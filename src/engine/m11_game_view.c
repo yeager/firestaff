@@ -29895,59 +29895,6 @@ int M11_GameView_ProbeViewportRenderMetadata(const M11_GameViewState* state,
     return 1;
 }
 
-int M11_GameView_ProbeDm1FrontChampionPortraitReceipt(
-    const M11_GameViewState* state,
-    int* outDrawChampionPortrait,
-    int* outGraphicIndex,
-    int* outSourceX,
-    int* outSourceY,
-    int* outWidth,
-    int* outHeight,
-    int* outDstX,
-    int* outDstY,
-    int* outTransparentColor,
-    int* outConsumedWallSquareReceipt) {
-    M11_ViewportCell cell;
-    DM1_V1_ChampionMirrorRenderReceiptPc34 receipt;
-    if (!m11_sample_viewport_cell(state, 1, 0, &cell) ||
-        !cell.valid ||
-        !m11_build_dm1_front_champion_portrait_receipt(&cell, &receipt) ||
-        !receipt.valid) {
-        return 0;
-    }
-    if (outDrawChampionPortrait) {
-        *outDrawChampionPortrait = receipt.drawChampionPortrait;
-    }
-    if (outGraphicIndex) {
-        *outGraphicIndex = receipt.graphicIndex;
-    }
-    if (outSourceX) {
-        *outSourceX = receipt.sourceX;
-    }
-    if (outSourceY) {
-        *outSourceY = receipt.sourceY;
-    }
-    if (outWidth) {
-        *outWidth = receipt.width;
-    }
-    if (outHeight) {
-        *outHeight = receipt.height;
-    }
-    if (outDstX) {
-        *outDstX = receipt.dstX;
-    }
-    if (outDstY) {
-        *outDstY = receipt.dstY;
-    }
-    if (outTransparentColor) {
-        *outTransparentColor = receipt.transparentColor;
-    }
-    if (outConsumedWallSquareReceipt) {
-        *outConsumedWallSquareReceipt = receipt.consumedWallSquareReceipt;
-    }
-    return 1;
-}
-
 int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
     int* outReady,
     int* outConsumeDm1ReceiptsOnly,

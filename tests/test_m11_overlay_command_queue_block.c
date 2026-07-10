@@ -7,6 +7,7 @@
  */
 
 #include "m11_game_view.h"
+#include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 
 #include <stdio.h>
@@ -1395,50 +1396,37 @@ static void test_hoc_front_mirror_receipt_uses_render_index(void)
     ASSERT_EQ(M11_GameView_GetFrontMirrorOrdinal(&state), 13,
               "front mirror selection consumes DM1 C127 render receipt");
     {
-        int draw = 0;
-        int graphic = 0;
-        int sx = -1;
-        int sy = -1;
-        int w = 0;
-        int h = 0;
-        int dx = -1;
-        int dy = -1;
-        int transparent = -1;
-        int consumedWall = 0;
-        ASSERT_EQ(M11_GameView_ProbeDm1FrontChampionPortraitReceipt(
-                      &state,
-                      &draw,
-                      &graphic,
-                      &sx,
-                      &sy,
-                      &w,
-                      &h,
-                      &dx,
-                      &dy,
-                      &transparent,
-                      &consumedWall),
+        DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
+        DM1_V1_ChampionMirrorRenderReceiptPc34 renderReceipt;
+        ASSERT_EQ(DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+                      127, 13, 4, 2, 2, &frontWall),
                   1,
-                  "M11 HoC portrait draw exposes DM1-owned render receipt");
-        ASSERT_EQ(draw, 1,
+                  "DM1 HoC test builds ReDMCSB C127 front-wall receipt");
+        ASSERT_EQ(DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+                      1,
+                      &frontWall, &renderReceipt),
+                  1,
+                  "DM1 HoC test consumes DM1-owned viewport render receipt directly");
+        ASSERT_EQ(renderReceipt.drawChampionPortrait, 1,
                   "DM1 render receipt owns C026 portrait draw gate");
-        ASSERT_EQ(graphic, 26,
+        ASSERT_EQ(renderReceipt.graphicIndex, 26,
                   "DM1 render receipt owns C026 graphic id");
-        ASSERT_EQ(sx, 160,
+        ASSERT_EQ(renderReceipt.sourceX, 160,
                   "DM1 render receipt owns ordinal-13 C026 source x");
-        ASSERT_EQ(sy, 29,
+        ASSERT_EQ(renderReceipt.sourceY, 29,
                   "DM1 render receipt owns ordinal-13 C026 source y");
-        ASSERT_EQ(w, 32,
+        ASSERT_EQ(renderReceipt.width, 32,
                   "DM1 render receipt owns C026 width");
-        ASSERT_EQ(h, 29,
+        ASSERT_EQ(renderReceipt.height, 29,
                   "DM1 render receipt owns C026 height");
-        ASSERT_EQ(dx, 96,
+        ASSERT_EQ(renderReceipt.dstX, 96,
                   "DM1 render receipt owns D1C portrait destination x");
-        ASSERT_EQ(dy, 35,
+        ASSERT_EQ(renderReceipt.dstY, 35,
                   "DM1 render receipt owns D1C portrait destination y");
-        ASSERT_EQ(transparent, 1,
+        ASSERT_EQ(renderReceipt.transparentColor, 1,
                   "DM1 render receipt owns C026 transparent color");
-        ASSERT_EQ(consumedWall, 1,
-                  "M11 consumed the wall-square receipt for C026 draw");
+        ASSERT_EQ(renderReceipt.consumedWallSquareReceipt, 1,
+                  "DM1 consumed the wall-square receipt for C026 draw");
     }
 
     squareFirstThings[0] = make_thing_cell(THING_TYPE_SENSOR, 0, 1);

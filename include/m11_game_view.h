@@ -727,6 +727,7 @@ typedef struct {
         int selected_dungeon;
         int companion_count;
         int startup_phase;
+        int startup_title_animation_tick;
         int startup_cursor;
         int selected_mirrors_mask;
         int selected_mirror_order[3];
@@ -852,6 +853,7 @@ typedef struct {
         int startup_menu_active;
         int startup_menu_selected_row;
         int startup_menu_row_count;
+        int startup_title_animation_tick;
         int startup_resume_available;
         unsigned int startup_slot_mask;
         char startup_save_root[512];
@@ -1015,18 +1017,6 @@ int M11_GameView_ProbeViewportRenderMetadata(const M11_GameViewState* state,
                                              int* outChampionPortraitOrdinal,
                                              int* outInscriptionTextIndex,
                                              int* outFloorOrnamentOrdinal);
-int M11_GameView_ProbeDm1FrontChampionPortraitReceipt(
-    const M11_GameViewState* state,
-    int* outDrawChampionPortrait,
-    int* outGraphicIndex,
-    int* outSourceX,
-    int* outSourceY,
-    int* outWidth,
-    int* outHeight,
-    int* outDstX,
-    int* outDstY,
-    int* outTransparentColor,
-    int* outConsumedWallSquareReceipt);
 int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
     int* outReady,
     int* outConsumeDm1ReceiptsOnly,
