@@ -3639,11 +3639,13 @@ static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
     struct TypedEntry { int category; int index; int type; int field; };
     static const struct TypedEntry k_interface_entries[] = {
         { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-          DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 0xfe },
+          DM2_GDAT_ENTRY_TYPE_PAL_IRGB, DM2_GDAT_INTERFACE_PALETTE_FIELD },
         { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-          DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET, 0xfe },
+          DM2_GDAT_ENTRY_TYPE_PAL_16, DM2_GDAT_INTERFACE_PALETTE_FIELD },
         { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-          DM2_GDAT_ENTRY_TYPE_RAW7, 0x00 },
+          DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_INTERFACE_RAW_LAYOUT_TABLE },
+        { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+          DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_INTERFACE_RAW_ACTION_TABLE },
         { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
           DM2_GDAT_ENTRY_TYPE_RAW6, 0x00 }
     };
@@ -3699,7 +3701,7 @@ static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
             ++interface_count;
         }
     }
-    if (interface_count < 3 ||
+    if (interface_count < 4 ||
         !dm2_v1_boot_runtime_raw_gdat_hash_add(profile,
                                                DM2_GDAT_CATEGORY_GRAPHICSSET,
                                                0,
@@ -3791,11 +3793,13 @@ static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
     struct TypedEntry { int category; int index; int type; int field; };
     static const struct TypedEntry k_interface_entries[] = {
         { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-          DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 0xfe },
+          DM2_GDAT_ENTRY_TYPE_PAL_IRGB, DM2_GDAT_INTERFACE_PALETTE_FIELD },
         { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-          DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET, 0xfe },
+          DM2_GDAT_ENTRY_TYPE_PAL_16, DM2_GDAT_INTERFACE_PALETTE_FIELD },
         { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-          DM2_GDAT_ENTRY_TYPE_RAW7, 0x00 },
+          DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_INTERFACE_RAW_LAYOUT_TABLE },
+        { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+          DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_INTERFACE_RAW_ACTION_TABLE },
         { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
           DM2_GDAT_ENTRY_TYPE_RAW6, 0x00 }
     };
@@ -3848,7 +3852,7 @@ static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
             ++interface_count;
         }
     }
-    if (interface_count < 3 ||
+    if (interface_count < 4 ||
         !dm2_v1_boot_runtime_decoded_gdat_hash_add(
             profile,
             DM2_GDAT_CATEGORY_GRAPHICSSET,
