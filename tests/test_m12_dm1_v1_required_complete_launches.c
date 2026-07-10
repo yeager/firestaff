@@ -52,11 +52,17 @@ static const char* kDm1DungeonMd5 = "766450c940651fc021c92fe5d0d0b3a6";
 static const int kDm1GameIndex = 0;
 
 static void seed_dm1_v1_complete_required_state(M12_StartupMenuState* state) {
+    M12_StartupMenuInitOptions options;
     M12_AssetVersionStatus* version;
     M12_AssetRequiredFileStatus* graphics;
     M12_AssetRequiredFileStatus* dungeon;
 
-    M12_StartupMenu_InitWithDataDir(state, "/tmp/firestaff-test-dm1-required", NULL);
+    memset(&options, 0, sizeof(options));
+    options.skipScreenshotGalleryScan = 1;
+    M12_StartupMenu_InitWithOptions(state,
+                                    "/tmp/firestaff-test-dm1-required",
+                                    NULL,
+                                    &options);
 
     /* The gating system is "required files matched -> game available".
      * The required set is {GRAPHICS.DAT, DUNGEON.DAT} for DM1; title,
@@ -267,6 +273,41 @@ static void check_dm1_v1_required_complete_launches(void) {
                  "FULL START READY") == 0);
     CHECK(strcmp(M12_StartupMenu_GetEntryBootDetailLabel(&state, kDm1GameIndex),
                  "SWSH, TITLE, ENTRANCE, HOC") == 0);
+
+    state.dm1HoCPresentedCaptureReceipt.consumerMask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
+    state.dm1HoCPresentedCaptureReceipt.chainHash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            state.dm1HoCPresentedCaptureReceipt.width,
+            state.dm1HoCPresentedCaptureReceipt.height,
+            state.dm1HoCPresentedCaptureReceipt.byteCount,
+            state.dm1HoCPresentedCaptureReceipt.framebufferHash,
+            state.dm1HoCPresentedCaptureReceipt.consumerMask);
+    CHECK(M12_StartupMenu_GetBootReadiness(&state, kDm1GameIndex, &boot) == 1);
+    CHECK(boot.dm1HoCHostRenderConsumerReady == 0);
+    CHECK(boot.dm1HoCM12CaptureConsumerReady == 1);
+    CHECK(boot.packagedCaptureReady == 0);
+
+    seed_dm1_hoc_presented_capture_receipt(&state);
+    state.dm1HoCPresentedCaptureReceipt.consumerMask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34;
+    state.dm1HoCPresentedCaptureReceipt.chainHash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            state.dm1HoCPresentedCaptureReceipt.width,
+            state.dm1HoCPresentedCaptureReceipt.height,
+            state.dm1HoCPresentedCaptureReceipt.byteCount,
+            state.dm1HoCPresentedCaptureReceipt.framebufferHash,
+            state.dm1HoCPresentedCaptureReceipt.consumerMask);
+    CHECK(M12_StartupMenu_GetBootReadiness(&state, kDm1GameIndex, &boot) == 1);
+    CHECK(boot.dm1HoCHostRenderConsumerReady == 1);
+    CHECK(boot.dm1HoCM12CaptureConsumerReady == 0);
+    CHECK(boot.packagedCaptureReady == 0);
+
+    seed_dm1_hoc_presented_capture_receipt(&state);
+    CHECK(M12_StartupMenu_GetBootReadiness(&state, kDm1GameIndex, &boot) == 1);
+    CHECK(boot.packagedCaptureReady == 1);
     CHECK(M12_StartupMenu_GetLaunchGate(&state, kDm1GameIndex, &gate) == 1);
     CHECK(gate.handled == 1);
     CHECK(gate.canLaunch == 1);
