@@ -14,6 +14,7 @@
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_save.h"
+#include "nexus_v1_viewport.h"
 #include "nexus_v1_world.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -1892,6 +1893,39 @@ int nexus_v1_launcher_startup_execute_title_pointer_from_snapshot(
         out_receipt);
 }
 
+static int nexus_v1_launcher_validate_dgn_viewport_render(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_DgnViewportRenderReceipt *out_receipt)
+{
+    Nexus_Viewport viewport;
+    Nexus_V1_DgnViewportRenderReceipt receipt;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!engine || !engine->level_loaded) {
+        return 0;
+    }
+
+    nexus_viewport_init(&viewport);
+    nexus_viewport_render(&viewport, engine);
+    if (nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) != 0) {
+        return 0;
+    }
+    if (out_receipt) {
+        *out_receipt = receipt;
+    }
+    return receipt.attempted &&
+           receipt.ready &&
+           receipt.used_real_dgn_route &&
+           !receipt.blocked &&
+           !receipt.fallback_visuals_permitted &&
+           receipt.command_count > 0 &&
+           receipt.command_count == receipt.material_surface_count &&
+           receipt.command_count == receipt.rasterized_command_count &&
+           receipt.written_pixels > 0;
+}
+
 int nexus_v1_launcher_startup_title_route_receipt_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     int menu_input,
@@ -2211,6 +2245,7 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
     Nexus_V1_DgnRenderPlanReceipt render_plan;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
+    Nexus_V1_DgnViewportRenderReceipt viewport_receipt;
     const Nexus_V1_DgnMaterialPlan *material_plan;
     Nexus_ScriptRuntimeReceipt script_receipt;
 
@@ -2299,6 +2334,24 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
             : "blocked-dgn-render";
         return 1;
     }
+    if (!nexus_v1_launcher_validate_dgn_viewport_render(
+            state->engine,
+            &viewport_receipt)) {
+        out_receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED;
+        out_receipt->render_plan = render_plan;
+        out_receipt->dgn_render_blocked = 1;
+        out_receipt->dgn_viewport_render_ready = 0;
+        out_receipt->viewport_rasterized_command_count =
+            viewport_receipt.rasterized_command_count;
+        out_receipt->viewport_material_surface_count =
+            viewport_receipt.material_surface_count;
+        out_receipt->viewport_written_pixels = viewport_receipt.written_pixels;
+        out_receipt->fallback_visuals_permitted =
+            viewport_receipt.fallback_visuals_permitted;
+        out_receipt->status_scope = "DGN";
+        out_receipt->status = "blocked-dgn-viewport";
+        return 1;
+    }
     memcpy(out_commands, material_plan->commands,
            (size_t)render_plan.command_count * sizeof(*out_commands));
 
@@ -2318,12 +2371,18 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     }
     out_receipt->runtime_ready = 1;
     out_receipt->dgn_render_ready = 1;
+    out_receipt->dgn_viewport_render_ready = 1;
     out_receipt->hud_ready = out_receipt->level_loaded ? 1 : 0;
     out_receipt->dgn_render_blocked = 0;
     out_receipt->party_x = state->engine->game.party_x;
     out_receipt->party_y = state->engine->game.party_y;
     out_receipt->party_dir = state->engine->game.party_dir;
     out_receipt->command_count = render_plan.command_count;
+    out_receipt->viewport_rasterized_command_count =
+        viewport_receipt.rasterized_command_count;
+    out_receipt->viewport_material_surface_count =
+        viewport_receipt.material_surface_count;
+    out_receipt->viewport_written_pixels = viewport_receipt.written_pixels;
     out_receipt->fallback_visuals_permitted =
         render_plan.fallback_visuals_permitted;
     out_receipt->status_scope = "DGN";
@@ -2492,8 +2551,17 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
         handoff->render_plan.command_count;
     out_receipt->dgn_render_floor_count = handoff->render_plan.floor_count;
     out_receipt->dgn_render_wall_count = handoff->render_plan.wall_count;
+    out_receipt->dgn_viewport_render_ready =
+        handoff->dgn_viewport_render_ready ? 1 : 0;
+    out_receipt->dgn_viewport_rasterized_command_count =
+        handoff->viewport_rasterized_command_count;
+    out_receipt->dgn_viewport_material_surface_count =
+        handoff->viewport_material_surface_count;
+    out_receipt->dgn_viewport_written_pixels =
+        handoff->viewport_written_pixels;
     out_receipt->dgn_blocks_real_mesh_render =
-        handoff->render_plan.blocks_real_dgn_mesh_render ? 1 : 0;
+        handoff->render_plan.blocks_real_dgn_mesh_render ||
+        !handoff->dgn_viewport_render_ready;
     if (commands && handoff->render_plan.command_count > 0) {
         out_receipt->first_dgn_render_command_kind = commands[0].kind;
     }
@@ -4048,9 +4116,16 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->runtime_dgn_handoff_ready =
             runtime_route->runtime_route_ready &&
             runtime_route->dgn_render_plan_ready &&
+            runtime_route->dgn_viewport_render_ready &&
             !runtime_route->dgn_blocks_real_mesh_render;
+        receipt->runtime_dgn_viewport_render_ready =
+            runtime_route->dgn_viewport_render_ready ? 1 : 0;
         receipt->dgn_draw_command_count =
             runtime_route->dgn_render_command_count;
+        receipt->dgn_viewport_rasterized_command_count =
+            runtime_route->dgn_viewport_rasterized_command_count;
+        receipt->dgn_viewport_written_pixels =
+            runtime_route->dgn_viewport_written_pixels;
         receipt->first_dgn_draw_kind =
             runtime_route->first_dgn_render_command_kind;
         if (receipt->runtime_dgn_handoff_ready) {
@@ -4183,6 +4258,12 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->host_route_consumes_dungeon_capture_frame &&
         receipt->dgn_route_saturn_capture_exact &&
         receipt->dgn_draw_command_count > 0;
+    receipt->dgn_route_consumes_startup_package =
+        receipt->dgn_route_consumes_startup_package &&
+        receipt->runtime_dgn_viewport_render_ready &&
+        receipt->dgn_viewport_rasterized_command_count ==
+            receipt->dgn_draw_command_count &&
+        receipt->dgn_viewport_written_pixels > 0;
 
     if (!receipt->no_fallback_visuals_enforced ||
         package->blocked_draw_suppressed ||
@@ -4424,6 +4505,8 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
           out_receipt->ownership.saturn_capture_frames_exact));
     out_receipt->host_runtime_dgn_ready =
         out_receipt->ownership.runtime_dgn_handoff_ready;
+    out_receipt->host_runtime_dgn_viewport_render_ready =
+        out_receipt->ownership.runtime_dgn_viewport_render_ready;
     out_receipt->bpk_handoff_consumed =
         out_receipt->ownership.consumes_bpk_menu_handoff;
     out_receipt->prs3_blocker_consumed =
@@ -4445,6 +4528,10 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
     out_receipt->copied_startup_command_count = startup_copied;
     out_receipt->dgn_command_count =
         out_receipt->ownership.dgn_draw_command_count;
+    out_receipt->dgn_viewport_rasterized_command_count =
+        out_receipt->ownership.dgn_viewport_rasterized_command_count;
+    out_receipt->dgn_viewport_written_pixels =
+        out_receipt->ownership.dgn_viewport_written_pixels;
     out_receipt->copied_dgn_command_count = dgn_copied;
     out_receipt->title_timing_frame =
         out_receipt->ownership.startup_bundle.timing_frame;
@@ -4608,9 +4695,13 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
     out_receipt->host_execute_dgn_draws =
         out_receipt->suppress_fallback_visuals &&
         out_receipt->host_runtime_dgn_ready &&
+        out_receipt->host_runtime_dgn_viewport_render_ready &&
         out_receipt->host_route_consumes_package_route &&
         out_receipt->dungeon_startup_route_consumption_complete &&
-        out_receipt->copied_dgn_command_count > 0;
+        out_receipt->copied_dgn_command_count > 0 &&
+        out_receipt->dgn_viewport_rasterized_command_count ==
+            out_receipt->dgn_command_count &&
+        out_receipt->dgn_viewport_written_pixels > 0;
     out_receipt->single_saturn_startup_owner_ready =
         out_receipt->receipt_owner_is_nexus &&
         out_receipt->package_capture_consumed_by_host &&

@@ -284,6 +284,7 @@ typedef struct {
     Nexus_ScriptRuntimeReceipt script_receipt;
     int runtime_ready;
     int dgn_render_ready;
+    int dgn_viewport_render_ready;
     int hud_ready;
     int dgn_render_blocked;
     int script_runtime_ready;
@@ -293,6 +294,9 @@ typedef struct {
     int party_y;
     int party_dir;
     int command_count;
+    int viewport_rasterized_command_count;
+    int viewport_material_surface_count;
+    int viewport_written_pixels;
     int fallback_visuals_permitted;
     const char *asset_route;
     const char *dgn_route;
@@ -320,6 +324,10 @@ typedef struct {
     int dgn_render_command_count;
     int dgn_render_floor_count;
     int dgn_render_wall_count;
+    int dgn_viewport_render_ready;
+    int dgn_viewport_rasterized_command_count;
+    int dgn_viewport_material_surface_count;
+    int dgn_viewport_written_pixels;
     int dgn_blocks_real_mesh_render;
     Nexus_ScriptRuntimeStatus script_runtime_status;
     int script_runtime_ready;
@@ -716,6 +724,7 @@ typedef struct {
     int saturn_champion_capture_frame;
     int saturn_dungeon_capture_frame;
     int runtime_dgn_handoff_ready;
+    int runtime_dgn_viewport_render_ready;
     int no_fallback_visuals_enforced;
     int fallback_visuals_permitted;
     int blocked_draw_suppressed;
@@ -723,6 +732,8 @@ typedef struct {
     int display_ready;
     int startup_draw_command_count;
     int dgn_draw_command_count;
+    int dgn_viewport_rasterized_command_count;
+    int dgn_viewport_written_pixels;
     Nexus_V1_StartupCaptureRoute capture_route;
     Nexus_V1_StartupDrawKind first_startup_draw_kind;
     Nexus_V1_DgnRenderCommandKind first_dgn_draw_kind;
@@ -739,6 +750,7 @@ typedef struct {
     int host_caller_ready;
     int host_startup_capture_ready;
     int host_runtime_dgn_ready;
+    int host_runtime_dgn_viewport_render_ready;
     int host_execute_startup_draws;
     int host_execute_dgn_draws;
     int bpk_handoff_consumed;
@@ -750,6 +762,8 @@ typedef struct {
     int startup_command_count;
     int copied_startup_command_count;
     int dgn_command_count;
+    int dgn_viewport_rasterized_command_count;
+    int dgn_viewport_written_pixels;
     int copied_dgn_command_count;
     int title_timing_frame;
     int title_timing_frame_max;

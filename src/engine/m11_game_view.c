@@ -36236,6 +36236,13 @@ static void m11_nexus_fill_dgn_quad(
     }
 }
 
+static void m11_draw_nexus_dgn_commands(
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const Nexus_V1_DgnRenderCommand *commands,
+    int count);
+
 static void m11_draw_nexus_dgn_host_plan(
     const M11_GameViewState *state,
     unsigned char *framebuffer,
@@ -36244,7 +36251,6 @@ static void m11_draw_nexus_dgn_host_plan(
 {
     const Nexus_V1_DgnRenderCommand *commands;
     int count;
-    int i;
 
     if (!state || !framebuffer ||
         !state->nexusState.startup_host_execute_dgn_draws ||
@@ -36254,6 +36260,27 @@ static void m11_draw_nexus_dgn_host_plan(
     commands = state->nexusState.startup_dgn_render_commands;
     count = state->nexusState.startup_dgn_render_cached_count;
     if (count <= 0 || count > NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS) {
+        return;
+    }
+    m11_draw_nexus_dgn_commands(framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                commands,
+                                count);
+}
+
+static void m11_draw_nexus_dgn_commands(
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const Nexus_V1_DgnRenderCommand *commands,
+    int count)
+{
+    int i;
+
+    if (!framebuffer || !commands || framebufferWidth <= 0 ||
+        framebufferHeight <= 0 || count <= 0 ||
+        count > NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS) {
         return;
     }
 
@@ -39887,6 +39914,16 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                     host_caller_receipt.host_execute_startup_draws
                         ? host_caller_receipt.copied_startup_command_count
                         : 0;
+                if (host_caller_receipt.host_execute_dgn_draws &&
+                    host_caller_receipt.copied_dgn_command_count > 0) {
+                    m11_draw_nexus_dgn_commands(
+                        framebuffer,
+                        framebufferWidth,
+                        framebufferHeight,
+                        dgn_commands,
+                        host_caller_receipt.copied_dgn_command_count);
+                    return;
+                }
             } else {
                 command_count = 0;
             }
