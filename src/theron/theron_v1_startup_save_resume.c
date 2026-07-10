@@ -1119,6 +1119,25 @@ static int theron_v1_startup_continue_attach_track02_media(
     return 1;
 }
 
+static int theron_v1_startup_continue_media_preflight(
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    if (!media_receipt) {
+        return 1;
+    }
+    if (theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            media_receipt)) {
+        return 1;
+    }
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt, receipt_cap,
+                 "Track 02 Continue media receipt incomplete; fallback visuals blocked");
+    }
+    return 0;
+}
+
 int theron_v1_startup_continue_apply_request(
     Theron_V1_World *world,
     const Theron_V1StartupContinueRequest *request,
@@ -1136,6 +1155,15 @@ int theron_v1_startup_continue_apply_request(
         theron_v1_startup_continue_result_init(out_result);
     }
     if (!world || !request) {
+        return 0;
+    }
+
+    /* A supplied Track 02 receipt is launch evidence, not optional
+     * decoration.  Check it before either restore path mutates the world so
+     * Continue cannot leave a restored level that falls back to synthetic
+     * startup graphics. */
+    if (!theron_v1_startup_continue_media_preflight(
+            request->track02_media_receipt, receipt, receipt_cap)) {
         return 0;
     }
 
