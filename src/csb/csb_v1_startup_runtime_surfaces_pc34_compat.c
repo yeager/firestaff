@@ -225,18 +225,34 @@ int csb_v1_boot_startup_runtime_asset_session_open_pc34(
     }
     surfaces->title_regions_ready = 1;
     surfaces->opening_frame_ready = 1;
+    surfaces->entrance_screen_ready = 1;
     surfaces->real_asset_matched = 1;
     surfaces->valid = 1;
     out_session->hud_inventory_binding = inventory ? *inventory : (CSB_V1_StartupAssetBinding_PC34){0};
     out_session->hud_resurrect_binding = resurrect ? *resurrect : (CSB_V1_StartupAssetBinding_PC34){0};
     out_session->title_assets_ready = 1;
+    out_session->title_presents_ready = surfaces->surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].valid;
+    out_session->title_chaos_ready = surfaces->surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].valid;
+    out_session->title_strikes_back_ready = surfaces->surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].valid;
     out_session->entrance_assets_ready = 1;
+    out_session->door_assets_ready = surfaces->surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].valid &&
+        surfaces->surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].valid;
     out_session->hud_assets_bound = inventory && resurrect && inventory->verified &&
         resurrect->verified && inventory->source != CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34 &&
         resurrect->source != CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34;
+    out_session->full_startup_ready =
+        out_session->title_presents_ready && out_session->title_chaos_ready &&
+        out_session->title_strikes_back_ready && out_session->entrance_assets_ready &&
+        out_session->door_assets_ready && out_session->hud_assets_bound;
+    out_session->rejects_legacy_wrappers = out_session->full_startup_ready;
     out_session->real_asset_matched = 1;
     out_session->generation = 1u;
-    out_session->valid = out_session->hud_assets_bound;
+    out_session->valid = out_session->full_startup_ready;
     if (!out_session->valid) {
         csb_v1_boot_startup_runtime_asset_session_release_pc34(out_session);
     }
@@ -259,7 +275,7 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
 {
     if (out_frame) memset(out_frame, 0, sizeof(*out_frame));
     if (!session || !plan || !out_frame || !session->valid ||
-        !session->surfaces.valid) return 0;
+        !session->surfaces.valid || !session->full_startup_ready) return 0;
     session->source_tick = source_tick;
     out_frame->source_tick = source_tick;
     out_frame->session_generation = session->generation;
@@ -294,46 +310,50 @@ int csb_v1_boot_startup_runtime_surfaces_materialize_pc34(
     const CSB_V1_BootProfile *profile, const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupRuntimeSurfaceSet_PC34 *out)
 {
-    unsigned char *title = NULL;
-    unsigned char *left = NULL;
-    unsigned char *right = NULL;
-    int title_w, title_h, left_w, left_h, right_w, right_h;
-    int ok = 0;
+    CSB_V1_StartupRuntimeAssetSession_PC34 session;
+    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!profile || !plan || !profile->assets_verified || !profile->graphics_verified ||
         !profile->startup_assets.real_graphics_available ||
         !csb_v1_boot_startup_render_plan_uses_real_assets_pc34(profile, plan)) return 0;
-    if (!csb_v1_startup_surface_load_graphic_pc34(profile->graphics_path, 1u,
-            &title, &title_w, &title_h)) goto done;
-    out->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].pixels = title;
-    out->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].width = title_w;
-    out->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height = title_h;
-    out->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].source_asset_id = 1;
-    out->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].valid = 1;
-    title = NULL;
-    if (!csb_v1_startup_surface_crop_pc34(&out->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34],
-            out->surfaces[0].pixels, title_w, title_h, 1, 0, 137, 320, 16, -1) ||
-        !csb_v1_startup_surface_crop_pc34(&out->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34],
-            out->surfaces[0].pixels, title_w, title_h, 1, 0, 0, 320, 80, -1) ||
-        !csb_v1_startup_surface_crop_pc34(&out->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34],
-            out->surfaces[0].pixels, title_w, title_h, 1, 0, 80, 320, 57, 0)) goto done;
-    out->title_regions_ready = 1;
-    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
-        plan->opening_door_valid) {
-        if (!csb_v1_startup_surface_load_graphic_pc34(profile->graphics_path, 2u, &left, &left_w, &left_h) ||
-            !csb_v1_startup_surface_load_graphic_pc34(profile->graphics_path, 3u, &right, &right_w, &right_h) ||
-            !csb_v1_startup_surface_crop_pc34(&out->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34], left, left_w, left_h, 2,
-                plan->opening_left_source_x, plan->opening_left_source_y, plan->opening_left_w, plan->opening_left_h, -1) ||
-            !csb_v1_startup_surface_crop_pc34(&out->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34], right, right_w, right_h, 3,
-                plan->opening_right_source_x, plan->opening_right_source_y, plan->opening_right_w, plan->opening_right_h, -1)) goto done;
-        out->opening_frame_ready = 1;
+    csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
+    if (!csb_v1_boot_startup_runtime_asset_session_open_pc34(profile, &session) ||
+        !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+            &session, plan, 0u, &frame)) {
+        csb_v1_boot_startup_runtime_asset_session_release_pc34(&session);
+        return 0;
     }
-    out->real_asset_matched = 1;
-    out->valid = 1;
-    ok = 1;
-done:
-    free(title); free(left); free(right);
-    if (!ok) csb_v1_boot_startup_runtime_surface_set_release_pc34(out);
-    return ok;
+    *out = session.surfaces;
+    memset(&session.surfaces, 0, sizeof(session.surfaces));
+    csb_v1_boot_startup_runtime_asset_session_release_pc34(&session);
+    return out->valid;
+}
+
+int csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupFullRuntimeReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!session || !session->valid || !session->surfaces.valid) return 0;
+    out_receipt->real_asset_matched = session->real_asset_matched;
+    out_receipt->title_presents_ready = session->title_presents_ready;
+    out_receipt->title_chaos_ready = session->title_chaos_ready;
+    out_receipt->title_strikes_back_ready = session->title_strikes_back_ready;
+    out_receipt->title_sequence_ready =
+        out_receipt->title_presents_ready && out_receipt->title_chaos_ready &&
+        out_receipt->title_strikes_back_ready;
+    out_receipt->entrance_ready = session->entrance_assets_ready;
+    out_receipt->hud_ready = session->hud_assets_bound;
+    out_receipt->door_ready = session->door_assets_ready;
+    out_receipt->no_legacy_wrappers = session->rejects_legacy_wrappers;
+    out_receipt->session_generation = session->generation;
+    out_receipt->source_evidence =
+        "ReDMCSB TITLE.C F0437; ENTRANCE.C F0806; CSBWin Graphics.cpp ReadGraphic";
+    out_receipt->valid =
+        out_receipt->real_asset_matched && out_receipt->title_sequence_ready &&
+        out_receipt->entrance_ready && out_receipt->hud_ready &&
+        out_receipt->door_ready && out_receipt->no_legacy_wrappers;
+    return out_receipt->valid;
 }
