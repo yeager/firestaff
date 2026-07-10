@@ -3048,14 +3048,15 @@ static int m11_csb_boot_startup_active_from_capture(
     const M11_GameViewState *state)
 {
     CSB_V1_BootStartupHostViewReceipt_PC34 view_receipt;
-    CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         return 0;
     }
-    if (!m11_csb_boot_runtime_full_visual_sequence_receipt(
-            state,
-            &visual_sequence)) {
-        return 0;
+    /* ReDMCSB TITLE.C F0437 / ENTRANCE.C F0806: title and entrance remain
+     * runtime state, not a verification-only capture route.  A partially
+     * missing packaged capture must not hide an active CSB startup frame. */
+    if (state->csbState.startup_title_active ||
+        state->csbState.startup_entrance_active) {
+        return 1;
     }
     if (m11_csb_boot_runtime_startup_host_view_receipt(state,
                                                        &view_receipt) &&
@@ -3099,6 +3100,12 @@ int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
     return host_view.special_palette;
 }
 
+static void m11_draw_csb_startup_fallback_text(
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const CSB_V1_StartupRenderPlan_PC34 *plan);
+
 static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        unsigned char *framebuffer,
                                        int framebufferWidth,
@@ -3125,11 +3132,10 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
         plan->title_source_h <= 0) {
         /* The CSB receipt owns this fallback label. It keeps the first
          * PRESENTS frame visible while the C001 title bitmap is unavailable. */
-        if (plan->fallback_title_text && plan->fallback_title_text[0]) {
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          104, 90, plan->fallback_title_text,
-                          &g_text_title);
-        }
+        m11_draw_csb_startup_fallback_text(framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           plan);
         return;
     }
     title_graphic = M11_AssetLoader_Load(
@@ -3139,11 +3145,10 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                                plan->title_source_w) ||
         title_graphic->height < (unsigned int)(plan->title_source_y +
                                                 plan->title_source_h)) {
-        if (plan->fallback_title_text && plan->fallback_title_text[0]) {
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          104, 90, plan->fallback_title_text,
-                          &g_text_title);
-        }
+        m11_draw_csb_startup_fallback_text(framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           plan);
         return;
     }
     memset(framebuffer, 0,
@@ -3184,8 +3189,10 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
     }
     if (!visible && plan->fallback_title_text &&
         plan->fallback_title_text[0]) {
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      104, 90, plan->fallback_title_text, &g_text_title);
+        m11_draw_csb_startup_fallback_text(framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           plan);
     }
 }
 
@@ -3222,6 +3229,33 @@ static void m11_draw_csb_startup_plan_text(
                   y,
                   text,
                   m11_csb_startup_text_style(style));
+}
+
+static void m11_draw_csb_startup_fallback_text(
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    int row;
+    if (!framebuffer || !plan) {
+        return;
+    }
+    for (row = 0; row < plan->fallback_text_row_count; ++row) {
+        const CSB_V1_StartupFallbackTextRow_PC34 *text_row =
+            &plan->fallback_text_rows[row];
+        if (!text_row->visible || !text_row->text ||
+            text_row->text[0] == '\0') {
+            continue;
+        }
+        m11_draw_csb_startup_plan_text(framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight,
+                                       text_row->x,
+                                       text_row->y,
+                                       text_row->style,
+                                       text_row->text);
+    }
 }
 
 static int m11_csb_copy_startup_rect(const unsigned char *source,
