@@ -2985,6 +2985,104 @@ int dm1_v1_startup_hoc_boot_full_graphics_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
+    const DM1_V1_StartupHoCBootCompleteSupportFacts_PC34* complete_facts,
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* hoc_facts,
+    const DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* ownership,
+    DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHandoffOutcome_PC34 enter_outcome;
+    DM1_V1_StartupHandoffOutcome_PC34 resume_outcome;
+    DM1_V1_StartupHostApplyResult_PC34 enter_host;
+    DM1_V1_StartupHostApplyResult_PC34 resume_host;
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 enter_handoff;
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 resume_handoff;
+    DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34 hoc_save;
+    DM1_V1_StartupSaveResumeCaptureFacts_PC34 save_facts;
+    DM1_V1_StartupSaveResumeCaptureReceipt_PC34 original_save;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&enter_outcome, 0, sizeof(enter_outcome));
+    memset(&resume_outcome, 0, sizeof(resume_outcome));
+    memset(&enter_host, 0, sizeof(enter_host));
+    memset(&resume_host, 0, sizeof(resume_host));
+    memset(&enter_handoff, 0, sizeof(enter_handoff));
+    memset(&resume_handoff, 0, sizeof(resume_handoff));
+    memset(&hoc_save, 0, sizeof(hoc_save));
+    memset(&save_facts, 0, sizeof(save_facts));
+    memset(&original_save, 0, sizeof(original_save));
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    if (!complete_facts || !hoc_facts || !ownership ||
+        !complete_facts->source_id || complete_facts->source_id[0] == '\0') {
+        return 0;
+    }
+
+    if (!dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+            ENTRANCE_COMPAT_COMMAND_PATH_ENTER, &enter_outcome)) {
+        return 0;
+    }
+    enter_outcome.title_played = 1;
+    enter_host.handled = 1;
+    if (!dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
+            "dm1", complete_facts->source_id, &enter_outcome, &enter_host,
+            &enter_handoff) ||
+        !dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
+            &enter_handoff, &enter_host, ownership, &hoc_save)) {
+        return 0;
+    }
+
+    if (!dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+            ENTRANCE_COMPAT_COMMAND_PATH_RESUME, &resume_outcome)) {
+        return 0;
+    }
+    resume_outcome.title_played = 1;
+    resume_host.handled = 1;
+    resume_host.resume_requested = 1;
+    resume_host.resume_loaded = 1;
+    snprintf(resume_host.resume_path,
+             sizeof(resume_host.resume_path),
+             "%s",
+             (complete_facts->resume_path &&
+              complete_facts->resume_path[0] != '\0')
+                 ? complete_facts->resume_path
+                 : "dm1-original-save");
+    if (!dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
+            "dm1", complete_facts->source_id, &resume_outcome, &resume_host,
+            &resume_handoff)) {
+        return 0;
+    }
+
+    save_facts.source_id = "dm1";
+    save_facts.outcome = &resume_outcome;
+    save_facts.host_apply = &resume_host;
+    save_facts.runtime_handoff = &resume_handoff;
+    save_facts.observed_save_header =
+        complete_facts->dungeon_loaded ? 1 : 0;
+    save_facts.observed_save_part_count =
+        DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34;
+    save_facts.observed_champion_portrait_count =
+        DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
+    save_facts.observed_dungeon_payload =
+        complete_facts->dungeon_loaded ? 1 : 0;
+    save_facts.observed_required_graphics_hash_match =
+        complete_facts->assets_available ? 1 : 0;
+    save_facts.observed_required_dungeon_hash_match =
+        complete_facts->dungeon_loaded ? 1 : 0;
+    if (!dm1_v1_startup_save_resume_capture_receipt_pc34(&save_facts,
+                                                         &original_save)) {
+        return 0;
+    }
+
+    return dm1_v1_startup_hoc_boot_full_graphics_receipt_pc34(
+        hoc_facts,
+        &enter_handoff,
+        &hoc_save,
+        &original_save,
+        out_receipt);
+}
+
 int dm1_v1_startup_hoc_boot_probe_summary_pc34(
     const DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* receipt,
     DM1_V1_StartupHoCBootProbeSummary_PC34* out_summary) {
