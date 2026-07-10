@@ -29793,31 +29793,6 @@ int M11_GameView_CountCellExplosions(
     return summary.explosions;
 }
 
-int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
-                                             int relForward,
-                                             int relSide,
-                                             int* outMapX,
-                                             int* outMapY,
-                                             int* outElementType,
-                                             int* outProjectileCount,
-                                             int* outExplosionCount,
-                                             int* outFirstProjectileGfx,
-                                             int* outFirstExplosionType) {
-    M11_ViewportCell cell;
-    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
-        !cell.valid) {
-        return 0;
-    }
-    if (outMapX) *outMapX = cell.mapX;
-    if (outMapY) *outMapY = cell.mapY;
-    if (outElementType) *outElementType = cell.elementType;
-    if (outProjectileCount) *outProjectileCount = cell.summary.projectiles;
-    if (outExplosionCount) *outExplosionCount = cell.summary.explosions;
-    if (outFirstProjectileGfx) *outFirstProjectileGfx = cell.firstProjectileGfxIndex;
-    if (outFirstExplosionType) *outFirstExplosionType = cell.firstExplosionType;
-    return 1;
-}
-
 typedef struct M11_CSBStartupHostViewProbe {
     int clearBlackCount;
     int drawTitleCount;
