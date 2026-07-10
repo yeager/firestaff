@@ -210,6 +210,16 @@ typedef struct {
     uint8_t animation_frame;
 } DM2_V1_CreatureInstance;
 
+/* Live CCM pool persistence.  This is deliberately the owning creature
+ * module's representation: save/load must not reconstruct instances through
+ * spawn helpers because that would reset CCM, animation, and revision state.
+ * Source: skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM. */
+typedef struct {
+    DM2_V1_CreatureInstance instances[DM2_MAX_CREATURE_INSTANCES];
+    int next_instance_id;
+    int tick_counter;
+} DM2_V1_CreatureLiveState;
+
 typedef struct {
     int valid;
     int instance_id;
@@ -313,6 +323,9 @@ int dm2_v1_creature_instance_ai(int instance_id);
  * Returns NULL if instance_id is out of range.  Used by projectile
  * dispatch (Phase 5 wire-up) to read AI attack flags + position. */
 const DM2_V1_CreatureInstance *dm2_v1_creature_get_instance(int instance_id);
+
+int dm2_v1_creature_export_live_state(DM2_V1_CreatureLiveState *out_state);
+int dm2_v1_creature_restore_live_state(const DM2_V1_CreatureLiveState *state);
 
 /* ── Test-only API (compiled in only when FIRESTAFF_DM2_CREATURE_TESTING=1) ──
  * Used by tests/probes to inject a synthetic AIDefinition entry so the

@@ -504,6 +504,34 @@ const DM2_V1_CreatureInstance *dm2_v1_creature_get_instance(int instance_id) {
     return &g_creature_pool[instance_id];
 }
 
+int dm2_v1_creature_export_live_state(DM2_V1_CreatureLiveState *out_state) {
+    if (!out_state) return -1;
+    memcpy(out_state->instances, g_creature_pool, sizeof(g_creature_pool));
+    out_state->next_instance_id = g_next_instance_id;
+    out_state->tick_counter = g_tick_counter;
+    return 0;
+}
+
+int dm2_v1_creature_restore_live_state(const DM2_V1_CreatureLiveState *state) {
+    if (!state || state->next_instance_id < 0 || state->tick_counter < 0) {
+        return -1;
+    }
+    for (int i = 0; i < DM2_MAX_CREATURE_INSTANCES; ++i) {
+        const DM2_V1_CreatureInstance *c = &state->instances[i];
+        if ((c->alive != 0 && c->alive != 1) ||
+            (c->is_visible != 0 && c->is_visible != 1) ||
+            c->direction < 0 || c->direction > 3 ||
+            c->ai_index < 0 || c->ai_index >= DM2_AI_TABLE_SIZE) {
+            return -1;
+        }
+    }
+    memcpy(g_creature_pool, state->instances, sizeof(g_creature_pool));
+    g_next_instance_id = state->next_instance_id;
+    g_tick_counter = state->tick_counter;
+    dm2_v1_creature_reset_ccm_tick_observer();
+    return 0;
+}
+
 /* ── Test-only API ────────────────────────────────────────────────
  * Compiled in only when FIRESTAFF_DM2_CREATURE_TESTING=1.  Lets the
  * collision gate inject a synthetic AI definition (with REFLECTOR /
