@@ -1,6 +1,5 @@
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "csb_v1_boot.h"
-#include "title_frontend_v1.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
@@ -1420,9 +1419,9 @@ static void csb_v1_startup_set_title_rect_pc34(
     /* ReDMCSB TITLE.C F0437 lines 430, 433-457, and 461 draw the title
      * through C424 PRESENTS, C425 CHAOS, and C426 STRIKES BACK zones. */
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
-        (void)V1_TitleFrontend_GetStepPalette(
-            V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
-            &plan->title_special_palette);
+        /* ReDMCSB TITLE.C F0437: C12_PRESENTS is installed for C424. */
+        plan->title_special_palette =
+            VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS;
         plan->special_palette = plan->title_special_palette;
         plan->title_source_x = 0;
         plan->title_source_y = 137;
@@ -1443,9 +1442,8 @@ static void csb_v1_startup_set_title_rect_pc34(
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
         plan->title_source_step >= 2 &&
         plan->title_source_step <= 19) {
-        (void)V1_TitleFrontend_GetStepPalette(
-            V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT,
-            &plan->title_special_palette);
+        /* ReDMCSB TITLE.C F0437: C13_DUNGEON + C14_MASTER for C425. */
+        plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_TITLE;
         plan->special_palette = plan->title_special_palette;
         /* ReDMCSB PC TITLE.C F0437 lines 340-360 creates shrinked
          * bitmaps from the full 320x80 title source, and lines 385-387
@@ -1469,9 +1467,8 @@ static void csb_v1_startup_set_title_rect_pc34(
         return;
     }
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
-        (void)V1_TitleFrontend_GetStepPalette(
-            V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT,
-            &plan->title_special_palette);
+        /* ReDMCSB TITLE.C F0437: C13_DUNGEON + C14_MASTER for C426. */
+        plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_TITLE;
         plan->special_palette = plan->title_special_palette;
         plan->title_source_x = 0;
         plan->title_source_y = 80;
