@@ -70,21 +70,6 @@ void DM1_V1_PortraitPanel_DamageFlashPc34Compat(DM1_V1_PortraitPanelStatePc34* s
 void DM1_V1_PortraitPanel_TickPc34Compat(DM1_V1_PortraitPanelStatePc34* state); /* update flash timers */
 void DM1_V1_PortraitPanel_LayoutPc34Compat(DM1_V1_PortraitPanelStatePc34* state, int16_t base_x, int16_t base_y);
 
-/* Compatibility aliases for older M11 call sites. */
-typedef DM1_V1_PortraitPanelPortraitPc34 M11_PP_Portrait;
-typedef DM1_V1_PortraitPanelStatusBarPc34 M11_PP_StatusBar;
-typedef DM1_V1_PortraitPanelChampionPc34 M11_PP_ChampionPanel;
-typedef DM1_V1_PortraitPanelStatePc34 M11_PP_PanelState;
-#define m11_pp_init DM1_V1_PortraitPanel_InitPc34Compat
-#define m11_pp_set_champion_count DM1_V1_PortraitPanel_SetChampionCountPc34Compat
-#define m11_pp_load_portrait DM1_V1_PortraitPanel_LoadPortraitPc34Compat
-#define m11_pp_convert_planar_to_chunky DM1_V1_PortraitPanel_ConvertPlanarToChunkyPc34Compat
-#define m11_pp_update_bars DM1_V1_PortraitPanel_UpdateBarsPc34Compat
-#define m11_pp_select DM1_V1_PortraitPanel_SelectPc34Compat
-#define m11_pp_damage_flash DM1_V1_PortraitPanel_DamageFlashPc34Compat
-#define m11_pp_tick DM1_V1_PortraitPanel_TickPc34Compat
-#define m11_pp_layout DM1_V1_PortraitPanel_LayoutPc34Compat
-
 #ifdef __cplusplus
 }
 #endif
