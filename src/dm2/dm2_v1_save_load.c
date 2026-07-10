@@ -206,6 +206,60 @@ static FILE *dm2_sl_open_valid_payload(const char *path, int *status)
     return f;
 }
 
+typedef enum {
+    DM2_SK_CORPUS_MISSING = 0,
+    DM2_SK_CORPUS_INVALID = 1,
+    DM2_SK_CORPUS_VALID = 2,
+} DM2_SKCorpusProbeStatus;
+
+static DM2_SKCorpusProbeStatus dm2_sksave_probe_path(const char *path,
+                                                      size_t *out_payload_size)
+{
+    FILE *f;
+    uint8_t hdr[42];
+    long end_pos;
+
+    if (out_payload_size) *out_payload_size = 0;
+    if (!path || !path[0]) return DM2_SK_CORPUS_MISSING;
+    f = fopen(path, "rb");
+    if (!f) return DM2_SK_CORPUS_MISSING;
+    if (fread(hdr, sizeof(hdr), 1, f) != 1) {
+        fclose(f);
+        return DM2_SK_CORPUS_INVALID;
+    }
+    if (!dm2_sl_header_valid(hdr)) {
+        fclose(f);
+        return DM2_SK_CORPUS_INVALID;
+    }
+    if (fseek(f, 0, SEEK_END) != 0) {
+        fclose(f);
+        return DM2_SK_CORPUS_INVALID;
+    }
+    end_pos = ftell(f);
+    fclose(f);
+    if (end_pos < (long)sizeof(hdr)) return DM2_SK_CORPUS_INVALID;
+    if (out_payload_size) {
+        *out_payload_size = (size_t)end_pos - sizeof(hdr);
+    }
+    return DM2_SK_CORPUS_VALID;
+}
+
+static void dm2_sksave_corpus_accept(DM2_SKSaveCorpusReceipt *receipt,
+                                     const char *path,
+                                     size_t payload_size)
+{
+    if (!receipt) return;
+    if (receipt->first_valid_path[0] == '\0' && path) {
+        snprintf(receipt->first_valid_path,
+                 sizeof(receipt->first_valid_path),
+                 "%s", path);
+    }
+    receipt->total_payload_size += payload_size;
+    if (payload_size > receipt->largest_payload_size) {
+        receipt->largest_payload_size = payload_size;
+    }
+}
+
 void dm2_sl_init(DM2_SL_State *state, const char *save_base)
 {
     if (!state) return;
@@ -478,6 +532,58 @@ bool dm2_v1_save_has_valid_last_session(const char *save_base)
     return true;
 }
 
+bool dm2_v1_sksave_corpus_scan(const char *save_base,
+                               DM2_SKSaveCorpusReceipt *out_receipt)
+{
+    DM2_SKCorpusProbeStatus status;
+    size_t payload_size = 0;
+    char path[512];
+
+    if (!save_base || !out_receipt) return false;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    /* SKWin/DM2 resume probes SKSave.dat before SKSave.bak; keep the same
+     * preference so real corpus scans tell the runtime which file would win.
+     * The 42-byte 0xBEEF/0xDEAD header is the same gate used by slot loads. */
+    snprintf(path, sizeof(path), "%s/SKSave.dat", save_base);
+    status = dm2_sksave_probe_path(path, &payload_size);
+    if (status == DM2_SK_CORPUS_VALID) {
+        out_receipt->has_last_session = true;
+        dm2_sksave_corpus_accept(out_receipt, path, payload_size);
+    } else if (status == DM2_SK_CORPUS_INVALID) {
+        out_receipt->invalid_candidate_count++;
+    }
+
+    snprintf(path, sizeof(path), "%s/SKSave.bak", save_base);
+    payload_size = 0;
+    status = dm2_sksave_probe_path(path, &payload_size);
+    if (status == DM2_SK_CORPUS_VALID) {
+        out_receipt->has_last_session_backup = true;
+        if (!out_receipt->has_last_session) {
+            out_receipt->last_session_uses_backup = true;
+        }
+        dm2_sksave_corpus_accept(out_receipt, path, payload_size);
+    } else if (status == DM2_SK_CORPUS_INVALID) {
+        out_receipt->invalid_candidate_count++;
+    }
+
+    for (uint8_t slot = 0; slot < DM2_SLOT_MAX; slot++) {
+        snprintf(path, sizeof(path), "%s/SKSave%02u.dat", save_base,
+                 (unsigned)slot);
+        payload_size = 0;
+        status = dm2_sksave_probe_path(path, &payload_size);
+        if (status == DM2_SK_CORPUS_VALID) {
+            out_receipt->valid_slot_count++;
+            out_receipt->valid_slot_mask |= (uint16_t)(1u << slot);
+            dm2_sksave_corpus_accept(out_receipt, path, payload_size);
+        } else if (status == DM2_SK_CORPUS_INVALID) {
+            out_receipt->invalid_candidate_count++;
+        }
+    }
+
+    return true;
+}
+
 bool dm2_v1_save_suppress_self_test(void)
 {
     return dm2_suppress_self_verification() != 0;
@@ -524,7 +630,9 @@ const char *dm2_v1_save_source_evidence(void)
         "docs/dm2_save_slots.md: 10-slot system, 0xBEEF/0xDEAD magic\n"
         "docs/dm2_party_state.md: champion squad persistence, SUPPRESS masks\n"
         "SKULL.ASM: WRITE_RECORD_CHECKCODE, WRITE_MINION_ASSOC\n"
-        "SKULL.ASM: _2066_33e7 slot picker, GAME_SAVE/GAME_LOAD\n";
+        "SKULL.ASM: _2066_33e7 slot picker, GAME_SAVE/GAME_LOAD\n"
+        "Firestaff: dm2_v1_sksave_corpus_scan validates real SKSave corpus "
+        "candidates before full session import\n";
 }
 
 /* ════════════════════════════════════════════════════════════════

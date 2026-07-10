@@ -94,6 +94,18 @@ typedef struct {
     bool    initialized;
 } DM2_SL_State;
 
+typedef struct {
+    uint8_t  valid_slot_count;
+    uint16_t valid_slot_mask;
+    bool     has_last_session;
+    bool     has_last_session_backup;
+    bool     last_session_uses_backup;
+    uint8_t  invalid_candidate_count;
+    size_t   largest_payload_size;
+    size_t   total_payload_size;
+    char     first_valid_path[256];
+} DM2_SKSaveCorpusReceipt;
+
 /* Initialise slot manager with save base directory (NULL = cwd). */
 void dm2_sl_init(DM2_SL_State *state, const char *save_base);
 
@@ -147,6 +159,13 @@ bool dm2_v1_save_has_valid_slot(const char *save_base, uint8_t slot);
 
 /* True if SKSave.dat or SKSave.bak has a valid 0xBEEF/0xDEAD header. */
 bool dm2_v1_save_has_valid_last_session(const char *save_base);
+
+/* Scan a directory containing original-style SKSave.dat/SKSave.bak and
+ * SKSave%02u.dat files. This is a lightweight real-save corpus hook: it
+ * validates the DM2 42-byte slot header, records which candidates are usable,
+ * and reports payload byte totals without importing the full session. */
+bool dm2_v1_sksave_corpus_scan(const char *save_base,
+                               DM2_SKSaveCorpusReceipt *out_receipt);
 
 /* Run dm2_suppress_self_verification; returns true on success. */
 bool dm2_v1_save_suppress_self_test(void);
