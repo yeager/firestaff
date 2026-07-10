@@ -20,6 +20,8 @@
  */
 
 #include "theron_v1_srm_classifier.h"
+#include "theron_v1_srm_runtime.h"
+#include "theron_v1_track02.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -650,6 +652,61 @@ static void test_probe_slot0_envelope_skip_when_absent(void) {
     else bd_setenv("FIRESTAFF_THERON_SRM_DIR", NULL);
 }
 
+static void test_runtime_export_continue_roundtrip(void) {
+#if FIRESTAFF_HAS_ZLIB
+    static const uint8_t descriptor[18] = {
+        0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
+        0x20, 0x14, 0x20, 0x18, 0x20, 0x1c, 0x20, 0x20
+    };
+    static const uint8_t span[44] = {
+        0xbe, 0x80, 0xfe, 0x80, 0x34, 0x81, 0x76, 0x81,
+        0xd0, 0x81, 0x2a, 0x80, 0x2b, 0x80, 0x38, 0x80,
+        0x45, 0x80, 0x52, 0x80, 0x5f, 0x80, 0x6c, 0x80,
+        0x79, 0x80, 0x86, 0x80, 0xa0, 0x80, 0xa5, 0x80,
+        0xaa, 0x80, 0xaf, 0x80, 0xb4, 0x80, 0xb9, 0x80,
+        0x93, 0x80, 0x00, 0x3f
+    };
+    char root[THERON_V1_SRM_PATH_MAX];
+    char path[THERON_V1_SRM_PATH_MAX];
+    uint8_t track[0x3000u + 160u];
+    Theron_V1_World source, restored;
+    Theron_V1SrmRuntimeReceipt receipt;
+
+    if (!make_temp_root(root) || !theron_v1_srm_slot_path(root, 0, path)) {
+        skip_test("runtime SRM roundtrip: temporary root unavailable");
+        return;
+    }
+    theron_v1_world_init(&source);
+    source.progression.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+    source.progression.current_level = 2u;
+    source.progression.quest_items_collected = 0x03u;
+    source.progression.dungeon_playtime_seconds = 987u;
+    source.party.champion_count = THERON_MAX_CHAMPIONS;
+    source.party.gold = 444u;
+    snprintf(source.party.champions[0].name, sizeof(source.party.champions[0].name), "Theron");
+    source.party.champions[0].health = 77;
+    expect_true(theron_v1_srm_runtime_export_path(&source, path, &receipt) == THERON_V1_SRM_RUNTIME_OK && receipt.srm_size > 10u,
+                "runtime export writes gzip .srm bytes");
+
+    memset(track, 0, sizeof(track));
+    memcpy(track + 0x1584u, descriptor, sizeof(descriptor));
+    memcpy(track + 0x3000u, span, sizeof(span));
+    for (size_t i = sizeof(span); i < 160u; ++i) track[0x3000u + i] = (uint8_t)(0x21u + i);
+    theron_v1_world_init(&restored);
+    expect_true(theron_v1_srm_runtime_continue_path(&restored, path, track, sizeof(track), THERON_TRACK02_MD5_US_ISO, &receipt) == THERON_V1_SRM_RUNTIME_OK &&
+                    restored.progression.current_dungeon == THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                    restored.progression.current_level == 2u &&
+                    restored.progression.quest_items_collected == 0x03u &&
+                    restored.party.gold == 444u && restored.party.champion_count == THERON_MAX_CHAMPIONS &&
+                    restored.runtime_media.identity.ready,
+                "runtime Continue restores party progression quest level and Track02 identity from bytes");
+    cleanup_root_with_slot0(root);
+#else
+    skip_test("runtime SRM roundtrip needs zlib (ZLIB_UNAVAILABLE)");
+    expect_true(1, "runtime SRM roundtrip placeholder");
+#endif
+}
+
 int main(void) {
     printf("\n=== Theron V1 SRM Body-Decode Envelope Unit Tests ===\n\n");
     test_envelope_kind_names();
@@ -660,6 +717,7 @@ int main(void) {
     test_decode_path_slot_file_roundtrip();
     test_probe_slot0_envelope_via_env_override();
     test_probe_slot0_envelope_skip_when_absent();
+    test_runtime_export_continue_roundtrip();
 
     printf("=====================================================\n");
     printf("Results: %d/%d passed (failures=%d, skipped=%d)\n",
