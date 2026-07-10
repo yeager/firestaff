@@ -104,6 +104,19 @@ static void make_complete_track02_media_receipt(
     media->startup_bitmap_atlas_tile_count = 32u;
     media->startup_bitmap_atlas_nonzero_pixel_count = 128u;
     media->startup_bitmap_atlas_checksum = 0x2468ace1u;
+    media->runtime_media_identity.ready = 1;
+    media->runtime_media_identity.track02_variant =
+        THERON_TRACK02_VARIANT_US_BIN;
+    media->runtime_media_identity.bank_anchor_index = 0u;
+    media->runtime_media_identity.bank_descriptor_offset = 0x70be06u;
+    media->runtime_media_identity.bank_first_value = 0x0020u;
+    media->runtime_media_identity.bank_last_value = 0x2020u;
+    media->runtime_media_identity.bank_stride = 0x0400u;
+    media->runtime_media_identity.audio_frame_ready = 1;
+    media->runtime_media_identity.audio_bank_id = 0x01725800u;
+    media->runtime_media_identity.audio_bank_id_offset = 0x2d53dcu;
+    media->runtime_media_identity.audio_bank_prefix_offset = 0x2d53d0u;
+    media->runtime_media_identity.checksum = 0x71a3b1c2u;
     media->startup_bitmap_title_sample_count = 8;
     media->startup_bitmap_stage_sample_count = 8;
     media->startup_bitmap_soul_room_sample_count = 4;
@@ -579,7 +592,13 @@ static void test_tqsv_only_resume_claim(void) {
                         theron_v1_world_runtime_media_for_level(
                             &world, 1, 1) == &world.runtime_media.forcefield &&
                         world.runtime_media.stage.pixels[0] == 2u &&
-                        world.runtime_media.forcefield.pixels[0] == 4u,
+                        world.runtime_media.forcefield.pixels[0] == 4u &&
+                        world.runtime_media.identity.ready &&
+                        world.runtime_media.identity.bank_descriptor_offset ==
+                            0x70be06u &&
+                        world.runtime_media.identity.audio_frame_ready &&
+                        world.runtime_media.identity.audio_bank_id ==
+                            0x01725800u,
                     "tqsv Continue restores Track 02 later-level and forcefield media with world");
         theron_v1_startup_continue_request_init(&continue_request);
         theron_v1_world_init(&world);

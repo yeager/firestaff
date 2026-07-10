@@ -740,6 +740,19 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
         check_int("synthetic startup semantic runtime handoff flag",
                   runtime_result.track02_semantic_handoff,
                   1);
+        check_int("synthetic startup semantic runtime keeps bank identity",
+                  runtime_world.runtime_media.identity.ready &&
+                  runtime_world.runtime_media.identity.track02_variant ==
+                      THERON_TRACK02_VARIANT_US_BIN &&
+                  runtime_world.runtime_media.identity.bank_anchor_index == 0u &&
+                  runtime_world.runtime_media.identity.bank_descriptor_offset ==
+                      runtime_descriptor_offsets[0] &&
+                  runtime_world.runtime_media.identity.bank_stride == 0x0400u &&
+                  runtime_result.track02_media_route &&
+                  runtime_result.track02_media.runtime_media_identity.ready &&
+                  runtime_result.track02_media.runtime_media_identity
+                      .bank_descriptor_offset == runtime_descriptor_offsets[0],
+                  1);
         check_int("synthetic startup semantic runtime no blocked fallback",
                   runtime_result.fallback_visuals_blocked,
                   0);
