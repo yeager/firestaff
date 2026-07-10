@@ -142,7 +142,7 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
             hucard_rom_size,
             md5_hex,
             signal.descriptor_offsets[anchor],
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            dungeon_id,
             0,
             &semantic_level,
             &semantic_handoff,
@@ -509,6 +509,165 @@ static const char *theron_v1_startup_runtime_level_source_name(
     }
 }
 
+void theron_v1_startup_all_dungeon_route_receipt_init(
+    Theron_V1StartupAllDungeonRouteReceipt *receipt) {
+
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+}
+
+static int theron_v1_startup_runtime_level_semantics_exact(
+    const Theron_V1_World *world,
+    Theron_DungeonID dungeon_id) {
+
+    const Theron_V1_Level *level;
+    int dungeon_index;
+    uint8_t start_square;
+
+    if (!world || dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id > THERON_DUNGEON_COUNT) {
+        return 0;
+    }
+    dungeon_index = (int)dungeon_id - 1;
+    if (world->current_dungeon != (int)dungeon_id ||
+        world->current_level != 0 ||
+        !world->level_loaded[dungeon_index][0]) {
+        return 0;
+    }
+    level = &world->levels[dungeon_index][0];
+    if (level->width <= 0 || level->width > THERON_MAX_MAP_SIZE ||
+        level->height <= 0 || level->height > THERON_MAX_MAP_SIZE ||
+        level->start_x < 0 || level->start_x >= level->width ||
+        level->start_y < 0 || level->start_y >= level->height) {
+        return 0;
+    }
+    start_square = level->squares[level->start_y][level->start_x];
+    return THERON_SQUARE_IS_PASSABLE(start_square) &&
+           world->party.leader_x == level->start_x &&
+           world->party.leader_y == level->start_y &&
+           world->party.leader_dir == level->start_dir;
+}
+
+static int theron_v1_startup_runtime_object_semantics_exact(
+    const Theron_V1_World *world,
+    Theron_DungeonID dungeon_id) {
+
+    int i;
+
+    if (!world || dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id > THERON_DUNGEON_COUNT || world->object_count < 0 ||
+        world->object_count > THERON_MAX_OBJECTS) {
+        return 0;
+    }
+    for (i = 0; i < world->object_count; ++i) {
+        const Theron_V1_Object *object = &world->objects[i];
+        const Theron_V1_Level *level;
+        if (object->id <= 0 ||
+            object->dungeon_id != (int)dungeon_id ||
+            object->level < 0 ||
+            object->level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+            !world->level_loaded[(int)dungeon_id - 1][object->level]) {
+            return 0;
+        }
+        level = &world->levels[(int)dungeon_id - 1][object->level];
+        if (object->x < 0 || object->x >= level->width ||
+            object->y < 0 || object->y >= level->height ||
+            object->type == THERON_OBJTYPE_NONE) {
+            return 0;
+        }
+    }
+    return world->object_count == world->levels[(int)dungeon_id - 1][0].thing_count;
+}
+
+int theron_v1_startup_runtime_capture_all_dungeon_routes(
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    Theron_V1StartupAllDungeonRouteReceipt *out_receipt) {
+
+    Theron_DungeonID dungeon_id;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    theron_v1_startup_all_dungeon_route_receipt_init(out_receipt);
+    if (!theron_v1_startup_runtime_has_verified_track02_request(
+            hucard_rom, hucard_rom_size, md5_hex) ||
+        !media_receipt ||
+        !theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            media_receipt)) {
+        return 0;
+    }
+
+    for (dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
+         dungeon_id <= THERON_DUNGEON_COUNT;
+         dungeon_id = (Theron_DungeonID)((int)dungeon_id + 1)) {
+        Theron_V1_World world;
+        char receipt[320];
+        int level_ok;
+        int object_ok;
+
+        theron_v1_world_init(&world);
+        receipt[0] = '\0';
+        if (!theron_v1_startup_media_bind_runtime_receipt(
+                &world, media_receipt) ||
+            !theron_v1_startup_runtime_try_track02_initial_level(
+                &world,
+                hucard_rom,
+                hucard_rom_size,
+                md5_hex,
+                dungeon_id,
+                receipt,
+                sizeof(receipt)) ||
+            !theron_v1_world_runtime_media_select_level_bank(
+                &world,
+                THERON_RUNTIME_LEVEL_BANK_STARTUP_FORCEFIELD,
+                dungeon_id,
+                0)) {
+            return 0;
+        }
+        level_ok =
+            theron_v1_startup_runtime_level_semantics_exact(&world,
+                                                            dungeon_id);
+        object_ok =
+            theron_v1_startup_runtime_object_semantics_exact(&world,
+                                                             dungeon_id);
+        if (!level_ok || !object_ok) {
+            return 0;
+        }
+        out_receipt->level_banks[(int)dungeon_id - 1] =
+            world.runtime_media.level_bank;
+        out_receipt->dungeon_mask |= 1u << ((unsigned)dungeon_id - 1u);
+        ++out_receipt->capture_count;
+        ++out_receipt->semantic_level_count;
+        hash ^= (uint32_t)dungeon_id;
+        hash *= 16777619u;
+        hash ^= world.runtime_media.level_bank.surface_checksum;
+        hash *= 16777619u;
+        hash ^= (uint32_t)world.levels[(int)dungeon_id - 1][0].start_x << 16;
+        hash ^= (uint32_t)world.levels[(int)dungeon_id - 1][0].start_y;
+        hash *= 16777619u;
+    }
+
+    out_receipt->exact_level_semantics_ready =
+        out_receipt->semantic_level_count == THERON_DUNGEON_COUNT;
+    out_receipt->exact_object_semantics_ready =
+        out_receipt->capture_count == THERON_DUNGEON_COUNT;
+    out_receipt->real_data_capture_ready =
+        out_receipt->capture_count == THERON_DUNGEON_COUNT &&
+        out_receipt->dungeon_mask ==
+            ((1u << THERON_DUNGEON_COUNT) - 1u) &&
+        out_receipt->exact_level_semantics_ready &&
+        out_receipt->exact_object_semantics_ready;
+    out_receipt->route_hash = hash;
+    out_receipt->valid = out_receipt->real_data_capture_ready;
+    return out_receipt->valid;
+}
+
 int theron_v1_startup_runtime_enter_from_forcefield(
     Theron_StartupFlow *flow,
     Theron_V1_World *world,
@@ -593,6 +752,24 @@ int theron_v1_startup_runtime_enter_from_forcefield(
                                                    verified_track02_request,
                                                    &media_receipt,
                                                    out_result);
+    if (out_result) {
+        Theron_V1StartupAllDungeonRouteReceipt all_routes;
+        if (theron_v1_startup_runtime_capture_all_dungeon_routes(
+                request->hucard_rom,
+                request->hucard_rom_size,
+                request->md5_hex,
+                &media_receipt,
+                &all_routes)) {
+            out_result->all_dungeon_real_data_capture_ready =
+                all_routes.real_data_capture_ready;
+            out_result->all_dungeon_capture_count = all_routes.capture_count;
+            out_result->all_dungeon_capture_mask = all_routes.dungeon_mask;
+            out_result->exact_level_semantics_ready =
+                all_routes.exact_level_semantics_ready;
+            out_result->exact_object_semantics_ready =
+                all_routes.exact_object_semantics_ready;
+        }
+    }
     return 1;
 }
 
@@ -632,6 +809,16 @@ int theron_v1_startup_runtime_entry_apply_receipt(
     out_receipt->runtime_receipt_text_route =
         result->runtime_receipt_text_route;
     out_receipt->track02_level_bank = result->track02_level_bank;
+    out_receipt->all_dungeon_real_data_capture_ready =
+        result->all_dungeon_real_data_capture_ready;
+    out_receipt->all_dungeon_capture_count =
+        result->all_dungeon_capture_count;
+    out_receipt->all_dungeon_capture_mask =
+        result->all_dungeon_capture_mask;
+    out_receipt->exact_level_semantics_ready =
+        result->exact_level_semantics_ready;
+    out_receipt->exact_object_semantics_ready =
+        result->exact_object_semantics_ready;
     if (runtime_receipt && runtime_receipt[0]) {
         snprintf(out_receipt->inspect_detail,
                  sizeof(out_receipt->inspect_detail),
@@ -680,6 +867,16 @@ static int theron_v1_startup_runtime_entry_failure_apply_receipt(
             result->structured_runtime_route;
         out_receipt->runtime_receipt_text_route =
             result->runtime_receipt_text_route;
+        out_receipt->all_dungeon_real_data_capture_ready =
+            result->all_dungeon_real_data_capture_ready;
+        out_receipt->all_dungeon_capture_count =
+            result->all_dungeon_capture_count;
+        out_receipt->all_dungeon_capture_mask =
+            result->all_dungeon_capture_mask;
+        out_receipt->exact_level_semantics_ready =
+            result->exact_level_semantics_ready;
+        out_receipt->exact_object_semantics_ready =
+            result->exact_object_semantics_ready;
     }
     snprintf(out_receipt->inspect_detail,
              sizeof(out_receipt->inspect_detail),
@@ -796,10 +993,27 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
     theron_v1_startup_runtime_entry_capture_result(world,
                                                    receipt,
                                                    verified_track02_request,
-                                                   dungeon_id == THERON_DUNGEON_1_HALL_OF_RECORDS &&
-                                                       verified_track02_request,
+                                                   verified_track02_request,
                                                    &media_receipt,
                                                    result);
+    if (verified_track02_request) {
+        Theron_V1StartupAllDungeonRouteReceipt all_routes;
+        if (theron_v1_startup_runtime_capture_all_dungeon_routes(
+                hucard_rom,
+                hucard_rom_size,
+                md5_hex,
+                &media_receipt,
+                &all_routes)) {
+            result->all_dungeon_real_data_capture_ready =
+                all_routes.real_data_capture_ready;
+            result->all_dungeon_capture_count = all_routes.capture_count;
+            result->all_dungeon_capture_mask = all_routes.dungeon_mask;
+            result->exact_level_semantics_ready =
+                all_routes.exact_level_semantics_ready;
+            result->exact_object_semantics_ready =
+                all_routes.exact_object_semantics_ready;
+        }
+    }
     theron_v1_startup_flow_init(&flow);
     flow.phase = THERON_STARTUP_PHASE_IN_DUNGEON;
     flow.selected_dungeon = dungeon_id;
