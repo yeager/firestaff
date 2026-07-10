@@ -735,29 +735,6 @@ int csb_v1_startup_render_state_from_command_state_pc34(
     int runtime_start_y,
     int runtime_start_dir,
     CSB_V1_StartupRenderState_PC34 *out_state);
-int csb_v1_startup_execute_primitive_commands_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    unsigned char *framebuffer,
-    int framebuffer_width,
-    int framebuffer_height);
-int csb_v1_startup_execute_asset_commands_kind_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    CSB_V1_StartupAssetCommandKind_PC34 kind,
-    CSB_V1_StartupAssetExecutor_PC34 executor,
-    void *user);
-int csb_v1_startup_execute_closed_door_asset_commands_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    CSB_V1_StartupAssetExecutor_PC34 executor,
-    void *user);
-int csb_v1_startup_title_empty_fallback_needed_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    const unsigned char *framebuffer,
-    int framebuffer_width,
-    int framebuffer_height);
-int csb_v1_startup_execute_opening_composite_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,
-    void *user);
 int csb_v1_startup_command_state_from_request_pc34(
     const CSB_V1_StartupCommandStateRequest_PC34 *request,
     CSB_V1_StartupCommandState_PC34 *out_state);

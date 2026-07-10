@@ -8,19 +8,6 @@
 static int g_passed;
 static int g_failed;
 
-typedef struct AssetExecutorProbe {
-    int call_count;
-    CSB_V1_StartupAssetCommandKind_PC34 fail_kind;
-    int seen_kind[CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34];
-    int seen_asset_id[CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34];
-} AssetExecutorProbe;
-
-typedef struct OpeningCompositeProbe {
-    int call_count;
-    int fail;
-    CSB_V1_StartupOpeningComposite_PC34 seen;
-} OpeningCompositeProbe;
-
 unsigned int ENTRANCE_Compat_GetMouseRouteCount(void)
 {
     return 5u;
@@ -101,34 +88,6 @@ static void check(int condition, const char *message)
     }
 }
 
-static int asset_executor_probe(void *user,
-                                const CSB_V1_StartupAssetCommand_PC34 *cmd)
-{
-    AssetExecutorProbe *probe = (AssetExecutorProbe *)user;
-    if (!probe || !cmd) {
-        return 0;
-    }
-    if (probe->call_count < CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34) {
-        probe->seen_kind[probe->call_count] = cmd->kind;
-        probe->seen_asset_id[probe->call_count] = cmd->asset_id;
-    }
-    ++probe->call_count;
-    return cmd->kind != probe->fail_kind;
-}
-
-static int opening_composite_probe(
-    void *user,
-    const CSB_V1_StartupOpeningComposite_PC34 *composite)
-{
-    OpeningCompositeProbe *probe = (OpeningCompositeProbe *)user;
-    if (!probe || !composite) {
-        return 0;
-    }
-    probe->seen = *composite;
-    ++probe->call_count;
-    return !probe->fail;
-}
-
 static void expect_action(const char *message,
                           int x,
                           int y,
@@ -171,8 +130,6 @@ int main(void)
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
     CSB_V1_StartupEntranceDecision_PC34 decision;
     CSB_V1_TextMaterial_PC34 material;
-    AssetExecutorProbe probe;
-    OpeningCompositeProbe composite_probe;
     char phase[64];
     char animation[64];
     int startup_active;
@@ -183,8 +140,6 @@ int main(void)
     int title_ready;
     int command;
     int i;
-    unsigned char fb[320 * 200];
-
     material = csb_v1_text_material_pc34(CSB_V1_TEXT_STYLE_TITLE_PC34);
     check(material.scale_x == 2 &&
               material.scale_y == 1 &&
@@ -568,41 +523,6 @@ int main(void)
               plan.render_commands[1].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34,
           "startup render plan owns title clear and draw command");
-    memset(&probe, 0, sizeof(probe));
-    check(csb_v1_startup_execute_asset_commands_kind_pc34(
-              &plan,
-              CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34,
-              asset_executor_probe,
-              &probe) == 1 &&
-              probe.call_count == 1 &&
-              probe.seen_kind[0] ==
-                  CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34 &&
-              probe.seen_asset_id[0] == 1,
-          "startup asset executor dispatches PRESENTS title region");
-    {
-        unsigned char framebuffer[320 * 200];
-        memset(framebuffer, 0, sizeof(framebuffer));
-        check(csb_v1_startup_title_empty_fallback_needed_pc34(
-                  &plan,
-                  framebuffer,
-                  320,
-                  200),
-              "startup title policy requests fallback when PRESENTS blit is empty");
-        framebuffer[plan.title_dest_y * 320 + plan.title_dest_x] = 7u;
-        check(!csb_v1_startup_title_empty_fallback_needed_pc34(
-                  &plan,
-                  framebuffer,
-                  320,
-                  200),
-              "startup title policy suppresses fallback when PRESENTS pixels exist");
-        check(!csb_v1_startup_title_empty_fallback_needed_pc34(
-                  NULL,
-                  framebuffer,
-                  320,
-                  200),
-              "startup title policy ignores missing render plan");
-    }
-
     check(csb_v1_startup_title_presents_ticks_pc34() == 60 &&
               csb_v1_startup_title_total_ticks_pc34() == 81 &&
               csb_v1_startup_title_source_step_for_frame_pc34(59) == 1 &&
@@ -846,52 +766,6 @@ int main(void)
               plan.render_commands[4].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34,
           "startup render plan owns closed entrance command order");
-    memset(&probe, 0, sizeof(probe));
-    check(csb_v1_startup_execute_asset_commands_kind_pc34(
-              &plan,
-              CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34,
-              asset_executor_probe,
-              &probe) == 1 &&
-              probe.call_count == 1 &&
-              probe.seen_kind[0] ==
-                  CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34 &&
-              probe.seen_asset_id[0] == 4,
-          "startup asset executor dispatches closed entrance surface");
-    memset(&probe, 0, sizeof(probe));
-    check(csb_v1_startup_execute_closed_door_asset_commands_pc34(
-              &plan,
-              asset_executor_probe,
-              &probe) &&
-              probe.call_count == 2 &&
-              probe.seen_kind[0] ==
-                  CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34 &&
-              probe.seen_kind[1] ==
-                  CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34 &&
-              probe.seen_asset_id[0] == 2 &&
-              probe.seen_asset_id[1] == 3,
-          "startup asset executor dispatches closed entrance door pair");
-    memset(&probe, 0, sizeof(probe));
-    probe.fail_kind = CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34;
-    check(!csb_v1_startup_execute_closed_door_asset_commands_pc34(
-              &plan,
-              asset_executor_probe,
-              &probe) &&
-              probe.call_count == 2,
-          "startup asset executor requires both closed doors");
-
-    memset(fb, 0xaa, sizeof(fb));
-    check(csb_v1_startup_execute_primitive_commands_pc34(&plan,
-                                                         fb,
-                                                         320,
-                                                         200) == 2 &&
-              fb[0] == 0 &&
-              fb[18 + 18 * 320] == 14 &&
-              fb[301 + 18 * 320] == 14 &&
-              fb[18 + 181 * 320] == 14 &&
-              fb[301 + 181 * 320] == 14 &&
-              fb[19 + 19 * 320] == 0,
-          "startup primitive executor draws CSB-owned clear plus fallback entrance frame");
-
     render_state.utility_overlay_active = 1;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               !plan.fallback_status_visible &&
@@ -1014,22 +888,6 @@ int main(void)
                   CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34,
           "startup render plan owns door pre-open command order");
 
-    memset(fb, 0xaa, sizeof(fb));
-    check(csb_v1_startup_execute_primitive_commands_pc34(&plan,
-                                                         fb,
-                                                         320,
-                                                         200) == 3 &&
-              fb[0] == 0 &&
-              fb[0 + 28 * 320] == 2 &&
-              fb[104 + 28 * 320] == 0 &&
-              fb[0 + 188 * 320] == 2 &&
-              fb[104 + 188 * 320] == 0 &&
-              fb[1 + 29 * 320] == 12 &&
-              fb[105 + 28 * 320] == 2 &&
-              fb[231 + 188 * 320] == 0 &&
-              fb[106 + 29 * 320] == 12,
-          "startup primitive executor draws CSB-owned fallback door panels");
-
     render_state.opening_delay_ticks = 0;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface ==
@@ -1094,32 +952,6 @@ int main(void)
               plan.render_commands[3].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34,
           "startup render plan owns door-opening command order");
-    memset(&composite_probe, 0, sizeof(composite_probe));
-    check(csb_v1_startup_execute_opening_composite_pc34(
-              &plan,
-              opening_composite_probe,
-              &composite_probe) &&
-              composite_probe.call_count == 1 &&
-              composite_probe.seen.screen_asset_id == 4 &&
-              composite_probe.seen.left_door_asset_id == 2 &&
-              composite_probe.seen.right_door_asset_id == 3 &&
-              composite_probe.seen.animation_step == 2 &&
-              composite_probe.seen.left_box_x == 0 &&
-              composite_probe.seen.left_box_w == 97 &&
-              composite_probe.seen.right_box_x == 113 &&
-              composite_probe.seen.right_box_w == 119 &&
-              composite_probe.seen.left_source_x == 0 &&
-              composite_probe.seen.right_source_x == 8,
-          "startup opening composite executor dispatches source door frame");
-    memset(&composite_probe, 0, sizeof(composite_probe));
-    composite_probe.fail = 1;
-    check(!csb_v1_startup_execute_opening_composite_pc34(
-              &plan,
-              opening_composite_probe,
-              &composite_probe) &&
-              composite_probe.call_count == 1,
-          "startup opening composite executor reports callback failure");
-
     memset(&command_state, 0, sizeof(command_state));
     check(csb_v1_startup_init_command_state_pc34(&command_state, 0) &&
               command_state.title_active &&
