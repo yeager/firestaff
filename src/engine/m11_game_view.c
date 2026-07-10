@@ -2816,14 +2816,14 @@ static int m11_execute_csb_startup_asset_command(
                                               framebuffer,
                                               framebufferWidth,
                                               framebufferHeight,
-                                              cmd->source_x,
-                                              cmd->source_y,
-                                              cmd->source_w,
-                                              cmd->source_h,
                                               cmd->dest_x,
                                               cmd->dest_y,
                                               cmd->dest_w,
                                               cmd->dest_h,
+                                              cmd->source_x,
+                                              cmd->source_y,
+                                              cmd->source_w,
+                                              cmd->source_h,
                                               cmd->transparent_color);
             return 1;
         case CSB_V1_STARTUP_ASSET_NONE_PC34:
