@@ -250,6 +250,10 @@ typedef struct {
     uint32_t startup_bitmap_stage_atlas_tile_count;
     uint32_t startup_bitmap_soul_room_atlas_tile_count;
     uint32_t startup_bitmap_forcefield_atlas_tile_count;
+    uint32_t startup_bitmap_title_atlas_width;
+    uint32_t startup_bitmap_stage_atlas_width;
+    uint32_t startup_bitmap_soul_room_atlas_width;
+    uint32_t startup_bitmap_forcefield_atlas_width;
 
     /* ── startup chapter/progression summary ─────────────────── */
     char     startup_chapter_label[THERON_CHAPTER_MARKER_LABEL_MAX];

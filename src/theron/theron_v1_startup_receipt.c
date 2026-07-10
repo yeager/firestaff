@@ -229,6 +229,14 @@ void theron_v1_startup_receipt_apply_bitmap_art_summary(
         (uint32_t)media_receipt->startup_bitmap_soul_room_atlas_tile_count;
     receipt->startup_bitmap_forcefield_atlas_tile_count =
         (uint32_t)media_receipt->startup_bitmap_forcefield_atlas_tile_count;
+    receipt->startup_bitmap_title_atlas_width =
+        (uint32_t)media_receipt->startup_bitmap_title_atlas_width;
+    receipt->startup_bitmap_stage_atlas_width =
+        (uint32_t)media_receipt->startup_bitmap_stage_atlas_width;
+    receipt->startup_bitmap_soul_room_atlas_width =
+        (uint32_t)media_receipt->startup_bitmap_soul_room_atlas_width;
+    receipt->startup_bitmap_forcefield_atlas_width =
+        (uint32_t)media_receipt->startup_bitmap_forcefield_atlas_width;
 
     if (media_receipt->startup_bitmap_title_route_ready &&
         media_receipt->startup_bitmap_title_atlas_tile_count >= 8u &&
@@ -1040,6 +1048,14 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->startup_bitmap_soul_room_atlas_tile_count), h);
     h = fnv1a_32(&receipt->startup_bitmap_forcefield_atlas_tile_count,
                  sizeof(receipt->startup_bitmap_forcefield_atlas_tile_count), h);
+    h = fnv1a_32(&receipt->startup_bitmap_title_atlas_width,
+                 sizeof(receipt->startup_bitmap_title_atlas_width), h);
+    h = fnv1a_32(&receipt->startup_bitmap_stage_atlas_width,
+                 sizeof(receipt->startup_bitmap_stage_atlas_width), h);
+    h = fnv1a_32(&receipt->startup_bitmap_soul_room_atlas_width,
+                 sizeof(receipt->startup_bitmap_soul_room_atlas_width), h);
+    h = fnv1a_32(&receipt->startup_bitmap_forcefield_atlas_width,
+                 sizeof(receipt->startup_bitmap_forcefield_atlas_width), h);
     h = fnv1a_str(h, receipt->startup_chapter_label);
     h = fnv1a_str(h, receipt->startup_quest_summary);
     h = fnv1a_str(h, receipt->startup_next_dungeon_hint);
@@ -1116,6 +1132,8 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "bitmap_atlas_checksum=0x%x "
                  "bitmap_title_tiles=%u bitmap_stage_tiles=%u "
                  "bitmap_soul_tiles=%u bitmap_forcefield_tiles=%u "
+                 "bitmap_title_width=%u bitmap_stage_width=%u "
+                 "bitmap_soul_width=%u bitmap_forcefield_width=%u "
                  "chapter=\"%s\" "
                  "quest=\"%s\" next=\"%s\" quest_total=%u "
                  "quest_items=0x%x "
@@ -1222,6 +1240,10 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  (unsigned)receipt->startup_bitmap_stage_atlas_tile_count,
                  (unsigned)receipt->startup_bitmap_soul_room_atlas_tile_count,
                  (unsigned)receipt->startup_bitmap_forcefield_atlas_tile_count,
+                 (unsigned)receipt->startup_bitmap_title_atlas_width,
+                 (unsigned)receipt->startup_bitmap_stage_atlas_width,
+                 (unsigned)receipt->startup_bitmap_soul_room_atlas_width,
+                 (unsigned)receipt->startup_bitmap_forcefield_atlas_width,
                  receipt->startup_chapter_label[0]
                     ? receipt->startup_chapter_label : "(none)",
                  receipt->startup_quest_summary[0]
