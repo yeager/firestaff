@@ -1115,14 +1115,30 @@ static int theron_v1_startup_continue_attach_track02_media(
     }
     result->track02_media_route = 1;
     result->track02_media = *media_receipt;
+    if (!theron_v1_world_runtime_media_select_level_bank(
+            world,
+            THERON_RUNTIME_LEVEL_BANK_SAVE_RESUME,
+            world->progression.current_dungeon,
+            world->current_level)) {
+        theron_v1_world_runtime_media_clear(world);
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "Track 02 Continue level bank binding failed; fallback visuals blocked");
+        }
+        return 0;
+    }
+    result->track02_level_bank = world->runtime_media.level_bank;
     if (receipt && receipt_cap > 0u) {
         size_t used = strlen(receipt);
         if (used < receipt_cap - 1u) {
             snprintf(receipt + used, receipt_cap - used,
-                     "%sTrack 02 media atlas=0x%x checksum=%08x",
+                     "%sTrack 02 media atlas=0x%x checksum=%08x level_bank=%d:%d route=0x%x",
                      used ? "; " : "",
                      media_receipt->startup_bitmap_atlas_route_mask,
-                     (unsigned)media_receipt->startup_bitmap_atlas_checksum);
+                     (unsigned)media_receipt->startup_bitmap_atlas_checksum,
+                     (int)result->track02_level_bank.dungeon_id,
+                     result->track02_level_bank.level_index,
+                     result->track02_level_bank.route_bit);
         }
     }
     return 1;
@@ -1265,6 +1281,7 @@ int theron_v1_startup_continue_apply_receipt(
         result->track02_media.startup_bitmap_atlas_route_mask;
     out_receipt->track02_media_checksum =
         result->track02_media.startup_bitmap_atlas_checksum;
+    out_receipt->track02_level_bank = result->track02_level_bank;
     out_receipt->status_scope = plan->status_scope
         ? plan->status_scope
         : "STARTUP";

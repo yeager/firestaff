@@ -415,7 +415,7 @@ int theron_v1_startup_host_receipt_from_runtime_entry_apply(
 }
 
 static void theron_v1_startup_runtime_entry_capture_result(
-    const Theron_V1_World *world,
+    Theron_V1_World *world,
     const char *runtime_receipt,
     int verified_track02_request,
     int semantic_handoff,
@@ -439,6 +439,16 @@ static void theron_v1_startup_runtime_entry_capture_result(
         if (world->runtime_media.identity.ready) {
             out_result->track02_media.runtime_media_identity =
                 world->runtime_media.identity;
+        }
+        if (world->runtime_media.restored &&
+            theron_v1_world_runtime_media_select_level_bank(
+                world,
+                world->current_level > 0
+                    ? THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL
+                    : THERON_RUNTIME_LEVEL_BANK_STARTUP_FORCEFIELD,
+                (Theron_DungeonID)world->current_dungeon,
+                world->current_level)) {
+            out_result->track02_level_bank = world->runtime_media.level_bank;
         }
     }
     if (!semantic_handoff && verified_track02_request && media_receipt &&
@@ -630,6 +640,7 @@ int theron_v1_startup_runtime_entry_apply_receipt(
         result->structured_runtime_route;
     out_receipt->runtime_receipt_text_route =
         result->runtime_receipt_text_route;
+    out_receipt->track02_level_bank = result->track02_level_bank;
     if (runtime_receipt && runtime_receipt[0]) {
         snprintf(out_receipt->inspect_detail,
                  sizeof(out_receipt->inspect_detail),
