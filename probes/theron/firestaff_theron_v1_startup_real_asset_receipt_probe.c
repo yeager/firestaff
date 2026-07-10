@@ -222,6 +222,13 @@ static void check_real_bitmap_routes_complete(
               r->startup_bitmap_soul_room_atlas_tile_count >= 8u &&
               r->startup_bitmap_forcefield_atlas_tile_count >= 8u,
           name);
+    snprintf(name, sizeof(name), "%s title/stage/soul/forcefield atlas widths",
+             prefix);
+    check(r->startup_bitmap_title_atlas_width >= 64u &&
+              r->startup_bitmap_stage_atlas_width >= 64u &&
+              r->startup_bitmap_soul_room_atlas_width >= 64u &&
+              r->startup_bitmap_forcefield_atlas_width >= 64u,
+          name);
     snprintf(name, sizeof(name), "%s real bitmap routes complete", prefix);
     check(r->startup_bitmap_real_routes_complete == 1 &&
               r->startup_bitmap_fallback_routes_allowed == 0,
@@ -706,6 +713,11 @@ static void check_real_asset_path(void) {
                       "raw Track 02 receipt decodes extended bitmap samples");
                 check(r.startup_bitmap_atlas_tile_count > 32u,
                       "raw Track 02 receipt carries extended bitmap atlas tiles");
+                check(r.startup_bitmap_title_atlas_width > 64u &&
+                          r.startup_bitmap_stage_atlas_width > 64u &&
+                          r.startup_bitmap_soul_room_atlas_width > 64u &&
+                          r.startup_bitmap_forcefield_atlas_width > 64u,
+                      "raw Track 02 receipt widens all startup bitmap routes");
                 check(r.user_data_window_count == 7u,
                       "raw Track 02 receipt has 7 logical user-data windows");
                 check(r.user_data_window_descriptor_count == 3u,

@@ -3739,7 +3739,7 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     track02_size,
                     THERON_TRACK02_MD5_US_BIN,
                     &catalog) == THERON_TRACK02_SIGNAL_OK &&
-                    catalog.sample_count == 32u &&
+                    catalog.sample_count == 44u &&
                     catalog.overflow_count == 0u &&
                     (catalog.route_mask &
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) &&
@@ -3754,6 +3754,12 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     catalog.samples[26].raw_offset == span_offsets[0] + 40u &&
                     catalog.samples[27].raw_offset == span_offsets[0] + 44u &&
                     catalog.samples[31].raw_offset == span_offsets[0] + 60u &&
+                    catalog.samples[32].raw_offset == span_offsets[1] + 32u &&
+                    catalog.samples[35].raw_offset == span_offsets[1] + 44u &&
+                    catalog.samples[36].raw_offset == span_offsets[2] + 32u &&
+                    catalog.samples[39].raw_offset == span_offsets[2] + 44u &&
+                    catalog.samples[40].raw_offset == span_offsets[1] &&
+                    catalog.samples[43].raw_offset == span_offsets[2] + 12u &&
                     catalog.samples[0].nonzero_pixel_count > 0u &&
                     catalog.samples[0].checksum != 0u,
                 "Track02 startup bitmap catalog decodes wider real 4bpp samples from raw-sector graphics spans");
@@ -3761,13 +3767,13 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     &catalog,
                     &atlas) == THERON_TRACK02_SIGNAL_OK &&
                     atlas.route_count == 4u &&
-                    atlas.total_tile_count == 32u &&
+                    atlas.total_tile_count == 44u &&
                     atlas.route_mask ==
                         (THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
-                    atlas.routes[0].width == 64u &&
+                    atlas.routes[0].width == 80u &&
                     atlas.routes[0].height == 8u &&
                     atlas.routes[0].raw_offsets[0] == span_offsets[0] &&
                     atlas.routes[0].raw_offsets[1] == span_offsets[0] + 4u &&
@@ -3777,7 +3783,9 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     atlas.routes[0].raw_offsets[5] == span_offsets[0] + 36u &&
                     atlas.routes[0].raw_offsets[6] == span_offsets[0] + 48u &&
                     atlas.routes[0].raw_offsets[7] == span_offsets[0] + 52u &&
-                    atlas.routes[1].width == 64u &&
+                    atlas.routes[0].raw_offsets[8] == span_offsets[1] &&
+                    atlas.routes[0].raw_offsets[9] == span_offsets[1] + 4u &&
+                    atlas.routes[1].width == 80u &&
                     atlas.routes[1].raw_offsets[0] == span_offsets[0] + 8u &&
                     atlas.routes[1].raw_offsets[1] == span_offsets[0] + 12u &&
                     atlas.routes[1].raw_offsets[2] == span_offsets[0] + 24u &&
@@ -3786,12 +3794,18 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     atlas.routes[1].raw_offsets[5] == span_offsets[0] + 44u &&
                     atlas.routes[1].raw_offsets[6] == span_offsets[0] + 56u &&
                     atlas.routes[1].raw_offsets[7] == span_offsets[0] + 60u &&
-                    atlas.routes[2].width == 64u &&
+                    atlas.routes[1].raw_offsets[8] == span_offsets[2] + 8u &&
+                    atlas.routes[1].raw_offsets[9] == span_offsets[2] + 12u &&
+                    atlas.routes[2].width == 96u &&
                     atlas.routes[2].raw_offsets[0] == span_offsets[1] &&
                     atlas.routes[2].raw_offsets[7] == span_offsets[1] + 28u &&
-                    atlas.routes[3].width == 64u &&
+                    atlas.routes[2].raw_offsets[8] == span_offsets[1] + 32u &&
+                    atlas.routes[2].raw_offsets[11] == span_offsets[1] + 44u &&
+                    atlas.routes[3].width == 96u &&
                     atlas.routes[3].raw_offsets[0] == span_offsets[2] &&
                     atlas.routes[3].raw_offsets[7] == span_offsets[2] + 28u &&
+                    atlas.routes[3].raw_offsets[8] == span_offsets[2] + 32u &&
+                    atlas.routes[3].raw_offsets[11] == span_offsets[2] + 44u &&
                     atlas.total_nonzero_pixel_count > 0u &&
                     atlas.checksum != 0u,
                 "Track02 startup bitmap atlas joins decoded tiles into sourced per-route bitmaps");
@@ -3804,7 +3818,7 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
     expect_true(receipt.startup_media_ready &&
                     receipt.startup_bitmap_decode_status ==
                         THERON_TRACK02_SIGNAL_OK &&
-                    receipt.startup_bitmap_sample_count == 32 &&
+                    receipt.startup_bitmap_sample_count == 44 &&
                     (receipt.startup_bitmap_route_mask &
                      THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE) &&
                     (receipt.startup_bitmap_route_mask &
@@ -3824,26 +3838,26 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
                          THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
-                    receipt.startup_bitmap_atlas_tile_count == 32u &&
+                    receipt.startup_bitmap_atlas_tile_count == 44u &&
                     receipt.startup_bitmap_atlas_nonzero_pixel_count > 0u &&
                     receipt.startup_bitmap_atlas_checksum != 0u &&
                     receipt.startup_bitmap_atlas.route_count == 4u &&
-                    receipt.startup_bitmap_atlas.total_tile_count == 32u &&
-                    receipt.startup_bitmap_atlas.routes[0].width == 64u &&
-                    receipt.startup_bitmap_atlas.routes[2].width == 64u &&
-                    receipt.startup_bitmap_atlas.routes[3].width == 64u &&
-                    receipt.startup_bitmap_title_atlas_tile_count == 8u &&
-                    receipt.startup_bitmap_stage_atlas_tile_count == 8u &&
-                    receipt.startup_bitmap_soul_room_atlas_tile_count == 8u &&
-                    receipt.startup_bitmap_forcefield_atlas_tile_count == 8u &&
-                    receipt.startup_bitmap_title_atlas_width == 64u &&
-                    receipt.startup_bitmap_stage_atlas_width == 64u &&
-                    receipt.startup_bitmap_soul_room_atlas_width == 64u &&
-                    receipt.startup_bitmap_forcefield_atlas_width == 64u &&
-                    receipt.startup_bitmap_title_sample_count == 8 &&
-                    receipt.startup_bitmap_stage_sample_count == 8 &&
-                    receipt.startup_bitmap_soul_room_sample_count == 8 &&
-                    receipt.startup_bitmap_forcefield_sample_count == 8 &&
+                    receipt.startup_bitmap_atlas.total_tile_count == 44u &&
+                    receipt.startup_bitmap_atlas.routes[0].width == 80u &&
+                    receipt.startup_bitmap_atlas.routes[2].width == 96u &&
+                    receipt.startup_bitmap_atlas.routes[3].width == 96u &&
+                    receipt.startup_bitmap_title_atlas_tile_count == 12u &&
+                    receipt.startup_bitmap_stage_atlas_tile_count == 12u &&
+                    receipt.startup_bitmap_soul_room_atlas_tile_count == 10u &&
+                    receipt.startup_bitmap_forcefield_atlas_tile_count == 10u &&
+                    receipt.startup_bitmap_title_atlas_width == 96u &&
+                    receipt.startup_bitmap_stage_atlas_width == 96u &&
+                    receipt.startup_bitmap_soul_room_atlas_width == 80u &&
+                    receipt.startup_bitmap_forcefield_atlas_width == 80u &&
+                    receipt.startup_bitmap_title_sample_count == 12 &&
+                    receipt.startup_bitmap_stage_sample_count == 12 &&
+                    receipt.startup_bitmap_soul_room_sample_count == 10 &&
+                    receipt.startup_bitmap_forcefield_sample_count == 10 &&
                     receipt.startup_bitmap_title_nonzero_pixel_count > 0u &&
                     receipt.startup_bitmap_stage_nonzero_pixel_count > 0u &&
                     receipt.startup_bitmap_soul_room_nonzero_pixel_count > 0u &&
