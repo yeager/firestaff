@@ -345,6 +345,13 @@ typedef struct {
     int16_t floor_ornament_height;
     bool door_front_asset_bound;
     int16_t door_front_asset_index;
+    bool door_front_blit_plan_bound;
+    int16_t door_front_graphic_index;
+    int16_t door_front_zone_index;
+    int16_t door_front_dst_x;
+    int16_t door_front_dst_y;
+    int16_t door_front_width;
+    int16_t door_front_height;
     const char *rear_pass_source_lines;
     const char *door_source_lines;
     const char *front_pass_source_lines;
@@ -832,6 +839,9 @@ typedef struct {
      * are derived by F0172 from the raw type + wall context.
      * Source: ReDMCSB DUNGEON.C:1371-1421 F0150; DUNVIEW.C:6226-6353 F0676/F0677. */
     const uint8_t *dungeon_grid;
+    /* Optional F0172-derived aspect type grid for callers that already
+     * resolved C16-C19 side/front aspects from raw dungeon bytes. */
+    const uint8_t *dungeon_aspect_grid;
     int            dungeon_width;
     int            dungeon_height;
 
