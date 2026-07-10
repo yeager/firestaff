@@ -1335,6 +1335,17 @@ int main(void)
                real_asset_ownership_receipt.runtime_dgn_viewport_render_ready == 1 &&
                real_asset_ownership_receipt.dgn_viewport_rasterized_command_count ==
                    real_asset_ownership_receipt.dgn_draw_command_count &&
+               real_asset_ownership_receipt.dgn_viewport_material_surface_count ==
+                   real_asset_ownership_receipt.dgn_draw_command_count &&
+               real_asset_ownership_receipt.dgn_viewport_floor_material_surface_count ==
+                   real_asset_ownership_receipt.dgn_render_plan.floor_count &&
+               real_asset_ownership_receipt.dgn_viewport_wall_material_surface_count ==
+                   real_asset_ownership_receipt.dgn_render_plan.wall_count &&
+               real_asset_ownership_receipt.dgn_viewport_ceiling_material_surface_count ==
+                   real_asset_ownership_receipt.dgn_draw_command_count -
+                       real_asset_ownership_receipt.dgn_render_plan.floor_count -
+                       real_asset_ownership_receipt.dgn_render_plan.wall_count &&
+               real_asset_ownership_receipt.dgn_material_surface_coverage_complete == 1 &&
                real_asset_ownership_receipt.dgn_viewport_written_pixels > 0 &&
                real_asset_ownership_receipt.menu_capture_uses_real_assets == 1 &&
                real_asset_ownership_receipt.full_start_package_consumed == 1 &&
@@ -1344,6 +1355,7 @@ int main(void)
                real_asset_ownership_receipt.host_route_consumes_capture_matrix == 1 &&
                real_asset_ownership_receipt.dgn_route_consumes_startup_package == 1 &&
                real_asset_ownership_receipt.dgn_route_saturn_capture_exact == 1 &&
+               real_asset_ownership_receipt.dungeon_capture_route_consumed == 1 &&
                real_asset_ownership_receipt.host_ownership_route_matches_capture_route == 1 &&
                real_asset_ownership_receipt.package_route_consumes_host_ownership == 1 &&
                real_asset_ownership_receipt.dgn_route_consumes_host_ownership == 1 &&
@@ -1406,6 +1418,8 @@ int main(void)
                    NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
                real_asset_ownership_receipt.startup_draw_command_count > 3 &&
                real_asset_ownership_receipt.dgn_draw_command_count > 0 &&
+               strcmp(real_asset_ownership_receipt.dungeon_capture_route,
+                      "runtime-dgn-handoff") == 0 &&
                strcmp(real_asset_ownership_receipt.receipt_owner,
                       "nexus-v1-launcher") == 0 &&
                strcmp(real_asset_ownership_receipt.status,
@@ -1441,6 +1455,7 @@ int main(void)
                host_caller_receipt.host_route_consumes_capture_matrix == 1 &&
                host_caller_receipt.dgn_route_consumes_startup_package == 1 &&
                host_caller_receipt.dgn_route_saturn_capture_exact == 1 &&
+               host_caller_receipt.dungeon_capture_route_consumed == 1 &&
                host_caller_receipt.host_ownership_route_matches_capture_route == 1 &&
                host_caller_receipt.package_route_consumes_host_ownership == 1 &&
                host_caller_receipt.dgn_route_consumes_host_ownership == 1 &&
@@ -1493,6 +1508,17 @@ int main(void)
                host_caller_receipt.dgn_command_count > 0 &&
                host_caller_receipt.dgn_viewport_rasterized_command_count ==
                    host_caller_receipt.dgn_command_count &&
+               host_caller_receipt.dgn_viewport_material_surface_count ==
+                   host_caller_receipt.dgn_command_count &&
+               host_caller_receipt.dgn_viewport_floor_material_surface_count ==
+                   host_caller_receipt.ownership.dgn_render_plan.floor_count &&
+               host_caller_receipt.dgn_viewport_wall_material_surface_count ==
+                   host_caller_receipt.ownership.dgn_render_plan.wall_count &&
+               host_caller_receipt.dgn_viewport_ceiling_material_surface_count ==
+                   host_caller_receipt.dgn_command_count -
+                       host_caller_receipt.ownership.dgn_render_plan.floor_count -
+                       host_caller_receipt.ownership.dgn_render_plan.wall_count &&
+               host_caller_receipt.dgn_material_surface_coverage_complete == 1 &&
                host_caller_receipt.dgn_viewport_written_pixels > 0 &&
                host_caller_receipt.copied_dgn_command_count ==
                    host_caller_receipt.dgn_command_count &&
@@ -1519,6 +1545,8 @@ int main(void)
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
                dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
                strcmp(host_caller_receipt.host_route,
+                      "runtime-dgn-handoff") == 0 &&
+               strcmp(host_caller_receipt.dungeon_capture_route,
                       "runtime-dgn-handoff") == 0 &&
                strcmp(host_caller_receipt.startup_package_route,
                       "champion-menu") == 0 &&
@@ -1564,9 +1592,12 @@ int main(void)
            "Nexus resumed dungeon host-caller copies materialized DGN commands");
     expect(host_caller_receipt.dgn_route_consumes_startup_package == 1 &&
                host_caller_receipt.dungeon_route_consumes_package_capture == 1 &&
+               host_caller_receipt.dungeon_capture_route_consumed == 1 &&
                host_caller_receipt.dungeon_route_saturn_capture_exact == 1 &&
                host_caller_receipt.host_route_consumes_dungeon_capture_frame == 1 &&
-               host_caller_receipt.saturn_dungeon_capture_frame == 102,
+               host_caller_receipt.saturn_dungeon_capture_frame == 102 &&
+               strcmp(host_caller_receipt.dungeon_capture_route,
+                      "runtime-dgn-handoff") == 0,
            "Nexus resumed dungeon host-caller consumes Saturn dungeon package frame");
     runtime_state.champion_select_active = 0;
     runtime_state.save_select_active = 0;
@@ -1618,6 +1649,8 @@ int main(void)
                complete_support_receipt.save_route_complete == 1 &&
                complete_support_receipt.champion_route_complete == 1 &&
                complete_support_receipt.dungeon_route_complete == 1 &&
+               complete_support_receipt.dungeon_capture_route_consumed == 1 &&
+               complete_support_receipt.dgn_material_surface_coverage_complete == 1 &&
                complete_support_receipt.dgn_mesh_runtime_complete == 1 &&
                complete_support_receipt.dgn_viewport_runtime_complete == 1 &&
                complete_support_receipt.startup_package_consumed_by_all_routes == 1 &&
@@ -1633,6 +1666,52 @@ int main(void)
                strcmp(complete_support_receipt.status,
                       "complete-support-ready") == 0,
            "Nexus complete-support receipt requires title/save/champion/dungeon DGN routes");
+    {
+        Nexus_V1_StartupHostCallerReceipt mutated_champion_host;
+        mutated_champion_host = champion_host_caller_receipt;
+        mutated_champion_host.dungeon_capture_route_consumed = 0;
+        mutated_champion_host.dungeon_capture_route = "none";
+        expect(nexus_v1_launcher_complete_support_receipt_from_host_routes(
+                   &title_host_caller_receipt,
+                   &save_host_caller_receipt,
+                   &mutated_champion_host,
+                   &complete_support_receipt) &&
+                   complete_support_receipt.champion_route_complete == 1 &&
+                   complete_support_receipt.dungeon_capture_route_consumed == 0 &&
+                   complete_support_receipt.dungeon_route_complete == 0 &&
+                   complete_support_receipt.dgn_mesh_runtime_complete == 1 &&
+                   complete_support_receipt.dgn_viewport_runtime_complete == 1 &&
+                   complete_support_receipt.all_nexus_startup_routes_complete == 1 &&
+                   complete_support_receipt.all_nexus_runtime_routes_complete == 0 &&
+                   complete_support_receipt.complete_support_ready == 0 &&
+                   complete_support_receipt.complete_route_mask == 15u &&
+                   strcmp(complete_support_receipt.status,
+                          "incomplete-startup-route-matrix") == 0,
+               "Nexus complete-support rejects DGN mesh without consumed dungeon capture route");
+    }
+    {
+        Nexus_V1_StartupHostCallerReceipt mutated_champion_host;
+        mutated_champion_host = champion_host_caller_receipt;
+        mutated_champion_host.dgn_material_surface_coverage_complete = 0;
+        mutated_champion_host.dgn_viewport_material_surface_count =
+            mutated_champion_host.dgn_command_count - 1;
+        expect(nexus_v1_launcher_complete_support_receipt_from_host_routes(
+                   &title_host_caller_receipt,
+                   &save_host_caller_receipt,
+                   &mutated_champion_host,
+                   &complete_support_receipt) &&
+                   complete_support_receipt.champion_route_complete == 1 &&
+                   complete_support_receipt.dungeon_capture_route_consumed == 1 &&
+                   complete_support_receipt.dgn_material_surface_coverage_complete == 0 &&
+                   complete_support_receipt.dungeon_route_complete == 0 &&
+                   complete_support_receipt.dgn_mesh_runtime_complete == 0 &&
+                   complete_support_receipt.dgn_viewport_runtime_complete == 1 &&
+                   complete_support_receipt.all_nexus_startup_routes_complete == 1 &&
+                   complete_support_receipt.all_nexus_runtime_routes_complete == 0 &&
+                   complete_support_receipt.complete_support_ready == 0 &&
+                   complete_support_receipt.complete_route_mask == 15u,
+               "Nexus complete-support rejects DGN mesh without full material surface coverage");
+    }
     runtime_state.save_select_active = 0;
     runtime_state.champion_select_active = 1;
     runtime_state.champion_cursor = 0;
@@ -1838,6 +1917,7 @@ int main(void)
                real_asset_ownership_receipt.host_route_consumes_capture_matrix == 1 &&
                real_asset_ownership_receipt.dgn_route_consumes_startup_package == 0 &&
                real_asset_ownership_receipt.dgn_route_saturn_capture_exact == 0 &&
+               real_asset_ownership_receipt.dungeon_capture_route_consumed == 0 &&
                real_asset_ownership_receipt.host_ownership_route_matches_capture_route == 1 &&
                real_asset_ownership_receipt.package_route_consumes_host_ownership == 1 &&
                real_asset_ownership_receipt.dgn_route_consumes_host_ownership == 0 &&
@@ -1877,6 +1957,8 @@ int main(void)
                real_asset_ownership_receipt.host_saturn_non_title_capture_count == 1 &&
                real_asset_ownership_receipt.host_saturn_non_title_capture_mask == 1u &&
                real_asset_ownership_receipt.host_saturn_expected_capture_mask == 1u &&
+               strcmp(real_asset_ownership_receipt.dungeon_capture_route,
+                      "none") == 0 &&
                strcmp(real_asset_ownership_receipt.status,
                       "menu-capture-owned") == 0,
            "Nexus real-asset ownership consumes SAVE package capture route");
@@ -1911,6 +1993,7 @@ int main(void)
                host_caller_receipt.host_route_consumes_capture_matrix == 1 &&
                host_caller_receipt.dgn_route_consumes_startup_package == 0 &&
                host_caller_receipt.dgn_route_saturn_capture_exact == 0 &&
+               host_caller_receipt.dungeon_capture_route_consumed == 0 &&
                host_caller_receipt.host_ownership_route_matches_capture_route == 1 &&
                host_caller_receipt.package_route_consumes_host_ownership == 1 &&
                host_caller_receipt.dgn_route_consumes_host_ownership == 0 &&
@@ -1958,6 +2041,8 @@ int main(void)
                dgn_commands[0].kind == 0 &&
                strcmp(host_caller_receipt.host_route,
                       "menu-capture") == 0 &&
+               strcmp(host_caller_receipt.dungeon_capture_route,
+                      "none") == 0 &&
                strcmp(host_caller_receipt.startup_package_route,
                       "save-menu") == 0,
            "Nexus host-caller consumes SAVE active capture frame before drawing");
@@ -2425,6 +2510,14 @@ int main(void)
                    runtime_route_receipt.dgn_render_command_count &&
                runtime_route_receipt.dgn_viewport_material_surface_count ==
                    runtime_route_receipt.dgn_render_command_count &&
+               runtime_route_receipt.dgn_viewport_floor_material_surface_count ==
+                   runtime_route_receipt.dgn_render_floor_count &&
+               runtime_route_receipt.dgn_viewport_wall_material_surface_count ==
+                   runtime_route_receipt.dgn_render_wall_count &&
+               runtime_route_receipt.dgn_viewport_ceiling_material_surface_count ==
+                   runtime_route_receipt.dgn_render_command_count -
+                       runtime_route_receipt.dgn_render_floor_count -
+                       runtime_route_receipt.dgn_render_wall_count &&
                runtime_route_receipt.dgn_viewport_written_pixels > 0 &&
                runtime_route_receipt.first_dgn_render_command_kind ==
                    NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&

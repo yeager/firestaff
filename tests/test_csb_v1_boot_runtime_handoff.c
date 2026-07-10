@@ -2401,6 +2401,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               runtime_host_gate.input_consumes_receipt_only &&
               runtime_host_gate.no_fallback_callbacks &&
               runtime_host_gate.no_wrapper_fallback_routes &&
+              runtime_host_gate.host_route_wrappers_retired &&
+              runtime_host_gate.no_loose_render_plan_exports &&
               runtime_host_gate.sequence_capture_hash ==
                   visual_sequence.sequence_capture_hash &&
               runtime_host_gate.runtime_capture_hash != 0u &&
@@ -2454,6 +2456,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               complete_support.no_legacy_wrappers &&
               complete_support.no_fallback_callbacks &&
               complete_support.no_wrapper_fallback_routes &&
+              complete_support.host_route_wrappers_retired &&
+              complete_support.no_loose_render_plan_exports &&
               complete_support.session_generation == 19u &&
               complete_support.runtime_host_gate_hash ==
                   runtime_host_gate.runtime_host_gate_hash &&

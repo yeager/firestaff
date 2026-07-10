@@ -657,6 +657,8 @@ typedef struct CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 {
     int closed_door_host_input_consumes_receipt_only;
     int utility_host_input_consumes_receipt_only;
     int door_opening_host_input_consumes_receipt_only;
+    int host_route_wrappers_retired;
+    int no_loose_render_plan_exports;
     uint32_t title_packaged_capture_hash;
     uint32_t closed_door_packaged_capture_hash;
     uint32_t utility_packaged_capture_hash;
@@ -878,6 +880,8 @@ typedef struct CSB_V1_StartupCompleteSupportReceipt_PC34 {
     int no_legacy_wrappers;
     int no_fallback_callbacks;
     int no_wrapper_fallback_routes;
+    int host_route_wrappers_retired;
+    int no_loose_render_plan_exports;
     uint32_t session_generation;
     uint32_t runtime_host_gate_hash;
     uint32_t complete_support_hash;
@@ -1027,6 +1031,8 @@ typedef struct CSB_V1_BootStartupHostOwnershipReceipt_PC34 {
     int should_ignore_input;
     int input_redraws_hud_menu;
     int suppress_legacy_utility_fallback;
+    int host_route_wrappers_retired;
+    int no_loose_render_plan_exports;
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
     CSB_V1_BootStartupHostViewDrawReceipt_PC34 host_draw;
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 host_input;

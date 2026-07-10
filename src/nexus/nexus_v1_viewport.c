@@ -179,6 +179,21 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
             texel_map = viewport_plan_palette_map(vp, command);
             if (surface && surface->valid) {
                 vp->last_dgn_render_receipt.material_surface_count++;
+                switch (command->kind) {
+                case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
+                    vp->last_dgn_render_receipt.floor_material_surface_count++;
+                    break;
+                case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
+                    vp->last_dgn_render_receipt.ceiling_material_surface_count++;
+                    break;
+                case NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT:
+                case NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT:
+                case NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT:
+                    vp->last_dgn_render_receipt.wall_material_surface_count++;
+                    break;
+                default:
+                    break;
+                }
             }
             switch (command->kind) {
             case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
@@ -221,6 +236,12 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
             vp->last_dgn_render_receipt.command_count > 0 &&
             vp->last_dgn_render_receipt.command_count ==
                 vp->last_dgn_render_receipt.material_surface_count &&
+            vp->last_dgn_render_receipt.floor_count ==
+                vp->last_dgn_render_receipt.floor_material_surface_count &&
+            vp->last_dgn_render_receipt.ceiling_count ==
+                vp->last_dgn_render_receipt.ceiling_material_surface_count &&
+            vp->last_dgn_render_receipt.wall_count ==
+                vp->last_dgn_render_receipt.wall_material_surface_count &&
             vp->last_dgn_render_receipt.command_count ==
                 vp->last_dgn_render_receipt.rasterized_command_count &&
             vp->last_dgn_render_receipt.written_pixels > 0;
