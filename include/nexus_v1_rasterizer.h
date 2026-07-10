@@ -91,6 +91,16 @@ void nexus_raster_quad_tex(Nexus_Framebuffer *fb,
     const uint8_t *tex_data, int tex_w, int tex_h,
     const uint32_t *tex_palette);
 
+/* Indexed texture with a frame-local CLUT remap. A map entry of 0xff clips
+ * the texel before depth is written. This lets independently decoded DMDF/BPK
+ * surfaces share the indexed VDP1 framebuffer without replacing their CLUT. */
+void nexus_raster_quad_tex_mapped(Nexus_Framebuffer *fb,
+    Nexus_RasterVertex v0, Nexus_RasterVertex v1,
+    Nexus_RasterVertex v2, Nexus_RasterVertex v3,
+    const Nexus_Camera *cam,
+    const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256]);
+
 /* ── Dungeon geometry ────────────────────────────────────────────── */
 /* wall_dir: 0=North(z-), 1=East(x+), 2=South(z+), 3=West(x-)
  * tex_data optional (NULL -> flat shaded, texture_id ignored)      */
@@ -114,6 +124,19 @@ void nexus_draw_floor_tex(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
 void nexus_draw_ceiling_tex(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     float x, float z, const uint8_t *tex_data, int tex_w, int tex_h,
     const uint32_t *tex_palette);
+
+void nexus_draw_floor_tex_mapped(Nexus_Framebuffer *fb,
+    const Nexus_Camera *cam, float x, float z,
+    const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256]);
+void nexus_draw_ceiling_tex_mapped(Nexus_Framebuffer *fb,
+    const Nexus_Camera *cam, float x, float z,
+    const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256]);
+void nexus_draw_wall_tex_mapped(Nexus_Framebuffer *fb,
+    const Nexus_Camera *cam, float x, float z, int wall_dir,
+    const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256]);
 
 /* Door state drawing (DM1 DUNGEON.C door semantics):
  *   CLOSED: full-height quad

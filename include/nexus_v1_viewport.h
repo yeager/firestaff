@@ -19,6 +19,8 @@ typedef struct {
     const Nexus_V1_Engine *material_engine;
     uint32_t material_generation;
     uint32_t base_palette[256];
+    uint8_t floor_material_palette_map[NEXUS_DMDF_MATERIAL_COUNT][256];
+    uint8_t wall_material_palette_map[NEXUS_DMDF_MATERIAL_COUNT][256];
     int material_palette_valid;
 } Nexus_Viewport;
 
