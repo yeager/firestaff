@@ -7,6 +7,42 @@ void nexus_viewport_init(Nexus_Viewport *vp) {
     if (!vp) return;
     memset(vp, 0, sizeof(*vp));
     nexus_fb_init(&vp->fb);
+    memcpy(vp->base_palette, vp->fb.palette, sizeof(vp->base_palette));
+}
+
+static const Nexus_DMDFTextureSurface *viewport_plan_surface(
+    const Nexus_V1_Engine *engine, const Nexus_V1_DgnRenderCommand *command)
+{
+    const Nexus_DMDFMaterialBank *bank =
+        (command->kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
+         command->kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
+            ? &engine->floor_materials : &engine->wall_materials;
+    return &bank->surfaces[command->material_id];
+}
+
+static void viewport_sync_dgn_material_palette(
+    Nexus_Viewport *vp, const Nexus_V1_Engine *engine,
+    const Nexus_V1_DgnMaterialPlan *plan)
+{
+    int i;
+    uint32_t palette[256];
+    if (vp->material_palette_valid && vp->material_engine == engine &&
+        vp->material_generation == plan->generation) return;
+    memcpy(palette, vp->base_palette, sizeof(palette));
+    for (i = 0; i < plan->receipt.command_count; ++i) {
+        const Nexus_DMDFTextureSurface *surface =
+            viewport_plan_surface(engine, &plan->commands[i]);
+        int color_index;
+        for (color_index = 0; color_index < 256; ++color_index) {
+            if (surface->palette[color_index] != 0U) {
+                palette[color_index] = surface->palette[color_index];
+            }
+        }
+    }
+    nexus_fb_set_palette(&vp->fb, palette);
+    vp->material_engine = engine;
+    vp->material_generation = plan->generation;
+    vp->material_palette_valid = 1;
 }
 
 /* Render visible dungeon squares from party position */
@@ -34,65 +70,22 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
     }
 
     if (engine->current_level.geometry_info.dmweb_container) {
-        Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
-        Nexus_V1_DgnRenderPlanReceipt receipt;
+        const Nexus_V1_DgnMaterialPlan *plan;
         int i;
 
         /* Real Nexus DGN path: draw only commands derived from Structure1B.
          * If this route blocks, do not fall through to synthetic legacy
          * visuals. */
-        if (nexus_v1_level_build_dgn_view_render_plan(
-                &engine->current_level,
-                px,
-                py,
-                pdir,
-                commands,
-                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
-                &receipt) != 0 ||
-            !receipt.plan_ready) {
+        plan = nexus_v1_prepare_dgn_material_plan(engine, px, py, pdir);
+        if (!plan) {
             return;
         }
+        viewport_sync_dgn_material_palette(vp, engine, plan);
 
-        /* BITM pixels carry global CLUT slots. Merge the decoded DMDF CLUTs
-         * before rasterizing so framebuffer indices retain source colours. */
-        {
-            uint32_t palette[256];
-            const Nexus_DMDFMaterialBank *banks[2] = {
-                &engine->floor_materials, &engine->wall_materials
-            };
-            int bank_index;
-            memcpy(palette, vp->fb.palette, sizeof(palette));
-            for (bank_index = 0; bank_index < 2; ++bank_index) {
-                const Nexus_DMDFMaterialBank *bank = banks[bank_index];
-                int material_index;
-                for (material_index = 0; bank->valid &&
-                     material_index < bank->surface_count; ++material_index) {
-                    const Nexus_DMDFTextureSurface *surface =
-                        &bank->surfaces[material_index];
-                    int color_index;
-                    for (color_index = 0; surface->valid &&
-                         color_index < 256; ++color_index) {
-                        if (surface->palette[color_index] != 0U)
-                            palette[color_index] = surface->palette[color_index];
-                    }
-                }
-            }
-            nexus_fb_set_palette(&vp->fb, palette);
-        }
-
-        for (i = 0; i < receipt.command_count; ++i) {
-            const Nexus_V1_DgnRenderCommand *command = &commands[i];
-            const Nexus_DMDFMaterialBank *bank;
+        for (i = 0; i < plan->receipt.command_count; ++i) {
+            const Nexus_V1_DgnRenderCommand *command = &plan->commands[i];
             const Nexus_DMDFTextureSurface *surface;
-            bank = (command->kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
-                    command->kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
-                ? &engine->floor_materials : &engine->wall_materials;
-            if (!bank->valid || command->material_id >= bank->surface_count) {
-                /* Real DGN commands are never replaced by generic colours. */
-                continue;
-            }
-            surface = &bank->surfaces[command->material_id];
-            if (!surface->valid) continue;
+            surface = viewport_plan_surface(engine, command);
             switch (command->kind) {
             case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
                 nexus_draw_floor_tex(&vp->fb, &vp->cam,
