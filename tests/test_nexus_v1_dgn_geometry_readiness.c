@@ -74,6 +74,16 @@ static void set_collision_ref(uint8_t *structure1,
     cell[7] = (uint8_t)(ref & 0xff);
 }
 
+static void set_mesh_ref(uint8_t *structure1,
+                         int structure1b_rel,
+                         int x,
+                         int y,
+                         int ref) {
+    uint8_t *cell = cell_at(structure1, structure1b_rel, x, y);
+    cell[5] = (uint8_t)((ref >> 4) & 0xff);
+    cell[6] = (uint8_t)((cell[6] & 0x0fU) | ((ref & 0x0f) << 4));
+}
+
 static void set_floor_flags(uint8_t *structure1, int structure1b_rel,
                             int x, int y, uint16_t flags) {
     uint8_t *cell = cell_at(structure1, structure1b_rel, x, y);
@@ -98,6 +108,9 @@ static void test_variable_grid_and_mesh_ready(void) {
     set_collision_ref(structure1, structure1b_rel, 2, 2, 1);
     set_collision_ref(structure1, structure1b_rel, 3, 2, 5);
     set_collision_ref(structure1, structure1b_rel, 4, 2, 5);
+    set_mesh_ref(structure1, structure1b_rel, 2, 2, 9);
+    set_mesh_ref(structure1, structure1b_rel, 3, 2, 9);
+    set_mesh_ref(structure1, structure1b_rel, 4, 2, 11);
     set_collision_ref(structure1, structure1b_rel, 0, 0, 0x0fff);
     cell_at(structure1, structure1b_rel, 5, 5)[1] = 0x01; /* door flag */
 
@@ -121,8 +134,12 @@ static void test_variable_grid_and_mesh_ready(void) {
           "collision ref unique count deduplicates Structure1C refs");
     CHECK(info.max_collision_ref == 5,
           "max collision descriptor ref is captured");
+    CHECK(info.mesh_ref_count == 3 &&
+          info.mesh_ref_unique_count == 2 &&
+          info.max_mesh_ref == 11,
+          "Structure1F-style mesh refs are counted and deduplicated");
     CHECK(info.mesh_ready == 1,
-          "bounded descriptor budget marks fixture mesh-ready");
+          "bounded collision and mesh descriptor budgets mark fixture mesh-ready");
 
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0,
           "level loader consumes same geometry info");
@@ -147,8 +164,10 @@ static void test_variable_grid_and_mesh_ready(void) {
           handoff.fallback_visuals_permitted == 0,
           "DGN renderer handoff routes real mesh without fallback visuals");
     CHECK(handoff.descriptor_capacity == geometry_bytes / 4 &&
-          handoff.max_collision_ref == 5,
-          "DGN renderer handoff exposes descriptor budget and max ref");
+          handoff.max_collision_ref == 5 &&
+          handoff.max_mesh_ref == 11 &&
+          handoff.mesh_ref_unique_count == 2,
+          "DGN renderer handoff exposes descriptor budget and max refs");
     CHECK(strcmp(nexus_v1_dgn_renderer_handoff_status_name(handoff.status),
                  "ready-mesh") == 0,
           "DGN renderer handoff has stable ready route name");
@@ -174,9 +193,12 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
     set_collision_ref(structure1, structure1b_rel, 3, 4, 1);
     cell_at(structure1, structure1b_rel, 3, 4)[3] = 4;
     cell_at(structure1, structure1b_rel, 3, 4)[4] = 41;
+    set_mesh_ref(structure1, structure1b_rel, 3, 4, 7);
     cell_at(structure1, structure1b_rel, 4, 4)[3] = 12;
     set_collision_ref(structure1, structure1b_rel, 4, 4, 1);
+    set_mesh_ref(structure1, structure1b_rel, 4, 4, 8);
     set_collision_ref(structure1, structure1b_rel, 3, 3, 1);
+    set_mesh_ref(structure1, structure1b_rel, 3, 3, 9);
     set_collision_ref(structure1, structure1b_rel, 2, 4, 0x0fff);
     set_collision_ref(structure1, structure1b_rel, 2, 3, 0x0fff);
     set_collision_ref(structure1, structure1b_rel, 4, 3, 0x0fff);
@@ -219,10 +241,15 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           receipt.floor_count == 3 &&
           receipt.wall_count == 4,
           "DGN view render plan emits bounded floor/ceiling/wall commands");
+    CHECK(receipt.mesh_command_count > 0 &&
+          receipt.first_mesh_ref == 7 &&
+          receipt.max_mesh_ref == 9,
+          "DGN view render plan consumes bounded Structure1B mesh refs");
     CHECK(commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
           commands[0].x == 3 &&
           commands[0].y == 4 &&
           commands[0].collision_ref == 1 &&
+          commands[0].mesh_ref == 7 &&
           commands[0].material_id == 21 && commands[0].floor_rotation == 1 &&
           commands[0].floor_slope == 2 &&
           commands[0].floor_height[0] == 4 &&
@@ -265,11 +292,14 @@ static void test_descriptor_budget_blocks_mesh_ready(void) {
           "small-geometry DGN buffer builds");
     structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
     set_collision_ref(structure1, structure1b_rel, 8, 8, 3);
+    set_mesh_ref(structure1, structure1b_rel, 8, 8, 10);
 
     CHECK(nexus_v1_dgn_geometry_info(&info, dgn, (int)sizeof(dgn)) == 0,
           "small-geometry DGN still parses");
     CHECK(info.max_collision_ref == 3,
           "small-geometry max ref captured");
+    CHECK(info.max_mesh_ref == 10,
+          "small-geometry max mesh ref captured");
     CHECK(info.geometry_size == 8,
           "small-geometry span size captured");
     CHECK(info.mesh_ready == 0,

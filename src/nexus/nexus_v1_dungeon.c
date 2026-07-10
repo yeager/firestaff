@@ -71,6 +71,7 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
     int geometry_offset;
     int geometry_size;
     unsigned char seen_refs[4096];
+    unsigned char seen_mesh_refs[4096];
     int y;
     int x;
 
@@ -127,12 +128,14 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
      * Structure1C/mesh reader can replace the procedural fallback.
      */
     memset(seen_refs, 0, sizeof(seen_refs));
+    memset(seen_mesh_refs, 0, sizeof(seen_mesh_refs));
     for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
         for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
             int off = structure1b_offset +
                       ((y * NEXUS_MAX_MAP_SIZE + x) *
                        NEXUS_DGN_STRUCTURE1B_CELL_BYTES);
             int ref = nexus_v1_decode_structure1b_collision_ref(data + off);
+            int mesh_ref = nexus_v1_decode_structure1b_mesh_ref(data + off);
             if (ref != 0 && ref != 0x0FFF) {
                 info.collision_ref_count++;
                 if (!seen_refs[ref]) {
@@ -141,6 +144,16 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
                 }
                 if (ref > info.max_collision_ref) {
                     info.max_collision_ref = ref;
+                }
+            }
+            if (mesh_ref != 0 && mesh_ref != 0x0FFF) {
+                info.mesh_ref_count++;
+                if (!seen_mesh_refs[mesh_ref]) {
+                    seen_mesh_refs[mesh_ref] = 1U;
+                    info.mesh_ref_unique_count++;
+                }
+                if (mesh_ref > info.max_mesh_ref) {
+                    info.max_mesh_ref = mesh_ref;
                 }
             }
         }
@@ -156,6 +169,8 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
     info.geometry_size = geometry_size;
     if (geometry_size > 0 &&
         info.max_collision_ref <=
+            (geometry_size / NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES) &&
+        info.max_mesh_ref <=
             (geometry_size / NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES)) {
         info.mesh_ready = 1;
     }
@@ -442,6 +457,9 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
     out_receipt->collision_ref_unique_count =
         info->collision_ref_unique_count;
     out_receipt->max_collision_ref = info->max_collision_ref;
+    out_receipt->mesh_ref_count = info->mesh_ref_count;
+    out_receipt->mesh_ref_unique_count = info->mesh_ref_unique_count;
+    out_receipt->max_mesh_ref = info->max_mesh_ref;
     out_receipt->descriptor_capacity =
         info->geometry_size > 0
             ? info->geometry_size / NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES
@@ -503,6 +521,15 @@ static int nexus_v1_dgn_plan_push(
         receipt->floor_count++;
     } else if (command.kind != NEXUS_V1_DGN_RENDER_COMMAND_CEILING) {
         receipt->wall_count++;
+    }
+    if (command.mesh_ref != 0U && command.mesh_ref != 0x0FFFU) {
+        receipt->mesh_command_count++;
+        if (receipt->first_mesh_ref == 0) {
+            receipt->first_mesh_ref = command.mesh_ref;
+        }
+        if ((int)command.mesh_ref > receipt->max_mesh_ref) {
+            receipt->max_mesh_ref = command.mesh_ref;
+        }
     }
     return 0;
 }
