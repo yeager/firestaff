@@ -742,6 +742,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_CompleteSupportReceipt_PC34 complete_support;
     DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34
         hoc_boot_full_graphics;
+    DM1_V1_StartupHoCBootProbeSummary_PC34 hoc_boot_summary;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 mirror_front_wall;
     DM1_V1_ChampionMirrorRenderReceiptPc34 mirror_render;
     DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 mirror_boundary;
@@ -3139,6 +3140,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  complete_support.block_enter_until_champion_selected,
              1);
     memset(&hoc_boot_full_graphics, 0, sizeof(hoc_boot_full_graphics));
+    memset(&hoc_boot_summary, 0, sizeof(hoc_boot_summary));
     expect_i("DM1 boot full-graphics receipt owns aggregate HoC readiness",
              dm1_v1_startup_hoc_boot_full_graphics_receipt_pc34(
                  &hoc_host_probe_facts,
@@ -3161,6 +3163,24 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_full_graphics.complete_support.ready &&
                  hoc_boot_full_graphics.complete_support
                      .complete_host_app_capture_route,
+             1);
+    expect_i("DM1 boot probe summary owns M11 HoC field interpretation",
+             dm1_v1_startup_hoc_boot_probe_summary_pc34(
+                 &hoc_boot_full_graphics,
+                 &hoc_boot_summary) &&
+                 hoc_boot_summary.handled &&
+                 hoc_boot_summary.full_graphics_ready &&
+                 hoc_boot_summary.host_render_plan_ready &&
+                 hoc_boot_summary.capture_proof_passed &&
+                 hoc_boot_summary.release_capture_ownership_ready &&
+                 hoc_boot_summary.host_render_consumer_ready &&
+                 hoc_boot_summary.m11_boot_probe_consumer_ready &&
+                 hoc_boot_summary.launch_path_ready &&
+                 hoc_boot_summary.receipt_only_consumer_ready &&
+                 hoc_boot_summary.presented_capture_chain_ready &&
+                 hoc_boot_summary.complete_support_ready &&
+                 hoc_boot_summary.complete_host_app_capture_route &&
+                 hoc_boot_summary.complete_original_save_roundtrip_route,
              1);
     hoc_save_capture_readiness.save_capture_ready = 0;
     memset(&hoc_boot_full_graphics, 0, sizeof(hoc_boot_full_graphics));

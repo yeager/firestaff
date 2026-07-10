@@ -11909,6 +11909,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             hoc_ownership;
         DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 hoc_facts;
         DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34 boot_full_graphics;
+        DM1_V1_StartupHoCBootProbeSummary_PC34 boot_summary;
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
         memset(&hoc_apply, 0, sizeof(hoc_apply));
@@ -11916,6 +11917,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         memset(&hoc_ownership, 0, sizeof(hoc_ownership));
         memset(&hoc_facts, 0, sizeof(hoc_facts));
         memset(&boot_full_graphics, 0, sizeof(boot_full_graphics));
+        memset(&boot_summary, 0, sizeof(boot_summary));
         facts.source_id = state->sourceId;
         facts.level_loaded = out->levelLoaded;
         facts.intro_bypassed = state->dm1StartupIntroBypassed;
@@ -11968,108 +11970,106 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_consumer = boot_full_graphics.production_consumer;
                 hoc_ownership = boot_full_graphics.ownership;
             }
-            out->dm1HoCFullGraphicsReady = 1;
-            out->dm1HoCHostRenderPlanReady =
-                hoc_apply.consumed_capture_artifact &&
-                hoc_apply.consumed_capture_proof;
-            out->dm1HoCCaptureProofPassed =
-                hoc_apply.ready && hoc_apply.require_proof_passed;
-            out->dm1HoCRuntimeApplyReady = hoc_apply.ready;
-            out->dm1HoCProductionConsumerReady = hoc_consumer.ready;
-            out->dm1HoCNoHostFallbackVisuals =
-                hoc_consumer.suppress_host_fallback_visuals;
-            out->dm1HoCRealAssetCapture =
-                hoc_consumer.real_asset_capture;
-            out->dm1HoCMacWindowCapture =
-                hoc_consumer.mac_window_capture;
-            out->dm1HoCReleaseAppCapture =
-                hoc_consumer.release_app_capture;
-            out->dm1HoCHostCaptureRouteMatches =
-                hoc_consumer.host_capture_route_matches;
-            out->dm1HoCReleaseCaptureOwnershipReady =
-                hoc_ownership.ready;
-            out->dm1HoCHostRenderConsumerReady =
-                hoc_ownership.consumed_hoc_host_render_receipt;
-            out->dm1HoCM11BootProbeConsumerReady =
-                hoc_ownership.consumed_m11_boot_probe_consumer;
-            out->dm1HoCLaunchPathReady =
-                hoc_ownership.consumed_launch_path_receipt &&
-                hoc_ownership.launch_path_started_from_launcher &&
-                hoc_ownership.launch_path_intro_not_bypassed;
-            out->dm1HoCRequiredAssetCapture =
-                hoc_ownership.required_asset_capture;
-            out->dm1HoCReceiptOnlyConsumerReady =
-                hoc_ownership.consume_dm1_receipts_only &&
-                hoc_ownership.consumed_runtime_apply_receipt &&
-                hoc_ownership.consumed_production_consumer_receipt &&
-                hoc_ownership.publish_packaged_full_graphics_proof;
-            out->dm1HoCLowerLevelHelpersReady =
-                hoc_ownership.lower_level_renderer_helper_owned &&
-                hoc_ownership.lower_level_audio_helper_owned;
-            out->dm1HoCHostDrawUsesOwnedReceipt =
-                hoc_ownership.host_draw_uses_owned_receipt;
-            out->dm1HoCHostDrawConsumesBackingAsset =
-                hoc_ownership.host_draw_consumes_backing_asset;
-            out->dm1HoCHostDrawRejectsBackingFallback =
-                hoc_ownership.host_draw_rejects_backing_fallback;
-            out->dm1HoCHoCAssetCapture =
-                hoc_consumer.hoc_asset_capture;
-            out->dm1HoCHostWindowCapture =
-                hoc_consumer.host_window_capture;
-            out->dm1HoCPresentedCapture =
-                hoc_ownership.presented_capture;
-            out->dm1HoCPresentedCaptureWidth =
-                hoc_ownership.presented_capture_width;
-            out->dm1HoCPresentedCaptureHeight =
-                hoc_ownership.presented_capture_height;
-            out->dm1HoCPresentedCaptureGeometry =
-                hoc_ownership.presented_capture_geometry_matches;
-            out->dm1HoCPresentedCapturePixels =
-                hoc_ownership.presented_capture_pixels_present;
-            out->dm1HoCPresentedCaptureBytes =
-                hoc_ownership.presented_capture_byte_count;
-            out->dm1HoCPresentedCaptureHash =
-                hoc_ownership.presented_capture_hash;
-            out->dm1HoCPresentedCaptureChainReady =
-                hoc_ownership.presented_capture_chain_ready;
-            out->dm1HoCPresentedCaptureConsumerMask =
-                hoc_ownership.presented_capture_consumer_mask;
-            out->dm1HoCPresentedCaptureChainHash =
-                hoc_ownership.presented_capture_chain_hash;
-            out->dm1HoCHostCaptureRoutePackaged =
-                hoc_ownership.host_capture_route_packaged;
-            out->dm1HoCHostCaptureRouteMask =
-                hoc_ownership.host_capture_route_mask;
-            out->dm1HoCHostCaptureRouteHash =
-                hoc_ownership.host_capture_route_hash;
-            out->dm1HoCPresentedCaptureRoutePackaged =
-                hoc_ownership.presented_capture_route_packaged;
-            out->dm1HoCOpenedEntranceFrame =
-                hoc_consumer.draw_opened_entrance_frame;
-            out->dm1HoCHallMirrorOverlay =
-                hoc_consumer.render_hall_mirror_overlay;
-            out->dm1HoCBlockedEnterUntilChampion =
-                hoc_consumer.block_enter_until_champion_selected;
-            out->dm1HoCMapWidth = hoc_consumer.map_width;
-            out->dm1HoCMapHeight = hoc_consumer.map_height;
-            out->dm1HoCRenderCommandCount =
-                hoc_consumer.render_command_count;
-            if (boot_full_graphics.handled) {
-                const DM1_V1_CompleteSupportReceipt_PC34* complete_support =
-                    &boot_full_graphics.complete_support;
-                out->dm1CompleteSupportReady = complete_support->ready;
+            if (dm1_v1_startup_hoc_boot_probe_summary_pc34(
+                    &boot_full_graphics,
+                    &boot_summary) &&
+                boot_summary.handled) {
+                out->dm1HoCFullGraphicsReady =
+                    boot_summary.full_graphics_ready;
+                out->dm1HoCHostRenderPlanReady =
+                    boot_summary.host_render_plan_ready;
+                out->dm1HoCCaptureProofPassed =
+                    boot_summary.capture_proof_passed;
+                out->dm1HoCRuntimeApplyReady =
+                    boot_summary.runtime_apply_ready;
+                out->dm1HoCProductionConsumerReady =
+                    boot_summary.production_consumer_ready;
+                out->dm1HoCNoHostFallbackVisuals =
+                    boot_summary.no_host_fallback_visuals;
+                out->dm1HoCRealAssetCapture =
+                    boot_summary.real_asset_capture;
+                out->dm1HoCMacWindowCapture =
+                    boot_summary.mac_window_capture;
+                out->dm1HoCReleaseAppCapture =
+                    boot_summary.release_app_capture;
+                out->dm1HoCHostCaptureRouteMatches =
+                    boot_summary.host_capture_route_matches;
+                out->dm1HoCReleaseCaptureOwnershipReady =
+                    boot_summary.release_capture_ownership_ready;
+                out->dm1HoCHostRenderConsumerReady =
+                    boot_summary.host_render_consumer_ready;
+                out->dm1HoCM11BootProbeConsumerReady =
+                    boot_summary.m11_boot_probe_consumer_ready;
+                out->dm1HoCLaunchPathReady =
+                    boot_summary.launch_path_ready;
+                out->dm1HoCRequiredAssetCapture =
+                    boot_summary.required_asset_capture;
+                out->dm1HoCReceiptOnlyConsumerReady =
+                    boot_summary.receipt_only_consumer_ready;
+                out->dm1HoCLowerLevelHelpersReady =
+                    boot_summary.lower_level_helpers_ready;
+                out->dm1HoCHostDrawUsesOwnedReceipt =
+                    boot_summary.host_draw_uses_owned_receipt;
+                out->dm1HoCHostDrawConsumesBackingAsset =
+                    boot_summary.host_draw_consumes_backing_asset;
+                out->dm1HoCHostDrawRejectsBackingFallback =
+                    boot_summary.host_draw_rejects_backing_fallback;
+                out->dm1HoCHoCAssetCapture =
+                    boot_summary.hoc_asset_capture;
+                out->dm1HoCHostWindowCapture =
+                    boot_summary.host_window_capture;
+                out->dm1HoCPresentedCapture =
+                    boot_summary.presented_capture;
+                out->dm1HoCPresentedCaptureWidth =
+                    boot_summary.presented_capture_width;
+                out->dm1HoCPresentedCaptureHeight =
+                    boot_summary.presented_capture_height;
+                out->dm1HoCPresentedCaptureGeometry =
+                    boot_summary.presented_capture_geometry;
+                out->dm1HoCPresentedCapturePixels =
+                    boot_summary.presented_capture_pixels;
+                out->dm1HoCPresentedCaptureBytes =
+                    boot_summary.presented_capture_bytes;
+                out->dm1HoCPresentedCaptureHash =
+                    boot_summary.presented_capture_hash;
+                out->dm1HoCPresentedCaptureChainReady =
+                    boot_summary.presented_capture_chain_ready;
+                out->dm1HoCPresentedCaptureConsumerMask =
+                    boot_summary.presented_capture_consumer_mask;
+                out->dm1HoCPresentedCaptureChainHash =
+                    boot_summary.presented_capture_chain_hash;
+                out->dm1HoCHostCaptureRoutePackaged =
+                    boot_summary.host_capture_route_packaged;
+                out->dm1HoCHostCaptureRouteMask =
+                    boot_summary.host_capture_route_mask;
+                out->dm1HoCHostCaptureRouteHash =
+                    boot_summary.host_capture_route_hash;
+                out->dm1HoCPresentedCaptureRoutePackaged =
+                    boot_summary.presented_capture_route_packaged;
+                out->dm1HoCOpenedEntranceFrame =
+                    boot_summary.opened_entrance_frame;
+                out->dm1HoCHallMirrorOverlay =
+                    boot_summary.hall_mirror_overlay;
+                out->dm1HoCBlockedEnterUntilChampion =
+                    boot_summary.blocked_enter_until_champion;
+                out->dm1HoCMapWidth = boot_summary.map_width;
+                out->dm1HoCMapHeight = boot_summary.map_height;
+                out->dm1HoCRenderCommandCount =
+                    boot_summary.render_command_count;
+                out->dm1CompleteSupportReady =
+                    boot_summary.complete_support_ready;
                 out->dm1CompleteSourceVisibleStartup =
-                    complete_support->complete_source_visible_startup;
+                    boot_summary.complete_source_visible_startup;
                 out->dm1CompleteEntranceToHoC =
-                    complete_support->complete_entrance_to_hoc_transition;
+                    boot_summary.complete_entrance_to_hoc;
                 out->dm1CompleteHoCRenderRoute =
-                    complete_support->complete_hoc_render_route;
+                    boot_summary.complete_hoc_render_route;
                 out->dm1CompleteHostAppCaptureRoute =
-                    complete_support->complete_host_app_capture_route;
+                    boot_summary.complete_host_app_capture_route;
                 out->dm1CompleteSaveCorpusRoute =
-                    complete_support->complete_save_corpus_route;
+                    boot_summary.complete_save_corpus_route;
                 out->dm1CompleteOriginalSaveRoundtripRoute =
-                    complete_support->complete_original_save_roundtrip_route;
+                    boot_summary.complete_original_save_roundtrip_route;
             }
         }
     } else {
