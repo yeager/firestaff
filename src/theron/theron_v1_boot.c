@@ -2471,6 +2471,10 @@ static void theron_v1_boot_startup_capture_track02_graphic_receipt(
 static void theron_v1_boot_startup_copy_required_bitmap_routes(
     const Theron_StartupRenderPlan *plan,
     Theron_V1_BootStartupGraphicsRouteReceipt *receipt);
+static void theron_v1_boot_startup_copy_package_bitmap_routes(
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    unsigned int required_route_mask,
+    Theron_V1_BootStartupGraphicsRouteReceipt *receipt);
 static int theron_v1_boot_startup_media_has_required_atlas_routes(
     const Theron_StartupMediaStateReceipt *media_receipt,
     unsigned int required_route_mask);
@@ -2545,6 +2549,10 @@ static int theron_v1_boot_startup_prepare_graphics_route_receipt(
             : 0;
     out_receipt->track02_atlas_startup_graphics_ready =
         out_receipt->real_bitmap_startup_graphics_ready;
+    theron_v1_boot_startup_copy_package_bitmap_routes(
+        &view_model->startup_media_state_receipt,
+        render_route.render_plan.required_bitmap_route_mask,
+        out_receipt);
     theron_v1_boot_startup_mark_bitmap_routes(
         view_model,
         &render_route.render_plan,
@@ -2806,7 +2814,60 @@ static int theron_v1_boot_startup_media_has_required_atlas_routes(
             break;
         }
     }
-    return 1;
+    switch (media_receipt->track02_variant) {
+    case THERON_TRACK02_VARIANT_JP_BIN:
+    case THERON_TRACK02_VARIANT_US_BIN:
+        return (media_receipt->startup_bitmap_raw_route_mask &
+                required_route_mask) == required_route_mask;
+    case THERON_TRACK02_VARIANT_JP_REV1_ISO:
+    case THERON_TRACK02_VARIANT_US_ISO:
+        return (media_receipt->startup_bitmap_iso_route_mask &
+                required_route_mask) == required_route_mask;
+    default:
+        return 0;
+    }
+}
+
+static void theron_v1_boot_startup_copy_package_bitmap_routes(
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    unsigned int required_route_mask,
+    Theron_V1_BootStartupGraphicsRouteReceipt *receipt)
+{
+    unsigned int package_mask;
+
+    if (!media_receipt || !receipt) {
+        return;
+    }
+    receipt->raw_bitmap_route_mask =
+        media_receipt->startup_bitmap_raw_route_mask;
+    receipt->raw_bitmap_route_count =
+        media_receipt->startup_bitmap_raw_route_count;
+    receipt->raw_bitmap_atlas_tile_count =
+        media_receipt->startup_bitmap_raw_atlas_tile_count;
+    receipt->iso_bitmap_route_mask =
+        media_receipt->startup_bitmap_iso_route_mask;
+    receipt->iso_bitmap_route_count =
+        media_receipt->startup_bitmap_iso_route_count;
+    receipt->iso_bitmap_atlas_tile_count =
+        media_receipt->startup_bitmap_iso_atlas_tile_count;
+    switch (media_receipt->track02_variant) {
+    case THERON_TRACK02_VARIANT_JP_BIN:
+    case THERON_TRACK02_VARIANT_US_BIN:
+        package_mask = receipt->raw_bitmap_route_mask;
+        break;
+    case THERON_TRACK02_VARIANT_JP_REV1_ISO:
+    case THERON_TRACK02_VARIANT_US_ISO:
+        package_mask = receipt->iso_bitmap_route_mask;
+        break;
+    default:
+        package_mask = 0u;
+        break;
+    }
+    receipt->bitmap_package_route_ready =
+        required_route_mask != 0u &&
+                (package_mask & required_route_mask) == required_route_mask
+            ? 1
+            : 0;
 }
 
 static int theron_v1_boot_startup_media_route_has_dense_bitmap(
@@ -3039,6 +3100,10 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
                 : 0;
         out_receipt->track02_atlas_startup_graphics_ready =
             out_receipt->real_bitmap_startup_graphics_ready;
+        theron_v1_boot_startup_copy_package_bitmap_routes(
+            &view_model->startup_media_state_receipt,
+            render_route.render_plan.required_bitmap_route_mask,
+            out_receipt);
         theron_v1_boot_startup_mark_bitmap_routes(
             view_model,
             &render_route.render_plan,
@@ -3304,6 +3369,20 @@ int theron_v1_boot_startup_full_start_receipt_from_view_model(
             out_receipt->graphics_route.bitmap_route_mask;
         out_receipt->bitmap_route_count =
             out_receipt->graphics_route.bitmap_route_count;
+        out_receipt->raw_bitmap_route_mask =
+            out_receipt->graphics_route.raw_bitmap_route_mask;
+        out_receipt->raw_bitmap_route_count =
+            out_receipt->graphics_route.raw_bitmap_route_count;
+        out_receipt->raw_bitmap_atlas_tile_count =
+            out_receipt->graphics_route.raw_bitmap_atlas_tile_count;
+        out_receipt->iso_bitmap_route_mask =
+            out_receipt->graphics_route.iso_bitmap_route_mask;
+        out_receipt->iso_bitmap_route_count =
+            out_receipt->graphics_route.iso_bitmap_route_count;
+        out_receipt->iso_bitmap_atlas_tile_count =
+            out_receipt->graphics_route.iso_bitmap_atlas_tile_count;
+        out_receipt->bitmap_package_route_ready =
+            out_receipt->graphics_route.bitmap_package_route_ready;
         out_receipt->title_bitmap_route_ready =
             out_receipt->graphics_route.title_bitmap_route_ready;
         out_receipt->stage_bitmap_route_ready =
@@ -3701,6 +3780,16 @@ int theron_v1_boot_startup_host_render_receipt_from_full_start_receipt(
         receipt->required_bitmap_routes_ready;
     out_receipt->bitmap_route_mask = receipt->bitmap_route_mask;
     out_receipt->bitmap_route_count = receipt->bitmap_route_count;
+    out_receipt->raw_bitmap_route_mask = receipt->raw_bitmap_route_mask;
+    out_receipt->raw_bitmap_route_count = receipt->raw_bitmap_route_count;
+    out_receipt->raw_bitmap_atlas_tile_count =
+        receipt->raw_bitmap_atlas_tile_count;
+    out_receipt->iso_bitmap_route_mask = receipt->iso_bitmap_route_mask;
+    out_receipt->iso_bitmap_route_count = receipt->iso_bitmap_route_count;
+    out_receipt->iso_bitmap_atlas_tile_count =
+        receipt->iso_bitmap_atlas_tile_count;
+    out_receipt->bitmap_package_route_ready =
+        receipt->bitmap_package_route_ready;
     out_receipt->title_bitmap_route_ready =
         receipt->title_bitmap_route_ready;
     out_receipt->stage_bitmap_route_ready =
@@ -3932,6 +4021,10 @@ int theron_v1_boot_startup_menu_runtime_handoff_from_full_start_receipt(
     out_receipt->real_graphics_handoff_ready =
         receipt->real_bitmap_startup_graphics_ready ||
         receipt->runtime_graphics_handoff ? 1 : 0;
+    out_receipt->bitmap_package_route_ready =
+        receipt->bitmap_package_route_ready ? 1 : 0;
+    out_receipt->raw_bitmap_route_mask = receipt->raw_bitmap_route_mask;
+    out_receipt->iso_bitmap_route_mask = receipt->iso_bitmap_route_mask;
     out_receipt->startup_graphics_executed =
         receipt->full_start_graphics_executed ? 1 : 0;
     out_receipt->startup_graphics_blocked =
@@ -4152,6 +4245,12 @@ int theron_v1_boot_startup_ui_caller_from_full_start_receipt(
         receipt->required_bitmap_route_count;
     out_receipt->bitmap_route_mask = (int)receipt->bitmap_route_mask;
     out_receipt->bitmap_route_count = receipt->bitmap_route_count;
+    out_receipt->bitmap_package_route_ready =
+        receipt->bitmap_package_route_ready ? 1 : 0;
+    out_receipt->raw_bitmap_route_mask = (int)receipt->raw_bitmap_route_mask;
+    out_receipt->raw_bitmap_route_count = receipt->raw_bitmap_route_count;
+    out_receipt->iso_bitmap_route_mask = (int)receipt->iso_bitmap_route_mask;
+    out_receipt->iso_bitmap_route_count = receipt->iso_bitmap_route_count;
     out_receipt->title_bitmap_route_ready =
         receipt->title_bitmap_route_ready ? 1 : 0;
     out_receipt->stage_bitmap_route_ready =
