@@ -11407,6 +11407,44 @@ int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state) {
         state->dm1StartupIntroBypassed);
 }
 
+static unsigned int m11_dm1_presented_rgba_hash_pc34(
+    const unsigned char* rgba,
+    int width,
+    int height,
+    int* out_byte_count)
+{
+    unsigned int hash = 2166136261u;
+    int byte_count;
+    int i;
+
+    if (out_byte_count) {
+        *out_byte_count = 0;
+    }
+    if (!rgba || width < 320 || height < 200 ||
+        width > 8192 || height > 8192) {
+        return 0U;
+    }
+    byte_count = width * height * 4;
+    if (byte_count <= 0) {
+        return 0U;
+    }
+    for (i = 0; i < byte_count; ++i) {
+        hash ^= (unsigned int)rgba[i];
+        hash *= 16777619u;
+    }
+    hash ^= (unsigned int)width;
+    hash *= 16777619u;
+    hash ^= (unsigned int)height;
+    hash *= 16777619u;
+    if (hash == 0U) {
+        hash = 1U;
+    }
+    if (out_byte_count) {
+        *out_byte_count = byte_count;
+    }
+    return hash;
+}
+
 static int m11_dm1_hoc_full_graphics_probe_receipt(
     const M11_GameViewState* state,
     DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* out_apply,
@@ -11422,6 +11460,8 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     int host_window_present;
     int presented_width;
     int presented_height;
+    int presented_byte_count;
+    unsigned int presented_hash;
     int presented_capture_ready;
 
     memset(&facts, 0, sizeof(facts));
@@ -11433,9 +11473,8 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     host_window_present = 0;
     presented_width = 0;
     presented_height = 0;
-    presented_capture_ready = 0;
-    presented_width = 0;
-    presented_height = 0;
+    presented_byte_count = 0;
+    presented_hash = 0U;
     presented_capture_ready = 0;
 
     if (state && state->assetsAvailable && state->assetLoader.fileState &&
@@ -11463,14 +11502,16 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
 #else
     host_window_present = 0;
 #endif
-    presented_capture_ready =
-        M11_Render_GetPresentedRGBA(&presented_width, &presented_height) != NULL &&
-        presented_width >= 320 &&
-        presented_height >= 200;
-    presented_capture_ready =
-        M11_Render_GetPresentedRGBA(&presented_width, &presented_height) != NULL &&
-        presented_width >= 320 &&
-        presented_height >= 200;
+    {
+        const unsigned char* presented_rgba =
+            M11_Render_GetPresentedRGBA(&presented_width, &presented_height);
+        presented_hash = m11_dm1_presented_rgba_hash_pc34(
+            presented_rgba,
+            presented_width,
+            presented_height,
+            &presented_byte_count);
+        presented_capture_ready = presented_hash != 0U;
+    }
 
     facts.source_id = state ? state->sourceId : NULL;
     facts.dungeon_loaded =
@@ -11512,6 +11553,8 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     facts.observed_presented_rgba_capture = presented_capture_ready;
     facts.presented_capture_width = presented_width;
     facts.presented_capture_height = presented_height;
+    facts.presented_capture_byte_count = presented_byte_count;
+    facts.presented_capture_hash = presented_hash;
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m11_boot_probe_consumer = 1;
     if (out_ownership) {
@@ -11837,6 +11880,12 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_ownership.presented_capture_height;
             out->dm1HoCPresentedCaptureGeometry =
                 hoc_ownership.presented_capture_geometry_matches;
+            out->dm1HoCPresentedCapturePixels =
+                hoc_ownership.presented_capture_pixels_present;
+            out->dm1HoCPresentedCaptureBytes =
+                hoc_ownership.presented_capture_byte_count;
+            out->dm1HoCPresentedCaptureHash =
+                hoc_ownership.presented_capture_hash;
             out->dm1HoCOpenedEntranceFrame =
                 hoc_consumer.draw_opened_entrance_frame;
             out->dm1HoCHallMirrorOverlay =
@@ -21129,6 +21178,8 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     int host_window_present;
     int presented_width;
     int presented_height;
+    int presented_byte_count;
+    unsigned int presented_hash;
     int presented_capture_ready;
 
     if (!renderReceipt || !mirrorReceipt || !outReceipt) {
@@ -21147,6 +21198,8 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     host_window_present = 0;
     presented_width = 0;
     presented_height = 0;
+    presented_byte_count = 0;
+    presented_hash = 0U;
     presented_capture_ready = 0;
     if (state && state->assetsAvailable && state->assetLoader.fileState &&
         mirrorReceipt->valid && mirrorReceipt->drawChampionPortrait) {
@@ -21163,10 +21216,16 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
 #else
     host_window_present = 0;
 #endif
-    presented_capture_ready =
-        M11_Render_GetPresentedRGBA(&presented_width, &presented_height) != NULL &&
-        presented_width >= 320 &&
-        presented_height >= 200;
+    {
+        const unsigned char* presented_rgba =
+            M11_Render_GetPresentedRGBA(&presented_width, &presented_height);
+        presented_hash = m11_dm1_presented_rgba_hash_pc34(
+            presented_rgba,
+            presented_width,
+            presented_height,
+            &presented_byte_count);
+        presented_capture_ready = presented_hash != 0U;
+    }
 
     if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
         !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
@@ -21196,6 +21255,8 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     captureFacts.observed_presented_rgba_capture = presented_capture_ready;
     captureFacts.presented_capture_width = presented_width;
     captureFacts.presented_capture_height = presented_height;
+    captureFacts.presented_capture_byte_count = presented_byte_count;
+    captureFacts.presented_capture_hash = presented_hash;
     captureFacts.captured_map_index = renderReceipt->map_index;
     captureFacts.captured_map_width =
         productionStart.packaged_proof.expected_map_width;
@@ -29623,6 +29684,8 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     captureFacts.observed_presented_rgba_capture = 1;
     captureFacts.presented_capture_width = 320;
     captureFacts.presented_capture_height = 200;
+    captureFacts.presented_capture_byte_count = 320 * 200 * 4;
+    captureFacts.presented_capture_hash = 0x4d314843u;
     captureFacts.captured_map_index = artifact.expected_map_index;
     captureFacts.captured_map_width = artifact.expected_map_width;
     captureFacts.captured_map_height = artifact.expected_map_height;
@@ -29661,6 +29724,8 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     hostProbeFacts.observed_presented_rgba_capture = 1;
     hostProbeFacts.presented_capture_width = 320;
     hostProbeFacts.presented_capture_height = 200;
+    hostProbeFacts.presented_capture_byte_count = 320 * 200 * 4;
+    hostProbeFacts.presented_capture_hash = 0x4d314843u;
     hostProbeFacts.consumed_hoc_host_render_receipt = 1;
     hostProbeFacts.consumed_m11_boot_probe_consumer = 1;
 

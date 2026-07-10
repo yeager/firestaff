@@ -6830,6 +6830,8 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     facts.observed_presented_rgba_capture = receipt->startupContractReady;
     facts.presented_capture_width = 320;
     facts.presented_capture_height = 200;
+    facts.presented_capture_byte_count = 320 * 200 * 4;
+    facts.presented_capture_hash = 0x4d31324du;
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m12_startup_capture_consumer = 1;
 
@@ -6877,6 +6879,12 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         ownership.presented_capture_height;
     receipt->dm1HoCPresentedCaptureGeometryReady =
         ownership.presented_capture_geometry_matches;
+    receipt->dm1HoCPresentedCapturePixelsReady =
+        ownership.presented_capture_pixels_present;
+    receipt->dm1HoCPresentedCaptureBytes =
+        ownership.presented_capture_byte_count;
+    receipt->dm1HoCPresentedCaptureHash =
+        ownership.presented_capture_hash;
     receipt->dm1HoCOpenedEntranceFrameReady =
         ownership.draw_opened_entrance_frame;
     receipt->dm1HoCHallMirrorOverlayReady =
@@ -6905,6 +6913,7 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         receipt->dm1HoCHostWindowCaptureReady &&
         receipt->dm1HoCPresentedCaptureReady &&
         receipt->dm1HoCPresentedCaptureGeometryReady &&
+        receipt->dm1HoCPresentedCapturePixelsReady &&
         receipt->dm1HoCOpenedEntranceFrameReady &&
         receipt->dm1HoCHallMirrorOverlayReady &&
         receipt->dm1HoCBlockedEnterUntilChampionReady &&

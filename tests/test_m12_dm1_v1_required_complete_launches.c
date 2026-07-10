@@ -186,6 +186,9 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(boot.dm1HoCPresentedCaptureWidth == 320);
     CHECK(boot.dm1HoCPresentedCaptureHeight == 200);
     CHECK(boot.dm1HoCPresentedCaptureGeometryReady == 1);
+    CHECK(boot.dm1HoCPresentedCapturePixelsReady == 1);
+    CHECK(boot.dm1HoCPresentedCaptureBytes == 320 * 200 * 4);
+    CHECK(boot.dm1HoCPresentedCaptureHash != 0u);
     CHECK(boot.dm1HoCOpenedEntranceFrameReady == 1);
     CHECK(boot.dm1HoCHallMirrorOverlayReady == 1);
     CHECK(boot.dm1HoCBlockedEnterUntilChampionReady == 1);

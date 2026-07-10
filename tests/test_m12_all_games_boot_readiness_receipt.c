@@ -138,6 +138,9 @@ int main(void) {
                         boot.dm1HoCPresentedCaptureWidth == 320 &&
                         boot.dm1HoCPresentedCaptureHeight == 200 &&
                         boot.dm1HoCPresentedCaptureGeometryReady == 1 &&
+                        boot.dm1HoCPresentedCapturePixelsReady == 1 &&
+                        boot.dm1HoCPresentedCaptureBytes == 320 * 200 * 4 &&
+                        boot.dm1HoCPresentedCaptureHash != 0u &&
                         boot.dm1HoCOpenedEntranceFrameReady == 1 &&
                         boot.dm1HoCHallMirrorOverlayReady == 1 &&
                         boot.dm1HoCBlockedEnterUntilChampionReady == 1 &&
