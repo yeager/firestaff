@@ -30,6 +30,21 @@
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_viewport_renderer.h"
+
+/* Runtime-visible proof that the M11-owned frame consumed DM2 GDAT pixels.
+ * This is deliberately aggregate: it proves ownership and real consumption
+ * without exposing a renderer buffer beyond its frame lifetime. */
+typedef struct {
+    unsigned int generation;
+    int runtime_frame_owned;
+    int gdat_provider_bound;
+    int startup_title_gdat_blits;
+    int startup_menu_gdat_blits;
+    int hud_gdat_blits;
+    int door_gdat_blits;
+    int creature_gdat_blits;
+    int valid;
+} DM2_V1_RuntimeFrameOwnershipReceipt;
 #include "dm2_v1_weather.h"
 
 #ifdef __cplusplus
@@ -74,6 +89,11 @@ int  dm2_v1_runtime_get_projectile_drain(DM2_V1_DrainedProjectile **out_list);
 int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                                   uint8_t *framebuffer, int fb_stride,
                                   int view_w, int view_h);
+
+void dm2_v1_runtime_note_startup_frame_consumption(
+    int title_gdat_blits, int menu_gdat_blits);
+int dm2_v1_runtime_last_frame_ownership(
+    DM2_V1_RuntimeFrameOwnershipReceipt *out_receipt);
 void dm2_v1_runtime_set_viewport_asset_provider(
     DM2_V1_ViewportAssetFetch fetch,
     void *user);
