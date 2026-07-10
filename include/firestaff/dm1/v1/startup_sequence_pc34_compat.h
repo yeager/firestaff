@@ -742,6 +742,20 @@ typedef struct DM1_V1_CompleteSupportReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_CompleteSupportReceipt_PC34;
 
+typedef struct DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34 {
+    int handled;
+    int ready;
+    int consumed_host_probe_facts;
+    int consumed_hoc_runtime_handoff_receipt;
+    int consumed_hoc_save_capture_host_readiness;
+    int consumed_original_save_capture_receipt;
+    DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 runtime_apply;
+    DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 production_consumer;
+    DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 ownership;
+    DM1_V1_CompleteSupportReceipt_PC34 complete_support;
+    const char* source_evidence;
+} DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34;
+
 typedef struct DM1_V1_StartupHoCRenderConsumerReceipt_PC34 {
     int handled;
     int ready;
@@ -1209,6 +1223,12 @@ int dm1_v1_complete_support_receipt_pc34(
     const DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34* hoc_save,
     const DM1_V1_StartupSaveResumeCaptureReceipt_PC34* original_save,
     DM1_V1_CompleteSupportReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_boot_full_graphics_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* hoc_handoff,
+    const DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34* hoc_save,
+    const DM1_V1_StartupSaveResumeCaptureReceipt_PC34* original_save,
+    DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* out_receipt);
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,

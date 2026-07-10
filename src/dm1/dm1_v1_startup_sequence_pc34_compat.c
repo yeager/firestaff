@@ -2720,6 +2720,67 @@ int dm1_v1_complete_support_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_boot_full_graphics_receipt_pc34(
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* hoc_handoff,
+    const DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34* hoc_save,
+    const DM1_V1_StartupSaveResumeCaptureReceipt_PC34* original_save,
+    DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34 receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!facts || !hoc_handoff || !hoc_save || !original_save) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.handled = 1;
+    receipt.consumed_host_probe_facts = 1;
+    receipt.consumed_hoc_runtime_handoff_receipt =
+        hoc_handoff->handled ? 1 : 0;
+    receipt.consumed_hoc_save_capture_host_readiness =
+        hoc_save->handled ? 1 : 0;
+    receipt.consumed_original_save_capture_receipt =
+        original_save->handled ? 1 : 0;
+
+    /* ReDMCSB DM1 boot into HoC is a single chain: TITLE.C F0437,
+     * ENTRANCE.C F0797/F0441, REVIVE.C F0280, then LOADSAVE.C
+     * F0433/F0435 for save/resume.  Host code may supply observed window
+     * pixels and assets, but this receipt owns the aggregate readiness
+     * decision for M11 boot probes and M12 startup capture. */
+    if (!dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
+            facts,
+            &receipt.runtime_apply,
+            &receipt.production_consumer) ||
+        !dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+            facts,
+            &receipt.ownership) ||
+        !dm1_v1_complete_support_receipt_pc34(
+            hoc_handoff,
+            &receipt.ownership,
+            hoc_save,
+            original_save,
+            &receipt.complete_support)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C F0437; ENTRANCE.C F0797/F0441; REVIVE.C F0280; LOADSAVE.C F0433/F0435";
+    receipt.ready =
+        receipt.runtime_apply.ready &&
+        receipt.production_consumer.ready &&
+        receipt.ownership.ready &&
+        receipt.complete_support.ready &&
+        receipt.consumed_hoc_runtime_handoff_receipt &&
+        receipt.consumed_hoc_save_capture_host_readiness &&
+        receipt.consumed_original_save_capture_receipt;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,
