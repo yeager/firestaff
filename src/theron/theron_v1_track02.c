@@ -3810,6 +3810,21 @@ int theron_v1_track02_capture_level_route_receipt(
             hash *= 16777619u;
             hash ^= (uint32_t)handoff.user_data_offset;
             hash *= 16777619u;
+            out_receipt->semantic_role_mask |=
+                1u << THERON_TRACK02_SEMANTIC_LEVEL_GRID_TABLE;
+            out_receipt->level_grid_role_mapped = 1;
+            ++out_receipt->startup_level_grid_record_count;
+            if (!out_receipt->startup_level_grid_record_ready) {
+                out_receipt->startup_level_grid_record_ready = 1;
+                out_receipt->startup_level_grid_descriptor_offset =
+                    descriptor_offset;
+                out_receipt->startup_level_grid_raw_offset =
+                    candidate->absolute_offset;
+                out_receipt->startup_level_grid_user_data_offset =
+                    handoff.user_data_offset;
+                out_receipt->startup_level_grid_user_data_offset_valid =
+                    handoff.user_data_offset_valid;
+            }
         } else {
             ++out_receipt->startup_level_blocked_anchor_count;
             out_receipt->startup_level_blocked_anchor_mask |=
@@ -3832,6 +3847,12 @@ int theron_v1_track02_capture_level_route_receipt(
             out_receipt->descriptor_anchor_mask;
     }
     hash ^= out_receipt->semantic_role_mask;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->startup_level_grid_record_count;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->startup_level_grid_raw_offset;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->startup_level_grid_user_data_offset;
     hash *= 16777619u;
     hash ^= out_receipt->startup_level_blocked_anchor_mask;
     hash *= 16777619u;
