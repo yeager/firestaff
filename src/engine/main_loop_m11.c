@@ -1321,14 +1321,14 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
                                               framebuffer,
                                               M11_FB_WIDTH,
                                               M11_FB_HEIGHT,
-                                              (int)blitPlan.srcX,
-                                              (int)blitPlan.srcY,
-                                              (int)blitPlan.srcW,
-                                              (int)blitPlan.srcH,
                                               (int)blitPlan.dstX,
                                               (int)blitPlan.dstY,
                                               (int)blitPlan.dstW,
                                               (int)blitPlan.dstH,
+                                              (int)blitPlan.srcX,
+                                              (int)blitPlan.srcY,
+                                              (int)blitPlan.srcW,
+                                              (int)blitPlan.srcH,
                                               blitPlan.transparentColor);
         } else {
             if (m11_delay_ms_with_intro_event_pump(
