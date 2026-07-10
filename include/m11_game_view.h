@@ -852,6 +852,7 @@ typedef struct {
         int startup_menu_active;
         int startup_menu_selected_row;
         int startup_menu_row_count;
+        int startup_title_animation_tick;
         int startup_resume_available;
         unsigned int startup_slot_mask;
         char startup_save_root[512];
