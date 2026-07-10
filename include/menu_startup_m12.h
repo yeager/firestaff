@@ -403,6 +403,20 @@ typedef struct {
     M12_StartupBootReadiness boot;
 } M12_StartupLaunchGate;
 
+typedef struct M12_DM1HoCPresentedCaptureReceipt {
+    int handled;
+    int presentedCaptureReady;
+    int hostWindowPresent;
+    int capturedFromMacWindow;
+    int capturedFromReleaseApp;
+    int width;
+    int height;
+    int byteCount;
+    unsigned int framebufferHash;
+    unsigned int consumerMask;
+    unsigned int chainHash;
+} M12_DM1HoCPresentedCaptureReceipt;
+
 
 /* ── Redesigned main menu items (pass604) ─────────────────────────── */
 typedef enum {
@@ -554,6 +568,7 @@ typedef struct M12_StartupMenuState {
     int dataDirScanCancelled;
     M12_AssetScanProgress dataDirScanProgress;
     void* dataDirScanJob;
+    M12_DM1HoCPresentedCaptureReceipt dm1HoCPresentedCaptureReceipt;
 } M12_StartupMenuState;
 
 typedef struct M12_StartupMenuInitOptions {
@@ -616,6 +631,9 @@ const char* M12_StartupMenu_GetRetroAchievementsEndpointValue(const M12_StartupM
 int M12_StartupMenu_GetBootReadiness(const M12_StartupMenuState* state,
                                      int entryIndex,
                                      M12_StartupBootReadiness* outReadiness);
+int M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(
+    M12_StartupMenuState* state,
+    const M12_DM1HoCPresentedCaptureReceipt* receipt);
 int M12_StartupMenu_GetLaunchGate(const M12_StartupMenuState* state,
                                   int entryIndex,
                                   M12_StartupLaunchGate* outGate);
