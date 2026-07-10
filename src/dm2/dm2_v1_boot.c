@@ -5136,10 +5136,18 @@ int dm2_v1_boot_runtime_render_frame(
             dm2_v1_runtime_last_asset_creature_count();
         out_receipt->runtime_render_fallback_creature_count =
             dm2_v1_runtime_last_fallback_creature_count();
+        out_receipt->runtime_render_asset_item_count =
+            dm2_v1_runtime_last_asset_item_count();
+        out_receipt->runtime_render_fallback_item_count =
+            dm2_v1_runtime_last_fallback_item_count();
         out_receipt->runtime_render_asset_creature_possession_item_count =
             dm2_v1_runtime_last_asset_creature_possession_item_count();
         out_receipt->runtime_render_fallback_creature_possession_item_count =
             dm2_v1_runtime_last_fallback_creature_possession_item_count();
+        out_receipt->runtime_render_asset_carried_item_count =
+            dm2_v1_runtime_last_asset_carried_item_count();
+        out_receipt->runtime_render_fallback_carried_item_count =
+            dm2_v1_runtime_last_fallback_carried_item_count();
         out_receipt->runtime_render_asset_projectile_count =
             dm2_v1_runtime_last_asset_projectile_count();
         out_receipt->runtime_render_fallback_projectile_count =
@@ -5151,7 +5159,9 @@ int dm2_v1_boot_runtime_render_frame(
             out_receipt->runtime_render_fallback_wall_count == 0 &&
             out_receipt->runtime_render_fallback_door_count == 0 &&
             out_receipt->runtime_render_fallback_creature_count == 0 &&
+            out_receipt->runtime_render_fallback_item_count == 0 &&
             out_receipt->runtime_render_fallback_creature_possession_item_count == 0 &&
+            out_receipt->runtime_render_fallback_carried_item_count == 0 &&
             out_receipt->runtime_render_fallback_projectile_count == 0;
         out_receipt->runtime_render_real_asset_ready =
             out_receipt->runtime_hud_capture_ready &&
@@ -5255,12 +5265,20 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             frame_receipt.runtime_render_asset_creature_count;
         out_receipt->total_fallback_creature_count +=
             frame_receipt.runtime_render_fallback_creature_count;
+        out_receipt->total_asset_item_count +=
+            frame_receipt.runtime_render_asset_item_count;
+        out_receipt->total_fallback_item_count +=
+            frame_receipt.runtime_render_fallback_item_count;
         out_receipt->total_asset_creature_possession_item_count +=
             frame_receipt
                 .runtime_render_asset_creature_possession_item_count;
         out_receipt->total_fallback_creature_possession_item_count +=
             frame_receipt
                 .runtime_render_fallback_creature_possession_item_count;
+        out_receipt->total_asset_carried_item_count +=
+            frame_receipt.runtime_render_asset_carried_item_count;
+        out_receipt->total_fallback_carried_item_count +=
+            frame_receipt.runtime_render_fallback_carried_item_count;
         out_receipt->total_asset_projectile_count +=
             frame_receipt.runtime_render_asset_projectile_count;
         out_receipt->total_fallback_projectile_count +=
@@ -5306,6 +5324,18 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
             (uint32_t)frame_receipt.runtime_render_fallback_door_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            (uint32_t)frame_receipt.runtime_render_asset_item_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            (uint32_t)frame_receipt.runtime_render_fallback_item_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            (uint32_t)frame_receipt.runtime_render_asset_carried_item_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            (uint32_t)frame_receipt.runtime_render_fallback_carried_item_count);
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
             (uint32_t)frame_receipt.runtime_render_asset_creature_count);
@@ -5877,7 +5907,9 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_hud.interface_font_table_ready &&
         out_receipt->runtime_hud.total_fallback_door_count == 0 &&
         out_receipt->runtime_hud.total_fallback_creature_count == 0 &&
+        out_receipt->runtime_hud.total_fallback_item_count == 0 &&
         out_receipt->runtime_hud.total_fallback_creature_possession_item_count == 0 &&
+        out_receipt->runtime_hud.total_fallback_carried_item_count == 0 &&
         out_receipt->runtime_hud.total_fallback_projectile_count == 0;
     out_receipt->runtime_gdat_map_chip_categories_complete =
         out_receipt->runtime_hud.dungeon_map_chip_graphicsset_ready &&
@@ -5949,6 +5981,14 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         hash, (uint32_t)out_receipt->runtime_hud.min_asset_floor_ceiling_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->runtime_hud.min_asset_wall_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud.total_asset_item_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud.total_fallback_item_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud.total_asset_carried_item_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud.total_fallback_carried_item_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud.raw_gdat_runtime_portrait_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(

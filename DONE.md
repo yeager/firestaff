@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM2 item/carried full-GDAT fallback gate: boot/runtime render receipts now carry floor-item and carried-item asset/fallback counts from the V1 viewport renderer, and complete-support rejects item/carried fallback draws alongside wall, door, creature, possession-item, and projectile fallback draws.
+
 - ✅ 2026-07-11 DM1 M12 corpus receipt consumer: startup menu now exposes DM1 PC34 corpus import/export receipt wrappers, so launcher code consumes the save-browser ReDMCSB `SAVEHEAD.C` F0429/F0430 plus `CEDTINCD.C` F7057 gates instead of raw selected-save diagnostics. Verification: `cmake --build build --target test_m12_quick_resume_gate --parallel 2`, `timeout 60 ./build/test_m12_quick_resume_gate`, and `git diff --check` passed.
 
 - ✅ 2026-07-11 DM2 skproject interface font-table receipt: runtime HUD/dungeon capture now parses `SkWinCore.cpp _3929_0e16` plus `QUERY_FONT` semantics from real `INTERFACE_GENERAL` `dt07/0x00`, including the 0x300-byte table, 6 rows, 128 character slots, printable coverage, and deterministic hash. Complete-support now requires this typed interface text receipt, while optional `dt07/0x0A` rect14 is validated only when the local data variant includes it. Verification: `cmake --build build --target test_dm2_v1_boot_profile_smoke --parallel 2`, `./build/test_dm2_v1_boot_profile_smoke` PASS 80/80, and `git diff --check` passed.

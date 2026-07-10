@@ -187,6 +187,8 @@ typedef struct DM2_V1_RuntimeDoorRenderReceipt {
 } DM2_V1_RuntimeDoorRenderReceipt;
 int dm2_v1_runtime_last_door_render_receipt(
     DM2_V1_RuntimeDoorRenderReceipt *out_receipt);
+int dm2_v1_runtime_last_asset_item_count(void);
+int dm2_v1_runtime_last_fallback_item_count(void);
 int dm2_v1_runtime_last_asset_carried_item_count(void);
 int dm2_v1_runtime_last_fallback_carried_item_count(void);
 typedef struct DM2_V1_RuntimeItemRenderReceipt {
