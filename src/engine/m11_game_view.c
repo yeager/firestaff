@@ -65,6 +65,7 @@
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
+#include "dm1_v1_live_action_effects_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
@@ -4825,6 +4826,37 @@ static void m11_set_status(M11_GameViewState* state,
 static void m11_refresh_hash(M11_GameViewState* state);
 static void m11_mark_explored(M11_GameViewState* state);
 
+static void m11_discard_transient_dm1_action_effects_after_resume(
+    M11_GameViewState* state)
+{
+    int i;
+    if (!state) return;
+    /* ReDMCSB TIMELINE.C F0253 owns removal of the F0407 defense delta.
+     * The Firestaff sidecar intentionally does not serialize live action
+     * receipts, so remove any pre-resume projection before accepting the
+     * restored world; otherwise a stale UI lock can remove defense later. */
+    for (i = 0; i < state->world.party.championCount && i < CHAMPION_MAX_PARTY; ++i) {
+        if (state->world.party.champions[i].actionIndex < 44u) {
+            DM1_ActionDefenseInputPc34 input;
+            DM1_ActionDefensePlanPc34 plan;
+            memset(&input, 0, sizeof(input));
+            memset(&plan, 0, sizeof(plan));
+            input.actionIndex = (int)state->world.party.champions[i].actionIndex;
+            if (dm1_v1_action_defense_remove_plan_f0407_pc34(&input, &plan) &&
+                plan.valid) {
+                state->world.party.champions[i].actionDefense += plan.defenseDelta;
+                state->world.party.champions[i].actionIndex =
+                    (unsigned char)plan.resultingActionIndex;
+            }
+        }
+    }
+    memset(&state->dm1LiveActionEffects, 0, sizeof(state->dm1LiveActionEffects));
+    memset(state->actionDisabledTicks, 0, sizeof(state->actionDisabledTicks));
+    memset(state->actionDisabledIndex, 0xFF, sizeof(state->actionDisabledIndex));
+    memset(state->actionEnableSlotOrdinal, 0xFF, sizeof(state->actionEnableSlotOrdinal));
+    memset(state->pendingShootReadyHandRefill, 0, sizeof(state->pendingShootReadyHandRefill));
+}
+
 int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
                                  const char* path,
                                  int* outUsedBackup)
@@ -4872,6 +4904,7 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
         return 0;
     }
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+    m11_discard_transient_dm1_action_effects_after_resume(state);
     m11_refresh_hash(state);
     m11_mark_explored(state);
     memset(&resumeRequest, 0, sizeof(resumeRequest));
@@ -5770,41 +5803,77 @@ static int m11_refill_ready_hand_after_shoot(M11_GameViewState* state,
                                              int championIndex);
 
 static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
+    DM1_V1_LiveActionEffectsAdvancePlanPc34 advancePlan;
     int i;
     if (!state) return;
-    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
-        if (state->actionDisabledTicks[i] > 0) {
-            state->actionDisabledTicks[i]--;
-            if (state->actionDisabledTicks[i] == 0) {
-                if (i < state->world.party.championCount &&
-                    state->actionDisabledIndex[i] < 44) {
-                    DM1_ActionDefenseInputPc34 defenseIn;
-                    DM1_ActionDefensePlanPc34 defensePlan;
-                    memset(&defenseIn, 0, sizeof(defenseIn));
-                    memset(&defensePlan, 0, sizeof(defensePlan));
-                    defenseIn.actionIndex = (int)state->actionDisabledIndex[i];
-                    if (dm1_v1_action_defense_remove_plan_f0407_pc34(
-                            &defenseIn, &defensePlan) &&
-                        defensePlan.valid) {
-                        state->world.party.champions[i].actionDefense +=
-                            defensePlan.defenseDelta;
-                        state->world.party.champions[i].actionIndex =
-                            (unsigned char)defensePlan.resultingActionIndex;
-                    }
-                }
-                if (state->pendingShootReadyHandRefill[i]) {
-                    /* ReDMCSB: TIMELINE.C C11 enable-action handling
-                     * lines ~1597-1607 refills the ready hand from
-                     * compatible quiver ammunition when the champion action
-                     * disable event closes, not immediately in F0407. */
-                    state->pendingShootReadyHandRefill[i] = 0u;
-                    (void)m11_refill_ready_hand_after_shoot(state, i);
-                }
-                state->actionDisabledIndex[i] = 0xFFu;
-                state->actionEnableSlotOrdinal[i] = 0xFFu;
+    memset(&advancePlan, 0, sizeof(advancePlan));
+    if (!dm1_v1_live_action_effects_advance_pc34(
+            &state->dm1LiveActionEffects, state->world.gameTick,
+            &advancePlan)) return;
+    for (i = 0; i < advancePlan.expiredCount; ++i) {
+        int championIndex = advancePlan.expiredChampionIndex[i];
+        int actionIndex = advancePlan.expiredActionIndex[i];
+        if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) continue;
+        state->actionDisabledTicks[championIndex] = 0u;
+        if (championIndex < state->world.party.championCount &&
+            actionIndex >= 0 && actionIndex < 44) {
+            DM1_ActionDefenseInputPc34 defenseIn;
+            DM1_ActionDefensePlanPc34 defensePlan;
+            memset(&defenseIn, 0, sizeof(defenseIn));
+            memset(&defensePlan, 0, sizeof(defensePlan));
+            defenseIn.actionIndex = actionIndex;
+            if (dm1_v1_action_defense_remove_plan_f0407_pc34(
+                    &defenseIn, &defensePlan) && defensePlan.valid) {
+                state->world.party.champions[championIndex].actionDefense +=
+                    defensePlan.defenseDelta;
+                state->world.party.champions[championIndex].actionIndex =
+                    (unsigned char)defensePlan.resultingActionIndex;
             }
         }
+        if (state->pendingShootReadyHandRefill[championIndex]) {
+            state->pendingShootReadyHandRefill[championIndex] = 0u;
+            (void)m11_refill_ready_hand_after_shoot(state, championIndex);
+        }
+        state->actionDisabledIndex[championIndex] = 0xFFu;
+        state->actionEnableSlotOrdinal[championIndex] = 0xFFu;
     }
+}
+
+static void m11_materialize_action_lock(M11_GameViewState* state,
+                                        int championIndex,
+                                        int actionIndex,
+                                        int ticks) {
+    DM1_V1_LiveActionEffectInputPc34 input;
+    if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY || ticks <= 0) return;
+    memset(&input, 0, sizeof(input));
+    input.kind = DM1_V1_LIVE_ACTION_EFFECT_ACTION_LOCK_PC34;
+    input.championIndex = championIndex;
+    input.actionIndex = actionIndex;
+    input.disabledTicks = ticks;
+    input.sourceTick = state->world.gameTick;
+    (void)dm1_v1_live_action_effect_materialize_pc34(
+        &state->dm1LiveActionEffects, &input, NULL);
+    state->actionDisabledTicks[championIndex] =
+        ticks > 255 ? 255u : (unsigned char)ticks;
+}
+
+static void m11_materialize_action_result(M11_GameViewState* state,
+                                          int kind, int championIndex,
+                                          int actionIndex, int damage,
+                                          int combatOutcome, int doorAffected) {
+    DM1_V1_LiveActionEffectInputPc34 input;
+    if (!state) return;
+    memset(&input, 0, sizeof(input));
+    input.kind = kind;
+    input.championIndex = championIndex;
+    input.actionIndex = actionIndex;
+    input.damage = damage;
+    input.combatOutcome = combatOutcome;
+    input.doorAffected = doorAffected;
+    input.disabledTicks = 1;
+    input.sourceTick = state->world.gameTick;
+    (void)dm1_v1_live_action_effect_materialize_pc34(
+        &state->dm1LiveActionEffects, &input, NULL);
 }
 
 static void m11_disable_champion_action_after_spell_f0412(
@@ -5814,8 +5883,6 @@ static void m11_disable_champion_action_after_spell_f0412(
     if (!state) return;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
     if (ticks <= 0) return;
-    state->actionDisabledTicks[championIndex] =
-        ticks > 255 ? 255u : (unsigned char)ticks;
     /* ReDMCSB: MENU.C F0412 lines 2034-2039 calls F0330 after
      * successful spell XP.  Spells do not assign Champion.ActionIndex;
      * TIMELINE.C F0253 only removes G0495 defense if an action index is
@@ -5824,6 +5891,8 @@ static void m11_disable_champion_action_after_spell_f0412(
     if (state->actionDisabledIndex[championIndex] >= 44u) {
         state->actionDisabledIndex[championIndex] = 0xFFu;
     }
+    m11_materialize_action_lock(state, championIndex,
+                                (int)state->actionDisabledIndex[championIndex], ticks);
     state->actionEnableSlotOrdinal[championIndex] = 0u;
 }
 
@@ -5838,10 +5907,9 @@ static void m11_disable_champion_action_f0328_throw(
      * F0330 initializes the enable-action event SlotOrdinal to 0; F0407
      * may later overwrite it with C01_SLOT_ACTION_HAND for action-row
      * THROW after F0328 succeeds. */
-    state->actionDisabledTicks[championIndex] =
-        ticks > 255 ? 255u : (unsigned char)ticks;
     state->actionDisabledIndex[championIndex] = 0xFFu;
     state->actionEnableSlotOrdinal[championIndex] = 0u;
+    m11_materialize_action_lock(state, championIndex, 0xFF, ticks);
 }
 
 /* ── Apply sensor effects from movement pipeline ──
@@ -9870,6 +9938,10 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                     !meleeEmissionPlan.showDamageFeedback) {
                     break;
                 }
+                m11_materialize_action_result(
+                    state, DM1_V1_LIVE_ACTION_EFFECT_DAMAGE_PC34,
+                    (int)e->payload[0], -1, meleeEmissionPlan.damage,
+                    (int)e->payload[3], 0);
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: DAMAGE %d DEALT",
                               (unsigned int)state->world.gameTick,
@@ -9949,6 +10021,9 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                          (int)e->payload[2]);
                 break;
             case EMIT_DOOR_STATE:
+                m11_materialize_action_result(
+                    state, DM1_V1_LIVE_ACTION_EFFECT_DOOR_PC34,
+                    -1, -1, 0, COMBAT_OUTCOME_INVALID, 1);
                 m11_log_event(state, M11_COLOR_YELLOW,
                               "T%u: DOOR STATE CHANGED",
                               (unsigned int)state->world.gameTick);
@@ -9963,6 +10038,9 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 int sSkill = (int)EMIT_SPELL_EFFECT_UNPACK_SKILL(e->payload[3]);
                 int sXp = (int)EMIT_SPELL_EFFECT_UNPACK_XP(e->payload[3]);
                 const char* kindStr = "SPELL";
+                m11_materialize_action_result(
+                    state, DM1_V1_LIVE_ACTION_EFFECT_SPELL_PC34,
+                    sChamp, -1, sPow, sKind, 0);
                 if (sKind == C2_SPELL_KIND_PROJECTILE_COMPAT) kindStr = "PROJECTILE";
                 else if (sKind == C3_SPELL_KIND_OTHER_COMPAT) kindStr = "ENCHANTMENT";
                 else if (sKind == C1_SPELL_KIND_POTION_COMPAT) kindStr = "POTION";
@@ -12669,6 +12747,7 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
         return 0;
     }
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+    m11_discard_transient_dm1_action_effects_after_resume(state);
     m11_refresh_hash(state);
     (void)m11_load_quicksave_explored_bits(state, path);
     (void)m11_load_quicksave_v1_runtime(state, path);
@@ -25618,6 +25697,11 @@ static int m11_apply_action_completion_plan_f0407(
         (unsigned char)plan.actionDisabledIndex;
     state->actionEnableSlotOrdinal[championIndex] =
         (unsigned char)plan.actionEnableSlotOrdinal;
+    if (plan.disabledTicks > 0) {
+        m11_materialize_action_lock(state, championIndex,
+                                    plan.actionDisabledIndex,
+                                    plan.disabledTicks);
+    }
     if (plan.shouldRefillReadyHandNow) {
         state->pendingShootReadyHandRefill[championIndex] = 0u;
         (void)m11_refill_ready_hand_after_shoot(state, championIndex);
@@ -31766,6 +31850,13 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
             performed = meleeOutcomePlan.performed;
             disabledTicks = (unsigned char)meleeOutcomePlan.disabledTicks;
         }
+        m11_materialize_action_result(
+            state,
+            observedDamage > 0 ? DM1_V1_LIVE_ACTION_EFFECT_DAMAGE_PC34 :
+                                DM1_V1_LIVE_ACTION_EFFECT_MISS_PC34,
+            championIndex, (int)chosen, observedDamage,
+            observedCombatOutcome,
+            meleeOutcomeIn.closedDoorBranchPerformed);
         (void)m11_apply_action_completion_plan_f0407(
             state, championIndex, chosen, performed, 0,
             meleeOutcomePlan.meleeFailureTail,
