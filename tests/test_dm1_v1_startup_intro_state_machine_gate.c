@@ -3005,6 +3005,42 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  save_resume_capture.observed_champion_portrait_count == 4 &&
                  strcmp(save_resume_capture.resume_path, "/tmp/combined.sav") == 0,
              1);
+    hoc_host_probe_facts.consumed_hoc_host_render_receipt = 1;
+    hoc_host_probe_facts.consumed_m11_boot_probe_consumer = 1;
+    hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 1;
+    hoc_host_probe_facts.captured_from_real_assets = 1;
+    hoc_host_probe_facts.observed_required_graphics_hash_match = 1;
+    hoc_host_probe_facts.observed_required_dungeon_hash_match = 1;
+    hoc_host_probe_facts.captured_from_mac_window = 1;
+    hoc_host_probe_facts.captured_from_release_app = 1;
+    hoc_host_probe_facts.observed_c026_portrait_asset = 1;
+    hoc_host_probe_facts.observed_c346_mirror_backing_asset = 1;
+    hoc_host_probe_facts.observed_host_window_present = 1;
+    hoc_host_probe_facts.observed_presented_rgba_capture = 1;
+    hoc_host_probe_facts.presented_capture_width = 320;
+    hoc_host_probe_facts.presented_capture_height = 200;
+    hoc_host_probe_facts.presented_capture_byte_count = 320 * 200 * 4;
+    hoc_host_probe_facts.presented_capture_hash = 0x4d314843u;
+    hoc_host_probe_facts.presented_capture_consumer_mask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34;
+    hoc_host_probe_facts.presented_capture_chain_hash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            hoc_host_probe_facts.presented_capture_width,
+            hoc_host_probe_facts.presented_capture_height,
+            hoc_host_probe_facts.presented_capture_byte_count,
+            hoc_host_probe_facts.presented_capture_hash,
+            hoc_host_probe_facts.presented_capture_consumer_mask);
+    hoc_host_probe_facts.launch_path_started_from_launcher = 1;
+    hoc_host_probe_facts.launch_path_intro_not_bypassed = 1;
+    expect_i("DM1 HoC release/app ownership restores positive host route",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 hoc_release_capture_ownership.ready &&
+                 hoc_release_capture_ownership.launch_path_started_from_launcher &&
+                 hoc_release_capture_ownership.launch_path_intro_not_bypassed,
+             1);
     memset(&hoc_save_capture_readiness, 0,
            sizeof(hoc_save_capture_readiness));
     expect_i("DM1 HoC save-capture host readiness consumes complete HoC path",
@@ -3076,6 +3112,20 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  !complete_support.complete_original_save_roundtrip_route,
              1);
     save_resume_capture.original_save_roundtrip_route_ready = 1;
+    save_resume_capture.observed_champion_portrait_count = 3;
+    expect_i("DM1 complete support rejects partial champion portrait corpus",
+             dm1_v1_complete_support_receipt_pc34(
+                 &hoc_enter_handoff,
+                 &hoc_release_capture_ownership,
+                 &hoc_save_capture_readiness,
+                 &save_resume_capture,
+                 &complete_support) &&
+                 complete_support.handled &&
+                 !complete_support.ready &&
+                 !complete_support.redmcsb_save_part_corpus_ready,
+             1);
+    save_resume_capture.observed_champion_portrait_count =
+        DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
     save_resume_facts.observed_save_part_count = 4;
     expect_i("DM1 save/resume capture rejects partial save corpus",
              dm1_v1_startup_save_resume_capture_receipt_pc34(

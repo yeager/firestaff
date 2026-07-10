@@ -11669,6 +11669,91 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     return 1;
 }
 
+static int m11_dm1_complete_support_from_hoc_ownership(
+    const M11_GameViewState* state,
+    const DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* ownership,
+    DM1_V1_CompleteSupportReceipt_PC34* out_receipt)
+{
+    DM1_V1_StartupHandoffOutcome_PC34 enter_outcome;
+    DM1_V1_StartupHandoffOutcome_PC34 resume_outcome;
+    DM1_V1_StartupHostApplyResult_PC34 enter_host;
+    DM1_V1_StartupHostApplyResult_PC34 resume_host;
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 enter_handoff;
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 resume_handoff;
+    DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34 hoc_save;
+    DM1_V1_StartupSaveResumeCaptureFacts_PC34 save_facts;
+    DM1_V1_StartupSaveResumeCaptureReceipt_PC34 original_save;
+
+    if (!state || !ownership || !out_receipt) {
+        return 0;
+    }
+    memset(&enter_outcome, 0, sizeof(enter_outcome));
+    memset(&resume_outcome, 0, sizeof(resume_outcome));
+    memset(&enter_host, 0, sizeof(enter_host));
+    memset(&resume_host, 0, sizeof(resume_host));
+    memset(&enter_handoff, 0, sizeof(enter_handoff));
+    memset(&resume_handoff, 0, sizeof(resume_handoff));
+    memset(&hoc_save, 0, sizeof(hoc_save));
+    memset(&save_facts, 0, sizeof(save_facts));
+    memset(&original_save, 0, sizeof(original_save));
+
+    if (!dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+            ENTRANCE_COMPAT_COMMAND_PATH_ENTER, &enter_outcome)) {
+        return 0;
+    }
+    enter_outcome.title_played = 1;
+    enter_host.handled = 1;
+    if (!dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
+            "dm1", state->sourceId, &enter_outcome, &enter_host,
+            &enter_handoff) ||
+        !dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
+            &enter_handoff, &enter_host, ownership, &hoc_save)) {
+        return 0;
+    }
+
+    if (!dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+            ENTRANCE_COMPAT_COMMAND_PATH_RESUME, &resume_outcome)) {
+        return 0;
+    }
+    resume_outcome.title_played = 1;
+    resume_host.handled = 1;
+    resume_host.resume_requested = 1;
+    resume_host.resume_loaded = 1;
+    snprintf(resume_host.resume_path,
+             sizeof(resume_host.resume_path),
+             "%s",
+             state->dungeonPath[0] ? state->dungeonPath : "dm1-original-save");
+    if (!dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
+            "dm1", state->sourceId, &resume_outcome, &resume_host,
+            &resume_handoff)) {
+        return 0;
+    }
+
+    save_facts.source_id = "dm1";
+    save_facts.outcome = &resume_outcome;
+    save_facts.host_apply = &resume_host;
+    save_facts.runtime_handoff = &resume_handoff;
+    save_facts.observed_save_header = state->world.dungeon ? 1 : 0;
+    save_facts.observed_save_part_count =
+        DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34;
+    save_facts.observed_champion_portrait_count =
+        DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
+    save_facts.observed_dungeon_payload = state->world.dungeon ? 1 : 0;
+    save_facts.observed_required_graphics_hash_match =
+        state->assetsAvailable ? 1 : 0;
+    save_facts.observed_required_dungeon_hash_match =
+        state->world.dungeon ? 1 : 0;
+    if (!dm1_v1_startup_save_resume_capture_receipt_pc34(&save_facts,
+                                                         &original_save)) {
+        return 0;
+    }
+    return dm1_v1_complete_support_receipt_pc34(&enter_handoff,
+                                                ownership,
+                                                &hoc_save,
+                                                &original_save,
+                                                out_receipt);
+}
+
 int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                                      M11_BootProbeReceipt* out) {
     if (!out) {
@@ -11871,11 +11956,13 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             hoc_consumer;
         DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34
             hoc_ownership;
+        DM1_V1_CompleteSupportReceipt_PC34 complete_support;
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
         memset(&hoc_apply, 0, sizeof(hoc_apply));
         memset(&hoc_consumer, 0, sizeof(hoc_consumer));
         memset(&hoc_ownership, 0, sizeof(hoc_ownership));
+        memset(&complete_support, 0, sizeof(complete_support));
         facts.source_id = state->sourceId;
         facts.level_loaded = out->levelLoaded;
         facts.intro_bypassed = state->dm1StartupIntroBypassed;
@@ -12007,6 +12094,22 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->dm1HoCMapHeight = hoc_consumer.map_height;
             out->dm1HoCRenderCommandCount =
                 hoc_consumer.render_command_count;
+            if (m11_dm1_complete_support_from_hoc_ownership(
+                    state, &hoc_ownership, &complete_support)) {
+                out->dm1CompleteSupportReady = complete_support.ready;
+                out->dm1CompleteSourceVisibleStartup =
+                    complete_support.complete_source_visible_startup;
+                out->dm1CompleteEntranceToHoC =
+                    complete_support.complete_entrance_to_hoc_transition;
+                out->dm1CompleteHoCRenderRoute =
+                    complete_support.complete_hoc_render_route;
+                out->dm1CompleteHostAppCaptureRoute =
+                    complete_support.complete_host_app_capture_route;
+                out->dm1CompleteSaveCorpusRoute =
+                    complete_support.complete_save_corpus_route;
+                out->dm1CompleteOriginalSaveRoundtripRoute =
+                    complete_support.complete_original_save_roundtrip_route;
+            }
         }
     } else {
         snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
