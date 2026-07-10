@@ -909,6 +909,11 @@ typedef struct CSB_V1_StartupReleaseAppCaptureReceipt_PC34 {
     int closed_door_release_app_capture_ready;
     int utility_release_app_capture_ready;
     int door_opening_release_app_capture_ready;
+    int title_host_consumer_ready;
+    int closed_door_host_consumer_ready;
+    int utility_host_consumer_ready;
+    int door_opening_host_consumer_ready;
+    int route_specific_host_consumers_ready;
     int title_phase_route_complete;
     int runtime_host_routes_ready;
     int draw_consumes_receipt_only;
