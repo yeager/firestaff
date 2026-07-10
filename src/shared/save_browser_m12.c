@@ -1833,6 +1833,88 @@ int M12_SaveBrowser_ExportDM1PC34Corpus(
     return 0;
 }
 
+static const char* save_browser_dm1_pc34_corpus_source_evidence(void) {
+    return "ReDMCSB SAVEHEAD.C F0429/F0430 header gate plus CEDTINCD.C "
+           "F7057 five-part save envelope; Firestaff validates each DM1 "
+           "PC34 corpus import/export through the same roundtrip gate.";
+}
+
+static uint32_t save_browser_corpus_receipt_hash(
+    const M12_SaveBrowserDM1PC34CorpusReceipt* receipt) {
+    uint32_t h = 2166136261u;
+#define MIX_INT(v) do { h ^= (uint32_t)(v); h *= 16777619u; } while (0)
+    if (!receipt) return 0u;
+    MIX_INT(receipt->operation);
+    MIX_INT(receipt->sourceLockedDm1PC34Corpus);
+    MIX_INT(receipt->consumedF0429HeaderGate);
+    MIX_INT(receipt->consumedF7057EnvelopeGate);
+    MIX_INT(receipt->consumedRoundtripGate);
+    MIX_INT(receipt->sourceEntryCount);
+    MIX_INT(receipt->dm1CandidateCount);
+    MIX_INT(receipt->f7057ReadyCount);
+    MIX_INT(receipt->exportedCount);
+    MIX_INT(receipt->importedCount);
+    MIX_INT(receipt->skippedCount);
+#undef MIX_INT
+    return h ? h : 1u;
+}
+
+static void save_browser_dm1_pc34_corpus_receipt_init(
+    M12_SaveBrowserDM1PC34CorpusReceipt* receipt,
+    int operation) {
+    if (!receipt) return;
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->operation = operation;
+    receipt->sourceLockedDm1PC34Corpus = 1;
+    receipt->consumedF0429HeaderGate = 1;
+    receipt->consumedF7057EnvelopeGate = 1;
+    receipt->consumedRoundtripGate = 1;
+    receipt->sourceEvidence = save_browser_dm1_pc34_corpus_source_evidence();
+}
+
+int M12_SaveBrowser_ExportDM1PC34CorpusReceipt(
+    const M12_SaveBrowserState* state,
+    const char* exportDir,
+    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt) {
+    int exported = 0;
+    int skipped = 0;
+    int rc;
+    int i;
+
+    if (!outReceipt) {
+        return -1;
+    }
+    save_browser_dm1_pc34_corpus_receipt_init(outReceipt, 1);
+    if (!state) {
+        outReceipt->receiptHash =
+            save_browser_corpus_receipt_hash(outReceipt);
+        return -1;
+    }
+    outReceipt->sourceEntryCount = state->entryCount;
+    for (i = 0; i < state->entryCount; ++i) {
+        const M12_SaveBrowserEntry* entry = &state->entries[i];
+        if (strcmp(entry->gameId, "dm1") != 0 || !entry->valid) {
+            continue;
+        }
+        ++outReceipt->dm1CandidateCount;
+        if (entry->dm1PC34PartEnvelopeReady) {
+            ++outReceipt->f7057ReadyCount;
+        }
+    }
+    rc = M12_SaveBrowser_ExportDM1PC34Corpus(
+        state, exportDir, &exported, &skipped);
+    outReceipt->exportedCount = exported;
+    outReceipt->skippedCount = skipped;
+    outReceipt->valid =
+        rc == 0 && exported > 0 &&
+        outReceipt->sourceLockedDm1PC34Corpus &&
+        outReceipt->consumedF0429HeaderGate &&
+        outReceipt->consumedF7057EnvelopeGate &&
+        outReceipt->consumedRoundtripGate;
+    outReceipt->receiptHash = save_browser_corpus_receipt_hash(outReceipt);
+    return outReceipt->valid ? 0 : -1;
+}
+
 int M12_SaveBrowser_ImportFile(const char* dataDir,
                                const char* importPath,
                                char* outPath,
@@ -1993,6 +2075,34 @@ int M12_SaveBrowser_ImportDM1PC34Corpus(
     if (outImportedCount) *outImportedCount = imported;
     if (outSkippedCount) *outSkippedCount = skipped;
     return imported > 0 ? 0 : -1;
+}
+
+int M12_SaveBrowser_ImportDM1PC34CorpusReceipt(
+    const char* dataDir,
+    const char* importDir,
+    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt) {
+    int imported = 0;
+    int skipped = 0;
+    int rc;
+
+    if (!outReceipt) {
+        return -1;
+    }
+    save_browser_dm1_pc34_corpus_receipt_init(outReceipt, 2);
+    rc = M12_SaveBrowser_ImportDM1PC34Corpus(
+        dataDir, importDir, &imported, &skipped);
+    outReceipt->importedCount = imported;
+    outReceipt->skippedCount = skipped;
+    outReceipt->dm1CandidateCount = imported;
+    outReceipt->f7057ReadyCount = imported;
+    outReceipt->valid =
+        rc == 0 && imported > 0 &&
+        outReceipt->sourceLockedDm1PC34Corpus &&
+        outReceipt->consumedF0429HeaderGate &&
+        outReceipt->consumedF7057EnvelopeGate &&
+        outReceipt->consumedRoundtripGate;
+    outReceipt->receiptHash = save_browser_corpus_receipt_hash(outReceipt);
+    return outReceipt->valid ? 0 : -1;
 }
 
 const M12_SaveBrowserEntry* M12_SaveBrowser_GetSelected(

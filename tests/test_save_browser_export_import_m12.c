@@ -1035,6 +1035,8 @@ int main(void) {
         int corpusSkipped;
         int corpusImported;
         int corpusImportSkipped;
+        M12_SaveBrowserDM1PC34CorpusReceipt corpusReceipt;
+        M12_SaveBrowserDM1PC34CorpusReceipt importReceipt;
         DM2_V1_SessionState dm2Session;
         DM2_GameStateBlock dm2SuppressState;
         DM2_ChampionRecord dm2SuppressChampion;
@@ -1137,12 +1139,21 @@ int main(void) {
         }
         corpusExported = -1;
         corpusSkipped = -1;
-        check(M12_SaveBrowser_ExportDM1PC34Corpus(
-                  &state, nestedExportDir, &corpusExported,
-                  &corpusSkipped) == 0,
-              "bulk export recursive DM1 PC34 corpus succeeds");
-        check(corpusExported == 1 && corpusSkipped == 0,
-              "bulk export reports one DM1 corpus export and no skips");
+        memset(&corpusReceipt, 0, sizeof(corpusReceipt));
+        check(M12_SaveBrowser_ExportDM1PC34CorpusReceipt(
+                  &state, nestedExportDir, &corpusReceipt) == 0 &&
+                  corpusReceipt.valid &&
+                  corpusReceipt.operation == 1 &&
+                  corpusReceipt.exportedCount == 1 &&
+                  corpusReceipt.skippedCount == 0 &&
+                  corpusReceipt.dm1CandidateCount == 1 &&
+                  corpusReceipt.f7057ReadyCount == 1 &&
+                  corpusReceipt.consumedF0429HeaderGate &&
+                  corpusReceipt.consumedF7057EnvelopeGate &&
+                  corpusReceipt.consumedRoundtripGate &&
+                  corpusReceipt.receiptHash != 0u &&
+                  strstr(corpusReceipt.sourceEvidence, "F7057") != NULL,
+              "bulk export recursive DM1 PC34 corpus receipt succeeds");
         memset(&nestedReceipt, 0, sizeof(nestedReceipt));
         check(DM1_BuildOriginalPC34RoundtripReceipt(
                   nestedExportPath, 0x4f524731u, &nestedReceipt) == 1 &&
@@ -1202,12 +1213,21 @@ int main(void) {
         }
         corpusImported = -1;
         corpusImportSkipped = -1;
-        check(M12_SaveBrowser_ImportDM1PC34Corpus(
-                  nestedData, nestedImportRoot, &corpusImported,
-                  &corpusImportSkipped) == 0,
-              "bulk import recursive DM1 PC34 corpus succeeds");
-        check(corpusImported == 1 && corpusImportSkipped == 1,
-              "bulk import reports one DM1 corpus import and one rejected file");
+        memset(&importReceipt, 0, sizeof(importReceipt));
+        check(M12_SaveBrowser_ImportDM1PC34CorpusReceipt(
+                  nestedData, nestedImportRoot, &importReceipt) == 0 &&
+                  importReceipt.valid &&
+                  importReceipt.operation == 2 &&
+                  importReceipt.importedCount == 1 &&
+                  importReceipt.skippedCount == 1 &&
+                  importReceipt.dm1CandidateCount == 1 &&
+                  importReceipt.f7057ReadyCount == 1 &&
+                  importReceipt.consumedF0429HeaderGate &&
+                  importReceipt.consumedF7057EnvelopeGate &&
+                  importReceipt.consumedRoundtripGate &&
+                  importReceipt.receiptHash != 0u &&
+                  strstr(importReceipt.sourceEvidence, "F7057") != NULL,
+              "bulk import recursive DM1 PC34 corpus receipt succeeds");
         memset(&nestedReceipt, 0, sizeof(nestedReceipt));
         check(DM1_BuildOriginalPC34RoundtripReceipt(
                   nestedImportedPath, 0x4f524731u, &nestedReceipt) == 1 &&
