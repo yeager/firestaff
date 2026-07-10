@@ -2826,6 +2826,10 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.render_plan_valid &&
               host_view_receipt.render_draw_valid &&
               host_view_receipt.render_draw.title_draw_ready &&
+              strstr(host_view_receipt.render_draw.source_evidence,
+                     "TITLE.C F0437") != NULL &&
+              strstr(host_view_receipt.render_draw.source_evidence,
+                     "ENTRANCE.C F0441") != NULL &&
               host_view_receipt.render_draw.primitive_commands_ready &&
               host_view_receipt.render_draw.title_asset_commands_ready &&
               host_view_receipt.readiness_valid &&
@@ -2857,6 +2861,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_draw_receipt.render_executed &&
               !host_view_draw_receipt.hud_menu_executed &&
               host_view_draw_receipt.real_asset_matched &&
+              strstr(host_view_draw_receipt.source_evidence,
+                     "ENTRANCE.C F0580") != NULL &&
               host_view_draw_receipt.primitive_commands_consumed &&
               host_view_draw_receipt.title_asset_commands_consumed &&
               !host_view_draw_receipt.closed_door_asset_commands_consumed &&
