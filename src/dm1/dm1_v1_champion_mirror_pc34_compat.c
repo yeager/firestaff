@@ -602,10 +602,17 @@ int DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
     decision.valid = 1;
     decision.consumedF0172Sensor = 1;
     decision.consumedF0115ThingReceipt = decision.thingConsumer.valid;
+    decision.drawFrontWallOverlay =
+        decision.render.drawMirrorBacking &&
+        decision.hostDraw.suppressHostFallbackVisuals;
     decision.drawChampionPortraitAsWallOverlay =
         decision.thingConsumer.drawChampionPortraitAsWallOverlay;
     decision.drawFloorObject = decision.thingConsumer.drawFloorObject;
     decision.drawRuntimeProjectile = decision.thingConsumer.drawRuntimeProjectile;
+    /* F0115's later explosion restart is independent of the mirror.  M11
+     * must receive an explicit receipt before it can draw that material. */
+    decision.drawRuntimeSpellEffect =
+        decision.thingConsumer.runtimeProjectileReceiptRequired ? 0 : 1;
     decision.suppressMaterializedItemPayload =
         decision.thingConsumer.suppressMaterializedItemPayload;
     decision.suppressMirrorAsFloorItem =
@@ -614,6 +621,8 @@ int DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
         decision.thingConsumer.suppressMirrorAsProjectile;
     decision.suppressMirrorAsSpellEffect =
         decision.thingConsumer.suppressMirrorAsSpellEffect;
+    decision.suppressHostFallbackVisuals =
+        decision.hostDraw.suppressHostFallbackVisuals;
     *outDecision = decision;
     return 1;
 }
