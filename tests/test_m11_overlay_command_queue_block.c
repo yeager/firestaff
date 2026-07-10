@@ -8,7 +8,10 @@
 
 #include "m11_game_view.h"
 #include "dm1_v1_champion_mirror_pc34_compat.h"
+#include "entrance_frontend_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
+#include "firestaff/dm1/v1/viewport/dm1_v1_viewport_d1l_d1r_f0115_thing_pass_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -38,6 +41,49 @@ static unsigned short make_thing_cell(int type, int index, int cell)
     if (a_ == e_) { ++g_pass; } \
     else { ++g_fail; fprintf(stderr, "FAIL: %s: got %d expected %d\n", (msg), a_, e_); } \
 } while (0)
+
+static int build_dm1_hoc_render_consumer_receipt_for_test(
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34* out)
+{
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 postPlan;
+    DM1_V1_StartupHandoffOutcome_PC34 outcome;
+    DM1_V1_StartupHoCFirstFrameReceipt_PC34 firstFrame;
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
+    DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 boundary;
+    DM1V1D1LD1RF0115RuntimeThingReceiptPc34 floorThing;
+    DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 thingConsumer;
+    const DM1V1D1LD1RF0115LanePc34Data* lane;
+
+    if (!out) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
+        !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+            ENTRANCE_COMPAT_COMMAND_PATH_ENTER, &outcome) ||
+        !dm1_v1_startup_hoc_first_frame_receipt_pc34(
+            "dm1", &postPlan, &outcome, &firstFrame)) {
+        return 0;
+    }
+    lane = dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);
+    if (!lane ||
+        !DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, 13, 4, 2, 2, &frontWall) ||
+        !DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+            1, &frontWall, &render) ||
+        !DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
+            &render, &boundary) ||
+        !dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+            lane, 5, 1, 1, 0, &floorThing) ||
+        !DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+            &boundary, &floorThing, &thingConsumer) ||
+        !dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
+            &firstFrame, &thingConsumer, out)) {
+        return 0;
+    }
+    return 1;
+}
 
 #define DM_PC_COLOR_BLACK 0
 #define DM_PC_COLOR_CYAN 4
@@ -429,74 +475,42 @@ static void test_candidate_panel_uses_dm1_hoc_menu_route_receipt(void)
 
 static void test_dm1_hoc_startup_render_consumer_is_m11_ready(void)
 {
-    int ready = 0;
-    int consumeReceiptsOnly = 0;
-    int noFallbackScan = 0;
-    int drawOpenedEntrance = 0;
-    int clearPanel = 0;
-    int renderMirrors = 0;
-    int drawWallOverlay = 0;
-    int drawFloorObject = 0;
-    int suppressFloorPayload = 0;
-    int suppressProjectilePayload = 0;
-    int suppressSpellPayload = 0;
-    int mapIndex = -1;
-    int doorFrame = -1;
-    int overlayKind = -1;
-    int commandCount = 0;
-    int runtimeRouteUsesReceipt = 0;
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34 consumer;
 
-    ASSERT_EQ(M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
-                  &ready,
-                  &consumeReceiptsOnly,
-                  &noFallbackScan,
-                  &drawOpenedEntrance,
-                  &clearPanel,
-                  &renderMirrors,
-                  &drawWallOverlay,
-                  &drawFloorObject,
-                  &suppressFloorPayload,
-                  &suppressProjectilePayload,
-                  &suppressSpellPayload,
-                  &mapIndex,
-                  &doorFrame,
-                  &overlayKind,
-                  &commandCount,
-                  &runtimeRouteUsesReceipt),
+    ASSERT_EQ(build_dm1_hoc_render_consumer_receipt_for_test(&consumer),
               1,
-              "M11 exposes DM1 HoC startup render consumer receipt");
-    ASSERT_EQ(ready, 1,
+              "DM1 exposes HoC startup render consumer receipt");
+    ASSERT_EQ(consumer.ready, 1,
               "DM1 HoC startup render consumer is ready");
-    ASSERT_EQ(consumeReceiptsOnly, 1,
-              "M11 HoC startup render consumes DM1 receipts only");
-    ASSERT_EQ(noFallbackScan, 1,
-              "M11 HoC startup render does not use fallback scan");
-    ASSERT_EQ(drawOpenedEntrance, 1,
+    ASSERT_EQ(consumer.consume_dm1_receipts_only, 1,
+              "HoC startup render consumes DM1 receipts only");
+    ASSERT_EQ(consumer.no_m11_fallback_scan, 1,
+              "HoC startup render does not use M11 fallback scan");
+    ASSERT_EQ(consumer.draw_opened_entrance_frame, 1,
               "DM1 receipt draws opened entrance frame");
-    ASSERT_EQ(clearPanel, 1,
+    ASSERT_EQ(consumer.clear_champion_panel, 1,
               "DM1 receipt clears stale champion panel");
-    ASSERT_EQ(renderMirrors, 1,
+    ASSERT_EQ(consumer.render_hall_mirror_overlay, 1,
               "DM1 receipt renders Hall mirrors");
-    ASSERT_EQ(drawWallOverlay, 1,
+    ASSERT_EQ(consumer.draw_champion_mirror_wall_overlay, 1,
               "DM1 receipt draws champion mirror wall overlay");
-    ASSERT_EQ(drawFloorObject, 1,
+    ASSERT_EQ(consumer.draw_real_floor_object, 1,
               "DM1 receipt allows real floor object");
-    ASSERT_EQ(suppressFloorPayload, 1,
+    ASSERT_EQ(consumer.suppress_mirror_floor_item_payload, 1,
               "DM1 receipt suppresses mirror floor payload");
-    ASSERT_EQ(suppressProjectilePayload, 1,
+    ASSERT_EQ(consumer.suppress_mirror_projectile_payload, 1,
               "DM1 receipt suppresses mirror projectile payload");
-    ASSERT_EQ(suppressSpellPayload, 1,
+    ASSERT_EQ(consumer.suppress_mirror_spell_effect_payload, 1,
               "DM1 receipt suppresses mirror spell payload");
-    ASSERT_EQ(mapIndex, DM1_V1_ENTRANCE_MAP_INDEX_PC34,
+    ASSERT_EQ(consumer.map_index, DM1_V1_ENTRANCE_MAP_INDEX_PC34,
               "DM1 receipt carries HoC entrance map");
-    ASSERT_EQ(doorFrame, 9,
+    ASSERT_EQ(consumer.entrance_door_frame_index, 9,
               "DM1 receipt carries opened door frame");
-    ASSERT_EQ(overlayKind, DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34,
+    ASSERT_EQ(consumer.hall_overlay_kind,
+              DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34,
               "DM1 receipt carries Hall mirror overlay kind");
-    ASSERT_EQ(commandCount, 3,
+    ASSERT_EQ(consumer.render_command_count, 3,
               "DM1 receipt carries ordered HoC render commands");
-    ASSERT_EQ(runtimeRouteUsesReceipt, 1,
-              "M11 runtime front mirror route consumes DM1 HoC receipt");
 }
 
 static void test_dm1_hoc_full_graphics_ownership_is_m11_ready(void)

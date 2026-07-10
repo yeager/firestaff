@@ -1017,23 +1017,6 @@ int M11_GameView_ProbeViewportRenderMetadata(const M11_GameViewState* state,
                                              int* outChampionPortraitOrdinal,
                                              int* outInscriptionTextIndex,
                                              int* outFloorOrnamentOrdinal);
-int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
-    int* outReady,
-    int* outConsumeDm1ReceiptsOnly,
-    int* outNoM11FallbackScan,
-    int* outDrawOpenedEntranceFrame,
-    int* outClearChampionPanel,
-    int* outRenderHallMirrorOverlay,
-    int* outDrawChampionMirrorWallOverlay,
-    int* outDrawRealFloorObject,
-    int* outSuppressMirrorFloorItemPayload,
-    int* outSuppressMirrorProjectilePayload,
-    int* outSuppressMirrorSpellEffectPayload,
-    int* outMapIndex,
-    int* outEntranceDoorFrameIndex,
-    int* outHallOverlayKind,
-    int* outRenderCommandCount,
-    int* outRuntimeRouteUsesReceipt);
 int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     int* outReady,
     int* outConsumedProductionConsumer,
