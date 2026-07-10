@@ -25,6 +25,8 @@
  *   0x01 ATTACK_HANDLER    - delegate to attack path (melee/spell)
  *   0x02 WALK_CONT         - movement continuation
  *   0x05 SPECIAL_ACTION    - branch to CCM06/CCM0B/CCM0C
+ *   0x07 SPECIAL_07        - CCM06-family alternate special phase
+ *   0x08 SPECIAL_08        - CCM06-family alternate special phase
  *   0x09 STEAL_ITEM        - thief-type item theft
  *   0x0A MERCHANT_BEHAVIOR - merchant/shop behavior
  *   0x0D SHOOT_ITEM        - ranged throw/pickup (projectile dispatch)
@@ -32,6 +34,7 @@
  *   0x13 ROTATES_TARGET    - reorient another creature
  *   0x15 CAST_SPELL        - monster spellcasting
  *   0x17 CREATURE_ATTACKS_PARTY - fallback attack
+ *   0x18 ATTACK_DOOR       - door-target attack phase
  *   0x26 EXPLODE_OR_SUMMON - self-destruct or spawn minion
  *
  * The remaining 200+ opcodes in skproject's full CCM are STUB'd in
@@ -65,6 +68,8 @@ typedef enum {
     DM2_CCM_OP_ROTATE_TO_TARGET = 0x04,
     DM2_CCM_OP_SPECIAL_ACTION   = 0x05,
     DM2_CCM_OP_SPECIAL_06       = 0x06,
+    DM2_CCM_OP_SPECIAL_07       = 0x07,
+    DM2_CCM_OP_SPECIAL_08       = 0x08,
     DM2_CCM_OP_STEAL_ITEM       = 0x09,
     DM2_CCM_OP_MERCHANT_BEHAVIOR= 0x0A,
     DM2_CCM_OP_PUTS_DOWN_ITEM   = 0x0B,
@@ -74,6 +79,7 @@ typedef enum {
     DM2_CCM_OP_ROTATES_TARGET   = 0x13,
     DM2_CCM_OP_CAST_SPELL       = 0x15,
     DM2_CCM_OP_CREATURE_ATTACKS_PARTY = 0x17,
+    DM2_CCM_OP_ATTACK_DOOR      = 0x18,
     DM2_CCM_OP_EXPLODE_OR_SUMMON = 0x26,
     /* Aliases for state-machine register names from dm2_v1_creature.h */
     DM2_CCM_OP_HALT             = 0xFF,
