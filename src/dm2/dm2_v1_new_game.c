@@ -1061,25 +1061,22 @@ int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
         const size_t inv_bytes =
             (size_t)session->champion_count *
             (size_t)DM2_CHAMPION_INVENTORY_SLOTS * 4u;
-        if (inv_bytes <= buf_size - pos) {
-            for (int c = 0; c < (int)session->champion_count; c++) {
-                DM2_ChampionRecord *champ =
-                    (DM2_ChampionRecord *)session->champion_data[c];
-                for (int slot = 0; slot < DM2_CHAMPION_INVENTORY_SLOTS;
-                     slot++) {
-                    champ->inventory[slot] =
-                        dm2_v1_read_u32_le_at(buf, pos);
-                    pos += 4u;
-                }
+        if (inv_bytes > buf_size - pos) return -1;
+        for (int c = 0; c < (int)session->champion_count; c++) {
+            DM2_ChampionRecord *champ =
+                (DM2_ChampionRecord *)session->champion_data[c];
+            for (int slot = 0; slot < DM2_CHAMPION_INVENTORY_SLOTS;
+                 slot++) {
+                champ->inventory[slot] =
+                    dm2_v1_read_u32_le_at(buf, pos);
+                pos += 4u;
             }
         }
     }
-    if (buf_size - pos >= 4u) {
-        session->original_leader_hand_object =
-            dm2_v1_read_u32_le_at(buf, pos);
-        pos += 4u;
-    }
-    if (buf_size - pos >= 1u) {
+    if (buf_size - pos < 4u) return -1;
+    session->original_leader_hand_object = dm2_v1_read_u32_le_at(buf, pos);
+    pos += 4u;
+    if (pos < buf_size) {
         const uint8_t count = buf[pos++];
         if (count > DM2_MAX_MINIONS ||
             (size_t)count * 8u > buf_size - pos) {
@@ -1096,7 +1093,44 @@ int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
         }
     }
 
-    if (!dm2_v1_session_validate(session)) return -1;
+    if (pos != buf_size || !dm2_v1_session_validate(session)) return -1;
+    return 0;
+}
+
+int dm2_v1_session_parse_save_candidate(DM2_V1_SaveCandidate *out_candidate,
+                                         const uint8_t *buf,
+                                         size_t buf_size)
+{
+    DM2_V1_SaveCandidate candidate;
+    size_t dungeon_size = 0u;
+
+    if (!out_candidate || !buf || buf_size == 0u) return -1;
+    memset(&candidate, 0, sizeof(candidate));
+
+    if (dm2_v1_session_deserialize(&candidate.session, buf, buf_size) == 0) {
+        candidate.kind = DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION;
+    } else if (dm2_v1_session_import_original_payload(&candidate.session,
+                                                       buf, buf_size) == 0) {
+        candidate.kind = DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE;
+    } else {
+        /* skproject/SKULLWIN/skgame.cpp's load path restores the dungeon DB
+         * before applying global/party state. The raw SKSave prefix is kept
+         * as caller-owned bytes here so runtime can enforce that same order
+         * without accepting a partial or differently-sized dungeon. */
+        if (!dm2_v1_locate_raw_sksave_state_offset(buf, buf_size,
+                                                   &dungeon_size) ||
+            dungeon_size == 0u ||
+            dm2_v1_session_import_raw_sksave_payload(&candidate.session,
+                                                      buf, buf_size) != 0) {
+            return -1;
+        }
+        candidate.kind = DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW;
+        candidate.dungeon_bytes = buf;
+        candidate.dungeon_size = dungeon_size;
+    }
+
+    if (!dm2_v1_session_validate(&candidate.session)) return -1;
+    *out_candidate = candidate;
     return 0;
 }
 
@@ -1207,21 +1241,12 @@ int dm2_v1_session_load_slot(const char *save_base, uint8_t slot,
     int r = dm2_sl_load(save_base, slot, buf, sizeof(buf), &out_size);
     if (r != 0) return r;
 
-    /* Deserialize into the Firestaff compact session first. If the payload is
-     * a bounded original/SUPPRESS resume body, import that instead so M11
-     * startup can resume SKSave files that do not carry Firestaff's byte-28
-     * session-version marker. */
-    r = dm2_v1_session_deserialize(session, buf, out_size);
-    if (r != 0) {
-        r = dm2_v1_session_import_original_payload(session, buf, out_size);
-        if (r != 0) {
-            r = dm2_v1_session_import_raw_sksave_payload(session, buf,
-                                                         out_size);
-            if (r != 0) return r;
-        }
+    {
+        DM2_V1_SaveCandidate candidate;
+        if (dm2_v1_session_parse_save_candidate(&candidate, buf, out_size) != 0)
+            return -1;
+        *session = candidate.session;
     }
-
-    if (!dm2_v1_session_validate(session)) return -1;
 
     return 0;
 }
@@ -1236,17 +1261,12 @@ int dm2_v1_session_load_last_session(const char *save_base,
     int r = dm2_sl_load_last_session(save_base, buf, sizeof(buf), &out_size);
     if (r != 0) return r;
 
-    r = dm2_v1_session_deserialize(session, buf, out_size);
-    if (r != 0) {
-        r = dm2_v1_session_import_original_payload(session, buf, out_size);
-        if (r != 0) {
-            r = dm2_v1_session_import_raw_sksave_payload(session, buf,
-                                                         out_size);
-            if (r != 0) return r;
-        }
+    {
+        DM2_V1_SaveCandidate candidate;
+        if (dm2_v1_session_parse_save_candidate(&candidate, buf, out_size) != 0)
+            return -1;
+        *session = candidate.session;
     }
-
-    if (!dm2_v1_session_validate(session)) return -1;
 
     return 0;
 }
