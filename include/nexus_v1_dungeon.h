@@ -32,6 +32,9 @@ typedef struct {
     int collision_ref_count;
     int collision_ref_unique_count;
     int max_collision_ref;
+    int mesh_ref_count;
+    int mesh_ref_unique_count;
+    int max_mesh_ref;
     int mesh_ready;
 } Nexus_V1_DgnGeometryInfo;
 
@@ -106,6 +109,9 @@ typedef struct {
     int collision_ref_count;
     int collision_ref_unique_count;
     int max_collision_ref;
+    int mesh_ref_count;
+    int mesh_ref_unique_count;
+    int max_mesh_ref;
     int descriptor_capacity;
 } Nexus_V1_DgnRendererHandoffReceipt;
 
@@ -151,6 +157,9 @@ typedef struct {
     int command_count;
     int floor_count;
     int wall_count;
+    int mesh_command_count;
+    int first_mesh_ref;
+    int max_mesh_ref;
     int source_cell_count;
     int missing_material_count;
     int first_missing_material_id;
