@@ -59,6 +59,11 @@ typedef struct {
     int semantic_level_count;
     int exact_level_semantics_ready;
     int exact_object_semantics_ready;
+    int object_capture_count;
+    unsigned int object_capture_mask;
+    int object_count_total;
+    uint32_t object_route_hash;
+    int object_counts[THERON_DUNGEON_COUNT];
     uint32_t route_hash;
     Theron_RuntimeLevelBankSelection level_banks[THERON_DUNGEON_COUNT];
 } Theron_V1StartupAllDungeonRouteReceipt;
