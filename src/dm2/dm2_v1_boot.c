@@ -45,6 +45,7 @@
 #define DM2_GDAT_WALL_BUTTON_CACHE_LIMIT 8
 #define DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT 16
 #define DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT 8
+#define DM2_GDAT_HUD_CORE_CACHE_LIMIT 9
 #define DM2_GDAT_OBJECT_ICON_FIELD_LIMIT 0x10
 
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
@@ -105,6 +106,10 @@ typedef struct {
     uint8_t *hud_portrait_pixels[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
     int hud_portrait_w[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
     int hud_portrait_h[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
+    int hud_core_keys[DM2_GDAT_HUD_CORE_CACHE_LIMIT];
+    uint8_t *hud_core_pixels[DM2_GDAT_HUD_CORE_CACHE_LIMIT];
+    int hud_core_w[DM2_GDAT_HUD_CORE_CACHE_LIMIT];
+    int hud_core_h[DM2_GDAT_HUD_CORE_CACHE_LIMIT];
     uint8_t *startup_title_pixels;
     int startup_title_w;
     int startup_title_h;
@@ -118,7 +123,8 @@ static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
     uint32_t *out_portrait_hash,
     uint32_t *out_portrait_byte_count,
     uint32_t *out_core_hash,
-    uint32_t *out_core_byte_count);
+    uint32_t *out_core_byte_count,
+    int *out_interface_count);
 static int dm2_v1_boot_startup_raw_gdat_hash(
     DM2_V1_BootProfile *profile,
     int category,
@@ -140,7 +146,12 @@ static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
     uint32_t *out_portrait_hash,
     uint32_t *out_portrait_pixel_count,
     uint32_t *out_core_hash,
-    uint32_t *out_core_pixel_count);
+    uint32_t *out_core_pixel_count,
+    int *out_interface_count);
+static int dm2_v1_boot_hud_core_gdat_route(int public_field,
+                                           int *out_index,
+                                           int *out_field,
+                                           int *out_slot);
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
 
@@ -294,6 +305,9 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     }
     for (int i = 0; i < DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT; ++i) {
         dm2_v1_asset_free_pixels(gfx->hud_portrait_pixels[i]);
+    }
+    for (int i = 0; i < DM2_GDAT_HUD_CORE_CACHE_LIMIT; ++i) {
+        dm2_v1_asset_free_pixels(gfx->hud_core_pixels[i]);
     }
     dm2_v1_asset_free_pixels(gfx->startup_title_pixels);
     dm2_v1_asset_loader_free(&gfx->loader);
@@ -1462,6 +1476,7 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
     DM2_V1_BootStartupFullStartReceipt *receipt;
     const DM2_V1_StartupRuntimeHandoffReceipt *handoff;
     const DM2_V1_StartupRenderReceipt *render;
+    int hud_raw_gdat_interface_count = 0;
 
     if (!snapshot || !view_model ||
         !view_model->view_receipt.valid ||
@@ -1604,15 +1619,17 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
                 receipt->menu_decoded_gdat_pixel_count == 320u * 200u;
         }
     }
-    if (snapshot && snapshot->profile &&
-        dm2_v1_boot_runtime_raw_gdat_hud_probe(
-            (DM2_V1_BootProfile *)snapshot->profile,
-            &receipt->hud_raw_gdat_portrait_count,
-            &receipt->hud_raw_gdat_portrait_hash,
-            &receipt->hud_raw_gdat_portrait_byte_count,
-            &receipt->hud_raw_gdat_core_hash,
-            &receipt->hud_raw_gdat_core_byte_count)) {
-        receipt->hud_raw_gdat_capture_ready = 1;
+    if (snapshot && snapshot->profile) {
+        if (dm2_v1_boot_runtime_raw_gdat_hud_probe(
+                (DM2_V1_BootProfile *)snapshot->profile,
+                &receipt->hud_raw_gdat_portrait_count,
+                &receipt->hud_raw_gdat_portrait_hash,
+                &receipt->hud_raw_gdat_portrait_byte_count,
+                &receipt->hud_raw_gdat_core_hash,
+                &receipt->hud_raw_gdat_core_byte_count,
+                &hud_raw_gdat_interface_count)) {
+            receipt->hud_raw_gdat_capture_ready = 1;
+        }
     }
     if (receipt->hud_raw_gdat_capture_ready) {
         receipt->full_start_real_asset_ready =
@@ -1623,7 +1640,8 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
             receipt->hud_raw_gdat_portrait_hash != 0u &&
             receipt->hud_raw_gdat_portrait_byte_count > 0u &&
             receipt->hud_raw_gdat_core_hash != 0u &&
-            receipt->hud_raw_gdat_core_byte_count > 0u;
+            receipt->hud_raw_gdat_core_byte_count > 0u &&
+            hud_raw_gdat_interface_count >= 9;
     }
     /* skproject/SKWIN title/menu startup keeps title timing, GDAT title art,
      * HUD suppression, and runtime handoff as one boot boundary. M11 can use
@@ -3521,10 +3539,23 @@ static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
     uint32_t *out_portrait_hash,
     uint32_t *out_portrait_byte_count,
     uint32_t *out_core_hash,
-    uint32_t *out_core_byte_count)
+    uint32_t *out_core_byte_count,
+    int *out_interface_count)
 {
+    static const int k_interface_fields[] = {
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_GOLD_BOX,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 0,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 1,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 2,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 3,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 4
+    };
     int portrait_index;
     int portrait_count = 0;
+    int interface_count = 0;
     uint32_t portrait_hash = 0x32485052u;
     uint32_t portrait_bytes = 0u;
     uint32_t core_hash = 0x32484352u;
@@ -3535,8 +3566,10 @@ static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
     if (out_portrait_byte_count) *out_portrait_byte_count = 0u;
     if (out_core_hash) *out_core_hash = 0u;
     if (out_core_byte_count) *out_core_byte_count = 0u;
+    if (out_interface_count) *out_interface_count = 0;
     if (!profile || !out_portrait_count || !out_portrait_hash ||
-        !out_portrait_byte_count || !out_core_hash || !out_core_byte_count) {
+        !out_portrait_byte_count || !out_core_hash || !out_core_byte_count ||
+        !out_interface_count) {
         return 0;
     }
 
@@ -3557,7 +3590,29 @@ static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
             ++portrait_count;
         }
     }
-    if (!dm2_v1_boot_runtime_raw_gdat_hash_add(profile,
+    /* skproject/SKWIN interface rendering consumes INTERFACE_GENERAL entries
+     * by UI surface family: status bar, action strip, gold box, portrait
+     * panel, and action icons. */
+    for (int i = 0; i < (int)(sizeof(k_interface_fields) /
+                              sizeof(k_interface_fields[0])); ++i) {
+        int interface_index = 0;
+        int interface_field = 0;
+        if (dm2_v1_boot_hud_core_gdat_route(k_interface_fields[i],
+                                            &interface_index,
+                                            &interface_field,
+                                            NULL) &&
+            dm2_v1_boot_runtime_raw_gdat_hash_add(
+                profile,
+                DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+                interface_index,
+                interface_field,
+                &core_hash,
+                &core_bytes)) {
+            ++interface_count;
+        }
+    }
+    if (interface_count < 3 ||
+        !dm2_v1_boot_runtime_raw_gdat_hash_add(profile,
                                                DM2_GDAT_CATEGORY_GRAPHICSSET,
                                                0,
                                                DM2_GDAT_GFXSET_FLOOR,
@@ -3577,6 +3632,7 @@ static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
     *out_portrait_byte_count = portrait_bytes;
     *out_core_hash = core_hash;
     *out_core_byte_count = core_bytes;
+    *out_interface_count = interface_count;
     return portrait_count >= 4 &&
            portrait_hash != 0u &&
            portrait_bytes > 0u &&
@@ -3641,10 +3697,23 @@ static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
     uint32_t *out_portrait_hash,
     uint32_t *out_portrait_pixel_count,
     uint32_t *out_core_hash,
-    uint32_t *out_core_pixel_count)
+    uint32_t *out_core_pixel_count,
+    int *out_interface_count)
 {
+    static const int k_interface_fields[] = {
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_GOLD_BOX,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 0,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 1,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 2,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 3,
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 4
+    };
     int portrait_index;
     int portrait_count = 0;
+    int interface_count = 0;
     uint32_t portrait_hash = 0x32485044u;
     uint32_t portrait_pixels = 0u;
     uint32_t core_hash = 0x32484344u;
@@ -3655,9 +3724,10 @@ static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
     if (out_portrait_pixel_count) *out_portrait_pixel_count = 0u;
     if (out_core_hash) *out_core_hash = 0u;
     if (out_core_pixel_count) *out_core_pixel_count = 0u;
+    if (out_interface_count) *out_interface_count = 0;
     if (!profile || !out_portrait_count || !out_portrait_hash ||
         !out_portrait_pixel_count || !out_core_hash ||
-        !out_core_pixel_count) {
+        !out_core_pixel_count || !out_interface_count) {
         return 0;
     }
 
@@ -3677,7 +3747,26 @@ static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
             ++portrait_count;
         }
     }
-    if (!dm2_v1_boot_runtime_decoded_gdat_hash_add(
+    for (int i = 0; i < (int)(sizeof(k_interface_fields) /
+                              sizeof(k_interface_fields[0])); ++i) {
+        int interface_index = 0;
+        int interface_field = 0;
+        if (dm2_v1_boot_hud_core_gdat_route(k_interface_fields[i],
+                                            &interface_index,
+                                            &interface_field,
+                                            NULL) &&
+            dm2_v1_boot_runtime_decoded_gdat_hash_add(
+                profile,
+                DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+                interface_index,
+                interface_field,
+                &core_hash,
+                &core_pixels)) {
+            ++interface_count;
+        }
+    }
+    if (interface_count < 3 ||
+        !dm2_v1_boot_runtime_decoded_gdat_hash_add(
             profile,
             DM2_GDAT_CATEGORY_GRAPHICSSET,
             0,
@@ -3699,6 +3788,7 @@ static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
     *out_portrait_pixel_count = portrait_pixels;
     *out_core_hash = core_hash;
     *out_core_pixel_count = core_pixels;
+    *out_interface_count = interface_count;
     return portrait_count >= 4 &&
            portrait_hash != 0u &&
            portrait_pixels > 0u &&
@@ -4038,6 +4128,8 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
             runtime_hud.raw_gdat_runtime_core_hash;
         out_receipt->runtime_hud_raw_core_byte_count =
             runtime_hud.raw_gdat_runtime_core_byte_count;
+        out_receipt->runtime_hud_raw_interface_count =
+            runtime_hud.raw_gdat_runtime_interface_count;
         out_receipt->runtime_hud_decoded_gdat_capture_ready =
             runtime_hud.decoded_gdat_runtime_hud_capture_ready;
         out_receipt->runtime_hud_decoded_portrait_count =
@@ -4050,6 +4142,8 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
             runtime_hud.decoded_gdat_runtime_core_hash;
         out_receipt->runtime_hud_decoded_core_pixel_count =
             runtime_hud.decoded_gdat_runtime_core_pixel_count;
+        out_receipt->runtime_hud_decoded_interface_count =
+            runtime_hud.decoded_gdat_runtime_interface_count;
         out_receipt->runtime_hud_frame_hash =
             runtime_hud.combined_frame_hash;
         out_receipt->runtime_hud_pixel_count =
@@ -4635,7 +4729,8 @@ int dm2_v1_boot_runtime_render_frame(
                 &out_receipt->runtime_hud_raw_portrait_hash,
                 &out_receipt->runtime_hud_raw_portrait_byte_count,
                 &out_receipt->runtime_hud_raw_core_hash,
-                &out_receipt->runtime_hud_raw_core_byte_count);
+                &out_receipt->runtime_hud_raw_core_byte_count,
+                &out_receipt->runtime_hud_raw_interface_count);
         out_receipt->runtime_hud_decoded_gdat_capture_ready =
             dm2_v1_boot_runtime_decoded_gdat_hud_probe(
                 profile,
@@ -4643,7 +4738,8 @@ int dm2_v1_boot_runtime_render_frame(
                 &out_receipt->runtime_hud_decoded_portrait_hash,
                 &out_receipt->runtime_hud_decoded_portrait_pixel_count,
                 &out_receipt->runtime_hud_decoded_core_hash,
-                &out_receipt->runtime_hud_decoded_core_pixel_count);
+                &out_receipt->runtime_hud_decoded_core_pixel_count,
+                &out_receipt->runtime_hud_decoded_interface_count);
         out_receipt->runtime_hud_frame_hash =
             dm2_v1_boot_runtime_hud_hash_frame(framebuffer,
                                                fb_stride,
@@ -4656,6 +4752,8 @@ int dm2_v1_boot_runtime_render_frame(
             out_receipt->runtime_hud_no_fallback_portraits &&
             out_receipt->runtime_hud_raw_gdat_capture_ready &&
             out_receipt->runtime_hud_decoded_gdat_capture_ready &&
+            out_receipt->runtime_hud_raw_interface_count >= 9 &&
+            out_receipt->runtime_hud_decoded_interface_count >= 9 &&
             out_receipt->runtime_hud_frame_hash != 0u;
         out_receipt->runtime_hud_capture_ready =
             out_receipt->startup_render_ready &&
@@ -4914,7 +5012,8 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->raw_gdat_runtime_portrait_hash,
             &out_receipt->raw_gdat_runtime_portrait_byte_count,
             &out_receipt->raw_gdat_runtime_core_hash,
-            &out_receipt->raw_gdat_runtime_core_byte_count);
+            &out_receipt->raw_gdat_runtime_core_byte_count,
+            &out_receipt->raw_gdat_runtime_interface_count);
     out_receipt->decoded_gdat_runtime_hud_capture_ready =
         dm2_v1_boot_runtime_decoded_gdat_hud_probe(
             profile,
@@ -4922,7 +5021,8 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->decoded_gdat_runtime_portrait_hash,
             &out_receipt->decoded_gdat_runtime_portrait_pixel_count,
             &out_receipt->decoded_gdat_runtime_core_hash,
-            &out_receipt->decoded_gdat_runtime_core_pixel_count);
+            &out_receipt->decoded_gdat_runtime_core_pixel_count,
+            &out_receipt->decoded_gdat_runtime_interface_count);
     out_receipt->real_gdat_runtime_hud_breadth_ready =
         out_receipt->render_sample_count == 4 &&
         out_receipt->render_success_count == 4 &&
@@ -4934,6 +5034,8 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         out_receipt->real_gdat_core_render_ready &&
         out_receipt->raw_gdat_runtime_hud_capture_ready &&
         out_receipt->decoded_gdat_runtime_hud_capture_ready &&
+        out_receipt->raw_gdat_runtime_interface_count >= 9 &&
+        out_receipt->decoded_gdat_runtime_interface_count >= 9 &&
         out_receipt->combined_frame_hash != 0u &&
         out_receipt->combined_pixel_count == 4u * 320u * 200u;
     out_receipt->valid =
@@ -5185,11 +5287,13 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->startup_visual.raw_gdat_capture_ready &&
         out_receipt->startup_visual.runtime_hud_raw_gdat_capture_ready &&
         out_receipt->runtime_hud.raw_gdat_runtime_hud_capture_ready &&
+        out_receipt->runtime_hud.raw_gdat_runtime_interface_count >= 9 &&
         out_receipt->runtime_hud.raw_gdat_runtime_portrait_hash != 0u &&
         out_receipt->runtime_hud.raw_gdat_runtime_core_hash != 0u;
     out_receipt->decoded_gdat_capture_complete =
         out_receipt->startup_visual.runtime_hud_decoded_gdat_capture_ready &&
         out_receipt->runtime_hud.decoded_gdat_runtime_hud_capture_ready &&
+        out_receipt->runtime_hud.decoded_gdat_runtime_interface_count >= 9 &&
         out_receipt->runtime_hud.decoded_gdat_runtime_portrait_hash != 0u &&
         out_receipt->runtime_hud.decoded_gdat_runtime_core_hash != 0u;
 
@@ -5362,6 +5466,35 @@ int dm2_v1_boot_startup_launch_alloc(
     out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_OK;
     out_launch->runtime_bound = 1;
     return 1;
+}
+
+static int dm2_v1_boot_hud_core_gdat_route(int public_field,
+                                           int *out_index,
+                                           int *out_field,
+                                           int *out_slot)
+{
+    struct Route { int public_field; int index; int field; };
+    static const struct Route k_routes[DM2_GDAT_HUD_CORE_CACHE_LIMIT] = {
+        { DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR, 6, 0 },
+        { DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP, 6, 1 },
+        { DM2_V1_VIEWPORT_GFX_HUD_CORE_GOLD_BOX, 2, 9 },
+        { DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL, 5, 1 },
+        { DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 0, 4, 2 },
+        { DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 1, 4, 3 },
+        { DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 2, 4, 4 },
+        { DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 3, 4, 5 },
+        { DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 4, 4, 10 }
+    };
+    int i;
+    for (i = 0; i < DM2_GDAT_HUD_CORE_CACHE_LIMIT; ++i) {
+        if (k_routes[i].public_field == public_field) {
+            if (out_index) *out_index = k_routes[i].index;
+            if (out_field) *out_field = k_routes[i].field;
+            if (out_slot) *out_slot = i;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int dm2_v1_boot_startup_launch_detach_runtime(
@@ -5565,6 +5698,24 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_w = &gfx->creature_w[slot];
         cache_h = &gfx->creature_h[slot];
         gfx->creature_keys[slot] = gdat_index;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index <
+                   0x100) {
+        int public_field =
+            DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index;
+        int slot = -1;
+        if (!dm2_v1_boot_hud_core_gdat_route(public_field,
+                                             &index,
+                                             &field,
+                                             &slot) ||
+            slot < 0 || slot >= DM2_GDAT_HUD_CORE_CACHE_LIMIT) {
+            return -1;
+        }
+        cache_pixels = &gfx->hud_core_pixels[slot];
+        cache_w = &gfx->hud_core_w[slot];
+        cache_h = &gfx->hud_core_h[slot];
+        gfx->hud_core_keys[slot] = gdat_index;
+        category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE - gdat_index <
                    (0x100 << DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT)) {
