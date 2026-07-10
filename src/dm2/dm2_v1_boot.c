@@ -5515,6 +5515,22 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
         *out_category = DM2_GDAT_CATEGORY_CREATURES;
         *out_index = (packed >> DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT) & 0xff;
         *out_field = DM2_GDAT_IMG_MAP_CHIP;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE &&
+               gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE) {
+        packed = DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE - gdat_index;
+        *out_category = DM2_GDAT_CATEGORY_DOOR_GFX;
+        *out_index =
+            (packed >> DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_INDEX_SHIFT) & 0xff;
+        *out_field = packed & DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_FIELD_MASK;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE - gdat_index <
+                   (0x100 << DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_INDEX_SHIFT)) {
+        packed = DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE -
+                 gdat_index;
+        *out_category = DM2_GDAT_CATEGORY_DOORS;
+        *out_index =
+            (packed >> DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_INDEX_SHIFT) & 0xff;
+        *out_field = packed & DM2_V1_VIEWPORT_GFX_DOOR_OVERLAY_FIELD_MASK;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE -
                             DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FRONT) {
         *out_category = DM2_GDAT_CATEGORY_DOORS;

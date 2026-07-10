@@ -482,6 +482,21 @@ static void test_first_tick_after_boot_profile_handoff(void)
               evidence.entry_index == 0x12 &&
               evidence.field == DM2_GDAT_IMG_MAP_CHIP,
           "viewport creature sprite resolves map-chip GDAT record before decode");
+    CHECK(dm2_v1_boot_viewport_asset_evidence(
+              NULL,
+              dm2_v1_viewport_door_ornate_graphic_index(2, DM2_SQ_D0C),
+              &evidence) == 0 &&
+              evidence.category == DM2_GDAT_CATEGORY_DOOR_GFX &&
+              evidence.entry_index == 2 && evidence.field == 0,
+          "viewport door ornament resolves its GDAT overlay record before decode");
+    CHECK(dm2_v1_boot_viewport_asset_evidence(
+              NULL,
+              dm2_v1_viewport_door_destroyed_mask_graphic_index(
+                  7, DM2_SQ_D0C),
+              &evidence) == 0 &&
+              evidence.category == DM2_GDAT_CATEGORY_DOORS &&
+              evidence.entry_index == 7 && evidence.field == 0,
+          "viewport destroyed-door mask resolves its GDAT overlay record before decode");
 
     make_synthetic_verified_profile(&profile);
     CHECK(dm2_v1_boot_enter_game(&profile) == 0,
