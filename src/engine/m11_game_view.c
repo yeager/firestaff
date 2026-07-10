@@ -16145,6 +16145,10 @@ typedef struct M11_ViewportCell {
      * cloud and smoke decay this per frame; the burst renderer uses it
      * to fade the cloud as it dissipates. */
     int firstExplosionAttack;
+    /* DM1 owns the D1C HoC layer choice.  This is populated once from the
+     * sampled F0172/F0115 facts and consumed by every visible M11 layer. */
+    int dm1RuntimeRenderDecisionReady;
+    DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 dm1RuntimeRenderDecision;
     M11_SquareThingSummary summary;
 } M11_ViewportCell;
 
@@ -35213,12 +35217,14 @@ static void m11_draw_dm2_leader_hand_object_icon(const M11_GameViewState* state,
 
 typedef struct M11_DM2StartupDrawContext {
     const M11_GameViewState *state;
+    const DM2_V1_BootStartupRenderOwnershipReceipt *ownership_receipt;
     unsigned char *framebuffer;
     int framebufferWidth;
     int framebufferHeight;
     int gdat_blit_count;
     int title_gdat_blit_count;
     int menu_gdat_blit_count;
+    int gdat_proof_failure_count;
     int rect_count;
     int text_count;
 } M11_DM2StartupDrawContext;
@@ -35252,11 +35258,43 @@ static int m11_dm2_startup_exec_gdat_image(
     int dstW;
     int dstH;
     int y;
+    uint32_t raw_hash = 0u;
+    uint32_t raw_byte_count = 0u;
+    uint32_t expected_hash = 0u;
+    uint32_t expected_byte_count = 0u;
+    uint32_t seed = 0u;
 
-    if (!context || !context->state || !context->framebuffer || !command) {
+    if (!context || !context->state || !context->ownership_receipt ||
+        !context->framebuffer || !command) {
         return 0;
     }
     profile = (DM2_V1_BootProfile *)context->state->dm2BootProfile;
+    if (command->frame_owner == DM2_V1_FRAME_OWNER_STARTUP_TITLE) {
+        seed = 0x32545257u;
+        expected_hash = context->ownership_receipt->startup_title_raw_gdat_hash;
+        expected_byte_count =
+            context->ownership_receipt->startup_title_raw_gdat_byte_count;
+    } else if (command->frame_owner == DM2_V1_FRAME_OWNER_STARTUP_MENU) {
+        seed = 0x324d5257u;
+        expected_hash = context->ownership_receipt->startup_menu_raw_gdat_hash;
+        expected_byte_count =
+            context->ownership_receipt->startup_menu_raw_gdat_byte_count;
+    } else {
+        ++context->gdat_proof_failure_count;
+        return 0;
+    }
+    if (!context->ownership_receipt->startup_title_menu_raw_gdat_receipt_consumed ||
+        !dm2_v1_boot_gdat_raw_asset_proof(profile,
+                                           command->gdat_category,
+                                           command->gdat_index,
+                                           command->gdat_field,
+                                           seed,
+                                           &raw_hash,
+                                           &raw_byte_count) ||
+        raw_hash != expected_hash || raw_byte_count != expected_byte_count) {
+        ++context->gdat_proof_failure_count;
+        return 0;
+    }
     if (!profile ||
         dm2_v1_boot_gdat_image_asset_fetch(profile,
                                            command->gdat_category,
@@ -35455,9 +35493,11 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     context.framebuffer = framebuffer;
     context.framebufferWidth = framebufferWidth;
     context.framebufferHeight = framebufferHeight;
+    context.ownership_receipt = &ownership_receipt;
     context.gdat_blit_count = 0;
     context.title_gdat_blit_count = 0;
     context.menu_gdat_blit_count = 0;
+    context.gdat_proof_failure_count = 0;
     context.rect_count = 0;
     context.text_count = 0;
     executor.userdata = &context;
@@ -35469,6 +35509,11 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
             view_model.commands,
             ownership_receipt.draw_command_count,
             &executor)) {
+        return 0;
+    }
+    if (context.gdat_proof_failure_count != 0 ||
+        context.title_gdat_blit_count != 1 ||
+        context.menu_gdat_blit_count != 1) {
         return 0;
     }
     dm2_v1_runtime_note_startup_frame_consumption(
@@ -35494,6 +35539,7 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
             visual_capture_receipt.composite_rect_count &&
         visual_capture_receipt.m11_draw_text_count ==
             visual_capture_receipt.composite_text_zone_count &&
+        context.gdat_proof_failure_count == 0 &&
         visual_capture_receipt.m11_draw_frame_hash != 0u &&
         visual_capture_receipt.m11_draw_frame_pixel_count ==
             (uint32_t)(framebufferWidth * framebufferHeight);
