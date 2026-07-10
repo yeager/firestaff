@@ -746,6 +746,40 @@ typedef struct CSB_V1_BootStartupM11PresentationReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_BootStartupM11PresentationReceipt_PC34;
 
+/* CSB-owned, indexed source pixels ready for a startup renderer.  The
+ * title source is C001; the three title regions are independent cropped
+ * surfaces.  The door surfaces are the C002/C003 strips for the current
+ * opening step.  Call release before discarding a populated set. */
+typedef enum CSB_V1_StartupRuntimeSurfaceRole_PC34 {
+    CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34 = 0,
+    CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34,
+    CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34,
+    CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34,
+    CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34,
+    CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34,
+    CSB_V1_STARTUP_RUNTIME_SURFACE_COUNT_PC34
+} CSB_V1_StartupRuntimeSurfaceRole_PC34;
+
+typedef struct CSB_V1_StartupRuntimeSurface_PC34 {
+    unsigned char *pixels;
+    int width;
+    int height;
+    int source_asset_id;
+    int source_x;
+    int source_y;
+    int transparent_color;
+    int valid;
+} CSB_V1_StartupRuntimeSurface_PC34;
+
+typedef struct CSB_V1_StartupRuntimeSurfaceSet_PC34 {
+    int valid;
+    int real_asset_matched;
+    int title_regions_ready;
+    int opening_frame_ready;
+    CSB_V1_StartupRuntimeSurface_PC34
+        surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_COUNT_PC34];
+} CSB_V1_StartupRuntimeSurfaceSet_PC34;
+
 /* Runtime-only startup presentation.  This is the CSB boundary for title,
  * entrance/HUD, utility, and opening-door plans when verified game data is
  * present.  The older snapshot helpers remain inspection adapters. */
@@ -757,6 +791,7 @@ typedef struct CSB_V1_BootStartupRuntimePresentationReceipt_PC34 {
     int door_plan_has_no_fallback;
     CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 asset_gate;
     CSB_V1_BootStartupM11PresentationReceipt_PC34 presentation;
+    CSB_V1_StartupRuntimeSurfaceSet_PC34 surfaces;
 } CSB_V1_BootStartupRuntimePresentationReceipt_PC34;
 
 typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
@@ -891,6 +926,12 @@ int csb_v1_boot_startup_runtime_presentation_from_snapshot_pc34(
     const CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *asset_gate,
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_BootStartupRuntimePresentationReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_runtime_surfaces_materialize_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupRuntimeSurfaceSet_PC34 *out_surfaces);
+void csb_v1_boot_startup_runtime_surface_set_release_pc34(
+    CSB_V1_StartupRuntimeSurfaceSet_PC34 *surfaces);
 const char *csb_v1_boot_startup_asset_source_name_pc34(
     CSB_V1_StartupAssetSource_PC34 source);
 int csb_v1_boot_probe_available(const char *data_dir);
