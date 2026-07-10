@@ -1087,37 +1087,6 @@ int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
                                           int* outDstY,
                                           int* outWidth,
                                           int* outHeight);
-int M11_GameView_ProbeDm1PrimarySideWallMaxForward(int centerMaxVisibleForward);
-int M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(int doorState,
-                                               int* outSrcX,
-                                               int* outSrcY,
-                                               int* outDstX,
-                                               int* outDstY,
-                                               int* outWidth,
-                                               int* outHeight);
-int M11_GameView_ProbeDm1CenterDoorPanelBlit(int depth,
-                                             int doorState,
-                                             int doorVertical,
-                                             int blitIndex,
-                                             int* outSrcX,
-                                             int* outSrcY,
-                                             int* outDstX,
-                                             int* outDstY,
-                                             int* outWidth,
-                                             int* outHeight);
-int M11_GameView_ProbeDm1SideDoorPanelBlit(int relForward,
-                                           int relSide,
-                                           int doorState,
-                                           int doorVertical,
-                                           int blitIndex,
-                                           int* outSrcX,
-                                           int* outSrcY,
-                                           int* outDstX,
-                                           int* outDstY,
-                                           int* outWidth,
-                                           int* outHeight);
-int M11_GameView_ProbeDm1WallOrnamentFlip(int viewWallIndex);
-
 /* Post-move environmental transition check (pits, teleporters).
  * Returns 1 if a transition occurred. */
 int M11_GameView_CheckPostMoveTransitions(M11_GameViewState* state);
