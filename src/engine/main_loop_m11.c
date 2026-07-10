@@ -4312,8 +4312,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             memset(&selectedReceipt, 0, sizeof(selectedReceipt));
             memset(&selectedKindFacts, 0, sizeof(selectedKindFacts));
             memset(&selectedKindReceipt, 0, sizeof(selectedKindReceipt));
-            if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                (selectedFacts.expected_game_id = o->gameId,
+            if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt)) {
+                fprintf(stderr,
+                        "firestaff: boot-probe could not read runtime receipt for --game %s\n",
+                        o->gameId ? o->gameId : "");
+                runRc = 4;
+                goto cleanup;
+            }
+            if ((selectedFacts.expected_game_id = o->gameId,
                  selectedFacts.actual_source_id = receipt.sourceId,
                  selectedFacts.active = receipt.active,
                  selectedFacts.started_from_launcher =
@@ -4353,8 +4359,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 runRc = 4;
             }
             if (o->bootProbeExpectPhase && o->bootProbeExpectPhase[0] != '\0') {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    strcmp(receipt.startupPhase, o->bootProbeExpectPhase) != 0) {
+                if (strcmp(receipt.startupPhase, o->bootProbeExpectPhase) != 0) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected phase '%s' but got '%s'\n",
                             o->bootProbeExpectPhase,
@@ -4373,8 +4378,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectRuntime) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.startupActive ||
+                if (receipt.startupActive ||
                     !receipt.levelLoaded) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected runtime handoff but got phase='%s' startupActive=%d levelLoaded=%d\n",
@@ -4385,8 +4389,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectParty) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.partyX != o->bootProbeExpectPartyX ||
+                if (receipt.partyX != o->bootProbeExpectPartyX ||
                     receipt.partyY != o->bootProbeExpectPartyY ||
                     receipt.partyDir != o->bootProbeExpectPartyDir) {
                     fprintf(stderr,
@@ -4401,8 +4404,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectChampions) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.championCount != o->bootProbeExpectChampionCount) {
+                if (receipt.championCount != o->bootProbeExpectChampionCount) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected champions %d but got %d\n",
                             o->bootProbeExpectChampionCount,
@@ -4411,8 +4413,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectLevelLoaded >= 0) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.levelLoaded != o->bootProbeExpectLevelLoaded) {
+                if (receipt.levelLoaded != o->bootProbeExpectLevelLoaded) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected levelLoaded=%d but got %d\n",
                             o->bootProbeExpectLevelLoaded,
@@ -4422,8 +4423,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             }
             if (o->bootProbeExpectAssetMd5 &&
                 o->bootProbeExpectAssetMd5[0] != '\0') {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    strcmp(receipt.bootAssetMd5,
+                if (strcmp(receipt.bootAssetMd5,
                            o->bootProbeExpectAssetMd5) != 0) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected asset md5 '%s' but got '%s'\n",
@@ -4433,8 +4433,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectMap) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.mapIndex != o->bootProbeExpectMapIndex) {
+                if (receipt.mapIndex != o->bootProbeExpectMapIndex) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected map %d but got %d\n",
                             o->bootProbeExpectMapIndex,
@@ -4443,8 +4442,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectRuntimeTickMin >= 0) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.runtimeTick < o->bootProbeExpectRuntimeTickMin) {
+                if (receipt.runtimeTick < o->bootProbeExpectRuntimeTickMin) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected runtime tick >= %d but got %d\n",
                             o->bootProbeExpectRuntimeTickMin,
@@ -4453,8 +4451,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectRuntimeTickMax >= 0) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.runtimeTick > o->bootProbeExpectRuntimeTickMax) {
+                if (receipt.runtimeTick > o->bootProbeExpectRuntimeTickMax) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected runtime tick <= %d but got %d\n",
                             o->bootProbeExpectRuntimeTickMax,
@@ -4463,8 +4460,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectStartupActive >= 0) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.startupActive != o->bootProbeExpectStartupActive) {
+                if (receipt.startupActive != o->bootProbeExpectStartupActive) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected startupActive=%d but got %d\n",
                             o->bootProbeExpectStartupActive,
@@ -4473,8 +4469,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectStartupFrameMin >= 0) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.startupFrame < o->bootProbeExpectStartupFrameMin) {
+                if (receipt.startupFrame < o->bootProbeExpectStartupFrameMin) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected startup frame >= %d but got %d\n",
                             o->bootProbeExpectStartupFrameMin,
@@ -4483,8 +4478,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectStartupFrameMax >= 0) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.startupFrame > o->bootProbeExpectStartupFrameMax) {
+                if (receipt.startupFrame > o->bootProbeExpectStartupFrameMax) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected startup frame <= %d but got %d\n",
                             o->bootProbeExpectStartupFrameMax,
@@ -4494,8 +4488,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             }
             if (o->bootProbeExpectStartupAnimation &&
                 o->bootProbeExpectStartupAnimation[0] != '\0') {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    strcmp(receipt.startupAnimation,
+                if (strcmp(receipt.startupAnimation,
                            o->bootProbeExpectStartupAnimation) != 0) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected startup animation '%s' but got '%s'\n",
@@ -4505,8 +4498,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectStartupAnimationActive >= 0) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.startupAnimationActive !=
+                if (receipt.startupAnimationActive !=
                         o->bootProbeExpectStartupAnimationActive) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected startupAnimationActive=%d but got %d\n",
@@ -4516,8 +4508,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectTitleFrameMin >= 0) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.startupTitleFrame < o->bootProbeExpectTitleFrameMin) {
+                if (receipt.startupTitleFrame < o->bootProbeExpectTitleFrameMin) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected title frame >= %d but got %d\n",
                             o->bootProbeExpectTitleFrameMin,
@@ -4526,8 +4517,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectTitleFrameMax >= 0) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.startupTitleFrame > o->bootProbeExpectTitleFrameMax) {
+                if (receipt.startupTitleFrame > o->bootProbeExpectTitleFrameMax) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected title frame <= %d but got %d\n",
                             o->bootProbeExpectTitleFrameMax,
@@ -4536,8 +4526,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectTitleFrameBoundary >= 0) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.startupTitleFrameMax !=
+                if (receipt.startupTitleFrameMax !=
                         o->bootProbeExpectTitleFrameBoundary) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected title frame boundary %d but got %d\n",
@@ -4547,8 +4536,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectTitleReady >= 0) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    receipt.startupTitleReady != o->bootProbeExpectTitleReady) {
+                if (receipt.startupTitleReady != o->bootProbeExpectTitleReady) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected titleReady=%d but got %d\n",
                             o->bootProbeExpectTitleReady,
@@ -4557,8 +4545,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectDm1HoCFullGraphics) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    !m11_dm1_boot_probe_complete_support_ready(&receipt)) {
+                if (!m11_dm1_boot_probe_complete_support_ready(&receipt)) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected DM1 HoC complete support but got complete=%d source=%d entrance=%d renderRoute=%d hostApp=%d saveCorpus=%d originalSave=%d ready=%d render=%d proof=%d apply=%d consumer=%d real=%d mac=%d release=%d hostWindow=%d presented=%d presentedGeometry=%d presentedPixels=%d presentedHash=%08x presentedChain=%d presentedChainHash=%08x route=%d ownership=%d hostRender=%d m11Consumer=%d launchPath=%d requiredAssets=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d hocAsset=%d opened=%d mirrors=%d block=%d commands=%d\n",
                             receipt.dm1CompleteSupportReady,
@@ -4604,8 +4591,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectDm1HoCReleaseAppCapture) {
-                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    !m11_dm1_boot_probe_release_app_capture_ready(&receipt)) {
+                if (!m11_dm1_boot_probe_release_app_capture_ready(&receipt)) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected DM1 HoC release-app host capture but got mac=%d release=%d hostWindow=%d presented=%d presentedGeometry=%d presentedPixels=%d presentedHash=%08x presentedChain=%d presentedChainHash=%08x route=%d ownership=%d hostRender=%d m11Consumer=%d launchPath=%d requiredAssets=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d\n",
                             receipt.dm1HoCMacWindowCapture,
