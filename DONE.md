@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 Theron title startup timing: M11 now keeps Theron at the Track02 title gate for an 8-frame startup animation, advances that animation on idle redraws, blocks keyboard/pointer accept until the title is ready, and suppresses synthetic text/rect title overlay when Track02 bitmap graphics execute. Verification: `test_theron_v1_m11_launcher_handoff_boundary`, `firestaff_m11`, and `git diff --check` passed.
+
 - ✅ 2026-07-10 CSB direct verified launch save-root binding: `csb_v1_boot_enter_game` now binds the default CSB save root when a verified profile is launched without going through the scanner, so save/import receipts and CSBWin resume import stay valid in direct/runtime tests. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_launcher_handoff_boundary`, and `git diff --check` passed.
 
 - ✅ 2026-07-10 CSB M11 startup fallback suppression: the production CSB startup host executor now suppresses door/text fallback callbacks instead of drawing legacy synthetic doors or fallback text over receipt-owned title/HUD/opening frames. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_m11_launcher_handoff_boundary`, and `git diff --check` passed.
