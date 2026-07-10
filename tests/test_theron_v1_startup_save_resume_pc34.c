@@ -4442,12 +4442,20 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                         ((1u << THERON_DUNGEON_COUNT) - 1u) &&
                     receipt.exact_level_semantics_ready &&
                     receipt.exact_object_semantics_ready &&
+                    receipt.object_capture_count == THERON_DUNGEON_COUNT &&
+                    receipt.object_capture_mask ==
+                        ((1u << THERON_DUNGEON_COUNT) - 1u) &&
+                    receipt.object_count_total == 0 &&
+                    receipt.object_route_hash != 0u &&
                     receipt.route_hash != 0u,
-                "Theron Track02 all seven dungeon selections have real-data level/object capture");
+                "Theron Track02 all seven dungeon selections have inspectable real-data level/object capture");
 
     for (dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
          dungeon_id <= THERON_DUNGEON_COUNT;
          dungeon_id = (Theron_DungeonID)((int)dungeon_id + 1)) {
+        int receipt_index = (int)dungeon_id - 1;
+        expect_true(receipt.object_counts[receipt_index] == 0,
+                    "Theron all-dungeon receipt records empty startup object route exactly");
         theron_v1_world_init(&selected_world);
         memset(runtime_receipt, 0, sizeof(runtime_receipt));
         expect_true(theron_v1_startup_runtime_load_initial_level(
