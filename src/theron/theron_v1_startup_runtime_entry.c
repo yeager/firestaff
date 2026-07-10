@@ -46,7 +46,6 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
     Theron_Track02SignalStatus signal_status;
     Theron_Track02UserDataWindowCatalog user_window_catalog;
     Theron_Track02StartupTextMarkerCatalog text_marker_catalog;
-    Theron_StartupMediaStateReceipt media_receipt;
     Theron_Track02LevelHandoffStatus last_semantic_status =
         THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
     Theron_Track02SemanticBindingStatus last_seed_status =
@@ -77,30 +76,6 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
                      receipt_cap,
                      "Track 02 initial candidate pending for stage %d",
                      (int)dungeon_id);
-        }
-        return 0;
-    }
-
-    /* The first runtime level is the endpoint of the title -> stage -> Soul
-     * Room -> forcefield sequence.  Keep that handoff bound to the same
-     * hash-gated media atlas that M11 consumes for those surfaces: a known
-     * Track 02 profile with an incomplete atlas must not quietly enter the
-     * synthetic presentation route. */
-    theron_v1_startup_media_capture_track02_state_receipt(
-        hucard_rom,
-        hucard_rom_size,
-        md5_hex,
-        &media_receipt);
-    if (!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
-            &media_receipt)) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "Track 02 semantic handoff requires complete media atlas variant=%d routes=0x%x atlas_routes=0x%x checksum=%08x",
-                     media_receipt.track02_variant,
-                     media_receipt.startup_bitmap_route_mask,
-                     media_receipt.startup_bitmap_atlas_route_mask,
-                     (unsigned)media_receipt.startup_bitmap_atlas_checksum);
         }
         return 0;
     }
@@ -200,7 +175,7 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
             if (receipt && receipt_cap > 0u) {
                 snprintf(receipt,
                          receipt_cap,
-                         "Track 02 semantic initial level anchor=%zu offset=0x%zx user_valid=%d user=0x%zx seed_status=%s startup_seed=0x%08x startup_level=0x%04x media_atlas=0x%x media_checksum=%08x header=%ux%u start=(%d,%d,%d)",
+                         "Track 02 semantic initial level anchor=%zu offset=0x%zx user_valid=%d user=0x%zx seed_status=%s startup_seed=0x%08x startup_level=0x%04x header=%ux%u start=(%d,%d,%d)",
                          anchor,
                          semantic_level_handoff.absolute_offset,
                          semantic_handoff.user_data_offset_valid,
@@ -209,8 +184,6 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
                              semantic_handoff.seed_table_status),
                          (unsigned)semantic_handoff.startup_seed,
                          (unsigned)semantic_handoff.startup_level_index,
-                         media_receipt.startup_bitmap_atlas_route_mask,
-                         (unsigned)media_receipt.startup_bitmap_atlas_checksum,
                          (unsigned)semantic_level_handoff.header_width,
                          (unsigned)semantic_level_handoff.header_height,
                          (int)world->levels[0][0].start_x,
@@ -272,9 +245,7 @@ int theron_v1_startup_runtime_load_initial_level(
     int dungeon_index;
     uint32_t seed;
     Theron_MapLoadResult r;
-    Theron_StartupMediaStateReceipt media_receipt;
     int verified_track02_request;
-    int complete_track02_media = 0;
 
     if (!world) {
         return 0;
@@ -287,11 +258,6 @@ int theron_v1_startup_runtime_load_initial_level(
     verified_track02_request =
         theron_v1_startup_runtime_has_verified_track02_request(
             hucard_rom, hucard_rom_size, md5_hex);
-    theron_v1_startup_media_capture_track02_state_receipt(
-        hucard_rom, hucard_rom_size, md5_hex, &media_receipt);
-    complete_track02_media =
-        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
-            &media_receipt);
     if (theron_v1_startup_runtime_try_track02_initial_level(world,
                                                             hucard_rom,
                                                             hucard_rom_size,
@@ -301,9 +267,7 @@ int theron_v1_startup_runtime_load_initial_level(
                                                             receipt_cap)) {
         return 1;
     }
-    if (verified_track02_request &&
-        (dungeon_id == THERON_DUNGEON_1_HALL_OF_RECORDS ||
-         !complete_track02_media)) {
+    if (verified_track02_request) {
         if (receipt && receipt_cap > 0u) {
             char semantic_detail[256];
             semantic_detail[0] = '\0';
@@ -365,31 +329,16 @@ int theron_v1_startup_runtime_load_initial_level(
                           world->levels[dungeon_index][0].start_y,
                           world->levels[dungeon_index][0].start_dir);
     if (receipt && receipt_cap > 0u && receipt[0] == '\0') {
-        if (verified_track02_request && complete_track02_media) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "Track 02 media route stage=%d atlas=0x%x checksum=%08x; bounded fallback map size=%dx%d seed=%u start=(%d,%d,%d)",
-                     (int)dungeon_id,
-                     media_receipt.startup_bitmap_atlas_route_mask,
-                     (unsigned)media_receipt.startup_bitmap_atlas_checksum,
-                     preview.width,
-                     preview.height,
-                     (unsigned)seed,
-                     (int)preview.start_x,
-                     (int)preview.start_y,
-                     (int)preview.start_dir);
-        } else {
-            snprintf(receipt,
-                     receipt_cap,
-                     "Track 02 descriptor scan unavailable; fallback room stage=%d size=%dx%d seed=%u start=(%d,%d,%d)",
-                     (int)dungeon_id,
-                     preview.width,
-                     preview.height,
-                     (unsigned)seed,
-                     (int)preview.start_x,
-                     (int)preview.start_y,
-                     (int)preview.start_dir);
-        }
+        snprintf(receipt,
+                 receipt_cap,
+                 "Track 02 descriptor scan unavailable; fallback room stage=%d size=%dx%d seed=%u start=(%d,%d,%d)",
+                 (int)dungeon_id,
+                 preview.width,
+                 preview.height,
+                 (unsigned)seed,
+                 (int)preview.start_x,
+                 (int)preview.start_y,
+                 (int)preview.start_dir);
     }
     return 1;
 }
@@ -462,7 +411,7 @@ static void theron_v1_startup_runtime_entry_capture_result(
     out_result->level_loaded = 1;
     out_result->structured_runtime_route = 1;
     out_result->runtime_receipt_text_route = 0;
-    if (verified_track02_request && media_receipt &&
+    if (!semantic_handoff && verified_track02_request && media_receipt &&
         theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
             media_receipt)) {
         out_result->track02_media_route = 1;
