@@ -4,11 +4,100 @@
 #include <stdio.h>
 
 /* Nexus V1 provisional trigger VM + dispatcher.
- * Stub implementation: the real trigger owner/record format is unresolved.
+ * Bounded implementation: the real trigger owner/record format is unresolved.
  * docs/nexus_triggers.md and docs/nexus_sensors.md currently classify
  * SDDRVS.TSK as Saturn sound-driver data; SLEV*.BIN / DGN metadata remain
- * candidate trigger sources. This module only provides deterministic runtime
- * condition/action dispatch for synthetic and future parsed rules. */
+ * candidate trigger sources. This module provides deterministic runtime
+ * condition/action dispatch and accepts only an explicit SLEV rule-table
+ * envelope before enabling parsed runtime dispatch. */
+
+#define NEXUS_SLEV_RULE_MAGIC_SIZE 4
+#define NEXUS_SLEV_RULE_HEADER_SIZE 8
+#define NEXUS_SLEV_RULE_VERSION 1
+#define NEXUS_SLEV_RULE_RECORD_SIZE 32
+
+static int nexus_read_u16_le(const uint8_t *p) {
+    return p ? (int)((uint16_t)p[0] | ((uint16_t)p[1] << 8)) : 0;
+}
+
+static int nexus_read_s16_le(const uint8_t *p) {
+    uint16_t v;
+    if (!p) return 0;
+    v = (uint16_t)nexus_read_u16_le(p);
+    return (v & 0x8000u) ? (int)v - 0x10000 : (int)v;
+}
+
+static int nexus_script_is_condition_opcode(int opcode) {
+    return opcode >= NEXUS_OP_WHEN_PARTY_ON_XY &&
+           opcode <= NEXUS_OP_WHEN_ITEM_USED;
+}
+
+static int nexus_script_is_action_opcode(int opcode) {
+    return opcode >= NEXUS_OP_TELEPORT &&
+           opcode <= NEXUS_OP_END_GAME;
+}
+
+static int nexus_script_parse_slev_rule_table(Nexus_ScriptVM *vm,
+                                              const uint8_t *data,
+                                              int size) {
+    int record_size;
+    int count;
+    int i;
+
+    if (!vm || !data || size < NEXUS_SLEV_RULE_HEADER_SIZE) return 0;
+    if (data[0] != 'S' || data[1] != 'L' ||
+        data[2] != 'E' || data[3] != 'V') {
+        return 0;
+    }
+    if (data[4] != NEXUS_SLEV_RULE_VERSION) return 0;
+    record_size = data[5];
+    if (record_size != NEXUS_SLEV_RULE_RECORD_SIZE) return 0;
+
+    count = nexus_read_u16_le(&data[6]);
+    if (count < 0 || count > NEXUS_SCRIPT_MAX_RULES) return 0;
+    if (size != NEXUS_SLEV_RULE_HEADER_SIZE + count * record_size) return 0;
+
+    for (i = 0; i < count; i++) {
+        const uint8_t *r = data + NEXUS_SLEV_RULE_HEADER_SIZE +
+                           i * record_size;
+        if (!nexus_script_is_condition_opcode(r[0])) return 0;
+        if (!nexus_script_is_action_opcode(r[1])) return 0;
+    }
+
+    for (i = 0; i < count; i++) {
+        const uint8_t *src = data + NEXUS_SLEV_RULE_HEADER_SIZE +
+                             i * record_size;
+        Nexus_ScriptRule *dst = &vm->rules[i];
+
+        memset(dst, 0, sizeof(*dst));
+        dst->rule_id = nexus_read_u16_le(&src[4]);
+        if (dst->rule_id == 0) dst->rule_id = i + 1;
+        dst->enabled = (src[2] & 0x02u) ? 0 : 1;
+        dst->once_only = (src[2] & 0x01u) ? 1 : 0;
+        dst->cond.opcode = (Nexus_WorldOpcode)src[0];
+        dst->cond.x = nexus_read_s16_le(&src[6]);
+        dst->cond.y = nexus_read_s16_le(&src[8]);
+        dst->cond.value = nexus_read_s16_le(&src[10]);
+        dst->cond.target_x = nexus_read_s16_le(&src[12]);
+        dst->cond.target_y = nexus_read_s16_le(&src[14]);
+        dst->cond.target_level = nexus_read_s16_le(&src[16]);
+        dst->action.opcode = (Nexus_WorldOpcode)src[1];
+        dst->action.x = nexus_read_s16_le(&src[18]);
+        dst->action.y = nexus_read_s16_le(&src[20]);
+        dst->action.value = nexus_read_s16_le(&src[22]);
+        dst->action.level = nexus_read_s16_le(&src[24]);
+        dst->action.item_id = nexus_read_s16_le(&src[26]);
+        dst->action.message_id = nexus_read_s16_le(&src[28]);
+        dst->action.flag_index = nexus_read_s16_le(&src[30]);
+    }
+
+    vm->rule_count = count;
+    vm->parser_supported = 1;
+    vm->dispatch_enabled = count > 0 ? 1 : 0;
+    vm->parsed_record_size = record_size;
+    vm->parsed_rule_count = count;
+    return 1;
+}
 
 /* ═══════════════════════════════════════════════════════════════════
  * Init
@@ -22,11 +111,9 @@ void nexus_script_vm_init(Nexus_ScriptVM *vm) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
- * Load candidate trigger data for a level — STUB
- * TODO: parse actual SLEV*.BIN/DGN trigger records once source-locked.
- * Current approach: register a small number of default rules
- * based on level index. Real implementation needs format reverse-
- * engineering of the real trigger owner.
+ * Load candidate trigger data for a level.
+ * Real SLEV ownership remains unresolved, so dispatch is enabled only for
+ * the explicit SLEV rule-table envelope documented in the public header.
  * Source: docs/nexus_triggers.md — unresolved trigger owner.
  * ═══════════════════════════════════════════════════════════════════ */
 
@@ -43,16 +130,23 @@ int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
     vm->candidate_source_bytes = vm->candidate_source_loaded ? size : 0;
     vm->parser_supported = 0;
     vm->dispatch_enabled = 0;
+    vm->parsed_record_size = 0;
+    vm->parsed_rule_count = 0;
 
-    /* No synthetic fallback rules here: real SLEV*.BIN/DGN trigger bytes are
-     * routed into a receipt until the real parser is source-locked.
+    if (vm->candidate_source_loaded) {
+        (void)nexus_script_parse_slev_rule_table(vm, data, size);
+    }
+
+    /* No synthetic fallback rules here: SLEV*.BIN/DGN trigger bytes that do
+     * not match the bounded rule-table envelope are routed into a receipt.
      *
      * Evidence so far:
      * - docs/nexus_triggers.md: SDDRVS.TSK is the 26,610-byte sound driver.
      * - Per-level SLEV*.BIN files (2-12 KB) remain plausible event/script data. */
 
-    printf("Nexus script VM: level %d source=%d bytes=%d parser=pending\n",
-        level_index, vm->candidate_source_loaded, vm->candidate_source_bytes);
+    printf("Nexus script VM: level %d source=%d bytes=%d parser=%s rules=%d\n",
+        level_index, vm->candidate_source_loaded, vm->candidate_source_bytes,
+        vm->parser_supported ? "parsed" : "pending", vm->rule_count);
     return 0;
 }
 
@@ -64,6 +158,8 @@ void nexus_script_vm_unload(Nexus_ScriptVM *vm) {
     vm->candidate_source_bytes = 0;
     vm->parser_supported = 0;
     vm->dispatch_enabled = 0;
+    vm->parsed_record_size = 0;
+    vm->parsed_rule_count = 0;
 }
 
 int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
@@ -80,6 +176,8 @@ int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
     out_receipt->candidate_source_bytes = vm->candidate_source_bytes;
     out_receipt->parser_supported = vm->parser_supported;
     out_receipt->dispatch_enabled = vm->dispatch_enabled;
+    out_receipt->parsed_record_size = vm->parsed_record_size;
+    out_receipt->parsed_rule_count = vm->parsed_rule_count;
     out_receipt->rules_loaded = vm->rule_count;
 
     if (!vm->candidate_source_loaded) {

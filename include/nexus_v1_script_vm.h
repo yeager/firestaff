@@ -10,15 +10,16 @@
  *
  * SDDRVS.TSK is now classified as a Saturn sound-driver task, not a proven
  * trigger bytecode file. SLEV*.BIN / DGN metadata remain candidate trigger
- * owners. This module is bounded scaffolding for deterministic condition ->
- * action dispatch while the real Nexus trigger format is still unresolved.
+ * owners. This module accepts only an explicit bounded SLEV rule-table
+ * envelope and otherwise keeps real candidate bytes blocked from dispatch.
  *
  * Provisional format: [WHEN condition] THEN [action] rules.
  * Unlike DM1 (tile-type hardwired) or DM2 (actuator enum dispatch), this API
  * models a declarative condition -> action dispatcher for future Nexus proof.
  *
  * Opcode constants are defined in nexus_v1_world.h (Nexus_WorldOpcode).
- * Current status: no real Nexus script/trigger bytecode parser. */
+ * Current status: bounded SLEV rule-table parser plus no-fallback receipts for
+ * candidate bytes that do not match the supported envelope. */
 
 struct Nexus_ScriptAction;
 typedef void (*Nexus_ScriptActionHandler)(const struct Nexus_ScriptAction *action,
@@ -67,6 +68,8 @@ typedef struct {
     int candidate_source_bytes;
     int parser_supported;
     int dispatch_enabled;
+    int parsed_record_size;
+    int parsed_rule_count;
     Nexus_ScriptActionHandler handler;
     void *handler_data;
 } Nexus_ScriptVM;
@@ -85,6 +88,8 @@ typedef struct {
     int candidate_source_bytes;
     int parser_supported;
     int dispatch_enabled;
+    int parsed_record_size;
+    int parsed_rule_count;
     int rules_loaded;
     int blocks_real_script_dispatch;
     int fallback_visuals_permitted;
@@ -96,8 +101,12 @@ void nexus_script_vm_init(Nexus_ScriptVM *vm);
 /* Load candidate trigger/script data for a level (0-15).
  * Pass raw file bytes and size.
  * Returns 0 on success, -1 on error.
- * TODO: actual Nexus trigger bytecode/record format unknown — this is a stub
- * that accepts the data but does not yet parse opcodes.
+ * Supported envelope:
+ *   magic "SLEV", version 1, record size 32, uint16 little-endian count,
+ *   then count fixed condition/action records using Nexus_WorldOpcode values.
+ * Bytes outside that envelope are retained in the runtime receipt but blocked
+ * from dispatch; this avoids synthetic fallback trigger rules for unknown
+ * real SLEV candidates.
  * Source: docs/nexus_triggers.md unresolved SLEV*.BIN/DGN trigger owner. */
 int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
                                 const uint8_t *data, int size);
