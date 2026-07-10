@@ -208,6 +208,53 @@ static void test_open_door_ui_cast_launches_source_projectile(void) {
               "timeline carries Open Door subtype");
 }
 
+static void test_open_door_cast_ages_existing_action_disable_before_f0412_disable(void) {
+    M11_GameViewState state;
+
+    memset(&state, 0, sizeof(state));
+    M11_GameView_Init(&state);
+    state.active = 1;
+    state.world.gameTick = 90;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapIndex = 0;
+    state.world.party.mapX = 3;
+    state.world.party.mapY = 4;
+    state.world.party.direction = 1;
+    state.world.party.championCount = 1;
+    state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].present = 1;
+    state.world.party.champions[0].hp.current = 100;
+    state.world.party.champions[0].hp.maximum = 100;
+    state.world.party.champions[0].mana.current = 80;
+    state.world.party.champions[0].mana.maximum = 80;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 80;
+    state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_WIZARD].experience = 8000;
+    state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_AIR].experience = 8000;
+
+    /* A different champion action would normally own this enable event.
+     * The cast consumes one real tick, so its stale duration must age before
+     * F0412 replaces the caster's disable with the spell-table duration. */
+    state.actionDisabledTicks[0] = 1;
+    state.actionDisabledIndex[0] = DM1_ACTION_SHOOT;
+    state.actionEnableSlotOrdinal[0] = 1;
+
+    ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1, "cooldown cast opens spell panel");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 0), 1, "cooldown cast enters Lo");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 5), 1, "cooldown cast enters Zo");
+    ASSERT_EQ(M11_GameView_CastSpell(&state), 1, "cooldown cast is committed");
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "F0412 still materializes the live Open Door projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
+              "materialized projectile keeps the party-facing direction");
+    ASSERT_EQ(state.actionDisabledTicks[0], 15,
+              "new F0412 action disable does not lose its creation tick");
+    ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
+              "expired action row does not leak into spell disable state");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0,
+              "F0330 spell disable retains source slot ordinal zero");
+}
+
 static void test_open_door_ui_cast_insufficient_mana_preserves_runes_and_caster(void) {
     M11_GameViewState state;
     struct ChampionState_Compat beforeChampion;
@@ -274,6 +321,7 @@ int main(void) {
 
     test_open_door_projectile_schedules_delayed_toggle_and_animates();
     test_open_door_ui_cast_launches_source_projectile();
+    test_open_door_cast_ages_existing_action_disable_before_f0412_disable();
     test_open_door_ui_cast_insufficient_mana_preserves_runes_and_caster();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
