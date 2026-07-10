@@ -744,6 +744,17 @@ static int m11_play_redmcsb_entrance_transition(
                                                       M11_FB_HEIGHT);
     }
 
+    /* ReDMCSB ENTRANCE.C presents C004/C002/C003 before it starts waiting
+     * for C200.  The source-step route may reach WAIT_FOR_INPUT before a
+     * later command requests another present, so publish this initial frame
+     * here.  This makes the entrance an actual interactive screen instead
+     * of a visually indistinguishable black wait on fast modern hosts. */
+    (void)M11_Render_PresentIndexedWithSpecialPalette(
+        framebuffer,
+        M11_FB_WIDTH,
+        M11_FB_HEIGHT,
+        VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
+
     /* ReDMCSB ENTRANCE.C source-lock:
      * - F0441_STARTEND_ProcessEntrance() waits in entrance mode until C200.
      * - ENTRANCE.C:935 delays 20 ticks before opening.
@@ -895,6 +906,12 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
     const char* videoDriver = getenv("SDL_VIDEODRIVER");
     if ((videoDriver && strcmp(videoDriver, "dummy") == 0) || getenv("FIRESTAFF_AUTOTEST")) {
         allowHeadlessTimeout = 1;
+    }
+    /* A probe has no second physical C200 command.  Keep the interactive
+     * entrance source-faithful, while ensuring dummy-video boot verification
+     * completes even when its caller has no explicit timeout policy. */
+    if (allowHeadlessTimeout && autoEnterAfterMs <= 0) {
+        autoEnterAfterMs = 1;
     }
 
     while (SDL_PollEvent(&ev)) {
