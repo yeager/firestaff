@@ -2180,6 +2180,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               visual_sequence.sequence_capture_hash != 0u &&
               visual_sequence.title_sample_count ==
                   CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
+              visual_sequence.title_unique_sample_hash_count ==
+                  CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
               visual_sequence.title_all_stages_captured &&
               visual_sequence.title_presents_capture_ready &&
               visual_sequence.title_chaos_zoom_capture_ready &&
@@ -2226,6 +2228,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               runtime_visual.title_runtime_consumed &&
               runtime_visual.title_runtime_sample_count ==
                   CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
+              runtime_visual.title_runtime_unique_sample_hash_count ==
+                  CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
               runtime_visual.title_runtime_all_stages_consumed &&
               runtime_visual.title_runtime_sample_hashes[0] ==
                   visual_sequence.title_sample_hashes[0] &&
@@ -2268,6 +2272,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               runtime_host_gate.route_hardening_valid &&
               runtime_host_gate.all_runtime_routes_consumed &&
               runtime_host_gate.title_runtime_captured &&
+              runtime_host_gate.title_runtime_unique_sample_hash_count ==
+                  CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
               runtime_host_gate.closed_door_hud_runtime_captured &&
               runtime_host_gate.utility_hud_runtime_captured &&
               runtime_host_gate.door_opening_runtime_captured &&
