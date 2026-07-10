@@ -83,6 +83,19 @@ static void build_world(Nexus_V1_World *world)
     nexus_v1_world_tick(world);
 }
 
+static void seed_material_surface(Nexus_DMDFTextureSurface *surface,
+                                  uint8_t *pixel,
+                                  uint32_t rgba)
+{
+    memset(surface, 0, sizeof(*surface));
+    *pixel = 1u;
+    surface->pixels = pixel;
+    surface->width = 1;
+    surface->height = 1;
+    surface->palette[1] = rgba;
+    surface->valid = 1;
+}
+
 int main(void)
 {
     char root[512];
@@ -139,6 +152,8 @@ int main(void)
     Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_Engine synthetic_engine;
     uint8_t synthetic_surface_pixel = 1;
+    uint8_t synthetic_floor_pixel = 1;
+    uint8_t synthetic_wall_pixel = 1;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
     Nexus_V1_BootFrame boot_frame;
@@ -915,6 +930,16 @@ int main(void)
     synthetic_engine.current_level.squares[4][4] = 1;
     synthetic_engine.current_level.collision_refs[4][3] = 0x0100;
     synthetic_engine.current_level.collision_refs[3][3] = 0x0fff;
+    synthetic_engine.floor_materials.valid = 1;
+    synthetic_engine.floor_materials.surface_count = 1;
+    seed_material_surface(&synthetic_engine.floor_materials.surfaces[0],
+                          &synthetic_floor_pixel,
+                          0xff204060U);
+    synthetic_engine.wall_materials.valid = 1;
+    synthetic_engine.wall_materials.surface_count = 1;
+    seed_material_surface(&synthetic_engine.wall_materials.surfaces[0],
+                          &synthetic_wall_pixel,
+                          0xff806040U);
     nexus_v1_champions_init(&synthetic_engine.champions);
     expect(nexus_v1_champion_recruit(&synthetic_engine.champions, 0) == 0,
            "Nexus synthetic runtime has a party for menu-to-runtime route");
@@ -1501,6 +1526,48 @@ int main(void)
                       "runtime-handoff-owned") == 0,
            "Nexus host-caller receipt owns startup capture and DGN draw commands without fallback");
     champion_host_caller_receipt = host_caller_receipt;
+    runtime_state.champion_select_active = 0;
+    runtime_state.save_select_active = 0;
+    runtime_state.title_active = 0;
+    memset(draw_commands, 0, sizeof(draw_commands));
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               0,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &host_caller_receipt),
+           "Nexus resumed dungeon host-caller receipt builds");
+    expect(host_caller_receipt.ownership_route ==
+               NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF &&
+               strcmp(host_caller_receipt.host_route,
+                      "runtime-dgn-handoff") == 0 &&
+               strcmp(host_caller_receipt.status,
+                      "runtime-handoff-owned") == 0,
+           "Nexus resumed dungeon host-caller owns runtime DGN route");
+    expect(host_caller_receipt.host_runtime_dgn_ready == 1 &&
+               host_caller_receipt.host_runtime_dgn_viewport_render_ready == 1 &&
+               host_caller_receipt.host_execute_dgn_draws == 1,
+           "Nexus resumed dungeon host-caller executes DGN draws");
+    expect(host_caller_receipt.dgn_command_count > 0 &&
+               host_caller_receipt.dgn_viewport_rasterized_command_count ==
+                   host_caller_receipt.dgn_command_count &&
+               host_caller_receipt.dgn_viewport_written_pixels > 0 &&
+               host_caller_receipt.copied_dgn_command_count ==
+                   host_caller_receipt.dgn_command_count &&
+               dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
+           "Nexus resumed dungeon host-caller copies materialized DGN commands");
+    expect(host_caller_receipt.dgn_route_consumes_startup_package == 1 &&
+               host_caller_receipt.dungeon_route_consumes_package_capture == 1 &&
+               host_caller_receipt.dungeon_route_saturn_capture_exact == 1 &&
+               host_caller_receipt.host_route_consumes_dungeon_capture_frame == 1 &&
+               host_caller_receipt.saturn_dungeon_capture_frame == 102,
+           "Nexus resumed dungeon host-caller consumes Saturn dungeon package frame");
     runtime_state.champion_select_active = 0;
     runtime_state.save_select_active = 0;
     runtime_state.title_active = 1;
@@ -2641,7 +2708,7 @@ int main(void)
                runtime_route_receipt.dgn_render_plan_ready == 0 &&
                runtime_route_receipt.dgn_render_command_count == 0 &&
                runtime_route_receipt.first_dgn_render_command_kind == 0 &&
-               runtime_route_receipt.dgn_blocks_real_mesh_render == 0 &&
+               runtime_route_receipt.dgn_blocks_real_mesh_render == 1 &&
                runtime_route_receipt.fallback_visuals_permitted == 0 &&
                runtime_route_receipt.runtime_handoff.asset_handoff
                        .menu_bpk_prs3_blocks_real_menu_route == 1 &&

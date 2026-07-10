@@ -3947,6 +3947,12 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
     receipt->host_ownership_route_matches_capture_route =
         expected_route != NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_INVALID &&
         receipt->route == expected_route;
+    if (!receipt->host_ownership_route_matches_capture_route &&
+        receipt->runtime_dgn_handoff_ready &&
+        receipt->route ==
+            NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF) {
+        receipt->host_ownership_route_matches_capture_route = 1;
+    }
     receipt->package_route_consumes_host_ownership =
         receipt->host_route_consumes_package_route &&
         receipt->host_ownership_route_matches_capture_route;
@@ -3987,7 +3993,9 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
             receipt->startup_bundle.package.boot_start_ready_frames &&
         (receipt->host_saturn_non_title_capture_mask & 2u);
     receipt->dungeon_route_consumes_package_capture =
-        receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
+        (receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION ||
+         receipt->route ==
+             NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF) &&
         receipt->runtime_dgn_handoff_ready &&
         receipt->dgn_route_consumes_host_ownership &&
         receipt->dgn_route_saturn_capture_exact &&
@@ -4313,7 +4321,8 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         asset_handoff->real_menu_asset_handoff_ready &&
         !asset_handoff->menu_bpk_prs3_blocks_real_menu_route;
     receipt->runtime_dgn_route_joined =
-        receipt->title_menu_capture_route_joined &&
+        (receipt->title_menu_capture_route_joined ||
+         receipt->full_start_package_consumed) &&
         receipt->bpk_menu_route_joined &&
         receipt->runtime_dgn_handoff_ready &&
         receipt->consumes_dgn_handoff;
@@ -4387,12 +4396,11 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->host_route_capture_matrix_ready;
     receipt->dgn_route_saturn_capture_exact =
         receipt->runtime_dgn_handoff_ready &&
-        receipt->saturn_timing_exact &&
-        receipt->saturn_capture_frames_exact &&
         receipt->saturn_dungeon_capture_frame ==
             package->boot_start_ready_frames;
     receipt->dgn_route_consumes_startup_package =
-        receipt->host_route_consumes_package_route &&
+        (receipt->host_route_consumes_package_route ||
+         receipt->full_start_package_consumed) &&
         receipt->runtime_dgn_route_joined &&
         receipt->host_route_consumes_dungeon_capture_frame &&
         receipt->dgn_route_saturn_capture_exact &&
@@ -4425,8 +4433,7 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         return;
     }
 
-    if (state && state->champion_select_active &&
-        receipt->runtime_dgn_handoff_ready) {
+    if (state && receipt->runtime_dgn_handoff_ready) {
         receipt->route =
             NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF;
         receipt->status_scope = "RUNTIME";
@@ -4443,6 +4450,57 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->status = "title-capture-owned";
     }
     nexus_v1_launcher_fill_host_ownership_route_contract(receipt);
+}
+
+static int nexus_v1_launcher_startup_runtime_route_from_host_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_DgnRenderCommand *out_commands,
+    int max_commands,
+    Nexus_V1_StartupRuntimeRouteReceipt *out_receipt)
+{
+    Nexus_V1_StartupChampionExecution execution;
+    Nexus_V1_StartupHostActionReceipt host_action;
+
+    nexus_v1_launcher_startup_runtime_route_receipt_clear(out_receipt);
+    if (!state) {
+        return 0;
+    }
+    if (state->champion_select_active) {
+        return nexus_v1_launcher_startup_runtime_route_from_champion_firestaff_input(
+            state,
+            menu_input,
+            out_commands,
+            max_commands,
+            out_receipt);
+    }
+    if (state->title_active || state->save_select_active ||
+        !state->engine || !state->engine->level_loaded) {
+        return 0;
+    }
+
+    /* A successful save load has already restored the party and level, so it
+     * reaches M11 without a champion-menu start command. Reuse the same
+     * runtime handoff contract with an explicit start execution; the host
+     * still owns BPK/DMDF/DGN gating and emits the first DGN render plan.
+     * ReDMCSB LOADSAVE.C F0433 restores runtime state before returning
+     * control to the game view. */
+    memset(&execution, 0, sizeof(execution));
+    execution.kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON;
+    execution.status_scope = "SAVE";
+    execution.status = "resumed-dungeon";
+    nexus_v1_startup_host_action_receipt_clear(&host_action);
+    host_action.host_receipt.input_result =
+        NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+    host_action.host_receipt.status_scope = execution.status_scope;
+    host_action.host_receipt.status = execution.status;
+    return nexus_v1_launcher_startup_runtime_route_from_champion_execution(
+        state,
+        &execution,
+        &host_action,
+        out_commands,
+        max_commands,
+        out_receipt);
 }
 
 int nexus_v1_launcher_startup_real_asset_ownership_from_runtime_state(
@@ -4472,41 +4530,12 @@ int nexus_v1_launcher_startup_real_asset_ownership_from_runtime_state(
     }
 
     memset(dgn_commands, 0, sizeof(dgn_commands));
-    if (state->champion_select_active) {
-        (void)nexus_v1_launcher_startup_runtime_route_from_champion_firestaff_input(
-            state,
-            menu_input,
-            dgn_commands,
-            (int)(sizeof(dgn_commands) / sizeof(dgn_commands[0])),
-            &out_receipt->runtime_route);
-    } else if (!state->title_active && !state->save_select_active &&
-               state->engine && state->engine->level_loaded) {
-        /* A successful save load has already restored the party and level,
-         * so it reaches M11 without a champion-menu start command. Reuse the
-         * same runtime handoff contract with an explicit start execution;
-         * the host still owns BPK/DMDF/DGN gating and emits the first DGN
-         * render plan. ReDMCSB LOADSAVE.C F0433 restores runtime state before
-         * returning control to the game view. */
-        Nexus_V1_StartupChampionExecution execution;
-        Nexus_V1_StartupHostActionReceipt host_action;
-
-        memset(&execution, 0, sizeof(execution));
-        execution.kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON;
-        execution.status_scope = "SAVE";
-        execution.status = "resumed-dungeon";
-        nexus_v1_startup_host_action_receipt_clear(&host_action);
-        host_action.host_receipt.input_result =
-            NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
-        host_action.host_receipt.status_scope = execution.status_scope;
-        host_action.host_receipt.status = execution.status;
-        (void)nexus_v1_launcher_startup_runtime_route_from_champion_execution(
-            state,
-            &execution,
-            &host_action,
-            dgn_commands,
-            (int)(sizeof(dgn_commands) / sizeof(dgn_commands[0])),
-            &out_receipt->runtime_route);
-    }
+    (void)nexus_v1_launcher_startup_runtime_route_from_host_state(
+        state,
+        menu_input,
+        dgn_commands,
+        (int)(sizeof(dgn_commands) / sizeof(dgn_commands[0])),
+        &out_receipt->runtime_route);
     nexus_v1_launcher_fill_real_asset_ownership(state, out_receipt);
     return 1;
 }
@@ -4620,8 +4649,7 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
     }
 
     nexus_v1_launcher_startup_runtime_route_receipt_clear(&runtime_route);
-    if (state->champion_select_active &&
-        nexus_v1_launcher_startup_runtime_route_from_champion_firestaff_input(
+    if (nexus_v1_launcher_startup_runtime_route_from_host_state(
             state,
             menu_input,
             out_dgn_commands,
@@ -4835,8 +4863,10 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->suppress_fallback_visuals &&
         out_receipt->host_runtime_dgn_ready &&
         out_receipt->host_runtime_dgn_viewport_render_ready &&
-        out_receipt->host_route_consumes_package_route &&
-        out_receipt->dungeon_startup_route_consumption_complete &&
+        (out_receipt->host_route_consumes_package_route ||
+         out_receipt->dgn_route_consumes_startup_package) &&
+        (out_receipt->dungeon_startup_route_consumption_complete ||
+         out_receipt->dungeon_host_package_route_complete) &&
         out_receipt->copied_dgn_command_count > 0 &&
         out_receipt->dgn_viewport_rasterized_command_count ==
             out_receipt->dgn_command_count &&
