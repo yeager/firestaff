@@ -737,6 +737,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34
         hoc_save_capture_readiness;
     DM1_V1_CompleteSupportReceipt_PC34 complete_support;
+    DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34
+        hoc_boot_full_graphics;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 mirror_front_wall;
     DM1_V1_ChampionMirrorRenderReceiptPc34 mirror_render;
     DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 mirror_boundary;
@@ -3086,7 +3088,44 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  complete_support.host_draw_uses_owned_receipt &&
                  complete_support.block_enter_until_champion_selected,
              1);
+    memset(&hoc_boot_full_graphics, 0, sizeof(hoc_boot_full_graphics));
+    expect_i("DM1 boot full-graphics receipt owns aggregate HoC readiness",
+             dm1_v1_startup_hoc_boot_full_graphics_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_enter_handoff,
+                 &hoc_save_capture_readiness,
+                 &save_resume_capture,
+                 &hoc_boot_full_graphics) &&
+                 hoc_boot_full_graphics.handled &&
+                 hoc_boot_full_graphics.ready &&
+                 hoc_boot_full_graphics.consumed_host_probe_facts &&
+                 hoc_boot_full_graphics
+                     .consumed_hoc_runtime_handoff_receipt &&
+                 hoc_boot_full_graphics
+                     .consumed_hoc_save_capture_host_readiness &&
+                 hoc_boot_full_graphics
+                     .consumed_original_save_capture_receipt &&
+                 hoc_boot_full_graphics.runtime_apply.ready &&
+                 hoc_boot_full_graphics.production_consumer.ready &&
+                 hoc_boot_full_graphics.ownership.ready &&
+                 hoc_boot_full_graphics.complete_support.ready &&
+                 hoc_boot_full_graphics.complete_support
+                     .complete_host_app_capture_route,
+             1);
     hoc_save_capture_readiness.save_capture_ready = 0;
+    memset(&hoc_boot_full_graphics, 0, sizeof(hoc_boot_full_graphics));
+    expect_i("DM1 boot full-graphics receipt rejects partial HoC save route",
+             dm1_v1_startup_hoc_boot_full_graphics_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_enter_handoff,
+                 &hoc_save_capture_readiness,
+                 &save_resume_capture,
+                 &hoc_boot_full_graphics) &&
+                 hoc_boot_full_graphics.handled &&
+                 !hoc_boot_full_graphics.ready &&
+                 !hoc_boot_full_graphics.complete_support
+                      .complete_hoc_render_route,
+             1);
     expect_i("DM1 complete support rejects partial HoC host route",
              dm1_v1_complete_support_receipt_pc34(
                  &hoc_enter_handoff,

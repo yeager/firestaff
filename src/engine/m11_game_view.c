@@ -11532,6 +11532,7 @@ static unsigned int m11_dm1_presented_rgba_hash_pc34(
 
 static int m11_dm1_hoc_full_graphics_probe_receipt(
     const M11_GameViewState* state,
+    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* out_facts,
     DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34* out_apply,
     DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34* out_consumer,
     DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* out_ownership)
@@ -11654,6 +11655,9 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m11_boot_probe_consumer = 1;
     facts.consumed_m12_startup_capture_consumer = 1;
+    if (out_facts) {
+        *out_facts = facts;
+    }
     if (out_ownership) {
         memset(out_ownership, 0, sizeof(*out_ownership));
     }
@@ -11671,8 +11675,9 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
 
 static int m11_dm1_complete_support_from_hoc_ownership(
     const M11_GameViewState* state,
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
     const DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* ownership,
-    DM1_V1_CompleteSupportReceipt_PC34* out_receipt)
+    DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* out_receipt)
 {
     DM1_V1_StartupHandoffOutcome_PC34 enter_outcome;
     DM1_V1_StartupHandoffOutcome_PC34 resume_outcome;
@@ -11684,7 +11689,7 @@ static int m11_dm1_complete_support_from_hoc_ownership(
     DM1_V1_StartupSaveResumeCaptureFacts_PC34 save_facts;
     DM1_V1_StartupSaveResumeCaptureReceipt_PC34 original_save;
 
-    if (!state || !ownership || !out_receipt) {
+    if (!state || !facts || !ownership || !out_receipt) {
         return 0;
     }
     memset(&enter_outcome, 0, sizeof(enter_outcome));
@@ -11747,11 +11752,12 @@ static int m11_dm1_complete_support_from_hoc_ownership(
                                                          &original_save)) {
         return 0;
     }
-    return dm1_v1_complete_support_receipt_pc34(&enter_handoff,
-                                                ownership,
-                                                &hoc_save,
-                                                &original_save,
-                                                out_receipt);
+    return dm1_v1_startup_hoc_boot_full_graphics_receipt_pc34(
+        facts,
+        &enter_handoff,
+        &hoc_save,
+        &original_save,
+        out_receipt);
 }
 
 int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
@@ -11956,13 +11962,15 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             hoc_consumer;
         DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34
             hoc_ownership;
-        DM1_V1_CompleteSupportReceipt_PC34 complete_support;
+        DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 hoc_facts;
+        DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34 boot_full_graphics;
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
         memset(&hoc_apply, 0, sizeof(hoc_apply));
         memset(&hoc_consumer, 0, sizeof(hoc_consumer));
         memset(&hoc_ownership, 0, sizeof(hoc_ownership));
-        memset(&complete_support, 0, sizeof(complete_support));
+        memset(&hoc_facts, 0, sizeof(hoc_facts));
+        memset(&boot_full_graphics, 0, sizeof(boot_full_graphics));
         facts.source_id = state->sourceId;
         facts.level_loaded = out->levelLoaded;
         facts.intro_bypassed = state->dm1StartupIntroBypassed;
@@ -12005,9 +12013,16 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         }
         if (m11_dm1_hoc_full_graphics_probe_receipt(
                 state,
+                &hoc_facts,
                 &hoc_apply,
                 &hoc_consumer,
                 &hoc_ownership)) {
+            if (m11_dm1_complete_support_from_hoc_ownership(
+                    state, &hoc_facts, &hoc_ownership, &boot_full_graphics)) {
+                hoc_apply = boot_full_graphics.runtime_apply;
+                hoc_consumer = boot_full_graphics.production_consumer;
+                hoc_ownership = boot_full_graphics.ownership;
+            }
             out->dm1HoCFullGraphicsReady = 1;
             out->dm1HoCHostRenderPlanReady =
                 hoc_apply.consumed_capture_artifact &&
@@ -12094,21 +12109,22 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->dm1HoCMapHeight = hoc_consumer.map_height;
             out->dm1HoCRenderCommandCount =
                 hoc_consumer.render_command_count;
-            if (m11_dm1_complete_support_from_hoc_ownership(
-                    state, &hoc_ownership, &complete_support)) {
-                out->dm1CompleteSupportReady = complete_support.ready;
+            if (boot_full_graphics.handled) {
+                const DM1_V1_CompleteSupportReceipt_PC34* complete_support =
+                    &boot_full_graphics.complete_support;
+                out->dm1CompleteSupportReady = complete_support->ready;
                 out->dm1CompleteSourceVisibleStartup =
-                    complete_support.complete_source_visible_startup;
+                    complete_support->complete_source_visible_startup;
                 out->dm1CompleteEntranceToHoC =
-                    complete_support.complete_entrance_to_hoc_transition;
+                    complete_support->complete_entrance_to_hoc_transition;
                 out->dm1CompleteHoCRenderRoute =
-                    complete_support.complete_hoc_render_route;
+                    complete_support->complete_hoc_render_route;
                 out->dm1CompleteHostAppCaptureRoute =
-                    complete_support.complete_host_app_capture_route;
+                    complete_support->complete_host_app_capture_route;
                 out->dm1CompleteSaveCorpusRoute =
-                    complete_support.complete_save_corpus_route;
+                    complete_support->complete_save_corpus_route;
                 out->dm1CompleteOriginalSaveRoundtripRoute =
-                    complete_support.complete_original_save_roundtrip_route;
+                    complete_support->complete_original_save_roundtrip_route;
             }
         }
     } else {
