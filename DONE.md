@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM1 HoC presented RGBA hash ownership: moved HoC presented framebuffer hash and byte-count validation from M11 into the DM1 startup receipt layer. M11 now only supplies the presented RGBA pixels and dimensions for DM1-owned capture decisions. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m11`, and `git diff --check` passed.
+
 - ✅ 2026-07-10 DM1 boot full-graphics aggregate receipt: DM1 now owns one HoC boot full-graphics receipt joining host probe facts, runtime apply, production consumer, release/app capture ownership, save readiness, and complete-support readiness. M11 consumes this aggregate receipt for boot probe fields instead of composing complete support locally. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m11`, and `git diff --check` passed.
 
 - ✅ 2026-07-10 RetroAchievements settings text input: RA username/token/endpoint editing now publishes a host text-input receipt, and M11 starts/stops SDL text input while those fields are active so physical keyboards and on-screen keyboards can enter credentials. Verification: `test_menu_hit_settings_tab_m12`, `firestaff`, and `git diff --check` passed.

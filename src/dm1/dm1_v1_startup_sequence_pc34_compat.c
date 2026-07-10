@@ -60,6 +60,43 @@ unsigned int dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
     return hash ? hash : 1u;
 }
 
+unsigned int dm1_v1_startup_hoc_presented_rgba_hash_pc34(
+    const unsigned char* rgba,
+    int width,
+    int height,
+    int* out_byte_count) {
+    unsigned int hash = 2166136261u;
+    int byte_count;
+    int i;
+
+    if (out_byte_count) {
+        *out_byte_count = 0;
+    }
+    if (!rgba || width < 320 || height < 200 ||
+        width > 8192 || height > 8192) {
+        return 0U;
+    }
+    byte_count = width * height * 4;
+    if (byte_count <= 0) {
+        return 0U;
+    }
+    for (i = 0; i < byte_count; ++i) {
+        hash ^= (unsigned int)rgba[i];
+        hash *= 16777619u;
+    }
+    hash ^= (unsigned int)width;
+    hash *= 16777619u;
+    hash ^= (unsigned int)height;
+    hash *= 16777619u;
+    if (hash == 0U) {
+        hash = 1U;
+    }
+    if (out_byte_count) {
+        *out_byte_count = byte_count;
+    }
+    return hash;
+}
+
 static int dm1_v1_startup_hoc_host_draw_no_backing_fallback_pc34(
     const DM1_V1_ChampionMirrorRenderReceiptPc34* render,
     int backing_asset_available,

@@ -722,6 +722,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
         hoc_suppression_receipt;
     DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34
         hoc_production_consumer;
+    unsigned char hoc_presented_rgba_sample[320 * 200 * 4];
+    int hoc_presented_byte_count;
+    unsigned int hoc_presented_hash;
     DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 hoc_host_probe_facts;
     DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34
         hoc_host_probe_apply;
@@ -1547,6 +1550,28 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      DM1_V1_ENTRANCE_OVERLAY_HALL_MIRRORS_PC34 &&
                  hoc_capture_artifact.expected_hoc_render_command_count == 3 &&
                  hoc_capture_artifact.block_enter_until_champion_selected,
+             1);
+    memset(hoc_presented_rgba_sample, 0x4d, sizeof(hoc_presented_rgba_sample));
+    hoc_presented_byte_count = 0;
+    hoc_presented_hash = dm1_v1_startup_hoc_presented_rgba_hash_pc34(
+        hoc_presented_rgba_sample,
+        320,
+        200,
+        &hoc_presented_byte_count);
+    expect_i("DM1 owns HoC presented RGBA hash and byte count",
+             hoc_presented_hash != 0u &&
+                 hoc_presented_byte_count == 320 * 200 * 4 &&
+                 hoc_presented_hash ==
+                     dm1_v1_startup_hoc_presented_rgba_hash_pc34(
+                         hoc_presented_rgba_sample, 320, 200, NULL),
+             1);
+    expect_i("DM1 HoC presented RGBA hash rejects undersized frames",
+             dm1_v1_startup_hoc_presented_rgba_hash_pc34(
+                 hoc_presented_rgba_sample,
+                 319,
+                 200,
+                 &hoc_presented_byte_count) == 0u &&
+                 hoc_presented_byte_count == 0,
              1);
     memset(&hoc_capture_facts, 0, sizeof(hoc_capture_facts));
     hoc_capture_facts.captured_after_first_frame_render = 1;
