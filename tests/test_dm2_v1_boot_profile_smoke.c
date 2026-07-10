@@ -488,13 +488,16 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               &creature_atlas) == 1 &&
               creature_atlas.valid == 1 &&
               creature_atlas.materialized_creature_index_count >= 4 &&
+              creature_atlas.frame_parity_matrix_count >=
+                  creature_atlas.materialized_creature_index_count * 16 &&
               creature_atlas.min_frame_count > 0 &&
               creature_atlas.raw_gdat_hash != 0u &&
               creature_atlas.raw_gdat_byte_count > 0u &&
               creature_atlas.decoded_gdat_hash != 0u &&
               creature_atlas.decoded_gdat_pixel_count > 0u &&
+              creature_atlas.frame_parity_hash != 0u &&
               creature_atlas.atlas_material_hash != 0u,
-          "boot creature atlas capture materializes skproject GDAT creature map-chip routes");
+          "boot creature atlas capture materializes skproject GDAT creature map-chip frame routes");
     memset(&complete_support, 0, sizeof(complete_support));
     CHECK(dm2_v1_boot_complete_support_receipt_from_runtime_state(
               launch.profile,

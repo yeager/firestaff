@@ -318,6 +318,7 @@ typedef struct {
     int graphics_dat_ready;
     int sampled_creature_index_count;
     int materialized_creature_index_count;
+    int frame_parity_matrix_count;
     int min_frame_count;
     int max_frame_count;
     uint32_t sampled_creature_mask_low;
@@ -326,6 +327,7 @@ typedef struct {
     uint32_t raw_gdat_byte_count;
     uint32_t decoded_gdat_hash;
     uint32_t decoded_gdat_pixel_count;
+    uint32_t frame_parity_hash;
     uint32_t atlas_material_hash;
 } DM2_V1_BootCreatureAtlasCaptureReceipt;
 
