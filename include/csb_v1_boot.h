@@ -1035,6 +1035,10 @@ typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
     int fallback_text_suppressed;
     int fallback_callbacks_stripped;
     int consumed_host_view_only;
+    int render_draw_receipt_consumed;
+    int capture_proof_consumed;
+    int readiness_receipt_consumed;
+    int no_legacy_plan_fallback;
     const char *source_evidence;
 } CSB_V1_BootStartupHostViewDrawReceipt_PC34;
 

@@ -2226,6 +2226,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupPackagedCaptureProof_PC34 packaged_proof;
     CSB_V1_BootStartupPackagedCaptureProof_PC34 packaged_proof_from_snapshot;
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view_receipt;
+    CSB_V1_BootStartupHostViewReceipt_PC34 poisoned_host_view_receipt;
     CSB_V1_BootStartupM11PresentationReceipt_PC34 m11_presentation_receipt;
     CSB_V1_BootStartupHostViewDrawReceipt_PC34 host_view_draw_receipt;
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 host_input_dispatch;
@@ -2939,6 +2940,10 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &host_view_draw_receipt) == 1 &&
               host_view_draw_receipt.valid &&
               host_view_draw_receipt.consumed_host_view_only &&
+              host_view_draw_receipt.render_draw_receipt_consumed &&
+              host_view_draw_receipt.capture_proof_consumed &&
+              host_view_draw_receipt.readiness_receipt_consumed &&
+              host_view_draw_receipt.no_legacy_plan_fallback &&
               host_view_draw_receipt.fallback_callbacks_stripped &&
               host_view_draw_receipt.render_executed &&
               !host_view_draw_receipt.hud_menu_executed &&
@@ -3903,6 +3908,19 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.draw_closed_doors_count == 1 &&
               capture_render_probe.draw_fallback_text_count == 0,
           "boot startup host-view draw receipt consumes closed-door render plus HUD without fallback text");
+    poisoned_host_view_receipt = host_view_receipt;
+    poisoned_host_view_receipt.render_draw.valid = 0;
+    render_probe_executor_init(&capture_render_executor,
+                               &capture_render_probe);
+    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
+              &poisoned_host_view_receipt,
+              &capture_render_executor,
+              &host_view_draw_receipt) == 0 &&
+              !host_view_draw_receipt.valid &&
+              !host_view_draw_receipt.no_legacy_plan_fallback &&
+              capture_render_probe.draw_full_surface_count == 0 &&
+              capture_render_probe.draw_closed_doors_count == 0,
+          "boot startup host-view draw rejects HUD fallback without render-draw receipt");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     capture_render_probe.draw_full_surface_result = 0;
