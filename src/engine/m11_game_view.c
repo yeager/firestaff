@@ -12007,6 +12007,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                     boot_summary.complete_save_corpus_route;
                 out->dm1CompleteOriginalSaveRoundtripRoute =
                     boot_summary.complete_original_save_roundtrip_route;
+                out->dm1HoCBootSummary = boot_summary;
             }
         }
     } else {

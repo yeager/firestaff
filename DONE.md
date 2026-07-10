@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM1 HoC presented publish from boot summary: DM1 startup now builds the M12 HoC presented-capture publish receipt directly from the DM1 boot-probe summary carried in `M11_BootProbeReceipt`. `main_loop_m11` no longer reconstructs DM1 publish facts from individual boot fields. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m11`, `firestaff`, and `git diff --check` passed.
+
 - ✅ 2026-07-10 DM1 HoC complete-support host-facts builder: DM1 startup now builds the ENTER/RESUME handoff, HoC save-readiness, and original-save capture receipt chain from host facts. M11 supplies only source id, resume path, dungeon-loaded, and asset-available facts before consuming the DM1 boot full-graphics receipt. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m11`, and `git diff --check` passed.
 
 - ✅ 2026-07-10 DM1 HoC boot-probe summary ownership: DM1 startup now exports a boot-probe summary from the HoC boot full-graphics receipt, carrying HoC capture, host-route, no-fallback, and complete-support fields for M11. M11 now copies those DM1-owned fields instead of rebuilding the nested receipt interpretation locally. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m11`, and `git diff --check` passed.

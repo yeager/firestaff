@@ -249,6 +249,7 @@ typedef struct {
     int dm1CompleteHostAppCaptureRoute;
     int dm1CompleteSaveCorpusRoute;
     int dm1CompleteOriginalSaveRoundtripRoute;
+    DM1_V1_StartupHoCBootProbeSummary_PC34 dm1HoCBootSummary;
     int startupInitializeV2Runtime;
     int startupInitializeHudRuntime;
     int startupInitializeTouchRuntime;

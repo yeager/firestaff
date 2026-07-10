@@ -317,7 +317,6 @@ static void m11_publish_dm1_hoc_presented_capture_to_m12(
     const M11_GameViewState* gameView,
     M12_StartupMenuState* menuState) {
     M11_BootProbeReceipt boot;
-    DM1_V1_StartupHoCPresentedCapturePublishFacts_PC34 facts;
     DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34 publish;
     M12_DM1HoCPresentedCaptureReceipt capture;
 
@@ -331,23 +330,10 @@ static void m11_publish_dm1_hoc_presented_capture_to_m12(
         return;
     }
 
-    memset(&facts, 0, sizeof(facts));
     memset(&publish, 0, sizeof(publish));
-    facts.source_id = boot.sourceId;
-    facts.presented_capture_ready = boot.dm1HoCPresentedCapture;
-    facts.host_window_present = boot.dm1HoCHostWindowCapture;
-    facts.captured_from_mac_window = boot.dm1HoCMacWindowCapture;
-    facts.captured_from_release_app = boot.dm1HoCReleaseAppCapture;
-    facts.width = boot.dm1HoCPresentedCaptureWidth;
-    facts.height = boot.dm1HoCPresentedCaptureHeight;
-    facts.byte_count = boot.dm1HoCPresentedCaptureBytes;
-    facts.framebuffer_hash = boot.dm1HoCPresentedCaptureHash;
-    facts.required_consumer_mask =
-        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
-    if (!dm1_v1_startup_hoc_presented_capture_publish_receipt_pc34(
-            &facts, &publish) ||
+    if (!dm1_v1_startup_hoc_presented_capture_publish_from_boot_summary_pc34(
+            &boot.dm1HoCBootSummary,
+            &publish) ||
         !publish.ready) {
         return;
     }

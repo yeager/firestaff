@@ -3204,6 +3204,18 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_summary.complete_host_app_capture_route &&
                  hoc_boot_summary.complete_original_save_roundtrip_route,
              1);
+    memset(&hoc_presented_publish, 0, sizeof(hoc_presented_publish));
+    expect_i("DM1 builds M12 presented publish receipt from boot summary",
+             dm1_v1_startup_hoc_presented_capture_publish_from_boot_summary_pc34(
+                 &hoc_boot_summary,
+                 &hoc_presented_publish) &&
+                 hoc_presented_publish.handled &&
+                 hoc_presented_publish.ready &&
+                 hoc_presented_publish.consumer_mask ==
+                     DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34 &&
+                 hoc_presented_publish.chain_hash ==
+                     hoc_boot_summary.presented_capture_chain_hash,
+             1);
     hoc_save_capture_readiness.save_capture_ready = 0;
     memset(&hoc_boot_full_graphics, 0, sizeof(hoc_boot_full_graphics));
     expect_i("DM1 boot full-graphics receipt rejects partial HoC save route",
