@@ -4022,9 +4022,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             useModern = 0;
         }
     }
-    /* Load PO translations based on system language.
-     * M12_Config_GetAutoLanguageIndex: 0=en, 1=sv, 2=fr */
-    {
+    /* Boot probes exercise the launch/runtime contract and emit a
+     * machine-readable receipt; they do not draw translated launcher text.
+     * Keep that path independent of filesystem-backed PO catalogs so a
+     * headless DM1 entrance/HoC probe cannot be delayed by unrelated UI I/O. */
+    if (!o->bootProbe) {
         const char* langCodes[] = {"en", "sv", "fr"};
         const char* langCode = "en";
         int langIdx = M12_Config_GetAutoLanguageIndex();

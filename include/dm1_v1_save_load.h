@@ -223,8 +223,11 @@ int DM1_LoadGameWithBackup(const char* path,
                            int* outUsedBackup);
 
 /*
- * Validate a save file without loading it.
- * Reads header, checks magic/version/CRC. Does not deserialize world.
+ * Validate a save file without retaining it as a live runtime world.
+ * Firestaff-native saves use header/version/CRC validation. Recognized
+ * original PC 3.4 saves are validated through the bounded ReDMCSB-shaped
+ * header/save-part handoff so successful validation has the same import
+ * eligibility as DM1_LoadGame().
  */
 int DM1_ValidateSaveFile(const char* path,
                          struct DM1SaveHeader* outHeader);
