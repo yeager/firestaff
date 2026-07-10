@@ -3328,7 +3328,6 @@ static int m11_execute_csb_entrance_opening_composite(
 
 typedef struct M11_CSBStartupRenderExecutorContext {
     const M11_GameViewState *state;
-    const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view;
     unsigned char *framebuffer;
     int framebufferWidth;
     int framebufferHeight;
@@ -3437,23 +3436,22 @@ static void m11_csb_startup_executor_draw_closed_doors(
 
 static void m11_csb_startup_executor_draw_utility_panel(
     void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_UtilRenderPlan *utility_plan)
 {
     M11_CSBStartupRenderExecutorContext *context =
         (M11_CSBStartupRenderExecutorContext *)user;
     (void)plan;
-    if (!context) {
+    if (!context || !utility_plan) {
         return;
     }
-    if (context->host_view &&
-        context->host_view->hud_menu_draw_valid &&
-        context->host_view->hud_menu_draw.utility_render_plan_valid) {
-        m11_draw_csb_startup_utility_render_plan(
-            &context->host_view->hud_menu_draw.utility_render_plan,
-            context->framebuffer,
-            context->framebufferWidth,
-            context->framebufferHeight);
-    }
+    /* ReDMCSB ENTRANCE.C F0441/F0806 keeps the Utility Disk panel in the
+     * entrance loop. CSB hands M11 the typed receipt payload directly, so
+     * M11 no longer reaches back into a host-view render-plan export. */
+    m11_draw_csb_startup_utility_render_plan(utility_plan,
+                                             context->framebuffer,
+                                             context->framebufferWidth,
+                                             context->framebufferHeight);
 }
 
 static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
@@ -3463,8 +3461,6 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 {
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 ownership;
-    CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
-    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 route_hardening;
     M11_CSBStartupRenderExecutorContext context;
     CSB_V1_StartupRenderExecutor_PC34 executor;
 
@@ -3472,23 +3468,9 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         framebufferHeight <= 0) {
         return;
     }
-    if (!m11_csb_boot_runtime_full_visual_sequence_receipt(
-            state,
-            &visual_sequence)) {
-        m11_fill_rect(framebuffer,
-                      framebufferWidth,
-                      framebufferHeight,
-                      0,
-                      0,
-                      framebufferWidth,
-                      framebufferHeight,
-                      M11_COLOR_BLACK);
-        return;
-    }
     m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
     csb_v1_boot_startup_host_ownership_receipt_init_pc34(&ownership);
     context.state = state;
-    context.host_view = &ownership.host_view;
     context.framebuffer = framebuffer;
     context.framebufferWidth = framebufferWidth;
     context.framebufferHeight = framebufferHeight;
@@ -3508,10 +3490,8 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
             0,
             &executor,
             &ownership) ||
-        !csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
-            &visual_sequence,
-            &ownership,
-            &route_hardening)) {
+        !ownership.draw_consumes_receipt_only ||
+        !ownership.packaged_visual_capture_ready) {
         m11_fill_rect(framebuffer,
                       framebufferWidth,
                       framebufferHeight,
@@ -30055,11 +30035,13 @@ static void m11_csb_startup_probe_draw_fallback_text(
 
 static void m11_csb_startup_probe_draw_utility_panel(
     void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_UtilRenderPlan *utility_plan)
 {
     M11_CSBStartupHostViewProbe *probe =
         (M11_CSBStartupHostViewProbe *)user;
     (void)plan;
+    (void)utility_plan;
     if (probe) {
         ++probe->drawUtilityPanelCount;
     }

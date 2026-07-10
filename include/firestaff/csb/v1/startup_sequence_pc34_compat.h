@@ -426,6 +426,8 @@ typedef int (*CSB_V1_StartupOpeningCompositeExecutor_PC34)(
     void *user,
     const CSB_V1_StartupOpeningComposite_PC34 *composite);
 
+struct CSB_V1_UtilRenderPlan;
+
 typedef struct CSB_V1_StartupRenderExecutor_PC34 {
     void *user;
     int (*draw_title)(void *user,
@@ -443,7 +445,8 @@ typedef struct CSB_V1_StartupRenderExecutor_PC34 {
     void (*draw_fallback_text)(void *user,
                                const CSB_V1_StartupRenderPlan_PC34 *plan);
     void (*draw_utility_panel)(void *user,
-                               const CSB_V1_StartupRenderPlan_PC34 *plan);
+                               const CSB_V1_StartupRenderPlan_PC34 *plan,
+                               const struct CSB_V1_UtilRenderPlan *utility_plan);
 } CSB_V1_StartupRenderExecutor_PC34;
 
 typedef struct CSB_V1_StartupCommandState_PC34 {

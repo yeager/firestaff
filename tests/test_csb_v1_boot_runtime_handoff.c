@@ -81,6 +81,7 @@ typedef struct {
     int last_waiting_for_input;
     int last_menu_option_count;
     int last_surface;
+    int last_utility_selected_action_index;
 } TestHudMenuDrawProbe;
 
 typedef struct {
@@ -99,16 +100,25 @@ typedef struct {
 
 static void hud_probe_draw_utility_panel(
     void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_UtilRenderPlan *utility_plan)
 {
     TestHudMenuDrawProbe *probe = (TestHudMenuDrawProbe *)user;
-    if (!probe || !plan) {
+    int i;
+    if (!probe || !plan || !utility_plan) {
         return;
     }
     ++probe->utility_panel_count;
     probe->last_waiting_for_input = plan->waiting_for_input;
     probe->last_menu_option_count = plan->menu_option_count;
     probe->last_surface = (int)plan->surface;
+    probe->last_utility_selected_action_index = -1;
+    for (i = 0; i < utility_plan->menu_row_count; ++i) {
+        if (utility_plan->menu_rows[i].selected) {
+            probe->last_utility_selected_action_index = i;
+            break;
+        }
+    }
 }
 
 static void hud_probe_draw_closed_doors(
@@ -239,12 +249,14 @@ static void render_probe_draw_fallback_text(
 
 static void render_probe_draw_utility_panel(
     void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_UtilRenderPlan *utility_plan)
 {
     TestStartupRenderProbe *probe = (TestStartupRenderProbe *)user;
     if (!probe || !plan) {
         return;
     }
+    (void)utility_plan;
     ++probe->draw_utility_panel_count;
     probe->last_surface = (int)plan->surface;
 }
@@ -3132,6 +3144,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               hud_draw_probe.closed_doors_count == 0 &&
               hud_draw_probe.fallback_text_count == 0 &&
               hud_draw_probe.last_waiting_for_input &&
+              hud_draw_probe.last_utility_selected_action_index ==
+                  host_view_receipt.selected_utility_action_index &&
               hud_draw_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup host-view receipt executes utility HUD/menu draw");
@@ -3244,6 +3258,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               hud_draw_probe.closed_doors_count == 0 &&
               hud_draw_probe.fallback_text_count == 0 &&
               hud_draw_probe.last_waiting_for_input &&
+              hud_draw_probe.last_utility_selected_action_index ==
+                  hud_draw_receipt.selected_utility_action_index &&
               hud_draw_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup HUD/menu executor draws utility panel from readiness-gated receipt");
