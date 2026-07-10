@@ -559,6 +559,11 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.dungeon_map_chip_raw_byte_count > 0u &&
               hud_capture.dungeon_map_chip_decoded_hash != 0u &&
               hud_capture.dungeon_map_chip_decoded_pixel_count > 0u &&
+              hud_capture.interface_action_table_ready == 1 &&
+              hud_capture.interface_action_table_hash != 0u &&
+              hud_capture.interface_action_table_byte_count > 0u &&
+              hud_capture.interface_action_group_count > 0u &&
+              hud_capture.interface_action_entry_count > 0u &&
               hud_capture.combined_frame_hash != 0u &&
               hud_capture.combined_pixel_count == 4u * 320u * 200u,
           "boot runtime HUD capture proves real GDAT portraits and frames across sampled directions");
