@@ -8241,6 +8241,16 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
          */
         DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(
             &state->dm1V1MovementPipeline);
+        /* Keep the M11 action-enable mirror on that same tick boundary.
+         * F0412 materializes its F0327 projectile before it calls F0330;
+         * therefore an older action disable ages now, while the successful
+         * cast's EMIT_ACTION_DISABLED is applied below and cannot lose a
+         * tick in its creation frame.  This is also the boundary shared by
+         * action-projectile rows: both routes reach the live F0810/F0821
+         * materialization pass with the caster direction and energy already
+         * committed.  ReDMCSB GAMELOOP.C:124-155, MENU.C F0412:1861-1870,
+         * 2034-2039 and CHAMPION.C F0330:2233-2255. */
+        m11_decrement_action_disabled_ticks(state);
         F0884_ORCH_AdvanceOneTick_Compat(&state->world, &input, &state->lastTickResult);
         state->lastWorldHash = state->lastTickResult.worldHashPost;
         M11_GameView_ProcessTickEmissions(state);
