@@ -265,6 +265,11 @@ typedef struct Theron_V1_BootRuntimeStartupSnapshot {
     int runtime_fallback_visuals_blocked;
     int runtime_structured_route;
     int runtime_receipt_text_route;
+    int all_dungeon_real_data_capture_ready;
+    int all_dungeon_capture_count;
+    unsigned int all_dungeon_capture_mask;
+    int exact_level_semantics_ready;
+    int exact_object_semantics_ready;
     const char *startup_text_prompt;
     const char (*startup_roster_names)
         [THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
@@ -318,6 +323,11 @@ typedef struct Theron_V1_BootStartupViewModel {
     int runtime_fallback_visuals_blocked;
     int runtime_structured_route;
     int runtime_receipt_text_route;
+    int all_dungeon_real_data_capture_ready;
+    int all_dungeon_capture_count;
+    unsigned int all_dungeon_capture_mask;
+    int exact_level_semantics_ready;
+    int exact_object_semantics_ready;
     int continue_focus;
     int resume_claim;
     int tqsv_slot;
@@ -354,6 +364,11 @@ typedef struct Theron_V1_BootStartupRenderRouteReceipt {
     int runtime_fallback_visuals_blocked;
     int runtime_structured_route;
     int runtime_receipt_text_route;
+    int all_dungeon_real_data_capture_ready;
+    int all_dungeon_capture_count;
+    unsigned int all_dungeon_capture_mask;
+    int exact_level_semantics_ready;
+    int exact_object_semantics_ready;
     const char *status_scope;
     const char *status;
 } Theron_V1_BootStartupRenderRouteReceipt;
@@ -390,6 +405,11 @@ typedef struct Theron_V1_BootStartupHostViewReceipt {
     int runtime_fallback_visuals_blocked;
     int runtime_structured_route;
     int runtime_receipt_text_route;
+    int all_dungeon_real_data_capture_ready;
+    int all_dungeon_capture_count;
+    unsigned int all_dungeon_capture_mask;
+    int exact_level_semantics_ready;
+    int exact_object_semantics_ready;
     int hud_ready;
     int state_receipt_valid;
     Theron_StartupStateReceipt state_receipt;
@@ -449,6 +469,11 @@ typedef struct Theron_V1_BootStartupGraphicsRouteReceipt {
     int runtime_fallback_visuals_blocked;
     int runtime_structured_route;
     int runtime_receipt_text_route;
+    int all_dungeon_real_data_capture_ready;
+    int all_dungeon_capture_count;
+    unsigned int all_dungeon_capture_mask;
+    int exact_level_semantics_ready;
+    int exact_object_semantics_ready;
     const char *status_scope;
     const char *status;
 } Theron_V1_BootStartupGraphicsRouteReceipt;
@@ -512,6 +537,11 @@ typedef struct Theron_V1_BootStartupFullStartReceipt {
     int runtime_fallback_visuals_blocked;
     int runtime_structured_route;
     int runtime_receipt_text_route;
+    int all_dungeon_real_data_capture_ready;
+    int all_dungeon_capture_count;
+    unsigned int all_dungeon_capture_mask;
+    int exact_level_semantics_ready;
+    int exact_object_semantics_ready;
     int hud_ready;
     int runtime_graphics_handoff;
     int track02_runtime_graphics_handoff;
@@ -653,6 +683,12 @@ typedef struct Theron_V1_BootStartupUiCallerReceipt {
     int semantic_first_level_ready;
     int semantic_nonzero_level_ready;
     int semantic_level_coverage_mask;
+    int all_dungeon_real_data_capture_ready;
+    int all_dungeon_capture_count;
+    unsigned int all_dungeon_capture_mask;
+    int exact_level_semantics_ready;
+    int exact_object_semantics_ready;
+    int complete_runtime_support_ready;
     int no_fallback_visuals_enforced;
     int fallback_visuals_allowed;
     int fallback_startup_graphics_executed;
