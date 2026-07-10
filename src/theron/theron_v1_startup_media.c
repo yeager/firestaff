@@ -186,6 +186,19 @@ static void theron_v1_startup_media_record_atlas_route(
         ++media->startup_bitmap_wide_route_count;
         media->startup_bitmap_wide_atlas_tile_count += route->tile_count;
     }
+    if ((media->track02_variant == (int)THERON_TRACK02_VARIANT_JP_BIN ||
+         media->track02_variant == (int)THERON_TRACK02_VARIANT_US_BIN) &&
+        (media->startup_bitmap_raw_route_mask & route->route_bit) == 0u) {
+        media->startup_bitmap_raw_route_mask |= route->route_bit;
+        ++media->startup_bitmap_raw_route_count;
+        media->startup_bitmap_raw_atlas_tile_count += route->tile_count;
+    }
+    if (media->track02_variant == (int)THERON_TRACK02_VARIANT_US_ISO &&
+        (media->startup_bitmap_iso_route_mask & route->route_bit) == 0u) {
+        media->startup_bitmap_iso_route_mask |= route->route_bit;
+        ++media->startup_bitmap_iso_route_count;
+        media->startup_bitmap_iso_atlas_tile_count += route->tile_count;
+    }
 }
 
 static void theron_v1_startup_media_capture_bitmaps(
@@ -379,6 +392,18 @@ void theron_v1_startup_media_capture_track02_state_receipt(
         media.startup_bitmap_wide_route_count;
     out_receipt->startup_bitmap_wide_atlas_tile_count =
         media.startup_bitmap_wide_atlas_tile_count;
+    out_receipt->startup_bitmap_raw_route_mask =
+        media.startup_bitmap_raw_route_mask;
+    out_receipt->startup_bitmap_raw_route_count =
+        media.startup_bitmap_raw_route_count;
+    out_receipt->startup_bitmap_raw_atlas_tile_count =
+        media.startup_bitmap_raw_atlas_tile_count;
+    out_receipt->startup_bitmap_iso_route_mask =
+        media.startup_bitmap_iso_route_mask;
+    out_receipt->startup_bitmap_iso_route_count =
+        media.startup_bitmap_iso_route_count;
+    out_receipt->startup_bitmap_iso_atlas_tile_count =
+        media.startup_bitmap_iso_atlas_tile_count;
     out_receipt->startup_roster_name_status =
         media.startup_roster_name_status;
     out_receipt->startup_text_prompt_status =

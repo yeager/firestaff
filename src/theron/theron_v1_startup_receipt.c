@@ -204,6 +204,12 @@ void theron_v1_startup_receipt_apply_bitmap_art_summary(
     receipt->startup_bitmap_wide_route_mask = 0u;
     receipt->startup_bitmap_wide_route_count = 0u;
     receipt->startup_bitmap_wide_atlas_tile_count = 0u;
+    receipt->startup_bitmap_raw_route_mask = 0u;
+    receipt->startup_bitmap_raw_route_count = 0u;
+    receipt->startup_bitmap_raw_atlas_tile_count = 0u;
+    receipt->startup_bitmap_iso_route_mask = 0u;
+    receipt->startup_bitmap_iso_route_count = 0u;
+    receipt->startup_bitmap_iso_atlas_tile_count = 0u;
     if (!media_receipt) {
         return;
     }
@@ -246,6 +252,18 @@ void theron_v1_startup_receipt_apply_bitmap_art_summary(
         (uint32_t)media_receipt->startup_bitmap_wide_route_count;
     receipt->startup_bitmap_wide_atlas_tile_count =
         (uint32_t)media_receipt->startup_bitmap_wide_atlas_tile_count;
+    receipt->startup_bitmap_raw_route_mask =
+        media_receipt->startup_bitmap_raw_route_mask;
+    receipt->startup_bitmap_raw_route_count =
+        (uint32_t)media_receipt->startup_bitmap_raw_route_count;
+    receipt->startup_bitmap_raw_atlas_tile_count =
+        (uint32_t)media_receipt->startup_bitmap_raw_atlas_tile_count;
+    receipt->startup_bitmap_iso_route_mask =
+        media_receipt->startup_bitmap_iso_route_mask;
+    receipt->startup_bitmap_iso_route_count =
+        (uint32_t)media_receipt->startup_bitmap_iso_route_count;
+    receipt->startup_bitmap_iso_atlas_tile_count =
+        (uint32_t)media_receipt->startup_bitmap_iso_atlas_tile_count;
 
     if (media_receipt->startup_bitmap_title_route_ready &&
         media_receipt->startup_bitmap_title_atlas_tile_count >= 8u &&
@@ -1071,6 +1089,18 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->startup_bitmap_wide_route_count), h);
     h = fnv1a_32(&receipt->startup_bitmap_wide_atlas_tile_count,
                  sizeof(receipt->startup_bitmap_wide_atlas_tile_count), h);
+    h = fnv1a_32(&receipt->startup_bitmap_raw_route_mask,
+                 sizeof(receipt->startup_bitmap_raw_route_mask), h);
+    h = fnv1a_32(&receipt->startup_bitmap_raw_route_count,
+                 sizeof(receipt->startup_bitmap_raw_route_count), h);
+    h = fnv1a_32(&receipt->startup_bitmap_raw_atlas_tile_count,
+                 sizeof(receipt->startup_bitmap_raw_atlas_tile_count), h);
+    h = fnv1a_32(&receipt->startup_bitmap_iso_route_mask,
+                 sizeof(receipt->startup_bitmap_iso_route_mask), h);
+    h = fnv1a_32(&receipt->startup_bitmap_iso_route_count,
+                 sizeof(receipt->startup_bitmap_iso_route_count), h);
+    h = fnv1a_32(&receipt->startup_bitmap_iso_atlas_tile_count,
+                 sizeof(receipt->startup_bitmap_iso_atlas_tile_count), h);
     h = fnv1a_str(h, receipt->startup_chapter_label);
     h = fnv1a_str(h, receipt->startup_quest_summary);
     h = fnv1a_str(h, receipt->startup_next_dungeon_hint);
@@ -1151,6 +1181,9 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "bitmap_soul_width=%u bitmap_forcefield_width=%u "
                  "bitmap_wide_mask=0x%x bitmap_wide_routes=%u "
                  "bitmap_wide_tiles=%u "
+                 "bitmap_raw_mask=0x%x bitmap_raw_routes=%u "
+                 "bitmap_raw_tiles=%u bitmap_iso_mask=0x%x "
+                 "bitmap_iso_routes=%u bitmap_iso_tiles=%u "
                  "chapter=\"%s\" "
                  "quest=\"%s\" next=\"%s\" quest_total=%u "
                  "quest_items=0x%x "
@@ -1264,6 +1297,12 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  (unsigned)receipt->startup_bitmap_wide_route_mask,
                  (unsigned)receipt->startup_bitmap_wide_route_count,
                  (unsigned)receipt->startup_bitmap_wide_atlas_tile_count,
+                 (unsigned)receipt->startup_bitmap_raw_route_mask,
+                 (unsigned)receipt->startup_bitmap_raw_route_count,
+                 (unsigned)receipt->startup_bitmap_raw_atlas_tile_count,
+                 (unsigned)receipt->startup_bitmap_iso_route_mask,
+                 (unsigned)receipt->startup_bitmap_iso_route_count,
+                 (unsigned)receipt->startup_bitmap_iso_atlas_tile_count,
                  receipt->startup_chapter_label[0]
                     ? receipt->startup_chapter_label : "(none)",
                  receipt->startup_quest_summary[0]
