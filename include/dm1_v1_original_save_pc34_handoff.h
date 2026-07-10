@@ -132,6 +132,16 @@ typedef struct {
     int core_state_matches;
 } DM1OriginalSavePC34RoundtripReport;
 
+/* Transient HoC state is not part of ReDMCSB's save parts.  Firestaff may
+ * persist it beside a quicksave, but it must be re-materialized only after
+ * F0435 has restored PARTY and the dungeon. */
+typedef struct {
+    int candidate_mirror_ordinal;
+    int candidate_party_index;
+    int candidate_panel_active;
+    int inventory_panel_active;
+} DM1OriginalSavePC34HoCResumeState;
+
 /* Classify `bytes` as a ReDMCSB DM1 PC 3.4 save header, then hand
  * the same byte buffer through a bounded ReDMCSB PC save-part
  * reader for GLOBAL_DATA and optional timeline handoff.
@@ -177,6 +187,25 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
     struct GameWorld_Compat *world,
     struct DM1_EventQueue_V1 *event_queue,
     DM1OriginalSavePC34HandoffReport *out_report);
+
+/* ReDMCSB LOADSAVE.C F0435 restores save parts and the dungeon before the
+ * live runtime consumes HoC state.  These helpers retain the already-loaded
+ * start dungeon only when the original save has no dungeon tail, and keep
+ * world ownership transfer out of M11. */
+int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+    const char *path,
+    const struct GameWorld_Compat *start_world,
+    struct GameWorld_Compat *out_world,
+    struct DM1_EventQueue_V1 *event_queue,
+    DM1OriginalSavePC34HandoffReport *out_report);
+
+int dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
+    struct GameWorld_Compat *runtime_world,
+    struct GameWorld_Compat *loaded_world);
+
+void dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
+    const struct GameWorld_Compat *world,
+    DM1OriginalSavePC34HoCResumeState *state);
 
 /* Import a ReDMCSB PC34-shaped save into a bounded DM1 runtime world,
  * immediately export that world back through the PC34 exporter, and
