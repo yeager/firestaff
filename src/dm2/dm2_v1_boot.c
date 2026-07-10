@@ -5345,6 +5345,12 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
      * QUERY_DUNGEON_MAP_CHIP_PICT before the teleporter/object routes. */
     out_receipt->dungeon_map_chip_raw_hash = 0x324d4352u;
     out_receipt->dungeon_map_chip_decoded_hash = 0x324d4344u;
+    out_receipt->dungeon_map_chip_graphicsset_raw_hash = 0x32474752u;
+    out_receipt->dungeon_map_chip_graphicsset_decoded_hash = 0x32474744u;
+    out_receipt->dungeon_map_chip_wall_raw_hash = 0x32574752u;
+    out_receipt->dungeon_map_chip_wall_decoded_hash = 0x32574744u;
+    out_receipt->dungeon_map_chip_floor_raw_hash = 0x32464752u;
+    out_receipt->dungeon_map_chip_floor_decoded_hash = 0x32464744u;
     out_receipt->dungeon_map_chip_graphicsset_count =
         dm2_v1_boot_runtime_map_chip_category_hash_add(
             profile,
@@ -5354,6 +5360,14 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->dungeon_map_chip_raw_byte_count,
             &out_receipt->dungeon_map_chip_decoded_hash,
             &out_receipt->dungeon_map_chip_decoded_pixel_count);
+    dm2_v1_boot_runtime_map_chip_category_hash_add(
+        profile,
+        DM2_GDAT_CATEGORY_GRAPHICSSET,
+        4,
+        &out_receipt->dungeon_map_chip_graphicsset_raw_hash,
+        &out_receipt->dungeon_map_chip_graphicsset_raw_byte_count,
+        &out_receipt->dungeon_map_chip_graphicsset_decoded_hash,
+        &out_receipt->dungeon_map_chip_graphicsset_decoded_pixel_count);
     out_receipt->dungeon_map_chip_wall_count =
         dm2_v1_boot_runtime_map_chip_category_hash_add(
             profile,
@@ -5363,6 +5377,14 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->dungeon_map_chip_raw_byte_count,
             &out_receipt->dungeon_map_chip_decoded_hash,
             &out_receipt->dungeon_map_chip_decoded_pixel_count);
+    dm2_v1_boot_runtime_map_chip_category_hash_add(
+        profile,
+        DM2_GDAT_CATEGORY_WALL_GFX,
+        8,
+        &out_receipt->dungeon_map_chip_wall_raw_hash,
+        &out_receipt->dungeon_map_chip_wall_raw_byte_count,
+        &out_receipt->dungeon_map_chip_wall_decoded_hash,
+        &out_receipt->dungeon_map_chip_wall_decoded_pixel_count);
     out_receipt->dungeon_map_chip_floor_count =
         dm2_v1_boot_runtime_map_chip_category_hash_add(
             profile,
@@ -5372,10 +5394,36 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->dungeon_map_chip_raw_byte_count,
             &out_receipt->dungeon_map_chip_decoded_hash,
             &out_receipt->dungeon_map_chip_decoded_pixel_count);
-    out_receipt->dungeon_map_chip_ready =
+    dm2_v1_boot_runtime_map_chip_category_hash_add(
+        profile,
+        DM2_GDAT_CATEGORY_FLOOR_GFX,
+        8,
+        &out_receipt->dungeon_map_chip_floor_raw_hash,
+        &out_receipt->dungeon_map_chip_floor_raw_byte_count,
+        &out_receipt->dungeon_map_chip_floor_decoded_hash,
+        &out_receipt->dungeon_map_chip_floor_decoded_pixel_count);
+    out_receipt->dungeon_map_chip_graphicsset_ready =
         out_receipt->dungeon_map_chip_graphicsset_count > 0 &&
+        out_receipt->dungeon_map_chip_graphicsset_raw_hash != 0u &&
+        out_receipt->dungeon_map_chip_graphicsset_raw_byte_count > 0u &&
+        out_receipt->dungeon_map_chip_graphicsset_decoded_hash != 0u &&
+        out_receipt->dungeon_map_chip_graphicsset_decoded_pixel_count > 0u;
+    out_receipt->dungeon_map_chip_wall_ready =
         out_receipt->dungeon_map_chip_wall_count > 0 &&
+        out_receipt->dungeon_map_chip_wall_raw_hash != 0u &&
+        out_receipt->dungeon_map_chip_wall_raw_byte_count > 0u &&
+        out_receipt->dungeon_map_chip_wall_decoded_hash != 0u &&
+        out_receipt->dungeon_map_chip_wall_decoded_pixel_count > 0u;
+    out_receipt->dungeon_map_chip_floor_ready =
         out_receipt->dungeon_map_chip_floor_count > 0 &&
+        out_receipt->dungeon_map_chip_floor_raw_hash != 0u &&
+        out_receipt->dungeon_map_chip_floor_raw_byte_count > 0u &&
+        out_receipt->dungeon_map_chip_floor_decoded_hash != 0u &&
+        out_receipt->dungeon_map_chip_floor_decoded_pixel_count > 0u;
+    out_receipt->dungeon_map_chip_ready =
+        out_receipt->dungeon_map_chip_graphicsset_ready &&
+        out_receipt->dungeon_map_chip_wall_ready &&
+        out_receipt->dungeon_map_chip_floor_ready &&
         out_receipt->dungeon_map_chip_raw_hash != 0u &&
         out_receipt->dungeon_map_chip_raw_byte_count > 0u &&
         out_receipt->dungeon_map_chip_decoded_hash != 0u &&
@@ -5387,6 +5435,15 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
             out_receipt->dungeon_map_chip_decoded_hash);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->dungeon_map_chip_graphicsset_raw_hash);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->dungeon_map_chip_wall_raw_hash);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->dungeon_map_chip_floor_raw_hash);
     }
     out_receipt->interface_rect14_ready =
         dm2_v1_boot_runtime_interface_rect14_receipt(
@@ -5726,11 +5783,24 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_hud.min_asset_wall_count > 0 &&
         out_receipt->runtime_hud.teleporter_map_chip_ready &&
         out_receipt->runtime_hud.dungeon_map_chip_ready &&
+        out_receipt->runtime_hud.dungeon_map_chip_graphicsset_ready &&
+        out_receipt->runtime_hud.dungeon_map_chip_wall_ready &&
+        out_receipt->runtime_hud.dungeon_map_chip_floor_ready &&
         out_receipt->runtime_hud.interface_action_table_ready &&
         out_receipt->runtime_hud.total_fallback_door_count == 0 &&
         out_receipt->runtime_hud.total_fallback_creature_count == 0 &&
         out_receipt->runtime_hud.total_fallback_creature_possession_item_count == 0 &&
         out_receipt->runtime_hud.total_fallback_projectile_count == 0;
+    out_receipt->runtime_gdat_map_chip_categories_complete =
+        out_receipt->runtime_hud.dungeon_map_chip_graphicsset_ready &&
+        out_receipt->runtime_hud.dungeon_map_chip_wall_ready &&
+        out_receipt->runtime_hud.dungeon_map_chip_floor_ready &&
+        out_receipt->runtime_hud.dungeon_map_chip_graphicsset_raw_hash != 0u &&
+        out_receipt->runtime_hud.dungeon_map_chip_wall_raw_hash != 0u &&
+        out_receipt->runtime_hud.dungeon_map_chip_floor_raw_hash != 0u &&
+        out_receipt->runtime_hud.dungeon_map_chip_graphicsset_decoded_hash != 0u &&
+        out_receipt->runtime_hud.dungeon_map_chip_wall_decoded_hash != 0u &&
+        out_receipt->runtime_hud.dungeon_map_chip_floor_decoded_hash != 0u;
     out_receipt->runtime_creature_atlas_complete =
         out_receipt->creature_atlas.valid &&
         out_receipt->creature_atlas.materialized_creature_index_count >= 4 &&
@@ -5783,6 +5853,12 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud.decoded_gdat_runtime_portrait_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.dungeon_map_chip_graphicsset_raw_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.dungeon_map_chip_wall_raw_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.dungeon_map_chip_floor_raw_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->creature_atlas.atlas_material_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->creature_atlas.frame_parity_hash);
@@ -5798,6 +5874,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->startup_hud_handoff_complete &&
         out_receipt->runtime_gdat_hud_complete &&
         out_receipt->runtime_gdat_dungeon_complete &&
+        out_receipt->runtime_gdat_map_chip_categories_complete &&
         out_receipt->runtime_creature_atlas_complete &&
         out_receipt->runtime_gdat_direction_breadth_complete &&
         out_receipt->no_fallback_title_or_runtime_visuals &&

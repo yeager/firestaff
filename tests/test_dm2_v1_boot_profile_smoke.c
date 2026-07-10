@@ -555,10 +555,25 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.dungeon_map_chip_graphicsset_count > 0 &&
               hud_capture.dungeon_map_chip_wall_count > 0 &&
               hud_capture.dungeon_map_chip_floor_count > 0 &&
+              hud_capture.dungeon_map_chip_graphicsset_ready == 1 &&
+              hud_capture.dungeon_map_chip_wall_ready == 1 &&
+              hud_capture.dungeon_map_chip_floor_ready == 1 &&
               hud_capture.dungeon_map_chip_raw_hash != 0u &&
               hud_capture.dungeon_map_chip_raw_byte_count > 0u &&
               hud_capture.dungeon_map_chip_decoded_hash != 0u &&
               hud_capture.dungeon_map_chip_decoded_pixel_count > 0u &&
+              hud_capture.dungeon_map_chip_graphicsset_raw_hash != 0u &&
+              hud_capture.dungeon_map_chip_graphicsset_raw_byte_count > 0u &&
+              hud_capture.dungeon_map_chip_graphicsset_decoded_hash != 0u &&
+              hud_capture.dungeon_map_chip_graphicsset_decoded_pixel_count > 0u &&
+              hud_capture.dungeon_map_chip_wall_raw_hash != 0u &&
+              hud_capture.dungeon_map_chip_wall_raw_byte_count > 0u &&
+              hud_capture.dungeon_map_chip_wall_decoded_hash != 0u &&
+              hud_capture.dungeon_map_chip_wall_decoded_pixel_count > 0u &&
+              hud_capture.dungeon_map_chip_floor_raw_hash != 0u &&
+              hud_capture.dungeon_map_chip_floor_raw_byte_count > 0u &&
+              hud_capture.dungeon_map_chip_floor_decoded_hash != 0u &&
+              hud_capture.dungeon_map_chip_floor_decoded_pixel_count > 0u &&
               hud_capture.interface_action_table_ready == 1 &&
               hud_capture.interface_action_table_hash != 0u &&
               hud_capture.interface_action_table_byte_count > 0u &&
@@ -605,6 +620,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               complete_support.startup_hud_handoff_complete == 1 &&
               complete_support.runtime_gdat_hud_complete == 1 &&
               complete_support.runtime_gdat_dungeon_complete == 1 &&
+              complete_support.runtime_gdat_map_chip_categories_complete == 1 &&
               complete_support.runtime_creature_atlas_complete == 1 &&
               complete_support.runtime_gdat_direction_breadth_complete == 1 &&
               complete_support.no_fallback_title_or_runtime_visuals == 1 &&
