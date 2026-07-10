@@ -17892,6 +17892,28 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_bpk_surface_class
     )
 
+    # Nexus V1 DGN material rasterizer. Exercises the cache-ready indexed
+    # sampling path without game media: non-power-of-two UV repeat, CLUT
+    # remapping, transparent texel clipping and no-flat-fallback behavior.
+    add_executable(test_nexus_v1_dgn_material_raster
+        tests/test_nexus_v1_dgn_material_raster.c
+    )
+    target_link_libraries(test_nexus_v1_dgn_material_raster PRIVATE
+        firestaff_nexus m
+    )
+    target_include_directories(test_nexus_v1_dgn_material_raster PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dgn_material_raster PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_dgn_material_raster
+        COMMAND test_nexus_v1_dgn_material_raster
+    )
+
     # ── Nexus V1 PRS3 payload-evidence walker unit test (pass1084) ──
     # Data-free BPPK synthetic receipts plus optional real MENU.BPK
     # receipt. Verifies per-entry leading 4-byte BE u32 receipts, the
