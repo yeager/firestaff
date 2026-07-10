@@ -980,16 +980,6 @@ void M11_MessageLog_Push(M11_MessageLog* log, const char* text, unsigned char co
 int M11_GameView_GetMessageLogCount(const M11_GameViewState* state);
 const char* M11_GameView_GetMessageLogEntry(const M11_GameViewState* state, int reverseIndex);
 
-int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
-                                             int relForward,
-                                             int relSide,
-                                             int* outMapX,
-                                             int* outMapY,
-                                             int* outElementType,
-                                             int* outProjectileCount,
-                                             int* outExplosionCount,
-                                             int* outFirstProjectileGfx,
-                                             int* outFirstExplosionType);
 int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outTitleReceiptReady,
     int* outTitleDrawExecuted,

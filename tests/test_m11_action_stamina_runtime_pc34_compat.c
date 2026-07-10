@@ -27,6 +27,7 @@
 #include "dm1_v1_sound_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
+#include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
@@ -8424,10 +8425,10 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     int artifactMapX = -1;
     int artifactMapY = -1;
     int artifactElement = -1;
-    int artifactProjectiles = -1;
     int artifactExplosions = -1;
-    int artifactProjectileGfx = -1;
     int artifactExplosionType = -1;
+    DM1_V1_ViewportRuntimeMaterializationInputPc34 materializationInput;
+    DM1_V1_ViewportRuntimeMaterializationDecisionPc34 materialization;
     int replayType = 0;
     int replayAttack = 0;
     int replayCreatureType = 0;
@@ -8555,13 +8556,26 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     state.world.explosions.entries[4].mapX = 2;
     state.world.explosions.entries[4].mapY = 1;
 
-    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
-                  &state, 1, -1, &artifactMapX, &artifactMapY,
-                  &artifactElement, &artifactProjectiles,
-                  &artifactExplosions, &artifactProjectileGfx,
-                  &artifactExplosionType),
+    memset(&materializationInput, 0, sizeof(materializationInput));
+    materializationInput.relativeForward = 1;
+    materializationInput.relativeSide = -1;
+    materializationInput.elementType = DUNGEON_ELEMENT_CORRIDOR;
+    materializationInput.mapIndex = state.world.party.mapIndex;
+    materializationInput.mapX = 1;
+    materializationInput.mapY = 1;
+    materializationInput.partyDirection = state.world.party.direction;
+    materializationInput.liveProjectiles = &state.world.projectiles;
+    materializationInput.liveExplosions = &state.world.explosions;
+    materializationInput.runtimeOrigin =
+        DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
+    ASSERT_EQ(dm1_v1_viewport_runtime_materialization_decide_pc34(
+                  &materializationInput, &materialization),
               1,
               "FUSE complete fixture can sample the left-front fluxcage square");
+    artifactMapX = materializationInput.mapX;
+    artifactMapY = materializationInput.mapY;
+    artifactExplosions = materialization.liveExplosionCount;
+    artifactExplosionType = materialization.liveExplosionType;
     ASSERT_EQ(artifactMapX, 1,
               "FUSE complete fixture left-front sample uses fluxcage x");
     ASSERT_EQ(artifactMapY, 1,
@@ -8606,15 +8620,18 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     ASSERT_EQ(M11_GameView_GetEndgameDoNotDrawFluxcages(&state), 1,
               "FUSE complete sets F0446 do-not-draw-fluxcages gate");
     artifactMapX = artifactMapY = artifactElement = -1;
-    artifactProjectiles = artifactExplosions = -1;
-    artifactProjectileGfx = artifactExplosionType = -1;
-    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
-                  &state, 1, -1, &artifactMapX, &artifactMapY,
-                  &artifactElement, &artifactProjectiles,
-                  &artifactExplosions, &artifactProjectileGfx,
-                  &artifactExplosionType),
+    artifactExplosions = -1;
+    artifactExplosionType = -1;
+    materializationInput.suppressFluxcages =
+        M11_GameView_GetEndgameDoNotDrawFluxcages(&state);
+    ASSERT_EQ(dm1_v1_viewport_runtime_materialization_decide_pc34(
+                  &materializationInput, &materialization),
               1,
               "FUSE complete samples the left-front square after F0446 hide gate");
+    artifactMapX = materializationInput.mapX;
+    artifactMapY = materializationInput.mapY;
+    artifactExplosions = materialization.liveExplosionCount;
+    artifactExplosionType = materialization.liveExplosionType;
     ASSERT_EQ(artifactMapX, 1,
               "FUSE complete post-hide sample keeps fluxcage square x");
     ASSERT_EQ(artifactMapY, 1,

@@ -10,6 +10,7 @@
 #include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
+#include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
@@ -46,6 +47,39 @@ static unsigned short make_thing_cell(int type, int index, int cell)
     return (unsigned short)(((cell & 0x03) << 14) |
                             ((type & 0x0f) << 10) |
                             (index & 0x03ff));
+}
+
+static int dm1_runtime_materialization_for_test(
+    const M11_GameViewState* state,
+    int relForward,
+    int relSide,
+    int mapX,
+    int mapY,
+    int elementType,
+    int projectileCell,
+    DM1_V1_ViewportRuntimeMaterializationDecisionPc34* outDecision)
+{
+    DM1_V1_ViewportRuntimeMaterializationInputPc34 input;
+    if (!state || !outDecision) {
+        return 0;
+    }
+    memset(&input, 0, sizeof(input));
+    input.relativeForward = relForward;
+    input.relativeSide = relSide;
+    input.elementType = elementType;
+    input.projectileCount = M11_GameView_CountCellProjectiles(
+        &state->world, state->world.party.mapIndex, mapX, mapY);
+    input.projectileCell = projectileCell;
+    input.mapIndex = state->world.party.mapIndex;
+    input.mapX = mapX;
+    input.mapY = mapY;
+    input.partyDirection = state->world.party.direction;
+    input.suppressFluxcages = state->endgameDoNotDrawFluxcages;
+    input.liveProjectiles = &state->world.projectiles;
+    input.liveExplosions = &state->world.explosions;
+    input.runtimeOrigin = DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
+    return dm1_v1_viewport_runtime_materialization_decide_pc34(
+        &input, outDecision);
 }
 
 #define ASSERT_EQ(actual, expected, msg) do { \
@@ -1166,6 +1200,7 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     unsigned char explosionRaw[8];
     int projectileCount = -1;
     int explosionCount = -1;
+    DM1_V1_ViewportRuntimeMaterializationDecisionPc34 materialization;
     int firstProjectileGfx = -2;
     int firstExplosionType = -2;
 
@@ -1217,12 +1252,15 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     state.world.party.mapX = 0;
     state.world.party.mapY = 0;
     state.world.party.direction = 0;
-    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
-                  &state, 0, 0, NULL, NULL, NULL,
-                  &projectileCount, &explosionCount,
-                  &firstProjectileGfx, &firstExplosionType),
+    ASSERT_EQ(dm1_runtime_materialization_for_test(
+                  &state, 0, 0, 0, 0, DUNGEON_ELEMENT_WALL, 0,
+                  &materialization),
               1,
-              "viewport artifact probe samples synthetic square");
+              "DM1 materialization samples synthetic square");
+    projectileCount = materialization.liveProjectileCount;
+    explosionCount = materialization.liveExplosionCount;
+    firstProjectileGfx = -1;
+    firstExplosionType = materialization.liveExplosionType;
     ASSERT_EQ(projectileCount, 0,
               "viewport sample suppresses static projectile count");
     ASSERT_EQ(explosionCount, 0,
@@ -1273,12 +1311,15 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     explosionCount = -1;
     firstProjectileGfx = -2;
     firstExplosionType = -2;
-    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
-                  &state, 0, 0, NULL, NULL, NULL,
-                  &projectileCount, &explosionCount,
-                  &firstProjectileGfx, &firstExplosionType),
+    ASSERT_EQ(dm1_runtime_materialization_for_test(
+                  &state, 0, 0, 0, 0, DUNGEON_ELEMENT_WALL, 0,
+                  &materialization),
               1,
-              "viewport artifact probe samples runtime effects");
+              "DM1 materialization samples runtime effects");
+    projectileCount = materialization.liveProjectileCount;
+    explosionCount = materialization.liveExplosionCount;
+    firstProjectileGfx = -1;
+    firstExplosionType = materialization.liveExplosionType;
     ASSERT_EQ(projectileCount, 0,
               "inactive zeroed runtime projectile slot is suppressed in viewport sample");
     ASSERT_EQ(firstProjectileGfx, -1,
@@ -1296,12 +1337,19 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     explosionCount = -1;
     firstProjectileGfx = -2;
     firstExplosionType = -2;
-    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
-                  &state, 0, 0, NULL, NULL, NULL,
-                  &projectileCount, &explosionCount,
-                  &firstProjectileGfx, &firstExplosionType),
+    ASSERT_EQ(dm1_runtime_materialization_for_test(
+                  &state, 0, 0, 0, 0, DUNGEON_ELEMENT_WALL, 0,
+                  &materialization),
               1,
-              "viewport artifact probe samples active runtime effects");
+              "DM1 materialization samples active runtime effects");
+    projectileCount = materialization.liveProjectileCount;
+    explosionCount = materialization.liveExplosionCount;
+    firstProjectileGfx = dm1_v1_projectile_graphic_index(
+        dm1_v1_projectile_subtype_to_aspect(
+            materialization.liveProjectileSubtype),
+        (materialization.liveProjectileDirection -
+         state.world.party.direction) & 3);
+    firstExplosionType = materialization.liveExplosionType;
     ASSERT_EQ(projectileCount, 1,
               "runtime projectile with resolved graphic remains visible");
     ASSERT_EQ(firstProjectileGfx >= 0, 1,
@@ -1324,12 +1372,13 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     explosionCount = -1;
     firstProjectileGfx = -2;
     firstExplosionType = -2;
-    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
-                  &state, 0, 0, NULL, NULL, NULL,
-                  &projectileCount, &explosionCount,
-                  &firstProjectileGfx, &firstExplosionType),
+    ASSERT_EQ(dm1_runtime_materialization_for_test(
+                  &state, 0, 0, 0, 0, DUNGEON_ELEMENT_WALL, 0,
+                  &materialization),
               1,
-              "viewport artifact probe samples active runtime explosion");
+              "DM1 materialization samples active runtime explosion");
+    explosionCount = materialization.liveExplosionCount;
+    firstExplosionType = materialization.liveExplosionType;
     ASSERT_EQ(explosionCount, 1,
               "active runtime explosion with drawable type remains visible");
     ASSERT_EQ(firstExplosionType, C000_EXPLOSION_FIREBALL,
