@@ -506,6 +506,67 @@ static void test_diagnostic_report_surfaces_title_import_status(void)
           "diagnostic report returns to v2.0 after cleanup");
 }
 
+static void test_real_startup_asset_selection_rejects_generic_paths(void)
+{
+    CSB_V1_BootProfile p;
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    const CSB_V1_StartupAssetBinding_PC34 *binding;
+
+    prime_verified_profile(&p);
+    csb_v1_boot_startup_assets_resolve_pc34(&p);
+    binding = csb_v1_boot_startup_asset_binding_pc34(
+        &p, CSB_V1_STARTUP_ASSET_ROLE_TITLE_CHAOS_PC34);
+    CHECK(binding && binding->source == CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 &&
+          binding->graphic_index == 1u && binding->verified == 1 &&
+          binding->rejects_generic_or_test_asset == 1 &&
+          strcmp(binding->path, "GRAPHICS.DAT") == 0,
+          "title CHAOS resolves to verified original GRAPHICS.DAT C001");
+    binding = csb_v1_boot_startup_asset_binding_pc34(
+        &p, CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_LEFT_DOOR_PC34);
+    CHECK(binding && binding->graphic_index == 2u && binding->verified == 1,
+          "door opening resolves left door from original C002");
+    binding = csb_v1_boot_startup_asset_binding_pc34(
+        &p, CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_CREDITS_PC34);
+    CHECK(binding && binding->graphic_index == 5u && binding->verified == 1,
+          "credits resolves from original C005");
+
+    memset(&plan, 0, sizeof(plan));
+    plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
+    plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
+    plan.asset_command_count = 1;
+    plan.asset_commands[0].kind = CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34;
+    plan.asset_commands[0].asset_id = 1;
+    plan.asset_commands[0].visible = 1;
+    CHECK(csb_v1_boot_startup_render_plan_uses_real_assets_pc34(&p, &plan) == 1,
+          "PRESENTS/CHAOS/STRIKES plan admits only the verified title binding");
+
+    p.csbgraphics_cache.loaded = 1;
+    snprintf(p.csbgraphics_cache.resolved_path,
+             sizeof(p.csbgraphics_cache.resolved_path), "%s", "CSBgraphics.dat");
+    p.csbgraphics_m11_plan.ready = 1;
+    p.csbgraphics_m11_plan.planned_count = 2u;
+    p.csbgraphics_m11_plan.entries[0].entry_index = 17u;
+    p.csbgraphics_m11_plan.entries[1].entry_index = 40u;
+    csb_v1_boot_startup_assets_resolve_pc34(&p);
+    binding = csb_v1_boot_startup_asset_binding_pc34(
+        &p, CSB_V1_STARTUP_ASSET_ROLE_HUD_INVENTORY_PC34);
+    CHECK(binding && binding->source == CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34 &&
+          binding->graphic_index == 17u && binding->verified == 1 &&
+          strcmp(binding->path, "CSBgraphics.dat") == 0,
+          "validated CSBgraphics inventory entry overrides the HUD source");
+    binding = csb_v1_boot_startup_asset_binding_pc34(
+        &p, CSB_V1_STARTUP_ASSET_ROLE_HUD_RESURRECT_PC34);
+    CHECK(binding && binding->source == CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34 &&
+          binding->graphic_index == 40u && binding->verified == 1,
+          "validated CSBgraphics resurrection entry overrides the HUD source");
+
+    p.startup_assets.bindings[CSB_V1_STARTUP_ASSET_ROLE_TITLE_CHAOS_PC34].source =
+        CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34;
+    CHECK(csb_v1_boot_startup_render_plan_uses_real_assets_pc34(&p, &plan) == 0,
+          "real-data title plan rejects a generic or test fallback source");
+    csb_v1_boot_cleanup(&p);
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_boot_source_evidence();
@@ -528,6 +589,7 @@ int main(void)
     test_utility_action_cursor_drives_select_action();
     test_utility_panel_layout_owns_visible_hit_area();
     test_diagnostic_report_surfaces_title_import_status();
+    test_real_startup_asset_selection_rejects_generic_paths();
     test_source_evidence();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
