@@ -1232,6 +1232,24 @@ int dm2_v1_boot_gdat_raw_asset_proof(
     uint32_t *out_hash,
     uint32_t *out_byte_count);
 
+/* Raw-byte and decoded-pixel evidence for one virtual viewport resource.
+ * The virtual index is the one used by DM2_V1_ViewportAssetFetch. */
+typedef struct {
+    int gdat_index;
+    int category;
+    int entry_index;
+    int field;
+    uint32_t raw_hash;
+    uint32_t raw_byte_count;
+    uint32_t decoded_hash;
+    uint32_t decoded_pixel_count;
+} DM2_V1_BootViewportAssetEvidence;
+
+int dm2_v1_boot_viewport_asset_evidence(
+    DM2_V1_BootProfile *profile,
+    int gdat_index,
+    DM2_V1_BootViewportAssetEvidence *out_evidence);
+
 void dm2_v1_boot_gdat_image_asset_free(uint8_t *pixels);
 
 /* Free resources allocated during boot (but not the profile itself). */

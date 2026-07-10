@@ -36,8 +36,6 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-#define DM2_GDAT_GFXSET_FLOOR 0x00
-#define DM2_GDAT_GFXSET_CEIL  0x01
 #define DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL 0x01
 #define DM2_GDAT_WALL_FIELD_CACHE_LIMIT 0x40
 #define DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT 0x20
@@ -48,7 +46,6 @@
 #define DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT 16
 #define DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT 8
 #define DM2_GDAT_OBJECT_ICON_FIELD_LIMIT 0x10
-#define DM2_GDAT_IMG_MAP_CHIP 0xF9
 
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
 
@@ -5413,6 +5410,95 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
     if (out_stride) *out_stride = *cache_w;
     (void)fmt;
     return 0;
+}
+
+static int dm2_v1_boot_viewport_asset_address(int gdat_index,
+                                              int *out_category,
+                                              int *out_index,
+                                              int *out_field)
+{
+    int packed;
+    if (!out_category || !out_index || !out_field) return 0;
+    if (gdat_index == DM2_V1_VIEWPORT_GFX_FLOOR) {
+        *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+        *out_index = 0;
+        *out_field = DM2_GDAT_GFXSET_FLOOR;
+    } else if (gdat_index == DM2_V1_VIEWPORT_GFX_CEILING) {
+        *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+        *out_index = 0;
+        *out_field = DM2_GDAT_GFXSET_CEIL;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
+                            DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST &&
+               gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE) {
+        *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+        *out_index = DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL;
+        *out_field = DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE &&
+               gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE) {
+        packed = DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE - gdat_index;
+        *out_category = DM2_GDAT_CATEGORY_DOORS;
+        *out_index = (packed >> DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT) & 0xff;
+        *out_field = packed & DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_MASK;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
+                   (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT)) {
+        packed = DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index;
+        *out_category = DM2_GDAT_CATEGORY_CREATURES;
+        *out_index = (packed >> DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT) & 0xff;
+        *out_field = DM2_GDAT_IMG_MAP_CHIP;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE -
+                            DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FRONT) {
+        *out_category = DM2_GDAT_CATEGORY_DOORS;
+        *out_index = 0;
+        *out_field = DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE - gdat_index;
+    } else {
+        return 0;
+    }
+    return *out_field >= 0;
+}
+
+int dm2_v1_boot_viewport_asset_evidence(
+    DM2_V1_BootProfile *profile,
+    int gdat_index,
+    DM2_V1_BootViewportAssetEvidence *out_evidence)
+{
+    const uint8_t *pixels = NULL;
+    int w = 0;
+    int h = 0;
+    int stride = 0;
+    uint32_t hash = 0x32445644u;
+    int x;
+    int y;
+    if (!out_evidence) return 0;
+    memset(out_evidence, 0, sizeof(*out_evidence));
+    out_evidence->gdat_index = gdat_index;
+    if (!dm2_v1_boot_viewport_asset_address(gdat_index,
+                                            &out_evidence->category,
+                                            &out_evidence->entry_index,
+                                            &out_evidence->field) ||
+        !dm2_v1_boot_gdat_raw_asset_proof(profile,
+                                           out_evidence->category,
+                                           out_evidence->entry_index,
+                                           out_evidence->field,
+                                           0x32445652u,
+                                           &out_evidence->raw_hash,
+                                           &out_evidence->raw_byte_count) ||
+        dm2_v1_boot_viewport_asset_fetch(profile, gdat_index, &pixels,
+                                         &w, &h, &stride) != 0 ||
+        !pixels || w <= 0 || h <= 0 || stride < w) {
+        return 0;
+    }
+    for (y = 0; y < h; ++y) {
+        for (x = 0; x < w; ++x) {
+            hash = dm2_v1_boot_packaged_capture_hash_step(
+                hash, pixels[(size_t)y * (size_t)stride + (size_t)x]);
+        }
+    }
+    out_evidence->decoded_hash = hash;
+    out_evidence->decoded_pixel_count = (uint32_t)((size_t)w * (size_t)h);
+    return out_evidence->raw_hash != 0u && out_evidence->raw_byte_count > 0u &&
+           out_evidence->decoded_hash != 0u &&
+           out_evidence->decoded_pixel_count > 0u;
 }
 
 static int dm2_v1_boot_object_pool_to_gdat_category(uint8_t pool)

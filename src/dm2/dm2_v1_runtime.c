@@ -112,6 +112,28 @@ static int g_dm2_last_asset_hud_portrait_count = 0;
 static int g_dm2_last_fallback_hud_portrait_count = 0;
 static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
 
+static void dm2_runtime_add_viewport_asset_evidence(
+    DM2_V1_RuntimeFrameOwnershipReceipt *receipt, int gdat_index)
+{
+    DM2_V1_BootViewportAssetEvidence evidence;
+    if (!receipt || g_dm2_runtime.viewport_asset_fetch !=
+                         dm2_v1_boot_viewport_asset_fetch ||
+        !g_dm2_runtime.viewport_asset_user ||
+        !dm2_v1_boot_viewport_asset_evidence(
+            (DM2_V1_BootProfile *)g_dm2_runtime.viewport_asset_user,
+            gdat_index, &evidence)) {
+        return;
+    }
+    receipt->viewport_raw_gdat_hash =
+        receipt->viewport_raw_gdat_hash * 33u + evidence.raw_hash;
+    receipt->viewport_raw_gdat_byte_count += evidence.raw_byte_count;
+    receipt->viewport_decoded_gdat_hash =
+        receipt->viewport_decoded_gdat_hash * 33u + evidence.decoded_hash;
+    receipt->viewport_decoded_gdat_pixel_count += evidence.decoded_pixel_count;
+    ++receipt->viewport_raw_gdat_asset_count;
+    ++receipt->viewport_decoded_gdat_asset_count;
+}
+
 static int dm2_runtime_door_state(uint16_t square_raw) {
     return (int)(square_raw & 0x0007u);
 }
@@ -1800,6 +1822,35 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.asset_door_button_drawn_count;
     g_dm2_frame_ownership.creature_gdat_blits =
         viewport.asset_creature_drawn_count;
+    g_dm2_frame_ownership.viewport_raw_gdat_asset_count = 0;
+    g_dm2_frame_ownership.viewport_decoded_gdat_asset_count = 0;
+    g_dm2_frame_ownership.viewport_raw_gdat_byte_count = 0u;
+    g_dm2_frame_ownership.viewport_decoded_gdat_pixel_count = 0u;
+    g_dm2_frame_ownership.viewport_raw_gdat_hash = 0x32445652u;
+    g_dm2_frame_ownership.viewport_decoded_gdat_hash = 0x32445644u;
+    if (viewport.asset_floor_ceiling_drawn_count > 0) {
+        dm2_runtime_add_viewport_asset_evidence(&g_dm2_frame_ownership,
+                                                DM2_V1_VIEWPORT_GFX_FLOOR);
+        dm2_runtime_add_viewport_asset_evidence(&g_dm2_frame_ownership,
+                                                DM2_V1_VIEWPORT_GFX_CEILING);
+    }
+    if (viewport.asset_wall_drawn_count > 0) {
+        dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            dm2_v1_viewport_wall_graphic_index_for_square(DM2_SQ_D0C));
+    }
+    if (viewport.asset_door_panel_drawn_count > 0 &&
+        g_dm2_last_door_render.panel_gdat_index != 0) {
+        dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            g_dm2_last_door_render.panel_gdat_index);
+    }
+    if (viewport.asset_creature_drawn_count > 0 &&
+        g_dm2_last_creature_render.gdat_index != 0) {
+        dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            g_dm2_last_creature_render.gdat_index);
+    }
     g_dm2_frame_ownership.valid =
         g_dm2_frame_ownership.runtime_frame_owned &&
         (g_dm2_frame_ownership.gdat_provider_bound ||
