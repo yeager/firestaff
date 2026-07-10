@@ -1,5 +1,7 @@
 #include "nexus_v1_bpk_archive.h"
+#include "nexus_v1_dmdf_model.h"
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -583,6 +585,187 @@ int nexus_v1_bpk_archive_extract_stored_surface(
     }
     *out_written = surface_bytes;
     return NEXUS_V1_BPK_EXTRACT_OK;
+}
+
+static int prs3_read_bit(const uint8_t *data, size_t size, size_t *cursor,
+                         uint8_t *control, unsigned int *bits_left,
+                         int *out_bit) {
+    if (*bits_left == 0U) {
+        if (*cursor >= size) return 0;
+        *control = data[(*cursor)++];
+        *bits_left = 8U;
+    }
+    *out_bit = *control & 1U;
+    *control >>= 1U;
+    --*bits_left;
+    return 1;
+}
+
+static int prs3_decode_body(const uint8_t *data, size_t size,
+                            uint8_t *out, size_t output_size,
+                            size_t *out_written) {
+    size_t cursor = 0U;
+    size_t written = 0U;
+    uint8_t control = 0U;
+    unsigned int bits_left = 0U;
+
+    while (written < output_size) {
+        int flag;
+        if (!prs3_read_bit(data, size, &cursor, &control, &bits_left, &flag))
+            return 0;
+        if (flag) {
+            if (cursor >= size) return 0;
+            out[written++] = data[cursor++];
+        } else {
+            int long_copy;
+            int length;
+            int offset;
+            if (!prs3_read_bit(data, size, &cursor, &control, &bits_left,
+                               &long_copy)) return 0;
+            if (long_copy) {
+                uint16_t token;
+                if (cursor + 2U > size) return 0;
+                token = (uint16_t)data[cursor] | ((uint16_t)data[cursor + 1U] << 8);
+                cursor += 2U;
+                offset = (int)(token >> 3);
+                if (offset & 0x1000) offset -= 0x2000;
+                length = (int)(token & 7U) + 2;
+            } else {
+                int bit0, bit1;
+                if (!prs3_read_bit(data, size, &cursor, &control, &bits_left,
+                                   &bit0) ||
+                    !prs3_read_bit(data, size, &cursor, &control, &bits_left,
+                                   &bit1) || cursor >= size) return 0;
+                length = bit0 | (bit1 << 1);
+                if (length == 0) return 0; /* stream end before declared surface */
+                length += 2;
+                offset = (int)(int8_t)data[cursor++];
+            }
+            if (offset >= 0 || (size_t)(-offset) > written ||
+                (size_t)length > output_size - written) return 0;
+            while (length-- > 0) {
+                out[written] = out[(size_t)((int)written + offset)];
+                ++written;
+            }
+        }
+    }
+    *out_written = written;
+    return 1;
+}
+
+int nexus_v1_bpk_archive_decode_surface(
+    const uint8_t *data, size_t data_size, uint32_t index, uint8_t *out,
+    size_t out_size, Nexus_V1_BpkSurfaceEntry *out_surface,
+    size_t *out_written) {
+    Nexus_V1_BpkEntry entry;
+    Nexus_V1_BpkEntryPrefix prefix;
+    Nexus_V1_BpkPrs3Info prs3;
+    uint32_t bpp;
+    size_t expected;
+
+    if (out_written) *out_written = 0U;
+    if (out_surface) memset(out_surface, 0, sizeof(*out_surface));
+    if (!data || !out || !out_written) return NEXUS_V1_BPK_DECODE_ERR_NULL;
+    if (nexus_v1_bpk_archive_get_entry(data, data_size, index, &entry) != 0 ||
+        nexus_v1_bpk_archive_get_entry_prefix(data, data_size, index, &prefix) != 0)
+        return NEXUS_V1_BPK_DECODE_ERR_ARCHIVE;
+    bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+    if (!prefix.prefix_complete || bpp == 0U) return NEXUS_V1_BPK_DECODE_ERR_NOT_SURFACE;
+    expected = (size_t)prefix.width * (size_t)prefix.height * bpp;
+    if (expected > out_size) return NEXUS_V1_BPK_DECODE_ERR_OUTPUT_TOO_SMALL;
+
+    if (!entry.has_prs3) {
+        int rc = nexus_v1_bpk_archive_extract_stored_surface(data, data_size,
+                                                               index, out, out_size,
+                                                               out_surface, out_written);
+        return rc == NEXUS_V1_BPK_EXTRACT_OK ? NEXUS_V1_BPK_DECODE_OK :
+            (rc == NEXUS_V1_BPK_EXTRACT_ERR_TRUNCATED ?
+             NEXUS_V1_BPK_DECODE_ERR_TRUNCATED : NEXUS_V1_BPK_DECODE_ERR_ARCHIVE);
+    }
+    if (nexus_v1_bpk_archive_inspect_prs3(data, data_size, index, &prs3) != 0 ||
+        !prs3.prs3_version_matches || !prs3.pixel_count_matches ||
+        entry.payload_size < NEXUS_V1_BPK_PRS3_HEADER_BYTES + 1U)
+        return NEXUS_V1_BPK_DECODE_ERR_TRUNCATED;
+    if (!prs3_decode_body(data + entry.payload_offset + 8U,
+                          entry.payload_size - 8U, out, expected, out_written))
+        return NEXUS_V1_BPK_DECODE_ERR_STREAM;
+    if (out_surface) {
+        out_surface->entry_index = index;
+        out_surface->mode = prefix.mode;
+        out_surface->width = prefix.width;
+        out_surface->height = prefix.height;
+        out_surface->pixel_count = (uint32_t)prefix.width * prefix.height;
+        out_surface->layout.bpp = bpp;
+        out_surface->layout.rowstride = (uint32_t)prefix.width * bpp;
+        out_surface->layout.surface_bytes = (uint32_t)expected;
+        out_surface->layout.surface_class = nexus_v1_bpk_mode_to_surface_class(prefix.mode);
+    }
+    return NEXUS_V1_BPK_DECODE_OK;
+}
+
+const char *nexus_v1_bpk_surface_decode_status_name(int status) {
+    switch (status) {
+    case NEXUS_V1_BPK_DECODE_OK: return "ok";
+    case NEXUS_V1_BPK_DECODE_ERR_NULL: return "null";
+    case NEXUS_V1_BPK_DECODE_ERR_ARCHIVE: return "archive";
+    case NEXUS_V1_BPK_DECODE_ERR_NOT_SURFACE: return "not-surface";
+    case NEXUS_V1_BPK_DECODE_ERR_OUTPUT_TOO_SMALL: return "output-too-small";
+    case NEXUS_V1_BPK_DECODE_ERR_TRUNCATED: return "truncated";
+    case NEXUS_V1_BPK_DECODE_ERR_STREAM: return "stream";
+    default: return "unknown";
+    }
+}
+
+int nexus_v1_dmdf_import_bpk_material_bank(const uint8_t *data,
+                                           size_t data_size,
+                                           Nexus_DMDFMaterialBank *out) {
+    Nexus_V1_BpkArchiveInfo archive;
+    uint32_t index;
+    int imported = 0;
+
+    if (!data || !out || nexus_v1_bpk_archive_parse(data, data_size, &archive) != 0)
+        return 0;
+    for (index = 0U; index < archive.candidate_offset_count &&
+                    index < NEXUS_DMDF_MATERIAL_COUNT; ++index) {
+        Nexus_V1_BpkEntryPrefix prefix;
+        Nexus_V1_BpkSurfaceEntry surface;
+        uint8_t *pixels;
+        size_t written = 0U;
+        size_t bytes;
+        int palette_source = -1;
+        int candidate;
+
+        if (out->surfaces[index].valid ||
+            nexus_v1_bpk_archive_get_entry_prefix(data, data_size, index, &prefix) != 0 ||
+            prefix.mode != NEXUS_V1_BPK_MODE_8BPP) continue;
+        bytes = (size_t)prefix.width * (size_t)prefix.height;
+        if (bytes == 0U) continue;
+        pixels = (uint8_t *)malloc(bytes);
+        if (!pixels) break;
+        if (nexus_v1_bpk_archive_decode_surface(data, data_size, index, pixels,
+                                                bytes, &surface, &written) !=
+                NEXUS_V1_BPK_DECODE_OK || written != bytes) {
+            free(pixels);
+            continue;
+        }
+        /* BPK 8bpp indices need a real CLUT already supplied by DMDF.
+         * Do not synthesize colours for an otherwise opaque Saturn surface. */
+        for (candidate = 0; candidate < NEXUS_DMDF_MATERIAL_COUNT; ++candidate) {
+            if (out->surfaces[candidate].valid) { palette_source = candidate; break; }
+        }
+        if (palette_source < 0) { free(pixels); continue; }
+        memcpy(out->surfaces[index].palette,
+               out->surfaces[palette_source].palette,
+               sizeof(out->surfaces[index].palette));
+        out->surfaces[index].pixels = pixels;
+        out->surfaces[index].width = (int)surface.width;
+        out->surfaces[index].height = (int)surface.height;
+        out->surfaces[index].valid = 1;
+        ++out->surface_count;
+        ++imported;
+    }
+    if (imported > 0) out->valid = 1;
+    return imported;
 }
 
 const char *nexus_v1_bpk_surface_extract_status_name(int status) {

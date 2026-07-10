@@ -1,5 +1,6 @@
 #include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_bpx_bpk.h"
+#include "nexus_v1_dmdf_model.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -142,6 +143,87 @@ static void make_synthetic_stored_bpk(uint8_t *data, size_t cap) {
         data[entry3_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + i] =
             (uint8_t)(0x80U + i);
     }
+}
+
+static void make_synthetic_prs3_literal_bpk(uint8_t *data, size_t cap) {
+    const uint32_t trailer_off = 64U;
+    const uint32_t surface_off = 96U;
+    uint8_t *p;
+    if (cap < 160U) return;
+    memset(data, 0, cap);
+    memcpy(data, "BPPK", 4);
+    wr32_be(data + 4, (uint32_t)cap);
+    memcpy(data + 12, "BMPD", 4);
+    wr32_be(data + 16, (uint32_t)cap - 20U);
+    wr32_be(data + 20, 2U);
+    wr32_be(data + 24, trailer_off);
+    wr32_be(data + 28, surface_off);
+    data[trailer_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
+        NEXUS_V1_BPK_MODE_TRAILER;
+    p = data + surface_off;
+    wr16_be(p + NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET, 2U);
+    p[NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET] = 2U;
+    p[NEXUS_V1_BPK_PREFIX_MODE_OFFSET] = NEXUS_V1_BPK_MODE_8BPP;
+    memcpy(p + 20, "PRS3", 4);
+    wr32_be(p + 24, 1U);
+    wr32_be(p + 28, 4U);
+    /* Four PRS literal control bits, least-significant bit first. */
+    p[32] = 0x0fU;
+    p[33] = 0x11U;
+    p[34] = 0x22U;
+    p[35] = 0x33U;
+    p[36] = 0x44U;
+}
+
+static void test_prs3_surface_decode(void) {
+    uint8_t data[160];
+    uint8_t pixels[4] = {0};
+    Nexus_V1_BpkSurfaceEntry surface;
+    size_t written = 0U;
+    int rc;
+
+    make_synthetic_prs3_literal_bpk(data, sizeof(data));
+    rc = nexus_v1_bpk_archive_decode_surface(data, sizeof(data), 1U,
+                                              pixels, sizeof(pixels),
+                                              &surface, &written);
+    expect(rc == NEXUS_V1_BPK_DECODE_OK,
+           "PRS3 literal stream decodes to a surface");
+    expect(written == sizeof(pixels) && pixels[0] == 0x11U &&
+               pixels[1] == 0x22U && pixels[2] == 0x33U &&
+               pixels[3] == 0x44U,
+           "PRS3 decoder preserves literal surface pixels");
+    expect(surface.width == 2U && surface.height == 2U &&
+               surface.layout.surface_class == NEXUS_V1_BPK_SURFACE_INDEXED_8BPP,
+           "PRS3 decoder returns the declared surface layout");
+
+    data[128] = 0x00U;
+    rc = nexus_v1_bpk_archive_decode_surface(data, sizeof(data), 1U,
+                                              pixels, sizeof(pixels),
+                                              NULL, &written);
+    expect(rc == NEXUS_V1_BPK_DECODE_ERR_STREAM,
+           "PRS3 decoder rejects an invalid back-reference without fallback");
+}
+
+static void test_prs3_material_import(void) {
+    uint8_t data[160];
+    Nexus_DMDFMaterialBank bank;
+    int imported;
+
+    memset(&bank, 0, sizeof(bank));
+    bank.surfaces[0].valid = 1;
+    bank.surfaces[0].palette[0x11] = 0xff112233U;
+    bank.surface_count = 1;
+    bank.valid = 1;
+    make_synthetic_prs3_literal_bpk(data, sizeof(data));
+    imported = nexus_v1_dmdf_import_bpk_material_bank(data, sizeof(data),
+                                                       &bank);
+    expect(imported == 1 && bank.surfaces[1].valid,
+           "decoded PRS3 surface fills its vacant DGN material slot");
+    expect(bank.surfaces[1].width == 2 && bank.surfaces[1].height == 2 &&
+               bank.surfaces[1].pixels[0] == 0x11U &&
+               bank.surfaces[1].palette[0x11] == 0xff112233U,
+           "BPK material keeps decoded texels and the real DMDF CLUT");
+    free(bank.surfaces[1].pixels);
 }
 
 /* ---- Surface-class lookup tests ---- */
@@ -1014,6 +1096,8 @@ int main(void) {
     test_runtime_render_receipt_ready_for_stored_surfaces();
     test_runtime_render_receipt_blocks_truncated_stored_surfaces();
     test_extract_stored_surface_bytes();
+    test_prs3_surface_decode();
+    test_prs3_material_import();
     test_runtime_surface_handoff_blocks_prs3();
     test_runtime_surface_handoff_ready_stored();
     test_runtime_surface_handoff_truncated_and_capacity();

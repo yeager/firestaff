@@ -187,6 +187,20 @@ typedef enum {
     NEXUS_V1_BPK_EXTRACT_ERR_TRUNCATED = -6
 } Nexus_V1_BpkSurfaceExtractStatus;
 
+/* Decode a single renderable BPK entry to its declared unpacked surface.
+ * PRS3 bodies use the Saturn PRS control stream after the bounded leading
+ * size word. The decoder must produce exactly width * height * bpp bytes;
+ * partial output and invalid back-references are hard failures. */
+typedef enum {
+    NEXUS_V1_BPK_DECODE_OK = 0,
+    NEXUS_V1_BPK_DECODE_ERR_NULL = -1,
+    NEXUS_V1_BPK_DECODE_ERR_ARCHIVE = -2,
+    NEXUS_V1_BPK_DECODE_ERR_NOT_SURFACE = -3,
+    NEXUS_V1_BPK_DECODE_ERR_OUTPUT_TOO_SMALL = -4,
+    NEXUS_V1_BPK_DECODE_ERR_TRUNCATED = -5,
+    NEXUS_V1_BPK_DECODE_ERR_STREAM = -6
+} Nexus_V1_BpkSurfaceDecodeStatus;
+
 typedef enum {
     NEXUS_V1_BPK_SURFACE_HANDOFF_INVALID = 0,
     NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED = 1,
@@ -264,6 +278,17 @@ int nexus_v1_bpk_archive_extract_stored_surface(
     size_t out_size,
     Nexus_V1_BpkSurfaceEntry *out_surface,
     size_t *out_written);
+
+int nexus_v1_bpk_archive_decode_surface(
+    const uint8_t *data,
+    size_t data_size,
+    uint32_t index,
+    uint8_t *out,
+    size_t out_size,
+    Nexus_V1_BpkSurfaceEntry *out_surface,
+    size_t *out_written);
+
+const char *nexus_v1_bpk_surface_decode_status_name(int status);
 
 const char *nexus_v1_bpk_surface_extract_status_name(int status);
 

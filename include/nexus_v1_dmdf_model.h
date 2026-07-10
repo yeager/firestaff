@@ -2,6 +2,8 @@
 #ifndef NEXUS_V1_DMDF_MODEL_H
 #define NEXUS_V1_DMDF_MODEL_H
 #include <stdint.h>
+#include <stddef.h>
+#include "nexus_v1_bpk_archive.h"
 
 /* DMDF — Dungeon Master Data Format
  * Magic: "DMDF" at offset 0
@@ -194,6 +196,14 @@ int nexus_v1_dmdf_estimate_raw_texture_payload(
  * or unpaletted blocks are rejected rather than replaced with a flat colour. */
 int nexus_v1_dmdf_decode_material_bank(const uint8_t *data, int size,
                                        Nexus_DMDFMaterialBank *out);
+
+/* Fill vacant DGN material slots from a BPK archive. Entry indices are
+ * material IDs; existing DMDF BITM surfaces always win. Only decoded source
+ * pixels are accepted, so an unknown PRS3 stream cannot become a flat or
+ * generic runtime material. */
+int nexus_v1_dmdf_import_bpk_material_bank(const uint8_t *data,
+                                           size_t data_size,
+                                           Nexus_DMDFMaterialBank *out);
 void nexus_v1_dmdf_free_material_bank(Nexus_DMDFMaterialBank *bank);
 
 /* Helper: read a single palette entry out of a parsed palette block.
