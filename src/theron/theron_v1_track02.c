@@ -1164,6 +1164,24 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
     };
     const struct {
         unsigned int route_bit;
+        size_t anchor_index;
+        size_t span_delta;
+    } raw_bank_mirror_sample_specs[] = {
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE, 1u, 32u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE, 1u, 36u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE, 1u, 40u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE, 1u, 44u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE, 2u, 32u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE, 2u, 36u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE, 2u, 40u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE, 2u, 44u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM, 1u, 0u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM, 1u, 4u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD, 2u, 8u },
+        { THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD, 2u, 12u }
+    };
+    const struct {
+        unsigned int route_bit;
         size_t span_delta;
     } iso_extended_sample_specs[] = {
         { THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM, 0u },
@@ -1286,6 +1304,28 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
                 track02_size,
                 md5_hex,
                 raw_tail_sample_specs[i].route_bit,
+                raw_offset);
+        }
+        for (size_t i = 0u;
+             i < sizeof(raw_bank_mirror_sample_specs) /
+                     sizeof(raw_bank_mirror_sample_specs[0]);
+             ++i) {
+            size_t raw_offset;
+
+            if (raw_bank_mirror_sample_specs[i].anchor_index >=
+                signal.anchor_count) {
+                continue;
+            }
+            raw_offset =
+                signal.post_boundary_span_offsets
+                    [raw_bank_mirror_sample_specs[i].anchor_index] +
+                raw_bank_mirror_sample_specs[i].span_delta;
+            (void)catalog_add_startup_bitmap_sample_from_offset(
+                out_catalog,
+                track02_data,
+                track02_size,
+                md5_hex,
+                raw_bank_mirror_sample_specs[i].route_bit,
                 raw_offset);
         }
     }
