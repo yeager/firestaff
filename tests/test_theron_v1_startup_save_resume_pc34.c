@@ -598,8 +598,39 @@ static void test_tqsv_only_resume_claim(void) {
                             0x70be06u &&
                         world.runtime_media.identity.audio_frame_ready &&
                         world.runtime_media.identity.audio_bank_id ==
-                            0x01725800u,
-                    "tqsv Continue restores Track 02 later-level and forcefield media with world");
+                            0x01725800u &&
+                        continue_result.track02_level_bank.ready &&
+                        continue_result.track02_level_bank.real_media_gate &&
+                        continue_result.track02_level_bank.kind ==
+                            THERON_RUNTIME_LEVEL_BANK_SAVE_RESUME &&
+                        continue_result.track02_level_bank.dungeon_id ==
+                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                        continue_result.track02_level_bank.level_index ==
+                            world.current_level &&
+                        continue_result.track02_level_bank.route_bit ==
+                            THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE &&
+                        continue_result.track02_level_bank.surface_checksum ==
+                            world.runtime_media.stage.checksum &&
+                        continue_result.track02_level_bank.identity_checksum ==
+                            world.runtime_media.identity.checksum &&
+                        strstr(receipt, "level_bank=2:") != NULL,
+                    "tqsv Continue restores Track 02 later-level media and level-bank handoff with world");
+        world.transition_pending = 1;
+        world.transition_target_level = 2;
+        expect_true(theron_v1_transition_execute(&world) == 0 &&
+                        !world.runtime_media.level_bank.ready,
+                    "Track 02 level-bank cache invalidates on runtime level transition");
+        world.current_level = 2;
+        expect_true(theron_v1_world_runtime_media_select_level_bank(
+                        &world,
+                        THERON_RUNTIME_LEVEL_BANK_SAVE_RESUME,
+                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                        world.current_level) &&
+                        world.runtime_media.level_bank.ready &&
+                        world.runtime_media.level_bank.level_index == 2 &&
+                        world.runtime_media.level_bank.route_bit ==
+                            THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+                    "Track 02 later-level bank can be rebound after runtime transition");
         theron_v1_startup_continue_request_init(&continue_request);
         theron_v1_world_init(&world);
         memset(receipt, 0, sizeof(receipt));

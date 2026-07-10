@@ -39,6 +39,7 @@ typedef struct {
     int fallback_visuals_blocked;
     int structured_runtime_route;
     int runtime_receipt_text_route;
+    Theron_RuntimeLevelBankSelection track02_level_bank;
     int party_x;
     int party_y;
     int party_dir;
@@ -59,6 +60,7 @@ typedef struct {
     int fallback_visuals_blocked;
     int structured_runtime_route;
     int runtime_receipt_text_route;
+    Theron_RuntimeLevelBankSelection track02_level_bank;
     const char *log_first_line;
     int log_receipt;
 } Theron_V1StartupRuntimeEntryApplyReceipt;
