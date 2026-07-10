@@ -57,6 +57,12 @@ typedef struct {
     unsigned int startup_bitmap_wide_route_mask;
     int startup_bitmap_wide_route_count;
     size_t startup_bitmap_wide_atlas_tile_count;
+    unsigned int startup_bitmap_raw_route_mask;
+    int startup_bitmap_raw_route_count;
+    size_t startup_bitmap_raw_atlas_tile_count;
+    unsigned int startup_bitmap_iso_route_mask;
+    int startup_bitmap_iso_route_count;
+    size_t startup_bitmap_iso_atlas_tile_count;
     int startup_roster_name_status;
     int startup_roster_name_count;
     char startup_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
@@ -112,6 +118,12 @@ typedef struct {
     unsigned int startup_bitmap_wide_route_mask;
     int startup_bitmap_wide_route_count;
     size_t startup_bitmap_wide_atlas_tile_count;
+    unsigned int startup_bitmap_raw_route_mask;
+    int startup_bitmap_raw_route_count;
+    size_t startup_bitmap_raw_atlas_tile_count;
+    unsigned int startup_bitmap_iso_route_mask;
+    int startup_bitmap_iso_route_count;
+    size_t startup_bitmap_iso_atlas_tile_count;
     int startup_roster_name_status;
     int startup_roster_name_count;
     char startup_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]

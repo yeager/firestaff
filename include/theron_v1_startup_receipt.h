@@ -257,6 +257,12 @@ typedef struct {
     uint32_t startup_bitmap_wide_route_mask;
     uint32_t startup_bitmap_wide_route_count;
     uint32_t startup_bitmap_wide_atlas_tile_count;
+    uint32_t startup_bitmap_raw_route_mask;
+    uint32_t startup_bitmap_raw_route_count;
+    uint32_t startup_bitmap_raw_atlas_tile_count;
+    uint32_t startup_bitmap_iso_route_mask;
+    uint32_t startup_bitmap_iso_route_count;
+    uint32_t startup_bitmap_iso_atlas_tile_count;
 
     /* ── startup chapter/progression summary ─────────────────── */
     char     startup_chapter_label[THERON_CHAPTER_MARKER_LABEL_MAX];

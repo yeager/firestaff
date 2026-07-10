@@ -726,6 +726,15 @@ static void check_real_asset_path(void) {
                           r.startup_bitmap_wide_route_count == 4u &&
                           r.startup_bitmap_wide_atlas_tile_count >= 56u,
                       "raw Track 02 receipt promotes wide bitmap route proof");
+                check(r.startup_bitmap_raw_route_mask ==
+                          (THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+                           THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+                           THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+                           THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) &&
+                          r.startup_bitmap_raw_route_count == 4u &&
+                          r.startup_bitmap_raw_atlas_tile_count >= 56u &&
+                          r.startup_bitmap_iso_route_mask == 0u,
+                      "raw Track 02 receipt separates raw bitmap route proof");
                 check(r.user_data_window_count == 7u,
                       "raw Track 02 receipt has 7 logical user-data windows");
                 check(r.user_data_window_descriptor_count == 3u,
