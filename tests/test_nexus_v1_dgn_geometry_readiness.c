@@ -171,6 +171,7 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           "render-plan DGN fixture builds");
     structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
     set_square_type(structure1, structure1b_rel, 3, 4, 1);
+    cell_at(structure1, structure1b_rel, 3, 4)[7] = 5;
     set_square_type(structure1, structure1b_rel, 4, 4, 1);
     set_square_type(structure1, structure1b_rel, 3, 3, 1);
     set_collision_ref(structure1, structure1b_rel, 2, 4, 0x0fff);
@@ -196,24 +197,33 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           receipt.blocks_real_dgn_mesh_render == 0 &&
           receipt.fallback_visuals_permitted == 0,
           "DGN view render plan is ready without fallback visuals");
-    CHECK(receipt.command_count == 7 &&
+    CHECK(receipt.command_count == 10 &&
           receipt.floor_count == 3 &&
           receipt.wall_count == 4,
-          "DGN view render plan emits bounded floor/wall commands");
+          "DGN view render plan emits bounded floor/ceiling/wall commands");
     CHECK(commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
           commands[0].x == 3 &&
           commands[0].y == 4 &&
-          commands[0].collision_ref == 0x0100,
-          "DGN render plan first command is real party cell floor");
-    CHECK(commands[2].kind == NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT &&
-          commands[2].wall_dir == 3 &&
-          commands[2].x == 3 &&
-          commands[2].y == 4,
-          "DGN render plan emits left wall from adjacent Structure1B wall");
+          commands[0].collision_ref == 0x0105 &&
+          commands[0].material_id == 5 &&
+          commands[0].palette_index == 9 &&
+          commands[0].quad_y[0] > commands[0].quad_y[2],
+          "DGN render plan projects and materials the real party floor");
+    CHECK(commands[1].kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING &&
+          commands[1].palette_index == 5 &&
+          commands[1].quad_y[0] < commands[1].quad_y[1],
+          "DGN render plan emits the paired projected ceiling material");
+    CHECK(commands[4].kind == NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT &&
+          commands[4].wall_dir == 3 &&
+          commands[4].x == 3 &&
+          commands[4].y == 4 &&
+          commands[4].quad_x[0] < commands[4].quad_x[1],
+          "DGN render plan projects the left wall from Structure1B visibility");
     CHECK(receipt.first_blocking_depth == 2 &&
           receipt.first_blocking_x == 3 &&
           receipt.first_blocking_y == 2 &&
-          commands[6].kind == NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT,
+          commands[9].kind == NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT &&
+          commands[9].quad_y[0] > commands[9].quad_y[2],
           "DGN render plan stops at first front wall");
 }
 
