@@ -756,6 +756,13 @@ typedef struct DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34;
 
+typedef struct DM1_V1_StartupHoCBootCompleteSupportFacts_PC34 {
+    const char* source_id;
+    const char* resume_path;
+    int dungeon_loaded;
+    int assets_available;
+} DM1_V1_StartupHoCBootCompleteSupportFacts_PC34;
+
 typedef struct DM1_V1_StartupHoCBootProbeSummary_PC34 {
     int handled;
     int full_graphics_ready;
@@ -1313,6 +1320,11 @@ int dm1_v1_startup_hoc_boot_full_graphics_receipt_pc34(
     const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* hoc_handoff,
     const DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34* hoc_save,
     const DM1_V1_StartupSaveResumeCaptureReceipt_PC34* original_save,
+    DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
+    const DM1_V1_StartupHoCBootCompleteSupportFacts_PC34* complete_facts,
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* hoc_facts,
+    const DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* ownership,
     DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* out_receipt);
 int dm1_v1_startup_hoc_boot_probe_summary_pc34(
     const DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* receipt,

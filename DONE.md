@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM1 HoC complete-support host-facts builder: DM1 startup now builds the ENTER/RESUME handoff, HoC save-readiness, and original-save capture receipt chain from host facts. M11 supplies only source id, resume path, dungeon-loaded, and asset-available facts before consuming the DM1 boot full-graphics receipt. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m11`, and `git diff --check` passed.
+
 - ✅ 2026-07-10 DM1 HoC boot-probe summary ownership: DM1 startup now exports a boot-probe summary from the HoC boot full-graphics receipt, carrying HoC capture, host-route, no-fallback, and complete-support fields for M11. M11 now copies those DM1-owned fields instead of rebuilding the nested receipt interpretation locally. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m11`, and `git diff --check` passed.
 
 - ✅ 2026-07-10 M11 direct-launch boot-probe receipt snapshot: direct-launch boot probes now read `M11_BootProbeReceipt` once after scripted frames and validate selected-source, runtime/title expectations, and DM1 HoC complete-support gates against that single snapshot. This removes repeated M11 receipt rebuilds from the DM1 complete-support path. Verification: `firestaff`, `firestaff_m11`, `test_dm1_v1_startup_intro_state_machine_gate`, and `git diff --check` passed. `firestaff_m11_phase_a_probe` and `test_m11_direct_launch_prepare_all_games` were stopped after several minutes of no output.

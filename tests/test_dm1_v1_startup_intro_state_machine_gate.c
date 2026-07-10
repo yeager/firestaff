@@ -743,6 +743,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34
         hoc_boot_full_graphics;
     DM1_V1_StartupHoCBootProbeSummary_PC34 hoc_boot_summary;
+    DM1_V1_StartupHoCBootCompleteSupportFacts_PC34
+        hoc_boot_complete_facts;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 mirror_front_wall;
     DM1_V1_ChampionMirrorRenderReceiptPc34 mirror_render;
     DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 mirror_boundary;
@@ -3163,6 +3165,26 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_full_graphics.complete_support.ready &&
                  hoc_boot_full_graphics.complete_support
                      .complete_host_app_capture_route,
+             1);
+    memset(&hoc_boot_complete_facts, 0, sizeof(hoc_boot_complete_facts));
+    memset(&hoc_boot_full_graphics, 0, sizeof(hoc_boot_full_graphics));
+    hoc_boot_complete_facts.source_id = "dm1";
+    hoc_boot_complete_facts.resume_path = "dm1-original-save";
+    hoc_boot_complete_facts.dungeon_loaded = 1;
+    hoc_boot_complete_facts.assets_available = 1;
+    expect_i("DM1 builds HoC complete support from host facts",
+             dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
+                 &hoc_boot_complete_facts,
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership,
+                 &hoc_boot_full_graphics) &&
+                 hoc_boot_full_graphics.handled &&
+                 hoc_boot_full_graphics.ready &&
+                 hoc_boot_full_graphics.complete_support.ready &&
+                 hoc_boot_full_graphics.complete_support
+                     .complete_save_corpus_route &&
+                 hoc_boot_full_graphics.complete_support
+                     .complete_original_save_roundtrip_route,
              1);
     expect_i("DM1 boot probe summary owns M11 HoC field interpretation",
              dm1_v1_startup_hoc_boot_probe_summary_pc34(
