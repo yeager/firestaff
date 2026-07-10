@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.71  (2026-07-10)",
+    "  - Packages current main after DM1 ReDMCSB complete-support, DM2 GDAT complete-support, Nexus DGN/material and Theron Track 02 receipt gates.",
+    "  - Release metadata is synchronized to v3.0.71.",
+    "",
     "V3.0.70  (2026-07-10)",
     "  - Packages the DM2 GDAT render receipt hardening and DM1 title release-target link fix after v3.0.69.",
     "  - Release metadata is synchronized to v3.0.70.",
@@ -524,5 +528,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.70";
+    return "3.0.71";
 }
