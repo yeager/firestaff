@@ -729,9 +729,9 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
     ASSERT_EQ(runtimeRouteHardeningHashReady, 1,
               "M11 CSB startup route hardening publishes route hashes");
     ASSERT_EQ(runtimeHostCaptureGateReady, 1,
-              "M11 CSB startup requires full runtime host capture gate");
+              "M11 CSB startup requires full real-data runtime host capture gate");
     ASSERT_EQ(runtimeHostCaptureGateHashReady, 1,
-              "M11 CSB startup runtime host capture gate publishes hashes");
+              "M11 CSB startup runtime host capture gate publishes route and asset hashes");
     ASSERT_EQ(titleStageRuntimeCaptureReady, 1,
               "M11 CSB startup consumes PRESENTS, CHAOS zoom, CHAOS hold and STRIKES BACK runtime captures");
     ASSERT_EQ(titleStageRuntimeCaptureHashReady, 1,

@@ -30443,14 +30443,17 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
             runtime_gate.draw_consumes_receipt_only &&
             runtime_gate.input_consumes_receipt_only &&
             runtime_gate.no_fallback_callbacks &&
-            runtime_gate.no_wrapper_fallback_routes;
+            runtime_gate.no_wrapper_fallback_routes &&
+            runtime_gate.real_startup_assets_bound &&
+            runtime_gate.real_startup_asset_role_count == 9;
     }
     if (outRuntimeHostCaptureGateHashReady) {
         *outRuntimeHostCaptureGateHashReady =
             runtime_gate.sequence_capture_hash != 0u &&
             runtime_gate.runtime_capture_hash != 0u &&
             runtime_gate.route_hardening_hash != 0u &&
-            runtime_gate.runtime_host_gate_hash != 0u;
+            runtime_gate.runtime_host_gate_hash != 0u &&
+            runtime_gate.real_startup_asset_binding_hash != 0u;
     }
     if (outTitleStageRuntimeCaptureReady) {
         *outTitleStageRuntimeCaptureReady =
