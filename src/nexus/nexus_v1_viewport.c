@@ -53,30 +53,69 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
             return;
         }
 
+        /* BITM pixels carry global CLUT slots. Merge the decoded DMDF CLUTs
+         * before rasterizing so framebuffer indices retain source colours. */
+        {
+            uint32_t palette[256];
+            const Nexus_DMDFMaterialBank *banks[2] = {
+                &engine->floor_materials, &engine->wall_materials
+            };
+            int bank_index;
+            memcpy(palette, vp->fb.palette, sizeof(palette));
+            for (bank_index = 0; bank_index < 2; ++bank_index) {
+                const Nexus_DMDFMaterialBank *bank = banks[bank_index];
+                int material_index;
+                for (material_index = 0; bank->valid &&
+                     material_index < bank->surface_count; ++material_index) {
+                    const Nexus_DMDFTextureSurface *surface =
+                        &bank->surfaces[material_index];
+                    int color_index;
+                    for (color_index = 0; surface->valid &&
+                         color_index < 256; ++color_index) {
+                        if (surface->palette[color_index] != 0U)
+                            palette[color_index] = surface->palette[color_index];
+                    }
+                }
+            }
+            nexus_fb_set_palette(&vp->fb, palette);
+        }
+
         for (i = 0; i < receipt.command_count; ++i) {
             const Nexus_V1_DgnRenderCommand *command = &commands[i];
+            const Nexus_DMDFMaterialBank *bank;
+            const Nexus_DMDFTextureSurface *surface;
+            bank = (command->kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
+                    command->kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
+                ? &engine->floor_materials : &engine->wall_materials;
+            if (!bank->valid || command->material_id >= bank->surface_count) {
+                /* Real DGN commands are never replaced by generic colours. */
+                continue;
+            }
+            surface = &bank->surfaces[command->material_id];
+            if (!surface->valid) continue;
             switch (command->kind) {
             case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
-                nexus_draw_floor(&vp->fb, &vp->cam,
-                                 (float)command->x,
-                                 (float)command->y,
-                                 8,
-                                 9);
+                nexus_draw_floor_tex(&vp->fb, &vp->cam,
+                                     (float)command->x,
+                                     (float)command->y,
+                                     surface->pixels, surface->width,
+                                     surface->height, surface->palette);
+                break;
+            case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
+                nexus_draw_ceiling_tex(&vp->fb, &vp->cam,
+                                       (float)command->x,
+                                       (float)command->y,
+                                       surface->pixels, surface->width,
+                                       surface->height, surface->palette);
                 break;
             case NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT:
-                nexus_draw_wall_simple(&vp->fb, &vp->cam,
-                                       (float)command->x,
-                                       (float)command->y,
-                                       command->wall_dir,
-                                       (uint8_t)(5 + (command->depth % 3)));
-                break;
             case NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT:
             case NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT:
-                nexus_draw_wall_simple(&vp->fb, &vp->cam,
-                                       (float)command->x,
-                                       (float)command->y,
-                                       command->wall_dir,
-                                       6);
+                nexus_draw_wall(&vp->fb, &vp->cam,
+                                (float)command->x, (float)command->y,
+                                command->wall_dir, 0, command->material_id,
+                                surface->pixels, surface->width,
+                                surface->height, surface->palette);
                 break;
             default:
                 break;

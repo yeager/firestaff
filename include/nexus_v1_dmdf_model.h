@@ -137,6 +137,24 @@ typedef struct {
     int      valid;
 } Nexus_DMDFRawTexturePayload;
 
+/* Runtime-ready indexed surface decoded from a bounded BITM/PLTB pair.
+ * `pixels` is owned by the surface and already contains global palette
+ * indices, so it can be passed directly to the V1 software rasterizer. */
+typedef struct {
+    uint8_t *pixels;
+    int width;
+    int height;
+    uint32_t palette[256];
+    int valid;
+} Nexus_DMDFTextureSurface;
+
+#define NEXUS_DMDF_MATERIAL_COUNT 256
+typedef struct {
+    Nexus_DMDFTextureSurface surfaces[NEXUS_DMDF_MATERIAL_COUNT];
+    int surface_count;
+    int valid;
+} Nexus_DMDFMaterialBank;
+
 /* Parser-level bounds gates. Return 1 on success, 0 on any bounds
  * failure (offset past end, count overflow, payload past end, etc).
  * Output struct is always written, with valid=0 on failure so callers
@@ -170,6 +188,13 @@ int nexus_v1_dmdf_scan_embedded_blocks(const uint8_t *data, int size,
  * tail is present without dereferencing past EOF. */
 int nexus_v1_dmdf_estimate_raw_texture_payload(
     const uint8_t *data, int size, Nexus_DMDFRawTexturePayload *out);
+
+/* Decode every valid BITM in a DMDF payload into the material slot matching
+ * its ordinal. A matching PLTB supplies its CLUT; malformed, direct-colour,
+ * or unpaletted blocks are rejected rather than replaced with a flat colour. */
+int nexus_v1_dmdf_decode_material_bank(const uint8_t *data, int size,
+                                       Nexus_DMDFMaterialBank *out);
+void nexus_v1_dmdf_free_material_bank(Nexus_DMDFMaterialBank *bank);
 
 /* Helper: read a single palette entry out of a parsed palette block.
  * Returns 1 on success and stores the entry value (up to 32 bits) in

@@ -108,6 +108,13 @@ void nexus_draw_floor(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     float x, float z,
     uint8_t floor_color, uint8_t ceil_color);
 
+void nexus_draw_floor_tex(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
+    float x, float z, const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette);
+void nexus_draw_ceiling_tex(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
+    float x, float z, const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette);
+
 /* Door state drawing (DM1 DUNGEON.C door semantics):
  *   CLOSED: full-height quad
  *   OPEN:   narrowed side-offset quad (gap visible)
