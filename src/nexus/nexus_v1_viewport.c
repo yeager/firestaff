@@ -20,29 +20,70 @@ static const Nexus_DMDFTextureSurface *viewport_plan_surface(
     return &bank->surfaces[command->material_id];
 }
 
-static void viewport_sync_dgn_material_palette(
+static uint8_t *viewport_plan_palette_map(
+    Nexus_Viewport *vp, const Nexus_V1_DgnRenderCommand *command)
+{
+    return (command->kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
+            command->kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
+        ? vp->floor_material_palette_map[command->material_id]
+        : vp->wall_material_palette_map[command->material_id];
+}
+
+static int viewport_find_palette_index(const uint32_t palette[256],
+                                       const uint8_t occupied[256],
+                                       uint32_t rgba)
+{
+    int i;
+    for (i = 0; i < 256; ++i) {
+        if (occupied[i] && palette[i] == rgba) return i;
+    }
+    return -1;
+}
+
+static int viewport_sync_dgn_material_palette(
     Nexus_Viewport *vp, const Nexus_V1_Engine *engine,
     const Nexus_V1_DgnMaterialPlan *plan)
 {
     int i;
     uint32_t palette[256];
+    uint8_t occupied[256] = {0};
+    int next_slot = 16;
     if (vp->material_palette_valid && vp->material_engine == engine &&
-        vp->material_generation == plan->generation) return;
+        vp->material_generation == plan->generation) return 1;
     memcpy(palette, vp->base_palette, sizeof(palette));
+    memset(vp->floor_material_palette_map, 0xff,
+           sizeof(vp->floor_material_palette_map));
+    memset(vp->wall_material_palette_map, 0xff,
+           sizeof(vp->wall_material_palette_map));
+    for (i = 0; i < 16; ++i) occupied[i] = 1;
     for (i = 0; i < plan->receipt.command_count; ++i) {
         const Nexus_DMDFTextureSurface *surface =
             viewport_plan_surface(engine, &plan->commands[i]);
+        uint8_t *texel_map = viewport_plan_palette_map(vp, &plan->commands[i]);
         int color_index;
         for (color_index = 0; color_index < 256; ++color_index) {
-            if (surface->palette[color_index] != 0U) {
-                palette[color_index] = surface->palette[color_index];
+            uint32_t rgba = surface->palette[color_index];
+            int mapped_index;
+            if ((rgba >> 24) == 0U) continue;
+            mapped_index = viewport_find_palette_index(palette, occupied, rgba);
+            if (mapped_index < 0) {
+                while (next_slot < 256 && occupied[next_slot]) ++next_slot;
+                if (next_slot == 256) {
+                    vp->material_palette_valid = 0;
+                    return 0;
+                }
+                mapped_index = next_slot++;
+                palette[mapped_index] = rgba;
+                occupied[mapped_index] = 1;
             }
+            texel_map[color_index] = (uint8_t)mapped_index;
         }
     }
     nexus_fb_set_palette(&vp->fb, palette);
     vp->material_engine = engine;
     vp->material_generation = plan->generation;
     vp->material_palette_valid = 1;
+    return 1;
 }
 
 /* Render visible dungeon squares from party position */
@@ -80,35 +121,37 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         if (!plan) {
             return;
         }
-        viewport_sync_dgn_material_palette(vp, engine, plan);
+        if (!viewport_sync_dgn_material_palette(vp, engine, plan)) return;
 
         for (i = 0; i < plan->receipt.command_count; ++i) {
             const Nexus_V1_DgnRenderCommand *command = &plan->commands[i];
             const Nexus_DMDFTextureSurface *surface;
+            uint8_t *texel_map;
             surface = viewport_plan_surface(engine, command);
+            texel_map = viewport_plan_palette_map(vp, command);
             switch (command->kind) {
             case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
-                nexus_draw_floor_tex(&vp->fb, &vp->cam,
+                nexus_draw_floor_tex_mapped(&vp->fb, &vp->cam,
                                      (float)command->x,
                                      (float)command->y,
                                      surface->pixels, surface->width,
-                                     surface->height, surface->palette);
+                                     surface->height, surface->palette, texel_map);
                 break;
             case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
-                nexus_draw_ceiling_tex(&vp->fb, &vp->cam,
+                nexus_draw_ceiling_tex_mapped(&vp->fb, &vp->cam,
                                        (float)command->x,
                                        (float)command->y,
                                        surface->pixels, surface->width,
-                                       surface->height, surface->palette);
+                                       surface->height, surface->palette, texel_map);
                 break;
             case NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT:
             case NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT:
             case NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT:
-                nexus_draw_wall(&vp->fb, &vp->cam,
-                                (float)command->x, (float)command->y,
-                                command->wall_dir, 0, command->material_id,
-                                surface->pixels, surface->width,
-                                surface->height, surface->palette);
+                nexus_draw_wall_tex_mapped(&vp->fb, &vp->cam,
+                                           (float)command->x, (float)command->y,
+                                           command->wall_dir, surface->pixels,
+                                           surface->width, surface->height,
+                                           surface->palette, texel_map);
                 break;
             default:
                 break;

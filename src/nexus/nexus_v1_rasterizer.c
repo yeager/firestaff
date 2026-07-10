@@ -124,6 +124,57 @@ static void tri_project(const Nexus_RasterVertex *v,
     bbox[3] = clampi(maxi(s[0].y, maxi(s[1].y, s[2].y)), 0, NEXUS_FB_H-1);
 }
 
+static int texture_repeat_coordinate(float uv, int extent) {
+    int coordinate = (int)floorf(uv * (float)extent);
+    coordinate %= extent;
+    return coordinate < 0 ? coordinate + extent : coordinate;
+}
+
+static void nexus_raster_triangle_tex_mapped(Nexus_Framebuffer *fb,
+    Nexus_RasterVertex v0, Nexus_RasterVertex v1, Nexus_RasterVertex v2,
+    const Nexus_Camera *cam,
+    const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256])
+{
+    Vec2i s[3]; float z[3]; int bbox[4]; float area, inv; int x, y;
+    Nexus_RasterVertex vs[3] = {v0, v1, v2};
+
+    if (!fb || !cam || !tex_data || !tex_palette || !texel_map ||
+        tex_w <= 0 || tex_h <= 0) return;
+    tri_project(vs, cam, s, z, bbox);
+    area = edge_fn(s[0], s[1], s[2]);
+    if (area <= 0) return;
+    inv = 1.0f / area;
+
+    for (y = bbox[2]; y <= bbox[3]; y++) {
+        for (x = bbox[0]; x <= bbox[1]; x++) {
+            Vec2i p = {x, y};
+            float w0 = edge_fn(s[1], s[2], p) * inv;
+            float w1 = edge_fn(s[2], s[0], p) * inv;
+            float w2 = 1.0f - w0 - w1;
+            if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
+                float zf = w0*z[0] + w1*z[1] + w2*z[2];
+                int idx = y * NEXUS_FB_W + x;
+                if (zf < fb->z_buffer[idx] && zf > 0) {
+                    float u = w0*v0.uv.x + w1*v1.uv.x + w2*v2.uv.x;
+                    float v = w0*v0.uv.y + w1*v1.uv.y + w2*v2.uv.y;
+                    int px = texture_repeat_coordinate(u, tex_w);
+                    int py = texture_repeat_coordinate(v, tex_h);
+                    uint8_t source_index = tex_data[py * tex_w + px];
+                    uint8_t framebuffer_index = texel_map[source_index];
+
+                    /* A missing CLUT entry and transparent source texels are
+                     * clipped, matching VDP1's no-write path. */
+                    if ((tex_palette[source_index] >> 24) == 0U ||
+                        framebuffer_index == 0xffU) continue;
+                    fb->z_buffer[idx] = zf;
+                    fb->color_buffer[idx] = framebuffer_index;
+                }
+            }
+        }
+    }
+}
+
 void nexus_raster_triangle(Nexus_Framebuffer *fb,
     Nexus_RasterVertex v0, Nexus_RasterVertex v1, Nexus_RasterVertex v2,
     const Nexus_Camera *cam)
@@ -163,11 +214,10 @@ void nexus_raster_triangle_tex(Nexus_Framebuffer *fb,
 {
     Vec2i s[3]; float z[3]; int bbox[4]; float area, inv; int x, y;
     Nexus_RasterVertex vs[3] = {v0, v1, v2};
-    (void)tex_palette;
 
     if (!fb || !cam) return;
     /* Fallback to flat if any texture param is invalid */
-    if (!tex_data || tex_w <= 0 || tex_h <= 0) {
+    if (!tex_data || !tex_palette || tex_w <= 0 || tex_h <= 0) {
         nexus_raster_triangle(fb, v0, v1, v2, cam);
         return;
     }
@@ -189,15 +239,31 @@ void nexus_raster_triangle_tex(Nexus_Framebuffer *fb,
                     /* Affine UV (Saturn VDP1 style — no perspective divide) */
                     float u = w0*v0.uv.x + w1*v1.uv.x + w2*v2.uv.x;
                     float v = w0*v0.uv.y + w1*v1.uv.y + w2*v2.uv.y;
-                    int px = (int)(u * (float)tex_w) & (tex_w - 1);
-                    int py = (int)(v * (float)tex_h) & (tex_h - 1);
+                    int px = texture_repeat_coordinate(u, tex_w);
+                    int py = texture_repeat_coordinate(v, tex_h);
                     uint8_t ci = tex_data[py * tex_w + px];
+                    if ((tex_palette[ci] >> 24) == 0U) continue;
                     fb->z_buffer[idx] = zf;
                     fb->color_buffer[idx] = ci;
                 }
             }
         }
     }
+}
+
+void nexus_raster_quad_tex_mapped(Nexus_Framebuffer *fb,
+    Nexus_RasterVertex v0, Nexus_RasterVertex v1,
+    Nexus_RasterVertex v2, Nexus_RasterVertex v3,
+    const Nexus_Camera *cam,
+    const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256])
+{
+    if (!fb || !cam || !tex_data || !tex_palette || !texel_map ||
+        tex_w <= 0 || tex_h <= 0) return;
+    nexus_raster_triangle_tex_mapped(fb, v0, v1, v2, cam,
+        tex_data, tex_w, tex_h, tex_palette, texel_map);
+    nexus_raster_triangle_tex_mapped(fb, v0, v2, v3, cam,
+        tex_data, tex_w, tex_h, tex_palette, texel_map);
 }
 
 /* ── Quad (two triangles) ─────────────────────────────────────────── */
@@ -241,25 +307,53 @@ static void wall_quad_verts(int wall_dir, float x, float z,
     Nexus_RasterVertex rv[4], uint8_t color,
     int texture_id)
 {
-    float wx0, wz0, wx1;
-    /* g_cam_dir table gives world-facing normal direction.
-     * g_cam_right gives right-vector for that facing.              */
-    (void)wall_dir;
-    /* North face (z = z, inner wall, faces -Z): bot-left at (x,z) */
-    wx0 = x;   wz0 = z;
-    wx1 = x+1;
     (void)texture_id;
-    /* Floor-level Y=0, ceiling Y=1 */
-    rv[0].position = (Vec3){wx0, 0.0f, wz0};
-    rv[1].position = (Vec3){wx1, 0.0f, wz0};
-    rv[2].position = (Vec3){wx1, 1.0f, wz0};
-    rv[3].position = (Vec3){wx0, 1.0f, wz0};
+    /* Counter-clockwise faces viewed from inside their grid square. */
+    switch (wall_dir & 3) {
+    case 0:
+        rv[0].position = (Vec3){x, 0.0f, z};
+        rv[1].position = (Vec3){x + 1.0f, 0.0f, z};
+        rv[2].position = (Vec3){x + 1.0f, 1.0f, z};
+        rv[3].position = (Vec3){x, 1.0f, z};
+        break;
+    case 1:
+        rv[0].position = (Vec3){x + 1.0f, 0.0f, z};
+        rv[1].position = (Vec3){x + 1.0f, 0.0f, z + 1.0f};
+        rv[2].position = (Vec3){x + 1.0f, 1.0f, z + 1.0f};
+        rv[3].position = (Vec3){x + 1.0f, 1.0f, z};
+        break;
+    case 2:
+        rv[0].position = (Vec3){x + 1.0f, 0.0f, z + 1.0f};
+        rv[1].position = (Vec3){x, 0.0f, z + 1.0f};
+        rv[2].position = (Vec3){x, 1.0f, z + 1.0f};
+        rv[3].position = (Vec3){x + 1.0f, 1.0f, z + 1.0f};
+        break;
+    default:
+        rv[0].position = (Vec3){x, 0.0f, z + 1.0f};
+        rv[1].position = (Vec3){x, 0.0f, z};
+        rv[2].position = (Vec3){x, 1.0f, z};
+        rv[3].position = (Vec3){x, 1.0f, z + 1.0f};
+        break;
+    }
     rv[0].color = rv[1].color = rv[2].color = rv[3].color = color;
     /* UVs: 0=bot-left, 1=bot-right, 2=top-right, 3=top-left of wall */
     rv[0].uv = (Vec2){0, 1}; rv[1].uv = (Vec2){1, 1};
     rv[2].uv = (Vec2){1, 0}; rv[3].uv = (Vec2){0, 0};
     rv[0].texture_id = rv[1].texture_id =
         rv[2].texture_id = rv[3].texture_id = texture_id;
+}
+
+void nexus_draw_wall_tex_mapped(Nexus_Framebuffer *fb,
+    const Nexus_Camera *cam, float x, float z, int wall_dir,
+    const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256])
+{
+    Nexus_RasterVertex rv[4];
+    if (!fb || !cam || !tex_data || !tex_palette || !texel_map ||
+        tex_w <= 0 || tex_h <= 0) return;
+    wall_quad_verts(wall_dir, x, z, rv, 0, -1);
+    nexus_raster_quad_tex_mapped(fb, rv[0], rv[1], rv[2], rv[3], cam,
+        tex_data, tex_w, tex_h, tex_palette, texel_map);
 }
 
 void nexus_draw_wall(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
@@ -336,6 +430,38 @@ void nexus_draw_ceiling_tex(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     v[0].color = v[1].color = v[2].color = v[3].color = 0;
     nexus_raster_quad_tex(fb, v[0], v[1], v[2], v[3], cam,
                           tex_data, tex_w, tex_h, tex_palette);
+}
+
+void nexus_draw_floor_tex_mapped(Nexus_Framebuffer *fb,
+    const Nexus_Camera *cam, float x, float z,
+    const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256])
+{
+    Nexus_RasterVertex v[4];
+    if (!fb || !cam || !tex_data || !tex_palette || !texel_map ||
+        tex_w <= 0 || tex_h <= 0) return;
+    v[0].position = (Vec3){x, 0, z}; v[0].uv = (Vec2){0, 1};
+    v[1].position = (Vec3){x + 1, 0, z}; v[1].uv = (Vec2){1, 1};
+    v[2].position = (Vec3){x + 1, 0, z + 1}; v[2].uv = (Vec2){1, 0};
+    v[3].position = (Vec3){x, 0, z + 1}; v[3].uv = (Vec2){0, 0};
+    nexus_raster_quad_tex_mapped(fb, v[0], v[1], v[2], v[3], cam,
+        tex_data, tex_w, tex_h, tex_palette, texel_map);
+}
+
+void nexus_draw_ceiling_tex_mapped(Nexus_Framebuffer *fb,
+    const Nexus_Camera *cam, float x, float z,
+    const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette, const uint8_t texel_map[256])
+{
+    Nexus_RasterVertex v[4];
+    if (!fb || !cam || !tex_data || !tex_palette || !texel_map ||
+        tex_w <= 0 || tex_h <= 0) return;
+    v[0].position = (Vec3){x, 1, z + 1}; v[0].uv = (Vec2){0, 0};
+    v[1].position = (Vec3){x + 1, 1, z + 1}; v[1].uv = (Vec2){1, 0};
+    v[2].position = (Vec3){x + 1, 1, z}; v[2].uv = (Vec2){1, 1};
+    v[3].position = (Vec3){x, 1, z}; v[3].uv = (Vec2){0, 1};
+    nexus_raster_quad_tex_mapped(fb, v[0], v[1], v[2], v[3], cam,
+        tex_data, tex_w, tex_h, tex_palette, texel_map);
 }
 
 /* ── Door rendering ───────────────────────────────────────────────── */
