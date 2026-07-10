@@ -165,6 +165,50 @@ typedef struct DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 {
     const char* status;
 } DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34;
 
+enum {
+    DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34 = 5,
+    DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34 = 4
+};
+
+typedef struct DM1_V1_StartupSaveResumeCaptureFacts_PC34 {
+    const char* source_id;
+    const DM1_V1_StartupHandoffOutcome_PC34* outcome;
+    const DM1_V1_StartupHostApplyResult_PC34* host_apply;
+    const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* runtime_handoff;
+    int observed_save_header;
+    int observed_save_part_count;
+    int observed_champion_portrait_count;
+    int observed_dungeon_payload;
+    int observed_required_graphics_hash_match;
+    int observed_required_dungeon_hash_match;
+} DM1_V1_StartupSaveResumeCaptureFacts_PC34;
+
+typedef struct DM1_V1_StartupSaveResumeCaptureReceipt_PC34 {
+    int handled;
+    int ready;
+    int consumed_resume_outcome;
+    int consumed_host_apply_result;
+    int consumed_runtime_handoff_receipt;
+    int resume_command_maps_load_saved_game;
+    int resume_path_resolved;
+    int resume_load_consumed;
+    int resume_runtime_ready;
+    int suppress_hoc_first_frame;
+    int save_header_present;
+    int save_part_corpus_present;
+    int champion_portrait_corpus_present;
+    int dungeon_payload_present;
+    int required_asset_hashes_present;
+    int save_corpus_capture_ready;
+    int original_save_roundtrip_route_ready;
+    int expected_save_part_count;
+    int observed_save_part_count;
+    int expected_champion_portrait_count;
+    int observed_champion_portrait_count;
+    char resume_path[512];
+    const char* source_evidence;
+} DM1_V1_StartupSaveResumeCaptureReceipt_PC34;
+
 typedef enum DM1_V1_StartupHoCRenderCommandKind_PC34 {
     DM1_V1_STARTUP_HOC_RENDER_COMMAND_NONE_PC34 = 0,
     DM1_V1_STARTUP_HOC_RENDER_COMMAND_ENTRANCE_OPEN_FRAME_PC34 = 1,
@@ -1032,6 +1076,9 @@ int dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
     const DM1_V1_StartupHandoffOutcome_PC34* outcome,
     const DM1_V1_StartupHostApplyResult_PC34* host_result,
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* out_receipt);
+int dm1_v1_startup_save_resume_capture_receipt_pc34(
+    const DM1_V1_StartupSaveResumeCaptureFacts_PC34* facts,
+    DM1_V1_StartupSaveResumeCaptureReceipt_PC34* out_receipt);
 int dm1_v1_startup_hoc_first_frame_receipt_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffPostLaunchPlan_PC34* post_plan,

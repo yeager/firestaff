@@ -1040,6 +1040,101 @@ int dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_save_resume_capture_receipt_pc34(
+    const DM1_V1_StartupSaveResumeCaptureFacts_PC34* facts,
+    DM1_V1_StartupSaveResumeCaptureReceipt_PC34* out_receipt) {
+    DM1_V1_StartupSaveResumeCaptureReceipt_PC34 receipt;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(
+            facts->source_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    if (!facts->outcome || !facts->host_apply || !facts->runtime_handoff) {
+        return 0;
+    }
+
+    receipt.handled = 1;
+    receipt.expected_save_part_count =
+        DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34;
+    receipt.expected_champion_portrait_count =
+        DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
+    receipt.observed_save_part_count = facts->observed_save_part_count;
+    receipt.observed_champion_portrait_count =
+        facts->observed_champion_portrait_count;
+    receipt.source_evidence =
+        "ReDMCSB COMMAND.C:2449-2450; LOADSAVE.C:1574-1649";
+
+    /* ReDMCSB COMMAND.C M566 sets LOAD_SAVED_GAME.  LOADSAVE.C then builds
+     * the save corpus from the five original save parts plus four PC34
+     * champion portraits and dungeon payload.  Host I/O stays outside DM1,
+     * but this receipt owns the decision that a loaded RESUME route is a save
+     * corpus handoff, not a HoC first-frame capture. */
+    receipt.consumed_resume_outcome =
+        facts->outcome->action ==
+        DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34;
+    receipt.consumed_host_apply_result =
+        facts->host_apply->handled && facts->host_apply->resume_requested;
+    receipt.consumed_runtime_handoff_receipt =
+        facts->runtime_handoff->handled &&
+        facts->runtime_handoff->full_graphics_consumed;
+    receipt.resume_command_maps_load_saved_game =
+        receipt.consumed_resume_outcome &&
+        facts->outcome->entrance_command == ENTRANCE_COMPAT_COMMAND_PATH_RESUME;
+    receipt.resume_path_resolved =
+        facts->host_apply->resume_path[0] != '\0';
+    receipt.resume_load_consumed =
+        facts->host_apply->resume_loaded ? 1 : 0;
+    receipt.resume_runtime_ready =
+        facts->runtime_handoff->resumed_runtime_ready &&
+        facts->runtime_handoff->runtime_first_frame_ready &&
+        facts->runtime_handoff->draw_opened_runtime &&
+        !facts->runtime_handoff->hoc_runtime_ready;
+    receipt.suppress_hoc_first_frame =
+        !facts->runtime_handoff->hoc_first_frame_ready &&
+        !facts->runtime_handoff->champion_mirror_startup_handoff_ready;
+    receipt.save_header_present =
+        facts->observed_save_header ? 1 : 0;
+    receipt.save_part_corpus_present =
+        facts->observed_save_part_count ==
+        DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34;
+    receipt.champion_portrait_corpus_present =
+        facts->observed_champion_portrait_count ==
+        DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
+    receipt.dungeon_payload_present =
+        facts->observed_dungeon_payload ? 1 : 0;
+    receipt.required_asset_hashes_present =
+        facts->observed_required_graphics_hash_match &&
+        facts->observed_required_dungeon_hash_match;
+    receipt.save_corpus_capture_ready =
+        receipt.save_header_present &&
+        receipt.save_part_corpus_present &&
+        receipt.champion_portrait_corpus_present &&
+        receipt.dungeon_payload_present;
+    receipt.original_save_roundtrip_route_ready =
+        receipt.consumed_resume_outcome &&
+        receipt.consumed_host_apply_result &&
+        receipt.consumed_runtime_handoff_receipt &&
+        receipt.resume_command_maps_load_saved_game &&
+        receipt.resume_path_resolved &&
+        receipt.resume_load_consumed &&
+        receipt.resume_runtime_ready &&
+        receipt.suppress_hoc_first_frame &&
+        receipt.save_corpus_capture_ready &&
+        receipt.required_asset_hashes_present;
+    receipt.ready = receipt.original_save_roundtrip_route_ready;
+    snprintf(receipt.resume_path,
+             sizeof(receipt.resume_path),
+             "%s",
+             facts->host_apply->resume_path);
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_hoc_first_frame_receipt_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffPostLaunchPlan_PC34* post_plan,

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ **2026-07-10 DM1 save/resume capture route:** startup now exposes a DM1-owned ReDMCSB M566/LOADSAVE receipt tying RESUME, loaded runtime handoff, five original save parts, four PC34 champion portraits, dungeon payload, and required asset hashes into one save-corpus capture route. Verification: `test_dm1_v1_startup_intro_state_machine_gate` and `git diff --check` passed.
+
 - ✅ 2026-07-10 CSB title-phase runtime gate: CSB runtime host-capture gates now require explicit PRESENTS, CHAOS zoom, CHAOS hold, and STRIKES BACK phase masks plus a phase hash before title/HUD startup is accepted as captured. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.
 
 - ✅ 2026-07-10 DM1 HoC release/app capture route package: release/app HoC capture ownership now exposes a DM1-owned host-capture route package and hash consumed by both M11 boot probe and M12 readiness, joining host-render, boot-probe, startup capture, and presented framebuffer chain proof. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `test_m12_dm1_v1_required_complete_launches`, `test_m12_all_games_boot_readiness_receipt`, and `git diff --check` passed.
