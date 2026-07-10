@@ -29,7 +29,11 @@
 #include <string.h>
 #include <stdint.h>
 #include <dirent.h>
+#include <errno.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 static const char* path_basename(const char* path) {
     const char* slash;
@@ -44,6 +48,20 @@ static const char* path_basename(const char* path) {
 static int file_exists(const char* path) {
     struct stat st;
     return path && stat(path, &st) == 0 && S_ISREG(st.st_mode);
+}
+
+static int ensure_dir_exists(const char* path) {
+    struct stat st;
+    if (!path || !*path) return -1;
+    if (stat(path, &st) == 0) {
+        return S_ISDIR(st.st_mode) ? 0 : -1;
+    }
+#ifdef _WIN32
+    if (_mkdir(path) == 0 || errno == EEXIST) return 0;
+#else
+    if (mkdir(path, 0755) == 0 || errno == EEXIST) return 0;
+#endif
+    return -1;
 }
 
 static int copy_file_bytes(const char* srcPath, const char* dstPath) {
@@ -1860,6 +1878,121 @@ int M12_SaveBrowser_ImportFile(const char* dataDir,
         snprintf(outPath, (size_t)outPathSize, "%s", dst);
     }
     return 0;
+}
+
+static int save_browser_import_dm1_pc34_corpus_file(
+    const char* dataDir,
+    const char* importPath) {
+    M12_SaveBrowserState probe;
+    const M12_SaveBrowserEntry* entry;
+    const char* base;
+    char saveRoot[512];
+    char dm1Root[512];
+    char dst[512];
+    int n;
+
+    if (!dataDir || !*dataDir || !importPath || !file_exists(importPath)) {
+        return 0;
+    }
+    memset(&probe, 0, sizeof(probe));
+    base = path_basename(importPath);
+    /*
+     * ReDMCSB SAVEHEAD.C F0429 lines ~30-54 accepts the 512-byte header,
+     * and CEDTINCD.C F7057 lines ~266-294 then requires the checksum-proven
+     * GLOBAL_DATA, ACTIVE_GROUP, and PARTY save parts before runtime import.
+     * DM1 corpus import therefore ignores filenames and copies only entries
+     * that pass Firestaff's same DM1 F7057/roundtrip save-browser gate.
+     */
+    if (save_browser_add_file_path(&probe, importPath, base, "dm1", 1) != 1 ||
+        probe.entryCount != 1) {
+        return 0;
+    }
+    entry = &probe.entries[0];
+    if (!entry->valid || !entry->dm1PC34PartEnvelopeReady ||
+        !entry->dm1PC34RoundtripReady ||
+        !entry->dm1PC34CoreStateMatches) {
+        return 0;
+    }
+
+    n = snprintf(saveRoot, sizeof(saveRoot), "%s/saves", dataDir);
+    if (n <= 0 || n >= (int)sizeof(saveRoot) ||
+        ensure_dir_exists(saveRoot) != 0) {
+        return 0;
+    }
+    n = snprintf(dm1Root, sizeof(dm1Root), "%s/dm1", saveRoot);
+    if (n <= 0 || n >= (int)sizeof(dm1Root) ||
+        ensure_dir_exists(dm1Root) != 0) {
+        return 0;
+    }
+    n = snprintf(dst, sizeof(dst), "%s/%s", dm1Root, base);
+    if (n <= 0 || n >= (int)sizeof(dst) || file_exists(dst)) {
+        return 0;
+    }
+    return copy_file_bytes(importPath, dst) == 0 ? 1 : 0;
+}
+
+static void save_browser_import_dm1_pc34_corpus_dir_recursive(
+    const char* dataDir,
+    const char* importDir,
+    int depth,
+    int* imported,
+    int* skipped) {
+    DIR* dir;
+    struct dirent* ent;
+
+    if (!dataDir || !importDir || depth > 4 || !imported || !skipped) {
+        return;
+    }
+    dir = opendir(importDir);
+    if (!dir) return;
+    while ((ent = readdir(dir)) != NULL) {
+        char fullPath[512];
+        struct stat st;
+        int n;
+        if (ent->d_name[0] == '.') continue;
+        n = snprintf(fullPath, sizeof(fullPath), "%s/%s",
+                     importDir, ent->d_name);
+        if (n <= 0 || n >= (int)sizeof(fullPath)) {
+            ++(*skipped);
+            continue;
+        }
+        if (stat(fullPath, &st) != 0) {
+            ++(*skipped);
+            continue;
+        }
+        if (S_ISDIR(st.st_mode)) {
+            save_browser_import_dm1_pc34_corpus_dir_recursive(
+                dataDir, fullPath, depth + 1, imported, skipped);
+            continue;
+        }
+        if (!S_ISREG(st.st_mode)) continue;
+        if (save_browser_import_dm1_pc34_corpus_file(dataDir, fullPath) == 1) {
+            ++(*imported);
+        } else {
+            ++(*skipped);
+        }
+    }
+    closedir(dir);
+}
+
+int M12_SaveBrowser_ImportDM1PC34Corpus(
+    const char* dataDir,
+    const char* importDir,
+    int* outImportedCount,
+    int* outSkippedCount) {
+    int imported = 0;
+    int skipped = 0;
+
+    if (outImportedCount) *outImportedCount = 0;
+    if (outSkippedCount) *outSkippedCount = 0;
+    if (!dataDir || !*dataDir || !importDir || !*importDir) {
+        return -1;
+    }
+    save_browser_import_dm1_pc34_corpus_dir_recursive(
+        dataDir, importDir, 0, &imported, &skipped);
+    if (outImportedCount) *outImportedCount = imported;
+    if (outSkippedCount) *outSkippedCount = skipped;
+    return imported > 0 ? 0 : -1;
 }
 
 const M12_SaveBrowserEntry* M12_SaveBrowser_GetSelected(

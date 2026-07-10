@@ -108,6 +108,15 @@ int M12_SaveBrowser_ImportFile(const char* dataDir,
                                char* outPath,
                                int outPathSize);
 
+/* Import arbitrary original DM1 PC34 save files from importDir recursively into
+ * dataDir/saves/dm1. Only files that pass the DM1 F7057/roundtrip gates are
+ * copied. Invalid files and destination collisions are counted as skipped. */
+int M12_SaveBrowser_ImportDM1PC34Corpus(
+    const char* dataDir,
+    const char* importDir,
+    int* outImportedCount,
+    int* outSkippedCount);
+
 /* Get the currently selected entry, or NULL if none. */
 const M12_SaveBrowserEntry* M12_SaveBrowser_GetSelected(
     const M12_SaveBrowserState* state);
