@@ -978,6 +978,12 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
             champion_host->dgn_command_count -
                 champion_host->ownership.dgn_render_plan.floor_count -
                 champion_host->ownership.dgn_render_plan.wall_count;
+    out_receipt->bpk_material_surface_count =
+        champion_host->bpk_material_surface_count;
+    out_receipt->bpk_truecolor_material_surface_count =
+        champion_host->bpk_truecolor_material_surface_count;
+    out_receipt->bpk_prs3_material_surface_count =
+        champion_host->bpk_prs3_material_surface_count;
     out_receipt->dungeon_route_complete =
         champion_host->dungeon_host_package_route_complete &&
         out_receipt->dungeon_capture_route_consumed &&
@@ -1202,6 +1208,31 @@ static int nexus_v1_launcher_capture_mask_count(unsigned int mask)
         mask >>= 1;
     }
     return count;
+}
+
+static void nexus_v1_launcher_fill_bpk_material_counts(
+    const Nexus_V1_Engine *engine,
+    int *out_total,
+    int *out_truecolor,
+    int *out_prs3)
+{
+    int total = 0;
+    int truecolor = 0;
+    int prs3 = 0;
+    if (engine) {
+        total =
+            engine->floor_materials.bpk_imported_surface_count +
+            engine->wall_materials.bpk_imported_surface_count;
+        truecolor =
+            engine->floor_materials.bpk_truecolor_surface_count +
+            engine->wall_materials.bpk_truecolor_surface_count;
+        prs3 =
+            engine->floor_materials.bpk_prs3_surface_count +
+            engine->wall_materials.bpk_prs3_surface_count;
+    }
+    if (out_total) *out_total = total;
+    if (out_truecolor) *out_truecolor = truecolor;
+    if (out_prs3) *out_prs3 = prs3;
 }
 
 static int nexus_v1_launcher_startup_base_saturn_capture_exact(
@@ -2510,6 +2541,11 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
             viewport_receipt.ceiling_material_surface_count;
         out_receipt->viewport_wall_material_surface_count =
             viewport_receipt.wall_material_surface_count;
+        nexus_v1_launcher_fill_bpk_material_counts(
+            state->engine,
+            &out_receipt->bpk_material_surface_count,
+            &out_receipt->bpk_truecolor_material_surface_count,
+            &out_receipt->bpk_prs3_material_surface_count);
         out_receipt->viewport_written_pixels = viewport_receipt.written_pixels;
         out_receipt->fallback_visuals_permitted =
             viewport_receipt.fallback_visuals_permitted;
@@ -2553,6 +2589,11 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         viewport_receipt.ceiling_material_surface_count;
     out_receipt->viewport_wall_material_surface_count =
         viewport_receipt.wall_material_surface_count;
+    nexus_v1_launcher_fill_bpk_material_counts(
+        state->engine,
+        &out_receipt->bpk_material_surface_count,
+        &out_receipt->bpk_truecolor_material_surface_count,
+        &out_receipt->bpk_prs3_material_surface_count);
     out_receipt->viewport_written_pixels = viewport_receipt.written_pixels;
     out_receipt->fallback_visuals_permitted =
         render_plan.fallback_visuals_permitted;
@@ -2734,6 +2775,12 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
         handoff->viewport_ceiling_material_surface_count;
     out_receipt->dgn_viewport_wall_material_surface_count =
         handoff->viewport_wall_material_surface_count;
+    out_receipt->bpk_material_surface_count =
+        handoff->bpk_material_surface_count;
+    out_receipt->bpk_truecolor_material_surface_count =
+        handoff->bpk_truecolor_material_surface_count;
+    out_receipt->bpk_prs3_material_surface_count =
+        handoff->bpk_prs3_material_surface_count;
     out_receipt->dgn_viewport_written_pixels =
         handoff->viewport_written_pixels;
     out_receipt->dgn_blocks_real_mesh_render =
@@ -4322,6 +4369,12 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
             runtime_route->dgn_viewport_ceiling_material_surface_count;
         receipt->dgn_viewport_wall_material_surface_count =
             runtime_route->dgn_viewport_wall_material_surface_count;
+        receipt->bpk_material_surface_count =
+            runtime_route->bpk_material_surface_count;
+        receipt->bpk_truecolor_material_surface_count =
+            runtime_route->bpk_truecolor_material_surface_count;
+        receipt->bpk_prs3_material_surface_count =
+            runtime_route->bpk_prs3_material_surface_count;
         receipt->dgn_viewport_written_pixels =
             runtime_route->dgn_viewport_written_pixels;
         receipt->first_dgn_draw_kind =
@@ -4780,6 +4833,12 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.dgn_viewport_wall_material_surface_count;
     out_receipt->dgn_material_surface_coverage_complete =
         out_receipt->ownership.dgn_material_surface_coverage_complete;
+    out_receipt->bpk_material_surface_count =
+        out_receipt->ownership.bpk_material_surface_count;
+    out_receipt->bpk_truecolor_material_surface_count =
+        out_receipt->ownership.bpk_truecolor_material_surface_count;
+    out_receipt->bpk_prs3_material_surface_count =
+        out_receipt->ownership.bpk_prs3_material_surface_count;
     out_receipt->dgn_viewport_written_pixels =
         out_receipt->ownership.dgn_viewport_written_pixels;
     out_receipt->copied_dgn_command_count = dgn_copied;

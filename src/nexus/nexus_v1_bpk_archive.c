@@ -716,6 +716,93 @@ const char *nexus_v1_bpk_surface_decode_status_name(int status) {
     }
 }
 
+static uint32_t bpk_rgb565_to_rgba(uint16_t value) {
+    uint32_t r = (uint32_t)((value >> 11) & 0x1fU);
+    uint32_t g = (uint32_t)((value >> 5) & 0x3fU);
+    uint32_t b = (uint32_t)(value & 0x1fU);
+    r = (r << 3) | (r >> 2);
+    g = (g << 2) | (g >> 4);
+    b = (b << 3) | (b >> 2);
+    return 0xff000000U | (r << 16) | (g << 8) | b;
+}
+
+static int bpk_truecolor_pixel_rgba(const uint8_t *pixels,
+                                    uint32_t bpp,
+                                    size_t pixel_index,
+                                    uint32_t *out_rgba) {
+    const uint8_t *p;
+    if (!pixels || !out_rgba || bpp < 2U || bpp > 4U) return 0;
+    p = pixels + pixel_index * (size_t)bpp;
+    if (bpp == 2U) {
+        uint16_t value = (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
+        *out_rgba = bpk_rgb565_to_rgba(value);
+    } else if (bpp == 3U) {
+        *out_rgba = 0xff000000U | ((uint32_t)p[0] << 16) |
+                    ((uint32_t)p[1] << 8) | (uint32_t)p[2];
+    } else {
+        *out_rgba = ((uint32_t)p[3] << 24) | ((uint32_t)p[0] << 16) |
+                    ((uint32_t)p[1] << 8) | (uint32_t)p[2];
+    }
+    return 1;
+}
+
+static int bpk_material_surface_from_truecolor(
+    const uint8_t *pixels,
+    const Nexus_V1_BpkSurfaceEntry *surface,
+    Nexus_DMDFTextureSurface *out_surface) {
+    size_t pixel_count;
+    size_t i;
+    uint32_t bpp;
+    uint8_t *indices;
+    uint32_t palette[256];
+    uint32_t palette_count = 1U;
+
+    if (!pixels || !surface || !out_surface ||
+        surface->width == 0U || surface->height == 0U) return 0;
+    bpp = surface->layout.bpp;
+    if (bpp < 2U || bpp > 4U) return 0;
+    pixel_count = (size_t)surface->width * (size_t)surface->height;
+    indices = (uint8_t *)malloc(pixel_count);
+    if (!indices) return 0;
+    memset(palette, 0, sizeof(palette));
+    for (i = 0; i < pixel_count; ++i) {
+        uint32_t rgba = 0U;
+        uint32_t slot;
+        int found = 0;
+        if (!bpk_truecolor_pixel_rgba(pixels, bpp, i, &rgba)) {
+            free(indices);
+            return 0;
+        }
+        if ((rgba >> 24) == 0U) {
+            indices[i] = 0U;
+            continue;
+        }
+        for (slot = 1U; slot < palette_count; ++slot) {
+            if (palette[slot] == rgba) {
+                indices[i] = (uint8_t)slot;
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            if (palette_count >= 256U) {
+                free(indices);
+                return 0;
+            }
+            palette[palette_count] = rgba;
+            indices[i] = (uint8_t)palette_count;
+            ++palette_count;
+        }
+    }
+
+    out_surface->pixels = indices;
+    out_surface->width = (int)surface->width;
+    out_surface->height = (int)surface->height;
+    memcpy(out_surface->palette, palette, sizeof(out_surface->palette));
+    out_surface->valid = 1;
+    return 1;
+}
+
 int nexus_v1_dmdf_import_bpk_material_bank(const uint8_t *data,
                                            size_t data_size,
                                            Nexus_DMDFMaterialBank *out) {
@@ -728,17 +815,20 @@ int nexus_v1_dmdf_import_bpk_material_bank(const uint8_t *data,
     for (index = 0U; index < archive.candidate_offset_count &&
                     index < NEXUS_DMDF_MATERIAL_COUNT; ++index) {
         Nexus_V1_BpkEntryPrefix prefix;
+        Nexus_V1_BpkEntry entry;
         Nexus_V1_BpkSurfaceEntry surface;
         uint8_t *pixels;
         size_t written = 0U;
         size_t bytes;
-        int palette_source = -1;
-        int candidate;
+        uint32_t bpp;
 
         if (out->surfaces[index].valid ||
+            nexus_v1_bpk_archive_get_entry(data, data_size, index, &entry) != 0 ||
             nexus_v1_bpk_archive_get_entry_prefix(data, data_size, index, &prefix) != 0 ||
-            prefix.mode != NEXUS_V1_BPK_MODE_8BPP) continue;
-        bytes = (size_t)prefix.width * (size_t)prefix.height;
+            prefix.width == 0U || prefix.height == 0U) continue;
+        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        if (bpp == 0U) continue;
+        bytes = (size_t)prefix.width * (size_t)prefix.height * (size_t)bpp;
         if (bytes == 0U) continue;
         pixels = (uint8_t *)malloc(bytes);
         if (!pixels) break;
@@ -748,20 +838,42 @@ int nexus_v1_dmdf_import_bpk_material_bank(const uint8_t *data,
             free(pixels);
             continue;
         }
-        /* BPK 8bpp indices need a real CLUT already supplied by DMDF.
-         * Do not synthesize colours for an otherwise opaque Saturn surface. */
-        for (candidate = 0; candidate < NEXUS_DMDF_MATERIAL_COUNT; ++candidate) {
-            if (out->surfaces[candidate].valid) { palette_source = candidate; break; }
+        if (bpp == 1U) {
+            int palette_source = -1;
+            int candidate;
+            /* BPK 8bpp indices need a real CLUT already supplied by DMDF.
+             * Do not synthesize colours for an otherwise opaque Saturn surface. */
+            for (candidate = 0; candidate < NEXUS_DMDF_MATERIAL_COUNT; ++candidate) {
+                if (out->surfaces[candidate].valid) {
+                    palette_source = candidate;
+                    break;
+                }
+            }
+            if (palette_source < 0) { free(pixels); continue; }
+            memcpy(out->surfaces[index].palette,
+                   out->surfaces[palette_source].palette,
+                   sizeof(out->surfaces[index].palette));
+            out->surfaces[index].pixels = pixels;
+            out->surfaces[index].width = (int)surface.width;
+            out->surfaces[index].height = (int)surface.height;
+            out->surfaces[index].valid = 1;
+        } else if (!bpk_material_surface_from_truecolor(
+                       pixels, &surface, &out->surfaces[index])) {
+            free(pixels);
+            continue;
+        } else {
+            free(pixels);
         }
-        if (palette_source < 0) { free(pixels); continue; }
-        memcpy(out->surfaces[index].palette,
-               out->surfaces[palette_source].palette,
-               sizeof(out->surfaces[index].palette));
-        out->surfaces[index].pixels = pixels;
-        out->surfaces[index].width = (int)surface.width;
-        out->surfaces[index].height = (int)surface.height;
-        out->surfaces[index].valid = 1;
         ++out->surface_count;
+        ++out->bpk_imported_surface_count;
+        if (bpp == 1U) {
+            ++out->bpk_indexed_surface_count;
+        } else {
+            ++out->bpk_truecolor_surface_count;
+        }
+        if (entry.has_prs3) {
+            ++out->bpk_prs3_surface_count;
+        }
         ++imported;
     }
     if (imported > 0) out->valid = 1;

@@ -299,6 +299,9 @@ typedef struct {
     int viewport_floor_material_surface_count;
     int viewport_ceiling_material_surface_count;
     int viewport_wall_material_surface_count;
+    int bpk_material_surface_count;
+    int bpk_truecolor_material_surface_count;
+    int bpk_prs3_material_surface_count;
     int viewport_written_pixels;
     int fallback_visuals_permitted;
     const char *asset_route;
@@ -333,6 +336,9 @@ typedef struct {
     int dgn_viewport_floor_material_surface_count;
     int dgn_viewport_ceiling_material_surface_count;
     int dgn_viewport_wall_material_surface_count;
+    int bpk_material_surface_count;
+    int bpk_truecolor_material_surface_count;
+    int bpk_prs3_material_surface_count;
     int dgn_viewport_written_pixels;
     int dgn_blocks_real_mesh_render;
     Nexus_ScriptRuntimeStatus script_runtime_status;
@@ -746,6 +752,9 @@ typedef struct {
     int dgn_viewport_ceiling_material_surface_count;
     int dgn_viewport_wall_material_surface_count;
     int dgn_material_surface_coverage_complete;
+    int bpk_material_surface_count;
+    int bpk_truecolor_material_surface_count;
+    int bpk_prs3_material_surface_count;
     Nexus_V1_StartupCaptureRoute capture_route;
     Nexus_V1_StartupDrawKind first_startup_draw_kind;
     Nexus_V1_DgnRenderCommandKind first_dgn_draw_kind;
@@ -782,6 +791,9 @@ typedef struct {
     int dgn_viewport_ceiling_material_surface_count;
     int dgn_viewport_wall_material_surface_count;
     int dgn_material_surface_coverage_complete;
+    int bpk_material_surface_count;
+    int bpk_truecolor_material_surface_count;
+    int bpk_prs3_material_surface_count;
     int copied_dgn_command_count;
     int title_timing_frame;
     int title_timing_frame_max;
@@ -871,6 +883,9 @@ typedef struct {
     int dungeon_route_complete;
     int dungeon_capture_route_consumed;
     int dgn_material_surface_coverage_complete;
+    int bpk_material_surface_count;
+    int bpk_truecolor_material_surface_count;
+    int bpk_prs3_material_surface_count;
     int dgn_mesh_runtime_complete;
     int dgn_viewport_runtime_complete;
     int startup_package_consumed_by_all_routes;

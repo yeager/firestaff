@@ -937,6 +937,8 @@ int main(void)
                           0xff204060U);
     synthetic_engine.wall_materials.valid = 1;
     synthetic_engine.wall_materials.surface_count = 1;
+    synthetic_engine.wall_materials.bpk_imported_surface_count = 1;
+    synthetic_engine.wall_materials.bpk_truecolor_surface_count = 1;
     seed_material_surface(&synthetic_engine.wall_materials.surfaces[0],
                           &synthetic_wall_pixel,
                           0xff806040U);
@@ -1346,6 +1348,9 @@ int main(void)
                        real_asset_ownership_receipt.dgn_render_plan.floor_count -
                        real_asset_ownership_receipt.dgn_render_plan.wall_count &&
                real_asset_ownership_receipt.dgn_material_surface_coverage_complete == 1 &&
+               real_asset_ownership_receipt.bpk_material_surface_count == 1 &&
+               real_asset_ownership_receipt.bpk_truecolor_material_surface_count == 1 &&
+               real_asset_ownership_receipt.bpk_prs3_material_surface_count == 0 &&
                real_asset_ownership_receipt.dgn_viewport_written_pixels > 0 &&
                real_asset_ownership_receipt.menu_capture_uses_real_assets == 1 &&
                real_asset_ownership_receipt.full_start_package_consumed == 1 &&
@@ -1519,6 +1524,9 @@ int main(void)
                        host_caller_receipt.ownership.dgn_render_plan.floor_count -
                        host_caller_receipt.ownership.dgn_render_plan.wall_count &&
                host_caller_receipt.dgn_material_surface_coverage_complete == 1 &&
+               host_caller_receipt.bpk_material_surface_count == 1 &&
+               host_caller_receipt.bpk_truecolor_material_surface_count == 1 &&
+               host_caller_receipt.bpk_prs3_material_surface_count == 0 &&
                host_caller_receipt.dgn_viewport_written_pixels > 0 &&
                host_caller_receipt.copied_dgn_command_count ==
                    host_caller_receipt.dgn_command_count &&
@@ -1651,6 +1659,9 @@ int main(void)
                complete_support_receipt.dungeon_route_complete == 1 &&
                complete_support_receipt.dungeon_capture_route_consumed == 1 &&
                complete_support_receipt.dgn_material_surface_coverage_complete == 1 &&
+               complete_support_receipt.bpk_material_surface_count == 1 &&
+               complete_support_receipt.bpk_truecolor_material_surface_count == 1 &&
+               complete_support_receipt.bpk_prs3_material_surface_count == 0 &&
                complete_support_receipt.dgn_mesh_runtime_complete == 1 &&
                complete_support_receipt.dgn_viewport_runtime_complete == 1 &&
                complete_support_receipt.startup_package_consumed_by_all_routes == 1 &&
@@ -2518,6 +2529,9 @@ int main(void)
                    runtime_route_receipt.dgn_render_command_count -
                        runtime_route_receipt.dgn_render_floor_count -
                        runtime_route_receipt.dgn_render_wall_count &&
+               runtime_route_receipt.bpk_material_surface_count == 1 &&
+               runtime_route_receipt.bpk_truecolor_material_surface_count == 1 &&
+               runtime_route_receipt.bpk_prs3_material_surface_count == 0 &&
                runtime_route_receipt.dgn_viewport_written_pixels > 0 &&
                runtime_route_receipt.first_dgn_render_command_kind ==
                    NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
