@@ -723,6 +723,114 @@ int DM1_BuildSaveResumeReceipt(const struct DM1SaveResumeRequest* request,
     return 1;
 }
 
+int DM1_BuildOriginalPC34RoundtripReceipt(
+    const char* path,
+    uint32_t gameID,
+    struct DM1OriginalPC34RoundtripReceipt* outReceipt) {
+    struct DM1OriginalPC34RoundtripReceipt receipt;
+    DM1OriginalSavePC34RoundtripReport report;
+    uint8_t* exportedBytes = NULL;
+    size_t exportedSize = 0u;
+    int result;
+
+    if (!path || path[0] == '\0' || !outReceipt) {
+        return 0;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&report, 0, sizeof(report));
+    receipt.gameID = gameID;
+    receipt.validateResult =
+        DM1_ValidateSaveFile(path, &receipt.validatedHeader);
+    receipt.readable = (receipt.validateResult == DM1_SAVE_OK) ? 1 : 0;
+
+    if (!receipt.readable) {
+        receipt.handoffResult = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
+        snprintf(receipt.statusTitle, sizeof(receipt.statusTitle),
+                 "%s", "PC34 SAVE BLOCKED");
+        snprintf(receipt.statusDetail, sizeof(receipt.statusDetail),
+                 "VALIDATE=%s PATH=%s",
+                 DM1_SaveLoadErrorString(receipt.validateResult),
+                 path);
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    exportedBytes = (uint8_t*)malloc(SAVEGAME_PC34_MAX_FILE_SIZE);
+    if (!exportedBytes) {
+        receipt.handoffResult = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+        snprintf(receipt.statusTitle, sizeof(receipt.statusTitle),
+                 "%s", "PC34 SAVE BLOCKED");
+        snprintf(receipt.statusDetail, sizeof(receipt.statusDetail),
+                 "%s", "OUT OF MEMORY");
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 restores original PC save parts into live
+     * runtime state before F0433 can write them back.  This host-facing
+     * receipt packages the same Firestaff handoff chain so launcher/UI code
+     * can ask one question: original bytes -> world -> PC34 export -> world. */
+    result = dm1_v1_original_save_pc34_roundtrip_world_reload_file(
+        path,
+        gameID,
+        exportedBytes,
+        SAVEGAME_PC34_MAX_FILE_SIZE,
+        &exportedSize,
+        &report);
+    free(exportedBytes);
+
+    receipt.handoffResult = result;
+    receipt.roundtripSucceeded =
+        (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) ? 1 : 0;
+    receipt.coreStateMatches = report.core_state_matches ? 1 : 0;
+    receipt.exportedByteCount = (uint32_t)exportedSize;
+    receipt.sourceChampionCount = report.source_champion_count;
+    receipt.exportedChampionCount = report.exported_champion_count;
+    receipt.reloadedChampionCount = report.reloaded_champion_count;
+    receipt.sourceMapIndex = report.source_map_index;
+    receipt.exportedMapIndex = report.exported_map_index;
+    receipt.reloadedMapIndex = report.reloaded_map_index;
+    receipt.sourceMapX = report.source_map_x;
+    receipt.exportedMapX = report.exported_map_x;
+    receipt.reloadedMapX = report.reloaded_map_x;
+    receipt.sourceMapY = report.source_map_y;
+    receipt.exportedMapY = report.exported_map_y;
+    receipt.reloadedMapY = report.reloaded_map_y;
+    receipt.sourceDirection = report.source_direction;
+    receipt.exportedDirection = report.exported_direction;
+    receipt.reloadedDirection = report.reloaded_direction;
+    receipt.sourceGameTime = report.source_game_time;
+    receipt.exportedGameTime = report.exported_game_time;
+    receipt.reloadedGameTime = report.reloaded_game_time;
+    receipt.sourceEventCount = report.source_event_count;
+    receipt.exportedEventCount = report.exported_event_count;
+    receipt.reloadedEventCount = report.reloaded_event_count;
+    receipt.sourceActiveGroupCount = report.source_active_group_count;
+    receipt.exportedActiveGroupCount = report.exported_active_group_count;
+    receipt.reloadedActiveGroupCount = report.reloaded_active_group_count;
+
+    snprintf(receipt.statusTitle, sizeof(receipt.statusTitle),
+             "%s",
+             receipt.roundtripSucceeded ? "PC34 SAVE READY"
+                                        : "PC34 SAVE BLOCKED");
+    snprintf(receipt.statusDetail, sizeof(receipt.statusDetail),
+             "RESULT=%s CORE=%d BYTES=%u TICK=%u MAP=%d:%d,%d DIR=%d EVENTS=%d GROUPS=%d",
+             dm1_v1_original_save_pc34_handoff_result_name(result),
+             receipt.coreStateMatches,
+             (unsigned int)receipt.exportedByteCount,
+             (unsigned int)receipt.sourceGameTime,
+             receipt.sourceMapIndex,
+             receipt.sourceMapX,
+             receipt.sourceMapY,
+             receipt.sourceDirection,
+             receipt.sourceEventCount,
+             receipt.sourceActiveGroupCount);
+
+    *outReceipt = receipt;
+    return 1;
+}
+
 /* ── Error string ─────────────────────────────────────────────── */
 
 const char* DM1_SaveLoadErrorString(int code) {

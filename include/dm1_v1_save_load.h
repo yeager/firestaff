@@ -129,7 +129,9 @@ struct DM1SaveMenuContext {
 enum {
     DM1_SAVE_RESUME_STATUS_CAPACITY = 32,
     DM1_SAVE_RESUME_INSPECT_TITLE_CAPACITY = 32,
-    DM1_SAVE_RESUME_INSPECT_DETAIL_CAPACITY = 512
+    DM1_SAVE_RESUME_INSPECT_DETAIL_CAPACITY = 512,
+    DM1_SAVE_PC34_ROUNDTRIP_STATUS_CAPACITY = 48,
+    DM1_SAVE_PC34_ROUNDTRIP_DETAIL_CAPACITY = 512
 };
 
 struct DM1SaveResumeRequest {
@@ -152,6 +154,43 @@ struct DM1SaveResumeReceipt {
     char statusDetail[DM1_SAVE_RESUME_STATUS_CAPACITY];
     char inspectTitle[DM1_SAVE_RESUME_INSPECT_TITLE_CAPACITY];
     char inspectDetail[DM1_SAVE_RESUME_INSPECT_DETAIL_CAPACITY];
+};
+
+struct DM1OriginalPC34RoundtripReceipt {
+    int readable;
+    int roundtripSucceeded;
+    int coreStateMatches;
+    int validateResult;
+    int handoffResult;
+    uint32_t gameID;
+    uint32_t exportedByteCount;
+    struct DM1SaveHeader validatedHeader;
+    int sourceChampionCount;
+    int exportedChampionCount;
+    int reloadedChampionCount;
+    int sourceMapIndex;
+    int exportedMapIndex;
+    int reloadedMapIndex;
+    int sourceMapX;
+    int exportedMapX;
+    int reloadedMapX;
+    int sourceMapY;
+    int exportedMapY;
+    int reloadedMapY;
+    int sourceDirection;
+    int exportedDirection;
+    int reloadedDirection;
+    uint32_t sourceGameTime;
+    uint32_t exportedGameTime;
+    uint32_t reloadedGameTime;
+    int sourceEventCount;
+    int exportedEventCount;
+    int reloadedEventCount;
+    int sourceActiveGroupCount;
+    int exportedActiveGroupCount;
+    int reloadedActiveGroupCount;
+    char statusTitle[DM1_SAVE_PC34_ROUNDTRIP_STATUS_CAPACITY];
+    char statusDetail[DM1_SAVE_PC34_ROUNDTRIP_DETAIL_CAPACITY];
 };
 
 /* ── Core save/load functions ─────────────────────────────────── */
@@ -251,6 +290,11 @@ int DM1_GetBackupSavePath(const char* savePath,
 int DM1_SaveResumeSourceAllowed(const char* sourceId);
 int DM1_BuildSaveResumeReceipt(const struct DM1SaveResumeRequest* request,
                                struct DM1SaveResumeReceipt* outReceipt);
+
+int DM1_BuildOriginalPC34RoundtripReceipt(
+    const char* path,
+    uint32_t gameID,
+    struct DM1OriginalPC34RoundtripReceipt* outReceipt);
 
 /* ── Error string ─────────────────────────────────────────────── */
 
