@@ -601,6 +601,25 @@ static void test_tqsv_only_resume_claim(void) {
                         strstr(host_receipt.inspect_detail,
                                "source=NONE") != NULL,
                     "tqsv-only request no-source emits host failure receipt");
+        theron_v1_startup_continue_request_init(&continue_request);
+        continue_request.resume_claim = THERON_V1_STARTUP_RESUME_TQSV;
+        continue_request.tqsv_slot_index = 2;
+        continue_request.tqsv_root = tqsv_root;
+        memset(&media_receipt, 0, sizeof(media_receipt));
+        media_receipt.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
+        continue_request.track02_media_receipt = &media_receipt;
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(!theron_v1_startup_continue_apply_request(
+                        &world,
+                        &continue_request,
+                        &continue_result,
+                        receipt,
+                        sizeof(receipt)) &&
+                        strstr(receipt, "fallback visuals blocked") != NULL &&
+                        world.level_loaded[0][0] == 0 &&
+                        !world.runtime_media.restored,
+                    "tqsv Continue rejects incomplete Track 02 media before restore");
         theron_v1_world_init(&world);
         memset(receipt, 0, sizeof(receipt));
         expect_true(theron_v1_startup_continue_tqsv_apply_with_host_receipts(
@@ -969,6 +988,33 @@ static void test_srm_party_continue_restores_all_champions(void) {
     expect_true(strstr(receipt, "path=-1") != NULL &&
                     strstr(receipt, "PROGRESSION_PARTY") != NULL,
                 "srm party custom path receipt reports path envelope");
+    {
+        Theron_V1StartupContinueRequest continue_request;
+        Theron_V1StartupContinueResult continue_result;
+        Theron_StartupMediaStateReceipt media_receipt;
+
+        theron_v1_startup_continue_request_init(&continue_request);
+        continue_request.srm_slot_index = 2;
+        continue_request.srm_root = srm_root;
+        continue_request.srm_import_status =
+            THERON_V1_SRM_PROGRESS_IMPORT_OK;
+        memset(&media_receipt, 0, sizeof(media_receipt));
+        media_receipt.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
+        continue_request.track02_media_receipt = &media_receipt;
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        expect_true(!theron_v1_startup_continue_apply_request(
+                        &world,
+                        &continue_request,
+                        &continue_result,
+                        receipt,
+                        sizeof(receipt)) &&
+                        strstr(receipt, "fallback visuals blocked") != NULL &&
+                        world.progression.current_dungeon ==
+                            THERON_DUNGEON_1_HALL_OF_RECORDS &&
+                        !world.runtime_media.restored,
+                    "srm Continue rejects incomplete Track 02 media before restore");
+    }
     {
         Theron_StartupAction action;
         Theron_StartupActionPlan plan;
@@ -4317,6 +4363,26 @@ static void test_runtime_entry_structured_track02_routes(void) {
                            "structured=1 text_route=0") != NULL &&
                     world.level_loaded[0][0] == 0,
                 "runtime entry verified Track02 block route is structured without fallback visuals");
+
+    theron_v1_world_init(&world);
+    memset(receipt, 0, sizeof(receipt));
+    expect_true(!theron_v1_startup_runtime_load_initial_level_with_receipts(
+                    &world,
+                    fake_track02,
+                    sizeof(fake_track02),
+                    THERON_TRACK02_MD5_US_BIN,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    &plan,
+                    &result,
+                    &apply_receipt,
+                    &state_receipt,
+                    receipt,
+                    sizeof(receipt)) &&
+                    result.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
+                    result.fallback_visuals_blocked &&
+                    world.level_loaded[1][0] == 0,
+                "runtime entry blocks verified Track02 later-level fallback route");
 }
 
 static void test_boot_runtime_render_frame_facade(void) {
