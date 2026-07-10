@@ -138,6 +138,23 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         vp->last_dgn_render_receipt.party_dir = pdir;
         plan = nexus_v1_prepare_dgn_material_plan(engine, px, py, pdir);
         if (!plan) {
+            const Nexus_V1_DgnRenderPlanReceipt *blocked_plan =
+                &engine->dgn_material_plan.receipt;
+            vp->last_dgn_render_receipt.command_count =
+                blocked_plan->command_count;
+            vp->last_dgn_render_receipt.floor_count =
+                blocked_plan->floor_count;
+            vp->last_dgn_render_receipt.wall_count =
+                blocked_plan->wall_count;
+            vp->last_dgn_render_receipt.ceiling_count =
+                blocked_plan->command_count - blocked_plan->floor_count -
+                blocked_plan->wall_count;
+            vp->last_dgn_render_receipt.missing_material_count =
+                blocked_plan->missing_material_count;
+            vp->last_dgn_render_receipt.first_missing_material_id =
+                blocked_plan->first_missing_material_id;
+            vp->last_dgn_render_receipt.first_missing_material_kind =
+                blocked_plan->first_missing_material_kind;
             vp->last_dgn_render_receipt.blocked = 1;
             return;
         }

@@ -265,7 +265,8 @@ static void theron_v1_startup_media_capture_bitmaps(
                                                     &catalog.samples[i]);
     }
 
-    status = theron_v1_track02_build_startup_bitmap_atlas(&catalog, &atlas);
+    status = theron_v1_track02_build_startup_bitmap_atlas_wide(&catalog,
+                                                               &atlas);
     if (status == THERON_TRACK02_SIGNAL_OK &&
         atlas.route_count > 0u &&
         atlas.total_tile_count > 0u &&

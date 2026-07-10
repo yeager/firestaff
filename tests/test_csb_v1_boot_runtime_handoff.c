@@ -861,6 +861,11 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     char dungeon_path[ASSET_PATH_MAX];
     char graphics_path[ASSET_PATH_MAX];
     char save_path[ASSET_PATH_MAX];
+    char csbwin_save_path[ASSET_PATH_MAX];
+    uint8_t csbwin_save_buf[1024];
+    size_t csbwin_save_size = 0u;
+    FILE *csbwin_save_file = NULL;
+    CSB_V1_BootRuntimeSaveImportReceipt_PC34 save_import_receipt;
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-test";
     int mkdir_ok = (TEST_MKDIR(tmp_dir) == 0) || 1; /* best-effort */
     uint32_t adapter_game_time = 0U;
@@ -981,6 +986,72 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
               &adapter_game_time) == 1 &&
               adapter_game_time == p.runtime.game_time,
           "boot-profile tick adapter advances CSB runtime and reports game time");
+    snprintf(csbwin_save_path,
+             sizeof(csbwin_save_path),
+             "%s/csbgame.dat",
+             tmp_dir);
+    csbwin_save_size = csb_v1_csbwin_save_loader_boundary_build_fixture(
+        CSB_V1_CSBWIN_SHAPE_CSBGAME_V20,
+        csbwin_save_buf,
+        sizeof(csbwin_save_buf));
+    CHECK(csbwin_save_size > 0u,
+          "CSBWin CSBGAME fixture builds for boot save/import receipt");
+    csbwin_save_file = fopen(csbwin_save_path, "wb");
+    CHECK(csbwin_save_file != NULL,
+          "CSBWin CSBGAME fixture opens for boot receipt");
+    if (csbwin_save_file) {
+        CHECK(fwrite(csbwin_save_buf, 1u, csbwin_save_size,
+                     csbwin_save_file) == csbwin_save_size,
+              "CSBWin CSBGAME fixture writes for boot receipt");
+        fclose(csbwin_save_file);
+    }
+    CHECK(csb_v1_boot_runtime_save_import_receipt_pc34(
+              &p,
+              "/tmp/firestaff-csb-v1-runtime-dm1-import.sav",
+              save_path,
+              csbwin_save_path,
+              &save_import_receipt) == 1 &&
+              save_import_receipt.valid &&
+              save_import_receipt.runtime_ready &&
+              save_import_receipt.save_root_bound &&
+              save_import_receipt.save_adapter_available &&
+              save_import_receipt.load_adapter_available &&
+              save_import_receipt.tick_adapter_available &&
+              save_import_receipt.resume_path_present &&
+              save_import_receipt.dm1_import_path_present &&
+              save_import_receipt.csbwin_path_present &&
+              save_import_receipt.csbwin_filename_candidate &&
+              save_import_receipt.csbwin_should_attempt_import &&
+              save_import_receipt.csbwin_contract_match &&
+              save_import_receipt.csbwin_shape ==
+                  CSB_V1_CSBWIN_SHAPE_CSBGAME_V20 &&
+              save_import_receipt.csbwin_file_kind ==
+                  CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT &&
+              strstr(save_import_receipt.source_evidence,
+                     "LOADSAVE.C F0433/F0435") != NULL,
+          "boot save/import receipt owns runtime save, resume, DM1 import, and CSBWin CSBGAME gates");
+    CHECK(csb_v1_boot_runtime_import_csbwin_save_from_path_pc34(
+              &p,
+              csbwin_save_path,
+              &save_import_receipt) == 1 &&
+              save_import_receipt.valid &&
+              save_import_receipt.csbwin_runtime_load_attempted &&
+              save_import_receipt.csbwin_runtime_load_succeeded &&
+              save_import_receipt.csbwin_runtime_load_code ==
+                  CSB_V1_LOAD_OK &&
+              save_import_receipt.csbwin_shape ==
+                  CSB_V1_CSBWIN_SHAPE_CSBGAME_V20 &&
+              save_import_receipt.csbwin_file_kind ==
+                  CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT &&
+              save_import_receipt.runtime_party_loaded_after &&
+              save_import_receipt.runtime_import_source_after ==
+                  CSB_SAVE_IMPORT_SOURCE &&
+              save_import_receipt.runtime_champion_count_after > 0 &&
+              save_import_receipt.runtime_champion_count_after <=
+                  CSB_V1_MAX_CHAMPIONS &&
+              save_import_receipt.runtime_game_time_after ==
+                  p.runtime.game_time,
+          "boot CSBWin import path runs the runtime loader and publishes imported party state");
 
     /* Cleanup: the boot profile owns the handoff runtime and must clear the
      * global current-dungeon context that mirrors ReDMCSB's current map globals.

@@ -139,11 +139,20 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         if (!nexus_v1_plan_surface(engine, &plan->commands[i])) {
             /* DMWeb DGN structure selects IDs; DMDF/BPK decoding proves the
              * matching source surface. PRS3 remains non-renderable here. */
-            plan->receipt.plan_ready = 0;
-            plan->receipt.blocks_real_dgn_mesh_render = 1;
-            plan->receipt.fallback_visuals_permitted = 0;
-            return NULL;
+            if (plan->receipt.missing_material_count == 0) {
+                plan->receipt.first_missing_material_id =
+                    plan->commands[i].material_id;
+                plan->receipt.first_missing_material_kind =
+                    plan->commands[i].kind;
+            }
+            plan->receipt.missing_material_count++;
         }
+    }
+    if (plan->receipt.missing_material_count > 0) {
+        plan->receipt.plan_ready = 0;
+        plan->receipt.blocks_real_dgn_mesh_render = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
+        return NULL;
     }
     plan->valid = 1;
     return plan;

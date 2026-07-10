@@ -6,6 +6,7 @@
 #include "csb_v1_csbgraphics_m11_runtime_plan.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
+#include "csb_v1_save_load_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 
@@ -5959,6 +5960,166 @@ int csb_v1_boot_runtime_load_game_from_path_pc34(
         *out_game_time = profile->runtime.game_time;
     }
     return result;
+}
+
+static void csb_v1_boot_copy_receipt_path_pc34(char *dst,
+                                               size_t dst_size,
+                                               const char *src)
+{
+    if (!dst || dst_size == 0u) {
+        return;
+    }
+    snprintf(dst, dst_size, "%s", src ? src : "");
+}
+
+int csb_v1_boot_runtime_save_import_receipt_pc34(
+    const CSB_V1_BootProfile *profile,
+    const char *dm1_import_path,
+    const char *resume_save_path,
+    const char *csbwin_save_path,
+    CSB_V1_BootRuntimeSaveImportReceipt_PC34 *out_receipt)
+{
+    CSB_V1_CSBWinSaveDiscoveryResult csbwin;
+    int csbwin_rc;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->csbwin_shape = CSB_V1_CSBWIN_SHAPE_COUNT;
+    out_receipt->csbwin_file_kind = CSB_V1_CSBWIN_SAVE_FILE_NONE;
+    out_receipt->csbwin_loader_code = CSB_SAVE_IMPORT_ERR_NULL;
+    out_receipt->csbwin_decision_label = "no_csbwin_save_path";
+    out_receipt->source_evidence =
+        "ReDMCSB LOADSAVE.C F0433/F0435; ENTRANCE.C F0806; "
+        "CSBWin CSBCode.cpp:421-422 csbgame.dat/csbgame.bak";
+    if (!profile) {
+        return 0;
+    }
+
+    out_receipt->boot_profile_ready =
+        strcmp(profile->game_id, CSB_V1_BOOT_GAME_ID) == 0 &&
+        profile->assets_verified &&
+        profile->graphics_verified &&
+        profile->dungeon_verified;
+    out_receipt->runtime_ready =
+        profile->state == CSB_V1_BOOT_STATE_RUNTIME_READY ? 1 : 0;
+    out_receipt->save_root_bound = profile->save_root[0] != '\0';
+    csb_v1_boot_copy_receipt_path_pc34(out_receipt->save_root,
+                                       sizeof(out_receipt->save_root),
+                                       profile->save_root);
+    out_receipt->save_adapter_available = out_receipt->runtime_ready;
+    out_receipt->load_adapter_available = out_receipt->runtime_ready;
+    out_receipt->tick_adapter_available = out_receipt->runtime_ready;
+
+    out_receipt->resume_path_present =
+        resume_save_path && resume_save_path[0] != '\0';
+    csb_v1_boot_copy_receipt_path_pc34(out_receipt->resume_path,
+                                       sizeof(out_receipt->resume_path),
+                                       resume_save_path);
+    out_receipt->dm1_import_path_present =
+        dm1_import_path && dm1_import_path[0] != '\0';
+    csb_v1_boot_copy_receipt_path_pc34(out_receipt->dm1_import_path,
+                                       sizeof(out_receipt->dm1_import_path),
+                                       dm1_import_path);
+
+    out_receipt->imported_party_ready = profile->imported_party_ready;
+    out_receipt->cmp_import_attempted = profile->cmp_import_attempted;
+    out_receipt->cmp_import_succeeded = profile->cmp_import_succeeded;
+    out_receipt->cmp_imported_slot = profile->cmp_imported_slot;
+    out_receipt->cmp_imported_champion_count =
+        profile->cmp_imported_champion_count;
+
+    out_receipt->csbwin_path_present =
+        csbwin_save_path && csbwin_save_path[0] != '\0';
+    csb_v1_boot_copy_receipt_path_pc34(out_receipt->csbwin_path,
+                                       sizeof(out_receipt->csbwin_path),
+                                       csbwin_save_path);
+    if (out_receipt->csbwin_path_present) {
+        memset(&csbwin, 0, sizeof(csbwin));
+        csbwin_rc = csb_v1_csbwin_save_loader_boundary_classify_file(
+            csbwin_save_path,
+            0u,
+            &csbwin);
+        out_receipt->csbwin_file_kind = csbwin.file_kind;
+        out_receipt->csbwin_filename_candidate =
+            csbwin.filename_candidate ? 1 : 0;
+        out_receipt->csbwin_should_attempt_import =
+            csbwin.should_attempt_import ? 1 : 0;
+        out_receipt->csbwin_loader_code = csbwin_rc;
+        out_receipt->csbwin_contract_match =
+            csbwin.loader.contract_match ? 1 : 0;
+        out_receipt->csbwin_shape = csbwin.shape;
+        out_receipt->csbwin_decision_label =
+            csb_v1_csbwin_save_loader_boundary_decision_name(&csbwin);
+    }
+
+    /* LOADSAVE.C F0433/F0435 and the CSBWin CSBGAME filename surface are
+     * now represented by this single boot-owned receipt.  Runtime consumers
+     * can ask for save/load/import readiness without reconstructing paths or
+     * poking the utility-flow internals. */
+    out_receipt->valid =
+        out_receipt->boot_profile_ready &&
+        out_receipt->save_root_bound &&
+        (out_receipt->runtime_ready ||
+         out_receipt->dm1_import_path_present ||
+         out_receipt->resume_path_present ||
+         out_receipt->csbwin_path_present);
+    return out_receipt->valid;
+}
+
+int csb_v1_boot_runtime_import_csbwin_save_from_path_pc34(
+    CSB_V1_BootProfile *profile,
+    const char *csbwin_save_path,
+    CSB_V1_BootRuntimeSaveImportReceipt_PC34 *out_receipt)
+{
+    int result;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    (void)csb_v1_boot_runtime_save_import_receipt_pc34(
+        profile,
+        NULL,
+        NULL,
+        csbwin_save_path,
+        out_receipt);
+    out_receipt->csbwin_runtime_load_code = CSB_V1_LOAD_ERR_UNREADABLE;
+    if (!profile || !csbwin_save_path || csbwin_save_path[0] == '\0') {
+        return 0;
+    }
+    out_receipt->csbwin_runtime_load_attempted =
+        out_receipt->runtime_ready && out_receipt->csbwin_path_present;
+    if (!out_receipt->csbwin_runtime_load_attempted) {
+        return 0;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 owns the live load path. CSBWin
+     * SaveGame.cpp lines 1707-1770 first opens CSBGAME.DAT, then the
+     * .BAK fallback, and copies the decoded save block into runtime state.
+     * Keep that policy under boot/runtime so utility and M11 callers do not
+     * branch on legacy filenames after the CSB profile is verified. */
+    result = csb_v1_runtime_load_game_from_path(&profile->runtime,
+                                                csbwin_save_path);
+    out_receipt->csbwin_runtime_load_code = result;
+    out_receipt->csbwin_runtime_load_succeeded =
+        result == CSB_V1_LOAD_OK ? 1 : 0;
+    out_receipt->runtime_party_loaded_after =
+        profile->runtime.party_state_valid ? 1 : 0;
+    out_receipt->runtime_import_source_after =
+        profile->runtime.party_state.ImportSource;
+    out_receipt->runtime_champion_count_after =
+        profile->runtime.party_state.ChampionCount;
+    out_receipt->runtime_leader_index_after =
+        profile->runtime.party_state.LeaderIndex;
+    out_receipt->runtime_current_level_after = profile->runtime.current_level;
+    out_receipt->runtime_game_time_after = profile->runtime.game_time;
+    out_receipt->runtime_party_x_after = profile->runtime.party_x;
+    out_receipt->runtime_party_y_after = profile->runtime.party_y;
+    out_receipt->runtime_party_dir_after = profile->runtime.party_dir;
+    out_receipt->valid =
+        out_receipt->valid && out_receipt->csbwin_runtime_load_succeeded;
+    return out_receipt->csbwin_runtime_load_succeeded;
 }
 
 int csb_v1_boot_runtime_tick_pc34(

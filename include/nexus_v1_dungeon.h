@@ -152,6 +152,9 @@ typedef struct {
     int floor_count;
     int wall_count;
     int source_cell_count;
+    int missing_material_count;
+    int first_missing_material_id;
+    Nexus_V1_DgnRenderCommandKind first_missing_material_kind;
     int first_blocking_depth;
     int first_blocking_x;
     int first_blocking_y;

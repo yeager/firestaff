@@ -196,5 +196,29 @@ int main(void) {
                receipt.written_pixels > 0,
            "viewport rasterizes floor, ceiling and wall DGN geometry to pixels");
 
+    engine.wall_materials.valid = 0;
+    engine.wall_materials.surface_count = 0;
+    engine.wall_materials.surfaces[0].valid = 0;
+    nexus_v1_invalidate_dgn_material_plan(&engine);
+    nexus_viewport_render(&viewport, &engine);
+    expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0,
+           "viewport exposes blocked DGN material receipt");
+    expect(receipt.attempted && receipt.used_real_dgn_route &&
+               receipt.blocked &&
+               !receipt.fallback_visuals_permitted &&
+               !receipt.palette_synced &&
+               receipt.rasterized_command_count == 0,
+           "viewport blocks real DGN route when required BPK/DMDF material is missing");
+    expect(receipt.command_count > 0 &&
+               receipt.missing_material_count > 0 &&
+               receipt.first_missing_material_id == 0 &&
+               (receipt.first_missing_material_kind ==
+                    NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT ||
+                receipt.first_missing_material_kind ==
+                    NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT ||
+                receipt.first_missing_material_kind ==
+                    NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT),
+           "DGN material plan reports the first missing wall material instead of falling back");
+
     return failures ? 1 : 0;
 }
