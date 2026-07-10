@@ -8,7 +8,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.69 LANGUAGES C)
+project(Firestaff VERSION 3.0.70 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
@@ -6077,6 +6077,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_startup_sequence_pc34_compat.c
         src/dm1/dm1_v1_startup_sequence_pc34_compat.c
         src/dm1/dm1_v1_champion_mirror_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
         src/dm1/dm1_v1_viewport_d1l_d1r_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_wall_ornament_pc34_compat.c
         src/dm1/dm1_v1_entrance_champion_select_pc34_compat.c
@@ -17467,6 +17468,7 @@ if(BUILD_TESTING)
         src/frontend/title_dat_loader_v1.c
         src/shared/vga_palette_pc34_compat.c
     )
+    target_link_libraries(firestaff_v1_dm_title_palette_regression_probe PRIVATE firestaff_m10)
     target_compile_definitions(firestaff_v1_dm_title_palette_regression_probe PRIVATE
         COMPILE_H
         STATICFUNCTION=static
@@ -17663,6 +17665,7 @@ if(BUILD_TESTING)
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )
+    target_link_libraries(test_title_frontend_runtime_cadence_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_title_frontend_runtime_cadence_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -17680,6 +17683,7 @@ if(BUILD_TESTING)
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )
+    target_link_libraries(test_title_frontend_c001_fallback_gate_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_title_frontend_c001_fallback_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()

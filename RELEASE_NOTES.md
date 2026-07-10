@@ -1,6 +1,29 @@
 
 # Unreleased
 
+# Firestaff v3.0.70
+
+Firestaff v3.0.70 packages the current `main` after the DM2 GDAT render receipt
+hardening and DM1 title release-target link fix landed after `v3.0.69`.
+
+## Highlights since v3.0.69
+
+- **DM2 GDAT rendering**: Runtime boot receipts now track creature, possession
+  item and projectile GDAT fallback usage alongside floor, wall and door usage.
+- **Release build fix**: DM1 title regression targets now link the HoC mirror
+  and D1L/D1R thing-pass sources they consume.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.70`.
+
+## Verification
+
+- Local release verification covers focused DM1 title target builds, DM2 boot
+  smoke tests, version synchronization and `git diff --check` before GitHub
+  Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.70` release run.
+
 # Firestaff v3.0.69
 
 Firestaff v3.0.69 packages the current `main` after the all-game boot adapter

@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.70  (2026-07-10)",
+    "  - Packages the DM2 GDAT render receipt hardening and DM1 title release-target link fix after v3.0.69.",
+    "  - Release metadata is synchronized to v3.0.70.",
+    "",
     "V3.0.69  (2026-07-08)",
     "  - Packages current main after the all-game boot adapter cleanup and DM1 HoC mirror source-route fix landed after v3.0.68.",
     "  - CSB and DM1 V2 startup paths now keep more boot policy inside game-owned adapters before M11 draws or dispatches runtime handoff.",
@@ -520,5 +524,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.69";
+    return "3.0.70";
 }
