@@ -2985,6 +2985,119 @@ int dm1_v1_startup_hoc_boot_full_graphics_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_boot_probe_summary_pc34(
+    const DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* receipt,
+    DM1_V1_StartupHoCBootProbeSummary_PC34* out_summary) {
+    DM1_V1_StartupHoCBootProbeSummary_PC34 summary;
+
+    if (!out_summary) {
+        return 0;
+    }
+    memset(&summary, 0, sizeof(summary));
+    if (!receipt || !receipt->handled) {
+        *out_summary = summary;
+        return 0;
+    }
+
+    summary.handled = 1;
+    summary.full_graphics_ready = 1;
+    summary.host_render_plan_ready =
+        receipt->runtime_apply.consumed_capture_artifact &&
+        receipt->runtime_apply.consumed_capture_proof;
+    summary.capture_proof_passed =
+        receipt->runtime_apply.ready &&
+        receipt->runtime_apply.require_proof_passed;
+    summary.runtime_apply_ready = receipt->runtime_apply.ready;
+    summary.production_consumer_ready = receipt->production_consumer.ready;
+    summary.no_host_fallback_visuals =
+        receipt->production_consumer.suppress_host_fallback_visuals;
+    summary.real_asset_capture = receipt->production_consumer.real_asset_capture;
+    summary.mac_window_capture = receipt->production_consumer.mac_window_capture;
+    summary.release_app_capture =
+        receipt->production_consumer.release_app_capture;
+    summary.host_capture_route_matches =
+        receipt->production_consumer.host_capture_route_matches;
+    summary.release_capture_ownership_ready = receipt->ownership.ready;
+    summary.host_render_consumer_ready =
+        receipt->ownership.consumed_hoc_host_render_receipt;
+    summary.m11_boot_probe_consumer_ready =
+        receipt->ownership.consumed_m11_boot_probe_consumer;
+    summary.launch_path_ready =
+        receipt->ownership.consumed_launch_path_receipt &&
+        receipt->ownership.launch_path_started_from_launcher &&
+        receipt->ownership.launch_path_intro_not_bypassed;
+    summary.required_asset_capture = receipt->ownership.required_asset_capture;
+    summary.receipt_only_consumer_ready =
+        receipt->ownership.consume_dm1_receipts_only &&
+        receipt->ownership.consumed_runtime_apply_receipt &&
+        receipt->ownership.consumed_production_consumer_receipt &&
+        receipt->ownership.publish_packaged_full_graphics_proof;
+    summary.lower_level_helpers_ready =
+        receipt->ownership.lower_level_renderer_helper_owned &&
+        receipt->ownership.lower_level_audio_helper_owned;
+    summary.host_draw_uses_owned_receipt =
+        receipt->ownership.host_draw_uses_owned_receipt;
+    summary.host_draw_consumes_backing_asset =
+        receipt->ownership.host_draw_consumes_backing_asset;
+    summary.host_draw_rejects_backing_fallback =
+        receipt->ownership.host_draw_rejects_backing_fallback;
+    summary.hoc_asset_capture = receipt->production_consumer.hoc_asset_capture;
+    summary.host_window_capture =
+        receipt->production_consumer.host_window_capture;
+    summary.presented_capture = receipt->ownership.presented_capture;
+    summary.presented_capture_width =
+        receipt->ownership.presented_capture_width;
+    summary.presented_capture_height =
+        receipt->ownership.presented_capture_height;
+    summary.presented_capture_geometry =
+        receipt->ownership.presented_capture_geometry_matches;
+    summary.presented_capture_pixels =
+        receipt->ownership.presented_capture_pixels_present;
+    summary.presented_capture_bytes =
+        receipt->ownership.presented_capture_byte_count;
+    summary.presented_capture_hash =
+        receipt->ownership.presented_capture_hash;
+    summary.presented_capture_chain_ready =
+        receipt->ownership.presented_capture_chain_ready;
+    summary.presented_capture_consumer_mask =
+        receipt->ownership.presented_capture_consumer_mask;
+    summary.presented_capture_chain_hash =
+        receipt->ownership.presented_capture_chain_hash;
+    summary.host_capture_route_packaged =
+        receipt->ownership.host_capture_route_packaged;
+    summary.host_capture_route_mask = receipt->ownership.host_capture_route_mask;
+    summary.host_capture_route_hash = receipt->ownership.host_capture_route_hash;
+    summary.presented_capture_route_packaged =
+        receipt->ownership.presented_capture_route_packaged;
+    summary.opened_entrance_frame =
+        receipt->production_consumer.draw_opened_entrance_frame;
+    summary.hall_mirror_overlay =
+        receipt->production_consumer.render_hall_mirror_overlay;
+    summary.blocked_enter_until_champion =
+        receipt->production_consumer.block_enter_until_champion_selected;
+    summary.map_width = receipt->production_consumer.map_width;
+    summary.map_height = receipt->production_consumer.map_height;
+    summary.render_command_count =
+        receipt->production_consumer.render_command_count;
+    summary.complete_support_ready = receipt->complete_support.ready;
+    summary.complete_source_visible_startup =
+        receipt->complete_support.complete_source_visible_startup;
+    summary.complete_entrance_to_hoc =
+        receipt->complete_support.complete_entrance_to_hoc_transition;
+    summary.complete_hoc_render_route =
+        receipt->complete_support.complete_hoc_render_route;
+    summary.complete_host_app_capture_route =
+        receipt->complete_support.complete_host_app_capture_route;
+    summary.complete_save_corpus_route =
+        receipt->complete_support.complete_save_corpus_route;
+    summary.complete_original_save_roundtrip_route =
+        receipt->complete_support.complete_original_save_roundtrip_route;
+    summary.source_evidence =
+        "ReDMCSB TITLE.C F0437; ENTRANCE.C F0797/F0441; REVIVE.C F0280; LOADSAVE.C F0433/F0435";
+    *out_summary = summary;
+    return 1;
+}
+
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,

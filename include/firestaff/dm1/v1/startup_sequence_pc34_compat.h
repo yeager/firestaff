@@ -756,6 +756,60 @@ typedef struct DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34;
 
+typedef struct DM1_V1_StartupHoCBootProbeSummary_PC34 {
+    int handled;
+    int full_graphics_ready;
+    int host_render_plan_ready;
+    int capture_proof_passed;
+    int runtime_apply_ready;
+    int production_consumer_ready;
+    int no_host_fallback_visuals;
+    int real_asset_capture;
+    int mac_window_capture;
+    int release_app_capture;
+    int host_capture_route_matches;
+    int release_capture_ownership_ready;
+    int host_render_consumer_ready;
+    int m11_boot_probe_consumer_ready;
+    int launch_path_ready;
+    int required_asset_capture;
+    int receipt_only_consumer_ready;
+    int lower_level_helpers_ready;
+    int host_draw_uses_owned_receipt;
+    int host_draw_consumes_backing_asset;
+    int host_draw_rejects_backing_fallback;
+    int hoc_asset_capture;
+    int host_window_capture;
+    int presented_capture;
+    int presented_capture_width;
+    int presented_capture_height;
+    int presented_capture_geometry;
+    int presented_capture_pixels;
+    int presented_capture_bytes;
+    unsigned int presented_capture_hash;
+    int presented_capture_chain_ready;
+    unsigned int presented_capture_consumer_mask;
+    unsigned int presented_capture_chain_hash;
+    int host_capture_route_packaged;
+    unsigned int host_capture_route_mask;
+    unsigned int host_capture_route_hash;
+    int presented_capture_route_packaged;
+    int opened_entrance_frame;
+    int hall_mirror_overlay;
+    int blocked_enter_until_champion;
+    int map_width;
+    int map_height;
+    int render_command_count;
+    int complete_support_ready;
+    int complete_source_visible_startup;
+    int complete_entrance_to_hoc;
+    int complete_hoc_render_route;
+    int complete_host_app_capture_route;
+    int complete_save_corpus_route;
+    int complete_original_save_roundtrip_route;
+    const char* source_evidence;
+} DM1_V1_StartupHoCBootProbeSummary_PC34;
+
 typedef struct DM1_V1_StartupHoCRenderConsumerReceipt_PC34 {
     int handled;
     int ready;
@@ -1260,6 +1314,9 @@ int dm1_v1_startup_hoc_boot_full_graphics_receipt_pc34(
     const DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34* hoc_save,
     const DM1_V1_StartupSaveResumeCaptureReceipt_PC34* original_save,
     DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_boot_probe_summary_pc34(
+    const DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* receipt,
+    DM1_V1_StartupHoCBootProbeSummary_PC34* out_summary);
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,
