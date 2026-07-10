@@ -1852,6 +1852,12 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      .presented_capture_consumer_mask == 0x3u &&
                  hoc_release_capture_ownership
                      .presented_capture_chain_hash != 0u &&
+                 hoc_release_capture_ownership
+                     .host_capture_route_packaged &&
+                 hoc_release_capture_ownership.host_capture_route_mask == 0x3u &&
+                 hoc_release_capture_ownership.host_capture_route_hash != 0u &&
+                 hoc_release_capture_ownership
+                     .presented_capture_route_packaged &&
                  hoc_release_capture_ownership.presented_capture_width == 320 &&
                  hoc_release_capture_ownership.presented_capture_height == 200 &&
                  hoc_release_capture_ownership.draw_opened_entrance_frame &&
@@ -1925,6 +1931,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership
                      .presented_capture_consumer_mask == 0x7u &&
                  hoc_release_capture_ownership.presented_capture_chain_ready &&
+                 hoc_release_capture_ownership.host_capture_route_packaged &&
+                 hoc_release_capture_ownership.host_capture_route_mask == 0x7u &&
+                 hoc_release_capture_ownership.host_capture_route_hash != 0u &&
                  hoc_release_capture_ownership.named_consumer_hash != 0u,
              1);
     memset(&hoc_presented_publish_facts, 0,

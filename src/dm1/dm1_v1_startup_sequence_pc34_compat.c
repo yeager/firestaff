@@ -24,6 +24,21 @@ static unsigned int dm1_v1_startup_hoc_capture_consumer_hash_pc34(
     return hash ? hash : 1u;
 }
 
+static unsigned int dm1_v1_startup_hoc_host_capture_route_hash_pc34(
+    unsigned int mask,
+    unsigned int chain_hash,
+    unsigned int presented_hash) {
+    unsigned int hash = 2166136261u;
+    hash ^= mask;
+    hash *= 16777619u;
+    hash ^= chain_hash;
+    hash *= 16777619u;
+    hash ^= presented_hash;
+    hash *= 16777619u;
+    hash ^= 0xD1C0A11u;
+    return hash ? hash : 1u;
+}
+
 unsigned int dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
     int width,
     int height,
@@ -2214,6 +2229,15 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
                 receipt.presented_capture_byte_count,
                 receipt.presented_capture_hash,
                 receipt.presented_capture_consumer_mask);
+    receipt.host_capture_route_mask = receipt.named_consumer_mask;
+    receipt.host_capture_route_hash =
+        dm1_v1_startup_hoc_host_capture_route_hash_pc34(
+            receipt.host_capture_route_mask,
+            receipt.presented_capture_chain_hash,
+            receipt.presented_capture_hash);
+    receipt.presented_capture_route_packaged =
+        receipt.presented_capture_chain_ready &&
+        receipt.host_capture_route_hash != 0u;
     receipt.draw_opened_entrance_frame = consumer.draw_opened_entrance_frame;
     receipt.render_hall_mirror_overlay = consumer.render_hall_mirror_overlay;
     receipt.suppress_host_fallback_visuals =
@@ -2286,6 +2310,16 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         receipt.lower_level_audio_helper_owned &&
         receipt.block_enter_until_champion_selected &&
         receipt.render_command_count == 3;
+    receipt.host_capture_route_packaged =
+        receipt.ready &&
+        receipt.host_capture_route_mask == receipt.named_consumer_mask &&
+        receipt.host_capture_route_hash ==
+            dm1_v1_startup_hoc_host_capture_route_hash_pc34(
+                receipt.named_consumer_mask,
+                receipt.presented_capture_chain_hash,
+                receipt.presented_capture_hash) &&
+        receipt.presented_capture_route_packaged;
+    receipt.ready = receipt.ready && receipt.host_capture_route_packaged;
     *out_receipt = receipt;
     return 1;
 }

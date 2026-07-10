@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM1 HoC release/app capture route package: release/app HoC capture ownership now exposes a DM1-owned host-capture route package and hash consumed by both M11 boot probe and M12 readiness, joining host-render, boot-probe, startup capture, and presented framebuffer chain proof. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `test_m12_dm1_v1_required_complete_launches`, `test_m12_all_games_boot_readiness_receipt`, and `git diff --check` passed.
+
 - ✅ 2026-07-10 DM2 skproject door material chain: DB0 door facts now flow from dungeon metadata into the viewport render plan and runtime receipt with skproject material-chain readiness/draw proof for panel, ornament, destroyed mask, frame, and button GDAT consumption. Verification: `test_dm2_v1_runtime_handoff_smoke`, `test_dm2_v1_lighting_falloff_boundary`, and `git diff --check` passed.
 
 - ✅ 2026-07-10 DM1 HoC presented-capture ownership: added a DM1-owned publish receipt for the presented HoC framebuffer and routed M11/M12 through one host-render + boot-probe + startup capture chain instead of rebuilding separate hashes in `main_loop_m11`. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `test_m12_all_games_boot_readiness_receipt`, `test_m12_dm1_v1_required_complete_launches`, and `git diff --check` passed. `test_m11_overlay_command_queue_block` still fails in its existing projectile/explosion viewport-summary section.

@@ -546,6 +546,9 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     int consumed_m12_startup_capture_consumer;
     unsigned int named_consumer_mask;
     unsigned int named_consumer_hash;
+    int host_capture_route_packaged;
+    unsigned int host_capture_route_mask;
+    unsigned int host_capture_route_hash;
     int consumed_launch_path_receipt;
     int consumed_runtime_apply_receipt;
     int consumed_production_consumer_receipt;
@@ -570,6 +573,7 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     int presented_capture_chain_ready;
     unsigned int presented_capture_consumer_mask;
     unsigned int presented_capture_chain_hash;
+    int presented_capture_route_packaged;
     int draw_opened_entrance_frame;
     int render_hall_mirror_overlay;
     int suppress_host_fallback_visuals;
