@@ -74,6 +74,12 @@ static int test_walk_tick_enters_attack_state(void) {
     CHECK("walk flag", obs.ccm_flag_walk == 1);
     CHECK("attack state writeback", obs.after_b_1a == DM2_CCM_CREATURE_ATTACKS_PARTY);
     CHECK("cooldown unchanged on planning tick", obs.attack_cooldown_after == 0);
+    {
+        const DM2_V1_CreatureInstance *inst = dm2_v1_creature_get_instance(slot);
+        CHECK("AI tick writes live attack animation frame",
+              inst && inst->animation_tick == 1u &&
+                  inst->animation_frame == 2 && inst->render_revision > 0u);
+    }
     return 1;
 }
 
@@ -87,6 +93,12 @@ static int test_attack_tick_sets_cooldown(void) {
     CHECK("attack flag", obs.ccm_flag_attack_party == 1);
     CHECK("walk writeback", obs.after_b_1a == DM2_CCM_WALK_NOW);
     CHECK("cooldown set", obs.attack_cooldown_after == 18);
+    {
+        const DM2_V1_CreatureInstance *inst = dm2_v1_creature_get_instance(0);
+        CHECK("AI cooldown writes live animation frame",
+              inst && inst->animation_tick == 2u &&
+                  inst->animation_frame == 1);
+    }
     return 1;
 }
 

@@ -198,6 +198,11 @@ typedef struct {
     int target_y;
     int attack_cooldown;   /* ticks until next attack allowed */
     int poison_ticks;      /* poison damage countdown */
+    /* Render writeback is owned by the live AI instance.  The viewport must
+     * consume this state rather than inventing a frame from its own clock. */
+    uint32_t animation_tick;
+    uint32_t render_revision;
+    uint8_t animation_frame;
 } DM2_V1_CreatureInstance;
 
 typedef struct {

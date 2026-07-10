@@ -870,6 +870,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
               receipt.ccm_secondary_state == 0 &&
               receipt.attack_cooldown == 0 &&
               receipt.frame_source == 2 &&
+              receipt.animation_tick == 1u &&
+              receipt.render_revision > 0u &&
               receipt.map_x == 1 &&
               receipt.map_y == 0 &&
               receipt.screen_x == 112 &&
@@ -897,6 +899,16 @@ static void test_first_tick_after_boot_profile_handoff(void)
               receipt.asset_dst_rect.w == 8 &&
               receipt.asset_dst_rect.h == 8,
               "runtime active creature render receipt exposes live AI projection and atlas blit");
+        CHECK(dm2_v1_creature_deal_damage(slot, 0x7fff) == 0,
+              "runtime live creature can despawn through damage writeback");
+        dm2_v1_runtime_tick();
+        memset(framebuffer, 0, sizeof(framebuffer));
+        CHECK(dm2_v1_runtime_render_frame(
+                  0, 1, 1, framebuffer, 320, 320, 200) == 0 &&
+              dm2_v1_runtime_last_asset_creature_count() == 0 &&
+              dm2_v1_runtime_last_fallback_creature_count() == 0 &&
+              dm2_v1_runtime_last_creature_render_receipt(&receipt) == 0,
+              "runtime despawn removes the live creature from the GDAT render plan");
         s_creature_asset_w = 16;
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
         clear_creature_pool_for_door_runtime_test();
