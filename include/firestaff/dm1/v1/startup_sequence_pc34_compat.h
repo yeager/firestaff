@@ -185,10 +185,6 @@ typedef struct DM1_V1_StartupSaveResumeCaptureFacts_PC34 {
     int observed_dungeon_payload;
     int observed_required_graphics_hash_match;
     int observed_required_dungeon_hash_match;
-    int observed_user_save_corpus_scan;
-    int observed_user_save_corpus_files;
-    int observed_user_save_corpus_classified;
-    int observed_user_save_corpus_pc34;
 } DM1_V1_StartupSaveResumeCaptureFacts_PC34;
 
 typedef struct DM1_V1_StartupSaveResumeCaptureReceipt_PC34 {
@@ -213,10 +209,6 @@ typedef struct DM1_V1_StartupSaveResumeCaptureReceipt_PC34 {
     int observed_save_part_count;
     int expected_champion_portrait_count;
     int observed_champion_portrait_count;
-    int user_save_corpus_scan_consumed;
-    int user_save_corpus_files;
-    int user_save_corpus_classified;
-    int user_save_corpus_pc34;
     char resume_path[512];
     const char* source_evidence;
 } DM1_V1_StartupSaveResumeCaptureReceipt_PC34;
@@ -739,8 +731,6 @@ typedef struct DM1_V1_CompleteSupportReceipt_PC34 {
     int redmcsb_hoc_mirror_overlay_ready;
     int redmcsb_hoc_thing_layer_suppression_ready;
     int redmcsb_save_part_corpus_ready;
-    int user_save_corpus_scan_consumed;
-    int user_save_corpus_pc34_ready;
     int host_capture_route_packaged;
     int presented_capture_chain_ready;
     int host_draw_uses_owned_receipt;

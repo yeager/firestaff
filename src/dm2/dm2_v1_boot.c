@@ -4973,6 +4973,7 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
         DM2_V1_BootViewportAssetEvidence ev;
         int gdat_index = dm2_v1_viewport_creature_graphic_index(creature, 0);
         int frame_count;
+        int parity_rows = 0;
         if (gdat_index == 0 ||
             !dm2_v1_boot_viewport_asset_evidence(profile, gdat_index, &ev) ||
             ev.category != DM2_GDAT_CATEGORY_CREATURES ||
@@ -4982,8 +4983,49 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
         frame_count =
             dm2_v1_viewport_map_chip_frame_count(ev.decoded_w, ev.decoded_h);
         if (frame_count <= 0) continue;
+        for (int requested = 0; requested < frame_count && requested < 8;
+             ++requested) {
+            for (int creature_dir = 0; creature_dir < 4; ++creature_dir) {
+                for (int party_dir = 0; party_dir < 4; ++party_dir) {
+                    int selected =
+                        dm2_v1_viewport_creature_frame_for_direction(
+                            requested, creature_dir, party_dir, frame_count);
+                    int expected;
+                    if (frame_count <= 3) {
+                        expected = dm2_v1_viewport_map_chip_frame_index(
+                            requested, frame_count);
+                    } else {
+                        int base = requested & ~1;
+                        int rel;
+                        if (base + 1 >= frame_count) base = 0;
+                        rel = ((party_dir & 3) - (creature_dir & 3)) & 3;
+                        expected = dm2_v1_viewport_map_chip_frame_index(
+                            base + (rel & 1), frame_count);
+                    }
+                    if (selected != expected) {
+                        continue;
+                    }
+                    ++parity_rows;
+                    out_receipt->frame_parity_hash =
+                        dm2_v1_boot_packaged_capture_hash_step(
+                            out_receipt->frame_parity_hash
+                                ? out_receipt->frame_parity_hash
+                                : 0x32434650u,
+                            (uint32_t)((creature << 16) |
+                                       (requested << 8) |
+                                       (creature_dir << 4) |
+                                       party_dir));
+                    out_receipt->frame_parity_hash =
+                        dm2_v1_boot_packaged_capture_hash_step(
+                            out_receipt->frame_parity_hash,
+                            (uint32_t)selected);
+                }
+            }
+        }
+        if (parity_rows <= 0) continue;
         ++out_receipt->sampled_creature_index_count;
         ++out_receipt->materialized_creature_index_count;
+        out_receipt->frame_parity_matrix_count += parity_rows;
         if (creature < 32) {
             out_receipt->sampled_creature_mask_low |= (uint32_t)1u << creature;
         } else {
@@ -5017,6 +5059,8 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
                                                       ev.raw_hash);
         hash = dm2_v1_boot_packaged_capture_hash_step(hash,
                                                       ev.decoded_hash);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, out_receipt->frame_parity_hash);
         if (out_receipt->materialized_creature_index_count >= 4) {
             break;
         }
@@ -5028,11 +5072,14 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
     out_receipt->valid =
         out_receipt->graphics_dat_ready &&
         out_receipt->materialized_creature_index_count >= 4 &&
+        out_receipt->frame_parity_matrix_count >=
+            out_receipt->materialized_creature_index_count * 16 &&
         out_receipt->min_frame_count > 0 &&
         out_receipt->raw_gdat_hash != 0u &&
         out_receipt->raw_gdat_byte_count > 0u &&
         out_receipt->decoded_gdat_hash != 0u &&
         out_receipt->decoded_gdat_pixel_count > 0u &&
+        out_receipt->frame_parity_hash != 0u &&
         out_receipt->atlas_material_hash != 0u;
     return out_receipt->valid;
 }
@@ -5117,9 +5164,12 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     out_receipt->runtime_creature_atlas_complete =
         out_receipt->creature_atlas.valid &&
         out_receipt->creature_atlas.materialized_creature_index_count >= 4 &&
+        out_receipt->creature_atlas.frame_parity_matrix_count >=
+            out_receipt->creature_atlas.materialized_creature_index_count * 16 &&
         out_receipt->creature_atlas.min_frame_count > 0 &&
         out_receipt->creature_atlas.raw_gdat_hash != 0u &&
-        out_receipt->creature_atlas.decoded_gdat_hash != 0u;
+        out_receipt->creature_atlas.decoded_gdat_hash != 0u &&
+        out_receipt->creature_atlas.frame_parity_hash != 0u;
     out_receipt->runtime_gdat_direction_breadth_complete =
         out_receipt->runtime_hud.render_sample_count == 4 &&
         out_receipt->runtime_hud.render_success_count == 4 &&
@@ -5161,6 +5211,8 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         hash, out_receipt->runtime_hud.decoded_gdat_runtime_portrait_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->creature_atlas.atlas_material_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->creature_atlas.frame_parity_hash);
     out_receipt->complete_support_hash = hash;
 
     /* skproject/SKWIN T520/T560 consumes GDAT title/menu, HUD, and dungeon
