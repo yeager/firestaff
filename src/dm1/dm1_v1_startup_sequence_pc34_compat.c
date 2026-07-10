@@ -2687,6 +2687,34 @@ int dm1_v1_startup_hoc_presented_capture_publish_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_presented_capture_publish_from_boot_summary_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary,
+    DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCPresentedCapturePublishFacts_PC34 facts;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!summary || !summary->handled) {
+        return 0;
+    }
+    memset(&facts, 0, sizeof(facts));
+    facts.source_id = "dm1";
+    facts.presented_capture_ready = summary->presented_capture;
+    facts.host_window_present = summary->host_window_capture;
+    facts.captured_from_mac_window = summary->mac_window_capture;
+    facts.captured_from_release_app = summary->release_app_capture;
+    facts.width = summary->presented_capture_width;
+    facts.height = summary->presented_capture_height;
+    facts.byte_count = summary->presented_capture_bytes;
+    facts.framebuffer_hash = summary->presented_capture_hash;
+    facts.required_consumer_mask = summary->presented_capture_consumer_mask;
+    return dm1_v1_startup_hoc_presented_capture_publish_receipt_pc34(
+        &facts,
+        out_receipt);
+}
+
 int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
     const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* handoff,
     const DM1_V1_StartupHostApplyResult_PC34* host_apply,

@@ -1304,6 +1304,9 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
 int dm1_v1_startup_hoc_presented_capture_publish_receipt_pc34(
     const DM1_V1_StartupHoCPresentedCapturePublishFacts_PC34* facts,
     DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_presented_capture_publish_from_boot_summary_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary,
+    DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34* out_receipt);
 int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
     const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* handoff,
     const DM1_V1_StartupHostApplyResult_PC34* host_apply,
