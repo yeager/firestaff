@@ -5081,8 +5081,10 @@ static void test_track02_bitmap_span_apply_receipts(void) {
     Theron_StartupActionPlan plan;
     Theron_V1StartupRuntimeEntryResult runtime_result;
     Theron_V1StartupRuntimeEntryApplyReceipt runtime_apply;
+    Theron_StartupHostReceipt runtime_host;
     Theron_V1StartupContinueResult continue_result;
     Theron_V1StartupContinueApplyReceipt continue_apply;
+    Theron_StartupHostReceipt continue_host;
 
     theron_v1_startup_media_state_receipt_init(&media_receipt);
     media_receipt.startup_media_ready = 1;
@@ -5139,6 +5141,22 @@ static void test_track02_bitmap_span_apply_receipts(void) {
                     runtime_apply.track02_media_forcefield_first_user_data_offset ==
                         0x3800u,
                 "runtime entry apply receipt carries Track02 bitmap source spans");
+    expect_true(theron_v1_startup_host_receipt_from_runtime_entry_apply(
+                    &runtime_apply,
+                    &runtime_host) == 1 &&
+                    runtime_host.track02_media_route == 1 &&
+                    runtime_host.track02_media_route_mask ==
+                        TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    runtime_host.track02_media_checksum == 0x45f10042u &&
+                    runtime_host.track02_media_title_first_raw_offset ==
+                        0x1000u &&
+                    runtime_host.track02_media_stage_last_user_data_offset ==
+                        0x183cu &&
+                    runtime_host.track02_media_soul_room_last_raw_offset ==
+                        0x306cu &&
+                    runtime_host.track02_media_forcefield_first_user_data_offset ==
+                        0x3800u,
+                "runtime host receipt carries Track02 bitmap source spans");
 
     theron_v1_startup_continue_result_init(&continue_result);
     continue_result.source = THERON_V1_STARTUP_CONTINUE_SOURCE_SRM;
@@ -5164,6 +5182,22 @@ static void test_track02_bitmap_span_apply_receipts(void) {
                     continue_apply.track02_media_forcefield_last_raw_offset ==
                         0x406cu,
                 "Continue apply receipt carries Track02 bitmap source spans");
+    expect_true(theron_v1_startup_host_receipt_from_continue_apply(
+                    &continue_apply,
+                    &continue_host) == 1 &&
+                    continue_host.track02_media_route == 1 &&
+                    continue_host.track02_media_route_mask ==
+                        TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    continue_host.track02_media_checksum == 0x45f10042u &&
+                    continue_host.track02_media_title_last_user_data_offset ==
+                        0x083cu &&
+                    continue_host.track02_media_stage_first_raw_offset ==
+                        0x2000u &&
+                    continue_host.track02_media_soul_room_first_user_data_offset ==
+                        0x2800u &&
+                    continue_host.track02_media_forcefield_last_raw_offset ==
+                        0x406cu,
+                "Continue host receipt carries Track02 bitmap source spans");
 }
 
 static void test_boot_startup_launch_detach_runtime_receipt(void) {
