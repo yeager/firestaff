@@ -626,6 +626,33 @@ typedef struct CSB_V1_BootStartupHostViewReceipt_PC34 {
     CSB_V1_BootStartupPackagedCaptureProof_PC34 capture_proof;
 } CSB_V1_BootStartupHostViewReceipt_PC34;
 
+/* Complete CSB-owned startup presentation transaction for an M11 consumer.
+ * Verification may still inspect capture receipts, but frame consumers get
+ * the resolved render plan, utility/HUD plan, readiness and asset proof in
+ * one snapshot-bound value. ReDMCSB TITLE.C F0437 lines 424-463 and
+ * ENTRANCE.C F0441/F0806 lines 850-883 keep those decisions in one loop;
+ * CSBWin Viewport.cpp keeps the menu panel as presentation state. */
+typedef struct CSB_V1_BootStartupM11PresentationReceipt_PC34 {
+    int valid;
+    int route;
+    int startup_render_plan_valid;
+    CSB_V1_StartupRenderPlan_PC34 startup_render_plan;
+    int utility_render_plan_valid;
+    CSB_V1_UtilRenderPlan utility_render_plan;
+    int hud_menu_draw_valid;
+    CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_menu_draw;
+    int readiness_valid;
+    CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
+    int capture_proof_valid;
+    CSB_V1_BootStartupPackagedCaptureProof_PC34 capture_proof;
+    int input_ready;
+    int hud_ready;
+    int runtime_ready;
+    int selected_command_id;
+    int selected_utility_action_index;
+    const char *source_evidence;
+} CSB_V1_BootStartupM11PresentationReceipt_PC34;
+
 typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
     int valid;
     int host_view_valid;
@@ -719,6 +746,8 @@ void csb_v1_boot_startup_render_draw_receipt_init_pc34(
     CSB_V1_BootStartupRenderDrawReceipt_PC34 *receipt);
 void csb_v1_boot_startup_host_view_receipt_init_pc34(
     CSB_V1_BootStartupHostViewReceipt_PC34 *receipt);
+void csb_v1_boot_startup_m11_presentation_receipt_init_pc34(
+    CSB_V1_BootStartupM11PresentationReceipt_PC34 *receipt);
 void csb_v1_boot_startup_host_view_draw_receipt_init_pc34(
     CSB_V1_BootStartupHostViewDrawReceipt_PC34 *receipt);
 void csb_v1_boot_startup_host_input_dispatch_receipt_init_pc34(
@@ -859,6 +888,9 @@ int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
 int csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_BootStartupHostViewReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupM11PresentationReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_host_input_dispatch_firestaff_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int menu_input,
