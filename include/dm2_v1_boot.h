@@ -353,6 +353,13 @@ typedef struct {
     uint32_t interface_action_group_count;
     uint32_t interface_action_entry_count;
     uint32_t interface_action_tail_byte_count;
+    int interface_font_table_ready;
+    uint32_t interface_font_table_hash;
+    uint32_t interface_font_table_byte_count;
+    uint32_t interface_font_table_row_count;
+    uint32_t interface_font_table_char_count;
+    uint32_t interface_font_table_nonzero_byte_count;
+    uint32_t interface_font_table_printable_char_count;
     uint32_t combined_frame_hash;
     uint32_t combined_pixel_count;
     DM2_V1_BootRuntimeRenderReceipt first_frame;
@@ -883,6 +890,7 @@ typedef struct {
     int runtime_gdat_hud_complete;
     int runtime_gdat_dungeon_complete;
     int runtime_gdat_map_chip_categories_complete;
+    int runtime_gdat_interface_placement_complete;
     int runtime_creature_atlas_complete;
     int runtime_gdat_direction_breadth_complete;
     int no_fallback_title_or_runtime_visuals;
