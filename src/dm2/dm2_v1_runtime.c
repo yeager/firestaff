@@ -32,6 +32,7 @@
 #include "dm2_v1_world_model.h"
 #include "fs_portable_compat.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* ── DM2 V1 Runtime State ─────────────────────────────────────────── */
@@ -111,6 +112,48 @@ static DM2_V1_RuntimeProjectileRenderReceipt g_dm2_last_projectile_render;
 static int g_dm2_last_asset_hud_portrait_count = 0;
 static int g_dm2_last_fallback_hud_portrait_count = 0;
 static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
+static int g_dm2_runtime_restore_in_progress = 0;
+
+#define DM2_RUNTIME_SAVE_MAGIC "FS2RT01"
+#define DM2_RUNTIME_SAVE_VERSION 1u
+
+typedef struct {
+    char magic[8];
+    uint32_t version;
+    uint32_t session_size;
+    uint32_t creature_size;
+    uint32_t dungeon_size;
+    uint32_t graphics_size;
+    char graphics_md5[33];
+    uint8_t map_wall_gfx_list[16];
+    uint8_t map_door_gfx_list[2];
+    int32_t map_wall_gfx_count;
+    int32_t move_cooldown_ticks;
+    int32_t paused;
+} DM2_V1_RuntimeSaveHeader;
+
+static int dm2_runtime_live_header_valid(const DM2_V1_RuntimeSaveHeader *header,
+                                         const DM2_V1_DungeonData *dungeon)
+{
+    if (!header || !dungeon ||
+        memcmp(header->magic, DM2_RUNTIME_SAVE_MAGIC, 8) != 0 ||
+        header->version != DM2_RUNTIME_SAVE_VERSION ||
+        header->session_size == 0 ||
+        header->creature_size != sizeof(DM2_V1_CreatureLiveState) ||
+        header->dungeon_size != (uint32_t)dungeon->raw_size ||
+        header->graphics_size != (uint32_t)g_dm2_runtime.boot->graphics_size ||
+        header->map_wall_gfx_count < 0 || header->map_wall_gfx_count > 16 ||
+        header->move_cooldown_ticks < 0) {
+        return 0;
+    }
+    return strncmp(header->graphics_md5,
+                   g_dm2_runtime.boot->graphics_md5,
+                   sizeof(header->graphics_md5)) == 0;
+}
+
+static int dm2_runtime_write_live_sidecar(const char *save_root);
+static void dm2_runtime_restore_live_sidecar(const char *save_root,
+                                             const DM2_V1_SessionState *session);
 
 static void dm2_runtime_add_viewport_asset_evidence(
     DM2_V1_RuntimeFrameOwnershipReceipt *receipt, int gdat_index)
@@ -919,6 +962,9 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
                                       ? DM2_WEATHER_RAIN
                                       : DM2_WEATHER_CLEAR);
     rt->weather.weather_intensity = (int)session->rain_intensity;
+    if (!g_dm2_runtime_restore_in_progress && rt->boot->save_root[0]) {
+        dm2_runtime_restore_live_sidecar(rt->boot->save_root, session);
+    }
     return 0;
 }
 
@@ -2334,6 +2380,178 @@ int dm2_v1_runtime_export_session(DM2_V1_SessionState *session) {
     return 0;
 }
 
+size_t dm2_v1_runtime_live_save_size(void) {
+    DM2_V1_DungeonData *dungeon;
+    uint8_t session[sizeof(DM2_V1_SessionState)];
+    DM2_V1_SessionState state;
+    int session_size;
+
+    if (!g_dm2_runtime.boot || !g_dm2_runtime.boot->dungeon_data) return 0;
+    dungeon = (DM2_V1_DungeonData *)g_dm2_runtime.boot->dungeon_data;
+    if (!dungeon->raw_data || dungeon->raw_size <= 0) return 0;
+    /* Session serialization has a bounded fixed size. Keep the actual size
+     * authoritative, since the compatible session envelope may grow. */
+    if (dm2_v1_runtime_export_session(&state) != 0) return 0;
+    session_size = dm2_v1_session_serialize(&state, session, sizeof(session));
+    if (session_size < 0) return 0;
+    return sizeof(DM2_V1_RuntimeSaveHeader) + (size_t)session_size +
+           sizeof(DM2_V1_CreatureLiveState) + (size_t)dungeon->raw_size;
+}
+
+int dm2_v1_runtime_serialize_live_save(uint8_t *out, size_t out_size) {
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_RuntimeSaveHeader header;
+    DM2_V1_CreatureLiveState creatures;
+    DM2_V1_SessionState session;
+    int session_size;
+    size_t total;
+    uint8_t *cursor;
+
+    if (!out || out_size < sizeof(header) || !g_dm2_runtime.boot ||
+        !g_dm2_runtime.boot->dungeon_data ||
+        dm2_v1_runtime_export_session(&session) != 0) return -1;
+    dungeon = (DM2_V1_DungeonData *)g_dm2_runtime.boot->dungeon_data;
+    if (!dungeon->raw_data || dungeon->raw_size <= 0 ||
+        dm2_v1_creature_export_live_state(&creatures) != 0) return -1;
+    session_size = dm2_v1_session_serialize(&session, out + sizeof(header),
+                                             out_size > sizeof(header)
+                                                 ? out_size - sizeof(header) : 0);
+    if (session_size < 0) return -1;
+    total = sizeof(header) + (size_t)session_size + sizeof(creatures) +
+            (size_t)dungeon->raw_size;
+    if (total > out_size) return -1;
+    memset(&header, 0, sizeof(header));
+    memcpy(header.magic, DM2_RUNTIME_SAVE_MAGIC, 8);
+    header.version = DM2_RUNTIME_SAVE_VERSION;
+    header.session_size = (uint32_t)session_size;
+    header.creature_size = (uint32_t)sizeof(creatures);
+    header.dungeon_size = (uint32_t)dungeon->raw_size;
+    header.graphics_size = (uint32_t)g_dm2_runtime.boot->graphics_size;
+    snprintf(header.graphics_md5, sizeof(header.graphics_md5), "%s",
+             g_dm2_runtime.boot->graphics_md5);
+    memcpy(header.map_wall_gfx_list, g_dm2_runtime.map_wall_gfx_list,
+           sizeof(header.map_wall_gfx_list));
+    memcpy(header.map_door_gfx_list, g_dm2_runtime.map_door_gfx_list,
+           sizeof(header.map_door_gfx_list));
+    header.map_wall_gfx_count = g_dm2_runtime.map_wall_gfx_count;
+    header.move_cooldown_ticks = g_dm2_runtime.move_cooldown_ticks;
+    header.paused = g_dm2_runtime.paused;
+    memcpy(out, &header, sizeof(header));
+    cursor = out + sizeof(header) + (size_t)session_size;
+    memcpy(cursor, &creatures, sizeof(creatures));
+    cursor += sizeof(creatures);
+    memcpy(cursor, dungeon->raw_data, (size_t)dungeon->raw_size);
+    return (int)total;
+}
+
+int dm2_v1_runtime_restore_live_save(const uint8_t *data, size_t data_size) {
+    const DM2_V1_RuntimeSaveHeader *header;
+    const uint8_t *cursor;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_SessionState session;
+    DM2_V1_CreatureLiveState creatures;
+    size_t total;
+
+    if (!data || !g_dm2_runtime.boot || !g_dm2_runtime.boot->dm2_state ||
+        !g_dm2_runtime.boot->dungeon_data ||
+        data_size < sizeof(*header)) return -1;
+    header = (const DM2_V1_RuntimeSaveHeader *)data;
+    dungeon = (DM2_V1_DungeonData *)g_dm2_runtime.boot->dungeon_data;
+    if (!dm2_runtime_live_header_valid(header, dungeon)) return -1;
+    total = sizeof(*header) + (size_t)header->session_size +
+            (size_t)header->creature_size + (size_t)header->dungeon_size;
+    if (total != data_size ||
+        dm2_v1_session_deserialize(&session, data + sizeof(*header),
+                                   header->session_size) != 0) return -1;
+    cursor = data + sizeof(*header) + header->session_size;
+    memcpy(&creatures, cursor, sizeof(creatures));
+    if (dm2_v1_creature_restore_live_state(&creatures) != 0) return -1;
+    cursor += sizeof(creatures);
+    memcpy(dungeon->raw_data, cursor, (size_t)dungeon->raw_size);
+    g_dm2_runtime_restore_in_progress = 1;
+    if (dm2_v1_runtime_apply_session(&session) != 0) {
+        g_dm2_runtime_restore_in_progress = 0;
+        return -1;
+    }
+    g_dm2_runtime_restore_in_progress = 0;
+    memcpy(g_dm2_runtime.map_wall_gfx_list, header->map_wall_gfx_list,
+           sizeof(g_dm2_runtime.map_wall_gfx_list));
+    memcpy(g_dm2_runtime.map_door_gfx_list, header->map_door_gfx_list,
+           sizeof(g_dm2_runtime.map_door_gfx_list));
+    g_dm2_runtime.map_wall_gfx_count = header->map_wall_gfx_count;
+    g_dm2_runtime.move_cooldown_ticks = header->move_cooldown_ticks;
+    g_dm2_runtime.paused = header->paused;
+    return 0;
+}
+
+static int dm2_runtime_write_live_sidecar(const char *save_root)
+{
+    char path[512];
+    uint8_t *data;
+    size_t size;
+    FILE *file;
+
+    if (!save_root || !FSP_JoinPath(path, sizeof(path), save_root,
+                                    "SKSave.runtime")) return -1;
+    size = dm2_v1_runtime_live_save_size();
+    if (size == 0) return -1;
+    data = (uint8_t *)malloc(size);
+    if (!data) return -1;
+    if (dm2_v1_runtime_serialize_live_save(data, size) < 0) {
+        free(data);
+        return -1;
+    }
+    file = fopen(path, "wb");
+    if (!file || fwrite(data, 1, size, file) != size) {
+        if (file) fclose(file);
+        free(data);
+        return -1;
+    }
+    fclose(file);
+    free(data);
+    return 0;
+}
+
+static void dm2_runtime_restore_live_sidecar(const char *save_root,
+                                             const DM2_V1_SessionState *session)
+{
+    char path[512];
+    FILE *file;
+    long length;
+    uint8_t *data;
+    DM2_V1_SessionState saved;
+
+    if (!save_root || !session || !FSP_JoinPath(path, sizeof(path), save_root,
+                                    "SKSave.runtime")) return;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (length = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return;
+    }
+    data = (uint8_t *)malloc((size_t)length);
+    if (!data || fread(data, 1, (size_t)length, file) != (size_t)length) {
+        fclose(file);
+        free(data);
+        return;
+    }
+    fclose(file);
+    if ((size_t)length <= sizeof(DM2_V1_RuntimeSaveHeader)) {
+        free(data);
+        return;
+    }
+    if (dm2_v1_session_deserialize(&saved, data + sizeof(DM2_V1_RuntimeSaveHeader),
+                                   (size_t)length - sizeof(DM2_V1_RuntimeSaveHeader)) != 0 ||
+        saved.game_tick != session->game_tick || saved.rng_seed != session->rng_seed ||
+        saved.party_x != session->party_x || saved.party_y != session->party_y ||
+        saved.party_level != session->party_level || saved.party_dir != session->party_dir) {
+        free(data);
+        return;
+    }
+    (void)dm2_v1_runtime_restore_live_save(data, (size_t)length);
+    free(data);
+}
+
 static void dm2_v1_quicksave_receipt_init(
     DM2_V1_QuicksaveReceipt *receipt,
     DM2_V1_QuicksaveResult result,
@@ -2392,6 +2610,14 @@ int dm2_v1_runtime_quicksave_boot_profile_with_receipt(
                                       "DM2 WRITE FAILED");
         snprintf(receipt->save_root, sizeof(receipt->save_root),
                  "%s", profile->save_root);
+        return 0;
+    }
+    if (dm2_runtime_write_live_sidecar(profile->save_root) != 0) {
+        dm2_v1_quicksave_receipt_init(receipt,
+                                      DM2_V1_QUICKSAVE_WRITE_FAILED,
+                                      "DM2 RUNTIME WRITE FAILED");
+        snprintf(receipt->save_root, sizeof(receipt->save_root), "%s",
+                 profile->save_root);
         return 0;
     }
     if (!FSP_JoinPath(receipt->save_path, sizeof(receipt->save_path),
