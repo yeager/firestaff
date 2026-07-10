@@ -90,6 +90,13 @@ typedef enum {
 #define DM2_GDAT_GFXSET_CEIL  0x01
 #define DM2_GDAT_IMG_MAP_CHIP 0xF9
 
+/* skproject/SKWIN/SkWinCore.cpp GET_CREATURE_ANIMATION_FRAME consumes the
+ * creature action/sequence tables; SKWINSPX/src/v4/skcrture.cpp names the
+ * real V5 GDAT records as category 0x0f dtRaw8/0xfb and dtRaw7/0xfc/0xfd. */
+#define DM2_GDAT_CREATURE_ANIM_ATTRIBUTION     0xFB
+#define DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE   0xFC
+#define DM2_GDAT_CREATURE_ANIM_FRAME_SEQUENCE  0xFD
+
 /* ── Image Compression Types ─────────────────────────────────────── */
 typedef enum {
     DM2_IMG_FMT_UNKNOWN     = 0,

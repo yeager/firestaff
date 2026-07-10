@@ -5250,6 +5250,67 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
             break;
         }
     }
+    /* skproject/SKWIN/SkWinCore.cpp GET_CREATURE_ANIMATION_FRAME consumes
+     * creature action/sequence tables for runtime frame choice.
+     * skproject/SKWINSPX/src/v4/skcrture.cpp:
+     * GET_CREATURE_COMMAND_ANIMATION_V5 reads dtRaw8/0xfb, while
+     * GET_ANIM_SEQUENCE_INFO_V5 and GET_CREATURE_ANIMATION_IMAGE_ID_V5 read
+     * dtRaw7/0xfc and dtRaw7/0xfd.  Keep this as boot/render asset evidence:
+     * it proves the real GDAT tables are present for creature rendering
+     * without executing creature AI or combat. */
+    for (int creature = 0; creature < 64; ++creature) {
+        uint32_t before_hash = out_receipt->animation_table_hash;
+        uint32_t before_count = out_receipt->animation_table_byte_count;
+        int table_count = 0;
+        if (dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
+                profile,
+                DM2_GDAT_CATEGORY_CREATURES,
+                creature,
+                DM2_GDAT_ENTRY_TYPE_RAW8,
+                DM2_GDAT_CREATURE_ANIM_ATTRIBUTION,
+                &out_receipt->animation_table_hash,
+                &out_receipt->animation_table_byte_count)) {
+            ++out_receipt->animation_attribution_count;
+            ++table_count;
+        }
+        if (dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
+                profile,
+                DM2_GDAT_CATEGORY_CREATURES,
+                creature,
+                DM2_GDAT_ENTRY_TYPE_RAW7,
+                DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE,
+                &out_receipt->animation_table_hash,
+                &out_receipt->animation_table_byte_count)) {
+            ++out_receipt->animation_info_sequence_count;
+            ++table_count;
+        }
+        if (dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
+                profile,
+                DM2_GDAT_CATEGORY_CREATURES,
+                creature,
+                DM2_GDAT_ENTRY_TYPE_RAW7,
+                DM2_GDAT_CREATURE_ANIM_FRAME_SEQUENCE,
+                &out_receipt->animation_table_hash,
+                &out_receipt->animation_table_byte_count)) {
+            ++out_receipt->animation_frame_sequence_count;
+            ++table_count;
+        }
+        if (table_count > 0) {
+            out_receipt->animation_table_hash =
+                dm2_v1_boot_packaged_capture_hash_step(
+                    out_receipt->animation_table_hash,
+                    (uint32_t)((creature << 8) | table_count));
+        } else {
+            out_receipt->animation_table_hash = before_hash;
+            out_receipt->animation_table_byte_count = before_count;
+        }
+    }
+    out_receipt->animation_table_ready =
+        out_receipt->animation_attribution_count > 0 &&
+        out_receipt->animation_info_sequence_count > 0 &&
+        out_receipt->animation_frame_sequence_count > 0 &&
+        out_receipt->animation_table_hash != 0u &&
+        out_receipt->animation_table_byte_count > 0u;
     if (out_receipt->min_frame_count == 9999) {
         out_receipt->min_frame_count = 0;
     }
@@ -5264,6 +5325,7 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
         out_receipt->raw_gdat_byte_count > 0u &&
         out_receipt->decoded_gdat_hash != 0u &&
         out_receipt->decoded_gdat_pixel_count > 0u &&
+        out_receipt->animation_table_ready &&
         out_receipt->frame_parity_hash != 0u &&
         out_receipt->atlas_material_hash != 0u;
     return out_receipt->valid;
@@ -5354,6 +5416,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->creature_atlas.min_frame_count > 0 &&
         out_receipt->creature_atlas.raw_gdat_hash != 0u &&
         out_receipt->creature_atlas.decoded_gdat_hash != 0u &&
+        out_receipt->creature_atlas.animation_table_ready &&
         out_receipt->creature_atlas.frame_parity_hash != 0u;
     out_receipt->runtime_gdat_direction_breadth_complete =
         out_receipt->runtime_hud.render_sample_count == 4 &&
