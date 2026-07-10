@@ -4100,6 +4100,27 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
             command.render_kind =
                 DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34;
             command.door_animation_step = source_step - 6U;
+            if (command.door_animation_step > 0U &&
+                command.door_animation_step <=
+                    media_receipt->entrance_door_step_count) {
+                EntranceCompatDoorStep door_step;
+                if (!ENTRANCE_Compat_GetDoorAnimationStep(
+                        command.door_animation_step,
+                        &door_step)) {
+                    return 0;
+                }
+                command.door_geometry_ready = 1;
+                command.door_left_box_x = door_step.leftBoxX;
+                command.door_left_box_y = door_step.leftBoxY;
+                command.door_left_box_w = door_step.leftBoxW;
+                command.door_left_box_h = door_step.leftBoxH;
+                command.door_right_box_x = door_step.rightBoxX;
+                command.door_right_box_y = door_step.rightBoxY;
+                command.door_right_box_w = door_step.rightBoxW;
+                command.door_right_box_h = door_step.rightBoxH;
+                command.door_left_source_x = door_step.leftSourceX;
+                command.door_right_source_x = door_step.rightSourceX;
+            }
             command.play_door_rattle_sound =
                 (command.door_animation_step > 0U &&
                  command.door_animation_step <=

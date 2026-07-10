@@ -642,6 +642,15 @@ static void check_title_to_menu_boundary(void) {
                  entranceCommand.lower_level_renderer_helper_owned &&
                  entranceCommand.lower_level_audio_helper_owned &&
                  entranceCommand.door_animation_step == 1u &&
+                 entranceCommand.door_geometry_ready &&
+                 entranceCommand.door_left_box_x == 0u &&
+                 entranceCommand.door_left_box_y == 0u &&
+                 entranceCommand.door_left_box_w == 101u &&
+                 entranceCommand.door_left_box_h == 161u &&
+                 entranceCommand.door_right_box_x == 109u &&
+                 entranceCommand.door_right_box_y == 0u &&
+                 entranceCommand.door_right_box_w == 123u &&
+                 entranceCommand.door_right_box_h == 161u &&
                  entranceCommand.play_door_rattle_sound &&
                  entranceCommand.delay_ms == media.entrance_vblank_ms,
              1);

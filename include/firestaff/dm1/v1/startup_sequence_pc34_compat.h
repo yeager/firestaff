@@ -94,6 +94,17 @@ typedef struct DM1_V1_StartupEntranceRenderAudioCommand_PC34 {
     int play_door_rattle_sound;
     unsigned int source_step;
     unsigned int door_animation_step;
+    int door_geometry_ready;
+    unsigned int door_left_box_x;
+    unsigned int door_left_box_y;
+    unsigned int door_left_box_w;
+    unsigned int door_left_box_h;
+    unsigned int door_right_box_x;
+    unsigned int door_right_box_y;
+    unsigned int door_right_box_w;
+    unsigned int door_right_box_h;
+    unsigned int door_left_source_x;
+    unsigned int door_right_source_x;
     unsigned int delay_ms;
 } DM1_V1_StartupEntranceRenderAudioCommand_PC34;
 

@@ -839,8 +839,21 @@ static int m11_play_redmcsb_entrance_transition(
         } else if (command.render_kind ==
                    DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34) {
             EntranceCompatDoorStep door;
-            if (ENTRANCE_Compat_GetDoorAnimationStep(command.door_animation_step,
-                                                     &door)) {
+            if (command.door_geometry_ready) {
+                memset(&door, 0, sizeof(door));
+                door.animationStep = command.door_animation_step;
+                door.soundRattle = (unsigned int)(command.play_door_rattle_sound ? 1 : 0);
+                door.vblankBeforeCopy = 1U;
+                door.leftBoxX = command.door_left_box_x;
+                door.leftBoxY = command.door_left_box_y;
+                door.leftBoxW = command.door_left_box_w;
+                door.leftBoxH = command.door_left_box_h;
+                door.rightBoxX = command.door_right_box_x;
+                door.rightBoxY = command.door_right_box_y;
+                door.rightBoxW = command.door_right_box_w;
+                door.rightBoxH = command.door_right_box_h;
+                door.leftSourceX = command.door_left_source_x;
+                door.rightSourceX = command.door_right_source_x;
                 if (command.play_door_rattle_sound) {
                     (void)M11_Audio_EmitMarker(&gameView->audioState,
                                                M11_AUDIO_MARKER_DOOR);
