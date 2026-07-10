@@ -14,6 +14,7 @@
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
+#include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -2464,8 +2465,24 @@ DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_
     }
 
     if (receipt.door_front_between_passes) {
+        const DM1_V1_D3L2D3R2F0111DoorFrontSpecPc34 *spec =
+            dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_for_side_pc34(
+                slot == 0 ? DM1_V1_D3L2_D3R2_F0111_SIDE_D3L2_PC34
+                          : DM1_V1_D3L2_D3R2_F0111_SIDE_D3R2_PC34);
+        DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 plan;
         receipt.door_front_asset_index = state->door_front_d3[slot];
         receipt.door_front_asset_bound = receipt.door_front_asset_index != 0;
+        if (spec &&
+            dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_material_plan_pc34(
+                spec, &plan)) {
+            receipt.door_front_blit_plan_bound = true;
+            receipt.door_front_graphic_index = receipt.door_front_asset_index;
+            receipt.door_front_zone_index = (int16_t)plan.door_zone;
+            receipt.door_front_dst_x = (int16_t)plan.x;
+            receipt.door_front_dst_y = (int16_t)plan.y;
+            receipt.door_front_width = (int16_t)plan.width;
+            receipt.door_front_height = (int16_t)plan.height;
+        }
     }
 
     return receipt;
@@ -2574,8 +2591,8 @@ const DM1_ViewportSameViewportCaptureContract *dm1_viewport_3d_same_viewport_cap
  *   5=TELEPORTER, 6=FAKEWALL
  *
  * Extended aspect types (16-19) are derived by F0172 from raw type
- * plus wall configuration context.  Those require additional dungeon
- * lookups and are handled by the caller (dm1_viewport_3d_draw_csb_*).
+ * plus wall configuration context.  Callers that already resolved those
+ * aspects may provide dungeon_aspect_grid; raw bytes still use sq>>5.
  *
  * Source: ReDMCSB DUNGEON.C:1371-1421 F0150; DEFS.H M034_SQUARE_TYPE (sq>>5)
  * ──────────────────────────────────────────────────────────────────────── */
@@ -2585,6 +2602,10 @@ int dm1_viewport_3d_get_dungeon_element(const DM1_Viewport3DState *state,
     if (!state || !state->dungeon_grid) return 0;
     if (map_x < 0 || map_x >= state->dungeon_width) return 0;
     if (map_y < 0 || map_y >= state->dungeon_height) return 0;
+    if (state->dungeon_aspect_grid) {
+        return (int)(state->dungeon_aspect_grid[
+            (unsigned)map_y * (unsigned)state->dungeon_width + (unsigned)map_x]);
+    }
     /* Dungeon grid is row-major: [y * width + x]
      * Note: CSB uses column-major dungeon.dat layout, but the firestaff
      * dungeon loader converts to row-major when populating the grid. */
@@ -2717,6 +2738,73 @@ static int dm1_viewport_3d_draw_floor_ornament_plan(
     return 1;
 }
 
+static int dm1_viewport_3d_draw_d3_door_front_plan(
+    DM1_Viewport3DState *state,
+    DM1_ViewSquareIndex square,
+    int door_front_index)
+{
+    const DM1_V1_D3L2D3R2F0111DoorFrontSpecPc34 *spec;
+    DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 plan;
+    int side;
+    int color;
+
+    if (!state || !state->viewport_pixels) return 0;
+    if (door_front_index <= 0) return 0;
+
+    if (square == DM1_VIEW_SQUARE_D3L2) {
+        side = DM1_V1_D3L2_D3R2_F0111_SIDE_D3L2_PC34;
+    } else if (square == DM1_VIEW_SQUARE_D3R2) {
+        side = DM1_V1_D3L2_D3R2_F0111_SIDE_D3R2_PC34;
+    } else {
+        return 0;
+    }
+
+    spec = dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_for_side_pc34(side);
+    if (!spec ||
+        !dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_material_plan_pc34(
+            spec, &plan)) {
+        return 0;
+    }
+    if (plan.x < 0 || plan.y < 0 ||
+        plan.x + plan.width > DM1_VIEWPORT_WIDTH ||
+        plan.y + plan.height > DM1_VIEWPORT_HEIGHT ||
+        plan.width <= 0 || plan.height <= 0) {
+        return 0;
+    }
+
+    color = door_front_index & 0x3f;
+    if (color == 0 || color == COLOR_TRANSPARENT) color = 12;
+
+    /* ReDMCSB F0676/F0677 call F0111 between the two F0115 passes
+     * (DUNVIEW.C:6272,6339). F0111:4257-4334 copies G0693 to temporary
+     * bitmap storage and draws it through C3700/C3710 with C10 transparency.
+     * Use the existing material plan so real GRAPHICS.DAT bytes can replace
+     * this bounded route without changing the runtime order. */
+    for (int y = 0; y < plan.height; ++y) {
+        uint8_t expanded[DM1_V1_D3L2_D3R2_F0111_DOOR_FRONT_VIEWPORT_WIDTH_PC34];
+        const uint8_t *src = NULL;
+        uint8_t *dst = state->viewport_pixels + (plan.y + y) * state->viewport_stride + plan.x;
+        int have_expanded = 0;
+
+        if (state->temp_bitmap &&
+            state->temp_bitmap_size >= plan.source_stride_bytes * plan.height) {
+            src = state->temp_bitmap + y * plan.source_stride_bytes;
+            have_expanded =
+                dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_materialize_row_pc34(
+                    &plan, src, (size_t)plan.source_stride_bytes,
+                    expanded, sizeof(expanded)) ? 1 : 0;
+        }
+
+        for (int x = 0; x < plan.width; ++x) {
+            uint8_t pixel = have_expanded ? expanded[x] : (uint8_t)color;
+            if (pixel != COLOR_TRANSPARENT) {
+                dst[x] = pixel;
+            }
+        }
+    }
+    return 1;
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_draw_csb_back_wall
  *
@@ -2747,7 +2835,8 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
     if (!state) return;
 
     int cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
-    int element = dm1_viewport_3d_classify_grid_cell(cell);
+    int element = state->dungeon_aspect_grid ? cell
+                                             : dm1_viewport_3d_classify_grid_cell(cell);
     state->last_d3_back_wall_receipt =
         dm1_viewport_3d_build_d3_back_wall_runtime_asset_receipt(state, square, element);
 
@@ -2925,6 +3014,13 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
      * helper. Host/runtime code must consume this route instead of treating the
      * square as a generic open corridor.
      * Source: DUNVIEW.C:6272 (F0676) · DUNVIEW.C:6339 (F0677) */
+    if (element == DM1_VP_ELEMENT_DOOR_FRONT) {
+        int slot = dm1_viewport_3d_d3_back_wall_side_slot(square);
+        if (slot >= 0) {
+            (void)dm1_viewport_3d_draw_d3_door_front_plan(
+                state, square, state->door_front_d3[slot]);
+        }
+    }
     (void)direction; /* unused in current stub */
     (void)fr;
 }
@@ -2956,7 +3052,8 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
     if (!state) return;
 
     int cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
-    int element = dm1_viewport_3d_classify_grid_cell(cell);
+    int element = state->dungeon_aspect_grid ? cell
+                                             : dm1_viewport_3d_classify_grid_cell(cell);
 
     const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
     if (!bm_base) return;

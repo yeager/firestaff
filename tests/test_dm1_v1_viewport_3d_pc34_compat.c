@@ -2658,6 +2658,14 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
                   d3l2_asset.door_front_asset_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3l2_door_asset_index",
                   d3l2_asset.door_front_asset_index, 0x231);
+        check_int("d3l2_d3r2_gate.d3l2_door_blit_plan_bound",
+                  d3l2_asset.door_front_blit_plan_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_door_blit_zone",
+                  d3l2_asset.door_front_zone_index == 3700 &&
+                  d3l2_asset.door_front_dst_x == 0 &&
+                  d3l2_asset.door_front_dst_y == 25 &&
+                  d3l2_asset.door_front_width == 16 &&
+                  d3l2_asset.door_front_height == 49, 1);
         check_int("d3l2_d3r2_gate.d3r2_floor_asset_bound",
                   d3r2_asset.floor_ornament_asset_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3r2_floor_asset_index",
@@ -2673,6 +2681,14 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
                   d3r2_asset.door_front_asset_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3r2_door_asset_index",
                   d3r2_asset.door_front_asset_index, 0x232);
+        check_int("d3l2_d3r2_gate.d3r2_door_blit_plan_bound",
+                  d3r2_asset.door_front_blit_plan_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3r2_door_blit_zone",
+                  d3r2_asset.door_front_zone_index == 3710 &&
+                  d3r2_asset.door_front_dst_x == 208 &&
+                  d3r2_asset.door_front_dst_y == 25 &&
+                  d3r2_asset.door_front_width == 16 &&
+                  d3r2_asset.door_front_height == 49, 1);
         check_int("d3l2_d3r2_gate.d3r2_corridor_floor_asset_bound",
                   d3r2_corridor.floor_ornament_asset_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3r2_corridor_door_asset_unbound",
@@ -2723,6 +2739,41 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
     check_int("d3l2_d3r2_gate.raw_corridor_old_diamond_zone_untouched",
               viewport[50 * DM1_VIEWPORT_WIDTH + 2], 0xee);
     grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
+
+    /* DOOR_FRONT uses the F0676/F0111 material route: F0108 floor ornament,
+     * F0115 rear pass, F0111 C3700 door blit, then F0115 front pass. */
+    {
+        uint8_t packed_door[8 * 49];
+        memset(viewport, 0xee, sizeof(viewport));
+        memset(packed_door, 0xaa, sizeof(packed_door));
+        packed_door[0] = 0xa4;       /* C10 skip then visible 4. */
+        packed_door[7] = 0x5a;       /* visible 5 then C10 skip. */
+        state.temp_bitmap = packed_door;
+        state.temp_bitmap_size = (int)sizeof(packed_door);
+        state.door_front_d3[0] = 0x231;
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_DOOR_FRONT;
+        state.dungeon_aspect_grid = grid;
+        state.parity_flip = false;
+        dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 1, 1);
+        check_int("d3l2_d3r2_gate.d3l2_door_runtime_plan_bound",
+                  state.last_d3_back_wall_receipt.door_front_blit_plan_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_door_runtime_zone",
+                  state.last_d3_back_wall_receipt.door_front_zone_index, 3700);
+        check_int("d3l2_d3r2_gate.d3l2_door_front_transparent_left_skip",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+        check_int("d3l2_d3r2_gate.d3l2_door_front_expanded_pixel",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 1], 0x04);
+        check_int("d3l2_d3r2_gate.d3l2_door_front_right_visible",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 14], 0x05);
+        check_int("d3l2_d3r2_gate.d3l2_door_front_right_transparent_skip",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 15], 0xee);
+        check_int("d3l2_d3r2_gate.d3l2_door_front_neighbor_untouched",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 16], 0xee);
+        state.temp_bitmap = NULL;
+        state.temp_bitmap_size = 0;
+        state.dungeon_aspect_grid = NULL;
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
+    }
 
     /* D3R2 native: F0677 chooses C10_WALL_D3R2 and C703_ZONE_WALL_D3R2. */
     memset(viewport, 0xee, sizeof(viewport));
