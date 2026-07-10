@@ -43,6 +43,12 @@ typedef struct {
     int hud_gdat_blits;
     int door_gdat_blits;
     int creature_gdat_blits;
+    int viewport_raw_gdat_asset_count;
+    int viewport_decoded_gdat_asset_count;
+    uint32_t viewport_raw_gdat_hash;
+    uint32_t viewport_raw_gdat_byte_count;
+    uint32_t viewport_decoded_gdat_hash;
+    uint32_t viewport_decoded_gdat_pixel_count;
     int valid;
 } DM2_V1_RuntimeFrameOwnershipReceipt;
 #include "dm2_v1_weather.h"
