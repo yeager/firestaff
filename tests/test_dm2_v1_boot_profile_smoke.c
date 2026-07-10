@@ -646,6 +646,10 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               complete_support.no_fallback_title_or_runtime_visuals == 1 &&
               complete_support.raw_gdat_capture_complete == 1 &&
               complete_support.decoded_gdat_capture_complete == 1 &&
+              complete_support.save_corpus_scan_complete == 1 &&
+              complete_support.save_corpus_hash != 0u &&
+              complete_support.save_corpus_valid_candidate_count >=
+                  complete_support.save_corpus_importable_candidate_count &&
               complete_support.complete_support_ready == 1 &&
               complete_support.complete_support_hash != 0u &&
               strcmp(complete_support.status, "complete-support-ready") == 0,

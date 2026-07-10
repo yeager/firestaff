@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM2 complete-support save-corpus receipt: DM2 complete-support now consumes `dm2_v1_sksave_corpus_scan`, exposes valid/importable/rejected/original candidate counts plus slot mask, and folds the save-corpus hash into the complete-support hash without requiring local saves to exist.
+
 - ✅ 2026-07-11 DM2 item/carried full-GDAT fallback gate: boot/runtime render receipts now carry floor-item and carried-item asset/fallback counts from the V1 viewport renderer, and complete-support rejects item/carried fallback draws alongside wall, door, creature, possession-item, and projectile fallback draws.
 
 - ✅ 2026-07-11 DM1 M12 corpus receipt consumer: startup menu now exposes DM1 PC34 corpus import/export receipt wrappers, so launcher code consumes the save-browser ReDMCSB `SAVEHEAD.C` F0429/F0430 plus `CEDTINCD.C` F7057 gates instead of raw selected-save diagnostics. Verification: `cmake --build build --target test_m12_quick_resume_gate --parallel 2`, `timeout 60 ./build/test_m12_quick_resume_gate`, and `git diff --check` passed.
