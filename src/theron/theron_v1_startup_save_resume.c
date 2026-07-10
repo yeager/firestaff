@@ -1051,6 +1051,38 @@ static void theron_v1_startup_continue_capture_result(
     out_result->tick_count = (int)world->world_tick;
 }
 
+static int theron_v1_startup_continue_attach_track02_media(
+    Theron_V1StartupContinueResult *result,
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    if (!result || !media_receipt) {
+        return 1;
+    }
+    if (!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            media_receipt)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "Track 02 Continue media receipt incomplete; fallback visuals blocked");
+        }
+        return 0;
+    }
+    result->track02_media_route = 1;
+    result->track02_media = *media_receipt;
+    if (receipt && receipt_cap > 0u) {
+        size_t used = strlen(receipt);
+        if (used < receipt_cap - 1u) {
+            snprintf(receipt + used, receipt_cap - used,
+                     "%sTrack 02 media atlas=0x%x checksum=%08x",
+                     used ? "; " : "",
+                     media_receipt->startup_bitmap_atlas_route_mask,
+                     (unsigned)media_receipt->startup_bitmap_atlas_checksum);
+        }
+    }
+    return 1;
+}
+
 int theron_v1_startup_continue_apply_request(
     Theron_V1_World *world,
     const Theron_V1StartupContinueRequest *request,
@@ -1096,7 +1128,8 @@ int theron_v1_startup_continue_apply_request(
             request->tqsv_slot_index,
             THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT,
             out_result);
-        return 1;
+        return theron_v1_startup_continue_attach_track02_media(
+            out_result, request->track02_media_receipt, receipt, receipt_cap);
     }
     if (srm_available) {
         if (!theron_v1_startup_continue_srm_apply(
@@ -1113,7 +1146,8 @@ int theron_v1_startup_continue_apply_request(
             request->srm_slot_index,
             request->srm_import_status,
             out_result);
-        return 1;
+        return theron_v1_startup_continue_attach_track02_media(
+            out_result, request->track02_media_receipt, receipt, receipt_cap);
     }
 
     if (receipt && receipt_cap > 0u) {
@@ -1153,6 +1187,11 @@ int theron_v1_startup_continue_apply_receipt(
     out_receipt->srm_party_champion_count =
         result->srm_party_champion_count;
     out_receipt->srm_party_gold = result->srm_party_gold;
+    out_receipt->track02_media_route = result->track02_media_route;
+    out_receipt->track02_media_route_mask =
+        result->track02_media.startup_bitmap_atlas_route_mask;
+    out_receipt->track02_media_checksum =
+        result->track02_media.startup_bitmap_atlas_checksum;
     out_receipt->status_scope = plan->status_scope
         ? plan->status_scope
         : "STARTUP";
@@ -1256,9 +1295,12 @@ int theron_v1_startup_continue_state_receipt_from_result(
     out_receipt->tick_count = result->tick_count;
     out_receipt->set_runtime_level_route = 1;
     out_receipt->runtime_level_source =
-        THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME;
+        result->track02_media_route
+            ? THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_MEDIA
+            : THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME;
     out_receipt->runtime_track02_semantic_handoff = 0;
-    out_receipt->runtime_fallback_visuals_blocked = 0;
+    out_receipt->runtime_fallback_visuals_blocked =
+        result->track02_media_route;
     out_receipt->runtime_structured_route = 1;
     out_receipt->runtime_receipt_text_route = 0;
     if (result->source == THERON_V1_STARTUP_CONTINUE_SOURCE_SRM) {

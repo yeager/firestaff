@@ -272,6 +272,9 @@ int theron_v1_startup_runtime_load_initial_level(
     int dungeon_index;
     uint32_t seed;
     Theron_MapLoadResult r;
+    Theron_StartupMediaStateReceipt media_receipt;
+    int verified_track02_request;
+    int complete_track02_media = 0;
 
     if (!world) {
         return 0;
@@ -281,6 +284,14 @@ int theron_v1_startup_runtime_load_initial_level(
         dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
     }
     dungeon_index = (int)dungeon_id - 1;
+    verified_track02_request =
+        theron_v1_startup_runtime_has_verified_track02_request(
+            hucard_rom, hucard_rom_size, md5_hex);
+    theron_v1_startup_media_capture_track02_state_receipt(
+        hucard_rom, hucard_rom_size, md5_hex, &media_receipt);
+    complete_track02_media =
+        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            &media_receipt);
     if (theron_v1_startup_runtime_try_track02_initial_level(world,
                                                             hucard_rom,
                                                             hucard_rom_size,
@@ -290,10 +301,9 @@ int theron_v1_startup_runtime_load_initial_level(
                                                             receipt_cap)) {
         return 1;
     }
-    if (theron_v1_startup_runtime_has_verified_track02_request(
-            hucard_rom,
-            hucard_rom_size,
-            md5_hex)) {
+    if (verified_track02_request &&
+        (dungeon_id == THERON_DUNGEON_1_HALL_OF_RECORDS ||
+         !complete_track02_media)) {
         if (receipt && receipt_cap > 0u) {
             char semantic_detail[256];
             semantic_detail[0] = '\0';
@@ -355,16 +365,31 @@ int theron_v1_startup_runtime_load_initial_level(
                           world->levels[dungeon_index][0].start_y,
                           world->levels[dungeon_index][0].start_dir);
     if (receipt && receipt_cap > 0u && receipt[0] == '\0') {
-        snprintf(receipt,
-                 receipt_cap,
-                 "Track 02 descriptor scan unavailable; fallback room stage=%d size=%dx%d seed=%u start=(%d,%d,%d)",
-                 (int)dungeon_id,
-                 preview.width,
-                 preview.height,
-                 (unsigned)seed,
-                 (int)preview.start_x,
-                 (int)preview.start_y,
-                 (int)preview.start_dir);
+        if (verified_track02_request && complete_track02_media) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "Track 02 media route stage=%d atlas=0x%x checksum=%08x; bounded fallback map size=%dx%d seed=%u start=(%d,%d,%d)",
+                     (int)dungeon_id,
+                     media_receipt.startup_bitmap_atlas_route_mask,
+                     (unsigned)media_receipt.startup_bitmap_atlas_checksum,
+                     preview.width,
+                     preview.height,
+                     (unsigned)seed,
+                     (int)preview.start_x,
+                     (int)preview.start_y,
+                     (int)preview.start_dir);
+        } else {
+            snprintf(receipt,
+                     receipt_cap,
+                     "Track 02 descriptor scan unavailable; fallback room stage=%d size=%dx%d seed=%u start=(%d,%d,%d)",
+                     (int)dungeon_id,
+                     preview.width,
+                     preview.height,
+                     (unsigned)seed,
+                     (int)preview.start_x,
+                     (int)preview.start_y,
+                     (int)preview.start_dir);
+        }
     }
     return 1;
 }
@@ -424,6 +449,8 @@ static void theron_v1_startup_runtime_entry_capture_result(
     const Theron_V1_World *world,
     const char *runtime_receipt,
     int verified_track02_request,
+    int semantic_handoff,
+    const Theron_StartupMediaStateReceipt *media_receipt,
     Theron_V1StartupRuntimeEntryResult *out_result) {
 
     (void)runtime_receipt;
@@ -435,10 +462,22 @@ static void theron_v1_startup_runtime_entry_capture_result(
     out_result->level_loaded = 1;
     out_result->structured_runtime_route = 1;
     out_result->runtime_receipt_text_route = 0;
-    if (verified_track02_request) {
+    if (verified_track02_request && media_receipt &&
+        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            media_receipt)) {
+        out_result->track02_media_route = 1;
+        out_result->track02_media = *media_receipt;
+        out_result->fallback_visuals_blocked = 1;
+    }
+    if (semantic_handoff) {
         out_result->runtime_level_source =
             THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC;
         out_result->track02_semantic_handoff = 1;
+    } else if (verified_track02_request && media_receipt &&
+               theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+                   media_receipt)) {
+        out_result->runtime_level_source =
+            THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_MEDIA;
     } else {
         out_result->runtime_level_source =
             THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM;
@@ -484,6 +523,8 @@ static const char *theron_v1_startup_runtime_level_source_name(
         return "track02-semantic";
     case THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED:
         return "track02-blocked";
+    case THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_MEDIA:
+        return "track02-media";
     case THERON_V1_STARTUP_RUNTIME_LEVEL_NONE:
     default:
         return "none";
@@ -501,6 +542,7 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     Theron_V1StartupRuntimeLevelLoadContext level_load_context;
     Theron_StartupResult result;
     int verified_track02_request = 0;
+    Theron_StartupMediaStateReceipt media_receipt;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -541,6 +583,9 @@ int theron_v1_startup_runtime_enter_from_forcefield(
             request->hucard_rom,
             request->hucard_rom_size,
             request->md5_hex);
+    theron_v1_startup_media_capture_track02_state_receipt(
+        request->hucard_rom, request->hucard_rom_size, request->md5_hex,
+        &media_receipt);
     result = theron_v1_startup_enter_runtime_from_forcefield(
         flow,
         world,
@@ -567,6 +612,8 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     theron_v1_startup_runtime_entry_capture_result(world,
                                                    receipt,
                                                    verified_track02_request,
+                                                   verified_track02_request,
+                                                   &media_receipt,
                                                    out_result);
     return 1;
 }
@@ -595,6 +642,11 @@ int theron_v1_startup_runtime_entry_apply_receipt(
     out_receipt->runtime_level_source = result->runtime_level_source;
     out_receipt->track02_semantic_handoff =
         result->track02_semantic_handoff;
+    out_receipt->track02_media_route = result->track02_media_route;
+    out_receipt->track02_media_route_mask =
+        result->track02_media.startup_bitmap_atlas_route_mask;
+    out_receipt->track02_media_checksum =
+        result->track02_media.startup_bitmap_atlas_checksum;
     out_receipt->fallback_visuals_blocked =
         result->fallback_visuals_blocked;
     out_receipt->structured_runtime_route =
@@ -721,6 +773,7 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
     Theron_V1StartupRuntimeEntryApplyReceipt apply_receipt;
     Theron_StartupFlow flow;
     int verified_track02_request;
+    Theron_StartupMediaStateReceipt media_receipt;
 
     theron_v1_startup_runtime_entry_result_init(result);
     theron_v1_startup_runtime_entry_apply_receipt_init(&apply_receipt);
@@ -737,6 +790,8 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
             hucard_rom,
             hucard_rom_size,
             md5_hex);
+    theron_v1_startup_media_capture_track02_state_receipt(
+        hucard_rom, hucard_rom_size, md5_hex, &media_receipt);
     if (!theron_v1_startup_runtime_load_initial_level(world,
                                                       hucard_rom,
                                                       hucard_rom_size,
@@ -762,6 +817,9 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
     theron_v1_startup_runtime_entry_capture_result(world,
                                                    receipt,
                                                    verified_track02_request,
+                                                   dungeon_id == THERON_DUNGEON_1_HALL_OF_RECORDS &&
+                                                       verified_track02_request,
+                                                   &media_receipt,
                                                    result);
     theron_v1_startup_flow_init(&flow);
     flow.phase = THERON_STARTUP_PHASE_IN_DUNGEON;
