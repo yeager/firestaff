@@ -31,7 +31,10 @@
  *   0x0A MERCHANT_BEHAVIOR - merchant/shop behavior
  *   0x0D SHOOT_ITEM        - ranged throw/pickup (projectile dispatch)
  *   0x0F KILL_ON_TIMER_POS - delayed-position kill
+ *   0x10/0x11/0x12/0x14 - skproject passive/deferred CCM states
  *   0x13 ROTATES_TARGET    - reorient another creature
+ *   0x16 ROTATES_TARGET_16 - paired rotate-target state
+ *   0x19/0x1A ITEM_ALIAS   - skproject put/take item aliases
  *   0x15 CAST_SPELL        - monster spellcasting
  *   0x17 CREATURE_ATTACKS_PARTY - fallback attack
  *   0x18 ATTACK_DOOR       - door-target attack phase
@@ -76,10 +79,17 @@ typedef enum {
     DM2_CCM_OP_TAKES_ITEM       = 0x0C,
     DM2_CCM_OP_SHOOT_ITEM       = 0x0D,
     DM2_CCM_OP_KILL_ON_TIMER_POS= 0x0F,
+    DM2_CCM_OP_PASSIVE_10       = 0x10,
+    DM2_CCM_OP_SPAWN_DEFERRED   = 0x11,
+    DM2_CCM_OP_PASSIVE_12       = 0x12,
     DM2_CCM_OP_ROTATES_TARGET   = 0x13,
+    DM2_CCM_OP_PASSIVE_14       = 0x14,
     DM2_CCM_OP_CAST_SPELL       = 0x15,
+    DM2_CCM_OP_ROTATES_TARGET_16 = 0x16,
     DM2_CCM_OP_CREATURE_ATTACKS_PARTY = 0x17,
     DM2_CCM_OP_ATTACK_DOOR      = 0x18,
+    DM2_CCM_OP_PUTS_DOWN_ITEM_19 = 0x19,
+    DM2_CCM_OP_TAKES_ITEM_1A    = 0x1A,
     DM2_CCM_OP_EXPLODE_OR_SUMMON = 0x26,
     /* Aliases for state-machine register names from dm2_v1_creature.h */
     DM2_CCM_OP_HALT             = 0xFF,

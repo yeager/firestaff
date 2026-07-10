@@ -457,7 +457,7 @@ static int test_stack_capacity(void) {
 
 static int test_stubbed_opcodes_return_unknown(void) {
     /* Several stubbed opcodes should all return UNKNOWN_OPCODE. */
-    int stub_ops[] = { 0x0E, 0x10, 0x11, 0x12, 0x14, 0x16, 0x19 };
+    int stub_ops[] = { 0x0E, 0x1F, 0x20, 0x21 };
     for (size_t i = 0; i < sizeof(stub_ops)/sizeof(stub_ops[0]); i++) {
         DM2_V1_CCMState s;
         dm2_v1_ccm_init_state(&s);
@@ -542,6 +542,35 @@ static int test_decode_program_accepts_extra_ccm_opcodes(void) {
            (int)DM2_CCM_RESULT_HALTED &&
            s.flags[13] == 1 && s.flags[7] == 1 &&
            s.target_id == DM2_CCM_OP_ATTACK_DOOR;
+}
+
+static int test_decode_program_accepts_skproject_deferred_aliases(void) {
+    const uint8_t bytes[] = {
+        DM2_CCM_OP_PASSIVE_10,
+        DM2_CCM_OP_SPAWN_DEFERRED,
+        DM2_CCM_OP_PASSIVE_12,
+        DM2_CCM_OP_PASSIVE_14,
+        DM2_CCM_OP_ROTATES_TARGET_16,
+        DM2_CCM_OP_PUTS_DOWN_ITEM_19,
+        DM2_CCM_OP_TAKES_ITEM_1A,
+        DM2_CCM_OP_HALT
+    };
+    DM2_V1_CCMProgram program;
+    DM2_V1_CCMState s;
+    if (dm2_v1_ccm_decode_program(bytes, sizeof(bytes), &program) !=
+        (int)DM2_CCM_RESULT_OK || program.count != 8 ||
+        program.ops[0].opcode != DM2_CCM_OP_PASSIVE_10 ||
+        program.ops[4].opcode != DM2_CCM_OP_ROTATES_TARGET_16 ||
+        program.ops[5].opcode != DM2_CCM_OP_PUTS_DOWN_ITEM_19 ||
+        program.ops[6].opcode != DM2_CCM_OP_TAKES_ITEM_1A) return 0;
+    dm2_v1_ccm_init_state(&s);
+    return dm2_v1_ccm_run_program(&s, &program, 1234) ==
+           (int)DM2_CCM_RESULT_HALTED &&
+           s.flags[6] == DM2_CCM_OP_PASSIVE_14 &&
+           s.flags[7] == 1 &&
+           s.flags[14] == 1 &&
+           s.flags[15] == 1 &&
+           s.next_state == DM2_CCM_OP_WALK_NOW;
 }
 
 /* ── Main ─────────────────────────────────────────────────────── */
@@ -630,6 +659,7 @@ int main(void) {
     TEST(decode_program_rejects_truncated_args);
     TEST(decode_program_rejects_stubbed_opcode);
     TEST(decode_program_accepts_extra_ccm_opcodes);
+    TEST(decode_program_accepts_skproject_deferred_aliases);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return (tests_passed == tests_run) ? 0 : 1;
