@@ -3111,7 +3111,7 @@ static void test_startup_session_facts_wrappers(void) {
                         2,
                         order,
                         THERON_STARTUP_MAX_COMPANIONS) &&
-                        theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+                        !theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
                             &partial_media_view_model,
                             &media_graphics_executor,
                             &partial_graphics_receipt) &&
@@ -3122,8 +3122,10 @@ static void test_startup_session_facts_wrappers(void) {
                         !partial_graphics_receipt.real_bitmap_startup_graphics_ready &&
                         partial_graphics_receipt.raw_graphics_plan_consumer_required &&
                         !partial_graphics_receipt.track02_startup_graphics_executed &&
-                        partial_graphics_receipt.fallback_startup_graphics_executed,
-                    "boot graphics route rejects incomplete Track02 startup bitmap route");
+                        partial_graphics_receipt.graphics_blocked &&
+                        partial_graphics_receipt.no_fallback_startup_graphics_proof &&
+                        !partial_graphics_receipt.fallback_startup_graphics_executed,
+                    "boot graphics route blocks incomplete verified Track02 bitmap routes");
     }
     {
         Theron_StartupMediaStateReceipt thin_media_receipt = media_receipt;
@@ -3168,7 +3170,7 @@ static void test_startup_session_facts_wrappers(void) {
                             2,
                             order,
                             THERON_STARTUP_MAX_COMPANIONS) &&
-                        theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+                        !theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
                             &thin_media_view_model,
                             &media_graphics_executor,
                             &thin_graphics_receipt) &&
@@ -3181,8 +3183,10 @@ static void test_startup_session_facts_wrappers(void) {
                         !thin_graphics_receipt.track02_atlas_startup_graphics_executed &&
                         !thin_graphics_receipt.track02_startup_graphics_executed &&
                         thin_graphics_receipt.raw_graphics_plan_consumer_required &&
-                        thin_graphics_receipt.fallback_startup_graphics_executed,
-                    "boot graphics route blocks thin Track02 title/stage atlas routes");
+                        thin_graphics_receipt.graphics_blocked &&
+                        thin_graphics_receipt.no_fallback_startup_graphics_proof &&
+                        !thin_graphics_receipt.fallback_startup_graphics_executed,
+                    "boot graphics route blocks thin verified Track02 title/stage atlas routes");
     }
     {
         Theron_StartupMediaStateReceipt iso_media_receipt = media_receipt;
@@ -3259,7 +3263,7 @@ static void test_startup_session_facts_wrappers(void) {
                             2,
                             order,
                             THERON_STARTUP_MAX_COMPANIONS) &&
-                        theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+                        !theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
                             &iso_media_view_model,
                             &media_graphics_executor,
                             &iso_graphics_receipt) &&
@@ -3269,16 +3273,13 @@ static void test_startup_session_facts_wrappers(void) {
                         !iso_graphics_receipt.required_bitmap_routes_ready &&
                         !iso_graphics_receipt.real_bitmap_startup_graphics_ready &&
                         !iso_graphics_receipt.track02_atlas_startup_graphics_ready &&
-                        iso_graphics_receipt.track02_atlas_startup_graphics_executed &&
-                        iso_graphics_receipt.track02_startup_graphics_executed &&
-                        (iso_graphics_receipt.track02_atlas_graphics_route_mask &
-                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) != 0u &&
-                        (iso_graphics_receipt.track02_atlas_graphics_route_mask &
-                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) != 0u &&
-                        iso_graphics_receipt.track02_atlas_graphics_pixel_count > 0u &&
+                        !iso_graphics_receipt.track02_atlas_startup_graphics_executed &&
+                        !iso_graphics_receipt.track02_startup_graphics_executed &&
                         iso_graphics_receipt.raw_graphics_plan_consumer_required &&
-                        iso_graphics_receipt.fallback_startup_graphics_executed,
-                    "boot graphics route binds partial ISO Track02 atlas routes before fallback commands");
+                        iso_graphics_receipt.graphics_blocked &&
+                        iso_graphics_receipt.no_fallback_startup_graphics_proof &&
+                        !iso_graphics_receipt.fallback_startup_graphics_executed,
+                    "boot graphics route blocks partial verified ISO Track02 routes");
     }
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     expect_true(theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
