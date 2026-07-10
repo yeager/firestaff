@@ -648,7 +648,14 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
     csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
     session.valid = 1;
     session.real_asset_matched = 1;
+    session.title_presents_ready = 1;
+    session.title_chaos_ready = 1;
+    session.title_strikes_back_ready = 1;
+    session.entrance_assets_ready = 1;
+    session.door_assets_ready = 1;
     session.hud_assets_bound = 1;
+    session.full_startup_ready = 1;
+    session.rejects_legacy_wrappers = 1;
     session.generation = 9u;
     session.surfaces.valid = 1;
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].valid = 1;
@@ -676,24 +683,37 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
               &session, &plan, 41u, &frame) == 1 && frame.valid &&
               frame.title_surface->pixels == presents_pixels &&
               frame.left_door_surface->pixels == left_pixels &&
+              frame.real_asset_matched &&
+              frame.title_sequence_ready &&
+              frame.entrance_ready &&
+              frame.door_ready &&
+              frame.no_legacy_wrappers &&
+              frame.title_phase_mask == 0x01 &&
+              frame.frame_route_hash != 0u &&
               frame.uses_verified_hud_bindings && frame.source_tick == 41u &&
               frame.session_generation == 9u,
-          "asset session keeps PRESENTS, HUD, and door source surfaces stable");
+          "asset session keeps PRESENTS, HUD, door source surfaces and route proof stable");
     plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 42u, &frame) == 1 &&
               frame.title_surface->pixels == chaos_pixels &&
+              frame.title_phase_mask == 0x02 &&
+              frame.frame_route_hash != 0u &&
               frame.left_door_surface->pixels == left_pixels,
           "asset session advances CHAOS timing without reopening door pixels");
     plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 43u, &frame) == 1 &&
-              frame.title_surface->pixels == strikes_pixels,
+              frame.title_surface->pixels == strikes_pixels &&
+              frame.title_phase_mask == 0x08 &&
+              frame.frame_route_hash != 0u,
           "asset session selects STRIKES BACK from the original title session");
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 44u, &frame) == 1 &&
               frame.entrance_surface->pixels == credits_pixels &&
+              frame.title_phase_mask == 0 &&
+              frame.frame_route_hash != 0u &&
               frame.right_door_surface->pixels == right_pixels,
           "asset session carries the same verified doors into entrance credits");
 }
@@ -717,8 +737,14 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
     session.valid = 1;
     session.real_asset_matched = 1;
     session.title_assets_ready = 1;
+    session.title_presents_ready = 1;
+    session.title_chaos_ready = 1;
+    session.title_strikes_back_ready = 1;
     session.entrance_assets_ready = 1;
+    session.door_assets_ready = 1;
     session.hud_assets_bound = 1;
+    session.full_startup_ready = 1;
+    session.rejects_legacy_wrappers = 1;
     session.surfaces.valid = 1;
     session.surfaces.title_regions_ready = 1;
     session.surfaces.opening_frame_ready = 1;
