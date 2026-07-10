@@ -1034,8 +1034,12 @@ typedef struct {
     unsigned int descriptor_anchor_mask;
     size_t descriptor_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t descriptor_entries_bound;
+    unsigned int semantic_role_mask;
     size_t descriptor_table_semantic_count;
+    int object_table_role_mapped;
     size_t object_table_candidate_count;
+    size_t object_table_blocked_anchor_count;
+    unsigned int object_table_blocked_anchor_mask;
     int object_table_decode_ready;
     int blocked_for_missing_real_object_evidence;
     int fallback_visuals_allowed;
@@ -1052,6 +1056,8 @@ typedef struct {
     unsigned int descriptor_anchor_mask;
     size_t startup_level_route_count;
     unsigned int startup_level_route_mask;
+    size_t startup_level_blocked_anchor_count;
+    unsigned int startup_level_blocked_anchor_mask;
     int startup_level_route_ready;
     size_t startup_descriptor_offset;
     size_t startup_raw_offset;
@@ -1061,7 +1067,11 @@ typedef struct {
     uint16_t startup_header_height;
     uint32_t startup_header_seed;
     uint16_t startup_header_level_index;
+    unsigned int semantic_role_mask;
+    int level_grid_role_mapped;
     size_t nonstartup_level_candidate_count;
+    size_t nonstartup_level_blocked_anchor_count;
+    unsigned int nonstartup_level_blocked_anchor_mask;
     int nonstartup_level_decode_ready;
     int blocked_for_missing_nonstartup_level_evidence;
     int fallback_visuals_allowed;

@@ -3652,8 +3652,13 @@ int theron_v1_track02_capture_object_table_route_receipt(
         hash *= 16777619u;
 
         for (entry_index = 0u; entry_index < table.entry_count; ++entry_index) {
-            if (theron_v1_track02_semantic_role_for_entry(entry_index) ==
-                THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE) {
+            Theron_Track02SemanticRole semantic_role =
+                theron_v1_track02_semantic_role_for_entry(entry_index);
+            if ((unsigned int)semantic_role < (sizeof(unsigned int) * 8u)) {
+                out_receipt->semantic_role_mask |=
+                    1u << (unsigned int)semantic_role;
+            }
+            if (semantic_role == THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE) {
                 Theron_Track02SemanticBinding binding;
                 if (theron_v1_track02_bind_semantic_descriptor(
                         track02_data,
@@ -3664,9 +3669,9 @@ int theron_v1_track02_capture_object_table_route_receipt(
                     ++out_receipt->descriptor_table_semantic_count;
                 }
             }
-            if (theron_v1_track02_semantic_role_for_entry(entry_index) ==
-                THERON_TRACK02_SEMANTIC_OBJECT_TABLE) {
+            if (semantic_role == THERON_TRACK02_SEMANTIC_OBJECT_TABLE) {
                 Theron_Track02SemanticBinding binding;
+                out_receipt->object_table_role_mapped = 1;
                 ++out_receipt->object_table_candidate_count;
                 if (theron_v1_track02_bind_semantic_descriptor(
                         track02_data,
@@ -3678,6 +3683,11 @@ int theron_v1_track02_capture_object_table_route_receipt(
                 }
             }
         }
+        if (!out_receipt->object_table_decode_ready) {
+            ++out_receipt->object_table_blocked_anchor_count;
+            out_receipt->object_table_blocked_anchor_mask |=
+                1u << (unsigned)anchor;
+        }
     }
 
     out_receipt->descriptor_route_ready =
@@ -3686,6 +3696,10 @@ int theron_v1_track02_capture_object_table_route_receipt(
     out_receipt->blocked_for_missing_real_object_evidence =
         out_receipt->descriptor_route_ready &&
         !out_receipt->object_table_decode_ready;
+    hash ^= out_receipt->semantic_role_mask;
+    hash *= 16777619u;
+    hash ^= out_receipt->object_table_blocked_anchor_mask;
+    hash *= 16777619u;
     out_receipt->route_hash = hash;
     out_receipt->valid = out_receipt->verified_track02 &&
         out_receipt->descriptor_route_ready;
@@ -3740,11 +3754,27 @@ int theron_v1_track02_capture_level_route_receipt(
     for (anchor = 0u; anchor < signal.anchor_count; ++anchor) {
         Theron_Track02StartupSemanticHandoff handoff;
         Theron_Track02LevelHandoffStatus handoff_status;
+        Theron_Track02SemanticRole semantic_role;
         size_t descriptor_offset = signal.descriptor_offsets[anchor];
+        size_t entry_index;
 
         out_receipt->descriptor_anchor_mask |= 1u << (unsigned)anchor;
         hash ^= (uint32_t)descriptor_offset;
         hash *= 16777619u;
+
+        for (entry_index = 0u;
+             entry_index < THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES;
+             ++entry_index) {
+            semantic_role =
+                theron_v1_track02_semantic_role_for_entry(entry_index);
+            if ((unsigned int)semantic_role < (sizeof(unsigned int) * 8u)) {
+                out_receipt->semantic_role_mask |=
+                    1u << (unsigned int)semantic_role;
+            }
+            if (semantic_role == THERON_TRACK02_SEMANTIC_LEVEL_GRID_TABLE) {
+                out_receipt->level_grid_role_mapped = 1;
+            }
+        }
 
         handoff_status = theron_v1_track02_bind_startup_semantic_handoff(
             track02_data,
@@ -3780,6 +3810,10 @@ int theron_v1_track02_capture_level_route_receipt(
             hash *= 16777619u;
             hash ^= (uint32_t)handoff.user_data_offset;
             hash *= 16777619u;
+        } else {
+            ++out_receipt->startup_level_blocked_anchor_count;
+            out_receipt->startup_level_blocked_anchor_mask |=
+                1u << (unsigned)anchor;
         }
     }
 
@@ -3790,6 +3824,19 @@ int theron_v1_track02_capture_level_route_receipt(
     out_receipt->blocked_for_missing_nonstartup_level_evidence =
         out_receipt->descriptor_route_ready &&
         !out_receipt->nonstartup_level_decode_ready;
+    if (out_receipt->descriptor_route_ready &&
+        !out_receipt->nonstartup_level_decode_ready) {
+        out_receipt->nonstartup_level_blocked_anchor_count =
+            out_receipt->descriptor_anchor_count;
+        out_receipt->nonstartup_level_blocked_anchor_mask =
+            out_receipt->descriptor_anchor_mask;
+    }
+    hash ^= out_receipt->semantic_role_mask;
+    hash *= 16777619u;
+    hash ^= out_receipt->startup_level_blocked_anchor_mask;
+    hash *= 16777619u;
+    hash ^= out_receipt->nonstartup_level_blocked_anchor_mask;
+    hash *= 16777619u;
     out_receipt->route_hash = hash;
     out_receipt->valid = out_receipt->verified_track02 &&
         out_receipt->descriptor_route_ready &&
