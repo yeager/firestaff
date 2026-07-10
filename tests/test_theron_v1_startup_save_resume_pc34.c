@@ -4186,6 +4186,7 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
     Theron_Track02StartupBitmapCatalog catalog;
     Theron_Track02StartupBitmapAtlas atlas;
     Theron_StartupMediaStateReceipt receipt;
+    Theron_V1_StartupReceipt startup_receipt;
 
     expect_true(track02 != NULL,
                 "Track02 startup bitmap sparse fixture allocates");
@@ -4346,6 +4347,24 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     receipt.startup_bitmap_stage_atlas_width == 128u &&
                     receipt.startup_bitmap_soul_room_atlas_width == 112u &&
                     receipt.startup_bitmap_forcefield_atlas_width == 112u &&
+                    receipt.startup_bitmap_title_first_raw_offset ==
+                        span_offsets[1] &&
+                    receipt.startup_bitmap_title_last_raw_offset ==
+                        span_offsets[1] + 60u &&
+                    receipt.startup_bitmap_title_first_user_data_offset <
+                        receipt.startup_bitmap_title_last_user_data_offset &&
+                    receipt.startup_bitmap_stage_first_raw_offset ==
+                        span_offsets[2] &&
+                    receipt.startup_bitmap_stage_last_raw_offset ==
+                        span_offsets[2] + 60u &&
+                    receipt.startup_bitmap_soul_room_first_raw_offset ==
+                        span_offsets[0] &&
+                    receipt.startup_bitmap_soul_room_last_raw_offset ==
+                        span_offsets[1] + 28u &&
+                    receipt.startup_bitmap_forcefield_first_raw_offset ==
+                        span_offsets[0] + 8u &&
+                    receipt.startup_bitmap_forcefield_last_raw_offset ==
+                        span_offsets[2] + 28u &&
                     receipt.startup_bitmap_wide_route_mask ==
                         TST_THERON_FULL_START_BITMAP_ROUTES &&
                     receipt.startup_bitmap_wide_route_count == 4 &&
@@ -4372,6 +4391,24 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     receipt.startup_bitmap_nonzero_pixel_count > 0u &&
                     receipt.startup_bitmap_checksum != 0u,
                 "startup media receipt carries per-route Track02 bitmap decode proof without text/roster fallback");
+    theron_v1_startup_receipt_set_placeholder(&startup_receipt);
+    theron_v1_startup_receipt_apply_bitmap_art_summary(&startup_receipt,
+                                                       &receipt);
+    (void)theron_v1_startup_receipt_session_tick(&startup_receipt);
+    expect_true(startup_receipt.startup_bitmap_real_routes_complete &&
+                    !startup_receipt.startup_bitmap_fallback_routes_allowed &&
+                    startup_receipt.startup_bitmap_title_first_raw_offset ==
+                        receipt.startup_bitmap_title_first_raw_offset &&
+                    startup_receipt.startup_bitmap_title_last_raw_offset ==
+                        receipt.startup_bitmap_title_last_raw_offset &&
+                    startup_receipt.startup_bitmap_title_first_user_data_offset ==
+                        receipt.startup_bitmap_title_first_user_data_offset &&
+                    startup_receipt.startup_bitmap_title_last_user_data_offset ==
+                        receipt.startup_bitmap_title_last_user_data_offset &&
+                    startup_receipt.startup_bitmap_stage_first_raw_offset ==
+                        receipt.startup_bitmap_stage_first_raw_offset &&
+                    startup_receipt.session_tick_token != 0u,
+                "startup receipt carries Track02 bitmap raw/user-data spans for no-fallback host proof");
 
     free(track02);
 }

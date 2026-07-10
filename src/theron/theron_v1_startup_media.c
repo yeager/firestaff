@@ -181,6 +181,10 @@ static void theron_v1_startup_media_record_atlas_route(
     const Theron_Track02StartupBitmapAtlasRoute *route) {
     size_t *tile_count = NULL;
     uint16_t *width = NULL;
+    size_t *first_raw_offset = NULL;
+    size_t *last_raw_offset = NULL;
+    size_t *first_user_data_offset = NULL;
+    size_t *last_user_data_offset = NULL;
     size_t min_wide_tiles = 12u;
     uint16_t min_wide_width = 96u;
 
@@ -191,24 +195,60 @@ static void theron_v1_startup_media_record_atlas_route(
     case THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE:
         tile_count = &media->startup_bitmap_title_atlas_tile_count;
         width = &media->startup_bitmap_title_atlas_width;
+        first_raw_offset = &media->startup_bitmap_title_first_raw_offset;
+        last_raw_offset = &media->startup_bitmap_title_last_raw_offset;
+        first_user_data_offset =
+            &media->startup_bitmap_title_first_user_data_offset;
+        last_user_data_offset =
+            &media->startup_bitmap_title_last_user_data_offset;
         break;
     case THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE:
         tile_count = &media->startup_bitmap_stage_atlas_tile_count;
         width = &media->startup_bitmap_stage_atlas_width;
+        first_raw_offset = &media->startup_bitmap_stage_first_raw_offset;
+        last_raw_offset = &media->startup_bitmap_stage_last_raw_offset;
+        first_user_data_offset =
+            &media->startup_bitmap_stage_first_user_data_offset;
+        last_user_data_offset =
+            &media->startup_bitmap_stage_last_user_data_offset;
         break;
     case THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM:
         tile_count = &media->startup_bitmap_soul_room_atlas_tile_count;
         width = &media->startup_bitmap_soul_room_atlas_width;
+        first_raw_offset =
+            &media->startup_bitmap_soul_room_first_raw_offset;
+        last_raw_offset =
+            &media->startup_bitmap_soul_room_last_raw_offset;
+        first_user_data_offset =
+            &media->startup_bitmap_soul_room_first_user_data_offset;
+        last_user_data_offset =
+            &media->startup_bitmap_soul_room_last_user_data_offset;
         break;
     case THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD:
         tile_count = &media->startup_bitmap_forcefield_atlas_tile_count;
         width = &media->startup_bitmap_forcefield_atlas_width;
+        first_raw_offset =
+            &media->startup_bitmap_forcefield_first_raw_offset;
+        last_raw_offset =
+            &media->startup_bitmap_forcefield_last_raw_offset;
+        first_user_data_offset =
+            &media->startup_bitmap_forcefield_first_user_data_offset;
+        last_user_data_offset =
+            &media->startup_bitmap_forcefield_last_user_data_offset;
         break;
     default:
         return;
     }
     *tile_count = route->tile_count;
     *width = route->width;
+    if (route->tile_count > 0u) {
+        *first_raw_offset = route->first_raw_offset;
+        *last_raw_offset = route->last_raw_offset;
+        *first_user_data_offset = route->first_user_data_offset;
+        *last_user_data_offset =
+            route->first_user_data_offset +
+            ((route->tile_count - 1u) * THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES);
+    }
     if (route->tile_count >= min_wide_tiles &&
         route->width >= min_wide_width &&
         route->nonzero_pixel_count > 0u &&
@@ -422,6 +462,38 @@ void theron_v1_startup_media_capture_track02_state_receipt(
         media.startup_bitmap_soul_room_atlas_width;
     out_receipt->startup_bitmap_forcefield_atlas_width =
         media.startup_bitmap_forcefield_atlas_width;
+    out_receipt->startup_bitmap_title_first_raw_offset =
+        media.startup_bitmap_title_first_raw_offset;
+    out_receipt->startup_bitmap_title_last_raw_offset =
+        media.startup_bitmap_title_last_raw_offset;
+    out_receipt->startup_bitmap_title_first_user_data_offset =
+        media.startup_bitmap_title_first_user_data_offset;
+    out_receipt->startup_bitmap_title_last_user_data_offset =
+        media.startup_bitmap_title_last_user_data_offset;
+    out_receipt->startup_bitmap_stage_first_raw_offset =
+        media.startup_bitmap_stage_first_raw_offset;
+    out_receipt->startup_bitmap_stage_last_raw_offset =
+        media.startup_bitmap_stage_last_raw_offset;
+    out_receipt->startup_bitmap_stage_first_user_data_offset =
+        media.startup_bitmap_stage_first_user_data_offset;
+    out_receipt->startup_bitmap_stage_last_user_data_offset =
+        media.startup_bitmap_stage_last_user_data_offset;
+    out_receipt->startup_bitmap_soul_room_first_raw_offset =
+        media.startup_bitmap_soul_room_first_raw_offset;
+    out_receipt->startup_bitmap_soul_room_last_raw_offset =
+        media.startup_bitmap_soul_room_last_raw_offset;
+    out_receipt->startup_bitmap_soul_room_first_user_data_offset =
+        media.startup_bitmap_soul_room_first_user_data_offset;
+    out_receipt->startup_bitmap_soul_room_last_user_data_offset =
+        media.startup_bitmap_soul_room_last_user_data_offset;
+    out_receipt->startup_bitmap_forcefield_first_raw_offset =
+        media.startup_bitmap_forcefield_first_raw_offset;
+    out_receipt->startup_bitmap_forcefield_last_raw_offset =
+        media.startup_bitmap_forcefield_last_raw_offset;
+    out_receipt->startup_bitmap_forcefield_first_user_data_offset =
+        media.startup_bitmap_forcefield_first_user_data_offset;
+    out_receipt->startup_bitmap_forcefield_last_user_data_offset =
+        media.startup_bitmap_forcefield_last_user_data_offset;
     out_receipt->startup_bitmap_wide_route_mask =
         media.startup_bitmap_wide_route_mask;
     out_receipt->startup_bitmap_wide_route_count =
