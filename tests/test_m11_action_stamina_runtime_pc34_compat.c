@@ -26,6 +26,7 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
@@ -162,6 +163,159 @@ static int probe_dm1_wall_ornament_flip(int viewWallIndex) {
         return -1;
     }
     return dm1_v1_wall_ornament_flip_horizontal_pc34(viewWallIndex);
+}
+
+static int dm1_wall_graphic_index_for_test(DM1_WallSetIndex wall)
+{
+    switch (wall) {
+        case DM1_WALL_D0R: return 93;
+        case DM1_WALL_D0L: return 94;
+        case DM1_WALL_D1R: return 95;
+        case DM1_WALL_D1L: return 96;
+        case DM1_WALL_D1C: return 97;
+        case DM1_WALL_D2R2: return 98;
+        case DM1_WALL_D2L2: return 99;
+        case DM1_WALL_D2R: return 100;
+        case DM1_WALL_D2L: return 101;
+        case DM1_WALL_D2C: return 102;
+        case DM1_WALL_D3R2: return 103;
+        case DM1_WALL_D3L2: return 104;
+        case DM1_WALL_D3R: return 105;
+        case DM1_WALL_D3L: return 106;
+        case DM1_WALL_D3C: return 107;
+        default: return -1;
+    }
+}
+
+static int dm1_sample_viewport_cell_for_test(const M11_GameViewState* state,
+                                             int relForward,
+                                             int relSide,
+                                             int* outMapX,
+                                             int* outMapY,
+                                             unsigned char* outRawSquare,
+                                             int* outElementType,
+                                             int* outEffectiveElementType,
+                                             int* outIsWallLike,
+                                             int* outIsOpen)
+{
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonMapTiles_Compat* tiles;
+    int16_t mapX = 0;
+    int16_t mapY = 0;
+    int index;
+    unsigned char square;
+    int element;
+    if (!state || !state->active || !state->world.dungeon ||
+        state->world.party.mapIndex < 0 ||
+        state->world.party.mapIndex >= (int)state->world.dungeon->header.mapCount ||
+        !state->world.dungeon->maps || !state->world.dungeon->tiles ||
+        !state->world.dungeon->tilesLoaded) {
+        return 0;
+    }
+    if (!dm1_viewport_3d_resolve_relative_map_xy(
+            state->world.party.direction, relForward, relSide,
+            state->world.party.mapX, state->world.party.mapY,
+            &mapX, &mapY)) {
+        return 0;
+    }
+    map = &state->world.dungeon->maps[state->world.party.mapIndex];
+    tiles = &state->world.dungeon->tiles[state->world.party.mapIndex];
+    if (mapX < 0 || mapY < 0 || mapX >= map->width || mapY >= map->height ||
+        !tiles->squareData) {
+        return 0;
+    }
+    index = (int)mapX * map->height + (int)mapY;
+    if (index < 0 || index >= tiles->squareCount) {
+        return 0;
+    }
+    square = tiles->squareData[index];
+    element = (square >> 5) & 0x07;
+    if (outMapX) *outMapX = mapX;
+    if (outMapY) *outMapY = mapY;
+    if (outRawSquare) *outRawSquare = square;
+    if (outElementType) *outElementType = element;
+    if (outEffectiveElementType) {
+        *outEffectiveElementType =
+            DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(square);
+    }
+    if (outIsWallLike) {
+        *outIsWallLike = DM1_V1_Viewport_SquareIsWallLikePc34Compat(square);
+    }
+    if (outIsOpen) {
+        *outIsOpen = DM1_V1_Viewport_SquareIsOpenPc34Compat(square);
+    }
+    return 1;
+}
+
+static int dm1_side_wall_draw_eligibility_for_test(
+    const M11_GameViewState* state,
+    int relForward,
+    int relSide,
+    int* outLegacyLaneClear,
+    int* outDrawsWithSourceOrder)
+{
+    int centerValid[3] = {0, 0, 0};
+    int centerOpen[3] = {0, 0, 0};
+    int centerDoor[3] = {0, 0, 0};
+    int leftOpen[3] = {0, 0, 0};
+    int rightOpen[3] = {0, 0, 0};
+    DM1_ViewportLaneVisibilityReceiptPc34 visibility;
+    int depth;
+    int wallLike = 0;
+    if (!state || relSide == 0 || relForward < 0) {
+        return 0;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        int element = -1;
+        (void)dm1_sample_viewport_cell_for_test(
+            state, depth + 1, 0, NULL, NULL, NULL, &element, NULL,
+            NULL, &centerOpen[depth]);
+        centerValid[depth] = element >= 0;
+        centerDoor[depth] = element == DUNGEON_ELEMENT_DOOR;
+        (void)dm1_sample_viewport_cell_for_test(
+            state, depth + 1, -1, NULL, NULL, NULL, NULL, NULL,
+            NULL, &leftOpen[depth]);
+        (void)dm1_sample_viewport_cell_for_test(
+            state, depth + 1, 1, NULL, NULL, NULL, NULL, NULL,
+            NULL, &rightOpen[depth]);
+    }
+    visibility = dm1_viewport_3d_lane_visibility_from_cells_pc34(
+        centerValid, centerOpen, centerDoor, leftOpen, rightOpen);
+    if (!dm1_sample_viewport_cell_for_test(
+            state, relForward, relSide, NULL, NULL, NULL, NULL, NULL,
+            &wallLike, NULL)) {
+        return 0;
+    }
+    if (outLegacyLaneClear) {
+        *outLegacyLaneClear =
+            dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
+                &visibility, relForward, relSide);
+    }
+    if (outDrawsWithSourceOrder) {
+        *outDrawsWithSourceOrder = wallLike;
+    }
+    return 1;
+}
+
+static int dm1_side_wall_runtime_blit_for_test(int relForward,
+                                               int relSide,
+                                               int* outGraphicIndex,
+                                               int* outDstX,
+                                               int* outDstY,
+                                               int* outWidth,
+                                               int* outHeight)
+{
+    const DM1_ViewportWallDrawSpec* spec =
+        dm1_viewport_3d_get_side_wall_draw_spec_for_rel(relForward, relSide);
+    if (!spec) {
+        return 0;
+    }
+    if (outGraphicIndex) *outGraphicIndex = dm1_wall_graphic_index_for_test(spec->native_wall);
+    if (outDstX) *outDstX = spec->runtime_dst_x;
+    if (outDstY) *outDstY = spec->runtime_dst_y;
+    if (outWidth) *outWidth = spec->runtime_width;
+    if (outHeight) *outHeight = spec->runtime_height;
+    return 1;
 }
 
 static void mark_raw_object_slots_unused_for_test(unsigned char* raw, int count) {
@@ -8787,7 +8941,7 @@ static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {
     ASSERT_EQ(dm1_viewport_3d_primary_side_wall_max_forward_pc34(3), 3,
               "primary side-wall pass keeps D1/D2/D3 on open center lane");
 
-    ASSERT_EQ(M11_GameView_ProbeViewportCellClass(
+    ASSERT_EQ(dm1_sample_viewport_cell_for_test(
                   &state, 2, -1, &mapX, &mapY, NULL, &element,
                   &effective, &wallLike, &open),
               1,
@@ -8800,13 +8954,13 @@ static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {
               "D2L side wall effective element is wall");
     ASSERT_EQ(wallLike, 1, "D2L side wall is wall-like");
     ASSERT_EQ(open, 0, "D2L side wall is not open");
-    ASSERT_EQ(M11_GameView_ProbeSideWallDrawEligibility(
+    ASSERT_EQ(dm1_side_wall_draw_eligibility_for_test(
                   &state, 2, -1, &legacyLaneClear, &draws),
               1,
               "D2L side wall draw eligibility resolves");
     ASSERT_EQ(draws, 1,
               "D2L source-order side-wall pass draws without waiting for D1");
-    ASSERT_EQ(M11_GameView_ProbeSideWallRuntimeBlit(
+    ASSERT_EQ(dm1_side_wall_runtime_blit_for_test(
                   2, -1, &gfx, &dstX, &dstY, &width, &height),
               1,
               "D2L runtime blit resolves");
@@ -8816,7 +8970,7 @@ static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {
     ASSERT_EQ(width, 75, "D2L runtime blit uses C710 inclusive width");
     ASSERT_EQ(height, 71, "D2L runtime blit uses G0163 inclusive height");
 
-    ASSERT_EQ(M11_GameView_ProbeViewportCellClass(
+    ASSERT_EQ(dm1_sample_viewport_cell_for_test(
                   &state, 2, 1, &mapX, &mapY, NULL, &element,
                   &effective, &wallLike, &open),
               1,
@@ -8824,13 +8978,13 @@ static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {
     ASSERT_EQ(mapX, 3, "D2R side wall x uses ReDMCSB F0150 2,+1");
     ASSERT_EQ(mapY, 1, "D2R side wall y uses ReDMCSB F0150 2,+1");
     ASSERT_EQ(wallLike, 1, "D2R side wall is wall-like");
-    ASSERT_EQ(M11_GameView_ProbeSideWallDrawEligibility(
+    ASSERT_EQ(dm1_side_wall_draw_eligibility_for_test(
                   &state, 2, 1, &legacyLaneClear, &draws),
               1,
               "D2R side wall draw eligibility resolves");
     ASSERT_EQ(draws, 1,
               "D2R source-order side-wall pass draws without waiting for D1");
-    ASSERT_EQ(M11_GameView_ProbeSideWallRuntimeBlit(
+    ASSERT_EQ(dm1_side_wall_runtime_blit_for_test(
                   2, 1, &gfx, &dstX, &dstY, &width, &height),
               1,
               "D2R runtime blit resolves");
