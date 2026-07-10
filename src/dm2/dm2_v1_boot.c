@@ -4943,6 +4943,145 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
     return out_receipt->valid;
 }
 
+void dm2_v1_boot_complete_support_receipt_init(
+    DM2_V1_CompleteSupportReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    dm2_v1_boot_startup_real_visual_capture_receipt_init(
+        &receipt->startup_visual);
+    dm2_v1_boot_runtime_hud_capture_receipt_init(&receipt->runtime_hud);
+    receipt->status_scope = "DM2";
+    receipt->status = "invalid";
+}
+
+int dm2_v1_boot_complete_support_receipt_from_runtime_state(
+    DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_CompleteSupportReceipt *out_receipt)
+{
+    uint32_t hash = 0x32414353u;
+
+    dm2_v1_boot_complete_support_receipt_init(out_receipt);
+    if (!profile || !out_receipt ||
+        !dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
+            profile,
+            startup_menu_active,
+            startup_save_root,
+            resume_available,
+            slot_mask,
+            selected_row,
+            title_animation_tick,
+            &out_receipt->startup_visual) ||
+        !dm2_v1_boot_runtime_hud_capture_receipt(
+            profile,
+            &out_receipt->runtime_hud)) {
+        return 0;
+    }
+
+    out_receipt->skproject_gdat_queries_ready =
+        out_receipt->startup_visual.skproject_title_query_ready &&
+        out_receipt->startup_visual.skproject_menu_query_ready;
+    out_receipt->startup_title_menu_complete =
+        out_receipt->startup_visual.valid &&
+        out_receipt->startup_visual.title_menu_hud_visual_proof_ready &&
+        out_receipt->startup_visual.full_title_frame_capture_ready &&
+        out_receipt->startup_visual.menu_gdat_capture_ready &&
+        out_receipt->startup_visual.menu_title_composite_capture_ready &&
+        out_receipt->startup_visual.exact_title_timing_ready;
+    out_receipt->startup_hud_handoff_complete =
+        out_receipt->startup_visual.hud_handoff_capture_ready &&
+        out_receipt->startup_visual.hud_suppressed_capture_ready &&
+        out_receipt->startup_visual.suppress_game_hud &&
+        !out_receipt->startup_visual.present_first_hud_frame;
+    out_receipt->runtime_gdat_hud_complete =
+        out_receipt->runtime_hud.valid &&
+        out_receipt->runtime_hud.first_runtime_hud_ready &&
+        out_receipt->runtime_hud.real_gdat_portrait_ready &&
+        out_receipt->runtime_hud.no_fallback_portraits &&
+        out_receipt->runtime_hud.min_asset_portrait_count >= 4;
+    out_receipt->runtime_gdat_dungeon_complete =
+        out_receipt->runtime_hud.real_gdat_core_render_ready &&
+        out_receipt->runtime_hud.no_core_render_fallbacks &&
+        out_receipt->runtime_hud.min_asset_floor_ceiling_count >= 2 &&
+        out_receipt->runtime_hud.min_asset_wall_count > 0 &&
+        out_receipt->runtime_hud.total_fallback_door_count == 0 &&
+        out_receipt->runtime_hud.total_fallback_creature_count == 0 &&
+        out_receipt->runtime_hud.total_fallback_creature_possession_item_count == 0 &&
+        out_receipt->runtime_hud.total_fallback_projectile_count == 0;
+    out_receipt->runtime_gdat_direction_breadth_complete =
+        out_receipt->runtime_hud.render_sample_count == 4 &&
+        out_receipt->runtime_hud.render_success_count == 4 &&
+        out_receipt->runtime_hud.sampled_direction_mask == 0x0f &&
+        out_receipt->runtime_hud.runtime_direction_mask == 0x0f &&
+        out_receipt->runtime_hud.runtime_turn_count == 4 &&
+        out_receipt->runtime_hud.unique_frame_hash_count > 0;
+    out_receipt->no_fallback_title_or_runtime_visuals =
+        out_receipt->startup_visual.no_fallback_title_blit &&
+        out_receipt->runtime_hud.no_fallback_portraits &&
+        out_receipt->runtime_hud.no_core_render_fallbacks;
+    out_receipt->raw_gdat_capture_complete =
+        out_receipt->startup_visual.raw_gdat_capture_ready &&
+        out_receipt->startup_visual.runtime_hud_raw_gdat_capture_ready &&
+        out_receipt->runtime_hud.raw_gdat_runtime_hud_capture_ready &&
+        out_receipt->runtime_hud.raw_gdat_runtime_portrait_hash != 0u &&
+        out_receipt->runtime_hud.raw_gdat_runtime_core_hash != 0u;
+    out_receipt->decoded_gdat_capture_complete =
+        out_receipt->startup_visual.runtime_hud_decoded_gdat_capture_ready &&
+        out_receipt->runtime_hud.decoded_gdat_runtime_hud_capture_ready &&
+        out_receipt->runtime_hud.decoded_gdat_runtime_portrait_hash != 0u &&
+        out_receipt->runtime_hud.decoded_gdat_runtime_core_hash != 0u;
+
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->startup_visual.packaged_visual_capture_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.combined_frame_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud.render_sample_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud.min_asset_portrait_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud.min_asset_floor_ceiling_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->runtime_hud.min_asset_wall_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.raw_gdat_runtime_portrait_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.decoded_gdat_runtime_portrait_hash);
+    out_receipt->complete_support_hash = hash;
+
+    /* skproject/SKWIN T520/T560 consumes GDAT title/menu, HUD, and dungeon
+     * draw paths as one runtime contract. Firestaff only reports complete
+     * DM2 support when both startup and live dungeon rendering are backed by
+     * real GDAT material and no legacy visual fallback remains. */
+    out_receipt->complete_support_ready =
+        out_receipt->skproject_gdat_queries_ready &&
+        out_receipt->startup_title_menu_complete &&
+        out_receipt->startup_hud_handoff_complete &&
+        out_receipt->runtime_gdat_hud_complete &&
+        out_receipt->runtime_gdat_dungeon_complete &&
+        out_receipt->runtime_gdat_direction_breadth_complete &&
+        out_receipt->no_fallback_title_or_runtime_visuals &&
+        out_receipt->raw_gdat_capture_complete &&
+        out_receipt->decoded_gdat_capture_complete &&
+        out_receipt->complete_support_hash != 0u;
+    out_receipt->valid = out_receipt->complete_support_ready;
+    out_receipt->status_scope = "DM2";
+    out_receipt->status = out_receipt->complete_support_ready
+        ? "complete-support-ready"
+        : out_receipt->runtime_gdat_dungeon_complete
+        ? "incomplete-startup-gdat"
+        : "incomplete-runtime-gdat";
+    return 1;
+}
+
 static const char *dm2_v1_boot_startup_prepare_host_status(
     DM2_V1_BootStartupPrepareResult result)
 {
