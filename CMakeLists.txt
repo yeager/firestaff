@@ -324,6 +324,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_vblank_timing.c
     src/dm1/dm1_v1_save_load.c
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
     src/dm1/dm1_v1_dungeon_loader_pc34_compat.c
     src/dm1/dm1_v1_title_screen_pc34_compat.c
     src/dm1/dm1_v1_palette_font_pc34_compat.c
@@ -390,6 +391,22 @@ if(DM2_SOURCES)
     # M11_GameView_StartDm2 in m11_game_view.c). Links the DM2 V1 boot
     # profile + runtime so --game dm2 reaches dm2_v1_boot_enter_game.
     target_link_libraries(firestaff_m11 PUBLIC firestaff_dm2)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_runtime_materialization_pc34_compat.c")
+    add_executable(test_dm1_v1_viewport_runtime_materialization_pc34_compat
+        tests/test_dm1_v1_viewport_runtime_materialization_pc34_compat.c
+        src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_viewport_runtime_materialization_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_runtime_materialization_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_runtime_materialization_pc34_compat
+        COMMAND test_dm1_v1_viewport_runtime_materialization_pc34_compat
+    )
 endif()
 if(CSB_V2_SOURCES)
     target_link_libraries(firestaff_m11 PUBLIC firestaff_csb_v2)
