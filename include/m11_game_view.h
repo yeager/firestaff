@@ -456,6 +456,9 @@ typedef struct {
      * the plain "RETURN TO START MENU?" dialog. */
     uint32_t lastSaveTick;
     uint32_t loadGameTick;
+    /* DM1 F0172/F0115 consumes live projectile/effect lists after every
+     * handoff. This records provenance only and never selects fallback art. */
+    int dm1ViewportRuntimeOrigin;
     /* quitGuardActive: 1 while the GAME-NOT-SAVED prompt is on screen.  When
      * the user picks SAVE&QUIT the dialog handler honors this flag and runs
      * a save before returning to the launcher. */
