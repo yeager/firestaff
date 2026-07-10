@@ -16333,6 +16333,10 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                                     int relForward,
                                     int relSide,
                                     M11_ViewportCell* outCell);
+static int m11_build_dm1_hoc_front_mirror_runtime_decision(
+    const M11_GameViewState* state,
+    const M11_ViewportCell* frontCell,
+    DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* outDecision);
 
 static void m11_dm1_v2_effect_point_for_cell(const M11_ViewportCell* cell,
                                              float* outX,
@@ -19340,6 +19344,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
      * Skip wall squares — items on walls are in alcoves, rendered
      * separately by m11_draw_dm1_alcove_wall_items. */
     if (cell->floorItemCount > 0 &&
+        (!cell->dm1RuntimeRenderDecisionReady ||
+         cell->dm1RuntimeRenderDecision.drawFloorObject) &&
         cell->elementType != DUNGEON_ELEMENT_WALL) {
         int ii;
         int itemsToShow = cell->floorItemCount;
@@ -19410,9 +19416,12 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
     }
 
     /* Layer 3: Projectiles and explosions (in flight, topmost) */
-    m11_draw_effect_cue(framebuffer, framebufferWidth, framebufferHeight,
-                        faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell,
-                        depthIndex, sourceZoneRow);
+    if (!cell->dm1RuntimeRenderDecisionReady ||
+        cell->dm1RuntimeRenderDecision.drawRuntimeProjectile) {
+        m11_draw_effect_cue(framebuffer, framebufferWidth, framebufferHeight,
+                            faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell,
+                            depthIndex, sourceZoneRow);
+    }
 }
 
 /* Known GRAPHICS.DAT indices for rendering assets in CSB PC 3.4. */
@@ -21119,62 +21128,84 @@ static int m11_build_dm1_front_champion_portrait_receipt(
         1, &frontReceipt, outReceipt);
 }
 
-static int m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
+static int m11_build_dm1_hoc_front_mirror_runtime_decision(
+    const M11_GameViewState* state,
     const M11_ViewportCell* frontCell,
-    const DM1_V1_ChampionMirrorRenderReceiptPc34* renderReceipt,
-    DM1_V1_StartupHoCRenderConsumerReceipt_PC34* outReceipt) {
-    DM1_V1_StartupHandoffPostLaunchPlan_PC34 postPlan;
-    DM1_V1_StartupHandoffOutcome_PC34 outcome;
-    DM1_V1_StartupHoCFirstFrameReceipt_PC34 firstFrame;
+    DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* outDecision) {
+    DM1_V1_ChampionMirrorRenderReceiptPc34 renderReceipt;
     DM1V1D1LD1RF0115RuntimeThingReceiptPc34 floorThing;
     DM1_V1_ChampionMirrorRuntimeRenderInputPc34 runtimeInput;
-    DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 runtimeDecision;
     const DM1V1D1LD1RF0115LanePc34Data* lane;
+    const M11_AssetSlot* backing;
     int thingType;
     int squareHasProjectile;
-    if (!frontCell || !renderReceipt || !outReceipt) {
+    if (!state || !frontCell || !outDecision) {
         return 0;
     }
-    memset(outReceipt, 0, sizeof(*outReceipt));
-    outReceipt->zone = -1;
-    outReceipt->row = -1;
-    outReceipt->view_cell = -1;
-    if (!renderReceipt->valid || !renderReceipt->drawChampionPortrait) {
+    memset(outDecision, 0, sizeof(*outDecision));
+    if (!m11_build_dm1_front_champion_portrait_receipt(frontCell,
+                                                       &renderReceipt) ||
+        !renderReceipt.valid || !renderReceipt.drawChampionPortrait) {
         return 1;
     }
     lane = dm1_v1_viewport_d1l_d1r_f0115_thing_pass_lane_at_pc34(0);
     thingType = frontCell->floorItemCount > 0 ?
         frontCell->firstItemThingType : THING_TYPE_PROJECTILE;
     squareHasProjectile = frontCell->summary.projectiles > 0;
-    if (!lane ||
-        !dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
+    if (!lane || !dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
+                     lane, thingType, 1, 1, squareHasProjectile, &floorThing)) {
+        return 0;
+    }
+    backing = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                   (unsigned int)renderReceipt.backingGraphicIndex);
+    memset(&runtimeInput, 0, sizeof(runtimeInput));
+    runtimeInput.wallSquareVisible = 1;
+    runtimeInput.sensorType = 127;
+    runtimeInput.sensorData = renderReceipt.renderIndex;
+    runtimeInput.ornamentOrdinal = renderReceipt.backingGraphicIndex;
+    runtimeInput.thingCell = 2;
+    runtimeInput.visibleWallCell = 2;
+    runtimeInput.candidatePanelActive = state->candidateMirrorPanelActive;
+    runtimeInput.backingAssetAvailable =
+        backing && backing->loaded && backing->pixels && backing->width > 0 &&
+        backing->height > 0;
+    runtimeInput.runtimeThingReceipt = &floorThing;
+    return DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
+        &runtimeInput, outDecision);
+}
+
+static int m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
+    const DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* runtimeDecision,
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34* outReceipt) {
+    DM1_V1_StartupHandoffPostLaunchPlan_PC34 postPlan;
+    DM1_V1_StartupHandoffOutcome_PC34 outcome;
+    DM1_V1_StartupHoCFirstFrameReceipt_PC34 firstFrame;
+    if (!runtimeDecision || !outReceipt) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    outReceipt->zone = -1;
+    outReceipt->row = -1;
+    outReceipt->view_cell = -1;
+    if (!runtimeDecision->valid ||
+        !runtimeDecision->drawChampionPortraitAsWallOverlay) {
+        return 1;
+    }
+    if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
         !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
             ENTRANCE_COMPAT_COMMAND_PATH_ENTER, &outcome) ||
         !dm1_v1_startup_hoc_first_frame_receipt_pc34(
             "dm1", &postPlan, &outcome, &firstFrame) ||
-        /* ReDMCSB DUNVIEW.C F0115 uses C01_VIEW_CELL_FRONT_RIGHT for the
-         * D1 front mirror/item lane proven by the DM1 D1L/D1R receipt.
-         * Keep M11 on that DM1 receipt instead of deriving a host cell. */
-        !dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
-            lane, thingType, 1, 1, squareHasProjectile, &floorThing)) {
+        !runtimeDecision->consumedF0172Sensor ||
+        !runtimeDecision->consumedF0115ThingReceipt) {
         memset(outReceipt, 0, sizeof(*outReceipt));
         outReceipt->zone = -1;
         outReceipt->row = -1;
         outReceipt->view_cell = -1;
         return 0;
     }
-    memset(&runtimeInput, 0, sizeof(runtimeInput));
-    runtimeInput.wallSquareVisible = 1;
-    runtimeInput.sensorType = 127;
-    runtimeInput.sensorData = renderReceipt->renderIndex;
-    runtimeInput.ornamentOrdinal = renderReceipt->backingGraphicIndex;
-    runtimeInput.thingCell = 2;
-    runtimeInput.visibleWallCell = 2;
-    runtimeInput.runtimeThingReceipt = &floorThing;
-    if (!DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
-            &runtimeInput, &runtimeDecision) ||
-        !dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
-            &firstFrame, &runtimeDecision.thingConsumer, outReceipt)) {
+    if (!dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
+            &firstFrame, &runtimeDecision->thingConsumer, outReceipt)) {
         memset(outReceipt, 0, sizeof(*outReceipt));
         outReceipt->zone = -1;
         outReceipt->row = -1;
@@ -21436,31 +21467,28 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                             unsigned char* framebuffer,
                                             int fbW,
                                             int fbH) {
-    DM1_V1_ChampionMirrorRenderReceiptPc34 receipt;
+    const DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* runtimeDecision;
+    const DM1_V1_ChampionMirrorRenderReceiptPc34* receipt;
     DM1_V1_ChampionMirrorHostDrawReceiptPc34 drawReceipt;
     DM1_V1_StartupHoCRenderConsumerReceipt_PC34 consumer;
     DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34 ownership;
     M11_DM1ZoneBlit backingBlit;
     const M11_AssetSlot* slot;
-    M11_ViewportCell mirrorCell;
-    int portraitOrdinal;
-    int backingAssetAvailable;
     if (!state || !frontCell) {
         return;
     }
-    mirrorCell = *frontCell;
-    portraitOrdinal = m11_front_cell_mirror_ordinal(state);
-    mirrorCell.championPortraitOrdinal = portraitOrdinal;
-    if (!m11_build_dm1_front_champion_portrait_receipt(&mirrorCell,
-                                                       &receipt) ||
-        !receipt.valid ||
-        !receipt.drawChampionPortrait) {
+    if (!frontCell->dm1RuntimeRenderDecisionReady) {
         return;
     }
+    runtimeDecision = &frontCell->dm1RuntimeRenderDecision;
+    receipt = &runtimeDecision->render;
+    if (!runtimeDecision->valid || !runtimeDecision->drawFrontWallOverlay ||
+        !runtimeDecision->drawChampionPortraitAsWallOverlay ||
+        !receipt->valid || !receipt->drawChampionPortrait) return;
     if (!m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
-            &mirrorCell, &receipt, &consumer) ||
+            runtimeDecision, &consumer) ||
         !m11_build_dm1_hoc_full_graphics_ownership_receipt(
-            state, &consumer, &receipt, &ownership) ||
+            state, &consumer, receipt, &ownership) ||
         !ownership.ready ||
         !ownership.consume_dm1_receipts_only ||
         !ownership.draw_champion_mirror_wall_overlay ||
@@ -21478,17 +21506,9 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
      * corridor squares carrying unrelated or transplanted C127 data cannot
      * draw a floating C026 portrait. */
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                (unsigned int)receipt.backingGraphicIndex);
-    backingAssetAvailable =
-        slot && slot->loaded && slot->pixels && slot->width > 0 &&
-        slot->height > 0;
-    if (!dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
-            &ownership,
-            &receipt,
-            state->candidateMirrorPanelActive,
-            backingAssetAvailable,
-            &drawReceipt) ||
-        !drawReceipt.valid) {
+                                (unsigned int)receipt->backingGraphicIndex);
+    drawReceipt = runtimeDecision->hostDraw;
+    if (!drawReceipt.valid || !runtimeDecision->suppressHostFallbackVisuals) {
         return;
     }
 
@@ -21583,6 +21603,9 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         if (!m11_sample_viewport_cell(state, spec.relForward, spec.relSide, &cell)) {
             continue;
         }
+        if (cells && spec.relForward == 1 && spec.relSide == 0) {
+            cell = cells[0][1];
+        }
         if (!cell.valid) {
             continue;
         }
@@ -21599,6 +21622,12 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             cell.wallOrnamentOrdinal = (int)state->world.dungeon->maps[mapIdx].wallOrnamentCount;
         }
         if (cell.wallOrnamentOrdinal <= 0) {
+            continue;
+        }
+        if (cell.dm1RuntimeRenderDecisionReady &&
+            cell.dm1RuntimeRenderDecision.drawFrontWallOverlay) {
+            /* The D1C C346/C026 pair is owned by the final DM1 runtime
+             * decision.  Do not revive it through this broad host scan. */
             continue;
         }
         localIdx = cell.wallOrnamentOrdinal - 1;
@@ -23697,6 +23726,10 @@ static void m11_draw_dm1_deferred_center_explosion(unsigned char* framebuffer,
     int faceH;
     if (!rect || !m11_viewport_cell_is_open(cell) ||
         !m11_viewport_cell_has_renderable_explosion(cell)) {
+        return;
+    }
+    if (cell->dm1RuntimeRenderDecisionReady &&
+        cell->dm1RuntimeRenderDecision.suppressMirrorAsSpellEffect) {
         return;
     }
     inset = 6 + depthIndex * 4;
@@ -29543,9 +29576,9 @@ int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
     DM1_V1_StartupHoCFirstFrameReceipt_PC34 firstFrame;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
     DM1_V1_ChampionMirrorRenderReceiptPc34 render;
-    DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 boundary;
     DM1V1D1LD1RF0115RuntimeThingReceiptPc34 floorThing;
-    DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 thingConsumer;
+    DM1_V1_ChampionMirrorRuntimeRenderInputPc34 runtimeInput;
+    DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 runtimeDecision;
     DM1_V1_StartupHoCRenderConsumerReceipt_PC34 consumer;
     const DM1V1D1LD1RF0115LanePc34Data* lane;
 
@@ -29561,14 +29594,23 @@ int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
         !DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
             127, 13, 4, 2, 2, &frontWall) ||
         !DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&frontWall, &render) ||
-        !DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
-            &render, &boundary) ||
         !dm1_v1_viewport_d1l_d1r_f0115_runtime_thing_receipt_pc34(
-            lane, 5, 1, 1, 0, &floorThing) ||
-        !DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
-            &boundary, &floorThing, &thingConsumer) ||
-        !dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
-            &firstFrame, &thingConsumer, &consumer)) {
+            lane, 5, 1, 1, 0, &floorThing)) {
+        return 0;
+    }
+    memset(&runtimeInput, 0, sizeof(runtimeInput));
+    runtimeInput.wallSquareVisible = 1;
+    runtimeInput.sensorType = 127;
+    runtimeInput.sensorData = 13;
+    runtimeInput.ornamentOrdinal = 4;
+    runtimeInput.thingCell = 2;
+    runtimeInput.visibleWallCell = 2;
+    runtimeInput.backingAssetAvailable = 1;
+    runtimeInput.runtimeThingReceipt = &floorThing;
+    if (!DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
+            &runtimeInput, &runtimeDecision) ||
+        !m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
+            &runtimeDecision, &consumer)) {
         return 0;
     }
 
@@ -29618,13 +29660,10 @@ int M11_GameView_ProbeDm1HocStartupRenderConsumerReceipt(
         *outRenderCommandCount = consumer.render_command_count;
     }
     if (outRuntimeRouteUsesReceipt) {
-        M11_ViewportCell frontCell;
         DM1_V1_StartupHoCRenderConsumerReceipt_PC34 runtimeConsumer;
-        memset(&frontCell, 0, sizeof(frontCell));
-        frontCell.valid = 1;
         *outRuntimeRouteUsesReceipt =
             m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
-                &frontCell, &render, &runtimeConsumer) &&
+                &runtimeDecision, &runtimeConsumer) &&
             runtimeConsumer.ready &&
             runtimeConsumer.consume_dm1_receipts_only &&
             runtimeConsumer.no_m11_fallback_scan &&
@@ -36696,6 +36735,11 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             (void)m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side]);
         }
     }
+    /* ReDMCSB DUNGEON.C F0172 (2608-2612) publishes the visible HoC
+     * mirror once, then DUNVIEW.C consumes it across wall and F0115 layers. */
+    cells[0][1].dm1RuntimeRenderDecisionReady =
+        m11_build_dm1_hoc_front_mirror_runtime_decision(
+            state, &cells[0][1], &cells[0][1].dm1RuntimeRenderDecision);
     /* V2.2 GPU render path integration: populate the per-frame
      * V22 shape cache from the sampled cells. When V22 is not the
      * active mode, the cache marks all cells active=0 (V1 path) and

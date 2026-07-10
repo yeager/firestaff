@@ -468,6 +468,7 @@ static void test_f0172_front_wall_sensor_receipt(void)
                 runtimeDecision.valid == 1 &&
                 runtimeDecision.consumedF0172Sensor == 1 &&
                 runtimeDecision.consumedF0115ThingReceipt == 1 &&
+                runtimeDecision.drawFrontWallOverlay == 1 &&
                 runtimeDecision.drawChampionPortraitAsWallOverlay == 1 &&
                 runtimeDecision.drawFloorObject == 1 &&
                 runtimeDecision.drawRuntimeProjectile == 0 &&
@@ -475,6 +476,24 @@ static void test_f0172_front_wall_sensor_receipt(void)
                 runtimeDecision.hostDraw.drawMirrorBackingAsset == 1,
             "DM1 runtime decision keeps materialized floor object separate from HoC mirror",
             "DUNGEON.C:2608-2612; DUNVIEW.C:3913-3928,5075");
+
+        /* A native/original-save resume only restores the candidate-panel
+         * bit after the DM1 world handoff.  It must not reopen M11's old
+         * wall/item/projectile fallback routes. */
+        runtimeInput.candidatePanelActive = 1;
+        CHECK_ANCHOR(
+            DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
+                &runtimeInput, &runtimeDecision) == 1 &&
+                runtimeDecision.drawFrontWallOverlay == 1 &&
+                runtimeDecision.drawChampionPortraitAsWallOverlay == 1 &&
+                runtimeDecision.drawFloorObject == 1 &&
+                runtimeDecision.drawRuntimeProjectile == 0 &&
+                runtimeDecision.suppressMaterializedItemPayload == 1 &&
+                runtimeDecision.hostDraw.candidatePanelOwnsCell == 1 &&
+                runtimeDecision.suppressHostFallbackVisuals == 1,
+            "resumed HoC candidate uses the same DM1 runtime layers",
+            "LOADSAVE.C:F0435; DUNGEON.C:2608-2612; DUNVIEW.C:3913-3928,5075");
+        runtimeInput.candidatePanelActive = 0;
 
         runtimeInput.runtimeThingReceipt = &projectileThing;
         CHECK_ANCHOR(
