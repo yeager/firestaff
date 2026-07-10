@@ -1058,7 +1058,9 @@ static int theron_v1_startup_continue_attach_track02_media(
     char *receipt,
     size_t receipt_cap) {
 
+    const Theron_Track02StartupBitmapAtlasRoute *title = NULL;
     const Theron_Track02StartupBitmapAtlasRoute *stage = NULL;
+    const Theron_Track02StartupBitmapAtlasRoute *soul_room = NULL;
     const Theron_Track02StartupBitmapAtlasRoute *forcefield = NULL;
 
     if (!world || !result || !media_receipt) {
@@ -1077,20 +1079,36 @@ static int theron_v1_startup_continue_attach_track02_media(
          ++i) {
         const Theron_Track02StartupBitmapAtlasRoute *route =
             &media_receipt->startup_bitmap_atlas.routes[i];
-        if (route->route_bit == THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE) {
+        if (route->route_bit == THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE) {
+            title = route;
+        } else if (route->route_bit == THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE) {
             stage = route;
+        } else if (route->route_bit ==
+                   THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) {
+            soul_room = route;
         } else if (route->route_bit ==
                    THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) {
             forcefield = route;
         }
     }
     theron_v1_world_runtime_media_clear(world);
-    if (!stage || !forcefield ||
+    if (!title || !stage || !soul_room || !forcefield ||
+        !theron_v1_world_runtime_media_set_surface(
+            world, THERON_RUNTIME_MEDIA_SURFACE_TITLE, title->route_bit,
+            title->width, title->height, title->tile_count,
+            title->nonzero_pixel_count, title->checksum, title->pixels,
+            (size_t)title->width * (size_t)title->height) ||
         !theron_v1_world_runtime_media_set_surface(
             world, THERON_RUNTIME_MEDIA_SURFACE_STAGE, stage->route_bit,
             stage->width, stage->height, stage->tile_count,
             stage->nonzero_pixel_count, stage->checksum, stage->pixels,
             (size_t)stage->width * (size_t)stage->height) ||
+        !theron_v1_world_runtime_media_set_surface(
+            world, THERON_RUNTIME_MEDIA_SURFACE_SOUL_ROOM,
+            soul_room->route_bit, soul_room->width, soul_room->height,
+            soul_room->tile_count, soul_room->nonzero_pixel_count,
+            soul_room->checksum, soul_room->pixels,
+            (size_t)soul_room->width * (size_t)soul_room->height) ||
         !theron_v1_world_runtime_media_set_surface(
             world, THERON_RUNTIME_MEDIA_SURFACE_FORCEFIELD,
             forcefield->route_bit, forcefield->width, forcefield->height,

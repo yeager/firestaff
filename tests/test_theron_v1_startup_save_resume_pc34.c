@@ -610,11 +610,27 @@ static void test_tqsv_only_resume_claim(void) {
                         state_receipt.flow.selected_dungeon ==
                             THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
                         world.runtime_media.restored &&
+                        world.runtime_media.route_mask ==
+                            TST_THERON_FULL_START_BITMAP_ROUTES &&
+                        world.runtime_media.title.ready &&
+                        world.runtime_media.title.route_bit ==
+                            THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE &&
+                        world.runtime_media.title.pixels[0] == 1u &&
                         theron_v1_world_runtime_media_for_level(
                             &world, 1, 0) == &world.runtime_media.stage &&
+                        world.runtime_media.stage.ready &&
+                        world.runtime_media.stage.route_bit ==
+                            THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE &&
                         theron_v1_world_runtime_media_for_level(
                             &world, 1, 1) == &world.runtime_media.forcefield &&
                         world.runtime_media.stage.pixels[0] == 2u &&
+                        world.runtime_media.soul_room.ready &&
+                        world.runtime_media.soul_room.route_bit ==
+                            THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM &&
+                        world.runtime_media.soul_room.pixels[0] == 3u &&
+                        world.runtime_media.forcefield.ready &&
+                        world.runtime_media.forcefield.route_bit ==
+                            THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD &&
                         world.runtime_media.forcefield.pixels[0] == 4u &&
                         world.runtime_media.identity.ready &&
                         world.runtime_media.identity.bank_descriptor_offset ==
