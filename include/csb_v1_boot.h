@@ -120,6 +120,25 @@ typedef struct CSB_V1_BootStartupLaunchReceipts_PC34 {
     CSB_V1_StartupHostReceipt_PC34 launch_host_receipt;
 } CSB_V1_BootStartupLaunchReceipts_PC34;
 
+/* A verified CSB launch has one owner for startup media and session state.
+ * TITLE.C F0437 consumes C001, while ENTRANCE.C F0438/F0441 consumes the
+ * entrance artwork and menu state in the same loop.  Do not let a runtime
+ * consumer reintroduce an unowned text, door, or utility fallback. */
+typedef struct CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 {
+    int valid;
+    int real_asset_matched;
+    int asset_ownership_valid;
+    int session_state_valid;
+    int title_assets_owned;
+    int entrance_assets_owned;
+    int hud_assets_owned;
+    int rejects_fallback_sources;
+    uint64_t real_asset_receipt_hash;
+    CSB_V1_RuntimeStartupSessionStateReceipt_PC34 session_state;
+    CSB_V1_StartupRealReceipt real_asset_receipt;
+    const char *source_evidence;
+} CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34;
+
 typedef struct CSB_V1_BootStartupLaunch_PC34 {
     CSB_V1_BootProfile *profile;
     CSB_V1_BootStartupLaunchReceipts_PC34 receipts;
@@ -136,6 +155,8 @@ typedef struct CSB_V1_BootStartupRuntimeReceipt_PC34 {
     int load_original_font_from_graphics;
     int real_asset_receipt_valid;
     CSB_V1_StartupRealReceipt real_asset_receipt;
+    int startup_asset_gate_valid;
+    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 startup_asset_gate;
     char graphics_path[512];
     char dungeon_path[512];
 } CSB_V1_BootStartupRuntimeReceipt_PC34;
@@ -725,6 +746,19 @@ typedef struct CSB_V1_BootStartupM11PresentationReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_BootStartupM11PresentationReceipt_PC34;
 
+/* Runtime-only startup presentation.  This is the CSB boundary for title,
+ * entrance/HUD, utility, and opening-door plans when verified game data is
+ * present.  The older snapshot helpers remain inspection adapters. */
+typedef struct CSB_V1_BootStartupRuntimePresentationReceipt_PC34 {
+    int valid;
+    int asset_gate_valid;
+    int render_plan_uses_owned_assets;
+    int utility_plan_uses_owned_session;
+    int door_plan_has_no_fallback;
+    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 asset_gate;
+    CSB_V1_BootStartupM11PresentationReceipt_PC34 presentation;
+} CSB_V1_BootStartupRuntimePresentationReceipt_PC34;
+
 typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
     int valid;
     int host_view_valid;
@@ -847,6 +881,16 @@ csb_v1_boot_startup_asset_binding_pc34(
 int csb_v1_boot_startup_render_plan_uses_real_assets_pc34(
     const CSB_V1_BootProfile *profile,
     const CSB_V1_StartupRenderPlan_PC34 *plan);
+void csb_v1_boot_startup_runtime_asset_gate_receipt_init_pc34(
+    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *receipt);
+int csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_BootStartupLaunchReceipts_PC34 *launch_receipts,
+    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_runtime_presentation_from_snapshot_pc34(
+    const CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *asset_gate,
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupRuntimePresentationReceipt_PC34 *out_receipt);
 const char *csb_v1_boot_startup_asset_source_name_pc34(
     CSB_V1_StartupAssetSource_PC34 source);
 int csb_v1_boot_probe_available(const char *data_dir);
