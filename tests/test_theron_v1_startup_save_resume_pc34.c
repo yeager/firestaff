@@ -1614,6 +1614,13 @@ static void test_startup_session_facts_wrappers(void) {
         THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
         THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
         THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+    media_receipt.startup_bitmap_raw_route_mask =
+        media_receipt.startup_bitmap_atlas_route_mask;
+    media_receipt.startup_bitmap_raw_route_count = 4;
+    media_receipt.startup_bitmap_raw_atlas_tile_count = 32u;
+    media_receipt.startup_bitmap_iso_route_mask = 0u;
+    media_receipt.startup_bitmap_iso_route_count = 0;
+    media_receipt.startup_bitmap_iso_atlas_tile_count = 0u;
     media_receipt.startup_bitmap_atlas_tile_count = 32u;
     media_receipt.startup_bitmap_atlas_nonzero_pixel_count = 384u;
     media_receipt.startup_bitmap_atlas_checksum = 0x9163u;
@@ -2339,6 +2346,12 @@ static void test_startup_session_facts_wrappers(void) {
                         TST_THERON_FULL_START_BITMAP_ROUTES &&
                     graphics_route_receipt.required_bitmap_route_count == 4 &&
                     graphics_route_receipt.required_bitmap_routes_ready &&
+                    graphics_route_receipt.bitmap_package_route_ready &&
+                    graphics_route_receipt.raw_bitmap_route_mask ==
+                        TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    graphics_route_receipt.raw_bitmap_route_count == 4 &&
+                    graphics_route_receipt.raw_bitmap_atlas_tile_count == 32u &&
+                    graphics_route_receipt.iso_bitmap_route_mask == 0u &&
                     (graphics_route_receipt.bitmap_route_mask & 0x04u) &&
                     (graphics_route_receipt.bitmap_route_mask & 0x08u) &&
                     graphics_route_receipt.bitmap_route_count >= 4 &&
@@ -2555,6 +2568,11 @@ static void test_startup_session_facts_wrappers(void) {
                     !ui_caller_receipt.save_resume_runtime_handoff_ready &&
                     ui_caller_receipt.real_graphics_handoff_ready &&
                     ui_caller_receipt.real_bitmap_decode_ready &&
+                    ui_caller_receipt.bitmap_package_route_ready &&
+                    ui_caller_receipt.raw_bitmap_route_mask ==
+                        (int)TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    ui_caller_receipt.raw_bitmap_route_count == 4 &&
+                    ui_caller_receipt.iso_bitmap_route_mask == 0 &&
                     (ui_caller_receipt.bitmap_route_mask & 0x04) &&
                     (ui_caller_receipt.bitmap_route_mask & 0x08) &&
                     ui_caller_receipt.bitmap_route_count >= 4 &&
@@ -2997,6 +3015,56 @@ static void test_startup_session_facts_wrappers(void) {
                     media_graphics_counters.rect_count > 0,
                 "boot graphics route receipt executes startup graphics from view model");
     {
+        Theron_StartupMediaStateReceipt unpackaged_media_receipt =
+            media_receipt;
+        Theron_V1_BootStartupViewModel unpackaged_view_model;
+        Theron_V1_BootStartupGraphicsRouteReceipt unpackaged_graphics_receipt;
+
+        unpackaged_media_receipt.startup_bitmap_raw_route_mask = 0u;
+        unpackaged_media_receipt.startup_bitmap_raw_route_count = 0;
+        unpackaged_media_receipt.startup_bitmap_raw_atlas_tile_count = 0u;
+        memset(&unpackaged_view_model, 0, sizeof(unpackaged_view_model));
+        memset(&unpackaged_graphics_receipt,
+               0,
+               sizeof(unpackaged_graphics_receipt));
+        memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+        expect_true(theron_v1_boot_startup_view_model_from_runtime_state_with_media_receipt(
+                        &unpackaged_view_model,
+                        &unpackaged_media_receipt,
+                        THERON_STARTUP_PHASE_READY,
+                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                        NULL,
+                        &world,
+                        NULL,
+                        1,
+                        1,
+                        THERON_V1_STARTUP_RESUME_DUAL,
+                        2,
+                        3,
+                        THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                        "/tmp/firestaff-theron-srm",
+                        NULL,
+                        NULL,
+                        NULL,
+                        0,
+                        0x03,
+                        2,
+                        order,
+                        THERON_STARTUP_MAX_COMPANIONS) &&
+                        theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+                            &unpackaged_view_model,
+                            &media_graphics_executor,
+                            &unpackaged_graphics_receipt) &&
+                        !unpackaged_graphics_receipt.bitmap_package_route_ready &&
+                        !unpackaged_graphics_receipt.required_bitmap_routes_ready &&
+                        !unpackaged_graphics_receipt.real_bitmap_startup_graphics_ready &&
+                        unpackaged_graphics_receipt
+                            .raw_graphics_plan_consumer_required &&
+                        !unpackaged_graphics_receipt
+                             .track02_startup_graphics_executed,
+                    "boot graphics route blocks real readiness without raw Track02 package proof");
+    }
+    {
         Theron_StartupMediaStateReceipt partial_media_receipt =
             media_receipt;
         Theron_V1_BootStartupViewModel partial_media_view_model;
@@ -3013,6 +3081,10 @@ static void test_startup_session_facts_wrappers(void) {
             ~THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
         partial_media_receipt.startup_bitmap_atlas_route_count = 3;
         partial_media_receipt.startup_bitmap_atlas_tile_count = 3u;
+        partial_media_receipt.startup_bitmap_raw_route_mask &=
+            ~THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+        partial_media_receipt.startup_bitmap_raw_route_count = 3;
+        partial_media_receipt.startup_bitmap_raw_atlas_tile_count = 24u;
         memset(&partial_media_view_model, 0, sizeof(partial_media_view_model));
         memset(&partial_graphics_receipt, 0, sizeof(partial_graphics_receipt));
         memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
@@ -3142,6 +3214,13 @@ static void test_startup_session_facts_wrappers(void) {
         iso_media_receipt.startup_bitmap_atlas.route_mask =
             iso_media_receipt.startup_bitmap_atlas_route_mask;
         iso_media_receipt.startup_bitmap_atlas.total_tile_count = 4u;
+        iso_media_receipt.startup_bitmap_raw_route_mask = 0u;
+        iso_media_receipt.startup_bitmap_raw_route_count = 0;
+        iso_media_receipt.startup_bitmap_raw_atlas_tile_count = 0u;
+        iso_media_receipt.startup_bitmap_iso_route_mask =
+            iso_media_receipt.startup_bitmap_route_mask;
+        iso_media_receipt.startup_bitmap_iso_route_count = 2;
+        iso_media_receipt.startup_bitmap_iso_atlas_tile_count = 4u;
         iso_media_receipt.startup_bitmap_atlas.routes[0] =
             media_receipt.startup_bitmap_atlas.routes[2];
         iso_media_receipt.startup_bitmap_atlas.routes[1] =
@@ -3232,6 +3311,12 @@ static void test_startup_session_facts_wrappers(void) {
                     full_start_receipt.real_bitmap_startup_graphics_ready &&
                     full_start_receipt.required_bitmap_routes_ready &&
                     full_start_receipt.required_bitmap_route_count == 4 &&
+                    full_start_receipt.bitmap_package_route_ready &&
+                    full_start_receipt.raw_bitmap_route_mask ==
+                        TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    full_start_receipt.raw_bitmap_route_count == 4 &&
+                    full_start_receipt.raw_bitmap_atlas_tile_count == 32u &&
+                    full_start_receipt.iso_bitmap_route_mask == 0u &&
                     (full_start_receipt.bitmap_route_mask & 0x04u) &&
                     (full_start_receipt.bitmap_route_mask & 0x08u) &&
                     full_start_receipt.bitmap_route_count >= 4 &&
@@ -3256,6 +3341,74 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(full_start_receipt.status,
                            "FULL START GRAPHICS READY") == 0,
                 "boot full-start receipt owns title stage soul-room save-resume graphics readiness");
+    {
+        Theron_StartupMediaStateReceipt iso_full_media_receipt =
+            media_receipt;
+        Theron_V1_BootStartupViewModel iso_full_view_model;
+        Theron_V1_BootStartupGraphicsRouteReceipt iso_full_graphics_receipt;
+
+        iso_full_media_receipt.track02_variant =
+            THERON_TRACK02_VARIANT_US_ISO;
+        snprintf(iso_full_media_receipt.track02_md5,
+                 sizeof(iso_full_media_receipt.track02_md5),
+                 "%s",
+                 THERON_TRACK02_MD5_US_ISO);
+        iso_full_media_receipt.startup_bitmap_atlas.variant =
+            THERON_TRACK02_VARIANT_US_ISO;
+        iso_full_media_receipt.startup_bitmap_raw_route_mask = 0u;
+        iso_full_media_receipt.startup_bitmap_raw_route_count = 0;
+        iso_full_media_receipt.startup_bitmap_raw_atlas_tile_count = 0u;
+        iso_full_media_receipt.startup_bitmap_iso_route_mask =
+            TST_THERON_FULL_START_BITMAP_ROUTES;
+        iso_full_media_receipt.startup_bitmap_iso_route_count = 4;
+        iso_full_media_receipt.startup_bitmap_iso_atlas_tile_count = 32u;
+        memset(&iso_full_view_model, 0, sizeof(iso_full_view_model));
+        memset(&iso_full_graphics_receipt,
+               0,
+               sizeof(iso_full_graphics_receipt));
+        memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+        expect_true(theron_v1_boot_startup_view_model_from_runtime_state_with_media_receipt(
+                        &iso_full_view_model,
+                        &iso_full_media_receipt,
+                        THERON_STARTUP_PHASE_READY,
+                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                        NULL,
+                        &world,
+                        NULL,
+                        1,
+                        1,
+                        THERON_V1_STARTUP_RESUME_DUAL,
+                        2,
+                        3,
+                        THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                        "/tmp/firestaff-theron-srm",
+                        NULL,
+                        NULL,
+                        NULL,
+                        0,
+                        0x03,
+                        2,
+                        order,
+                        THERON_STARTUP_MAX_COMPANIONS) &&
+                        theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+                            &iso_full_view_model,
+                            &media_graphics_executor,
+                            &iso_full_graphics_receipt) &&
+                        iso_full_graphics_receipt.bitmap_package_route_ready &&
+                        iso_full_graphics_receipt.required_bitmap_routes_ready &&
+                        iso_full_graphics_receipt.real_bitmap_startup_graphics_ready &&
+                        iso_full_graphics_receipt.iso_bitmap_route_mask ==
+                            TST_THERON_FULL_START_BITMAP_ROUTES &&
+                        iso_full_graphics_receipt.iso_bitmap_route_count == 4 &&
+                        iso_full_graphics_receipt
+                                .iso_bitmap_atlas_tile_count == 32u &&
+                        iso_full_graphics_receipt.raw_bitmap_route_mask == 0u &&
+                        !iso_full_graphics_receipt
+                             .raw_graphics_plan_consumer_required &&
+                        !iso_full_graphics_receipt
+                             .fallback_startup_graphics_executed,
+                    "boot graphics route accepts complete ISO Track02 package proof");
+    }
     memset(media_layout, 0, sizeof(media_layout));
     expect_true(theron_v1_boot_startup_layout_build_from_full_start_receipt(
                     &full_start_receipt,
