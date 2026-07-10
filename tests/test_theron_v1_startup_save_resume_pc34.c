@@ -4402,6 +4402,10 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
     Theron_Track02ObjectTableRouteReceipt object_route_receipt;
     Theron_Track02SemanticBinding descriptor_semantic;
     Theron_V1StartupAllDungeonRouteReceipt receipt;
+    Theron_StartupActionPlan plan;
+    Theron_V1StartupRuntimeEntryResult runtime_result;
+    Theron_V1StartupRuntimeEntryApplyReceipt apply_receipt;
+    Theron_StartupStateReceipt state_receipt;
     Theron_V1_World selected_world;
     char runtime_receipt[320];
     Theron_DungeonID dungeon_id;
@@ -4465,6 +4469,20 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     receipt.object_capture_mask ==
                         ((1u << THERON_DUNGEON_COUNT) - 1u) &&
                     receipt.object_count_total == 0 &&
+                    (receipt.no_fallback_semantic_role_mask &
+                     (1u << THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE)) &&
+                    (receipt.no_fallback_semantic_role_mask &
+                     (1u << THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE)) &&
+                    receipt.object_table_no_fallback_ready &&
+                    receipt.object_table_blocked_anchor_count == 3 &&
+                    receipt.object_table_blocked_anchor_mask == 0x07u &&
+                    receipt.nonstartup_level_no_fallback_ready &&
+                    receipt.nonstartup_level_blocked_anchor_count == 3 &&
+                    receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
+                    receipt.startup_level_blocked_anchor_count == 2 &&
+                    receipt.startup_level_blocked_anchor_mask == 0x06u &&
+                    receipt.object_table_route_hash != 0u &&
+                    receipt.level_route_hash != 0u &&
                     receipt.object_route_hash != 0u &&
                     receipt.route_hash != 0u,
                 "Theron Track02 all seven dungeon selections have inspectable real-data level/object capture");
@@ -4550,6 +4568,44 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                             descriptor_semantic.byte_count >=
                         descriptor_offsets[0] + 18u,
                 "Theron Track02 descriptor-table semantic entry binds without object-table fallback");
+
+    theron_v1_startup_action_plan_init(&plan);
+    plan.status_scope = "READY";
+    plan.status = "THERON READY";
+    theron_v1_world_init(&selected_world);
+    memset(runtime_receipt, 0, sizeof(runtime_receipt));
+    expect_true(theron_v1_startup_runtime_load_initial_level_with_receipts(
+                    &selected_world,
+                    track02,
+                    track02_size,
+                    THERON_TRACK02_MD5_US_BIN,
+                    THERON_DUNGEON_1_HALL_OF_RECORDS,
+                    &plan,
+                    &runtime_result,
+                    &apply_receipt,
+                    &state_receipt,
+                    runtime_receipt,
+                    sizeof(runtime_receipt)) &&
+                    runtime_result.all_dungeon_real_data_capture_ready &&
+                    runtime_result.object_table_no_fallback_ready &&
+                    runtime_result.object_table_blocked_anchor_mask == 0x07u &&
+                    runtime_result.nonstartup_level_no_fallback_ready &&
+                    runtime_result.nonstartup_level_blocked_anchor_mask == 0x07u &&
+                    runtime_result.startup_level_blocked_anchor_mask == 0x06u &&
+                    runtime_result.object_table_route_hash != 0u &&
+                    runtime_result.level_route_hash != 0u &&
+                    apply_receipt.object_table_no_fallback_ready &&
+                    apply_receipt.object_table_blocked_anchor_mask == 0x07u &&
+                    apply_receipt.nonstartup_level_no_fallback_ready &&
+                    apply_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
+                    apply_receipt.startup_level_blocked_anchor_mask == 0x06u &&
+                    apply_receipt.object_table_route_hash ==
+                        runtime_result.object_table_route_hash &&
+                    apply_receipt.level_route_hash ==
+                        runtime_result.level_route_hash &&
+                    strstr(apply_receipt.inspect_detail,
+                           "no_fallback_roles=0x") != NULL,
+                "Theron runtime/apply receipts propagate Track02 object and non-startup level no-fallback evidence");
 
     for (dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
          dungeon_id <= THERON_DUNGEON_COUNT;
