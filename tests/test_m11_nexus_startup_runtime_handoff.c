@@ -113,6 +113,24 @@ static int count_nonzero_pixels(const unsigned char *pixels, int count)
     return nonzero;
 }
 
+static int count_color_pixels(const unsigned char *pixels,
+                              int count,
+                              unsigned char color)
+{
+    int i;
+    int matches = 0;
+
+    if (!pixels || count <= 0) {
+        return 0;
+    }
+    for (i = 0; i < count; ++i) {
+        if (pixels[i] == color) {
+            ++matches;
+        }
+    }
+    return matches;
+}
+
 int main(void)
 {
     Nexus_V1_Engine engine;
@@ -176,6 +194,12 @@ int main(void)
                     view.nexusState.startup_copied_draw_command_count > 0 &&
                     view.nexusState.startup_copied_dgn_render_command_count > 0,
                 "M11 Nexus startup gate consumes host-caller receipt for capture and DGN handoff");
+    expect_true(view.nexusState.startup_dgn_render_cached_count > 0,
+                "M11 Nexus caches the host-owned DGN command plan");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    expect_true(count_nonzero_pixels(framebuffer, (int)sizeof(framebuffer)) > 0,
+                "M11 Nexus runtime consumes cached DGN commands");
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);
@@ -264,8 +288,8 @@ int main(void)
     engine.menu_bpk_decode_receipt.decode_blocked = 1;
     memset(framebuffer, 0x7f, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(count_nonzero_pixels(framebuffer, (int)sizeof(framebuffer)) > 0,
-                "M11 Nexus draw uses real title capture before blocked menu fallback");
+    expect_true(count_color_pixels(framebuffer, (int)sizeof(framebuffer), 0x7fu) == 0,
+                "M11 Nexus blocked route clears stale title pixels without fallback");
 
     if (g_failures) {
         fprintf(stderr,

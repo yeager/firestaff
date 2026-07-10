@@ -45,7 +45,7 @@
 #include "firestaff_accessibility.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
-#include "entrance_frontend_pc34_compat.h"
+#include "entrance_frontend_pc34_compat.h" /* command-path enum only */
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "m11_game_view_a11y.h"  /* m11_screen_reader_update_ex gameplay manifest */
@@ -3241,8 +3241,6 @@ static int m11_draw_csb_entrance_opening_frame_asset(
     const M11_AssetSlot *entranceScreen;
     const M11_AssetSlot *leftDoor;
     const M11_AssetSlot *rightDoor;
-    EntranceCompatDoorStep door;
-    EntranceCompatCompositePixels pixels;
 
     if (!context || !composite) {
         return 0;
@@ -10435,6 +10433,34 @@ static void m11_nexus_apply_startup_host_caller_receipt(
         receipt->copied_dgn_command_count;
 }
 
+static void m11_nexus_cache_host_dgn_commands(
+    M11_GameViewState *state,
+    const Nexus_V1_StartupHostCallerReceipt *receipt,
+    const Nexus_V1_DgnRenderCommand *commands,
+    int command_capacity)
+{
+    int count;
+
+    if (!state || !receipt || !commands || command_capacity <= 0) {
+        return;
+    }
+    if (!receipt->host_execute_dgn_draws ||
+        receipt->copied_dgn_command_count <= 0) {
+        return;
+    }
+    count = receipt->copied_dgn_command_count;
+    if (count > command_capacity) {
+        count = command_capacity;
+    }
+    if (count > NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS) {
+        count = NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS;
+    }
+    memcpy(state->nexusState.startup_dgn_render_commands,
+           commands,
+           (size_t)count * sizeof(commands[0]));
+    state->nexusState.startup_dgn_render_cached_count = count;
+}
+
 static int m11_nexus_refresh_startup_host_caller(
     M11_GameViewState *state,
     M12_MenuInput input,
@@ -10467,6 +10493,10 @@ static int m11_nexus_refresh_startup_host_caller(
         return 0;
     }
     m11_nexus_apply_startup_host_caller_receipt(state, out_receipt);
+    m11_nexus_cache_host_dgn_commands(state,
+                                      out_receipt,
+                                      dgn_commands,
+                                      max_dgn_commands);
     return 1;
 }
 
@@ -35208,6 +35238,8 @@ typedef struct M11_DM2StartupDrawContext {
     int framebufferWidth;
     int framebufferHeight;
     int gdat_blit_count;
+    int title_gdat_blit_count;
+    int menu_gdat_blit_count;
     int rect_count;
     int text_count;
 } M11_DM2StartupDrawContext;
@@ -35291,6 +35323,11 @@ static int m11_dm2_startup_exec_gdat_image(
     }
     dm2_v1_boot_gdat_image_asset_free(pixels);
     ++context->gdat_blit_count;
+    if (command->frame_owner == DM2_V1_FRAME_OWNER_STARTUP_TITLE) {
+        ++context->title_gdat_blit_count;
+    } else if (command->frame_owner == DM2_V1_FRAME_OWNER_STARTUP_MENU) {
+        ++context->menu_gdat_blit_count;
+    }
     return 1;
 }
 
@@ -35440,6 +35477,8 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     context.framebufferWidth = framebufferWidth;
     context.framebufferHeight = framebufferHeight;
     context.gdat_blit_count = 0;
+    context.title_gdat_blit_count = 0;
+    context.menu_gdat_blit_count = 0;
     context.rect_count = 0;
     context.text_count = 0;
     executor.userdata = &context;
@@ -35453,6 +35492,8 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
             &executor)) {
         return 0;
     }
+    dm2_v1_runtime_note_startup_frame_consumption(
+        context.title_gdat_blit_count, context.menu_gdat_blit_count);
     visual_capture_receipt.m11_draw_executed_command_count =
         ownership_receipt.draw_command_count;
     visual_capture_receipt.m11_draw_gdat_blit_count =
@@ -35789,6 +35830,83 @@ static void m11_draw_nexus_startup_commands(
     (void)nexus_v1_launcher_startup_presentation_execute(commands,
                                                          command_count,
                                                          &executor);
+}
+
+static void m11_draw_nexus_dgn_host_plan(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    const Nexus_V1_DgnRenderCommand *commands;
+    int count;
+    int i;
+
+    if (!state || !framebuffer ||
+        !state->nexusState.startup_host_execute_dgn_draws ||
+        !state->nexusState.startup_dgn_render_ready) {
+        return;
+    }
+    commands = state->nexusState.startup_dgn_render_commands;
+    count = state->nexusState.startup_dgn_render_cached_count;
+    if (count <= 0 || count > NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS) {
+        return;
+    }
+
+    /* The DGN handoff emits ordered floor/wall commands from the real
+     * Structure1B collision map. M11 deliberately consumes only those
+     * commands here; it must not switch to nexus_viewport_render() when a
+     * Saturn mesh route is unavailable. */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  0, 0, framebufferWidth, framebufferHeight,
+                  M11_COLOR_BLACK);
+    for (i = 0; i < count; ++i) {
+        const Nexus_V1_DgnRenderCommand *command = &commands[i];
+        int depth = command->depth;
+        int inset;
+        int left;
+        int right;
+        int top;
+        int bottom;
+        unsigned char color;
+
+        if (depth < 0 || depth >= NEXUS_V1_DGN_VIEW_DISTANCE) {
+            continue;
+        }
+        inset = 18 + depth * 26;
+        left = inset;
+        right = framebufferWidth - inset;
+        top = 18 + depth * 15;
+        bottom = framebufferHeight - 36 - depth * 18;
+        if (right <= left || bottom <= top) {
+            continue;
+        }
+        color = (unsigned char)(M11_COLOR_DARK_GRAY +
+                                ((command->collision_ref >> 4) & 3));
+        switch (command->kind) {
+        case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          left, bottom - 5 - depth * 2,
+                          right - left, 6 + depth * 2,
+                          (unsigned char)(M11_COLOR_DARK_GRAY + depth));
+            break;
+        case NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT:
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          left, top, right - left, bottom - top, color);
+            break;
+        case NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT:
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          left, top, 6 + depth * 3, bottom - top, color);
+            break;
+        case NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT:
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          right - (6 + depth * 3), top,
+                          6 + depth * 3, bottom - top, color);
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 static int m11_draw_nexus_title_from_real_assets(
@@ -39354,7 +39472,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
             int command_count;
             int host_caller_ready = 0;
-            int suppress_legacy_startup_fallback = 0;
             directDraw = 1;
             m11_nexus_runtime_startup_snapshot(state, &snapshot);
             memset(&runtime_receipt, 0, sizeof(runtime_receipt));
@@ -39372,8 +39489,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                     (int)(sizeof(dgn_commands) / sizeof(dgn_commands[0])),
                     &host_caller_receipt)) {
                 host_caller_ready = host_caller_receipt.host_caller_ready ? 1 : 0;
-                suppress_legacy_startup_fallback =
-                    host_caller_receipt.suppress_legacy_placeholder_visuals ? 1 : 0;
                 command_count =
                     host_caller_receipt.host_execute_startup_draws
                         ? host_caller_receipt.copied_startup_command_count
@@ -39381,40 +39496,25 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             } else {
                 command_count = 0;
             }
-            if (command_count <= 0 &&
-                state->nexusState.startup_save_select_active) {
-                command_count =
-                    nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
-                        &snapshot.runtime,
-                        commands,
-                        (int)(sizeof(commands) / sizeof(commands[0])));
-            } else if (command_count <= 0 &&
-                       state->nexusState.champion_select_active) {
-                command_count =
-                    nexus_v1_launcher_startup_presentation_build_champion_from_runtime_state(
-                        &snapshot.runtime,
-                        commands,
-                        (int)(sizeof(commands) / sizeof(commands[0])));
-            }
-            m11_draw_nexus_startup_commands(state,
-                                            framebuffer,
-                                            framebufferWidth,
-                                            framebufferHeight,
-                                            commands,
-                                            command_count);
-            if (command_count <= 0 &&
-                state->nexusState.title_active &&
-                (!host_caller_ready || !suppress_legacy_startup_fallback)) {
-                (void)m11_draw_nexus_title_from_real_assets(state,
-                                                            framebuffer,
-                                                            framebufferWidth,
-                                                            framebufferHeight);
+            /* A blocked real-asset route owns this frame too. Clear it so
+             * callers never retain a stale title/menu image as a fallback. */
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          0, 0, framebufferWidth, framebufferHeight,
+                          M11_COLOR_BLACK);
+            if (host_caller_ready && command_count > 0) {
+                m11_draw_nexus_startup_commands(state,
+                                                framebuffer,
+                                                framebufferWidth,
+                                                framebufferHeight,
+                                                commands,
+                                                command_count);
             }
         } else if (state->nexusEngine) {
-            Nexus_Viewport vp;
-            nexus_viewport_init(&vp);
-            nexus_viewport_render(&vp, state->nexusEngine);
-            memcpy(&nexusFb, &vp.fb, sizeof(nexusFb));
+            directDraw = 1;
+            m11_draw_nexus_dgn_host_plan(state,
+                                         framebuffer,
+                                         framebufferWidth,
+                                         framebufferHeight);
         }
         if (!directDraw) {
             for (y = 0; y < copyH; ++y) {

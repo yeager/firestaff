@@ -9,6 +9,7 @@
 #include "asset_loader_m11.h"
 #include "audio_sdl_m11.h"
 #include "font_m11.h"
+#include "nexus_v1_dungeon.h"
 #include "nexus_v1_light_runtime.h"
 #include "dm1_v1_vblank_timing.h"
 #include "dm1_v1_save_load.h"
@@ -649,6 +650,13 @@ typedef struct {
         int startup_blocked_route_suppresses_all_draws;
         int startup_copied_draw_command_count;
         int startup_copied_dgn_render_command_count;
+        /* M11 only presents the DGN plan supplied by the Nexus startup
+         * host route. Keeping the accepted plan here lets a champion start
+         * or save-resume enter the dungeon without falling back to the
+         * generic Nexus viewport. */
+        Nexus_V1_DgnRenderCommand
+            startup_dgn_render_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+        int startup_dgn_render_cached_count;
     } nexusState;
 
     /* Theron's Quest V1 runtime — active when sourceKind ==
