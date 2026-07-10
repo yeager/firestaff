@@ -1934,6 +1934,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_frame_ownership.runtime_frame_owned = 1;
     g_dm2_frame_ownership.gdat_provider_bound =
         rt->viewport_asset_fetch != NULL;
+    g_dm2_frame_ownership.floor_ceiling_gdat_blits =
+        viewport.asset_floor_ceiling_drawn_count;
+    g_dm2_frame_ownership.wall_gdat_blits =
+        viewport.asset_wall_drawn_count;
+    g_dm2_frame_ownership.hud_core_gdat_blits =
+        viewport.asset_hud_core_drawn_count;
     g_dm2_frame_ownership.hud_gdat_blits =
         viewport.asset_hud_core_drawn_count +
         viewport.asset_hud_portrait_drawn_count;
@@ -1944,6 +1950,31 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.asset_door_button_drawn_count;
     g_dm2_frame_ownership.creature_gdat_blits =
         viewport.asset_creature_drawn_count;
+    g_dm2_frame_ownership.item_gdat_blits =
+        viewport.asset_item_drawn_count +
+        viewport.asset_creature_possession_item_drawn_count +
+        viewport.asset_carried_item_drawn_count;
+    g_dm2_frame_ownership.projectile_gdat_blits =
+        viewport.asset_projectile_drawn_count;
+    g_dm2_frame_ownership.total_runtime_gdat_blits =
+        g_dm2_frame_ownership.floor_ceiling_gdat_blits +
+        g_dm2_frame_ownership.wall_gdat_blits +
+        g_dm2_frame_ownership.hud_gdat_blits +
+        g_dm2_frame_ownership.door_gdat_blits +
+        g_dm2_frame_ownership.creature_gdat_blits +
+        g_dm2_frame_ownership.item_gdat_blits +
+        g_dm2_frame_ownership.projectile_gdat_blits;
+    g_dm2_frame_ownership.total_runtime_fallback_draws =
+        viewport.fallback_floor_ceiling_drawn_count +
+        viewport.fallback_wall_drawn_count +
+        viewport.fallback_hud_core_drawn_count +
+        viewport.fallback_hud_portrait_drawn_count +
+        viewport.fallback_door_drawn_count +
+        viewport.fallback_creature_drawn_count +
+        viewport.fallback_item_drawn_count +
+        viewport.fallback_creature_possession_item_drawn_count +
+        viewport.fallback_carried_item_drawn_count +
+        viewport.fallback_projectile_drawn_count;
     g_dm2_frame_ownership.viewport_raw_gdat_asset_count = 0;
     g_dm2_frame_ownership.viewport_decoded_gdat_asset_count = 0;
     g_dm2_frame_ownership.viewport_raw_gdat_byte_count = 0u;
@@ -2006,12 +2037,28 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &g_dm2_frame_ownership,
             g_dm2_last_creature_render.gdat_index);
     }
+    g_dm2_frame_ownership.real_gdat_evidence_valid =
+        rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch &&
+        g_dm2_frame_ownership.viewport_raw_gdat_asset_count >= 5 &&
+        g_dm2_frame_ownership.viewport_decoded_gdat_asset_count >= 5 &&
+        g_dm2_frame_ownership.viewport_raw_gdat_byte_count > 0u &&
+        g_dm2_frame_ownership.viewport_decoded_gdat_pixel_count > 0u;
+    /* skproject SKWIN/SkWinCore.cpp routes the runtime HUD, floor/ceiling,
+     * walls and overlays through GDAT-backed surface fetches before blitting.
+     * A "full" DM2 runtime frame is only accepted when the mandatory HUD and
+     * dungeon base layers are GDAT-backed and no visible runtime element fell
+     * back to Firestaff's bounded placeholder paths. */
+    g_dm2_frame_ownership.full_gdat_frame_valid =
+        g_dm2_frame_ownership.gdat_provider_bound &&
+        g_dm2_frame_ownership.floor_ceiling_gdat_blits >= 2 &&
+        g_dm2_frame_ownership.wall_gdat_blits > 0 &&
+        g_dm2_frame_ownership.hud_core_gdat_blits >= 3 &&
+        g_dm2_frame_ownership.hud_gdat_blits > 0 &&
+        g_dm2_frame_ownership.total_runtime_gdat_blits > 0 &&
+        g_dm2_frame_ownership.total_runtime_fallback_draws == 0;
     g_dm2_frame_ownership.valid =
         g_dm2_frame_ownership.runtime_frame_owned &&
-        (g_dm2_frame_ownership.gdat_provider_bound ||
-         (g_dm2_frame_ownership.hud_gdat_blits == 0 &&
-          g_dm2_frame_ownership.door_gdat_blits == 0 &&
-          g_dm2_frame_ownership.creature_gdat_blits == 0));
+        g_dm2_frame_ownership.full_gdat_frame_valid;
     rt->weather.weather_seed = viewport.random_seed;
 
     return 0;

@@ -41,8 +41,17 @@ typedef struct {
     int startup_title_gdat_blits;
     int startup_menu_gdat_blits;
     int hud_gdat_blits;
+    int hud_core_gdat_blits;
     int door_gdat_blits;
     int creature_gdat_blits;
+    int floor_ceiling_gdat_blits;
+    int wall_gdat_blits;
+    int item_gdat_blits;
+    int projectile_gdat_blits;
+    int total_runtime_gdat_blits;
+    int total_runtime_fallback_draws;
+    int full_gdat_frame_valid;
+    int real_gdat_evidence_valid;
     int viewport_raw_gdat_asset_count;
     int viewport_decoded_gdat_asset_count;
     uint32_t viewport_raw_gdat_hash;
