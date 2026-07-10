@@ -712,6 +712,36 @@ typedef struct DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34;
 
+typedef struct DM1_V1_CompleteSupportReceipt_PC34 {
+    int handled;
+    int ready;
+    int consumed_hoc_runtime_handoff_receipt;
+    int consumed_release_app_capture_ownership;
+    int consumed_hoc_save_capture_host_readiness;
+    int consumed_original_save_capture_receipt;
+    int complete_source_visible_startup;
+    int complete_entrance_to_hoc_transition;
+    int complete_hoc_render_route;
+    int complete_host_app_capture_route;
+    int complete_save_corpus_route;
+    int complete_original_save_roundtrip_route;
+    int consume_dm1_receipts_only;
+    int no_host_fallback_visuals;
+    int redmcsb_entrance_micro_dungeon_ready;
+    int redmcsb_hoc_mirror_overlay_ready;
+    int redmcsb_hoc_thing_layer_suppression_ready;
+    int redmcsb_save_part_corpus_ready;
+    int host_capture_route_packaged;
+    int presented_capture_chain_ready;
+    int host_draw_uses_owned_receipt;
+    int block_enter_until_champion_selected;
+    int map_index;
+    int map_width;
+    int map_height;
+    int render_command_count;
+    const char* source_evidence;
+} DM1_V1_CompleteSupportReceipt_PC34;
+
 typedef struct DM1_V1_StartupHoCRenderConsumerReceipt_PC34 {
     int handled;
     int ready;
@@ -1173,6 +1203,12 @@ int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
     const DM1_V1_StartupHostApplyResult_PC34* host_apply,
     const DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* ownership,
     DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34* out_receipt);
+int dm1_v1_complete_support_receipt_pc34(
+    const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* hoc_handoff,
+    const DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* ownership,
+    const DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34* hoc_save,
+    const DM1_V1_StartupSaveResumeCaptureReceipt_PC34* original_save,
+    DM1_V1_CompleteSupportReceipt_PC34* out_receipt);
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,
