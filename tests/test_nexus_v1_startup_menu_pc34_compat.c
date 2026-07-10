@@ -1205,6 +1205,23 @@ int main(void)
                m12_package_receipt.saturn_champion_capture_frame == 102 &&
                m12_package_receipt.saturn_dungeon_capture_frame == -1,
            "Nexus M12 startup package consumes CHAMPION capture receipt");
+    mutated_package_receipt = full_start_package_receipt;
+    mutated_package_receipt.champion_capture_frame =
+        nexus_v1_boot_start_ready_frames() + 1;
+    mutated_package_receipt.saturn_champion_capture_frame =
+        mutated_package_receipt.champion_capture_frame;
+    mutated_package_receipt.saturn_capture_frames_exact = 0;
+    mutated_package_receipt.full_start_package_receipt_ready = 0;
+    mutated_package_receipt.host_display_caller_expected = 0;
+    expect(nexus_v1_launcher_m12_startup_package_from_full_start_package(
+               &mutated_package_receipt,
+               &m12_package_receipt) &&
+               m12_package_receipt.packaged_capture_ready == 0 &&
+               m12_package_receipt.saturn_champion_capture_frame ==
+                   nexus_v1_boot_start_ready_frames() + 1 &&
+               m12_package_receipt.saturn_capture_frames_exact == 0 &&
+               m12_package_receipt.host_display_caller_expected == 0,
+           "Nexus M12 startup package rejects off-by-one Saturn champion capture frame");
     memset(draw_commands, 0, sizeof(draw_commands));
     expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_runtime_state(
                &synthetic_runtime_receipt,
@@ -1527,6 +1544,23 @@ int main(void)
                m12_package_receipt.saturn_champion_capture_frame == -1 &&
                m12_package_receipt.saturn_dungeon_capture_frame == -1,
            "Nexus M12 startup package consumes SAVE capture receipt");
+    mutated_package_receipt = full_start_package_receipt;
+    mutated_package_receipt.save_capture_frame =
+        nexus_v1_boot_start_ready_frames() + 1;
+    mutated_package_receipt.saturn_save_capture_frame =
+        mutated_package_receipt.save_capture_frame;
+    mutated_package_receipt.saturn_capture_frames_exact = 0;
+    mutated_package_receipt.full_start_package_receipt_ready = 0;
+    mutated_package_receipt.host_display_caller_expected = 0;
+    expect(nexus_v1_launcher_m12_startup_package_from_full_start_package(
+               &mutated_package_receipt,
+               &m12_package_receipt) &&
+               m12_package_receipt.packaged_capture_ready == 0 &&
+               m12_package_receipt.saturn_save_capture_frame ==
+                   nexus_v1_boot_start_ready_frames() + 1 &&
+               m12_package_receipt.saturn_capture_frames_exact == 0 &&
+               m12_package_receipt.host_display_caller_expected == 0,
+           "Nexus M12 startup package rejects off-by-one Saturn save capture frame");
     memset(draw_commands, 0, sizeof(draw_commands));
     expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
                &synthetic_runtime_receipt,
