@@ -1556,6 +1556,10 @@ Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas(
         if (!route) {
             continue;
         }
+        if (route->tile_count >=
+            THERON_TRACK02_STARTUP_BITMAP_ATLAS_LEGACY_MAX_WIDTH / 8u) {
+            continue;
+        }
         startup_atlas_append_tile(route, sample);
     }
     for (i = 0u; i < out_atlas->route_count; ++i) {
@@ -1568,6 +1572,90 @@ Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas(
     }
     return out_atlas->route_count > 0u ? THERON_TRACK02_SIGNAL_OK
                                        : THERON_TRACK02_SIGNAL_NOT_FOUND;
+}
+
+static int startup_atlas_route_has_raw_offset(
+    const Theron_Track02StartupBitmapAtlasRoute *route,
+    size_t raw_offset)
+{
+    size_t i;
+
+    if (!route) {
+        return 0;
+    }
+    for (i = 0u; i < route->tile_count; ++i) {
+        if (route->raw_offsets[i] == raw_offset) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int startup_atlas_promote_route_wide(
+    const Theron_Track02StartupBitmapCatalog *catalog,
+    Theron_Track02StartupBitmapAtlasRoute *route,
+    size_t target_tile_count)
+{
+    size_t added = 0u;
+
+    if (!catalog || !route || route->tile_count == 0u) {
+        return 0;
+    }
+    for (size_t i = 0u; i < catalog->sample_count; ++i) {
+        const Theron_Track02StartupBitmapSample *sample =
+            &catalog->samples[i];
+        if (route->tile_count >= target_tile_count) {
+            break;
+        }
+        if (sample->route_bit != route->route_bit ||
+            startup_atlas_route_has_raw_offset(route, sample->raw_offset)) {
+            continue;
+        }
+        startup_atlas_append_tile(route, sample);
+        ++added;
+    }
+    return (int)added;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas_wide(
+    const Theron_Track02StartupBitmapCatalog *catalog,
+    Theron_Track02StartupBitmapAtlas *out_atlas)
+{
+    Theron_Track02SignalStatus status;
+    size_t promoted = 0u;
+
+    status = theron_v1_track02_build_startup_bitmap_atlas(catalog, out_atlas);
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return status;
+    }
+
+    for (size_t i = 0u; i < out_atlas->route_count; ++i) {
+        Theron_Track02StartupBitmapAtlasRoute *route = &out_atlas->routes[i];
+        size_t before = route->tile_count;
+
+        (void)startup_atlas_promote_route_wide(
+            catalog,
+            route,
+            THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH / 8u);
+        if (route->tile_count > before) {
+            promoted += route->tile_count - before;
+            out_atlas->promoted_wide_route_mask |= route->route_bit;
+        }
+    }
+
+    out_atlas->promoted_wide_tile_count = promoted;
+    out_atlas->total_tile_count = 0u;
+    out_atlas->total_nonzero_pixel_count = 0u;
+    out_atlas->checksum = 0u;
+    for (size_t i = 0u; i < out_atlas->route_count; ++i) {
+        out_atlas->total_tile_count += out_atlas->routes[i].tile_count;
+        out_atlas->total_nonzero_pixel_count +=
+            out_atlas->routes[i].nonzero_pixel_count;
+        out_atlas->checksum ^=
+            out_atlas->routes[i].checksum +
+            (uint32_t)(out_atlas->routes[i].route_bit * 2166136261u);
+    }
+    return THERON_TRACK02_SIGNAL_OK;
 }
 
 Theron_Track02SignalStatus theron_v1_track02_copy_user_data_window_by_role(

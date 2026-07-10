@@ -111,6 +111,159 @@ static void check_u32(const char *label, uint32_t got, uint32_t want) {
     }
 }
 
+static void check_gt_size(const char *label, size_t got, size_t floor) {
+    if (got <= floor) {
+        printf("FAIL %s: got %zu want > %zu\n", label, got, floor);
+        ++g_fail;
+    }
+}
+
+static size_t atlas_route_tile_count(
+    const Theron_Track02StartupBitmapAtlas *atlas,
+    unsigned int route_bit) {
+    size_t i;
+
+    if (!atlas) return 0u;
+    for (i = 0u; i < atlas->route_count; ++i) {
+        if (atlas->routes[i].route_bit == route_bit) {
+            return atlas->routes[i].tile_count;
+        }
+    }
+    return 0u;
+}
+
+static void encode_4bpp_tile(uint8_t tile[THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES],
+                             uint8_t base) {
+    size_t y;
+
+    memset(tile, 0, THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES);
+    for (y = 0u; y < 8u; ++y) {
+        uint8_t lo = 0u;
+        uint8_t hi = 0u;
+        uint8_t lo2 = 0u;
+        uint8_t hi2 = 0u;
+
+        for (size_t x = 0u; x < 8u; ++x) {
+            uint8_t v = (uint8_t)((base + (uint8_t)x + (uint8_t)y) & 0x0fu);
+            uint8_t bit = (uint8_t)(0x80u >> x);
+            if (v & 0x01u) lo |= bit;
+            if (v & 0x02u) hi |= bit;
+            if (v & 0x04u) lo2 |= bit;
+            if (v & 0x08u) hi2 |= bit;
+        }
+        tile[y * 2u + 0u] = lo;
+        tile[y * 2u + 1u] = hi;
+        tile[16u + y * 2u + 0u] = lo2;
+        tile[16u + y * 2u + 1u] = hi2;
+    }
+}
+
+static void append_synthetic_bitmap_sample(
+    Theron_Track02StartupBitmapCatalog *catalog,
+    unsigned int route_bit,
+    size_t raw_offset,
+    const uint8_t pixels[THERON_TRACK02_STARTUP_BITMAP_PIXELS],
+    size_t nonzero_pixel_count,
+    uint32_t checksum) {
+    Theron_Track02StartupBitmapSample *sample;
+
+    if (!catalog || catalog->sample_count >=
+        THERON_TRACK02_MAX_STARTUP_BITMAP_SAMPLES) {
+        if (catalog) ++catalog->overflow_count;
+        return;
+    }
+    sample = &catalog->samples[catalog->sample_count++];
+    sample->route_bit = route_bit;
+    sample->raw_offset = raw_offset;
+    sample->user_data_offset = raw_offset;
+    sample->byte_count = THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES;
+    sample->width = 8u;
+    sample->height = 8u;
+    sample->bpp = 4u;
+    sample->nonzero_pixel_count = nonzero_pixel_count;
+    sample->checksum = checksum;
+    memcpy(sample->pixels, pixels, THERON_TRACK02_STARTUP_BITMAP_PIXELS);
+    catalog->route_mask |= route_bit;
+}
+
+static void probe_synthetic_wide_startup_bitmap_atlas(void) {
+    Theron_Track02StartupBitmapCatalog catalog;
+    Theron_Track02StartupBitmapAtlas base_atlas;
+    Theron_Track02StartupBitmapAtlas wide_atlas;
+    static const unsigned int route_bits[] = {
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM,
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD
+    };
+
+    memset(&catalog, 0, sizeof(catalog));
+    catalog.variant = THERON_TRACK02_VARIANT_US_ISO;
+    for (size_t r = 0u; r < sizeof(route_bits) / sizeof(route_bits[0]); ++r) {
+        const size_t route_base = 0x3000u + r * 0x200u;
+        for (size_t t = 0u; t < 20u; ++t) {
+            uint8_t tile[THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES];
+            uint8_t pixels[THERON_TRACK02_STARTUP_BITMAP_PIXELS];
+            size_t nonzero = 0u;
+            uint32_t checksum = 0u;
+
+            encode_4bpp_tile(tile, (uint8_t)(1u + r * 3u + t));
+            check_int("synthetic wide tile decode",
+                      theron_v1_track02_decode_4bpp_tile(tile,
+                                                          sizeof(tile),
+                                                          pixels,
+                                                          &nonzero,
+                                                          &checksum),
+                      THERON_TRACK02_SIGNAL_OK);
+            append_synthetic_bitmap_sample(
+                &catalog,
+                route_bits[r],
+                route_base + t * THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES,
+                pixels,
+                nonzero,
+                checksum);
+        }
+    }
+
+    check_int("synthetic base atlas status",
+              theron_v1_track02_build_startup_bitmap_atlas(&catalog,
+                                                           &base_atlas),
+              THERON_TRACK02_SIGNAL_OK);
+    check_int("synthetic wide atlas status",
+              theron_v1_track02_build_startup_bitmap_atlas_wide(&catalog,
+                                                                &wide_atlas),
+              THERON_TRACK02_SIGNAL_OK);
+    check_size("synthetic wide atlas route count",
+               wide_atlas.route_count,
+               4u);
+    check_int("synthetic wide atlas route mask",
+              (int)wide_atlas.route_mask,
+              (int)(THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+                    THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+                    THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+                    THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD));
+    check_int("synthetic wide atlas promoted mask",
+              (int)wide_atlas.promoted_wide_route_mask,
+              (int)wide_atlas.route_mask);
+    check_size("synthetic wide promoted tile count",
+               wide_atlas.promoted_wide_tile_count,
+               16u);
+    check_gt_size("synthetic wide total tiles",
+                  wide_atlas.total_tile_count,
+                  base_atlas.total_tile_count);
+    for (size_t r = 0u; r < sizeof(route_bits) / sizeof(route_bits[0]); ++r) {
+        check_size("synthetic base route tiles",
+                   atlas_route_tile_count(&base_atlas, route_bits[r]),
+                   THERON_TRACK02_STARTUP_BITMAP_ATLAS_LEGACY_MAX_WIDTH / 8u);
+        check_size("synthetic wide route tiles",
+                   atlas_route_tile_count(&wide_atlas, route_bits[r]),
+                   20u);
+    }
+    check_gt_size("synthetic wide nonzero pixels",
+                  wide_atlas.total_nonzero_pixel_count,
+                  base_atlas.total_nonzero_pixel_count);
+}
+
 static void check_str_eq(const char *got, const char *want, const char *label) {
     if (!got || !want || strcmp(got, want) != 0) {
         printf("FAIL %s: got \"%s\" want \"%s\"\n",
@@ -1552,6 +1705,7 @@ int main(void) {
     probe_descriptor_only_negative_fixture();
     probe_boundary_prefix_only_negative_fixture();
     probe_raw_user_data_synthetic_fixture();
+    probe_synthetic_wide_startup_bitmap_atlas();
     probe_audio_bank_marker_synthetic_fixture();
     probe_audio_bank_marker_unsupported_variant_fixture();
     probe_audio_bank_marker_real_data(THERON_TRACK02_MD5_US_BIN,

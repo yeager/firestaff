@@ -38,7 +38,11 @@ enum {
 enum {
     DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 = 0x1u,
     DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 = 0x2u,
-    DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34 = 0x4u
+    DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34 = 0x4u,
+    DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34 =
+        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34
 };
 
 typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
@@ -588,6 +592,7 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     int consumed_hoc_host_render_receipt;
     int consumed_m11_boot_probe_consumer;
     int consumed_m12_startup_capture_consumer;
+    int consumed_all_named_host_consumers;
     unsigned int named_consumer_mask;
     unsigned int named_consumer_hash;
     int host_capture_route_packaged;

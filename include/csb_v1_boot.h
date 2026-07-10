@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "csb_v1_csbgraphics_m11_runtime_plan.h"
+#include "csb_v1_csbwin_save_loader_boundary_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_startup_real_asset_receipt.h"
 #include "csb_v1_viewport_pc34_compat.h"
@@ -864,6 +865,53 @@ typedef struct CSB_V1_BootStartupRuntimePresentationReceipt_PC34 {
     CSB_V1_StartupRuntimeSurfaceSet_PC34 surfaces;
 } CSB_V1_BootStartupRuntimePresentationReceipt_PC34;
 
+/* CSB-owned save/import handoff for runtime consumers.  ReDMCSB keeps
+ * save/load under LOADSAVE.C F0433/F0435 while the CSB utility/import path
+ * enters from ENTRANCE.C F0806; CSBWin adds the CSBGAME.DAT/.BAK filename
+ * surface.  Keep those facts behind boot so M11 does not infer them from
+ * paths or menu labels. */
+typedef struct CSB_V1_BootRuntimeSaveImportReceipt_PC34 {
+    int valid;
+    int boot_profile_ready;
+    int runtime_ready;
+    int save_root_bound;
+    char save_root[CSB_V1_BOOT_STARTUP_RESUME_PATH_CAP_PC34];
+    int save_adapter_available;
+    int load_adapter_available;
+    int tick_adapter_available;
+    int resume_path_present;
+    char resume_path[CSB_V1_BOOT_STARTUP_RESUME_PATH_CAP_PC34];
+    int dm1_import_path_present;
+    char dm1_import_path[CSB_V1_BOOT_STARTUP_RESUME_PATH_CAP_PC34];
+    int imported_party_ready;
+    int cmp_import_attempted;
+    int cmp_import_succeeded;
+    int cmp_imported_slot;
+    int cmp_imported_champion_count;
+    int csbwin_path_present;
+    char csbwin_path[CSB_V1_BOOT_STARTUP_RESUME_PATH_CAP_PC34];
+    int csbwin_filename_candidate;
+    int csbwin_should_attempt_import;
+    int csbwin_loader_code;
+    int csbwin_contract_match;
+    CSB_V1_CSBWinSaveShape csbwin_shape;
+    CSB_V1_CSBWinSaveFileKind csbwin_file_kind;
+    const char *csbwin_decision_label;
+    int csbwin_runtime_load_attempted;
+    int csbwin_runtime_load_succeeded;
+    int csbwin_runtime_load_code;
+    int runtime_party_loaded_after;
+    int runtime_import_source_after;
+    int runtime_champion_count_after;
+    int runtime_leader_index_after;
+    int runtime_current_level_after;
+    uint32_t runtime_game_time_after;
+    int runtime_party_x_after;
+    int runtime_party_y_after;
+    int runtime_party_dir_after;
+    const char *source_evidence;
+} CSB_V1_BootRuntimeSaveImportReceipt_PC34;
+
 typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
     int valid;
     int host_view_valid;
@@ -1240,6 +1288,16 @@ int csb_v1_boot_runtime_load_game_from_path_pc34(
     CSB_V1_BootProfile *profile,
     const char *path,
     uint32_t *out_game_time);
+int csb_v1_boot_runtime_save_import_receipt_pc34(
+    const CSB_V1_BootProfile *profile,
+    const char *dm1_import_path,
+    const char *resume_save_path,
+    const char *csbwin_save_path,
+    CSB_V1_BootRuntimeSaveImportReceipt_PC34 *out_receipt);
+int csb_v1_boot_runtime_import_csbwin_save_from_path_pc34(
+    CSB_V1_BootProfile *profile,
+    const char *csbwin_save_path,
+    CSB_V1_BootRuntimeSaveImportReceipt_PC34 *out_receipt);
 int csb_v1_boot_runtime_tick_pc34(
     CSB_V1_BootProfile *profile,
     uint32_t *out_game_time);

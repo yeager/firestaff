@@ -1782,8 +1782,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_host_probe_facts.presented_capture_byte_count = 320 * 200 * 4;
     hoc_host_probe_facts.presented_capture_hash = 0x4d314843u;
     hoc_host_probe_facts.presented_capture_consumer_mask =
-        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34;
+        DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34;
     hoc_host_probe_facts.presented_capture_chain_hash =
         dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
             hoc_host_probe_facts.presented_capture_width,
@@ -1793,6 +1792,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
             hoc_host_probe_facts.presented_capture_consumer_mask);
     hoc_host_probe_facts.consumed_hoc_host_render_receipt = 1;
     hoc_host_probe_facts.consumed_m11_boot_probe_consumer = 1;
+    hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 1;
     expect_i("DM1 HoC host probe carries real Mac asset capture route",
              dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
                  &hoc_host_probe_facts,
@@ -1819,7 +1819,12 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      .consumed_hoc_host_render_receipt &&
                  hoc_release_capture_ownership
                      .consumed_m11_boot_probe_consumer &&
-                 hoc_release_capture_ownership.named_consumer_mask == 0x3u &&
+                 hoc_release_capture_ownership
+                     .consumed_m12_startup_capture_consumer &&
+                 hoc_release_capture_ownership
+                     .consumed_all_named_host_consumers &&
+                 hoc_release_capture_ownership.named_consumer_mask ==
+                     DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34 &&
                  hoc_release_capture_ownership.named_consumer_hash != 0u &&
                  hoc_release_capture_ownership
                      .consumed_runtime_apply_receipt &&
@@ -1851,12 +1856,14 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership.presented_capture_hash ==
                      0x4d314843u &&
                  hoc_release_capture_ownership
-                     .presented_capture_consumer_mask == 0x3u &&
+                     .presented_capture_consumer_mask ==
+                         DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34 &&
                  hoc_release_capture_ownership
                      .presented_capture_chain_hash != 0u &&
                  hoc_release_capture_ownership
                      .host_capture_route_packaged &&
-                 hoc_release_capture_ownership.host_capture_route_mask == 0x3u &&
+                 hoc_release_capture_ownership.host_capture_route_mask ==
+                     DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34 &&
                  hoc_release_capture_ownership.host_capture_route_hash != 0u &&
                  hoc_release_capture_ownership
                      .presented_capture_route_packaged &&
@@ -1897,6 +1904,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
              1);
     hoc_host_probe_facts.consumed_hoc_host_render_receipt = 1;
     hoc_host_probe_facts.consumed_m11_boot_probe_consumer = 0;
+    hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 0;
     expect_i("DM1 HoC release/app ownership rejects unnamed M11/M12 consumer",
              dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
                  &hoc_host_probe_facts,
@@ -1907,14 +1915,43 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      .consumed_hoc_host_render_receipt &&
                  !hoc_release_capture_ownership
                       .consumed_m11_boot_probe_consumer &&
+                 !hoc_release_capture_ownership
+                      .consumed_all_named_host_consumers &&
                  hoc_release_capture_ownership.named_consumer_mask == 0x1u,
              1);
     hoc_host_probe_facts.consumed_m11_boot_probe_consumer = 1;
-    hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 1;
+    hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 0;
     hoc_host_probe_facts.presented_capture_consumer_mask =
         DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
+        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34;
+    hoc_host_probe_facts.presented_capture_chain_hash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            hoc_host_probe_facts.presented_capture_width,
+            hoc_host_probe_facts.presented_capture_height,
+            hoc_host_probe_facts.presented_capture_byte_count,
+            hoc_host_probe_facts.presented_capture_hash,
+            hoc_host_probe_facts.presented_capture_consumer_mask);
+    expect_i("DM1 HoC release/app ownership rejects missing M12 capture consumer",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 !hoc_release_capture_ownership.ready &&
+                 hoc_release_capture_ownership
+                     .consumed_hoc_host_render_receipt &&
+                 hoc_release_capture_ownership
+                     .consumed_m11_boot_probe_consumer &&
+                 !hoc_release_capture_ownership
+                      .consumed_m12_startup_capture_consumer &&
+                 !hoc_release_capture_ownership
+                      .consumed_all_named_host_consumers &&
+                 hoc_release_capture_ownership.named_consumer_mask ==
+                     (DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+                      DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34),
+             1);
+    hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 1;
+    hoc_host_probe_facts.presented_capture_consumer_mask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34;
     hoc_host_probe_facts.presented_capture_chain_hash =
         dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
             hoc_host_probe_facts.presented_capture_width,
@@ -1929,12 +1966,17 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership.ready &&
                  hoc_release_capture_ownership
                      .consumed_m12_startup_capture_consumer &&
-                 hoc_release_capture_ownership.named_consumer_mask == 0x7u &&
                  hoc_release_capture_ownership
-                     .presented_capture_consumer_mask == 0x7u &&
+                     .consumed_all_named_host_consumers &&
+                 hoc_release_capture_ownership.named_consumer_mask ==
+                     DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34 &&
+                 hoc_release_capture_ownership
+                     .presented_capture_consumer_mask ==
+                         DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34 &&
                  hoc_release_capture_ownership.presented_capture_chain_ready &&
                  hoc_release_capture_ownership.host_capture_route_packaged &&
-                 hoc_release_capture_ownership.host_capture_route_mask == 0x7u &&
+                 hoc_release_capture_ownership.host_capture_route_mask ==
+                     DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34 &&
                  hoc_release_capture_ownership.host_capture_route_hash != 0u &&
                  hoc_release_capture_ownership.named_consumer_hash != 0u,
              1);
@@ -1963,8 +2005,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
              1);
     hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 0;
     hoc_host_probe_facts.presented_capture_consumer_mask =
-        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34;
+        DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34;
     hoc_host_probe_facts.presented_capture_chain_hash =
         dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
             hoc_host_probe_facts.presented_capture_width,

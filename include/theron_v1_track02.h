@@ -24,7 +24,7 @@
 #define THERON_TRACK02_MAX_USER_DATA_WINDOWS 8u
 #define THERON_TRACK02_MAX_STARTUP_TEXT_MARKERS 8u
 #define THERON_TRACK02_MAX_STARTUP_ROSTER_NAMES 8u
-#define THERON_TRACK02_MAX_STARTUP_BITMAP_SAMPLES 64u
+#define THERON_TRACK02_MAX_STARTUP_BITMAP_SAMPLES 128u
 #define THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY 16u
 #define THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY 32u
 #define THERON_TRACK02_RAW_SECTOR_BYTES 2352u
@@ -33,7 +33,8 @@
 #define THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES 32u
 #define THERON_TRACK02_STARTUP_BITMAP_PIXELS 64u
 #define THERON_TRACK02_STARTUP_BITMAP_ATLAS_ROUTE_MAX 4u
-#define THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH 128u
+#define THERON_TRACK02_STARTUP_BITMAP_ATLAS_LEGACY_MAX_WIDTH 128u
+#define THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH 256u
 #define THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_HEIGHT 8u
 #define THERON_TRACK02_STARTUP_BITMAP_ATLAS_PIXELS \
     (THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH * \
@@ -338,6 +339,8 @@ typedef struct {
     size_t route_count;
     size_t overflow_count;
     unsigned int route_mask;
+    size_t promoted_wide_tile_count;
+    unsigned int promoted_wide_route_mask;
     size_t total_tile_count;
     size_t total_nonzero_pixel_count;
     uint32_t checksum;
@@ -359,6 +362,10 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
     Theron_Track02StartupBitmapCatalog *out_catalog);
 
 Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas(
+    const Theron_Track02StartupBitmapCatalog *catalog,
+    Theron_Track02StartupBitmapAtlas *out_atlas);
+
+Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas_wide(
     const Theron_Track02StartupBitmapCatalog *catalog,
     Theron_Track02StartupBitmapAtlas *out_atlas);
 
