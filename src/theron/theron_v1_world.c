@@ -505,6 +505,71 @@ void theron_v1_world_tick(Theron_V1_World *world) {
     /* Tick 3: ambient effects placeholder */
 }
 
+void theron_v1_world_runtime_media_clear(Theron_V1_World *world) {
+    if (!world) return;
+    memset(&world->runtime_media, 0, sizeof(world->runtime_media));
+}
+
+int theron_v1_world_runtime_media_set_surface(
+    Theron_V1_World *world,
+    Theron_RuntimeMediaSurfaceKind kind,
+    unsigned int route_bit,
+    uint16_t width,
+    uint16_t height,
+    size_t tile_count,
+    size_t nonzero_pixel_count,
+    uint32_t checksum,
+    const uint8_t *pixels,
+    size_t pixel_count) {
+
+    Theron_RuntimeMediaSurface *surface;
+
+    if (!world || !pixels || route_bit == 0u || width == 0u ||
+        height == 0u || width > THERON_RUNTIME_MEDIA_MAX_WIDTH ||
+        height > THERON_RUNTIME_MEDIA_HEIGHT ||
+        pixel_count != (size_t)width * (size_t)height ||
+        pixel_count > THERON_RUNTIME_MEDIA_PIXELS || tile_count == 0u ||
+        nonzero_pixel_count == 0u || checksum == 0u) {
+        return 0;
+    }
+    if (kind == THERON_RUNTIME_MEDIA_SURFACE_STAGE) {
+        surface = &world->runtime_media.stage;
+    } else if (kind == THERON_RUNTIME_MEDIA_SURFACE_FORCEFIELD) {
+        surface = &world->runtime_media.forcefield;
+    } else {
+        return 0;
+    }
+    memset(surface, 0, sizeof(*surface));
+    surface->ready = 1;
+    surface->route_bit = route_bit;
+    surface->width = width;
+    surface->height = height;
+    surface->tile_count = tile_count;
+    surface->nonzero_pixel_count = nonzero_pixel_count;
+    surface->checksum = checksum;
+    memcpy(surface->pixels, pixels, pixel_count);
+    world->runtime_media.route_mask |= route_bit;
+    world->runtime_media.checksum ^= checksum + (uint32_t)route_bit;
+    world->runtime_media.restored =
+        world->runtime_media.stage.ready && world->runtime_media.forcefield.ready;
+    return 1;
+}
+
+const Theron_RuntimeMediaSurface *theron_v1_world_runtime_media_for_level(
+    const Theron_V1_World *world,
+    int level_index,
+    int forcefield_active) {
+
+    if (!world || !world->runtime_media.restored) return NULL;
+    if (forcefield_active && world->runtime_media.forcefield.ready) {
+        return &world->runtime_media.forcefield;
+    }
+    if (level_index > 0 && world->runtime_media.stage.ready) {
+        return &world->runtime_media.stage;
+    }
+    return NULL;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Deterministic world-state hashing (FNV-1a 64-bit)
  *
