@@ -475,6 +475,7 @@ typedef struct CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 {
     int real_asset_matched;
     uint32_t sequence_capture_hash;
     int title_sample_count;
+    int title_unique_sample_hash_count;
     int title_all_stages_captured;
     int title_presents_capture_ready;
     int title_chaos_zoom_capture_ready;
@@ -510,6 +511,7 @@ typedef struct CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 {
     int real_asset_matched;
     int title_runtime_consumed;
     int title_runtime_sample_count;
+    int title_runtime_unique_sample_hash_count;
     int title_runtime_all_stages_consumed;
     int title_presents_runtime_consumed;
     int title_chaos_zoom_runtime_consumed;
@@ -562,6 +564,7 @@ typedef struct CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 {
     int route_hardening_valid;
     int all_runtime_routes_consumed;
     int title_runtime_captured;
+    int title_runtime_unique_sample_hash_count;
     int title_presents_runtime_captured;
     int title_chaos_zoom_runtime_captured;
     int title_chaos_hold_runtime_captured;

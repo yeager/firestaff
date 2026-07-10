@@ -48,6 +48,33 @@ static uint32_t csb_v1_boot_packaged_capture_hash_step_pc34(uint32_t hash,
     return hash;
 }
 
+static int csb_v1_boot_count_unique_hashes_pc34(const uint32_t *hashes,
+                                                int count)
+{
+    int unique_count = 0;
+    int i;
+    if (!hashes || count <= 0) {
+        return 0;
+    }
+    for (i = 0; i < count; ++i) {
+        int j;
+        int seen = 0;
+        if (hashes[i] == 0u) {
+            continue;
+        }
+        for (j = 0; j < i; ++j) {
+            if (hashes[j] == hashes[i]) {
+                seen = 1;
+                break;
+            }
+        }
+        if (!seen) {
+            ++unique_count;
+        }
+    }
+    return unique_count;
+}
+
 static const char *const g_csb_boot_dungeon_hashes[] = {
     "6695d2acebce49f95db1d8f3a5c733de",
     NULL
@@ -3265,11 +3292,17 @@ int csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
             &out_receipt->title_sample_hashes[3]);
     out_receipt->title_sample_count =
         CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34;
+    out_receipt->title_unique_sample_hash_count =
+        csb_v1_boot_count_unique_hashes_pc34(
+            out_receipt->title_sample_hashes,
+            CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34);
     out_receipt->title_all_stages_captured =
         out_receipt->title_presents_capture_ready &&
                 out_receipt->title_chaos_zoom_capture_ready &&
                 out_receipt->title_chaos_hold_capture_ready &&
-                out_receipt->title_strikes_back_capture_ready
+                out_receipt->title_strikes_back_capture_ready &&
+                out_receipt->title_unique_sample_hash_count ==
+                    CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34
             ? 1
             : 0;
 
@@ -3548,9 +3581,17 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
                 out_receipt->title_presents_runtime_consumed &&
                 out_receipt->title_chaos_zoom_runtime_consumed &&
                 out_receipt->title_chaos_hold_runtime_consumed &&
-                out_receipt->title_strikes_back_runtime_consumed
+                out_receipt->title_strikes_back_runtime_consumed &&
+                csb_v1_boot_count_unique_hashes_pc34(
+                    out_receipt->title_runtime_sample_hashes,
+                    CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34) ==
+                    CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34
             ? 1
             : 0;
+    out_receipt->title_runtime_unique_sample_hash_count =
+        csb_v1_boot_count_unique_hashes_pc34(
+            out_receipt->title_runtime_sample_hashes,
+            CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34);
     out_receipt->title_runtime_consumed =
         out_receipt->title_runtime_all_stages_consumed;
     out_receipt->title_draw_consumed =
@@ -4028,6 +4069,8 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
                 out_receipt->runtime_visual.title_draw_consumed
             ? 1
             : 0;
+    out_receipt->title_runtime_unique_sample_hash_count =
+        out_receipt->runtime_visual.title_runtime_unique_sample_hash_count;
     out_receipt->title_presents_runtime_captured =
         out_receipt->runtime_visual.title_presents_runtime_consumed;
     out_receipt->title_chaos_zoom_runtime_captured =
