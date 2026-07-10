@@ -727,6 +727,7 @@ typedef struct {
         int selected_dungeon;
         int companion_count;
         int startup_phase;
+        int startup_title_animation_tick;
         int startup_cursor;
         int selected_mirrors_mask;
         int selected_mirror_order[3];
@@ -852,6 +853,7 @@ typedef struct {
         int startup_menu_active;
         int startup_menu_selected_row;
         int startup_menu_row_count;
+        int startup_title_animation_tick;
         int startup_resume_available;
         unsigned int startup_slot_mask;
         char startup_save_root[512];
