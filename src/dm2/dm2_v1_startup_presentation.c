@@ -22,8 +22,7 @@ static int dm2_v1_startup_push_gdat_image(DM2_V1_StartupDrawCommand *commands,
                                           int index,
                                           int field,
                                           const DM2_V1_StartupRect *rect,
-                                          int transparent_color,
-                                          DM2_V1_FrameOwner frame_owner)
+                                          int transparent_color)
 {
     DM2_V1_StartupDrawCommand *command;
     if (!commands || !count || !rect || max_commands <= 0 ||
@@ -38,7 +37,6 @@ static int dm2_v1_startup_push_gdat_image(DM2_V1_StartupDrawCommand *commands,
     command->gdat_index = index;
     command->gdat_field = field;
     command->transparent_color = transparent_color;
-    command->frame_owner = frame_owner;
     ++(*count);
     return 1;
 }
@@ -148,8 +146,7 @@ int dm2_v1_startup_presentation_build(
                                         0,
                                         1,
                                         &rect,
-                                        -1,
-                                        DM2_V1_FRAME_OWNER_STARTUP_TITLE) ||
+                                        -1) ||
         !dm2_v1_startup_push_gdat_image(out_commands,
                                         max_commands,
                                         &count,
@@ -157,8 +154,7 @@ int dm2_v1_startup_presentation_build(
                                         0,
                                         4,
                                         &rect,
-                                        -1,
-                                        DM2_V1_FRAME_OWNER_STARTUP_MENU) ||
+                                        -1) ||
         !dm2_v1_startup_panel_rect(&rect) ||
         !dm2_v1_startup_push_rect(out_commands,
                                   max_commands,
