@@ -21704,39 +21704,6 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     return 1;
 }
 
-static void m11_draw_dm1_front_champion_portrait(const M11_GameViewState* state,
-                                                 const M11_ViewportCell* cell,
-                                                 unsigned char* framebuffer,
-                                                 int fbW,
-                                                 int fbH) {
-    DM1_V1_ChampionMirrorRenderReceiptPc34 receipt;
-    const M11_AssetSlot* portraits;
-    if (!state || !cell) {
-        return;
-    }
-    if (!m11_build_dm1_front_champion_portrait_receipt(cell, &receipt) ||
-        !receipt.valid ||
-        !receipt.drawChampionPortrait) {
-        return;
-    }
-    portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                     (unsigned int)receipt.graphicIndex);
-    if (!portraits || !portraits->loaded || !portraits->pixels) {
-        return;
-    }
-    M11_AssetLoader_BlitRegion(portraits,
-                               receipt.sourceX,
-                               receipt.sourceY,
-                               receipt.width,
-                               receipt.height,
-                               framebuffer,
-                               fbW,
-                               fbH,
-                               M11_VIEWPORT_X + receipt.dstX,
-                               M11_VIEWPORT_Y + receipt.dstY,
-                               receipt.transparentColor);
-}
-
 static void m11_draw_dm1_front_champion_portrait_host_receipt(
     const M11_GameViewState* state,
     const DM1_V1_ChampionMirrorHostDrawReceiptPc34* receipt,
