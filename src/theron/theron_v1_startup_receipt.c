@@ -198,6 +198,8 @@ void theron_v1_startup_receipt_apply_bitmap_art_summary(
     }
     receipt->startup_decoded_art_count = 0u;
     receipt->startup_bitmap_required_route_mask = required_mask;
+    receipt->startup_bitmap_real_route_mask = 0u;
+    receipt->startup_bitmap_fallback_route_mask = required_mask;
     receipt->startup_bitmap_fallback_routes_allowed = 1;
     if (!media_receipt) {
         return;
@@ -227,6 +229,33 @@ void theron_v1_startup_receipt_apply_bitmap_art_summary(
         (uint32_t)media_receipt->startup_bitmap_soul_room_atlas_tile_count;
     receipt->startup_bitmap_forcefield_atlas_tile_count =
         (uint32_t)media_receipt->startup_bitmap_forcefield_atlas_tile_count;
+
+    if (media_receipt->startup_bitmap_title_route_ready &&
+        media_receipt->startup_bitmap_title_atlas_tile_count >= 8u &&
+        media_receipt->startup_bitmap_title_nonzero_pixel_count > 0u) {
+        receipt->startup_bitmap_real_route_mask |=
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE;
+    }
+    if (media_receipt->startup_bitmap_stage_route_ready &&
+        media_receipt->startup_bitmap_stage_atlas_tile_count >= 8u &&
+        media_receipt->startup_bitmap_stage_nonzero_pixel_count > 0u) {
+        receipt->startup_bitmap_real_route_mask |=
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE;
+    }
+    if (media_receipt->startup_bitmap_soul_room_route_ready &&
+        media_receipt->startup_bitmap_soul_room_atlas_tile_count >= 8u &&
+        media_receipt->startup_bitmap_soul_room_nonzero_pixel_count > 0u) {
+        receipt->startup_bitmap_real_route_mask |=
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM;
+    }
+    if (media_receipt->startup_bitmap_forcefield_route_ready &&
+        media_receipt->startup_bitmap_forcefield_atlas_tile_count >= 8u &&
+        media_receipt->startup_bitmap_forcefield_nonzero_pixel_count > 0u) {
+        receipt->startup_bitmap_real_route_mask |=
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+    }
+    receipt->startup_bitmap_fallback_route_mask =
+        required_mask & ~receipt->startup_bitmap_real_route_mask;
 
     real_routes_complete =
         theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
@@ -985,6 +1014,10 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->startup_bitmap_route_mask), h);
     h = fnv1a_32(&receipt->startup_bitmap_required_route_mask,
                  sizeof(receipt->startup_bitmap_required_route_mask), h);
+    h = fnv1a_32(&receipt->startup_bitmap_real_route_mask,
+                 sizeof(receipt->startup_bitmap_real_route_mask), h);
+    h = fnv1a_32(&receipt->startup_bitmap_fallback_route_mask,
+                 sizeof(receipt->startup_bitmap_fallback_route_mask), h);
     h = fnv1a_32(&receipt->startup_bitmap_real_routes_complete,
                  sizeof(receipt->startup_bitmap_real_routes_complete), h);
     h = fnv1a_32(&receipt->startup_bitmap_fallback_routes_allowed,
@@ -1076,6 +1109,7 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "mirror_decoded_labels=%u mirror_decoded_art=%u "
                  "bitmap_status=%d bitmap_samples=%u "
                  "bitmap_mask=0x%x bitmap_required=0x%x "
+                 "bitmap_real_mask=0x%x bitmap_fallback_mask=0x%x "
                  "bitmap_real_routes=%d bitmap_fallback=%d "
                  "bitmap_atlas_routes=%u bitmap_atlas_mask=0x%x "
                  "bitmap_atlas_tiles=%u bitmap_atlas_nonzero=%llu "
@@ -1174,6 +1208,8 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  (unsigned)receipt->startup_bitmap_sample_count,
                  (unsigned)receipt->startup_bitmap_route_mask,
                  (unsigned)receipt->startup_bitmap_required_route_mask,
+                 (unsigned)receipt->startup_bitmap_real_route_mask,
+                 (unsigned)receipt->startup_bitmap_fallback_route_mask,
                  receipt->startup_bitmap_real_routes_complete,
                  receipt->startup_bitmap_fallback_routes_allowed,
                  (unsigned)receipt->startup_bitmap_atlas_route_count,
