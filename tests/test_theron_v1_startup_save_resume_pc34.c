@@ -3269,11 +3269,16 @@ static void test_startup_session_facts_wrappers(void) {
                         !iso_graphics_receipt.required_bitmap_routes_ready &&
                         !iso_graphics_receipt.real_bitmap_startup_graphics_ready &&
                         !iso_graphics_receipt.track02_atlas_startup_graphics_ready &&
-                        !iso_graphics_receipt.track02_atlas_startup_graphics_executed &&
-                        !iso_graphics_receipt.track02_startup_graphics_executed &&
+                        iso_graphics_receipt.track02_atlas_startup_graphics_executed &&
+                        iso_graphics_receipt.track02_startup_graphics_executed &&
+                        (iso_graphics_receipt.track02_atlas_graphics_route_mask &
+                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) != 0u &&
+                        (iso_graphics_receipt.track02_atlas_graphics_route_mask &
+                         THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) != 0u &&
+                        iso_graphics_receipt.track02_atlas_graphics_pixel_count > 0u &&
                         iso_graphics_receipt.raw_graphics_plan_consumer_required &&
                         iso_graphics_receipt.fallback_startup_graphics_executed,
-                    "boot graphics route blocks partial ISO Track02 atlas as full-start fallback");
+                    "boot graphics route binds partial ISO Track02 atlas routes before fallback commands");
     }
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     expect_true(theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
