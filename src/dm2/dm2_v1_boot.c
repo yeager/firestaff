@@ -3833,6 +3833,154 @@ static int dm2_v1_boot_runtime_map_chip_category_hash_add(
     return materialized;
 }
 
+static int dm2_v1_boot_runtime_interface_rect14_receipt(
+    DM2_V1_BootProfile *profile,
+    uint32_t *out_hash,
+    uint32_t *out_byte_count,
+    uint32_t *out_row_count,
+    uint32_t *out_stride,
+    uint32_t *out_nonzero_5x5_count,
+    uint32_t *out_image_field_count,
+    uint32_t *out_flag_field_count)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0;
+    uint32_t hash = 0x32495231u;
+    uint32_t rows;
+    uint32_t nonzero_5x5 = 0u;
+    uint32_t image_fields = 0u;
+    uint32_t flag_fields = 0u;
+
+    if (out_hash) *out_hash = 0u;
+    if (out_byte_count) *out_byte_count = 0u;
+    if (out_row_count) *out_row_count = 0u;
+    if (out_stride) *out_stride = 0u;
+    if (out_nonzero_5x5_count) *out_nonzero_5x5_count = 0u;
+    if (out_image_field_count) *out_image_field_count = 0u;
+    if (out_flag_field_count) *out_flag_field_count = 0u;
+    if (!profile || !profile->graphics_dat || !out_hash ||
+        !out_byte_count || !out_row_count || !out_stride ||
+        !out_nonzero_5x5_count || !out_image_field_count ||
+        !out_flag_field_count) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_typed_sized(
+        &gfx->loader,
+        DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+        0,
+        DM2_GDAT_ENTRY_TYPE_RAW7,
+        DM2_GDAT_INTERFACE_RAW_RECT14_TABLE,
+        &raw_size);
+    if (!raw || raw_size == 0 || raw_size > UINT32_MAX ||
+        (raw_size % 14u) != 0u) {
+        return 0;
+    }
+
+    rows = (uint32_t)(raw_size / 14u);
+    /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_0A loads
+     * INTERFACE_GENERAL dt07/0x0A as U8 (*)[14] into _4976_5a98. Later
+     * creature placement code reads [0] as the 5x5 slot, [2..5] as
+     * direction image fields, [6..9] as stretch sizes, and [10..13] as
+     * per-direction flags. */
+    for (uint32_t row = 0; row < rows; ++row) {
+        const uint8_t *r = raw + (size_t)row * 14u;
+        if (r[0] != 0u) ++nonzero_5x5;
+        for (int i = 2; i <= 5; ++i) {
+            if (r[i] != 0xffu) ++image_fields;
+        }
+        for (int i = 10; i <= 13; ++i) {
+            if (r[i] != 0u) ++flag_fields;
+        }
+        for (int i = 0; i < 14; ++i) {
+            hash = dm2_v1_boot_packaged_capture_hash_step(hash, r[i]);
+        }
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, row);
+    }
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, rows);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, 14u);
+
+    *out_hash = hash;
+    *out_byte_count = (uint32_t)raw_size;
+    *out_row_count = rows;
+    *out_stride = 14u;
+    *out_nonzero_5x5_count = nonzero_5x5;
+    *out_image_field_count = image_fields;
+    *out_flag_field_count = flag_fields;
+    return rows > 0u && image_fields > 0u;
+}
+
+static int dm2_v1_boot_runtime_interface_action_table_receipt(
+    DM2_V1_BootProfile *profile,
+    uint32_t *out_hash,
+    uint32_t *out_byte_count,
+    uint32_t *out_group_count,
+    uint32_t *out_entry_count,
+    uint32_t *out_tail_byte_count)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0;
+    uint32_t hash = 0x32494132u;
+    uint32_t group_count;
+    uint32_t entry_count = 0u;
+    size_t min_payload;
+
+    if (out_hash) *out_hash = 0u;
+    if (out_byte_count) *out_byte_count = 0u;
+    if (out_group_count) *out_group_count = 0u;
+    if (out_entry_count) *out_entry_count = 0u;
+    if (out_tail_byte_count) *out_tail_byte_count = 0u;
+    if (!profile || !profile->graphics_dat || !out_hash ||
+        !out_byte_count || !out_group_count || !out_entry_count ||
+        !out_tail_byte_count) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_typed_sized(
+        &gfx->loader,
+        DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+        0,
+        DM2_GDAT_ENTRY_TYPE_RAW7,
+        DM2_GDAT_INTERFACE_RAW_ACTION_TABLE,
+        &raw_size);
+    if (!raw || raw_size < 2 || raw_size > UINT32_MAX) {
+        return 0;
+    }
+
+    /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_02 reads the
+     * first byte as group count, copies one length byte per group into
+     * _4976_4bde[].b0, then binds two variable-length blocks (pv1/pv5)
+     * before the trailing _4976_4be2 command table. */
+    group_count = raw[0];
+    if (group_count == 0u || raw_size < 1u + (size_t)group_count) {
+        return 0;
+    }
+    for (uint32_t i = 0; i < group_count; ++i) {
+        entry_count += raw[1u + i];
+    }
+    min_payload = 1u + (size_t)group_count + ((size_t)entry_count * 2u);
+    if (raw_size < min_payload) {
+        return 0;
+    }
+    for (size_t i = 0; i < raw_size; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
+    }
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, group_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, entry_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash,
+        (uint32_t)(raw_size - min_payload));
+
+    *out_hash = hash;
+    *out_byte_count = (uint32_t)raw_size;
+    *out_group_count = group_count;
+    *out_entry_count = entry_count;
+    *out_tail_byte_count = (uint32_t)(raw_size - min_payload);
+    return entry_count > 0u;
+}
+
 static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
     DM2_V1_BootProfile *profile,
     int *out_portrait_count,
@@ -5240,6 +5388,40 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             combined_hash,
             out_receipt->dungeon_map_chip_decoded_hash);
     }
+    out_receipt->interface_rect14_ready =
+        dm2_v1_boot_runtime_interface_rect14_receipt(
+            profile,
+            &out_receipt->interface_rect14_hash,
+            &out_receipt->interface_rect14_byte_count,
+            &out_receipt->interface_rect14_row_count,
+            &out_receipt->interface_rect14_stride,
+            &out_receipt->interface_rect14_nonzero_5x5_count,
+            &out_receipt->interface_rect14_image_field_count,
+            &out_receipt->interface_rect14_flag_field_count);
+    out_receipt->interface_action_table_ready =
+        dm2_v1_boot_runtime_interface_action_table_receipt(
+            profile,
+            &out_receipt->interface_action_table_hash,
+            &out_receipt->interface_action_table_byte_count,
+            &out_receipt->interface_action_group_count,
+            &out_receipt->interface_action_entry_count,
+            &out_receipt->interface_action_tail_byte_count);
+    if (out_receipt->interface_rect14_ready) {
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->interface_rect14_hash);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->interface_rect14_row_count);
+    }
+    if (out_receipt->interface_action_table_ready) {
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->interface_action_table_hash);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->interface_action_entry_count);
+    }
     out_receipt->combined_frame_hash = combined_hash;
     out_receipt->real_gdat_runtime_hud_breadth_ready =
         out_receipt->render_sample_count == 4 &&
@@ -5256,6 +5438,7 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         out_receipt->decoded_gdat_runtime_interface_count >= 4 &&
         out_receipt->teleporter_map_chip_ready &&
         out_receipt->dungeon_map_chip_ready &&
+        out_receipt->interface_action_table_ready &&
         out_receipt->combined_frame_hash != 0u &&
         out_receipt->combined_pixel_count == 4u * 320u * 200u;
     out_receipt->valid =
@@ -5543,6 +5726,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_hud.min_asset_wall_count > 0 &&
         out_receipt->runtime_hud.teleporter_map_chip_ready &&
         out_receipt->runtime_hud.dungeon_map_chip_ready &&
+        out_receipt->runtime_hud.interface_action_table_ready &&
         out_receipt->runtime_hud.total_fallback_door_count == 0 &&
         out_receipt->runtime_hud.total_fallback_creature_count == 0 &&
         out_receipt->runtime_hud.total_fallback_creature_possession_item_count == 0 &&
