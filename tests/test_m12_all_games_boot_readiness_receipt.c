@@ -85,6 +85,7 @@ static void mark_game_ready(M12_StartupMenuState* state, int slot, const char* g
         receipt.framebufferHash = 0x4d31324du;
         receipt.consumerMask =
             DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+            DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
             DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
         receipt.chainHash =
             dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
@@ -170,6 +171,7 @@ int main(void) {
                         boot.dm1HoCPresentedCaptureChainReady == 1 &&
                         boot.dm1HoCPresentedCaptureConsumerMask ==
                             (DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+                             DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
                              DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34) &&
                         boot.dm1HoCPresentedCaptureChainHash != 0u &&
                         boot.dm1HoCOpenedEntranceFrameReady == 1 &&

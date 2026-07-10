@@ -11642,7 +11642,8 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     facts.presented_capture_hash = presented_hash;
     facts.presented_capture_consumer_mask =
         DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34;
+        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
     facts.presented_capture_chain_hash =
         dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
             facts.presented_capture_width,
@@ -11652,6 +11653,7 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
             facts.presented_capture_consumer_mask);
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m11_boot_probe_consumer = 1;
+    facts.consumed_m12_startup_capture_consumer = 1;
     if (out_ownership) {
         memset(out_ownership, 0, sizeof(*out_ownership));
     }
@@ -21309,7 +21311,9 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     captureFacts.presented_capture_byte_count = presented_byte_count;
     captureFacts.presented_capture_hash = presented_hash;
     captureFacts.presented_capture_consumer_mask =
-        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34;
+        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
     captureFacts.presented_capture_chain_hash =
         dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
             captureFacts.presented_capture_width,
@@ -29758,7 +29762,9 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     captureFacts.presented_capture_byte_count = 320 * 200 * 4;
     captureFacts.presented_capture_hash = 0x4d314843u;
     captureFacts.presented_capture_consumer_mask =
-        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34;
+        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
     captureFacts.presented_capture_chain_hash =
         dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
             captureFacts.presented_capture_width,
@@ -29808,7 +29814,8 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     hostProbeFacts.presented_capture_hash = 0x4d314843u;
     hostProbeFacts.presented_capture_consumer_mask =
         DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34;
+        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
     hostProbeFacts.presented_capture_chain_hash =
         dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
             hostProbeFacts.presented_capture_width,
@@ -29818,6 +29825,7 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
             hostProbeFacts.presented_capture_consumer_mask);
     hostProbeFacts.consumed_hoc_host_render_receipt = 1;
     hostProbeFacts.consumed_m11_boot_probe_consumer = 1;
+    hostProbeFacts.consumed_m12_startup_capture_consumer = 1;
 
     if (!dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
             &artifact, &captureFacts, &captureProof) ||

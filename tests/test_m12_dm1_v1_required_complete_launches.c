@@ -136,6 +136,7 @@ static void seed_dm1_hoc_presented_capture_receipt(M12_StartupMenuState* state) 
     receipt.byteCount = 320 * 200 * 4;
     receipt.framebufferHash = 0x4d31324du;
     receipt.consumerMask = DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+                           DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
                            DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
     receipt.chainHash =
         dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
@@ -227,6 +228,7 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(boot.dm1HoCPresentedCaptureChainReady == 1);
     CHECK(boot.dm1HoCPresentedCaptureConsumerMask ==
           (DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+           DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
            DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34));
     CHECK(boot.dm1HoCPresentedCaptureChainHash != 0u);
     CHECK(boot.dm1HoCOpenedEntranceFrameReady == 1);

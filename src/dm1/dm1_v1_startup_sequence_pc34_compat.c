@@ -2290,6 +2290,71 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_hoc_presented_capture_publish_receipt_pc34(
+    const DM1_V1_StartupHoCPresentedCapturePublishFacts_PC34* facts,
+    DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34 receipt;
+    unsigned int mask;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!facts || !facts->source_id || strcmp(facts->source_id, "dm1") != 0) {
+        *out_receipt = receipt;
+        return facts ? 1 : 0;
+    }
+
+    receipt.handled = 1;
+    receipt.presented_capture_ready =
+        facts->presented_capture_ready ? 1 : 0;
+    receipt.host_window_present = facts->host_window_present ? 1 : 0;
+    receipt.captured_from_mac_window =
+        facts->captured_from_mac_window ? 1 : 0;
+    receipt.captured_from_release_app =
+        facts->captured_from_release_app ? 1 : 0;
+    receipt.width = facts->width;
+    receipt.height = facts->height;
+    receipt.byte_count = facts->byte_count;
+    receipt.framebuffer_hash = facts->framebuffer_hash;
+    mask = facts->required_consumer_mask;
+    if (!mask) {
+        mask = DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+               DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
+               DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
+    }
+    receipt.consumer_mask = mask;
+    receipt.chain_hash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            receipt.width,
+            receipt.height,
+            receipt.byte_count,
+            receipt.framebuffer_hash,
+            receipt.consumer_mask);
+    receipt.geometry_matches = receipt.width >= 320 && receipt.height >= 200;
+    receipt.pixels_present =
+        receipt.byte_count >= receipt.width * receipt.height * 4 &&
+        receipt.framebuffer_hash != 0U;
+    receipt.source_evidence =
+        "ReDMCSB DRAWVIEW.C F0097; ENTRANCE.C F0797/F0441";
+    receipt.ready =
+        receipt.presented_capture_ready &&
+        receipt.host_window_present &&
+        receipt.captured_from_mac_window &&
+        receipt.captured_from_release_app &&
+        receipt.geometry_matches &&
+        receipt.pixels_present &&
+        (receipt.consumer_mask &
+         DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34) &&
+        (receipt.consumer_mask &
+         DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34) &&
+        (receipt.consumer_mask &
+         DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34) &&
+        receipt.chain_hash != 0U;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,
