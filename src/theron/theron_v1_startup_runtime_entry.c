@@ -619,6 +619,8 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
     Theron_V1StartupAllDungeonRouteReceipt *out_receipt) {
 
     Theron_DungeonID dungeon_id;
+    Theron_Track02ObjectTableRouteReceipt object_table_route;
+    Theron_Track02LevelRouteReceipt level_route;
     uint32_t hash = 2166136261u;
     uint32_t object_hash = 2166136261u;
 
@@ -632,6 +634,47 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         !theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
             media_receipt)) {
         return 0;
+    }
+
+    if (theron_v1_track02_capture_object_table_route_receipt(
+            hucard_rom,
+            hucard_rom_size,
+            md5_hex,
+            &object_table_route) &&
+        object_table_route.blocked_for_missing_real_object_evidence &&
+        !object_table_route.fallback_visuals_allowed) {
+        out_receipt->no_fallback_semantic_role_mask |=
+            object_table_route.semantic_role_mask;
+        out_receipt->object_table_no_fallback_ready = 1;
+        out_receipt->object_table_blocked_anchor_mask =
+            object_table_route.object_table_blocked_anchor_mask;
+        out_receipt->object_table_blocked_anchor_count =
+            (int)object_table_route.object_table_blocked_anchor_count;
+        out_receipt->object_table_route_hash =
+            object_table_route.route_hash;
+        hash ^= object_table_route.route_hash;
+        hash *= 16777619u;
+    }
+    if (theron_v1_track02_capture_level_route_receipt(hucard_rom,
+                                                       hucard_rom_size,
+                                                       md5_hex,
+                                                       &level_route) &&
+        level_route.blocked_for_missing_nonstartup_level_evidence &&
+        !level_route.fallback_visuals_allowed) {
+        out_receipt->no_fallback_semantic_role_mask |=
+            level_route.semantic_role_mask;
+        out_receipt->nonstartup_level_no_fallback_ready = 1;
+        out_receipt->nonstartup_level_blocked_anchor_mask =
+            level_route.nonstartup_level_blocked_anchor_mask;
+        out_receipt->nonstartup_level_blocked_anchor_count =
+            (int)level_route.nonstartup_level_blocked_anchor_count;
+        out_receipt->startup_level_blocked_anchor_mask =
+            level_route.startup_level_blocked_anchor_mask;
+        out_receipt->startup_level_blocked_anchor_count =
+            (int)level_route.startup_level_blocked_anchor_count;
+        out_receipt->level_route_hash = level_route.route_hash;
+        hash ^= level_route.route_hash;
+        hash *= 16777619u;
     }
 
     for (dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
@@ -701,6 +744,8 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         out_receipt->capture_count == THERON_DUNGEON_COUNT &&
         out_receipt->dungeon_mask ==
             ((1u << THERON_DUNGEON_COUNT) - 1u) &&
+        out_receipt->object_table_no_fallback_ready &&
+        out_receipt->nonstartup_level_no_fallback_ready &&
         out_receipt->exact_level_semantics_ready &&
         out_receipt->exact_object_semantics_ready;
     out_receipt->route_hash = hash;
@@ -809,6 +854,27 @@ int theron_v1_startup_runtime_enter_from_forcefield(
                 all_routes.exact_level_semantics_ready;
             out_result->exact_object_semantics_ready =
                 all_routes.exact_object_semantics_ready;
+            out_result->no_fallback_semantic_role_mask =
+                all_routes.no_fallback_semantic_role_mask;
+            out_result->object_table_no_fallback_ready =
+                all_routes.object_table_no_fallback_ready;
+            out_result->object_table_blocked_anchor_mask =
+                all_routes.object_table_blocked_anchor_mask;
+            out_result->object_table_blocked_anchor_count =
+                all_routes.object_table_blocked_anchor_count;
+            out_result->nonstartup_level_no_fallback_ready =
+                all_routes.nonstartup_level_no_fallback_ready;
+            out_result->nonstartup_level_blocked_anchor_mask =
+                all_routes.nonstartup_level_blocked_anchor_mask;
+            out_result->nonstartup_level_blocked_anchor_count =
+                all_routes.nonstartup_level_blocked_anchor_count;
+            out_result->startup_level_blocked_anchor_mask =
+                all_routes.startup_level_blocked_anchor_mask;
+            out_result->startup_level_blocked_anchor_count =
+                all_routes.startup_level_blocked_anchor_count;
+            out_result->object_table_route_hash =
+                all_routes.object_table_route_hash;
+            out_result->level_route_hash = all_routes.level_route_hash;
         }
     }
     return 1;
@@ -860,17 +926,40 @@ int theron_v1_startup_runtime_entry_apply_receipt(
         result->exact_level_semantics_ready;
     out_receipt->exact_object_semantics_ready =
         result->exact_object_semantics_ready;
+    out_receipt->no_fallback_semantic_role_mask =
+        result->no_fallback_semantic_role_mask;
+    out_receipt->object_table_no_fallback_ready =
+        result->object_table_no_fallback_ready;
+    out_receipt->object_table_blocked_anchor_mask =
+        result->object_table_blocked_anchor_mask;
+    out_receipt->object_table_blocked_anchor_count =
+        result->object_table_blocked_anchor_count;
+    out_receipt->nonstartup_level_no_fallback_ready =
+        result->nonstartup_level_no_fallback_ready;
+    out_receipt->nonstartup_level_blocked_anchor_mask =
+        result->nonstartup_level_blocked_anchor_mask;
+    out_receipt->nonstartup_level_blocked_anchor_count =
+        result->nonstartup_level_blocked_anchor_count;
+    out_receipt->startup_level_blocked_anchor_mask =
+        result->startup_level_blocked_anchor_mask;
+    out_receipt->startup_level_blocked_anchor_count =
+        result->startup_level_blocked_anchor_count;
+    out_receipt->object_table_route_hash = result->object_table_route_hash;
+    out_receipt->level_route_hash = result->level_route_hash;
     if (runtime_receipt && runtime_receipt[0]) {
         snprintf(out_receipt->inspect_detail,
                  sizeof(out_receipt->inspect_detail),
-                 "%s route=%s semantic=%d fallback_blocked=%d structured=%d text_route=%d",
+                 "%s route=%s semantic=%d fallback_blocked=%d structured=%d text_route=%d no_fallback_roles=0x%x object_block=0x%x level_block=0x%x",
                  runtime_receipt,
                  theron_v1_startup_runtime_level_source_name(
                      result->runtime_level_source),
                  result->track02_semantic_handoff,
                  result->fallback_visuals_blocked,
                  result->structured_runtime_route,
-                 result->runtime_receipt_text_route);
+                 result->runtime_receipt_text_route,
+                 result->no_fallback_semantic_role_mask,
+                 result->object_table_blocked_anchor_mask,
+                 result->nonstartup_level_blocked_anchor_mask);
         out_receipt->log_receipt = 1;
     }
     out_receipt->log_first_line = "T0: THERON LOADED";
@@ -918,6 +1007,27 @@ static int theron_v1_startup_runtime_entry_failure_apply_receipt(
             result->exact_level_semantics_ready;
         out_receipt->exact_object_semantics_ready =
             result->exact_object_semantics_ready;
+        out_receipt->no_fallback_semantic_role_mask =
+            result->no_fallback_semantic_role_mask;
+        out_receipt->object_table_no_fallback_ready =
+            result->object_table_no_fallback_ready;
+        out_receipt->object_table_blocked_anchor_mask =
+            result->object_table_blocked_anchor_mask;
+        out_receipt->object_table_blocked_anchor_count =
+            result->object_table_blocked_anchor_count;
+        out_receipt->nonstartup_level_no_fallback_ready =
+            result->nonstartup_level_no_fallback_ready;
+        out_receipt->nonstartup_level_blocked_anchor_mask =
+            result->nonstartup_level_blocked_anchor_mask;
+        out_receipt->nonstartup_level_blocked_anchor_count =
+            result->nonstartup_level_blocked_anchor_count;
+        out_receipt->startup_level_blocked_anchor_mask =
+            result->startup_level_blocked_anchor_mask;
+        out_receipt->startup_level_blocked_anchor_count =
+            result->startup_level_blocked_anchor_count;
+        out_receipt->object_table_route_hash =
+            result->object_table_route_hash;
+        out_receipt->level_route_hash = result->level_route_hash;
     }
     snprintf(out_receipt->inspect_detail,
              sizeof(out_receipt->inspect_detail),
@@ -1053,6 +1163,27 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
                 all_routes.exact_level_semantics_ready;
             result->exact_object_semantics_ready =
                 all_routes.exact_object_semantics_ready;
+            result->no_fallback_semantic_role_mask =
+                all_routes.no_fallback_semantic_role_mask;
+            result->object_table_no_fallback_ready =
+                all_routes.object_table_no_fallback_ready;
+            result->object_table_blocked_anchor_mask =
+                all_routes.object_table_blocked_anchor_mask;
+            result->object_table_blocked_anchor_count =
+                all_routes.object_table_blocked_anchor_count;
+            result->nonstartup_level_no_fallback_ready =
+                all_routes.nonstartup_level_no_fallback_ready;
+            result->nonstartup_level_blocked_anchor_mask =
+                all_routes.nonstartup_level_blocked_anchor_mask;
+            result->nonstartup_level_blocked_anchor_count =
+                all_routes.nonstartup_level_blocked_anchor_count;
+            result->startup_level_blocked_anchor_mask =
+                all_routes.startup_level_blocked_anchor_mask;
+            result->startup_level_blocked_anchor_count =
+                all_routes.startup_level_blocked_anchor_count;
+            result->object_table_route_hash =
+                all_routes.object_table_route_hash;
+            result->level_route_hash = all_routes.level_route_hash;
         }
     }
     theron_v1_startup_flow_init(&flow);
