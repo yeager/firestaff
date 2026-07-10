@@ -306,6 +306,38 @@ void nexus_draw_floor(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     nexus_raster_quad(fb, cv[0], cv[1], cv[2], cv[3], cam);
 }
 
+void nexus_draw_floor_tex(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
+    float x, float z, const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette)
+{
+    Nexus_RasterVertex v[4];
+    if (!fb || !cam || !tex_data || !tex_palette || tex_w <= 0 || tex_h <= 0)
+        return;
+    v[0].position = (Vec3){x, 0, z};     v[0].uv = (Vec2){0, 1};
+    v[1].position = (Vec3){x + 1, 0, z}; v[1].uv = (Vec2){1, 1};
+    v[2].position = (Vec3){x + 1, 0, z + 1}; v[2].uv = (Vec2){1, 0};
+    v[3].position = (Vec3){x, 0, z + 1}; v[3].uv = (Vec2){0, 0};
+    v[0].color = v[1].color = v[2].color = v[3].color = 0;
+    nexus_raster_quad_tex(fb, v[0], v[1], v[2], v[3], cam,
+                          tex_data, tex_w, tex_h, tex_palette);
+}
+
+void nexus_draw_ceiling_tex(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
+    float x, float z, const uint8_t *tex_data, int tex_w, int tex_h,
+    const uint32_t *tex_palette)
+{
+    Nexus_RasterVertex v[4];
+    if (!fb || !cam || !tex_data || !tex_palette || tex_w <= 0 || tex_h <= 0)
+        return;
+    v[0].position = (Vec3){x, 1, z + 1}; v[0].uv = (Vec2){0, 0};
+    v[1].position = (Vec3){x + 1, 1, z + 1}; v[1].uv = (Vec2){1, 0};
+    v[2].position = (Vec3){x + 1, 1, z}; v[2].uv = (Vec2){1, 1};
+    v[3].position = (Vec3){x, 1, z}; v[3].uv = (Vec2){0, 1};
+    v[0].color = v[1].color = v[2].color = v[3].color = 0;
+    nexus_raster_quad_tex(fb, v[0], v[1], v[2], v[3], cam,
+                          tex_data, tex_w, tex_h, tex_palette);
+}
+
 /* ── Door rendering ───────────────────────────────────────────────── */
 void nexus_draw_door(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     float x, float z, int facing, int door_state,

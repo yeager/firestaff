@@ -82,6 +82,10 @@ struct Nexus_V1_Engine {
     Nexus_V1_Level current_level;
     int level_loaded;
 
+    /* DGN material references resolve through these decoded DMDF banks. */
+    Nexus_DMDFMaterialBank floor_materials;
+    Nexus_DMDFMaterialBank wall_materials;
+
     /* 3D models (loaded on demand) */
     Nexus_V1_Model models[NEXUS_MAX_MODELS];
     int model_count;

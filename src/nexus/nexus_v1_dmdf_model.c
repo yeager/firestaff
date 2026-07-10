@@ -439,3 +439,109 @@ int nexus_v1_dmdf_estimate_raw_texture_payload(
     out->valid = 1;
     return 1;
 }
+
+static uint32_t dmdf_bgr555_rgba(uint16_t value) {
+    uint32_t r = (value >> 10) & 31U;
+    uint32_t g = (value >> 5) & 31U;
+    uint32_t b = value & 31U;
+    return 0xff000000U | ((r * 255U / 31U) << 16) |
+           ((g * 255U / 31U) << 8) | (b * 255U / 31U);
+}
+
+void nexus_v1_dmdf_free_material_bank(Nexus_DMDFMaterialBank *bank) {
+    int i;
+    if (!bank) return;
+    for (i = 0; i < NEXUS_DMDF_MATERIAL_COUNT; ++i) {
+        free(bank->surfaces[i].pixels);
+        bank->surfaces[i].pixels = NULL;
+    }
+    memset(bank, 0, sizeof(*bank));
+}
+
+int nexus_v1_dmdf_decode_material_bank(const uint8_t *data, int size,
+                                       Nexus_DMDFMaterialBank *out) {
+    int pos = 0;
+    int ordinal = 0;
+    Nexus_DMDFPaletteBlock palette;
+    int have_palette = 0;
+
+    if (!out) return 0;
+    nexus_v1_dmdf_free_material_bank(out);
+    if (!data || size <= 0) return 0;
+
+    /* Locate the shared CLUT first. DMDF tails may place BITM before PLTB;
+     * association is by the BITM palette slot, not incidental byte order. */
+    while (pos + 4 <= size) {
+        if (rb32(data + pos) == NEXUS_DMDF_PALETTE_BLOCK_MAGIC &&
+            nexus_v1_dmdf_parse_palette_block(data, size, pos, &palette)) {
+            have_palette = 1;
+            break;
+        }
+        pos++;
+    }
+    if (!have_palette) return 0;
+    pos = 0;
+
+    /* A PLTB is the shared CLUT for the BITM blocks in this material bank.
+     * We deliberately do not invent a palette when it is absent. */
+    while (pos + 4 <= size && ordinal < NEXUS_DMDF_MATERIAL_COUNT) {
+        uint32_t magic = rb32(data + pos);
+        if (magic == NEXUS_DMDF_PALETTE_BLOCK_MAGIC) {
+            Nexus_DMDFPaletteBlock ignored;
+            if (!nexus_v1_dmdf_parse_palette_block(data, size, pos, &ignored))
+                return 0;
+            pos += (int)ignored.bytes_used;
+        } else if (magic == NEXUS_DMDF_BITMAP_BLOCK_MAGIC) {
+            Nexus_DMDFBitmapBlock bitmap;
+            Nexus_DMDFTextureSurface *surface;
+            uint32_t i;
+            if (!nexus_v1_dmdf_parse_bitmap_block(data, size, pos, &bitmap)) {
+                /* A later corrupt marker must not invalidate surfaces that
+                 * were already bounded and decoded successfully. */
+                pos++;
+                continue;
+            }
+            if (!have_palette || (bitmap.bpp != 4U && bitmap.bpp != 8U) ||
+                bitmap.palette_index + palette.entry_count > 256U) {
+                nexus_v1_dmdf_free_material_bank(out);
+                return 0;
+            }
+            surface = &out->surfaces[ordinal];
+            surface->pixels = (uint8_t *)malloc((size_t)bitmap.width * bitmap.height);
+            if (!surface->pixels) {
+                nexus_v1_dmdf_free_material_bank(out);
+                return 0;
+            }
+            for (i = 0; i < palette.entry_count; ++i) {
+                uint32_t entry;
+                if (!nexus_v1_dmdf_palette_entry(data, size, &palette, i, &entry)) {
+                    nexus_v1_dmdf_free_material_bank(out);
+                    return 0;
+                }
+                surface->palette[bitmap.palette_index + i] =
+                    dmdf_bgr555_rgba((uint16_t)entry);
+            }
+            for (i = 0; i < bitmap.width * bitmap.height; ++i) {
+                uint8_t texel = bitmap.bpp == 4U
+                    ? (uint8_t)((data[bitmap.payload_offset + i / 2U] >>
+                        ((i & 1U) ? 0U : 4U)) & 0x0fU)
+                    : data[bitmap.payload_offset + i];
+                if (texel >= palette.entry_count) {
+                    nexus_v1_dmdf_free_material_bank(out);
+                    return 0;
+                }
+                surface->pixels[i] = (uint8_t)(bitmap.palette_index + texel);
+            }
+            surface->width = (int)bitmap.width;
+            surface->height = (int)bitmap.height;
+            surface->valid = 1;
+            out->surface_count++;
+            ordinal++;
+            pos += (int)bitmap.bytes_used;
+        } else {
+            pos++;
+        }
+    }
+    out->valid = out->surface_count > 0;
+    return out->valid;
+}
