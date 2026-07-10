@@ -1591,6 +1591,7 @@ int main(void) {
                         runtime_hud_capture.min_asset_wall_count > 0 &&
                         runtime_hud_capture.total_fallback_floor_ceiling_count == 0 &&
                         runtime_hud_capture.total_fallback_wall_count == 0 &&
+                        runtime_hud_capture.total_fallback_door_count == 0 &&
                         runtime_hud_capture.raw_gdat_runtime_hud_capture_ready == 1 &&
                         runtime_hud_capture.raw_gdat_runtime_portrait_count >= 4 &&
                         runtime_hud_capture.raw_gdat_runtime_portrait_hash != 0u &&
@@ -1613,6 +1614,7 @@ int main(void) {
                         dm2_v1_runtime_last_fallback_floor_ceiling_count() == 0 &&
                         dm2_v1_runtime_last_asset_wall_count() > 0 &&
                         dm2_v1_runtime_last_fallback_wall_count() == 0 &&
+                        dm2_v1_runtime_last_fallback_door_count() == 0 &&
                         strcmp(view.lastAction, "RUNTIME") == 0 &&
                         strcmp(view.lastOutcome, "DM2 RUNTIME GDAT") == 0,
                     "M11 DM2 runtime draw consumes real GDAT frame/HUD receipt");

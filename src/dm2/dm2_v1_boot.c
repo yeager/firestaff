@@ -4570,11 +4570,22 @@ int dm2_v1_boot_runtime_render_frame(
             dm2_v1_runtime_last_asset_wall_count();
         out_receipt->runtime_render_fallback_wall_count =
             dm2_v1_runtime_last_fallback_wall_count();
+        out_receipt->runtime_render_asset_door_panel_count =
+            dm2_v1_runtime_last_asset_door_panel_count();
+        out_receipt->runtime_render_asset_door_overlay_count =
+            dm2_v1_runtime_last_asset_door_overlay_count();
+        out_receipt->runtime_render_asset_door_frame_count =
+            dm2_v1_runtime_last_asset_door_frame_count();
+        out_receipt->runtime_render_asset_door_button_count =
+            dm2_v1_runtime_last_asset_door_button_count();
+        out_receipt->runtime_render_fallback_door_count =
+            dm2_v1_runtime_last_fallback_door_count();
         out_receipt->runtime_render_no_core_fallbacks =
             out_receipt->runtime_render_asset_floor_ceiling_count >= 2 &&
             out_receipt->runtime_render_fallback_floor_ceiling_count == 0 &&
             out_receipt->runtime_render_asset_wall_count > 0 &&
-            out_receipt->runtime_render_fallback_wall_count == 0;
+            out_receipt->runtime_render_fallback_wall_count == 0 &&
+            out_receipt->runtime_render_fallback_door_count == 0;
         out_receipt->runtime_render_real_asset_ready =
             out_receipt->runtime_hud_capture_ready &&
             out_receipt->runtime_render_no_core_fallbacks;
@@ -4663,6 +4674,16 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             frame_receipt.runtime_render_asset_wall_count;
         out_receipt->total_fallback_wall_count +=
             frame_receipt.runtime_render_fallback_wall_count;
+        out_receipt->total_asset_door_panel_count +=
+            frame_receipt.runtime_render_asset_door_panel_count;
+        out_receipt->total_asset_door_overlay_count +=
+            frame_receipt.runtime_render_asset_door_overlay_count;
+        out_receipt->total_asset_door_frame_count +=
+            frame_receipt.runtime_render_asset_door_frame_count;
+        out_receipt->total_asset_door_button_count +=
+            frame_receipt.runtime_render_asset_door_button_count;
+        out_receipt->total_fallback_door_count +=
+            frame_receipt.runtime_render_fallback_door_count;
         if (frame_receipt.runtime_hud_asset_portrait_count <
             out_receipt->min_asset_portrait_count) {
             out_receipt->min_asset_portrait_count =
@@ -4697,6 +4718,15 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             (uint32_t)frame_receipt.runtime_render_asset_wall_count);
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
+            (uint32_t)frame_receipt.runtime_render_asset_door_panel_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            (uint32_t)frame_receipt.runtime_render_asset_door_frame_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            (uint32_t)frame_receipt.runtime_render_fallback_door_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
             (uint32_t)frame_receipt.runtime.party_dir);
         out_receipt->combined_pixel_count +=
             frame_receipt.runtime_hud_frame_pixel_count;
@@ -4728,7 +4758,8 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         out_receipt->total_asset_floor_ceiling_count > 0 &&
         out_receipt->total_fallback_floor_ceiling_count == 0 &&
         out_receipt->total_asset_wall_count > 0 &&
-        out_receipt->total_fallback_wall_count == 0;
+        out_receipt->total_fallback_wall_count == 0 &&
+        out_receipt->total_fallback_door_count == 0;
     out_receipt->first_runtime_hud_ready =
         out_receipt->first_frame.runtime_hud_capture_ready;
     out_receipt->real_gdat_portrait_ready =
