@@ -242,6 +242,13 @@ typedef struct {
     int dm1HoCMapWidth;
     int dm1HoCMapHeight;
     int dm1HoCRenderCommandCount;
+    int dm1CompleteSupportReady;
+    int dm1CompleteSourceVisibleStartup;
+    int dm1CompleteEntranceToHoC;
+    int dm1CompleteHoCRenderRoute;
+    int dm1CompleteHostAppCaptureRoute;
+    int dm1CompleteSaveCorpusRoute;
+    int dm1CompleteOriginalSaveRoundtripRoute;
     int startupInitializeV2Runtime;
     int startupInitializeHudRuntime;
     int startupInitializeTouchRuntime;
