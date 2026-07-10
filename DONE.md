@@ -4936,3 +4936,5 @@
 - ✅ 2026-07-10 Nexus complete-support receipt: added a single Nexus V1 complete-support gate that requires title, save, champion, and dungeon/DGN host routes to consume the startup package, exact Saturn timing/capture matrices, no fallback visuals, material-validated DGN mesh commands, and a rasterized viewport with written pixels. Covered in `test_nexus_v1_startup_menu_pc34_compat`; focused syntax checks and `git diff --check` passed.
 
 - ✅ 2026-07-10 Nexus DGN material block receipt: real DGN material planning now reports missing DMDF/BPK surface count and first missing material, and the viewport blocks without legacy fallback when required wall/floor/ceiling material surfaces are absent. Verified with `test_nexus_v1_dgn_material_raster`.
+
+- ✅ 2026-07-10 DM1 ReDMCSB complete-support receipt: added a single DM1 V1 gate requiring source-visible SWSH/title/entrance startup, HoC mirror/object render ownership, release/app presented capture ownership, and original-save corpus/roundtrip readiness together. Covered in `test_dm1_v1_startup_intro_state_machine_gate`; focused syntax check passed.

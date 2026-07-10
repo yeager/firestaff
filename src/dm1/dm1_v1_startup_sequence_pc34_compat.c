@@ -2585,6 +2585,141 @@ int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_complete_support_receipt_pc34(
+    const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* hoc_handoff,
+    const DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* ownership,
+    const DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34* hoc_save,
+    const DM1_V1_StartupSaveResumeCaptureReceipt_PC34* original_save,
+    DM1_V1_CompleteSupportReceipt_PC34* out_receipt) {
+    DM1_V1_CompleteSupportReceipt_PC34 receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!hoc_handoff || !ownership || !hoc_save || !original_save) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!hoc_handoff->handled || !ownership->handled ||
+        !hoc_save->handled || !original_save->handled) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB DM1 startup is a single source chain: ENTRANCE.C F0797/F0438
+     * builds and opens the entrance view, REVIVE.C F0280 owns HoC champion
+     * mirror materialization, and LOADSAVE.C F0433/F0435 owns original save
+     * parts.  Treat DM1 as complete only when Firestaff consumes all three
+     * through DM1 receipts, not through host-side fallback rendering. */
+    receipt.handled = 1;
+    receipt.consumed_hoc_runtime_handoff_receipt = 1;
+    receipt.consumed_release_app_capture_ownership = 1;
+    receipt.consumed_hoc_save_capture_host_readiness = 1;
+    receipt.consumed_original_save_capture_receipt = 1;
+    receipt.complete_source_visible_startup =
+        hoc_handoff->full_graphics_consumed &&
+        ownership->consumed_launch_path_receipt &&
+        ownership->launch_path_started_from_launcher &&
+        ownership->launch_path_intro_not_bypassed;
+    receipt.complete_entrance_to_hoc_transition =
+        hoc_handoff->hoc_runtime_ready &&
+        hoc_handoff->hoc_first_frame_ready &&
+        hoc_handoff->runtime_first_frame_ready &&
+        hoc_handoff->draw_opened_runtime &&
+        hoc_handoff->champion_mirror_startup_handoff_ready &&
+        hoc_handoff->champion_mirror_startup_input_ready &&
+        hoc_handoff->champion_mirror_startup_panel_clear &&
+        hoc_handoff->champion_mirror_startup_blocks_enter &&
+        hoc_save->enter_route_ready;
+    receipt.complete_hoc_render_route =
+        ownership->draw_opened_entrance_frame &&
+        ownership->render_hall_mirror_overlay &&
+        ownership->hoc_asset_capture &&
+        ownership->host_draw_uses_owned_receipt &&
+        ownership->render_command_count == 3 &&
+        hoc_save->save_capture_ready;
+    receipt.complete_host_app_capture_route =
+        ownership->ready &&
+        ownership->host_capture_route_packaged &&
+        ownership->presented_capture_chain_ready &&
+        ownership->presented_capture_route_packaged &&
+        ownership->real_asset_capture &&
+        ownership->mac_window_capture &&
+        ownership->release_app_capture &&
+        ownership->required_asset_capture &&
+        ownership->host_window_capture &&
+        ownership->presented_capture;
+    receipt.complete_save_corpus_route =
+        original_save->save_corpus_capture_ready &&
+        original_save->save_header_present &&
+        original_save->save_part_corpus_present &&
+        original_save->champion_portrait_corpus_present &&
+        original_save->dungeon_payload_present &&
+        original_save->required_asset_hashes_present;
+    receipt.complete_original_save_roundtrip_route =
+        original_save->original_save_roundtrip_route_ready &&
+        original_save->resume_load_consumed &&
+        original_save->resume_runtime_ready &&
+        original_save->resume_path_resolved;
+    receipt.consume_dm1_receipts_only =
+        ownership->consume_dm1_receipts_only &&
+        hoc_save->consume_dm1_receipts_only;
+    receipt.no_host_fallback_visuals =
+        ownership->suppress_host_fallback_visuals &&
+        hoc_save->suppress_host_fallback_visuals;
+    receipt.redmcsb_entrance_micro_dungeon_ready =
+        ownership->map_index == DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
+        ownership->map_width == DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 &&
+        ownership->map_height == DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34;
+    receipt.redmcsb_hoc_mirror_overlay_ready =
+        ownership->render_hall_mirror_overlay &&
+        ownership->host_draw_consumes_backing_asset &&
+        ownership->consumed_required_graphics_asset;
+    receipt.redmcsb_hoc_thing_layer_suppression_ready =
+        ownership->host_draw_rejects_backing_fallback &&
+        ownership->suppress_host_fallback_visuals;
+    receipt.redmcsb_save_part_corpus_ready =
+        original_save->observed_save_part_count ==
+            DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34 &&
+        original_save->observed_champion_portrait_count ==
+            DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
+    receipt.host_capture_route_packaged =
+        ownership->host_capture_route_packaged;
+    receipt.presented_capture_chain_ready =
+        ownership->presented_capture_chain_ready;
+    receipt.host_draw_uses_owned_receipt =
+        ownership->host_draw_uses_owned_receipt;
+    receipt.block_enter_until_champion_selected =
+        ownership->block_enter_until_champion_selected &&
+        hoc_handoff->champion_mirror_startup_blocks_enter;
+    receipt.map_index = ownership->map_index;
+    receipt.map_width = ownership->map_width;
+    receipt.map_height = ownership->map_height;
+    receipt.render_command_count = ownership->render_command_count;
+    receipt.source_evidence =
+        "ReDMCSB ENTRANCE.C F0797/F0438; REVIVE.C F0280; LOADSAVE.C F0433/F0435";
+    receipt.ready =
+        receipt.complete_source_visible_startup &&
+        receipt.complete_entrance_to_hoc_transition &&
+        receipt.complete_hoc_render_route &&
+        receipt.complete_host_app_capture_route &&
+        receipt.complete_save_corpus_route &&
+        receipt.complete_original_save_roundtrip_route &&
+        receipt.consume_dm1_receipts_only &&
+        receipt.no_host_fallback_visuals &&
+        receipt.redmcsb_entrance_micro_dungeon_ready &&
+        receipt.redmcsb_hoc_mirror_overlay_ready &&
+        receipt.redmcsb_hoc_thing_layer_suppression_ready &&
+        receipt.redmcsb_save_part_corpus_ready &&
+        receipt.host_capture_route_packaged &&
+        receipt.presented_capture_chain_ready &&
+        receipt.host_draw_uses_owned_receipt &&
+        receipt.block_enter_until_champion_selected;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,

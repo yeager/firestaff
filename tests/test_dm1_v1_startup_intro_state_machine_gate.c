@@ -733,6 +733,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
         hoc_presented_publish_facts;
     DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34
         hoc_presented_publish;
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 hoc_enter_handoff;
+    DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34
+        hoc_save_capture_readiness;
+    DM1_V1_CompleteSupportReceipt_PC34 complete_support;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 mirror_front_wall;
     DM1_V1_ChampionMirrorRenderReceiptPc34 mirror_render;
     DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 mirror_boundary;
@@ -2914,6 +2918,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  runtime_handoff.draw_opened_runtime &&
                  !runtime_handoff.suppress_draw_opened,
              1);
+    hoc_enter_handoff = runtime_handoff;
 
     memset(&fake, 0, sizeof(fake));
     fake.entrance_command = 2;
@@ -3000,6 +3005,77 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  save_resume_capture.observed_champion_portrait_count == 4 &&
                  strcmp(save_resume_capture.resume_path, "/tmp/combined.sav") == 0,
              1);
+    memset(&hoc_save_capture_readiness, 0,
+           sizeof(hoc_save_capture_readiness));
+    expect_i("DM1 HoC save-capture host readiness consumes complete HoC path",
+             dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
+                 &hoc_enter_handoff,
+                 &apply_result,
+                 &hoc_release_capture_ownership,
+                 &hoc_save_capture_readiness) &&
+                 hoc_save_capture_readiness.handled &&
+                 hoc_save_capture_readiness.ready &&
+                 hoc_save_capture_readiness.save_capture_ready &&
+                 hoc_save_capture_readiness.enter_route_ready &&
+                 hoc_save_capture_readiness.consume_dm1_receipts_only &&
+                 hoc_save_capture_readiness.host_capture_route_matches &&
+                 hoc_save_capture_readiness.render_hall_mirror_overlay &&
+                 hoc_save_capture_readiness.host_draw_uses_owned_receipt &&
+                 hoc_save_capture_readiness.render_command_count == 3,
+             1);
+    memset(&complete_support, 0, sizeof(complete_support));
+    expect_i("DM1 complete support requires ReDMCSB startup HoC and save routes",
+             dm1_v1_complete_support_receipt_pc34(
+                 &hoc_enter_handoff,
+                 &hoc_release_capture_ownership,
+                 &hoc_save_capture_readiness,
+                 &save_resume_capture,
+                 &complete_support) &&
+                 complete_support.handled &&
+                 complete_support.ready &&
+                 complete_support.complete_source_visible_startup &&
+                 complete_support.complete_entrance_to_hoc_transition &&
+                 complete_support.complete_hoc_render_route &&
+                 complete_support.complete_host_app_capture_route &&
+                 complete_support.complete_save_corpus_route &&
+                 complete_support.complete_original_save_roundtrip_route &&
+                 complete_support.consume_dm1_receipts_only &&
+                 complete_support.no_host_fallback_visuals &&
+                 complete_support.redmcsb_entrance_micro_dungeon_ready &&
+                 complete_support.redmcsb_hoc_mirror_overlay_ready &&
+                 complete_support.redmcsb_hoc_thing_layer_suppression_ready &&
+                 complete_support.redmcsb_save_part_corpus_ready &&
+                 complete_support.host_capture_route_packaged &&
+                 complete_support.presented_capture_chain_ready &&
+                 complete_support.host_draw_uses_owned_receipt &&
+                 complete_support.block_enter_until_champion_selected,
+             1);
+    hoc_save_capture_readiness.save_capture_ready = 0;
+    expect_i("DM1 complete support rejects partial HoC host route",
+             dm1_v1_complete_support_receipt_pc34(
+                 &hoc_enter_handoff,
+                 &hoc_release_capture_ownership,
+                 &hoc_save_capture_readiness,
+                 &save_resume_capture,
+                 &complete_support) &&
+                 complete_support.handled &&
+                 !complete_support.ready &&
+                 !complete_support.complete_hoc_render_route,
+             1);
+    hoc_save_capture_readiness.save_capture_ready = 1;
+    save_resume_capture.original_save_roundtrip_route_ready = 0;
+    expect_i("DM1 complete support rejects partial original-save route",
+             dm1_v1_complete_support_receipt_pc34(
+                 &hoc_enter_handoff,
+                 &hoc_release_capture_ownership,
+                 &hoc_save_capture_readiness,
+                 &save_resume_capture,
+                 &complete_support) &&
+                 complete_support.handled &&
+                 !complete_support.ready &&
+                 !complete_support.complete_original_save_roundtrip_route,
+             1);
+    save_resume_capture.original_save_roundtrip_route_ready = 1;
     save_resume_facts.observed_save_part_count = 4;
     expect_i("DM1 save/resume capture rejects partial save corpus",
              dm1_v1_startup_save_resume_capture_receipt_pc34(
