@@ -1,4 +1,5 @@
 #include "nexus_v1_engine.h"
+#include "nexus_v1_viewport.h"
 #include "firestaff_nexus_v1_boot_profile.h"
 #include "fs_portable_compat.h"
 
@@ -78,6 +79,87 @@ static int diag_details_contain(const Nexus_V1_Diagnostic* diags,
     return 0;
 }
 
+static void wb16(unsigned char* p, unsigned int value) {
+    p[0] = (unsigned char)(value >> 8);
+    p[1] = (unsigned char)value;
+}
+
+static void wb32(unsigned char* p, unsigned int value) {
+    p[0] = (unsigned char)(value >> 24);
+    p[1] = (unsigned char)(value >> 16);
+    p[2] = (unsigned char)(value >> 8);
+    p[3] = (unsigned char)value;
+}
+
+static void test_dgn_material_plan_cache(void) {
+    static Nexus_V1_Engine engine;
+    static Nexus_Viewport viewport;
+    static unsigned char dgn[NEXUS_DGN_BLOCK_SIZE * 20];
+    static unsigned char pixels[64];
+    Nexus_V1_DgnMaterialPlan const *first;
+    Nexus_V1_DgnMaterialPlan const *second;
+    unsigned char* structure1;
+    int i;
+
+    memset(&engine, 0, sizeof(engine));
+    memset(dgn, 0, sizeof(dgn));
+    wb16(dgn + 0x0c, 1U);
+    wb16(dgn + 0x0e, 19U);
+    wb32(dgn + 0x10,
+         (unsigned int)(0x40 + NEXUS_DGN_STRUCTURE1B_BYTES + 1024));
+    structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
+    structure1[1] = 0x50;
+    structure1[2] = 0x40;
+    structure1[3] = 0x40;
+    wb32(structure1 + 0x10, 0x38U);
+    wb32(structure1 + 0x14, 0x40U);
+    wb32(structure1 + 0x18, 0x40U + NEXUS_DGN_STRUCTURE1B_BYTES);
+    engine.level_loaded = 1;
+    engine.game.current_level = 3;
+    check_int(nexus_v1_level_load(&engine.current_level, dgn,
+                                  (int)sizeof(dgn), 3) == 0,
+              "Nexus DGN material cache fixture loads");
+    engine.current_level.squares[4][3] = 1;
+    engine.current_level.floor_material_refs[4][3] = 7;
+    engine.current_level.wall_material_refs[4][3][0] = 9;
+    engine.floor_materials.valid = 1;
+    engine.wall_materials.valid = 1;
+    for (i = 0; i < NEXUS_DMDF_MATERIAL_COUNT; ++i) {
+        engine.floor_materials.surfaces[i].valid = 1;
+        engine.floor_materials.surfaces[i].pixels = pixels;
+        engine.floor_materials.surfaces[i].width = 8;
+        engine.floor_materials.surfaces[i].height = 8;
+        engine.floor_materials.surfaces[i].palette[13] = 0xff45ab67U;
+        engine.wall_materials.surfaces[i].valid = 1;
+        engine.wall_materials.surfaces[i].pixels = pixels;
+        engine.wall_materials.surfaces[i].width = 8;
+        engine.wall_materials.surfaces[i].height = 8;
+        engine.wall_materials.surfaces[i].palette[13] = 0xff45ab67U;
+    }
+
+    first = nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0);
+    check_int(first != NULL && first->valid,
+              "Nexus DGN material plan accepts decoded DMDF/BPK surfaces");
+    second = nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0);
+    check_int(second == first && engine.dgn_material_plan.cache_hit_count == 1U,
+              "Nexus DGN material plan is shared for an already loaded level");
+    nexus_viewport_init(&viewport);
+    engine.game.party_x = 3;
+    engine.game.party_y = 4;
+    engine.game.party_dir = 0;
+    nexus_viewport_render(&viewport, &engine);
+    check_int(viewport.material_engine == &engine &&
+                  viewport.material_generation == engine.dgn_material_plan.generation &&
+                  viewport.fb.palette[13] == 0xff45ab67U,
+              "Nexus viewport caches the palette from the verified DGN material plan");
+    nexus_v1_invalidate_dgn_material_plan(&engine);
+    check_int(engine.dgn_material_plan.valid == 0,
+              "Nexus DGN material plan invalidates before a new or resumed level");
+    engine.floor_materials.surfaces[7].valid = 0;
+    check_int(nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0) == NULL,
+              "Nexus DGN material plan rejects an undecoded PRS3-only surface");
+}
+
 int main(void) {
     const char* home = getenv("HOME");
     char root[FSP_PATH_MAX];
@@ -98,6 +180,8 @@ int main(void) {
     char sal00_dst[FSP_PATH_MAX];
     char map00_src[FSP_PATH_MAX];
     char map00_dst[FSP_PATH_MAX];
+
+    test_dgn_material_plan_cache();
     char profile_level_root[FSP_PATH_MAX];
     char profile_level_nexus_dir[FSP_PATH_MAX];
     char profile_level_dst[FSP_PATH_MAX];

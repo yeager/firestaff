@@ -68,6 +68,23 @@ typedef struct {
     uint32_t first_blocked_expected_output_bytes;
 } Nexus_V1_MenuBpkRendererHandoffReceipt;
 
+/* A DGN view plan is not renderable until every referenced material has a
+ * decoded DMDF/BPK surface. PRS3-only entries intentionally remain blocked:
+ * no synthetic colour is substituted for an unverified Saturn surface. */
+typedef struct {
+    Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_DgnRenderPlanReceipt receipt;
+    int level;
+    int party_x;
+    int party_y;
+    int party_dir;
+    uint32_t generation;
+    uint32_t rebuild_count;
+    uint32_t cache_hit_count;
+    uint32_t invalidation_count;
+    int valid;
+} Nexus_V1_DgnMaterialPlan;
+
 /* ── Main engine struct ─────────────────────────────────────────────── */
 struct Nexus_V1_Engine {
     /* Data source */
@@ -85,6 +102,7 @@ struct Nexus_V1_Engine {
     /* DGN material references resolve through these decoded DMDF banks. */
     Nexus_DMDFMaterialBank floor_materials;
     Nexus_DMDFMaterialBank wall_materials;
+    Nexus_V1_DgnMaterialPlan dgn_material_plan;
 
     /* 3D models (loaded on demand) */
     Nexus_V1_Model models[NEXUS_MAX_MODELS];
@@ -146,6 +164,13 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir);
 /* Load a dungeon level (0-15). Calls nexus_v1_level_load().
  * Returns 0 on success, -1 on failure. */
 int nexus_v1_load_level(Nexus_V1_Engine *engine, int level);
+
+/* Return the DGN plan whose commands and material surfaces have been checked
+ * together for this level and party pose. The returned pointer is owned by
+ * `engine` and remains valid until the next prepare/invalidate/shutdown. */
+const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
+    Nexus_V1_Engine *engine, int party_x, int party_y, int party_dir);
+void nexus_v1_invalidate_dgn_material_plan(Nexus_V1_Engine *engine);
 
 /* Load a 3D creature model by filename (e.g. "SCORPION.MNS").
  * Returns model index (>=0) on success, -1 on failure. */
