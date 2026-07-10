@@ -1555,7 +1555,7 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
         receipt->hud_overlay_suppressed &&
         receipt->hud_runtime_ready;
     if (snapshot && snapshot->profile &&
-        dm2_v1_boot_startup_raw_gdat_hash(
+        dm2_v1_boot_gdat_raw_asset_proof(
             (DM2_V1_BootProfile *)snapshot->profile,
             receipt->title_gdat_category,
             receipt->title_gdat_index,
@@ -1563,7 +1563,7 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
             0x32545257u,
             &receipt->title_raw_gdat_hash,
             &receipt->title_raw_gdat_byte_count) &&
-        dm2_v1_boot_startup_raw_gdat_hash(
+        dm2_v1_boot_gdat_raw_asset_proof(
             (DM2_V1_BootProfile *)snapshot->profile,
             receipt->menu_gdat_category,
             receipt->menu_gdat_index,
@@ -1792,9 +1792,15 @@ int dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
     hash = dm2_v1_boot_packaged_capture_hash_step(hash,
         (uint32_t)out_proof->menu_gdat_field);
     hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->title_menu_raw_gdat_capture_ready);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
         out_proof->title_raw_gdat_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        out_proof->title_raw_gdat_byte_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
         out_proof->menu_raw_gdat_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        out_proof->menu_raw_gdat_byte_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(hash,
         (uint32_t)out_proof->title_menu_decoded_gdat_capture_ready);
     hash = dm2_v1_boot_packaged_capture_hash_step(hash,
@@ -1826,6 +1832,12 @@ int dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
         out_proof->host_view_valid &&
         out_proof->full_start_valid &&
         out_proof->m11_consumer_ready &&
+        (!full_start->full_start_real_asset_ready ||
+         (out_proof->title_menu_raw_gdat_capture_ready &&
+          out_proof->title_raw_gdat_hash != 0u &&
+          out_proof->title_raw_gdat_byte_count > 0u &&
+          out_proof->menu_raw_gdat_hash != 0u &&
+          out_proof->menu_raw_gdat_byte_count > 0u)) &&
         out_proof->packaged_capture_hash != 0u;
     return out_proof->valid;
 }
@@ -1971,7 +1983,11 @@ int dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->title_raw_gdat_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->title_raw_gdat_byte_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->menu_raw_gdat_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->menu_raw_gdat_byte_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->title_menu_decoded_gdat_capture_ready);
     hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -2002,7 +2018,12 @@ int dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
         out_receipt->capture_proof_valid &&
         out_receipt->exact_title_timing_ready &&
         (!out_receipt->full_start_real_asset_ready ||
-         out_receipt->title_menu_decoded_gdat_capture_ready) &&
+         (out_receipt->title_menu_raw_gdat_capture_ready &&
+          out_receipt->title_raw_gdat_hash != 0u &&
+          out_receipt->title_raw_gdat_byte_count > 0u &&
+          out_receipt->menu_raw_gdat_hash != 0u &&
+          out_receipt->menu_raw_gdat_byte_count > 0u &&
+          out_receipt->title_menu_decoded_gdat_capture_ready)) &&
         out_receipt->menu_capture_ready &&
         out_receipt->m11_consumer_ready &&
         out_receipt->packaged_full_start_hash != 0u;
@@ -2419,6 +2440,14 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
         package->hud_raw_gdat_core_hash;
     out_receipt->startup_hud_raw_gdat_core_byte_count =
         package->hud_raw_gdat_core_byte_count;
+    out_receipt->startup_title_menu_raw_gdat_capture_ready =
+        package->title_menu_raw_gdat_capture_ready;
+    out_receipt->startup_title_raw_gdat_hash = package->title_raw_gdat_hash;
+    out_receipt->startup_title_raw_gdat_byte_count =
+        package->title_raw_gdat_byte_count;
+    out_receipt->startup_menu_raw_gdat_hash = package->menu_raw_gdat_hash;
+    out_receipt->startup_menu_raw_gdat_byte_count =
+        package->menu_raw_gdat_byte_count;
     out_receipt->startup_title_menu_decoded_gdat_capture_ready =
         package->title_menu_decoded_gdat_capture_ready;
     out_receipt->startup_title_decoded_gdat_hash =
@@ -2446,7 +2475,12 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
     out_receipt->packaged_title_timing_consumed =
         package->exact_title_timing_ready &&
         (!package->full_start_real_asset_ready ||
-         package->title_menu_decoded_gdat_capture_ready) &&
+         (package->title_menu_raw_gdat_capture_ready &&
+          package->title_raw_gdat_hash != 0u &&
+          package->title_raw_gdat_byte_count > 0u &&
+          package->menu_raw_gdat_hash != 0u &&
+          package->menu_raw_gdat_byte_count > 0u &&
+          package->title_menu_decoded_gdat_capture_ready)) &&
         package->title_frame_duration_ticks > 0 &&
         package->title_cycle_ticks > 0 &&
         package->title_next_frame_tick >
@@ -2460,7 +2494,13 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
     out_receipt->m11_startup_receipt_ready =
         package->m11_consumer_ready &&
         out_receipt->packaged_title_timing_consumed &&
-        out_receipt->packaged_first_hud_receipt_consumed;
+        out_receipt->packaged_first_hud_receipt_consumed &&
+        (!package->full_start_real_asset_ready ||
+         (out_receipt->startup_title_menu_raw_gdat_capture_ready &&
+          out_receipt->startup_title_raw_gdat_hash != 0u &&
+          out_receipt->startup_title_raw_gdat_byte_count > 0u &&
+          out_receipt->startup_menu_raw_gdat_hash != 0u &&
+          out_receipt->startup_menu_raw_gdat_byte_count > 0u));
     out_receipt->full_start_real_asset_ready =
         package->full_start_real_asset_ready;
     out_receipt->runtime_menu_ready = package->runtime_menu_ready;
@@ -2568,7 +2608,12 @@ int dm2_v1_boot_startup_host_frame_receipt_from_consumer(
         consumer->startup_draw_ready &&
         consumer->packaged_title_timing_consumed &&
         (!consumer->full_start_real_asset_ready ||
-         consumer->startup_title_menu_decoded_gdat_capture_ready);
+         (consumer->startup_title_menu_raw_gdat_capture_ready &&
+          consumer->startup_title_raw_gdat_hash != 0u &&
+          consumer->startup_title_raw_gdat_byte_count > 0u &&
+          consumer->startup_menu_raw_gdat_hash != 0u &&
+          consumer->startup_menu_raw_gdat_byte_count > 0u &&
+          consumer->startup_title_menu_decoded_gdat_capture_ready));
     out_receipt->render_startup_menu =
         consumer->startup_active &&
         consumer->startup_draw_ready &&
@@ -2621,6 +2666,16 @@ int dm2_v1_boot_startup_host_frame_receipt_from_consumer(
         consumer->startup_hud_raw_gdat_core_hash;
     out_receipt->startup_hud_raw_gdat_core_byte_count =
         consumer->startup_hud_raw_gdat_core_byte_count;
+    out_receipt->startup_title_menu_raw_gdat_capture_ready =
+        consumer->startup_title_menu_raw_gdat_capture_ready;
+    out_receipt->startup_title_raw_gdat_hash =
+        consumer->startup_title_raw_gdat_hash;
+    out_receipt->startup_title_raw_gdat_byte_count =
+        consumer->startup_title_raw_gdat_byte_count;
+    out_receipt->startup_menu_raw_gdat_hash =
+        consumer->startup_menu_raw_gdat_hash;
+    out_receipt->startup_menu_raw_gdat_byte_count =
+        consumer->startup_menu_raw_gdat_byte_count;
     out_receipt->startup_title_menu_decoded_gdat_capture_ready =
         consumer->startup_title_menu_decoded_gdat_capture_ready;
     out_receipt->startup_title_decoded_gdat_hash =
@@ -2748,6 +2803,16 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
     out_receipt->suppress_game_hud = host_frame.suppress_game_hud;
     out_receipt->startup_hud_raw_gdat_receipt_consumed =
         host_frame.startup_hud_raw_gdat_capture_ready;
+    out_receipt->startup_title_menu_raw_gdat_receipt_consumed =
+        host_frame.startup_title_menu_raw_gdat_capture_ready;
+    out_receipt->startup_title_raw_gdat_hash =
+        host_frame.startup_title_raw_gdat_hash;
+    out_receipt->startup_title_raw_gdat_byte_count =
+        host_frame.startup_title_raw_gdat_byte_count;
+    out_receipt->startup_menu_raw_gdat_hash =
+        host_frame.startup_menu_raw_gdat_hash;
+    out_receipt->startup_menu_raw_gdat_byte_count =
+        host_frame.startup_menu_raw_gdat_byte_count;
     out_receipt->startup_title_menu_decoded_gdat_receipt_consumed =
         host_frame.startup_title_menu_decoded_gdat_capture_ready;
     out_receipt->startup_title_decoded_gdat_hash =
@@ -2862,12 +2927,19 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
               out_receipt->title_gdat_asset_w) ||
          (!out_receipt->title_gdat_asset_required &&
           package.title_gdat_asset_ready ==
-              out_receipt->title_gdat_asset_ready));
+              out_receipt->title_gdat_asset_ready)) &&
+        (!package.full_start_real_asset_ready ||
+         (out_receipt->startup_title_menu_raw_gdat_receipt_consumed &&
+          out_receipt->startup_title_raw_gdat_hash != 0u &&
+          out_receipt->startup_title_raw_gdat_byte_count > 0u &&
+          out_receipt->startup_menu_raw_gdat_hash != 0u &&
+          out_receipt->startup_menu_raw_gdat_byte_count > 0u));
     out_receipt->menu_hud_startup_receipt_breadth =
         package.menu_capture_ready &&
         package.hud_handoff_capture_ready &&
         (!package.full_start_real_asset_ready ||
          (out_receipt->startup_hud_raw_gdat_receipt_consumed &&
+          out_receipt->startup_title_menu_raw_gdat_receipt_consumed &&
           out_receipt->startup_title_menu_decoded_gdat_receipt_consumed)) &&
         out_receipt->executed_rect_count >= 2 &&
         out_receipt->executed_text_count >= package.menu_row_count &&
@@ -2895,6 +2967,7 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         out_receipt->suppress_game_hud &&
         (!package.full_start_real_asset_ready ||
          (out_receipt->startup_hud_raw_gdat_receipt_consumed &&
+          out_receipt->startup_title_menu_raw_gdat_receipt_consumed &&
           out_receipt->startup_title_menu_decoded_gdat_receipt_consumed)) &&
         out_receipt->schedule_next_title_tick &&
         !out_receipt->fallback_title_blit_used &&
@@ -3383,6 +3456,34 @@ static int dm2_v1_boot_startup_raw_gdat_hash(
     return 1;
 }
 
+int dm2_v1_boot_gdat_raw_asset_proof(
+    DM2_V1_BootProfile *profile,
+    int category,
+    int index,
+    int field,
+    uint32_t seed,
+    uint32_t *out_hash,
+    uint32_t *out_byte_count)
+{
+    if (out_hash) *out_hash = 0u;
+    if (out_byte_count) *out_byte_count = 0u;
+    if (category < 0 || index < 0 || field < 0 || !out_hash ||
+        !out_byte_count) {
+        return 0;
+    }
+    /* The sized loader bounds the returned range to this GDAT entry.  Do not
+     * let M11 consume decoded pixels until that original byte interval has
+     * been independently accepted. */
+    return dm2_v1_boot_startup_raw_gdat_hash(profile,
+                                             category,
+                                             index,
+                                             field,
+                                             seed,
+                                             out_hash,
+                                             out_byte_count) &&
+           *out_hash != 0u && *out_byte_count > 0u;
+}
+
 static int dm2_v1_boot_runtime_raw_gdat_hash_add(
     DM2_V1_BootProfile *profile,
     int category,
@@ -3767,20 +3868,20 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         }
     }
 
-    if (dm2_v1_boot_startup_raw_gdat_hash(profile,
-                                          package.title_gdat_category,
-                                          package.title_gdat_index,
-                                          package.title_gdat_field,
-                                          0x32545257u,
-                                          &out_receipt->title_raw_byte_hash,
-                                          &out_receipt->title_raw_byte_count) &&
-        dm2_v1_boot_startup_raw_gdat_hash(profile,
-                                          out_receipt->menu_gdat_category,
-                                          out_receipt->menu_gdat_index,
-                                          out_receipt->menu_gdat_field,
-                                          0x324d5257u,
-                                          &out_receipt->menu_raw_byte_hash,
-                                          &out_receipt->menu_raw_byte_count)) {
+    if (dm2_v1_boot_gdat_raw_asset_proof(profile,
+                                         package.title_gdat_category,
+                                         package.title_gdat_index,
+                                         package.title_gdat_field,
+                                         0x32545257u,
+                                         &out_receipt->title_raw_byte_hash,
+                                         &out_receipt->title_raw_byte_count) &&
+        dm2_v1_boot_gdat_raw_asset_proof(profile,
+                                         out_receipt->menu_gdat_category,
+                                         out_receipt->menu_gdat_index,
+                                         out_receipt->menu_gdat_field,
+                                         0x324d5257u,
+                                         &out_receipt->menu_raw_byte_hash,
+                                         &out_receipt->menu_raw_byte_count)) {
         out_receipt->raw_gdat_capture_ready =
             out_receipt->title_raw_byte_hash != 0u &&
             out_receipt->title_raw_byte_count > 0u &&

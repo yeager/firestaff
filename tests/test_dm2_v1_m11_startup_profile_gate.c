@@ -1103,6 +1103,8 @@ int main(void) {
     DM2_V1_BootStartupHostViewReceipt host_view_receipt;
     DM2_V1_BootStartupPackagedFullStartReceipt full_start_package;
     DM2_V1_BootStartupPackagedConsumerReceipt consumer_receipt;
+    DM2_V1_BootStartupHostFrameReceipt host_frame_receipt;
+    DM2_V1_BootStartupRenderOwnershipReceipt ownership_receipt;
     DM2_V1_BootStartupRealVisualCaptureReceipt real_visual_capture;
     DM2_V1_BootProfile* profile;
     DM2_V1_GameState* world;
@@ -1115,8 +1117,23 @@ int main(void) {
     DM2_V1_SessionState direct_session;
     DM2_V1_SessionState resume_session;
     uint32_t loadable_icon_handle = 0u;
+    uint32_t raw_hash = 0xFFFFFFFFu;
+    uint32_t raw_byte_count = 0xFFFFFFFFu;
+    uint32_t title_raw_hash = 0u;
+    uint32_t title_raw_byte_count = 0u;
+    uint32_t menu_raw_hash = 0u;
+    uint32_t menu_raw_byte_count = 0u;
 
     expect_dm2_startup_layout_contract();
+    expect_true(!dm2_v1_boot_gdat_raw_asset_proof(NULL,
+                                                   5,
+                                                   0,
+                                                   1,
+                                                   0x32545257u,
+                                                   &raw_hash,
+                                                   &raw_byte_count) &&
+                    raw_hash == 0u && raw_byte_count == 0u,
+                "DM2 M11 raw GDAT proof rejects an unowned byte range");
 
     check_incomplete_required_files_block_m11(
         "M11 blocks DM2 launch when GRAPHICS.DAT is present without DUNGEON.DAT",
@@ -1399,6 +1416,11 @@ int main(void) {
                         consumer_receipt.title_frame_elapsed_ticks == 1 &&
                         consumer_receipt.packaged_title_timing_consumed == 1 &&
                         consumer_receipt.packaged_first_hud_receipt_consumed == 1 &&
+                        consumer_receipt.startup_title_menu_raw_gdat_capture_ready == 1 &&
+                        consumer_receipt.startup_title_raw_gdat_hash != 0u &&
+                        consumer_receipt.startup_title_raw_gdat_byte_count > 0u &&
+                        consumer_receipt.startup_menu_raw_gdat_hash != 0u &&
+                        consumer_receipt.startup_menu_raw_gdat_byte_count > 0u &&
                         consumer_receipt.startup_hud_raw_gdat_capture_ready == 1 &&
                         consumer_receipt.startup_hud_raw_gdat_portrait_count >= 4 &&
                         consumer_receipt.startup_hud_raw_gdat_portrait_hash != 0u &&
@@ -1412,6 +1434,56 @@ int main(void) {
                             full_start_package.command_count &&
                         consumer_receipt.startup_hud_runtime_ready == 1,
                     "DM2 packaged consumer receipt carries real GDAT startup proof");
+        expect_true(dm2_v1_boot_gdat_raw_asset_proof(
+                        profile,
+                        full_start_package.title_gdat_category,
+                        full_start_package.title_gdat_index,
+                        full_start_package.title_gdat_field,
+                        0x32545257u,
+                        &title_raw_hash,
+                        &title_raw_byte_count) &&
+                        dm2_v1_boot_gdat_raw_asset_proof(
+                        profile,
+                        full_start_package.menu_gdat_category,
+                        full_start_package.menu_gdat_index,
+                        full_start_package.menu_gdat_field,
+                        0x324d5257u,
+                        &menu_raw_hash,
+                        &menu_raw_byte_count) &&
+                        title_raw_hash == full_start_package.title_raw_gdat_hash &&
+                        title_raw_byte_count == full_start_package.title_raw_gdat_byte_count &&
+                        menu_raw_hash == full_start_package.menu_raw_gdat_hash &&
+                        menu_raw_byte_count == full_start_package.menu_raw_gdat_byte_count &&
+                        title_raw_hash == consumer_receipt.startup_title_raw_gdat_hash &&
+                        title_raw_byte_count == consumer_receipt.startup_title_raw_gdat_byte_count &&
+                        menu_raw_hash == consumer_receipt.startup_menu_raw_gdat_hash &&
+                        menu_raw_byte_count == consumer_receipt.startup_menu_raw_gdat_byte_count,
+                    "DM2 receipt chain preserves the exact title/menu raw GDAT byte proof");
+        expect_true(dm2_v1_boot_startup_host_frame_receipt_from_consumer(
+                        &consumer_receipt, &host_frame_receipt) &&
+                        host_frame_receipt.startup_title_menu_raw_gdat_capture_ready == 1 &&
+                        host_frame_receipt.startup_title_raw_gdat_hash == title_raw_hash &&
+                        host_frame_receipt.startup_title_raw_gdat_byte_count == title_raw_byte_count &&
+                        host_frame_receipt.startup_menu_raw_gdat_hash == menu_raw_hash &&
+                        host_frame_receipt.startup_menu_raw_gdat_byte_count == menu_raw_byte_count &&
+                        host_frame_receipt.render_startup_title == 1,
+                    "DM2 host frame consumes the exact title/menu raw GDAT byte proof");
+        expect_true(dm2_v1_boot_startup_render_ownership_receipt_from_runtime_state(
+                        profile,
+                        startup_snapshot.startup_menu_active,
+                        startup_snapshot.startup_save_root,
+                        startup_snapshot.resume_available,
+                        startup_snapshot.slot_mask,
+                        startup_snapshot.selected_row,
+                        13,
+                        &ownership_receipt) &&
+                        ownership_receipt.startup_title_menu_raw_gdat_receipt_consumed == 1 &&
+                        ownership_receipt.startup_title_raw_gdat_hash == title_raw_hash &&
+                        ownership_receipt.startup_title_raw_gdat_byte_count == title_raw_byte_count &&
+                        ownership_receipt.startup_menu_raw_gdat_hash == menu_raw_hash &&
+                        ownership_receipt.startup_menu_raw_gdat_byte_count == menu_raw_byte_count &&
+                        ownership_receipt.final_m11_draw_caller_ready == 1,
+                    "DM2 render ownership keeps the exact title/menu raw GDAT byte proof");
         expect_true(dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
                         profile,
                         startup_snapshot.startup_menu_active,
