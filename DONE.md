@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 CSB title phase route hardening: complete-support and release-app capture now carry the runtime host gate's title phase mask, expected mask, and phase hash, so PRESENTS, CHAOS zoom, CHAOS hold, and STRIKES BACK must remain distinct through the final startup capture receipts.
+
 - ✅ 2026-07-11 DM2 complete-support save-corpus receipt: DM2 complete-support now consumes `dm2_v1_sksave_corpus_scan`, exposes valid/importable/rejected/original candidate counts plus slot mask, and folds the save-corpus hash into the complete-support hash without requiring local saves to exist.
 
 - ✅ 2026-07-11 DM2 item/carried full-GDAT fallback gate: boot/runtime render receipts now carry floor-item and carried-item asset/fallback counts from the V1 viewport renderer, and complete-support rejects item/carried fallback draws alongside wall, door, creature, possession-item, and projectile fallback draws.

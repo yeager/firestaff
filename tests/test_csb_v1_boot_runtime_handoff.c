@@ -2446,6 +2446,10 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               complete_support.real_asset_matched &&
               complete_support.title_sequence_ready &&
               complete_support.title_phase_route_complete &&
+              complete_support.title_runtime_phase_mask == 0x0f &&
+              complete_support.title_runtime_expected_phase_mask == 0x0f &&
+              complete_support.title_runtime_phase_hash ==
+                  runtime_host_gate.title_runtime_phase_hash &&
               complete_support.title_presents_ready &&
               complete_support.title_chaos_ready &&
               complete_support.title_strikes_back_ready &&
@@ -2486,6 +2490,10 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               release_app_capture.door_opening_host_consumer_ready &&
               release_app_capture.route_specific_host_consumers_ready &&
               release_app_capture.title_phase_route_complete &&
+              release_app_capture.title_runtime_phase_mask == 0x0f &&
+              release_app_capture.title_runtime_expected_phase_mask == 0x0f &&
+              release_app_capture.title_runtime_phase_hash ==
+                  complete_support.title_runtime_phase_hash &&
               release_app_capture.runtime_host_routes_ready &&
               release_app_capture.draw_consumes_receipt_only &&
               release_app_capture.input_consumes_receipt_only &&
