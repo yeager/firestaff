@@ -3427,6 +3427,13 @@ static void check_dm1_launch_path_bypass_contract(void) {
     save_resume_capture.observed_champion_portrait_count =
         DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
     save_resume_facts.observed_save_part_count = 4;
+    save_resume_facts.observed_user_save_corpus_scan = 0;
+    save_resume_facts.observed_user_save_corpus_files = 0;
+    save_resume_facts.observed_user_save_corpus_classified = 0;
+    save_resume_facts.observed_user_save_corpus_pc34 = 0;
+    save_resume_facts.observed_user_save_corpus_rejected = 0;
+    save_resume_facts.observed_user_save_corpus_truncated = 0;
+    save_resume_facts.observed_user_save_corpus_first_pc34_path = NULL;
     expect_i("DM1 save/resume capture rejects partial save corpus",
              dm1_v1_startup_save_resume_capture_receipt_pc34(
                  &save_resume_facts,
