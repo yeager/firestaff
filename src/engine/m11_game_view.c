@@ -3166,14 +3166,14 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                           framebuffer,
                                           framebufferWidth,
                                           framebufferHeight,
-                                          plan->title_source_x,
-                                          plan->title_source_y,
-                                          plan->title_source_w,
-                                          plan->title_source_h,
                                           plan->title_dest_x,
                                           plan->title_dest_y,
                                           plan->title_dest_w,
                                           plan->title_dest_h,
+                                          plan->title_source_x,
+                                          plan->title_source_y,
+                                          plan->title_source_w,
+                                          plan->title_source_h,
                                           plan->title_transparent_color);
     }
     for (i = 0; i < framebufferWidth * framebufferHeight; ++i) {
