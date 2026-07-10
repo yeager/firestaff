@@ -8,13 +8,14 @@
  * the result drives the next state transition.
  *
  * This module implements a representative subset of CCM opcodes:
- *   18 opcodes (out of skproject's full ~200) are wired up:
+ *   21 opcodes (out of skproject's full ~200) are wired up:
  *     WALK_NOW, ATTACK_HANDLER, WALK_CONT, WALK_PATH, ROTATE_TO_TARGET,
- *     SPECIAL_ACTION, SPECIAL_06, STEAL_ITEM, MERCHANT_BEHAVIOR,
+ *     SPECIAL_ACTION, SPECIAL_06, SPECIAL_07, SPECIAL_08,
+ *     STEAL_ITEM, MERCHANT_BEHAVIOR,
  *     PUTS_DOWN_ITEM, TAKES_ITEM, SHOOT_ITEM, KILL_ON_TIMER_POS, ROTATES_TARGET,
- *     CAST_SPELL, CREATURE_ATTACKS_PARTY, EXPLODE_OR_SUMMON
+ *     CAST_SPELL, CREATURE_ATTACKS_PARTY, ATTACK_DOOR, EXPLODE_OR_SUMMON
  *   All other opcodes return DM2_CCM_RESULT_UNKNOWN_OPCODE (documented
- *   stub for the remaining ~188 opcodes).
+ *   stub for the remaining ~179 opcodes).
  *
  * Source-lock anchors:
  *   skproject/SKULLWIN/c_creature.cpp         - DM2_PROCEED_CCM
@@ -52,16 +53,16 @@ static const DM2_V1_CCMOpcodeDef g_opcode_table[DM2_CCM_MAX_OPCODES] = {
     { 0x15, "CAST_SPELL",          3, 0 },  /* arg: spell_id, target_x, target_y */
     { 0x17, "CREATURE_ATTACKS_PARTY", 0, 0 },
     { 0x26, "EXPLODE_OR_SUMMON",   1, 0 },
-    /* The remaining entries are documented stubs. */
-    { 0x07, "SPECIAL_07",          0, 1 },
-    { 0x08, "SPECIAL_08",          0, 1 },
+    /* Additional known CCM entries; stubbed rows remain explicit below. */
+    { 0x07, "SPECIAL_07",          0, 0 },
+    { 0x08, "SPECIAL_08",          0, 0 },
     { 0x0E, "SPECIAL_0E",          0, 1 },
     { 0x10, "KILL_ON_TIMER_10",     1, 1 },
     { 0x11, "KILL_ON_TIMER_11",     1, 1 },
     { 0x12, "KILL_ON_TIMER_12",     1, 1 },
     { 0x14, "ROTATE_OTHER",        1, 1 },
     { 0x16, "SPECIAL_16",          1, 1 },
-    { 0x18, "ATTACK_DOOR",         0, 1 },
+    { 0x18, "ATTACK_DOOR",         0, 0 },
     { 0x19, "SPECIAL_19",          1, 1 },
     { 0x1A, "SPECIAL_1A",          1, 1 },
     { 0x1F, "SPECIAL_1F",          1, 1 },
@@ -206,6 +207,18 @@ static int dispatch_opcode(DM2_V1_CCMState *state, int opcode,
             state->flags[13] = 1;
             state->next_state = DM2_CCM_OP_WALK_CONT;
             break;
+        case DM2_CCM_OP_SPECIAL_07:
+            /* skproject/SKULLWIN/c_creature.cpp CCM06 family treats 0x07 as
+             * the paired alternate special phase before returning to walk. */
+            state->flags[13] = 1;
+            state->next_state = DM2_CCM_OP_WALK_CONT;
+            break;
+        case DM2_CCM_OP_SPECIAL_08:
+            /* skproject/SKULLWIN/c_creature.cpp routes 0x08 through the same
+             * short special-state envelope, without direct party mutation. */
+            state->flags[13] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
+            break;
         case DM2_CCM_OP_STEAL_ITEM:
             /* arg: target champion. */
             state->target_id = (arg_count > 0) ? args[0] : 0;
@@ -253,6 +266,13 @@ static int dispatch_opcode(DM2_V1_CCMState *state, int opcode,
             break;
         case DM2_CCM_OP_CREATURE_ATTACKS_PARTY:
             state->flags[9] = 1;
+            break;
+        case DM2_CCM_OP_ATTACK_DOOR:
+            /* skproject/SKULLWIN/c_creature.cpp door-attack CCM state only
+             * marks the door-target phase here; door HP/effects stay owned
+             * by the runtime door/projectile path. */
+            state->flags[7] = 1;
+            state->target_id = DM2_CCM_OP_ATTACK_DOOR;
             break;
         case DM2_CCM_OP_EXPLODE_OR_SUMMON:
             state->flags[10] = 1;
@@ -368,15 +388,17 @@ const char *dm2_v1_ccm_source_evidence(void) {
         "Source: ReDMCSB GROUP.C:1695-1770                 - F0207 creature attack\n"
         "Source: ReDMCSB GROUP.C:2376-2387                 - F0209 visible row/col\n"
         "Source: ReDMCSB PROJEXPL.C:76-92                  - F0212 projectile live\n"
-        "Implemented opcodes (12 of ~200 in skproject):\n"
+        "Implemented opcodes (21 of ~200 in skproject):\n"
         "  0x00 WALK_NOW / 0x01 ATTACK_HANDLER / 0x02 WALK_CONT\n"
-        "  0x05 SPECIAL_ACTION / 0x09 STEAL_ITEM / 0x0A MERCHANT_BEHAVIOR\n"
+        "  0x03 WALK_PATH / 0x04 ROTATE_TO_TARGET / 0x05 SPECIAL_ACTION\n"
+        "  0x06 SPECIAL_06 / 0x07 SPECIAL_07 / 0x08 SPECIAL_08\n"
+        "  0x09 STEAL_ITEM / 0x0A MERCHANT_BEHAVIOR\n"
+        "  0x0B PUTS_DOWN_ITEM / 0x0C TAKES_ITEM\n"
         "  0x0D SHOOT_ITEM / 0x0F KILL_ON_TIMER_POS / 0x13 ROTATES_TARGET\n"
-        "  0x15 CAST_SPELL / 0x17 CREATURE_ATTACKS_PARTY\n"
+        "  0x15 CAST_SPELL / 0x17 CREATURE_ATTACKS_PARTY / 0x18 ATTACK_DOOR\n"
         "  0x26 EXPLODE_OR_SUMMON / 0xFF HALT\n"
         "Stubbed opcodes (return DM2_CCM_RESULT_UNKNOWN_OPCODE):\n"
-        "  0x03/0x04/0x06/0x07/0x08/0x0B/0x0C/0x0E/0x10/0x11/0x12/0x14\n"
-        "  0x16/0x18/0x19/0x1A/0x1F/0x20/0x21/0x25\n"
-        "  + remaining ~168 opcodes in skproject/SKULLWIN/c_creature.cpp.\n"
+        "  0x0E/0x10/0x11/0x12/0x14/0x16/0x19/0x1A/0x1F/0x20/0x21/0x25\n"
+        "  + remaining ~179 opcodes in skproject/SKULLWIN/c_creature.cpp.\n"
         "V1 invariant: CCM NEVER mutates party state directly.\n";
 }

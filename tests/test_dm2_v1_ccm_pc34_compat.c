@@ -26,7 +26,7 @@
  * 23. step(0x26 EXPLODE_OR_SUMMON) sets flag 10
  * 24. step(0xFF HALT) sets halted=1, returns HALTED
  * 25. step on unknown opcode (e.g., 0xFE) returns UNKNOWN_OPCODE
- * 26. step on stubbed opcode (e.g., 0x03) returns UNKNOWN_OPCODE
+ * 26. step on stubbed opcode (e.g., 0x0E) returns UNKNOWN_OPCODE
  * 27. Halted state rejects further step() calls
  * 28. step with too-few args returns BAD_ARG
  * 29. step on NULL state returns BAD_ARG
@@ -42,7 +42,7 @@
  * 39. Multi-step: WALK_NOW → ATTACK_HANDLER → HALT
  * 40. Flags persist across steps
  * 41. Stack can hold up to DM2_CCM_STACK_SIZE items
- * 42. After 12 implemented opcodes, all stubbed (0x03 etc.) return UNKNOWN
+ * 42. Remaining unimplemented opcodes return UNKNOWN
  */
 
 #include "dm2_v1_ccm.h"
@@ -220,6 +220,20 @@ static int test_step_path_rotate_and_item_actions(void) {
            dm2_v1_ccm_stack_pop(&s, &value) == 1 && value == 44;
 }
 
+static int test_step_extra_special_and_door_actions(void) {
+    DM2_V1_CCMState s;
+    dm2_v1_ccm_init_state(&s);
+    if (dm2_v1_ccm_step(&s, DM2_CCM_OP_SPECIAL_07, NULL, 0, 0) !=
+        (int)DM2_CCM_RESULT_OK || s.flags[13] != 1 ||
+        s.next_state != DM2_CCM_OP_WALK_CONT) return 0;
+    if (dm2_v1_ccm_step(&s, DM2_CCM_OP_SPECIAL_08, NULL, 0, 0) !=
+        (int)DM2_CCM_RESULT_OK || s.next_state != DM2_CCM_OP_WALK_NOW) return 0;
+    if (dm2_v1_ccm_step(&s, DM2_CCM_OP_ATTACK_DOOR, NULL, 0, 0) !=
+        (int)DM2_CCM_RESULT_OK || s.flags[7] != 1 ||
+        s.target_id != DM2_CCM_OP_ATTACK_DOOR) return 0;
+    return 1;
+}
+
 static int test_step_steal_item(void) {
     DM2_V1_CCMState s;
     dm2_v1_ccm_init_state(&s);
@@ -310,7 +324,7 @@ static int test_step_unknown_opcode(void) {
 static int test_step_stubbed_opcode(void) {
     DM2_V1_CCMState s;
     dm2_v1_ccm_init_state(&s);
-    int rc = dm2_v1_ccm_step(&s, 0x07, NULL, 0, 0);  /* stubbed */
+    int rc = dm2_v1_ccm_step(&s, 0x0E, NULL, 0, 0);  /* stubbed */
     return rc == (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
 }
 
@@ -443,7 +457,7 @@ static int test_stack_capacity(void) {
 
 static int test_stubbed_opcodes_return_unknown(void) {
     /* Several stubbed opcodes should all return UNKNOWN_OPCODE. */
-    int stub_ops[] = { 0x07, 0x08, 0x0E, 0x10, 0x11, 0x12, 0x14 };
+    int stub_ops[] = { 0x0E, 0x10, 0x11, 0x12, 0x14, 0x16, 0x19 };
     for (size_t i = 0; i < sizeof(stub_ops)/sizeof(stub_ops[0]); i++) {
         DM2_V1_CCMState s;
         dm2_v1_ccm_init_state(&s);
@@ -508,10 +522,26 @@ static int test_decode_program_rejects_truncated_args(void) {
 }
 
 static int test_decode_program_rejects_stubbed_opcode(void) {
-    const uint8_t bytes[] = { 0x07 };
+    const uint8_t bytes[] = { 0x0E };
     DM2_V1_CCMProgram program;
     return dm2_v1_ccm_decode_program(bytes, sizeof(bytes), &program) ==
            (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
+}
+
+static int test_decode_program_accepts_extra_ccm_opcodes(void) {
+    const uint8_t bytes[] = { 0x07, 0x08, 0x18, 0xFF };
+    DM2_V1_CCMProgram program;
+    DM2_V1_CCMState s;
+    if (dm2_v1_ccm_decode_program(bytes, sizeof(bytes), &program) !=
+        (int)DM2_CCM_RESULT_OK || program.count != 4 ||
+        program.ops[0].opcode != DM2_CCM_OP_SPECIAL_07 ||
+        program.ops[1].opcode != DM2_CCM_OP_SPECIAL_08 ||
+        program.ops[2].opcode != DM2_CCM_OP_ATTACK_DOOR) return 0;
+    dm2_v1_ccm_init_state(&s);
+    return dm2_v1_ccm_run_program(&s, &program, 1234) ==
+           (int)DM2_CCM_RESULT_HALTED &&
+           s.flags[13] == 1 && s.flags[7] == 1 &&
+           s.target_id == DM2_CCM_OP_ATTACK_DOOR;
 }
 
 /* ── Main ─────────────────────────────────────────────────────── */
@@ -547,6 +577,7 @@ int main(void) {
     TEST(step_attack_handler);
     TEST(step_special_action);
     TEST(step_path_rotate_and_item_actions);
+    TEST(step_extra_special_and_door_actions);
     TEST(step_steal_item);
     TEST(step_merchant_behavior);
     TEST(step_shoot_item_pushes_stack);
@@ -598,6 +629,7 @@ int main(void) {
     TEST(run_program_walk_shoot_spell_halt);
     TEST(decode_program_rejects_truncated_args);
     TEST(decode_program_rejects_stubbed_opcode);
+    TEST(decode_program_accepts_extra_ccm_opcodes);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return (tests_passed == tests_run) ? 0 : 1;
