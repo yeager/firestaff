@@ -1068,6 +1068,12 @@ typedef struct {
     uint32_t startup_header_seed;
     uint16_t startup_header_level_index;
     unsigned int semantic_role_mask;
+    int startup_level_grid_record_ready;
+    size_t startup_level_grid_record_count;
+    size_t startup_level_grid_descriptor_offset;
+    size_t startup_level_grid_raw_offset;
+    size_t startup_level_grid_user_data_offset;
+    int startup_level_grid_user_data_offset_valid;
     int level_grid_role_mapped;
     size_t nonstartup_level_candidate_count;
     size_t nonstartup_level_blocked_anchor_count;
@@ -1124,10 +1130,11 @@ void theron_v1_track02_level_route_receipt_init(
 
 /* Descriptor-anchored level-route evidence.
  *
- * This receipt promotes only the already source-locked startup level handoff
- * and keeps broader/non-startup level decoding blocked until real Track 02
- * evidence identifies additional dungeon records.  Verified Track 02 media
- * never falls back to synthetic level visuals through this route.
+ * This receipt promotes the already source-locked startup level handoff as the
+ * first real Track 02 level-grid/dungeon-record route and keeps broader/
+ * non-startup level decoding blocked until real Track 02 evidence identifies
+ * additional dungeon records.  Verified Track 02 media never falls back to
+ * synthetic level visuals through this route.
  */
 int theron_v1_track02_capture_level_route_receipt(
     const uint8_t *track02_data,

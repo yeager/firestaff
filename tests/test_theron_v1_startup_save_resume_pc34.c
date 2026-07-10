@@ -4531,6 +4531,8 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                      (1u << THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE)) &&
                     (receipt.no_fallback_semantic_role_mask &
                      (1u << THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE)) &&
+                    (receipt.no_fallback_semantic_role_mask &
+                     (1u << THERON_TRACK02_SEMANTIC_LEVEL_GRID_TABLE)) &&
                     receipt.object_table_no_fallback_ready &&
                     receipt.object_table_blocked_anchor_count == 3 &&
                     receipt.object_table_blocked_anchor_mask == 0x07u &&
@@ -4599,9 +4601,18 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                      (1u << THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE)) &&
                     (level_route_receipt.semantic_role_mask &
                      (1u << THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE)) &&
-                    !(level_route_receipt.semantic_role_mask &
-                      (1u << THERON_TRACK02_SEMANTIC_LEVEL_GRID_TABLE)) &&
-                    !level_route_receipt.level_grid_role_mapped &&
+                    (level_route_receipt.semantic_role_mask &
+                     (1u << THERON_TRACK02_SEMANTIC_LEVEL_GRID_TABLE)) &&
+                    level_route_receipt.startup_level_grid_record_ready &&
+                    level_route_receipt.startup_level_grid_record_count == 1u &&
+                    level_route_receipt.startup_level_grid_descriptor_offset ==
+                        descriptor_offsets[0] &&
+                    level_route_receipt.startup_level_grid_raw_offset ==
+                        candidate_offset &&
+                    level_route_receipt.startup_level_grid_user_data_offset_valid &&
+                    level_route_receipt.startup_level_grid_user_data_offset ==
+                        level_route_receipt.startup_user_data_offset &&
+                    level_route_receipt.level_grid_role_mapped &&
                     level_route_receipt.nonstartup_level_candidate_count == 0u &&
                     level_route_receipt.nonstartup_level_blocked_anchor_count == 3u &&
                     level_route_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
