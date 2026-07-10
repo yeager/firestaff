@@ -705,6 +705,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupRuntimeReadyFacts_PC34 ready_facts;
     DM1_V1_StartupRuntimeReadyReceipt_PC34 ready_receipt;
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 runtime_handoff;
+    DM1_V1_StartupSaveResumeCaptureFacts_PC34 save_resume_facts;
+    DM1_V1_StartupSaveResumeCaptureReceipt_PC34 save_resume_capture;
     DM1_V1_StartupHoCFirstFrameReceipt_PC34 hoc_first_frame;
     DM1_V1_StartupHoCHostRenderPlan_PC34 hoc_host_plan;
     DM1_V1_StartupHoCPackagedFullGraphicsProof_PC34 hoc_full_graphics_proof;
@@ -2914,6 +2916,72 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  runtime_handoff.draw_opened_runtime &&
                  !runtime_handoff.hoc_runtime_ready,
              1);
+    memset(&save_resume_facts, 0, sizeof(save_resume_facts));
+    save_resume_facts.source_id = "dm1";
+    save_resume_facts.outcome = &outcome;
+    save_resume_facts.host_apply = &apply_result;
+    save_resume_facts.runtime_handoff = &runtime_handoff;
+    save_resume_facts.observed_save_header = 1;
+    save_resume_facts.observed_save_part_count =
+        DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34;
+    save_resume_facts.observed_champion_portrait_count =
+        DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
+    save_resume_facts.observed_dungeon_payload = 1;
+    save_resume_facts.observed_required_graphics_hash_match = 1;
+    save_resume_facts.observed_required_dungeon_hash_match = 1;
+    memset(&save_resume_capture, 0, sizeof(save_resume_capture));
+    expect_i("DM1 save/resume capture receipt builds",
+             dm1_v1_startup_save_resume_capture_receipt_pc34(
+                 &save_resume_facts,
+                 &save_resume_capture),
+             1);
+    expect_i("DM1 save/resume capture owns original corpus route",
+             save_resume_capture.handled &&
+                 save_resume_capture.ready &&
+                 save_resume_capture.consumed_resume_outcome &&
+                 save_resume_capture.consumed_host_apply_result &&
+                 save_resume_capture.consumed_runtime_handoff_receipt &&
+                 save_resume_capture.resume_command_maps_load_saved_game &&
+                 save_resume_capture.resume_path_resolved &&
+                 save_resume_capture.resume_load_consumed &&
+                 save_resume_capture.resume_runtime_ready &&
+                 save_resume_capture.suppress_hoc_first_frame &&
+                 save_resume_capture.save_header_present &&
+                 save_resume_capture.save_part_corpus_present &&
+                 save_resume_capture.champion_portrait_corpus_present &&
+                 save_resume_capture.dungeon_payload_present &&
+                 save_resume_capture.required_asset_hashes_present &&
+                 save_resume_capture.save_corpus_capture_ready &&
+                 save_resume_capture.original_save_roundtrip_route_ready &&
+                 save_resume_capture.expected_save_part_count == 5 &&
+                 save_resume_capture.observed_save_part_count == 5 &&
+                 save_resume_capture.expected_champion_portrait_count == 4 &&
+                 save_resume_capture.observed_champion_portrait_count == 4 &&
+                 strcmp(save_resume_capture.resume_path, "/tmp/combined.sav") == 0,
+             1);
+    save_resume_facts.observed_save_part_count = 4;
+    expect_i("DM1 save/resume capture rejects partial save corpus",
+             dm1_v1_startup_save_resume_capture_receipt_pc34(
+                 &save_resume_facts,
+                 &save_resume_capture) &&
+                 save_resume_capture.handled &&
+                 !save_resume_capture.ready &&
+                 !save_resume_capture.save_part_corpus_present &&
+                 !save_resume_capture.original_save_roundtrip_route_ready,
+             1);
+    expect_i("DM1 save/resume capture stays no-op for CSB",
+             (save_resume_facts.source_id = "csb",
+              dm1_v1_startup_save_resume_capture_receipt_pc34(
+                  &save_resume_facts,
+                  &save_resume_capture) &&
+                  save_resume_capture.handled == 0),
+             1);
+    save_resume_facts.source_id = "dm1";
+    expect_i("DM1 save/resume capture rejects NULL input",
+             dm1_v1_startup_save_resume_capture_receipt_pc34(
+                 NULL,
+                 &save_resume_capture),
+             0);
 
     memset(&fake, 0, sizeof(fake));
     callbacks = fake_callbacks(&fake);
