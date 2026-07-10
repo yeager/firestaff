@@ -11492,44 +11492,6 @@ int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state) {
         state->dm1StartupIntroBypassed);
 }
 
-static unsigned int m11_dm1_presented_rgba_hash_pc34(
-    const unsigned char* rgba,
-    int width,
-    int height,
-    int* out_byte_count)
-{
-    unsigned int hash = 2166136261u;
-    int byte_count;
-    int i;
-
-    if (out_byte_count) {
-        *out_byte_count = 0;
-    }
-    if (!rgba || width < 320 || height < 200 ||
-        width > 8192 || height > 8192) {
-        return 0U;
-    }
-    byte_count = width * height * 4;
-    if (byte_count <= 0) {
-        return 0U;
-    }
-    for (i = 0; i < byte_count; ++i) {
-        hash ^= (unsigned int)rgba[i];
-        hash *= 16777619u;
-    }
-    hash ^= (unsigned int)width;
-    hash *= 16777619u;
-    hash ^= (unsigned int)height;
-    hash *= 16777619u;
-    if (hash == 0U) {
-        hash = 1U;
-    }
-    if (out_byte_count) {
-        *out_byte_count = byte_count;
-    }
-    return hash;
-}
-
 static int m11_dm1_hoc_full_graphics_probe_receipt(
     const M11_GameViewState* state,
     DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* out_facts,
@@ -11591,7 +11553,7 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     {
         const unsigned char* presented_rgba =
             M11_Render_GetPresentedRGBA(&presented_width, &presented_height);
-        presented_hash = m11_dm1_presented_rgba_hash_pc34(
+        presented_hash = dm1_v1_startup_hoc_presented_rgba_hash_pc34(
             presented_rgba,
             presented_width,
             presented_height,
@@ -21399,7 +21361,7 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     {
         const unsigned char* presented_rgba =
             M11_Render_GetPresentedRGBA(&presented_width, &presented_height);
-        presented_hash = m11_dm1_presented_rgba_hash_pc34(
+        presented_hash = dm1_v1_startup_hoc_presented_rgba_hash_pc34(
             presented_rgba,
             presented_width,
             presented_height,

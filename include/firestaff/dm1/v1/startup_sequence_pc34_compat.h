@@ -1104,6 +1104,11 @@ unsigned int dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
     int byte_count,
     unsigned int presented_hash,
     unsigned int consumer_mask);
+unsigned int dm1_v1_startup_hoc_presented_rgba_hash_pc34(
+    const unsigned char* rgba,
+    int width,
+    int height,
+    int* out_byte_count);
 int dm1_v1_startup_launch_path_bypasses_intro_pc34(
     DM1_V1_StartupLaunchPath_PC34 path);
 int dm1_v1_startup_source_visible_handoff_required_pc34(const char* game_id);
