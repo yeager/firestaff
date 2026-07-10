@@ -1867,6 +1867,12 @@ static void test_startup_session_facts_wrappers(void) {
     media_receipt.startup_bitmap_stage_atlas_tile_count = 12u;
     media_receipt.startup_bitmap_soul_room_atlas_tile_count = 12u;
     media_receipt.startup_bitmap_forcefield_atlas_tile_count = 12u;
+    media_receipt.startup_bitmap_title_sample_count = 12;
+    media_receipt.startup_bitmap_stage_sample_count = 12;
+    media_receipt.startup_bitmap_soul_room_sample_count = 12;
+    media_receipt.startup_bitmap_forcefield_sample_count = 12;
+    media_receipt.startup_bitmap_sample_count = 48;
+    media_receipt.startup_bitmap_atlas_tile_count = 48u;
     media_receipt.startup_bitmap_title_atlas_width = 96u;
     media_receipt.startup_bitmap_stage_atlas_width = 96u;
     media_receipt.startup_bitmap_soul_room_atlas_width = 96u;
@@ -4296,6 +4302,56 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
     free(track02);
 }
 
+static void test_track02_startup_bitmap_atlas_overflow_breadth(void) {
+    Theron_Track02StartupBitmapCatalog catalog;
+    Theron_Track02StartupBitmapAtlas atlas;
+    Theron_Track02StartupBitmapAtlas wide_atlas;
+    const size_t sample_count = 36u;
+
+    memset(&catalog, 0, sizeof(catalog));
+    catalog.variant = THERON_TRACK02_VARIANT_US_BIN;
+    catalog.sample_count = sample_count;
+    catalog.route_mask = THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE;
+    for (size_t i = 0u; i < sample_count; ++i) {
+        Theron_Track02StartupBitmapSample *sample = &catalog.samples[i];
+        sample->route_bit = THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE;
+        sample->raw_offset = 0x2000u + i * 4u;
+        sample->user_data_offset = 0x1800u + i * 4u;
+        sample->byte_count = THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES;
+        sample->width = 8u;
+        sample->height = 8u;
+        sample->bpp = 4u;
+        sample->nonzero_pixel_count = 1u;
+        sample->checksum = 0x10000u + (uint32_t)i;
+        sample->pixels[i % THERON_TRACK02_STARTUP_BITMAP_PIXELS] =
+            (uint8_t)((i % 15u) + 1u);
+    }
+
+    expect_true(theron_v1_track02_build_startup_bitmap_atlas(
+                    &catalog,
+                    &atlas) == THERON_TRACK02_SIGNAL_OK &&
+                    atlas.route_count == 1u &&
+                    atlas.routes[0].tile_count == 16u &&
+                    atlas.routes[0].width == 128u &&
+                    atlas.total_tile_count == 16u &&
+                    atlas.overflow_count == sample_count - 16u,
+                "Track02 legacy startup bitmap atlas reports over-cap decoded samples");
+    expect_true(theron_v1_track02_build_startup_bitmap_atlas_wide(
+                    &catalog,
+                    &wide_atlas) == THERON_TRACK02_SIGNAL_OK &&
+                    wide_atlas.route_count == 1u &&
+                    wide_atlas.routes[0].tile_count == 32u &&
+                    wide_atlas.routes[0].width == 256u &&
+                    wide_atlas.promoted_wide_route_mask ==
+                        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE &&
+                    wide_atlas.promoted_wide_tile_count == 16u &&
+                    wide_atlas.total_tile_count == 32u &&
+                    wide_atlas.overflow_count == sample_count - 32u &&
+                    wide_atlas.routes[0].raw_offsets[31] ==
+                        catalog.samples[31].raw_offset,
+                "Track02 wide startup bitmap atlas promotes breadth and keeps residual overflow");
+}
+
 static void test_track02_all_dungeon_runtime_capture_receipt(void) {
     static const uint8_t descriptor[18] = {
         0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
@@ -4685,6 +4741,12 @@ static void test_startup_receipt_bitmap_art_gate(void) {
     media_receipt.startup_bitmap_stage_atlas_tile_count = 12u;
     media_receipt.startup_bitmap_soul_room_atlas_tile_count = 12u;
     media_receipt.startup_bitmap_forcefield_atlas_tile_count = 12u;
+    media_receipt.startup_bitmap_title_sample_count = 12;
+    media_receipt.startup_bitmap_stage_sample_count = 12;
+    media_receipt.startup_bitmap_soul_room_sample_count = 12;
+    media_receipt.startup_bitmap_forcefield_sample_count = 12;
+    media_receipt.startup_bitmap_sample_count = 48;
+    media_receipt.startup_bitmap_atlas_tile_count = 48u;
     media_receipt.startup_bitmap_title_atlas_width = 96u;
     media_receipt.startup_bitmap_stage_atlas_width = 96u;
     media_receipt.startup_bitmap_soul_room_atlas_width = 96u;
@@ -4699,6 +4761,20 @@ static void test_startup_receipt_bitmap_art_gate(void) {
     media_receipt.startup_bitmap_iso_atlas_tile_count = 48u;
     theron_v1_startup_receipt_apply_bitmap_art_summary(&receipt,
                                                        &media_receipt);
+    expect_true(receipt.startup_bitmap_wide_route_mask ==
+                    TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    receipt.startup_bitmap_wide_route_count == 4u &&
+                    receipt.startup_bitmap_wide_atlas_tile_count == 48u,
+                "startup receipt preserves wide Track02 bitmap route counters");
+    expect_true(receipt.startup_decoded_art_count ==
+                        THERON_STARTUP_HERO_MIRROR_COUNT &&
+                    receipt.startup_bitmap_fallback_routes_allowed == 0,
+                "startup receipt treats complete wide Track02 bitmap proof as real art");
+    expect_true(receipt.startup_bitmap_iso_route_mask ==
+                    TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    receipt.startup_bitmap_iso_route_count == 4u &&
+                    receipt.startup_bitmap_iso_atlas_tile_count == 48u,
+                "startup receipt preserves wide Track02 ISO bitmap proof");
     expect_true(receipt.startup_bitmap_wide_route_mask ==
                     TST_THERON_FULL_START_BITMAP_ROUTES &&
                     receipt.startup_bitmap_wide_route_count == 4u &&
@@ -5093,6 +5169,7 @@ int main(void) {
     test_boot_runtime_release_facade();
     test_startup_session_facts_wrappers();
     test_track02_startup_bitmap_decode_receipt();
+    test_track02_startup_bitmap_atlas_overflow_breadth();
     test_track02_all_dungeon_runtime_capture_receipt();
     test_track02_startup_bitmap_decode_iso_receipt();
     test_startup_receipt_bitmap_art_gate();
