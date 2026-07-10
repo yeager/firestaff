@@ -3981,6 +3981,75 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
     return entry_count > 0u;
 }
 
+static int dm2_v1_boot_runtime_interface_font_table_receipt(
+    DM2_V1_BootProfile *profile,
+    uint32_t *out_hash,
+    uint32_t *out_byte_count,
+    uint32_t *out_row_count,
+    uint32_t *out_char_count,
+    uint32_t *out_nonzero_byte_count,
+    uint32_t *out_printable_char_count)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0;
+    uint32_t hash = 0x32494654u;
+    uint32_t nonzero = 0u;
+    uint32_t printable = 0u;
+
+    if (out_hash) *out_hash = 0u;
+    if (out_byte_count) *out_byte_count = 0u;
+    if (out_row_count) *out_row_count = 0u;
+    if (out_char_count) *out_char_count = 0u;
+    if (out_nonzero_byte_count) *out_nonzero_byte_count = 0u;
+    if (out_printable_char_count) *out_printable_char_count = 0u;
+    if (!profile || !profile->graphics_dat || !out_hash ||
+        !out_byte_count || !out_row_count || !out_char_count ||
+        !out_nonzero_byte_count || !out_printable_char_count) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_typed_sized(
+        &gfx->loader,
+        DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+        0,
+        DM2_GDAT_ENTRY_TYPE_RAW7,
+        DM2_GDAT_INTERFACE_RAW_LAYOUT_TABLE,
+        &raw_size);
+    if (!raw || raw_size != 0x300u) {
+        return 0;
+    }
+
+    /* skproject/SKWIN/SkWinCore.cpp _3929_0e16 loads
+     * INTERFACE_GENERAL dt07/0x00 into _4976_5c0e with 0x300 bytes.
+     * QUERY_FONT indexes it as (row << 7) + character for six font rows. */
+    for (size_t i = 0; i < raw_size; ++i) {
+        if (raw[i] != 0u) ++nonzero;
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
+    }
+    for (uint32_t ch = 0x20u; ch <= 0x7eu; ++ch) {
+        int has_pixel = 0;
+        for (uint32_t row = 0u; row < 6u; ++row) {
+            if (raw[(row << 7) + ch] != 0u) {
+                has_pixel = 1;
+                break;
+            }
+        }
+        if (has_pixel) ++printable;
+    }
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, 6u);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, 128u);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, printable);
+
+    *out_hash = hash;
+    *out_byte_count = (uint32_t)raw_size;
+    *out_row_count = 6u;
+    *out_char_count = 128u;
+    *out_nonzero_byte_count = nonzero;
+    *out_printable_char_count = printable;
+    return nonzero > 0u && printable > 0u;
+}
+
 static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
     DM2_V1_BootProfile *profile,
     int *out_portrait_count,
@@ -5463,6 +5532,15 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->interface_action_group_count,
             &out_receipt->interface_action_entry_count,
             &out_receipt->interface_action_tail_byte_count);
+    out_receipt->interface_font_table_ready =
+        dm2_v1_boot_runtime_interface_font_table_receipt(
+            profile,
+            &out_receipt->interface_font_table_hash,
+            &out_receipt->interface_font_table_byte_count,
+            &out_receipt->interface_font_table_row_count,
+            &out_receipt->interface_font_table_char_count,
+            &out_receipt->interface_font_table_nonzero_byte_count,
+            &out_receipt->interface_font_table_printable_char_count);
     if (out_receipt->interface_rect14_ready) {
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
@@ -5478,6 +5556,14 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
             out_receipt->interface_action_entry_count);
+    }
+    if (out_receipt->interface_font_table_ready) {
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->interface_font_table_hash);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->interface_font_table_printable_char_count);
     }
     out_receipt->combined_frame_hash = combined_hash;
     out_receipt->real_gdat_runtime_hud_breadth_ready =
@@ -5496,6 +5582,7 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         out_receipt->teleporter_map_chip_ready &&
         out_receipt->dungeon_map_chip_ready &&
         out_receipt->interface_action_table_ready &&
+        out_receipt->interface_font_table_ready &&
         out_receipt->combined_frame_hash != 0u &&
         out_receipt->combined_pixel_count == 4u * 320u * 200u;
     out_receipt->valid =
@@ -5787,6 +5874,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_hud.dungeon_map_chip_wall_ready &&
         out_receipt->runtime_hud.dungeon_map_chip_floor_ready &&
         out_receipt->runtime_hud.interface_action_table_ready &&
+        out_receipt->runtime_hud.interface_font_table_ready &&
         out_receipt->runtime_hud.total_fallback_door_count == 0 &&
         out_receipt->runtime_hud.total_fallback_creature_count == 0 &&
         out_receipt->runtime_hud.total_fallback_creature_possession_item_count == 0 &&
@@ -5801,6 +5889,19 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_hud.dungeon_map_chip_graphicsset_decoded_hash != 0u &&
         out_receipt->runtime_hud.dungeon_map_chip_wall_decoded_hash != 0u &&
         out_receipt->runtime_hud.dungeon_map_chip_floor_decoded_hash != 0u;
+    out_receipt->runtime_gdat_interface_placement_complete =
+        (!out_receipt->runtime_hud.interface_rect14_ready ||
+         (out_receipt->runtime_hud.interface_rect14_stride == 14u &&
+          out_receipt->runtime_hud.interface_rect14_row_count > 0u &&
+          out_receipt->runtime_hud.interface_rect14_hash != 0u &&
+          out_receipt->runtime_hud.interface_rect14_byte_count ==
+              out_receipt->runtime_hud.interface_rect14_row_count * 14u &&
+          out_receipt->runtime_hud.interface_rect14_image_field_count > 0u)) &&
+        out_receipt->runtime_hud.interface_font_table_ready &&
+        out_receipt->runtime_hud.interface_font_table_byte_count == 0x300u &&
+        out_receipt->runtime_hud.interface_font_table_row_count == 6u &&
+        out_receipt->runtime_hud.interface_font_table_char_count == 128u &&
+        out_receipt->runtime_hud.interface_font_table_printable_char_count > 0u;
     out_receipt->runtime_creature_atlas_complete =
         out_receipt->creature_atlas.valid &&
         out_receipt->creature_atlas.materialized_creature_index_count >= 4 &&
@@ -5859,6 +5960,10 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud.dungeon_map_chip_floor_raw_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.interface_rect14_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.interface_rect14_row_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->creature_atlas.atlas_material_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->creature_atlas.frame_parity_hash);
@@ -5875,6 +5980,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_gdat_hud_complete &&
         out_receipt->runtime_gdat_dungeon_complete &&
         out_receipt->runtime_gdat_map_chip_categories_complete &&
+        out_receipt->runtime_gdat_interface_placement_complete &&
         out_receipt->runtime_creature_atlas_complete &&
         out_receipt->runtime_gdat_direction_breadth_complete &&
         out_receipt->no_fallback_title_or_runtime_visuals &&

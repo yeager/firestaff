@@ -579,9 +579,24 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.interface_action_table_byte_count > 0u &&
               hud_capture.interface_action_group_count > 0u &&
               hud_capture.interface_action_entry_count > 0u &&
+              hud_capture.interface_font_table_ready == 1 &&
+              hud_capture.interface_font_table_hash != 0u &&
+              hud_capture.interface_font_table_byte_count == 0x300u &&
+              hud_capture.interface_font_table_row_count == 6u &&
+              hud_capture.interface_font_table_char_count == 128u &&
+              hud_capture.interface_font_table_nonzero_byte_count > 0u &&
+              hud_capture.interface_font_table_printable_char_count > 0u &&
               hud_capture.combined_frame_hash != 0u &&
               hud_capture.combined_pixel_count == 4u * 320u * 200u,
           "boot runtime HUD capture proves real GDAT portraits and frames across sampled directions");
+    CHECK(hud_capture.interface_rect14_ready == 0 ||
+              (hud_capture.interface_rect14_hash != 0u &&
+               hud_capture.interface_rect14_byte_count ==
+                   hud_capture.interface_rect14_row_count * 14u &&
+               hud_capture.interface_rect14_stride == 14u &&
+               hud_capture.interface_rect14_row_count > 0u &&
+               hud_capture.interface_rect14_image_field_count > 0u),
+          "boot runtime HUD capture validates optional skproject dt07/0x0A rect14 table when present");
     memset(&creature_atlas, 0, sizeof(creature_atlas));
     CHECK(dm2_v1_boot_creature_atlas_capture_receipt(
               launch.profile,
@@ -621,6 +636,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               complete_support.runtime_gdat_hud_complete == 1 &&
               complete_support.runtime_gdat_dungeon_complete == 1 &&
               complete_support.runtime_gdat_map_chip_categories_complete == 1 &&
+              complete_support.runtime_gdat_interface_placement_complete == 1 &&
               complete_support.runtime_creature_atlas_complete == 1 &&
               complete_support.runtime_gdat_direction_breadth_complete == 1 &&
               complete_support.no_fallback_title_or_runtime_visuals == 1 &&
