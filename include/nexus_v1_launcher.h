@@ -676,6 +676,9 @@ typedef struct {
     int save_host_package_route_complete;
     int champion_host_package_route_complete;
     int dungeon_host_package_route_complete;
+    unsigned int host_package_route_complete_mask;
+    unsigned int host_package_route_expected_mask;
+    int host_package_route_matrix_complete;
     int title_menu_capture_route_joined;
     int bpk_menu_route_joined;
     int runtime_dgn_route_joined;
@@ -757,6 +760,9 @@ typedef struct {
     int save_host_package_route_complete;
     int champion_host_package_route_complete;
     int dungeon_host_package_route_complete;
+    unsigned int host_package_route_complete_mask;
+    unsigned int host_package_route_expected_mask;
+    int host_package_route_matrix_complete;
     int startup_bundle_consumed;
     int display_callers_use_package_receipt;
     int single_saturn_startup_owner_ready;

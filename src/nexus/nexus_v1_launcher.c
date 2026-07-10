@@ -3761,6 +3761,24 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
         receipt->runtime_dgn_route_joined &&
         receipt->route ==
             NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF;
+    receipt->host_package_route_complete_mask = 0u;
+    if (receipt->save_host_package_route_complete) {
+        receipt->host_package_route_complete_mask |= 1u;
+    }
+    if (receipt->champion_host_package_route_complete) {
+        receipt->host_package_route_complete_mask |= 2u;
+    }
+    if (receipt->dungeon_host_package_route_complete) {
+        receipt->host_package_route_complete_mask |= 4u;
+    }
+    receipt->host_package_route_expected_mask =
+        nexus_v1_launcher_expected_non_title_capture_mask(
+            receipt->capture_route,
+            receipt->runtime_dgn_handoff_ready);
+    receipt->host_package_route_matrix_complete =
+        receipt->host_package_route_expected_mask != 0u &&
+        receipt->host_package_route_complete_mask ==
+            receipt->host_package_route_expected_mask;
     non_title_capture_route_complete =
         receipt->no_fallback_visuals_enforced &&
         !receipt->fallback_visuals_permitted &&
@@ -3777,6 +3795,7 @@ static void nexus_v1_launcher_fill_host_ownership_route_contract(
         receipt->host_saturn_expected_capture_mask != 0u &&
         receipt->host_saturn_non_title_capture_mask ==
             receipt->host_saturn_expected_capture_mask &&
+        receipt->host_package_route_matrix_complete &&
         ((receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_SAVE &&
           receipt->save_host_package_route_complete) ||
          (receipt->capture_route == NEXUS_V1_STARTUP_CAPTURE_CHAMPION &&
@@ -4279,6 +4298,12 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.champion_host_package_route_complete;
     out_receipt->dungeon_host_package_route_complete =
         out_receipt->ownership.dungeon_host_package_route_complete;
+    out_receipt->host_package_route_complete_mask =
+        out_receipt->ownership.host_package_route_complete_mask;
+    out_receipt->host_package_route_expected_mask =
+        out_receipt->ownership.host_package_route_expected_mask;
+    out_receipt->host_package_route_matrix_complete =
+        out_receipt->ownership.host_package_route_matrix_complete;
     out_receipt->startup_bundle_consumed =
         out_receipt->ownership.startup_bundle.package
             .full_start_package_receipt_ready;
