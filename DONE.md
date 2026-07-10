@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM1 launcher PC34 roundtrip wiring: the M12 save browser now exposes original PC34 roundtrip receipt fields for scanned DM1 saves and validates Firestaff-native-to-PC34 exports through the same ReDMCSB-shaped roundtrip chain before reporting success. Verification: `test_save_browser_export_import_m12`, `test_dm1_v1_save_load`, and `git diff --check` passed.
+
 - ✅ 2026-07-10 DM1 original PC34 roundtrip receipt: save/load now exposes a host-facing receipt that validates an original PC34 save, imports it through the ReDMCSB-shaped handoff, exports it back to PC34, reloads it, and reports core champion/map/time/event/active-group preservation for launcher/UI consumers. Verification: `test_dm1_v1_save_load` passed 15/15.
 
 - ✅ 2026-07-10 CSB runtime host-gate ownership breadth: runtime host-capture gates now carry per-route host-ownership summaries and packaged hashes for title/PRESENTS/CHAOS/STRIKES, closed-door HUD/menu, utility HUD/menu, and door opening, so full capture proof no longer depends on separate wrapper checks. Verification: `test_csb_v1_boot_runtime_handoff` passed.
