@@ -1,4 +1,5 @@
 #include "nexus_v1_rasterizer.h"
+#include "nexus_v1_viewport.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -30,6 +31,66 @@ static int count_written_depth(const Nexus_Framebuffer *fb) {
     return count;
 }
 
+static void wb16(uint8_t *p, uint16_t v) {
+    p[0] = (uint8_t)(v >> 8);
+    p[1] = (uint8_t)(v & 0xffU);
+}
+
+static void wb32(uint8_t *p, uint32_t v) {
+    p[0] = (uint8_t)(v >> 24);
+    p[1] = (uint8_t)((v >> 16) & 0xffU);
+    p[2] = (uint8_t)((v >> 8) & 0xffU);
+    p[3] = (uint8_t)(v & 0xffU);
+}
+
+static uint8_t *dgn_cell(uint8_t *structure1, int structure1b_rel,
+                         int x, int y) {
+    return structure1 + structure1b_rel +
+           ((y * NEXUS_MAX_MAP_SIZE + x) *
+            NEXUS_DGN_STRUCTURE1B_CELL_BYTES);
+}
+
+static void set_dgn_collision_ref(uint8_t *structure1,
+                                  int structure1b_rel,
+                                  int x,
+                                  int y,
+                                  int ref) {
+    uint8_t *cell = dgn_cell(structure1, structure1b_rel, x, y);
+    cell[6] = (uint8_t)((ref >> 8) & 0x0f);
+    cell[7] = (uint8_t)(ref & 0xff);
+}
+
+static int build_viewport_dgn(uint8_t *buf, int buf_size,
+                              int structure1b_rel, int geometry_bytes) {
+    const int structure1_blocks = 19;
+    uint8_t *structure1;
+    int useful;
+    if (!buf || buf_size <= 0) return -1;
+    memset(buf, 0, (size_t)buf_size);
+    useful = structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + geometry_bytes;
+    if (useful > structure1_blocks * NEXUS_DGN_BLOCK_SIZE) return -1;
+    wb16(buf + 0x0c, 1U);
+    wb16(buf + 0x0e, (uint16_t)structure1_blocks);
+    wb32(buf + 0x10, (uint32_t)useful);
+    structure1 = buf + NEXUS_DGN_BLOCK_SIZE;
+    structure1[2] = 0x40;
+    structure1[3] = 0x40;
+    wb32(structure1 + 0x14, (uint32_t)structure1b_rel);
+    return 0;
+}
+
+static void seed_surface(Nexus_DMDFTextureSurface *surface,
+                         uint8_t *pixel,
+                         uint32_t rgba) {
+    memset(surface, 0, sizeof(*surface));
+    *pixel = 1u;
+    surface->pixels = pixel;
+    surface->width = 1;
+    surface->height = 1;
+    surface->palette[1] = rgba;
+    surface->valid = 1;
+}
+
 int main(void) {
     Nexus_Framebuffer fb;
     Nexus_Camera cam;
@@ -38,6 +99,13 @@ int main(void) {
     uint32_t palette[256] = {0};
     uint8_t map[256];
     int written_before;
+    Nexus_V1_Engine engine;
+    Nexus_Viewport viewport;
+    Nexus_V1_DgnViewportRenderReceipt receipt;
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
+    uint8_t floor_pixel;
+    uint8_t wall_pixel;
+    uint8_t *structure1;
 
     nexus_fb_init(&fb);
     nexus_fb_clear(&fb);
@@ -79,6 +147,54 @@ int main(void) {
                                pixels, 3, 2, palette, map);
     expect(count_color(&fb, 42) == 0,
            "undefined palette remaps clip instead of falling back to flat color");
+
+    memset(&engine, 0, sizeof(engine));
+    expect(build_viewport_dgn(dgn, (int)sizeof(dgn), 0x40, 2048) == 0,
+           "viewport DGN fixture builds");
+    structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
+    set_dgn_collision_ref(structure1, 0x40, 3, 4, 1);
+    set_dgn_collision_ref(structure1, 0x40, 2, 4, 0x0fff);
+    set_dgn_collision_ref(structure1, 0x40, 4, 4, 0x0fff);
+    set_dgn_collision_ref(structure1, 0x40, 3, 3, 0x0fff);
+    expect(nexus_v1_level_load(&engine.current_level,
+                               dgn,
+                               (int)sizeof(dgn),
+                               0) == 0,
+           "viewport DGN fixture loads through real Structure1B parser");
+    engine.level_loaded = 1;
+    engine.game.current_level = 0;
+    engine.game.party_x = 3;
+    engine.game.party_y = 4;
+    engine.game.party_dir = 0;
+    engine.floor_materials.valid = 1;
+    engine.floor_materials.surface_count = 1;
+    seed_surface(&engine.floor_materials.surfaces[0],
+                 &floor_pixel,
+                 0xff204060U);
+    engine.wall_materials.valid = 1;
+    engine.wall_materials.surface_count = 1;
+    seed_surface(&engine.wall_materials.surfaces[0],
+                 &wall_pixel,
+                 0xff806040U);
+    nexus_viewport_init(&viewport);
+    nexus_viewport_render(&viewport, &engine);
+    expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0,
+           "viewport exposes last DGN render receipt");
+    expect(receipt.attempted && receipt.ready &&
+               receipt.used_real_dgn_route &&
+               !receipt.blocked &&
+               !receipt.fallback_visuals_permitted,
+           "viewport renders real DGN route without legacy fallback");
+    expect(receipt.command_count > 0 &&
+               receipt.command_count == receipt.material_surface_count &&
+               receipt.command_count == receipt.rasterized_command_count,
+           "viewport consumes every DGN command through decoded material surfaces");
+    expect(receipt.floor_count > 0 &&
+               receipt.ceiling_count > 0 &&
+               receipt.wall_count > 0 &&
+               receipt.palette_synced &&
+               receipt.written_pixels > 0,
+           "viewport rasterizes floor, ceiling and wall DGN geometry to pixels");
 
     return failures ? 1 : 0;
 }
