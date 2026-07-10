@@ -502,14 +502,14 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_hud_raw_portrait_byte_count > 0u &&
               render_receipt.runtime_hud_raw_core_hash != 0u &&
               render_receipt.runtime_hud_raw_core_byte_count > 0u &&
-              render_receipt.runtime_hud_raw_interface_count >= 3 &&
+              render_receipt.runtime_hud_raw_interface_count >= 4 &&
               render_receipt.runtime_hud_decoded_gdat_capture_ready == 1 &&
               render_receipt.runtime_hud_decoded_portrait_count >= 4 &&
               render_receipt.runtime_hud_decoded_portrait_hash != 0u &&
               render_receipt.runtime_hud_decoded_portrait_pixel_count > 0u &&
               render_receipt.runtime_hud_decoded_core_hash != 0u &&
               render_receipt.runtime_hud_decoded_core_pixel_count > 0u &&
-              render_receipt.runtime_hud_decoded_interface_count >= 3 &&
+              render_receipt.runtime_hud_decoded_interface_count >= 4 &&
               render_receipt.runtime_hud_frame_hash != 0u &&
               render_receipt.runtime_hud_frame_pixel_count == 320u * 200u &&
               render_receipt.runtime_render_real_asset_ready == 1 &&
@@ -546,6 +546,11 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.real_gdat_runtime_hud_breadth_ready == 1 &&
               hud_capture.raw_gdat_runtime_interface_count >= 4 &&
               hud_capture.decoded_gdat_runtime_interface_count >= 4 &&
+              hud_capture.teleporter_map_chip_ready == 1 &&
+              hud_capture.teleporter_map_chip_raw_hash != 0u &&
+              hud_capture.teleporter_map_chip_raw_byte_count > 0u &&
+              hud_capture.teleporter_map_chip_decoded_hash != 0u &&
+              hud_capture.teleporter_map_chip_decoded_pixel_count > 0u &&
               hud_capture.combined_frame_hash != 0u &&
               hud_capture.combined_pixel_count == 4u * 320u * 200u,
           "boot runtime HUD capture proves real GDAT portraits and frames across sampled directions");

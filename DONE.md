@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM2 teleporter map-chip GDAT receipt: runtime HUD/dungeon capture now materializes the skproject `QUERY_DUNGEON_MAP_CHIP_PICT(GDAT_CATEGORY_TELEPORTERS, 0, GDAT_IMG_MAP_CHIP)` route from real `GRAPHICS.DAT`, including raw and decoded hashes, and complete-support requires the receipt. Verification: `cmake --build build --target test_dm2_v1_boot_profile_smoke --parallel 2`, `./build/test_dm2_v1_boot_profile_smoke` PASS 79/79, and `git diff --check` passed.
+
 - ✅ 2026-07-10 CSB M11 host-view draw receipt consumption: M11 CSB startup rendering now consumes host-view render-draw readiness fields for title/PRESENTS/CHAOS/STRIKES, HUD/closed doors, and door-opening before executing callbacks, and no longer calls the public startup primitive/asset/opening helper exports directly. Reference read: ReDMCSB `TITLE.C` F0437 and `ENTRANCE.C` F0441/F0580/F0581. Verification: `firestaff_m11`, `test_csb_v1_m11_launcher_handoff_boundary`, `test_csb_v1_m11_startup_resume_gate`, `test_csb_v1_boot_runtime_handoff`, helper-call `rg`, and `git diff --check` passed.
 
 - ✅ 2026-07-10 DM1 D3L2/D3R2 G0693 provider boundary: the DM1 viewport state now accepts an expanded GRAPHICS.DAT pixel provider for F0111 door-front graphics, consumes provider-backed G0693 pixels through the C3700/C3710 material plan before falling back to temporary packed rows, and records provider dimensions in the D3 back-wall receipt. Verification: `test_dm1_v1_viewport_3d_pc34_compat`, `firestaff_m11`, and `git diff --check` passed.

@@ -4839,8 +4839,8 @@ int dm2_v1_boot_runtime_render_frame(
             out_receipt->runtime_hud_no_fallback_portraits &&
             out_receipt->runtime_hud_raw_gdat_capture_ready &&
             out_receipt->runtime_hud_decoded_gdat_capture_ready &&
-            out_receipt->runtime_hud_raw_interface_count >= 3 &&
-            out_receipt->runtime_hud_decoded_interface_count >= 3 &&
+            out_receipt->runtime_hud_raw_interface_count >= 4 &&
+            out_receipt->runtime_hud_decoded_interface_count >= 4 &&
             out_receipt->runtime_hud_frame_hash != 0u;
         out_receipt->runtime_hud_capture_ready =
             out_receipt->startup_render_ready &&
@@ -5110,6 +5110,36 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->decoded_gdat_runtime_core_hash,
             &out_receipt->decoded_gdat_runtime_core_pixel_count,
             &out_receipt->decoded_gdat_runtime_interface_count);
+    /* skproject/SKWIN/SkWinCore.cpp DRAW_MAP_CHIP calls
+     * QUERY_DUNGEON_MAP_CHIP_PICT(GDAT_CATEGORY_TELEPORTERS, 0, ...)
+     * for teleporter dungeon tiles.  This receipt proves the runtime
+     * dungeon asset owner can materialize that real map-chip atlas, even
+     * when the current startup view does not contain a visible teleporter. */
+    out_receipt->teleporter_map_chip_raw_hash = 0x32485452u;
+    out_receipt->teleporter_map_chip_decoded_hash = 0x32485444u;
+    if (dm2_v1_boot_runtime_raw_gdat_hash_add(
+            profile,
+            DM2_GDAT_CATEGORY_TELEPORTERS,
+            0,
+            DM2_GDAT_IMG_MAP_CHIP,
+            &out_receipt->teleporter_map_chip_raw_hash,
+            &out_receipt->teleporter_map_chip_raw_byte_count) &&
+        dm2_v1_boot_runtime_decoded_gdat_hash_add(
+            profile,
+            DM2_GDAT_CATEGORY_TELEPORTERS,
+            0,
+            DM2_GDAT_IMG_MAP_CHIP,
+            &out_receipt->teleporter_map_chip_decoded_hash,
+            &out_receipt->teleporter_map_chip_decoded_pixel_count)) {
+        out_receipt->teleporter_map_chip_ready = 1;
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->teleporter_map_chip_raw_hash);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->teleporter_map_chip_decoded_hash);
+    }
+    out_receipt->combined_frame_hash = combined_hash;
     out_receipt->real_gdat_runtime_hud_breadth_ready =
         out_receipt->render_sample_count == 4 &&
         out_receipt->render_success_count == 4 &&
@@ -5121,8 +5151,9 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         out_receipt->real_gdat_core_render_ready &&
         out_receipt->raw_gdat_runtime_hud_capture_ready &&
         out_receipt->decoded_gdat_runtime_hud_capture_ready &&
-        out_receipt->raw_gdat_runtime_interface_count >= 3 &&
-        out_receipt->decoded_gdat_runtime_interface_count >= 3 &&
+        out_receipt->raw_gdat_runtime_interface_count >= 4 &&
+        out_receipt->decoded_gdat_runtime_interface_count >= 4 &&
+        out_receipt->teleporter_map_chip_ready &&
         out_receipt->combined_frame_hash != 0u &&
         out_receipt->combined_pixel_count == 4u * 320u * 200u;
     out_receipt->valid =
@@ -5408,6 +5439,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_hud.no_core_render_fallbacks &&
         out_receipt->runtime_hud.min_asset_floor_ceiling_count >= 2 &&
         out_receipt->runtime_hud.min_asset_wall_count > 0 &&
+        out_receipt->runtime_hud.teleporter_map_chip_ready &&
         out_receipt->runtime_hud.total_fallback_door_count == 0 &&
         out_receipt->runtime_hud.total_fallback_creature_count == 0 &&
         out_receipt->runtime_hud.total_fallback_creature_possession_item_count == 0 &&
@@ -5437,13 +5469,13 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->startup_visual.raw_gdat_capture_ready &&
         out_receipt->startup_visual.runtime_hud_raw_gdat_capture_ready &&
         out_receipt->runtime_hud.raw_gdat_runtime_hud_capture_ready &&
-        out_receipt->runtime_hud.raw_gdat_runtime_interface_count >= 3 &&
+        out_receipt->runtime_hud.raw_gdat_runtime_interface_count >= 4 &&
         out_receipt->runtime_hud.raw_gdat_runtime_portrait_hash != 0u &&
         out_receipt->runtime_hud.raw_gdat_runtime_core_hash != 0u;
     out_receipt->decoded_gdat_capture_complete =
         out_receipt->startup_visual.runtime_hud_decoded_gdat_capture_ready &&
         out_receipt->runtime_hud.decoded_gdat_runtime_hud_capture_ready &&
-        out_receipt->runtime_hud.decoded_gdat_runtime_interface_count >= 3 &&
+        out_receipt->runtime_hud.decoded_gdat_runtime_interface_count >= 4 &&
         out_receipt->runtime_hud.decoded_gdat_runtime_portrait_hash != 0u &&
         out_receipt->runtime_hud.decoded_gdat_runtime_core_hash != 0u;
 

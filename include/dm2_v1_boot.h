@@ -311,6 +311,11 @@ typedef struct {
     uint32_t decoded_gdat_runtime_core_hash;
     uint32_t decoded_gdat_runtime_core_pixel_count;
     int decoded_gdat_runtime_interface_count;
+    int teleporter_map_chip_ready;
+    uint32_t teleporter_map_chip_raw_hash;
+    uint32_t teleporter_map_chip_raw_byte_count;
+    uint32_t teleporter_map_chip_decoded_hash;
+    uint32_t teleporter_map_chip_decoded_pixel_count;
     uint32_t combined_frame_hash;
     uint32_t combined_pixel_count;
     DM2_V1_BootRuntimeRenderReceipt first_frame;
