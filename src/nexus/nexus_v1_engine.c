@@ -84,6 +84,22 @@ void nexus_v1_invalidate_dgn_material_plan(Nexus_V1_Engine *engine) {
     plan->receipt.plan_ready = 0;
 }
 
+void nexus_v1_sync_dgn_runtime_pose(Nexus_V1_Engine *engine,
+                                    int level, int party_x, int party_y,
+                                    int party_dir) {
+    if (!engine) return;
+    party_dir &= 3;
+    if (engine->game.current_level != level ||
+        engine->game.party_x != party_x || engine->game.party_y != party_y ||
+        engine->game.party_dir != party_dir) {
+        nexus_v1_invalidate_dgn_material_plan(engine);
+    }
+    engine->game.current_level = level;
+    engine->game.party_x = party_x;
+    engine->game.party_y = party_y;
+    engine->game.party_dir = party_dir;
+}
+
 const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     Nexus_V1_Engine *engine, int party_x, int party_y, int party_dir)
 {
@@ -96,7 +112,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     party_dir &= 3;
     if (plan->valid && plan->level == engine->game.current_level &&
         plan->party_x == party_x && plan->party_y == party_y &&
-        plan->party_dir == party_dir) {
+        plan->party_dir == party_dir &&
+        plan->geometry_generation == plan->generation) {
         plan->cache_hit_count++;
         return plan;
     }
@@ -109,6 +126,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     plan->party_dir = party_dir;
     plan->valid = 0;
     plan->generation++;
+    plan->geometry_generation = plan->generation;
     plan->rebuild_count++;
     if (nexus_v1_level_build_dgn_view_render_plan(
             &engine->current_level, party_x, party_y, party_dir,
@@ -561,7 +579,8 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     if (r < 0) return -1;
 
     engine->level_loaded = 1;
-    engine->game.current_level = level;
+    nexus_v1_sync_dgn_runtime_pose(engine, level, engine->game.party_x,
+                                   engine->game.party_y, engine->game.party_dir);
 
     snprintf(script_name, sizeof(script_name), "SLEV%02d.BIN", level);
     script_data = nexus_v1_read_file(engine, script_name, &script_size);
@@ -639,8 +658,10 @@ int nexus_v1_engine_level_change(Nexus_V1_Engine *engine, int *out_new_level) {
     nexus_teleporters_init();
     nexus_doors_init();
     /* Initialize party position for new level */
-    engine->game.party_x = engine->mechanics->party_x;
-    engine->game.party_y = engine->mechanics->party_y;
+    nexus_v1_sync_dgn_runtime_pose(engine, engine->mechanics->pending_level_change,
+                                   engine->mechanics->party_x,
+                                   engine->mechanics->party_y,
+                                   engine->mechanics->party_dir);
     engine->mechanics->map_index = engine->mechanics->pending_level_change;
     engine->mechanics->pending_level_change = -1;
     return 0;
@@ -657,6 +678,12 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
      * Source: DM1 CLIKMENU.C:269-323 (step result + cooldown),
      * CLIKMENU.C F0366 (game loop tick). */
     redraw = nexus_mechanics_tick(engine->mechanics, engine);
+    if (engine->mechanics) {
+        nexus_v1_sync_dgn_runtime_pose(engine, engine->mechanics->map_index,
+                                       engine->mechanics->party_x,
+                                       engine->mechanics->party_y,
+                                       engine->mechanics->party_dir);
+    }
 
     /* Handle pending level change (stairs/chute/pit).
      * Loaded here so the level data is ready for next tick's render.
