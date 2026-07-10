@@ -2782,6 +2782,8 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
                   state.last_d3_back_wall_receipt.door_front_blit_plan_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3l2_door_runtime_zone",
                   state.last_d3_back_wall_receipt.door_front_zone_index, 3700);
+        check_int("d3l2_d3r2_gate.d3l2_door_runtime_temp_bound",
+                  state.last_d3_back_wall_receipt.door_front_temp_bitmap_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3l2_door_front_transparent_left_skip",
                   viewport[25 * DM1_VIEWPORT_WIDTH + 0], 0xee);
         check_int("d3l2_d3r2_gate.d3l2_door_front_expanded_pixel",
@@ -2794,6 +2796,50 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
                   viewport[25 * DM1_VIEWPORT_WIDTH + 16], 0xee);
         state.temp_bitmap = NULL;
         state.temp_bitmap_size = 0;
+        state.dungeon_aspect_grid = NULL;
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
+    }
+
+    /* Packed GRAPHICS.DAT/G0693 path: the source-owned 4bpp rows are copied
+     * into the F0111 temporary door bitmap before C3700 materialization. */
+    {
+        uint8_t graphics_dat_door[8 * 49];
+        uint8_t temporary_door[8 * 49];
+        memset(viewport, 0xee, sizeof(viewport));
+        memset(graphics_dat_door, 0xaa, sizeof(graphics_dat_door));
+        memset(temporary_door, 0x44, sizeof(temporary_door));
+        graphics_dat_door[0] = 0xa6; /* C10 skip then visible 6. */
+        graphics_dat_door[7] = 0x7a; /* visible 7 then C10 skip. */
+        state.temp_bitmap = temporary_door;
+        state.temp_bitmap_size = (int)sizeof(temporary_door);
+        state.door_front_d3_packed_source[0] = graphics_dat_door;
+        state.door_front_d3_packed_stride_bytes[0] = 8;
+        state.door_front_d3_packed_height[0] = 49;
+        state.door_front_d3[0] = 0x231;
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_DOOR_FRONT;
+        state.dungeon_aspect_grid = grid;
+        dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 1, 1);
+        check_int("d3l2_d3r2_gate.d3l2_packed_receipt_bound",
+                  state.last_d3_back_wall_receipt.door_front_graphics_dat_packed_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_packed_receipt_stride",
+                  state.last_d3_back_wall_receipt.door_front_packed_stride_bytes, 8);
+        check_int("d3l2_d3r2_gate.d3l2_packed_receipt_no_fallback",
+                  state.last_d3_back_wall_receipt.door_front_used_bounded_fallback ? 1 : 0, 0);
+        check_int("d3l2_d3r2_gate.d3l2_packed_copied_to_temp",
+                  memcmp(temporary_door, graphics_dat_door, sizeof(temporary_door)) == 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_packed_transparent_left_skip",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+        check_int("d3l2_d3r2_gate.d3l2_packed_pixel",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 1], 0x06);
+        check_int("d3l2_d3r2_gate.d3l2_packed_right_pixel",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 14], 0x07);
+        check_int("d3l2_d3r2_gate.d3l2_packed_transparent_right_skip",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 15], 0xee);
+        state.temp_bitmap = NULL;
+        state.temp_bitmap_size = 0;
+        state.door_front_d3_packed_source[0] = NULL;
+        state.door_front_d3_packed_stride_bytes[0] = 0;
+        state.door_front_d3_packed_height[0] = 0;
         state.dungeon_aspect_grid = NULL;
         grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
     }
