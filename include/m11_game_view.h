@@ -980,33 +980,6 @@ void M11_MessageLog_Push(M11_MessageLog* log, const char* text, unsigned char co
 int M11_GameView_GetMessageLogCount(const M11_GameViewState* state);
 const char* M11_GameView_GetMessageLogEntry(const M11_GameViewState* state, int reverseIndex);
 
-int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
-    int* outTitleReceiptReady,
-    int* outTitleDrawExecuted,
-    int* outTitleHudExecuted,
-    int* outClosedDoorReceiptReady,
-    int* outClosedDoorDrawExecuted,
-    int* outClosedDoorHudExecuted,
-    int* outUtilityReceiptReady,
-    int* outUtilityDrawExecuted,
-    int* outUtilityHudExecuted,
-    int* outOpeningReceiptReady,
-    int* outOpeningDrawExecuted,
-    int* outConsumedHostViewOnly,
-    int* outSuppressLegacyUtilityFallback,
-    int* outPackagedVisualCaptureReady,
-    int* outInputConsumesReceiptOnly,
-    int* outUtilityInputDispatchReady,
-    int* outTitleAssetDrawReady,
-    int* outClosedDoorFallbackSuppressed,
-    int* outOpeningFrameDrawReady,
-    int* outFullVisualSequenceConsumed,
-    int* outRuntimeRouteHardeningReady,
-    int* outRuntimeRouteHardeningHashReady,
-    int* outRuntimeHostCaptureGateReady,
-    int* outRuntimeHostCaptureGateHashReady,
-    int* outTitleStageRuntimeCaptureReady,
-    int* outTitleStageRuntimeCaptureHashReady);
 int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     const M11_GameViewState* state,
     int* outObjectSpriteCount,

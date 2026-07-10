@@ -725,118 +725,6 @@ static void test_dm1_hoc_startup_render_consumer_is_m11_ready(void)
               "DM1 receipt carries ordered HoC render commands");
 }
 
-static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
-{
-    int titleReceiptReady = 0;
-    int titleDrawExecuted = 0;
-    int titleHudExecuted = -1;
-    int closedDoorReceiptReady = 0;
-    int closedDoorDrawExecuted = 0;
-    int closedDoorHudExecuted = 0;
-    int utilityReceiptReady = 0;
-    int utilityDrawExecuted = 0;
-    int utilityHudExecuted = 0;
-    int openingReceiptReady = 0;
-    int openingDrawExecuted = 0;
-    int consumedHostViewOnly = 0;
-    int suppressLegacyUtilityFallback = 0;
-    int packagedVisualCaptureReady = 0;
-    int inputConsumesReceiptOnly = 0;
-    int utilityInputDispatchReady = 0;
-    int titleAssetDrawReady = 0;
-    int closedDoorFallbackSuppressed = 0;
-    int openingFrameDrawReady = 0;
-    int fullVisualSequenceConsumed = 0;
-    int runtimeRouteHardeningReady = 0;
-    int runtimeRouteHardeningHashReady = 0;
-    int runtimeHostCaptureGateReady = 0;
-    int runtimeHostCaptureGateHashReady = 0;
-    int titleStageRuntimeCaptureReady = 0;
-    int titleStageRuntimeCaptureHashReady = 0;
-
-    ASSERT_EQ(M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
-                  &titleReceiptReady,
-                  &titleDrawExecuted,
-                  &titleHudExecuted,
-                  &closedDoorReceiptReady,
-                  &closedDoorDrawExecuted,
-                  &closedDoorHudExecuted,
-                  &utilityReceiptReady,
-                  &utilityDrawExecuted,
-                  &utilityHudExecuted,
-                  &openingReceiptReady,
-                  &openingDrawExecuted,
-                  &consumedHostViewOnly,
-                  &suppressLegacyUtilityFallback,
-                  &packagedVisualCaptureReady,
-                  &inputConsumesReceiptOnly,
-                  &utilityInputDispatchReady,
-                  &titleAssetDrawReady,
-                  &closedDoorFallbackSuppressed,
-                  &openingFrameDrawReady,
-                  &fullVisualSequenceConsumed,
-                  &runtimeRouteHardeningReady,
-                  &runtimeRouteHardeningHashReady,
-                  &runtimeHostCaptureGateReady,
-                  &runtimeHostCaptureGateHashReady,
-                  &titleStageRuntimeCaptureReady,
-                  &titleStageRuntimeCaptureHashReady),
-              1,
-              "M11 exposes CSB startup host-view draw receipt");
-    ASSERT_EQ(titleReceiptReady, 1,
-              "CSB title receipt is ready");
-    ASSERT_EQ(titleDrawExecuted, 1,
-              "CSB title draw executes through host-view receipt");
-    ASSERT_EQ(titleHudExecuted, 0,
-              "CSB title blocks HUD/menu draw while PRESENTS is active");
-    ASSERT_EQ(closedDoorReceiptReady, 1,
-              "CSB closed-door receipt is ready");
-    ASSERT_EQ(closedDoorDrawExecuted, 1,
-              "CSB closed-door draw executes through host-view receipt");
-    ASSERT_EQ(closedDoorHudExecuted, 1,
-              "CSB closed-door HUD/menu executes through receipt");
-    ASSERT_EQ(utilityReceiptReady, 1,
-              "CSB utility receipt is ready");
-    ASSERT_EQ(utilityDrawExecuted, 1,
-              "CSB utility startup draw executes through host-view receipt");
-    ASSERT_EQ(utilityHudExecuted, 1,
-              "CSB utility HUD/menu executes through receipt");
-    ASSERT_EQ(openingReceiptReady, 1,
-              "CSB opening receipt is ready");
-    ASSERT_EQ(openingDrawExecuted, 1,
-              "CSB door-opening draw executes through host-view receipt");
-    ASSERT_EQ(consumedHostViewOnly, 1,
-              "M11 CSB startup draw consumes host-view receipt only");
-    ASSERT_EQ(suppressLegacyUtilityFallback, 1,
-              "CSB receipt suppresses legacy utility fallback");
-    ASSERT_EQ(packagedVisualCaptureReady, 1,
-              "CSB packaged visual capture proof feeds M11 draw");
-    ASSERT_EQ(inputConsumesReceiptOnly, 1,
-              "M11 CSB startup input consumes dispatch receipt only");
-    ASSERT_EQ(utilityInputDispatchReady, 1,
-              "CSB utility input dispatch redraws HUD/menu through receipt");
-    ASSERT_EQ(titleAssetDrawReady, 1,
-              "CSB title uses real title asset path without fallback text");
-    ASSERT_EQ(closedDoorFallbackSuppressed, 1,
-              "CSB closed-door/menu receipt blocks fallback text path");
-    ASSERT_EQ(openingFrameDrawReady, 1,
-              "CSB door opening uses receipt-owned frame draw");
-    ASSERT_EQ(fullVisualSequenceConsumed, 1,
-              "M11 CSB startup requires the full title/HUD/door visual sequence receipt");
-    ASSERT_EQ(runtimeRouteHardeningReady, 1,
-              "M11 CSB startup routes require runtime route hardening");
-    ASSERT_EQ(runtimeRouteHardeningHashReady, 1,
-              "M11 CSB startup route hardening publishes route hashes");
-    ASSERT_EQ(runtimeHostCaptureGateReady, 1,
-              "M11 CSB startup requires full real-data runtime host capture gate");
-    ASSERT_EQ(runtimeHostCaptureGateHashReady, 1,
-              "M11 CSB startup runtime host capture gate publishes route and asset hashes");
-    ASSERT_EQ(titleStageRuntimeCaptureReady, 1,
-              "M11 CSB startup consumes PRESENTS, CHAOS zoom, CHAOS hold and STRIKES BACK runtime captures");
-    ASSERT_EQ(titleStageRuntimeCaptureHashReady, 1,
-              "M11 CSB startup title stage captures match packaged source hashes");
-}
-
 static void test_candidate_panel_blocks_direct_object_helpers(void)
 {
     M11_GameViewState state;
@@ -1936,7 +1824,6 @@ int main(void)
     test_candidate_panel_blocks_direct_map_toggle();
     test_candidate_panel_uses_dm1_hoc_menu_route_receipt();
     test_dm1_hoc_startup_render_consumer_is_m11_ready();
-    test_csb_startup_host_view_draw_receipt_is_m11_ready();
     test_candidate_panel_blocks_direct_object_helpers();
     test_candidate_panel_blocks_direct_leader_hand_chest_helpers();
     test_candidate_panel_blocks_direct_quickload_only();
