@@ -1435,12 +1435,49 @@ static int save_browser_has_path(const M12_SaveBrowserState* state,
     return 0;
 }
 
+static int save_browser_add_file_path(M12_SaveBrowserState* state,
+                                      const char* fullPath,
+                                      const char* filename,
+                                      const char* forcedGameId,
+                                      int requireValid) {
+    struct stat st;
+    M12_SaveBrowserEntry* entry;
+
+    if (!state || !fullPath || !filename ||
+        state->entryCount >= SAVE_BROWSER_MAX_ENTRIES ||
+        strlen(fullPath) >= SAVE_BROWSER_FILENAME_MAX ||
+        save_browser_has_path(state, fullPath)) {
+        return 0;
+    }
+
+    entry = &state->entries[state->entryCount];
+    memset(entry, 0, sizeof(*entry));
+    snprintf(entry->filename, SAVE_BROWSER_FILENAME_MAX, "%s", filename);
+    snprintf(entry->fullPath, SAVE_BROWSER_FILENAME_MAX, "%s", fullPath);
+    if (forcedGameId && forcedGameId[0]) {
+        snprintf(entry->gameId, sizeof(entry->gameId), "%s", forcedGameId);
+    } else {
+        extract_game_id(filename, entry->gameId, (int)sizeof(entry->gameId));
+    }
+
+    if (stat(fullPath, &st) == 0) {
+        entry->fileModTime = st.st_mtime;
+        entry->fileSize = (long)st.st_size;
+    }
+
+    parse_save_entry(entry);
+    if (requireValid && !entry->valid) {
+        memset(entry, 0, sizeof(*entry));
+        return 0;
+    }
+    ++state->entryCount;
+    return 1;
+}
+
 int save_browser_scan_dir(M12_SaveBrowserState* state,
                                  const char* dirPath) {
     DIR* dir;
     struct dirent* ent;
-    struct stat st;
-    M12_SaveBrowserEntry* entry;
     char fullPath[512];
     int added = 0;
     int n;
@@ -1458,27 +1495,53 @@ int save_browser_scan_dir(M12_SaveBrowserState* state,
         if (n <= 0 || n >= (int)sizeof(fullPath)) continue;
         if ((size_t)n >= SAVE_BROWSER_FILENAME_MAX) continue;
         if (save_browser_has_path(state, fullPath)) continue;
+        added += save_browser_add_file_path(
+            state, fullPath, ent->d_name, NULL, 0);
+    }
+    closedir(dir);
+    return added;
+}
 
-        entry = &state->entries[state->entryCount];
-        snprintf(entry->filename, SAVE_BROWSER_FILENAME_MAX,
-                 "%s", ent->d_name);
-        snprintf(entry->fullPath, SAVE_BROWSER_FILENAME_MAX,
-                 "%s", fullPath);
+static int save_browser_scan_dm1_corpus_dir_recursive(
+    M12_SaveBrowserState* state,
+    const char* dirPath,
+    int depth) {
+    DIR* dir;
+    struct dirent* ent;
+    int added = 0;
 
-        extract_game_id(ent->d_name, entry->gameId,
-                        (int)sizeof(entry->gameId));
+    if (!state || !dirPath || depth > 4 ||
+        state->entryCount >= SAVE_BROWSER_MAX_ENTRIES) {
+        return 0;
+    }
 
-        if (stat(fullPath, &st) == 0) {
-            entry->fileModTime = st.st_mtime;
-            entry->fileSize = (long)st.st_size;
-        } else {
-            entry->fileModTime = 0;
-            entry->fileSize = 0;
+    dir = opendir(dirPath);
+    if (!dir) return 0;
+    while ((ent = readdir(dir)) != NULL) {
+        char fullPath[512];
+        struct stat st;
+        int n;
+        if (state->entryCount >= SAVE_BROWSER_MAX_ENTRIES) break;
+        if (ent->d_name[0] == '.') continue;
+        n = snprintf(fullPath, sizeof(fullPath), "%s/%s",
+                     dirPath, ent->d_name);
+        if (n <= 0 || n >= (int)sizeof(fullPath)) continue;
+        if (stat(fullPath, &st) != 0) continue;
+        if (S_ISDIR(st.st_mode)) {
+            added += save_browser_scan_dm1_corpus_dir_recursive(
+                state, fullPath, depth + 1);
+            continue;
         }
-
-        parse_save_entry(entry);
-        ++state->entryCount;
-        ++added;
+        if (!S_ISREG(st.st_mode)) continue;
+        /*
+         * ReDMCSB SAVEHEAD.C F0429/F0430 lines ~30-104 accepts the 512-byte
+         * header, while CEDTINCD.C F7051/F7057 lines ~226-294 loads the five
+         * checksum-protected save parts.  DM1 corpus directories may use
+         * arbitrary filenames, so M12 forces the DM1 parser here and keeps
+         * only files that pass the existing DM1 load/roundtrip gates.
+         */
+        added += save_browser_add_file_path(
+            state, fullPath, ent->d_name, "dm1", 1);
     }
     closedir(dir);
     return added;
@@ -1518,12 +1581,20 @@ int M12_SaveBrowser_Scan(M12_SaveBrowserState* state, const char* dataDir) {
                      dataDir, games[i]);
         if (n > 0 && n < (int)sizeof(saveDir)) {
             (void)save_browser_scan_dir(state, saveDir);
+            if (strcmp(games[i], "dm1") == 0) {
+                (void)save_browser_scan_dm1_corpus_dir_recursive(
+                    state, saveDir, 0);
+            }
         }
         if (state->entryCount >= SAVE_BROWSER_MAX_ENTRIES) break;
         n = snprintf(saveDir, sizeof(saveDir), "%s/saves/%s",
                      dataDir, games[i]);
         if (n > 0 && n < (int)sizeof(saveDir)) {
             (void)save_browser_scan_dir(state, saveDir);
+            if (strcmp(games[i], "dm1") == 0) {
+                (void)save_browser_scan_dm1_corpus_dir_recursive(
+                    state, saveDir, 0);
+            }
         }
     }
 
