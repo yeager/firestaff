@@ -496,7 +496,8 @@ typedef enum {
     NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED = 1,
     NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3 = 2,
     NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED = 3,
-    NEXUS_V1_BPK_DECODE_ROUTE_NO_SURFACES = 4
+    NEXUS_V1_BPK_DECODE_ROUTE_NO_SURFACES = 4,
+    NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED = 5
 } Nexus_V1_BpkRuntimeDecodeRoute;
 
 typedef struct {
@@ -509,12 +510,17 @@ typedef struct {
     uint32_t prs3_stream_plan_failures;
     uint32_t prs3_bounded_header_candidates;
     uint32_t prs3_header_underflows;
+    uint32_t prs3_decode_attempts;
+    uint32_t prs3_decode_successes;
+    uint32_t prs3_decode_failures;
+    uint64_t prs3_decoded_surface_bytes;
     uint32_t first_blocked_entry;
     uint32_t first_blocked_stream_offset;
     uint32_t first_blocked_stream_size;
     uint32_t first_blocked_expected_output_bytes;
     uint32_t first_blocked_header_first_u32;
     uint32_t first_blocked_header_minus_payload;
+    int first_blocked_decode_status;
     int requires_prs3_decoder;
     int decode_blocked;
     Nexus_V1_BpkRuntimeDecodeRoute route;

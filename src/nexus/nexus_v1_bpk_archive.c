@@ -1333,14 +1333,60 @@ int nexus_v1_bpk_archive_runtime_decode_receipt(
                 have_first_blocked = 1;
             }
         }
+        {
+            Nexus_V1_BpkSurfaceEntry surface;
+            uint8_t *pixels;
+            size_t written = 0U;
+            size_t expected =
+                (size_t)prefix.width * (size_t)prefix.height * (size_t)bpp;
+            int rc;
+
+            ++out_receipt->prs3_decode_attempts;
+            pixels = (uint8_t *)malloc(expected);
+            if (!pixels) {
+                rc = NEXUS_V1_BPK_DECODE_ERR_OUTPUT_TOO_SMALL;
+            } else {
+                rc = nexus_v1_bpk_archive_decode_surface(
+                    data, data_size, i, pixels, expected, &surface, &written);
+            }
+            if (rc == NEXUS_V1_BPK_DECODE_OK && written == expected) {
+                ++out_receipt->prs3_decode_successes;
+                out_receipt->prs3_decoded_surface_bytes += written;
+            } else {
+                ++out_receipt->prs3_decode_failures;
+                if (!have_first_blocked) {
+                    out_receipt->first_blocked_entry = i;
+                    out_receipt->first_blocked_stream_offset =
+                        entry.payload_offset + NEXUS_V1_BPK_PRS3_HEADER_BYTES;
+                    out_receipt->first_blocked_stream_size =
+                        entry.payload_size > NEXUS_V1_BPK_PRS3_HEADER_BYTES
+                            ? entry.payload_size -
+                                  NEXUS_V1_BPK_PRS3_HEADER_BYTES
+                            : 0U;
+                    out_receipt->first_blocked_expected_output_bytes =
+                        (uint32_t)expected;
+                    have_first_blocked = 1;
+                }
+                if (out_receipt->first_blocked_entry == i &&
+                    out_receipt->first_blocked_decode_status == 0) {
+                    out_receipt->first_blocked_decode_status = rc;
+                }
+            }
+            free(pixels);
+        }
     }
 
     if (out_receipt->surface_entries == 0U) {
         out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_NO_SURFACES;
-    } else if (out_receipt->blocked_prs3_surfaces > 0U) {
+    } else if (out_receipt->prs3_decode_failures > 0U ||
+               (out_receipt->blocked_prs3_surfaces > 0U &&
+                out_receipt->prs3_decode_successes <
+                    out_receipt->blocked_prs3_surfaces)) {
         out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3;
     } else if (out_receipt->blocked_truncated_surfaces > 0U) {
         out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED;
+    } else if (out_receipt->prs3_decode_successes > 0U) {
+        out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED;
     } else {
         out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED;
     }
@@ -1360,6 +1406,7 @@ const char *nexus_v1_bpk_runtime_decode_route_name(
     case NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED:
         return "blocked-truncated";
     case NEXUS_V1_BPK_DECODE_ROUTE_NO_SURFACES: return "no-surfaces";
+    case NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED: return "ready-decoded";
     default: return "unknown";
     }
 }

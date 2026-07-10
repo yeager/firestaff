@@ -175,6 +175,47 @@ static void make_synthetic_prs3_literal_bpk(uint8_t *data, size_t cap) {
     p[36] = 0x44U;
 }
 
+static void make_synthetic_prs3_rgb565_bpk(uint8_t *data, size_t cap) {
+    const uint32_t trailer_off = 64U;
+    const uint32_t surface_off = 96U;
+    uint8_t *p;
+    if (cap < 168U) return;
+    memset(data, 0, cap);
+    memcpy(data, "BPPK", 4);
+    wr32_be(data + 4, (uint32_t)cap);
+    memcpy(data + 12, "BMPD", 4);
+    wr32_be(data + 16, (uint32_t)cap - 20U);
+    wr32_be(data + 20, 2U);
+    wr32_be(data + 24, trailer_off);
+    wr32_be(data + 28, surface_off);
+    data[trailer_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
+        NEXUS_V1_BPK_MODE_TRAILER;
+    p = data + surface_off;
+    wr16_be(p + NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET, 2U);
+    p[NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET] = 2U;
+    p[NEXUS_V1_BPK_PREFIX_MODE_OFFSET] = NEXUS_V1_BPK_MODE_16BPP;
+    memcpy(p + 20, "PRS3", 4);
+    wr32_be(p + 24, 1U);
+    wr32_be(p + 28, 4U);
+    /* Eight PRS literal control bits, then 4 RGB565 pixels:
+     * red, green, blue, white. */
+    p[32] = 0xffU;
+    p[33] = 0xf8U; p[34] = 0x00U;
+    p[35] = 0x07U; p[36] = 0xe0U;
+    p[37] = 0x00U; p[38] = 0x1fU;
+    p[39] = 0xffU; p[40] = 0xffU;
+}
+
+static int surface_palette_has(const Nexus_DMDFTextureSurface *surface,
+                               uint32_t rgba) {
+    int i;
+    if (!surface) return 0;
+    for (i = 0; i < 256; ++i) {
+        if (surface->palette[i] == rgba) return 1;
+    }
+    return 0;
+}
+
 static void test_prs3_surface_decode(void) {
     uint8_t data[160];
     uint8_t pixels[4] = {0};
@@ -223,6 +264,44 @@ static void test_prs3_material_import(void) {
                bank.surfaces[1].pixels[0] == 0x11U &&
                bank.surfaces[1].palette[0x11] == 0xff112233U,
            "BPK material keeps decoded texels and the real DMDF CLUT");
+    free(bank.surfaces[1].pixels);
+}
+
+static void test_truecolor_material_import(void) {
+    uint8_t data[256];
+    Nexus_DMDFMaterialBank bank;
+    int imported;
+
+    memset(&bank, 0, sizeof(bank));
+    make_synthetic_stored_bpk(data, sizeof(data));
+    imported = nexus_v1_dmdf_import_bpk_material_bank(data, sizeof(data),
+                                                       &bank);
+    expect(imported == 2 && bank.surfaces[2].valid &&
+               bank.surfaces[3].valid,
+           "stored RGB565/RGB888 BPK surfaces import without synthetic CLUT");
+    expect(bank.surfaces[2].width == 8 && bank.surfaces[2].height == 4 &&
+               bank.surfaces[2].pixels[0] != 0 &&
+               bank.surfaces[2].palette[bank.surfaces[2].pixels[0]] != 0U,
+           "stored RGB565 material is converted to indexed pixels plus source palette");
+    expect(bank.surfaces[3].width == 2 && bank.surfaces[3].height == 3 &&
+               bank.surfaces[3].pixels[0] != 0 &&
+               bank.surfaces[3].palette[bank.surfaces[3].pixels[0]] != 0U,
+           "stored RGB888 material is converted to indexed pixels plus source palette");
+    free(bank.surfaces[2].pixels);
+    free(bank.surfaces[3].pixels);
+
+    memset(&bank, 0, sizeof(bank));
+    make_synthetic_prs3_rgb565_bpk(data, sizeof(data));
+    imported = nexus_v1_dmdf_import_bpk_material_bank(data, sizeof(data),
+                                                       &bank);
+    expect(imported == 1 && bank.surfaces[1].valid,
+           "PRS3-decoded RGB565 BPK surface imports into material bank");
+    expect(bank.surfaces[1].width == 2 && bank.surfaces[1].height == 2 &&
+               surface_palette_has(&bank.surfaces[1], 0xffff0000U) &&
+               surface_palette_has(&bank.surfaces[1], 0xff00ff00U) &&
+               surface_palette_has(&bank.surfaces[1], 0xff0000ffU) &&
+               surface_palette_has(&bank.surfaces[1], 0xffffffffU),
+           "PRS3 RGB565 import preserves decoded red/green/blue/white pixels");
     free(bank.surfaces[1].pixels);
 }
 
@@ -656,13 +735,33 @@ static void test_runtime_decode_receipt_routes(void) {
                receipt.blocked_prs3_surfaces == 3U &&
                receipt.prs3_stream_plans == 1U &&
                receipt.prs3_stream_plan_failures == 2U &&
+               receipt.prs3_decode_attempts == 1U &&
+               receipt.prs3_decode_successes == 0U &&
+               receipt.prs3_decode_failures == 1U &&
                receipt.requires_prs3_decoder == 1 &&
                receipt.decode_blocked == 1,
-           "decode receipt exposes PRS3 stream plan failure blockers");
+           "decode receipt exposes PRS3 decode failure blockers");
     expect(receipt.first_blocked_entry == 1U &&
                receipt.first_blocked_stream_size == 0U &&
                receipt.first_blocked_expected_output_bytes == 16U,
            "decode receipt carries first blocked PRS3 failure facts");
+
+    make_synthetic_prs3_literal_bpk(data, sizeof(data));
+    memset(&receipt, 0, sizeof(receipt));
+    rc = nexus_v1_bpk_archive_runtime_decode_receipt(
+        data, sizeof(data), &receipt);
+    expect(rc == 0, "decode receipt returns 0 for literal PRS3 archive");
+    expect(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED,
+           "decode receipt routes literal PRS3 archive to ready-decoded");
+    expect(strcmp(nexus_v1_bpk_runtime_decode_route_name(receipt.route),
+                  "ready-decoded") == 0,
+           "decode receipt ready-decoded route name is stable");
+    expect(receipt.prs3_decode_attempts == 1U &&
+               receipt.prs3_decode_successes == 1U &&
+               receipt.prs3_decode_failures == 0U &&
+               receipt.prs3_decoded_surface_bytes == 4U &&
+               receipt.decode_blocked == 0,
+           "decode receipt exposes successful PRS3 decode counts");
 
     make_synthetic_stored_bpk(data, sizeof(data));
     memset(&receipt, 0, sizeof(receipt));
@@ -674,6 +773,7 @@ static void test_runtime_decode_receipt_routes(void) {
     expect(receipt.ready_stored_surfaces == 3U &&
                receipt.blocked_prs3_surfaces == 0U &&
                receipt.prs3_stream_plans == 0U &&
+               receipt.prs3_decode_attempts == 0U &&
                receipt.decode_blocked == 0,
            "decode receipt exposes ready stored counts");
 
@@ -967,6 +1067,7 @@ static void test_optional_local_menu_bpk(void) {
     Nexus_V1_BpkSurfaceEntry entries[200];
     Nexus_V1_BpkSurfaceEstimate summary;
     Nexus_V1_BpkRuntimeRenderReceipt receipt;
+    Nexus_V1_BpkRuntimeDecodeReceipt decode_receipt;
     Nexus_V1_BpkRuntimeUploadRow upload_rows[8];
     Nexus_V1_BpkRuntimeUploadReceipt upload_receipt;
     uint32_t indexed = 0U, rgb565 = 0U, rgb888 = 0U, rgba32 = 0U;
@@ -1061,6 +1162,24 @@ static void test_optional_local_menu_bpk(void) {
     expect(receipt.fallback_visuals_permitted == 0,
            "local MENU.BPK runtime receipt forbids fallback visuals");
 
+    memset(&decode_receipt, 0, sizeof(decode_receipt));
+    expect(nexus_v1_bpk_archive_runtime_decode_receipt(
+               data, size, &decode_receipt) == 0,
+           "local MENU.BPK runtime decode receipt returns 0");
+    expect(decode_receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3,
+           "local MENU.BPK decode route blocks on real PRS3 streams");
+    expect(decode_receipt.prs3_decode_attempts == 162U &&
+               decode_receipt.prs3_decode_successes == 0U &&
+               decode_receipt.prs3_decode_failures == 162U,
+           "local MENU.BPK decode receipt attempts every PRS3 surface");
+    expect(decode_receipt.first_blocked_entry == 1U &&
+               decode_receipt.first_blocked_decode_status ==
+                   NEXUS_V1_BPK_DECODE_ERR_STREAM &&
+               decode_receipt.first_blocked_expected_output_bytes > 0U,
+           "local MENU.BPK decode receipt records first real stream blocker");
+    expect(decode_receipt.decode_blocked == 1,
+           "local MENU.BPK decode receipt forbids fallback after failed decode");
+
     memset(upload_rows, 0, sizeof(upload_rows));
     memset(&upload_receipt, 0, sizeof(upload_receipt));
     expect(nexus_v1_bpk_archive_runtime_upload_plan(
@@ -1098,6 +1217,7 @@ int main(void) {
     test_extract_stored_surface_bytes();
     test_prs3_surface_decode();
     test_prs3_material_import();
+    test_truecolor_material_import();
     test_runtime_surface_handoff_blocks_prs3();
     test_runtime_surface_handoff_ready_stored();
     test_runtime_surface_handoff_truncated_and_capacity();
