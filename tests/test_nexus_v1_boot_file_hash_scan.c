@@ -49,6 +49,18 @@ static int copy_file_bytes(const char* src, const char* dst) {
     return fclose(out) == 0;
 }
 
+static int write_file_bytes(const char* dst,
+                            const unsigned char* data,
+                            size_t size) {
+    FILE* out = fopen(dst, "wb");
+    if (!out) return 0;
+    if (size > 0U && fwrite(data, 1U, size, out) != size) {
+        fclose(out);
+        return 0;
+    }
+    return fclose(out) == 0;
+}
+
 static int make_root(char* out, size_t outBytes) {
     int rc = snprintf(out,
                       outBytes,
@@ -79,6 +91,16 @@ static int diag_details_contain(const Nexus_V1_Diagnostic* diags,
     return 0;
 }
 
+static int palette_contains_color(const Nexus_Viewport* viewport,
+                                  unsigned int rgba) {
+    int i;
+    if (!viewport) return 0;
+    for (i = 0; i < 256; ++i) {
+        if (viewport->fb.palette[i] == rgba) return 1;
+    }
+    return 0;
+}
+
 static void wb16(unsigned char* p, unsigned int value) {
     p[0] = (unsigned char)(value >> 8);
     p[1] = (unsigned char)value;
@@ -89,6 +111,49 @@ static void wb32(unsigned char* p, unsigned int value) {
     p[1] = (unsigned char)(value >> 16);
     p[2] = (unsigned char)(value >> 8);
     p[3] = (unsigned char)value;
+}
+
+static int write_iso_payload_fixture(const char* dst,
+                                     const unsigned char* mns,
+                                     size_t mns_size,
+                                     const unsigned char* fallback_dmdf,
+                                     size_t fallback_dmdf_size,
+                                     const unsigned char* exact_dmdf,
+                                     size_t exact_dmdf_size) {
+    unsigned char sector[NEXUS_ISO_DATA_SIZE];
+    FILE* out = fopen(dst, "wb");
+    if (!out) return 0;
+    memset(sector, 0, sizeof(sector));
+    if (mns_size > sizeof(sector)) {
+        fclose(out);
+        return 0;
+    }
+    memcpy(sector, mns, mns_size);
+    if (fwrite(sector, 1U, sizeof(sector), out) != sizeof(sector)) {
+        fclose(out);
+        return 0;
+    }
+    memset(sector, 0, sizeof(sector));
+    if (fallback_dmdf_size > sizeof(sector)) {
+        fclose(out);
+        return 0;
+    }
+    memcpy(sector, fallback_dmdf, fallback_dmdf_size);
+    if (fwrite(sector, 1U, sizeof(sector), out) != sizeof(sector)) {
+        fclose(out);
+        return 0;
+    }
+    memset(sector, 0, sizeof(sector));
+    if (exact_dmdf_size > sizeof(sector)) {
+        fclose(out);
+        return 0;
+    }
+    memcpy(sector, exact_dmdf, exact_dmdf_size);
+    if (fwrite(sector, 1U, sizeof(sector), out) != sizeof(sector)) {
+        fclose(out);
+        return 0;
+    }
+    return fclose(out) == 0;
 }
 
 static void test_dgn_material_plan_cache(void) {
@@ -150,7 +215,8 @@ static void test_dgn_material_plan_cache(void) {
     nexus_viewport_render(&viewport, &engine);
     check_int(viewport.material_engine == &engine &&
                   viewport.material_generation == engine.dgn_material_plan.generation &&
-                  viewport.fb.palette[13] == 0xff45ab67U,
+                  viewport.last_dgn_render_receipt.palette_synced &&
+                  palette_contains_color(&viewport, 0xff45ab67U),
               "Nexus viewport caches the palette from the verified DGN material plan");
     nexus_v1_invalidate_dgn_material_plan(&engine);
     check_int(engine.dgn_material_plan.valid == 0,
@@ -224,6 +290,123 @@ int main(void) {
     check_int(data != NULL, "Nexus TITLE.CG resolves by hash when renamed");
     check_int(size > 100000, "renamed Nexus TITLE.CG size is plausible");
     free(data);
+
+    {
+        unsigned char dmdf_model[32];
+        unsigned char dmdf_material[36];
+        char mns_dir[FSP_PATH_MAX];
+        char mns_dst[FSP_PATH_MAX];
+        char dmdf_dst[FSP_PATH_MAX];
+        char exact_dmdf_dst[FSP_PATH_MAX];
+        memset(dmdf_model, 0, sizeof(dmdf_model));
+        memset(dmdf_material, 0, sizeof(dmdf_material));
+        dmdf_model[0] = 'D';
+        dmdf_model[1] = 'M';
+        dmdf_model[2] = 'D';
+        dmdf_model[3] = 'F';
+        dmdf_material[0] = 'D';
+        dmdf_material[1] = 'M';
+        dmdf_material[2] = 'D';
+        dmdf_material[3] = 'F';
+        check_int(FSP_JoinPath(mns_dir, sizeof(mns_dir), root, "models") &&
+                      FSP_CreateDirectoryRecursive(mns_dir) &&
+                      FSP_JoinPath(mns_dst,
+                                   sizeof(mns_dst),
+                                   mns_dir,
+                                   "renamed-creature-family.payload.mns") &&
+                      write_file_bytes(mns_dst,
+                                       dmdf_model,
+                                       sizeof(dmdf_model)),
+                  "synthetic renamed MNS DMDF fixture written");
+        memset(&engine, 0, sizeof(engine));
+        engine.source = NEXUS_SRC_EXTRACTED;
+        snprintf(engine.data_dir, sizeof(engine.data_dir), "%s", root);
+        check_int(nexus_v1_load_model(&engine, "SCORPION.MNS") == 0,
+                  "Nexus model loader resolves renamed MNS by DMDF signature fallback");
+        nexus_v1_dmdf_free(&engine.models[0]);
+
+        check_int(FSP_JoinPath(dmdf_dst,
+                               sizeof(dmdf_dst),
+                               root,
+                               "renamed-material-family.payload.dmdf") &&
+                      write_file_bytes(dmdf_dst,
+                                       dmdf_model,
+                                       sizeof(dmdf_model)),
+                  "synthetic renamed DMDF material fixture written");
+        data = nexus_v1_read_file(&engine, "FLOORS.DMDF", &size);
+        check_int(data != NULL && size == (int)sizeof(dmdf_model),
+                  "Nexus material loader resolves renamed DMDF by signature fallback");
+        free(data);
+
+        check_int(FSP_JoinPath(exact_dmdf_dst,
+                               sizeof(exact_dmdf_dst),
+                               root,
+                               "WALLS.DMDF") &&
+                      write_file_bytes(exact_dmdf_dst,
+                                       dmdf_material,
+                                       sizeof(dmdf_material)),
+                  "synthetic exact DMDF material fixture written");
+        data = nexus_v1_read_file(&engine, "WALLS.DMDF", &size);
+        check_int(data != NULL && size == (int)sizeof(dmdf_material),
+                  "Nexus material loader keeps exact DMDF filename precedence");
+        free(data);
+
+        {
+            char iso_payload[FSP_PATH_MAX];
+            check_int(FSP_JoinPath(iso_payload,
+                                   sizeof(iso_payload),
+                                   root,
+                                   "synthetic-dmdf-family.iso-payload") &&
+                          write_iso_payload_fixture(iso_payload,
+                                                    dmdf_model,
+                                                    sizeof(dmdf_model),
+                                                    dmdf_model,
+                                                    sizeof(dmdf_model),
+                                                    dmdf_material,
+                                                    sizeof(dmdf_material)),
+                      "synthetic ISO DMDF-family payload fixture written");
+            memset(&engine, 0, sizeof(engine));
+            engine.source = NEXUS_SRC_ISO;
+            engine.iso.fp = fopen(iso_payload, "rb");
+            check_int(engine.iso.fp != NULL,
+                      "synthetic ISO DMDF-family payload opened");
+            engine.iso.valid = 1;
+            engine.iso.sector_size = NEXUS_ISO_DATA_SIZE;
+            engine.iso.data_offset = 0;
+            engine.iso.file_count = 3;
+            snprintf(engine.iso.files[0].name,
+                     sizeof(engine.iso.files[0].name),
+                     "%s",
+                     "RENAMED_CREATURE.MNS");
+            engine.iso.files[0].lba = 0U;
+            engine.iso.files[0].size = (uint32_t)sizeof(dmdf_model);
+            snprintf(engine.iso.files[1].name,
+                     sizeof(engine.iso.files[1].name),
+                     "%s",
+                     "RENAMED_FLOORS.DMDF");
+            engine.iso.files[1].lba = 1U;
+            engine.iso.files[1].size = (uint32_t)sizeof(dmdf_model);
+            snprintf(engine.iso.files[2].name,
+                     sizeof(engine.iso.files[2].name),
+                     "%s",
+                     "WALLS.DMDF");
+            engine.iso.files[2].lba = 2U;
+            engine.iso.files[2].size = (uint32_t)sizeof(dmdf_material);
+
+            check_int(nexus_v1_load_model(&engine, "SCORPION.MNS") == 0,
+                      "Nexus ISO model loader resolves renamed MNS by DMDF signature fallback");
+            nexus_v1_dmdf_free(&engine.models[0]);
+            data = nexus_v1_read_file(&engine, "FLOORS.DMDF", &size);
+            check_int(data != NULL && size == (int)sizeof(dmdf_model),
+                      "Nexus ISO material loader resolves renamed DMDF by signature fallback");
+            free(data);
+            data = nexus_v1_read_file(&engine, "WALLS.DMDF", &size);
+            check_int(data != NULL && size == (int)sizeof(dmdf_material),
+                      "Nexus ISO material loader keeps exact DMDF filename precedence");
+            free(data);
+            nexus_iso_close(&engine.iso);
+        }
+    }
 
     if (FSP_JoinPath(dm_bin_src, sizeof(dm_bin_src), home, ".firestaff/data/nexus/DM.BIN") &&
         local_file_exists(dm_bin_src) &&
@@ -326,7 +509,7 @@ int main(void) {
         copy_file_bytes(level_src, level_dst)) {
         if (FSP_JoinPath(slev00_src, sizeof(slev00_src), home, ".firestaff/data/nexus/SLEV00.BIN") &&
             local_file_exists(slev00_src) &&
-            FSP_JoinPath(slev00_dst, sizeof(slev00_dst), root, "SLEV00.BIN") &&
+            FSP_JoinPath(slev00_dst, sizeof(slev00_dst), root, "renamed-script-level-zero.payload") &&
             copy_file_bytes(slev00_src, slev00_dst)) {
             slev00_copied = 1;
         }
@@ -334,8 +517,8 @@ int main(void) {
             FSP_JoinPath(map00_src, sizeof(map00_src), home, ".firestaff/data/nexus/SNDLEV00.MAP") &&
             local_file_exists(sal00_src) &&
             local_file_exists(map00_src) &&
-            FSP_JoinPath(sal00_dst, sizeof(sal00_dst), root, "SNDLEV00.SAL") &&
-            FSP_JoinPath(map00_dst, sizeof(map00_dst), root, "SNDLEV00.MAP") &&
+            FSP_JoinPath(sal00_dst, sizeof(sal00_dst), root, "renamed-sound-level-zero.sal-payload") &&
+            FSP_JoinPath(map00_dst, sizeof(map00_dst), root, "renamed-sound-level-zero.map-payload") &&
             copy_file_bytes(sal00_src, sal00_dst) &&
             copy_file_bytes(map00_src, map00_dst)) {
             sndlev00_copied = 1;
@@ -377,7 +560,7 @@ int main(void) {
         if (slev00_copied) {
             check_int(script_receipt.candidate_source_loaded == 1 &&
                           script_receipt.candidate_source_bytes > 0,
-                      "Nexus script receipt sees real SLEV00 candidate bytes");
+                      "Nexus script receipt sees hash-resolved renamed SLEV00 candidate bytes");
             check_int(script_receipt.status ==
                           NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT,
                       "Nexus script receipt blocks unsupported real SLEV format");
@@ -399,7 +582,7 @@ int main(void) {
         if (sndlev00_copied) {
             check_int(sfx_receipt.sal_loaded == 1 &&
                           sfx_receipt.map_loaded == 1,
-                      "Nexus SFX receipt sees real SNDLEV00 SAL/MAP bytes");
+                      "Nexus SFX receipt sees hash-resolved renamed SNDLEV00 SAL/MAP bytes");
             check_int(sfx_receipt.status ==
                           NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE,
                       "Nexus SFX receipt blocks real SAL/MAP decode gap");
