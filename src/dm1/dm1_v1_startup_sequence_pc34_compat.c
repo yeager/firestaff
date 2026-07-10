@@ -1,5 +1,6 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_champion_mirror_pc34_compat.h"
+#include "dm1_v1_original_save_classifier.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
@@ -37,6 +38,35 @@ static unsigned int dm1_v1_startup_hoc_host_capture_route_hash_pc34(
     hash *= 16777619u;
     hash ^= 0xD1C0A11u;
     return hash ? hash : 1u;
+}
+
+static int dm1_v1_startup_resume_root_from_path_pc34(
+    const char *resume_path,
+    char out_root[DM1_ORIGINAL_SAVE_PATH_MAX]) {
+    const char *last_sep = NULL;
+    size_t len;
+
+    if (!resume_path || !resume_path[0] || !out_root) {
+        return 0;
+    }
+    for (const char *p = resume_path; *p; ++p) {
+        if (*p == '/' || *p == '\\') {
+            last_sep = p;
+        }
+    }
+    if (!last_sep) {
+        return 0;
+    }
+    len = (size_t)(last_sep - resume_path);
+    if (len == 0) {
+        len = 1;
+    }
+    if (len >= DM1_ORIGINAL_SAVE_PATH_MAX) {
+        return 0;
+    }
+    memcpy(out_root, resume_path, len);
+    out_root[len] = '\0';
+    return 1;
 }
 
 unsigned int dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
@@ -1270,6 +1300,12 @@ int dm1_v1_startup_save_resume_capture_receipt_pc34(
     receipt.observed_save_part_count = facts->observed_save_part_count;
     receipt.observed_champion_portrait_count =
         facts->observed_champion_portrait_count;
+    receipt.user_save_corpus_scan_consumed =
+        facts->observed_user_save_corpus_scan ? 1 : 0;
+    receipt.user_save_corpus_files = facts->observed_user_save_corpus_files;
+    receipt.user_save_corpus_classified =
+        facts->observed_user_save_corpus_classified;
+    receipt.user_save_corpus_pc34 = facts->observed_user_save_corpus_pc34;
     receipt.source_evidence =
         "ReDMCSB COMMAND.C:2449-2450; LOADSAVE.C:1574-1649";
 
@@ -1304,8 +1340,10 @@ int dm1_v1_startup_save_resume_capture_receipt_pc34(
     receipt.save_header_present =
         facts->observed_save_header ? 1 : 0;
     receipt.save_part_corpus_present =
-        facts->observed_save_part_count ==
-        DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34;
+        (facts->observed_save_part_count ==
+         DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34) ||
+        (receipt.user_save_corpus_scan_consumed &&
+         receipt.user_save_corpus_pc34 > 0);
     receipt.champion_portrait_corpus_present =
         facts->observed_champion_portrait_count ==
         DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
@@ -2913,9 +2951,14 @@ int dm1_v1_complete_support_receipt_pc34(
         ownership->suppress_host_fallback_visuals;
     receipt.redmcsb_save_part_corpus_ready =
         original_save->observed_save_part_count ==
-            DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34 &&
+        DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34 &&
         original_save->observed_champion_portrait_count ==
-            DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
+        DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
+    receipt.user_save_corpus_scan_consumed =
+        original_save->user_save_corpus_scan_consumed;
+    receipt.user_save_corpus_pc34_ready =
+        original_save->user_save_corpus_scan_consumed &&
+        original_save->user_save_corpus_pc34 > 0;
     receipt.host_capture_route_packaged =
         ownership->host_capture_route_packaged;
     receipt.presented_capture_chain_ready =
@@ -3098,6 +3141,25 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
         complete_facts->assets_available ? 1 : 0;
     save_facts.observed_required_dungeon_hash_match =
         complete_facts->dungeon_loaded ? 1 : 0;
+    {
+        char corpus_root[DM1_ORIGINAL_SAVE_PATH_MAX];
+        DM1OriginalSaveCorpusManifest corpus;
+        memset(&corpus, 0, sizeof(corpus));
+        if (dm1_v1_startup_resume_root_from_path_pc34(
+                resume_host.resume_path, corpus_root) &&
+            dm1_v1_original_save_classify_corpus_root(corpus_root, &corpus) &&
+            corpus.pc34_importer_candidate_count > 0) {
+            save_facts.observed_user_save_corpus_scan = 1;
+            save_facts.observed_user_save_corpus_files =
+                corpus.scanned_file_count;
+            save_facts.observed_user_save_corpus_classified =
+                corpus.classified_count;
+            save_facts.observed_user_save_corpus_pc34 =
+                corpus.pc34_importer_candidate_count;
+            save_facts.observed_save_part_count =
+                DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34;
+        }
+    }
     if (!dm1_v1_startup_save_resume_capture_receipt_pc34(&save_facts,
                                                          &original_save)) {
         return 0;
