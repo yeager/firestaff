@@ -45,6 +45,7 @@ static int test_dm2_asset_fetch(void *user,
     static const uint8_t door_frame[4] = { 15, 1, 2, 3 };
     static const uint8_t door_button[4] = { 4, 5, 6, 7 };
     static const uint8_t wall_button[4] = { 12, 13, 14, 15 };
+    static const uint8_t hud_core[4] = { 12, 14, 15, 1 };
     static const uint8_t hud_portrait[4] = { 3, 4, 5, 6 };
     static const uint8_t creature_atlas[21 * 7] = {
         4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14,
@@ -166,6 +167,10 @@ static int test_dm2_asset_fetch(void *user,
                DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE - gdat_index <
                    (0x100 << DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT)) {
         if (out_pixels) *out_pixels = hud_portrait;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index <
+                   0x100) {
+        if (out_pixels) *out_pixels = hud_core;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE &&
                (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) >= 0x10 &&
@@ -270,6 +275,17 @@ static void test_door_rect_contracts(void)
               dm2_v1_viewport_hud_portrait_graphic_index(-1) == 0 &&
               dm2_v1_viewport_hud_portrait_graphic_index(
                   DM2_V1_HUD_PORTRAIT_COUNT) == 0);
+    CHECK("DM2 HUD core asset index packs skproject interface fields",
+          dm2_v1_viewport_hud_core_graphic_index(
+              DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR) ==
+              DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE -
+                  DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR &&
+              dm2_v1_viewport_hud_action_icon_graphic_index(4) ==
+                  DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE -
+                      (DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + 4) &&
+              dm2_v1_viewport_hud_core_graphic_index(-1) == 0 &&
+              dm2_v1_viewport_hud_action_icon_graphic_index(
+                  DM2_V1_HUD_ACTION_ICON_COUNT) == 0);
 
     CHECK("DM2 D0C door panel rect is the startup front-door bound",
           dm2_v1_viewport_door_panel_rect_for_square(DM2_SQ_D0C, &rect) &&
@@ -321,12 +337,20 @@ static void test_hud_chrome_render_plan(void)
               rect_equals(&indoor.action_icons[0].frame_rect, 20, 178,
                           20, 16) &&
               rect_equals(&indoor.action_icons[4].fill_rect, 222, 180,
-                          16, 12));
+                          16, 12) &&
+              indoor.action_icons[4].gdat_index ==
+                  dm2_v1_viewport_hud_action_icon_graphic_index(4));
     CHECK("DM2 indoor HUD exposes four champion slots",
           indoor.champion_slot_count == DM2_V1_HUD_CHAMPION_SLOT_COUNT &&
               rect_equals(&indoor.portrait_panel_rect, 242, 28, 78, 144) &&
               rect_equals(&indoor.champion_slots[3].fill_rect,
-                          246, 140, 68, 22));
+                          246, 140, 68, 22) &&
+              indoor.top_bar_gdat_index ==
+                  dm2_v1_viewport_hud_core_graphic_index(
+                      DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR) &&
+              indoor.portrait_panel_gdat_index ==
+                  dm2_v1_viewport_hud_core_graphic_index(
+                      DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL));
 
     CHECK("DM2 outdoor HUD chrome plan builds",
           dm2_v1_viewport_build_hud_chrome_plan(1, &outdoor) == 1);
@@ -1008,7 +1032,11 @@ static void test_sprite_asset_provider(void)
                                            NULL);
         dm2_v1_render_ui_chrome(&viewport);
         CHECK("DM2 UI chrome fetches and scales HUD portrait assets",
-              s_asset_fetch_calls == 1 &&
+              s_asset_fetch_calls == 10 &&
+                  viewport.asset_hud_core_drawn_count == 9 &&
+                  viewport.fallback_hud_core_drawn_count == 0 &&
+                  viewport.last_hud_core_gdat_hash != 2166136261u &&
+                  viewport.last_hud_core_pixel_count > 0u &&
                   viewport.asset_hud_portrait_drawn_count == 1 &&
                   viewport.fallback_hud_portrait_drawn_count == 0 &&
                   s_last_asset_index ==

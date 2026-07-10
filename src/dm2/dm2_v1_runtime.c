@@ -1935,6 +1935,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_frame_ownership.gdat_provider_bound =
         rt->viewport_asset_fetch != NULL;
     g_dm2_frame_ownership.hud_gdat_blits =
+        viewport.asset_hud_core_drawn_count +
         viewport.asset_hud_portrait_drawn_count;
     g_dm2_frame_ownership.door_gdat_blits =
         viewport.asset_door_panel_drawn_count +
@@ -1959,6 +1960,23 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         dm2_runtime_add_viewport_asset_evidence(
             &g_dm2_frame_ownership,
             dm2_v1_viewport_wall_graphic_index_for_square(DM2_SQ_D0C));
+    }
+    if (viewport.asset_hud_core_drawn_count > 0) {
+        /* skproject loads interface GDAT through
+         * DM2_LOAD_GDAT_INTERFACE_00_02 before the runtime HUD draw. */
+        dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            dm2_v1_viewport_hud_core_graphic_index(
+                DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR));
+        dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            dm2_v1_viewport_hud_core_graphic_index(
+                DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP));
+    }
+    if (viewport.asset_hud_portrait_drawn_count > 0) {
+        dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            dm2_v1_viewport_hud_portrait_graphic_index(0));
     }
     if (viewport.asset_door_panel_drawn_count > 0 &&
         g_dm2_last_door_render.panel_gdat_index != 0) {
