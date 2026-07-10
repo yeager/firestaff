@@ -1559,6 +1559,15 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         facts->observed_required_dungeon_hash_match;
     receipt.host_window_capture =
         receipt.mac_window_capture && facts->observed_host_window_present;
+    /* ReDMCSB DRAWVIEW.C F0097 publishes the full 320x200 viewport buffer
+     * after ENTRANCE.C F0797/F0438 has composed the entrance/HoC frame.
+     * A release/app Mac capture must therefore prove a presented surface
+     * large enough to contain that source frame, not just an SDL window. */
+    receipt.presented_capture =
+        facts->observed_presented_rgba_capture ? 1 : 0;
+    receipt.presented_capture_geometry_matches =
+        facts->presented_capture_width >= 320 &&
+        facts->presented_capture_height >= 200;
     receipt.capture_phase = artifact->capture_phase;
     receipt.source_evidence =
         "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
@@ -1590,6 +1599,8 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         receipt.hoc_asset_capture &&
         receipt.required_asset_capture &&
         receipt.host_window_capture &&
+        receipt.presented_capture &&
+        receipt.presented_capture_geometry_matches &&
         receipt.release_app_capture;
     receipt.stale_title_absent =
         artifact->title_surface_forbidden && !facts->saw_title_surface;
@@ -1617,6 +1628,8 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         receipt.hoc_asset_capture &&
         receipt.required_asset_capture &&
         receipt.host_window_capture &&
+        receipt.presented_capture &&
+        receipt.presented_capture_geometry_matches &&
         receipt.release_app_capture &&
         receipt.stale_title_absent &&
         receipt.stale_door_absent &&
@@ -1967,6 +1980,12 @@ int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
         facts->observed_required_dungeon_hash_match;
     capture_facts.observed_host_window_present =
         facts->observed_host_window_present;
+    capture_facts.observed_presented_rgba_capture =
+        facts->observed_presented_rgba_capture;
+    capture_facts.presented_capture_width =
+        facts->presented_capture_width;
+    capture_facts.presented_capture_height =
+        facts->presented_capture_height;
     capture_facts.captured_map_index = artifact.expected_map_index;
     capture_facts.captured_map_width = artifact.expected_map_width;
     capture_facts.captured_map_height = artifact.expected_map_height;
@@ -2116,6 +2135,13 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         receipt.consumed_required_graphics_asset &&
         receipt.consumed_required_dungeon_asset;
     receipt.host_window_capture = consumer.host_window_capture;
+    receipt.presented_capture =
+        facts->observed_presented_rgba_capture ? 1 : 0;
+    receipt.presented_capture_width = facts->presented_capture_width;
+    receipt.presented_capture_height = facts->presented_capture_height;
+    receipt.presented_capture_geometry_matches =
+        receipt.presented_capture_width >= 320 &&
+        receipt.presented_capture_height >= 200;
     receipt.draw_opened_entrance_frame = consumer.draw_opened_entrance_frame;
     receipt.render_hall_mirror_overlay = consumer.render_hall_mirror_overlay;
     receipt.suppress_host_fallback_visuals =
@@ -2170,6 +2196,8 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         receipt.mac_window_capture &&
         receipt.release_app_capture &&
         receipt.host_capture_route_matches &&
+        receipt.presented_capture &&
+        receipt.presented_capture_geometry_matches &&
         receipt.hoc_asset_capture &&
         receipt.required_asset_capture &&
         receipt.host_window_capture &&

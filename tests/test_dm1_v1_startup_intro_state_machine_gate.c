@@ -1546,6 +1546,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_capture_facts.observed_required_graphics_hash_match = 1;
     hoc_capture_facts.observed_required_dungeon_hash_match = 1;
     hoc_capture_facts.observed_host_window_present = 1;
+    hoc_capture_facts.observed_presented_rgba_capture = 1;
+    hoc_capture_facts.presented_capture_width = 320;
+    hoc_capture_facts.presented_capture_height = 200;
     hoc_capture_facts.captured_map_index = DM1_V1_ENTRANCE_MAP_INDEX_PC34;
     hoc_capture_facts.captured_map_width =
         DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34;
@@ -1581,6 +1584,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_capture_proof.hoc_asset_capture &&
                  hoc_capture_proof.required_asset_capture &&
                  hoc_capture_proof.host_window_capture &&
+                 hoc_capture_proof.presented_capture &&
+                 hoc_capture_proof.presented_capture_geometry_matches &&
                  hoc_capture_proof.redmcsb_c026_asset_present &&
                  hoc_capture_proof.redmcsb_c346_asset_present &&
                  hoc_capture_proof.required_layers_present &&
@@ -1746,6 +1751,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_host_probe_facts.observed_c026_portrait_asset = 1;
     hoc_host_probe_facts.observed_c346_mirror_backing_asset = 1;
     hoc_host_probe_facts.observed_host_window_present = 1;
+    hoc_host_probe_facts.observed_presented_rgba_capture = 1;
+    hoc_host_probe_facts.presented_capture_width = 320;
+    hoc_host_probe_facts.presented_capture_height = 200;
     hoc_host_probe_facts.consumed_hoc_host_render_receipt = 1;
     hoc_host_probe_facts.consumed_m11_boot_probe_consumer = 1;
     expect_i("DM1 HoC host probe carries real Mac asset capture route",
@@ -1794,6 +1802,11 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership.hoc_asset_capture &&
                  hoc_release_capture_ownership.required_asset_capture &&
                  hoc_release_capture_ownership.host_window_capture &&
+                 hoc_release_capture_ownership.presented_capture &&
+                 hoc_release_capture_ownership
+                     .presented_capture_geometry_matches &&
+                 hoc_release_capture_ownership.presented_capture_width == 320 &&
+                 hoc_release_capture_ownership.presented_capture_height == 200 &&
                  hoc_release_capture_ownership.draw_opened_entrance_frame &&
                  hoc_release_capture_ownership.render_hall_mirror_overlay &&
                  hoc_release_capture_ownership.suppress_host_fallback_visuals &&
@@ -1854,6 +1867,32 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership.named_consumer_hash != 0u,
              1);
     hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 0;
+    hoc_host_probe_facts.observed_presented_rgba_capture = 0;
+    expect_i("DM1 HoC release/app ownership rejects missing presented capture",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 !hoc_release_capture_ownership.ready &&
+                 !hoc_release_capture_ownership.presented_capture &&
+                 !hoc_release_capture_ownership.host_capture_route_matches,
+             1);
+    hoc_host_probe_facts.observed_presented_rgba_capture = 1;
+    hoc_host_probe_facts.presented_capture_width = 319;
+    hoc_host_probe_facts.presented_capture_height = 200;
+    expect_i("DM1 HoC release/app ownership rejects undersized presented capture",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 !hoc_release_capture_ownership.ready &&
+                 hoc_release_capture_ownership.presented_capture &&
+                 !hoc_release_capture_ownership
+                      .presented_capture_geometry_matches &&
+                 !hoc_release_capture_ownership.host_capture_route_matches,
+             1);
+    hoc_host_probe_facts.presented_capture_width = 320;
+    hoc_host_probe_facts.presented_capture_height = 200;
     hoc_host_probe_facts.captured_from_real_assets = 0;
     expect_i("DM1 HoC host probe exposes missing real-asset capture route",
              dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
