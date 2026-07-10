@@ -645,6 +645,9 @@ typedef struct CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 {
     int input_consumes_receipt_only;
     int no_fallback_callbacks;
     int no_wrapper_fallback_routes;
+    int real_startup_assets_bound;
+    int real_startup_asset_role_count;
+    uint32_t real_startup_asset_binding_hash;
     int title_host_ownership_valid;
     int closed_door_host_ownership_valid;
     int utility_host_ownership_valid;
@@ -882,6 +885,8 @@ typedef struct CSB_V1_StartupCompleteSupportReceipt_PC34 {
     int no_wrapper_fallback_routes;
     int host_route_wrappers_retired;
     int no_loose_render_plan_exports;
+    int real_startup_assets_bound;
+    uint32_t real_startup_asset_binding_hash;
     uint32_t session_generation;
     uint32_t runtime_host_gate_hash;
     uint32_t complete_support_hash;

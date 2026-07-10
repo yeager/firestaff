@@ -453,6 +453,10 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
         host_capture_gate->host_route_wrappers_retired ? 1 : 0;
     out_receipt->no_loose_render_plan_exports =
         host_capture_gate->no_loose_render_plan_exports ? 1 : 0;
+    out_receipt->real_startup_assets_bound =
+        host_capture_gate->real_startup_assets_bound ? 1 : 0;
+    out_receipt->real_startup_asset_binding_hash =
+        host_capture_gate->real_startup_asset_binding_hash;
     out_receipt->session_generation = full_runtime->session_generation;
     out_receipt->runtime_host_gate_hash =
         host_capture_gate->runtime_host_gate_hash;
@@ -467,6 +471,10 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
     hash ^= (uint32_t)host_capture_gate->host_route_wrappers_retired;
     hash *= 16777619u;
     hash ^= (uint32_t)host_capture_gate->no_loose_render_plan_exports;
+    hash *= 16777619u;
+    hash ^= (uint32_t)host_capture_gate->real_startup_assets_bound;
+    hash *= 16777619u;
+    hash ^= host_capture_gate->real_startup_asset_binding_hash;
     out_receipt->complete_support_hash = hash ? hash : 1u;
     out_receipt->valid =
         out_receipt->full_runtime_valid &&
@@ -487,6 +495,8 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
                 out_receipt->no_wrapper_fallback_routes &&
                 out_receipt->host_route_wrappers_retired &&
                 out_receipt->no_loose_render_plan_exports &&
+                out_receipt->real_startup_assets_bound &&
+                out_receipt->real_startup_asset_binding_hash != 0u &&
                 out_receipt->complete_support_hash != 0u
             ? 1
             : 0;

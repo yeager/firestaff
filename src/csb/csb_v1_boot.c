@@ -348,6 +348,50 @@ static int csb_v1_boot_startup_asset_roles_owned_pc34(
     return 1;
 }
 
+static uint32_t csb_v1_boot_startup_asset_binding_hash_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_StartupAssetRole_PC34 *roles,
+    size_t role_count,
+    int *out_bound_count)
+{
+    uint32_t hash = 2166136261u;
+    int bound_count = 0;
+    size_t i;
+
+    if (out_bound_count) {
+        *out_bound_count = 0;
+    }
+    if (!profile || !roles || role_count == 0) {
+        return 0u;
+    }
+    for (i = 0; i < role_count; ++i) {
+        const CSB_V1_StartupAssetBinding_PC34 *binding =
+            csb_v1_boot_startup_asset_binding_pc34(profile, roles[i]);
+        const unsigned char *p;
+        if (!binding || !binding->verified ||
+            !binding->rejects_generic_or_test_asset ||
+            binding->source == CSB_V1_STARTUP_ASSET_SOURCE_NONE_PC34 ||
+            binding->source == CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34 ||
+            binding->path[0] == '\0') {
+            return 0u;
+        }
+        hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+            hash, (uint32_t)roles[i]);
+        hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+            hash, (uint32_t)binding->source);
+        hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+            hash, binding->graphic_index);
+        for (p = (const unsigned char *)binding->path; *p; ++p) {
+            hash = csb_v1_boot_packaged_capture_hash_step_pc34(hash, *p);
+        }
+        ++bound_count;
+    }
+    if (out_bound_count) {
+        *out_bound_count = bound_count;
+    }
+    return hash ? hash : 1u;
+}
+
 int csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
     const CSB_V1_BootProfile *profile,
     const CSB_V1_BootStartupLaunchReceipts_PC34 *launch_receipts,
@@ -4297,11 +4341,24 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
     const CSB_V1_StartupRenderExecutor_PC34 *executor,
     CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *out_receipt)
 {
+    static const CSB_V1_StartupAssetRole_PC34 startup_asset_roles[] = {
+        CSB_V1_STARTUP_ASSET_ROLE_TITLE_PRESENTS_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_TITLE_CHAOS_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_TITLE_STRIKES_BACK_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_LEFT_DOOR_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_RIGHT_DOOR_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_SCREEN_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_CREDITS_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_HUD_INVENTORY_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_HUD_RESURRECT_PC34
+    };
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 title_ownership;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 closed_door_ownership;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 utility_ownership;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 door_opening_ownership;
+    CSB_V1_BootProfile resolved_profile;
+    const CSB_V1_BootProfile *asset_profile;
     uint32_t gate_hash = 2166136261u;
 
     if (!out_receipt) {
@@ -4316,6 +4373,11 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
     if (!boot_profile || !executor) {
         return 0;
     }
+    resolved_profile = *boot_profile;
+    if (!resolved_profile.startup_assets.real_graphics_available) {
+        csb_v1_boot_startup_assets_resolve_pc34(&resolved_profile);
+    }
+    asset_profile = &resolved_profile;
     if (!csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
             boot_profile,
             executor,
@@ -4332,6 +4394,19 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
         out_receipt->runtime_visual.sequence_capture_hash;
     out_receipt->runtime_capture_hash =
         out_receipt->runtime_visual.runtime_capture_hash;
+    out_receipt->real_startup_asset_binding_hash =
+        csb_v1_boot_startup_asset_binding_hash_pc34(
+            asset_profile,
+            startup_asset_roles,
+            sizeof(startup_asset_roles) / sizeof(startup_asset_roles[0]),
+            &out_receipt->real_startup_asset_role_count);
+    out_receipt->real_startup_assets_bound =
+        out_receipt->real_startup_asset_binding_hash != 0u &&
+                out_receipt->real_startup_asset_role_count ==
+                    (int)(sizeof(startup_asset_roles) /
+                          sizeof(startup_asset_roles[0]))
+            ? 1
+            : 0;
 
     csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
     snapshot.title_active = 1;
@@ -4569,6 +4644,12 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
         out_receipt->title_runtime_phase_hash);
     gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
         gate_hash,
+        out_receipt->real_startup_asset_binding_hash);
+    gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        gate_hash,
+        (uint32_t)out_receipt->real_startup_asset_role_count);
+    gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        gate_hash,
         (uint32_t)out_receipt->host_route_wrappers_retired);
     gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
         gate_hash,
@@ -4587,6 +4668,7 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
                 out_receipt->input_consumes_receipt_only &&
                 out_receipt->no_fallback_callbacks &&
                 out_receipt->no_wrapper_fallback_routes &&
+                out_receipt->real_startup_assets_bound &&
                 out_receipt->host_route_wrappers_retired &&
                 out_receipt->no_loose_render_plan_exports &&
                 out_receipt->runtime_host_gate_hash != 0u
