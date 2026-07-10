@@ -1056,28 +1056,6 @@ int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     int* outProjectileMarkerCount,
     int* outExplosionSpriteCount,
     int* outExplosionMarkerCount);
-int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
-                                        int relForward,
-                                        int relSide,
-                                        int* outMapX,
-                                        int* outMapY,
-                                        unsigned char* outRawSquare,
-                                        int* outElementType,
-                                        int* outEffectiveElementType,
-                                        int* outIsWallLike,
-                                        int* outIsOpen);
-int M11_GameView_ProbeSideWallDrawEligibility(const M11_GameViewState* state,
-                                              int relForward,
-                                              int relSide,
-                                              int* outLegacyLaneClear,
-                                              int* outDrawsWithSourceOrder);
-int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
-                                          int relSide,
-                                          int* outGraphicIndex,
-                                          int* outDstX,
-                                          int* outDstY,
-                                          int* outWidth,
-                                          int* outHeight);
 /* Post-move environmental transition check (pits, teleporters).
  * Returns 1 if a transition occurred. */
 int M11_GameView_CheckPostMoveTransitions(M11_GameViewState* state);

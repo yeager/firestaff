@@ -9,6 +9,7 @@
 #include "m11_game_view.h"
 #include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
@@ -23,6 +24,17 @@ unsigned char* G2160_puc_Bitmap_Destination;
 
 static int g_pass = 0;
 static int g_fail = 0;
+
+static int dm1_sample_viewport_cell_for_test(const M11_GameViewState* state,
+                                             int relForward,
+                                             int relSide,
+                                             int* outMapX,
+                                             int* outMapY,
+                                             unsigned char* outRawSquare,
+                                             int* outElementType,
+                                             int* outEffectiveElementType,
+                                             int* outIsWallLike,
+                                             int* outIsOpen);
 
 static unsigned short make_thing(int type, int index)
 {
@@ -109,7 +121,7 @@ static int dm1_center_lane_for_test(const M11_GameViewState* state,
     }
     for (depth = 0; depth < 3; ++depth) {
         int isOpen = 0;
-        if (!M11_GameView_ProbeViewportCellClass(
+        if (!dm1_sample_viewport_cell_for_test(
                 state, depth + 1, 0, &mapX[depth], &mapY[depth], NULL,
                 &element[depth], NULL, NULL, &isOpen)) {
             continue;
@@ -137,6 +149,116 @@ static int dm1_center_lane_for_test(const M11_GameViewState* state,
     if (outContentMask) {
         *outContentMask = dm1_viewport_3d_center_visible_depth_mask_pc34(
             masks.valid_depth_mask, masks.open_depth_mask);
+    }
+    return 1;
+}
+
+static int dm1_sample_viewport_cell_for_test(const M11_GameViewState* state,
+                                             int relForward,
+                                             int relSide,
+                                             int* outMapX,
+                                             int* outMapY,
+                                             unsigned char* outRawSquare,
+                                             int* outElementType,
+                                             int* outEffectiveElementType,
+                                             int* outIsWallLike,
+                                             int* outIsOpen)
+{
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonMapTiles_Compat* tiles;
+    int16_t mapX = 0;
+    int16_t mapY = 0;
+    int index;
+    unsigned char square;
+    int element;
+    if (!state || !state->active || !state->world.dungeon ||
+        state->world.party.mapIndex < 0 ||
+        state->world.party.mapIndex >= (int)state->world.dungeon->header.mapCount ||
+        !state->world.dungeon->maps || !state->world.dungeon->tiles ||
+        !state->world.dungeon->tilesLoaded) {
+        return 0;
+    }
+    if (!dm1_viewport_3d_resolve_relative_map_xy(
+            state->world.party.direction, relForward, relSide,
+            state->world.party.mapX, state->world.party.mapY,
+            &mapX, &mapY)) {
+        return 0;
+    }
+    map = &state->world.dungeon->maps[state->world.party.mapIndex];
+    tiles = &state->world.dungeon->tiles[state->world.party.mapIndex];
+    if (mapX < 0 || mapY < 0 || mapX >= map->width || mapY >= map->height ||
+        !tiles->squareData) {
+        return 0;
+    }
+    index = (int)mapX * map->height + (int)mapY;
+    if (index < 0 || index >= tiles->squareCount) {
+        return 0;
+    }
+    square = tiles->squareData[index];
+    element = (square >> 5) & 0x07;
+    if (outMapX) *outMapX = mapX;
+    if (outMapY) *outMapY = mapY;
+    if (outRawSquare) *outRawSquare = square;
+    if (outElementType) *outElementType = element;
+    if (outEffectiveElementType) {
+        *outEffectiveElementType =
+            DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(square);
+    }
+    if (outIsWallLike) {
+        *outIsWallLike = DM1_V1_Viewport_SquareIsWallLikePc34Compat(square);
+    }
+    if (outIsOpen) {
+        *outIsOpen = DM1_V1_Viewport_SquareIsOpenPc34Compat(square);
+    }
+    return 1;
+}
+
+static int dm1_side_wall_draw_eligibility_for_test(
+    const M11_GameViewState* state,
+    int relForward,
+    int relSide,
+    int* outLegacyLaneClear,
+    int* outDrawsWithSourceOrder)
+{
+    int centerValid[3] = {0, 0, 0};
+    int centerOpen[3] = {0, 0, 0};
+    int centerDoor[3] = {0, 0, 0};
+    int leftOpen[3] = {0, 0, 0};
+    int rightOpen[3] = {0, 0, 0};
+    DM1_ViewportLaneVisibilityReceiptPc34 visibility;
+    int depth;
+    int wallLike = 0;
+    if (!state || relSide == 0 || relForward < 0) {
+        return 0;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        int element = -1;
+        (void)dm1_sample_viewport_cell_for_test(
+            state, depth + 1, 0, NULL, NULL, NULL, &element, NULL,
+            NULL, &centerOpen[depth]);
+        centerValid[depth] = element >= 0;
+        centerDoor[depth] = element == DUNGEON_ELEMENT_DOOR;
+        (void)dm1_sample_viewport_cell_for_test(
+            state, depth + 1, -1, NULL, NULL, NULL, NULL, NULL,
+            NULL, &leftOpen[depth]);
+        (void)dm1_sample_viewport_cell_for_test(
+            state, depth + 1, 1, NULL, NULL, NULL, NULL, NULL,
+            NULL, &rightOpen[depth]);
+    }
+    visibility = dm1_viewport_3d_lane_visibility_from_cells_pc34(
+        centerValid, centerOpen, centerDoor, leftOpen, rightOpen);
+    if (!dm1_sample_viewport_cell_for_test(
+            state, relForward, relSide, NULL, NULL, NULL, NULL, NULL,
+            &wallLike, NULL)) {
+        return 0;
+    }
+    if (outLegacyLaneClear) {
+        *outLegacyLaneClear =
+            dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
+                &visibility, relForward, relSide);
+    }
+    if (outDrawsWithSourceOrder) {
+        *outDrawsWithSourceOrder = wallLike;
     }
     return 1;
 }
@@ -1547,7 +1669,7 @@ static void test_m11_runtime_samples_d2_d3_side_walls(void)
         unsigned char raw = 0xffu;
         squareData[cases[i].mapX * (int)map.height + cases[i].mapY] =
             DUNGEON_SQUARE_MASK_THING_LIST;
-        ASSERT_EQ(M11_GameView_ProbeViewportCellClass(
+        ASSERT_EQ(dm1_sample_viewport_cell_for_test(
                       &state, cases[i].relForward, cases[i].relSide,
                       &outX, &outY, &raw, &element, &effective,
                       &isWall, &isOpen),
@@ -1623,7 +1745,7 @@ static void test_m11_runtime_draws_far_side_wall_with_near_side_blocker(void)
         squareData[cases[i].farMapX * (int)map.height + cases[i].farMapY] =
             DUNGEON_SQUARE_MASK_THING_LIST;
 
-        ASSERT_EQ(M11_GameView_ProbeSideWallDrawEligibility(
+        ASSERT_EQ(dm1_side_wall_draw_eligibility_for_test(
                       &state, cases[i].relForward, cases[i].relSide,
                       &legacyLaneClear, &drawsWithSourceOrder),
                   1, cases[i].label);
@@ -1690,7 +1812,7 @@ static void test_m11_runtime_draws_far_side_wall_with_center_blocker(void)
         squareData[cases[i].farMapX * (int)map.height + cases[i].farMapY] =
             DUNGEON_SQUARE_MASK_THING_LIST;
 
-        ASSERT_EQ(M11_GameView_ProbeSideWallDrawEligibility(
+        ASSERT_EQ(dm1_side_wall_draw_eligibility_for_test(
                       &state, cases[i].relForward, cases[i].relSide,
                       &legacyLaneClear, &drawsWithSourceOrder),
                   1, cases[i].label);
