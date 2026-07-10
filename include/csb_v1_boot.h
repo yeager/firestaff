@@ -757,6 +757,8 @@ typedef enum CSB_V1_StartupRuntimeSurfaceRole_PC34 {
     CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34,
     CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34,
     CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34,
+    CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34,
+    CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34,
     CSB_V1_STARTUP_RUNTIME_SURFACE_COUNT_PC34
 } CSB_V1_StartupRuntimeSurfaceRole_PC34;
 
@@ -779,6 +781,42 @@ typedef struct CSB_V1_StartupRuntimeSurfaceSet_PC34 {
     CSB_V1_StartupRuntimeSurface_PC34
         surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_COUNT_PC34];
 } CSB_V1_StartupRuntimeSurfaceSet_PC34;
+
+/* One verified startup session owns every source image for the complete
+ * FTL -> title -> entrance -> HUD handoff.  ReDMCSB keeps C001 resident
+ * while TITLE.C changes zones, then keeps C002-C005 resident through the
+ * entrance loop; CSBWin's Graphics.cpp ReadGraphic keeps the archive read
+ * boundary separate from its consumers. */
+typedef struct CSB_V1_StartupRuntimeAssetSession_PC34 {
+    int valid;
+    int real_asset_matched;
+    int title_assets_ready;
+    int entrance_assets_ready;
+    int hud_assets_bound;
+    uint32_t source_tick;
+    uint32_t generation;
+    CSB_V1_StartupAssetBinding_PC34 hud_inventory_binding;
+    CSB_V1_StartupAssetBinding_PC34 hud_resurrect_binding;
+    CSB_V1_StartupRuntimeSurfaceSet_PC34 surfaces;
+} CSB_V1_StartupRuntimeAssetSession_PC34;
+
+/* A non-owning frame view into a startup asset session.  The source pointers
+ * remain valid until csb_v1_boot_startup_runtime_asset_session_release_pc34.
+ * No fallback text or synthetic door pixels are represented here. */
+typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
+    int valid;
+    uint32_t source_tick;
+    uint32_t session_generation;
+    CSB_V1_StartupStage_PC34 stage;
+    int title_phase_tick;
+    int title_phase_tick_count;
+    const CSB_V1_StartupRuntimeSurface_PC34 *title_surface;
+    const CSB_V1_StartupRuntimeSurface_PC34 *entrance_surface;
+    const CSB_V1_StartupRuntimeSurface_PC34 *left_door_surface;
+    const CSB_V1_StartupRuntimeSurface_PC34 *right_door_surface;
+    int opening_step;
+    int uses_verified_hud_bindings;
+} CSB_V1_StartupRuntimeAssetFrame_PC34;
 
 /* Runtime-only startup presentation.  This is the CSB boundary for title,
  * entrance/HUD, utility, and opening-door plans when verified game data is
@@ -932,6 +970,18 @@ int csb_v1_boot_startup_runtime_surfaces_materialize_pc34(
     CSB_V1_StartupRuntimeSurfaceSet_PC34 *out_surfaces);
 void csb_v1_boot_startup_runtime_surface_set_release_pc34(
     CSB_V1_StartupRuntimeSurfaceSet_PC34 *surfaces);
+void csb_v1_boot_startup_runtime_asset_session_init_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session);
+int csb_v1_boot_startup_runtime_asset_session_open_pc34(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_StartupRuntimeAssetSession_PC34 *out_session);
+void csb_v1_boot_startup_runtime_asset_session_release_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session);
+int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    uint32_t source_tick,
+    CSB_V1_StartupRuntimeAssetFrame_PC34 *out_frame);
 const char *csb_v1_boot_startup_asset_source_name_pc34(
     CSB_V1_StartupAssetSource_PC34 source);
 int csb_v1_boot_probe_available(const char *data_dir);
