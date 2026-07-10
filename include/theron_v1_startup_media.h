@@ -2,6 +2,7 @@
 #define THERON_V1_STARTUP_MEDIA_H
 
 #include "theron_v1_track02.h"
+#include "theron_v1_world.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -34,6 +35,7 @@ typedef struct {
     size_t startup_bitmap_atlas_nonzero_pixel_count;
     uint32_t startup_bitmap_atlas_checksum;
     Theron_Track02StartupBitmapAtlas startup_bitmap_atlas;
+    Theron_RuntimeMediaIdentity runtime_media_identity;
     int startup_bitmap_title_sample_count;
     int startup_bitmap_stage_sample_count;
     int startup_bitmap_soul_room_sample_count;
@@ -86,6 +88,7 @@ typedef struct {
     size_t startup_bitmap_atlas_nonzero_pixel_count;
     uint32_t startup_bitmap_atlas_checksum;
     Theron_Track02StartupBitmapAtlas startup_bitmap_atlas;
+    Theron_RuntimeMediaIdentity runtime_media_identity;
     int startup_bitmap_title_sample_count;
     int startup_bitmap_stage_sample_count;
     int startup_bitmap_soul_room_sample_count;

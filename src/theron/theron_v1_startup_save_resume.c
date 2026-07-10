@@ -1104,6 +1104,15 @@ static int theron_v1_startup_continue_attach_track02_media(
         }
         return 0;
     }
+    if (!theron_v1_world_runtime_media_set_identity(
+            world, &media_receipt->runtime_media_identity)) {
+        theron_v1_world_runtime_media_clear(world);
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "Track 02 Continue media identity missing; fallback visuals blocked");
+        }
+        return 0;
+    }
     result->track02_media_route = 1;
     result->track02_media = *media_receipt;
     if (receipt && receipt_cap > 0u) {
