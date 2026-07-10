@@ -1042,6 +1042,32 @@ typedef struct {
     uint32_t route_hash;
 } Theron_Track02ObjectTableRouteReceipt;
 
+typedef struct {
+    int valid;
+    int verified_track02;
+    Theron_Track02SignalStatus signal_status;
+    Theron_Track02Variant variant;
+    int descriptor_route_ready;
+    size_t descriptor_anchor_count;
+    unsigned int descriptor_anchor_mask;
+    size_t startup_level_route_count;
+    unsigned int startup_level_route_mask;
+    int startup_level_route_ready;
+    size_t startup_descriptor_offset;
+    size_t startup_raw_offset;
+    size_t startup_user_data_offset;
+    int startup_user_data_offset_valid;
+    uint16_t startup_header_width;
+    uint16_t startup_header_height;
+    uint32_t startup_header_seed;
+    uint16_t startup_header_level_index;
+    size_t nonstartup_level_candidate_count;
+    int nonstartup_level_decode_ready;
+    int blocked_for_missing_nonstartup_level_evidence;
+    int fallback_visuals_allowed;
+    uint32_t route_hash;
+} Theron_Track02LevelRouteReceipt;
+
 /* Compose the bounded Track 02 startup evidence into one runtime-facing
  * handoff summary.
  *
@@ -1082,6 +1108,22 @@ int theron_v1_track02_capture_object_table_route_receipt(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02ObjectTableRouteReceipt *out_receipt);
+
+void theron_v1_track02_level_route_receipt_init(
+    Theron_Track02LevelRouteReceipt *receipt);
+
+/* Descriptor-anchored level-route evidence.
+ *
+ * This receipt promotes only the already source-locked startup level handoff
+ * and keeps broader/non-startup level decoding blocked until real Track 02
+ * evidence identifies additional dungeon records.  Verified Track 02 media
+ * never falls back to synthetic level visuals through this route.
+ */
+int theron_v1_track02_capture_level_route_receipt(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02LevelRouteReceipt *out_receipt);
 
 /* Runtime-facing semantic startup level load.
  *
