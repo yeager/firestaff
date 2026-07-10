@@ -247,12 +247,7 @@ static int m11_swsh_intro_find_logo_path_for_suffixes(
         effectiveDataDir = ".";
     }
 
-    /* 2. Known original SWOOSH hashes under the selected data root. */
-    if (m11_swsh_intro_find_known_hash(effectiveDataDir, outPath, outPathBytes)) {
-        return 1;
-    }
-
-    /* 3. Asset-catalog matched path for the selected game. */
+    /* 2. Keep launch discovery bounded to the selected game's directory. */
     if (menuState) {
         for (i = 0U; i < M12_AssetStatus_GetVersionCount(gameId); ++i) {
             const M12_AssetVersionStatus* version =
@@ -296,8 +291,13 @@ static int m11_swsh_intro_find_logo_path_for_suffixes(
             return 1;
         }
     }
-    {
+    if (getenv("FIRESTAFF_SWOOSH_DEEP_SCAN")) {
         int filesVisited = 0;
+        if (m11_swsh_intro_find_known_hash(effectiveDataDir,
+                                           outPath,
+                                           outPathBytes)) {
+            return 1;
+        }
         if (m11_swsh_intro_scan_tree_for_payload(effectiveDataDir,
                                                  0,
                                                  &filesVisited,
@@ -306,7 +306,6 @@ static int m11_swsh_intro_find_logo_path_for_suffixes(
             return 1;
         }
     }
-
     home = getenv("HOME");
     if (home && home[0] != '\0') {
         for (i = 0U; i < homeSuffixCount; ++i) {
