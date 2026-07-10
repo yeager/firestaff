@@ -1056,7 +1056,6 @@ int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     int* outProjectileMarkerCount,
     int* outExplosionSpriteCount,
     int* outExplosionMarkerCount);
-int M11_GameView_ProbeDm1V2LiveEffectSeedCount(const M11_GameViewState* state);
 int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
                                         int relForward,
                                         int relSide,
@@ -1072,14 +1071,6 @@ int M11_GameView_ProbeSideWallDrawEligibility(const M11_GameViewState* state,
                                               int relSide,
                                               int* outLegacyLaneClear,
                                               int* outDrawsWithSourceOrder);
-int M11_GameView_ProbeDm1NearestBlockingCenterDepth(const M11_GameViewState* state,
-                                                    int* outDepthIndex,
-                                                    int* outRelForward,
-                                                    int* outMapX,
-                                                    int* outMapY,
-                                                    int* outElementType);
-int M11_GameView_ProbeDm1CenterContentVisibleDepthMask(const M11_GameViewState* state,
-                                                       int* outDepthMask);
 int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
                                           int relSide,
                                           int* outGraphicIndex,
