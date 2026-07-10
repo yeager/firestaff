@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 CSB title/entrance visual regression: `test_csb_v1_m11_launcher_handoff_boundary` now captures real CSB PRESENTS, CHAOS, closed-entrance, and opening-entrance frames and verifies title phase changes plus visible door-opening movement. Verification: `test_csb_v1_m11_launcher_handoff_boundary`, `test_csb_v1_m11_startup_resume_gate`, `test_dm1_v1_startup_intro_state_machine_gate`, `test_title_frontend_step_palette_v1_pc34_compat`, and `test_title_frontend_c001_fallback_gate_pc34_compat` passed.
+
 - ✅ 2026-07-10 DM1 title palette regression target: added the missing CMake/CTest target for `test_title_frontend_step_palette_v1_pc34_compat`, so DM1 C12 PRESENTS vs C13/C14 title palette mapping is built and run separately from CSB title rendering. Verification: `test_title_frontend_step_palette_v1_pc34_compat`, `test_title_frontend_c001_fallback_gate_pc34_compat`, `test_dm1_v1_startup_intro_state_machine_gate`, and `test_csb_v1_m11_launcher_handoff_boundary` passed.
 
 - ✅ 2026-07-10 DM1 HoC presented publish from boot summary: DM1 startup now builds the M12 HoC presented-capture publish receipt directly from the DM1 boot-probe summary carried in `M11_BootProbeReceipt`. `main_loop_m11` no longer reconstructs DM1 publish facts from individual boot fields. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m11`, `firestaff`, and `git diff --check` passed.
