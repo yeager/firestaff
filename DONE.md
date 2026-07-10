@@ -4938,3 +4938,5 @@
 - ✅ 2026-07-10 Nexus DGN material block receipt: real DGN material planning now reports missing DMDF/BPK surface count and first missing material, and the viewport blocks without legacy fallback when required wall/floor/ceiling material surfaces are absent. Verified with `test_nexus_v1_dgn_material_raster`.
 
 - ✅ 2026-07-10 DM1 ReDMCSB complete-support receipt: added a single DM1 V1 gate requiring source-visible SWSH/title/entrance startup, HoC mirror/object render ownership, release/app presented capture ownership, and original-save corpus/roundtrip readiness together. Covered in `test_dm1_v1_startup_intro_state_machine_gate`; focused syntax check passed.
+
+- ✅ 2026-07-10 v3.0.71 release preparation: synchronized CMake, in-app version strings, generated version header, changelog and release notes to `v3.0.71`; committed `Prepare v3.0.71 release`, pushed `main`, and pushed tag `v3.0.71`. GitHub Actions release run `29111129206` started from the tag.
