@@ -8,12 +8,13 @@
  * the result drives the next state transition.
  *
  * This module implements a representative subset of CCM opcodes:
- *   21 opcodes (out of skproject's full ~200) are wired up:
+ *   28 opcodes (out of skproject's full ~200) are wired up:
  *     WALK_NOW, ATTACK_HANDLER, WALK_CONT, WALK_PATH, ROTATE_TO_TARGET,
  *     SPECIAL_ACTION, SPECIAL_06, SPECIAL_07, SPECIAL_08,
  *     STEAL_ITEM, MERCHANT_BEHAVIOR,
  *     PUTS_DOWN_ITEM, TAKES_ITEM, SHOOT_ITEM, KILL_ON_TIMER_POS, ROTATES_TARGET,
- *     CAST_SPELL, CREATURE_ATTACKS_PARTY, ATTACK_DOOR, EXPLODE_OR_SUMMON
+ *     CAST_SPELL, ROTATES_TARGET_16, CREATURE_ATTACKS_PARTY, ATTACK_DOOR,
+ *     PUTS_DOWN_ITEM_19, TAKES_ITEM_1A, EXPLODE_OR_SUMMON
  *   All other opcodes return DM2_CCM_RESULT_UNKNOWN_OPCODE (documented
  *   stub for the remaining ~179 opcodes).
  *
@@ -57,14 +58,14 @@ static const DM2_V1_CCMOpcodeDef g_opcode_table[DM2_CCM_MAX_OPCODES] = {
     { 0x07, "SPECIAL_07",          0, 0 },
     { 0x08, "SPECIAL_08",          0, 0 },
     { 0x0E, "SPECIAL_0E",          0, 1 },
-    { 0x10, "KILL_ON_TIMER_10",     1, 1 },
-    { 0x11, "KILL_ON_TIMER_11",     1, 1 },
-    { 0x12, "KILL_ON_TIMER_12",     1, 1 },
-    { 0x14, "ROTATE_OTHER",        1, 1 },
-    { 0x16, "SPECIAL_16",          1, 1 },
+    { 0x10, "PASSIVE_10",          0, 0 },
+    { 0x11, "SPAWN_DEFERRED",      0, 0 },
+    { 0x12, "PASSIVE_12",          0, 0 },
+    { 0x14, "PASSIVE_14",          0, 0 },
+    { 0x16, "ROTATES_TARGET_16",   0, 0 },
     { 0x18, "ATTACK_DOOR",         0, 0 },
-    { 0x19, "SPECIAL_19",          1, 1 },
-    { 0x1A, "SPECIAL_1A",          1, 1 },
+    { 0x19, "PUTS_DOWN_ITEM_19",   0, 0 },
+    { 0x1A, "TAKES_ITEM_1A",       0, 0 },
     { 0x1F, "SPECIAL_1F",          1, 1 },
     { 0x20, "SPECIAL_20",          1, 1 },
     { 0x21, "SPECIAL_21",          1, 1 },
@@ -252,8 +253,25 @@ static int dispatch_opcode(DM2_V1_CCMState *state, int opcode,
             state->flags[6] = (arg_count > 0) ? args[0] : 0;
             state->last_step_tick_ms = now_ms;
             break;
+        case DM2_CCM_OP_PASSIVE_10:
+        case DM2_CCM_OP_SPAWN_DEFERRED:
+        case DM2_CCM_OP_PASSIVE_12:
+        case DM2_CCM_OP_PASSIVE_14:
+            /* skproject/SKWIN/SkWinCore.cpp PROCEED_CCM routes ccm10,
+             * ccmSpawn, ccm12, and ccm14 to the shared ^15D5 break. They are
+             * valid no-op/deferred states, not unknown opcodes. */
+            state->flags[6] = opcode;
+            state->last_step_tick_ms = now_ms;
+            break;
         case DM2_CCM_OP_ROTATES_TARGET:
             state->target_id = (arg_count > 0) ? args[0] : 0;
+            state->flags[7] = 1;
+            break;
+        case DM2_CCM_OP_ROTATES_TARGET_16:
+            /* skproject PROCEED_CCM groups ccm15 and ccm16 through
+             * CREATURE_ROTATES_TARGET_CREATURE. Firestaff keeps this as a
+             * receipt/writeback request until the runtime target bridge owns
+             * the concrete rotate mutation. */
             state->flags[7] = 1;
             break;
         case DM2_CCM_OP_CAST_SPELL:
@@ -273,6 +291,19 @@ static int dispatch_opcode(DM2_V1_CCMState *state, int opcode,
              * by the runtime door/projectile path. */
             state->flags[7] = 1;
             state->target_id = DM2_CCM_OP_ATTACK_DOOR;
+            break;
+        case DM2_CCM_OP_PUTS_DOWN_ITEM_19:
+            /* skproject PROCEED_CCM routes ccm19 with the other put-item
+             * states. Imported real byteprograms often carry only the command
+             * byte, so this alias marks the item phase without requiring an
+             * extra synthetic operand. */
+            state->flags[14] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
+            break;
+        case DM2_CCM_OP_TAKES_ITEM_1A:
+            /* skproject PROCEED_CCM routes ccm1A through CREATURE_TAKES_ITEM. */
+            state->flags[15] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
             break;
         case DM2_CCM_OP_EXPLODE_OR_SUMMON:
             state->flags[10] = 1;
@@ -388,17 +419,21 @@ const char *dm2_v1_ccm_source_evidence(void) {
         "Source: ReDMCSB GROUP.C:1695-1770                 - F0207 creature attack\n"
         "Source: ReDMCSB GROUP.C:2376-2387                 - F0209 visible row/col\n"
         "Source: ReDMCSB PROJEXPL.C:76-92                  - F0212 projectile live\n"
-        "Implemented opcodes (21 of ~200 in skproject):\n"
+        "Implemented opcodes (28 of ~200 in skproject):\n"
         "  0x00 WALK_NOW / 0x01 ATTACK_HANDLER / 0x02 WALK_CONT\n"
         "  0x03 WALK_PATH / 0x04 ROTATE_TO_TARGET / 0x05 SPECIAL_ACTION\n"
         "  0x06 SPECIAL_06 / 0x07 SPECIAL_07 / 0x08 SPECIAL_08\n"
         "  0x09 STEAL_ITEM / 0x0A MERCHANT_BEHAVIOR\n"
         "  0x0B PUTS_DOWN_ITEM / 0x0C TAKES_ITEM\n"
-        "  0x0D SHOOT_ITEM / 0x0F KILL_ON_TIMER_POS / 0x13 ROTATES_TARGET\n"
-        "  0x15 CAST_SPELL / 0x17 CREATURE_ATTACKS_PARTY / 0x18 ATTACK_DOOR\n"
+        "  0x0D SHOOT_ITEM / 0x0F KILL_ON_TIMER_POS\n"
+        "  0x10 PASSIVE_10 / 0x11 SPAWN_DEFERRED / 0x12 PASSIVE_12\n"
+        "  0x13 ROTATES_TARGET / 0x14 PASSIVE_14\n"
+        "  0x15 CAST_SPELL / 0x16 ROTATES_TARGET_16\n"
+        "  0x17 CREATURE_ATTACKS_PARTY / 0x18 ATTACK_DOOR\n"
+        "  0x19 PUTS_DOWN_ITEM_19 / 0x1A TAKES_ITEM_1A\n"
         "  0x26 EXPLODE_OR_SUMMON / 0xFF HALT\n"
         "Stubbed opcodes (return DM2_CCM_RESULT_UNKNOWN_OPCODE):\n"
-        "  0x0E/0x10/0x11/0x12/0x14/0x16/0x19/0x1A/0x1F/0x20/0x21/0x25\n"
+        "  0x0E/0x1F/0x20/0x21/0x25\n"
         "  + remaining ~179 opcodes in skproject/SKULLWIN/c_creature.cpp.\n"
         "V1 invariant: CCM NEVER mutates party state directly.\n";
 }
