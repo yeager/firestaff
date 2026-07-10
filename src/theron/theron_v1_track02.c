@@ -3565,6 +3565,120 @@ int theron_v1_track02_startup_runtime_receipt_from_handoff(
     return out_receipt->valid ? 1 : 0;
 }
 
+void theron_v1_track02_object_table_route_receipt_init(
+    Theron_Track02ObjectTableRouteReceipt *receipt) {
+
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->signal_status = THERON_TRACK02_SIGNAL_BAD_INPUT;
+    receipt->variant = THERON_TRACK02_VARIANT_UNKNOWN;
+    receipt->fallback_visuals_allowed = 1;
+}
+
+int theron_v1_track02_capture_object_table_route_receipt(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02ObjectTableRouteReceipt *out_receipt) {
+
+    Theron_Track02BankSignal signal;
+    Theron_Track02SignalStatus signal_status;
+    uint32_t hash = 2166136261u;
+    size_t anchor;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    theron_v1_track02_object_table_route_receipt_init(out_receipt);
+    if (!track02_data || track02_size == 0u || !md5_hex || !md5_hex[0]) {
+        return 0;
+    }
+
+    out_receipt->variant = theron_v1_track02_variant_for_md5(md5_hex);
+    signal_status = theron_v1_track02_find_bank_signal(track02_data,
+                                                       track02_size,
+                                                       md5_hex,
+                                                       &signal);
+    out_receipt->signal_status = signal_status;
+    if (signal_status != THERON_TRACK02_SIGNAL_OK) {
+        return 0;
+    }
+
+    out_receipt->verified_track02 = 1;
+    out_receipt->fallback_visuals_allowed = 0;
+    out_receipt->variant = signal.variant;
+
+    for (anchor = 0u; anchor < signal.anchor_count; ++anchor) {
+        Theron_Track02DescriptorTable table;
+        Theron_Track02DescriptorEntrySemanticBinding
+            entries[THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES];
+        Theron_Track02TableDecodeStatus table_status;
+        size_t descriptor_offset = signal.descriptor_offsets[anchor];
+        size_t entry_index;
+
+        if (descriptor_offset > track02_size ||
+            TQR_US_ISO_BANK_STRIDE_BYTES > track02_size - descriptor_offset) {
+            continue;
+        }
+        table_status = theron_v1_track02_decode_descriptor_table(
+            track02_data + descriptor_offset,
+            TQR_US_ISO_BANK_STRIDE_BYTES,
+            TQR_US_ISO_BANK_STRIDE_STEP,
+            &table);
+        if (table_status != THERON_TRACK02_TABLE_DECODE_OK) {
+            continue;
+        }
+        table_status = theron_v1_track02_bind_descriptor_entry_roles(
+            track02_data,
+            track02_size,
+            descriptor_offset,
+            &table,
+            entries);
+        if (table_status != THERON_TRACK02_TABLE_DECODE_OK) {
+            continue;
+        }
+
+        out_receipt->descriptor_offsets[out_receipt->descriptor_anchor_count] =
+            descriptor_offset;
+        ++out_receipt->descriptor_anchor_count;
+        out_receipt->descriptor_anchor_mask |= 1u << (unsigned)anchor;
+        out_receipt->descriptor_entries_bound += table.entry_count;
+        hash ^= (uint32_t)descriptor_offset;
+        hash *= 16777619u;
+        hash ^= (uint32_t)table.entry_count;
+        hash *= 16777619u;
+
+        for (entry_index = 0u; entry_index < table.entry_count; ++entry_index) {
+            if (theron_v1_track02_semantic_role_for_entry(entry_index) ==
+                THERON_TRACK02_SEMANTIC_OBJECT_TABLE) {
+                Theron_Track02SemanticBinding binding;
+                ++out_receipt->object_table_candidate_count;
+                if (theron_v1_track02_bind_semantic_descriptor(
+                        track02_data,
+                        track02_size,
+                        descriptor_offset,
+                        entry_index,
+                        &binding) == THERON_TRACK02_SEMANTIC_BINDING_OK) {
+                    out_receipt->object_table_decode_ready = 1;
+                }
+            }
+        }
+    }
+
+    out_receipt->descriptor_route_ready =
+        out_receipt->descriptor_anchor_count == signal.anchor_count &&
+        signal.anchor_count > 0u;
+    out_receipt->blocked_for_missing_real_object_evidence =
+        out_receipt->descriptor_route_ready &&
+        !out_receipt->object_table_decode_ready;
+    out_receipt->route_hash = hash;
+    out_receipt->valid = out_receipt->verified_track02 &&
+        out_receipt->descriptor_route_ready;
+    return out_receipt->valid ? 1 : 0;
+}
+
 Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
     const uint8_t *track02_data,
     size_t track02_size,
