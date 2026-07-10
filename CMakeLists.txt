@@ -17723,6 +17723,7 @@ if(BUILD_TESTING)
         src/dm1/dm1_v1_title_screen_pc34_compat.c
         src/shared/vga_palette_pc34_compat.c
     )
+    target_link_libraries(test_dm1_v1_intro_skip_state_cleanup_pc34_compat PRIVATE firestaff_m10)
     target_compile_definitions(test_dm1_v1_intro_skip_state_cleanup_pc34_compat PRIVATE
         COMPILE_H
         STATICFUNCTION=static
