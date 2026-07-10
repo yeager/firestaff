@@ -362,6 +362,10 @@ typedef struct {
     bool door_front_graphics_dat_bound;
     int16_t door_front_graphics_dat_width;
     int16_t door_front_graphics_dat_height;
+    bool door_front_graphics_dat_packed_bound;
+    bool door_front_temp_bitmap_bound;
+    bool door_front_used_bounded_fallback;
+    int16_t door_front_packed_stride_bytes;
     const char *rear_pass_source_lines;
     const char *door_source_lines;
     const char *front_pass_source_lines;
@@ -799,6 +803,14 @@ typedef struct {
     int16_t  door_front_d3[2];
     int16_t  door_front_d2[2];
     int16_t  door_front_d1[2];
+
+    /* Optional packed 4bpp GRAPHICS.DAT source rows for the D3 F0111
+     * door-front pass. ReDMCSB F0111 copies G0693 through
+     * F0489_MEMORY_GetNativeBitmapOrGraphic into G0074_puc_Bitmap_Temporary
+     * before drawing C3700/C3710 (DUNVIEW.C:4257-4263, 4333-4334). */
+    const uint8_t *door_front_d3_packed_source[2];
+    int16_t door_front_d3_packed_stride_bytes[2];
+    int16_t door_front_d3_packed_height[2];
 
     /* Floor/ceiling graphic indices.
      * From DUNVIEW.C G2108_Floor, G2109_Ceiling. */

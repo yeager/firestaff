@@ -2433,6 +2433,35 @@ static int dm1_viewport_3d_d3_back_wall_side_slot(DM1_ViewSquareIndex square)
     return -1;
 }
 
+static int dm1_viewport_3d_d3_door_front_temp_bytes(
+    const DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 *plan)
+{
+    if (!plan || plan->source_stride_bytes <= 0 || plan->height <= 0) {
+        return 0;
+    }
+    return plan->source_stride_bytes * plan->height;
+}
+
+static int dm1_viewport_3d_d3_door_front_packed_source_ready(
+    const DM1_Viewport3DState *state,
+    int slot,
+    const DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 *plan)
+{
+    if (!state || !plan || slot < 0 || slot >= 2) return 0;
+    return state->door_front_d3_packed_source[slot] &&
+           state->door_front_d3_packed_stride_bytes[slot] >= plan->source_stride_bytes &&
+           state->door_front_d3_packed_height[slot] >= plan->height;
+}
+
+static int dm1_viewport_3d_d3_door_front_temp_ready(
+    const DM1_Viewport3DState *state,
+    const DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 *plan)
+{
+    int required = dm1_viewport_3d_d3_door_front_temp_bytes(plan);
+    return state && state->temp_bitmap && required > 0 &&
+           state->temp_bitmap_size >= required;
+}
+
 static int dm1_viewport_3d_floor_ornament_side_for_square(
     DM1_ViewSquareIndex square);
 
@@ -2499,6 +2528,20 @@ DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_
                 receipt.door_front_graphics_dat_bound = true;
                 receipt.door_front_graphics_dat_width = (int16_t)width;
                 receipt.door_front_graphics_dat_height = (int16_t)height;
+            }
+            receipt.door_front_graphics_dat_packed_bound =
+                dm1_viewport_3d_d3_door_front_packed_source_ready(
+                    state, slot, &plan) ? true : false;
+            receipt.door_front_temp_bitmap_bound =
+                dm1_viewport_3d_d3_door_front_temp_ready(state, &plan)
+                    ? true : false;
+            receipt.door_front_used_bounded_fallback =
+                !receipt.door_front_graphics_dat_bound &&
+                !receipt.door_front_graphics_dat_packed_bound &&
+                !receipt.door_front_temp_bitmap_bound;
+            if (receipt.door_front_graphics_dat_packed_bound) {
+                receipt.door_front_packed_stride_bytes =
+                    state->door_front_d3_packed_stride_bytes[slot];
             }
         }
     }
@@ -2764,6 +2807,7 @@ static int dm1_viewport_3d_draw_d3_door_front_plan(
     const DM1_V1_D3L2D3R2F0111DoorFrontSpecPc34 *spec;
     DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 plan;
     int side;
+    int slot;
     int color;
 
     if (!state || !state->viewport_pixels) return 0;
@@ -2771,8 +2815,10 @@ static int dm1_viewport_3d_draw_d3_door_front_plan(
 
     if (square == DM1_VIEW_SQUARE_D3L2) {
         side = DM1_V1_D3L2_D3R2_F0111_SIDE_D3L2_PC34;
+        slot = 0;
     } else if (square == DM1_VIEW_SQUARE_D3R2) {
         side = DM1_V1_D3L2_D3R2_F0111_SIDE_D3R2_PC34;
+        slot = 1;
     } else {
         return 0;
     }
@@ -2827,18 +2873,41 @@ static int dm1_viewport_3d_draw_d3_door_front_plan(
         }
     }
 
+    /* ReDMCSB F0111 obtains G0693 through F0489 and copies native packed
+     * rows into G0074_puc_Bitmap_Temporary before the C3700/C3710 blit.
+     * Source: DUNVIEW.C:4218-4263, 4333-4334; F0676/F0677:6272,6339. */
+    if (dm1_viewport_3d_d3_door_front_packed_source_ready(
+            state, slot, &plan) &&
+        dm1_viewport_3d_d3_door_front_temp_ready(state, &plan)) {
+        const uint8_t *source = state->door_front_d3_packed_source[slot];
+        int source_stride = state->door_front_d3_packed_stride_bytes[slot];
+        for (int y = 0; y < plan.height; ++y) {
+            memcpy(state->temp_bitmap + y * plan.source_stride_bytes,
+                   source + y * source_stride,
+                   (size_t)plan.source_stride_bytes);
+        }
+    }
+
     for (int y = 0; y < plan.height; ++y) {
         uint8_t expanded[DM1_V1_D3L2_D3R2_F0111_DOOR_FRONT_VIEWPORT_WIDTH_PC34];
         const uint8_t *src = NULL;
         uint8_t *dst = state->viewport_pixels + (plan.y + y) * state->viewport_stride + plan.x;
         int have_expanded = 0;
 
-        if (state->temp_bitmap &&
-            state->temp_bitmap_size >= plan.source_stride_bytes * plan.height) {
+        if (dm1_viewport_3d_d3_door_front_temp_ready(state, &plan)) {
             src = state->temp_bitmap + y * plan.source_stride_bytes;
             have_expanded =
                 dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_materialize_row_pc34(
                     &plan, src, (size_t)plan.source_stride_bytes,
+                    expanded, sizeof(expanded)) ? 1 : 0;
+        } else if (dm1_viewport_3d_d3_door_front_packed_source_ready(
+                       state, slot, &plan)) {
+            src = state->door_front_d3_packed_source[slot] +
+                  y * state->door_front_d3_packed_stride_bytes[slot];
+            have_expanded =
+                dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_materialize_row_pc34(
+                    &plan, src,
+                    (size_t)state->door_front_d3_packed_stride_bytes[slot],
                     expanded, sizeof(expanded)) ? 1 : 0;
         }
 

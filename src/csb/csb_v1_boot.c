@@ -2720,10 +2720,6 @@ static int csb_v1_boot_startup_render_draw_receipt_from_capture_pc34(
     int closed_left_count = 0;
     int closed_right_count = 0;
     int opening_frame_command_count = 0;
-    static const char *k_draw_source =
-        "ReDMCSB TITLE.C F0437 lines 424-463; "
-        "ENTRANCE.C F0441 lines 620-943; "
-        "ENTRANCE.C F0580/F0581 lines 1123-1165";
     if (!out_receipt) {
         return 0;
     }
@@ -2744,7 +2740,6 @@ static int csb_v1_boot_startup_render_draw_receipt_from_capture_pc34(
     out_receipt->route = capture_receipt->render_route;
     out_receipt->surface = out_receipt->render_plan.surface;
     out_receipt->real_asset_matched = 1;
-    out_receipt->source_evidence = k_draw_source;
     out_receipt->title_draw_ready =
         capture_receipt->title_capture_ready ? 1 : 0;
     out_receipt->hud_menu_draw_ready =
@@ -2788,11 +2783,10 @@ static int csb_v1_boot_startup_render_draw_receipt_from_capture_pc34(
     }
     out_receipt->opening_frame_command_ready =
         opening_frame_command_count > 0 ? 1 : 0;
-    /* ReDMCSB TITLE.C F0437 lines 424-463 and ENTRANCE.C F0441/F0580/F0581
-     * lines 620-943/1123-1165 own CSB startup title/HUD/opening draws. This
-     * receipt is the M11-facing draw boundary: callers consume the CSB
-     * capture's real-asset-gated render receipt instead of a title-only
-     * planned copy. */
+    /* ReDMCSB TITLE.C F0437 lines 424-463 and ENTRANCE.C F0441/F0806
+     * lines 850-883 own CSB startup title/HUD/opening draws. This receipt
+     * is the M11-facing draw boundary: callers consume the CSB capture's
+     * real-asset-gated render receipt instead of a title-only planned copy. */
     return 1;
 }
 
@@ -2912,8 +2906,6 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
                 ? 1
                 : 0;
         out_receipt->fallback_callbacks_stripped = 1;
-        out_receipt->source_evidence =
-            host_view->render_draw.source_evidence;
     }
 
     render_executor = *executor;
