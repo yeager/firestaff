@@ -17,6 +17,7 @@
 #define NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES 4
 #define NEXUS_V1_DGN_VIEW_DISTANCE 4
 #define NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS 48
+#define NEXUS_V1_DGN_VIEWPORT_UNITS 1024
 
 typedef struct {
     int dmweb_container;
@@ -72,9 +73,10 @@ typedef struct {
 
 typedef enum {
     NEXUS_V1_DGN_RENDER_COMMAND_FLOOR = 1,
-    NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT = 2,
-    NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT = 3,
-    NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT = 4
+    NEXUS_V1_DGN_RENDER_COMMAND_CEILING = 2,
+    NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT = 3,
+    NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT = 4,
+    NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT = 5
 } Nexus_V1_DgnRenderCommandKind;
 
 typedef struct {
@@ -86,6 +88,13 @@ typedef struct {
     int square_type;
     int wall_dir;
     uint16_t collision_ref;
+    /* Screen-space quad in NEXUS_V1_DGN_VIEWPORT_UNITS. The DGN plan
+     * owns projection and material selection; hosts only rasterize it. */
+    int16_t quad_x[4];
+    int16_t quad_y[4];
+    uint8_t material_id;
+    uint8_t palette_index;
+    uint8_t draw_order;
 } Nexus_V1_DgnRenderCommand;
 
 typedef struct {
