@@ -8,9 +8,10 @@
  * the result drives the next state transition.
  *
  * This module implements a representative subset of CCM opcodes:
- *   12 opcodes (out of skproject's full ~200) are wired up:
- *     WALK_NOW, ATTACK_HANDLER, WALK_CONT, SPECIAL_ACTION, STEAL_ITEM,
- *     MERCHANT_BEHAVIOR, SHOOT_ITEM, KILL_ON_TIMER_POS, ROTATES_TARGET,
+ *   18 opcodes (out of skproject's full ~200) are wired up:
+ *     WALK_NOW, ATTACK_HANDLER, WALK_CONT, WALK_PATH, ROTATE_TO_TARGET,
+ *     SPECIAL_ACTION, SPECIAL_06, STEAL_ITEM, MERCHANT_BEHAVIOR,
+ *     PUTS_DOWN_ITEM, TAKES_ITEM, SHOOT_ITEM, KILL_ON_TIMER_POS, ROTATES_TARGET,
  *     CAST_SPELL, CREATURE_ATTACKS_PARTY, EXPLODE_OR_SUMMON
  *   All other opcodes return DM2_CCM_RESULT_UNKNOWN_OPCODE (documented
  *   stub for the remaining ~188 opcodes).
@@ -37,9 +38,14 @@ static const DM2_V1_CCMOpcodeDef g_opcode_table[DM2_CCM_MAX_OPCODES] = {
     { 0x00, "WALK_NOW",            0, 0 },
     { 0x01, "ATTACK_HANDLER",      1, 0 },
     { 0x02, "WALK_CONT",           0, 0 },
+    { 0x03, "WALK_PATH",           0, 0 },
+    { 0x04, "ROTATE_TO_TARGET",    1, 0 },
     { 0x05, "SPECIAL_ACTION",      1, 0 },  /* arg: sub-action 06/0B/0C */
+    { 0x06, "SPECIAL_06",          0, 0 },
     { 0x09, "STEAL_ITEM",          1, 0 },  /* arg: target champion */
     { 0x0A, "MERCHANT_BEHAVIOR",   1, 0 },
+    { 0x0B, "PUTS_DOWN_ITEM",      1, 0 },
+    { 0x0C, "TAKES_ITEM",          1, 0 },
     { 0x0D, "SHOOT_ITEM",          2, 0 },  /* arg: item_id, direction */
     { 0x0F, "KILL_ON_TIMER_POS",   1, 0 },
     { 0x13, "ROTATES_TARGET",      1, 0 },  /* arg: target creature */
@@ -47,13 +53,8 @@ static const DM2_V1_CCMOpcodeDef g_opcode_table[DM2_CCM_MAX_OPCODES] = {
     { 0x17, "CREATURE_ATTACKS_PARTY", 0, 0 },
     { 0x26, "EXPLODE_OR_SUMMON",   1, 0 },
     /* The remaining entries are documented stubs. */
-    { 0x03, "WALK_PATH",           0, 1 },
-    { 0x04, "ROTATE_TO_TARGET",    1, 1 },
-    { 0x06, "SPECIAL_06",          1, 1 },
     { 0x07, "SPECIAL_07",          0, 1 },
     { 0x08, "SPECIAL_08",          0, 1 },
-    { 0x0B, "SPECIAL_0B",          1, 1 },
-    { 0x0C, "SPECIAL_0C",          1, 1 },
     { 0x0E, "SPECIAL_0E",          0, 1 },
     { 0x10, "KILL_ON_TIMER_10",     1, 1 },
     { 0x11, "KILL_ON_TIMER_11",     1, 1 },
@@ -78,6 +79,7 @@ static int s_total_halted = 0;
 void dm2_v1_ccm_reset_state(DM2_V1_CCMState *state) {
     if (!state) return;
     memset(state, 0, sizeof(*state));
+    state->next_state = -1;
 }
 
 void dm2_v1_ccm_init_state(DM2_V1_CCMState *state) {
@@ -86,6 +88,7 @@ void dm2_v1_ccm_init_state(DM2_V1_CCMState *state) {
     state->pc = 0;
     state->halted = 0;
     state->stack_top = 0;
+    state->next_state = -1;
 }
 
 /* ── Catalog ────────────────────────────────────────────────────── */
@@ -178,9 +181,30 @@ static int dispatch_opcode(DM2_V1_CCMState *state, int opcode,
             state->flags[0] = 1;
             state->step_count++;
             break;
+        case DM2_CCM_OP_WALK_PATH:
+            /* skproject/SKULLWIN/c_creature.cpp:1609 DM2_CREATURE_CCM03
+             * continues the path state after selecting its walk action. */
+            state->flags[11] = 1;
+            state->next_state = DM2_CCM_OP_WALK_CONT;
+            break;
+        case DM2_CCM_OP_ROTATE_TO_TARGET:
+            /* Orientation is written before the next think pass.  The
+             * normalized direction is consumed by the live instance bridge. */
+            state->target_id = args[0] & 3;
+            state->flags[12] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
+            break;
         case DM2_CCM_OP_SPECIAL_ACTION:
-            /* Branch to sub-action 06/0B/0C. */
+            /* c_creature.cpp:1636 DM2_CREATURE_JUMPS advances through its
+             * secondary phase before returning to the movement state. */
             state->flags[2] = (arg_count > 0) ? args[0] : 0;
+            state->flags[13] = 1;
+            state->next_state = DM2_CCM_OP_WALK_CONT;
+            break;
+        case DM2_CCM_OP_SPECIAL_06:
+            /* c_creature.cpp:2969 groups 0x06/0x07 in CCM06. */
+            state->flags[13] = 1;
+            state->next_state = DM2_CCM_OP_WALK_CONT;
             break;
         case DM2_CCM_OP_STEAL_ITEM:
             /* arg: target champion. */
@@ -190,6 +214,18 @@ static int dispatch_opcode(DM2_V1_CCMState *state, int opcode,
         case DM2_CCM_OP_MERCHANT_BEHAVIOR:
             /* arg: shop_id. */
             state->flags[4] = (arg_count > 0) ? args[0] : 0;
+            break;
+        case DM2_CCM_OP_PUTS_DOWN_ITEM:
+            /* c_creature.cpp:2284 DM2_CREATURE_PUTS_DOWN_ITEM. */
+            if (!dm2_v1_ccm_stack_push(state, args[0])) return (int)DM2_CCM_RESULT_STACK_OVERFLOW;
+            state->flags[14] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
+            break;
+        case DM2_CCM_OP_TAKES_ITEM:
+            /* c_creature.cpp:2176 DM2_CREATURE_TAKES_ITEM. */
+            if (!dm2_v1_ccm_stack_push(state, args[0])) return (int)DM2_CCM_RESULT_STACK_OVERFLOW;
+            state->flags[15] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
             break;
         case DM2_CCM_OP_SHOOT_ITEM:
             /* arg: item_id, direction. */

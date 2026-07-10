@@ -61,9 +61,14 @@ typedef enum {
     DM2_CCM_OP_WALK_NOW         = 0x00,  /* alias per skproject: 0x00 = walk */
     DM2_CCM_OP_ATTACK_HANDLER   = 0x01,
     DM2_CCM_OP_WALK_CONT        = 0x02,
+    DM2_CCM_OP_WALK_PATH        = 0x03,
+    DM2_CCM_OP_ROTATE_TO_TARGET = 0x04,
     DM2_CCM_OP_SPECIAL_ACTION   = 0x05,
+    DM2_CCM_OP_SPECIAL_06       = 0x06,
     DM2_CCM_OP_STEAL_ITEM       = 0x09,
     DM2_CCM_OP_MERCHANT_BEHAVIOR= 0x0A,
+    DM2_CCM_OP_PUTS_DOWN_ITEM   = 0x0B,
+    DM2_CCM_OP_TAKES_ITEM       = 0x0C,
     DM2_CCM_OP_SHOOT_ITEM       = 0x0D,
     DM2_CCM_OP_KILL_ON_TIMER_POS= 0x0F,
     DM2_CCM_OP_ROTATES_TARGET   = 0x13,
@@ -95,6 +100,7 @@ typedef struct {
     int   last_step_tick_ms;
     int   target_id;
     int   target_x, target_y, target_level;
+    int   next_state;                  /* requested b_1a writeback, -1 = none */
     int   step_count;
     /* Result of last execution */
     int   last_opcode;

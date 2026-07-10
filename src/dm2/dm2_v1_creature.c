@@ -651,8 +651,11 @@ static void dm2_v1_creature_make_ccm_args(const DM2_V1_CreatureInstance *c,
      * streams are wired from real assets. */
     switch (opcode) {
         case DM2_CCM_OP_ATTACK_HANDLER:
+        case DM2_CCM_OP_ROTATE_TO_TARGET:
         case DM2_CCM_OP_STEAL_ITEM:
         case DM2_CCM_OP_SPECIAL_ACTION:
+        case DM2_CCM_OP_PUTS_DOWN_ITEM:
+        case DM2_CCM_OP_TAKES_ITEM:
         case DM2_CCM_OP_MERCHANT_BEHAVIOR:
         case DM2_CCM_OP_KILL_ON_TIMER_POS:
         case DM2_CCM_OP_ROTATES_TARGET:
@@ -762,6 +765,11 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     g_last_ccm_tick.ccm_flag_shoot = state.flags[5];
     g_last_ccm_tick.ccm_flag_cast_spell = state.flags[8];
     g_last_ccm_tick.ccm_flag_explode_or_summon = state.flags[10];
+    g_last_ccm_tick.ccm_flag_path = state.flags[11];
+    g_last_ccm_tick.ccm_flag_rotate = state.flags[12];
+    g_last_ccm_tick.ccm_flag_special = state.flags[13];
+    g_last_ccm_tick.ccm_flag_item = state.flags[14] || state.flags[15];
+    g_last_ccm_tick.ccm_requested_state = state.next_state;
     g_last_ccm_tick.ccm_target_id = state.target_id;
     g_last_ccm_tick.ccm_target_x = state.target_x;
     g_last_ccm_tick.ccm_target_y = state.target_y;
@@ -777,6 +785,7 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     g_last_ccm_tick.field_door_open_pct =
         door_valid ? dm2_v1_creature_door_open_pct_from_state(door_state) : -1;
     g_last_ccm_tick.field_blocks_movement = door_blocks;
+    g_last_ccm_tick.direction_before = c->direction;
     g_last_ccm_tick.attack_cooldown_before = before_cooldown;
 
     if (rc == (int)DM2_CCM_RESULT_OK) {
@@ -786,13 +795,20 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
         } else if (state.flags[5] || state.flags[8] || state.flags[10]) {
             c->b_1a = DM2_CCM_WALK_NOW;
             c->attack_cooldown = 18;
-        } else if (state.flags[3]) {
+        } else if (state.flags[3] || state.flags[14] || state.flags[15]) {
             c->b_1a = DM2_CCM_WALK_NOW;
             c->attack_cooldown = 9;
-        } else if (state.flags[0] && before_cooldown == 0 &&
+        } else {
+            if (state.flags[12]) {
+                c->direction = state.target_id & 3;
+            }
+            if (state.next_state >= 0) {
+                c->b_1a = (uint8_t)state.next_state;
+            }
+            if ((state.flags[0] || state.flags[11]) && before_cooldown == 0 &&
                    dm2_v1_creature_attacks_party(c->ai_index, 1)) {
-            c->b_1a = DM2_CCM_CREATURE_ATTACKS_PARTY;
-        } else if (state.flags[0] && before_cooldown == 0 &&
+                c->b_1a = DM2_CCM_CREATURE_ATTACKS_PARTY;
+            } else if ((state.flags[0] || state.flags[11]) && before_cooldown == 0 &&
                    (!door_valid || !door_blocks)) {
             /* skproject/SKULLWIN/c_ai.cpp DM2_THINK_CREATURE advances the
              * creature's map cell after DM2_PROCEED_CCM leaves a walk state,
@@ -803,6 +819,8 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
             c->world_x = door_x;
             c->world_y = door_y;
             g_last_ccm_tick.field_moved = 1;
+            g_last_ccm_tick.field_move_distance = 1;
+            }
         }
     }
 
@@ -819,6 +837,7 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     }
 
     g_last_ccm_tick.after_b_1a = c->b_1a;
+    g_last_ccm_tick.direction_after = c->direction;
     g_last_ccm_tick.attack_cooldown_after = c->attack_cooldown;
 }
 
