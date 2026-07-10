@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM1 original-save corpus scan: added a bounded `dm1_v1_original_save_classify_corpus_root` API that scans arbitrary regular save filenames in the selected root, not only the four legacy DMSAVE/DMGAME candidate names. This gives the DM1 original-save route a stronger real user-save corpus boundary while leaving existing fixed-name callers untouched. Verification: `test_dm1_v1_original_save_classifier_pc34`, `test_save_browser_export_import_m12`, and `test_dm1_v1_startup_intro_state_machine_gate` passed.
+
 - ✅ 2026-07-10 CSB title/entrance visual regression: `test_csb_v1_m11_launcher_handoff_boundary` now captures real CSB PRESENTS, CHAOS, closed-entrance, and opening-entrance frames and verifies title phase changes plus visible door-opening movement. Verification: `test_csb_v1_m11_launcher_handoff_boundary`, `test_csb_v1_m11_startup_resume_gate`, `test_dm1_v1_startup_intro_state_machine_gate`, `test_title_frontend_step_palette_v1_pc34_compat`, and `test_title_frontend_c001_fallback_gate_pc34_compat` passed.
 
 - ✅ 2026-07-10 DM1 title palette regression target: added the missing CMake/CTest target for `test_title_frontend_step_palette_v1_pc34_compat`, so DM1 C12 PRESENTS vs C13/C14 title palette mapping is built and run separately from CSB title rendering. Verification: `test_title_frontend_step_palette_v1_pc34_compat`, `test_title_frontend_c001_fallback_gate_pc34_compat`, `test_dm1_v1_startup_intro_state_machine_gate`, and `test_csb_v1_m11_launcher_handoff_boundary` passed.
