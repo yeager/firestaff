@@ -404,7 +404,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
               0,
               DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
-              0xfe,
+              DM2_GDAT_INTERFACE_PALETTE_FIELD,
               0x32544439u,
               &typed_hash,
               &typed_bytes) == 1 &&
@@ -415,14 +415,38 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               launch.profile,
               DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
               0,
-              DM2_GDAT_ENTRY_TYPE_RAW7,
+              DM2_GDAT_ENTRY_TYPE_PAL_16,
+              DM2_GDAT_INTERFACE_PALETTE_FIELD,
+              0x32543136u,
+              &typed_hash,
+              &typed_bytes) == 1 &&
+              typed_hash != 0u &&
+              typed_bytes > 0u,
+          "boot GDAT typed parser loads skproject dtPalette16 data");
+    CHECK(dm2_v1_boot_gdat_typed_raw_asset_proof(
+              launch.profile,
+              DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
               0,
+              DM2_GDAT_ENTRY_TYPE_RAW7,
+              DM2_GDAT_INTERFACE_RAW_LAYOUT_TABLE,
               0x32544437u,
               &typed_hash,
               &typed_bytes) == 1 &&
               typed_hash != 0u &&
               typed_bytes > 0u,
           "boot GDAT typed parser loads skproject dt07 interface data");
+    CHECK(dm2_v1_boot_gdat_typed_raw_asset_proof(
+              launch.profile,
+              DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+              0,
+              DM2_GDAT_ENTRY_TYPE_RAW7,
+              DM2_GDAT_INTERFACE_RAW_ACTION_TABLE,
+              0x32543732u,
+              &typed_hash,
+              &typed_bytes) == 1 &&
+              typed_hash != 0u &&
+              typed_bytes > 0u,
+          "boot GDAT typed parser loads skproject dt07 interface action table");
     CHECK(dm2_v1_boot_gdat_typed_raw_asset_proof(
               launch.profile,
               DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
@@ -520,8 +544,8 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.real_gdat_portrait_ready == 1 &&
               hud_capture.real_gdat_core_render_ready == 1 &&
               hud_capture.real_gdat_runtime_hud_breadth_ready == 1 &&
-              hud_capture.raw_gdat_runtime_interface_count >= 3 &&
-              hud_capture.decoded_gdat_runtime_interface_count >= 3 &&
+              hud_capture.raw_gdat_runtime_interface_count >= 4 &&
+              hud_capture.decoded_gdat_runtime_interface_count >= 4 &&
               hud_capture.combined_frame_hash != 0u &&
               hud_capture.combined_pixel_count == 4u * 320u * 200u,
           "boot runtime HUD capture proves real GDAT portraits and frames across sampled directions");

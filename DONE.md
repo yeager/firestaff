@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM2 typed GDAT interface breadth: corrected the skproject typed GDAT enum split (`dtImageOffset=12`, `dtPalette16=13`) and widened HUD/runtime interface receipts to require real `INTERFACE_GENERAL` `dt09/0xfe`, `dtPalette16/0xfe`, `dt07/0x00`, and `dt07/0x02` records while keeping absent `dt06/0x00` isolated. Verification: `cmake --build build --target test_dm2_v1_boot_profile_smoke --parallel 2`, direct `./build/test_dm2_v1_boot_profile_smoke` PASS 79/79, and `git diff --check` passed.
+
 - ✅ 2026-07-10 DM1 D3L2/D3R2 F0108 floor-ornament draw plan: far back-wall floor ornaments now use the DM1-owned F0108/G0206 source zone for D3L2/D3R2 and record the bound blit rectangle in the D3 back-wall runtime receipt; the old hand-placed diamond path is no longer used for those squares. Verification: `test_dm1_v1_viewport_3d_pc34_compat`, `firestaff_m11`, and `git diff --check` passed.
 
 - ✅ 2026-07-10 CSB utility startup action-wrapper cleanup: removed public non-action utility keyboard/pointer startup wrappers from the runtime header and kept the implementation internal behind action receipts. Tests now verify keyboard and pointer utility startup through the same action receipt path that chains entrance/runtime consumption. Verification: `test_csb_v1_boot_runtime_handoff`, `test_csb_v1_startup_entrance_pointer_pc34_compat`, focused `-Wall -Wextra -Werror` syntax checks, and `git diff --check` passed.

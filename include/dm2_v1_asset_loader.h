@@ -81,7 +81,8 @@ typedef enum {
     DM2_GDAT_ENTRY_TYPE_RAW7         = 0x07,
     DM2_GDAT_ENTRY_TYPE_RAW8         = 0x08,
     DM2_GDAT_ENTRY_TYPE_PAL_IRGB     = 0x09,
-    DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET = 0x0D,
+    DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET = 0x0C,
+    DM2_GDAT_ENTRY_TYPE_PAL_16       = 0x0D,
 } DM2_GDAT_EntryType;
 
 /* Viewport image fields used by the boot/runtime GDAT bridge.
@@ -89,6 +90,14 @@ typedef enum {
 #define DM2_GDAT_GFXSET_FLOOR 0x00
 #define DM2_GDAT_GFXSET_CEIL  0x01
 #define DM2_GDAT_IMG_MAP_CHIP 0xF9
+
+/* skproject/SKWIN/SkWinCore.cpp startup/HUD interface raw data:
+ * LOAD_GDAT_INTERFACE_00_0A, LOAD_GDAT_INTERFACE_00_02,
+ * LOAD_GDAT_ENTRY_DATA_TO(0x1,0x0,dt07,0x0), dtPalIRGB, dtPalette16. */
+#define DM2_GDAT_INTERFACE_RAW_LAYOUT_TABLE   0x00
+#define DM2_GDAT_INTERFACE_RAW_ACTION_TABLE   0x02
+#define DM2_GDAT_INTERFACE_RAW_RECT14_TABLE   0x0A
+#define DM2_GDAT_INTERFACE_PALETTE_FIELD      0xFE
 
 /* skproject/SKWIN/SkWinCore.cpp GET_CREATURE_ANIMATION_FRAME consumes the
  * creature action/sequence tables; SKWINSPX/src/v4/skcrture.cpp names the
