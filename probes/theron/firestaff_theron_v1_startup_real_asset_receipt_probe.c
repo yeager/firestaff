@@ -209,6 +209,12 @@ static void check_real_bitmap_routes_complete(
     check(r->startup_bitmap_atlas_nonzero_pixel_count > 0u &&
               r->startup_bitmap_atlas_checksum != 0u,
           name);
+    snprintf(name, sizeof(name), "%s real bitmap mask covers all routes",
+             prefix);
+    check((r->startup_bitmap_real_route_mask & required_mask) ==
+              required_mask &&
+              r->startup_bitmap_fallback_route_mask == 0u,
+          name);
     snprintf(name, sizeof(name), "%s title/stage/soul/forcefield atlas tiles",
              prefix);
     check(r->startup_bitmap_title_atlas_tile_count >= 8u &&
@@ -371,6 +377,9 @@ static void check_placeholder_fields(void) {
     check_startup_chapter_placeholder(&r, "placeholder startup");
     check(r.startup_bitmap_real_routes_complete == 0 &&
               r.startup_bitmap_fallback_routes_allowed == 1 &&
+              r.startup_bitmap_real_route_mask == 0u &&
+              r.startup_bitmap_fallback_route_mask ==
+                  r.startup_bitmap_required_route_mask &&
               r.startup_decoded_art_count == 0u,
           "placeholder keeps bitmap fallback route active");
 
@@ -682,6 +691,10 @@ static void check_real_asset_path(void) {
                                    "real receipt line names semantic status");
                 check_str_contains(line, "bitmap_real_routes=1",
                                    "real receipt line names real bitmap route completion");
+                check_str_contains(line, "bitmap_real_mask=0xf",
+                                   "real receipt line names complete bitmap route mask");
+                check_str_contains(line, "bitmap_fallback_mask=0x0",
+                                   "real receipt line clears bitmap fallback mask");
                 check_str_contains(line, "bitmap_fallback=0",
                                    "real receipt line suppresses bitmap fallback");
                 check_str_contains(line, "bitmap_atlas_routes=4",

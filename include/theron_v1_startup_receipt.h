@@ -237,6 +237,8 @@ typedef struct {
     uint32_t startup_bitmap_sample_count;
     uint32_t startup_bitmap_route_mask;
     uint32_t startup_bitmap_required_route_mask;
+    uint32_t startup_bitmap_real_route_mask;
+    uint32_t startup_bitmap_fallback_route_mask;
     int      startup_bitmap_real_routes_complete;
     int      startup_bitmap_fallback_routes_allowed;
     uint32_t startup_bitmap_atlas_route_count;
