@@ -84,14 +84,8 @@ pre-commit:
 pre-push:
   parallel: false
   commands:
-    po_layout_full:
-      run: bash po/validate_po_layout.sh
-
-    hash_harmonization_full:
-      run: python3 tools/asset-validate/compare_md5_to_sha256.py
-
-    no_game_data_payloads:
-      run: python3 tools/asset-validate/no_game_data_in_git.py
+    fast_checks:
+      run: bash scripts/hooks/pre_push_fast_checks.sh
 
 # ─────────────────────────────────────────────────────────────────────────
 # CI: invoked by .github/workflows/verify.yml after checkout
