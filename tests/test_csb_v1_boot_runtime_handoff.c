@@ -2020,6 +2020,9 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                 launch.receipts.launch_host_receipt.log_color = 11U;
                 launch.receipts.init_state.command_state.entrance_active = 1;
                 launch.receipts.session_state.entrance_resume_available = 1;
+                snprintf(launch.receipts.session_state.entrance_resume_path,
+                         sizeof(launch.receipts.session_state.entrance_resume_path),
+                         "%s", "/tmp/firestaff_csb_resume.sav");
                 memset(&runtime_receipt, 0, sizeof(runtime_receipt));
                 CHECK(csb_v1_boot_startup_launch_detach_runtime_pc34(
                           &launch,
@@ -2046,6 +2049,11 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                           strcmp(runtime_receipt.real_asset_receipt.dungeon_md5,
                                  "6695d2acebce49f95db1d8f3a5c733de") == 0 &&
                           runtime_receipt.real_asset_receipt.receipt_hash != 0u &&
+                          runtime_receipt.startup_asset_gate_valid &&
+                          runtime_receipt.startup_asset_gate.valid &&
+                          runtime_receipt.startup_asset_gate.title_assets_owned &&
+                          runtime_receipt.startup_asset_gate.entrance_assets_owned &&
+                          runtime_receipt.startup_asset_gate.hud_assets_owned &&
                           runtime_receipt.receipts.init_state.command_state.entrance_active &&
                           runtime_receipt.receipts.session_state.entrance_resume_available &&
                           runtime_receipt.receipts.launch_host_receipt.status &&

@@ -567,6 +567,40 @@ static void test_real_startup_asset_selection_rejects_generic_paths(void)
     csb_v1_boot_cleanup(&p);
 }
 
+static void test_runtime_asset_gate_binds_session_and_owned_artwork(void)
+{
+    CSB_V1_BootProfile p;
+    CSB_V1_BootStartupLaunchReceipts_PC34 launch;
+    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 gate;
+
+    prime_verified_profile(&p);
+    snprintf(p.graphics_md5, sizeof(p.graphics_md5), "%s",
+             "61fbfd56887c8bfe85ba4fb306fc2861");
+    snprintf(p.dungeon_md5, sizeof(p.dungeon_md5), "%s",
+             "6695d2acebce49f95db1d8f3a5c733de");
+    memset(&launch, 0, sizeof(launch));
+    launch.session_state.import_selected_action_index = 0;
+    csb_v1_boot_startup_assets_resolve_pc34(&p);
+    CHECK(csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+              &p, &launch, &gate) == 1 && gate.valid &&
+              gate.title_assets_owned && gate.entrance_assets_owned &&
+              gate.hud_assets_owned && gate.session_state_valid &&
+              gate.rejects_fallback_sources,
+          "runtime gate binds verified title, entrance, HUD, and session ownership");
+
+    p.startup_assets.bindings[CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_RIGHT_DOOR_PC34]
+        .source = CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34;
+    CHECK(csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+              &p, &launch, &gate) == 0,
+          "runtime gate rejects a fallback entrance-door binding");
+    csb_v1_boot_startup_assets_resolve_pc34(&p);
+    launch.session_state.entrance_resume_available = 1;
+    CHECK(csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+              &p, &launch, &gate) == 0,
+          "runtime gate rejects a resume session without its owned save path");
+    csb_v1_boot_cleanup(&p);
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_boot_source_evidence();
@@ -590,6 +624,7 @@ int main(void)
     test_utility_panel_layout_owns_visible_hit_area();
     test_diagnostic_report_surfaces_title_import_status();
     test_real_startup_asset_selection_rejects_generic_paths();
+    test_runtime_asset_gate_binds_session_and_owned_artwork();
     test_source_evidence();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
