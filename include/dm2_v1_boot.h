@@ -801,6 +801,25 @@ typedef struct {
 
 typedef struct {
     int valid;
+    DM2_V1_BootStartupRealVisualCaptureReceipt startup_visual;
+    DM2_V1_BootRuntimeHudCaptureReceipt runtime_hud;
+    int skproject_gdat_queries_ready;
+    int startup_title_menu_complete;
+    int startup_hud_handoff_complete;
+    int runtime_gdat_hud_complete;
+    int runtime_gdat_dungeon_complete;
+    int runtime_gdat_direction_breadth_complete;
+    int no_fallback_title_or_runtime_visuals;
+    int raw_gdat_capture_complete;
+    int decoded_gdat_capture_complete;
+    int complete_support_ready;
+    uint32_t complete_support_hash;
+    const char *status_scope;
+    const char *status;
+} DM2_V1_CompleteSupportReceipt;
+
+typedef struct {
+    int valid;
     int draw_startup_menu;
     int command_count;
     int selected_row;
@@ -1133,6 +1152,17 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     int selected_row,
     int title_animation_tick,
     DM2_V1_BootStartupRealVisualCaptureReceipt *out_receipt);
+void dm2_v1_boot_complete_support_receipt_init(
+    DM2_V1_CompleteSupportReceipt *receipt);
+int dm2_v1_boot_complete_support_receipt_from_runtime_state(
+    DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int title_animation_tick,
+    DM2_V1_CompleteSupportReceipt *out_receipt);
 int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int startup_menu_active,
     char *out_phase,
