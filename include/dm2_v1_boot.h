@@ -316,6 +316,14 @@ typedef struct {
     uint32_t teleporter_map_chip_raw_byte_count;
     uint32_t teleporter_map_chip_decoded_hash;
     uint32_t teleporter_map_chip_decoded_pixel_count;
+    int dungeon_map_chip_ready;
+    int dungeon_map_chip_graphicsset_count;
+    int dungeon_map_chip_wall_count;
+    int dungeon_map_chip_floor_count;
+    uint32_t dungeon_map_chip_raw_hash;
+    uint32_t dungeon_map_chip_raw_byte_count;
+    uint32_t dungeon_map_chip_decoded_hash;
+    uint32_t dungeon_map_chip_decoded_pixel_count;
     uint32_t combined_frame_hash;
     uint32_t combined_pixel_count;
     DM2_V1_BootRuntimeRenderReceipt first_frame;
