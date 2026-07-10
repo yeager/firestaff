@@ -71,6 +71,31 @@ static void mark_game_ready(M12_StartupMenuState* state, int slot, const char* g
     state->assetStatus.versions[slot][0].matched = 1;
     state->entries[slot].available = 1;
     state->gameOptions[slot].versionIndex = 0;
+    if (strcmp(gameId, "dm1") == 0) {
+        M12_DM1HoCPresentedCaptureReceipt receipt;
+        memset(&receipt, 0, sizeof(receipt));
+        receipt.handled = 1;
+        receipt.presentedCaptureReady = 1;
+        receipt.hostWindowPresent = 1;
+        receipt.capturedFromMacWindow = 1;
+        receipt.capturedFromReleaseApp = 1;
+        receipt.width = 320;
+        receipt.height = 200;
+        receipt.byteCount = 320 * 200 * 4;
+        receipt.framebufferHash = 0x4d31324du;
+        receipt.consumerMask =
+            DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+            DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
+        receipt.chainHash =
+            dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+                receipt.width,
+                receipt.height,
+                receipt.byteCount,
+                receipt.framebufferHash,
+                receipt.consumerMask);
+        (void)M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(state,
+                                                               &receipt);
+    }
 }
 
 int main(void) {

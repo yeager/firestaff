@@ -123,6 +123,30 @@ static void seed_dm1_v1_complete_required_state(M12_StartupMenuState* state) {
     state->gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
 }
 
+static void seed_dm1_hoc_presented_capture_receipt(M12_StartupMenuState* state) {
+    M12_DM1HoCPresentedCaptureReceipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.handled = 1;
+    receipt.presentedCaptureReady = 1;
+    receipt.hostWindowPresent = 1;
+    receipt.capturedFromMacWindow = 1;
+    receipt.capturedFromReleaseApp = 1;
+    receipt.width = 320;
+    receipt.height = 200;
+    receipt.byteCount = 320 * 200 * 4;
+    receipt.framebufferHash = 0x4d31324du;
+    receipt.consumerMask = DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+                           DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
+    receipt.chainHash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            receipt.width,
+            receipt.height,
+            receipt.byteCount,
+            receipt.framebufferHash,
+            receipt.consumerMask);
+    CHECK(M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(state, &receipt) == 1);
+}
+
 static void check_dm1_v1_required_complete_launches(void) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -133,6 +157,11 @@ static void check_dm1_v1_required_complete_launches(void) {
     M12_AssetRequiredFileStatus* mutableDungeon;
 
     seed_dm1_v1_complete_required_state(&state);
+    CHECK(M12_StartupMenu_GetBootReadiness(&state, kDm1GameIndex, &boot) == 1);
+    CHECK(boot.packagedCaptureReady == 0);
+    CHECK(boot.dm1HoCPresentedCaptureReady == 0);
+    CHECK((boot.blockedStepMask & M12_STARTUP_BOOT_STEP_CAPTURE) != 0u);
+    seed_dm1_hoc_presented_capture_receipt(&state);
 
     /* Required hash-set completeness, mirroring the assertions in
      * test_m12_missing_dungeon_launch_blocker.c. */
