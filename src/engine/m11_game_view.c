@@ -21521,19 +21521,24 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         !ownership.no_m11_fallback_scan) {
         return;
     }
-    /* ReDMCSB DUNGEON.C:2608-2612 stores the C127 champion portrait in
-     * G0289 and DUNVIEW.C:3913-3928 blits the fixed D1C portrait-on-wall
-     * rectangle from that state.  `m11_front_cell_mirror_ordinal` already
-     * enforces the source wall/fake-wall square-aspect gate, so open Hall
-     * corridor squares carrying unrelated or transplanted C127 data cannot
-     * draw a floating C026 portrait. */
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)receipt->backingGraphicIndex);
-    drawReceipt = runtimeDecision->hostDraw;
-    if (!drawReceipt.valid || !runtimeDecision->suppressHostFallbackVisuals) {
+    if (!dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
+            &ownership,
+            receipt,
+            state->candidateMirrorPanelActive,
+            slot && slot->loaded && slot->pixels,
+            &drawReceipt) ||
+        !drawReceipt.valid ||
+        !runtimeDecision->suppressHostFallbackVisuals) {
         return;
     }
 
+    /* ReDMCSB DUNGEON.C:2608-2612 stores the C127 champion portrait in
+     * G0289 and DUNVIEW.C:3913-3928 blits the fixed D1C portrait-on-wall
+     * rectangle from that state.  M11 must execute the draw through the
+     * DM1-owned HoC host-draw receipt above, so missing C346 backing assets
+     * stop the route instead of reopening the old fallback rectangle path. */
     if (drawReceipt.candidatePanelOwnsCell) {
         m11_draw_dm1_front_champion_portrait_host_receipt(
             state, &drawReceipt, framebuffer, fbW, fbH);
