@@ -139,6 +139,13 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT 8
 #define DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_MASK 0xFF
 #define DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD 0x00
+#define DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE (-0x81000)
+#define DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR 0x02
+#define DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP 0x0a
+#define DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL 0x07
+#define DM2_V1_VIEWPORT_GFX_HUD_CORE_GOLD_BOX 0x09
+#define DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE 0x20
+#define DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK 0xFF
 
 int dm2_v1_viewport_wall_field_for_square(int view_square);
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square);
@@ -170,6 +177,8 @@ int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
                                              int projectile_type,
                                              int frame_index);
 int dm2_v1_viewport_hud_portrait_graphic_index(int portrait_index);
+int dm2_v1_viewport_hud_core_graphic_index(int field);
+int dm2_v1_viewport_hud_action_icon_graphic_index(int icon_index);
 int dm2_v1_viewport_map_chip_frame_width(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_count(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_index(int requested_frame,
@@ -265,6 +274,7 @@ typedef struct {
     DM2_V1_ViewportRect frame_rect;
     DM2_V1_ViewportRect fill_rect;
     uint8_t fill_color;
+    int gdat_index;
 } DM2_V1_HudIconRender;
 
 typedef struct {
@@ -314,6 +324,10 @@ typedef struct {
     DM2_V1_ViewportRect gold_box_rect;
     DM2_V1_ViewportRect gold_coin_rect;
     DM2_V1_ViewportRect gold_label_rect;
+    int top_bar_gdat_index;
+    int action_strip_gdat_index;
+    int portrait_panel_gdat_index;
+    int gold_box_gdat_index;
     DM2_V1_HudIconRender action_icons[DM2_V1_HUD_ACTION_ICON_COUNT];
     int action_icon_count;
     DM2_V1_ViewportRect portrait_separator_dark_rect;
@@ -719,6 +733,10 @@ typedef struct {
     int last_projectile_asset_src_stride;
     DM2_V1_ProjectileRender last_projectile_render;
     DM2_V1_ProjectileAssetBlit last_projectile_asset_blit;
+    int asset_hud_core_drawn_count;
+    int fallback_hud_core_drawn_count;
+    uint32_t last_hud_core_gdat_hash;
+    uint32_t last_hud_core_pixel_count;
     int asset_hud_portrait_drawn_count;
     int fallback_hud_portrait_drawn_count;
 } DM2_V1_ViewportState;

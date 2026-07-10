@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM2 skproject HUD GDAT core route: HUD chrome now exposes renderer-owned GDAT material keys for top bar, action strip, gold box, action icons, portrait panel, and portraits, renders core HUD through the viewport asset provider when present, and records core HUD plus portrait GDAT consumption in runtime frame ownership. Verification: `test_dm2_v1_lighting_falloff_boundary`, `test_dm2_v1_runtime_handoff_smoke`, and `git diff --check` passed.
+
 - ✅ **2026-07-10 DM1 save/resume capture route:** startup now exposes a DM1-owned ReDMCSB M566/LOADSAVE receipt tying RESUME, loaded runtime handoff, five original save parts, four PC34 champion portraits, dungeon payload, and required asset hashes into one save-corpus capture route. Verification: `test_dm1_v1_startup_intro_state_machine_gate` and `git diff --check` passed.
 
 - ✅ 2026-07-10 CSB title-phase runtime gate: CSB runtime host-capture gates now require explicit PRESENTS, CHAOS zoom, CHAOS hold, and STRIKES BACK phase masks plus a phase hash before title/HUD startup is accepted as captured. Verification: `test_csb_v1_boot_runtime_handoff` and `git diff --check` passed.

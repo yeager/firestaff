@@ -164,6 +164,19 @@ int dm2_v1_viewport_build_hud_chrome_plan(
     out_plan->gold_label_rect =
         (DM2_V1_ViewportRect){ out_plan->gold_box_rect.x + 16,
                                out_plan->gold_box_rect.y + 3, 14, 7 };
+    /* skproject SKULLWIN/c_gdatfile.cpp DM2_LOAD_GDAT_INTERFACE_00_02
+     * loads interface category 1/image 0/field 7 before the runtime HUD
+     * is drawn.  Firestaff keeps these as renderer-private GDAT keys so
+     * the asset provider can resolve real GRAPHICS.DAT surfaces. */
+    out_plan->top_bar_gdat_index =
+        dm2_v1_viewport_hud_core_graphic_index(
+            DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR);
+    out_plan->action_strip_gdat_index =
+        dm2_v1_viewport_hud_core_graphic_index(
+            DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP);
+    out_plan->gold_box_gdat_index =
+        dm2_v1_viewport_hud_core_graphic_index(
+            DM2_V1_VIEWPORT_GFX_HUD_CORE_GOLD_BOX);
     out_plan->action_icon_count = DM2_V1_HUD_ACTION_ICON_COUNT;
     for (int i = 0; i < out_plan->action_icon_count; ++i) {
         DM2_V1_HudIconRender *icon = &out_plan->action_icons[i];
@@ -173,6 +186,7 @@ int dm2_v1_viewport_build_hud_chrome_plan(
             (DM2_V1_ViewportRect){ icon->frame_rect.x + 2,
                                    icon->frame_rect.y + 2, 16, 12 };
         icon->fill_color = (uint8_t)(8 + i);
+        icon->gdat_index = dm2_v1_viewport_hud_action_icon_graphic_index(i);
     }
     if (!out_plan->outdoor) {
         out_plan->portrait_separator_dark_rect =
@@ -188,6 +202,9 @@ int dm2_v1_viewport_build_hud_chrome_plan(
                                    DM2_VP_WIDTH - (panel_x + 2),
                                    DM2_VP_HEIGHT - DM2_VP_CHROME_TOP -
                                        DM2_VP_CHROME_BOT };
+        out_plan->portrait_panel_gdat_index =
+            dm2_v1_viewport_hud_core_graphic_index(
+                DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL);
         out_plan->champion_slot_count = DM2_V1_HUD_CHAMPION_SLOT_COUNT;
         for (int slot = 0; slot < out_plan->champion_slot_count; ++slot) {
             int py = DM2_VP_CHROME_TOP + 2 + slot * 36;
@@ -598,6 +615,7 @@ void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
     s->time_of_day  = 0.5f;
     s->dirty        = 1;
     s->random_seed  = 0x0100u;
+    s->last_hud_core_gdat_hash = 2166136261u;
 
     /* Initialize all view squares to empty */
     for (int i = 0; i < DM2_SQ_COUNT; i++) {
@@ -1008,6 +1026,23 @@ int dm2_v1_viewport_hud_portrait_graphic_index(int portrait_index)
     packed = (portrait_index << DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT) |
              DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD;
     return DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE - packed;
+}
+
+int dm2_v1_viewport_hud_core_graphic_index(int field)
+{
+    if (field < 0 || field > DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK) {
+        return 0;
+    }
+    return DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - field;
+}
+
+int dm2_v1_viewport_hud_action_icon_graphic_index(int icon_index)
+{
+    if (icon_index < 0 || icon_index >= DM2_V1_HUD_ACTION_ICON_COUNT) {
+        return 0;
+    }
+    return dm2_v1_viewport_hud_core_graphic_index(
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE + icon_index);
 }
 
 int dm2_v1_viewport_map_chip_frame_width(int src_w, int src_h)
@@ -3617,6 +3652,60 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
 
 /* ── UI Chrome ────────────────────────────────────────────────────── */
 
+static uint32_t dm2_v1_viewport_hash_gdat_asset(uint32_t hash,
+                                                int gdat_index,
+                                                int w,
+                                                int h)
+{
+    hash ^= (uint32_t)gdat_index;
+    hash *= 16777619u;
+    hash ^= (uint32_t)w;
+    hash *= 16777619u;
+    hash ^= (uint32_t)h;
+    hash *= 16777619u;
+    return hash;
+}
+
+static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
+                                        const DM2_V1_ViewportRect *rect,
+                                        int gdat_index)
+{
+    const uint8_t *pixels = NULL;
+    int w = 0;
+    int h = 0;
+    int stride = 0;
+    if (!s || !s->framebuffer || !rect || rect->w <= 0 || rect->h <= 0 ||
+        gdat_index == 0 ||
+        dm2_v1_fetch_viewport_asset(s,
+                                    gdat_index,
+                                    &pixels,
+                                    &w,
+                                    &h,
+                                    &stride) != 0 ||
+        !pixels || w <= 0 || h <= 0) {
+        return 0;
+    }
+    dm2_v1_blit_scaled_bitmap(s->framebuffer,
+                              s->fb_stride,
+                              rect->x,
+                              rect->y,
+                              rect->w,
+                              rect->h,
+                              pixels,
+                              w,
+                              h,
+                              stride > 0 ? stride : w,
+                              DM2_COLOR_TRANSPARENT);
+    ++s->asset_hud_core_drawn_count;
+    s->last_hud_core_gdat_hash =
+        dm2_v1_viewport_hash_gdat_asset(s->last_hud_core_gdat_hash,
+                                        gdat_index,
+                                        w,
+                                        h);
+    s->last_hud_core_pixel_count += (uint32_t)(rect->w * rect->h);
+    return 1;
+}
+
 void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
 {
     DM2_V1_HudChromeRenderPlan plan;
@@ -3642,18 +3731,38 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         return;
     }
 
-    dm2_v1_fill_rect(vp, stride, &plan.top_bar_rect, DM2_COL_DKGRAY);
+    if (!dm2_v1_render_hud_core_asset(s,
+                                      &plan.top_bar_rect,
+                                      plan.top_bar_gdat_index)) {
+        dm2_v1_fill_rect(vp, stride, &plan.top_bar_rect, DM2_COL_DKGRAY);
+        ++s->fallback_hud_core_drawn_count;
+    }
     dm2_v1_fill_rect(vp, stride, &plan.top_divider_rect, DM2_COL_MIDGRAY);
-    dm2_v1_fill_rect(vp, stride, &plan.action_strip_rect, DM2_COL_DKGRAY);
+    if (!dm2_v1_render_hud_core_asset(s,
+                                      &plan.action_strip_rect,
+                                      plan.action_strip_gdat_index)) {
+        dm2_v1_fill_rect(vp, stride, &plan.action_strip_rect, DM2_COL_DKGRAY);
+        ++s->fallback_hud_core_drawn_count;
+    }
     dm2_v1_fill_rect(vp, stride, &plan.action_divider_rect, DM2_COL_MIDGRAY);
-    dm2_v1_fill_rect(vp, stride, &plan.gold_box_rect, DM2_COL_GROUND);
+    if (!dm2_v1_render_hud_core_asset(s,
+                                      &plan.gold_box_rect,
+                                      plan.gold_box_gdat_index)) {
+        dm2_v1_fill_rect(vp, stride, &plan.gold_box_rect, DM2_COL_GROUND);
+        ++s->fallback_hud_core_drawn_count;
+    }
     dm2_v1_fill_coin_disc(vp, stride, &plan.gold_coin_rect, 11);
     dm2_v1_fill_rect(vp, stride, &plan.gold_label_rect, DM2_COL_LTGRAY);
     for (int i = 0; i < plan.action_icon_count; ++i) {
         dm2_v1_stroke_rect(vp, stride, &plan.action_icons[i].frame_rect,
                            DM2_COL_MIDGRAY);
-        dm2_v1_fill_rect(vp, stride, &plan.action_icons[i].fill_rect,
-                         plan.action_icons[i].fill_color);
+        if (!dm2_v1_render_hud_core_asset(s,
+                                          &plan.action_icons[i].fill_rect,
+                                          plan.action_icons[i].gdat_index)) {
+            dm2_v1_fill_rect(vp, stride, &plan.action_icons[i].fill_rect,
+                             plan.action_icons[i].fill_color);
+            ++s->fallback_hud_core_drawn_count;
+        }
     }
 
     if (!plan.outdoor) {
@@ -3661,8 +3770,13 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                          DM2_COL_MIDGRAY);
         dm2_v1_fill_rect(vp, stride, &plan.portrait_separator_light_rect,
                          DM2_COL_LTGRAY);
-        dm2_v1_fill_rect(vp, stride, &plan.portrait_panel_rect,
-                         DM2_COL_DKGRAY);
+        if (!dm2_v1_render_hud_core_asset(s,
+                                          &plan.portrait_panel_rect,
+                                          plan.portrait_panel_gdat_index)) {
+            dm2_v1_fill_rect(vp, stride, &plan.portrait_panel_rect,
+                             DM2_COL_DKGRAY);
+            ++s->fallback_hud_core_drawn_count;
+        }
         for (int slot = 0; slot < plan.champion_slot_count; ++slot) {
             dm2_v1_fill_rect(vp, stride,
                              &plan.champion_slots[slot].frame_rect,
@@ -3785,6 +3899,10 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
            sizeof(s->last_projectile_render));
     memset(&s->last_projectile_asset_blit, 0,
            sizeof(s->last_projectile_asset_blit));
+    s->asset_hud_core_drawn_count = 0;
+    s->fallback_hud_core_drawn_count = 0;
+    s->last_hud_core_gdat_hash = 2166136261u;
+    s->last_hud_core_pixel_count = 0u;
     s->asset_hud_portrait_drawn_count = 0;
     s->fallback_hud_portrait_drawn_count = 0;
 

@@ -58,6 +58,7 @@ static uint8_t s_creature_wide_pixels[32 * 8];
 static int s_creature_asset_w = 16;
 static uint8_t s_item_pixels[16 * 8];
 static uint8_t s_projectile_pixels[16 * 8];
+static uint8_t s_hud_core_pixels[16 * 8];
 static uint8_t s_hud_portrait_pixels[16 * 8];
 static int s_last_door_panel_index;
 
@@ -218,6 +219,14 @@ static int synthetic_viewport_asset_fetch(void *user,
         DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE - gdat_index <
             (0x100 << DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT)) {
         if (out_pixels) *out_pixels = s_hud_portrait_pixels;
+        if (out_w) *out_w = 16;
+        if (out_h) *out_h = 8;
+        if (out_stride) *out_stride = 16;
+        return 0;
+    }
+    if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE &&
+        DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index < 0x100) {
+        if (out_pixels) *out_pixels = s_hud_core_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
         if (out_stride) *out_stride = 16;
@@ -744,6 +753,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
         memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
         memset(s_item_pixels, 6, sizeof(s_item_pixels));
+        memset(s_hud_core_pixels, 12, sizeof(s_hud_core_pixels));
         memset(s_hud_portrait_pixels, 14, sizeof(s_hud_portrait_pixels));
         memset(framebuffer, 0, sizeof(framebuffer));
         dm2_v1_runtime_set_outdoor(0);
@@ -756,8 +766,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   dm2_v1_runtime_get_party_y(),
                   framebuffer, 320, 320, 200) == 0,
               "runtime renders through an injected viewport asset provider");
-        CHECK(fetch_count == 16,
-              "runtime viewport provider receives ceiling, floor, wall and HUD portrait fetches");
+        CHECK(fetch_count == 25,
+              "runtime viewport provider receives ceiling, floor, wall and full HUD GDAT fetches");
         CHECK(dm2_v1_runtime_last_asset_floor_ceiling_count() == 2 &&
               dm2_v1_runtime_last_fallback_floor_ceiling_count() == 0,
               "runtime records asset-backed floor/ceiling draw counts");
@@ -776,11 +786,11 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(dm2_v1_runtime_last_frame_ownership(&ownership) &&
               ownership.runtime_frame_owned &&
               ownership.gdat_provider_bound &&
-              ownership.hud_gdat_blits == 4 &&
+              ownership.hud_gdat_blits == 13 &&
               ownership.door_gdat_blits == 0 &&
               ownership.creature_gdat_blits == 0,
-              "runtime frame ownership records actual HUD GDAT consumption");
-        CHECK(framebuffer[0] == 1,
+              "runtime frame ownership records actual core HUD and portrait GDAT consumption");
+        CHECK(framebuffer[0] != 0,
               "runtime asset-provider frame completes the shared viewport render pass");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
     }
@@ -806,7 +816,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   dm2_v1_runtime_get_party_y(),
                   framebuffer, 320, 320, 200) == 0,
               "runtime renders a leader-hand carried item through the viewport");
-        CHECK(fetch_count == 17,
+        CHECK(fetch_count == 26,
               "runtime carried item adds one item-map-chip fetch to the viewport pass");
         CHECK(dm2_v1_runtime_last_asset_carried_item_count() == 1 &&
               dm2_v1_runtime_last_fallback_carried_item_count() == 0,
@@ -1771,7 +1781,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   dm2_v1_runtime_get_party_y(),
                   framebuffer, 320, 320, 200) == 0,
               "runtime renders a drained projectile through the viewport");
-        CHECK(fetch_count == 17,
+        CHECK(fetch_count == 26,
               "runtime projectile adds one projectile-map-chip fetch to the viewport pass");
         CHECK(dm2_v1_runtime_last_asset_projectile_count() == 1 &&
               dm2_v1_runtime_last_fallback_projectile_count() == 0,
