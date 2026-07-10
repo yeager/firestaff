@@ -1317,6 +1317,9 @@ int main(void)
                real_asset_ownership_receipt.save_route_consumes_package_capture == 0 &&
                real_asset_ownership_receipt.champion_route_consumes_package_capture == 1 &&
                real_asset_ownership_receipt.dungeon_route_consumes_package_capture == 1 &&
+               real_asset_ownership_receipt.save_route_saturn_capture_exact == 0 &&
+               real_asset_ownership_receipt.champion_route_saturn_capture_exact == 1 &&
+               real_asset_ownership_receipt.dungeon_route_saturn_capture_exact == 1 &&
                real_asset_ownership_receipt.startup_route_consumption_complete == 1 &&
                real_asset_ownership_receipt.non_title_saturn_capture_route_complete == 1 &&
                real_asset_ownership_receipt.dungeon_startup_route_consumption_complete == 1 &&
@@ -1388,6 +1391,9 @@ int main(void)
                host_caller_receipt.save_route_consumes_package_capture == 0 &&
                host_caller_receipt.champion_route_consumes_package_capture == 1 &&
                host_caller_receipt.dungeon_route_consumes_package_capture == 1 &&
+               host_caller_receipt.save_route_saturn_capture_exact == 0 &&
+               host_caller_receipt.champion_route_saturn_capture_exact == 1 &&
+               host_caller_receipt.dungeon_route_saturn_capture_exact == 1 &&
                host_caller_receipt.startup_route_consumption_complete == 1 &&
                host_caller_receipt.non_title_saturn_capture_route_complete == 1 &&
                host_caller_receipt.dungeon_startup_route_consumption_complete == 1 &&
@@ -1645,6 +1651,9 @@ int main(void)
                real_asset_ownership_receipt.save_route_consumes_package_capture == 1 &&
                real_asset_ownership_receipt.champion_route_consumes_package_capture == 0 &&
                real_asset_ownership_receipt.dungeon_route_consumes_package_capture == 0 &&
+               real_asset_ownership_receipt.save_route_saturn_capture_exact == 1 &&
+               real_asset_ownership_receipt.champion_route_saturn_capture_exact == 0 &&
+               real_asset_ownership_receipt.dungeon_route_saturn_capture_exact == 0 &&
                real_asset_ownership_receipt.startup_route_consumption_complete == 1 &&
                real_asset_ownership_receipt.non_title_saturn_capture_route_complete == 1 &&
                real_asset_ownership_receipt.dungeon_startup_route_consumption_complete == 0 &&
@@ -1693,6 +1702,9 @@ int main(void)
                host_caller_receipt.save_route_consumes_package_capture == 1 &&
                host_caller_receipt.champion_route_consumes_package_capture == 0 &&
                host_caller_receipt.dungeon_route_consumes_package_capture == 0 &&
+               host_caller_receipt.save_route_saturn_capture_exact == 1 &&
+               host_caller_receipt.champion_route_saturn_capture_exact == 0 &&
+               host_caller_receipt.dungeon_route_saturn_capture_exact == 0 &&
                host_caller_receipt.startup_route_consumption_complete == 1 &&
                host_caller_receipt.non_title_saturn_capture_route_complete == 1 &&
                host_caller_receipt.dungeon_startup_route_consumption_complete == 0 &&
@@ -2541,6 +2553,9 @@ int main(void)
                real_asset_ownership_receipt.save_route_consumes_package_capture == 0 &&
                real_asset_ownership_receipt.champion_route_consumes_package_capture == 0 &&
                real_asset_ownership_receipt.dungeon_route_consumes_package_capture == 0 &&
+               real_asset_ownership_receipt.save_route_saturn_capture_exact == 0 &&
+               real_asset_ownership_receipt.champion_route_saturn_capture_exact == 0 &&
+               real_asset_ownership_receipt.dungeon_route_saturn_capture_exact == 0 &&
                real_asset_ownership_receipt.startup_route_consumption_complete == 0 &&
                real_asset_ownership_receipt.non_title_saturn_capture_route_complete == 0 &&
                real_asset_ownership_receipt.dungeon_startup_route_consumption_complete == 0 &&
@@ -2591,6 +2606,9 @@ int main(void)
                host_caller_receipt.save_route_consumes_package_capture == 0 &&
                host_caller_receipt.champion_route_consumes_package_capture == 0 &&
                host_caller_receipt.dungeon_route_consumes_package_capture == 0 &&
+               host_caller_receipt.save_route_saturn_capture_exact == 0 &&
+               host_caller_receipt.champion_route_saturn_capture_exact == 0 &&
+               host_caller_receipt.dungeon_route_saturn_capture_exact == 0 &&
                host_caller_receipt.startup_route_consumption_complete == 0 &&
                host_caller_receipt.non_title_saturn_capture_route_complete == 0 &&
                host_caller_receipt.dungeon_startup_route_consumption_complete == 0 &&
