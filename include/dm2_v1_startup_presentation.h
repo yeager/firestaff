@@ -21,15 +21,6 @@ typedef enum {
     DM2_V1_STARTUP_STYLE_SELECTED_TEXT = 5
 } DM2_V1_StartupStyle;
 
-/* The final M11 surface owns every decoded GDAT image for exactly one
- * presentation phase.  Keep that phase on the command instead of making the
- * host infer it from category/field pairs after decoding. */
-typedef enum {
-    DM2_V1_FRAME_OWNER_NONE = 0,
-    DM2_V1_FRAME_OWNER_STARTUP_TITLE = 1,
-    DM2_V1_FRAME_OWNER_STARTUP_MENU = 2
-} DM2_V1_FrameOwner;
-
 typedef struct DM2_V1_StartupDrawCommand {
     DM2_V1_StartupDrawKind kind;
     DM2_V1_StartupStyle style;
@@ -41,7 +32,6 @@ typedef struct DM2_V1_StartupDrawCommand {
     int gdat_index;
     int gdat_field;
     int transparent_color;
-    DM2_V1_FrameOwner frame_owner;
     char text[64];
 } DM2_V1_StartupDrawCommand;
 

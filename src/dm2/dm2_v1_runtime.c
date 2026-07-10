@@ -110,7 +110,6 @@ static int g_dm2_last_fallback_projectile_count = 0;
 static DM2_V1_RuntimeProjectileRenderReceipt g_dm2_last_projectile_render;
 static int g_dm2_last_asset_hud_portrait_count = 0;
 static int g_dm2_last_fallback_hud_portrait_count = 0;
-static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
 
 static int dm2_runtime_door_state(uint16_t square_raw) {
     return (int)(square_raw & 0x0007u);
@@ -764,7 +763,6 @@ static void dm2_runtime_process_timeline(DM2_V1_RuntimeState *rt, int now_ms) {
 void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     if (!boot_profile) return;
     memset(&g_dm2_runtime, 0, sizeof(g_dm2_runtime));
-    memset(&g_dm2_frame_ownership, 0, sizeof(g_dm2_frame_ownership));
     g_dm2_runtime.boot = boot_profile;
     g_dm2_runtime.outdoor = 0;
     g_dm2_runtime.tick_count = 0;
@@ -1787,47 +1785,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.asset_hud_portrait_drawn_count;
     g_dm2_last_fallback_hud_portrait_count =
         viewport.fallback_hud_portrait_drawn_count;
-    ++g_dm2_frame_ownership.generation;
-    g_dm2_frame_ownership.runtime_frame_owned = 1;
-    g_dm2_frame_ownership.gdat_provider_bound =
-        rt->viewport_asset_fetch != NULL;
-    g_dm2_frame_ownership.hud_gdat_blits =
-        viewport.asset_hud_portrait_drawn_count;
-    g_dm2_frame_ownership.door_gdat_blits =
-        viewport.asset_door_panel_drawn_count +
-        viewport.asset_door_overlay_drawn_count +
-        viewport.asset_door_frame_drawn_count +
-        viewport.asset_door_button_drawn_count;
-    g_dm2_frame_ownership.creature_gdat_blits =
-        viewport.asset_creature_drawn_count;
-    g_dm2_frame_ownership.valid =
-        g_dm2_frame_ownership.runtime_frame_owned &&
-        (g_dm2_frame_ownership.gdat_provider_bound ||
-         (g_dm2_frame_ownership.hud_gdat_blits == 0 &&
-          g_dm2_frame_ownership.door_gdat_blits == 0 &&
-          g_dm2_frame_ownership.creature_gdat_blits == 0));
     rt->weather.weather_seed = viewport.random_seed;
 
     return 0;
-}
-
-void dm2_v1_runtime_note_startup_frame_consumption(
-    int title_gdat_blits, int menu_gdat_blits)
-{
-    g_dm2_frame_ownership.startup_title_gdat_blits =
-        title_gdat_blits > 0 ? title_gdat_blits : 0;
-    g_dm2_frame_ownership.startup_menu_gdat_blits =
-        menu_gdat_blits > 0 ? menu_gdat_blits : 0;
-}
-
-int dm2_v1_runtime_last_frame_ownership(
-    DM2_V1_RuntimeFrameOwnershipReceipt *out_receipt)
-{
-    if (!out_receipt) {
-        return 0;
-    }
-    *out_receipt = g_dm2_frame_ownership;
-    return out_receipt->valid;
 }
 
 void dm2_v1_runtime_set_viewport_asset_provider(
