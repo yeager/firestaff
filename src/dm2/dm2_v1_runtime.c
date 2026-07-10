@@ -2484,6 +2484,73 @@ int dm2_v1_runtime_restore_live_save(const uint8_t *data, size_t data_size) {
     return 0;
 }
 
+int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
+                                          size_t data_size)
+{
+    DM2_V1_SaveCandidate candidate;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_CreatureLiveState cleared_creatures;
+    uint8_t *saved_dungeon = NULL;
+
+    if (!data || !g_dm2_runtime.boot || !g_dm2_runtime.boot->dm2_state ||
+        !g_dm2_runtime.boot->dungeon_data ||
+        dm2_v1_session_parse_save_candidate(&candidate, data, data_size) != 0) {
+        return -1;
+    }
+    dungeon = (DM2_V1_DungeonData *)g_dm2_runtime.boot->dungeon_data;
+    if (!dungeon->raw_data || dungeon->raw_size <= 0 ||
+        (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW &&
+         candidate.dungeon_size != (size_t)dungeon->raw_size)) {
+        return -1;
+    }
+
+    /* All fallible parsing and compatibility checks happen above. Keep a
+     * rollback copy anyway: a rejected candidate must not leave a half-loaded
+     * dungeon behind if a later runtime binding check is tightened. */
+    saved_dungeon = (uint8_t *)malloc((size_t)dungeon->raw_size);
+    if (!saved_dungeon) return -1;
+    memcpy(saved_dungeon, dungeon->raw_data, (size_t)dungeon->raw_size);
+    if (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+        memcpy(dungeon->raw_data, candidate.dungeon_bytes,
+               (size_t)dungeon->raw_size);
+    }
+
+    /* Original SKSave has dungeon DB records but no Firestaff-only CCM cache.
+     * Clear that cache before apply_session; a matching quicksave sidecar is
+     * allowed to replace it with the exact saved CCM/animation/GDAT state. */
+    memset(&cleared_creatures, 0, sizeof(cleared_creatures));
+    if (dm2_v1_creature_restore_live_state(&cleared_creatures) != 0 ||
+        dm2_v1_runtime_apply_session(&candidate.session) != 0) {
+        memcpy(dungeon->raw_data, saved_dungeon, (size_t)dungeon->raw_size);
+        free(saved_dungeon);
+        return -1;
+    }
+    free(saved_dungeon);
+    return 0;
+}
+
+int dm2_v1_runtime_load_save_slot(const char *save_base, uint8_t slot)
+{
+    uint8_t data[DM2_SESSION_MAX_SIZE];
+    size_t data_size = 0u;
+
+    if (dm2_sl_load(save_base, slot, data, sizeof(data), &data_size) != 0) {
+        return -1;
+    }
+    return dm2_v1_runtime_restore_save_candidate(data, data_size);
+}
+
+int dm2_v1_runtime_load_last_session(const char *save_base)
+{
+    uint8_t data[DM2_SESSION_MAX_SIZE];
+    size_t data_size = 0u;
+
+    if (dm2_sl_load_last_session(save_base, data, sizeof(data), &data_size) != 0) {
+        return -1;
+    }
+    return dm2_v1_runtime_restore_save_candidate(data, data_size);
+}
+
 static int dm2_runtime_write_live_sidecar(const char *save_root)
 {
     char path[512];

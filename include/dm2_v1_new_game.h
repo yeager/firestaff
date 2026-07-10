@@ -189,6 +189,21 @@ typedef struct DM2_V1_SessionState {
     uint8_t  reserved[256];
 } DM2_V1_SessionState;
 
+/* A decoded save candidate. dungeon_bytes aliases the caller-owned input and
+ * is populated only for an original raw SKSave body. */
+typedef enum DM2_V1_SaveCandidateKind {
+    DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION = 0,
+    DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE,
+    DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW
+} DM2_V1_SaveCandidateKind;
+
+typedef struct DM2_V1_SaveCandidate {
+    DM2_V1_SaveCandidateKind kind;
+    DM2_V1_SessionState session;
+    const uint8_t *dungeon_bytes;
+    size_t dungeon_size;
+} DM2_V1_SaveCandidate;
+
 /* ════════════════════════════════════════════════════════════════
  * New game API
  * ════════════════════════════════════════════════════════════════ */
@@ -273,6 +288,13 @@ int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
 int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
                                              const uint8_t *buf,
                                              size_t buf_size);
+
+/* Parse one payload after the 42-byte SKSave slot header. The function never
+ * changes live runtime state; callers must apply the returned candidate only
+ * after validating the active dungeon/profile boundary. */
+int dm2_v1_session_parse_save_candidate(DM2_V1_SaveCandidate *out_candidate,
+                                         const uint8_t *buf,
+                                         size_t buf_size);
 
 /* Save session to slot N using the slot manager.
  * Combines serialize + dm2_sl_save.
