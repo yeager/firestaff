@@ -89,6 +89,220 @@ static const char *const g_csb_boot_fast_scan_subdirs[] = {
     NULL
 };
 
+enum {
+    CSB_V1_GRAPHIC_TITLE = 1u,
+    CSB_V1_GRAPHIC_ENTRANCE_LEFT_DOOR = 2u,
+    CSB_V1_GRAPHIC_ENTRANCE_RIGHT_DOOR = 3u,
+    CSB_V1_GRAPHIC_ENTRANCE_SCREEN = 4u,
+    CSB_V1_GRAPHIC_ENTRANCE_CREDITS = 5u,
+    CSB_V1_CSBGRAPHICS_HUD_INVENTORY = 17u,
+    CSB_V1_CSBGRAPHICS_HUD_RESURRECT = 40u
+};
+
+static void csb_v1_boot_startup_asset_binding_set_pc34(
+    CSB_V1_StartupAssetSelection_PC34 *selection,
+    CSB_V1_StartupAssetRole_PC34 role,
+    CSB_V1_StartupAssetSource_PC34 source,
+    uint32_t graphic_index,
+    const char *path,
+    int verified)
+{
+    CSB_V1_StartupAssetBinding_PC34 *binding;
+    if (!selection || role <= CSB_V1_STARTUP_ASSET_ROLE_NONE_PC34 ||
+        role >= CSB_V1_STARTUP_ASSET_ROLE_COUNT_PC34) {
+        return;
+    }
+    binding = &selection->bindings[role];
+    memset(binding, 0, sizeof(*binding));
+    binding->role = role;
+    binding->source = source;
+    binding->graphic_index = graphic_index;
+    binding->verified = verified ? 1 : 0;
+    binding->rejects_generic_or_test_asset =
+        selection->reject_generic_or_test_assets;
+    snprintf(binding->path, sizeof(binding->path), "%s", path ? path : "");
+}
+
+static int csb_v1_boot_csbgraphics_has_m11_entry_pc34(
+    const CSB_V1_BootProfile *profile,
+    uint32_t entry_index)
+{
+    return profile && profile->csbgraphics_cache.loaded &&
+           profile->csbgraphics_m11_plan.ready &&
+           csb_v1_csbgraphics_m11_runtime_plan_find_entry(
+               &profile->csbgraphics_m11_plan, entry_index) != NULL;
+}
+
+void csb_v1_boot_startup_assets_resolve_pc34(CSB_V1_BootProfile *profile)
+{
+    CSB_V1_StartupAssetSelection_PC34 *selection;
+    const char *graphics_path;
+    const char *hud_path;
+    int graphics_ready;
+    int inventory_override;
+    int resurrect_override;
+
+    if (!profile) {
+        return;
+    }
+    selection = &profile->startup_assets;
+    memset(selection, 0, sizeof(*selection));
+    graphics_ready = profile->assets_verified && profile->graphics_verified &&
+                     profile->graphics_path[0] != '\0';
+    selection->real_graphics_available = graphics_ready ? 1 : 0;
+    selection->reject_generic_or_test_assets = graphics_ready ? 1 : 0;
+    graphics_path = graphics_ready ? profile->graphics_path : NULL;
+
+    /* ReDMCSB TITLE.C F0437 lines 424-461 loads C001 once, then presents
+     * its C424/C425/C426 zones. ENTRANCE.C F0806 lines 721-778 loads
+     * C002-C005 and derives all opening frames from C002/C003. */
+    csb_v1_boot_startup_asset_binding_set_pc34(
+        selection, CSB_V1_STARTUP_ASSET_ROLE_TITLE_PRESENTS_PC34,
+        CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34,
+        CSB_V1_GRAPHIC_TITLE, graphics_path, graphics_ready);
+    csb_v1_boot_startup_asset_binding_set_pc34(
+        selection, CSB_V1_STARTUP_ASSET_ROLE_TITLE_CHAOS_PC34,
+        CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34,
+        CSB_V1_GRAPHIC_TITLE, graphics_path, graphics_ready);
+    csb_v1_boot_startup_asset_binding_set_pc34(
+        selection, CSB_V1_STARTUP_ASSET_ROLE_TITLE_STRIKES_BACK_PC34,
+        CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34,
+        CSB_V1_GRAPHIC_TITLE, graphics_path, graphics_ready);
+    csb_v1_boot_startup_asset_binding_set_pc34(
+        selection, CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_LEFT_DOOR_PC34,
+        CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34,
+        CSB_V1_GRAPHIC_ENTRANCE_LEFT_DOOR, graphics_path, graphics_ready);
+    csb_v1_boot_startup_asset_binding_set_pc34(
+        selection, CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_RIGHT_DOOR_PC34,
+        CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34,
+        CSB_V1_GRAPHIC_ENTRANCE_RIGHT_DOOR, graphics_path, graphics_ready);
+    csb_v1_boot_startup_asset_binding_set_pc34(
+        selection, CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_SCREEN_PC34,
+        CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34,
+        CSB_V1_GRAPHIC_ENTRANCE_SCREEN, graphics_path, graphics_ready);
+    csb_v1_boot_startup_asset_binding_set_pc34(
+        selection, CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_CREDITS_PC34,
+        CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34,
+        CSB_V1_GRAPHIC_ENTRANCE_CREDITS, graphics_path, graphics_ready);
+
+    /* CSBWin Graphics.cpp:1918-1983 accepts an override only after its
+     * index is parsed. Restrict the startup HUD handoff to the existing
+     * geometry-validated M11 entries instead of accepting an arbitrary
+     * CSBgraphics.dat payload as a generic test surface. */
+    inventory_override = csb_v1_boot_csbgraphics_has_m11_entry_pc34(
+        profile, CSB_V1_CSBGRAPHICS_HUD_INVENTORY);
+    resurrect_override = csb_v1_boot_csbgraphics_has_m11_entry_pc34(
+        profile, CSB_V1_CSBGRAPHICS_HUD_RESURRECT);
+    selection->csbgraphics_available =
+        inventory_override || resurrect_override;
+    hud_path = selection->csbgraphics_available
+        ? profile->csbgraphics_cache.resolved_path : graphics_path;
+    csb_v1_boot_startup_asset_binding_set_pc34(
+        selection, CSB_V1_STARTUP_ASSET_ROLE_HUD_INVENTORY_PC34,
+        inventory_override ? CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34
+                           : CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34,
+        inventory_override ? CSB_V1_CSBGRAPHICS_HUD_INVENTORY : 0u,
+        inventory_override ? hud_path : graphics_path,
+        inventory_override || graphics_ready);
+    csb_v1_boot_startup_asset_binding_set_pc34(
+        selection, CSB_V1_STARTUP_ASSET_ROLE_HUD_RESURRECT_PC34,
+        resurrect_override ? CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34
+                           : CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34,
+        resurrect_override ? CSB_V1_CSBGRAPHICS_HUD_RESURRECT : 0u,
+        resurrect_override ? hud_path : graphics_path,
+        resurrect_override || graphics_ready);
+}
+
+const CSB_V1_StartupAssetBinding_PC34 *
+csb_v1_boot_startup_asset_binding_pc34(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_StartupAssetRole_PC34 role)
+{
+    if (!profile || role <= CSB_V1_STARTUP_ASSET_ROLE_NONE_PC34 ||
+        role >= CSB_V1_STARTUP_ASSET_ROLE_COUNT_PC34) {
+        return NULL;
+    }
+    return &profile->startup_assets.bindings[role];
+}
+
+const char *csb_v1_boot_startup_asset_source_name_pc34(
+    CSB_V1_StartupAssetSource_PC34 source)
+{
+    switch (source) {
+    case CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34: return "graphics.dat";
+    case CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34: return "csbgraphics.dat";
+    case CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34: return "fallback";
+    case CSB_V1_STARTUP_ASSET_SOURCE_NONE_PC34:
+    default: return "none";
+    }
+}
+
+static CSB_V1_StartupAssetRole_PC34
+csb_v1_boot_startup_role_for_command_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_StartupAssetCommand_PC34 *command)
+{
+    if (!plan || !command) {
+        return CSB_V1_STARTUP_ASSET_ROLE_NONE_PC34;
+    }
+    if (command->kind == CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34) {
+        return CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_LEFT_DOOR_PC34;
+    }
+    if (command->kind == CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34) {
+        return CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_RIGHT_DOOR_PC34;
+    }
+    if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
+        switch (plan->title_stage) {
+        case CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34:
+            return CSB_V1_STARTUP_ASSET_ROLE_TITLE_PRESENTS_PC34;
+        case CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34:
+            return CSB_V1_STARTUP_ASSET_ROLE_TITLE_CHAOS_PC34;
+        case CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34:
+            return CSB_V1_STARTUP_ASSET_ROLE_TITLE_STRIKES_BACK_PC34;
+        default:
+            return CSB_V1_STARTUP_ASSET_ROLE_NONE_PC34;
+        }
+    }
+    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34) {
+        return CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_CREDITS_PC34;
+    }
+    return CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_SCREEN_PC34;
+}
+
+int csb_v1_boot_startup_render_plan_uses_real_assets_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    int i;
+    int seen = 0;
+    if (!profile || !plan || !profile->startup_assets.real_graphics_available) {
+        return 0;
+    }
+    for (i = 0; i < plan->asset_command_count &&
+                i < CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34; ++i) {
+        const CSB_V1_StartupAssetBinding_PC34 *binding;
+        CSB_V1_StartupAssetRole_PC34 role;
+        if (!plan->asset_commands[i].visible) {
+            continue;
+        }
+        ++seen;
+        role = csb_v1_boot_startup_role_for_command_pc34(
+            plan, &plan->asset_commands[i]);
+        binding = csb_v1_boot_startup_asset_binding_pc34(profile, role);
+        if (!binding || !binding->verified ||
+            binding->source == CSB_V1_STARTUP_ASSET_SOURCE_NONE_PC34 ||
+            binding->source == CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34 ||
+            binding->path[0] == '\0') {
+            return 0;
+        }
+        if (plan->asset_commands[i].asset_id !=
+            (int)binding->graphic_index) {
+            return 0;
+        }
+    }
+    return seen > 0;
+}
+
 static void csb_v1_boot_startup_route_from_presentation_pc34(
     const CSB_V1_StartupPresentationReceipt_PC34 *presentation,
     const CSB_V1_StartupHostFacts_PC34 *facts,
@@ -603,6 +817,7 @@ void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile)
            sizeof(profile->csbgraphics_skin_def_words));
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
     csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
+    csb_v1_boot_startup_assets_resolve_pc34(profile);
     csb_v1_character_init_default(&profile->imported_party);
     csb_v1_runtime_init(&profile->runtime, NULL);
     csb_v1_engine_version_display_set_csb(0);
@@ -5885,6 +6100,7 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
         csb_v1_boot_set_save_root(profile, NULL);
     }
     (void)csb_v1_boot_scan_csbgraphics(profile, NULL);
+    csb_v1_boot_startup_assets_resolve_pc34(profile);
     if (profile->assets_verified) {
         profile->state = CSB_V1_BOOT_STATE_ASSETS_READY;
         return 0;
