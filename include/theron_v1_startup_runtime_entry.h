@@ -34,6 +34,8 @@ typedef struct {
     int level_loaded;
     int runtime_level_source;
     int track02_semantic_handoff;
+    int track02_media_route;
+    Theron_StartupMediaStateReceipt track02_media;
     int fallback_visuals_blocked;
     int structured_runtime_route;
     int runtime_receipt_text_route;
@@ -51,6 +53,9 @@ typedef struct {
     char inspect_detail[320];
     int runtime_level_source;
     int track02_semantic_handoff;
+    int track02_media_route;
+    unsigned int track02_media_route_mask;
+    uint32_t track02_media_checksum;
     int fallback_visuals_blocked;
     int structured_runtime_route;
     int runtime_receipt_text_route;
@@ -63,7 +68,10 @@ typedef enum {
     THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM = 1,
     THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC = 2,
     THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED = 3,
-    THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME = 4
+    THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME = 4,
+    /* A later dungeon or Continue/SRM entry has a verified Track 02 bitmap
+     * atlas but no broader level-record claim. */
+    THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_MEDIA = 5
 } Theron_V1StartupRuntimeLevelSource;
 
 int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
