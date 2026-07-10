@@ -2899,6 +2899,12 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         return;
     }
     if (hasExplicitDataDirOverride) {
+        if (gameId && gameId[0] != '\0') {
+            M12_AssetStatus_ScanGame(&state->assetStatus,
+                                     config->dataDir,
+                                     gameId);
+            return;
+        }
         if ((!gameId || gameId[0] == '\0') &&
             m12_startup_data_dir_is_game_leaf(config->dataDir)) {
             M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
@@ -2912,18 +2918,21 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         }
         return;
     }
-    /* The visible launcher must publish full cross-game availability even
-     * when the caller supplied --game.  M12_AssetStatus_ScanGame() is a
-     * direct-launch fast path for Theron/Nexus and may intentionally return
-     * a one-game status; using it here makes the start menu disagree with
-     * `firestaff --scan-data` for the same data root. */
-    M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
+    if (gameId && gameId[0] != '\0') {
+        M12_AssetStatus_ScanGame(&state->assetStatus, config->dataDir, gameId);
+    } else {
+        M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
+    }
     {
         M12_AssetStatus defaultStatus;
         int currentReadyCount = m12_asset_ready_game_count(&state->assetStatus);
         int defaultReadyCount;
         memset(&defaultStatus, 0, sizeof(defaultStatus));
-        M12_AssetStatus_Scan(&defaultStatus, NULL);
+        if (gameId && gameId[0] != '\0') {
+            M12_AssetStatus_ScanGame(&defaultStatus, NULL, gameId);
+        } else {
+            M12_AssetStatus_Scan(&defaultStatus, NULL);
+        }
         defaultReadyCount = m12_asset_ready_game_count(&defaultStatus);
         if (defaultReadyCount > currentReadyCount ||
             (gameId && gameId[0] != '\0' &&
@@ -2945,7 +2954,13 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
             int currentReadyCount = m12_asset_ready_game_count(&state->assetStatus);
             int fallbackReadyCount;
             memset(&fallbackStatus, 0, sizeof(fallbackStatus));
-            M12_AssetStatus_Scan(&fallbackStatus, resolvedDataDir);
+            if (gameId && gameId[0] != '\0') {
+                M12_AssetStatus_ScanGame(&fallbackStatus,
+                                         resolvedDataDir,
+                                         gameId);
+            } else {
+                M12_AssetStatus_Scan(&fallbackStatus, resolvedDataDir);
+            }
             fallbackReadyCount = m12_asset_ready_game_count(&fallbackStatus);
             if (fallbackReadyCount > currentReadyCount ||
                 (gameId && gameId[0] != '\0' &&

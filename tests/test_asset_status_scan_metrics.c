@@ -333,6 +333,34 @@ static void check_dm1_optional_boot_files_are_original_candidates(const char* ro
               "DM1 optional boot files must not satisfy the required launch gate");
 }
 
+static void check_direct_game_scan_limits_hash_fanout(const char* root) {
+    M12_AssetStatus status;
+    M12_AssetStatusScanMetrics fullMetrics;
+    M12_AssetStatusScanMetrics dm1Metrics;
+
+    M12_AssetStatus_TestResetScanMetrics();
+    M12_AssetStatus_Scan(&status, root);
+    fullMetrics = M12_AssetStatus_TestGetScanMetrics();
+
+    M12_AssetStatus_TestResetScanMetrics();
+    M12_AssetStatus_ScanGame(&status, root, "dm1");
+    dm1Metrics = M12_AssetStatus_TestGetScanMetrics();
+
+    check_int(dm1Metrics.rootCount == fullMetrics.rootCount,
+              "direct game scan should use the same requested root set");
+    check_int(dm1Metrics.versionHashLookups < fullMetrics.versionHashLookups,
+              "direct game scan should not search every game's version hashes");
+    check_int(dm1Metrics.requiredHashLookups < fullMetrics.requiredHashLookups,
+              "direct game scan should not search every game's required hashes");
+    check_int(M12_AssetStatus_GetRequiredFileCount(&status, "dm1") > 0U,
+              "direct DM1 scan should keep DM1 required-file metadata");
+    check_int(M12_AssetStatus_GameAvailable(&status, "csb") == 0 &&
+                  M12_AssetStatus_GameAvailable(&status, "dm2") == 0 &&
+                  M12_AssetStatus_GameAvailable(&status, "nexus") == 0 &&
+                  M12_AssetStatus_GameAvailable(&status, "theron") == 0,
+              "direct DM1 scan should not mark other games available");
+}
+
 static void check_dm2_virtual_required_files_materialize(const char* root) {
 #ifdef FIRESTAFF_HAS_ZLIB
     static const char graphicsPayload[] =
@@ -577,6 +605,7 @@ int main(void) {
     check_int(!M12_AssetStatus_HasOriginalFileCandidate(&status),
               "empty fixture should not report original asset candidates");
 
+    check_direct_game_scan_limits_hash_fanout(requestRoot);
     check_dm1_optional_boot_files_are_original_candidates(requestRoot);
     check_dm2_virtual_required_files_materialize(requestRoot);
     check_direct_theron_file_scan_avoids_root_rescan(requestRoot);
