@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <io.h>
+#include <windows.h>
 #define strcasecmp _stricmp
 #else
 #include <dirent.h>
@@ -30,6 +31,69 @@ static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"FONT256.S2D", "427735a9997e692d85f2d81158dba423"},
     {"MENU.BPK", "c2776768ff25287c79013a1452253ca0"},
     {"LEV00.DGN", "603ec9c531a92539babdda84ab09e78e"},
+    {"LEV01.DGN", "751e1442bf7dccbd41bf146b5be144ab"},
+    {"LEV02.DGN", "e2cb85d9fedc27f894a84e0f465fcde1"},
+    {"LEV03.DGN", "19637d6b59849565f64565aed786d7ea"},
+    {"LEV04.DGN", "85abc1b822e5c66ec4e99f1f676c140e"},
+    {"LEV05.DGN", "ed5d54ab0ac1c927c1346dd966c8a5cc"},
+    {"LEV06.DGN", "58c336ff6146e7216f0081e726823ea1"},
+    {"LEV07.DGN", "c19e6038a017a320515ecbb66f6da197"},
+    {"LEV08.DGN", "9bfc31bea631345a3660c2645be0e95b"},
+    {"LEV09.DGN", "32a6450f29eb7babd73fcbe7a0310f22"},
+    {"LEV10.DGN", "2928440e9c21457929f1323a28a42f70"},
+    {"LEV11.DGN", "d7be5cd0d6e5c10afe99ec9950614fad"},
+    {"LEV12.DGN", "db1cf70d6730615f73f191fad5e11e32"},
+    {"LEV13.DGN", "f8876d0181d79727013236a6b597b99b"},
+    {"LEV14.DGN", "a634dd5e95567ecbbbc332350c8cf12b"},
+    {"LEV15.DGN", "5e6e237074f1e6b0decc629868a51f3c"},
+    {"SLEV00.BIN", "59c01cbdd224152a6176687cdebeea9e"},
+    {"SLEV01.BIN", "b3b14a73db311b7cf1bf417e858e5350"},
+    {"SLEV02.BIN", "a77b9cae611a01fbc6a68958f9252b48"},
+    {"SLEV03.BIN", "6600745773cd7058d3125747ead5b612"},
+    {"SLEV04.BIN", "1d678eaff22d0827899a8ffa7377f06b"},
+    {"SLEV05.BIN", "9166ae024df53462b7b47ca81db56fc4"},
+    {"SLEV06.BIN", "7c737f7532677babfc28848198a8288d"},
+    {"SLEV07.BIN", "d607ef9b6ee52c0730b92ed22843c2da"},
+    {"SLEV08.BIN", "5f1bfbd324648ac6872c73d3d282cd6d"},
+    {"SLEV09.BIN", "f588811de05a2099633f7dba5a0ca956"},
+    {"SLEV10.BIN", "e346ee3c7db858cbd872ca947eb79309"},
+    {"SLEV11.BIN", "a7deb8241dfa633804793cf07e841a84"},
+    {"SLEV12.BIN", "fc4028c61279d7d10fc771b040486c85"},
+    {"SLEV13.BIN", "2a988cf44049e59e647976d93126dedb"},
+    {"SLEV14.BIN", "8116d450f4f60af67e8a86b559beb5ab"},
+    {"SLEV15.BIN", "5b71918f112e10b3d8c40092565cce53"},
+    {"SNDLEV00.SAL", "ea8493341fd8ad4f20335629e6dbdbbc"},
+    {"SNDLEV01.SAL", "ea8493341fd8ad4f20335629e6dbdbbc"},
+    {"SNDLEV02.SAL", "729a66977e1661808d104059ff21e95e"},
+    {"SNDLEV03.SAL", "5c357157d68b2878881e1e0a293d3058"},
+    {"SNDLEV04.SAL", "9d8d8b793801234b8f4b0e64e1135afc"},
+    {"SNDLEV05.SAL", "db21b7945b65ccfbb7a4246b1f5dca7b"},
+    {"SNDLEV06.SAL", "2d7698144c64996536e8240ee7bfea08"},
+    {"SNDLEV07.SAL", "9b31400c2b3c7468b8f88c1fd09c8bca"},
+    {"SNDLEV08.SAL", "0e5caba79b2e31963739784f6941f3c5"},
+    {"SNDLEV09.SAL", "f311e79dd6e4be376c0466ea34a27b10"},
+    {"SNDLEV10.SAL", "4b655b6cf8c6caebe99dd0b3b55d39c0"},
+    {"SNDLEV11.SAL", "7a9509b7d777f1468ecf987107f1aed0"},
+    {"SNDLEV12.SAL", "59e70afc5cf607c6d268811cbed961cd"},
+    {"SNDLEV13.SAL", "14a1f88abc0363d7a96b2a267d89e7a4"},
+    {"SNDLEV14.SAL", "1c12a4f3d3dfc9892cdf54955abbca62"},
+    {"SNDLEV15.SAL", "d8cfb5da08d5fc8d86834d81d8997eac"},
+    {"SNDLEV00.MAP", "232afa942754027ecf49702703c72e83"},
+    {"SNDLEV01.MAP", "232afa942754027ecf49702703c72e83"},
+    {"SNDLEV02.MAP", "e724a7b953a6ee9d4bb7d5c2114d5310"},
+    {"SNDLEV03.MAP", "91be9e82471be25036889b6801e7fcd3"},
+    {"SNDLEV04.MAP", "64f95657b2745acdbed9d938ba5dfd9e"},
+    {"SNDLEV05.MAP", "95be564a755500e2605b6c83f742f37f"},
+    {"SNDLEV06.MAP", "8d0a168e11ebeea2c424a81a474c9d17"},
+    {"SNDLEV07.MAP", "2c8def9015004a9955706c7f41d319be"},
+    {"SNDLEV08.MAP", "4e5bee7797d2b3b06a54bb55e6809e90"},
+    {"SNDLEV09.MAP", "47af8003ec0900979fa939288cc1b549"},
+    {"SNDLEV10.MAP", "89f984a9eb3be797c37515766e658c12"},
+    {"SNDLEV11.MAP", "130bf4977263076710aaf722c3078f0c"},
+    {"SNDLEV12.MAP", "5cdd004b21437268ef51bdc6be33988d"},
+    {"SNDLEV13.MAP", "1f3a1f6ddae837f8140063a637d5fbbc"},
+    {"SNDLEV14.MAP", "fd3b5d9894265d0753aee0e0ddb02500"},
+    {"SNDLEV15.MAP", "9757c71fe8afad9ad3be58543640270d"},
     {NULL, NULL}
 };
 
@@ -57,6 +121,113 @@ static int nexus_path_has_ext(const char *path, const char *ext) {
 static int nexus_path_is_file(const char *path) {
     struct stat st;
     return path && stat(path, &st) == 0 && (st.st_mode & S_IFMT) != S_IFDIR;
+}
+
+static int nexus_v1_file_has_dmdf_magic(const char *path) {
+    unsigned char magic[4];
+    FILE *fp;
+    if (!path || !path[0]) return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    if (fread(magic, 1, sizeof(magic), fp) != sizeof(magic)) {
+        fclose(fp);
+        return 0;
+    }
+    fclose(fp);
+    return magic[0] == 'D' && magic[1] == 'M' &&
+           magic[2] == 'D' && magic[3] == 'F';
+}
+
+#ifdef _WIN32
+static int nexus_v1_find_dmdf_family_file_recursive(const char *dir,
+                                                    const char *ext,
+                                                    char *out_path,
+                                                    int out_size,
+                                                    int depth) {
+    WIN32_FIND_DATAA fd;
+    HANDLE h;
+    char pattern[512];
+    if (!dir || !ext || !out_path || out_size <= 0 || depth < 0) return 0;
+    snprintf(pattern, sizeof(pattern), "%s\\*", dir);
+    h = FindFirstFileA(pattern, &fd);
+    if (h == INVALID_HANDLE_VALUE) return 0;
+    do {
+        char path[512];
+        if (strcmp(fd.cFileName, ".") == 0 ||
+            strcmp(fd.cFileName, "..") == 0) {
+            continue;
+        }
+        snprintf(path, sizeof(path), "%s\\%s", dir, fd.cFileName);
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            if (nexus_v1_find_dmdf_family_file_recursive(path, ext, out_path,
+                                                         out_size, depth - 1)) {
+                FindClose(h);
+                return 1;
+            }
+        } else if (nexus_path_has_ext(path, ext) &&
+                   nexus_v1_file_has_dmdf_magic(path)) {
+            snprintf(out_path, (size_t)out_size, "%s", path);
+            FindClose(h);
+            return 1;
+        }
+    } while (FindNextFileA(h, &fd));
+    FindClose(h);
+    return 0;
+}
+#else
+static int nexus_v1_find_dmdf_family_file_recursive(const char *dir,
+                                                    const char *ext,
+                                                    char *out_path,
+                                                    int out_size,
+                                                    int depth) {
+    DIR *d;
+    struct dirent *ent;
+    if (!dir || !ext || !out_path || out_size <= 0 || depth < 0) return 0;
+    d = opendir(dir);
+    if (!d) return 0;
+    while ((ent = readdir(d)) != NULL) {
+        char path[512];
+        struct stat st;
+        if (strcmp(ent->d_name, ".") == 0 ||
+            strcmp(ent->d_name, "..") == 0) {
+            continue;
+        }
+        snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
+        if (stat(path, &st) != 0) {
+            continue;
+        }
+        if ((st.st_mode & S_IFMT) == S_IFDIR) {
+            if (nexus_v1_find_dmdf_family_file_recursive(path, ext, out_path,
+                                                         out_size, depth - 1)) {
+                closedir(d);
+                return 1;
+            }
+        } else if (nexus_path_has_ext(path, ext) &&
+                   nexus_v1_file_has_dmdf_magic(path)) {
+            snprintf(out_path, (size_t)out_size, "%s", path);
+            closedir(d);
+            return 1;
+        }
+    }
+    closedir(d);
+    return 0;
+}
+#endif
+
+static int nexus_v1_find_dmdf_family_file(const char *dir,
+                                          const char *name,
+                                          char *out_path,
+                                          int out_size) {
+    if (!name) return 0;
+    if (nexus_path_has_ext(name, ".MNS")) {
+        return nexus_v1_find_dmdf_family_file_recursive(dir, ".MNS",
+                                                        out_path, out_size, 8);
+    }
+    if (nexus_path_has_ext(name, ".DMDF")) {
+        return nexus_v1_find_dmdf_family_file_recursive(dir, ".DMDF",
+                                                        out_path, out_size, 8);
+    }
+    return 0;
 }
 
 static const Nexus_DMDFTextureSurface *nexus_v1_plan_surface(
@@ -209,6 +380,10 @@ static uint8_t *nexus_v1_read_extracted_file(Nexus_V1_Engine *engine,
         asset_find_by_md5(engine->data_dir, md5, path, (int)sizeof(path), 8)) {
         return nexus_read_host_file(path, out_size);
     }
+    if (nexus_v1_find_dmdf_family_file(engine->data_dir, name, path,
+                                       (int)sizeof(path))) {
+        return nexus_read_host_file(path, out_size);
+    }
     return NULL;
 }
 
@@ -232,7 +407,6 @@ static int nexus_try_open_disc_path(Nexus_V1_Engine *engine, const char *path) {
 
 /* Try to find ISO/CUE/BIN in data directory — cross-platform */
 #ifdef _WIN32
-#include <windows.h>
 static int find_iso(const char *dir, char *disc_path, int max_len) {
     static const char* const patterns[] = {"*.cue", "*.bin", "*.iso", NULL};
     WIN32_FIND_DATAA fd;
