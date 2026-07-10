@@ -871,6 +871,13 @@ int main(void) {
                   "DM1 original PC34 save has roundtrip receipt");
             check(original->dm1PC34CoreStateMatches == 1,
                   "DM1 original PC34 receipt core state matches");
+            check(original->dm1PC34PartEnvelopeReady == 1,
+                  "DM1 original PC34 save has F7057 envelope receipt");
+            check(original->dm1PC34PartEnvelopeOkCount == 5,
+                  "DM1 original PC34 save has five F7057 parts");
+            check(original->dm1PC34PartEnvelopePayloadBytes >
+                      SAVEGAME_PC34_DM_SAVE_HEADER_SIZE,
+                  "DM1 original PC34 save exposes F7057 payload bytes");
             check(original->dm1PC34RoundtripGameTime == 1000u,
                   "DM1 original PC34 receipt exposes game tick");
             check(original->dm1PC34RoundtripBytes >
