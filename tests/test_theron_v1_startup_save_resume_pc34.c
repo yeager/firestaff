@@ -3870,6 +3870,10 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                     receipt.startup_bitmap_stage_atlas_width == 128u &&
                     receipt.startup_bitmap_soul_room_atlas_width == 112u &&
                     receipt.startup_bitmap_forcefield_atlas_width == 112u &&
+                    receipt.startup_bitmap_wide_route_mask ==
+                        TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    receipt.startup_bitmap_wide_route_count == 4 &&
+                    receipt.startup_bitmap_wide_atlas_tile_count == 60u &&
                     receipt.startup_bitmap_title_sample_count == 16 &&
                     receipt.startup_bitmap_stage_sample_count == 16 &&
                     receipt.startup_bitmap_soul_room_sample_count == 14 &&
@@ -4062,6 +4066,10 @@ static void test_track02_startup_bitmap_decode_iso_receipt(void) {
                     receipt.startup_bitmap_stage_atlas_width == 96u &&
                     receipt.startup_bitmap_soul_room_atlas_width == 96u &&
                     receipt.startup_bitmap_forcefield_atlas_width == 96u &&
+                    receipt.startup_bitmap_wide_route_mask ==
+                        TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    receipt.startup_bitmap_wide_route_count == 4 &&
+                    receipt.startup_bitmap_wide_atlas_tile_count == 48u &&
                     receipt.startup_bitmap_soul_room_sample_count == 12 &&
                     receipt.startup_bitmap_forcefield_sample_count == 12 &&
                     (receipt.startup_bitmap_route_mask &
@@ -4122,16 +4130,47 @@ static void test_startup_receipt_bitmap_art_gate(void) {
     media_receipt.startup_bitmap_stage_atlas_width = 64u;
     media_receipt.startup_bitmap_soul_room_atlas_width = 64u;
     media_receipt.startup_bitmap_forcefield_atlas_width = 64u;
+    media_receipt.startup_bitmap_wide_route_mask = 0u;
+    media_receipt.startup_bitmap_wide_route_count = 0;
+    media_receipt.startup_bitmap_wide_atlas_tile_count = 0u;
 
     theron_v1_startup_receipt_apply_bitmap_art_summary(&receipt,
                                                        &media_receipt);
     expect_true(receipt.startup_decoded_art_count ==
                     THERON_STARTUP_HERO_MIRROR_COUNT,
                 "startup receipt promotes full Track02 bitmap atlas to decoded art");
+    expect_true(receipt.startup_bitmap_wide_route_mask == 0u &&
+                    receipt.startup_bitmap_wide_route_count == 0u &&
+                    receipt.startup_bitmap_wide_atlas_tile_count == 0u,
+                "startup receipt keeps base 64px atlas separate from wide proof");
+
+    media_receipt.startup_bitmap_title_atlas_tile_count = 12u;
+    media_receipt.startup_bitmap_stage_atlas_tile_count = 12u;
+    media_receipt.startup_bitmap_soul_room_atlas_tile_count = 12u;
+    media_receipt.startup_bitmap_forcefield_atlas_tile_count = 12u;
+    media_receipt.startup_bitmap_title_atlas_width = 96u;
+    media_receipt.startup_bitmap_stage_atlas_width = 96u;
+    media_receipt.startup_bitmap_soul_room_atlas_width = 96u;
+    media_receipt.startup_bitmap_forcefield_atlas_width = 96u;
+    media_receipt.startup_bitmap_wide_route_mask =
+        TST_THERON_FULL_START_BITMAP_ROUTES;
+    media_receipt.startup_bitmap_wide_route_count = 4;
+    media_receipt.startup_bitmap_wide_atlas_tile_count = 48u;
+    theron_v1_startup_receipt_apply_bitmap_art_summary(&receipt,
+                                                       &media_receipt);
+    expect_true(receipt.startup_bitmap_wide_route_mask ==
+                    TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    receipt.startup_bitmap_wide_route_count == 4u &&
+                    receipt.startup_bitmap_wide_atlas_tile_count == 48u,
+                "startup receipt preserves wide Track02 bitmap proof");
 
     media_receipt.startup_bitmap_atlas_tile_count = 24u;
     media_receipt.startup_bitmap_soul_room_atlas_tile_count = 4u;
     media_receipt.startup_bitmap_soul_room_atlas_width = 32u;
+    media_receipt.startup_bitmap_wide_route_mask &=
+        ~THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM;
+    media_receipt.startup_bitmap_wide_route_count = 3;
+    media_receipt.startup_bitmap_wide_atlas_tile_count = 36u;
     theron_v1_startup_receipt_apply_bitmap_art_summary(&receipt,
                                                        &media_receipt);
     expect_true(receipt.startup_decoded_art_count == 0u,
