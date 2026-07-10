@@ -15,6 +15,37 @@ void theron_v1_startup_media_init(Theron_StartupMedia *media) {
         (int)THERON_TRACK02_SIGNAL_BAD_INPUT;
 }
 
+static void theron_v1_startup_media_capture_runtime_identity(
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_RuntimeMediaIdentity *identity) {
+    Theron_Track02BankSignal signal;
+
+    if (!identity) return;
+    memset(identity, 0, sizeof(*identity));
+    if (theron_v1_track02_find_bank_signal(hucard_rom, hucard_rom_size,
+                                            md5_hex, &signal) !=
+        THERON_TRACK02_SIGNAL_OK || signal.anchor_count == 0u ||
+        signal.stride == 0u) {
+        return;
+    }
+    identity->track02_variant = (int)signal.variant;
+    identity->bank_anchor_index = 0u;
+    identity->bank_descriptor_offset = signal.descriptor_offsets[0];
+    identity->bank_first_value = signal.first_value;
+    identity->bank_last_value = signal.last_value;
+    identity->bank_stride = signal.stride;
+    identity->audio_frame_ready = signal.audio_bank_id_recognized[0] ? 1 : 0;
+    identity->audio_bank_id = signal.audio_bank_id[0];
+    identity->audio_bank_id_offset = signal.audio_bank_id_offsets[0];
+    identity->audio_bank_prefix_offset = signal.audio_bank_prefix_offsets[0];
+    identity->checksum = signal.audio_bank_id[0] ^
+        (uint32_t)signal.descriptor_offsets[0] ^
+        ((uint32_t)signal.first_value << 16) ^ signal.last_value;
+    identity->ready = 1;
+}
+
 void theron_v1_startup_media_state_receipt_init(
     Theron_StartupMediaStateReceipt *receipt) {
     if (!receipt) {
@@ -273,6 +304,8 @@ void theron_v1_startup_media_capture_track02(
              "%s",
              md5_hex);
     out_media->track02_size = hucard_rom_size;
+    theron_v1_startup_media_capture_runtime_identity(
+        hucard_rom, hucard_rom_size, md5_hex, &out_media->runtime_media_identity);
     theron_v1_startup_media_capture_roster(hucard_rom,
                                            hucard_rom_size,
                                            md5_hex,
@@ -347,6 +380,7 @@ void theron_v1_startup_media_capture_track02_state_receipt(
     out_receipt->startup_bitmap_atlas_checksum =
         media.startup_bitmap_atlas_checksum;
     out_receipt->startup_bitmap_atlas = media.startup_bitmap_atlas;
+    out_receipt->runtime_media_identity = media.runtime_media_identity;
     out_receipt->startup_bitmap_title_sample_count =
         media.startup_bitmap_title_sample_count;
     out_receipt->startup_bitmap_stage_sample_count =

@@ -67,6 +67,24 @@ typedef struct {
     uint8_t pixels[THERON_RUNTIME_MEDIA_PIXELS];
 } Theron_RuntimeMediaSurface;
 
+/* Provenance for the bank and audio frame paired with decoded Track 02
+ * surfaces.  This records byte-verified routing only; it does not claim a
+ * decoded palette payload or playable audio stream. */
+typedef struct {
+    int ready;
+    int track02_variant;
+    size_t bank_anchor_index;
+    size_t bank_descriptor_offset;
+    uint16_t bank_first_value;
+    uint16_t bank_last_value;
+    uint16_t bank_stride;
+    int audio_frame_ready;
+    uint32_t audio_bank_id;
+    size_t audio_bank_id_offset;
+    size_t audio_bank_prefix_offset;
+    uint32_t checksum;
+} Theron_RuntimeMediaIdentity;
+
 typedef struct {
     int restored;
     unsigned int route_mask;
@@ -75,6 +93,7 @@ typedef struct {
      * forcefield explicitly selects the decoded forcefield surface. */
     Theron_RuntimeMediaSurface stage;
     Theron_RuntimeMediaSurface forcefield;
+    Theron_RuntimeMediaIdentity identity;
 } Theron_RuntimeLevelMedia;
 
 /* ── Square tile types ────────────────────────────────────────────── */
@@ -314,6 +333,9 @@ const Theron_RuntimeMediaSurface *theron_v1_world_runtime_media_for_level(
     const Theron_V1_World *world,
     int level_index,
     int forcefield_active);
+int theron_v1_world_runtime_media_set_identity(
+    Theron_V1_World *world,
+    const Theron_RuntimeMediaIdentity *identity);
 
 /* ── Deterministic world hash (FNV-1a 64-bit) ─────────────────────── */
 #define THERON_HASH_SEED_PARTY   0x50415254UL  /* 'PART' */
