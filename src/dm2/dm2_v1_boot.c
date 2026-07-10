@@ -3781,6 +3781,58 @@ static int dm2_v1_boot_runtime_decoded_gdat_hash_add(
     return 1;
 }
 
+static int dm2_v1_boot_runtime_map_chip_category_hash_add(
+    DM2_V1_BootProfile *profile,
+    int category,
+    int max_materialized,
+    uint32_t *io_raw_hash,
+    uint32_t *io_raw_byte_count,
+    uint32_t *io_decoded_hash,
+    uint32_t *io_decoded_pixel_count)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    int entry_count;
+    int materialized = 0;
+
+    if (!profile || !profile->graphics_dat || !io_raw_hash ||
+        !io_raw_byte_count || !io_decoded_hash || !io_decoded_pixel_count ||
+        max_materialized <= 0) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    entry_count = dm2_v1_asset_category_entry_count(&gfx->loader, category);
+    if (entry_count <= 0) return 0;
+
+    for (int index = 0; index < entry_count && materialized < max_materialized;
+         ++index) {
+        uint32_t raw_hash = *io_raw_hash;
+        uint32_t raw_bytes = *io_raw_byte_count;
+        uint32_t decoded_hash = *io_decoded_hash;
+        uint32_t decoded_pixels = *io_decoded_pixel_count;
+        if (dm2_v1_boot_runtime_raw_gdat_hash_add(
+                profile,
+                category,
+                index,
+                DM2_GDAT_IMG_MAP_CHIP,
+                &raw_hash,
+                &raw_bytes) &&
+            dm2_v1_boot_runtime_decoded_gdat_hash_add(
+                profile,
+                category,
+                index,
+                DM2_GDAT_IMG_MAP_CHIP,
+                &decoded_hash,
+                &decoded_pixels)) {
+            *io_raw_hash = raw_hash;
+            *io_raw_byte_count = raw_bytes;
+            *io_decoded_hash = decoded_hash;
+            *io_decoded_pixel_count = decoded_pixels;
+            ++materialized;
+        }
+    }
+    return materialized;
+}
+
 static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
     DM2_V1_BootProfile *profile,
     int *out_portrait_count,
@@ -5139,6 +5191,55 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             combined_hash,
             out_receipt->teleporter_map_chip_decoded_hash);
     }
+    /* skproject/SKWIN/SkWinCore.cpp DRAW_MAP_CHIP first pulls the base
+     * magic-map tile from GDAT_CATEGORY_GRAPHICSSET, then overlays
+     * GDAT_CATEGORY_WALL_GFX and GDAT_CATEGORY_FLOOR_GFX map chips via
+     * QUERY_DUNGEON_MAP_CHIP_PICT before the teleporter/object routes. */
+    out_receipt->dungeon_map_chip_raw_hash = 0x324d4352u;
+    out_receipt->dungeon_map_chip_decoded_hash = 0x324d4344u;
+    out_receipt->dungeon_map_chip_graphicsset_count =
+        dm2_v1_boot_runtime_map_chip_category_hash_add(
+            profile,
+            DM2_GDAT_CATEGORY_GRAPHICSSET,
+            4,
+            &out_receipt->dungeon_map_chip_raw_hash,
+            &out_receipt->dungeon_map_chip_raw_byte_count,
+            &out_receipt->dungeon_map_chip_decoded_hash,
+            &out_receipt->dungeon_map_chip_decoded_pixel_count);
+    out_receipt->dungeon_map_chip_wall_count =
+        dm2_v1_boot_runtime_map_chip_category_hash_add(
+            profile,
+            DM2_GDAT_CATEGORY_WALL_GFX,
+            8,
+            &out_receipt->dungeon_map_chip_raw_hash,
+            &out_receipt->dungeon_map_chip_raw_byte_count,
+            &out_receipt->dungeon_map_chip_decoded_hash,
+            &out_receipt->dungeon_map_chip_decoded_pixel_count);
+    out_receipt->dungeon_map_chip_floor_count =
+        dm2_v1_boot_runtime_map_chip_category_hash_add(
+            profile,
+            DM2_GDAT_CATEGORY_FLOOR_GFX,
+            8,
+            &out_receipt->dungeon_map_chip_raw_hash,
+            &out_receipt->dungeon_map_chip_raw_byte_count,
+            &out_receipt->dungeon_map_chip_decoded_hash,
+            &out_receipt->dungeon_map_chip_decoded_pixel_count);
+    out_receipt->dungeon_map_chip_ready =
+        out_receipt->dungeon_map_chip_graphicsset_count > 0 &&
+        out_receipt->dungeon_map_chip_wall_count > 0 &&
+        out_receipt->dungeon_map_chip_floor_count > 0 &&
+        out_receipt->dungeon_map_chip_raw_hash != 0u &&
+        out_receipt->dungeon_map_chip_raw_byte_count > 0u &&
+        out_receipt->dungeon_map_chip_decoded_hash != 0u &&
+        out_receipt->dungeon_map_chip_decoded_pixel_count > 0u;
+    if (out_receipt->dungeon_map_chip_ready) {
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->dungeon_map_chip_raw_hash);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->dungeon_map_chip_decoded_hash);
+    }
     out_receipt->combined_frame_hash = combined_hash;
     out_receipt->real_gdat_runtime_hud_breadth_ready =
         out_receipt->render_sample_count == 4 &&
@@ -5154,6 +5255,7 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         out_receipt->raw_gdat_runtime_interface_count >= 4 &&
         out_receipt->decoded_gdat_runtime_interface_count >= 4 &&
         out_receipt->teleporter_map_chip_ready &&
+        out_receipt->dungeon_map_chip_ready &&
         out_receipt->combined_frame_hash != 0u &&
         out_receipt->combined_pixel_count == 4u * 320u * 200u;
     out_receipt->valid =
@@ -5440,6 +5542,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_hud.min_asset_floor_ceiling_count >= 2 &&
         out_receipt->runtime_hud.min_asset_wall_count > 0 &&
         out_receipt->runtime_hud.teleporter_map_chip_ready &&
+        out_receipt->runtime_hud.dungeon_map_chip_ready &&
         out_receipt->runtime_hud.total_fallback_door_count == 0 &&
         out_receipt->runtime_hud.total_fallback_creature_count == 0 &&
         out_receipt->runtime_hud.total_fallback_creature_possession_item_count == 0 &&

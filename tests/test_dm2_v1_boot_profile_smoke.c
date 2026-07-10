@@ -551,6 +551,14 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.teleporter_map_chip_raw_byte_count > 0u &&
               hud_capture.teleporter_map_chip_decoded_hash != 0u &&
               hud_capture.teleporter_map_chip_decoded_pixel_count > 0u &&
+              hud_capture.dungeon_map_chip_ready == 1 &&
+              hud_capture.dungeon_map_chip_graphicsset_count > 0 &&
+              hud_capture.dungeon_map_chip_wall_count > 0 &&
+              hud_capture.dungeon_map_chip_floor_count > 0 &&
+              hud_capture.dungeon_map_chip_raw_hash != 0u &&
+              hud_capture.dungeon_map_chip_raw_byte_count > 0u &&
+              hud_capture.dungeon_map_chip_decoded_hash != 0u &&
+              hud_capture.dungeon_map_chip_decoded_pixel_count > 0u &&
               hud_capture.combined_frame_hash != 0u &&
               hud_capture.combined_pixel_count == 4u * 320u * 200u,
           "boot runtime HUD capture proves real GDAT portraits and frames across sampled directions");
