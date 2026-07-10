@@ -246,6 +246,38 @@ void theron_v1_startup_receipt_apply_bitmap_art_summary(
         (uint32_t)media_receipt->startup_bitmap_soul_room_atlas_width;
     receipt->startup_bitmap_forcefield_atlas_width =
         (uint32_t)media_receipt->startup_bitmap_forcefield_atlas_width;
+    receipt->startup_bitmap_title_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_first_raw_offset;
+    receipt->startup_bitmap_title_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_last_raw_offset;
+    receipt->startup_bitmap_title_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_first_user_data_offset;
+    receipt->startup_bitmap_title_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_last_user_data_offset;
+    receipt->startup_bitmap_stage_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_first_raw_offset;
+    receipt->startup_bitmap_stage_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_last_raw_offset;
+    receipt->startup_bitmap_stage_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_first_user_data_offset;
+    receipt->startup_bitmap_stage_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_last_user_data_offset;
+    receipt->startup_bitmap_soul_room_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_first_raw_offset;
+    receipt->startup_bitmap_soul_room_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_last_raw_offset;
+    receipt->startup_bitmap_soul_room_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_first_user_data_offset;
+    receipt->startup_bitmap_soul_room_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_last_user_data_offset;
+    receipt->startup_bitmap_forcefield_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_first_raw_offset;
+    receipt->startup_bitmap_forcefield_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_last_raw_offset;
+    receipt->startup_bitmap_forcefield_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_first_user_data_offset;
+    receipt->startup_bitmap_forcefield_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_last_user_data_offset;
     receipt->startup_bitmap_wide_route_mask =
         media_receipt->startup_bitmap_wide_route_mask;
     receipt->startup_bitmap_wide_route_count =
@@ -1083,6 +1115,38 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->startup_bitmap_soul_room_atlas_width), h);
     h = fnv1a_32(&receipt->startup_bitmap_forcefield_atlas_width,
                  sizeof(receipt->startup_bitmap_forcefield_atlas_width), h);
+    h = fnv1a_32(&receipt->startup_bitmap_title_first_raw_offset,
+                 sizeof(receipt->startup_bitmap_title_first_raw_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_title_last_raw_offset,
+                 sizeof(receipt->startup_bitmap_title_last_raw_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_title_first_user_data_offset,
+                 sizeof(receipt->startup_bitmap_title_first_user_data_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_title_last_user_data_offset,
+                 sizeof(receipt->startup_bitmap_title_last_user_data_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_stage_first_raw_offset,
+                 sizeof(receipt->startup_bitmap_stage_first_raw_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_stage_last_raw_offset,
+                 sizeof(receipt->startup_bitmap_stage_last_raw_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_stage_first_user_data_offset,
+                 sizeof(receipt->startup_bitmap_stage_first_user_data_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_stage_last_user_data_offset,
+                 sizeof(receipt->startup_bitmap_stage_last_user_data_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_soul_room_first_raw_offset,
+                 sizeof(receipt->startup_bitmap_soul_room_first_raw_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_soul_room_last_raw_offset,
+                 sizeof(receipt->startup_bitmap_soul_room_last_raw_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_soul_room_first_user_data_offset,
+                 sizeof(receipt->startup_bitmap_soul_room_first_user_data_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_soul_room_last_user_data_offset,
+                 sizeof(receipt->startup_bitmap_soul_room_last_user_data_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_forcefield_first_raw_offset,
+                 sizeof(receipt->startup_bitmap_forcefield_first_raw_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_forcefield_last_raw_offset,
+                 sizeof(receipt->startup_bitmap_forcefield_last_raw_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_forcefield_first_user_data_offset,
+                 sizeof(receipt->startup_bitmap_forcefield_first_user_data_offset), h);
+    h = fnv1a_32(&receipt->startup_bitmap_forcefield_last_user_data_offset,
+                 sizeof(receipt->startup_bitmap_forcefield_last_user_data_offset), h);
     h = fnv1a_32(&receipt->startup_bitmap_wide_route_mask,
                  sizeof(receipt->startup_bitmap_wide_route_mask), h);
     h = fnv1a_32(&receipt->startup_bitmap_wide_route_count,
