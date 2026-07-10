@@ -841,6 +841,30 @@ typedef struct {
     const char *status;
 } Nexus_V1_StartupHostCallerReceipt;
 
+typedef struct {
+    Nexus_V1_StartupHostCallerReceipt title_host;
+    Nexus_V1_StartupHostCallerReceipt save_host;
+    Nexus_V1_StartupHostCallerReceipt champion_host;
+    int title_route_complete;
+    int save_route_complete;
+    int champion_route_complete;
+    int dungeon_route_complete;
+    int dgn_mesh_runtime_complete;
+    int dgn_viewport_runtime_complete;
+    int startup_package_consumed_by_all_routes;
+    int host_route_matrix_complete;
+    int saturn_timing_matrix_complete;
+    int no_fallback_visuals_enforced;
+    int fallback_visuals_permitted;
+    unsigned int complete_route_mask;
+    unsigned int expected_route_mask;
+    int all_nexus_startup_routes_complete;
+    int all_nexus_runtime_routes_complete;
+    int complete_support_ready;
+    const char *status_scope;
+    const char *status;
+} Nexus_V1_CompleteSupportReceipt;
+
 void nexus_v1_launcher_startup_runtime_state_clear(
     Nexus_V1_StartupRuntimeState *state);
 void nexus_v1_launcher_runtime_startup_snapshot_clear(
@@ -869,8 +893,15 @@ void nexus_v1_launcher_startup_real_asset_ownership_receipt_clear(
     Nexus_V1_StartupRealAssetOwnershipReceipt *receipt);
 void nexus_v1_launcher_startup_host_caller_receipt_clear(
     Nexus_V1_StartupHostCallerReceipt *receipt);
+void nexus_v1_launcher_complete_support_receipt_clear(
+    Nexus_V1_CompleteSupportReceipt *receipt);
 const char *nexus_v1_launcher_startup_real_asset_ownership_route_name(
     Nexus_V1_StartupRealAssetOwnershipRoute route);
+int nexus_v1_launcher_complete_support_receipt_from_host_routes(
+    const Nexus_V1_StartupHostCallerReceipt *title_host,
+    const Nexus_V1_StartupHostCallerReceipt *save_host,
+    const Nexus_V1_StartupHostCallerReceipt *champion_host,
+    Nexus_V1_CompleteSupportReceipt *out_receipt);
 int nexus_v1_launcher_m12_startup_package_from_flags(
     int supported,
     int data_ready,
