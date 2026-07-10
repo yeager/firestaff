@@ -449,6 +449,10 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
         host_capture_gate->no_fallback_callbacks ? 1 : 0;
     out_receipt->no_wrapper_fallback_routes =
         host_capture_gate->no_wrapper_fallback_routes ? 1 : 0;
+    out_receipt->host_route_wrappers_retired =
+        host_capture_gate->host_route_wrappers_retired ? 1 : 0;
+    out_receipt->no_loose_render_plan_exports =
+        host_capture_gate->no_loose_render_plan_exports ? 1 : 0;
     out_receipt->session_generation = full_runtime->session_generation;
     out_receipt->runtime_host_gate_hash =
         host_capture_gate->runtime_host_gate_hash;
@@ -459,6 +463,10 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
     hash ^= host_capture_gate->title_runtime_phase_hash;
     hash *= 16777619u;
     hash ^= host_capture_gate->runtime_capture_hash;
+    hash *= 16777619u;
+    hash ^= (uint32_t)host_capture_gate->host_route_wrappers_retired;
+    hash *= 16777619u;
+    hash ^= (uint32_t)host_capture_gate->no_loose_render_plan_exports;
     out_receipt->complete_support_hash = hash ? hash : 1u;
     out_receipt->valid =
         out_receipt->full_runtime_valid &&
@@ -477,6 +485,8 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
                 out_receipt->no_legacy_wrappers &&
                 out_receipt->no_fallback_callbacks &&
                 out_receipt->no_wrapper_fallback_routes &&
+                out_receipt->host_route_wrappers_retired &&
+                out_receipt->no_loose_render_plan_exports &&
                 out_receipt->complete_support_hash != 0u
             ? 1
             : 0;

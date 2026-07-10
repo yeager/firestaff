@@ -29,6 +29,9 @@ typedef struct {
     int first_missing_material_id;
     Nexus_V1_DgnRenderCommandKind first_missing_material_kind;
     int material_surface_count;
+    int floor_material_surface_count;
+    int ceiling_material_surface_count;
+    int wall_material_surface_count;
     int rasterized_command_count;
     int palette_synced;
     int written_pixels;

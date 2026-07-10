@@ -296,6 +296,9 @@ typedef struct {
     int command_count;
     int viewport_rasterized_command_count;
     int viewport_material_surface_count;
+    int viewport_floor_material_surface_count;
+    int viewport_ceiling_material_surface_count;
+    int viewport_wall_material_surface_count;
     int viewport_written_pixels;
     int fallback_visuals_permitted;
     const char *asset_route;
@@ -327,6 +330,9 @@ typedef struct {
     int dgn_viewport_render_ready;
     int dgn_viewport_rasterized_command_count;
     int dgn_viewport_material_surface_count;
+    int dgn_viewport_floor_material_surface_count;
+    int dgn_viewport_ceiling_material_surface_count;
+    int dgn_viewport_wall_material_surface_count;
     int dgn_viewport_written_pixels;
     int dgn_blocks_real_mesh_render;
     Nexus_ScriptRuntimeStatus script_runtime_status;
@@ -685,6 +691,7 @@ typedef struct {
     int save_route_saturn_capture_exact;
     int champion_route_saturn_capture_exact;
     int dungeon_route_saturn_capture_exact;
+    int dungeon_capture_route_consumed;
     int startup_host_package_route_complete;
     int title_host_package_route_complete;
     int save_host_package_route_complete;
@@ -734,10 +741,16 @@ typedef struct {
     int dgn_draw_command_count;
     int dgn_viewport_rasterized_command_count;
     int dgn_viewport_written_pixels;
+    int dgn_viewport_material_surface_count;
+    int dgn_viewport_floor_material_surface_count;
+    int dgn_viewport_ceiling_material_surface_count;
+    int dgn_viewport_wall_material_surface_count;
+    int dgn_material_surface_coverage_complete;
     Nexus_V1_StartupCaptureRoute capture_route;
     Nexus_V1_StartupDrawKind first_startup_draw_kind;
     Nexus_V1_DgnRenderCommandKind first_dgn_draw_kind;
     const char *receipt_owner;
+    const char *dungeon_capture_route;
     const char *asset_route;
     const char *asset_blocker;
     const char *status_scope;
@@ -764,6 +777,11 @@ typedef struct {
     int dgn_command_count;
     int dgn_viewport_rasterized_command_count;
     int dgn_viewport_written_pixels;
+    int dgn_viewport_material_surface_count;
+    int dgn_viewport_floor_material_surface_count;
+    int dgn_viewport_ceiling_material_surface_count;
+    int dgn_viewport_wall_material_surface_count;
+    int dgn_material_surface_coverage_complete;
     int copied_dgn_command_count;
     int title_timing_frame;
     int title_timing_frame_max;
@@ -775,6 +793,7 @@ typedef struct {
     int host_route_consumes_capture_matrix;
     int dgn_route_consumes_startup_package;
     int dgn_route_saturn_capture_exact;
+    int dungeon_capture_route_consumed;
     int host_ownership_route_matches_capture_route;
     int package_route_consumes_host_ownership;
     int dgn_route_consumes_host_ownership;
@@ -836,6 +855,7 @@ typedef struct {
     Nexus_V1_StartupCaptureRoute capture_route;
     Nexus_V1_StartupRealAssetOwnershipRoute ownership_route;
     const char *host_route;
+    const char *dungeon_capture_route;
     const char *startup_package_route;
     const char *status_scope;
     const char *status;
@@ -849,6 +869,8 @@ typedef struct {
     int save_route_complete;
     int champion_route_complete;
     int dungeon_route_complete;
+    int dungeon_capture_route_consumed;
+    int dgn_material_surface_coverage_complete;
     int dgn_mesh_runtime_complete;
     int dgn_viewport_runtime_complete;
     int startup_package_consumed_by_all_routes;

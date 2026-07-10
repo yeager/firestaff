@@ -2953,11 +2953,34 @@ int csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
         }
     }
 
+    out_receipt->host_route_wrappers_retired =
+        out_receipt->host_view_valid &&
+                out_receipt->host_draw_valid &&
+                out_receipt->host_draw.consumed_host_view_only &&
+                out_receipt->host_draw.fallback_callbacks_stripped &&
+                (!include_menu_input ||
+                 out_receipt->input_consumes_receipt_only ||
+                 out_receipt->host_input_blocked ||
+                 out_receipt->host_input_dispatch_valid)
+            ? 1
+            : 0;
+    out_receipt->no_loose_render_plan_exports =
+        out_receipt->host_route_wrappers_retired &&
+                out_receipt->draw_consumes_receipt_only &&
+                out_receipt->host_draw.fallback_text_suppressed &&
+                (out_receipt->host_draw.render_executed ||
+                 out_receipt->host_draw.hud_menu_executed) &&
+                out_receipt->capture_proof_valid &&
+                out_receipt->packaged_visual_capture_ready
+            ? 1
+            : 0;
     out_receipt->valid =
         out_receipt->host_view_valid &&
                 out_receipt->capture_proof_valid &&
                 out_receipt->packaged_visual_capture_ready &&
                 out_receipt->host_draw_valid &&
+                out_receipt->host_route_wrappers_retired &&
+                out_receipt->no_loose_render_plan_exports &&
                 (!include_menu_input ||
                  out_receipt->host_input_dispatch_valid)
             ? 1
@@ -4497,6 +4520,20 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
                     .no_legacy_door_fallback_route
             ? 1
             : 0;
+    out_receipt->host_route_wrappers_retired =
+        title_ownership.host_route_wrappers_retired &&
+                closed_door_ownership.host_route_wrappers_retired &&
+                utility_ownership.host_route_wrappers_retired &&
+                door_opening_ownership.host_route_wrappers_retired
+            ? 1
+            : 0;
+    out_receipt->no_loose_render_plan_exports =
+        title_ownership.no_loose_render_plan_exports &&
+                closed_door_ownership.no_loose_render_plan_exports &&
+                utility_ownership.no_loose_render_plan_exports &&
+                door_opening_ownership.no_loose_render_plan_exports
+            ? 1
+            : 0;
     out_receipt->route_hardening_hash = gate_hash ? gate_hash : 1u;
     gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
         gate_hash,
@@ -4519,6 +4556,12 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
     gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
         gate_hash,
         out_receipt->title_runtime_phase_hash);
+    gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        gate_hash,
+        (uint32_t)out_receipt->host_route_wrappers_retired);
+    gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        gate_hash,
+        (uint32_t)out_receipt->no_loose_render_plan_exports);
     out_receipt->runtime_host_gate_hash = gate_hash ? gate_hash : 1u;
     out_receipt->valid =
         out_receipt->runtime_visual_valid &&
@@ -4533,6 +4576,8 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
                 out_receipt->input_consumes_receipt_only &&
                 out_receipt->no_fallback_callbacks &&
                 out_receipt->no_wrapper_fallback_routes &&
+                out_receipt->host_route_wrappers_retired &&
+                out_receipt->no_loose_render_plan_exports &&
                 out_receipt->runtime_host_gate_hash != 0u
             ? 1
             : 0;
@@ -6536,6 +6581,9 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
      * Source: csb_v1_runtime_pc34_compat.h CSB_V1_TICK_MS_NOMINAL */
     if (csb_v1_boot_assume_no_dm1_runtime(profile) != 0) {
         return -1;
+    }
+    if (profile->save_root[0] == '\0') {
+        csb_v1_boot_set_save_root(profile, NULL);
     }
     /* Re-entering the CSB profile replaces the live dungeon context just as
      * ReDMCSB's global dungeon/map state is replaced when a new game is

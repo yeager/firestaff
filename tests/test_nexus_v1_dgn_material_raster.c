@@ -187,6 +187,9 @@ int main(void) {
            "viewport renders real DGN route without legacy fallback");
     expect(receipt.command_count > 0 &&
                receipt.command_count == receipt.material_surface_count &&
+               receipt.floor_count == receipt.floor_material_surface_count &&
+               receipt.ceiling_count == receipt.ceiling_material_surface_count &&
+               receipt.wall_count == receipt.wall_material_surface_count &&
                receipt.command_count == receipt.rasterized_command_count,
            "viewport consumes every DGN command through decoded material surfaces");
     expect(receipt.floor_count > 0 &&
