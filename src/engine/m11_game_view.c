@@ -11989,6 +11989,14 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_ownership.presented_capture_consumer_mask;
             out->dm1HoCPresentedCaptureChainHash =
                 hoc_ownership.presented_capture_chain_hash;
+            out->dm1HoCHostCaptureRoutePackaged =
+                hoc_ownership.host_capture_route_packaged;
+            out->dm1HoCHostCaptureRouteMask =
+                hoc_ownership.host_capture_route_mask;
+            out->dm1HoCHostCaptureRouteHash =
+                hoc_ownership.host_capture_route_hash;
+            out->dm1HoCPresentedCaptureRoutePackaged =
+                hoc_ownership.presented_capture_route_packaged;
             out->dm1HoCOpenedEntranceFrame =
                 hoc_consumer.draw_opened_entrance_frame;
             out->dm1HoCHallMirrorOverlay =

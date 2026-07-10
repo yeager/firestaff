@@ -231,6 +231,11 @@ static void check_dm1_v1_required_complete_launches(void) {
            DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
            DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34));
     CHECK(boot.dm1HoCPresentedCaptureChainHash != 0u);
+    CHECK(boot.dm1HoCHostCaptureRoutePackagedReady == 1);
+    CHECK(boot.dm1HoCHostCaptureRouteMask ==
+          boot.dm1HoCPresentedCaptureConsumerMask);
+    CHECK(boot.dm1HoCHostCaptureRouteHash != 0u);
+    CHECK(boot.dm1HoCPresentedCaptureRoutePackagedReady == 1);
     CHECK(boot.dm1HoCOpenedEntranceFrameReady == 1);
     CHECK(boot.dm1HoCHallMirrorOverlayReady == 1);
     CHECK(boot.dm1HoCBlockedEnterUntilChampionReady == 1);

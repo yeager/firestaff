@@ -361,6 +361,10 @@ typedef struct {
     int dm1HoCPresentedCaptureChainReady;
     unsigned int dm1HoCPresentedCaptureConsumerMask;
     unsigned int dm1HoCPresentedCaptureChainHash;
+    int dm1HoCHostCaptureRoutePackagedReady;
+    unsigned int dm1HoCHostCaptureRouteMask;
+    unsigned int dm1HoCHostCaptureRouteHash;
+    int dm1HoCPresentedCaptureRoutePackagedReady;
     int dm1HoCOpenedEntranceFrameReady;
     int dm1HoCHallMirrorOverlayReady;
     int dm1HoCBlockedEnterUntilChampionReady;

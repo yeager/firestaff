@@ -6906,6 +6906,14 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         ownership.presented_capture_consumer_mask;
     receipt->dm1HoCPresentedCaptureChainHash =
         ownership.presented_capture_chain_hash;
+    receipt->dm1HoCHostCaptureRoutePackagedReady =
+        ownership.host_capture_route_packaged;
+    receipt->dm1HoCHostCaptureRouteMask =
+        ownership.host_capture_route_mask;
+    receipt->dm1HoCHostCaptureRouteHash =
+        ownership.host_capture_route_hash;
+    receipt->dm1HoCPresentedCaptureRoutePackagedReady =
+        ownership.presented_capture_route_packaged;
     receipt->dm1HoCOpenedEntranceFrameReady =
         ownership.draw_opened_entrance_frame;
     receipt->dm1HoCHallMirrorOverlayReady =
@@ -6936,6 +6944,8 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         receipt->dm1HoCPresentedCaptureGeometryReady &&
         receipt->dm1HoCPresentedCapturePixelsReady &&
         receipt->dm1HoCPresentedCaptureChainReady &&
+        receipt->dm1HoCHostCaptureRoutePackagedReady &&
+        receipt->dm1HoCPresentedCaptureRoutePackagedReady &&
         receipt->dm1HoCOpenedEntranceFrameReady &&
         receipt->dm1HoCHallMirrorOverlayReady &&
         receipt->dm1HoCBlockedEnterUntilChampionReady &&
