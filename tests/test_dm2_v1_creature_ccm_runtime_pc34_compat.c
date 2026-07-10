@@ -297,6 +297,46 @@ static int test_ccm_walk_field_door_writeback(void) {
     return 1;
 }
 
+static int test_ccm_path_rotation_and_item_writeback(void) {
+    DM2_V1_CreatureCCMTickObserver obs;
+    const DM2_V1_CreatureInstance *inst;
+    int slot;
+
+#ifdef FIRESTAFF_DM2_CREATURE_TESTING
+    dm2_v1_creature_test_reset_instances();
+#endif
+    install_mobile_nonattacking_ai();
+    slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 7, 7, 0, 0, 8);
+    CHECK("spawn path runtime", slot >= 0);
+    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_WALK_PATH, 0, 0, 0);
+    dm2_v1_creature_tick();
+    CHECK("path observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("path state writeback", obs.ccm_flag_path == 1 &&
+          obs.ccm_requested_state == DM2_CCM_WALK_CONT &&
+          obs.after_b_1a == DM2_CCM_WALK_CONT);
+    CHECK("path position writeback", obs.field_moved == 1 &&
+          obs.field_move_distance == 1);
+    inst = dm2_v1_creature_get_instance(slot);
+    CHECK("path live location", inst && inst->world_x == 7 && inst->world_y == 6);
+
+    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_ROTATE_TO_TARGET, 3, 0, 0);
+    dm2_v1_creature_tick();
+    CHECK("rotate observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("rotate live direction", obs.ccm_flag_rotate == 1 &&
+          obs.direction_before == 0 && obs.direction_after == 3);
+    inst = dm2_v1_creature_get_instance(slot);
+    CHECK("viewport-facing live record", inst && inst->direction == 3 &&
+          inst->render_revision > 0u);
+
+    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_TAKES_ITEM, 81, 0, 0);
+    dm2_v1_creature_tick();
+    CHECK("item observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("item state writeback", obs.ccm_flag_item == 1 &&
+          obs.after_b_1a == DM2_CCM_WALK_NOW && obs.attack_cooldown_after == 9 &&
+          obs.ccm_stack_top == 1 && obs.ccm_stack_value0 == 81);
+    return 1;
+}
+
 int main(void) {
     printf("DM2 V1 creature CCM runtime bridge\n");
     if (!test_walk_tick_enters_attack_state()) return 1;
@@ -307,6 +347,7 @@ int main(void) {
     if (!test_explode_or_summon_opcode_writeback()) return 1;
     if (!test_gdat_imported_ccm_program_drives_ticks()) return 1;
     if (!test_ccm_walk_field_door_writeback()) return 1;
+    if (!test_ccm_path_rotation_and_item_writeback()) return 1;
     printf("%d/%d checks passed\n", g_pass, g_run);
     return 0;
 }

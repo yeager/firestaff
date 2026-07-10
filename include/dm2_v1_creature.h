@@ -86,9 +86,14 @@ typedef struct __attribute__((packed)) {
 #define DM2_CCM_WALK_NOW              0x00  /* movement dispatch */
 #define DM2_CCM_ATTACK_HANDLER        0x01  /* attack handler */
 #define DM2_CCM_WALK_CONT              0x02  /* movement continuation */
+#define DM2_CCM_WALK_PATH              0x03  /* path/think continuation */
+#define DM2_CCM_ROTATE_TO_TARGET       0x04  /* turn toward current target */
 #define DM2_CCM_SPECIAL_ACTION        0x05  /* CCM06/CCM0B/CCM0C */
+#define DM2_CCM_SPECIAL_06             0x06  /* CCM06 action transition */
 #define DM2_CCM_STEAL_ITEM            0x09  /* thief-type item theft */
 #define DM2_CCM_MERCHANT_BEHAVIOR     0x0a  /* merchant/shop behavior */
+#define DM2_CCM_PUTS_DOWN_ITEM         0x0b  /* place carried item */
+#define DM2_CCM_TAKES_ITEM             0x0c  /* take world item */
 #define DM2_CCM_SHOOT_ITEM            0x0d  /* ranged throw/pickup */
 #define DM2_CCM_KILL_ON_TIMER_POS     0x0f  /* delayed-position kill (0x0f-0x13) */
 #define DM2_CCM_ROTATES_TARGET        0x13  /* reorient another creature */
@@ -219,6 +224,11 @@ typedef struct {
     int ccm_flag_shoot;
     int ccm_flag_cast_spell;
     int ccm_flag_explode_or_summon;
+    int ccm_flag_path;
+    int ccm_flag_rotate;
+    int ccm_flag_special;
+    int ccm_flag_item;
+    int ccm_requested_state;
     int ccm_target_id;
     int ccm_target_x;
     int ccm_target_y;
@@ -235,6 +245,9 @@ typedef struct {
     int field_door_open_pct;
     int field_blocks_movement;
     int field_moved;
+    int field_move_distance;
+    int direction_before;
+    int direction_after;
     int attack_cooldown_before;
     int attack_cooldown_after;
 } DM2_V1_CreatureCCMTickObserver;

@@ -198,7 +198,26 @@ static int test_step_special_action(void) {
     dm2_v1_ccm_init_state(&s);
     int args[] = { 0x06 };  /* sub-action 06 */
     int rc = dm2_v1_ccm_step(&s, 0x05, args, 1, 0);
-    return rc == (int)DM2_CCM_RESULT_OK && s.flags[2] == 0x06;
+    return rc == (int)DM2_CCM_RESULT_OK && s.flags[2] == 0x06
+        && s.flags[13] == 1 && s.next_state == DM2_CCM_OP_WALK_CONT;
+}
+
+static int test_step_path_rotate_and_item_actions(void) {
+    DM2_V1_CCMState s;
+    int value;
+    dm2_v1_ccm_init_state(&s);
+    if (dm2_v1_ccm_step(&s, DM2_CCM_OP_WALK_PATH, NULL, 0, 0) !=
+        (int)DM2_CCM_RESULT_OK || s.flags[11] != 1 ||
+        s.next_state != DM2_CCM_OP_WALK_CONT) return 0;
+    if (dm2_v1_ccm_step(&s, DM2_CCM_OP_ROTATE_TO_TARGET, (int[]){7}, 1, 0) !=
+        (int)DM2_CCM_RESULT_OK || s.flags[12] != 1 || s.target_id != 3 ||
+        s.next_state != DM2_CCM_OP_WALK_NOW) return 0;
+    if (dm2_v1_ccm_step(&s, DM2_CCM_OP_PUTS_DOWN_ITEM, (int[]){44}, 1, 0) !=
+        (int)DM2_CCM_RESULT_OK || s.flags[14] != 1) return 0;
+    if (dm2_v1_ccm_step(&s, DM2_CCM_OP_TAKES_ITEM, (int[]){45}, 1, 0) !=
+        (int)DM2_CCM_RESULT_OK || s.flags[15] != 1) return 0;
+    return dm2_v1_ccm_stack_pop(&s, &value) == 1 && value == 45 &&
+           dm2_v1_ccm_stack_pop(&s, &value) == 1 && value == 44;
 }
 
 static int test_step_steal_item(void) {
@@ -291,7 +310,7 @@ static int test_step_unknown_opcode(void) {
 static int test_step_stubbed_opcode(void) {
     DM2_V1_CCMState s;
     dm2_v1_ccm_init_state(&s);
-    int rc = dm2_v1_ccm_step(&s, 0x03, NULL, 0, 0);  /* stubbed */
+    int rc = dm2_v1_ccm_step(&s, 0x07, NULL, 0, 0);  /* stubbed */
     return rc == (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
 }
 
@@ -424,7 +443,7 @@ static int test_stack_capacity(void) {
 
 static int test_stubbed_opcodes_return_unknown(void) {
     /* Several stubbed opcodes should all return UNKNOWN_OPCODE. */
-    int stub_ops[] = { 0x03, 0x04, 0x06, 0x07, 0x08, 0x0B, 0x0C };
+    int stub_ops[] = { 0x07, 0x08, 0x0E, 0x10, 0x11, 0x12, 0x14 };
     for (size_t i = 0; i < sizeof(stub_ops)/sizeof(stub_ops[0]); i++) {
         DM2_V1_CCMState s;
         dm2_v1_ccm_init_state(&s);
@@ -489,7 +508,7 @@ static int test_decode_program_rejects_truncated_args(void) {
 }
 
 static int test_decode_program_rejects_stubbed_opcode(void) {
-    const uint8_t bytes[] = { 0x03 };
+    const uint8_t bytes[] = { 0x07 };
     DM2_V1_CCMProgram program;
     return dm2_v1_ccm_decode_program(bytes, sizeof(bytes), &program) ==
            (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
@@ -527,6 +546,7 @@ int main(void) {
     TEST(step_nop);
     TEST(step_attack_handler);
     TEST(step_special_action);
+    TEST(step_path_rotate_and_item_actions);
     TEST(step_steal_item);
     TEST(step_merchant_behavior);
     TEST(step_shoot_item_pushes_stack);
