@@ -371,12 +371,26 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
                                                       &engine->floor_materials);
             free(material_data);
         }
+        material_data = nexus_v1_read_file(engine, "FLOORS.BPK", &material_size);
+        if (material_data) {
+            (void)nexus_v1_dmdf_import_bpk_material_bank(material_data,
+                                                          (size_t)material_size,
+                                                          &engine->floor_materials);
+            free(material_data);
+        }
         material_data = nexus_v1_read_file(engine, "WALLS.DMDF",
                                             &material_size);
         if (material_data) {
             (void)nexus_v1_dmdf_decode_material_bank(material_data,
                                                       material_size,
                                                       &engine->wall_materials);
+            free(material_data);
+        }
+        material_data = nexus_v1_read_file(engine, "WALLS.BPK", &material_size);
+        if (material_data) {
+            (void)nexus_v1_dmdf_import_bpk_material_bank(material_data,
+                                                          (size_t)material_size,
+                                                          &engine->wall_materials);
             free(material_data);
         }
     }
