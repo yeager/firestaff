@@ -7,6 +7,7 @@
 #include "theron_v1_save_load.h"
 #include "theron_v1_srm_classifier.h"
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_startup_media.h"
 #include "theron_v1_world.h"
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -151,6 +152,10 @@ typedef struct {
     int srm_slot_index;
     Theron_V1SrmProgressImportStatus srm_import_status;
     const char *srm_root;
+    /* Optional launch-owned Track 02 media receipt.  A complete receipt is
+     * copied into the Continue result, preserving the real bitmap atlas on
+     * SRM and native-save runtime routes. */
+    const Theron_StartupMediaStateReceipt *track02_media_receipt;
 } Theron_V1StartupContinueRequest;
 
 typedef struct {
@@ -170,6 +175,8 @@ typedef struct {
     int srm_party_restored;
     int srm_party_champion_count;
     uint32_t srm_party_gold;
+    int track02_media_route;
+    Theron_StartupMediaStateReceipt track02_media;
     int tick_count;
 } Theron_V1StartupContinueResult;
 
@@ -184,6 +191,9 @@ typedef struct {
     int srm_party_restored;
     int srm_party_champion_count;
     uint32_t srm_party_gold;
+    int track02_media_route;
+    unsigned int track02_media_route_mask;
+    uint32_t track02_media_checksum;
     const char *status_scope;
     const char *status;
     const char *inspect_scope;
