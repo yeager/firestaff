@@ -161,6 +161,11 @@ static void check_dm1_v1_required_complete_launches(void) {
     CHECK(boot.packagedCaptureReady == 0);
     CHECK(boot.dm1HoCPresentedCaptureReady == 0);
     CHECK((boot.blockedStepMask & M12_STARTUP_BOOT_STEP_CAPTURE) != 0u);
+    CHECK(M12_StartupMenu_GetLaunchGate(&state, kDm1GameIndex, &gate) == 1);
+    CHECK(gate.canLaunch == 1);
+    CHECK(gate.packagedCaptureReady == 0);
+    CHECK(gate.blockedLabel &&
+          strcmp(gate.blockedLabel, "READY TO LAUNCH") == 0);
     seed_dm1_hoc_presented_capture_receipt(&state);
 
     /* Required hash-set completeness, mirroring the assertions in

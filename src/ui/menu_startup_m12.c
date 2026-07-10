@@ -7309,15 +7309,21 @@ int M12_StartupMenu_GetLaunchGate(
         gate.blockedLabel = "STARTUP PROOF MISSING";
         gate.blockedDetail = gate.boot.startupContractLabel;
     } else if (gate.boot.packagedCaptureExpected &&
-               !gate.packagedCaptureReady) {
+               !gate.packagedCaptureReady &&
+               (!entry->gameId || strcmp(entry->gameId, "dm1") != 0)) {
         gate.blockedLabel = "CAPTURE PROOF MISSING";
         gate.blockedDetail = gate.boot.packagedCaptureLabel;
     } else {
         gate.canLaunch = 1;
         gate.blockedLabel = "READY TO LAUNCH";
-        gate.blockedDetail = gate.boot.activeProofLabel
-                                 ? gate.boot.activeProofLabel
-                                 : gate.boot.startupPathLabel;
+        gate.blockedDetail =
+            (entry->gameId && strcmp(entry->gameId, "dm1") == 0 &&
+             gate.boot.packagedCaptureExpected &&
+             !gate.packagedCaptureReady)
+                ? "DM1 HOC CAPTURE WILL BE PROVEN AFTER FIRST PRESENT"
+                : (gate.boot.activeProofLabel
+                       ? gate.boot.activeProofLabel
+                       : gate.boot.startupPathLabel);
     }
 
     *outGate = gate;

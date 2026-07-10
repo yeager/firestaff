@@ -313,6 +313,49 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
     return result;
 }
 
+static void m11_publish_dm1_hoc_presented_capture_to_m12(
+    const M11_GameViewState* gameView,
+    M12_StartupMenuState* menuState) {
+    M11_BootProbeReceipt boot;
+    M12_DM1HoCPresentedCaptureReceipt capture;
+
+    if (!gameView || !menuState ||
+        !M11_GameView_GetBootProbeReceipt(gameView, &boot) ||
+        strcmp(boot.sourceId, "dm1") != 0 ||
+        !boot.dm1HoCPresentedCapture ||
+        !boot.dm1HoCPresentedCaptureGeometry ||
+        !boot.dm1HoCPresentedCapturePixels ||
+        boot.dm1HoCPresentedCaptureHash == 0u) {
+        return;
+    }
+
+    memset(&capture, 0, sizeof(capture));
+    capture.handled = 1;
+    capture.presentedCaptureReady = 1;
+    capture.hostWindowPresent = boot.dm1HoCHostWindowCapture;
+    capture.capturedFromMacWindow = boot.dm1HoCMacWindowCapture;
+    capture.capturedFromReleaseApp = boot.dm1HoCReleaseAppCapture;
+    capture.width = boot.dm1HoCPresentedCaptureWidth;
+    capture.height = boot.dm1HoCPresentedCaptureHeight;
+    capture.byteCount = boot.dm1HoCPresentedCaptureBytes;
+    capture.framebufferHash = boot.dm1HoCPresentedCaptureHash;
+    capture.consumerMask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
+    capture.chainHash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            capture.width,
+            capture.height,
+            capture.byteCount,
+            capture.framebufferHash,
+            capture.consumerMask);
+    /* ReDMCSB DRAWVIEW.C F0097 publishes the post-ENTRANCE viewport.  This
+     * bridge lets M12 consume the actual M11-presented RGBA frame instead of
+     * manufacturing a readiness receipt before the app has drawn HoC. */
+    (void)M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(menuState,
+                                                           &capture);
+}
+
 void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
     int requestedWindowMode;
     int actualWindowMode;
@@ -4535,6 +4578,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     if (gameView.active) {
         M11_Render_Present();
+        m11_publish_dm1_hoc_presented_capture_to_m12(&gameView,
+                                                     &menuState);
     } else {
         m11_present_launcher(launcherFramebuffer, modernRgba, useModern);
     }
@@ -4799,6 +4844,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                      M11_Render_GetFramebuffer(),
                                      M11_FB_WIDTH, M11_FB_HEIGHT);
                 m11_present_game_frame(&gameView);
+                m11_publish_dm1_hoc_presented_capture_to_m12(&gameView,
+                                                             &menuState);
                 gameFrameNeedsPresent = 0;
             }
         } else {
