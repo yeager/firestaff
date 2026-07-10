@@ -545,9 +545,35 @@ static void cleanup(const char* root) {
     unlink(path);
     snprintf(path, sizeof(path), "%s/backup/not-a-save.dat", root);
     unlink(path);
+    snprintf(path, sizeof(path),
+             "%s/nested/saves/dm1/deep/slot-seven-real-save.bin", root);
+    unlink(path);
+    snprintf(path, sizeof(path),
+             "%s/nested/saves/csb/firestaff-csb-sibling.sav", root);
+    unlink(path);
+    snprintf(path, sizeof(path), "%s/nested/saves/dm2/SKSave.dat", root);
+    unlink(path);
+    snprintf(path, sizeof(path), "%s/nested/saves/dm2/SKSave06.dat", root);
+    unlink(path);
+    snprintf(path, sizeof(path), "%s/nested/saves/dm2/SKSave08.dat", root);
+    unlink(path);
     snprintf(path, sizeof(path), "%s/data", root);
     rmdir(path);
     snprintf(path, sizeof(path), "%s/backup", root);
+    rmdir(path);
+    snprintf(path, sizeof(path), "%s/nested/saves/dm1/deep", root);
+    rmdir(path);
+    snprintf(path, sizeof(path), "%s/nested/saves/dm1", root);
+    rmdir(path);
+    snprintf(path, sizeof(path), "%s/nested/saves/csb", root);
+    rmdir(path);
+    snprintf(path, sizeof(path), "%s/nested/saves/dm2", root);
+    rmdir(path);
+    snprintf(path, sizeof(path), "%s/nested/saves", root);
+    rmdir(path);
+    snprintf(path, sizeof(path), "%s/nested/data", root);
+    rmdir(path);
+    snprintf(path, sizeof(path), "%s/nested", root);
     rmdir(path);
     rmdir(root);
 }
@@ -968,10 +994,13 @@ int main(void) {
         char nestedRoot[512];
         char nestedData[512];
         char nestedSaves[512];
+        char nestedDm1Saves[512];
+        char nestedDm1DeepSaves[512];
         char nestedCsbSaves[512];
         char nestedDm2Saves[512];
         char nestedSavePath[512];
         const M12_SaveBrowserEntry* nested;
+        const M12_SaveBrowserEntry* nestedDm1;
         const M12_SaveBrowserEntry* nestedSuppress;
         DM2_V1_SessionState dm2Session;
         DM2_GameStateBlock dm2SuppressState;
@@ -980,13 +1009,23 @@ int main(void) {
         snprintf(nestedRoot, sizeof(nestedRoot), "%s/nested", root);
         snprintf(nestedData, sizeof(nestedData), "%s/data", nestedRoot);
         snprintf(nestedSaves, sizeof(nestedSaves), "%s/saves", nestedRoot);
+        snprintf(nestedDm1Saves, sizeof(nestedDm1Saves), "%s/dm1", nestedSaves);
+        snprintf(nestedDm1DeepSaves, sizeof(nestedDm1DeepSaves),
+                 "%s/deep", nestedDm1Saves);
         snprintf(nestedCsbSaves, sizeof(nestedCsbSaves), "%s/csb", nestedSaves);
         snprintf(nestedDm2Saves, sizeof(nestedDm2Saves), "%s/dm2", nestedSaves);
         check(mkdir_one(nestedRoot), "created nested root");
         check(mkdir_one(nestedData), "created nested data dir");
         check(mkdir_one(nestedSaves), "created sibling saves dir");
+        check(mkdir_one(nestedDm1Saves), "created sibling DM1 saves dir");
+        check(mkdir_one(nestedDm1DeepSaves),
+              "created sibling DM1 deep saves dir");
         check(mkdir_one(nestedCsbSaves), "created sibling CSB saves dir");
         check(mkdir_one(nestedDm2Saves), "created sibling DM2 saves dir");
+        snprintf(nestedSavePath, sizeof(nestedSavePath),
+                 "%s/slot-seven-real-save.bin", nestedDm1DeepSaves);
+        check(write_original_pc34_dm1_save(nestedSavePath),
+              "wrote nested arbitrary DM1 original save fixture");
         snprintf(nestedSavePath, sizeof(nestedSavePath),
                  "%s/firestaff-csb-sibling.sav", nestedCsbSaves);
         check(write_bytes(nestedSavePath, "CSB-SIBLING-SAVE"),
@@ -1027,8 +1066,20 @@ int main(void) {
                                              &dm2SuppressState,
                                              &dm2SuppressChampion),
               "wrote sibling DM2 SUPPRESS SKSave slot fixture");
-        check(M12_SaveBrowser_Scan(&state, nestedData) == 4,
-              "scan finds sibling CSB plus DM2 session/SUPPRESS entries");
+        check(M12_SaveBrowser_Scan(&state, nestedData) == 5,
+              "scan finds recursive DM1 plus sibling CSB/DM2 entries");
+        nestedDm1 = find_entry(&state, "slot-seven-real-save.bin");
+        check(nestedDm1 != NULL, "nested arbitrary DM1 original save entry present");
+        if (nestedDm1) {
+            check(strcmp(nestedDm1->gameId, "dm1") == 0,
+                  "nested arbitrary DM1 original save forces game id");
+            check(nestedDm1->valid == 1 &&
+                      nestedDm1->dm1PC34PartEnvelopeReady == 1,
+                  "nested arbitrary DM1 original save passes F7057 envelope gate");
+            check(strstr(nestedDm1->fullPath,
+                         "/saves/dm1/deep/slot-seven-real-save.bin") != NULL,
+                  "nested arbitrary DM1 original save records recursive path");
+        }
         nested = find_entry(&state, "firestaff-csb-sibling.sav");
         check(nested != NULL, "sibling CSB save entry present");
         if (nested) {
