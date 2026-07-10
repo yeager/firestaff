@@ -561,7 +561,7 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
     /* ReDMCSB PANEL.C F0352 lines 1182-1191 uses the inventory
      * champion's F0303 Priest level when deciding whether to prefix a
      * non-water potion with '_' + Power/40.  Exercise the real C071
-     * runtime route, not just M11_GameView_ProbeF0352PotionEyeDescription. */
+     * runtime route, not just the DM1 formatter contract. */
     memset(potions, 0, sizeof(potions));
     potions[0].next = THING_ENDOFLIST;
     potions[0].type = 6;  /* ROS POTION */

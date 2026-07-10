@@ -996,15 +996,6 @@ int M11_GameView_ProbeF0230ParryAdjustedAttack(
     int random16,
     int creatureBaseAttack,
     int doubledMapDifficulty);
-int M11_GameView_ProbeF0352PotionEyeDescription(
-    const M11_GameViewState* state,
-    int championIndex,
-    unsigned int thingType,
-    unsigned int iconIndex,
-    unsigned int potionPower,
-    const char* objectName,
-    char* outText,
-    size_t outTextSize);
 int M11_GameView_ProbeF0407ShootAttack(
     const M11_GameViewState* state,
     int championIndex,
