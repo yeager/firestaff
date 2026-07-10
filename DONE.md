@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+
+- ✅ 2026-07-10 CSB host-view draw command-consumption receipts: startup host-view render-draw receipts now report primitive-command, title asset-command, closed-door asset-command, and opening-frame command readiness/consumption for PRESENTS/title, utility/closed-door HUD, and door-opening routes. This gives the remaining M11 primitive/asset helper callers a verified CSB receipt boundary before they are retired. Verification: `test_csb_v1_boot_runtime_handoff` PASS 442/442, `test_csb_v1_startup_entrance_pointer_pc34_compat` PASS 152/152, focused `-Wall -Wextra -Werror` syntax checks, and `git diff --check` passed.
 - ✅ 2026-07-10 DM1 M11 HoC presented-capture handoff cleanup: `main_loop_m11` now validates only the DM1 source and boot receipt before calling the DM1-owned presented-capture publish receipt; loose host-side capture/geometry/pixel gates no longer decide whether M12 receives HoC capture. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m11`, and `git diff --check` passed.
 
 - ✅ 2026-07-10 DM1 HoC presented-capture exact consumer gate: HoC presented-capture publish now requires exactly the named production consumers (host-render, M11 boot-probe, and M12 startup capture) before the release/app capture chain can go ready; extra or partial masks are rejected. Verification: `test_dm1_v1_startup_intro_state_machine_gate` and `git diff --check` passed.

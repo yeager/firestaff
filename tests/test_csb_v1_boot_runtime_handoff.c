@@ -2837,6 +2837,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.render_plan_valid &&
               host_view_receipt.render_draw_valid &&
               host_view_receipt.render_draw.title_draw_ready &&
+              host_view_receipt.render_draw.primitive_commands_ready &&
+              host_view_receipt.render_draw.title_asset_commands_ready &&
               host_view_receipt.readiness_valid &&
               host_view_receipt.readiness.host_input_blocked &&
               host_view_receipt.render_plan.surface ==
@@ -2866,6 +2868,10 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_draw_receipt.render_executed &&
               !host_view_draw_receipt.hud_menu_executed &&
               host_view_draw_receipt.real_asset_matched &&
+              host_view_draw_receipt.primitive_commands_consumed &&
+              host_view_draw_receipt.title_asset_commands_consumed &&
+              !host_view_draw_receipt.closed_door_asset_commands_consumed &&
+              !host_view_draw_receipt.opening_frame_command_consumed &&
               host_view_draw_receipt.route ==
                   CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
               host_view_draw_receipt.surface ==
@@ -3271,6 +3277,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.render_plan_valid &&
               host_view_receipt.render_draw_valid &&
               host_view_receipt.render_draw.hud_menu_draw_ready &&
+              host_view_receipt.render_draw.primitive_commands_ready &&
+              host_view_receipt.render_draw.closed_door_asset_commands_ready &&
               host_view_receipt.hud_menu_draw_valid &&
               host_view_receipt.hud_menu_draw.draw_utility_panel &&
               host_view_receipt.hud_menu_draw.utility_render_plan_valid &&
@@ -3326,6 +3334,10 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
               host_view_draw_receipt.consumed_host_view_only &&
               host_view_draw_receipt.fallback_callbacks_stripped &&
+              host_view_draw_receipt.primitive_commands_consumed &&
+              !host_view_draw_receipt.title_asset_commands_consumed &&
+              host_view_draw_receipt.closed_door_asset_commands_consumed &&
+              !host_view_draw_receipt.opening_frame_command_consumed &&
               capture_render_probe.draw_full_surface_count == 1 &&
               capture_render_probe.draw_utility_panel_count == 1 &&
               capture_render_probe.draw_closed_doors_count == 0,
@@ -3898,6 +3910,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_view_receipt.render_plan_valid &&
               host_view_receipt.render_draw_valid &&
               host_view_receipt.render_draw.opening_draw_ready &&
+              host_view_receipt.render_draw.primitive_commands_ready &&
+              host_view_receipt.render_draw.opening_frame_command_ready &&
               host_view_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
               host_view_receipt.render_plan.opening_step == 3 &&
@@ -3914,6 +3928,10 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &host_view_draw_receipt) == 1 &&
               host_view_draw_receipt.render_executed &&
               host_view_draw_receipt.fallback_callbacks_stripped &&
+              host_view_draw_receipt.primitive_commands_consumed &&
+              !host_view_draw_receipt.title_asset_commands_consumed &&
+              host_view_draw_receipt.closed_door_asset_commands_consumed &&
+              host_view_draw_receipt.opening_frame_command_consumed &&
               capture_render_probe.draw_opening_frame_count == 1 &&
               capture_render_probe.last_surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34,
