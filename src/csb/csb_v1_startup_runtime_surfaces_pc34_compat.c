@@ -368,6 +368,160 @@ void csb_v1_boot_startup_complete_support_receipt_init_pc34(
         "CSBWin Graphics.cpp ReadGraphic and startup host loop";
 }
 
+void csb_v1_boot_startup_release_app_capture_receipt_init_pc34(
+    CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *receipt)
+{
+    if (!receipt) return;
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_boot_startup_complete_support_receipt_init_pc34(
+        &receipt->complete_support);
+    receipt->source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 424-463; "
+        "ENTRANCE.C F0441/F0806 lines 620-700; "
+        "ENTRANCE.C F0580/F0581 lines 1123-1165";
+}
+
+int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
+    const CSB_V1_StartupCompleteSupportReceipt_PC34 *complete_support,
+    CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *out_receipt)
+{
+    const CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *host_gate;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    csb_v1_boot_startup_release_app_capture_receipt_init_pc34(out_receipt);
+    if (!complete_support) return 0;
+
+    host_gate = &complete_support->host_capture_gate;
+    out_receipt->complete_support = *complete_support;
+    out_receipt->complete_support_valid = complete_support->valid ? 1 : 0;
+    out_receipt->host_capture_gate_valid =
+        complete_support->host_capture_gate_valid && host_gate->valid ? 1 : 0;
+    out_receipt->title_phase_route_complete =
+        complete_support->title_phase_route_complete &&
+                host_gate->title_runtime_phase_route_complete
+            ? 1
+            : 0;
+    out_receipt->runtime_host_routes_ready =
+        complete_support->runtime_host_routes_ready &&
+                host_gate->all_runtime_routes_consumed
+            ? 1
+            : 0;
+    out_receipt->draw_consumes_receipt_only =
+        complete_support->draw_consumes_receipt_only &&
+                host_gate->draw_consumes_receipt_only
+            ? 1
+            : 0;
+    out_receipt->input_consumes_receipt_only =
+        complete_support->input_consumes_receipt_only &&
+                host_gate->input_consumes_receipt_only
+            ? 1
+            : 0;
+    out_receipt->no_fallback_callbacks =
+        complete_support->no_fallback_callbacks &&
+                host_gate->no_fallback_callbacks
+            ? 1
+            : 0;
+    out_receipt->no_wrapper_fallback_routes =
+        complete_support->no_wrapper_fallback_routes &&
+                host_gate->no_wrapper_fallback_routes
+            ? 1
+            : 0;
+    out_receipt->host_route_wrappers_retired =
+        complete_support->host_route_wrappers_retired &&
+                host_gate->host_route_wrappers_retired
+            ? 1
+            : 0;
+    out_receipt->no_loose_render_plan_exports =
+        complete_support->no_loose_render_plan_exports &&
+                host_gate->no_loose_render_plan_exports
+            ? 1
+            : 0;
+    out_receipt->real_startup_assets_bound =
+        complete_support->real_startup_assets_bound &&
+                host_gate->real_startup_assets_bound
+            ? 1
+            : 0;
+    out_receipt->title_packaged_capture_hash =
+        host_gate->title_packaged_capture_hash;
+    out_receipt->closed_door_packaged_capture_hash =
+        host_gate->closed_door_packaged_capture_hash;
+    out_receipt->utility_packaged_capture_hash =
+        host_gate->utility_packaged_capture_hash;
+    out_receipt->door_opening_packaged_capture_hash =
+        host_gate->door_opening_packaged_capture_hash;
+    out_receipt->title_release_app_capture_ready =
+        host_gate->title_runtime_captured &&
+                host_gate->title_packaged_capture_hash != 0u
+            ? 1
+            : 0;
+    out_receipt->closed_door_release_app_capture_ready =
+        host_gate->closed_door_hud_runtime_captured &&
+                host_gate->closed_door_packaged_capture_hash != 0u
+            ? 1
+            : 0;
+    out_receipt->utility_release_app_capture_ready =
+        host_gate->utility_hud_runtime_captured &&
+                host_gate->utility_packaged_capture_hash != 0u
+            ? 1
+            : 0;
+    out_receipt->door_opening_release_app_capture_ready =
+        host_gate->door_opening_runtime_captured &&
+                host_gate->door_opening_packaged_capture_hash != 0u
+            ? 1
+            : 0;
+    out_receipt->runtime_host_gate_hash =
+        complete_support->runtime_host_gate_hash;
+    out_receipt->complete_support_hash =
+        complete_support->complete_support_hash;
+
+    hash ^= out_receipt->runtime_host_gate_hash;
+    hash *= 16777619u;
+    hash ^= out_receipt->complete_support_hash;
+    hash *= 16777619u;
+    hash ^= out_receipt->title_packaged_capture_hash;
+    hash *= 16777619u;
+    hash ^= out_receipt->closed_door_packaged_capture_hash;
+    hash *= 16777619u;
+    hash ^= out_receipt->utility_packaged_capture_hash;
+    hash *= 16777619u;
+    hash ^= out_receipt->door_opening_packaged_capture_hash;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->title_phase_route_complete;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->runtime_host_routes_ready;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->host_route_wrappers_retired;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->no_loose_render_plan_exports;
+    out_receipt->release_app_capture_hash = hash ? hash : 1u;
+    out_receipt->release_app_capture_ready =
+        out_receipt->complete_support_valid &&
+                out_receipt->host_capture_gate_valid &&
+                out_receipt->title_release_app_capture_ready &&
+                out_receipt->closed_door_release_app_capture_ready &&
+                out_receipt->utility_release_app_capture_ready &&
+                out_receipt->door_opening_release_app_capture_ready &&
+                out_receipt->title_phase_route_complete &&
+                out_receipt->runtime_host_routes_ready &&
+                out_receipt->draw_consumes_receipt_only &&
+                out_receipt->input_consumes_receipt_only &&
+                out_receipt->no_fallback_callbacks &&
+                out_receipt->no_wrapper_fallback_routes &&
+                out_receipt->host_route_wrappers_retired &&
+                out_receipt->no_loose_render_plan_exports &&
+                out_receipt->real_startup_assets_bound &&
+                out_receipt->release_app_capture_hash != 0u
+            ? 1
+            : 0;
+    out_receipt->valid = out_receipt->release_app_capture_ready;
+    /* ReDMCSB keeps title, entrance HUD and opening-door presentation under
+     * TITLE.C F0437 plus ENTRANCE.C F0441/F0580/F0581.  The release app
+     * capture gate consumes the same packaged title/HUD/opening hashes instead
+     * of accepting partial or fallback host routes. */
+    return out_receipt->valid;
+}
+
 int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
     const CSB_V1_StartupFullRuntimeReceipt_PC34 *full_runtime,
     const CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *host_capture_gate,
