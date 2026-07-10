@@ -621,6 +621,29 @@ static void format_champion_name(const unsigned char packed[8],
 static void format_csb_champion_name(const char packed[16],
                                      char* out, int outSize);
 
+static int attach_dm1_pc34_roundtrip_receipt(M12_SaveBrowserEntry* entry,
+                                             uint32_t gameID) {
+    struct DM1OriginalPC34RoundtripReceipt receipt;
+
+    if (!entry || strcmp(entry->gameId, "dm1") != 0) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!DM1_BuildOriginalPC34RoundtripReceipt(entry->fullPath,
+                                               gameID,
+                                               &receipt) ||
+        !receipt.roundtripSucceeded ||
+        !receipt.coreStateMatches) {
+        return 0;
+    }
+
+    entry->dm1PC34RoundtripReady = 1;
+    entry->dm1PC34CoreStateMatches = receipt.coreStateMatches;
+    entry->dm1PC34RoundtripBytes = receipt.exportedByteCount;
+    entry->dm1PC34RoundtripGameTime = receipt.sourceGameTime;
+    return 1;
+}
+
 static void format_dm2_champion_name(const char packed[8],
                                      char* out, int outSize) {
     int i;
@@ -1048,6 +1071,7 @@ static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
     rc = dm1_v1_original_save_pc34_handoff_file(
         entry->fullPath, &sg, &originalReport);
     if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        (void)attach_dm1_pc34_roundtrip_receipt(entry, 0x44534d31u);
         entry->valid = 1;
         entry->mapLevel = sg.party ? sg.party->mapIndex : -1;
         entry->championCount = sg.party ? sg.party->championCount : 0;
@@ -1594,6 +1618,7 @@ int M12_SaveBrowser_ExportSelectedAsDM1PC34(
     const M12_SaveBrowserEntry* entry;
     struct GameWorld_Compat world;
     struct DM1SaveHeader hdr;
+    struct DM1OriginalPC34RoundtripReceipt receipt;
     char base[SAVE_BROWSER_FILENAME_MAX];
     char dst[512];
     uint32_t gameID;
@@ -1632,6 +1657,13 @@ int M12_SaveBrowser_ExportSelectedAsDM1PC34(
     rc = DM1_SaveGamePC34(&world, dst, gameID);
     F0883_WORLD_Free_Compat(&world);
     if (rc != DM1_SAVE_OK) {
+        remove(dst);
+        return -1;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!DM1_BuildOriginalPC34RoundtripReceipt(dst, gameID, &receipt) ||
+        !receipt.roundtripSucceeded ||
+        !receipt.coreStateMatches) {
         remove(dst);
         return -1;
     }

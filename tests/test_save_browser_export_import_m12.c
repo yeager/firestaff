@@ -867,6 +867,15 @@ int main(void) {
                   "DM1 original PC34 save reports manifest-not-present");
             check(original->valid == 1,
                   "DM1 original PC34 save is load-browser valid");
+            check(original->dm1PC34RoundtripReady == 1,
+                  "DM1 original PC34 save has roundtrip receipt");
+            check(original->dm1PC34CoreStateMatches == 1,
+                  "DM1 original PC34 receipt core state matches");
+            check(original->dm1PC34RoundtripGameTime == 1000u,
+                  "DM1 original PC34 receipt exposes game tick");
+            check(original->dm1PC34RoundtripBytes >
+                      SAVEGAME_PC34_DM_SAVE_HEADER_SIZE,
+                  "DM1 original PC34 receipt exposes exported bytes");
             check(original->mapLevel == 8,
                   "DM1 original PC34 save imports map level via original handoff");
             check(original->championCount == 1,
@@ -895,6 +904,7 @@ int main(void) {
             struct PartyState_Compat importedParty;
             struct TimelineQueue_Compat importedTimeline;
             DM1OriginalSavePC34HandoffReport report;
+            struct DM1OriginalPC34RoundtripReceipt receipt;
             int rc;
 
             check(native->valid == 1,
@@ -916,6 +926,12 @@ int main(void) {
                                                         &report);
             check(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
                   "PC34 export is accepted by original handoff");
+            memset(&receipt, 0, sizeof(receipt));
+            check(DM1_BuildOriginalPC34RoundtripReceipt(
+                      outPath, 0x44534d31u, &receipt) == 1 &&
+                      receipt.roundtripSucceeded &&
+                      receipt.coreStateMatches,
+                  "PC34 export has launcher roundtrip receipt");
             if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
                 check(importedParty.championCount == 1,
                       "PC34 export preserves champion count");

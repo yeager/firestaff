@@ -40,6 +40,10 @@ typedef struct {
     int  mapLevel;                              /* dungeon level (-1=unknown) */
     int  championCount;                         /* 0-4                    */
     int  valid;                                 /* header parsed OK       */
+    int  dm1PC34RoundtripReady;                 /* original PC34 import/export proof */
+    int  dm1PC34CoreStateMatches;               /* receipt core-state parity */
+    uint32_t dm1PC34RoundtripBytes;             /* exported PC34 byte count */
+    uint32_t dm1PC34RoundtripGameTime;          /* original save game tick */
     time_t fileModTime;                         /* file modification time */
     long   fileSize;                            /* file size in bytes     */
 } M12_SaveBrowserEntry;
