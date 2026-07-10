@@ -7839,25 +7839,6 @@ static int m11_game_view_get_f0352_potion_priest_skill(
     return priestSkill < 0 ? 0 : priestSkill;
 }
 
-int M11_GameView_ProbeF0352PotionEyeDescription(
-    const M11_GameViewState* state,
-    int championIndex,
-    unsigned int thingType,
-    unsigned int iconIndex,
-    unsigned int potionPower,
-    const char* objectName,
-    char* outText,
-    size_t outTextSize) {
-    const unsigned int priestSkill =
-        (unsigned int)m11_game_view_get_f0352_potion_priest_skill(
-            state, championIndex);
-    /* ReDMCSB: PANEL.C F0352 lines 1182-1191 prefixes non-water
-     * potion names from F0303(PRIEST) > 1, not raw champion storage. */
-    return INVENTORY_Compat_FormatPotionEyeDescription(
-        thingType, iconIndex, potionPower, priestSkill,
-        objectName, outText, outTextSize, NULL);
-}
-
 /* ================================================================
  * Pickup: take first item from current cell -> champion inventory
  * ================================================================ */
