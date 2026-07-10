@@ -1,6 +1,26 @@
 
 # Unreleased
 
+# Firestaff v3.0.71
+
+Firestaff v3.0.71 packages current `main` after DM1, DM2, Nexus and Theron
+support gates landed after `v3.0.70`.
+
+## Highlights since v3.0.70
+
+- **DM1 ReDMCSB gate**: DM1 complete support now requires source-visible
+  startup, HoC render ownership, app capture and original-save routes together.
+- **DM2 GDAT gate**: DM2 complete support now joins skproject-shaped GDAT
+  title/menu/HUD/dungeon receipts behind one boot-level gate.
+- **Nexus and Theron gates**: Startup/runtime receipt chains were tightened for
+  DGN/material and Track 02 route ownership.
+
+## Verification
+
+- Local verification covered focused syntax checks and `git diff --check`.
+- GitHub Actions release packaging builds the platform artifacts from the
+  `v3.0.71` tag.
+
 # Firestaff v3.0.70
 
 Firestaff v3.0.70 packages the current `main` after the DM2 GDAT render receipt
