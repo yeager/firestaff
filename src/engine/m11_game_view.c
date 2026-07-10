@@ -30077,7 +30077,9 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outRuntimeRouteHardeningReady,
     int* outRuntimeRouteHardeningHashReady,
     int* outRuntimeHostCaptureGateReady,
-    int* outRuntimeHostCaptureGateHashReady)
+    int* outRuntimeHostCaptureGateHashReady,
+    int* outTitleStageRuntimeCaptureReady,
+    int* outTitleStageRuntimeCaptureHashReady)
 {
     CSB_V1_BootProfile boot;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
@@ -30337,6 +30339,27 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
             runtime_gate.runtime_capture_hash != 0u &&
             runtime_gate.route_hardening_hash != 0u &&
             runtime_gate.runtime_host_gate_hash != 0u;
+    }
+    if (outTitleStageRuntimeCaptureReady) {
+        *outTitleStageRuntimeCaptureReady =
+            runtime_gate.title_presents_runtime_captured &&
+            runtime_gate.title_chaos_zoom_runtime_captured &&
+            runtime_gate.title_chaos_hold_runtime_captured &&
+            runtime_gate.title_strikes_back_runtime_captured &&
+            runtime_gate.runtime_visual.title_runtime_sample_count ==
+                CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34;
+    }
+    if (outTitleStageRuntimeCaptureHashReady) {
+        int i;
+        *outTitleStageRuntimeCaptureHashReady = 1;
+        for (i = 0; i < CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34; ++i) {
+            if (runtime_gate.runtime_visual.title_runtime_sample_hashes[i] == 0u ||
+                runtime_gate.runtime_visual.title_runtime_sample_hashes[i] !=
+                    visual_sequence.title_sample_hashes[i]) {
+                *outTitleStageRuntimeCaptureHashReady = 0;
+                break;
+            }
+        }
     }
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 keep post-swoosh
      * title, closed-door HUD/menu, utility menu, and door opening inside the
