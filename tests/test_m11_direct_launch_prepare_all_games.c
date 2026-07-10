@@ -32,9 +32,13 @@
 #if defined(_WIN32)
 #include <direct.h>
 #include <process.h>
+#include <sys/stat.h>
 #define TEST_MKDIR(path) _mkdir(path)
 #define TEST_PATH_SEP "\\"
 #define TEST_GETPID() _getpid()
+#define TEST_STAT_STRUCT struct _stat
+#define TEST_STAT(path, st) _stat((path), (st))
+#define TEST_ISDIR(mode) (((mode) & _S_IFDIR) != 0)
 static void test_setenv(const char* name, const char* value) {
     (void)_putenv_s(name, value ? value : "");
 }
@@ -44,6 +48,9 @@ static void test_setenv(const char* name, const char* value) {
 #define TEST_MKDIR(path) mkdir((path), 0700)
 #define TEST_PATH_SEP "/"
 #define TEST_GETPID() getpid()
+#define TEST_STAT_STRUCT struct stat
+#define TEST_STAT(path, st) stat((path), (st))
+#define TEST_ISDIR(mode) S_ISDIR(mode)
 static void test_setenv(const char* name, const char* value) {
     if (value) {
         (void)setenv(name, value, 1);
@@ -134,8 +141,9 @@ static int run_heavy_real_data_case(const char* game_id) {
 }
 
 static int local_dir_exists(const char* path) {
-    struct stat st;
-    return path && path[0] && stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+    TEST_STAT_STRUCT st;
+    return path && path[0] && TEST_STAT(path, &st) == 0 &&
+           TEST_ISDIR(st.st_mode);
 }
 
 static const char* game_scoped_data_root(const char* broad_root,
