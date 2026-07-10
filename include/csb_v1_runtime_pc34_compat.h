@@ -1148,40 +1148,6 @@ int csb_v1_runtime_util_render_plan_from_boot_profile_facts_pc34(
 int csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
     const CSB_V1_StartupHostFacts_PC34 *facts,
     CSB_V1_UtilRenderPlan *out_plan);
-int csb_v1_runtime_util_apply_point_with_state_from_boot_profile_facts_pc34(
-    int selected_action_index,
-    int imported_champion_count,
-    const void *boot_profile,
-    int x,
-    int y,
-    int import_available,
-    int credits_active,
-    int opening_active,
-    int preview_active,
-    CSB_V1_UtilApplyReceipt *out_receipt,
-    CSB_V1_UtilStateReceipt *out_state_receipt);
-int csb_v1_runtime_util_apply_point_from_startup_host_facts_pc34(
-    const CSB_V1_StartupHostFacts_PC34 *facts,
-    int x,
-    int y,
-    CSB_V1_UtilApplyReceipt *out_receipt,
-    CSB_V1_UtilStateReceipt *out_state_receipt);
-int csb_v1_runtime_util_apply_firestaff_input_with_state_from_boot_profile_facts_pc34(
-    int selected_action_index,
-    int imported_champion_count,
-    const void *boot_profile,
-    int menu_input,
-    int import_available,
-    int credits_active,
-    int opening_active,
-    int preview_active,
-    CSB_V1_UtilApplyReceipt *out_receipt,
-    CSB_V1_UtilStateReceipt *out_state_receipt);
-int csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_pc34(
-    const CSB_V1_StartupHostFacts_PC34 *facts,
-    int menu_input,
-    CSB_V1_UtilApplyReceipt *out_receipt,
-    CSB_V1_UtilStateReceipt *out_state_receipt);
 typedef struct CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 {
     CSB_V1_UtilApplyReceipt util_receipt;
     CSB_V1_UtilStateReceipt util_state_receipt;
