@@ -205,9 +205,14 @@ typedef struct DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 {
     int valid;
     int consumedF0172Sensor;
     int consumedF0115ThingReceipt;
+    /* The only M11 execution switches for a visible HoC D1C cell.  They
+     * preserve DUNVIEW's wall-overlay -> object -> projectile separation. */
+    int drawFrontWallOverlay;
     int drawChampionPortraitAsWallOverlay;
     int drawFloorObject;
     int drawRuntimeProjectile;
+    int drawRuntimeSpellEffect;
+    int suppressHostFallbackVisuals;
     int suppressMaterializedItemPayload;
     int suppressMirrorAsFloorItem;
     int suppressMirrorAsProjectile;
