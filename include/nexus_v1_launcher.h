@@ -302,6 +302,10 @@ typedef struct {
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
     int bpk_prs3_material_surface_count;
+    int dgn_material_plan_consumed;
+    int dgn_commands_copied_from_material_plan;
+    int dgn_material_viewport_consumed;
+    int bpk_material_path_consumed;
     int viewport_written_pixels;
     int fallback_visuals_permitted;
     const char *asset_route;
@@ -339,6 +343,10 @@ typedef struct {
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
     int bpk_prs3_material_surface_count;
+    int dgn_material_plan_consumed;
+    int dgn_commands_copied_from_material_plan;
+    int dgn_material_viewport_consumed;
+    int bpk_material_path_consumed;
     int dgn_viewport_written_pixels;
     int dgn_blocks_real_mesh_render;
     Nexus_ScriptRuntimeStatus script_runtime_status;
@@ -752,6 +760,8 @@ typedef struct {
     int dgn_viewport_ceiling_material_surface_count;
     int dgn_viewport_wall_material_surface_count;
     int dgn_material_surface_coverage_complete;
+    int runtime_dgn_material_path_consumed;
+    int host_route_consumes_dgn_material_path;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
     int bpk_prs3_material_surface_count;
@@ -791,6 +801,8 @@ typedef struct {
     int dgn_viewport_ceiling_material_surface_count;
     int dgn_viewport_wall_material_surface_count;
     int dgn_material_surface_coverage_complete;
+    int host_runtime_dgn_material_path_consumed;
+    int host_route_consumes_dgn_material_path;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
     int bpk_prs3_material_surface_count;
@@ -883,6 +895,7 @@ typedef struct {
     int dungeon_route_complete;
     int dungeon_capture_route_consumed;
     int dgn_material_surface_coverage_complete;
+    int dgn_material_path_consumed;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
     int bpk_prs3_material_surface_count;

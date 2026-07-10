@@ -238,9 +238,15 @@ int nexus_v1_bpk_archive_inspect_prs3(const uint8_t *data,
     out_info->pixel_count_matches = (prs3_pixel_count == prefix_pixels);
 
     payload_start = prs3_off + NEXUS_V1_BPK_PRS3_HEADER_BYTES;
-    if (payload_start <= entry.next_offset) {
+    if (payload_start + 4U <= data_size) {
+        uint32_t declared = rd32_be(data + payload_start);
+        uint32_t available =
+            (data_size - payload_start - 4U > UINT32_MAX)
+                ? UINT32_MAX
+                : (uint32_t)(data_size - payload_start - 4U);
         out_info->payload_available = 1;
-        out_info->compressed_size = entry.next_offset - payload_start;
+        out_info->compressed_size =
+            (declared <= available) ? declared : available;
     }
     return 0;
 }
@@ -617,35 +623,36 @@ static int prs3_decode_body(const uint8_t *data, size_t size,
             if (cursor >= size) return 0;
             out[written++] = data[cursor++];
         } else {
-            int long_copy;
             int length;
-            int offset;
-            if (!prs3_read_bit(data, size, &cursor, &control, &bits_left,
-                               &long_copy)) return 0;
-            if (long_copy) {
-                uint16_t token;
-                if (cursor + 2U > size) return 0;
-                token = (uint16_t)data[cursor] | ((uint16_t)data[cursor + 1U] << 8);
-                cursor += 2U;
-                offset = (int)(token >> 3);
-                if (offset & 0x1000) offset -= 0x2000;
-                length = (int)(token & 7U) + 2;
+            int raw_offset;
+            int absolute_offset;
+            int copy_index;
+            uint8_t byte0;
+            uint8_t byte1;
+            if (cursor + 2U > size) return 0;
+            byte0 = data[cursor];
+            byte1 = data[cursor + 1U];
+            cursor += 2U;
+            length = 3 + (int)(byte1 & 0x0fU);
+            raw_offset = (int)byte0 | (((int)byte1 & 0xf0) << 4);
+            if (raw_offset >= 0xfdc) {
+                absolute_offset = raw_offset - 0xfee;
             } else {
-                int bit0, bit1;
-                if (!prs3_read_bit(data, size, &cursor, &control, &bits_left,
-                                   &bit0) ||
-                    !prs3_read_bit(data, size, &cursor, &control, &bits_left,
-                                   &bit1) || cursor >= size) return 0;
-                length = bit0 | (bit1 << 1);
-                if (length == 0) return 0; /* stream end before declared surface */
-                length += 2;
-                offset = (int)(int8_t)data[cursor++];
+                absolute_offset = raw_offset + 18;
             }
-            if (offset >= 0 || (size_t)(-offset) > written ||
-                (size_t)length > output_size - written) return 0;
-            while (length-- > 0) {
-                out[written] = out[(size_t)((int)written + offset)];
+            while ((int)written - absolute_offset > 4095) {
+                absolute_offset += 4096;
+            }
+            if ((size_t)length > output_size - written) return 0;
+            for (copy_index = 0; copy_index < length; ++copy_index) {
+                if (absolute_offset < 0) {
+                    out[written] = 0U;
+                } else {
+                    if ((size_t)absolute_offset >= written) return 0;
+                    out[written] = out[(size_t)absolute_offset];
+                }
                 ++written;
+                ++absolute_offset;
             }
         }
     }
@@ -671,10 +678,10 @@ int nexus_v1_bpk_archive_decode_surface(
         return NEXUS_V1_BPK_DECODE_ERR_ARCHIVE;
     bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
     if (!prefix.prefix_complete || bpp == 0U) return NEXUS_V1_BPK_DECODE_ERR_NOT_SURFACE;
-    expected = (size_t)prefix.width * (size_t)prefix.height * bpp;
-    if (expected > out_size) return NEXUS_V1_BPK_DECODE_ERR_OUTPUT_TOO_SMALL;
 
     if (!entry.has_prs3) {
+        expected = (size_t)prefix.width * (size_t)prefix.height * bpp;
+        if (expected > out_size) return NEXUS_V1_BPK_DECODE_ERR_OUTPUT_TOO_SMALL;
         int rc = nexus_v1_bpk_archive_extract_stored_surface(data, data_size,
                                                                index, out, out_size,
                                                                out_surface, out_written);
@@ -684,10 +691,13 @@ int nexus_v1_bpk_archive_decode_surface(
     }
     if (nexus_v1_bpk_archive_inspect_prs3(data, data_size, index, &prs3) != 0 ||
         !prs3.prs3_version_matches || !prs3.pixel_count_matches ||
-        entry.payload_size < NEXUS_V1_BPK_PRS3_HEADER_BYTES + 1U)
+        prs3.compressed_size == 0U ||
+        entry.payload_size < NEXUS_V1_BPK_PRS3_HEADER_BYTES + 4U)
         return NEXUS_V1_BPK_DECODE_ERR_TRUNCATED;
-    if (!prs3_decode_body(data + entry.payload_offset + 8U,
-                          entry.payload_size - 8U, out, expected, out_written))
+    expected = prs3.prs3_pixel_count;
+    if (expected > out_size) return NEXUS_V1_BPK_DECODE_ERR_OUTPUT_TOO_SMALL;
+    if (!prs3_decode_body(data + entry.payload_offset + 12U,
+                          prs3.compressed_size, out, expected, out_written))
         return NEXUS_V1_BPK_DECODE_ERR_STREAM;
     if (out_surface) {
         out_surface->entry_index = index;
@@ -695,10 +705,11 @@ int nexus_v1_bpk_archive_decode_surface(
         out_surface->width = prefix.width;
         out_surface->height = prefix.height;
         out_surface->pixel_count = (uint32_t)prefix.width * prefix.height;
-        out_surface->layout.bpp = bpp;
-        out_surface->layout.rowstride = (uint32_t)prefix.width * bpp;
+        out_surface->layout.bpp = 1U;
+        out_surface->layout.rowstride = (uint32_t)prefix.width;
         out_surface->layout.surface_bytes = (uint32_t)expected;
-        out_surface->layout.surface_class = nexus_v1_bpk_mode_to_surface_class(prefix.mode);
+        out_surface->layout.surface_class =
+            NEXUS_V1_BPK_SURFACE_INDEXED_8BPP;
     }
     return NEXUS_V1_BPK_DECODE_OK;
 }
@@ -828,7 +839,8 @@ int nexus_v1_dmdf_import_bpk_material_bank(const uint8_t *data,
             prefix.width == 0U || prefix.height == 0U) continue;
         bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
         if (bpp == 0U) continue;
-        bytes = (size_t)prefix.width * (size_t)prefix.height * (size_t)bpp;
+        bytes = (size_t)prefix.width * (size_t)prefix.height *
+                (entry.has_prs3 ? 1U : (size_t)bpp);
         if (bytes == 0U) continue;
         pixels = (uint8_t *)malloc(bytes);
         if (!pixels) break;
@@ -838,6 +850,7 @@ int nexus_v1_dmdf_import_bpk_material_bank(const uint8_t *data,
             free(pixels);
             continue;
         }
+        bpp = surface.layout.bpp;
         if (bpp == 1U) {
             int palette_source = -1;
             int candidate;
@@ -1138,13 +1151,6 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
 
     out_receipt->archive_entries = handoff.archive_entries;
     out_receipt->surface_entries = handoff.surface_entries;
-    out_receipt->ready_uploads = handoff.ready_stored_surfaces;
-    out_receipt->blocked_prs3_uploads = handoff.blocked_prs3_surfaces;
-    out_receipt->blocked_truncated_uploads =
-        handoff.blocked_truncated_surfaces;
-    out_receipt->expected_upload_bytes = handoff.expected_surface_bytes;
-    out_receipt->extractable_upload_bytes =
-        handoff.extractable_surface_bytes;
 
     for (uint32_t i = 0; i < count; ++i) {
         Nexus_V1_BpkEntry entry;
@@ -1166,10 +1172,6 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
         bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
         if (bpp == 0U) continue;
         expected = (uint64_t)prefix.width * (uint64_t)prefix.height * bpp;
-        if (expected > UINT32_MAX) {
-            out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
-            return -1;
-        }
 
         memset(&row, 0, sizeof(row));
         row.entry_index = i;
@@ -1178,15 +1180,15 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
         row.width = prefix.width;
         row.height = prefix.height;
         row.bpp = bpp;
-        row.expected_output_bytes = (uint32_t)expected;
         row.payload_offset = entry.payload_offset;
         row.payload_size = entry.payload_size;
 
         if (entry.has_prs3) {
             Nexus_V1_BpkPrs3StreamPlan plan;
+            Nexus_V1_BpkSurfaceEntry decoded_surface;
+            uint8_t *pixels;
+            size_t written = 0U;
             int rc;
-            row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3;
-            row.decode_blocked = 1;
             rc = nexus_v1_bpk_archive_prs3_stream_plan(
                 data, data_size, i, &plan);
             if (rc == NEXUS_V1_BPK_PRS3_STREAM_OK) {
@@ -1199,11 +1201,48 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
             } else {
                 row.header_minus_payload = UINT32_MAX;
             }
+            expected = (uint64_t)prefix.width * (uint64_t)prefix.height;
+            if (expected > UINT32_MAX) {
+                out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
+                return -1;
+            }
+            pixels = (uint8_t *)malloc((size_t)expected);
+            if (pixels) {
+                rc = nexus_v1_bpk_archive_decode_surface(
+                    data, data_size, i, pixels, (size_t)expected,
+                    &decoded_surface, &written);
+            } else {
+                rc = NEXUS_V1_BPK_DECODE_ERR_OUTPUT_TOO_SMALL;
+            }
+            if (rc == NEXUS_V1_BPK_DECODE_OK && written == (size_t)expected) {
+                row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED;
+                row.surface_class = decoded_surface.layout.surface_class;
+                row.bpp = decoded_surface.layout.bpp;
+                row.expected_output_bytes = (uint32_t)written;
+                row.upload_ready = 1;
+                ++out_receipt->ready_uploads;
+                out_receipt->expected_upload_bytes += written;
+                out_receipt->extractable_upload_bytes += written;
+            } else {
+                row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3;
+                row.decode_blocked = 1;
+                row.expected_output_bytes = (uint32_t)expected;
+                ++out_receipt->blocked_prs3_uploads;
+                out_receipt->expected_upload_bytes += expected;
+            }
+            free(pixels);
         } else if ((uint64_t)entry.payload_size < expected) {
             row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_TRUNCATED;
+            row.expected_output_bytes = (uint32_t)expected;
+            ++out_receipt->blocked_truncated_uploads;
+            out_receipt->expected_upload_bytes += expected;
         } else {
             row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED;
+            row.expected_output_bytes = (uint32_t)expected;
             row.upload_ready = 1;
+            ++out_receipt->ready_uploads;
+            out_receipt->expected_upload_bytes += expected;
+            out_receipt->extractable_upload_bytes += expected;
         }
 
         if (out_rows && planned < row_capacity) {
@@ -1222,6 +1261,8 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3;
     } else if (out_receipt->blocked_truncated_uploads > 0U) {
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED;
+    } else if (out_receipt->ready_uploads > handoff.ready_stored_surfaces) {
+        out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED;
     } else {
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED;
     }
@@ -1243,6 +1284,7 @@ const char *nexus_v1_bpk_runtime_upload_route_name(
     case NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED:
         return "blocked-truncated";
     case NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES: return "no-surfaces";
+    case NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED: return "ready-decoded";
     default: return "unknown";
     }
 }
@@ -1319,26 +1361,13 @@ int nexus_v1_bpk_archive_runtime_decode_receipt(
             if (plan.header_underflow) {
                 ++out_receipt->prs3_header_underflows;
             }
-            if (!have_first_blocked) {
-                out_receipt->first_blocked_entry = i;
-                out_receipt->first_blocked_stream_offset =
-                    plan.stream_offset;
-                out_receipt->first_blocked_stream_size = plan.stream_size;
-                out_receipt->first_blocked_expected_output_bytes =
-                    plan.expected_output_bytes;
-                out_receipt->first_blocked_header_first_u32 =
-                    plan.header_first_u32;
-                out_receipt->first_blocked_header_minus_payload =
-                    plan.header_minus_payload;
-                have_first_blocked = 1;
-            }
         }
         {
             Nexus_V1_BpkSurfaceEntry surface;
             uint8_t *pixels;
             size_t written = 0U;
             size_t expected =
-                (size_t)prefix.width * (size_t)prefix.height * (size_t)bpp;
+                (size_t)prefix.width * (size_t)prefix.height;
             int rc;
 
             ++out_receipt->prs3_decode_attempts;

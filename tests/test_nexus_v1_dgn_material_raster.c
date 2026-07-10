@@ -1,5 +1,6 @@
 #include "nexus_v1_rasterizer.h"
 #include "nexus_v1_viewport.h"
+#include "nexus_v1_dmdf_model.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -91,6 +92,31 @@ static void seed_surface(Nexus_DMDFTextureSurface *surface,
     surface->valid = 1;
 }
 
+static void build_prs3_indexed_material_bpk(uint8_t *data, size_t size) {
+    const uint32_t trailer_off = 64U;
+    const uint32_t surface_off = 96U;
+    memset(data, 0, size);
+    memcpy(data, "BPPK", 4);
+    wb32(data + 4, (uint32_t)size);
+    memcpy(data + 12, "BMPD", 4);
+    wb32(data + 16, (uint32_t)size - 20U);
+    wb32(data + 20, 2U);
+    wb32(data + 24, trailer_off);
+    wb32(data + 28, surface_off);
+    data[trailer_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
+        NEXUS_V1_BPK_MODE_TRAILER;
+    wb16(data + surface_off + NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET, 1U);
+    data[surface_off + NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET] = 1U;
+    data[surface_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
+        NEXUS_V1_BPK_MODE_16BPP;
+    memcpy(data + surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, "PRS3", 4);
+    wb32(data + surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 4U, 1U);
+    wb32(data + surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 8U, 1U);
+    wb32(data + surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 12U, 2U);
+    data[surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 16U] = 0x01U;
+    data[surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 17U] = 0xf8U;
+}
+
 int main(void) {
     Nexus_Framebuffer fb;
     Nexus_Camera cam;
@@ -104,7 +130,7 @@ int main(void) {
     Nexus_V1_DgnViewportRenderReceipt receipt;
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
     uint8_t floor_pixel;
-    uint8_t wall_pixel;
+    uint8_t wall_bpk[160];
     uint8_t *structure1;
 
     nexus_fb_init(&fb);
@@ -161,6 +187,13 @@ int main(void) {
                                (int)sizeof(dgn),
                                0) == 0,
            "viewport DGN fixture loads through real Structure1B parser");
+    for (int y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
+        for (int x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
+            for (int dir = 0; dir < 4; ++dir) {
+                engine.current_level.wall_material_refs[y][x][dir] = 1U;
+            }
+        }
+    }
     engine.level_loaded = 1;
     engine.game.current_level = 0;
     engine.game.party_x = 3;
@@ -173,9 +206,15 @@ int main(void) {
                  0xff204060U);
     engine.wall_materials.valid = 1;
     engine.wall_materials.surface_count = 1;
-    seed_surface(&engine.wall_materials.surfaces[0],
-                 &wall_pixel,
-                 0xff806040U);
+    engine.wall_materials.surfaces[0].valid = 1;
+    engine.wall_materials.surfaces[0].palette[0xf8] = 0xfff80000U;
+    build_prs3_indexed_material_bpk(wall_bpk, sizeof(wall_bpk));
+    expect(nexus_v1_dmdf_import_bpk_material_bank(
+               wall_bpk, sizeof(wall_bpk), &engine.wall_materials) == 1 &&
+               engine.wall_materials.surfaces[1].valid &&
+               engine.wall_materials.surfaces[1].pixels[0] == 0xf8U &&
+               engine.wall_materials.bpk_prs3_surface_count == 1,
+           "viewport imports PRS3-decoded BPK wall material surface");
     nexus_viewport_init(&viewport);
     nexus_viewport_render(&viewport, &engine);
     expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0,
@@ -201,7 +240,7 @@ int main(void) {
 
     engine.wall_materials.valid = 0;
     engine.wall_materials.surface_count = 0;
-    engine.wall_materials.surfaces[0].valid = 0;
+    engine.wall_materials.surfaces[1].valid = 0;
     nexus_v1_invalidate_dgn_material_plan(&engine);
     nexus_viewport_render(&viewport, &engine);
     expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0,
@@ -214,7 +253,7 @@ int main(void) {
            "viewport blocks real DGN route when required BPK/DMDF material is missing");
     expect(receipt.command_count > 0 &&
                receipt.missing_material_count > 0 &&
-               receipt.first_missing_material_id == 0 &&
+               receipt.first_missing_material_id == 1 &&
                (receipt.first_missing_material_kind ==
                     NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT ||
                 receipt.first_missing_material_kind ==
