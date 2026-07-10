@@ -622,13 +622,24 @@ static void format_csb_champion_name(const char packed[16],
                                      char* out, int outSize);
 
 static int attach_dm1_pc34_roundtrip_receipt(M12_SaveBrowserEntry* entry,
+                                             const DM1OriginalSavePC34HandoffReport*
+                                                 report,
                                              uint32_t gameID) {
     struct DM1OriginalPC34RoundtripReceipt receipt;
 
     if (!entry || strcmp(entry->gameId, "dm1") != 0) {
         return 0;
     }
+    if (!report || !report->classify.pc34_loader_part_envelope_candidate) {
+        return 0;
+    }
     memset(&receipt, 0, sizeof(receipt));
+    /*
+     * ReDMCSB SAVEHEAD.C F0429 lines ~30-54 accepts only the obfuscated
+     * save header. CEDTINCD.C F7051/F7057 lines ~226-294 then proves the
+     * real DM1 loader route by reading GLOBAL_DATA, ACTIVE_GROUP, PARTY,
+     * EVENTS and TIMELINE as checksum-protected save parts.
+     */
     if (!DM1_BuildOriginalPC34RoundtripReceipt(entry->fullPath,
                                                gameID,
                                                &receipt) ||
@@ -637,6 +648,11 @@ static int attach_dm1_pc34_roundtrip_receipt(M12_SaveBrowserEntry* entry,
         return 0;
     }
 
+    entry->dm1PC34PartEnvelopeReady = 1;
+    entry->dm1PC34PartEnvelopeOkCount =
+        report->classify.save_part_loader_envelope_ok_count;
+    entry->dm1PC34PartEnvelopePayloadBytes =
+        report->classify.save_part_loader_envelope_payload_bytes;
     entry->dm1PC34RoundtripReady = 1;
     entry->dm1PC34CoreStateMatches = receipt.coreStateMatches;
     entry->dm1PC34RoundtripBytes = receipt.exportedByteCount;
@@ -1071,7 +1087,8 @@ static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
     rc = dm1_v1_original_save_pc34_handoff_file(
         entry->fullPath, &sg, &originalReport);
     if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
-        (void)attach_dm1_pc34_roundtrip_receipt(entry, 0x44534d31u);
+        (void)attach_dm1_pc34_roundtrip_receipt(
+            entry, &originalReport, 0x44534d31u);
         entry->valid = 1;
         entry->mapLevel = sg.party ? sg.party->mapIndex : -1;
         entry->championCount = sg.party ? sg.party->championCount : 0;

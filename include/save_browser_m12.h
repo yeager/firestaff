@@ -42,6 +42,9 @@ typedef struct {
     int  valid;                                 /* header parsed OK       */
     int  dm1PC34RoundtripReady;                 /* original PC34 import/export proof */
     int  dm1PC34CoreStateMatches;               /* receipt core-state parity */
+    int  dm1PC34PartEnvelopeReady;              /* ReDMCSB F7057 five-part proof */
+    uint16_t dm1PC34PartEnvelopeOkCount;        /* validated save parts */
+    uint32_t dm1PC34PartEnvelopePayloadBytes;   /* total save-part payload bytes */
     uint32_t dm1PC34RoundtripBytes;             /* exported PC34 byte count */
     uint32_t dm1PC34RoundtripGameTime;          /* original save game tick */
     time_t fileModTime;                         /* file modification time */
