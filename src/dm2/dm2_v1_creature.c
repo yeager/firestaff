@@ -401,6 +401,27 @@ static DM2_V1_CreatureCCMTickObserver g_last_ccm_tick;
 static DM2_V1_CreatureDeathDropObserver g_last_death_drop;
 static int g_death_observer_count = 0;
 
+static void dm2_v1_creature_write_render_state(DM2_V1_CreatureInstance *c,
+                                               int advance_tick)
+{
+    if (!c) return;
+    if (advance_tick) {
+        ++c->animation_tick;
+    }
+    /* skproject/SKWIN/SkWinCore.cpp DRAW_MAP_CHIP consumes the creature's
+     * current animation base after DM2_PROCEED_CCM has written b_1a.  Keep
+     * that frame on the live record, so a later viewport pass cannot replace
+     * it with a renderer-local clock when the GDAT map-chip atlas is ready. */
+    if (c->b_1a == DM2_CCM_CREATURE_ATTACKS_PARTY) {
+        c->animation_frame = 2;
+    } else if (c->attack_cooldown > 0) {
+        c->animation_frame = 1;
+    } else {
+        c->animation_frame = (uint8_t)(c->animation_tick & 1u);
+    }
+    ++c->render_revision;
+}
+
 /* dm2_v1_creature_spawn — spawn a creature instance.
  * Source: SkWinCore.cpp:16815 — ALLOC_NEW_CREATURE(type, mult, dir, x, y)
  * healthMultiplier: 0=default (8), 1–16 scale HP. DM2_CREATURE_SPAWN_MAX=64. */
@@ -426,6 +447,7 @@ int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
     c->b_17        = 0;
     c->attack_cooldown = 0;
     c->poison_ticks    = 0;
+    dm2_v1_creature_write_render_state(c, 0);
 
     int mult = (health_multiplier > 0) ? health_multiplier : 8;
     const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(ai_index);
@@ -433,6 +455,7 @@ int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
     if (hp <= 0) hp = 1;  /* minimum 1 HP so zero-init stub creatures can die */
     c->hp_max     = hp;
     c->hp_current = c->hp_max;
+    ++c->render_revision;
 
     return slot;
 }
@@ -462,6 +485,7 @@ int dm2_v1_creature_deal_damage(int instance_id, int damage) {
     if (!c->alive) return -1;
     c->hp_current -= damage;
     if (c->hp_current < 0) c->hp_current = 0;
+    ++c->render_revision;
     return c->hp_current;
 }
 
@@ -537,6 +561,7 @@ void dm2_v1_creature_death_check(int instance_id) {
     int snap_map   = c->map_index;
 
     c->alive = 0;
+    ++c->render_revision;
 
     /* SOUND_CREATURE_DEATH (constant) positional at creature position.
      * Source: SKULLWIN/c_sound.cpp death_sfx dispatch */
@@ -840,6 +865,7 @@ void dm2_v1_creature_tick(void) {
         }
 
         dm2_v1_creature_run_ccm_tick(c, i);
+        dm2_v1_creature_write_render_state(c, 1);
 
         /* Only trigger death check for alive creatures whose HP just hit 0.
          * alive=1 && hp_current<=0 means HP reached 0 this tick — death not yet processed.

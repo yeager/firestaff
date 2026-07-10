@@ -1044,18 +1044,10 @@ static void dm2_runtime_append_creature_sprite(
 }
 
 static int dm2_runtime_creature_frame_from_instance(
-    const DM2_V1_CreatureInstance *inst,
-    int tick_count)
+    const DM2_V1_CreatureInstance *inst)
 {
     if (!inst) return 0;
-    /* skproject SKULLWIN/c_creature.cpp DM2_PROCEED_CCM advances b_1a/b_17
-     * before viewport drawing; SkWinCore.cpp DRAW_TEMP_PICST then draws the
-     * current creature map-chip frame.  Until the exact per-creature GDAT
-     * animation table is decoded, keep a deterministic receipt bridge from
-     * live AI state to the atlas frame used by the renderer. */
-    if (inst->b_1a == DM2_CCM_CREATURE_ATTACKS_PARTY) return 2;
-    if (inst->attack_cooldown > 0) return 1;
-    return tick_count & 1;
+    return inst->animation_frame;
 }
 
 static int dm2_runtime_creature_frame_source_from_instance(
@@ -1070,8 +1062,7 @@ static int dm2_runtime_creature_frame_source_from_instance(
 static void dm2_runtime_append_creature_instance_sprite(
     DM2_V1_ViewportState *viewport,
     const DM2_V1_CreatureInstance *inst,
-    const DM2_V1_ViewportSpritePlacement *placement,
-    int tick_count)
+    const DM2_V1_ViewportSpritePlacement *placement)
 {
     DM2_CreatureSprite *dst;
     int hp_pct = 100;
@@ -1089,8 +1080,7 @@ static void dm2_runtime_append_creature_instance_sprite(
     dst = &viewport->creatures[viewport->creature_count++];
     memset(dst, 0, sizeof(*dst));
     dst->creature_type = (uint8_t)(inst->ai_index & 0xff);
-    dst->frame_index =
-        (uint8_t)dm2_runtime_creature_frame_from_instance(inst, tick_count);
+    dst->frame_index = (uint8_t)dm2_runtime_creature_frame_from_instance(inst);
     dst->depth = (int16_t)placement->depth;
     dst->screen_x = (int16_t)placement->screen_x;
     dst->screen_y = (int16_t)placement->screen_y;
@@ -1109,6 +1099,8 @@ static void dm2_runtime_append_creature_instance_sprite(
     g_dm2_last_creature_render.ccm_primary_state = inst->b_1a;
     g_dm2_last_creature_render.ccm_secondary_state = inst->b_17;
     g_dm2_last_creature_render.attack_cooldown = inst->attack_cooldown;
+    g_dm2_last_creature_render.animation_tick = inst->animation_tick;
+    g_dm2_last_creature_render.render_revision = inst->render_revision;
     g_dm2_last_creature_render.frame_source =
         dm2_runtime_creature_frame_source_from_instance(inst);
     g_dm2_last_creature_render.map_x = inst->world_x;
@@ -1341,7 +1333,7 @@ static void dm2_runtime_populate_active_creature_instances(
             continue;
         }
         dm2_runtime_append_creature_instance_sprite(
-            viewport, inst, &placement, rt->tick_count);
+            viewport, inst, &placement);
     }
 }
 
@@ -1757,9 +1749,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     viewport.random_seed = rt->weather.weather_seed;
     dm2_runtime_populate_front_square(rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_projectiles(&viewport, party_dir, party_x, party_y);
-    dm2_runtime_populate_creatures(rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_active_creature_instances(
         rt, &viewport, party_dir, party_x, party_y);
+    dm2_runtime_populate_creatures(rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_creature_possession_items(
         rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_carried_item(rt, &viewport);
