@@ -16,6 +16,7 @@
 #define NEXUS_DGN_STRUCTURE1B_CELL_BYTES 8
 #define NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES 4
 #define NEXUS_DGN_MAX_COLLISION_SECTORS 256
+#define NEXUS_DGN_MAX_MESH_DESCRIPTORS 4096
 #define NEXUS_V1_DGN_VIEW_DISTANCE 4
 #define NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS 48
 #define NEXUS_V1_DGN_VIEWPORT_UNITS 1024
@@ -49,6 +50,14 @@ typedef struct {
     int8_t y2;
 } Nexus_V1_DgnCollisionSector;
 
+typedef struct {
+    int valid;
+    int8_t x1;
+    int8_t y1;
+    int8_t x2;
+    int8_t y2;
+} Nexus_V1_DgnMeshDescriptor;
+
 /* Runtime-facing view of one Structure1B cell. Movement and rendering must
  * consume this same decoded record so a resumed party cannot collide against
  * a stale square map while the viewport uses newer mesh/material data. */
@@ -64,6 +73,7 @@ typedef struct {
     uint8_t floor_slope;
     uint8_t floor_rotation;
     Nexus_V1_DgnCollisionSector collision_sector;
+    Nexus_V1_DgnMeshDescriptor mesh_descriptor;
 } Nexus_V1_DgnCellGeometry;
 
 typedef struct {
@@ -79,6 +89,8 @@ typedef struct {
     uint16_t mesh_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     Nexus_V1_DgnCollisionSector
         collision_sectors[NEXUS_DGN_MAX_COLLISION_SECTORS];
+    Nexus_V1_DgnMeshDescriptor
+        mesh_descriptors[NEXUS_DGN_MAX_MESH_DESCRIPTORS];
     int thing_count;
     int creature_count;
     int has_3d_geometry;
@@ -134,6 +146,7 @@ typedef struct {
     uint16_t collision_ref;
     uint16_t mesh_ref;
     Nexus_V1_DgnCollisionSector collision_sector;
+    Nexus_V1_DgnMeshDescriptor mesh_descriptor;
     /* DGN byte3 is signed 1/32 world-unit height. The four values are
      * NW, NE, SE, SW and carry the source-cell slope where present. */
     int8_t floor_height[4];
@@ -144,6 +157,7 @@ typedef struct {
      * owns projection and material selection; hosts only rasterize it. */
     int16_t quad_x[4];
     int16_t quad_y[4];
+    int mesh_descriptor_projected;
     uint8_t material_id;
     uint8_t palette_index;
     uint8_t draw_order;
@@ -158,6 +172,7 @@ typedef struct {
     int floor_count;
     int wall_count;
     int mesh_command_count;
+    int mesh_descriptor_command_count;
     int first_mesh_ref;
     int max_mesh_ref;
     int source_cell_count;

@@ -231,6 +231,8 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
             {
                 const uint8_t *sectors = data + info.geometry_offset;
                 int sector_count = sectors[0] > 0 ? sectors[0] - 1 : 0;
+                int mesh_descriptor_count =
+                    info.geometry_size / NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES;
                 if (sector_count > NEXUS_DGN_MAX_COLLISION_SECTORS - 1)
                     sector_count = NEXUS_DGN_MAX_COLLISION_SECTORS - 1;
                 for (int sector = 1; sector <= sector_count; ++sector) {
@@ -241,6 +243,16 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                     dst->x1 = (int8_t)src[0]; dst->y1 = (int8_t)src[1];
                     dst->x2 = (int8_t)src[2]; dst->y2 = (int8_t)src[3];
                     dst->circle = src[3] == 0x80U;
+                }
+                if (mesh_descriptor_count > NEXUS_DGN_MAX_MESH_DESCRIPTORS - 1)
+                    mesh_descriptor_count = NEXUS_DGN_MAX_MESH_DESCRIPTORS - 1;
+                for (int ref = 1; ref <= mesh_descriptor_count; ++ref) {
+                    const uint8_t *src = sectors + ref * 4;
+                    Nexus_V1_DgnMeshDescriptor *dst =
+                        &level->mesh_descriptors[ref];
+                    dst->valid = 1;
+                    dst->x1 = (int8_t)src[0]; dst->y1 = (int8_t)src[1];
+                    dst->x2 = (int8_t)src[2]; dst->y2 = (int8_t)src[3];
                 }
             }
             level->has_3d_geometry = 1;
@@ -362,6 +374,8 @@ int nexus_v1_level_get_cell_geometry(const Nexus_V1_Level *level, int x, int y,
         cell.ceiling_height[corner] = (int8_t)(cell.floor_height[corner] + 32);
     if (cell.collision_ref < NEXUS_DGN_MAX_COLLISION_SECTORS)
         cell.collision_sector = level->collision_sectors[cell.collision_ref];
+    if (cell.mesh_ref < NEXUS_DGN_MAX_MESH_DESCRIPTORS)
+        cell.mesh_descriptor = level->mesh_descriptors[cell.mesh_ref];
     *out_cell = cell;
     return 0;
 }
@@ -524,6 +538,9 @@ static int nexus_v1_dgn_plan_push(
     }
     if (command.mesh_ref != 0U && command.mesh_ref != 0x0FFFU) {
         receipt->mesh_command_count++;
+        if (command.mesh_descriptor_projected) {
+            receipt->mesh_descriptor_command_count++;
+        }
         if (receipt->first_mesh_ref == 0) {
             receipt->first_mesh_ref = command.mesh_ref;
         }
@@ -556,6 +573,7 @@ static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
     command.collision_ref = cell.collision_ref;
     command.mesh_ref = cell.mesh_ref;
     command.collision_sector = cell.collision_sector;
+    command.mesh_descriptor = cell.mesh_descriptor;
     command.floor_rotation = cell.floor_rotation;
     command.floor_slope = cell.floor_slope;
     memcpy(command.floor_height, cell.floor_height, sizeof(command.floor_height));
@@ -660,6 +678,18 @@ static void nexus_v1_dgn_plan_project_quad(Nexus_V1_DgnRenderCommand *command) {
         break;
     default:
         break;
+    }
+    if (command->mesh_descriptor.valid) {
+        int x0 = command->quad_x[0] + (int)command->mesh_descriptor.x1 * 2;
+        int y0 = command->quad_y[0] + (int)command->mesh_descriptor.y1 * 2;
+        int x1 = command->quad_x[1] + (int)command->mesh_descriptor.x2 * 2;
+        int y1 = command->quad_y[1] + (int)command->mesh_descriptor.y1 * 2;
+        int x2 = command->quad_x[2] + (int)command->mesh_descriptor.x2 * 2;
+        int y2 = command->quad_y[2] + (int)command->mesh_descriptor.y2 * 2;
+        int x3 = command->quad_x[3] + (int)command->mesh_descriptor.x1 * 2;
+        int y3 = command->quad_y[3] + (int)command->mesh_descriptor.y2 * 2;
+        nexus_v1_dgn_plan_set_quad(command, x0, y0, x1, y1, x2, y2, x3, y3);
+        command->mesh_descriptor_projected = 1;
     }
 }
 
