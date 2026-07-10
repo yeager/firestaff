@@ -734,11 +734,6 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                 runtime_receipt,
                 sizeof(runtime_receipt)),
             1);
-        if (runtime_result.runtime_level_source !=
-            THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC) {
-            printf("synthetic startup semantic runtime receipt: %s\n",
-                   runtime_receipt);
-        }
         check_int("synthetic startup semantic runtime route source",
                   runtime_result.runtime_level_source,
                   THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC);

@@ -46,6 +46,7 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
     Theron_Track02SignalStatus signal_status;
     Theron_Track02UserDataWindowCatalog user_window_catalog;
     Theron_Track02StartupTextMarkerCatalog text_marker_catalog;
+    Theron_StartupMediaStateReceipt media_receipt;
     Theron_Track02LevelHandoffStatus last_semantic_status =
         THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
     Theron_Track02SemanticBindingStatus last_seed_status =
@@ -76,6 +77,30 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
                      receipt_cap,
                      "Track 02 initial candidate pending for stage %d",
                      (int)dungeon_id);
+        }
+        return 0;
+    }
+
+    /* The first runtime level is the endpoint of the title -> stage -> Soul
+     * Room -> forcefield sequence.  Keep that handoff bound to the same
+     * hash-gated media atlas that M11 consumes for those surfaces: a known
+     * Track 02 profile with an incomplete atlas must not quietly enter the
+     * synthetic presentation route. */
+    theron_v1_startup_media_capture_track02_state_receipt(
+        hucard_rom,
+        hucard_rom_size,
+        md5_hex,
+        &media_receipt);
+    if (!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            &media_receipt)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "Track 02 semantic handoff requires complete media atlas variant=%d routes=0x%x atlas_routes=0x%x checksum=%08x",
+                     media_receipt.track02_variant,
+                     media_receipt.startup_bitmap_route_mask,
+                     media_receipt.startup_bitmap_atlas_route_mask,
+                     (unsigned)media_receipt.startup_bitmap_atlas_checksum);
         }
         return 0;
     }
@@ -175,28 +200,17 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
             if (receipt && receipt_cap > 0u) {
                 snprintf(receipt,
                          receipt_cap,
-                         "Track 02 semantic initial level anchor=%zu offset=0x%zx user_valid=%d user=0x%zx seed_status=%s seed0=%u seed6=%u startup_seed=0x%08x startup_level=0x%04x seed_in_table=%d user_windows=%zu user_desc=%zu user_span=%zu user_initial=%zu text_markers=%zu text_us=%zu text_jp=%zu header=%ux%u start=(%d,%d,%d)",
+                         "Track 02 semantic initial level anchor=%zu offset=0x%zx user_valid=%d user=0x%zx seed_status=%s startup_seed=0x%08x startup_level=0x%04x media_atlas=0x%x media_checksum=%08x header=%ux%u start=(%d,%d,%d)",
                          anchor,
                          semantic_level_handoff.absolute_offset,
                          semantic_handoff.user_data_offset_valid,
                          semantic_handoff.user_data_offset,
                          theron_v1_track02_semantic_binding_status_name(
                              semantic_handoff.seed_table_status),
-                         (unsigned)semantic_handoff.seed_table_binding
-                             .dungeon_seed_table.seeds[0],
-                         (unsigned)semantic_handoff.seed_table_binding
-                             .dungeon_seed_table
-                             .seeds[THERON_TRACK02_DUNGEON_COUNT - 1u],
                          (unsigned)semantic_handoff.startup_seed,
                          (unsigned)semantic_handoff.startup_level_index,
-                         semantic_handoff.startup_seed_in_seed_table,
-                         user_window_catalog.entry_count,
-                         user_window_descriptor_count,
-                         user_window_span_count,
-                         user_window_initial_count,
-                         text_marker_catalog.marker_count,
-                         startup_text_us_count,
-                         startup_text_jp_count,
+                         media_receipt.startup_bitmap_atlas_route_mask,
+                         (unsigned)media_receipt.startup_bitmap_atlas_checksum,
                          (unsigned)semantic_level_handoff.header_width,
                          (unsigned)semantic_level_handoff.header_height,
                          (int)world->levels[0][0].start_x,
