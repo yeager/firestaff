@@ -2328,6 +2328,26 @@ static int m11_boot_probe_runtime_receipt_ready(
            receipt->levelLoaded;
 }
 
+static int m11_dm1_boot_probe_complete_support_ready(
+    const M11_BootProbeReceipt* receipt)
+{
+    return receipt &&
+           receipt->dm1CompleteSupportReady &&
+           receipt->dm1CompleteSourceVisibleStartup &&
+           receipt->dm1CompleteEntranceToHoC &&
+           receipt->dm1CompleteHoCRenderRoute &&
+           receipt->dm1CompleteHostAppCaptureRoute &&
+           receipt->dm1CompleteSaveCorpusRoute &&
+           receipt->dm1CompleteOriginalSaveRoundtripRoute;
+}
+
+static int m11_dm1_boot_probe_release_app_capture_ready(
+    const M11_BootProbeReceipt* receipt)
+{
+    return m11_dm1_boot_probe_complete_support_ready(receipt) &&
+           receipt->dm1CompleteHostAppCaptureRoute;
+}
+
 
 static void m11_write_autotest_runtime_probe(const char* path,
                                              int launchedEver,
@@ -4495,43 +4515,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             }
             if (o->bootProbeExpectDm1HoCFullGraphics) {
                 if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    !receipt.dm1CompleteSupportReady ||
-                    !receipt.dm1CompleteSourceVisibleStartup ||
-                    !receipt.dm1CompleteEntranceToHoC ||
-                    !receipt.dm1CompleteHoCRenderRoute ||
-                    !receipt.dm1CompleteHostAppCaptureRoute ||
-                    !receipt.dm1CompleteSaveCorpusRoute ||
-                    !receipt.dm1CompleteOriginalSaveRoundtripRoute ||
-                    !receipt.dm1HoCFullGraphicsReady ||
-                    !receipt.dm1HoCHostRenderPlanReady ||
-                    !receipt.dm1HoCCaptureProofPassed ||
-                    !receipt.dm1HoCRuntimeApplyReady ||
-                    !receipt.dm1HoCProductionConsumerReady ||
-                    !receipt.dm1HoCRealAssetCapture ||
-                    !receipt.dm1HoCMacWindowCapture ||
-                    !receipt.dm1HoCReleaseAppCapture ||
-                    !receipt.dm1HoCHostWindowCapture ||
-                    !receipt.dm1HoCHostCaptureRouteMatches ||
-                    !receipt.dm1HoCReleaseCaptureOwnershipReady ||
-                    !receipt.dm1HoCHostRenderConsumerReady ||
-                    !receipt.dm1HoCM11BootProbeConsumerReady ||
-                    !receipt.dm1HoCLaunchPathReady ||
-                    !receipt.dm1HoCRequiredAssetCapture ||
-                    !receipt.dm1HoCReceiptOnlyConsumerReady ||
-                    !receipt.dm1HoCLowerLevelHelpersReady ||
-                    !receipt.dm1HoCHostDrawUsesOwnedReceipt ||
-                    !receipt.dm1HoCHostDrawConsumesBackingAsset ||
-                    !receipt.dm1HoCHostDrawRejectsBackingFallback ||
-                    !receipt.dm1HoCNoHostFallbackVisuals ||
-                    !receipt.dm1HoCHoCAssetCapture ||
-                    !receipt.dm1HoCPresentedCapture ||
-                    !receipt.dm1HoCPresentedCaptureGeometry ||
-                    !receipt.dm1HoCPresentedCapturePixels ||
-                    !receipt.dm1HoCPresentedCaptureChainReady ||
-                    !receipt.dm1HoCOpenedEntranceFrame ||
-                    !receipt.dm1HoCHallMirrorOverlay ||
-                    !receipt.dm1HoCBlockedEnterUntilChampion ||
-                    receipt.dm1HoCRenderCommandCount != 3) {
+                    !m11_dm1_boot_probe_complete_support_ready(&receipt)) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected DM1 HoC complete support but got complete=%d source=%d entrance=%d renderRoute=%d hostApp=%d saveCorpus=%d originalSave=%d ready=%d render=%d proof=%d apply=%d consumer=%d real=%d mac=%d release=%d hostWindow=%d presented=%d presentedGeometry=%d presentedPixels=%d presentedHash=%08x presentedChain=%d presentedChainHash=%08x route=%d ownership=%d hostRender=%d m11Consumer=%d launchPath=%d requiredAssets=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d hocAsset=%d opened=%d mirrors=%d block=%d commands=%d\n",
                             receipt.dm1CompleteSupportReady,
@@ -4578,27 +4562,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             }
             if (o->bootProbeExpectDm1HoCReleaseAppCapture) {
                 if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                    !receipt.dm1CompleteSupportReady ||
-                    !receipt.dm1CompleteHostAppCaptureRoute ||
-                    !receipt.dm1HoCMacWindowCapture ||
-                    !receipt.dm1HoCReleaseAppCapture ||
-                    !receipt.dm1HoCHostWindowCapture ||
-                    !receipt.dm1HoCHostCaptureRouteMatches ||
-                    !receipt.dm1HoCReleaseCaptureOwnershipReady ||
-                    !receipt.dm1HoCHostRenderConsumerReady ||
-                    !receipt.dm1HoCM11BootProbeConsumerReady ||
-                    !receipt.dm1HoCLaunchPathReady ||
-                    !receipt.dm1HoCRequiredAssetCapture ||
-                    !receipt.dm1HoCReceiptOnlyConsumerReady ||
-                    !receipt.dm1HoCLowerLevelHelpersReady ||
-                    !receipt.dm1HoCHostDrawUsesOwnedReceipt ||
-                    !receipt.dm1HoCHostDrawConsumesBackingAsset ||
-                    !receipt.dm1HoCHostDrawRejectsBackingFallback ||
-                    !receipt.dm1HoCPresentedCapture ||
-                    !receipt.dm1HoCPresentedCaptureGeometry ||
-                    !receipt.dm1HoCPresentedCapturePixels ||
-                    !receipt.dm1HoCPresentedCaptureChainReady ||
-                    !receipt.dm1HoCNoHostFallbackVisuals) {
+                    !m11_dm1_boot_probe_release_app_capture_ready(&receipt)) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected DM1 HoC release-app host capture but got mac=%d release=%d hostWindow=%d presented=%d presentedGeometry=%d presentedPixels=%d presentedHash=%08x presentedChain=%d presentedChainHash=%08x route=%d ownership=%d hostRender=%d m11Consumer=%d launchPath=%d requiredAssets=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d\n",
                             receipt.dm1HoCMacWindowCapture,

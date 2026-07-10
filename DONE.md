@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM1 boot-probe aggregate gate cleanup: full-HoC and release/app boot-probe expectations now call M11 aggregate helpers backed by the DM1 complete-support receipt instead of repeating long host-side HoC subfield condition lists. Diagnostics still print subfields for failures. Verification: `firestaff_m11`, `test_dm1_v1_startup_intro_state_machine_gate`, and `git diff --check` passed.
+
 - ✅ 2026-07-10 DM1 complete-support boot-probe gate: `main_loop_m11` now requires the DM1 complete-support receipt for full HoC graphics and release/app capture probes instead of accepting only the loose HoC subreceipt set. Diagnostics still print the subfields, but the pass/fail gate is the DM1-owned aggregate route. Verification: `firestaff_m11`, `test_dm1_v1_startup_intro_state_machine_gate`, and `git diff --check` passed.
 
 - ✅ 2026-07-10 DM1 complete-support M11 consumption: M11 boot probes now consume the DM1-owned complete-support receipt that joins source-visible startup, entrance-to-HoC, HoC render, host/app capture, save corpus, and original-save roundtrip routes instead of exposing only separate HoC subreceipts. The DM1 startup test also restores positive HoC ownership after negative capture cases and verifies that partial champion portrait corpuses keep complete support red. Verification: `test_dm1_v1_startup_intro_state_machine_gate` and `git diff --check` passed.
