@@ -182,6 +182,7 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
     Nexus_V1_DgnRenderPlanReceipt receipt;
     Nexus_V1_DgnCellGeometry cell;
     uint8_t *structure1;
+    uint8_t *geometry;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
                           structure1b_rel, geometry_bytes) == 0,
@@ -213,14 +214,31 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
         NEXUS_DGN_STRUCTURE1B_BYTES + 6] = 20;
     dgn[NEXUS_DGN_BLOCK_SIZE + structure1b_rel +
         NEXUS_DGN_STRUCTURE1B_BYTES + 7] = 10;
+    geometry = dgn + NEXUS_DGN_BLOCK_SIZE + structure1b_rel +
+               NEXUS_DGN_STRUCTURE1B_BYTES;
+    geometry[7 * 4 + 0] = (uint8_t)-24;
+    geometry[7 * 4 + 1] = (uint8_t)-12;
+    geometry[7 * 4 + 2] = 24;
+    geometry[7 * 4 + 3] = 12;
+    geometry[8 * 4 + 0] = (uint8_t)-16;
+    geometry[8 * 4 + 1] = (uint8_t)-8;
+    geometry[8 * 4 + 2] = 16;
+    geometry[8 * 4 + 3] = 8;
+    geometry[9 * 4 + 0] = (uint8_t)-8;
+    geometry[9 * 4 + 1] = (uint8_t)-4;
+    geometry[9 * 4 + 2] = 8;
+    geometry[9 * 4 + 3] = 4;
 
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 4) == 0,
           "render-plan level loads from DMWeb DGN");
     CHECK(nexus_v1_level_get_cell_geometry(&level, 3, 4, &cell) == 0 &&
           cell.mesh_ref == level.mesh_refs[4][3] &&
+          cell.mesh_descriptor.valid == 1 &&
+          cell.mesh_descriptor.x1 == -24 &&
+          cell.mesh_descriptor.y2 == 12 &&
           cell.floor_material_ref == 21 && cell.floor_height[1] == 12 &&
           cell.collision_sector.valid == 1 && cell.collision_sector.x1 == -20,
-          "movement and viewport share one decoded DGN cell geometry record");
+          "movement and viewport share one decoded DGN cell geometry and mesh descriptor record");
     memset(commands, 0, sizeof(commands));
     memset(&receipt, 0, sizeof(receipt));
     CHECK(nexus_v1_level_build_dgn_view_render_plan(
@@ -242,14 +260,18 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           receipt.wall_count == 4,
           "DGN view render plan emits bounded floor/ceiling/wall commands");
     CHECK(receipt.mesh_command_count > 0 &&
+          receipt.mesh_descriptor_command_count == receipt.mesh_command_count &&
           receipt.first_mesh_ref == 7 &&
           receipt.max_mesh_ref == 9,
-          "DGN view render plan consumes bounded Structure1B mesh refs");
+          "DGN view render plan consumes bounded Structure1B mesh descriptors");
     CHECK(commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
           commands[0].x == 3 &&
           commands[0].y == 4 &&
           commands[0].collision_ref == 1 &&
           commands[0].mesh_ref == 7 &&
+          commands[0].mesh_descriptor.valid == 1 &&
+          commands[0].mesh_descriptor.x1 == -24 &&
+          commands[0].mesh_descriptor_projected == 1 &&
           commands[0].material_id == 21 && commands[0].floor_rotation == 1 &&
           commands[0].floor_slope == 2 &&
           commands[0].floor_height[0] == 4 &&
