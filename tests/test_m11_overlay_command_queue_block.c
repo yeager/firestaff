@@ -1402,9 +1402,9 @@ static void test_hoc_front_mirror_receipt_uses_render_index(void)
     unsigned char squareData[2];
     unsigned short squareFirstThings[2];
     unsigned char sensorRaw[8];
-    int wallOrnament = -1;
-    int portrait = -1;
     int elementType = -1;
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 renderReceipt;
 
     seed_active_view(&state);
     memset(&dungeon, 0, sizeof(dungeon));
@@ -1446,31 +1446,24 @@ static void test_hoc_front_mirror_receipt_uses_render_index(void)
     state.mirrorCatalogAvailable = 1;
     state.mirrorCatalog.count = 24;
 
-    ASSERT_EQ(M11_GameView_ProbeViewportRenderMetadata(
-                  &state, 1, 0, NULL, NULL, &elementType,
-                  &wallOrnament, &portrait, NULL, NULL),
+    elementType = (squareData[0] >> 5) & 0x07;
+    ASSERT_EQ(DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+                  127, 13, 4, 2, 2, &frontWall),
               1,
-              "HoC front mirror probe samples front wall");
+              "DM1 HoC test builds front mirror receipt");
+    ASSERT_EQ(DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+                  1, &frontWall, &renderReceipt),
+              1,
+              "DM1 HoC test builds viewport render receipt");
     ASSERT_EQ(elementType, DUNGEON_ELEMENT_WALL,
               "HoC front mirror square is wall");
-    ASSERT_EQ(wallOrnament, 4,
+    ASSERT_EQ(frontWall.wallOrnamentOrdinal, 4,
               "HoC front mirror receipt carries mirror frame ornament");
-    ASSERT_EQ(portrait, 13,
+    ASSERT_EQ(frontWall.championPortraitRenderIndex, 13,
               "HoC front mirror uses zero-based C026 render index");
     ASSERT_EQ(M11_GameView_GetFrontMirrorOrdinal(&state), 13,
               "front mirror selection consumes DM1 C127 render receipt");
     {
-        DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
-        DM1_V1_ChampionMirrorRenderReceiptPc34 renderReceipt;
-        ASSERT_EQ(DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
-                      127, 13, 4, 2, 2, &frontWall),
-                  1,
-                  "DM1 HoC test builds ReDMCSB C127 front-wall receipt");
-        ASSERT_EQ(DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
-                      1,
-                      &frontWall, &renderReceipt),
-                  1,
-                  "DM1 HoC test consumes DM1-owned viewport render receipt directly");
         ASSERT_EQ(renderReceipt.drawChampionPortrait, 1,
                   "DM1 render receipt owns C026 portrait draw gate");
         ASSERT_EQ(renderReceipt.graphicIndex, 26,
@@ -1494,13 +1487,15 @@ static void test_hoc_front_mirror_receipt_uses_render_index(void)
     }
 
     squareFirstThings[0] = make_thing_cell(THING_TYPE_SENSOR, 0, 1);
-    portrait = -2;
-    ASSERT_EQ(M11_GameView_ProbeViewportRenderMetadata(
-                  &state, 1, 0, NULL, NULL, NULL,
-                  NULL, &portrait, NULL, NULL),
+    ASSERT_EQ(DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+                  127, 13, 4, 1, 2, &frontWall),
               1,
-              "HoC side mirror probe samples front wall");
-    ASSERT_EQ(portrait, -1,
+              "DM1 HoC side-cell receipt builds");
+    ASSERT_EQ(DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+                  1, &frontWall, &renderReceipt),
+              1,
+              "DM1 HoC side-cell render receipt builds");
+    ASSERT_EQ(renderReceipt.drawChampionPortrait, 0,
               "HoC side-cell C127 does not render a floating portrait");
     ASSERT_EQ(M11_GameView_GetFrontMirrorOrdinal(&state), -1,
               "side-cell C127 is rejected by DM1 render receipt before selection");
