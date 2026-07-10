@@ -356,6 +356,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     DM2_V1_BootRuntimeActionReceipt action;
     DM2_V1_BootRuntimeRenderReceipt render_receipt;
     DM2_V1_BootRuntimeHudCaptureReceipt hud_capture;
+    DM2_V1_BootCreatureAtlasCaptureReceipt creature_atlas;
     DM2_V1_CompleteSupportReceipt complete_support;
     unsigned char framebuffer[320 * 200];
     int v2_callback_count = 0;
@@ -481,6 +482,19 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.combined_frame_hash != 0u &&
               hud_capture.combined_pixel_count == 4u * 320u * 200u,
           "boot runtime HUD capture proves real GDAT portraits and frames across sampled directions");
+    memset(&creature_atlas, 0, sizeof(creature_atlas));
+    CHECK(dm2_v1_boot_creature_atlas_capture_receipt(
+              launch.profile,
+              &creature_atlas) == 1 &&
+              creature_atlas.valid == 1 &&
+              creature_atlas.materialized_creature_index_count >= 4 &&
+              creature_atlas.min_frame_count > 0 &&
+              creature_atlas.raw_gdat_hash != 0u &&
+              creature_atlas.raw_gdat_byte_count > 0u &&
+              creature_atlas.decoded_gdat_hash != 0u &&
+              creature_atlas.decoded_gdat_pixel_count > 0u &&
+              creature_atlas.atlas_material_hash != 0u,
+          "boot creature atlas capture materializes skproject GDAT creature map-chip routes");
     memset(&complete_support, 0, sizeof(complete_support));
     CHECK(dm2_v1_boot_complete_support_receipt_from_runtime_state(
               launch.profile,
@@ -497,6 +511,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               complete_support.startup_hud_handoff_complete == 1 &&
               complete_support.runtime_gdat_hud_complete == 1 &&
               complete_support.runtime_gdat_dungeon_complete == 1 &&
+              complete_support.runtime_creature_atlas_complete == 1 &&
               complete_support.runtime_gdat_direction_breadth_complete == 1 &&
               complete_support.no_fallback_title_or_runtime_visuals == 1 &&
               complete_support.raw_gdat_capture_complete == 1 &&

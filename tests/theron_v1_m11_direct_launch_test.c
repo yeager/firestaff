@@ -219,7 +219,6 @@ int main(void) {
     unsigned char framebuffer[FB_W * FB_H];
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
-    M11_BootProbeReceipt boot_receipt;
     Theron_V1_BootProfile* profile;
     Theron_V1_World* world;
     unsigned long rescans_before;
@@ -374,26 +373,6 @@ int main(void) {
     render_pixels = count_nonzero_pixels(framebuffer, sizeof(framebuffer));
     expect_true(render_pixels > 1000,
                 "M11 Theron startup screen produces a nonblank framebuffer");
-    memset(&boot_receipt, 0, sizeof(boot_receipt));
-    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
-                    boot_receipt.startupTitleFrame == 0 &&
-                    boot_receipt.startupTitleFrameMax == 7 &&
-                    boot_receipt.startupTitleReady == 0,
-                "M11 Theron title starts on animated Track02 title frame 0");
-    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
-                    M11_GAME_INPUT_REDRAW &&
-                    view.theronState.startup_phase ==
-                        THERON_STARTUP_PHASE_TITLE,
-                "M11 Theron title input is blocked until title animation finishes");
-    while (view.theronState.startup_title_animation_tick < 48) {
-        (void)M11_GameView_AdvanceIdleTick(&view);
-    }
-    memset(&boot_receipt, 0, sizeof(boot_receipt));
-    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
-                    boot_receipt.startupTitleFrame == 7 &&
-                    boot_receipt.startupTitleFrameMax == 7 &&
-                    boot_receipt.startupTitleReady == 1,
-                "M11 Theron title reaches ready frame after startup animation ticks");
     startup_row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
     expect_true(startup_row_count >= 3 &&
@@ -553,13 +532,9 @@ int main(void) {
                     "Theron startup pointer receipt consumes panel hits without action");
     }
 
-    {
-        M11_GameInputResult panel_hit =
-            M11_GameView_HandlePointer(&view, 36, 24, 1);
-        expect_true(panel_hit == M11_GAME_INPUT_REDRAW ||
-                    panel_hit == M11_GAME_INPUT_IGNORED,
+    expect_true(M11_GameView_HandlePointer(&view, 36, 24, 1) ==
+                M11_GAME_INPUT_REDRAW,
                 "M11 Theron startup panel consumes non-action pointer hits");
-    }
     expect_true(view.theronState.startup_phase ==
                     THERON_STARTUP_PHASE_STAGE_SELECT &&
                 view.theronState.level_loaded == 0,
@@ -578,9 +553,6 @@ int main(void) {
         expect_true(no_continue_view.theronState.startup_phase ==
                         THERON_STARTUP_PHASE_TITLE,
                     "M11 Theron save-present new-stage path starts at title gate");
-        while (no_continue_view.theronState.startup_title_animation_tick < 48) {
-            (void)M11_GameView_AdvanceIdleTick(&no_continue_view);
-        }
         expect_true(M11_GameView_HandleInput(&no_continue_view,
                                              M12_MENU_INPUT_ACCEPT) ==
                         M11_GAME_INPUT_REDRAW,
@@ -787,12 +759,6 @@ int main(void) {
     expect_true(M11_GameView_HandlePointer(&view, 46 + 77, 158 + 5, 1) ==
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron forcefield click loads the dungeon");
-    if (world != NULL && world->level_loaded[0][0] == 0) {
-        expect_true(strstr(view.inspectDetail, "fallback visuals blocked") != NULL &&
-                    strstr(view.inspectDetail, "track02-blocked") != NULL,
-                    "M11 Theron fake Track02 forcefield blocks fallback runtime visuals");
-        goto theron_fake_track02_runtime_done;
-    }
     expect_true(world != NULL && world->level_loaded[0][0] == 1,
                 "M11 loaded the initial Theron level after forcefield");
     expect_true(world != NULL &&
@@ -948,8 +914,6 @@ int main(void) {
                 strcmp(world->party.champions[0].name, "Theron") == 0,
                 "M11 Theron stage 2 forcefield starts with current Soul Room selection");
 
-theron_fake_track02_runtime_done:
-
     M11_GameView_Shutdown(&view);
 
 #if FIRESTAFF_HAS_ZLIB
@@ -1023,9 +987,6 @@ theron_fake_track02_runtime_done:
                     srm_view.theronState.save_resume_srm_import_status ==
                         THERON_V1_SRM_PROGRESS_IMPORT_OK,
                     "M11 Theron exposes selected decoded SRM Continue slot");
-        while (srm_view.theronState.startup_title_animation_tick < 48) {
-            (void)M11_GameView_AdvanceIdleTick(&srm_view);
-        }
         expect_true(srm_view.theronState.startup_phase ==
                         THERON_STARTUP_PHASE_TITLE &&
                     M11_GameView_HandleInput(&srm_view,
