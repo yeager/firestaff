@@ -1,4 +1,5 @@
 #include "dm1_v1_original_save_classifier.h"
+#include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm1_v1_save_load.h"
 
 #include <stdio.h>
@@ -246,6 +247,10 @@ static void test_original_dm1_pc34_importer_candidate(void) {
               r.readiness, DM1_ORIGINAL_SAVE_READY_CLASSIFIED_HEADER_ONLY);
     check_int("PC34 checksum ok", r.header_checksum_ok, 1);
     check_int("PC34 importer candidate", r.pc34_importer_candidate, 1);
+    check_int("PC34 header-only not loader envelope",
+              r.pc34_loader_part_envelope_candidate, 0);
+    check_int("PC34 header-only part ok count",
+              r.save_part_loader_envelope_ok_count, 0);
     check_int("PC34 still blocked until real roundtrip",
               r.import_blocked_until_roundtrip, 1);
     check_u16("PC34 format id", r.format_id, 5u);
@@ -321,6 +326,8 @@ static void cleanup_root(const char *root) {
             test_unlink(path);
         }
     }
+    snprintf(path, sizeof(path), "%s/slot-seven-real-save.bin", root);
+    test_unlink(path);
     test_rmdir(root);
 }
 
@@ -364,6 +371,71 @@ static void test_root_manifest(void) {
     cleanup_root(root);
 }
 
+static void test_corpus_manifest_finds_arbitrary_real_save_name(void) {
+    char root[DM1_ORIGINAL_SAVE_PATH_MAX];
+    char path[DM1_ORIGINAL_SAVE_PATH_MAX];
+    uint8_t bytes[4096];
+    size_t bytes_written = 0u;
+    DM1OriginalSavePC34FixtureSpec fixture;
+    DM1OriginalSaveManifest fixed;
+    DM1OriginalSaveCorpusManifest corpus;
+
+    if (!make_temp_root(root)) {
+        printf("FAIL temp root corpus\n");
+        g_fail++;
+        return;
+    }
+
+    memset(&fixture, 0, sizeof(fixture));
+    fixture.champion_count = 2;
+    fixture.map_index = 0;
+    fixture.map_x = 4;
+    fixture.map_y = 6;
+    fixture.direction = 1;
+    fixture.active_champion_index = 0;
+    fixture.current_active_group_count = 1;
+    fixture.maximum_active_group_count = 3;
+    fixture.event_count = 3;
+    fixture.event_maximum_count = 4;
+    fixture.game_time = 1234u;
+    fixture.game_id = 0x534c4f54u;
+    check_int("build arbitrary original save fixture",
+              dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
+                  &fixture, bytes, sizeof(bytes), &bytes_written),
+              0);
+    snprintf(path, sizeof(path), "%s/slot-seven-real-save.bin", root);
+    check_int("write arbitrary original save name",
+              write_file(path, bytes, bytes_written), 1);
+
+    check_int("fixed root manifest ignores arbitrary save filename",
+              dm1_v1_original_save_classify_root(root, &fixed), 1);
+    check_int("fixed manifest present count for arbitrary save",
+              fixed.present_count, 0);
+
+    check_int("corpus root manifest scans arbitrary save filename",
+              dm1_v1_original_save_classify_corpus_root(root, &corpus), 1);
+    check_int("corpus capacity",
+              corpus.candidate_capacity,
+              (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP);
+    check_int("corpus scanned file count", corpus.scanned_file_count, 1);
+    check_int("corpus present count", corpus.present_count, 1);
+    check_int("corpus classified count", corpus.classified_count, 1);
+    check_int("corpus original dm1 pc34 count",
+              corpus.original_dm1_pc34_count, 1);
+    check_int("corpus pc34 importer candidate count",
+              corpus.pc34_importer_candidate_count, 1);
+    check_int("corpus pc34 loader envelope count",
+              corpus.pc34_loader_part_envelope_count, 1);
+    check_int("corpus result loader envelope candidate",
+              corpus.results[0].pc34_loader_part_envelope_candidate, 1);
+    check_int("corpus result save part ok count",
+              corpus.results[0].save_part_loader_envelope_ok_count, 5);
+    check_int("corpus path records arbitrary filename",
+              strstr(corpus.paths[0], "slot-seven-real-save.bin") != NULL, 1);
+
+    cleanup_root(root);
+}
+
 static void test_helpers(void) {
     char root[DM1_ORIGINAL_SAVE_PATH_MAX];
     char path[DM1_ORIGINAL_SAVE_PATH_MAX];
@@ -394,6 +466,7 @@ int main(void) {
     test_rejects_mutated_header();
     test_compat_family_and_unknown_format();
     test_root_manifest();
+    test_corpus_manifest_finds_arbitrary_real_save_name();
     test_helpers();
 
     printf("DM1 original save classifier: %d passed, %d failed\n", g_pass, g_fail);

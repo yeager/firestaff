@@ -9,6 +9,7 @@
 #if defined(_WIN32) || defined(_WIN64)
 #define DM1OS_PATH_SEP '\\'
 #else
+#include <dirent.h>
 #define DM1OS_PATH_SEP '/'
 #endif
 
@@ -20,6 +21,7 @@
 #define DM1OS_FORMAT_AMIGA_36_PC 5u
 #define DM1OS_PLATFORM_PC 9u
 #define DM1OS_DUNGEON_DM 10u
+#define DM1OS_SAVE_PART_COUNT 5u
 
 typedef enum {
     DM1OS_ENDIAN_LE = 0,
@@ -144,6 +146,105 @@ static void set_reason(DM1OriginalSaveClassifyResult *out, const char *reason) {
     out->reason[n] = '\0';
 }
 
+static void copy_path(char *dst, size_t cap, const char *src) {
+    size_t n;
+    if (!dst || cap == 0u) return;
+    dst[0] = '\0';
+    if (!src) return;
+    n = strlen(src);
+    if (n >= cap) n = cap - 1u;
+    memcpy(dst, src, n);
+    dst[n] = '\0';
+}
+
+static void dm1_original_save_corpus_count_result(
+    DM1OriginalSaveCorpusManifest *manifest,
+    const DM1OriginalSaveClassifyResult *result) {
+    if (!manifest || !result) return;
+    if (result->shape != DM1_ORIGINAL_SAVE_SHAPE_ABSENT) {
+        manifest->present_count++;
+    }
+    if (result->readiness == DM1_ORIGINAL_SAVE_READY_CLASSIFIED_HEADER_ONLY) {
+        manifest->classified_count++;
+    }
+    if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1) {
+        manifest->original_dm1_count++;
+    }
+    if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34) {
+        manifest->original_dm1_count++;
+        manifest->original_dm1_pc34_count++;
+    }
+    if (result->pc34_importer_candidate) {
+        manifest->pc34_importer_candidate_count++;
+    }
+    if (result->pc34_loader_part_envelope_candidate) {
+        manifest->pc34_loader_part_envelope_count++;
+    }
+    if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_FIRESTAFF_NATIVE) {
+        manifest->firestaff_native_count++;
+    }
+    if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_REJECTED) {
+        manifest->rejected_count++;
+    }
+}
+
+static int classify_pc34_loader_part_envelope(
+    const uint8_t *bytes,
+    size_t size,
+    const uint8_t header[DM1_ORIGINAL_SAVE_HEADER_BYTES],
+    DM1OSEndian endian,
+    DM1OriginalSaveClassifyResult *out)
+{
+    size_t cursor = DM1_ORIGINAL_SAVE_HEADER_BYTES;
+    uint32_t payload_bytes = 0u;
+    uint16_t ok_count = 0u;
+
+    if (!bytes || !header || !out) return 0;
+
+    for (size_t part = 0u; part < DM1OS_SAVE_PART_COUNT; ++part) {
+        uint16_t byte_count;
+        uint16_t key;
+        uint16_t expected;
+        uint16_t actual;
+        uint8_t *part_bytes;
+
+        if (cursor + 2u > size) break;
+        byte_count = rd16(bytes + cursor, endian);
+        cursor += 2u;
+        if ((byte_count & 1u) != 0u ||
+            byte_count > 0xfffeu ||
+            cursor + (size_t)byte_count > size) {
+            break;
+        }
+        part_bytes = NULL;
+        if (byte_count > 0u) {
+            part_bytes = (uint8_t *)malloc((size_t)byte_count);
+            if (!part_bytes) break;
+            memcpy(part_bytes, bytes + cursor, (size_t)byte_count);
+        }
+        key = rd16(header + 310u + (part * 2u), endian);
+        expected = rd16(header + 342u + (part * 2u), endian);
+        actual = obfuscate_and_checksum_words(
+            part_bytes ? part_bytes : (uint8_t *)"",
+            key,
+            (size_t)byte_count / 2u,
+            endian);
+        free(part_bytes);
+        if (actual != expected) {
+            break;
+        }
+        ok_count++;
+        payload_bytes += byte_count;
+        cursor += (size_t)byte_count;
+    }
+
+    out->save_part_loader_envelope_ok_count = ok_count;
+    out->save_part_loader_envelope_payload_bytes = payload_bytes;
+    out->pc34_loader_part_envelope_candidate =
+        ok_count == (uint16_t)DM1OS_SAVE_PART_COUNT;
+    return out->pc34_loader_part_envelope_candidate;
+}
+
 static int classify_original_header_with_endian(
     const uint8_t *bytes,
     size_t size,
@@ -227,7 +328,16 @@ static int classify_original_header_with_endian(
             dungeon_id == DM1OS_DUNGEON_DM) {
             out->shape = DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34;
             out->pc34_importer_candidate = 1;
-            set_reason(out, "recognized DM1 PC 3.4 save header; PC34 importer candidate pending real-byte round-trip");
+            /* ReDMCSB CEDTINCD.C F7051 lines ~224-266 accepts the DM/PC
+             * header, then F7057 reads each save part by length, key and
+             * checksum.  This bounded classifier proves that envelope before
+             * startup receipts count a real user corpus as save-part backed. */
+            (void)classify_pc34_loader_part_envelope(
+                bytes, size, header, endian, out);
+            set_reason(out,
+                       out->pc34_loader_part_envelope_candidate
+                           ? "recognized DM1 PC 3.4 save header and F7057 save-part envelope"
+                           : "recognized DM1 PC 3.4 save header; save-part envelope not proven");
             return 1;
         }
         set_reason(out, "recognized ReDMCSB-compatible save family, not DM1 Atari/ST-format header");
@@ -436,12 +546,119 @@ int dm1_v1_original_save_classify_root(
         if (result->pc34_importer_candidate) {
             out_manifest->pc34_importer_candidate_count++;
         }
+        if (result->pc34_loader_part_envelope_candidate) {
+            out_manifest->pc34_loader_part_envelope_count++;
+        }
         if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_FIRESTAFF_NATIVE) {
             out_manifest->firestaff_native_count++;
         }
     }
 
     return 1;
+}
+
+static int corpus_add_classified_file(
+    DM1OriginalSaveCorpusManifest *manifest,
+    const char *path) {
+    DM1OriginalSaveClassifyResult *result;
+    int slot;
+
+    if (!manifest || !path || !path[0]) return 0;
+    manifest->scanned_file_count++;
+    if (manifest->present_count >=
+        (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP) {
+        manifest->truncated_count++;
+        return 1;
+    }
+    slot = manifest->present_count;
+    result = &manifest->results[slot];
+    if (!dm1_v1_original_save_classify_file(path, result)) {
+        return 0;
+    }
+    if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_ABSENT) {
+        return 1;
+    }
+    copy_path(manifest->paths[slot],
+              sizeof(manifest->paths[slot]),
+              path);
+    dm1_original_save_corpus_count_result(manifest, result);
+    return 1;
+}
+
+int dm1_v1_original_save_classify_corpus_root(
+    const char *root,
+    DM1OriginalSaveCorpusManifest *out_manifest) {
+    if (!out_manifest) return 0;
+    memset(out_manifest, 0, sizeof(*out_manifest));
+    out_manifest->candidate_capacity =
+        (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP;
+
+    if (root && root[0]) {
+        copy_path(out_manifest->root, sizeof(out_manifest->root), root);
+    } else if (!dm1_v1_original_save_default_root(out_manifest->root)) {
+        return 0;
+    }
+
+#if defined(_WIN32) || defined(_WIN64)
+    {
+        DM1OriginalSaveManifest fixed;
+        if (!dm1_v1_original_save_classify_root(out_manifest->root, &fixed)) {
+            return 0;
+        }
+        for (int i = 0; i < fixed.candidate_count; ++i) {
+            if (fixed.results[i].shape == DM1_ORIGINAL_SAVE_SHAPE_ABSENT) {
+                continue;
+            }
+            if (out_manifest->present_count >=
+                (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP) {
+                out_manifest->truncated_count++;
+                break;
+            }
+            out_manifest->results[out_manifest->present_count] =
+                fixed.results[i];
+            copy_path(out_manifest->paths[out_manifest->present_count],
+                      sizeof(out_manifest->paths[out_manifest->present_count]),
+                      fixed.paths[i]);
+            out_manifest->scanned_file_count++;
+            dm1_original_save_corpus_count_result(
+                out_manifest,
+                &out_manifest->results[out_manifest->present_count]);
+        }
+        return 1;
+    }
+#else
+    {
+        DIR *dir = opendir(out_manifest->root);
+        struct dirent *entry;
+        if (!dir) {
+            return 1;
+        }
+        while ((entry = readdir(dir)) != NULL) {
+            char path[DM1_ORIGINAL_SAVE_PATH_MAX];
+            struct stat st;
+            int n;
+            if (entry->d_name[0] == '.') {
+                continue;
+            }
+            n = snprintf(path, sizeof(path), "%s%c%s",
+                         out_manifest->root, DM1OS_PATH_SEP,
+                         entry->d_name);
+            if (n <= 0 || (size_t)n >= sizeof(path)) {
+                out_manifest->truncated_count++;
+                continue;
+            }
+            if (stat(path, &st) != 0 || !S_ISREG(st.st_mode)) {
+                continue;
+            }
+            if (!corpus_add_classified_file(out_manifest, path)) {
+                closedir(dir);
+                return 0;
+            }
+        }
+        closedir(dir);
+        return 1;
+    }
+#endif
 }
 
 const char *dm1_v1_original_save_shape_name(DM1OriginalSaveShape shape) {

@@ -1306,6 +1306,8 @@ int dm1_v1_startup_save_resume_capture_receipt_pc34(
     receipt.user_save_corpus_classified =
         facts->observed_user_save_corpus_classified;
     receipt.user_save_corpus_pc34 = facts->observed_user_save_corpus_pc34;
+    receipt.user_save_corpus_part_envelope =
+        facts->observed_user_save_corpus_part_envelope;
     receipt.user_save_corpus_rejected =
         facts->observed_user_save_corpus_rejected;
     receipt.user_save_corpus_truncated =
@@ -1354,7 +1356,7 @@ int dm1_v1_startup_save_resume_capture_receipt_pc34(
         (facts->observed_save_part_count ==
          DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34) ||
         (receipt.user_save_corpus_scan_consumed &&
-         receipt.user_save_corpus_pc34 > 0);
+         receipt.user_save_corpus_part_envelope > 0);
     receipt.champion_portrait_corpus_present =
         facts->observed_champion_portrait_count ==
         DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
@@ -2959,12 +2961,17 @@ int dm1_v1_complete_support_receipt_pc34(
         original_save->observed_save_part_count ==
         DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34 &&
         original_save->observed_champion_portrait_count ==
-        DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
+        DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34 &&
+        (!original_save->user_save_corpus_scan_consumed ||
+         original_save->user_save_corpus_part_envelope > 0);
     receipt.user_save_corpus_scan_consumed =
         original_save->user_save_corpus_scan_consumed;
     receipt.user_save_corpus_pc34_ready =
         original_save->user_save_corpus_scan_consumed &&
         original_save->user_save_corpus_pc34 > 0;
+    receipt.user_save_corpus_part_envelope_ready =
+        original_save->user_save_corpus_scan_consumed &&
+        original_save->user_save_corpus_part_envelope > 0;
     receipt.user_save_corpus_rejected =
         original_save->user_save_corpus_rejected;
     receipt.user_save_corpus_truncated =
@@ -3001,6 +3008,8 @@ int dm1_v1_complete_support_receipt_pc34(
         receipt.redmcsb_hoc_mirror_overlay_ready &&
         receipt.redmcsb_hoc_thing_layer_suppression_ready &&
         receipt.redmcsb_save_part_corpus_ready &&
+        (!receipt.user_save_corpus_scan_consumed ||
+         receipt.user_save_corpus_part_envelope_ready) &&
         receipt.host_capture_route_packaged &&
         receipt.presented_capture_chain_ready &&
         receipt.host_draw_uses_owned_receipt &&
@@ -3162,7 +3171,7 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
         if (dm1_v1_startup_resume_root_from_path_pc34(
                 resume_host.resume_path, corpus_root) &&
             dm1_v1_original_save_classify_corpus_root(corpus_root, &corpus) &&
-            corpus.pc34_importer_candidate_count > 0) {
+            corpus.pc34_loader_part_envelope_count > 0) {
             int first_pc34_index = -1;
             save_facts.observed_user_save_corpus_scan = 1;
             save_facts.observed_user_save_corpus_files =
@@ -3171,12 +3180,14 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
                 corpus.classified_count;
             save_facts.observed_user_save_corpus_pc34 =
                 corpus.pc34_importer_candidate_count;
+            save_facts.observed_user_save_corpus_part_envelope =
+                corpus.pc34_loader_part_envelope_count;
             save_facts.observed_user_save_corpus_rejected =
                 corpus.rejected_count;
             save_facts.observed_user_save_corpus_truncated =
                 corpus.truncated_count;
             for (int i = 0; i < corpus.present_count; ++i) {
-                if (corpus.results[i].pc34_importer_candidate) {
+                if (corpus.results[i].pc34_loader_part_envelope_candidate) {
                     first_pc34_index = i;
                     break;
                 }
@@ -3311,6 +3322,8 @@ int dm1_v1_startup_hoc_boot_probe_summary_pc34(
         receipt->complete_support.complete_original_save_roundtrip_route;
     summary.user_save_corpus_pc34_ready =
         receipt->complete_support.user_save_corpus_pc34_ready;
+    summary.user_save_corpus_part_envelope_ready =
+        receipt->complete_support.user_save_corpus_part_envelope_ready;
     summary.user_save_corpus_rejected =
         receipt->complete_support.user_save_corpus_rejected;
     summary.user_save_corpus_truncated =
