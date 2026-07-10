@@ -1367,6 +1367,91 @@ static void probe_real_data_if_present(void) {
                             "theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin");
 }
 
+static void probe_media_gated_level_bank_selection(void) {
+    Theron_V1_World world;
+    Theron_StartupMediaStateReceipt media;
+    const unsigned int route_bits[4] = {
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM,
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD
+    };
+    size_t i;
+
+    memset(&media, 0, sizeof(media));
+    media.startup_media_ready = 1;
+    media.startup_bitmap_decode_status = THERON_TRACK02_SIGNAL_OK;
+    media.startup_bitmap_sample_count = 24;
+    media.startup_bitmap_route_mask = 0x0fu;
+    media.startup_bitmap_nonzero_pixel_count = 128u;
+    media.startup_bitmap_checksum = 0x100u;
+    media.startup_bitmap_atlas_ready = 1;
+    media.startup_bitmap_atlas_route_count = 4;
+    media.startup_bitmap_atlas_route_mask = 0x0fu;
+    media.startup_bitmap_atlas_tile_count = 32u;
+    media.startup_bitmap_atlas_nonzero_pixel_count = 128u;
+    media.startup_bitmap_atlas_checksum = 0x200u;
+    media.startup_bitmap_title_route_ready = 1;
+    media.startup_bitmap_stage_route_ready = 1;
+    media.startup_bitmap_soul_room_route_ready = 1;
+    media.startup_bitmap_forcefield_route_ready = 1;
+    media.startup_bitmap_title_sample_count = 8;
+    media.startup_bitmap_stage_sample_count = 8;
+    media.startup_bitmap_soul_room_sample_count = 4;
+    media.startup_bitmap_forcefield_sample_count = 4;
+    media.startup_bitmap_title_nonzero_pixel_count = 32u;
+    media.startup_bitmap_stage_nonzero_pixel_count = 32u;
+    media.startup_bitmap_soul_room_nonzero_pixel_count = 32u;
+    media.startup_bitmap_forcefield_nonzero_pixel_count = 32u;
+    media.startup_bitmap_title_checksum = 1u;
+    media.startup_bitmap_stage_checksum = 2u;
+    media.startup_bitmap_soul_room_checksum = 3u;
+    media.startup_bitmap_forcefield_checksum = 4u;
+    media.startup_bitmap_title_atlas_tile_count = 8u;
+    media.startup_bitmap_stage_atlas_tile_count = 8u;
+    media.startup_bitmap_soul_room_atlas_tile_count = 8u;
+    media.startup_bitmap_forcefield_atlas_tile_count = 8u;
+    media.startup_bitmap_title_atlas_width = 64u;
+    media.startup_bitmap_stage_atlas_width = 64u;
+    media.startup_bitmap_soul_room_atlas_width = 64u;
+    media.startup_bitmap_forcefield_atlas_width = 64u;
+    media.startup_bitmap_atlas.route_count = 4u;
+    for (i = 0u; i < 4u; ++i) {
+        Theron_Track02StartupBitmapAtlasRoute *route =
+            &media.startup_bitmap_atlas.routes[i];
+        route->route_bit = route_bits[i];
+        route->tile_count = 8u;
+        route->width = 64u;
+        route->height = 8u;
+        route->nonzero_pixel_count = 32u;
+        route->checksum = (uint32_t)(i + 1u);
+        route->pixels[0] = (uint8_t)(i + 1u);
+    }
+    media.runtime_media_identity.ready = 1;
+    media.runtime_media_identity.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
+    media.runtime_media_identity.bank_descriptor_offset = 0x70be06u;
+    media.runtime_media_identity.bank_stride = 0x0400u;
+    media.runtime_media_identity.checksum = 0x71a3b1c2u;
+
+    theron_v1_world_init(&world);
+    check_int("media gate rejects unbound later semantic level",
+              theron_v1_world_runtime_media_select_level_bank(
+                  &world, THERON_RUNTIME_LEVEL_BANK_STAGE,
+                  THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 1), 0);
+    check_int("media gate accepts complete Track 02 receipt",
+              theron_v1_startup_media_bind_runtime_receipt(&world, &media), 1);
+    check_int("forcefield transition is media gated",
+              theron_v1_world_runtime_media_select_level_bank(
+                  &world, THERON_RUNTIME_LEVEL_BANK_FORCEFIELD,
+                  THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 1), 1);
+    check_int("stage transition replaces selected bank",
+              theron_v1_world_runtime_media_select_level_bank(
+                  &world, THERON_RUNTIME_LEVEL_BANK_STAGE,
+                  THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 1), 1);
+    check_int("stage selection retains real-media receipt",
+              world.runtime_media.selected_bank.real_media_gate, 1);
+}
+
 int main(void) {
     printf("=== Theron V1 Track 02 Level Handoff Probe ===\n");
     printf("%s\n", theron_v1_track02_source_evidence());
@@ -1378,6 +1463,7 @@ int main(void) {
     probe_synthetic_initial_candidate_user_data_offsets();
     probe_synthetic_multiple_initial_candidates_rejected();
     probe_negative_handoffs();
+    probe_media_gated_level_bank_selection();
     probe_real_data_if_present();
 
     printf("summary: fail=%d skip=%d\n", g_fail, g_skip);
