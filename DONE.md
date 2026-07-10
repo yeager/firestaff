@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+
+- ✅ 2026-07-10 CSB complete startup support receipt: added a CSB-owned complete-support receipt that requires the full real startup runtime session plus host-capture route hardening for PRESENTS, CHAOS zoom/hold, STRIKES BACK, entrance/credits, closed-door HUD, utility HUD, opening-door capture, receipt-only draw/input, and no-wrapper/no-fallback policy. Covered in `test_csb_v1_boot_runtime_handoff`; focused direct compiles for `csb_v1_startup_runtime_surfaces_pc34_compat.c` and `test_csb_v1_boot_runtime_handoff.c` plus `git diff --check` passed. Local CMake target rebuild stalled in shared M10 objects and was interrupted.
 - ✅ 2026-07-10 Game-specific launch asset scan: launching a selected game now calls the targeted `M12_AssetStatus_ScanGame` path from startup, and that path resolves only the selected game's version hashes, required files, and launch cache instead of scanning all games. Verification: direct `test_asset_status_scan_metrics` rebuild/run with V2.2 stubs, focused syntax checks, and `git diff --check` passed.
 
 - ✅ 2026-07-10 DM1 TODO audit: verified the current DM1 HoC/render startup ownership row against the existing ReDMCSB complete-support gate and DONE entries. TODO now keeps only the remaining real Mac/release pixel-promotion work instead of reopening verified host ownership code. Verification: `git diff --check -- TODO.md DONE.md` passed.

@@ -859,6 +859,33 @@ typedef struct CSB_V1_StartupFullRuntimeReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_StartupFullRuntimeReceipt_PC34;
 
+typedef struct CSB_V1_StartupCompleteSupportReceipt_PC34 {
+    int valid;
+    int full_runtime_valid;
+    int host_capture_gate_valid;
+    int real_asset_matched;
+    int title_sequence_ready;
+    int title_phase_route_complete;
+    int title_presents_ready;
+    int title_chaos_ready;
+    int title_strikes_back_ready;
+    int entrance_ready;
+    int hud_ready;
+    int door_ready;
+    int runtime_host_routes_ready;
+    int draw_consumes_receipt_only;
+    int input_consumes_receipt_only;
+    int no_legacy_wrappers;
+    int no_fallback_callbacks;
+    int no_wrapper_fallback_routes;
+    uint32_t session_generation;
+    uint32_t runtime_host_gate_hash;
+    uint32_t complete_support_hash;
+    CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
+    CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 host_capture_gate;
+    const char *source_evidence;
+} CSB_V1_StartupCompleteSupportReceipt_PC34;
+
 /* A non-owning frame view into a startup asset session.  The source pointers
  * remain valid until csb_v1_boot_startup_runtime_asset_session_release_pc34.
  * No fallback text or synthetic door pixels are represented here. */
@@ -1091,6 +1118,12 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
 int csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupFullRuntimeReceipt_PC34 *out_receipt);
+void csb_v1_boot_startup_complete_support_receipt_init_pc34(
+    CSB_V1_StartupCompleteSupportReceipt_PC34 *receipt);
+int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
+    const CSB_V1_StartupFullRuntimeReceipt_PC34 *full_runtime,
+    const CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *host_capture_gate,
+    CSB_V1_StartupCompleteSupportReceipt_PC34 *out_receipt);
 /* ReDMCSB SWSH.C F0909/F0910 owns the pre-title sound, TITLE.C F0437 owns
  * the title timing, and ENTRANCE.C F0806 starts C0_MUSIC_ENTRANCE. */
 int csb_v1_boot_startup_playback_begin_pc34(

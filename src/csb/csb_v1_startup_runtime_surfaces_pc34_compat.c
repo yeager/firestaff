@@ -357,3 +357,128 @@ int csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
         out_receipt->door_ready && out_receipt->no_legacy_wrappers;
     return out_receipt->valid;
 }
+
+void csb_v1_boot_startup_complete_support_receipt_init_pc34(
+    CSB_V1_StartupCompleteSupportReceipt_PC34 *receipt)
+{
+    if (!receipt) return;
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->source_evidence =
+        "ReDMCSB TITLE.C F0437; ENTRANCE.C F0806/F0807; "
+        "CSBWin Graphics.cpp ReadGraphic and startup host loop";
+}
+
+int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
+    const CSB_V1_StartupFullRuntimeReceipt_PC34 *full_runtime,
+    const CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *host_capture_gate,
+    CSB_V1_StartupCompleteSupportReceipt_PC34 *out_receipt)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    csb_v1_boot_startup_complete_support_receipt_init_pc34(out_receipt);
+    if (!full_runtime || !host_capture_gate) return 0;
+
+    out_receipt->full_runtime = *full_runtime;
+    out_receipt->host_capture_gate = *host_capture_gate;
+    out_receipt->full_runtime_valid = full_runtime->valid ? 1 : 0;
+    out_receipt->host_capture_gate_valid = host_capture_gate->valid ? 1 : 0;
+    out_receipt->real_asset_matched =
+        full_runtime->real_asset_matched &&
+                host_capture_gate->runtime_visual.real_asset_matched
+            ? 1
+            : 0;
+    out_receipt->title_sequence_ready =
+        full_runtime->title_sequence_ready &&
+                host_capture_gate->title_runtime_phase_route_complete
+            ? 1
+            : 0;
+    out_receipt->title_phase_route_complete =
+        host_capture_gate->title_runtime_phase_route_complete ? 1 : 0;
+    out_receipt->title_presents_ready =
+        full_runtime->title_presents_ready &&
+                host_capture_gate->title_presents_runtime_captured
+            ? 1
+            : 0;
+    out_receipt->title_chaos_ready =
+        full_runtime->title_chaos_ready &&
+                host_capture_gate->title_chaos_zoom_runtime_captured &&
+                host_capture_gate->title_chaos_hold_runtime_captured
+            ? 1
+            : 0;
+    out_receipt->title_strikes_back_ready =
+        full_runtime->title_strikes_back_ready &&
+                host_capture_gate->title_strikes_back_runtime_captured
+            ? 1
+            : 0;
+    out_receipt->entrance_ready =
+        full_runtime->entrance_ready &&
+                host_capture_gate->credits_runtime_captured
+            ? 1
+            : 0;
+    out_receipt->hud_ready =
+        full_runtime->hud_ready &&
+                host_capture_gate->closed_door_hud_runtime_captured &&
+                host_capture_gate->utility_hud_runtime_captured
+            ? 1
+            : 0;
+    out_receipt->door_ready =
+        full_runtime->door_ready &&
+                host_capture_gate->door_opening_runtime_captured
+            ? 1
+            : 0;
+    out_receipt->runtime_host_routes_ready =
+        host_capture_gate->route_hardening_valid &&
+                host_capture_gate->all_runtime_routes_consumed &&
+                host_capture_gate->title_host_ownership_valid &&
+                host_capture_gate->closed_door_host_ownership_valid &&
+                host_capture_gate->utility_host_ownership_valid &&
+                host_capture_gate->door_opening_host_ownership_valid
+            ? 1
+            : 0;
+    out_receipt->draw_consumes_receipt_only =
+        host_capture_gate->draw_consumes_receipt_only ? 1 : 0;
+    out_receipt->input_consumes_receipt_only =
+        host_capture_gate->input_consumes_receipt_only ? 1 : 0;
+    out_receipt->no_legacy_wrappers =
+        full_runtime->no_legacy_wrappers &&
+                host_capture_gate->no_wrapper_fallback_routes
+            ? 1
+            : 0;
+    out_receipt->no_fallback_callbacks =
+        host_capture_gate->no_fallback_callbacks ? 1 : 0;
+    out_receipt->no_wrapper_fallback_routes =
+        host_capture_gate->no_wrapper_fallback_routes ? 1 : 0;
+    out_receipt->session_generation = full_runtime->session_generation;
+    out_receipt->runtime_host_gate_hash =
+        host_capture_gate->runtime_host_gate_hash;
+    hash ^= full_runtime->session_generation;
+    hash *= 16777619u;
+    hash ^= host_capture_gate->runtime_host_gate_hash;
+    hash *= 16777619u;
+    hash ^= host_capture_gate->title_runtime_phase_hash;
+    hash *= 16777619u;
+    hash ^= host_capture_gate->runtime_capture_hash;
+    out_receipt->complete_support_hash = hash ? hash : 1u;
+    out_receipt->valid =
+        out_receipt->full_runtime_valid &&
+                out_receipt->host_capture_gate_valid &&
+                out_receipt->real_asset_matched &&
+                out_receipt->title_sequence_ready &&
+                out_receipt->title_presents_ready &&
+                out_receipt->title_chaos_ready &&
+                out_receipt->title_strikes_back_ready &&
+                out_receipt->entrance_ready &&
+                out_receipt->hud_ready &&
+                out_receipt->door_ready &&
+                out_receipt->runtime_host_routes_ready &&
+                out_receipt->draw_consumes_receipt_only &&
+                out_receipt->input_consumes_receipt_only &&
+                out_receipt->no_legacy_wrappers &&
+                out_receipt->no_fallback_callbacks &&
+                out_receipt->no_wrapper_fallback_routes &&
+                out_receipt->complete_support_hash != 0u
+            ? 1
+            : 0;
+    return out_receipt->valid;
+}

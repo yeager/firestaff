@@ -2238,6 +2238,9 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 runtime_visual;
     CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 route_hardening;
     CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 runtime_host_gate;
+    CSB_V1_StartupRuntimeAssetSession_PC34 full_session;
+    CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
+    CSB_V1_StartupCompleteSupportReceipt_PC34 complete_support;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
     TestHudMenuDrawProbe hud_draw_probe;
@@ -2413,6 +2416,58 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.draw_fallback_text_count == 0 &&
               capture_render_probe.draw_door_fallback_count == 0,
           "boot startup runtime host gate binds full capture to route hardening without wrapper fallbacks");
+    csb_v1_boot_startup_runtime_asset_session_init_pc34(&full_session);
+    full_session.valid = 1;
+    full_session.real_asset_matched = 1;
+    full_session.surfaces.valid = 1;
+    full_session.title_presents_ready = 1;
+    full_session.title_chaos_ready = 1;
+    full_session.title_strikes_back_ready = 1;
+    full_session.entrance_assets_ready = 1;
+    full_session.hud_assets_bound = 1;
+    full_session.door_assets_ready = 1;
+    full_session.full_startup_ready = 1;
+    full_session.rejects_legacy_wrappers = 1;
+    full_session.generation = 19u;
+    CHECK(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+              &full_session,
+              &full_runtime) == 1 &&
+              csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
+                  &full_runtime,
+                  &runtime_host_gate,
+                  &complete_support) == 1 &&
+              complete_support.valid &&
+              complete_support.full_runtime_valid &&
+              complete_support.host_capture_gate_valid &&
+              complete_support.real_asset_matched &&
+              complete_support.title_sequence_ready &&
+              complete_support.title_phase_route_complete &&
+              complete_support.title_presents_ready &&
+              complete_support.title_chaos_ready &&
+              complete_support.title_strikes_back_ready &&
+              complete_support.entrance_ready &&
+              complete_support.hud_ready &&
+              complete_support.door_ready &&
+              complete_support.runtime_host_routes_ready &&
+              complete_support.draw_consumes_receipt_only &&
+              complete_support.input_consumes_receipt_only &&
+              complete_support.no_legacy_wrappers &&
+              complete_support.no_fallback_callbacks &&
+              complete_support.no_wrapper_fallback_routes &&
+              complete_support.session_generation == 19u &&
+              complete_support.runtime_host_gate_hash ==
+                  runtime_host_gate.runtime_host_gate_hash &&
+              complete_support.complete_support_hash != 0u &&
+              strstr(complete_support.source_evidence, "TITLE.C F0437") != NULL,
+          "CSB complete-support receipt joins full startup runtime with PRESENTS/CHAOS/STRIKES HUD and door host capture");
+    runtime_host_gate.title_chaos_hold_runtime_captured = 0;
+    CHECK(csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
+              &full_runtime,
+              &runtime_host_gate,
+              &complete_support) == 0 &&
+              !complete_support.valid &&
+              !complete_support.title_chaos_ready,
+          "CSB complete-support receipt rejects partial CHAOS title capture");
     memset(&snapshot, 0, sizeof(snapshot));
     snapshot.boot_profile = &boot;
     snapshot.entrance_active = 1;
