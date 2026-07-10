@@ -1436,20 +1436,20 @@ static void probe_media_gated_level_bank_selection(void) {
     theron_v1_world_init(&world);
     check_int("media gate rejects unbound later semantic level",
               theron_v1_world_runtime_media_select_level_bank(
-                  &world, THERON_RUNTIME_LEVEL_BANK_STAGE,
+                  &world, THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL,
                   THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 1), 0);
     check_int("media gate accepts complete Track 02 receipt",
               theron_v1_startup_media_bind_runtime_receipt(&world, &media), 1);
     check_int("forcefield transition is media gated",
               theron_v1_world_runtime_media_select_level_bank(
-                  &world, THERON_RUNTIME_LEVEL_BANK_FORCEFIELD,
+                  &world, THERON_RUNTIME_LEVEL_BANK_STARTUP_FORCEFIELD,
                   THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 1), 1);
     check_int("stage transition replaces selected bank",
               theron_v1_world_runtime_media_select_level_bank(
-                  &world, THERON_RUNTIME_LEVEL_BANK_STAGE,
+                  &world, THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL,
                   THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 1), 1);
     check_int("stage selection retains real-media receipt",
-              world.runtime_media.selected_bank.real_media_gate, 1);
+              world.runtime_media.level_bank.real_media_gate, 1);
 }
 
 int main(void) {
