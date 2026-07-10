@@ -49,6 +49,17 @@ static uint32_t csb_v1_boot_packaged_capture_hash_step_pc34(uint32_t hash,
     return hash;
 }
 
+static int csb_v1_boot_runtime_execute_startup_firestaff_input_gate_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int menu_input,
+    CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt);
+static int csb_v1_boot_runtime_execute_startup_pointer_gate_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int x,
+    int y,
+    unsigned int button_mask,
+    CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt);
+
 static int csb_v1_boot_count_unique_hashes_pc34(const uint32_t *hashes,
                                                 int count)
 {
@@ -5647,7 +5658,7 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     return 1;
 }
 
-int csb_v1_boot_runtime_execute_startup_firestaff_input_render_from_snapshot_pc34(
+static int csb_v1_boot_runtime_execute_startup_firestaff_input_render_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int menu_input,
     CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt)
@@ -5671,7 +5682,7 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_render_from_snapshot_pc3
         out_receipt);
 }
 
-int csb_v1_boot_runtime_execute_startup_firestaff_input_gate_from_snapshot_pc34(
+static int csb_v1_boot_runtime_execute_startup_firestaff_input_gate_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int menu_input,
     CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt)
@@ -5871,7 +5882,7 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
     return 1;
 }
 
-int csb_v1_boot_runtime_execute_startup_pointer_render_from_snapshot_pc34(
+static int csb_v1_boot_runtime_execute_startup_pointer_render_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int x,
     int y,
@@ -5899,7 +5910,7 @@ int csb_v1_boot_runtime_execute_startup_pointer_render_from_snapshot_pc34(
         out_receipt);
 }
 
-int csb_v1_boot_runtime_execute_startup_pointer_gate_from_snapshot_pc34(
+static int csb_v1_boot_runtime_execute_startup_pointer_gate_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int x,
     int y,
