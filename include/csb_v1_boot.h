@@ -1319,14 +1319,6 @@ int csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     int menu_input,
     CSB_V1_BootStartupActionReceipt_PC34 *out_receipt);
-int csb_v1_boot_runtime_execute_startup_firestaff_input_render_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    int menu_input,
-    CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt);
-int csb_v1_boot_runtime_execute_startup_firestaff_input_gate_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    int menu_input,
-    CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
     const CSB_V1_BootStartupActionReceipt_PC34 *receipt,
     CSB_V1_BootStartupHostDecisionReceipt_PC34 *out_decision);
@@ -1336,18 +1328,6 @@ int csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
     int y,
     unsigned int button_mask,
     CSB_V1_BootStartupActionReceipt_PC34 *out_receipt);
-int csb_v1_boot_runtime_execute_startup_pointer_render_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    int x,
-    int y,
-    unsigned int button_mask,
-    CSB_V1_BootStartupInputRenderReceipt_PC34 *out_receipt);
-int csb_v1_boot_runtime_execute_startup_pointer_gate_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    int x,
-    int y,
-    unsigned int button_mask,
-    CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt);
 int csb_v1_boot_runtime_save_game_to_path_pc34(
     const CSB_V1_BootProfile *profile,
     const char *path,
