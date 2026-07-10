@@ -40,11 +40,28 @@ typedef struct {
     int structured_runtime_route;
     int runtime_receipt_text_route;
     Theron_RuntimeLevelBankSelection track02_level_bank;
+    int all_dungeon_real_data_capture_ready;
+    int all_dungeon_capture_count;
+    unsigned int all_dungeon_capture_mask;
+    int exact_level_semantics_ready;
+    int exact_object_semantics_ready;
     int party_x;
     int party_y;
     int party_dir;
     int tick_count;
 } Theron_V1StartupRuntimeEntryResult;
+
+typedef struct {
+    int valid;
+    int real_data_capture_ready;
+    int capture_count;
+    unsigned int dungeon_mask;
+    int semantic_level_count;
+    int exact_level_semantics_ready;
+    int exact_object_semantics_ready;
+    uint32_t route_hash;
+    Theron_RuntimeLevelBankSelection level_banks[THERON_DUNGEON_COUNT];
+} Theron_V1StartupAllDungeonRouteReceipt;
 
 typedef struct {
     Theron_StartupInputResult input_result;
@@ -61,6 +78,11 @@ typedef struct {
     int structured_runtime_route;
     int runtime_receipt_text_route;
     Theron_RuntimeLevelBankSelection track02_level_bank;
+    int all_dungeon_real_data_capture_ready;
+    int all_dungeon_capture_count;
+    unsigned int all_dungeon_capture_mask;
+    int exact_level_semantics_ready;
+    int exact_object_semantics_ready;
     const char *log_first_line;
     int log_receipt;
 } Theron_V1StartupRuntimeEntryApplyReceipt;
@@ -178,6 +200,14 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
     Theron_StartupStateReceipt *out_state_receipt,
     char *receipt,
     size_t receipt_cap);
+void theron_v1_startup_all_dungeon_route_receipt_init(
+    Theron_V1StartupAllDungeonRouteReceipt *receipt);
+int theron_v1_startup_runtime_capture_all_dungeon_routes(
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    Theron_V1StartupAllDungeonRouteReceipt *out_receipt);
 
 #ifdef __cplusplus
 }

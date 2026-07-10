@@ -163,6 +163,23 @@ static void wr16le_test(uint8_t *p, uint16_t v) {
     p[1] = (uint8_t)((v >> 8) & 0xffu);
 }
 
+static void wr16be_test(uint8_t *p, uint16_t v) {
+    p[0] = (uint8_t)((v >> 8) & 0xffu);
+    p[1] = (uint8_t)(v & 0xffu);
+}
+
+static void wr32be_test(uint8_t *p, uint32_t v) {
+    wr16be_test(p, (uint16_t)((v >> 16) & 0xffffu));
+    wr16be_test(p + 2, (uint16_t)(v & 0xffffu));
+}
+
+static void wr32le_test(uint8_t *p, uint32_t v) {
+    p[0] = (uint8_t)(v & 0xffu);
+    p[1] = (uint8_t)((v >> 8) & 0xffu);
+    p[2] = (uint8_t)((v >> 16) & 0xffu);
+    p[3] = (uint8_t)((v >> 24) & 0xffu);
+}
+
 typedef struct TestStartupGraphicsCounters {
     int fill_count;
     int rect_count;
@@ -4242,6 +4259,125 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
     free(track02);
 }
 
+static void test_track02_all_dungeon_runtime_capture_receipt(void) {
+    static const uint8_t descriptor[18] = {
+        0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
+        0x20, 0x14, 0x20, 0x18, 0x20, 0x1c, 0x20, 0x20
+    };
+    static const uint32_t progression_seeds[THERON_TRACK02_DUNGEON_COUNT] = {
+        313u, 414u, 527u, 632u, 749u, 856u, 967u
+    };
+    static const size_t descriptor_offsets[3] = {
+        0x70be06u, 0x70e2c6u, 0x710904u
+    };
+    static const size_t span_offsets[3] = {
+        0x2d53e0u, 0x47d040u, 0x712840u
+    };
+    static const uint8_t post_boundary_span[44] = {
+        0xbe, 0x80, 0xfe, 0x80, 0x34, 0x81, 0x76, 0x81,
+        0xd0, 0x81, 0x2a, 0x80, 0x2b, 0x80, 0x38, 0x80,
+        0x45, 0x80, 0x52, 0x80, 0x5f, 0x80, 0x6c, 0x80,
+        0x79, 0x80, 0x86, 0x80, 0xa0, 0x80, 0xa5, 0x80,
+        0xaa, 0x80, 0xaf, 0x80, 0xb4, 0x80, 0xb9, 0x80,
+        0x93, 0x80, 0x00, 0x3f
+    };
+    const size_t candidate_offset = 0x7015b4u;
+    const size_t seed_table_offset = (0x70be06u - 0x1584u) + 0x20u;
+    const size_t track02_size =
+        ((0x712840u + 92u + THERON_TRACK02_RAW_SECTOR_BYTES - 1u) /
+         THERON_TRACK02_RAW_SECTOR_BYTES) *
+        THERON_TRACK02_RAW_SECTOR_BYTES;
+    uint8_t *track02 = (uint8_t *)calloc(track02_size, 1u);
+    Theron_StartupMediaStateReceipt media_receipt;
+    Theron_V1StartupAllDungeonRouteReceipt receipt;
+    Theron_V1_World selected_world;
+    char runtime_receipt[320];
+    Theron_DungeonID dungeon_id;
+
+    expect_true(track02 != NULL,
+                "Theron all-dungeon Track02 sparse fixture allocates");
+    if (!track02) {
+        return;
+    }
+
+    for (size_t anchor = 0u; anchor < 3u; ++anchor) {
+        memcpy(track02 + descriptor_offsets[anchor],
+               descriptor,
+               sizeof(descriptor));
+        memcpy(track02 + span_offsets[anchor],
+               post_boundary_span,
+               sizeof(post_boundary_span));
+        for (size_t i = sizeof(post_boundary_span); i < 92u; ++i) {
+            track02[span_offsets[anchor] + i] =
+                (uint8_t)(0x31u + ((anchor * 17u + i * 7u) % 0xcau));
+        }
+    }
+    for (size_t i = 0u; i < THERON_TRACK02_DUNGEON_COUNT; ++i) {
+        wr32le_test(track02 + seed_table_offset + i * 4u,
+                    progression_seeds[i]);
+    }
+    wr16be_test(track02 + candidate_offset + 0u, 32u);
+    wr16be_test(track02 + candidate_offset + 2u, 27u);
+    wr32be_test(track02 + candidate_offset + 4u, 0x0108e938u);
+    wr16be_test(track02 + candidate_offset + 8u, 0x0026u);
+    memset(track02 + candidate_offset + 12u,
+           THERON_SQUARE_WALL,
+           32u * 27u);
+    track02[candidate_offset + 12u + 1u * 32u + 1u] =
+        THERON_SQUARE_FLOOR;
+    track02[candidate_offset + 12u + 1u * 32u + 2u] =
+        THERON_SQUARE_FLOOR;
+    track02[candidate_offset + 12u + 2u * 32u + 2u] =
+        THERON_SQUARE_EXIT;
+
+    theron_v1_startup_media_capture_track02_state_receipt(
+        track02,
+        track02_size,
+        THERON_TRACK02_MD5_US_BIN,
+        &media_receipt);
+    expect_true(theron_v1_startup_runtime_capture_all_dungeon_routes(
+                    track02,
+                    track02_size,
+                    THERON_TRACK02_MD5_US_BIN,
+                    &media_receipt,
+                    &receipt) &&
+                    receipt.valid &&
+                    receipt.real_data_capture_ready &&
+                    receipt.capture_count == THERON_DUNGEON_COUNT &&
+                    receipt.semantic_level_count == THERON_DUNGEON_COUNT &&
+                    receipt.dungeon_mask ==
+                        ((1u << THERON_DUNGEON_COUNT) - 1u) &&
+                    receipt.exact_level_semantics_ready &&
+                    receipt.exact_object_semantics_ready &&
+                    receipt.route_hash != 0u,
+                "Theron Track02 all seven dungeon selections have real-data level/object capture");
+
+    for (dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
+         dungeon_id <= THERON_DUNGEON_COUNT;
+         dungeon_id = (Theron_DungeonID)((int)dungeon_id + 1)) {
+        theron_v1_world_init(&selected_world);
+        memset(runtime_receipt, 0, sizeof(runtime_receipt));
+        expect_true(theron_v1_startup_runtime_load_initial_level(
+                        &selected_world,
+                        track02,
+                        track02_size,
+                        THERON_TRACK02_MD5_US_BIN,
+                        dungeon_id,
+                        runtime_receipt,
+                        sizeof(runtime_receipt)) &&
+                        selected_world.current_dungeon == (int)dungeon_id &&
+                        selected_world.level_loaded[(int)dungeon_id - 1][0] &&
+                        selected_world.object_count ==
+                            selected_world.levels[(int)dungeon_id - 1][0]
+                                .thing_count &&
+                        strstr(runtime_receipt,
+                               "Track 02 semantic initial level") != NULL,
+                    "Theron selected dungeon loads through selected Track02 semantic route");
+    }
+
+    free(track02);
+}
+
 static void test_track02_startup_bitmap_decode_iso_receipt(void) {
     static const uint8_t descriptor[18] = {
         0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
@@ -4920,6 +5056,7 @@ int main(void) {
     test_boot_runtime_release_facade();
     test_startup_session_facts_wrappers();
     test_track02_startup_bitmap_decode_receipt();
+    test_track02_all_dungeon_runtime_capture_receipt();
     test_track02_startup_bitmap_decode_iso_receipt();
     test_startup_receipt_bitmap_art_gate();
 
