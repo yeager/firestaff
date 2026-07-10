@@ -1626,6 +1626,95 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+    const char *path,
+    const struct GameWorld_Compat *start_world,
+    struct GameWorld_Compat *out_world,
+    struct DM1_EventQueue_V1 *event_queue,
+    DM1OriginalSavePC34HandoffReport *out_report)
+{
+    int result;
+
+    if (!path || !out_world) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    memset(out_world, 0, sizeof(*out_world));
+    result = dm1_v1_original_save_pc34_handoff_load_world_from_file(
+        path, out_world, event_queue, out_report);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        F0883_WORLD_Free_Compat(out_world);
+        return result;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 loads the dungeon after PARTY/EVENT/TIMELINE.
+     * A PC34 stream without that optional tail is therefore resumed against
+     * the already materialized DM1 start dungeon, never a host-made HoC
+     * substitute. */
+    if (!out_world->dungeon && start_world) {
+        out_world->dungeon = start_world->dungeon;
+        out_world->things = start_world->things;
+        out_world->ownsDungeon = 0;
+    }
+    if (!out_world->dungeon || !out_world->things) {
+        F0883_WORLD_Free_Compat(out_world);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
+int dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
+    struct GameWorld_Compat *runtime_world,
+    struct GameWorld_Compat *loaded_world)
+{
+    int reuses_start_dungeon;
+
+    if (!runtime_world || !loaded_world) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    /* Native quicksaves serialize runtime data but retain the start dungeon
+     * outside that blob.  Give them the same DM1-owned materialized backing
+     * used by a tail-less original save before transferring ownership. */
+    if (!loaded_world->dungeon && runtime_world->dungeon) {
+        loaded_world->dungeon = runtime_world->dungeon;
+        loaded_world->things = runtime_world->things;
+        loaded_world->ownsDungeon = 0;
+    }
+    reuses_start_dungeon = loaded_world->dungeon == runtime_world->dungeon &&
+                         loaded_world->things == runtime_world->things;
+    if (reuses_start_dungeon) {
+        runtime_world->dungeon = NULL;
+        runtime_world->things = NULL;
+        runtime_world->ownsDungeon = 0;
+    }
+    F0883_WORLD_Free_Compat(runtime_world);
+    *runtime_world = *loaded_world;
+    memset(loaded_world, 0, sizeof(*loaded_world));
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
+void dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
+    const struct GameWorld_Compat *world,
+    DM1OriginalSavePC34HoCResumeState *state)
+{
+    if (!state) {
+        return;
+    }
+    if (!world || !state->candidate_panel_active ||
+        state->candidate_mirror_ordinal < 0 ||
+        state->candidate_party_index < 0 ||
+        state->candidate_party_index >= world->party.championCount ||
+        state->candidate_party_index >= CHAMPION_MAX_PARTY ||
+        !world->party.champions[state->candidate_party_index].present) {
+        state->candidate_mirror_ordinal = -1;
+        state->candidate_party_index = -1;
+        state->candidate_panel_active = 0;
+        return;
+    }
+    /* F0280 has already appended the candidate when C040 opens. */
+    state->candidate_panel_active = 1;
+    state->inventory_panel_active = 1;
+}
+
 int dm1_v1_original_save_pc34_roundtrip_world_bytes(
     const uint8_t *bytes,
     size_t size,
