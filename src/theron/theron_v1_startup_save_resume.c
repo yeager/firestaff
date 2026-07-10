@@ -1052,12 +1052,16 @@ static void theron_v1_startup_continue_capture_result(
 }
 
 static int theron_v1_startup_continue_attach_track02_media(
+    Theron_V1_World *world,
     Theron_V1StartupContinueResult *result,
     const Theron_StartupMediaStateReceipt *media_receipt,
     char *receipt,
     size_t receipt_cap) {
 
-    if (!result || !media_receipt) {
+    const Theron_Track02StartupBitmapAtlasRoute *stage = NULL;
+    const Theron_Track02StartupBitmapAtlasRoute *forcefield = NULL;
+
+    if (!world || !result || !media_receipt) {
         return 1;
     }
     if (!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
@@ -1065,6 +1069,38 @@ static int theron_v1_startup_continue_attach_track02_media(
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt, receipt_cap,
                      "Track 02 Continue media receipt incomplete; fallback visuals blocked");
+        }
+        return 0;
+    }
+    for (size_t i = 0u;
+         i < media_receipt->startup_bitmap_atlas.route_count;
+         ++i) {
+        const Theron_Track02StartupBitmapAtlasRoute *route =
+            &media_receipt->startup_bitmap_atlas.routes[i];
+        if (route->route_bit == THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE) {
+            stage = route;
+        } else if (route->route_bit ==
+                   THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) {
+            forcefield = route;
+        }
+    }
+    theron_v1_world_runtime_media_clear(world);
+    if (!stage || !forcefield ||
+        !theron_v1_world_runtime_media_set_surface(
+            world, THERON_RUNTIME_MEDIA_SURFACE_STAGE, stage->route_bit,
+            stage->width, stage->height, stage->tile_count,
+            stage->nonzero_pixel_count, stage->checksum, stage->pixels,
+            (size_t)stage->width * (size_t)stage->height) ||
+        !theron_v1_world_runtime_media_set_surface(
+            world, THERON_RUNTIME_MEDIA_SURFACE_FORCEFIELD,
+            forcefield->route_bit, forcefield->width, forcefield->height,
+            forcefield->tile_count, forcefield->nonzero_pixel_count,
+            forcefield->checksum, forcefield->pixels,
+            (size_t)forcefield->width * (size_t)forcefield->height)) {
+        theron_v1_world_runtime_media_clear(world);
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "Track 02 Continue media binding failed; fallback visuals blocked");
         }
         return 0;
     }
@@ -1129,7 +1165,7 @@ int theron_v1_startup_continue_apply_request(
             THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT,
             out_result);
         return theron_v1_startup_continue_attach_track02_media(
-            out_result, request->track02_media_receipt, receipt, receipt_cap);
+            world, out_result, request->track02_media_receipt, receipt, receipt_cap);
     }
     if (srm_available) {
         if (!theron_v1_startup_continue_srm_apply(
@@ -1147,7 +1183,7 @@ int theron_v1_startup_continue_apply_request(
             request->srm_import_status,
             out_result);
         return theron_v1_startup_continue_attach_track02_media(
-            out_result, request->track02_media_receipt, receipt, receipt_cap);
+            world, out_result, request->track02_media_receipt, receipt, receipt_cap);
     }
 
     if (receipt && receipt_cap > 0u) {
