@@ -278,7 +278,6 @@ int main(void)
     CSB_V1_StartupTickState_PC34 tick;
     CSB_V1_StartupTickResult_PC34 result;
     CSB_V1_StartupRenderState_PC34 render_state;
-    CSB_V1_StartupRenderPlanRequest_PC34 render_request;
     CSB_V1_StartupCommandStateRequest_PC34 command_request;
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupCommandState_PC34 command_state;
@@ -1312,82 +1311,6 @@ int main(void)
               render_state.runtime_start_dir == 3,
           "startup render state is derived from command state by CSB module");
 
-    memset(&render_request, 0, sizeof(render_request));
-    render_request.title_active = command_state.title_active;
-    render_request.title_frame = command_state.title_frame;
-    render_request.title_source_step = command_state.title_source_step;
-    render_request.entrance_active = command_state.entrance_active;
-    render_request.entrance_source_step = command_state.entrance_source_step;
-    render_request.entrance_dismissed = command_state.entrance_dismissed;
-    render_request.credits_active = command_state.credits_active;
-    render_request.credits_remaining_ticks =
-        command_state.credits_remaining_ticks;
-    render_request.opening_active = command_state.opening_active;
-    render_request.opening_delay_ticks = command_state.opening_delay_ticks;
-    render_request.opening_step = command_state.opening_step;
-    render_request.pending_command = command_state.pending_command;
-    render_request.entrance_frame = 37;
-    render_request.utility_overlay_active = 1;
-    render_request.runtime_start_valid = 1;
-    render_request.runtime_start_x = 12;
-    render_request.runtime_start_y = 22;
-    render_request.runtime_start_dir = 3;
-    check(csb_v1_startup_build_render_plan_from_request_pc34(
-              &render_request,
-              &plan) &&
-              plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
-              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
-              plan.title_source_step ==
-                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
-              plan.waiting_for_input == 0,
-          "startup render plan request owns M11 fact adapter");
-    memset(&plan, 0, sizeof(plan));
-    check(csb_v1_startup_build_render_plan_from_facts_pc34(
-              command_state.title_active,
-              command_state.title_frame,
-              command_state.title_source_step,
-              command_state.entrance_active,
-              command_state.entrance_source_step,
-              command_state.entrance_dismissed,
-              command_state.credits_active,
-              command_state.credits_remaining_ticks,
-              command_state.opening_active,
-              command_state.opening_delay_ticks,
-              command_state.opening_step,
-              command_state.pending_command,
-              37,
-              1,
-              1,
-              12,
-              22,
-              3,
-              &plan) &&
-              plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
-              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
-              plan.waiting_for_input == 0,
-          "startup render plan facts helper owns M11 field adapter");
-    memset(&plan, 0, sizeof(plan));
-    check(csb_v1_startup_build_render_plan_from_host_facts_pc34(
-              command_state.title_active,
-              command_state.title_frame,
-              command_state.title_source_step,
-              command_state.entrance_active,
-              command_state.entrance_source_step,
-              command_state.entrance_dismissed,
-              command_state.credits_active,
-              command_state.credits_remaining_ticks,
-              command_state.opening_active,
-              command_state.opening_delay_ticks,
-              command_state.opening_step,
-              command_state.pending_command,
-              37,
-              1,
-              NULL,
-              &plan) &&
-              plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
-              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
-              plan.waiting_for_input == 0,
-          "startup render host facts helper owns profile adapter fallback");
     memset(&host_facts, 0, sizeof(host_facts));
     host_facts.title_active = command_state.title_active;
     host_facts.title_frame = command_state.title_frame;
@@ -1407,12 +1330,17 @@ int main(void)
     host_facts.utility_selected_action_index = 0;
     host_facts.utility_imported_champion_count = 2;
     host_facts.utility_preview_active = 0;
-    check(csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
+    memset(&presentation_receipt, 0x7f, sizeof(presentation_receipt));
+    check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
               &host_facts,
-              &plan) &&
-              plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
-              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
-          "startup render host facts struct owns M11 field adapter");
+              &presentation_receipt) &&
+              presentation_receipt.valid &&
+              presentation_receipt.render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              presentation_receipt.render_plan.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              !presentation_receipt.render_plan.waiting_for_input,
+          "startup presentation receipt owns M11 title render facts");
     memset(&command_state, 0xff, sizeof(command_state));
     check(csb_v1_startup_init_command_state_pc34(&command_state, 1) &&
               !command_state.title_active &&
@@ -2501,17 +2429,21 @@ int main(void)
             menu_facts.opening_active = 0;
             menu_facts.utility_overlay_active = 0;
             menu_facts.boot_profile = NULL;
-            check(csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
+            memset(&presentation_receipt, 0x7f,
+                   sizeof(presentation_receipt));
+            check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
                       &menu_facts,
-                      &plan) &&
-                      plan.surface ==
+                      &presentation_receipt) &&
+                      presentation_receipt.valid &&
+                      presentation_receipt.render_plan.surface ==
                           CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
-                      plan.menu_option_count == 4 &&
-                      plan.menu_options[1].command_id ==
+                      presentation_receipt.render_plan.menu_option_count == 4 &&
+                      presentation_receipt.render_plan.menu_options[1].command_id ==
                           CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
-                      plan.menu_options[1].enabled &&
-                      strcmp(plan.menu_options[1].label, "RESUME") == 0,
-                  "startup render plan host facts enable resume menu option");
+                      presentation_receipt.render_plan.menu_options[1].enabled &&
+                      strcmp(presentation_receipt.render_plan.menu_options[1].label,
+                             "RESUME") == 0,
+                  "startup presentation receipt host facts enable resume menu option");
             memset(&presentation_receipt, 0x7f,
                    sizeof(presentation_receipt));
             check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
