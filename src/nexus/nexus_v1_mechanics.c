@@ -226,7 +226,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                                  forward, strafe, strafe_left,
                                  &t_x, &t_y);
 
-            int sq = nexus_get_square(engine->current_level.squares, t_x, t_y);
+            int sq = nexus_v1_level_get_square(&engine->current_level, t_x, t_y);
 
             /* Door blocking: check if door is locked and party has key.
              * Pass party leader's inventory for key check.
@@ -251,7 +251,9 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 }
             }
 
-            if (sq != 0) {
+            if (sq != 0 && nexus_v1_level_move_allowed(&engine->current_level,
+                                                       st->party_x, st->party_y,
+                                                       t_x, t_y)) {
                 st->party_x = t_x;
                 st->party_y = t_y;
                 st->move_cooldown_ticks = 6;
