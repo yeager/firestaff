@@ -823,15 +823,15 @@ int main(void) {
                   "DM1 vanilla PC34 save has no manifest game code");
             check(vanilla->manifestStatus == SAVE_BROWSER_MANIFEST_NOT_PRESENT,
                   "DM1 vanilla PC34 save reports manifest-not-present");
-            check(vanilla->valid == 1,
-                  "DM1 vanilla PC34 save remains load-browser valid");
+            check(vanilla->valid == 0,
+                  "DM1 vanilla PC34 header-only save is not load-browser valid");
             check(vanilla->mapLevel == 6,
-                  "DM1 vanilla PC34 save imports map level via native importer");
-            check(strstr(vanilla->label, "vanilla PC34 save") != NULL,
-                  "DM1 vanilla PC34 label names legacy interop path");
+                  "DM1 vanilla PC34 save exposes diagnostic map level");
+            check(strstr(vanilla->label, "PC34 header only") != NULL,
+                  "DM1 vanilla PC34 label names missing F7057 envelope");
             state.selectedIndex = (int)(vanilla - state.entries);
-            check(M12_SaveBrowser_HandleInput(&state, 5) == 1,
-                  "DM1 vanilla PC34 save can request load handoff");
+            check(M12_SaveBrowser_HandleInput(&state, 5) == 0,
+                  "DM1 vanilla PC34 header-only save cannot request load handoff");
         }
         if (csb) {
             check(csb->expectedGameCode == SAVEGAME_PC34_GAME_CODE_CSB,
