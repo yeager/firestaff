@@ -735,49 +735,6 @@ int csb_v1_startup_render_state_from_command_state_pc34(
     int runtime_start_y,
     int runtime_start_dir,
     CSB_V1_StartupRenderState_PC34 *out_state);
-int csb_v1_startup_build_render_plan_from_request_pc34(
-    const CSB_V1_StartupRenderPlanRequest_PC34 *request,
-    CSB_V1_StartupRenderPlan_PC34 *out_plan);
-int csb_v1_startup_build_render_plan_from_facts_pc34(
-    int title_active,
-    int title_frame,
-    int title_source_step,
-    int entrance_active,
-    int entrance_source_step,
-    int entrance_dismissed,
-    int credits_active,
-    int credits_remaining_ticks,
-    int opening_active,
-    int opening_delay_ticks,
-    int opening_step,
-    int pending_command,
-    int entrance_frame,
-    int utility_overlay_active,
-    int runtime_start_valid,
-    int runtime_start_x,
-    int runtime_start_y,
-    int runtime_start_dir,
-    CSB_V1_StartupRenderPlan_PC34 *out_plan);
-int csb_v1_startup_build_render_plan_from_host_facts_pc34(
-    int title_active,
-    int title_frame,
-    int title_source_step,
-    int entrance_active,
-    int entrance_source_step,
-    int entrance_dismissed,
-    int credits_active,
-    int credits_remaining_ticks,
-    int opening_active,
-    int opening_delay_ticks,
-    int opening_step,
-    int pending_command,
-    int entrance_frame,
-    int utility_overlay_active,
-    const void *boot_profile,
-    CSB_V1_StartupRenderPlan_PC34 *out_plan);
-int csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
-    const CSB_V1_StartupHostFacts_PC34 *facts,
-    CSB_V1_StartupRenderPlan_PC34 *out_plan);
 int csb_v1_startup_execute_primitive_commands_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     unsigned char *framebuffer,
