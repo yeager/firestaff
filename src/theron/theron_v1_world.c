@@ -488,6 +488,13 @@ Theron_TransitionType theron_v1_check_transition(Theron_V1_World *world,
 
 int theron_v1_transition_execute(Theron_V1_World *world) {
     if (!world || !world->transition_pending) return -1;
+    if (world->transition_type == THERON_TRANSITION_STAIRS &&
+        world->transition_target_level != world->current_level) {
+        /* T400/T600 bank changes must not reuse a decoded surface selected
+         * for the prior level.  A later semantic level loader must reselect
+         * through the same verified-media gate. */
+        theron_v1_world_runtime_media_invalidate_cache(world);
+    }
     world->transition_pending = 0;
     return 0;
 }
@@ -508,6 +515,20 @@ void theron_v1_world_tick(Theron_V1_World *world) {
 void theron_v1_world_runtime_media_clear(Theron_V1_World *world) {
     if (!world) return;
     memset(&world->runtime_media, 0, sizeof(world->runtime_media));
+    world->runtime_media.cache_generation = 1u;
+    world->runtime_media.cache_invalidated = 1;
+}
+
+void theron_v1_world_runtime_media_invalidate_cache(Theron_V1_World *world) {
+    if (!world) return;
+    ++world->runtime_media.cache_generation;
+    if (world->runtime_media.cache_generation == 0u) {
+        world->runtime_media.cache_generation = 1u;
+    }
+    memset(&world->runtime_media.selected_bank,
+           0,
+           sizeof(world->runtime_media.selected_bank));
+    world->runtime_media.cache_invalidated = 1;
 }
 
 int theron_v1_world_runtime_media_set_surface(
@@ -579,6 +600,54 @@ int theron_v1_world_runtime_media_set_identity(
         return 0;
     }
     world->runtime_media.identity = *identity;
+    return 1;
+}
+
+int theron_v1_world_runtime_media_select_level_bank(
+    Theron_V1_World *world,
+    Theron_RuntimeLevelBankKind kind,
+    Theron_DungeonID dungeon_id,
+    int level_index) {
+
+    Theron_RuntimeLevelBankSelection *selection;
+    int changed;
+
+    if (!world || !world->runtime_media.restored ||
+        !world->runtime_media.identity.ready ||
+        dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id > THERON_DUNGEON_COUNT || level_index < 0 ||
+        level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        (kind != THERON_RUNTIME_LEVEL_BANK_STAGE &&
+         kind != THERON_RUNTIME_LEVEL_BANK_FORCEFIELD)) {
+        return 0;
+    }
+    if ((kind == THERON_RUNTIME_LEVEL_BANK_STAGE &&
+         !world->runtime_media.stage.ready) ||
+        (kind == THERON_RUNTIME_LEVEL_BANK_FORCEFIELD &&
+         !world->runtime_media.forcefield.ready)) {
+        return 0;
+    }
+    selection = &world->runtime_media.selected_bank;
+    changed = !selection->ready || selection->kind != kind ||
+        selection->dungeon_id != (int)dungeon_id ||
+        selection->level_index != level_index ||
+        selection->bank_descriptor_offset !=
+            world->runtime_media.identity.bank_descriptor_offset ||
+        selection->media_checksum != world->runtime_media.identity.checksum;
+    if (changed) {
+        theron_v1_world_runtime_media_invalidate_cache(world);
+        selection = &world->runtime_media.selected_bank;
+    }
+    selection->ready = 1;
+    selection->real_media_gate = 1;
+    selection->kind = kind;
+    selection->dungeon_id = (int)dungeon_id;
+    selection->level_index = level_index;
+    selection->bank_descriptor_offset =
+        world->runtime_media.identity.bank_descriptor_offset;
+    selection->media_checksum = world->runtime_media.identity.checksum;
+    selection->cache_generation = world->runtime_media.cache_generation;
+    world->runtime_media.cache_invalidated = 0;
     return 1;
 }
 

@@ -1058,9 +1058,6 @@ static int theron_v1_startup_continue_attach_track02_media(
     char *receipt,
     size_t receipt_cap) {
 
-    const Theron_Track02StartupBitmapAtlasRoute *stage = NULL;
-    const Theron_Track02StartupBitmapAtlasRoute *forcefield = NULL;
-
     if (!world || !result || !media_receipt) {
         return 1;
     }
@@ -1072,49 +1069,28 @@ static int theron_v1_startup_continue_attach_track02_media(
         }
         return 0;
     }
-    for (size_t i = 0u;
-         i < media_receipt->startup_bitmap_atlas.route_count;
-         ++i) {
-        const Theron_Track02StartupBitmapAtlasRoute *route =
-            &media_receipt->startup_bitmap_atlas.routes[i];
-        if (route->route_bit == THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE) {
-            stage = route;
-        } else if (route->route_bit ==
-                   THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) {
-            forcefield = route;
-        }
-    }
-    theron_v1_world_runtime_media_clear(world);
-    if (!stage || !forcefield ||
-        !theron_v1_world_runtime_media_set_surface(
-            world, THERON_RUNTIME_MEDIA_SURFACE_STAGE, stage->route_bit,
-            stage->width, stage->height, stage->tile_count,
-            stage->nonzero_pixel_count, stage->checksum, stage->pixels,
-            (size_t)stage->width * (size_t)stage->height) ||
-        !theron_v1_world_runtime_media_set_surface(
-            world, THERON_RUNTIME_MEDIA_SURFACE_FORCEFIELD,
-            forcefield->route_bit, forcefield->width, forcefield->height,
-            forcefield->tile_count, forcefield->nonzero_pixel_count,
-            forcefield->checksum, forcefield->pixels,
-            (size_t)forcefield->width * (size_t)forcefield->height)) {
-        theron_v1_world_runtime_media_clear(world);
+    if (!theron_v1_startup_media_bind_runtime_receipt(world, media_receipt)) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt, receipt_cap,
                      "Track 02 Continue media binding failed; fallback visuals blocked");
         }
         return 0;
     }
-    if (!theron_v1_world_runtime_media_set_identity(
-            world, &media_receipt->runtime_media_identity)) {
+    if (!theron_v1_world_runtime_media_select_level_bank(
+            world,
+            THERON_RUNTIME_LEVEL_BANK_STAGE,
+            world->progression.current_dungeon,
+            (int)world->progression.current_level)) {
         theron_v1_world_runtime_media_clear(world);
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt, receipt_cap,
-                     "Track 02 Continue media identity missing; fallback visuals blocked");
+                     "Track 02 Continue level-bank gate failed; fallback visuals blocked");
         }
         return 0;
     }
     result->track02_media_route = 1;
     result->track02_media = *media_receipt;
+    result->track02_level_bank = world->runtime_media.selected_bank;
     if (receipt && receipt_cap > 0u) {
         size_t used = strlen(receipt);
         if (used < receipt_cap - 1u) {
@@ -1265,6 +1241,7 @@ int theron_v1_startup_continue_apply_receipt(
         result->track02_media.startup_bitmap_atlas_route_mask;
     out_receipt->track02_media_checksum =
         result->track02_media.startup_bitmap_atlas_checksum;
+    out_receipt->track02_level_bank = result->track02_level_bank;
     out_receipt->status_scope = plan->status_scope
         ? plan->status_scope
         : "STARTUP";
