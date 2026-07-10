@@ -1,13 +1,6 @@
 # Firestaff TODO - Open Work
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
-- 🔧 2026-07-09 Nexus full-start follow-up: full-start receipts now cover boot/title/warning/save/champion menus, Track 02 SFX, real startup graphics gates, packaged capture routes, title/warning timing fields, presentation export, M11 draw-command consumers, and M12 status/card package facts. Remaining work is replacing any last launcher display text that still reads generic manifest labels instead of Nexus package receipt fields.
-  - 2026-07-09 update: startup receipt bundles now package full-start state, M12 card facts, timing fields, capture route, first draw kind, and bounded draw-command consumption for title/save/champion consumers. Remaining work is wiring any final host callers to this bundle.
-  - 2026-07-09 update: Nexus startup now has a real-asset ownership receipt joining title/menu capture, BPK/PRS3 blockers, DGN runtime handoff, and no-fallback visual enforcement. Remaining work is wiring final host callers to consume this ownership receipt directly.
-  - 2026-07-09 update: Nexus host-caller receipts now package startup draw commands, DGN draw commands, BPK/PRS3 blockers, timing, capture route, and no-fallback suppression behind one Nexus-owned API. Remaining work is switching final M11 callers to this API.
-  - 2026-07-09 update: M11 Nexus startup input/render consumers now read host-caller receipts for startup capture, DGN handoff, Saturn timing proof, and no-fallback suppression. Remaining work is replacing any last launcher display text that still reads generic manifest labels instead of Nexus package receipt fields.
-
-
 - 🔧 2026-07-09 Theron boot/title follow-up: Track 02 media receipts now feed prompt and roster fallback rows in startup view-model builders. Remaining work is wiring any final UI callers to stop passing duplicate media arrays once they already hold the receipt.
   - 2026-07-10 update: Track02 startup bitmap atlas can now promote wider real 4bpp tile runs per title/stage/Soul Room/forcefield route. Remaining work is broader semantic dungeon-window coverage beyond the initial startup level.
   - 2026-07-09 update: render-route receipts now carry Track02 title/menu readiness, runtime/HUD readiness, title-menu-to-runtime handoff readiness, and explicit no-fallback-visuals policy. Remaining work is final UI/M11 render consumption and broader semantic Track02 level routes.

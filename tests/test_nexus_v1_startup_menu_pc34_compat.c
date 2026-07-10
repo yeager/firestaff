@@ -1303,6 +1303,10 @@ int main(void)
                    NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH &&
                real_asset_ownership_receipt.dgn_render_plan.plan_ready == 1 &&
                real_asset_ownership_receipt.runtime_dgn_handoff_ready == 1 &&
+               real_asset_ownership_receipt.runtime_dgn_viewport_render_ready == 1 &&
+               real_asset_ownership_receipt.dgn_viewport_rasterized_command_count ==
+                   real_asset_ownership_receipt.dgn_draw_command_count &&
+               real_asset_ownership_receipt.dgn_viewport_written_pixels > 0 &&
                real_asset_ownership_receipt.menu_capture_uses_real_assets == 1 &&
                real_asset_ownership_receipt.full_start_package_consumed == 1 &&
                real_asset_ownership_receipt.package_capture_consumed_by_host == 1 &&
@@ -1395,6 +1399,7 @@ int main(void)
                host_caller_receipt.receipt_owner_is_nexus == 1 &&
                host_caller_receipt.host_startup_capture_ready == 1 &&
                host_caller_receipt.host_runtime_dgn_ready == 1 &&
+               host_caller_receipt.host_runtime_dgn_viewport_render_ready == 1 &&
                host_caller_receipt.host_execute_startup_draws == 1 &&
                host_caller_receipt.host_execute_dgn_draws == 1 &&
                host_caller_receipt.bpk_handoff_consumed == 1 &&
@@ -1457,6 +1462,9 @@ int main(void)
                host_caller_receipt.copied_startup_command_count ==
                    host_caller_receipt.startup_command_count &&
                host_caller_receipt.dgn_command_count > 0 &&
+               host_caller_receipt.dgn_viewport_rasterized_command_count ==
+                   host_caller_receipt.dgn_command_count &&
+               host_caller_receipt.dgn_viewport_written_pixels > 0 &&
                host_caller_receipt.copied_dgn_command_count ==
                    host_caller_receipt.dgn_command_count &&
                host_caller_receipt.title_timing_ready == 1 &&
@@ -2271,6 +2279,12 @@ int main(void)
                runtime_route_receipt.dgn_render_plan_ready == 1 &&
                runtime_route_receipt.dgn_render_command_count > 0 &&
                runtime_route_receipt.dgn_render_floor_count > 0 &&
+               runtime_route_receipt.dgn_viewport_render_ready == 1 &&
+               runtime_route_receipt.dgn_viewport_rasterized_command_count ==
+                   runtime_route_receipt.dgn_render_command_count &&
+               runtime_route_receipt.dgn_viewport_material_surface_count ==
+                   runtime_route_receipt.dgn_render_command_count &&
+               runtime_route_receipt.dgn_viewport_written_pixels > 0 &&
                runtime_route_receipt.first_dgn_render_command_kind ==
                    NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
                runtime_route_receipt.dgn_blocks_real_mesh_render == 0 &&
