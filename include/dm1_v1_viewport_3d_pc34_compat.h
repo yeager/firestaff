@@ -176,6 +176,13 @@ typedef void (*DM1_ViewportPreSquareDrawCallback)(
     int relative_forward,
     int relative_side);
 
+typedef int (*DM1_ViewportGraphicProviderCallback)(
+    void *user_data,
+    int graphic_index,
+    const uint8_t **out_pixels,
+    int *out_width,
+    int *out_height);
+
 /* Wall set bitmap indices — from DUNVIEW.C G2107_WallSet[15] (I34E) */
 typedef enum {
     DM1_WALL_D0R = 0,
@@ -352,6 +359,9 @@ typedef struct {
     int16_t door_front_dst_y;
     int16_t door_front_width;
     int16_t door_front_height;
+    bool door_front_graphics_dat_bound;
+    int16_t door_front_graphics_dat_width;
+    int16_t door_front_graphics_dat_height;
     const char *rear_pass_source_lines;
     const char *door_source_lines;
     const char *front_pass_source_lines;
@@ -850,6 +860,11 @@ typedef struct {
      * CSBWin Viewport.cpp:6926-7045 without changing DM1 default behavior. */
     DM1_ViewportPreSquareDrawCallback pre_square_draw_callback;
     void *pre_square_draw_user_data;
+
+    /* Optional expanded GRAPHICS.DAT pixel provider.  The callback returns
+     * one byte per pixel, as M11_AssetLoader_Load does after IMG3 expansion. */
+    DM1_ViewportGraphicProviderCallback graphic_provider_callback;
+    void *graphic_provider_user_data;
 
     /* Last D3L2/D3R2 source-ordered F0115/door/field runtime decision.
      * Metadata only: this does not claim original pixel parity or install
