@@ -879,6 +879,12 @@ void nexus_v1_launcher_startup_real_asset_ownership_receipt_clear(
     receipt->status = "blocked-startup";
 }
 
+#define NEXUS_V1_HOST_ROUTE_STARTUP_BIT  1u
+#define NEXUS_V1_HOST_ROUTE_TITLE_BIT    2u
+#define NEXUS_V1_HOST_ROUTE_SAVE_BIT     4u
+#define NEXUS_V1_HOST_ROUTE_CHAMPION_BIT 8u
+#define NEXUS_V1_HOST_ROUTE_DUNGEON_BIT  16u
+
 void nexus_v1_launcher_startup_host_caller_receipt_clear(
     Nexus_V1_StartupHostCallerReceipt *receipt)
 {
@@ -899,6 +905,145 @@ void nexus_v1_launcher_startup_host_caller_receipt_clear(
     receipt->startup_package_route = "blocked-startup";
     receipt->status_scope = "STARTUP";
     receipt->status = "blocked-startup";
+}
+
+void nexus_v1_launcher_complete_support_receipt_clear(
+    Nexus_V1_CompleteSupportReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    nexus_v1_launcher_startup_host_caller_receipt_clear(
+        &receipt->title_host);
+    nexus_v1_launcher_startup_host_caller_receipt_clear(
+        &receipt->save_host);
+    nexus_v1_launcher_startup_host_caller_receipt_clear(
+        &receipt->champion_host);
+    receipt->expected_route_mask =
+        NEXUS_V1_HOST_ROUTE_STARTUP_BIT |
+        NEXUS_V1_HOST_ROUTE_TITLE_BIT |
+        NEXUS_V1_HOST_ROUTE_SAVE_BIT |
+        NEXUS_V1_HOST_ROUTE_CHAMPION_BIT |
+        NEXUS_V1_HOST_ROUTE_DUNGEON_BIT;
+    receipt->status_scope = "NEXUS";
+    receipt->status = "invalid";
+}
+
+int nexus_v1_launcher_complete_support_receipt_from_host_routes(
+    const Nexus_V1_StartupHostCallerReceipt *title_host,
+    const Nexus_V1_StartupHostCallerReceipt *save_host,
+    const Nexus_V1_StartupHostCallerReceipt *champion_host,
+    Nexus_V1_CompleteSupportReceipt *out_receipt)
+{
+    unsigned int complete_mask;
+
+    nexus_v1_launcher_complete_support_receipt_clear(out_receipt);
+    if (!out_receipt || !title_host || !save_host || !champion_host) {
+        return 0;
+    }
+
+    out_receipt->title_host = *title_host;
+    out_receipt->save_host = *save_host;
+    out_receipt->champion_host = *champion_host;
+    out_receipt->title_route_complete =
+        title_host->title_host_package_route_complete &&
+        title_host->title_route_saturn_capture_exact &&
+        title_host->host_all_route_timing_matrix_complete &&
+        title_host->single_saturn_startup_owner_ready;
+    out_receipt->save_route_complete =
+        save_host->save_host_package_route_complete &&
+        save_host->save_route_saturn_capture_exact &&
+        save_host->host_all_route_timing_matrix_complete &&
+        save_host->single_saturn_startup_owner_ready;
+    out_receipt->champion_route_complete =
+        champion_host->champion_host_package_route_complete &&
+        champion_host->champion_route_saturn_capture_exact &&
+        champion_host->host_all_route_timing_matrix_complete &&
+        champion_host->single_saturn_startup_owner_ready;
+    out_receipt->dungeon_route_complete =
+        champion_host->dungeon_host_package_route_complete &&
+        champion_host->dungeon_route_saturn_capture_exact &&
+        champion_host->dungeon_startup_route_consumption_complete &&
+        champion_host->host_execute_dgn_draws;
+    out_receipt->dgn_mesh_runtime_complete =
+        champion_host->host_runtime_dgn_ready &&
+        champion_host->dgn_handoff_consumed &&
+        champion_host->dgn_command_count > 0 &&
+        champion_host->copied_dgn_command_count ==
+            champion_host->dgn_command_count;
+    out_receipt->dgn_viewport_runtime_complete =
+        champion_host->host_runtime_dgn_viewport_render_ready &&
+        champion_host->dgn_viewport_rasterized_command_count ==
+            champion_host->dgn_command_count &&
+        champion_host->dgn_viewport_written_pixels > 0;
+    out_receipt->startup_package_consumed_by_all_routes =
+        title_host->startup_host_package_route_complete &&
+        save_host->startup_host_package_route_complete &&
+        champion_host->startup_host_package_route_complete &&
+        title_host->full_start_package_consumed &&
+        save_host->full_start_package_consumed &&
+        champion_host->full_start_package_consumed;
+    out_receipt->host_route_matrix_complete =
+        title_host->host_all_route_matrix_complete &&
+        save_host->host_all_route_matrix_complete &&
+        champion_host->host_all_route_matrix_complete;
+    out_receipt->saturn_timing_matrix_complete =
+        title_host->host_all_route_timing_matrix_complete &&
+        save_host->host_all_route_timing_matrix_complete &&
+        champion_host->host_all_route_timing_matrix_complete;
+    out_receipt->no_fallback_visuals_enforced =
+        title_host->no_fallback_visuals_enforced &&
+        save_host->no_fallback_visuals_enforced &&
+        champion_host->no_fallback_visuals_enforced &&
+        title_host->suppress_legacy_placeholder_visuals &&
+        save_host->suppress_legacy_placeholder_visuals &&
+        champion_host->suppress_legacy_placeholder_visuals;
+    out_receipt->fallback_visuals_permitted =
+        title_host->ownership.fallback_visuals_permitted ||
+        save_host->ownership.fallback_visuals_permitted ||
+        champion_host->ownership.fallback_visuals_permitted;
+
+    complete_mask = NEXUS_V1_HOST_ROUTE_STARTUP_BIT;
+    if (out_receipt->title_route_complete) {
+        complete_mask |= NEXUS_V1_HOST_ROUTE_TITLE_BIT;
+    }
+    if (out_receipt->save_route_complete) {
+        complete_mask |= NEXUS_V1_HOST_ROUTE_SAVE_BIT;
+    }
+    if (out_receipt->champion_route_complete) {
+        complete_mask |= NEXUS_V1_HOST_ROUTE_CHAMPION_BIT;
+    }
+    if (out_receipt->dungeon_route_complete &&
+        out_receipt->dgn_mesh_runtime_complete &&
+        out_receipt->dgn_viewport_runtime_complete) {
+        complete_mask |= NEXUS_V1_HOST_ROUTE_DUNGEON_BIT;
+    }
+    out_receipt->complete_route_mask = complete_mask;
+    out_receipt->all_nexus_startup_routes_complete =
+        out_receipt->startup_package_consumed_by_all_routes &&
+        out_receipt->title_route_complete &&
+        out_receipt->save_route_complete &&
+        out_receipt->champion_route_complete &&
+        out_receipt->host_route_matrix_complete &&
+        out_receipt->saturn_timing_matrix_complete;
+    out_receipt->all_nexus_runtime_routes_complete =
+        out_receipt->all_nexus_startup_routes_complete &&
+        out_receipt->dungeon_route_complete &&
+        out_receipt->dgn_mesh_runtime_complete &&
+        out_receipt->dgn_viewport_runtime_complete;
+    out_receipt->complete_support_ready =
+        out_receipt->all_nexus_runtime_routes_complete &&
+        out_receipt->complete_route_mask == out_receipt->expected_route_mask &&
+        out_receipt->no_fallback_visuals_enforced &&
+        !out_receipt->fallback_visuals_permitted;
+    out_receipt->status_scope = "NEXUS";
+    out_receipt->status = out_receipt->complete_support_ready
+        ? "complete-support-ready"
+        : out_receipt->dgn_viewport_runtime_complete
+        ? "incomplete-startup-route-matrix"
+        : "incomplete-dgn-runtime";
+    return 1;
 }
 
 static int nexus_v1_launcher_saturn_timing_exact(
@@ -1038,12 +1183,6 @@ static int nexus_v1_launcher_capture_mask_count(unsigned int mask)
     }
     return count;
 }
-
-#define NEXUS_V1_HOST_ROUTE_STARTUP_BIT  1u
-#define NEXUS_V1_HOST_ROUTE_TITLE_BIT    2u
-#define NEXUS_V1_HOST_ROUTE_SAVE_BIT     4u
-#define NEXUS_V1_HOST_ROUTE_CHAMPION_BIT 8u
-#define NEXUS_V1_HOST_ROUTE_DUNGEON_BIT  16u
 
 static int nexus_v1_launcher_startup_base_saturn_capture_exact(
     const Nexus_V1_StartupFullStartPackageReceipt *package)

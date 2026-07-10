@@ -128,6 +128,10 @@ int main(void)
     Nexus_V1_StartupReceiptBundle startup_bundle_receipt;
     Nexus_V1_StartupRealAssetOwnershipReceipt real_asset_ownership_receipt;
     Nexus_V1_StartupHostCallerReceipt host_caller_receipt;
+    Nexus_V1_StartupHostCallerReceipt title_host_caller_receipt;
+    Nexus_V1_StartupHostCallerReceipt save_host_caller_receipt;
+    Nexus_V1_StartupHostCallerReceipt champion_host_caller_receipt;
+    Nexus_V1_CompleteSupportReceipt complete_support_receipt;
     Nexus_V1_LauncherStartupAssetsReceipt startup_assets_receipt;
     Nexus_V1_StartupLaunchGateReceipt launch_gate_receipt;
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff_receipt;
@@ -1496,6 +1500,76 @@ int main(void)
                strcmp(host_caller_receipt.status,
                       "runtime-handoff-owned") == 0,
            "Nexus host-caller receipt owns startup capture and DGN draw commands without fallback");
+    champion_host_caller_receipt = host_caller_receipt;
+    runtime_state.champion_select_active = 0;
+    runtime_state.save_select_active = 0;
+    runtime_state.title_active = 1;
+    runtime_state.title_frame = nexus_v1_boot_warning_frames();
+    memset(draw_commands, 0, sizeof(draw_commands));
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               0,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &title_host_caller_receipt) &&
+               title_host_caller_receipt.title_host_package_route_complete == 1 &&
+               title_host_caller_receipt.host_all_route_complete_mask == 3u &&
+               title_host_caller_receipt.host_all_route_timing_matrix_complete == 1,
+           "Nexus complete-support receipt has title host route input");
+    runtime_state.title_active = 0;
+    runtime_state.save_select_active = 1;
+    runtime_state.save_selected_row = 0;
+    memset(draw_commands, 0, sizeof(draw_commands));
+    memset(dgn_commands, 0, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
+               &synthetic_runtime_receipt,
+               &runtime_state,
+               0,
+               NULL,
+               NULL,
+               draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &save_host_caller_receipt) &&
+               save_host_caller_receipt.save_host_package_route_complete == 1 &&
+               save_host_caller_receipt.host_all_route_complete_mask == 5u &&
+               save_host_caller_receipt.host_all_route_timing_matrix_complete == 1,
+           "Nexus complete-support receipt has save host route input");
+    expect(nexus_v1_launcher_complete_support_receipt_from_host_routes(
+               &title_host_caller_receipt,
+               &save_host_caller_receipt,
+               &champion_host_caller_receipt,
+               &complete_support_receipt) &&
+               complete_support_receipt.title_route_complete == 1 &&
+               complete_support_receipt.save_route_complete == 1 &&
+               complete_support_receipt.champion_route_complete == 1 &&
+               complete_support_receipt.dungeon_route_complete == 1 &&
+               complete_support_receipt.dgn_mesh_runtime_complete == 1 &&
+               complete_support_receipt.dgn_viewport_runtime_complete == 1 &&
+               complete_support_receipt.startup_package_consumed_by_all_routes == 1 &&
+               complete_support_receipt.host_route_matrix_complete == 1 &&
+               complete_support_receipt.saturn_timing_matrix_complete == 1 &&
+               complete_support_receipt.no_fallback_visuals_enforced == 1 &&
+               complete_support_receipt.fallback_visuals_permitted == 0 &&
+               complete_support_receipt.complete_route_mask == 31u &&
+               complete_support_receipt.expected_route_mask == 31u &&
+               complete_support_receipt.all_nexus_startup_routes_complete == 1 &&
+               complete_support_receipt.all_nexus_runtime_routes_complete == 1 &&
+               complete_support_receipt.complete_support_ready == 1 &&
+               strcmp(complete_support_receipt.status,
+                      "complete-support-ready") == 0,
+           "Nexus complete-support receipt requires title/save/champion/dungeon DGN routes");
+    runtime_state.save_select_active = 0;
+    runtime_state.champion_select_active = 1;
+    runtime_state.champion_cursor = 0;
+    runtime_state.champion_frame = 0;
     runtime_snapshot.runtime = runtime_state;
     memset(draw_commands, 0, sizeof(draw_commands));
     expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
