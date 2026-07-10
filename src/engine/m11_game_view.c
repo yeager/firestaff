@@ -11508,8 +11508,6 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     int host_window_present;
     int presented_width;
     int presented_height;
-    int presented_byte_count;
-    unsigned int presented_hash;
     int presented_capture_ready;
 
     memset(&facts, 0, sizeof(facts));
@@ -11521,8 +11519,6 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     host_window_present = 0;
     presented_width = 0;
     presented_height = 0;
-    presented_byte_count = 0;
-    presented_hash = 0U;
     presented_capture_ready = 0;
 
     if (state && state->assetsAvailable && state->assetLoader.fileState &&
@@ -11553,12 +11549,15 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     {
         const unsigned char* presented_rgba =
             M11_Render_GetPresentedRGBA(&presented_width, &presented_height);
-        presented_hash = dm1_v1_startup_hoc_presented_rgba_hash_pc34(
-            presented_rgba,
-            presented_width,
-            presented_height,
-            &presented_byte_count);
-        presented_capture_ready = presented_hash != 0U;
+        presented_capture_ready =
+            dm1_v1_startup_hoc_host_probe_facts_set_presented_rgba_pc34(
+                &facts,
+                presented_rgba,
+                presented_width,
+                presented_height,
+                DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+                DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
+                DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34);
     }
 
     facts.source_id = state ? state->sourceId : NULL;
@@ -11598,22 +11597,6 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     facts.observed_c346_mirror_backing_asset =
         backing && backing->loaded && backing->pixels ? 1 : 0;
     facts.observed_host_window_present = host_window_present;
-    facts.observed_presented_rgba_capture = presented_capture_ready;
-    facts.presented_capture_width = presented_width;
-    facts.presented_capture_height = presented_height;
-    facts.presented_capture_byte_count = presented_byte_count;
-    facts.presented_capture_hash = presented_hash;
-    facts.presented_capture_consumer_mask =
-        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
-    facts.presented_capture_chain_hash =
-        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
-            facts.presented_capture_width,
-            facts.presented_capture_height,
-            facts.presented_capture_byte_count,
-            facts.presented_capture_hash,
-            facts.presented_capture_consumer_mask);
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m11_boot_probe_consumer = 1;
     facts.consumed_m12_startup_capture_consumer = 1;
@@ -21320,8 +21303,6 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     int host_window_present;
     int presented_width;
     int presented_height;
-    int presented_byte_count;
-    unsigned int presented_hash;
     int presented_capture_ready;
 
     if (!renderReceipt || !mirrorReceipt || !outReceipt) {
@@ -21340,8 +21321,6 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     host_window_present = 0;
     presented_width = 0;
     presented_height = 0;
-    presented_byte_count = 0;
-    presented_hash = 0U;
     presented_capture_ready = 0;
     if (state && state->assetsAvailable && state->assetLoader.fileState &&
         mirrorReceipt->valid && mirrorReceipt->drawChampionPortrait) {
@@ -21358,17 +21337,6 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
 #else
     host_window_present = 0;
 #endif
-    {
-        const unsigned char* presented_rgba =
-            M11_Render_GetPresentedRGBA(&presented_width, &presented_height);
-        presented_hash = dm1_v1_startup_hoc_presented_rgba_hash_pc34(
-            presented_rgba,
-            presented_width,
-            presented_height,
-            &presented_byte_count);
-        presented_capture_ready = presented_hash != 0U;
-    }
-
     if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
         !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
             ENTRANCE_COMPAT_COMMAND_PATH_ENTER, &outcome) ||
@@ -21380,6 +21348,19 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     }
 
     memset(&captureFacts, 0, sizeof(captureFacts));
+    {
+        const unsigned char* presented_rgba =
+            M11_Render_GetPresentedRGBA(&presented_width, &presented_height);
+        presented_capture_ready =
+            dm1_v1_startup_hoc_capture_facts_set_presented_rgba_pc34(
+                &captureFacts,
+                presented_rgba,
+                presented_width,
+                presented_height,
+                DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+                DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
+                DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34);
+    }
     captureFacts.captured_after_first_frame_render = 1;
     captureFacts.captured_from_real_assets = hoc_assets_ready;
     captureFacts.captured_from_mac_window =
@@ -21394,22 +21375,6 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     captureFacts.observed_c346_mirror_backing_asset =
         backing && backing->loaded && backing->pixels;
     captureFacts.observed_host_window_present = host_window_present;
-    captureFacts.observed_presented_rgba_capture = presented_capture_ready;
-    captureFacts.presented_capture_width = presented_width;
-    captureFacts.presented_capture_height = presented_height;
-    captureFacts.presented_capture_byte_count = presented_byte_count;
-    captureFacts.presented_capture_hash = presented_hash;
-    captureFacts.presented_capture_consumer_mask =
-        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
-    captureFacts.presented_capture_chain_hash =
-        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
-            captureFacts.presented_capture_width,
-            captureFacts.presented_capture_height,
-            captureFacts.presented_capture_byte_count,
-            captureFacts.presented_capture_hash,
-            captureFacts.presented_capture_consumer_mask);
     captureFacts.captured_map_index = renderReceipt->map_index;
     captureFacts.captured_map_width =
         productionStart.packaged_proof.expected_map_width;
@@ -29845,22 +29810,15 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     captureFacts.observed_c026_portrait_asset = 1;
     captureFacts.observed_c346_mirror_backing_asset = 1;
     captureFacts.observed_host_window_present = 1;
-    captureFacts.observed_presented_rgba_capture = 1;
-    captureFacts.presented_capture_width = 320;
-    captureFacts.presented_capture_height = 200;
-    captureFacts.presented_capture_byte_count = 320 * 200 * 4;
-    captureFacts.presented_capture_hash = 0x4d314843u;
-    captureFacts.presented_capture_consumer_mask =
+    (void)dm1_v1_startup_hoc_capture_facts_set_presented_hash_pc34(
+        &captureFacts,
+        320,
+        200,
+        320 * 200 * 4,
+        0x4d314843u,
         DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
         DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
-    captureFacts.presented_capture_chain_hash =
-        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
-            captureFacts.presented_capture_width,
-            captureFacts.presented_capture_height,
-            captureFacts.presented_capture_byte_count,
-            captureFacts.presented_capture_hash,
-            captureFacts.presented_capture_consumer_mask);
+        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34);
     captureFacts.captured_map_index = artifact.expected_map_index;
     captureFacts.captured_map_width = artifact.expected_map_width;
     captureFacts.captured_map_height = artifact.expected_map_height;
@@ -29896,22 +29854,15 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     hostProbeFacts.observed_c026_portrait_asset = 1;
     hostProbeFacts.observed_c346_mirror_backing_asset = 1;
     hostProbeFacts.observed_host_window_present = 1;
-    hostProbeFacts.observed_presented_rgba_capture = 1;
-    hostProbeFacts.presented_capture_width = 320;
-    hostProbeFacts.presented_capture_height = 200;
-    hostProbeFacts.presented_capture_byte_count = 320 * 200 * 4;
-    hostProbeFacts.presented_capture_hash = 0x4d314843u;
-    hostProbeFacts.presented_capture_consumer_mask =
+    (void)dm1_v1_startup_hoc_host_probe_facts_set_presented_hash_pc34(
+        &hostProbeFacts,
+        320,
+        200,
+        320 * 200 * 4,
+        0x4d314843u,
         DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
         DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
-        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
-    hostProbeFacts.presented_capture_chain_hash =
-        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
-            hostProbeFacts.presented_capture_width,
-            hostProbeFacts.presented_capture_height,
-            hostProbeFacts.presented_capture_byte_count,
-            hostProbeFacts.presented_capture_hash,
-            hostProbeFacts.presented_capture_consumer_mask);
+        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34);
     hostProbeFacts.consumed_hoc_host_render_receipt = 1;
     hostProbeFacts.consumed_m11_boot_probe_consumer = 1;
     hostProbeFacts.consumed_m12_startup_capture_consumer = 1;

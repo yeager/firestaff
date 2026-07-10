@@ -97,6 +97,173 @@ unsigned int dm1_v1_startup_hoc_presented_rgba_hash_pc34(
     return hash;
 }
 
+static int dm1_v1_startup_hoc_presented_capture_fields_pc34(
+    const unsigned char* rgba,
+    int width,
+    int height,
+    unsigned int consumer_mask,
+    int* out_byte_count,
+    unsigned int* out_hash,
+    unsigned int* out_chain_hash) {
+    int byte_count = 0;
+    unsigned int hash;
+
+    if (out_byte_count) {
+        *out_byte_count = 0;
+    }
+    if (out_hash) {
+        *out_hash = 0U;
+    }
+    if (out_chain_hash) {
+        *out_chain_hash = 0U;
+    }
+    hash = dm1_v1_startup_hoc_presented_rgba_hash_pc34(
+        rgba, width, height, &byte_count);
+    if (hash == 0U || consumer_mask == 0U) {
+        return 0;
+    }
+    if (out_byte_count) {
+        *out_byte_count = byte_count;
+    }
+    if (out_hash) {
+        *out_hash = hash;
+    }
+    if (out_chain_hash) {
+        *out_chain_hash =
+            dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+                width, height, byte_count, hash, consumer_mask);
+    }
+    return 1;
+}
+
+int dm1_v1_startup_hoc_capture_facts_set_presented_rgba_pc34(
+    DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34* facts,
+    const unsigned char* rgba,
+    int width,
+    int height,
+    unsigned int consumer_mask) {
+    int byte_count = 0;
+    unsigned int hash = 0U;
+    unsigned int chain_hash = 0U;
+
+    if (!facts) {
+        return 0;
+    }
+    if (!dm1_v1_startup_hoc_presented_capture_fields_pc34(
+            rgba, width, height, consumer_mask,
+            &byte_count, &hash, &chain_hash)) {
+        facts->observed_presented_rgba_capture = 0;
+        facts->presented_capture_width = width;
+        facts->presented_capture_height = height;
+        facts->presented_capture_byte_count = 0;
+        facts->presented_capture_hash = 0U;
+        facts->presented_capture_consumer_mask = consumer_mask;
+        facts->presented_capture_chain_hash = 0U;
+        return 0;
+    }
+    facts->observed_presented_rgba_capture = 1;
+    facts->presented_capture_width = width;
+    facts->presented_capture_height = height;
+    facts->presented_capture_byte_count = byte_count;
+    facts->presented_capture_hash = hash;
+    facts->presented_capture_consumer_mask = consumer_mask;
+    facts->presented_capture_chain_hash = chain_hash;
+    return 1;
+}
+
+int dm1_v1_startup_hoc_capture_facts_set_presented_hash_pc34(
+    DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34* facts,
+    int width,
+    int height,
+    int byte_count,
+    unsigned int presented_hash,
+    unsigned int consumer_mask) {
+    if (!facts) {
+        return 0;
+    }
+    facts->observed_presented_rgba_capture =
+        width >= 320 && height >= 200 &&
+        byte_count >= width * height * 4 &&
+        presented_hash != 0U && consumer_mask != 0U;
+    facts->presented_capture_width = width;
+    facts->presented_capture_height = height;
+    facts->presented_capture_byte_count =
+        facts->observed_presented_rgba_capture ? byte_count : 0;
+    facts->presented_capture_hash =
+        facts->observed_presented_rgba_capture ? presented_hash : 0U;
+    facts->presented_capture_consumer_mask = consumer_mask;
+    facts->presented_capture_chain_hash =
+        facts->observed_presented_rgba_capture
+            ? dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+                  width, height, byte_count, presented_hash, consumer_mask)
+            : 0U;
+    return facts->observed_presented_rgba_capture;
+}
+
+int dm1_v1_startup_hoc_host_probe_facts_set_presented_rgba_pc34(
+    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    const unsigned char* rgba,
+    int width,
+    int height,
+    unsigned int consumer_mask) {
+    int byte_count = 0;
+    unsigned int hash = 0U;
+    unsigned int chain_hash = 0U;
+
+    if (!facts) {
+        return 0;
+    }
+    if (!dm1_v1_startup_hoc_presented_capture_fields_pc34(
+            rgba, width, height, consumer_mask,
+            &byte_count, &hash, &chain_hash)) {
+        facts->observed_presented_rgba_capture = 0;
+        facts->presented_capture_width = width;
+        facts->presented_capture_height = height;
+        facts->presented_capture_byte_count = 0;
+        facts->presented_capture_hash = 0U;
+        facts->presented_capture_consumer_mask = consumer_mask;
+        facts->presented_capture_chain_hash = 0U;
+        return 0;
+    }
+    facts->observed_presented_rgba_capture = 1;
+    facts->presented_capture_width = width;
+    facts->presented_capture_height = height;
+    facts->presented_capture_byte_count = byte_count;
+    facts->presented_capture_hash = hash;
+    facts->presented_capture_consumer_mask = consumer_mask;
+    facts->presented_capture_chain_hash = chain_hash;
+    return 1;
+}
+
+int dm1_v1_startup_hoc_host_probe_facts_set_presented_hash_pc34(
+    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    int width,
+    int height,
+    int byte_count,
+    unsigned int presented_hash,
+    unsigned int consumer_mask) {
+    if (!facts) {
+        return 0;
+    }
+    facts->observed_presented_rgba_capture =
+        width >= 320 && height >= 200 &&
+        byte_count >= width * height * 4 &&
+        presented_hash != 0U && consumer_mask != 0U;
+    facts->presented_capture_width = width;
+    facts->presented_capture_height = height;
+    facts->presented_capture_byte_count =
+        facts->observed_presented_rgba_capture ? byte_count : 0;
+    facts->presented_capture_hash =
+        facts->observed_presented_rgba_capture ? presented_hash : 0U;
+    facts->presented_capture_consumer_mask = consumer_mask;
+    facts->presented_capture_chain_hash =
+        facts->observed_presented_rgba_capture
+            ? dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+                  width, height, byte_count, presented_hash, consumer_mask)
+            : 0U;
+    return facts->observed_presented_rgba_capture;
+}
+
 static int dm1_v1_startup_hoc_host_draw_no_backing_fallback_pc34(
     const DM1_V1_ChampionMirrorRenderReceiptPc34* render,
     int backing_asset_available,
