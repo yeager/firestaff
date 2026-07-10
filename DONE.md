@@ -1,6 +1,6 @@
 # Firestaff DONE - Completed Work
 
-- ✅ 2026-07-10 DM2 creature animation-table GDAT receipt: creature atlas capture now verifies skproject-shaped creature action/animation table data from real GDAT category 0x0f, including `dtRaw8/0xfb` attribution plus `dtRaw7/0xfc` info sequence and `dtRaw7/0xfd` frame sequence, before complete DM2 support accepts the creature atlas route. Verification: `cmake --build build --target test_dm2_v1_boot_profile_smoke --parallel 2`, direct `./build/test_dm2_v1_boot_profile_smoke` PASS 77/77, and `git diff --check` passed.
+- ✅ 2026-07-10 DM1 M11 HoC presented-capture handoff cleanup: `main_loop_m11` now validates only the DM1 source and boot receipt before calling the DM1-owned presented-capture publish receipt; loose host-side capture/geometry/pixel gates no longer decide whether M12 receives HoC capture. Verification: `test_dm1_v1_startup_intro_state_machine_gate`, `firestaff_m11`, and `git diff --check` passed.
 
 - ✅ 2026-07-10 DM1 HoC presented-capture exact consumer gate: HoC presented-capture publish now requires exactly the named production consumers (host-render, M11 boot-probe, and M12 startup capture) before the release/app capture chain can go ready; extra or partial masks are rejected. Verification: `test_dm1_v1_startup_intro_state_machine_gate` and `git diff --check` passed.
 
