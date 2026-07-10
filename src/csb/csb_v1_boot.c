@@ -3807,7 +3807,8 @@ static int csb_v1_boot_startup_runtime_host_gate_snapshot_pc34(
     const CSB_V1_StartupRenderExecutor_PC34 *executor,
     const CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 *visual_sequence,
     CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 *out_hardening,
-    uint32_t *gate_hash)
+    uint32_t *gate_hash,
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 *out_ownership)
 {
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 ownership;
     if (!snapshot || !executor || !visual_sequence || !out_hardening ||
@@ -3834,7 +3835,46 @@ static int csb_v1_boot_startup_runtime_host_gate_snapshot_pc34(
     *gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
         *gate_hash,
         ownership.packaged_capture_hash);
+    if (out_ownership) {
+        *out_ownership = ownership;
+    }
     return 1;
+}
+
+static void csb_v1_boot_startup_runtime_host_gate_copy_ownership_pc34(
+    const CSB_V1_BootStartupHostOwnershipReceipt_PC34 *ownership,
+    int *ownership_valid,
+    int *draw_consumes_receipt_only,
+    int *input_consumes_receipt_only,
+    uint32_t *packaged_capture_hash)
+{
+    if (!ownership) {
+        return;
+    }
+    if (ownership_valid) {
+        *ownership_valid = ownership->valid &&
+                ownership->host_view_valid &&
+                ownership->host_draw_valid &&
+                ownership->capture_proof_valid &&
+                ownership->packaged_visual_capture_ready
+            ? 1
+            : 0;
+    }
+    if (draw_consumes_receipt_only) {
+        *draw_consumes_receipt_only =
+            ownership->draw_consumes_receipt_only ? 1 : 0;
+    }
+    if (input_consumes_receipt_only) {
+        *input_consumes_receipt_only =
+            ownership->input_consumes_receipt_only ||
+                    ownership->host_input_blocked ||
+                    ownership->host_input_dispatch_valid
+                ? 1
+                : 0;
+    }
+    if (packaged_capture_hash) {
+        *packaged_capture_hash = ownership->packaged_capture_hash;
+    }
 }
 
 int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
@@ -3843,6 +3883,10 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
     CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *out_receipt)
 {
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 title_ownership;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 closed_door_ownership;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 utility_ownership;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 door_opening_ownership;
     uint32_t gate_hash = 2166136261u;
 
     if (!out_receipt) {
@@ -3850,6 +3894,10 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
     }
     csb_v1_boot_startup_runtime_host_capture_gate_receipt_init_pc34(
         out_receipt);
+    csb_v1_boot_startup_host_ownership_receipt_init_pc34(&title_ownership);
+    csb_v1_boot_startup_host_ownership_receipt_init_pc34(&closed_door_ownership);
+    csb_v1_boot_startup_host_ownership_receipt_init_pc34(&utility_ownership);
+    csb_v1_boot_startup_host_ownership_receipt_init_pc34(&door_opening_ownership);
     if (!boot_profile || !executor) {
         return 0;
     }
@@ -3879,10 +3927,17 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
             executor,
             &out_receipt->runtime_visual.visual_sequence,
             &out_receipt->title_route_hardening,
-            &gate_hash) ||
+            &gate_hash,
+            &title_ownership) ||
         !out_receipt->title_route_hardening.title_route_covered) {
         return 0;
     }
+    csb_v1_boot_startup_runtime_host_gate_copy_ownership_pc34(
+        &title_ownership,
+        &out_receipt->title_host_ownership_valid,
+        &out_receipt->title_host_draw_consumes_receipt_only,
+        &out_receipt->title_host_input_consumes_receipt_only,
+        &out_receipt->title_packaged_capture_hash);
 
     csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
     snapshot.utility_overlay_active = 0;
@@ -3891,10 +3946,17 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
             executor,
             &out_receipt->runtime_visual.visual_sequence,
             &out_receipt->closed_door_route_hardening,
-            &gate_hash) ||
+            &gate_hash,
+            &closed_door_ownership) ||
         !out_receipt->closed_door_route_hardening.closed_door_hud_route_covered) {
         return 0;
     }
+    csb_v1_boot_startup_runtime_host_gate_copy_ownership_pc34(
+        &closed_door_ownership,
+        &out_receipt->closed_door_host_ownership_valid,
+        &out_receipt->closed_door_host_draw_consumes_receipt_only,
+        &out_receipt->closed_door_host_input_consumes_receipt_only,
+        &out_receipt->closed_door_packaged_capture_hash);
 
     csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
     snapshot.utility_overlay_active = 1;
@@ -3906,10 +3968,17 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
             executor,
             &out_receipt->runtime_visual.visual_sequence,
             &out_receipt->utility_route_hardening,
-            &gate_hash) ||
+            &gate_hash,
+            &utility_ownership) ||
         !out_receipt->utility_route_hardening.utility_hud_route_covered) {
         return 0;
     }
+    csb_v1_boot_startup_runtime_host_gate_copy_ownership_pc34(
+        &utility_ownership,
+        &out_receipt->utility_host_ownership_valid,
+        &out_receipt->utility_host_draw_consumes_receipt_only,
+        &out_receipt->utility_host_input_consumes_receipt_only,
+        &out_receipt->utility_packaged_capture_hash);
 
     csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
     snapshot.opening_active = 1;
@@ -3922,10 +3991,17 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
             executor,
             &out_receipt->runtime_visual.visual_sequence,
             &out_receipt->door_opening_route_hardening,
-            &gate_hash) ||
+            &gate_hash,
+            &door_opening_ownership) ||
         !out_receipt->door_opening_route_hardening.door_opening_route_covered) {
         return 0;
     }
+    csb_v1_boot_startup_runtime_host_gate_copy_ownership_pc34(
+        &door_opening_ownership,
+        &out_receipt->door_opening_host_ownership_valid,
+        &out_receipt->door_opening_host_draw_consumes_receipt_only,
+        &out_receipt->door_opening_host_input_consumes_receipt_only,
+        &out_receipt->door_opening_packaged_capture_hash);
 
     out_receipt->route_hardening_valid =
         out_receipt->title_route_hardening.valid &&
@@ -3974,7 +4050,11 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
                 out_receipt->title_route_hardening.host_draw_consumes_receipt_only &&
                 out_receipt->closed_door_route_hardening.host_draw_consumes_receipt_only &&
                 out_receipt->utility_route_hardening.host_draw_consumes_receipt_only &&
-                out_receipt->door_opening_route_hardening.host_draw_consumes_receipt_only
+                out_receipt->door_opening_route_hardening.host_draw_consumes_receipt_only &&
+                out_receipt->title_host_draw_consumes_receipt_only &&
+                out_receipt->closed_door_host_draw_consumes_receipt_only &&
+                out_receipt->utility_host_draw_consumes_receipt_only &&
+                out_receipt->door_opening_host_draw_consumes_receipt_only
             ? 1
             : 0;
     out_receipt->input_consumes_receipt_only =
@@ -3982,7 +4062,11 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
                 out_receipt->title_route_hardening.valid &&
                 out_receipt->closed_door_route_hardening.valid &&
                 out_receipt->utility_route_hardening.valid &&
-                out_receipt->door_opening_route_hardening.valid
+                out_receipt->door_opening_route_hardening.valid &&
+                out_receipt->title_host_input_consumes_receipt_only &&
+                out_receipt->closed_door_host_input_consumes_receipt_only &&
+                out_receipt->utility_host_input_consumes_receipt_only &&
+                out_receipt->door_opening_host_input_consumes_receipt_only
             ? 1
             : 0;
     out_receipt->no_fallback_callbacks =
@@ -4011,6 +4095,10 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
         out_receipt->runtime_visual_valid &&
                 out_receipt->visual_sequence_valid &&
                 out_receipt->route_hardening_valid &&
+                out_receipt->title_host_ownership_valid &&
+                out_receipt->closed_door_host_ownership_valid &&
+                out_receipt->utility_host_ownership_valid &&
+                out_receipt->door_opening_host_ownership_valid &&
                 out_receipt->all_runtime_routes_consumed &&
                 out_receipt->draw_consumes_receipt_only &&
                 out_receipt->input_consumes_receipt_only &&

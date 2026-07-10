@@ -2272,6 +2272,22 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               runtime_host_gate.utility_hud_runtime_captured &&
               runtime_host_gate.door_opening_runtime_captured &&
               runtime_host_gate.credits_runtime_captured &&
+              runtime_host_gate.title_host_ownership_valid &&
+              runtime_host_gate.closed_door_host_ownership_valid &&
+              runtime_host_gate.utility_host_ownership_valid &&
+              runtime_host_gate.door_opening_host_ownership_valid &&
+              runtime_host_gate.title_host_draw_consumes_receipt_only &&
+              runtime_host_gate.closed_door_host_draw_consumes_receipt_only &&
+              runtime_host_gate.utility_host_draw_consumes_receipt_only &&
+              runtime_host_gate.door_opening_host_draw_consumes_receipt_only &&
+              runtime_host_gate.title_host_input_consumes_receipt_only &&
+              runtime_host_gate.closed_door_host_input_consumes_receipt_only &&
+              runtime_host_gate.utility_host_input_consumes_receipt_only &&
+              runtime_host_gate.door_opening_host_input_consumes_receipt_only &&
+              runtime_host_gate.title_packaged_capture_hash != 0u &&
+              runtime_host_gate.closed_door_packaged_capture_hash != 0u &&
+              runtime_host_gate.utility_packaged_capture_hash != 0u &&
+              runtime_host_gate.door_opening_packaged_capture_hash != 0u &&
               runtime_host_gate.draw_consumes_receipt_only &&
               runtime_host_gate.input_consumes_receipt_only &&
               runtime_host_gate.no_fallback_callbacks &&
