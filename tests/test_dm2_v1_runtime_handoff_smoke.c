@@ -786,10 +786,19 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(dm2_v1_runtime_last_frame_ownership(&ownership) &&
               ownership.runtime_frame_owned &&
               ownership.gdat_provider_bound &&
+              ownership.floor_ceiling_gdat_blits == 2 &&
+              ownership.wall_gdat_blits == 10 &&
+              ownership.hud_core_gdat_blits == 9 &&
               ownership.hud_gdat_blits == 13 &&
               ownership.door_gdat_blits == 0 &&
-              ownership.creature_gdat_blits == 0,
-              "runtime frame ownership records actual core HUD and portrait GDAT consumption");
+              ownership.creature_gdat_blits == 0 &&
+              ownership.item_gdat_blits == 0 &&
+              ownership.projectile_gdat_blits == 0 &&
+              ownership.total_runtime_gdat_blits == 25 &&
+              ownership.total_runtime_fallback_draws == 0 &&
+              ownership.full_gdat_frame_valid == 1 &&
+              ownership.real_gdat_evidence_valid == 0,
+              "runtime frame ownership requires full GDAT HUD and dungeon consumption without fallback");
         CHECK(framebuffer[0] != 0,
               "runtime asset-provider frame completes the shared viewport render pass");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
