@@ -509,6 +509,8 @@ typedef struct CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 {
     int visual_sequence_valid;
     int real_asset_matched;
     int title_runtime_consumed;
+    int title_runtime_sample_count;
+    int title_runtime_all_stages_consumed;
     int closed_door_hud_runtime_consumed;
     int utility_hud_runtime_consumed;
     int door_opening_delay_runtime_consumed;
@@ -525,6 +527,7 @@ typedef struct CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 {
     int input_consumes_receipt_only;
     uint32_t sequence_capture_hash;
     uint32_t runtime_capture_hash;
+    uint32_t title_runtime_sample_hashes[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34];
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
     const char *source_evidence;
 } CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34;

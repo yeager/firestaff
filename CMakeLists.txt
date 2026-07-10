@@ -6076,6 +6076,9 @@ if(BUILD_TESTING)
         src/csb/csb_v1_startup_entrance_pointer_pc34_compat.c
         src/csb/csb_v1_startup_sequence_pc34_compat.c
         src/dm1/dm1_v1_startup_sequence_pc34_compat.c
+        src/dm1/dm1_v1_champion_mirror_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d1l_d1r_f0115_thing_pass_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
         src/dm1/dm1_v1_entrance_champion_select_pc34_compat.c
         src/frontend/entrance_frontend_pc34_compat.c
         src/frontend/swsh_frontend_pc34_compat.c
@@ -6085,6 +6088,8 @@ if(BUILD_TESTING)
     target_include_directories(test_csb_v1_startup_entrance_pointer_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_csb_v1_startup_entrance_pointer_pc34_compat
+        PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_startup_entrance_pointer_pc34_compat
             PRIVATE -Wall -Wextra -O2)
