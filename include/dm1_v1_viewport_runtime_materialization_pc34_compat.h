@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_PC34_COMPAT_H
 
+#include "memory_projectile_pc34_compat.h"
+
 /*
  * DM1 V1 visible viewport materialization receipt.
  *
@@ -27,6 +29,13 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationInputPc34 {
     int projectileCount;
     int projectileCell;
     int hasVisibleChampionMirrorPayload;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int partyDirection;
+    int suppressFluxcages;
+    const struct ProjectileList_Compat *liveProjectiles;
+    const struct ExplosionList_Compat *liveExplosions;
     DM1_V1_ViewportRuntimeOriginPc34 runtimeOrigin;
 } DM1_V1_ViewportRuntimeMaterializationInputPc34;
 
@@ -46,6 +55,17 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
     int suppressMirrorAsProjectile;
     int suppressMirrorAsSpellEffect;
     int noM11Fallback;
+    int liveProjectileCount;
+    int liveProjectileSlot;
+    int liveProjectileSubtype;
+    int liveProjectileCell;
+    int liveProjectileDirection;
+    int liveExplosionCount;
+    int liveExplosionSlot;
+    int liveExplosionType;
+    int liveExplosionFrame;
+    int liveExplosionMaxFrames;
+    int liveExplosionAttack;
     const char *sourceAnchor;
 } DM1_V1_ViewportRuntimeMaterializationDecisionPc34;
 
