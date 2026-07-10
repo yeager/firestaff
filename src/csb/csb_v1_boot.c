@@ -303,6 +303,108 @@ int csb_v1_boot_startup_render_plan_uses_real_assets_pc34(
     return seen > 0;
 }
 
+void csb_v1_boot_startup_runtime_asset_gate_receipt_init_pc34(
+    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *receipt)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+        csb_v1_runtime_startup_session_state_receipt_init_pc34(
+            &receipt->session_state);
+        csb_v1_startup_real_receipt_init(&receipt->real_asset_receipt);
+    }
+}
+
+static int csb_v1_boot_startup_asset_roles_owned_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_StartupAssetRole_PC34 *roles,
+    size_t role_count)
+{
+    size_t i;
+    if (!profile || !roles) {
+        return 0;
+    }
+    for (i = 0; i < role_count; ++i) {
+        const CSB_V1_StartupAssetBinding_PC34 *binding =
+            csb_v1_boot_startup_asset_binding_pc34(profile, roles[i]);
+        if (!binding || !binding->verified || !binding->rejects_generic_or_test_asset ||
+            binding->path[0] == '\0' ||
+            binding->source == CSB_V1_STARTUP_ASSET_SOURCE_NONE_PC34 ||
+            binding->source == CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_BootStartupLaunchReceipts_PC34 *launch_receipts,
+    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *out_receipt)
+{
+    static const CSB_V1_StartupAssetRole_PC34 title_roles[] = {
+        CSB_V1_STARTUP_ASSET_ROLE_TITLE_PRESENTS_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_TITLE_CHAOS_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_TITLE_STRIKES_BACK_PC34
+    };
+    static const CSB_V1_StartupAssetRole_PC34 entrance_roles[] = {
+        CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_LEFT_DOOR_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_RIGHT_DOOR_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_SCREEN_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_CREDITS_PC34
+    };
+    static const CSB_V1_StartupAssetRole_PC34 hud_roles[] = {
+        CSB_V1_STARTUP_ASSET_ROLE_HUD_INVENTORY_PC34,
+        CSB_V1_STARTUP_ASSET_ROLE_HUD_RESURRECT_PC34
+    };
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_boot_startup_runtime_asset_gate_receipt_init_pc34(out_receipt);
+    if (!profile || !launch_receipts || !profile->assets_verified ||
+        !profile->graphics_verified || !profile->dungeon_verified ||
+        !profile->startup_assets.real_graphics_available) {
+        return 0;
+    }
+    out_receipt->real_asset_matched =
+        csb_v1_startup_real_receipt_from_profile_fields(
+            profile->asset_root, profile->graphics_path, profile->dungeon_path,
+            profile->graphics_md5, profile->dungeon_md5, 0u, 0u,
+            profile->variant_id, profile->graphics_kind, 4,
+            profile->assets_verified, profile->graphics_verified,
+            profile->dungeon_verified, &out_receipt->real_asset_receipt);
+    out_receipt->title_assets_owned = csb_v1_boot_startup_asset_roles_owned_pc34(
+        profile, title_roles, sizeof(title_roles) / sizeof(title_roles[0]));
+    out_receipt->entrance_assets_owned = csb_v1_boot_startup_asset_roles_owned_pc34(
+        profile, entrance_roles, sizeof(entrance_roles) / sizeof(entrance_roles[0]));
+    out_receipt->hud_assets_owned = csb_v1_boot_startup_asset_roles_owned_pc34(
+        profile, hud_roles, sizeof(hud_roles) / sizeof(hud_roles[0]));
+    out_receipt->asset_ownership_valid =
+        out_receipt->title_assets_owned && out_receipt->entrance_assets_owned &&
+                out_receipt->hud_assets_owned ? 1 : 0;
+    out_receipt->session_state = launch_receipts->session_state;
+    out_receipt->session_state_valid =
+        (!out_receipt->session_state.entrance_resume_available ||
+         out_receipt->session_state.entrance_resume_path[0] != '\0') &&
+                (!out_receipt->session_state.import_available ||
+                 out_receipt->session_state.import_champion_count > 0) &&
+                out_receipt->session_state.import_selected_action_index >= 0
+            ? 1 : 0;
+    out_receipt->rejects_fallback_sources =
+        profile->startup_assets.reject_generic_or_test_assets ? 1 : 0;
+    out_receipt->real_asset_receipt_hash =
+        out_receipt->real_asset_receipt.receipt_hash;
+    out_receipt->source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 94-95; ENTRANCE.C F0438 lines 116-152; "
+        "CSBWin Viewport.cpp startup HUD/menu ownership";
+    out_receipt->valid = out_receipt->real_asset_matched &&
+                         out_receipt->real_asset_receipt.matched &&
+                         out_receipt->asset_ownership_valid &&
+                         out_receipt->session_state_valid &&
+                         out_receipt->rejects_fallback_sources ? 1 : 0;
+    return out_receipt->valid;
+}
+
 static void csb_v1_boot_startup_route_from_presentation_pc34(
     const CSB_V1_StartupPresentationReceipt_PC34 *presentation,
     const CSB_V1_StartupHostFacts_PC34 *facts,
@@ -1258,6 +1360,14 @@ int csb_v1_boot_startup_launch_detach_runtime_pc34(
     }
     memset(out_receipt, 0, sizeof(*out_receipt));
     if (!launch || !launch->profile) {
+        return 0;
+    }
+    csb_v1_boot_startup_assets_resolve_pc34(launch->profile);
+    out_receipt->startup_asset_gate_valid =
+        csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+            launch->profile, &launch->receipts,
+            &out_receipt->startup_asset_gate);
+    if (!out_receipt->startup_asset_gate_valid) {
         return 0;
     }
     out_receipt->profile = launch->profile;
@@ -4598,6 +4708,88 @@ int csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34(
     /* The host consumes this immutable CSB transaction rather than adapting
      * separate render-plan, utility, HUD and capture compatibility facts. */
     return 1;
+}
+
+static int csb_v1_boot_startup_plan_has_no_fallback_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    int i;
+    if (!plan || plan->fallback_status_visible || plan->fallback_frame_valid ||
+        plan->fallback_detail_visible || plan->fallback_runtime_detail_visible) {
+        return 0;
+    }
+    for (i = 0; i < plan->render_command_count &&
+                i < CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34; ++i) {
+        CSB_V1_StartupRenderCommandKind_PC34 kind = plan->render_commands[i].kind;
+        if (kind == CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34 ||
+            kind == CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34 ||
+            kind == CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int csb_v1_boot_startup_runtime_presentation_from_snapshot_pc34(
+    const CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *asset_gate,
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_BootStartupRuntimePresentationReceipt_PC34 *out_receipt)
+{
+    const CSB_V1_BootProfile *profile;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    csb_v1_boot_startup_runtime_asset_gate_receipt_init_pc34(
+        &out_receipt->asset_gate);
+    if (!asset_gate || !asset_gate->valid || !snapshot ||
+        !(profile = snapshot->boot_profile) ||
+        !csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34(
+            snapshot, &out_receipt->presentation)) {
+        return 0;
+    }
+    out_receipt->asset_gate = *asset_gate;
+    out_receipt->asset_gate_valid = 1;
+    if (snapshot->resume_available !=
+            asset_gate->session_state.entrance_resume_available ||
+        strcmp(snapshot->resume_path ? snapshot->resume_path : "",
+               asset_gate->session_state.entrance_resume_path) != 0) {
+        return 0;
+    }
+    if (snapshot->utility_overlay_active &&
+        (snapshot->utility_imported_champion_count !=
+             asset_gate->session_state.import_champion_count ||
+         snapshot->utility_selected_action_index !=
+             asset_gate->session_state.import_selected_action_index ||
+         snapshot->utility_preview_active !=
+             asset_gate->session_state.import_preview_active ||
+         strcmp(snapshot->utility_prompt ? snapshot->utility_prompt : "",
+                asset_gate->session_state.import_utility_prompt) != 0)) {
+        return 0;
+    }
+    out_receipt->render_plan_uses_owned_assets =
+        out_receipt->presentation.startup_render_plan_valid &&
+        csb_v1_boot_startup_render_plan_uses_real_assets_pc34(
+            profile, &out_receipt->presentation.startup_render_plan);
+    out_receipt->utility_plan_uses_owned_session =
+        !snapshot->utility_overlay_active ||
+        (out_receipt->presentation.utility_render_plan_valid &&
+         out_receipt->presentation.hud_menu_draw_valid &&
+         out_receipt->presentation.hud_menu_draw.kind ==
+             CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34);
+    out_receipt->door_plan_has_no_fallback =
+        out_receipt->render_plan_uses_owned_assets &&
+        csb_v1_boot_startup_plan_has_no_fallback_pc34(
+            &out_receipt->presentation.startup_render_plan);
+    out_receipt->valid = out_receipt->asset_gate_valid &&
+                         out_receipt->render_plan_uses_owned_assets &&
+                         out_receipt->utility_plan_uses_owned_session &&
+                         out_receipt->door_plan_has_no_fallback ? 1 : 0;
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0438/F0441 publish title,
+     * door animation, and entrance input as one live sequence.  CSBWin's
+     * viewport owns the utility panel in that same session. */
+    return out_receipt->valid;
 }
 
 static int csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(
