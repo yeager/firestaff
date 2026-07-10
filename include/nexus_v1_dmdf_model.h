@@ -154,6 +154,10 @@ typedef struct {
 typedef struct {
     Nexus_DMDFTextureSurface surfaces[NEXUS_DMDF_MATERIAL_COUNT];
     int surface_count;
+    int bpk_imported_surface_count;
+    int bpk_indexed_surface_count;
+    int bpk_truecolor_surface_count;
+    int bpk_prs3_surface_count;
     int valid;
 } Nexus_DMDFMaterialBank;
 
