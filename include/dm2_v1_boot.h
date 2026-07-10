@@ -243,6 +243,11 @@ typedef struct {
     int runtime_render_fallback_floor_ceiling_count;
     int runtime_render_asset_wall_count;
     int runtime_render_fallback_wall_count;
+    int runtime_render_asset_door_panel_count;
+    int runtime_render_asset_door_overlay_count;
+    int runtime_render_asset_door_frame_count;
+    int runtime_render_asset_door_button_count;
+    int runtime_render_fallback_door_count;
     int runtime_render_no_core_fallbacks;
 } DM2_V1_BootRuntimeRenderReceipt;
 
@@ -266,6 +271,11 @@ typedef struct {
     int total_fallback_floor_ceiling_count;
     int total_asset_wall_count;
     int total_fallback_wall_count;
+    int total_asset_door_panel_count;
+    int total_asset_door_overlay_count;
+    int total_asset_door_frame_count;
+    int total_asset_door_button_count;
+    int total_fallback_door_count;
     int min_asset_floor_ceiling_count;
     int min_asset_wall_count;
     int no_core_render_fallbacks;

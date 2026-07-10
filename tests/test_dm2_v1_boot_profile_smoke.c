@@ -450,6 +450,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_render_fallback_floor_ceiling_count == 0 &&
               render_receipt.runtime_render_asset_wall_count > 0 &&
               render_receipt.runtime_render_fallback_wall_count == 0 &&
+              render_receipt.runtime_render_fallback_door_count == 0 &&
               render_receipt.runtime_render_no_core_fallbacks == 1,
           "boot runtime render owns V2 callback, V1 fallback, and real GDAT frame/HUD receipt");
     memset(&hud_capture, 0, sizeof(hud_capture));
@@ -469,6 +470,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.min_asset_wall_count > 0 &&
               hud_capture.total_fallback_floor_ceiling_count == 0 &&
               hud_capture.total_fallback_wall_count == 0 &&
+              hud_capture.total_fallback_door_count == 0 &&
               hud_capture.no_core_render_fallbacks == 1 &&
               hud_capture.no_fallback_portraits == 1 &&
               hud_capture.first_runtime_hud_ready == 1 &&
