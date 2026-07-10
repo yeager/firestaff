@@ -904,6 +904,13 @@ typedef struct {
     int no_fallback_title_or_runtime_visuals;
     int raw_gdat_capture_complete;
     int decoded_gdat_capture_complete;
+    int save_corpus_scan_complete;
+    int save_corpus_valid_candidate_count;
+    int save_corpus_importable_candidate_count;
+    int save_corpus_rejected_candidate_count;
+    int save_corpus_original_candidate_count;
+    unsigned int save_corpus_valid_slot_mask;
+    uint32_t save_corpus_hash;
     int complete_support_ready;
     uint32_t complete_support_hash;
     const char *status_scope;
