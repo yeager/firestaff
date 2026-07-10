@@ -1156,17 +1156,23 @@ static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
         return 0;
     }
 
-    entry->valid = 1;
+    /*
+     * ReDMCSB SAVEHEAD.C F0429 only proves the obfuscated DM_SAVE_HEADER.
+     * CEDTINCD.C F7057 is the original load path for the five real save
+     * parts. Header-only PC34 files may be inspected here, but M12 must not
+     * present them as load-ready DM1 original saves.
+     */
+    entry->valid = 0;
     entry->mapLevel = sg.party ? sg.party->mapIndex : -1;
     entry->championCount = sg.party ? sg.party->championCount : 0;
     entry->champions[0] = '\0';
     if (entry->mapLevel >= 0) {
         snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
-                 "%s  L%d  (vanilla PC34 save)",
+                 "%s  L%d  (PC34 header only)",
                  entry->gameId, entry->mapLevel);
     } else {
         snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
-                 "%s (vanilla PC34 save)", entry->gameId);
+                 "%s (PC34 header only)", entry->gameId);
     }
     return 1;
 }
