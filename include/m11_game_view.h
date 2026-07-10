@@ -661,6 +661,9 @@ typedef struct {
         int startup_save_route_consumes_package_capture;
         int startup_champion_route_consumes_package_capture;
         int startup_dungeon_route_consumes_package_capture;
+        int startup_save_route_saturn_capture_exact;
+        int startup_champion_route_saturn_capture_exact;
+        int startup_dungeon_route_saturn_capture_exact;
         int startup_single_saturn_owner_ready;
         int startup_title_menu_capture_route_joined;
         int startup_runtime_dgn_route_joined;
