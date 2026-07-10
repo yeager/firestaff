@@ -177,6 +177,7 @@ typedef struct {
     uint32_t srm_party_gold;
     int track02_media_route;
     Theron_StartupMediaStateReceipt track02_media;
+    Theron_RuntimeLevelBankSelection track02_level_bank;
     int tick_count;
 } Theron_V1StartupContinueResult;
 
@@ -194,6 +195,7 @@ typedef struct {
     int track02_media_route;
     unsigned int track02_media_route_mask;
     uint32_t track02_media_checksum;
+    Theron_RuntimeLevelBankSelection track02_level_bank;
     const char *status_scope;
     const char *status;
     const char *inspect_scope;

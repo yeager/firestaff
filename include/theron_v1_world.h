@@ -85,6 +85,26 @@ typedef struct {
     uint32_t checksum;
 } Theron_RuntimeMediaIdentity;
 
+/* Selected runtime bank state.  This is a routing receipt, not a claim that
+ * Track 02 descriptor entries are a complete level-bank format.  A selection
+ * is valid only while it is paired with the currently verified media identity. */
+typedef enum {
+    THERON_RUNTIME_LEVEL_BANK_NONE = 0,
+    THERON_RUNTIME_LEVEL_BANK_STAGE,
+    THERON_RUNTIME_LEVEL_BANK_FORCEFIELD
+} Theron_RuntimeLevelBankKind;
+
+typedef struct {
+    int ready;
+    int real_media_gate;
+    Theron_RuntimeLevelBankKind kind;
+    int dungeon_id;
+    int level_index;
+    size_t bank_descriptor_offset;
+    uint32_t media_checksum;
+    uint32_t cache_generation;
+} Theron_RuntimeLevelBankSelection;
+
 typedef struct {
     int restored;
     unsigned int route_mask;
@@ -94,6 +114,9 @@ typedef struct {
     Theron_RuntimeMediaSurface stage;
     Theron_RuntimeMediaSurface forcefield;
     Theron_RuntimeMediaIdentity identity;
+    Theron_RuntimeLevelBankSelection selected_bank;
+    uint32_t cache_generation;
+    int cache_invalidated;
 } Theron_RuntimeLevelMedia;
 
 /* ── Square tile types ────────────────────────────────────────────── */
@@ -318,6 +341,7 @@ void theron_v1_world_tick(Theron_V1_World *world);
 
 /* ── Decoded Track 02 runtime media ───────────────────────────────── */
 void theron_v1_world_runtime_media_clear(Theron_V1_World *world);
+void theron_v1_world_runtime_media_invalidate_cache(Theron_V1_World *world);
 int theron_v1_world_runtime_media_set_surface(
     Theron_V1_World *world,
     Theron_RuntimeMediaSurfaceKind kind,
@@ -336,6 +360,11 @@ const Theron_RuntimeMediaSurface *theron_v1_world_runtime_media_for_level(
 int theron_v1_world_runtime_media_set_identity(
     Theron_V1_World *world,
     const Theron_RuntimeMediaIdentity *identity);
+int theron_v1_world_runtime_media_select_level_bank(
+    Theron_V1_World *world,
+    Theron_RuntimeLevelBankKind kind,
+    Theron_DungeonID dungeon_id,
+    int level_index);
 
 /* ── Deterministic world hash (FNV-1a 64-bit) ─────────────────────── */
 #define THERON_HASH_SEED_PARTY   0x50415254UL  /* 'PART' */

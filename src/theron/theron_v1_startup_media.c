@@ -480,3 +480,47 @@ int theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
            receipt->startup_bitmap_soul_room_atlas_width >= 16u &&
            receipt->startup_bitmap_forcefield_atlas_width >= 16u;
 }
+
+int theron_v1_startup_media_bind_runtime_receipt(
+    Theron_V1_World *world,
+    const Theron_StartupMediaStateReceipt *receipt) {
+
+    const Theron_Track02StartupBitmapAtlasRoute *stage = NULL;
+    const Theron_Track02StartupBitmapAtlasRoute *forcefield = NULL;
+    size_t i;
+
+    if (!world || !receipt ||
+        !theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            receipt)) {
+        return 0;
+    }
+    for (i = 0u; i < receipt->startup_bitmap_atlas.route_count; ++i) {
+        const Theron_Track02StartupBitmapAtlasRoute *route =
+            &receipt->startup_bitmap_atlas.routes[i];
+        if (route->route_bit == THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE) {
+            stage = route;
+        } else if (route->route_bit ==
+                   THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD) {
+            forcefield = route;
+        }
+    }
+    theron_v1_world_runtime_media_clear(world);
+    if (!stage || !forcefield ||
+        !theron_v1_world_runtime_media_set_surface(
+            world, THERON_RUNTIME_MEDIA_SURFACE_STAGE, stage->route_bit,
+            stage->width, stage->height, stage->tile_count,
+            stage->nonzero_pixel_count, stage->checksum, stage->pixels,
+            (size_t)stage->width * (size_t)stage->height) ||
+        !theron_v1_world_runtime_media_set_surface(
+            world, THERON_RUNTIME_MEDIA_SURFACE_FORCEFIELD,
+            forcefield->route_bit, forcefield->width, forcefield->height,
+            forcefield->tile_count, forcefield->nonzero_pixel_count,
+            forcefield->checksum, forcefield->pixels,
+            (size_t)forcefield->width * (size_t)forcefield->height) ||
+        !theron_v1_world_runtime_media_set_identity(
+            world, &receipt->runtime_media_identity)) {
+        theron_v1_world_runtime_media_clear(world);
+        return 0;
+    }
+    return 1;
+}

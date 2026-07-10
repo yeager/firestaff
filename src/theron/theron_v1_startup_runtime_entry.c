@@ -250,6 +250,18 @@ static int theron_v1_startup_runtime_has_verified_track02_request(
         THERON_TRACK02_VARIANT_UNKNOWN;
 }
 
+static int theron_v1_startup_runtime_bind_selected_media(
+    Theron_V1_World *world,
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    Theron_RuntimeLevelBankKind kind,
+    Theron_DungeonID dungeon_id,
+    int level_index) {
+
+    return theron_v1_startup_media_bind_runtime_receipt(world, media_receipt) &&
+        theron_v1_world_runtime_media_select_level_bank(
+            world, kind, dungeon_id, level_index);
+}
+
 int theron_v1_startup_runtime_load_initial_level(
     Theron_V1_World *world,
     const uint8_t *hucard_rom,
@@ -459,6 +471,7 @@ static void theron_v1_startup_runtime_entry_capture_result(
         out_result->runtime_level_source =
             THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM;
     }
+    out_result->track02_level_bank = world->runtime_media.selected_bank;
     out_result->party_x = world->party.leader_x;
     out_result->party_y = world->party.leader_y;
     out_result->party_dir = world->party.leader_dir;
@@ -563,6 +576,26 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     theron_v1_startup_media_capture_track02_state_receipt(
         request->hucard_rom, request->hucard_rom_size, request->md5_hex,
         &media_receipt);
+    if (verified_track02_request &&
+        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            &media_receipt) &&
+        !theron_v1_startup_runtime_bind_selected_media(
+            world,
+            &media_receipt,
+            THERON_RUNTIME_LEVEL_BANK_FORCEFIELD,
+            flow->selected_dungeon,
+            0)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "Track 02 forcefield media gate failed; runtime blocked");
+        }
+        if (out_result) {
+            out_result->result = THERON_STARTUP_ERR_LEVEL_LOAD;
+            out_result->fallback_visuals_blocked = 1;
+        }
+        return 0;
+    }
     result = theron_v1_startup_enter_runtime_from_forcefield(
         flow,
         world,
@@ -583,6 +616,21 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         theron_v1_startup_runtime_entry_capture_failure_route(receipt,
                                                               verified_track02_request,
                                                               out_result);
+        return 0;
+    }
+    if (verified_track02_request &&
+        !theron_v1_world_runtime_media_select_level_bank(
+            world,
+            THERON_RUNTIME_LEVEL_BANK_STAGE,
+            world->current_dungeon,
+            world->current_level)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "Track 02 stage media gate failed; runtime blocked");
+        }
+        theron_v1_startup_runtime_entry_capture_failure_route(
+            receipt, verified_track02_request, out_result);
         return 0;
     }
 
@@ -630,6 +678,7 @@ int theron_v1_startup_runtime_entry_apply_receipt(
         result->structured_runtime_route;
     out_receipt->runtime_receipt_text_route =
         result->runtime_receipt_text_route;
+    out_receipt->track02_level_bank = result->track02_level_bank;
     if (runtime_receipt && runtime_receipt[0]) {
         snprintf(out_receipt->inspect_detail,
                  sizeof(out_receipt->inspect_detail),
@@ -785,6 +834,28 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
             result,
             receipt,
             &apply_receipt);
+        if (out_apply_receipt) {
+            *out_apply_receipt = apply_receipt;
+        }
+        return 0;
+    }
+
+    if (verified_track02_request &&
+        !theron_v1_startup_runtime_bind_selected_media(
+            world,
+            &media_receipt,
+            THERON_RUNTIME_LEVEL_BANK_STAGE,
+            world->current_dungeon,
+            world->current_level)) {
+        result->result = THERON_STARTUP_ERR_LEVEL_LOAD;
+        result->fallback_visuals_blocked = 1;
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "Track 02 stage media gate failed; runtime blocked");
+        }
+        theron_v1_startup_runtime_entry_capture_failure_route(
+            receipt, verified_track02_request, result);
         if (out_apply_receipt) {
             *out_apply_receipt = apply_receipt;
         }

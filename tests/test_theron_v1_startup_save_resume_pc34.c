@@ -597,7 +597,15 @@ static void test_tqsv_only_resume_claim(void) {
                             0x70be06u &&
                         world.runtime_media.identity.audio_frame_ready &&
                         world.runtime_media.identity.audio_bank_id ==
-                            0x01725800u,
+                            0x01725800u &&
+                        continue_result.track02_level_bank.ready &&
+                        continue_result.track02_level_bank.real_media_gate &&
+                        continue_result.track02_level_bank.kind ==
+                            THERON_RUNTIME_LEVEL_BANK_STAGE &&
+                        continue_result.track02_level_bank.dungeon_id ==
+                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                        continue_result.track02_level_bank.cache_generation ==
+                            world.runtime_media.cache_generation,
                     "tqsv Continue restores Track 02 later-level and forcefield media with world");
         theron_v1_startup_continue_request_init(&continue_request);
         theron_v1_world_init(&world);
@@ -4483,6 +4491,56 @@ static void test_boot_runtime_release_facade(void) {
                 "boot runtime release facade is idempotent");
 }
 
+static void test_track02_level_bank_media_gate_and_cache(void) {
+    Theron_V1_World world;
+    Theron_StartupMediaStateReceipt media;
+    uint32_t stage_generation;
+
+    theron_v1_world_init(&world);
+    expect_true(!theron_v1_world_runtime_media_select_level_bank(
+                    &world,
+                    THERON_RUNTIME_LEVEL_BANK_STAGE,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    1),
+                "level-bank selection rejects missing real-media gate");
+
+    make_complete_track02_media_receipt(&media);
+    expect_true(theron_v1_startup_media_bind_runtime_receipt(&world, &media) &&
+                    world.runtime_media.cache_invalidated &&
+                    !world.runtime_media.selected_bank.ready,
+                "complete Track 02 receipt binds media and invalidates prior cache");
+    expect_true(theron_v1_world_runtime_media_select_level_bank(
+                    &world,
+                    THERON_RUNTIME_LEVEL_BANK_FORCEFIELD,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    1) &&
+                    world.runtime_media.selected_bank.ready &&
+                    world.runtime_media.selected_bank.real_media_gate &&
+                    world.runtime_media.selected_bank.kind ==
+                        THERON_RUNTIME_LEVEL_BANK_FORCEFIELD,
+                "forcefield bank selection carries verified Track 02 identity");
+    stage_generation = world.runtime_media.cache_generation;
+    expect_true(theron_v1_world_runtime_media_select_level_bank(
+                    &world,
+                    THERON_RUNTIME_LEVEL_BANK_STAGE,
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    1) &&
+                    world.runtime_media.selected_bank.kind ==
+                        THERON_RUNTIME_LEVEL_BANK_STAGE &&
+                    world.runtime_media.selected_bank.cache_generation >
+                        stage_generation &&
+                    !world.runtime_media.cache_invalidated,
+                "stage transition replaces forcefield bank with a fresh cache generation");
+    world.current_level = 1;
+    world.transition_pending = 1;
+    world.transition_type = THERON_TRANSITION_STAIRS;
+    world.transition_target_level = 2;
+    expect_true(theron_v1_transition_execute(&world) == 0 &&
+                    world.runtime_media.cache_invalidated &&
+                    !world.runtime_media.selected_bank.ready,
+                "level transition invalidates cache so later semantic levels require a media-gated bank selection");
+}
+
 int main(void) {
     printf("\n=== Theron V1 Startup Save/Resume Smoke Gate Unit Tests ===\n\n");
     test_clean_host_skip_safe_no_save_root();
@@ -4504,6 +4562,7 @@ int main(void) {
     test_runtime_entry_structured_track02_routes();
     test_boot_runtime_render_frame_facade();
     test_boot_runtime_release_facade();
+    test_track02_level_bank_media_gate_and_cache();
     test_startup_session_facts_wrappers();
     test_track02_startup_bitmap_decode_receipt();
     test_track02_startup_bitmap_decode_iso_receipt();

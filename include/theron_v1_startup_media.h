@@ -139,6 +139,13 @@ void theron_v1_startup_media_capture_track02_state_receipt(
 int theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
     const Theron_StartupMediaStateReceipt *receipt);
 
+/* Bind only a complete, hash-profiled Track 02 media receipt to a world.
+ * The operation clears the prior media cache before replacing it, so a stage
+ * or forcefield transition cannot retain surfaces from another Track 02. */
+int theron_v1_startup_media_bind_runtime_receipt(
+    Theron_V1_World *world,
+    const Theron_StartupMediaStateReceipt *receipt);
+
 #ifdef __cplusplus
 }
 #endif
