@@ -570,6 +570,54 @@ int DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
     return 1;
 }
 
+int DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
+    const DM1_V1_ChampionMirrorRuntimeRenderInputPc34 *input,
+    DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 *outDecision)
+{
+    DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 decision;
+
+    if (!input || !input->runtimeThingReceipt || !outDecision) {
+        return 0;
+    }
+    memset(&decision, 0, sizeof(decision));
+    if (!DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            input->sensorType, input->sensorData, input->ornamentOrdinal,
+            input->thingCell, input->visibleWallCell, &decision.frontWall) ||
+        !DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+            input->wallSquareVisible, &decision.frontWall, &decision.render) ||
+        !DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
+            &decision.render, &decision.thingBoundary) ||
+        !DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
+            &decision.thingBoundary, input->runtimeThingReceipt,
+            &decision.thingConsumer) ||
+        !DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+            &decision.render, input->candidatePanelActive,
+            input->backingAssetAvailable, &decision.hostDraw)) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNGEON.C:2608-2612 publishes C127 only for the visible
+     * wall face; DUNVIEW.C:3913-3928 consumes it before F0115's separate
+     * object/projectile pass.  Keep that ordering as one DM1-owned result. */
+    decision.valid = 1;
+    decision.consumedF0172Sensor = 1;
+    decision.consumedF0115ThingReceipt = decision.thingConsumer.valid;
+    decision.drawChampionPortraitAsWallOverlay =
+        decision.thingConsumer.drawChampionPortraitAsWallOverlay;
+    decision.drawFloorObject = decision.thingConsumer.drawFloorObject;
+    decision.drawRuntimeProjectile = decision.thingConsumer.drawRuntimeProjectile;
+    decision.suppressMaterializedItemPayload =
+        decision.thingConsumer.suppressMaterializedItemPayload;
+    decision.suppressMirrorAsFloorItem =
+        decision.thingConsumer.suppressMirrorAsFloorItem;
+    decision.suppressMirrorAsProjectile =
+        decision.thingConsumer.suppressMirrorAsProjectile;
+    decision.suppressMirrorAsSpellEffect =
+        decision.thingConsumer.suppressMirrorAsSpellEffect;
+    *outDecision = decision;
+    return 1;
+}
+
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
 {
     return "ReDMCSB COMMAND.C:484-488 G0455 maps C159..C162 champion-name "
