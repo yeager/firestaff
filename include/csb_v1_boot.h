@@ -891,6 +891,9 @@ typedef struct CSB_V1_StartupCompleteSupportReceipt_PC34 {
     int host_route_wrappers_retired;
     int no_loose_render_plan_exports;
     int real_startup_assets_bound;
+    int title_runtime_phase_mask;
+    int title_runtime_expected_phase_mask;
+    uint32_t title_runtime_phase_hash;
     uint32_t real_startup_asset_binding_hash;
     uint32_t session_generation;
     uint32_t runtime_host_gate_hash;
@@ -923,6 +926,9 @@ typedef struct CSB_V1_StartupReleaseAppCaptureReceipt_PC34 {
     int host_route_wrappers_retired;
     int no_loose_render_plan_exports;
     int real_startup_assets_bound;
+    int title_runtime_phase_mask;
+    int title_runtime_expected_phase_mask;
+    uint32_t title_runtime_phase_hash;
     uint32_t title_packaged_capture_hash;
     uint32_t closed_door_packaged_capture_hash;
     uint32_t utility_packaged_capture_hash;
