@@ -35,6 +35,12 @@ enum {
     DM1_V1_ENTRANCE_DOOR_OPEN_FRAME_INDEX_PC34 = 9
 };
 
+enum {
+    DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 = 0x1u,
+    DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 = 0x2u,
+    DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34 = 0x4u
+};
+
 typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
     int handled;
     int play_swsh;
@@ -331,6 +337,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 {
     int presented_capture_height;
     int presented_capture_byte_count;
     unsigned int presented_capture_hash;
+    unsigned int presented_capture_consumer_mask;
+    unsigned int presented_capture_chain_hash;
     int captured_map_index;
     int captured_map_width;
     int captured_map_height;
@@ -364,6 +372,9 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 {
     int presented_capture_pixels_present;
     int presented_capture_byte_count;
     unsigned int presented_capture_hash;
+    int presented_capture_chain_ready;
+    unsigned int presented_capture_consumer_mask;
+    unsigned int presented_capture_chain_hash;
     int redmcsb_c026_asset_present;
     int redmcsb_c346_asset_present;
     int geometry_matches;
@@ -512,6 +523,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 {
     int presented_capture_height;
     int presented_capture_byte_count;
     unsigned int presented_capture_hash;
+    unsigned int presented_capture_consumer_mask;
+    unsigned int presented_capture_chain_hash;
     int consumed_hoc_host_render_receipt;
     int consumed_m11_boot_probe_consumer;
     int consumed_m12_startup_capture_consumer;
@@ -554,6 +567,9 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     int presented_capture_pixels_present;
     int presented_capture_byte_count;
     unsigned int presented_capture_hash;
+    int presented_capture_chain_ready;
+    unsigned int presented_capture_consumer_mask;
+    unsigned int presented_capture_chain_hash;
     int draw_opened_entrance_frame;
     int render_hall_mirror_overlay;
     int suppress_host_fallback_visuals;
@@ -918,6 +934,12 @@ typedef struct DM1_V1_StartupSelectedBootProbeSourceKindReceipt_PC34 {
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage);
 int dm1_v1_startup_stage_after_pc34(DM1_V1_StartupStage_PC34 later,
                                     DM1_V1_StartupStage_PC34 earlier);
+unsigned int dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+    int width,
+    int height,
+    int byte_count,
+    unsigned int presented_hash,
+    unsigned int consumer_mask);
 int dm1_v1_startup_launch_path_bypasses_intro_pc34(
     DM1_V1_StartupLaunchPath_PC34 path);
 int dm1_v1_startup_source_visible_handoff_required_pc34(const char* game_id);

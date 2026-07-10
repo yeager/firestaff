@@ -6832,6 +6832,16 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     facts.presented_capture_height = 200;
     facts.presented_capture_byte_count = 320 * 200 * 4;
     facts.presented_capture_hash = 0x4d31324du;
+    facts.presented_capture_consumer_mask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+        DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
+    facts.presented_capture_chain_hash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            facts.presented_capture_width,
+            facts.presented_capture_height,
+            facts.presented_capture_byte_count,
+            facts.presented_capture_hash,
+            facts.presented_capture_consumer_mask);
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m12_startup_capture_consumer = 1;
 
@@ -6885,6 +6895,12 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         ownership.presented_capture_byte_count;
     receipt->dm1HoCPresentedCaptureHash =
         ownership.presented_capture_hash;
+    receipt->dm1HoCPresentedCaptureChainReady =
+        ownership.presented_capture_chain_ready;
+    receipt->dm1HoCPresentedCaptureConsumerMask =
+        ownership.presented_capture_consumer_mask;
+    receipt->dm1HoCPresentedCaptureChainHash =
+        ownership.presented_capture_chain_hash;
     receipt->dm1HoCOpenedEntranceFrameReady =
         ownership.draw_opened_entrance_frame;
     receipt->dm1HoCHallMirrorOverlayReady =
@@ -6914,6 +6930,7 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         receipt->dm1HoCPresentedCaptureReady &&
         receipt->dm1HoCPresentedCaptureGeometryReady &&
         receipt->dm1HoCPresentedCapturePixelsReady &&
+        receipt->dm1HoCPresentedCaptureChainReady &&
         receipt->dm1HoCOpenedEntranceFrameReady &&
         receipt->dm1HoCHallMirrorOverlayReady &&
         receipt->dm1HoCBlockedEnterUntilChampionReady &&

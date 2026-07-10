@@ -13,10 +13,6 @@
 #define DM1_V1_STARTUP_TITLE_FINAL_GUARD_VBLANKS_PC34 1u
 #define DM1_V1_STARTUP_TITLE_VBLANK_TICK_MS_PC34 55u
 
-#define DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 0x1u
-#define DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 0x2u
-#define DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34 0x4u
-
 static unsigned int dm1_v1_startup_hoc_capture_consumer_hash_pc34(
     unsigned int mask) {
     unsigned int hash = 2166136261u;
@@ -25,6 +21,27 @@ static unsigned int dm1_v1_startup_hoc_capture_consumer_hash_pc34(
     hash ^= (mask << 8);
     hash *= 16777619u;
     hash ^= 0xD1C0u;
+    return hash ? hash : 1u;
+}
+
+unsigned int dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+    int width,
+    int height,
+    int byte_count,
+    unsigned int presented_hash,
+    unsigned int consumer_mask) {
+    unsigned int hash = 2166136261u;
+    hash ^= (unsigned int)width;
+    hash *= 16777619u;
+    hash ^= (unsigned int)height;
+    hash *= 16777619u;
+    hash ^= (unsigned int)byte_count;
+    hash *= 16777619u;
+    hash ^= presented_hash;
+    hash *= 16777619u;
+    hash ^= consumer_mask;
+    hash *= 16777619u;
+    hash ^= 0xD14F0Cu;
     return hash ? hash : 1u;
 }
 
@@ -1575,6 +1592,19 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         facts->presented_capture_hash != 0U;
     receipt.presented_capture_byte_count = facts->presented_capture_byte_count;
     receipt.presented_capture_hash = facts->presented_capture_hash;
+    receipt.presented_capture_consumer_mask =
+        facts->presented_capture_consumer_mask;
+    receipt.presented_capture_chain_hash =
+        facts->presented_capture_chain_hash;
+    receipt.presented_capture_chain_ready =
+        receipt.presented_capture_pixels_present &&
+        receipt.presented_capture_chain_hash ==
+            dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+                facts->presented_capture_width,
+                facts->presented_capture_height,
+                facts->presented_capture_byte_count,
+                facts->presented_capture_hash,
+                facts->presented_capture_consumer_mask);
     receipt.capture_phase = artifact->capture_phase;
     receipt.source_evidence =
         "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
@@ -1609,6 +1639,7 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         receipt.presented_capture &&
         receipt.presented_capture_geometry_matches &&
         receipt.presented_capture_pixels_present &&
+        receipt.presented_capture_chain_ready &&
         receipt.release_app_capture;
     receipt.stale_title_absent =
         artifact->title_surface_forbidden && !facts->saw_title_surface;
@@ -1639,6 +1670,7 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         receipt.presented_capture &&
         receipt.presented_capture_geometry_matches &&
         receipt.presented_capture_pixels_present &&
+        receipt.presented_capture_chain_ready &&
         receipt.release_app_capture &&
         receipt.stale_title_absent &&
         receipt.stale_door_absent &&
@@ -1999,6 +2031,10 @@ int dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
         facts->presented_capture_byte_count;
     capture_facts.presented_capture_hash =
         facts->presented_capture_hash;
+    capture_facts.presented_capture_consumer_mask =
+        facts->presented_capture_consumer_mask;
+    capture_facts.presented_capture_chain_hash =
+        facts->presented_capture_chain_hash;
     capture_facts.captured_map_index = artifact.expected_map_index;
     capture_facts.captured_map_width = artifact.expected_map_width;
     capture_facts.captured_map_height = artifact.expected_map_height;
@@ -2162,6 +2198,22 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         facts->presented_capture_hash != 0U;
     receipt.presented_capture_byte_count = facts->presented_capture_byte_count;
     receipt.presented_capture_hash = facts->presented_capture_hash;
+    receipt.presented_capture_consumer_mask =
+        facts->presented_capture_consumer_mask;
+    if (!receipt.presented_capture_consumer_mask) {
+        receipt.presented_capture_consumer_mask = receipt.named_consumer_mask;
+    }
+    receipt.presented_capture_chain_hash = facts->presented_capture_chain_hash;
+    receipt.presented_capture_chain_ready =
+        receipt.presented_capture_pixels_present &&
+        receipt.presented_capture_consumer_mask == receipt.named_consumer_mask &&
+        receipt.presented_capture_chain_hash ==
+            dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+                receipt.presented_capture_width,
+                receipt.presented_capture_height,
+                receipt.presented_capture_byte_count,
+                receipt.presented_capture_hash,
+                receipt.presented_capture_consumer_mask);
     receipt.draw_opened_entrance_frame = consumer.draw_opened_entrance_frame;
     receipt.render_hall_mirror_overlay = consumer.render_hall_mirror_overlay;
     receipt.suppress_host_fallback_visuals =
@@ -2219,6 +2271,7 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         receipt.presented_capture &&
         receipt.presented_capture_geometry_matches &&
         receipt.presented_capture_pixels_present &&
+        receipt.presented_capture_chain_ready &&
         receipt.hoc_asset_capture &&
         receipt.required_asset_capture &&
         receipt.host_window_capture &&
