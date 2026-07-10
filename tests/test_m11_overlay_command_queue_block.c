@@ -652,6 +652,8 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
     int runtimeRouteHardeningHashReady = 0;
     int runtimeHostCaptureGateReady = 0;
     int runtimeHostCaptureGateHashReady = 0;
+    int titleStageRuntimeCaptureReady = 0;
+    int titleStageRuntimeCaptureHashReady = 0;
 
     ASSERT_EQ(M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
                   &titleReceiptReady,
@@ -677,7 +679,9 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
                   &runtimeRouteHardeningReady,
                   &runtimeRouteHardeningHashReady,
                   &runtimeHostCaptureGateReady,
-                  &runtimeHostCaptureGateHashReady),
+                  &runtimeHostCaptureGateHashReady,
+                  &titleStageRuntimeCaptureReady,
+                  &titleStageRuntimeCaptureHashReady),
               1,
               "M11 exposes CSB startup host-view draw receipt");
     ASSERT_EQ(titleReceiptReady, 1,
@@ -728,6 +732,10 @@ static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
               "M11 CSB startup requires full runtime host capture gate");
     ASSERT_EQ(runtimeHostCaptureGateHashReady, 1,
               "M11 CSB startup runtime host capture gate publishes hashes");
+    ASSERT_EQ(titleStageRuntimeCaptureReady, 1,
+              "M11 CSB startup consumes PRESENTS, CHAOS zoom, CHAOS hold and STRIKES BACK runtime captures");
+    ASSERT_EQ(titleStageRuntimeCaptureHashReady, 1,
+              "M11 CSB startup title stage captures match packaged source hashes");
 }
 
 static void test_candidate_panel_blocks_direct_object_helpers(void)

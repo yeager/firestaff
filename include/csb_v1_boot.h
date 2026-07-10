@@ -511,6 +511,10 @@ typedef struct CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 {
     int title_runtime_consumed;
     int title_runtime_sample_count;
     int title_runtime_all_stages_consumed;
+    int title_presents_runtime_consumed;
+    int title_chaos_zoom_runtime_consumed;
+    int title_chaos_hold_runtime_consumed;
+    int title_strikes_back_runtime_consumed;
     int closed_door_hud_runtime_consumed;
     int utility_hud_runtime_consumed;
     int door_opening_delay_runtime_consumed;
@@ -558,6 +562,10 @@ typedef struct CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 {
     int route_hardening_valid;
     int all_runtime_routes_consumed;
     int title_runtime_captured;
+    int title_presents_runtime_captured;
+    int title_chaos_zoom_runtime_captured;
+    int title_chaos_hold_runtime_captured;
+    int title_strikes_back_runtime_captured;
     int closed_door_hud_runtime_captured;
     int utility_hud_runtime_captured;
     int door_opening_runtime_captured;

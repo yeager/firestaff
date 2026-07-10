@@ -3528,6 +3528,15 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
             out_receipt->title_runtime_sample_hashes[title_i] =
                 ownership.host_view.capture_proof.packaged_capture_hash;
             ++out_receipt->title_runtime_sample_count;
+            if (title_i == 0) {
+                out_receipt->title_presents_runtime_consumed = 1;
+            } else if (title_i == 1) {
+                out_receipt->title_chaos_zoom_runtime_consumed = 1;
+            } else if (title_i == 2) {
+                out_receipt->title_chaos_hold_runtime_consumed = 1;
+            } else if (title_i == 3) {
+                out_receipt->title_strikes_back_runtime_consumed = 1;
+            }
             fallback_callbacks_stripped =
                 fallback_callbacks_stripped &&
                 ownership.host_draw.fallback_callbacks_stripped;
@@ -3535,7 +3544,11 @@ int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
     }
     out_receipt->title_runtime_all_stages_consumed =
         out_receipt->title_runtime_sample_count ==
-                CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34
+                CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
+                out_receipt->title_presents_runtime_consumed &&
+                out_receipt->title_chaos_zoom_runtime_consumed &&
+                out_receipt->title_chaos_hold_runtime_consumed &&
+                out_receipt->title_strikes_back_runtime_consumed
             ? 1
             : 0;
     out_receipt->title_runtime_consumed =
@@ -4015,6 +4028,14 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
                 out_receipt->runtime_visual.title_draw_consumed
             ? 1
             : 0;
+    out_receipt->title_presents_runtime_captured =
+        out_receipt->runtime_visual.title_presents_runtime_consumed;
+    out_receipt->title_chaos_zoom_runtime_captured =
+        out_receipt->runtime_visual.title_chaos_zoom_runtime_consumed;
+    out_receipt->title_chaos_hold_runtime_captured =
+        out_receipt->runtime_visual.title_chaos_hold_runtime_consumed;
+    out_receipt->title_strikes_back_runtime_captured =
+        out_receipt->runtime_visual.title_strikes_back_runtime_consumed;
     out_receipt->closed_door_hud_runtime_captured =
         out_receipt->runtime_visual.closed_door_hud_runtime_consumed &&
                 out_receipt->runtime_visual.closed_door_hud_draw_consumed
@@ -4039,6 +4060,10 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
             : 0;
     out_receipt->all_runtime_routes_consumed =
         out_receipt->title_runtime_captured &&
+                out_receipt->title_presents_runtime_captured &&
+                out_receipt->title_chaos_zoom_runtime_captured &&
+                out_receipt->title_chaos_hold_runtime_captured &&
+                out_receipt->title_strikes_back_runtime_captured &&
                 out_receipt->closed_door_hud_runtime_captured &&
                 out_receipt->utility_hud_runtime_captured &&
                 out_receipt->door_opening_runtime_captured &&
