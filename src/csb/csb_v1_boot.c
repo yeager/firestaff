@@ -4405,6 +4405,32 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
         out_receipt->runtime_visual.title_chaos_hold_runtime_consumed;
     out_receipt->title_strikes_back_runtime_captured =
         out_receipt->runtime_visual.title_strikes_back_runtime_consumed;
+    out_receipt->title_runtime_expected_phase_mask = 0x0f;
+    out_receipt->title_runtime_phase_mask =
+        (out_receipt->title_presents_runtime_captured ? 0x01 : 0) |
+        (out_receipt->title_chaos_zoom_runtime_captured ? 0x02 : 0) |
+        (out_receipt->title_chaos_hold_runtime_captured ? 0x04 : 0) |
+        (out_receipt->title_strikes_back_runtime_captured ? 0x08 : 0);
+    out_receipt->title_runtime_phase_route_complete =
+        out_receipt->title_runtime_captured &&
+                out_receipt->title_runtime_phase_mask ==
+                    out_receipt->title_runtime_expected_phase_mask &&
+                out_receipt->title_runtime_unique_sample_hash_count ==
+                    CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34
+            ? 1
+            : 0;
+    out_receipt->title_runtime_phase_hash =
+        csb_v1_boot_packaged_capture_hash_step_pc34(
+            csb_v1_boot_packaged_capture_hash_step_pc34(
+                csb_v1_boot_packaged_capture_hash_step_pc34(
+                    (uint32_t)out_receipt->title_runtime_phase_mask,
+                    (uint32_t)out_receipt->title_runtime_expected_phase_mask),
+                (uint32_t)out_receipt->title_runtime_unique_sample_hash_count),
+            (uint32_t)out_receipt->runtime_visual
+                .title_runtime_sample_count);
+    if (out_receipt->title_runtime_phase_hash == 0u) {
+        out_receipt->title_runtime_phase_hash = 1u;
+    }
     out_receipt->closed_door_hud_runtime_captured =
         out_receipt->runtime_visual.closed_door_hud_runtime_consumed &&
                 out_receipt->runtime_visual.closed_door_hud_draw_consumed
@@ -4428,11 +4454,7 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
             ? 1
             : 0;
     out_receipt->all_runtime_routes_consumed =
-        out_receipt->title_runtime_captured &&
-                out_receipt->title_presents_runtime_captured &&
-                out_receipt->title_chaos_zoom_runtime_captured &&
-                out_receipt->title_chaos_hold_runtime_captured &&
-                out_receipt->title_strikes_back_runtime_captured &&
+        out_receipt->title_runtime_phase_route_complete &&
                 out_receipt->closed_door_hud_runtime_captured &&
                 out_receipt->utility_hud_runtime_captured &&
                 out_receipt->door_opening_runtime_captured &&
@@ -4484,6 +4506,18 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
     gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
         gate_hash,
         out_receipt->route_hardening_hash);
+    gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        gate_hash,
+        (uint32_t)out_receipt->title_runtime_phase_mask);
+    gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        gate_hash,
+        (uint32_t)out_receipt->title_runtime_expected_phase_mask);
+    gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        gate_hash,
+        (uint32_t)out_receipt->title_runtime_phase_route_complete);
+    gate_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        gate_hash,
+        out_receipt->title_runtime_phase_hash);
     out_receipt->runtime_host_gate_hash = gate_hash ? gate_hash : 1u;
     out_receipt->valid =
         out_receipt->runtime_visual_valid &&
@@ -4502,11 +4536,10 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
             ? 1
             : 0;
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806/F0438 execute title,
-     * HUD/menu, credits, and door-opening as one startup host path. This
-     * gate proves the same runtime draw executor consumed the full visual
-     * sequence and that each M11-facing route is also covered by route
-     * hardening, so older loose render-plan wrappers cannot satisfy startup
-     * proof on their own. */
+     * HUD/menu, credits, and door-opening as one startup host path. CSBWin
+     * keeps PRESENTS, CHAOS zoom/hold, and STRIKES BACK as runtime-visible
+     * view states. This gate now requires every title phase bit plus the HUD
+     * routes before M11 can treat CSB startup as captured. */
     return out_receipt->valid;
 }
 

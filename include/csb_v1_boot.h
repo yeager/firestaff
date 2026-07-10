@@ -632,6 +632,10 @@ typedef struct CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 {
     int title_chaos_zoom_runtime_captured;
     int title_chaos_hold_runtime_captured;
     int title_strikes_back_runtime_captured;
+    int title_runtime_phase_mask;
+    int title_runtime_expected_phase_mask;
+    int title_runtime_phase_route_complete;
+    uint32_t title_runtime_phase_hash;
     int closed_door_hud_runtime_captured;
     int utility_hud_runtime_captured;
     int door_opening_runtime_captured;

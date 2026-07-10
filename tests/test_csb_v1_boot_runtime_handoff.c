@@ -2295,6 +2295,14 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               runtime_host_gate.title_runtime_captured &&
               runtime_host_gate.title_runtime_unique_sample_hash_count ==
                   CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
+              runtime_host_gate.title_presents_runtime_captured &&
+              runtime_host_gate.title_chaos_zoom_runtime_captured &&
+              runtime_host_gate.title_chaos_hold_runtime_captured &&
+              runtime_host_gate.title_strikes_back_runtime_captured &&
+              runtime_host_gate.title_runtime_phase_mask == 0x0f &&
+              runtime_host_gate.title_runtime_expected_phase_mask == 0x0f &&
+              runtime_host_gate.title_runtime_phase_route_complete &&
+              runtime_host_gate.title_runtime_phase_hash != 0u &&
               runtime_host_gate.closed_door_hud_runtime_captured &&
               runtime_host_gate.utility_hud_runtime_captured &&
               runtime_host_gate.door_opening_runtime_captured &&
