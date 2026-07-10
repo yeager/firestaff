@@ -1378,6 +1378,8 @@ static void test_hoc_front_mirror_receipt_uses_render_index(void)
     state.world.party.mapX = 0;
     state.world.party.mapY = 1;
     state.world.party.direction = 0;
+    state.mirrorCatalogAvailable = 1;
+    state.mirrorCatalog.count = 24;
 
     ASSERT_EQ(M11_GameView_ProbeViewportRenderMetadata(
                   &state, 1, 0, NULL, NULL, &elementType,
@@ -1390,6 +1392,8 @@ static void test_hoc_front_mirror_receipt_uses_render_index(void)
               "HoC front mirror receipt carries mirror frame ornament");
     ASSERT_EQ(portrait, 13,
               "HoC front mirror uses zero-based C026 render index");
+    ASSERT_EQ(M11_GameView_GetFrontMirrorOrdinal(&state), 13,
+              "front mirror selection consumes DM1 C127 render receipt");
     {
         int draw = 0;
         int graphic = 0;
@@ -1446,6 +1450,8 @@ static void test_hoc_front_mirror_receipt_uses_render_index(void)
               "HoC side mirror probe samples front wall");
     ASSERT_EQ(portrait, -1,
               "HoC side-cell C127 does not render a floating portrait");
+    ASSERT_EQ(M11_GameView_GetFrontMirrorOrdinal(&state), -1,
+              "side-cell C127 is rejected by DM1 render receipt before selection");
 }
 
 static void test_runtime_projectiles_use_f0115_c2900_raw_rows(void)

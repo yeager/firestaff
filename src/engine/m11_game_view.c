@@ -16708,6 +16708,9 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                                     int relForward,
                                     int relSide,
                                     M11_ViewportCell* outCell);
+static int m11_build_dm1_front_champion_portrait_receipt(
+    const M11_ViewportCell* cell,
+    DM1_V1_ChampionMirrorRenderReceiptPc34* outReceipt);
 static int m11_build_dm1_hoc_front_mirror_runtime_decision(
     const M11_GameViewState* state,
     const M11_ViewportCell* frontCell,
@@ -19140,21 +19143,24 @@ static int m11_inspect_front_cell(M11_GameViewState* state) {
 
 static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
     M11_ViewportCell frontCell;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 receipt;
 
     if (!state || !state->active || !state->mirrorCatalogAvailable ||
         !m11_get_front_cell(state, &frontCell) || !frontCell.valid) {
         return -1;
     }
 
-    if (frontCell.championPortraitOrdinal >= 0 &&
-        frontCell.championPortraitOrdinal < state->mirrorCatalog.count) {
-        /* ReDMCSB DUNGEON.C F0172 lines 2591-2612 computes the visible
-         * wall side and stores C127 sensorData in G0289 only for
-         * M552_FRONT_WALL_ORNAMENT_ORDINAL.  m11_sample_viewport_cell()
-         * already mirrors that source-aspect pass.  Do not re-scan the host
-         * thing chain here: that duplicate route can re-materialize HoC
-         * payloads after DM1 selected the wall/object/projectile layers. */
-        return frontCell.championPortraitOrdinal;
+    if (m11_build_dm1_front_champion_portrait_receipt(&frontCell, &receipt) &&
+        receipt.valid &&
+        receipt.drawChampionPortrait &&
+        receipt.renderIndex >= 0 &&
+        receipt.renderIndex < state->mirrorCatalog.count) {
+        /* ReDMCSB DUNGEON.C F0172 lines 2573/2608-2612 publishes C127
+         * portrait data only for the visible wall face, and DUNVIEW.C
+         * 3913-3928 consumes G0289 as the C026 atlas render index.  Use the
+         * same DM1-owned render receipt here as the HoC draw path; M11 must
+         * not select mirrors from a loose cached ordinal. */
+        return receipt.renderIndex;
     }
     return -1;
 }
