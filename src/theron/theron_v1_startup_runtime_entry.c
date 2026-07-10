@@ -581,6 +581,36 @@ static int theron_v1_startup_runtime_object_semantics_exact(
     return world->object_count == world->levels[(int)dungeon_id - 1][0].thing_count;
 }
 
+static uint32_t theron_v1_startup_runtime_object_route_hash(
+    const Theron_V1_World *world,
+    Theron_DungeonID dungeon_id) {
+
+    uint32_t hash = 2166136261u;
+    int i;
+
+    if (!world) {
+        return 0u;
+    }
+    hash ^= (uint32_t)dungeon_id;
+    hash *= 16777619u;
+    hash ^= (uint32_t)world->object_count;
+    hash *= 16777619u;
+    for (i = 0; i < world->object_count; ++i) {
+        const Theron_V1_Object *object = &world->objects[i];
+        hash ^= (uint32_t)object->id;
+        hash *= 16777619u;
+        hash ^= (uint32_t)object->type;
+        hash *= 16777619u;
+        hash ^= (uint32_t)((object->level & 0xff) << 16) ^
+                (uint32_t)((object->x & 0xff) << 8) ^
+                (uint32_t)(object->y & 0xff);
+        hash *= 16777619u;
+        hash ^= (uint32_t)object->flags;
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
 int theron_v1_startup_runtime_capture_all_dungeon_routes(
     const uint8_t *hucard_rom,
     size_t hucard_rom_size,
@@ -590,6 +620,7 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
 
     Theron_DungeonID dungeon_id;
     uint32_t hash = 2166136261u;
+    uint32_t object_hash = 2166136261u;
 
     if (!out_receipt) {
         return 0;
@@ -641,6 +672,10 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         }
         out_receipt->level_banks[(int)dungeon_id - 1] =
             world.runtime_media.level_bank;
+        out_receipt->object_counts[(int)dungeon_id - 1] = world.object_count;
+        ++out_receipt->object_capture_count;
+        out_receipt->object_capture_mask |= 1u << ((unsigned)dungeon_id - 1u);
+        out_receipt->object_count_total += world.object_count;
         out_receipt->dungeon_mask |= 1u << ((unsigned)dungeon_id - 1u);
         ++out_receipt->capture_count;
         ++out_receipt->semantic_level_count;
@@ -651,12 +686,17 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         hash ^= (uint32_t)world.levels[(int)dungeon_id - 1][0].start_x << 16;
         hash ^= (uint32_t)world.levels[(int)dungeon_id - 1][0].start_y;
         hash *= 16777619u;
+        object_hash ^= theron_v1_startup_runtime_object_route_hash(
+            &world, dungeon_id);
+        object_hash *= 16777619u;
     }
 
     out_receipt->exact_level_semantics_ready =
         out_receipt->semantic_level_count == THERON_DUNGEON_COUNT;
     out_receipt->exact_object_semantics_ready =
-        out_receipt->capture_count == THERON_DUNGEON_COUNT;
+        out_receipt->object_capture_count == THERON_DUNGEON_COUNT &&
+        out_receipt->object_capture_mask ==
+            ((1u << THERON_DUNGEON_COUNT) - 1u);
     out_receipt->real_data_capture_ready =
         out_receipt->capture_count == THERON_DUNGEON_COUNT &&
         out_receipt->dungeon_mask ==
@@ -664,6 +704,7 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         out_receipt->exact_level_semantics_ready &&
         out_receipt->exact_object_semantics_ready;
     out_receipt->route_hash = hash;
+    out_receipt->object_route_hash = object_hash;
     out_receipt->valid = out_receipt->real_data_capture_ready;
     return out_receipt->valid;
 }
