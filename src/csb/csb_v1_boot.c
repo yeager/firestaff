@@ -4587,10 +4587,17 @@ int csb_v1_boot_startup_runtime_presentation_from_snapshot_pc34(
         out_receipt->render_plan_uses_owned_assets &&
         csb_v1_boot_startup_plan_has_no_fallback_pc34(
             &out_receipt->presentation.startup_render_plan);
+    if (out_receipt->render_plan_uses_owned_assets &&
+        !csb_v1_boot_startup_runtime_surfaces_materialize_pc34(
+            profile, &out_receipt->presentation.startup_render_plan,
+            &out_receipt->surfaces)) {
+        return 0;
+    }
     out_receipt->valid = out_receipt->asset_gate_valid &&
                          out_receipt->render_plan_uses_owned_assets &&
                          out_receipt->utility_plan_uses_owned_session &&
-                         out_receipt->door_plan_has_no_fallback ? 1 : 0;
+                         out_receipt->door_plan_has_no_fallback &&
+                         out_receipt->surfaces.valid ? 1 : 0;
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0438/F0441 publish title,
      * door animation, and entrance input as one live sequence.  CSBWin's
      * viewport owns the utility panel in that same session. */

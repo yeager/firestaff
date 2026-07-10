@@ -601,6 +601,33 @@ static void test_runtime_asset_gate_binds_session_and_owned_artwork(void)
     csb_v1_boot_cleanup(&p);
 }
 
+static void test_runtime_surface_materializer_rejects_unopened_source(void)
+{
+    CSB_V1_BootProfile p;
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_StartupRuntimeSurfaceSet_PC34 surfaces;
+
+    prime_verified_profile(&p);
+    csb_v1_boot_startup_assets_resolve_pc34(&p);
+    memset(&plan, 0, sizeof(plan));
+    plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
+    plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
+    plan.asset_command_count = 1;
+    plan.asset_commands[0].kind = CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34;
+    plan.asset_commands[0].asset_id = 1;
+    plan.asset_commands[0].source_w = 320;
+    plan.asset_commands[0].source_h = 80;
+    plan.asset_commands[0].dest_w = 320;
+    plan.asset_commands[0].dest_h = 80;
+    plan.asset_commands[0].visible = 1;
+    CHECK(csb_v1_boot_startup_runtime_surfaces_materialize_pc34(
+              &p, &plan, &surfaces) == 0 && !surfaces.valid &&
+              surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].pixels == NULL,
+          "surface materializer never synthesizes title pixels when GRAPHICS.DAT is unavailable");
+    csb_v1_boot_startup_runtime_surface_set_release_pc34(&surfaces);
+    csb_v1_boot_cleanup(&p);
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_boot_source_evidence();
@@ -625,6 +652,7 @@ int main(void)
     test_diagnostic_report_surfaces_title_import_status();
     test_real_startup_asset_selection_rejects_generic_paths();
     test_runtime_asset_gate_binds_session_and_owned_artwork();
+    test_runtime_surface_materializer_rejects_unopened_source();
     test_source_evidence();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
