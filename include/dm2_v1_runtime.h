@@ -317,6 +317,14 @@ size_t dm2_v1_runtime_live_save_size(void);
 int dm2_v1_runtime_serialize_live_save(uint8_t *out, size_t out_size);
 int dm2_v1_runtime_restore_live_save(const uint8_t *data, size_t data_size);
 
+/* Restore a decoded SKSave payload into the active DM2 runtime. Original raw
+ * candidates must carry a dungeon prefix exactly matching the booted dungeon;
+ * malformed or incompatible inputs leave the live runtime untouched. */
+int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
+                                          size_t data_size);
+int dm2_v1_runtime_load_save_slot(const char *save_base, uint8_t slot);
+int dm2_v1_runtime_load_last_session(const char *save_base);
+
 typedef enum DM2_V1_QuicksaveResult {
     DM2_V1_QUICKSAVE_OK = 0,
     DM2_V1_QUICKSAVE_PROFILE_MISSING,
