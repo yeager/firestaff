@@ -326,6 +326,9 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 {
     int observed_required_graphics_hash_match;
     int observed_required_dungeon_hash_match;
     int observed_host_window_present;
+    int observed_presented_rgba_capture;
+    int presented_capture_width;
+    int presented_capture_height;
     int captured_map_index;
     int captured_map_width;
     int captured_map_height;
@@ -354,6 +357,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 {
     int hoc_asset_capture;
     int required_asset_capture;
     int host_window_capture;
+    int presented_capture;
+    int presented_capture_geometry_matches;
     int redmcsb_c026_asset_present;
     int redmcsb_c346_asset_present;
     int geometry_matches;
@@ -497,6 +502,9 @@ typedef struct DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 {
     int observed_required_graphics_hash_match;
     int observed_required_dungeon_hash_match;
     int observed_host_window_present;
+    int observed_presented_rgba_capture;
+    int presented_capture_width;
+    int presented_capture_height;
     int consumed_hoc_host_render_receipt;
     int consumed_m11_boot_probe_consumer;
     int consumed_m12_startup_capture_consumer;
@@ -532,6 +540,10 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     int hoc_asset_capture;
     int required_asset_capture;
     int host_window_capture;
+    int presented_capture;
+    int presented_capture_width;
+    int presented_capture_height;
+    int presented_capture_geometry_matches;
     int draw_opened_entrance_frame;
     int render_hall_mirror_overlay;
     int suppress_host_fallback_visuals;

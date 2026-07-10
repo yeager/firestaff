@@ -11414,6 +11414,9 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     const M11_AssetSlot* backing;
     int hoc_assets_ready;
     int host_window_present;
+    int presented_width;
+    int presented_height;
+    int presented_capture_ready;
 
     memset(&facts, 0, sizeof(facts));
     memset(&front_wall, 0, sizeof(front_wall));
@@ -11422,6 +11425,12 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     backing = NULL;
     hoc_assets_ready = 0;
     host_window_present = 0;
+    presented_width = 0;
+    presented_height = 0;
+    presented_capture_ready = 0;
+    presented_width = 0;
+    presented_height = 0;
+    presented_capture_ready = 0;
 
     if (state && state->assetsAvailable && state->assetLoader.fileState &&
         DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
@@ -11448,6 +11457,14 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
 #else
     host_window_present = 0;
 #endif
+    presented_capture_ready =
+        M11_Render_GetPresentedRGBA(&presented_width, &presented_height) != NULL &&
+        presented_width >= 320 &&
+        presented_height >= 200;
+    presented_capture_ready =
+        M11_Render_GetPresentedRGBA(&presented_width, &presented_height) != NULL &&
+        presented_width >= 320 &&
+        presented_height >= 200;
 
     facts.source_id = state ? state->sourceId : NULL;
     facts.dungeon_loaded =
@@ -11472,19 +11489,23 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
         facts.dungeon_loaded && facts.map_count > 0;
     facts.captured_from_mac_window =
 #ifdef __APPLE__
-        host_window_present;
+        host_window_present && presented_capture_ready;
 #else
         0;
 #endif
     facts.captured_from_release_app =
         state && state->startedFromLauncher &&
         !state->dm1StartupIntroBypassed &&
-        host_window_present;
+        host_window_present &&
+        presented_capture_ready;
     facts.observed_c026_portrait_asset =
         portraits && portraits->loaded && portraits->pixels ? 1 : 0;
     facts.observed_c346_mirror_backing_asset =
         backing && backing->loaded && backing->pixels ? 1 : 0;
     facts.observed_host_window_present = host_window_present;
+    facts.observed_presented_rgba_capture = presented_capture_ready;
+    facts.presented_capture_width = presented_width;
+    facts.presented_capture_height = presented_height;
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m11_boot_probe_consumer = 1;
     if (out_ownership) {
@@ -11802,6 +11823,14 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_consumer.hoc_asset_capture;
             out->dm1HoCHostWindowCapture =
                 hoc_consumer.host_window_capture;
+            out->dm1HoCPresentedCapture =
+                hoc_ownership.presented_capture;
+            out->dm1HoCPresentedCaptureWidth =
+                hoc_ownership.presented_capture_width;
+            out->dm1HoCPresentedCaptureHeight =
+                hoc_ownership.presented_capture_height;
+            out->dm1HoCPresentedCaptureGeometry =
+                hoc_ownership.presented_capture_geometry_matches;
             out->dm1HoCOpenedEntranceFrame =
                 hoc_consumer.draw_opened_entrance_frame;
             out->dm1HoCHallMirrorOverlay =
@@ -21092,6 +21121,9 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     const M11_AssetSlot* backing;
     int hoc_assets_ready;
     int host_window_present;
+    int presented_width;
+    int presented_height;
+    int presented_capture_ready;
 
     if (!renderReceipt || !mirrorReceipt || !outReceipt) {
         return 0;
@@ -21107,6 +21139,9 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     backing = NULL;
     hoc_assets_ready = 0;
     host_window_present = 0;
+    presented_width = 0;
+    presented_height = 0;
+    presented_capture_ready = 0;
     if (state && state->assetsAvailable && state->assetLoader.fileState &&
         mirrorReceipt->valid && mirrorReceipt->drawChampionPortrait) {
         portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
@@ -21122,6 +21157,10 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
 #else
     host_window_present = 0;
 #endif
+    presented_capture_ready =
+        M11_Render_GetPresentedRGBA(&presented_width, &presented_height) != NULL &&
+        presented_width >= 320 &&
+        presented_height >= 200;
 
     if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
         !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
@@ -21136,16 +21175,21 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     memset(&captureFacts, 0, sizeof(captureFacts));
     captureFacts.captured_after_first_frame_render = 1;
     captureFacts.captured_from_real_assets = hoc_assets_ready;
-    captureFacts.captured_from_mac_window = host_window_present;
+    captureFacts.captured_from_mac_window =
+        host_window_present && presented_capture_ready;
     captureFacts.captured_from_release_app =
         state && state->startedFromLauncher &&
         !state->dm1StartupIntroBypassed &&
-        host_window_present;
+        host_window_present &&
+        presented_capture_ready;
     captureFacts.observed_c026_portrait_asset =
         portraits && portraits->loaded && portraits->pixels;
     captureFacts.observed_c346_mirror_backing_asset =
         backing && backing->loaded && backing->pixels;
     captureFacts.observed_host_window_present = host_window_present;
+    captureFacts.observed_presented_rgba_capture = presented_capture_ready;
+    captureFacts.presented_capture_width = presented_width;
+    captureFacts.presented_capture_height = presented_height;
     captureFacts.captured_map_index = renderReceipt->map_index;
     captureFacts.captured_map_width =
         productionStart.packaged_proof.expected_map_width;
@@ -29570,6 +29614,9 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     captureFacts.observed_c026_portrait_asset = 1;
     captureFacts.observed_c346_mirror_backing_asset = 1;
     captureFacts.observed_host_window_present = 1;
+    captureFacts.observed_presented_rgba_capture = 1;
+    captureFacts.presented_capture_width = 320;
+    captureFacts.presented_capture_height = 200;
     captureFacts.captured_map_index = artifact.expected_map_index;
     captureFacts.captured_map_width = artifact.expected_map_width;
     captureFacts.captured_map_height = artifact.expected_map_height;
@@ -29605,6 +29652,9 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     hostProbeFacts.observed_c026_portrait_asset = 1;
     hostProbeFacts.observed_c346_mirror_backing_asset = 1;
     hostProbeFacts.observed_host_window_present = 1;
+    hostProbeFacts.observed_presented_rgba_capture = 1;
+    hostProbeFacts.presented_capture_width = 320;
+    hostProbeFacts.presented_capture_height = 200;
     hostProbeFacts.consumed_hoc_host_render_receipt = 1;
     hostProbeFacts.consumed_m11_boot_probe_consumer = 1;
 

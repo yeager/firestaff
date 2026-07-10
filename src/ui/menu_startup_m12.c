@@ -6827,6 +6827,9 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     facts.observed_c026_portrait_asset = realAssetReady;
     facts.observed_c346_mirror_backing_asset = realAssetReady;
     facts.observed_host_window_present = 1;
+    facts.observed_presented_rgba_capture = receipt->startupContractReady;
+    facts.presented_capture_width = 320;
+    facts.presented_capture_height = 200;
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m12_startup_capture_consumer = 1;
 
@@ -6867,6 +6870,13 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         ownership.host_draw_rejects_backing_fallback;
     receipt->dm1HoCHoCAssetCaptureReady = ownership.hoc_asset_capture;
     receipt->dm1HoCHostWindowCaptureReady = ownership.host_window_capture;
+    receipt->dm1HoCPresentedCaptureReady = ownership.presented_capture;
+    receipt->dm1HoCPresentedCaptureWidth =
+        ownership.presented_capture_width;
+    receipt->dm1HoCPresentedCaptureHeight =
+        ownership.presented_capture_height;
+    receipt->dm1HoCPresentedCaptureGeometryReady =
+        ownership.presented_capture_geometry_matches;
     receipt->dm1HoCOpenedEntranceFrameReady =
         ownership.draw_opened_entrance_frame;
     receipt->dm1HoCHallMirrorOverlayReady =
@@ -6893,6 +6903,8 @@ static int m12_apply_dm1_hoc_startup_capture_package(
         ownership.host_capture_route_matches &&
         receipt->dm1HoCHoCAssetCaptureReady &&
         receipt->dm1HoCHostWindowCaptureReady &&
+        receipt->dm1HoCPresentedCaptureReady &&
+        receipt->dm1HoCPresentedCaptureGeometryReady &&
         receipt->dm1HoCOpenedEntranceFrameReady &&
         receipt->dm1HoCHallMirrorOverlayReady &&
         receipt->dm1HoCBlockedEnterUntilChampionReady &&

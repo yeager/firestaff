@@ -220,6 +220,10 @@ typedef struct {
     int dm1HoCHostDrawRejectsBackingFallback;
     int dm1HoCHoCAssetCapture;
     int dm1HoCHostWindowCapture;
+    int dm1HoCPresentedCapture;
+    int dm1HoCPresentedCaptureWidth;
+    int dm1HoCPresentedCaptureHeight;
+    int dm1HoCPresentedCaptureGeometry;
     int dm1HoCOpenedEntranceFrame;
     int dm1HoCHallMirrorOverlay;
     int dm1HoCBlockedEnterUntilChampion;

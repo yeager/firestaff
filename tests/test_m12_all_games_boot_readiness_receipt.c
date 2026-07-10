@@ -134,6 +134,10 @@ int main(void) {
                         boot.dm1HoCHostDrawRejectsBackingFallbackReady == 1 &&
                         boot.dm1HoCHoCAssetCaptureReady == 1 &&
                         boot.dm1HoCHostWindowCaptureReady == 1 &&
+                        boot.dm1HoCPresentedCaptureReady == 1 &&
+                        boot.dm1HoCPresentedCaptureWidth == 320 &&
+                        boot.dm1HoCPresentedCaptureHeight == 200 &&
+                        boot.dm1HoCPresentedCaptureGeometryReady == 1 &&
                         boot.dm1HoCOpenedEntranceFrameReady == 1 &&
                         boot.dm1HoCHallMirrorOverlayReady == 1 &&
                         boot.dm1HoCBlockedEnterUntilChampionReady == 1 &&

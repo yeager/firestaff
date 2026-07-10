@@ -351,6 +351,10 @@ typedef struct {
     int dm1HoCHostDrawRejectsBackingFallbackReady;
     int dm1HoCHoCAssetCaptureReady;
     int dm1HoCHostWindowCaptureReady;
+    int dm1HoCPresentedCaptureReady;
+    int dm1HoCPresentedCaptureWidth;
+    int dm1HoCPresentedCaptureHeight;
+    int dm1HoCPresentedCaptureGeometryReady;
     int dm1HoCOpenedEntranceFrameReady;
     int dm1HoCHallMirrorOverlayReady;
     int dm1HoCBlockedEnterUntilChampionReady;
