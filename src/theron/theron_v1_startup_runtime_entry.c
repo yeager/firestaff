@@ -441,6 +441,43 @@ int theron_v1_startup_host_receipt_from_runtime_entry_apply(
              sizeof(out_receipt->inspect_detail),
              "%s",
              apply_receipt->inspect_detail);
+    out_receipt->track02_media_route = apply_receipt->track02_media_route;
+    out_receipt->track02_media_route_mask =
+        apply_receipt->track02_media_route_mask;
+    out_receipt->track02_media_checksum =
+        apply_receipt->track02_media_checksum;
+    out_receipt->track02_media_title_first_raw_offset =
+        apply_receipt->track02_media_title_first_raw_offset;
+    out_receipt->track02_media_title_last_raw_offset =
+        apply_receipt->track02_media_title_last_raw_offset;
+    out_receipt->track02_media_title_first_user_data_offset =
+        apply_receipt->track02_media_title_first_user_data_offset;
+    out_receipt->track02_media_title_last_user_data_offset =
+        apply_receipt->track02_media_title_last_user_data_offset;
+    out_receipt->track02_media_stage_first_raw_offset =
+        apply_receipt->track02_media_stage_first_raw_offset;
+    out_receipt->track02_media_stage_last_raw_offset =
+        apply_receipt->track02_media_stage_last_raw_offset;
+    out_receipt->track02_media_stage_first_user_data_offset =
+        apply_receipt->track02_media_stage_first_user_data_offset;
+    out_receipt->track02_media_stage_last_user_data_offset =
+        apply_receipt->track02_media_stage_last_user_data_offset;
+    out_receipt->track02_media_soul_room_first_raw_offset =
+        apply_receipt->track02_media_soul_room_first_raw_offset;
+    out_receipt->track02_media_soul_room_last_raw_offset =
+        apply_receipt->track02_media_soul_room_last_raw_offset;
+    out_receipt->track02_media_soul_room_first_user_data_offset =
+        apply_receipt->track02_media_soul_room_first_user_data_offset;
+    out_receipt->track02_media_soul_room_last_user_data_offset =
+        apply_receipt->track02_media_soul_room_last_user_data_offset;
+    out_receipt->track02_media_forcefield_first_raw_offset =
+        apply_receipt->track02_media_forcefield_first_raw_offset;
+    out_receipt->track02_media_forcefield_last_raw_offset =
+        apply_receipt->track02_media_forcefield_last_raw_offset;
+    out_receipt->track02_media_forcefield_first_user_data_offset =
+        apply_receipt->track02_media_forcefield_first_user_data_offset;
+    out_receipt->track02_media_forcefield_last_user_data_offset =
+        apply_receipt->track02_media_forcefield_last_user_data_offset;
     out_receipt->log_first_line = apply_receipt->log_first_line;
     out_receipt->log_receipt = apply_receipt->log_receipt ? 1 : 0;
     return 1;
