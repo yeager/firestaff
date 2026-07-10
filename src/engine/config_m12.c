@@ -13,7 +13,7 @@
 #endif
 
 enum {
-    M12_LAYOUT_MIGRATION_VERSION_CURRENT = 1,
+    M12_LAYOUT_MIGRATION_VERSION_CURRENT = 2,
     M12_CONFIG_SCALE_1X = 0,
     M12_CONFIG_SCALE_4X = 3,
     M12_CONFIG_SCALE_FIT = 4,
@@ -1078,6 +1078,20 @@ static int m12_apply_layout_migrations(M12_Config* config) {
             changed = 1;
         }
         config->layoutMigrationVersion = 1;
+        changed = 1;
+    }
+    /* Firestaff now presents every game through the common M11 framebuffer.
+     * Older installs can retain an explicit native 1x--4x value forever,
+     * which makes DM1/CSB/DM2/Theron/Nexus occupy only a small part of a
+     * modern or Retina window.  Upgrade those legacy display preferences to
+     * FIT once; users still retain aspect, filter, and fullscreen choices. */
+    if (config->layoutMigrationVersion < 2) {
+        if (config->scaleModeIndex >= M12_CONFIG_SCALE_1X &&
+            config->scaleModeIndex <= M12_CONFIG_SCALE_4X) {
+            config->scaleModeIndex = M12_CONFIG_SCALE_FIT;
+            changed = 1;
+        }
+        config->layoutMigrationVersion = 2;
         changed = 1;
     }
     if (config->layoutMigrationVersion < M12_LAYOUT_MIGRATION_VERSION_CURRENT) {

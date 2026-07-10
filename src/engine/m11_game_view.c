@@ -3487,14 +3487,16 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     executor.draw_closed_doors = m11_csb_startup_executor_draw_closed_doors;
     executor.draw_utility_panel =
         m11_csb_startup_executor_draw_utility_panel;
+    /* The ownership executor already rejects non-CSB commands.  Capture
+     * provenance is diagnostic evidence, not a reason to replace a valid
+     * TITLE/ENTRANCE frame with black during a normal interactive boot. */
     if (!csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
             &snapshot,
             0,
             0,
             &executor,
             &ownership) ||
-        !ownership.draw_consumes_receipt_only ||
-        !ownership.packaged_visual_capture_ready) {
+        !ownership.draw_consumes_receipt_only) {
         m11_fill_rect(framebuffer,
                       framebufferWidth,
                       framebufferHeight,
