@@ -4,6 +4,18 @@
 
 #include <string.h>
 
+static int dm1_v1_viewport_runtime_projectile_is_active_pc34(
+    const struct ProjectileInstance_Compat *projectile)
+{
+    return projectile && projectile->slotIndex >= 0 && projectile->reserved3 != 0;
+}
+
+static int dm1_v1_viewport_runtime_explosion_is_active_pc34(
+    const struct ExplosionInstance_Compat *explosion)
+{
+    return explosion && explosion->slotIndex >= 0 && explosion->reserved0 != 0;
+}
+
 const char *dm1_v1_viewport_runtime_materialization_source_evidence_pc34(void)
 {
     return "ReDMCSB DUNGEON.C F0172 lines 2466-2589 publishes each visible "
@@ -24,6 +36,7 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
     int itemY;
     int projectileX;
     int projectileY;
+    int projectileCell;
     int isD1c;
 
     if (!input || !outDecision) {
@@ -36,6 +49,15 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
         input->relativeForward, input->relativeSide);
     decision.itemZone = -1;
     decision.projectileZone = -1;
+    decision.liveProjectileSlot = -1;
+    decision.liveProjectileSubtype = -1;
+    decision.liveProjectileCell = -1;
+    decision.liveProjectileDirection = -1;
+    decision.liveExplosionSlot = -1;
+    decision.liveExplosionType = -1;
+    decision.liveExplosionFrame = -1;
+    decision.liveExplosionMaxFrames = 0;
+    decision.liveExplosionAttack = -1;
     decision.noM11Fallback = 1;
     decision.sourceAnchor = dm1_v1_viewport_runtime_materialization_source_evidence_pc34();
 
@@ -46,6 +68,54 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
         decision.viewSquare < 0 || decision.row < 0) {
         *outDecision = decision;
         return 1;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0219:644-764 and F0220:765 onward mutate the
+     * active effect records. F0115:5668-5683 / 5916-5933 consumes those
+     * live records at draw time, not an earlier square thing-chain snapshot. */
+    if (input->liveProjectiles) {
+        int i;
+        for (i = 0; i < input->liveProjectiles->count &&
+                    i < PROJECTILE_LIST_CAPACITY; ++i) {
+            const struct ProjectileInstance_Compat *projectile =
+                &input->liveProjectiles->entries[i];
+            if (!dm1_v1_viewport_runtime_projectile_is_active_pc34(projectile) ||
+                projectile->mapIndex != input->mapIndex ||
+                projectile->mapX != input->mapX || projectile->mapY != input->mapY) {
+                continue;
+            }
+            ++decision.liveProjectileCount;
+            if (decision.liveProjectileSlot < 0) {
+                decision.liveProjectileSlot = projectile->slotIndex;
+                decision.liveProjectileSubtype = projectile->projectileSubtype;
+                decision.liveProjectileCell = projectile->cell;
+                decision.liveProjectileDirection = projectile->direction;
+            }
+        }
+    }
+    if (input->liveExplosions) {
+        int i;
+        for (i = 0; i < input->liveExplosions->count &&
+                    i < EXPLOSION_LIST_CAPACITY; ++i) {
+            const struct ExplosionInstance_Compat *explosion =
+                &input->liveExplosions->entries[i];
+            if (!dm1_v1_viewport_runtime_explosion_is_active_pc34(explosion) ||
+                (input->suppressFluxcages &&
+                 explosion->explosionType == C050_EXPLOSION_FLUXCAGE) ||
+                explosion->mapIndex != input->mapIndex ||
+                explosion->mapX != input->mapX || explosion->mapY != input->mapY) {
+                continue;
+            }
+            ++decision.liveExplosionCount;
+            if (decision.liveExplosionSlot < 0) {
+                decision.liveExplosionSlot = explosion->slotIndex;
+                decision.liveExplosionType = explosion->explosionType;
+                decision.liveExplosionFrame = explosion->currentFrame;
+                decision.liveExplosionMaxFrames =
+                    explosion->maxFrames > 0 ? explosion->maxFrames : 1;
+                decision.liveExplosionAttack = explosion->attack;
+            }
+        }
     }
 
     decision.valid = 1;
@@ -61,12 +131,16 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
         decision.itemZone = 2500 + decision.row * 4 + 2;
         decision.drawFloorItems = 1;
     }
-    if (input->projectileCount > 0 &&
+    projectileCell = input->projectileCell;
+    if (decision.liveProjectileCount > 0) {
+        projectileCell = (decision.liveProjectileCell - input->partyDirection) & 3;
+    }
+    if ((input->projectileCount > 0 || decision.liveProjectileCount > 0) &&
         dm1_viewport_3d_c2900_projectile_raw_zone_point(
-            decision.row, input->projectileCell, &projectileX, &projectileY)) {
+            decision.row, projectileCell, &projectileX, &projectileY)) {
         (void)projectileX;
         (void)projectileY;
-        decision.projectileZone = 2900 + decision.row * 4 + input->projectileCell;
+        decision.projectileZone = 2900 + decision.row * 4 + projectileCell;
         decision.drawRuntimeProjectiles = 1;
     }
 

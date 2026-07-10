@@ -5555,53 +5555,6 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
         summary.items = receipt.items;
     }
 
-    /* V1 projectile-cycle visibility: projectile/explosion sprites are
-     * driven by the active runtime lists, not by static dungeon thing-list
-     * payloads.  ReDMCSB DUNGEON.C/DUNVIEW.C scans active projectiles for
-     * visible missiles; treating THING_TYPE_PROJECTILE/EXPLOSION entries in
-     * SquareFirstThings as visible viewport effects leaks compact Hall of
-     * Champions payloads as false fireballs/explosions.
-     *
-     * Runtime-only projectiles and
-     * explosions spawned via F0810 / F0821 (action-menu projectile
-     * rows) are not in the dungeon-thing linked list.  The viewport
-     * renderer and side-pane code gate their sprites on
-     * summary.projectiles / summary.explosions, so we fold the
-     * GameWorld runtime lists into the same totals here so the
-     * newly-spawned projectile is drawn at its current cell from
-     * the first tick, and keeps being drawn at the cell it has
-     * travelled to after each F0811 advance.  Matches DM1 where
-     * a thrown arrow / fireball appears on the square it is flying
-     * through for each visible frame of the cast animation.
-     *
-     * Ref: ReDMCSB DUNGEON.C viewport projectile scan walks the
-     * ACTIVE_PROJECTILE list per tick in exactly the same way. */
-    if (world) {
-        int i;
-        for (i = 0; i < world->projectiles.count
-                    && i < PROJECTILE_LIST_CAPACITY; ++i) {
-            const struct ProjectileInstance_Compat* p =
-                &world->projectiles.entries[i];
-            if (!m11_projectile_instance_active(p)) continue;
-            if (p->mapIndex == mapIndex && p->mapX == mapX
-                    && p->mapY == mapY) {
-                ++summary.projectiles;
-                ++summary.total;
-            }
-        }
-        for (i = 0; i < world->explosions.count
-                    && i < EXPLOSION_LIST_CAPACITY; ++i) {
-            const struct ExplosionInstance_Compat* e =
-                &world->explosions.entries[i];
-            if (!m11_explosion_instance_active(e)) continue;
-            if (e->mapIndex == mapIndex && e->mapX == mapX
-                    && e->mapY == mapY) {
-                ++summary.explosions;
-                ++summary.total;
-            }
-        }
-    }
-
     if (outSummary) {
         *outSummary = summary;
     }
@@ -16342,11 +16295,12 @@ static int m11_build_dm1_hoc_front_mirror_runtime_decision(
     DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* outDecision);
 
 static int m11_build_dm1_viewport_materialization_decision(
-    const M11_ViewportCell* cell,
+    const M11_GameViewState* state,
+    M11_ViewportCell* cell,
     DM1_V1_ViewportRuntimeMaterializationDecisionPc34* outDecision)
 {
     DM1_V1_ViewportRuntimeMaterializationInputPc34 input;
-    if (!cell || !outDecision) {
+    if (!state || !cell || !outDecision) {
         return 0;
     }
     memset(&input, 0, sizeof(input));
@@ -16356,14 +16310,51 @@ static int m11_build_dm1_viewport_materialization_decision(
     input.floorItemCount = cell->floorItemCount;
     input.projectileCount = cell->summary.projectiles;
     input.projectileCell = cell->firstProjectileCell;
+    input.mapIndex = state->world.party.mapIndex;
+    input.mapX = cell->mapX;
+    input.mapY = cell->mapY;
+    input.partyDirection = state->world.party.direction;
+    input.suppressFluxcages = state->endgameDoNotDrawFluxcages;
+    input.liveProjectiles = &state->world.projectiles;
+    input.liveExplosions = &state->world.explosions;
     input.hasVisibleChampionMirrorPayload =
         cell->relForward == 1 && cell->relSide == 0 &&
         cell->championPortraitOrdinal >= 0;
     /* ReDMCSB rebuilds F0172/F0115 view state after every entrance or save
      * handoff. The receipt is deliberately independent of that provenance. */
     input.runtimeOrigin = DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
-    return dm1_v1_viewport_runtime_materialization_decide_pc34(&input,
-                                                                 outDecision);
+    if (!dm1_v1_viewport_runtime_materialization_decide_pc34(&input,
+                                                               outDecision)) {
+        return 0;
+    }
+    /* ReDMCSB: DUNVIEW.C F0115:5668-5683 and :5916-5933 consumes the
+     * current effect records after F0219/F0220 mutation. The DM1 decision
+     * owns this projection; M11 only transfers it to the legacy blitters. */
+    if (outDecision->liveProjectileCount > 0) {
+        int aspect = dm1_v1_projectile_subtype_to_aspect(
+            outDecision->liveProjectileSubtype);
+        cell->summary.projectiles = outDecision->liveProjectileCount;
+        cell->summary.total += outDecision->liveProjectileCount;
+        cell->firstProjectileSubtype = outDecision->liveProjectileSubtype;
+        cell->firstProjectileRelDir =
+            (outDecision->liveProjectileDirection - state->world.party.direction) & 3;
+        cell->firstProjectileCell =
+            (outDecision->liveProjectileCell - state->world.party.direction) & 3;
+        cell->firstProjectileGfxIndex = dm1_v1_projectile_graphic_index(
+            aspect, cell->firstProjectileRelDir);
+        cell->firstProjectileFlipFlags = dm1_v1_projectile_flip_flags(
+            aspect, cell->firstProjectileRelDir, cell->firstProjectileCell,
+            cell->mapX, cell->mapY);
+    }
+    if (outDecision->liveExplosionCount > 0) {
+        cell->summary.explosions = outDecision->liveExplosionCount;
+        cell->summary.total += outDecision->liveExplosionCount;
+        cell->firstExplosionType = outDecision->liveExplosionType;
+        cell->firstExplosionFrame = outDecision->liveExplosionFrame;
+        cell->firstExplosionMaxFrames = outDecision->liveExplosionMaxFrames;
+        cell->firstExplosionAttack = outDecision->liveExplosionAttack;
+    }
+    return 1;
 }
 
 static void m11_dm1_v2_effect_point_for_cell(const M11_ViewportCell* cell,
@@ -17581,28 +17572,6 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                                 mapX,
                                 mapY,
                                 &cell.summary);
-    if (state->endgameDoNotDrawFluxcages && cell.summary.explosions > 0) {
-        int hiddenFluxcages = 0;
-        int ei;
-        for (ei = 0; ei < state->world.explosions.count &&
-                    ei < EXPLOSION_LIST_CAPACITY; ++ei) {
-            const struct ExplosionInstance_Compat* re =
-                &state->world.explosions.entries[ei];
-            if (!m11_explosion_instance_active(re)) continue;
-            if (re->mapIndex != state->world.party.mapIndex) continue;
-            if (re->mapX != mapX || re->mapY != mapY) continue;
-            if (!m11_runtime_fluxcage_visible_in_viewport(state, re)) {
-                ++hiddenFluxcages;
-            }
-        }
-        if (hiddenFluxcages > 0) {
-            cell.summary.explosions -= hiddenFluxcages;
-            cell.summary.total -= hiddenFluxcages;
-            if (cell.summary.explosions < 0) cell.summary.explosions = 0;
-            if (cell.summary.total < 0) cell.summary.total = 0;
-        }
-    }
-
     if (cell.elementType == DUNGEON_ELEMENT_DOOR) {
         cell.doorState = square & 0x07;
         cell.doorVertical = (square & 0x08) != 0;
@@ -18018,108 +17987,6 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         }
     }
 
-    /* Runtime projectile render source. ReDMCSB DUNVIEW.C F0115 lines
-     * 5668-5683 draws concrete C14 projectiles, but Firestaff's DM1
-     * runtime owns those live effects through world.projectiles after
-     * F0219/F0811. Stale dungeon C14 refs in HoC payload chains must not
-     * override the live projectile's slot/aspect. */
-    if (cell.summary.projectiles > 0 && cell.firstProjectileGfxIndex < 0) {
-        int pi;
-        for (pi = 0; pi < state->world.projectiles.count; ++pi) {
-            const struct ProjectileInstance_Compat* rp =
-                &state->world.projectiles.entries[pi];
-            if (!m11_projectile_instance_active(rp)) continue;
-            if (rp->mapIndex != state->world.party.mapIndex) continue;
-            if (rp->mapX != mapX || rp->mapY != mapY) continue;
-            cell.firstProjectileSubtype = rp->projectileSubtype;
-            cell.firstProjectileGfxIndex =
-                dm1_v1_projectile_subtype_graphic_index(rp->projectileSubtype);
-            break;
-        }
-    }
-
-    /* Extract first projectile direction from the runtime projectile list.
-     * Match a runtime ProjectileInstance_Compat to this cell's map position
-     * and compute the direction relative to party facing.
-     * In DM1, projectile sprites are horizontally mirrored when the
-     * missile's relative direction is 1 (right) vs 3 (left).  Missiles
-     * heading toward (2) or away (0) from the party use the normal sprite.
-     * Ref: ReDMCSB VIEWPORT.C projectile rendering direction logic. */
-    if (cell.firstProjectileGfxIndex >= 0) {
-        int pi;
-        int partyMap = state->world.party.mapIndex;
-        int partyDir = state->world.party.direction;
-        for (pi = 0; pi < state->world.projectiles.count; ++pi) {
-            const struct ProjectileInstance_Compat* rp = &state->world.projectiles.entries[pi];
-            if (!m11_projectile_instance_active(rp)) continue;
-            if (rp->mapIndex == partyMap && rp->mapX == mapX && rp->mapY == mapY) {
-                cell.firstProjectileRelDir = (rp->direction - partyDir) & 3;
-                if (cell.firstProjectileSubtype >= 0) {
-                    int aspectIndex = m11_projectile_subtype_to_aspect_index(
-                        cell.firstProjectileSubtype);
-                    cell.firstProjectileGfxIndex = m11_projectile_aspect_to_graphic_index(
-                        aspectIndex,
-                        cell.firstProjectileRelDir);
-                    cell.firstProjectileFlipFlags = m11_projectile_aspect_flip_flags(
-                        aspectIndex,
-                        cell.firstProjectileRelDir,
-                        (rp->cell - partyDir) & 3,
-                        mapX,
-                        mapY);
-                }
-                /* Extract sub-cell position (0-3) for DM1-faithful
-                 * projectile viewport offset.  The cell field in the
-                 * runtime data is absolute (0=NW,1=NE,2=SW,3=SE).
-                 * We store the relative sub-cell: rotate by party
-                 * facing so 0 = back-left, 1 = back-right,
-                 * 2 = front-left, 3 = front-right from the party's
-                 * perspective.  This matches DM1's view-cell mapping.
-                 * Ref: ReDMCSB DUNVIEW.C L0139_i_Cell = M21_NORMALIZE(
-                 *   A0126_i_ViewCell + P142_i_Direction). */
-                cell.firstProjectileCell = (rp->cell - partyDir) & 3;
-                break;
-            }
-        }
-    }
-
-    /* Runtime explosion render source. ReDMCSB DUNVIEW.C F0115 lines
-     * 5916-5933 restarts the list for C15 explosions; Firestaff's DM1
-     * runtime gets the drawable type/frame/attack from world.explosions so
-     * stale static HoC C15 refs cannot become false spell effects. */
-    if (cell.summary.explosions > 0 && cell.firstExplosionType < 0) {
-        int ei;
-        for (ei = 0; ei < state->world.explosions.count; ++ei) {
-            const struct ExplosionInstance_Compat* re =
-                &state->world.explosions.entries[ei];
-            if (!m11_explosion_instance_active(re)) continue;
-            if (!m11_runtime_fluxcage_visible_in_viewport(state, re)) continue;
-            if (re->mapIndex != state->world.party.mapIndex) continue;
-            if (re->mapX != mapX || re->mapY != mapY) continue;
-            cell.firstExplosionType      = re->explosionType;
-            cell.firstExplosionFrame     = re->currentFrame;
-            cell.firstExplosionMaxFrames = re->maxFrames > 0 ? re->maxFrames : 1;
-            cell.firstExplosionAttack    = re->attack;
-            break;
-        }
-    }
-    if (cell.summary.projectiles > 0 && cell.firstProjectileGfxIndex < 0) {
-        /* ReDMCSB DUNVIEW.C F0115 draws projectile sprites from concrete
-         * projectile records.  A count without a resolved runtime/static
-         * projectile aspect is not drawable and must not fall through to
-         * Firestaff's cue art, or Hall compact payload/stale runtime state
-         * can appear as false floating effects. */
-        cell.summary.total -= cell.summary.projectiles;
-        cell.summary.projectiles = 0;
-        if (cell.summary.total < 0) cell.summary.total = 0;
-    }
-    if (cell.summary.explosions > 0 && cell.firstExplosionType < 0) {
-        /* ReDMCSB DUNVIEW.C F0141/F0136 similarly requires an explosion
-         * type before selecting FIRE/SPELL/POISON/SMOKE bitmap aspects. */
-        cell.summary.total -= cell.summary.explosions;
-        cell.summary.explosions = 0;
-        if (cell.summary.total < 0) cell.summary.total = 0;
-    }
-
     /* Extract floor ornament ordinal from random generation or sensor things.
      * ReDMCSB F0172 assigns random floor ornaments only on the
      * corridor/fakewall path, but the pit/teleporter path still scans
@@ -18130,6 +17997,10 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         cell.floorOrnamentOrdinal = m11_compute_floor_ornament_ordinal(
             state, state->world.party.mapIndex, mapX, mapY, square);
     }
+
+    cell.dm1MaterializationDecisionReady =
+        m11_build_dm1_viewport_materialization_decision(
+            state, &cell, &cell.dm1MaterializationDecision);
 
     if (outCell) {
         *outCell = cell;
@@ -36766,10 +36637,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         int side;
         for (side = 0; side < 3; ++side) {
             (void)m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side]);
-            cells[depth][side].dm1MaterializationDecisionReady =
-                m11_build_dm1_viewport_materialization_decision(
-                    &cells[depth][side],
-                    &cells[depth][side].dm1MaterializationDecision);
         }
     }
     /* ReDMCSB DUNGEON.C F0172 (2608-2612) publishes the visible HoC
