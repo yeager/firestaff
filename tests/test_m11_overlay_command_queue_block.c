@@ -8,6 +8,7 @@
 
 #include "m11_game_view.h"
 #include "dm1_v1_champion_mirror_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
@@ -81,6 +82,61 @@ static int build_dm1_hoc_render_consumer_receipt_for_test(
         !dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
             &firstFrame, &thingConsumer, out)) {
         return 0;
+    }
+    return 1;
+}
+
+static int dm1_center_lane_for_test(const M11_GameViewState* state,
+                                    int* outDepthIndex,
+                                    int* outRelForward,
+                                    int* outMapX,
+                                    int* outMapY,
+                                    int* outElement,
+                                    int* outContentMask)
+{
+    int valid[3] = {0, 0, 0};
+    int open[3] = {0, 0, 0};
+    int door[3] = {0, 0, 0};
+    int mapX[3] = {-1, -1, -1};
+    int mapY[3] = {-1, -1, -1};
+    int element[3] = {-1, -1, -1};
+    DM1_ViewportCenterLaneMasksPc34 masks;
+    int depth;
+    int blockingDepth;
+
+    if (!state || !state->active) {
+        return 0;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        int isOpen = 0;
+        if (!M11_GameView_ProbeViewportCellClass(
+                state, depth + 1, 0, &mapX[depth], &mapY[depth], NULL,
+                &element[depth], NULL, NULL, &isOpen)) {
+            continue;
+        }
+        valid[depth] = 1;
+        open[depth] = isOpen ? 1 : 0;
+        door[depth] = (element[depth] == DUNGEON_ELEMENT_DOOR) ? 1 : 0;
+    }
+
+    masks = dm1_viewport_3d_center_lane_masks_from_cells_pc34(
+        valid, open, door);
+    blockingDepth = dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(
+        masks.blocking_depth_mask);
+    if (outDepthIndex) *outDepthIndex = blockingDepth;
+    if (outRelForward) *outRelForward = blockingDepth >= 0 ? blockingDepth + 1 : -1;
+    if (blockingDepth >= 0) {
+        if (outMapX) *outMapX = mapX[blockingDepth];
+        if (outMapY) *outMapY = mapY[blockingDepth];
+        if (outElement) *outElement = element[blockingDepth];
+    } else {
+        if (outMapX) *outMapX = -1;
+        if (outMapY) *outMapY = -1;
+        if (outElement) *outElement = -1;
+    }
+    if (outContentMask) {
+        *outContentMask = dm1_viewport_3d_center_visible_depth_mask_pc34(
+            masks.valid_depth_mask, masks.open_depth_mask);
     }
     return 1;
 }
@@ -1704,17 +1760,15 @@ static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
         squareData[cases[i].wallMapX * (int)map.height + cases[i].wallMapY] =
             DUNGEON_SQUARE_MASK_THING_LIST;
 
-        ASSERT_EQ(M11_GameView_ProbeDm1NearestBlockingCenterDepth(
-                      &state, &depth, &relForward, &mapX, &mapY, &element),
+        ASSERT_EQ(dm1_center_lane_for_test(
+                      &state, &depth, &relForward, &mapX, &mapY, &element,
+                      &contentMask),
                   1, cases[i].label);
         ASSERT_EQ(depth, cases[i].expectedDepth, cases[i].label);
         ASSERT_EQ(relForward, cases[i].wallForward, cases[i].label);
         ASSERT_EQ(mapX, cases[i].wallMapX, cases[i].label);
         ASSERT_EQ(mapY, cases[i].wallMapY, cases[i].label);
         ASSERT_EQ(element, DUNGEON_ELEMENT_WALL, cases[i].label);
-        ASSERT_EQ(M11_GameView_ProbeDm1CenterContentVisibleDepthMask(
-                      &state, &contentMask),
-                  1, cases[i].label);
         ASSERT_EQ(contentMask, expectedMask, cases[i].label);
     }
 
@@ -1727,17 +1781,15 @@ static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
         int mapY = -2;
         int element = -2;
         int contentMask = -1;
-        ASSERT_EQ(M11_GameView_ProbeDm1NearestBlockingCenterDepth(
-                      &state, &depth, &relForward, &mapX, &mapY, &element),
+        ASSERT_EQ(dm1_center_lane_for_test(
+                      &state, &depth, &relForward, &mapX, &mapY, &element,
+                      &contentMask),
                   1, "open center corridor resolves");
         ASSERT_EQ(depth, -1, "open center corridor has no center blocker");
         ASSERT_EQ(relForward, -1, "open center corridor has no blocker rel forward");
         ASSERT_EQ(mapX, -1, "open center corridor has no blocker x");
         ASSERT_EQ(mapY, -1, "open center corridor has no blocker y");
         ASSERT_EQ(element, -1, "open center corridor has no blocker element");
-        ASSERT_EQ(M11_GameView_ProbeDm1CenterContentVisibleDepthMask(
-                      &state, &contentMask),
-                  1, "open center corridor content mask resolves");
         ASSERT_EQ(contentMask, 7, "open center corridor draws D1/D2/D3 contents");
     }
 }

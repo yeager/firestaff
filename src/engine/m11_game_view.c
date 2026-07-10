@@ -30446,12 +30446,6 @@ int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     return 1;
 }
 
-int M11_GameView_ProbeDm1V2LiveEffectSeedCount(
-    const M11_GameViewState* state)
-{
-    return m11_count_dm1_v2_visible_effect_seeds_from_viewport(state);
-}
-
 int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
                                         int relForward,
                                         int relSide,
@@ -30512,61 +30506,6 @@ int M11_GameView_ProbeSideWallDrawEligibility(const M11_GameViewState* state,
     draws = m11_viewport_cell_is_wall_like(&cell);
     if (outLegacyLaneClear) *outLegacyLaneClear = laneClear;
     if (outDrawsWithSourceOrder) *outDrawsWithSourceOrder = draws;
-    return 1;
-}
-
-int M11_GameView_ProbeDm1NearestBlockingCenterDepth(const M11_GameViewState* state,
-                                                    int* outDepthIndex,
-                                                    int* outRelForward,
-                                                    int* outMapX,
-                                                    int* outMapY,
-                                                    int* outElementType) {
-    M11_ViewportCell cells[3][3];
-    int depth;
-    int side;
-    int blockingDepth;
-    if (!state || !state->active) {
-        return 0;
-    }
-    for (depth = 0; depth < 3; ++depth) {
-        for (side = 0; side < 3; ++side) {
-            memset(&cells[depth][side], 0, sizeof(cells[depth][side]));
-            (void)m11_sample_viewport_cell(state, depth + 1, side - 1,
-                                           &cells[depth][side]);
-        }
-    }
-    blockingDepth = m11_dm1_nearest_blocking_center_depth_index(cells);
-    if (outDepthIndex) *outDepthIndex = blockingDepth;
-    if (outRelForward) *outRelForward = blockingDepth >= 0 ? blockingDepth + 1 : -1;
-    if (blockingDepth >= 0) {
-        const M11_ViewportCell* cell = &cells[blockingDepth][1];
-        if (outMapX) *outMapX = cell->mapX;
-        if (outMapY) *outMapY = cell->mapY;
-        if (outElementType) *outElementType = cell->elementType;
-    } else {
-        if (outMapX) *outMapX = -1;
-        if (outMapY) *outMapY = -1;
-        if (outElementType) *outElementType = -1;
-    }
-    return 1;
-}
-
-int M11_GameView_ProbeDm1CenterContentVisibleDepthMask(const M11_GameViewState* state,
-                                                       int* outDepthMask) {
-    M11_ViewportCell cells[3][3];
-    int depth;
-    int side;
-    if (!state || !state->active || !outDepthMask) {
-        return 0;
-    }
-    for (depth = 0; depth < 3; ++depth) {
-        for (side = 0; side < 3; ++side) {
-            memset(&cells[depth][side], 0, sizeof(cells[depth][side]));
-            (void)m11_sample_viewport_cell(state, depth + 1, side - 1,
-                                           &cells[depth][side]);
-        }
-    }
-    *outDepthMask = m11_dm1_center_content_visible_depth_mask(cells);
     return 1;
 }
 
