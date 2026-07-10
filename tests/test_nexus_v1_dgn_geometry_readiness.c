@@ -161,6 +161,7 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
     Nexus_V1_Level level;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_DgnRenderPlanReceipt receipt;
+    Nexus_V1_DgnCellGeometry cell;
     uint8_t *structure1;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
@@ -193,6 +194,11 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
 
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 4) == 0,
           "render-plan level loads from DMWeb DGN");
+    CHECK(nexus_v1_level_get_cell_geometry(&level, 3, 4, &cell) == 0 &&
+          cell.mesh_ref == level.mesh_refs[4][3] &&
+          cell.floor_material_ref == 21 && cell.floor_height[1] == 12 &&
+          cell.collision_sector.valid == 1 && cell.collision_sector.x1 == -20,
+          "movement and viewport share one decoded DGN cell geometry record");
     memset(commands, 0, sizeof(commands));
     memset(&receipt, 0, sizeof(receipt));
     CHECK(nexus_v1_level_build_dgn_view_render_plan(
@@ -280,6 +286,35 @@ static void test_descriptor_budget_blocks_mesh_ready(void) {
           "DGN budget-blocked handoff forbids fallback visuals");
 }
 
+static void test_collision_sector_blocks_entry(void) {
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
+    const int structure1b_rel = 0x40;
+    Nexus_V1_Level level;
+    uint8_t *structure1;
+    uint8_t *sector;
+
+    CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
+                          structure1b_rel, 2048) == 0,
+          "collision movement fixture builds");
+    structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
+    set_collision_ref(structure1, structure1b_rel, 8, 8, 1);
+    set_collision_ref(structure1, structure1b_rel, 8, 9, 1);
+    sector = dgn + NEXUS_DGN_BLOCK_SIZE + structure1b_rel +
+             NEXUS_DGN_STRUCTURE1B_BYTES;
+    sector[0] = 2; /* one descriptor follows */
+    sector[4] = (uint8_t)-100;
+    sector[5] = 40;
+    sector[6] = 100;
+    sector[7] = 40;
+
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 5) == 0,
+          "collision movement level loads");
+    CHECK(!nexus_v1_level_move_allowed(&level, 8, 9, 8, 8),
+          "DGN collision sector blocks a party entering through its segment");
+    CHECK(nexus_v1_level_move_allowed(&level, 7, 8, 8, 8),
+          "same DGN sector permits entry that does not cross its segment");
+}
+
 static void test_bounds_and_legacy_non_promotion(void) {
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 21];
     uint8_t legacy[64];
@@ -338,6 +373,7 @@ int main(void) {
     test_variable_grid_and_mesh_ready();
     test_dgn_view_render_plan_from_structure1b();
     test_descriptor_budget_blocks_mesh_ready();
+    test_collision_sector_blocks_entry();
     test_bounds_and_legacy_non_promotion();
     test_determinism();
 

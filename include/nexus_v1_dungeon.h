@@ -46,6 +46,23 @@ typedef struct {
     int8_t y2;
 } Nexus_V1_DgnCollisionSector;
 
+/* Runtime-facing view of one Structure1B cell. Movement and rendering must
+ * consume this same decoded record so a resumed party cannot collide against
+ * a stale square map while the viewport uses newer mesh/material data. */
+typedef struct {
+    int square_type;
+    uint16_t collision_ref;
+    uint16_t mesh_ref;
+    uint8_t floor_material_ref;
+    uint8_t ceiling_material_ref;
+    uint8_t wall_material_refs[4];
+    int8_t floor_height[4];
+    int8_t ceiling_height[4];
+    uint8_t floor_slope;
+    uint8_t floor_rotation;
+    Nexus_V1_DgnCollisionSector collision_sector;
+} Nexus_V1_DgnCellGeometry;
+
 typedef struct {
     int width, height;
     uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
@@ -146,6 +163,13 @@ int nexus_v1_level_get_collision_ref(const Nexus_V1_Level *level, int x, int y);
 int nexus_v1_level_get_material_ref(const Nexus_V1_Level *level, int x, int y,
                                     Nexus_V1_DgnRenderCommandKind kind,
                                     int wall_dir);
+int nexus_v1_level_get_cell_geometry(const Nexus_V1_Level *level, int x, int y,
+                                     Nexus_V1_DgnCellGeometry *out_cell);
+/* Returns non-zero only when the DGN target cell and its collision sector
+ * admit a center-to-center party step. */
+int nexus_v1_level_move_allowed(const Nexus_V1_Level *level,
+                                int from_x, int from_y,
+                                int to_x, int to_y);
 int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
                                const uint8_t *data,
                                int size);
