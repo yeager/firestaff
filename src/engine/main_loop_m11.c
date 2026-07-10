@@ -4079,9 +4079,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             useModern = 0;
         }
     }
-    /* Load PO translations based on system language.
-     * M12_Config_GetAutoLanguageIndex: 0=en, 1=sv, 2=fr */
-    {
+    /* Boot probes exercise runtime receipts, not translated launcher text. */
+    if (!o->bootProbe) {
         const char* langCodes[] = {"en", "sv", "fr"};
         const char* langCode = "en";
         int langIdx = M12_Config_GetAutoLanguageIndex();
