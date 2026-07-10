@@ -159,6 +159,7 @@ typedef struct {
     int16_t quad_y[4];
     int mesh_descriptor_projected;
     uint8_t material_id;
+    Nexus_V1_DgnRenderCommandKind material_source_kind;
     uint8_t palette_index;
     uint8_t draw_order;
 } Nexus_V1_DgnRenderCommand;
@@ -170,7 +171,12 @@ typedef struct {
     int fallback_visuals_permitted;
     int command_count;
     int floor_count;
+    int ceiling_count;
     int wall_count;
+    int floor_material_command_count;
+    int ceiling_material_command_count;
+    int wall_material_command_count;
+    int material_semantics_complete;
     int mesh_command_count;
     int mesh_descriptor_command_count;
     int first_mesh_ref;

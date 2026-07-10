@@ -976,9 +976,7 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
         champion_host->dgn_viewport_wall_material_surface_count ==
             champion_host->ownership.dgn_render_plan.wall_count &&
         champion_host->dgn_viewport_ceiling_material_surface_count ==
-            champion_host->dgn_command_count -
-                champion_host->ownership.dgn_render_plan.floor_count -
-                champion_host->ownership.dgn_render_plan.wall_count;
+            champion_host->ownership.dgn_render_plan.ceiling_count;
     out_receipt->dgn_material_path_consumed =
         out_receipt->dgn_material_surface_coverage_complete &&
         champion_host->host_route_consumes_dgn_material_path &&
@@ -2615,9 +2613,7 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         viewport_receipt.wall_material_surface_count ==
             render_plan.wall_count &&
         viewport_receipt.ceiling_material_surface_count ==
-            render_plan.command_count -
-                render_plan.floor_count -
-                render_plan.wall_count &&
+            render_plan.ceiling_count &&
         viewport_receipt.written_pixels > 0;
     out_receipt->bpk_material_path_consumed =
         out_receipt->bpk_material_surface_count > 0;
@@ -4561,9 +4557,7 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->dgn_viewport_wall_material_surface_count ==
             receipt->dgn_render_plan.wall_count &&
         receipt->dgn_viewport_ceiling_material_surface_count ==
-            receipt->dgn_draw_command_count -
-                receipt->dgn_render_plan.floor_count -
-                receipt->dgn_render_plan.wall_count &&
+            receipt->dgn_render_plan.ceiling_count &&
         receipt->dgn_viewport_written_pixels > 0;
     receipt->dgn_material_surface_coverage_complete =
         receipt->dgn_route_consumes_startup_package &&
