@@ -267,6 +267,29 @@ void csb_v1_boot_startup_runtime_asset_session_release_pc34(
     memset(session, 0, sizeof(*session));
 }
 
+static uint32_t csb_v1_startup_frame_hash_step_pc34(uint32_t hash,
+                                                    uint32_t value)
+{
+    hash ^= value;
+    hash *= 16777619u;
+    return hash ? hash : 2166136261u;
+}
+
+static int csb_v1_startup_frame_title_phase_mask_pc34(
+    CSB_V1_StartupStage_PC34 stage)
+{
+    if (stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
+        return 0x01;
+    }
+    if (stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34) {
+        return 0x02;
+    }
+    if (stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
+        return 0x08;
+    }
+    return 0;
+}
+
 int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     const CSB_V1_StartupRenderPlan_PC34 *plan,
@@ -277,6 +300,16 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
     if (!session || !plan || !out_frame || !session->valid ||
         !session->surfaces.valid || !session->full_startup_ready) return 0;
     session->source_tick = source_tick;
+    out_frame->real_asset_matched = session->real_asset_matched ? 1 : 0;
+    out_frame->title_sequence_ready =
+        session->title_presents_ready && session->title_chaos_ready &&
+                session->title_strikes_back_ready
+            ? 1
+            : 0;
+    out_frame->entrance_ready = session->entrance_assets_ready ? 1 : 0;
+    out_frame->door_ready = session->door_assets_ready ? 1 : 0;
+    out_frame->no_legacy_wrappers =
+        session->rejects_legacy_wrappers ? 1 : 0;
     out_frame->source_tick = source_tick;
     out_frame->session_generation = session->generation;
     out_frame->stage = (CSB_V1_StartupStage_PC34)plan->title_stage;
@@ -289,6 +322,8 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
     if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
         out_frame->title_phase_tick = plan->title_source_step;
         out_frame->title_phase_tick_count = csb_v1_startup_title_total_ticks_pc34();
+        out_frame->title_phase_mask =
+            csb_v1_startup_frame_title_phase_mask_pc34(out_frame->stage);
         if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34)
             out_frame->title_surface = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
         else if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34)
@@ -301,8 +336,30 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
                plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34) {
         out_frame->entrance_surface = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
     }
-    out_frame->valid = (out_frame->title_surface || out_frame->entrance_surface) &&
-        out_frame->left_door_surface->valid && out_frame->right_door_surface->valid;
+    out_frame->frame_route_hash =
+        csb_v1_startup_frame_hash_step_pc34(2166136261u,
+                                            (uint32_t)out_frame->source_tick);
+    out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
+        out_frame->frame_route_hash,
+        (uint32_t)out_frame->session_generation);
+    out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
+        out_frame->frame_route_hash, (uint32_t)plan->surface);
+    out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
+        out_frame->frame_route_hash, (uint32_t)out_frame->stage);
+    out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
+        out_frame->frame_route_hash, (uint32_t)out_frame->opening_step);
+    out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
+        out_frame->frame_route_hash, (uint32_t)out_frame->title_phase_mask);
+    out_frame->valid =
+        out_frame->real_asset_matched &&
+        out_frame->title_sequence_ready &&
+        out_frame->entrance_ready &&
+        out_frame->door_ready &&
+        out_frame->no_legacy_wrappers &&
+        (out_frame->title_surface || out_frame->entrance_surface) &&
+        out_frame->left_door_surface->valid &&
+        out_frame->right_door_surface->valid &&
+        out_frame->frame_route_hash != 0u;
     return out_frame->valid;
 }
 

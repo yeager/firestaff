@@ -939,6 +939,13 @@ typedef struct CSB_V1_StartupReleaseAppCaptureReceipt_PC34 {
  * No fallback text or synthetic door pixels are represented here. */
 typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     int valid;
+    int real_asset_matched;
+    int title_sequence_ready;
+    int entrance_ready;
+    int door_ready;
+    int no_legacy_wrappers;
+    int title_phase_mask;
+    uint32_t frame_route_hash;
     uint32_t source_tick;
     uint32_t session_generation;
     CSB_V1_StartupStage_PC34 stage;
