@@ -2647,6 +2647,13 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
                   d3l2_asset.floor_ornament_asset_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3l2_floor_asset_index",
                   d3l2_asset.floor_ornament_asset_index, 0x123);
+        check_int("d3l2_d3r2_gate.d3l2_floor_blit_plan_bound",
+                  d3l2_asset.floor_ornament_blit_plan_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_floor_blit_zone",
+                  d3l2_asset.floor_ornament_dst_x == 32 &&
+                  d3l2_asset.floor_ornament_dst_y == 66 &&
+                  d3l2_asset.floor_ornament_width == 48 &&
+                  d3l2_asset.floor_ornament_height == 6, 1);
         check_int("d3l2_d3r2_gate.d3l2_door_asset_bound",
                   d3l2_asset.door_front_asset_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3l2_door_asset_index",
@@ -2655,6 +2662,13 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
                   d3r2_asset.floor_ornament_asset_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3r2_floor_asset_index",
                   d3r2_asset.floor_ornament_asset_index, 0x124);
+        check_int("d3l2_d3r2_gate.d3r2_floor_blit_plan_bound",
+                  d3r2_asset.floor_ornament_blit_plan_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3r2_floor_blit_zone",
+                  d3r2_asset.floor_ornament_dst_x == 144 &&
+                  d3r2_asset.floor_ornament_dst_y == 66 &&
+                  d3r2_asset.floor_ornament_width == 48 &&
+                  d3r2_asset.floor_ornament_height == 6, 1);
         check_int("d3l2_d3r2_gate.d3r2_door_asset_bound",
                   d3r2_asset.door_front_asset_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3r2_door_asset_index",
@@ -2704,6 +2718,10 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
     dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 1, 1);
     check_int("d3l2_d3r2_gate.raw_corridor_does_not_draw_wall",
               viewport[25 * DM1_VIEWPORT_WIDTH + 1], 0xee);
+    check_int("d3l2_d3r2_gate.raw_corridor_draws_f0108_floor_zone",
+              viewport[66 * DM1_VIEWPORT_WIDTH + 32], 0x23);
+    check_int("d3l2_d3r2_gate.raw_corridor_old_diamond_zone_untouched",
+              viewport[50 * DM1_VIEWPORT_WIDTH + 2], 0xee);
     grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
 
     /* D3R2 native: F0677 chooses C10_WALL_D3R2 and C703_ZONE_WALL_D3R2. */

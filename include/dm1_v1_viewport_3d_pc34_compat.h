@@ -337,6 +337,12 @@ typedef struct {
     bool wall_case_returns_before_things;
     bool floor_ornament_asset_bound;
     int16_t floor_ornament_asset_index;
+    bool floor_ornament_blit_plan_bound;
+    int16_t floor_ornament_graphic_index;
+    int16_t floor_ornament_dst_x;
+    int16_t floor_ornament_dst_y;
+    int16_t floor_ornament_width;
+    int16_t floor_ornament_height;
     bool door_front_asset_bound;
     int16_t door_front_asset_index;
     const char *rear_pass_source_lines;
