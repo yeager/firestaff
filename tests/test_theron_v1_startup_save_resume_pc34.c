@@ -2586,6 +2586,12 @@ static void test_startup_session_facts_wrappers(void) {
     semantic_snapshot.runtime_fallback_visuals_blocked = 0;
     semantic_snapshot.runtime_structured_route = 1;
     semantic_snapshot.runtime_receipt_text_route = 0;
+    semantic_snapshot.all_dungeon_real_data_capture_ready = 1;
+    semantic_snapshot.all_dungeon_capture_count = THERON_DUNGEON_COUNT;
+    semantic_snapshot.all_dungeon_capture_mask =
+        (1u << THERON_DUNGEON_COUNT) - 1u;
+    semantic_snapshot.exact_level_semantics_ready = 1;
+    semantic_snapshot.exact_object_semantics_ready = 1;
     expect_true(theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
                     &semantic_snapshot,
                     &media_receipt,
@@ -2622,6 +2628,13 @@ static void test_startup_session_facts_wrappers(void) {
                     render_route_receipt.runtime_track02_semantic_handoff == 1 &&
                     render_route_receipt.runtime_structured_route == 1 &&
                     render_route_receipt.runtime_receipt_text_route == 0 &&
+                    render_route_receipt.all_dungeon_real_data_capture_ready &&
+                    render_route_receipt.all_dungeon_capture_count ==
+                        THERON_DUNGEON_COUNT &&
+                    render_route_receipt.all_dungeon_capture_mask ==
+                        ((1u << THERON_DUNGEON_COUNT) - 1u) &&
+                    render_route_receipt.exact_level_semantics_ready &&
+                    render_route_receipt.exact_object_semantics_ready &&
                     strcmp(render_route_receipt.status,
                            "TRACK02 RUNTIME READY") == 0,
                 "boot startup render route receipt marks Track02 semantic first level HUD-ready without fallback visuals");
@@ -2636,6 +2649,11 @@ static void test_startup_session_facts_wrappers(void) {
                     host_view_receipt.runtime_track02_semantic_handoff == 1 &&
                     host_view_receipt.runtime_structured_route == 1 &&
                     host_view_receipt.runtime_receipt_text_route == 0 &&
+                    host_view_receipt.all_dungeon_real_data_capture_ready &&
+                    host_view_receipt.all_dungeon_capture_count ==
+                        THERON_DUNGEON_COUNT &&
+                    host_view_receipt.exact_level_semantics_ready &&
+                    host_view_receipt.exact_object_semantics_ready &&
                     host_view_receipt.runtime_level_render_allowed &&
                     host_view_receipt.runtime_readiness_ready &&
                     host_view_receipt.title_menu_runtime_handoff_ready &&
@@ -2716,6 +2734,11 @@ static void test_startup_session_facts_wrappers(void) {
                     !full_start_receipt.fallback_visuals_allowed &&
                     full_start_receipt.runtime_graphics_handoff &&
                     full_start_receipt.track02_runtime_graphics_handoff &&
+                    full_start_receipt.all_dungeon_real_data_capture_ready &&
+                    full_start_receipt.all_dungeon_capture_count ==
+                        THERON_DUNGEON_COUNT &&
+                    full_start_receipt.exact_level_semantics_ready &&
+                    full_start_receipt.exact_object_semantics_ready &&
                     !full_start_receipt.save_resume_runtime_graphics_handoff &&
                     !full_start_receipt.raw_prompt_roster_required &&
                     !full_start_receipt.raw_session_rebuild_required &&
@@ -2780,6 +2803,14 @@ static void test_startup_session_facts_wrappers(void) {
                     ui_caller_receipt.semantic_first_level_ready &&
                     !ui_caller_receipt.semantic_nonzero_level_ready &&
                     ui_caller_receipt.semantic_level_coverage_mask == 0x01 &&
+                    ui_caller_receipt.all_dungeon_real_data_capture_ready &&
+                    ui_caller_receipt.all_dungeon_capture_count ==
+                        THERON_DUNGEON_COUNT &&
+                    ui_caller_receipt.all_dungeon_capture_mask ==
+                        ((1u << THERON_DUNGEON_COUNT) - 1u) &&
+                    ui_caller_receipt.exact_level_semantics_ready &&
+                    ui_caller_receipt.exact_object_semantics_ready &&
+                    ui_caller_receipt.complete_runtime_support_ready &&
                     ui_caller_receipt.no_fallback_visuals_enforced &&
                     !ui_caller_receipt.fallback_visuals_allowed &&
                     !ui_caller_receipt.fallback_startup_graphics_executed &&
@@ -2799,6 +2830,12 @@ static void test_startup_session_facts_wrappers(void) {
     semantic_level_snapshot.runtime_fallback_visuals_blocked = 0;
     semantic_level_snapshot.runtime_structured_route = 1;
     semantic_level_snapshot.runtime_receipt_text_route = 0;
+    semantic_level_snapshot.all_dungeon_real_data_capture_ready = 1;
+    semantic_level_snapshot.all_dungeon_capture_count = THERON_DUNGEON_COUNT;
+    semantic_level_snapshot.all_dungeon_capture_mask =
+        (1u << THERON_DUNGEON_COUNT) - 1u;
+    semantic_level_snapshot.exact_level_semantics_ready = 1;
+    semantic_level_snapshot.exact_object_semantics_ready = 1;
     expect_true(theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
                     &semantic_level_snapshot,
                     &media_receipt,

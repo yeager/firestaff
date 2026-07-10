@@ -1338,6 +1338,16 @@ int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
         effective_snapshot.runtime_structured_route ? 1 : 0;
     out_view_model->runtime_receipt_text_route =
         effective_snapshot.runtime_receipt_text_route ? 1 : 0;
+    out_view_model->all_dungeon_real_data_capture_ready =
+        effective_snapshot.all_dungeon_real_data_capture_ready ? 1 : 0;
+    out_view_model->all_dungeon_capture_count =
+        effective_snapshot.all_dungeon_capture_count;
+    out_view_model->all_dungeon_capture_mask =
+        effective_snapshot.all_dungeon_capture_mask;
+    out_view_model->exact_level_semantics_ready =
+        effective_snapshot.exact_level_semantics_ready ? 1 : 0;
+    out_view_model->exact_object_semantics_ready =
+        effective_snapshot.exact_object_semantics_ready ? 1 : 0;
     if (out_view_model->runtime_level_source ==
             THERON_V1_STARTUP_RUNTIME_LEVEL_NONE &&
         effective_snapshot.world) {
@@ -1581,6 +1591,16 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
         view_model->runtime_structured_route;
     out_receipt->runtime_receipt_text_route =
         view_model->runtime_receipt_text_route;
+    out_receipt->all_dungeon_real_data_capture_ready =
+        view_model->all_dungeon_real_data_capture_ready;
+    out_receipt->all_dungeon_capture_count =
+        view_model->all_dungeon_capture_count;
+    out_receipt->all_dungeon_capture_mask =
+        view_model->all_dungeon_capture_mask;
+    out_receipt->exact_level_semantics_ready =
+        view_model->exact_level_semantics_ready;
+    out_receipt->exact_object_semantics_ready =
+        view_model->exact_object_semantics_ready;
     out_receipt->startup_menu_render_allowed =
         view_model->render_plan_valid ? 1 : 0;
     out_receipt->track02_title_menu_ready =
@@ -1775,6 +1795,16 @@ int theron_v1_boot_startup_host_view_receipt_from_view_model(
             out_receipt->render_route.runtime_structured_route;
         out_receipt->runtime_receipt_text_route =
             out_receipt->render_route.runtime_receipt_text_route;
+        out_receipt->all_dungeon_real_data_capture_ready =
+            out_receipt->render_route.all_dungeon_real_data_capture_ready;
+        out_receipt->all_dungeon_capture_count =
+            out_receipt->render_route.all_dungeon_capture_count;
+        out_receipt->all_dungeon_capture_mask =
+            out_receipt->render_route.all_dungeon_capture_mask;
+        out_receipt->exact_level_semantics_ready =
+            out_receipt->render_route.exact_level_semantics_ready;
+        out_receipt->exact_object_semantics_ready =
+            out_receipt->render_route.exact_object_semantics_ready;
         out_receipt->hud_ready = out_receipt->render_route.hud_ready;
         out_receipt->status_scope = out_receipt->render_route.status_scope;
         out_receipt->status = out_receipt->render_route.status;
@@ -3309,6 +3339,16 @@ int theron_v1_boot_startup_full_start_receipt_from_view_model(
             out_receipt->host_view.runtime_structured_route;
         out_receipt->runtime_receipt_text_route =
             out_receipt->host_view.runtime_receipt_text_route;
+        out_receipt->all_dungeon_real_data_capture_ready =
+            out_receipt->host_view.all_dungeon_real_data_capture_ready;
+        out_receipt->all_dungeon_capture_count =
+            out_receipt->host_view.all_dungeon_capture_count;
+        out_receipt->all_dungeon_capture_mask =
+            out_receipt->host_view.all_dungeon_capture_mask;
+        out_receipt->exact_level_semantics_ready =
+            out_receipt->host_view.exact_level_semantics_ready;
+        out_receipt->exact_object_semantics_ready =
+            out_receipt->host_view.exact_object_semantics_ready;
         out_receipt->hud_ready = out_receipt->host_view.hud_ready;
         out_receipt->runtime_graphics_handoff =
             out_receipt->host_view.runtime_graphics_handoff;
@@ -4288,6 +4328,23 @@ int theron_v1_boot_startup_ui_caller_from_full_start_receipt(
         level_bit = 1 << receipt->runtime_level;
         out_receipt->semantic_level_coverage_mask = level_bit;
     }
+    out_receipt->all_dungeon_real_data_capture_ready =
+        receipt->all_dungeon_real_data_capture_ready ? 1 : 0;
+    out_receipt->all_dungeon_capture_count =
+        receipt->all_dungeon_capture_count;
+    out_receipt->all_dungeon_capture_mask =
+        receipt->all_dungeon_capture_mask;
+    out_receipt->exact_level_semantics_ready =
+        receipt->exact_level_semantics_ready ? 1 : 0;
+    out_receipt->exact_object_semantics_ready =
+        receipt->exact_object_semantics_ready ? 1 : 0;
+    out_receipt->complete_runtime_support_ready =
+        out_receipt->all_dungeon_real_data_capture_ready &&
+        out_receipt->all_dungeon_capture_count == THERON_DUNGEON_COUNT &&
+        out_receipt->exact_level_semantics_ready &&
+        out_receipt->exact_object_semantics_ready
+            ? 1
+            : 0;
     out_receipt->no_fallback_visuals_enforced =
         receipt->no_fallback_visuals_enforced ? 1 : 0;
     out_receipt->fallback_visuals_allowed =
