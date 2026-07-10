@@ -945,6 +945,47 @@ void theron_v1_startup_continue_apply_receipt_init(
     receipt->srm_quest_mask = -1;
 }
 
+static void theron_v1_startup_continue_apply_receipt_copy_media_spans(
+    Theron_V1StartupContinueApplyReceipt *out_receipt,
+    const Theron_StartupMediaStateReceipt *media_receipt) {
+
+    if (!out_receipt || !media_receipt) {
+        return;
+    }
+    out_receipt->track02_media_title_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_first_raw_offset;
+    out_receipt->track02_media_title_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_last_raw_offset;
+    out_receipt->track02_media_title_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_first_user_data_offset;
+    out_receipt->track02_media_title_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_last_user_data_offset;
+    out_receipt->track02_media_stage_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_first_raw_offset;
+    out_receipt->track02_media_stage_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_last_raw_offset;
+    out_receipt->track02_media_stage_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_first_user_data_offset;
+    out_receipt->track02_media_stage_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_last_user_data_offset;
+    out_receipt->track02_media_soul_room_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_first_raw_offset;
+    out_receipt->track02_media_soul_room_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_last_raw_offset;
+    out_receipt->track02_media_soul_room_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_first_user_data_offset;
+    out_receipt->track02_media_soul_room_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_last_user_data_offset;
+    out_receipt->track02_media_forcefield_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_first_raw_offset;
+    out_receipt->track02_media_forcefield_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_last_raw_offset;
+    out_receipt->track02_media_forcefield_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_first_user_data_offset;
+    out_receipt->track02_media_forcefield_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_last_user_data_offset;
+}
+
 int theron_v1_startup_host_receipt_from_continue_apply(
     const Theron_V1StartupContinueApplyReceipt *apply_receipt,
     Theron_StartupHostReceipt *out_receipt) {
@@ -1299,6 +1340,9 @@ int theron_v1_startup_continue_apply_receipt(
         result->track02_media.startup_bitmap_atlas_route_mask;
     out_receipt->track02_media_checksum =
         result->track02_media.startup_bitmap_atlas_checksum;
+    theron_v1_startup_continue_apply_receipt_copy_media_spans(
+        out_receipt,
+        &result->track02_media);
     out_receipt->track02_level_bank = result->track02_level_bank;
     out_receipt->status_scope = plan->status_scope
         ? plan->status_scope

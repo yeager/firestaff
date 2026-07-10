@@ -5076,6 +5076,96 @@ static void test_startup_receipt_bitmap_art_gate(void) {
                 "startup receipt gates partial Track02 bitmap atlas as fallback art");
 }
 
+static void test_track02_bitmap_span_apply_receipts(void) {
+    Theron_StartupMediaStateReceipt media_receipt;
+    Theron_StartupActionPlan plan;
+    Theron_V1StartupRuntimeEntryResult runtime_result;
+    Theron_V1StartupRuntimeEntryApplyReceipt runtime_apply;
+    Theron_V1StartupContinueResult continue_result;
+    Theron_V1StartupContinueApplyReceipt continue_apply;
+
+    theron_v1_startup_media_state_receipt_init(&media_receipt);
+    media_receipt.startup_media_ready = 1;
+    media_receipt.startup_bitmap_decode_status = THERON_TRACK02_SIGNAL_OK;
+    media_receipt.startup_bitmap_route_mask = TST_THERON_FULL_START_BITMAP_ROUTES;
+    media_receipt.startup_bitmap_atlas_ready = 1;
+    media_receipt.startup_bitmap_atlas_route_mask =
+        TST_THERON_FULL_START_BITMAP_ROUTES;
+    media_receipt.startup_bitmap_atlas_route_count = 4;
+    media_receipt.startup_bitmap_atlas_checksum = 0x45f10042u;
+    media_receipt.startup_bitmap_title_first_raw_offset = 0x1000u;
+    media_receipt.startup_bitmap_title_last_raw_offset = 0x103cu;
+    media_receipt.startup_bitmap_title_first_user_data_offset = 0x0800u;
+    media_receipt.startup_bitmap_title_last_user_data_offset = 0x083cu;
+    media_receipt.startup_bitmap_stage_first_raw_offset = 0x2000u;
+    media_receipt.startup_bitmap_stage_last_raw_offset = 0x203cu;
+    media_receipt.startup_bitmap_stage_first_user_data_offset = 0x1800u;
+    media_receipt.startup_bitmap_stage_last_user_data_offset = 0x183cu;
+    media_receipt.startup_bitmap_soul_room_first_raw_offset = 0x3000u;
+    media_receipt.startup_bitmap_soul_room_last_raw_offset = 0x306cu;
+    media_receipt.startup_bitmap_soul_room_first_user_data_offset = 0x2800u;
+    media_receipt.startup_bitmap_soul_room_last_user_data_offset = 0x286cu;
+    media_receipt.startup_bitmap_forcefield_first_raw_offset = 0x4000u;
+    media_receipt.startup_bitmap_forcefield_last_raw_offset = 0x406cu;
+    media_receipt.startup_bitmap_forcefield_first_user_data_offset = 0x3800u;
+    media_receipt.startup_bitmap_forcefield_last_user_data_offset = 0x386cu;
+
+    theron_v1_startup_action_plan_init(&plan);
+    plan.status_scope = "READY";
+    plan.status = "THERON READY";
+
+    theron_v1_startup_runtime_entry_result_init(&runtime_result);
+    runtime_result.result = THERON_STARTUP_OK;
+    runtime_result.level_loaded = 1;
+    runtime_result.runtime_level_source =
+        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_MEDIA;
+    runtime_result.track02_media_route = 1;
+    runtime_result.track02_media = media_receipt;
+    expect_true(theron_v1_startup_runtime_entry_apply_receipt(
+                    &plan,
+                    &runtime_result,
+                    "Track02 media handoff",
+                    &runtime_apply) == 1 &&
+                    runtime_apply.track02_media_route == 1 &&
+                    runtime_apply.track02_media_route_mask ==
+                        TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    runtime_apply.track02_media_checksum == 0x45f10042u &&
+                    runtime_apply.track02_media_title_first_raw_offset ==
+                        0x1000u &&
+                    runtime_apply.track02_media_stage_last_user_data_offset ==
+                        0x183cu &&
+                    runtime_apply.track02_media_soul_room_last_raw_offset ==
+                        0x306cu &&
+                    runtime_apply.track02_media_forcefield_first_user_data_offset ==
+                        0x3800u,
+                "runtime entry apply receipt carries Track02 bitmap source spans");
+
+    theron_v1_startup_continue_result_init(&continue_result);
+    continue_result.source = THERON_V1_STARTUP_CONTINUE_SOURCE_SRM;
+    continue_result.source_slot_index = 2;
+    continue_result.track02_media_route = 1;
+    continue_result.track02_media = media_receipt;
+    expect_true(theron_v1_startup_continue_apply_receipt(
+                    &plan,
+                    &continue_result,
+                    "Continue Track02 media handoff",
+                    "chapter marker",
+                    &continue_apply) == 1 &&
+                    continue_apply.track02_media_route == 1 &&
+                    continue_apply.track02_media_route_mask ==
+                        TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    continue_apply.track02_media_checksum == 0x45f10042u &&
+                    continue_apply.track02_media_title_last_user_data_offset ==
+                        0x083cu &&
+                    continue_apply.track02_media_stage_first_raw_offset ==
+                        0x2000u &&
+                    continue_apply.track02_media_soul_room_first_user_data_offset ==
+                        0x2800u &&
+                    continue_apply.track02_media_forcefield_last_raw_offset ==
+                        0x406cu,
+                "Continue apply receipt carries Track02 bitmap source spans");
+}
+
 static void test_boot_startup_launch_detach_runtime_receipt(void) {
     Theron_V1_BootStartupLaunch launch;
     Theron_V1_BootStartupRuntimeReceipt receipt;
@@ -5444,6 +5534,7 @@ int main(void) {
     test_track02_all_dungeon_runtime_capture_receipt();
     test_track02_startup_bitmap_decode_iso_receipt();
     test_startup_receipt_bitmap_art_gate();
+    test_track02_bitmap_span_apply_receipts();
 
     printf("=====================================================\n");
     printf("Results: %d/%d passed (failures=%d)\n",
