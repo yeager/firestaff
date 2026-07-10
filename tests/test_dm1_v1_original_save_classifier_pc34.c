@@ -328,6 +328,14 @@ static void cleanup_root(const char *root) {
     }
     snprintf(path, sizeof(path), "%s/slot-seven-real-save.bin", root);
     test_unlink(path);
+    snprintf(path, sizeof(path), "%s/nested/saves/slot-eight-real-save.bin", root);
+    test_unlink(path);
+    snprintf(path, sizeof(path), "%s/nested/saves/readme.txt", root);
+    test_unlink(path);
+    snprintf(path, sizeof(path), "%s/nested/saves", root);
+    test_rmdir(path);
+    snprintf(path, sizeof(path), "%s/nested", root);
+    test_rmdir(path);
     test_rmdir(root);
 }
 
@@ -371,9 +379,34 @@ static void test_root_manifest(void) {
     cleanup_root(root);
 }
 
+static int corpus_path_contains(const DM1OriginalSaveCorpusManifest *corpus,
+                                const char *needle) {
+    if (!corpus || !needle) return 0;
+    for (int i = 0; i < corpus->present_count &&
+                    i < (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP; ++i) {
+        if (strstr(corpus->paths[i], needle) != NULL) return 1;
+    }
+    return 0;
+}
+
+static int corpus_loader_envelope_ok_count(
+    const DM1OriginalSaveCorpusManifest *corpus) {
+    int count = 0;
+    if (!corpus) return 0;
+    for (int i = 0; i < corpus->present_count &&
+                    i < (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP; ++i) {
+        if (corpus->results[i].pc34_loader_part_envelope_candidate &&
+            corpus->results[i].save_part_loader_envelope_ok_count == 5) {
+            ++count;
+        }
+    }
+    return count;
+}
+
 static void test_corpus_manifest_finds_arbitrary_real_save_name(void) {
     char root[DM1_ORIGINAL_SAVE_PATH_MAX];
     char path[DM1_ORIGINAL_SAVE_PATH_MAX];
+    char nested[DM1_ORIGINAL_SAVE_PATH_MAX];
     uint8_t bytes[4096];
     size_t bytes_written = 0u;
     DM1OriginalSavePC34FixtureSpec fixture;
@@ -406,6 +439,17 @@ static void test_corpus_manifest_finds_arbitrary_real_save_name(void) {
     snprintf(path, sizeof(path), "%s/slot-seven-real-save.bin", root);
     check_int("write arbitrary original save name",
               write_file(path, bytes, bytes_written), 1);
+    snprintf(nested, sizeof(nested), "%s/nested", root);
+    check_int("create nested corpus dir", test_mkdir(nested) == 0, 1);
+    snprintf(nested, sizeof(nested), "%s/nested/saves", root);
+    check_int("create nested saves corpus dir", test_mkdir(nested) == 0, 1);
+    snprintf(path, sizeof(path), "%s/nested/saves/slot-eight-real-save.bin",
+             root);
+    check_int("write nested arbitrary original save name",
+              write_file(path, bytes, bytes_written), 1);
+    snprintf(path, sizeof(path), "%s/nested/saves/readme.txt", root);
+    check_int("write nested rejected corpus file",
+              write_file(path, (const uint8_t *)"not-a-save", 10u), 1);
 
     check_int("fixed root manifest ignores arbitrary save filename",
               dm1_v1_original_save_classify_root(root, &fixed), 1);
@@ -417,21 +461,23 @@ static void test_corpus_manifest_finds_arbitrary_real_save_name(void) {
     check_int("corpus capacity",
               corpus.candidate_capacity,
               (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP);
-    check_int("corpus scanned file count", corpus.scanned_file_count, 1);
-    check_int("corpus present count", corpus.present_count, 1);
-    check_int("corpus classified count", corpus.classified_count, 1);
+    check_int("corpus scanned file count", corpus.scanned_file_count, 3);
+    check_int("corpus present count", corpus.present_count, 3);
+    check_int("corpus classified count", corpus.classified_count, 2);
     check_int("corpus original dm1 pc34 count",
-              corpus.original_dm1_pc34_count, 1);
+              corpus.original_dm1_pc34_count, 2);
     check_int("corpus pc34 importer candidate count",
-              corpus.pc34_importer_candidate_count, 1);
+              corpus.pc34_importer_candidate_count, 2);
     check_int("corpus pc34 loader envelope count",
-              corpus.pc34_loader_part_envelope_count, 1);
-    check_int("corpus result loader envelope candidate",
-              corpus.results[0].pc34_loader_part_envelope_candidate, 1);
-    check_int("corpus result save part ok count",
-              corpus.results[0].save_part_loader_envelope_ok_count, 5);
+              corpus.pc34_loader_part_envelope_count, 2);
+    check_int("corpus result loader envelope candidates",
+              corpus_loader_envelope_ok_count(&corpus), 2);
+    check_int("corpus rejected nested text file",
+              corpus.rejected_count, 1);
     check_int("corpus path records arbitrary filename",
-              strstr(corpus.paths[0], "slot-seven-real-save.bin") != NULL, 1);
+              corpus_path_contains(&corpus, "slot-seven-real-save.bin"), 1);
+    check_int("corpus path records nested arbitrary filename",
+              corpus_path_contains(&corpus, "slot-eight-real-save.bin"), 1);
 
     cleanup_root(root);
 }
