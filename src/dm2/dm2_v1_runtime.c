@@ -465,6 +465,12 @@ static void dm2_runtime_capture_door_render_receipt(
     g_dm2_last_door_render.valid = 1;
     g_dm2_last_door_render.view_square = door->view_square;
     g_dm2_last_door_render.skproject_cell = door->skproject_cell;
+    g_dm2_last_door_render.door_record_type = door->door_record_type;
+    g_dm2_last_door_render.door_gfx_index = door->door_gfx_index;
+    g_dm2_last_door_render.door_opening_dir = door->door_opening_dir;
+    g_dm2_last_door_render.ornament_index = door->ornament_index;
+    g_dm2_last_door_render.door_button = door->door_button;
+    g_dm2_last_door_render.door_button_state = door->door_button_state;
     g_dm2_last_door_render.door_state = door->door_state;
     g_dm2_last_door_render.door_open_pct = door->door_open_pct;
     g_dm2_last_door_render.panel_gdat_index =
@@ -503,6 +509,61 @@ static void dm2_runtime_capture_door_render_receipt(
         door->button_gdat_index != 0 &&
         door->button_rect.w > 0 &&
         door->button_rect.h > 0;
+    /* skproject SKWINSPX/src/v0/dme.h Door::DoorType, Button,
+     * ButtonState, OpeningDir and OrnateIndex feed
+     * SKWINSPX/src/v4/skguidrw.cpp DRAW_DOOR/DRAW_DOOR_FRAMES as one door
+     * material chain. Count the same required GDAT slots here before draw. */
+    g_dm2_last_door_render.skproject_material_expected_count = 1;
+    g_dm2_last_door_render.skproject_material_ready_count =
+        g_dm2_last_door_render.panel_blit_ready ? 1 : 0;
+    if (door->ornament_index > 0) {
+        ++g_dm2_last_door_render.skproject_material_expected_count;
+        if (g_dm2_last_door_render.ornate_blit_ready) {
+            ++g_dm2_last_door_render.skproject_material_ready_count;
+        }
+    }
+    if (door->door_state == 5) {
+        ++g_dm2_last_door_render.skproject_material_expected_count;
+        if (g_dm2_last_door_render.destroyed_mask_blit_ready) {
+            ++g_dm2_last_door_render.skproject_material_ready_count;
+        }
+    }
+    ++g_dm2_last_door_render.skproject_material_expected_count;
+    if (g_dm2_last_door_render.frame_blit_ready) {
+        ++g_dm2_last_door_render.skproject_material_ready_count;
+    }
+    if (door->button_gdat_index != 0) {
+        ++g_dm2_last_door_render.skproject_material_expected_count;
+        if (g_dm2_last_door_render.button_blit_ready) {
+            ++g_dm2_last_door_render.skproject_material_ready_count;
+        }
+    }
+    g_dm2_last_door_render.skproject_material_chain_ready =
+        g_dm2_last_door_render.skproject_material_expected_count ==
+        g_dm2_last_door_render.skproject_material_ready_count;
+    g_dm2_last_door_render.skproject_material_chain_hash =
+        2166136261u;
+#define DM2_MIX_DOOR_RECEIPT(v) \
+    do { \
+        g_dm2_last_door_render.skproject_material_chain_hash ^= \
+            (uint32_t)(v); \
+        g_dm2_last_door_render.skproject_material_chain_hash *= 16777619u; \
+    } while (0)
+    DM2_MIX_DOOR_RECEIPT(door->view_square);
+    DM2_MIX_DOOR_RECEIPT(door->skproject_cell);
+    DM2_MIX_DOOR_RECEIPT(door->door_record_type);
+    DM2_MIX_DOOR_RECEIPT(door->door_gfx_index);
+    DM2_MIX_DOOR_RECEIPT(door->door_opening_dir);
+    DM2_MIX_DOOR_RECEIPT(door->ornament_index);
+    DM2_MIX_DOOR_RECEIPT(door->door_button);
+    DM2_MIX_DOOR_RECEIPT(door->door_button_state);
+    DM2_MIX_DOOR_RECEIPT(door->door_state);
+    DM2_MIX_DOOR_RECEIPT(door->panel_gdat_index);
+    DM2_MIX_DOOR_RECEIPT(door->ornate_gdat_index);
+    DM2_MIX_DOOR_RECEIPT(door->destroyed_mask_gdat_index);
+    DM2_MIX_DOOR_RECEIPT(door->frame_gdat_index);
+    DM2_MIX_DOOR_RECEIPT(door->button_gdat_index);
+#undef DM2_MIX_DOOR_RECEIPT
     g_dm2_last_door_render.panel_rect = door->panel_rect;
     g_dm2_last_door_render.panel_visible_rect = door->panel_visible_rect;
     g_dm2_last_door_render.overlay_rect = door->panel_rect;
@@ -531,6 +592,28 @@ static void dm2_runtime_finish_door_render_receipt(
         viewport->last_door_frame_asset_blit_valid;
     g_dm2_last_door_render.button_asset_drawn =
         viewport->last_door_button_asset_blit_valid;
+    g_dm2_last_door_render.skproject_material_drawn_count = 0;
+    if (g_dm2_last_door_render.panel_asset_drawn) {
+        ++g_dm2_last_door_render.skproject_material_drawn_count;
+    }
+    if (g_dm2_last_door_render.ornament_index > 0 &&
+        g_dm2_last_door_render.ornate_asset_drawn) {
+        ++g_dm2_last_door_render.skproject_material_drawn_count;
+    }
+    if (g_dm2_last_door_render.door_state == 5 &&
+        g_dm2_last_door_render.destroyed_mask_asset_drawn) {
+        ++g_dm2_last_door_render.skproject_material_drawn_count;
+    }
+    if (g_dm2_last_door_render.frame_asset_drawn) {
+        ++g_dm2_last_door_render.skproject_material_drawn_count;
+    }
+    if (g_dm2_last_door_render.button_gdat_index != 0 &&
+        g_dm2_last_door_render.button_asset_drawn) {
+        ++g_dm2_last_door_render.skproject_material_drawn_count;
+    }
+    g_dm2_last_door_render.skproject_material_chain_drawn =
+        g_dm2_last_door_render.skproject_material_expected_count ==
+        g_dm2_last_door_render.skproject_material_drawn_count;
 
     g_dm2_last_door_render.panel_asset_src_w =
         viewport->last_door_panel_asset_src_w;

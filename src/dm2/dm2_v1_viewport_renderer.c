@@ -1331,6 +1331,12 @@ int dm2_v1_viewport_build_door_render_plan(
         row = &out_plan->doors[out_plan->door_count++];
         row->view_square = square;
         row->skproject_cell = dm2_v1_viewport_skproject_cell_for_square(square);
+        row->door_record_type = vs->door_record_type;
+        row->door_gfx_index = vs->door_gfx_index;
+        row->door_opening_dir = vs->door_opening_dir;
+        row->ornament_index = vs->ornament_index;
+        row->door_button = vs->door_button;
+        row->door_button_state = vs->door_button_state;
         if (vs->door_gfx_index != 0 ||
             vs->door_record_type != 0 ||
             vs->door_opening_dir != 0) {

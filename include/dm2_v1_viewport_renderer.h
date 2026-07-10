@@ -225,6 +225,12 @@ typedef struct {
 typedef struct {
     int view_square;
     int skproject_cell;
+    int door_record_type;
+    int door_gfx_index;
+    int door_opening_dir;
+    int ornament_index;
+    int door_button;
+    int door_button_state;
     int panel_gdat_index;
     int ornate_gdat_index;
     int destroyed_mask_gdat_index;
