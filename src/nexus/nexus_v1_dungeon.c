@@ -16,6 +16,14 @@ static int nexus_v1_decode_structure1b_collision_ref(const uint8_t *cell) {
     return (int)((((unsigned)cell[6] & 0x0FU) << 8) | (unsigned)cell[7]);
 }
 
+static uint8_t nexus_v1_decode_structure1b_wall_material(
+    const uint8_t *cell, int wall_dir) {
+    /* DMWeb DGN Structure1B: byte 3 holds north/east surface ids and
+     * byte 4 holds south/west ids. The directional bit is the missing link
+     * between the level's material references and the mesh command. */
+    return cell[(wall_dir & 3) < 2 ? 3 : 4];
+}
+
 static int nexus_v1_decode_structure1b_cell(const uint8_t *cell) {
     uint16_t flags;
     unsigned square_type;
@@ -175,6 +183,15 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                     int ref = nexus_v1_decode_structure1b_collision_ref(data + off);
                     level->squares[y][x] = (uint8_t)nexus_v1_decode_structure1b_cell(data + off);
                     level->collision_refs[y][x] = (uint16_t)ref;
+                    level->floor_material_refs[y][x] = data[off + 2];
+                    level->wall_material_refs[y][x][0] =
+                        nexus_v1_decode_structure1b_wall_material(data + off, 0);
+                    level->wall_material_refs[y][x][1] =
+                        nexus_v1_decode_structure1b_wall_material(data + off, 1);
+                    level->wall_material_refs[y][x][2] =
+                        nexus_v1_decode_structure1b_wall_material(data + off, 2);
+                    level->wall_material_refs[y][x][3] =
+                        nexus_v1_decode_structure1b_wall_material(data + off, 3);
                 }
             }
             level->has_3d_geometry = 1;
@@ -247,6 +264,17 @@ int nexus_v1_level_get_collision_ref(const Nexus_V1_Level *level, int x, int y) 
     if (!level || x < 0 || x >= level->width || y < 0 || y >= level->height)
         return 0x0fff;
     return (int)level->collision_refs[y][x];
+}
+
+int nexus_v1_level_get_material_ref(const Nexus_V1_Level *level, int x, int y,
+                                    Nexus_V1_DgnRenderCommandKind kind,
+                                    int wall_dir) {
+    if (!level || x < 0 || x >= level->width || y < 0 || y >= level->height)
+        return -1;
+    if (kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
+        kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
+        return level->floor_material_refs[y][x];
+    return level->wall_material_refs[y][x][wall_dir & 3];
 }
 
 int nexus_v1_level_dgn_renderer_handoff_receipt(
@@ -360,19 +388,19 @@ static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
     command.wall_dir = wall_dir & 3;
     command.collision_ref =
         (uint16_t)nexus_v1_level_get_collision_ref(level, x, y);
-    command.material_id = command.collision_ref == 0x0fffU
-        ? 0U : (uint8_t)(command.collision_ref & 7U);
+    command.material_id = (uint8_t)nexus_v1_level_get_material_ref(
+        level, x, y, kind, wall_dir);
     switch (kind) {
     case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
-        command.palette_index = (uint8_t)(8U + (command.material_id & 3U));
+        command.palette_index = command.material_id;
         command.draw_order = (uint8_t)(32 - depth);
         break;
     case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
-        command.palette_index = (uint8_t)(4U + (command.material_id & 3U));
+        command.palette_index = command.material_id;
         command.draw_order = (uint8_t)(16 - depth);
         break;
     default:
-        command.palette_index = (uint8_t)(12U + (command.material_id & 3U));
+        command.palette_index = command.material_id;
         command.draw_order = (uint8_t)(48 - depth);
         break;
     }
