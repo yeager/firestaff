@@ -542,8 +542,12 @@ int theron_v1_world_runtime_media_set_surface(
         nonzero_pixel_count == 0u || checksum == 0u) {
         return 0;
     }
-    if (kind == THERON_RUNTIME_MEDIA_SURFACE_STAGE) {
+    if (kind == THERON_RUNTIME_MEDIA_SURFACE_TITLE) {
+        surface = &world->runtime_media.title;
+    } else if (kind == THERON_RUNTIME_MEDIA_SURFACE_STAGE) {
         surface = &world->runtime_media.stage;
+    } else if (kind == THERON_RUNTIME_MEDIA_SURFACE_SOUL_ROOM) {
+        surface = &world->runtime_media.soul_room;
     } else if (kind == THERON_RUNTIME_MEDIA_SURFACE_FORCEFIELD) {
         surface = &world->runtime_media.forcefield;
     } else {
@@ -561,7 +565,10 @@ int theron_v1_world_runtime_media_set_surface(
     world->runtime_media.route_mask |= route_bit;
     world->runtime_media.checksum ^= checksum + (uint32_t)route_bit;
     world->runtime_media.restored =
-        world->runtime_media.stage.ready && world->runtime_media.forcefield.ready;
+        world->runtime_media.title.ready &&
+        world->runtime_media.stage.ready &&
+        world->runtime_media.soul_room.ready &&
+        world->runtime_media.forcefield.ready;
     theron_v1_world_runtime_media_invalidate_cache(world);
     return 1;
 }

@@ -52,7 +52,9 @@ extern "C" {
 
 typedef enum {
     THERON_RUNTIME_MEDIA_SURFACE_NONE = 0,
+    THERON_RUNTIME_MEDIA_SURFACE_TITLE,
     THERON_RUNTIME_MEDIA_SURFACE_STAGE,
+    THERON_RUNTIME_MEDIA_SURFACE_SOUL_ROOM,
     THERON_RUNTIME_MEDIA_SURFACE_FORCEFIELD
 } Theron_RuntimeMediaSurfaceKind;
 
@@ -112,9 +114,12 @@ typedef struct {
     int restored;
     unsigned int route_mask;
     uint32_t checksum;
-    /* A later (non-zero) level uses the decoded stage surface.  A gameplay
-     * forcefield explicitly selects the decoded forcefield surface. */
+    /* Title/stage/Soul Room/forcefield preserve the four verified Track 02
+     * startup bitmap routes.  A later (non-zero) level uses stage; gameplay
+     * forcefield explicitly selects forcefield. */
+    Theron_RuntimeMediaSurface title;
     Theron_RuntimeMediaSurface stage;
+    Theron_RuntimeMediaSurface soul_room;
     Theron_RuntimeMediaSurface forcefield;
     Theron_RuntimeMediaIdentity identity;
     uint64_t cache_generation;
