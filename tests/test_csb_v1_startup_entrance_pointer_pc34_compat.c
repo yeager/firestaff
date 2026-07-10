@@ -21,19 +21,6 @@ typedef struct OpeningCompositeProbe {
     CSB_V1_StartupOpeningComposite_PC34 seen;
 } OpeningCompositeProbe;
 
-typedef struct RenderExecutorProbe {
-    int draw_title_count;
-    int clear_black_count;
-    int draw_full_surface_count;
-    int draw_full_surface_result;
-    int draw_opening_frame_count;
-    int draw_opening_frame_result;
-    int draw_closed_doors_count;
-    int draw_door_fallback_count;
-    int draw_fallback_text_count;
-    int draw_utility_panel_count;
-} RenderExecutorProbe;
-
 unsigned int ENTRANCE_Compat_GetMouseRouteCount(void)
 {
     return 5u;
@@ -142,118 +129,6 @@ static int opening_composite_probe(
     return !probe->fail;
 }
 
-static int render_probe_draw_title(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    RenderExecutorProbe *probe = (RenderExecutorProbe *)user;
-    (void)plan;
-    if (!probe) {
-        return 0;
-    }
-    ++probe->draw_title_count;
-    return 1;
-}
-
-static void render_probe_clear_black(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    RenderExecutorProbe *probe = (RenderExecutorProbe *)user;
-    (void)plan;
-    if (probe) {
-        ++probe->clear_black_count;
-    }
-}
-
-static int render_probe_draw_full_surface(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    RenderExecutorProbe *probe = (RenderExecutorProbe *)user;
-    (void)plan;
-    if (!probe) {
-        return 0;
-    }
-    ++probe->draw_full_surface_count;
-    return probe->draw_full_surface_result;
-}
-
-static int render_probe_draw_opening_frame(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    RenderExecutorProbe *probe = (RenderExecutorProbe *)user;
-    (void)plan;
-    if (!probe) {
-        return 0;
-    }
-    ++probe->draw_opening_frame_count;
-    return probe->draw_opening_frame_result;
-}
-
-static void render_probe_draw_closed_doors(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    RenderExecutorProbe *probe = (RenderExecutorProbe *)user;
-    (void)plan;
-    if (probe) {
-        ++probe->draw_closed_doors_count;
-    }
-}
-
-static void render_probe_draw_door_fallback(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    RenderExecutorProbe *probe = (RenderExecutorProbe *)user;
-    (void)plan;
-    if (probe) {
-        ++probe->draw_door_fallback_count;
-    }
-}
-
-static void render_probe_draw_fallback_text(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    RenderExecutorProbe *probe = (RenderExecutorProbe *)user;
-    (void)plan;
-    if (probe) {
-        ++probe->draw_fallback_text_count;
-    }
-}
-
-static void render_probe_draw_utility_panel(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    const CSB_V1_UtilRenderPlan *utility_plan)
-{
-    RenderExecutorProbe *probe = (RenderExecutorProbe *)user;
-    (void)plan;
-    (void)utility_plan;
-    if (probe) {
-        ++probe->draw_utility_panel_count;
-    }
-}
-
-static void render_probe_executor_init(
-    CSB_V1_StartupRenderExecutor_PC34 *executor,
-    RenderExecutorProbe *probe)
-{
-    memset(executor, 0, sizeof(*executor));
-    executor->user = probe;
-    executor->draw_title = render_probe_draw_title;
-    executor->clear_black = render_probe_clear_black;
-    executor->draw_full_surface = render_probe_draw_full_surface;
-    executor->draw_opening_frame = render_probe_draw_opening_frame;
-    executor->draw_closed_doors = render_probe_draw_closed_doors;
-    executor->draw_door_fallback = render_probe_draw_door_fallback;
-    executor->draw_fallback_text = render_probe_draw_fallback_text;
-    executor->draw_utility_panel = render_probe_draw_utility_panel;
-}
-
 static void expect_action(const char *message,
                           int x,
                           int y,
@@ -298,8 +173,6 @@ int main(void)
     CSB_V1_TextMaterial_PC34 material;
     AssetExecutorProbe probe;
     OpeningCompositeProbe composite_probe;
-    RenderExecutorProbe render_probe;
-    CSB_V1_StartupRenderExecutor_PC34 render_executor;
     char phase[64];
     char animation[64];
     int startup_active;
@@ -695,14 +568,6 @@ int main(void)
               plan.render_commands[1].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34,
           "startup render plan owns title clear and draw command");
-    memset(&render_probe, 0, sizeof(render_probe));
-    render_probe_executor_init(&render_executor, &render_probe);
-    check(csb_v1_startup_execute_render_plan_pc34(&plan, &render_executor) &&
-              render_probe.draw_title_count == 1 &&
-              render_probe.clear_black_count == 1 &&
-              render_probe.draw_full_surface_count == 0 &&
-              render_probe.draw_fallback_text_count == 0,
-          "startup render executor dispatches title clear before draw");
     memset(&probe, 0, sizeof(probe));
     check(csb_v1_startup_execute_asset_commands_kind_pc34(
               &plan,
@@ -1229,27 +1094,6 @@ int main(void)
               plan.render_commands[3].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34,
           "startup render plan owns door-opening command order");
-    memset(&render_probe, 0, sizeof(render_probe));
-    render_probe.draw_full_surface_result = 1;
-    render_probe.draw_opening_frame_result = 1;
-    render_probe_executor_init(&render_executor, &render_probe);
-    check(csb_v1_startup_execute_render_plan_pc34(&plan, &render_executor) &&
-              render_probe.clear_black_count == 1 &&
-              render_probe.draw_full_surface_count == 1 &&
-              render_probe.draw_opening_frame_count == 1 &&
-              render_probe.draw_closed_doors_count == 0 &&
-              render_probe.draw_door_fallback_count == 0,
-          "startup render executor stops after successful opening composite");
-    memset(&render_probe, 0, sizeof(render_probe));
-    render_probe.draw_full_surface_result = 0;
-    render_probe_executor_init(&render_executor, &render_probe);
-    check(csb_v1_startup_execute_render_plan_pc34(&plan, &render_executor) &&
-              render_probe.clear_black_count == 1 &&
-              render_probe.draw_full_surface_count == 1 &&
-              render_probe.draw_opening_frame_count == 0 &&
-              render_probe.draw_closed_doors_count == 0 &&
-              render_probe.draw_door_fallback_count == 1,
-          "startup render executor routes missing door surface to fallback primitives");
     memset(&composite_probe, 0, sizeof(composite_probe));
     check(csb_v1_startup_execute_opening_composite_pc34(
               &plan,

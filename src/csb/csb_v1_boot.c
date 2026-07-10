@@ -59,6 +59,9 @@ static int csb_v1_boot_runtime_execute_startup_pointer_gate_from_snapshot_pc34(
     int y,
     unsigned int button_mask,
     CSB_V1_BootStartupInputGateReceipt_PC34 *out_receipt);
+extern int csb_v1_startup_execute_render_plan_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor);
 
 static int csb_v1_boot_count_unique_hashes_pc34(const uint32_t *hashes,
                                                 int count)
