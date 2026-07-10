@@ -1746,6 +1746,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_host_probe_facts.observed_c026_portrait_asset = 1;
     hoc_host_probe_facts.observed_c346_mirror_backing_asset = 1;
     hoc_host_probe_facts.observed_host_window_present = 1;
+    hoc_host_probe_facts.consumed_hoc_host_render_receipt = 1;
+    hoc_host_probe_facts.consumed_m11_boot_probe_consumer = 1;
     expect_i("DM1 HoC host probe carries real Mac asset capture route",
              dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(
                  &hoc_host_probe_facts,
@@ -1768,6 +1770,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership.handled &&
                  hoc_release_capture_ownership.ready &&
                  hoc_release_capture_ownership.consumed_host_probe_facts &&
+                 hoc_release_capture_ownership
+                     .consumed_hoc_host_render_receipt &&
+                 hoc_release_capture_ownership
+                     .consumed_m11_boot_probe_consumer &&
                  hoc_release_capture_ownership
                      .consumed_runtime_apply_receipt &&
                  hoc_release_capture_ownership
@@ -1807,6 +1813,32 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      .block_enter_until_champion_selected &&
                  hoc_release_capture_ownership.render_command_count == 3,
              1);
+    hoc_host_probe_facts.consumed_hoc_host_render_receipt = 0;
+    expect_i("DM1 HoC release/app ownership rejects missing host-render consumer",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 !hoc_release_capture_ownership.ready &&
+                 !hoc_release_capture_ownership
+                      .consumed_hoc_host_render_receipt &&
+                 hoc_release_capture_ownership
+                     .consumed_m11_boot_probe_consumer,
+             1);
+    hoc_host_probe_facts.consumed_hoc_host_render_receipt = 1;
+    hoc_host_probe_facts.consumed_m11_boot_probe_consumer = 0;
+    expect_i("DM1 HoC release/app ownership rejects unnamed M11/M12 consumer",
+             dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_release_capture_ownership) &&
+                 hoc_release_capture_ownership.handled &&
+                 !hoc_release_capture_ownership.ready &&
+                 hoc_release_capture_ownership
+                     .consumed_hoc_host_render_receipt &&
+                 !hoc_release_capture_ownership
+                      .consumed_m11_boot_probe_consumer,
+             1);
+    hoc_host_probe_facts.consumed_m11_boot_probe_consumer = 1;
     hoc_host_probe_facts.captured_from_real_assets = 0;
     expect_i("DM1 HoC host probe exposes missing real-asset capture route",
              dm1_v1_startup_hoc_full_graphics_host_probe_receipt_pc34(

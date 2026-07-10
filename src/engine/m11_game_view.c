@@ -11479,6 +11479,8 @@ static int m11_dm1_hoc_full_graphics_probe_receipt(
     facts.observed_c346_mirror_backing_asset =
         backing && backing->loaded && backing->pixels ? 1 : 0;
     facts.observed_host_window_present = host_window_present;
+    facts.consumed_hoc_host_render_receipt = 1;
+    facts.consumed_m11_boot_probe_consumer = 1;
     if (out_ownership) {
         memset(out_ownership, 0, sizeof(*out_ownership));
     }
@@ -11766,6 +11768,10 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 hoc_consumer.host_capture_route_matches;
             out->dm1HoCReleaseCaptureOwnershipReady =
                 hoc_ownership.ready;
+            out->dm1HoCHostRenderConsumerReady =
+                hoc_ownership.consumed_hoc_host_render_receipt;
+            out->dm1HoCM11BootProbeConsumerReady =
+                hoc_ownership.consumed_m11_boot_probe_consumer;
             out->dm1HoCLaunchPathReady =
                 hoc_ownership.consumed_launch_path_receipt &&
                 hoc_ownership.launch_path_started_from_launcher &&
@@ -29593,6 +29599,8 @@ int M11_GameView_ProbeDm1HocFullGraphicsOwnershipReceipt(
     hostProbeFacts.observed_c026_portrait_asset = 1;
     hostProbeFacts.observed_c346_mirror_backing_asset = 1;
     hostProbeFacts.observed_host_window_present = 1;
+    hostProbeFacts.consumed_hoc_host_render_receipt = 1;
+    hostProbeFacts.consumed_m11_boot_probe_consumer = 1;
 
     if (!dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
             &artifact, &captureFacts, &captureProof) ||

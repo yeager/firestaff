@@ -497,6 +497,9 @@ typedef struct DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 {
     int observed_required_graphics_hash_match;
     int observed_required_dungeon_hash_match;
     int observed_host_window_present;
+    int consumed_hoc_host_render_receipt;
+    int consumed_m11_boot_probe_consumer;
+    int consumed_m12_startup_capture_consumer;
     int observed_false_floor_item_payload_count;
     int observed_projectile_payload_count;
     int observed_spell_effect_payload_count;
@@ -510,6 +513,9 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     int handled;
     int ready;
     int consumed_host_probe_facts;
+    int consumed_hoc_host_render_receipt;
+    int consumed_m11_boot_probe_consumer;
+    int consumed_m12_startup_capture_consumer;
     int consumed_launch_path_receipt;
     int consumed_runtime_apply_receipt;
     int consumed_production_consumer_receipt;
