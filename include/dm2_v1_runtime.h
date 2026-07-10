@@ -118,6 +118,12 @@ typedef struct DM2_V1_RuntimeDoorRenderReceipt {
     int valid;
     int view_square;
     int skproject_cell;
+    int door_record_type;
+    int door_gfx_index;
+    int door_opening_dir;
+    int ornament_index;
+    int door_button;
+    int door_button_state;
     int door_state;
     int door_open_pct;
     int panel_gdat_index;
@@ -133,6 +139,12 @@ typedef struct DM2_V1_RuntimeDoorRenderReceipt {
     int destroyed_mask_blit_ready;
     int frame_blit_ready;
     int button_blit_ready;
+    int skproject_material_expected_count;
+    int skproject_material_ready_count;
+    int skproject_material_drawn_count;
+    int skproject_material_chain_ready;
+    int skproject_material_chain_drawn;
+    uint32_t skproject_material_chain_hash;
     int panel_asset_drawn;
     int ornate_asset_drawn;
     int destroyed_mask_asset_drawn;

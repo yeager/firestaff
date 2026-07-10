@@ -648,6 +648,10 @@ static void test_floor_ceiling_asset_provider(void)
               door_plan.doors[0].panel_gdat_index ==
                   dm2_v1_viewport_door_panel_graphic_index_for_record(
                       DM2_SQ_D0C, 7, 1) &&
+              door_plan.doors[0].door_record_type == 1 &&
+              door_plan.doors[0].door_gfx_index == 7 &&
+              door_plan.doors[0].door_opening_dir == 1 &&
+              door_plan.doors[0].ornament_index == 2 &&
               door_plan.doors[0].panel_gdat_index !=
                   dm2_v1_viewport_door_panel_graphic_index_for_square(
                       DM2_SQ_D0C) &&

@@ -1203,6 +1203,12 @@ static void test_first_tick_after_boot_profile_handoff(void)
                 CHECK(dm2_v1_runtime_last_door_render_receipt(&door_receipt) == 1 &&
                       door_receipt.view_square == DM2_SQ_D0C &&
                       door_receipt.skproject_cell == 0 &&
+                      door_receipt.door_record_type == 1 &&
+                      door_receipt.door_gfx_index == 7 &&
+                      door_receipt.door_opening_dir == 1 &&
+                      door_receipt.ornament_index == 2 &&
+                      door_receipt.door_button == 1 &&
+                      door_receipt.door_button_state == 1 &&
                       door_receipt.door_state == 4 &&
                       door_receipt.door_open_pct == 0 &&
                       door_receipt.panel_gdat_index ==
@@ -1224,6 +1230,12 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       door_receipt.destroyed_mask_blit_ready == 0 &&
                       door_receipt.frame_blit_ready == 1 &&
                       door_receipt.button_blit_ready == 1 &&
+                      door_receipt.skproject_material_expected_count == 4 &&
+                      door_receipt.skproject_material_ready_count == 4 &&
+                      door_receipt.skproject_material_drawn_count == 4 &&
+                      door_receipt.skproject_material_chain_ready == 1 &&
+                      door_receipt.skproject_material_chain_drawn == 1 &&
+                      door_receipt.skproject_material_chain_hash != 0u &&
                       door_receipt.panel_rect.w > 0 &&
                       door_receipt.panel_rect.h > 0 &&
                       door_receipt.panel_visible_rect.w > 0 &&
@@ -1355,6 +1367,12 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       door_receipt.destroyed_mask_blit_ready == 1 &&
                       door_receipt.frame_blit_ready == 1 &&
                       door_receipt.button_blit_ready == 1 &&
+                      door_receipt.skproject_material_expected_count == 5 &&
+                      door_receipt.skproject_material_ready_count == 4 &&
+                      door_receipt.skproject_material_drawn_count == 4 &&
+                      door_receipt.skproject_material_chain_ready == 0 &&
+                      door_receipt.skproject_material_chain_drawn == 0 &&
+                      door_receipt.skproject_material_chain_hash != 0u &&
                       door_receipt.panel_asset_drawn == 0 &&
                       door_receipt.ornate_asset_drawn == 1 &&
                       door_receipt.destroyed_mask_asset_drawn == 1 &&
