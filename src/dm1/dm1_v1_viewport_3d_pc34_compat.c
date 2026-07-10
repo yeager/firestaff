@@ -2483,6 +2483,9 @@ DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_
         receipt.floor_ornament_asset_bound = receipt.floor_ornament_asset_index != 0;
         if (rel_side != 0 &&
             dm1_v1_floor_ornament_source_zone_pc34(3, rel_side, &plan)) {
+            const uint8_t *pixels = NULL;
+            int width = 0;
+            int height = 0;
             receipt.floor_ornament_blit_plan_bound = true;
             receipt.floor_ornament_graphic_index =
                 receipt.floor_ornament_asset_index;
@@ -2490,6 +2493,23 @@ DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_
             receipt.floor_ornament_dst_y = (int16_t)plan.blit.dstY;
             receipt.floor_ornament_width = (int16_t)plan.blit.width;
             receipt.floor_ornament_height = (int16_t)plan.blit.height;
+            if (receipt.floor_ornament_asset_bound &&
+                state->graphic_provider_callback &&
+                state->graphic_provider_callback(
+                    state->graphic_provider_user_data,
+                    receipt.floor_ornament_asset_index,
+                    &pixels,
+                    &width,
+                    &height) &&
+                pixels &&
+                width >= plan.blit.width &&
+                height >= plan.blit.height) {
+                receipt.floor_ornament_graphics_dat_bound = true;
+                receipt.floor_ornament_graphics_dat_width = (int16_t)width;
+                receipt.floor_ornament_graphics_dat_height = (int16_t)height;
+            }
+            receipt.floor_ornament_used_bounded_fallback =
+                !receipt.floor_ornament_graphics_dat_bound;
         }
     }
 
@@ -2727,11 +2747,10 @@ static void dm1_viewport_3d_draw_field(DM1_Viewport3DState *state,
  * Renders a floor ornament at the appropriate viewport position for
  * CSB back-wall squares (D3L2/D3R2) and near-wall squares (D2L2/D2R2).
  *
- * This is a simplified implementation of ReDMCSB F0108_DUNGEONVIEW_DrawFloorOrnament.
- * It draws a colored placeholder diamond at the floor ornament zone position.
- * The full implementation would look up the floor ornament info from
- * G0102_as_CurrentMapFloorOrnamentsInfo and the coordinate set from
- * G0206_aaauc_Graphic558_FloorOrnamentCoordinateSets.
+ * This is a bounded implementation of ReDMCSB F0108_DUNGEONVIEW_DrawFloorOrnament.
+ * When a GRAPHICS.DAT provider is available, it blits the expanded source
+ * bitmap through the source-locked G0206 zone with C10 transparency. Without
+ * provider pixels it falls back to a flat diagnostic fill for tests.
  *
  * View floor index mapping (ReDMCSB DEFS.H C00_VIEW_FLOOR_D3L2/C01_VIEW_FLOOR_D3R2):
  *   D3L2 (square=-101): floor_index=0 (C00_VIEW_FLOOR_D3L2)
@@ -2761,6 +2780,9 @@ static int dm1_viewport_3d_draw_floor_ornament_plan(
     int max_y;
     uint8_t *vp;
     int stride;
+    const uint8_t *provider_pixels = NULL;
+    int provider_width = 0;
+    int provider_height = 0;
 
     if (!state || !state->viewport_pixels) return 0;
     if (floor_ornament_index <= 0) return 0;
@@ -2786,10 +2808,37 @@ static int dm1_viewport_3d_draw_floor_ornament_plan(
     vp = state->viewport_pixels;
     stride = state->viewport_stride;
 
-    /* ReDMCSB F0108 DUNVIEW.C:3959-3989 resolves the G0206 zone before
-     * the transparent floor-ornament blit.  This bounded helper now draws
-     * through that source-locked zone instead of the old hand-placed diamond;
-     * GRAPHICS.DAT pixel expansion can plug into the same plan later. */
+    /*
+     * ReDMCSB F0108 DUNVIEW.C:3965-3998 obtains the native floor-ornament
+     * bitmap through F0489, resolves the G0206 coordinate set, and blits with
+     * C10 transparency. M11 supplies already-expanded GRAPHICS.DAT pixels via
+     * the provider callback; DM1 owns the zone and transparency decision here.
+     */
+    if (state->graphic_provider_callback &&
+        state->graphic_provider_callback(
+            state->graphic_provider_user_data,
+            floor_ornament_index,
+            &provider_pixels,
+            &provider_width,
+            &provider_height) &&
+        provider_pixels &&
+        provider_width >= plan.blit.width &&
+        provider_height >= plan.blit.height) {
+        for (int y = 0; y < plan.blit.height; ++y) {
+            const uint8_t *src = provider_pixels + y * provider_width;
+            uint8_t *row = vp + (plan.blit.dstY + y) * stride + plan.blit.dstX;
+            for (int x = 0; x < plan.blit.width; ++x) {
+                uint8_t pixel = src[x];
+                if (pixel != COLOR_TRANSPARENT) {
+                    row[x] = pixel;
+                }
+            }
+        }
+        return 1;
+    }
+
+    /* Bounded diagnostic fallback used only when no expanded GRAPHICS.DAT
+     * floor-ornament pixels have been provided. */
     for (int y = 0; y < plan.blit.height; ++y) {
         uint8_t *row = vp + (plan.blit.dstY + y) * stride + plan.blit.dstX;
         for (int x = 0; x < plan.blit.width; ++x) {

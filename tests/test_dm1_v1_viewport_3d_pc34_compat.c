@@ -2677,6 +2677,10 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
                   d3l2_asset.floor_ornament_dst_y == 66 &&
                   d3l2_asset.floor_ornament_width == 48 &&
                   d3l2_asset.floor_ornament_height == 6, 1);
+        check_int("d3l2_d3r2_gate.d3l2_floor_provider_unbound",
+                  d3l2_asset.floor_ornament_graphics_dat_bound ? 1 : 0, 0);
+        check_int("d3l2_d3r2_gate.d3l2_floor_bounded_fallback",
+                  d3l2_asset.floor_ornament_used_bounded_fallback ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3l2_door_asset_bound",
                   d3l2_asset.door_front_asset_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3l2_door_asset_index",
@@ -2700,6 +2704,10 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
                   d3r2_asset.floor_ornament_dst_y == 66 &&
                   d3r2_asset.floor_ornament_width == 48 &&
                   d3r2_asset.floor_ornament_height == 6, 1);
+        check_int("d3l2_d3r2_gate.d3r2_floor_provider_unbound",
+                  d3r2_asset.floor_ornament_graphics_dat_bound ? 1 : 0, 0);
+        check_int("d3l2_d3r2_gate.d3r2_floor_bounded_fallback",
+                  d3r2_asset.floor_ornament_used_bounded_fallback ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3r2_door_asset_bound",
                   d3r2_asset.door_front_asset_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3r2_door_asset_index",
@@ -2723,6 +2731,51 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
     }
 
     dm1_viewport_3d_set_wall_frame_bitmaps(assets);
+
+    /* Expanded GRAPHICS.DAT provider path for F0108 floor ornaments: M11 can
+     * pass already-expanded G0206 pixels into the DM1-owned D3L2 route. */
+    {
+        uint8_t provider_pixels[48 * 6];
+        DM1_TestGraphicProvider provider;
+        memset(viewport, 0xee, sizeof(viewport));
+        memset(provider_pixels, 10, sizeof(provider_pixels));
+        provider_pixels[0 * 48 + 0] = 10;
+        provider_pixels[0 * 48 + 1] = 0x61;
+        provider_pixels[0 * 48 + 46] = 0x62;
+        provider_pixels[0 * 48 + 47] = 10;
+        memset(&provider, 0, sizeof(provider));
+        provider.expected_index = 0x123;
+        provider.pixels = provider_pixels;
+        provider.width = 48;
+        provider.height = 6;
+        state.graphic_provider_callback = dm1_test_graphic_provider;
+        state.graphic_provider_user_data = &provider;
+        state.floor_ornament_indices[0] = 0x123;
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_CORRIDOR;
+        state.dungeon_aspect_grid = grid;
+        dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 1, 1);
+        check_int("d3l2_d3r2_gate.d3l2_floor_provider_called",
+                  provider.calls >= 1 ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_floor_provider_receipt_bound",
+                  state.last_d3_back_wall_receipt.floor_ornament_graphics_dat_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_floor_provider_receipt_size",
+                  state.last_d3_back_wall_receipt.floor_ornament_graphics_dat_width == 48 &&
+                  state.last_d3_back_wall_receipt.floor_ornament_graphics_dat_height == 6, 1);
+        check_int("d3l2_d3r2_gate.d3l2_floor_provider_no_fallback",
+                  state.last_d3_back_wall_receipt.floor_ornament_used_bounded_fallback ? 1 : 0, 0);
+        check_int("d3l2_d3r2_gate.d3l2_floor_provider_transparent_left_skip",
+                  viewport[66 * DM1_VIEWPORT_WIDTH + 32], 0xee);
+        check_int("d3l2_d3r2_gate.d3l2_floor_provider_pixel",
+                  viewport[66 * DM1_VIEWPORT_WIDTH + 33], 0x61);
+        check_int("d3l2_d3r2_gate.d3l2_floor_provider_right_pixel",
+                  viewport[66 * DM1_VIEWPORT_WIDTH + 78], 0x62);
+        check_int("d3l2_d3r2_gate.d3l2_floor_provider_transparent_right_skip",
+                  viewport[66 * DM1_VIEWPORT_WIDTH + 79], 0xee);
+        state.graphic_provider_callback = NULL;
+        state.graphic_provider_user_data = NULL;
+        state.dungeon_aspect_grid = NULL;
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
+    }
 
     /* D3L2 native: F0676 chooses C11_WALL_D3L2 and C702_ZONE_WALL_D3L2. */
     d3l2_bitmap[0 * 8 + 0] = 10;

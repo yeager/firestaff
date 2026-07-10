@@ -350,6 +350,10 @@ typedef struct {
     int16_t floor_ornament_dst_y;
     int16_t floor_ornament_width;
     int16_t floor_ornament_height;
+    bool floor_ornament_graphics_dat_bound;
+    int16_t floor_ornament_graphics_dat_width;
+    int16_t floor_ornament_graphics_dat_height;
+    bool floor_ornament_used_bounded_fallback;
     bool door_front_asset_bound;
     int16_t door_front_asset_index;
     bool door_front_blit_plan_bound;
