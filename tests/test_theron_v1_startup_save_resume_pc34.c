@@ -4480,8 +4480,17 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     object_route_receipt.descriptor_anchor_mask == 0x07u &&
                     object_route_receipt.descriptor_entries_bound ==
                         3u * THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES &&
+                    (object_route_receipt.semantic_role_mask &
+                     (1u << THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE)) &&
+                    (object_route_receipt.semantic_role_mask &
+                     (1u << THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE)) &&
+                    !(object_route_receipt.semantic_role_mask &
+                      (1u << THERON_TRACK02_SEMANTIC_OBJECT_TABLE)) &&
                     object_route_receipt.descriptor_table_semantic_count == 3u &&
+                    !object_route_receipt.object_table_role_mapped &&
                     object_route_receipt.object_table_candidate_count == 0u &&
+                    object_route_receipt.object_table_blocked_anchor_count == 3u &&
+                    object_route_receipt.object_table_blocked_anchor_mask == 0x07u &&
                     !object_route_receipt.object_table_decode_ready &&
                     object_route_receipt.blocked_for_missing_real_object_evidence &&
                     !object_route_receipt.fallback_visuals_allowed &&
@@ -4500,6 +4509,8 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     level_route_receipt.startup_level_route_ready &&
                     level_route_receipt.startup_level_route_count == 1u &&
                     level_route_receipt.startup_level_route_mask == 0x01u &&
+                    level_route_receipt.startup_level_blocked_anchor_count == 2u &&
+                    level_route_receipt.startup_level_blocked_anchor_mask == 0x06u &&
                     level_route_receipt.startup_descriptor_offset ==
                         descriptor_offsets[0] &&
                     level_route_receipt.startup_raw_offset ==
@@ -4508,7 +4519,16 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     level_route_receipt.startup_header_width == 32u &&
                     level_route_receipt.startup_header_height == 27u &&
                     level_route_receipt.startup_header_level_index == 0x0026u &&
+                    (level_route_receipt.semantic_role_mask &
+                     (1u << THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE)) &&
+                    (level_route_receipt.semantic_role_mask &
+                     (1u << THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE)) &&
+                    !(level_route_receipt.semantic_role_mask &
+                      (1u << THERON_TRACK02_SEMANTIC_LEVEL_GRID_TABLE)) &&
+                    !level_route_receipt.level_grid_role_mapped &&
                     level_route_receipt.nonstartup_level_candidate_count == 0u &&
+                    level_route_receipt.nonstartup_level_blocked_anchor_count == 3u &&
+                    level_route_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     !level_route_receipt.nonstartup_level_decode_ready &&
                     level_route_receipt.blocked_for_missing_nonstartup_level_evidence &&
                     !level_route_receipt.fallback_visuals_allowed &&
