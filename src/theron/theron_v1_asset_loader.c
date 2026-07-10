@@ -320,6 +320,53 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
         return TR_ASSET_ERR_FILE;
     }
 
+    /* The commonly distributed CD image keeps MODE1 Track 02 split as
+     * TQJP19.iso/TQJP02End.iso (and likewise for US). Decode.bat joins
+     * those files before cue playback. Accept the split layout directly so
+     * the real Track 02 descriptor/bitmap data is not mistaken for an empty
+     * suffix. */
+    {
+        const char *suffix = strstr(file_path, "02End.iso");
+        if (suffix && suffix[9] == '\0') {
+            char track19_path[1024];
+            size_t prefix_len = (size_t)(suffix - file_path);
+            FILE *track19;
+            long track19_size;
+            uint8_t *combined;
+
+            if (prefix_len + strlen("19.iso") < sizeof(track19_path)) {
+                memcpy(track19_path, file_path, prefix_len);
+                memcpy(track19_path + prefix_len, "19.iso", 7u);
+                track19 = fopen(track19_path, "rb");
+                if (track19) {
+                    fseek(track19, 0, SEEK_END);
+                    track19_size = ftell(track19);
+                    fseek(track19, 0, SEEK_SET);
+                    if (track19_size > 0 &&
+                        (size_t)track19_size <= 64u * 1024u * 1024u -
+                                                  (size_t)file_size) {
+                        combined = (uint8_t *)malloc((size_t)track19_size +
+                                                     (size_t)file_size);
+                        if (combined &&
+                            fread(combined, 1, (size_t)track19_size,
+                                  track19) == (size_t)track19_size) {
+                            memcpy(combined + track19_size, data,
+                                   (size_t)file_size);
+                            free(data);
+                            data = combined;
+                            file_size += track19_size;
+                            printf("[TQR] Rebuilt Track 02 from %s + %s\n",
+                                   track19_path, file_path);
+                        } else {
+                            free(combined);
+                        }
+                    }
+                    fclose(track19);
+                }
+            }
+        }
+    }
+
     /* Scan for Track 03/04 magic signatures */
     TrAssetResult r = find_tracks_in_buffer(bundle, data, (size_t)file_size);
     if (r < 0) {
