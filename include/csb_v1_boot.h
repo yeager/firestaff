@@ -783,6 +783,7 @@ typedef struct CSB_V1_StartupRuntimeSurfaceSet_PC34 {
     int real_asset_matched;
     int title_regions_ready;
     int opening_frame_ready;
+    int entrance_screen_ready;
     CSB_V1_StartupRuntimeSurface_PC34
         surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_COUNT_PC34];
 } CSB_V1_StartupRuntimeSurfaceSet_PC34;
@@ -823,8 +824,14 @@ typedef struct CSB_V1_StartupRuntimeAssetSession_PC34 {
     int valid;
     int real_asset_matched;
     int title_assets_ready;
+    int title_presents_ready;
+    int title_chaos_ready;
+    int title_strikes_back_ready;
     int entrance_assets_ready;
+    int door_assets_ready;
     int hud_assets_bound;
+    int full_startup_ready;
+    int rejects_legacy_wrappers;
     uint32_t source_tick;
     uint32_t generation;
     CSB_V1_StartupAssetBinding_PC34 hud_inventory_binding;
@@ -832,6 +839,25 @@ typedef struct CSB_V1_StartupRuntimeAssetSession_PC34 {
     CSB_V1_StartupRuntimeSurfaceSet_PC34 surfaces;
     CSB_V1_StartupPlaybackState_PC34 playback;
 } CSB_V1_StartupRuntimeAssetSession_PC34;
+
+/* One strict runtime-data proof for the complete CSB start.  Consumers may
+ * still request a single frame, but the session is only accepted after C001
+ * title regions, C002/C003 opening doors, entrance art and HUD bindings all
+ * come from the verified CSB data owner. */
+typedef struct CSB_V1_StartupFullRuntimeReceipt_PC34 {
+    int valid;
+    int real_asset_matched;
+    int title_sequence_ready;
+    int title_presents_ready;
+    int title_chaos_ready;
+    int title_strikes_back_ready;
+    int entrance_ready;
+    int hud_ready;
+    int door_ready;
+    int no_legacy_wrappers;
+    uint32_t session_generation;
+    const char *source_evidence;
+} CSB_V1_StartupFullRuntimeReceipt_PC34;
 
 /* A non-owning frame view into a startup asset session.  The source pointers
  * remain valid until csb_v1_boot_startup_runtime_asset_session_release_pc34.
@@ -1062,6 +1088,9 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     uint32_t source_tick,
     CSB_V1_StartupRuntimeAssetFrame_PC34 *out_frame);
+int csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupFullRuntimeReceipt_PC34 *out_receipt);
 /* ReDMCSB SWSH.C F0909/F0910 owns the pre-title sound, TITLE.C F0437 owns
  * the title timing, and ENTRANCE.C F0806 starts C0_MUSIC_ENTRANCE. */
 int csb_v1_boot_startup_playback_begin_pc34(

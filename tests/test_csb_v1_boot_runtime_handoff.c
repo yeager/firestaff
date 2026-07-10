@@ -4370,6 +4370,56 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     csb_v1_boot_cleanup(&boot);
 }
 
+static void test_startup_full_runtime_receipt_requires_complete_real_session(void)
+{
+    CSB_V1_StartupRuntimeAssetSession_PC34 session;
+    CSB_V1_StartupFullRuntimeReceipt_PC34 receipt;
+
+    csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
+    session.valid = 1;
+    session.real_asset_matched = 1;
+    session.surfaces.valid = 1;
+    session.title_presents_ready = 1;
+    session.title_chaos_ready = 1;
+    session.title_strikes_back_ready = 1;
+    session.entrance_assets_ready = 1;
+    session.door_assets_ready = 1;
+    session.hud_assets_bound = 1;
+    session.generation = 7u;
+    CHECK(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+              &session,
+              &receipt) == 0 &&
+              !receipt.valid,
+          "CSB full startup runtime receipt rejects legacy-wrapper route");
+
+    session.rejects_legacy_wrappers = 1;
+    session.full_startup_ready = 1;
+    CHECK(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+              &session,
+              &receipt) == 1 &&
+              receipt.valid &&
+              receipt.real_asset_matched &&
+              receipt.title_sequence_ready &&
+              receipt.title_presents_ready &&
+              receipt.title_chaos_ready &&
+              receipt.title_strikes_back_ready &&
+              receipt.entrance_ready &&
+              receipt.hud_ready &&
+              receipt.door_ready &&
+              receipt.no_legacy_wrappers &&
+              receipt.session_generation == 7u &&
+              strstr(receipt.source_evidence, "TITLE.C F0437") != NULL,
+          "CSB full startup runtime receipt gates PRESENTS/CHAOS/STRIKES HUD and door together");
+
+    session.title_chaos_ready = 0;
+    CHECK(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+              &session,
+              &receipt) == 0 &&
+              !receipt.valid &&
+              !receipt.title_sequence_ready,
+          "CSB full startup runtime receipt rejects partial title sequence");
+}
+
 int main(void)
 {
     printf("=== CSB V1 Boot → Runtime Handoff Regression ===\n\n");
@@ -4380,6 +4430,7 @@ int main(void)
     test_runtime_view_state_receipt_owns_scalar_handoff();
     test_runtime_utility_startup_host_facts_wrappers();
     test_startup_real_asset_receipt_is_skip_safe_and_deterministic();
+    test_startup_full_runtime_receipt_requires_complete_real_session();
     test_enter_game_rotate_party_aligns_champion_state();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_runtime_handoff_is_idempotent();
