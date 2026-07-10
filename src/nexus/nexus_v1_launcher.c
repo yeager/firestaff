@@ -450,7 +450,8 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
         nexus_v1_startup_surfaces_ready(engine);
     receipt->real_menu_surface_route_ready =
         receipt->menu_bpk_upload_receipt_valid &&
-        receipt->menu_bpk_upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED &&
+        (receipt->menu_bpk_upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED ||
+         receipt->menu_bpk_upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED) &&
         !receipt->menu_bpk_blocks_real_menu_surface_render;
     receipt->real_menu_surface_route_blocked =
         receipt->real_menu_surface_route_ready ? 0 : 1;
@@ -978,6 +979,11 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
             champion_host->dgn_command_count -
                 champion_host->ownership.dgn_render_plan.floor_count -
                 champion_host->ownership.dgn_render_plan.wall_count;
+    out_receipt->dgn_material_path_consumed =
+        out_receipt->dgn_material_surface_coverage_complete &&
+        champion_host->host_route_consumes_dgn_material_path &&
+        champion_host->host_runtime_dgn_material_path_consumed &&
+        champion_host->host_execute_dgn_draws;
     out_receipt->bpk_material_surface_count =
         champion_host->bpk_material_surface_count;
     out_receipt->bpk_truecolor_material_surface_count =
@@ -988,6 +994,7 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
         champion_host->dungeon_host_package_route_complete &&
         out_receipt->dungeon_capture_route_consumed &&
         out_receipt->dgn_material_surface_coverage_complete &&
+        out_receipt->dgn_material_path_consumed &&
         champion_host->dungeon_route_saturn_capture_exact &&
         champion_host->dungeon_startup_route_consumption_complete &&
         champion_host->host_execute_dgn_draws;
@@ -995,6 +1002,7 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
         champion_host->host_runtime_dgn_ready &&
         out_receipt->dgn_material_surface_coverage_complete &&
         champion_host->dgn_handoff_consumed &&
+        champion_host->host_runtime_dgn_material_path_consumed &&
         champion_host->dgn_command_count > 0 &&
         champion_host->copied_dgn_command_count ==
             champion_host->dgn_command_count;
@@ -2595,6 +2603,24 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         &out_receipt->bpk_truecolor_material_surface_count,
         &out_receipt->bpk_prs3_material_surface_count);
     out_receipt->viewport_written_pixels = viewport_receipt.written_pixels;
+    out_receipt->dgn_material_plan_consumed = 1;
+    out_receipt->dgn_commands_copied_from_material_plan =
+        render_plan.command_count > 0;
+    out_receipt->dgn_material_viewport_consumed =
+        viewport_receipt.rasterized_command_count ==
+            render_plan.command_count &&
+        viewport_receipt.material_surface_count == render_plan.command_count &&
+        viewport_receipt.floor_material_surface_count ==
+            render_plan.floor_count &&
+        viewport_receipt.wall_material_surface_count ==
+            render_plan.wall_count &&
+        viewport_receipt.ceiling_material_surface_count ==
+            render_plan.command_count -
+                render_plan.floor_count -
+                render_plan.wall_count &&
+        viewport_receipt.written_pixels > 0;
+    out_receipt->bpk_material_path_consumed =
+        out_receipt->bpk_material_surface_count > 0;
     out_receipt->fallback_visuals_permitted =
         render_plan.fallback_visuals_permitted;
     out_receipt->status_scope = "DGN";
@@ -2781,6 +2807,14 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
         handoff->bpk_truecolor_material_surface_count;
     out_receipt->bpk_prs3_material_surface_count =
         handoff->bpk_prs3_material_surface_count;
+    out_receipt->dgn_material_plan_consumed =
+        handoff->dgn_material_plan_consumed ? 1 : 0;
+    out_receipt->dgn_commands_copied_from_material_plan =
+        handoff->dgn_commands_copied_from_material_plan ? 1 : 0;
+    out_receipt->dgn_material_viewport_consumed =
+        handoff->dgn_material_viewport_consumed ? 1 : 0;
+    out_receipt->bpk_material_path_consumed =
+        handoff->bpk_material_path_consumed ? 1 : 0;
     out_receipt->dgn_viewport_written_pixels =
         handoff->viewport_written_pixels;
     out_receipt->dgn_blocks_real_mesh_render =
@@ -4375,6 +4409,12 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
             runtime_route->bpk_truecolor_material_surface_count;
         receipt->bpk_prs3_material_surface_count =
             runtime_route->bpk_prs3_material_surface_count;
+        receipt->runtime_dgn_material_path_consumed =
+            runtime_route->dgn_material_plan_consumed &&
+            runtime_route->dgn_commands_copied_from_material_plan &&
+            runtime_route->dgn_material_viewport_consumed &&
+            runtime_route->bpk_material_path_consumed &&
+            !runtime_route->fallback_visuals_permitted;
         receipt->dgn_viewport_written_pixels =
             runtime_route->dgn_viewport_written_pixels;
         receipt->first_dgn_draw_kind =
@@ -4572,6 +4612,13 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->status = "title-capture-owned";
     }
     nexus_v1_launcher_fill_host_ownership_route_contract(receipt);
+    receipt->host_route_consumes_dgn_material_path =
+        receipt->dgn_material_surface_coverage_complete &&
+        receipt->runtime_dgn_material_path_consumed &&
+        receipt->dgn_route_consumes_startup_package &&
+        receipt->dgn_route_consumes_host_ownership &&
+        receipt->no_fallback_visuals_enforced &&
+        !receipt->fallback_visuals_permitted;
     receipt->dungeon_capture_route =
         receipt->dungeon_capture_route_consumed
             ? "runtime-dgn-handoff"
@@ -4833,6 +4880,10 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.dgn_viewport_wall_material_surface_count;
     out_receipt->dgn_material_surface_coverage_complete =
         out_receipt->ownership.dgn_material_surface_coverage_complete;
+    out_receipt->host_runtime_dgn_material_path_consumed =
+        out_receipt->ownership.runtime_dgn_material_path_consumed;
+    out_receipt->host_route_consumes_dgn_material_path =
+        out_receipt->ownership.host_route_consumes_dgn_material_path;
     out_receipt->bpk_material_surface_count =
         out_receipt->ownership.bpk_material_surface_count;
     out_receipt->bpk_truecolor_material_surface_count =
@@ -5015,6 +5066,7 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         (out_receipt->dungeon_startup_route_consumption_complete ||
          out_receipt->dungeon_host_package_route_complete) &&
         out_receipt->dgn_material_surface_coverage_complete &&
+        out_receipt->host_route_consumes_dgn_material_path &&
         out_receipt->copied_dgn_command_count > 0 &&
         out_receipt->dgn_viewport_material_surface_count ==
             out_receipt->dgn_command_count &&
