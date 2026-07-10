@@ -3423,10 +3423,10 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
     out_binding->byte_count = window->byte_count;
     out_binding->window_kind = window->kind;
 
-    /* Role-specific decode.  Today this only covers DUNGEON_SEED_TABLE;
-     * every other bound role (DESCRIPTOR_TABLE) returns NOT_BOUND at the
-     * role-classification step above and never reaches here.  When new
-     * roles are added, they get a dedicated branch. */
+    /* Role-specific decode.  DUNGEON_SEED_TABLE reads a value payload;
+     * DESCRIPTOR_TABLE binds the already decoded descriptor-bearing
+     * window as a real semantic route.  Object/text/palette roles remain
+     * unclaimed until real Track 02 evidence promotes them. */
     if (out_binding->role == THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE) {
         if (window->kind == THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL) {
             status = THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL;
@@ -3439,10 +3439,11 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
                 window->byte_count,
                 &out_binding->dungeon_seed_table);
         }
+    } else if (out_binding->role == THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE) {
+        status = window->kind == THERON_TRACK02_DESCRIPTOR_WINDOW_DESCRIPTOR_TABLE
+            ? THERON_TRACK02_SEMANTIC_BINDING_OK
+            : THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
     } else {
-        /* DESCRIPTOR_TABLE role reaches here only by explicit future
-         * extension; for now classify as not-bound so callers don't get a
-         * silent OK on a role we have not yet given semantic content. */
         status = THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND;
     }
 
@@ -3651,6 +3652,18 @@ int theron_v1_track02_capture_object_table_route_receipt(
         hash *= 16777619u;
 
         for (entry_index = 0u; entry_index < table.entry_count; ++entry_index) {
+            if (theron_v1_track02_semantic_role_for_entry(entry_index) ==
+                THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE) {
+                Theron_Track02SemanticBinding binding;
+                if (theron_v1_track02_bind_semantic_descriptor(
+                        track02_data,
+                        track02_size,
+                        descriptor_offset,
+                        entry_index,
+                        &binding) == THERON_TRACK02_SEMANTIC_BINDING_OK) {
+                    ++out_receipt->descriptor_table_semantic_count;
+                }
+            }
             if (theron_v1_track02_semantic_role_for_entry(entry_index) ==
                 THERON_TRACK02_SEMANTIC_OBJECT_TABLE) {
                 Theron_Track02SemanticBinding binding;

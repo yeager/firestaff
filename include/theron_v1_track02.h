@@ -920,9 +920,9 @@ typedef struct {
  *
  * The mapping is the documented working hypothesis from this header's
  * source-locks section: entry 0 is the dungeon_seed table, entry 5 is
- * the descriptor-table-bearing window (already classified structurally),
- * every other entry is UNKNOWN.  Returning UNKNOWN is not an error; it
- * simply means no semantic role is currently bound. */
+ * the descriptor-table-bearing window, every other entry is UNKNOWN.
+ * Returning UNKNOWN is not an error; it simply means no semantic role is
+ * currently bound. */
 Theron_Track02SemanticRole theron_v1_track02_semantic_role_for_entry(
     size_t entry_index);
 
@@ -1034,6 +1034,7 @@ typedef struct {
     unsigned int descriptor_anchor_mask;
     size_t descriptor_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t descriptor_entries_bound;
+    size_t descriptor_table_semantic_count;
     size_t object_table_candidate_count;
     int object_table_decode_ready;
     int blocked_for_missing_real_object_evidence;
