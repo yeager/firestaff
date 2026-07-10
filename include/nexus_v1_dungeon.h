@@ -15,6 +15,7 @@
 #define NEXUS_DGN_STRUCTURE1B_BYTES 0x8000
 #define NEXUS_DGN_STRUCTURE1B_CELL_BYTES 8
 #define NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES 4
+#define NEXUS_DGN_MAX_COLLISION_SECTORS 256
 #define NEXUS_V1_DGN_VIEW_DISTANCE 4
 #define NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS 48
 #define NEXUS_V1_DGN_VIEWPORT_UNITS 1024
@@ -34,12 +35,30 @@ typedef struct {
     int mesh_ready;
 } Nexus_V1_DgnGeometryInfo;
 
+/* DMWeb DGN Structure1C collision descriptor. Coordinates are signed tile
+ * parts relative to the cell centre; a final value of -128 denotes a circle. */
+typedef struct {
+    int valid;
+    int circle;
+    int8_t x1;
+    int8_t y1;
+    int8_t x2;
+    int8_t y2;
+} Nexus_V1_DgnCollisionSector;
+
 typedef struct {
     int width, height;
     uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     uint16_t collision_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     uint8_t floor_material_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    uint8_t ceiling_material_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     uint8_t wall_material_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE][4];
+    int8_t floor_heights[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    uint8_t floor_slopes[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    uint8_t floor_rotations[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    uint16_t mesh_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    Nexus_V1_DgnCollisionSector
+        collision_sectors[NEXUS_DGN_MAX_COLLISION_SECTORS];
     int thing_count;
     int creature_count;
     int has_3d_geometry;
@@ -90,6 +109,14 @@ typedef struct {
     int square_type;
     int wall_dir;
     uint16_t collision_ref;
+    uint16_t mesh_ref;
+    Nexus_V1_DgnCollisionSector collision_sector;
+    /* DGN byte3 is signed 1/32 world-unit height. The four values are
+     * NW, NE, SE, SW and carry the source-cell slope where present. */
+    int8_t floor_height[4];
+    int8_t ceiling_height[4];
+    uint8_t floor_rotation;
+    uint8_t floor_slope;
     /* Screen-space quad in NEXUS_V1_DGN_VIEWPORT_UNITS. The DGN plan
      * owns projection and material selection; hosts only rasterize it. */
     int16_t quad_x[4];

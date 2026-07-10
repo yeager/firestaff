@@ -74,14 +74,11 @@ static void set_collision_ref(uint8_t *structure1,
     cell[7] = (uint8_t)(ref & 0xff);
 }
 
-static void set_square_type(uint8_t *structure1,
-                            int structure1b_rel,
-                            int x,
-                            int y,
-                            int type) {
+static void set_floor_flags(uint8_t *structure1, int structure1b_rel,
+                            int x, int y, uint16_t flags) {
     uint8_t *cell = cell_at(structure1, structure1b_rel, x, y);
-    cell[6] = (uint8_t)(type & 0x0f);
-    cell[7] = 0;
+    cell[0] = (uint8_t)(flags >> 8);
+    cell[1] = (uint8_t)(flags & 0xffU);
 }
 
 static void test_variable_grid_and_mesh_ready(void) {
@@ -170,17 +167,29 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
                           structure1b_rel, geometry_bytes) == 0,
           "render-plan DGN fixture builds");
     structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
-    set_square_type(structure1, structure1b_rel, 3, 4, 1);
-    cell_at(structure1, structure1b_rel, 3, 4)[7] = 5;
-    cell_at(structure1, structure1b_rel, 3, 4)[2] = 21;
-    cell_at(structure1, structure1b_rel, 3, 4)[3] = 31;
+    structure1[9] = 22;
+    set_floor_flags(structure1, structure1b_rel, 3, 4,
+                    (uint16_t)((1U << 14) | (21U << 7) | (2U << 4) | 2U));
+    set_collision_ref(structure1, structure1b_rel, 3, 4, 1);
+    cell_at(structure1, structure1b_rel, 3, 4)[3] = 4;
     cell_at(structure1, structure1b_rel, 3, 4)[4] = 41;
-    set_square_type(structure1, structure1b_rel, 4, 4, 1);
-    set_square_type(structure1, structure1b_rel, 3, 3, 1);
+    cell_at(structure1, structure1b_rel, 4, 4)[3] = 12;
+    set_collision_ref(structure1, structure1b_rel, 4, 4, 1);
+    set_collision_ref(structure1, structure1b_rel, 3, 3, 1);
     set_collision_ref(structure1, structure1b_rel, 2, 4, 0x0fff);
     set_collision_ref(structure1, structure1b_rel, 2, 3, 0x0fff);
     set_collision_ref(structure1, structure1b_rel, 4, 3, 0x0fff);
     set_collision_ref(structure1, structure1b_rel, 3, 2, 0x0fff);
+    dgn[NEXUS_DGN_BLOCK_SIZE + structure1b_rel +
+        NEXUS_DGN_STRUCTURE1B_BYTES] = 2;
+    dgn[NEXUS_DGN_BLOCK_SIZE + structure1b_rel +
+        NEXUS_DGN_STRUCTURE1B_BYTES + 4] = (uint8_t)-20;
+    dgn[NEXUS_DGN_BLOCK_SIZE + structure1b_rel +
+        NEXUS_DGN_STRUCTURE1B_BYTES + 5] = (uint8_t)-10;
+    dgn[NEXUS_DGN_BLOCK_SIZE + structure1b_rel +
+        NEXUS_DGN_STRUCTURE1B_BYTES + 6] = 20;
+    dgn[NEXUS_DGN_BLOCK_SIZE + structure1b_rel +
+        NEXUS_DGN_STRUCTURE1B_BYTES + 7] = 10;
 
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 4) == 0,
           "render-plan level loads from DMWeb DGN");
@@ -207,15 +216,21 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
     CHECK(commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
           commands[0].x == 3 &&
           commands[0].y == 4 &&
-          commands[0].collision_ref == 0x0105 &&
-          commands[0].material_id == 21 &&
+          commands[0].collision_ref == 1 &&
+          commands[0].material_id == 21 && commands[0].floor_rotation == 1 &&
+          commands[0].floor_slope == 2 &&
+          commands[0].floor_height[0] == 4 &&
+          commands[0].floor_height[1] == 12 &&
+          commands[0].collision_sector.valid == 1 &&
+          commands[0].collision_sector.x1 == -20 &&
           commands[0].palette_index == 21 &&
           commands[0].quad_y[0] > commands[0].quad_y[2],
-          "DGN render plan projects and materials the real party floor");
+          "DGN plan carries real tile height, slope, rotation and sector fields");
     CHECK(commands[1].kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING &&
-          commands[1].material_id == 21 && commands[1].palette_index == 21 &&
+          commands[1].material_id == 22 && commands[1].floor_height[2] == 12 &&
+          commands[1].ceiling_height[2] == 44 && commands[1].palette_index == 22 &&
           commands[1].quad_y[0] < commands[1].quad_y[1],
-          "DGN render plan emits the paired projected ceiling material");
+          "DGN plan selects the header-referenced ceiling texture and height");
     CHECK(commands[4].kind == NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT &&
           commands[4].wall_dir == 3 &&
           commands[4].x == 3 &&
