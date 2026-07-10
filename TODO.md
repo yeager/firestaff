@@ -1,6 +1,7 @@
 # Firestaff TODO - Open Work
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
+- 🔧 2026-07-10 DM1 projectile runtime: validate F0328/F0811 thrown-item flight against real DM1 assets after the live-effect save/resume handoff.
 - 🔧 2026-07-09 Nexus full-start follow-up: full-start receipts now cover boot/title/warning/save/champion menus, Track 02 SFX, real startup graphics gates, packaged capture routes, title/warning timing fields, presentation export, M11 draw-command consumers, and M12 status/card package facts. Remaining work is replacing any last launcher display text that still reads generic manifest labels instead of Nexus package receipt fields.
   - 2026-07-09 update: startup receipt bundles now package full-start state, M12 card facts, timing fields, capture route, first draw kind, and bounded draw-command consumption for title/save/champion consumers. Remaining work is wiring any final host callers to this bundle.
   - 2026-07-09 update: Nexus startup now has a real-asset ownership receipt joining title/menu capture, BPK/PRS3 blockers, DGN runtime handoff, and no-fallback visual enforcement. Remaining work is wiring final host callers to consume this ownership receipt directly.
