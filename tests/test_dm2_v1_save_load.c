@@ -1550,9 +1550,11 @@ static int test_champion_death_permanence_source_lock(void)
 
 static int test_live_runtime_state_roundtrip(void)
 {
+    char tmpdir[256];
     DM2_V1_BootProfile boot;
     DM2_V1_GameState game;
     DM2_V1_DungeonData dungeon;
+    DM2_V1_QuicksaveReceipt receipt;
     const DM2_V1_CreatureInstance *before;
     const DM2_V1_CreatureInstance *after;
     uint8_t *save_data = NULL;
@@ -1563,6 +1565,8 @@ static int test_live_runtime_state_roundtrip(void)
     uint32_t saved_render_revision;
 
     printf("  Live CCM/dungeon/GDAT runtime round-trip...\n");
+    snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_live_%d", FS_GETPID());
+    FS_MKDIR(tmpdir);
     memset(&boot, 0, sizeof(boot));
     memset(&game, 0, sizeof(game));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -1578,6 +1582,7 @@ static int test_live_runtime_state_roundtrip(void)
     boot.dungeon_data = &dungeon;
     boot.graphics_size = 0x876543u;
     snprintf(boot.graphics_md5, sizeof(boot.graphics_md5), "runtime-gdat");
+    snprintf(boot.save_root, sizeof(boot.save_root), "%s", tmpdir);
     dm2_v1_runtime_init(&boot);
     creature_id = dm2_v1_creature_spawn(3, 1, 1, 0, 2, 8);
     if (creature_id < 0) goto fail;
@@ -1602,15 +1607,145 @@ static int test_live_runtime_state_roundtrip(void)
         after->animation_tick != saved_animation_tick ||
         after->render_revision != saved_render_revision ||
         dungeon.raw_data[3] != 0x24) goto fail;
+
+    if (!dm2_v1_runtime_quicksave_boot_profile_with_receipt(&boot, &receipt) ||
+        !receipt.session_valid ||
+        dm2_v1_creature_deal_damage(creature_id, 2) != 0) goto fail;
+    dungeon.raw_data[3] = 0;
+    if (dm2_v1_runtime_load_last_session(tmpdir) != 0) goto fail;
+    after = dm2_v1_creature_get_instance(creature_id);
+    if (!after || after->hp_current != saved_hp ||
+        after->animation_tick != saved_animation_tick ||
+        after->render_revision != saved_render_revision ||
+        dungeon.raw_data[3] != 0x24) goto fail;
+    {
+        char path[512];
+        snprintf(path, sizeof(path), "%s/SKSave.dat", tmpdir);
+        (void)remove(path);
+        snprintf(path, sizeof(path), "%s/SKSave.bak", tmpdir);
+        (void)remove(path);
+        snprintf(path, sizeof(path), "%s/SKSave.runtime", tmpdir);
+        (void)remove(path);
+    }
+    FS_RMDIR(tmpdir);
     free(save_data);
     free(dungeon.raw_data);
-    printf("    PASS: live CCM, animation/revision, dungeon and GDAT binding restored\n");
+    printf("    PASS: direct and quicksave live CCM/dungeon/GDAT restore work\n");
     return 1;
 fail:
+    {
+        char path[512];
+        snprintf(path, sizeof(path), "%s/SKSave.dat", tmpdir);
+        (void)remove(path);
+        snprintf(path, sizeof(path), "%s/SKSave.bak", tmpdir);
+        (void)remove(path);
+        snprintf(path, sizeof(path), "%s/SKSave.runtime", tmpdir);
+        (void)remove(path);
+    }
+    FS_RMDIR(tmpdir);
     free(save_data);
     free(dungeon.raw_data);
     printf("    FAIL: live runtime state did not round-trip\n");
     return 0;
+}
+
+static int test_original_save_candidate_live_restore(void)
+{
+    uint8_t payload[2048];
+    size_t payload_size = 0u;
+    DM2_TestGameStateStorage gs_store;
+    DM2_GameStateBlock *gs = &gs_store.block;
+    DM2_ChampionRecord champion;
+    DM2_V1_SaveCandidate candidate;
+    DM2_V1_BootProfile boot;
+    DM2_V1_GameState game;
+    DM2_V1_DungeonData dungeon;
+    uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE] = { 0 };
+    uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE] = { 0 };
+    uint16_t global_words[DM2_GLOBAL_WORDS_SIZE] = { 0 };
+    uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE] = { 0 };
+    uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
+    uint8_t *expected_dungeon = NULL;
+    int creature_id;
+    int result = 0;
+
+    printf("  Original SKSave candidate restores live party/dungeon state...\n");
+    memset(&gs_store, 0, sizeof(gs_store));
+    memset(&champion, 0, sizeof(champion));
+    gs->dwGameTick = 0x00012345u;
+    gs->dwRandomSeed = 0x00002345u;
+    gs->wChampionsCount = 1;
+    gs->wPlayerPosX = 3;
+    gs->wPlayerPosY = 4;
+    gs->wPlayerDir = 1;
+    gs->wPlayerMap = 0;
+    gs->wChampionLeader = 0;
+    memcpy(champion.first_name, "HISS", 4);
+    champion.absolute_direction = 1;
+    champion.cur_hp = 50;
+    champion.max_hp = 60;
+    inventory[0] = dm2_db_make_handle(5, 0x17);
+    inventory[8] = dm2_db_make_handle(6, 0x23);
+    if (!build_raw_sksave_payload(gs, &champion,
+                                  global_flags, global_bytes, global_words,
+                                  spell_effects, NULL, 0, inventory,
+                                  dm2_db_make_handle(7, 0x2a), payload,
+                                  sizeof(payload), &payload_size) ||
+        dm2_v1_session_parse_save_candidate(&candidate, payload,
+                                             payload_size) != 0 ||
+        candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW ||
+        candidate.dungeon_size == 0u) {
+        printf("    FAIL: could not parse original raw candidate\n");
+        return 0;
+    }
+
+    memset(&boot, 0, sizeof(boot));
+    memset(&game, 0, sizeof(game));
+    memset(&dungeon, 0, sizeof(dungeon));
+    dungeon.raw_data = (uint8_t *)calloc(candidate.dungeon_size, 1u);
+    expected_dungeon = (uint8_t *)malloc(candidate.dungeon_size);
+    if (!dungeon.raw_data || !expected_dungeon) goto done;
+    dungeon.raw_size = (int)candidate.dungeon_size;
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 1;
+    dungeon.level_heights[0] = 1;
+    dungeon.square_bytes = 1;
+    boot.dm2_state = &game;
+    boot.dungeon_data = &dungeon;
+    boot.graphics_size = 0x102030u;
+    snprintf(boot.graphics_md5, sizeof(boot.graphics_md5), "candidate-gdat");
+    dm2_v1_runtime_init(&boot);
+    creature_id = dm2_v1_creature_spawn(2, 0, 0, 0, 1, 5);
+    if (creature_id < 0) goto done;
+
+    memcpy(expected_dungeon, payload, candidate.dungeon_size);
+    if (dm2_v1_runtime_restore_save_candidate(payload, payload_size) != 0 ||
+        game.party_x != 3 || game.party_y != 4 || game.party_dir != 1 ||
+        dm2_v1_runtime_get_tick_count() != (int)gs->dwGameTick ||
+        dm2_v1_runtime_get_champion_inventory_object(0, 8) != inventory[8] ||
+        dm2_v1_runtime_get_leader_hand_object() != dm2_db_make_handle(7, 0x2a) ||
+        dm2_v1_creature_count() != 0 ||
+        memcmp(dungeon.raw_data, expected_dungeon, candidate.dungeon_size) != 0) {
+        goto done;
+    }
+
+    /* Truncation must be rejected before it can mutate party, dungeon, CCM,
+     * or the GDAT-bound runtime view. */
+    if (dm2_v1_runtime_restore_save_candidate(payload, payload_size - 1u) == 0 ||
+        game.party_x != 3 || game.party_y != 4 ||
+        memcmp(dungeon.raw_data, expected_dungeon, candidate.dungeon_size) != 0) {
+        goto done;
+    }
+    result = 1;
+done:
+    free(expected_dungeon);
+    free(dungeon.raw_data);
+    if (!result) {
+        printf("    FAIL: original candidate did not restore atomically\n");
+        return 0;
+    }
+    printf("    PASS: party, dungeon, inventory, CCM reset and GDAT runtime binding restored\n");
+    return 1;
 }
 
 /* ════════════════════════════════════════════════════════════════ */
@@ -1643,6 +1778,7 @@ int main(void)
     RUN(15, test_raw_sksave_resume_import);
     RUN(16, test_champion_death_permanence_source_lock);
     RUN(17, test_live_runtime_state_roundtrip);
+    RUN(18, test_original_save_candidate_live_restore);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);
