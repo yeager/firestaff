@@ -2615,6 +2615,59 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
                   strstr(d3r2_door.front_pass_source_lines, "DUNVIEW.C:6340-6353") != NULL,
                   1);
     }
+    {
+        DM1_ViewportD3BackWallRuntimeReceipt d3l2_asset;
+        DM1_ViewportD3BackWallRuntimeReceipt d3r2_asset;
+        DM1_ViewportD3BackWallRuntimeReceipt d3r2_corridor;
+        DM1_ViewportD3BackWallRuntimeReceipt d3l2_null_asset;
+
+        state.floor_ornament_indices[0] = 0x123;
+        state.floor_ornament_indices[1] = 0x124;
+        state.door_front_d3[0] = 0x231;
+        state.door_front_d3[1] = 0x232;
+
+        d3l2_asset = dm1_viewport_3d_build_d3_back_wall_runtime_asset_receipt(
+            &state,
+            DM1_VIEW_SQUARE_D3L2,
+            DM1_VP_ELEMENT_DOOR_FRONT);
+        d3r2_asset = dm1_viewport_3d_build_d3_back_wall_runtime_asset_receipt(
+            &state,
+            DM1_VIEW_SQUARE_D3R2,
+            DM1_VP_ELEMENT_DOOR_FRONT);
+        d3r2_corridor = dm1_viewport_3d_build_d3_back_wall_runtime_asset_receipt(
+            &state,
+            DM1_VIEW_SQUARE_D3R2,
+            DM1_VP_ELEMENT_CORRIDOR);
+        d3l2_null_asset = dm1_viewport_3d_build_d3_back_wall_runtime_asset_receipt(
+            NULL,
+            DM1_VIEW_SQUARE_D3L2,
+            DM1_VP_ELEMENT_DOOR_FRONT);
+
+        check_int("d3l2_d3r2_gate.d3l2_floor_asset_bound",
+                  d3l2_asset.floor_ornament_asset_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_floor_asset_index",
+                  d3l2_asset.floor_ornament_asset_index, 0x123);
+        check_int("d3l2_d3r2_gate.d3l2_door_asset_bound",
+                  d3l2_asset.door_front_asset_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_door_asset_index",
+                  d3l2_asset.door_front_asset_index, 0x231);
+        check_int("d3l2_d3r2_gate.d3r2_floor_asset_bound",
+                  d3r2_asset.floor_ornament_asset_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3r2_floor_asset_index",
+                  d3r2_asset.floor_ornament_asset_index, 0x124);
+        check_int("d3l2_d3r2_gate.d3r2_door_asset_bound",
+                  d3r2_asset.door_front_asset_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3r2_door_asset_index",
+                  d3r2_asset.door_front_asset_index, 0x232);
+        check_int("d3l2_d3r2_gate.d3r2_corridor_floor_asset_bound",
+                  d3r2_corridor.floor_ornament_asset_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3r2_corridor_door_asset_unbound",
+                  d3r2_corridor.door_front_asset_bound ? 1 : 0, 0);
+        check_int("d3l2_d3r2_gate.d3l2_null_floor_asset_unbound",
+                  d3l2_null_asset.floor_ornament_asset_bound ? 1 : 0, 0);
+        check_int("d3l2_d3r2_gate.d3l2_null_door_asset_unbound",
+                  d3l2_null_asset.door_front_asset_bound ? 1 : 0, 0);
+    }
 
     dm1_viewport_3d_set_wall_frame_bitmaps(assets);
 

@@ -2424,6 +2424,37 @@ DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_
     return receipt;
 }
 
+static int dm1_viewport_3d_d3_back_wall_side_slot(DM1_ViewSquareIndex square)
+{
+    if (square == DM1_VIEW_SQUARE_D3L2) return 0;
+    if (square == DM1_VIEW_SQUARE_D3R2) return 1;
+    return -1;
+}
+
+DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_asset_receipt(
+    const DM1_Viewport3DState *state,
+    DM1_ViewSquareIndex square,
+    int element)
+{
+    DM1_ViewportD3BackWallRuntimeReceipt receipt =
+        dm1_viewport_3d_build_d3_back_wall_runtime_receipt(square, element);
+    int slot = dm1_viewport_3d_d3_back_wall_side_slot(square);
+
+    if (!state || slot < 0) return receipt;
+
+    if (receipt.floor_ornament_before_rear_pass) {
+        receipt.floor_ornament_asset_index = state->floor_ornament_indices[slot];
+        receipt.floor_ornament_asset_bound = receipt.floor_ornament_asset_index != 0;
+    }
+
+    if (receipt.door_front_between_passes) {
+        receipt.door_front_asset_index = state->door_front_d3[slot];
+        receipt.door_front_asset_bound = receipt.door_front_asset_index != 0;
+    }
+
+    return receipt;
+}
+
 size_t dm1_viewport_3d_side_occlusion_spec_count(void)
 {
     return sizeof(s_side_occlusion_specs) / sizeof(s_side_occlusion_specs[0]);
@@ -2701,7 +2732,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
     int cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
     int element = dm1_viewport_3d_classify_grid_cell(cell);
     state->last_d3_back_wall_receipt =
-        dm1_viewport_3d_build_d3_back_wall_runtime_receipt(square, element);
+        dm1_viewport_3d_build_d3_back_wall_runtime_asset_receipt(state, square, element);
 
     const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
     if (!bm_base) return;

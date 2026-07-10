@@ -335,6 +335,10 @@ typedef struct {
     bool door_front_between_passes;
     bool field_after_thing_passes;
     bool wall_case_returns_before_things;
+    bool floor_ornament_asset_bound;
+    int16_t floor_ornament_asset_index;
+    bool door_front_asset_bound;
+    int16_t door_front_asset_index;
     const char *rear_pass_source_lines;
     const char *door_source_lines;
     const char *front_pass_source_lines;
@@ -1074,6 +1078,10 @@ size_t dm1_viewport_3d_door_front_occlusion_spec_count(void);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec(size_t index);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_ViewSquareIndex square);
 DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_receipt(
+    DM1_ViewSquareIndex square,
+    int element);
+DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_asset_receipt(
+    const DM1_Viewport3DState *state,
     DM1_ViewSquareIndex square,
     int element);
 size_t dm1_viewport_3d_side_occlusion_spec_count(void);
