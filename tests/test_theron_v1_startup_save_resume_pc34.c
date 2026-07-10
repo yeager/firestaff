@@ -4382,6 +4382,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
         THERON_TRACK02_RAW_SECTOR_BYTES;
     uint8_t *track02 = (uint8_t *)calloc(track02_size, 1u);
     Theron_StartupMediaStateReceipt media_receipt;
+    Theron_Track02LevelRouteReceipt level_route_receipt;
     Theron_Track02ObjectTableRouteReceipt object_route_receipt;
     Theron_Track02SemanticBinding descriptor_semantic;
     Theron_V1StartupAllDungeonRouteReceipt receipt;
@@ -4470,6 +4471,33 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     !object_route_receipt.fallback_visuals_allowed &&
                     object_route_receipt.route_hash != 0u,
                 "Theron Track02 object-table route receipt blocks fallback when real object evidence is missing");
+    expect_true(theron_v1_track02_capture_level_route_receipt(
+                    track02,
+                    track02_size,
+                    THERON_TRACK02_MD5_US_BIN,
+                    &level_route_receipt) &&
+                    level_route_receipt.valid &&
+                    level_route_receipt.verified_track02 &&
+                    level_route_receipt.descriptor_route_ready &&
+                    level_route_receipt.descriptor_anchor_count == 3u &&
+                    level_route_receipt.descriptor_anchor_mask == 0x07u &&
+                    level_route_receipt.startup_level_route_ready &&
+                    level_route_receipt.startup_level_route_count == 1u &&
+                    level_route_receipt.startup_level_route_mask == 0x01u &&
+                    level_route_receipt.startup_descriptor_offset ==
+                        descriptor_offsets[0] &&
+                    level_route_receipt.startup_raw_offset ==
+                        candidate_offset &&
+                    level_route_receipt.startup_user_data_offset_valid &&
+                    level_route_receipt.startup_header_width == 32u &&
+                    level_route_receipt.startup_header_height == 27u &&
+                    level_route_receipt.startup_header_level_index == 0x0026u &&
+                    level_route_receipt.nonstartup_level_candidate_count == 0u &&
+                    !level_route_receipt.nonstartup_level_decode_ready &&
+                    level_route_receipt.blocked_for_missing_nonstartup_level_evidence &&
+                    !level_route_receipt.fallback_visuals_allowed &&
+                    level_route_receipt.route_hash != 0u,
+                "Theron Track02 level-route receipt promotes startup level and blocks non-startup fallback");
     expect_true(theron_v1_track02_bind_semantic_descriptor(
                     track02,
                     track02_size,

@@ -3692,6 +3692,111 @@ int theron_v1_track02_capture_object_table_route_receipt(
     return out_receipt->valid ? 1 : 0;
 }
 
+void theron_v1_track02_level_route_receipt_init(
+    Theron_Track02LevelRouteReceipt *receipt) {
+
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->signal_status = THERON_TRACK02_SIGNAL_BAD_INPUT;
+    receipt->variant = THERON_TRACK02_VARIANT_UNKNOWN;
+    receipt->fallback_visuals_allowed = 1;
+}
+
+int theron_v1_track02_capture_level_route_receipt(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02LevelRouteReceipt *out_receipt) {
+
+    Theron_Track02BankSignal signal;
+    Theron_Track02SignalStatus signal_status;
+    uint32_t hash = 2166136261u;
+    size_t anchor;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    theron_v1_track02_level_route_receipt_init(out_receipt);
+    if (!track02_data || track02_size == 0u || !md5_hex || !md5_hex[0]) {
+        return 0;
+    }
+
+    out_receipt->variant = theron_v1_track02_variant_for_md5(md5_hex);
+    signal_status = theron_v1_track02_find_bank_signal(track02_data,
+                                                       track02_size,
+                                                       md5_hex,
+                                                       &signal);
+    out_receipt->signal_status = signal_status;
+    if (signal_status != THERON_TRACK02_SIGNAL_OK) {
+        return 0;
+    }
+
+    out_receipt->verified_track02 = 1;
+    out_receipt->fallback_visuals_allowed = 0;
+    out_receipt->variant = signal.variant;
+    out_receipt->descriptor_anchor_count = signal.anchor_count;
+    for (anchor = 0u; anchor < signal.anchor_count; ++anchor) {
+        Theron_Track02StartupSemanticHandoff handoff;
+        Theron_Track02LevelHandoffStatus handoff_status;
+        size_t descriptor_offset = signal.descriptor_offsets[anchor];
+
+        out_receipt->descriptor_anchor_mask |= 1u << (unsigned)anchor;
+        hash ^= (uint32_t)descriptor_offset;
+        hash *= 16777619u;
+
+        handoff_status = theron_v1_track02_bind_startup_semantic_handoff(
+            track02_data,
+            track02_size,
+            md5_hex,
+            descriptor_offset,
+            &handoff);
+        if (handoff_status == THERON_TRACK02_LEVEL_HANDOFF_OK &&
+            handoff.ready_for_runtime &&
+            handoff.user_data_offset_valid) {
+            const Theron_Track02LevelCandidate *candidate =
+                &handoff.initial_candidate.candidate;
+            ++out_receipt->startup_level_route_count;
+            out_receipt->startup_level_route_mask |= 1u << (unsigned)anchor;
+            if (!out_receipt->startup_level_route_ready) {
+                out_receipt->startup_level_route_ready = 1;
+                out_receipt->startup_descriptor_offset = descriptor_offset;
+                out_receipt->startup_raw_offset = candidate->absolute_offset;
+                out_receipt->startup_user_data_offset =
+                    handoff.user_data_offset;
+                out_receipt->startup_user_data_offset_valid =
+                    handoff.user_data_offset_valid;
+                out_receipt->startup_header_width =
+                    candidate->header_width;
+                out_receipt->startup_header_height =
+                    candidate->header_height;
+                out_receipt->startup_header_seed =
+                    candidate->header_seed;
+                out_receipt->startup_header_level_index =
+                    candidate->header_level_index;
+            }
+            hash ^= (uint32_t)candidate->absolute_offset;
+            hash *= 16777619u;
+            hash ^= (uint32_t)handoff.user_data_offset;
+            hash *= 16777619u;
+        }
+    }
+
+    out_receipt->descriptor_route_ready =
+        signal.anchor_count > 0u &&
+        out_receipt->descriptor_anchor_mask ==
+            ((1u << (unsigned)signal.anchor_count) - 1u);
+    out_receipt->blocked_for_missing_nonstartup_level_evidence =
+        out_receipt->descriptor_route_ready &&
+        !out_receipt->nonstartup_level_decode_ready;
+    out_receipt->route_hash = hash;
+    out_receipt->valid = out_receipt->verified_track02 &&
+        out_receipt->descriptor_route_ready &&
+        out_receipt->startup_level_route_ready;
+    return out_receipt->valid ? 1 : 0;
+}
+
 Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
     const uint8_t *track02_data,
     size_t track02_size,
