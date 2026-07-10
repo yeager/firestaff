@@ -2643,6 +2643,80 @@ int theron_v1_track02_initial_candidate_expected_offset(
     return 1;
 }
 
+/* Recover the one source-locked startup payload when its bytes span two raw
+ * MODE1 sectors.  The ordinary raw-image scan deliberately remains useful
+ * evidence for contiguous candidates; this path is only reached when that
+ * scan finds none.  JP/US layouts differ in absolute anchors but share the
+ * descriptor-relative startup relation. */
+static int tqr_bind_split_initial_level_candidate(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t descriptor_offset,
+    Theron_Track02InitialCandidateBinding *out_binding) {
+
+    enum {
+        payload_size = 12u + TQR_RAW_INITIAL_LEVEL_WIDTH *
+            TQR_RAW_INITIAL_LEVEL_HEIGHT
+    };
+    uint8_t payload[payload_size];
+    Theron_V1_Level level;
+    Theron_MapLoadResult map_status;
+    Theron_Track02SignalStatus signal_status;
+    size_t candidate_offset = 0u;
+    size_t user_data_offset = 0u;
+    uint16_t width = 0u;
+    uint16_t height = 0u;
+    size_t decoded_size = 0u;
+
+    if (!variant_is_raw_bin(theron_v1_track02_variant_for_md5(md5_hex)) ||
+        !theron_v1_track02_initial_candidate_expected_offset(
+            descriptor_offset, &candidate_offset) ||
+        candidate_offset >= track02_size ||
+        payload_size > track02_size - candidate_offset) {
+        return 0;
+    }
+
+    signal_status = theron_v1_track02_copy_raw_user_data_range(
+        track02_data, track02_size, md5_hex, candidate_offset,
+        payload_size, payload, sizeof(payload), &user_data_offset);
+    if (signal_status != THERON_TRACK02_SIGNAL_OK ||
+        !tqr_level_candidate_header_matches(payload, sizeof(payload),
+                                            &width, &height, &decoded_size) ||
+        decoded_size != payload_size) {
+        return 0;
+    }
+
+    map_status = theron_v1_level_load(&level, payload, (int)decoded_size,
+                                      THERON_DUNGEON_1_HALL_OF_RECORDS, 0);
+    if (map_status != THERON_MAP_OK) {
+        return 0;
+    }
+
+    out_binding->candidate_count = 1u;
+    out_binding->candidate_index = 0u;
+    out_binding->expected_offset_valid = 1;
+    out_binding->expected_offset = candidate_offset;
+    out_binding->matches_initial_anchor = 1;
+    out_binding->candidate.absolute_offset = candidate_offset;
+    out_binding->candidate.byte_count = decoded_size;
+    out_binding->candidate.header_width = width;
+    out_binding->candidate.header_height = height;
+    out_binding->candidate.header_seed = rd32be(payload + 4u);
+    out_binding->candidate.header_level_index = rd16be(payload + 8u);
+    out_binding->candidate.map_status = map_status;
+    out_binding->candidate.start_x = level.start_x;
+    out_binding->candidate.start_y = level.start_y;
+    out_binding->candidate.start_dir = level.start_dir;
+    out_binding->candidate.descriptor_delta =
+        descriptor_offset - candidate_offset;
+    out_binding->candidate.matches_initial_anchor = 1;
+    out_binding->candidate.user_data_offset = user_data_offset;
+    out_binding->candidate.user_data_offset_valid = 1;
+    out_binding->candidate.loaded = 1;
+    return 1;
+}
+
 Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -2691,6 +2765,15 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
                                                      &catalog);
     out_binding->candidate_count = catalog.candidate_count;
     if (status != THERON_TRACK02_LEVEL_HANDOFF_OK) {
+        if (status == THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL &&
+            tqr_bind_split_initial_level_candidate(track02_data,
+                                                    track02_size,
+                                                    md5_hex,
+                                                    descriptor_offset,
+                                                    out_binding)) {
+            out_binding->status = THERON_TRACK02_LEVEL_HANDOFF_OK;
+            return out_binding->status;
+        }
         out_binding->status = THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
         return out_binding->status;
     }
@@ -2721,6 +2804,19 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
     if (!expected_ok ||
         catalog.candidates[0].absolute_offset != expected_candidate_offset ||
         !catalog.candidates[0].matches_initial_anchor) {
+        out_binding->status = THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+        return out_binding->status;
+    }
+
+    /* Normalize the promoted raw-BIN payload through MODE1 user data even
+     * when the raw scanner could see its header.  That makes the semantic
+     * handoff insensitive to JP/US sector framing at the payload tail. */
+    if (variant_is_raw_bin(theron_v1_track02_variant_for_md5(md5_hex)) &&
+        !tqr_bind_split_initial_level_candidate(track02_data,
+                                                 track02_size,
+                                                 md5_hex,
+                                                 descriptor_offset,
+                                                 out_binding)) {
         out_binding->status = THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
         return out_binding->status;
     }
@@ -3361,8 +3457,12 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
         out_semantic_handoff ? out_semantic_handoff : &local_semantic;
     const Theron_Track02LevelCandidate *candidate;
     const uint8_t *level_bytes;
+    uint8_t user_data_level_bytes[12u + TQR_RAW_INITIAL_LEVEL_WIDTH *
+                                  TQR_RAW_INITIAL_LEVEL_HEIGHT];
     Theron_Track02LevelHandoffStatus status;
     Theron_MapLoadResult map_status;
+    size_t copied_byte_count = 0u;
+    size_t copied_user_data_offset = 0u;
 
     if (out_semantic_handoff) {
         memset(out_semantic_handoff, 0, sizeof(*out_semantic_handoff));
@@ -3406,7 +3506,22 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
         return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
     }
 
-    level_bytes = track02_data + candidate->absolute_offset;
+    if (candidate->byte_count > sizeof(user_data_level_bytes) ||
+        theron_v1_track02_copy_initial_level_user_data_window(
+            track02_data,
+            track02_size,
+            md5_hex,
+            descriptor_offset,
+            user_data_level_bytes,
+            sizeof(user_data_level_bytes),
+            &copied_byte_count,
+            &copied_user_data_offset) != THERON_TRACK02_LEVEL_HANDOFF_OK ||
+        copied_byte_count != candidate->byte_count ||
+        copied_user_data_offset != candidate->user_data_offset) {
+        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+    }
+
+    level_bytes = user_data_level_bytes;
     out_level_handoff->entry_index = THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES;
     out_level_handoff->absolute_offset = candidate->absolute_offset;
     out_level_handoff->byte_count = candidate->byte_count;

@@ -23,14 +23,47 @@ extern "C" {
  * ReDMCSB: SUPPRESS_WRITER / SUPPRESS_READER
  * ════════════════════════════════════════════════════════════════ */
 
-/* Encode nibble-pairs (data[i], mask[i]) into compact byte stream.
- * mask low nibble: 0=skip field; 1..7 = number of LSB bits to store.
- * Returns output byte count, or -1 on error. */
+/* Source-faithful SUPPRESS stream state.
+ * SKProject's DM2_SUPPRESS_WRITER/READER scan each mask byte from bit 7
+ * through bit 0. A set mask bit selects the corresponding source-data bit.
+ * Bits are emitted MSB-first and adjacent save sections share this state
+ * until the writer is flushed. */
+typedef struct {
+    uint8_t pending_byte;
+    uint8_t pending_bits;
+} DM2_SuppressWriter;
+
+typedef struct {
+    const uint8_t *data;
+    size_t size;
+    size_t position;
+    uint8_t current_byte;
+    uint8_t bits_remaining;
+} DM2_SuppressReader;
+
+void dm2_suppress_writer_init(DM2_SuppressWriter *writer);
+int dm2_suppress_writer_write(DM2_SuppressWriter *writer,
+                              const uint8_t *data, const uint8_t *mask,
+                              size_t count, uint8_t *out,
+                              size_t out_capacity, size_t *out_size);
+int dm2_suppress_writer_flush(DM2_SuppressWriter *writer,
+                              uint8_t *out, size_t out_capacity,
+                              size_t *out_size);
+
+void dm2_suppress_reader_init(DM2_SuppressReader *reader,
+                              const uint8_t *data, size_t size);
+int dm2_suppress_reader_read(DM2_SuppressReader *reader,
+                             const uint8_t *mask, size_t count,
+                             uint8_t *out, uint8_t fill);
+
+/* Encode data+mask pairs into one self-contained compact byte stream.
+ * Each set bit in mask[i] stores the matching data[i] bit. Returns output
+ * byte count, or -1 on error. */
 int dm2_suppress_encode(const uint8_t *data, const uint8_t *mask,
                         size_t count, uint8_t *out, size_t out_capacity);
 
 /* Decode SUPPRESS stream → flat array.
- * fill=0: absent fields stay 0x00; fill=1: absent fields → 0xFF.
+ * fill=0: absent/masked-off bits stay 0x00; fill=1: they stay 0xFF.
  * Returns bytes consumed from input stream, or -1 on underflow. */
 int dm2_suppress_decode(const uint8_t *in, size_t in_capacity,
                         const uint8_t *mask, size_t count,

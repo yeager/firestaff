@@ -247,7 +247,11 @@ static int m11_swsh_intro_find_logo_path_for_suffixes(
         effectiveDataDir = ".";
     }
 
-    /* 2. Keep launch discovery bounded to the selected game's directory. */
+    /* 2. Start from the selected game's catalog path.  Do not recursively
+     * hash the full shared data root during launch: it can include large ISO,
+     * BIN and archive payloads for every game and stalls the title handoff.
+     * The data scanner already owns full-root discovery; this runtime lookup
+     * is deliberately bounded to the selected game's directory. */
     if (menuState) {
         for (i = 0U; i < M12_AssetStatus_GetVersionCount(gameId); ++i) {
             const M12_AssetVersionStatus* version =
@@ -291,6 +295,8 @@ static int m11_swsh_intro_find_logo_path_for_suffixes(
             return 1;
         }
     }
+    /* Diagnostic-only escape hatch for unusual loose-file layouts.  Normal
+     * launch must never walk unrelated games or disc images synchronously. */
     if (getenv("FIRESTAFF_SWOOSH_DEEP_SCAN")) {
         int filesVisited = 0;
         if (m11_swsh_intro_find_known_hash(effectiveDataDir,
