@@ -28,6 +28,10 @@
 
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_creature.h"
+#include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_game.h"
+#include "dm2_v1_runtime.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1544,6 +1548,71 @@ static int test_champion_death_permanence_source_lock(void)
     return 1;
 }
 
+static int test_live_runtime_state_roundtrip(void)
+{
+    DM2_V1_BootProfile boot;
+    DM2_V1_GameState game;
+    DM2_V1_DungeonData dungeon;
+    const DM2_V1_CreatureInstance *before;
+    const DM2_V1_CreatureInstance *after;
+    uint8_t *save_data = NULL;
+    size_t save_size;
+    int creature_id;
+    int saved_hp;
+    uint32_t saved_animation_tick;
+    uint32_t saved_render_revision;
+
+    printf("  Live CCM/dungeon/GDAT runtime round-trip...\n");
+    memset(&boot, 0, sizeof(boot));
+    memset(&game, 0, sizeof(game));
+    memset(&dungeon, 0, sizeof(dungeon));
+    dungeon.raw_data = (uint8_t *)calloc(16u, 1u);
+    if (!dungeon.raw_data) return 0;
+    dungeon.raw_size = 16;
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 2;
+    dungeon.level_heights[0] = 2;
+    dungeon.square_bytes = 1;
+    dungeon.raw_map_data_base = 0;
+    boot.dm2_state = &game;
+    boot.dungeon_data = &dungeon;
+    boot.graphics_size = 0x876543u;
+    snprintf(boot.graphics_md5, sizeof(boot.graphics_md5), "runtime-gdat");
+    dm2_v1_runtime_init(&boot);
+    creature_id = dm2_v1_creature_spawn(3, 1, 1, 0, 2, 8);
+    if (creature_id < 0) goto fail;
+    dm2_v1_creature_tick();
+    before = dm2_v1_creature_get_instance(creature_id);
+    if (!before || before->animation_tick == 0 || before->render_revision == 0)
+        goto fail;
+    saved_hp = before->hp_current;
+    saved_animation_tick = before->animation_tick;
+    saved_render_revision = before->render_revision;
+    dungeon.raw_data[3] = 0x24;
+    save_size = dm2_v1_runtime_live_save_size();
+    save_data = (uint8_t *)malloc(save_size);
+    if (!save_data || dm2_v1_runtime_serialize_live_save(save_data, save_size) < 0)
+        goto fail;
+    (void)dm2_v1_creature_deal_damage(creature_id, 3);
+    dungeon.raw_data[3] = 0;
+    if (dm2_v1_runtime_restore_live_save(save_data, save_size) != 0)
+        goto fail;
+    after = dm2_v1_creature_get_instance(creature_id);
+    if (!after || after->hp_current != saved_hp ||
+        after->animation_tick != saved_animation_tick ||
+        after->render_revision != saved_render_revision ||
+        dungeon.raw_data[3] != 0x24) goto fail;
+    free(save_data);
+    free(dungeon.raw_data);
+    printf("    PASS: live CCM, animation/revision, dungeon and GDAT binding restored\n");
+    return 1;
+fail:
+    free(save_data);
+    free(dungeon.raw_data);
+    printf("    FAIL: live runtime state did not round-trip\n");
+    return 0;
+}
+
 /* ════════════════════════════════════════════════════════════════ */
 
 int main(void)
@@ -1573,6 +1642,7 @@ int main(void)
     RUN(14, test_resume_smoke_gate_position_facing_inventory);
     RUN(15, test_raw_sksave_resume_import);
     RUN(16, test_champion_death_permanence_source_lock);
+    RUN(17, test_live_runtime_state_roundtrip);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);
