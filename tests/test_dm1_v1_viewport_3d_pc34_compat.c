@@ -3903,6 +3903,15 @@ static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
         { "src/engine/m11_game_view.c",
           "metadata selects the parity bitmap and asks M11 to mirror",
           "pass510.side_wall_lr_swap_path" },
+        { "src/engine/m11_game_view.c",
+          "static void m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(",
+          "pass643.d3l2_d3r2_f0111_runtime_consumer" },
+        { "src/engine/m11_game_view.c",
+          "DUNVIEW.C:6272 and :6339",
+          "pass643.d3l2_d3r2_f0111_redmcsb_anchors" },
+        { "src/engine/m11_game_view.c",
+          "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_material_plan_pc34(",
+          "pass643.d3l2_d3r2_material_plan_consumed" },
     };
     for (size_t i = 0; i < sizeof(needles) / sizeof(needles[0]); ++i) {
         char id[128];

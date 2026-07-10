@@ -106,6 +106,7 @@
 #include "dm1_v1_side_door_render_pc34_compat.h"
 #include "dm1_v1_stairs_render_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
+#include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_throw_shoot_pc34_compat.h"
@@ -22414,6 +22415,79 @@ static M11_DM1ZoneBlit m11_dm1_side_door_blit_from_plan(
     return blit;
 }
 
+static void m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH,
+    int maxVisibleForward,
+    const M11_ViewportCell cells[3][3]) {
+    size_t i;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    for (i = 0;
+         i < dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_count_pc34();
+         ++i) {
+        M11_ViewportCell cell;
+        M11_DM1ZoneBlit blit;
+        DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 plan;
+        const DM1_V1_D3L2D3R2F0111DoorFrontSpecPc34* spec =
+            dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_at_pc34(i);
+        int panelGraphic;
+        if (!spec) {
+            continue;
+        }
+        if (spec->relative_depth > maxVisibleForward) {
+            continue;
+        }
+        if (!m11_dm1_side_lane_clear_for_rel(cells,
+                                             spec->relative_depth,
+                                             spec->relative_lateral)) {
+            continue;
+        }
+        if (!m11_sample_viewport_cell(state,
+                                      spec->relative_depth,
+                                      spec->relative_lateral,
+                                      &cell)) {
+            continue;
+        }
+        if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_DOOR ||
+            m11_viewport_cell_is_open(&cell)) {
+            continue;
+        }
+        if (!dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_material_plan_pc34(
+                spec,
+                &plan)) {
+            continue;
+        }
+        memset(&blit, 0, sizeof(blit));
+        blit.graphicIndex = plan.bitmap_id;
+        blit.srcX = 0;
+        blit.srcY = 0;
+        blit.dstX = plan.x;
+        blit.dstY = plan.y;
+        blit.width = plan.width;
+        blit.height = plan.height;
+        panelGraphic = m11_dm1_door_panel_graphic(state, &cell, 2);
+        if (panelGraphic >= 0) {
+            blit.graphicIndex = panelGraphic;
+        }
+        /* ReDMCSB DUNVIEW.C F0676/F0677 call F0111 for D3L2/D3R2 at
+         * DUNVIEW.C:6272 and :6339, using C3700/C3710 with C10 transparent
+         * color.  Keep this far side-pair route on the GRAPHICS.DAT loader,
+         * before the older generic side-door pass handles adjacent D3L/R. */
+        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
+                                     &blit, plan.transparent_color);
+    }
+}
+
+static int m11_dm1_is_d3l2_d3r2_f0111_side_door_plan(
+    const DM1_SideDoorRenderPlanPc34* plan) {
+    return plan && plan->relForward == 3 &&
+           (plan->relSide == -2 || plan->relSide == 2);
+}
+
 static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW,
@@ -22437,6 +22511,9 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
         int panelCount;
         int panelIndex;
         if (!dm1_v1_side_door_render_plan_at_pc34(i, &plan)) {
+            continue;
+        }
+        if (m11_dm1_is_d3l2_d3r2_f0111_side_door_plan(&plan)) {
             continue;
         }
         if (plan.relForward > maxVisibleForward) {
@@ -22511,6 +22588,9 @@ static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
         if (!dm1_v1_side_door_render_plan_at_pc34(i, &plan)) {
             continue;
         }
+        if (m11_dm1_is_d3l2_d3r2_f0111_side_door_plan(&plan)) {
+            continue;
+        }
         if (plan.relForward > maxVisibleForward) {
             continue;
         }
@@ -22568,6 +22648,9 @@ static void m11_draw_dm1_side_destroyed_door_masks(const M11_GameViewState* stat
         int panelGraphic;
         int panelCount;
         if (!dm1_v1_side_door_render_plan_at_pc34(i, &plan)) {
+            continue;
+        }
+        if (m11_dm1_is_d3l2_d3r2_f0111_side_door_plan(&plan)) {
             continue;
         }
         if (plan.relForward > maxVisibleForward) {
@@ -37055,6 +37138,9 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                         maxVisibleForward, cells);
     m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
+    m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
+        state, framebuffer, framebufferWidth, framebufferHeight,
+        maxVisibleForward, cells);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
                              maxVisibleForward, cells);
     m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
@@ -37083,6 +37169,9 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                     nearMaxVisibleForward, cells);
             m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                         nearMaxVisibleForward, cells);
+            m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                nearMaxVisibleForward, cells);
             m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
                                     nearMaxVisibleForward, cells);
             m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-10 DM1 M11 D3L2/D3R2 F0111 door-front asset-loader consumer: M11 now consumes the DM1-owned ReDMCSB F0676/F0677 material plan for far D3L2/D3R2 door-fronts through the production GRAPHICS.DAT asset loader, before the older generic side-door pass can overwrite the C3700/C3710 route. Reference read: local ReDMCSB `DUNVIEW.C` F0111/F0676/F0677. Verification: `test_dm1_v1_viewport_3d_pc34_compat`, `firestaff_m11`, and `git diff --check` passed.
+
 - ✅ 2026-07-10 DM1 D3L2/D3R2 G0693 packed source to F0111 temp door: the DM1 viewport state now accepts packed 4bpp GRAPHICS.DAT/G0693 rows per D3 side, copies them into the F0111 temporary door bitmap before C3700/C3710 materialization, and records packed-source/temp/fallback receipt status. Reference read: local ReDMCSB `DUNVIEW.C` F0096/F0111/F0676/F0677. Verification: `test_dm1_v1_viewport_3d_pc34_compat` and `git diff --check` passed.
 
 - ✅ 2026-07-10 DM2 teleporter map-chip GDAT receipt: runtime HUD/dungeon capture now materializes the skproject `QUERY_DUNGEON_MAP_CHIP_PICT(GDAT_CATEGORY_TELEPORTERS, 0, GDAT_IMG_MAP_CHIP)` route from real `GRAPHICS.DAT`, including raw and decoded hashes, and complete-support requires the receipt. Verification: `cmake --build build --target test_dm2_v1_boot_profile_smoke --parallel 2`, `./build/test_dm2_v1_boot_profile_smoke` PASS 79/79, and `git diff --check` passed.
