@@ -709,6 +709,23 @@ static void test_floor_ceiling_asset_provider(void)
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+    s_asset_fetch_calls = 0;
+    s_fail_asset_index =
+        dm2_v1_viewport_door_panel_graphic_index_for_square(DM2_SQ_D0C);
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_doors(&viewport);
+    CHECK("door pass records panel fallback when frame GDAT succeeds",
+          s_asset_fetch_calls == 2 &&
+              viewport.asset_door_panel_drawn_count == 0 &&
+              viewport.asset_door_frame_drawn_count == 1 &&
+              viewport.fallback_door_drawn_count == 1);
+    s_fail_asset_index = 0;
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
     viewport.squares[DM2_SQ_D0C].door_button = 1;
     viewport.squares[DM2_SQ_D0C].door_button_state = 1;
     memset(&door_plan, 0, sizeof(door_plan));

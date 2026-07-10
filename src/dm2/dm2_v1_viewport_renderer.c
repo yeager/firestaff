@@ -2817,6 +2817,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int panel_w = 0;
             int panel_h = 0;
             int panel_stride = 0;
+            int panel_drawn_asset = 0;
             if (door->panel_gdat_index != 0 &&
                 dm2_v1_fetch_viewport_asset(s,
                                             door->panel_gdat_index,
@@ -2856,8 +2857,10 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     s->last_door_panel_asset_src_h = panel_h;
                     s->last_door_panel_asset_src_stride =
                         panel_stride > 0 ? panel_stride : panel_w;
+                    panel_drawn_asset = 1;
                 }
-            } else {
+            }
+            if (!panel_drawn_asset) {
                 dm2_v1_draw_door_panel_fallback_rect(vp,
                                                      stride,
                                                      door->view_square,
@@ -3033,10 +3036,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     s->asset_door_overlay_drawn_count += door_overlay_asset_count;
     s->asset_door_frame_drawn_count += door_asset_count;
     s->asset_door_button_drawn_count += door_button_asset_count;
-    if (door_asset_count == 0 && door_panel_asset_count == 0 &&
-        door_button_asset_count == 0) {
-        s->fallback_door_drawn_count += door_fallback_count;
-    }
+    s->fallback_door_drawn_count += door_fallback_count;
 }
 
 /* ── Creatures ───────────────────────────────────────────────────── */
