@@ -1788,6 +1788,8 @@ static int m11_apply_dm1_save_resume_receipt(
     }
     state->loadGameTick = receipt->loadGameTick;
     state->lastSaveTick = receipt->lastSaveTick;
+    state->dm1ViewportRuntimeOrigin =
+        DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34;
     (void)M11_GameView_SetMusicEnabled(state, receipt->musicOn);
     m11_set_status(state, receipt->statusTitle, receipt->statusDetail);
     snprintf(state->inspectTitle,
@@ -4903,6 +4905,8 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
         F0883_WORLD_Free_Compat(&loadedWorld);
         return 0;
     }
+    state->dm1ViewportRuntimeOrigin =
+        DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34;
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_discard_transient_dm1_action_effects_after_resume(state);
     m11_refresh_hash(state);
@@ -10127,6 +10131,8 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->leaderHandObjectPresent = 0;
     state->leaderHandThing = THING_NONE;
     state->leaderHandIconIndex = -1;
+    state->dm1ViewportRuntimeOrigin =
+        DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
     state->v1ScrollPanelActive = 0;
     state->v1ScrollPanelThing = THING_NONE;
     state->v1OpenChestThing = THING_NONE;
@@ -12907,6 +12913,8 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
         m11_set_status(state, "LOAD", "SAVE ADOPTION FAILED");
         return 0;
     }
+    state->dm1ViewportRuntimeOrigin =
+        DM1_V1_VIEWPORT_RUNTIME_ORIGIN_QUICKSAVE_RESUME_PC34;
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_discard_transient_dm1_action_effects_after_resume(state);
     m11_refresh_hash(state);
@@ -16410,8 +16418,10 @@ static int m11_build_dm1_viewport_materialization_decision(
         cell->relForward == 1 && cell->relSide == 0 &&
         cell->championPortraitOrdinal >= 0;
     /* ReDMCSB rebuilds F0172/F0115 view state after every entrance or save
-     * handoff. The receipt is deliberately independent of that provenance. */
-    input.runtimeOrigin = DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
+     * handoff. The live effect lists remain authoritative; provenance never
+     * selects an M11 fallback. */
+    input.runtimeOrigin = (DM1_V1_ViewportRuntimeOriginPc34)
+        state->dm1ViewportRuntimeOrigin;
     if (!dm1_v1_viewport_runtime_materialization_decide_pc34(&input,
                                                                outDecision)) {
         return 0;
@@ -26224,15 +26234,9 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
  * the firstProjectileGfxIndex path in m11_sample_viewport_cell)
  * and draws the sprite at its map cell.
  *
- * Even though the per-tick TIMELINE_EVENT_PROJECTILE_MOVE handler
- * in F0887 is a v1 no-op (the queue pops the event but does not
- * yet step the projectile), the visible, recognisable DM effect
- * still lands: the player sees the correct projectile sprite (from
- * GRAPHICS.DAT 416..438) appear at the party's cell facing their
- * direction, the required mana is deducted, the DM1-style log
- * line and audio cue fire, and the action menu closes.  This
- * matches what classic DM showed the player in the first animation
- * frame of the spell — exactly the bounded slice asked for.
+ * F0811 is advanced by the live game-view tick path, committing
+ * cross-cell movement, collision, energy decay and F0215 landing before
+ * the viewport samples the current live-effect list.
  *
  * Returns 1 on success (slot allocated), 0 on list-full / invalid.
  *
@@ -26283,10 +26287,8 @@ static int m11_spawn_action_projectile_ex(M11_GameViewState* state,
                                         &slot, &firstMove)) {
         return 0;
     }
-    /* Schedule the first-move event so it rides the existing
-     * timeline path.  The F0887 handler pops it as a v1 no-op,
-     * but scheduling keeps the queue honest for the eventual real
-     * handler without requiring any M10 changes. */
+    /* F0212 schedules the first movement at tick +1. The live F0811
+     * game-view tick consumes the slot when that time arrives. */
     (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &firstMove);
     return 1;
 }
