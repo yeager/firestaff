@@ -4254,6 +4254,33 @@ int nexus_v1_launcher_startup_real_asset_ownership_from_runtime_state(
             dgn_commands,
             (int)(sizeof(dgn_commands) / sizeof(dgn_commands[0])),
             &out_receipt->runtime_route);
+    } else if (!state->title_active && !state->save_select_active &&
+               state->engine && state->engine->level_loaded) {
+        /* A successful save load has already restored the party and level,
+         * so it reaches M11 without a champion-menu start command. Reuse the
+         * same runtime handoff contract with an explicit start execution;
+         * the host still owns BPK/DMDF/DGN gating and emits the first DGN
+         * render plan. ReDMCSB LOADSAVE.C F0433 restores runtime state before
+         * returning control to the game view. */
+        Nexus_V1_StartupChampionExecution execution;
+        Nexus_V1_StartupHostActionReceipt host_action;
+
+        memset(&execution, 0, sizeof(execution));
+        execution.kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON;
+        execution.status_scope = "SAVE";
+        execution.status = "resumed-dungeon";
+        nexus_v1_startup_host_action_receipt_clear(&host_action);
+        host_action.host_receipt.input_result =
+            NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+        host_action.host_receipt.status_scope = execution.status_scope;
+        host_action.host_receipt.status = execution.status;
+        (void)nexus_v1_launcher_startup_runtime_route_from_champion_execution(
+            state,
+            &execution,
+            &host_action,
+            dgn_commands,
+            (int)(sizeof(dgn_commands) / sizeof(dgn_commands[0])),
+            &out_receipt->runtime_route);
     }
     nexus_v1_launcher_fill_real_asset_ownership(state, out_receipt);
     return 1;
