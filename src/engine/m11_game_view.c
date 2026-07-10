@@ -10421,6 +10421,12 @@ static void m11_nexus_apply_startup_host_caller_receipt(
         receipt->champion_route_saturn_capture_exact ? 1 : 0;
     state->nexusState.startup_dungeon_route_saturn_capture_exact =
         receipt->dungeon_route_saturn_capture_exact ? 1 : 0;
+    state->nexusState.startup_save_host_package_route_complete =
+        receipt->save_host_package_route_complete ? 1 : 0;
+    state->nexusState.startup_champion_host_package_route_complete =
+        receipt->champion_host_package_route_complete ? 1 : 0;
+    state->nexusState.startup_dungeon_host_package_route_complete =
+        receipt->dungeon_host_package_route_complete ? 1 : 0;
     state->nexusState.startup_single_saturn_owner_ready =
         receipt->single_saturn_startup_owner_ready ? 1 : 0;
     state->nexusState.startup_title_menu_capture_route_joined =
