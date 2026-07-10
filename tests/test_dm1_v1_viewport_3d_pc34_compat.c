@@ -2579,6 +2579,42 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
     check_int("d3l2_d3r2_gate.d3r2_field_after_things",
               d3r2_order->field_after_things &&
               strstr(d3r2_order->field_source_lines, "DUNVIEW.C:6355-6356") != NULL, 1);
+    {
+        DM1_ViewportD3BackWallRuntimeReceipt d3l2_door =
+            dm1_viewport_3d_build_d3_back_wall_runtime_receipt(
+                DM1_VIEW_SQUARE_D3L2,
+                DM1_VP_ELEMENT_DOOR_FRONT);
+        DM1_ViewportD3BackWallRuntimeReceipt d3r2_door =
+            dm1_viewport_3d_build_d3_back_wall_runtime_receipt(
+                DM1_VIEW_SQUARE_D3R2,
+                DM1_VP_ELEMENT_DOOR_FRONT);
+        check_int("d3l2_d3r2_gate.d3l2_door_front_pass_count",
+                  d3l2_door.thing_pass_count, 2);
+        check_int("d3l2_d3r2_gate.d3l2_door_front_rear_order",
+                  d3l2_door.rear_cell_order, 0x0218);
+        check_int("d3l2_d3r2_gate.d3l2_door_front_front_order",
+                  d3l2_door.front_cell_order, 0x0349);
+        check_int("d3l2_d3r2_gate.d3l2_door_front_between_passes",
+                  d3l2_door.door_front_between_passes ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_door_front_source",
+                  strstr(d3l2_door.rear_pass_source_lines, "DUNVIEW.C:6271") != NULL &&
+                  strstr(d3l2_door.door_source_lines, "DUNVIEW.C:6272") != NULL &&
+                  strstr(d3l2_door.front_pass_source_lines, "DUNVIEW.C:6273-6286") != NULL,
+                  1);
+        check_int("d3l2_d3r2_gate.d3r2_door_front_pass_count",
+                  d3r2_door.thing_pass_count, 2);
+        check_int("d3l2_d3r2_gate.d3r2_door_front_rear_order",
+                  d3r2_door.rear_cell_order, 0x0128);
+        check_int("d3l2_d3r2_gate.d3r2_door_front_front_order",
+                  d3r2_door.front_cell_order, 0x0439);
+        check_int("d3l2_d3r2_gate.d3r2_door_front_between_passes",
+                  d3r2_door.door_front_between_passes ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3r2_door_front_source",
+                  strstr(d3r2_door.rear_pass_source_lines, "DUNVIEW.C:6338") != NULL &&
+                  strstr(d3r2_door.door_source_lines, "DUNVIEW.C:6339") != NULL &&
+                  strstr(d3r2_door.front_pass_source_lines, "DUNVIEW.C:6340-6353") != NULL,
+                  1);
+    }
 
     dm1_viewport_3d_set_wall_frame_bitmaps(assets);
 
@@ -2689,6 +2725,16 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
               viewport[25 * DM1_VIEWPORT_WIDTH + 0], 0x1c);
     check_int("d3l2_d3r2_gate.teleporter_d3r2_zone_untouched",
               viewport[25 * DM1_VIEWPORT_WIDTH + 208], 0xee);
+    check_int("d3l2_d3r2_gate.teleporter_receipt_pass_count",
+              state.last_d3_back_wall_receipt.thing_pass_count, 1);
+    check_int("d3l2_d3r2_gate.teleporter_receipt_order",
+              state.last_d3_back_wall_receipt.rear_cell_order, 0x3421);
+    check_int("d3l2_d3r2_gate.teleporter_receipt_field_after",
+              state.last_d3_back_wall_receipt.field_after_thing_passes ? 1 : 0, 1);
+    check_int("d3l2_d3r2_gate.teleporter_receipt_source",
+              strstr(state.last_d3_back_wall_receipt.rear_pass_source_lines, "DUNVIEW.C:6286") != NULL &&
+              strstr(state.last_d3_back_wall_receipt.field_source_lines, "DUNVIEW.C:6288-6289") != NULL,
+              1);
 
     /* ReDMCSB DUNVIEW.C:F0677 lines 6355-6356 draws the D3R2 teleporter
      * field through F0113 at C703_ZONE_WALL_D3R2 (DEFS.H:4043).  F0113

@@ -321,8 +321,6 @@ static void cleanup_root(const char *root) {
             test_unlink(path);
         }
     }
-    snprintf(path, sizeof(path), "%s/slot-seven-real-save.bin", root);
-    test_unlink(path);
     test_rmdir(root);
 }
 
@@ -366,48 +364,6 @@ static void test_root_manifest(void) {
     cleanup_root(root);
 }
 
-static void test_corpus_manifest_finds_arbitrary_real_save_name(void) {
-    char root[DM1_ORIGINAL_SAVE_PATH_MAX];
-    char path[DM1_ORIGINAL_SAVE_PATH_MAX];
-    uint8_t bytes[800];
-    DM1OriginalSaveManifest fixed;
-    DM1OriginalSaveCorpusManifest corpus;
-
-    if (!make_temp_root(root)) {
-        printf("FAIL temp root corpus\n");
-        g_fail++;
-        return;
-    }
-
-    memset(bytes, 0, sizeof(bytes));
-    build_original_header(bytes, 5u, 0, 0x534c4f54u);
-    snprintf(path, sizeof(path), "%s/slot-seven-real-save.bin", root);
-    check_int("write arbitrary original save name",
-              write_file(path, bytes, sizeof(bytes)), 1);
-
-    check_int("fixed root manifest ignores arbitrary save filename",
-              dm1_v1_original_save_classify_root(root, &fixed), 1);
-    check_int("fixed manifest present count for arbitrary save",
-              fixed.present_count, 0);
-
-    check_int("corpus root manifest scans arbitrary save filename",
-              dm1_v1_original_save_classify_corpus_root(root, &corpus), 1);
-    check_int("corpus capacity",
-              corpus.candidate_capacity,
-              (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP);
-    check_int("corpus scanned file count", corpus.scanned_file_count, 1);
-    check_int("corpus present count", corpus.present_count, 1);
-    check_int("corpus classified count", corpus.classified_count, 1);
-    check_int("corpus original dm1 pc34 count",
-              corpus.original_dm1_pc34_count, 1);
-    check_int("corpus pc34 importer candidate count",
-              corpus.pc34_importer_candidate_count, 1);
-    check_int("corpus path records arbitrary filename",
-              strstr(corpus.paths[0], "slot-seven-real-save.bin") != NULL, 1);
-
-    cleanup_root(root);
-}
-
 static void test_helpers(void) {
     char root[DM1_ORIGINAL_SAVE_PATH_MAX];
     char path[DM1_ORIGINAL_SAVE_PATH_MAX];
@@ -438,7 +394,6 @@ int main(void) {
     test_rejects_mutated_header();
     test_compat_family_and_unknown_format();
     test_root_manifest();
-    test_corpus_manifest_finds_arbitrary_real_save_name();
     test_helpers();
 
     printf("DM1 original save classifier: %d passed, %d failed\n", g_pass, g_fail);

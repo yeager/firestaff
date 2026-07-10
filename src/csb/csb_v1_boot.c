@@ -6537,9 +6537,6 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
     if (csb_v1_boot_assume_no_dm1_runtime(profile) != 0) {
         return -1;
     }
-    if (profile->save_root[0] == '\0') {
-        csb_v1_boot_set_save_root(profile, NULL);
-    }
     /* Re-entering the CSB profile replaces the live dungeon context just as
      * ReDMCSB's global dungeon/map state is replaced when a new game is
      * loaded.  Clear the previous heap-owned runtime before csb_v1_runtime_init

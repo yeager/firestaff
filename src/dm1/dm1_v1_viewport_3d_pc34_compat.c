@@ -2381,6 +2381,49 @@ const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusi
     return NULL;
 }
 
+DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_receipt(
+    DM1_ViewSquareIndex square,
+    int element)
+{
+    DM1_ViewportD3BackWallRuntimeReceipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.square = square;
+    receipt.element = element;
+
+    const DM1_ViewportFloorFieldOrderSpec *order =
+        dm1_viewport_3d_get_floor_field_order_spec_for_square(square);
+    const DM1_ViewportDoorFrontOcclusionSpec *door =
+        dm1_viewport_3d_get_door_front_occlusion_spec_for_square(square);
+
+    if (order) {
+        receipt.wall_case_returns_before_things =
+            order->wall_case_returns_before_things && element == DM1_VP_ELEMENT_WALL;
+        receipt.field_after_thing_passes =
+            order->field_after_things && element == DM1_VP_ELEMENT_TELEPORTER;
+        receipt.field_source_lines = order->field_source_lines;
+    }
+
+    if (element == DM1_VP_ELEMENT_DOOR_FRONT && door) {
+        receipt.rear_cell_order = door->rear_cell_order;
+        receipt.front_cell_order = door->front_cell_order;
+        receipt.thing_pass_count = 2;
+        receipt.floor_ornament_before_rear_pass = true;
+        receipt.door_front_between_passes = true;
+        receipt.rear_pass_source_lines = door->rear_pass_source_lines;
+        receipt.door_source_lines = door->door_source_lines;
+        receipt.front_pass_source_lines = door->front_pass_source_lines;
+    } else if (order && !receipt.wall_case_returns_before_things) {
+        receipt.rear_cell_order = order->cell_order;
+        receipt.thing_pass_count =
+            order->objects_creatures_projectiles_before_explosions ? 1 : 0;
+        receipt.floor_ornament_before_rear_pass =
+            order->floor_ornament_before_things;
+        receipt.rear_pass_source_lines = order->things_source_lines;
+    }
+
+    return receipt;
+}
+
 size_t dm1_viewport_3d_side_occlusion_spec_count(void)
 {
     return sizeof(s_side_occlusion_specs) / sizeof(s_side_occlusion_specs[0]);
@@ -2635,16 +2678,16 @@ static void dm1_viewport_3d_draw_floor_ornament_simple(DM1_Viewport3DState *stat
  * (line 6293).  These functions are CSB-specific: they render the back
  * wall of a corridor when viewed from a perpendicular direction.
  *
- * Element routing:
- *   WALL        → draw wall bitmap (parity-aware) + wall ornament → return
- *   TELEPORTER  → draw field effect at wall zone → return
- *   STAIRS_FRONT→ draw stairs up/down bitmap → return
- *   PIT         → draw pit bitmap (if not visible) → fall through
- *   CORRIDOR    → draw floor ornament + F0115 (TODO) → return
- *   DOOR_SIDE   → draw floor ornament + F0115 (TODO) → return
- *   STAIRS_SIDE → draw floor ornament + F0115 (TODO) → return
- *   DOOR_FRONT  → floor ornament + F0115 (pass1, TODO) + door panel +
- *                  F0115 (pass2, TODO) → return
+     * Element routing:
+     *   WALL        → draw wall bitmap (parity-aware) + wall ornament → return
+     *   TELEPORTER  → draw field effect at wall zone → return
+     *   STAIRS_FRONT→ draw stairs up/down bitmap → return
+     *   PIT         → draw pit bitmap (if not visible) → fall through
+     *   CORRIDOR    → draw floor ornament + F0115 receipt → return
+     *   DOOR_SIDE   → draw floor ornament + F0115 receipt → return
+     *   STAIRS_SIDE → draw floor ornament + F0115 receipt → return
+     *   DOOR_FRONT  → floor ornament + F0115 pass1 receipt + door panel receipt +
+     *                  F0115 pass2 receipt → return
  *
  * Source: ReDMCSB DUNVIEW.C F0676 (line 6226) · F0677 (line 6293)
  * ──────────────────────────────────────────────────────────────────────── */
@@ -2657,6 +2700,8 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
 
     int cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
     int element = dm1_viewport_3d_classify_grid_cell(cell);
+    state->last_d3_back_wall_receipt =
+        dm1_viewport_3d_build_d3_back_wall_runtime_receipt(square, element);
 
     const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
     if (!bm_base) return;
@@ -2789,9 +2834,8 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
      * DOOR_SIDE (16) and STAIRS_SIDE (18) also route here.
      * DOOR_FRONT (17) additionally calls F0111 before the second F0115.
      *
-     * F0115 is not yet implemented in Firestaff; creatures/items/projectiles
-     * are TODO (pass603+).  The floor ornament and field effect are the
-     * only visible elements rendered at this stage.
+     * Firestaff records the F0115 cell-order receipt here; item/creature/
+     * projectile bitmap emission remains with the shared F0115 runtime layer.
      *
      * Source: DUNVIEW.C:6282-6289 (F0676 corridor/teleporter) ·
      *         DUNVIEW.C:6349-6356 (F0677 corridor/teleporter) */
@@ -2808,13 +2852,10 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
         }
         dm1_viewport_3d_draw_floor_ornament_simple(state, square, fo_idx);
 
-        /* F0115 creature/item/projectile/explosion pass — TODO (pass603+).
-         * This is the core things-rendering pipeline from F0115.
-         * Requires: thing list traversal, z-order, occlusion specs for
-         * D3L2/D3R2 (s_projectile_occlusion_specs[12/13],
-         *   s_explosion_occlusion_specs[12/13]).
-         * Source: DUNVIEW.C:6286 (F0676) · DUNVIEW.C:6353 (F0677) */
-        /* F0115 things pass — TODO (pass603+) */
+        /* F0115 creature/item/projectile/explosion pass receipt.
+         * ReDMCSB calls F0115 here with 0x3421/0x4312 for open cells, 0x0321/
+         * 0x0412 for side-door/stairs-side cells, or the door-front split below.
+         * Source: DUNVIEW.C:6286 (F0676) · DUNVIEW.C:6353 (F0677). */
 
         /* Teleporter field effect — only for TELEPORTER element.
          * Source: DUNVIEW.C:6288-6289 (F0676) · DUNVIEW.C:6355-6356 (F0677) */
@@ -2831,9 +2872,11 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
      *   3. F0111_DUNGEONVIEW_DrawDoor → C3700_ZONE_DOOR_D3L2 / C3710_ZONE_DOOR_D3R2
      *   4. F0115 with order 0x0349 (pass2: front cells)
      *
-     * TODO (pass603): implement F0111 door panel drawing for D3L2/D3R2.
+     * The receipt records both source cell orders and the F0111 door slot
+     * even when the concrete door bitmap asset is not available in this bounded
+     * helper. Host/runtime code must consume this route instead of treating the
+     * square as a generic open corridor.
      * Source: DUNVIEW.C:6272 (F0676) · DUNVIEW.C:6339 (F0677) */
-    /* DOOR_FRONT F0111 door panel — TODO (pass603) */
     (void)direction; /* unused in current stub */
     (void)fr;
 }

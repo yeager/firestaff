@@ -325,6 +325,22 @@ typedef struct {
     const char *front_pass_source_lines;
 } DM1_ViewportDoorFrontOcclusionSpec;
 
+typedef struct {
+    DM1_ViewSquareIndex square;
+    int element;
+    uint16_t rear_cell_order;
+    uint16_t front_cell_order;
+    unsigned char thing_pass_count;
+    bool floor_ornament_before_rear_pass;
+    bool door_front_between_passes;
+    bool field_after_thing_passes;
+    bool wall_case_returns_before_things;
+    const char *rear_pass_source_lines;
+    const char *door_source_lines;
+    const char *front_pass_source_lines;
+    const char *field_source_lines;
+} DM1_ViewportD3BackWallRuntimeReceipt;
+
 /* Side-door/stairs-side branches do not draw a door bitmap in front of the
  * cell contents.  ReDMCSB still routes them through F0115 with a square-
  * specific packed cell order, which defines which side sub-cells are visible
@@ -815,6 +831,11 @@ typedef struct {
     DM1_ViewportPreSquareDrawCallback pre_square_draw_callback;
     void *pre_square_draw_user_data;
 
+    /* Last D3L2/D3R2 source-ordered F0115/door/field runtime decision.
+     * Metadata only: this does not claim original pixel parity or install
+     * synthetic replacement art. */
+    DM1_ViewportD3BackWallRuntimeReceipt last_d3_back_wall_receipt;
+
 } DM1_Viewport3DState;
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -1052,6 +1073,9 @@ int dm1_viewport_3d_explosion_rebirth_step2_zone(const DM1_ViewportExplosionOccl
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec(size_t index);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_ViewSquareIndex square);
+DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_receipt(
+    DM1_ViewSquareIndex square,
+    int element);
 size_t dm1_viewport_3d_side_occlusion_spec_count(void);
 const DM1_ViewportSideOcclusionSpec *dm1_viewport_3d_get_side_occlusion_spec(size_t index);
 const DM1_ViewportSideOcclusionSpec *dm1_viewport_3d_get_side_occlusion_spec_for_square(DM1_ViewSquareIndex square);

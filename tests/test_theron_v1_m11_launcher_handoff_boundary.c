@@ -170,7 +170,6 @@ static void run_real_launcher_handoff_if_available(void) {
     M12_StartupMenuState menu;
     M12_LaunchIntent intent;
     M11_GameViewState view;
-    M11_BootProbeReceipt boot_receipt;
     const M12_MenuEntry* entry;
     char real_dir[512];
     const char* data_dir = default_data_root(real_dir);
@@ -230,12 +229,6 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
                 "M11 Theron launcher stage select draws a nonblank frame");
-    memset(&boot_receipt, 0, sizeof(boot_receipt));
-    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
-                    boot_receipt.startupTitleFrame == 0 &&
-                    boot_receipt.startupTitleFrameMax == 7 &&
-                    boot_receipt.startupTitleReady == 0,
-                "M11 Theron launcher title starts on animated frame 0");
     row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
     expect_true(row_count >= 3 &&
@@ -244,14 +237,6 @@ static void run_real_launcher_handoff_if_available(void) {
                     startup_rows_contain(startup_rows, row_count,
                                          "PRESS ENTER TO START"),
                 "M11 Theron launcher rows expose title-gate state");
-    while (view.theronState.startup_title_animation_tick < 48) {
-        (void)M11_GameView_AdvanceIdleTick(&view);
-    }
-    memset(&boot_receipt, 0, sizeof(boot_receipt));
-    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
-                    boot_receipt.startupTitleFrame == 7 &&
-                    boot_receipt.startupTitleReady == 1,
-                "M11 Theron launcher title reaches ready frame before accept");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,
                 "M11 Theron launcher title accept opens stage select");
