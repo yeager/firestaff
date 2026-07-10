@@ -1574,6 +1574,31 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_presented_byte_count == 0,
              1);
     memset(&hoc_capture_facts, 0, sizeof(hoc_capture_facts));
+    expect_i("DM1 fills HoC capture fact presented chain from hash",
+             dm1_v1_startup_hoc_capture_facts_set_presented_hash_pc34(
+                 &hoc_capture_facts,
+                 320,
+                 200,
+                 320 * 200 * 4,
+                 0x4d314843u,
+                 DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34) &&
+                 hoc_capture_facts.observed_presented_rgba_capture &&
+                 hoc_capture_facts.presented_capture_chain_hash != 0u,
+             1);
+    memset(&hoc_host_probe_facts, 0, sizeof(hoc_host_probe_facts));
+    expect_i("DM1 fills HoC host-probe presented chain from RGBA",
+             dm1_v1_startup_hoc_host_probe_facts_set_presented_rgba_pc34(
+                 &hoc_host_probe_facts,
+                 hoc_presented_rgba_sample,
+                 320,
+                 200,
+                 DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34) &&
+                 hoc_host_probe_facts.observed_presented_rgba_capture &&
+                 hoc_host_probe_facts.presented_capture_byte_count ==
+                     320 * 200 * 4 &&
+                 hoc_host_probe_facts.presented_capture_chain_hash != 0u,
+             1);
+    memset(&hoc_capture_facts, 0, sizeof(hoc_capture_facts));
     hoc_capture_facts.captured_after_first_frame_render = 1;
     hoc_capture_facts.captured_from_real_assets = 1;
     hoc_capture_facts.captured_from_mac_window = 1;
