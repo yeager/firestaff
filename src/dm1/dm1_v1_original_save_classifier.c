@@ -22,6 +22,7 @@
 #define DM1OS_PLATFORM_PC 9u
 #define DM1OS_DUNGEON_DM 10u
 #define DM1OS_SAVE_PART_COUNT 5u
+#define DM1OS_CORPUS_MAX_DEPTH 4
 
 typedef enum {
     DM1OS_ENDIAN_LE = 0,
@@ -585,6 +586,65 @@ static int corpus_add_classified_file(
     return 1;
 }
 
+#if !defined(_WIN32) && !defined(_WIN64)
+static int corpus_scan_directory_recursive(
+    DM1OriginalSaveCorpusManifest *manifest,
+    const char *dir_path,
+    int depth) {
+    DIR *dir;
+    struct dirent *entry;
+
+    if (!manifest || !dir_path || depth > DM1OS_CORPUS_MAX_DEPTH) {
+        return 1;
+    }
+
+    dir = opendir(dir_path);
+    if (!dir) {
+        return 1;
+    }
+    while ((entry = readdir(dir)) != NULL) {
+        char path[DM1_ORIGINAL_SAVE_PATH_MAX];
+        struct stat st;
+        int n;
+        if (entry->d_name[0] == '.') {
+            continue;
+        }
+        n = snprintf(path, sizeof(path), "%s%c%s",
+                     dir_path, DM1OS_PATH_SEP, entry->d_name);
+        if (n <= 0 || (size_t)n >= sizeof(path)) {
+            manifest->truncated_count++;
+            continue;
+        }
+        if (stat(path, &st) != 0) {
+            continue;
+        }
+        if (S_ISDIR(st.st_mode)) {
+            if (!corpus_scan_directory_recursive(manifest, path, depth + 1)) {
+                closedir(dir);
+                return 0;
+            }
+            continue;
+        }
+        if (!S_ISREG(st.st_mode)) {
+            continue;
+        }
+        /*
+         * ReDMCSB SAVEHEAD.C F0429/F0430 lines ~30-104 only identifies the
+         * obfuscated header; CEDTINCD.C F7051/F7057 lines ~226-294 then
+         * proves the loader route by reading the five checksum-protected save
+         * parts.  The corpus scan is therefore recursive by user layout, but
+         * still byte-shaped: filename is never enough to promote a DM1 save.
+         */
+        if (!corpus_add_classified_file(manifest, path)) {
+            closedir(dir);
+            return 0;
+        }
+    }
+    closedir(dir);
+    return 1;
+}
+#endif
+
 int dm1_v1_original_save_classify_corpus_root(
     const char *root,
     DM1OriginalSaveCorpusManifest *out_manifest) {
@@ -627,37 +687,7 @@ int dm1_v1_original_save_classify_corpus_root(
         return 1;
     }
 #else
-    {
-        DIR *dir = opendir(out_manifest->root);
-        struct dirent *entry;
-        if (!dir) {
-            return 1;
-        }
-        while ((entry = readdir(dir)) != NULL) {
-            char path[DM1_ORIGINAL_SAVE_PATH_MAX];
-            struct stat st;
-            int n;
-            if (entry->d_name[0] == '.') {
-                continue;
-            }
-            n = snprintf(path, sizeof(path), "%s%c%s",
-                         out_manifest->root, DM1OS_PATH_SEP,
-                         entry->d_name);
-            if (n <= 0 || (size_t)n >= sizeof(path)) {
-                out_manifest->truncated_count++;
-                continue;
-            }
-            if (stat(path, &st) != 0 || !S_ISREG(st.st_mode)) {
-                continue;
-            }
-            if (!corpus_add_classified_file(out_manifest, path)) {
-                closedir(dir);
-                return 0;
-            }
-        }
-        closedir(dir);
-        return 1;
-    }
+    return corpus_scan_directory_recursive(out_manifest, out_manifest->root, 0);
 #endif
 }
 
