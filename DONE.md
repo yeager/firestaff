@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 M12 corpus receipt consumer: startup menu now exposes DM1 PC34 corpus import/export receipt wrappers, so launcher code consumes the save-browser ReDMCSB `SAVEHEAD.C` F0429/F0430 plus `CEDTINCD.C` F7057 gates instead of raw selected-save diagnostics. Verification: `cmake --build build --target test_m12_quick_resume_gate --parallel 2`, `timeout 60 ./build/test_m12_quick_resume_gate`, and `git diff --check` passed.
+
 - ✅ 2026-07-11 DM2 skproject interface font-table receipt: runtime HUD/dungeon capture now parses `SkWinCore.cpp _3929_0e16` plus `QUERY_FONT` semantics from real `INTERFACE_GENERAL` `dt07/0x00`, including the 0x300-byte table, 6 rows, 128 character slots, printable coverage, and deterministic hash. Complete-support now requires this typed interface text receipt, while optional `dt07/0x0A` rect14 is validated only when the local data variant includes it. Verification: `cmake --build build --target test_dm2_v1_boot_profile_smoke --parallel 2`, `./build/test_dm2_v1_boot_profile_smoke` PASS 80/80, and `git diff --check` passed.
 
 - ✅ 2026-07-11 DM2 skproject interface placement receipt: runtime HUD/dungeon capture now validates the skproject `LOAD_GDAT_INTERFACE_00_0A` (`INTERFACE_GENERAL` `dt07/0x0A`) rect14 placement table when that entry exists, including row stride, raw byte count, image fields, and deterministic hash. The current local DM2 data variant does not include that optional entry, so complete-support stays gated by the verified action-table and map-chip routes.
