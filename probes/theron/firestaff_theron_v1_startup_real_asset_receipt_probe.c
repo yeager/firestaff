@@ -702,6 +702,10 @@ static void check_real_asset_path(void) {
             }
             if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_BIN) == 0 ||
                 strcmp(c->expected_md5, THERON_TRACK02_MD5_US_BIN) == 0) {
+                check(r.startup_bitmap_sample_count > 32u,
+                      "raw Track 02 receipt decodes extended bitmap samples");
+                check(r.startup_bitmap_atlas_tile_count > 32u,
+                      "raw Track 02 receipt carries extended bitmap atlas tiles");
                 check(r.user_data_window_count == 7u,
                       "raw Track 02 receipt has 7 logical user-data windows");
                 check(r.user_data_window_descriptor_count == 3u,
