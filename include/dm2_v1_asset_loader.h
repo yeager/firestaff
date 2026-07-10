@@ -75,6 +75,12 @@ typedef enum {
     DM2_GDAT_CATEGORY_JAPANESE_FONT      = 0x1C,
 } DM2_GDAT_Category;
 
+/* Viewport image fields used by the boot/runtime GDAT bridge.
+ * skproject/SKWIN/defines.h GRAPHICSSET and map-chip field identifiers. */
+#define DM2_GDAT_GFXSET_FLOOR 0x00
+#define DM2_GDAT_GFXSET_CEIL  0x01
+#define DM2_GDAT_IMG_MAP_CHIP 0xF9
+
 /* ── Image Compression Types ─────────────────────────────────────── */
 typedef enum {
     DM2_IMG_FMT_UNKNOWN     = 0,
