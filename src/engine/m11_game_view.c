@@ -5860,6 +5860,34 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
         summary.groups = receipt.groups;
         summary.items = receipt.items;
     }
+    if (world) {
+        int i;
+        for (i = 0; i < world->projectiles.count &&
+                    i < PROJECTILE_LIST_CAPACITY; ++i) {
+            const struct ProjectileInstance_Compat *projectile =
+                &world->projectiles.entries[i];
+            if (m11_projectile_instance_active(projectile) &&
+                projectile->mapIndex == mapIndex &&
+                projectile->mapX == mapX &&
+                projectile->mapY == mapY) {
+                ++summary.projectiles;
+                ++summary.total;
+            }
+        }
+        for (i = 0; i < world->explosions.count &&
+                    i < EXPLOSION_LIST_CAPACITY; ++i) {
+            const struct ExplosionInstance_Compat *explosion =
+                &world->explosions.entries[i];
+            if (m11_explosion_instance_active(explosion) &&
+                explosion->explosionType >= 0 &&
+                explosion->mapIndex == mapIndex &&
+                explosion->mapX == mapX &&
+                explosion->mapY == mapY) {
+                ++summary.explosions;
+                ++summary.total;
+            }
+        }
+    }
 
     if (outSummary) {
         *outSummary = summary;
