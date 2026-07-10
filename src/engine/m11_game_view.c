@@ -35814,6 +35814,63 @@ static void m11_draw_nexus_startup_commands(
                                                          &executor);
 }
 
+static void m11_nexus_fill_dgn_quad(
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const Nexus_V1_DgnRenderCommand *command)
+{
+    int y;
+    int min_y = framebufferHeight;
+    int max_y = -1;
+    int i;
+
+    for (i = 0; i < 4; ++i) {
+        int py = (command->quad_y[i] * (framebufferHeight - 1) +
+                  NEXUS_V1_DGN_VIEWPORT_UNITS / 2) /
+                 NEXUS_V1_DGN_VIEWPORT_UNITS;
+        if (py < min_y) min_y = py;
+        if (py > max_y) max_y = py;
+    }
+    if (min_y < 0) min_y = 0;
+    if (max_y >= framebufferHeight) max_y = framebufferHeight - 1;
+    for (y = min_y; y <= max_y; ++y) {
+        int intersections[4];
+        int count = 0;
+        for (i = 0; i < 4; ++i) {
+            int j = (i + 1) & 3;
+            int x0 = (command->quad_x[i] * (framebufferWidth - 1) +
+                      NEXUS_V1_DGN_VIEWPORT_UNITS / 2) /
+                     NEXUS_V1_DGN_VIEWPORT_UNITS;
+            int y0 = (command->quad_y[i] * (framebufferHeight - 1) +
+                      NEXUS_V1_DGN_VIEWPORT_UNITS / 2) /
+                     NEXUS_V1_DGN_VIEWPORT_UNITS;
+            int x1 = (command->quad_x[j] * (framebufferWidth - 1) +
+                      NEXUS_V1_DGN_VIEWPORT_UNITS / 2) /
+                     NEXUS_V1_DGN_VIEWPORT_UNITS;
+            int y1 = (command->quad_y[j] * (framebufferHeight - 1) +
+                      NEXUS_V1_DGN_VIEWPORT_UNITS / 2) /
+                     NEXUS_V1_DGN_VIEWPORT_UNITS;
+            if (y0 != y1 && y >= (y0 < y1 ? y0 : y1) &&
+                y < (y0 > y1 ? y0 : y1)) {
+                intersections[count++] = x0 + (y - y0) * (x1 - x0) /
+                    (y1 - y0);
+            }
+        }
+        if (count >= 2) {
+            int left = intersections[0];
+            int right = intersections[1];
+            if (right < left) {
+                int swap = left;
+                left = right;
+                right = swap;
+            }
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                           left, right, y, command->palette_index);
+        }
+    }
+}
+
 static void m11_draw_nexus_dgn_host_plan(
     const M11_GameViewState *state,
     unsigned char *framebuffer,
@@ -35835,55 +35892,21 @@ static void m11_draw_nexus_dgn_host_plan(
         return;
     }
 
-    /* The DGN handoff emits ordered floor/wall commands from the real
-     * Structure1B collision map. M11 deliberately consumes only those
-     * commands here; it must not switch to nexus_viewport_render() when a
-     * Saturn mesh route is unavailable. */
+    /* The DGN handoff owns the projected quads and their resolved surface
+     * materials. M11 deliberately only rasterizes that plan. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   0, 0, framebufferWidth, framebufferHeight,
                   M11_COLOR_BLACK);
     for (i = 0; i < count; ++i) {
         const Nexus_V1_DgnRenderCommand *command = &commands[i];
-        int depth = command->depth;
-        int inset;
-        int left;
-        int right;
-        int top;
-        int bottom;
-        unsigned char color;
-
-        if (depth < 0 || depth >= NEXUS_V1_DGN_VIEW_DISTANCE) {
-            continue;
-        }
-        inset = 18 + depth * 26;
-        left = inset;
-        right = framebufferWidth - inset;
-        top = 18 + depth * 15;
-        bottom = framebufferHeight - 36 - depth * 18;
-        if (right <= left || bottom <= top) {
-            continue;
-        }
-        color = (unsigned char)(M11_COLOR_DARK_GRAY +
-                                ((command->collision_ref >> 4) & 3));
         switch (command->kind) {
         case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          left, bottom - 5 - depth * 2,
-                          right - left, 6 + depth * 2,
-                          (unsigned char)(M11_COLOR_DARK_GRAY + depth));
-            break;
+        case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
         case NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT:
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          left, top, right - left, bottom - top, color);
-            break;
         case NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT:
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          left, top, 6 + depth * 3, bottom - top, color);
-            break;
         case NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT:
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          right - (6 + depth * 3), top,
-                          6 + depth * 3, bottom - top, color);
+            m11_nexus_fill_dgn_quad(framebuffer, framebufferWidth,
+                                    framebufferHeight, command);
             break;
         default:
             break;

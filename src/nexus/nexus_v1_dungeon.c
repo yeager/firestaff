@@ -315,6 +315,8 @@ const char *nexus_v1_dgn_renderer_handoff_status_name(
     }
 }
 
+static void nexus_v1_dgn_plan_project_quad(Nexus_V1_DgnRenderCommand *command);
+
 static int nexus_v1_dgn_plan_push(
     Nexus_V1_DgnRenderCommand *commands,
     int max_commands,
@@ -328,11 +330,12 @@ static int nexus_v1_dgn_plan_push(
         receipt->plan_ready = 0;
         return -1;
     }
+    nexus_v1_dgn_plan_project_quad(&command);
     commands[receipt->command_count++] = command;
     receipt->source_cell_count++;
     if (command.kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR) {
         receipt->floor_count++;
-    } else {
+    } else if (command.kind != NEXUS_V1_DGN_RENDER_COMMAND_CEILING) {
         receipt->wall_count++;
     }
     return 0;
@@ -357,7 +360,106 @@ static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
     command.wall_dir = wall_dir & 3;
     command.collision_ref =
         (uint16_t)nexus_v1_level_get_collision_ref(level, x, y);
+    command.material_id = command.collision_ref == 0x0fffU
+        ? 0U : (uint8_t)(command.collision_ref & 7U);
+    switch (kind) {
+    case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
+        command.palette_index = (uint8_t)(8U + (command.material_id & 3U));
+        command.draw_order = (uint8_t)(32 - depth);
+        break;
+    case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
+        command.palette_index = (uint8_t)(4U + (command.material_id & 3U));
+        command.draw_order = (uint8_t)(16 - depth);
+        break;
+    default:
+        command.palette_index = (uint8_t)(12U + (command.material_id & 3U));
+        command.draw_order = (uint8_t)(48 - depth);
+        break;
+    }
     return command;
+}
+
+static int16_t nexus_v1_dgn_view_clamp(int value) {
+    if (value < -NEXUS_V1_DGN_VIEWPORT_UNITS) return -NEXUS_V1_DGN_VIEWPORT_UNITS;
+    if (value > NEXUS_V1_DGN_VIEWPORT_UNITS * 2) return NEXUS_V1_DGN_VIEWPORT_UNITS * 2;
+    return (int16_t)value;
+}
+
+static int nexus_v1_dgn_view_x(int lateral_half, int z_half) {
+    return (NEXUS_V1_DGN_VIEWPORT_UNITS / 2) +
+        (lateral_half * NEXUS_V1_DGN_VIEWPORT_UNITS / 2) / z_half;
+}
+
+static int nexus_v1_dgn_view_floor_y(int z_half) {
+    return 400 + (768 / z_half);
+}
+
+static int nexus_v1_dgn_view_ceiling_y(int z_half) {
+    return 400 - (512 / z_half);
+}
+
+static void nexus_v1_dgn_plan_set_quad(Nexus_V1_DgnRenderCommand *command,
+                                       int x0, int y0, int x1, int y1,
+                                       int x2, int y2, int x3, int y3) {
+    command->quad_x[0] = nexus_v1_dgn_view_clamp(x0);
+    command->quad_y[0] = nexus_v1_dgn_view_clamp(y0);
+    command->quad_x[1] = nexus_v1_dgn_view_clamp(x1);
+    command->quad_y[1] = nexus_v1_dgn_view_clamp(y1);
+    command->quad_x[2] = nexus_v1_dgn_view_clamp(x2);
+    command->quad_y[2] = nexus_v1_dgn_view_clamp(y2);
+    command->quad_x[3] = nexus_v1_dgn_view_clamp(x3);
+    command->quad_y[3] = nexus_v1_dgn_view_clamp(y3);
+}
+
+static void nexus_v1_dgn_plan_project_quad(Nexus_V1_DgnRenderCommand *command) {
+    int near_z = command->depth * 2 + 1;
+    int far_z = near_z + 2;
+    int left_half = command->lateral * 2 - 1;
+    int right_half = left_half + 2;
+    int near_left = nexus_v1_dgn_view_x(left_half, near_z);
+    int near_right = nexus_v1_dgn_view_x(right_half, near_z);
+    int far_left = nexus_v1_dgn_view_x(left_half, far_z);
+    int far_right = nexus_v1_dgn_view_x(right_half, far_z);
+
+    switch (command->kind) {
+    case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
+        nexus_v1_dgn_plan_set_quad(command,
+            near_left, nexus_v1_dgn_view_floor_y(near_z),
+            near_right, nexus_v1_dgn_view_floor_y(near_z),
+            far_right, nexus_v1_dgn_view_floor_y(far_z),
+            far_left, nexus_v1_dgn_view_floor_y(far_z));
+        break;
+    case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
+        nexus_v1_dgn_plan_set_quad(command,
+            near_left, nexus_v1_dgn_view_ceiling_y(near_z),
+            far_left, nexus_v1_dgn_view_ceiling_y(far_z),
+            far_right, nexus_v1_dgn_view_ceiling_y(far_z),
+            near_right, nexus_v1_dgn_view_ceiling_y(near_z));
+        break;
+    case NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT:
+        nexus_v1_dgn_plan_set_quad(command,
+            near_left, nexus_v1_dgn_view_floor_y(near_z),
+            near_right, nexus_v1_dgn_view_floor_y(near_z),
+            near_right, nexus_v1_dgn_view_ceiling_y(near_z),
+            near_left, nexus_v1_dgn_view_ceiling_y(near_z));
+        break;
+    case NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT:
+        nexus_v1_dgn_plan_set_quad(command,
+            near_left, nexus_v1_dgn_view_floor_y(near_z),
+            far_left, nexus_v1_dgn_view_floor_y(far_z),
+            far_left, nexus_v1_dgn_view_ceiling_y(far_z),
+            near_left, nexus_v1_dgn_view_ceiling_y(near_z));
+        break;
+    case NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT:
+        nexus_v1_dgn_plan_set_quad(command,
+            far_right, nexus_v1_dgn_view_floor_y(far_z),
+            near_right, nexus_v1_dgn_view_floor_y(near_z),
+            near_right, nexus_v1_dgn_view_ceiling_y(near_z),
+            far_right, nexus_v1_dgn_view_ceiling_y(far_z));
+        break;
+    default:
+        break;
+    }
 }
 
 int nexus_v1_level_build_dgn_view_render_plan(
@@ -432,6 +534,16 @@ int nexus_v1_level_build_dgn_view_render_plan(
                         cx, cy, depth, 0, pdir)) != 0) {
                 break;
             }
+            if (nexus_v1_dgn_plan_push(
+                    commands,
+                    max_commands,
+                    &receipt,
+                    nexus_v1_dgn_plan_command(
+                        level,
+                        NEXUS_V1_DGN_RENDER_COMMAND_CEILING,
+                        cx, cy, depth, 0, pdir)) != 0) {
+                break;
+            }
             if (sq_l != 0) {
                 (void)nexus_v1_dgn_plan_push(
                     commands,
@@ -440,6 +552,14 @@ int nexus_v1_level_build_dgn_view_render_plan(
                     nexus_v1_dgn_plan_command(
                         level,
                         NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
+                        lx, ly, depth, -1, pdir));
+                (void)nexus_v1_dgn_plan_push(
+                    commands,
+                    max_commands,
+                    &receipt,
+                    nexus_v1_dgn_plan_command(
+                        level,
+                        NEXUS_V1_DGN_RENDER_COMMAND_CEILING,
                         lx, ly, depth, -1, pdir));
             }
             if (sq_r != 0) {
@@ -450,6 +570,14 @@ int nexus_v1_level_build_dgn_view_render_plan(
                     nexus_v1_dgn_plan_command(
                         level,
                         NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
+                        rx, ry, depth, 1, pdir));
+                (void)nexus_v1_dgn_plan_push(
+                    commands,
+                    max_commands,
+                    &receipt,
+                    nexus_v1_dgn_plan_command(
+                        level,
+                        NEXUS_V1_DGN_RENDER_COMMAND_CEILING,
                         rx, ry, depth, 1, pdir));
             }
             if (sq_l == 0) {
