@@ -2476,6 +2476,29 @@ static void test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate(void)
     dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
 }
 
+typedef struct {
+    int expected_index;
+    const uint8_t *pixels;
+    int width;
+    int height;
+    int calls;
+} DM1_TestGraphicProvider;
+
+static int dm1_test_graphic_provider(void *user_data,
+                                     int graphic_index,
+                                     const uint8_t **out_pixels,
+                                     int *out_width,
+                                     int *out_height)
+{
+    DM1_TestGraphicProvider *provider = (DM1_TestGraphicProvider *)user_data;
+    if (!provider || graphic_index != provider->expected_index) return 0;
+    provider->calls++;
+    if (out_pixels) *out_pixels = provider->pixels;
+    if (out_width) *out_width = provider->width;
+    if (out_height) *out_height = provider->height;
+    return 1;
+}
+
 static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
 {
     /*
@@ -2771,6 +2794,52 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
                   viewport[25 * DM1_VIEWPORT_WIDTH + 16], 0xee);
         state.temp_bitmap = NULL;
         state.temp_bitmap_size = 0;
+        state.dungeon_aspect_grid = NULL;
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
+    }
+
+    /* Expanded GRAPHICS.DAT provider path: M11 can pass an already-expanded
+     * G0693 bitmap into the DM1-owned F0111 D3 door-front route without the
+     * viewport depending on M11 internals. */
+    {
+        uint8_t provider_pixels[16 * 49];
+        DM1_TestGraphicProvider provider;
+        memset(viewport, 0xee, sizeof(viewport));
+        memset(provider_pixels, 10, sizeof(provider_pixels));
+        provider_pixels[0 * 16 + 0] = 10;
+        provider_pixels[0 * 16 + 1] = 0x31;
+        provider_pixels[0 * 16 + 14] = 0x32;
+        provider_pixels[0 * 16 + 15] = 10;
+        memset(&provider, 0, sizeof(provider));
+        provider.expected_index = 0x231;
+        provider.pixels = provider_pixels;
+        provider.width = 16;
+        provider.height = 49;
+        state.temp_bitmap = NULL;
+        state.temp_bitmap_size = 0;
+        state.graphic_provider_callback = dm1_test_graphic_provider;
+        state.graphic_provider_user_data = &provider;
+        state.door_front_d3[0] = 0x231;
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_DOOR_FRONT;
+        state.dungeon_aspect_grid = grid;
+        dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 1, 1);
+        check_int("d3l2_d3r2_gate.d3l2_provider_called",
+                  provider.calls >= 1 ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_provider_receipt_bound",
+                  state.last_d3_back_wall_receipt.door_front_graphics_dat_bound ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_provider_receipt_size",
+                  state.last_d3_back_wall_receipt.door_front_graphics_dat_width == 16 &&
+                  state.last_d3_back_wall_receipt.door_front_graphics_dat_height == 49, 1);
+        check_int("d3l2_d3r2_gate.d3l2_provider_transparent_left_skip",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+        check_int("d3l2_d3r2_gate.d3l2_provider_pixel",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 1], 0x31);
+        check_int("d3l2_d3r2_gate.d3l2_provider_right_pixel",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 14], 0x32);
+        check_int("d3l2_d3r2_gate.d3l2_provider_transparent_right_skip",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 15], 0xee);
+        state.graphic_provider_callback = NULL;
+        state.graphic_provider_user_data = NULL;
         state.dungeon_aspect_grid = NULL;
         grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
     }

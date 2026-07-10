@@ -2475,6 +2475,9 @@ DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_
         if (spec &&
             dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_material_plan_pc34(
                 spec, &plan)) {
+            const uint8_t *pixels = NULL;
+            int width = 0;
+            int height = 0;
             receipt.door_front_blit_plan_bound = true;
             receipt.door_front_graphic_index = receipt.door_front_asset_index;
             receipt.door_front_zone_index = (int16_t)plan.door_zone;
@@ -2482,6 +2485,21 @@ DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_
             receipt.door_front_dst_y = (int16_t)plan.y;
             receipt.door_front_width = (int16_t)plan.width;
             receipt.door_front_height = (int16_t)plan.height;
+            if (receipt.door_front_asset_bound &&
+                state->graphic_provider_callback &&
+                state->graphic_provider_callback(
+                    state->graphic_provider_user_data,
+                    receipt.door_front_asset_index,
+                    &pixels,
+                    &width,
+                    &height) &&
+                pixels &&
+                width >= plan.width &&
+                height >= plan.height) {
+                receipt.door_front_graphics_dat_bound = true;
+                receipt.door_front_graphics_dat_width = (int16_t)width;
+                receipt.door_front_graphics_dat_height = (int16_t)height;
+            }
         }
     }
 
@@ -2780,6 +2798,35 @@ static int dm1_viewport_3d_draw_d3_door_front_plan(
      * bitmap storage and draws it through C3700/C3710 with C10 transparency.
      * Use the existing material plan so real GRAPHICS.DAT bytes can replace
      * this bounded route without changing the runtime order. */
+    {
+        const uint8_t *provider_pixels = NULL;
+        int provider_width = 0;
+        int provider_height = 0;
+        if (state->graphic_provider_callback &&
+            state->graphic_provider_callback(
+                state->graphic_provider_user_data,
+                door_front_index,
+                &provider_pixels,
+                &provider_width,
+                &provider_height) &&
+            provider_pixels &&
+            provider_width >= plan.width &&
+            provider_height >= plan.height) {
+            for (int y = 0; y < plan.height; ++y) {
+                const uint8_t *src = provider_pixels + y * provider_width;
+                uint8_t *dst =
+                    state->viewport_pixels + (plan.y + y) * state->viewport_stride + plan.x;
+                for (int x = 0; x < plan.width; ++x) {
+                    uint8_t pixel = src[x];
+                    if (pixel != COLOR_TRANSPARENT) {
+                        dst[x] = pixel;
+                    }
+                }
+            }
+            return 1;
+        }
+    }
+
     for (int y = 0; y < plan.height; ++y) {
         uint8_t expanded[DM1_V1_D3L2_D3R2_F0111_DOOR_FRONT_VIEWPORT_WIDTH_PC34];
         const uint8_t *src = NULL;
