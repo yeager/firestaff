@@ -190,7 +190,7 @@ typedef struct {
     int preview_max_rows;
 } CSB_V1_UtilPanelLayout;
 
-typedef struct {
+typedef struct CSB_V1_UtilRenderPlan {
     CSB_V1_UtilPanelLayout panel;
     CSB_V1_UtilRenderTextRow status_row;
     int has_status_row;
