@@ -73,6 +73,8 @@ static void cleanup_slot_dir(const char *dir)
     }
     {
         char p[256];
+        snprintf(p, sizeof(p), "%s/SKSave.dat", dir);
+        (void)remove(p);
         snprintf(p, sizeof(p), "%s/SKSave.bak", dir);
         (void)remove(p);
     }
@@ -87,6 +89,25 @@ static int write_bad_slot_file(const char *dir, uint8_t slot)
     snprintf(path, sizeof(path), "%s/SKSave%02u.dat", dir, (unsigned)slot);
     memset(hdr, 0, sizeof(hdr));
     hdr[38] = 0x44; hdr[39] = 0x4D; /* DM1-ish marker, not DM2 BEEF/DEAD. */
+    FILE *f = fopen(path, "wb");
+    if (!f) return -1;
+    if (fwrite(hdr, sizeof(hdr), 1, f) != 1 ||
+        fwrite(payload, 1, sizeof(payload), f) != sizeof(payload)) {
+        fclose(f);
+        return -1;
+    }
+    fclose(f);
+    return 0;
+}
+
+static int write_bad_last_session_file(const char *dir)
+{
+    char path[256];
+    uint8_t hdr[42];
+    uint8_t payload[8] = { 'B', 'A', 'D', 'L', 'A', 'S', 'T', 0 };
+    snprintf(path, sizeof(path), "%s/SKSave.dat", dir);
+    memset(hdr, 0, sizeof(hdr));
+    hdr[38] = 0x44; hdr[39] = 0x4D;
     FILE *f = fopen(path, "wb");
     if (!f) return -1;
     if (fwrite(hdr, sizeof(hdr), 1, f) != 1 ||
@@ -1320,6 +1341,101 @@ static int test_raw_sksave_resume_import(void)
     return 1;
 }
 
+static int test_sksave_corpus_scan_receipt(void)
+{
+    printf("  Real SKSave corpus scan receipt...\n");
+    char tmpdir[256];
+    uint8_t payload_a[5] = { 1, 2, 3, 4, 5 };
+    uint8_t payload_b[9] = { 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+    uint8_t payload_c[3] = { 0xAA, 0xBB, 0xCC };
+    DM2_SKSaveCorpusReceipt receipt;
+    int r;
+
+    snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_sksave_corpus_%d",
+             FS_GETPID());
+    FS_MKDIR(tmpdir);
+
+    memset(&receipt, 0xCC, sizeof(receipt));
+    if (!dm2_v1_sksave_corpus_scan(tmpdir, &receipt) ||
+        receipt.valid_slot_count != 0 ||
+        receipt.valid_slot_mask != 0 ||
+        receipt.has_last_session ||
+        receipt.has_last_session_backup ||
+        receipt.invalid_candidate_count != 0 ||
+        receipt.total_payload_size != 0) {
+        printf("    FAIL: empty corpus did not produce an empty receipt\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+
+    r = dm2_sl_save(tmpdir, 3, "Slot3", payload_c, sizeof(payload_c));
+    if (r != 0) {
+        printf("    FAIL: could not write slot corpus save (%d)\n", r);
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    r = dm2_sl_save_last_session(tmpdir, "LastA",
+                                 payload_a, sizeof(payload_a));
+    if (r != 0) {
+        printf("    FAIL: could not write first last-session save (%d)\n", r);
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    r = dm2_sl_save_last_session(tmpdir, "LastB",
+                                 payload_b, sizeof(payload_b));
+    if (r != 0) {
+        printf("    FAIL: could not rotate last-session backup (%d)\n", r);
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    if (write_bad_slot_file(tmpdir, 8) != 0) {
+        printf("    FAIL: could not write bad slot fixture\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_sksave_corpus_scan(tmpdir, &receipt) ||
+        !receipt.has_last_session ||
+        !receipt.has_last_session_backup ||
+        receipt.last_session_uses_backup ||
+        receipt.valid_slot_count != 1 ||
+        receipt.valid_slot_mask != (uint16_t)(1u << 3) ||
+        receipt.invalid_candidate_count != 1 ||
+        receipt.largest_payload_size != sizeof(payload_b) ||
+        receipt.total_payload_size !=
+            sizeof(payload_a) + sizeof(payload_b) + sizeof(payload_c) ||
+        strstr(receipt.first_valid_path, "SKSave.dat") == NULL) {
+        printf("    FAIL: mixed corpus receipt did not match expected fields\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+
+    if (write_bad_last_session_file(tmpdir) != 0) {
+        printf("    FAIL: could not corrupt last-session primary\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_sksave_corpus_scan(tmpdir, &receipt) ||
+        receipt.has_last_session ||
+        !receipt.has_last_session_backup ||
+        !receipt.last_session_uses_backup ||
+        receipt.valid_slot_count != 1 ||
+        receipt.invalid_candidate_count != 2 ||
+        strstr(receipt.first_valid_path, "SKSave.bak") == NULL) {
+        printf("    FAIL: backup-selected corpus receipt did not match "
+               "expected fields\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+
+    printf("    PASS: corpus scan reports last-session, backup, slot mask, "
+           "payload sizes and invalid saves\n");
+    cleanup_slot_dir(tmpdir);
+    return 1;
+}
+
 static int same_dead_champion_persistence_fields(const DM2_ChampionRecord *expected,
                                                  const DM2_ChampionRecord *actual,
                                                  const char *label)
@@ -1827,9 +1943,10 @@ int main(void)
     RUN(14, test_stale_fixture_metadata_guard);
     RUN(15, test_resume_smoke_gate_position_facing_inventory);
     RUN(16, test_raw_sksave_resume_import);
-    RUN(17, test_champion_death_permanence_source_lock);
-    RUN(18, test_live_runtime_state_roundtrip);
-    RUN(19, test_original_save_candidate_live_restore);
+    RUN(17, test_sksave_corpus_scan_receipt);
+    RUN(18, test_champion_death_permanence_source_lock);
+    RUN(19, test_live_runtime_state_roundtrip);
+    RUN(20, test_original_save_candidate_live_restore);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);
