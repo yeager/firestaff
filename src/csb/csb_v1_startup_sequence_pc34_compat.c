@@ -34,6 +34,49 @@ enum {
     CSB_V1_ENTRANCE_DOOR_STEP_COUNT_PC34 = 31
 };
 
+typedef struct CSB_V1_StartupCommandStateRequest_PC34 {
+    int title_active;
+    int title_frame;
+    int title_source_step;
+    int entrance_active;
+    int entrance_source_step;
+    int entrance_dismissed;
+    int credits_active;
+    int credits_remaining_ticks;
+    int opening_active;
+    int opening_delay_ticks;
+    int opening_step;
+    int pending_command;
+} CSB_V1_StartupCommandStateRequest_PC34;
+
+typedef struct CSB_V1_StartupRenderPlanRequest_PC34 {
+    int title_active;
+    int title_frame;
+    int title_source_step;
+    int entrance_active;
+    int entrance_source_step;
+    int entrance_dismissed;
+    int credits_active;
+    int credits_remaining_ticks;
+    int opening_active;
+    int opening_delay_ticks;
+    int opening_step;
+    int pending_command;
+    int entrance_frame;
+    int utility_overlay_active;
+    int resume_available;
+    int runtime_start_valid;
+    int runtime_start_x;
+    int runtime_start_y;
+    int runtime_start_dir;
+} CSB_V1_StartupRenderPlanRequest_PC34;
+
+static int csb_v1_startup_command_state_from_request_pc34(
+    const CSB_V1_StartupCommandStateRequest_PC34 *request,
+    CSB_V1_StartupCommandState_PC34 *out_state);
+static int csb_v1_startup_entrance_accepts_input_from_request_pc34(
+    const CSB_V1_StartupCommandStateRequest_PC34 *request);
+
 void csb_v1_startup_host_facts_init_pc34(
     CSB_V1_StartupHostFacts_PC34 *facts)
 {
@@ -1080,20 +1123,21 @@ static void csb_v1_startup_set_opening_composite_pc34(
         plan->closed_right_asset_id <= 0) {
         return;
     }
-    /* ReDMCSB ENTRANCE.C F0438/F0807 composites C004 with the live dungeon
-     * viewport and moving C002/C003 door strips.  M11 supplies pixels, but
-     * CSB owns the source asset ids and door-step rectangle contract. */
+    /* ReDMCSB ENTRANCE.C F0438 lines 172-239 composites C004 with the live
+     * dungeon viewport and moving C002/C003 door strips at screen y=28.
+     * M11 supplies pixels, but CSB owns the source asset ids and destination
+     * rectangle contract. */
     plan->opening_composite_valid = 1;
     plan->opening_composite_screen_asset_id = plan->source_asset_id;
     plan->opening_composite_left_asset_id = plan->closed_left_asset_id;
     plan->opening_composite_right_asset_id = plan->closed_right_asset_id;
     plan->opening_composite_animation_step = plan->opening_door_step;
     plan->opening_composite_left_box_x = plan->opening_left_dest_x;
-    plan->opening_composite_left_box_y = plan->opening_left_source_y;
+    plan->opening_composite_left_box_y = plan->opening_left_dest_y;
     plan->opening_composite_left_box_w = plan->opening_left_w;
     plan->opening_composite_left_box_h = plan->opening_left_h;
     plan->opening_composite_right_box_x = plan->opening_right_dest_x;
-    plan->opening_composite_right_box_y = plan->opening_right_source_y;
+    plan->opening_composite_right_box_y = plan->opening_right_dest_y;
     plan->opening_composite_right_box_w = plan->opening_right_w;
     plan->opening_composite_right_box_h = plan->opening_right_h;
     plan->opening_composite_left_source_x = plan->opening_left_source_x;
@@ -1550,7 +1594,7 @@ int csb_v1_startup_advance_idle_from_host_facts_with_receipt_pc34(
     return 1;
 }
 
-int csb_v1_startup_render_state_from_command_state_pc34(
+static int csb_v1_startup_render_state_from_command_state_pc34(
     const CSB_V1_StartupCommandState_PC34 *command_state,
     int entrance_frame,
     int utility_overlay_active,
@@ -1583,6 +1627,10 @@ int csb_v1_startup_render_state_from_command_state_pc34(
     return 1;
 }
 
+static int csb_v1_startup_build_render_plan_from_state_pc34(
+    const CSB_V1_StartupRenderState_PC34 *state,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan);
+
 static int csb_v1_startup_build_render_plan_from_request_pc34(
     const CSB_V1_StartupRenderPlanRequest_PC34 *request,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
@@ -1595,7 +1643,8 @@ static int csb_v1_startup_build_render_plan_from_request_pc34(
         return 0;
     }
     if (!request) {
-        return csb_v1_startup_build_render_plan_pc34(NULL, out_plan);
+        return csb_v1_startup_build_render_plan_from_state_pc34(NULL,
+                                                                 out_plan);
     }
 
     memset(&command_request, 0, sizeof(command_request));
@@ -1628,7 +1677,8 @@ static int csb_v1_startup_build_render_plan_from_request_pc34(
         return 0;
     }
     render_state.resume_available = request->resume_available ? 1 : 0;
-    return csb_v1_startup_build_render_plan_pc34(&render_state, out_plan);
+    return csb_v1_startup_build_render_plan_from_state_pc34(&render_state,
+                                                             out_plan);
 }
 
 static int csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
@@ -1669,7 +1719,7 @@ static int csb_v1_startup_build_render_plan_from_host_facts_struct_pc34(
                                                               out_plan);
 }
 
-int csb_v1_startup_command_state_from_request_pc34(
+static int csb_v1_startup_command_state_from_request_pc34(
     const CSB_V1_StartupCommandStateRequest_PC34 *request,
     CSB_V1_StartupCommandState_PC34 *out_state)
 {
@@ -1880,7 +1930,7 @@ int csb_v1_startup_entrance_accepts_input_from_facts_pc34(
         &request);
 }
 
-int csb_v1_startup_entrance_accepts_input_from_request_pc34(
+static int csb_v1_startup_entrance_accepts_input_from_request_pc34(
     const CSB_V1_StartupCommandStateRequest_PC34 *request)
 {
     CSB_V1_StartupCommandState_PC34 state;
@@ -1912,7 +1962,10 @@ int csb_v1_startup_entrance_accepts_input_from_host_facts_pc34(
         facts->pending_command);
 }
 
-int csb_v1_startup_build_render_plan_pc34(
+/* Receipt construction is the public startup presentation boundary. Keep the
+ * state-to-plan adapter private so hosts cannot bypass verified host facts.
+ * ReDMCSB: TITLE.C F0437; ENTRANCE.C F0441/F0806. */
+static int csb_v1_startup_build_render_plan_from_state_pc34(
     const CSB_V1_StartupRenderState_PC34 *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {

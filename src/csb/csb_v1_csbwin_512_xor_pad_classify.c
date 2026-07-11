@@ -915,6 +915,366 @@ int csb_v1_csbwin_512_decode_stream_section(
     return CSB_V1_CSBWIN_512_OK;
 }
 
+static uint32_t csbwin_extended_form_checksum(const uint8_t *bytes,
+                                              size_t size)
+{
+    uint32_t result = 0u;
+    size_t i;
+
+    /* CSBWin SaveGame.cpp FormChecksum lines 204-213. */
+    for (i = 0u; i < size; ++i) {
+        result = result * 0xbb40e62du + 11u + (uint32_t)bytes[i];
+    }
+    return result;
+}
+
+static uint32_t csbwin_rcs_checksum(const uint8_t *bytes, size_t size)
+{
+    uint32_t result = 0xffffu;
+    size_t i;
+
+    /* CSBWin data.cpp RCS(ui8 *, i32) lines 1818-1827. */
+    for (i = 0u; i < size; ++i) {
+        result = result * 0xbb40e62du + 11u + (uint32_t)bytes[i];
+    }
+    return result;
+}
+
+int csb_v1_csbwin_512_inspect_extended_features(
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWinExtendedFeaturesReport *out_report)
+{
+    static const uint8_t sentinel[] = " Extended Features ";
+    uint8_t header[CSB_V1_CSBWIN_EXTENDED_FEATURES_BYTES];
+    uint32_t expected_checksum;
+    uint32_t data_map_length;
+    size_t maps_size;
+
+    if (!bytes || !out_report) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_ARGUMENT;
+    }
+    memset(out_report, 0, sizeof(*out_report));
+    if (size < sizeof(sentinel)) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
+    }
+    if (memcmp(bytes, sentinel, sizeof(sentinel)) != 0) {
+        return CSB_V1_CSBWIN_EXTENDED_ABSENT;
+    }
+    if (size < CSB_V1_CSBWIN_EXTENDED_FEATURES_BYTES) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
+    }
+
+    memcpy(header, bytes, sizeof(header));
+    expected_checksum = read_le32(header, 32u);
+    memset(header + 32u, 0, 4u);
+    if (csbwin_extended_form_checksum(header, sizeof(header)) !=
+        expected_checksum) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_CHECKSUM;
+    }
+    data_map_length = read_le32(header, 20u);
+    if (data_map_length > CSB_V1_CSBWIN_MAX_EXTENDED_DATA_MAP_BYTES) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_BOUNDS;
+    }
+    maps_size = (size_t)data_map_length * 3u;
+    if (size < CSB_V1_CSBWIN_EXTENDED_FEATURES_BYTES + maps_size) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
+    }
+    if (csbwin_extended_form_checksum(
+            bytes + CSB_V1_CSBWIN_EXTENDED_FEATURES_BYTES,
+            data_map_length) != read_le32(header, 24u) ||
+        csbwin_extended_form_checksum(
+            bytes + CSB_V1_CSBWIN_EXTENDED_FEATURES_BYTES + data_map_length,
+            (size_t)data_map_length * 2u) != read_le32(header, 28u)) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_CHECKSUM;
+    }
+
+    out_report->valid = 1;
+    out_report->version = header[36u];
+    out_report->flags = header[37u];
+    out_report->dsa_count = read_le16(header, 38u);
+    out_report->game_info_size = read_le32(header, 44u);
+    out_report->cell_flag_array_size = read_le32(header, 48u);
+    out_report->extended_flags = read_le32(header, 64u);
+    out_report->data_map_length = data_map_length;
+    out_report->extension_payload_offset =
+        CSB_V1_CSBWIN_EXTENDED_FEATURES_BYTES + maps_size;
+
+    /* SaveGame.cpp:324-343 supports RC4 simple encryption. This module is a
+     * strict read-only gate, so it refuses that alternate representation. */
+    if ((out_report->flags & 0x04u) != 0u) {
+        out_report->simple_encryption = 1;
+        return CSB_V1_CSBWIN_EXTENDED_UNSUPPORTED_ENCRYPTION;
+    }
+    if (out_report->dsa_count != 0u) {
+        return CSB_V1_CSBWIN_EXTENDED_UNSUPPORTED_DSA;
+    }
+    return CSB_V1_CSBWIN_EXTENDED_OK;
+}
+
+int csb_v1_csbwin_512_inspect_extended_data_map(
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWinExtendedDataMapEntry *entries,
+    size_t entries_capacity,
+    size_t *out_count,
+    CSB_V1_CSBWinExtendedFeaturesReport *out_report)
+{
+    CSB_V1_CSBWinExtendedFeaturesReport local_report;
+    CSB_V1_CSBWinExtendedFeaturesReport *report;
+    int result;
+    size_t count;
+    size_t i;
+    size_t type_map_offset = CSB_V1_CSBWIN_EXTENDED_FEATURES_BYTES;
+    size_t index_map_offset;
+
+    if (!bytes || !out_count) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_ARGUMENT;
+    }
+    report = out_report ? out_report : &local_report;
+    *out_count = 0u;
+    result = csb_v1_csbwin_512_inspect_extended_features(bytes, size, report);
+    if (result != CSB_V1_CSBWIN_EXTENDED_OK &&
+        result != CSB_V1_CSBWIN_EXTENDED_UNSUPPORTED_DSA) {
+        return result;
+    }
+
+    count = (size_t)report->data_map_length;
+    if (entries && entries_capacity < count) {
+        *out_count = count;
+        return CSB_V1_CSBWIN_EXTENDED_ERR_BOUNDS;
+    }
+    *out_count = count;
+    if (!entries) {
+        return result;
+    }
+
+    index_map_offset = type_map_offset + count;
+    /* CSBWin SaveGame.cpp:163-170 and 369-383 reads the maps only after
+     * their FormChecksum checks pass, then applies BE16 to every index.
+     * We copy that normalized, read-only view and stop before ReadDSAs(). */
+    for (i = 0u; i < count; ++i) {
+        uint8_t raw_type = bytes[type_map_offset + i];
+        entries[i].raw_type = raw_type;
+        entries[i].database_type = (uint8_t)(raw_type & 0x0fu);
+        entries[i].position = (uint8_t)(raw_type >> 4);
+        entries[i].database_index = (uint16_t)(
+            ((uint16_t)bytes[index_map_offset + i * 2u] << 8) |
+            (uint16_t)bytes[index_map_offset + i * 2u + 1u]);
+    }
+    return result;
+}
+
+int csb_v1_csbwin_512_inspect_extended_dsa_section(
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWinExtendedDSAReport *out_report,
+    CSB_V1_CSBWinExtendedFeaturesReport *out_features)
+{
+    CSB_V1_CSBWinExtendedFeaturesReport local_features;
+    CSB_V1_CSBWinExtendedFeaturesReport *features;
+    uint8_t dsa_ids[CSB_V1_CSBWIN_MAX_EXTENDED_DSA_COUNT];
+    uint8_t state_seen[CSB_V1_CSBWIN_MAX_EXTENDED_DSA_STATES / 8u];
+    size_t offset;
+    size_t dsa_start;
+    uint32_t total_states = 0u;
+    uint32_t total_actions = 0u;
+    uint32_t total_program_words = 0u;
+    uint16_t dsa_index;
+    int result;
+
+    if (!bytes || !out_report) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_ARGUMENT;
+    }
+    memset(out_report, 0, sizeof(*out_report));
+    features = out_features ? out_features : &local_features;
+    result = csb_v1_csbwin_512_inspect_extended_features(bytes, size, features);
+    if (result != CSB_V1_CSBWIN_EXTENDED_UNSUPPORTED_DSA &&
+        result != CSB_V1_CSBWIN_EXTENDED_OK) {
+        return result;
+    }
+    if (features->dsa_count == 0u) {
+        out_report->valid = 1;
+        out_report->dsa_payload_offset = features->extension_payload_offset;
+        out_report->next_payload_offset = features->extension_payload_offset;
+        return CSB_V1_CSBWIN_EXTENDED_OK;
+    }
+    if (features->dsa_count > CSB_V1_CSBWIN_MAX_EXTENDED_DSA_COUNT ||
+        features->extension_payload_offset > size) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_BOUNDS;
+    }
+
+    memset(dsa_ids, 0, sizeof(dsa_ids));
+    offset = features->extension_payload_offset;
+    dsa_start = offset;
+    for (dsa_index = 0u; dsa_index < features->dsa_count; ++dsa_index) {
+        uint32_t dsa_id;
+        uint32_t state_slots;
+        uint32_t non_empty_states;
+        uint32_t state_index;
+        uint32_t state_ordinal;
+
+        /* SaveGame.cpp ReadDSAs + DSA.cpp DSA::Read. */
+        if (size - offset < 4u + 80u + 24u) {
+            return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
+        }
+        dsa_id = read_le32(bytes, offset);
+        offset += 4u + 80u;
+        offset += 12u; /* m_state, m_localState, m_groupID */
+        state_slots = read_le32(bytes, offset);
+        offset += 4u;
+        offset += 4u; /* m_firstDisplayedState */
+        non_empty_states = read_le32(bytes, offset);
+        offset += 4u;
+        if (dsa_id >= CSB_V1_CSBWIN_MAX_EXTENDED_DSA_COUNT ||
+            dsa_ids[dsa_id] ||
+            state_slots > CSB_V1_CSBWIN_MAX_EXTENDED_DSA_STATES ||
+            non_empty_states > state_slots) {
+            return CSB_V1_CSBWIN_EXTENDED_ERR_DSA;
+        }
+        dsa_ids[dsa_id] = 1u;
+        memset(state_seen, 0, sizeof(state_seen));
+
+        for (state_ordinal = 0u; state_ordinal < non_empty_states;
+             ++state_ordinal) {
+            uint32_t action_count;
+            uint32_t action_ordinal;
+
+            if (size - offset < 8u) {
+                return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
+            }
+            state_index = read_le32(bytes, offset);
+            offset += 4u;
+            if (state_index >= state_slots ||
+                (state_seen[state_index / 8u] &
+                 (uint8_t)(1u << (state_index & 7u))) != 0u) {
+                return CSB_V1_CSBWIN_EXTENDED_ERR_DSA;
+            }
+            state_seen[state_index / 8u] |= (uint8_t)(1u << (state_index & 7u));
+            action_count = read_le32(bytes, offset);
+            offset += 4u;
+            if (action_count > 12u ||
+                total_states == UINT32_MAX ||
+                total_actions > UINT32_MAX - action_count) {
+                return CSB_V1_CSBWIN_EXTENDED_ERR_DSA;
+            }
+            ++total_states;
+            total_actions += action_count;
+            for (action_ordinal = 0u; action_ordinal < action_count;
+                 ++action_ordinal) {
+                uint32_t program_words;
+                size_t program_bytes;
+
+                if (size - offset < 8u) {
+                    return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
+                }
+                offset += 4u; /* DSAAction::m_column */
+                program_words = read_le32(bytes, offset);
+                offset += 4u;
+                if (!checked_mul_size((size_t)program_words, 2u,
+                                      &program_bytes) ||
+                    program_bytes > size - offset ||
+                    total_program_words > UINT32_MAX - program_words) {
+                    return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
+                }
+                total_program_words += program_words;
+                offset += program_bytes;
+            }
+        }
+    }
+    if (size - offset < 4u) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
+    }
+    out_report->computed_checksum = csbwin_rcs_checksum(bytes + dsa_start,
+                                                         offset - dsa_start);
+    out_report->stored_checksum = read_le32(bytes, offset);
+    if (out_report->computed_checksum != out_report->stored_checksum) {
+        memset(out_report, 0, sizeof(*out_report));
+        return CSB_V1_CSBWIN_EXTENDED_ERR_CHECKSUM;
+    }
+    out_report->valid = 1;
+    out_report->dsa_count = features->dsa_count;
+    out_report->state_count = total_states;
+    out_report->action_count = total_actions;
+    out_report->program_word_count = total_program_words;
+    out_report->dsa_payload_offset = dsa_start;
+    out_report->dsa_payload_size = offset - dsa_start;
+    out_report->next_payload_offset = offset + 4u;
+    return CSB_V1_CSBWIN_EXTENDED_OK;
+}
+
+int csb_v1_csbwin_512_inspect_extended_tail(
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWinExtendedTailReport *out_report,
+    CSB_V1_CSBWinExtendedDSAReport *out_dsa,
+    CSB_V1_CSBWinExtendedFeaturesReport *out_features)
+{
+    CSB_V1_CSBWinExtendedDSAReport local_dsa;
+    CSB_V1_CSBWinExtendedFeaturesReport local_features;
+    CSB_V1_CSBWinExtendedDSAReport *dsa = out_dsa ? out_dsa : &local_dsa;
+    CSB_V1_CSBWinExtendedFeaturesReport *features =
+        out_features ? out_features : &local_features;
+    size_t offset;
+    size_t i;
+    int rc;
+
+    if (!bytes || !out_report) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_ARGUMENT;
+    }
+    memset(out_report, 0, sizeof(*out_report));
+    for (i = 0u; i < 64u * 32u; ++i) {
+        ((uint16_t *)out_report->level_dsa_index)[i] = 0xffffu;
+    }
+
+    rc = csb_v1_csbwin_512_inspect_extended_dsa_section(bytes, size, dsa,
+                                                         features);
+    if (rc != CSB_V1_CSBWIN_EXTENDED_OK) {
+        return rc;
+    }
+    offset = dsa->next_payload_offset;
+    if (offset > size || features->game_info_size > size - offset) {
+        return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
+    }
+
+    /* CSBWin SaveGame.cpp:244-260 reads exactly gameInfoSize bytes then
+     * appends its own NUL. Retain a neutral fingerprint, never host text. */
+    out_report->game_info_offset = offset;
+    out_report->game_info_size = features->game_info_size;
+    out_report->game_info_fnv1a =
+        fnv1a32_bytes(bytes + offset, (size_t)features->game_info_size);
+    offset += (size_t)features->game_info_size;
+
+    if ((features->flags & 0x01u) != 0u) {
+        out_report->level_index_present = 1;
+        /* ReDMCSB/CSBWin ReadDSALevelIndex(): 64 levels, 32 slots, followed
+         * by a 0xff,0xff,0xff sentinel. */
+        for (;;) {
+            uint8_t level;
+            uint8_t slot;
+            uint8_t dsa_index;
+            if (size - offset < 3u) {
+                return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
+            }
+            level = bytes[offset + 0u];
+            slot = bytes[offset + 1u];
+            dsa_index = bytes[offset + 2u];
+            offset += 3u;
+            if (level > 63u) {
+                break;
+            }
+            if (slot > 31u || out_report->level_dsa_index[level][slot] != 0xffffu) {
+                return CSB_V1_CSBWIN_EXTENDED_ERR_LEVEL_INDEX;
+            }
+            out_report->level_dsa_index[level][slot] = (uint16_t)dsa_index;
+            ++out_report->level_index_entry_count;
+        }
+    }
+    out_report->valid = 1;
+    out_report->next_payload_offset = offset;
+    return CSB_V1_CSBWIN_EXTENDED_OK;
+}
+
 int csb_v1_csbwin_512_build_writable_champion_sections(
     const CSB_V1_CSBWin512BodyReport *summary,
     CSB_V1_CSBWin512WritableChampionSections *out)
@@ -1520,6 +1880,56 @@ int csb_v1_csbwin_512_appended_expool_locate_record(
     return 0;
 }
 
+int csb_v1_csbwin_512_inspect_appended_dsa_tracing(
+    const CSB_V1_CSBWin512BodyReport *report,
+    CSB_V1_CSBWinDSATracingReport *out_report)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    size_t i;
+    uint16_t enabled_count = 0u;
+
+    if (!report || !out_report) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+    memset(out_report, 0, sizeof(*out_report));
+    out_report->record_id = CSB_V1_CSBWIN_DSA_TRACING_RECORD_ID;
+    if (report->appended_truncated ||
+        report->appended_size == 0u ||
+        report->appended_size != report->appended_preserved_size ||
+        !report->appended_expool_candidate) {
+        return CSB_V1_CSBWIN_512_ERR_BAD_EXPOOL;
+    }
+
+    if (!csb_v1_csbwin_512_appended_expool_locate_record(
+            report, CSB_V1_CSBWIN_DSA_TRACING_RECORD_ID,
+            &payload, &payload_size)) {
+        out_report->valid = 1;
+        return CSB_V1_CSBWIN_512_OK;
+    }
+    if (!payload || payload_size !=
+        CSB_V1_CSBWIN_DSA_TRACING_WORDS * sizeof(uint32_t)) {
+        return CSB_V1_CSBWIN_512_ERR_BAD_EXPOOL;
+    }
+
+    for (i = 0u; i < CSB_V1_CSBWIN_DSA_TRACING_WORDS; ++i) {
+        uint32_t word = read_le32(payload, i * sizeof(uint32_t));
+        uint32_t bits = word;
+
+        out_report->words[i] = word;
+        while (bits != 0u) {
+            enabled_count = (uint16_t)(enabled_count + (bits & 1u));
+            bits >>= 1;
+        }
+    }
+    out_report->valid = 1;
+    out_report->present = 1;
+    out_report->payload_bytes = payload_size;
+    out_report->enabled_dsa_count = enabled_count;
+    out_report->payload_fnv1a = fnv1a32_bytes(payload, payload_size);
+    return CSB_V1_CSBWIN_512_OK;
+}
+
 const char *csb_v1_csbwin_512_xor_pad_result_name(int result)
 {
     switch (result) {
@@ -1528,6 +1938,7 @@ const char *csb_v1_csbwin_512_xor_pad_result_name(int result)
     case CSB_V1_CSBWIN_512_ERR_TOO_SMALL: return "too-small";
     case CSB_V1_CSBWIN_512_ERR_BAD_KEYS: return "bad-keys";
     case CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM: return "bad-checksum";
+    case CSB_V1_CSBWIN_512_ERR_BAD_EXPOOL: return "bad-expool";
     default: return "unknown";
     }
 }
@@ -1558,6 +1969,8 @@ const char *csb_v1_csbwin_512_xor_pad_source_evidence(void)
         "CSBWin/CSBCode.cpp:9061 UnscrambleStream (section checksum gate)\n"
         "CSBWin/CSBCode.cpp:9038 Unscramble (RC4-like XOR stream)\n"
         "CSBWin/data.cpp EXPOOL::Locate (record hash/bucket lookup for appended DB11 blocks)\n"
+        "CSBWin/DSA.cpp:5553-5583 DSAINDEX::ReadTracing/WriteTracing (EDT_Database|EDBT_DSAtraces, eight uint32 words)\n"
+        "CSBWin/CSB.h:1555-1564 EDT_Database=5, EDBT_DSAtraces=7\n"
         "CSBWin/Hint.cpp:601 Unscramble (same algorithm on HCSB.HTC hint text)\n"
         "ReDMCSB DEFS.H:469 DM_SAVE_HEADER Noise[149] (C10_DM_SAVE_HEADER_DECRYPTION_KEY_INDEX = 10)\n"
         "ReDMCSB DEFS.H:480 CSB_SAVE_HEADER Noise[150] (C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX = 29)\n"

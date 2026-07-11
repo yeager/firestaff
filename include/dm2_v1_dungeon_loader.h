@@ -62,6 +62,9 @@ typedef struct {
     int text_word_count;
     int thing_data_bases[16];
     int thing_type_counts[16];
+    /* Set only when the source layout has materialized every map-to-record
+     * ownership table.  A byte-square map alone is not a playable graph. */
+    int record_graph_complete;
     uint8_t *raw_data;
     int raw_size;
     /* DM2 outdoor extension */
@@ -120,6 +123,11 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
     int *out_index,
     int *out_size);
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level);
+/* Validate the source-shaped map -> ground-stack -> DB-record graph.
+ * Returns 1 only when every thing-bearing square resolves to a bounded,
+ * terminating chain.  PC G1 files whose pre-map ownership block is not yet
+ * decoded return 0 instead of being promoted as a partial world. */
+int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
 #endif

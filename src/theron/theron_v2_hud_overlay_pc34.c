@@ -54,7 +54,7 @@
  * PC Engine native framebuffer is 256x224 indexed (one byte per pixel,
  * palette index 0..255).  These helpers bounds-check against the
  * framebuffer dimensions passed by the caller (so the module works
- * with both 256x224 and the M11 320x200 letterbox).
+ * with both 256x224 and the runtime 320x200 letterbox).
  * ══════════════════════════════════════════════════════════════════════ */
 
 static void hud_plot(uint8_t *fb, int stride, int w, int h_res, int x, int y, uint8_t val)

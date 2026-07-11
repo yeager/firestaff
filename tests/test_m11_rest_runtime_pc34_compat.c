@@ -219,12 +219,43 @@ static void test_resting_idle_tick_recovers_at_boundary(void) {
     ASSERT_EQ(result, M11_GAME_INPUT_REDRAW, "resting idle tick redraws");
     ASSERT_EQ(state.resting, 1, "resting idle tick keeps rest state");
     ASSERT_EQ(state.world.gameTick, 4, "resting idle tick advances to boundary");
-    ASSERT_EQ(state.world.party.champions[0].hp.current, 10,
-              "resting idle tick recovers hp at boundary");
-    ASSERT_EQ(state.world.party.champions[0].stamina.current, 20,
-              "resting idle tick recovers capped stamina at boundary");
+    ASSERT_EQ(state.world.party.champions[0].hp.current, 11,
+              "F0331 resting health formula recovers two hp");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, 9,
+              "F0331 mana regeneration spends stamina before needs cycle");
     ASSERT_EQ(state.world.party.champions[0].mana.current, 5,
-              "resting idle tick recovers capped mana at boundary");
+              "F0331 resting mana formula recovers capped mana");
+}
+
+static void test_f0331_runs_on_first_source_tick(void) {
+    M11_GameViewState state;
+    M11_GameInputResult result;
+
+    memset(&state, 0, sizeof(state));
+    M11_GameView_Init(&state);
+    state.active = 1;
+    state.world.party.championCount = 1;
+    state.world.party.champions[0].present = 1;
+    state.world.party.champions[0].hp.current = 100;
+    state.world.party.champions[0].hp.maximum = 100;
+    state.world.party.champions[0].stamina.current = 100;
+    state.world.party.champions[0].stamina.maximum = 100;
+    state.world.party.champions[0].food = 100;
+    state.world.party.champions[0].water = 100;
+    state.world.lifecycle.champions[0].skills20[DM1_SKILL_IDX_FIGHTER]
+        .temporaryExperience = 2;
+
+    result = M11_GameView_AdvanceIdleTick(&state);
+
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW, "first idle source tick redraws");
+    ASSERT_EQ(state.world.gameTick, 1, "first idle source tick advances");
+    ASSERT_EQ(state.world.party.champions[0].food, 98,
+              "F0331 food drain is not six-tick gated");
+    ASSERT_EQ(state.world.party.champions[0].water, 99,
+              "F0331 water drain is not six-tick gated");
+    ASSERT_EQ(state.world.lifecycle.champions[0].skills20[DM1_SKILL_IDX_FIGHTER]
+                  .temporaryExperience,
+              1, "F0331 temporary experience decays each source tick");
 }
 
 int main(void) {
@@ -235,6 +266,7 @@ int main(void) {
     test_creature_attack_runtime_uses_f0230_parry_skill();
     test_wake_input_does_not_spend_recovery_tick();
     test_resting_idle_tick_recovers_at_boundary();
+    test_f0331_runs_on_first_source_tick();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

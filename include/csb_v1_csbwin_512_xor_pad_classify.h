@@ -119,6 +119,13 @@ extern "C" {
 #define CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES 64u
 #define CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES 4096u
 #define CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES 256u
+#define CSB_V1_CSBWIN_DSA_TRACING_WORDS 8u
+/* CSBWin CSB.h: EDT_Database=5, EDBT_DSAtraces=7. */
+#define CSB_V1_CSBWIN_DSA_TRACING_RECORD_ID 0x05070000u
+#define CSB_V1_CSBWIN_EXTENDED_FEATURES_BYTES 512u
+#define CSB_V1_CSBWIN_MAX_EXTENDED_DATA_MAP_BYTES 4096u
+#define CSB_V1_CSBWIN_MAX_EXTENDED_DSA_COUNT 256u
+#define CSB_V1_CSBWIN_MAX_EXTENDED_DSA_STATES 65536u
 
 /* The two documented scramble keys. CSBWin/Chaos.cpp:2357 tries
  * CSB_KEY first, then DM_KEY on UnscrambleBlock1 returning 0.
@@ -166,7 +173,8 @@ typedef enum {
     CSB_V1_CSBWIN_512_ERR_ARGUMENT = -1,
     CSB_V1_CSBWIN_512_ERR_TOO_SMALL = -2,
     CSB_V1_CSBWIN_512_ERR_BAD_KEYS = -3,
-    CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM = -4
+    CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM = -4,
+    CSB_V1_CSBWIN_512_ERR_BAD_EXPOOL = -5
 } CSB_V1_CSBWin512Result;
 
 /* The verdict: which documented CSBWin scramble key (if any)
@@ -407,6 +415,21 @@ typedef struct {
     uint8_t appended_preserved[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
 } CSB_V1_CSBWin512BodyReport;
 
+/* Read-only receipt for the DSA trace bitmap stored in EXPOOL. CSBWin
+ * DSAINDEX::WriteTracing writes eight uint32 words under
+ * EDT_Database|EDBT_DSAtraces, and ReadTracing accepts only that exact
+ * word count. The bitmap is reported as save evidence only; it does not
+ * configure Firestaff tracing or reach runtime state. */
+typedef struct {
+    int valid;
+    int present;
+    uint32_t record_id;
+    size_t payload_bytes;
+    uint16_t enabled_dsa_count;
+    uint32_t payload_fnv1a;
+    uint32_t words[CSB_V1_CSBWIN_DSA_TRACING_WORDS];
+} CSB_V1_CSBWinDSATracingReport;
+
 typedef struct {
     uint16_t block2_hash;
     uint16_t block2_checksum;
@@ -454,6 +477,84 @@ typedef struct {
     int16_t word22592;              /* GAMEBLOCK1 offset 378 */
     uint8_t byte22808[132];         /* GAMEBLOCK1 offset 380 */
 } CSB_V1_CSBWin512WritableHeader;
+
+/* Read-only summary of CSBWin's optional Extended Features preamble.
+ * SaveGame.cpp ReadExtendedFeatures reads this before GAMEBLOCK1, verifies
+ * the header and its two maps, then hands the variable-length DSA payload to
+ * the DSA interpreter. Firestaff records only the independently verifiable
+ * container here; no DSA bytes reach the runtime through this boundary. */
+typedef struct {
+    int valid;
+    int simple_encryption;
+    uint8_t version;
+    uint8_t flags;
+    uint32_t extended_flags;
+    uint16_t dsa_count;
+    uint32_t data_map_length;
+    uint32_t game_info_size;
+    uint32_t cell_flag_array_size;
+    size_t extension_payload_offset;
+} CSB_V1_CSBWinExtendedFeaturesReport;
+
+/* One read-only CSBWin Extended Features data-map record. SaveGame.cpp
+ * loads the byte type map and the big-endian uint16 index map, then
+ * SwapDataIndexMap() normalizes each index for use by the engine. This
+ * representation exposes that verified map without exposing any DSA or
+ * trailing extension bytes to Firestaff runtime state. */
+typedef struct {
+    uint8_t raw_type;
+    uint8_t database_type;
+    uint8_t position;
+    uint16_t database_index;
+} CSB_V1_CSBWinExtendedDataMapEntry;
+
+/* Read-only evidence for the variable DSA records immediately after the
+ * verified Extended Features maps. This is deliberately aggregate-only:
+ * script descriptions and program words stay in the input buffer and no
+ * record is promoted into the Firestaff DSA runtime. */
+typedef struct {
+    int valid;
+    uint16_t dsa_count;
+    uint32_t state_count;
+    uint32_t action_count;
+    uint32_t program_word_count;
+    uint32_t computed_checksum;
+    uint32_t stored_checksum;
+    size_t dsa_payload_offset;
+    size_t dsa_payload_size;
+    size_t next_payload_offset;
+} CSB_V1_CSBWinExtendedDSAReport;
+
+/* Read-only decoding receipt for the bytes immediately following a verified
+ * Extended Features DSA section. CSBWin SaveGame.cpp ReadGameInfo() consumes
+ * exactly game_info_size bytes, then ReadDSALevelIndex() optionally consumes
+ * three-byte (level, slot, DSA) rows through the 0xff,0xff,0xff terminator.
+ * DSA tracing is stored later in EXPOOL data and is deliberately not inferred
+ * from this immediate tail. */
+typedef struct {
+    int valid;
+    size_t game_info_offset;
+    uint32_t game_info_size;
+    uint32_t game_info_fnv1a;
+    int level_index_present;
+    uint16_t level_index_entry_count;
+    size_t next_payload_offset;
+    uint16_t level_dsa_index[64][32];
+} CSB_V1_CSBWinExtendedTailReport;
+
+typedef enum {
+    CSB_V1_CSBWIN_EXTENDED_OK = 0,
+    CSB_V1_CSBWIN_EXTENDED_ABSENT = 1,
+    CSB_V1_CSBWIN_EXTENDED_UNSUPPORTED_ENCRYPTION = 2,
+    CSB_V1_CSBWIN_EXTENDED_UNSUPPORTED_DSA = 3,
+    CSB_V1_CSBWIN_EXTENDED_ERR_ARGUMENT = -1,
+    CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED = -2,
+    CSB_V1_CSBWIN_EXTENDED_ERR_SENTINEL = -3,
+    CSB_V1_CSBWIN_EXTENDED_ERR_CHECKSUM = -4,
+    CSB_V1_CSBWIN_EXTENDED_ERR_BOUNDS = -5,
+    CSB_V1_CSBWIN_EXTENDED_ERR_DSA = -6,
+    CSB_V1_CSBWIN_EXTENDED_ERR_LEVEL_INDEX = -7
+} CSB_V1_CSBWinExtendedFeaturesResult;
 
 /* ── Public API ──────────────────────────────────────────────────────── */
 
@@ -517,6 +618,66 @@ int csb_v1_csbwin_512_decode_stream_section(
     uint16_t expected_checksum,
     uint8_t *out,
     size_t out_capacity);
+
+/* Validate the unencrypted Extended Features preamble that may precede a
+ * CSBWin GAMEBLOCK1. Mirrors SaveGame.cpp ReadExtendedFeatures lines 298-385
+ * through the header/map checks. A valid preamble carrying DSA records is
+ * returned as UNSUPPORTED_DSA rather than partially decoded; the output still
+ * identifies the proven boundary and the first extension-payload offset. */
+int csb_v1_csbwin_512_inspect_extended_features(
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWinExtendedFeaturesReport *out_report);
+
+/* Copy the checksum-verified Extended Features type/index maps into caller
+ * storage. This is inspection only: it neither reads the variable DSA/game
+ * info/level-index tail nor mutates runtime state. A valid DSA-bearing
+ * preamble may be reported because its maps precede the DSA payload, but the
+ * return value remains UNSUPPORTED_DSA and callers must not promote it.
+ * Encrypted preambles remain unsupported because their maps cannot be
+ * independently inspected until a fully validated decrypt path exists.
+ *
+ * `out_count` is always set to the validated entry count on a valid plain
+ * preamble, even when `entries` is NULL or too small. Pass entries=NULL and
+ * capacity=0 to query that count. Returns ERR_BOUNDS when caller storage is
+ * too small; no partial entry list is written. */
+int csb_v1_csbwin_512_inspect_extended_data_map(
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWinExtendedDataMapEntry *entries,
+    size_t entries_capacity,
+    size_t *out_count,
+    CSB_V1_CSBWinExtendedFeaturesReport *out_report);
+
+/* Decode and authenticate CSBWin's variable DSA section without exposing
+ * DSA bytecode or mutating game state. The section starts after the validated
+ * type/index maps and consists of `dsa_count` numbered DSA records followed
+ * by a little-endian checksum. Mirrors SaveGame.cpp ReadDSAs lines 211-241,
+ * DSA.cpp DSA::Read lines 5637-5669, DSAState::Read lines 5742-5762, and
+ * DSAAction::Read lines 5790-5798. The checksum begins at 0xffff, as in
+ * data.cpp RCS lines 1798-1827. On success, `next_payload_offset` is the
+ * exact boundary for the separately-gated game-info/level-index tail.
+ *
+ * Simple-encrypted preambles remain unsupported. All DSA records, including
+ * duplicate IDs/states, invalid counts, truncated programs, and a bad final
+ * checksum are rejected before the output report becomes valid. */
+int csb_v1_csbwin_512_inspect_extended_dsa_section(
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWinExtendedDSAReport *out_report,
+    CSB_V1_CSBWinExtendedFeaturesReport *out_features);
+
+/* Decode the non-script tail after inspect_extended_dsa_section() has
+ * authenticated its variable DSA payload. The game-info bytes are reported
+ * only as a size and FNV-1a receipt. When LevelDSAInfoPresent is set, every
+ * level-index row must fit the source 64x32 table and the sequence must end
+ * in the CSBWin 0xff,0xff,0xff sentinel. No tail field reaches runtime. */
+int csb_v1_csbwin_512_inspect_extended_tail(
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWinExtendedTailReport *out_report,
+    CSB_V1_CSBWinExtendedDSAReport *out_dsa,
+    CSB_V1_CSBWinExtendedFeaturesReport *out_features);
 
 /* Build the first CSBWin writeback sections from a bounded runtime summary.
  * The output contains scrambled GAMEBLOCK2 and CHARDESC/character bytes plus
@@ -586,6 +747,15 @@ int csb_v1_csbwin_512_appended_expool_locate_record(
     uint32_t record_id,
     const uint8_t **out_bytes,
     size_t *out_size);
+
+/* Inspect the source-locked CSBWin DSA tracing record after save-body
+ * verification has preserved a complete DB11/EXPOOL tail. A missing record
+ * is valid evidence with `present == 0`; a present record must be exactly
+ * eight uint32 words. Truncated, non-EXPOOL, or malformed tails reject.
+ * This helper is intentionally read-only and has no runtime handoff. */
+int csb_v1_csbwin_512_inspect_appended_dsa_tracing(
+    const CSB_V1_CSBWin512BodyReport *report,
+    CSB_V1_CSBWinDSATracingReport *out_report);
 
 /* ── Lookup helpers (used by tests + probe + docs) ──────────────────── */
 

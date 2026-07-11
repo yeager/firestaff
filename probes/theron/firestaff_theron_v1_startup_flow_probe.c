@@ -4,6 +4,7 @@
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_startup_save_resume.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -146,6 +147,68 @@ static void raw_sector_put_text(unsigned char *sector,
         return;
     }
     memcpy(sector + raw_offset, text, text_len);
+}
+
+static uint8_t *make_verified_bitmap_track02(size_t *out_size) {
+    static const uint8_t descriptor[18] = {
+        0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
+        0x20, 0x14, 0x20, 0x18, 0x20, 0x1c, 0x20, 0x20
+    };
+    static const size_t descriptor_offsets[3] = {
+        0x70be06u, 0x70e2c6u, 0x710904u
+    };
+    static const size_t span_offsets[3] = {
+        0x2d53e0u, 0x47d040u, 0x712840u
+    };
+    static const uint8_t post_boundary_span[44] = {
+        0xbe, 0x80, 0xfe, 0x80, 0x34, 0x81, 0x76, 0x81,
+        0xd0, 0x81, 0x2a, 0x80, 0x2b, 0x80, 0x38, 0x80,
+        0x45, 0x80, 0x52, 0x80, 0x5f, 0x80, 0x6c, 0x80,
+        0x79, 0x80, 0x86, 0x80, 0xa0, 0x80, 0xa5, 0x80,
+        0xaa, 0x80, 0xaf, 0x80, 0xb4, 0x80, 0xb9, 0x80,
+        0x93, 0x80, 0x00, 0x3f
+    };
+    static const uint8_t audio_prefix[12] = {
+        0x00,
+        0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff,
+        0x00
+    };
+    size_t size = span_offsets[2] + 160u;
+    uint8_t *track;
+    size_t i;
+
+    size = ((size + THERON_TRACK02_RAW_SECTOR_BYTES - 1u) /
+            THERON_TRACK02_RAW_SECTOR_BYTES) *
+           THERON_TRACK02_RAW_SECTOR_BYTES;
+    track = (uint8_t *)calloc(size, 1u);
+    if (!track) {
+        if (out_size) {
+            *out_size = 0u;
+        }
+        return NULL;
+    }
+    for (i = 0u; i < 3u; ++i) {
+        size_t j;
+        const size_t prefix_offset = span_offsets[i] - 16u;
+        memcpy(track + descriptor_offsets[i], descriptor, sizeof(descriptor));
+        memcpy(track + prefix_offset, audio_prefix, sizeof(audio_prefix));
+        track[prefix_offset + 12u] = (uint8_t)(0x40u + i);
+        track[prefix_offset + 13u] = (uint8_t)(0x50u + i);
+        track[prefix_offset + 14u] = (uint8_t)(0x60u + i);
+        track[prefix_offset + 15u] = (uint8_t)(0x70u + i);
+        memcpy(track + span_offsets[i],
+               post_boundary_span,
+               sizeof(post_boundary_span));
+        for (j = sizeof(post_boundary_span); j < 160u; ++j) {
+            track[span_offsets[i] + j] =
+                (uint8_t)(0x11u + (uint8_t)(i * 37u) + (uint8_t)j);
+        }
+    }
+    if (out_size) {
+        *out_size = size;
+    }
+    return track;
 }
 
 static int fake_runtime_level_load(Theron_V1_World *world,
@@ -2746,6 +2809,76 @@ int main(void) {
                           world.level_loaded[
                               THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
                           0);
+                {
+                    uint8_t *bitmap_track02;
+                    size_t bitmap_track02_size = 0u;
+                    const unsigned int full_bitmap_mask =
+                        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+                        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+                        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+                        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+
+                    bitmap_track02 =
+                        make_verified_bitmap_track02(&bitmap_track02_size);
+                    check_int("runtime load host bitmap fixture alloc",
+                              bitmap_track02 != NULL,
+                              1);
+                    if (bitmap_track02) {
+                        theron_v1_world_init(&world);
+                        load_receipt[0] = '\0';
+                        check_int("runtime load host verified bitmap Track02 blocked rc",
+                                  theron_v1_startup_runtime_load_initial_level_with_host_receipts(
+                                      &world,
+                                      bitmap_track02,
+                                      bitmap_track02_size,
+                                      THERON_TRACK02_MD5_US_BIN,
+                                      THERON_DUNGEON_1_HALL_OF_RECORDS,
+                                      &forcefield_plan,
+                                      &load_result,
+                                      &load_host_receipt,
+                                      &load_state_receipt,
+                                      load_receipt,
+                                      sizeof(load_receipt)),
+                                  0);
+                        check_int("runtime load host verified bitmap route",
+                                  load_result.runtime_level_source,
+                                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED);
+                        check_int("runtime load host verified bitmap media result",
+                                  load_result.track02_media_route,
+                                  1);
+                        check_int("runtime load host verified bitmap media host",
+                                  load_host_receipt.track02_media_route,
+                                  1);
+                        check_int("runtime load host verified bitmap mask",
+                                  (int)(load_host_receipt.track02_media_route_mask &
+                                        full_bitmap_mask),
+                                  (int)full_bitmap_mask);
+                        check_int("runtime load host verified bitmap checksum",
+                                  load_host_receipt.track02_media_checksum != 0u,
+                                  1);
+                        check_int("runtime load host verified bitmap title span",
+                                  load_host_receipt
+                                          .track02_media_title_first_raw_offset != 0u &&
+                                      load_host_receipt
+                                          .track02_media_title_last_user_data_offset != 0u,
+                                  1);
+                        check_int("runtime load host verified bitmap soul span",
+                                  load_host_receipt
+                                          .track02_media_soul_room_first_raw_offset != 0u &&
+                                      load_host_receipt
+                                          .track02_media_soul_room_last_user_data_offset != 0u,
+                                  1);
+                        check_int("runtime load host verified bitmap no level",
+                                  world.level_loaded[
+                                      THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                                  0);
+                        check_contains(
+                            "runtime load host verified bitmap detail",
+                            load_host_receipt.inspect_detail,
+                            "semantic startup handoff scanned anchors=3");
+                        free(bitmap_track02);
+                    }
+                }
             }
         }
         {

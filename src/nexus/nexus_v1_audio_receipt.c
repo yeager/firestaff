@@ -242,7 +242,9 @@ int nexus_v1_audio_cd_track_for_level_receipt(int level_index) {
 }
 
 int nexus_v1_audio_decode_supported(Nexus_V1_AudioKind kind) {
-    (void)kind;
+    if (kind == NEXUS_V1_AUDIO_KIND_MAP_TABLE) {
+        return 1;
+    }
     return 0;
 }
 
@@ -288,6 +290,6 @@ const char *nexus_v1_audio_source_evidence(void) {
         "docs/VERIFIED_HASHES.md:154-185 verified SAL/MAP sizes + SHA256\n"
         "docs/nexus_audio_format.md: CD-DA tracks 2-9, two levels per track\n"
         "src/nexus/nexus_v1_game.c: nexus_v1_cd_track_for_level mapping\n"
-        "Boundary: receipt/classification only; no SAL decode, MAP parse, "
-        "CD sector read, or playback binding.\n";
+        "Boundary: receipt/classification plus bounded MAP event table parse; "
+        "no SAL decode, CD sector read, or playback binding.\n";
 }

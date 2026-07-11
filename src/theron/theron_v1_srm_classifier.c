@@ -69,6 +69,8 @@ static const uint8_t g_party_payload_magic[8] = {
     'F', 'S', 'T', 'Q', 'P', 'T', 'Y', '1'
 };
 
+static uint32_t rd32le(const uint8_t *p);
+
 /* ── Path helpers ────────────────────────────────────────────────── */
 
 static int file_exists_regular(const char *path) {
@@ -357,6 +359,11 @@ static int theron_v1_srm_gzip_deflate_slice(const uint8_t *srm_bytes,
     const uint8_t flags = srm_bytes[3];
     size_t pos = 10u; /* gzip fixed header */
 
+    /* RFC 1952 reserves the high three flag bits.  The raw-DEFLATE path
+     * below bypasses zlib's gzip wrapper, so validate this container fact
+     * before any body can become SRM evidence. */
+    if (flags & 0xe0u) return 0;
+
     if (flags & 0x04u) { /* FEXTRA */
         if (pos + 2u > srm_size) return 0;
         size_t xlen = (size_t)srm_bytes[pos] | ((size_t)srm_bytes[pos + 1u] << 8);
@@ -375,7 +382,11 @@ static int theron_v1_srm_gzip_deflate_slice(const uint8_t *srm_bytes,
         pos++;
     }
     if (flags & 0x02u) { /* FHCRC */
+        uint32_t header_crc;
         if (pos + 2u > srm_size) return 0;
+        header_crc = (uint32_t)crc32(crc32(0L, Z_NULL, 0),
+                                     srm_bytes, (uInt)pos);
+        if ((uint16_t)header_crc != rd16le(srm_bytes + pos)) return 0;
         pos += 2u;
     }
 
@@ -437,8 +448,24 @@ Theron_V1SrmPayloadProbeStatus theron_v1_srm_probe_gzip_payload(
 
     ret = inflate(&zs, Z_FINISH);
     if (ret == Z_STREAM_END) {
+        size_t trailer_offset = deflate_offset + (size_t)zs.total_in;
+        uint32_t expected_crc;
+        uint32_t expected_isize;
+        uint32_t actual_crc = (uint32_t)crc32(crc32(0L, Z_NULL, 0),
+                                              out_payload, (uInt)zs.total_out);
         *out_payload_size = (size_t)zs.total_out;
         inflateEnd(&zs);
+        /* A Save Disk slot must be exactly one gzip member.  In particular,
+         * do not authenticate the first member against a later trailer. */
+        if (trailer_offset + 8u != srm_size) {
+            return THERON_V1_SRM_PAYLOAD_PROBE_TRAILING_DATA;
+        }
+        expected_crc = rd32le(srm_bytes + trailer_offset);
+        expected_isize = rd32le(srm_bytes + trailer_offset + 4u);
+        if (expected_crc != actual_crc || expected_isize !=
+            (uint32_t)(*out_payload_size & 0xffffffffu)) {
+            return THERON_V1_SRM_PAYLOAD_PROBE_TRAILER_MISMATCH;
+        }
         return THERON_V1_SRM_PAYLOAD_PROBE_OK;
     }
 
@@ -452,6 +479,42 @@ Theron_V1SrmPayloadProbeStatus theron_v1_srm_probe_gzip_payload(
     (void)out_payload_capacity;
     return THERON_V1_SRM_PAYLOAD_PROBE_ZLIB_UNAVAILABLE;
 #endif
+}
+
+static void theron_v1_srm_capture_body_evidence(
+    const uint8_t *srm_bytes,
+    size_t srm_size,
+    const uint8_t *payload,
+    size_t payload_size,
+    Theron_V1SrmBodyEvidence *out_evidence) {
+
+    size_t sample_size;
+
+    if (!out_evidence) return;
+    memset(out_evidence, 0, sizeof(*out_evidence));
+    if (!srm_bytes || srm_size < 18u || !payload || payload_size == 0u) {
+        return;
+    }
+
+    sample_size = payload_size < 16u ? payload_size : 16u;
+    out_evidence->payload_size = payload_size;
+    out_evidence->payload_checksum32 = rolling_checksum32(payload, payload_size);
+    out_evidence->payload_prefix_checksum32 = rolling_checksum32(payload, sample_size);
+    out_evidence->payload_suffix_checksum32 =
+        rolling_checksum32(payload + payload_size - sample_size, sample_size);
+    out_evidence->gzip_trailer_crc32 = rd32le(srm_bytes + srm_size - 8u);
+    out_evidence->gzip_trailer_isize = rd32le(srm_bytes + srm_size - 4u);
+    out_evidence->gzip_flags = srm_bytes[3];
+    out_evidence->gzip_extra_flags = srm_bytes[8];
+    out_evidence->gzip_os = srm_bytes[9];
+#if FIRESTAFF_HAS_ZLIB
+    out_evidence->computed_crc32 = (uint32_t)crc32(
+        crc32(0L, Z_NULL, 0), payload, (uInt)payload_size);
+    out_evidence->gzip_trailer_verified =
+        out_evidence->computed_crc32 == out_evidence->gzip_trailer_crc32 &&
+        out_evidence->gzip_trailer_isize == (uint32_t)(payload_size & 0xffffffffu);
+#endif
+    out_evidence->captured = 1;
 }
 
 Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_payload(
@@ -762,6 +825,9 @@ Theron_V1SrmEnvelopeKind theron_v1_srm_decode_envelope(
     if (inflate_status != THERON_V1_SRM_PAYLOAD_PROBE_OK) {
         return THERON_V1_SRM_ENVELOPE_KIND_NONE;
     }
+    theron_v1_srm_capture_body_evidence(srm_bytes, srm_size, scratch,
+                                        payload_size,
+                                        &out_envelope->body_evidence);
 
     /* First try the progression+party envelope (the larger of the
      * two).  If the magic does not match, drop to the
@@ -894,6 +960,316 @@ Theron_V1SrmEnvelopeKind theron_v1_srm_decode_path(
     return kind;
 }
 
+int theron_v1_srm_catalog_body_evidence(
+    const Theron_V1SrmEnvelopeReceipt *envelopes,
+    size_t envelope_count,
+    Theron_V1SrmBodyEvidenceCatalog *out_catalog) {
+
+    uint32_t checksum = 2166136261u;
+    size_t i;
+
+    if (out_catalog) {
+        memset(out_catalog, 0, sizeof(*out_catalog));
+        out_catalog->first_authenticated_slot = -1;
+        for (i = 0u; i < THERON_V1_SRM_DISK_SLOT_COUNT; ++i) {
+            out_catalog->fingerprint_group_for_slot[i] = -1;
+            out_catalog->first_slot_for_group[i] = -1;
+        }
+    }
+    if (!envelopes || !out_catalog ||
+        envelope_count > THERON_V1_SRM_DISK_SLOT_COUNT) {
+        return 0;
+    }
+
+    for (i = 0u; i < envelope_count; ++i) {
+        const Theron_V1SrmEnvelopeReceipt *envelope = &envelopes[i];
+        const Theron_V1SrmBodyEvidence *evidence = &envelope->body_evidence;
+        int group = -1;
+        size_t prior;
+
+        if (!evidence->captured || !evidence->gzip_trailer_verified) {
+            continue;
+        }
+        if (envelope->slot_index < 0 ||
+            envelope->slot_index >= THERON_V1_SRM_DISK_SLOT_COUNT ||
+            out_catalog->fingerprint_group_for_slot[envelope->slot_index] >= 0) {
+            return 0;
+        }
+
+        for (prior = 0u; prior < i; ++prior) {
+            const Theron_V1SrmEnvelopeReceipt *prior_envelope = &envelopes[prior];
+            const Theron_V1SrmBodyEvidence *prior_evidence =
+                &prior_envelope->body_evidence;
+            if (!prior_evidence->captured ||
+                !prior_evidence->gzip_trailer_verified ||
+                prior_envelope->slot_index < 0 ||
+                prior_envelope->slot_index >= THERON_V1_SRM_DISK_SLOT_COUNT) {
+                continue;
+            }
+            if (prior_evidence->payload_size == evidence->payload_size &&
+                prior_evidence->payload_checksum32 == evidence->payload_checksum32 &&
+                prior_evidence->payload_prefix_checksum32 ==
+                    evidence->payload_prefix_checksum32 &&
+                prior_evidence->payload_suffix_checksum32 ==
+                    evidence->payload_suffix_checksum32 &&
+                prior_evidence->gzip_trailer_crc32 == evidence->gzip_trailer_crc32 &&
+                prior_evidence->gzip_trailer_isize == evidence->gzip_trailer_isize) {
+                group = out_catalog->fingerprint_group_for_slot[
+                    prior_envelope->slot_index];
+                break;
+            }
+        }
+        if (group < 0) {
+            group = (int)out_catalog->fingerprint_group_count++;
+            out_catalog->first_slot_for_group[group] = envelope->slot_index;
+        }
+        out_catalog->fingerprint_group_for_slot[envelope->slot_index] = group;
+        if (out_catalog->first_authenticated_slot < 0 ||
+            envelope->slot_index < out_catalog->first_authenticated_slot) {
+            out_catalog->first_authenticated_slot = envelope->slot_index;
+        }
+        ++out_catalog->authenticated_slot_count;
+        checksum ^= (uint32_t)envelope->slot_index;
+        checksum *= 16777619u;
+        checksum ^= (uint32_t)group;
+        checksum *= 16777619u;
+        checksum ^= (uint32_t)evidence->payload_size;
+        checksum *= 16777619u;
+        checksum ^= evidence->payload_checksum32;
+        checksum *= 16777619u;
+        checksum ^= evidence->payload_prefix_checksum32;
+        checksum *= 16777619u;
+        checksum ^= evidence->payload_suffix_checksum32;
+        checksum *= 16777619u;
+    }
+    out_catalog->catalog_checksum = checksum;
+    return 1;
+}
+
+static int srm_body_evidence_matches(const Theron_V1SrmBodyEvidence *left,
+                                     const Theron_V1SrmBodyEvidence *right) {
+    return left->payload_size == right->payload_size &&
+           left->payload_checksum32 == right->payload_checksum32 &&
+           left->payload_prefix_checksum32 == right->payload_prefix_checksum32 &&
+           left->payload_suffix_checksum32 == right->payload_suffix_checksum32 &&
+           left->gzip_trailer_crc32 == right->gzip_trailer_crc32 &&
+           left->gzip_trailer_isize == right->gzip_trailer_isize;
+}
+
+static int srm_body_evidence_index_slots(
+    const Theron_V1SrmEnvelopeReceipt *envelopes,
+    size_t envelope_count,
+    const Theron_V1SrmEnvelopeReceipt *by_slot[THERON_V1_SRM_DISK_SLOT_COUNT],
+    unsigned int *out_mask) {
+    size_t i;
+
+    if (!envelopes || !by_slot || !out_mask ||
+        envelope_count > THERON_V1_SRM_DISK_SLOT_COUNT) {
+        return 0;
+    }
+    memset(by_slot, 0, sizeof(*by_slot) * THERON_V1_SRM_DISK_SLOT_COUNT);
+    *out_mask = 0u;
+    for (i = 0u; i < envelope_count; ++i) {
+        const Theron_V1SrmEnvelopeReceipt *envelope = &envelopes[i];
+        const Theron_V1SrmBodyEvidence *evidence = &envelope->body_evidence;
+        unsigned int bit;
+
+        if (!evidence->captured || !evidence->gzip_trailer_verified) continue;
+        if (envelope->slot_index < 0 ||
+            envelope->slot_index >= THERON_V1_SRM_DISK_SLOT_COUNT ||
+            by_slot[envelope->slot_index] != NULL) {
+            return 0;
+        }
+        by_slot[envelope->slot_index] = envelope;
+        bit = 1u << (unsigned int)envelope->slot_index;
+        *out_mask |= bit;
+    }
+    return 1;
+}
+
+int theron_v1_srm_compare_body_evidence(
+    const Theron_V1SrmEnvelopeReceipt *left_envelopes,
+    size_t left_envelope_count,
+    const Theron_V1SrmEnvelopeReceipt *right_envelopes,
+    size_t right_envelope_count,
+    Theron_V1SrmBodyEvidenceComparison *out_comparison) {
+    const Theron_V1SrmEnvelopeReceipt *left_by_slot[THERON_V1_SRM_DISK_SLOT_COUNT];
+    const Theron_V1SrmEnvelopeReceipt *right_by_slot[THERON_V1_SRM_DISK_SLOT_COUNT];
+    uint32_t checksum = 2166136261u;
+    unsigned int left_mask;
+    unsigned int right_mask;
+    int slot;
+
+    if (!out_comparison ||
+        !srm_body_evidence_index_slots(left_envelopes, left_envelope_count,
+                                       left_by_slot, &left_mask) ||
+        !srm_body_evidence_index_slots(right_envelopes, right_envelope_count,
+                                       right_by_slot, &right_mask)) {
+        return 0;
+    }
+    memset(out_comparison, 0, sizeof(*out_comparison));
+    out_comparison->left_authenticated_slot_mask = left_mask;
+    out_comparison->right_authenticated_slot_mask = right_mask;
+    for (slot = 0; slot < THERON_V1_SRM_DISK_SLOT_COUNT; ++slot) {
+        const Theron_V1SrmBodyEvidence *left;
+        const Theron_V1SrmBodyEvidence *right;
+        unsigned int bit = 1u << (unsigned int)slot;
+
+        if (!(left_mask & bit) || !(right_mask & bit)) continue;
+        left = &left_by_slot[slot]->body_evidence;
+        right = &right_by_slot[slot]->body_evidence;
+        out_comparison->comparable_slot_mask |= bit;
+        if (srm_body_evidence_matches(left, right)) {
+            out_comparison->matching_slot_mask |= bit;
+        } else {
+            out_comparison->mismatch_slot_mask |= bit;
+        }
+        checksum ^= bit;
+        checksum *= 16777619u;
+        checksum ^= left->payload_checksum32;
+        checksum *= 16777619u;
+        checksum ^= right->payload_checksum32;
+        checksum *= 16777619u;
+    }
+    out_comparison->comparison_checksum = checksum;
+    return 1;
+}
+
+static int srm_payload_matches_evidence(
+    const Theron_V1SrmEnvelopeReceipt *envelope,
+    const uint8_t *payload,
+    size_t payload_size) {
+    const Theron_V1SrmBodyEvidence *evidence;
+    size_t sample_size;
+
+    if (!envelope || !payload) return 0;
+    evidence = &envelope->body_evidence;
+    if (!evidence->captured || !evidence->gzip_trailer_verified ||
+        payload_size != evidence->payload_size) {
+        return 0;
+    }
+    /* Keep this in lockstep with theron_v1_srm_capture_body_evidence().
+     * The manifest's on-disk prefix sample is wider; body evidence uses
+     * 16-byte payload ends so two authenticated receipts can be compared
+     * without retaining the body in runtime state. */
+    sample_size = payload_size < 16u ? payload_size : 16u;
+    return rolling_checksum32(payload, payload_size) ==
+               evidence->payload_checksum32 &&
+           rolling_checksum32(payload, sample_size) ==
+               evidence->payload_prefix_checksum32 &&
+           rolling_checksum32(payload + payload_size - sample_size,
+                              sample_size) ==
+               evidence->payload_suffix_checksum32;
+}
+
+int theron_v1_srm_compare_authenticated_payloads(
+    const Theron_V1SrmEnvelopeReceipt *left_envelope,
+    const uint8_t *left_payload,
+    size_t left_payload_size,
+    const Theron_V1SrmEnvelopeReceipt *right_envelope,
+    const uint8_t *right_payload,
+    size_t right_payload_size,
+    Theron_V1SrmBodyEvidenceDelta *out_delta) {
+    size_t shared_size;
+    size_t i;
+    uint32_t checksum = 2166136261u;
+
+    if (!out_delta ||
+        !srm_payload_matches_evidence(left_envelope, left_payload,
+                                      left_payload_size) ||
+        !srm_payload_matches_evidence(right_envelope, right_payload,
+                                      right_payload_size)) {
+        return 0;
+    }
+    memset(out_delta, 0, sizeof(*out_delta));
+    out_delta->left_payload_size = left_payload_size;
+    out_delta->right_payload_size = right_payload_size;
+    shared_size = left_payload_size < right_payload_size
+        ? left_payload_size : right_payload_size;
+
+    while (out_delta->shared_prefix_bytes < shared_size &&
+           left_payload[out_delta->shared_prefix_bytes] ==
+               right_payload[out_delta->shared_prefix_bytes]) {
+        ++out_delta->shared_prefix_bytes;
+    }
+    while (out_delta->shared_suffix_bytes <
+               shared_size - out_delta->shared_prefix_bytes &&
+           left_payload[left_payload_size - 1u -
+                        out_delta->shared_suffix_bytes] ==
+               right_payload[right_payload_size - 1u -
+                             out_delta->shared_suffix_bytes]) {
+        ++out_delta->shared_suffix_bytes;
+    }
+    for (i = out_delta->shared_prefix_bytes;
+         i < shared_size - out_delta->shared_suffix_bytes;) {
+        size_t run_start;
+        size_t run_size;
+        if (left_payload[i] == right_payload[i]) {
+            ++i;
+            continue;
+        }
+        run_start = i;
+        do {
+            ++i;
+        } while (i < shared_size - out_delta->shared_suffix_bytes &&
+                 left_payload[i] != right_payload[i]);
+        run_size = i - run_start;
+        out_delta->differing_byte_count += run_size;
+        ++out_delta->differing_run_count;
+        if (run_size > out_delta->longest_differing_run_bytes) {
+            out_delta->longest_differing_run_bytes = run_size;
+        }
+        if (out_delta->retained_run_count < THERON_V1_SRM_BODY_DELTA_MAX_RUNS) {
+            out_delta->differing_runs[out_delta->retained_run_count].offset = run_start;
+            out_delta->differing_runs[out_delta->retained_run_count].byte_count = run_size;
+            ++out_delta->retained_run_count;
+        } else {
+            out_delta->differing_runs_truncated = 1;
+        }
+    }
+    if (left_payload_size != right_payload_size) {
+        size_t tail_size = left_payload_size > right_payload_size
+            ? left_payload_size - shared_size : right_payload_size - shared_size;
+        out_delta->differing_byte_count += tail_size;
+        ++out_delta->differing_run_count;
+        if (tail_size > out_delta->longest_differing_run_bytes) {
+            out_delta->longest_differing_run_bytes = tail_size;
+        }
+        if (out_delta->retained_run_count < THERON_V1_SRM_BODY_DELTA_MAX_RUNS) {
+            out_delta->differing_runs[out_delta->retained_run_count].offset = shared_size;
+            out_delta->differing_runs[out_delta->retained_run_count].byte_count = tail_size;
+            ++out_delta->retained_run_count;
+        } else {
+            out_delta->differing_runs_truncated = 1;
+        }
+    }
+
+    checksum ^= (uint32_t)left_payload_size;
+    checksum *= 16777619u;
+    checksum ^= (uint32_t)right_payload_size;
+    checksum *= 16777619u;
+    checksum ^= (uint32_t)out_delta->shared_prefix_bytes;
+    checksum *= 16777619u;
+    checksum ^= (uint32_t)out_delta->shared_suffix_bytes;
+    checksum *= 16777619u;
+    checksum ^= (uint32_t)out_delta->differing_byte_count;
+    checksum *= 16777619u;
+    checksum ^= (uint32_t)out_delta->differing_run_count;
+    checksum *= 16777619u;
+    checksum ^= (uint32_t)out_delta->longest_differing_run_bytes;
+    checksum *= 16777619u;
+    checksum ^= (uint32_t)out_delta->differing_runs_truncated;
+    checksum *= 16777619u;
+    for (i = 0u; i < out_delta->retained_run_count; ++i) {
+        checksum ^= (uint32_t)out_delta->differing_runs[i].offset;
+        checksum *= 16777619u;
+        checksum ^= (uint32_t)out_delta->differing_runs[i].byte_count;
+        checksum *= 16777619u;
+    }
+    out_delta->delta_checksum = checksum;
+    return 1;
+}
+
 Theron_V1SrmEnvelopeKind theron_v1_srm_probe_slot0_envelope(
     Theron_V1SrmEnvelopeReceipt *out_envelope) {
 
@@ -952,6 +1328,10 @@ const char *theron_v1_srm_payload_probe_status_name(Theron_V1SrmPayloadProbeStat
         return "INFLATE_FAILED";
     case THERON_V1_SRM_PAYLOAD_PROBE_OUTPUT_TRUNCATED:
         return "OUTPUT_TRUNCATED";
+    case THERON_V1_SRM_PAYLOAD_PROBE_TRAILER_MISMATCH:
+        return "TRAILER_MISMATCH";
+    case THERON_V1_SRM_PAYLOAD_PROBE_TRAILING_DATA:
+        return "TRAILING_DATA";
     }
     return "UNKNOWN";
 }

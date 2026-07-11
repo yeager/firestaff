@@ -86,6 +86,45 @@ typedef struct {
     int valid;
 } Nexus_V1_DgnMaterialPlan;
 
+/* A named material container may be observed and structurally parsed before
+ * it is eligible for the DGN host.  The retail Track 1 listing currently
+ * has MENU.BPK only; it does not establish FLOORS.BPK or WALLS.BPK hashes.
+ * Consequently format recognition alone never promotes pixels to runtime. */
+typedef struct {
+    Nexus_V1_DgnMaterialCategory category;
+    /* An exact FLOORS.BPK/WALLS.BPK source observation is not an identity
+     * verification or an import approval. */
+    int exact_name_observed;
+    int source_present;
+    int format_valid;
+    int identity_verified;
+    int host_route_permitted;
+    int blocks_real_surface_render;
+    int fallback_visuals_permitted;
+    Nexus_V1_BpkArchiveInfo archive;
+} Nexus_V1_DgnMaterialContainerReceipt;
+
+/* Read-only real-media evidence for the fixed LEV00..LEV15 corpus.  It
+ * counts only the already typed Structure1B material selectors and checks
+ * them against the same banks used by the DGN viewport; it does not infer
+ * meanings for any opaque DGN payload bytes. */
+typedef struct {
+    int attempted;
+    int expected_level_count;
+    int readable_level_count;
+    int parsed_level_count;
+    int geometry_ready_level_count;
+    Nexus_V1_DgnMaterialCategoryCoverageReceipt floor_coverage;
+    Nexus_V1_DgnMaterialCategoryCoverageReceipt ceiling_coverage;
+    Nexus_V1_DgnMaterialCategoryCoverageReceipt wall_coverage;
+    Nexus_V1_DgnMaterialContainerReceipt floor_container;
+    Nexus_V1_DgnMaterialContainerReceipt wall_container;
+    int bpk_host_routes_complete;
+    int material_coverage_complete;
+    int host_route_evidence_complete;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnMaterialCorpusReceipt;
+
 /* ── Main engine struct ─────────────────────────────────────────────── */
 struct Nexus_V1_Engine {
     /* Data source */
@@ -103,7 +142,18 @@ struct Nexus_V1_Engine {
     /* DGN material references resolve through these decoded DMDF banks. */
     Nexus_DMDFMaterialBank floor_materials;
     Nexus_DMDFMaterialBank wall_materials;
+    Nexus_V1_DgnMaterialContainerReceipt floor_bpk_container;
+    Nexus_V1_DgnMaterialContainerReceipt wall_bpk_container;
+    /* FLOORS/WALLS.BPK must cross the validated BPK host route before a
+     * Structure1B material reference can reach the real DGN viewport. */
+    int floor_bpk_host_route_attempted;
+    int floor_bpk_host_route_valid;
+    Nexus_V1_BpkMaterialHostRouteReceipt floor_bpk_host_route;
+    int wall_bpk_host_route_attempted;
+    int wall_bpk_host_route_valid;
+    Nexus_V1_BpkMaterialHostRouteReceipt wall_bpk_host_route;
     Nexus_V1_DgnMaterialPlan dgn_material_plan;
+    Nexus_V1_DgnMaterialCorpusReceipt dgn_material_corpus;
 
     /* 3D models (loaded on demand) */
     Nexus_V1_Model models[NEXUS_MAX_MODELS];
@@ -165,6 +215,12 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir);
 /* Load a dungeon level (0-15). Calls nexus_v1_level_load().
  * Returns 0 on success, -1 on failure. */
 int nexus_v1_load_level(Nexus_V1_Engine *engine, int level);
+
+/* Inspects every canonical level without changing the currently loaded
+ * level or promoting corpus coverage into a runtime launch gate. */
+int nexus_v1_inspect_dgn_material_corpus(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_DgnMaterialCorpusReceipt *out_receipt);
 
 /* Return the DGN plan whose commands and material surfaces have been checked
  * together for this level and party pose. The returned pointer is owned by

@@ -1,4 +1,5 @@
 #include "dm2_v1_startup_menu.h"
+#include "dm2_v1_sound.h"
 #include "dm2_v1_save_load.h"
 
 #include <stdio.h>
@@ -1322,36 +1323,32 @@ int dm2_v1_startup_runtime_handoff_receipt_from_tick(
     int animation_tick)
 {
     int active;
-    int tick;
-
-    enum {
-        DM2_V1_STARTUP_TITLE_FRAME_COUNT = 8,
-        DM2_V1_STARTUP_TITLE_FRAME_TICKS = 6
-    };
-
     if (!out_receipt) {
         return 0;
     }
     memset(out_receipt, 0, sizeof(*out_receipt));
     active = startup_menu_active ? 1 : 0;
-    tick = animation_tick < 0 ? 0 : animation_tick;
+    (void)animation_tick;
     out_receipt->valid = 1;
     out_receipt->startup_menu_active = active;
-    out_receipt->animation_active = active;
+    out_receipt->animation_active = 0;
     snprintf(out_receipt->animation,
              sizeof(out_receipt->animation),
              "%s",
              active ? "dm2-startup-menu" : "dm2-runtime");
-    out_receipt->title_animation_tick = tick;
-    out_receipt->title_frame =
-        active ? (tick / DM2_V1_STARTUP_TITLE_FRAME_TICKS) %
-                     DM2_V1_STARTUP_TITLE_FRAME_COUNT
-               : 0;
-    out_receipt->title_frame_max =
-        active ? DM2_V1_STARTUP_TITLE_FRAME_COUNT - 1 : 0;
-    out_receipt->title_frame_duration_ticks =
-        active ? DM2_V1_STARTUP_TITLE_FRAME_TICKS : 0;
-    out_receipt->title_ready = active ? 0 : 1;
+    /* fe7299.cpp has no startup frame loop: cue 0 is started before the
+     * static TITLE/0 dt07/4 menu surface is shown. */
+    out_receipt->title_animation_tick = 0;
+    out_receipt->title_frame = 0;
+    out_receipt->title_frame_max = 0;
+    out_receipt->title_frame_duration_ticks = 0;
+    out_receipt->title_ready = 1;
+    out_receipt->music_cue = active ? 0 : -1;
+    out_receipt->music_loop = active;
+    out_receipt->music_cue_played = active ?
+        (dm2_v1_sound_play_music(0) == 0) : 0;
+    out_receipt->show_menu_screen_after_music =
+        active ? out_receipt->music_cue_played : 0;
     /* skproject/SKWIN SkWinCore startup keeps title/menu presentation and
      * HUD/game runtime as one boot handoff; Firestaff records the same
      * boundary here so M11 does not infer HUD/runtime init from text status. */

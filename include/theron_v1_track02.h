@@ -21,6 +21,7 @@
 #define THERON_TRACK02_MD5_US_ISO      "3d8b78571dcd0e6eb8eb4b01eeb7fbba"
 
 #define THERON_TRACK02_MAX_LEVEL_CANDIDATES 32u
+#define THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES 3u
 #define THERON_TRACK02_MAX_USER_DATA_WINDOWS 8u
 #define THERON_TRACK02_MAX_STARTUP_TEXT_MARKERS 8u
 #define THERON_TRACK02_MAX_STARTUP_ROSTER_NAMES 8u
@@ -39,6 +40,9 @@
 #define THERON_TRACK02_STARTUP_BITMAP_ATLAS_PIXELS \
     (THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH * \
      THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_HEIGHT)
+#define THERON_TRACK02_4BPP_PALETTE_ENTRY_COUNT 16u
+#define THERON_TRACK02_4BPP_PALETTE_BYTES \
+    (THERON_TRACK02_4BPP_PALETTE_ENTRY_COUNT * 2u)
 
 enum {
     THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE = 1u << 0,
@@ -368,6 +372,81 @@ Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas(
 Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas_wide(
     const Theron_Track02StartupBitmapCatalog *catalog,
     Theron_Track02StartupBitmapAtlas *out_atlas);
+
+/* HuC6270/VCE palette payload used by one 4bpp tile bank: sixteen
+ * little-endian 9-bit RGB words.  Bits 0..2, 3..5, and 6..8 are red,
+ * green, and blue respectively; bits 9..15 must be clear.  Track 02 image
+ * discovery deliberately does not guess a palette address: callers must
+ * provide the exact, separately verified 32-byte payload. */
+typedef struct {
+    uint16_t raw_word;
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+} Theron_Track02PaletteEntry;
+
+typedef struct {
+    Theron_Track02PaletteEntry entries[THERON_TRACK02_4BPP_PALETTE_ENTRY_COUNT];
+    size_t nonblack_entry_count;
+    uint32_t checksum;
+    int valid;
+} Theron_Track02Palette4Bpp;
+
+typedef struct {
+    int valid;
+    unsigned int route_bit;
+    uint16_t width;
+    uint16_t height;
+    uint32_t checksum;
+    uint8_t rgba[THERON_TRACK02_STARTUP_BITMAP_ATLAS_PIXELS * 4u];
+} Theron_Track02StartupBitmapRgbaRoute;
+
+/* Evidence for a palette window whose offset was supplied by an external
+ * source analysis.  This records only byte provenance and HuC6270 syntax.
+ * It deliberately has no route binding: a palette-shaped 32-byte span is
+ * not proof that the game loads it for title, stage, Soul Room, or
+ * forcefield.  `promotion_allowed` therefore remains zero until a future,
+ * source-locked loader binding can populate it. */
+typedef struct {
+    Theron_Track02Variant variant;
+    size_t raw_offset;
+    size_t user_data_offset;
+    size_t byte_count;
+    uint32_t payload_checksum;
+    int raw_offset_is_user_data;
+    int format_valid;
+    int semantic_binding_verified;
+    int promotion_allowed;
+    Theron_Track02Palette4Bpp palette;
+} Theron_Track02PaletteWindowEvidence;
+
+/* These routines form the palette half of the Track 02 bitmap route.  A
+ * malformed palette or an incomplete indexed route produces no RGBA output;
+ * callers must not promote a fallback palette through this API. */
+Theron_Track02SignalStatus theron_v1_track02_decode_4bpp_palette(
+    const uint8_t *palette_bytes,
+    size_t palette_size,
+    Theron_Track02Palette4Bpp *out_palette);
+
+Theron_Track02SignalStatus theron_v1_track02_colorize_startup_bitmap_route(
+    const Theron_Track02StartupBitmapAtlasRoute *indexed_route,
+    const Theron_Track02Palette4Bpp *palette,
+    Theron_Track02StartupBitmapRgbaRoute *out_route);
+
+/* Inspect one explicitly supplied palette payload offset.  The MD5 must name
+ * a known Track 02 variant.  Raw BIN offsets are copied only through MODE1
+ * user-data bytes; the US ISO has a plain 2048-byte user-data stream.  No
+ * scanner calls this function and no successful result is a semantic or
+ * render-promotion claim. */
+Theron_Track02SignalStatus theron_v1_track02_inspect_4bpp_palette_window(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t raw_offset,
+    Theron_Track02PaletteWindowEvidence *out_evidence);
+
+int theron_v1_track02_palette_window_evidence_can_promote(
+    const Theron_Track02PaletteWindowEvidence *evidence);
 
 const char *theron_v1_track02_signal_status_name(Theron_Track02SignalStatus status);
 const char *theron_v1_track02_variant_name(Theron_Track02Variant variant);
@@ -858,7 +937,7 @@ const char *theron_v1_track02_descriptor_window_kind_name(
  * `dungeon_seed` table, sourced from theron_v1_boot.c:318-345 /
  * theron_v1_dungeon_progression.c:38-110); entry 5 restates the
  * descriptor-table-bearing window; entry 6 is a compact object-table row
- * candidate. Real-data promotion is still receipt-gated: object rows must
+ * candidate.  Real-data promotion is still receipt-gated: object rows must
  * pass theron_v1_track02_read_object_table() before fallback visuals are
  * reduced.
  *
@@ -903,16 +982,126 @@ typedef struct {
     uint16_t argument;
 } Theron_Track02ObjectTableRecord;
 
+typedef enum {
+    THERON_TRACK02_OBJECT_TABLE_REJECT_NONE = 0,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_ZERO_COUNT,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_DECLARED_OVERFLOW,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_WINDOW_TOO_SMALL,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_ZERO_OBJECT_ID,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_ZERO_KIND,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_X_OUT_OF_RANGE,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_Y_OUT_OF_RANGE,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_LEVEL_OUT_OF_RANGE
+} Theron_Track02ObjectTableRejectReason;
+
 typedef struct {
+    size_t declared_record_count;
     size_t record_count;
     size_t overflow_count;
+    size_t required_byte_count;
     size_t byte_count;
     size_t nonzero_byte_count;
     uint32_t checksum;
     int shape_ok;
+    size_t first_bad_record_index;
+    Theron_Track02ObjectTableRejectReason reject_reason;
+    /* Observation only: accepted compact rows are bucketed by their existing
+     * level byte so real-media analysis can prove multi-level coverage without
+     * assigning those rows to gameplay objects or a dungeon route. */
+    unsigned int level_mask;
+    size_t level_record_counts[THERON_TRACK02_DUNGEON_COUNT];
+    uint32_t level_record_hashes[THERON_TRACK02_DUNGEON_COUNT];
+    /* Layout evidence only.  These retain the compact-table ordinal at
+     * which a level's accepted rows begin/end, plus a hash that includes
+     * each ordinal before its eight raw row bytes.  They do not assign
+     * semantics to the row fields. */
+    size_t level_first_record_indexes[THERON_TRACK02_DUNGEON_COUNT];
+    size_t level_last_record_indexes[THERON_TRACK02_DUNGEON_COUNT];
+    uint32_t level_position_hashes[THERON_TRACK02_DUNGEON_COUNT];
     Theron_Track02ObjectTableRecord
         records[THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS];
 } Theron_Track02ObjectTable;
+
+/* A decoded Track 02 dungeon route is deliberately a single transaction:
+ * bitmap evidence, a loader-accepted level, and one bounded object table
+ * must all be present before a caller can publish it to the live world.
+ * This avoids the older split route where a real map could be paired with
+ * synthetic objects (or vice versa). */
+typedef enum {
+    THERON_TRACK02_DUNGEON_ROUTE_OK = 1,
+    THERON_TRACK02_DUNGEON_ROUTE_NOT_FOUND = 0,
+    THERON_TRACK02_DUNGEON_ROUTE_BAD_INPUT = -1,
+    THERON_TRACK02_DUNGEON_ROUTE_LEVEL_REJECTED = -2,
+    THERON_TRACK02_DUNGEON_ROUTE_OBJECT_REJECTED = -3,
+    THERON_TRACK02_DUNGEON_ROUTE_BITMAP_REJECTED = -4
+} Theron_Track02DungeonRouteStatus;
+
+typedef struct {
+    int valid;
+    Theron_Track02DungeonRouteStatus status;
+    size_t descriptor_offset;
+    int dungeon_id;
+    int level_index;
+    size_t level_entry_index;
+    size_t level_raw_offset;
+    size_t level_byte_count;
+    size_t object_entry_index;
+    size_t object_raw_offset;
+    Theron_V1_Level level;
+    Theron_Track02ObjectTable objects;
+    Theron_Track02StartupBitmapAtlas bitmap_atlas;
+    uint32_t checksum;
+} Theron_Track02DungeonRoute;
+
+/* A route catalog is a bounded, all-or-nothing selection surface for the
+ * decoded level/object transactions above.  Its entries may arrive in any
+ * order, but they must form one contiguous level sequence starting at 0 for
+ * one dungeon.  This prevents a caller from skipping an unverified middle
+ * level or silently choosing the first of duplicate candidates. */
+typedef enum {
+    THERON_TRACK02_ROUTE_CATALOG_OK = 1,
+    THERON_TRACK02_ROUTE_CATALOG_NOT_FOUND = 0,
+    THERON_TRACK02_ROUTE_CATALOG_BAD_INPUT = -1,
+    THERON_TRACK02_ROUTE_CATALOG_ROUTE_REJECTED = -2,
+    THERON_TRACK02_ROUTE_CATALOG_DUNGEON_MISMATCH = -3,
+    THERON_TRACK02_ROUTE_CATALOG_DUPLICATE_LEVEL = -4,
+    THERON_TRACK02_ROUTE_CATALOG_NONCONTIGUOUS = -5
+} Theron_Track02RouteCatalogStatus;
+
+typedef struct {
+    Theron_Track02RouteCatalogStatus status;
+    int dungeon_id;
+    int requested_level_index;
+    size_t route_count;
+    unsigned int level_mask;
+    size_t matching_route_count;
+    uint32_t catalog_checksum;
+    int selected;
+} Theron_Track02RouteCatalogReceipt;
+
+/* A Track 02 level transition is permitted only after the target has been
+ * assembled as one complete, validated dungeon route.  In particular, a
+ * level record cannot be promoted on its own while its object-table or
+ * bitmap evidence is missing. */
+typedef enum {
+    THERON_TRACK02_LEVEL_TRANSITION_OK = 1,
+    THERON_TRACK02_LEVEL_TRANSITION_NOT_PENDING = 0,
+    THERON_TRACK02_LEVEL_TRANSITION_BAD_INPUT = -1,
+    THERON_TRACK02_LEVEL_TRANSITION_SOURCE_REJECTED = -2,
+    THERON_TRACK02_LEVEL_TRANSITION_TARGET_REJECTED = -3,
+    THERON_TRACK02_LEVEL_TRANSITION_TARGET_MISMATCH = -4
+} Theron_Track02LevelTransitionStatus;
+
+typedef struct {
+    int applied;
+    Theron_Track02LevelTransitionStatus status;
+    int dungeon_id;
+    int source_level_index;
+    int target_level_index;
+    size_t target_object_record_count;
+    uint32_t source_route_checksum;
+    uint32_t target_route_checksum;
+} Theron_Track02LevelTransitionReceipt;
 
 typedef enum {
     THERON_TRACK02_SEMANTIC_ROLE_UNKNOWN = 0,
@@ -1021,15 +1210,100 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_read_dungeon_seed_table(
     size_t seed_size,
     Theron_Track02DungeonSeedTable *out_table);
 
-/* Lower-level: read a compact object-table candidate from `object_bytes`.
- * The working layout is count-prefixed: uint16 LE record_count followed by
- * 8-byte rows `{object_id, kind, x, y, level_index, flags, argument_le16}`.
- * The decoder is intentionally strict and bounded; success only proves the
- * row shape is coherent, not final gameplay semantics. */
+/* Read a compact count-prefixed object table.
+ *
+ * Shape gate:
+ *   - first uint16 little-endian word is the record count
+ *   - count is 1..THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS
+ *   - each 8-byte row has nonzero object_id and kind
+ *   - x < 32, y < 27, level_index < THERON_TRACK02_DUNGEON_COUNT
+ *
+ * The decoder records coordinates, flags, and a stable checksum only.  It
+ * does not claim item type semantics, monster behavior, triggers, or runtime
+ * object spawning. */
 Theron_Track02SemanticBindingStatus theron_v1_track02_read_object_table(
     const uint8_t *object_bytes,
     size_t object_size,
     Theron_Track02ObjectTable *out_table);
+
+/* Build one descriptor-local dungeon route.  The level record must be a
+ * complete big-endian Theron level header/grid in a descriptor data window;
+ * the object table must pass the compact-row decoder in a different data
+ * window.  `bitmap_atlas` is copied only when it carries all four verified
+ * startup bitmap routes.  This helper is usable with byte fixtures; the
+ * verified wrapper below adds the Track 02 hash/anchor gate. */
+Theron_Track02DungeonRouteStatus theron_v1_track02_build_dungeon_route(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    int dungeon_id,
+    int sub_level_index,
+    const Theron_Track02StartupBitmapAtlas *bitmap_atlas,
+    Theron_Track02DungeonRoute *out_route);
+
+/* Hash/anchor-gated Track 02 route.  It starts from the source-locked
+ * startup level, requires a separately decoded object-table window, and
+ * attaches the real title/stage/Soul Room/forcefield bitmap atlas. */
+Theron_Track02DungeonRouteStatus theron_v1_track02_load_verified_dungeon_route(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t descriptor_offset,
+    int dungeon_id,
+    const Theron_Track02StartupBitmapAtlas *bitmap_atlas,
+    Theron_Track02DungeonRoute *out_route);
+
+const char *theron_v1_track02_dungeon_route_status_name(
+    Theron_Track02DungeonRouteStatus status);
+
+const char *theron_v1_track02_route_catalog_status_name(
+    Theron_Track02RouteCatalogStatus status);
+
+/* Select one exact route from a fully validated contiguous catalog.
+ *
+ * Every supplied route must be a complete THERON_TRACK02_DUNGEON_ROUTE_OK
+ * transaction for `dungeon_id`; levels must be unique and cover 0 through
+ * route_count - 1 without a hole.  A missing, duplicate, mismatched, or
+ * rejected route returns a non-OK status and leaves `out_route` NULL.  The
+ * function never substitutes a neighbouring level or a fallback route. */
+Theron_Track02RouteCatalogStatus theron_v1_track02_select_dungeon_route(
+    const Theron_Track02DungeonRoute *routes,
+    size_t route_count,
+    int dungeon_id,
+    int level_index,
+    const Theron_Track02DungeonRoute **out_route,
+    Theron_Track02RouteCatalogReceipt *out_receipt);
+
+const char *theron_v1_track02_level_transition_status_name(
+    Theron_Track02LevelTransitionStatus status);
+
+/* Atomically install a validated Track 02 target route for a queued stairs
+ * transition.  The caller supplies the already accepted source route so the
+ * transition cannot pair a validated target level with an unchecked current
+ * level.  Both routes must carry complete level/object/bitmap transactions;
+ * a rejected transaction never produces alternate data for the world.
+ *
+ * The current Track 02 object record format is retained by the route receipt
+ * rather than projected into the generic world-object database.  That
+ * projection remains blocked until its real-media semantics are known. */
+Theron_Track02LevelTransitionStatus theron_v1_track02_apply_level_transition(
+    Theron_V1_World *world,
+    const Theron_Track02DungeonRoute *source_route,
+    const Theron_Track02DungeonRoute *target_route,
+    Theron_Track02LevelTransitionReceipt *out_receipt);
+
+/* Resolve both ends of a queued stairs transition from one catalog, then
+ * atomically install the exact target through theron_v1_track02_apply_level_transition.
+ * A catalog failure is converted to the corresponding source/target rejection
+ * and leaves the world and queued transition untouched. */
+Theron_Track02LevelTransitionStatus
+theron_v1_track02_apply_level_transition_from_catalog(
+    Theron_V1_World *world,
+    const Theron_Track02DungeonRoute *routes,
+    size_t route_count,
+    Theron_Track02LevelTransitionReceipt *out_receipt,
+    Theron_Track02RouteCatalogReceipt *out_source_receipt,
+    Theron_Track02RouteCatalogReceipt *out_target_receipt);
 
 const char *theron_v1_track02_semantic_binding_status_name(
     Theron_Track02SemanticBindingStatus status);
@@ -1091,18 +1365,12 @@ typedef struct {
     int object_table_candidate_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_nonzero_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_candidate_last_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_candidate_last_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_candidate_last_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint32_t object_table_candidate_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint32_t object_table_candidate_last_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint16_t object_table_candidate_header_width[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint16_t object_table_candidate_header_height[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint32_t object_table_candidate_header_seed[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint16_t object_table_candidate_header_level_index[THERON_TRACK02_MAX_BANK_ANCHORS];
-    int object_table_candidate_startup_header_shaped[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_candidate_header_probe_count;
-    size_t object_table_candidate_startup_header_shape_count;
+    int object_table_candidate_header_matches_startup_shape[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t object_table_candidate_hash[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_descriptor_delta[THERON_TRACK02_MAX_BANK_ANCHORS];
     int object_table_candidate_after_descriptor[THERON_TRACK02_MAX_BANK_ANCHORS];
     Theron_Track02DescriptorEntryRole object_table_candidate_entry_role[THERON_TRACK02_MAX_BANK_ANCHORS];
@@ -1111,64 +1379,79 @@ typedef struct {
     unsigned int object_table_blocked_anchor_mask;
     int object_table_anchor_binding_status[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint32_t object_table_anchor_hash[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_anchor_record_count[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_anchor_overflow_count[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_anchor_decoded_byte_count[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_anchor_decoded_nonzero_byte_count[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint32_t object_table_anchor_decoded_checksum[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_probe_count;
-    size_t object_table_row_probe_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_reject_count;
-    size_t object_table_row_bad_shape_count;
-    size_t object_table_row_window_too_small_count;
-    size_t object_table_row_zero_fill_count;
-    int object_table_row_first_reject_status[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_first_reject_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_first_reject_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_first_reject_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    int object_table_row_first_reject_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_first_reject_record_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_first_reject_overflow_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_first_reject_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint32_t object_table_row_first_reject_checksums[THERON_TRACK02_MAX_BANK_ANCHORS];
-    int object_table_shape_best_score[THERON_TRACK02_MAX_BANK_ANCHORS];
-    int object_table_shape_best_status[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_shape_best_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_shape_best_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_shape_best_window_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_shape_best_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    int object_table_shape_best_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_shape_best_record_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_shape_best_overflow_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_shape_best_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint32_t object_table_shape_best_checksums[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_inner_scan_probe_count;
-    size_t object_table_inner_scan_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_inner_scan_shaped_count;
-    unsigned int object_table_inner_scan_shaped_anchor_mask;
-    size_t object_table_inner_scan_shaped_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_inner_scan_shaped_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_inner_scan_shaped_window_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_inner_scan_shaped_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    int object_table_inner_scan_shaped_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_inner_scan_shaped_record_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_inner_scan_shaped_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint32_t object_table_inner_scan_shaped_checksums[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_shaped_count;
-    unsigned int object_table_row_shaped_anchor_mask;
-    size_t object_table_row_shaped_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_shaped_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_shaped_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_shaped_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    int object_table_row_shaped_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_shaped_record_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t object_table_row_shaped_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint32_t object_table_row_shaped_checksums[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_declared_record_count[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_record_count[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_required_byte_count[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_overflow_count[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_first_bad_record_index[THERON_TRACK02_MAX_BANK_ANCHORS];
+    Theron_Track02ObjectTableRejectReason
+        object_table_reject_reason[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t object_table_record_hash[THERON_TRACK02_MAX_BANK_ANCHORS];
+    unsigned int object_table_level_mask[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_level_record_counts[THERON_TRACK02_MAX_BANK_ANCHORS]
+                                         [THERON_TRACK02_DUNGEON_COUNT];
+    uint32_t object_table_level_record_hashes[THERON_TRACK02_MAX_BANK_ANCHORS]
+                                             [THERON_TRACK02_DUNGEON_COUNT];
+    size_t object_table_level_first_record_indexes[THERON_TRACK02_MAX_BANK_ANCHORS]
+                                                  [THERON_TRACK02_DUNGEON_COUNT];
+    size_t object_table_level_last_record_indexes[THERON_TRACK02_MAX_BANK_ANCHORS]
+                                                 [THERON_TRACK02_DUNGEON_COUNT];
+    uint32_t object_table_level_position_hashes[THERON_TRACK02_MAX_BANK_ANCHORS]
+                                               [THERON_TRACK02_DUNGEON_COUNT];
+    /* Cross-anchor observation for accepted compact rows.  A bit in
+     * object_table_level_consensus_mask means every descriptor anchor carried
+     * the same existing level byte, row count, row-byte FNV-1a hash, and
+     * row ordinals.  This is evidence only: it neither identifies object
+     * fields nor promotes a candidate into a route or runtime object. */
+    unsigned int object_table_level_consensus_mask;
+    unsigned int object_table_level_consensus_anchor_masks
+        [THERON_TRACK02_DUNGEON_COUNT];
+    size_t object_table_level_consensus_record_counts
+        [THERON_TRACK02_DUNGEON_COUNT];
+    uint32_t object_table_level_consensus_record_hashes
+        [THERON_TRACK02_DUNGEON_COUNT];
+    size_t object_table_level_consensus_first_record_indexes
+        [THERON_TRACK02_DUNGEON_COUNT];
+    size_t object_table_level_consensus_last_record_indexes
+        [THERON_TRACK02_DUNGEON_COUNT];
+    uint32_t object_table_level_consensus_position_hashes
+        [THERON_TRACK02_DUNGEON_COUNT];
     int object_table_decode_ready;
     int blocked_for_missing_real_object_evidence;
     int fallback_visuals_allowed;
     uint32_t route_hash;
 } Theron_Track02ObjectTableRouteReceipt;
+
+/* Cross-variant comparison of the compact-row layout already accepted by
+ * two independent raw Track 02 receipts.  This is deliberately narrower
+ * than object decoding: it compares only per-level presence, row counts,
+ * raw-row hashes and ordinal-bound hashes.  A matching bit is evidence that
+ * the two media variants share a layout observation, not a claim about row
+ * field meaning, a route, runtime objects, Continue, menus, or palettes. */
+typedef enum {
+    THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_OK = 1,
+    THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_BAD_INPUT = -1,
+    THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_UNVERIFIED_RECEIPT = -2,
+    THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_UNSUPPORTED_VARIANT_PAIR = -3
+} Theron_Track02ObjectLayoutComparisonStatus;
+
+typedef struct {
+    int valid;
+    Theron_Track02ObjectLayoutComparisonStatus status;
+    Theron_Track02Variant jp_variant;
+    Theron_Track02Variant us_variant;
+    unsigned int jp_level_mask;
+    unsigned int us_level_mask;
+    unsigned int comparable_level_mask;
+    unsigned int matching_level_mask;
+    unsigned int mismatch_level_mask;
+    size_t matching_record_counts[THERON_TRACK02_DUNGEON_COUNT];
+    uint32_t matching_record_hashes[THERON_TRACK02_DUNGEON_COUNT];
+    size_t matching_first_record_indexes[THERON_TRACK02_DUNGEON_COUNT];
+    size_t matching_last_record_indexes[THERON_TRACK02_DUNGEON_COUNT];
+    uint32_t matching_position_hashes[THERON_TRACK02_DUNGEON_COUNT];
+    uint32_t comparison_hash;
+} Theron_Track02ObjectLayoutComparisonReceipt;
 
 typedef struct {
     int valid;
@@ -1209,49 +1492,49 @@ typedef struct {
     int level_grid_role_mapped;
     size_t nonstartup_level_candidate_count;
     unsigned int nonstartup_level_candidate_anchor_mask;
-    size_t nonstartup_level_candidate_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t
+        nonstartup_level_candidate_sample_count
+            [THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t
+        nonstartup_level_candidate_sample_entry_index
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    size_t
+        nonstartup_level_candidate_sample_raw_offsets
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    size_t
+        nonstartup_level_candidate_sample_user_data_offsets
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    int
+        nonstartup_level_candidate_sample_user_data_valid
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    size_t
+        nonstartup_level_candidate_sample_byte_counts
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    size_t
+        nonstartup_level_candidate_sample_descriptor_delta
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    uint32_t
+        nonstartup_level_candidate_sample_hash
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
     size_t nonstartup_level_candidate_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
     int nonstartup_level_candidate_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_nonzero_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t nonstartup_level_candidate_last_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t nonstartup_level_candidate_last_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t nonstartup_level_candidate_last_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint32_t nonstartup_level_candidate_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint32_t nonstartup_level_candidate_last_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
-    int nonstartup_level_candidate_map_status[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint16_t nonstartup_level_candidate_header_width[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint16_t nonstartup_level_candidate_header_height[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint32_t nonstartup_level_candidate_header_seed[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint16_t nonstartup_level_candidate_header_level_index[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t nonstartup_level_candidate_header_probe_count;
-    size_t nonstartup_level_candidate_loader_reject_count;
-    size_t nonstartup_level_loaded_count;
-    unsigned int nonstartup_level_loaded_anchor_mask;
-    size_t nonstartup_level_loaded_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t nonstartup_level_loaded_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t nonstartup_level_loaded_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t nonstartup_level_loaded_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    int nonstartup_level_loaded_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint16_t nonstartup_level_loaded_width[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint16_t nonstartup_level_loaded_height[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint32_t nonstartup_level_loaded_seed[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint16_t nonstartup_level_loaded_level_index[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t nonstartup_level_inner_scan_probe_count;
-    size_t nonstartup_level_inner_scan_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t nonstartup_level_inner_scan_loaded_count;
-    unsigned int nonstartup_level_inner_scan_loaded_anchor_mask;
-    size_t nonstartup_level_inner_scan_loaded_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t nonstartup_level_inner_scan_loaded_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t nonstartup_level_inner_scan_loaded_window_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    size_t nonstartup_level_inner_scan_loaded_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
-    int nonstartup_level_inner_scan_loaded_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint16_t nonstartup_level_inner_scan_loaded_width[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint16_t nonstartup_level_inner_scan_loaded_height[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint32_t nonstartup_level_inner_scan_loaded_seed[THERON_TRACK02_MAX_BANK_ANCHORS];
-    uint16_t nonstartup_level_inner_scan_loaded_level_index[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int nonstartup_level_candidate_header_matches_startup_shape[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t nonstartup_level_candidate_hash[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_descriptor_delta[THERON_TRACK02_MAX_BANK_ANCHORS];
     int nonstartup_level_candidate_after_descriptor[THERON_TRACK02_MAX_BANK_ANCHORS];
     Theron_Track02DescriptorEntryRole nonstartup_level_candidate_entry_role[THERON_TRACK02_MAX_BANK_ANCHORS];
@@ -1263,6 +1546,31 @@ typedef struct {
     int fallback_visuals_allowed;
     uint32_t route_hash;
 } Theron_Track02LevelRouteReceipt;
+
+/* Cross-variant comparison of opaque post-descriptor level candidates.
+ * It compares only receipts captured from hash-verified JP and US raw BINs:
+ * candidate count plus each sampled entry index, byte count,
+ * descriptor-relative position and byte hash. Neither outcome identifies a
+ * level or enables a route, runtime, Continue, palette, or fallback. */
+typedef enum {
+    THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_OK = 1,
+    THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_BAD_INPUT = -1,
+    THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_UNVERIFIED_RECEIPT = -2,
+    THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_UNSUPPORTED_VARIANT_PAIR = -3
+} Theron_Track02NonstartupLevelLayoutComparisonStatus;
+
+typedef struct {
+    int valid;
+    Theron_Track02NonstartupLevelLayoutComparisonStatus status;
+    Theron_Track02Variant jp_variant;
+    Theron_Track02Variant us_variant;
+    unsigned int comparable_anchor_mask;
+    unsigned int matching_anchor_mask;
+    unsigned int mismatch_anchor_mask;
+    size_t candidate_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t matching_sample_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t comparison_hash;
+} Theron_Track02NonstartupLevelLayoutComparisonReceipt;
 
 /* Compose the bounded Track 02 startup evidence into one runtime-facing
  * handoff summary.
@@ -1292,18 +1600,30 @@ void theron_v1_track02_object_table_route_receipt_init(
 
 /* Descriptor-anchored object-table route evidence.
  *
- * This receipt is deliberately a no-fallback blocker today: hash-verified
- * Track 02 descriptor anchors are decoded and bound, but no descriptor entry
- * is yet promoted to THERON_TRACK02_SEMANTIC_OBJECT_TABLE.  For verified
- * Track 02 media, valid==1 with object_table_decode_ready==0 means callers
- * have enough evidence to block synthetic object-table/runtime visuals
- * instead of silently falling back.
+ * This receipt is deliberately a no-fallback blocker unless entry 6's compact
+ * object-table row candidate passes theron_v1_track02_read_object_table().
+ * For verified Track 02 media, valid==1 with object_table_decode_ready==0
+ * means callers have enough evidence to block synthetic object-table/runtime
+ * visuals instead of silently falling back.
  */
 int theron_v1_track02_capture_object_table_route_receipt(
     const uint8_t *track02_data,
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02ObjectTableRouteReceipt *out_receipt);
+
+const char *theron_v1_track02_object_layout_comparison_status_name(
+    Theron_Track02ObjectLayoutComparisonStatus status);
+
+/* Compare hash-gated JP and US raw-BIN compact-row observations.  Argument
+ * order does not matter.  JP Rev 1/US ISO and same-region pairs are rejected
+ * because this receipt is specifically a cross-region real-media comparison.
+ * No failure path mutates either source receipt. */
+Theron_Track02ObjectLayoutComparisonStatus
+theron_v1_track02_compare_object_table_layout_variants(
+    const Theron_Track02ObjectTableRouteReceipt *first,
+    const Theron_Track02ObjectTableRouteReceipt *second,
+    Theron_Track02ObjectLayoutComparisonReceipt *out_receipt);
 
 void theron_v1_track02_level_route_receipt_init(
     Theron_Track02LevelRouteReceipt *receipt);
@@ -1321,6 +1641,15 @@ int theron_v1_track02_capture_level_route_receipt(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02LevelRouteReceipt *out_receipt);
+
+const char *theron_v1_track02_nonstartup_level_layout_comparison_status_name(
+    Theron_Track02NonstartupLevelLayoutComparisonStatus status);
+
+Theron_Track02NonstartupLevelLayoutComparisonStatus
+theron_v1_track02_compare_nonstartup_level_layout_variants(
+    const Theron_Track02LevelRouteReceipt *first,
+    const Theron_Track02LevelRouteReceipt *second,
+    Theron_Track02NonstartupLevelLayoutComparisonReceipt *out_receipt);
 
 /* Runtime-facing semantic startup level load.
  *

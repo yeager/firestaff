@@ -1394,13 +1394,13 @@ static void probe_media_gated_level_bank_selection(void) {
     media.startup_bitmap_atlas_tile_count = 48u;
     media.startup_bitmap_atlas_nonzero_pixel_count = 128u;
     media.startup_bitmap_atlas_checksum = 0x200u;
+    media.startup_bitmap_wide_route_count = 4u;
+    media.startup_bitmap_wide_route_mask = 0x0fu;
+    media.startup_bitmap_wide_atlas_tile_count = 48u;
     media.startup_bitmap_title_route_ready = 1;
     media.startup_bitmap_stage_route_ready = 1;
     media.startup_bitmap_soul_room_route_ready = 1;
     media.startup_bitmap_forcefield_route_ready = 1;
-    media.startup_bitmap_wide_route_count = 4;
-    media.startup_bitmap_wide_route_mask = 0x0fu;
-    media.startup_bitmap_wide_atlas_tile_count = 48u;
     media.startup_bitmap_title_sample_count = 12;
     media.startup_bitmap_stage_sample_count = 12;
     media.startup_bitmap_soul_room_sample_count = 12;

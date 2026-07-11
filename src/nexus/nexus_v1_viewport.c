@@ -151,6 +151,20 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         vp->last_dgn_render_receipt.party_x = px;
         vp->last_dgn_render_receipt.party_y = py;
         vp->last_dgn_render_receipt.party_dir = pdir;
+        /* The real runtime must not convert a decoded DMDF-only bank into
+         * visible DGN material. FLOORS/WALLS need independently verified BPK
+         * containers and completed host routes; missing Track 1 containers
+         * leave this route blocked with no legacy visual fallback. */
+        if (engine->initialized &&
+            (!engine->floor_bpk_container.host_route_permitted ||
+             !engine->wall_bpk_container.host_route_permitted ||
+             !engine->floor_bpk_host_route_valid ||
+             !engine->wall_bpk_host_route_valid ||
+             !engine->floor_bpk_host_route.host_consumed_surfaces ||
+             !engine->wall_bpk_host_route.host_consumed_surfaces)) {
+            vp->last_dgn_render_receipt.blocked = 1;
+            return;
+        }
         plan = nexus_v1_prepare_dgn_material_plan(engine, px, py, pdir);
         if (!plan) {
             const Nexus_V1_DgnRenderPlanReceipt *blocked_plan =
@@ -192,17 +206,32 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
             texel_map = viewport_plan_palette_map(vp, command);
             if (surface && surface->valid) {
                 vp->last_dgn_render_receipt.material_surface_count++;
+                if (surface->from_bpk) {
+                    vp->last_dgn_render_receipt.bpk_material_surface_count++;
+                }
                 switch (command->kind) {
                 case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
                     vp->last_dgn_render_receipt.floor_material_surface_count++;
+                    if (surface->from_bpk) {
+                        vp->last_dgn_render_receipt
+                            .bpk_floor_material_surface_count++;
+                    }
                     break;
                 case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
                     vp->last_dgn_render_receipt.ceiling_material_surface_count++;
+                    if (surface->from_bpk) {
+                        vp->last_dgn_render_receipt
+                            .bpk_ceiling_material_surface_count++;
+                    }
                     break;
                 case NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT:
                 case NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT:
                 case NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT:
                     vp->last_dgn_render_receipt.wall_material_surface_count++;
+                    if (surface->from_bpk) {
+                        vp->last_dgn_render_receipt
+                            .bpk_wall_material_surface_count++;
+                    }
                     break;
                 default:
                     break;
@@ -367,6 +396,14 @@ int nexus_viewport_dgn_host_route_receipt(
     out_receipt->ceiling_count = render->ceiling_count;
     out_receipt->wall_count = render->wall_count;
     out_receipt->material_surface_count = render->material_surface_count;
+    out_receipt->bpk_material_surface_count =
+        render->bpk_material_surface_count;
+    out_receipt->bpk_floor_material_surface_count =
+        render->bpk_floor_material_surface_count;
+    out_receipt->bpk_ceiling_material_surface_count =
+        render->bpk_ceiling_material_surface_count;
+    out_receipt->bpk_wall_material_surface_count =
+        render->bpk_wall_material_surface_count;
     out_receipt->rasterized_command_count = render->rasterized_command_count;
     out_receipt->written_pixels = render->written_pixels;
     out_receipt->palette_synced = render->palette_synced;
@@ -376,8 +413,10 @@ int nexus_viewport_dgn_host_route_receipt(
     out_receipt->first_missing_material_id = render->first_missing_material_id;
     out_receipt->first_missing_material_kind =
         render->first_missing_material_kind;
-    out_receipt->mesh_ref_unique_count = handoff.mesh_ref_unique_count;
-    out_receipt->max_mesh_ref = handoff.max_mesh_ref;
+    out_receipt->post_grid_0x30_ref_unique_count =
+        handoff.post_grid_0x30_ref_unique_count;
+    out_receipt->max_post_grid_0x30_ref =
+        handoff.max_post_grid_0x30_ref;
 
     if (!handoff.can_render_dgn_mesh ||
         handoff.blocks_real_dgn_mesh_render ||

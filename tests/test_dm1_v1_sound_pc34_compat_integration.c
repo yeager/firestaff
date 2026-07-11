@@ -11,6 +11,7 @@
  *  7. Sound name coverage
  */
 #include "dm1_v1_sound_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -215,6 +216,61 @@ static void test_music_map_parity(void) {
     }
 }
 
+static void test_tick_emission_audio_plan(void) {
+    struct TickEmission_Compat emission;
+    DM1_V1_AudioEmissionPlanPc34 plan;
+
+    memset(&emission, 0, sizeof(emission));
+    emission.kind = EMIT_PARTY_MOVED;
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 1,
+          "party move has an audio plan");
+    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_FOOTSTEP,
+          "party move uses footstep route");
+
+    emission.kind = EMIT_DOOR_STATE;
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 1,
+          "door state has an audio plan");
+    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_DOOR,
+          "door state uses door route");
+
+    emission.kind = EMIT_KILL_NOTIFY;
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 1,
+          "kill notification has an audio plan");
+    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_COMBAT,
+          "kill notification uses combat route");
+
+    emission.kind = EMIT_CHAMPION_DOWN;
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 1,
+          "champion down has an audio plan");
+    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_COMBAT,
+          "champion down uses combat route");
+
+    emission.kind = EMIT_SPELL_EFFECT;
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 1,
+          "spell effect has an audio plan");
+    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_SPELL,
+          "spell effect uses spell route");
+
+    emission.kind = EMIT_SOUND_REQUEST;
+    emission.payload[0] = DM1_SND_BUZZ;
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 1,
+          "source sound request has an audio plan");
+    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND,
+          "source request preserves source route");
+    CHECK(plan.sourceSoundIndex == DM1_SND_BUZZ,
+          "source request preserves sound index");
+
+    emission.kind = 0xff;
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 0,
+          "unknown emission has no audio plan");
+    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_NONE,
+          "unknown emission clears route");
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(NULL, &plan) == 0,
+          "null emission is rejected");
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, NULL) == 0,
+          "null plan is rejected");
+}
+
 int main(void) {
     test_init();
     test_sound_constants();
@@ -231,6 +287,7 @@ int main(void) {
     test_music_stop();
     test_sound_names();
     test_music_map_parity();
+    test_tick_emission_audio_plan();
 
     printf("dm1_v1_sound_pc34_compat: %d passed, %d failed\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

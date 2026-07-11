@@ -304,6 +304,125 @@ static void test_dungeon_real_format_square_first_thing_chain(void)
     csb_v1_dungeon_unload();
 }
 
+static void test_dungeon_live_mutable_thing_chain(void)
+{
+    CSB_V1_DungeonData d;
+    uint8_t buf[96];
+    const int map_desc = 44;
+    const int column_counts = 60;
+    const int square_first_things = 66;
+    const int weapon_data = 74;
+    const int raw_map = 86;
+    const uint16_t raw_bit_a = (uint16_t)(0 | ((3 - 1) << 6));
+    const uint16_t weapon_a = 0x1400u;
+    const uint16_t weapon_b = 0x1401u;
+    const uint16_t weapon_c = 0x1402u;
+
+    memset(buf, 0, sizeof(buf));
+    buf[4] = 1;
+    put_le16(buf, 10, 4);             /* two occupied slots plus capacity */
+    put_le16(buf, 12 + 5 * 2, 3);     /* three 4-byte weapon records */
+    put_le16(buf, map_desc + 8, raw_bit_a);
+    put_le16(buf, column_counts + 0, 0);
+    put_le16(buf, column_counts + 2, 1);
+    put_le16(buf, column_counts + 4, 2);
+    put_le16(buf, square_first_things + 0, weapon_a);
+    put_le16(buf, square_first_things + 2, weapon_c);
+    put_le16(buf, square_first_things + 4, CSB_THING_PARTY);
+    put_le16(buf, square_first_things + 6, CSB_THING_PARTY);
+    put_le16(buf, weapon_data + 0, weapon_b);
+    put_le16(buf, weapon_data + 2, 0xBEEFu);
+    put_le16(buf, weapon_data + 4, CSB_THING_ENDOFLIST);
+    put_le16(buf, weapon_data + 8, CSB_THING_ENDOFLIST);
+    buf[raw_map + 0] = 0x31u;
+    buf[raw_map + 1] = 0x31u;
+
+    CHECK(csb_v1_dungeon_load(&d, buf, (int)sizeof(buf)) == 0,
+          "mutable-chain source-format dungeon loads");
+    csb_v1_dungeon_set_current(&d);
+    csb_v1_dungeon_set_current_level(0);
+    CHECK(csb_dungeon_get_first_thing_default(0, 0) == weapon_a,
+          "F0161 returns source head");
+    CHECK(csb_dungeon_get_next_thing_default(weapon_a) == weapon_b,
+          "F0159 returns raw source next link");
+    CHECK(csb_dungeon_thing_data_u16_default(weapon_a, 2) == 0xBEEFu,
+          "F0156 reads live Thing data");
+
+    CHECK(csb_dungeon_move_thing_default(weapon_b, 0, 0, 1, 0) == 0,
+          "F0267 primitive moves a tail into an occupied destination");
+    CHECK(csb_dungeon_get_next_thing_default(weapon_a) == CSB_THING_ENDOFLIST,
+          "source tail unlink terminates the surviving chain");
+    CHECK(csb_dungeon_get_first_thing_default(1, 0) == weapon_c,
+          "destination preserves its existing head");
+    CHECK(csb_dungeon_get_next_thing_default(weapon_c) == weapon_b,
+          "destination appends moved Thing at the tail");
+
+    CHECK(csb_dungeon_move_thing_default(weapon_a, 0, 0, 2, 0) == 0,
+          "F0267 primitive moves a sole source head to an empty destination");
+    CHECK(csb_dungeon_get_first_thing_default(0, 0) == CSB_THING_ENDOFLIST,
+          "sole-source unlink clears the source square list");
+    CHECK(csb_dungeon_get_first_thing_default(2, 0) == weapon_a,
+          "empty destination receives a new square-list head");
+    CHECK(csb_dungeon_move_thing_default(weapon_b, 1, 0, -1, -1) == 0,
+          "negative F0267 destination removes a linked Thing");
+    CHECK(csb_dungeon_get_next_thing_default(weapon_c) == CSB_THING_ENDOFLIST,
+          "removal repairs the destination predecessor link");
+    CHECK(csb_dungeon_move_thing_default(weapon_b, 1, 0, 2, 0) == -2,
+          "undeclared source Thing is rejected without mutation");
+    csb_v1_dungeon_unload();
+}
+
+static void test_dungeon_live_mutable_thing_chain_between_levels(void)
+{
+    CSB_V1_DungeonData d;
+    uint8_t buf[112];
+    const int map_desc = 44;
+    const int column_counts = 76;
+    const int square_first_things = 80;
+    const int weapon_data = 86;
+    const int raw_map = 94;
+    const uint16_t one_square = 0;
+    const uint16_t weapon_a = 0x1400u;
+    const uint16_t weapon_b = 0x1401u;
+
+    memset(buf, 0, sizeof(buf));
+    buf[4] = 2;
+    put_le16(buf, 10, 3);
+    put_le16(buf, 12 + 5 * 2, 2);
+    put_le16(buf, map_desc + 0, 0);
+    put_le16(buf, map_desc + 8, one_square);
+    put_le16(buf, map_desc + 16, 1);
+    put_le16(buf, map_desc + 16 + 8, (uint16_t)(1 | one_square));
+    put_le16(buf, column_counts + 0, 0);
+    put_le16(buf, column_counts + 2, 1);
+    put_le16(buf, square_first_things + 0, weapon_a);
+    put_le16(buf, square_first_things + 2, weapon_b);
+    put_le16(buf, square_first_things + 4, CSB_THING_PARTY);
+    put_le16(buf, weapon_data + 0, CSB_THING_ENDOFLIST);
+    put_le16(buf, weapon_data + 4, CSB_THING_ENDOFLIST);
+    buf[raw_map + 0] = 0x31u;
+    buf[raw_map + 1] = 0x31u;
+
+    CHECK(csb_v1_dungeon_load(&d, buf, (int)sizeof(buf)) == 0,
+          "two-level mutable-chain source-format dungeon loads");
+    csb_v1_dungeon_set_current(&d);
+    csb_v1_dungeon_set_current_level(1);
+    CHECK(csb_dungeon_move_thing_between_levels_default(
+              weapon_a, 0, 0, 0, 1, 0, 0) == 0,
+          "cross-level F0267 primitive moves through live M10 chains");
+    CHECK(csb_v1_dungeon_get_current_level() == 1,
+          "cross-level primitive restores caller current level");
+    csb_v1_dungeon_set_current_level(0);
+    CHECK(csb_dungeon_get_first_thing_default(0, 0) == CSB_THING_ENDOFLIST,
+          "cross-level source list is removed");
+    csb_v1_dungeon_set_current_level(1);
+    CHECK(csb_dungeon_get_first_thing_default(0, 0) == weapon_b,
+          "cross-level destination preserves its head");
+    CHECK(csb_dungeon_get_next_thing_default(weapon_b) == weapon_a,
+          "cross-level destination appends moved Thing");
+    csb_v1_dungeon_unload();
+}
+
 static void test_dungeon_real_format_expool_db11_skin_lookup(void)
 {
     CSB_V1_DungeonData d;
@@ -1435,6 +1554,8 @@ int main(void)
     test_dungeon_square_access();
     test_dungeon_first_thing();
     test_dungeon_real_format_square_first_thing_chain();
+    test_dungeon_live_mutable_thing_chain();
+    test_dungeon_live_mutable_thing_chain_between_levels();
     test_dungeon_real_format_expool_db11_skin_lookup();
     test_runtime_custom_background_skin_grid_from_expool();
     test_runtime_custom_background_skin_grid_from_csbwin_tail();

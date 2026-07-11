@@ -5901,6 +5901,28 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
               "CSBWin resume report materializes the timer queue");
     }
 
+    {
+        CSB_V1_RuntimeProfile rejected_profile;
+        CSB_V1_RuntimeProfile snapshot;
+
+        csb_v1_runtime_init(&rejected_profile, NULL);
+        rejected_profile.game_time = 77u;
+        rejected_profile.party_x = 3;
+        rejected_profile.party_y = 4;
+        rejected_profile.current_level = 2;
+        csb_v1_dungeon_set_current_level(2);
+        snapshot = rejected_profile;
+        summary.timer_queue[0] = summary.timer_summary_count;
+        CHECK(csb_v1_runtime_apply_csbwin_resume_report(
+                  &rejected_profile, &summary) == -1,
+              "CSBWin resume report rejects an out-of-range timer queue reference");
+        CHECK(memcmp(&rejected_profile, &snapshot, sizeof(snapshot)) == 0,
+              "CSBWin rejected timer queue leaves the live runtime profile unchanged");
+        CHECK(csb_v1_dungeon_get_current_level() == 2,
+              "CSBWin rejected timer queue restores the shared dungeon level");
+        summary.timer_queue[0] = 2u;
+    }
+
     summary.party_facing = 4u;
     {
         CSB_V1_RuntimeProfile rejected_profile;

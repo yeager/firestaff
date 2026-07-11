@@ -279,11 +279,13 @@ static void scan_tqsv_slots(Theron_V1StartupSaveResume *snap) {
 /* ── .srm classification via existing API ─────────────────────────── */
 
 static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
+    Theron_V1SrmEnvelopeReceipt envelopes[THERON_V1_SRM_DISK_SLOT_COUNT];
     snap->srm_total_slots = THERON_V1_SRM_DISK_SLOT_COUNT;
     snap->srm_present_slots = 0;
     snap->srm_recognized_slots = 0;
     snap->srm_first_recognized_slot = -1;
     snap->srm_first_recognized_checksum32 = 0u;
+    snap->srm_first_decoded_slot = -1;
     snap->srm_payload_probe_status = THERON_V1_SRM_PAYLOAD_PROBE_BAD_INPUT;
     snap->srm_payload_probe_ran = 0;
     snap->srm_payload_size = 0u;
@@ -298,6 +300,13 @@ static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
     snap->srm_party_restored = 0;
     snap->srm_party_champion_count = 0;
     snap->srm_party_gold = 0u;
+    memset(envelopes, 0, sizeof(envelopes));
+    for (int i = 0; i < THERON_V1_SRM_DISK_SLOT_COUNT; ++i) {
+        envelopes[i].slot_index = i;
+    }
+    (void)theron_v1_srm_catalog_body_evidence(
+        envelopes, THERON_V1_SRM_DISK_SLOT_COUNT,
+        &snap->srm_body_evidence_catalog);
 
     if (!snap->srm_root[0]) {
         return;
@@ -321,62 +330,74 @@ static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
         }
     }
 
-    /* When the gate found a recognized .srm, attempt a bounded
-     * payload probe + progression-decode.  We only do this for the
-     * first RECOGNIZED slot and only when zlib is built in — the
-     * gate stays cheap and never claims Sphenx/Greatstone custom
-     * body coverage. */
+    /* Decode recognized slots in Save Disk order until one passes the
+     * existing bounded envelope contract.  A gzip-recognized custom body
+     * is evidence of a real artifact, but not evidence that Continue can
+     * restore it.  Therefore an unknown slot cannot prevent a later
+     * explicitly supported envelope from becoming the selected slot. */
     if (snap->srm_first_recognized_slot < 0) {
         return;
     }
 
-    char slot_path[THERON_V1_SRM_PATH_MAX];
-    if (!theron_v1_srm_slot_path(snap->srm_root,
-                                  snap->srm_first_recognized_slot,
-                                  slot_path)) {
-        return;
-    }
-
 #if FIRESTAFF_HAS_ZLIB
-    uint8_t payload[TSR_INFLATE_BUFFER_BYTES];
-    Theron_V1SrmEnvelopeReceipt envelope;
-    Theron_V1SrmEnvelopeKind kind;
-    memset(payload, 0, sizeof(payload));
-    memset(&envelope, 0, sizeof(envelope));
-    kind = theron_v1_srm_decode_path(slot_path,
-                                     snap->srm_first_recognized_slot,
-                                     payload,
-                                     sizeof(payload),
-                                     &envelope);
+    for (int i = 0; i < THERON_V1_SRM_DISK_SLOT_COUNT; ++i) {
+        char slot_path[THERON_V1_SRM_PATH_MAX];
+        uint8_t payload[TSR_INFLATE_BUFFER_BYTES];
+        Theron_V1SrmEnvelopeReceipt *envelope = &envelopes[i];
+        Theron_V1SrmEnvelopeKind kind;
+        int decoded;
 
-    snap->srm_envelope_kind = kind;
-    snap->srm_payload_probe_status = envelope.inflate_status;
-    snap->srm_payload_probe_ran = 1;
-    snap->srm_payload_size = envelope.inflate_payload_size;
-    snap->srm_payload_hits_fstq_magic =
-        (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
-         kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) ? 1 : 0;
+        if (manifest.slots[i].status !=
+            THERON_V1_SRM_SLOT_PRESENT_AND_RECOGNIZED ||
+            !theron_v1_srm_slot_path(snap->srm_root, i, slot_path)) {
+            continue;
+        }
+        memset(payload, 0, sizeof(payload));
+        memset(envelope, 0, sizeof(*envelope));
+        kind = theron_v1_srm_decode_path(slot_path, i, payload,
+                                         sizeof(payload), envelope);
+        decoded = (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
+                   kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) &&
+                  envelope->decode_status == THERON_V1_SRM_PROGRESS_IMPORT_OK;
 
-    if (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
-        kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) {
-        snap->srm_progress_import_status = envelope.decode_status;
-        snap->srm_progress_import_ran = 1;
-        if (envelope.decode_status == THERON_V1_SRM_PROGRESS_IMPORT_OK) {
-            snap->srm_progress_current_dungeon =
-                (int)envelope.progression.current_dungeon;
-            snap->srm_progress_current_level =
-                (int)envelope.progression.current_level;
-            snap->srm_progress_quest_mask =
-                (int)envelope.progression.quest_items_bitmask;
-            if (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) {
-                snap->srm_party_import_ran = 1;
-                snap->srm_party_restored = envelope.party.restored ? 1 : 0;
-                snap->srm_party_champion_count =
-                    (int)envelope.party.champion_count;
-                snap->srm_party_gold = envelope.party.party_gold;
-            }
+        /* Keep a diagnostic for the first recognized artifact if none is
+         * decodable, but replace it only with a complete decoded receipt. */
+        if (i == snap->srm_first_recognized_slot ||
+            (decoded && snap->srm_first_decoded_slot < 0)) {
+            snap->srm_envelope_kind = kind;
+            snap->srm_payload_probe_status = envelope->inflate_status;
+            snap->srm_payload_probe_ran = 1;
+            snap->srm_payload_size = envelope->inflate_payload_size;
+            snap->srm_payload_hits_fstq_magic =
+                (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
+                 kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) ? 1 : 0;
+            snap->srm_progress_import_status = decoded
+                ? envelope->decode_status
+                : THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+            snap->srm_progress_import_ran = decoded ? 1 : 0;
+        }
+        if (!decoded || snap->srm_first_decoded_slot >= 0) {
+            continue;
+        }
+
+        snap->srm_first_decoded_slot = i;
+        snap->srm_progress_current_dungeon =
+            (int)envelope->progression.current_dungeon;
+        snap->srm_progress_current_level =
+            (int)envelope->progression.current_level;
+        snap->srm_progress_quest_mask =
+            (int)envelope->progression.quest_items_bitmask;
+        if (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) {
+            snap->srm_party_import_ran = 1;
+            snap->srm_party_restored = envelope->party.restored ? 1 : 0;
+            snap->srm_party_champion_count =
+                (int)envelope->party.champion_count;
+            snap->srm_party_gold = envelope->party.party_gold;
         }
     }
+    (void)theron_v1_srm_catalog_body_evidence(
+        envelopes, THERON_V1_SRM_DISK_SLOT_COUNT,
+        &snap->srm_body_evidence_catalog);
 #else
     /* Without zlib we deliberately do not run the inflate step.
      * The verdict/claim surface is independent of zlib presence, so
@@ -395,6 +416,7 @@ int theron_v1_startup_save_resume_evaluate(
     memset(out_snapshot, 0, sizeof(*out_snapshot));
     out_snapshot->tqsv_active_slot = -1;
     out_snapshot->srm_first_recognized_slot = -1;
+    out_snapshot->srm_first_decoded_slot = -1;
     out_snapshot->srm_progress_current_dungeon = -1;
     out_snapshot->srm_progress_current_level = -1;
     out_snapshot->srm_progress_quest_mask = -1;
@@ -494,6 +516,7 @@ int theron_v1_startup_save_resume_apply_explicit_path(
             snap->srm_recognized_slots = 1;
         }
         snap->srm_first_recognized_slot = slot;
+        snap->srm_first_decoded_slot = slot;
         snap->srm_envelope_kind = kind;
         snap->srm_payload_probe_status = envelope.inflate_status;
         snap->srm_payload_probe_ran =
@@ -539,7 +562,7 @@ int theron_v1_startup_save_resume_state_receipt(
     out_receipt->save_resume_active_slot =
         (snapshot_ready && snapshot) ? snapshot->tqsv_active_slot : -1;
     out_receipt->save_resume_srm_active_slot =
-        (snapshot_ready && snapshot) ? snapshot->srm_first_recognized_slot : -1;
+        (snapshot_ready && snapshot) ? snapshot->srm_first_decoded_slot : -1;
     out_receipt->save_resume_srm_import_status =
         (snapshot_ready && snapshot)
             ? (int)snapshot->srm_progress_import_status
@@ -564,7 +587,7 @@ int theron_v1_startup_save_resume_state_receipt(
         (snapshot_ready && snapshot) ? snapshot->srm_recognized_slots : 0;
     if (snapshot_ready &&
         snapshot &&
-        snapshot->srm_first_recognized_slot >= 0 &&
+        snapshot->srm_first_decoded_slot >= 0 &&
         snapshot->srm_root[0] != '\0') {
         snprintf(out_receipt->save_resume_srm_root,
                  sizeof(out_receipt->save_resume_srm_root),
@@ -2283,6 +2306,7 @@ size_t theron_v1_startup_save_resume_format(
                      "srm_present_slots:%d\n"
                      "srm_recognized:   %d\n"
                      "srm_first_recog:  %d\n"
+                     "srm_first_decoded:%d\n"
                      "srm_envelope:     %s\n"
                      "srm_payload_probe:%s ran=%d size=%zu fstq_magic=%d\n"
                      "srm_prog_import:  %s ran=%d dungeon=%d level=%d quest=0x%02x\n"
@@ -2298,6 +2322,7 @@ size_t theron_v1_startup_save_resume_format(
                      snap->srm_present_slots,
                      snap->srm_recognized_slots,
                      snap->srm_first_recognized_slot,
+                     snap->srm_first_decoded_slot,
                      theron_v1_srm_envelope_kind_name(snap->srm_envelope_kind),
                      theron_v1_srm_payload_probe_status_name(snap->srm_payload_probe_status),
                      snap->srm_payload_probe_ran,

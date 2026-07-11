@@ -459,16 +459,17 @@ int dm1_v1_original_save_classify_bytes(
     return 1;
 }
 
-int dm1_v1_original_save_classify_file(
-    const char *path,
-    DM1OriginalSaveClassifyResult *out_result) {
+static int classify_file_at_path(const char *path,
+                                 DM1OriginalSaveClassifyResult *out_result,
+                                 int *out_present) {
     FILE *fp;
     uint64_t file_size = 0;
     uint8_t *buf;
     size_t got;
     int rc;
 
-    if (!out_result) return 0;
+    if (!out_result || !out_present) return 0;
+    *out_present = 0;
     memset(out_result, 0, sizeof(*out_result));
     out_result->shape = DM1_ORIGINAL_SAVE_SHAPE_ABSENT;
     out_result->readiness = DM1_ORIGINAL_SAVE_READY_ABSENT;
@@ -478,6 +479,7 @@ int dm1_v1_original_save_classify_file(
     if (!file_exists_regular(path, &file_size)) {
         return 1;
     }
+    *out_present = 1;
     if (file_size == 0u || file_size > (16u * 1024u * 1024u)) {
         out_result->size_bytes = file_size;
         out_result->shape = DM1_ORIGINAL_SAVE_SHAPE_REJECTED;
@@ -506,6 +508,35 @@ int dm1_v1_original_save_classify_file(
     return rc;
 }
 
+int dm1_v1_original_save_classify_file(
+    const char *path,
+    DM1OriginalSaveClassifyResult *out_result) {
+    char backup_path[DM1_ORIGINAL_SAVE_PATH_MAX];
+    size_t path_length;
+    int primary_present;
+    int backup_present;
+
+    if (!out_result) return 0;
+    if (!classify_file_at_path(path, out_result, &primary_present)) return 0;
+    if (primary_present) return 1;
+
+    /* ReDMCSB LOADSAVE.C F0435 lines 2560-2583 attempts the backup only
+     * after the primary open fails. Do not let a rejected primary payload
+     * silently select a backup. */
+    if (!path || !path[0]) return 1;
+    path_length = strlen(path);
+    if (path_length + 4u >= sizeof(backup_path)) return 1;
+    memcpy(backup_path, path, path_length);
+    memcpy(backup_path + path_length, ".bak", 5u);
+    if (!classify_file_at_path(backup_path, out_result, &backup_present)) {
+        return 0;
+    }
+    if (backup_present) {
+        out_result->resume_uses_backup = 1;
+    }
+    return 1;
+}
+
 int dm1_v1_original_save_classify_root(
     const char *root,
     DM1OriginalSaveManifest *out_manifest) {
@@ -528,8 +559,13 @@ int dm1_v1_original_save_classify_root(
                                                  out_manifest->paths[i])) {
             continue;
         }
-        if (!dm1_v1_original_save_classify_file(out_manifest->paths[i], result)) {
-            return 0;
+        /* A corpus lists physical files. It must not count a DMSAVE.BAK
+         * twice through the absent DMSAVE.DAT candidate. */
+        {
+            int present;
+            if (!classify_file_at_path(out_manifest->paths[i], result, &present)) {
+                return 0;
+            }
         }
         if (result->shape != DM1_ORIGINAL_SAVE_SHAPE_ABSENT) {
             out_manifest->present_count++;

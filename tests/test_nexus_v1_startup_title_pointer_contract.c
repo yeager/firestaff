@@ -21,6 +21,9 @@ static void check(int condition, const char *message)
 int main(void)
 {
     Nexus_V1_StartupAction action;
+    Nexus_V1_StartupHostFacts facts;
+    Nexus_V1_StartupHostActionReceipt host_receipt;
+    Nexus_V1_StartupTitleExecution title_execution;
     Nexus_V1_StartupMenu menu;
     Nexus_V1_StartupSaveRenderRow rows[4];
     char phase[64];
@@ -50,6 +53,20 @@ int main(void)
               ready_frame, 0u, NEXUS_V1_STARTUP_INPUT_BACK, &action) &&
               action.kind == NEXUS_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER,
           "title back returns to launcher");
+
+    memset(&facts, 0, sizeof(facts));
+    facts.title_active = 1;
+    facts.slot_mask = 0u;
+    facts.title_frame = nexus_v1_boot_warning_frames() + ready_frame;
+    check(nexus_v1_startup_execute_title_pointer_from_host_facts_with_receipt(
+              &facts, &title_execution, &host_receipt) &&
+              title_execution.kind == NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_CHAMPIONS,
+          "title pointer opens champions only after the full boot sequence");
+    facts.title_frame = nexus_v1_boot_warning_frames() + ready_frame - 1;
+    check(nexus_v1_startup_execute_title_pointer_from_host_facts_with_receipt(
+              &facts, &title_execution, &host_receipt) &&
+              title_execution.kind == NEXUS_V1_STARTUP_TITLE_EXEC_HOLD_TITLE,
+          "title pointer holds during the final pre-ready boot frame");
 
     nexus_v1_startup_menu_init(&menu, "/tmp/firestaff-nexus-test");
     check(nexus_v1_startup_menu_refresh(&menu, 1u) &&

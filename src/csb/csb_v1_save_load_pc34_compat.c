@@ -24,6 +24,10 @@
 #include <stdint.h>
 #include <time.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
+
 /* ── Constants ─────────────────────────────────────────────────────── */
 
 /* Obfuscation key table (from ReDMCSB F0417, per media variant) */
@@ -507,10 +511,10 @@ int csb_v1_load_game(const char *path,
 {
     FILE *f;
     uint8_t *buf = (uint8_t *)state;
+    uint8_t *candidate_state = NULL;
     size_t hdr_read, data_read;
     CSB_V1_SaveHeader tmp_hdr;
     int result;
-    int read_error = 0;
 
     if (!path || max_size < 0) return -1;
     if (!state && max_size != 0) return -1;
@@ -533,22 +537,32 @@ int csb_v1_load_game(const char *path,
         return CSB_V1_LOAD_ERR_DAMAGED;
     }
 
-    /* Header-only compatibility checks intentionally stop here. ReDMCSB
-     * LOADSAVE.C F0435 lines ~2665-2724 reads F0429's save header before
-     * pulling GLOBAL_DATA and later runtime sections. */
+    /* ReDMCSB LOADSAVE.C F0435 lines ~2665-2724 validates the header before
+     * it publishes GLOBAL_DATA into the live runtime. Keep the Firestaff
+     * bounded-prefix boundary equally transactional: a short or failed read
+     * must not leave a partly replaced caller state behind. */
     if (max_size > 0) {
-        data_read = fread(buf, 1, (size_t)max_size, f);
-        read_error = ferror(f);
+        candidate_state = (uint8_t *)malloc((size_t)max_size);
+        if (!candidate_state) {
+            fclose(f);
+            return CSB_V1_LOAD_ERR_UNREADABLE;
+        }
+        data_read = fread(candidate_state, 1, (size_t)max_size, f);
     } else {
         data_read = 0;
     }
 
     fclose(f);
 
-    if ((int)data_read != max_size && read_error) {
+    if ((int)data_read != max_size) {
+        free(candidate_state);
         return CSB_V1_LOAD_ERR_UNREADABLE;
     }
 
+    if (max_size > 0) {
+        memcpy(buf, candidate_state, (size_t)max_size);
+        free(candidate_state);
+    }
     if (out_header) {
         memcpy(out_header, &tmp_hdr, sizeof(*out_header));
     }
@@ -601,12 +615,58 @@ int csb_v1_save_backup(const char *path)
 
 int csb_v1_save_restore_backup(const char *path)
 {
-    const char *backup = csb_v1_save_get_backup_path(path);
-    if (!backup) return -1;
-    /* Copy backup over original */
-    /* In practice: read backup, write to original path */
-    (void)backup;
-    return 0;
+    char backup_path[512];
+    char restore_path[544];
+    FILE *src;
+    FILE *dst;
+    uint8_t buf[4096];
+    size_t n;
+    int failed = 0;
+    int flush_failed;
+    int close_failed;
+
+    if (!path || path[0] == '\0') return CSB_V1_LOAD_ERR_NO_BACKUP;
+    if (!csb_v1_save_get_backup_path(path)) return CSB_V1_LOAD_ERR_NO_BACKUP;
+    snprintf(backup_path, sizeof(backup_path), "%s",
+             csb_v1_save_get_backup_path(path));
+    if (snprintf(restore_path, sizeof(restore_path), "%s.restore", path)
+            >= (int)sizeof(restore_path)) {
+        return CSB_V1_LOAD_ERR_UNREADABLE;
+    }
+
+    src = fopen(backup_path, "rb");
+    if (!src) return CSB_V1_LOAD_ERR_NO_BACKUP;
+    dst = fopen(restore_path, "wb");
+    if (!dst) {
+        fclose(src);
+        return CSB_V1_LOAD_ERR_UNREADABLE;
+    }
+
+    while ((n = fread(buf, 1, sizeof(buf), src)) > 0u) {
+        if (fwrite(buf, 1, n, dst) != n) {
+            failed = 1;
+            break;
+        }
+    }
+    flush_failed = (fflush(dst) != 0);
+    close_failed = (fclose(dst) != 0);
+    if (ferror(src) || flush_failed || close_failed) {
+        failed = 1;
+    }
+    fclose(src);
+    if (failed) {
+        remove(restore_path);
+        return CSB_V1_LOAD_ERR_UNREADABLE;
+    }
+#if defined(_WIN32) || defined(_WIN64)
+    if (!MoveFileExA(restore_path, path, MOVEFILE_REPLACE_EXISTING)) {
+#else
+    if (rename(restore_path, path) != 0) {
+#endif
+        remove(restore_path);
+        return CSB_V1_LOAD_ERR_UNREADABLE;
+    }
+    return CSB_V1_LOAD_OK;
 }
 
 /* ── Save compatibility check ─────────────────────────────────────────── */

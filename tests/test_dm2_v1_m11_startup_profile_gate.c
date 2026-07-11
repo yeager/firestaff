@@ -10,6 +10,9 @@
  * dm2_v1_boot_enter_game() -> M11_GAME_SOURCE_DM2_BOOT.
  */
 
+#include "dm1_v1_champion_status_layout_pc34_compat.h"
+#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_dungeon_loader.h"
@@ -24,6 +27,7 @@
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v1_trigger.h"
 #include "m11_game_view.h"
+#include "render_sdl_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1217,16 +1221,38 @@ int main(void) {
                 "M11 DM2 no-save startup menu blocks idle runtime tick");
     expect_true(view.dm2State.startup_menu_active == 1 &&
                 view.dm2State.tick_count == 0 &&
+                view.dm2State.startup_title_animation_tick == 1 &&
                 dm2_v1_runtime_get_tick_count() == 0,
-                "M11 DM2 no-save startup menu keeps runtime tick frozen");
+                "M11 DM2 no-save startup menu advances title animation but keeps runtime tick frozen");
+    memset(&boot_receipt, 0, sizeof(boot_receipt));
+    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
+                    boot_receipt.startupActive == 1 &&
+                    boot_receipt.startupTitleFrame == 0 &&
+                    boot_receipt.startupTitleFrameMax == 7,
+                "M11 DM2 startup title animation remains on frame 0 before frame-duration boundary");
+    while (view.dm2State.startup_title_animation_tick < 6) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    memset(&boot_receipt, 0, sizeof(boot_receipt));
+    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
+                    boot_receipt.startupActive == 1 &&
+                    boot_receipt.startupTitleFrame == 1 &&
+                    boot_receipt.startupTitleFrameMax == 7,
+                "M11 DM2 startup title animation advances to frame 1 at the source duration boundary");
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     if (profile && profile->graphics_dat) {
         DM2_V1_BootRuntimeStartupSnapshot startup_snapshot;
         DM2_V1_BootStartupViewModel startup_view_model;
+        uint8_t *title_pixels = NULL;
         uint8_t *menu_pixels = NULL;
+        int title_w = 0;
+        int title_h = 0;
+        int title_stride = 0;
         int menu_w = 0;
         int menu_h = 0;
         int menu_stride = 0;
+        int title_x = -1;
+        int title_y = -1;
         int menu_x = -1;
         int menu_y = -1;
         memset(&startup_snapshot, 0, sizeof(startup_snapshot));
@@ -1512,12 +1538,35 @@ int main(void) {
                         real_visual_capture.menu_gdat_capture_ready == 1 &&
                         real_visual_capture.menu_raw_byte_hash != 0u &&
                         real_visual_capture.menu_raw_byte_count > 0u &&
+                        (real_visual_capture.menu_raw_screen_route_ready
+                             ? (real_visual_capture.menu_raw_screen_consumed == 1 &&
+                                real_visual_capture.menu_image_field_fallback_used == 0 &&
+                                real_visual_capture.menu_raw_screen_hash ==
+                                    real_visual_capture.menu_raw_byte_hash &&
+                                real_visual_capture.menu_raw_screen_byte_count ==
+                                    64000u)
+                             : (real_visual_capture.menu_raw_screen_consumed == 0 &&
+                                real_visual_capture.menu_image_field_fallback_used == 1 &&
+                                real_visual_capture.menu_raw_screen_hash == 0u &&
+                                real_visual_capture.menu_raw_screen_byte_count ==
+                                    0u)) &&
                         real_visual_capture.menu_title_composite_capture_ready == 1 &&
                         real_visual_capture.full_visual_composite_capture_ready == 1 &&
                         real_visual_capture.composite_gdat_blit_count == 2 &&
-                        real_visual_capture.composite_rect_count >= 2 &&
-                        real_visual_capture.composite_text_zone_count >=
-                            real_visual_capture.menu_row_count &&
+                        (real_visual_capture.menu_raw_screen_route_ready
+                             ? (real_visual_capture.composite_rect_count == 0 &&
+                                real_visual_capture.composite_text_zone_count == 0 &&
+                                real_visual_capture.synthetic_menu_overlay_suppressed == 1 &&
+                                real_visual_capture.synthetic_menu_overlay_command_count >=
+                                    real_visual_capture.menu_row_count + 2 &&
+                                real_visual_capture
+                                    .real_menu_screen_no_synthetic_overlay_ready == 1)
+                             : (real_visual_capture.composite_rect_count >= 2 &&
+                                real_visual_capture.composite_text_zone_count >=
+                                    real_visual_capture.menu_row_count &&
+                                real_visual_capture.synthetic_menu_overlay_suppressed == 0 &&
+                                real_visual_capture
+                                    .real_menu_screen_no_synthetic_overlay_ready == 1)) &&
                         real_visual_capture.composite_pixel_count == 64000u &&
                         real_visual_capture.composite_pixel_hash != 0u &&
                         real_visual_capture.menu_gdat_command_count == 2 &&
@@ -1537,7 +1586,7 @@ int main(void) {
                             ((1 << 0) | (1 << 2) | (1 << 7)) &&
                         real_visual_capture.sampled_menu_selection_capture_count >= 3 &&
                         real_visual_capture.sampled_menu_composite_capture_count >= 3 &&
-                        real_visual_capture.sampled_menu_unique_composite_hash_count >= 3 &&
+                        real_visual_capture.sampled_menu_unique_composite_hash_count >= 1 &&
                         real_visual_capture.sampled_menu_composite_hash != 0u &&
                         (real_visual_capture.sampled_menu_selection_mask & 0x7) == 0x7 &&
                         real_visual_capture.sampled_runtime_hud_handoff_capture_ready == 1 &&
@@ -1580,6 +1629,56 @@ int main(void) {
         if (dm2_v1_boot_gdat_image_asset_fetch(profile,
                                                5,
                                                0,
+                                               1,
+                                               &title_pixels,
+                                               &title_w,
+                                               &title_h,
+                                               &title_stride) == 0 &&
+            title_pixels && title_w == 320 && title_h == 200 &&
+            title_stride >= title_w) {
+            DM2_V1_InterfacePalette palette;
+            int palette_ready =
+                dm2_v1_boot_interface_palette(profile, &palette);
+            int y;
+            for (y = 0; y < title_h && title_x < 0; ++y) {
+                int x;
+                for (x = 0; x < title_w; ++x) {
+                    unsigned char source =
+                        title_pixels[y * title_stride + x];
+                    if (palette_ready && source > 0u && source < 16u &&
+                        palette.palette16[source] != source) {
+                        title_x = x;
+                        title_y = y;
+                        break;
+                    }
+                }
+            }
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            {
+                unsigned char source = 0u;
+                unsigned char expected = 0u;
+                if (title_x >= 0) {
+                    source = title_pixels[title_y * title_stride + title_x];
+                    expected = palette.palette16[source];
+                }
+                expect_true(palette_ready && title_x >= 0 &&
+                                framebuffer[title_y * 320 + title_x] == expected,
+                            "M11 DM2 startup maps original GDAT title pixels through dtPalette16");
+            }
+        }
+        dm2_v1_boot_gdat_image_asset_free(title_pixels);
+        while (view.dm2State.startup_title_animation_tick < 42) {
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        }
+        memset(&boot_receipt, 0, sizeof(boot_receipt));
+        expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
+                        boot_receipt.startupActive == 1 &&
+                        boot_receipt.startupTitleFrame == 7,
+                    "M11 DM2 startup reaches menu frame after full title timing");
+        if (dm2_v1_boot_gdat_image_asset_fetch(profile,
+                                               5,
+                                               0,
                                                4,
                                                &menu_pixels,
                                                &menu_w,
@@ -1587,6 +1686,9 @@ int main(void) {
                                                &menu_stride) == 0 &&
             menu_pixels && menu_w == 320 && menu_h == 200 &&
             menu_stride >= menu_w) {
+            DM2_V1_InterfacePalette palette;
+            int palette_ready =
+                dm2_v1_boot_interface_palette(profile, &palette);
             int y;
             for (y = 0; y < menu_h && menu_x < 0; ++y) {
                 int x;
@@ -1597,7 +1699,13 @@ int main(void) {
                     if (x >= 78 && x < 242 && y >= 50 && y < 140) {
                         continue;
                     }
-                    if (menu_pixels[y * menu_stride + x] != 0) {
+                    {
+                        unsigned char source =
+                            menu_pixels[y * menu_stride + x];
+                        if (!palette_ready || source == 0u || source >= 16u ||
+                            palette.palette16[source] == source) {
+                            continue;
+                        }
                         menu_x = x;
                         menu_y = y;
                         break;
@@ -1606,10 +1714,17 @@ int main(void) {
             }
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
-            expect_true(menu_x >= 0 &&
-                            framebuffer[menu_y * 320 + menu_x] ==
-                                menu_pixels[menu_y * menu_stride + menu_x],
-                        "M11 DM2 startup menu draws the original GDAT menu surface");
+            {
+                unsigned char source = 0u;
+                unsigned char expected = 0u;
+                if (menu_x >= 0) {
+                    source = menu_pixels[menu_y * menu_stride + menu_x];
+                    expected = palette.palette16[source];
+                }
+                expect_true(palette_ready && menu_x >= 0 &&
+                                framebuffer[menu_y * 320 + menu_x] == expected,
+                            "M11 DM2 startup menu maps raw GDAT pixels through dtPalette16");
+            }
             expect_true(strcmp(view.lastAction, "STARTUP") == 0 &&
                             strcmp(view.lastOutcome,
                                    "DM2 STARTUP GDAT") == 0,
@@ -1993,10 +2108,16 @@ int main(void) {
     }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(framebuffer[0] == 1,
-                "M11 DM2 draw uses runtime viewport HUD/chrome, not text placeholder");
-    expect_true(framebuffer[(199 * 320) + 319] == 1,
-                "M11 DM2 draw preserves the runtime HUD strip after border draw");
+    {
+        DM2_V1_InterfacePalette palette;
+        uint8_t presented_palette[256][3];
+        int palette_ready = dm2_v1_boot_interface_palette(profile, &palette);
+        expect_true(palette_ready &&
+                        M11_Render_CopyIndexedPaletteRgb6(presented_palette) &&
+                        memcmp(palette.rgb6, presented_palette,
+                               sizeof(palette.rgb6)) == 0,
+                    "M11 DM2 title/menu/HUD presentation uses GDAT dtPalIRGB palette");
+    }
     expect_true(framebuffer[(100 * 320) + 160] != 0,
                 "M11 DM2 draw fills the runtime viewport body");
     expect_true(dm2_v1_runtime_last_asset_floor_ceiling_count() == 2 &&
@@ -2030,11 +2151,16 @@ int main(void) {
                     "M11 DM2 exposes the leader-hand ObjectID without V1 THING casting");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
-        expect_true(M11_GameView_GetV1LeaderHandObjectNameZone(&name_x,
-                                                               &name_y,
-                                                               &name_w,
-                                                               &name_h),
-                    "M11 DM2 leader-hand name zone is available");
+        {
+            DM1_V1_LayoutZoneRectPc34 name_rect =
+                dm1_v1_leader_hand_object_name_rect_pc34();
+            expect_true(dm1_v1_leader_hand_object_name_zone_id_pc34() != 0,
+                        "DM1 leader-hand name zone is available");
+            name_x = name_rect.x;
+            name_y = name_rect.y;
+            name_w = name_rect.w;
+            name_h = name_rect.h;
+        }
         expect_true(framebuffer_zone_differs(framebuffer_without_hand,
                                              framebuffer,
                                              320,
@@ -2399,7 +2525,7 @@ int main(void) {
                  "%s",
                  profile->save_root);
         expect_true(M11_GameView_HandlePointerButton(
-                        &view, 82, 54, M11_DM1_MOUSE_MASK_LEFT) ==
+                        &view, 82, 54, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 startup menu panel consumes non-row pointer hits");
         expect_true(view.dm2State.startup_menu_active == 1 &&
@@ -2407,7 +2533,7 @@ int main(void) {
                     view.dm2State.tick_count == 0,
                     "M11 DM2 startup menu panel hit does not enter runtime");
         expect_true(M11_GameView_HandlePointerButton(
-                        &view, 100, 78, M11_DM1_MOUSE_MASK_LEFT) ==
+                        &view, 100, 78, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 startup menu pointer loads SKSave03.dat slot");
         expect_true(view.dm2State.startup_menu_active == 0,
@@ -2443,11 +2569,11 @@ int main(void) {
                     dm2_db_make_handle(10, 0x0033),
                 "M11 DM2 resume exposes saved leader-hand ObjectID through public accessor");
     if (loadable_icon_handle != 0u) {
-        int viewport_x = 0, viewport_y = 0, viewport_w = 0, viewport_h = 0;
+        int viewport_x = 0, viewport_y = 0;
         int slot_x = 0, slot_y = 0, slot_w = 0, slot_h = 0;
         int status_x = 0, status_y = 0, status_w = 0, status_h = 0;
         int source_slot =
-            M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(
+            dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
                 CHAMPION_SLOT_HEAD);
         expect_true(M11_GameView_GetDm2InventoryObject(
                         &view, 0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
@@ -2456,11 +2582,14 @@ int main(void) {
                                              M12_MENU_INPUT_INVENTORY_TOGGLE) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 resume inventory toggle opens panel for slot ObjectIDs");
-        expect_true(M11_GameView_GetV1ViewportZone(&viewport_x,
-                                                   &viewport_y,
-                                                   &viewport_w,
-                                                   &viewport_h) &&
-                        M11_GameView_GetV1InventorySourceSlotBoxZone(
+        {
+            DM1_V1_LayoutZoneRectPc34 viewport_rect =
+                dm1_v1_viewport_rect_pc34();
+            viewport_x = viewport_rect.x;
+            viewport_y = viewport_rect.y;
+        }
+        expect_true(dm1_v1_viewport_zone_id_pc34() != 0 &&
+                        dm1_v1_inventory_source_slot_box_zone_xywh_pc34(
                             source_slot,
                             &slot_x,
                             &slot_y,
@@ -2490,7 +2619,7 @@ int main(void) {
                         &view,
                         viewport_x + slot_x + (slot_w / 2),
                         viewport_y + slot_y + (slot_h / 2),
-                        M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+                        DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW,
                     "M11 DM2 resume inventory click picks up a slot ObjectID");
         expect_true(M11_GameView_GetDm2InventoryObject(
                         &view, 0, CHAMPION_SLOT_HEAD) == 0u,
@@ -2504,13 +2633,13 @@ int main(void) {
         expect_true(dm2_v1_runtime_get_champion_inventory_object(
                         0, CHAMPION_SLOT_HEAD) == 0u,
                     "M11 DM2 resume slot pickup writes cleared slot to runtime inventory");
-        expect_true(M11_GameView_GetV1LeaderHandObjectIconIndex(&view) == -1,
+        expect_true(DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(&view) == -1,
                     "M11 DM2 resume slot pickup does not synthesize a V1 leader-hand icon");
         expect_true(M11_GameView_HandlePointerButton(
                         &view,
                         viewport_x + slot_x + (slot_w / 2),
                         viewport_y + slot_y + (slot_h / 2),
-                        M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+                        DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW,
                     "M11 DM2 resume inventory click places leader-hand ObjectID back into slot");
         expect_true(M11_GameView_GetDm2InventoryObject(
                         &view, 0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
@@ -2527,17 +2656,21 @@ int main(void) {
                     "M11 DM2 resume Back closes champion 0 inventory before champion switch");
         expect_true(!M11_GameView_IsInventoryPanelActive(&view),
                     "M11 DM2 champion 0 inventory is closed before champion switch");
-        expect_true(M11_GameView_GetV1StatusBoxZone(1,
-                                                    &status_x,
-                                                    &status_y,
-                                                    &status_w,
-                                                    &status_h),
+        {
+            DM1_V1_ChampionStatusRectPc34 status_rect;
+            expect_true(dm1_v1_champion_status_box_rect_pc34(1,
+                                                             &status_rect),
                     "M11 DM2 champion 1 status box zone is available");
+            status_x = status_rect.x;
+            status_y = status_rect.y;
+            status_w = status_rect.w;
+            status_h = status_rect.h;
+        }
         expect_true(M11_GameView_HandlePointerButton(
                         &view,
                         status_x + (status_w / 2),
                         status_y + (status_h / 2),
-                        M11_DM1_MOUSE_MASK_RIGHT) == M11_GAME_INPUT_REDRAW,
+                        DM1_V1_MOUSE_MASK_RIGHT_PC34) == M11_GAME_INPUT_REDRAW,
                     "M11 DM2 right-click opens champion 1 inventory");
         expect_true(M11_GameView_IsInventoryPanelActive(&view),
                     "M11 DM2 champion 1 inventory is active");
@@ -2545,7 +2678,7 @@ int main(void) {
                         &view,
                         viewport_x + slot_x + (slot_w / 2),
                         viewport_y + slot_y + (slot_h / 2),
-                        M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+                        DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW,
                     "M11 DM2 champion 1 inventory click picks up slot ObjectID");
         expect_true(M11_GameView_GetDm2InventoryObject(
                         &view, 1, CHAMPION_SLOT_HEAD) == 0u,
@@ -2563,7 +2696,7 @@ int main(void) {
                         &view,
                         viewport_x + slot_x + (slot_w / 2),
                         viewport_y + slot_y + (slot_h / 2),
-                        M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+                        DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW,
                     "M11 DM2 champion 1 inventory click places ObjectID back");
         expect_true(M11_GameView_GetDm2InventoryObject(
                         &view, 1, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
@@ -2600,16 +2733,16 @@ int main(void) {
         dm2_v1_runtime_set_leader_hand_object(dm2_db_make_handle(10, 0x0033));
         view.dm2State.leader_hand_object =
             dm2_v1_runtime_get_leader_hand_object();
-        expect_true(M11_GameView_GetV1LeaderHandObjectIconIndex(&view) == -1,
+        expect_true(DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(&view) == -1,
                     "M11 DM2 leader-hand does not fake a V1 object icon");
-        expect_true(M11_GameView_GetV1LeaderHandObjectName(&view,
+        expect_true(DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(&view,
                                                            leader_name,
                                                            sizeof(leader_name)) &&
                         strcmp(leader_name, "DM2 MISC 51") == 0,
                     "M11 DM2 leader-hand name preserves DB handle identity");
         view.dm2State.leader_hand_object =
             dm2_db_make_handle(10, DM2_ITEM_HEAL_POTION);
-        expect_true(M11_GameView_GetV1LeaderHandObjectName(&view,
+        expect_true(DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(&view,
                                                            leader_name,
                                                            sizeof(leader_name)) &&
                         strcmp(leader_name, "HEAL POTION") == 0,

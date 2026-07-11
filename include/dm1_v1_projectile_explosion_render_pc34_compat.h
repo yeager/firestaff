@@ -278,6 +278,23 @@ typedef struct DM1_F0115ThingLayerReceiptPc34 {
     unsigned short firstExplosionThing;
 } DM1_F0115ThingLayerReceiptPc34;
 
+/* ReDMCSB: DUNVIEW.C F0115 lines 4547-4581 classifies the static square
+ * chain before its live projectile and explosion passes at 5668-5683 and
+ * 5916-5933. M11 supplies the already-filtered live instance counts; DM1
+ * owns the resulting visible-layer summary. */
+typedef struct DM1_F0115RuntimeSummaryPc34 {
+    int valid;
+    int total;
+    int groups;
+    int items;
+    int sensors;
+    int textStrings;
+    int teleporters;
+    int projectiles;
+    int explosions;
+    int doors;
+} DM1_F0115RuntimeSummaryPc34;
+
 int dm1_v1_verify_f0115_draw_order(const int* order, int count);
 int dm1_v1_f0115_thing_layer_receipt_pc34(
     const unsigned short* thingRefs,
@@ -293,6 +310,12 @@ int dm1_v1_f0115_thing_route_receipt_pc34(
     int mapIndex,
     int suppressHallFloorItems,
     DM1_F0115ThingLayerReceiptPc34* outReceipt);
+int dm1_v1_f0115_runtime_summary_pc34(
+    const unsigned short* thingRefs,
+    int thingCount,
+    int liveProjectileCount,
+    int liveExplosionCount,
+    DM1_F0115RuntimeSummaryPc34* outSummary);
 
 #ifdef __cplusplus
 }

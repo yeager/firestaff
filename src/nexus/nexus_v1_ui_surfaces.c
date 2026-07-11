@@ -27,12 +27,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* ── Default surface fills for fallback states ───────────────── */
-static void surface_clear_gray(Nexus_UI_Surface *surf) {
+static void surface_clear_gray(Nexus_UI_Surface *surf)
+{
     int i;
     if (!surf || !surf->data) return;
-    for (i = 0; i < surf->w * surf->h; i++)
-        surf->data[i] = 7;  /* palette index 7 = deterministic mid-gray */
+    for (i = 0; i < surf->w * surf->h; ++i) {
+        surf->data[i] = 7;
+    }
 }
 
 /* ── Manager lifecycle ──────────────────────────────────────────── */
@@ -73,21 +74,12 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
         surf->owns_data = 0;
     }
 
-    if (!data || data_size <= 0) {
-        /* Deterministic fallback: dark fill + diagnostic */
-        printf("Nexus UI: WARNING null data for surface %d [%s] — "
-               "loading deterministic gray placeholder\n",
-               which, source ? source : "?");
-        surf->w = w; surf->h = h;
-        surf->data = (uint8_t *)calloc(w * h, 1);
-        if (surf->data) {
-            surf->owns_data = 1;
-            surface_clear_gray(surf);
-            surf->pal_start = pal_start;
-            surf->pal_count = pal_count;
-            surf->source = source;
-        }
-        return 0;  /* 0 = loaded via fallback */
+    if (!data || data_size < w * h) {
+        /* Saturn startup media is all-or-nothing. A missing or short source
+         * must reach the launch gate instead of becoming a plausible UI. */
+        printf("Nexus UI: rejecting incomplete surface %d [%s] (%d < %d)\n",
+               which, source ? source : "?", data_size, w * h);
+        return -1;
     }
 
     surf->w = w; surf->h = h;
@@ -95,24 +87,10 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
     surf->pal_count = pal_count;
     surf->source = source;
 
-    /* Enough data? */
-    if (data_size >= w * h) {
-        surf->data = (uint8_t *)malloc(w * h);
-        if (surf->data) {
-            surf->owns_data = 1;
-            memcpy(surf->data, data, w * h);
-        }
-    } else {
-        /* Partial/short data: copy what we have, zero-pad rest */
-        printf("Nexus UI: WARNING partial data %d < %d for [%s] "
-               "— loading available pixels\n",
-               data_size, w * h, source ? source : "?");
-        surf->data = (uint8_t *)calloc(w * h, 1);
-        if (surf->data) {
-            surf->owns_data = 1;
-            memcpy(surf->data, data, data_size < w*h ? data_size : w*h);
-            /* Rest is already zeroed by calloc */
-        }
+    surf->data = (uint8_t *)malloc(w * h);
+    if (surf->data) {
+        surf->owns_data = 1;
+        memcpy(surf->data, data, w * h);
     }
 
     printf("Nexus UI: surface %d [%s] loaded %dx%d "
@@ -226,37 +204,35 @@ const char *nexus_ui_bpk_import_status_name(int status) {
 
 /* ── Surface-specific loaders ──────────────────────────────────── */
 
-/* TITLE.CG (164 KB) — title screen color graphics.
- * Format evidence: file is 164 KB = 168 960 bytes.
- * 320×200 = 64 000 bytes.  Could be: 2.56 bytes/pixel (2.56:1 compression)
- * or is a sub-format with header.
- * Approach: scan for SEGA header (0x53454E41...) at offset 0 or in
- * first 2 sectors; use raw pixel data once signature confirmed. */
+/* TITLE.CG is not an indexed 320x200 raster on the verified Saturn disc.
+ * This helper accepts only a plane decoded by a format-aware caller. Treating
+ * the packed file prefix as pixels fabricated plausible title art. */
 int nexus_ui_load_title(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette)
 {
-    int offset = 0;
     (void)palette;
     if (!mgr) return -1;
-    /* Check for Saturn SEGA header — skip 16 bytes if present */
-    if (data_size >= 16 && memcmp(data, "SEGA", 4) == 0) {
-        offset = 16;
-        printf("Nexus UI: TITLE.CG has Sega header — skipping 16 bytes\n");
+    if (!data || data_size != 320 * 200) {
+        printf("Nexus UI: TITLE.CG requires a verified decoder; raw prefix rejected\n");
+        return -1;
     }
-    /* Default: TITLE.CG = 320×200 indexed at offset */
     return nexus_ui_surface_load(mgr, NEXUS_SURFACE_TITLE,
-        data ? data + offset : NULL, data_size - offset,
+        data, data_size,
         320, 200, 64, 64, "TITLE.CG");
 }
 
-/* WARNING.BIN (99 KB) — simple indexed 320×200 */
+/* WARNING.BIN on the verified disc is a RES* container, not a raw raster. */
 int nexus_ui_load_warning(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette)
 {
     (void)palette;
     if (!mgr) return -1;
+    if (!data || data_size != 320 * 200) {
+        printf("Nexus UI: WARNING.BIN requires a verified decoder; raw prefix rejected\n");
+        return -1;
+    }
     return nexus_ui_surface_load(mgr, NEXUS_SURFACE_WARNING,
         data, data_size, 320, 200, 160, 32, "WARNING.BIN");
 }
@@ -467,11 +443,8 @@ int nexus_ui_load_face_placeholder(Nexus_UI_Manager *mgr,
     return 0;
 }
 
-/* FACE.BIN (44 KB class) — champion portraits.  Some observed Saturn
- * dumps expose fewer than 24 complete raw 48x48 entries, with file
- * headers/trailing data handled by the higher-level asset classifier.
- * The engine keeps all 24 roster rows visible and uses placeholders
- * for rows not backed by a complete source entry. */
+/* Generic raw-face helper. Startup code must not call this with a partial
+ * record; only a completed decoder may provide compact Saturn FACE records. */
 int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_of_face,
     int data_size, int face_index,

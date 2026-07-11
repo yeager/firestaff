@@ -72,6 +72,7 @@
 #include "dm1_v2_camera_controller_pc34.h"
 #include "dm1_v2_boot_pc34.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
+#include "dm1_v1_endgame_presentation_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
@@ -97,6 +98,7 @@
 #include "dm1_v1_champion_panel_disabled_icon_state_pc34_compat.h"
 #include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "firestaff/dm1/v1/slot_drop_order_pc34_compat.h"
 #include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
@@ -165,7 +167,8 @@ static void m11_set_inspect_readout(M11_GameViewState* state,
 static void m11_log_event(M11_GameViewState* state,
                           unsigned char color,
                           const char* fmt,
-                          ...);
+                           ...);
+static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex);
 static void m11_format_champion_name(const unsigned char* raw,
                                      char* out,
                                      size_t outSize);
@@ -4825,38 +4828,22 @@ static const char* m11_source_name(M11_GameSourceKind sourceKind) {
     }
 }
 
-static M11_AudioMarker m11_audio_marker_from_emission(const struct TickEmission_Compat* emission) {
-    if (!emission) {
-        return M11_AUDIO_MARKER_NONE;
-    }
-    switch (emission->kind) {
-        case EMIT_PARTY_MOVED:
+static M11_AudioMarker m11_audio_marker_from_dm1_route(
+    DM1_V1_AudioEmissionRoutePc34 route) {
+    switch (route) {
+        case DM1_V1_AUDIO_EMISSION_ROUTE_FOOTSTEP:
             return M11_AUDIO_MARKER_FOOTSTEP;
-        case EMIT_DOOR_STATE:
+        case DM1_V1_AUDIO_EMISSION_ROUTE_DOOR:
             return M11_AUDIO_MARKER_DOOR;
-        case EMIT_KILL_NOTIFY:
-        case EMIT_CHAMPION_DOWN:
+        case DM1_V1_AUDIO_EMISSION_ROUTE_COMBAT:
             return M11_AUDIO_MARKER_COMBAT;
-        case EMIT_SPELL_EFFECT:
+        case DM1_V1_AUDIO_EMISSION_ROUTE_CREATURE:
+            return M11_AUDIO_MARKER_CREATURE;
+        case DM1_V1_AUDIO_EMISSION_ROUTE_SPELL:
             return M11_AUDIO_MARKER_SPELL;
-        case EMIT_SOUND_REQUEST:
-            switch (emission->payload[0]) {
-                case 1:
-                case 2:
-                    return M11_AUDIO_MARKER_DOOR;
-                case 3:
-                    return M11_AUDIO_MARKER_FOOTSTEP;
-                case 4:
-                    return M11_AUDIO_MARKER_COMBAT;
-                case 6:
-                    return M11_AUDIO_MARKER_SPELL;
-                default:
-                    return M11_AUDIO_MARKER_CREATURE;
-            }
         default:
-            break;
+            return M11_AUDIO_MARKER_NONE;
     }
-    return M11_AUDIO_MARKER_NONE;
 }
 
 static void m11_audio_emit_source_sound(M11_GameViewState* state,
@@ -4914,20 +4901,25 @@ static void m11_audio_emit_creature_movement_sound(M11_GameViewState* state,
 
 static void m11_audio_emit_for_emission(M11_GameViewState* state,
                                         const struct TickEmission_Compat* emission) {
+    DM1_V1_AudioEmissionPlanPc34 plan;
     M11_AudioMarker marker;
     if (!state || !emission) {
         return;
     }
-    marker = m11_audio_marker_from_emission(emission);
+    if (!DM1_V1_BuildAudioEmissionPlanPc34(emission, &plan)) {
+        return;
+    }
+    if (plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND) {
+        (void)M11_Audio_EmitSourceSoundIndex(&state->audioState,
+                                               plan.sourceSoundIndex);
+        state->audioEventCount += 1;
+        return;
+    }
+    marker = m11_audio_marker_from_dm1_route(plan.route);
     if (marker == M11_AUDIO_MARKER_NONE) {
         return;
     }
-    if (emission->kind == EMIT_SOUND_REQUEST) {
-        (void)M11_Audio_EmitSourceSoundIndex(&state->audioState,
-                                               emission->payload[0]);
-    } else {
-        (void)M11_Audio_EmitMarker(&state->audioState, marker);
-    }
+    (void)M11_Audio_EmitMarker(&state->audioState, marker);
     state->audioEventCount += 1;
 }
 
@@ -5516,18 +5508,6 @@ static int m11_count_square_things(const struct GameWorld_Compat* world,
     return count;
 }
 
-typedef struct {
-    int total;
-    int groups;
-    int items;
-    int sensors;
-    int textStrings;
-    int teleporters;
-    int projectiles;
-    int explosions;
-    int doors;
-} M11_SquareThingSummary;
-
 struct M11_ViewportCell;
 
 /* ── DM1 random ornament computation (F0169/F0170 from ReDMCSB) ──
@@ -5712,29 +5692,19 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
                                         int mapIndex,
                                         int mapX,
                                         int mapY,
-                                        M11_SquareThingSummary* outSummary) {
-    M11_SquareThingSummary summary;
-    DM1_F0115ThingLayerReceiptPc34 receipt;
+                                        DM1_F0115RuntimeSummaryPc34* outSummary) {
+    DM1_F0115RuntimeSummaryPc34 summary;
     unsigned short thingRefs[32];
     unsigned short thing = m11_get_viewport_static_first_thing(world, mapIndex, mapX, mapY);
     int thingRefCount = 0;
+    int liveProjectiles = 0;
+    int liveExplosions = 0;
 
     memset(&summary, 0, sizeof(summary));
     while (thing != THING_ENDOFLIST && thing != THING_NONE &&
            thingRefCount < (int)(sizeof(thingRefs) / sizeof(thingRefs[0]))) {
         thingRefs[thingRefCount++] = thing;
         thing = m11_raw_next_thing(world->things, thing);
-    }
-    memset(&receipt, 0, sizeof(receipt));
-    if (dm1_v1_f0115_thing_layer_receipt_pc34(
-            thingRefs, thingRefCount, -1, 0, &receipt) && receipt.valid) {
-        summary.total = receipt.drawableTotal;
-        summary.doors = receipt.doors;
-        summary.teleporters = receipt.teleporters;
-        summary.textStrings = receipt.textStrings;
-        summary.sensors = receipt.sensors;
-        summary.groups = receipt.groups;
-        summary.items = receipt.items;
     }
     if (world) {
         int i;
@@ -5746,8 +5716,7 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
                 projectile->mapIndex == mapIndex &&
                 projectile->mapX == mapX &&
                 projectile->mapY == mapY) {
-                ++summary.projectiles;
-                ++summary.total;
+                ++liveProjectiles;
             }
         }
         for (i = 0; i < world->explosions.count &&
@@ -5759,11 +5728,16 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
                 explosion->mapIndex == mapIndex &&
                 explosion->mapX == mapX &&
                 explosion->mapY == mapY) {
-                ++summary.explosions;
-                ++summary.total;
+                ++liveExplosions;
             }
         }
     }
+
+    /* ReDMCSB: DUNVIEW.C F0115 layers the static chain before restarting
+     * for live projectile/explosion passes. M11 only follows its world-owned
+     * links and supplies active instance counts; DM1 owns the receipt. */
+    (void)dm1_v1_f0115_runtime_summary_pc34(
+        thingRefs, thingRefCount, liveProjectiles, liveExplosions, &summary);
 
     if (outSummary) {
         *outSummary = summary;
@@ -7509,6 +7483,80 @@ static int m11_link_fixed_possession_thing_to_square(
     return 1;
 }
 
+/* ReDMCSB CHAMPION.C F0318:1527-1550 and F0319:1552-1687. */
+static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex) {
+    struct ChampionState_Compat* champion;
+    int slot;
+    int aliveIndex = -1;
+    if (!state || championIndex < 0 ||
+        championIndex >= state->world.party.championCount) return;
+    champion = &state->world.party.champions[championIndex];
+    if (!champion->present) return;
+
+    champion->hp.current = 0;
+    if (state->inventoryPanelActive &&
+        state->world.party.activeChampionIndex == championIndex) {
+        state->inventoryPanelActive = 0;
+    }
+    state->spellPanelOpen = 0;
+
+    for (slot = 0; slot < dm1_v1_slot_drop_order_size_pc34(); ++slot) {
+        int inventorySlot = dm1_v1_slot_drop_order_get_pc34(slot);
+        unsigned short thing;
+        if (inventorySlot < 0 || inventorySlot >= CHAMPION_SLOT_COUNT) continue;
+        thing = champion->inventory[inventorySlot];
+        if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
+        champion->inventory[inventorySlot] = THING_NONE;
+        (void)m11_prepend_thing_to_square(&state->world,
+                                           state->world.party.mapIndex,
+                                           state->world.party.mapX,
+                                           state->world.party.mapY,
+                                           (unsigned short)((thing & 0x3fffu) |
+                                               ((unsigned short)(champion->cell & 3) << 14)));
+    }
+
+    /* F0319 allocates an actual unused JUNK record; lack of one leaves the
+     * source path without bones instead of manufacturing a replacement. */
+    if (state->world.things) {
+        int junkIndex = m11_find_unused_object_slot(state->world.things,
+                                                     THING_TYPE_JUNK);
+        if (junkIndex >= 0) {
+            unsigned short bones = m11_thing_with_cell(THING_TYPE_JUNK,
+                                                        junkIndex, champion->cell);
+            unsigned char* raw = state->world.things->rawThingData[THING_TYPE_JUNK];
+            memset(&state->world.things->junks[junkIndex], 0,
+                   sizeof(state->world.things->junks[junkIndex]));
+            state->world.things->junks[junkIndex].next = THING_ENDOFLIST;
+            state->world.things->junks[junkIndex].type = DM1_JUNK_TYPE_BONES;
+            state->world.things->junks[junkIndex].doNotDiscard = 1;
+            state->world.things->junks[junkIndex].chargeCount =
+                (unsigned char)championIndex;
+            if (raw && junkIndex < state->world.things->thingCounts[THING_TYPE_JUNK]) {
+                raw += junkIndex * s_thingDataByteCount[THING_TYPE_JUNK];
+                raw[0] = 0xff; raw[1] = 0xff;
+                raw[2] = DM1_JUNK_TYPE_BONES | 0x80u;
+                raw[3] = (unsigned char)((championIndex & 3) << 6);
+            }
+            (void)m11_prepend_thing_to_square(&state->world,
+                                               state->world.party.mapIndex,
+                                               state->world.party.mapX,
+                                               state->world.party.mapY, bones);
+        }
+    }
+    champion->wounds = 0;
+    champion->poisonDose = 0;
+    for (slot = 0; slot < state->world.party.championCount; ++slot) {
+        if (state->world.party.champions[slot].present &&
+            state->world.party.champions[slot].hp.current > 0) {
+            aliveIndex = slot;
+            break;
+        }
+    }
+    if (aliveIndex >= 0 && state->world.party.activeChampionIndex == championIndex) {
+        state->world.party.activeChampionIndex = aliveIndex;
+    }
+}
+
 static int m11_materialize_creature_fixed_possession_drops(
     M11_GameViewState* state,
     int creatureType,
@@ -8453,19 +8501,16 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
  * Food / water drain, rest recovery, champion death
  * ================================================================ */
 
-static void m11_apply_survival_drain(M11_GameViewState* state) {
+static void m11_apply_champion_time_effects(M11_GameViewState* state) {
     int i;
     if (!state || !state->active) {
         return;
     }
-    /* Every 6 ticks, drain food and water from each champion.
-     * BUG-031 fix (ReDMCSB CHAMPION.C F0331 / F0325): call the source-locked
-     * dm1_needs_apply_time_effects for ALL champions, not just starving ones.
-     * This wires m11_fw_tick equivalent: food/water drain is stamina-gated
-     * (not fixed-rate) and starvation HP damage is produced by F0325. */
-    if ((state->world.gameTick % 6U) != 0U) {
-        return;
-    }
+    /* ReDMCSB CHAMPION.C F0331:2305-2509 runs once for every source tick.
+     * Its effect order is scent, mana/stamina, temporary XP, needs/stamina,
+     * health, statistic recovery, then panel refresh. */
+    if (state->world.party.championCount <= 0) return;
+    DM1_V1_Needs_DecayScentsPc34Compat(&state->championScents);
     for (i = 0; i < state->world.party.championCount; ++i) {
         struct ChampionState_Compat* champ = &state->world.party.champions[i];
         if (!champ->present || champ->hp.current == 0) {
@@ -8500,6 +8545,10 @@ static void m11_apply_survival_drain(M11_GameViewState* state) {
         needs.wisdom_current = (uint8_t)champ->attributes[CHAMPION_ATTR_WISDOM];
         needs.wounds = champ->wounds;
         needs.alive = 1;
+        needs.has_ekkhard_cross =
+            dm1_skill_icon_index_for_thing(
+                state->world.things, champ->inventory[CHAMPION_SLOT_NECK]) ==
+            DM1_SKILL_ICON_JUNK_EKKHARD_CROSS;
         needs.priest_skill_level = M11_GameView_GetSkillLevel(state, i, 2);
         needs.wizard_skill_level = M11_GameView_GetSkillLevel(state, i, 3);
         if (needs.priest_skill_level < 0) needs.priest_skill_level = 0;
@@ -8530,39 +8579,57 @@ static void m11_apply_survival_drain(M11_GameViewState* state) {
             champ->stamina.current = (unsigned short)stamina;
         }
 
+        if (out.mana_delta != 0) {
+            int mana = (int)champ->mana.current + (int)out.mana_delta;
+            if (mana < 0) mana = 0;
+            if (mana > (int)champ->mana.maximum) mana = champ->mana.maximum;
+            champ->mana.current = (unsigned short)mana;
+        }
+        if (out.health_delta > 0) {
+            int health = (int)champ->hp.current + (int)out.health_delta;
+            if (health > (int)champ->hp.maximum) health = champ->hp.maximum;
+            champ->hp.current = (unsigned short)health;
+        }
+
         /* F0325 underflow produces pending HP damage */
         if (out.pending_health_damage > 0) {
             int hp = (int)champ->hp.current - (int)out.pending_health_damage;
             champ->hp.current = (unsigned short)(hp > 0 ? hp : 0);
             M11_GameView_NotifyDamageFlash(state, -1);
         }
-    }
-}
 
-static void m11_apply_rest_recovery(M11_GameViewState* state) {
-    int i;
-    if (!state || !state->active || !state->resting) {
-        return;
-    }
-    /* Every 4 ticks while resting, recover 1 HP, 2 stamina, 1 mana */
-    if ((state->world.gameTick % 4U) != 0U) {
-        return;
-    }
-    for (i = 0; i < state->world.party.championCount; ++i) {
-        struct ChampionState_Compat* champ = &state->world.party.champions[i];
-        if (!champ->present || champ->hp.current == 0) {
-            continue;
-        }
-        if (champ->hp.current < champ->hp.maximum) {
-            ++champ->hp.current;
-        }
-        if (champ->stamina.current + 2 <= champ->stamina.maximum) {
-            champ->stamina.current += 2;
-        } else {
-            champ->stamina.current = champ->stamina.maximum;
-        }
-        if (champ->mana.current < champ->mana.maximum) {
-            ++champ->mana.current;
+        /* F0331:2357-2361 and 2452-2476.  Lifecycle owns the complete
+         * 20-skill and seven-stat records; mirror the visible six stats in
+         * the source direction after the source-owned transforms. */
+        {
+            struct ChampionLifecycleState_Compat* lifecycleChampion =
+                &state->world.lifecycle.champions[i];
+            static const int attributeForStatistic[] = {
+                -1, CHAMPION_ATTR_STRENGTH, CHAMPION_ATTR_DEXTERITY,
+                CHAMPION_ATTR_WISDOM, CHAMPION_ATTR_VITALITY,
+                CHAMPION_ATTR_ANTIMAGIC, CHAMPION_ATTR_ANTIFIRE
+            };
+            int statistic;
+            for (statistic = LIFECYCLE_STAT_STRENGTH;
+                 statistic < LIFECYCLE_STAT_COUNT; ++statistic) {
+                int attribute = attributeForStatistic[statistic];
+                lifecycleChampion->statistics[statistic][LIFECYCLE_STAT_CURRENT] =
+                    (uint8_t)champ->attributes[attribute];
+                lifecycleChampion->statistics[statistic][LIFECYCLE_STAT_MAXIMUM] =
+                    (uint8_t)(champ->attributeMaximums[attribute]
+                        ? champ->attributeMaximums[attribute]
+                        : champ->attributes[attribute]);
+            }
+            (void)F0847_LIFECYCLE_ApplyTemporaryXPDecay_Compat(
+                lifecycleChampion);
+            (void)F0846_LIFECYCLE_ApplyStatDrift_Compat(
+                lifecycleChampion, state->world.gameTick, state->resting);
+            for (statistic = LIFECYCLE_STAT_STRENGTH;
+                 statistic < LIFECYCLE_STAT_COUNT; ++statistic) {
+                int attribute = attributeForStatistic[statistic];
+                champ->attributes[attribute] =
+                    lifecycleChampion->statistics[statistic][LIFECYCLE_STAT_CURRENT];
+            }
         }
     }
 }
@@ -8599,6 +8666,7 @@ static void m11_check_party_death(M11_GameViewState* state) {
             m11_log_event(state, M11_COLOR_LIGHT_RED,
                           "T%u: %s HAS FALLEN!",
                           (unsigned int)state->world.gameTick, dName);
+            m11_kill_champion_f0319(state, i);
         }
     }
     if (!anyAlive && state->world.party.championCount > 0) {
@@ -8611,6 +8679,10 @@ static void m11_check_party_death(M11_GameViewState* state) {
         snprintf(state->inspectDetail, sizeof(state->inspectDetail),
                  "THE DUNGEON CLAIMS YOUR SOULS. LOAD A SAVE OR RETURN TO MENU.");
     }
+}
+
+void M11_GameView_ProbeCheckPartyDeath(M11_GameViewState* state) {
+    m11_check_party_death(state);
 }
 
 /* ================================================================
@@ -12818,6 +12890,35 @@ static int m11_theron_boot_runtime_startup_ui_caller_receipt(
     return out_receipt && out_receipt->host_render_valid;
 }
 
+/* Track 02 owns all four startup phases.  This is deliberately stricter
+ * than a render-plan check: the live world must retain every decoded atlas
+ * route, so title, stage, Soul Room, and forcefield never fall back to
+ * command-drawn UI after the launcher has accepted the image. */
+static int m11_theron_startup_has_verified_runtime_surfaces(
+    const M11_GameViewState *state)
+{
+    const unsigned int required_routes =
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+    const Theron_V1_World *world;
+    Theron_StartupMediaStateReceipt media_receipt;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02) {
+        return 0;
+    }
+    world = (const Theron_V1_World *)state->theronWorld;
+    if (!world || !world->runtime_media.restored ||
+        (world->runtime_media.route_mask & required_routes) !=
+            required_routes) {
+        return 0;
+    }
+    m11_theron_boot_runtime_startup_media_receipt(state, &media_receipt);
+    return theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+        &media_receipt);
+}
+
 static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* verifiedPath,
@@ -12854,6 +12955,11 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         goto fail;
     }
     if (!m11_theron_apply_boot_runtime_receipt(state, &runtime_receipt)) {
+        goto fail;
+    }
+    if (!m11_theron_startup_has_verified_runtime_surfaces(state)) {
+        m11_set_status(state, "STARTUP", "TRACK02 ATLAS ROUTES INVALID");
+        M11_GameView_Shutdown(state);
         goto fail;
     }
     return 1;
@@ -13383,7 +13489,6 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                     state,
                     mouthRedraw,
                     &receipt)) {
-                state->dm2State.startup_title_animation_tick++;
                 return m11_dm2_startup_apply_host_receipt(
                     state,
                     &receipt.host_receipt);
@@ -13556,9 +13661,7 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
     }
     (void)F0891_ORCH_WorldHash_Compat(&state->world, &state->lastWorldHash);
 
-    m11_apply_survival_drain(state);
-    m11_apply_rest_recovery(state);
-    M11_GameView_UpdateTorchFuel(state);
+    m11_apply_champion_time_effects(state);
     m11_process_creature_ticks(state);
     M11_GameView_TickAnimation(state);
     m11_check_party_death(state);
@@ -13866,11 +13969,8 @@ static int m11_apply_tick_with_attack_action(M11_GameViewState* state,
     }
 
     /* Apply survival mechanics */
-    m11_apply_survival_drain(state);
-    m11_apply_rest_recovery(state);
+    m11_apply_champion_time_effects(state);
 
-    /* Torch fuel burn-down */
-    M11_GameView_UpdateTorchFuel(state);
 
     /* Creature AI: movement and autonomous damage */
     m11_process_creature_ticks(state);
@@ -14949,6 +15049,12 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
         Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
         int moved = 0;
+        if ((state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
+             !state->theronState.level_loaded) &&
+            !m11_theron_startup_has_verified_runtime_surfaces(state)) {
+            m11_set_status(state, "STARTUP", "TRACK02 ATLAS ROUTES INVALID");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
         if (!world) {
             return M11_GAME_INPUT_IGNORED;
         }
@@ -15279,8 +15385,20 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
      * victory-text/final delay before F0444 installs the final endgame
      * presentation path, so complete-FUSE delay playback ignores input. */
     if (state->gameWon) {
-        if (M11_GameView_GetEndgameFinalPresentationReady(state) &&
-            input == M12_MENU_INPUT_BACK) {
+        DM1_V1_EndgamePresentationInputPc34 endgameInput = {0};
+        DM1_V1_EndgamePresentationDecisionPc34 endgameDecision;
+        endgameInput.gameWon = state->gameWon;
+        endgameInput.finalHandoffReady = state->endgameFinalHandoffReady;
+        endgameInput.endgameCalledWithTrue = state->endgameCalledWithTrue;
+        endgameInput.finalDelayTicks = state->endgameFinalDelayTicks;
+        endgameInput.fuseDelayTicks = state->endgameFuseSequenceDelayTicks;
+        endgameInput.fuseDelayRemainingTicks = state->endgameFuseSequenceDelayRemainingTicks;
+        endgameInput.textMessageDelayTicks = state->endgameTextMessageDelayTicks;
+        endgameInput.restartAllowed = state->endgameRestartAllowed;
+        endgameInput.backRequested = (input == M12_MENU_INPUT_BACK);
+        dm1_v1_endgame_presentation_decide_pc34(&endgameInput, &endgameDecision);
+        if (endgameDecision.action ==
+            DM1_V1_ENDGAME_PRESENTATION_ACTION_RETURN_TO_MENU_PC34) {
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
@@ -15580,6 +15698,10 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
         state->theronState.startup_phase == THERON_STARTUP_PHASE_IN_DUNGEON ||
         state->theronState.level_loaded) {
         return M11_GAME_INPUT_IGNORED;
+    }
+    if (!m11_theron_startup_has_verified_runtime_surfaces(state)) {
+        m11_set_status(state, "STARTUP", "TRACK02 ATLAS ROUTES INVALID");
+        return M11_GAME_INPUT_RETURN_TO_MENU;
     }
     if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
         state->theronState.startup_title_animation_tick <
@@ -15968,28 +16090,27 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * observes that latch while processing the queue before restarting.
      * Quit returns to the launcher. */
     if (state->gameWon) {
-        int boxX, boxY, boxW, boxH;
-        if (!M11_GameView_GetEndgameFinalPresentationReady(state) ||
-            !state->endgameRestartAllowed) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-        DM1_V1_EndgameRectPc34 box;
-        (void)dm1_v1_endgame_restart_box_pc34(0, &box);
-        boxX = box.x;
-        boxY = box.y;
-        boxW = box.w;
-        boxH = box.h;
-        if (m11_point_in_rect(x, y, boxX, boxY, boxW, boxH)) {
+        DM1_V1_EndgamePresentationInputPc34 endgameInput = {0};
+        DM1_V1_EndgamePresentationDecisionPc34 endgameDecision;
+        endgameInput.gameWon = state->gameWon;
+        endgameInput.finalHandoffReady = state->endgameFinalHandoffReady;
+        endgameInput.endgameCalledWithTrue = state->endgameCalledWithTrue;
+        endgameInput.finalDelayTicks = state->endgameFinalDelayTicks;
+        endgameInput.fuseDelayTicks = state->endgameFuseSequenceDelayTicks;
+        endgameInput.fuseDelayRemainingTicks = state->endgameFuseSequenceDelayRemainingTicks;
+        endgameInput.textMessageDelayTicks = state->endgameTextMessageDelayTicks;
+        endgameInput.restartAllowed = state->endgameRestartAllowed;
+        endgameInput.pointerX = x;
+        endgameInput.pointerY = y;
+        endgameInput.pointerPressed = 1;
+        dm1_v1_endgame_presentation_decide_pc34(&endgameInput, &endgameDecision);
+        if (endgameDecision.action == DM1_V1_ENDGAME_PRESENTATION_ACTION_RESTART_PC34) {
             state->endgameRestartRequested = 1;
             m11_set_status(state, "ENDGAME", "RESTART REQUESTED");
             return M11_GAME_INPUT_RESTART_GAME;
         }
-        (void)dm1_v1_endgame_quit_box_pc34(0, &box);
-        boxX = box.x;
-        boxY = box.y;
-        boxW = box.w;
-        boxH = box.h;
-        if (m11_point_in_rect(x, y, boxX, boxY, boxW, boxH)) {
+        if (endgameDecision.action ==
+            DM1_V1_ENDGAME_PRESENTATION_ACTION_RETURN_TO_MENU_PC34) {
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
@@ -16521,7 +16642,7 @@ typedef struct M11_ViewportCell {
     DM1_V1_ViewportRuntimeMaterializationDecisionPc34 dm1MaterializationDecision;
     int dm1RuntimeRenderDecisionReady;
     DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 dm1RuntimeRenderDecision;
-    M11_SquareThingSummary summary;
+    DM1_F0115RuntimeSummaryPc34 summary;
 } M11_ViewportCell;
 
 static int m11_viewport_cell_is_wall_free(const M11_ViewportCell* cell);
@@ -20117,9 +20238,18 @@ static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState*
         state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
         wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
     }
-    return (unsigned int)dm1_v1_graphic_materialized_wallset_index_pc34(
-        wallSet,
-        (int)wallSet0GraphicIndex);
+    if (wallSet0GraphicIndex < M11_GFX_DM1_WALLSET_FIRST ||
+        wallSet0GraphicIndex >=
+            M11_GFX_DM1_WALLSET_FIRST + M11_GFX_DM1_WALLSET_COUNT) {
+        return wallSet0GraphicIndex;
+    }
+    /* ReDMCSB DUNVIEW.C F0096: wall-set-0 source ids are materialized from
+     * M646_GRAPHIC_FIRST_WALL_SET + wallSet *
+     * M647_WALL_SET_GRAPHIC_COUNT before F0116/F0117 consume their D3L/D3R
+     * wall, door-frame, and stairs variants. */
+    return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +
+                          wallSet * M11_GFX_DM1_WALLSET_COUNT +
+                          (wallSet0GraphicIndex - M11_GFX_DM1_WALLSET_FIRST));
 }
 
 static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* state,
@@ -20620,6 +20750,15 @@ static DM1_ViewportLaneVisibilityReceiptPc34 m11_dm1_lane_visibility(
                                                            centerDoor,
                                                            leftOpen,
                                                            rightOpen);
+}
+
+static int m11_dm1_nearest_blocking_center_depth_index(
+    const M11_ViewportCell cells[3][3])
+{
+    /* ReDMCSB DUNVIEW.C F0128 emits D3L/D3R through D1L/D1R before their
+     * corresponding center cells.  The split M11 F0115 passes must retain
+     * that nearest closed center depth as their late-side occlusion bound. */
+    return m11_dm1_lane_visibility(cells).nearest_blocking_center_depth_index;
 }
 
 static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
@@ -23556,7 +23695,7 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
     }
 
     visibility = m11_dm1_lane_visibility(cells);
-    blockingCenterDepth = visibility.nearest_blocking_center_depth_index;
+    blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);
 
     /* Source-bound side contents pass.  DUNVIEW.C F0115 places side-cell
      * objects through the same layout-696 C2500 object zones and C3200
@@ -23860,7 +23999,7 @@ static void m11_draw_dm1_deferred_explosion_pass(const M11_GameViewState* state,
         return;
     }
     visibility = m11_dm1_lane_visibility(cells);
-    blockingCenterDepth = visibility.nearest_blocking_center_depth_index;
+    blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);
     /* ReDMCSB F0115 source lock: DUNVIEW.C:5915 exits the packed-cell
      * object/creature/projectile loop, then DUNVIEW.C:5916-5933 starts
      * a separate explosion-only pass by restarting at L0146_T_FirstThingToDraw.
@@ -24403,191 +24542,39 @@ static void m11_draw_focus_card(unsigned char* framebuffer,
                   222, 129, state->inspectDetail, &g_text_small);
 }
 
-/* ================================================================
- * Light-level computation
- *
- * Combines magical light (FUL spell, MAGIC_TORCH), lit torches in
- * champion hand slots, and the ILLUMULET junk item to produce a
- * 0..255 light level that drives viewport depth dimming.
- *
- * Light sources (additive, clamped to 255):
- *   - magicalLightAmount from world.magic (FUL/OH spell chain)
- *   - Each lit TORCH weapon in a hand slot:  +80
- *   - ILLUMULET junk in any hand slot:       +50
- *   - FLAMITT weapon (index 3) lit:          +100
- * ================================================================ */
-
-#define M11_LIGHT_TORCH_BONUS       80
-#define M11_LIGHT_ILLUMULET_BONUS   50
-#define M11_LIGHT_FLAMITT_BONUS     100
-#define M11_LIGHT_MAX               255
-
-/* Torch weapon sub-type index in s_weaponTypeNames[] */
-#define M11_WEAPON_SUBTYPE_TORCH    2
-#define M11_WEAPON_SUBTYPE_FLAMITT  3
-/* ILLUMULET junk sub-type index in s_junkTypeNames[] */
-#define M11_JUNK_SUBTYPE_ILLUMULET  4
+/* ReDMCSB PANEL.C F0337 owns the weighted ChargeCount calculation.  M11
+ * only consumes this M10 receipt for presentation and diagnostics. */
+static int m11_dm1_dungeon_view_light(const M11_GameViewState* state,
+                                      struct DungeonViewLight_Compat* outLight) {
+    if (!state || !outLight) {
+        return 0;
+    }
+    return F0890b_ORCH_ComputeDungeonViewLight_Compat(&state->world, outLight);
+}
 
 static int m11_compute_dungeon_palette_index(const M11_GameViewState* state) {
     struct DungeonViewLight_Compat light;
-    if (!state) {
-        return 5;
-    }
-    if (F0890b_ORCH_ComputeDungeonViewLight_Compat(&state->world, &light)) {
+    if (m11_dm1_dungeon_view_light(state, &light)) {
         return light.paletteIndex;
     }
     return 5;
 }
 
 static int m11_compute_light_level(const M11_GameViewState* state) {
-    int light;
-    int ci;
-    if (!state) {
-        return 0;
+    struct DungeonViewLight_Compat light;
+    if (m11_dm1_dungeon_view_light(state, &light)) {
+        return light.totalLightAmount;
     }
-
-    /* Start with the magical light amount from the spell system. */
-    light = state->world.magic.magicalLightAmount;
-    if (light < 0) light = 0;
-
-    /* Scan each champion's hand slots for light-emitting items. */
-    for (ci = 0; ci < CHAMPION_MAX_PARTY; ++ci) {
-        const struct ChampionState_Compat* champ = &state->world.party.champions[ci];
-        int slot;
-        if (!champ->present) continue;
-
-        for (slot = CHAMPION_SLOT_HAND_LEFT; slot <= CHAMPION_SLOT_HAND_RIGHT; ++slot) {
-            unsigned short thing = champ->inventory[slot];
-            int thingType, thingIndex;
-            if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
-
-            thingType = THING_GET_TYPE(thing);
-            thingIndex = THING_GET_INDEX(thing);
-
-            if (thingType == THING_TYPE_WEAPON &&
-                state->world.things &&
-                thingIndex >= 0 && thingIndex < state->world.things->weaponCount) {
-                const struct DungeonWeapon_Compat* w = &state->world.things->weapons[thingIndex];
-                if (w->type == M11_WEAPON_SUBTYPE_TORCH && w->lit) {
-                    /* Scale light by remaining fuel fraction */
-                    int fuel = (thingIndex >= 0 && thingIndex < M11_TORCH_FUEL_CAPACITY)
-                               ? state->torchFuel[thingIndex] : M11_TORCH_INITIAL_FUEL;
-                    int bonus = (M11_LIGHT_TORCH_BONUS * fuel) / M11_TORCH_INITIAL_FUEL;
-                    if (bonus < 1 && fuel > 0) bonus = 1;
-                    light += bonus;
-                }
-                if (w->type == M11_WEAPON_SUBTYPE_FLAMITT && w->lit) {
-                    int fuel = (thingIndex >= 0 && thingIndex < M11_TORCH_FUEL_CAPACITY)
-                               ? state->torchFuel[thingIndex] : M11_FLAMITT_INITIAL_FUEL;
-                    int bonus = (M11_LIGHT_FLAMITT_BONUS * fuel) / M11_FLAMITT_INITIAL_FUEL;
-                    if (bonus < 1 && fuel > 0) bonus = 1;
-                    light += bonus;
-                }
-            }
-
-            if (thingType == THING_TYPE_JUNK &&
-                state->world.things &&
-                thingIndex >= 0 && thingIndex < state->world.things->junkCount) {
-                const struct DungeonJunk_Compat* j = &state->world.things->junks[thingIndex];
-                if (j->type == M11_JUNK_SUBTYPE_ILLUMULET) {
-                    light += M11_LIGHT_ILLUMULET_BONUS;
-                }
-            }
-        }
-    }
-
-    if (light > M11_LIGHT_MAX) light = M11_LIGHT_MAX;
-    return light;
+    return 0;
 }
 
-/* Query the current party light level (0..255). Exposed for probes. */
+/* Query the source-owned F0337 dungeon-view light amount for probes. */
 int M11_GameView_GetLightLevel(const M11_GameViewState* state) {
     return m11_compute_light_level(state);
 }
 
 int M11_GameView_GetDungeonPaletteIndex(const M11_GameViewState* state) {
     return m11_compute_dungeon_palette_index(state);
-}
-
-/* ================================================================
- * Torch fuel burn-down
- * ================================================================ */
-
-int M11_GameView_GetTorchFuel(const M11_GameViewState* state, int weaponIndex) {
-    if (!state || weaponIndex < 0 || weaponIndex >= M11_TORCH_FUEL_CAPACITY) {
-        return 0;
-    }
-    return state->torchFuel[weaponIndex];
-}
-
-void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
-    int ci;
-    if (!state || !state->active || !state->world.things) {
-        return;
-    }
-
-    /* Scan all champion hand slots for lit torches/flamitts. */
-    for (ci = 0; ci < CHAMPION_MAX_PARTY; ++ci) {
-        struct ChampionState_Compat* champ = &state->world.party.champions[ci];
-        int slot;
-        if (!champ->present) continue;
-
-        for (slot = CHAMPION_SLOT_HAND_LEFT; slot <= CHAMPION_SLOT_HAND_RIGHT; ++slot) {
-            unsigned short thing = champ->inventory[slot];
-            int thingType, thingIndex;
-            if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
-
-            thingType = THING_GET_TYPE(thing);
-            thingIndex = THING_GET_INDEX(thing);
-
-            if (thingType != THING_TYPE_WEAPON) continue;
-            if (thingIndex < 0 || thingIndex >= state->world.things->weaponCount) continue;
-            if (thingIndex >= M11_TORCH_FUEL_CAPACITY) continue;
-
-            {
-                struct DungeonWeapon_Compat* w = &state->world.things->weapons[thingIndex];
-                int isTorch = (w->type == M11_WEAPON_SUBTYPE_TORCH);
-                int isFlamitt = (w->type == M11_WEAPON_SUBTYPE_FLAMITT);
-
-                if (!isTorch && !isFlamitt) continue;
-                if (!w->lit) continue;
-
-                /* Initialize fuel on first encounter */
-                if (!state->torchFuelInitialized[thingIndex]) {
-                    state->torchFuel[thingIndex] = isTorch
-                        ? M11_TORCH_INITIAL_FUEL
-                        : M11_FLAMITT_INITIAL_FUEL;
-                    state->torchFuelInitialized[thingIndex] = 1;
-                }
-
-                /* Burn one unit of fuel */
-                state->torchFuel[thingIndex]--;
-
-                /* Log when fuel is low */
-                if (state->torchFuel[thingIndex] == (M11_TORCH_INITIAL_FUEL / 4) && isTorch) {
-                    m11_log_event(state, M11_COLOR_YELLOW,
-                                  "T%u: TORCH DIMS",
-                                  (unsigned int)state->world.gameTick);
-                }
-                if (state->torchFuel[thingIndex] == (M11_FLAMITT_INITIAL_FUEL / 4) && isFlamitt) {
-                    m11_log_event(state, M11_COLOR_YELLOW,
-                                  "T%u: FLAMITT DIMS",
-                                  (unsigned int)state->world.gameTick);
-                }
-
-                /* Extinguish when fuel is exhausted */
-                if (state->torchFuel[thingIndex] <= 0) {
-                    state->torchFuel[thingIndex] = 0;
-                    state->torchFuelInitialized[thingIndex] = 0;
-                    w->lit = 0;
-                    m11_log_event(state, M11_COLOR_LIGHT_RED,
-                                  "T%u: %s BURNS OUT",
-                                  (unsigned int)state->world.gameTick,
-                                  isTorch ? "TORCH" : "FLAMITT");
-                }
-            }
-        }
-    }
 }
 
 /* Classic-DM right column geometry (320x200 screen).
@@ -27113,48 +27100,6 @@ static void m11_remove_fluxcages_on_square_f0446(M11_GameViewState* state,
     }
 }
 
-static void m11_spawn_fuse_fireball_burst_f0446(M11_GameViewState* state,
-                                                int mapIndex,
-                                                int mapX,
-                                                int mapY) {
-    int attack;
-    if (!state) return;
-    /* ReDMCSB: ENDGAME.C F0446 lines 890-893 creates the opening
-     * fuse-sequence fireball burst at attacks 55,95,135,175,215,255. */
-    for (attack = 55; attack <= 255; attack += 40) {
-        (void)m11_spawn_centered_explosion(state, C000_EXPLOSION_FIREBALL,
-                                           attack, mapIndex, mapX, mapY);
-    }
-}
-
-static void m11_spawn_fuse_harm_burst_f0446(M11_GameViewState* state,
-                                            int mapIndex,
-                                            int mapX,
-                                            int mapY) {
-    int attack;
-    if (!state) return;
-    /* ReDMCSB: ENDGAME.C F0446 lines 896-900 mirrors the opening burst
-     * with Harm Non Material explosions at the same attack values. */
-    for (attack = 55; attack <= 255; attack += 40) {
-        (void)m11_spawn_centered_explosion(
-            state, C003_EXPLOSION_HARM_NON_MATERIAL, attack,
-            mapIndex, mapX, mapY);
-    }
-}
-
-static void m11_spawn_fuse_final_explosions_f0446(M11_GameViewState* state,
-                                                  int mapIndex,
-                                                  int mapX,
-                                                  int mapY) {
-    if (!state) return;
-    /* ReDMCSB: ENDGAME.C F0446 lines 907-910 creates the final centered
-     * Fireball + Harm Non Material pair at attack 255 before Grey Lord. */
-    (void)m11_spawn_centered_explosion(state, C000_EXPLOSION_FIREBALL, 255,
-                                       mapIndex, mapX, mapY);
-    (void)m11_spawn_centered_explosion(
-        state, C003_EXPLOSION_HARM_NON_MATERIAL, 255, mapIndex, mapX, mapY);
-}
-
 static void m11_record_fuse_sequence_update_f0445(M11_GameViewState* state,
                                                   int replayType,
                                                   int attack,
@@ -27177,38 +27122,51 @@ static void m11_record_fuse_sequence_update_f0445(M11_GameViewState* state,
     }
 }
 
-static void m11_run_fuse_chaos_order_cycle_f0446(M11_GameViewState* state,
-                                                 int mapIndex,
-                                                 int mapX,
-                                                 int mapY) {
-    int cycleCount;
-    if (!state) return;
-    /* ReDMCSB: ENDGAME.C F0446 lines 900-906 runs
-     * for (cycle=4; --cycle;) and for (switch=5; --switch;), requesting
-     * M560_SOUND_BUZZ and setting Lord Order on odd switch counts, Lord
-     * Chaos on even switch counts.  Each switch then performs `cycle`
-     * F0445 updates before the final explosions. */
-    for (cycleCount = 4; --cycleCount; ) {
-        int switchCount;
-        for (switchCount = 5; --switchCount; ) {
-            int creatureType = DM1_Endgame_GetCycleCreatureType(switchCount);
+static void m11_apply_fuse_mutation_plan_f0446(
+    M11_GameViewState* state,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    const DM1EndgameFuseMutationPlan* plan) {
+    int i;
+    if (!state || !plan) return;
+    /* DM1 supplies the ReDMCSB F0446 mutation and F0445 replay order. */
+    for (i = 0; i < plan->stepCount; ++i) {
+        const DM1EndgameFuseMutationStep* step = &plan->steps[i];
+        if (step->spawnFireball) {
+            (void)m11_spawn_centered_explosion(state, C000_EXPLOSION_FIREBALL,
+                                               step->attackValue, mapIndex, mapX, mapY);
+        }
+        if (step->spawnHarmNonMaterial) {
+            (void)m11_spawn_centered_explosion(state,
+                                               C003_EXPLOSION_HARM_NON_MATERIAL,
+                                               step->attackValue, mapIndex, mapX, mapY);
+        }
+        if (step->requestBuzz) {
             m11_audio_emit_source_sound(state, DM1_SND_BUZZ,
                                         M11_AUDIO_MARKER_CREATURE);
             state->endgameBuzzRequestCount += 1;
-            state->endgameChaosOrderSwitchCount += 1;
-            m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
-                                         creatureType,
-                                         state->world.party.direction);
-            {
-                int updateCount;
-                for (updateCount = 0; updateCount < cycleCount; ++updateCount) {
-                    state->endgameFuseSequenceUpdateTicks += 1;
-                    m11_record_fuse_sequence_update_f0445(
-                        state, M11_ENDGAME_F0445_EVENT_CHAOS_ORDER_SWITCH,
-                        0, creatureType);
-                }
+            if (step->replayType == DM1_ENDGAME_F0445_EVENT_CHAOS_ORDER_SWITCH) {
+                state->endgameChaosOrderSwitchCount += 1;
             }
         }
+        if (step->setCreatureType) {
+            m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
+                                         step->creatureType,
+                                         state->world.party.direction);
+        }
+        if (step->hideFluxcages) state->endgameDoNotDrawFluxcages = 1;
+        if (step->deleteOtherGroups) {
+            m11_delete_other_groups_for_endgame_f0446(state, mapIndex, mapX, mapY);
+        }
+        if (step->replayType == DM1_ENDGAME_F0445_EVENT_CHAOS_ORDER_SWITCH) {
+            /* ReDMCSB F0446 increments the cycle-local update counter before
+             * its matching F0445 call.  Keep that diagnostic counter distinct
+             * from the DM1-owned replay cadence. */
+            state->endgameFuseSequenceUpdateTicks += 1;
+        }
+        m11_record_fuse_sequence_update_f0445(state, (int)step->replayType,
+                                               step->attackValue, step->creatureType);
     }
 }
 
@@ -27340,11 +27298,10 @@ static void m11_mark_game_won_from_fuse_f0446(M11_GameViewState* state) {
     }
 }
 
-static void m11_apply_fuse_final_endgame_params_f0446(M11_GameViewState* state) {
-    const DM1EndgameEndingParams* params;
-    if (!state) return;
-    params = DM1_Endgame_GetEndingParams();
-    if (!params) return;
+static void m11_apply_fuse_final_endgame_params_f0446(
+    M11_GameViewState* state,
+    const DM1EndgameFuseMutationPlan* plan) {
+    if (!state || !plan) return;
 
     /* ReDMCSB: ENDGAME.C F0446 lines 924-960 plays C2_MUSIC_GAME_WON
      * on MEDIA503 builds, then after the victory text waits 600 ticks,
@@ -27352,18 +27309,18 @@ static void m11_apply_fuse_final_endgame_params_f0446(M11_GameViewState* state) 
      * F0444_STARTEND_Endgame(C1_TRUE).  M11 records this final handoff
      * explicitly while the actual timed credits/palette sequence remains
      * in the presentation follow-up. */
-    state->endgameFinalDelayTicks = params->finalDelayTicks;
-    state->endgameFuseSequenceDelayTicks += params->finalDelayTicks;
+    state->endgameFinalDelayTicks = plan->finalDelayTicks;
+    state->endgameFuseSequenceDelayTicks += plan->finalDelayTicks;
     state->endgameFuseSequenceDelayRemainingTicks =
         state->endgameFuseSequenceDelayTicks;
     state->endgameFinalHandoffReady =
         (state->endgameFuseSequenceFrameReplayRemainingTicks <= 0 &&
          state->endgameFuseSequenceDelayRemainingTicks <= 0) ? 1 : 0;
-    state->endgameRestartAllowed = params->restartAllowedAfterWin;
-    state->endgameCalledWithTrue = params->endgameCalledWithTrue;
-    if (params->victoryMusicId >= 0) {
+    state->endgameRestartAllowed = plan->restartAllowedAfterWin;
+    state->endgameCalledWithTrue = plan->endgameCalledWithTrue;
+    if (plan->victoryMusicId >= 0) {
         (void)M11_Audio_RequestSourceMusicTrack(&state->audioState,
-                                                params->victoryMusicId);
+                                                plan->victoryMusicId);
     }
 }
 
@@ -27380,6 +27337,7 @@ static int m11_perform_fuse_action_at(M11_GameViewState* state,
     int escapeY = -1;
     unsigned short chaosThing;
     DM1EndgameFuseActionResult result;
+    DM1EndgameFuseMutationPlan mutationPlan;
     if (!state || !state->world.dungeon ||
         mapIndex < 0 || mapIndex >= (int)state->world.dungeon->header.mapCount) {
         return 0;
@@ -27436,50 +27394,14 @@ static int m11_perform_fuse_action_at(M11_GameViewState* state,
     }
     if (!result.fuseSequenceTriggered) return 0;
 
+    if (!DM1_Endgame_BuildFuseMutationPlan(&mutationPlan)) return 0;
+
     m11_remove_fluxcages_on_square_f0446(state, mapIndex,
                                          state->world.party.mapX,
                                          state->world.party.mapY);
     m11_remove_fluxcages_on_square_f0446(state, mapIndex, mapX, mapY);
-    m11_record_fuse_sequence_update_f0445(
-        state, M11_ENDGAME_F0445_EVENT_SETUP, 0, 0);
-    m11_record_fuse_sequence_update_f0445(
-        state, M11_ENDGAME_F0445_EVENT_SETUP, 0, 0);
-    m11_spawn_fuse_fireball_burst_f0446(state, mapIndex, mapX, mapY);
-    {
-        int attack;
-        for (attack = 55; attack <= 255; attack += 40) {
-            m11_record_fuse_sequence_update_f0445(
-                state, M11_ENDGAME_F0445_EVENT_FIREBALL_BURST,
-                attack, 0);
-        }
-    }
-    m11_audio_emit_source_sound(state, DM1_SND_BUZZ, M11_AUDIO_MARKER_CREATURE);
-    state->endgameBuzzRequestCount += 1;
-    m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
-                                 DM1_CREATURE_LORD_ORDER_ID,
-                                 state->world.party.direction);
-    m11_record_fuse_sequence_update_f0445(
-        state, M11_ENDGAME_F0445_EVENT_LORD_ORDER, 0,
-        DM1_CREATURE_LORD_ORDER_ID);
-    m11_spawn_fuse_harm_burst_f0446(state, mapIndex, mapX, mapY);
-    {
-        int attack;
-        for (attack = 55; attack <= 255; attack += 40) {
-            m11_record_fuse_sequence_update_f0445(
-                state, M11_ENDGAME_F0445_EVENT_HARM_BURST,
-                attack, 0);
-        }
-    }
-    m11_run_fuse_chaos_order_cycle_f0446(state, mapIndex, mapX, mapY);
-    m11_spawn_fuse_final_explosions_f0446(state, mapIndex, mapX, mapY);
-    m11_record_fuse_sequence_update_f0445(
-        state, M11_ENDGAME_F0445_EVENT_FINAL_EXPLOSIONS, 255, 0);
-    m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
-                                 DM1_CREATURE_GREY_LORD_ID,
-                                 state->world.party.direction);
-    m11_record_fuse_sequence_update_f0445(
-        state, M11_ENDGAME_F0445_EVENT_GREY_LORD, 0,
-        DM1_CREATURE_GREY_LORD_ID);
+    m11_apply_fuse_mutation_plan_f0446(state, mapIndex, mapX, mapY,
+                                        &mutationPlan);
     /* ReDMCSB: ENDGAME.C F0446 lines 805-812 marks the game won, sets
      * MagicalLightAmount to 200, then sets FireShieldDefense,
      * SpellShieldDefense, and ShieldDefense to 100 before the fuse
@@ -27492,14 +27414,8 @@ static int m11_perform_fuse_action_at(M11_GameViewState* state,
      * G0077_B_DoNotDrawFluxcagesDuringEndgame before continuing the
      * endgame cleanup.  Keep the live C50 entries for timing/accounting,
      * but suppress them from runtime viewport sampling from this point on. */
-    state->endgameDoNotDrawFluxcages = 1;
-    m11_record_fuse_sequence_update_f0445(
-        state, M11_ENDGAME_F0445_EVENT_FLUXCAGE_HIDE, 0, 0);
-    m11_delete_other_groups_for_endgame_f0446(state, mapIndex, mapX, mapY);
-    m11_record_fuse_sequence_update_f0445(
-        state, M11_ENDGAME_F0445_EVENT_GROUP_CLEANUP, 0, 0);
     (void)m11_print_endgame_text_messages_f0446(state, mapIndex);
-    m11_apply_fuse_final_endgame_params_f0446(state);
+    m11_apply_fuse_final_endgame_params_f0446(state, &mutationPlan);
     m11_mark_game_won_from_fuse_f0446(state);
     m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                   "T%u: %s FUSES CHAOS AND ORDER",
@@ -29411,7 +29327,7 @@ int M11_GameView_CountCellProjectiles(
     int mapIndex,
     int mapX,
     int mapY) {
-    M11_SquareThingSummary summary;
+    DM1_F0115RuntimeSummaryPc34 summary;
     m11_summarize_square_things(world, mapIndex, mapX, mapY, &summary);
     return summary.projectiles;
 }
@@ -29421,7 +29337,7 @@ int M11_GameView_CountCellExplosions(
     int mapIndex,
     int mapX,
     int mapY) {
-    M11_SquareThingSummary summary;
+    DM1_F0115RuntimeSummaryPc34 summary;
     m11_summarize_square_things(world, mapIndex, mapX, mapY, &summary);
     return summary.explosions;
 }
@@ -32554,6 +32470,7 @@ static int m11_dm2_startup_exec_gdat_image(
     uint32_t expected_hash = 0u;
     uint32_t expected_byte_count = 0u;
     uint32_t seed = 0u;
+    DM2_V1_InterfacePalette palette;
 
     if (!context || !context->state || !context->ownership_receipt ||
         !context->framebuffer || !command) {
@@ -32593,6 +32510,7 @@ static int m11_dm2_startup_exec_gdat_image(
         return 0;
     }
     if (!profile ||
+        !dm2_v1_boot_interface_palette(profile, &palette) ||
         dm2_v1_boot_gdat_image_asset_fetch(profile,
                                            command->gdat_category,
                                            command->gdat_index,
@@ -32631,6 +32549,14 @@ static int m11_dm2_startup_exec_gdat_image(
             if (command->transparent_color >= 0 &&
                 c == (unsigned char)command->transparent_color) {
                 continue;
+            }
+            /* dm2_v1_boot_interface_palette is the boot-owned, validated
+             * dtPalIRGB/dtPalette16 handoff installed by SkWinCore::INIT
+             * before SHOW_MENU_SCREEN (lines 55606-55615). Title/menu GDAT
+             * pixels below 16 are logical colours; M11 writes the verified
+             * physical slot and render_sdl_m11 applies that IRGB table. */
+            if (c < 16u) {
+                c = palette.palette16[c];
             }
             context->framebuffer[dy * context->framebufferWidth + dx] = c;
         }
@@ -32944,7 +32870,7 @@ static void m11_nexus_startup_exec_title_background(
                       0,
                       context->framebufferWidth,
                       context->framebufferHeight,
-                      1);
+                      M11_COLOR_BLACK);
         return;
     }
     copyW = context->framebufferWidth < title->width
@@ -33017,7 +32943,7 @@ static void m11_nexus_startup_exec_warning_background(
                   0,
                   context->framebufferWidth,
                   context->framebufferHeight,
-                  1);
+                  M11_COLOR_BLACK);
 }
 
 static void m11_nexus_startup_exec_boot_title_frame(
@@ -33585,7 +33511,12 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         }
         int barY = 67;
         int barFillY = barY + 1;
-        barW = (lightLevel * 80) / M11_LIGHT_MAX;
+        /* PANEL.C F0337's palette thresholds top out at 99.  The utility
+         * bar is diagnostic-only, so clamp its physical width without
+         * changing the source-owned total returned by the light receipt. */
+        if (lightLevel < 0) lightLevel = 0;
+        if (lightLevel > 100) lightLevel = 100;
+        barW = (lightLevel * 80) / 100;
         if (barW < 1 && lightLevel > 0) barW = 1;
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                       222, barY, 80, 5, M11_COLOR_DARK_GRAY);
@@ -36892,8 +36823,11 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                                                         framebufferWidth,
                                                         framebufferHeight,
                                                         &ui_caller);
-    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
-        ui_caller.host_render.track02_startup_graphics_executed) {
+    /* A verified Track 02 startup surface owns every startup phase.  Do not
+     * layer the synthetic render-plan border or text over title, stage
+     * select, Soul Room, or forcefield atlas graphics. */
+    if (!theron_v1_boot_startup_host_render_plan_fallback_allowed(
+            &ui_caller.host_render)) {
         return;
     }
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -36998,6 +36932,22 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     char champion[24];
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
+    }
+    if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        state->dm2BootProfile) {
+        DM2_V1_InterfacePalette palette;
+        /* skproject/SKWIN/SkWinCore.cpp SkWinCore::INIT lines 55606-55615
+         * loads INTERFACE_GENERAL/0 dtPalIRGB+dtPalette16 field 0xFE before
+         * SHOW_MENU_SCREEN.  MapGraphicsStyle selects GRAPHICSSET scene art;
+         * it must not replace this global display IRGB table. */
+        if (dm2_v1_boot_interface_palette(
+                (DM2_V1_BootProfile *)state->dm2BootProfile, &palette)) {
+            (void)M11_Render_SetIndexedPaletteRgb6(palette.rgb6);
+        } else {
+            M11_Render_ClearIndexedPaletteRgb6();
+        }
+    } else {
+        M11_Render_ClearIndexedPaletteRgb6();
     }
     /* Set file-scope draw state for asset-backed rendering helpers */
     g_drawState = state;
@@ -37160,6 +37110,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                                 framebufferHeight,
                                                 commands,
                                                 command_count);
+            } else if (host_caller_ready) {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              18, 18, "NEXUS STARTUP ASSET BLOCKED",
+                              &g_text_title);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              18, 36, "REAL SATURN DECODER REQUIRED",
+                              &g_text_shadow);
             }
         } else if (state->nexusEngine) {
             directDraw = 1;
@@ -37802,7 +37759,20 @@ void M11_GameView_Draw(const M11_GameViewState* state,
              * restart/quit controls only when G0524_B_RestartGameAllowed
              * is true. F0446 line 960 clears that flag before the winning
              * Endgame(TRUE) handoff. */
-            if (state->endgameRestartAllowed) {
+            {
+                DM1_V1_EndgamePresentationInputPc34 endgameInput = {0};
+                DM1_V1_EndgamePresentationDecisionPc34 endgameDecision;
+                endgameInput.gameWon = state->gameWon;
+                endgameInput.finalHandoffReady = state->endgameFinalHandoffReady;
+                endgameInput.endgameCalledWithTrue = state->endgameCalledWithTrue;
+                endgameInput.finalDelayTicks = state->endgameFinalDelayTicks;
+                endgameInput.fuseDelayTicks = state->endgameFuseSequenceDelayTicks;
+                endgameInput.fuseDelayRemainingTicks = state->endgameFuseSequenceDelayRemainingTicks;
+                endgameInput.textMessageDelayTicks = state->endgameTextMessageDelayTicks;
+                endgameInput.restartAllowed = state->endgameRestartAllowed;
+                dm1_v1_endgame_presentation_decide_pc34(&endgameInput,
+                                                        &endgameDecision);
+                if (endgameDecision.controlsVisible) {
                 int outerX, outerY, outerW, outerH;
                 int innerX, innerY, innerW, innerH;
                 DM1_V1_EndgameRectPc34 outerRect;
@@ -37831,6 +37801,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                               innerX, innerY, innerW, innerH, M11_COLOR_BLACK);
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                               innerX + 5, innerY + 7, "QUIT", &g_text_small);
+                }
             }
         } else {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -38432,24 +38403,19 @@ int M11_GameView_GetEndgameFinalHandoffReady(const M11_GameViewState* state) {
 }
 
 int M11_GameView_GetEndgameFinalPresentationReady(const M11_GameViewState* state) {
-    if (!state || !state->gameWon) {
-        return 0;
-    }
-    if (state->endgameFinalHandoffReady) {
-        return 1;
-    }
-    /* Plain EMIT_GAME_WON paths predate the F0446 replay state and have
-     * no delayed source handoff armed. Keep those legacy/debug wins
-     * presentable while complete-FUSE waits for ENDGAME.C F0446 lines
-     * 939-961 to drain. */
-    if (state->endgameCalledWithTrue ||
-        state->endgameFinalDelayTicks > 0 ||
-        state->endgameFuseSequenceDelayTicks > 0 ||
-        state->endgameFuseSequenceDelayRemainingTicks > 0 ||
-        state->endgameTextMessageDelayTicks > 0) {
-        return 0;
-    }
-    return 1;
+    DM1_V1_EndgamePresentationInputPc34 input = {0};
+    DM1_V1_EndgamePresentationDecisionPc34 decision;
+    if (!state) return 0;
+    input.gameWon = state->gameWon;
+    input.finalHandoffReady = state->endgameFinalHandoffReady;
+    input.endgameCalledWithTrue = state->endgameCalledWithTrue;
+    input.finalDelayTicks = state->endgameFinalDelayTicks;
+    input.fuseDelayTicks = state->endgameFuseSequenceDelayTicks;
+    input.fuseDelayRemainingTicks = state->endgameFuseSequenceDelayRemainingTicks;
+    input.textMessageDelayTicks = state->endgameTextMessageDelayTicks;
+    input.restartAllowed = state->endgameRestartAllowed;
+    dm1_v1_endgame_presentation_decide_pc34(&input, &decision);
+    return decision.presentationReady;
 }
 
 int M11_GameView_GetEndgameRestartRequested(const M11_GameViewState* state) {

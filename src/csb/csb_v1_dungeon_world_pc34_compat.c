@@ -41,7 +41,7 @@ int csb_door_minimum_attack_power(int doorType) {
 }
 
 /* ================================================================
- *  Dungeon-layer accessors (caller-supplied integration points)
+ *  Dungeon-layer accessors (live M10 integration points)
  *
  *  F0175_GROUP_GetThing: walk square thing list, return first GROUP
  *    type or ENDOF list.  GROUP.C:52-70.
@@ -109,28 +109,278 @@ uint16_t csb_dungeon_get_first_thing_default(int mapX, int mapY) {
 
 /*
  * csb_dungeon_get_next_thing -- F0159 equivalent.
- * Stub: caller supplies the actual M10 accessor.
+ *
+ * Generic.Next is the first little-endian word in every Thing record.
+ * ReDMCSB: DUNGEON.C F0159 lines 1664-1676.
  */
 uint16_t csb_dungeon_get_next_thing_default(uint16_t thing) {
-    (void)thing;
-    return CSB_THING_ENDOFLIST; /* replaced by M10 integration */
+    const CSB_V1_DungeonData *d = csb_v1_dungeon_get_current();
+    const uint8_t *record;
+    int size;
+    if (!d) return CSB_THING_ENDOFLIST;
+    record = csb_v1_dungeon_get_thing_record(d, thing, NULL, NULL, &size);
+    if (!record || size < 2) return CSB_THING_ENDOFLIST;
+    return (uint16_t)((uint16_t)record[0] | ((uint16_t)record[1] << 8));
 }
 
 /*
  * csb_dungeon_thing_data_u16 -- F0156 word read at byte offset.
- * Stub: caller supplies the actual M10 accessor.
+ * Invalid Thing/offset returns zero, matching the existing narrow u16 helper
+ * contract while keeping runtime callers away from fabricated records.
  */
 uint16_t csb_dungeon_thing_data_u16_default(uint16_t thing, int offset) {
-    (void)thing; (void)offset;
-    return 0; /* replaced by M10 integration */
+    const CSB_V1_DungeonData *d = csb_v1_dungeon_get_current();
+    const uint8_t *record;
+    int size;
+    if (!d || offset < 0) return 0;
+    record = csb_v1_dungeon_get_thing_record(d, thing, NULL, NULL, &size);
+    if (!record || offset > size - 2) return 0;
+    return (uint16_t)((uint16_t)record[offset] |
+                      ((uint16_t)record[offset + 1] << 8));
 }
 
-/*
- * csb_move_thing -- F0267 equivalent.
- * Stub: caller supplies the actual M10 move function.
- */
-void csb_move_thing_default(uint16_t thing, void* ctxOpaque) {
-    (void)thing; (void)ctxOpaque;
+static uint16_t csb_dungeon_read_u16(const uint8_t *p) {
+    return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+}
+
+static void csb_dungeon_write_u16(uint8_t *p, uint16_t value) {
+    p[0] = (uint8_t)(value & 0xFFu);
+    p[1] = (uint8_t)(value >> 8);
+}
+
+static int csb_dungeon_current_column_count(const CSB_V1_DungeonData *d) {
+    int level;
+    int columns = 0;
+    if (!d) return -1;
+    for (level = 0; level < d->level_count; ++level) {
+        columns += d->level_widths[level];
+    }
+    return columns;
+}
+
+static int csb_dungeon_square_list_slot(const CSB_V1_DungeonData *d,
+                                        int map_x, int map_y,
+                                        int require_present) {
+    int level = csb_v1_dungeon_get_current_level();
+    int prior_columns = 0;
+    int x;
+    int y;
+    int square_offset;
+    int column_count_offset;
+    int slot;
+    if (!d || !d->raw_data || d->square_bytes != 1 || level < 0 ||
+        level >= d->level_count || map_x < 0 || map_y < 0 ||
+        map_x >= d->level_widths[level] || map_y >= d->level_heights[level]) {
+        return -1;
+    }
+    square_offset = d->level_offsets[level] +
+                    map_x * d->level_heights[level] + map_y;
+    if (square_offset < 0 || square_offset >= d->raw_size ||
+        (require_present && (d->raw_data[square_offset] & 0x10u) == 0u)) {
+        return -1;
+    }
+    for (x = 0; x < level; ++x) prior_columns += d->level_widths[x];
+    column_count_offset = 44 + d->level_count * 16 +
+                          (prior_columns + map_x) * 2;
+    if (column_count_offset < 0 || column_count_offset + 2 > d->raw_size) {
+        return -1;
+    }
+    slot = (int)csb_dungeon_read_u16(d->raw_data + column_count_offset);
+    square_offset = d->level_offsets[level] + map_x * d->level_heights[level];
+    for (y = 0; y < map_y; ++y) {
+        if (square_offset + y >= d->raw_size) return -1;
+        if (d->raw_data[square_offset + y] & 0x10u) ++slot;
+    }
+    return slot;
+}
+
+static int csb_dungeon_adjust_column_counts(CSB_V1_DungeonData *d,
+                                            int map_x, int delta) {
+    int level = csb_v1_dungeon_get_current_level();
+    int prior_columns = 0;
+    int column;
+    int column_count;
+    if (!d || !d->raw_data || level < 0 || level >= d->level_count) return -1;
+    for (column = 0; column < level; ++column) prior_columns += d->level_widths[column];
+    column_count = csb_dungeon_current_column_count(d);
+    if (column_count < 0 || prior_columns + map_x + 1 > column_count) return -1;
+    for (column = prior_columns + map_x + 1; column < column_count; ++column) {
+        int offset = 44 + d->level_count * 16 + column * 2;
+        int value;
+        if (offset < 0 || offset + 2 > d->raw_size) return -1;
+        value = (int)csb_dungeon_read_u16(d->raw_data + offset) + delta;
+        if (value < 0 || value > 0xFFFF) return -1;
+        csb_dungeon_write_u16(d->raw_data + offset, (uint16_t)value);
+    }
+    return 0;
+}
+
+static uint8_t *csb_dungeon_mutable_thing_record(CSB_V1_DungeonData *d,
+                                                  uint16_t thing,
+                                                  int *out_size) {
+    const uint8_t *record = csb_v1_dungeon_get_thing_record(
+        d, thing, NULL, NULL, out_size);
+    return (uint8_t *)record;
+}
+
+static int csb_dungeon_unlink_thing(CSB_V1_DungeonData *d, uint16_t thing,
+                                    int map_x, int map_y) {
+    int slot = csb_dungeon_square_list_slot(d, map_x, map_y, 1);
+    uint8_t *first_things;
+    uint16_t previous = CSB_THING_ENDOFLIST;
+    uint16_t current;
+    uint16_t next;
+    uint8_t *record;
+    int size;
+    int guard;
+    int square_offset;
+    if (slot < 0 || slot >= d->square_first_thing_count) return -1;
+    first_things = d->raw_data + d->square_first_thing_base;
+    current = csb_dungeon_read_u16(first_things + slot * 2);
+    for (guard = 0; guard < d->square_first_thing_count; ++guard) {
+        if (current == CSB_THING_ENDOFLIST || current == CSB_THING_PARTY) return -2;
+        record = csb_dungeon_mutable_thing_record(d, current, &size);
+        if (!record || size < 2) return -1;
+        next = csb_dungeon_read_u16(record);
+        if ((current & 0x3FFFu) == (thing & 0x3FFFu)) {
+            if (previous == CSB_THING_ENDOFLIST) {
+                if (next == CSB_THING_ENDOFLIST) {
+                    if (slot + 1 < d->square_first_thing_count) {
+                        memmove(first_things + slot * 2,
+                                first_things + (slot + 1) * 2,
+                                (size_t)(d->square_first_thing_count - slot - 1) * 2u);
+                    }
+                    csb_dungeon_write_u16(first_things +
+                                           (d->square_first_thing_count - 1) * 2,
+                                           CSB_THING_PARTY);
+                    square_offset = d->level_offsets[csb_v1_dungeon_get_current_level()] +
+                                    map_x * d->level_heights[csb_v1_dungeon_get_current_level()] + map_y;
+                    d->raw_data[square_offset] &= (uint8_t)~0x10u;
+                    if (csb_dungeon_adjust_column_counts(d, map_x, -1) != 0) return -1;
+                } else {
+                    csb_dungeon_write_u16(first_things + slot * 2, next);
+                }
+            } else {
+                uint8_t *previous_record = csb_dungeon_mutable_thing_record(d, previous, &size);
+                if (!previous_record || size < 2) return -1;
+                csb_dungeon_write_u16(previous_record, next);
+            }
+            csb_dungeon_write_u16(record, CSB_THING_ENDOFLIST);
+            return 0;
+        }
+        previous = current;
+        current = next;
+    }
+    return -2;
+}
+
+static int csb_dungeon_link_thing(CSB_V1_DungeonData *d, uint16_t thing,
+                                  int map_x, int map_y) {
+    int slot = csb_dungeon_square_list_slot(d, map_x, map_y, 0);
+    int present_slot = csb_dungeon_square_list_slot(d, map_x, map_y, 1);
+    uint8_t *first_things;
+    uint8_t *record;
+    uint16_t current;
+    uint16_t next;
+    int size;
+    int guard;
+    int square_offset;
+    if (slot < 0 || slot > d->square_first_thing_count) return -1;
+    record = csb_dungeon_mutable_thing_record(d, thing, &size);
+    if (!record || size < 2) return -1;
+    first_things = d->raw_data + d->square_first_thing_base;
+    csb_dungeon_write_u16(record, CSB_THING_ENDOFLIST);
+    if (present_slot < 0) {
+        if (slot >= d->square_first_thing_count ||
+            csb_dungeon_read_u16(first_things +
+                                  (d->square_first_thing_count - 1) * 2) != CSB_THING_PARTY) {
+            return -1;
+        }
+        if (slot < d->square_first_thing_count - 1) {
+            memmove(first_things + (slot + 1) * 2, first_things + slot * 2,
+                    (size_t)(d->square_first_thing_count - slot - 1) * 2u);
+        }
+        csb_dungeon_write_u16(first_things + slot * 2, thing);
+        square_offset = d->level_offsets[csb_v1_dungeon_get_current_level()] +
+                        map_x * d->level_heights[csb_v1_dungeon_get_current_level()] + map_y;
+        d->raw_data[square_offset] |= 0x10u;
+        return csb_dungeon_adjust_column_counts(d, map_x, 1);
+    }
+    current = csb_dungeon_read_u16(first_things + present_slot * 2);
+    for (guard = 0; guard < d->square_first_thing_count; ++guard) {
+        uint8_t *current_record;
+        if (current == CSB_THING_ENDOFLIST || current == CSB_THING_PARTY) return -1;
+        current_record = csb_dungeon_mutable_thing_record(d, current, &size);
+        if (!current_record || size < 2) return -1;
+        next = csb_dungeon_read_u16(current_record);
+        if (next == CSB_THING_ENDOFLIST) {
+            csb_dungeon_write_u16(current_record, thing);
+            return 0;
+        }
+        current = next;
+    }
+    return -1;
+}
+
+int csb_dungeon_move_thing_default(uint16_t thing,
+                                   int source_map_x, int source_map_y,
+                                   int destination_map_x, int destination_map_y) {
+    CSB_V1_DungeonData *d = csb_v1_dungeon_get_current_mutable();
+    if (!d || !d->raw_data || d->square_bytes != 1 ||
+        thing == CSB_THING_ENDOFLIST || thing == CSB_THING_PARTY) return -1;
+    if (source_map_x == destination_map_x && source_map_y == destination_map_y &&
+        source_map_x >= 0) return 0;
+    if (source_map_x >= 0) {
+        if (csb_dungeon_unlink_thing(d, thing, source_map_x, source_map_y) != 0) return -2;
+    }
+    if (destination_map_x >= 0) {
+        if (csb_dungeon_link_thing(d, thing, destination_map_x, destination_map_y) != 0) return -1;
+    }
+    return 0;
+}
+
+int csb_dungeon_move_thing_between_levels_default(
+    uint16_t thing,
+    int source_level,
+    int source_map_x,
+    int source_map_y,
+    int destination_level,
+    int destination_map_x,
+    int destination_map_y)
+{
+    int saved_level;
+    int status;
+
+    if (source_level < 0 || destination_level < 0) return -1;
+    saved_level = csb_v1_dungeon_get_current_level();
+    if (source_level == destination_level) {
+        csb_v1_dungeon_set_current_level(source_level);
+        status = csb_dungeon_move_thing_default(
+            thing, source_map_x, source_map_y,
+            destination_map_x, destination_map_y);
+        csb_v1_dungeon_set_current_level(saved_level);
+        return status;
+    }
+
+    csb_v1_dungeon_set_current_level(source_level);
+    status = csb_dungeon_move_thing_default(
+        thing, source_map_x, source_map_y, -1, -1);
+    if (status != 0) {
+        csb_v1_dungeon_set_current_level(saved_level);
+        return status;
+    }
+    csb_v1_dungeon_set_current_level(destination_level);
+    status = csb_dungeon_move_thing_default(
+        thing, -1, -1, destination_map_x, destination_map_y);
+    if (status != 0) {
+        /* A capacity or destination validation failure must not lose the
+         * source Thing; restore it through the same F0163-style primitive. */
+        csb_v1_dungeon_set_current_level(source_level);
+        (void)csb_dungeon_move_thing_default(
+            thing, -1, -1, source_map_x, source_map_y);
+    }
+    csb_v1_dungeon_set_current_level(saved_level);
+    return status;
 }
 #endif /* CSB_NO_DUNGEON_ACCESSORS */
 

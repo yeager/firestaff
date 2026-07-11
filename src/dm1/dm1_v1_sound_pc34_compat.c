@@ -14,6 +14,7 @@
  * MEDIA425 (Amiga variant), used for I34E PC with 64-max L/R.
  */
 #include "dm1_v1_sound_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 #include <string.h>
 
 /* ── ReDMCSB G1028_aauc_DistanceToSoundVolume[25][25] (MEDIA425) ── */
@@ -350,6 +351,41 @@ const char* DM1_Sound_Name(int16_t soundIndex) {
     }
 }
 
+int DM1_V1_BuildAudioEmissionPlanPc34(const struct TickEmission_Compat* emission,
+                                      DM1_V1_AudioEmissionPlanPc34* outPlan) {
+    if (!outPlan) {
+        return 0;
+    }
+    outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_NONE;
+    outPlan->sourceSoundIndex = DM1_SND_NONE;
+    if (!emission) {
+        return 0;
+    }
+
+    switch (emission->kind) {
+        case EMIT_PARTY_MOVED:
+            outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_FOOTSTEP;
+            break;
+        case EMIT_DOOR_STATE:
+            outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_DOOR;
+            break;
+        case EMIT_KILL_NOTIFY:
+        case EMIT_CHAMPION_DOWN:
+            outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_COMBAT;
+            break;
+        case EMIT_SPELL_EFFECT:
+            outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_SPELL;
+            break;
+        case EMIT_SOUND_REQUEST:
+            outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND;
+            outPlan->sourceSoundIndex = (int16_t)emission->payload[0];
+            break;
+        default:
+            return 0;
+    }
+    return 1;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Pass602b — SOUND.C remaining function citations
  *
@@ -374,4 +410,3 @@ const char* DM1_Sound_Name(int16_t soundIndex) {
  *   SOUND.C:949 F2202_CPSX
  *   SOUND.C:945 F2207_CPSX
  * ══════════════════════════════════════════════════════════════════════ */
-

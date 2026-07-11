@@ -2,6 +2,7 @@
 #define THERON_V1_STARTUP_MEDIA_H
 
 #include "theron_v1_track02.h"
+#include "theron_v1_startup_media_identity.h"
 #include "theron_v1_world.h"
 
 #include <stddef.h>

@@ -236,12 +236,30 @@ static void check_palette_cross_source_contract(void) {
     expect_u("ZOOM blit kind",
              (unsigned int)zoomPlan.kind,
              (unsigned int)V1_TITLE_FRONTEND_C001_BLIT_SCALED_REGION);
-    expect_u("ZOOM destination width",
-             zoomPlan.dstW,
+    expect_u("ZOOM source x is full C001 title origin",
+             zoomPlan.srcX,
+             0u);
+    expect_u("ZOOM source y is full C001 title origin",
+             zoomPlan.srcY,
+             0u);
+    expect_u("ZOOM source width is full C001 title width",
+             zoomPlan.srcW,
              320u);
-    expect_u("ZOOM destination height",
-             zoomPlan.dstH,
+    expect_u("ZOOM source height is full C001 title height",
+             zoomPlan.srcH,
              80u);
+    expect_u("ZOOM destination x is source-centred box",
+             zoomPlan.dstX,
+             zoomStep.x);
+    expect_u("ZOOM destination y is source-centred box",
+             zoomPlan.dstY,
+             zoomStep.y);
+    expect_u("ZOOM destination width is source-centred box width",
+             zoomPlan.dstW,
+             zoomStep.width);
+    expect_u("ZOOM destination height is source-centred box height",
+             zoomPlan.dstH,
+             zoomStep.height);
     expect_i("ZOOM clears first",
              zoomPlan.clearBeforeBlit,
              1);

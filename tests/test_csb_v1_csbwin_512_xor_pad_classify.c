@@ -93,6 +93,87 @@ static void write_le32(uint8_t *b, size_t off, uint32_t v)
     b[off + 3u] = (uint8_t)((v >> 24) & 0xFFu);
 }
 
+static uint32_t extended_form_checksum(const uint8_t *bytes, size_t size)
+{
+    uint32_t result = 0u;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        result = result * 0xbb40e62du + 11u + (uint32_t)bytes[i];
+    }
+    return result;
+}
+
+static uint32_t extended_dsa_checksum(const uint8_t *bytes, size_t size)
+{
+    uint32_t result = 0xffffu;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        result = result * 0xbb40e62du + 11u + (uint32_t)bytes[i];
+    }
+    return result;
+}
+
+static size_t build_extended_features_fixture(uint8_t *bytes,
+                                              size_t capacity,
+                                              uint16_t dsa_count)
+{
+    uint8_t *header = bytes;
+    uint8_t *type_map;
+    uint8_t *index_map;
+    const uint32_t map_length = 4u;
+    size_t total = 512u + (size_t)map_length * 3u;
+    size_t i;
+
+    if (!bytes || capacity < total) return 0u;
+    memset(bytes, 0, total);
+    memcpy(header, " Extended Features ", 19u);
+    write_le32(header, 20u, map_length);
+    header[36u] = (uint8_t)'Z';
+    header[37u] = 0u;
+    write_le16(header, 38u, dsa_count);
+    write_le32(header, 44u, 23u);
+    write_le32(header, 48u, 99u);
+    write_le32(header, 64u, 0xA5u);
+    type_map = bytes + 512u;
+    index_map = type_map + map_length;
+    for (i = 0u; i < map_length; ++i) {
+        type_map[i] = (uint8_t)(0x20u + i);
+        index_map[i * 2u] = (uint8_t)(0x40u + i);
+        index_map[i * 2u + 1u] = (uint8_t)(0x60u + i);
+    }
+    write_le32(header, 24u, extended_form_checksum(type_map, map_length));
+    write_le32(header, 28u, extended_form_checksum(index_map, map_length * 2u));
+    write_le32(header, 32u, 0u);
+    write_le32(header, 32u, extended_form_checksum(header, 512u));
+    return total;
+}
+
+static size_t append_extended_dsa_fixture(uint8_t *bytes, size_t offset,
+                                          size_t capacity)
+{
+    size_t start = offset;
+    size_t i;
+
+    if (!bytes || capacity - offset < 128u) return 0u;
+    write_le32(bytes, offset, 7u); offset += 4u;
+    for (i = 0u; i < 80u; ++i) bytes[offset + i] = (uint8_t)('A' + (i % 3u));
+    offset += 80u;
+    write_le32(bytes, offset, 3u); offset += 4u;
+    write_le32(bytes, offset, 1u); offset += 4u;
+    write_le32(bytes, offset, 9u); offset += 4u;
+    write_le32(bytes, offset, 2u); offset += 4u;
+    write_le32(bytes, offset, 0u); offset += 4u;
+    write_le32(bytes, offset, 1u); offset += 4u;
+    write_le32(bytes, offset, 1u); offset += 4u;
+    write_le32(bytes, offset, 1u); offset += 4u;
+    write_le32(bytes, offset, 3u); offset += 4u;
+    write_le32(bytes, offset, 2u); offset += 4u;
+    write_le16(bytes, offset, 0x1234u); offset += 2u;
+    write_le16(bytes, offset, 0xabcdu); offset += 2u;
+    write_le32(bytes, offset, extended_dsa_checksum(bytes + start, offset - start));
+    return offset + 4u;
+}
+
 /* Unscramble algorithm — mirrors src/csb/csb_v1_csbwin_512_xor_pad_classify.c
  * so the test can build scrambled fixtures without linking the
  * production path. We could link the production helper but
@@ -1363,6 +1444,238 @@ static int test_input_buffer_not_modified(void)
     return 1;
 }
 
+static int test_extended_features_container_gate(void)
+{
+    uint8_t bytes[1024];
+    CSB_V1_CSBWinExtendedFeaturesReport report;
+    size_t size;
+    int rc;
+
+    size = build_extended_features_fixture(bytes, sizeof(bytes), 0u);
+    ASSERT_TRUE(size == 524u);
+    rc = csb_v1_csbwin_512_inspect_extended_features(bytes, size, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_OK);
+    ASSERT_TRUE(report.valid == 1 && report.version == (uint8_t)'Z' &&
+                report.data_map_length == 4u &&
+                report.extension_payload_offset == size &&
+                report.game_info_size == 23u && report.cell_flag_array_size == 99u &&
+                report.extended_flags == 0xA5u);
+
+    bytes[512u] ^= 0x01u;
+    rc = csb_v1_csbwin_512_inspect_extended_features(bytes, size, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_ERR_CHECKSUM);
+
+    size = build_extended_features_fixture(bytes, sizeof(bytes), 1u);
+    rc = csb_v1_csbwin_512_inspect_extended_features(bytes, size, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_UNSUPPORTED_DSA);
+    ASSERT_TRUE(report.valid == 1 && report.dsa_count == 1u &&
+                report.extension_payload_offset == size);
+
+    bytes[37u] |= 0x04u;
+    write_le32(bytes, 32u, 0u);
+    write_le32(bytes, 32u, extended_form_checksum(bytes, 512u));
+    rc = csb_v1_csbwin_512_inspect_extended_features(bytes, size, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_UNSUPPORTED_ENCRYPTION);
+    ASSERT_TRUE(report.valid == 1 && report.simple_encryption == 1);
+
+    memset(bytes, 0, sizeof(bytes));
+    rc = csb_v1_csbwin_512_inspect_extended_features(bytes, sizeof(bytes), &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_ABSENT);
+    rc = csb_v1_csbwin_512_inspect_extended_features(NULL, size, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_ERR_ARGUMENT);
+    return 1;
+}
+
+static int test_extended_features_data_map_inspection(void)
+{
+    uint8_t bytes[1024];
+    uint8_t original[1024];
+    CSB_V1_CSBWinExtendedFeaturesReport report;
+    CSB_V1_CSBWinExtendedDataMapEntry entries[4];
+    size_t size;
+    size_t count;
+    int rc;
+
+    size = build_extended_features_fixture(bytes, sizeof(bytes), 0u);
+    memcpy(original, bytes, sizeof(bytes));
+    rc = csb_v1_csbwin_512_inspect_extended_data_map(
+        bytes, size, entries, 4u, &count, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_OK && count == 4u &&
+                report.valid == 1);
+    ASSERT_TRUE(entries[0].raw_type == 0x20u &&
+                entries[0].database_type == 0u &&
+                entries[0].position == 2u &&
+                entries[0].database_index == 0x4060u);
+    ASSERT_TRUE(entries[3].raw_type == 0x23u &&
+                entries[3].database_type == 3u &&
+                entries[3].position == 2u &&
+                entries[3].database_index == 0x4363u);
+    ASSERT_TRUE(memcmp(bytes, original, sizeof(bytes)) == 0);
+
+    rc = csb_v1_csbwin_512_inspect_extended_data_map(
+        bytes, size, NULL, 0u, &count, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_OK && count == 4u);
+    memset(entries, 0xA5, sizeof(entries));
+    rc = csb_v1_csbwin_512_inspect_extended_data_map(
+        bytes, size, entries, 3u, &count, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_ERR_BOUNDS && count == 4u &&
+                entries[0].raw_type == 0xA5u);
+
+    size = build_extended_features_fixture(bytes, sizeof(bytes), 1u);
+    rc = csb_v1_csbwin_512_inspect_extended_data_map(
+        bytes, size, entries, 4u, &count, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_UNSUPPORTED_DSA && count == 4u &&
+                entries[2].database_index == 0x4262u);
+
+    bytes[37u] |= 0x04u;
+    write_le32(bytes, 32u, 0u);
+    write_le32(bytes, 32u, extended_form_checksum(bytes, 512u));
+    rc = csb_v1_csbwin_512_inspect_extended_data_map(
+        bytes, size, entries, 4u, &count, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_UNSUPPORTED_ENCRYPTION &&
+                count == 0u);
+    return 1;
+}
+
+static int test_extended_features_dsa_inspection(void)
+{
+    uint8_t bytes[1024];
+    uint8_t original[1024];
+    CSB_V1_CSBWinExtendedDSAReport report;
+    CSB_V1_CSBWinExtendedFeaturesReport features;
+    size_t size;
+    int rc;
+
+    size = build_extended_features_fixture(bytes, sizeof(bytes), 1u);
+    size = append_extended_dsa_fixture(bytes, size, sizeof(bytes));
+    ASSERT_TRUE(size != 0u);
+    memcpy(original, bytes, sizeof(bytes));
+    rc = csb_v1_csbwin_512_inspect_extended_dsa_section(bytes, size, &report,
+                                                         &features);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_OK && report.valid == 1 &&
+                report.dsa_count == 1u && report.state_count == 1u &&
+                report.action_count == 1u && report.program_word_count == 2u &&
+                report.dsa_payload_offset == 524u &&
+                report.next_payload_offset == size && features.valid == 1);
+    ASSERT_TRUE(memcmp(bytes, original, sizeof(bytes)) == 0);
+
+    bytes[size - 1u] ^= 0x01u;
+    rc = csb_v1_csbwin_512_inspect_extended_dsa_section(bytes, size, &report,
+                                                         &features);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_ERR_CHECKSUM && report.valid == 0);
+
+    size = build_extended_features_fixture(bytes, sizeof(bytes), 1u);
+    size = append_extended_dsa_fixture(bytes, size, sizeof(bytes));
+    write_le32(bytes, 636u, 13u);
+    write_le32(bytes, size - 4u, extended_dsa_checksum(bytes + 524u,
+                                                        size - 528u));
+    rc = csb_v1_csbwin_512_inspect_extended_dsa_section(bytes, size, &report,
+                                                         &features);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_ERR_DSA && report.valid == 0);
+    return 1;
+}
+
+static int test_extended_features_tail_inspection(void)
+{
+    uint8_t bytes[1024];
+    uint8_t original[1024];
+    CSB_V1_CSBWinExtendedTailReport report;
+    CSB_V1_CSBWinExtendedDSAReport dsa;
+    CSB_V1_CSBWinExtendedFeaturesReport features;
+    size_t size;
+    int rc;
+
+    size = build_extended_features_fixture(bytes, sizeof(bytes), 1u);
+    bytes[37u] |= 0x01u; /* LevelDSAInfoPresent */
+    write_le32(bytes, 32u, 0u);
+    write_le32(bytes, 32u, extended_form_checksum(bytes, 512u));
+    size = append_extended_dsa_fixture(bytes, size, sizeof(bytes));
+    ASSERT_TRUE(size != 0u);
+    memset(bytes + size, 'I', 23u);
+    size += 23u;
+    bytes[size++] = 3u; bytes[size++] = 2u; bytes[size++] = 7u;
+    bytes[size++] = 63u; bytes[size++] = 31u; bytes[size++] = 9u;
+    bytes[size++] = 255u; bytes[size++] = 255u; bytes[size++] = 255u;
+    memcpy(original, bytes, sizeof(bytes));
+
+    rc = csb_v1_csbwin_512_inspect_extended_tail(bytes, size, &report,
+                                                  &dsa, &features);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_OK && report.valid == 1 &&
+                dsa.valid == 1 && features.valid == 1);
+    ASSERT_TRUE(report.game_info_offset == dsa.next_payload_offset &&
+                report.game_info_size == 23u && report.game_info_fnv1a != 0u);
+    ASSERT_TRUE(report.level_index_present == 1 &&
+                report.level_index_entry_count == 2u &&
+                report.level_dsa_index[3][2] == 7u &&
+                report.level_dsa_index[63][31] == 9u &&
+                report.level_dsa_index[0][0] == 0xffffu &&
+                report.next_payload_offset == size);
+    ASSERT_TRUE(memcmp(bytes, original, sizeof(bytes)) == 0);
+
+    rc = csb_v1_csbwin_512_inspect_extended_tail(bytes, size - 1u, &report,
+                                                  &dsa, &features);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED && report.valid == 0);
+
+    size = build_extended_features_fixture(bytes, sizeof(bytes), 0u);
+    memset(bytes + size, 'Q', 23u);
+    size += 23u;
+    rc = csb_v1_csbwin_512_inspect_extended_tail(bytes, size, &report,
+                                                  &dsa, &features);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_EXTENDED_OK && report.valid == 1 &&
+                report.level_index_present == 0 && report.next_payload_offset == size);
+    return 1;
+}
+
+static int test_appended_dsa_tracing_inspection(void)
+{
+    uint8_t bytes[8192];
+    uint8_t original[8192];
+    CSB_V1_CSBWin512BodyReport body;
+    CSB_V1_CSBWinDSATracingReport tracing;
+    const uint32_t tracing_hash =
+        CSB_V1_CSBWIN_DSA_TRACING_RECORD_ID * 0xbb40e62du;
+    const uint32_t tracing_bucket = 32u + (tracing_hash >> 27);
+    size_t size;
+    int rc;
+
+    size = build_full_csbwin_body_fixture(bytes, sizeof(bytes), 0);
+    ASSERT_TRUE(size == 4054u);
+    memset(bytes + size, 0, CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
+    write_le16(bytes + size, 2u, 10u);
+    write_le32(bytes + size, tracing_bucket * 4u, 1u);
+    write_le32(bytes + size, 2u * 4u,
+               CSB_V1_CSBWIN_DSA_TRACING_RECORD_ID);
+    write_le32(bytes + size, 3u * 4u, 0x80000001u);
+    write_le32(bytes + size, 4u * 4u, 0x00000002u);
+    write_le32(bytes + size, 10u * 4u, 0x00000080u);
+    memcpy(original, bytes, sizeof(bytes));
+
+    rc = csb_v1_csbwin_512_verify_save_body(
+        bytes, size + CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES, 16u, &body);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    rc = csb_v1_csbwin_512_inspect_appended_dsa_tracing(&body, &tracing);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK && tracing.valid == 1 &&
+                tracing.present == 1);
+    ASSERT_TRUE(tracing.record_id == CSB_V1_CSBWIN_DSA_TRACING_RECORD_ID &&
+                tracing.payload_bytes == 32u && tracing.enabled_dsa_count == 4u &&
+                tracing.words[0] == 0x80000001u &&
+                tracing.words[1] == 0x00000002u &&
+                tracing.words[7] == 0x00000080u &&
+                tracing.payload_fnv1a == fnv1a32_bytes(bytes + size + 12u, 32u));
+    ASSERT_TRUE(memcmp(bytes, original, sizeof(bytes)) == 0);
+
+    write_le16(bytes + size, 2u, 9u);
+    rc = csb_v1_csbwin_512_verify_save_body(
+        bytes, size + CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES, 16u, &body);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    rc = csb_v1_csbwin_512_inspect_appended_dsa_tracing(&body, &tracing);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_BAD_EXPOOL && tracing.valid == 0);
+
+    rc = csb_v1_csbwin_512_inspect_appended_dsa_tracing(NULL, &tracing);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_ARGUMENT);
+    return 1;
+}
+
 static int test_result_and_evidence_strings(void)
 {
     const char *r;
@@ -1411,6 +1724,11 @@ struct { const char *name; test_fn fn; } tests[] = {
     { "writable-header-roundtrip",    test_writable_header_roundtrip },
     { "csb-first-fallback-to-dm",     test_csb_first_fallback_to_dm },
     { "input-buffer-not-modified",    test_input_buffer_not_modified },
+    { "extended-features-container-gate", test_extended_features_container_gate },
+    { "extended-features-data-map-inspection", test_extended_features_data_map_inspection },
+    { "extended-features-dsa-inspection", test_extended_features_dsa_inspection },
+    { "extended-features-tail-inspection", test_extended_features_tail_inspection },
+    { "appended-dsa-tracing-inspection", test_appended_dsa_tracing_inspection },
     { "result-and-evidence-strings",  test_result_and_evidence_strings },
 };
 

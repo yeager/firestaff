@@ -104,11 +104,80 @@ static void test_header_only_compatibility_and_bounded_prefix_load(void)
     remove(path);
 }
 
+static void test_truncated_load_and_backup_restore_are_transactional(void)
+{
+    const char *path = test_save_path();
+    const char *backup;
+    uint8_t saved_state[96];
+    uint8_t replacement_state[96];
+    uint8_t destination[96];
+    uint8_t untouched_destination[96];
+    CSB_V1_SaveHeader hdr;
+    CSB_V1_SaveHeader before_header;
+    CSB_V1_SaveHeader out_header;
+    FILE *f;
+    int r;
+
+    remove(path);
+    build_state(saved_state, sizeof(saved_state));
+    memset(replacement_state, 0x5c, sizeof(replacement_state));
+    memset(destination, 0xa5, sizeof(destination));
+    memset(untouched_destination, 0xa5, sizeof(untouched_destination));
+    memset(&hdr, 0, sizeof(hdr));
+    memset(&before_header, 0x3c, sizeof(before_header));
+    out_header = before_header;
+    r = csb_v1_save_header_build(&hdr, CSB_V1_SAVE_MAGIC_CSB, 0x2345u,
+                                  0x12345678u, 1, 2, 3, 0, 2,
+                                  0x10203040u, 999u);
+    CHECK_EQ(r, 0, "transactional save header build");
+    r = csb_v1_save_game(path, saved_state, (int)sizeof(saved_state), &hdr);
+    CHECK_EQ(r, CSB_V1_SAVE_OK, "initial native save write");
+    r = csb_v1_save_backup(path);
+    CHECK_EQ(r, 0, "explicit complete backup before truncation");
+
+    f = fopen(path, "wb");
+    CHECK(f != NULL, "open native save for truncation");
+    if (f) {
+        CHECK(fwrite(&hdr, 1, sizeof(hdr), f) == sizeof(hdr),
+              "write valid truncated save header");
+        CHECK(fwrite(saved_state, 1, 11, f) == 11,
+              "write incomplete native state payload");
+        fclose(f);
+    }
+    r = csb_v1_load_game(path, destination, (int)sizeof(destination),
+                         &out_header);
+    CHECK_EQ(r, CSB_V1_LOAD_ERR_UNREADABLE,
+             "truncated payload fails bounded load");
+    CHECK(memcmp(destination, untouched_destination, sizeof(destination)) == 0,
+          "truncated payload leaves caller state unchanged");
+    CHECK(memcmp(&out_header, &before_header, sizeof(out_header)) == 0,
+          "truncated payload leaves caller header unchanged");
+
+    r = csb_v1_save_restore_backup(path);
+    CHECK_EQ(r, CSB_V1_LOAD_OK, "restore complete backup after truncation");
+    r = csb_v1_save_game(path, replacement_state, (int)sizeof(replacement_state),
+                         &hdr);
+    CHECK_EQ(r, CSB_V1_SAVE_OK, "replacement save preserves backup");
+    backup = csb_v1_save_get_backup_path(path);
+    CHECK(backup != NULL, "backup path is available");
+    r = csb_v1_save_restore_backup(path);
+    CHECK_EQ(r, CSB_V1_LOAD_OK, "restore backup replaces active save");
+    memset(destination, 0, sizeof(destination));
+    r = csb_v1_load_game(path, destination, (int)sizeof(destination), NULL);
+    CHECK_EQ(r, CSB_V1_LOAD_OK, "restored backup loads");
+    CHECK(memcmp(destination, saved_state, sizeof(destination)) == 0,
+          "restored backup retains original complete state");
+
+    remove(path);
+    if (backup) remove(backup);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Save Runtime Boundary Regression ===\n\n");
 
     test_header_only_compatibility_and_bounded_prefix_load();
+    test_truncated_load_and_backup_restore_are_transactional();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

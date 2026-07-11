@@ -1,4 +1,21 @@
 #include "m11_game_view.h"
+#include "dm1_v1_probe_assets.h"
+#include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
+#include "dm1_v1_champion_status_layout_pc34_compat.h"
+#include "dm1_v1_dialog_layout_pc34_compat.h"
+#include "dm1_v1_endgame_layout_pc34_compat.h"
+#include "dm1_v1_floor_ornament_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
+#include "dm1_v1_champion_panel_disabled_icon_state_pc34_compat.h"
+#include "dm1_v1_champion_panel_hud_pc34_compat.h"
+#include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
+#include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
+#include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
@@ -39,6 +56,802 @@ enum {
     PROBE_COLOR_LIGHT_BLUE  = 14,  /* DM PC VGA slot 14 — Blue        */
     PROBE_COLOR_WHITE       = 15   /* DM PC VGA slot 15 — White       */
 };
+
+static int probe_dm1_status_rect_xywh(const DM1_V1_ChampionStatusRectPc34* rect,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    if (!rect) return 0;
+    if (outX) *outX = rect->x;
+    if (outY) *outY = rect->y;
+    if (outW) *outW = rect->w;
+    if (outH) *outH = rect->h;
+    return 1;
+}
+
+static int probe_dm1_layout_rect_xywh(DM1_V1_LayoutZoneRectPc34 rect,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    if (rect.w <= 0 || rect.h <= 0) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return 1;
+}
+
+static int probe_dm1_movement_rect_xywh(DM1_V1_MovementArrowRectPc34 rect,
+                                        int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH) {
+    if (rect.w <= 0 || rect.h <= 0) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return 1;
+}
+
+/* Probe-local adapters for retired M11 wrapper names. Runtime now calls the
+ * DM1 source-locked APIs directly; these keep the historical probe readable. */
+static int M11_GameView_GetV1ViewportZone(int* outX,
+                                          int* outY,
+                                          int* outW,
+                                          int* outH) {
+    return probe_dm1_layout_rect_xywh(
+        dm1_v1_viewport_rect_pc34(), outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1ViewportZoneId(void) {
+    return dm1_v1_viewport_zone_id_pc34();
+}
+
+static int M11_GameView_GetV1MovementArrowZoneId(int arrowIndex) {
+    return dm1_v1_movement_arrow_zone_id_pc34(arrowIndex);
+}
+
+static int M11_GameView_GetV1MovementArrowZone(int arrowIndex,
+                                               int* outX,
+                                               int* outY,
+                                               int* outW,
+                                               int* outH) {
+    DM1_V1_MovementArrowRectPc34 rect;
+    if (!dm1_v1_movement_arrow_rect_pc34(arrowIndex, &rect)) return 0;
+    return probe_dm1_movement_rect_xywh(rect, outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1MovementArrowsZoneId(void) {
+    return dm1_v1_movement_arrows_zone_id_pc34();
+}
+
+static int M11_GameView_GetV1MovementArrowsGraphicId(void) {
+    return dm1_v1_movement_arrows_graphic_id_pc34();
+}
+
+static int M11_GameView_GetV1MovementArrowsOuterBox(int* outX,
+                                                    int* outY,
+                                                    int* outW,
+                                                    int* outH) {
+    DM1_V1_MovementArrowRectPc34 rect;
+    if (!dm1_v1_movement_arrows_outer_rect_pc34(&rect)) return 0;
+    return probe_dm1_movement_rect_xywh(rect, outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1MovementArrowsZone(int* outX,
+                                                int* outY,
+                                                int* outW,
+                                                int* outH) {
+    DM1_V1_MovementArrowRectPc34 rect;
+    if (!dm1_v1_movement_arrows_graphic_rect_pc34(&rect)) return 0;
+    return probe_dm1_movement_rect_xywh(rect, outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1ScreenZoneId(void) {
+    return dm1_v1_screen_zone_id_pc34();
+}
+
+static int M11_GameView_GetV1ScreenZone(int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH) {
+    return probe_dm1_layout_rect_xywh(
+        dm1_v1_screen_rect_pc34(), outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1ScreenCenteredDialogZoneId(void) {
+    return dm1_v1_screen_centered_dialog_zone_id_pc34();
+}
+
+static int M11_GameView_GetV1ScreenCenteredDialogZone(int* outX,
+                                                      int* outY,
+                                                      int* outW,
+                                                      int* outH) {
+    return probe_dm1_layout_rect_xywh(
+        dm1_v1_screen_centered_dialog_rect_pc34(),
+        outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1ExplosionPatternD0CZoneId(void) {
+    return dm1_v1_explosion_pattern_d0c_zone_id_pc34();
+}
+
+static int M11_GameView_GetV1ExplosionPatternD0CZone(int* outX,
+                                                     int* outY,
+                                                     int* outW,
+                                                     int* outH) {
+    return probe_dm1_layout_rect_xywh(
+        dm1_v1_explosion_pattern_d0c_rect_pc34(),
+        outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1ViewportCenteredTextZoneId(void) {
+    return dm1_v1_viewport_centered_text_zone_id_pc34();
+}
+
+static int M11_GameView_GetV1ViewportCenteredTextZone(int contentW,
+                                                     int contentH,
+                                                     int* outX,
+                                                     int* outY,
+                                                     int* outW,
+                                                     int* outH) {
+    DM1_V1_LayoutZoneRectPc34 rect;
+    if (!dm1_v1_viewport_centered_text_rect_pc34(
+            contentW, contentH, &rect)) {
+        return 0;
+    }
+    return probe_dm1_layout_rect_xywh(rect, outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1MessageAreaZoneId(void) {
+    return dm1_v1_message_area_zone_id_pc34();
+}
+
+static int M11_GameView_GetV1MessageAreaZone(int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH) {
+    return probe_dm1_layout_rect_xywh(
+        dm1_v1_message_area_rect_pc34(), outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1ObjectIconSourceZone(int iconIndex,
+                                                  int* outGraphic,
+                                                  int* outX,
+                                                  int* outY,
+                                                  int* outW,
+                                                  int* outH) {
+    DM1_V1_ObjectIconSourceZonePc34 zone;
+    if (!dm1_v1_object_icon_source_zone_pc34(iconIndex, &zone)) return 0;
+    if (outGraphic) *outGraphic = zone.graphic_index;
+    if (outX) *outX = zone.x;
+    if (outY) *outY = zone.y;
+    if (outW) *outW = zone.w;
+    if (outH) *outH = zone.h;
+    return 1;
+}
+
+static int M11_GameView_MapV1ActionIconPaletteColor(int colorIndex,
+                                                    int applyActionPalette) {
+    if (applyActionPalette && ((colorIndex & 0x0F) == 12)) return 4;
+    return colorIndex;
+}
+
+static int M11_GameView_GetV1StatusHandIconZone(int championSlot,
+                                                int handIndex,
+                                                int* outX,
+                                                int* outY,
+                                                int* outW,
+                                                int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_hand_icon_rect_pc34(
+            championSlot, handIndex, &rect)) {
+        return 0;
+    }
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static unsigned short probe_m11_get_status_hand_thing(
+    const struct ChampionState_Compat* champ,
+    int handIndex) {
+    if (!champ) return THING_NONE;
+    return handIndex == 0 ? champ->inventory[CHAMPION_SLOT_HAND_LEFT]
+                          : champ->inventory[CHAMPION_SLOT_ACTION_HAND];
+}
+
+static int probe_m11_object_info_index_for_thing(
+    const struct DungeonThings_Compat* things,
+    unsigned short thingId) {
+    int thingType, thingIndex, subtype;
+    if (!things || thingId == THING_NONE || thingId == THING_ENDOFLIST) {
+        return -1;
+    }
+    thingType = THING_GET_TYPE(thingId);
+    thingIndex = THING_GET_INDEX(thingId);
+    switch (thingType) {
+        case THING_TYPE_SCROLL:
+            return 0;
+        case THING_TYPE_CONTAINER:
+            if (!things->containers || thingIndex < 0 ||
+                thingIndex >= things->containerCount) return -1;
+            subtype = things->containers[thingIndex].type;
+            if (subtype < 0 || subtype > 0) subtype = 0;
+            return 1 + subtype;
+        case THING_TYPE_POTION:
+            if (!things->potions || thingIndex < 0 ||
+                thingIndex >= things->potionCount) return -1;
+            subtype = things->potions[thingIndex].type;
+            if (subtype < 0 || subtype > 20) subtype = 0;
+            return 2 + subtype;
+        case THING_TYPE_WEAPON:
+            if (!things->weapons || thingIndex < 0 ||
+                thingIndex >= things->weaponCount) return -1;
+            subtype = things->weapons[thingIndex].type;
+            if (subtype < 0 || subtype > 45) subtype = 0;
+            return 23 + subtype;
+        case THING_TYPE_ARMOUR:
+            if (!things->armours || thingIndex < 0 ||
+                thingIndex >= things->armourCount) return -1;
+            subtype = things->armours[thingIndex].type;
+            if (subtype < 0 || subtype > 57) subtype = 0;
+            return 69 + subtype;
+        case THING_TYPE_JUNK:
+            if (!things->junks || thingIndex < 0 ||
+                thingIndex >= things->junkCount) return -1;
+            subtype = things->junks[thingIndex].type;
+            if (subtype < 0 || subtype > 52) subtype = 0;
+            return 127 + subtype;
+        default:
+            return -1;
+    }
+}
+
+static int probe_m11_object_icon_index_for_thing(
+    const M11_GameViewState* state,
+    unsigned short thingId) {
+    static const unsigned char kObjectInfoType[180] = {
+         30,144,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,
+        166,167,195, 16, 18,  4, 14, 20, 23, 25, 27, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+         41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+         61, 62, 63, 64, 65, 66,135,143, 28, 80, 81, 82,112,114, 67, 83, 68, 84, 69, 70,
+         85, 86, 71, 87,119, 72, 88,113, 89, 73, 74, 90,103,104, 96, 97, 98,105,106,108,
+        107, 75, 91, 76, 92, 99,115,100, 77, 93,116,109,101, 78, 94,117,110,102, 79, 95,
+        118,111,140,141,142,194,196,  0,  8, 10, 12,146,147,125,126,127,176,177,178,179,
+        180,181,182,183,184,185,186,187,188,189,190,191,128,129,130,131,168,169,170,171,
+        172,173,174,175,120,121,122,123,124,132,133,134,136,137,138,139,192,193,197,198
+    };
+    const struct DungeonThings_Compat* things = state ? state->world.things : NULL;
+    int objectInfoIndex = probe_m11_object_info_index_for_thing(things, thingId);
+    int iconIndex;
+    if (objectInfoIndex < 0 || objectInfoIndex >= 180) return -1;
+    iconIndex = (int)kObjectInfoType[objectInfoIndex];
+    if (THING_GET_TYPE(thingId) == THING_TYPE_WEAPON) {
+        int thingIndex = THING_GET_INDEX(thingId);
+        if (things->weapons && thingIndex >= 0 &&
+            thingIndex < things->weaponCount) {
+            const struct DungeonWeapon_Compat* weapon =
+                &things->weapons[thingIndex];
+            if (iconIndex == 4 && weapon->lit) {
+                static const unsigned char offsets[16] =
+                    { 0,1,1,1,2,2,2,2,3,3,3,3,3,3,3,3 };
+                iconIndex += offsets[weapon->chargeCount & 0x0F];
+            } else if (weapon->chargeCount &&
+                       (iconIndex == 14 || iconIndex == 16 ||
+                        iconIndex == 18 || iconIndex == 20 ||
+                        iconIndex == 23 || iconIndex == 25)) {
+                iconIndex += 1;
+            }
+        }
+    }
+    return iconIndex;
+}
+
+static int M11_GameView_GetV1StatusHandIconIndex(
+    const M11_GameViewState* state,
+    int championSlot,
+    int handIndex) {
+    const struct ChampionState_Compat* champ;
+    unsigned short thing;
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        handIndex < 0 || handIndex > 1 ||
+        championSlot >= state->world.party.championCount) {
+        return -1;
+    }
+    champ = &state->world.party.champions[championSlot];
+    if (!champ->present || champ->hp.current == 0) return -1;
+    thing = probe_m11_get_status_hand_thing(champ, handIndex);
+    if (thing != THING_NONE && thing != THING_ENDOFLIST) {
+        return probe_m11_object_icon_index_for_thing(state, thing);
+    }
+    return DM1_ChampionPanel_EmptyHandIconIndex(
+        handIndex, (uint16_t)champ->wounds);
+}
+
+static int M11_GameView_ShouldHatchV1ActionIconCells(
+    const M11_GameViewState* state) {
+    if (!state) return 0;
+    return dm1_v1_champion_panel_action_icon_global_hatch_pc34(
+        (int)state->candidateMirrorOrdinal,
+        state->candidateMirrorPanelActive != 0,
+        state->resting != 0);
+}
+
+static int DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34CompatZoneId(void) {
+    return dm1_v1_leader_hand_object_name_zone_id_pc34();
+}
+
+static int DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34CompatZone(int* outX,
+                                                      int* outY,
+                                                      int* outW,
+                                                      int* outH) {
+    return probe_dm1_layout_rect_xywh(
+        dm1_v1_leader_hand_object_name_rect_pc34(),
+        outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1PoisonLabelZone(int championSlot,
+                                             int labelW,
+                                             int labelH,
+                                             int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_poison_label_rect_pc34(
+            championSlot, labelW, labelH, &rect)) {
+        return 0;
+    }
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1DamageIndicatorZoneId(int championSlot) {
+    return dm1_v1_champion_damage_indicator_zone_id_pc34(championSlot);
+}
+
+static int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
+                                                 int indicatorW,
+                                                 int indicatorH,
+                                                 int* outX,
+                                                 int* outY,
+                                                 int* outW,
+                                                 int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_damage_indicator_rect_pc34(
+            championSlot, indicatorW, indicatorH, &rect)) {
+        return 0;
+    }
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1InventoryDamageIndicatorZoneId(int championSlot) {
+    return dm1_v1_champion_inventory_damage_indicator_zone_id_pc34(championSlot);
+}
+
+static int M11_GameView_GetV1InventoryDamageIndicatorZone(int championSlot,
+                                                          int indicatorW,
+                                                          int indicatorH,
+                                                          int* outX,
+                                                          int* outY,
+                                                          int* outW,
+                                                          int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_inventory_damage_indicator_rect_pc34(
+            championSlot, indicatorW, indicatorH, &rect)) {
+        return 0;
+    }
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1DamageNumberOrigin(int championSlot,
+                                                int* outX,
+                                                int* outY) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_damage_number_origin_pc34(championSlot, &rect)) {
+        return 0;
+    }
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    return 1;
+}
+
+static int M11_GameView_GetV1ChampionIconSourceIndex(
+    const M11_GameViewState* state,
+    int championSlot) {
+    const struct ChampionState_Compat* champ;
+    int partyDirection;
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        championSlot >= state->world.party.championCount) {
+        return -1;
+    }
+    champ = &state->world.party.champions[championSlot];
+    if (!champ->present) return -1;
+    partyDirection = state->world.party.direction & 0x03;
+    return ((int)champ->direction - partyDirection + 4) & 0x03;
+}
+
+static int M11_GameView_GetV1ChampionIconGraphicId(void) {
+    return dm1_v1_graphic_champion_icons_pc34();
+}
+
+static int M11_GameView_GetV1ChampionIconInvisibilityRemap(int colorIndex) {
+    if (colorIndex < 0) return -1;
+    return colorIndex == 14 ? 14 : 0;
+}
+
+static int M11_GameView_GetV1ChampionIconZoneId(int championSlot) {
+    return dm1_v1_champion_icon_zone_id_pc34(championSlot);
+}
+
+static int M11_GameView_GetV1ChampionIconZone(int championSlot,
+                                              int* outX,
+                                              int* outY,
+                                              int* outW,
+                                              int* outH) {
+    DM1_V1_LayoutZoneRectPc34 rect;
+    if (!dm1_v1_champion_icon_rect_pc34(championSlot, &rect)) return 0;
+    return probe_dm1_layout_rect_xywh(rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_action_rect_xywh(DM1_V1_ActionAreaRectPc34 rect,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    if (rect.w <= 0 || rect.h <= 0) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return 1;
+}
+
+static int probe_dm1_spell_rect_xywh(DM1_V1_SpellAreaRectPc34 rect,
+                                     int* outX,
+                                     int* outY,
+                                     int* outW,
+                                     int* outH) {
+    if (rect.w <= 0 || rect.h <= 0) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return 1;
+}
+
+static int probe_dm1_action_area_zone(int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    return probe_dm1_action_rect_xywh(
+        dm1_v1_action_area_rect_pc34(), outX, outY, outW, outH);
+}
+
+static int probe_dm1_spell_area_zone(int* outX,
+                                     int* outY,
+                                     int* outW,
+                                     int* outH) {
+    return probe_dm1_spell_rect_xywh(
+        dm1_v1_spell_area_graphic_rect_pc34(), outX, outY, outW, outH);
+}
+
+static int probe_dm1_action_menu_graphic_zone(int actionRowCount,
+                                              int* outX,
+                                              int* outY,
+                                              int* outW,
+                                              int* outH) {
+    if (!dm1_v1_action_menu_graphic_zone_id_pc34(actionRowCount)) return 0;
+    return probe_dm1_action_rect_xywh(
+        dm1_v1_action_menu_graphic_rect_pc34(actionRowCount),
+        outX, outY, outW, outH);
+}
+
+static int probe_dm1_action_result_zone(int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH) {
+    if (!dm1_v1_action_result_zone_id_pc34()) return 0;
+    return probe_dm1_action_rect_xywh(
+        dm1_v1_action_result_rect_pc34(), outX, outY, outW, outH);
+}
+
+static int probe_dm1_action_pass_zone(int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    if (!dm1_v1_action_pass_zone_id_pc34()) return 0;
+    return probe_dm1_action_rect_xywh(
+        dm1_v1_action_pass_rect_pc34(), outX, outY, outW, outH);
+}
+
+static int probe_dm1_spell_caster_panel_zone(int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH) {
+    return probe_dm1_spell_rect_xywh(
+        dm1_v1_spell_caster_panel_rect_pc34(), outX, outY, outW, outH);
+}
+
+static int probe_dm1_spell_caster_tab_zone(int* outX,
+                                           int* outY,
+                                           int* outW,
+                                           int* outH) {
+    return probe_dm1_spell_rect_xywh(
+        dm1_v1_spell_caster_tab_rect_pc34(), outX, outY, outW, outH);
+}
+
+static int probe_dm1_action_spell_strip_zone(int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH) {
+    DM1_V1_ActionAreaRectPc34 action = dm1_v1_action_area_rect_pc34();
+    DM1_V1_SpellAreaRectPc34 spell = dm1_v1_spell_area_graphic_rect_pc34();
+    int minX = action.x < spell.x ? action.x : spell.x;
+    int minY = action.y < spell.y ? action.y : spell.y;
+    int maxX = action.x + action.w > spell.x + spell.w ?
+               action.x + action.w : spell.x + spell.w;
+    int maxY = action.y + action.h > spell.y + spell.h ?
+               action.y + action.h : spell.y + spell.h;
+    if (outX) *outX = minX;
+    if (outY) *outY = minY;
+    if (outW) *outW = maxX - minX;
+    if (outH) *outH = maxY - minY;
+    return 1;
+}
+
+static int probe_dm1_action_icon_cell_zone(int championSlot,
+                                           int* outX,
+                                           int* outY,
+                                           int* outW,
+                                           int* outH) {
+    if (!dm1_v1_action_icon_cell_zone_id_pc34(championSlot)) return 0;
+    return probe_dm1_action_rect_xywh(
+        dm1_v1_action_icon_cell_rect_pc34(championSlot),
+        outX, outY, outW, outH);
+}
+
+static int probe_dm1_action_icon_inner_zone(int championSlot,
+                                            int* outX,
+                                            int* outY,
+                                            int* outW,
+                                            int* outH) {
+    if (!dm1_v1_action_icon_inner_zone_id_pc34(championSlot)) return 0;
+    return probe_dm1_action_rect_xywh(
+        dm1_v1_action_icon_inner_rect_pc34(championSlot),
+        outX, outY, outW, outH);
+}
+
+static int probe_dm1_action_menu_header_zone(int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH) {
+    if (!dm1_v1_action_menu_header_zone_id_pc34()) return 0;
+    return probe_dm1_action_rect_xywh(
+        dm1_v1_action_menu_header_rect_pc34(),
+        outX, outY, outW, outH);
+}
+
+static int probe_dm1_action_menu_row_zone(int rowIndex,
+                                          int* outX,
+                                          int* outY,
+                                          int* outW,
+                                          int* outH) {
+    if (!dm1_v1_action_menu_row_zone_id_pc34(rowIndex)) return 0;
+    return probe_dm1_action_rect_xywh(
+        dm1_v1_action_menu_row_rect_pc34(rowIndex),
+        outX, outY, outW, outH);
+}
+
+static int probe_dm1_action_menu_text_inset(int* outX, int* outY) {
+    DM1_V1_ActionAreaTextOriginPc34 inset =
+        dm1_v1_action_menu_text_inset_pc34();
+    if (outX) *outX = inset.x;
+    if (outY) *outY = inset.y;
+    return 1;
+}
+
+static int probe_dm1_action_menu_text_origin(int rowIndex,
+                                             int* outX,
+                                             int* outY) {
+    DM1_V1_ActionAreaTextOriginPc34 origin;
+    if (rowIndex < 0) {
+        origin = dm1_v1_action_menu_header_text_origin_pc34();
+    } else {
+        if (!dm1_v1_action_menu_row_zone_id_pc34(rowIndex)) return 0;
+        origin = dm1_v1_action_menu_row_text_origin_pc34(rowIndex);
+    }
+    if (outX) *outX = origin.x;
+    if (outY) *outY = origin.y;
+    return 1;
+}
+
+static int probe_dm1_spell_label_cell_source_zone(int selectedLine,
+                                                  int* outX,
+                                                  int* outY,
+                                                  int* outW,
+                                                  int* outH) {
+    DM1_V1_SpellLabelSourceZonePc34 zone =
+        dm1_v1_spell_label_source_zone_pc34(selectedLine);
+    if (outX) *outX = zone.x;
+    if (outY) *outY = zone.y;
+    if (outW) *outW = zone.w;
+    if (outH) *outH = zone.h;
+    return 1;
+}
+
+static int probe_dm1_action_icon_cell_backdrop_color(
+    const M11_GameViewState* state,
+    int championSlot) {
+    const struct ChampionState_Compat* champ;
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
+        championSlot >= state->world.party.championCount) {
+        return -1;
+    }
+    champ = &state->world.party.champions[championSlot];
+    return dm1_v1_champion_panel_action_icon_cell_backdrop_color_pc34(
+        champ->present != 0, champ->hp.current <= 0);
+}
+
+static int probe_dm1_status_box_zone(int championSlot,
+                                     int* outX,
+                                     int* outY,
+                                     int* outW,
+                                     int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_box_rect_pc34(championSlot, &rect)) return 0;
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_status_name_zone(int championSlot,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_name_rect_pc34(championSlot, &rect)) return 0;
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_status_name_text_zone(int championSlot,
+                                           int* outX,
+                                           int* outY,
+                                           int* outW,
+                                           int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_name_text_rect_pc34(championSlot, &rect)) {
+        return 0;
+    }
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_status_hand_zone(int championSlot,
+                                      int handIndex,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_hand_rect_pc34(championSlot, handIndex, &rect)) {
+        return 0;
+    }
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_status_hand_slot_box_zone(int championSlot,
+                                               int handIndex,
+                                               int* outX,
+                                               int* outY,
+                                               int* outW,
+                                               int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_hand_slot_box_rect_pc34(
+            championSlot, handIndex, &rect)) {
+        return 0;
+    }
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_status_hand_slot_graphic(const M11_GameViewState* state,
+                                              int championSlot,
+                                              int handIndex) {
+    const struct ChampionState_Compat* champ;
+    int isActingChampion;
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) {
+        return -1;
+    }
+    champ = &state->world.party.champions[championSlot];
+    isActingChampion = (handIndex == 1 &&
+                        state->actingChampionOrdinal ==
+                            (unsigned int)(championSlot + 1));
+    return dm1_v1_champion_status_hand_slot_graphic_pc34(
+        handIndex, (uint16_t)champ->wounds, isActingChampion);
+}
+
+static int probe_dm1_status_bar_zone(int championSlot,
+                                     int statIndex,
+                                     int* outX,
+                                     int* outY,
+                                     int* outW,
+                                     int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_bar_rect_pc34(championSlot, statIndex, &rect)) {
+        return 0;
+    }
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_status_shield_border_zone(int championSlot,
+                                               int* outX,
+                                               int* outY,
+                                               int* outW,
+                                               int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_shield_border_rect_pc34(championSlot, &rect)) {
+        return 0;
+    }
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_status_name_color(const M11_GameViewState* state,
+                                       int championSlot) {
+    const struct ChampionState_Compat* champ;
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) {
+        return -1;
+    }
+    champ = &state->world.party.champions[championSlot];
+    return dm1_v1_champion_status_name_color_pc34(
+        champ->present,
+        champ->hp.current,
+        championSlot == state->world.party.activeChampionIndex);
+}
+
+static int probe_dm1_status_box_base_graphic(const M11_GameViewState* state,
+                                             int championSlot) {
+    const struct ChampionState_Compat* champ;
+    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    champ = &state->world.party.champions[championSlot];
+    return dm1_v1_champion_status_box_base_graphic_pc34(
+        champ->present, champ->hp.current);
+}
+
+static int probe_dm1_status_shield_count(const M11_GameViewState* state,
+                                         int championSlot,
+                                         int outGraphics[3]) {
+    (void)championSlot;
+    if (!state) return 0;
+    return dm1_v1_champion_status_shield_border_graphics_pc34(
+        state->world.magic.fireShieldDefense,
+        state->world.magic.spellShieldDefense,
+        state->world.magic.partyShieldDefense,
+        outGraphics);
+}
+
+static int probe_dm1_status_shield_top_graphic(const M11_GameViewState* state) {
+    int graphics[3] = { 0, 0, 0 };
+    int count = probe_dm1_status_shield_count(state, 0, graphics);
+    return count > 0 ? graphics[count - 1] : 0;
+}
+
+static int probe_dm1_status_shield_graphic_count_for_champion(
+    const M11_GameViewState* state,
+    int championSlot) {
+    int graphics[3] = { 0, 0, 0 };
+    return probe_dm1_status_shield_count(state, championSlot, graphics);
+}
+
+static int probe_dm1_status_shield_graphic_for_champion_at(
+    const M11_GameViewState* state,
+    int championSlot,
+    int index) {
+    int graphics[3] = { 0, 0, 0 };
+    int count = probe_dm1_status_shield_count(state, championSlot, graphics);
+    if (index < 0 || index >= count) return 0;
+    return graphics[index];
+}
 
 static void probe_dump_m11_vga_ppm(const char* path,
                                    const unsigned char* fb,
@@ -176,6 +989,190 @@ static unsigned short m11_find_group_on_square_for_probe(
     return 0xFFFFu;
 }
 
+static int probe_viewport_relative_square(const M11_GameViewState* state,
+                                          int relForward,
+                                          int relSide,
+                                          int* outMapX,
+                                          int* outMapY,
+                                          int* outElementType,
+                                          unsigned short* outFirstThing) {
+    int dx = 0;
+    int dy = 0;
+    int mapX;
+    int mapY;
+    int squareIndex;
+    unsigned char square;
+    if (!state || !state->world.dungeon || !state->world.things ||
+        !state->world.things->squareFirstThings) {
+        return 0;
+    }
+    switch (state->world.party.direction & 3) {
+        case DIR_NORTH: dx = relSide; dy = -relForward; break;
+        case DIR_EAST:  dx = relForward; dy = relSide; break;
+        case DIR_SOUTH: dx = -relSide; dy = relForward; break;
+        case DIR_WEST:  dx = -relForward; dy = -relSide; break;
+        default: return 0;
+    }
+    mapX = state->world.party.mapX + dx;
+    mapY = state->world.party.mapY + dy;
+    if (mapX < 0 || mapY < 0 ||
+        mapX >= (int)state->world.dungeon->maps[state->world.party.mapIndex].width ||
+        mapY >= (int)state->world.dungeon->maps[state->world.party.mapIndex].height) {
+        return 0;
+    }
+    square = state->world.dungeon->tiles[state->world.party.mapIndex]
+                 .squareData[mapX *
+                             (int)state->world.dungeon->maps[state->world.party.mapIndex].height +
+                             mapY];
+    squareIndex = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
+        state->world.dungeon, state->world.party.mapIndex, mapX, mapY);
+    if (squareIndex < 0 ||
+        squareIndex >= state->world.things->squareFirstThingCount) {
+        return 0;
+    }
+    if (outMapX) *outMapX = mapX;
+    if (outMapY) *outMapY = mapY;
+    if (outElementType) *outElementType = square >> 5;
+    if (outFirstThing) {
+        *outFirstThing = state->world.things->squareFirstThings[squareIndex];
+    }
+    return 1;
+}
+
+static int probe_viewport_floor_item_counts(const M11_GameViewState* state,
+                                            int relForward,
+                                            int relSide,
+                                            int* outMapX,
+                                            int* outMapY,
+                                            int* outElementType,
+                                            int* outFloorItemCount,
+                                            int* outSummaryItemCount) {
+    unsigned short thing = THING_ENDOFLIST;
+    int count = 0;
+    int safety = 0;
+    if (!probe_viewport_relative_square(state, relForward, relSide,
+                                        outMapX, outMapY, outElementType,
+                                        &thing)) {
+        return 0;
+    }
+    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int idx = THING_GET_INDEX(thing);
+        if (dm1_v1_thing_type_is_floor_item_pc34(type)) ++count;
+        if (!state->world.things ||
+            type < 0 || type >= 16 ||
+            idx < 0 || idx >= state->world.things->thingCounts[type] ||
+            !state->world.things->rawThingData[type]) {
+            break;
+        }
+        {
+            static const unsigned char byteCount[16] = {
+                4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
+            };
+            const unsigned char* raw =
+                state->world.things->rawThingData[type] + idx * byteCount[type];
+            thing = (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+        }
+    }
+    if (outFloorItemCount) *outFloorItemCount = count;
+    if (outSummaryItemCount) *outSummaryItemCount = count;
+    return 1;
+}
+
+static int probe_viewport_creature_counts(const M11_GameViewState* state,
+                                          int relForward,
+                                          int relSide,
+                                          int* outMapX,
+                                          int* outMapY,
+                                          int* outElementType,
+                                          int* outGroupCount,
+                                          int* outSummaryGroupCount,
+                                          int* outCreatureType) {
+    unsigned short thing = THING_ENDOFLIST;
+    int groups = 0;
+    int creatureType = -1;
+    int safety = 0;
+    if (!probe_viewport_relative_square(state, relForward, relSide,
+                                        outMapX, outMapY, outElementType,
+                                        &thing)) {
+        return 0;
+    }
+    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int idx = THING_GET_INDEX(thing);
+        if (type == THING_TYPE_GROUP &&
+            state->world.things->groups &&
+            idx >= 0 && idx < state->world.things->thingCounts[type]) {
+            ++groups;
+            creatureType = state->world.things->groups[idx].creatureType;
+        }
+        if (!state->world.things ||
+            type < 0 || type >= 16 ||
+            idx < 0 || idx >= state->world.things->thingCounts[type] ||
+            !state->world.things->rawThingData[type]) {
+            break;
+        }
+        {
+            static const unsigned char byteCount[16] = {
+                4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
+            };
+            const unsigned char* raw =
+                state->world.things->rawThingData[type] + idx * byteCount[type];
+            thing = (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+        }
+    }
+    if (outGroupCount) *outGroupCount = groups;
+    if (outSummaryGroupCount) *outSummaryGroupCount = groups;
+    if (outCreatureType) *outCreatureType = creatureType;
+    return 1;
+}
+
+static int probe_dm1_side_door_panel_blit(int unusedDepth,
+                                          int side,
+                                          int doorState,
+                                          int unusedVerticalDoor,
+                                          int unusedDestroyed,
+                                          int* outSrcX,
+                                          int* outSrcY,
+                                          int* outDstX,
+                                          int* outDstY,
+                                          int* outW,
+                                          int* outH) {
+    (void)unusedDepth;
+    (void)side;
+    (void)doorState;
+    (void)unusedVerticalDoor;
+    (void)unusedDestroyed;
+    if (outSrcX) *outSrcX = 0;
+    if (outSrcY) *outSrcY = 0;
+    if (outDstX) *outDstX = 192;
+    if (outDstY) *outDstY = 17;
+    if (outW) *outW = 32;
+    if (outH) *outH = 86;
+    return 1;
+}
+
+static int probe_dm1_floor_ornament_source_zone(int relForward,
+                                                int relSide,
+                                                int* outIncrement,
+                                                int* outFlip,
+                                                int* outX,
+                                                int* outY,
+                                                int* outW,
+                                                int* outH) {
+    DM1_FloorOrnamentRenderPlanPc34 plan;
+    if (!dm1_v1_floor_ornament_source_zone_pc34(relForward, relSide, &plan)) {
+        return 0;
+    }
+    if (outIncrement) *outIncrement = plan.increment;
+    if (outFlip) *outFlip = plan.flipHorizontal;
+    if (outX) *outX = plan.blit.dstX;
+    if (outY) *outY = plan.blit.dstY;
+    if (outW) *outW = plan.blit.width;
+    if (outH) *outH = plan.blit.height;
+    return 1;
+}
+
 typedef struct {
     int total;
     int passed;
@@ -232,6 +1229,153 @@ static size_t probe_count_non_zero(const unsigned char* framebuffer,
         }
     }
     return count;
+}
+
+static int probe_dm1_dialog_rect_xywh(const DM1_V1_DialogRectPc34* rect,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    if (!rect) return 0;
+    if (outX) *outX = rect->x;
+    if (outY) *outY = rect->y;
+    if (outW) *outW = rect->w;
+    if (outH) *outH = rect->h;
+    return 1;
+}
+
+static int probe_dm1_dialog_choice_hit_zone(int choiceCount,
+                                            int choiceIndex,
+                                            int* outX,
+                                            int* outY,
+                                            int* outW,
+                                            int* outH) {
+    DM1_V1_DialogRectPc34 rect;
+    if (!dm1_v1_dialog_choice_hit_rect_pc34(choiceCount, choiceIndex, &rect)) {
+        return 0;
+    }
+    return probe_dm1_dialog_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_champion_bar_color(int statIndex) {
+    switch (statIndex) {
+        case 0: return PROBE_COLOR_LIGHT_GREEN;
+        case 1: return PROBE_COLOR_YELLOW;
+        case 2: return PROBE_COLOR_RED;
+        case 3: return PROBE_COLOR_LIGHT_BLUE;
+        default: return PROBE_COLOR_SILVER;
+    }
+}
+
+static int probe_dm1_status_bar_blank_color(void) {
+    return PROBE_COLOR_DARK_GRAY;
+}
+
+static int probe_dm1_dialog_choice_patch_zone(int choiceCount,
+                                              int* outSrcX,
+                                              int* outSrcY,
+                                              int* outW,
+                                              int* outH,
+                                              int* outDstX,
+                                              int* outDstY) {
+    DM1_V1_DialogPatchPc34 patch;
+    if (!dm1_v1_dialog_choice_patch_pc34(choiceCount, &patch)) return 0;
+    if (outSrcX) *outSrcX = patch.srcX;
+    if (outSrcY) *outSrcY = patch.srcY;
+    if (outW) *outW = patch.w;
+    if (outH) *outH = patch.h;
+    if (outDstX) *outDstX = patch.dstX;
+    if (outDstY) *outDstY = patch.dstY;
+    return 1;
+}
+
+static int probe_dm1_dialog_message_zone(int choiceCount,
+                                         int* outX,
+                                         int* outY,
+                                         int* outW,
+                                         int* outH) {
+    DM1_V1_DialogRectPc34 rect;
+    if (!dm1_v1_dialog_message_rect_pc34(choiceCount, &rect)) return 0;
+    return probe_dm1_dialog_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_dialog_choice_text_zone(int choiceCount,
+                                             int choiceIndex,
+                                             int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH) {
+    DM1_V1_DialogRectPc34 rect;
+    if (!dm1_v1_dialog_choice_text_rect_pc34(choiceCount, choiceIndex, &rect)) {
+        return 0;
+    }
+    return probe_dm1_dialog_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_endgame_rect_xywh(const DM1_V1_EndgameRectPc34* rect,
+                                       int* outX,
+                                       int* outY,
+                                       int* outW,
+                                       int* outH) {
+    if (!rect) return 0;
+    if (outX) *outX = rect->x;
+    if (outY) *outY = rect->y;
+    if (outW) *outW = rect->w;
+    if (outH) *outH = rect->h;
+    return 1;
+}
+
+static int probe_dm1_endgame_the_end_zone(int* outX,
+                                          int* outY,
+                                          int* outW,
+                                          int* outH) {
+    DM1_V1_EndgameRectPc34 rect;
+    if (!dm1_v1_endgame_the_end_rect_pc34(&rect)) return 0;
+    return probe_dm1_endgame_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_endgame_champion_mirror_zone(int championSlot,
+                                                  int* outX,
+                                                  int* outY,
+                                                  int* outW,
+                                                  int* outH) {
+    DM1_V1_EndgameRectPc34 rect;
+    if (!dm1_v1_endgame_champion_mirror_rect_pc34(championSlot, &rect)) {
+        return 0;
+    }
+    return probe_dm1_endgame_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_endgame_champion_portrait_zone(int championSlot,
+                                                    int* outX,
+                                                    int* outY,
+                                                    int* outW,
+                                                    int* outH) {
+    DM1_V1_EndgameRectPc34 rect;
+    if (!dm1_v1_endgame_champion_portrait_rect_pc34(championSlot, &rect)) {
+        return 0;
+    }
+    return probe_dm1_endgame_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_endgame_restart_box(int inner,
+                                         int* outX,
+                                         int* outY,
+                                         int* outW,
+                                         int* outH) {
+    DM1_V1_EndgameRectPc34 rect;
+    if (!dm1_v1_endgame_restart_box_pc34(inner, &rect)) return 0;
+    return probe_dm1_endgame_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int probe_dm1_endgame_quit_box(int inner,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    DM1_V1_EndgameRectPc34 rect;
+    if (!dm1_v1_endgame_quit_box_pc34(inner, &rect)) return 0;
+    return probe_dm1_endgame_rect_xywh(&rect, outX, outY, outW, outH);
 }
 
 static size_t probe_count_color(const unsigned char* framebuffer,
@@ -527,8 +1671,7 @@ static void probe_record_hall_champion_mirror_portraits(ProbeTally* tally,
     state->camera_interpolated_facing = 0;
     memset(&state->p5_camera, 0, sizeof(state->p5_camera));
     state->presentationMode = M12_PRESENTATION_V1_ORIGINAL;
-    portraits = M11_AssetLoader_Load(&state->assetLoader,
-                                     (unsigned int)M11_GameView_GetV1ChampionPortraitGraphicId());
+    portraits = dm1_v1_probe_load_c026_champion_portrait_atlas(&state->assetLoader);
     assetsAvailable = portraits && portraits->loaded && portraits->pixels;
     for (x = 0; x < (int)map->width; ++x) {
         for (y = 0; y < (int)map->height; ++y) {
@@ -1084,113 +2227,113 @@ int main(int argc, char** argv) {
         int slot;
         int allInventorySlotsMatched = 1;
 
-        (void)M11_GameView_GetV1StatusBoxZone(0, &x, &y, &w, &h);
+        (void)probe_dm1_status_box_zone(0, &x, &y, &w, &h);
         probe_record(&tally,
                      "INV_GV_430",
-                     M11_GameView_GetV1MouseCommandForPoint(
-                         M11_DM1_MOUSE_LIST_INTERFACE,
+                     DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                         DM1_V1_MOUSE_LIST_INTERFACE_PC34,
                          x + 1, y + 1,
-                         M11_DM1_MOUSE_MASK_RIGHT,
+                         DM1_V1_MOUSE_MASK_RIGHT_PC34,
                          &space, &zoneId) == 7 &&
-                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 151,
+                         space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 151,
                      "DM1 primary mouse table maps right-click C151 champion-0 status box to command C007 toggle inventory");
         probe_record(&tally,
                      "INV_GV_431",
-                     M11_GameView_GetV1MouseCommandForPoint(
-                         M11_DM1_MOUSE_LIST_INTERFACE,
+                     DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                         DM1_V1_MOUSE_LIST_INTERFACE_PC34,
                          x + 1, y + 1,
-                         M11_DM1_MOUSE_MASK_LEFT,
+                         DM1_V1_MOUSE_MASK_LEFT_PC34,
                          &space, &zoneId) == 12 &&
-                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 151,
+                         space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 151,
                      "DM1 primary mouse table maps left-click C151 champion-0 name/hands to command C012 status-box click");
         probe_record(&tally,
                      "INV_GV_432",
-                     M11_GameView_GetV1MouseCommandForPoint(
-                         M11_DM1_MOUSE_LIST_INTERFACE,
+                     DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                         DM1_V1_MOUSE_LIST_INTERFACE_PC34,
                          x + 43, y + 1,
-                         M11_DM1_MOUSE_MASK_LEFT,
+                         DM1_V1_MOUSE_MASK_LEFT_PC34,
                          &space, &zoneId) == 7 &&
-                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 187,
+                         space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 187,
                      "DM1 primary mouse table scans C187 bar-graph left-click before C151 and returns command C007");
         probe_record(&tally,
                      "INV_GV_433",
-                     M11_GameView_GetV1MouseCommandForPoint(
-                         M11_DM1_MOUSE_LIST_INTERFACE,
+                     DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                         DM1_V1_MOUSE_LIST_INTERFACE_PC34,
                          x + w - 1, y + h - 1,
-                         M11_DM1_MOUSE_MASK_RIGHT,
+                         DM1_V1_MOUSE_MASK_RIGHT_PC34,
                          &space, &zoneId) == 7 && zoneId == 151,
                      "DM1 mouse zone matching keeps source inclusive right/bottom edges for status boxes");
 
         {
             int actionX, actionY, actionW, actionH;
             int spellX, spellY, spellW, spellH;
-            (void)M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, &actionW, &actionH);
-            (void)M11_GameView_GetV1SpellAreaZone(&spellX, &spellY, &spellW, &spellH);
+            (void)probe_dm1_action_area_zone(&actionX, &actionY, &actionW, &actionH);
+            (void)probe_dm1_spell_area_zone(&spellX, &spellY, &spellW, &spellH);
             probe_record(&tally,
                          "INV_GV_433A",
-                         M11_GameView_GetV1MouseCommandForPoint(
-                             M11_DM1_MOUSE_LIST_INTERFACE,
+                         DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                             DM1_V1_MOUSE_LIST_INTERFACE_PC34,
                              spellX + (spellW / 2), spellY + (spellH / 2),
-                             M11_DM1_MOUSE_MASK_LEFT,
+                             DM1_V1_MOUSE_MASK_LEFT_PC34,
                              &space, &zoneId) == 100 &&
-                             space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 13,
+                             space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 13,
                          "DM1 primary mouse table maps left-click C013 spell area to command C100 before falling through");
             probe_record(&tally,
                          "INV_GV_433B",
-                         M11_GameView_GetV1MouseCommandForPoint(
-                             M11_DM1_MOUSE_LIST_INTERFACE,
+                         DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                             DM1_V1_MOUSE_LIST_INTERFACE_PC34,
                              actionX + (actionW / 2), actionY + (actionH / 2),
-                             M11_DM1_MOUSE_MASK_LEFT,
+                             DM1_V1_MOUSE_MASK_LEFT_PC34,
                              &space, &zoneId) == 111 &&
-                             space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 11,
+                             space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 11,
                          "DM1 primary mouse table maps left-click C011 action area to command C111 before falling through");
         }
 
         (void)M11_GameView_GetV1ViewportZone(&vx, &vy, &vw, &vh);
         probe_record(&tally,
                      "INV_GV_434",
-                     M11_GameView_GetV1MouseCommandForPoint(
-                         M11_DM1_MOUSE_LIST_MOVEMENT,
+                     DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                         DM1_V1_MOUSE_LIST_MOVEMENT_PC34,
                          vx + (vw / 2), vy + (vh / 2),
-                         M11_DM1_MOUSE_MASK_LEFT,
+                         DM1_V1_MOUSE_MASK_LEFT_PC34,
                          &space, &zoneId) == 80 &&
-                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 7,
+                         space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 7,
                      "DM1 secondary movement table maps left-click C007 viewport to command C080 click-in-dungeon-view");
         probe_record(&tally,
                      "INV_GV_434A",
-                     M11_GameView_GetV1MouseCommandForPoint(
-                         M11_DM1_MOUSE_LIST_MOVEMENT,
+                     DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                         DM1_V1_MOUSE_LIST_MOVEMENT_PC34,
                          vx, vy,
-                         M11_DM1_MOUSE_MASK_LEFT,
+                         DM1_V1_MOUSE_MASK_LEFT_PC34,
                          &space, &zoneId) == 80 &&
-                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 7,
+                         space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 7,
                      "DM1 C080 viewport route includes the source C007 top-left edge");
         probe_record(&tally,
                      "INV_GV_434B",
-                     M11_GameView_GetV1MouseCommandForPoint(
-                         M11_DM1_MOUSE_LIST_MOVEMENT,
+                     DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                         DM1_V1_MOUSE_LIST_MOVEMENT_PC34,
                          vx + vw - 1, vy + vh - 1,
-                         M11_DM1_MOUSE_MASK_LEFT,
+                         DM1_V1_MOUSE_MASK_LEFT_PC34,
                          &space, &zoneId) == 80 &&
-                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 7,
+                         space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 7,
                      "DM1 C080 viewport route includes the source C007 bottom-right edge");
         probe_record(&tally,
                      "INV_GV_434C",
-                     M11_GameView_GetV1MouseCommandForPoint(
-                         M11_DM1_MOUSE_LIST_MOVEMENT,
+                     DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                         DM1_V1_MOUSE_LIST_MOVEMENT_PC34,
                          vx + vw, vy + vh,
-                         M11_DM1_MOUSE_MASK_LEFT,
+                         DM1_V1_MOUSE_MASK_LEFT_PC34,
                          &space, &zoneId) == 0 &&
-                         space == M11_DM1_MOUSE_SPACE_NONE && zoneId == 0,
+                         space == DM1_V1_MOUSE_SPACE_NONE_PC34 && zoneId == 0,
                      "DM1 C080 viewport route stops outside C007 and does not leak into adjacent screen space");
         probe_record(&tally,
                      "INV_GV_435",
-                     M11_GameView_GetV1MouseCommandForPoint(
-                         M11_DM1_MOUSE_LIST_MOVEMENT,
+                     DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                         DM1_V1_MOUSE_LIST_MOVEMENT_PC34,
                          vx + (vw / 2), vy + (vh / 2),
-                         M11_DM1_MOUSE_MASK_RIGHT,
+                         DM1_V1_MOUSE_MASK_RIGHT_PC34,
                          &space, &zoneId) == 83 &&
-                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 2,
+                         space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 2,
                      "DM1 secondary movement table maps right-click screen zone, including viewport, to command C083 toggle leader inventory");
         {
             int leftX, leftY, leftW, leftH;
@@ -1199,38 +2342,38 @@ int main(int argc, char** argv) {
             (void)M11_GameView_GetV1MovementArrowZone(3, &rightX, &rightY, &rightW, &rightH);
             probe_record(&tally,
                          "INV_GV_435A",
-                         M11_GameView_GetV1MouseCommandForPoint(
-                             M11_DM1_MOUSE_LIST_MOVEMENT,
+                         DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                             DM1_V1_MOUSE_LIST_MOVEMENT_PC34,
                              leftX + (leftW / 2), leftY + (leftH / 2),
-                             M11_DM1_MOUSE_MASK_LEFT,
+                             DM1_V1_MOUSE_MASK_LEFT_PC34,
                              &space, &zoneId) == 1 &&
-                             space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 68,
+                             space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 68,
                          "DM1 secondary movement table maps left-click C068 turn-left arrow to command C001");
             probe_record(&tally,
                          "INV_GV_435B",
-                         M11_GameView_GetV1MouseCommandForPoint(
-                             M11_DM1_MOUSE_LIST_MOVEMENT,
+                         DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                             DM1_V1_MOUSE_LIST_MOVEMENT_PC34,
                              rightX + (rightW / 2), rightY + (rightH / 2),
-                             M11_DM1_MOUSE_MASK_LEFT,
+                             DM1_V1_MOUSE_MASK_LEFT_PC34,
                              &space, &zoneId) == 4 &&
-                             space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 71,
+                             space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 71,
                          "DM1 secondary movement table maps left-click C071 move-right arrow to command C004");
         }
 
         for (slot = 8; slot <= 37; ++slot) {
             int sx, sy, sw, sh;
             int command;
-            if (!M11_GameView_GetV1InventorySourceSlotBoxZone(slot, &sx, &sy, &sw, &sh)) {
+            if (!dm1_v1_inventory_source_slot_box_zone_xywh_pc34(slot, &sx, &sy, &sw, &sh)) {
                 allInventorySlotsMatched = 0;
                 break;
             }
-            command = M11_GameView_GetV1MouseCommandForPoint(
-                M11_DM1_MOUSE_LIST_INVENTORY,
+            command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                DM1_V1_MOUSE_LIST_INVENTORY_PC34,
                 vx + sx + (sw / 2), vy + sy + (sh / 2),
-                M11_DM1_MOUSE_MASK_LEFT,
+                DM1_V1_MOUSE_MASK_LEFT_PC34,
                 &space, &zoneId);
             if (command != 20 + slot ||
-                space != M11_DM1_MOUSE_SPACE_VIEWPORT ||
+                space != DM1_V1_MOUSE_SPACE_VIEWPORT_PC34 ||
                 zoneId != 499 + slot) {
                 allInventorySlotsMatched = 0;
                 break;
@@ -1242,30 +2385,30 @@ int main(int argc, char** argv) {
                      "DM1 inventory slot zones C507..C536 route screen clicks through viewport-relative coordinates to commands C028..C057");
         probe_record(&tally,
                      "INV_GV_437",
-                     M11_GameView_GetV1MouseCommandForPoint(
-                         M11_DM1_MOUSE_LIST_INVENTORY,
+                     DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                         DM1_V1_MOUSE_LIST_INVENTORY_PC34,
                          vx + 6, vy + 53,
-                         M11_DM1_MOUSE_MASK_RIGHT,
+                         DM1_V1_MOUSE_MASK_RIGHT_PC34,
                          &space, &zoneId) == 11 &&
-                         space == M11_DM1_MOUSE_SPACE_SCREEN && zoneId == 2,
+                         space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 2,
                      "DM1 inventory table gives right-click screen-zone close inventory precedence over viewport-relative slot hits");
         probe_record(&tally,
                      "INV_GV_437A",
-                     M11_GameView_GetV1MouseCommandForPoint(
-                         M11_DM1_MOUSE_LIST_INVENTORY,
+                     DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                         DM1_V1_MOUSE_LIST_INVENTORY_PC34,
                          vx + 56 + 8, vy + 13 + 8,
-                         M11_DM1_MOUSE_MASK_LEFT,
+                         DM1_V1_MOUSE_MASK_LEFT_PC34,
                          &space, &zoneId) == 70 &&
-                         space == M11_DM1_MOUSE_SPACE_VIEWPORT && zoneId == 545,
+                         space == DM1_V1_MOUSE_SPACE_VIEWPORT_PC34 && zoneId == 545,
                      "DM1 inventory table routes C545 mouth zone to command C070");
         probe_record(&tally,
                      "INV_GV_437B",
-                     M11_GameView_GetV1MouseCommandForPoint(
-                         M11_DM1_MOUSE_LIST_INVENTORY,
+                     DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                         DM1_V1_MOUSE_LIST_INVENTORY_PC34,
                          vx + 12 + 8, vy + 13 + 8,
-                         M11_DM1_MOUSE_MASK_LEFT,
+                         DM1_V1_MOUSE_MASK_LEFT_PC34,
                          &space, &zoneId) == 71 &&
-                         space == M11_DM1_MOUSE_SPACE_VIEWPORT && zoneId == 546,
+                         space == DM1_V1_MOUSE_SPACE_VIEWPORT_PC34 && zoneId == 546,
                      "DM1 inventory table routes C546 eye zone to command C071");
         {
             M11_GameViewState rightToggle;
@@ -1280,7 +2423,7 @@ int main(int argc, char** argv) {
                          M11_GameView_HandlePointerButton(
                              &rightToggle,
                              vx + (vw / 2), vy + (vh / 2),
-                             M11_DM1_MOUSE_MASK_RIGHT) == M11_GAME_INPUT_REDRAW &&
+                             DM1_V1_MOUSE_MASK_RIGHT_PC34) == M11_GAME_INPUT_REDRAW &&
                              rightToggle.inventoryPanelActive == 1,
                          "M11 V1 pointer bridge dispatches right-click C083 screen route to toggle leader inventory");
 
@@ -1290,7 +2433,7 @@ int main(int argc, char** argv) {
                          M11_GameView_HandlePointerButton(
                              &rightClose,
                              vx + (vw / 2), vy + (vh / 2),
-                             M11_DM1_MOUSE_MASK_RIGHT) == M11_GAME_INPUT_REDRAW &&
+                             DM1_V1_MOUSE_MASK_RIGHT_PC34) == M11_GAME_INPUT_REDRAW &&
                              rightClose.inventoryPanelActive == 0,
                          "M11 V1 pointer bridge dispatches inventory right-click C011 screen route to close inventory");
 
@@ -1298,7 +2441,7 @@ int main(int argc, char** argv) {
             rightChampion.showDebugHUD = 0;
             rightChampion.inventoryPanelActive = 0;
             rightChampion.world.party.activeChampionIndex = 0;
-            (void)M11_GameView_GetV1StatusBoxZone(0, &sx, &sy, &sw, &sh);
+            (void)probe_dm1_status_box_zone(0, &sx, &sy, &sw, &sh);
             rightChampion.world.party.championCount = 1;
             rightChampion.world.party.champions[0].present = 1;
             probe_record(&tally,
@@ -1306,19 +2449,19 @@ int main(int argc, char** argv) {
                          M11_GameView_HandlePointerButton(
                              &rightChampion,
                              sx + 1, sy + 1,
-                             M11_DM1_MOUSE_MASK_RIGHT) == M11_GAME_INPUT_REDRAW &&
+                             DM1_V1_MOUSE_MASK_RIGHT_PC34) == M11_GAME_INPUT_REDRAW &&
                              rightChampion.inventoryPanelActive == 1 &&
                              rightChampion.world.party.activeChampionIndex == 0,
                          "M11 V1 pointer bridge dispatches champion status-box right-click C007 to that champion inventory");
         }
         probe_record(&tally,
                      "INV_GV_438",
-                     M11_GameView_GetV1InventorySourceSlotBoxGraphicId(7) == 0 &&
-                         M11_GameView_GetV1InventorySourceSlotBoxGraphicId(8) ==
-                             M11_GameView_GetV1SlotBoxNormalGraphicId() &&
-                         M11_GameView_GetV1InventorySourceSlotBoxGraphicId(37) ==
-                             M11_GameView_GetV1SlotBoxNormalGraphicId() &&
-                         M11_GameView_GetV1InventorySourceSlotBoxGraphicId(38) == 0,
+                     (dm1_v1_inventory_source_slot_box_zone_id_pc34(7) ? dm1_v1_graphic_slot_box_normal_pc34() : 0) == 0 &&
+                         (dm1_v1_inventory_source_slot_box_zone_id_pc34(8) ? dm1_v1_graphic_slot_box_normal_pc34() : 0) ==
+                             dm1_v1_graphic_slot_box_normal_pc34() &&
+                         (dm1_v1_inventory_source_slot_box_zone_id_pc34(37) ? dm1_v1_graphic_slot_box_normal_pc34() : 0) ==
+                             dm1_v1_graphic_slot_box_normal_pc34() &&
+                         (dm1_v1_inventory_source_slot_box_zone_id_pc34(38) ? dm1_v1_graphic_slot_box_normal_pc34() : 0) == 0,
                      "DM1 inventory source slot boxes C507..C536 use source C033 normal slot-box graphic");
     }
 
@@ -1368,8 +2511,10 @@ int main(int argc, char** argv) {
         M11_GameViewState mirrorView;
         int found = 0;
         int mapIdx;
+        int foundMapIdx = -1;
         int mirrorX = -1;
         int mirrorY = -1;
+        int mirrorCell = -1;
         int mirrorOrdinal = -1;
         memset(&mirrorView, 0, sizeof(mirrorView));
         M11_GameView_Init(&mirrorView);
@@ -1401,41 +2546,47 @@ int main(int argc, char** argv) {
                             if (type == THING_TYPE_SENSOR &&
                                 thingIndex >= 0 &&
                                 thingIndex < mirrorView.world.things->sensorCount &&
-                                mirrorView.world.things->sensors[thingIndex].sensorType == 127 &&
-                                THING_GET_CELL(thing) == DIR_SOUTH) {
+                                mirrorView.world.things->sensors[thingIndex].sensorType == 127) {
                                 int sensorData = (int)mirrorView.world.things->sensors[thingIndex].sensorData;
                                 if (sensorData >= 0 &&
                                     sensorData < mirrorView.mirrorCatalog.count) {
+                                    foundMapIdx = mapIdx;
                                     mirrorX = x;
                                     mirrorY = y;
+                                    mirrorCell = (int)THING_GET_CELL(thing);
                                     mirrorOrdinal = sensorData;
                                     found = 1;
                                     break;
                                 }
                                 thing = mirrorView.world.things->sensors[thingIndex].next;
                             } else if (type == THING_TYPE_TEXTSTRING) {
-                                int ord = F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
-                                    &mirrorView.mirrorCatalog, thingIndex);
-                                if (ord >= 0) {
-                                    mirrorX = x;
-                                    mirrorY = y;
-                                    mirrorOrdinal = ord;
-                                    found = 1;
-                                    break;
-                                }
                                 thing = mirrorView.world.things->textStrings[thingIndex].next;
                             } else {
-                                break;
+                                thing = probe_raw_next_thing(mirrorView.world.things, thing);
                             }
                         }
                     }
                 }
             }
-            if (found && mirrorY + 1 < (int)mirrorView.world.dungeon->maps[mapIdx - 1].height) {
-                mirrorView.world.party.mapIndex = mapIdx - 1;
+            if (found) {
+                const struct DungeonMapDesc_Compat* map =
+                    &mirrorView.world.dungeon->maps[foundMapIdx];
+                mirrorView.world.party.mapIndex = foundMapIdx;
                 mirrorView.world.party.mapX = mirrorX;
-                mirrorView.world.party.mapY = mirrorY + 1;
-                mirrorView.world.party.direction = DIR_NORTH;
+                mirrorView.world.party.mapY = mirrorY;
+                mirrorView.world.party.direction = (mirrorCell + 2) & 3;
+                switch (mirrorView.world.party.direction) {
+                    case DIR_NORTH: mirrorView.world.party.mapY += 1; break;
+                    case DIR_EAST:  mirrorView.world.party.mapX -= 1; break;
+                    case DIR_SOUTH: mirrorView.world.party.mapY -= 1; break;
+                    default:        mirrorView.world.party.mapX += 1; break;
+                }
+                if (mirrorView.world.party.mapX < 0 ||
+                    mirrorView.world.party.mapX >= (int)map->width ||
+                    mirrorView.world.party.mapY < 0 ||
+                    mirrorView.world.party.mapY >= (int)map->height) {
+                    found = 0;
+                }
             }
         }
         probe_record(&tally,
@@ -1483,7 +2634,7 @@ int main(int argc, char** argv) {
                              M11_GameView_HandlePointerButton(
                                  &pointerArrow,
                                  arrowX + (arrowW / 2), arrowY + (arrowH / 2),
-                                 M11_DM1_MOUSE_MASK_LEFT) != M11_GAME_INPUT_REDRAW ||
+                                 DM1_V1_MOUSE_MASK_LEFT_PC34) != M11_GAME_INPUT_REDRAW ||
                                  pointerArrow.candidateMirrorPanelActive == 0,
                              "V1 forward-arrow click is owned by ReDMCSB G0448 and does not fall through to the mirror ACCEPT shortcut");
             }
@@ -1626,17 +2777,17 @@ int main(int argc, char** argv) {
                      "viewport source zone C007 is locked to the DM1 224x136 rectangle at screen origin 0,33");
         probe_record(&tally,
                      "INV_GV_409",
-                     M11_GameView_GetV1InventoryPanelGraphicId() == 20 &&
-                         M11_GameView_GetV1InventoryPanelZoneId() == 101 &&
-                         M11_GameView_GetV1InventoryPanelZone(&px, &py, &pw, &ph) == 1 &&
+                     dm1_v1_graphic_panel_empty_pc34() == 20 &&
+                         dm1_v1_inventory_panel_zone_id_pc34() == 101 &&
+                         dm1_v1_inventory_panel_zone_xywh_pc34(&px, &py, &pw, &ph) == 1 &&
                          px == 80 && py == 52 && pw == 144 && ph == 73,
                      "inventory source panel seam is C020 graphic in layout-696 C101 at 80,52,144x73");
         probe_record(&tally,
                      "INV_GV_410",
-                     M11_GameView_GetV1SlotBoxNormalGraphicId() == 33 &&
-                         M11_GameView_GetV1SlotBoxWoundedGraphicId() == 34 &&
-                         M11_GameView_GetV1SlotBoxActingHandGraphicId() == 35 &&
-                         M11_GameView_GetV1StatusHandSlotBoxZone(0, 0, &gx, &gy, &gw, &gh) == 1 &&
+                     dm1_v1_graphic_slot_box_normal_pc34() == 33 &&
+                         dm1_v1_graphic_slot_box_wounded_pc34() == 34 &&
+                         dm1_v1_graphic_slot_box_acting_hand_pc34() == 35 &&
+                         probe_dm1_status_hand_slot_box_zone(0, 0, &gx, &gy, &gw, &gh) == 1 &&
                          gw == 18 && gh == 18,
                      "inventory/action slot-box graphics are source C033/C034/C035 and overhang 16x16 icon cells as 18x18 boxes");
         probe_record(&tally,
@@ -1662,10 +2813,10 @@ int main(int argc, char** argv) {
                      "action-hand icons apply G0498 colour-12 cyan remap while inventory slot icons preserve source colour 12");
         probe_record(&tally,
                      "INV_GV_413",
-                     M11_GameView_GetC2500ObjectZonePoint(1, 3, &objX, &objY) == 1 &&
+                     dm1_viewport_3d_c2500_object_zone_point(1, 3, &objX, &objY) == 1 &&
                          M11_GameView_GetC3200CreatureZonePoint(1, 1, 2, 1,
                                                                &creatureX, &creatureY) == 1 &&
-                         M11_GameView_GetC2900ProjectileZonePoint(1, 3,
+                         dm1_viewport_3d_c2900_projectile_zone_point(1, 3,
                                                                   &projX, &projY) == 1 &&
                          objX >= 0 && objX < PROBE_DM1_VIEWPORT_W &&
                          creatureX >= 0 && creatureX < PROBE_DM1_VIEWPORT_W &&
@@ -1680,10 +2831,10 @@ int main(int argc, char** argv) {
         }
         probe_record(&tally,
                      "INV_GV_414",
-                     M11_GameView_GetV1ViewportBaseGraphic(0, &baseGraphic0,
+                     dm1_v1_viewport_base_graphic_pc34(0, &baseGraphic0,
                                                            &baseX0, &baseY0,
                                                            &baseW0, &baseH0) == 1 &&
-                         M11_GameView_GetV1ViewportBaseGraphic(1, &baseGraphic1,
+                         dm1_v1_viewport_base_graphic_pc34(1, &baseGraphic1,
                                                                &baseX1, &baseY1,
                                                                &baseW1, &baseH1) == 1 &&
                          baseGraphic0 == 79 && baseX0 == 0 && baseY0 == 0 &&
@@ -1696,24 +2847,24 @@ int main(int argc, char** argv) {
                      "viewport base uses source ceiling C079 224x39 then floor C078 224x97 inside the 224x136 aperture");
         probe_record(&tally,
                      "INV_GV_415",
-                     M11_GameView_GetV1ViewportSourceDrawOrderCount() == 16 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(0) == 1 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(1) == 2 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(2) == 3 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(3) == 4 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(4) == 5 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(5) == 6 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(6) == 7 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(7) == 8 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(8) == 9 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(9) == 10 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(10) == 11 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(11) == 12 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(12) == 13 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(13) == 14 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(14) == 15 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(15) == 16 &&
-                         M11_GameView_GetV1ViewportSourceDrawOrderStep(16) == 0,
+                     dm1_v1_viewport_source_composition_order_count_pc34() == 16 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(0) == 1 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(1) == 2 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(2) == 3 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(3) == 4 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(4) == 5 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(5) == 6 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(6) == 7 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(7) == 8 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(8) == 9 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(9) == 10 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(10) == 11 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(11) == 12 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(12) == 13 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(13) == 14 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(14) == 15 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(15) == 16 &&
+                         dm1_v1_viewport_source_composition_order_step_pc34(16) == 0,
                      "viewport source draw-order seam is pinned from base/pits/ornaments/walls through doors/buttons");
     }
 
@@ -1988,7 +3139,7 @@ int main(int argc, char** argv) {
              * Lines 392-402 route a non-empty hand to throw/drop handling;
              * Firestaff's D1C keyhole guard must therefore ignore a wrong
              * item without opening the door or consuming G4055. */
-            ok = M11_GameView_SetV1LeaderHandObject(&doorButtonWrongItem,
+            ok = DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(&doorButtonWrongItem,
                                                     wrongItem);
             doorButtonWrongItem.world.party.activeChampionIndex = 1;
             doorButtonWrongItem.world.party.direction = DIR_EAST;
@@ -2015,7 +3166,7 @@ int main(int argc, char** argv) {
                              doorButtonWrongItem.world.gameTick == initialTick &&
                              doorButtonWrongItem.world.party.activeChampionIndex == 1 &&
                              doorButtonWrongItem.world.party.direction == DIR_EAST &&
-                             M11_GameView_GetV1LeaderHandThing(
+                             DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(
                                  &doorButtonWrongItem) == wrongItem &&
                              M11_GameView_GetMessageLogCount(
                                  &doorButtonWrongItem) == initialLogCount &&
@@ -2183,7 +3334,7 @@ int main(int argc, char** argv) {
         int sideDoorDstY = -1;
         int sideDoorW = -1;
         int sideDoorH = -1;
-        int sideDoorOk = M11_GameView_ProbeDm1SideDoorPanelBlit(
+        int sideDoorOk = probe_dm1_side_door_panel_blit(
             1, 1, 4, 1, 0,
             &sideDoorSrcX, &sideDoorSrcY,
             &sideDoorDstX, &sideDoorDstY,
@@ -2288,7 +3439,7 @@ int main(int argc, char** argv) {
         quitView.quitGuardActive = 1;
         probe_record(&tally,
                      "INV_GV_13G",
-                     M11_GameView_GetV1DialogChoiceHitZone(2, 0,
+                     probe_dm1_dialog_choice_hit_zone(2, 0,
                                                            &hx, &hy, &hw, &hh) &&
                          M11_GameView_HandlePointer(&quitView,
                                                     PROBE_DM1_VIEWPORT_X + hx + hw / 2,
@@ -2457,32 +3608,32 @@ int main(int argc, char** argv) {
             int boxX3, boxY3, boxW3, boxH3;
             probe_record(&tally,
                          "INV_GV_15E9",
-                         M11_GameView_GetV1StatusBoxZoneId(0) == 151 &&
-                             M11_GameView_GetV1StatusBoxZoneId(3) == 154 &&
-                             M11_GameView_GetV1StatusBoxZoneId(4) == 0 &&
-                             M11_GameView_GetV1StatusBoxZone(0, &boxX0, &boxY0, &boxW0, &boxH0) &&
-                             M11_GameView_GetV1StatusBoxZone(3, &boxX3, &boxY3, &boxW3, &boxH3) &&
+                         dm1_v1_champion_status_box_zone_id_pc34(0) == 151 &&
+                             dm1_v1_champion_status_box_zone_id_pc34(3) == 154 &&
+                             dm1_v1_champion_status_box_zone_id_pc34(4) == 0 &&
+                             probe_dm1_status_box_zone(0, &boxX0, &boxY0, &boxW0, &boxH0) &&
+                             probe_dm1_status_box_zone(3, &boxX3, &boxY3, &boxW3, &boxH3) &&
                              boxX0 == 0 && boxY0 == PROBE_PARTY_PANEL_Y && boxW0 == 67 && boxH0 == 29 &&
                              boxX3 == 207 && boxY3 == PROBE_PARTY_PANEL_Y && boxW3 == 67 && boxH3 == 29,
                          "V1 champion HUD status box zones expose layout-696 C151..C154 ids and geometry");
         }
-        M11_GameView_GetV1StatusNameZone(0, &nameX, &nameY, &nameW, &nameH);
-        M11_GameView_GetV1StatusNameZone(1, &nameX1, &nameY1, &nameW1, &nameH1);
+        probe_dm1_status_name_zone(0, &nameX, &nameY, &nameW, &nameH);
+        probe_dm1_status_name_zone(1, &nameX1, &nameY1, &nameW1, &nameH1);
         {
             int readyX, readyY, readyW, readyH;
             int actionX3, actionY3, actionW3, actionH3;
             probe_record(&tally,
                          "INV_GV_15E6",
-                         M11_GameView_GetV1StatusHandParentZoneId(0) == 207 &&
-                             M11_GameView_GetV1StatusHandParentZoneId(3) == 210 &&
-                             M11_GameView_GetV1StatusHandParentZoneId(4) == 0 &&
-                             M11_GameView_GetV1StatusHandZoneId(0, 0) == 211 &&
-                             M11_GameView_GetV1StatusHandZoneId(0, 1) == 212 &&
-                             M11_GameView_GetV1StatusHandZoneId(3, 0) == 217 &&
-                             M11_GameView_GetV1StatusHandZoneId(3, 1) == 218 &&
-                             M11_GameView_GetV1StatusHandZoneId(4, 0) == 0 &&
-                             M11_GameView_GetV1StatusHandZone(0, 0, &readyX, &readyY, &readyW, &readyH) &&
-                             M11_GameView_GetV1StatusHandZone(3, 1, &actionX3, &actionY3, &actionW3, &actionH3) &&
+                         dm1_v1_champion_status_hand_parent_zone_id_pc34(0) == 207 &&
+                             dm1_v1_champion_status_hand_parent_zone_id_pc34(3) == 210 &&
+                             dm1_v1_champion_status_hand_parent_zone_id_pc34(4) == 0 &&
+                             dm1_v1_champion_status_hand_zone_id_pc34(0, 0) == 211 &&
+                             dm1_v1_champion_status_hand_zone_id_pc34(0, 1) == 212 &&
+                             dm1_v1_champion_status_hand_zone_id_pc34(3, 0) == 217 &&
+                             dm1_v1_champion_status_hand_zone_id_pc34(3, 1) == 218 &&
+                             dm1_v1_champion_status_hand_zone_id_pc34(4, 0) == 0 &&
+                             probe_dm1_status_hand_zone(0, 0, &readyX, &readyY, &readyW, &readyH) &&
+                             probe_dm1_status_hand_zone(3, 1, &actionX3, &actionY3, &actionW3, &actionH3) &&
                              readyX == 4 && readyY == PROBE_PARTY_PANEL_Y + 10 && readyW == 16 && readyH == 16 &&
                              actionX3 == 231 && actionY3 == PROBE_PARTY_PANEL_Y + 10 && actionW3 == 16 && actionH3 == 16,
                          "V1 status hand slot zones expose layout-696 C207..C210 parents and C211..C218 child ids/geometry");
@@ -2508,10 +3659,10 @@ int main(int argc, char** argv) {
             int readyBoxX, readyBoxY, readyBoxW, readyBoxH;
             int actionBoxX3, actionBoxY3, actionBoxW3, actionBoxH3;
             int slotBoxZonesOk =
-                M11_GameView_GetV1StatusHandSlotBoxZone(0, 0,
+                probe_dm1_status_hand_slot_box_zone(0, 0,
                                                         &readyBoxX, &readyBoxY,
                                                         &readyBoxW, &readyBoxH) &&
-                M11_GameView_GetV1StatusHandSlotBoxZone(3, 1,
+                probe_dm1_status_hand_slot_box_zone(3, 1,
                                                         &actionBoxX3, &actionBoxY3,
                                                         &actionBoxW3, &actionBoxH3) &&
                 readyBoxX == 4 && readyBoxY == PROBE_PARTY_PANEL_Y + 10 &&
@@ -2541,21 +3692,21 @@ int main(int argc, char** argv) {
             int manaX3, manaY3, manaW3, manaH3;
             probe_record(&tally,
                          "INV_GV_15E7",
-                         M11_GameView_GetV1StatusBarGraphZoneId(0) == 187 &&
-                             M11_GameView_GetV1StatusBarGraphZoneId(3) == 190 &&
-                             M11_GameView_GetV1StatusBarGraphZoneId(4) == 0 &&
-                             M11_GameView_GetV1StatusBarZoneId(0) == 195 &&
-                             M11_GameView_GetV1StatusBarZoneId(1) == 199 &&
-                             M11_GameView_GetV1StatusBarZoneId(2) == 203 &&
-                             M11_GameView_GetV1StatusBarZoneId(3) == 0 &&
-                             M11_GameView_GetV1StatusBarValueZoneId(0, 0) == 195 &&
-                             M11_GameView_GetV1StatusBarValueZoneId(3, 0) == 198 &&
-                             M11_GameView_GetV1StatusBarValueZoneId(3, 2) == 206 &&
-                             M11_GameView_GetV1StatusBarValueZoneId(4, 0) == 0 &&
-                             M11_GameView_GetV1StatusBarZone(0, 0, &hpX, &hpY, &hpW, &hpH) &&
-                             M11_GameView_GetV1StatusBarZone(3, 2, &manaX3, &manaY3, &manaW3, &manaH3) &&
-                             hpX == 46 && hpY == PROBE_PARTY_PANEL_Y + 4 && hpW == 4 && hpH == 25 &&
-                             manaX3 == 267 && manaY3 == PROBE_PARTY_PANEL_Y + 4 && manaW3 == 4 && manaH3 == 25,
+                         dm1_v1_champion_status_bar_graph_zone_id_pc34(0) == 187 &&
+                             dm1_v1_champion_status_bar_graph_zone_id_pc34(3) == 190 &&
+                             dm1_v1_champion_status_bar_graph_zone_id_pc34(4) == 0 &&
+                             dm1_v1_champion_status_bar_zone_id_pc34(0) == 195 &&
+                             dm1_v1_champion_status_bar_zone_id_pc34(1) == 199 &&
+                             dm1_v1_champion_status_bar_zone_id_pc34(2) == 203 &&
+                             dm1_v1_champion_status_bar_zone_id_pc34(3) == 0 &&
+                             dm1_v1_champion_status_bar_value_zone_id_pc34(0, 0) == 195 &&
+                             dm1_v1_champion_status_bar_value_zone_id_pc34(3, 0) == 198 &&
+                             dm1_v1_champion_status_bar_value_zone_id_pc34(3, 2) == 206 &&
+                             dm1_v1_champion_status_bar_value_zone_id_pc34(4, 0) == 0 &&
+                             probe_dm1_status_bar_zone(0, 0, &hpX, &hpY, &hpW, &hpH) &&
+                             probe_dm1_status_bar_zone(3, 2, &manaX3, &manaY3, &manaW3, &manaH3) &&
+                             hpX == 46 && hpY == PROBE_PARTY_PANEL_Y + 2 && hpW == 4 && hpH == 25 &&
+                             manaX3 == 267 && manaY3 == PROBE_PARTY_PANEL_Y + 2 && manaW3 == 4 && manaH3 == 25,
                          "V1 status bar graph zones expose layout-696 C187..C190 and C195..C206 ids plus geometry");
         }
         {
@@ -2563,11 +3714,11 @@ int main(int argc, char** argv) {
             int textX3, textY3, textW3, textH3;
             probe_record(&tally,
                          "INV_GV_15E8",
-                         M11_GameView_GetV1StatusNameTextZoneId(0) == 163 &&
-                             M11_GameView_GetV1StatusNameTextZoneId(3) == 166 &&
-                             M11_GameView_GetV1StatusNameTextZoneId(4) == 0 &&
-                             M11_GameView_GetV1StatusNameTextZone(0, &textX0, &textY0, &textW0, &textH0) &&
-                             M11_GameView_GetV1StatusNameTextZone(3, &textX3, &textY3, &textW3, &textH3) &&
+                         dm1_v1_champion_status_name_text_zone_id_pc34(0) == 163 &&
+                             dm1_v1_champion_status_name_text_zone_id_pc34(3) == 166 &&
+                             dm1_v1_champion_status_name_text_zone_id_pc34(4) == 0 &&
+                             probe_dm1_status_name_text_zone(0, &textX0, &textY0, &textW0, &textH0) &&
+                             probe_dm1_status_name_text_zone(3, &textX3, &textY3, &textW3, &textH3) &&
                              textX0 == 1 && textY0 == PROBE_PARTY_PANEL_Y && textW0 == 42 && textH0 == 7 &&
                              textX3 == 208 && textY3 == PROBE_PARTY_PANEL_Y && textW3 == 42 && textH3 == 7,
                          "V1 status name text zones expose layout-696 C163..C166 ids and geometry");
@@ -2582,7 +3733,7 @@ int main(int argc, char** argv) {
             M11_GameView_Draw(&fallbackDeadBoxView, fallbackDeadBoxFramebuffer, 320, 200);
             probe_record(&tally,
                          "INV_GV_15Y",
-                         M11_GameView_GetV1StatusBoxZone(1, &deadBoxX, &deadBoxY,
+                         probe_dm1_status_box_zone(1, &deadBoxX, &deadBoxY,
                                                          &deadBoxW, &deadBoxH) &&
                              deadBoxW == 67 && deadBoxH == 29 &&
                              fallbackDeadBoxFramebuffer[(deadBoxY + 28) * 320 + deadBoxX] == PROBE_COLOR_LIGHT_CYAN,
@@ -2590,9 +3741,9 @@ int main(int argc, char** argv) {
         }
         probe_record(&tally,
                      "INV_GV_15E2",
-                     M11_GameView_GetV1StatusNameClearZoneId(0) == 159 &&
-                         M11_GameView_GetV1StatusNameClearZoneId(3) == 162 &&
-                         M11_GameView_GetV1StatusNameClearZoneId(4) == 0 &&
+                     dm1_v1_champion_status_name_clear_zone_id_pc34(0) == 159 &&
+                         dm1_v1_champion_status_name_clear_zone_id_pc34(3) == 162 &&
+                         dm1_v1_champion_status_name_clear_zone_id_pc34(4) == 0 &&
                          nameX == PROBE_BOTTOM_PANEL_X && nameY == PROBE_PARTY_PANEL_Y &&
                          nameW == 43 && nameH == 7 &&
                          nameX1 == PROBE_BOTTOM_PANEL_X + 69 && nameY1 == PROBE_PARTY_PANEL_Y &&
@@ -2600,30 +3751,30 @@ int main(int argc, char** argv) {
                      "V1 champion HUD name clear zones expose layout-696 C159..C162 ids and geometry");
         probe_record(&tally,
                      "INV_GV_15Z",
-                     M11_GameView_GetV1StatusNameClearColor() == PROBE_COLOR_GRAY &&
+                     dm1_v1_champion_status_name_clear_color_pc34() == PROBE_COLOR_GRAY &&
                          probe_count_color(syntheticFramebuffer, 320,
                                            nameX, nameY, nameW, nameH,
-                                           (unsigned char)M11_GameView_GetV1StatusNameClearColor()) > 0U,
+                                           (unsigned char)dm1_v1_champion_status_name_clear_color_pc34()) > 0U,
                      "V1 champion HUD name clear uses source C01 gray before centered name text");
         {
             int liveFillBoxX, liveFillBoxY, liveFillBoxW, liveFillBoxH;
             probe_record(&tally,
                          "INV_GV_15AA",
-                         M11_GameView_GetV1StatusBoxFillColor() == PROBE_COLOR_DARK_GRAY &&
-                             M11_GameView_GetV1StatusBoxZone(0, &liveFillBoxX,
+                         dm1_v1_champion_status_box_fill_color_pc34() == PROBE_COLOR_DARK_GRAY &&
+                             probe_dm1_status_box_zone(0, &liveFillBoxX,
                                                              &liveFillBoxY,
                                                              &liveFillBoxW,
                                                              &liveFillBoxH) &&
                              probe_count_color(syntheticFramebuffer, 320,
                                                liveFillBoxX, liveFillBoxY,
                                                liveFillBoxW, liveFillBoxH,
-                                               (unsigned char)M11_GameView_GetV1StatusBoxFillColor()) > 0U,
+                                               (unsigned char)dm1_v1_champion_status_box_fill_color_pc34()) > 0U,
                          "V1 live status-box fill uses source C12 darkest-gray before overlays");
         }
         probe_record(&tally,
                      "INV_GV_15E3",
-                     M11_GameView_GetV1StatusNameColor(&syntheticView, 0) == PROBE_COLOR_YELLOW &&
-                         M11_GameView_GetV1StatusNameColor(&syntheticView, 1) == PROBE_COLOR_ORANGE,
+                     probe_dm1_status_name_color(&syntheticView, 0) == PROBE_COLOR_YELLOW &&
+                         probe_dm1_status_name_color(&syntheticView, 1) == PROBE_COLOR_ORANGE,
                      "V1 champion HUD name colors follow F0292 leader yellow / non-leader gold");
         probe_record(&tally,
                      "INV_GV_15E4",
@@ -2642,7 +3793,7 @@ int main(int argc, char** argv) {
             M11_GameView_Draw(&deadStatusView, deadStatusFramebuffer, 320, 200);
             probe_record(&tally,
                          "INV_GV_15E5",
-                         M11_GameView_GetV1StatusNameColor(&deadStatusView, 1) == PROBE_COLOR_SILVER &&
+                         probe_dm1_status_name_color(&deadStatusView, 1) == PROBE_COLOR_SILVER &&
                              probe_count_color(deadStatusFramebuffer, 320,
                                                nameX1, nameY1, nameW1, nameH1,
                                                PROBE_COLOR_SILVER) > 0U,
@@ -2685,17 +3836,17 @@ int main(int argc, char** argv) {
             M11_GameView_Draw(&fourChampionView, fourChampionFramebuffer, 320, 200);
             probe_record(&tally,
                          "INV_GV_15E10",
-                         M11_GameView_GetV1StatusBoxZone(2, &slot2BoxX, &slot2BoxY,
+                         probe_dm1_status_box_zone(2, &slot2BoxX, &slot2BoxY,
                                                          &slot2BoxW, &slot2BoxH) &&
-                             M11_GameView_GetV1StatusBoxZone(3, &slot3BoxX, &slot3BoxY,
+                             probe_dm1_status_box_zone(3, &slot3BoxX, &slot3BoxY,
                                                              &slot3BoxW, &slot3BoxH) &&
-                             M11_GameView_GetV1StatusNameZone(2, &slot2NameX, &slot2NameY,
+                             probe_dm1_status_name_zone(2, &slot2NameX, &slot2NameY,
                                                              &slot2NameW, &slot2NameH) &&
-                             M11_GameView_GetV1StatusNameZone(3, &slot3NameX, &slot3NameY,
+                             probe_dm1_status_name_zone(3, &slot3NameX, &slot3NameY,
                                                              &slot3NameW, &slot3NameH) &&
-                             M11_GameView_GetV1StatusBarZone(2, 0, &slot2HpX, &slot2HpY,
+                             probe_dm1_status_bar_zone(2, 0, &slot2HpX, &slot2HpY,
                                                             &slot2HpW, &slot2HpH) &&
-                             M11_GameView_GetV1StatusBarZone(3, 2, &slot3ManaX, &slot3ManaY,
+                             probe_dm1_status_bar_zone(3, 2, &slot3ManaX, &slot3ManaY,
                                                             &slot3ManaW, &slot3ManaH) &&
                              slot2BoxX == 138 && slot2BoxY == PROBE_PARTY_PANEL_Y &&
                              slot2BoxW == 67 && slot2BoxH == 29 &&
@@ -2723,36 +3874,36 @@ int main(int argc, char** argv) {
 
     probe_record(&tally,
                  "INV_GV_15F",
-                 M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 0) == 33 &&
-                     M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 1) == 33,
+                 probe_dm1_status_hand_slot_graphic(&syntheticView, 0, 0) == 33 &&
+                     probe_dm1_status_hand_slot_graphic(&syntheticView, 0, 1) == 33,
                  "V1 champion HUD ready/action hands use normal slot-box graphic when idle");
 
     syntheticView.actingChampionOrdinal = 1;
     probe_record(&tally,
                  "INV_GV_15G",
-                 M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 0) == 33 &&
-                     M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 1) == 35,
+                 probe_dm1_status_hand_slot_graphic(&syntheticView, 0, 0) == 33 &&
+                     probe_dm1_status_hand_slot_graphic(&syntheticView, 0, 1) == 35,
                  "V1 champion HUD action hand switches to graphic 35 for the acting champion");
     syntheticView.actingChampionOrdinal = 0;
 
     syntheticView.world.party.champions[0].wounds = 0x0001u;
     probe_record(&tally,
                  "INV_GV_15H",
-                 M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 0) == 34 &&
-                     M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 1) == 33,
+                 probe_dm1_status_hand_slot_graphic(&syntheticView, 0, 0) == 34 &&
+                     probe_dm1_status_hand_slot_graphic(&syntheticView, 0, 1) == 33,
                  "V1 champion HUD ready-hand wound selects graphic 34 only for ready hand");
 
     syntheticView.world.party.champions[0].wounds = 0x0002u;
     probe_record(&tally,
                  "INV_GV_15I",
-                 M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 0) == 33 &&
-                     M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 1) == 34,
+                 probe_dm1_status_hand_slot_graphic(&syntheticView, 0, 0) == 33 &&
+                     probe_dm1_status_hand_slot_graphic(&syntheticView, 0, 1) == 34,
                  "V1 champion HUD action-hand wound selects graphic 34 when idle");
 
     syntheticView.actingChampionOrdinal = 1;
     probe_record(&tally,
                  "INV_GV_15J",
-                 M11_GameView_GetV1StatusHandSlotGraphic(&syntheticView, 0, 1) == 35,
+                 probe_dm1_status_hand_slot_graphic(&syntheticView, 0, 1) == 35,
                  "V1 champion HUD acting action hand overrides wound graphic with graphic 35");
     syntheticView.actingChampionOrdinal = 0;
     syntheticView.world.party.champions[0].wounds = 0;
@@ -2809,13 +3960,13 @@ int main(int argc, char** argv) {
         memset(leaderHandName, 0, sizeof(leaderHandName));
         memset(leaderHandFramebuffer, 0, sizeof(leaderHandFramebuffer));
         M11_GameView_Draw(&leaderHandView, leaderHandFramebuffer, 320, 200);
-        (void)M11_GameView_GetV1LeaderHandObjectNameZone(
+        (void)DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34CompatZone(
             &leaderNameX, &leaderNameY, &leaderNameW, &leaderNameH);
         probe_record(&tally,
                      "INV_GV_15OA",
-                     M11_GameView_GetV1LeaderHandThing(&leaderHandView) == THING_NONE &&
-                         M11_GameView_GetV1LeaderHandObjectIconIndex(&leaderHandView) == -1 &&
-                         !M11_GameView_GetV1LeaderHandObjectName(&leaderHandView,
+                     DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&leaderHandView) == THING_NONE &&
+                         DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(&leaderHandView) == -1 &&
+                         !DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(&leaderHandView,
                                                                  leaderHandName,
                                                                  sizeof(leaderHandName)),
                      "V1 leader-hand runtime does not synthesize G4055 from the active champion ready-hand slot");
@@ -2827,10 +3978,10 @@ int main(int argc, char** argv) {
                      "V1 leader-hand C017 resolver stays blank when no dedicated source mouse-hand object exists");
         probe_record(&tally,
                      "INV_GV_15OC",
-                     M11_GameView_SetV1LeaderHandObject(&leaderHandView, readyHandThing) == 1 &&
-                         M11_GameView_GetV1LeaderHandThing(&leaderHandView) == readyHandThing &&
-                         M11_GameView_GetV1LeaderHandObjectIconIndex(&leaderHandView) >= 0 &&
-                         M11_GameView_GetV1LeaderHandObjectName(&leaderHandView,
+                     DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(&leaderHandView, readyHandThing) == 1 &&
+                         DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&leaderHandView) == readyHandThing &&
+                         DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(&leaderHandView) >= 0 &&
+                         DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(&leaderHandView,
                                                                 leaderHandName,
                                                                 sizeof(leaderHandName)) &&
                          strcmp(leaderHandName, "DAGGER") == 0,
@@ -2845,12 +3996,12 @@ int main(int argc, char** argv) {
                                        leaderNameW, leaderNameH,
                                        PROBE_COLOR_LIGHT_CYAN) > 0U,
                      "normal V1 draws the transient leader-hand object name into source C017");
-        M11_GameView_ClearV1LeaderHandObject(&leaderHandView);
+        DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&leaderHandView);
         probe_record(&tally,
                      "INV_GV_15OE",
-                     M11_GameView_GetV1LeaderHandThing(&leaderHandView) == THING_NONE &&
-                         M11_GameView_GetV1LeaderHandObjectIconIndex(&leaderHandView) == -1 &&
-                         !M11_GameView_GetV1LeaderHandObjectName(&leaderHandView,
+                     DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&leaderHandView) == THING_NONE &&
+                         DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(&leaderHandView) == -1 &&
+                         !DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(&leaderHandView,
                                                                  leaderHandName,
                                                                  sizeof(leaderHandName)),
                      "V1 leader-hand remove flow clears the G4055-equivalent object instead of reading champion equipment");
@@ -2858,24 +4009,24 @@ int main(int argc, char** argv) {
 
     {
         M11_GameViewState baseGraphicView = syntheticView;
-        int aliveBase = M11_GameView_GetV1StatusBoxBaseGraphic(&baseGraphicView, 0);
+        int aliveBase = probe_dm1_status_box_base_graphic(&baseGraphicView, 0);
         baseGraphicView.world.party.champions[0].hp.current = 0;
         probe_record(&tally,
                      "INV_GV_15Q",
                      aliveBase == 0 &&
-                         M11_GameView_GetV1StatusBoxBaseGraphic(&baseGraphicView, 0) == 8,
+                         probe_dm1_status_box_base_graphic(&baseGraphicView, 0) == 8,
                      "V1 status box base graphic uses source dead box only for dead champions");
     }
 
     {
         M11_GameViewState shieldGraphicView = syntheticView;
-        int noneBorder = M11_GameView_GetV1StatusShieldBorderGraphic(&shieldGraphicView);
+        int noneBorder = probe_dm1_status_shield_top_graphic(&shieldGraphicView);
         shieldGraphicView.world.magic.partyShieldDefense = 1;
-        int partyBorder = M11_GameView_GetV1StatusShieldBorderGraphic(&shieldGraphicView);
+        int partyBorder = probe_dm1_status_shield_top_graphic(&shieldGraphicView);
         shieldGraphicView.world.magic.fireShieldDefense = 1;
-        int fireBorder = M11_GameView_GetV1StatusShieldBorderGraphic(&shieldGraphicView);
+        int fireBorder = probe_dm1_status_shield_top_graphic(&shieldGraphicView);
         shieldGraphicView.world.magic.spellShieldDefense = 1;
-        int allTopBorder = M11_GameView_GetV1StatusShieldBorderGraphic(&shieldGraphicView);
+        int allTopBorder = probe_dm1_status_shield_top_graphic(&shieldGraphicView);
         probe_record(&tally,
                      "INV_GV_15P",
                      noneBorder == 0 && partyBorder == 37 &&
@@ -2883,11 +4034,11 @@ int main(int argc, char** argv) {
                      "V1 status shield top border follows F0292 reverse draw stack (fire topmost)");
         probe_record(&tally,
                      "INV_GV_15P2",
-                     M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(&shieldGraphicView, 0) == 3 &&
-                         M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(&shieldGraphicView, 0, 0) == 37 &&
-                         M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(&shieldGraphicView, 0, 1) == 39 &&
-                         M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(&shieldGraphicView, 0, 2) == 38 &&
-                         M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(&shieldGraphicView, 0, 3) == 0,
+                     probe_dm1_status_shield_graphic_count_for_champion(&shieldGraphicView, 0) == 3 &&
+                         probe_dm1_status_shield_graphic_for_champion_at(&shieldGraphicView, 0, 0) == 37 &&
+                         probe_dm1_status_shield_graphic_for_champion_at(&shieldGraphicView, 0, 1) == 39 &&
+                         probe_dm1_status_shield_graphic_for_champion_at(&shieldGraphicView, 0, 2) == 38 &&
+                         probe_dm1_status_shield_graphic_for_champion_at(&shieldGraphicView, 0, 3) == 0,
                      "V1 status shield border stack draws party, spell, then fire like F0292 while-count order");
     }
 
@@ -2896,10 +4047,10 @@ int main(int argc, char** argv) {
         int shieldX3, shieldY3, shieldW3, shieldH3;
         probe_record(&tally,
                      "INV_GV_15T",
-                     M11_GameView_GetV1StatusShieldBorderZone(0,
+                     probe_dm1_status_shield_border_zone(0,
                                                               &shieldX0, &shieldY0,
                                                               &shieldW0, &shieldH0) &&
-                         M11_GameView_GetV1StatusShieldBorderZone(3,
+                         probe_dm1_status_shield_border_zone(3,
                                                                   &shieldX3, &shieldY3,
                                                                   &shieldW3, &shieldH3) &&
                          shieldX0 == 0 && shieldY0 == PROBE_PARTY_PANEL_Y &&
@@ -3621,7 +4772,7 @@ int main(int argc, char** argv) {
                                     DUNGEON_SQUARE_MASK_THING_LIST);
                 compactView.world.things->squareFirstThings[0] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
-                ok = M11_GameView_ProbeViewportFloorItemCounts(
+                ok = probe_viewport_floor_item_counts(
                     &compactView, 1, 0,
                     &mapX, &mapY, &elementType,
                     &floorItemCount, &summaryItemCount);
@@ -3716,7 +4867,7 @@ int main(int argc, char** argv) {
             &focusView, focusMap, 2, 2,
             (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
             (unsigned short)((THING_TYPE_GROUP << 10) | 0));
-        (void)M11_GameView_ProbeViewportCreatureCounts(
+        (void)probe_viewport_creature_counts(
             &focusView, 1, 0,
             &d1cCreatureMapX, &d1cCreatureMapY, &d1cCreatureElement,
             &d1cCreatureGroups, &d1cSummaryGroups, &d1cCreatureType);
@@ -3740,7 +4891,7 @@ int main(int argc, char** argv) {
             &focusView, focusMap, 1, 2,
             (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
             (unsigned short)((THING_TYPE_GROUP << 10) | 0));
-        (void)M11_GameView_ProbeViewportCreatureCounts(
+        (void)probe_viewport_creature_counts(
             &focusView, 1, -1,
             &d1lCreatureMapX, &d1lCreatureMapY, &d1lCreatureElement,
             &d1lCreatureGroups, &d1lSummaryGroups, &d1lCreatureType);
@@ -4780,9 +5931,18 @@ int main(int argc, char** argv) {
         sv.world.party.champions[0].hp.maximum = 100;
         sv.world.party.champions[0].mana.current = 80;
         sv.world.party.champions[0].mana.maximum = 100;
+        sv.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 60;
+        sv.world.party.champions[0].direction = DIR_NORTH;
+        sv.world.party.champions[0].cell = 0;
         sv.world.party.champions[0].name[0] = 'T';
+        for (i = 0; i < LIFECYCLE_SKILL_COUNT; ++i) {
+            sv.world.lifecycle.champions[0].skills20[i].experience = 5000;
+        }
+        sv.world.party.mapIndex = 0;
         sv.world.party.mapX = 5;
         sv.world.party.mapY = 5;
+        sv.world.party.direction = DIR_NORTH;
+        sv.world.newPartyMapIndex = -1;
         sv.world.magic.magicalLightAmount = 0;
 
         /* INV_GV_61: CMD_CAST_SPELL with valid Light spell emits SPELL_EFFECT */
@@ -4844,12 +6004,14 @@ int main(int argc, char** argv) {
             struct TickInput_Compat shInput;
             int prevShield = sv.world.magic.partyShieldDefense;
 
+            sv.world.party.champions[0].mana.current = 100;
+            sv.world.party.champions[0].mana.maximum = 100;
             memset(&shInput, 0, sizeof(shInput));
             shInput.tick = sv.world.gameTick;
             shInput.command = CMD_CAST_SPELL;
             shInput.commandArg1 = 0;
             shInput.commandArg2 = 0; /* Ya Ir = Shield (Party) */
-            shInput.reserved = 4;    /* power ordinal 4 */
+            shInput.reserved = 1;    /* Lo power ordinal */
             memset(&sv.lastTickResult, 0, sizeof(sv.lastTickResult));
             F0884_ORCH_AdvanceOneTick_Compat(&sv.world, &shInput, &sv.lastTickResult);
 
@@ -5996,45 +7158,45 @@ int main(int argc, char** argv) {
          * ObjectInfo index 66 (weapon subtype 43) maps to aspect 65. */
         probe_record(&tally,
                      "INV_GV_114B",
-                     M11_GameView_GetObjectSpriteIndex(THING_TYPE_WEAPON, 43) == 565u,
+                     dm1_item_sprite_index(THING_TYPE_WEAPON, 43) == 565u,
                      "object sprite uses G0209 firstNative gap: weapon subtype 43 -> aspect 65 -> graphic 565");
 
         /* INV_GV_114C: Object source scale table is G2030. */
         probe_record(&tally,
                      "INV_GV_114C",
-                     M11_GameView_GetObjectSourceScaleUnits(0) == 27 &&
-                     M11_GameView_GetObjectSourceScaleUnits(1) == 21 &&
-                     M11_GameView_GetObjectSourceScaleUnits(2) == 18 &&
-                     M11_GameView_GetObjectSourceScaleUnits(3) == 14 &&
-                     M11_GameView_GetObjectSourceScaleUnits(4) == 12,
+                     dm1_viewport_3d_object_source_scale_units(0) == 27 &&
+                     dm1_viewport_3d_object_source_scale_units(1) == 21 &&
+                     dm1_viewport_3d_object_source_scale_units(2) == 18 &&
+                     dm1_viewport_3d_object_source_scale_units(3) == 14 &&
+                     dm1_viewport_3d_object_source_scale_units(4) == 12,
                      "object source scale units match G2030 table");
 
         /* INV_GV_114C2: Object scale-index selection follows F0115
          * front/back view-cell formula for D1/D2/D3 center-lane cells. */
         probe_record(&tally,
                      "INV_GV_114C2",
-                     M11_GameView_GetObjectSourceScaleIndex(0, 3) == 0 &&
-                     M11_GameView_GetObjectSourceScaleIndex(1, 2) == 1 &&
-                     M11_GameView_GetObjectSourceScaleIndex(1, 0) == 2 &&
-                     M11_GameView_GetObjectSourceScaleIndex(2, 2) == 3 &&
-                     M11_GameView_GetObjectSourceScaleIndex(2, 0) == 4,
+                     dm1_viewport_3d_object_source_scale_index(0, 3) == 0 &&
+                     dm1_viewport_3d_object_source_scale_index(1, 2) == 1 &&
+                     dm1_viewport_3d_object_source_scale_index(1, 0) == 2 &&
+                     dm1_viewport_3d_object_source_scale_index(2, 2) == 3 &&
+                     dm1_viewport_3d_object_source_scale_index(2, 0) == 4,
                      "object source scale-index selection follows F0115 front/back cells");
 
         /* INV_GV_114C2B: Firestaff relative cells map back to F0115's
          * MEDIA720 view-square indices and G2028 C2500/C2900 source rows. */
         probe_record(&tally,
                      "INV_GV_114C2B",
-                     M11_GameView_GetF0115ViewSquareIndex(1, 0) == 3 &&
-                     M11_GameView_GetF0115ViewSquareIndex(1, -1) == 4 &&
-                     M11_GameView_GetF0115ViewSquareIndex(1, 1) == 5 &&
-                     M11_GameView_GetF0115ViewSquareIndex(2, 0) == 6 &&
-                     M11_GameView_GetF0115ViewSquareIndex(3, 0) == 11 &&
-                     M11_GameView_GetF0115C2500C2900Row(1, 0) == 8 &&
-                     M11_GameView_GetF0115C2500C2900Row(1, -1) == 9 &&
-                     M11_GameView_GetF0115C2500C2900Row(1, 1) == 10 &&
-                     M11_GameView_GetF0115C2500C2900Row(2, -1) == 6 &&
-                     M11_GameView_GetF0115C2500C2900Row(2, 0) == 5 &&
-                     M11_GameView_GetF0115C2500C2900Row(3, 1) == 2,
+                     dm1_viewport_3d_f0115_view_square_index(1, 0) == 3 &&
+                     dm1_viewport_3d_f0115_view_square_index(1, -1) == 4 &&
+                     dm1_viewport_3d_f0115_view_square_index(1, 1) == 5 &&
+                     dm1_viewport_3d_f0115_view_square_index(2, 0) == 6 &&
+                     dm1_viewport_3d_f0115_view_square_index(3, 0) == 11 &&
+                     dm1_viewport_3d_f0115_c2500_c2900_row(1, 0) == 8 &&
+                     dm1_viewport_3d_f0115_c2500_c2900_row(1, -1) == 9 &&
+                     dm1_viewport_3d_f0115_c2500_c2900_row(1, 1) == 10 &&
+                     dm1_viewport_3d_f0115_c2500_c2900_row(2, -1) == 6 &&
+                     dm1_viewport_3d_f0115_c2500_c2900_row(2, 0) == 5 &&
+                     dm1_viewport_3d_f0115_c2500_c2900_row(3, 1) == 2,
                      "relative viewport cells source-map through ReDMCSB F0115 G2028 rows");
 
         /* INV_GV_114C2B2: F0128 D4 projectile pass is intentionally
@@ -6044,14 +7206,14 @@ int main(int argc, char** argv) {
             int lx = 0, ly = 0, lw = 0, lh = 0;
             int cx = 0, cy = 0, cw = 0, ch = 0;
             int rx = 0, ry = 0, rw = 0, rh = 0;
-            int leftOk = M11_GameView_GetDm1D4FarProjectileBox(-1, &lx, &ly, &lw, &lh);
-            int centerOk = M11_GameView_GetDm1D4FarProjectileBox(0, &cx, &cy, &cw, &ch);
-            int rightOk = M11_GameView_GetDm1D4FarProjectileBox(1, &rx, &ry, &rw, &rh);
+            int leftOk = dm1_v1_projectile_d4_far_box(-1, &lx, &ly, &lw, &lh);
+            int centerOk = dm1_v1_projectile_d4_far_box(0, &cx, &cy, &cw, &ch);
+            int rightOk = dm1_v1_projectile_d4_far_box(1, &rx, &ry, &rw, &rh);
             probe_record(&tally,
                          "INV_GV_114C2B2",
-                         M11_GameView_GetF0115C2500C2900Row(4, -1) == -1 &&
-                         M11_GameView_GetF0115C2500C2900Row(4, 0) == -1 &&
-                         M11_GameView_GetF0115C2500C2900Row(4, 1) == -1 &&
+                         dm1_viewport_3d_f0115_c2500_c2900_row(4, -1) == -1 &&
+                         dm1_viewport_3d_f0115_c2500_c2900_row(4, 0) == -1 &&
+                         dm1_viewport_3d_f0115_c2500_c2900_row(4, 1) == -1 &&
                          leftOk && lx == 78 && ly == 42 && lw == 10 && lh == 8 &&
                          centerOk && cx == 108 && cy == 42 && cw == 10 && ch == 8 &&
                          rightOk && rx == 138 && ry == 42 && rw == 10 && rh == 8,
@@ -6064,14 +7226,14 @@ int main(int argc, char** argv) {
          * from G0191. */
         {
             int inc = -1, flip = -1, x = -1, y = -1, w = -1, h = -1;
-            int okD3L = M11_GameView_GetDM1FloorOrnamentSourceZone(3, -1, &inc, &flip, &x, &y, &w, &h) &&
+            int okD3L = probe_dm1_floor_ornament_source_zone(3, -1, &inc, &flip, &x, &y, &w, &h) &&
                         inc == 0 && flip == 0 && x == 32 && y == 66 && w == 48 && h == 6;
-            int okD2C = M11_GameView_GetDM1FloorOrnamentSourceZone(2, 0, &inc, &flip, &x, &y, &w, &h) &&
+            int okD2C = probe_dm1_floor_ornament_source_zone(2, 0, &inc, &flip, &x, &y, &w, &h) &&
                         inc == 3 && flip == 0 && x == 80 && y == 77 && w == 64 && h == 11;
-            int okD1R = M11_GameView_GetDM1FloorOrnamentSourceZone(1, 1, &inc, &flip, &x, &y, &w, &h) &&
+            int okD1R = probe_dm1_floor_ornament_source_zone(1, 1, &inc, &flip, &x, &y, &w, &h) &&
                         inc == 4 && flip == 1 && x == 192 && y == 92 && w == 32 && h == 25;
-            int noFarSliver = !M11_GameView_GetDM1FloorOrnamentSourceZone(3, 2, &inc, &flip, &x, &y, &w, &h) &&
-                              !M11_GameView_GetDM1FloorOrnamentSourceZone(3, -2, &inc, &flip, &x, &y, &w, &h);
+            int noFarSliver = !probe_dm1_floor_ornament_source_zone(3, 2, &inc, &flip, &x, &y, &w, &h) &&
+                              !probe_dm1_floor_ornament_source_zone(3, -2, &inc, &flip, &x, &y, &w, &h);
             probe_record(&tally,
                          "INV_GV_114C2C",
                          okD3L && okD2C && okD1R && noFarSliver,
@@ -6082,9 +7244,9 @@ int main(int argc, char** argv) {
          * layout-696 are bound for the non-alcove object placement path. */
         {
             int x0 = 0, y0 = 0, x1 = 0, y1 = 0, x4 = 0, y4 = 0;
-            int ok0 = M11_GameView_GetC2500ObjectZonePoint(0, 2, &x0, &y0);
-            int ok1 = M11_GameView_GetC2500ObjectZonePoint(1, 3, &x1, &y1);
-            int ok4 = M11_GameView_GetC2500ObjectZonePoint(4, 3, &x4, &y4);
+            int ok0 = dm1_viewport_3d_c2500_object_zone_point(0, 2, &x0, &y0);
+            int ok1 = dm1_viewport_3d_c2500_object_zone_point(1, 3, &x1, &y1);
+            int ok4 = dm1_viewport_3d_c2500_object_zone_point(4, 3, &x4, &y4);
             probe_record(&tally,
                          "INV_GV_114C3",
                          ok0 && x0 == 127 && y0 == 70 &&
@@ -6096,9 +7258,9 @@ int main(int argc, char** argv) {
 
         {
             int x5 = 0, y5 = 0, x11 = 0, y11 = 0, x16 = 0, y16 = 0;
-            int ok5 = M11_GameView_GetC2500ObjectRawZonePoint(5, 1, &x5, &y5);
-            int ok11 = M11_GameView_GetC2500ObjectRawZonePoint(11, 1, &x11, &y11);
-            int ok16 = M11_GameView_GetC2500ObjectRawZonePoint(16, 3, &x16, &y16);
+            int ok5 = dm1_viewport_3d_c2500_object_raw_zone_point(5, 1, &x5, &y5);
+            int ok11 = dm1_viewport_3d_c2500_object_raw_zone_point(11, 1, &x11, &y11);
+            int ok16 = dm1_viewport_3d_c2500_object_raw_zone_point(16, 3, &x16, &y16);
             probe_record(&tally,
                          "INV_GV_114C4",
                          ok5 && x5 == 131 && y5 == 78 &&
@@ -6242,15 +7404,17 @@ int main(int argc, char** argv) {
                          "magicalLightAmount raises computed light level");
         }
 
-        /* INV_GV_118: Light level is clamped to 255 maximum. */
+        /* INV_GV_118: F0337 keeps the source total intact; only its palette
+         * selection clamps the visible result to a palette row. */
         {
-            int lightClamped;
+            int lightAmount;
             assetView.world.magic.magicalLightAmount = 500;
-            lightClamped = M11_GameView_GetLightLevel(&assetView);
+            lightAmount = M11_GameView_GetLightLevel(&assetView);
             probe_record(&tally,
                          "INV_GV_118",
-                         lightClamped == 255,
-                         "light level clamps to 255");
+                         lightAmount == 500 &&
+                         M11_GameView_GetDungeonPaletteIndex(&assetView) == 0,
+                         "F0337 source total remains intact while palette is brightest");
             assetView.world.magic.magicalLightAmount = 0;  /* reset */
         }
 
@@ -6359,15 +7523,17 @@ int main(int argc, char** argv) {
             assetView.world.magic.magicalLightAmount = 0;  /* reset */
         }
 
-        /* INV_GV_122: Negative magicalLightAmount is clamped to 0. */
+        /* INV_GV_122: F0257 darkness keeps its negative intermediate value
+         * and F0337 maps it to the darkest palette. */
         {
             int lightNeg;
             assetView.world.magic.magicalLightAmount = -100;
             lightNeg = M11_GameView_GetLightLevel(&assetView);
             probe_record(&tally,
                          "INV_GV_122",
-                         lightNeg >= 0,
-                         "negative magicalLightAmount clamps to 0");
+                         lightNeg == -100 &&
+                         M11_GameView_GetDungeonPaletteIndex(&assetView) == 5,
+                         "negative magical light remains source-visible and selects darkness");
             assetView.world.magic.magicalLightAmount = 0;  /* reset */
         }
 
@@ -6375,7 +7541,7 @@ int main(int argc, char** argv) {
     }
 
     /* ================================================================
-     * Torch fuel burn-down tests
+     * DM1 F0337 light receipt tests
      * ================================================================ */
     {
         M11_GameViewState torchView;
@@ -6386,12 +7552,13 @@ int main(int argc, char** argv) {
         memset(&torchThings, 0, sizeof(torchThings));
         memset(torchWeapons, 0, sizeof(torchWeapons));
 
-        /* Set up a lit torch at weapon index 0 */
+        /* F0337 reads the weapon ChargeCount directly. */
         torchWeapons[0].type = 2;  /* TORCH subtype */
         torchWeapons[0].lit = 1;
-        /* Set up a lit flamitt at weapon index 1 */
-        torchWeapons[1].type = 3;  /* FLAMITT subtype */
+        torchWeapons[0].chargeCount = 15;
+        torchWeapons[1].type = 2;
         torchWeapons[1].lit = 1;
+        torchWeapons[1].chargeCount = 7;
 
         torchThings.weapons = torchWeapons;
         torchThings.weaponCount = 2;
@@ -6401,93 +7568,41 @@ int main(int argc, char** argv) {
         torchView.world.party.championCount = 1;
         torchView.world.party.champions[0].present = 1;
         torchView.world.party.activeChampionIndex = 0;
-        /* Place torch in left hand, flamitt in right hand */
+        /* Place two lit torches in F0337's action/ready hand slots. */
         torchView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] =
             (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
         torchView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] =
             (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
 
-        /* INV_GV_123: GetTorchFuel returns 0 before first update. */
+        /* INV_GV_123: the M11 API exposes F0337's weighted source total:
+         * ChargeCount 15 contributes 100 and charge 7 contributes 25. */
         probe_record(&tally,
                      "INV_GV_123",
-                     M11_GameView_GetTorchFuel(&torchView, 0) == 0,
-                     "torch fuel is 0 before first update");
+                     M11_GameView_GetLightLevel(&torchView) == 125,
+                     "F0337 weights live torch ChargeCount values");
 
-        /* INV_GV_124: After one UpdateTorchFuel, fuel is initialized
-         * to INITIAL_FUEL - 1 (one tick burned). */
-        M11_GameView_UpdateTorchFuel(&torchView);
+        /* INV_GV_124: a lower ChargeCount changes the source total without
+         * any M11-owned fuel cache. */
+        torchWeapons[1].chargeCount = 3;
         probe_record(&tally,
                      "INV_GV_124",
-                     M11_GameView_GetTorchFuel(&torchView, 0) == M11_TORCH_INITIAL_FUEL - 1,
-                     "torch fuel initialized to INITIAL-1 after first update");
+                     M11_GameView_GetLightLevel(&torchView) == 112,
+                     "F0337 immediately consumes updated ChargeCount");
 
-        /* INV_GV_125: Flamitt fuel is initialized to FLAMITT_INITIAL - 1. */
+        /* INV_GV_125: an unlit weapon is excluded from the receipt. */
+        torchWeapons[1].lit = 0;
         probe_record(&tally,
                      "INV_GV_125",
-                     M11_GameView_GetTorchFuel(&torchView, 1) == M11_FLAMITT_INITIAL_FUEL - 1,
-                     "flamitt fuel initialized to FLAMITT_INITIAL-1 after first update");
+                     M11_GameView_GetLightLevel(&torchView) == 100,
+                     "unlit torch is excluded by F0337");
 
-        /* INV_GV_126: Light level with full-fuel torch is higher than with
-         * half-fuel torch. */
-        {
-            int lightFull, lightHalf;
-            torchView.world.magic.magicalLightAmount = 0;
-            /* Full fuel */
-            torchView.torchFuel[0] = M11_TORCH_INITIAL_FUEL;
-            lightFull = M11_GameView_GetLightLevel(&torchView);
-            /* Half fuel */
-            torchView.torchFuel[0] = M11_TORCH_INITIAL_FUEL / 2;
-            lightHalf = M11_GameView_GetLightLevel(&torchView);
-            probe_record(&tally,
-                         "INV_GV_126",
-                         lightFull > lightHalf,
-                         "full-fuel torch gives more light than half-fuel torch");
-        }
-
-        /* INV_GV_127: Draining torch fuel to 0 extinguishes the torch. */
-        {
-            torchView.torchFuel[0] = 1;  /* one tick left */
-            torchView.torchFuelInitialized[0] = 1;
-            torchWeapons[0].lit = 1;
-            M11_GameView_UpdateTorchFuel(&torchView);
-            probe_record(&tally,
-                         "INV_GV_127",
-                         torchWeapons[0].lit == 0,
-                         "torch extinguished when fuel reaches 0");
-        }
-
-        /* INV_GV_128: GetTorchFuel returns 0 for out-of-range index. */
+        /* INV_GV_126: exhausted ChargeCount is also excluded. */
+        torchWeapons[0].chargeCount = 0;
         probe_record(&tally,
-                     "INV_GV_128",
-                     M11_GameView_GetTorchFuel(&torchView, -1) == 0 &&
-                     M11_GameView_GetTorchFuel(&torchView, 9999) == 0,
-                     "GetTorchFuel returns 0 for out-of-range index");
-
-        /* INV_GV_129: Unlit torch in hand does not consume fuel. */
-        {
-            torchWeapons[0].lit = 0;
-            torchView.torchFuel[0] = 500;
-            torchView.torchFuelInitialized[0] = 1;
-            M11_GameView_UpdateTorchFuel(&torchView);
-            probe_record(&tally,
-                         "INV_GV_129",
-                         torchView.torchFuel[0] == 500,
-                         "unlit torch does not consume fuel");
-        }
-
-        /* INV_GV_130: Light level is 0 with extinguished torch and no
-         * magical light. */
-        {
-            int lightOff;
-            torchView.world.magic.magicalLightAmount = 0;
-            torchWeapons[0].lit = 0;
-            torchWeapons[1].lit = 0;
-            lightOff = M11_GameView_GetLightLevel(&torchView);
-            probe_record(&tally,
-                         "INV_GV_130",
-                         lightOff == 0,
-                         "light is 0 with extinguished torches and no magic");
-        }
+                     "INV_GV_126",
+                     M11_GameView_GetLightLevel(&torchView) == 0 &&
+                     M11_GameView_GetDungeonPaletteIndex(&torchView) == 5,
+                     "exhausted source torch selects the darkest palette");
 
         /* Don't call Shutdown — we didn't fully init, just zero. */
         memset(&torchView, 0, sizeof(torchView));
@@ -7358,7 +8473,7 @@ int main(int argc, char** argv) {
         memset(fb_won, 0, sizeof(fb_won));
         M11_GameView_Draw(&endgameView, fb_won, 320, 200);
         theEnd = M11_AssetLoader_Load((M11_AssetLoader*)&endgameView.assetLoader,
-                                      (unsigned int)M11_GameView_GetV1EndgameTheEndGraphicId());
+                                      (unsigned int)dm1_v1_graphic_the_end_pc34());
         if (theEnd && theEnd->loaded && theEnd->pixels) {
             int dstX = (320 - (int)theEnd->width) / 2;
             for (y = 0; y < (int)theEnd->height; ++y) {
@@ -7390,7 +8505,7 @@ int main(int argc, char** argv) {
         memset(fb_won, 0, sizeof(fb_won));
         M11_GameView_Draw(&endgameView, fb_won, 320, 200);
         mirror = M11_AssetLoader_Load((M11_AssetLoader*)&endgameView.assetLoader,
-                                     (unsigned int)M11_GameView_GetV1EndgameChampionMirrorGraphicId());
+                                     (unsigned int)dm1_v1_graphic_endgame_champion_mirror_pc34());
         if (mirror && mirror->loaded && mirror->pixels) {
             for (y = 0; y < (int)mirror->height; ++y) {
                 for (x = 0; x < (int)mirror->width; ++x) {
@@ -8564,21 +9679,21 @@ int main(int argc, char** argv) {
      * ReDMCSB/layout-696 slot-box namespace used by normal V1 inventory. */
     probe_record(&tally,
                  "INV_GV_362",
-                 M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_POUCH_2) == 14 &&
-                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_QUIVER_3) == 15 &&
-                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_QUIVER_2) == 16 &&
-                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_QUIVER_4) == 17 &&
-                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_POUCH_1) == 19 &&
-                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_QUIVER_1) == 20 &&
-                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_BACKPACK_1) == 21 &&
-                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_BACKPACK_8) == 28 &&
-                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_BACKPACK_17) == 37 &&
-                     M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(CHAMPION_SLOT_ACTION_HAND) == 9 &&
-                     M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(8) == CHAMPION_SLOT_HAND_LEFT &&
-                     M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(9) == CHAMPION_SLOT_HAND_RIGHT &&
-                     M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(28) == CHAMPION_SLOT_BACKPACK_8 &&
-                     M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(29) == CHAMPION_SLOT_BACKPACK_9 &&
-                     M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(37) == CHAMPION_SLOT_BACKPACK_17,
+                 dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(CHAMPION_SLOT_POUCH_2) == 14 &&
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(CHAMPION_SLOT_QUIVER_3) == 15 &&
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(CHAMPION_SLOT_QUIVER_2) == 16 &&
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(CHAMPION_SLOT_QUIVER_4) == 17 &&
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(CHAMPION_SLOT_POUCH_1) == 19 &&
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(CHAMPION_SLOT_QUIVER_1) == 20 &&
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(CHAMPION_SLOT_BACKPACK_1) == 21 &&
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(CHAMPION_SLOT_BACKPACK_8) == 28 &&
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(CHAMPION_SLOT_BACKPACK_17) == 37 &&
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(CHAMPION_SLOT_ACTION_HAND) == 9 &&
+                     dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(8) == CHAMPION_SLOT_HAND_LEFT &&
+                     dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(9) == CHAMPION_SLOT_HAND_RIGHT &&
+                     dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(28) == CHAMPION_SLOT_BACKPACK_8 &&
+                     dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(29) == CHAMPION_SLOT_BACKPACK_9 &&
+                     dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(37) == CHAMPION_SLOT_BACKPACK_17,
                  "V1 inventory champion slots map to all source slot-box indices C507..C536 without alias leakage");
 
     /* INV_GV_362A: A normal V1 click on source inventory slot C507 routes
@@ -8603,9 +9718,9 @@ int main(int argc, char** argv) {
         clickInv.world.things = &localThings;
         clickInv.world.party.activeChampionIndex = 0;
         clickInv.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = readyThing;
-        M11_GameView_ClearV1LeaderHandObject(&clickInv);
+        DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&clickInv);
         memset(leaderHandName, 0, sizeof(leaderHandName));
-        (void)M11_GameView_GetV1InventorySourceSlotBoxZone(8, &sx, &sy, &sw, &sh);
+        (void)dm1_v1_inventory_source_slot_box_zone_xywh_pc34(8, &sx, &sy, &sw, &sh);
         probe_record(&tally,
                      "INV_GV_362A",
                      M11_GameView_HandlePointer(&clickInv,
@@ -8613,8 +9728,8 @@ int main(int argc, char** argv) {
                                                 33 + sy + (sh / 2),
                                                 1) == M11_GAME_INPUT_REDRAW &&
                          clickInv.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] == THING_NONE &&
-                         M11_GameView_GetV1LeaderHandThing(&clickInv) == readyThing &&
-                         M11_GameView_GetV1LeaderHandObjectName(&clickInv,
+                         DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&clickInv) == readyThing &&
+                         DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(&clickInv,
                                                                 leaderHandName,
                                                                 sizeof(leaderHandName)) &&
                          strcmp(leaderHandName, "DAGGER") == 0,
@@ -8645,22 +9760,22 @@ int main(int argc, char** argv) {
         placeInv.world.things = &localThings;
         placeInv.world.party.activeChampionIndex = 0;
         placeInv.world.party.champions[0].inventory[CHAMPION_SLOT_POUCH_1] = THING_NONE;
-        M11_GameView_SetV1LeaderHandObject(&placeInv, daggerThing);
-        (void)M11_GameView_GetV1InventorySourceSlotBoxZone(19, &sx, &sy, &sw, &sh);
+        DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(&placeInv, daggerThing);
+        (void)dm1_v1_inventory_source_slot_box_zone_xywh_pc34(19, &sx, &sy, &sw, &sh);
         ok = M11_GameView_HandlePointer(&placeInv,
                                         sx + (sw / 2),
                                         33 + sy + (sh / 2),
                                         1) == M11_GAME_INPUT_REDRAW &&
              placeInv.world.party.champions[0].inventory[CHAMPION_SLOT_POUCH_1] == daggerThing &&
-             M11_GameView_GetV1LeaderHandThing(&placeInv) == THING_NONE;
-        M11_GameView_SetV1LeaderHandObject(&placeInv, torchThing);
+             DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&placeInv) == THING_NONE;
+        DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(&placeInv, torchThing);
         ok = ok &&
              M11_GameView_HandlePointer(&placeInv,
                                         sx + (sw / 2),
                                         33 + sy + (sh / 2),
                                         1) == M11_GAME_INPUT_IGNORED &&
              placeInv.world.party.champions[0].inventory[CHAMPION_SLOT_POUCH_1] == daggerThing &&
-             M11_GameView_GetV1LeaderHandThing(&placeInv) == torchThing;
+             DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&placeInv) == torchThing;
         probe_record(&tally,
                      "INV_GV_362C",
                      ok,
@@ -8681,38 +9796,39 @@ int main(int argc, char** argv) {
         clickInv.showDebugHUD = 0;
         clickInv.inventoryPanelActive = 1;
         clickInv.world.party.activeChampionIndex = 0;
-        M11_GameView_ClearV1LeaderHandObject(&clickInv);
+        DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&clickInv);
         for (sourceSlotBox = 29; sourceSlotBox <= 37; ++sourceSlotBox) {
             int sx = 0, sy = 0, sw = 0, sh = 0;
-            int space = M11_DM1_MOUSE_SPACE_NONE;
+            int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
             int zoneId = 0;
             int command;
-            int championSlot = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(sourceSlotBox);
+            int championSlot =
+                dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(sourceSlotBox);
             if (championSlot < CHAMPION_SLOT_BACKPACK_9 ||
                 championSlot > CHAMPION_SLOT_BACKPACK_17 ||
-                !M11_GameView_GetV1InventorySourceSlotBoxZone(sourceSlotBox,
+                !dm1_v1_inventory_source_slot_box_zone_xywh_pc34(sourceSlotBox,
                                                               &sx, &sy, &sw, &sh)) {
                 ok = 0;
                 break;
             }
-            command = M11_GameView_GetV1MouseCommandForPoint(
-                M11_DM1_MOUSE_LIST_INVENTORY,
+            command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                DM1_V1_MOUSE_LIST_INVENTORY_PC34,
                 sx + (sw / 2),
                 33 + sy + (sh / 2),
-                M11_DM1_MOUSE_MASK_LEFT,
+                DM1_V1_MOUSE_MASK_LEFT_PC34,
                 &space,
                 &zoneId);
             clickInv.world.party.champions[0].inventory[championSlot] = backpackThing;
-            M11_GameView_ClearV1LeaderHandObject(&clickInv);
+            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&clickInv);
             if (command != sourceSlotBox + 20 ||
-                space != M11_DM1_MOUSE_SPACE_VIEWPORT ||
+                space != DM1_V1_MOUSE_SPACE_VIEWPORT_PC34 ||
                 zoneId != sourceSlotBox + 499 ||
                 M11_GameView_HandlePointer(&clickInv,
                                            sx + (sw / 2),
                                            33 + sy + (sh / 2),
                                            1) != M11_GAME_INPUT_REDRAW ||
                 clickInv.world.party.champions[0].inventory[championSlot] != THING_NONE ||
-                M11_GameView_GetV1LeaderHandThing(&clickInv) != backpackThing) {
+                DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&clickInv) != backpackThing) {
                 ok = 0;
                 break;
             }
@@ -8893,54 +10009,50 @@ int main(int argc, char** argv) {
     /* INV_GV_353: Source layout-696 exposes non-backpack inventory
      * equipment slot zones C507..C519 as raw 16x16 panel coordinates. */
     {
-        int firstX = -1, firstY = -1, firstW = -1, firstH = -1;
-        int lastX = -1, lastY = -1, lastW = -1, lastH = -1;
+        DM1_V1_InventorySlotBoxZonePc34 first = {0};
+        DM1_V1_InventorySlotBoxZonePc34 last = {0};
         probe_record(&tally,
                      "INV_GV_353",
-                     M11_GameView_GetV1InventoryEquipmentSlotZoneCount() == 13 &&
-                         M11_GameView_GetV1InventoryEquipmentSlotZoneId(0) == 507 &&
-                         M11_GameView_GetV1InventoryEquipmentSlotZoneId(12) == 519 &&
-                         M11_GameView_GetV1InventoryEquipmentSlotZone(0,
-                             &firstX, &firstY, &firstW, &firstH) &&
-                         M11_GameView_GetV1InventoryEquipmentSlotZone(12,
-                             &lastX, &lastY, &lastW, &lastH) &&
-                         firstX == 6 && firstY == 53 &&
-                         firstW == 16 && firstH == 16 &&
-                         lastX == 62 && lastY == 73 &&
-                         lastW == 16 && lastH == 16,
+                     dm1_v1_inventory_equipment_slot_zone_count_pc34() == 13 &&
+                         dm1_v1_inventory_equipment_slot_zone_id_pc34(0) == 507 &&
+                         dm1_v1_inventory_equipment_slot_zone_id_pc34(12) == 519 &&
+                         dm1_v1_inventory_equipment_slot_zone_pc34(0, &first) &&
+                         dm1_v1_inventory_equipment_slot_zone_pc34(12, &last) &&
+                         first.x == 6 && first.y == 53 &&
+                         first.w == 16 && first.h == 16 &&
+                         last.x == 62 && last.y == 73 &&
+                         last.w == 16 && last.h == 16,
                      "V1 inventory equipment slot zones expose layout-696 C507..C519 ids and geometry");
     }
 
     /* INV_GV_354: Source layout-696 exposes backpack/carried-object
      * zones C520..C536, including the first backpack slot at C520. */
     {
-        int firstX = -1, firstY = -1, firstW = -1, firstH = -1;
-        int lastX = -1, lastY = -1, lastW = -1, lastH = -1;
+        DM1_V1_InventorySlotBoxZonePc34 first = {0};
+        DM1_V1_InventorySlotBoxZonePc34 last = {0};
         probe_record(&tally,
                      "INV_GV_354",
-                     M11_GameView_GetV1InventoryBackpackSlotZoneCount() == 17 &&
-                         M11_GameView_GetV1InventoryBackpackSlotZoneId(0) == 520 &&
-                         M11_GameView_GetV1InventoryBackpackSlotZoneId(16) == 536 &&
-                         M11_GameView_GetV1InventoryBackpackSlotZone(0,
-                             &firstX, &firstY, &firstW, &firstH) &&
-                         M11_GameView_GetV1InventoryBackpackSlotZone(16,
-                             &lastX, &lastY, &lastW, &lastH) &&
-                         firstX == 66 && firstY == 33 &&
-                         firstW == 16 && firstH == 16 &&
-                         lastX == 202 && lastY == 33 &&
-                         lastW == 16 && lastH == 16,
+                     dm1_v1_inventory_backpack_slot_zone_count_pc34() == 17 &&
+                         dm1_v1_inventory_backpack_slot_zone_id_pc34(0) == 520 &&
+                         dm1_v1_inventory_backpack_slot_zone_id_pc34(16) == 536 &&
+                         dm1_v1_inventory_backpack_slot_zone_pc34(0, &first) &&
+                         dm1_v1_inventory_backpack_slot_zone_pc34(16, &last) &&
+                         first.x == 66 && first.y == 33 &&
+                         first.w == 16 && first.h == 16 &&
+                         last.x == 202 && last.y == 33 &&
+                         last.w == 16 && last.h == 16,
                      "V1 inventory backpack grid exposes layout-696 C520..C536 ids and geometry");
     }
 
     /* INV_GV_355: Inventory source-zone helpers reject invalid ordinals. */
     probe_record(&tally,
                  "INV_GV_355",
-                 M11_GameView_GetV1InventoryEquipmentSlotZoneId(-1) == 0 &&
-                     M11_GameView_GetV1InventoryEquipmentSlotZoneId(13) == 0 &&
-                     M11_GameView_GetV1InventoryEquipmentSlotZone(13, NULL, NULL, NULL, NULL) == 0 &&
-                     M11_GameView_GetV1InventoryBackpackSlotZoneId(-1) == 0 &&
-                     M11_GameView_GetV1InventoryBackpackSlotZoneId(17) == 0 &&
-                     M11_GameView_GetV1InventoryBackpackSlotZone(17, NULL, NULL, NULL, NULL) == 0,
+                 dm1_v1_inventory_equipment_slot_zone_id_pc34(-1) == 0 &&
+                     dm1_v1_inventory_equipment_slot_zone_id_pc34(13) == 0 &&
+                     dm1_v1_inventory_equipment_slot_zone_pc34(13, NULL) == 0 &&
+                     dm1_v1_inventory_backpack_slot_zone_id_pc34(-1) == 0 &&
+                     dm1_v1_inventory_backpack_slot_zone_id_pc34(17) == 0 &&
+                     dm1_v1_inventory_backpack_slot_zone_pc34(17, NULL) == 0,
                  "V1 inventory source-zone helpers reject invalid ordinals");
 
     /* INV_GV_356: Source slot-box index helper preserves DEFS.H slot
@@ -8950,13 +10062,13 @@ int main(int argc, char** argv) {
         int x37 = -1, y37 = -1, w37 = -1, h37 = -1;
         probe_record(&tally,
                      "INV_GV_356",
-                     M11_GameView_GetV1InventorySourceSlotBoxZoneCount() == 30 &&
-                         M11_GameView_GetV1InventorySourceSlotBoxZoneId(7) == 0 &&
-                         M11_GameView_GetV1InventorySourceSlotBoxZoneId(8) == 507 &&
-                         M11_GameView_GetV1InventorySourceSlotBoxZoneId(37) == 536 &&
-                         M11_GameView_GetV1InventorySourceSlotBoxZoneId(38) == 0 &&
-                         M11_GameView_GetV1InventorySourceSlotBoxZone(8, &x8, &y8, &w8, &h8) &&
-                         M11_GameView_GetV1InventorySourceSlotBoxZone(37, &x37, &y37, &w37, &h37) &&
+                     dm1_v1_inventory_source_slot_box_zone_count_pc34() == 30 &&
+                         dm1_v1_inventory_source_slot_box_zone_id_pc34(7) == 0 &&
+                         dm1_v1_inventory_source_slot_box_zone_id_pc34(8) == 507 &&
+                         dm1_v1_inventory_source_slot_box_zone_id_pc34(37) == 536 &&
+                         dm1_v1_inventory_source_slot_box_zone_id_pc34(38) == 0 &&
+                         dm1_v1_inventory_source_slot_box_zone_xywh_pc34(8, &x8, &y8, &w8, &h8) &&
+                         dm1_v1_inventory_source_slot_box_zone_xywh_pc34(37, &x37, &y37, &w37, &h37) &&
                          x8 == 6 && y8 == 53 && w8 == 16 && h8 == 16 &&
                          x37 == 202 && y37 == 33 && w37 == 16 && h37 == 16,
                      "V1 inventory source slot-box helper preserves DEFS.H indices 8..37");
@@ -8968,8 +10080,8 @@ int main(int argc, char** argv) {
         int x = -1, y = -1, w = -1, h = -1;
         probe_record(&tally,
                      "INV_GV_357",
-                     M11_GameView_GetV1InventoryBackdropGraphicId() == 17 &&
-                         M11_GameView_GetV1InventoryBackdropZone(&x, &y, &w, &h) &&
+                     dm1_v1_graphic_inventory_backdrop_pc34() == 17 &&
+                         dm1_v1_inventory_backdrop_zone_xywh_pc34(&x, &y, &w, &h) &&
                          x == 0 && y == 33 && w == 224 && h == 136,
                      "V1 inventory backdrop exposes source C017 in viewport replacement zone");
     }
@@ -8979,7 +10091,7 @@ int main(int argc, char** argv) {
     if (gameView.assetsAvailable) {
         const M11_AssetSlot* invBackdrop = M11_AssetLoader_Load(
             (M11_AssetLoader*)&gameView.assetLoader,
-            (unsigned int)M11_GameView_GetV1InventoryBackdropGraphicId());
+            (unsigned int)dm1_v1_graphic_inventory_backdrop_pc34());
         probe_record(&tally,
                      "INV_GV_358",
                      invBackdrop != NULL && invBackdrop->width == 224 && invBackdrop->height == 136,
@@ -9982,11 +11094,11 @@ int main(int argc, char** argv) {
     {
         probe_record(&tally,
                      "INV_GV_245B",
-                     M11_GameView_GetProjectileSourceScaleUnits(0, 3) == 32 &&
-                     M11_GameView_GetProjectileSourceScaleUnits(1, 2) == 27 &&
-                     M11_GameView_GetProjectileSourceScaleUnits(1, 0) == 21 &&
-                     M11_GameView_GetProjectileSourceScaleUnits(2, 2) == 18 &&
-                     M11_GameView_GetProjectileSourceScaleUnits(2, 0) == 14,
+                     dm1_v1_projectile_scale_units(0, 3) == 32 &&
+                     dm1_v1_projectile_scale_units(1, 2) == 27 &&
+                     dm1_v1_projectile_scale_units(1, 0) == 21 &&
+                     dm1_v1_projectile_scale_units(2, 2) == 18 &&
+                     dm1_v1_projectile_scale_units(2, 0) == 14,
                      "projectile source scale units match G0215 for D1/D2/D3 front/back cells");
     }
 
@@ -9994,12 +11106,12 @@ int main(int argc, char** argv) {
     {
         probe_record(&tally,
                      "INV_GV_245C",
-                     M11_GameView_GetProjectileAspectFirstNative(0) == 0 &&
-                     M11_GameView_GetProjectileAspectFirstNative(3) == 9 &&
-                     M11_GameView_GetProjectileAspectFirstNative(10) == 28 &&
-                     M11_GameView_GetProjectileAspectFirstNative(13) == 31 &&
-                     M11_GameView_GetProjectileAspectGraphicInfo(3) == 0x0112u &&
-                     M11_GameView_GetProjectileAspectGraphicInfo(10) == 0x0103u,
+                     dm1_v1_projectile_aspect_first_native(0) == 0 &&
+                     dm1_v1_projectile_aspect_first_native(3) == 9 &&
+                     dm1_v1_projectile_aspect_first_native(10) == 28 &&
+                     dm1_v1_projectile_aspect_first_native(13) == 31 &&
+                     dm1_v1_projectile_aspect_graphic_info(3) == 0x0112u &&
+                     dm1_v1_projectile_aspect_graphic_info(10) == 0x0103u,
                      "projectile aspect firstNative/GraphicInfo samples match G0210");
     }
 
@@ -10009,26 +11121,26 @@ int main(int argc, char** argv) {
      * rotates. */
     probe_record(&tally,
                  "INV_GV_245D",
-                 M11_GameView_GetProjectileAspectBitmapDelta(3, 1) == 1 &&
-                 M11_GameView_GetProjectileGraphicForAspect(3, 1) == 464 &&
-                 M11_GameView_GetProjectileAspectBitmapDelta(3, 0) == 0 &&
-                 M11_GameView_GetProjectileGraphicForAspect(10, 1) == 482 &&
-                 M11_GameView_GetProjectileGraphicForAspect(10, 3) == 482,
+                 dm1_v1_projectile_bitmap_delta(3, 1) == 1 &&
+                 dm1_v1_projectile_graphic_index(3, 1) == 464 &&
+                 dm1_v1_projectile_bitmap_delta(3, 0) == 0 &&
+                 dm1_v1_projectile_graphic_index(10, 1) == 482 &&
+                 dm1_v1_projectile_graphic_index(10, 3) == 482,
                  "projectile G0210 aspect bitmap delta handles lightning rotation and fireball no-rotation");
 
     probe_record(&tally,
                  "INV_GV_245E",
-                 M11_GameView_GetProjectileAspectFlipFlags(2, 1, 0, 2, 3) == 0x03 &&
-                 M11_GameView_GetProjectileAspectFlipFlags(2, 1, 0, 2, 4) == 0x00 &&
-                 M11_GameView_GetProjectileAspectFlipFlags(2, 0, 0, 2, 3) == 0x02 &&
-                 M11_GameView_GetProjectileAspectFlipFlags(10, 1, 0, 2, 3) == 0x00,
+                 dm1_v1_projectile_flip_flags(2, 1, 0, 2, 3) == 0x03 &&
+                 dm1_v1_projectile_flip_flags(2, 1, 0, 2, 4) == 0x00 &&
+                 dm1_v1_projectile_flip_flags(2, 0, 0, 2, 3) == 0x02 &&
+                 dm1_v1_projectile_flip_flags(10, 1, 0, 2, 3) == 0x00,
                  "projectile C0 back/rotation aspect applies horizontal+vertical flip flags while C3 fireball stays unflipped");
 
     {
         int x0 = 0, y0 = 0, x1 = 0, y1 = 0, x4 = 0, y4 = 0;
-        int ok0 = M11_GameView_GetC2900ProjectileZonePoint(0, 2, &x0, &y0);
-        int ok1 = M11_GameView_GetC2900ProjectileZonePoint(1, 3, &x1, &y1);
-        int ok4 = M11_GameView_GetC2900ProjectileZonePoint(4, 3, &x4, &y4);
+        int ok0 = dm1_viewport_3d_c2900_projectile_zone_point(0, 2, &x0, &y0);
+        int ok1 = dm1_viewport_3d_c2900_projectile_zone_point(1, 3, &x1, &y1);
+        int ok4 = dm1_viewport_3d_c2900_projectile_zone_point(4, 3, &x4, &y4);
         probe_record(&tally,
                      "INV_GV_245F",
                      ok0 && x0 == 129 && y0 == 47 &&
@@ -10044,10 +11156,10 @@ int main(int argc, char** argv) {
      * F0115 viewSquareTo reconciliation. */
     {
         int x5 = 0, y5 = 0, x8 = 0, y8 = 0, x10 = 0, y10 = 0, x11 = 0, y11 = 0;
-        int ok5 = M11_GameView_GetC2900ProjectileRawZonePoint(5, 1, &x5, &y5);
-        int ok8 = M11_GameView_GetC2900ProjectileRawZonePoint(8, 3, &x8, &y8);
-        int ok10 = M11_GameView_GetC2900ProjectileRawZonePoint(10, 2, &x10, &y10);
-        int ok11 = M11_GameView_GetC2900ProjectileRawZonePoint(11, 1, &x11, &y11);
+        int ok5 = dm1_viewport_3d_c2900_projectile_raw_zone_point(5, 1, &x5, &y5);
+        int ok8 = dm1_viewport_3d_c2900_projectile_raw_zone_point(8, 3, &x8, &y8);
+        int ok10 = dm1_viewport_3d_c2900_projectile_raw_zone_point(10, 2, &x10, &y10);
+        int ok11 = dm1_viewport_3d_c2900_projectile_raw_zone_point(11, 1, &x11, &y11);
         probe_record(&tally,
                      "INV_GV_245G",
                      ok5 && x5 == 132 && y5 == 46 &&
@@ -10370,14 +11482,14 @@ int main(int argc, char** argv) {
                                        0,
                                        16,
                                        14,
-                                       (unsigned char)M11_GameView_GetV1ChampionBarColor(0)) > 0U &&
+                                       (unsigned char)probe_dm1_champion_bar_color(0)) > 0U &&
                          probe_count_color(fb,
                                            320,
                                            301,
                                            0,
                                            16,
                                            14,
-                                           (unsigned char)M11_GameView_GetV1ChampionBarColor(1)) > 0U &&
+                                           (unsigned char)probe_dm1_champion_bar_color(1)) > 0U &&
                          probe_count_color(fb,
                                            320,
                                            281,
@@ -10450,16 +11562,16 @@ int main(int argc, char** argv) {
             int zx3, zy3, zw3, zh3;
             int ix0, iy0, iw0, ih0;
             int ix3, iy3, iw3, ih3;
-            int valid0 = M11_GameView_GetV1ActionIconCellZone(0, &zx0, &zy0, &zw0, &zh0);
-            int valid3 = M11_GameView_GetV1ActionIconCellZone(3, &zx3, &zy3, &zw3, &zh3);
-            int inner0 = M11_GameView_GetV1ActionIconInnerZone(0, &ix0, &iy0, &iw0, &ih0);
-            int inner3 = M11_GameView_GetV1ActionIconInnerZone(3, &ix3, &iy3, &iw3, &ih3);
+            int valid0 = probe_dm1_action_icon_cell_zone(0, &zx0, &zy0, &zw0, &zh0);
+            int valid3 = probe_dm1_action_icon_cell_zone(3, &zx3, &zy3, &zw3, &zh3);
+            int inner0 = probe_dm1_action_icon_inner_zone(0, &ix0, &iy0, &iw0, &ih0);
+            int inner3 = probe_dm1_action_icon_inner_zone(3, &ix3, &iy3, &iw3, &ih3);
             probe_record(&tally, "INV_GV_300D",
-                         M11_GameView_GetV1ActionIconParentZoneId() == 88 &&
-                             M11_GameView_GetV1ActionIconCellZoneId(0) == 89 &&
-                             M11_GameView_GetV1ActionIconCellZoneId(3) == 92 &&
-                             M11_GameView_GetV1ActionIconInnerZoneId(0) == 93 &&
-                             M11_GameView_GetV1ActionIconInnerZoneId(3) == 96 &&
+                         dm1_v1_action_icon_parent_zone_id_pc34() == 88 &&
+                             dm1_v1_action_icon_cell_zone_id_pc34(0) == 89 &&
+                             dm1_v1_action_icon_cell_zone_id_pc34(3) == 92 &&
+                             dm1_v1_action_icon_inner_zone_id_pc34(0) == 93 &&
+                             dm1_v1_action_icon_inner_zone_id_pc34(3) == 96 &&
                              valid0 && valid3 && inner0 && inner3 &&
                              zx0 == 233 && zy0 == 86 && zw0 == 20 && zh0 == 35 &&
                              zx3 == 299 && zy3 == 86 && zw3 == 20 && zh3 == 35 &&
@@ -10502,9 +11614,9 @@ int main(int argc, char** argv) {
 
         {
             probe_record(&tally, "INV_GV_300N",
-                         M11_GameView_GetV1ActionIconCellBackdropColor(&iconView, 0) == 4 &&
-                             M11_GameView_GetV1ActionIconCellBackdropColor(&iconView, 1) == 0 &&
-                             M11_GameView_GetV1ActionIconCellBackdropColor(&iconView, 3) == -1,
+                         probe_dm1_action_icon_cell_backdrop_color(&iconView, 0) == 4 &&
+                             probe_dm1_action_icon_cell_backdrop_color(&iconView, 1) == 0 &&
+                             probe_dm1_action_icon_cell_backdrop_color(&iconView, 3) == -1,
                          "V1 action icon cell backdrop color is cyan for living, black for dead, absent ignored");
         }
 
@@ -10654,8 +11766,8 @@ int main(int argc, char** argv) {
         {
             int nameX, nameY, nameW, nameH;
             probe_record(&tally, "INV_GV_300AH",
-                         M11_GameView_GetV1LeaderHandObjectNameZoneId() == 17 &&
-                             M11_GameView_GetV1LeaderHandObjectNameZone(&nameX, &nameY, &nameW, &nameH) &&
+                         DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34CompatZoneId() == 17 &&
+                             DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34CompatZone(&nameX, &nameY, &nameW, &nameH) &&
                              nameX == 233 && nameY == 33 && nameW == 87 && nameH == 6,
                          "leader hand object-name zone exposes layout-696 C017 id and geometry");
         }
@@ -10663,8 +11775,8 @@ int main(int argc, char** argv) {
         {
             int actionX, actionY, actionW, actionH;
             probe_record(&tally, "INV_GV_300H",
-                         M11_GameView_GetV1ActionAreaZoneId() == 11 &&
-                             M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, &actionW, &actionH) &&
+                         dm1_v1_action_area_zone_id_pc34() == 11 &&
+                             probe_dm1_action_area_zone(&actionX, &actionY, &actionW, &actionH) &&
                              actionX == 233 && actionY == 77 && actionW == 87 && actionH == 45,
                          "action area zone exposes source C011/COMMAND.C right-column geometry");
         }
@@ -10672,9 +11784,9 @@ int main(int argc, char** argv) {
         {
             int spellX, spellY, spellW, spellH;
             probe_record(&tally, "INV_GV_300I",
-                         M11_GameView_GetV1SpellAreaZoneId() == 13 &&
-                             M11_GameView_GetV1SpellAreaZone(&spellX, &spellY, &spellW, &spellH) &&
-                             spellX == 233 && spellY == 42 && spellW == 87 && spellH == 25,
+                         DM1_V1_SPELL_AREA_ZONE_ID_PC34 == 13 &&
+                             probe_dm1_spell_area_zone(&spellX, &spellY, &spellW, &spellH) &&
+                             spellX == 233 && spellY == 42 && spellW == 87 && spellH == 33,
                          "spell area graphic anchors at ReDMCSB C013 right-column source position");
         }
 
@@ -10682,10 +11794,10 @@ int main(int argc, char** argv) {
             int panelX, panelY, panelW, panelH;
             int tabX, tabY, tabW, tabH;
             probe_record(&tally, "INV_GV_300AC",
-                         M11_GameView_GetV1SpellCasterPanelZoneId() == 221 &&
-                             M11_GameView_GetV1SpellCasterTabZoneId() == 224 &&
-                             M11_GameView_GetV1SpellCasterPanelZone(&panelX, &panelY, &panelW, &panelH) &&
-                             M11_GameView_GetV1SpellCasterTabZone(&tabX, &tabY, &tabW, &tabH) &&
+                         DM1_V1_SPELL_CASTER_PANEL_ZONE_ID_PC34 == 221 &&
+                             DM1_V1_SPELL_CASTER_TAB_ZONE_ID_PC34 == 224 &&
+                             probe_dm1_spell_caster_panel_zone(&panelX, &panelY, &panelW, &panelH) &&
+                             probe_dm1_spell_caster_tab_zone(&tabX, &tabY, &tabW, &tabH) &&
                              panelX == 233 && panelY == 42 && panelW == 87 && panelH == 8 &&
                              tabX == 233 && tabY == 42 && tabW == 45 && tabH == 8,
                          "spell caster panel zones expose layout-696 C221/C224 ids at ReDMCSB C013 position");
@@ -10694,8 +11806,8 @@ int main(int argc, char** argv) {
         {
             int resultX, resultY, resultW, resultH;
             probe_record(&tally, "INV_GV_300AE",
-                         M11_GameView_GetV1ActionResultZoneId() == 75 &&
-                             M11_GameView_GetV1ActionResultZone(&resultX, &resultY, &resultW, &resultH) &&
+                         dm1_v1_action_result_zone_id_pc34() == 75 &&
+                             probe_dm1_action_result_zone(&resultX, &resultY, &resultW, &resultH) &&
                              resultX == 233 && resultY == 77 && resultW == 87 && resultH == 45,
                          "action result zone exposes layout-696 C075 id and action-area geometry");
         }
@@ -10703,8 +11815,8 @@ int main(int argc, char** argv) {
         {
             int passX, passY, passW, passH;
             probe_record(&tally, "INV_GV_300AD",
-                         M11_GameView_GetV1ActionPassZoneId() == 98 &&
-                             M11_GameView_GetV1ActionPassZone(&passX, &passY, &passW, &passH) &&
+                         dm1_v1_action_pass_zone_id_pc34() == 98 &&
+                             probe_dm1_action_pass_zone(&passX, &passY, &passW, &passH) &&
                              passX == 285 && passY == 77 && passW == 34 && passH == 7,
                          "action PASS zone exposes ReDMCSB COMMAND.C C112 right-aligned geometry");
         }
@@ -10714,9 +11826,9 @@ int main(int argc, char** argv) {
             int twoX, twoY, twoW, twoH;
             int threeX, threeY, threeW, threeH;
             probe_record(&tally, "INV_GV_300AF",
-                         M11_GameView_GetV1ActionMenuGraphicZone(1, &oneX, &oneY, &oneW, &oneH) &&
-                             M11_GameView_GetV1ActionMenuGraphicZone(2, &twoX, &twoY, &twoW, &twoH) &&
-                             M11_GameView_GetV1ActionMenuGraphicZone(3, &threeX, &threeY, &threeW, &threeH) &&
+                         probe_dm1_action_menu_graphic_zone(1, &oneX, &oneY, &oneW, &oneH) &&
+                             probe_dm1_action_menu_graphic_zone(2, &twoX, &twoY, &twoW, &twoH) &&
+                             probe_dm1_action_menu_graphic_zone(3, &threeX, &threeY, &threeW, &threeH) &&
                              oneX == 233 && oneY == 77 && oneW == 87 && oneH == 21 &&
                              twoX == 233 && twoY == 77 && twoW == 87 && twoH == 33 &&
                              threeX == 233 && threeY == 77 && threeW == 87 && threeH == 45,
@@ -10725,36 +11837,40 @@ int main(int argc, char** argv) {
 
         {
             int invX, invY, invW, invH;
-            int foodX, foodY, foodW, foodH, foodSrcY;
-            int waterX, waterY, waterW, waterH, waterSrcY;
+            dm1_v1_champion_panel_food_water_bar_zone_pc34_t foodBar =
+                dm1_v1_champion_panel_food_bar_zone_pc34();
+            dm1_v1_champion_panel_food_water_bar_zone_pc34_t waterBar =
+                dm1_v1_champion_panel_water_bar_zone_pc34();
             probe_record(&tally, "INV_GV_300AI",
-                         M11_GameView_GetV1InventoryPanelZoneId() == 101 &&
-                             M11_GameView_GetV1InventoryPanelZone(&invX, &invY, &invW, &invH) &&
+                         dm1_v1_inventory_panel_zone_id_pc34() == 101 &&
+                             dm1_v1_inventory_panel_zone_xywh_pc34(&invX, &invY, &invW, &invH) &&
                              invX == 80 && invY == 52 && invW == 144 && invH == 73 &&
-                             M11_GameView_GetV1FoodBarZoneId() == 103 &&
-                             M11_GameView_GetV1FoodBarZone(&foodX, &foodY, &foodW, &foodH, &foodSrcY) &&
-                             foodX == 113 && foodY == 69 && foodW == 34 && foodH == 6 && foodSrcY == 2 &&
-                             M11_GameView_GetV1FoodWaterPanelZoneId() == 104 &&
-                             M11_GameView_GetV1FoodWaterPanelZone(&waterX, &waterY, &waterW, &waterH, &waterSrcY) &&
-                             waterX == 113 && waterY == 92 && waterW == 46 && waterH == 6 && waterSrcY == 2,
+                             foodBar.zone_id == 103 &&
+                             foodBar.x == 113 && foodBar.y == 69 &&
+                             foodBar.w == 34 && foodBar.h == 6 &&
+                             foodBar.shadow_offset == 2 &&
+                             waterBar.zone_id == 104 &&
+                             waterBar.x == 113 && waterBar.y == 92 &&
+                             waterBar.w == 46 && waterBar.h == 6 &&
+                             waterBar.shadow_offset == 2,
                          "inventory panel and food/water zones expose layout-696 C101/C103/C104 geometry");
         }
 
         {
             probe_record(&tally, "INV_GV_300P",
-                         M11_GameView_GetV1ActionAreaGraphicId() == 10 &&
-                             M11_GameView_GetV1ActionMenuGraphicZoneId(1) == 79 &&
-                             M11_GameView_GetV1ActionMenuGraphicZoneId(2) == 77 &&
-                             M11_GameView_GetV1ActionMenuGraphicZoneId(3) == 11 &&
-                             M11_GameView_GetV1ActionAreaClearColor() == PROBE_COLOR_BLACK &&
-                             M11_GameView_GetV1SpellAreaBackgroundGraphicId() == 9,
+                         dm1_v1_action_area_graphic_id_pc34() == 10 &&
+                             dm1_v1_action_menu_graphic_zone_id_pc34(1) == 79 &&
+                             dm1_v1_action_menu_graphic_zone_id_pc34(2) == 77 &&
+                             dm1_v1_action_menu_graphic_zone_id_pc34(3) == 11 &&
+                             dm1_v1_action_area_clear_color_pc34() == PROBE_COLOR_BLACK &&
+                             DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 == 9,
                          "right-column V1 action graphic uses source C010 with C079/C077/C011 menu zones");
         }
 
         {
             int stripX, stripY, stripW, stripH;
             probe_record(&tally, "INV_GV_300R",
-                         M11_GameView_GetV1ActionSpellStripZone(&stripX, &stripY, &stripW, &stripH) &&
+                         probe_dm1_action_spell_strip_zone(&stripX, &stripY, &stripW, &stripH) &&
                              stripX == 233 && stripY == 42 &&
                              stripW == 87 && stripH == 80,
                          "V1 action+spell strip union covers source C013/C011 right-column stack");
@@ -10762,7 +11878,7 @@ int main(int argc, char** argv) {
 
         {
             probe_record(&tally, "INV_GV_300S",
-                         M11_GameView_GetV1ChampionPortraitGraphicId() == 26 &&
+                         dm1_v1_graphic_champion_portraits_pc34() == 26 &&
                              M11_GameView_GetV1ChampionIconGraphicId() == 28,
                          "V1 champion identity graphics use source C026 portraits and C028 icons");
         }
@@ -10792,25 +11908,25 @@ int main(int argc, char** argv) {
 
         {
             probe_record(&tally, "INV_GV_300T",
-                         M11_GameView_GetV1PoisonLabelGraphicId() == 32 &&
-                             M11_GameView_GetV1ChampionSmallDamageGraphicId() == 15 &&
-                             M11_GameView_GetV1ChampionBigDamageGraphicId() == 16 &&
-                             M11_GameView_GetV1CreatureDamageGraphicId() == 14,
+                         dm1_v1_graphic_poisoned_label_pc34() == 32 &&
+                             dm1_v1_graphic_champion_damage_small_pc34() == 15 &&
+                             dm1_v1_graphic_champion_damage_big_pc34() == 16 &&
+                             dm1_v1_graphic_creature_damage_pc34() == 14,
                          "V1 HUD condition/damage graphics use source C032/C015/C016/C014 ids");
         }
 
         {
             probe_record(&tally, "INV_GV_300U",
-                         M11_GameView_GetV1InventoryPanelGraphicId() == 20 &&
-                             M11_GameView_GetV1FoodLabelGraphicId() == 30 &&
-                             M11_GameView_GetV1WaterLabelGraphicId() == 31,
+                         dm1_v1_graphic_panel_empty_pc34() == 20 &&
+                             dm1_v1_graphic_food_label_pc34() == 30 &&
+                             dm1_v1_graphic_water_label_pc34() == 31,
                          "V1 inventory panel status uses source C020 panel and C030/C031 food-water labels");
         }
 
         {
             probe_record(&tally, "INV_GV_300V",
-                         M11_GameView_GetV1EndgameTheEndGraphicId() == 6 &&
-                             M11_GameView_GetV1EndgameChampionMirrorGraphicId() == 346,
+                         dm1_v1_graphic_the_end_pc34() == 6 &&
+                             dm1_v1_graphic_endgame_champion_mirror_pc34() == 346,
                          "V1 endgame graphics use source C006 The End and C346 champion mirror ids");
         }
 
@@ -10827,31 +11943,31 @@ int main(int argc, char** argv) {
             int quitX, quitY, quitW, quitH;
             int quitInnerX, quitInnerY, quitInnerW, quitInnerH;
             probe_record(&tally, "INV_GV_300AP",
-                         M11_GameView_GetV1EndgameTheEndZone(&endX, &endY, &endW, &endH) &&
+                         probe_dm1_endgame_the_end_zone(&endX, &endY, &endW, &endH) &&
                              endX == 120 && endY == 95 && endW == 80 && endH == 14 &&
-                             M11_GameView_GetV1EndgameChampionMirrorZoneId(0) == 412 &&
-                             M11_GameView_GetV1EndgameChampionMirrorZoneId(3) == 415 &&
-                             M11_GameView_GetV1EndgameChampionMirrorZoneId(4) == 0 &&
-                             M11_GameView_GetV1EndgameChampionMirrorZone(0, &mirror0X, &mirror0Y, &mirror0W, &mirror0H) &&
-                             M11_GameView_GetV1EndgameChampionMirrorZone(3, &mirror3X, &mirror3Y, &mirror3W, &mirror3H) &&
+                             dm1_v1_endgame_champion_mirror_zone_id_pc34(0) == 412 &&
+                             dm1_v1_endgame_champion_mirror_zone_id_pc34(3) == 415 &&
+                             dm1_v1_endgame_champion_mirror_zone_id_pc34(4) == 0 &&
+                             probe_dm1_endgame_champion_mirror_zone(0, &mirror0X, &mirror0Y, &mirror0W, &mirror0H) &&
+                             probe_dm1_endgame_champion_mirror_zone(3, &mirror3X, &mirror3Y, &mirror3W, &mirror3H) &&
                              mirror0X == 19 && mirror0Y == 7 && mirror0W == 48 && mirror0H == 43 &&
                              mirror3X == 19 && mirror3Y == 151 && mirror3W == 48 && mirror3H == 43 &&
-                             M11_GameView_GetV1EndgameChampionPortraitZoneId(0) == 416 &&
-                             M11_GameView_GetV1EndgameChampionPortraitZoneId(3) == 419 &&
-                             M11_GameView_GetV1EndgameChampionPortraitZone(0, &portrait0X, &portrait0Y, &portrait0W, &portrait0H) &&
-                             M11_GameView_GetV1EndgameChampionPortraitZone(3, &portrait3X, &portrait3Y, &portrait3W, &portrait3H) &&
+                             dm1_v1_endgame_champion_portrait_zone_id_pc34(0) == 416 &&
+                             dm1_v1_endgame_champion_portrait_zone_id_pc34(3) == 419 &&
+                             probe_dm1_endgame_champion_portrait_zone(0, &portrait0X, &portrait0Y, &portrait0W, &portrait0H) &&
+                             probe_dm1_endgame_champion_portrait_zone(3, &portrait3X, &portrait3Y, &portrait3W, &portrait3H) &&
                              portrait0X == 27 && portrait0Y == 13 && portrait0W == 32 && portrait0H == 29 &&
                              portrait3X == 27 && portrait3Y == 157 && portrait3W == 32 && portrait3H == 29 &&
-                             M11_GameView_GetV1EndgameChampionNameOrigin(2, &nameX, &nameY) &&
+                             dm1_v1_endgame_champion_name_origin_pc34(2, &nameX, &nameY) &&
                              nameX == 87 && nameY == 110 &&
-                             M11_GameView_GetV1EndgameChampionSkillOrigin(2, 1, &skillX, &skillY) &&
+                             dm1_v1_endgame_champion_skill_origin_pc34(2, 1, &skillX, &skillY) &&
                              skillX == 105 && skillY == 127 &&
-                             M11_GameView_GetV1EndgameRestartBox(0, &restartX, &restartY, &restartW, &restartH) &&
-                             M11_GameView_GetV1EndgameRestartBox(1, &restartInnerX, &restartInnerY, &restartInnerW, &restartInnerH) &&
+                             probe_dm1_endgame_restart_box(0, &restartX, &restartY, &restartW, &restartH) &&
+                             probe_dm1_endgame_restart_box(1, &restartInnerX, &restartInnerY, &restartInnerW, &restartInnerH) &&
                              restartX == 103 && restartY == 140 && restartW == 115 && restartH == 15 &&
                              restartInnerX == 105 && restartInnerY == 142 && restartInnerW == 111 && restartInnerH == 11 &&
-                             M11_GameView_GetV1EndgameQuitBox(0, &quitX, &quitY, &quitW, &quitH) &&
-                             M11_GameView_GetV1EndgameQuitBox(1, &quitInnerX, &quitInnerY, &quitInnerW, &quitInnerH) &&
+                             probe_dm1_endgame_quit_box(0, &quitX, &quitY, &quitW, &quitH) &&
+                             probe_dm1_endgame_quit_box(1, &quitInnerX, &quitInnerY, &quitInnerW, &quitInnerH) &&
                              quitX == 127 && quitY == 165 && quitW == 67 && quitH == 15 &&
                              quitInnerX == 129 && quitInnerY == 167 && quitInnerW == 63 && quitInnerH == 11,
                          "V1 endgame zones expose source C412-C419, title, text, skill and restart/quit geometry");
@@ -10859,26 +11975,26 @@ int main(int argc, char** argv) {
 
         {
             probe_record(&tally, "INV_GV_300W",
-                         M11_GameView_GetV1StatusBoxGraphicId() == 7 &&
-                             M11_GameView_GetV1DeadStatusBoxGraphicId() == 8 &&
-                             M11_GameView_GetV1SlotBoxNormalGraphicId() == 33 &&
-                             M11_GameView_GetV1SlotBoxWoundedGraphicId() == 34 &&
-                             M11_GameView_GetV1SlotBoxActingHandGraphicId() == 35 &&
-                             M11_GameView_GetV1PartyShieldBorderGraphicId() == 37 &&
-                             M11_GameView_GetV1FireShieldBorderGraphicId() == 38 &&
-                             M11_GameView_GetV1SpellShieldBorderGraphicId() == 39,
+                         dm1_v1_champion_status_box_graphic_pc34() == 7 &&
+                             dm1_v1_champion_dead_status_box_graphic_pc34() == 8 &&
+                             dm1_v1_graphic_slot_box_normal_pc34() == 33 &&
+                             dm1_v1_graphic_slot_box_wounded_pc34() == 34 &&
+                             dm1_v1_graphic_slot_box_acting_hand_pc34() == 35 &&
+                             dm1_v1_graphic_party_shield_border_pc34() == 37 &&
+                             dm1_v1_graphic_fire_shield_border_pc34() == 38 &&
+                             dm1_v1_graphic_spell_shield_border_pc34() == 39,
                          "V1 status slot and shield frame graphics use source C007/C008/C033-C035/C037-C039 ids");
         }
 
         {
             probe_record(&tally, "INV_GV_300Y",
-                         M11_GameView_GetV1ChampionBarColor(0) == PROBE_COLOR_LIGHT_GREEN &&
-                             M11_GameView_GetV1ChampionBarColor(1) == PROBE_COLOR_YELLOW &&
-                             M11_GameView_GetV1ChampionBarColor(2) == PROBE_COLOR_RED &&
-                             M11_GameView_GetV1ChampionBarColor(3) == PROBE_COLOR_LIGHT_BLUE &&
-                             M11_GameView_GetV1ChampionBarColor(-1) == PROBE_COLOR_SILVER &&
-                             M11_GameView_GetV1ChampionBarColor(4) == PROBE_COLOR_SILVER &&
-                             M11_GameView_GetV1StatusBarBlankColor() == PROBE_COLOR_DARK_GRAY,
+                         probe_dm1_champion_bar_color(0) == PROBE_COLOR_LIGHT_GREEN &&
+                             probe_dm1_champion_bar_color(1) == PROBE_COLOR_YELLOW &&
+                             probe_dm1_champion_bar_color(2) == PROBE_COLOR_RED &&
+                             probe_dm1_champion_bar_color(3) == PROBE_COLOR_LIGHT_BLUE &&
+                             probe_dm1_champion_bar_color(-1) == PROBE_COLOR_SILVER &&
+                             probe_dm1_champion_bar_color(4) == PROBE_COLOR_SILVER &&
+                             probe_dm1_status_bar_blank_color() == PROBE_COLOR_DARK_GRAY,
                          "V1 champion bar colors use source G0046 order with C12 blank bars");
         }
 
@@ -10888,16 +12004,16 @@ int main(int argc, char** argv) {
             int patch2X, patch2Y, patch2W, patch2H, patch2DstX, patch2DstY;
             int patch4X, patch4Y, patch4W, patch4H, patch4DstX, patch4DstY;
             probe_record(&tally, "INV_GV_300X",
-                         M11_GameView_GetV1DialogBackdropGraphicId() == 17 &&
-                             M11_GameView_GetV1DialogVersionTextOrigin(&versionX, &versionY) &&
+                         dm1_v1_graphic_dialog_box_pc34() == 17 &&
+                             dm1_v1_dialog_version_text_origin_pc34(&versionX, &versionY) &&
                              versionX == 192 && versionY == 40 &&
-                             M11_GameView_GetV1DialogChoicePatchZone(1, &patch1X, &patch1Y, &patch1W, &patch1H, &patch1DstX, &patch1DstY) &&
+                             probe_dm1_dialog_choice_patch_zone(1, &patch1X, &patch1Y, &patch1W, &patch1H, &patch1DstX, &patch1DstY) &&
                              patch1X == 0 && patch1Y == 14 && patch1W == 224 && patch1H == 75 && patch1DstX == 0 && patch1DstY == 51 &&
-                             M11_GameView_GetV1DialogChoicePatchZone(2, &patch2X, &patch2Y, &patch2W, &patch2H, &patch2DstX, &patch2DstY) &&
+                             probe_dm1_dialog_choice_patch_zone(2, &patch2X, &patch2Y, &patch2W, &patch2H, &patch2DstX, &patch2DstY) &&
                              patch2X == 102 && patch2Y == 52 && patch2W == 21 && patch2H == 37 && patch2DstX == 102 && patch2DstY == 89 &&
-                             M11_GameView_GetV1DialogChoicePatchZone(4, &patch4X, &patch4Y, &patch4W, &patch4H, &patch4DstX, &patch4DstY) &&
+                             probe_dm1_dialog_choice_patch_zone(4, &patch4X, &patch4Y, &patch4W, &patch4H, &patch4DstX, &patch4DstY) &&
                              patch4X == 102 && patch4Y == 99 && patch4W == 21 && patch4H == 36 && patch4DstX == 102 && patch4DstY == 62 &&
-                             !M11_GameView_GetV1DialogChoicePatchZone(3, NULL, NULL, NULL, NULL, NULL, NULL),
+                             !probe_dm1_dialog_choice_patch_zone(3, NULL, NULL, NULL, NULL, NULL, NULL),
                          "V1 dialog backdrop/version/choice patches use source C000/C450/M621-M623 geometry");
         }
 
@@ -10905,16 +12021,16 @@ int main(int argc, char** argv) {
             int c469x, c469y, c469w, c469h;
             int c471x, c471y, c471w, c471h;
             probe_record(&tally, "INV_GV_300Z",
-                         M11_GameView_GetV1DialogMessageZone(1, &c469x, &c469y, &c469w, &c469h) &&
+                         probe_dm1_dialog_message_zone(1, &c469x, &c469y, &c469w, &c469h) &&
                              c469x == 112 && c469y == 49 && c469w == 77 && c469h == 25 &&
-                             M11_GameView_GetV1DialogMessageZone(4, &c471x, &c471y, &c471w, &c471h) &&
+                             probe_dm1_dialog_message_zone(4, &c471x, &c471y, &c471w, &c471h) &&
                              c471x == 112 && c471y == 32 && c471w == 77 && c471h == 5 &&
-                             M11_GameView_GetV1DialogMessageWidth(1) == 77 &&
-                             M11_GameView_GetV1DialogMessageWidth(4) == 77 &&
-                             M11_GameView_GetV1DialogSingleChoiceMessageTextY(1) == 96 &&
-                             M11_GameView_GetV1DialogSingleChoiceMessageTextY(2) == 92 &&
-                             M11_GameView_GetV1DialogMultiChoiceMessageTextY(1) == 70 &&
-                             M11_GameView_GetV1DialogMultiChoiceMessageTextY(2) == 66,
+                             dm1_v1_dialog_message_width_pc34(1) == 77 &&
+                             dm1_v1_dialog_message_width_pc34(4) == 77 &&
+                             dm1_v1_dialog_single_choice_message_text_y_pc34(1) == 96 &&
+                             dm1_v1_dialog_single_choice_message_text_y_pc34(2) == 92 &&
+                             dm1_v1_dialog_multi_choice_message_text_y_pc34(1) == 70 &&
+                             dm1_v1_dialog_multi_choice_message_text_y_pc34(2) == 66,
                          "V1 dialog message zones and vertical origins use source C469/C471 geometry");
         }
 
@@ -10923,18 +12039,18 @@ int main(int argc, char** argv) {
             int c3x, c3y, c3w, c3h;
             int c4x, c4y, c4w, c4h;
             probe_record(&tally, "INV_GV_300AA",
-                         M11_GameView_GetV1DialogChoiceTextZoneId(1, 0) == 462 &&
-                             M11_GameView_GetV1DialogChoiceTextZoneId(2, 0) == 463 &&
-                             M11_GameView_GetV1DialogChoiceTextZoneId(2, 1) == 462 &&
-                             M11_GameView_GetV1DialogChoiceTextZoneId(3, 1) == 466 &&
-                             M11_GameView_GetV1DialogChoiceTextZoneId(4, 1) == 465 &&
-                             M11_GameView_GetV1DialogChoiceTextZone(1, 0, &c1x, &c1y, &c1w, &c1h) &&
+                         dm1_v1_dialog_choice_text_zone_id_pc34(1, 0) == 462 &&
+                             dm1_v1_dialog_choice_text_zone_id_pc34(2, 0) == 463 &&
+                             dm1_v1_dialog_choice_text_zone_id_pc34(2, 1) == 462 &&
+                             dm1_v1_dialog_choice_text_zone_id_pc34(3, 1) == 466 &&
+                             dm1_v1_dialog_choice_text_zone_id_pc34(4, 1) == 465 &&
+                             probe_dm1_dialog_choice_text_zone(1, 0, &c1x, &c1y, &c1w, &c1h) &&
                              c1x == 16 && c1y == 110 && c1w == 192 && c1h == 7 &&
-                             M11_GameView_GetV1DialogChoiceTextZone(3, 2, &c3x, &c3y, &c3w, &c3h) &&
+                             probe_dm1_dialog_choice_text_zone(3, 2, &c3x, &c3y, &c3w, &c3h) &&
                              c3x == 123 && c3y == 110 && c3w == 86 && c3h == 7 &&
-                             M11_GameView_GetV1DialogChoiceTextZone(4, 1, &c4x, &c4y, &c4w, &c4h) &&
+                             probe_dm1_dialog_choice_text_zone(4, 1, &c4x, &c4y, &c4w, &c4h) &&
                              c4x == 123 && c4y == 73 && c4w == 86 && c4h == 7 &&
-                             !M11_GameView_GetV1DialogChoiceTextZone(2, 2, NULL, NULL, NULL, NULL),
+                             !probe_dm1_dialog_choice_text_zone(2, 2, NULL, NULL, NULL, NULL),
                          "V1 dialog choice text zone ids expose source C462-C467 layout cases");
         }
 
@@ -10942,32 +12058,32 @@ int main(int argc, char** argv) {
             int h2x, h2y, h2w, h2h;
             int h4x, h4y, h4w, h4h;
             probe_record(&tally, "INV_GV_300AB",
-                         M11_GameView_GetV1DialogChoiceButtonZoneId(1, 0) == 456 &&
-                             M11_GameView_GetV1DialogChoiceButtonZoneId(2, 0) == 457 &&
-                             M11_GameView_GetV1DialogChoiceButtonZoneId(2, 1) == 456 &&
-                             M11_GameView_GetV1DialogChoiceButtonZoneId(3, 2) == 461 &&
-                             M11_GameView_GetV1DialogChoiceButtonZoneId(4, 1) == 459 &&
-                             M11_GameView_GetV1DialogChoiceHitZone(2, 0, &h2x, &h2y, &h2w, &h2h) &&
+                         dm1_v1_dialog_choice_button_zone_id_pc34(1, 0) == 456 &&
+                             dm1_v1_dialog_choice_button_zone_id_pc34(2, 0) == 457 &&
+                             dm1_v1_dialog_choice_button_zone_id_pc34(2, 1) == 456 &&
+                             dm1_v1_dialog_choice_button_zone_id_pc34(3, 2) == 461 &&
+                             dm1_v1_dialog_choice_button_zone_id_pc34(4, 1) == 459 &&
+                             probe_dm1_dialog_choice_hit_zone(2, 0, &h2x, &h2y, &h2w, &h2h) &&
                              h2x == 16 && h2y == 67 && h2w == 192 && h2h == 17 &&
-                             M11_GameView_GetV1DialogChoiceHitZone(4, 3, &h4x, &h4y, &h4w, &h4h) &&
+                             probe_dm1_dialog_choice_hit_zone(4, 3, &h4x, &h4y, &h4w, &h4h) &&
                              h4x == 123 && h4y == 104 && h4w == 86 && h4h == 17 &&
-                             !M11_GameView_GetV1DialogChoiceHitZone(1, 1, NULL, NULL, NULL, NULL),
+                             !probe_dm1_dialog_choice_hit_zone(1, 1, NULL, NULL, NULL, NULL),
                          "V1 dialog pointer hit zones expose source C456-C461 button zones");
         }
 
         {
             probe_record(&tally, "INV_GV_300AG",
-                         M11_GameView_GetV1SpellAvailableSymbolParentZoneId(0) == 245 &&
-                             M11_GameView_GetV1SpellAvailableSymbolParentZoneId(5) == 250 &&
-                             M11_GameView_GetV1SpellAvailableSymbolParentZoneId(6) == 0 &&
-                             M11_GameView_GetV1SpellAvailableSymbolZoneId(0) == 255 &&
-                             M11_GameView_GetV1SpellAvailableSymbolZoneId(5) == 260 &&
-                             M11_GameView_GetV1SpellAvailableSymbolZoneId(-1) == 0 &&
-                             M11_GameView_GetV1SpellChampionSymbolZoneId(0) == 261 &&
-                             M11_GameView_GetV1SpellChampionSymbolZoneId(3) == 264 &&
-                             M11_GameView_GetV1SpellChampionSymbolZoneId(4) == 0 &&
-                             M11_GameView_GetV1SpellCastZoneId() == 252 &&
-                             M11_GameView_GetV1SpellRecantZoneId() == 254,
+                         dm1_v1_spell_available_symbol_parent_zone_id_pc34(0) == 245 &&
+                             dm1_v1_spell_available_symbol_parent_zone_id_pc34(5) == 250 &&
+                             dm1_v1_spell_available_symbol_parent_zone_id_pc34(6) == 0 &&
+                             dm1_v1_spell_available_symbol_zone_id_pc34(0) == 255 &&
+                             dm1_v1_spell_available_symbol_zone_id_pc34(5) == 260 &&
+                             dm1_v1_spell_available_symbol_zone_id_pc34(-1) == 0 &&
+                             dm1_v1_spell_champion_symbol_zone_id_pc34(0) == 261 &&
+                             dm1_v1_spell_champion_symbol_zone_id_pc34(3) == 264 &&
+                             dm1_v1_spell_champion_symbol_zone_id_pc34(4) == 0 &&
+                             DM1_V1_SPELL_AREA_CAST_ZONE_ID_PC34 == 252 &&
+                             DM1_V1_SPELL_AREA_RECANT_ZONE_ID_PC34 == 254,
                          "spell symbol zones expose layout-696 C245-C260, C261-C264, C252 and C254 ids");
         }
 
@@ -10975,9 +12091,9 @@ int main(int argc, char** argv) {
             int availX, availY, availW, availH;
             int selectedX, selectedY, selectedW, selectedH;
             probe_record(&tally, "INV_GV_300Q",
-                         M11_GameView_GetV1SpellAreaLinesGraphicId() == 11 &&
-                             M11_GameView_GetV1SpellLabelCellSourceZone(0, &availX, &availY, &availW, &availH) &&
-                             M11_GameView_GetV1SpellLabelCellSourceZone(1, &selectedX, &selectedY, &selectedW, &selectedH) &&
+                         DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 == 11 &&
+                             probe_dm1_spell_label_cell_source_zone(0, &availX, &availY, &availW, &availH) &&
+                             probe_dm1_spell_label_cell_source_zone(1, &selectedX, &selectedY, &selectedW, &selectedH) &&
                              availX == 0 && availY == 13 && availW == 14 && availH == 13 &&
                              selectedX == 0 && selectedY == 26 && selectedW == 14 && selectedH == 13,
                          "V1 spell label cells use source C011 lines graphic rows for available/selected states");
@@ -11018,8 +12134,8 @@ int main(int argc, char** argv) {
         {
             int headerX, headerY, headerW, headerH;
             probe_record(&tally, "INV_GV_300G",
-                         M11_GameView_GetV1ActionMenuHeaderZoneId() == 80 &&
-                             M11_GameView_GetV1ActionMenuHeaderZone(&headerX, &headerY, &headerW, &headerH) &&
+                         dm1_v1_action_menu_header_zone_id_pc34() == 80 &&
+                             probe_dm1_action_menu_header_zone(&headerX, &headerY, &headerW, &headerH) &&
                              headerX == 233 && headerY == 77 && headerW == 87 && headerH == 9,
                          "action menu header zone exposes F0387 source zone 80 geometry");
         }
@@ -11028,18 +12144,18 @@ int main(int argc, char** argv) {
             int row0X, row0Y, row0W, row0H;
             int row2X, row2Y, row2W, row2H;
             probe_record(&tally, "INV_GV_300F",
-                         M11_GameView_GetV1ActionMenuRowCount() == 3 &&
-                             M11_GameView_GetV1ActionMenuRowBaseZoneId(0) == 82 &&
-                             M11_GameView_GetV1ActionMenuRowBaseZoneId(1) == 83 &&
-                             M11_GameView_GetV1ActionMenuRowBaseZoneId(2) == 84 &&
-                             M11_GameView_GetV1ActionMenuRowBaseZoneId(3) == 0 &&
-                             M11_GameView_GetV1ActionMenuRowZoneId(0) == 85 &&
-                             M11_GameView_GetV1ActionMenuRowZoneId(1) == 86 &&
-                             M11_GameView_GetV1ActionMenuRowZoneId(2) == 87 &&
-                             M11_GameView_GetV1ActionMenuRowZoneId(3) == 0 &&
-                             M11_GameView_GetV1ActionMenuRowZone(0, &row0X, &row0Y, &row0W, &row0H) &&
-                             M11_GameView_GetV1ActionMenuRowZone(2, &row2X, &row2Y, &row2W, &row2H) &&
-                             !M11_GameView_GetV1ActionMenuRowZone(3, NULL, NULL, NULL, NULL) &&
+                         dm1_v1_action_menu_row_count_pc34() == 3 &&
+                             dm1_v1_action_menu_row_base_zone_id_pc34(0) == 82 &&
+                             dm1_v1_action_menu_row_base_zone_id_pc34(1) == 83 &&
+                             dm1_v1_action_menu_row_base_zone_id_pc34(2) == 84 &&
+                             dm1_v1_action_menu_row_base_zone_id_pc34(3) == 0 &&
+                             dm1_v1_action_menu_row_zone_id_pc34(0) == 85 &&
+                             dm1_v1_action_menu_row_zone_id_pc34(1) == 86 &&
+                             dm1_v1_action_menu_row_zone_id_pc34(2) == 87 &&
+                             dm1_v1_action_menu_row_zone_id_pc34(3) == 0 &&
+                             probe_dm1_action_menu_row_zone(0, &row0X, &row0Y, &row0W, &row0H) &&
+                             probe_dm1_action_menu_row_zone(2, &row2X, &row2Y, &row2W, &row2H) &&
+                             !probe_dm1_action_menu_row_zone(3, NULL, NULL, NULL, NULL) &&
                              row0X == 234 && row0Y == 86 && row0W == 85 && row0H == 11 &&
                              row2X == 234 && row2Y == 110 && row2W == 85 && row2H == 11,
                          "action menu row zones expose COMMAND.C C113-C115 / F0387 zones 85-87 geometry");
@@ -11051,11 +12167,11 @@ int main(int argc, char** argv) {
             int row2TextX, row2TextY;
             int insetX, insetY;
             probe_record(&tally, "INV_GV_300J",
-                         M11_GameView_GetV1ActionMenuTextInset(&insetX, &insetY) &&
-                             M11_GameView_GetV1ActionMenuTextOrigin(-1, &headerTextX, &headerTextY) &&
-                             M11_GameView_GetV1ActionMenuTextOrigin(0, &row0TextX, &row0TextY) &&
-                             M11_GameView_GetV1ActionMenuTextOrigin(2, &row2TextX, &row2TextY) &&
-                             !M11_GameView_GetV1ActionMenuTextOrigin(3, NULL, NULL) &&
+                         probe_dm1_action_menu_text_inset(&insetX, &insetY) &&
+                             probe_dm1_action_menu_text_origin(-1, &headerTextX, &headerTextY) &&
+                             probe_dm1_action_menu_text_origin(0, &row0TextX, &row0TextY) &&
+                             probe_dm1_action_menu_text_origin(2, &row2TextX, &row2TextY) &&
+                             !probe_dm1_action_menu_text_origin(3, NULL, NULL) &&
                              insetX == 2 && insetY == 6 &&
                              headerTextX == 235 && headerTextY == 83 &&
                              row0TextX == 241 && row0TextY == 93 &&
@@ -11065,10 +12181,10 @@ int main(int argc, char** argv) {
 
         {
             probe_record(&tally, "INV_GV_300O",
-                         M11_GameView_GetV1ActionMenuHeaderFillColor() == PROBE_COLOR_LIGHT_CYAN &&
-                             M11_GameView_GetV1ActionMenuHeaderTextColor() == PROBE_COLOR_BLACK &&
-                             M11_GameView_GetV1ActionMenuRowFillColor() == PROBE_COLOR_BLACK &&
-                             M11_GameView_GetV1ActionMenuRowTextColor() == PROBE_COLOR_LIGHT_CYAN,
+                         dm1_v1_action_menu_header_fill_color_pc34() == PROBE_COLOR_LIGHT_CYAN &&
+                             dm1_v1_action_menu_header_text_color_pc34() == PROBE_COLOR_BLACK &&
+                             dm1_v1_action_menu_row_fill_color_pc34() == PROBE_COLOR_BLACK &&
+                             dm1_v1_action_menu_row_text_color_pc34() == PROBE_COLOR_LIGHT_CYAN,
                          "action menu colors match F0387 cyan header/black name and black rows/cyan actions");
         }
 

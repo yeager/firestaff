@@ -534,6 +534,7 @@ int nexus_v1_dmdf_decode_material_bank(const uint8_t *data, int size,
             }
             surface->width = (int)bitmap.width;
             surface->height = (int)bitmap.height;
+            surface->from_bpk = 0;
             surface->valid = 1;
             out->surface_count++;
             ordinal++;

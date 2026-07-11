@@ -83,27 +83,33 @@ static int synthetic_viewport_asset_fetch(void *user,
                                           int *out_stride)
 {
     int *fetch_count = (int *)user;
+    int scene_material_index = 0;
+    int scene_material_field = 0;
+    int wall_graphicsset_index = 0;
+    int wall_field = 0;
     if (fetch_count) {
         ++*fetch_count;
     }
-    if (gdat_index == -2) {
+    if (dm2_v1_viewport_scene_material_graphic_address(
+            gdat_index, &scene_material_index, &scene_material_field) &&
+        scene_material_field == DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING) {
         if (out_pixels) *out_pixels = s_ceiling_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
         if (out_stride) *out_stride = 16;
         return 0;
     }
-    if (gdat_index == -1) {
+    if (dm2_v1_viewport_scene_material_graphic_address(
+            gdat_index, &scene_material_index, &scene_material_field) &&
+        scene_material_field == DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR) {
         if (out_pixels) *out_pixels = s_floor_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
         if (out_stride) *out_stride = 16;
         return 0;
     }
-    if (gdat_index <=
-        DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
-            DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST &&
-        DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index < 0x40) {
+    if (dm2_v1_viewport_wall_graphic_address(
+            gdat_index, &wall_graphicsset_index, &wall_field)) {
         if (out_pixels) *out_pixels = s_wall_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
@@ -478,6 +484,28 @@ static void test_first_tick_after_boot_profile_handoff(void)
           "viewport floor material resolves to its raw GDAT address before decode");
     CHECK(dm2_v1_boot_viewport_asset_evidence(
               NULL,
+              dm2_v1_viewport_scene_material_graphic_index(
+                  3, DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR),
+              &evidence) == 0 &&
+              evidence.category == DM2_GDAT_CATEGORY_GRAPHICSSET &&
+              evidence.entry_index == 3 &&
+              evidence.field == DM2_GDAT_GFXSET_FLOOR,
+          "active map graphics style selects its own GDAT floor material");
+    {
+        int graphicsset_index = -1;
+        int wall_field = -1;
+        int wall_gdat_index = dm2_v1_viewport_wall_graphic_index_for_graphicsset(
+            3, DM2_SQ_D0L);
+        int wall_address_ready = dm2_v1_viewport_wall_graphic_address(
+            wall_gdat_index, &graphicsset_index, &wall_field);
+        CHECK(wall_address_ready == 1 &&
+                  graphicsset_index == 3 &&
+                  wall_field == dm2_v1_viewport_wall_field_for_square(
+                      DM2_SQ_D0L),
+              "active map graphics style selects its own GDAT wall material");
+    }
+    CHECK(dm2_v1_boot_viewport_asset_evidence(
+              NULL,
               dm2_v1_viewport_door_panel_graphic_index_for_record(
                   DM2_SQ_D0C, 7, 1),
               &evidence) == 0 &&
@@ -797,7 +825,9 @@ static void test_first_tick_after_boot_profile_handoff(void)
               ownership.total_runtime_gdat_blits == 25 &&
               ownership.total_runtime_fallback_draws == 0 &&
               ownership.full_gdat_frame_valid == 1 &&
-              ownership.real_gdat_evidence_valid == 0,
+              ownership.real_gdat_evidence_valid == 0 &&
+              ownership.gdat_scene_control_ready == 0 &&
+              ownership.gdat_scene_control_consumed == 0,
               "runtime frame ownership requires full GDAT HUD and dungeon consumption without fallback");
         CHECK(ownership.gdat_scene_light_consumed >=
                   ownership.gdat_scene_control_consumed,
@@ -835,6 +865,47 @@ static void test_first_tick_after_boot_profile_handoff(void)
               "runtime ownership carries outdoor weather overlay plan evidence");
         dm2_v1_runtime_set_outdoor(0);
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+    }
+
+    {
+        uint8_t framebuffer[320 * 200];
+        int fetch_count = 0;
+        DM2_V1_RuntimeFrameOwnershipReceipt ownership;
+
+        memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
+        memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
+        memset(s_hud_core_pixels, 12, sizeof(s_hud_core_pixels));
+        memset(s_hud_portrait_pixels, 14, sizeof(s_hud_portrait_pixels));
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_runtime_set_outdoor(1);
+        dm2_v1_runtime_set_leader_hand_object(0u);
+        dm2_v1_runtime_set_viewport_asset_provider(
+            synthetic_viewport_asset_fetch, &fetch_count);
+        CHECK(dm2_v1_runtime_render_frame(
+                  dm2_v1_runtime_get_party_dir(),
+                  dm2_v1_runtime_get_party_x(),
+                  dm2_v1_runtime_get_party_y(),
+                  framebuffer, 320, 320, 200) == 0,
+              "outdoor runtime routes active GRAPHICSSET sky and ground GDAT materials");
+        CHECK(fetch_count >= 2 &&
+              dm2_v1_runtime_last_asset_floor_ceiling_count() == 2 &&
+              dm2_v1_runtime_last_fallback_floor_ceiling_count() == 0,
+              "outdoor viewport fetches both real material planes without a generated fallback");
+        CHECK(dm2_v1_runtime_last_frame_ownership(&ownership) &&
+              ownership.is_outdoor == 1 &&
+              ownership.outdoor_sky_gdat_blits == 1 &&
+              ownership.outdoor_ground_gdat_blits == 1 &&
+              ownership.gdat_scene_material_index == 0 &&
+              ownership.gdat_scene_material_consumed == 2 &&
+              ownership.wall_gdat_blits == 0 &&
+              ownership.outdoor_gdat_frame_valid == 1 &&
+              ownership.full_gdat_frame_valid == 1 &&
+              ownership.valid == 1,
+              "outdoor GDAT material route reaches the runtime host receipt");
+        CHECK(framebuffer[40 * 320] == 12 && framebuffer[140 * 320] == 4,
+              "outdoor scene pixels retain their GDAT material palette entries");
+        dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+        dm2_v1_runtime_set_outdoor(0);
     }
 
     {

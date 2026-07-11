@@ -147,6 +147,10 @@ typedef struct {
     int width;
     int height;
     uint32_t palette[256];
+    /* Set only after the complete BPK upload/decode route has committed
+     * this surface into the bank. This lets the DGN host prove it rasterized
+     * real FLOORS/WALLS archive pixels rather than a DMDF-only substitute. */
+    int from_bpk;
     int valid;
 } Nexus_DMDFTextureSurface;
 

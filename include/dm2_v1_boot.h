@@ -2,6 +2,7 @@
 #define DM2_V1_BOOT_H
 
 #include <stdint.h>
+#include "dm2_v1_asset_loader.h"
 #include <stddef.h>
 
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
@@ -361,6 +362,10 @@ typedef struct {
     uint32_t graphicsset_highest_light_level;
     uint32_t graphicsset_void_random_fall;
     uint32_t graphicsset_animated_floor;
+    uint32_t graphicsset_scene_rain;
+    uint32_t graphicsset_misty_map;
+    uint32_t graphicsset_thunder_position;
+    uint32_t graphicsset_ambient_darkness;
     int wall_gfx_image_offsets_ready;
     uint32_t wall_gfx_image_offsets_hash;
     uint32_t wall_gfx_image_offsets_query_count;
@@ -1423,6 +1428,19 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
     DM2_V1_BootProfile *profile,
     DM2_V1_BootRuntimeHudCaptureReceipt *out_receipt);
 
+/* Source-locked interface palette used by the runtime HUD/viewport handoff.
+ * SkWinCore::INIT loads dtPalIRGB and dtPalette16 before entering the game. */
+int dm2_v1_boot_interface_palette(DM2_V1_BootProfile *profile,
+                                  DM2_V1_InterfacePalette *out_palette);
+
+/* skproject LOAD_GDAT_INTERFACE_00_0A table. Storage remains owned by the
+ * boot graphics handle and is valid while profile->graphics_dat is alive. */
+int dm2_v1_boot_interface_rect14_table(
+    DM2_V1_BootProfile *profile,
+    const uint8_t **out_rows,
+    uint32_t *out_row_count,
+    uint32_t *out_hash);
+
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */
 int dm2_v1_boot_viewport_asset_fetch(void *user,
@@ -1447,7 +1465,9 @@ void dm2_v1_boot_object_icon_asset_free(uint8_t *pixels);
 
 /* Fetch a GDAT image directly from the boot-owned GRAPHICS.DAT handle.
  * Used by startup/title/credits presentation code where the DM2 module
- * owns the GDAT address and M11 only executes the resulting blit. */
+ * owns the GDAT address and M11 only executes the resulting blit. For the
+ * TITLE/0 field-4 menu surface this preserves SHOW_MENU_SCREEN's dt07/4
+ * 320x200 raw-screen priority over the decoded image fallback. */
 int dm2_v1_boot_gdat_image_asset_fetch(
     DM2_V1_BootProfile *profile,
     int category,
@@ -1489,7 +1509,11 @@ int dm2_v1_boot_graphicsset_scene_control(
     uint32_t *out_ambient_light,
     uint32_t *out_highest_light_level,
     uint32_t *out_void_random_fall,
-    uint32_t *out_animated_floor);
+    uint32_t *out_animated_floor,
+    uint32_t *out_scene_rain,
+    uint32_t *out_misty_map,
+    uint32_t *out_thunder_position,
+    uint32_t *out_ambient_darkness);
 
 /* Raw-byte and decoded-pixel evidence for one virtual viewport resource.
  * The virtual index is the one used by DM2_V1_ViewportAssetFetch. */

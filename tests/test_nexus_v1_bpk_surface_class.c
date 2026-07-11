@@ -410,6 +410,63 @@ static void test_prs3_host_route_receipt(void) {
     free(bank.surfaces[1].pixels);
 }
 
+static void test_prs3_host_route_blocks_corrupt_stream(void) {
+    uint8_t data[160];
+    Nexus_DMDFMaterialBank bank;
+    Nexus_V1_BpkMaterialHostRouteReceipt host;
+    int rc;
+
+    memset(&bank, 0, sizeof(bank));
+    bank.surfaces[0].valid = 1;
+    bank.surfaces[0].palette[0x11] = 0xff112233U;
+    bank.surface_count = 1;
+    bank.valid = 1;
+    make_synthetic_prs3_literal_bpk(data, sizeof(data));
+    data[132] = 0x00U;
+    data[133] = 0xeeU;
+    data[134] = 0x0fU;
+
+    rc = nexus_v1_dmdf_import_bpk_material_bank_host_route(
+        data, sizeof(data), &bank, NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR,
+        &host);
+    expect(rc == 0, "corrupt PRS3 host route does not import a material");
+    expect(host.upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 &&
+               host.blocks_real_surface_render == 1 &&
+               host.fallback_visuals_permitted == 0 &&
+               host.host_consumed_surfaces == 0 &&
+               host.imported_surface_count == 0,
+           "corrupt PRS3 remains a no-fallback material host-route blocker");
+    expect(bank.surfaces[1].valid == 0,
+           "corrupt PRS3 cannot populate a DGN material slot");
+}
+
+static void test_host_route_rejects_partial_material_archive(void) {
+    uint8_t data[256];
+    Nexus_DMDFMaterialBank bank;
+    Nexus_V1_BpkMaterialHostRouteReceipt host;
+    int rc;
+
+    memset(&bank, 0, sizeof(bank));
+    make_synthetic_stored_bpk(data, sizeof(data));
+    /* Entry 2 remains a valid RGB565 source surface. Entry 3 is made
+     * structurally short, so a non-transactional importer would consume
+     * entry 2 before discovering the corrupt tail. */
+    wr16_be(data + 216U + NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET, 8U);
+
+    rc = nexus_v1_dmdf_import_bpk_material_bank_host_route(
+        data, sizeof(data), &bank, NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL,
+        &host);
+    expect(rc == 0, "mixed valid and truncated BPK archive is not consumed");
+    expect(host.upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED &&
+               host.blocks_real_surface_render == 1 &&
+               host.host_consumed_surfaces == 0 &&
+               host.before_surface_count == 0 &&
+               host.after_surface_count == 0,
+           "material host route keeps destination bank atomic on corrupt archive");
+    expect(bank.surface_count == 0 && !bank.surfaces[2].valid,
+           "valid prefix material cannot leak through a corrupt BPK host route");
+}
+
 /* ---- Surface-class lookup tests ---- */
 
 static void test_mode_to_surface_class(void) {
@@ -1331,6 +1388,8 @@ int main(void) {
     test_truecolor_material_import();
     test_material_host_route_and_category_coverage();
     test_prs3_host_route_receipt();
+    test_prs3_host_route_blocks_corrupt_stream();
+    test_host_route_rejects_partial_material_archive();
     test_runtime_surface_handoff_blocks_prs3();
     test_runtime_surface_handoff_ready_stored();
     test_runtime_surface_handoff_truncated_and_capacity();

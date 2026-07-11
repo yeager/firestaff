@@ -32,6 +32,10 @@ typedef struct {
     int floor_material_surface_count;
     int ceiling_material_surface_count;
     int wall_material_surface_count;
+    int bpk_material_surface_count;
+    int bpk_floor_material_surface_count;
+    int bpk_ceiling_material_surface_count;
+    int bpk_wall_material_surface_count;
     int rasterized_command_count;
     int palette_synced;
     int written_pixels;
@@ -65,6 +69,10 @@ typedef struct {
     int ceiling_count;
     int wall_count;
     int material_surface_count;
+    int bpk_material_surface_count;
+    int bpk_floor_material_surface_count;
+    int bpk_ceiling_material_surface_count;
+    int bpk_wall_material_surface_count;
     int rasterized_command_count;
     int written_pixels;
     int palette_synced;
@@ -73,8 +81,8 @@ typedef struct {
     int missing_material_count;
     int first_missing_material_id;
     Nexus_V1_DgnRenderCommandKind first_missing_material_kind;
-    int mesh_ref_unique_count;
-    int max_mesh_ref;
+    int post_grid_0x30_ref_unique_count;
+    int max_post_grid_0x30_ref;
 } Nexus_V1_DgnViewportHostRouteReceipt;
 
 typedef struct {

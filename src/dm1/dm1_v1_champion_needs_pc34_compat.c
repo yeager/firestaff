@@ -72,6 +72,31 @@ static int bounded_value(int lo, int val, int hi) {
 static int min_value(int a, int b) { return a < b ? a : b; }
 static int max_value(int a, int b) { return a > b ? a : b; }
 
+void DM1_V1_Needs_DecayScentsPc34Compat(
+    DM1_V1_NeedsScentListPc34Compat* scents) {
+    int index;
+    if (!scents) return;
+    if (scents->count > DM1_V1_NEEDS_SCENT_CAPACITY) {
+        scents->count = DM1_V1_NEEDS_SCENT_CAPACITY;
+    }
+    index = 0;
+    /* ReDMCSB CHAMPION.C F0331:2311-2330 deliberately stops at count - 1. */
+    while (index < (int)scents->count - 1) {
+        if (scents->entries[index].strength > 0) {
+            scents->entries[index].strength--;
+        }
+        if (scents->entries[index].strength == 0 && index == 0) {
+            int tail;
+            for (tail = 0; tail + 1 < (int)scents->count; ++tail) {
+                scents->entries[tail] = scents->entries[tail + 1];
+            }
+            scents->count--;
+            continue;
+        }
+        index++;
+    }
+}
+
 /* ── dm1_needs_compute_stamina_amount ─────────────────────────────── */
 int dm1_needs_compute_stamina_amount(int max_stamina) {
     /* F0331: BoundedValue(1, (MaxStamina >> 8) - 1, 6) */

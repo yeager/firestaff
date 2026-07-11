@@ -585,8 +585,18 @@ static void test_floor_ceiling_asset_provider(void)
               rect_equals(&wall_plan.panels[8].dst_rect, 0, 0, 32, 136) &&
               wall_plan.panels[9].view_square == DM2_SQ_D0R &&
               rect_equals(&wall_plan.panels[9].dst_rect, 192, 0, 32, 136));
-    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, 3, 0x4d415047u, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    memset(&wall_plan, 0, sizeof(wall_plan));
+    CHECK("wall plan carries MapGraphicsStyle into GRAPHICSSET GDAT addresses",
+          dm2_v1_viewport_build_wall_panel_render_plan(&viewport,
+                                                       &wall_plan) == 1 &&
+              wall_plan.panel_count == 10 &&
+              wall_plan.panels[8].gdat_index ==
+                  dm2_v1_viewport_wall_graphic_index_for_graphicsset(
+                      3, DM2_SQ_D0L));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    memset(framebuffer, 0, sizeof(framebuffer));
     s_asset_fetch_calls = 0;
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        test_dm2_asset_fetch,
@@ -1091,6 +1101,39 @@ static void test_sprite_asset_provider(void)
               framebuffer[180 * 320 + 222] == 12 &&
               framebuffer[138 * 320 + 244] == 7 &&
               framebuffer[140 * 320 + 246] == 14);
+
+    {
+        uint8_t palette16[16];
+        for (int i = 0; i < 16; ++i) palette16[i] = (uint8_t)(0xa0 + i);
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, 320);
+        dm2_v1_viewport_set_gdat_interface_palette(
+            &viewport, 1, 0x51a7c0deu, palette16);
+        dm2_v1_render_ui_chrome(&viewport);
+        CHECK("DM2 HUD consumes the bound GDAT palette16 logical colours",
+              viewport.gdat_interface_palette_ready == 1 &&
+                  viewport.gdat_interface_palette_consumed_count > 0 &&
+                  framebuffer[0] == palette16[1] &&
+                  framebuffer[28 * 320] == palette16[7] &&
+                  framebuffer[176 * 320 + 280] == palette16[6]);
+
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, 320);
+        dm2_v1_viewport_set_asset_provider(&viewport, test_dm2_asset_fetch, NULL);
+        dm2_v1_viewport_set_gdat_interface_palette(
+            &viewport, 1, 0x51a7c0deu, palette16);
+        viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+        dm2_v1_render_floor_ceiling(&viewport);
+        dm2_v1_render_walls(&viewport);
+        dm2_v1_render_doors(&viewport);
+        CHECK("DM2 GDAT palette maps floor, wall and door-frame material pixels",
+              viewport.gdat_material_palette_floor_ceiling_consumed_count > 0 &&
+                  viewport.gdat_material_palette_wall_consumed_count > 0 &&
+                  viewport.gdat_material_palette_door_frame_consumed_count > 0 &&
+                  framebuffer[300] == palette16[2] &&
+                  framebuffer[66 * 320 + 300] == palette16[6] &&
+                  viewport.asset_door_frame_drawn_count > 0);
+    }
 
     {
         DM2_V1_HudPartyState party;

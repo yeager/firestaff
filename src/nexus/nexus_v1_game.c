@@ -36,9 +36,106 @@ void nexus_v1_game_init(Nexus_V1_GameState *state, const char *data_dir) {
     if (!state) return;
     memset(state, 0, sizeof(*state));
     state->data_dir = data_dir;
-    state->party_x = 11;
-    state->party_y = 29;
-    state->party_dir = 0;  /* North — same as DM1 */
+    state->party_x = NEXUS_V1_INITIAL_PARTY_X;
+    state->party_y = NEXUS_V1_INITIAL_PARTY_Y;
+    state->party_dir = NEXUS_V1_INITIAL_PARTY_DIR;
+    state->dungeon_start.status = NEXUS_V1_DUNGEON_START_MISSING;
+    state->dungeon_start.level = NEXUS_V1_INITIAL_PARTY_LEVEL;
+    state->dungeon_start.requested_x = NEXUS_V1_INITIAL_PARTY_X;
+    state->dungeon_start.requested_y = NEXUS_V1_INITIAL_PARTY_Y;
+    state->dungeon_start.requested_dir = NEXUS_V1_INITIAL_PARTY_DIR;
+    state->dungeon_start.party_x = NEXUS_V1_INITIAL_PARTY_X;
+    state->dungeon_start.party_y = NEXUS_V1_INITIAL_PARTY_Y;
+    state->dungeon_start.party_dir = NEXUS_V1_INITIAL_PARTY_DIR;
+    state->dungeon_start.blocks_runtime = 1;
+}
+
+int nexus_v1_game_resolve_dungeon_start(
+    const Nexus_V1_Level *level,
+    int requested_level,
+    int requested_x,
+    int requested_y,
+    int requested_dir,
+    Nexus_V1_DungeonStartReceipt *out_receipt)
+{
+    Nexus_V1_DungeonStartReceipt receipt;
+    Nexus_V1_DgnCellGeometry cell;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_DUNGEON_START_MISSING;
+    receipt.level = requested_level;
+    receipt.requested_x = requested_x;
+    receipt.requested_y = requested_y;
+    receipt.requested_dir = requested_dir & 3;
+    receipt.party_x = requested_x;
+    receipt.party_y = requested_y;
+    receipt.party_dir = requested_dir & 3;
+    receipt.fallback_visuals_permitted = 0;
+    receipt.blocks_runtime = 1;
+
+    if (!level || level->width <= 0 || level->height <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (requested_level != NEXUS_V1_INITIAL_PARTY_LEVEL) {
+        receipt.status = NEXUS_V1_DUNGEON_START_BLOCKED_LEVEL;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (requested_x < 0 || requested_y < 0 ||
+        requested_x >= level->width || requested_y >= level->height ||
+        nexus_v1_level_get_cell_geometry(level, requested_x, requested_y,
+                                         &cell) != 0) {
+        receipt.status = NEXUS_V1_DUNGEON_START_BLOCKED_COORDINATE;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.square_type = cell.square_type;
+    receipt.collision_ref = cell.collision_ref;
+    receipt.post_grid_0x30_ref = cell.post_grid_0x30_ref;
+    receipt.dmweb_container = level->geometry_info.dmweb_container;
+    receipt.dgn_cell_consumed = 1;
+    if (cell.square_type == 0 || cell.collision_ref == 0x0fffU) {
+        receipt.status = NEXUS_V1_DUNGEON_START_BLOCKED_CELL;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.status = NEXUS_V1_DUNGEON_START_READY;
+    receipt.blocks_runtime = 0;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_game_apply_dungeon_start(
+    Nexus_V1_GameState *state,
+    const Nexus_V1_DungeonStartReceipt *receipt)
+{
+    if (!state || !receipt || receipt->status != NEXUS_V1_DUNGEON_START_READY ||
+        receipt->blocks_runtime || receipt->fallback_visuals_permitted) {
+        return 0;
+    }
+    state->current_level = receipt->level;
+    state->party_x = receipt->party_x;
+    state->party_y = receipt->party_y;
+    state->party_dir = receipt->party_dir & 3;
+    state->dungeon_start = *receipt;
+    return 1;
+}
+
+const char *nexus_v1_dungeon_start_status_name(
+    Nexus_V1_DungeonStartStatus status)
+{
+    switch (status) {
+    case NEXUS_V1_DUNGEON_START_MISSING: return "missing";
+    case NEXUS_V1_DUNGEON_START_READY: return "ready";
+    case NEXUS_V1_DUNGEON_START_BLOCKED_LEVEL: return "blocked-level";
+    case NEXUS_V1_DUNGEON_START_BLOCKED_COORDINATE: return "blocked-coordinate";
+    case NEXUS_V1_DUNGEON_START_BLOCKED_CELL: return "blocked-cell";
+    default: return "unknown";
+    }
 }
 
 int nexus_v1_game_load_level(Nexus_V1_GameState *state, int level) {

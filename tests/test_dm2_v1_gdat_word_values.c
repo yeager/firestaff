@@ -118,6 +118,8 @@ static void test_item_word_values_real_data(void)
         free(graphics);
         return;
     }
+    CHECK(dm2_v1_asset_loader_validate_typed_graph(&loader) == 1,
+          "real typed ENT1 entries resolve to bounded GDAT raw payloads");
 
     for (int category = DM2_GDAT_CATEGORY_WEAPONS;
          category <= DM2_GDAT_CATEGORY_MISCELLANEOUS;
@@ -162,9 +164,100 @@ static void test_item_word_values_real_data(void)
     free(graphics);
 }
 
+static void test_interface_palette_real_data(void)
+{
+    uint8_t *graphics = NULL;
+    size_t graphics_size = 0u;
+    char path[1024];
+    DM2_V1_AssetLoader loader;
+    DM2_V1_InterfacePalette palette;
+
+    memset(&loader, 0, sizeof(loader));
+    if (!load_graphics(&graphics, &graphics_size, path, sizeof(path))) {
+        printf("  SKIP: optional real DM2 GRAPHICS.DAT not present\n");
+        return;
+    }
+    CHECK(dm2_v1_asset_loader_init(&loader, graphics, graphics_size) == 0,
+          "real DM2 GRAPHICS.DAT initializes palette decoder");
+    if (loader.loaded) {
+        CHECK(dm2_v1_asset_load_interface_palette(
+                  &loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+                  DM2_GDAT_INTERFACE_PALETTE_FIELD, &palette) == 1,
+              "real INTERFACE_GENERAL dtPalIRGB/dtPalette16 pair decodes");
+        CHECK(palette.hash != 0u,
+              "real interface palette exposes a nonzero semantic receipt");
+    }
+    dm2_v1_asset_loader_free(&loader);
+    free(graphics);
+}
+
+static void test_interface_palette_decoder_fixture(void)
+{
+    uint8_t irgb[256 * 4];
+    uint8_t pal16[16];
+    uint32_t offsets[2] = { 0u, 0u };
+    uint32_t sizes[2] = { sizeof(irgb), sizeof(pal16) };
+    DM2_V1_GdatEntry entries[2];
+    DM2_V1_AssetLoader loader;
+    DM2_V1_InterfacePalette palette;
+
+    for (int i = 0; i < 256; ++i) {
+        irgb[i * 4 + 0] = 0xffu;
+        irgb[i * 4 + 1] = (uint8_t)i;
+        irgb[i * 4 + 2] = (uint8_t)(255 - i);
+        irgb[i * 4 + 3] = (uint8_t)(i ^ 0xa5);
+    }
+    for (int i = 0; i < 16; ++i) pal16[i] = (uint8_t)(15 - i);
+    memset(&loader, 0, sizeof(loader));
+    memset(entries, 0, sizeof(entries));
+    loader.data = irgb;
+    loader.data_size = sizeof(irgb);
+    loader.loaded = 1;
+    loader.raw_data_count = 2;
+    loader.raw_offsets = offsets;
+    loader.raw_sizes = sizes;
+    loader.entries = entries;
+    loader.entry_count = 2;
+    entries[0].cls1 = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+    entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_PAL_IRGB;
+    entries[0].cls4 = DM2_GDAT_INTERFACE_PALETTE_FIELD;
+    entries[0].data_index = 0;
+    entries[1] = entries[0];
+    entries[1].cls3 = DM2_GDAT_ENTRY_TYPE_PAL_16;
+    entries[1].data_index = 1;
+
+    /* Keep both typed payloads contiguous so the fixture uses the normal
+     * raw-offset lookup rather than a test-only data path. */
+    offsets[1] = sizeof(irgb);
+    {
+        uint8_t combined[sizeof(irgb) + sizeof(pal16)];
+        memcpy(combined, irgb, sizeof(irgb));
+        memcpy(combined + sizeof(irgb), pal16, sizeof(pal16));
+        loader.data = combined;
+        loader.data_size = sizeof(combined);
+        CHECK(dm2_v1_asset_load_interface_palette(
+                  &loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+                  DM2_GDAT_INTERFACE_PALETTE_FIELD, &palette) == 1,
+              "typed dtPalIRGB/dtPalette16 fixture decodes");
+        CHECK(palette.rgb6[0][0] == 0u && palette.rgb6[0][1] == 63u &&
+                  palette.rgb6[0][2] == (0xa5u >> 2),
+              "IRGB decoder skips byte zero and converts RGB to VGA 6-bit");
+        CHECK(palette.palette16[0] == 15u && palette.palette16[15] == 0u &&
+                  palette.hash != 0u,
+              "dtPalette16 remains a 16-byte logical colour-index table");
+        sizes[1] = 15u;
+        CHECK(dm2_v1_asset_load_interface_palette(
+                  &loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+                  DM2_GDAT_INTERFACE_PALETTE_FIELD, &palette) == 0,
+              "short dtPalette16 payload is rejected");
+    }
+}
+
 int main(void)
 {
     printf("=== DM2 V1 GDAT Word-Value Test ===\n");
+    test_interface_palette_decoder_fixture();
+    test_interface_palette_real_data();
     test_item_word_values_real_data();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

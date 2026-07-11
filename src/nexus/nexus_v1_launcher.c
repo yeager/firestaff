@@ -279,11 +279,7 @@ static int nexus_v1_launcher_startup_asset_handoff_from_parts(
         out_receipt->title_asset_handoff_ready &&
         out_receipt->audio_asset_handoff_ready &&
         out_receipt->real_menu_asset_handoff_ready;
-    out_receipt->fallback_visuals_permitted =
-        assets->menu_bpk_fallback_visuals_permitted ||
-        (out_receipt->menu_bpk_renderer_handoff_valid &&
-         renderer_handoff.blocks_real_menu_surface_render &&
-         renderer_handoff.fallback_visuals_permitted) ? 1 : 0;
+    out_receipt->fallback_visuals_permitted = 0;
     out_receipt->saturn_asset_handoff_ready =
         out_receipt->title_asset_handoff_ready &&
         out_receipt->audio_asset_handoff_ready;
@@ -5854,6 +5850,14 @@ int nexus_v1_launcher_boot_level0_startup(
                                         engine,
                                         title_loaded,
                                         out_receipt);
+    if (!out_receipt->startup_assets.title_screen_loaded ||
+        !out_receipt->startup_assets.warning_surface_loaded) {
+        (void)nexus_v1_startup_boot_status_host_receipt(
+            NEXUS_V1_STARTUP_BOOT_STATUS_ASSET_ERROR,
+            &out_receipt->startup_receipt.host_receipt);
+        nexus_v1_launcher_shutdown();
+        return 0;
+    }
     return 1;
 }
 
@@ -5902,13 +5906,13 @@ int nexus_v1_launcher_boot_level0_runtime_startup(
     out_receipt->startup_assets = boot_receipt.startup_assets;
     boot_status = boot_receipt.title_loaded
         ? NEXUS_V1_STARTUP_BOOT_STATUS_TITLE
-        : NEXUS_V1_STARTUP_BOOT_STATUS_TITLE_FALLBACK;
+        : NEXUS_V1_STARTUP_BOOT_STATUS_ASSET_ERROR;
     (void)nexus_v1_launcher_startup_boot_status_host_receipt(
         boot_status,
         &out_receipt->boot_status_receipt);
     out_receipt->boot_log_line = boot_receipt.title_loaded
         ? "T0: NEXUS TITLE LOADED"
-        : "T0: NEXUS TITLE FALLBACK";
+        : "T0: NEXUS STARTUP ASSETS MISSING";
     return 1;
 }
 

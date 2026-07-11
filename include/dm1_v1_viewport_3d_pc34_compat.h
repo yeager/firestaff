@@ -370,6 +370,18 @@ typedef struct {
     bool door_front_temp_bitmap_bound;
     bool door_front_used_bounded_fallback;
     int16_t door_front_packed_stride_bytes;
+    bool stairs_front_drawn;
+    bool stairs_front_up;
+    bool stairs_front_flipped;
+    int16_t stairs_front_graphic_index;
+    int16_t stairs_front_zone_index;
+    bool stairs_front_graphics_dat_bound;
+    bool pit_drawn;
+    bool pit_invisible;
+    bool pit_flipped;
+    int16_t pit_graphic_index;
+    int16_t pit_zone_index;
+    bool pit_graphics_dat_bound;
     const char *rear_pass_source_lines;
     const char *door_source_lines;
     const char *front_pass_source_lines;
@@ -868,6 +880,11 @@ typedef struct {
     /* Optional F0172-derived aspect type grid for callers that already
      * resolved C16-C19 side/front aspects from raw dungeon bytes. */
     const uint8_t *dungeon_aspect_grid;
+    /* Optional F0172 aspect flags, row-major like dungeon_aspect_grid.
+     * M555_STAIRS_UP selects the front-stairs bitmap; M554 is the pit
+     * invisibility bit used by F0676/F0677 before the F0108/F0115 tail. */
+    const uint8_t *dungeon_stairs_up_grid;
+    const uint8_t *dungeon_pit_invisible_grid;
     int            dungeon_width;
     int            dungeon_height;
 
@@ -1045,6 +1062,14 @@ const DM1_WallFrame *dm1_viewport_3d_get_wall_frame(DM1_ViewSquareIndex square);
 DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate(const DM1_WallFrame *frame,
                                                                       int source_width,
                                                                       int source_height);
+int dm1_v1_viewport_base_graphic_pc34(int layer,
+                                      int* outGraphic,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH);
+int dm1_v1_viewport_source_composition_order_count_pc34(void);
+int dm1_v1_viewport_source_composition_order_step_pc34(int ordinal);
 
 /* Source-locked F0128 visible-square draw order metadata. */
 size_t dm1_viewport_3d_draw_order_count(void);

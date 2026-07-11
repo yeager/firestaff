@@ -307,6 +307,7 @@ int csb_v1_import_from_dm1_save_buffer(CSB_V1_PartyState *party,
                                        int buf_size,
                                        CSB_V1_ImportResult *result)
 {
+    CSB_V1_PartyState candidate_party;
     int champ_count;
     int i;
     int offset;
@@ -364,11 +365,13 @@ int csb_v1_import_from_dm1_save_buffer(CSB_V1_PartyState *party,
         );
     }
 
-    /* Initialize party */
-    csb_v1_character_init_default(party);
-    party->ImportedFromDM1 = 1;
-    party->ImportSource = 2;  /* 2 = dm1_save_file */
-    party->ChampionCount = 0;
+    /* ReDMCSB CEDTINCI.C F7090_MakeNewAdventure builds the imported party
+     * before it replaces the live adventure state.  Keep the same boundary:
+     * a later invalid record must not leave a usable party partly replaced. */
+    csb_v1_character_init_default(&candidate_party);
+    candidate_party.ImportedFromDM1 = 1;
+    candidate_party.ImportSource = 2;  /* 2 = dm1_save_file */
+    candidate_party.ChampionCount = 0;
 
     /* State 3: Read each DM1 champion record */
     if (result) result->state = CSB_V1_IMPORT_STATE_READ_CHAMPS;
@@ -381,7 +384,7 @@ int csb_v1_import_from_dm1_save_buffer(CSB_V1_PartyState *party,
                 result->byte_offset = offset;
                 result->state = CSB_V1_IMPORT_STATE_ERROR;
             }
-            break;
+            return -1;
         }
 
         /* State 4: Convert to CSB 256-byte block */
@@ -395,8 +398,7 @@ int csb_v1_import_from_dm1_save_buffer(CSB_V1_PartyState *party,
                     result->byte_offset = offset;
                     result->state = CSB_V1_IMPORT_STATE_ERROR;
                 }
-                offset += DM1_CHAMPION_RECORD_SIZE;
-                continue; /* skip malformed record */
+                return -1;
             }
 
             {
@@ -428,29 +430,38 @@ int csb_v1_import_from_dm1_save_buffer(CSB_V1_PartyState *party,
 
             /* State 6: Store in party slot */
             if (result) result->state = CSB_V1_IMPORT_STATE_STORE_PARTY;
-            csb_v1_champion_block_to_party(party, i, &block);
+            if (csb_v1_champion_block_to_party(&candidate_party, i, &block) != 0) {
+                if (result) {
+                    result->error_code = CSB_V1_IMPORT_ERR_BLOCK_ALIGN;
+                    result->byte_offset = offset;
+                    result->state = CSB_V1_IMPORT_STATE_ERROR;
+                }
+                return -1;
+            }
         }
 
         offset += DM1_CHAMPION_RECORD_SIZE;
-        party->ChampionCount++;
+        candidate_party.ChampionCount++;
     }
 
     /* Set leader to first living champion */
-    for (i = 0; i < party->ChampionCount; i++) {
-        if (!csb_v1_champion_is_dead(&party->Champions[i])) {
-            party->LeaderIndex = i;
+    for (i = 0; i < candidate_party.ChampionCount; i++) {
+        if (!csb_v1_champion_is_dead(&candidate_party.Champions[i])) {
+            candidate_party.LeaderIndex = i;
             break;
         }
     }
-    if (party->LeaderIndex < 0 && party->ChampionCount > 0)
-        party->LeaderIndex = 0;
+    if (candidate_party.LeaderIndex < 0 && candidate_party.ChampionCount > 0)
+        candidate_party.LeaderIndex = 0;
+
+    *party = candidate_party;
 
     if (result) {
-        result->champion_count = party->ChampionCount;
+        result->champion_count = candidate_party.ChampionCount;
         result->state = CSB_V1_IMPORT_STATE_DONE;
     }
 
-    return party->ChampionCount;
+    return candidate_party.ChampionCount;
 }
 
 /* ── Import from DM1 save file ────────────────────────────────────────── */

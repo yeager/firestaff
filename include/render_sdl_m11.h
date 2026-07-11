@@ -106,6 +106,13 @@ size_t         M11_Render_GetFramebufferSize(void);
 int  M11_Render_SetPaletteLevel(int level);
 int  M11_Render_GetPaletteLevel(void);
 
+/* Install a game-owned 256-entry 6-bit RGB palette for raw indexed frames.
+ * DM2's GDAT title/menu images use full byte indices, unlike the packed
+ * 4-bit/brightness encoding used by the DM1 renderer. */
+int  M11_Render_SetIndexedPaletteRgb6(const uint8_t rgb6[256][3]);
+void M11_Render_ClearIndexedPaletteRgb6(void);
+int  M11_Render_CopyIndexedPaletteRgb6(uint8_t out_rgb6[256][3]);
+
 /* Clear the framebuffer to a single 4-bit palette index value.
    Returns the number of bytes written, or -1 if not initialised. */
 long M11_Render_ClearFramebuffer(unsigned char colorIndex);

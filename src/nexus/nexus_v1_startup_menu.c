@@ -148,8 +148,10 @@ int nexus_v1_startup_boot_status_host_receipt(
         out_receipt->input_result = NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
         break;
     case NEXUS_V1_STARTUP_BOOT_STATUS_TITLE_FALLBACK:
-        out_receipt->status = "NEXUS TITLE";
-        out_receipt->input_result = NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+        out_receipt->status = "NEXUS STARTUP ASSETS MISSING";
+        break;
+    case NEXUS_V1_STARTUP_BOOT_STATUS_ASSET_ERROR:
+        out_receipt->status = "NEXUS STARTUP ASSETS MISSING";
         break;
     case NEXUS_V1_STARTUP_BOOT_STATUS_DATA_ERROR:
         out_receipt->status = "NEXUS DATA ERROR";
@@ -1909,9 +1911,10 @@ int nexus_v1_startup_execute_title_pointer_from_host_facts_with_receipt(
         nexus_v1_startup_action_clear(&action);
         return 0;
     }
-    if (!nexus_v1_startup_title_handle_hit(facts->title_frame,
-                                           facts->slot_mask,
-                                           &action)) {
+    if (!nexus_v1_startup_boot_handle_input(facts->title_frame,
+                                            facts->slot_mask,
+                                            NEXUS_V1_STARTUP_INPUT_ACCEPT,
+                                            &action)) {
         return 0;
     }
     return nexus_v1_startup_execute_title_action_with_host_receipt(

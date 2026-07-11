@@ -36,6 +36,11 @@ static void theron_v1_startup_copy_level_anchor_receipt_u64(
     const uint32_t in_seed[THERON_TRACK02_MAX_BANK_ANCHORS],
     const uint16_t in_level_index[THERON_TRACK02_MAX_BANK_ANCHORS]);
 
+static int theron_v1_startup_runtime_publish_track02_route(
+    Theron_V1_World *world,
+    Theron_DungeonID dungeon_id,
+    const Theron_Track02DungeonRoute *route);
+
 static int theron_v1_startup_runtime_level_load_callback(
     Theron_V1_World *world,
     Theron_DungeonID dungeon_id,
@@ -70,6 +75,9 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
     Theron_Track02SignalStatus signal_status;
     Theron_Track02UserDataWindowCatalog user_window_catalog;
     Theron_Track02StartupTextMarkerCatalog text_marker_catalog;
+    Theron_Track02StartupBitmapCatalog bitmap_catalog;
+    Theron_Track02StartupBitmapAtlas bitmap_atlas;
+    int bitmap_atlas_ready = 0;
     Theron_Track02LevelHandoffStatus last_semantic_status =
         THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
     Theron_Track02SemanticBindingStatus last_seed_status =
@@ -155,11 +163,41 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
         }
     }
 
+    memset(&bitmap_catalog, 0, sizeof(bitmap_catalog));
+    memset(&bitmap_atlas, 0, sizeof(bitmap_atlas));
+    if (theron_v1_track02_catalog_startup_bitmap_samples(
+            hucard_rom, hucard_rom_size, md5_hex, &bitmap_catalog) ==
+            THERON_TRACK02_SIGNAL_OK &&
+        theron_v1_track02_build_startup_bitmap_atlas_wide(
+            &bitmap_catalog, &bitmap_atlas) == THERON_TRACK02_SIGNAL_OK) {
+        bitmap_atlas_ready = 1;
+    }
+
     for (anchor = 0u; anchor < signal.anchor_count; ++anchor) {
         Theron_Track02StartupSemanticHandoff semantic_handoff;
         Theron_Track02LevelHandoff semantic_level_handoff;
         Theron_Track02LevelHandoffStatus semantic_status;
         Theron_V1_Level semantic_level;
+
+        if (bitmap_atlas_ready) {
+            Theron_Track02DungeonRoute route;
+            if (theron_v1_track02_load_verified_dungeon_route(
+                    hucard_rom, hucard_rom_size, md5_hex,
+                    signal.descriptor_offsets[anchor], dungeon_id,
+                    &bitmap_atlas, &route) == THERON_TRACK02_DUNGEON_ROUTE_OK &&
+                theron_v1_startup_runtime_publish_track02_route(world,
+                                                                 dungeon_id,
+                                                                 &route)) {
+                if (receipt && receipt_cap > 0u) {
+                    snprintf(receipt, receipt_cap,
+                             "Track 02 dungeon route stage=%d anchor=%zu level=0x%zx object=0x%zx rows=%zu bitmap=0x%08x",
+                             (int)dungeon_id, anchor, route.level_raw_offset,
+                             route.object_raw_offset, route.objects.record_count,
+                             (unsigned)route.bitmap_atlas.checksum);
+                }
+                return 1;
+            }
+        }
 
         semantic_status = theron_v1_track02_load_startup_semantic_level(
             hucard_rom,
@@ -250,6 +288,46 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
                  startup_text_jp_count);
     }
     return 0;
+}
+
+static int theron_v1_startup_runtime_publish_track02_route(
+    Theron_V1_World *world,
+    Theron_DungeonID dungeon_id,
+    const Theron_Track02DungeonRoute *route) {
+    size_t i;
+
+    if (!world || !route || !route->valid ||
+        route->objects.record_count > THERON_MAX_OBJECTS ||
+        dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id > THERON_DUNGEON_COUNT) return 0;
+
+    world->current_dungeon = dungeon_id;
+    world->current_level = 0;
+    world->levels[(int)dungeon_id - 1][0] = route->level;
+    world->levels[(int)dungeon_id - 1][0].thing_count = 0;
+    world->level_loaded[(int)dungeon_id - 1][0] = 1;
+    world->object_count = 0;
+    for (i = 0u; i < route->objects.record_count; ++i) {
+        const Theron_Track02ObjectTableRecord *record = &route->objects.records[i];
+        Theron_V1_Object object;
+        if (record->level_index != 0u || record->x >= route->level.width ||
+            record->y >= route->level.height || record->kind == 0u ||
+            record->kind > THERON_OBJTYPE_QUEST_ITEM) return 0;
+        memset(&object, 0, sizeof(object));
+        object.type = record->kind;
+        object.state = record->flags & 0x03u;
+        object.x = record->x;
+        object.y = record->y;
+        object.level = record->level_index;
+        object.dungeon_id = dungeon_id;
+        object.quantity = record->argument ? record->argument : 1;
+        object.flags = record->flags;
+        if (theron_v1_object_place(world, &object) != 0) return 0;
+        ++world->levels[(int)dungeon_id - 1][0].thing_count;
+    }
+    theron_v1_party_place(world, route->level.start_x, route->level.start_y,
+                          route->level.start_dir);
+    return 1;
 }
 
 static int theron_v1_startup_runtime_has_verified_track02_request(

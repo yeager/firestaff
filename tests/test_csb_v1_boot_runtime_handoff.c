@@ -2204,6 +2204,67 @@ static void test_runtime_view_state_receipt_owns_scalar_handoff(void)
     csb_v1_runtime_cleanup(&runtime);
 }
 
+static void test_door_opening_runtime_handoff_owns_hud_transition(void)
+{
+    CSB_V1_BootProfile boot;
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_StartupRuntimeAssetSession_PC34 session;
+    CSB_V1_BootStartupDoorRuntimeReceipt_PC34 receipt;
+    CSB_V1_DungeonData dummy_dungeon;
+
+    csb_v1_boot_profile_init(&boot);
+    memset(&snapshot, 0, sizeof(snapshot));
+    memset(&dummy_dungeon, 0, sizeof(dummy_dungeon));
+    boot.runtime.dungeon_handle = &dummy_dungeon;
+    boot.runtime.current_level = 0;
+    boot.runtime.party_x = 2;
+    boot.runtime.party_y = 0;
+    boot.runtime.party_dir = CSB_V1_DIR_SOUTH;
+    snapshot.boot_profile = &boot;
+    snapshot.entrance_active = 1;
+    snapshot.opening_active = 1;
+    snapshot.opening_step = 31;
+    snapshot.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+
+    csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
+    session.valid = 1;
+    session.real_asset_matched = 1;
+    session.title_assets_ready = 1;
+    session.entrance_assets_ready = 1;
+    session.hud_assets_bound = 1;
+    session.surfaces.valid = 1;
+    session.surfaces.title_regions_ready = 1;
+    session.surfaces.opening_frame_ready = 1;
+    session.playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34;
+    session.playback.entrance_music_active = 1;
+
+    CHECK(csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
+              &snapshot, &session, &receipt) == 1 &&
+              receipt.valid && receipt.door_opening_finished &&
+              receipt.runtime_view_ready && receipt.hud_session_ready &&
+              receipt.route == CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_HUD_READY_PC34 &&
+              receipt.runtime_mirror.valid &&
+              receipt.runtime_mirror.view.level_loaded &&
+              receipt.runtime_mirror.view.party_x == 2 &&
+              receipt.runtime_mirror.view.party_y == 0 &&
+              session.playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34,
+          "door completion atomically hands the live dungeon pose to the verified HUD session");
+
+    session.playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34;
+    session.playback.entrance_music_active = 1;
+    boot.runtime.dungeon_handle = NULL;
+    CHECK(csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
+              &snapshot, &session, &receipt) == 1 && receipt.valid &&
+              receipt.door_opening_finished && !receipt.runtime_view_ready &&
+              !receipt.hud_session_ready &&
+              receipt.route == CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_RUNTIME_BLOCKED_PC34 &&
+              session.playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34,
+          "door completion blocks the HUD transition when no dungeon is live");
+
+    csb_v1_runtime_cleanup(&boot.runtime);
+}
+
 static void test_runtime_utility_startup_receipt_facades(void)
 {
     CSB_V1_BootProfile boot;
@@ -2236,7 +2297,9 @@ static void test_runtime_utility_startup_receipt_facades(void)
     CSB_V1_StartupCompleteSupportReceipt_PC34 complete_support;
     CSB_V1_StartupCompleteSupportReceipt_PC34 partial_complete_support;
     CSB_V1_StartupReleaseAppCaptureReceipt_PC34 release_app_capture;
-    CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 presented_capture;
+    CSB_V1_StartupReleaseAppCaptureReceipt_PC34 partial_release_app_capture;
+    CSB_V1_StartupPresentedAppCaptureFacts_PC34 presented_app_facts;
+    CSB_V1_StartupPresentedAppCaptureReceipt_PC34 presented_app_capture;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
     TestHudMenuDrawProbe hud_draw_probe;
@@ -2427,6 +2490,11 @@ static void test_runtime_utility_startup_receipt_facades(void)
     full_session.valid = 1;
     full_session.real_asset_matched = 1;
     full_session.surfaces.valid = 1;
+    full_session.surfaces.hud_surfaces_ready = 1;
+    full_session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].valid = 1;
+    full_session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].valid = 1;
     full_session.title_presents_ready = 1;
     full_session.title_chaos_ready = 1;
     full_session.title_strikes_back_ready = 1;
@@ -2469,6 +2537,10 @@ static void test_runtime_utility_startup_receipt_facades(void)
               complete_support.entrance_ready &&
               complete_support.hud_ready &&
               complete_support.door_ready &&
+              complete_support.playback_route_ready &&
+              complete_support.title_to_hud_same_session &&
+              complete_support.playback_route_hash ==
+                  full_runtime.playback_route_hash &&
               complete_support.runtime_host_routes_ready &&
               complete_support.draw_consumes_receipt_only &&
               complete_support.input_consumes_receipt_only &&
@@ -2483,6 +2555,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               complete_support.real_startup_asset_binding_hash ==
                   runtime_host_gate.real_startup_asset_binding_hash &&
               complete_support.session_generation == 19u &&
+              complete_support.playback_route_hash != 0u &&
               complete_support.runtime_host_gate_hash ==
                   runtime_host_gate.runtime_host_gate_hash &&
               complete_support.complete_support_hash != 0u &&
@@ -2500,12 +2573,18 @@ static void test_runtime_utility_startup_receipt_facades(void)
               release_app_capture.utility_release_app_capture_ready &&
               release_app_capture.door_opening_release_app_capture_ready &&
               release_app_capture.credits_release_app_capture_ready &&
+              release_app_capture.title_sequence_capture_ready &&
+              release_app_capture.title_sequence_host_consumer_ready &&
+              release_app_capture.title_sequence_same_capture_route &&
               release_app_capture.title_host_consumer_ready &&
               release_app_capture.closed_door_host_consumer_ready &&
               release_app_capture.utility_host_consumer_ready &&
               release_app_capture.door_opening_host_consumer_ready &&
               release_app_capture.credits_host_consumer_ready &&
               release_app_capture.route_specific_host_consumers_ready &&
+              release_app_capture.hud_door_capture_ready &&
+              release_app_capture.hud_door_host_consumers_ready &&
+              release_app_capture.hud_door_same_capture_route &&
               release_app_capture.title_phase_route_complete &&
               release_app_capture.title_runtime_phase_mask == 0x0f &&
               release_app_capture.title_runtime_expected_phase_mask == 0x0f &&
@@ -2535,6 +2614,9 @@ static void test_runtime_utility_startup_receipt_facades(void)
               release_app_capture.real_startup_assets_bound &&
               release_app_capture.title_packaged_capture_hash ==
                   runtime_host_gate.title_packaged_capture_hash &&
+              release_app_capture.title_sequence_capture_hash != 0u &&
+              release_app_capture.title_sequence_capture_hash !=
+                  release_app_capture.release_app_capture_hash &&
               release_app_capture.closed_door_packaged_capture_hash ==
                   runtime_host_gate.closed_door_packaged_capture_hash &&
               release_app_capture.utility_packaged_capture_hash ==
@@ -2543,6 +2625,9 @@ static void test_runtime_utility_startup_receipt_facades(void)
                   runtime_host_gate.door_opening_packaged_capture_hash &&
               release_app_capture.credits_packaged_capture_hash ==
                   runtime_host_gate.credits_packaged_capture_hash &&
+              release_app_capture.hud_door_capture_hash != 0u &&
+              release_app_capture.hud_door_capture_hash !=
+                  release_app_capture.release_app_capture_hash &&
               release_app_capture.release_app_real_asset_capture_hash !=
                   release_app_capture.release_app_capture_hash &&
               release_app_capture.runtime_host_gate_hash ==
@@ -2553,154 +2638,147 @@ static void test_runtime_utility_startup_receipt_facades(void)
               strstr(release_app_capture.source_evidence,
                      "ENTRANCE.C F0580") != NULL,
           "CSB release/app capture gate consumes complete title HUD and door packaged hashes");
-    CHECK(csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
+    memset(&presented_app_facts, 0, sizeof(presented_app_facts));
+    presented_app_facts.running_from_macos_app_bundle = 1;
+    presented_app_facts.mac_window_capture_ready = 1;
+    presented_app_facts.presented_frame_captured = 1;
+    presented_app_facts.presented_frame_width = 320;
+    presented_app_facts.presented_frame_height = 200;
+    presented_app_facts.presented_frame_indexed_pixels = 1;
+    presented_app_facts.presented_frame_uses_real_csb_assets = 1;
+    presented_app_facts.presented_frame_hash = 0x51b4c0deu;
+    CHECK(csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
               &release_app_capture,
-              1,
-              1,
-              1,
-              320,
-              200,
-              320 * 200 * 4,
-              0x4353424du,
-              &presented_capture) == 1 &&
-              presented_capture.valid &&
-              presented_capture.release_app_capture_valid &&
-              presented_capture.presented_capture_ready &&
-              presented_capture.host_window_present &&
-              presented_capture.captured_from_mac_window &&
-              presented_capture.captured_from_release_app &&
-              presented_capture.geometry_matches &&
-              presented_capture.pixels_present &&
-              presented_capture.consumer_mask == 0x1fu &&
-              presented_capture.expected_consumer_mask == 0x1fu &&
-              presented_capture.route_specific_host_consumers_ready &&
-              presented_capture.no_loose_render_plan_exports &&
-              presented_capture.width == 320 &&
-              presented_capture.height == 200 &&
-              presented_capture.byte_count == 320 * 200 * 4 &&
-              presented_capture.framebuffer_hash == 0x4353424du &&
-              presented_capture.release_app_capture_hash ==
+              &presented_app_facts,
+              &presented_app_capture) == 1 &&
+              presented_app_capture.valid &&
+              presented_app_capture.release_app_capture_valid &&
+              presented_app_capture.running_from_macos_app_bundle &&
+              presented_app_capture.mac_window_capture_ready &&
+              presented_app_capture.presented_frame_captured &&
+              presented_app_capture.presented_frame_geometry_ready &&
+              presented_app_capture.presented_frame_pixels_ready &&
+              presented_app_capture.presented_frame_real_asset_ready &&
+              presented_app_capture.presented_title_sequence_ready &&
+              presented_app_capture.presented_title_phase_mask_ready &&
+              presented_app_capture.presented_hud_door_ready &&
+              presented_app_capture.presented_hud_door_route_hash_ready &&
+              presented_app_capture.presented_credits_ready &&
+              presented_app_capture.presented_credits_route_hash_ready &&
+              presented_app_capture.presented_route_aggregates_ready &&
+              presented_app_capture.presented_wrapper_cleanup_ready &&
+              presented_app_capture.presented_runtime_capture_boundary_ready &&
+              presented_app_capture.release_app_capture_hash ==
                   release_app_capture.release_app_capture_hash &&
-              presented_capture.release_app_real_asset_capture_hash ==
-                  release_app_capture.release_app_real_asset_capture_hash &&
-              presented_capture.chain_hash != 0u &&
-              strstr(presented_capture.source_evidence,
-                     "ENTRANCE.C F0441") != NULL,
-          "CSB release/app presented capture export joins Mac window pixels to CSB-owned route mask");
-    memset(&snapshot, 0, sizeof(snapshot));
-    snapshot.boot_profile = &boot;
-    snapshot.entrance_active = 1;
-    snapshot.entrance_source_step = 4;
-    snapshot.utility_overlay_active = 1;
-    snapshot.utility_selected_action_index = 0;
-    snapshot.utility_imported_champion_count = 2;
-    snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
-    snapshot.resume_available = 1;
-    snapshot.resume_path = resume_path;
-    snapshot.title_active = 1;
-    snapshot.title_frame = 0;
-    snapshot.title_source_step = 1;
-    CHECK(csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34(
-              &snapshot,
-              &m11_presentation_receipt) == 1 &&
-              m11_presentation_receipt.valid &&
-              m11_presentation_receipt.startup_render_plan_valid &&
-              m11_presentation_receipt.capture_proof_valid &&
-              m11_presentation_receipt.capture_proof.valid &&
-              m11_presentation_receipt.capture_proof.packaged_capture_hash != 0u,
-          "CSB M11 presentation receipt packages title capture before release/app pixel promotion");
-    CHECK(csb_v1_boot_startup_release_app_presented_capture_from_m11_presentation_pc34(
+              presented_app_capture.title_sequence_capture_hash ==
+                  release_app_capture.title_sequence_capture_hash &&
+              presented_app_capture.hud_door_capture_hash ==
+                  release_app_capture.hud_door_capture_hash &&
+              presented_app_capture.credits_capture_hash ==
+                  release_app_capture.credits_packaged_capture_hash &&
+              presented_app_capture.presented_wrapper_cleanup_hash != 0u &&
+              presented_app_capture.presented_wrapper_cleanup_hash !=
+                  presented_app_capture.presented_app_capture_hash &&
+              presented_app_capture.presented_frame_hash ==
+                  presented_app_facts.presented_frame_hash &&
+              presented_app_capture.presented_app_capture_hash != 0u &&
+              strstr(presented_app_capture.source_evidence,
+                     "CSBWin Graphics.cpp") != NULL,
+          "CSB presented app capture requires Mac window real-asset frame above release route proof");
+    presented_app_facts.mac_window_capture_ready = 0;
+    CHECK(csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
               &release_app_capture,
-              &m11_presentation_receipt,
-              1,
-              1,
-              1,
-              320,
-              200,
-              320 * 200 * 4,
-              0x4353424du,
-              &presented_capture) == 1 &&
-              presented_capture.valid &&
-              presented_capture.presented_capture_ready &&
-              presented_capture.m11_presentation_valid &&
-              presented_capture.m11_presentation_consumed &&
-              presented_capture.m11_presentation_route ==
-                  m11_presentation_receipt.route &&
-              presented_capture.m11_presentation_capture_proof_ready &&
-              presented_capture.release_app_capture_hash ==
-                  release_app_capture.release_app_capture_hash &&
-              presented_capture.release_app_real_asset_capture_hash ==
-                  release_app_capture.release_app_real_asset_capture_hash &&
-              presented_capture.consumer_mask == 0x1fu &&
-              presented_capture.expected_consumer_mask == 0x1fu &&
-              presented_capture.chain_hash != 0u &&
-              strstr(presented_capture.source_evidence,
-                     "CSBWin Viewport.cpp") != NULL,
-          "CSB release/app presented capture consumes the M11 presentation receipt before Mac window promotion");
-    CHECK(csb_v1_boot_startup_release_app_presented_capture_from_m11_presentation_pc34(
+              &presented_app_facts,
+              &presented_app_capture) == 0 &&
+              !presented_app_capture.valid &&
+              !presented_app_capture.mac_window_capture_ready &&
+              presented_app_capture.presented_runtime_capture_boundary_ready,
+          "CSB presented app capture rejects missing Mac window capture");
+    presented_app_facts.mac_window_capture_ready = 1;
+    presented_app_facts.presented_frame_uses_real_csb_assets = 0;
+    CHECK(csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
               &release_app_capture,
-              NULL,
-              1,
-              1,
-              1,
-              320,
-              200,
-              320 * 200 * 4,
-              0x4353424du,
-              &presented_capture) == 0 &&
-              !presented_capture.valid &&
-              !presented_capture.presented_capture_ready &&
-              !presented_capture.m11_presentation_valid,
-          "CSB release/app presented capture rejects missing M11 presentation receipt");
-    partial_m11_presentation_receipt = m11_presentation_receipt;
-    partial_m11_presentation_receipt.capture_proof_valid = 0;
-    CHECK(csb_v1_boot_startup_release_app_presented_capture_from_m11_presentation_pc34(
-              &release_app_capture,
-              &partial_m11_presentation_receipt,
-              1,
-              1,
-              1,
-              320,
-              200,
-              320 * 200 * 4,
-              0x4353424du,
-              &presented_capture) == 0 &&
-              !presented_capture.valid &&
-              !presented_capture.presented_capture_ready &&
-              presented_capture.m11_presentation_valid &&
-              !presented_capture.m11_presentation_consumed &&
-              !presented_capture.m11_presentation_capture_proof_ready,
-          "CSB release/app presented capture rejects M11 routes without capture proof");
-    CHECK(csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
-              &release_app_capture,
-              1,
-              0,
-              1,
-              320,
-              200,
-              320 * 200 * 4,
-              0x4353424du,
-              &presented_capture) == 0 &&
-              !presented_capture.valid &&
-              !presented_capture.presented_capture_ready &&
-              !presented_capture.captured_from_mac_window &&
-              presented_capture.consumer_mask == 0x1fu,
-          "CSB release/app presented capture export rejects non-Mac-window captures");
-    CHECK(csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
-              &release_app_capture,
-              1,
-              1,
-              1,
-              319,
-              200,
-              320 * 200 * 4,
-              0x4353424du,
-              &presented_capture) == 0 &&
-              !presented_capture.valid &&
-              !presented_capture.presented_capture_ready &&
-              !presented_capture.geometry_matches &&
-              presented_capture.pixels_present,
-          "CSB release/app presented capture export rejects host geometry drift");
+              &presented_app_facts,
+              &presented_app_capture) == 0 &&
+              !presented_app_capture.valid &&
+              !presented_app_capture.presented_frame_real_asset_ready,
+          "CSB presented app capture rejects non-real presented frame");
+    partial_release_app_capture = release_app_capture;
+    partial_release_app_capture.title_sequence_capture_ready = 0;
+    CHECK(csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
+              &partial_release_app_capture,
+              &presented_app_facts,
+              &presented_app_capture) == 0 &&
+              !presented_app_capture.valid &&
+              !presented_app_capture.presented_title_sequence_ready &&
+              !presented_app_capture.presented_route_aggregates_ready &&
+              !presented_app_capture.presented_runtime_capture_boundary_ready,
+          "CSB presented app capture rejects title sequence aggregate loss");
+    partial_release_app_capture = release_app_capture;
+    partial_release_app_capture.hud_door_capture_ready = 0;
+    CHECK(csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
+              &partial_release_app_capture,
+              &presented_app_facts,
+              &presented_app_capture) == 0 &&
+              !presented_app_capture.valid &&
+              !presented_app_capture.presented_hud_door_ready &&
+              !presented_app_capture.presented_route_aggregates_ready &&
+              !presented_app_capture.presented_runtime_capture_boundary_ready,
+          "CSB presented app capture rejects HUD/door aggregate loss");
+    partial_release_app_capture = release_app_capture;
+    partial_release_app_capture.host_route_wrappers_retired = 0;
+    CHECK(csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
+              &partial_release_app_capture,
+              &presented_app_facts,
+              &presented_app_capture) == 0 &&
+              !presented_app_capture.valid &&
+              !presented_app_capture.presented_wrapper_cleanup_ready &&
+              !presented_app_capture.presented_runtime_capture_boundary_ready,
+          "CSB presented app capture rejects startup wrapper cleanup loss");
+    partial_release_app_capture = release_app_capture;
+    partial_release_app_capture.title_runtime_phase_mask = 0x1u;
+    CHECK(csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
+              &partial_release_app_capture,
+              &presented_app_facts,
+              &presented_app_capture) == 0 &&
+              !presented_app_capture.valid &&
+              !presented_app_capture.presented_title_phase_mask_ready &&
+              !presented_app_capture.presented_route_aggregates_ready,
+          "CSB presented app capture rejects incomplete PRESENTS/CHAOS/STRIKES phase mask");
+    partial_release_app_capture = release_app_capture;
+    partial_release_app_capture.hud_door_capture_hash =
+        partial_release_app_capture.title_sequence_capture_hash;
+    CHECK(csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
+              &partial_release_app_capture,
+              &presented_app_facts,
+              &presented_app_capture) == 0 &&
+              !presented_app_capture.valid &&
+              !presented_app_capture.presented_hud_door_route_hash_ready &&
+              !presented_app_capture.presented_route_aggregates_ready,
+          "CSB presented app capture rejects HUD/door route hash collapsed into title sequence");
+    partial_release_app_capture = release_app_capture;
+    partial_release_app_capture.credits_packaged_capture_hash = 0u;
+    CHECK(csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
+              &partial_release_app_capture,
+              &presented_app_facts,
+              &presented_app_capture) == 0 &&
+              !presented_app_capture.valid &&
+              !presented_app_capture.presented_credits_ready &&
+              !presented_app_capture.presented_credits_route_hash_ready &&
+              !presented_app_capture.presented_route_aggregates_ready,
+          "CSB presented app capture rejects missing credits package route");
+    partial_release_app_capture = release_app_capture;
+    partial_release_app_capture.credits_packaged_capture_hash =
+        partial_release_app_capture.title_sequence_capture_hash;
+    CHECK(csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
+              &partial_release_app_capture,
+              &presented_app_facts,
+              &presented_app_capture) == 0 &&
+              !presented_app_capture.valid &&
+              presented_app_capture.presented_credits_ready &&
+              !presented_app_capture.presented_credits_route_hash_ready &&
+              !presented_app_capture.presented_route_aggregates_ready,
+          "CSB presented app capture rejects credits route hash collapsed into title sequence");
     partial_complete_support = complete_support;
     partial_complete_support.full_runtime.real_asset_matched = 0;
     CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
@@ -2725,15 +2803,42 @@ static void test_runtime_utility_startup_receipt_facades(void)
               &partial_complete_support,
               &release_app_capture) == 0 &&
               !release_app_capture.valid &&
-              release_app_capture.title_runtime_phase_hash_count == 3,
+              release_app_capture.title_runtime_phase_hash_count == 3 &&
+              !release_app_capture.title_sequence_capture_ready &&
+              !release_app_capture.title_sequence_same_capture_route,
           "CSB release/app capture gate rejects collapsed title phase hashes");
+
+    partial_complete_support = complete_support;
+    partial_complete_support.host_capture_gate.title_packaged_capture_hash = 0u;
+    CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
+              &partial_complete_support,
+              &release_app_capture) == 0 &&
+              !release_app_capture.valid &&
+              !release_app_capture.title_release_app_capture_ready &&
+              !release_app_capture.title_sequence_capture_ready &&
+              !release_app_capture.title_sequence_same_capture_route,
+          "CSB release/app capture gate rejects missing title package");
+
+    partial_complete_support = complete_support;
+    partial_complete_support.host_capture_gate.closed_door_packaged_capture_hash = 0u;
+    CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
+              &partial_complete_support,
+              &release_app_capture) == 0 &&
+              !release_app_capture.valid &&
+              !release_app_capture.closed_door_release_app_capture_ready &&
+              !release_app_capture.hud_door_capture_ready &&
+              !release_app_capture.hud_door_same_capture_route,
+          "CSB release/app capture gate rejects partial closed-door HUD package");
+
     partial_complete_support = complete_support;
     partial_complete_support.host_capture_gate.door_opening_packaged_capture_hash = 0u;
     CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
               &partial_complete_support,
               &release_app_capture) == 0 &&
               !release_app_capture.valid &&
-              !release_app_capture.door_opening_release_app_capture_ready,
+              !release_app_capture.door_opening_release_app_capture_ready &&
+              !release_app_capture.hud_door_capture_ready &&
+              !release_app_capture.hud_door_same_capture_route,
           "CSB release/app capture gate rejects partial door-opening package");
     partial_complete_support = complete_support;
     partial_complete_support.host_capture_gate.utility_host_draw_consumes_receipt_only = 0;
@@ -2742,7 +2847,9 @@ static void test_runtime_utility_startup_receipt_facades(void)
               &release_app_capture) == 0 &&
               !release_app_capture.valid &&
               !release_app_capture.utility_host_consumer_ready &&
-              !release_app_capture.route_specific_host_consumers_ready,
+              !release_app_capture.route_specific_host_consumers_ready &&
+              !release_app_capture.hud_door_host_consumers_ready &&
+              !release_app_capture.hud_door_same_capture_route,
           "CSB release/app capture gate rejects utility HUD host wrappers");
     partial_complete_support = complete_support;
     partial_complete_support.host_capture_gate.credits_packaged_capture_hash = 0u;
@@ -2983,12 +3090,17 @@ static void test_runtime_utility_startup_receipt_facades(void)
               !m11_presentation_receipt.hud_menu_draw_valid &&
               m11_presentation_receipt.capture_proof_valid &&
               m11_presentation_receipt.capture_proof.title_route &&
+              m11_presentation_receipt.host_view_valid &&
+              m11_presentation_receipt.host_draw_package_ready &&
+              m11_presentation_receipt.host_draw_uses_receipt_package &&
+              m11_presentation_receipt.no_legacy_render_wrapper_ready &&
+              m11_presentation_receipt.legacy_plan_exports_inspection_only &&
               !m11_presentation_receipt.input_ready &&
               !m11_presentation_receipt.hud_ready &&
               !m11_presentation_receipt.runtime_ready,
-          "M11 presentation receipt owns title plan and capture gate without facade chaining");
-    CHECK(host_view_receipt.render_draw.render_plan_valid &&
-              host_view_receipt.render_draw.render_plan.surface ==
+          "M11 presentation receipt owns title package without wrapper-era plan chaining");
+    CHECK(host_view_receipt.render_plan_valid &&
+              host_view_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
               host_view_receipt.render_draw.render_plan.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
@@ -3078,6 +3190,9 @@ static void test_runtime_utility_startup_receipt_facades(void)
                      "ENTRANCE.C F0441") != NULL &&
               host_view_receipt.render_draw.primitive_commands_ready &&
               host_view_receipt.render_draw.title_asset_commands_ready &&
+              host_view_receipt.host_draw_package_ready &&
+              host_view_receipt.host_draw_uses_receipt_package &&
+              host_view_receipt.no_legacy_render_wrapper_ready &&
               host_view_receipt.readiness_valid &&
               host_view_receipt.readiness.host_input_blocked &&
               host_view_receipt.render_draw.render_plan.surface ==
@@ -3486,8 +3601,11 @@ static void test_runtime_utility_startup_receipt_facades(void)
               host_view_receipt.render_draw.render_plan.menu_option_count == 4 &&
               host_view_receipt.render_draw_valid &&
               host_view_receipt.render_draw.hud_menu_draw_ready &&
-              host_view_receipt.hud_menu_draw_valid,
-          "boot startup snapshot host-view consumes utility render-draw receipt");
+              host_view_receipt.hud_menu_draw_valid &&
+              host_view_receipt.host_draw_package_ready &&
+              host_view_receipt.host_draw_uses_receipt_package &&
+              host_view_receipt.no_legacy_render_wrapper_ready,
+          "boot startup snapshot host-view consumes utility draw package receipt");
     CHECK(csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34(
               &snapshot,
               &m11_presentation_receipt) == 1 &&
@@ -3503,8 +3621,13 @@ static void test_runtime_utility_startup_receipt_facades(void)
               m11_presentation_receipt.input_ready &&
               m11_presentation_receipt.hud_ready &&
               !m11_presentation_receipt.runtime_ready &&
+              m11_presentation_receipt.host_view_valid &&
+              m11_presentation_receipt.host_draw_package_ready &&
+              m11_presentation_receipt.host_draw_uses_receipt_package &&
+              m11_presentation_receipt.no_legacy_render_wrapper_ready &&
+              m11_presentation_receipt.legacy_plan_exports_inspection_only &&
               m11_presentation_receipt.capture_proof.utility_menu_route,
-          "M11 presentation receipt owns utility HUD plan and readiness together");
+          "M11 presentation receipt owns utility HUD package and readiness together");
     CHECK(csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
               &capture_receipt,
               &host_view_receipt) == 1 &&
@@ -3520,6 +3643,9 @@ static void test_runtime_utility_startup_receipt_facades(void)
               host_view_receipt.readiness_valid &&
               host_view_receipt.readiness.hud_menu_kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+              host_view_receipt.host_draw_package_ready &&
+              host_view_receipt.host_draw_uses_receipt_package &&
+              host_view_receipt.no_legacy_render_wrapper_ready &&
               host_view_receipt.capture_proof.utility_menu_route,
           "boot startup host-view receipt packages utility HUD render-draw receipt");
     render_probe_executor_init(&capture_render_executor,
@@ -4641,6 +4767,11 @@ static void test_startup_full_runtime_receipt_requires_complete_real_session(voi
     session.valid = 1;
     session.real_asset_matched = 1;
     session.surfaces.valid = 1;
+    session.surfaces.hud_surfaces_ready = 1;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].valid = 1;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].valid = 1;
     session.title_presents_ready = 1;
     session.title_chaos_ready = 1;
     session.title_strikes_back_ready = 1;
@@ -4668,8 +4799,14 @@ static void test_startup_full_runtime_receipt_requires_complete_real_session(voi
               receipt.entrance_ready &&
               receipt.hud_ready &&
               receipt.door_ready &&
+              receipt.playback_route_ready &&
+              receipt.playback_reaches_title &&
+              receipt.playback_reaches_entrance &&
+              receipt.playback_reaches_hud &&
+              receipt.title_to_hud_same_session &&
               receipt.no_legacy_wrappers &&
               receipt.session_generation == 7u &&
+              receipt.playback_route_hash != 0u &&
               strstr(receipt.source_evidence, "TITLE.C F0437") != NULL,
           "CSB full startup runtime receipt gates PRESENTS/CHAOS/STRIKES HUD and door together");
 
@@ -4678,7 +4815,8 @@ static void test_startup_full_runtime_receipt_requires_complete_real_session(voi
               &session,
               &receipt) == 0 &&
               !receipt.valid &&
-              !receipt.title_sequence_ready,
+              !receipt.title_sequence_ready &&
+              !receipt.playback_route_ready,
           "CSB full startup runtime receipt rejects partial title sequence");
 }
 
@@ -4690,6 +4828,7 @@ int main(void)
     test_enter_game_preserves_imported_party_and_switches_leader();
     test_runtime_import_dm1_party_path_owns_utility_handoff();
     test_runtime_view_state_receipt_owns_scalar_handoff();
+    test_door_opening_runtime_handoff_owns_hud_transition();
     test_runtime_utility_startup_receipt_facades();
     test_startup_real_asset_receipt_is_skip_safe_and_deterministic();
     test_startup_full_runtime_receipt_requires_complete_real_session();

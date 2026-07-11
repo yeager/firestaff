@@ -23,6 +23,7 @@
 #include "dm1_v1_movement_timing_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_teleporter_pit_pc34_compat.h"
 #include "dm1_v1_throw_shoot_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
@@ -994,6 +995,47 @@ static const unsigned short s_dm1_i34_creature_attributes[27] = {
     0x05B8, 0x0381, 0x0680, 0x04A0, 0x0280, 0x4060, 0x10DE,
     0x0082, 0x1480, 0x78AA, 0x068A, 0x78AA, 0x78AA
 };
+
+/* ReDMCSB DUNGEON.C G0243_as_Graphic559_CreatureInfo (PC 3.4 rows).
+ * The Phase-16 profile owns combat values; F0209 additionally needs these
+ * packed range/animation words when it schedules C29-C41 events. */
+static const unsigned short s_dm1_i34_creature_ranges[27] = {
+    0x1153, 0x3132, 0x1376, 0x320A, 0x1554, 0x1232, 0x1111,
+    0x1463, 0x1423, 0x1023, 0x1224, 0x1312, 0x1013, 0x1343,
+    0x4335, 0x1AA1, 0x1343, 0x1432, 0x1005, 0x3258, 0x1381,
+    0x1592, 0x4344, 0x6369, 0x3645, 0x6369, 0x6369
+};
+
+static const unsigned short s_dm1_i34_creature_animation_ticks[27] = {
+    0x0254, 0x0384, 0x0222, 0x0113, 0x0143, 0x0265, 0x02F2,
+    0x01F4, 0x0116, 0x04F3, 0x0483, 0x0114, 0x0132, 0x0112,
+    0x0664, 0x0253, 0x0332, 0x0112, 0x0143, 0x0117, 0x0345,
+    0x0224, 0x0124, 0x0564, 0x0445, 0x0564, 0x0564
+};
+
+static int orch_get_dm1_creature_info_pc34_compat(
+    int creatureType,
+    struct DM1CreatureInfo_Compat* out)
+{
+    const struct CreatureBehaviorProfile_Compat* profile;
+
+    if (!out || creatureType < 0 || creatureType >= CREATURE_TYPE_COUNT) return 0;
+    profile = CREATURE_GetProfile_Compat(creatureType);
+    if (!profile) return 0;
+    memset(out, 0, sizeof(*out));
+    out->attributes = s_dm1_i34_creature_attributes[creatureType];
+    out->movementTicks = profile->movementTicks;
+    out->attackTicks = profile->attackTicks;
+    out->attack = profile->baseAttack;
+    out->poisonAttack = profile->poisonAttack;
+    out->dexterity = profile->dexterity;
+    out->ranges = s_dm1_i34_creature_ranges[creatureType];
+    out->properties = profile->properties;
+    out->animationTicks = s_dm1_i34_creature_animation_ticks[creatureType];
+    out->woundProbabilities = profile->woundProbabilities;
+    out->attackType = profile->attackType;
+    return 1;
+}
 
 static unsigned short orch_next_thing_compat(
     const struct DungeonThings_Compat* things,
@@ -5155,17 +5197,371 @@ static int orch_link_thing_to_square_tail_compat(
             world->things, attachReceipt.baseThing, THING_ENDOFLIST)) {
         return 0;
     }
+    orch_write_raw_next_compat(world->things, attachReceipt.baseThing);
     if (attachReceipt.shouldSetSquareFirstThing) {
         world->things->squareFirstThings[sftIndex] =
             attachReceipt.droppedThing;
         return 1;
     }
     if (attachReceipt.shouldAppendAfterTail && attachReceipt.foundTail) {
-        return orch_set_next_thing_compat(
-            world->things, attachReceipt.tailThing,
-            attachReceipt.droppedThing);
+        if (!orch_set_next_thing_compat(
+                world->things, attachReceipt.tailThing,
+                attachReceipt.droppedThing)) {
+            return 0;
+        }
+        orch_write_raw_next_compat(world->things, attachReceipt.tailThing);
+        return 1;
     }
     return 0;
+}
+
+static int orch_f0267_thing_is_present_on_square_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short needle)
+{
+    int sftIndex;
+    unsigned short current;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things) return 0;
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
+    current = world->things->squareFirstThings[sftIndex];
+    while (current != THING_NONE && current != THING_ENDOFLIST && safety++ < 64) {
+        if ((current & 0x3fffu) == (needle & 0x3fffu)) return 1;
+        current = orch_next_thing_compat(world->things, current);
+    }
+    return 0;
+}
+
+static int orch_f0267_sensor_pass_count_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short movingThing,
+    int isAddition)
+{
+    struct SensorOnSquare_Compat sensors[SENSOR_ENUM_CAPACITY];
+    struct FloorSensorContext_Compat context;
+    struct SensorTriggerResultList_Compat results;
+    int type;
+    int index;
+    int objectType = -1;
+    int sensorCount;
+
+    if (!world || !world->dungeon || !world->things) return 0;
+    type = THING_GET_TYPE(movingThing);
+    index = THING_GET_INDEX(movingThing);
+    if (type > THING_TYPE_GROUP && type < THING_TYPE_PROJECTILE &&
+        index >= 0 && index < world->things->thingCounts[type] &&
+        world->things->rawThingData[type] &&
+        s_orch_thing_data_byte_count[type] >= 4) {
+        objectType = (int)(r_u16(world->things->rawThingData[type] +
+            (index * s_orch_thing_data_byte_count[type]) + 2) & 0x007fu);
+    }
+
+    memset(&context, 0, sizeof(context));
+    context.thingType = type;
+    context.objectType = objectType;
+    context.partyOnSquare = (world->partyMapIndex == mapIndex &&
+        world->party.mapX == mapX && world->party.mapY == mapY);
+    context.partyChampionCount = world->party.championCount;
+    context.isAddition = isAddition ? 1 : 0;
+    sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
+        world->dungeon, world->things, mapIndex, mapX, mapY, sensors);
+    if (sensorCount <= 0) return 0;
+    memset(&results, 0, sizeof(results));
+    if (!F0725_SENSOR_ProcessFloorSquare_Compat(
+            sensors, sensorCount, world->things->sensors,
+            world->things->sensorCount, &context, &results)) {
+        return 0;
+    }
+    return results.count;
+}
+
+static void orch_f0267_dispatch_sensor_results_compat(
+    struct GameWorld_Compat* world,
+    const struct SensorTriggerResultList_Compat* results,
+    struct F0267ThingMoveResultPc34Compat* moveResult)
+{
+    int i;
+
+    if (!world || !results || !moveResult) return;
+    /* ReDMCSB MOVESENS.C F0276 lines 1771-1785 sends each evaluated
+     * remote result to F0268 in list order.  The common M10 route owns
+     * the supported remote-event receipt; local rotation remains owned by
+     * the corresponding party/group movement paths. */
+    for (i = 0; i < results->count; ++i) {
+        const struct SensorTriggerResult_Compat* trigger = &results->results[i];
+        struct SensorEffect_Compat* effect;
+        if (!trigger->triggered || trigger->isLocal ||
+            trigger->targetEventType == DM1_EVENT_NONE) {
+            continue;
+        }
+        if (world->pendingSensorEffects.count >= SENSOR_EFFECT_LIST_MAX_COUNT) {
+            moveResult->sensorDispatchOverflow = 1;
+            continue;
+        }
+        effect = &world->pendingSensorEffects.effects[
+            world->pendingSensorEffects.count++];
+        memset(effect, 0, sizeof(*effect));
+        effect->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
+        effect->sensorType = trigger->effectKind;
+        effect->destMapIndex = -1;
+        effect->destMapX = trigger->targetMapX;
+        effect->destMapY = trigger->targetMapY;
+        effect->destCell = trigger->targetCell;
+        effect->textIndex = trigger->resolvedEffect;
+        moveResult->sensorDispatches++;
+    }
+}
+
+static int orch_f0267_sensor_pass_dispatch_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short movingThing,
+    int isAddition,
+    struct F0267ThingMoveResultPc34Compat* moveResult)
+{
+    struct SensorOnSquare_Compat sensors[SENSOR_ENUM_CAPACITY];
+    struct FloorSensorContext_Compat context;
+    struct SensorTriggerResultList_Compat results;
+    int type;
+    int index;
+    int objectType = -1;
+    int sensorCount;
+
+    if (!world || !world->dungeon || !world->things || !moveResult) return 0;
+    type = THING_GET_TYPE(movingThing);
+    index = THING_GET_INDEX(movingThing);
+    if (type > THING_TYPE_GROUP && type < THING_TYPE_PROJECTILE &&
+        index >= 0 && index < world->things->thingCounts[type] &&
+        world->things->rawThingData[type] &&
+        s_orch_thing_data_byte_count[type] >= 4) {
+        objectType = (int)(r_u16(world->things->rawThingData[type] +
+            (index * s_orch_thing_data_byte_count[type]) + 2) & 0x007fu);
+    }
+    memset(&context, 0, sizeof(context));
+    context.thingType = type;
+    context.objectType = objectType;
+    context.partyOnSquare = (world->partyMapIndex == mapIndex &&
+        world->party.mapX == mapX && world->party.mapY == mapY);
+    context.partyChampionCount = world->party.championCount;
+    context.isAddition = isAddition ? 1 : 0;
+    sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
+        world->dungeon, world->things, mapIndex, mapX, mapY, sensors);
+    if (sensorCount <= 0) return 0;
+    memset(&results, 0, sizeof(results));
+    if (!F0725_SENSOR_ProcessFloorSquare_Compat(
+            sensors, sensorCount, world->things->sensors,
+            world->things->sensorCount, &context, &results)) {
+        return 0;
+    }
+    orch_f0267_dispatch_sensor_results_compat(world, &results, moveResult);
+    return results.count;
+}
+
+static int orch_f0267_stairs_exit_direction_compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonMapDesc_Compat* map;
+    unsigned char square;
+    int northSouth;
+    int checkX;
+    int checkY;
+    int blocked = 1;
+
+    if (!dungeon || !dungeon->maps || !dungeon->tiles ||
+        mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) return 0;
+    map = &dungeon->maps[mapIndex];
+    if (!dungeon->tiles[mapIndex].squareData || mapX < 0 || mapX >= map->width ||
+        mapY < 0 || mapY >= map->height) return 0;
+    square = dungeon->tiles[mapIndex].squareData[mapX * map->height + mapY];
+    northSouth = (square & 0x08) ? 0 : 1;
+    checkX = mapX + (northSouth ? 1 : 0);
+    checkY = mapY + (northSouth ? 0 : -1);
+    if (checkX >= 0 && checkX < map->width && checkY >= 0 && checkY < map->height) {
+        int type = (dungeon->tiles[mapIndex].squareData[
+            checkX * map->height + checkY] & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+        blocked = (type == DUNGEON_ELEMENT_WALL || type == DUNGEON_ELEMENT_STAIRS);
+    }
+    return (blocked << 1) + northSouth;
+}
+
+static int orch_f0267_resolve_non_group_chain_compat(
+    const struct GameWorld_Compat* world,
+    unsigned short* inOutThing,
+    int* inOutMapIndex,
+    int* inOutMapX,
+    int* inOutMapY,
+    struct F0267ThingMoveResultPc34Compat* result)
+{
+    int remaining;
+    int type;
+
+    if (!world || !world->dungeon || !inOutThing || !inOutMapIndex ||
+        !inOutMapX || !inOutMapY || !result) return 0;
+    type = THING_GET_TYPE(*inOutThing);
+    for (remaining = 100; remaining > 0; --remaining) {
+        const struct DungeonMapDesc_Compat* map;
+        unsigned char square;
+        int squareType;
+        if (*inOutMapIndex < 0 ||
+            *inOutMapIndex >= (int)world->dungeon->header.mapCount) return 0;
+        map = &world->dungeon->maps[*inOutMapIndex];
+        if (!world->dungeon->tiles || !world->dungeon->tiles[*inOutMapIndex].squareData ||
+            *inOutMapX < 0 || *inOutMapX >= map->width ||
+            *inOutMapY < 0 || *inOutMapY >= map->height) return 0;
+        square = world->dungeon->tiles[*inOutMapIndex].squareData[
+            *inOutMapX * map->height + *inOutMapY];
+        squareType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+        if (squareType == DUNGEON_ELEMENT_TELEPORTER && (square & 0x08)) {
+            struct DungeonTeleporter_Compat teleporter;
+            int selfTarget;
+            if (!orch_find_teleporter_on_square_compat(
+                    world, *inOutMapIndex, *inOutMapX, *inOutMapY,
+                    &teleporter) || teleporter.scope == 1 ||
+                teleporter.targetMapIndex >= world->dungeon->header.mapCount) break;
+            selfTarget = teleporter.targetMapIndex == *inOutMapIndex &&
+                teleporter.targetMapX == *inOutMapX &&
+                teleporter.targetMapY == *inOutMapY;
+            *inOutMapIndex = teleporter.targetMapIndex;
+            *inOutMapX = teleporter.targetMapX;
+            *inOutMapY = teleporter.targetMapY;
+            if (type != THING_TYPE_PROJECTILE && !teleporter.absoluteRotation) {
+                *inOutThing = orch_thing_with_cell_compat(
+                    *inOutThing, THING_GET_CELL(*inOutThing) + teleporter.rotation);
+            }
+            result->teleporterChainCount++;
+            if (selfTarget) break;
+            continue;
+        }
+        if (squareType == DUNGEON_ELEMENT_PIT && type != THING_TYPE_PROJECTILE &&
+            (square & 0x08) && !(square & 0x01)) {
+            int target = orch_group_level_change_location_compat(
+                world->dungeon, *inOutMapIndex, 1, inOutMapX, inOutMapY);
+            if (target < 0) break;
+            *inOutMapIndex = target;
+            result->pitChainCount++;
+            continue;
+        }
+        if (squareType == DUNGEON_ELEMENT_STAIRS && type != THING_TYPE_PROJECTILE &&
+            !(square & 0x04)) {
+            int exitDirection;
+            int target = orch_group_level_change_location_compat(
+                world->dungeon, *inOutMapIndex, 1, inOutMapX, inOutMapY);
+            if (target < 0) break;
+            *inOutMapIndex = target;
+            exitDirection = orch_f0267_stairs_exit_direction_compat(
+                world->dungeon, *inOutMapIndex, *inOutMapX, *inOutMapY);
+            if (exitDirection == 0) --*inOutMapY;
+            else if (exitDirection == 1) ++*inOutMapX;
+            else if (exitDirection == 2) ++*inOutMapY;
+            else --*inOutMapX;
+            exitDirection = (exitDirection + 2) & 3;
+            *inOutThing = orch_thing_with_cell_compat(*inOutThing,
+                ((((THING_GET_CELL(*inOutThing) - exitDirection + 1) & 2) >> 1) +
+                 exitDirection));
+            result->stairsChainCount++;
+            continue;
+        }
+        break;
+    }
+    if (remaining == 0) result->chainedMoveLimitHit = 1;
+    return 1;
+}
+
+int F0267_MOVE_MoveThingOnLoadedChain_Compat(
+    struct GameWorld_Compat* world,
+    const struct F0267ThingMoveRequestPc34Compat* request,
+    struct F0267ThingMoveResultPc34Compat* outResult)
+{
+    struct F0267ThingMoveResultPc34Compat result;
+    struct F0267ThingMoveRequestPc34Compat resolvedRequest;
+    int type;
+
+    memset(&result, 0, sizeof(result));
+    if (!world || !world->dungeon || !world->things || !request ||
+        !world->things->loaded || request->thing == THING_NONE ||
+        request->thing == THING_ENDOFLIST) {
+        if (outResult) *outResult = result;
+        return 0;
+    }
+    resolvedRequest = *request;
+    type = THING_GET_TYPE(request->thing);
+    result.thingType = type;
+    /* C04 owns active-group state, collision deferral and C04 rotation in
+     * the existing F0267 branch.  Keeping it there prevents this common
+     * object route from changing source C04 move ordering. */
+    if (type == THING_TYPE_GROUP || type < THING_TYPE_WEAPON ||
+        type > THING_TYPE_EXPLOSION ||
+        !orch_f0267_thing_is_present_on_square_compat(
+            world, request->sourceMapIndex, request->sourceMapX,
+            request->sourceMapY, request->thing)) {
+        if (outResult) *outResult = result;
+        return 0;
+    }
+
+    result.valid = 1;
+    result.levitates = (type == THING_TYPE_PROJECTILE) ? 1 : 0;
+    if (!orch_f0267_resolve_non_group_chain_compat(
+            world, &resolvedRequest.thing, &resolvedRequest.destinationMapIndex,
+            &resolvedRequest.destinationMapX, &resolvedRequest.destinationMapY, &result)) {
+        if (outResult) *outResult = result;
+        return 0;
+    }
+    result.finalMapIndex = resolvedRequest.destinationMapIndex;
+    result.finalMapX = resolvedRequest.destinationMapX;
+    result.finalMapY = resolvedRequest.destinationMapY;
+    /* ReDMCSB MOVESENS.C:F0267 lines 799-807 runs F0276 before the
+     * source unlink for ordinary things.  Projectiles are levitating and
+     * therefore use F0164 directly. */
+    if (!result.levitates) {
+        result.sourceSensorPasses = orch_f0267_sensor_pass_dispatch_compat(
+            world, resolvedRequest.sourceMapIndex, resolvedRequest.sourceMapX,
+            resolvedRequest.sourceMapY, resolvedRequest.thing, 0, &result);
+    }
+    if (!orch_unlink_thing_from_square_compat(
+            world, resolvedRequest.sourceMapIndex, resolvedRequest.sourceMapX,
+            resolvedRequest.sourceMapY, resolvedRequest.thing)) {
+        if (outResult) *outResult = result;
+        return 0;
+    }
+    result.sourceUnlinked = 1;
+
+    /* MOVESENS.C:F0267 lines 892-897 runs the destination F0276 pass
+     * before linking ordinary things; C14 projectile stays levitating. */
+    if (!result.levitates) {
+        result.destinationSensorPasses = orch_f0267_sensor_pass_dispatch_compat(
+            world, resolvedRequest.destinationMapIndex, resolvedRequest.destinationMapX,
+            resolvedRequest.destinationMapY, resolvedRequest.thing, 1, &result);
+    }
+    if (!orch_link_thing_to_square_tail_compat(
+            world, resolvedRequest.destinationMapIndex, resolvedRequest.destinationMapX,
+            resolvedRequest.destinationMapY, resolvedRequest.thing)) {
+        /* A failed destination link is not allowed to discard an original
+         * Thing. Restore its source position before reporting failure. */
+        (void)orch_link_thing_to_square_tail_compat(
+            world, resolvedRequest.sourceMapIndex, resolvedRequest.sourceMapX,
+            resolvedRequest.sourceMapY, resolvedRequest.thing);
+        result.sourceUnlinked = 0;
+        if (outResult) *outResult = result;
+        return 0;
+    }
+    result.destinationLinked = 1;
+    result.moved = 1;
+    if (outResult) *outResult = result;
+    return 1;
 }
 
 static int orch_drop_creature_fixed_possessions_compat(
@@ -6198,6 +6594,11 @@ static int orch_link_existing_group_to_square_head_only_compat(
     return 1;
 }
 
+static int orch_handle_creature_reaction_event_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result);
+
 static int orch_handle_creature_tick_group_move_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
@@ -6218,6 +6619,15 @@ static int orch_handle_creature_tick_group_move_compat(
 
     (void)result;
     if (!world || !ev || !world->things || !world->dungeon) return 0;
+
+    /* ReDMCSB GROUP.C F0209 owns C29-C41.  C37 is also the initial
+     * wandering event created by F0180, so route it before the older F0267
+     * movement-only slice.  The shared handler schedules the next source
+     * event; physical move/attack application remains explicitly separate. */
+    if (ev->aux2 >= DM1_EVENT_REACTION_DANGER_ON_SQUARE &&
+        ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        return orch_handle_creature_reaction_event_compat(world, ev, result);
+    }
     groupIndex = ev->aux0;
     if (groupIndex < 0 || groupIndex >= world->things->groupCount || !world->things->groups) return 0;
     activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
@@ -6363,7 +6773,30 @@ static int orch_handle_creature_reaction_event_compat(
     ctx.creatureType = group->creatureType;
     ctx.groupBehavior = orch_ai_state_to_dm1_behavior_compat(ai->stateKind);
     ctx.creatureCount = group->count;
-    ctx.movementTicks = 1;
+    if (!orch_get_dm1_creature_info_pc34_compat(group->creatureType,
+                                                 &ctx.creatureInfo)) {
+        return 0;
+    }
+    ctx.creatureSize = ctx.creatureInfo.attributes & DM1_ATTR_SIZE_MASK;
+    ctx.isArchenemy = (ctx.creatureInfo.attributes & DM1_ATTR_ARCHENEMY) != 0;
+    ctx.freezeLifeTicks = world->freezeLifeTicks;
+    ctx.movementTicks = ctx.creatureInfo.movementTicks;
+    ctx.currentGroupDistanceToParty =
+        abs(ctx.partyMapX - ctx.currentGroupMapX) +
+        abs(ctx.partyMapY - ctx.currentGroupMapY);
+    if (ctx.partyMapIndex == ctx.currentMapIndex &&
+        (ctx.currentGroupMapX == ctx.partyMapX ||
+         ctx.currentGroupMapY == ctx.partyMapY)) {
+        ctx.distanceToVisibleParty = ctx.currentGroupDistanceToParty;
+    }
+    if (ctx.partyMapX > ctx.currentGroupMapX) ctx.currentGroupPrimaryDirToParty = 1;
+    else if (ctx.partyMapX < ctx.currentGroupMapX) ctx.currentGroupPrimaryDirToParty = 3;
+    else if (ctx.partyMapY > ctx.currentGroupMapY) ctx.currentGroupPrimaryDirToParty = 2;
+    else ctx.currentGroupPrimaryDirToParty = 0;
+    ctx.currentGroupSecondaryDirToParty =
+        (ctx.currentGroupPrimaryDirToParty + 1) & 3;
+    ctx.ticksSinceLastMove = (int)world->gameTick - ai->lastSeenPartyTick;
+    if (ctx.ticksSinceLastMove < 0) ctx.ticksSinceLastMove = 0;
     ctx.currentTickLow = (int)world->gameTick;
     ctx.eventType = ev->aux2;
     ctx.eventTicks = (int)ev->fireAtTick;

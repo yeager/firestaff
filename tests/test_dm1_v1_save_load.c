@@ -686,6 +686,44 @@ static int test_original_pc34_runtime_load_fallback(void) {
         remove(path);
         return 0;
     }
+
+    {
+        FILE* badPrimary = fopen(primary, "wb");
+        unsigned char badBytes[DM1_SAVE_HEADER_SIZE] = {0};
+
+        if (!badPrimary ||
+            fwrite(badBytes, 1, sizeof(badBytes), badPrimary) !=
+                sizeof(badBytes)) {
+            if (badPrimary) fclose(badPrimary);
+            printf("  FAIL: could not write rejected primary fixture\n");
+            remove(path);
+            remove(primary);
+            remove(backup);
+            return 0;
+        }
+        fclose(badPrimary);
+    }
+    memset(&world, 0, sizeof(world));
+    memset(&hdr, 0, sizeof(hdr));
+    world.gameTick = 991u;
+    world.partyMapIndex = 7;
+    hdr.gameTick = 881u;
+    usedBackup = 7;
+    rc = DM1_LoadGameWithBackup(primary, &world, &hdr, &usedBackup);
+    ok &= expect_int_eq("original PC34 rejected primary stays rejected", rc,
+                        DM1_SAVE_ERROR_BAD_MAGIC);
+    ok &= expect_int_eq("original PC34 rejected primary keeps live world tick",
+                        (int)world.gameTick, 991);
+    ok &= expect_int_eq("original PC34 rejected primary keeps live world map",
+                        world.partyMapIndex, 7);
+    ok &= expect_u32_eq("original PC34 rejected primary keeps header",
+                        hdr.gameTick, 881u);
+    ok &= expect_int_eq("original PC34 rejected primary keeps backup flag",
+                        usedBackup, 0);
+    ok &= expect_int_eq("original PC34 rejected primary leaves backup",
+                        test_file_exists(backup), 1);
+    remove(primary);
+
     memset(&world, 0, sizeof(world));
     memset(&hdr, 0, sizeof(hdr));
     rc = DM1_LoadGameWithBackup(primary, &world, &hdr, &usedBackup);

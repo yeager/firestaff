@@ -117,19 +117,7 @@ static uint32_t rd32le(const uint8_t *p) {
            ((uint32_t)p[3] << 24);
 }
 
-static uint32_t tqr_fnv1a_bytes(const uint8_t *bytes, size_t byte_count) {
-    uint32_t hash = 2166136261u;
-    size_t i;
-
-    if (!bytes || byte_count == 0u) {
-        return 0u;
-    }
-    for (i = 0u; i < byte_count; ++i) {
-        hash ^= bytes[i];
-        hash *= 16777619u;
-    }
-    return hash ? hash : 2166136261u;
-}
+static uint32_t tqr_hash_bytes(const uint8_t *bytes, size_t byte_count);
 
 /* Read and validate the audio-bank marker at one raw-BIN anchor.
  *
@@ -1122,6 +1110,169 @@ Theron_Track02SignalStatus theron_v1_track02_decode_4bpp_tile(
     *out_checksum = checksum;
     return nonzero > 0u ? THERON_TRACK02_SIGNAL_OK
                         : THERON_TRACK02_SIGNAL_NOT_FOUND;
+}
+
+static uint8_t expand_pce_palette_component(uint16_t value) {
+    return (uint8_t)((value * 255u + 3u) / 7u);
+}
+
+Theron_Track02SignalStatus theron_v1_track02_decode_4bpp_palette(
+    const uint8_t *palette_bytes,
+    size_t palette_size,
+    Theron_Track02Palette4Bpp *out_palette) {
+
+    uint32_t checksum = 2166136261u;
+    size_t i;
+
+    if (out_palette) {
+        memset(out_palette, 0, sizeof(*out_palette));
+    }
+    if (!palette_bytes || !out_palette ||
+        palette_size < THERON_TRACK02_4BPP_PALETTE_BYTES) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    for (i = 0u; i < THERON_TRACK02_4BPP_PALETTE_ENTRY_COUNT; ++i) {
+        const uint16_t raw_word = rd16le(palette_bytes + i * 2u);
+        Theron_Track02PaletteEntry *entry = &out_palette->entries[i];
+
+        if ((raw_word & 0xfe00u) != 0u) {
+            memset(out_palette, 0, sizeof(*out_palette));
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+        entry->raw_word = raw_word;
+        entry->red = expand_pce_palette_component(raw_word & 0x0007u);
+        entry->green = expand_pce_palette_component((raw_word >> 3u) & 0x0007u);
+        entry->blue = expand_pce_palette_component((raw_word >> 6u) & 0x0007u);
+        if (raw_word != 0u) {
+            ++out_palette->nonblack_entry_count;
+        }
+        checksum ^= raw_word;
+        checksum *= 16777619u;
+    }
+
+    if (out_palette->nonblack_entry_count == 0u) {
+        memset(out_palette, 0, sizeof(*out_palette));
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    out_palette->checksum = checksum;
+    out_palette->valid = 1;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_inspect_4bpp_palette_window(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t raw_offset,
+    Theron_Track02PaletteWindowEvidence *out_evidence) {
+
+    Theron_Track02Variant variant;
+    Theron_Track02SignalStatus status;
+    uint8_t palette_bytes[THERON_TRACK02_4BPP_PALETTE_BYTES];
+    size_t user_data_offset = 0u;
+
+    if (out_evidence) {
+        memset(out_evidence, 0, sizeof(*out_evidence));
+    }
+    if (!track02_data || !out_evidence || !md5_hex ||
+        raw_offset > track02_size ||
+        THERON_TRACK02_4BPP_PALETTE_BYTES > track02_size - raw_offset) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    variant = theron_v1_track02_variant_for_md5(md5_hex);
+    if (variant == THERON_TRACK02_VARIANT_UNKNOWN ||
+        variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) {
+        return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+    }
+
+    out_evidence->variant = variant;
+    out_evidence->raw_offset = raw_offset;
+    out_evidence->byte_count = THERON_TRACK02_4BPP_PALETTE_BYTES;
+    if (variant_is_raw_bin(variant)) {
+        status = theron_v1_track02_copy_raw_user_data_range(
+            track02_data, track02_size, md5_hex, raw_offset,
+            sizeof(palette_bytes), palette_bytes, sizeof(palette_bytes),
+            &user_data_offset);
+        if (status != THERON_TRACK02_SIGNAL_OK) {
+            return status;
+        }
+        out_evidence->raw_offset_is_user_data = 1;
+    } else if (variant_has_plain_user_data(variant)) {
+        memcpy(palette_bytes, track02_data + raw_offset, sizeof(palette_bytes));
+        user_data_offset = raw_offset;
+        out_evidence->raw_offset_is_user_data = 1;
+    } else {
+        return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+    }
+
+    out_evidence->user_data_offset = user_data_offset;
+    out_evidence->payload_checksum =
+        tqr_hash_bytes(palette_bytes, sizeof(palette_bytes));
+    status = theron_v1_track02_decode_4bpp_palette(
+        palette_bytes, sizeof(palette_bytes), &out_evidence->palette);
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return status;
+    }
+
+    out_evidence->format_valid = 1;
+    /* No Track 02 loader reference currently binds any palette window. */
+    out_evidence->semantic_binding_verified = 0;
+    out_evidence->promotion_allowed = 0;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
+int theron_v1_track02_palette_window_evidence_can_promote(
+    const Theron_Track02PaletteWindowEvidence *evidence) {
+    return evidence && evidence->format_valid &&
+           evidence->semantic_binding_verified &&
+           evidence->promotion_allowed;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_colorize_startup_bitmap_route(
+    const Theron_Track02StartupBitmapAtlasRoute *indexed_route,
+    const Theron_Track02Palette4Bpp *palette,
+    Theron_Track02StartupBitmapRgbaRoute *out_route) {
+
+    uint32_t checksum = 2166136261u;
+    size_t x;
+    size_t y;
+
+    if (out_route) {
+        memset(out_route, 0, sizeof(*out_route));
+    }
+    if (!indexed_route || !palette || !out_route || !palette->valid ||
+        indexed_route->route_bit == 0u || indexed_route->width == 0u ||
+        indexed_route->width > THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH ||
+        indexed_route->height == 0u ||
+        indexed_route->height > THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_HEIGHT ||
+        indexed_route->tile_count == 0u) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    out_route->route_bit = indexed_route->route_bit;
+    out_route->width = indexed_route->width;
+    out_route->height = indexed_route->height;
+    for (y = 0u; y < indexed_route->height; ++y) {
+        for (x = 0u; x < indexed_route->width; ++x) {
+            const size_t indexed_offset =
+                y * THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH + x;
+            const size_t rgba_offset = indexed_offset * 4u;
+            const Theron_Track02PaletteEntry *entry =
+                &palette->entries[indexed_route->pixels[indexed_offset] & 0x0fu];
+
+            out_route->rgba[rgba_offset + 0u] = entry->red;
+            out_route->rgba[rgba_offset + 1u] = entry->green;
+            out_route->rgba[rgba_offset + 2u] = entry->blue;
+            out_route->rgba[rgba_offset + 3u] = 0xffu;
+            checksum ^= entry->raw_word;
+            checksum *= 16777619u;
+        }
+    }
+    out_route->checksum = checksum;
+    out_route->valid = 1;
+    return THERON_TRACK02_SIGNAL_OK;
 }
 
 Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
@@ -3273,19 +3424,22 @@ const char *theron_v1_track02_descriptor_window_kind_name(
  *                                  semantic role is a re-statement of
  *                                  the existing contains_descriptor_table
  *                                  flag for the middle entry)
- *   entry 6 -> OBJECT_TABLE    (bounded compact-row candidate)
+ *   entry 6 -> OBJECT_TABLE       (compact count-prefixed row candidate;
+ *                                  receipt-gated before fallback visuals
+ *                                  can be reduced)
  *   every other entry -> UNKNOWN
  *
- * This is one bound entry per the lane task.  Other entries keep their
- * structural classification but no semantic role until real Track 02
- * decoding promotes them. */
+ * Other entries keep their structural classification but no semantic role
+ * until real Track 02 decoding promotes them. */
 Theron_Track02SemanticRole theron_v1_track02_semantic_role_for_entry(
     size_t entry_index) {
     if (entry_index == 0u) return THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE;
     if (entry_index == (size_t)TQR_US_ISO_BANK_STRIDE_WINDOW_WITH_DESCRIPTOR) {
         return THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE;
     }
-    if (entry_index == 6u) return THERON_TRACK02_SEMANTIC_OBJECT_TABLE;
+    if (entry_index == (size_t)TQR_US_ISO_BANK_STRIDE_WINDOW_WITH_DESCRIPTOR + 1u) {
+        return THERON_TRACK02_SEMANTIC_OBJECT_TABLE;
+    }
     return THERON_TRACK02_SEMANTIC_ROLE_UNKNOWN;
 }
 
@@ -3380,6 +3534,9 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_read_dungeon_seed_table(
                     : THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
 }
 
+static size_t tqr_count_nonzero_bytes(const uint8_t *bytes, size_t byte_count);
+static uint32_t tqr_hash_bytes(const uint8_t *bytes, size_t byte_count);
+
 Theron_Track02SemanticBindingStatus theron_v1_track02_read_object_table(
     const uint8_t *object_bytes,
     size_t object_size,
@@ -3397,27 +3554,34 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_read_object_table(
     }
 
     record_count = rd16le(object_bytes);
+    out_table->declared_record_count = record_count;
     if (record_count == 0u) {
         out_table->byte_count = 2u;
-        out_table->checksum = tqr_fnv1a_bytes(object_bytes, 2u);
+        out_table->required_byte_count = 2u;
+        out_table->checksum = tqr_hash_bytes(object_bytes, 2u);
+        out_table->reject_reason =
+            THERON_TRACK02_OBJECT_TABLE_REJECT_ZERO_COUNT;
         return THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL;
     }
     if (record_count > THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS) {
-        out_table->record_count = record_count;
         out_table->overflow_count =
             record_count - THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS;
+        out_table->required_byte_count =
+            2u + record_count * THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES;
         out_table->byte_count = 2u;
-        for (size_t i = 0u; i < 2u; ++i) {
-            if (object_bytes[i] != 0u) {
-                ++out_table->nonzero_byte_count;
-            }
-        }
-        out_table->checksum = tqr_fnv1a_bytes(object_bytes, 2u);
+        out_table->nonzero_byte_count = tqr_count_nonzero_bytes(object_bytes, 2u);
+        out_table->checksum = tqr_hash_bytes(object_bytes, 2u);
+        out_table->first_bad_record_index =
+            THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS;
+        out_table->reject_reason =
+            THERON_TRACK02_OBJECT_TABLE_REJECT_DECLARED_OVERFLOW;
         return THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
     }
-
     needed = 2u + record_count * THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES;
+    out_table->required_byte_count = needed;
     if (needed > object_size) {
+        out_table->reject_reason =
+            THERON_TRACK02_OBJECT_TABLE_REJECT_WINDOW_TOO_SMALL;
         return THERON_TRACK02_SEMANTIC_BINDING_WINDOW_TOO_SMALL;
     }
 
@@ -3443,18 +3607,510 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_read_object_table(
         record->flags = row[5];
         record->argument = rd16le(row + 6u);
 
-        if (record->object_id == 0u || record->kind == 0u ||
-            record->x >= TQR_RAW_INITIAL_LEVEL_WIDTH ||
-            record->y >= TQR_RAW_INITIAL_LEVEL_HEIGHT ||
-            record->level_index >= THERON_TRACK02_DUNGEON_COUNT) {
+        if (record->object_id == 0u) {
+            out_table->first_bad_record_index = i;
+            out_table->reject_reason =
+                THERON_TRACK02_OBJECT_TABLE_REJECT_ZERO_OBJECT_ID;
             out_table->checksum = checksum;
             return THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
+        }
+        if (record->kind == 0u) {
+            out_table->first_bad_record_index = i;
+            out_table->reject_reason =
+                THERON_TRACK02_OBJECT_TABLE_REJECT_ZERO_KIND;
+            out_table->checksum = checksum;
+            return THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
+        }
+        if (record->x >= TQR_RAW_INITIAL_LEVEL_WIDTH) {
+            out_table->first_bad_record_index = i;
+            out_table->reject_reason =
+                THERON_TRACK02_OBJECT_TABLE_REJECT_X_OUT_OF_RANGE;
+            out_table->checksum = checksum;
+            return THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
+        }
+        if (record->y >= TQR_RAW_INITIAL_LEVEL_HEIGHT) {
+            out_table->first_bad_record_index = i;
+            out_table->reject_reason =
+                THERON_TRACK02_OBJECT_TABLE_REJECT_Y_OUT_OF_RANGE;
+            out_table->checksum = checksum;
+            return THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
+        }
+        if (record->level_index >= THERON_TRACK02_DUNGEON_COUNT) {
+            out_table->first_bad_record_index = i;
+            out_table->reject_reason =
+                THERON_TRACK02_OBJECT_TABLE_REJECT_LEVEL_OUT_OF_RANGE;
+            out_table->checksum = checksum;
+            return THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
+        }
+
+        out_table->level_mask |= 1u << (unsigned int)record->level_index;
+        if (out_table->level_record_counts[record->level_index] == 0u) {
+            out_table->level_record_hashes[record->level_index] = 2166136261u;
+            out_table->level_position_hashes[record->level_index] = 2166136261u;
+            out_table->level_first_record_indexes[record->level_index] = i;
+        }
+        ++out_table->level_record_counts[record->level_index];
+        out_table->level_last_record_indexes[record->level_index] = i;
+        for (size_t byte_index = 0u; byte_index < 4u; ++byte_index) {
+            out_table->level_position_hashes[record->level_index] ^=
+                (uint8_t)(i >> (byte_index * 8u));
+            out_table->level_position_hashes[record->level_index] *= 16777619u;
+        }
+        for (size_t byte_index = 0u;
+             byte_index < THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES;
+             ++byte_index) {
+            out_table->level_record_hashes[record->level_index] ^= row[byte_index];
+            out_table->level_record_hashes[record->level_index] *= 16777619u;
+            out_table->level_position_hashes[record->level_index] ^= row[byte_index];
+            out_table->level_position_hashes[record->level_index] *= 16777619u;
         }
     }
 
     out_table->checksum = checksum;
     out_table->shape_ok = 1;
     return THERON_TRACK02_SEMANTIC_BINDING_OK;
+}
+
+const char *theron_v1_track02_dungeon_route_status_name(
+    Theron_Track02DungeonRouteStatus status) {
+
+    switch (status) {
+    case THERON_TRACK02_DUNGEON_ROUTE_OK: return "ok";
+    case THERON_TRACK02_DUNGEON_ROUTE_NOT_FOUND: return "not-found";
+    case THERON_TRACK02_DUNGEON_ROUTE_BAD_INPUT: return "bad-input";
+    case THERON_TRACK02_DUNGEON_ROUTE_LEVEL_REJECTED: return "level-rejected";
+    case THERON_TRACK02_DUNGEON_ROUTE_OBJECT_REJECTED: return "object-rejected";
+    case THERON_TRACK02_DUNGEON_ROUTE_BITMAP_REJECTED: return "bitmap-rejected";
+    default: return "unknown";
+    }
+}
+
+const char *theron_v1_track02_route_catalog_status_name(
+    Theron_Track02RouteCatalogStatus status) {
+
+    switch (status) {
+    case THERON_TRACK02_ROUTE_CATALOG_OK: return "ok";
+    case THERON_TRACK02_ROUTE_CATALOG_NOT_FOUND: return "not-found";
+    case THERON_TRACK02_ROUTE_CATALOG_BAD_INPUT: return "bad-input";
+    case THERON_TRACK02_ROUTE_CATALOG_ROUTE_REJECTED: return "route-rejected";
+    case THERON_TRACK02_ROUTE_CATALOG_DUNGEON_MISMATCH: return "dungeon-mismatch";
+    case THERON_TRACK02_ROUTE_CATALOG_DUPLICATE_LEVEL: return "duplicate-level";
+    case THERON_TRACK02_ROUTE_CATALOG_NONCONTIGUOUS: return "noncontiguous";
+    default: return "unknown";
+    }
+}
+
+Theron_Track02RouteCatalogStatus theron_v1_track02_select_dungeon_route(
+    const Theron_Track02DungeonRoute *routes,
+    size_t route_count,
+    int dungeon_id,
+    int level_index,
+    const Theron_Track02DungeonRoute **out_route,
+    Theron_Track02RouteCatalogReceipt *out_receipt) {
+
+    Theron_Track02RouteCatalogStatus status = THERON_TRACK02_ROUTE_CATALOG_BAD_INPUT;
+    unsigned int level_mask = 0u;
+    uint32_t checksum = 2166136261u;
+    size_t matching_route_count = 0u;
+    size_t i;
+
+    if (out_route) *out_route = NULL;
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->status = status;
+        out_receipt->dungeon_id = dungeon_id;
+        out_receipt->requested_level_index = level_index;
+        out_receipt->route_count = route_count;
+    }
+    if (!routes || !out_route || route_count == 0u ||
+        route_count > THERON_MAX_LEVELS_PER_DUNGEON ||
+        dungeon_id < 1 || dungeon_id > (int)THERON_DUNGEON_COUNT ||
+        level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON) {
+        return status;
+    }
+
+    for (i = 0u; i < route_count; ++i) {
+        const Theron_Track02DungeonRoute *route = &routes[i];
+        unsigned int level_bit;
+        if (!route->valid || route->status != THERON_TRACK02_DUNGEON_ROUTE_OK) {
+            status = THERON_TRACK02_ROUTE_CATALOG_ROUTE_REJECTED;
+            goto finish;
+        }
+        if (route->dungeon_id != dungeon_id) {
+            status = THERON_TRACK02_ROUTE_CATALOG_DUNGEON_MISMATCH;
+            goto finish;
+        }
+        if (route->level_index < 0 ||
+            route->level_index >= THERON_MAX_LEVELS_PER_DUNGEON) {
+            status = THERON_TRACK02_ROUTE_CATALOG_ROUTE_REJECTED;
+            goto finish;
+        }
+        level_bit = 1u << (unsigned int)route->level_index;
+        if ((level_mask & level_bit) != 0u) {
+            status = THERON_TRACK02_ROUTE_CATALOG_DUPLICATE_LEVEL;
+            goto finish;
+        }
+        level_mask |= level_bit;
+        checksum ^= route->checksum;
+        checksum *= 16777619u;
+        if (route->level_index == level_index) {
+            ++matching_route_count;
+            *out_route = route;
+        }
+    }
+
+    if (level_mask != ((1u << (unsigned int)route_count) - 1u)) {
+        status = THERON_TRACK02_ROUTE_CATALOG_NONCONTIGUOUS;
+        *out_route = NULL;
+        goto finish;
+    }
+    status = matching_route_count == 1u ? THERON_TRACK02_ROUTE_CATALOG_OK
+                                         : THERON_TRACK02_ROUTE_CATALOG_NOT_FOUND;
+    if (status != THERON_TRACK02_ROUTE_CATALOG_OK) *out_route = NULL;
+
+finish:
+    if (status != THERON_TRACK02_ROUTE_CATALOG_OK) {
+        *out_route = NULL;
+    }
+    if (out_receipt) {
+        out_receipt->status = status;
+        out_receipt->level_mask = level_mask;
+        out_receipt->matching_route_count = matching_route_count;
+        out_receipt->catalog_checksum = checksum;
+        out_receipt->selected = status == THERON_TRACK02_ROUTE_CATALOG_OK;
+    }
+    return status;
+}
+
+const char *theron_v1_track02_level_transition_status_name(
+    Theron_Track02LevelTransitionStatus status) {
+
+    switch (status) {
+    case THERON_TRACK02_LEVEL_TRANSITION_OK: return "ok";
+    case THERON_TRACK02_LEVEL_TRANSITION_NOT_PENDING: return "not-pending";
+    case THERON_TRACK02_LEVEL_TRANSITION_BAD_INPUT: return "bad-input";
+    case THERON_TRACK02_LEVEL_TRANSITION_SOURCE_REJECTED: return "source-rejected";
+    case THERON_TRACK02_LEVEL_TRANSITION_TARGET_REJECTED: return "target-rejected";
+    case THERON_TRACK02_LEVEL_TRANSITION_TARGET_MISMATCH: return "target-mismatch";
+    default: return "unknown";
+    }
+}
+
+Theron_Track02LevelTransitionStatus theron_v1_track02_apply_level_transition(
+    Theron_V1_World *world,
+    const Theron_Track02DungeonRoute *source_route,
+    const Theron_Track02DungeonRoute *target_route,
+    Theron_Track02LevelTransitionReceipt *out_receipt) {
+
+    Theron_Track02LevelTransitionStatus status;
+    int dungeon_slot;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->status = THERON_TRACK02_LEVEL_TRANSITION_BAD_INPUT;
+    }
+    if (!world || !source_route || !target_route) {
+        return THERON_TRACK02_LEVEL_TRANSITION_BAD_INPUT;
+    }
+    if (!world->transition_pending ||
+        world->transition_type != THERON_TRANSITION_STAIRS) {
+        status = THERON_TRACK02_LEVEL_TRANSITION_NOT_PENDING;
+    } else if (world->current_dungeon < 1 ||
+               world->current_dungeon > (int)THERON_DUNGEON_COUNT ||
+               world->current_level < 0 ||
+               world->current_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+               !world->level_loaded[world->current_dungeon - 1]
+                                   [world->current_level] ||
+               !source_route->valid ||
+               source_route->status != THERON_TRACK02_DUNGEON_ROUTE_OK ||
+               source_route->dungeon_id != world->current_dungeon ||
+               source_route->level_index != world->current_level) {
+        status = THERON_TRACK02_LEVEL_TRANSITION_SOURCE_REJECTED;
+    } else if (!target_route->valid ||
+               target_route->status != THERON_TRACK02_DUNGEON_ROUTE_OK) {
+        status = THERON_TRACK02_LEVEL_TRANSITION_TARGET_REJECTED;
+    } else if (target_route->dungeon_id != world->current_dungeon ||
+               target_route->level_index != world->transition_target_level ||
+               target_route->level_index < 0 ||
+               target_route->level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+               target_route->level.width <= 0 || target_route->level.height <= 0 ||
+               target_route->level.start_x < 0 || target_route->level.start_y < 0 ||
+               target_route->level.start_x >= target_route->level.width ||
+               target_route->level.start_y >= target_route->level.height) {
+        status = THERON_TRACK02_LEVEL_TRANSITION_TARGET_MISMATCH;
+    } else {
+        dungeon_slot = world->current_dungeon - 1;
+        if (dungeon_slot < 0 || dungeon_slot >= (int)THERON_DUNGEON_COUNT) {
+            status = THERON_TRACK02_LEVEL_TRANSITION_BAD_INPUT;
+        } else {
+            world->levels[dungeon_slot][target_route->level_index] =
+                target_route->level;
+            world->level_loaded[dungeon_slot][target_route->level_index] = 1;
+            world->current_level = target_route->level_index;
+            world->transition_pending = 0;
+            theron_v1_world_runtime_media_invalidate_cache(world);
+            status = THERON_TRACK02_LEVEL_TRANSITION_OK;
+        }
+    }
+
+    if (out_receipt) {
+        out_receipt->status = status;
+        out_receipt->dungeon_id = world->current_dungeon;
+        out_receipt->source_level_index = source_route->level_index;
+        out_receipt->target_level_index = target_route->level_index;
+        out_receipt->target_object_record_count = target_route->objects.record_count;
+        out_receipt->source_route_checksum = source_route->checksum;
+        out_receipt->target_route_checksum = target_route->checksum;
+        out_receipt->applied = status == THERON_TRACK02_LEVEL_TRANSITION_OK;
+    }
+    return status;
+}
+
+Theron_Track02LevelTransitionStatus
+theron_v1_track02_apply_level_transition_from_catalog(
+    Theron_V1_World *world,
+    const Theron_Track02DungeonRoute *routes,
+    size_t route_count,
+    Theron_Track02LevelTransitionReceipt *out_receipt,
+    Theron_Track02RouteCatalogReceipt *out_source_receipt,
+    Theron_Track02RouteCatalogReceipt *out_target_receipt) {
+
+    const Theron_Track02DungeonRoute *source_route = NULL;
+    const Theron_Track02DungeonRoute *target_route = NULL;
+    Theron_Track02RouteCatalogStatus source_status;
+    Theron_Track02RouteCatalogStatus target_status;
+    Theron_Track02LevelTransitionStatus status;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->status = THERON_TRACK02_LEVEL_TRANSITION_BAD_INPUT;
+    }
+    if (!world) return THERON_TRACK02_LEVEL_TRANSITION_BAD_INPUT;
+    if (!world->transition_pending ||
+        world->transition_type != THERON_TRANSITION_STAIRS) {
+        status = THERON_TRACK02_LEVEL_TRANSITION_NOT_PENDING;
+        goto finish;
+    }
+
+    source_status = theron_v1_track02_select_dungeon_route(
+        routes, route_count, world->current_dungeon, world->current_level,
+        &source_route, out_source_receipt);
+    if (source_status != THERON_TRACK02_ROUTE_CATALOG_OK) {
+        status = THERON_TRACK02_LEVEL_TRANSITION_SOURCE_REJECTED;
+        goto finish;
+    }
+    target_status = theron_v1_track02_select_dungeon_route(
+        routes, route_count, world->current_dungeon,
+        world->transition_target_level, &target_route, out_target_receipt);
+    if (target_status != THERON_TRACK02_ROUTE_CATALOG_OK) {
+        status = THERON_TRACK02_LEVEL_TRANSITION_TARGET_REJECTED;
+        goto finish;
+    }
+    return theron_v1_track02_apply_level_transition(
+        world, source_route, target_route, out_receipt);
+
+finish:
+    if (out_receipt) {
+        out_receipt->status = status;
+        out_receipt->dungeon_id = world->current_dungeon;
+        out_receipt->source_level_index = world->current_level;
+        out_receipt->target_level_index = world->transition_target_level;
+        out_receipt->applied = 0;
+    }
+    return status;
+}
+
+static int tqr_bitmap_atlas_is_complete(
+    const Theron_Track02StartupBitmapAtlas *atlas) {
+    const unsigned int required = THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+    return atlas && (atlas->route_mask & required) == required &&
+        atlas->route_count == THERON_TRACK02_STARTUP_BITMAP_ATLAS_ROUTE_MAX;
+}
+
+static int tqr_find_object_table_window(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const Theron_Track02DescriptorEntrySemanticBinding *entries,
+    size_t entry_count,
+    size_t excluded_entry_index,
+    size_t *out_entry_index,
+    size_t *out_raw_offset,
+    Theron_Track02ObjectTable *out_objects) {
+    size_t i;
+
+    if (out_entry_index) *out_entry_index = 0u;
+    if (out_raw_offset) *out_raw_offset = 0u;
+    if (out_objects) memset(out_objects, 0, sizeof(*out_objects));
+    if (!track02_data || !entries || !out_entry_index || !out_raw_offset ||
+        !out_objects) return 0;
+
+    for (i = 0u; i < entry_count; ++i) {
+        Theron_Track02ObjectTable objects;
+        const Theron_Track02DescriptorEntrySemanticBinding *entry = &entries[i];
+        if (i == excluded_entry_index ||
+            entry->role == THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_RESERVED_ZERO_FILL ||
+            entry->absolute_offset > track02_size ||
+            entry->byte_count > track02_size - entry->absolute_offset) continue;
+        if (theron_v1_track02_read_object_table(track02_data + entry->absolute_offset,
+                                                entry->byte_count,
+                                                &objects) ==
+            THERON_TRACK02_SEMANTIC_BINDING_OK) {
+            *out_entry_index = i;
+            *out_raw_offset = entry->absolute_offset;
+            *out_objects = objects;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+Theron_Track02DungeonRouteStatus theron_v1_track02_build_dungeon_route(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    int dungeon_id,
+    int sub_level_index,
+    const Theron_Track02StartupBitmapAtlas *bitmap_atlas,
+    Theron_Track02DungeonRoute *out_route) {
+
+    Theron_Track02DescriptorTable table;
+    Theron_Track02DescriptorEntrySemanticBinding
+        entries[THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES];
+    size_t i;
+
+    if (out_route) {
+        memset(out_route, 0, sizeof(*out_route));
+        out_route->status = THERON_TRACK02_DUNGEON_ROUTE_BAD_INPUT;
+    }
+    if (!track02_data || !out_route || descriptor_offset > track02_size ||
+        TQR_US_ISO_BANK_STRIDE_BYTES > track02_size - descriptor_offset) {
+        return THERON_TRACK02_DUNGEON_ROUTE_BAD_INPUT;
+    }
+    if (!tqr_bitmap_atlas_is_complete(bitmap_atlas)) {
+        out_route->status = THERON_TRACK02_DUNGEON_ROUTE_BITMAP_REJECTED;
+        return out_route->status;
+    }
+    if (theron_v1_track02_decode_descriptor_table(track02_data + descriptor_offset,
+                                                  TQR_US_ISO_BANK_STRIDE_BYTES,
+                                                  TQR_US_ISO_BANK_STRIDE_STEP,
+                                                  &table) !=
+            THERON_TRACK02_TABLE_DECODE_OK ||
+        theron_v1_track02_bind_descriptor_entry_roles(track02_data,
+                                                      track02_size,
+                                                      descriptor_offset,
+                                                      &table,
+                                                      entries) !=
+            THERON_TRACK02_TABLE_DECODE_OK) {
+        return out_route->status;
+    }
+
+    out_route->descriptor_offset = descriptor_offset;
+    out_route->dungeon_id = dungeon_id;
+    out_route->level_index = sub_level_index;
+    for (i = 0u; i < table.entry_count; ++i) {
+        const Theron_Track02DescriptorEntrySemanticBinding *entry = &entries[i];
+        Theron_V1_Level level;
+        if (entry->role == THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_RESERVED_ZERO_FILL ||
+            entry->absolute_offset > track02_size ||
+            entry->byte_count > track02_size - entry->absolute_offset) continue;
+        if (theron_v1_level_load(&level,
+                                 track02_data + entry->absolute_offset,
+                                 (int)entry->byte_count,
+                                 dungeon_id,
+                                 sub_level_index) != THERON_MAP_OK) continue;
+        choose_initial_level_start_pose(&level);
+        out_route->level = level;
+        out_route->level_entry_index = i;
+        out_route->level_raw_offset = entry->absolute_offset;
+        out_route->level_byte_count = entry->byte_count;
+        break;
+    }
+    if (out_route->level_byte_count == 0u) {
+        out_route->status = THERON_TRACK02_DUNGEON_ROUTE_LEVEL_REJECTED;
+        return out_route->status;
+    }
+    if (!tqr_find_object_table_window(track02_data, track02_size, entries,
+                                      table.entry_count,
+                                      out_route->level_entry_index,
+                                      &out_route->object_entry_index,
+                                      &out_route->object_raw_offset,
+                                      &out_route->objects)) {
+        out_route->status = THERON_TRACK02_DUNGEON_ROUTE_OBJECT_REJECTED;
+        return out_route->status;
+    }
+    out_route->bitmap_atlas = *bitmap_atlas;
+    out_route->checksum = tqr_hash_bytes((const uint8_t *)&out_route->level,
+                                         sizeof(out_route->level));
+    out_route->checksum ^= out_route->objects.checksum;
+    out_route->checksum ^= bitmap_atlas->checksum;
+    out_route->valid = 1;
+    out_route->status = THERON_TRACK02_DUNGEON_ROUTE_OK;
+    return out_route->status;
+}
+
+Theron_Track02DungeonRouteStatus theron_v1_track02_load_verified_dungeon_route(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t descriptor_offset,
+    int dungeon_id,
+    const Theron_Track02StartupBitmapAtlas *bitmap_atlas,
+    Theron_Track02DungeonRoute *out_route) {
+
+    Theron_Track02StartupSemanticHandoff semantic;
+    Theron_Track02LevelHandoff level_handoff;
+    Theron_Track02DescriptorTable table;
+    Theron_Track02DescriptorEntrySemanticBinding entries[THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES];
+
+    if (out_route) {
+        memset(out_route, 0, sizeof(*out_route));
+        out_route->status = THERON_TRACK02_DUNGEON_ROUTE_BAD_INPUT;
+    }
+    if (!track02_data || !md5_hex || !out_route ||
+        !tqr_bitmap_atlas_is_complete(bitmap_atlas)) {
+        if (out_route) out_route->status = THERON_TRACK02_DUNGEON_ROUTE_BITMAP_REJECTED;
+        return out_route ? out_route->status : THERON_TRACK02_DUNGEON_ROUTE_BAD_INPUT;
+    }
+    if (theron_v1_track02_load_startup_semantic_level(track02_data, track02_size,
+                                                       md5_hex, descriptor_offset,
+                                                       dungeon_id, 0,
+                                                       &out_route->level, &semantic,
+                                                       &level_handoff) !=
+        THERON_TRACK02_LEVEL_HANDOFF_OK) {
+        out_route->status = THERON_TRACK02_DUNGEON_ROUTE_LEVEL_REJECTED;
+        return out_route->status;
+    }
+    if (theron_v1_track02_decode_descriptor_table(track02_data + descriptor_offset,
+                                                  TQR_US_ISO_BANK_STRIDE_BYTES,
+                                                  TQR_US_ISO_BANK_STRIDE_STEP,
+                                                  &table) != THERON_TRACK02_TABLE_DECODE_OK ||
+        theron_v1_track02_bind_descriptor_entry_roles(track02_data, track02_size,
+                                                      descriptor_offset, &table,
+                                                      entries) != THERON_TRACK02_TABLE_DECODE_OK ||
+        !tqr_find_object_table_window(track02_data, track02_size, entries,
+                                      table.entry_count, (size_t)-1,
+                                      &out_route->object_entry_index,
+                                      &out_route->object_raw_offset,
+                                      &out_route->objects)) {
+        out_route->status = THERON_TRACK02_DUNGEON_ROUTE_OBJECT_REJECTED;
+        return out_route->status;
+    }
+    out_route->descriptor_offset = descriptor_offset;
+    out_route->dungeon_id = dungeon_id;
+    out_route->level_index = 0;
+    out_route->level_entry_index = THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES;
+    out_route->level_raw_offset = level_handoff.absolute_offset;
+    out_route->level_byte_count = level_handoff.byte_count;
+    out_route->bitmap_atlas = *bitmap_atlas;
+    out_route->checksum = tqr_hash_bytes((const uint8_t *)&out_route->level,
+                                         sizeof(out_route->level)) ^
+        out_route->objects.checksum ^ bitmap_atlas->checksum;
+    out_route->valid = 1;
+    out_route->status = THERON_TRACK02_DUNGEON_ROUTE_OK;
+    return out_route->status;
 }
 
 Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
@@ -3521,8 +4177,8 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
 
     /* Role-specific decode.  DUNGEON_SEED_TABLE reads a value payload;
      * DESCRIPTOR_TABLE binds the already decoded descriptor-bearing
-     * window as a real semantic route.  OBJECT_TABLE uses a strict bounded
-     * compact-row shape gate before any no-fallback reduction. */
+     * window as a real semantic route.  OBJECT_TABLE reads a compact row
+     * candidate but does not assign gameplay behavior to any object. */
     if (out_binding->role == THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE) {
         if (window->kind == THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL) {
             status = THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL;
@@ -3542,6 +4198,8 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
     } else if (out_binding->role == THERON_TRACK02_SEMANTIC_OBJECT_TABLE) {
         if (window->kind == THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL) {
             status = THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL;
+        } else if (window->byte_count < 2u) {
+            status = THERON_TRACK02_SEMANTIC_BINDING_WINDOW_TOO_SMALL;
         } else {
             status = theron_v1_track02_read_object_table(
                 track02_data + window->absolute_offset,
@@ -3750,6 +4408,182 @@ void theron_v1_track02_object_table_route_receipt_init(
     receipt->fallback_visuals_allowed = 1;
 }
 
+static size_t tqr_count_nonzero_bytes(const uint8_t *bytes, size_t byte_count) {
+    size_t count = 0u;
+
+    if (!bytes) {
+        return 0u;
+    }
+    for (size_t i = 0u; i < byte_count; ++i) {
+        if (bytes[i] != 0u) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+static uint32_t tqr_hash_bytes(const uint8_t *bytes, size_t byte_count) {
+    uint32_t hash = 2166136261u;
+
+    if (!bytes) {
+        return 0u;
+    }
+    for (size_t i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static void tqr_profile_post_descriptor_candidate(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const Theron_Track02DescriptorEntrySemanticBinding *entry,
+    size_t *out_nonzero_byte_count,
+    uint16_t *out_header_width,
+    uint16_t *out_header_height,
+    uint32_t *out_header_seed,
+    uint16_t *out_header_level_index,
+    int *out_header_matches_startup_shape,
+    uint32_t *out_candidate_hash) {
+
+    uint16_t width = 0u;
+    uint16_t height = 0u;
+    size_t payload_size = 0u;
+
+    if (out_nonzero_byte_count) *out_nonzero_byte_count = 0u;
+    if (out_header_width) *out_header_width = 0u;
+    if (out_header_height) *out_header_height = 0u;
+    if (out_header_seed) *out_header_seed = 0u;
+    if (out_header_level_index) *out_header_level_index = 0u;
+    if (out_header_matches_startup_shape) {
+        *out_header_matches_startup_shape = 0;
+    }
+    if (out_candidate_hash) *out_candidate_hash = 0u;
+
+    if (!track02_data || !entry ||
+        entry->absolute_offset > track02_size ||
+        entry->byte_count > track02_size - entry->absolute_offset) {
+        return;
+    }
+
+    if (out_nonzero_byte_count) {
+        *out_nonzero_byte_count =
+            tqr_count_nonzero_bytes(track02_data + entry->absolute_offset,
+                                    entry->byte_count);
+    }
+    if (out_candidate_hash) {
+        *out_candidate_hash =
+            tqr_hash_bytes(track02_data + entry->absolute_offset,
+                           entry->byte_count);
+    }
+    if (entry->byte_count >= 12u) {
+        const uint8_t *bytes = track02_data + entry->absolute_offset;
+        if (out_header_width) *out_header_width = rd16be(bytes + 0u);
+        if (out_header_height) *out_header_height = rd16be(bytes + 2u);
+        if (out_header_seed) *out_header_seed = rd32be(bytes + 4u);
+        if (out_header_level_index) {
+            *out_header_level_index = rd16be(bytes + 8u);
+        }
+        if (out_header_matches_startup_shape &&
+            tqr_level_candidate_header_matches(bytes,
+                                               entry->byte_count,
+                                               &width,
+                                               &height,
+                                               &payload_size) &&
+            width == TQR_RAW_INITIAL_LEVEL_WIDTH &&
+            height == TQR_RAW_INITIAL_LEVEL_HEIGHT &&
+            rd32be(bytes + 4u) == TQR_RAW_INITIAL_LEVEL_SEED &&
+            rd16be(bytes + 8u) == TQR_RAW_INITIAL_LEVEL_INDEX) {
+            *out_header_matches_startup_shape = 1;
+        }
+    }
+}
+
+/* Compare only row evidence already accepted by the compact-table decoder.
+ * The result is deliberately receipt-only: matching rows across descriptor
+ * anchors do not establish their gameplay meaning or make them runnable. */
+static void tqr_capture_object_table_level_consensus(
+    Theron_Track02ObjectTableRouteReceipt *receipt) {
+
+    size_t level_index;
+
+    if (!receipt || receipt->descriptor_anchor_mask == 0u) {
+        return;
+    }
+
+    for (level_index = 0u;
+         level_index < THERON_TRACK02_DUNGEON_COUNT;
+         ++level_index) {
+        size_t anchor;
+        size_t reference_count = 0u;
+        uint32_t reference_hash = 0u;
+        size_t reference_first_index = 0u;
+        size_t reference_last_index = 0u;
+        uint32_t reference_position_hash = 0u;
+        unsigned int matching_mask = 0u;
+        int have_reference = 0;
+
+        for (anchor = 0u; anchor < THERON_TRACK02_MAX_BANK_ANCHORS; ++anchor) {
+            unsigned int anchor_bit = 1u << (unsigned int)anchor;
+            size_t count;
+            uint32_t row_hash;
+            size_t first_index;
+            size_t last_index;
+            uint32_t position_hash;
+
+            if ((receipt->descriptor_anchor_mask & anchor_bit) == 0u ||
+                receipt->object_table_anchor_binding_status[anchor] !=
+                    THERON_TRACK02_SEMANTIC_BINDING_OK ||
+                (receipt->object_table_level_mask[anchor] &
+                 (1u << (unsigned int)level_index)) == 0u) {
+                continue;
+            }
+
+            count = receipt->object_table_level_record_counts[anchor][level_index];
+            row_hash = receipt->object_table_level_record_hashes[anchor][level_index];
+            first_index = receipt->object_table_level_first_record_indexes[anchor]
+                                                                            [level_index];
+            last_index = receipt->object_table_level_last_record_indexes[anchor]
+                                                                          [level_index];
+            position_hash = receipt->object_table_level_position_hashes[anchor]
+                                                                       [level_index];
+            if (!have_reference) {
+                reference_count = count;
+                reference_hash = row_hash;
+                reference_first_index = first_index;
+                reference_last_index = last_index;
+                reference_position_hash = position_hash;
+                have_reference = 1;
+            }
+            if (count == reference_count && row_hash == reference_hash &&
+                first_index == reference_first_index &&
+                last_index == reference_last_index &&
+                position_hash == reference_position_hash) {
+                matching_mask |= anchor_bit;
+            }
+        }
+
+        receipt->object_table_level_consensus_anchor_masks[level_index] =
+            matching_mask;
+        receipt->object_table_level_consensus_record_counts[level_index] =
+            reference_count;
+        receipt->object_table_level_consensus_record_hashes[level_index] =
+            reference_hash;
+        receipt->object_table_level_consensus_first_record_indexes[level_index] =
+            reference_first_index;
+        receipt->object_table_level_consensus_last_record_indexes[level_index] =
+            reference_last_index;
+        receipt->object_table_level_consensus_position_hashes[level_index] =
+            reference_position_hash;
+        if (have_reference &&
+            matching_mask == receipt->descriptor_anchor_mask) {
+            receipt->object_table_level_consensus_mask |=
+                1u << (unsigned int)level_index;
+        }
+    }
+}
+
 int theron_v1_track02_capture_object_table_route_receipt(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -3859,146 +4693,92 @@ int theron_v1_track02_capture_object_table_route_receipt(
                         entry_index,
                         &binding);
                 if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
-                    size_t user_data_offset = 0u;
+                    out_receipt->object_table_candidate_entry_index[anchor] =
+                        entry_index;
+                    out_receipt->object_table_candidate_raw_offsets[anchor] =
+                        binding.absolute_offset;
+                    if (binding.absolute_offset >= descriptor_offset) {
+                        out_receipt
+                            ->object_table_candidate_after_descriptor[anchor] = 1;
+                        out_receipt
+                            ->object_table_candidate_descriptor_delta[anchor] =
+                            binding.absolute_offset - descriptor_offset;
+                    }
+                    out_receipt->object_table_candidate_byte_counts[anchor] =
+                        binding.byte_count;
+                    tqr_profile_post_descriptor_candidate(
+                        track02_data,
+                        track02_size,
+                        &entries[entry_index],
+                        &out_receipt
+                             ->object_table_candidate_nonzero_byte_counts
+                                 [anchor],
+                        &out_receipt->object_table_candidate_header_width
+                            [anchor],
+                        &out_receipt->object_table_candidate_header_height
+                            [anchor],
+                        &out_receipt->object_table_candidate_header_seed
+                            [anchor],
+                        &out_receipt
+                             ->object_table_candidate_header_level_index
+                                 [anchor],
+                        &out_receipt
+                             ->object_table_candidate_header_matches_startup_shape
+                                 [anchor],
+                        &out_receipt->object_table_candidate_hash[anchor]);
+                    out_receipt->object_table_candidate_entry_role[anchor] =
+                        entries[entry_index].role;
+                    out_receipt->object_table_candidate_window_kind[anchor] =
+                        binding.window_kind;
+                    if (theron_v1_track02_raw_offset_to_user_offset(
+                            binding.absolute_offset,
+                            track02_size,
+                            md5_hex,
+                            &out_receipt
+                                 ->object_table_candidate_user_data_offsets
+                                     [anchor]) == THERON_TRACK02_SIGNAL_OK) {
+                        out_receipt
+                            ->object_table_candidate_user_data_valid[anchor] = 1;
+                    }
                     out_receipt->object_table_anchor_binding_status[anchor] =
                         (int)binding_status;
                     out_receipt->object_table_anchor_hash[anchor] =
                         ((uint32_t)descriptor_offset ^ (uint32_t)entry_index ^
                          ((uint32_t)binding_status << 24));
-                    out_receipt->object_table_anchor_record_count[anchor] =
+                    out_receipt->object_table_declared_record_count[anchor] =
+                        binding.object_table.declared_record_count;
+                    out_receipt->object_table_record_count[anchor] =
                         binding.object_table.record_count;
-                    out_receipt->object_table_anchor_overflow_count[anchor] =
+                    out_receipt->object_table_required_byte_count[anchor] =
+                        binding.object_table.required_byte_count;
+                    out_receipt->object_table_overflow_count[anchor] =
                         binding.object_table.overflow_count;
-                    out_receipt->object_table_anchor_decoded_byte_count[anchor] =
-                        binding.object_table.byte_count;
-                    out_receipt
-                        ->object_table_anchor_decoded_nonzero_byte_count[anchor] =
-                        binding.object_table.nonzero_byte_count;
-                    out_receipt->object_table_anchor_decoded_checksum[anchor] =
+                    out_receipt->object_table_first_bad_record_index[anchor] =
+                        binding.object_table.first_bad_record_index;
+                    out_receipt->object_table_reject_reason[anchor] =
+                        binding.object_table.reject_reason;
+                    out_receipt->object_table_record_hash[anchor] =
                         binding.object_table.checksum;
-                    ++out_receipt
-                          ->object_table_candidate_anchor_counts[anchor];
-                    if (out_receipt
-                            ->object_table_candidate_anchor_counts[anchor] ==
-                        1u) {
-                        out_receipt->object_table_candidate_entry_index[anchor] =
-                            entry_index;
-                        out_receipt->object_table_candidate_raw_offsets[anchor] =
-                            binding.absolute_offset;
-                        out_receipt->object_table_candidate_byte_counts[anchor] =
-                            binding.byte_count;
-                        out_receipt
-                            ->object_table_candidate_nonzero_byte_counts[anchor] =
-                            entries[entry_index].nonzero_byte_count;
-                        out_receipt->object_table_candidate_hashes[anchor] =
-                            tqr_fnv1a_bytes(track02_data + binding.absolute_offset,
-                                            binding.byte_count);
-                        if (binding.byte_count >= 12u &&
-                            binding.absolute_offset <= track02_size &&
-                            binding.byte_count <=
-                                track02_size - binding.absolute_offset) {
-                            const uint8_t *candidate =
-                                track02_data + binding.absolute_offset;
-                            int startup_header_shaped;
-                            out_receipt
-                                ->object_table_candidate_header_width[anchor] =
-                                rd16be(candidate + 0u);
-                            out_receipt
-                                ->object_table_candidate_header_height[anchor] =
-                                rd16be(candidate + 2u);
-                            out_receipt
-                                ->object_table_candidate_header_seed[anchor] =
-                                rd32be(candidate + 4u);
-                            out_receipt
-                                ->object_table_candidate_header_level_index
-                                    [anchor] =
-                                rd16be(candidate + 8u);
-                            startup_header_shaped =
-                                out_receipt
-                                    ->object_table_candidate_header_width
-                                        [anchor] ==
-                                    TQR_RAW_INITIAL_LEVEL_WIDTH &&
-                                out_receipt
-                                    ->object_table_candidate_header_height
-                                        [anchor] ==
-                                    TQR_RAW_INITIAL_LEVEL_HEIGHT &&
-                                out_receipt
-                                    ->object_table_candidate_header_seed
-                                        [anchor] ==
-                                    TQR_RAW_INITIAL_LEVEL_SEED &&
-                                out_receipt
-                                    ->object_table_candidate_header_level_index
-                                        [anchor] ==
-                                    TQR_RAW_INITIAL_LEVEL_INDEX;
-                            out_receipt
-                                ->object_table_candidate_startup_header_shaped
-                                    [anchor] =
-                                startup_header_shaped ? 1 : 0;
-                            ++out_receipt
-                                  ->object_table_candidate_header_probe_count;
-                            if (startup_header_shaped) {
-                                ++out_receipt
-                                      ->object_table_candidate_startup_header_shape_count;
-                            }
-                        }
-                        if (binding.absolute_offset >= descriptor_offset) {
-                            out_receipt
-                                ->object_table_candidate_after_descriptor[anchor] =
-                                1;
-                            out_receipt
-                                ->object_table_candidate_descriptor_delta[anchor] =
-                                binding.absolute_offset - descriptor_offset;
-                        }
-                        if (theron_v1_track02_raw_offset_to_user_offset(
-                                binding.absolute_offset,
-                                track02_size,
-                                md5_hex,
-                                &user_data_offset) ==
-                            THERON_TRACK02_SIGNAL_OK) {
-                            out_receipt
-                                ->object_table_candidate_user_data_offsets[anchor] =
-                                user_data_offset;
-                            out_receipt
-                                ->object_table_candidate_user_data_valid[anchor] =
-                                1;
-                        }
-                        out_receipt->object_table_candidate_entry_role[anchor] =
-                            entries[entry_index].role;
-                        out_receipt->object_table_candidate_window_kind[anchor] =
-                            binding.window_kind;
-                    }
-                    out_receipt
-                        ->object_table_candidate_last_entry_index[anchor] =
-                        entry_index;
-                    out_receipt
-                        ->object_table_candidate_last_raw_offsets[anchor] =
-                        binding.absolute_offset;
-                    out_receipt
-                        ->object_table_candidate_last_byte_counts[anchor] =
-                        binding.byte_count;
-                    out_receipt->object_table_candidate_last_hashes[anchor] =
-                        tqr_fnv1a_bytes(track02_data + binding.absolute_offset,
-                                        binding.byte_count);
-                    {
-                        size_t shape_user_data_offset = 0u;
-                        int shape_user_data_valid =
-                            theron_v1_track02_raw_offset_to_user_offset(
-                                binding.absolute_offset,
-                                track02_size,
-                                md5_hex,
-                                &shape_user_data_offset) ==
-                            THERON_TRACK02_SIGNAL_OK;
-                        theron_v1_track02_object_table_note_shape_candidate(
-                            out_receipt,
-                            anchor,
-                            entry_index,
-                            binding.absolute_offset,
-                            0u,
-                            shape_user_data_offset,
-                            shape_user_data_valid,
-                            binding_status,
-                            &binding.object_table);
-                    }
+                    out_receipt->object_table_level_mask[anchor] =
+                        binding.object_table.level_mask;
+                    memcpy(out_receipt->object_table_level_record_counts[anchor],
+                           binding.object_table.level_record_counts,
+                           sizeof(binding.object_table.level_record_counts));
+                    memcpy(out_receipt->object_table_level_record_hashes[anchor],
+                           binding.object_table.level_record_hashes,
+                           sizeof(binding.object_table.level_record_hashes));
+                    memcpy(out_receipt
+                               ->object_table_level_first_record_indexes[anchor],
+                           binding.object_table.level_first_record_indexes,
+                           sizeof(binding.object_table.level_first_record_indexes));
+                    memcpy(out_receipt
+                               ->object_table_level_last_record_indexes[anchor],
+                           binding.object_table.level_last_record_indexes,
+                           sizeof(binding.object_table.level_last_record_indexes));
+                    memcpy(out_receipt
+                               ->object_table_level_position_hashes[anchor],
+                           binding.object_table.level_position_hashes,
+                           sizeof(binding.object_table.level_position_hashes));
                 }
                 if (binding_status == THERON_TRACK02_SEMANTIC_BINDING_OK) {
                     out_receipt->object_table_decode_ready = 1;
@@ -4015,353 +4795,54 @@ int theron_v1_track02_capture_object_table_route_receipt(
                 ++out_receipt->object_table_candidate_count;
                 out_receipt->object_table_candidate_anchor_mask |=
                     1u << (unsigned)anchor;
-                if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
+                if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS &&
+                    out_receipt->object_table_candidate_raw_offsets[anchor] ==
+                        0u) {
                     size_t user_data_offset = 0u;
-                    ++out_receipt
-                          ->object_table_candidate_anchor_counts[anchor];
-                    if (out_receipt
-                            ->object_table_candidate_anchor_counts[anchor] ==
-                        1u) {
-                        out_receipt->object_table_candidate_entry_index[anchor] =
-                            entry_index;
-                        out_receipt->object_table_candidate_raw_offsets[anchor] =
-                            entries[entry_index].absolute_offset;
-                        out_receipt->object_table_candidate_byte_counts[anchor] =
-                            entries[entry_index].byte_count;
-                        out_receipt
-                            ->object_table_candidate_nonzero_byte_counts[anchor] =
-                            entries[entry_index].nonzero_byte_count;
-                        out_receipt->object_table_candidate_hashes[anchor] =
-                            tqr_fnv1a_bytes(
-                                track02_data + entries[entry_index].absolute_offset,
-                                entries[entry_index].byte_count);
-                        if (entries[entry_index].byte_count >= 12u &&
-                            entries[entry_index].absolute_offset <=
-                                track02_size &&
-                            entries[entry_index].byte_count <=
-                                track02_size -
-                                    entries[entry_index].absolute_offset) {
-                            const uint8_t *candidate =
-                                track02_data +
-                                entries[entry_index].absolute_offset;
-                            int startup_header_shaped;
-                            out_receipt
-                                ->object_table_candidate_header_width[anchor] =
-                                rd16be(candidate + 0u);
-                            out_receipt
-                                ->object_table_candidate_header_height[anchor] =
-                                rd16be(candidate + 2u);
-                            out_receipt
-                                ->object_table_candidate_header_seed[anchor] =
-                                rd32be(candidate + 4u);
-                            out_receipt
-                                ->object_table_candidate_header_level_index
-                                    [anchor] =
-                                rd16be(candidate + 8u);
-                            startup_header_shaped =
-                                out_receipt
-                                    ->object_table_candidate_header_width
-                                        [anchor] ==
-                                    TQR_RAW_INITIAL_LEVEL_WIDTH &&
-                                out_receipt
-                                    ->object_table_candidate_header_height
-                                        [anchor] ==
-                                    TQR_RAW_INITIAL_LEVEL_HEIGHT &&
-                                out_receipt
-                                    ->object_table_candidate_header_seed
-                                        [anchor] ==
-                                    TQR_RAW_INITIAL_LEVEL_SEED &&
-                                out_receipt
-                                    ->object_table_candidate_header_level_index
-                                        [anchor] ==
-                                    TQR_RAW_INITIAL_LEVEL_INDEX;
-                            out_receipt
-                                ->object_table_candidate_startup_header_shaped
-                                    [anchor] =
-                                startup_header_shaped ? 1 : 0;
-                            ++out_receipt
-                                  ->object_table_candidate_header_probe_count;
-                            if (startup_header_shaped) {
-                                ++out_receipt
-                                      ->object_table_candidate_startup_header_shape_count;
-                            }
-                        }
-                        if (entries[entry_index].absolute_offset >=
-                            descriptor_offset) {
-                            out_receipt
-                                ->object_table_candidate_after_descriptor[anchor] =
-                                1;
-                            out_receipt
-                                ->object_table_candidate_descriptor_delta[anchor] =
-                                entries[entry_index].absolute_offset -
-                                descriptor_offset;
-                        }
-                        if (theron_v1_track02_raw_offset_to_user_offset(
-                                entries[entry_index].absolute_offset,
-                                track02_size,
-                                md5_hex,
-                                &user_data_offset) ==
-                            THERON_TRACK02_SIGNAL_OK) {
-                            out_receipt
-                                ->object_table_candidate_user_data_offsets[anchor] =
-                                user_data_offset;
-                            out_receipt
-                                ->object_table_candidate_user_data_valid[anchor] =
-                                1;
-                        }
-                        out_receipt->object_table_candidate_entry_role[anchor] =
-                            entries[entry_index].role;
-                        out_receipt->object_table_candidate_window_kind[anchor] =
-                            THERON_TRACK02_DESCRIPTOR_WINDOW_DATA;
-                    }
-                    out_receipt
-                        ->object_table_candidate_last_entry_index[anchor] =
+                    out_receipt->object_table_candidate_entry_index[anchor] =
                         entry_index;
-                    out_receipt
-                        ->object_table_candidate_last_raw_offsets[anchor] =
+                    out_receipt->object_table_candidate_raw_offsets[anchor] =
                         entries[entry_index].absolute_offset;
-                    out_receipt
-                        ->object_table_candidate_last_byte_counts[anchor] =
-                        entries[entry_index].byte_count;
-                    out_receipt->object_table_candidate_last_hashes[anchor] =
-                        tqr_fnv1a_bytes(
-                            track02_data + entries[entry_index].absolute_offset,
-                            entries[entry_index].byte_count);
-                }
-                if (entries[entry_index].absolute_offset <= track02_size &&
-                    entries[entry_index].byte_count <=
-                        track02_size - entries[entry_index].absolute_offset) {
-                    row_status = theron_v1_track02_read_object_table(
-                        track02_data + entries[entry_index].absolute_offset,
-                        entries[entry_index].byte_count,
-                        &row_table);
-                    ++out_receipt->object_table_row_probe_count;
-                    if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
-                        ++out_receipt
-                              ->object_table_row_probe_anchor_counts[anchor];
+                    if (entries[entry_index].absolute_offset >= descriptor_offset) {
+                        out_receipt->object_table_candidate_after_descriptor[anchor] = 1;
+                        out_receipt->object_table_candidate_descriptor_delta[anchor] =
+                            entries[entry_index].absolute_offset - descriptor_offset;
                     }
-                    {
-                        size_t shape_user_data_offset = 0u;
-                        int shape_user_data_valid =
-                            theron_v1_track02_raw_offset_to_user_offset(
-                                entries[entry_index].absolute_offset,
-                                track02_size,
-                                md5_hex,
-                                &shape_user_data_offset) ==
-                            THERON_TRACK02_SIGNAL_OK;
-                        theron_v1_track02_object_table_note_shape_candidate(
-                            out_receipt,
-                            anchor,
-                            entry_index,
+                    if (theron_v1_track02_raw_offset_to_user_offset(
                             entries[entry_index].absolute_offset,
-                            0u,
-                            shape_user_data_offset,
-                            shape_user_data_valid,
-                            row_status,
-                            &row_table);
+                            track02_size,
+                            md5_hex,
+                            &user_data_offset) == THERON_TRACK02_SIGNAL_OK) {
+                        out_receipt->object_table_candidate_user_data_offsets[anchor] =
+                            user_data_offset;
+                        out_receipt->object_table_candidate_user_data_valid[anchor] = 1;
                     }
-                }
-                if (row_status == THERON_TRACK02_SEMANTIC_BINDING_OK) {
-                    size_t user_data_offset = 0u;
-                    out_receipt->object_table_decode_ready = 1;
-                    anchor_object_table_ready = 1;
-                    ++out_receipt->object_table_row_shaped_count;
-                    out_receipt->object_table_row_shaped_anchor_mask |=
-                        1u << (unsigned)anchor;
-                    if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
-                        ++out_receipt
-                              ->object_table_row_shaped_anchor_counts[anchor];
-                        if (out_receipt
-                                ->object_table_row_shaped_anchor_counts[anchor] ==
-                            1u) {
-                            out_receipt
-                                ->object_table_row_shaped_entry_index[anchor] =
-                                entry_index;
-                            out_receipt
-                                ->object_table_row_shaped_raw_offsets[anchor] =
-                                entries[entry_index].absolute_offset;
-                            out_receipt
-                                ->object_table_row_shaped_record_counts[anchor] =
-                                row_table.record_count;
-                            out_receipt
-                                ->object_table_row_shaped_byte_counts[anchor] =
-                                row_table.byte_count;
-                            out_receipt
-                                ->object_table_row_shaped_checksums[anchor] =
-                                row_table.checksum;
-                            if (theron_v1_track02_raw_offset_to_user_offset(
-                                    entries[entry_index].absolute_offset,
-                                    track02_size,
-                                    md5_hex,
-                                    &user_data_offset) ==
-                                THERON_TRACK02_SIGNAL_OK) {
-                                out_receipt
-                                    ->object_table_row_shaped_user_data_offsets
-                                        [anchor] = user_data_offset;
-                                out_receipt
-                                    ->object_table_row_shaped_user_data_valid
-                                        [anchor] = 1;
-                            }
-                        }
-                    }
-                } else if (entries[entry_index].absolute_offset <=
-                               track02_size &&
-                           entries[entry_index].byte_count <=
-                               track02_size -
-                                   entries[entry_index].absolute_offset) {
-                    const size_t max_scan =
-                        entries[entry_index].byte_count < 0x80u
-                            ? entries[entry_index].byte_count
-                            : 0x80u;
-                    size_t inner_offset;
-                    for (inner_offset = 2u;
-                         inner_offset + 2u <= max_scan;
-                         inner_offset += 2u) {
-                        Theron_Track02ObjectTable inner_table;
-                        Theron_Track02SemanticBindingStatus inner_status =
-                            theron_v1_track02_read_object_table(
-                                track02_data +
-                                    entries[entry_index].absolute_offset +
-                                    inner_offset,
-                                entries[entry_index].byte_count - inner_offset,
-                                &inner_table);
-                        ++out_receipt->object_table_inner_scan_probe_count;
-                        if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
-                            ++out_receipt
-                                  ->object_table_inner_scan_anchor_counts
-                                      [anchor];
-                        }
-                        {
-                            size_t shape_user_data_offset = 0u;
-                            const size_t shape_raw_offset =
-                                entries[entry_index].absolute_offset +
-                                inner_offset;
-                            int shape_user_data_valid =
-                                theron_v1_track02_raw_offset_to_user_offset(
-                                    shape_raw_offset,
-                                    track02_size,
-                                    md5_hex,
-                                    &shape_user_data_offset) ==
-                                THERON_TRACK02_SIGNAL_OK;
-                            theron_v1_track02_object_table_note_shape_candidate(
-                                out_receipt,
-                                anchor,
-                                entry_index,
-                                shape_raw_offset,
-                                inner_offset,
-                                shape_user_data_offset,
-                                shape_user_data_valid,
-                                inner_status,
-                                &inner_table);
-                        }
-                        if (inner_status ==
-                            THERON_TRACK02_SEMANTIC_BINDING_OK) {
-                            size_t inner_user_data_offset = 0u;
-                            const size_t inner_raw_offset =
-                                entries[entry_index].absolute_offset +
-                                inner_offset;
-                            ++out_receipt
-                                  ->object_table_inner_scan_shaped_count;
-                            out_receipt
-                                ->object_table_inner_scan_shaped_anchor_mask |=
-                                1u << (unsigned)anchor;
-                            if (anchor <
-                                    THERON_TRACK02_MAX_BANK_ANCHORS &&
-                                out_receipt
-                                        ->object_table_inner_scan_shaped_raw_offsets
-                                            [anchor] == 0u) {
-                                out_receipt
-                                    ->object_table_inner_scan_shaped_entry_index
-                                        [anchor] = entry_index;
-                                out_receipt
-                                    ->object_table_inner_scan_shaped_raw_offsets
-                                        [anchor] = inner_raw_offset;
-                                out_receipt
-                                    ->object_table_inner_scan_shaped_window_offsets
-                                        [anchor] = inner_offset;
-                                out_receipt
-                                    ->object_table_inner_scan_shaped_record_counts
-                                        [anchor] = inner_table.record_count;
-                                out_receipt
-                                    ->object_table_inner_scan_shaped_byte_counts
-                                        [anchor] = inner_table.byte_count;
-                                out_receipt
-                                    ->object_table_inner_scan_shaped_checksums
-                                        [anchor] = inner_table.checksum;
-                                if (theron_v1_track02_raw_offset_to_user_offset(
-                                        inner_raw_offset,
-                                        track02_size,
-                                        md5_hex,
-                                        &inner_user_data_offset) ==
-                                    THERON_TRACK02_SIGNAL_OK) {
-                                    out_receipt
-                                        ->object_table_inner_scan_shaped_user_data_offsets
-                                            [anchor] =
-                                        inner_user_data_offset;
-                                    out_receipt
-                                        ->object_table_inner_scan_shaped_user_data_valid
-                                            [anchor] = 1;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-                if (row_status != THERON_TRACK02_SEMANTIC_BINDING_OK &&
-                    row_status !=
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT) {
-                    size_t reject_user_data_offset = 0u;
-                    ++out_receipt->object_table_row_reject_count;
-                    if (row_status ==
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE) {
-                        ++out_receipt->object_table_row_bad_shape_count;
-                    } else if (row_status ==
-                               THERON_TRACK02_SEMANTIC_BINDING_WINDOW_TOO_SMALL) {
-                        ++out_receipt
-                              ->object_table_row_window_too_small_count;
-                    } else if (row_status ==
-                               THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL) {
-                        ++out_receipt->object_table_row_zero_fill_count;
-                    }
-                    if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS &&
-                        out_receipt
-                                ->object_table_row_first_reject_status[anchor] ==
-                            0) {
-                        out_receipt
-                            ->object_table_row_first_reject_status[anchor] =
-                            (int)row_status;
-                        out_receipt
-                            ->object_table_row_first_reject_entry_index[anchor] =
-                            entry_index;
-                        out_receipt
-                            ->object_table_row_first_reject_raw_offsets[anchor] =
-                            entries[entry_index].absolute_offset;
-                        out_receipt
-                            ->object_table_row_first_reject_record_counts[anchor] =
-                            row_table.record_count;
-                        out_receipt
-                            ->object_table_row_first_reject_overflow_counts
-                                [anchor] = row_table.overflow_count;
-                        out_receipt
-                            ->object_table_row_first_reject_byte_counts[anchor] =
-                            row_table.byte_count;
-                        out_receipt
-                            ->object_table_row_first_reject_checksums[anchor] =
-                            row_table.checksum;
-                        if (theron_v1_track02_raw_offset_to_user_offset(
-                                entries[entry_index].absolute_offset,
-                                track02_size,
-                                md5_hex,
-                                &reject_user_data_offset) ==
-                            THERON_TRACK02_SIGNAL_OK) {
-                            out_receipt
-                                ->object_table_row_first_reject_user_data_offsets
-                                    [anchor] = reject_user_data_offset;
-                            out_receipt
-                                ->object_table_row_first_reject_user_data_valid
-                                    [anchor] = 1;
-                        }
-                    }
+                    out_receipt->object_table_candidate_byte_counts[anchor] =
+                        entries[entry_index].byte_count;
+                    tqr_profile_post_descriptor_candidate(
+                        track02_data,
+                        track02_size,
+                        &entries[entry_index],
+                        &out_receipt
+                             ->object_table_candidate_nonzero_byte_counts
+                                 [anchor],
+                        &out_receipt->object_table_candidate_header_width
+                            [anchor],
+                        &out_receipt->object_table_candidate_header_height
+                            [anchor],
+                        &out_receipt->object_table_candidate_header_seed
+                            [anchor],
+                        &out_receipt
+                             ->object_table_candidate_header_level_index
+                                 [anchor],
+                        &out_receipt
+                             ->object_table_candidate_header_matches_startup_shape
+                                 [anchor],
+                        &out_receipt->object_table_candidate_hash[anchor]);
+                    out_receipt->object_table_candidate_entry_role[anchor] =
+                        entries[entry_index].role;
+                    out_receipt->object_table_candidate_window_kind[anchor] =
+                        THERON_TRACK02_DESCRIPTOR_WINDOW_DATA;
                 }
             }
         }
@@ -4378,6 +4859,7 @@ int theron_v1_track02_capture_object_table_route_receipt(
     out_receipt->blocked_for_missing_real_object_evidence =
         out_receipt->descriptor_route_ready &&
         !out_receipt->object_table_decode_ready;
+    tqr_capture_object_table_level_consensus(out_receipt);
     hash ^= out_receipt->semantic_role_mask;
     hash *= 16777619u;
     hash ^= out_receipt->descriptor_table_semantic_anchor_mask;
@@ -4424,24 +4906,9 @@ int theron_v1_track02_capture_object_table_route_receipt(
         hash ^= (uint32_t)
             out_receipt->object_table_candidate_nonzero_byte_counts[anchor];
         hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_candidate_last_entry_index[anchor];
+        hash ^= (uint32_t)out_receipt->object_table_candidate_header_width[anchor];
         hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_candidate_last_raw_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_candidate_last_byte_counts[anchor];
-        hash *= 16777619u;
-        hash ^= out_receipt->object_table_candidate_hashes[anchor];
-        hash *= 16777619u;
-        hash ^= out_receipt->object_table_candidate_last_hashes[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_candidate_header_width[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_candidate_header_height[anchor];
+        hash ^= (uint32_t)out_receipt->object_table_candidate_header_height[anchor];
         hash *= 16777619u;
         hash ^= out_receipt->object_table_candidate_header_seed[anchor];
         hash *= 16777619u;
@@ -4449,7 +4916,10 @@ int theron_v1_track02_capture_object_table_route_receipt(
             out_receipt->object_table_candidate_header_level_index[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)
-            out_receipt->object_table_candidate_startup_header_shaped[anchor];
+            out_receipt
+                ->object_table_candidate_header_matches_startup_shape[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->object_table_candidate_hash[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->object_table_candidate_descriptor_delta[anchor];
         hash *= 16777619u;
@@ -4463,123 +4933,61 @@ int theron_v1_track02_capture_object_table_route_receipt(
         hash *= 16777619u;
         hash ^= out_receipt->object_table_anchor_hash[anchor];
         hash *= 16777619u;
-        hash ^= (uint32_t)out_receipt->object_table_anchor_record_count[anchor];
+        hash ^= (uint32_t)out_receipt->object_table_declared_record_count[anchor];
         hash *= 16777619u;
-        hash ^= (uint32_t)out_receipt->object_table_anchor_overflow_count[anchor];
+        hash ^= (uint32_t)out_receipt->object_table_record_count[anchor];
         hash *= 16777619u;
-        hash ^= (uint32_t)out_receipt->object_table_anchor_decoded_byte_count[anchor];
+        hash ^= (uint32_t)out_receipt->object_table_required_byte_count[anchor];
         hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_anchor_decoded_nonzero_byte_count[anchor];
+        hash ^= (uint32_t)out_receipt->object_table_overflow_count[anchor];
         hash *= 16777619u;
-        hash ^= out_receipt->object_table_anchor_decoded_checksum[anchor];
+        hash ^= (uint32_t)out_receipt->object_table_first_bad_record_index[anchor];
         hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_probe_anchor_counts[anchor];
+        hash ^= (uint32_t)out_receipt->object_table_reject_reason[anchor];
         hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_first_reject_status[anchor];
+        hash ^= out_receipt->object_table_record_hash[anchor];
         hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_first_reject_entry_index[anchor];
+        hash ^= out_receipt->object_table_level_mask[anchor];
         hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_first_reject_raw_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt
-                ->object_table_row_first_reject_user_data_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_first_reject_user_data_valid[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_first_reject_record_counts[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_first_reject_overflow_counts[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_first_reject_byte_counts[anchor];
-        hash *= 16777619u;
-        hash ^= out_receipt->object_table_row_first_reject_checksums[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_shape_best_score[anchor];
+        for (size_t level_index = 0u;
+             level_index < THERON_TRACK02_DUNGEON_COUNT;
+             ++level_index) {
+            hash ^= (uint32_t)
+                out_receipt->object_table_level_record_counts[anchor][level_index];
+            hash *= 16777619u;
+            hash ^= out_receipt->object_table_level_record_hashes[anchor][level_index];
+            hash *= 16777619u;
+            hash ^= (uint32_t)out_receipt
+                ->object_table_level_first_record_indexes[anchor][level_index];
+            hash *= 16777619u;
+            hash ^= (uint32_t)out_receipt
+                ->object_table_level_last_record_indexes[anchor][level_index];
+            hash *= 16777619u;
+            hash ^= out_receipt
+                ->object_table_level_position_hashes[anchor][level_index];
+            hash *= 16777619u;
+        }
+    }
+    hash ^= out_receipt->object_table_level_consensus_mask;
+    hash *= 16777619u;
+    for (size_t level_index = 0u;
+         level_index < THERON_TRACK02_DUNGEON_COUNT;
+         ++level_index) {
+        hash ^= out_receipt->object_table_level_consensus_anchor_masks[level_index];
         hash *= 16777619u;
         hash ^= (uint32_t)
-            out_receipt->object_table_shape_best_status[anchor];
+            out_receipt->object_table_level_consensus_record_counts[level_index];
         hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_shape_best_entry_index[anchor];
+        hash ^= out_receipt->object_table_level_consensus_record_hashes[level_index];
         hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_shape_best_raw_offsets[anchor];
+        hash ^= (uint32_t)out_receipt
+            ->object_table_level_consensus_first_record_indexes[level_index];
         hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_shape_best_window_offsets[anchor];
+        hash ^= (uint32_t)out_receipt
+            ->object_table_level_consensus_last_record_indexes[level_index];
         hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_shape_best_record_counts[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_shape_best_overflow_counts[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_shape_best_byte_counts[anchor];
-        hash *= 16777619u;
-        hash ^= out_receipt->object_table_shape_best_checksums[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_inner_scan_anchor_counts[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_inner_scan_shaped_entry_index[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_inner_scan_shaped_raw_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_inner_scan_shaped_window_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt
-                ->object_table_inner_scan_shaped_user_data_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt
-                ->object_table_inner_scan_shaped_user_data_valid[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_inner_scan_shaped_record_counts[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_inner_scan_shaped_byte_counts[anchor];
-        hash *= 16777619u;
-        hash ^= out_receipt->object_table_inner_scan_shaped_checksums[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_shaped_anchor_counts[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_shaped_entry_index[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_shaped_raw_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_shaped_user_data_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_shaped_user_data_valid[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_shaped_record_counts[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->object_table_row_shaped_byte_counts[anchor];
-        hash *= 16777619u;
-        hash ^= out_receipt->object_table_row_shaped_checksums[anchor];
+        hash ^= out_receipt
+            ->object_table_level_consensus_position_hashes[level_index];
         hash *= 16777619u;
     }
     hash ^= (uint32_t)out_receipt->object_table_candidate_header_probe_count;
@@ -4591,6 +4999,130 @@ int theron_v1_track02_capture_object_table_route_receipt(
     out_receipt->valid = out_receipt->verified_track02 &&
         out_receipt->descriptor_route_ready;
     return out_receipt->valid ? 1 : 0;
+}
+
+const char *theron_v1_track02_object_layout_comparison_status_name(
+    Theron_Track02ObjectLayoutComparisonStatus status) {
+    switch (status) {
+    case THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_OK:
+        return "ok";
+    case THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_BAD_INPUT:
+        return "bad-input";
+    case THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_UNVERIFIED_RECEIPT:
+        return "unverified-receipt";
+    case THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_UNSUPPORTED_VARIANT_PAIR:
+        return "unsupported-variant-pair";
+    default:
+        return "unknown";
+    }
+}
+
+Theron_Track02ObjectLayoutComparisonStatus
+theron_v1_track02_compare_object_table_layout_variants(
+    const Theron_Track02ObjectTableRouteReceipt *first,
+    const Theron_Track02ObjectTableRouteReceipt *second,
+    Theron_Track02ObjectLayoutComparisonReceipt *out_receipt) {
+    const Theron_Track02ObjectTableRouteReceipt *jp;
+    const Theron_Track02ObjectTableRouteReceipt *us;
+    size_t level_index;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) {
+        return THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_BAD_INPUT;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_BAD_INPUT;
+    if (!first || !second) {
+        return out_receipt->status;
+    }
+    if (!first->valid || !second->valid || !first->verified_track02 ||
+        !second->verified_track02 ||
+        !first->descriptor_route_ready ||
+        !second->descriptor_route_ready || first->fallback_visuals_allowed ||
+        second->fallback_visuals_allowed) {
+        out_receipt->status =
+            THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_UNVERIFIED_RECEIPT;
+        return out_receipt->status;
+    }
+    if (first->variant == THERON_TRACK02_VARIANT_JP_BIN &&
+        second->variant == THERON_TRACK02_VARIANT_US_BIN) {
+        jp = first;
+        us = second;
+    } else if (first->variant == THERON_TRACK02_VARIANT_US_BIN &&
+               second->variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        jp = second;
+        us = first;
+    } else {
+        out_receipt->status =
+            THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_UNSUPPORTED_VARIANT_PAIR;
+        return out_receipt->status;
+    }
+
+    out_receipt->jp_variant = jp->variant;
+    out_receipt->us_variant = us->variant;
+    out_receipt->jp_level_mask = jp->object_table_level_consensus_mask;
+    out_receipt->us_level_mask = us->object_table_level_consensus_mask;
+    out_receipt->comparable_level_mask = out_receipt->jp_level_mask &
+                                          out_receipt->us_level_mask;
+    for (level_index = 0u; level_index < THERON_TRACK02_DUNGEON_COUNT;
+         ++level_index) {
+        unsigned int bit = 1u << (unsigned int)level_index;
+        size_t count;
+        uint32_t row_hash;
+        size_t first_index;
+        size_t last_index;
+        uint32_t position_hash;
+
+        if ((out_receipt->comparable_level_mask & bit) == 0u) {
+            continue;
+        }
+        count = jp->object_table_level_consensus_record_counts[level_index];
+        row_hash = jp->object_table_level_consensus_record_hashes[level_index];
+        first_index = jp->object_table_level_consensus_first_record_indexes[level_index];
+        last_index = jp->object_table_level_consensus_last_record_indexes[level_index];
+        position_hash = jp->object_table_level_consensus_position_hashes[level_index];
+        if (count == us->object_table_level_consensus_record_counts[level_index] &&
+            row_hash == us->object_table_level_consensus_record_hashes[level_index] &&
+            first_index == us->object_table_level_consensus_first_record_indexes[level_index] &&
+            last_index == us->object_table_level_consensus_last_record_indexes[level_index] &&
+            position_hash == us->object_table_level_consensus_position_hashes[level_index]) {
+            out_receipt->matching_level_mask |= bit;
+            out_receipt->matching_record_counts[level_index] = count;
+            out_receipt->matching_record_hashes[level_index] = row_hash;
+            out_receipt->matching_first_record_indexes[level_index] = first_index;
+            out_receipt->matching_last_record_indexes[level_index] = last_index;
+            out_receipt->matching_position_hashes[level_index] = position_hash;
+        } else {
+            out_receipt->mismatch_level_mask |= bit;
+        }
+    }
+    hash ^= (uint32_t)out_receipt->jp_variant;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->us_variant;
+    hash *= 16777619u;
+    hash ^= out_receipt->comparable_level_mask;
+    hash *= 16777619u;
+    hash ^= out_receipt->matching_level_mask;
+    hash *= 16777619u;
+    hash ^= out_receipt->mismatch_level_mask;
+    hash *= 16777619u;
+    for (level_index = 0u; level_index < THERON_TRACK02_DUNGEON_COUNT;
+         ++level_index) {
+        hash ^= (uint32_t)out_receipt->matching_record_counts[level_index];
+        hash *= 16777619u;
+        hash ^= out_receipt->matching_record_hashes[level_index];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->matching_first_record_indexes[level_index];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->matching_last_record_indexes[level_index];
+        hash *= 16777619u;
+        hash ^= out_receipt->matching_position_hashes[level_index];
+        hash *= 16777619u;
+    }
+    out_receipt->comparison_hash = hash;
+    out_receipt->valid = 1;
+    out_receipt->status = THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_OK;
+    return out_receipt->status;
 }
 
 void theron_v1_track02_level_route_receipt_init(
@@ -4686,21 +5218,85 @@ int theron_v1_track02_capture_level_route_receipt(
                     if (entries[entry_index].role ==
                             THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_POST_DESCRIPTOR_DATA &&
                         entries[entry_index].byte_count > 0u) {
+                        uint32_t candidate_hash = 0u;
+                        size_t candidate_nonzero_byte_count = 0u;
+                        uint16_t candidate_header_width = 0u;
+                        uint16_t candidate_header_height = 0u;
+                        uint32_t candidate_header_seed = 0u;
+                        uint16_t candidate_header_level_index = 0u;
+                        int candidate_header_matches_startup_shape = 0;
+                        size_t user_data_offset = 0u;
+                        int user_data_valid = 0;
+                        size_t descriptor_delta = 0u;
+                        tqr_profile_post_descriptor_candidate(
+                            track02_data,
+                            track02_size,
+                            &entries[entry_index],
+                            &candidate_nonzero_byte_count,
+                            &candidate_header_width,
+                            &candidate_header_height,
+                            &candidate_header_seed,
+                            &candidate_header_level_index,
+                            &candidate_header_matches_startup_shape,
+                            &candidate_hash);
+                        if (entries[entry_index].absolute_offset >=
+                            descriptor_offset) {
+                            descriptor_delta =
+                                entries[entry_index].absolute_offset -
+                                descriptor_offset;
+                        }
+                        if (theron_v1_track02_raw_offset_to_user_offset(
+                                entries[entry_index].absolute_offset,
+                                track02_size,
+                                md5_hex,
+                                &user_data_offset) ==
+                            THERON_TRACK02_SIGNAL_OK) {
+                            user_data_valid = 1;
+                        }
                         ++out_receipt->nonstartup_level_candidate_count;
                         out_receipt->nonstartup_level_candidate_anchor_mask |=
                             1u << (unsigned)anchor;
                         if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
-                            size_t user_data_offset = 0u;
+                            size_t sample_slot =
+                                out_receipt
+                                    ->nonstartup_level_candidate_sample_count
+                                        [anchor];
+                            if (sample_slot <
+                                THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES) {
+                                out_receipt
+                                    ->nonstartup_level_candidate_sample_entry_index
+                                        [anchor][sample_slot] = entry_index;
+                                out_receipt
+                                    ->nonstartup_level_candidate_sample_raw_offsets
+                                        [anchor][sample_slot] =
+                                    entries[entry_index].absolute_offset;
+                                out_receipt
+                                    ->nonstartup_level_candidate_sample_user_data_offsets
+                                        [anchor][sample_slot] =
+                                    user_data_offset;
+                                out_receipt
+                                    ->nonstartup_level_candidate_sample_user_data_valid
+                                        [anchor][sample_slot] =
+                                    user_data_valid;
+                                out_receipt
+                                    ->nonstartup_level_candidate_sample_byte_counts
+                                        [anchor][sample_slot] =
+                                    entries[entry_index].byte_count;
+                                out_receipt
+                                    ->nonstartup_level_candidate_sample_descriptor_delta
+                                        [anchor][sample_slot] =
+                                    descriptor_delta;
+                                out_receipt
+                                    ->nonstartup_level_candidate_sample_hash
+                                        [anchor][sample_slot] =
+                                    candidate_hash;
+                            }
                             ++out_receipt
-                                  ->nonstartup_level_candidate_anchor_counts
+                                  ->nonstartup_level_candidate_sample_count
                                       [anchor];
-                            if (out_receipt
-                                    ->nonstartup_level_candidate_anchor_counts
-                                        [anchor] == 1u) {
-                                out_receipt
-                                    ->nonstartup_level_candidate_entry_index
-                                        [anchor] = entry_index;
-                                out_receipt
+                        }
+                        if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS &&
+                            out_receipt
                                     ->nonstartup_level_candidate_raw_offsets
                                         [anchor] =
                                     entries[entry_index].absolute_offset;
@@ -4962,6 +5558,24 @@ int theron_v1_track02_capture_level_route_receipt(
                                 ->nonstartup_level_candidate_last_raw_offsets
                                     [anchor] =
                                 entries[entry_index].absolute_offset;
+                            if (entries[entry_index].absolute_offset >=
+                                descriptor_offset) {
+                                out_receipt
+                                    ->nonstartup_level_candidate_after_descriptor
+                                        [anchor] = 1;
+                                out_receipt
+                                    ->nonstartup_level_candidate_descriptor_delta
+                                        [anchor] =
+                                    descriptor_delta;
+                            }
+                            if (user_data_valid) {
+                                out_receipt
+                                    ->nonstartup_level_candidate_user_data_offsets
+                                        [anchor] = user_data_offset;
+                                out_receipt
+                                    ->nonstartup_level_candidate_user_data_valid
+                                        [anchor] = 1;
+                            }
                             out_receipt
                                 ->nonstartup_level_candidate_last_byte_counts
                                     [anchor] =
@@ -4969,10 +5583,38 @@ int theron_v1_track02_capture_level_route_receipt(
                             out_receipt
                                 ->nonstartup_level_candidate_last_hashes
                                     [anchor] =
-                                tqr_fnv1a_bytes(
-                                    track02_data +
-                                        entries[entry_index].absolute_offset,
-                                    entries[entry_index].byte_count);
+                                candidate_nonzero_byte_count;
+                            out_receipt
+                                ->nonstartup_level_candidate_header_width
+                                    [anchor] =
+                                candidate_header_width;
+                            out_receipt
+                                ->nonstartup_level_candidate_header_height
+                                    [anchor] =
+                                candidate_header_height;
+                            out_receipt
+                                ->nonstartup_level_candidate_header_seed
+                                    [anchor] =
+                                candidate_header_seed;
+                            out_receipt
+                                ->nonstartup_level_candidate_header_level_index
+                                    [anchor] =
+                                candidate_header_level_index;
+                            out_receipt
+                                ->nonstartup_level_candidate_header_matches_startup_shape
+                                    [anchor] =
+                                candidate_header_matches_startup_shape;
+                            out_receipt
+                                ->nonstartup_level_candidate_hash[anchor] =
+                                candidate_hash;
+                            out_receipt
+                                ->nonstartup_level_candidate_entry_role
+                                    [anchor] =
+                                entries[entry_index].role;
+                            out_receipt
+                                ->nonstartup_level_candidate_window_kind
+                                    [anchor] =
+                                THERON_TRACK02_DESCRIPTOR_WINDOW_DATA;
                         }
                     }
                 }
@@ -5090,6 +5732,50 @@ int theron_v1_track02_capture_level_route_receipt(
     hash ^= out_receipt->nonstartup_level_inner_scan_loaded_anchor_mask;
     hash *= 16777619u;
     for (anchor = 0u; anchor < THERON_TRACK02_MAX_BANK_ANCHORS; ++anchor) {
+        size_t sample_slot;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_sample_count[anchor];
+        hash *= 16777619u;
+        for (sample_slot = 0u;
+             sample_slot <
+             THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES;
+             ++sample_slot) {
+            hash ^= (uint32_t)
+                out_receipt
+                    ->nonstartup_level_candidate_sample_entry_index
+                        [anchor][sample_slot];
+            hash *= 16777619u;
+            hash ^= (uint32_t)
+                out_receipt
+                    ->nonstartup_level_candidate_sample_raw_offsets
+                        [anchor][sample_slot];
+            hash *= 16777619u;
+            hash ^= (uint32_t)
+                out_receipt
+                    ->nonstartup_level_candidate_sample_user_data_offsets
+                        [anchor][sample_slot];
+            hash *= 16777619u;
+            hash ^= (uint32_t)
+                out_receipt
+                    ->nonstartup_level_candidate_sample_user_data_valid
+                        [anchor][sample_slot];
+            hash *= 16777619u;
+            hash ^= (uint32_t)
+                out_receipt
+                    ->nonstartup_level_candidate_sample_byte_counts
+                        [anchor][sample_slot];
+            hash *= 16777619u;
+            hash ^= (uint32_t)
+                out_receipt
+                    ->nonstartup_level_candidate_sample_descriptor_delta
+                        [anchor][sample_slot];
+            hash *= 16777619u;
+            hash ^=
+                out_receipt
+                    ->nonstartup_level_candidate_sample_hash
+                        [anchor][sample_slot];
+            hash *= 16777619u;
+        }
         hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_anchor_counts[anchor];
         hash *= 16777619u;
@@ -5112,22 +5798,6 @@ int theron_v1_track02_capture_level_route_receipt(
             out_receipt->nonstartup_level_candidate_nonzero_byte_counts[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)
-            out_receipt->nonstartup_level_candidate_last_entry_index[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_candidate_last_raw_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_candidate_last_byte_counts[anchor];
-        hash *= 16777619u;
-        hash ^= out_receipt->nonstartup_level_candidate_hashes[anchor];
-        hash *= 16777619u;
-        hash ^= out_receipt->nonstartup_level_candidate_last_hashes[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_candidate_map_status[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_header_width[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)
@@ -5137,6 +5807,12 @@ int theron_v1_track02_capture_level_route_receipt(
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_header_level_index[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt
+                ->nonstartup_level_candidate_header_matches_startup_shape[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->nonstartup_level_candidate_hash[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_descriptor_delta[anchor];
@@ -5149,65 +5825,6 @@ int theron_v1_track02_capture_level_route_receipt(
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_window_kind[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_loaded_anchor_counts[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_loaded_entry_index[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_loaded_raw_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_loaded_user_data_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_loaded_user_data_valid[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_loaded_width[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_loaded_height[anchor];
-        hash *= 16777619u;
-        hash ^= out_receipt->nonstartup_level_loaded_seed[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_loaded_level_index[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_inner_scan_anchor_counts[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_inner_scan_loaded_entry_index[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_inner_scan_loaded_raw_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt
-                ->nonstartup_level_inner_scan_loaded_window_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt
-                ->nonstartup_level_inner_scan_loaded_user_data_offsets[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt
-                ->nonstartup_level_inner_scan_loaded_user_data_valid[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_inner_scan_loaded_width[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_inner_scan_loaded_height[anchor];
-        hash *= 16777619u;
-        hash ^= out_receipt->nonstartup_level_inner_scan_loaded_seed[anchor];
-        hash *= 16777619u;
-        hash ^= (uint32_t)
-            out_receipt
-                ->nonstartup_level_inner_scan_loaded_level_index[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->startup_level_anchor_status[anchor];
         hash *= 16777619u;
@@ -5222,6 +5839,137 @@ int theron_v1_track02_capture_level_route_receipt(
         out_receipt->descriptor_route_ready &&
         out_receipt->startup_level_route_ready;
     return out_receipt->valid ? 1 : 0;
+}
+
+const char *theron_v1_track02_nonstartup_level_layout_comparison_status_name(
+    Theron_Track02NonstartupLevelLayoutComparisonStatus status) {
+
+    switch (status) {
+    case THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_OK:
+        return "ok";
+    case THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_BAD_INPUT:
+        return "bad-input";
+    case THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_UNVERIFIED_RECEIPT:
+        return "unverified-receipt";
+    case THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_UNSUPPORTED_VARIANT_PAIR:
+        return "unsupported-variant-pair";
+    default:
+        return "unknown";
+    }
+}
+
+Theron_Track02NonstartupLevelLayoutComparisonStatus
+theron_v1_track02_compare_nonstartup_level_layout_variants(
+    const Theron_Track02LevelRouteReceipt *first,
+    const Theron_Track02LevelRouteReceipt *second,
+    Theron_Track02NonstartupLevelLayoutComparisonReceipt *out_receipt) {
+    const Theron_Track02LevelRouteReceipt *jp;
+    const Theron_Track02LevelRouteReceipt *us;
+    uint32_t hash = 2166136261u;
+    size_t anchor;
+
+    if (!out_receipt) {
+        return THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_BAD_INPUT;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status =
+        THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_BAD_INPUT;
+    if (!first || !second) {
+        return out_receipt->status;
+    }
+    if (!first->verified_track02 || !second->verified_track02 ||
+        !first->descriptor_route_ready ||
+        !second->descriptor_route_ready || first->fallback_visuals_allowed ||
+        second->fallback_visuals_allowed) {
+        out_receipt->status =
+            THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_UNVERIFIED_RECEIPT;
+        return out_receipt->status;
+    }
+    if (first->variant == THERON_TRACK02_VARIANT_JP_BIN &&
+        second->variant == THERON_TRACK02_VARIANT_US_BIN) {
+        jp = first;
+        us = second;
+    } else if (first->variant == THERON_TRACK02_VARIANT_US_BIN &&
+               second->variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        jp = second;
+        us = first;
+    } else {
+        out_receipt->status =
+            THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_UNSUPPORTED_VARIANT_PAIR;
+        return out_receipt->status;
+    }
+
+    out_receipt->jp_variant = jp->variant;
+    out_receipt->us_variant = us->variant;
+    for (anchor = 0u; anchor < THERON_TRACK02_MAX_BANK_ANCHORS; ++anchor) {
+        unsigned int bit = 1u << (unsigned int)anchor;
+        size_t sample_count =
+            jp->nonstartup_level_candidate_sample_count[anchor];
+        uint32_t sample_hash = 2166136261u;
+        int matches = 1;
+        size_t sample;
+
+        if ((jp->nonstartup_level_candidate_anchor_mask & bit) == 0u ||
+            (us->nonstartup_level_candidate_anchor_mask & bit) == 0u ||
+            sample_count == 0u ||
+            sample_count > THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES ||
+            sample_count !=
+                us->nonstartup_level_candidate_sample_count[anchor]) {
+            continue;
+        }
+        out_receipt->comparable_anchor_mask |= bit;
+        out_receipt->candidate_counts[anchor] = sample_count;
+        for (sample = 0u; sample < sample_count; ++sample) {
+            if (jp->nonstartup_level_candidate_sample_entry_index[anchor][sample] !=
+                    us->nonstartup_level_candidate_sample_entry_index[anchor][sample] ||
+                jp->nonstartup_level_candidate_sample_byte_counts[anchor][sample] !=
+                    us->nonstartup_level_candidate_sample_byte_counts[anchor][sample] ||
+                jp->nonstartup_level_candidate_sample_descriptor_delta[anchor][sample] !=
+                    us->nonstartup_level_candidate_sample_descriptor_delta[anchor][sample] ||
+                jp->nonstartup_level_candidate_sample_hash[anchor][sample] !=
+                    us->nonstartup_level_candidate_sample_hash[anchor][sample]) {
+                matches = 0;
+            }
+            sample_hash ^= (uint32_t)
+                jp->nonstartup_level_candidate_sample_entry_index[anchor][sample];
+            sample_hash *= 16777619u;
+            sample_hash ^= (uint32_t)
+                jp->nonstartup_level_candidate_sample_byte_counts[anchor][sample];
+            sample_hash *= 16777619u;
+            sample_hash ^= (uint32_t)
+                jp->nonstartup_level_candidate_sample_descriptor_delta[anchor][sample];
+            sample_hash *= 16777619u;
+            sample_hash ^=
+                jp->nonstartup_level_candidate_sample_hash[anchor][sample];
+            sample_hash *= 16777619u;
+        }
+        if (matches) {
+            out_receipt->matching_anchor_mask |= bit;
+            out_receipt->matching_sample_hashes[anchor] = sample_hash;
+        } else {
+            out_receipt->mismatch_anchor_mask |= bit;
+        }
+    }
+    hash ^= (uint32_t)out_receipt->jp_variant;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->us_variant;
+    hash *= 16777619u;
+    hash ^= out_receipt->comparable_anchor_mask;
+    hash *= 16777619u;
+    hash ^= out_receipt->matching_anchor_mask;
+    hash *= 16777619u;
+    hash ^= out_receipt->mismatch_anchor_mask;
+    hash *= 16777619u;
+    for (anchor = 0u; anchor < THERON_TRACK02_MAX_BANK_ANCHORS; ++anchor) {
+        hash ^= (uint32_t)out_receipt->candidate_counts[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->matching_sample_hashes[anchor];
+        hash *= 16777619u;
+    }
+    out_receipt->comparison_hash = hash;
+    out_receipt->valid = 1;
+    out_receipt->status = THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_OK;
+    return out_receipt->status;
 }
 
 Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(

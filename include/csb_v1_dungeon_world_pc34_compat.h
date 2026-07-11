@@ -214,10 +214,10 @@ typedef struct {
 /* ================================================================
  *  Dungeon-layer accessor stubs (M10 integration points)
  *
- *  These are the integration points between CSB compat layer and
- *  the M10 dungeon layer.  The default stubs return ENDOF / 0;
- *  replace them by wiring real F0161/F0159/F0175/F0156/F0267
- *  from M10 once those accessors are available.
+ *  These are the M10 integration points between the CSB compatibility layer
+ *  and the loaded, decoded original dungeon.  They operate on the live
+ *  square-first-thing table and Thing records, not on a fixture-only shadow
+ *  world.
  *
  *  ReDMCSB: GROUP.C:52 (F0175), DUNGEON.C:?? (F0161/F0159),
  *           DUNGEON.C:?? (F0156), MOVE.C:?? (F0267)
@@ -239,7 +239,29 @@ uint16_t csb_dungeon_get_group(
 uint16_t csb_dungeon_get_first_thing_default(int mapX, int mapY);
 uint16_t csb_dungeon_get_next_thing_default(uint16_t thing);
 uint16_t csb_dungeon_thing_data_u16_default(uint16_t thing, int offset);
-void     csb_move_thing_default(uint16_t thing, void* ctxOpaque);
+
+/* F0267's list-mutation boundary.  This is the common source/destination
+ * move primitive: a negative source places an unlinked thing, a negative
+ * destination removes it, and non-negative coordinates transfer it between
+ * live square lists.  Higher F0267 behavior (projectile impacts, teleporters,
+ * pits, groups and sensors) remains owned by its corresponding runtime code.
+ * Returns 0 on a completed mutation, -1 for invalid state or coordinates, and
+ * -2 when the requested Thing is not on its declared source square.
+ * ReDMCSB: MOVESENS.C F0267; DUNGEON.C F0156/F0159/F0161/F0163/F0164. */
+int csb_dungeon_move_thing_default(uint16_t thing,
+                                   int source_map_x, int source_map_y,
+                                   int destination_map_x, int destination_map_y);
+
+/* Same F0267 list boundary when source and destination are on different
+ * current-map contexts.  The adapter restores the caller's current level;
+ * F0267's higher-level map and active-group effects remain with the runtime. */
+int csb_dungeon_move_thing_between_levels_default(uint16_t thing,
+                                                  int source_level,
+                                                  int source_map_x,
+                                                  int source_map_y,
+                                                  int destination_level,
+                                                  int destination_map_x,
+                                                  int destination_map_y);
 
 /* ================================================================
  *  Door helpers -- DUNGEON.C:561-565 (pass563 compat)

@@ -11,16 +11,14 @@
 #if defined(_WIN32) || defined(_WIN64)
 #include <direct.h>
 #include <process.h>
-#define test_mkdir(p) _mkdir(p)
-#define test_rmdir(p) _rmdir(p)
-#define test_unlink(p) remove(p)
-#define test_pid() _getpid()
+#define test_mkdir(path) _mkdir(path)
+#define test_rmdir(path) _rmdir(path)
+#define test_getpid() _getpid()
 #else
 #include <unistd.h>
-#define test_mkdir(p) mkdir((p), 0700)
-#define test_rmdir(p) rmdir(p)
-#define test_unlink(p) unlink(p)
-#define test_pid() getpid()
+#define test_mkdir(path) mkdir((path), 0700)
+#define test_rmdir(path) rmdir(path)
+#define test_getpid() getpid()
 #endif
 
 #define CHECK(cond, msg) \
@@ -982,6 +980,8 @@ static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(vo
     CHECK(start_world.dungeon == &start_dungeon &&
           start_world.things == &start_things,
           "adopted world retains the shared DM1 start materialization");
+    CHECK(start_world.ownsDungeon == 0,
+          "non-owning fixture stays non-owning after adopt");
 
     memset(&hoc, 0, sizeof(hoc));
     hoc.candidate_mirror_ordinal = 7;
@@ -1002,6 +1002,153 @@ static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(vo
     CHECK(hoc.candidate_mirror_ordinal == -1 && hoc.candidate_party_index == -1,
           "invalid HoC candidate resets both source indices");
     F0883_WORLD_Free_Compat(&start_world);
+}
+
+static void test_runtime_materializer_recovers_missing_primary_from_backup(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    char backup_path[516];
+    int written = 0;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct DungeonDatState_Compat start_dungeon;
+    struct DungeonThings_Compat start_things;
+    DM1OriginalSavePC34HandoffReport report;
+    DM1OriginalSaveClassifyResult classified;
+    FILE *primary;
+    int rc;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK, "backup materializer fixture build succeeds");
+    make_temp_save_path(path, sizeof(path));
+    snprintf(backup_path, sizeof(backup_path), "%s.bak", path);
+    remove(path);
+    remove(backup_path);
+    CHECK(write_fixture_file(path, bytes, written),
+          "backup materializer primary fixture write succeeds");
+    CHECK(rename(path, backup_path) == 0,
+          "backup materializer moves fixture to automatic backup");
+    CHECK(dm1_v1_original_save_classify_file(path, &classified) &&
+          classified.shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 &&
+          classified.resume_uses_backup,
+          "resume classifier selects original backup only when primary is absent");
+
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&start_dungeon, 0, sizeof(start_dungeon));
+    memset(&start_things, 0, sizeof(start_things));
+    memset(&report, 0, sizeof(report));
+    start_world.dungeon = &start_dungeon;
+    start_world.things = &start_things;
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "missing primary resumes from validated original backup");
+    CHECK(report.resumed_from_backup && report.backup_promoted_to_primary,
+          "backup receipt records source and post-validation promotion");
+    CHECK(loaded_world.dungeon == &start_dungeon &&
+          loaded_world.things == &start_things,
+          "backup resume preserves the live start dungeon ownership boundary");
+    primary = fopen(path, "rb");
+    CHECK(primary != NULL, "validated backup is promoted to the primary path");
+    if (primary) fclose(primary);
+    remove(path);
+    remove(backup_path);
+    F0883_WORLD_Free_Compat(&loaded_world);
+    F0883_WORLD_Free_Compat(&start_world);
+}
+
+static void test_runtime_handoff_is_transactional_on_rejected_tail(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    char backup_path[516];
+    int written = 0;
+    struct GameWorld_Compat world;
+    struct GameWorld_Compat start_world;
+    struct DungeonDatState_Compat start_dungeon;
+    struct DungeonThings_Compat start_things;
+    struct DM1_EventQueue_V1 event_queue;
+    DM1OriginalSavePC34HandoffReport report;
+    int rc;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "transactional handoff fixture build succeeds");
+    CHECK(written < (int)sizeof(bytes),
+          "transactional fixture has room for malformed tail");
+    bytes[written++] = 0u;
+
+    memset(&world, 0, sizeof(world));
+    memset(&event_queue, 0, sizeof(event_queue));
+    memset(&report, 0, sizeof(report));
+    world.gameTick = 777u;
+    world.party.championCount = 1;
+    world.party.mapIndex = 6;
+    event_queue.gameTick = 888u;
+    event_queue.eventCount = 1;
+    report.original_game_time = 999u;
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, &event_queue, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "bad optional dungeon tail rejects whole runtime handoff");
+    CHECK(world.gameTick == 777u && world.party.championCount == 1 &&
+          world.party.mapIndex == 6,
+          "rejected byte handoff leaves live world untouched");
+    CHECK(event_queue.gameTick == 888u && event_queue.eventCount == 1,
+          "rejected byte handoff leaves event queue untouched");
+    CHECK(report.original_game_time == 999u,
+          "rejected byte handoff leaves receipt untouched");
+
+    make_temp_save_path(path, sizeof(path));
+    snprintf(backup_path, sizeof(backup_path), "%s.bak", path);
+    remove(path);
+    remove(backup_path);
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "transactional backup fixture rebuild succeeds");
+    CHECK(write_fixture_file(backup_path, bytes, written),
+          "transactional backup fixture write succeeds");
+    bytes[written++] = 0u;
+    CHECK(write_fixture_file(path, bytes, written),
+          "transactional materializer fixture write succeeds");
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&start_dungeon, 0, sizeof(start_dungeon));
+    memset(&start_things, 0, sizeof(start_things));
+    start_world.dungeon = &start_dungeon;
+    start_world.things = &start_things;
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &world, &event_queue, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "bad primary tail rejects materialized runtime handoff without backup fallback");
+    CHECK(world.gameTick == 777u && world.party.mapIndex == 6,
+          "rejected materializer leaves destination world untouched");
+    CHECK(event_queue.gameTick == 888u && event_queue.eventCount == 1,
+          "rejected materializer leaves destination queue untouched");
+    CHECK(report.original_game_time == 999u,
+          "rejected materializer leaves destination receipt untouched");
+    {
+        FILE *backup = fopen(backup_path, "rb");
+        CHECK(backup != NULL,
+              "rejected primary leaves the automatic backup unpromoted");
+        if (backup) fclose(backup);
+    }
+    remove(path);
+    remove(backup_path);
+    CHECK(dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+              path, &start_world, &start_world, NULL, NULL) ==
+          DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
+          "materializer rejects start/destination aliasing before IO");
+    CHECK(dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
+              &world, &world) == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
+          "adopt rejects self-transfer");
 }
 
 static void test_public_fixture_builder_roundtrips_pc34_handoff(void)
@@ -1407,15 +1554,80 @@ static void test_strings(void)
           "source evidence mentions event layout");
 }
 
+static void test_corpus_roundtrip_proof(void)
+{
+    char root[256];
+    char nested[256];
+    char first_path[512];
+    char second_path[512];
+    char rejected_path[512];
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int written = 0;
+    DM1OriginalSavePC34CorpusRoundtripReport report;
+    int rc;
+
+    snprintf(root, sizeof(root), "firestaff_dm1_pc34_corpus_%ld",
+             (long)test_getpid());
+    snprintf(nested, sizeof(nested), "%s/nested", root);
+    test_rmdir(nested);
+    test_rmdir(root);
+    CHECK(test_mkdir(root) == 0, "create corpus root");
+    CHECK(test_mkdir(nested) == 0, "create corpus nested root");
+    snprintf(first_path, sizeof(first_path), "%s/first-original.bin", root);
+    snprintf(second_path, sizeof(second_path), "%s/second-original.bin", nested);
+    snprintf(rejected_path, sizeof(rejected_path), "%s/not-a-save.txt", root);
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 1, 4, 5, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK, "build corpus PC34 fixture");
+    CHECK(write_fixture_file(first_path, bytes, written),
+          "write first corpus PC34 fixture");
+    CHECK(write_fixture_file(second_path, bytes, written),
+          "write second corpus PC34 fixture");
+    CHECK(write_fixture_file(rejected_path, (const unsigned char *)"no", 2),
+          "write rejected corpus file");
+
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_roundtrip_corpus_root(root, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "corpus roundtrip scan succeeds");
+    CHECK(report.scan_succeeded == 1, "corpus scan receipt succeeds");
+    CHECK(report.scanned_file_count == 3, "corpus scans all files");
+    CHECK(report.pc34_candidate_count == 2, "corpus selects only PC34 files");
+    CHECK(report.roundtrip_attempted_count == 2,
+          "corpus roundtrips every eligible file");
+    CHECK(report.roundtrip_succeeded_count == 2,
+          "corpus roundtrips both PC34 files");
+    CHECK(report.core_state_match_count == 2,
+          "corpus preserves core state for every PC34 file");
+    CHECK(report.roundtrip_failed_count == 0,
+          "corpus has no failed PC34 roundtrip");
+    CHECK(strstr(report.first_pc34_path, "first-original.bin") != NULL,
+          "corpus records first eligible path");
+    CHECK(strstr(report.first_roundtrip_path, "first-original.bin") != NULL,
+          "corpus records first verified path");
+    CHECK(dm1_v1_original_save_pc34_roundtrip_corpus_root(NULL, &report) ==
+              DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
+          "corpus helper rejects null root");
+
+    remove(rejected_path);
+    remove(second_path);
+    remove(first_path);
+    test_rmdir(nested);
+    test_rmdir(root);
+}
+
 int main(void)
 {
     test_pc34_handoff_imports_party_state();
     test_rejects_non_pc34_and_truncated_parts();
     test_file_runtime_world_loader();
     test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc();
+    test_runtime_materializer_recovers_missing_primary_from_backup();
+    test_runtime_handoff_is_transactional_on_rejected_tail();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();
-    test_corpus_verification_receipt_roundtrips_pc34_candidates();
+    test_corpus_roundtrip_proof();
     test_strings();
     puts("PASS dm1_v1_original_save_pc34_handoff");
     return 0;

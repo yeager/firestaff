@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_M11_GAME_VIEW_H
 #define FIRESTAFF_M11_GAME_VIEW_H
 
+#include "dm1_v1_champion_needs_pc34_compat.h"
+
 #include <stdint.h>
 #include "menu_startup_m12.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -15,6 +17,7 @@
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_movement_pipeline_pc34_compat.h"
 #include "dm1_v1_live_action_effects_pc34_compat.h"
+#include "dm1_v1_mouse_routes_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
 #include "firestaff_retroachievements.h"
 #include "firestaff/dm1/v1/resurrection_rename_ui_gate_pc34_compat.h"
@@ -27,7 +30,6 @@ extern "C" {
 
 enum {
     M11_GAME_VIEW_PATH_CAPACITY = 512,
-    M11_TORCH_FUEL_CAPACITY = 256,
     M11_ENDGAME_F0445_REPLAY_CAPACITY = 64,
     M11_THERON_STARTUP_RENDER_ROW_CAPACITY = 80,
     M11_THERON_STARTUP_LAYOUT_LABEL_CAPACITY = 48
@@ -331,6 +333,8 @@ typedef struct {
     int candidateMirrorRenameActive;
     DM1_V1_ResurrectionRenameUiGatePc34Compat candidateMirrorRename;
     uint32_t lastPartyMovementTick;
+    /* ReDMCSB CHAMPION.C F0316/F0317/F0331 source state for Thieves Eye. */
+    DM1_V1_NeedsScentListPc34Compat championScents;
     M11_MessageLog messageLog;
     int resting;
     int partyDead;
@@ -355,14 +359,6 @@ typedef struct {
     int floorOrnamentIndices[32][16];  /* [mapIndex][ordinal] -> graphic index */
     int doorOrnamentIndices[32][16];
     int ornamentCacheLoaded[32];       /* 1 if loaded for this map */
-
-    /* Torch fuel burn-down tracking.
-     * Each weapon index that is a lit torch has its remaining fuel
-     * tracked here.  Fuel decreases by 1 each game tick.  When it
-     * reaches 0, the torch is extinguished.  A torch's light
-     * contribution is scaled by its fuel fraction. */
-    int torchFuel[M11_TORCH_FUEL_CAPACITY];          /* remaining fuel per weapon index */
-    int torchFuelInitialized[M11_TORCH_FUEL_CAPACITY]; /* 1 if fuel has been set for this index */
 
     /* Spell casting UI state */
     int spellPanelOpen;          /* 1 when rune entry panel is visible */
@@ -992,144 +988,6 @@ void M11_MessageLog_Push(M11_MessageLog* log, const char* text, unsigned char co
 int M11_GameView_GetMessageLogCount(const M11_GameViewState* state);
 const char* M11_GameView_GetMessageLogEntry(const M11_GameViewState* state, int reverseIndex);
 
-int M11_GameView_ProbeViewportFloorItemCounts(const M11_GameViewState* state,
-                                              int relForward,
-                                              int relSide,
-                                              int* outMapX,
-                                              int* outMapY,
-                                              int* outElementType,
-                                              int* outFloorItemCount,
-                                              int* outSummaryItemCount);
-int M11_GameView_ProbeViewportCreatureCounts(const M11_GameViewState* state,
-                                             int relForward,
-                                             int relSide,
-                                             int* outMapX,
-                                             int* outMapY,
-                                             int* outElementType,
-                                             int* outCreatureGroupCount,
-                                             int* outSummaryGroupCount,
-                                             int* outFirstCreatureType);
-int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
-                                             int relForward,
-                                             int relSide,
-                                             int* outMapX,
-                                             int* outMapY,
-                                             int* outElementType,
-                                             int* outProjectileCount,
-                                             int* outExplosionCount,
-                                             int* outFirstProjectileGfx,
-                                             int* outFirstExplosionType);
-int M11_GameView_ProbeViewportRenderMetadata(const M11_GameViewState* state,
-                                             int relForward,
-                                             int relSide,
-                                             int* outMapX,
-                                             int* outMapY,
-                                             int* outElementType,
-                                             int* outWallOrnamentOrdinal,
-                                             int* outChampionPortraitOrdinal,
-                                             int* outInscriptionTextIndex,
-                                             int* outFloorOrnamentOrdinal);
-int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
-    int* outTitleReceiptReady,
-    int* outTitleDrawExecuted,
-    int* outTitleHudExecuted,
-    int* outClosedDoorReceiptReady,
-    int* outClosedDoorDrawExecuted,
-    int* outClosedDoorHudExecuted,
-    int* outUtilityReceiptReady,
-    int* outUtilityDrawExecuted,
-    int* outUtilityHudExecuted,
-    int* outOpeningReceiptReady,
-    int* outOpeningDrawExecuted,
-    int* outConsumedHostViewOnly,
-    int* outSuppressLegacyUtilityFallback,
-    int* outPackagedVisualCaptureReady,
-    int* outInputConsumesReceiptOnly,
-    int* outUtilityInputDispatchReady,
-    int* outTitleAssetDrawReady,
-    int* outClosedDoorFallbackSuppressed,
-    int* outOpeningFrameDrawReady,
-    int* outFullVisualSequenceConsumed,
-    int* outRuntimeRouteHardeningReady,
-    int* outRuntimeRouteHardeningHashReady,
-    int* outRuntimeHostCaptureGateReady,
-    int* outRuntimeHostCaptureGateHashReady,
-    int* outTitleStageRuntimeCaptureReady,
-    int* outTitleStageRuntimeCaptureHashReady);
-int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
-    const M11_GameViewState* state,
-    int* outObjectSpriteCount,
-    int* outObjectIconCount,
-    int* outObjectMarkerCount,
-    int* outGroupSpriteCount,
-    int* outGroupMarkerCount,
-    int* outProjectileSpriteCount,
-    int* outProjectileMaterialCount,
-    int* outProjectileMarkerCount,
-    int* outExplosionSpriteCount,
-    int* outExplosionMarkerCount);
-int M11_GameView_ProbeDm1V2LiveEffectSeedCount(const M11_GameViewState* state);
-int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
-                                        int relForward,
-                                        int relSide,
-                                        int* outMapX,
-                                        int* outMapY,
-                                        unsigned char* outRawSquare,
-                                        int* outElementType,
-                                        int* outEffectiveElementType,
-                                        int* outIsWallLike,
-                                        int* outIsOpen);
-int M11_GameView_ProbeSideWallDrawEligibility(const M11_GameViewState* state,
-                                              int relForward,
-                                              int relSide,
-                                              int* outLegacyLaneClear,
-                                              int* outDrawsWithSourceOrder);
-int M11_GameView_ProbeDm1NearestBlockingCenterDepth(const M11_GameViewState* state,
-                                                    int* outDepthIndex,
-                                                    int* outRelForward,
-                                                    int* outMapX,
-                                                    int* outMapY,
-                                                    int* outElementType);
-int M11_GameView_ProbeDm1CenterContentVisibleDepthMask(const M11_GameViewState* state,
-                                                       int* outDepthMask);
-int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
-                                          int relSide,
-                                          int* outGraphicIndex,
-                                          int* outDstX,
-                                          int* outDstY,
-                                          int* outWidth,
-                                          int* outHeight);
-int M11_GameView_ProbeDm1PrimarySideWallMaxForward(int centerMaxVisibleForward);
-int M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(int doorState,
-                                               int* outSrcX,
-                                               int* outSrcY,
-                                               int* outDstX,
-                                               int* outDstY,
-                                               int* outWidth,
-                                               int* outHeight);
-int M11_GameView_ProbeDm1CenterDoorPanelBlit(int depth,
-                                             int doorState,
-                                             int doorVertical,
-                                             int blitIndex,
-                                             int* outSrcX,
-                                             int* outSrcY,
-                                             int* outDstX,
-                                             int* outDstY,
-                                             int* outWidth,
-                                             int* outHeight);
-int M11_GameView_ProbeDm1SideDoorPanelBlit(int relForward,
-                                           int relSide,
-                                           int doorState,
-                                           int doorVertical,
-                                           int blitIndex,
-                                           int* outSrcX,
-                                           int* outSrcY,
-                                           int* outDstX,
-                                           int* outDstY,
-                                           int* outWidth,
-                                           int* outHeight);
-int M11_GameView_ProbeDm1WallOrnamentFlip(int viewWallIndex);
-
 /* Post-move environmental transition check (pits, teleporters).
  * Returns 1 if a transition occurred. */
 int M11_GameView_CheckPostMoveTransitions(M11_GameViewState* state);
@@ -1146,15 +1004,6 @@ int M11_GameView_ProbeF0230ParryAdjustedAttack(
     int random16,
     int creatureBaseAttack,
     int doubledMapDifficulty);
-int M11_GameView_ProbeF0352PotionEyeDescription(
-    const M11_GameViewState* state,
-    int championIndex,
-    unsigned int thingType,
-    unsigned int iconIndex,
-    unsigned int potionPower,
-    const char* objectName,
-    char* outText,
-    size_t outTextSize);
 int M11_GameView_ProbeF0407ShootAttack(
     const M11_GameViewState* state,
     int championIndex,
@@ -1173,26 +1022,14 @@ int M11_GameView_UseItem(M11_GameViewState* state);
  * probe-level verification of emission-driven XP integration. */
 void M11_GameView_ProcessTickEmissions(M11_GameViewState* state);
 
-/* Compute the party's current light level (0..255).
- * Combines magical light from FUL/MAGIC_TORCH spells with lit torch
- * items in hand slots.  Used by the viewport renderer for dynamic
- * depth dimming and exposed for probe-level verification. */
+/* Return the source-owned F0337 total dungeon-view light amount.
+ * The value is intentionally not clamped: darkness can leave a negative
+ * intermediate amount before F0337 selects the darkest palette. */
 int M11_GameView_GetLightLevel(const M11_GameViewState* state);
 
 /* Compute the source dungeon-view palette index (0=brightest, 5=darkest).
  * This is the same F0337-backed value the V1 viewport renderer applies. */
 int M11_GameView_GetDungeonPaletteIndex(const M11_GameViewState* state);
-
-/* Torch fuel constants.  INITIAL is the starting fuel for a freshly-lit
- * torch (approximately 1500 game ticks).  Each tick burns 1 unit. */
-#define M11_TORCH_INITIAL_FUEL  1500
-#define M11_FLAMITT_INITIAL_FUEL 2500
-
-/* Query remaining fuel for a weapon index (0 if untracked or exhausted). */
-int M11_GameView_GetTorchFuel(const M11_GameViewState* state, int weaponIndex);
-
-/* Update torch fuel for all lit torches (called once per tick). */
-void M11_GameView_UpdateTorchFuel(M11_GameViewState* state);
 
 /* ── Creature animation API ── */
 
@@ -1443,6 +1280,11 @@ int M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
     int mapX,
     int mapY);
 
+/* Drives the production CHAMPION.C F0319 death check without advancing an
+ * unrelated timeline tick.  Probe-only: callers must provide the live M11
+ * world state that the normal tick route owns. */
+void M11_GameView_ProbeCheckPartyDeath(M11_GameViewState* state);
+
 /* V1 explosion cycle probe hook: drive one tick of the V1 explosion
  * advance over all live explosion slots.  Normally invoked from
  * M11_GameView_ProcessTickEmissions each orchestrator tick right after
@@ -1470,66 +1312,6 @@ int M11_GameView_CountCellExplosions(
     int mapX,
     int mapY);
 
-/* Return DM1 G0215 projectile scale units (out of 32) for a viewport
- * depth and relative sub-cell. Exposed so probes can pin D2/D3 source
- * scaling without depending on screenshot pixel dimensions. */
-int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
-                                               int relativeCell);
-int M11_GameView_GetProjectileAspectFirstNative(int aspectIndex);
-unsigned int M11_GameView_GetProjectileAspectGraphicInfo(int aspectIndex);
-int M11_GameView_GetProjectileAspectBitmapDelta(int aspectIndex, int relativeDir);
-int M11_GameView_GetProjectileGraphicForAspect(int aspectIndex, int relativeDir);
-int M11_GameView_GetProjectileAspectFlipFlags(int aspectIndex,
-                                              int relativeDir,
-                                              int relativeCell,
-                                              int mapX,
-                                              int mapY);
-
-/* Resolve a dungeon thing type/subtype to its M612 viewport object
- * native graphic index using G0237 object-info -> G0209 object-aspect
- * source data. Returns 0 for unsupported inputs. */
-unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype);
-
-/* Return DM1 G2030 object scale units for source object distance/cell
- * scale bucket 0..4. Out-of-range inputs clamp like the renderer. */
-int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex);
-int M11_GameView_GetObjectSourceScaleIndex(int depthIndex, int relativeCell);
-int M11_GameView_GetF0115ViewSquareIndex(int relForward, int relSide);
-int M11_GameView_GetF0115C2500C2900Row(int relForward, int relSide);
-int M11_GameView_GetDm1D4FarProjectileBox(int relSide,
-                                          int* outX,
-                                          int* outY,
-                                          int* outW,
-                                          int* outH);
-int M11_GameView_GetDM1FloorOrnamentSourceZone(int relForward,
-                                               int relSide,
-                                               int* outIncrement,
-                                               int* outFlipHorizontal,
-                                               int* outX,
-                                               int* outY,
-                                               int* outW,
-                                               int* outH);
-int M11_GameView_GetC2500ObjectZonePoint(int scaleIndex,
-                                         int relativeCell,
-                                         int* outX,
-                                         int* outY);
-int M11_GameView_GetC2500ObjectRawZonePoint(int rowIndex,
-                                            int relativeCell,
-                                            int* outX,
-                                            int* outY);
-int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
-                                             int relativeCell,
-                                             int* outX,
-                                             int* outY);
-int M11_GameView_GetC2900ProjectileRawZonePoint(int rowIndex,
-                                                int relativeCell,
-                                                int* outX,
-                                                int* outY);
-int M11_GameView_GetProjectileRawZonePointForRel(int relForward,
-                                                 int relSide,
-                                                 int relativeCell,
-                                                 int* outX,
-                                                 int* outY);
 int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex);
 int DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(M11_GameViewState* state,
                                                     unsigned short thing);
@@ -1554,14 +1336,6 @@ void DM1_V1_M11Runtime_CloseOpenChestPc34Compat(M11_GameViewState* state);
 unsigned short DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(
     const M11_GameViewState* state);
 int M11_GameView_GetViewportRect(int* outX, int* outY, int* outW, int* outH);
-int M11_GameView_GetV1ViewportBaseGraphic(int layer,
-                                           int* outGraphic,
-                                           int* outX,
-                                           int* outY,
-                                           int* outW,
-                                           int* outH);
-int M11_GameView_GetV1ViewportSourceDrawOrderCount(void);
-int M11_GameView_GetV1ViewportSourceDrawOrderStep(int ordinal);
 int M11_GameView_GetObjectIconIndexForThing(const M11_GameViewState* state,
                                             unsigned short thingId);
 int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
@@ -1718,35 +1492,6 @@ int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state);
 int M11_GameView_GetDm1HocMenuRouteReceipt(
     const M11_GameViewState* state,
     DM1_V1_EntranceMenuRouteReceiptPc34* outReceipt);
-int M11_GameView_CsbF0282ChampionPanelGateActive(
-    const M11_GameViewState* state,
-    int* outFrontMirrorOrdinal,
-    int* outCandidateOrdinal,
-    int* outCandidatePartyIndex);
-/* D1C wall-mirror zone (DUNVIEW.C G0205 graphic 558 set index 12,
- * coordSet-indexed).  Returns the wall ornament destination box
- * in viewport coordinates.  Used by
- * firestaff_dm1_v1_hall_of_champions_wall_mirror_zones_probe
- * to verify the wall box is at the source-locked position. */
-int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
-                                       int* outX, int* outY,
-                                       int* outW, int* outH);
-/* DUNVIEW.C G0205 G0205_aaauc_Graphic558_WallOrnamentCoordinateSets
- * lookup: returns the destination box for a (coordSet, viewWallIndex)
- * pair in viewport coordinates.  coordSet is 0..7, viewWallIndex is
- * 0..12.  Used by the ordinal-10 fullscreen_scale_rect gate probe to
- * prove the source-locked coordSet=5/index=12 (D1C champion-mirror
- * frame route, 80x29..143x71) and the coordSet=7/index=12 fullscreen
- * variant (32x9..191x119) are correctly distinct, and that the C026
- * champion-portrait blit is anchored inside the coordSet=5 frame and
- * not into the coordSet=7 fullscreen variant.  Returns 1 on a valid
- * (coordSet, viewWallIndex) lookup, 0 on out-of-range. */
-int M11_GameView_GetDm1WallOrnamentZone(int coordSet,
-                                        int viewWallIndex,
-                                        int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH);
 int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state);
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate);
@@ -1759,177 +1504,6 @@ int M11_GameView_HandleMirrorCandidateRenameClick(M11_GameViewState* state,
                                                   int x,
                                                   int y);
 int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state);
-int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
-                                      int championSlot);
-int M11_GameView_GetV1StatusNameClearColor(void);
-int M11_GameView_GetV1StatusBoxFillColor(void);
-int M11_GameView_GetV1StatusBoxZoneId(int championSlot);
-int M11_GameView_GetV1StatusBoxZone(int championSlot,
-                                    int* outX,
-                                    int* outY,
-                                    int* outW,
-                                    int* outH);
-int M11_GameView_GetV1StatusNameClearZoneId(int championSlot);
-int M11_GameView_GetV1StatusNameTextZoneId(int championSlot);
-int M11_GameView_GetV1StatusNameZone(int championSlot,
-                                     int* outX,
-                                     int* outY,
-                                     int* outW,
-                                     int* outH);
-int M11_GameView_GetV1StatusNameTextZone(int championSlot,
-                                         int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH);
-int M11_GameView_GetV1StatusHandParentZoneId(int championSlot);
-int M11_GameView_GetV1StatusHandZoneId(int championSlot,
-                                       int handIndex);
-int M11_GameView_GetV1StatusHandZone(int championSlot,
-                                     int handIndex,
-                                     int* outX,
-                                     int* outY,
-                                     int* outW,
-                                     int* outH);
-int M11_GameView_GetV1StatusHandIconZone(int championSlot,
-                                         int handIndex,
-                                         int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH);
-int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
-                                            int handIndex,
-                                            int* outX,
-                                            int* outY,
-                                            int* outW,
-                                            int* outH);
-int M11_GameView_GetV1StatusBarGraphZoneId(int championSlot);
-int M11_GameView_GetV1StatusBarZoneId(int statIndex);
-int M11_GameView_GetV1StatusBarValueZoneId(int championSlot,
-                                           int statIndex);
-int M11_GameView_GetV1StatusBarZone(int championSlot,
-                                    int statIndex,
-                                    int* outX,
-                                    int* outY,
-                                    int* outW,
-                                    int* outH);
-int M11_GameView_GetV1ChampionBarColor(int championSlot);
-int M11_GameView_GetV1StatusBarBlankColor(void);
-int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
-                                            int championSlot,
-                                            int handIndex);
-int M11_GameView_GetV1SlotBoxNormalGraphicId(void);
-int M11_GameView_GetV1SlotBoxWoundedGraphicId(void);
-int M11_GameView_GetV1SlotBoxActingHandGraphicId(void);
-int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
-                                          int championSlot,
-                                          int handIndex);
-int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state);
-int M11_GameView_GetV1StatusShieldBorderGraphicForChampion(
-    const M11_GameViewState* state, int championSlot);
-int M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(
-    const M11_GameViewState* state, int championSlot);
-int M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(
-    const M11_GameViewState* state, int championSlot, int drawOrdinal);
-int M11_GameView_GetV1PartyShieldBorderGraphicId(void);
-int M11_GameView_GetV1FireShieldBorderGraphicId(void);
-int M11_GameView_GetV1SpellShieldBorderGraphicId(void);
-int M11_GameView_GetV1StatusShieldBorderZone(int championSlot,
-                                             int* outX,
-                                             int* outY,
-                                             int* outW,
-                                             int* outH);
-int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
-                                           int championSlot);
-int M11_GameView_GetV1StatusBoxGraphicId(void);
-int M11_GameView_GetV1DeadStatusBoxGraphicId(void);
-int M11_GameView_GetV1PoisonLabelZone(int championSlot,
-                                      int labelW,
-                                      int labelH,
-                                      int* outX,
-                                      int* outY,
-                                      int* outW,
-                                      int* outH);
-int M11_GameView_GetV1DamageIndicatorZoneId(int championSlot);
-int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
-                                          int indicatorW,
-                                          int indicatorH,
-                                          int* outX,
-                                          int* outY,
-                                          int* outW,
-                                          int* outH);
-int M11_GameView_GetV1InventoryDamageIndicatorZoneId(int championSlot);
-int M11_GameView_GetV1InventoryDamageIndicatorZone(int championSlot,
-                                                   int indicatorW,
-                                                   int indicatorH,
-                                                   int* outX,
-                                                   int* outY,
-                                                   int* outW,
-                                                   int* outH);
-int M11_GameView_GetV1DamageNumberOrigin(int championSlot,
-                                         int* outX,
-                                         int* outY);
-int M11_GameView_GetV1DamageNumberOriginPc34(int championSlot,
-                                             int damageAmount,
-                                             int inventoryChampion,
-                                             int* outX,
-                                             int* outY);
-int M11_GameView_GetV1PoisonLabelGraphicId(void);
-int M11_GameView_GetV1ChampionSmallDamageGraphicId(void);
-int M11_GameView_GetV1ChampionBigDamageGraphicId(void);
-int M11_GameView_GetV1CreatureDamageGraphicId(void);
-int M11_GameView_GetV1MovementArrowsZoneId(void);
-int M11_GameView_GetV1MovementArrowsGraphicId(void);
-int M11_GameView_GetV1MovementArrowsOuterBox(int* outX,
-                                             int* outY,
-                                             int* outW,
-                                             int* outH);
-int M11_GameView_GetV1MovementArrowsZone(int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH);
-int M11_GameView_GetV1MovementArrowZoneId(int arrowIndex);
-int M11_GameView_GetV1MovementArrowZone(int arrowIndex,
-                                         int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH);
-int M11_GameView_GetV1ScreenZoneId(void);
-int M11_GameView_GetV1ScreenZone(int* outX,
-                                  int* outY,
-                                  int* outW,
-                                  int* outH);
-int M11_GameView_GetV1ScreenCenteredDialogZoneId(void);
-int M11_GameView_GetV1ScreenCenteredDialogZone(int* outX,
-                                                int* outY,
-                                                int* outW,
-                                                int* outH);
-int M11_GameView_GetV1ExplosionPatternD0CZoneId(void);
-int M11_GameView_GetV1ExplosionPatternD0CZone(int* outX,
-                                              int* outY,
-                                              int* outW,
-                                              int* outH);
-int M11_GameView_GetV1ViewportCenteredTextZoneId(void);
-int M11_GameView_GetV1ViewportCenteredTextZone(int contentW,
-                                               int contentH,
-                                               int* outX,
-                                               int* outY,
-                                               int* outW,
-                                               int* outH);
-int M11_GameView_GetV1MessageAreaZoneId(void);
-int M11_GameView_GetV1MessageAreaZone(int* outX,
-                                       int* outY,
-                                       int* outW,
-                                       int* outH);
-int M11_GameView_GetV1ViewportZoneId(void);
-int M11_GameView_GetV1ViewportZone(int* outX,
-                                   int* outY,
-                                   int* outW,
-                                   int* outH);
-int M11_GameView_GetV1LeaderHandObjectNameZoneId(void);
-int M11_GameView_GetV1LeaderHandObjectNameZone(int* outX,
-                                               int* outY,
-                                               int* outW,
-                                               int* outH);
 int M11_GameView_GetDm2LeaderHandObjectIconZone(int* outX,
                                                 int* outY,
                                                 int* outW,
@@ -1946,68 +1520,23 @@ uint32_t M11_GameView_GetDm2InventoryObject(const M11_GameViewState* state,
                                             int championSlot);
 int M11_GameView_Dm2LeaderHandObjectIconAvailable(
     const M11_GameViewState* state);
-int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,
+int DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(M11_GameViewState* state,
                                         unsigned short thing);
-void M11_GameView_ClearV1LeaderHandObject(M11_GameViewState* state);
-unsigned short M11_GameView_GetV1LeaderHandThing(const M11_GameViewState* state);
-int M11_GameView_GetV1LeaderHandObjectIconIndex(const M11_GameViewState* state);
-int M11_GameView_GetV1InventorySlotIconIndex(const M11_GameViewState* state,
+void DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(M11_GameViewState* state);
+unsigned short DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(const M11_GameViewState* state);
+int DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(const M11_GameViewState* state);
+int DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(const M11_GameViewState* state,
                                              int championSlot);
-int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
+int DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(const M11_GameViewState* state,
                                            char* out,
                                            int outSize);
-int M11_GameView_DecodeV1InventoryActionHandScrollText(
+int DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
     const M11_GameViewState* state,
     char* out,
     int outSize);
-int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state);
-void M11_GameView_CloseV1OpenChest(M11_GameViewState* state);
-unsigned short M11_GameView_GetV1OpenChestThing(const M11_GameViewState* state);
-int M11_GameView_GetV1ActionAreaZoneId(void);
-int M11_GameView_GetV1ActionAreaZone(int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH);
-int M11_GameView_GetV1SpellAreaZoneId(void);
-int M11_GameView_GetV1SpellAreaZone(int* outX,
-                                       int* outY,
-                                       int* outW,
-                                       int* outH);
-int M11_GameView_GetV1ActionSpellStripZone(int* outX,
-                                           int* outY,
-                                           int* outW,
-                                           int* outH);
-int M11_GameView_GetV1SpellCasterPanelZoneId(void);
-int M11_GameView_GetV1SpellCasterPanelZone(int* outX,
-                                           int* outY,
-                                           int* outW,
-                                           int* outH);
-int M11_GameView_GetV1SpellCasterTabZoneId(void);
-int M11_GameView_GetV1SpellCasterTabZone(int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH);
-int M11_GameView_GetV1ActionAreaGraphicId(void);
-int M11_GameView_GetV1ActionMenuGraphicZoneId(int actionRowCount);
-int M11_GameView_GetV1ActionMenuGraphicZone(int actionRowCount,
-                                            int* outX,
-                                            int* outY,
-                                            int* outW,
-                                            int* outH);
-int M11_GameView_GetV1ActionAreaClearColor(void);
-int M11_GameView_GetV1ActionResultZoneId(void);
-int M11_GameView_GetV1ActionResultZone(int* outX,
-                                       int* outY,
-                                       int* outW,
-                                       int* outH);
-int M11_GameView_GetV1ActionPassZoneId(void);
-int M11_GameView_GetV1ActionPassZone(int* outX,
-                                     int* outY,
-                                     int* outW,
-                                     int* outH);
-int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void);
-int M11_GameView_GetV1ChampionPortraitGraphicId(void);
-int M11_GameView_GetV1ChampionIconGraphicId(void);
+int DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(M11_GameViewState* state);
+void DM1_V1_M11Runtime_CloseOpenChestPc34Compat(M11_GameViewState* state);
+unsigned short DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(const M11_GameViewState* state);
 
 /* M11_DM1 V1 sub-cell hit mask (BUG-111).  Source-locked per
  * ReDMCSB DEFS.H M550 (DUNGEON.C:1085).  Full-square creatures
@@ -2016,186 +1545,6 @@ int M11_GameView_GetV1ChampionIconGraphicId(void);
  * because per-sub-cell positioning is deferred to post-M10. */
 #define M11_DM1_CELL_OCCUPIED_MASK 0x0Fu
 #define M11_DM1_CELL_OCCUPIED_QUARTER 0xF0u
-
-int M11_GameView_GetV1ChampionIconZoneId(int championSlot);
-int M11_GameView_GetV1ChampionIconZone(int championSlot,
-                                        int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH);
-int M11_GameView_GetV1ChampionIconSourceIndex(const M11_GameViewState* state,
-                                              int championSlot);
-int M11_GameView_GetV1ChampionIconInvisibilityRemap(int paletteIndex);
-int M11_GameView_GetV1InventoryPanelGraphicId(void);
-int M11_GameView_GetV1OpenScrollPanelGraphicId(void);
-int M11_GameView_GetV1InventoryPanelZoneId(void);
-int M11_GameView_GetV1InventoryBackdropGraphicId(void);
-int M11_GameView_GetV1InventoryBackdropZone(int* outX,
-                                             int* outY,
-                                             int* outW,
-                                             int* outH);
-int M11_GameView_GetV1InventoryPanelZone(int* outX,
-                                          int* outY,
-                                          int* outW,
-                                          int* outH);
-int M11_GameView_GetV1ObjectDescriptionPanelGraphicId(void);
-int M11_GameView_GetV1ObjectDescriptionCircleGraphicId(void);
-int M11_GameView_GetV1ObjectDescriptionCircleZoneId(void);
-int M11_GameView_GetV1ObjectDescriptionCircleZone(int* outX,
-                                                   int* outY,
-                                                   int* outW,
-                                                   int* outH);
-int M11_GameView_GetV1ObjectDescriptionIconZoneId(void);
-int M11_GameView_GetV1ObjectDescriptionIconZone(int* outX,
-                                                 int* outY,
-                                                 int* outW,
-                                                 int* outH);
-int M11_GameView_GetV1ArrowOrEyeZoneId(void);
-int M11_GameView_GetV1ArrowOrEyeZone(int* outX,
-                                      int* outY,
-                                      int* outW,
-                                      int* outH);
-int M11_GameView_GetV1ArrowOrEyeGraphicId(int pressingEye);
-int M11_GameView_GetV1ObjectDescriptionNameZoneId(void);
-int M11_GameView_GetV1ObjectDescriptionNameZoneForText(int textPixelWidth,
-                                                        int textPixelHeight,
-                                                        int* outX,
-                                                        int* outY,
-                                                        int* outW,
-                                                        int* outH);
-int M11_GameView_GetV1ObjectDescriptionContinuationOrigin(int* outX,
-                                                           int* outY);
-const char* M11_GameView_GetV1ObjectDescriptionLayoutEvidence(void);
-int M11_GameView_GetV1InventorySourceSlotBoxZoneCount(void);
-int M11_GameView_GetV1InventorySourceSlotBoxZoneId(int sourceSlotBoxIndex);
-int M11_GameView_GetV1InventorySourceSlotBoxZone(int sourceSlotBoxIndex,
-                                                  int* outX,
-                                                  int* outY,
-                                                  int* outW,
-                                                  int* outH);
-int M11_GameView_GetV1InventorySourceSlotBoxGraphicId(int sourceSlotBoxIndex);
-int M11_GameView_GetV1InventoryEquipmentSlotZoneCount(void);
-int M11_GameView_GetV1InventoryEquipmentSlotZoneId(int equipmentOrdinal);
-int M11_GameView_GetV1InventoryEquipmentSlotZone(int equipmentOrdinal,
-                                                  int* outX,
-                                                  int* outY,
-                                                  int* outW,
-                                                  int* outH);
-int M11_GameView_GetV1InventoryBackpackSlotZoneCount(void);
-int M11_GameView_GetV1InventoryBackpackSlotZoneId(int backpackOrdinal);
-int M11_GameView_GetV1InventoryBackpackSlotZone(int backpackOrdinal,
-                                                 int* outX,
-                                                 int* outY,
-                                                 int* outW,
-                                                 int* outH);
-int M11_GameView_GetV1ChestSlotBoxZoneCount(void);
-int M11_GameView_GetV1ChestSlotBoxZoneId(int chestOrdinal);
-int M11_GameView_GetV1ChestSlotBoxZone(int chestOrdinal,
-                                        int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH);
-enum {
-    M11_DM1_MOUSE_MASK_RIGHT = 0x0001,
-    M11_DM1_MOUSE_MASK_LEFT  = 0x0002
-};
-
-enum {
-    M11_DM1_MOUSE_SPACE_NONE     = 0,
-    M11_DM1_MOUSE_SPACE_SCREEN   = 1,
-    M11_DM1_MOUSE_SPACE_VIEWPORT = 2
-};
-
-enum {
-    M11_DM1_MOUSE_LIST_INTERFACE = 1,
-    M11_DM1_MOUSE_LIST_MOVEMENT  = 2,
-    M11_DM1_MOUSE_LIST_INVENTORY = 3
-};
-
-/* Bounded source-backed DM PC 3.4 mouse input resolver for probes/future
- * routing. It mirrors COMMAND.C F0358_COMMAND_GetCommandFromMouseInput_CPSC
- * for the currently covered GRAPHIC561 rows: champion status/icon plus
- * action/spell area entries from interface G0447, movement arrow +
- * viewport/screen rows from movement G0448, and inventory slot rows from
- * G0449. Coordinates passed in are screen-relative;
- * viewport-relative source zones (CM2) are matched after subtracting the DM1
- * viewport origin. Returns the DM1 command id or 0 (C000_COMMAND_NONE). */
-int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
-                                           int screenX,
-                                           int screenY,
-                                           int buttonMask,
-                                           int* outCoordinateSpace,
-                                           int* outZoneId);
-int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int championSlot);
-int M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(int sourceSlotBoxIndex);
-int M11_GameView_GetV1EndgameTheEndGraphicId(void);
-int M11_GameView_GetV1EndgameTheEndZone(int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH);
-int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void);
-int M11_GameView_GetV1EndgameChampionMirrorZoneId(int championSlot);
-int M11_GameView_GetV1EndgameChampionMirrorZone(int championSlot,
-                                                int* outX,
-                                                int* outY,
-                                                int* outW,
-                                                int* outH);
-int M11_GameView_GetV1EndgameChampionPortraitZoneId(int championSlot);
-int M11_GameView_GetV1EndgameChampionPortraitZone(int championSlot,
-                                                  int* outX,
-                                                  int* outY,
-                                                  int* outW,
-                                                  int* outH);
-int M11_GameView_GetV1EndgameChampionNameOrigin(int championSlot,
-                                                int* outX,
-                                                int* outY);
-int M11_GameView_GetV1EndgameChampionSkillOrigin(int championSlot,
-                                                 int skillLineIndex,
-                                                 int* outX,
-                                                 int* outY);
-int M11_GameView_GetV1EndgameRestartBox(int inner,
-                                        int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH);
-int M11_GameView_GetV1EndgameQuitBox(int inner,
-                                     int* outX,
-                                     int* outY,
-                                     int* outW,
-                                     int* outH);
-int M11_GameView_GetV1DialogBackdropGraphicId(void);
-int M11_GameView_GetV1DialogVersionTextOrigin(int* outX, int* outY);
-int M11_GameView_GetV1DialogChoicePatchZone(int choiceCount,
-                                             int* outSrcX,
-                                             int* outSrcY,
-                                             int* outW,
-                                             int* outH,
-                                             int* outDstX,
-                                             int* outDstY);
-int M11_GameView_GetV1DialogMessageZone(int choiceCount,
-                                          int* outX,
-                                          int* outY,
-                                          int* outW,
-                                          int* outH);
-int M11_GameView_GetV1DialogMessageWidth(int choiceCount);
-int M11_GameView_GetV1DialogSingleChoiceMessageTextY(int lineCount);
-int M11_GameView_GetV1DialogMultiChoiceMessageTextY(int lineCount);
-int M11_GameView_GetV1DialogChoiceTextZoneId(int choiceCount,
-                                              int choiceIndex);
-int M11_GameView_GetV1DialogChoiceTextZone(int choiceCount,
-                                            int choiceIndex,
-                                            int* outX,
-                                            int* outY,
-                                            int* outW,
-                                            int* outH);
-int M11_GameView_GetV1DialogChoiceButtonZoneId(int choiceCount,
-                                                int choiceIndex);
-int M11_GameView_GetV1DialogChoiceHitZone(int choiceCount,
-                                           int choiceIndex,
-                                           int* outX,
-                                           int* outY,
-                                           int* outW,
-                                           int* outH);
 
 /* ── Forced-pause dialog fit/layout (Firestaff session timer) ───────
  * Not driven by ReDMCSB; this surface is the session-timer escalation
@@ -2293,78 +1642,6 @@ void M11_GameView_GetReturnConfirmDialogLayout(
 
 int M11_GameView_ReturnConfirmDialogLayoutMaxTextPixelWidth(
     const M11_ReturnConfirmDialogLayout* layout);
-
-int M11_GameView_GetV1FoodLabelGraphicId(void);
-int M11_GameView_GetV1WaterLabelGraphicId(void);
-int M11_GameView_GetV1FoodBarZoneId(void);
-int M11_GameView_GetV1FoodBarZone(int* outX,
-                                  int* outY,
-                                  int* outW,
-                                  int* outH,
-                                  int* outSrcY);
-int M11_GameView_GetV1FoodWaterPanelZoneId(void);
-int M11_GameView_GetV1FoodWaterPanelZone(int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH,
-                                         int* outSrcY);
-int M11_GameView_GetV1SpellAreaLinesGraphicId(void);
-int M11_GameView_GetV1SpellAvailableSymbolParentZoneId(int symbolIndex);
-int M11_GameView_GetV1SpellAvailableSymbolZoneId(int symbolIndex);
-int M11_GameView_GetV1SpellChampionSymbolZoneId(int symbolIndex);
-int M11_GameView_GetV1SpellCastZoneId(void);
-int M11_GameView_GetV1SpellRecantZoneId(void);
-int M11_GameView_GetV1SpellLabelCellSourceZone(int selectedLine,
-                                                int* outX,
-                                                int* outY,
-                                                int* outW,
-                                                int* outH);
-int M11_GameView_GetV1ActionMenuHeaderZoneId(void);
-int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
-                                               int* outY,
-                                               int* outW,
-                                               int* outH);
-int M11_GameView_GetV1ActionMenuRowCount(void);
-int M11_GameView_GetV1ActionMenuRowBaseZoneId(int rowIndex);
-int M11_GameView_GetV1ActionMenuRowZoneId(int rowIndex);
-int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
-                                            int* outX,
-                                            int* outY,
-                                            int* outW,
-                                            int* outH);
-int M11_GameView_GetV1ActionMenuTextInset(int* outX,
-                                           int* outY);
-int M11_GameView_GetV1ActionMenuTextOrigin(int rowIndex,
-                                               int* outX,
-                                               int* outY);
-int M11_GameView_GetV1ActionMenuHeaderFillColor(void);
-int M11_GameView_GetV1ActionMenuHeaderTextColor(void);
-int M11_GameView_GetV1ActionMenuRowFillColor(void);
-int M11_GameView_GetV1ActionMenuRowTextColor(void);
-int M11_GameView_GetV1ActionIconParentZoneId(void);
-int M11_GameView_GetV1ActionIconCellZoneId(int championSlot);
-int M11_GameView_GetV1ActionIconCellZone(int championSlot,
-                                             int* outX,
-                                             int* outY,
-                                             int* outW,
-                                             int* outH);
-int M11_GameView_GetV1ActionIconInnerZoneId(int championSlot);
-int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
-                                              int* outX,
-                                              int* outY,
-                                              int* outW,
-                                              int* outH);
-int M11_GameView_GetV1ObjectIconSourceZone(int iconIndex,
-                                               int* outGraphicIndex,
-                                               int* outX,
-                                               int* outY,
-                                               int* outW,
-                                               int* outH);
-int M11_GameView_MapV1ActionIconPaletteColor(int colorIndex,
-                                             int applyActionPalette);
-int M11_GameView_ShouldHatchV1ActionIconCells(const M11_GameViewState* state);
-int M11_GameView_GetV1ActionIconCellBackdropColor(const M11_GameViewState* state,
-                                                  int championSlot);
 
 /* ── Click hit-test (replaces ReDMCSB F0376_COMMAND_IsPointInBox) ────
  * Returns 1 if (px,py) is inside the closed box {left,right,top,bottom}

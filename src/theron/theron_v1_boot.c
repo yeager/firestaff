@@ -4547,6 +4547,12 @@ void theron_v1_boot_startup_ui_caller_receipt_init(
     receipt->status = "NO UI CALLER HANDOFF";
 }
 
+int theron_v1_boot_startup_host_render_plan_fallback_allowed(
+    const Theron_V1_BootStartupHostRenderReceipt *receipt)
+{
+    return receipt && !receipt->track02_startup_graphics_executed;
+}
+
 int theron_v1_boot_startup_ui_caller_from_full_start_receipt(
     const Theron_V1_BootStartupFullStartReceipt *receipt,
     int input_code,

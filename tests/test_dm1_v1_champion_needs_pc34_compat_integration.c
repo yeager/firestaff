@@ -354,6 +354,21 @@ static void test_movement_delay_boost(void) {
            "longer idle → more stamina");
 }
 
+static void test_scent_decay_preserves_newest_entry(void) {
+    DM1_V1_NeedsScentListPc34Compat scents;
+    memset(&scents, 0, sizeof(scents));
+    scents.count = 3;
+    scents.entries[0].strength = 1;
+    scents.entries[1].strength = 4;
+    scents.entries[2].strength = 9;
+
+    DM1_V1_Needs_DecayScentsPc34Compat(&scents);
+
+    ASSERT_EQ(scents.count, 2, "expired oldest scent is removed through F0316");
+    ASSERT_EQ(scents.entries[0].strength, 3, "shifted scent decays in same tick");
+    ASSERT_EQ(scents.entries[1].strength, 9, "newest scent remains untouched");
+}
+
 int main(void) {
     printf("=== DM1 V1 Champion Needs Source-Lock Tests ===\n\n");
 
@@ -373,6 +388,7 @@ int main(void) {
     test_mana_regen_stamina_cost();
     test_null_safety();
     test_movement_delay_boost();
+    test_scent_decay_preserves_newest_entry();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

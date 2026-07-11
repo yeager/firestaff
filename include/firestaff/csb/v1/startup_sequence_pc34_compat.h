@@ -464,21 +464,6 @@ typedef struct CSB_V1_StartupCommandState_PC34 {
     int pending_command;
 } CSB_V1_StartupCommandState_PC34;
 
-typedef struct CSB_V1_StartupCommandStateRequest_PC34 {
-    int title_active;
-    int title_frame;
-    int title_source_step;
-    int entrance_active;
-    int entrance_source_step;
-    int entrance_dismissed;
-    int credits_active;
-    int credits_remaining_ticks;
-    int opening_active;
-    int opening_delay_ticks;
-    int opening_step;
-    int pending_command;
-} CSB_V1_StartupCommandStateRequest_PC34;
-
 typedef struct CSB_V1_StartupCommandStateReceipt_PC34 {
     int title_active;
     int title_frame;
@@ -530,28 +515,6 @@ typedef struct CSB_V1_StartupEntranceHostActionReceipt_PC34 {
     CSB_V1_StartupCommandStateReceipt_PC34 state_receipt;
     CSB_V1_StartupHostReceipt_PC34 host_receipt;
 } CSB_V1_StartupEntranceHostActionReceipt_PC34;
-
-typedef struct CSB_V1_StartupRenderPlanRequest_PC34 {
-    int title_active;
-    int title_frame;
-    int title_source_step;
-    int entrance_active;
-    int entrance_source_step;
-    int entrance_dismissed;
-    int credits_active;
-    int credits_remaining_ticks;
-    int opening_active;
-    int opening_delay_ticks;
-    int opening_step;
-    int pending_command;
-    int entrance_frame;
-    int utility_overlay_active;
-    int resume_available;
-    int runtime_start_valid;
-    int runtime_start_x;
-    int runtime_start_y;
-    int runtime_start_dir;
-} CSB_V1_StartupRenderPlanRequest_PC34;
 
 typedef struct CSB_V1_StartupHostFacts_PC34 {
     int title_active;
@@ -723,21 +686,6 @@ void csb_v1_startup_idle_receipt_init_pc34(
 int csb_v1_startup_advance_idle_from_host_facts_with_receipt_pc34(
     const CSB_V1_StartupHostFacts_PC34 *facts,
     CSB_V1_StartupIdleReceipt_PC34 *out_receipt);
-int csb_v1_startup_build_render_plan_pc34(
-    const CSB_V1_StartupRenderState_PC34 *state,
-    CSB_V1_StartupRenderPlan_PC34 *out_plan);
-int csb_v1_startup_render_state_from_command_state_pc34(
-    const CSB_V1_StartupCommandState_PC34 *command_state,
-    int entrance_frame,
-    int utility_overlay_active,
-    int runtime_start_valid,
-    int runtime_start_x,
-    int runtime_start_y,
-    int runtime_start_dir,
-    CSB_V1_StartupRenderState_PC34 *out_state);
-int csb_v1_startup_command_state_from_request_pc34(
-    const CSB_V1_StartupCommandStateRequest_PC34 *request,
-    CSB_V1_StartupCommandState_PC34 *out_state);
 int csb_v1_startup_command_state_from_facts_pc34(
     int title_active,
     int title_frame,
@@ -792,8 +740,6 @@ int csb_v1_startup_entrance_accepts_input_from_facts_pc34(
     int opening_delay_ticks,
     int opening_step,
     int pending_command);
-int csb_v1_startup_entrance_accepts_input_from_request_pc34(
-    const CSB_V1_StartupCommandStateRequest_PC34 *request);
 int csb_v1_startup_entrance_accepts_input_from_host_facts_pc34(
     const CSB_V1_StartupHostFacts_PC34 *facts);
 int csb_v1_startup_init_command_state_pc34(
