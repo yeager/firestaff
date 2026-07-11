@@ -1350,6 +1350,12 @@ int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
         effective_snapshot.exact_object_semantics_ready ? 1 : 0;
     out_view_model->no_fallback_semantic_role_mask =
         effective_snapshot.no_fallback_semantic_role_mask;
+    out_view_model->track02_state_predicates_consumed =
+        effective_snapshot.track02_state_predicates_consumed ? 1 : 0;
+    out_view_model->track02_bitmap_routes_complete =
+        effective_snapshot.track02_bitmap_routes_complete ? 1 : 0;
+    out_view_model->track02_no_fallback_runtime_route_ready =
+        effective_snapshot.track02_no_fallback_runtime_route_ready ? 1 : 0;
     out_view_model->object_table_no_fallback_ready =
         effective_snapshot.object_table_no_fallback_ready ? 1 : 0;
     out_view_model->object_table_blocked_anchor_mask =
@@ -1724,10 +1730,12 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
         out_receipt->track02_state_predicates_consumed = 1;
         out_receipt->track02_bitmap_routes_complete =
             theron_v1_startup_state_receipt_has_complete_track02_bitmap_routes(
-                &state_receipt);
+                &state_receipt) ||
+            view_model->track02_bitmap_routes_complete;
         out_receipt->track02_no_fallback_runtime_route_ready =
             theron_v1_startup_state_receipt_has_track02_no_fallback_runtime_route(
-                &state_receipt);
+                &state_receipt) ||
+            view_model->track02_no_fallback_runtime_route_ready;
     }
     return out_receipt->render_plan_valid ||
            out_receipt->state_receipt_valid ||
@@ -1894,10 +1902,12 @@ int theron_v1_boot_startup_host_view_receipt_from_view_model(
         out_receipt->track02_state_predicates_consumed = 1;
         out_receipt->track02_bitmap_routes_complete =
             theron_v1_startup_state_receipt_has_complete_track02_bitmap_routes(
-                &out_receipt->state_receipt);
+                &out_receipt->state_receipt) ||
+            view_model->track02_bitmap_routes_complete;
         out_receipt->track02_no_fallback_runtime_route_ready =
             theron_v1_startup_state_receipt_has_track02_no_fallback_runtime_route(
-                &out_receipt->state_receipt);
+                &out_receipt->state_receipt) ||
+            view_model->track02_no_fallback_runtime_route_ready;
     }
     out_receipt->track02_media_consumed =
         view_model->startup_media_state_valid &&
