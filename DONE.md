@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 dead inventory pickup API cleanup: removed the unused, unimplemented `dm1_v1_inventory_item_pickup_pc34_compat.h` M11-named pickup preflight declaration. Verification: `firestaff_m11` built, targeted header/symbol `rg` passed, and `git diff --check` passed.
+
 - ✅ 2026-07-11 DM1 legacy M11 alias cleanup batch 8: removed unused header-only aliases from the DM1 object-world metadata header. Verification: `firestaff_m11` built, targeted object-world alias `rg` passed, and `git diff --check` passed.
 
 - ✅ 2026-07-11 DM1 legacy M11 alias cleanup batch 7: removed unused header-only aliases from DM1 legacy light, object interaction, and save/load system headers. Verification: `firestaff_m11`, `test_dm1_v1_object_interaction_pc34_compat`, `test_dm1_v1_save_load`, `test_dm1_v1_save_load_slots`, `test_dm1_v1_light_pc34_compat`, `test_dm1_v1_light_darkness_spell_bridge_pc34_compat`, `test_dm1_v1_light_power_to_light_amount_pc34_compat`, targeted alias `rg`, and `git diff --check` passed.
