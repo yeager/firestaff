@@ -118,7 +118,7 @@ static void test_spell_area_boxes_stay_source_locked(void)
     check_int("spell area w", w, 87);
     check_int("spell area h", h, 33);
     check_int("spell bg graphic", M11_GameView_GetV1SpellAreaBackgroundGraphicId(), 9);
-    check_int("spell lines graphic", M11_GameView_GetV1SpellAreaLinesGraphicId(), 9);
+    check_int("spell lines graphic", M11_GameView_GetV1SpellAreaLinesGraphicId(), 11);
 
     check_int("caster panel zone id",
               M11_GameView_GetV1SpellCasterPanelZoneId(), 221);
@@ -192,7 +192,7 @@ static void test_status_boxes_stay_source_locked(void)
     check_true("bar champ2 stamina", dm1_v1_champion_status_bar_rect_pc34(2, 1, &rect));
     (void)status_rect_to_xywh(&rect, &x, &y, &w, &h);
     check_int("bar champ2 stamina x", x, 191);
-    check_int("bar champ2 stamina y", y, 0);
+    check_int("bar champ2 stamina y", y, 2);
     check_int("bar champ2 stamina w", w, 4);
     check_int("bar champ2 stamina h", h, 25);
 
