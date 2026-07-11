@@ -119,6 +119,37 @@ static int write_bad_last_session_file(const char *dir)
     return 0;
 }
 
+static int write_valid_sksave_file_at_path(const char *path,
+                                           const char *name,
+                                           const uint8_t *payload,
+                                           size_t payload_size)
+{
+    uint8_t hdr[42];
+    FILE *f;
+    if (!path || !payload || payload_size == 0u) return -1;
+    memset(hdr, 0, sizeof(hdr));
+    hdr[0] = 1;
+    if (name) {
+        size_t nlen = strlen(name);
+        if (nlen > 33) nlen = 33;
+        memcpy(hdr + 2, name, nlen);
+    }
+    hdr[36] = 0x30;
+    hdr[38] = 0xEF;
+    hdr[39] = 0xBE;
+    hdr[40] = 0xAD;
+    hdr[41] = 0xDE;
+    f = fopen(path, "wb");
+    if (!f) return -1;
+    if (fwrite(hdr, sizeof(hdr), 1, f) != 1 ||
+        fwrite(payload, 1, payload_size, f) != payload_size) {
+        fclose(f);
+        return -1;
+    }
+    fclose(f);
+    return 0;
+}
+
 /* ── Test 1: SUPPRESS all-1s mask round-trip ──────────────────── */
 
 static int test_suppress_all1_roundtrip(void)
@@ -1358,6 +1389,8 @@ static int test_sksave_corpus_scan_receipt(void)
     uint8_t loaded_payload[DM2_SESSION_MAX_SIZE];
     size_t loaded_payload_size = 0u;
     DM2_V1_SaveCandidate loaded_candidate;
+    char nested_dir[256];
+    char nested_save_path[256];
     int payload_c_size;
     DM2_TestGameStateStorage gs_store;
     DM2_GameStateBlock *gs = &gs_store.block;
@@ -1565,9 +1598,49 @@ static int test_sksave_corpus_scan_receipt(void)
         return 0;
     }
 
+    snprintf(nested_dir, sizeof(nested_dir), "%s/real_corpus", tmpdir);
+    FS_MKDIR(nested_dir);
+    snprintf(nested_save_path, sizeof(nested_save_path),
+             "%s/sksave04.dat", nested_dir);
+    if (write_valid_sksave_file_at_path(nested_save_path, "Nested",
+                                        payload_b, payload_b_size) != 0) {
+        printf("    FAIL: could not write nested lowercase corpus save\n");
+        (void)remove(nested_save_path);
+        FS_RMDIR(nested_dir);
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_sksave_corpus_scan(tmpdir, &receipt) ||
+        receipt.valid_slot_count != 1 ||
+        receipt.importable_candidate_count != 2 ||
+        receipt.firestaff_session_candidate_count != 1 ||
+        receipt.original_envelope_candidate_count != 1 ||
+        receipt.recursive_candidate_count != 1 ||
+        receipt.recursive_importable_candidate_count != 1 ||
+        receipt.alternate_name_candidate_count != 1 ||
+        receipt.extra_valid_candidate_count != 1 ||
+        strstr(receipt.first_importable_path, "SKSave03.dat") == NULL) {
+        printf("    FAIL: recursive lowercase corpus receipt did not match "
+               "expected fields (importable=%u rec=%u rec_imp=%u alt=%u "
+               "extra=%u first=%s)\n",
+               receipt.importable_candidate_count,
+               receipt.recursive_candidate_count,
+               receipt.recursive_importable_candidate_count,
+               receipt.alternate_name_candidate_count,
+               receipt.extra_valid_candidate_count,
+               receipt.first_importable_path);
+        (void)remove(nested_save_path);
+        FS_RMDIR(nested_dir);
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    (void)remove(nested_save_path);
+    FS_RMDIR(nested_dir);
+
     printf("    PASS: corpus scan reports resume order, slot mask, importable "
-           "Firestaff/envelope saves, payload sizes, invalid saves and "
-           "first-importable payload promotion\n");
+           "Firestaff/envelope saves, recursive lowercase corpus saves, "
+           "payload sizes, invalid saves and first-importable payload promotion\n");
     cleanup_slot_dir(tmpdir);
     return 1;
 }
