@@ -33516,32 +33516,6 @@ int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
     return 1;
 }
 
-int M11_GameView_GetV1SlotBoxWoundedGraphicId(void) {
-    return dm1_v1_graphic_slot_box_wounded_pc34();
-}
-
-int M11_GameView_GetV1SlotBoxActingHandGraphicId(void) {
-    return dm1_v1_graphic_slot_box_acting_hand_pc34();
-}
-
-int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
-                                               int championSlot,
-                                               int handIndex) {
-    const struct ChampionState_Compat* champ;
-    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
-        handIndex < 0 || handIndex > 1 ||
-        championSlot >= state->world.party.championCount) {
-        return 0;
-    }
-    champ = &state->world.party.champions[championSlot];
-    if (!champ->present || champ->hp.current == 0) return 0;
-    return dm1_v1_champion_status_hand_slot_graphic_pc34(
-        handIndex,
-        (uint16_t)champ->wounds,
-        (handIndex == DM1_SLOT_ACTION_HAND &&
-         state->actingChampionOrdinal == (unsigned int)(championSlot + 1)));
-}
-
 int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
                                       int championSlot) {
     const struct ChampionState_Compat* champ;
@@ -33682,58 +33656,6 @@ int M11_GameView_GetV1FireShieldBorderGraphicId(void) {
 
 int M11_GameView_GetV1SpellShieldBorderGraphicId(void) {
     return dm1_v1_graphic_spell_shield_border_pc34();
-}
-
-static int m11_collect_v1_status_shield_border_graphics(
-    const M11_GameViewState* state,
-    int championSlot,
-    int outGraphics[3]) {
-    (void)championSlot;
-    if (!state) return 0;
-
-    return dm1_v1_champion_status_shield_border_graphics_pc34(
-        (int)state->world.magic.fireShieldDefense,
-        (int)state->world.magic.spellShieldDefense,
-        (int)state->world.magic.partyShieldDefense,
-        outGraphics);
-}
-
-int M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(
-    const M11_GameViewState* state, int championSlot) {
-    return m11_collect_v1_status_shield_border_graphics(
-        state, championSlot, NULL);
-}
-
-int M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(
-    const M11_GameViewState* state, int championSlot, int drawOrdinal) {
-    int graphics[3] = {0, 0, 0};
-    int count;
-    if (drawOrdinal < 0 || drawOrdinal >= 3) return 0;
-    count = m11_collect_v1_status_shield_border_graphics(
-        state, championSlot, graphics);
-    if (drawOrdinal >= count) return 0;
-    return graphics[drawOrdinal];
-}
-
-int M11_GameView_GetV1StatusShieldBorderGraphicForChampion(
-    const M11_GameViewState* state, int championSlot) {
-    int count = M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(
-        state, championSlot);
-    if (count <= 0) return 0;
-    return M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(
-        state, championSlot, count - 1);
-}
-
-int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) {
-    return M11_GameView_GetV1StatusShieldBorderGraphicForChampion(state, -1);
-}
-
-int M11_GameView_GetV1ChampionSmallDamageGraphicId(void) {
-    return dm1_v1_graphic_champion_damage_small_pc34();
-}
-
-int M11_GameView_GetV1ChampionBigDamageGraphicId(void) {
-    return dm1_v1_graphic_champion_damage_big_pc34();
 }
 
 int M11_GameView_GetV1CreatureDamageGraphicId(void) {
@@ -36818,9 +36740,9 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
     if (state->assetsAvailable) {
         unsigned int gfxIdx;
         if (isActingHand)
-            gfxIdx = (unsigned int)M11_GameView_GetV1SlotBoxActingHandGraphicId();
+            gfxIdx = (unsigned int)dm1_v1_graphic_slot_box_acting_hand_pc34();
         else if (isDead)
-            gfxIdx = (unsigned int)M11_GameView_GetV1SlotBoxWoundedGraphicId();
+            gfxIdx = (unsigned int)dm1_v1_graphic_slot_box_wounded_pc34();
         else
             gfxIdx = (unsigned int)dm1_v1_graphic_slot_box_normal_pc34();
 

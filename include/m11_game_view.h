@@ -1544,21 +1544,9 @@ int M11_GameView_GetV1StatusBarZone(int championSlot,
                                     int* outH);
 int M11_GameView_GetV1ChampionBarColor(int championSlot);
 int M11_GameView_GetV1StatusBarBlankColor(void);
-int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
-                                            int championSlot,
-                                            int handIndex);
-int M11_GameView_GetV1SlotBoxWoundedGraphicId(void);
-int M11_GameView_GetV1SlotBoxActingHandGraphicId(void);
 int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
                                           int championSlot,
                                           int handIndex);
-int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state);
-int M11_GameView_GetV1StatusShieldBorderGraphicForChampion(
-    const M11_GameViewState* state, int championSlot);
-int M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(
-    const M11_GameViewState* state, int championSlot);
-int M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(
-    const M11_GameViewState* state, int championSlot, int drawOrdinal);
 int M11_GameView_GetV1PartyShieldBorderGraphicId(void);
 int M11_GameView_GetV1FireShieldBorderGraphicId(void);
 int M11_GameView_GetV1SpellShieldBorderGraphicId(void);
@@ -1602,8 +1590,6 @@ int M11_GameView_GetV1DamageNumberOriginPc34(int championSlot,
                                              int inventoryChampion,
                                              int* outX,
                                              int* outY);
-int M11_GameView_GetV1ChampionSmallDamageGraphicId(void);
-int M11_GameView_GetV1ChampionBigDamageGraphicId(void);
 int M11_GameView_GetV1CreatureDamageGraphicId(void);
 int M11_GameView_GetV1MovementArrowsZoneId(void);
 int M11_GameView_GetV1MovementArrowsGraphicId(void);

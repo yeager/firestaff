@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 status-HUD wrapper retirement: removed public M11 wounded/acting slotbox, status-hand-slot, shield-border, and champion small/big damage graphic wrappers after moving consumers to DM1/ReDMCSB APIs; stale disabled-icon shield-border comments now reference the DM1 API. Verification: `firestaff_m11`, `test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat`, `test_dm1_v1_champion_status_layout_pc34_compat`, `test_m11_inventory_full_panel_runtime_pc34_compat`, and targeted old-symbol `rg` passed.
+
 - ✅ 2026-07-11 DM1 status-HUD runtime consumer cleanup: moved active M11 status-HUD drawing for hand-slot boxes, shield borders, and champion damage graphics from M11 wrapper calls to DM1/ReDMCSB status-layout and graphic-id APIs. Verification: `firestaff_m11`, `test_dm1_v1_champion_status_layout_pc34_compat`, `test_m11_v1_action_area_geometry_pc34_compat`, `test_m11_inventory_full_panel_runtime_pc34_compat`, and targeted runtime-call `rg` passed.
 
 - ✅ 2026-07-11 DM1 graphic-id M11 export cleanup: removed public M11 normal-slot and poison-label graphic-id wrappers and moved active inventory/status drawing to DM1/ReDMCSB graphic-id APIs. Verification: `firestaff_m11`, `test_dm1_v1_inventory_panel_mouse_routes_pc34_compat`, `test_m11_inventory_full_panel_runtime_pc34_compat`, targeted old-symbol `rg`, and focused build passed.
