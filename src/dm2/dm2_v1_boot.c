@@ -3740,6 +3740,79 @@ static int dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
     return 1;
 }
 
+static int dm2_v1_boot_creature_animation_semantics_add(
+    DM2_V1_BootProfile *profile,
+    int creature,
+    int max_frame_count,
+    uint32_t *io_hash,
+    uint32_t *io_byte_count,
+    uint32_t *io_nonzero_byte_count,
+    uint32_t *io_sequence_ref_count,
+    uint32_t *io_frame_ref_count)
+{
+    typedef struct {
+        int type;
+        int field;
+    } DM2_V1_CreatureAnimRawSpec;
+    static const DM2_V1_CreatureAnimRawSpec k_specs[] = {
+        { DM2_GDAT_ENTRY_TYPE_RAW8, DM2_GDAT_CREATURE_ANIM_ATTRIBUTION },
+        { DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE },
+        { DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_CREATURE_ANIM_FRAME_SEQUENCE },
+    };
+    DM2_V1_BootGraphicsDat *gfx;
+    int present_count = 0;
+
+    if (!profile || !profile->graphics_dat || !io_hash || !io_byte_count ||
+        !io_nonzero_byte_count || !io_sequence_ref_count ||
+        !io_frame_ref_count) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    for (size_t spec_i = 0; spec_i < sizeof(k_specs) / sizeof(k_specs[0]);
+         ++spec_i) {
+        const uint8_t *raw;
+        size_t raw_size = 0;
+        raw = dm2_v1_asset_load_typed_sized(&gfx->loader,
+                                            DM2_GDAT_CATEGORY_CREATURES,
+                                            creature,
+                                            k_specs[spec_i].type,
+                                            k_specs[spec_i].field,
+                                            &raw_size);
+        if (!raw || raw_size == 0 || raw_size > UINT32_MAX) {
+            continue;
+        }
+        ++present_count;
+        *io_hash = dm2_v1_boot_packaged_capture_hash_step(
+            *io_hash ? *io_hash : 0x32434153u,
+            (uint32_t)((creature << 16) |
+                       (k_specs[spec_i].type << 8) |
+                       k_specs[spec_i].field));
+        *io_hash = dm2_v1_boot_packaged_capture_hash_step(
+            *io_hash,
+            (uint32_t)raw_size);
+        *io_byte_count += (uint32_t)raw_size;
+        for (size_t i = 0; i < raw_size; ++i) {
+            uint8_t value = raw[i];
+            *io_hash =
+                dm2_v1_boot_packaged_capture_hash_step(*io_hash, value);
+            if (value != 0u) {
+                ++(*io_nonzero_byte_count);
+            }
+            if (k_specs[spec_i].field ==
+                    DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE &&
+                value != 0xffu) {
+                ++(*io_sequence_ref_count);
+            }
+            if (k_specs[spec_i].field ==
+                    DM2_GDAT_CREATURE_ANIM_FRAME_SEQUENCE &&
+                max_frame_count > 0 && value < (uint8_t)max_frame_count) {
+                ++(*io_frame_ref_count);
+            }
+        }
+    }
+    return present_count > 0;
+}
+
 static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
     DM2_V1_BootProfile *profile,
     int *out_portrait_count,
@@ -6689,6 +6762,15 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
                 dm2_v1_boot_packaged_capture_hash_step(
                     out_receipt->animation_table_hash,
                     (uint32_t)((creature << 8) | table_count));
+            (void)dm2_v1_boot_creature_animation_semantics_add(
+                profile,
+                creature,
+                out_receipt->max_frame_count,
+                &out_receipt->animation_semantic_hash,
+                &out_receipt->animation_semantic_byte_count,
+                &out_receipt->animation_semantic_nonzero_byte_count,
+                &out_receipt->animation_semantic_sequence_ref_count,
+                &out_receipt->animation_semantic_frame_ref_count);
         } else {
             out_receipt->animation_table_hash = before_hash;
             out_receipt->animation_table_byte_count = before_count;
@@ -6706,11 +6788,18 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
         out_receipt->animation_frame_sequence_count > 0 &&
         out_receipt->animation_frame_sequence_hash != 0u &&
         out_receipt->animation_frame_sequence_byte_count > 0u;
+    out_receipt->animation_semantic_ready =
+        out_receipt->animation_semantic_hash != 0u &&
+        out_receipt->animation_semantic_byte_count > 0u &&
+        out_receipt->animation_semantic_nonzero_byte_count > 0u &&
+        out_receipt->animation_semantic_sequence_ref_count > 0u &&
+        out_receipt->animation_semantic_frame_ref_count > 0u;
     out_receipt->animation_table_ready =
         (out_receipt->animation_table_field_mask & 0x07u) == 0x07u &&
         out_receipt->animation_attribution_ready &&
         out_receipt->animation_info_sequence_ready &&
         out_receipt->animation_frame_sequence_ready &&
+        out_receipt->animation_semantic_ready &&
         out_receipt->animation_table_hash != 0u &&
         out_receipt->animation_table_byte_count > 0u;
     if (out_receipt->min_frame_count == 9999) {
@@ -7023,6 +7112,8 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->creature_atlas.animation_attribution_hash != 0u &&
         out_receipt->creature_atlas.animation_info_sequence_hash != 0u &&
         out_receipt->creature_atlas.animation_frame_sequence_hash != 0u &&
+        out_receipt->creature_atlas.animation_semantic_ready &&
+        out_receipt->creature_atlas.animation_semantic_hash != 0u &&
         out_receipt->creature_atlas.frame_parity_hash != 0u;
     out_receipt->runtime_gdat_direction_breadth_complete =
         out_receipt->runtime_hud.render_sample_count == 4 &&
@@ -7135,6 +7226,12 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         hash, out_receipt->creature_atlas.animation_info_sequence_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->creature_atlas.animation_frame_sequence_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->creature_atlas.animation_semantic_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->creature_atlas.animation_semantic_sequence_ref_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->creature_atlas.animation_semantic_frame_ref_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->save_corpus_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(

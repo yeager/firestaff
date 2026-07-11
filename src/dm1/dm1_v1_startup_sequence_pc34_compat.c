@@ -3744,6 +3744,8 @@ int dm1_v1_startup_hoc_boot_probe_release_app_capture_ready_pc34(
            summary->presented_capture_pixels &&
            summary->presented_capture_chain_ready &&
            summary->host_capture_route_matches &&
+           summary->host_capture_route_packaged &&
+           summary->presented_capture_route_packaged &&
            summary->release_capture_ownership_ready &&
            summary->host_render_consumer_ready &&
            summary->m11_boot_probe_consumer_ready &&
