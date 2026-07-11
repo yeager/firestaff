@@ -14276,25 +14276,6 @@ int M11_GameView_CsbF0282ChampionPanelGateActive(
            state->world.party.champions[state->candidateMirrorPartyIndex].present;
 }
 
-int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
-                                       int* outX, int* outY,
-                                       int* outW, int* outH) {
-    DM1_WallOrnamentZoneBlitPc34 blit;
-    /* DUNVIEW.C G0205 G0205_aaauc_Graphic558_WallOrnamentCoordinateSets
-     * coordSet 5 / index 12 is the C346 D1C champion-mirror frame
-     * route (DUNVIEW.C:3913-3928).  The C026 champion portrait is a
-     * smaller cutout inside this wall-ornament box at (96,35)-(127,63). */
-    if (!state) return 0;
-    if (!dm1_v1_wall_ornament_zone_pc34(5, 12, &blit)) {
-        return 0;
-    }
-    if (outX) *outX = blit.dstX;
-    if (outY) *outY = blit.dstY;
-    if (outW) *outW = blit.width;
-    if (outH) *outH = blit.height;
-    return 1;
-}
-
 static int m11_disable_front_mirror_route(M11_GameViewState* state,
                                           int mirrorOrdinal) {
     int mapX;
@@ -20225,14 +20206,6 @@ typedef struct M11_DM1ZoneBlit {
     int height;
 } M11_DM1ZoneBlit;
 
-/* Forward declaration for the file-private DUNVIEW.C G0205 lookup,
- * so the public M11_GameView_GetDm1WallOrnamentZone wrapper below
- * (just before m11_dm1_wall_ornament_zone's definition) can call it
- * without a separate header dependency. */
-static int m11_dm1_wall_ornament_zone(int coordSet,
-                                      int viewWallIndex,
-                                      M11_DM1ZoneBlit* outBlit);
-
 /* ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set
  * when (mapX + mapY + direction) & 1.  When true, the wall-set swap tables
  * (G3048_WallSetFlipped / G3071_WallSetNotFlipped) exchange the L/R bitmap
@@ -20679,60 +20652,6 @@ static int m11_dm1_door_panel_graphic(const M11_GameViewState* state,
         (int)state->world.dungeon->maps[mapIdx].doorSet1 :
         (int)state->world.dungeon->maps[mapIdx].doorSet0;
     return dm1_v1_door_panel_graphic_for_set_depth_pc34(doorSet, depthIndex);
-}
-
-int M11_GameView_GetDm1WallOrnamentZone(int coordSet,
-                                        int viewWallIndex,
-                                        int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH) {
-    /* Public wrapper around m11_dm1_wall_ornament_zone.  Exposes the
-     * DUNVIEW.C G0205 lookup so probes can verify each (coordSet,
-     * viewWallIndex) destination box directly without re-typing the
-     * kZones[8][13][6] table.  coordSet 0..7, viewWallIndex 0..12.
-     * Returns 1 on a valid lookup, 0 on out-of-range or null out params.
-     *
-     * The ordinal-10 fullscreen_scale_rect gate probe uses this helper
-     * to confirm:
-     *   - coordSet=5/index=12 is the D1C champion-mirror frame route
-     *     (80, 29, 64, 43), which is the destination of the C026
-     *     champion portrait blit (DUNVIEW.C:3913-3928).
-     *   - coordSet=7/index=12 is the fullscreen D1C variant
-     *     (32, 9, 160, 111), which is wall-texture only and is NOT
-     *     a destination for the C026 champion portrait sprite.
-     * Both invariants must hold at the (1,5,N) GANDO / ordinal-10
-     * pose (C127 sensor with sensorData=10 on the (1,4) front
-     * square per DUNGEON.C:2573 + 2608-2612). */
-    M11_DM1ZoneBlit blit;
-    if (!outX || !outY || !outW || !outH) {
-        return 0;
-    }
-    if (!m11_dm1_wall_ornament_zone(coordSet, viewWallIndex, &blit)) {
-        return 0;
-    }
-    *outX = blit.dstX;
-    *outY = blit.dstY;
-    *outW = blit.width;
-    *outH = blit.height;
-    return 1;
-}
-
-static int m11_dm1_wall_ornament_zone(int coordSet,
-                                      int viewWallIndex,
-                                      M11_DM1ZoneBlit* outBlit) {
-    DM1_WallOrnamentZoneBlitPc34 blit;
-    if (!outBlit ||
-        !dm1_v1_wall_ornament_zone_pc34(coordSet, viewWallIndex, &blit)) {
-        return 0;
-    }
-    outBlit->srcX = blit.srcX;
-    outBlit->srcY = blit.srcY;
-    outBlit->dstX = blit.dstX;
-    outBlit->dstY = blit.dstY;
-    outBlit->width = blit.width;
-    outBlit->height = blit.height;
-    return 1;
 }
 
 static int m11_dm1_door_ornament_info(const M11_GameViewState* state,
