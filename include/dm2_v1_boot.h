@@ -966,6 +966,8 @@ typedef struct {
     int save_corpus_recursive_scan_depth_limit;
     int save_corpus_recursive_scan_candidate_cap;
     unsigned int save_corpus_valid_slot_mask;
+    uint32_t save_corpus_importable_kind_mask;
+    uint32_t save_corpus_importable_payload_hash;
     int save_corpus_import_promotion_ready;
     int save_corpus_first_importable_kind;
     size_t save_corpus_first_importable_payload_size;

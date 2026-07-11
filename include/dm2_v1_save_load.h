@@ -117,6 +117,8 @@ typedef struct {
     size_t   total_payload_size;
     size_t   largest_importable_payload_size;
     size_t   total_importable_payload_size;
+    uint32_t importable_kind_mask;
+    uint32_t importable_payload_hash;
     char     first_valid_path[256];
     char     first_importable_path[256];
 } DM2_SKSaveCorpusReceipt;

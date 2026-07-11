@@ -344,6 +344,28 @@ static void dm2_sksave_corpus_accept(DM2_SKSaveCorpusReceipt *receipt,
     }
 }
 
+static uint32_t dm2_sksave_corpus_hash_step(uint32_t hash, uint32_t value)
+{
+    hash ^= value;
+    hash *= 16777619u;
+    return hash;
+}
+
+static uint32_t dm2_sksave_corpus_payload_hash(const uint8_t *payload,
+                                               size_t payload_size,
+                                               uint32_t seed)
+{
+    uint32_t hash = seed ? seed : 0x32434f52u;
+    size_t i;
+    if (!payload || payload_size == 0u) {
+        return hash;
+    }
+    for (i = 0; i < payload_size; ++i) {
+        hash = dm2_sksave_corpus_hash_step(hash, payload[i]);
+    }
+    return hash;
+}
+
 static void dm2_sksave_corpus_classify_payload(
     DM2_SKSaveCorpusReceipt *receipt,
     const char *path,
@@ -353,6 +375,7 @@ static void dm2_sksave_corpus_classify_payload(
     uint8_t *payload;
     DM2_V1_SaveCandidate candidate;
     int status = 0;
+    int importable_kind_ok = 0;
 
     if (!receipt || !path || payload_size == 0u ||
         payload_size > (size_t)DM2_SESSION_MAX_SIZE) {
@@ -379,9 +402,6 @@ static void dm2_sksave_corpus_classify_payload(
         receipt->import_rejected_candidate_count++;
         return;
     }
-    free(payload);
-    fclose(f);
-
     receipt->importable_candidate_count++;
     receipt->total_importable_payload_size += payload_size;
     if (payload_size > receipt->largest_importable_payload_size) {
@@ -394,18 +414,34 @@ static void dm2_sksave_corpus_classify_payload(
     switch (candidate.kind) {
         case DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION:
             receipt->firestaff_session_candidate_count++;
+            importable_kind_ok = 1;
             break;
         case DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE:
             receipt->original_envelope_candidate_count++;
+            importable_kind_ok = 1;
             break;
         case DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW:
             receipt->original_raw_candidate_count++;
+            importable_kind_ok = 1;
             break;
         default:
             receipt->import_rejected_candidate_count++;
             receipt->importable_candidate_count--;
             break;
     }
+    if (importable_kind_ok) {
+        receipt->importable_kind_mask |=
+            1u << ((unsigned int)candidate.kind & 31u);
+        receipt->importable_payload_hash =
+            dm2_sksave_corpus_payload_hash(
+                payload,
+                payload_size,
+                receipt->importable_payload_hash
+                    ? receipt->importable_payload_hash
+                    : 0x32534b43u);
+    }
+    free(payload);
+    fclose(f);
 }
 
 static void dm2_sksave_corpus_probe_candidate(
