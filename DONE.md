@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 mirror-click/leader API cleanup: moved resurrect-rearm, double-open/close, and chest-reopen cross-champion callers from old `Dm1V1MirrorClickClosed*Compat` / `Dm1V1ChampionLeader*Compat` aliases to the direct DM1/ReDMCSB names, then removed the public alias typedefs/macros. Verification: `firestaff_m11`, `test_dm1_v1_champion_mirror_click_closed_pc34_compat`, `test_dm1_v1_champion_leader_pc34_compat`, `test_dm1_v1_mirror_candidate_double_open_close_pc34_compat`, targeted alias `rg`, and whitespace scan passed.
+
 - ✅ 2026-07-11 DM1 HoC champion-mirror API cleanup: removed the unused old `Dm1V1ChampionMirror*Compat` type aliases and `DM1_V1_ChampionMirror_*Pc34Compat` macro aliases from the public champion-mirror header. M11, startup, overlay, and mirror tests already consume the DM1/ReDMCSB receipt API directly. Verification: `firestaff_m11`, `test_dm1_v1_champion_mirror_pc34_compat`, `test_m11_overlay_command_queue_block`, targeted alias `rg`, and whitespace scan passed.
 
 - ✅ 2026-07-11 DM1 entrance full-graphics host-ready gate: added a DM1/ReDMCSB host-ready validator for the F0797 entrance micro-dungeon and C563/G0562 asset receipt, then made M11 consume it before drawing the entrance transition; missing real GRAPHICS.DAT entrance assets now stop the full-graphics path instead of falling back to host-drawn closed/opening doors. Verification: `firestaff_m11`, `test_dm1_v1_entrance_champion_select_pc34_compat`, and whitespace scan passed.
