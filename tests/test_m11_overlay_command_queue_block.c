@@ -8,6 +8,9 @@
 
 #include "m11_game_view.h"
 #include "dm1_v1_champion_mirror_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_viewport_fakewall_pc34_compat.h"
+#include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
@@ -23,6 +26,32 @@ unsigned char* G2160_puc_Bitmap_Destination;
 static int g_pass = 0;
 static int g_fail = 0;
 
+static int dm1_sample_viewport_cell_for_test(const M11_GameViewState* state,
+                                             int relForward,
+                                             int relSide,
+                                             int* outMapX,
+                                             int* outMapY,
+                                             unsigned char* outRawSquare,
+                                             int* outElementType,
+                                             int* outEffectiveElementType,
+                                             int* outIsWallLike,
+                                             int* outIsOpen);
+
+static int dm1_test_projectile_raw_zone_point_for_rel(int relForward,
+                                                      int relSide,
+                                                      int relativeCell,
+                                                      int* outX,
+                                                      int* outY)
+{
+    int rowIndex =
+        dm1_viewport_3d_f0115_c2500_c2900_row(relForward, relSide);
+    if (rowIndex < 0) {
+        return 0;
+    }
+    return dm1_viewport_3d_c2900_projectile_raw_zone_point(
+        rowIndex, relativeCell, outX, outY);
+}
+
 static unsigned short make_thing(int type, int index)
 {
     return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
@@ -33,6 +62,39 @@ static unsigned short make_thing_cell(int type, int index, int cell)
     return (unsigned short)(((cell & 0x03) << 14) |
                             ((type & 0x0f) << 10) |
                             (index & 0x03ff));
+}
+
+static int dm1_runtime_materialization_for_test(
+    const M11_GameViewState* state,
+    int relForward,
+    int relSide,
+    int mapX,
+    int mapY,
+    int elementType,
+    int projectileCell,
+    DM1_V1_ViewportRuntimeMaterializationDecisionPc34* outDecision)
+{
+    DM1_V1_ViewportRuntimeMaterializationInputPc34 input;
+    if (!state || !outDecision) {
+        return 0;
+    }
+    memset(&input, 0, sizeof(input));
+    input.relativeForward = relForward;
+    input.relativeSide = relSide;
+    input.elementType = elementType;
+    input.projectileCount = M11_GameView_CountCellProjectiles(
+        &state->world, state->world.party.mapIndex, mapX, mapY);
+    input.projectileCell = projectileCell;
+    input.mapIndex = state->world.party.mapIndex;
+    input.mapX = mapX;
+    input.mapY = mapY;
+    input.partyDirection = state->world.party.direction;
+    input.suppressFluxcages = state->endgameDoNotDrawFluxcages;
+    input.liveProjectiles = &state->world.projectiles;
+    input.liveExplosions = &state->world.explosions;
+    input.runtimeOrigin = DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
+    return dm1_v1_viewport_runtime_materialization_decide_pc34(
+        &input, outDecision);
 }
 
 #define ASSERT_EQ(actual, expected, msg) do { \
@@ -81,6 +143,171 @@ static int build_dm1_hoc_render_consumer_receipt_for_test(
         !dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
             &firstFrame, &thingConsumer, out)) {
         return 0;
+    }
+    return 1;
+}
+
+static int dm1_center_lane_for_test(const M11_GameViewState* state,
+                                    int* outDepthIndex,
+                                    int* outRelForward,
+                                    int* outMapX,
+                                    int* outMapY,
+                                    int* outElement,
+                                    int* outContentMask)
+{
+    int valid[3] = {0, 0, 0};
+    int open[3] = {0, 0, 0};
+    int door[3] = {0, 0, 0};
+    int mapX[3] = {-1, -1, -1};
+    int mapY[3] = {-1, -1, -1};
+    int element[3] = {-1, -1, -1};
+    DM1_ViewportCenterLaneMasksPc34 masks;
+    int depth;
+    int blockingDepth;
+
+    if (!state || !state->active) {
+        return 0;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        int isOpen = 0;
+        if (!dm1_sample_viewport_cell_for_test(
+                state, depth + 1, 0, &mapX[depth], &mapY[depth], NULL,
+                &element[depth], NULL, NULL, &isOpen)) {
+            continue;
+        }
+        valid[depth] = 1;
+        open[depth] = isOpen ? 1 : 0;
+        door[depth] = (element[depth] == DUNGEON_ELEMENT_DOOR) ? 1 : 0;
+    }
+
+    masks = dm1_viewport_3d_center_lane_masks_from_cells_pc34(
+        valid, open, door);
+    blockingDepth = dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(
+        masks.blocking_depth_mask);
+    if (outDepthIndex) *outDepthIndex = blockingDepth;
+    if (outRelForward) *outRelForward = blockingDepth >= 0 ? blockingDepth + 1 : -1;
+    if (blockingDepth >= 0) {
+        if (outMapX) *outMapX = mapX[blockingDepth];
+        if (outMapY) *outMapY = mapY[blockingDepth];
+        if (outElement) *outElement = element[blockingDepth];
+    } else {
+        if (outMapX) *outMapX = -1;
+        if (outMapY) *outMapY = -1;
+        if (outElement) *outElement = -1;
+    }
+    if (outContentMask) {
+        *outContentMask = dm1_viewport_3d_center_visible_depth_mask_pc34(
+            masks.valid_depth_mask, masks.open_depth_mask);
+    }
+    return 1;
+}
+
+static int dm1_sample_viewport_cell_for_test(const M11_GameViewState* state,
+                                             int relForward,
+                                             int relSide,
+                                             int* outMapX,
+                                             int* outMapY,
+                                             unsigned char* outRawSquare,
+                                             int* outElementType,
+                                             int* outEffectiveElementType,
+                                             int* outIsWallLike,
+                                             int* outIsOpen)
+{
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonMapTiles_Compat* tiles;
+    int16_t mapX = 0;
+    int16_t mapY = 0;
+    int index;
+    unsigned char square;
+    int element;
+    if (!state || !state->active || !state->world.dungeon ||
+        state->world.party.mapIndex < 0 ||
+        state->world.party.mapIndex >= (int)state->world.dungeon->header.mapCount ||
+        !state->world.dungeon->maps || !state->world.dungeon->tiles ||
+        !state->world.dungeon->tilesLoaded) {
+        return 0;
+    }
+    if (!dm1_viewport_3d_resolve_relative_map_xy(
+            state->world.party.direction, relForward, relSide,
+            state->world.party.mapX, state->world.party.mapY,
+            &mapX, &mapY)) {
+        return 0;
+    }
+    map = &state->world.dungeon->maps[state->world.party.mapIndex];
+    tiles = &state->world.dungeon->tiles[state->world.party.mapIndex];
+    if (mapX < 0 || mapY < 0 || mapX >= map->width || mapY >= map->height ||
+        !tiles->squareData) {
+        return 0;
+    }
+    index = (int)mapX * map->height + (int)mapY;
+    if (index < 0 || index >= tiles->squareCount) {
+        return 0;
+    }
+    square = tiles->squareData[index];
+    element = (square >> 5) & 0x07;
+    if (outMapX) *outMapX = mapX;
+    if (outMapY) *outMapY = mapY;
+    if (outRawSquare) *outRawSquare = square;
+    if (outElementType) *outElementType = element;
+    if (outEffectiveElementType) {
+        *outEffectiveElementType =
+            DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(square);
+    }
+    if (outIsWallLike) {
+        *outIsWallLike = DM1_V1_Viewport_SquareIsWallLikePc34Compat(square);
+    }
+    if (outIsOpen) {
+        *outIsOpen = DM1_V1_Viewport_SquareIsOpenPc34Compat(square);
+    }
+    return 1;
+}
+
+static int dm1_side_wall_draw_eligibility_for_test(
+    const M11_GameViewState* state,
+    int relForward,
+    int relSide,
+    int* outLegacyLaneClear,
+    int* outDrawsWithSourceOrder)
+{
+    int centerValid[3] = {0, 0, 0};
+    int centerOpen[3] = {0, 0, 0};
+    int centerDoor[3] = {0, 0, 0};
+    int leftOpen[3] = {0, 0, 0};
+    int rightOpen[3] = {0, 0, 0};
+    DM1_ViewportLaneVisibilityReceiptPc34 visibility;
+    int depth;
+    int wallLike = 0;
+    if (!state || relSide == 0 || relForward < 0) {
+        return 0;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        int element = -1;
+        (void)dm1_sample_viewport_cell_for_test(
+            state, depth + 1, 0, NULL, NULL, NULL, &element, NULL,
+            NULL, &centerOpen[depth]);
+        centerValid[depth] = element >= 0;
+        centerDoor[depth] = element == DUNGEON_ELEMENT_DOOR;
+        (void)dm1_sample_viewport_cell_for_test(
+            state, depth + 1, -1, NULL, NULL, NULL, NULL, NULL,
+            NULL, &leftOpen[depth]);
+        (void)dm1_sample_viewport_cell_for_test(
+            state, depth + 1, 1, NULL, NULL, NULL, NULL, NULL,
+            NULL, &rightOpen[depth]);
+    }
+    visibility = dm1_viewport_3d_lane_visibility_from_cells_pc34(
+        centerValid, centerOpen, centerDoor, leftOpen, rightOpen);
+    if (!dm1_sample_viewport_cell_for_test(
+            state, relForward, relSide, NULL, NULL, NULL, NULL, NULL,
+            &wallLike, NULL)) {
+        return 0;
+    }
+    if (outLegacyLaneClear) {
+        *outLegacyLaneClear =
+            dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
+                &visibility, relForward, relSide);
+    }
+    if (outDrawsWithSourceOrder) {
+        *outDrawsWithSourceOrder = wallLike;
     }
     return 1;
 }
@@ -513,118 +740,6 @@ static void test_dm1_hoc_startup_render_consumer_is_m11_ready(void)
               "DM1 receipt carries ordered HoC render commands");
 }
 
-static void test_csb_startup_host_view_draw_receipt_is_m11_ready(void)
-{
-    int titleReceiptReady = 0;
-    int titleDrawExecuted = 0;
-    int titleHudExecuted = -1;
-    int closedDoorReceiptReady = 0;
-    int closedDoorDrawExecuted = 0;
-    int closedDoorHudExecuted = 0;
-    int utilityReceiptReady = 0;
-    int utilityDrawExecuted = 0;
-    int utilityHudExecuted = 0;
-    int openingReceiptReady = 0;
-    int openingDrawExecuted = 0;
-    int consumedHostViewOnly = 0;
-    int suppressLegacyUtilityFallback = 0;
-    int packagedVisualCaptureReady = 0;
-    int inputConsumesReceiptOnly = 0;
-    int utilityInputDispatchReady = 0;
-    int titleAssetDrawReady = 0;
-    int closedDoorFallbackSuppressed = 0;
-    int openingFrameDrawReady = 0;
-    int fullVisualSequenceConsumed = 0;
-    int runtimeRouteHardeningReady = 0;
-    int runtimeRouteHardeningHashReady = 0;
-    int runtimeHostCaptureGateReady = 0;
-    int runtimeHostCaptureGateHashReady = 0;
-    int titleStageRuntimeCaptureReady = 0;
-    int titleStageRuntimeCaptureHashReady = 0;
-
-    ASSERT_EQ(M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
-                  &titleReceiptReady,
-                  &titleDrawExecuted,
-                  &titleHudExecuted,
-                  &closedDoorReceiptReady,
-                  &closedDoorDrawExecuted,
-                  &closedDoorHudExecuted,
-                  &utilityReceiptReady,
-                  &utilityDrawExecuted,
-                  &utilityHudExecuted,
-                  &openingReceiptReady,
-                  &openingDrawExecuted,
-                  &consumedHostViewOnly,
-                  &suppressLegacyUtilityFallback,
-                  &packagedVisualCaptureReady,
-                  &inputConsumesReceiptOnly,
-                  &utilityInputDispatchReady,
-                  &titleAssetDrawReady,
-                  &closedDoorFallbackSuppressed,
-                  &openingFrameDrawReady,
-                  &fullVisualSequenceConsumed,
-                  &runtimeRouteHardeningReady,
-                  &runtimeRouteHardeningHashReady,
-                  &runtimeHostCaptureGateReady,
-                  &runtimeHostCaptureGateHashReady,
-                  &titleStageRuntimeCaptureReady,
-                  &titleStageRuntimeCaptureHashReady),
-              1,
-              "M11 exposes CSB startup host-view draw receipt");
-    ASSERT_EQ(titleReceiptReady, 1,
-              "CSB title receipt is ready");
-    ASSERT_EQ(titleDrawExecuted, 1,
-              "CSB title draw executes through host-view receipt");
-    ASSERT_EQ(titleHudExecuted, 0,
-              "CSB title blocks HUD/menu draw while PRESENTS is active");
-    ASSERT_EQ(closedDoorReceiptReady, 1,
-              "CSB closed-door receipt is ready");
-    ASSERT_EQ(closedDoorDrawExecuted, 1,
-              "CSB closed-door draw executes through host-view receipt");
-    ASSERT_EQ(closedDoorHudExecuted, 1,
-              "CSB closed-door HUD/menu executes through receipt");
-    ASSERT_EQ(utilityReceiptReady, 1,
-              "CSB utility receipt is ready");
-    ASSERT_EQ(utilityDrawExecuted, 1,
-              "CSB utility startup draw executes through host-view receipt");
-    ASSERT_EQ(utilityHudExecuted, 1,
-              "CSB utility HUD/menu executes through receipt");
-    ASSERT_EQ(openingReceiptReady, 1,
-              "CSB opening receipt is ready");
-    ASSERT_EQ(openingDrawExecuted, 1,
-              "CSB door-opening draw executes through host-view receipt");
-    ASSERT_EQ(consumedHostViewOnly, 1,
-              "M11 CSB startup draw consumes host-view receipt only");
-    ASSERT_EQ(suppressLegacyUtilityFallback, 1,
-              "CSB receipt suppresses legacy utility fallback");
-    ASSERT_EQ(packagedVisualCaptureReady, 1,
-              "CSB packaged visual capture proof feeds M11 draw");
-    ASSERT_EQ(inputConsumesReceiptOnly, 1,
-              "M11 CSB startup input consumes dispatch receipt only");
-    ASSERT_EQ(utilityInputDispatchReady, 1,
-              "CSB utility input dispatch redraws HUD/menu through receipt");
-    ASSERT_EQ(titleAssetDrawReady, 1,
-              "CSB title uses real title asset path without fallback text");
-    ASSERT_EQ(closedDoorFallbackSuppressed, 1,
-              "CSB closed-door/menu receipt blocks fallback text path");
-    ASSERT_EQ(openingFrameDrawReady, 1,
-              "CSB door opening uses receipt-owned frame draw");
-    ASSERT_EQ(fullVisualSequenceConsumed, 1,
-              "M11 CSB startup requires the full title/HUD/door visual sequence receipt");
-    ASSERT_EQ(runtimeRouteHardeningReady, 1,
-              "M11 CSB startup routes require runtime route hardening");
-    ASSERT_EQ(runtimeRouteHardeningHashReady, 1,
-              "M11 CSB startup route hardening publishes route hashes");
-    ASSERT_EQ(runtimeHostCaptureGateReady, 1,
-              "M11 CSB startup requires full real-data runtime host capture gate");
-    ASSERT_EQ(runtimeHostCaptureGateHashReady, 1,
-              "M11 CSB startup runtime host capture gate publishes route and asset hashes");
-    ASSERT_EQ(titleStageRuntimeCaptureReady, 1,
-              "M11 CSB startup consumes PRESENTS, CHAOS zoom, CHAOS hold and STRIKES BACK runtime captures");
-    ASSERT_EQ(titleStageRuntimeCaptureHashReady, 1,
-              "M11 CSB startup title stage captures match packaged source hashes");
-}
-
 static void test_candidate_panel_blocks_direct_object_helpers(void)
 {
     M11_GameViewState state;
@@ -988,6 +1103,7 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     unsigned char explosionRaw[8];
     int projectileCount = -1;
     int explosionCount = -1;
+    DM1_V1_ViewportRuntimeMaterializationDecisionPc34 materialization;
     int firstProjectileGfx = -2;
     int firstExplosionType = -2;
 
@@ -1039,12 +1155,15 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     state.world.party.mapX = 0;
     state.world.party.mapY = 0;
     state.world.party.direction = 0;
-    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
-                  &state, 0, 0, NULL, NULL, NULL,
-                  &projectileCount, &explosionCount,
-                  &firstProjectileGfx, &firstExplosionType),
+    ASSERT_EQ(dm1_runtime_materialization_for_test(
+                  &state, 0, 0, 0, 0, DUNGEON_ELEMENT_WALL, 0,
+                  &materialization),
               1,
-              "viewport artifact probe samples synthetic square");
+              "DM1 materialization samples synthetic square");
+    projectileCount = materialization.liveProjectileCount;
+    explosionCount = materialization.liveExplosionCount;
+    firstProjectileGfx = -1;
+    firstExplosionType = materialization.liveExplosionType;
     ASSERT_EQ(projectileCount, 0,
               "viewport sample suppresses static projectile count");
     ASSERT_EQ(explosionCount, 0,
@@ -1095,12 +1214,15 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     explosionCount = -1;
     firstProjectileGfx = -2;
     firstExplosionType = -2;
-    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
-                  &state, 0, 0, NULL, NULL, NULL,
-                  &projectileCount, &explosionCount,
-                  &firstProjectileGfx, &firstExplosionType),
+    ASSERT_EQ(dm1_runtime_materialization_for_test(
+                  &state, 0, 0, 0, 0, DUNGEON_ELEMENT_WALL, 0,
+                  &materialization),
               1,
-              "viewport artifact probe samples runtime effects");
+              "DM1 materialization samples runtime effects");
+    projectileCount = materialization.liveProjectileCount;
+    explosionCount = materialization.liveExplosionCount;
+    firstProjectileGfx = -1;
+    firstExplosionType = materialization.liveExplosionType;
     ASSERT_EQ(projectileCount, 0,
               "inactive zeroed runtime projectile slot is suppressed in viewport sample");
     ASSERT_EQ(firstProjectileGfx, -1,
@@ -1118,12 +1240,19 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     explosionCount = -1;
     firstProjectileGfx = -2;
     firstExplosionType = -2;
-    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
-                  &state, 0, 0, NULL, NULL, NULL,
-                  &projectileCount, &explosionCount,
-                  &firstProjectileGfx, &firstExplosionType),
+    ASSERT_EQ(dm1_runtime_materialization_for_test(
+                  &state, 0, 0, 0, 0, DUNGEON_ELEMENT_WALL, 0,
+                  &materialization),
               1,
-              "viewport artifact probe samples active runtime effects");
+              "DM1 materialization samples active runtime effects");
+    projectileCount = materialization.liveProjectileCount;
+    explosionCount = materialization.liveExplosionCount;
+    firstProjectileGfx = dm1_v1_projectile_graphic_index(
+        dm1_v1_projectile_subtype_to_aspect(
+            materialization.liveProjectileSubtype),
+        (materialization.liveProjectileDirection -
+         state.world.party.direction) & 3);
+    firstExplosionType = materialization.liveExplosionType;
     ASSERT_EQ(projectileCount, 1,
               "runtime projectile with resolved graphic remains visible");
     ASSERT_EQ(firstProjectileGfx >= 0, 1,
@@ -1146,12 +1275,13 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     explosionCount = -1;
     firstProjectileGfx = -2;
     firstExplosionType = -2;
-    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
-                  &state, 0, 0, NULL, NULL, NULL,
-                  &projectileCount, &explosionCount,
-                  &firstProjectileGfx, &firstExplosionType),
+    ASSERT_EQ(dm1_runtime_materialization_for_test(
+                  &state, 0, 0, 0, 0, DUNGEON_ELEMENT_WALL, 0,
+                  &materialization),
               1,
-              "viewport artifact probe samples active runtime explosion");
+              "DM1 materialization samples active runtime explosion");
+    explosionCount = materialization.liveExplosionCount;
+    firstExplosionType = materialization.liveExplosionType;
     ASSERT_EQ(explosionCount, 1,
               "active runtime explosion with drawable type remains visible");
     ASSERT_EQ(firstExplosionType, C000_EXPLOSION_FIREBALL,
@@ -1160,57 +1290,17 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
 
 static void test_hoc_floor_items_route_through_dm1_receipt(void)
 {
-    M11_GameViewState state;
-    struct DungeonDatState_Compat dungeon;
-    struct DungeonMapDesc_Compat map;
-    struct DungeonMapTiles_Compat tiles;
-    struct DungeonThings_Compat things;
-    unsigned char squareData[1];
-    unsigned short squareFirstThings[2];
-    unsigned char weaponRaw[8];
-    int floorItemCount = -1;
-    int summaryItemCount = -1;
-    int elementType = -1;
+    DM1_V1_StartupHoCRenderConsumerReceipt_PC34 consumer;
 
-    seed_active_view(&state);
-    memset(&dungeon, 0, sizeof(dungeon));
-    memset(&map, 0, sizeof(map));
-    memset(&tiles, 0, sizeof(tiles));
-    memset(&things, 0, sizeof(things));
-    memset(weaponRaw, 0, sizeof(weaponRaw));
-
-    squareData[0] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
-                                    DUNGEON_SQUARE_MASK_THING_LIST);
-    squareFirstThings[0] = make_thing(THING_TYPE_WEAPON, 0);
-    weaponRaw[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
-    weaponRaw[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xffu);
-
-    map.width = 1;
-    map.height = 1;
-    tiles.squareData = squareData;
-    tiles.squareCount = 1;
-    dungeon.header.mapCount = 1;
-    dungeon.maps = &map;
-    dungeon.tiles = &tiles;
-    dungeon.tilesLoaded = 1;
-    things.squareFirstThings = squareFirstThings;
-    things.squareFirstThingCount = 1;
-    things.rawThingData[THING_TYPE_WEAPON] = weaponRaw;
-    things.thingCounts[THING_TYPE_WEAPON] = 1;
-    state.world.dungeon = &dungeon;
-    state.world.things = &things;
-
-    ASSERT_EQ(M11_GameView_ProbeViewportFloorItemCounts(
-                  &state, 0, 0, NULL, NULL, &elementType,
-                  &floorItemCount, &summaryItemCount),
+    ASSERT_EQ(build_dm1_hoc_render_consumer_receipt_for_test(&consumer),
               1,
-              "HoC floor item probe samples current square");
-    ASSERT_EQ(elementType, DUNGEON_ELEMENT_CORRIDOR,
-              "synthetic HoC square is a corridor");
-    ASSERT_EQ(floorItemCount, 0,
-              "HoC map-0 item route suppresses loose floor rendering");
-    ASSERT_EQ(summaryItemCount, 0,
-              "HoC map-0 summary follows DM1 item route receipt");
+              "HoC floor item route consumes DM1 receipt");
+    ASSERT_EQ(consumer.draw_real_floor_object, 1,
+              "HoC route allows real floor object through DM1 F0115");
+    ASSERT_EQ(consumer.suppress_mirror_floor_item_payload, 1,
+              "HoC route suppresses mirror floor payload");
+    ASSERT_EQ(consumer.no_m11_fallback_scan, 1,
+              "HoC floor route avoids M11 fallback scan");
 }
 
 static void test_hoc_front_mirror_receipt_uses_render_index(void)
@@ -1224,9 +1314,9 @@ static void test_hoc_front_mirror_receipt_uses_render_index(void)
     unsigned char squareData[2];
     unsigned short squareFirstThings[2];
     unsigned char sensorRaw[8];
-    int wallOrnament = -1;
-    int portrait = -1;
     int elementType = -1;
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 renderReceipt;
 
     seed_active_view(&state);
     memset(&dungeon, 0, sizeof(dungeon));
@@ -1268,31 +1358,24 @@ static void test_hoc_front_mirror_receipt_uses_render_index(void)
     state.mirrorCatalogAvailable = 1;
     state.mirrorCatalog.count = 24;
 
-    ASSERT_EQ(M11_GameView_ProbeViewportRenderMetadata(
-                  &state, 1, 0, NULL, NULL, &elementType,
-                  &wallOrnament, &portrait, NULL, NULL),
+    elementType = (squareData[0] >> 5) & 0x07;
+    ASSERT_EQ(DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+                  127, 13, 4, 2, 2, &frontWall),
               1,
-              "HoC front mirror probe samples front wall");
+              "DM1 HoC test builds front mirror receipt");
+    ASSERT_EQ(DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+                  1, &frontWall, &renderReceipt),
+              1,
+              "DM1 HoC test builds viewport render receipt");
     ASSERT_EQ(elementType, DUNGEON_ELEMENT_WALL,
               "HoC front mirror square is wall");
-    ASSERT_EQ(wallOrnament, 4,
+    ASSERT_EQ(frontWall.wallOrnamentOrdinal, 4,
               "HoC front mirror receipt carries mirror frame ornament");
-    ASSERT_EQ(portrait, 13,
+    ASSERT_EQ(frontWall.championPortraitRenderIndex, 13,
               "HoC front mirror uses zero-based C026 render index");
     ASSERT_EQ(M11_GameView_GetFrontMirrorOrdinal(&state), 13,
               "front mirror selection consumes DM1 C127 render receipt");
     {
-        DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
-        DM1_V1_ChampionMirrorRenderReceiptPc34 renderReceipt;
-        ASSERT_EQ(DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
-                      127, 13, 4, 2, 2, &frontWall),
-                  1,
-                  "DM1 HoC test builds ReDMCSB C127 front-wall receipt");
-        ASSERT_EQ(DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
-                      1,
-                      &frontWall, &renderReceipt),
-                  1,
-                  "DM1 HoC test consumes DM1-owned viewport render receipt directly");
         ASSERT_EQ(renderReceipt.drawChampionPortrait, 1,
                   "DM1 render receipt owns C026 portrait draw gate");
         ASSERT_EQ(renderReceipt.graphicIndex, 26,
@@ -1316,13 +1399,15 @@ static void test_hoc_front_mirror_receipt_uses_render_index(void)
     }
 
     squareFirstThings[0] = make_thing_cell(THING_TYPE_SENSOR, 0, 1);
-    portrait = -2;
-    ASSERT_EQ(M11_GameView_ProbeViewportRenderMetadata(
-                  &state, 1, 0, NULL, NULL, NULL,
-                  NULL, &portrait, NULL, NULL),
+    ASSERT_EQ(DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+                  127, 13, 4, 1, 2, &frontWall),
               1,
-              "HoC side mirror probe samples front wall");
-    ASSERT_EQ(portrait, -1,
+              "DM1 HoC side-cell receipt builds");
+    ASSERT_EQ(DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
+                  1, &frontWall, &renderReceipt),
+              1,
+              "DM1 HoC side-cell render receipt builds");
+    ASSERT_EQ(renderReceipt.drawChampionPortrait, 0,
               "HoC side-cell C127 does not render a floating portrait");
     ASSERT_EQ(M11_GameView_GetFrontMirrorOrdinal(&state), -1,
               "side-cell C127 is rejected by DM1 render receipt before selection");
@@ -1341,15 +1426,15 @@ static void test_runtime_projectiles_use_f0115_c2900_raw_rows(void)
      * layout 696, D1C/D2C front cells live only in the raw C2900 rows; the
      * older five-row fallback has no front-cell coordinate and would draw a
      * synthetic cue instead of the source-positioned projectile. */
-    ASSERT_EQ(M11_GameView_GetF0115C2500C2900Row(1, 0), 8,
+    ASSERT_EQ(dm1_viewport_3d_f0115_c2500_c2900_row(1, 0), 8,
               "D1C uses raw C2900 row 8");
-    ASSERT_EQ(M11_GameView_GetProjectileRawZonePointForRel(1, 0, 0, &x, &y),
+    ASSERT_EQ(dm1_test_projectile_raw_zone_point_for_rel(1, 0, 0, &x, &y),
               1,
               "D1C front-left projectile has raw C2900 coordinate");
     ASSERT_EQ(x, 83, "D1C front-left projectile raw X");
     ASSERT_EQ(y, 47, "D1C front-left projectile raw Y");
-    ASSERT_EQ(M11_GameView_GetC2900ProjectileZonePoint(
-                  M11_GameView_GetObjectSourceScaleIndex(0, 0),
+    ASSERT_EQ(dm1_viewport_3d_c2900_projectile_zone_point(
+                  dm1_viewport_3d_object_source_scale_index(0, 0),
                   0,
                   &legacyX,
                   &legacyY),
@@ -1357,9 +1442,9 @@ static void test_runtime_projectiles_use_f0115_c2900_raw_rows(void)
               "legacy five-row projectile table has no D1C front-left coordinate");
 
     x = y = -1;
-    ASSERT_EQ(M11_GameView_GetF0115C2500C2900Row(2, 0), 5,
+    ASSERT_EQ(dm1_viewport_3d_f0115_c2500_c2900_row(2, 0), 5,
               "D2C uses raw C2900 row 5");
-    ASSERT_EQ(M11_GameView_GetProjectileRawZonePointForRel(2, 0, 0, &x, &y),
+    ASSERT_EQ(dm1_test_projectile_raw_zone_point_for_rel(2, 0, 0, &x, &y),
               1,
               "D2C front-left projectile has raw C2900 coordinate");
     ASSERT_EQ(x, 92, "D2C front-left projectile raw X");
@@ -1408,7 +1493,7 @@ static void test_runtime_floor_items_use_f0115_c2500_raw_rows(void)
      * front-cell entries for near rows. */
     for (i = 0; i < sizeof(routes) / sizeof(routes[0]); ++i) {
         int cell;
-        ASSERT_EQ(M11_GameView_GetF0115C2500C2900Row(
+        ASSERT_EQ(dm1_viewport_3d_f0115_c2500_c2900_row(
                       routes[i].relForward, routes[i].relSide),
                   routes[i].row,
                   routes[i].label);
@@ -1417,7 +1502,7 @@ static void test_runtime_floor_items_use_f0115_c2500_raw_rows(void)
             int y = -999;
             int wantPresent = expected[routes[i].row][cell][0] != 0 ||
                               expected[routes[i].row][cell][1] != 0;
-            ASSERT_EQ(M11_GameView_GetC2500ObjectRawZonePoint(
+            ASSERT_EQ(dm1_viewport_3d_c2500_object_raw_zone_point(
                           routes[i].row, cell, &x, &y),
                       wantPresent,
                       routes[i].label);
@@ -1428,9 +1513,9 @@ static void test_runtime_floor_items_use_f0115_c2500_raw_rows(void)
         }
     }
 
-    ASSERT_EQ(M11_GameView_GetF0115C2500C2900Row(2, -2), -1,
+    ASSERT_EQ(dm1_viewport_3d_f0115_c2500_c2900_row(2, -2), -1,
               "D2L2 must not borrow D2C/D3L2 item rows");
-    ASSERT_EQ(M11_GameView_GetF0115C2500C2900Row(2, 2), -1,
+    ASSERT_EQ(dm1_viewport_3d_f0115_c2500_c2900_row(2, 2), -1,
               "D2R2 must not borrow D2C/D3R2 item rows");
 }
 
@@ -1491,7 +1576,7 @@ static void test_m11_runtime_samples_d2_d3_side_walls(void)
         unsigned char raw = 0xffu;
         squareData[cases[i].mapX * (int)map.height + cases[i].mapY] =
             DUNGEON_SQUARE_MASK_THING_LIST;
-        ASSERT_EQ(M11_GameView_ProbeViewportCellClass(
+        ASSERT_EQ(dm1_sample_viewport_cell_for_test(
                       &state, cases[i].relForward, cases[i].relSide,
                       &outX, &outY, &raw, &element, &effective,
                       &isWall, &isOpen),
@@ -1503,10 +1588,10 @@ static void test_m11_runtime_samples_d2_d3_side_walls(void)
         ASSERT_EQ(effective, DUNGEON_ELEMENT_WALL, cases[i].label);
         ASSERT_EQ(isWall, 1, cases[i].label);
         ASSERT_EQ(isOpen, 0, cases[i].label);
-        ASSERT_EQ(M11_GameView_GetF0115ViewSquareIndex(
+        ASSERT_EQ(dm1_viewport_3d_f0115_view_square_index(
                       cases[i].relForward, cases[i].relSide),
                   cases[i].viewSquare, cases[i].label);
-        ASSERT_EQ(M11_GameView_GetF0115C2500C2900Row(
+        ASSERT_EQ(dm1_viewport_3d_f0115_c2500_c2900_row(
                       cases[i].relForward, cases[i].relSide),
                   cases[i].c2500Row, cases[i].label);
         squareData[cases[i].mapX * (int)map.height + cases[i].mapY] =
@@ -1567,7 +1652,7 @@ static void test_m11_runtime_draws_far_side_wall_with_near_side_blocker(void)
         squareData[cases[i].farMapX * (int)map.height + cases[i].farMapY] =
             DUNGEON_SQUARE_MASK_THING_LIST;
 
-        ASSERT_EQ(M11_GameView_ProbeSideWallDrawEligibility(
+        ASSERT_EQ(dm1_side_wall_draw_eligibility_for_test(
                       &state, cases[i].relForward, cases[i].relSide,
                       &legacyLaneClear, &drawsWithSourceOrder),
                   1, cases[i].label);
@@ -1634,7 +1719,7 @@ static void test_m11_runtime_draws_far_side_wall_with_center_blocker(void)
         squareData[cases[i].farMapX * (int)map.height + cases[i].farMapY] =
             DUNGEON_SQUARE_MASK_THING_LIST;
 
-        ASSERT_EQ(M11_GameView_ProbeSideWallDrawEligibility(
+        ASSERT_EQ(dm1_side_wall_draw_eligibility_for_test(
                       &state, cases[i].relForward, cases[i].relSide,
                       &legacyLaneClear, &drawsWithSourceOrder),
                   1, cases[i].label);
@@ -1704,17 +1789,15 @@ static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
         squareData[cases[i].wallMapX * (int)map.height + cases[i].wallMapY] =
             DUNGEON_SQUARE_MASK_THING_LIST;
 
-        ASSERT_EQ(M11_GameView_ProbeDm1NearestBlockingCenterDepth(
-                      &state, &depth, &relForward, &mapX, &mapY, &element),
+        ASSERT_EQ(dm1_center_lane_for_test(
+                      &state, &depth, &relForward, &mapX, &mapY, &element,
+                      &contentMask),
                   1, cases[i].label);
         ASSERT_EQ(depth, cases[i].expectedDepth, cases[i].label);
         ASSERT_EQ(relForward, cases[i].wallForward, cases[i].label);
         ASSERT_EQ(mapX, cases[i].wallMapX, cases[i].label);
         ASSERT_EQ(mapY, cases[i].wallMapY, cases[i].label);
         ASSERT_EQ(element, DUNGEON_ELEMENT_WALL, cases[i].label);
-        ASSERT_EQ(M11_GameView_ProbeDm1CenterContentVisibleDepthMask(
-                      &state, &contentMask),
-                  1, cases[i].label);
         ASSERT_EQ(contentMask, expectedMask, cases[i].label);
     }
 
@@ -1727,17 +1810,15 @@ static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
         int mapY = -2;
         int element = -2;
         int contentMask = -1;
-        ASSERT_EQ(M11_GameView_ProbeDm1NearestBlockingCenterDepth(
-                      &state, &depth, &relForward, &mapX, &mapY, &element),
+        ASSERT_EQ(dm1_center_lane_for_test(
+                      &state, &depth, &relForward, &mapX, &mapY, &element,
+                      &contentMask),
                   1, "open center corridor resolves");
         ASSERT_EQ(depth, -1, "open center corridor has no center blocker");
         ASSERT_EQ(relForward, -1, "open center corridor has no blocker rel forward");
         ASSERT_EQ(mapX, -1, "open center corridor has no blocker x");
         ASSERT_EQ(mapY, -1, "open center corridor has no blocker y");
         ASSERT_EQ(element, -1, "open center corridor has no blocker element");
-        ASSERT_EQ(M11_GameView_ProbeDm1CenterContentVisibleDepthMask(
-                      &state, &contentMask),
-                  1, "open center corridor content mask resolves");
         ASSERT_EQ(contentMask, 7, "open center corridor draws D1/D2/D3 contents");
     }
 }
@@ -1758,7 +1839,6 @@ int main(void)
     test_candidate_panel_blocks_direct_map_toggle();
     test_candidate_panel_uses_dm1_hoc_menu_route_receipt();
     test_dm1_hoc_startup_render_consumer_is_m11_ready();
-    test_csb_startup_host_view_draw_receipt_is_m11_ready();
     test_candidate_panel_blocks_direct_object_helpers();
     test_candidate_panel_blocks_direct_leader_hand_chest_helpers();
     test_candidate_panel_blocks_direct_quickload_only();

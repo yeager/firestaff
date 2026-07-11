@@ -1311,53 +1311,6 @@ int M11_GameView_CountCellExplosions(
     int mapX,
     int mapY);
 
-/* Return DM1 G0215 projectile scale units (out of 32) for a viewport
- * depth and relative sub-cell. Exposed so probes can pin D2/D3 source
- * scaling without depending on screenshot pixel dimensions. */
-int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
-                                               int relativeCell);
-int M11_GameView_GetProjectileAspectFirstNative(int aspectIndex);
-unsigned int M11_GameView_GetProjectileAspectGraphicInfo(int aspectIndex);
-int M11_GameView_GetProjectileAspectBitmapDelta(int aspectIndex, int relativeDir);
-int M11_GameView_GetProjectileGraphicForAspect(int aspectIndex, int relativeDir);
-int M11_GameView_GetProjectileAspectFlipFlags(int aspectIndex,
-                                              int relativeDir,
-                                              int relativeCell,
-                                              int mapX,
-                                              int mapY);
-
-/* Resolve a dungeon thing type/subtype to its M612 viewport object
- * native graphic index using G0237 object-info -> G0209 object-aspect
- * source data. Returns 0 for unsupported inputs. */
-unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype);
-
-/* Return DM1 G2030 object scale units for source object distance/cell
- * scale bucket 0..4. Out-of-range inputs clamp like the renderer. */
-int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex);
-int M11_GameView_GetObjectSourceScaleIndex(int depthIndex, int relativeCell);
-int M11_GameView_GetF0115ViewSquareIndex(int relForward, int relSide);
-int M11_GameView_GetF0115C2500C2900Row(int relForward, int relSide);
-int M11_GameView_GetC2500ObjectZonePoint(int scaleIndex,
-                                         int relativeCell,
-                                         int* outX,
-                                         int* outY);
-int M11_GameView_GetC2500ObjectRawZonePoint(int rowIndex,
-                                            int relativeCell,
-                                            int* outX,
-                                            int* outY);
-int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
-                                             int relativeCell,
-                                             int* outX,
-                                             int* outY);
-int M11_GameView_GetC2900ProjectileRawZonePoint(int rowIndex,
-                                                int relativeCell,
-                                                int* outX,
-                                                int* outY);
-int M11_GameView_GetProjectileRawZonePointForRel(int relForward,
-                                                 int relSide,
-                                                 int relativeCell,
-                                                 int* outX,
-                                                 int* outY);
 int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex);
 int M11_GameView_GetViewportRect(int* outX, int* outY, int* outW, int* outH);
 int M11_GameView_GetV1ViewportBaseGraphic(int layer,
