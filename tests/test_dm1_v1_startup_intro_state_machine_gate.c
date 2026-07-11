@@ -682,13 +682,13 @@ static void check_menu_to_entrance_wait_boundary(void) {
      * be recycled as the first ENTER_DUNGEON command.
      */
     expect_i("interactive entrance does not auto-enter after title/menu handoff",
-             M11_Entrance_ShouldAutoEnterForTimeout(0, 1200, 6000u),
+             ENTRANCE_Compat_ShouldAutoEnterForTimeout(0, 1200, 6000u),
              0);
     expect_i("headless entrance waits until explicit timeout",
-             M11_Entrance_ShouldAutoEnterForTimeout(1, 1200, 1199u),
+             ENTRANCE_Compat_ShouldAutoEnterForTimeout(1, 1200, 1199u),
              0);
     expect_i("headless entrance may auto-enter after explicit timeout",
-             M11_Entrance_ShouldAutoEnterForTimeout(1, 1200, 1201u),
+             ENTRANCE_Compat_ShouldAutoEnterForTimeout(1, 1200, 1201u),
              1);
     expect_stage_after("entrance wait follows menu eligibility",
                        DM1_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34,
@@ -2415,7 +2415,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_fallback_ownership.suppress_mirror_payload_things &&
                  hoc_fallback_ownership.suppress_materialized_item_payload,
              1);
-    expect_i("DM1 HoC fallback draw ownership carries M11 geometry",
+    expect_i("DM1 HoC fallback draw ownership carries runtime geometry",
              hoc_fallback_ownership.map_index ==
                      DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
                  hoc_fallback_ownership.map_width ==
