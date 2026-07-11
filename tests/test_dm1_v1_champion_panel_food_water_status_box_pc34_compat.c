@@ -182,6 +182,36 @@ static void test_contract_and_evidence(void)
                     "sourceEvidence requested MENU symbols");
     expect_contains("source.defs", source, "3869-3870",
                     "sourceEvidence C500/C501 zones");
+    {
+        dm1_v1_champion_panel_food_water_bar_zone_pc34_t food =
+            dm1_v1_champion_panel_food_bar_zone_pc34();
+        dm1_v1_champion_panel_food_water_bar_zone_pc34_t water =
+            dm1_v1_champion_panel_water_bar_zone_pc34();
+        expect_int("food_bar.zone", food.zone_id, 103,
+                   "DEFS.H:3777 C103");
+        expect_int("food_bar.x", food.x, 113,
+                   "PANEL.C F0344 proportional C103 zone");
+        expect_int("food_bar.y", food.y, 69,
+                   "PANEL.C F0345 Food y");
+        expect_int("food_bar.w", food.w, 34,
+                   "PANEL.C F0344 proportional C103 zone");
+        expect_int("food_bar.h", food.h, 6,
+                   "PANEL.C F0344 bar height");
+        expect_int("food_bar.shadow", food.shadow_offset, 2,
+                   "PANEL.C F0344 shadow offset");
+        expect_int("water_bar.zone", water.zone_id, 104,
+                   "DEFS.H:3778 C104");
+        expect_int("water_bar.x", water.x, 113,
+                   "PANEL.C F0344 proportional C104 zone");
+        expect_int("water_bar.y", water.y, 92,
+                   "PANEL.C F0345 Water y");
+        expect_int("water_bar.w", water.w, 46,
+                   "PANEL.C F0344 proportional C104 zone");
+        expect_int("water_bar.h", water.h, 6,
+                   "PANEL.C F0344 bar height");
+        expect_int("water_bar.shadow", water.shadow_offset, 2,
+                   "PANEL.C F0344 shadow offset");
+    }
 }
 
 static void test_default_order_frame_and_panel(void)
