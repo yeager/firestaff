@@ -1116,6 +1116,17 @@ typedef struct {
     size_t object_table_anchor_decoded_byte_count[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_anchor_decoded_nonzero_byte_count[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint32_t object_table_anchor_decoded_checksum[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_row_probe_count;
+    size_t object_table_row_shaped_count;
+    unsigned int object_table_row_shaped_anchor_mask;
+    size_t object_table_row_shaped_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_row_shaped_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_row_shaped_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_row_shaped_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int object_table_row_shaped_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_row_shaped_record_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_row_shaped_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t object_table_row_shaped_checksums[THERON_TRACK02_MAX_BANK_ANCHORS];
     int object_table_decode_ready;
     int blocked_for_missing_real_object_evidence;
     int fallback_visuals_allowed;
