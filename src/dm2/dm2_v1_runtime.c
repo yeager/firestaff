@@ -86,6 +86,17 @@ typedef struct {
     uint8_t map_wall_gfx_list[16];
     int map_wall_gfx_count;
     uint8_t map_door_gfx_list[2];
+    int map_graphics_style;
+    int gdat_scene_control_ready;
+    uint32_t gdat_scene_control_hash;
+    uint32_t gdat_scene_control_present_mask;
+    uint32_t gdat_scene_control_query_count;
+    uint16_t gdat_scene_colorkey;
+    uint16_t gdat_scene_flags;
+    uint16_t gdat_scene_ambient_light;
+    uint16_t gdat_scene_highest_light_level;
+    uint16_t gdat_scene_void_random_fall;
+    uint16_t gdat_scene_animated_floor;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -118,7 +129,7 @@ static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
 static int g_dm2_runtime_restore_in_progress = 0;
 
 #define DM2_RUNTIME_SAVE_MAGIC "FS2RT01"
-#define DM2_RUNTIME_SAVE_VERSION 1u
+#define DM2_RUNTIME_SAVE_VERSION 2u
 
 typedef struct {
     char magic[8];
@@ -133,6 +144,17 @@ typedef struct {
     int32_t map_wall_gfx_count;
     int32_t move_cooldown_ticks;
     int32_t paused;
+    int32_t map_graphics_style;
+    int32_t gdat_scene_control_ready;
+    uint32_t gdat_scene_control_hash;
+    uint32_t gdat_scene_control_present_mask;
+    uint32_t gdat_scene_control_query_count;
+    uint16_t gdat_scene_colorkey;
+    uint16_t gdat_scene_flags;
+    uint16_t gdat_scene_ambient_light;
+    uint16_t gdat_scene_highest_light_level;
+    uint16_t gdat_scene_void_random_fall;
+    uint16_t gdat_scene_animated_floor;
 } DM2_V1_RuntimeSaveHeader;
 
 static int dm2_runtime_live_header_valid(const DM2_V1_RuntimeSaveHeader *header,
@@ -499,6 +521,64 @@ static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
     if (count > 0) {
         rt->map_wall_gfx_count = count;
     }
+}
+
+static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
+{
+    DM2_V1_DungeonData *dd;
+    uint32_t scene_flags = 0u;
+    uint32_t scene_colorkey = 0u;
+    uint32_t ambient_light = 0u;
+    uint32_t highest_light_level = 0u;
+    uint32_t void_random_fall = 0u;
+    uint32_t animated_floor = 0u;
+
+    if (!rt) return;
+    rt->map_graphics_style = -1;
+    rt->gdat_scene_control_ready = 0;
+    rt->gdat_scene_control_hash = 0u;
+    rt->gdat_scene_control_present_mask = 0u;
+    rt->gdat_scene_control_query_count = 0u;
+    rt->gdat_scene_colorkey = 0u;
+    rt->gdat_scene_flags = 0u;
+    rt->gdat_scene_ambient_light = 0u;
+    rt->gdat_scene_highest_light_level = 0u;
+    rt->gdat_scene_void_random_fall = 0u;
+    rt->gdat_scene_animated_floor = 0u;
+    if (!rt->boot || !rt->boot->dungeon_data) return;
+
+    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    rt->map_graphics_style =
+        dm2_v1_dungeon_get_map_graphics_style(dd, rt->dungeon_level);
+    if (rt->map_graphics_style < 0) return;
+
+    /* skproject/SKWIN/SkWinCore.cpp refreshes glbMapGraphicsSet from
+     * Map_definitions::MapGraphicsStyle(), then reads GRAPHICSSET dtWordValue
+     * 0x64/0x65/0x67/0x68/0x6A/0x6B for live dungeon rendering. */
+    if (!dm2_v1_boot_graphicsset_scene_control(
+            rt->boot,
+            rt->map_graphics_style,
+            &rt->gdat_scene_control_hash,
+            &rt->gdat_scene_control_present_mask,
+            &rt->gdat_scene_control_query_count,
+            &scene_flags,
+            &scene_colorkey,
+            &ambient_light,
+            &highest_light_level,
+            &void_random_fall,
+            &animated_floor)) {
+        if (rt->gdat_scene_control_hash == 0u ||
+            rt->gdat_scene_control_present_mask == 0u) {
+            return;
+        }
+    }
+    rt->gdat_scene_control_ready = 1;
+    rt->gdat_scene_flags = (uint16_t)scene_flags;
+    rt->gdat_scene_colorkey = (uint16_t)scene_colorkey;
+    rt->gdat_scene_ambient_light = (uint16_t)ambient_light;
+    rt->gdat_scene_highest_light_level = (uint16_t)highest_light_level;
+    rt->gdat_scene_void_random_fall = (uint16_t)void_random_fall;
+    rt->gdat_scene_animated_floor = (uint16_t)animated_floor;
 }
 
 static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
@@ -1079,7 +1159,9 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     memset(g_dm2_runtime.map_wall_gfx_list, 0,
            sizeof(g_dm2_runtime.map_wall_gfx_list));
     g_dm2_runtime.map_wall_gfx_count = 0;
+    g_dm2_runtime.map_graphics_style = -1;
     dm2_runtime_refresh_map_wall_gfx_list(&g_dm2_runtime);
+    dm2_runtime_refresh_gdat_scene_control(&g_dm2_runtime);
 }
 
 int dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile) {
@@ -1088,6 +1170,7 @@ int dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile) {
     if (boot_profile->graphics_dat) {
         dm2_v1_runtime_set_viewport_asset_provider(
             dm2_v1_boot_viewport_asset_fetch, boot_profile);
+        dm2_runtime_refresh_gdat_scene_control(&g_dm2_runtime);
     }
     return 1;
 }
@@ -1147,6 +1230,7 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     rt->dungeon_level = gs->current_level;
     rt->view_dir = gs->party_dir;
     dm2_runtime_refresh_map_wall_gfx_list(rt);
+    dm2_runtime_refresh_gdat_scene_control(rt);
     rt->leader_hand_object = session->original_leader_hand_object;
     memset(rt->champion_inventory_objects, 0,
            sizeof(rt->champion_inventory_objects));
@@ -2008,6 +2092,16 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        rt->viewport_asset_fetch,
                                        rt->viewport_asset_user);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport,
+        rt->gdat_scene_control_ready,
+        rt->gdat_scene_control_hash,
+        rt->gdat_scene_colorkey,
+        rt->gdat_scene_flags,
+        rt->gdat_scene_ambient_light,
+        rt->gdat_scene_highest_light_level,
+        rt->gdat_scene_void_random_fall,
+        rt->gdat_scene_animated_floor);
     {
         DM2_V1_InterfaceTheme theme;
         if (dm2_runtime_build_interface_theme(rt, &theme)) {
@@ -2214,6 +2308,24 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_frame_ownership.viewport_decoded_gdat_asset_count >= 5 &&
         g_dm2_frame_ownership.viewport_raw_gdat_byte_count > 0u &&
         g_dm2_frame_ownership.viewport_decoded_gdat_pixel_count > 0u;
+    g_dm2_frame_ownership.gdat_scene_control_ready =
+        rt->gdat_scene_control_ready;
+    g_dm2_frame_ownership.gdat_scene_control_consumed =
+        viewport.gdat_scene_control_consumed_count;
+    g_dm2_frame_ownership.gdat_scene_control_hash =
+        rt->gdat_scene_control_hash;
+    g_dm2_frame_ownership.gdat_scene_control_present_mask =
+        rt->gdat_scene_control_present_mask;
+    g_dm2_frame_ownership.gdat_scene_colorkey = rt->gdat_scene_colorkey;
+    g_dm2_frame_ownership.gdat_scene_flags = rt->gdat_scene_flags;
+    g_dm2_frame_ownership.gdat_scene_ambient_light =
+        rt->gdat_scene_ambient_light;
+    g_dm2_frame_ownership.gdat_scene_highest_light_level =
+        rt->gdat_scene_highest_light_level;
+    g_dm2_frame_ownership.gdat_scene_void_random_fall =
+        rt->gdat_scene_void_random_fall;
+    g_dm2_frame_ownership.gdat_scene_animated_floor =
+        rt->gdat_scene_animated_floor;
     /* skproject SKWIN/SkWinCore.cpp routes the runtime HUD, floor/ceiling,
      * walls and overlays through GDAT-backed surface fetches before blitting.
      * A "full" DM2 runtime frame is only accepted when the mandatory HUD and
@@ -2223,6 +2335,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_frame_ownership.gdat_provider_bound &&
         g_dm2_frame_ownership.floor_ceiling_gdat_blits >= 2 &&
         g_dm2_frame_ownership.wall_gdat_blits > 0 &&
+        (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
+         (g_dm2_frame_ownership.gdat_scene_control_ready &&
+          g_dm2_frame_ownership.gdat_scene_control_consumed > 0 &&
+          g_dm2_frame_ownership.gdat_scene_control_hash != 0u)) &&
         /* skproject SKWIN uses raw INTERFACE_GENERAL tables for the HUD
          * chrome/layout and CHAMPIONS images for the visible portrait panel.
          * Do not require Firestaff's primitive rect fills to be separate
@@ -2264,6 +2380,28 @@ int dm2_v1_runtime_last_frame_ownership(
     }
     *out_receipt = g_dm2_frame_ownership;
     return out_receipt->valid;
+}
+
+int dm2_v1_runtime_graphicsset_scene_receipt(
+    DM2_V1_RuntimeGraphicsSetSceneReceipt *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->ready = g_dm2_runtime.gdat_scene_control_ready;
+    out_receipt->map_graphics_style = g_dm2_runtime.map_graphics_style;
+    out_receipt->hash = g_dm2_runtime.gdat_scene_control_hash;
+    out_receipt->present_mask = g_dm2_runtime.gdat_scene_control_present_mask;
+    out_receipt->query_count = g_dm2_runtime.gdat_scene_control_query_count;
+    out_receipt->scene_colorkey = g_dm2_runtime.gdat_scene_colorkey;
+    out_receipt->scene_flags = g_dm2_runtime.gdat_scene_flags;
+    out_receipt->ambient_light = g_dm2_runtime.gdat_scene_ambient_light;
+    out_receipt->highest_light_level =
+        g_dm2_runtime.gdat_scene_highest_light_level;
+    out_receipt->void_random_fall = g_dm2_runtime.gdat_scene_void_random_fall;
+    out_receipt->animated_floor = g_dm2_runtime.gdat_scene_animated_floor;
+    return out_receipt->ready;
 }
 
 void dm2_v1_runtime_set_viewport_asset_provider(
@@ -2775,6 +2913,25 @@ int dm2_v1_runtime_serialize_live_save(uint8_t *out, size_t out_size) {
     header.map_wall_gfx_count = g_dm2_runtime.map_wall_gfx_count;
     header.move_cooldown_ticks = g_dm2_runtime.move_cooldown_ticks;
     header.paused = g_dm2_runtime.paused;
+    header.map_graphics_style = g_dm2_runtime.map_graphics_style;
+    header.gdat_scene_control_ready =
+        g_dm2_runtime.gdat_scene_control_ready;
+    header.gdat_scene_control_hash =
+        g_dm2_runtime.gdat_scene_control_hash;
+    header.gdat_scene_control_present_mask =
+        g_dm2_runtime.gdat_scene_control_present_mask;
+    header.gdat_scene_control_query_count =
+        g_dm2_runtime.gdat_scene_control_query_count;
+    header.gdat_scene_colorkey = g_dm2_runtime.gdat_scene_colorkey;
+    header.gdat_scene_flags = g_dm2_runtime.gdat_scene_flags;
+    header.gdat_scene_ambient_light =
+        g_dm2_runtime.gdat_scene_ambient_light;
+    header.gdat_scene_highest_light_level =
+        g_dm2_runtime.gdat_scene_highest_light_level;
+    header.gdat_scene_void_random_fall =
+        g_dm2_runtime.gdat_scene_void_random_fall;
+    header.gdat_scene_animated_floor =
+        g_dm2_runtime.gdat_scene_animated_floor;
     memcpy(out, &header, sizeof(header));
     cursor = out + sizeof(header) + (size_t)session_size;
     memcpy(cursor, &creatures, sizeof(creatures));
@@ -2820,6 +2977,26 @@ int dm2_v1_runtime_restore_live_save(const uint8_t *data, size_t data_size) {
     g_dm2_runtime.map_wall_gfx_count = header->map_wall_gfx_count;
     g_dm2_runtime.move_cooldown_ticks = header->move_cooldown_ticks;
     g_dm2_runtime.paused = header->paused;
+    if (header->gdat_scene_control_ready &&
+        header->map_graphics_style == g_dm2_runtime.map_graphics_style) {
+        g_dm2_runtime.gdat_scene_control_ready = 1;
+        g_dm2_runtime.gdat_scene_control_hash =
+            header->gdat_scene_control_hash;
+        g_dm2_runtime.gdat_scene_control_present_mask =
+            header->gdat_scene_control_present_mask;
+        g_dm2_runtime.gdat_scene_control_query_count =
+            header->gdat_scene_control_query_count;
+        g_dm2_runtime.gdat_scene_colorkey = header->gdat_scene_colorkey;
+        g_dm2_runtime.gdat_scene_flags = header->gdat_scene_flags;
+        g_dm2_runtime.gdat_scene_ambient_light =
+            header->gdat_scene_ambient_light;
+        g_dm2_runtime.gdat_scene_highest_light_level =
+            header->gdat_scene_highest_light_level;
+        g_dm2_runtime.gdat_scene_void_random_fall =
+            header->gdat_scene_void_random_fall;
+        g_dm2_runtime.gdat_scene_animated_floor =
+            header->gdat_scene_animated_floor;
+    }
     return 0;
 }
 
@@ -3030,6 +3207,8 @@ int dm2_v1_runtime_quicksave_boot_profile_with_receipt(
                       profile->save_root, "SKSave.dat")) {
         receipt->save_path[0] = '\0';
     }
+    (void)dm2_v1_runtime_graphicsset_scene_receipt(
+        &receipt->graphicsset_scene);
     receipt->result = DM2_V1_QUICKSAVE_OK;
     receipt->status_scope = "SAVE";
     receipt->status = "DM2 SKSAVE WRITTEN";

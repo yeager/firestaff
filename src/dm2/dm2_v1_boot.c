@@ -4077,6 +4077,33 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
     return best_ready;
 }
 
+int dm2_v1_boot_graphicsset_scene_control(
+    DM2_V1_BootProfile *profile,
+    int graphicsset_index,
+    uint32_t *out_hash,
+    uint32_t *out_present_mask,
+    uint32_t *out_query_count,
+    uint32_t *out_scene_flags,
+    uint32_t *out_scene_colorkey,
+    uint32_t *out_ambient_light,
+    uint32_t *out_highest_light_level,
+    uint32_t *out_void_random_fall,
+    uint32_t *out_animated_floor)
+{
+    return dm2_v1_boot_runtime_graphicsset_word_values_receipt(
+        profile,
+        graphicsset_index,
+        out_hash,
+        out_present_mask,
+        out_query_count,
+        out_scene_flags,
+        out_scene_colorkey,
+        out_ambient_light,
+        out_highest_light_level,
+        out_void_random_fall,
+        out_animated_floor);
+}
+
 static int dm2_v1_boot_runtime_wall_gfx_image_offsets_receipt(
     DM2_V1_BootProfile *profile,
     uint32_t *out_hash,

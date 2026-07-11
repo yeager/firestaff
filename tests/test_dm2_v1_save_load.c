@@ -1805,6 +1805,8 @@ static int test_live_runtime_state_roundtrip(void)
     DM2_V1_GameState game;
     DM2_V1_DungeonData dungeon;
     DM2_V1_QuicksaveReceipt receipt;
+    DM2_V1_RuntimeGraphicsSetSceneReceipt scene_before;
+    DM2_V1_RuntimeGraphicsSetSceneReceipt scene_after;
     const DM2_V1_CreatureInstance *before;
     const DM2_V1_CreatureInstance *after;
     uint8_t *save_data = NULL;
@@ -1834,6 +1836,9 @@ static int test_live_runtime_state_roundtrip(void)
     snprintf(boot.graphics_md5, sizeof(boot.graphics_md5), "runtime-gdat");
     snprintf(boot.save_root, sizeof(boot.save_root), "%s", tmpdir);
     dm2_v1_runtime_init(&boot);
+    memset(&scene_before, 0, sizeof(scene_before));
+    if (dm2_v1_runtime_graphicsset_scene_receipt(&scene_before) != 0 ||
+        scene_before.ready != 0) goto fail;
     creature_id = dm2_v1_creature_spawn(3, 1, 1, 0, 2, 8);
     if (creature_id < 0) goto fail;
     dm2_v1_creature_tick();
@@ -1852,6 +1857,11 @@ static int test_live_runtime_state_roundtrip(void)
     dungeon.raw_data[3] = 0;
     if (dm2_v1_runtime_restore_live_save(save_data, save_size) != 0)
         goto fail;
+    memset(&scene_after, 0, sizeof(scene_after));
+    (void)dm2_v1_runtime_graphicsset_scene_receipt(&scene_after);
+    if (scene_after.ready != scene_before.ready ||
+        scene_after.map_graphics_style != scene_before.map_graphics_style)
+        goto fail;
     after = dm2_v1_creature_get_instance(creature_id);
     if (!after || after->hp_current != saved_hp ||
         after->animation_tick != saved_animation_tick ||
@@ -1860,6 +1870,7 @@ static int test_live_runtime_state_roundtrip(void)
 
     if (!dm2_v1_runtime_quicksave_boot_profile_with_receipt(&boot, &receipt) ||
         !receipt.session_valid ||
+        receipt.graphicsset_scene.ready != scene_before.ready ||
         dm2_v1_creature_deal_damage(creature_id, 2) != 0) goto fail;
     dungeon.raw_data[3] = 0;
     if (dm2_v1_runtime_load_last_session(tmpdir) != 0) goto fail;

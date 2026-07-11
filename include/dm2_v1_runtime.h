@@ -52,6 +52,16 @@ typedef struct {
     int total_runtime_fallback_draws;
     int full_gdat_frame_valid;
     int real_gdat_evidence_valid;
+    int gdat_scene_control_ready;
+    int gdat_scene_control_consumed;
+    uint32_t gdat_scene_control_hash;
+    uint32_t gdat_scene_control_present_mask;
+    uint32_t gdat_scene_colorkey;
+    uint32_t gdat_scene_flags;
+    uint32_t gdat_scene_ambient_light;
+    uint32_t gdat_scene_highest_light_level;
+    uint32_t gdat_scene_void_random_fall;
+    uint32_t gdat_scene_animated_floor;
     int viewport_raw_gdat_asset_count;
     int viewport_decoded_gdat_asset_count;
     uint32_t viewport_raw_gdat_hash;
@@ -64,6 +74,20 @@ typedef struct {
     int interface_rect14_consumed;
     int valid;
 } DM2_V1_RuntimeFrameOwnershipReceipt;
+
+typedef struct {
+    int ready;
+    int map_graphics_style;
+    uint32_t hash;
+    uint32_t present_mask;
+    uint32_t query_count;
+    uint32_t scene_colorkey;
+    uint32_t scene_flags;
+    uint32_t ambient_light;
+    uint32_t highest_light_level;
+    uint32_t void_random_fall;
+    uint32_t animated_floor;
+} DM2_V1_RuntimeGraphicsSetSceneReceipt;
 #include "dm2_v1_weather.h"
 
 #ifdef __cplusplus
@@ -113,6 +137,8 @@ void dm2_v1_runtime_note_startup_frame_consumption(
     int title_gdat_blits, int menu_gdat_blits);
 int dm2_v1_runtime_last_frame_ownership(
     DM2_V1_RuntimeFrameOwnershipReceipt *out_receipt);
+int dm2_v1_runtime_graphicsset_scene_receipt(
+    DM2_V1_RuntimeGraphicsSetSceneReceipt *out_receipt);
 void dm2_v1_runtime_set_viewport_asset_provider(
     DM2_V1_ViewportAssetFetch fetch,
     void *user);
@@ -367,6 +393,7 @@ typedef struct DM2_V1_QuicksaveReceipt {
     char save_root[512];
     char save_path[512];
     DM2_V1_SessionState session;
+    DM2_V1_RuntimeGraphicsSetSceneReceipt graphicsset_scene;
     int session_valid;
 } DM2_V1_QuicksaveReceipt;
 

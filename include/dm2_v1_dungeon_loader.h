@@ -110,6 +110,9 @@ int dm2_v1_dungeon_get_map_wall_gfx_list(
     int level,
     uint8_t *out_wall_gfx_list,
     int out_capacity);
+int dm2_v1_dungeon_get_map_graphics_style(
+    const DM2_V1_DungeonData *d,
+    int level);
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
     uint16_t thing,

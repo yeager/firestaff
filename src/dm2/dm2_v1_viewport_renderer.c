@@ -806,6 +806,29 @@ void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_gdat_scene_control(
+    DM2_V1_ViewportState *s,
+    int ready,
+    uint32_t hash,
+    uint16_t scene_colorkey,
+    uint16_t scene_flags,
+    uint16_t ambient_light,
+    uint16_t highest_light_level,
+    uint16_t void_random_fall,
+    uint16_t animated_floor)
+{
+    if (!s) return;
+    s->gdat_scene_control_ready = ready ? 1 : 0;
+    s->gdat_scene_control_hash = ready ? hash : 0u;
+    s->gdat_scene_colorkey = ready ? scene_colorkey : 0u;
+    s->gdat_scene_flags = ready ? scene_flags : 0u;
+    s->gdat_ambient_light = ready ? ambient_light : 0u;
+    s->gdat_highest_light_level = ready ? highest_light_level : 0u;
+    s->gdat_void_random_fall = ready ? void_random_fall : 0u;
+    s->gdat_animated_floor = ready ? animated_floor : 0u;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_interface_theme(
     DM2_V1_ViewportState *s,
     const DM2_V1_InterfaceTheme *theme)
@@ -2888,7 +2911,12 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                                   wall_w,
                                   wall_h,
                                   wall_stride > 0 ? wall_stride : wall_w,
-                                  DM2_COLOR_TRANSPARENT);
+                                  s->gdat_scene_control_ready
+                                      ? (int)s->gdat_scene_colorkey
+                                      : DM2_COLOR_TRANSPARENT);
+        if (s->gdat_scene_control_ready) {
+            ++s->gdat_scene_control_consumed_count;
+        }
         ++wall_asset_count;
     }
 
@@ -4103,6 +4131,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->interface_semantics_hash = 0u;
     s->interface_semantics_byte_count = 0u;
     s->interface_rect14_consumed = 0;
+    s->gdat_scene_control_consumed_count = 0;
 
     /* DM2 has two fundamentally different render paths:
      *   1. Indoor dungeon (is_outdoor=0): first-person 3D dungeon view

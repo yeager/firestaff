@@ -710,6 +710,15 @@ typedef struct {
     int fallback_floor_ceiling_drawn_count;
     int asset_wall_drawn_count;
     int fallback_wall_drawn_count;
+    int gdat_scene_control_ready;
+    int gdat_scene_control_consumed_count;
+    uint32_t gdat_scene_control_hash;
+    uint16_t gdat_scene_colorkey;
+    uint16_t gdat_scene_flags;
+    uint16_t gdat_ambient_light;
+    uint16_t gdat_highest_light_level;
+    uint16_t gdat_void_random_fall;
+    uint16_t gdat_animated_floor;
     int asset_door_panel_drawn_count;
     int asset_door_overlay_drawn_count;
     int asset_door_frame_drawn_count;
@@ -802,6 +811,16 @@ void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
 void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
                                         DM2_V1_ViewportAssetFetch fetch,
                                         void *user);
+void dm2_v1_viewport_set_gdat_scene_control(
+    DM2_V1_ViewportState *s,
+    int ready,
+    uint32_t hash,
+    uint16_t scene_colorkey,
+    uint16_t scene_flags,
+    uint16_t ambient_light,
+    uint16_t highest_light_level,
+    uint16_t void_random_fall,
+    uint16_t animated_floor);
 void dm2_v1_viewport_set_interface_theme(
     DM2_V1_ViewportState *s,
     const DM2_V1_InterfaceTheme *theme);
