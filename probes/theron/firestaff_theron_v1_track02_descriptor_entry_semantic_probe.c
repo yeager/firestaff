@@ -144,6 +144,24 @@ static void make_fixture(uint8_t track[TRACK_FIXTURE_BYTES]) {
     track[0x1c20u + 31u] = 0x91u;
     track[0x1c20u + 32u] = 0x23u;
 
+    /* Entry 7 is a complete big-endian dungeon record.  Together with
+     * entry 6's compact object rows it drives the production route builder. */
+    track[0x1c20u + 1u] = 3u;
+    track[0x1c20u + 3u] = 3u;
+    track[0x1c20u + 4u] = 0x01u;
+    track[0x1c20u + 5u] = 0x08u;
+    track[0x1c20u + 6u] = 0xe9u;
+    track[0x1c20u + 7u] = 0x38u;
+    track[0x1c20u + 12u] = THERON_SQUARE_WALL;
+    track[0x1c20u + 13u] = THERON_SQUARE_WALL;
+    track[0x1c20u + 14u] = THERON_SQUARE_WALL;
+    track[0x1c20u + 15u] = THERON_SQUARE_WALL;
+    track[0x1c20u + 16u] = THERON_SQUARE_FLOOR;
+    track[0x1c20u + 17u] = THERON_SQUARE_EXIT;
+    track[0x1c20u + 18u] = THERON_SQUARE_WALL;
+    track[0x1c20u + 19u] = THERON_SQUARE_WALL;
+    track[0x1c20u + 20u] = THERON_SQUARE_WALL;
+
     /* The descriptor-bearing window has source-shape markers around the
      * descriptor bytes.  0x60 is the HuC6280 RTS marker documented by the
      * production semantic binder. */
@@ -307,12 +325,45 @@ static void probe_semantic_seed_binding(void) {
         DESCRIPTOR_OFFSET,
         6u,
         &binding);
-    check_semantic_status("entry 6 semantic status",
+    check_semantic_status("entry 6 object semantic status",
                           status,
-                          THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND);
+                          THERON_TRACK02_SEMANTIC_BINDING_OK);
     check_int("entry 6 semantic role",
               binding.role,
-              THERON_TRACK02_SEMANTIC_ROLE_UNKNOWN);
+              THERON_TRACK02_SEMANTIC_OBJECT_TABLE);
+    check_size("entry 6 object record count",
+               binding.object_table.record_count,
+               2u);
+    check_size("entry 6 object declared count",
+               binding.object_table.declared_record_count,
+               2u);
+    check_size("entry 6 object required bytes",
+               binding.object_table.required_byte_count,
+               18u);
+    check_int("entry 6 object shape",
+              binding.object_table.shape_ok,
+              1);
+    check_int("entry 6 object reject reason",
+              binding.object_table.reject_reason,
+              THERON_TRACK02_OBJECT_TABLE_REJECT_NONE);
+    check_int("entry 6 object[0] x", binding.object_table.records[0].x, 4);
+    check_int("entry 6 object[0] y", binding.object_table.records[0].y, 5);
+    check_int("entry 6 object[1] level",
+              binding.object_table.records[1].level_index,
+              1);
+    check_int("entry 6 object[1] kind",
+              binding.object_table.records[1].kind,
+              2);
+    check_u32("entry 6 object level coverage", binding.object_table.level_mask,
+              (1u << 0) | (1u << 1));
+    check_size("entry 6 object level 0 count",
+               binding.object_table.level_record_counts[0], 1u);
+    check_size("entry 6 object level 1 count",
+               binding.object_table.level_record_counts[1], 1u);
+    check_int("entry 6 object level 0 hash present",
+              binding.object_table.level_record_hashes[0] != 0u, 1);
+    check_int("entry 6 object level 1 hash present",
+              binding.object_table.level_record_hashes[1] != 0u, 1);
 }
 
 static void probe_negative_fixtures(void) {
@@ -390,6 +441,23 @@ static void probe_negative_fixtures(void) {
                           semantic_status,
                           THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE);
 
+    make_fixture(track);
+    track[0x1820u + 4u] = 32u;
+    semantic_status = theron_v1_track02_bind_semantic_descriptor(
+        track,
+        sizeof(track),
+        DESCRIPTOR_OFFSET,
+        6u,
+        &binding);
+    check_semantic_status("bad object x semantic binding",
+                          semantic_status,
+                          THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE);
+    check_size("bad object x first bad row",
+               binding.object_table.first_bad_record_index,
+               0u);
+    check_int("bad object x reject reason",
+              binding.object_table.reject_reason,
+              THERON_TRACK02_OBJECT_TABLE_REJECT_X_OUT_OF_RANGE);
 }
 
 static void probe_dungeon_route(void) {
@@ -402,9 +470,12 @@ static void probe_dungeon_route(void) {
     make_complete_bitmap_atlas(&atlas);
     status = theron_v1_track02_build_dungeon_route(
         track, sizeof(track), DESCRIPTOR_OFFSET, 1, 0, &atlas, &route);
-    check_int("dungeon route remains blocked", status,
-              THERON_TRACK02_DUNGEON_ROUTE_OBJECT_REJECTED);
-    check_int("dungeon route is not valid", route.valid, 0);
+    check_int("dungeon route status", status, THERON_TRACK02_DUNGEON_ROUTE_OK);
+    check_int("dungeon route valid", route.valid, 1);
+    check_size("dungeon route level entry", route.level_entry_index, 7u);
+    check_size("dungeon route object entry", route.object_entry_index, 6u);
+    check_int("dungeon route level width", route.level.width, 3);
+    check_size("dungeon route objects", route.objects.record_count, 2u);
 
     atlas.route_mask = THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE;
     status = theron_v1_track02_build_dungeon_route(
@@ -416,29 +487,141 @@ static void probe_dungeon_route(void) {
 static void probe_validated_level_transition(void) {
     uint8_t track[TRACK_FIXTURE_BYTES];
     Theron_Track02StartupBitmapAtlas atlas;
-    Theron_Track02DungeonRoute route;
+    Theron_Track02DungeonRoute source;
+    Theron_Track02DungeonRoute target;
+    Theron_Track02LevelTransitionReceipt receipt;
+    Theron_V1_World world;
+    Theron_Track02LevelTransitionStatus status;
 
     make_fixture(track);
     make_complete_bitmap_atlas(&atlas);
-    check_int("transition source route remains blocked",
+    check_int("transition source route",
               theron_v1_track02_build_dungeon_route(
                   track, sizeof(track), DESCRIPTOR_OFFSET, 1, 0,
-                  &atlas, &route),
-              THERON_TRACK02_DUNGEON_ROUTE_OBJECT_REJECTED);
+                  &atlas, &source),
+              THERON_TRACK02_DUNGEON_ROUTE_OK);
+    check_int("transition target route",
+              theron_v1_track02_build_dungeon_route(
+                  track, sizeof(track), DESCRIPTOR_OFFSET, 1, 1,
+                  &atlas, &target),
+              THERON_TRACK02_DUNGEON_ROUTE_OK);
+
+    theron_v1_world_init(&world);
+    world.current_dungeon = 1;
+    world.current_level = 0;
+    world.levels[0][0] = source.level;
+    world.level_loaded[0][0] = 1;
+    world.transition_pending = 1;
+    world.transition_type = THERON_TRANSITION_STAIRS;
+    world.transition_target_level = 1;
+    status = theron_v1_track02_apply_level_transition(
+        &world, &source, &target, &receipt);
+    check_int("validated transition status",
+              status, THERON_TRACK02_LEVEL_TRANSITION_OK);
+    check_int("validated transition applied", receipt.applied, 1);
+    check_int("validated transition level", world.current_level, 1);
+    check_int("validated transition loaded", world.level_loaded[0][1], 1);
+    check_int("validated transition clears queue", world.transition_pending, 0);
+    check_size("validated transition objects",
+               receipt.target_object_record_count, 2u);
+
+    world.transition_pending = 1;
+    world.transition_type = THERON_TRANSITION_STAIRS;
+    world.transition_target_level = 2;
+    status = theron_v1_track02_apply_level_transition(
+        &world, &target, &target, &receipt);
+    check_int("mismatched transition status",
+              status, THERON_TRACK02_LEVEL_TRANSITION_TARGET_MISMATCH);
+    check_int("mismatched transition keeps queue", world.transition_pending, 1);
+    check_int("mismatched transition keeps level", world.current_level, 1);
 }
 
 static void probe_catalog_level_transition(void) {
     uint8_t track[TRACK_FIXTURE_BYTES];
     Theron_Track02StartupBitmapAtlas atlas;
-    Theron_Track02DungeonRoute route;
+    Theron_Track02DungeonRoute routes[2];
+    Theron_Track02LevelTransitionReceipt transition_receipt;
+    Theron_Track02RouteCatalogReceipt source_receipt;
+    Theron_Track02RouteCatalogReceipt target_receipt;
+    Theron_V1_World world;
+    const Theron_Track02DungeonRoute *selected = NULL;
+    Theron_Track02RouteCatalogStatus catalog_status;
+    Theron_Track02LevelTransitionStatus transition_status;
 
     make_fixture(track);
     make_complete_bitmap_atlas(&atlas);
-    check_int("catalog route remains blocked",
+    check_int("catalog route 0",
+              theron_v1_track02_build_dungeon_route(
+                  track, sizeof(track), DESCRIPTOR_OFFSET, 1, 0,
+                  &atlas, &routes[0]),
+              THERON_TRACK02_DUNGEON_ROUTE_OK);
+    check_int("catalog route 1",
               theron_v1_track02_build_dungeon_route(
                   track, sizeof(track), DESCRIPTOR_OFFSET, 1, 1,
-                  &atlas, &route),
-              THERON_TRACK02_DUNGEON_ROUTE_OBJECT_REJECTED);
+                  &atlas, &routes[1]),
+              THERON_TRACK02_DUNGEON_ROUTE_OK);
+
+    catalog_status = theron_v1_track02_select_dungeon_route(
+        routes, 2u, 1, 1, &selected, &target_receipt);
+    check_int("catalog selects exact target", catalog_status,
+              THERON_TRACK02_ROUTE_CATALOG_OK);
+    check_int("catalog selected target pointer", selected == &routes[1], 1);
+    check_int("catalog complete mask", (int)target_receipt.level_mask, 3);
+
+    theron_v1_world_init(&world);
+    world.current_dungeon = 1;
+    world.current_level = 0;
+    world.levels[0][0] = routes[0].level;
+    world.level_loaded[0][0] = 1;
+    world.transition_pending = 1;
+    world.transition_type = THERON_TRANSITION_STAIRS;
+    world.transition_target_level = 1;
+    transition_status = theron_v1_track02_apply_level_transition_from_catalog(
+        &world, routes, 2u, &transition_receipt,
+        &source_receipt, &target_receipt);
+    check_int("catalog transition status", transition_status,
+              THERON_TRACK02_LEVEL_TRANSITION_OK);
+    check_int("catalog transition applied", transition_receipt.applied, 1);
+    check_int("catalog transition level", world.current_level, 1);
+    check_int("catalog source selected", source_receipt.selected, 1);
+    check_int("catalog target selected", target_receipt.selected, 1);
+
+    world.transition_pending = 0;
+    transition_status = theron_v1_track02_apply_level_transition_from_catalog(
+        &world, routes, 2u, &transition_receipt,
+        &source_receipt, &target_receipt);
+    check_int("catalog no pending status", transition_status,
+              THERON_TRACK02_LEVEL_TRANSITION_NOT_PENDING);
+    check_int("catalog no pending leaves level", world.current_level, 1);
+
+    routes[1].level_index = 2;
+    world.current_level = 0;
+    world.transition_pending = 1;
+    world.transition_type = THERON_TRANSITION_STAIRS;
+    world.transition_target_level = 1;
+    transition_status = theron_v1_track02_apply_level_transition_from_catalog(
+        &world, routes, 2u, &transition_receipt,
+        &source_receipt, &target_receipt);
+    check_int("catalog gap rejects target", transition_status,
+              THERON_TRACK02_LEVEL_TRANSITION_SOURCE_REJECTED);
+    check_int("catalog gap leaves queue", world.transition_pending, 1);
+    check_int("catalog gap leaves level", world.current_level, 0);
+    check_int("catalog gap receipt", source_receipt.status,
+              THERON_TRACK02_ROUTE_CATALOG_NONCONTIGUOUS);
+
+    routes[1] = routes[0];
+    catalog_status = theron_v1_track02_select_dungeon_route(
+        routes, 2u, 1, 0, &selected, &target_receipt);
+    check_int("catalog duplicate rejects", catalog_status,
+              THERON_TRACK02_ROUTE_CATALOG_DUPLICATE_LEVEL);
+    check_int("catalog duplicate no selection", selected == NULL, 1);
+
+    routes[1].valid = 0;
+    catalog_status = theron_v1_track02_select_dungeon_route(
+        routes, 2u, 1, 0, &selected, &target_receipt);
+    check_int("catalog rejected route", catalog_status,
+              THERON_TRACK02_ROUTE_CATALOG_ROUTE_REJECTED);
+    check_int("catalog rejected no selection", selected == NULL, 1);
 }
 
 static void probe_track02_palette_route(void) {
@@ -448,7 +631,7 @@ static void probe_track02_palette_route(void) {
     Theron_Track02StartupBitmapRgbaRoute rgba_route;
     Theron_Track02SignalStatus status;
 
-    /* HuC6260 CTW/CTR: blue=7, red=3, green=1 at index 1. */
+    /* HuC6270 9-bit RGB: red=7, green=3, blue=1 at index 1. */
     palette_bytes[2u] = 0x5fu;
     palette_bytes[3u] = 0x00u;
     palette_bytes[4u] = 0xc0u;
@@ -459,9 +642,9 @@ static void probe_track02_palette_route(void) {
     check_int("Track02 palette valid", palette.valid, 1);
     check_size("Track02 palette nonblack entries",
                palette.nonblack_entry_count, 2u);
-    check_int("Track02 palette index1 red", palette.entries[1].red, 109);
-    check_int("Track02 palette index1 green", palette.entries[1].green, 36);
-    check_int("Track02 palette index1 blue", palette.entries[1].blue, 255);
+    check_int("Track02 palette index1 red", palette.entries[1].red, 255);
+    check_int("Track02 palette index1 green", palette.entries[1].green, 109);
+    check_int("Track02 palette index1 blue", palette.entries[1].blue, 36);
 
     memset(&indexed_route, 0, sizeof(indexed_route));
     indexed_route.route_bit = THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE;
@@ -474,11 +657,11 @@ static void probe_track02_palette_route(void) {
         &indexed_route, &palette, &rgba_route);
     check_int("Track02 RGBA route status", status, THERON_TRACK02_SIGNAL_OK);
     check_int("Track02 RGBA route valid", rgba_route.valid, 1);
-    check_int("Track02 RGBA route red", rgba_route.rgba[0], 109);
-    check_int("Track02 RGBA route green", rgba_route.rgba[1], 36);
-    check_int("Track02 RGBA route blue", rgba_route.rgba[2], 255);
+    check_int("Track02 RGBA route red", rgba_route.rgba[0], 255);
+    check_int("Track02 RGBA route green", rgba_route.rgba[1], 109);
+    check_int("Track02 RGBA route blue", rgba_route.rgba[2], 36);
     check_int("Track02 RGBA route alpha", rgba_route.rgba[3], 255);
-    check_int("Track02 RGBA index2 green", rgba_route.rgba[5], 255);
+    check_int("Track02 RGBA index2 blue", rgba_route.rgba[7], 255);
 
     palette_bytes[3u] = 0x80u;
     status = theron_v1_track02_decode_4bpp_palette(

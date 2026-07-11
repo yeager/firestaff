@@ -14100,10 +14100,12 @@ static int csb_v1_runtime_stage_csbwin_resume_report(
     CSB_V1_RuntimeProfile *candidate,
     const CSB_V1_CSBWin512BodyReport *summary)
 {
+    CSB_V1_RuntimeProfile candidate;
+    int previous_dungeon_level;
     uint16_t champion_index;
     uint16_t queue_index;
 
-    if (!candidate || !summary || !summary->header_valid ||
+    if (!profile || !summary || !summary->header_valid ||
         summary->sections_verified < CSB_V1_CSBWIN_512_SECTION_COUNT ||
         summary->num_character > CSB_V1_MAX_CHAMPIONS ||
         summary->party_x > CSB_V1_MAX_PARTY_X ||
@@ -14143,101 +14145,33 @@ static int csb_v1_runtime_stage_csbwin_resume_report(
      * the complete ordered handoff before publishing it. GAMEBLOCK2 also
      * updates the shared current-dungeon level, so restore that singleton if
      * a later candidate step fails. */
-    if (csb_v1_runtime_apply_csbwin_gameblock2_summary(
-            candidate, summary) != 0) {
-        return -1;
-    }
-    if (csb_v1_runtime_apply_csbwin_champion_summaries(
-            candidate, summary) != 0) {
-        return -1;
-    }
-    if (csb_v1_runtime_apply_csbwin_body_runtime_summaries(
-            candidate, summary) != 0) {
-        return -1;
-    }
-    if (csb_v1_runtime_materialize_csbwin_item16_summaries(candidate) < 0) {
-        return -1;
-    }
-    if (csb_v1_runtime_materialize_csbwin_timer_queue(candidate) < 0) {
-        return -1;
-    }
-    return 0;
-}
-
-static int csb_v1_runtime_stage_csbwin_extended_state(
-    CSB_V1_RuntimeProfile *candidate,
-    const uint8_t *bytes,
-    size_t size,
-    const CSB_V1_CSBWinExtendedFeaturesReport *features,
-    const CSB_V1_CSBWinExtendedTailReport *tail)
-{
-    char *game_info;
-
-    if (!candidate || !bytes || !features || !tail || !features->valid ||
-        !tail->valid ||
-        tail->game_info_offset > size ||
-        tail->game_info_size > size - tail->game_info_offset) {
-        return -1;
-    }
-    game_info = (char *)malloc((size_t)tail->game_info_size + 1u);
-    if (!game_info) return -1;
-    memcpy(game_info, bytes + tail->game_info_offset, tail->game_info_size);
-    game_info[tail->game_info_size] = '\0';
-
-    /* CSBWin SaveGame.cpp:211-260 authenticates DSA records before it
-     * publishes gameInfo. DSA.cpp:5637-5798 defines those records. Keep the
-     * imported action words opaque until a source-faithful interpreter exists. */
-    csb_v1_chaos_init(&candidate->csbwin_extended_dsa_state);
-    if (csb_v1_chaos_import_extended_save_dsas(
-            &candidate->csbwin_extended_dsa_state, bytes, (int)size) < 0) {
-        free(game_info);
-        return -1;
-    }
-    candidate->csbwin_extended_features_valid = 1;
-    candidate->csbwin_extended_features_version = features->version;
-    candidate->csbwin_extended_features_flags = features->flags;
-    candidate->csbwin_extended_features_flags32 = features->extended_flags;
-    candidate->csbwin_extended_cell_flag_array_size =
-        features->cell_flag_array_size;
-    candidate->csbwin_extended_game_info = game_info;
-    candidate->csbwin_extended_game_info_size = tail->game_info_size;
-    candidate->csbwin_extended_game_info_fnv1a = tail->game_info_fnv1a;
-    candidate->csbwin_extended_level_index_present =
-        tail->level_index_present;
-    memcpy(candidate->csbwin_extended_level_dsa_index,
-           tail->level_dsa_index,
-           sizeof(candidate->csbwin_extended_level_dsa_index));
-    return 0;
-}
-
-int csb_v1_runtime_apply_csbwin_resume_report(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_CSBWin512BodyReport *summary)
-{
-    CSB_V1_RuntimeProfile candidate;
-    int previous_dungeon_level;
-
-    if (!profile || !summary) return -1;
     candidate = *profile;
     previous_dungeon_level = csb_v1_dungeon_get_current_level();
-    if (csb_v1_runtime_stage_csbwin_resume_report(&candidate, summary) != 0) {
-        csb_v1_dungeon_set_current_level(previous_dungeon_level);
-        return -1;
+    if (csb_v1_runtime_apply_csbwin_gameblock2_summary(
+            &candidate, summary) != 0) {
+        goto reject;
     }
-    /* A core-only report has no Extended Features preamble. CSBWin clears its
-     * DSA/game-info/index owners before loading the save body. */
-    csb_v1_chaos_init(&candidate.csbwin_extended_dsa_state);
-    candidate.csbwin_extended_game_info = NULL;
-    candidate.csbwin_extended_game_info_size = 0u;
-    candidate.csbwin_extended_game_info_fnv1a = 0u;
-    candidate.csbwin_extended_features_valid = 0;
-    candidate.csbwin_extended_level_index_present = 0;
-    memset(candidate.csbwin_extended_level_dsa_index, 0xff,
-           sizeof(candidate.csbwin_extended_level_dsa_index));
-    csb_v1_runtime_cleanup_csbwin_extended_state(profile);
+    if (csb_v1_runtime_apply_csbwin_champion_summaries(
+            &candidate, summary) != 0) {
+        goto reject;
+    }
+    if (csb_v1_runtime_apply_csbwin_body_runtime_summaries(
+            &candidate, summary) != 0) {
+        goto reject;
+    }
+    if (csb_v1_runtime_materialize_csbwin_item16_summaries(&candidate) < 0) {
+        goto reject;
+    }
+    if (csb_v1_runtime_materialize_csbwin_timer_queue(&candidate) < 0) {
+        goto reject;
+    }
     *profile = candidate;
     (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership(profile);
     return 0;
+
+reject:
+    csb_v1_dungeon_set_current_level(previous_dungeon_level);
+    return -1;
 }
 
 int csb_v1_runtime_apply_csbwin_resume_file(
