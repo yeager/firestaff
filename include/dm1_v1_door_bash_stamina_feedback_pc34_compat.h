@@ -235,18 +235,6 @@ bool DM1_V1_DoorBashStamina_ActionIsBashPc34Compat(uint8_t action_ordinal);
 
 const char *DM1_V1_DoorBashStamina_SourceLockPc34Compat(void);
 
-/* Compatibility aliases for older M11 call sites. */
-#define M11_GameView_DoorBashStaminaAdjustedStrengthPc34 \
-    DM1_V1_DoorBashStamina_AdjustedStrengthPc34Compat
-#define M11_GameView_DoorBashStaminaActionCostPc34 \
-    DM1_V1_DoorBashStamina_ActionCostPc34Compat
-#define M11_GameView_DoorBashStaminaResolvePc34 \
-    DM1_V1_DoorBashStamina_ResolvePc34Compat
-#define M11_GameView_DoorBashStaminaActionIsBashPc34 \
-    DM1_V1_DoorBashStamina_ActionIsBashPc34Compat
-#define M11_GameView_DoorBashStaminaSourceLockPc34 \
-    DM1_V1_DoorBashStamina_SourceLockPc34Compat
-
 #ifdef __cplusplus
 }
 #endif

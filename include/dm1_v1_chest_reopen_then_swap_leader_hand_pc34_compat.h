@@ -91,13 +91,6 @@ DM1_V1_ChestReopenThenSwapLeaderHand_SpecPc34Compat(void);
 int DM1_V1_ChestReopenThenSwapLeaderHand_RunPc34Compat(
     DM1_V1_ChestReopenThenSwapLeaderHandProbePc34* out);
 
-#define M11_GameView_ChestReopenThenSwapLeaderHandSourceEvidencePc34 \
-    DM1_V1_ChestReopenThenSwapLeaderHand_SourceEvidencePc34Compat
-#define M11_GameView_ChestReopenThenSwapLeaderHandSpecPc34 \
-    DM1_V1_ChestReopenThenSwapLeaderHand_SpecPc34Compat
-#define M11_GameView_ChestReopenThenSwapLeaderHandRunPc34 \
-    DM1_V1_ChestReopenThenSwapLeaderHand_RunPc34Compat
-
 #ifdef __cplusplus
 }
 #endif

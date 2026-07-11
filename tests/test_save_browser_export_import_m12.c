@@ -545,56 +545,9 @@ static void cleanup(const char* root) {
     unlink(path);
     snprintf(path, sizeof(path), "%s/backup/not-a-save.dat", root);
     unlink(path);
-    snprintf(path, sizeof(path),
-             "%s/nested/export/slot-seven-real-save.bin-pc34.sav", root);
-    unlink(path);
-    snprintf(path, sizeof(path), "%s/nested/data/saves/dm1/saved-slot-a.raw", root);
-    unlink(path);
-    snprintf(path, sizeof(path),
-             "%s/nested/import-source/deep/saved-slot-a.raw", root);
-    unlink(path);
-    snprintf(path, sizeof(path),
-             "%s/nested/import-source/deep/not-a-dm1-save.bin", root);
-    unlink(path);
-    snprintf(path, sizeof(path),
-             "%s/nested/saves/dm1/deep/slot-seven-real-save.bin", root);
-    unlink(path);
-    snprintf(path, sizeof(path),
-             "%s/nested/saves/csb/firestaff-csb-sibling.sav", root);
-    unlink(path);
-    snprintf(path, sizeof(path), "%s/nested/saves/dm2/SKSave.dat", root);
-    unlink(path);
-    snprintf(path, sizeof(path), "%s/nested/saves/dm2/SKSave06.dat", root);
-    unlink(path);
-    snprintf(path, sizeof(path), "%s/nested/saves/dm2/SKSave08.dat", root);
-    unlink(path);
     snprintf(path, sizeof(path), "%s/data", root);
     rmdir(path);
     snprintf(path, sizeof(path), "%s/backup", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/nested/saves/dm1/deep", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/nested/saves/dm1", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/nested/saves/csb", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/nested/saves/dm2", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/nested/saves", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/nested/export", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/nested/data/saves/dm1", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/nested/data/saves", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/nested/data", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/nested/import-source/deep", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/nested/import-source", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/nested", root);
     rmdir(path);
     rmdir(root);
 }
@@ -1015,74 +968,25 @@ int main(void) {
         char nestedRoot[512];
         char nestedData[512];
         char nestedSaves[512];
-        char nestedDm1Saves[512];
-        char nestedDm1DeepSaves[512];
         char nestedCsbSaves[512];
         char nestedDm2Saves[512];
-        char nestedExportDir[512];
-        char nestedExportPath[512];
-        char nestedImportRoot[512];
-        char nestedImportDeep[512];
-        char nestedImportValidPath[512];
-        char nestedImportInvalidPath[512];
-        char nestedImportedPath[512];
         char nestedSavePath[512];
         const M12_SaveBrowserEntry* nested;
-        const M12_SaveBrowserEntry* nestedDm1;
-        const M12_SaveBrowserEntry* importedDm1;
         const M12_SaveBrowserEntry* nestedSuppress;
-        int corpusExported;
-        int corpusSkipped;
-        int corpusImported;
-        int corpusImportSkipped;
-        M12_SaveBrowserDM1PC34CorpusReceipt corpusReceipt;
-        M12_SaveBrowserDM1PC34CorpusReceipt importReceipt;
         DM2_V1_SessionState dm2Session;
         DM2_GameStateBlock dm2SuppressState;
         DM2_ChampionRecord dm2SuppressChampion;
-        struct DM1OriginalPC34RoundtripReceipt nestedReceipt;
 
         snprintf(nestedRoot, sizeof(nestedRoot), "%s/nested", root);
         snprintf(nestedData, sizeof(nestedData), "%s/data", nestedRoot);
         snprintf(nestedSaves, sizeof(nestedSaves), "%s/saves", nestedRoot);
-        snprintf(nestedDm1Saves, sizeof(nestedDm1Saves), "%s/dm1", nestedSaves);
-        snprintf(nestedDm1DeepSaves, sizeof(nestedDm1DeepSaves),
-                 "%s/deep", nestedDm1Saves);
         snprintf(nestedCsbSaves, sizeof(nestedCsbSaves), "%s/csb", nestedSaves);
         snprintf(nestedDm2Saves, sizeof(nestedDm2Saves), "%s/dm2", nestedSaves);
-        snprintf(nestedExportDir, sizeof(nestedExportDir),
-                 "%s/export", nestedRoot);
-        snprintf(nestedExportPath, sizeof(nestedExportPath),
-                 "%s/slot-seven-real-save.bin-pc34.sav", nestedExportDir);
-        snprintf(nestedImportRoot, sizeof(nestedImportRoot),
-                 "%s/import-source", nestedRoot);
-        snprintf(nestedImportDeep, sizeof(nestedImportDeep),
-                 "%s/deep", nestedImportRoot);
-        snprintf(nestedImportValidPath, sizeof(nestedImportValidPath),
-                 "%s/saved-slot-a.raw", nestedImportDeep);
-        snprintf(nestedImportInvalidPath, sizeof(nestedImportInvalidPath),
-                 "%s/not-a-dm1-save.bin", nestedImportDeep);
-        snprintf(nestedImportedPath, sizeof(nestedImportedPath),
-                 "%s/saves/dm1/saved-slot-a.raw", nestedData);
         check(mkdir_one(nestedRoot), "created nested root");
         check(mkdir_one(nestedData), "created nested data dir");
         check(mkdir_one(nestedSaves), "created sibling saves dir");
-        check(mkdir_one(nestedDm1Saves), "created sibling DM1 saves dir");
-        check(mkdir_one(nestedDm1DeepSaves),
-              "created sibling DM1 deep saves dir");
         check(mkdir_one(nestedCsbSaves), "created sibling CSB saves dir");
         check(mkdir_one(nestedDm2Saves), "created sibling DM2 saves dir");
-        check(mkdir_one(nestedExportDir), "created nested DM1 corpus export dir");
-        check(mkdir_one(nestedImportRoot), "created nested DM1 corpus import root");
-        check(mkdir_one(nestedImportDeep), "created nested DM1 corpus import deep dir");
-        snprintf(nestedSavePath, sizeof(nestedSavePath),
-                 "%s/slot-seven-real-save.bin", nestedDm1DeepSaves);
-        check(write_original_pc34_dm1_save(nestedSavePath),
-              "wrote nested arbitrary DM1 original save fixture");
-        check(write_original_pc34_dm1_save(nestedImportValidPath),
-              "wrote import corpus arbitrary DM1 original save fixture");
-        check(write_bytes(nestedImportInvalidPath, "NOT-DM1"),
-              "wrote import corpus invalid DM1 fixture");
         snprintf(nestedSavePath, sizeof(nestedSavePath),
                  "%s/firestaff-csb-sibling.sav", nestedCsbSaves);
         check(write_bytes(nestedSavePath, "CSB-SIBLING-SAVE"),
@@ -1123,49 +1027,8 @@ int main(void) {
                                              &dm2SuppressState,
                                              &dm2SuppressChampion),
               "wrote sibling DM2 SUPPRESS SKSave slot fixture");
-        check(M12_SaveBrowser_Scan(&state, nestedData) == 5,
-              "scan finds recursive DM1 plus sibling CSB/DM2 entries");
-        nestedDm1 = find_entry(&state, "slot-seven-real-save.bin");
-        check(nestedDm1 != NULL, "nested arbitrary DM1 original save entry present");
-        if (nestedDm1) {
-            check(strcmp(nestedDm1->gameId, "dm1") == 0,
-                  "nested arbitrary DM1 original save forces game id");
-            check(nestedDm1->valid == 1 &&
-                      nestedDm1->dm1PC34PartEnvelopeReady == 1,
-                  "nested arbitrary DM1 original save passes F7057 envelope gate");
-            check(strstr(nestedDm1->fullPath,
-                         "/saves/dm1/deep/slot-seven-real-save.bin") != NULL,
-                  "nested arbitrary DM1 original save records recursive path");
-        }
-        corpusExported = -1;
-        corpusSkipped = -1;
-        memset(&corpusReceipt, 0, sizeof(corpusReceipt));
-        check(M12_SaveBrowser_ExportDM1PC34CorpusReceipt(
-                  &state, nestedExportDir, &corpusReceipt) == 0 &&
-                  corpusReceipt.valid &&
-                  corpusReceipt.operation == 1 &&
-                  corpusReceipt.exportedCount == 1 &&
-                  corpusReceipt.skippedCount == 0 &&
-                  corpusReceipt.dm1CandidateCount == 1 &&
-                  corpusReceipt.f7057ReadyCount == 1 &&
-                  corpusReceipt.consumedF0429HeaderGate &&
-                  corpusReceipt.consumedF7057EnvelopeGate &&
-                  corpusReceipt.consumedRoundtripGate &&
-                  corpusReceipt.receiptHash != 0u &&
-                  strstr(corpusReceipt.sourceEvidence, "F7057") != NULL,
-              "bulk export recursive DM1 PC34 corpus receipt succeeds");
-        memset(&nestedReceipt, 0, sizeof(nestedReceipt));
-        check(DM1_BuildOriginalPC34RoundtripReceipt(
-                  nestedExportPath, 0x4f524731u, &nestedReceipt) == 1 &&
-                  nestedReceipt.roundtripSucceeded &&
-                  nestedReceipt.coreStateMatches,
-              "bulk exported recursive DM1 save has PC34 roundtrip receipt");
-        check(M12_SaveBrowser_ExportDM1PC34Corpus(
-                  &state, nestedExportDir, &corpusExported,
-                  &corpusSkipped) == -1,
-              "duplicate bulk export preserves existing DM1 corpus destination");
-        check(corpusExported == 0 && corpusSkipped == 1,
-              "duplicate bulk export reports skipped DM1 corpus entry");
+        check(M12_SaveBrowser_Scan(&state, nestedData) == 4,
+              "scan finds sibling CSB plus DM2 session/SUPPRESS entries");
         nested = find_entry(&state, "firestaff-csb-sibling.sav");
         check(nested != NULL, "sibling CSB save entry present");
         if (nested) {
@@ -1211,49 +1074,6 @@ int main(void) {
                          "/saves/dm2/SKSave08.dat") != NULL,
                   "sibling DM2 SUPPRESS SKSave records actual save-root path");
         }
-        corpusImported = -1;
-        corpusImportSkipped = -1;
-        memset(&importReceipt, 0, sizeof(importReceipt));
-        check(M12_SaveBrowser_ImportDM1PC34CorpusReceipt(
-                  nestedData, nestedImportRoot, &importReceipt) == 0 &&
-                  importReceipt.valid &&
-                  importReceipt.operation == 2 &&
-                  importReceipt.importedCount == 1 &&
-                  importReceipt.skippedCount == 1 &&
-                  importReceipt.dm1CandidateCount == 1 &&
-                  importReceipt.f7057ReadyCount == 1 &&
-                  importReceipt.consumedF0429HeaderGate &&
-                  importReceipt.consumedF7057EnvelopeGate &&
-                  importReceipt.consumedRoundtripGate &&
-                  importReceipt.receiptHash != 0u &&
-                  strstr(importReceipt.sourceEvidence, "F7057") != NULL,
-              "bulk import recursive DM1 PC34 corpus receipt succeeds");
-        memset(&nestedReceipt, 0, sizeof(nestedReceipt));
-        check(DM1_BuildOriginalPC34RoundtripReceipt(
-                  nestedImportedPath, 0x4f524731u, &nestedReceipt) == 1 &&
-                  nestedReceipt.roundtripSucceeded &&
-                  nestedReceipt.coreStateMatches,
-              "bulk imported recursive DM1 save has PC34 roundtrip receipt");
-        check(M12_SaveBrowser_Scan(&state, nestedData) == 6,
-              "scan finds bulk imported recursive DM1 corpus entry");
-        importedDm1 = find_entry(&state, "saved-slot-a.raw");
-        check(importedDm1 != NULL, "bulk imported DM1 corpus entry present");
-        if (importedDm1) {
-            check(strcmp(importedDm1->gameId, "dm1") == 0,
-                  "bulk imported DM1 corpus entry forces game id");
-            check(importedDm1->valid == 1 &&
-                      importedDm1->dm1PC34PartEnvelopeReady == 1,
-                  "bulk imported DM1 corpus entry passes F7057 envelope gate");
-            check(strstr(importedDm1->fullPath,
-                         "/data/saves/dm1/saved-slot-a.raw") != NULL,
-                  "bulk imported DM1 corpus entry records data-root save path");
-        }
-        check(M12_SaveBrowser_ImportDM1PC34Corpus(
-                  nestedData, nestedImportRoot, &corpusImported,
-                  &corpusImportSkipped) == -1,
-              "duplicate bulk import preserves existing DM1 corpus destination");
-        check(corpusImported == 0 && corpusImportSkipped == 2,
-              "duplicate bulk import reports skipped valid and invalid files");
     }
 
     cleanup(root);

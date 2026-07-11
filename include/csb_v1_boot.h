@@ -692,7 +692,6 @@ typedef struct CSB_V1_BootStartupRenderDrawReceipt_PC34 {
     int opening_frame_command_ready;
     int real_asset_matched;
     CSB_V1_StartupRenderPlan_PC34 render_plan;
-    const char *source_evidence;
 } CSB_V1_BootStartupRenderDrawReceipt_PC34;
 
 typedef struct CSB_V1_BootStartupHostViewReceipt_PC34 {
@@ -891,9 +890,6 @@ typedef struct CSB_V1_StartupCompleteSupportReceipt_PC34 {
     int host_route_wrappers_retired;
     int no_loose_render_plan_exports;
     int real_startup_assets_bound;
-    int title_runtime_phase_mask;
-    int title_runtime_expected_phase_mask;
-    uint32_t title_runtime_phase_hash;
     uint32_t real_startup_asset_binding_hash;
     uint32_t session_generation;
     uint32_t runtime_host_gate_hash;
@@ -903,55 +899,11 @@ typedef struct CSB_V1_StartupCompleteSupportReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_StartupCompleteSupportReceipt_PC34;
 
-typedef struct CSB_V1_StartupReleaseAppCaptureReceipt_PC34 {
-    int valid;
-    int complete_support_valid;
-    int host_capture_gate_valid;
-    int release_app_capture_ready;
-    int title_release_app_capture_ready;
-    int closed_door_release_app_capture_ready;
-    int utility_release_app_capture_ready;
-    int door_opening_release_app_capture_ready;
-    int title_host_consumer_ready;
-    int closed_door_host_consumer_ready;
-    int utility_host_consumer_ready;
-    int door_opening_host_consumer_ready;
-    int route_specific_host_consumers_ready;
-    int title_phase_route_complete;
-    int runtime_host_routes_ready;
-    int draw_consumes_receipt_only;
-    int input_consumes_receipt_only;
-    int no_fallback_callbacks;
-    int no_wrapper_fallback_routes;
-    int host_route_wrappers_retired;
-    int no_loose_render_plan_exports;
-    int real_startup_assets_bound;
-    int title_runtime_phase_mask;
-    int title_runtime_expected_phase_mask;
-    uint32_t title_runtime_phase_hash;
-    uint32_t title_packaged_capture_hash;
-    uint32_t closed_door_packaged_capture_hash;
-    uint32_t utility_packaged_capture_hash;
-    uint32_t door_opening_packaged_capture_hash;
-    uint32_t runtime_host_gate_hash;
-    uint32_t complete_support_hash;
-    uint32_t release_app_capture_hash;
-    CSB_V1_StartupCompleteSupportReceipt_PC34 complete_support;
-    const char *source_evidence;
-} CSB_V1_StartupReleaseAppCaptureReceipt_PC34;
-
 /* A non-owning frame view into a startup asset session.  The source pointers
  * remain valid until csb_v1_boot_startup_runtime_asset_session_release_pc34.
  * No fallback text or synthetic door pixels are represented here. */
 typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     int valid;
-    int real_asset_matched;
-    int title_sequence_ready;
-    int entrance_ready;
-    int door_ready;
-    int no_legacy_wrappers;
-    int title_phase_mask;
-    uint32_t frame_route_hash;
     uint32_t source_tick;
     uint32_t session_generation;
     CSB_V1_StartupStage_PC34 stage;
@@ -1048,12 +1000,6 @@ typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
     int fallback_text_suppressed;
     int fallback_callbacks_stripped;
     int consumed_host_view_only;
-    int render_draw_receipt_consumed;
-    int capture_proof_consumed;
-    int route_capture_proof_consumed;
-    int readiness_receipt_consumed;
-    int no_legacy_plan_fallback;
-    const char *source_evidence;
 } CSB_V1_BootStartupHostViewDrawReceipt_PC34;
 
 typedef struct CSB_V1_BootStartupHostInputDispatchReceipt_PC34 {
@@ -1197,11 +1143,6 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
     const CSB_V1_StartupFullRuntimeReceipt_PC34 *full_runtime,
     const CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *host_capture_gate,
     CSB_V1_StartupCompleteSupportReceipt_PC34 *out_receipt);
-void csb_v1_boot_startup_release_app_capture_receipt_init_pc34(
-    CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *receipt);
-int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
-    const CSB_V1_StartupCompleteSupportReceipt_PC34 *complete_support,
-    CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *out_receipt);
 /* ReDMCSB SWSH.C F0909/F0910 owns the pre-title sound, TITLE.C F0437 owns
  * the title timing, and ENTRANCE.C F0806 starts C0_MUSIC_ENTRANCE. */
 int csb_v1_boot_startup_playback_begin_pc34(

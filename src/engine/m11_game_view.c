@@ -7839,6 +7839,25 @@ static int m11_game_view_get_f0352_potion_priest_skill(
     return priestSkill < 0 ? 0 : priestSkill;
 }
 
+int M11_GameView_ProbeF0352PotionEyeDescription(
+    const M11_GameViewState* state,
+    int championIndex,
+    unsigned int thingType,
+    unsigned int iconIndex,
+    unsigned int potionPower,
+    const char* objectName,
+    char* outText,
+    size_t outTextSize) {
+    const unsigned int priestSkill =
+        (unsigned int)m11_game_view_get_f0352_potion_priest_skill(
+            state, championIndex);
+    /* ReDMCSB: PANEL.C F0352 lines 1182-1191 prefixes non-water
+     * potion names from F0303(PRIEST) > 1, not raw champion storage. */
+    return INVENTORY_Compat_FormatPotionEyeDescription(
+        thingType, iconIndex, potionPower, priestSkill,
+        objectName, outText, outTextSize, NULL);
+}
+
 /* ================================================================
  * Pickup: take first item from current cell -> champion inventory
  * ================================================================ */
@@ -29772,6 +29791,910 @@ int M11_GameView_CountCellExplosions(
     M11_SquareThingSummary summary;
     m11_summarize_square_things(world, mapIndex, mapX, mapY, &summary);
     return summary.explosions;
+}
+
+int M11_GameView_ProbeViewportFloorItemCounts(const M11_GameViewState* state,
+                                              int relForward,
+                                              int relSide,
+                                              int* outMapX,
+                                              int* outMapY,
+                                              int* outElementType,
+                                              int* outFloorItemCount,
+                                              int* outSummaryItemCount) {
+    M11_ViewportCell cell;
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+    if (outMapX) *outMapX = cell.mapX;
+    if (outMapY) *outMapY = cell.mapY;
+    if (outElementType) *outElementType = cell.elementType;
+    if (outFloorItemCount) *outFloorItemCount = cell.floorItemCount;
+    if (outSummaryItemCount) *outSummaryItemCount = cell.summary.items;
+    return 1;
+}
+
+int M11_GameView_ProbeViewportCreatureCounts(const M11_GameViewState* state,
+                                             int relForward,
+                                             int relSide,
+                                             int* outMapX,
+                                             int* outMapY,
+                                             int* outElementType,
+                                             int* outCreatureGroupCount,
+                                             int* outSummaryGroupCount,
+                                             int* outFirstCreatureType) {
+    M11_ViewportCell cell;
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+    if (outMapX) *outMapX = cell.mapX;
+    if (outMapY) *outMapY = cell.mapY;
+    if (outElementType) *outElementType = cell.elementType;
+    if (outCreatureGroupCount) *outCreatureGroupCount = cell.creatureGroupCount;
+    if (outSummaryGroupCount) *outSummaryGroupCount = cell.summary.groups;
+    if (outFirstCreatureType) *outFirstCreatureType = cell.creatureType;
+    return 1;
+}
+
+int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
+                                             int relForward,
+                                             int relSide,
+                                             int* outMapX,
+                                             int* outMapY,
+                                             int* outElementType,
+                                             int* outProjectileCount,
+                                             int* outExplosionCount,
+                                             int* outFirstProjectileGfx,
+                                             int* outFirstExplosionType) {
+    M11_ViewportCell cell;
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+    if (outMapX) *outMapX = cell.mapX;
+    if (outMapY) *outMapY = cell.mapY;
+    if (outElementType) *outElementType = cell.elementType;
+    if (outProjectileCount) *outProjectileCount = cell.summary.projectiles;
+    if (outExplosionCount) *outExplosionCount = cell.summary.explosions;
+    if (outFirstProjectileGfx) *outFirstProjectileGfx = cell.firstProjectileGfxIndex;
+    if (outFirstExplosionType) *outFirstExplosionType = cell.firstExplosionType;
+    return 1;
+}
+
+int M11_GameView_ProbeViewportRenderMetadata(const M11_GameViewState* state,
+                                             int relForward,
+                                             int relSide,
+                                             int* outMapX,
+                                             int* outMapY,
+                                             int* outElementType,
+                                             int* outWallOrnamentOrdinal,
+                                             int* outChampionPortraitOrdinal,
+                                             int* outInscriptionTextIndex,
+                                             int* outFloorOrnamentOrdinal) {
+    M11_ViewportCell cell;
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+    if (outMapX) *outMapX = cell.mapX;
+    if (outMapY) *outMapY = cell.mapY;
+    if (outElementType) *outElementType = cell.elementType;
+    if (outWallOrnamentOrdinal) {
+        *outWallOrnamentOrdinal = cell.wallOrnamentOrdinal;
+    }
+    if (outChampionPortraitOrdinal) {
+        *outChampionPortraitOrdinal = cell.championPortraitOrdinal;
+    }
+    if (outInscriptionTextIndex) {
+        *outInscriptionTextIndex = cell.inscriptionTextIndex;
+    }
+    if (outFloorOrnamentOrdinal) {
+        *outFloorOrnamentOrdinal = cell.floorOrnamentOrdinal;
+    }
+    return 1;
+}
+
+typedef struct M11_CSBStartupHostViewProbe {
+    int clearBlackCount;
+    int drawTitleCount;
+    int drawFullSurfaceCount;
+    int drawOpeningFrameCount;
+    int drawClosedDoorsCount;
+    int drawDoorFallbackCount;
+    int drawFallbackTextCount;
+    int drawUtilityPanelCount;
+} M11_CSBStartupHostViewProbe;
+
+static void m11_csb_startup_probe_clear_black(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->clearBlackCount;
+    }
+}
+
+static int m11_csb_startup_probe_draw_title(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawTitleCount;
+    }
+    return 1;
+}
+
+static int m11_csb_startup_probe_draw_full_surface(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawFullSurfaceCount;
+    }
+    return 1;
+}
+
+static int m11_csb_startup_probe_draw_opening_frame(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawOpeningFrameCount;
+    }
+    return 1;
+}
+
+static void m11_csb_startup_probe_draw_closed_doors(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawClosedDoorsCount;
+    }
+}
+
+static void m11_csb_startup_probe_draw_door_fallback(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawDoorFallbackCount;
+    }
+}
+
+static void m11_csb_startup_probe_draw_fallback_text(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    if (probe) {
+        ++probe->drawFallbackTextCount;
+    }
+}
+
+static void m11_csb_startup_probe_draw_utility_panel(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_UtilRenderPlan *utility_plan)
+{
+    M11_CSBStartupHostViewProbe *probe =
+        (M11_CSBStartupHostViewProbe *)user;
+    (void)plan;
+    (void)utility_plan;
+    if (probe) {
+        ++probe->drawUtilityPanelCount;
+    }
+}
+
+static void m11_csb_startup_probe_executor_init(
+    CSB_V1_StartupRenderExecutor_PC34 *executor,
+    M11_CSBStartupHostViewProbe *probe)
+{
+    memset(probe, 0, sizeof(*probe));
+    memset(executor, 0, sizeof(*executor));
+    executor->user = probe;
+    executor->clear_black = m11_csb_startup_probe_clear_black;
+    executor->draw_title = m11_csb_startup_probe_draw_title;
+    executor->draw_full_surface = m11_csb_startup_probe_draw_full_surface;
+    executor->draw_opening_frame = m11_csb_startup_probe_draw_opening_frame;
+    executor->draw_closed_doors = m11_csb_startup_probe_draw_closed_doors;
+    executor->draw_door_fallback = m11_csb_startup_probe_draw_door_fallback;
+    executor->draw_fallback_text = m11_csb_startup_probe_draw_fallback_text;
+    executor->draw_utility_panel = m11_csb_startup_probe_draw_utility_panel;
+}
+
+static void m11_csb_startup_probe_boot_profile(
+    CSB_V1_BootProfile *boot)
+{
+    csb_v1_boot_profile_init(boot);
+    snprintf(boot->asset_root, sizeof(boot->asset_root), "%s", "/tmp");
+    snprintf(boot->graphics_path,
+             sizeof(boot->graphics_path),
+             "%s",
+             "/tmp/firestaff_csb_GRAPHICS.DAT");
+    snprintf(boot->dungeon_path,
+             sizeof(boot->dungeon_path),
+             "%s",
+             "/tmp/firestaff_csb_DUNGEON.DAT");
+    snprintf(boot->graphics_md5,
+             sizeof(boot->graphics_md5),
+             "%s",
+             "61fbfd56887c8bfe85ba4fb306fc2861");
+    snprintf(boot->dungeon_md5,
+             sizeof(boot->dungeon_md5),
+             "%s",
+             "6695d2acebce49f95db1d8f3a5c733de");
+    boot->assets_verified = 1;
+    boot->graphics_verified = 1;
+    boot->dungeon_verified = 1;
+    boot->variant_id = CSB_V1_VARIANT_PC34_EN;
+    boot->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+}
+
+static int m11_csb_startup_probe_execute_snapshot(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    int include_menu_input,
+    int menu_input,
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 *ownership_receipt,
+    M11_CSBStartupHostViewProbe *probe)
+{
+    CSB_V1_StartupRenderExecutor_PC34 executor;
+
+    m11_csb_startup_probe_executor_init(&executor, probe);
+    return csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
+        snapshot,
+        include_menu_input,
+        menu_input,
+        &executor,
+        ownership_receipt);
+}
+
+int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
+    int* outTitleReceiptReady,
+    int* outTitleDrawExecuted,
+    int* outTitleHudExecuted,
+    int* outClosedDoorReceiptReady,
+    int* outClosedDoorDrawExecuted,
+    int* outClosedDoorHudExecuted,
+    int* outUtilityReceiptReady,
+    int* outUtilityDrawExecuted,
+    int* outUtilityHudExecuted,
+    int* outOpeningReceiptReady,
+    int* outOpeningDrawExecuted,
+    int* outConsumedHostViewOnly,
+    int* outSuppressLegacyUtilityFallback,
+    int* outPackagedVisualCaptureReady,
+    int* outInputConsumesReceiptOnly,
+    int* outUtilityInputDispatchReady,
+    int* outTitleAssetDrawReady,
+    int* outClosedDoorFallbackSuppressed,
+    int* outOpeningFrameDrawReady,
+    int* outFullVisualSequenceConsumed,
+    int* outRuntimeRouteHardeningReady,
+    int* outRuntimeRouteHardeningHashReady,
+    int* outRuntimeHostCaptureGateReady,
+    int* outRuntimeHostCaptureGateHashReady,
+    int* outTitleStageRuntimeCaptureReady,
+    int* outTitleStageRuntimeCaptureHashReady)
+{
+    CSB_V1_BootProfile boot;
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
+    CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 runtime_gate;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 title_ownership;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 closed_ownership;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 utility_ownership;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 opening_ownership;
+    CSB_V1_BootStartupHostOwnershipReceipt_PC34 input_ownership;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 title_hardening;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 closed_hardening;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 utility_hardening;
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 opening_hardening;
+    M11_CSBStartupHostViewProbe title_probe;
+    M11_CSBStartupHostViewProbe closed_probe;
+    M11_CSBStartupHostViewProbe utility_probe;
+    M11_CSBStartupHostViewProbe opening_probe;
+    M11_CSBStartupHostViewProbe input_probe;
+
+    m11_csb_startup_probe_boot_profile(&boot);
+    memset(&visual_sequence, 0, sizeof(visual_sequence));
+    memset(&runtime_gate, 0, sizeof(runtime_gate));
+    memset(&title_hardening, 0, sizeof(title_hardening));
+    memset(&closed_hardening, 0, sizeof(closed_hardening));
+    memset(&utility_hardening, 0, sizeof(utility_hardening));
+    memset(&opening_hardening, 0, sizeof(opening_hardening));
+    (void)csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
+        &boot,
+        &visual_sequence);
+    {
+        CSB_V1_StartupRenderExecutor_PC34 runtime_gate_executor;
+        M11_CSBStartupHostViewProbe runtime_gate_probe;
+        m11_csb_startup_probe_executor_init(&runtime_gate_executor,
+                                            &runtime_gate_probe);
+        (void)csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
+            &boot,
+            &runtime_gate_executor,
+            &runtime_gate);
+    }
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.boot_profile = &boot;
+    snapshot.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    snapshot.entrance_active = 1;
+    snapshot.entrance_source_step = 4;
+    snapshot.resume_available = 1;
+    snapshot.resume_path = "/tmp/firestaff-csb-resume.dat";
+    snapshot.title_active = 1;
+    snapshot.title_frame = 0;
+    snapshot.title_source_step = 1;
+    (void)m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                 0,
+                                                 0,
+                                                 &title_ownership,
+                                                 &title_probe);
+    (void)csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+        &visual_sequence,
+        &title_ownership,
+        &title_hardening);
+
+    snapshot.title_active = 0;
+    snapshot.title_frame = csb_v1_startup_title_total_ticks_pc34();
+    snapshot.title_source_step = 0;
+    snapshot.entrance_source_step = 4;
+    snapshot.utility_overlay_active = 0;
+    (void)m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                 0,
+                                                 0,
+                                                 &closed_ownership,
+                                                 &closed_probe);
+    (void)csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+        &visual_sequence,
+        &closed_ownership,
+        &closed_hardening);
+
+    snapshot.utility_overlay_active = 1;
+    snapshot.utility_selected_action_index = 0;
+    snapshot.utility_imported_champion_count = 2;
+    snapshot.utility_preview_active = 0;
+    snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
+    (void)m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                 0,
+                                                 0,
+                                                 &utility_ownership,
+                                                 &utility_probe);
+    (void)csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+        &visual_sequence,
+        &utility_ownership,
+        &utility_hardening);
+    (void)m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                 1,
+                                                 2,
+                                                 &input_ownership,
+                                                 &input_probe);
+
+    snapshot.utility_overlay_active = 0;
+    snapshot.opening_active = 1;
+    snapshot.opening_delay_ticks = 0;
+    snapshot.opening_step = 1;
+    snapshot.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+    (void)m11_csb_startup_probe_execute_snapshot(&snapshot,
+                                                 0,
+                                                 0,
+                                                 &opening_ownership,
+                                                 &opening_probe);
+    (void)csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+        &visual_sequence,
+        &opening_ownership,
+        &opening_hardening);
+
+    if (outTitleReceiptReady) {
+        *outTitleReceiptReady = title_ownership.valid;
+    }
+    if (outTitleDrawExecuted) {
+        *outTitleDrawExecuted =
+            title_ownership.render_executed && title_probe.drawTitleCount == 1;
+    }
+    if (outTitleHudExecuted) {
+        *outTitleHudExecuted = title_ownership.hud_menu_executed;
+    }
+    if (outClosedDoorReceiptReady) {
+        *outClosedDoorReceiptReady = closed_ownership.valid;
+    }
+    if (outClosedDoorDrawExecuted) {
+        *outClosedDoorDrawExecuted =
+            closed_ownership.render_executed &&
+            closed_probe.drawFullSurfaceCount == 1;
+    }
+    if (outClosedDoorHudExecuted) {
+        *outClosedDoorHudExecuted = closed_ownership.hud_menu_executed;
+    }
+    if (outUtilityReceiptReady) {
+        *outUtilityReceiptReady = utility_ownership.valid;
+    }
+    if (outUtilityDrawExecuted) {
+        *outUtilityDrawExecuted =
+            utility_ownership.render_executed &&
+            utility_probe.drawFullSurfaceCount == 1;
+    }
+    if (outUtilityHudExecuted) {
+        *outUtilityHudExecuted = utility_ownership.hud_menu_executed;
+    }
+    if (outOpeningReceiptReady) {
+        *outOpeningReceiptReady = opening_ownership.valid;
+    }
+    if (outOpeningDrawExecuted) {
+        *outOpeningDrawExecuted =
+            opening_ownership.render_executed &&
+            opening_probe.drawOpeningFrameCount == 1;
+    }
+    if (outConsumedHostViewOnly) {
+        *outConsumedHostViewOnly =
+            title_ownership.draw_consumes_receipt_only &&
+            closed_ownership.draw_consumes_receipt_only &&
+            utility_ownership.draw_consumes_receipt_only &&
+            opening_ownership.draw_consumes_receipt_only;
+    }
+    if (outSuppressLegacyUtilityFallback) {
+        *outSuppressLegacyUtilityFallback =
+            closed_ownership.suppress_legacy_utility_fallback;
+    }
+    if (outPackagedVisualCaptureReady) {
+        *outPackagedVisualCaptureReady =
+            title_ownership.packaged_visual_capture_ready &&
+            closed_ownership.packaged_visual_capture_ready &&
+            utility_ownership.packaged_visual_capture_ready &&
+            opening_ownership.packaged_visual_capture_ready;
+    }
+    if (outInputConsumesReceiptOnly) {
+        *outInputConsumesReceiptOnly =
+            input_ownership.input_consumes_receipt_only;
+    }
+    if (outUtilityInputDispatchReady) {
+        *outUtilityInputDispatchReady =
+            input_ownership.host_input_dispatch_valid &&
+            input_ownership.should_dispatch_input &&
+            input_ownership.input_redraws_hud_menu;
+    }
+    if (outTitleAssetDrawReady) {
+        *outTitleAssetDrawReady =
+            title_ownership.host_draw.title_asset_draw_ready &&
+            title_probe.drawFallbackTextCount == 0;
+    }
+    if (outClosedDoorFallbackSuppressed) {
+        *outClosedDoorFallbackSuppressed =
+            closed_ownership.host_draw.closed_door_asset_draw_ready &&
+            closed_ownership.host_draw.fallback_text_suppressed &&
+            closed_probe.drawFallbackTextCount == 0 &&
+            utility_probe.drawFallbackTextCount == 0;
+    }
+    if (outOpeningFrameDrawReady) {
+        *outOpeningFrameDrawReady =
+            opening_ownership.host_draw.opening_frame_draw_ready &&
+            opening_probe.drawFallbackTextCount == 0 &&
+            opening_probe.drawDoorFallbackCount == 0;
+    }
+    if (outFullVisualSequenceConsumed) {
+        *outFullVisualSequenceConsumed =
+            visual_sequence.valid &&
+            visual_sequence.title_all_stages_captured &&
+            visual_sequence.closed_door_hud_capture_ready &&
+            visual_sequence.utility_hud_capture_ready &&
+            visual_sequence.door_opening_delay_capture_ready &&
+            visual_sequence.door_opening_frame_capture_ready &&
+            visual_sequence.credits_capture_ready &&
+            visual_sequence.no_fallback_text_routes &&
+            visual_sequence.no_legacy_door_fallback_routes &&
+            title_ownership.packaged_visual_capture_ready &&
+            closed_ownership.packaged_visual_capture_ready &&
+            utility_ownership.packaged_visual_capture_ready &&
+            opening_ownership.packaged_visual_capture_ready;
+    }
+    if (outRuntimeRouteHardeningReady) {
+        *outRuntimeRouteHardeningReady =
+            title_hardening.valid &&
+            title_hardening.title_route_covered &&
+            closed_hardening.valid &&
+            closed_hardening.closed_door_hud_route_covered &&
+            utility_hardening.valid &&
+            utility_hardening.utility_hud_route_covered &&
+            opening_hardening.valid &&
+            opening_hardening.door_opening_route_covered &&
+            title_hardening.no_fallback_text_route &&
+            closed_hardening.no_fallback_text_route &&
+            utility_hardening.no_fallback_text_route &&
+            opening_hardening.no_legacy_door_fallback_route;
+    }
+    if (outRuntimeRouteHardeningHashReady) {
+        *outRuntimeRouteHardeningHashReady =
+            title_hardening.route_hardening_hash != 0u &&
+            closed_hardening.route_hardening_hash != 0u &&
+            utility_hardening.route_hardening_hash != 0u &&
+            opening_hardening.route_hardening_hash != 0u;
+    }
+    if (outRuntimeHostCaptureGateReady) {
+        *outRuntimeHostCaptureGateReady =
+            runtime_gate.valid &&
+            runtime_gate.runtime_visual_valid &&
+            runtime_gate.visual_sequence_valid &&
+            runtime_gate.route_hardening_valid &&
+            runtime_gate.all_runtime_routes_consumed &&
+            runtime_gate.title_runtime_captured &&
+            runtime_gate.closed_door_hud_runtime_captured &&
+            runtime_gate.utility_hud_runtime_captured &&
+            runtime_gate.door_opening_runtime_captured &&
+            runtime_gate.credits_runtime_captured &&
+            runtime_gate.draw_consumes_receipt_only &&
+            runtime_gate.input_consumes_receipt_only &&
+            runtime_gate.no_fallback_callbacks &&
+            runtime_gate.no_wrapper_fallback_routes &&
+            runtime_gate.real_startup_assets_bound &&
+            runtime_gate.real_startup_asset_role_count == 9;
+    }
+    if (outRuntimeHostCaptureGateHashReady) {
+        *outRuntimeHostCaptureGateHashReady =
+            runtime_gate.sequence_capture_hash != 0u &&
+            runtime_gate.runtime_capture_hash != 0u &&
+            runtime_gate.route_hardening_hash != 0u &&
+            runtime_gate.runtime_host_gate_hash != 0u &&
+            runtime_gate.real_startup_asset_binding_hash != 0u;
+    }
+    if (outTitleStageRuntimeCaptureReady) {
+        *outTitleStageRuntimeCaptureReady =
+            runtime_gate.title_presents_runtime_captured &&
+            runtime_gate.title_chaos_zoom_runtime_captured &&
+            runtime_gate.title_chaos_hold_runtime_captured &&
+            runtime_gate.title_strikes_back_runtime_captured &&
+            runtime_gate.runtime_visual.title_runtime_sample_count ==
+                CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34;
+    }
+    if (outTitleStageRuntimeCaptureHashReady) {
+        int i;
+        *outTitleStageRuntimeCaptureHashReady = 1;
+        for (i = 0; i < CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34; ++i) {
+            if (runtime_gate.runtime_visual.title_runtime_sample_hashes[i] == 0u ||
+                runtime_gate.runtime_visual.title_runtime_sample_hashes[i] !=
+                    visual_sequence.title_sample_hashes[i]) {
+                *outTitleStageRuntimeCaptureHashReady = 0;
+                break;
+            }
+        }
+    }
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 keep post-swoosh
+     * title, closed-door HUD/menu, utility menu, and door opening inside the
+     * CSB startup host loop. This probe mirrors M11's draw call boundary. */
+    return 1;
+}
+
+int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
+    const M11_GameViewState* state,
+    int* outObjectSpriteCount,
+    int* outObjectIconCount,
+    int* outObjectMarkerCount,
+    int* outGroupSpriteCount,
+    int* outGroupMarkerCount,
+    int* outProjectileSpriteCount,
+    int* outProjectileMaterialCount,
+    int* outProjectileMarkerCount,
+    int* outExplosionSpriteCount,
+    int* outExplosionMarkerCount)
+{
+    if (!state) {
+        return 0;
+    }
+    if (outObjectSpriteCount) {
+        *outObjectSpriteCount =
+            state->csbState.runtime_object_sprite_drawn_count;
+    }
+    if (outObjectIconCount) {
+        *outObjectIconCount =
+            state->csbState.runtime_object_icon_drawn_count;
+    }
+    if (outObjectMarkerCount) {
+        *outObjectMarkerCount =
+            state->csbState.runtime_object_marker_drawn_count;
+    }
+    if (outGroupSpriteCount) {
+        *outGroupSpriteCount =
+            state->csbState.runtime_group_sprite_drawn_count;
+    }
+    if (outGroupMarkerCount) {
+        *outGroupMarkerCount =
+            state->csbState.runtime_group_marker_drawn_count;
+    }
+    if (outProjectileSpriteCount) {
+        *outProjectileSpriteCount =
+            state->csbState.runtime_projectile_sprite_drawn_count;
+    }
+    if (outProjectileMaterialCount) {
+        *outProjectileMaterialCount =
+            state->csbState.runtime_projectile_material_resolved_count;
+    }
+    if (outProjectileMarkerCount) {
+        *outProjectileMarkerCount =
+            state->csbState.runtime_projectile_marker_drawn_count;
+    }
+    if (outExplosionSpriteCount) {
+        *outExplosionSpriteCount =
+            state->csbState.runtime_explosion_sprite_drawn_count;
+    }
+    if (outExplosionMarkerCount) {
+        *outExplosionMarkerCount =
+            state->csbState.runtime_explosion_marker_drawn_count;
+    }
+    return 1;
+}
+
+int M11_GameView_ProbeDm1V2LiveEffectSeedCount(
+    const M11_GameViewState* state)
+{
+    return m11_count_dm1_v2_visible_effect_seeds_from_viewport(state);
+}
+
+int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
+                                        int relForward,
+                                        int relSide,
+                                        int* outMapX,
+                                        int* outMapY,
+                                        unsigned char* outRawSquare,
+                                        int* outElementType,
+                                        int* outEffectiveElementType,
+                                        int* outIsWallLike,
+                                        int* outIsOpen) {
+    M11_ViewportCell cell;
+    int effectiveElement;
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+    effectiveElement =
+        DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(cell.square);
+    if (outMapX) *outMapX = cell.mapX;
+    if (outMapY) *outMapY = cell.mapY;
+    if (outRawSquare) *outRawSquare = cell.square;
+    if (outElementType) *outElementType = cell.elementType;
+    if (outEffectiveElementType) *outEffectiveElementType = effectiveElement;
+    if (outIsWallLike) *outIsWallLike = m11_viewport_cell_is_wall_like(&cell);
+    if (outIsOpen) *outIsOpen = m11_viewport_cell_is_open(&cell);
+    return 1;
+}
+
+int M11_GameView_ProbeSideWallDrawEligibility(const M11_GameViewState* state,
+                                              int relForward,
+                                              int relSide,
+                                              int* outLegacyLaneClear,
+                                              int* outDrawsWithSourceOrder) {
+    M11_ViewportCell cells[3][3];
+    M11_ViewportCell cell;
+    int depth;
+    int side;
+    int maxVisibleForward;
+    int laneClear;
+    int draws;
+    if (!state || !state->active || relSide == 0 || relForward < 0) {
+        return 0;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        for (side = 0; side < 3; ++side) {
+            memset(&cells[depth][side], 0, sizeof(cells[depth][side]));
+            (void)m11_sample_viewport_cell(state, depth + 1, side - 1,
+                                           &cells[depth][side]);
+        }
+    }
+    maxVisibleForward = m11_dm1_max_visible_forward_from_center(cells);
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+    laneClear = m11_dm1_side_lane_clear_for_rel(cells, relForward, relSide);
+    (void)maxVisibleForward;
+    draws = m11_viewport_cell_is_wall_like(&cell);
+    if (outLegacyLaneClear) *outLegacyLaneClear = laneClear;
+    if (outDrawsWithSourceOrder) *outDrawsWithSourceOrder = draws;
+    return 1;
+}
+
+int M11_GameView_ProbeDm1NearestBlockingCenterDepth(const M11_GameViewState* state,
+                                                    int* outDepthIndex,
+                                                    int* outRelForward,
+                                                    int* outMapX,
+                                                    int* outMapY,
+                                                    int* outElementType) {
+    M11_ViewportCell cells[3][3];
+    int depth;
+    int side;
+    int blockingDepth;
+    if (!state || !state->active) {
+        return 0;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        for (side = 0; side < 3; ++side) {
+            memset(&cells[depth][side], 0, sizeof(cells[depth][side]));
+            (void)m11_sample_viewport_cell(state, depth + 1, side - 1,
+                                           &cells[depth][side]);
+        }
+    }
+    blockingDepth = m11_dm1_nearest_blocking_center_depth_index(cells);
+    if (outDepthIndex) *outDepthIndex = blockingDepth;
+    if (outRelForward) *outRelForward = blockingDepth >= 0 ? blockingDepth + 1 : -1;
+    if (blockingDepth >= 0) {
+        const M11_ViewportCell* cell = &cells[blockingDepth][1];
+        if (outMapX) *outMapX = cell->mapX;
+        if (outMapY) *outMapY = cell->mapY;
+        if (outElementType) *outElementType = cell->elementType;
+    } else {
+        if (outMapX) *outMapX = -1;
+        if (outMapY) *outMapY = -1;
+        if (outElementType) *outElementType = -1;
+    }
+    return 1;
+}
+
+int M11_GameView_ProbeDm1CenterContentVisibleDepthMask(const M11_GameViewState* state,
+                                                       int* outDepthMask) {
+    M11_ViewportCell cells[3][3];
+    int depth;
+    int side;
+    if (!state || !state->active || !outDepthMask) {
+        return 0;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        for (side = 0; side < 3; ++side) {
+            memset(&cells[depth][side], 0, sizeof(cells[depth][side]));
+            (void)m11_sample_viewport_cell(state, depth + 1, side - 1,
+                                           &cells[depth][side]);
+        }
+    }
+    *outDepthMask = m11_dm1_center_content_visible_depth_mask(cells);
+    return 1;
+}
+
+int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
+                                          int relSide,
+                                          int* outGraphicIndex,
+                                          int* outDstX,
+                                          int* outDstY,
+                                          int* outWidth,
+                                          int* outHeight) {
+    M11_DM1WallFrontBlit blit;
+    if (!m11_dm1_side_wall_blit_for_rel(relForward, relSide, &blit)) {
+        return 0;
+    }
+    if (outGraphicIndex) *outGraphicIndex = blit.graphicIndex;
+    if (outDstX) *outDstX = blit.dstX;
+    if (outDstY) *outDstY = blit.dstY;
+    if (outWidth) *outWidth = blit.width;
+    if (outHeight) *outHeight = blit.height;
+    return 1;
+}
+
+int M11_GameView_ProbeDm1PrimarySideWallMaxForward(int centerMaxVisibleForward) {
+    return dm1_viewport_3d_primary_side_wall_max_forward_pc34(centerMaxVisibleForward);
+}
+
+int M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(int doorState,
+                                               int* outSrcX,
+                                               int* outSrcY,
+                                               int* outDstX,
+                                               int* outDstY,
+                                               int* outWidth,
+                                               int* outHeight) {
+    M11_ViewportCell cell;
+    M11_DM1ZoneBlit panels[2];
+    memset(&cell, 0, sizeof(cell));
+    cell.valid = 1;
+    cell.elementType = DUNGEON_ELEMENT_DOOR;
+    cell.doorState = doorState;
+    cell.doorVertical = 1;
+    if (m11_dm1_center_door_panel_blits_for_cell(0, &cell, panels) <= 0) {
+        return 0;
+    }
+    if (outSrcX) *outSrcX = panels[0].srcX;
+    if (outSrcY) *outSrcY = panels[0].srcY;
+    if (outDstX) *outDstX = panels[0].dstX;
+    if (outDstY) *outDstY = panels[0].dstY;
+    if (outWidth) *outWidth = panels[0].width;
+    if (outHeight) *outHeight = panels[0].height;
+    return 1;
+}
+
+int M11_GameView_ProbeDm1CenterDoorPanelBlit(int depth,
+                                             int doorState,
+                                             int doorVertical,
+                                             int blitIndex,
+                                             int* outSrcX,
+                                             int* outSrcY,
+                                             int* outDstX,
+                                             int* outDstY,
+                                             int* outWidth,
+                                             int* outHeight) {
+    M11_ViewportCell cell;
+    M11_DM1ZoneBlit panels[2];
+    int panelCount;
+    memset(&cell, 0, sizeof(cell));
+    cell.valid = 1;
+    cell.elementType = DUNGEON_ELEMENT_DOOR;
+    cell.doorState = doorState;
+    cell.doorVertical = doorVertical ? 1 : 0;
+    panelCount = m11_dm1_center_door_panel_blits_for_cell(depth, &cell, panels);
+    if (blitIndex < 0) {
+        return panelCount;
+    }
+    if (panelCount <= 0 || blitIndex >= panelCount) {
+        return 0;
+    }
+    if (outSrcX) *outSrcX = panels[blitIndex].srcX;
+    if (outSrcY) *outSrcY = panels[blitIndex].srcY;
+    if (outDstX) *outDstX = panels[blitIndex].dstX;
+    if (outDstY) *outDstY = panels[blitIndex].dstY;
+    if (outWidth) *outWidth = panels[blitIndex].width;
+    if (outHeight) *outHeight = panels[blitIndex].height;
+    return 1;
+}
+
+int M11_GameView_ProbeDm1SideDoorPanelBlit(int relForward,
+                                           int relSide,
+                                           int doorState,
+                                           int doorVertical,
+                                           int blitIndex,
+                                           int* outSrcX,
+                                           int* outSrcY,
+                                           int* outDstX,
+                                           int* outDstY,
+                                           int* outWidth,
+                                           int* outHeight) {
+    DM1_SideDoorRenderPlanPc34 plan;
+    DM1_SideDoorBlitPc34 panelPlans[2];
+    int panelCount;
+    if (!dm1_v1_side_door_render_plan_for_rel_pc34(relForward, relSide, &plan)) {
+        return 0;
+    }
+    panelCount = dm1_v1_side_door_panel_blits_for_draw_pc34(
+        &plan,
+        doorState,
+        doorVertical ? 1 : 0,
+        panelPlans);
+    if (blitIndex < 0) {
+        return panelCount;
+    }
+    if (panelCount <= 0 || blitIndex >= panelCount) {
+        return 0;
+    }
+    if (outSrcX) *outSrcX = panelPlans[blitIndex].srcX;
+    if (outSrcY) *outSrcY = panelPlans[blitIndex].srcY;
+    if (outDstX) *outDstX = panelPlans[blitIndex].dstX;
+    if (outDstY) *outDstY = panelPlans[blitIndex].dstY;
+    if (outWidth) *outWidth = panelPlans[blitIndex].width;
+    if (outHeight) *outHeight = panelPlans[blitIndex].height;
+    return 1;
+}
+
+int M11_GameView_ProbeDm1WallOrnamentFlip(int viewWallIndex) {
+    if (viewWallIndex < 0 || viewWallIndex >= 13) {
+        return -1;
+    }
+    return dm1_v1_wall_ornament_flip_horizontal_pc34(viewWallIndex);
 }
 
 int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,

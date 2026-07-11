@@ -203,6 +203,19 @@ void DM1_V1_LegacyText_TickPc34Compat(DM1_V1_LegacyTextStatePc34* s, int tickMs)
 int  DM1_V1_LegacyText_GetActiveCountPc34Compat(const DM1_V1_LegacyTextStatePc34* s);
 const DM1_V1_LegacyTextMessagePc34* DM1_V1_LegacyText_GetMessagePc34Compat(const DM1_V1_LegacyTextStatePc34* s, int index);
 
+/* Compatibility aliases for older M11 call sites. */
+#define M11_TEXT_MAX_MESSAGES DM1_V1_LEGACY_TEXT_MAX_MESSAGES_PC34
+#define M11_TEXT_MAX_LENGTH DM1_V1_LEGACY_TEXT_MAX_LENGTH_PC34
+#define M11_TEXT_DISPLAY_TICKS DM1_V1_LEGACY_TEXT_DISPLAY_TICKS_PC34
+typedef DM1_V1_LegacyTextMessagePc34 M11_TextMessage;
+typedef DM1_V1_LegacyTextStatePc34 M11_TextState;
+#define m11_text_init DM1_V1_LegacyText_InitPc34Compat
+#define m11_text_show DM1_V1_LegacyText_ShowPc34Compat
+#define m11_text_show_centered DM1_V1_LegacyText_ShowCenteredPc34Compat
+#define m11_text_tick DM1_V1_LegacyText_TickPc34Compat
+#define m11_text_get_active_count DM1_V1_LegacyText_GetActiveCountPc34Compat
+#define m11_text_get_message DM1_V1_LegacyText_GetMessagePc34Compat
+
 #ifdef __cplusplus
 }
 #endif

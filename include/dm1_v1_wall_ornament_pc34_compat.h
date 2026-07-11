@@ -131,25 +131,6 @@ int dm1_v1_front_mirror_render_plan_pc34(
     int portraitOrdinal,
     DM1_FrontMirrorRenderPlanPc34* outPlan);
 
-/* Compatibility aliases for older M11 call sites. */
-typedef DM1_V1_WallOrnamentKindPc34 M11_WO_OrnamentKind;
-typedef DM1_V1_WallOrnamentCoordPc34 M11_WO_OrnCoord;
-typedef DM1_V1_WallOrnamentDefPc34 M11_WO_OrnamentDef;
-typedef DM1_V1_WallOrnamentStatePc34 M11_WO_OrnamentState;
-#define M11_ORN_NONE DM1_V1_WALL_ORN_NONE
-#define M11_ORN_ALCOVE DM1_V1_WALL_ORN_ALCOVE
-#define M11_ORN_SWITCH DM1_V1_WALL_ORN_SWITCH
-#define M11_ORN_KEYHOLE DM1_V1_WALL_ORN_KEYHOLE
-#define M11_ORN_INSCRIPTION DM1_V1_WALL_ORN_INSCRIPTION
-#define M11_ORN_FOUNTAIN DM1_V1_WALL_ORN_FOUNTAIN
-#define M11_ORN_TORCH_HOLDER DM1_V1_WALL_ORN_TORCH_HOLDER
-#define M11_ORN_GENERIC DM1_V1_WALL_ORN_GENERIC
-#define m11_wo_init DM1_V1_WallOrnament_InitPc34Compat
-#define m11_wo_set_level_ornaments DM1_V1_WallOrnament_SetLevelOrnamentsPc34Compat
-#define m11_wo_is_alcove DM1_V1_WallOrnament_IsAlcovePc34Compat
-#define m11_wo_get_coord DM1_V1_WallOrnament_GetCoordPc34Compat
-#define m11_wo_setup_default_coords DM1_V1_WallOrnament_SetupDefaultCoordsPc34Compat
-
 #ifdef __cplusplus
 }
 #endif

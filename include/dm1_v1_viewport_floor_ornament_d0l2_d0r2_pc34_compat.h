@@ -77,6 +77,15 @@ uint8_t DM1_V1_FloorOrnamentD0L2D0R2_BlendPixelPc34Compat(
 
 const char *DM1_V1_FloorOrnamentD0L2D0R2_SourceLockPc34Compat(void);
 
+#define M11_GameView_FloorOrnamentD0L2D0R2ResolvePc34 \
+    DM1_V1_FloorOrnamentD0L2D0R2_ResolvePc34Compat
+#define M11_GameView_FloorOrnamentD0L2D0R2ApplyPixelSlicePc34 \
+    DM1_V1_FloorOrnamentD0L2D0R2_ApplyPixelSlicePc34Compat
+#define M11_GameView_FloorOrnamentD0L2D0R2BlendPixelPc34 \
+    DM1_V1_FloorOrnamentD0L2D0R2_BlendPixelPc34Compat
+#define M11_GameView_FloorOrnamentD0L2D0R2SourceLockPc34 \
+    DM1_V1_FloorOrnamentD0L2D0R2_SourceLockPc34Compat
+
 #ifdef __cplusplus
 }
 #endif

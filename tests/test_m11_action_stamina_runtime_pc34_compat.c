@@ -18,17 +18,11 @@
 
 #include "m11_game_view.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
-#include "dm1_v1_center_door_render_pc34_compat.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
-#include "dm1_v1_side_door_render_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
-#include "dm1_v1_viewport_3d_pc34_compat.h"
-#include "dm1_v1_viewport_fakewall_pc34_compat.h"
-#include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
-#include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
@@ -75,248 +69,6 @@ static unsigned short pack_text3(int a, int b, int c) {
 
 static unsigned char square_for_test(int elementType, int attributes) {
     return (unsigned char)(((elementType & 0x07) << 5) | (attributes & 0x1f));
-}
-
-static int probe_dm1_d1c_thieves_eye_mask_blit(int doorState,
-                                               int* outSrcX,
-                                               int* outSrcY,
-                                               int* outDstX,
-                                               int* outDstY,
-                                               int* outWidth,
-                                               int* outHeight) {
-    DM1_CenterDoorBlitPc34 panels[2];
-    if (dm1_v1_center_door_panel_blits_for_cell_pc34(0, doorState, 1, panels) <= 0) {
-        return 0;
-    }
-    if (outSrcX) *outSrcX = panels[0].srcX;
-    if (outSrcY) *outSrcY = panels[0].srcY;
-    if (outDstX) *outDstX = panels[0].dstX;
-    if (outDstY) *outDstY = panels[0].dstY;
-    if (outWidth) *outWidth = panels[0].width;
-    if (outHeight) *outHeight = panels[0].height;
-    return 1;
-}
-
-static int probe_dm1_center_door_panel_blit(int depth,
-                                            int doorState,
-                                            int doorVertical,
-                                            int blitIndex,
-                                            int* outSrcX,
-                                            int* outSrcY,
-                                            int* outDstX,
-                                            int* outDstY,
-                                            int* outWidth,
-                                            int* outHeight) {
-    DM1_CenterDoorBlitPc34 panels[2];
-    int panelCount = dm1_v1_center_door_panel_blits_for_cell_pc34(
-        depth, doorState, doorVertical, panels);
-    if (blitIndex < 0) {
-        return panelCount;
-    }
-    if (panelCount <= 0 || blitIndex >= panelCount) {
-        return 0;
-    }
-    if (outSrcX) *outSrcX = panels[blitIndex].srcX;
-    if (outSrcY) *outSrcY = panels[blitIndex].srcY;
-    if (outDstX) *outDstX = panels[blitIndex].dstX;
-    if (outDstY) *outDstY = panels[blitIndex].dstY;
-    if (outWidth) *outWidth = panels[blitIndex].width;
-    if (outHeight) *outHeight = panels[blitIndex].height;
-    return 1;
-}
-
-static int probe_dm1_side_door_panel_blit(int relForward,
-                                          int relSide,
-                                          int doorState,
-                                          int doorVertical,
-                                          int blitIndex,
-                                          int* outSrcX,
-                                          int* outSrcY,
-                                          int* outDstX,
-                                          int* outDstY,
-                                          int* outWidth,
-                                          int* outHeight) {
-    DM1_SideDoorRenderPlanPc34 plan;
-    DM1_SideDoorBlitPc34 panels[2];
-    int panelCount;
-    if (!dm1_v1_side_door_render_plan_for_rel_pc34(relForward, relSide, &plan)) {
-        return 0;
-    }
-    panelCount = dm1_v1_side_door_panel_blits_for_draw_pc34(
-        &plan, doorState, doorVertical, panels);
-    if (blitIndex < 0) {
-        return panelCount;
-    }
-    if (panelCount <= 0 || blitIndex >= panelCount) {
-        return 0;
-    }
-    if (outSrcX) *outSrcX = panels[blitIndex].srcX;
-    if (outSrcY) *outSrcY = panels[blitIndex].srcY;
-    if (outDstX) *outDstX = panels[blitIndex].dstX;
-    if (outDstY) *outDstY = panels[blitIndex].dstY;
-    if (outWidth) *outWidth = panels[blitIndex].width;
-    if (outHeight) *outHeight = panels[blitIndex].height;
-    return 1;
-}
-
-static int probe_dm1_wall_ornament_flip(int viewWallIndex) {
-    if (viewWallIndex < 0 || viewWallIndex >= 13) {
-        return -1;
-    }
-    return dm1_v1_wall_ornament_flip_horizontal_pc34(viewWallIndex);
-}
-
-static int dm1_wall_graphic_index_for_test(DM1_WallSetIndex wall)
-{
-    switch (wall) {
-        case DM1_WALL_D0R: return 93;
-        case DM1_WALL_D0L: return 94;
-        case DM1_WALL_D1R: return 95;
-        case DM1_WALL_D1L: return 96;
-        case DM1_WALL_D1C: return 97;
-        case DM1_WALL_D2R2: return 98;
-        case DM1_WALL_D2L2: return 99;
-        case DM1_WALL_D2R: return 100;
-        case DM1_WALL_D2L: return 101;
-        case DM1_WALL_D2C: return 102;
-        case DM1_WALL_D3R2: return 103;
-        case DM1_WALL_D3L2: return 104;
-        case DM1_WALL_D3R: return 105;
-        case DM1_WALL_D3L: return 106;
-        case DM1_WALL_D3C: return 107;
-        default: return -1;
-    }
-}
-
-static int dm1_sample_viewport_cell_for_test(const M11_GameViewState* state,
-                                             int relForward,
-                                             int relSide,
-                                             int* outMapX,
-                                             int* outMapY,
-                                             unsigned char* outRawSquare,
-                                             int* outElementType,
-                                             int* outEffectiveElementType,
-                                             int* outIsWallLike,
-                                             int* outIsOpen)
-{
-    const struct DungeonMapDesc_Compat* map;
-    const struct DungeonMapTiles_Compat* tiles;
-    int16_t mapX = 0;
-    int16_t mapY = 0;
-    int index;
-    unsigned char square;
-    int element;
-    if (!state || !state->active || !state->world.dungeon ||
-        state->world.party.mapIndex < 0 ||
-        state->world.party.mapIndex >= (int)state->world.dungeon->header.mapCount ||
-        !state->world.dungeon->maps || !state->world.dungeon->tiles ||
-        !state->world.dungeon->tilesLoaded) {
-        return 0;
-    }
-    if (!dm1_viewport_3d_resolve_relative_map_xy(
-            state->world.party.direction, relForward, relSide,
-            state->world.party.mapX, state->world.party.mapY,
-            &mapX, &mapY)) {
-        return 0;
-    }
-    map = &state->world.dungeon->maps[state->world.party.mapIndex];
-    tiles = &state->world.dungeon->tiles[state->world.party.mapIndex];
-    if (mapX < 0 || mapY < 0 || mapX >= map->width || mapY >= map->height ||
-        !tiles->squareData) {
-        return 0;
-    }
-    index = (int)mapX * map->height + (int)mapY;
-    if (index < 0 || index >= tiles->squareCount) {
-        return 0;
-    }
-    square = tiles->squareData[index];
-    element = (square >> 5) & 0x07;
-    if (outMapX) *outMapX = mapX;
-    if (outMapY) *outMapY = mapY;
-    if (outRawSquare) *outRawSquare = square;
-    if (outElementType) *outElementType = element;
-    if (outEffectiveElementType) {
-        *outEffectiveElementType =
-            DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(square);
-    }
-    if (outIsWallLike) {
-        *outIsWallLike = DM1_V1_Viewport_SquareIsWallLikePc34Compat(square);
-    }
-    if (outIsOpen) {
-        *outIsOpen = DM1_V1_Viewport_SquareIsOpenPc34Compat(square);
-    }
-    return 1;
-}
-
-static int dm1_side_wall_draw_eligibility_for_test(
-    const M11_GameViewState* state,
-    int relForward,
-    int relSide,
-    int* outLegacyLaneClear,
-    int* outDrawsWithSourceOrder)
-{
-    int centerValid[3] = {0, 0, 0};
-    int centerOpen[3] = {0, 0, 0};
-    int centerDoor[3] = {0, 0, 0};
-    int leftOpen[3] = {0, 0, 0};
-    int rightOpen[3] = {0, 0, 0};
-    DM1_ViewportLaneVisibilityReceiptPc34 visibility;
-    int depth;
-    int wallLike = 0;
-    if (!state || relSide == 0 || relForward < 0) {
-        return 0;
-    }
-    for (depth = 0; depth < 3; ++depth) {
-        int element = -1;
-        (void)dm1_sample_viewport_cell_for_test(
-            state, depth + 1, 0, NULL, NULL, NULL, &element, NULL,
-            NULL, &centerOpen[depth]);
-        centerValid[depth] = element >= 0;
-        centerDoor[depth] = element == DUNGEON_ELEMENT_DOOR;
-        (void)dm1_sample_viewport_cell_for_test(
-            state, depth + 1, -1, NULL, NULL, NULL, NULL, NULL,
-            NULL, &leftOpen[depth]);
-        (void)dm1_sample_viewport_cell_for_test(
-            state, depth + 1, 1, NULL, NULL, NULL, NULL, NULL,
-            NULL, &rightOpen[depth]);
-    }
-    visibility = dm1_viewport_3d_lane_visibility_from_cells_pc34(
-        centerValid, centerOpen, centerDoor, leftOpen, rightOpen);
-    if (!dm1_sample_viewport_cell_for_test(
-            state, relForward, relSide, NULL, NULL, NULL, NULL, NULL,
-            &wallLike, NULL)) {
-        return 0;
-    }
-    if (outLegacyLaneClear) {
-        *outLegacyLaneClear =
-            dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
-                &visibility, relForward, relSide);
-    }
-    if (outDrawsWithSourceOrder) {
-        *outDrawsWithSourceOrder = wallLike;
-    }
-    return 1;
-}
-
-static int dm1_side_wall_runtime_blit_for_test(int relForward,
-                                               int relSide,
-                                               int* outGraphicIndex,
-                                               int* outDstX,
-                                               int* outDstY,
-                                               int* outWidth,
-                                               int* outHeight)
-{
-    const DM1_ViewportWallDrawSpec* spec =
-        dm1_viewport_3d_get_side_wall_draw_spec_for_rel(relForward, relSide);
-    if (!spec) {
-        return 0;
-    }
-    if (outGraphicIndex) *outGraphicIndex = dm1_wall_graphic_index_for_test(spec->native_wall);
-    if (outDstX) *outDstX = spec->runtime_dst_x;
-    if (outDstY) *outDstY = spec->runtime_dst_y;
-    if (outWidth) *outWidth = spec->runtime_width;
-    if (outHeight) *outHeight = spec->runtime_height;
-    return 1;
 }
 
 static void mark_raw_object_slots_unused_for_test(unsigned char* raw, int count) {
@@ -8425,10 +8177,10 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     int artifactMapX = -1;
     int artifactMapY = -1;
     int artifactElement = -1;
+    int artifactProjectiles = -1;
     int artifactExplosions = -1;
+    int artifactProjectileGfx = -1;
     int artifactExplosionType = -1;
-    DM1_V1_ViewportRuntimeMaterializationInputPc34 materializationInput;
-    DM1_V1_ViewportRuntimeMaterializationDecisionPc34 materialization;
     int replayType = 0;
     int replayAttack = 0;
     int replayCreatureType = 0;
@@ -8556,26 +8308,13 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     state.world.explosions.entries[4].mapX = 2;
     state.world.explosions.entries[4].mapY = 1;
 
-    memset(&materializationInput, 0, sizeof(materializationInput));
-    materializationInput.relativeForward = 1;
-    materializationInput.relativeSide = -1;
-    materializationInput.elementType = DUNGEON_ELEMENT_CORRIDOR;
-    materializationInput.mapIndex = state.world.party.mapIndex;
-    materializationInput.mapX = 1;
-    materializationInput.mapY = 1;
-    materializationInput.partyDirection = state.world.party.direction;
-    materializationInput.liveProjectiles = &state.world.projectiles;
-    materializationInput.liveExplosions = &state.world.explosions;
-    materializationInput.runtimeOrigin =
-        DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
-    ASSERT_EQ(dm1_v1_viewport_runtime_materialization_decide_pc34(
-                  &materializationInput, &materialization),
+    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
+                  &state, 1, -1, &artifactMapX, &artifactMapY,
+                  &artifactElement, &artifactProjectiles,
+                  &artifactExplosions, &artifactProjectileGfx,
+                  &artifactExplosionType),
               1,
               "FUSE complete fixture can sample the left-front fluxcage square");
-    artifactMapX = materializationInput.mapX;
-    artifactMapY = materializationInput.mapY;
-    artifactExplosions = materialization.liveExplosionCount;
-    artifactExplosionType = materialization.liveExplosionType;
     ASSERT_EQ(artifactMapX, 1,
               "FUSE complete fixture left-front sample uses fluxcage x");
     ASSERT_EQ(artifactMapY, 1,
@@ -8620,18 +8359,15 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     ASSERT_EQ(M11_GameView_GetEndgameDoNotDrawFluxcages(&state), 1,
               "FUSE complete sets F0446 do-not-draw-fluxcages gate");
     artifactMapX = artifactMapY = artifactElement = -1;
-    artifactExplosions = -1;
-    artifactExplosionType = -1;
-    materializationInput.suppressFluxcages =
-        M11_GameView_GetEndgameDoNotDrawFluxcages(&state);
-    ASSERT_EQ(dm1_v1_viewport_runtime_materialization_decide_pc34(
-                  &materializationInput, &materialization),
+    artifactProjectiles = artifactExplosions = -1;
+    artifactProjectileGfx = artifactExplosionType = -1;
+    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
+                  &state, 1, -1, &artifactMapX, &artifactMapY,
+                  &artifactElement, &artifactProjectiles,
+                  &artifactExplosions, &artifactProjectileGfx,
+                  &artifactExplosionType),
               1,
               "FUSE complete samples the left-front square after F0446 hide gate");
-    artifactMapX = materializationInput.mapX;
-    artifactMapY = materializationInput.mapY;
-    artifactExplosions = materialization.liveExplosionCount;
-    artifactExplosionType = materialization.liveExplosionType;
     ASSERT_EQ(artifactMapX, 1,
               "FUSE complete post-hide sample keeps fluxcage square x");
     ASSERT_EQ(artifactMapY, 1,
@@ -8951,14 +8687,14 @@ static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {
     state.world.party.mapY = 3;
     state.world.party.direction = 0; /* north: D2L=(1,1), D2R=(3,1). */
 
-    ASSERT_EQ(dm1_viewport_3d_primary_side_wall_max_forward_pc34(1), 3,
+    ASSERT_EQ(M11_GameView_ProbeDm1PrimarySideWallMaxForward(1), 3,
               "primary side-wall pass keeps D1/D2/D3 when D1C blocks");
-    ASSERT_EQ(dm1_viewport_3d_primary_side_wall_max_forward_pc34(2), 3,
+    ASSERT_EQ(M11_GameView_ProbeDm1PrimarySideWallMaxForward(2), 3,
               "primary side-wall pass keeps D1/D2/D3 when D2C blocks");
-    ASSERT_EQ(dm1_viewport_3d_primary_side_wall_max_forward_pc34(3), 3,
+    ASSERT_EQ(M11_GameView_ProbeDm1PrimarySideWallMaxForward(3), 3,
               "primary side-wall pass keeps D1/D2/D3 on open center lane");
 
-    ASSERT_EQ(dm1_sample_viewport_cell_for_test(
+    ASSERT_EQ(M11_GameView_ProbeViewportCellClass(
                   &state, 2, -1, &mapX, &mapY, NULL, &element,
                   &effective, &wallLike, &open),
               1,
@@ -8971,13 +8707,13 @@ static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {
               "D2L side wall effective element is wall");
     ASSERT_EQ(wallLike, 1, "D2L side wall is wall-like");
     ASSERT_EQ(open, 0, "D2L side wall is not open");
-    ASSERT_EQ(dm1_side_wall_draw_eligibility_for_test(
+    ASSERT_EQ(M11_GameView_ProbeSideWallDrawEligibility(
                   &state, 2, -1, &legacyLaneClear, &draws),
               1,
               "D2L side wall draw eligibility resolves");
     ASSERT_EQ(draws, 1,
               "D2L source-order side-wall pass draws without waiting for D1");
-    ASSERT_EQ(dm1_side_wall_runtime_blit_for_test(
+    ASSERT_EQ(M11_GameView_ProbeSideWallRuntimeBlit(
                   2, -1, &gfx, &dstX, &dstY, &width, &height),
               1,
               "D2L runtime blit resolves");
@@ -8987,7 +8723,7 @@ static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {
     ASSERT_EQ(width, 75, "D2L runtime blit uses C710 inclusive width");
     ASSERT_EQ(height, 71, "D2L runtime blit uses G0163 inclusive height");
 
-    ASSERT_EQ(dm1_sample_viewport_cell_for_test(
+    ASSERT_EQ(M11_GameView_ProbeViewportCellClass(
                   &state, 2, 1, &mapX, &mapY, NULL, &element,
                   &effective, &wallLike, &open),
               1,
@@ -8995,13 +8731,13 @@ static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {
     ASSERT_EQ(mapX, 3, "D2R side wall x uses ReDMCSB F0150 2,+1");
     ASSERT_EQ(mapY, 1, "D2R side wall y uses ReDMCSB F0150 2,+1");
     ASSERT_EQ(wallLike, 1, "D2R side wall is wall-like");
-    ASSERT_EQ(dm1_side_wall_draw_eligibility_for_test(
+    ASSERT_EQ(M11_GameView_ProbeSideWallDrawEligibility(
                   &state, 2, 1, &legacyLaneClear, &draws),
               1,
               "D2R side wall draw eligibility resolves");
     ASSERT_EQ(draws, 1,
               "D2R source-order side-wall pass draws without waiting for D1");
-    ASSERT_EQ(dm1_side_wall_runtime_blit_for_test(
+    ASSERT_EQ(M11_GameView_ProbeSideWallRuntimeBlit(
                   2, 1, &gfx, &dstX, &dstY, &width, &height),
               1,
               "D2R runtime blit resolves");
@@ -9020,12 +8756,12 @@ static void test_dm1_d1c_thieves_eye_mask_follows_opening_door_panel(void) {
     int width = -1;
     int height = -1;
 
-    ASSERT_EQ(probe_dm1_d1c_thieves_eye_mask_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(
                   0, &srcX, &srcY, &dstX, &dstY, &width, &height),
               0,
               "open D1C door skips thieves-eye mask like F0111 open-state return");
 
-    ASSERT_EQ(probe_dm1_d1c_thieves_eye_mask_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(
                   4, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "closed D1C thieves-eye mask resolves");
@@ -9036,7 +8772,7 @@ static void test_dm1_d1c_thieves_eye_mask_follows_opening_door_panel(void) {
     ASSERT_EQ(width, 96, "closed D1C mask width");
     ASSERT_EQ(height, 86, "closed D1C mask height");
 
-    ASSERT_EQ(probe_dm1_d1c_thieves_eye_mask_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(
                   2, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "half-open D1C thieves-eye mask resolves through clipped panel");
@@ -9047,23 +8783,23 @@ static void test_dm1_d1c_thieves_eye_mask_follows_opening_door_panel(void) {
     ASSERT_EQ(width, 96, "half-open D1C mask width");
     ASSERT_EQ(height, 45, "half-open D1C mask height");
 
-    ASSERT_EQ(probe_dm1_d1c_thieves_eye_mask_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(
                   5, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "destroyed D1C thieves-eye mask keeps closed/destroyed panel");
     ASSERT_EQ(srcY, 0, "destroyed D1C mask uses closed/destroyed src y");
     ASSERT_EQ(height, 86, "destroyed D1C mask uses closed/destroyed height");
 
-    ASSERT_EQ(probe_dm1_center_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1CenterDoorPanelBlit(
                   0, 2, 1, -1, NULL, NULL, NULL, NULL, NULL, NULL),
               1,
               "vertical half-open D1C uses one vertical panel blit");
-    ASSERT_EQ(probe_dm1_center_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1CenterDoorPanelBlit(
                   0, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
               2,
               "horizontal half-open D1C uses LeftHorizontal and RightHorizontal");
 
-    ASSERT_EQ(probe_dm1_center_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1CenterDoorPanelBlit(
                   0, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "horizontal half-open D1C left half resolves");
@@ -9074,7 +8810,7 @@ static void test_dm1_d1c_thieves_eye_mask_follows_opening_door_panel(void) {
     ASSERT_EQ(width, 24, "horizontal half-open D1C left width from G0186");
     ASSERT_EQ(height, 86, "horizontal half-open D1C left height from G0186");
 
-    ASSERT_EQ(probe_dm1_center_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1CenterDoorPanelBlit(
                   0, 2, 0, 1, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "horizontal half-open D1C right half resolves");
@@ -9085,11 +8821,11 @@ static void test_dm1_d1c_thieves_eye_mask_follows_opening_door_panel(void) {
     ASSERT_EQ(width, 24, "horizontal half-open D1C right width from G0186");
     ASSERT_EQ(height, 86, "horizontal half-open D1C right height from G0186");
 
-    ASSERT_EQ(probe_dm1_center_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1CenterDoorPanelBlit(
                   1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
               2,
               "horizontal half-open D2C also uses two source halves");
-    ASSERT_EQ(probe_dm1_center_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1CenterDoorPanelBlit(
                   2, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
               2,
               "horizontal half-open D3C also uses two source halves");
@@ -9103,7 +8839,7 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
     int width = -1;
     int height = -1;
 
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   3, -1, 4, 1, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "closed D3L side door resolves through G0179");
@@ -9114,11 +8850,11 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
     ASSERT_EQ(width, 48, "closed D3L side door width from G0179");
     ASSERT_EQ(height, 40, "closed D3L side door height from G0179");
 
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   3, -1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
               2,
               "horizontal half-open D3L side door uses two G0179 halves");
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   3, -1, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "horizontal half-open D3L left half resolves");
@@ -9126,7 +8862,7 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
     ASSERT_EQ(dstX, 24, "D3L horizontal left dst x from G0179");
     ASSERT_EQ(width, 12, "D3L horizontal left width from G0179");
     ASSERT_EQ(height, 40, "D3L horizontal left height from G0179");
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   3, -1, 2, 0, 1, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "horizontal half-open D3L right half resolves");
@@ -9134,18 +8870,18 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
     ASSERT_EQ(dstX, 60, "D3L horizontal right dst x from G0179");
     ASSERT_EQ(width, 12, "D3L horizontal right width from G0179");
 
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   3, 1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
               2,
               "horizontal half-open D3R side door uses two G0181 halves");
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   3, 1, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "horizontal half-open D3R left half resolves");
     ASSERT_EQ(srcX, 12, "D3R horizontal left source x from G0181");
     ASSERT_EQ(dstX, 150, "D3R horizontal left dst x from G0181");
     ASSERT_EQ(width, 12, "D3R horizontal left width from G0181");
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   3, 1, 2, 0, 1, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "horizontal half-open D3R right half resolves");
@@ -9153,7 +8889,7 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
     ASSERT_EQ(dstX, 186, "D3R horizontal right dst x from G0181");
     ASSERT_EQ(width, 12, "D3R horizontal right width from G0181");
 
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   2, -1, 4, 1, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "closed D2L side door resolves through G0182");
@@ -9164,11 +8900,11 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
     ASSERT_EQ(width, 64, "closed D2L side door width from G0182");
     ASSERT_EQ(height, 59, "closed D2L side door height from G0182");
 
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   2, -1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
               2,
               "horizontal half-open D2L side door uses two G0182 halves");
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   2, -1, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "horizontal half-open D2L left half resolves");
@@ -9176,7 +8912,7 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
     ASSERT_EQ(dstX, 0, "D2L horizontal left dst x from G0182");
     ASSERT_EQ(width, 16, "D2L horizontal left width from G0182");
     ASSERT_EQ(height, 59, "D2L horizontal left height from G0182");
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   2, -1, 2, 0, 1, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "horizontal half-open D2L right half resolves");
@@ -9184,18 +8920,18 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
     ASSERT_EQ(dstX, 48, "D2L horizontal right dst x from G0182");
     ASSERT_EQ(width, 16, "D2L horizontal right width from G0182");
 
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   2, 1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
               2,
               "horizontal half-open D2R side door uses two G0184 halves");
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   2, 1, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "horizontal half-open D2R left half resolves");
     ASSERT_EQ(srcX, 16, "D2R horizontal left source x from G0184");
     ASSERT_EQ(dstX, 160, "D2R horizontal left dst x from G0184");
     ASSERT_EQ(width, 16, "D2R horizontal left width from G0184");
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   2, 1, 2, 0, 1, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "horizontal half-open D2R right half resolves");
@@ -9203,11 +8939,11 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
     ASSERT_EQ(dstX, 208, "D2R horizontal right dst x from G0184");
     ASSERT_EQ(width, 16, "D2R horizontal right width from G0184");
 
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   1, -1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
               1,
               "horizontal half-open D1L side door draws only visible G0185 half");
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   1, -1, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "horizontal half-open D1L visible half resolves");
@@ -9216,11 +8952,11 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
     ASSERT_EQ(width, 24, "D1L horizontal visible width from G0185");
     ASSERT_EQ(height, 86, "D1L horizontal visible height from G0185");
 
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   1, 1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
               1,
               "horizontal half-open D1R side door draws only visible G0187 half");
-    ASSERT_EQ(probe_dm1_side_door_panel_blit(
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   1, 1, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "horizontal half-open D1R visible half resolves");
@@ -9231,25 +8967,25 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
 }
 
 static void test_dm1_wall_ornament_flip_matches_f0107_pc34(void) {
-    ASSERT_EQ(probe_dm1_wall_ornament_flip(0), 0,
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(0), 0,
               "D3L2 wall ornament is not flipped by F0107");
-    ASSERT_EQ(probe_dm1_wall_ornament_flip(1), 1,
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(1), 1,
               "D3R2 wall ornament uses right-side horizontal flip");
-    ASSERT_EQ(probe_dm1_wall_ornament_flip(2), 0,
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(2), 0,
               "D3L front wall ornament is not flipped");
-    ASSERT_EQ(probe_dm1_wall_ornament_flip(4), 0,
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(4), 0,
               "D3R front wall ornament is not flipped");
-    ASSERT_EQ(probe_dm1_wall_ornament_flip(6), 1,
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(6), 1,
               "D2R left wall ornament uses right-side horizontal flip");
-    ASSERT_EQ(probe_dm1_wall_ornament_flip(9), 0,
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(9), 0,
               "D2R front wall ornament is not flipped");
-    ASSERT_EQ(probe_dm1_wall_ornament_flip(11), 1,
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(11), 1,
               "D1R left wall ornament uses right-side horizontal flip");
-    ASSERT_EQ(probe_dm1_wall_ornament_flip(12), 0,
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(12), 0,
               "D1C front wall ornament is not flipped");
-    ASSERT_EQ(probe_dm1_wall_ornament_flip(-1), -1,
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(-1), -1,
               "wall ornament flip probe rejects negative view index");
-    ASSERT_EQ(probe_dm1_wall_ornament_flip(13), -1,
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(13), -1,
               "wall ornament flip probe rejects out-of-range view index");
 }
 

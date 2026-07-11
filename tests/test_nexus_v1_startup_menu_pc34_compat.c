@@ -1349,7 +1349,9 @@ int main(void)
                real_asset_ownership_receipt.dgn_viewport_wall_material_surface_count ==
                    real_asset_ownership_receipt.dgn_render_plan.wall_count &&
                real_asset_ownership_receipt.dgn_viewport_ceiling_material_surface_count ==
-                   real_asset_ownership_receipt.dgn_render_plan.ceiling_count &&
+                   real_asset_ownership_receipt.dgn_draw_command_count -
+                       real_asset_ownership_receipt.dgn_render_plan.floor_count -
+                       real_asset_ownership_receipt.dgn_render_plan.wall_count &&
                real_asset_ownership_receipt.dgn_material_surface_coverage_complete == 1 &&
                real_asset_ownership_receipt.bpk_material_surface_count == 1 &&
                real_asset_ownership_receipt.bpk_truecolor_material_surface_count == 1 &&
@@ -1527,7 +1529,9 @@ int main(void)
                host_caller_receipt.dgn_viewport_wall_material_surface_count ==
                    host_caller_receipt.ownership.dgn_render_plan.wall_count &&
                host_caller_receipt.dgn_viewport_ceiling_material_surface_count ==
-                   host_caller_receipt.ownership.dgn_render_plan.ceiling_count &&
+                   host_caller_receipt.dgn_command_count -
+                       host_caller_receipt.ownership.dgn_render_plan.floor_count -
+                       host_caller_receipt.ownership.dgn_render_plan.wall_count &&
                host_caller_receipt.dgn_material_surface_coverage_complete == 1 &&
                host_caller_receipt.bpk_material_surface_count == 1 &&
                host_caller_receipt.bpk_truecolor_material_surface_count == 1 &&

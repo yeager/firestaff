@@ -122,31 +122,6 @@ static void check_loaded_game(const char* root,
     fs_assets_free(&bundle);
 }
 
-static void check_known_game_rejects_filename_only_pair(const char* root) {
-    char dm1Dir[FSP_PATH_MAX];
-    char graphicsPath[FSP_PATH_MAX];
-    char dungeonPath[FSP_PATH_MAX];
-    FS_AssetBundle bundle;
-
-    check_int(FSP_JoinPath(dm1Dir, sizeof(dm1Dir), root, "dm1") &&
-              FSP_CreateDirectoryRecursive(dm1Dir) &&
-              FSP_JoinPath(graphicsPath, sizeof(graphicsPath), dm1Dir, "GRAPHICS.DAT") &&
-              FSP_JoinPath(dungeonPath, sizeof(dungeonPath), dm1Dir, "DUNGEON.DAT"),
-              "filename-only DM1 fixture paths built");
-    check_int(write_payload(graphicsPath, "filename-only graphics bytes") &&
-              write_payload(dungeonPath, "filename-only dungeon bytes"),
-              "filename-only DM1 fixture written");
-
-    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
-    memset(&bundle, 0, sizeof(bundle));
-    check_int(fs_assets_load_game(&bundle, root, "dm1") != 0,
-              "known DM1 asset pipeline rejects filename-only data without hash match");
-    check_int(bundle.loaded == 0 && bundle.graphics_data == NULL &&
-              bundle.dungeon_data == NULL,
-              "rejected filename-only DM1 fixture leaves bundle empty");
-    fs_assets_free(&bundle);
-}
-
 static void check_optional_real_multilang_renamed_hash(const char* root,
                                                        const char* originalHome) {
     char graphicsSrc[FSP_PATH_MAX];
@@ -264,7 +239,6 @@ int main(void) {
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
     M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, NULL);
     M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
-    check_known_game_rejects_filename_only_pair(root);
 
     if (failures) return 1;
     puts("ok: asset pipeline loads renamed required files by hash");

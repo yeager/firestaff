@@ -2108,49 +2108,6 @@ int M12_StartupMenu_ExportSelectedSaveBrowserDM1PC34(M12_StartupMenuState* state
                                                    outPathSize);
 }
 
-int M12_StartupMenu_ExportSaveBrowserDM1PC34CorpusReceipt(
-    M12_StartupMenuState* state,
-    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt)
-{
-    const char* dataDir;
-
-    if (!state || !outReceipt || state->view != M12_MENU_VIEW_SAVE_BROWSER) {
-        return -1;
-    }
-    dataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
-    /*
-     * ReDMCSB SAVEHEAD.C F0430 lines ~57-109 and CEDTINCD.C F7057
-     * lines ~266-294 are consumed in the save-browser corpus receipt.
-     * M12 routes launcher export through that receipt instead of
-     * rebuilding DM1 PC34 readiness from selected-entry diagnostics.
-     */
-    return M12_SaveBrowser_ExportDM1PC34CorpusReceipt(&state->saveBrowser,
-                                                      dataDir,
-                                                      outReceipt);
-}
-
-int M12_StartupMenu_ImportDM1PC34CorpusReceipt(
-    M12_StartupMenuState* state,
-    const char* importDir,
-    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt)
-{
-    const char* dataDir;
-
-    if (!state || !importDir || !*importDir || !outReceipt) {
-        return -1;
-    }
-    dataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
-    /*
-     * ReDMCSB SAVEHEAD.C F0429 lines ~30-54 and CEDTINCD.C F7057
-     * lines ~266-294 remain the DM1 corpus import gate.  The launcher
-     * consumes the save-browser receipt so arbitrary filenames are not
-     * accepted unless the original save-parts pass that gate.
-     */
-    return M12_SaveBrowser_ImportDM1PC34CorpusReceipt(dataDir,
-                                                      importDir,
-                                                      outReceipt);
-}
-
 static int m12_save_browser_select_first_game(M12_StartupMenuState* state,
                                               const char* gameId) {
     int i;

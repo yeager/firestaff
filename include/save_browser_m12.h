@@ -59,23 +59,6 @@ typedef struct {
     int confirmDelete;      /* 1 = awaiting delete confirmation */
 } M12_SaveBrowserState;
 
-typedef struct {
-    int valid;
-    int operation;                 /* 1=export, 2=import */
-    int sourceLockedDm1PC34Corpus;
-    int consumedF0429HeaderGate;
-    int consumedF7057EnvelopeGate;
-    int consumedRoundtripGate;
-    int sourceEntryCount;
-    int dm1CandidateCount;
-    int f7057ReadyCount;
-    int exportedCount;
-    int importedCount;
-    int skippedCount;
-    uint32_t receiptHash;
-    const char* sourceEvidence;
-} M12_SaveBrowserDM1PC34CorpusReceipt;
-
 /* Scan dataDir for Firestaff saves and known original/CSBWin save
  * basenames, then populate state. Returns number of entries found. */
 int M12_SaveBrowser_Scan(M12_SaveBrowserState* state, const char* dataDir);
@@ -103,21 +86,6 @@ int M12_SaveBrowser_ExportSelectedAsDM1PC34(
     char* outPath,
     int outPathSize);
 
-/* Export every load-ready DM1 entry in the browser as original PC 3.4-shaped
- * save files. Entries that are not DM1, are not load-ready, or would overwrite
- * an existing destination are counted as skipped. Returns 0 when at least one
- * DM1 save was exported. */
-int M12_SaveBrowser_ExportDM1PC34Corpus(
-    const M12_SaveBrowserState* state,
-    const char* exportDir,
-    int* outExportedCount,
-    int* outSkippedCount);
-
-int M12_SaveBrowser_ExportDM1PC34CorpusReceipt(
-    const M12_SaveBrowserState* state,
-    const char* exportDir,
-    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt);
-
 /* Import a launcher-visible save into dataDir. Firestaff names are copied
  * by basename; known original/CSBWin CSB basenames first pass the CSBWin
  * loader-boundary classifier and then validate through the CSB runtime
@@ -129,20 +97,6 @@ int M12_SaveBrowser_ImportFile(const char* dataDir,
                                const char* importPath,
                                char* outPath,
                                int outPathSize);
-
-/* Import arbitrary original DM1 PC34 save files from importDir recursively into
- * dataDir/saves/dm1. Only files that pass the DM1 F7057/roundtrip gates are
- * copied. Invalid files and destination collisions are counted as skipped. */
-int M12_SaveBrowser_ImportDM1PC34Corpus(
-    const char* dataDir,
-    const char* importDir,
-    int* outImportedCount,
-    int* outSkippedCount);
-
-int M12_SaveBrowser_ImportDM1PC34CorpusReceipt(
-    const char* dataDir,
-    const char* importDir,
-    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt);
 
 /* Get the currently selected entry, or NULL if none. */
 const M12_SaveBrowserEntry* M12_SaveBrowser_GetSelected(
