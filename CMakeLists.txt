@@ -13100,7 +13100,7 @@ if(BUILD_TESTING)
     )
     add_executable(test_dm1_v1_f0128_viewport_pc34_compat
         tests/test_dm1_v1_f0128_viewport_pc34_compat.c
-        src/engine/m11_dm1_v1_f0128_viewport_pc34_compat.c
+        src/dm1/dm1_v1_f0128_viewport_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_f0128_viewport_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)

@@ -6,7 +6,7 @@
  * Bounded viewport-crop readiness helper that drives
  * pass434's gate.
  */
-#include "m11_dm1_v1_f0128_viewport_pc34_compat.h"
+#include "dm1_v1_f0128_viewport_pc34_compat.h"
 
 #include <string.h>
 
