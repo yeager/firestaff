@@ -406,6 +406,7 @@ static void test_weather_overlay_render_plan(void)
     uint8_t framebuffer[320 * 200];
     DM2_V1_ViewportState viewport;
     DM2_V1_WeatherOverlayRenderPlan plan;
+    DM2_V1_ViewportSceneConsumptionReceipt receipt;
     DM2_V1_WeatherOverlayCommandPlan commands;
 
     memset(framebuffer, 7, sizeof(framebuffer));
@@ -532,6 +533,15 @@ static void test_weather_overlay_render_plan(void)
     dm2_v1_render_weather_overlay(&viewport);
     CHECK("GRAPHICSSET weather fields are consumed by overlay render",
           viewport.gdat_scene_weather_consumed_count == 1);
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK("viewport scene receipt captures weather GRAPHICSSET consumption",
+          dm2_v1_viewport_scene_consumption_receipt(&viewport, &receipt) == 1 &&
+              receipt.ready == 1 &&
+              receipt.consumed_mask == 0x8u &&
+              receipt.weather_consumed == 1 &&
+              receipt.source_hash == 0x32475357u &&
+              receipt.void_random_fall == 3 &&
+              receipt.consumption_hash != 0u);
 }
 
 static void test_floor_ceiling_asset_provider(void)
@@ -540,6 +550,7 @@ static void test_floor_ceiling_asset_provider(void)
     DM2_V1_ViewportState viewport;
     DM2_V1_WallPanelRenderPlan wall_plan;
     DM2_V1_DoorRenderPlan door_plan;
+    DM2_V1_ViewportSceneConsumptionReceipt scene_receipt;
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -611,6 +622,16 @@ static void test_floor_ceiling_asset_provider(void)
     CHECK("GRAPHICSSET scene light is consumed by floor/ceiling pass",
           viewport.gdat_scene_light_consumed_count == 1 &&
               viewport.gdat_scene_floor_anim_consumed_count == 1);
+    memset(&scene_receipt, 0, sizeof(scene_receipt));
+    CHECK("viewport scene receipt captures light/floor GRAPHICSSET consumption",
+          dm2_v1_viewport_scene_consumption_receipt(&viewport,
+                                                    &scene_receipt) == 1 &&
+              scene_receipt.ready == 1 &&
+              (scene_receipt.consumed_mask & 0x6u) == 0x6u &&
+              scene_receipt.light_consumed == 1 &&
+              scene_receipt.floor_anim_consumed == 1 &&
+              scene_receipt.animated_floor == 0x000a &&
+              scene_receipt.consumption_hash != 0u);
     CHECK("GRAPHICSSET animated floor offsets the live floor tile source",
           framebuffer[(66 * 320)] == 9 &&
               framebuffer[(66 * 320) + 1] == 8 &&
