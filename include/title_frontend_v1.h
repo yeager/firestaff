@@ -215,7 +215,7 @@ int V1_TitleFrontend_Unpack4bppScreenToIndexed(const unsigned char* packed4bpp,
  *     (TITLE.C:319-324, palette C12_PRESENTS — white on black).
  *   - VGA_PALETTE_PC34_SPECIAL_TITLE for ZOOM_BLIT and
  *     MASTER_STRIKES_BACK_BLIT steps (TITLE.C:340-402, palette
- *     C13_DUNGEON + C14_MASTER — warm browns/golds with red on 0x0C).
+ *     C13_DUNGEON + C14_MASTER — warm browns/golds with red on 0x0F).
  *   - VGA_PALETTE_PC34_SPECIAL_TITLE for all other steps so that any
  *     present blit the runtime adds later still gets the DUNGEON+MASTER
  *     palette.  The PRESENTS phase must never borrow the DUNGEON+MASTER

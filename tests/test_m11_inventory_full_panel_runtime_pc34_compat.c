@@ -63,8 +63,6 @@
  *     rewrites only the eight visible slots and drops the hidden tail.
  */
 
-#include "dm1_v1_graphic_ids_pc34_compat.h"
-#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "m11_game_view.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
@@ -81,73 +79,6 @@ unsigned char* G2160_puc_Bitmap_Destination;
 
 static int g_pass = 0;
 static int g_fail = 0;
-
-static int test_inventory_panel_zone(int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_inventory_panel_rect_pc34();
-    if (!dm1_v1_inventory_panel_zone_id_pc34()) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-static int test_inventory_backdrop_zone(int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_inventory_backdrop_rect_pc34();
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-static int test_object_description_circle_zone(int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_object_description_circle_rect_pc34();
-    if (!dm1_v1_object_description_circle_zone_id_pc34()) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-static int test_object_description_icon_zone(int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_object_description_icon_rect_pc34();
-    if (!dm1_v1_object_description_icon_zone_id_pc34()) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-static int test_arrow_or_eye_zone(int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_arrow_or_eye_rect_pc34();
-    if (!dm1_v1_arrow_or_eye_zone_id_pc34()) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-static int test_object_description_name_zone_for_text(int textPixelWidth,
-                                                       int textPixelHeight,
-                                                       int* outX,
-                                                       int* outY,
-                                                       int* outW,
-                                                       int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect;
-    if (!dm1_v1_object_description_name_rect_for_text_pc34(
-            textPixelWidth, textPixelHeight, &rect)) {
-        return 0;
-    }
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
 
 #define ASSERT_TRUE(expr, msg) do { \
     if (expr) { ++g_pass; } \
@@ -199,12 +130,12 @@ static int point_is_in_object_description_panel_overdraw(int panelX,
     int circleX = 0, circleY = 0, circleW = 0, circleH = 0;
     int iconX = 0, iconY = 0, iconW = 0, iconH = 0;
 
-    if (test_object_description_circle_zone(&circleX, &circleY,
+    if (M11_GameView_GetV1ObjectDescriptionCircleZone(&circleX, &circleY,
                                                        &circleW, &circleH) &&
         point_in_rect(x, y, circleX - panelX, circleY - panelY, circleW, circleH)) {
         return 1;
     }
-    if (test_object_description_icon_zone(&iconX, &iconY, &iconW, &iconH) &&
+    if (M11_GameView_GetV1ObjectDescriptionIconZone(&iconX, &iconY, &iconW, &iconH) &&
         point_in_rect(x, y, iconX - panelX, iconY - panelY, iconW, iconH)) {
         return 1;
     }
@@ -233,19 +164,19 @@ static int framebuffer_matches_object_description_source_pixels(
 
     if (!state || !framebuffer ||
         !M11_GameView_GetViewportRect(&viewportX, &viewportY, &viewportW, &viewportH) ||
-        !test_inventory_panel_zone(&panelX, &panelY, &panelW, &panelH) ||
-        !test_object_description_circle_zone(&circleX, &circleY,
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH) ||
+        !M11_GameView_GetV1ObjectDescriptionCircleZone(&circleX, &circleY,
                                                        &circleW, &circleH) ||
-        !test_object_description_icon_zone(&iconX, &iconY, &iconW, &iconH)) {
+        !M11_GameView_GetV1ObjectDescriptionIconZone(&iconX, &iconY, &iconW, &iconH)) {
         return 0;
     }
     (void)viewportW;
     (void)viewportH;
 
     panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                 (unsigned int)dm1_v1_graphic_panel_empty_pc34());
+                                 (unsigned int)M11_GameView_GetV1ObjectDescriptionPanelGraphicId());
     circle = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                  (unsigned int)dm1_v1_graphic_object_description_circle_pc34());
+                                  (unsigned int)M11_GameView_GetV1ObjectDescriptionCircleGraphicId());
     if (!panel || !panel->pixels || !circle || !circle->pixels ||
         panel->width != (unsigned short)panelW || panel->height != (unsigned short)panelH) {
         return 0;
@@ -325,7 +256,7 @@ static int framebuffer_matches_open_chest_panel_pixels(const M11_GameViewState* 
     int x, y;
 
     if (!state || !framebuffer ||
-        !test_inventory_panel_zone(&panelX, &panelY, &panelW, &panelH)) {
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
         return 0;
     }
     panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 25u);
@@ -337,7 +268,7 @@ static int framebuffer_matches_open_chest_panel_pixels(const M11_GameViewState* 
     /* PANEL.C F0339 lines 505-514 draws C018/C019 (arrow / pressing-eye)
      * at viewport-relative (83, 57, 16, 9) on top of the C025 panel.
      * Skip that zone so the test compares only C025-owned pixels. */
-    (void)test_arrow_or_eye_zone(&ax, &ay, &aw, &ah);
+    (void)M11_GameView_GetV1ArrowOrEyeZone(&ax, &ay, &aw, &ah);
 
     for (y = 0; y < panelH; ++y) {
         for (x = 0; x < panelW; ++x) {
@@ -375,16 +306,16 @@ static int framebuffer_preserves_inventory_backdrop_through_open_chest_red(
     int x, y;
 
     if (!state || !framebuffer ||
-        !test_inventory_panel_zone(&panelX, &panelY,
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY,
                                               &panelW, &panelH) ||
-        !test_inventory_backdrop_zone(&viewportX, &viewportY,
+        !M11_GameView_GetV1InventoryBackdropZone(&viewportX, &viewportY,
                                                  &viewportW, &viewportH)) {
         return 0;
     }
     chestPanel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                       25u);
     backdrop = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    (unsigned int)dm1_v1_graphic_inventory_backdrop_pc34());
+                                    (unsigned int)M11_GameView_GetV1InventoryBackdropGraphicId());
     if (!chestPanel || !chestPanel->pixels || !backdrop || !backdrop->pixels ||
         chestPanel->width != (unsigned short)panelW ||
         chestPanel->height != (unsigned short)panelH ||
@@ -468,7 +399,7 @@ static int framebuffer_matches_chest_slot_box_pixels(
     (void)zw;
     (void)zh;
     slotBox = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                   (unsigned int)dm1_v1_graphic_slot_box_normal_pc34());
+                                   (unsigned int)M11_GameView_GetV1SlotBoxNormalGraphicId());
     if (!slotBox || !slotBox->pixels || slotBox->width != 18 || slotBox->height != 18) {
         return 0;
     }
@@ -538,17 +469,17 @@ static int framebuffer_matches_food_water_source_panel_pixels(
     int x, y;
 
     if (!state || !framebuffer ||
-        !test_inventory_panel_zone(&panelX, &panelY, &panelW, &panelH)) {
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
         return 0;
     }
     panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                 (unsigned int)dm1_v1_graphic_panel_empty_pc34());
+                                 (unsigned int)M11_GameView_GetV1InventoryPanelGraphicId());
     food = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                (unsigned int)dm1_v1_graphic_food_label_pc34());
+                                (unsigned int)M11_GameView_GetV1FoodLabelGraphicId());
     water = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                 (unsigned int)dm1_v1_graphic_water_label_pc34());
+                                 (unsigned int)M11_GameView_GetV1WaterLabelGraphicId());
     poison = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                  (unsigned int)dm1_v1_graphic_poisoned_label_pc34());
+                                  (unsigned int)M11_GameView_GetV1PoisonLabelGraphicId());
     if (!panel || !panel->pixels || !food || !food->pixels ||
         !water || !water->pixels ||
         panel->width != (unsigned short)panelW ||
@@ -2441,41 +2372,41 @@ static void test_action_hand_open_chest_icon_runtime(void) {
 
 static void test_object_description_layout_source_zones(void) {
     int x = -1, y = -1, w = -1, h = -1;
-    const char* evidence = dm1_v1_layout_zones_source_evidence_pc34();
+    const char* evidence = M11_GameView_GetV1ObjectDescriptionLayoutEvidence();
 
-    ASSERT_EQ(dm1_v1_graphic_panel_empty_pc34(), 20,
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionPanelGraphicId(), 20,
               "object description uses C020 panel-empty graphic");
-    ASSERT_EQ(dm1_v1_graphic_object_description_circle_pc34(), 29,
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionCircleGraphicId(), 29,
               "object description uses C029 circle graphic");
 
-    ASSERT_EQ(dm1_v1_object_description_circle_zone_id_pc34(), 504,
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionCircleZoneId(), 504,
               "object description circle source zone is C504");
-    ASSERT_EQ(test_object_description_circle_zone(&x, &y, &w, &h), 1,
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionCircleZone(&x, &y, &w, &h), 1,
               "C504 circle zone resolves");
     ASSERT_EQ(x, 103, "C504 circle x follows layout-696 F0635");
     ASSERT_EQ(y, 53, "C504 circle y follows layout-696 F0635");
     ASSERT_EQ(w, 32, "C029 circle width resolves to 32 pixels");
     ASSERT_EQ(h, 27, "C029 circle height resolves to 27 pixels");
 
-    ASSERT_EQ(dm1_v1_object_description_icon_zone_id_pc34(), 505,
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionIconZoneId(), 505,
               "object description icon source zone is C505");
-    ASSERT_EQ(test_object_description_icon_zone(&x, &y, &w, &h), 1,
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionIconZone(&x, &y, &w, &h), 1,
               "C505 icon zone resolves");
     ASSERT_EQ(x, 111, "C505 icon x follows layout-696 F0635");
     ASSERT_EQ(y, 59, "C505 icon y follows layout-696 F0635");
     ASSERT_EQ(w, 16, "C505 icon width is one object-icon cell");
     ASSERT_EQ(h, 16, "C505 icon height is one object-icon cell");
 
-    ASSERT_EQ(dm1_v1_object_description_name_zone_id_pc34(), 506,
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionNameZoneId(), 506,
               "object description name source zone is C506");
-    ASSERT_EQ(test_object_description_name_zone_for_text(80, 7, &x, &y, &w, &h), 1,
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionNameZoneForText(80, 7, &x, &y, &w, &h), 1,
               "C506 text zone resolves for an 80x7 measured name");
     ASSERT_EQ(x, 134, "C506 name x follows TEXT.C/F0635");
     ASSERT_EQ(y, 64, "C506 name top follows type-8 vertical centering");
     ASSERT_EQ(w, 80, "C506 keeps caller-measured text width");
     ASSERT_EQ(h, 7, "C506 keeps caller-measured text height");
 
-    ASSERT_EQ(dm1_v1_object_description_continuation_origin_pc34(&x, &y), 1,
+    ASSERT_EQ(M11_GameView_GetV1ObjectDescriptionContinuationOrigin(&x, &y), 1,
               "C556 continuation text origin resolves");
     ASSERT_EQ(x, 108, "C556 form-feed x includes one-pixel margin");
     ASSERT_EQ(y, 59, "C556 form-feed y includes one-pixel margin");
@@ -2889,7 +2820,7 @@ static void test_eye_panel_champion_stats_and_skills(void) {
 
     memset(framebuffer, 0xEE, sizeof(framebuffer));
     M11_GameView_Draw(&state, framebuffer, 320, 200);
-    ASSERT_TRUE(test_inventory_panel_zone(&panelX, &panelY, &panelW, &panelH),
+    ASSERT_TRUE(M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH),
                 "champion stats pixel test resolves C101 panel zone");
     ASSERT_EQ(framebuffer[(33 + panelY + DM1_STATISTIC_FIRST_REL_Y) * 320 +
                           (panelX + DM1_STATISTIC_CURRENT_REL_X + 9)],

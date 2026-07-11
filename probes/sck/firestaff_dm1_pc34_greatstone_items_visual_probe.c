@@ -21,13 +21,8 @@
  */
 
 #include "asset_loader_m11.h"
-#include "dm1_v1_champion_status_layout_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "firestaff_sck_mapfile.h"
 #include "m11_game_view.h"
-#include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
-#include "dm1_v1_layout_zones_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -266,7 +261,7 @@ static void verify_runtime_anchor_contracts(const FirestaffSckMapfileV2* map,
     verify_desc_contains(map, "0078", "Floor");
     verify_loaded_size(loader, 78u, 224u, 97u, "floor");
 
-    if (dm1_v1_graphic_inventory_backdrop_pc34() != 17) {
+    if (M11_GameView_GetV1DialogBackdropGraphicId() != 17) {
         fail_check("dialog/inventory backdrop graphic id 17");
     }
     verify_desc_contains(map, "0017", "Character Sheet");
@@ -299,57 +294,57 @@ static void verify_runtime_anchor_contracts(const FirestaffSckMapfileV2* map,
     verify_desc_contains(map, "0028", "Champion Positions");
     verify_loaded_size(loader, 26u, 256u, 87u, "champion portraits");
 
-    if (dm1_v1_graphic_slot_box_normal_pc34() != 33 ||
-        dm1_v1_graphic_slot_box_wounded_pc34() != 34 ||
-        dm1_v1_graphic_slot_box_acting_hand_pc34() != 35) {
+    if (M11_GameView_GetV1SlotBoxNormalGraphicId() != 33 ||
+        M11_GameView_GetV1SlotBoxWoundedGraphicId() != 34 ||
+        M11_GameView_GetV1SlotBoxActingHandGraphicId() != 35) {
         fail_check("slot box graphic ids 33/34/35");
     }
     verify_desc_contains(map, "0033", "Gray Border Item Slot");
     verify_desc_contains(map, "0034", "Red Border Item Slot");
     verify_desc_contains(map, "0035", "Cyan Border Item Slot");
 
-    if (dm1_v1_graphic_panel_open_scroll_pc34() != 23 ||
-        dm1_v1_graphic_panel_empty_pc34() != 20 ||
-        dm1_v1_graphic_panel_empty_pc34() != 20 ||
-        dm1_v1_graphic_object_description_circle_pc34() != 29) {
+    if (M11_GameView_GetV1OpenScrollPanelGraphicId() != 23 ||
+        M11_GameView_GetV1InventoryPanelGraphicId() != 20 ||
+        M11_GameView_GetV1ObjectDescriptionPanelGraphicId() != 20 ||
+        M11_GameView_GetV1ObjectDescriptionCircleGraphicId() != 29) {
         fail_check("inventory panel graphic ids 20/23/29");
     }
     verify_desc_contains(map, "0020", "Empty Information Area");
     verify_desc_contains(map, "0023", "Open Scroll");
     verify_desc_contains(map, "0029", "Circle Displayed");
 
-    if (dm1_v1_graphic_arrow_or_eye_pc34(0) != 18 ||
-        dm1_v1_graphic_arrow_or_eye_pc34(1) != 19) {
+    if (M11_GameView_GetV1ArrowOrEyeGraphicId(0) != 18 ||
+        M11_GameView_GetV1ArrowOrEyeGraphicId(1) != 19) {
         fail_check("arrow/eye graphic ids 18/19");
     }
     verify_desc_contains(map, "0018", "Arrow Showing");
     verify_desc_contains(map, "0019", "Eye Showing");
 
-    if (dm1_v1_graphic_food_label_pc34() != 30 ||
-        dm1_v1_graphic_water_label_pc34() != 31 ||
-        dm1_v1_graphic_poisoned_label_pc34() != 32) {
+    if (M11_GameView_GetV1FoodLabelGraphicId() != 30 ||
+        M11_GameView_GetV1WaterLabelGraphicId() != 31 ||
+        M11_GameView_GetV1PoisonLabelGraphicId() != 32) {
         fail_check("food/water/poison labels 30/31/32");
     }
     verify_desc_contains(map, "0030", "'Food' Label");
     verify_desc_contains(map, "0031", "'Water' Label");
     verify_desc_contains(map, "0032", "'Poisoned' Label");
 
-    if (dm1_v1_champion_status_box_graphic_pc34() != 7 ||
-        dm1_v1_champion_dead_status_box_graphic_pc34() != 8 ||
-        dm1_v1_graphic_party_shield_border_pc34() != 37 ||
-        dm1_v1_graphic_fire_shield_border_pc34() != 38 ||
-        dm1_v1_graphic_spell_shield_border_pc34() != 39) {
+    if (M11_GameView_GetV1StatusBoxGraphicId() != 7 ||
+        M11_GameView_GetV1DeadStatusBoxGraphicId() != 8 ||
+        M11_GameView_GetV1PartyShieldBorderGraphicId() != 37 ||
+        M11_GameView_GetV1FireShieldBorderGraphicId() != 38 ||
+        M11_GameView_GetV1SpellShieldBorderGraphicId() != 39) {
         fail_check("status box/border graphic ids 7/8/37/38/39");
     }
 
-    if (dm1_v1_graphic_champion_damage_small_pc34() != 15 ||
-        dm1_v1_graphic_champion_damage_big_pc34() != 16 ||
-        dm1_v1_graphic_creature_damage_pc34() != 14) {
+    if (M11_GameView_GetV1ChampionSmallDamageGraphicId() != 15 ||
+        M11_GameView_GetV1ChampionBigDamageGraphicId() != 16 ||
+        M11_GameView_GetV1CreatureDamageGraphicId() != 14) {
         fail_check("damage graphic ids 14/15/16");
     }
 
-    if (dm1_v1_graphic_the_end_pc34() != 6 ||
-        dm1_v1_graphic_endgame_champion_mirror_pc34() != 346) {
+    if (M11_GameView_GetV1EndgameTheEndGraphicId() != 6 ||
+        M11_GameView_GetV1EndgameChampionMirrorGraphicId() != 346) {
         fail_check("endgame graphic ids 6/346");
     }
     verify_desc_contains(map, "0006", "'The End' Label");

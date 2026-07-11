@@ -677,13 +677,6 @@ int M12_StartupMenu_OpenSaveBrowser(M12_StartupMenuState* state);
 int M12_StartupMenu_ExportSelectedSaveBrowserDM1PC34(M12_StartupMenuState* state,
                                                      char* outPath,
                                                      int outPathSize);
-int M12_StartupMenu_ExportSaveBrowserDM1PC34CorpusReceipt(
-    M12_StartupMenuState* state,
-    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt);
-int M12_StartupMenu_ImportDM1PC34CorpusReceipt(
-    M12_StartupMenuState* state,
-    const char* importDir,
-    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt);
 const char* M12_StartupMenu_SaveBrowserFooterText(
     const M12_StartupMenuState* state);
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state);

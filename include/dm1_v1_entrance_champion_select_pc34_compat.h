@@ -280,13 +280,6 @@ int DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(
     DM1_V1_EntranceFullStartRenderReceiptPc34 *outReceipt);
 
 /*
- * Validate that the full-start entrance receipt is complete enough for the
- * host renderer to consume without reconstructing ReDMCSB ENTRANCE.C state.
- */
-int DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(
-    const DM1_V1_EntranceFullStartRenderReceiptPc34 *receipt);
-
-/*
  * Build the HoC champion-selection menu route for M11/M12 without host-side
  * state inference.
  */

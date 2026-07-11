@@ -74,11 +74,11 @@ static int test_probe_spec_and_setup(void)
                      g_probe.chestACellY != g_probe.chestBCellY, 1,
                      f0333Open);
     ok &= expect_int("C544 helmet item type",
-                     spec->c544Helmet.itemType,
+                     spec->c544Helmet.m11ItemItemType,
                      DM1_PC34_CHEST_CLOSE_FULL_HAND_HELMET_ITEM_TYPE,
                      f0302Swap);
     ok &= expect_int("C544 helmet allowed head plus container",
-                     spec->c544Helmet.allowedSlots,
+                     spec->c544Helmet.m11ItemAllowedSlots,
                      DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER,
                      f0302Swap);
 

@@ -299,13 +299,6 @@ typedef struct {
     int viewport_floor_material_surface_count;
     int viewport_ceiling_material_surface_count;
     int viewport_wall_material_surface_count;
-    int dgn_render_floor_count;
-    int dgn_render_ceiling_count;
-    int dgn_render_wall_count;
-    int dgn_floor_material_command_count;
-    int dgn_ceiling_material_command_count;
-    int dgn_wall_material_command_count;
-    int dgn_material_semantics_complete;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
     int bpk_prs3_material_surface_count;
@@ -340,12 +333,7 @@ typedef struct {
     int dgn_render_plan_ready;
     int dgn_render_command_count;
     int dgn_render_floor_count;
-    int dgn_render_ceiling_count;
     int dgn_render_wall_count;
-    int dgn_floor_material_command_count;
-    int dgn_ceiling_material_command_count;
-    int dgn_wall_material_command_count;
-    int dgn_material_semantics_complete;
     int dgn_viewport_render_ready;
     int dgn_viewport_rasterized_command_count;
     int dgn_viewport_material_surface_count;
@@ -772,7 +760,6 @@ typedef struct {
     int dgn_viewport_ceiling_material_surface_count;
     int dgn_viewport_wall_material_surface_count;
     int dgn_material_surface_coverage_complete;
-    int dgn_material_semantics_complete;
     int runtime_dgn_material_path_consumed;
     int host_route_consumes_dgn_material_path;
     int bpk_material_surface_count;
@@ -814,7 +801,6 @@ typedef struct {
     int dgn_viewport_ceiling_material_surface_count;
     int dgn_viewport_wall_material_surface_count;
     int dgn_material_surface_coverage_complete;
-    int dgn_material_semantics_complete;
     int host_runtime_dgn_material_path_consumed;
     int host_route_consumes_dgn_material_path;
     int bpk_material_surface_count;
@@ -909,7 +895,6 @@ typedef struct {
     int dungeon_route_complete;
     int dungeon_capture_route_consumed;
     int dgn_material_surface_coverage_complete;
-    int dgn_material_semantics_complete;
     int dgn_material_path_consumed;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;

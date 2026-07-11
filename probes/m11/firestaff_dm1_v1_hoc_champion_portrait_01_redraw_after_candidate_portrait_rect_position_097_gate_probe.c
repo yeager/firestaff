@@ -97,9 +97,6 @@
  *   firestaff_dm1_v1_hoc_champion_portrait_01_redraw_after_candidate_portrait_rect_position_097_gate_probe DATA_DIR
  */
 #include "m11_game_view.h"
-#include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
-#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
@@ -145,7 +142,7 @@ enum {
     D1C_ZONE_Y_VP = 29,
     D1C_ZONE_W = 64,
     D1C_ZONE_H = 43,
-    /* RR panel (C040) zone from dm1_v1_inventory_panel_zone_xywh_pc34,
+    /* RR panel (C040) zone from M11_GameView_GetV1InventoryPanelZone,
      * viewport-local.  The panel covers the bottom two-thirds of the
      * viewport; this includes the lower 12 rows of the HALK portrait
      * rect (rows 52..64 of viewport y). */

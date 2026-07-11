@@ -1,3 +1,4 @@
+#include "main_loop_m11.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 
@@ -16,7 +17,17 @@ static int expect_command(const char* label,
                           int y,
                           unsigned int mask,
                           int want) {
-    int got = ENTRANCE_Compat_DispatchMouseRouteCommand(x, y, mask);
+    int got = M11_Entrance_DispatchSourceLockedPointerCommand(x, y, mask);
+    if (got != want) {
+        fprintf(stderr, "%s: got %d want %d\n", label, got, want);
+        return 0;
+    }
+    printf("%s=%d\n", label, got);
+    return 1;
+}
+
+static int expect_key(const char* label, int key, int want) {
+    int got = M11_Entrance_DispatchSourceLockedKeyCommand(key);
     if (got != want) {
         fprintf(stderr, "%s: got %d want %d\n", label, got, want);
         return 0;
@@ -54,12 +65,12 @@ static int expect_resume_path(const char* label,
     char path[512];
     int got;
     memset(path, 0, sizeof(path));
-    got = ENTRANCE_Compat_ResolveDm1ResumeSavePath(sourceId,
-                                                   quickAvailable,
-                                                   quickGameId,
-                                                   quickPath,
-                                                   path,
-                                                   sizeof(path));
+    got = M11_Entrance_ResolveDm1ResumeSavePath(sourceId,
+                                                quickAvailable,
+                                                quickGameId,
+                                                quickPath,
+                                                path,
+                                                sizeof(path));
     if (!got || strcmp(path, want) != 0) {
         fprintf(stderr, "%s: got ok=%d path=%s want=%s\n",
                 label, got, path, want);
@@ -91,24 +102,24 @@ int main(void) {
 
     ok &= expect_command("enter", 244, 45,
                          ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
-                         ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON);
+                         M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
     ok &= expect_command("bonus", 244, 45,
                          ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT,
-                         ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON);
+                         M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON);
     ok &= expect_command("resume", 298, 93,
                          ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
-                         ENTRANCE_COMPAT_RUNTIME_COMMAND_RESUME);
+                         M11_ENTRANCE_RUNTIME_COMMAND_RESUME);
     ok &= expect_command("quit", 243, 110,
                          ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
-                         ENTRANCE_COMPAT_RUNTIME_COMMAND_QUIT);
+                         M11_ENTRANCE_RUNTIME_COMMAND_QUIT);
     ok &= expect_command("credits", 248, 186,
                          ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
-                         ENTRANCE_COMPAT_RUNTIME_COMMAND_DRAW_CREDITS);
+                         M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS);
     ok &= expect_command("outside_miss", 299, 58,
                          ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
-                         ENTRANCE_COMPAT_RUNTIME_COMMAND_NONE);
+                         M11_ENTRANCE_RUNTIME_COMMAND_NONE);
     ok &= expect_command("zero_mask_miss", 244, 45, 0u,
-                         ENTRANCE_COMPAT_RUNTIME_COMMAND_NONE);
+                         M11_ENTRANCE_RUNTIME_COMMAND_NONE);
     ok &= ENTRANCE_Compat_DispatchMouseRouteCommand(
               244, 45, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT) ==
           ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON;
@@ -130,6 +141,14 @@ int main(void) {
                   0, 720, 0.5f, 0.5f, &wx, &wy) == 0;
     }
 
+    ok &= expect_key("return_enter", SDLK_RETURN,
+                     M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
+    ok &= expect_key("space_not_activation", SDLK_SPACE,
+                     M11_ENTRANCE_RUNTIME_COMMAND_NONE);
+    ok &= expect_key("keypad_enter", SDLK_KP_ENTER,
+                     M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
+    ok &= expect_key("escape_quit", SDLK_ESCAPE,
+                     M11_ENTRANCE_RUNTIME_COMMAND_QUIT);
     ok &= expect_compat_key("compat_return_enter", ENTRANCE_COMPAT_KEY_RETURN,
                             ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON);
     ok &= expect_compat_key("compat_space_not_activation", ENTRANCE_COMPAT_KEY_SPACE,
@@ -174,7 +193,7 @@ int main(void) {
     {
         char tiny[8];
         memset(tiny, 0, sizeof(tiny));
-        ok &= ENTRANCE_Compat_ResolveDm1ResumeSavePath(
+        ok &= M11_Entrance_ResolveDm1ResumeSavePath(
                   "dm1", 1, "dm1", "/tmp/too-long-for-buffer.sav",
                   tiny, sizeof(tiny)) == 0;
     }

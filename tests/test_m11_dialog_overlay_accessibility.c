@@ -14,7 +14,7 @@
  *     that match what m11_dialog_choice_at_point() actually hit-tests.
  *   - The source-backed dialog surface (text plaque / save dialog) emits
  *     one DIALOG_CHOICE_n button per source choice, with bounds from
- *     dm1_v1_dialog_choice_hit_rect_pc34 (translated from
+ *     M11_GameView_GetV1DialogChoiceHitZone (translated from
  *     viewport-relative to absolute framebuffer coords using the
  *     M11_VIEWPORT_X / M11_VIEWPORT_Y origin so external tools do not
  *     need to know about the viewport layout).
@@ -440,7 +440,7 @@ static void subtest_source_backed_dialog_overlay(void) {
     check(strstr(buf, "\"value\":\"CANCEL\"") != NULL,
           "source-dlg: choice 3 value is CANCEL");
 
-    /* Bounds must come from dm1_v1_dialog_choice_hit_rect_pc34
+    /* Bounds must come from M11_GameView_GetV1DialogChoiceHitZone
      * (viewport-relative) translated into absolute framebuffer coords
      * by adding M11_VIEWPORT_X / M11_VIEWPORT_Y (both 0/33 for DM1 V1).
      * choiceCount=3: indices 0/1/2 map to zones 457/460/461 ->

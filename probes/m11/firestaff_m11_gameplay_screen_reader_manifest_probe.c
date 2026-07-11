@@ -104,9 +104,6 @@
 
 #include "firestaff_accessibility.h"
 #include "m11_game_view.h"
-#include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
-#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "m11_game_view_a11y.h"
 #include "session_timer_runtime.h"
 
@@ -840,7 +837,7 @@ static void subtest_entrance_mirror_manifest(void)
     /* All three buttons sit on top of the panel rect, so their
      * bounds must (a) stay inside the framebuffer and (b) overlap
      * the panel bounds. The literal x values depend on
-     * dm1_v1_inventory_panel_zone_xywh_pc34() which is a sourced
+     * M11_GameView_GetV1InventoryPanelZone() which is a sourced
      * helper that requires real assets, so we lock the cheap
      * "inside framebuffer" contract here and the "overlaps panel"
      * contract in the bounds-walk subtest below. */

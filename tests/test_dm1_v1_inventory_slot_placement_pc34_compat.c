@@ -520,27 +520,6 @@ static int test_slotbox_zones(void)
     ok &= expect_int("source high rejects",
                      dm1_v1_inventory_source_slot_box_zone_id_pc34(38),
                      0, coord);
-    ok &= expect_int("champion ready-hand maps to C507 source slot",
-                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
-                         CHAMPION_SLOT_HAND_LEFT),
-                     8, coord);
-    ok &= expect_int("champion action-hand maps to C508 source slot",
-                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
-                         CHAMPION_SLOT_ACTION_HAND),
-                     9, coord);
-    ok &= expect_int("champion backpack17 maps to C536 source slot",
-                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
-                         CHAMPION_SLOT_BACKPACK_17),
-                     37, coord);
-    ok &= expect_int("C507 maps back to ready-hand champion slot",
-                     dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(8),
-                     CHAMPION_SLOT_HAND_LEFT, coord);
-    ok &= expect_int("C536 maps back to backpack17 champion slot",
-                     dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(37),
-                     CHAMPION_SLOT_BACKPACK_17, coord);
-    ok &= expect_int("invalid source slot rejects champion mapping",
-                     dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(38),
-                     -1, coord);
 
     ok &= expect_int("equipment zone count",
                      dm1_v1_inventory_equipment_slot_zone_count_pc34(),

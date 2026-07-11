@@ -257,14 +257,8 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           "DGN view render plan is ready without fallback visuals");
     CHECK(receipt.command_count == 10 &&
           receipt.floor_count == 3 &&
-          receipt.ceiling_count == 3 &&
           receipt.wall_count == 4,
           "DGN view render plan emits bounded floor/ceiling/wall commands");
-    CHECK(receipt.material_semantics_complete == 1 &&
-          receipt.floor_material_command_count == receipt.floor_count &&
-          receipt.ceiling_material_command_count == receipt.ceiling_count &&
-          receipt.wall_material_command_count == receipt.wall_count,
-          "DGN render plan proves Structure1B surface semantics per command family");
     CHECK(receipt.mesh_command_count > 0 &&
           receipt.mesh_descriptor_command_count == receipt.mesh_command_count &&
           receipt.first_mesh_ref == 7 &&
@@ -279,7 +273,6 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           commands[0].mesh_descriptor.x1 == -24 &&
           commands[0].mesh_descriptor_projected == 1 &&
           commands[0].material_id == 21 && commands[0].floor_rotation == 1 &&
-          commands[0].material_source_kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
           commands[0].floor_slope == 2 &&
           commands[0].floor_height[0] == 4 &&
           commands[0].floor_height[1] == 12 &&
@@ -289,9 +282,7 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           commands[0].quad_y[0] > commands[0].quad_y[2],
           "DGN plan carries real tile height, slope, rotation and sector fields");
     CHECK(commands[1].kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING &&
-          commands[1].material_id == 22 &&
-          commands[1].material_source_kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING &&
-          commands[1].floor_height[2] == 12 &&
+          commands[1].material_id == 22 && commands[1].floor_height[2] == 12 &&
           commands[1].ceiling_height[2] == 44 && commands[1].palette_index == 22 &&
           commands[1].quad_y[0] < commands[1].quad_y[1],
           "DGN plan selects the header-referenced ceiling texture and height");
@@ -300,7 +291,6 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           commands[4].x == 3 &&
           commands[4].y == 4 &&
           commands[4].material_id == 41 &&
-          commands[4].material_source_kind == NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT &&
           commands[4].quad_x[0] < commands[4].quad_x[1],
           "DGN render plan projects the left wall from Structure1B visibility");
     CHECK(receipt.first_blocking_depth == 2 &&

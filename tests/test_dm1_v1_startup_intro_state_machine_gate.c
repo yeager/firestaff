@@ -388,7 +388,6 @@ static void check_title_to_menu_boundary(void) {
     DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 receipt;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 badMedia;
-    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 titleSource;
     DM1_V1_StartupEntranceRenderAudioCommand_PC34 entranceCommand;
     EntranceCompatSourceAnimationStep entranceStep;
     EntranceCompatSourceAnimationStep doorStep;
@@ -413,7 +412,6 @@ static void check_title_to_menu_boundary(void) {
     memset(&entranceCommand, 0, sizeof(entranceCommand));
     memset(&media, 0, sizeof(media));
     memset(&badMedia, 0, sizeof(badMedia));
-    memset(&titleSource, 0, sizeof(titleSource));
     (void)V1_TitleFrontend_GetStepPalette(
         V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
         &expected_presents_palette);
@@ -492,33 +490,6 @@ static void check_title_to_menu_boundary(void) {
     expect_i("DM1 full graphics media receipt title palette",
              media.title_zoom_palette,
              expected_title_palette);
-    expect_i("DM1 title runtime source receipt selects GRAPHICS.DAT C001",
-             dm1_v1_startup_title_runtime_source_receipt_pc34(
-                 "dm1", 1, 320u, 175u, 1, &titleSource) &&
-                 titleSource.handled &&
-                 titleSource.graphics_c001_usable &&
-                 titleSource.title_dat_fallback_usable &&
-                 titleSource.selected_runtime_source ==
-                     (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001 &&
-                 titleSource.require_graphics_c001_for_release_start &&
-                 !titleSource.fallback_is_visible_last_resort,
-             1);
-    expect_i("DM1 title runtime source receipt permits TITLE.DAT fallback only as last resort",
-             dm1_v1_startup_title_runtime_source_receipt_pc34(
-                 "dm1", 1, 319u, 175u, 1, &titleSource) &&
-                 titleSource.handled &&
-                 !titleSource.graphics_c001_usable &&
-                 titleSource.title_dat_fallback_usable &&
-                 titleSource.selected_runtime_source ==
-                     (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK &&
-                 !titleSource.require_graphics_c001_for_release_start &&
-                 titleSource.fallback_is_visible_last_resort,
-             1);
-    expect_i("DM1 title runtime source receipt no-ops non-DM1",
-             dm1_v1_startup_title_runtime_source_receipt_pc34(
-                 "csb", 1, 320u, 175u, 1, &titleSource) &&
-                 titleSource.handled == 0,
-             1);
     expect_u("DM1 full graphics media receipt entrance source steps",
              media.entrance_source_animation_steps,
              ENTRANCE_Compat_GetSourceAnimationStepCount());
@@ -711,13 +682,13 @@ static void check_menu_to_entrance_wait_boundary(void) {
      * be recycled as the first ENTER_DUNGEON command.
      */
     expect_i("interactive entrance does not auto-enter after title/menu handoff",
-             ENTRANCE_Compat_ShouldAutoEnterForTimeout(0, 1200, 6000u),
+             M11_Entrance_ShouldAutoEnterForTimeout(0, 1200, 6000u),
              0);
     expect_i("headless entrance waits until explicit timeout",
-             ENTRANCE_Compat_ShouldAutoEnterForTimeout(1, 1200, 1199u),
+             M11_Entrance_ShouldAutoEnterForTimeout(1, 1200, 1199u),
              0);
     expect_i("headless entrance may auto-enter after explicit timeout",
-             ENTRANCE_Compat_ShouldAutoEnterForTimeout(1, 1200, 1201u),
+             M11_Entrance_ShouldAutoEnterForTimeout(1, 1200, 1201u),
              1);
     expect_stage_after("entrance wait follows menu eligibility",
                        DM1_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34,
@@ -2444,7 +2415,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_fallback_ownership.suppress_mirror_payload_things &&
                  hoc_fallback_ownership.suppress_materialized_item_payload,
              1);
-    expect_i("DM1 HoC fallback draw ownership carries runtime geometry",
+    expect_i("DM1 HoC fallback draw ownership carries M11 geometry",
              hoc_fallback_ownership.map_index ==
                      DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
                  hoc_fallback_ownership.map_width ==

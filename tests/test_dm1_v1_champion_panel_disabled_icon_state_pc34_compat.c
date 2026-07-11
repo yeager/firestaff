@@ -5,12 +5,12 @@
  *   - ReDMCSB CHAMPION.C F0330_CHAMPION_DisableAction:2208-2255
  *   - ReDMCSB ACTIDRAW.C F0386_MENUS_DrawActionIcon:201-296
  *   - ReDMCSB MENU.C G0491_auc_Graphic560_ActionDisabledTicks[44]:27,157
- *   - dm1_v1_champion_status_shield_border_graphics_pc34
+ *   - M11 m11_collect_v1_status_shield_border_graphics
  *   - M11_GameView_ShouldHatchV1ActionIconCells (m11_game_view.c:17904)
  *
  * Companion to:
  *   - dm1_v1_graphic560_action_disabled_ticks_pc34_compat (table bytes)
- *   - dm1_v1_champion_status_shield_border_graphics_pc34 (asset path)
+ *   - M11_GameView_GetV1StatusShieldBorderGraphicForChampion (asset path)
  *   - M11_GameView_ShouldHatchV1ActionIconCells (global gate)
  *   - firestaff_dm1_v1_champion_panel_shield_border_pixel_probe
  *     (asset-backed ENABLED shield pixel probe)
@@ -125,8 +125,8 @@ static void test_evidence_and_invariants(void)
                     "MENU.C:27,157 anchor");
     expect_contains("evidence.shield_disabled",
                     evidence->shield_border_disabled_anchor,
-                    "dm1_v1_champion_status_shield_border_graphics_pc34",
-                    "DM1 shield-border disabled contract anchor");
+                    "m11_collect_v1_status_shield_border_graphics",
+                    "M11 shield-border disabled contract anchor");
     expect_contains("evidence.global_hatch", evidence->global_hatch_gate_anchor,
                     "M11_GameView_ShouldHatchV1ActionIconCells",
                     "M11 global hatch gate anchor");
@@ -549,7 +549,7 @@ static void test_empty_hand_available(void)
 /*
  * ReDMCSB shield-border DISABLED side — when ALL three of
  * partyShieldDefense, spellShieldDefense, fireShieldDefense are 0,
- * the dm1_v1_champion_status_shield_border_graphics_pc34 append loop
+ * the M11 m11_collect_v1_status_shield_border_graphics append loop
  * produces 0 borders.  This pins the inactive side of the
  * shield-border state; the active side is covered by the asset-
  * backed shield_border_pixel_probe ENABLED lane.
@@ -563,7 +563,7 @@ static void test_shield_border_disabled_state(void)
     DM1_V1_ChampionPanelDisabledIconState_InitStatePc34Compat(&state, 4);
     DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(&state, &r);
     expect_bool("shield.disabled.flag", r.any_shield_border_active, false,
-                "dm1_v1_champion_status_shield_border_graphics_pc34 0 borders");
+                "M11 m11_collect_v1_status_shield_border_graphics 0 borders");
     for (int i = 0; i < 4; ++i) {
         char id[64];
         snprintf(id, sizeof(id), "shield.disabled.count%d", i);
@@ -588,7 +588,8 @@ static void test_shield_border_disabled_state(void)
                 "F0292 active side");
 
     /* All three defenses → 3 borders in reversed append order
-     * (party, spell, fire — same order the DM1 shield-border helper uses). */
+     * (party, spell, fire — same order the M11
+     * m11_collect_v1_status_shield_border_graphics helper uses). */
     DM1_V1_ChampionPanelDisabledIconState_InitStatePc34Compat(&state, 4);
     state.champions[1].party_shield_defense = 4;
     state.champions[1].spell_shield_defense = 4;

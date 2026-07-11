@@ -15,7 +15,7 @@
  *   ReDMCSB CLIKVIEW.C F0374:170-171 / DUNGEON.C F0163:1800-1837
  *   leader-hand object drop to the dungeon floor list.
  */
-#include "dm1_v1_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat.h"
+#include "m11_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat.h"
 #include "m11_game_view.h"
 
 #include <stdio.h>

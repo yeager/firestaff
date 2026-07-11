@@ -22,14 +22,16 @@
  *     cell at C089_ZONE_ACTION_AREA_CHAMPION_0_ACTION.
  *   - ReDMCSB shield-border disabled state: when partyShieldDefense,
  *     spellShieldDefense, and fireShieldDefense are all 0, the
- *     F0292 append loop model in dm1_v1_champion_status_shield_border_graphics_pc34
- *     returns 0 borders and produces the disabled/inactive side.
+ *     F0292 append loop in m11_game_view.c's
+ *     m11_collect_v1_status_shield_border_graphics returns 0 borders
+ *     and the M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion
+ *     path produces the disabled/inactive side.
  *
  * Companion to:
  *   - dm1_v1_graphic560_action_disabled_ticks_pc34_compat
  *     (G0491 table bytes; this gate re-uses the values for the
  *      per-action predicate).
- *   - dm1_v1_champion_status_shield_border_graphics_pc34
+ *   - M11_GameView_GetV1StatusShieldBorderGraphicForChampion
  *     (asset-backed ENABLED pixel path; separate lane).
  *   - M11_GameView_ShouldHatchV1ActionIconCells
  *     (global hatch gate; separate lane).
@@ -113,9 +115,10 @@ static const DM1_V1_ChampionPanelDisabledIconEvidencePc34Compat s_evidence = {
     /* g0491_action_disabled_ticks_anchor */
     "MENU.C G0491_auc_Graphic560_ActionDisabledTicks[44]:27,157 PC 3.4 EN init",
     /* shield_border_disabled_anchor */
-    "dm1_v1_champion_status_shield_border_graphics_pc34 appends 0 "
-    "borders when partyShieldDefense/spellShieldDefense/fireShieldDefense "
-    "are all 0",
+    "M11 m11_collect_v1_status_shield_border_graphics (m11_game_view.c) "
+    "appends 0 borders when partyShieldDefense/spellShieldDefense/"
+    "fireShieldDefense are all 0 — M11_GameView_GetV1StatusShieldBorder"
+    "GraphicCountForChampion returns 0",
     /* global_hatch_gate_anchor */
     "M11_GameView_ShouldHatchV1ActionIconCells (m11_game_view.c:17904) "
     "candidateMirrorOrdinal > 0 || candidateMirrorPanelActive || resting",
@@ -464,11 +467,13 @@ int DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(
     }
 
     /* Shield-border disabled state — when ALL three defenses are
-     * zero, dm1_v1_champion_status_shield_border_graphics_pc34
+     * zero, M11's m11_collect_v1_status_shield_border_graphics
      * returns 0 borders.  Conversely, when any one is positive
      * the per-champion append order (fire, spell, party — drawn
-     * in reverse) produces >=1 border.  This pins the disabled side
-     * for the same per-champion loop as the ENABLED pixel path. */
+     * in reverse) produces >=1 border.  This mirrors the contract
+     * surface M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion
+     * exposes for the M11 ENABLED pixel path; the disabled side
+     * is what the gate here pins for the same per-champion loop. */
     for (i = 0; i < state->party_champion_count &&
                 i < DM1_V1_CPDIS_CHAMPION_COUNT_PC34; ++i) {
         const DM1_V1_ChampionPanelDisabledIconChampionPc34Compat *row =

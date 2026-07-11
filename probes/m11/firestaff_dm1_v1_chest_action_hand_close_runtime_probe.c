@@ -19,9 +19,6 @@
  */
 #include "asset_loader_m11.h"
 #include "m11_game_view.h"
-#include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
-#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -295,7 +292,7 @@ int main(int argc, char** argv)
                           &slotX, &slotY, &slotW, &slotH) &&
                       slotW == 16 && slotH == 16);
     ok &= expect_true("C101 inventory panel zone available",
-                      dm1_v1_inventory_panel_zone_xywh_pc34(
+                      M11_GameView_GetV1InventoryPanelZone(
                           &panelX, &panelY, &panelW, &panelH) &&
                       panelW > 0 && panelH > 0);
     openPanel = M11_AssetLoader_Load(&game.assetLoader,

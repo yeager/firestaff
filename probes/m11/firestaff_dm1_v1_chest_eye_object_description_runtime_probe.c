@@ -21,9 +21,6 @@
  */
 #include "asset_loader_m11.h"
 #include "m11_game_view.h"
-#include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
-#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -321,9 +318,9 @@ int main(int argc, char** argv)
                       chestPanel && chestPanel->pixels &&
                       circle && circle->pixels);
     ok &= expect_true("object-description panel zones available",
-                      dm1_v1_inventory_panel_zone_xywh_pc34(
+                      M11_GameView_GetV1InventoryPanelZone(
                           &panelX, &panelY, &panelW, &panelH) &&
-                      dm1_v1_object_description_circle_zone_xywh_pc34(
+                      M11_GameView_GetV1ObjectDescriptionCircleZone(
                           &circleX, &circleY, &circleW, &circleH));
     (void)panelW;
     (void)panelH;

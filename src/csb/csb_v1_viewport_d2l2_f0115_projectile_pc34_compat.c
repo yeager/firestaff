@@ -157,28 +157,28 @@ static const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec s_routes[] = {
     }
 };
 
-size_t csb_v1_viewport_d2l2_f0115_projectile_route_spec_count_pc34_compat(void)
+size_t M11_GameView_D2L2F0115ProjectileRouteSpecCount(void)
 {
     return sizeof(s_routes) / sizeof(s_routes[0]);
 }
 
 const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *
-csb_v1_viewport_d2l2_f0115_projectile_route_spec_at_pc34_compat(size_t index)
+M11_GameView_D2L2F0115ProjectileRouteSpecAt(size_t index)
 {
-    if (index >= csb_v1_viewport_d2l2_f0115_projectile_route_spec_count_pc34_compat()) return NULL;
+    if (index >= M11_GameView_D2L2F0115ProjectileRouteSpecCount()) return NULL;
     return &s_routes[index];
 }
 
 const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *
-csb_v1_viewport_d2l2_f0115_projectile_route_spec_for_square_pc34_compat(int view_square)
+M11_GameView_D2L2F0115ProjectileRouteSpecForSquare(int view_square)
 {
-    for (size_t i = 0; i < csb_v1_viewport_d2l2_f0115_projectile_route_spec_count_pc34_compat(); ++i) {
+    for (size_t i = 0; i < M11_GameView_D2L2F0115ProjectileRouteSpecCount(); ++i) {
         if (s_routes[i].view_square == view_square) return &s_routes[i];
     }
     return NULL;
 }
 
-int csb_v1_viewport_d2l2_f0115_projectile_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileZone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec,
     unsigned char view_cell)
 {
@@ -192,7 +192,7 @@ int csb_v1_viewport_d2l2_f0115_projectile_zone_pc34_compat(
            view_cell;
 }
 
-int csb_v1_viewport_d2l2_f0115_projectile_object_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileObjectZone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec,
     unsigned char view_cell)
 {
@@ -202,7 +202,7 @@ int csb_v1_viewport_d2l2_f0115_projectile_object_zone_pc34_compat(
            view_cell;
 }
 
-int csb_v1_viewport_d2l2_f0115_projectile_creature_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileCreatureZone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec,
     int coordinate_set,
     unsigned char view_cell)
@@ -216,28 +216,28 @@ int csb_v1_viewport_d2l2_f0115_projectile_creature_zone_pc34_compat(
            view_cell;
 }
 
-int csb_v1_viewport_d2l2_f0115_projectile_explosion_rebirth_step1_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileExplosionRebirthStep1Zone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec)
 {
     if (!spec || spec->explosion_g2034_row < 0) return -1;
     return spec->explosion_rebirth_step1_zone_base + spec->explosion_g2034_row;
 }
 
-int csb_v1_viewport_d2l2_f0115_projectile_explosion_rebirth_step2_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileExplosionRebirthStep2Zone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec)
 {
     if (!spec || spec->explosion_g2034_row < 0) return -1;
     return spec->explosion_rebirth_step2_zone_base + spec->explosion_g2034_row;
 }
 
-int csb_v1_viewport_d2l2_f0115_projectile_explosion_centered_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileExplosionCenteredZone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec)
 {
     if (!spec || spec->explosion_g2034_row < 0) return -1;
     return spec->explosion_centered_zone_base + spec->explosion_g2034_row;
 }
 
-int csb_v1_viewport_d2l2_f0115_projectile_explosion_side_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileExplosionSideZone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec,
     unsigned char view_cell)
 {
@@ -247,14 +247,14 @@ int csb_v1_viewport_d2l2_f0115_projectile_explosion_side_zone_pc34_compat(
            view_cell;
 }
 
-int csb_v1_viewport_d2l2_f0115_projectile_teleporter_field_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileTeleporterFieldZone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec)
 {
     if (!spec || !spec->f0113_teleporter_route) return -1;
     return spec->field_zone;
 }
 
-int csb_v1_viewport_d2l2_f0115_projectile_apply_synthetic_c10_blit_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileApplySyntheticC10Blit(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec,
     const uint8_t *source,
     int source_stride,
@@ -285,7 +285,7 @@ int csb_v1_viewport_d2l2_f0115_projectile_apply_synthetic_c10_blit_pc34_compat(
     return copied;
 }
 
-const char *csb_v1_viewport_d2l2_f0115_projectile_source_evidence_pc34_compat(void)
+const char *M11_GameView_D2L2F0115ProjectileSourceEvidence(void)
 {
     return s_source_evidence;
 }

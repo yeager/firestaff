@@ -21,7 +21,7 @@
  */
 
 #include "csb_v1_viewport_pc34_compat.h"
-#include "csb_v1_csbgraphics_runtime_plan.h"
+#include "csb_v1_csbgraphics_m11_runtime_plan.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.h"
 #include "csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
@@ -3266,10 +3266,10 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
     const int viewport_word_stride = DM1_VIEWPORT_WIDTH / 8;
     const size_t viewport_word_count =
         (size_t)viewport_word_stride * (size_t)DM1_VIEWPORT_HEIGHT;
-    const CSB_V1_CSBGraphicsRuntimePlan *plan;
+    const CSB_V1_CSBGraphicsM11RuntimePlan *plan;
     const CSB_V1_CSBGraphicsDatRealCache *cache;
     uint32_t *viewport_words;
-    uint16_t selected_skin_def_words[CSB_V1_CSBGRAPHICS_RUNTIME_SKIN_DEF_MAX_WORDS];
+    uint16_t selected_skin_def_words[CSB_V1_CSBGRAPHICS_M11_SKIN_DEF_MAX_WORDS];
     const uint16_t *skin_def_words;
     size_t skin_def_word_count;
     const CSB_V1_CustomBackgroundsRoomSlotContract *room_contract;
@@ -3288,7 +3288,7 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
         }
         return 0;
     }
-    plan = (const CSB_V1_CSBGraphicsRuntimePlan *)cfg->csbgraphics_plan;
+    plan = (const CSB_V1_CSBGraphicsM11RuntimePlan *)cfg->csbgraphics_plan;
     cache = (const CSB_V1_CSBGraphicsDatRealCache *)cfg->csbgraphics_cache;
     if (!preserve_existing) {
         cfg->custom_background_selected_skin_num = 0;
@@ -3352,15 +3352,15 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
                 &selection) &&
             selection.has_custom_background_entry) {
             size_t selected_word_count = 0u;
-            int rc = csb_v1_csbgraphics_runtime_plan_decode_custom_background_skin_def_for_skin(
+            int rc = csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def_for_skin(
                 cache,
                 (uint32_t)selection.selected_skin,
                 selected_skin_def_words,
-                CSB_V1_CSBGRAPHICS_RUNTIME_SKIN_DEF_MAX_WORDS,
+                CSB_V1_CSBGRAPHICS_M11_SKIN_DEF_MAX_WORDS,
                 &selected_word_count);
             cfg->custom_background_selected_skin_num = selection.selected_skin;
             cfg->custom_background_used_default_skin = selection.used_default_skin;
-            if (rc == CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK &&
+            if (rc == CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK &&
                 selected_word_count > 0u) {
                 skin_def_words = selected_skin_def_words;
                 skin_def_word_count = selected_word_count;
@@ -3396,11 +3396,11 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
         for (layer = 0; layer < 3; ++layer) {
             int rc;
             if (cfg->custom_background_layer_mask_valid[layer]) {
-                rc = csb_v1_csbgraphics_runtime_plan_apply_custom_background_room_layer(
+                rc = csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer(
                     plan,
                     cache,
                     room_num,
-                    (CSB_V1_CSBGraphicsRuntimeCustomBackgroundLayer)layer,
+                    (CSB_V1_CSBGraphicsM11CustomBackgroundLayer)layer,
                     skin_def_words,
                     skin_def_word_count,
                     &cfg->custom_background_layer_masks[layer],
@@ -3408,18 +3408,18 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
                     viewport_word_count,
                     DM1_VIEWPORT_WIDTH);
             } else {
-                rc = csb_v1_csbgraphics_runtime_plan_apply_custom_background_room_layer_auto_mask(
+                rc = csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer_auto_mask(
                     plan,
                     cache,
                     room_num,
-                    (CSB_V1_CSBGraphicsRuntimeCustomBackgroundLayer)layer,
+                    (CSB_V1_CSBGraphicsM11CustomBackgroundLayer)layer,
                     skin_def_words,
                     skin_def_word_count,
                     viewport_words,
                     viewport_word_count,
                     DM1_VIEWPORT_WIDTH);
             }
-            if (rc == CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK) {
+            if (rc == CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
                 ++applied;
                 ++room_applied;
             }

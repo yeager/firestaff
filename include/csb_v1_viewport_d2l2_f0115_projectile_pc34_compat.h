@@ -61,34 +61,34 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_ViewportD2L2F0115ProjectileRouteSpec;
 
-size_t csb_v1_viewport_d2l2_f0115_projectile_route_spec_count_pc34_compat(void);
+size_t M11_GameView_D2L2F0115ProjectileRouteSpecCount(void);
 const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *
-csb_v1_viewport_d2l2_f0115_projectile_route_spec_at_pc34_compat(size_t index);
+M11_GameView_D2L2F0115ProjectileRouteSpecAt(size_t index);
 const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *
-csb_v1_viewport_d2l2_f0115_projectile_route_spec_for_square_pc34_compat(int view_square);
+M11_GameView_D2L2F0115ProjectileRouteSpecForSquare(int view_square);
 
-int csb_v1_viewport_d2l2_f0115_projectile_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileZone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec,
     unsigned char view_cell);
-int csb_v1_viewport_d2l2_f0115_projectile_object_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileObjectZone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec,
     unsigned char view_cell);
-int csb_v1_viewport_d2l2_f0115_projectile_creature_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileCreatureZone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec,
     int coordinate_set,
     unsigned char view_cell);
-int csb_v1_viewport_d2l2_f0115_projectile_explosion_rebirth_step1_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileExplosionRebirthStep1Zone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec);
-int csb_v1_viewport_d2l2_f0115_projectile_explosion_rebirth_step2_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileExplosionRebirthStep2Zone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec);
-int csb_v1_viewport_d2l2_f0115_projectile_explosion_centered_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileExplosionCenteredZone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec);
-int csb_v1_viewport_d2l2_f0115_projectile_explosion_side_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileExplosionSideZone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec,
     unsigned char view_cell);
-int csb_v1_viewport_d2l2_f0115_projectile_teleporter_field_zone_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileTeleporterFieldZone(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec);
-int csb_v1_viewport_d2l2_f0115_projectile_apply_synthetic_c10_blit_pc34_compat(
+int M11_GameView_D2L2F0115ProjectileApplySyntheticC10Blit(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec,
     const uint8_t *source,
     int source_stride,
@@ -97,7 +97,7 @@ int csb_v1_viewport_d2l2_f0115_projectile_apply_synthetic_c10_blit_pc34_compat(
     int width,
     int height);
 
-const char *csb_v1_viewport_d2l2_f0115_projectile_source_evidence_pc34_compat(void);
+const char *M11_GameView_D2L2F0115ProjectileSourceEvidence(void);
 
 #ifdef __cplusplus
 }
