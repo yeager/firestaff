@@ -802,6 +802,23 @@ typedef struct {
     int interface_rect14_consumed;
 } DM2_V1_ViewportState;
 
+typedef struct {
+    int ready;
+    uint32_t consumed_mask;
+    uint32_t consumption_hash;
+    uint32_t source_hash;
+    uint16_t scene_colorkey;
+    uint16_t scene_flags;
+    uint16_t ambient_light;
+    uint16_t highest_light_level;
+    uint16_t void_random_fall;
+    uint16_t animated_floor;
+    int scene_control_consumed;
+    int light_consumed;
+    int floor_anim_consumed;
+    int weather_consumed;
+} DM2_V1_ViewportSceneConsumptionReceipt;
+
 /* ── Initialization ────────────────────────────────────────────── */
 void dm2_v1_viewport_init(DM2_V1_ViewportState *s, uint8_t *framebuffer, int stride);
 void dm2_v1_viewport_set_party(DM2_V1_ViewportState *s, int dir, int x, int y);
@@ -824,6 +841,9 @@ void dm2_v1_viewport_set_gdat_scene_control(
     uint16_t highest_light_level,
     uint16_t void_random_fall,
     uint16_t animated_floor);
+int dm2_v1_viewport_scene_consumption_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportSceneConsumptionReceipt *out_receipt);
 void dm2_v1_viewport_set_interface_theme(
     DM2_V1_ViewportState *s,
     const DM2_V1_InterfaceTheme *theme);

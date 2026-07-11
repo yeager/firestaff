@@ -209,36 +209,6 @@ static uint32_t dm2_runtime_hash_step(uint32_t hash, uint32_t value)
     return hash;
 }
 
-static uint32_t dm2_runtime_scene_consumption_mask(
-    const DM2_V1_RuntimeFrameOwnershipReceipt *receipt)
-{
-    uint32_t mask = 0u;
-    if (!receipt) return 0u;
-    if (receipt->gdat_scene_control_consumed > 0) mask |= 1u << 0;
-    if (receipt->gdat_scene_light_consumed > 0) mask |= 1u << 1;
-    if (receipt->gdat_scene_floor_anim_consumed > 0) mask |= 1u << 2;
-    if (receipt->gdat_scene_weather_consumed > 0) mask |= 1u << 3;
-    return mask;
-}
-
-static uint32_t dm2_runtime_scene_consumption_hash(
-    const DM2_V1_RuntimeFrameOwnershipReceipt *receipt)
-{
-    uint32_t hash = 0x32475343u;
-    if (!receipt) return 0u;
-    hash = dm2_runtime_hash_step(hash,
-                                 dm2_runtime_scene_consumption_mask(receipt));
-    hash = dm2_runtime_hash_step(hash, receipt->gdat_scene_control_hash);
-    hash = dm2_runtime_hash_step(hash, receipt->gdat_scene_control_present_mask);
-    hash = dm2_runtime_hash_step(hash, receipt->gdat_scene_colorkey);
-    hash = dm2_runtime_hash_step(hash, receipt->gdat_scene_flags);
-    hash = dm2_runtime_hash_step(hash, receipt->gdat_scene_ambient_light);
-    hash = dm2_runtime_hash_step(hash, receipt->gdat_scene_highest_light_level);
-    hash = dm2_runtime_hash_step(hash, receipt->gdat_scene_void_random_fall);
-    hash = dm2_runtime_hash_step(hash, receipt->gdat_scene_animated_floor);
-    return hash;
-}
-
 static uint8_t dm2_runtime_palette_color(uint32_t hash, unsigned int shift)
 {
     return (uint8_t)(2u + ((hash >> shift) % 13u));
@@ -2363,10 +2333,17 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_scene_void_random_fall;
     g_dm2_frame_ownership.gdat_scene_animated_floor =
         rt->gdat_scene_animated_floor;
-    g_dm2_frame_ownership.gdat_scene_consumed_mask =
-        dm2_runtime_scene_consumption_mask(&g_dm2_frame_ownership);
-    g_dm2_frame_ownership.gdat_scene_consumption_hash =
-        dm2_runtime_scene_consumption_hash(&g_dm2_frame_ownership);
+    {
+        DM2_V1_ViewportSceneConsumptionReceipt scene_receipt;
+        memset(&scene_receipt, 0, sizeof(scene_receipt));
+        if (dm2_v1_viewport_scene_consumption_receipt(&viewport,
+                                                      &scene_receipt)) {
+            g_dm2_frame_ownership.gdat_scene_consumed_mask =
+                scene_receipt.consumed_mask;
+            g_dm2_frame_ownership.gdat_scene_consumption_hash =
+                scene_receipt.consumption_hash;
+        }
+    }
     /* skproject SKWIN/SkWinCore.cpp routes the runtime HUD, floor/ceiling,
      * walls and overlays through GDAT-backed surface fetches before blitting.
      * A "full" DM2 runtime frame is only accepted when the mandatory HUD and

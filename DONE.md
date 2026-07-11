@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM2 viewport-owned scene-consumption receipt: GRAPHICSSET scene/light/floor/weather consumption is now exposed by the viewport renderer as a structured receipt, and runtime frame ownership consumes that receipt instead of duplicating hash logic locally. Verification: focused DM2 boot/runtime/light CTest set passed 3/3.
+
 - ✅ 2026-07-11 DM1 startup consumes verified user-save corpus receipts: HoC complete-support now routes user-save corpus capture through the DM1 PC34 roundtrip verifier, exposes verified/failed/hash receipt fields through save-resume, complete-support, and boot-summary receipts, and rejects user-save corpus readiness unless every save-part-envelope candidate survives export/reload. Verification: Ninja built `test_dm1_v1_startup_intro_state_machine_gate`, `test_dm1_v1_original_save_pc34_handoff`, and `test_dm1_v1_original_save_classifier_pc34`; direct runs passed; focused DM1 CTest passed 3/3.
 
 - ✅ 2026-07-11 DM2 boot HUD scene-consumption propagation: boot runtime-render and HUD-capture receipts now carry the live runtime GRAPHICSSET scene-consumption mask/hash from frame ownership, so boot-profile evidence can prove the skproject scene/light values reached runtime rendering. Verification: focused DM2 boot/runtime/save/light CTest set passed 4/4.
