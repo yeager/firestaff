@@ -430,6 +430,16 @@ typedef struct {
     int animation_attribution_count;
     int animation_info_sequence_count;
     int animation_frame_sequence_count;
+    uint32_t animation_table_field_mask;
+    int animation_attribution_ready;
+    uint32_t animation_attribution_hash;
+    uint32_t animation_attribution_byte_count;
+    int animation_info_sequence_ready;
+    uint32_t animation_info_sequence_hash;
+    uint32_t animation_info_sequence_byte_count;
+    int animation_frame_sequence_ready;
+    uint32_t animation_frame_sequence_hash;
+    uint32_t animation_frame_sequence_byte_count;
     uint32_t animation_table_hash;
     uint32_t animation_table_byte_count;
     int animation_table_ready;

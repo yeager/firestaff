@@ -6630,33 +6630,60 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
                 creature,
                 DM2_GDAT_ENTRY_TYPE_RAW8,
                 DM2_GDAT_CREATURE_ANIM_ATTRIBUTION,
-                &out_receipt->animation_table_hash,
-                &out_receipt->animation_table_byte_count)) {
+                &out_receipt->animation_attribution_hash,
+                &out_receipt->animation_attribution_byte_count)) {
             ++out_receipt->animation_attribution_count;
             ++table_count;
+            out_receipt->animation_table_field_mask |= 0x01u;
         }
+        (void)dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
+            profile,
+            DM2_GDAT_CATEGORY_CREATURES,
+            creature,
+            DM2_GDAT_ENTRY_TYPE_RAW8,
+            DM2_GDAT_CREATURE_ANIM_ATTRIBUTION,
+            &out_receipt->animation_table_hash,
+            &out_receipt->animation_table_byte_count);
         if (dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
                 profile,
                 DM2_GDAT_CATEGORY_CREATURES,
                 creature,
                 DM2_GDAT_ENTRY_TYPE_RAW7,
                 DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE,
-                &out_receipt->animation_table_hash,
-                &out_receipt->animation_table_byte_count)) {
+                &out_receipt->animation_info_sequence_hash,
+                &out_receipt->animation_info_sequence_byte_count)) {
             ++out_receipt->animation_info_sequence_count;
             ++table_count;
+            out_receipt->animation_table_field_mask |= 0x02u;
         }
+        (void)dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
+            profile,
+            DM2_GDAT_CATEGORY_CREATURES,
+            creature,
+            DM2_GDAT_ENTRY_TYPE_RAW7,
+            DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE,
+            &out_receipt->animation_table_hash,
+            &out_receipt->animation_table_byte_count);
         if (dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
                 profile,
                 DM2_GDAT_CATEGORY_CREATURES,
                 creature,
                 DM2_GDAT_ENTRY_TYPE_RAW7,
                 DM2_GDAT_CREATURE_ANIM_FRAME_SEQUENCE,
-                &out_receipt->animation_table_hash,
-                &out_receipt->animation_table_byte_count)) {
+                &out_receipt->animation_frame_sequence_hash,
+                &out_receipt->animation_frame_sequence_byte_count)) {
             ++out_receipt->animation_frame_sequence_count;
             ++table_count;
+            out_receipt->animation_table_field_mask |= 0x04u;
         }
+        (void)dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
+            profile,
+            DM2_GDAT_CATEGORY_CREATURES,
+            creature,
+            DM2_GDAT_ENTRY_TYPE_RAW7,
+            DM2_GDAT_CREATURE_ANIM_FRAME_SEQUENCE,
+            &out_receipt->animation_table_hash,
+            &out_receipt->animation_table_byte_count);
         if (table_count > 0) {
             out_receipt->animation_table_hash =
                 dm2_v1_boot_packaged_capture_hash_step(
@@ -6667,10 +6694,23 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
             out_receipt->animation_table_byte_count = before_count;
         }
     }
-    out_receipt->animation_table_ready =
+    out_receipt->animation_attribution_ready =
         out_receipt->animation_attribution_count > 0 &&
+        out_receipt->animation_attribution_hash != 0u &&
+        out_receipt->animation_attribution_byte_count > 0u;
+    out_receipt->animation_info_sequence_ready =
         out_receipt->animation_info_sequence_count > 0 &&
+        out_receipt->animation_info_sequence_hash != 0u &&
+        out_receipt->animation_info_sequence_byte_count > 0u;
+    out_receipt->animation_frame_sequence_ready =
         out_receipt->animation_frame_sequence_count > 0 &&
+        out_receipt->animation_frame_sequence_hash != 0u &&
+        out_receipt->animation_frame_sequence_byte_count > 0u;
+    out_receipt->animation_table_ready =
+        (out_receipt->animation_table_field_mask & 0x07u) == 0x07u &&
+        out_receipt->animation_attribution_ready &&
+        out_receipt->animation_info_sequence_ready &&
+        out_receipt->animation_frame_sequence_ready &&
         out_receipt->animation_table_hash != 0u &&
         out_receipt->animation_table_byte_count > 0u;
     if (out_receipt->min_frame_count == 9999) {
@@ -6978,6 +7018,11 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->creature_atlas.raw_gdat_hash != 0u &&
         out_receipt->creature_atlas.decoded_gdat_hash != 0u &&
         out_receipt->creature_atlas.animation_table_ready &&
+        (out_receipt->creature_atlas.animation_table_field_mask & 0x07u) ==
+            0x07u &&
+        out_receipt->creature_atlas.animation_attribution_hash != 0u &&
+        out_receipt->creature_atlas.animation_info_sequence_hash != 0u &&
+        out_receipt->creature_atlas.animation_frame_sequence_hash != 0u &&
         out_receipt->creature_atlas.frame_parity_hash != 0u;
     out_receipt->runtime_gdat_direction_breadth_complete =
         out_receipt->runtime_hud.render_sample_count == 4 &&
@@ -7082,6 +7127,14 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         hash, out_receipt->creature_atlas.atlas_material_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->creature_atlas.frame_parity_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->creature_atlas.animation_table_field_mask);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->creature_atlas.animation_attribution_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->creature_atlas.animation_info_sequence_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->creature_atlas.animation_frame_sequence_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->save_corpus_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
