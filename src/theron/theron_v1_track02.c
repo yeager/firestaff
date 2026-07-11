@@ -117,6 +117,20 @@ static uint32_t rd32le(const uint8_t *p) {
            ((uint32_t)p[3] << 24);
 }
 
+static uint32_t tqr_fnv1a_bytes(const uint8_t *bytes, size_t byte_count) {
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes || byte_count == 0u) {
+        return 0u;
+    }
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 2166136261u;
+}
+
 /* Read and validate the audio-bank marker at one raw-BIN anchor.
  *
  * anchor_index selects which of (descriptor_offsets, span_offsets) to use;
@@ -3721,6 +3735,10 @@ int theron_v1_track02_capture_object_table_route_receipt(
                         out_receipt
                             ->object_table_candidate_nonzero_byte_counts[anchor] =
                             entries[entry_index].nonzero_byte_count;
+                        out_receipt->object_table_candidate_hashes[anchor] =
+                            tqr_fnv1a_bytes(
+                                track02_data + entries[entry_index].absolute_offset,
+                                entries[entry_index].byte_count);
                     }
                     out_receipt
                         ->object_table_candidate_last_entry_index[anchor] =
@@ -3731,6 +3749,10 @@ int theron_v1_track02_capture_object_table_route_receipt(
                     out_receipt
                         ->object_table_candidate_last_byte_counts[anchor] =
                         entries[entry_index].byte_count;
+                    out_receipt->object_table_candidate_last_hashes[anchor] =
+                        tqr_fnv1a_bytes(
+                            track02_data + entries[entry_index].absolute_offset,
+                            entries[entry_index].byte_count);
                 }
             }
         }
@@ -3776,6 +3798,10 @@ int theron_v1_track02_capture_object_table_route_receipt(
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->object_table_candidate_last_byte_counts[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->object_table_candidate_hashes[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->object_table_candidate_last_hashes[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->object_table_anchor_binding_status[anchor];
         hash *= 16777619u;
@@ -3905,6 +3931,13 @@ int theron_v1_track02_capture_level_route_receipt(
                                     ->nonstartup_level_candidate_nonzero_byte_counts
                                         [anchor] =
                                     entries[entry_index].nonzero_byte_count;
+                                out_receipt
+                                    ->nonstartup_level_candidate_hashes
+                                        [anchor] =
+                                    tqr_fnv1a_bytes(
+                                        track02_data +
+                                            entries[entry_index].absolute_offset,
+                                        entries[entry_index].byte_count);
                                 if (entries[entry_index].byte_count >= 12u &&
                                     entries[entry_index].absolute_offset <=
                                         track02_size &&
@@ -3956,6 +3989,13 @@ int theron_v1_track02_capture_level_route_receipt(
                                 ->nonstartup_level_candidate_last_byte_counts
                                     [anchor] =
                                 entries[entry_index].byte_count;
+                            out_receipt
+                                ->nonstartup_level_candidate_last_hashes
+                                    [anchor] =
+                                tqr_fnv1a_bytes(
+                                    track02_data +
+                                        entries[entry_index].absolute_offset,
+                                    entries[entry_index].byte_count);
                         }
                     }
                 }
@@ -4088,6 +4128,10 @@ int theron_v1_track02_capture_level_route_receipt(
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_last_byte_counts[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->nonstartup_level_candidate_hashes[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->nonstartup_level_candidate_last_hashes[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_map_status[anchor];

@@ -4557,6 +4557,20 @@ static void test_track02_startup_bitmap_atlas_overflow_breadth(void) {
                 "Track02 wide startup bitmap atlas promotes breadth and keeps residual overflow");
 }
 
+static uint32_t test_fnv1a_bytes(const uint8_t *bytes, size_t byte_count) {
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes || byte_count == 0u) {
+        return 0u;
+    }
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 2166136261u;
+}
+
 static void test_track02_all_dungeon_runtime_capture_receipt(void) {
     static const uint8_t descriptor[18] = {
         0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
@@ -4743,11 +4757,19 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     object_route_receipt
                             .object_table_candidate_nonzero_byte_counts[0] ==
                         16u &&
+                    object_route_receipt.object_table_candidate_hashes[0] ==
+                        test_fnv1a_bytes(
+                            track02 + post_descriptor_candidate_offsets[0],
+                            0x0400u) &&
                     object_route_receipt.object_table_candidate_last_entry_index[0] == 7u &&
                     object_route_receipt.object_table_candidate_last_raw_offsets[0] ==
                         post_descriptor_candidate_last_offsets[0] &&
                     object_route_receipt.object_table_candidate_last_byte_counts[0] ==
                         0x0400u &&
+                    object_route_receipt.object_table_candidate_last_hashes[0] ==
+                        test_fnv1a_bytes(
+                            track02 + post_descriptor_candidate_last_offsets[0],
+                            0x0400u) &&
                     object_route_receipt.object_table_blocked_anchor_count == 3u &&
                     object_route_receipt.object_table_blocked_anchor_mask == 0x07u &&
                     object_route_receipt.object_table_anchor_binding_status[0] ==
@@ -4825,6 +4847,10 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     level_route_receipt
                             .nonstartup_level_candidate_nonzero_byte_counts[0] ==
                         16u &&
+                    level_route_receipt.nonstartup_level_candidate_hashes[0] ==
+                        test_fnv1a_bytes(
+                            track02 + post_descriptor_candidate_offsets[0],
+                            0x0400u) &&
                     level_route_receipt
                             .nonstartup_level_candidate_header_probe_count ==
                         3u &&
@@ -4851,6 +4877,11 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                         post_descriptor_candidate_last_offsets[0] &&
                     level_route_receipt.nonstartup_level_candidate_last_byte_counts[0] ==
                         0x0400u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_last_hashes[0] ==
+                        test_fnv1a_bytes(
+                            track02 + post_descriptor_candidate_last_offsets[0],
+                            0x0400u) &&
                     level_route_receipt.nonstartup_level_blocked_anchor_count == 3u &&
                     level_route_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     !level_route_receipt.nonstartup_level_decode_ready &&

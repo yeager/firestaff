@@ -438,6 +438,114 @@ void csb_v1_boot_startup_release_app_capture_receipt_init_pc34(
         "ENTRANCE.C F0580/F0581 lines 1123-1165";
 }
 
+void csb_v1_boot_startup_release_app_presented_capture_receipt_init_pc34(
+    CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 *receipt)
+{
+    if (!receipt) return;
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_boot_startup_release_app_capture_receipt_init_pc34(
+        &receipt->release_app_capture);
+    receipt->expected_consumer_mask = 0x1fu;
+    receipt->source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 424-463; "
+        "ENTRANCE.C F0441/F0806/F0580 release-app startup capture";
+}
+
+int csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
+    const CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *release_app_capture,
+    int host_window_present,
+    int captured_from_mac_window,
+    int captured_from_release_app,
+    int width,
+    int height,
+    int byte_count,
+    uint32_t framebuffer_hash,
+    CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 *out_receipt)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    csb_v1_boot_startup_release_app_presented_capture_receipt_init_pc34(
+        out_receipt);
+    if (!release_app_capture) return 0;
+
+    out_receipt->release_app_capture = *release_app_capture;
+    out_receipt->release_app_capture_valid =
+        release_app_capture->valid ? 1 : 0;
+    out_receipt->release_app_capture_ready =
+        release_app_capture->release_app_capture_ready ? 1 : 0;
+    out_receipt->host_window_present = host_window_present ? 1 : 0;
+    out_receipt->captured_from_mac_window =
+        captured_from_mac_window ? 1 : 0;
+    out_receipt->captured_from_release_app =
+        captured_from_release_app ? 1 : 0;
+    out_receipt->width = width;
+    out_receipt->height = height;
+    out_receipt->byte_count = byte_count;
+    out_receipt->framebuffer_hash = framebuffer_hash;
+    out_receipt->geometry_matches =
+        width == 320 && height == 200 && byte_count == 320 * 200 * 4
+            ? 1
+            : 0;
+    out_receipt->pixels_present = framebuffer_hash != 0u ? 1 : 0;
+    out_receipt->route_specific_host_consumers_ready =
+        release_app_capture->route_specific_host_consumers_ready ? 1 : 0;
+    out_receipt->no_loose_render_plan_exports =
+        release_app_capture->no_loose_render_plan_exports ? 1 : 0;
+    out_receipt->release_app_capture_hash =
+        release_app_capture->release_app_capture_hash;
+    out_receipt->release_app_real_asset_capture_hash =
+        release_app_capture->release_app_real_asset_capture_hash;
+    out_receipt->consumer_mask =
+        (release_app_capture->title_release_app_capture_ready ? 0x01u : 0u) |
+        (release_app_capture->closed_door_release_app_capture_ready ? 0x02u : 0u) |
+        (release_app_capture->utility_release_app_capture_ready ? 0x04u : 0u) |
+        (release_app_capture->door_opening_release_app_capture_ready ? 0x08u : 0u) |
+        (release_app_capture->credits_release_app_capture_ready ? 0x10u : 0u);
+
+    hash ^= (uint32_t)out_receipt->width;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->height;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->byte_count;
+    hash *= 16777619u;
+    hash ^= out_receipt->framebuffer_hash;
+    hash *= 16777619u;
+    hash ^= out_receipt->consumer_mask;
+    hash *= 16777619u;
+    hash ^= out_receipt->expected_consumer_mask;
+    hash *= 16777619u;
+    hash ^= out_receipt->release_app_capture_hash;
+    hash *= 16777619u;
+    hash ^= out_receipt->release_app_real_asset_capture_hash;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->captured_from_mac_window;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->captured_from_release_app;
+    out_receipt->chain_hash = hash ? hash : 1u;
+
+    out_receipt->presented_capture_ready =
+        out_receipt->release_app_capture_valid &&
+                out_receipt->release_app_capture_ready &&
+                out_receipt->host_window_present &&
+                out_receipt->captured_from_mac_window &&
+                out_receipt->captured_from_release_app &&
+                out_receipt->geometry_matches &&
+                out_receipt->pixels_present &&
+                out_receipt->route_specific_host_consumers_ready &&
+                out_receipt->no_loose_render_plan_exports &&
+                out_receipt->consumer_mask == out_receipt->expected_consumer_mask &&
+                out_receipt->chain_hash != 0u
+            ? 1
+            : 0;
+    out_receipt->valid = out_receipt->presented_capture_ready;
+    /* ReDMCSB keeps title, entrance HUD, utility, credits and door-opening
+     * under the CSB startup loop. This export is the Mac/release-app boundary:
+     * host code supplies only the observed window/pixel facts, while CSB owns
+     * the route mask and release capture proof. */
+    return out_receipt->valid;
+}
+
 int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
     const CSB_V1_StartupCompleteSupportReceipt_PC34 *complete_support,
     CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *out_receipt)
