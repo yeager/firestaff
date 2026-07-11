@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_MENU_STARTUP_M12_H
 #define FIRESTAFF_MENU_STARTUP_M12_H
 
+#include "menu_input_m12.h"
 #include "asset_status_m12.h"
 #include "card_art_m12.h"
 #include "creature_art_m12.h"
@@ -13,60 +14,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef enum {
-    M12_MENU_INPUT_NONE = 0,
-    M12_MENU_INPUT_UP,
-    M12_MENU_INPUT_DOWN,
-    M12_MENU_INPUT_LEFT,
-    M12_MENU_INPUT_RIGHT,
-    M12_MENU_INPUT_STRAFE_LEFT,
-    M12_MENU_INPUT_STRAFE_RIGHT,
-    /* v2.8.x: split turn-left/turn-right out of LEFT/RIGHT so the
-     * arrow keys can mean strafe (matching the original DM1 PC 3.4
-     * gameplay convention where arrow keys move the party forward /
-     * back and strafe left / right, while Home/End turn).  Q/E on
-     * the keyboard also map to TURN_LEFT/TURN_RIGHT.  Historically
-     * LEFT/RIGHT meant turn-left/turn-right; that mapping has been
-     * moved to TURN_LEFT/TURN_RIGHT.  Menu navigation in the M12
-     * launcher still uses M12_MENU_INPUT_LEFT/RIGHT (the +/- on a
-     * settings tab strip), unaffected by this split. */
-    M12_MENU_INPUT_TURN_LEFT,
-    M12_MENU_INPUT_TURN_RIGHT,
-    M12_MENU_INPUT_ACCEPT,
-    M12_MENU_INPUT_BACK,
-    M12_MENU_INPUT_ACTION,
-    M12_MENU_INPUT_CYCLE_CHAMPION,
-    /* v2.7.15: cycle the current setting's value (the +/- button
-     * on a row in M12_MENU_VIEW_SETTINGS).  Distinct from
-     * M12_MENU_INPUT_LEFT/RIGHT which cycle the settings tab
-     * strip.  Routed by M12_ModernMenu_ApplyHit when the user
-     * clicks the cycle button on a row. */
-    M12_MENU_INPUT_VALUE_LEFT,
-    M12_MENU_INPUT_VALUE_RIGHT,
-    M12_MENU_INPUT_REST_TOGGLE,
-    M12_MENU_INPUT_USE_STAIRS,
-    M12_MENU_INPUT_PICKUP_ITEM,
-    M12_MENU_INPUT_DROP_ITEM,
-    M12_MENU_INPUT_SPELL_RUNE_1,
-    M12_MENU_INPUT_SPELL_RUNE_2,
-    M12_MENU_INPUT_SPELL_RUNE_3,
-    M12_MENU_INPUT_SPELL_RUNE_4,
-    M12_MENU_INPUT_SPELL_RUNE_5,
-    M12_MENU_INPUT_SPELL_RUNE_6,
-    M12_MENU_INPUT_SPELL_CAST,
-    M12_MENU_INPUT_SPELL_CLEAR,
-    M12_MENU_INPUT_USE_ITEM,
-    M12_MENU_INPUT_MAP_TOGGLE,
-    M12_MENU_INPUT_INVENTORY_TOGGLE,
-    M12_MENU_INPUT_SAVE_GAME,
-    M12_MENU_INPUT_FREEZE_TOGGLE,
-    M12_MENU_INPUT_DISK_MENU,
-    M12_MENU_INPUT_CHAMPION_1_INVENTORY,
-    M12_MENU_INPUT_CHAMPION_2_INVENTORY,
-    M12_MENU_INPUT_CHAMPION_3_INVENTORY,
-    M12_MENU_INPUT_CHAMPION_4_INVENTORY
-} M12_MenuInput;
 
 typedef enum {
     M12_MENU_VIEW_MAIN = 0,
@@ -677,6 +624,13 @@ int M12_StartupMenu_OpenSaveBrowser(M12_StartupMenuState* state);
 int M12_StartupMenu_ExportSelectedSaveBrowserDM1PC34(M12_StartupMenuState* state,
                                                      char* outPath,
                                                      int outPathSize);
+int M12_StartupMenu_ExportSaveBrowserDM1PC34CorpusReceipt(
+    M12_StartupMenuState* state,
+    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt);
+int M12_StartupMenu_ImportDM1PC34CorpusReceipt(
+    M12_StartupMenuState* state,
+    const char* importDir,
+    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt);
 const char* M12_StartupMenu_SaveBrowserFooterText(
     const M12_StartupMenuState* state);
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state);

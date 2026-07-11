@@ -23,6 +23,7 @@
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_save.h"
 #include "render_sdl_m11.h"
+#include "save_browser_m12.h"
 #include "theron_v1_save_load.h"
 #include "theron_v1_srm_classifier.h"
 #include "color_presets_m11.h"
