@@ -1327,9 +1327,6 @@ int csb_v1_boot_startup_execute_hud_menu_draw_receipt_pc34(
 int csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
     const CSB_V1_BootStartupCaptureReceipt_PC34 *capture_receipt,
     CSB_V1_BootStartupPackagedCaptureProof_PC34 *out_proof);
-int csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    CSB_V1_BootStartupPackagedCaptureProof_PC34 *out_proof);
 int csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
     const CSB_V1_BootProfile *boot_profile,
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 *out_receipt);

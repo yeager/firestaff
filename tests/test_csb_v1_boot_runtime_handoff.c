@@ -2891,15 +2891,15 @@ static void test_runtime_utility_startup_receipt_facades(void)
             capture_receipt.selected_command_id;
     CHECK(packaged_title_ok,
           "boot startup packaged proof binds title capture route, real assets, and render plan");
-    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
-              &snapshot,
+    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
+              &capture_receipt,
               &packaged_proof_from_snapshot) == 1 &&
               packaged_proof_from_snapshot.valid &&
               packaged_proof_from_snapshot.packaged_capture_hash ==
                   packaged_proof.packaged_capture_hash &&
               packaged_proof_from_snapshot.real_asset_receipt_hash ==
                   packaged_proof.real_asset_receipt_hash,
-          "boot startup packaged proof snapshot wrapper is deterministic");
+          "boot startup packaged proof capture receipt is deterministic");
     CHECK(packaged_title_ok &&
               strstr(packaged_proof.source_evidence, "TITLE.C") != NULL,
           "boot startup packaged capture proof binds title and real assets");
@@ -2980,10 +2980,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               &host_view_receipt) == 1 &&
               host_view_receipt.valid &&
               host_view_receipt.capture_proof.title_route &&
-              csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
-                  &snapshot,
-                  &packaged_proof_from_snapshot) == 1 &&
-              packaged_proof_from_snapshot.packaged_capture_hash ==
+              host_view_receipt.capture_proof.packaged_capture_hash ==
                   packaged_proof.packaged_capture_hash,
           "boot startup snapshot host-view consumes title capture proof");
     CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
@@ -3655,8 +3652,8 @@ static void test_runtime_utility_startup_receipt_facades(void)
               capture_receipt.readiness.runtime_map_index == 6 &&
               capture_receipt.readiness.runtime_champion_count == 4,
           "boot startup capture receipt packages runtime HUD readiness");
-    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
-              &snapshot,
+    CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
+              &capture_receipt,
               &packaged_proof) == 1 &&
               packaged_proof.valid &&
               packaged_proof.runtime_capture_ready &&
