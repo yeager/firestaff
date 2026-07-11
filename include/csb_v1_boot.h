@@ -1180,6 +1180,10 @@ int csb_v1_boot_startup_render_plan_uses_real_assets_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan);
 void csb_v1_boot_startup_runtime_asset_gate_receipt_init_pc34(
     CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *receipt);
+int csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_BootStartupLaunchReceipts_PC34 *launch_receipts,
+    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_runtime_presentation_from_snapshot_pc34(
     const CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *asset_gate,
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,

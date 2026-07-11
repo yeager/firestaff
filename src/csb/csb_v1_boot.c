@@ -403,7 +403,7 @@ static uint32_t csb_v1_boot_startup_asset_binding_hash_pc34(
     return hash ? hash : 1u;
 }
 
-static int csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+int csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
     const CSB_V1_BootProfile *profile,
     const CSB_V1_BootStartupLaunchReceipts_PC34 *launch_receipts,
     CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *out_receipt)
