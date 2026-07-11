@@ -16,11 +16,15 @@
 #include "theron_v1_save_load.h"
 
 #include <stdio.h>
+#include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 #ifndef FIRESTAFF_HAS_ZLIB
 #define FIRESTAFF_HAS_ZLIB 0
@@ -40,6 +44,14 @@ static int m12_test_setenv(const char* name, const char* value) {
     return _putenv_s(name, value);
 #else
     return setenv(name, value, 1);
+#endif
+}
+
+static int mkdir_one(const char* path) {
+#ifdef _WIN32
+    return _mkdir(path) == 0 || errno == EEXIST;
+#else
+    return mkdir(path, 0755) == 0 || errno == EEXIST;
 #endif
 }
 
@@ -791,8 +803,15 @@ int main(void) {
     char theronSlotSavePath[512];
     char theronSrmSavePath[512];
     char nativeSavePath[512];
+    char screenshotRoot[512];
+    char corpusDataRoot[512];
+    char corpusNativeSavePath[512];
+    char corpusImportRoot[512];
+    char corpusImportDeep[512];
+    char corpusImportSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
+    M12_SaveBrowserDM1PC34CorpusReceipt corpusReceipt;
     char pc34Path[512];
 
     if (!mkdtemp(tmpTemplate)) {
@@ -804,6 +823,9 @@ int main(void) {
         return 1;
     }
     m12_test_setenv("HOME", tmpTemplate);
+    snprintf(screenshotRoot, sizeof(screenshotRoot), "%s/screenshots", tmpTemplate);
+    if (!expect(mkdir_one(screenshotRoot), "should create empty screenshot root")) return 1;
+    m12_test_setenv("FIRESTAFF_SCREENSHOTS_DIR", screenshotRoot);
 
     M12_Config_SetLastSavePath("");
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
@@ -1571,6 +1593,54 @@ int main(void) {
                     &state, pc34Path, (int)sizeof(pc34Path)) == -1,
                 "save browser PC34 export should refuse overwrite")) return 1;
 
+    snprintf(corpusDataRoot, sizeof(corpusDataRoot), "%s/dm1-corpus-ui",
+             tmpTemplate);
+    snprintf(corpusNativeSavePath, sizeof(corpusNativeSavePath),
+             "%s/firestaff-dm1-corpus-ui.sav", corpusDataRoot);
+    snprintf(corpusImportRoot, sizeof(corpusImportRoot), "%s/import",
+             corpusDataRoot);
+    snprintf(corpusImportDeep, sizeof(corpusImportDeep), "%s/deep",
+             corpusImportRoot);
+    snprintf(corpusImportSavePath, sizeof(corpusImportSavePath),
+             "%s/imported-slot.raw", corpusImportDeep);
+    if (!expect(mkdir_one(corpusDataRoot), "should create DM1 corpus UI root")) return 1;
+    if (!expect(mkdir_one(corpusImportRoot), "should create DM1 corpus import root")) return 1;
+    if (!expect(mkdir_one(corpusImportDeep), "should create DM1 corpus import deep dir")) return 1;
+    if (!expect(write_native_dm1_save(corpusNativeSavePath),
+                "should write native DM1 corpus UI save")) return 1;
+    if (!expect(write_original_pc34_dm1_save_file(corpusImportSavePath),
+                "should write original DM1 corpus import save")) return 1;
+    M12_StartupMenu_InitWithDataDir(&state, corpusDataRoot, NULL);
+    force_dm1_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should open isolated DM1 corpus save browser")) return 1;
+    memset(&corpusReceipt, 0, sizeof(corpusReceipt));
+    if (!expect(M12_StartupMenu_ExportSaveBrowserDM1PC34CorpusReceipt(
+                    &state, &corpusReceipt) == 0,
+                "startup should export DM1 corpus through receipt wrapper")) return 1;
+    if (!expect(corpusReceipt.valid &&
+                    corpusReceipt.operation == 1 &&
+                    corpusReceipt.exportedCount == 1 &&
+                    corpusReceipt.consumedF0429HeaderGate &&
+                    corpusReceipt.consumedF7057EnvelopeGate &&
+                    corpusReceipt.consumedRoundtripGate &&
+                    corpusReceipt.receiptHash != 0u,
+                "startup DM1 corpus export receipt should carry source gates")) return 1;
+    memset(&corpusReceipt, 0, sizeof(corpusReceipt));
+    if (!expect(M12_StartupMenu_ImportDM1PC34CorpusReceipt(
+                    &state, corpusImportRoot, &corpusReceipt) == 0,
+                "startup should import DM1 corpus through receipt wrapper")) return 1;
+    if (!expect(corpusReceipt.valid &&
+                    corpusReceipt.operation == 2 &&
+                    corpusReceipt.importedCount == 1 &&
+                    corpusReceipt.consumedF0429HeaderGate &&
+                    corpusReceipt.consumedF7057EnvelopeGate &&
+                    corpusReceipt.consumedRoundtripGate &&
+                    corpusReceipt.receiptHash != 0u,
+                "startup DM1 corpus import receipt should carry source gates")) return 1;
+
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_dm1_available(&state);
     if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
                 "startup should reopen save browser after export")) return 1;
     if (!expect(select_save_entry(&state, "firestaff-dm1-browser.sav"),
