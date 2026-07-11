@@ -1858,41 +1858,6 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
                                            int* outZoneId);
 int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int championSlot);
 int M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(int sourceSlotBoxIndex);
-int M11_GameView_GetV1EndgameTheEndGraphicId(void);
-int M11_GameView_GetV1EndgameTheEndZone(int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH);
-int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void);
-int M11_GameView_GetV1EndgameChampionMirrorZoneId(int championSlot);
-int M11_GameView_GetV1EndgameChampionMirrorZone(int championSlot,
-                                                int* outX,
-                                                int* outY,
-                                                int* outW,
-                                                int* outH);
-int M11_GameView_GetV1EndgameChampionPortraitZoneId(int championSlot);
-int M11_GameView_GetV1EndgameChampionPortraitZone(int championSlot,
-                                                  int* outX,
-                                                  int* outY,
-                                                  int* outW,
-                                                  int* outH);
-int M11_GameView_GetV1EndgameChampionNameOrigin(int championSlot,
-                                                int* outX,
-                                                int* outY);
-int M11_GameView_GetV1EndgameChampionSkillOrigin(int championSlot,
-                                                 int skillLineIndex,
-                                                 int* outX,
-                                                 int* outY);
-int M11_GameView_GetV1EndgameRestartBox(int inner,
-                                        int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH);
-int M11_GameView_GetV1EndgameQuitBox(int inner,
-                                     int* outX,
-                                     int* outY,
-                                     int* outW,
-                                     int* outH);
 /* ── Forced-pause dialog fit/layout (Firestaff session timer) ───────
  * Not driven by ReDMCSB; this surface is the session-timer escalation
  * overlay that pops when the limit hits zero.  The layout shrinks or
