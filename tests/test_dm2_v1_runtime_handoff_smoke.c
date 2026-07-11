@@ -802,6 +802,14 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(ownership.gdat_scene_light_consumed >=
                   ownership.gdat_scene_control_consumed,
               "runtime ownership reports GRAPHICSSET light consumption with scene-control consumption");
+        CHECK(((ownership.gdat_scene_control_consumed > 0 &&
+                (ownership.gdat_scene_consumed_mask & 0x1u) != 0u) ||
+               ownership.gdat_scene_control_consumed == 0) &&
+                  ((ownership.gdat_scene_light_consumed > 0 &&
+                    (ownership.gdat_scene_consumed_mask & 0x2u) != 0u) ||
+                   ownership.gdat_scene_light_consumed == 0) &&
+                  ownership.gdat_scene_consumption_hash != 0u,
+              "runtime ownership hashes consumed GRAPHICSSET scene/light words");
         CHECK(framebuffer[0] != 0,
               "runtime asset-provider frame completes the shared viewport render pass");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);

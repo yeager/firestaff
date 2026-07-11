@@ -4097,8 +4097,89 @@ int theron_v1_track02_capture_object_table_route_receipt(
                             }
                         }
                     }
-                } else if (row_status !=
-                           THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT) {
+                } else if (entries[entry_index].absolute_offset <=
+                               track02_size &&
+                           entries[entry_index].byte_count <=
+                               track02_size -
+                                   entries[entry_index].absolute_offset) {
+                    const size_t max_scan =
+                        entries[entry_index].byte_count < 0x80u
+                            ? entries[entry_index].byte_count
+                            : 0x80u;
+                    size_t inner_offset;
+                    for (inner_offset = 2u;
+                         inner_offset + 2u <= max_scan;
+                         inner_offset += 2u) {
+                        Theron_Track02ObjectTable inner_table;
+                        Theron_Track02SemanticBindingStatus inner_status =
+                            theron_v1_track02_read_object_table(
+                                track02_data +
+                                    entries[entry_index].absolute_offset +
+                                    inner_offset,
+                                entries[entry_index].byte_count - inner_offset,
+                                &inner_table);
+                        ++out_receipt->object_table_inner_scan_probe_count;
+                        if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
+                            ++out_receipt
+                                  ->object_table_inner_scan_anchor_counts
+                                      [anchor];
+                        }
+                        if (inner_status ==
+                            THERON_TRACK02_SEMANTIC_BINDING_OK) {
+                            size_t inner_user_data_offset = 0u;
+                            const size_t inner_raw_offset =
+                                entries[entry_index].absolute_offset +
+                                inner_offset;
+                            ++out_receipt
+                                  ->object_table_inner_scan_shaped_count;
+                            out_receipt
+                                ->object_table_inner_scan_shaped_anchor_mask |=
+                                1u << (unsigned)anchor;
+                            if (anchor <
+                                    THERON_TRACK02_MAX_BANK_ANCHORS &&
+                                out_receipt
+                                        ->object_table_inner_scan_shaped_raw_offsets
+                                            [anchor] == 0u) {
+                                out_receipt
+                                    ->object_table_inner_scan_shaped_entry_index
+                                        [anchor] = entry_index;
+                                out_receipt
+                                    ->object_table_inner_scan_shaped_raw_offsets
+                                        [anchor] = inner_raw_offset;
+                                out_receipt
+                                    ->object_table_inner_scan_shaped_window_offsets
+                                        [anchor] = inner_offset;
+                                out_receipt
+                                    ->object_table_inner_scan_shaped_record_counts
+                                        [anchor] = inner_table.record_count;
+                                out_receipt
+                                    ->object_table_inner_scan_shaped_byte_counts
+                                        [anchor] = inner_table.byte_count;
+                                out_receipt
+                                    ->object_table_inner_scan_shaped_checksums
+                                        [anchor] = inner_table.checksum;
+                                if (theron_v1_track02_raw_offset_to_user_offset(
+                                        inner_raw_offset,
+                                        track02_size,
+                                        md5_hex,
+                                        &inner_user_data_offset) ==
+                                    THERON_TRACK02_SIGNAL_OK) {
+                                    out_receipt
+                                        ->object_table_inner_scan_shaped_user_data_offsets
+                                            [anchor] =
+                                        inner_user_data_offset;
+                                    out_receipt
+                                        ->object_table_inner_scan_shaped_user_data_valid
+                                            [anchor] = 1;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+                if (row_status != THERON_TRACK02_SEMANTIC_BINDING_OK &&
+                    row_status !=
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT) {
                     size_t reject_user_data_offset = 0u;
                     ++out_receipt->object_table_row_reject_count;
                     if (row_status ==
@@ -4185,6 +4266,12 @@ int theron_v1_track02_capture_object_table_route_receipt(
         out_receipt->object_table_row_window_too_small_count;
     hash *= 16777619u;
     hash ^= (uint32_t)out_receipt->object_table_row_zero_fill_count;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->object_table_inner_scan_probe_count;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->object_table_inner_scan_shaped_count;
+    hash *= 16777619u;
+    hash ^= out_receipt->object_table_inner_scan_shaped_anchor_mask;
     hash *= 16777619u;
     hash ^= (uint32_t)out_receipt->object_table_row_shaped_count;
     hash *= 16777619u;
@@ -4286,6 +4373,34 @@ int theron_v1_track02_capture_object_table_route_receipt(
             out_receipt->object_table_row_first_reject_byte_counts[anchor];
         hash *= 16777619u;
         hash ^= out_receipt->object_table_row_first_reject_checksums[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_inner_scan_anchor_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_inner_scan_shaped_entry_index[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_inner_scan_shaped_raw_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_inner_scan_shaped_window_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt
+                ->object_table_inner_scan_shaped_user_data_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt
+                ->object_table_inner_scan_shaped_user_data_valid[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_inner_scan_shaped_record_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_inner_scan_shaped_byte_counts[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->object_table_inner_scan_shaped_checksums[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->object_table_row_shaped_anchor_counts[anchor];

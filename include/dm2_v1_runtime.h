@@ -66,6 +66,8 @@ typedef struct {
     uint32_t gdat_scene_highest_light_level;
     uint32_t gdat_scene_void_random_fall;
     uint32_t gdat_scene_animated_floor;
+    uint32_t gdat_scene_consumed_mask;
+    uint32_t gdat_scene_consumption_hash;
     int viewport_raw_gdat_asset_count;
     int viewport_decoded_gdat_asset_count;
     uint32_t viewport_raw_gdat_hash;

@@ -4611,6 +4611,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
         THERON_TRACK02_RAW_SECTOR_BYTES;
     uint8_t *track02 = (uint8_t *)calloc(track02_size, 1u);
     uint8_t *track02_positive = NULL;
+    uint8_t *track02_inner_positive = NULL;
     uint8_t *track02_level_positive = NULL;
     Theron_StartupMediaStateReceipt media_receipt;
     Theron_Track02LevelRouteReceipt level_route_receipt;
@@ -4855,6 +4856,18 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                         test_fnv1a_bytes(
                             track02 + post_descriptor_candidate_last_offsets[0],
                             2u) &&
+                    object_route_receipt.object_table_inner_scan_probe_count ==
+                        189u &&
+                    object_route_receipt.object_table_inner_scan_anchor_counts[0] ==
+                        63u &&
+                    object_route_receipt.object_table_inner_scan_anchor_counts[1] ==
+                        63u &&
+                    object_route_receipt.object_table_inner_scan_anchor_counts[2] ==
+                        63u &&
+                    object_route_receipt
+                            .object_table_inner_scan_shaped_count == 0u &&
+                    object_route_receipt
+                            .object_table_inner_scan_shaped_anchor_mask == 0u &&
                     object_route_receipt.object_table_row_shaped_count == 0u &&
                     object_route_receipt.object_table_row_shaped_anchor_mask == 0u &&
                     !object_route_receipt.object_table_decode_ready &&
@@ -4924,6 +4937,76 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     object_route_receipt.route_hash != 0u,
                 "Theron Track02 object-table route receipt promotes a real row-shaped post-descriptor table");
         free(track02_positive);
+    }
+    track02_inner_positive = (uint8_t *)malloc(track02_size);
+    expect_true(track02_inner_positive != NULL,
+                "Theron Track02 inner object table fixture allocates");
+    if (track02_inner_positive) {
+        const size_t inner_offset = 0x20u;
+        const size_t inner_raw =
+            post_descriptor_candidate_last_offsets[0] + inner_offset;
+        memcpy(track02_inner_positive, track02, track02_size);
+        memset(track02_inner_positive +
+                   post_descriptor_candidate_last_offsets[0],
+               0,
+               0x0400u);
+        track02_inner_positive[inner_raw + 0u] = 1u;
+        track02_inner_positive[inner_raw + 1u] = 0u;
+        track02_inner_positive[inner_raw + 2u] = 2u;
+        track02_inner_positive[inner_raw + 3u] = 3u;
+        track02_inner_positive[inner_raw + 4u] = 4u;
+        track02_inner_positive[inner_raw + 5u] = 5u;
+        track02_inner_positive[inner_raw + 6u] = 6u;
+        track02_inner_positive[inner_raw + 7u] = 0u;
+        track02_inner_positive[inner_raw + 8u] = 0x78u;
+        track02_inner_positive[inner_raw + 9u] = 0x56u;
+        expect_true(theron_v1_track02_capture_object_table_route_receipt(
+                        track02_inner_positive,
+                        track02_size,
+                        THERON_TRACK02_MD5_US_BIN,
+                        &object_route_receipt) &&
+                        object_route_receipt.valid &&
+                        object_route_receipt.verified_track02 &&
+                        object_route_receipt.descriptor_route_ready &&
+                        !object_route_receipt.object_table_decode_ready &&
+                        object_route_receipt
+                            .blocked_for_missing_real_object_evidence &&
+                        !object_route_receipt.fallback_visuals_allowed &&
+                        object_route_receipt.object_table_row_shaped_count ==
+                            0u &&
+                        object_route_receipt
+                                .object_table_inner_scan_shaped_count == 1u &&
+                        object_route_receipt
+                                .object_table_inner_scan_shaped_anchor_mask ==
+                            0x01u &&
+                        object_route_receipt
+                                .object_table_inner_scan_shaped_entry_index[0] ==
+                            7u &&
+                        object_route_receipt
+                                .object_table_inner_scan_shaped_raw_offsets[0] ==
+                            inner_raw &&
+                        object_route_receipt
+                                .object_table_inner_scan_shaped_window_offsets[0] ==
+                            inner_offset &&
+                        object_route_receipt
+                                .object_table_inner_scan_shaped_user_data_valid[0] &&
+                        object_route_receipt
+                                .object_table_inner_scan_shaped_record_counts[0] ==
+                            1u &&
+                        object_route_receipt
+                                .object_table_inner_scan_shaped_byte_counts[0] ==
+                            10u &&
+                        object_route_receipt
+                                .object_table_inner_scan_shaped_checksums[0] ==
+                            test_fnv1a_bytes(track02_inner_positive + inner_raw,
+                                             10u) &&
+                        object_route_receipt.object_table_blocked_anchor_count ==
+                            3u &&
+                        object_route_receipt.object_table_blocked_anchor_mask ==
+                            0x07u &&
+                        object_route_receipt.route_hash != 0u,
+                    "Theron Track02 object-table route receipt records inner row-shaped diagnostics without promoting fallback");
+        free(track02_inner_positive);
     }
     expect_true(theron_v1_track02_capture_level_route_receipt(
                     track02,
