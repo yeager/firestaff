@@ -983,20 +983,6 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     int uses_verified_hud_bindings;
 } CSB_V1_StartupRuntimeAssetFrame_PC34;
 
-/* Runtime-only startup presentation.  This is the CSB boundary for title,
- * entrance/HUD, utility, and opening-door plans when verified game data is
- * present.  The older snapshot helpers remain inspection adapters. */
-typedef struct CSB_V1_BootStartupRuntimePresentationReceipt_PC34 {
-    int valid;
-    int asset_gate_valid;
-    int render_plan_uses_owned_assets;
-    int utility_plan_uses_owned_session;
-    int door_plan_has_no_fallback;
-    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 asset_gate;
-    CSB_V1_BootStartupM11PresentationReceipt_PC34 presentation;
-    CSB_V1_StartupRuntimeSurfaceSet_PC34 surfaces;
-} CSB_V1_BootStartupRuntimePresentationReceipt_PC34;
-
 /* CSB-owned save/import handoff for runtime consumers.  ReDMCSB keeps
  * save/load under LOADSAVE.C F0433/F0435 while the CSB utility/import path
  * enters from ENTRANCE.C F0806; CSBWin adds the CSBGAME.DAT/.BAK filename
@@ -1287,18 +1273,6 @@ int csb_v1_boot_startup_advance_idle_from_snapshot_pc34(
     CSB_V1_StartupIdleReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_entrance_accepts_input_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot);
-int csb_v1_boot_startup_presentation_receipt_from_snapshot_pc34(
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    char *out_phase,
-    int out_phase_size,
-    int *out_startup_active,
-    int *out_startup_frame,
-    char *out_animation,
-    int out_animation_size,
-    int *out_animation_active,
-    int *out_title_frame,
-    int *out_title_frame_max,
-    int *out_title_ready);
 int csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_StartupPresentationReceipt_PC34 *out_receipt);
