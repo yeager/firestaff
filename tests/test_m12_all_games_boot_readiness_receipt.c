@@ -113,6 +113,7 @@ int main(void) {
          "THERON FULL START HOST VIEW RECEIPT", "THERON TRACK 02 REAL GRAPHICS PROOF", 7},
     };
     M12_StartupMenuState state;
+    M12_StartupMenuInitOptions initOptions;
     M12_LaunchIntent intent;
     int i;
     const unsigned int fullMask = M12_STARTUP_BOOT_STEP_DATA |
@@ -122,7 +123,12 @@ int main(void) {
                                   M12_STARTUP_BOOT_STEP_CONTRACT |
                                   M12_STARTUP_BOOT_STEP_CAPTURE;
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    memset(&initOptions, 0, sizeof(initOptions));
+    initOptions.skipScreenshotGalleryScan = 1;
+    M12_StartupMenu_InitWithOptions(&state,
+                                    "/tmp/firestaff-test-no-assets",
+                                    NULL,
+                                    &initOptions);
     state.view = M12_MENU_VIEW_MAIN;
     for (i = 0; i < M12_CONFIG_GAME_COUNT; ++i) {
         M12_StartupBootReadiness boot;
