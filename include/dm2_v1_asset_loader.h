@@ -81,6 +81,7 @@ typedef enum {
     DM2_GDAT_ENTRY_TYPE_RAW7         = 0x07,
     DM2_GDAT_ENTRY_TYPE_RAW8         = 0x08,
     DM2_GDAT_ENTRY_TYPE_PAL_IRGB     = 0x09,
+    DM2_GDAT_ENTRY_TYPE_WORD_VALUE   = 0x0B,
     DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET = 0x0C,
     DM2_GDAT_ENTRY_TYPE_PAL_16       = 0x0D,
 } DM2_GDAT_EntryType;
@@ -90,6 +91,19 @@ typedef enum {
 #define DM2_GDAT_GFXSET_FLOOR 0x00
 #define DM2_GDAT_GFXSET_CEIL  0x01
 #define DM2_GDAT_IMG_MAP_CHIP 0xF9
+
+#define DM2_GDAT_GFXSET_SCENE_COLORKEY       0x64
+#define DM2_GDAT_GFXSET_SCENE_FLAGS          0x65
+#define DM2_GDAT_GFXSET_SCENE_RAIN           0x66
+#define DM2_GDAT_GFXSET_AMBIANT_LIGHT        0x67
+#define DM2_GDAT_GFXSET_HIGHEST_LIGHT_LEVEL  0x68
+#define DM2_GDAT_GFXSET_MISTY_MAP            0x69
+#define DM2_GDAT_GFXSET_VOID_RANDOM_FALL     0x6A
+#define DM2_GDAT_GFXSET_ANIMATED_FLOOR       0x6B
+#define DM2_GDAT_GFXSET_THUNDER_POSITION     0x6C
+#define DM2_GDAT_GFXSET_AMBIANT_DARKNESS     0x6D
+#define DM2_GDAT_GFXSET_TRIM_WALL_D1         0x70
+#define DM2_GDAT_GFXSET_TRIM_WALL_D2         0x71
 
 /* skproject/SKWIN/SkWinCore.cpp startup/HUD interface raw data:
  * LOAD_GDAT_INTERFACE_00_0A, LOAD_GDAT_INTERFACE_00_02,
@@ -172,6 +186,24 @@ const uint8_t *dm2_v1_asset_load_typed_sized(
     int type,
     int field,
     size_t *out_size);
+
+/* Read a skproject dtWordValue field by exact category/index/field.
+ * Returns 1 on success and 0 when the typed entry is absent. */
+int dm2_v1_asset_load_word_value(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    uint16_t *out_value);
+
+/* Read a skproject dtImageOffset field by exact category/index/field.
+ * Returns 1 on success and 0 when the typed entry is absent. */
+int dm2_v1_asset_load_image_offset(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    uint16_t *out_value);
 
 /* Load image asset and decode to pixel buffer.
  * out_width, out_height set dimensions, out_format sets format.
