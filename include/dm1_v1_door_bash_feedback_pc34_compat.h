@@ -152,13 +152,6 @@ bool DM1_V1_DoorBash_ActionIsBashPc34Compat(uint8_t action_ordinal);
 
 const char *DM1_V1_DoorBash_SourceLockPc34Compat(void);
 
-#define M11_GameView_DoorBashResolvePc34 \
-    DM1_V1_DoorBash_ResolvePc34Compat
-#define M11_GameView_DoorBashActionIsBashPc34 \
-    DM1_V1_DoorBash_ActionIsBashPc34Compat
-#define M11_GameView_DoorBashSourceLockPc34 \
-    DM1_V1_DoorBash_SourceLockPc34Compat
-
 #ifdef __cplusplus
 }
 #endif
