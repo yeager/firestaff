@@ -171,6 +171,40 @@ int M11_GameView_PresentationTarget(int presentationMode,
                                     int* outW,
                                     int* outH);
 
+/* Source-locked entrance wait policy: interactive builds must not auto-enter
+   after launcher handoff; only headless/autotest runs may use a timeout. */
+int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
+                                           int autoEnterAfterMs,
+                                           uint64_t elapsedMs);
+
+enum M11_EntranceRuntimeCommandId {
+    M11_ENTRANCE_RUNTIME_COMMAND_NONE = 0,
+    M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON = 200,
+    M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON = 201,
+    M11_ENTRANCE_RUNTIME_COMMAND_RESUME = 202,
+    M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS = 203,
+    M11_ENTRANCE_RUNTIME_COMMAND_QUIT = 216
+};
+
+/* Source-locked entrance/menu pointer dispatch. Coordinates are already in
+   the 320x200 DM1 framebuffer space; buttonMask uses ReDMCSB mouse masks. */
+int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
+                                                    int framebufferY,
+                                                    unsigned int buttonMask);
+
+/* Runtime keyboard guard for the current click-only entrance semantics. */
+int M11_Entrance_DispatchSourceLockedKeyCommand(int keyCode);
+
+/* Resolve the save path used by the DM1 entrance RESUME button.  The launcher
+   may already have a validated quick-resume path; use it for DM1 before
+   falling back to the historical source-id quicksave filename. */
+int M11_Entrance_ResolveDm1ResumeSavePath(const char* sourceId,
+                                          int quickResumeAvailable,
+                                          const char* quickResumeGameId,
+                                          const char* quickResumeSavePath,
+                                          char* outPath,
+                                          size_t outPathBytes);
+
 #ifdef __cplusplus
 }
 #endif

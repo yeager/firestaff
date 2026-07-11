@@ -14,7 +14,6 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
-#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
@@ -63,63 +62,6 @@ static void add_object_pile_shift(int depth_index,
                                            &shift_y_index);
     *x += M11_GameView_GetObjectShiftValue(shift_set, shift_x_index);
     *y += M11_GameView_GetObjectShiftValue(shift_set, shift_y_index);
-}
-
-static int capture_csb_runtime_overlay_draw_stats(
-    const M11_GameViewState *state,
-    int *out_object_sprite_count,
-    int *out_object_icon_count,
-    int *out_object_marker_count,
-    int *out_group_sprite_count,
-    int *out_group_marker_count,
-    int *out_projectile_sprite_count,
-    int *out_projectile_material_count,
-    int *out_projectile_marker_count,
-    int *out_explosion_sprite_count,
-    int *out_explosion_marker_count)
-{
-    if (!state) return 0;
-    if (out_object_sprite_count) {
-        *out_object_sprite_count =
-            state->csbState.runtime_object_sprite_drawn_count;
-    }
-    if (out_object_icon_count) {
-        *out_object_icon_count =
-            state->csbState.runtime_object_icon_drawn_count;
-    }
-    if (out_object_marker_count) {
-        *out_object_marker_count =
-            state->csbState.runtime_object_marker_drawn_count;
-    }
-    if (out_group_sprite_count) {
-        *out_group_sprite_count =
-            state->csbState.runtime_group_sprite_drawn_count;
-    }
-    if (out_group_marker_count) {
-        *out_group_marker_count =
-            state->csbState.runtime_group_marker_drawn_count;
-    }
-    if (out_projectile_sprite_count) {
-        *out_projectile_sprite_count =
-            state->csbState.runtime_projectile_sprite_drawn_count;
-    }
-    if (out_projectile_material_count) {
-        *out_projectile_material_count =
-            state->csbState.runtime_projectile_material_resolved_count;
-    }
-    if (out_projectile_marker_count) {
-        *out_projectile_marker_count =
-            state->csbState.runtime_projectile_marker_drawn_count;
-    }
-    if (out_explosion_sprite_count) {
-        *out_explosion_sprite_count =
-            state->csbState.runtime_explosion_sprite_drawn_count;
-    }
-    if (out_explosion_marker_count) {
-        *out_explosion_marker_count =
-            state->csbState.runtime_explosion_marker_drawn_count;
-    }
-    return 1;
 }
 
 static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
@@ -440,9 +382,9 @@ int main(void)
                   "CSB draw checks can resolve source viewport geometry");
             check(sx == 0 && sy == 33 && sw == 224 && sh == 136,
                   "CSB draw checks use the source 224x136 viewport at y=33");
-            f0115_row = dm1_viewport_3d_f0115_c2500_c2900_row(1, 0);
+            f0115_row = M11_GameView_GetF0115C2500C2900Row(1, 0);
             check(f0115_row >= 0 &&
-                      dm1_viewport_3d_c2500_object_raw_zone_point(
+                      M11_GameView_GetC2500ObjectRawZonePoint(
                           f0115_row,
                           3,
                           &object_marker_x,
@@ -476,9 +418,9 @@ int main(void)
                       &group_marker_count2_y),
                   "CSB draw checks resolve non-sequential second front-square group marker through C3200");
             group_marker_count2_y += sy;
-            f0115_row = dm1_viewport_3d_f0115_c2500_c2900_row(3, 2);
+            f0115_row = M11_GameView_GetF0115C2500C2900Row(3, 2);
             check(f0115_row >= 0 &&
-                      dm1_viewport_3d_c2500_object_raw_zone_point(
+                      M11_GameView_GetC2500ObjectRawZonePoint(
                           f0115_row,
                           3,
                           &d3_object_marker_x,
@@ -502,7 +444,7 @@ int main(void)
             raw[69] = 0x10u; /* wall with thing-list-present: overlays must stay hidden. */
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
-            check(capture_csb_runtime_overlay_draw_stats(
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
                       &state,
                       &object_sprite_count,
                       &object_icon_count,
@@ -532,7 +474,7 @@ int main(void)
             raw[69] = (unsigned char)((1u << 5) | 0x10u);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
-            check(capture_csb_runtime_overlay_draw_stats(
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
                       &state,
                       &object_sprite_count,
                       &object_icon_count,
@@ -564,7 +506,7 @@ int main(void)
                 &profile.runtime, bow);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
-            check(capture_csb_runtime_overlay_draw_stats(
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
                       &state,
                       &object_sprite_count,
                       &object_icon_count,
@@ -589,7 +531,7 @@ int main(void)
             write_u16(raw + 110, (1u << 5));
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
-            check(capture_csb_runtime_overlay_draw_stats(
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
                       &state,
                       &object_sprite_count,
                       &object_icon_count,
@@ -619,7 +561,7 @@ int main(void)
                 &profile.runtime, bow);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
-            check(capture_csb_runtime_overlay_draw_stats(
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
                       &state,
                       &object_sprite_count,
                       &object_icon_count,

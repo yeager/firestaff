@@ -39,7 +39,8 @@
  *
  *   MAGIC + CHAMPION.C runtime shield state (partyShieldDefense,
  *   spellShieldDefense, fireShieldDefense):
- *     - dm1_v1_champion_status_shield_border_graphics_pc34 copies
+ *     - The M11 G0493/G0494/G0495 stack already exposed by
+ *       M11_GameView_GetV1StatusShieldBorderGraphicForChampion copies
  *       the ReDMCSB F0292 append order (fire, spell, party — drawn
  *       in reverse).  When ALL three defenses are zero the count is
  *       0, which is the DISABLED side of the shield-border active
@@ -48,7 +49,7 @@
  * Companion to:
  *   - dm1_v1_graphic560_action_disabled_ticks_pc34_compat
  *     (G0491 table bytes contract)
- *   - dm1_v1_champion_status_shield_border_graphics_pc34
+ *   - M11_GameView_GetV1StatusShieldBorderGraphicForChampion
  *     (shield-border ENABLED pixel path — separate lane)
  *   - M11_GameView_ShouldHatchV1ActionIconCells
  *     (global hatch gate — separate lane)

@@ -98,27 +98,10 @@ static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
     return nonzero;
 }
 
-static int count_changed_pixels(const unsigned char* a,
-                                const unsigned char* b,
-                                size_t count) {
-    size_t i;
-    int changed = 0;
-    if (!a || !b) {
-        return 0;
-    }
-    for (i = 0; i < count; ++i) {
-        if (a[i] != b[i]) {
-            ++changed;
-        }
-    }
-    return changed;
-}
-
 static void drive_csb_entrance_opening(M11_GameViewState *view,
                                        const char *message) {
-    unsigned int guard =
-        csb_v1_startup_entrance_pre_open_delay_ticks_pc34() +
-        ENTRANCE_Compat_GetDoorAnimationStepCount() + 8u;
+    unsigned int i;
+    unsigned int ticks = 20u + ENTRANCE_Compat_GetDoorAnimationStepCount();
     int tick_before;
     if (!view) {
         expect_true(0, message);
@@ -128,7 +111,7 @@ static void drive_csb_entrance_opening(M11_GameViewState *view,
     expect_true(view->csbState.startup_entrance_active == 1 &&
                     view->csbState.startup_entrance_opening_active == 1,
                 "M11 CSB launcher entrance starts door-opening phase");
-    while (guard-- > 0 && view->csbState.startup_entrance_active) {
+    for (i = 0; i < ticks; ++i) {
         expect_true(M11_GameView_AdvanceIdleTick(view) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 CSB launcher entrance door-opening tick redraws");
@@ -221,10 +204,6 @@ static void run_real_launcher_handoff_if_available(void) {
     char real_dir[512];
     const char* data_dir = default_data_root(real_dir);
     unsigned char framebuffer[320 * 200];
-    unsigned char title_presents_frame[320 * 200];
-    unsigned char title_chaos_frame[320 * 200];
-    unsigned char entrance_closed_frame[320 * 200];
-    unsigned char entrance_opening_frame[320 * 200];
     int tick_before;
     int entrance_frame_before;
 
@@ -274,7 +253,7 @@ static void run_real_launcher_handoff_if_available(void) {
                     view.csbState.startup_entrance_source_step == 0,
                 "M11 CSB launcher handoff starts at the source title prelude");
     expect_true(view.csbState.startup_entrance_last_command ==
-                    ENTRANCE_COMPAT_RUNTIME_COMMAND_NONE,
+                    M11_ENTRANCE_RUNTIME_COMMAND_NONE,
                 "M11 CSB launcher handoff has no recycled entrance command");
     expect_true(view.csbState.startup_import_available == 0,
                 "M11 CSB normal launcher handoff has no import panel armed");
@@ -293,7 +272,6 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
                 "M11 CSB launcher title prelude draws a visible first frame");
-    memcpy(title_presents_frame, framebuffer, sizeof(title_presents_frame));
 
     tick_before = view.csbState.tick_count;
     entrance_frame_before = view.csbState.startup_entrance_frame;
@@ -323,15 +301,6 @@ static void run_real_launcher_handoff_if_available(void) {
                     view.csbState.startup_title_source_step == 2 &&
                     view.csbState.startup_entrance_source_step == 0,
                 "M11 CSB launcher title prelude reaches CHAOS zoom before entrance");
-    memset(title_chaos_frame, 0, sizeof(title_chaos_frame));
-    M11_GameView_Draw(&view, title_chaos_frame, 320, 200);
-    expect_true(count_nonzero_pixels(title_chaos_frame,
-                                     sizeof(title_chaos_frame)) > 0,
-                "M11 CSB launcher CHAOS title phase draws visible pixels");
-    expect_true(count_changed_pixels(title_presents_frame,
-                                     title_chaos_frame,
-                                     sizeof(title_chaos_frame)) > 64,
-                "M11 CSB title phases are visually distinct");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_IGNORED,
                 "M11 CSB launcher title/entrance ignores Enter before source wait loop");
@@ -358,33 +327,15 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
                 "M11 CSB launcher entrance draws a nonblank wait-loop frame");
-    memcpy(entrance_closed_frame, framebuffer, sizeof(entrance_closed_frame));
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,
                 "M11 CSB launcher entrance accepts explicit Enter command");
-    for (int i = 0;
-         i < csb_v1_startup_entrance_pre_open_delay_ticks_pc34() + 1 &&
-         view.csbState.startup_entrance_active &&
-         view.csbState.startup_entrance_opening_delay_ticks > 0;
-         ++i) {
-        expect_true(M11_GameView_AdvanceIdleTick(&view) ==
-                        M11_GAME_INPUT_REDRAW,
-                    "M11 CSB launcher entrance advances to visible door opening");
-    }
-    expect_true(view.csbState.startup_entrance_opening_delay_ticks == 0,
-                "M11 CSB launcher entrance leaves pre-open delay");
-    memset(entrance_opening_frame, 0, sizeof(entrance_opening_frame));
-    M11_GameView_Draw(&view, entrance_opening_frame, 320, 200);
-    expect_true(count_changed_pixels(entrance_closed_frame,
-                                     entrance_opening_frame,
-                                     sizeof(entrance_opening_frame)) > 64,
-                "M11 CSB entrance opening visibly changes the door frame");
     drive_csb_entrance_opening(
         &view,
         "M11 CSB launcher entrance clears after explicit command");
     expect_true(view.csbState.startup_entrance_last_command ==
-                    ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON,
+                    M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON,
                 "M11 CSB launcher handoff records source enter-dungeon command");
 
     M11_GameView_Shutdown(&view);

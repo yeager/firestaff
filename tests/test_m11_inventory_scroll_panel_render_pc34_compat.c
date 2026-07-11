@@ -16,8 +16,6 @@
  */
 
 #include "m11_game_view.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
-#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -31,26 +29,6 @@ unsigned char* G2160_puc_Bitmap_Destination;
 
 static int g_pass = 0;
 static int g_fail = 0;
-
-static int test_inventory_panel_zone(int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_inventory_panel_rect_pc34();
-    if (!dm1_v1_inventory_panel_zone_id_pc34()) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-static int test_arrow_or_eye_zone(int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_arrow_or_eye_rect_pc34();
-    if (!dm1_v1_arrow_or_eye_zone_id_pc34()) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
 
 #define ASSERT_TRUE(expr, msg) do { \
     if (expr) { g_pass++; } \
@@ -102,13 +80,13 @@ static int framebuffer_matches_open_scroll_panel_pixels(
 
     if (!state || !framebuffer ||
         !M11_GameView_GetViewportRect(&viewportX, &viewportY, &viewportW, &viewportH) ||
-        !test_inventory_panel_zone(&panelX, &panelY, &panelW, &panelH)) {
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
         return 0;
     }
     (void)viewportW;
     (void)viewportH;
     panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                 (unsigned int)dm1_v1_graphic_panel_open_scroll_pc34());
+                                 (unsigned int)M11_GameView_GetV1OpenScrollPanelGraphicId());
     if (!panel || !panel->pixels ||
         panel->width != (unsigned short)panelW ||
         panel->height != (unsigned short)panelH) {
@@ -158,7 +136,7 @@ static int framebuffer_matches_open_chest_panel_pixels(
 
     if (!state || !framebuffer ||
         !M11_GameView_GetViewportRect(&viewportX, &viewportY, &viewportW, &viewportH) ||
-        !test_inventory_panel_zone(&panelX, &panelY, &panelW, &panelH)) {
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
         return 0;
     }
     (void)viewportW;
@@ -172,7 +150,7 @@ static int framebuffer_matches_open_chest_panel_pixels(
     /* PANEL.C F0339 lines 505-514 draws C018/C019 (arrow / pressing-eye)
      * at viewport-relative (83, 57, 16, 9) on top of the C025 panel.
      * Skip that zone so the test compares only C025-owned pixels. */
-    (void)test_arrow_or_eye_zone(&ax, &ay, &aw, &ah);
+    (void)M11_GameView_GetV1ArrowOrEyeZone(&ax, &ay, &aw, &ah);
 
     for (y = 0; y < panelH; ++y) {
         for (x = 0; x < panelW; ++x) {
@@ -373,7 +351,7 @@ static void test_action_hand_scroll_decode_reaches_m11_panel_state(void) {
     M11_GameView_Init(&state);
     seed_scroll_world(&state, &things, textStrings, scrolls, textData);
 
-    ASSERT_EQ(dm1_v1_graphic_panel_open_scroll_pc34(), 23,
+    ASSERT_EQ(M11_GameView_GetV1OpenScrollPanelGraphicId(), 23,
               "open-scroll panel graphic id");
     ASSERT_TRUE(M11_GameView_DecodeV1InventoryActionHandScrollText(
                     &state, decoded, sizeof(decoded)),
@@ -399,7 +377,7 @@ static void test_inventory_draw_overlays_scroll_panel_region(void) {
 
     ASSERT_TRUE(M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh),
                 "viewport rect helper is available");
-    ASSERT_TRUE(test_inventory_panel_zone(&zx, &zy, &zw, &zh),
+    ASSERT_TRUE(M11_GameView_GetV1InventoryPanelZone(&zx, &zy, &zw, &zh),
                 "C101 inventory panel zone helper is available");
     ASSERT_TRUE(framebuffer[(vy + zy + 1) * 320 + (vx + zx + 1)] != 0,
                 "scroll panel fallback fills C101 panel region");
@@ -461,7 +439,7 @@ static void test_eye_click_scroll_routes_without_dialog_overlay(void) {
     M11_GameView_Draw(&state, framebuffer, 320, 200);
     ASSERT_TRUE(M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh),
                 "viewport rect helper remains available after scroll eye click");
-    ASSERT_TRUE(test_inventory_panel_zone(&zx, &zy, &zw, &zh),
+    ASSERT_TRUE(M11_GameView_GetV1InventoryPanelZone(&zx, &zy, &zw, &zh),
                 "C101 panel zone remains available after scroll eye click");
     ASSERT_TRUE(framebuffer[(vy + zy + 1) * 320 + (vx + zx + 1)] != 0,
                 "scroll eye click leaves C023 scroll panel renderable");
@@ -517,7 +495,7 @@ static void test_eye_click_chest_opens_panel_without_action_hand_icon_swap(void)
     M11_GameView_Draw(&state, framebuffer, 320, 200);
     ASSERT_TRUE(M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh),
                 "viewport rect helper remains available after chest eye click");
-    ASSERT_TRUE(test_inventory_panel_zone(&zx, &zy, &zw, &zh),
+    ASSERT_TRUE(M11_GameView_GetV1InventoryPanelZone(&zx, &zy, &zw, &zh),
                 "C101 panel zone remains available after chest eye click");
     ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(0, &zx, &zy, &zw, &zh),
                 "C537 first chest slot zone remains available after chest eye click");

@@ -58,6 +58,20 @@ int DM1_V1_ChampionLeader_SetPc34(
 
 const char *DM1_V1_ChampionLeader_SourceEvidencePc34(void);
 
+typedef DM1_V1_ChampionLeaderEntryPc34
+    Dm1V1ChampionLeaderEntryPc34Compat;
+typedef DM1_V1_ChampionLeaderStatePc34
+    Dm1V1ChampionLeaderStatePc34Compat;
+typedef DM1_V1_ChampionLeaderSetResultPc34
+    Dm1V1ChampionLeaderSetResultPc34Compat;
+
+#define DM1_V1_ChampionLeader_InitPc34Compat \
+    DM1_V1_ChampionLeader_InitPc34
+#define DM1_V1_ChampionLeader_SetPc34Compat \
+    DM1_V1_ChampionLeader_SetPc34
+#define DM1_V1_ChampionLeader_SourceEvidencePc34Compat \
+    DM1_V1_ChampionLeader_SourceEvidencePc34
+
 #ifdef __cplusplus
 }
 #endif

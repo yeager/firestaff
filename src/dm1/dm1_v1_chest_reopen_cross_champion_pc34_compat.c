@@ -131,13 +131,13 @@ static int contains_sequence_item(const int* types, int count, int firstType)
 }
 
 static void seed_leader_switch_state(
-    DM1_V1_ChampionLeaderStatePc34* leaderState,
+    Dm1V1ChampionLeaderStatePc34Compat* leaderState,
     const DM1_V1_InventoryStatePc34* inventory,
     int handWeight)
 {
     int i;
 
-    DM1_V1_ChampionLeader_InitPc34(leaderState);
+    DM1_V1_ChampionLeader_InitPc34Compat(leaderState);
     leaderState->leaderIndex = DM1_PC34_CHEST_REOPEN_CROSS_LEADER_A;
     leaderState->partyDirection = 1;
     leaderState->leaderHandWeight = handWeight;
@@ -164,8 +164,8 @@ int DM1_V1_ChestReopenCrossChampion_RunPc34Compat(
     DM1_V1_ChestReopenCrossChampionProbePc34* out)
 {
     DM1_V1_InventoryStatePc34 inventory;
-    DM1_V1_ChampionLeaderStatePc34 leaderState;
-    DM1_V1_ChampionLeaderSetResultPc34 switchResult;
+    Dm1V1ChampionLeaderStatePc34Compat leaderState;
+    Dm1V1ChampionLeaderSetResultPc34Compat switchResult;
     DM1_V1_ItemPc34 chestA[DM1_PC34_CHEST_REOPEN_CROSS_A_COUNT];
     DM1_V1_ItemPc34 chestB[DM1_PC34_CHEST_REOPEN_CROSS_B_COUNT];
     DM1_V1_ItemPc34 closedA[DM1_PC34_CHEST_REOPEN_CROSS_SLOT_COUNT];
@@ -254,7 +254,7 @@ int DM1_V1_ChestReopenCrossChampion_RunPc34Compat(
     seed_leader_switch_state(&leaderState, &inventory, hand.weight);
     /* ReDMCSB CLIKCHAM.C F0368 lines 54-72 detaches the global leader hand
      * weight from leader A and attaches it to the new leader B. */
-    out->leaderSwitchResult = DM1_V1_ChampionLeader_SetPc34(
+    out->leaderSwitchResult = DM1_V1_ChampionLeader_SetPc34Compat(
         &leaderState, leaderB, &switchResult);
     if (!out->leaderSwitchResult) {
         return 0;

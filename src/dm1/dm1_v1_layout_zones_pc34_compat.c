@@ -111,16 +111,6 @@ DM1_V1_LayoutZoneRectPc34 dm1_v1_inventory_backdrop_rect_pc34(void) {
     return dm1_v1_viewport_rect_pc34();
 }
 
-int dm1_v1_inventory_backdrop_zone_xywh_pc34(
-    int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_inventory_backdrop_rect_pc34();
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
 int dm1_v1_inventory_panel_zone_id_pc34(void) {
     return 101;
 }
@@ -128,17 +118,6 @@ int dm1_v1_inventory_panel_zone_id_pc34(void) {
 DM1_V1_LayoutZoneRectPc34 dm1_v1_inventory_panel_rect_pc34(void) {
     DM1_V1_LayoutZoneRectPc34 rect = { 80, 52, 144, 73 };
     return rect;
-}
-
-int dm1_v1_inventory_panel_zone_xywh_pc34(
-    int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_inventory_panel_rect_pc34();
-    if (!dm1_v1_inventory_panel_zone_id_pc34()) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
 }
 
 int dm1_v1_object_description_circle_zone_id_pc34(void) {
@@ -150,18 +129,6 @@ DM1_V1_LayoutZoneRectPc34 dm1_v1_object_description_circle_rect_pc34(void) {
     return rect;
 }
 
-int dm1_v1_object_description_circle_zone_xywh_pc34(
-    int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect =
-        dm1_v1_object_description_circle_rect_pc34();
-    if (!dm1_v1_object_description_circle_zone_id_pc34()) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
 int dm1_v1_object_description_icon_zone_id_pc34(void) {
     return 505;
 }
@@ -171,18 +138,6 @@ DM1_V1_LayoutZoneRectPc34 dm1_v1_object_description_icon_rect_pc34(void) {
     return rect;
 }
 
-int dm1_v1_object_description_icon_zone_xywh_pc34(
-    int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect =
-        dm1_v1_object_description_icon_rect_pc34();
-    if (!dm1_v1_object_description_icon_zone_id_pc34()) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
 int dm1_v1_arrow_or_eye_zone_id_pc34(void) {
     return 503;
 }
@@ -190,17 +145,6 @@ int dm1_v1_arrow_or_eye_zone_id_pc34(void) {
 DM1_V1_LayoutZoneRectPc34 dm1_v1_arrow_or_eye_rect_pc34(void) {
     DM1_V1_LayoutZoneRectPc34 rect = { 83, 57, 16, 9 };
     return rect;
-}
-
-int dm1_v1_arrow_or_eye_zone_xywh_pc34(
-    int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_arrow_or_eye_rect_pc34();
-    if (!dm1_v1_arrow_or_eye_zone_id_pc34()) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
 }
 
 int dm1_v1_object_description_name_zone_id_pc34(void) {

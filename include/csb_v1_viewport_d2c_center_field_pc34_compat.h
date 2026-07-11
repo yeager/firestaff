@@ -64,12 +64,12 @@ typedef struct {
 } CSB_V1_D2CCenterFieldSpecPc34;
 
 const CSB_V1_D2CCenterFieldSpecPc34 *
-csb_v1_viewport_d2c_center_field_spec_pc34_compat(void);
+M11_GameView_ViewportD2CCenterFieldPc34Spec(void);
 
-int csb_v1_viewport_d2c_center_field_zone_from_c702_base_pc34_compat(
+int M11_GameView_ViewportD2CCenterFieldPc34ZoneFromC702Base(
     const CSB_V1_D2CCenterFieldSpecPc34 *spec);
 
-int csb_v1_viewport_d2c_center_field_apply_synthetic_c10_field_blit_pc34_compat(
+int M11_GameView_ViewportD2CCenterFieldPc34ApplySyntheticC10FieldBlit(
     const CSB_V1_D2CCenterFieldSpecPc34 *spec,
     const uint8_t *source,
     int source_stride,
@@ -78,7 +78,7 @@ int csb_v1_viewport_d2c_center_field_apply_synthetic_c10_field_blit_pc34_compat(
     int width,
     int height);
 
-const char *csb_v1_viewport_d2c_center_field_source_evidence_pc34_compat(void);
+const char *M11_GameView_ViewportD2CCenterFieldPc34SourceEvidence(void);
 
 #ifdef __cplusplus
 }

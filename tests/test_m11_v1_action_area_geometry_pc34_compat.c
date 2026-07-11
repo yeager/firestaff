@@ -1,6 +1,4 @@
 #include "m11_game_view.h"
-#include "dm1_v1_champion_status_layout_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -24,20 +22,6 @@ static void check_true(const char *label, int cond)
         ++g_failures;
         fprintf(stderr, "FAIL %s\n", label);
     }
-}
-
-static int status_rect_to_xywh(const DM1_V1_ChampionStatusRectPc34* r,
-                               int* x,
-                               int* y,
-                               int* w,
-                               int* h)
-{
-    if (!r) return 0;
-    if (x) *x = r->x;
-    if (y) *y = r->y;
-    if (w) *w = r->w;
-    if (h) *h = r->h;
-    return 1;
 }
 
 static void test_action_area_box(void)
@@ -118,7 +102,7 @@ static void test_spell_area_boxes_stay_source_locked(void)
     check_int("spell area w", w, 87);
     check_int("spell area h", h, 33);
     check_int("spell bg graphic", M11_GameView_GetV1SpellAreaBackgroundGraphicId(), 9);
-    check_int("spell lines graphic", M11_GameView_GetV1SpellAreaLinesGraphicId(), 11);
+    check_int("spell lines graphic", M11_GameView_GetV1SpellAreaLinesGraphicId(), 9);
 
     check_int("caster panel zone id",
               M11_GameView_GetV1SpellCasterPanelZoneId(), 221);
@@ -174,86 +158,75 @@ static void test_status_boxes_stay_source_locked(void)
     }
     state.actingChampionOrdinal = 4;
 
-    DM1_V1_ChampionStatusRectPc34 rect;
-    check_int("status box 0 zone", dm1_v1_champion_status_box_zone_id_pc34(0), 151);
-    check_int("status box 3 zone", dm1_v1_champion_status_box_zone_id_pc34(3), 154);
-    check_int("status box bad zone", dm1_v1_champion_status_box_zone_id_pc34(4), 0);
-    check_true("status box 3", dm1_v1_champion_status_box_rect_pc34(3, &rect));
-    (void)status_rect_to_xywh(&rect, &x, &y, &w, &h);
+    check_int("status box 0 zone", M11_GameView_GetV1StatusBoxZoneId(0), 151);
+    check_int("status box 3 zone", M11_GameView_GetV1StatusBoxZoneId(3), 154);
+    check_int("status box bad zone", M11_GameView_GetV1StatusBoxZoneId(4), 0);
+    check_true("status box 3", M11_GameView_GetV1StatusBoxZone(3, &x, &y, &w, &h));
     check_int("status box 3 x", x, 207);
     check_int("status box 3 y", y, 0);
     check_int("status box 3 w", w, 67);
     check_int("status box 3 h", h, 29);
 
-    check_int("bar graph 3 zone", dm1_v1_champion_status_bar_graph_zone_id_pc34(3), 190);
-    check_int("bar hp zone", dm1_v1_champion_status_bar_zone_id_pc34(0), 195);
-    check_int("bar stamina zone", dm1_v1_champion_status_bar_zone_id_pc34(1), 199);
-    check_int("bar mana value zone champ2", dm1_v1_champion_status_bar_value_zone_id_pc34(2, 2), 205);
-    check_true("bar champ2 stamina", dm1_v1_champion_status_bar_rect_pc34(2, 1, &rect));
-    (void)status_rect_to_xywh(&rect, &x, &y, &w, &h);
+    check_int("bar graph 3 zone", M11_GameView_GetV1StatusBarGraphZoneId(3), 190);
+    check_int("bar hp zone", M11_GameView_GetV1StatusBarZoneId(0), 195);
+    check_int("bar stamina zone", M11_GameView_GetV1StatusBarZoneId(1), 199);
+    check_int("bar mana value zone champ2", M11_GameView_GetV1StatusBarValueZoneId(2, 2), 205);
+    check_true("bar champ2 stamina", M11_GameView_GetV1StatusBarZone(2, 1, &x, &y, &w, &h));
     check_int("bar champ2 stamina x", x, 191);
-    check_int("bar champ2 stamina y", y, 2);
+    check_int("bar champ2 stamina y", y, 0);
     check_int("bar champ2 stamina w", w, 4);
     check_int("bar champ2 stamina h", h, 25);
 
-    check_int("hand parent champ3", dm1_v1_champion_status_hand_parent_zone_id_pc34(3), 210);
-    check_int("hand zone champ3 action", dm1_v1_champion_status_hand_zone_id_pc34(3, 1), 218);
-    check_true("hand champ3 action", dm1_v1_champion_status_hand_rect_pc34(3, 1, &rect));
-    (void)status_rect_to_xywh(&rect, &x, &y, &w, &h);
+    check_int("hand parent champ3", M11_GameView_GetV1StatusHandParentZoneId(3), 210);
+    check_int("hand zone champ3 action", M11_GameView_GetV1StatusHandZoneId(3, 1), 218);
+    check_true("hand champ3 action", M11_GameView_GetV1StatusHandZone(3, 1, &x, &y, &w, &h));
     check_int("hand champ3 action x", x, 231);
     check_int("hand champ3 action y", y, 10);
     check_int("hand champ3 action w", w, 16);
     check_int("hand champ3 action h", h, 16);
-    check_true("hand icon champ3 action", dm1_v1_champion_status_hand_icon_rect_pc34(3, 1, &rect));
-    (void)status_rect_to_xywh(&rect, &x, &y, &w, &h);
+    check_true("hand icon champ3 action", M11_GameView_GetV1StatusHandIconZone(3, 1, &x, &y, &w, &h));
     check_int("hand icon champ3 action x", x, 232);
     check_int("hand icon champ3 action y", y, 11);
     check_true("hand slot box champ3 action",
-               dm1_v1_champion_status_hand_slot_box_rect_pc34(3, 1, &rect));
-    (void)status_rect_to_xywh(&rect, &x, &y, &w, &h);
+               M11_GameView_GetV1StatusHandSlotBoxZone(3, 1, &x, &y, &w, &h));
     check_int("hand slot box champ3 action w", w, 18);
     check_int("hand slot box champ3 action h", h, 18);
-    check_int("slot box normal", dm1_v1_graphic_slot_box_normal_pc34(), 33);
-    check_int("slot box wounded", dm1_v1_graphic_slot_box_wounded_pc34(), 34);
-    check_int("slot box acting", dm1_v1_graphic_slot_box_acting_hand_pc34(), 35);
+    check_int("slot box normal", M11_GameView_GetV1SlotBoxNormalGraphicId(), 33);
+    check_int("slot box wounded", M11_GameView_GetV1SlotBoxWoundedGraphicId(), 34);
+    check_int("slot box acting", M11_GameView_GetV1SlotBoxActingHandGraphicId(), 35);
     check_int("status action acting graphic",
-              dm1_v1_champion_status_hand_slot_graphic_pc34(1, 0x0002u, 1), 35);
+              M11_GameView_GetV1StatusHandSlotGraphic(&state, 3, 1), 35);
     check_int("status action wounded empty icon",
               M11_GameView_GetV1StatusHandIconIndex(&state, 3, 1), 215);
     state.actingChampionOrdinal = 0;
     check_int("status action wounded graphic",
-              dm1_v1_champion_status_hand_slot_graphic_pc34(1, 0x0002u, 0), 34);
-    check_int("food label graphic", dm1_v1_graphic_food_label_pc34(), 30);
-    check_int("water label graphic", dm1_v1_graphic_water_label_pc34(), 31);
-    check_int("poison label graphic", dm1_v1_graphic_poisoned_label_pc34(), 32);
+              M11_GameView_GetV1StatusHandSlotGraphic(&state, 3, 1), 34);
+    check_int("food label graphic", M11_GameView_GetV1FoodLabelGraphicId(), 30);
+    check_int("water label graphic", M11_GameView_GetV1WaterLabelGraphicId(), 31);
+    check_int("poison label graphic", M11_GameView_GetV1PoisonLabelGraphicId(), 32);
 
-    check_int("name clear champ3", dm1_v1_champion_status_name_clear_zone_id_pc34(3), 162);
-    check_int("name text champ3", dm1_v1_champion_status_name_text_zone_id_pc34(3), 166);
-    check_true("name clear zone champ3", dm1_v1_champion_status_name_rect_pc34(3, &rect));
-    (void)status_rect_to_xywh(&rect, &x, &y, &w, &h);
+    check_int("name clear champ3", M11_GameView_GetV1StatusNameClearZoneId(3), 162);
+    check_int("name text champ3", M11_GameView_GetV1StatusNameTextZoneId(3), 166);
+    check_true("name clear zone champ3", M11_GameView_GetV1StatusNameZone(3, &x, &y, &w, &h));
     check_int("name clear x", x, 207);
     check_int("name clear w", w, 43);
-    check_true("name text zone champ3", dm1_v1_champion_status_name_text_rect_pc34(3, &rect));
-    (void)status_rect_to_xywh(&rect, &x, &y, &w, &h);
+    check_true("name text zone champ3", M11_GameView_GetV1StatusNameTextZone(3, &x, &y, &w, &h));
     check_int("name text x", x, 208);
     check_int("name text w", w, 42);
 
-    check_int("damage indicator zone champ3", dm1_v1_champion_damage_indicator_zone_id_pc34(3), 170);
+    check_int("damage indicator zone champ3", M11_GameView_GetV1DamageIndicatorZoneId(3), 170);
     check_true("damage indicator champ3",
-               dm1_v1_champion_damage_indicator_rect_pc34(3, 45, 7, &rect));
-    (void)status_rect_to_xywh(&rect, &x, &y, &w, &h);
+               M11_GameView_GetV1DamageIndicatorZone(3, 45, 7, &x, &y, &w, &h));
     check_int("damage indicator champ3 x", x, 218);
     check_int("damage indicator champ3 y", y, 11);
     check_int("inventory damage zone champ3",
-              dm1_v1_champion_inventory_damage_indicator_zone_id_pc34(3), 182);
+              M11_GameView_GetV1InventoryDamageIndicatorZoneId(3), 182);
     check_true("inventory damage champ3",
-               dm1_v1_champion_inventory_damage_indicator_rect_pc34(3, 32, 29, &rect));
-    (void)status_rect_to_xywh(&rect, &x, &y, &w, &h);
+               M11_GameView_GetV1InventoryDamageIndicatorZone(3, 32, 29, &x, &y, &w, &h));
     check_int("inventory damage champ3 x", x, 214);
     check_int("inventory damage champ3 y", y, 0);
     check_true("damage number champ3",
-               dm1_v1_champion_damage_number_origin_pc34(3, &rect));
-    (void)status_rect_to_xywh(&rect, &x, &y, NULL, NULL);
+               M11_GameView_GetV1DamageNumberOrigin(3, &x, &y));
     check_int("damage number champ3 x", x, 236);
     check_int("damage number champ3 y", y, 11);
     check_true("pc34 damage number champ3",

@@ -36,8 +36,8 @@
 #include "vga_palette_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "screenshot_m11.h"
-#include "v1_swsh_intro_pathfinder_pc34_compat.h"
-#include "v1_title_intro_pathfinder_pc34_compat.h"
+#include "swsh_intro_pathfinder_m11.h"
+#include "title_intro_pathfinder_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -677,6 +677,14 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
 static int m11_boot_probe_expected_source_kind(const char* gameId,
                                                M11_GameSourceKind* outKind);
 
+int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
+                                                    int framebufferY,
+                                                    unsigned int buttonMask) {
+    return ENTRANCE_Compat_DispatchMouseRouteCommand(framebufferX,
+                                                     framebufferY,
+                                                     buttonMask);
+}
+
 static EntranceCompatKey m11_entrance_compat_key_from_sdl_key(int keyCode) {
     switch (keyCode) {
     case SDLK_RETURN:
@@ -694,12 +702,34 @@ static EntranceCompatKey m11_entrance_compat_key_from_sdl_key(int keyCode) {
     }
 }
 
-static int m11_entrance_dispatch_source_locked_key_command(int keyCode) {
+int M11_Entrance_DispatchSourceLockedKeyCommand(int keyCode) {
     return ENTRANCE_Compat_DispatchKeyCommand(m11_entrance_compat_key_from_sdl_key(keyCode));
+}
+
+int M11_Entrance_ResolveDm1ResumeSavePath(const char* sourceId,
+                                          int quickResumeAvailable,
+                                          const char* quickResumeGameId,
+                                          const char* quickResumeSavePath,
+                                          char* outPath,
+                                          size_t outPathBytes) {
+    return ENTRANCE_Compat_ResolveDm1ResumeSavePath(sourceId,
+                                                    quickResumeAvailable,
+                                                    quickResumeGameId,
+                                                    quickResumeSavePath,
+                                                    outPath,
+                                                    outPathBytes);
 }
 
 static M11_EntranceCommand m11_entrance_command_path_from_source_command(int commandId) {
     return (M11_EntranceCommand)ENTRANCE_Compat_CommandPathFromSourceCommand(commandId);
+}
+
+int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
+                                           int autoEnterAfterMs,
+                                           uint64_t elapsedMs) {
+    return ENTRANCE_Compat_ShouldAutoEnterForTimeout(allowHeadlessTimeout,
+                                                     autoEnterAfterMs,
+                                                     (unsigned long long)elapsedMs);
 }
 
 static int m11_play_redmcsb_entrance_transition(
@@ -711,8 +741,12 @@ static int m11_play_redmcsb_entrance_transition(
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
     if (!gameView || !gameView->active) return 0;
-    if (!DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(
-            entranceReceipt)) {
+    if (entranceReceipt &&
+        (!entranceReceipt->valid ||
+         entranceReceipt->mapIndex != DM1_V1_ENTRANCE_MAP_INDEX_PC34 ||
+         entranceReceipt->width != DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 ||
+         entranceReceipt->height != DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 ||
+         entranceReceipt->partyDirection != DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34)) {
         return 0;
     }
     framebuffer = M11_Render_GetFramebuffer();
@@ -737,10 +771,16 @@ static int m11_play_redmcsb_entrance_transition(
      * This also mirrors the ReDMCSB source order: draw C004+doors first,
      * then micro-dungeon, then fade/curtain, then wait-for-input loop.
      */
-    if (!m11_draw_entrance_screen_asset(gameView, framebuffer) ||
-        !m11_draw_entrance_closed_doors_asset(gameView, framebuffer)) {
-        free(dungeonFrame);
-        return 0;
+    if (m11_draw_entrance_screen_asset(gameView, framebuffer)) {
+        (void)m11_draw_entrance_closed_doors_asset(gameView, framebuffer);
+    } else {
+        /* Palette-fill fallback: draw the entrance screen background
+         * and closed door panels so the first present is not a dungeon
+         * viewport. */
+        memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+        (void)ENTRANCE_Compat_DrawFallbackClosedDoors(framebuffer,
+                                                      M11_FB_WIDTH,
+                                                      M11_FB_HEIGHT);
     }
 
     /* ReDMCSB ENTRANCE.C presents C004/C002/C003 before it starts waiting
@@ -784,10 +824,13 @@ static int m11_play_redmcsb_entrance_transition(
             memset(framebuffer, 0, (size_t)M11_FB_BYTES);
         } else if (command.render_kind ==
                    DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34) {
-            if (!m11_draw_entrance_screen_asset(gameView, framebuffer) ||
-                !m11_draw_entrance_closed_doors_asset(gameView, framebuffer)) {
-                free(dungeonFrame);
-                return 0;
+            if (m11_draw_entrance_screen_asset(gameView, framebuffer)) {
+                (void)m11_draw_entrance_closed_doors_asset(gameView, framebuffer);
+            } else {
+                memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
+                (void)ENTRANCE_Compat_DrawFallbackClosedDoors(framebuffer,
+                                                              M11_FB_WIDTH,
+                                                              M11_FB_HEIGHT);
             }
         } else if (command.render_kind ==
                    DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34) {
@@ -811,13 +854,12 @@ static int m11_play_redmcsb_entrance_transition(
                     (void)M11_Audio_EmitMarker(&gameView->audioState,
                                                M11_AUDIO_MARKER_DOOR);
                 }
-                if (!m11_draw_entrance_opening_doors_asset(
-                        gameView,
-                        framebuffer,
-                        dungeonFrame,
-                        &door)) {
-                    free(dungeonFrame);
-                    return 0;
+                if (!m11_draw_entrance_opening_doors_asset(gameView, framebuffer, dungeonFrame, &door)) {
+                    memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
+                    (void)ENTRANCE_Compat_DrawFallbackOpeningDoorFrame(framebuffer,
+                                                                       M11_FB_WIDTH,
+                                                                       M11_FB_HEIGHT,
+                                                                       &door);
                 }
             }
         } else {
@@ -939,7 +981,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
             if (ev.type == SDL_EVENT_KEY_DOWN) {
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
-                        m11_entrance_dispatch_source_locked_key_command((int)ev.key.key));
+                        M11_Entrance_DispatchSourceLockedKeyCommand((int)ev.key.key));
                 if (keyCommand != M11_ENTRANCE_COMMAND_NONE) return keyCommand;
             }
             if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
@@ -970,7 +1012,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
             if (ev.type == SDL_KEYDOWN) {
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
-                        m11_entrance_dispatch_source_locked_key_command((int)ev.key.keysym.sym));
+                        M11_Entrance_DispatchSourceLockedKeyCommand((int)ev.key.keysym.sym));
                 if (keyCommand != M11_ENTRANCE_COMMAND_NONE) return keyCommand;
             }
             if (ev.type == SDL_MOUSEBUTTONDOWN) {
@@ -1003,10 +1045,9 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
          * drained above and must not count as that command.  Therefore timeout
          * auto-enter is strictly a dummy-video/autotest escape hatch, never an
          * interactive runtime behavior. */
-        if (ENTRANCE_Compat_ShouldAutoEnterForTimeout(
-                allowHeadlessTimeout,
-                autoEnterAfterMs,
-                (unsigned long long)(SDL_GetTicks() - started))) {
+        if (M11_Entrance_ShouldAutoEnterForTimeout(allowHeadlessTimeout,
+                                                   autoEnterAfterMs,
+                                                   (uint64_t)(SDL_GetTicks() - started))) {
             return M11_ENTRANCE_COMMAND_ENTER;
         }
         SDL_Delay(16);
@@ -1141,7 +1182,7 @@ static void m11_play_ftl_swoosh_for_game_if_available(
         hasDm1Media =
             m11_dm1_startup_media_receipt_for_source(gameId, &dm1Media);
     }
-    if (!V1_SWSH_Intro_FindLogoPathForGame(menuState,
+    if (!M11_SWSH_Intro_FindLogoPathForGame(menuState,
                                             dataDir,
                                             gameId,
                                             logoPath,
@@ -1257,17 +1298,13 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     }
     titleGraphic = M11_AssetLoader_Load(&gameView->assetLoader, 1U);
     {
-        DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 sourceReceipt;
-        if (!dm1_v1_startup_title_runtime_source_receipt_pc34(
-                "dm1",
+        V1_TitleFrontendRuntimeSourceDecision sourceDecision =
+            V1_TitleFrontend_SelectRuntimeSource(
                 titleGraphic != NULL,
                 titleGraphic ? titleGraphic->width : 0U,
                 titleGraphic ? titleGraphic->height : 0U,
-                0,
-                &sourceReceipt) ||
-            !sourceReceipt.handled ||
-            sourceReceipt.selected_runtime_source !=
-                (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001) {
+                0);
+        if (sourceDecision.source != V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001) {
             return 0;
         }
     }
@@ -1434,7 +1471,7 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                                                           dm1MediaReceipt)) {
         return;
     }
-    if (!V1_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
+    if (!M11_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
         fprintf(stderr,
                 "Firestaff V1 original TITLE intro skipped: no GRAPHICS.DAT C001 title graphic "
                 "or DM PC 3.4 TITLE fallback file found; set FIRESTAFF_TITLE_DAT or install "
@@ -1703,7 +1740,7 @@ static int m11_dm1_host_resolve_resume_save_path(void* user,
     if (!ctx || !ctx->menuState) {
         return 0;
     }
-    return ENTRANCE_Compat_ResolveDm1ResumeSavePath(
+    return M11_Entrance_ResolveDm1ResumeSavePath(
         source_id,
         ctx->menuState->quickResumeAvailable,
         ctx->menuState->quickResumeGameId,

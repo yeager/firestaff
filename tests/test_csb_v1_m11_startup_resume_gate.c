@@ -551,7 +551,7 @@ static int inject_synthetic_csbgraphics_viewport_override(
 
     csb_v1_csbgraphics_dat_real_cache_free(&profile->csbgraphics_cache);
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
-    csb_v1_csbgraphics_runtime_plan_init(&profile->csbgraphics_runtime_plan);
+    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
     profile->csbgraphics_cache.file_buffer = bytes;
     profile->csbgraphics_cache.file_size = size;
     profile->csbgraphics_cache.loaded = 1;
@@ -574,14 +574,14 @@ static int inject_synthetic_csbgraphics_viewport_override(
     profile->csbgraphics_scan_attempted = 1;
     profile->csbgraphics_scan_result = CSB_V1_CSBGRAPHICS_DAT_REAL_OK;
     profile->csbgraphics_plan_result =
-        csb_v1_csbgraphics_runtime_plan_add_explicit_entry(
+        csb_v1_csbgraphics_m11_runtime_plan_add_explicit_entry(
             &profile->csbgraphics_cache,
             73u,
             8u,
             8u,
-            &profile->csbgraphics_runtime_plan);
+            &profile->csbgraphics_m11_plan);
     return profile->csbgraphics_plan_result ==
-           CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK;
+           CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
 }
 
 static int inject_synthetic_csbgraphics_custom_background(
@@ -658,7 +658,7 @@ static int inject_synthetic_csbgraphics_custom_background(
 
     csb_v1_csbgraphics_dat_real_cache_free(&profile->csbgraphics_cache);
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
-    csb_v1_csbgraphics_runtime_plan_init(&profile->csbgraphics_runtime_plan);
+    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
     profile->csbgraphics_cache.file_buffer = bytes;
     profile->csbgraphics_cache.file_size = size;
     profile->csbgraphics_cache.loaded = 1;
@@ -687,13 +687,13 @@ static int inject_synthetic_csbgraphics_custom_background(
     profile->csbgraphics_skin_def_words[0] = 100u;
     profile->csbgraphics_skin_def_words[4] = 104u;
     profile->csbgraphics_plan_result =
-        csb_v1_csbgraphics_runtime_plan_add_custom_background_skin_def(
+        csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
             &profile->csbgraphics_cache,
             profile->csbgraphics_skin_def_words,
             profile->csbgraphics_skin_def_word_count,
-            &profile->csbgraphics_runtime_plan);
+            &profile->csbgraphics_m11_plan);
     if (profile->csbgraphics_plan_result !=
-        CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK) {
+        CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
         return 0;
     }
 
@@ -1374,7 +1374,7 @@ int main(void) {
                     view.csbState.startup_entrance_credits_remaining_ticks ==
                         1800 &&
                     view.csbState.startup_entrance_last_command ==
-                        ENTRANCE_COMPAT_RUNTIME_COMMAND_DRAW_CREDITS,
+                        M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS,
                     "M11 CSB entrance credits button opens the startup credits phase");
         expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
                         VGA_PALETTE_PC34_SPECIAL_CREDITS,
@@ -1422,7 +1422,7 @@ int main(void) {
                     view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_resume_available == 0 &&
                     view.csbState.startup_entrance_last_command ==
-                        ENTRANCE_COMPAT_RUNTIME_COMMAND_RESUME,
+                        M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
                     "M11 CSB entrance resume without save stays on startup");
         expect_true(strcmp(view.lastOutcome, "CSB RESUME UNAVAILABLE") == 0,
                     "M11 CSB entrance resume without save reports unavailable status");
@@ -1460,7 +1460,7 @@ int main(void) {
         drive_csb_entrance_opening(&view,
                                    "M11 CSB entrance dismisses to dungeon runtime");
         expect_true(view.csbState.startup_entrance_last_command ==
-                        ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON,
+                        M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON,
                     "M11 CSB entrance records the enter-dungeon command");
         expect_true(view.csbState.startup_entrance_bonus_requested == 0,
                     "M11 CSB normal enter does not mark bonus dungeon");
@@ -1550,7 +1550,7 @@ int main(void) {
                     M11_GAME_INPUT_REDRAW &&
                     view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_last_command ==
-                        ENTRANCE_COMPAT_RUNTIME_COMMAND_RESUME,
+                        M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
                 "M11 CSB utility keyboard ACCEPT activates selected LOAD row");
     expect_true(strcmp(view.lastOutcome, "CSB RESUME UNAVAILABLE") == 0,
                 "M11 CSB utility keyboard LOAD reports unavailable resume without save");
@@ -1654,7 +1654,7 @@ int main(void) {
                     M11_GAME_INPUT_REDRAW &&
                     view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_last_command ==
-                        ENTRANCE_COMPAT_RUNTIME_COMMAND_RESUME,
+                        M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
                 "M11 CSB utility LOAD row routes through the resume command");
     expect_true(strcmp(view.lastOutcome, "CSB RESUME UNAVAILABLE") == 0,
                 "M11 CSB utility LOAD row reports unavailable resume without save");
@@ -1673,7 +1673,7 @@ int main(void) {
     expect_true(view.world.party.championCount == 2,
                 "M11 CSB imported party survives the utility start handoff");
     expect_true(view.csbState.startup_entrance_last_command ==
-                    ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON,
+                    M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON,
                 "M11 CSB utility START NEW GAME row records the enter-dungeon command");
     M11_GameView_Shutdown(&view);
 
@@ -1700,7 +1700,7 @@ int main(void) {
     drive_csb_entrance_opening(&view,
                                "M11 CSB utility LOAD row opens into runtime");
     expect_true(view.csbState.startup_entrance_last_command ==
-                    ENTRANCE_COMPAT_RUNTIME_COMMAND_RESUME,
+                    M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
                 "M11 CSB utility LOAD row records the resume command before loading");
     assert_csb_view_matches_expected_resume(
         &view,
@@ -1777,7 +1777,7 @@ int main(void) {
                     M11_GAME_INPUT_RETURN_TO_MENU,
                 "M11 CSB entrance quit button returns to launcher");
     expect_true(view.csbState.startup_entrance_last_command ==
-                    ENTRANCE_COMPAT_RUNTIME_COMMAND_QUIT,
+                    M11_ENTRANCE_RUNTIME_COMMAND_QUIT,
                 "M11 CSB entrance records the source quit command");
     expect_true(view.csbState.startup_entrance_active == 0 &&
                     view.csbState.startup_entrance_dismissed == 1,
@@ -1797,7 +1797,7 @@ int main(void) {
                     M11_GAME_INPUT_RETURN_TO_MENU,
                 "M11 CSB entrance Back input returns to launcher");
     expect_true(view.csbState.startup_entrance_last_command ==
-                    ENTRANCE_COMPAT_RUNTIME_COMMAND_QUIT,
+                    M11_ENTRANCE_RUNTIME_COMMAND_QUIT,
                 "M11 CSB entrance Back input records the source quit command");
     expect_true(view.csbState.startup_entrance_active == 0 &&
                     view.csbState.startup_entrance_dismissed == 1,
@@ -1823,7 +1823,7 @@ int main(void) {
     drive_csb_entrance_opening(&view,
                                "M11 CSB bonus-dungeon command dismisses to runtime");
     expect_true(view.csbState.startup_entrance_last_command ==
-                    ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON,
+                    M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON,
                 "M11 CSB entrance records the bonus-dungeon command");
     expect_true(view.csbState.startup_entrance_bonus_requested == 1,
                 "M11 CSB entrance preserves the bonus-dungeon request");
@@ -1883,7 +1883,7 @@ int main(void) {
         &view,
         "M11 CSB entrance resume dismisses to resumed runtime");
     expect_true(view.csbState.startup_entrance_last_command ==
-                    ENTRANCE_COMPAT_RUNTIME_COMMAND_RESUME,
+                    M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
                 "M11 CSB entrance records the resume command before loading");
     assert_csb_view_matches_expected_resume(
         &view,
@@ -1951,8 +1951,8 @@ int main(void) {
                     "CSB boot profile attempts CSBgraphics startup scan");
         expect_true(csb_v1_boot_csbgraphics_cache(profile) ==
                         &profile->csbgraphics_cache &&
-                    csb_v1_boot_csbgraphics_runtime_plan(profile) ==
-                        &profile->csbgraphics_runtime_plan,
+                    csb_v1_boot_csbgraphics_m11_plan(profile) ==
+                        &profile->csbgraphics_m11_plan,
                     "CSB boot profile owns CSBgraphics cache and M11 plan");
         expect_true(profile->csbgraphics_scan_result ==
                         CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND ||

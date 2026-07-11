@@ -147,7 +147,8 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
             vp->last_dgn_render_receipt.wall_count =
                 blocked_plan->wall_count;
             vp->last_dgn_render_receipt.ceiling_count =
-                blocked_plan->ceiling_count;
+                blocked_plan->command_count - blocked_plan->floor_count -
+                blocked_plan->wall_count;
             vp->last_dgn_render_receipt.missing_material_count =
                 blocked_plan->missing_material_count;
             vp->last_dgn_render_receipt.first_missing_material_id =
@@ -162,7 +163,8 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         vp->last_dgn_render_receipt.floor_count = plan->receipt.floor_count;
         vp->last_dgn_render_receipt.wall_count = plan->receipt.wall_count;
         vp->last_dgn_render_receipt.ceiling_count =
-            plan->receipt.ceiling_count;
+            plan->receipt.command_count - plan->receipt.floor_count -
+            plan->receipt.wall_count;
         if (!viewport_sync_dgn_material_palette(vp, engine, plan)) {
             vp->last_dgn_render_receipt.blocked = 1;
             return;

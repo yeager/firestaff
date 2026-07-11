@@ -16,7 +16,6 @@
  *   - COORD.C:2490-2495 F0638_GetZone fetches layout-696 zone records.
  */
 
-#include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "render_sdl_m11.h"
@@ -122,7 +121,7 @@ static void expect_route_on_surface(const EntranceMouseRouteCompat* route,
     CHECK(hit.zoneIndex == route->zoneIndex);
     CHECK(hit.commandId == route->commandId);
 
-    command = ENTRANCE_Compat_DispatchMouseRouteCommand(fbX, fbY, route->buttonMask);
+    command = M11_Entrance_DispatchSourceLockedPointerCommand(fbX, fbY, route->buttonMask);
     CHECK(command == (int)route->commandId);
 
     printf("surface=%s route=%s window=%d,%d fb=%d,%d zone=%u command=%u\n",
@@ -187,8 +186,8 @@ static void expect_right_edge_misses(const EntranceMouseRouteCompat* route,
                                            M11_DISPLAY_ASPECT_CONTENT,
                                            &fbX,
                                            &fbY) == 1);
-    command = ENTRANCE_Compat_DispatchMouseRouteCommand(fbX, fbY, route->buttonMask);
-    CHECK(command == ENTRANCE_COMPAT_RUNTIME_COMMAND_NONE);
+    command = M11_Entrance_DispatchSourceLockedPointerCommand(fbX, fbY, route->buttonMask);
+    CHECK(command == M11_ENTRANCE_RUNTIME_COMMAND_NONE);
     printf("surface=%s outside_right_of=%s window=%d,%d fb=%d,%d command=%d\n",
            surfaceName, route->name, windowX, windowY, fbX, fbY, command);
 }

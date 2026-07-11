@@ -81,7 +81,6 @@ typedef enum {
     DM2_GDAT_ENTRY_TYPE_RAW7         = 0x07,
     DM2_GDAT_ENTRY_TYPE_RAW8         = 0x08,
     DM2_GDAT_ENTRY_TYPE_PAL_IRGB     = 0x09,
-    DM2_GDAT_ENTRY_TYPE_WORD_VALUE   = 0x0B,
     DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET = 0x0C,
     DM2_GDAT_ENTRY_TYPE_PAL_16       = 0x0D,
 } DM2_GDAT_EntryType;
@@ -173,15 +172,6 @@ const uint8_t *dm2_v1_asset_load_typed_sized(
     int type,
     int field,
     size_t *out_size);
-
-/* Read a skproject dtWordValue field by exact category/index/field.
- * Returns 1 on success and 0 when the typed entry is absent. */
-int dm2_v1_asset_load_word_value(
-    const DM2_V1_AssetLoader *loader,
-    int category,
-    int index,
-    int field,
-    uint16_t *out_value);
 
 /* Load image asset and decode to pixel buffer.
  * out_width, out_height set dimensions, out_format sets format.

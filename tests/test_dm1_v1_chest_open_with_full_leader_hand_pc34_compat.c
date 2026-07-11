@@ -66,11 +66,11 @@ static int test_probe_spec_and_setup(void)
                      g_probe.chestACellY != g_probe.chestBCellY, 1,
                      f0333Open);
     ok &= expect_int("leader helmet item type",
-                     spec->leaderHelmet.itemType,
+                     spec->leaderHelmet.m11ItemItemType,
                      DM1_PC34_CHEST_OPEN_FULL_HAND_HELMET_ITEM_TYPE,
                      f0302Hand);
     ok &= expect_int("leader helmet allowed head plus container",
-                     spec->leaderHelmet.allowedSlots,
+                     spec->leaderHelmet.m11ItemAllowedSlots,
                      DM1_PC34_ALLOWED_HEAD | DM1_PC34_ALLOWED_CONTAINER,
                      f0302Hand);
     ok &= expect_int("leader hand setup",

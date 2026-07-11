@@ -1,7 +1,7 @@
 /*
- * v1_swsh_intro_pathfinder_pc34_compat.c
+ * swsh_intro_pathfinder_m11.c
  *
- * See v1_swsh_intro_pathfinder_pc34_compat.h for the design contract.
+ * See swsh_intro_pathfinder_m11.h for the design contract.
  *
  * ReDMCSB SWSH.C T0901006 ties the FTL logo (SWSHGDAT.C) to a
  * 320x200 bitmap that the original expands to Physbase. The canonical
@@ -12,8 +12,8 @@
  * main_loop_m11.c (M11 launcher handoff).
  */
 
-#ifndef FIRESTAFF_V1_SWSH_INTRO_PATHFINDER_PC34_COMPAT_H
-#include "v1_swsh_intro_pathfinder_pc34_compat.h"
+#ifndef FIRESTAFF_SWSH_INTRO_PATHFINDER_M11_H
+#include "swsh_intro_pathfinder_m11.h"
 #endif
 #include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
@@ -32,11 +32,11 @@
 #endif
 
 enum {
-    V1_SWSH_RECURSIVE_SCAN_MAX_DEPTH = 8,
-    V1_SWSH_RECURSIVE_SCAN_MAX_FILES = 4096
+    M11_SWSH_RECURSIVE_SCAN_MAX_DEPTH = 8,
+    M11_SWSH_RECURSIVE_SCAN_MAX_FILES = 4096
 };
 
-static const char* const g_v1_swsh_known_md5s[] = {
+static const char* const g_m11_swsh_known_md5s[] = {
     "28d406007e99b0ae8da0c6f7fc7f183b", /* ReDMCSB Reference/Original/A20ED/swoosh */
     "a66b607f3850e604b6703e90bbfb5189", /* ReDMCSB Reference/Original/I34E/SWOOSH */
     "a0ffbcc7ae8cecac03128ddb32887ef4", /* ReDMCSB Reference/Original/A20E/swoosh */
@@ -47,7 +47,7 @@ static const char* const g_v1_swsh_known_md5s[] = {
     NULL
 };
 
-int V1_SWSH_Intro_PayloadLooksValid(const char* path) {
+int M11_SWSH_Intro_PayloadLooksValid(const char* path) {
     FILE* f;
     long fsize;
     unsigned char* data;
@@ -81,7 +81,7 @@ int V1_SWSH_Intro_PayloadLooksValid(const char* path) {
     return ok;
 }
 
-static int v1_swsh_intro_find_known_hash(const char* dir,
+static int m11_swsh_intro_find_known_hash(const char* dir,
                                           char* outPath,
                                           size_t outPathBytes) {
     char found[FSP_PATH_MAX];
@@ -91,22 +91,22 @@ static int v1_swsh_intro_find_known_hash(const char* dir,
     }
     found[0] = '\0';
     if (!asset_find_by_md5_list(dir,
-                                g_v1_swsh_known_md5s,
+                                g_m11_swsh_known_md5s,
                                 found,
                                 (int)sizeof(found),
                                 &matchIndex,
-                                V1_SWSH_RECURSIVE_SCAN_MAX_DEPTH)) {
+                                M11_SWSH_RECURSIVE_SCAN_MAX_DEPTH)) {
         return 0;
     }
     (void)matchIndex;
-    if (strstr(found, "::") != NULL || !V1_SWSH_Intro_PayloadLooksValid(found)) {
+    if (strstr(found, "::") != NULL || !M11_SWSH_Intro_PayloadLooksValid(found)) {
         return 0;
     }
     snprintf(outPath, outPathBytes, "%s", found);
     return 1;
 }
 
-static int v1_swsh_intro_scan_tree_for_payload(const char* dir,
+static int m11_swsh_intro_scan_tree_for_payload(const char* dir,
                                                 int depth,
                                                 int* filesVisited,
                                                 char* outPath,
@@ -116,8 +116,8 @@ static int v1_swsh_intro_scan_tree_for_payload(const char* dir,
     WIN32_FIND_DATAA data;
     HANDLE handle;
     if (!dir || !outPath || outPathBytes == 0U || !filesVisited ||
-        depth > V1_SWSH_RECURSIVE_SCAN_MAX_DEPTH ||
-        *filesVisited >= V1_SWSH_RECURSIVE_SCAN_MAX_FILES) {
+        depth > M11_SWSH_RECURSIVE_SCAN_MAX_DEPTH ||
+        *filesVisited >= M11_SWSH_RECURSIVE_SCAN_MAX_FILES) {
         return 0;
     }
     if (!FSP_JoinPath(pattern, sizeof(pattern), dir, "*")) {
@@ -137,7 +137,7 @@ static int v1_swsh_intro_scan_tree_for_payload(const char* dir,
             continue;
         }
         if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-            if (v1_swsh_intro_scan_tree_for_payload(child,
+            if (m11_swsh_intro_scan_tree_for_payload(child,
                                                      depth + 1,
                                                      filesVisited,
                                                      outPath,
@@ -147,12 +147,12 @@ static int v1_swsh_intro_scan_tree_for_payload(const char* dir,
             }
         } else {
             ++(*filesVisited);
-            if (V1_SWSH_Intro_PayloadLooksValid(child)) {
+            if (M11_SWSH_Intro_PayloadLooksValid(child)) {
                 snprintf(outPath, outPathBytes, "%s", child);
                 FindClose(handle);
                 return 1;
             }
-            if (*filesVisited >= V1_SWSH_RECURSIVE_SCAN_MAX_FILES) {
+            if (*filesVisited >= M11_SWSH_RECURSIVE_SCAN_MAX_FILES) {
                 break;
             }
         }
@@ -163,8 +163,8 @@ static int v1_swsh_intro_scan_tree_for_payload(const char* dir,
     DIR* d;
     struct dirent* ent;
     if (!dir || !outPath || outPathBytes == 0U || !filesVisited ||
-        depth > V1_SWSH_RECURSIVE_SCAN_MAX_DEPTH ||
-        *filesVisited >= V1_SWSH_RECURSIVE_SCAN_MAX_FILES) {
+        depth > M11_SWSH_RECURSIVE_SCAN_MAX_DEPTH ||
+        *filesVisited >= M11_SWSH_RECURSIVE_SCAN_MAX_FILES) {
         return 0;
     }
     d = opendir(dir);
@@ -183,7 +183,7 @@ static int v1_swsh_intro_scan_tree_for_payload(const char* dir,
             continue;
         }
         if (S_ISDIR(st.st_mode)) {
-            if (v1_swsh_intro_scan_tree_for_payload(child,
+            if (m11_swsh_intro_scan_tree_for_payload(child,
                                                      depth + 1,
                                                      filesVisited,
                                                      outPath,
@@ -193,12 +193,12 @@ static int v1_swsh_intro_scan_tree_for_payload(const char* dir,
             }
         } else if (S_ISREG(st.st_mode)) {
             ++(*filesVisited);
-            if (V1_SWSH_Intro_PayloadLooksValid(child)) {
+            if (M11_SWSH_Intro_PayloadLooksValid(child)) {
                 snprintf(outPath, outPathBytes, "%s", child);
                 closedir(d);
                 return 1;
             }
-            if (*filesVisited >= V1_SWSH_RECURSIVE_SCAN_MAX_FILES) {
+            if (*filesVisited >= M11_SWSH_RECURSIVE_SCAN_MAX_FILES) {
                 break;
             }
         }
@@ -208,7 +208,7 @@ static int v1_swsh_intro_scan_tree_for_payload(const char* dir,
 #endif
 }
 
-static int v1_swsh_intro_find_logo_path_for_suffixes(
+static int m11_swsh_intro_find_logo_path_for_suffixes(
                                 const M12_StartupMenuState* menuState,
                                 const char* dataDir,
                                 const char* gameId,
@@ -234,7 +234,7 @@ static int v1_swsh_intro_find_logo_path_for_suffixes(
     /* 1. Env override. Useful for headless tests and developer overrides. */
     {
         const char* e = getenv("FIRESTAFF_SWOOSH");
-        if (e && e[0] != '\0' && V1_SWSH_Intro_PayloadLooksValid(e)) {
+        if (e && e[0] != '\0' && M11_SWSH_Intro_PayloadLooksValid(e)) {
             snprintf(outPath, outPathBytes, "%s", e);
             return 1;
         }
@@ -264,23 +264,23 @@ static int v1_swsh_intro_find_logo_path_for_suffixes(
                 continue;
             }
             if (FSP_JoinPath(cand, sizeof(cand), parent, "SWOOSH") &&
-                V1_SWSH_Intro_PayloadLooksValid(cand)) {
+                M11_SWSH_Intro_PayloadLooksValid(cand)) {
                 snprintf(outPath, outPathBytes, "%s", cand);
                 return 1;
             }
             if (FSP_JoinPath(cand, sizeof(cand), parent, "SWOOSH.DAT") &&
-                V1_SWSH_Intro_PayloadLooksValid(cand)) {
+                M11_SWSH_Intro_PayloadLooksValid(cand)) {
                 snprintf(outPath, outPathBytes, "%s", cand);
                 return 1;
             }
             if (FSP_ParentDir(grandparent, sizeof(grandparent), parent)) {
                 if (FSP_JoinPath(cand, sizeof(cand), grandparent, "SWOOSH") &&
-                    V1_SWSH_Intro_PayloadLooksValid(cand)) {
+                    M11_SWSH_Intro_PayloadLooksValid(cand)) {
                     snprintf(outPath, outPathBytes, "%s", cand);
                     return 1;
                 }
                 if (FSP_JoinPath(cand, sizeof(cand), grandparent, "SWOOSH.DAT") &&
-                    V1_SWSH_Intro_PayloadLooksValid(cand)) {
+                    M11_SWSH_Intro_PayloadLooksValid(cand)) {
                     snprintf(outPath, outPathBytes, "%s", cand);
                     return 1;
                 }
@@ -290,7 +290,7 @@ static int v1_swsh_intro_find_logo_path_for_suffixes(
 
     for (i = 0U; i < dataDirSuffixCount; ++i) {
         if (FSP_JoinPath(cand, sizeof(cand), effectiveDataDir, dataDirSuffixes[i]) &&
-            V1_SWSH_Intro_PayloadLooksValid(cand)) {
+            M11_SWSH_Intro_PayloadLooksValid(cand)) {
             snprintf(outPath, outPathBytes, "%s", cand);
             return 1;
         }
@@ -299,12 +299,12 @@ static int v1_swsh_intro_find_logo_path_for_suffixes(
      * launch must never walk unrelated games or disc images synchronously. */
     if (getenv("FIRESTAFF_SWOOSH_DEEP_SCAN")) {
         int filesVisited = 0;
-        if (v1_swsh_intro_find_known_hash(effectiveDataDir,
+        if (m11_swsh_intro_find_known_hash(effectiveDataDir,
                                            outPath,
                                            outPathBytes)) {
             return 1;
         }
-        if (v1_swsh_intro_scan_tree_for_payload(effectiveDataDir,
+        if (m11_swsh_intro_scan_tree_for_payload(effectiveDataDir,
                                                  0,
                                                  &filesVisited,
                                                  outPath,
@@ -316,7 +316,7 @@ static int v1_swsh_intro_find_logo_path_for_suffixes(
     if (home && home[0] != '\0') {
         for (i = 0U; i < homeSuffixCount; ++i) {
             if (FSP_JoinPath(cand, sizeof(cand), home, homeSuffixes[i]) &&
-                V1_SWSH_Intro_PayloadLooksValid(cand)) {
+                M11_SWSH_Intro_PayloadLooksValid(cand)) {
                 snprintf(outPath, outPathBytes, "%s", cand);
                 return 1;
             }
@@ -325,7 +325,7 @@ static int v1_swsh_intro_find_logo_path_for_suffixes(
     return 0;
 }
 
-int V1_SWSH_Intro_FindLogoPathForGame(const M12_StartupMenuState* menuState,
+int M11_SWSH_Intro_FindLogoPathForGame(const M12_StartupMenuState* menuState,
                                        const char* dataDir,
                                        const char* gameId,
                                        char* outPath,
@@ -389,7 +389,7 @@ int V1_SWSH_Intro_FindLogoPathForGame(const M12_StartupMenuState* menuState,
     };
 
     if (!gameId || strcmp(gameId, "dm1") == 0) {
-        return v1_swsh_intro_find_logo_path_for_suffixes(
+        return m11_swsh_intro_find_logo_path_for_suffixes(
             menuState,
             dataDir,
             "dm1",
@@ -401,7 +401,7 @@ int V1_SWSH_Intro_FindLogoPathForGame(const M12_StartupMenuState* menuState,
             outPathBytes);
     }
     if (strcmp(gameId, "csb") == 0) {
-        return v1_swsh_intro_find_logo_path_for_suffixes(
+        return m11_swsh_intro_find_logo_path_for_suffixes(
             menuState,
             dataDir,
             "csb",
@@ -418,11 +418,11 @@ int V1_SWSH_Intro_FindLogoPathForGame(const M12_StartupMenuState* menuState,
     return 0;
 }
 
-int V1_SWSH_Intro_FindLogoPath(const M12_StartupMenuState* menuState,
+int M11_SWSH_Intro_FindLogoPath(const M12_StartupMenuState* menuState,
                                 const char* dataDir,
                                 char* outPath,
                                 size_t outPathBytes) {
-    return V1_SWSH_Intro_FindLogoPathForGame(menuState,
+    return M11_SWSH_Intro_FindLogoPathForGame(menuState,
                                               dataDir,
                                               "dm1",
                                               outPath,

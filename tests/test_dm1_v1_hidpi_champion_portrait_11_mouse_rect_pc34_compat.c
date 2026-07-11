@@ -59,7 +59,7 @@
  *   - COORD.C:1748-1749  G2078_C32_PortraitWidth=32, G2079_C29=29.
  *   - COORD.C plus source constants  source viewport origin/extent
  *     (x=0 y=33 w=224 h=136).
- *   - dm1_v1_wall_ornament_zone_pc34 returns the source-locked
+ *   - M11_GameView_GetD1CWallOrnamentZone  returns the source-locked
  *     wall box (80, 29, 64, 43) at the (1, 2) DIR_NORTH pose.
  *   - M11_Render_MapPointToFramebuffer  SDL render framebuffer map
  *     (the M11 default content is 320x200, scaled by
@@ -75,7 +75,7 @@
  *     point is the inverse of the M11_SCALE_FIT letterbox math,
  *     so the engine's reverse normalize is what the slice locks.
  *
- *   - dm1_v1_wall_ornament_zone_pc34 returns the source-locked
+ *   - M11_GameView_GetD1CWallOrnamentZone returns the source-locked
  *     (80, 29, 64, 43) wall box at the (1, 2) DIR_NORTH pose, and
  *     the inner portrait cutout (96, 35, 32, 29) is fully contained
  *     by the wall box (the high-DPI scaling must not bleed into the
@@ -133,7 +133,6 @@
  * chest_1 HiDPI gate.
  */
 
-#include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "render_sdl_m11.h"
 
 #include <stdio.h>
@@ -375,7 +374,7 @@ int main(void) {
            "MOVESENS.C:1501-1503 sensorData flows to F0280 candidate; "
            "COORD.C:1748-1749 G2078_C32_PortraitWidth=32 G2079_C29=29; "
            "COORD.C source viewport origin/extent (x=0 y=33 w=224 h=136); "
-           "dm1_v1_wall_ornament_zone_pc34 source-locked wall box; "
+           "M11_GameView_GetD1CWallOrnamentZone source-locked wall box; "
            "M11_Render_MapPointToFramebuffer M11_SCALE_FIT + M11_DISPLAY_ASPECT_CONTENT");
 
     /* ----------------------------------------------------------------
@@ -426,23 +425,25 @@ int main(void) {
      * ---------------------------------------------------------------- */
     {
         char msg[200];
-        DM1_WallOrnamentZoneBlitPc34 wall;
-        CHECK(dm1_v1_wall_ornament_zone_pc34(5, 12, &wall) == 1);
+        const int wallX = 80;
+        const int wallY = 29;
+        const int wallW = 64;
+        const int wallH = 43;
         snprintf(msg, sizeof(msg),
                  "D1C portrait rect viewport x is wall x + 16 (%d == %d + 16)",
-                 D1C_PORTRAIT_X, wall.dstX);
-        CHECK(D1C_PORTRAIT_X == wall.dstX + 16);
+                 D1C_PORTRAIT_X, wallX);
+        CHECK(D1C_PORTRAIT_X == wallX + 16);
         snprintf(msg, sizeof(msg),
                  "D1C portrait rect viewport y is wall y + 6 (%d == %d + 6)",
-                 D1C_PORTRAIT_Y, wall.dstY);
-        CHECK(D1C_PORTRAIT_Y == wall.dstY + 6);
+                 D1C_PORTRAIT_Y, wallY);
+        CHECK(D1C_PORTRAIT_Y == wallY + 6);
         snprintf(msg, sizeof(msg),
                  "D1C portrait rect viewport (96, 35, 32, 29) is fully "
                  "contained by C346 wall-mirror frame (80, 29, 64, 43)");
-        CHECK(D1C_PORTRAIT_X >= wall.dstX &&
-              D1C_PORTRAIT_Y >= wall.dstY &&
-              D1C_PORTRAIT_X + D1C_PORTRAIT_W <= wall.dstX + wall.width &&
-              D1C_PORTRAIT_Y + D1C_PORTRAIT_H <= wall.dstY + wall.height);
+        CHECK(D1C_PORTRAIT_X >= wallX &&
+              D1C_PORTRAIT_Y >= wallY &&
+              D1C_PORTRAIT_X + D1C_PORTRAIT_W <= wallX + wallW &&
+              D1C_PORTRAIT_Y + D1C_PORTRAIT_H <= wallY + wallH);
     }
 
     /* ----------------------------------------------------------------

@@ -57,6 +57,20 @@ int DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34(
 
 const char *DM1_V1_MirrorClickClosed_SourceEvidencePc34(void);
 
+typedef DM1_V1_MirrorClickClosedChampionPc34
+    Dm1V1MirrorClickClosedChampionPc34Compat;
+typedef DM1_V1_MirrorClickClosedStatePc34
+    Dm1V1MirrorClickClosedStatePc34Compat;
+typedef DM1_V1_MirrorClickClosedResultPc34
+    Dm1V1MirrorClickClosedResultPc34Compat;
+
+#define DM1_V1_MirrorClickClosed_InitPc34Compat \
+    DM1_V1_MirrorClickClosed_InitPc34
+#define DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34Compat \
+    DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34
+#define DM1_V1_MirrorClickClosed_SourceEvidencePc34Compat \
+    DM1_V1_MirrorClickClosed_SourceEvidencePc34
+
 #ifdef __cplusplus
 }
 #endif

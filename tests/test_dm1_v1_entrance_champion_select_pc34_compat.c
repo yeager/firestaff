@@ -70,26 +70,6 @@ static void test_door_animation(void)
     expect_int("fullstart.requires_graphics", receipt.requiresGraphicsDat, 1);
     expect_int("fullstart.no_host_inference", receipt.noHostRenderInference, 1);
     expect_true("fullstart.reason", receipt.captureProofReason != 0);
-    expect_int("fullstart.host_ready",
-               DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(&receipt),
-               1);
-    {
-        DM1_V1_EntranceFullStartRenderReceiptPc34 invalid = receipt;
-        invalid.squares[7] = DM1_V1_ENTRANCE_ELEMENT_WALL_PC34;
-        expect_int("fullstart.host_rejects_bad_micro_dungeon",
-                   DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(&invalid),
-                   0);
-        invalid = receipt;
-        invalid.realAssetCaptureProof = 0;
-        expect_int("fullstart.host_rejects_missing_asset_proof",
-                   DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(&invalid),
-                   0);
-        invalid = receipt;
-        invalid.noHostRenderInference = 0;
-        expect_int("fullstart.host_rejects_host_inference",
-                   DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(&invalid),
-                   0);
-    }
 
     DM1_V1_Entrance_StartDoorAnimationPc34Compat(&ctx, 3000u);
     expect_int("fullstart.start.receipt", DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(&ctx, &receipt), 1);

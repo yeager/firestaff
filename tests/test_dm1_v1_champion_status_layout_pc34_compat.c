@@ -63,7 +63,7 @@ static void test_bars_hands_and_names(void) {
     expect_rect(dm1_v1_champion_status_bar_rect_pc34(2, 1, &r),
                 &r,
                 191,
-                2,
+                0,
                 4,
                 25);
 

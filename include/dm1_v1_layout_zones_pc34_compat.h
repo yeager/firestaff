@@ -34,24 +34,14 @@ int dm1_v1_champion_icon_zone_id_pc34(int championSlot);
 int dm1_v1_champion_icon_rect_pc34(int championSlot,
                                    DM1_V1_LayoutZoneRectPc34* outRect);
 DM1_V1_LayoutZoneRectPc34 dm1_v1_inventory_backdrop_rect_pc34(void);
-int dm1_v1_inventory_backdrop_zone_xywh_pc34(
-    int* outX, int* outY, int* outW, int* outH);
 int dm1_v1_inventory_panel_zone_id_pc34(void);
 DM1_V1_LayoutZoneRectPc34 dm1_v1_inventory_panel_rect_pc34(void);
-int dm1_v1_inventory_panel_zone_xywh_pc34(
-    int* outX, int* outY, int* outW, int* outH);
 int dm1_v1_object_description_circle_zone_id_pc34(void);
 DM1_V1_LayoutZoneRectPc34 dm1_v1_object_description_circle_rect_pc34(void);
-int dm1_v1_object_description_circle_zone_xywh_pc34(
-    int* outX, int* outY, int* outW, int* outH);
 int dm1_v1_object_description_icon_zone_id_pc34(void);
 DM1_V1_LayoutZoneRectPc34 dm1_v1_object_description_icon_rect_pc34(void);
-int dm1_v1_object_description_icon_zone_xywh_pc34(
-    int* outX, int* outY, int* outW, int* outH);
 int dm1_v1_arrow_or_eye_zone_id_pc34(void);
 DM1_V1_LayoutZoneRectPc34 dm1_v1_arrow_or_eye_rect_pc34(void);
-int dm1_v1_arrow_or_eye_zone_xywh_pc34(
-    int* outX, int* outY, int* outW, int* outH);
 int dm1_v1_object_description_name_zone_id_pc34(void);
 int dm1_v1_object_description_name_rect_for_text_pc34(
     int textPixelWidth,

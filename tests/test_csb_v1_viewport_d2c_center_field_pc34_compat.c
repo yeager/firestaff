@@ -49,7 +49,7 @@ static void expect_contains(const char *id, const char *haystack,
 static void test_d2c_i34_dispatch_and_index_contract(void)
 {
     const CSB_V1_D2CCenterFieldSpecPc34 *spec =
-        csb_v1_viewport_d2c_center_field_spec_pc34_compat();
+        M11_GameView_ViewportD2CCenterFieldPc34Spec();
 
     expect_nonnull("d2c.spec", spec, "ReDMCSB DUNVIEW.C:7244");
     if (!spec) return;
@@ -79,7 +79,7 @@ static void test_d2c_i34_dispatch_and_index_contract(void)
 static void test_d2c_no_wall_door_route_contract(void)
 {
     const CSB_V1_D2CCenterFieldSpecPc34 *spec =
-        csb_v1_viewport_d2c_center_field_spec_pc34_compat();
+        M11_GameView_ViewportD2CCenterFieldPc34Spec();
 
     expect_nonnull("d2c.no_wall.spec", spec, "ReDMCSB DUNVIEW.C:7353-7388");
     if (!spec) return;
@@ -111,7 +111,7 @@ static void test_d2c_no_wall_door_route_contract(void)
 static void test_d2c_wall_zone_and_frame_anchors(void)
 {
     const CSB_V1_D2CCenterFieldSpecPc34 *spec =
-        csb_v1_viewport_d2c_center_field_spec_pc34_compat();
+        M11_GameView_ViewportD2CCenterFieldPc34Spec();
 
     expect_nonnull("d2c.zone.spec", spec, "ReDMCSB DEFS.H:4030/4049");
     if (!spec) return;
@@ -131,12 +131,10 @@ static void test_d2c_wall_zone_and_frame_anchors(void)
     expect_int("d2c.zone_from_c702_spec", spec->media720_field_zone_from_c702, 709,
                "ReDMCSB DUNVIEW.C:6219 C702 + field aspect");
     expect_int("d2c.zone_from_c702_helper",
-               csb_v1_viewport_d2c_center_field_zone_from_c702_base_pc34_compat(spec),
-               709,
+               M11_GameView_ViewportD2CCenterFieldPc34ZoneFromC702Base(spec), 709,
                "ReDMCSB DUNVIEW.C:7386 and DEFS.H:4042/4049");
     expect_int("d2c.zone_from_c702_null",
-               csb_v1_viewport_d2c_center_field_zone_from_c702_base_pc34_compat(NULL),
-               -1,
+               M11_GameView_ViewportD2CCenterFieldPc34ZoneFromC702Base(NULL), -1,
                "route helper rejects unresolved spec");
     expect_int("d2c.frame.x1", spec->wall_frame.x1, 60, "ReDMCSB DUNVIEW.C:586");
     expect_int("d2c.frame.x2", spec->wall_frame.x2, 163, "ReDMCSB DUNVIEW.C:586");
@@ -157,7 +155,7 @@ static void test_d2c_wall_zone_and_frame_anchors(void)
 static void test_d2c_c10_transparency_contract(void)
 {
     const CSB_V1_D2CCenterFieldSpecPc34 *spec =
-        csb_v1_viewport_d2c_center_field_spec_pc34_compat();
+        M11_GameView_ViewportD2CCenterFieldPc34Spec();
     uint8_t source[8] = { 10, 1, 2, 10, 3, 4, 10, 5 };
     uint8_t destination[8] = { 77, 77, 77, 77, 77, 77, 77, 77 };
 
@@ -173,7 +171,7 @@ static void test_d2c_c10_transparency_contract(void)
                 spec->field_blit_preserves_c10_transparency, true,
                 "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
     expect_int("d2c.blit.copied",
-               csb_v1_viewport_d2c_center_field_apply_synthetic_c10_field_blit_pc34_compat(
+               M11_GameView_ViewportD2CCenterFieldPc34ApplySyntheticC10FieldBlit(
                    spec, source, 4, destination, 4, 4, 2),
                5, "synthetic F0113 C10 field contract");
     expect_int("d2c.blit.transparent0", destination[0], 77,
@@ -188,7 +186,7 @@ static void test_d2c_c10_transparency_contract(void)
                "ReDMCSB DEFS.H:2088 C10 transparent");
     expect_int("d2c.blit.pixel7", destination[7], 5, "synthetic field copy");
     expect_int("d2c.blit.reject_null",
-               csb_v1_viewport_d2c_center_field_apply_synthetic_c10_field_blit_pc34_compat(
+               M11_GameView_ViewportD2CCenterFieldPc34ApplySyntheticC10FieldBlit(
                    NULL, source, 4, destination, 4, 4, 2),
                -1, "route helper rejects unresolved spec");
     expect_bool("d2c.contract_only_marker", spec->contract_only, true,
@@ -197,9 +195,9 @@ static void test_d2c_c10_transparency_contract(void)
 
 static void test_source_evidence_mentions_all_anchors(void)
 {
-    const char *e = csb_v1_viewport_d2c_center_field_source_evidence_pc34_compat();
+    const char *e = M11_GameView_ViewportD2CCenterFieldPc34SourceEvidence();
     const CSB_V1_D2CCenterFieldSpecPc34 *spec =
-        csb_v1_viewport_d2c_center_field_spec_pc34_compat();
+        M11_GameView_ViewportD2CCenterFieldPc34Spec();
 
     expect_nonnull("evidence.nonnull", e, "source evidence");
     expect_contains("evidence.contract_only", e, "Source-locked contract gate only",

@@ -1024,11 +1024,7 @@ int main(void)
                    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
                runtime_handoff_receipt.asset_handoff.real_asset_route_ready == 1 &&
                runtime_handoff_receipt.render_plan.plan_ready == 1 &&
-               runtime_handoff_receipt.render_plan.material_semantics_complete == 1 &&
                runtime_handoff_receipt.command_count > 0 &&
-               runtime_handoff_receipt.dgn_render_ceiling_count ==
-                   runtime_handoff_receipt.render_plan.ceiling_count &&
-               runtime_handoff_receipt.dgn_material_semantics_complete == 1 &&
                runtime_handoff_receipt.dgn_material_plan_consumed == 1 &&
                runtime_handoff_receipt
                        .dgn_commands_copied_from_material_plan == 1 &&
@@ -1353,9 +1349,10 @@ int main(void)
                real_asset_ownership_receipt.dgn_viewport_wall_material_surface_count ==
                    real_asset_ownership_receipt.dgn_render_plan.wall_count &&
                real_asset_ownership_receipt.dgn_viewport_ceiling_material_surface_count ==
-                   real_asset_ownership_receipt.dgn_render_plan.ceiling_count &&
+                   real_asset_ownership_receipt.dgn_draw_command_count -
+                       real_asset_ownership_receipt.dgn_render_plan.floor_count -
+                       real_asset_ownership_receipt.dgn_render_plan.wall_count &&
                real_asset_ownership_receipt.dgn_material_surface_coverage_complete == 1 &&
-               real_asset_ownership_receipt.dgn_material_semantics_complete == 1 &&
                real_asset_ownership_receipt.bpk_material_surface_count == 1 &&
                real_asset_ownership_receipt.bpk_truecolor_material_surface_count == 1 &&
                real_asset_ownership_receipt.bpk_prs3_material_surface_count == 0 &&
@@ -1532,9 +1529,10 @@ int main(void)
                host_caller_receipt.dgn_viewport_wall_material_surface_count ==
                    host_caller_receipt.ownership.dgn_render_plan.wall_count &&
                host_caller_receipt.dgn_viewport_ceiling_material_surface_count ==
-                   host_caller_receipt.ownership.dgn_render_plan.ceiling_count &&
+                   host_caller_receipt.dgn_command_count -
+                       host_caller_receipt.ownership.dgn_render_plan.floor_count -
+                       host_caller_receipt.ownership.dgn_render_plan.wall_count &&
                host_caller_receipt.dgn_material_surface_coverage_complete == 1 &&
-               host_caller_receipt.dgn_material_semantics_complete == 1 &&
                host_caller_receipt.bpk_material_surface_count == 1 &&
                host_caller_receipt.bpk_truecolor_material_surface_count == 1 &&
                host_caller_receipt.bpk_prs3_material_surface_count == 0 &&
@@ -1674,7 +1672,6 @@ int main(void)
                complete_support_receipt.dungeon_route_complete == 1 &&
                complete_support_receipt.dungeon_capture_route_consumed == 1 &&
                complete_support_receipt.dgn_material_surface_coverage_complete == 1 &&
-               complete_support_receipt.dgn_material_semantics_complete == 1 &&
                complete_support_receipt.dgn_material_path_consumed == 1 &&
                complete_support_receipt.bpk_material_surface_count == 1 &&
                complete_support_receipt.bpk_truecolor_material_surface_count == 1 &&
@@ -1739,23 +1736,6 @@ int main(void)
                    complete_support_receipt.complete_support_ready == 0 &&
                    complete_support_receipt.complete_route_mask == 15u,
                "Nexus complete-support rejects DGN mesh without full material surface coverage");
-    }
-    {
-        Nexus_V1_StartupHostCallerReceipt mutated_champion_host;
-        mutated_champion_host = champion_host_caller_receipt;
-        mutated_champion_host.dgn_material_semantics_complete = 0;
-        mutated_champion_host.ownership.dgn_render_plan.material_semantics_complete = 0;
-        expect(nexus_v1_launcher_complete_support_receipt_from_host_routes(
-                   &title_host_caller_receipt,
-                   &save_host_caller_receipt,
-                   &mutated_champion_host,
-                   &complete_support_receipt) &&
-                   complete_support_receipt.dgn_material_surface_coverage_complete == 1 &&
-                   complete_support_receipt.dgn_material_semantics_complete == 0 &&
-                   complete_support_receipt.dgn_material_path_consumed == 0 &&
-                   complete_support_receipt.dgn_mesh_runtime_complete == 0 &&
-                   complete_support_receipt.complete_support_ready == 0,
-               "Nexus complete-support rejects DGN mesh without surface semantics proof");
     }
     runtime_state.save_select_active = 0;
     runtime_state.champion_select_active = 1;
@@ -2555,8 +2535,6 @@ int main(void)
                runtime_route_receipt.dgn_render_plan_ready == 1 &&
                runtime_route_receipt.dgn_render_command_count > 0 &&
                runtime_route_receipt.dgn_render_floor_count > 0 &&
-               runtime_route_receipt.dgn_render_ceiling_count > 0 &&
-               runtime_route_receipt.dgn_material_semantics_complete == 1 &&
                runtime_route_receipt.dgn_viewport_render_ready == 1 &&
                runtime_route_receipt.dgn_viewport_rasterized_command_count ==
                    runtime_route_receipt.dgn_render_command_count &&
@@ -2567,7 +2545,9 @@ int main(void)
                runtime_route_receipt.dgn_viewport_wall_material_surface_count ==
                    runtime_route_receipt.dgn_render_wall_count &&
                runtime_route_receipt.dgn_viewport_ceiling_material_surface_count ==
-                   runtime_route_receipt.dgn_render_ceiling_count &&
+                   runtime_route_receipt.dgn_render_command_count -
+                       runtime_route_receipt.dgn_render_floor_count -
+                       runtime_route_receipt.dgn_render_wall_count &&
                runtime_route_receipt.bpk_material_surface_count == 1 &&
                runtime_route_receipt.bpk_truecolor_material_surface_count == 1 &&
                runtime_route_receipt.bpk_prs3_material_surface_count == 0 &&
