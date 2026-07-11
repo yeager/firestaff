@@ -3667,19 +3667,54 @@ int theron_v1_track02_capture_object_table_route_receipt(
                         entry_index,
                         &binding) == THERON_TRACK02_SEMANTIC_BINDING_OK) {
                     ++out_receipt->descriptor_table_semantic_count;
+                    ++out_receipt->descriptor_table_semantic_anchor_count;
+                    out_receipt->descriptor_table_semantic_anchor_mask |=
+                        1u << (unsigned)anchor;
                 }
             }
             if (semantic_role == THERON_TRACK02_SEMANTIC_OBJECT_TABLE) {
                 Theron_Track02SemanticBinding binding;
+                Theron_Track02SemanticBindingStatus binding_status;
                 out_receipt->object_table_role_mapped = 1;
                 ++out_receipt->object_table_candidate_count;
-                if (theron_v1_track02_bind_semantic_descriptor(
+                out_receipt->object_table_candidate_anchor_mask |=
+                    1u << (unsigned)anchor;
+                binding_status = theron_v1_track02_bind_semantic_descriptor(
                         track02_data,
                         track02_size,
                         descriptor_offset,
                         entry_index,
-                        &binding) == THERON_TRACK02_SEMANTIC_BINDING_OK) {
+                        &binding);
+                if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
+                    out_receipt->object_table_anchor_binding_status[anchor] =
+                        (int)binding_status;
+                    out_receipt->object_table_anchor_hash[anchor] =
+                        ((uint32_t)descriptor_offset ^ (uint32_t)entry_index ^
+                         ((uint32_t)binding_status << 24));
+                }
+                if (binding_status == THERON_TRACK02_SEMANTIC_BINDING_OK) {
                     out_receipt->object_table_decode_ready = 1;
+                }
+            }
+            if (semantic_role == THERON_TRACK02_SEMANTIC_ROLE_UNKNOWN &&
+                entries[entry_index].role ==
+                    THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_POST_DESCRIPTOR_DATA &&
+                entries[entry_index].byte_count > 0u) {
+                ++out_receipt->object_table_candidate_count;
+                out_receipt->object_table_candidate_anchor_mask |=
+                    1u << (unsigned)anchor;
+                if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS &&
+                    out_receipt->object_table_candidate_raw_offsets[anchor] ==
+                        0u) {
+                    out_receipt->object_table_candidate_entry_index[anchor] =
+                        entry_index;
+                    out_receipt->object_table_candidate_raw_offsets[anchor] =
+                        entries[entry_index].absolute_offset;
+                    out_receipt->object_table_candidate_byte_counts[anchor] =
+                        entries[entry_index].byte_count;
+                    out_receipt
+                        ->object_table_candidate_nonzero_byte_counts[anchor] =
+                        entries[entry_index].byte_count;
                 }
             }
         }
@@ -3698,8 +3733,27 @@ int theron_v1_track02_capture_object_table_route_receipt(
         !out_receipt->object_table_decode_ready;
     hash ^= out_receipt->semantic_role_mask;
     hash *= 16777619u;
+    hash ^= out_receipt->descriptor_table_semantic_anchor_mask;
+    hash *= 16777619u;
+    hash ^= out_receipt->object_table_candidate_anchor_mask;
+    hash *= 16777619u;
     hash ^= out_receipt->object_table_blocked_anchor_mask;
     hash *= 16777619u;
+    for (anchor = 0u; anchor < THERON_TRACK02_MAX_BANK_ANCHORS; ++anchor) {
+        hash ^= (uint32_t)out_receipt->object_table_candidate_entry_index[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->object_table_candidate_raw_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->object_table_candidate_byte_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_candidate_nonzero_byte_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->object_table_anchor_binding_status[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->object_table_anchor_hash[anchor];
+        hash *= 16777619u;
+    }
     out_receipt->route_hash = hash;
     out_receipt->valid = out_receipt->verified_track02 &&
         out_receipt->descriptor_route_ready;
@@ -3752,6 +3806,10 @@ int theron_v1_track02_capture_level_route_receipt(
     out_receipt->variant = signal.variant;
     out_receipt->descriptor_anchor_count = signal.anchor_count;
     for (anchor = 0u; anchor < signal.anchor_count; ++anchor) {
+        Theron_Track02DescriptorTable table;
+        Theron_Track02DescriptorEntrySemanticBinding
+            entries[THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES];
+        Theron_Track02TableDecodeStatus table_status;
         Theron_Track02StartupSemanticHandoff handoff;
         Theron_Track02LevelHandoffStatus handoff_status;
         Theron_Track02SemanticRole semantic_role;
@@ -3775,6 +3833,52 @@ int theron_v1_track02_capture_level_route_receipt(
                 out_receipt->level_grid_role_mapped = 1;
             }
         }
+        if (descriptor_offset <= track02_size &&
+            TQR_US_ISO_BANK_STRIDE_BYTES <= track02_size - descriptor_offset) {
+            table_status = theron_v1_track02_decode_descriptor_table(
+                track02_data + descriptor_offset,
+                TQR_US_ISO_BANK_STRIDE_BYTES,
+                TQR_US_ISO_BANK_STRIDE_STEP,
+                &table);
+            if (table_status == THERON_TRACK02_TABLE_DECODE_OK &&
+                theron_v1_track02_bind_descriptor_entry_roles(
+                    track02_data,
+                    track02_size,
+                    descriptor_offset,
+                    &table,
+                    entries) == THERON_TRACK02_TABLE_DECODE_OK) {
+                for (entry_index = 0u; entry_index < table.entry_count;
+                     ++entry_index) {
+                    if (entries[entry_index].role ==
+                            THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_POST_DESCRIPTOR_DATA &&
+                        entries[entry_index].byte_count > 0u) {
+                        ++out_receipt->nonstartup_level_candidate_count;
+                        out_receipt->nonstartup_level_candidate_anchor_mask |=
+                            1u << (unsigned)anchor;
+                        if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS &&
+                            out_receipt
+                                    ->nonstartup_level_candidate_raw_offsets
+                                        [anchor] == 0u) {
+                            out_receipt
+                                ->nonstartup_level_candidate_entry_index
+                                    [anchor] = entry_index;
+                            out_receipt
+                                ->nonstartup_level_candidate_raw_offsets
+                                    [anchor] =
+                                entries[entry_index].absolute_offset;
+                            out_receipt
+                                ->nonstartup_level_candidate_byte_counts
+                                    [anchor] =
+                                entries[entry_index].byte_count;
+                            out_receipt
+                                ->nonstartup_level_candidate_nonzero_byte_counts
+                                    [anchor] =
+                                entries[entry_index].byte_count;
+                        }
+                    }
+                }
+            }
+        }
 
         handoff_status = theron_v1_track02_bind_startup_semantic_handoff(
             track02_data,
@@ -3782,6 +3886,10 @@ int theron_v1_track02_capture_level_route_receipt(
             md5_hex,
             descriptor_offset,
             &handoff);
+        if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
+            out_receipt->startup_level_anchor_status[anchor] =
+                (int)handoff_status;
+        }
         if (handoff_status == THERON_TRACK02_LEVEL_HANDOFF_OK &&
             handoff.ready_for_runtime &&
             handoff.user_data_offset_valid) {
@@ -3810,6 +3918,22 @@ int theron_v1_track02_capture_level_route_receipt(
             hash *= 16777619u;
             hash ^= (uint32_t)handoff.user_data_offset;
             hash *= 16777619u;
+            if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
+                out_receipt->startup_level_anchor_raw_offsets[anchor] =
+                    candidate->absolute_offset;
+                out_receipt->startup_level_anchor_user_data_offsets[anchor] =
+                    handoff.user_data_offset;
+                out_receipt->startup_level_anchor_user_data_valid[anchor] =
+                    handoff.user_data_offset_valid;
+                out_receipt->startup_level_anchor_width[anchor] =
+                    candidate->header_width;
+                out_receipt->startup_level_anchor_height[anchor] =
+                    candidate->header_height;
+                out_receipt->startup_level_anchor_seed[anchor] =
+                    candidate->header_seed;
+                out_receipt->startup_level_anchor_level_index[anchor] =
+                    candidate->header_level_index;
+            }
             out_receipt->semantic_role_mask |=
                 1u << THERON_TRACK02_SEMANTIC_LEVEL_GRID_TABLE;
             out_receipt->level_grid_role_mapped = 1;
@@ -3858,6 +3982,27 @@ int theron_v1_track02_capture_level_route_receipt(
     hash *= 16777619u;
     hash ^= out_receipt->nonstartup_level_blocked_anchor_mask;
     hash *= 16777619u;
+    for (anchor = 0u; anchor < THERON_TRACK02_MAX_BANK_ANCHORS; ++anchor) {
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_entry_index[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_raw_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_byte_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_nonzero_byte_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->startup_level_anchor_status[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->startup_level_anchor_raw_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->startup_level_anchor_user_data_offsets[anchor];
+        hash *= 16777619u;
+    }
     out_receipt->route_hash = hash;
     out_receipt->valid = out_receipt->verified_track02 &&
         out_receipt->descriptor_route_ready &&
