@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 status-HUD runtime consumer cleanup: moved active M11 status-HUD drawing for hand-slot boxes, shield borders, and champion damage graphics from M11 wrapper calls to DM1/ReDMCSB status-layout and graphic-id APIs. Verification: `firestaff_m11`, `test_dm1_v1_champion_status_layout_pc34_compat`, `test_m11_v1_action_area_geometry_pc34_compat`, `test_m11_inventory_full_panel_runtime_pc34_compat`, and targeted runtime-call `rg` passed.
+
 - ✅ 2026-07-11 DM1 graphic-id M11 export cleanup: removed public M11 normal-slot and poison-label graphic-id wrappers and moved active inventory/status drawing to DM1/ReDMCSB graphic-id APIs. Verification: `firestaff_m11`, `test_dm1_v1_inventory_panel_mouse_routes_pc34_compat`, `test_m11_inventory_full_panel_runtime_pc34_compat`, targeted old-symbol `rg`, and focused build passed.
 
 - ✅ 2026-07-11 DM1 status/graphic regression consumer cleanup: moved remaining inventory/full-panel/DM2 startup regression callers off pure M11 status-box and slot/poison graphic wrappers and onto DM1/ReDMCSB champion-status layout plus graphic-id APIs. Verification: `test_dm1_v1_inventory_panel_mouse_routes_pc34_compat`, `test_m11_inventory_full_panel_runtime_pc34_compat`, `test_dm2_v1_m11_startup_profile_gate`, targeted old-symbol `rg`, and focused build passed.

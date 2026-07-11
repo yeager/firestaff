@@ -33516,7 +33516,6 @@ int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
     return 1;
 }
 
-
 int M11_GameView_GetV1SlotBoxWoundedGraphicId(void) {
     return dm1_v1_graphic_slot_box_wounded_pc34();
 }
@@ -33729,7 +33728,6 @@ int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) 
     return M11_GameView_GetV1StatusShieldBorderGraphicForChampion(state, -1);
 }
 
-
 int M11_GameView_GetV1ChampionSmallDamageGraphicId(void) {
     return dm1_v1_graphic_champion_damage_small_pc34();
 }
@@ -33892,8 +33890,11 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
     int iconIndex;
 
     if (!state || !champ || !framebuffer) return 0;
-    boxGfx = M11_GameView_GetV1StatusHandSlotGraphic(
-        state, championSlot, handIndex);
+    boxGfx = dm1_v1_champion_status_hand_slot_graphic_pc34(
+        handIndex,
+        (uint16_t)champ->wounds,
+        (handIndex == DM1_SLOT_ACTION_HAND &&
+         state->actingChampionOrdinal == (unsigned int)(championSlot + 1)));
     if (boxGfx <= 0) return 0;
 
     if (state->assetsAvailable) {
@@ -33910,8 +33911,16 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
         int boxY = dstY;
         int boxW = 18;
         int boxH = 18;
-        (void)M11_GameView_GetV1StatusHandSlotBoxZone(
-            championSlot, handIndex, &boxX, &boxY, &boxW, &boxH);
+        {
+            DM1_V1_ChampionStatusRectPc34 boxRect;
+            if (dm1_v1_champion_status_hand_slot_box_rect_pc34(
+                    championSlot, handIndex, &boxRect)) {
+                boxX = boxRect.x;
+                boxY = boxRect.y;
+                boxW = boxRect.w;
+                boxH = boxRect.h;
+            }
+        }
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       boxX, boxY, boxW, boxH, M11_COLOR_BLACK);
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -36217,14 +36226,16 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * text, bars, and hand slots so changed-status refreshes preserve
              * the source overdraw order. */
             if (!useV2PartyHud && state->assetsAvailable && !isDead) {
+                int borderGraphics[3] = {0, 0, 0};
                 int borderCount =
-                    M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(
-                        state, slot);
+                    dm1_v1_champion_status_shield_border_graphics_pc34(
+                        (int)state->world.magic.fireShieldDefense,
+                        (int)state->world.magic.spellShieldDefense,
+                        (int)state->world.magic.partyShieldDefense,
+                        borderGraphics);
                 int borderOrdinal;
                 for (borderOrdinal = 0; borderOrdinal < borderCount; ++borderOrdinal) {
-                    unsigned int borderGfx = (unsigned int)
-                        M11_GameView_GetV1StatusShieldBorderGraphicForChampionAt(
-                            state, slot, borderOrdinal);
+                    unsigned int borderGfx = (unsigned int)borderGraphics[borderOrdinal];
                     if (borderGfx) {
                         const M11_AssetSlot* borderAsset = M11_AssetLoader_Load(
                             (M11_AssetLoader*)&state->assetLoader, borderGfx);
@@ -36234,8 +36245,15 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                             int borderY;
                             int borderW;
                             int borderH;
-                            (void)M11_GameView_GetV1StatusShieldBorderZone(
-                                slot, &borderX, &borderY, &borderW, &borderH);
+                            DM1_V1_ChampionStatusRectPc34 borderRect;
+                            if (!dm1_v1_champion_status_shield_border_rect_pc34(
+                                    slot, &borderRect)) {
+                                continue;
+                            }
+                            borderX = borderRect.x;
+                            borderY = borderRect.y;
+                            borderW = borderRect.w;
+                            borderH = borderRect.h;
                             M11_AssetLoader_BlitRegion(borderAsset,
                                 0, 0, borderW, borderH,
                                 framebuffer, framebufferWidth, framebufferHeight,
@@ -36387,10 +36405,18 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * right-column action icon cells. */
             if (!useV2PartyHud && !isDead) {
                 int readyX, readyY, actionX, actionY;
-                (void)M11_GameView_GetV1StatusHandSlotBoxZone(
-                    slot, 0, &readyX, &readyY, NULL, NULL);
-                (void)M11_GameView_GetV1StatusHandSlotBoxZone(
-                    slot, 1, &actionX, &actionY, NULL, NULL);
+                DM1_V1_ChampionStatusRectPc34 readyRect;
+                DM1_V1_ChampionStatusRectPc34 actionRect;
+                if (!dm1_v1_champion_status_hand_slot_box_rect_pc34(
+                        slot, 0, &readyRect) ||
+                    !dm1_v1_champion_status_hand_slot_box_rect_pc34(
+                        slot, 1, &actionRect)) {
+                    continue;
+                }
+                readyX = readyRect.x;
+                readyY = readyRect.y;
+                actionX = actionRect.x;
+                actionY = actionRect.y;
                 (void)m11_draw_v1_status_hand_slot(
                     state, champ, framebuffer, framebufferWidth, framebufferHeight,
                     slot, 0, readyX, readyY);
@@ -36446,8 +36472,8 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     const M11_AssetSlot* dmgAsset = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
                         (unsigned int)(useBigDamage
-                            ? M11_GameView_GetV1ChampionBigDamageGraphicId()
-                            : M11_GameView_GetV1ChampionSmallDamageGraphicId()));
+                            ? dm1_v1_graphic_champion_damage_big_pc34()
+                            : dm1_v1_graphic_champion_damage_small_pc34()));
                     if (dmgAsset &&
                         ((!useBigDamage && dmgAsset->width == 45 &&
                           dmgAsset->height == 7) ||
@@ -37815,7 +37841,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             if (state->assetsAvailable) {
                 const M11_AssetSlot* dmg16 = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
-                    (unsigned int)M11_GameView_GetV1ChampionBigDamageGraphicId());
+                    (unsigned int)dm1_v1_graphic_champion_damage_big_pc34());
                 if (dmg16 && dmg16->width == 32 && dmg16->height == 29) {
                     M11_AssetLoader_BlitRegion(dmg16,
                         0, 0, 32, 29,
