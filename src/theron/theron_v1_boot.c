@@ -4168,6 +4168,51 @@ void theron_v1_boot_startup_menu_runtime_handoff_receipt_init(
     receipt->status = "NO MENU RUNTIME HANDOFF";
 }
 
+static void theron_v1_boot_startup_menu_runtime_handoff_copy_media_spans(
+    Theron_V1_BootStartupMenuRuntimeHandoffReceipt *out_receipt,
+    const Theron_StartupMediaStateReceipt *media_receipt)
+{
+    if (!out_receipt || !media_receipt) {
+        return;
+    }
+    out_receipt->track02_media_route_mask =
+        media_receipt->startup_bitmap_atlas_route_mask;
+    out_receipt->track02_media_checksum =
+        media_receipt->startup_bitmap_atlas_checksum;
+    out_receipt->track02_media_title_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_first_raw_offset;
+    out_receipt->track02_media_title_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_last_raw_offset;
+    out_receipt->track02_media_title_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_first_user_data_offset;
+    out_receipt->track02_media_title_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_title_last_user_data_offset;
+    out_receipt->track02_media_stage_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_first_raw_offset;
+    out_receipt->track02_media_stage_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_last_raw_offset;
+    out_receipt->track02_media_stage_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_first_user_data_offset;
+    out_receipt->track02_media_stage_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_stage_last_user_data_offset;
+    out_receipt->track02_media_soul_room_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_first_raw_offset;
+    out_receipt->track02_media_soul_room_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_last_raw_offset;
+    out_receipt->track02_media_soul_room_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_first_user_data_offset;
+    out_receipt->track02_media_soul_room_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_soul_room_last_user_data_offset;
+    out_receipt->track02_media_forcefield_first_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_first_raw_offset;
+    out_receipt->track02_media_forcefield_last_raw_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_last_raw_offset;
+    out_receipt->track02_media_forcefield_first_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_first_user_data_offset;
+    out_receipt->track02_media_forcefield_last_user_data_offset =
+        (uint64_t)media_receipt->startup_bitmap_forcefield_last_user_data_offset;
+}
+
 int theron_v1_boot_startup_menu_runtime_handoff_from_full_start_receipt(
     const Theron_V1_BootStartupFullStartReceipt *receipt,
     int input_code,
@@ -4197,6 +4242,13 @@ int theron_v1_boot_startup_menu_runtime_handoff_from_full_start_receipt(
     out_receipt->track02_media_consumed =
         receipt->host_view_valid &&
         receipt->host_view.track02_media_consumed ? 1 : 0;
+    if (out_receipt->track02_media_consumed &&
+        receipt->view_model_valid &&
+        receipt->view_model.startup_media_state_valid) {
+        theron_v1_boot_startup_menu_runtime_handoff_copy_media_spans(
+            out_receipt,
+            &receipt->view_model.startup_media_state_receipt);
+    }
     out_receipt->startup_menu_render_allowed =
         receipt->host_view_valid &&
         receipt->host_view.render_route_valid &&
@@ -4392,6 +4444,42 @@ int theron_v1_boot_startup_ui_caller_from_full_start_receipt(
 
     out_receipt->track02_media_consumed =
         out_receipt->menu_runtime_handoff.track02_media_consumed ? 1 : 0;
+    out_receipt->track02_media_route_mask =
+        out_receipt->menu_runtime_handoff.track02_media_route_mask;
+    out_receipt->track02_media_checksum =
+        out_receipt->menu_runtime_handoff.track02_media_checksum;
+    out_receipt->track02_media_title_first_raw_offset =
+        out_receipt->menu_runtime_handoff.track02_media_title_first_raw_offset;
+    out_receipt->track02_media_title_last_raw_offset =
+        out_receipt->menu_runtime_handoff.track02_media_title_last_raw_offset;
+    out_receipt->track02_media_title_first_user_data_offset =
+        out_receipt->menu_runtime_handoff.track02_media_title_first_user_data_offset;
+    out_receipt->track02_media_title_last_user_data_offset =
+        out_receipt->menu_runtime_handoff.track02_media_title_last_user_data_offset;
+    out_receipt->track02_media_stage_first_raw_offset =
+        out_receipt->menu_runtime_handoff.track02_media_stage_first_raw_offset;
+    out_receipt->track02_media_stage_last_raw_offset =
+        out_receipt->menu_runtime_handoff.track02_media_stage_last_raw_offset;
+    out_receipt->track02_media_stage_first_user_data_offset =
+        out_receipt->menu_runtime_handoff.track02_media_stage_first_user_data_offset;
+    out_receipt->track02_media_stage_last_user_data_offset =
+        out_receipt->menu_runtime_handoff.track02_media_stage_last_user_data_offset;
+    out_receipt->track02_media_soul_room_first_raw_offset =
+        out_receipt->menu_runtime_handoff.track02_media_soul_room_first_raw_offset;
+    out_receipt->track02_media_soul_room_last_raw_offset =
+        out_receipt->menu_runtime_handoff.track02_media_soul_room_last_raw_offset;
+    out_receipt->track02_media_soul_room_first_user_data_offset =
+        out_receipt->menu_runtime_handoff.track02_media_soul_room_first_user_data_offset;
+    out_receipt->track02_media_soul_room_last_user_data_offset =
+        out_receipt->menu_runtime_handoff.track02_media_soul_room_last_user_data_offset;
+    out_receipt->track02_media_forcefield_first_raw_offset =
+        out_receipt->menu_runtime_handoff.track02_media_forcefield_first_raw_offset;
+    out_receipt->track02_media_forcefield_last_raw_offset =
+        out_receipt->menu_runtime_handoff.track02_media_forcefield_last_raw_offset;
+    out_receipt->track02_media_forcefield_first_user_data_offset =
+        out_receipt->menu_runtime_handoff.track02_media_forcefield_first_user_data_offset;
+    out_receipt->track02_media_forcefield_last_user_data_offset =
+        out_receipt->menu_runtime_handoff.track02_media_forcefield_last_user_data_offset;
     out_receipt->title_prompt_ready =
         receipt->view_model_valid &&
                 receipt->view_model.startup_media_state_valid &&
