@@ -1136,6 +1136,8 @@ typedef struct {
     size_t object_table_shape_best_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_shape_best_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_shape_best_window_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_shape_best_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int object_table_shape_best_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_shape_best_record_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_shape_best_overflow_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_shape_best_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];

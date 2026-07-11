@@ -3592,6 +3592,8 @@ static void theron_v1_track02_object_table_note_shape_candidate(
     size_t entry_index,
     size_t raw_offset,
     size_t window_offset,
+    size_t user_data_offset,
+    int user_data_valid,
     Theron_Track02SemanticBindingStatus status,
     const Theron_Track02ObjectTable *table) {
 
@@ -3609,6 +3611,10 @@ static void theron_v1_track02_object_table_note_shape_candidate(
     receipt->object_table_shape_best_entry_index[anchor] = entry_index;
     receipt->object_table_shape_best_raw_offsets[anchor] = raw_offset;
     receipt->object_table_shape_best_window_offsets[anchor] = window_offset;
+    receipt->object_table_shape_best_user_data_offsets[anchor] =
+        user_data_offset;
+    receipt->object_table_shape_best_user_data_valid[anchor] =
+        user_data_valid ? 1 : 0;
     receipt->object_table_shape_best_record_counts[anchor] =
         table->record_count;
     receipt->object_table_shape_best_overflow_counts[anchor] =
@@ -3973,14 +3979,26 @@ int theron_v1_track02_capture_object_table_route_receipt(
                     out_receipt->object_table_candidate_last_hashes[anchor] =
                         tqr_fnv1a_bytes(track02_data + binding.absolute_offset,
                                         binding.byte_count);
-                    theron_v1_track02_object_table_note_shape_candidate(
-                        out_receipt,
-                        anchor,
-                        entry_index,
-                        binding.absolute_offset,
-                        0u,
-                        binding_status,
-                        &binding.object_table);
+                    {
+                        size_t shape_user_data_offset = 0u;
+                        int shape_user_data_valid =
+                            theron_v1_track02_raw_offset_to_user_offset(
+                                binding.absolute_offset,
+                                track02_size,
+                                md5_hex,
+                                &shape_user_data_offset) ==
+                            THERON_TRACK02_SIGNAL_OK;
+                        theron_v1_track02_object_table_note_shape_candidate(
+                            out_receipt,
+                            anchor,
+                            entry_index,
+                            binding.absolute_offset,
+                            0u,
+                            shape_user_data_offset,
+                            shape_user_data_valid,
+                            binding_status,
+                            &binding.object_table);
+                    }
                 }
                 if (binding_status == THERON_TRACK02_SEMANTIC_BINDING_OK) {
                     out_receipt->object_table_decode_ready = 1;
@@ -4122,14 +4140,26 @@ int theron_v1_track02_capture_object_table_route_receipt(
                         ++out_receipt
                               ->object_table_row_probe_anchor_counts[anchor];
                     }
-                    theron_v1_track02_object_table_note_shape_candidate(
-                        out_receipt,
-                        anchor,
-                        entry_index,
-                        entries[entry_index].absolute_offset,
-                        0u,
-                        row_status,
-                        &row_table);
+                    {
+                        size_t shape_user_data_offset = 0u;
+                        int shape_user_data_valid =
+                            theron_v1_track02_raw_offset_to_user_offset(
+                                entries[entry_index].absolute_offset,
+                                track02_size,
+                                md5_hex,
+                                &shape_user_data_offset) ==
+                            THERON_TRACK02_SIGNAL_OK;
+                        theron_v1_track02_object_table_note_shape_candidate(
+                            out_receipt,
+                            anchor,
+                            entry_index,
+                            entries[entry_index].absolute_offset,
+                            0u,
+                            shape_user_data_offset,
+                            shape_user_data_valid,
+                            row_status,
+                            &row_table);
+                    }
                 }
                 if (row_status == THERON_TRACK02_SEMANTIC_BINDING_OK) {
                     size_t user_data_offset = 0u;
@@ -4201,15 +4231,29 @@ int theron_v1_track02_capture_object_table_route_receipt(
                                   ->object_table_inner_scan_anchor_counts
                                       [anchor];
                         }
-                        theron_v1_track02_object_table_note_shape_candidate(
-                            out_receipt,
-                            anchor,
-                            entry_index,
-                            entries[entry_index].absolute_offset +
+                        {
+                            size_t shape_user_data_offset = 0u;
+                            const size_t shape_raw_offset =
+                                entries[entry_index].absolute_offset +
+                                inner_offset;
+                            int shape_user_data_valid =
+                                theron_v1_track02_raw_offset_to_user_offset(
+                                    shape_raw_offset,
+                                    track02_size,
+                                    md5_hex,
+                                    &shape_user_data_offset) ==
+                                THERON_TRACK02_SIGNAL_OK;
+                            theron_v1_track02_object_table_note_shape_candidate(
+                                out_receipt,
+                                anchor,
+                                entry_index,
+                                shape_raw_offset,
                                 inner_offset,
-                            inner_offset,
-                            inner_status,
-                            &inner_table);
+                                shape_user_data_offset,
+                                shape_user_data_valid,
+                                inner_status,
+                                &inner_table);
+                        }
                         if (inner_status ==
                             THERON_TRACK02_SEMANTIC_BINDING_OK) {
                             size_t inner_user_data_offset = 0u;
