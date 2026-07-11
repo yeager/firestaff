@@ -294,6 +294,70 @@ int dm1_v1_startup_hoc_host_probe_facts_set_presented_hash_pc34(
     return facts->observed_presented_rgba_capture;
 }
 
+int dm1_v1_startup_hoc_capture_facts_apply_host_observation_pc34(
+    DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34* facts,
+    const DM1_V1_StartupHoCHostCaptureObservation_PC34* observation) {
+    int host_presented;
+
+    if (!facts || !observation) {
+        return 0;
+    }
+    host_presented =
+        observation->host_window_present &&
+        observation->presented_capture_ready &&
+        facts->observed_presented_rgba_capture;
+    facts->captured_from_real_assets =
+        observation->captured_from_real_assets ? 1 : 0;
+    facts->observed_c026_portrait_asset =
+        observation->observed_c026_portrait_asset ? 1 : 0;
+    facts->observed_c346_mirror_backing_asset =
+        observation->observed_c346_mirror_backing_asset ? 1 : 0;
+    facts->observed_required_graphics_hash_match =
+        observation->observed_required_graphics_hash_match ? 1 : 0;
+    facts->observed_required_dungeon_hash_match =
+        observation->observed_required_dungeon_hash_match ? 1 : 0;
+    facts->observed_host_window_present =
+        observation->host_window_present ? 1 : 0;
+    facts->captured_from_mac_window = host_presented ? 1 : 0;
+    facts->captured_from_release_app =
+        host_presented &&
+        observation->started_from_launcher &&
+        observation->intro_not_bypassed ? 1 : 0;
+    return 1;
+}
+
+int dm1_v1_startup_hoc_host_probe_facts_apply_host_observation_pc34(
+    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    const DM1_V1_StartupHoCHostCaptureObservation_PC34* observation) {
+    int host_presented;
+
+    if (!facts || !observation) {
+        return 0;
+    }
+    host_presented =
+        observation->host_window_present &&
+        observation->presented_capture_ready &&
+        facts->observed_presented_rgba_capture;
+    facts->captured_from_real_assets =
+        observation->captured_from_real_assets ? 1 : 0;
+    facts->observed_c026_portrait_asset =
+        observation->observed_c026_portrait_asset ? 1 : 0;
+    facts->observed_c346_mirror_backing_asset =
+        observation->observed_c346_mirror_backing_asset ? 1 : 0;
+    facts->observed_required_graphics_hash_match =
+        observation->observed_required_graphics_hash_match ? 1 : 0;
+    facts->observed_required_dungeon_hash_match =
+        observation->observed_required_dungeon_hash_match ? 1 : 0;
+    facts->observed_host_window_present =
+        observation->host_window_present ? 1 : 0;
+    facts->captured_from_mac_window = host_presented ? 1 : 0;
+    facts->captured_from_release_app =
+        host_presented &&
+        observation->started_from_launcher &&
+        observation->intro_not_bypassed ? 1 : 0;
+    return 1;
+}
+
 static int dm1_v1_startup_hoc_host_draw_no_backing_fallback_pc34(
     const DM1_V1_ChampionMirrorRenderReceiptPc34* render,
     int backing_asset_available,

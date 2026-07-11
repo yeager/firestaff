@@ -11644,6 +11644,7 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
     DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* out_facts)
 {
     DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 facts;
+    DM1_V1_StartupHoCHostCaptureObservation_PC34 observation;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 front_wall;
     DM1_V1_ChampionMirrorRenderReceiptPc34 mirror_render;
     const M11_AssetSlot* portraits;
@@ -11655,6 +11656,7 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
     int presented_capture_ready;
 
     memset(&facts, 0, sizeof(facts));
+    memset(&observation, 0, sizeof(observation));
     memset(&front_wall, 0, sizeof(front_wall));
     memset(&mirror_render, 0, sizeof(mirror_render));
     portraits = NULL;
@@ -11718,29 +11720,26 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
     facts.launch_path_intro_not_bypassed =
         state && !state->dm1StartupIntroBypassed ? 1 : 0;
     facts.captured_after_first_frame_render = 1;
-    facts.captured_from_real_assets =
+    observation.host_window_present = host_window_present;
+    observation.presented_capture_ready = presented_capture_ready;
+    observation.started_from_launcher =
+        state && state->startedFromLauncher ? 1 : 0;
+    observation.intro_not_bypassed =
+        state && !state->dm1StartupIntroBypassed ? 1 : 0;
+    observation.captured_from_real_assets =
         state && state->assetsAvailable && state->assetLoader.fileState &&
         hoc_assets_ready;
-    facts.observed_required_graphics_hash_match =
-        facts.captured_from_real_assets;
-    facts.observed_required_dungeon_hash_match =
+    observation.observed_required_graphics_hash_match =
+        observation.captured_from_real_assets;
+    observation.observed_required_dungeon_hash_match =
         facts.dungeon_loaded && facts.map_count > 0;
-    facts.captured_from_mac_window =
-#ifdef __APPLE__
-        host_window_present && presented_capture_ready;
-#else
-        0;
-#endif
-    facts.captured_from_release_app =
-        state && state->startedFromLauncher &&
-        !state->dm1StartupIntroBypassed &&
-        host_window_present &&
-        presented_capture_ready;
-    facts.observed_c026_portrait_asset =
+    observation.observed_c026_portrait_asset =
         portraits && portraits->loaded && portraits->pixels ? 1 : 0;
-    facts.observed_c346_mirror_backing_asset =
+    observation.observed_c346_mirror_backing_asset =
         backing && backing->loaded && backing->pixels ? 1 : 0;
-    facts.observed_host_window_present = host_window_present;
+    (void)dm1_v1_startup_hoc_host_probe_facts_apply_host_observation_pc34(
+        &facts,
+        &observation);
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m11_boot_probe_consumer = 1;
     facts.consumed_m12_startup_capture_consumer = 1;
@@ -21230,6 +21229,7 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     DM1_V1_StartupHoCFullStartProductionReceipt_PC34 productionStart;
     DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 captureArtifact;
     DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 captureFacts;
+    DM1_V1_StartupHoCHostCaptureObservation_PC34 captureObservation;
     DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 captureProof;
     DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 runtimeApply;
     DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34 suppressionFacts;
@@ -21287,6 +21287,7 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     }
 
     memset(&captureFacts, 0, sizeof(captureFacts));
+    memset(&captureObservation, 0, sizeof(captureObservation));
     {
         const unsigned char* presented_rgba =
             M11_Render_GetPresentedRGBA(&presented_width, &presented_height);
@@ -21301,19 +21302,24 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
                 DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34);
     }
     captureFacts.captured_after_first_frame_render = 1;
-    captureFacts.captured_from_real_assets = hoc_assets_ready;
-    captureFacts.captured_from_mac_window =
-        host_window_present && presented_capture_ready;
-    captureFacts.captured_from_release_app =
-        state && state->startedFromLauncher &&
-        !state->dm1StartupIntroBypassed &&
-        host_window_present &&
-        presented_capture_ready;
-    captureFacts.observed_c026_portrait_asset =
-        portraits && portraits->loaded && portraits->pixels;
-    captureFacts.observed_c346_mirror_backing_asset =
-        backing && backing->loaded && backing->pixels;
-    captureFacts.observed_host_window_present = host_window_present;
+    captureObservation.host_window_present = host_window_present;
+    captureObservation.presented_capture_ready = presented_capture_ready;
+    captureObservation.started_from_launcher =
+        state && state->startedFromLauncher ? 1 : 0;
+    captureObservation.intro_not_bypassed =
+        state && !state->dm1StartupIntroBypassed ? 1 : 0;
+    captureObservation.captured_from_real_assets = hoc_assets_ready;
+    captureObservation.observed_c026_portrait_asset =
+        portraits && portraits->loaded && portraits->pixels ? 1 : 0;
+    captureObservation.observed_c346_mirror_backing_asset =
+        backing && backing->loaded && backing->pixels ? 1 : 0;
+    captureObservation.observed_required_graphics_hash_match =
+        hoc_assets_ready;
+    captureObservation.observed_required_dungeon_hash_match =
+        state && state->world.dungeon && state->world.dungeon->maps ? 1 : 0;
+    (void)dm1_v1_startup_hoc_capture_facts_apply_host_observation_pc34(
+        &captureFacts,
+        &captureObservation);
     captureFacts.captured_map_index = renderReceipt->map_index;
     captureFacts.captured_map_width =
         productionStart.packaged_proof.expected_map_width;

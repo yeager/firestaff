@@ -439,6 +439,18 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 {
     int blocked_enter_until_champion_selected;
 } DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34;
 
+typedef struct DM1_V1_StartupHoCHostCaptureObservation_PC34 {
+    int host_window_present;
+    int presented_capture_ready;
+    int started_from_launcher;
+    int intro_not_bypassed;
+    int captured_from_real_assets;
+    int observed_c026_portrait_asset;
+    int observed_c346_mirror_backing_asset;
+    int observed_required_graphics_hash_match;
+    int observed_required_dungeon_hash_match;
+} DM1_V1_StartupHoCHostCaptureObservation_PC34;
+
 typedef struct DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 {
     int handled;
     int ready;
@@ -1384,6 +1396,12 @@ int dm1_v1_startup_hoc_host_probe_facts_set_presented_hash_pc34(
     int byte_count,
     unsigned int presented_hash,
     unsigned int consumer_mask);
+int dm1_v1_startup_hoc_capture_facts_apply_host_observation_pc34(
+    DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34* facts,
+    const DM1_V1_StartupHoCHostCaptureObservation_PC34* observation);
+int dm1_v1_startup_hoc_host_probe_facts_apply_host_observation_pc34(
+    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    const DM1_V1_StartupHoCHostCaptureObservation_PC34* observation);
 int dm1_v1_startup_launch_path_bypasses_intro_pc34(
     DM1_V1_StartupLaunchPath_PC34 path);
 int dm1_v1_startup_source_visible_handoff_required_pc34(const char* game_id);
