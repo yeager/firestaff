@@ -730,8 +730,6 @@ typedef struct CSB_V1_BootStartupHostViewReceipt_PC34 {
     int runtime_tick_count;
     int readiness_valid;
     CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
-    int render_plan_valid;
-    CSB_V1_StartupRenderPlan_PC34 render_plan;
     int render_draw_valid;
     CSB_V1_BootStartupRenderDrawReceipt_PC34 render_draw;
     int hud_menu_draw_valid;

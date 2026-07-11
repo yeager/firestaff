@@ -4919,10 +4919,6 @@ int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
             hud->selected_utility_action_index;
     }
 
-    out_receipt->render_plan_valid =
-        csb_v1_boot_startup_capture_render_plan_pc34(
-            capture_receipt,
-            &out_receipt->render_plan);
     out_receipt->render_draw_valid =
         csb_v1_boot_startup_render_draw_receipt_from_capture_pc34(
             capture_receipt,
@@ -4977,9 +4973,11 @@ int csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34(
     }
 
     out_receipt->route = host_view.route;
-    out_receipt->startup_render_plan_valid = host_view.render_plan_valid;
+    out_receipt->startup_render_plan_valid =
+        host_view.render_draw_valid &&
+        host_view.render_draw.render_plan_valid;
     if (out_receipt->startup_render_plan_valid) {
-        out_receipt->startup_render_plan = host_view.render_plan;
+        out_receipt->startup_render_plan = host_view.render_draw.render_plan;
     }
     out_receipt->hud_menu_draw_valid = host_view.hud_menu_draw_valid;
     if (out_receipt->hud_menu_draw_valid) {
