@@ -6539,17 +6539,6 @@ static int m11_v1_bar_graphs_enabled(void) {
     return cached;
 }
 
-int M11_GameView_GetV1ChampionBarColor(int championIndex) {
-    if (championIndex < 0 || championIndex > 3) {
-        return DM1_COLOR_LIGHTEST_GRAY;
-    }
-    return (int)DM1_ChampionColor[championIndex];
-}
-
-int M11_GameView_GetV1StatusBarBlankColor(void) {
-    return DM1_COLOR_DARKEST_GRAY;
-}
-
 static void m11_blit_v2_slice_asset(const M11_V2SliceAsset* asset,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
@@ -32124,15 +32113,30 @@ static int m11_v1_mouse_route_zone_rect(int zoneId,
     }
 
     if (zoneId >= 151 && zoneId <= 154) {
-        return M11_GameView_GetV1StatusBoxZone(zoneId - 151,
-                                               outX, outY, outW, outH);
+        DM1_V1_ChampionStatusRectPc34 rect;
+        if (!dm1_v1_champion_status_box_rect_pc34(zoneId - 151, &rect)) {
+            return 0;
+        }
+        if (outX) *outX = rect.x;
+        if (outY) *outY = rect.y;
+        if (outW) *outW = rect.w;
+        if (outH) *outH = rect.h;
+        return 1;
     }
     if (zoneId >= 211 && zoneId <= 218) {
         const int slotBox = zoneId - 211;
         const int championSlot = slotBox >> 1;
         const int handSlot = slotBox & 1;
-        return M11_GameView_GetV1StatusHandZone(championSlot, handSlot,
-                                                outX, outY, outW, outH);
+        DM1_V1_ChampionStatusRectPc34 rect;
+        if (!dm1_v1_champion_status_hand_rect_pc34(championSlot, handSlot,
+                                                   &rect)) {
+            return 0;
+        }
+        if (outX) *outX = rect.x;
+        if (outY) *outY = rect.y;
+        if (outW) *outW = rect.w;
+        if (outH) *outH = rect.h;
+        return 1;
     }
     if (zoneId >= 187 && zoneId <= 190) {
         ChampionStatusRectCompat rect;
@@ -33403,82 +33407,6 @@ static unsigned short m11_get_status_hand_thing(const struct ChampionState_Compa
     return champ->inventory[CHAMPION_SLOT_ACTION_HAND];
 }
 
-int M11_GameView_GetV1StatusBoxZoneId(int championSlot) {
-    return dm1_v1_champion_status_box_zone_id_pc34(championSlot);
-}
-
-int M11_GameView_GetV1StatusBoxZone(int championSlot,
-                                    int* outX,
-                                    int* outY,
-                                    int* outW,
-                                    int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_box_rect_pc34(championSlot, &rect)) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-int M11_GameView_GetV1StatusBarGraphZoneId(int championSlot) {
-    return dm1_v1_champion_status_bar_graph_zone_id_pc34(championSlot);
-}
-
-int M11_GameView_GetV1StatusBarZoneId(int statIndex) {
-    return dm1_v1_champion_status_bar_zone_id_pc34(statIndex);
-}
-
-int M11_GameView_GetV1StatusBarValueZoneId(int championSlot,
-                                           int statIndex) {
-    return dm1_v1_champion_status_bar_value_zone_id_pc34(championSlot,
-                                                         statIndex);
-}
-
-int M11_GameView_GetV1StatusBarZone(int championSlot,
-                                    int statIndex,
-                                    int* outX,
-                                    int* outY,
-                                    int* outW,
-                                    int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_bar_rect_pc34(championSlot, statIndex, &rect)) {
-        return 0;
-    }
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-int M11_GameView_GetV1StatusHandParentZoneId(int championSlot) {
-    return dm1_v1_champion_status_hand_parent_zone_id_pc34(championSlot);
-}
-
-int M11_GameView_GetV1StatusHandZoneId(int championSlot,
-                                       int handIndex) {
-    return dm1_v1_champion_status_hand_zone_id_pc34(championSlot, handIndex);
-}
-
-int M11_GameView_GetV1StatusHandZone(int championSlot,
-                                     int handIndex,
-                                     int* outX,
-                                     int* outY,
-                                     int* outW,
-                                     int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_hand_rect_pc34(championSlot, handIndex,
-                                               &rect)) {
-        return 0;
-    }
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
 int M11_GameView_GetV1StatusHandIconZone(int championSlot,
                                          int handIndex,
                                          int* outX,
@@ -33488,88 +33416,6 @@ int M11_GameView_GetV1StatusHandIconZone(int championSlot,
     DM1_V1_ChampionStatusRectPc34 rect;
     if (!dm1_v1_champion_status_hand_icon_rect_pc34(championSlot, handIndex,
                                                     &rect)) {
-        return 0;
-    }
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
-                                            int handIndex,
-                                            int* outX,
-                                            int* outY,
-                                            int* outW,
-                                            int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_hand_slot_box_rect_pc34(championSlot,
-                                                        handIndex,
-                                                        &rect)) {
-        return 0;
-    }
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
-                                      int championSlot) {
-    const struct ChampionState_Compat* champ;
-    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
-        championSlot >= state->world.party.championCount ||
-        !state->world.party.champions[championSlot].present) {
-        return -1;
-    }
-    champ = &state->world.party.champions[championSlot];
-    return dm1_v1_champion_status_name_color_pc34(
-        (int)champ->present,
-        (int)champ->hp.current,
-        championSlot == state->world.party.activeChampionIndex);
-}
-
-int M11_GameView_GetV1StatusNameClearColor(void) {
-    return dm1_v1_champion_status_name_clear_color_pc34();
-}
-
-int M11_GameView_GetV1StatusBoxFillColor(void) {
-    return dm1_v1_champion_status_box_fill_color_pc34();
-}
-
-int M11_GameView_GetV1StatusNameClearZoneId(int championSlot) {
-    return dm1_v1_champion_status_name_clear_zone_id_pc34(championSlot);
-}
-
-int M11_GameView_GetV1StatusNameTextZoneId(int championSlot) {
-    return dm1_v1_champion_status_name_text_zone_id_pc34(championSlot);
-}
-
-int M11_GameView_GetV1StatusNameZone(int championSlot,
-                                     int* outX,
-                                     int* outY,
-                                     int* outW,
-                                     int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_name_rect_pc34(championSlot, &rect)) {
-        return 0;
-    }
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-int M11_GameView_GetV1StatusNameTextZone(int championSlot,
-                                         int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_name_text_rect_pc34(championSlot, &rect)) {
         return 0;
     }
     if (outX) *outX = rect.x;
@@ -33618,60 +33464,6 @@ int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
         return 0;
     }
     rect = dm1_v1_action_icon_inner_rect_pc34(championSlot);
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-int M11_GameView_GetV1StatusBoxGraphicId(void) {
-    return dm1_v1_champion_status_box_graphic_pc34();
-}
-
-int M11_GameView_GetV1DeadStatusBoxGraphicId(void) {
-    return dm1_v1_champion_dead_status_box_graphic_pc34();
-}
-
-int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
-                                           int championSlot) {
-    const struct ChampionState_Compat* champ;
-    if (!state || championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY ||
-        championSlot >= state->world.party.championCount) {
-        return 0;
-    }
-    champ = &state->world.party.champions[championSlot];
-    return dm1_v1_champion_status_box_base_graphic_pc34(
-        (int)champ->present,
-        (int)champ->hp.current);
-}
-
-int M11_GameView_GetV1PartyShieldBorderGraphicId(void) {
-    return dm1_v1_graphic_party_shield_border_pc34();
-}
-
-int M11_GameView_GetV1FireShieldBorderGraphicId(void) {
-    return dm1_v1_graphic_fire_shield_border_pc34();
-}
-
-int M11_GameView_GetV1SpellShieldBorderGraphicId(void) {
-    return dm1_v1_graphic_spell_shield_border_pc34();
-}
-
-int M11_GameView_GetV1CreatureDamageGraphicId(void) {
-    return dm1_v1_graphic_creature_damage_pc34();
-}
-
-int M11_GameView_GetV1StatusShieldBorderZone(int championSlot,
-                                             int* outX,
-                                             int* outY,
-                                             int* outW,
-                                             int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_shield_border_rect_pc34(championSlot,
-                                                        &rect)) {
-        return 0;
-    }
     if (outX) *outX = rect.x;
     if (outY) *outY = rect.y;
     if (outW) *outW = rect.w;
@@ -36071,7 +35863,13 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
         char line[48];
         int drewStatusBox = 0;
         if (!useV2PartyHud) {
-            (void)M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &slotW, &slotH);
+            DM1_V1_ChampionStatusRectPc34 statusRect;
+            if (dm1_v1_champion_status_box_rect_pc34(slot, &statusRect)) {
+                x = statusRect.x;
+                y = statusRect.y;
+                slotW = statusRect.w;
+                slotH = statusRect.h;
+            }
         }
 
         if (slot < state->world.party.championCount && state->world.party.champions[slot].present) {
@@ -36108,9 +35906,11 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * C007_GRAPHIC_STATUS_BOX as "never used"; alive champion
              * status boxes are cleared to C12 darkest-gray, then name,
              * bars, hands, and optional shield borders are drawn on top
-             * (CHAMPION.C F0292).  Dead champions still use graphic 8. */
+            * (CHAMPION.C F0292).  Dead champions still use graphic 8. */
             if (!useV2PartyHud) {
-                int baseGfx = M11_GameView_GetV1StatusBoxBaseGraphic(state, slot);
+                int baseGfx = dm1_v1_champion_status_box_base_graphic_pc34(
+                    (int)champ->present,
+                    (int)champ->hp.current);
                 if (baseGfx && state->assetsAvailable) {
                     const M11_AssetSlot* boxAsset = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
@@ -36126,7 +35926,8 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 if (!isDead) {
                     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                                   x, y, slotW, slotH,
-                                  (unsigned char)M11_GameView_GetV1StatusBoxFillColor());
+                                  (unsigned char)
+                                      dm1_v1_champion_status_box_fill_color_pc34());
                     drewStatusBox = 1;
                 }
             }
@@ -36197,22 +35998,31 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * leader C11 yellow, other champions C09 gold. */
             if (!useV2PartyHud) {
                 M11_TextStyle nameStyle = g_text_small;
-                nameStyle.color = (unsigned char)M11_GameView_GetV1StatusNameColor(state, slot);
+                nameStyle.color = (unsigned char)
+                    dm1_v1_champion_status_name_color_pc34(
+                        (int)champ->present,
+                        (int)champ->hp.current,
+                        slot == state->world.party.activeChampionIndex);
                 {
-                    int nameClearX, nameClearY, nameClearW, nameClearH;
-                    (void)M11_GameView_GetV1StatusNameZone(
-                        slot, &nameClearX, &nameClearY, &nameClearW, &nameClearH);
+                    DM1_V1_ChampionStatusRectPc34 nameRect;
+                    if (!dm1_v1_champion_status_name_rect_pc34(slot,
+                                                               &nameRect)) {
+                        continue;
+                    }
                     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                  nameClearX, nameClearY, nameClearW, nameClearH,
-                                  (unsigned char)M11_GameView_GetV1StatusNameClearColor());
+                                  nameRect.x, nameRect.y, nameRect.w, nameRect.h,
+                                  (unsigned char)
+                                      dm1_v1_champion_status_name_clear_color_pc34());
                 }
                 {
-                    int nameTextX, nameTextY, nameTextW;
-                    (void)M11_GameView_GetV1StatusNameTextZone(
-                        slot, &nameTextX, &nameTextY, &nameTextW, NULL);
+                    DM1_V1_ChampionStatusRectPc34 nameTextRect;
+                    if (!dm1_v1_champion_status_name_text_rect_pc34(
+                            slot, &nameTextRect)) {
+                        continue;
+                    }
                     m11_draw_text_centered_in_rect(
                         framebuffer, framebufferWidth, framebufferHeight,
-                        nameTextX, nameTextY, nameTextW,
+                        nameTextRect.x, nameTextRect.y, nameTextRect.w,
                         name, &nameStyle);
                 }
             } else {
@@ -36292,15 +36102,16 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                           (unsigned char)barModel.fillColor);
                         }
                     } else {
-                        int barX, barTopY, barW, barFullHeight;
-                        (void)M11_GameView_GetV1StatusBarZone(
-                            slot, statIdx, &barX, &barTopY,
-                            &barW, &barFullHeight);
+                        DM1_V1_ChampionStatusRectPc34 barRect;
+                        if (!dm1_v1_champion_status_bar_rect_pc34(
+                                slot, statIdx, &barRect)) {
+                            continue;
+                        }
                         m11_fill_rect(framebuffer, framebufferWidth,
                                       framebufferHeight,
-                                      barX, barTopY, barW, barFullHeight,
+                                      barRect.x, barRect.y, barRect.w, barRect.h,
                                       (unsigned char)
-                                          M11_GameView_GetV1StatusBarBlankColor());
+                                          DM1_COLOR_DARKEST_GRAY);
                     }
                 }
             } else if (!m11_v1_bar_graphs_enabled()) {
@@ -36476,7 +36287,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             if (state->assetsAvailable) {
                 const M11_AssetSlot* boxAsset = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
-                    (unsigned int)M11_GameView_GetV1StatusBoxGraphicId());
+                    (unsigned int)dm1_v1_champion_status_box_graphic_pc34());
                 if (boxAsset && boxAsset->width == 67 && boxAsset->height == 29) {
                     M11_AssetLoader_BlitRegion(boxAsset,
                         0, 0, 67, 29,
@@ -39531,7 +39342,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         if (state->assetsAvailable) {
             const M11_AssetSlot* dmg14 = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
-                (unsigned int)M11_GameView_GetV1CreatureDamageGraphicId());
+                (unsigned int)dm1_v1_graphic_creature_damage_pc34());
             if (dmg14 && dmg14->width > 0 && dmg14->height > 0) {
                 int blitW, blitH;
                 if (state->creatureHitDamageAmount > 40) {
