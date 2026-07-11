@@ -192,6 +192,83 @@ int dm1_v1_inventory_source_slot_box_zone_pc34(
         outZone);
 }
 
+int dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
+    int championSlot) {
+    /* ReDMCSB COMMAND.C C034..C059 maps champion inventory slots onto
+     * source slot-box zones C507..C536.  Keep the compact Firestaff slot
+     * index to source-zone index mapping in DM1, not M11. */
+    switch (championSlot) {
+        case CHAMPION_SLOT_HAND_LEFT:  return 8;  /* READY_HAND -> C507 */
+        case CHAMPION_SLOT_HAND_RIGHT: return 9;  /* ACTION_HAND -> C508 */
+        case CHAMPION_SLOT_HEAD:       return 10; /* C509 */
+        case CHAMPION_SLOT_TORSO:      return 11; /* C510 */
+        case CHAMPION_SLOT_LEGS:       return 12; /* C511 */
+        case CHAMPION_SLOT_FEET:       return 13; /* C512 */
+        case CHAMPION_SLOT_POUCH_2:    return 14; /* C513 */
+        case CHAMPION_SLOT_QUIVER_3:   return 15; /* C514 */
+        case CHAMPION_SLOT_QUIVER_2:   return 16; /* C515 */
+        case CHAMPION_SLOT_QUIVER_4:   return 17; /* C516 */
+        case CHAMPION_SLOT_NECK:       return 18; /* C517 */
+        case CHAMPION_SLOT_POUCH_1:    return 19; /* C518 */
+        case CHAMPION_SLOT_QUIVER_1:   return 20; /* C519 */
+        case CHAMPION_SLOT_BACKPACK_1: return 21; /* C520 */
+        case CHAMPION_SLOT_BACKPACK_2: return 22; /* C521 */
+        case CHAMPION_SLOT_BACKPACK_3: return 23; /* C522 */
+        case CHAMPION_SLOT_BACKPACK_4: return 24; /* C523 */
+        case CHAMPION_SLOT_BACKPACK_5: return 25; /* C524 */
+        case CHAMPION_SLOT_BACKPACK_6: return 26; /* C525 */
+        case CHAMPION_SLOT_BACKPACK_7: return 27; /* C526 */
+        case CHAMPION_SLOT_BACKPACK_8: return 28; /* C527 */
+        case CHAMPION_SLOT_BACKPACK_9: return 29; /* C528 */
+        case CHAMPION_SLOT_BACKPACK_10: return 30; /* C529 */
+        case CHAMPION_SLOT_BACKPACK_11: return 31; /* C530 */
+        case CHAMPION_SLOT_BACKPACK_12: return 32; /* C531 */
+        case CHAMPION_SLOT_BACKPACK_13: return 33; /* C532 */
+        case CHAMPION_SLOT_BACKPACK_14: return 34; /* C533 */
+        case CHAMPION_SLOT_BACKPACK_15: return 35; /* C534 */
+        case CHAMPION_SLOT_BACKPACK_16: return 36; /* C535 */
+        case CHAMPION_SLOT_BACKPACK_17: return 37; /* C536 */
+        default: return 0;
+    }
+}
+
+int dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
+    int sourceSlotBoxIndex) {
+    switch (sourceSlotBoxIndex) {
+        case 8:  return CHAMPION_SLOT_HAND_LEFT;
+        case 9:  return CHAMPION_SLOT_HAND_RIGHT;
+        case 10: return CHAMPION_SLOT_HEAD;
+        case 11: return CHAMPION_SLOT_TORSO;
+        case 12: return CHAMPION_SLOT_LEGS;
+        case 13: return CHAMPION_SLOT_FEET;
+        case 14: return CHAMPION_SLOT_POUCH_2;
+        case 15: return CHAMPION_SLOT_QUIVER_3;
+        case 16: return CHAMPION_SLOT_QUIVER_2;
+        case 17: return CHAMPION_SLOT_QUIVER_4;
+        case 18: return CHAMPION_SLOT_NECK;
+        case 19: return CHAMPION_SLOT_POUCH_1;
+        case 20: return CHAMPION_SLOT_QUIVER_1;
+        case 21: return CHAMPION_SLOT_BACKPACK_1;
+        case 22: return CHAMPION_SLOT_BACKPACK_2;
+        case 23: return CHAMPION_SLOT_BACKPACK_3;
+        case 24: return CHAMPION_SLOT_BACKPACK_4;
+        case 25: return CHAMPION_SLOT_BACKPACK_5;
+        case 26: return CHAMPION_SLOT_BACKPACK_6;
+        case 27: return CHAMPION_SLOT_BACKPACK_7;
+        case 28: return CHAMPION_SLOT_BACKPACK_8;
+        case 29: return CHAMPION_SLOT_BACKPACK_9;
+        case 30: return CHAMPION_SLOT_BACKPACK_10;
+        case 31: return CHAMPION_SLOT_BACKPACK_11;
+        case 32: return CHAMPION_SLOT_BACKPACK_12;
+        case 33: return CHAMPION_SLOT_BACKPACK_13;
+        case 34: return CHAMPION_SLOT_BACKPACK_14;
+        case 35: return CHAMPION_SLOT_BACKPACK_15;
+        case 36: return CHAMPION_SLOT_BACKPACK_16;
+        case 37: return CHAMPION_SLOT_BACKPACK_17;
+        default: return -1;
+    }
+}
+
 int dm1_v1_inventory_equipment_slot_zone_count_pc34(void) {
     return (int)(sizeof(kInventoryEquipmentSlotZones) /
                  sizeof(kInventoryEquipmentSlotZones[0]));

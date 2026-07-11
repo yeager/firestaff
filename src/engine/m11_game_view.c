@@ -32036,12 +32036,26 @@ static int m11_v1_mouse_route_zone_rect(int zoneId,
                                                   outX, outY, outW, outH);
     }
     if (zoneId >= 507 && zoneId <= 536) {
-        return M11_GameView_GetV1InventorySourceSlotBoxZone(zoneId - 499,
-                                                            outX, outY, outW, outH);
+        DM1_V1_InventorySlotBoxZonePc34 zone;
+        if (!dm1_v1_inventory_source_slot_box_zone_pc34(zoneId - 499, &zone)) {
+            return 0;
+        }
+        if (outX) *outX = zone.x;
+        if (outY) *outY = zone.y;
+        if (outW) *outW = zone.w;
+        if (outH) *outH = zone.h;
+        return 1;
     }
     if (zoneId >= 537 && zoneId <= 544) {
-        return M11_GameView_GetV1ChestSlotBoxZone(zoneId - 537,
-                                                  outX, outY, outW, outH);
+        DM1_V1_InventorySlotBoxZonePc34 zone;
+        if (!dm1_v1_inventory_chest_slot_box_zone_pc34(zoneId - 537, &zone)) {
+            return 0;
+        }
+        if (outX) *outX = zone.x;
+        if (outY) *outY = zone.y;
+        if (outW) *outW = zone.w;
+        if (outH) *outH = zone.h;
+        return 1;
     }
     if (zoneId == 101) {
         DM1_V1_LayoutZoneRectPc34 panelRect =
@@ -32083,84 +32097,12 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
 }
 
 int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int championSlot) {
-    /* Bridge Firestaff's compact champion inventory indices to the
-     * ReDMCSB/DEFS.H inventory slot-box namespace.  The return value is
-     * the original source slot-box index (8..37), which maps directly to
-     * layout-696 zones C507..C536 via
-     * M11_GameView_GetV1InventorySourceSlotBoxZone*(). */
-    switch (championSlot) {
-        case CHAMPION_SLOT_HAND_LEFT:  return 8;  /* READY_HAND -> C507 */
-        case CHAMPION_SLOT_HAND_RIGHT: return 9;  /* ACTION_HAND -> C508 */
-        case CHAMPION_SLOT_HEAD:       return 10; /* C509 */
-        case CHAMPION_SLOT_TORSO:      return 11; /* C510 */
-        case CHAMPION_SLOT_LEGS:       return 12; /* C511 */
-        case CHAMPION_SLOT_FEET:       return 13; /* C512 */
-        case CHAMPION_SLOT_POUCH_2:    return 14; /* C513 */
-        case CHAMPION_SLOT_QUIVER_3:   return 15; /* C514 QUIVER_LINE2_1 */
-        case CHAMPION_SLOT_QUIVER_2:   return 16; /* C515 QUIVER_LINE1_2 */
-        case CHAMPION_SLOT_QUIVER_4:   return 17; /* C516 QUIVER_LINE2_2 */
-        case CHAMPION_SLOT_NECK:       return 18; /* C517 */
-        case CHAMPION_SLOT_POUCH_1:    return 19; /* C518 */
-        case CHAMPION_SLOT_QUIVER_1:   return 20; /* C519 QUIVER_LINE1_1 */
-        case CHAMPION_SLOT_BACKPACK_1: return 21; /* C520 */
-        case CHAMPION_SLOT_BACKPACK_2: return 22; /* C521 */
-        case CHAMPION_SLOT_BACKPACK_3: return 23; /* C522 */
-        case CHAMPION_SLOT_BACKPACK_4: return 24; /* C523 */
-        case CHAMPION_SLOT_BACKPACK_5: return 25; /* C524 */
-        case CHAMPION_SLOT_BACKPACK_6: return 26; /* C525 */
-        case CHAMPION_SLOT_BACKPACK_7: return 27; /* C526 */
-        case CHAMPION_SLOT_BACKPACK_8: return 28; /* C527 */
-        case CHAMPION_SLOT_BACKPACK_9: return 29; /* C528 */
-        case CHAMPION_SLOT_BACKPACK_10: return 30; /* C529 */
-        case CHAMPION_SLOT_BACKPACK_11: return 31; /* C530 */
-        case CHAMPION_SLOT_BACKPACK_12: return 32; /* C531 */
-        case CHAMPION_SLOT_BACKPACK_13: return 33; /* C532 */
-        case CHAMPION_SLOT_BACKPACK_14: return 34; /* C533 */
-        case CHAMPION_SLOT_BACKPACK_15: return 35; /* C534 */
-        case CHAMPION_SLOT_BACKPACK_16: return 36; /* C535 */
-        case CHAMPION_SLOT_BACKPACK_17: return 37; /* C536 */
-        default: return 0;
-    }
+    return dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(championSlot);
 }
 
 int M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(int sourceSlotBoxIndex) {
-    /* Inverse of M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot().
-     * Used by the source mouse-route bridge for COMMAND.C C028..C057.
-     * Source slot-box indices 29..37 are the remaining DM1 backpack cells
-     * (C528..C536) and map to the reserved upper champion inventory slots. */
-    switch (sourceSlotBoxIndex) {
-        case 8:  return CHAMPION_SLOT_HAND_LEFT;   /* READY_HAND / C507 */
-        case 9:  return CHAMPION_SLOT_HAND_RIGHT;  /* ACTION_HAND / C508 */
-        case 10: return CHAMPION_SLOT_HEAD;        /* C509 */
-        case 11: return CHAMPION_SLOT_TORSO;       /* C510 */
-        case 12: return CHAMPION_SLOT_LEGS;        /* C511 */
-        case 13: return CHAMPION_SLOT_FEET;        /* C512 */
-        case 14: return CHAMPION_SLOT_POUCH_2;     /* C513 */
-        case 15: return CHAMPION_SLOT_QUIVER_3;    /* C514 */
-        case 16: return CHAMPION_SLOT_QUIVER_2;    /* C515 */
-        case 17: return CHAMPION_SLOT_QUIVER_4;    /* C516 */
-        case 18: return CHAMPION_SLOT_NECK;        /* C517 */
-        case 19: return CHAMPION_SLOT_POUCH_1;     /* C518 */
-        case 20: return CHAMPION_SLOT_QUIVER_1;    /* C519 */
-        case 21: return CHAMPION_SLOT_BACKPACK_1;  /* C520 */
-        case 22: return CHAMPION_SLOT_BACKPACK_2;  /* C521 */
-        case 23: return CHAMPION_SLOT_BACKPACK_3;  /* C522 */
-        case 24: return CHAMPION_SLOT_BACKPACK_4;  /* C523 */
-        case 25: return CHAMPION_SLOT_BACKPACK_5;  /* C524 */
-        case 26: return CHAMPION_SLOT_BACKPACK_6;  /* C525 */
-        case 27: return CHAMPION_SLOT_BACKPACK_7;  /* C526 */
-        case 28: return CHAMPION_SLOT_BACKPACK_8;  /* C527 */
-        case 29: return CHAMPION_SLOT_BACKPACK_9;  /* C528 */
-        case 30: return CHAMPION_SLOT_BACKPACK_10; /* C529 */
-        case 31: return CHAMPION_SLOT_BACKPACK_11; /* C530 */
-        case 32: return CHAMPION_SLOT_BACKPACK_12; /* C531 */
-        case 33: return CHAMPION_SLOT_BACKPACK_13; /* C532 */
-        case 34: return CHAMPION_SLOT_BACKPACK_14; /* C533 */
-        case 35: return CHAMPION_SLOT_BACKPACK_15; /* C534 */
-        case 36: return CHAMPION_SLOT_BACKPACK_16; /* C535 */
-        case 37: return CHAMPION_SLOT_BACKPACK_17; /* C536 */
-        default: return -1;
-    }
+    return dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
+        sourceSlotBoxIndex);
 }
 
 
@@ -32828,7 +32770,7 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
     }
     championIndex = state->world.party.activeChampionIndex;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
-    championSlot = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(
+    championSlot = dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
         sourceSlotBoxIndex);
     if (championSlot < 0 || championSlot >= CHAMPION_SLOT_COUNT) return 0;
     champ = &state->world.party.champions[championIndex];
@@ -32891,7 +32833,7 @@ static int m11_process_dm2_inventory_slot_box_click(M11_GameViewState* state,
     }
     championIndex = state->world.party.activeChampionIndex;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
-    championSlot = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(
+    championSlot = dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
         sourceSlotBoxIndex);
     if (championSlot < 0 || championSlot >= CHAMPION_SLOT_COUNT) return 0;
 
@@ -33613,16 +33555,21 @@ static void m11_draw_dm2_inventory_object_icons(const M11_GameViewState* state,
         uint32_t object =
             state->dm2State.champion_inventory_objects[championIndex][slot];
         int sourceSlotBox;
+        DM1_V1_InventorySlotBoxZonePc34 zone;
         int zx = 0, zy = 0, zw = 0, zh = 0;
         int drawW, drawH;
         if (object == 0u) continue;
         sourceSlotBox =
-            M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(slot);
+            dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(slot);
         if (!sourceSlotBox ||
-            !M11_GameView_GetV1InventorySourceSlotBoxZone(
-                sourceSlotBox, &zx, &zy, &zw, &zh)) {
+            !dm1_v1_inventory_source_slot_box_zone_pc34(
+                sourceSlotBox, &zone)) {
             continue;
         }
+        zx = zone.x;
+        zy = zone.y;
+        zw = zone.w;
+        zh = zone.h;
         drawW = zw > 2 ? zw - 2 : zw;
         drawH = zh > 2 ? zh - 2 : zh;
         (void)m11_draw_dm2_object_icon_at(
@@ -37063,14 +37010,19 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         int sourceSlotBox;
         int slotIdx;
         for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox) {
+            DM1_V1_InventorySlotBoxZonePc34 zone;
             int zx = 0, zy = 0, zw = 0, zh = 0;
-            int slotBoxGraphic = M11_GameView_GetV1InventorySourceSlotBoxGraphicId(
-                sourceSlotBox);
+            int slotBoxGraphic = dm1_v1_graphic_slot_box_normal_pc34();
+            memset(&zone, 0, sizeof(zone));
             if (!slotBoxGraphic ||
-                !M11_GameView_GetV1InventorySourceSlotBoxZone(
-                    sourceSlotBox, &zx, &zy, &zw, &zh)) {
+                !dm1_v1_inventory_source_slot_box_zone_pc34(
+                    sourceSlotBox, &zone)) {
                 continue;
             }
+            zx = zone.x;
+            zy = zone.y;
+            zw = zone.w;
+            zh = zone.h;
             if (state->assetsAvailable) {
                 const M11_AssetSlot* boxSlot = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
@@ -37093,21 +37045,25 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         }
         for (slotIdx = 0; slotIdx < CHAMPION_SLOT_COUNT; ++slotIdx) {
             unsigned short thingId = champ->inventory[slotIdx];
-            int sourceSlotBox = M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(slotIdx);
+            int sourceSlotBox =
+                dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(slotIdx);
             if (!sourceSlotBox) continue;
             if (thingId != THING_NONE && thingId != THING_ENDOFLIST &&
                 state->assetsAvailable &&
                 (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT ||
                  state->world.things)) {
-                int zx = 0, zy = 0, zw = 0, zh = 0;
+                DM1_V1_InventorySlotBoxZonePc34 zone;
                 int iconIndex = m11_v1_inventory_slot_icon_index_for_thing(
                     state, slotIdx, thingId);
-                if (M11_GameView_GetV1InventorySourceSlotBoxZone(
-                        sourceSlotBox, &zx, &zy, &zw, &zh)) {
-                    (void)zw; (void)zh;
+                memset(&zone, 0, sizeof(zone));
+                if (dm1_v1_inventory_source_slot_box_zone_pc34(
+                        sourceSlotBox, &zone)) {
                     (void)m11_draw_dm_object_icon_index(
                         state, framebuffer, framebufferWidth, framebufferHeight,
-                        iconIndex, M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy, 0);
+                        iconIndex,
+                        M11_VIEWPORT_X + zone.x,
+                        M11_VIEWPORT_Y + zone.y,
+                        0);
                 }
             }
         }
@@ -37145,8 +37101,17 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 }
             }
             for (chestOrdinal = 0; chestOrdinal < 8; ++chestOrdinal) {
+                DM1_V1_InventorySlotBoxZonePc34 zone;
                 int zx = 0, zy = 0, zw = 0, zh = 0;
-                if (!M11_GameView_GetV1ChestSlotBoxZone(chestOrdinal, &zx, &zy, &zw, &zh)) continue;
+                memset(&zone, 0, sizeof(zone));
+                if (!dm1_v1_inventory_chest_slot_box_zone_pc34(
+                        chestOrdinal, &zone)) {
+                    continue;
+                }
+                zx = zone.x;
+                zy = zone.y;
+                zw = zone.w;
+                zh = zone.h;
                 if (state->assetsAvailable) {
                     const M11_AssetSlot* boxSlot = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
