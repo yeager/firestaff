@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 CSB D2L2/D2R2 F0115 render API cleanup: renamed the old public `M11_GameView_D2L2F0115Projectile*` CSB viewport helpers to CSB-owned ReDMCSB names, updated the regression test, and wired the existing test into CMake/CTest. Reference read: ReDMCSB `DUNVIEW.C` F0115/F0678/F0679 and `DEFS.H` C09/C10/C707/C708. Verification: `firestaff_m11`, `test_csb_v1_viewport_d2l2_f0115_projectile_pc34_compat`, focused CTest, targeted M11-symbol `rg`, and whitespace scan passed.
+
 - ✅ 2026-07-11 DM1 mirror-click/leader API cleanup: moved resurrect-rearm, double-open/close, and chest-reopen cross-champion callers from old `Dm1V1MirrorClickClosed*Compat` / `Dm1V1ChampionLeader*Compat` aliases to the direct DM1/ReDMCSB names, then removed the public alias typedefs/macros. Verification: `firestaff_m11`, `test_dm1_v1_champion_mirror_click_closed_pc34_compat`, `test_dm1_v1_champion_leader_pc34_compat`, `test_dm1_v1_mirror_candidate_double_open_close_pc34_compat`, targeted alias `rg`, and whitespace scan passed.
 
 - ✅ 2026-07-11 DM1 HoC champion-mirror API cleanup: removed the unused old `Dm1V1ChampionMirror*Compat` type aliases and `DM1_V1_ChampionMirror_*Pc34Compat` macro aliases from the public champion-mirror header. M11, startup, overlay, and mirror tests already consume the DM1/ReDMCSB receipt API directly. Verification: `firestaff_m11`, `test_dm1_v1_champion_mirror_pc34_compat`, `test_m11_overlay_command_queue_block`, targeted alias `rg`, and whitespace scan passed.
