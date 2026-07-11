@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 Nexus screenshot/readiness and DGN capture route: Track 1 screen-capture readiness now writes a Nexus-owned deterministic 24-bit BMP without linking the full M11 app, runtime screenshot readiness uses boot-probe plus BMP receipt instead of the old gallery timeout, and launcher complete-support carries DGN viewport capture frame/hash. Verification: Nexus readiness/direct verifiers passed and focused Nexus CTest passed 8/8.
+
 - ✅ 2026-07-11 CSB runtime boundary verifier refresh: `csb_v1_m11_runtime_capture_boundary` now checks current M12 launch gate, M11 host-view receipt, and CSB M11 presentation receipt anchors instead of stale line-window strings. Verification: `python3 tools/verify_csb_v1_m11_runtime_capture_boundary.py` passed; focused CSB CTest pair passed 2/2.
 
 - ✅ 2026-07-11 DM2 GDAT frame ownership split: runtime full-frame ownership now allows complete provider-backed HUD/dungeon GDAT consumption while keeping `real_gdat_evidence_valid` exclusive to the real boot GDAT provider. Verification: `test_dm2_v1_runtime_handoff_smoke` passed 150/150; focused DM2 CTest pair passed 2/2.

@@ -1066,6 +1066,35 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
         title_host->host_all_route_timing_matrix_complete &&
         save_host->host_all_route_timing_matrix_complete &&
         champion_host->host_all_route_timing_matrix_complete;
+    out_receipt->saturn_title_capture_frame =
+        title_host->saturn_title_capture_frame;
+    out_receipt->saturn_save_capture_frame =
+        save_host->saturn_save_capture_frame;
+    out_receipt->saturn_champion_capture_frame =
+        champion_host->saturn_champion_capture_frame;
+    out_receipt->saturn_dungeon_capture_frame =
+        champion_host->saturn_dungeon_capture_frame;
+    out_receipt->saturn_non_title_capture_mask =
+        (save_host->host_saturn_non_title_capture_mask & 1u) |
+        (champion_host->host_saturn_non_title_capture_mask & 2u) |
+        (champion_host->host_saturn_non_title_capture_mask & 4u);
+    out_receipt->saturn_expected_capture_mask =
+        save_host->host_saturn_expected_capture_mask |
+        champion_host->host_saturn_expected_capture_mask;
+    out_receipt->saturn_non_title_capture_count =
+        (out_receipt->saturn_non_title_capture_mask & 1u ? 1 : 0) +
+        (out_receipt->saturn_non_title_capture_mask & 2u ? 1 : 0) +
+        (out_receipt->saturn_non_title_capture_mask & 4u ? 1 : 0);
+    out_receipt->saturn_non_title_capture_complete =
+        out_receipt->saturn_non_title_capture_mask == 7u &&
+        (out_receipt->saturn_expected_capture_mask & 7u) == 7u &&
+        out_receipt->saturn_non_title_capture_count == 3 &&
+        out_receipt->saturn_save_capture_frame ==
+            save_host->ownership.startup_bundle.package.boot_start_ready_frames &&
+        out_receipt->saturn_champion_capture_frame ==
+            champion_host->ownership.startup_bundle.package.boot_start_ready_frames &&
+        out_receipt->saturn_dungeon_capture_frame ==
+            champion_host->ownership.startup_bundle.package.boot_start_ready_frames;
     out_receipt->no_fallback_visuals_enforced =
         title_host->no_fallback_visuals_enforced &&
         save_host->no_fallback_visuals_enforced &&
@@ -1100,7 +1129,8 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
         out_receipt->save_route_complete &&
         out_receipt->champion_route_complete &&
         out_receipt->host_route_matrix_complete &&
-        out_receipt->saturn_timing_matrix_complete;
+        out_receipt->saturn_timing_matrix_complete &&
+        out_receipt->saturn_non_title_capture_complete;
     out_receipt->all_nexus_runtime_routes_complete =
         out_receipt->all_nexus_startup_routes_complete &&
         out_receipt->dungeon_route_complete &&
@@ -4641,6 +4671,10 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
             viewport_host_route.package_consumed ? 1 : 0;
         receipt->dgn_viewport_host_route_blocks_runtime =
             viewport_host_route.blocks_runtime_dgn ? 1 : 0;
+        receipt->dgn_viewport_capture_ready =
+            viewport_host_route.captured_frame_ready ? 1 : 0;
+        receipt->dgn_viewport_frame_hash =
+            viewport_host_route.frame_hash;
     }
 
     receipt->title_capture_uses_real_assets =

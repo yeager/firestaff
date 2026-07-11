@@ -258,7 +258,7 @@ def write_outputs(result: dict[str, Any]) -> None:
         "This gate proves the DM.BIN/FONT256.S2D/MNS runtime handoff",
         "reaches a real 24-bit BMP on disk through",
         "`nexus_viewport_render` + `nexus_viewport_to_rgba` +",
-        "`M11_Screenshot_CaptureRGBA` for every verified Nexus data root",
+        "the probe-owned 24-bit BMP receipt writer for every verified Nexus data root",
         "that is present on the host. It is a *readiness* receipt for",
         "the E1 Track 1 phase-launch row; it does not promote screenshots",
         "and it does not rewrite public docs.",

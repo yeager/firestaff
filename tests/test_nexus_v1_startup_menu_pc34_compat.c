@@ -1369,6 +1369,8 @@ int main(void)
                real_asset_ownership_receipt.bpk_truecolor_material_surface_count == 1 &&
                real_asset_ownership_receipt.bpk_prs3_material_surface_count == 0 &&
                real_asset_ownership_receipt.dgn_viewport_written_pixels > 0 &&
+               real_asset_ownership_receipt.dgn_viewport_capture_ready == 1 &&
+               real_asset_ownership_receipt.dgn_viewport_frame_hash != 0u &&
                real_asset_ownership_receipt
                        .runtime_dgn_material_path_consumed == 1 &&
                real_asset_ownership_receipt
@@ -1703,6 +1705,15 @@ int main(void)
                complete_support_receipt.startup_package_consumed_by_all_routes == 1 &&
                complete_support_receipt.host_route_matrix_complete == 1 &&
                complete_support_receipt.saturn_timing_matrix_complete == 1 &&
+               complete_support_receipt.saturn_title_capture_frame ==
+                   nexus_v1_boot_warning_frames() &&
+               complete_support_receipt.saturn_save_capture_frame == 102 &&
+               complete_support_receipt.saturn_champion_capture_frame == 102 &&
+               complete_support_receipt.saturn_dungeon_capture_frame == 102 &&
+               complete_support_receipt.saturn_non_title_capture_mask == 7u &&
+               complete_support_receipt.saturn_expected_capture_mask == 7u &&
+               complete_support_receipt.saturn_non_title_capture_count == 3 &&
+               complete_support_receipt.saturn_non_title_capture_complete == 1 &&
                complete_support_receipt.no_fallback_visuals_enforced == 1 &&
                complete_support_receipt.fallback_visuals_permitted == 0 &&
                complete_support_receipt.complete_route_mask == 31u &&

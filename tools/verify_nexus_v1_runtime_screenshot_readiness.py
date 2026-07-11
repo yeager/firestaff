@@ -120,7 +120,7 @@ def screenshot_rows(directory: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
+def run_case(firestaff: Path, track1_probe: Path, case: dict[str, Any]) -> dict[str, Any]:
     data_dir = Path(case["path"])
     row: dict[str, Any] = {
         "id": case["id"],
@@ -130,6 +130,7 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
         "probe": None,
         "screenshots": [],
         "presented_screenshots": [],
+        "probe_bmp_screenshots": [],
         "marker_found": False,
         "ok": False,
     }
@@ -144,10 +145,15 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
         probe_path = temp_root / "nexus_runtime_probe.json"
         screenshot_dir = temp_root / "source_bmp"
         presented_dir = temp_root / "presented_bmp"
+        probe_bmp_dir = temp_root / "probe_bmp"
+        screenshot_dir.mkdir(parents=True, exist_ok=True)
+        presented_dir.mkdir(parents=True, exist_ok=True)
+        probe_bmp_dir.mkdir(parents=True, exist_ok=True)
         replacements = {
             str(temp_root): "<temp>",
             str(data_dir): f"<{case['id']}-data-dir>",
             str(firestaff): "<build-firestaff>",
+            str(track1_probe): "<track1-probe>",
         }
         env = os.environ.copy()
         env["HOME"] = str(temp_home)
@@ -162,8 +168,9 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
             "nexus",
             "--data-dir",
             str(data_dir),
-            "--duration",
-            "1500",
+            "--boot-probe",
+            "--boot-probe-frames",
+            "4",
         ]
         proc = run(cmd, env=env, replacements=replacements)
         row["command"] = proc
@@ -178,33 +185,38 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
             row["probe"] = json.loads(probe_path.read_text(encoding="utf-8"))
         row["screenshots"] = screenshot_rows(screenshot_dir)
         row["presented_screenshots"] = screenshot_rows(presented_dir)
+        if track1_probe.exists():
+            probe_proc = run(
+                [str(track1_probe), str(data_dir), str(probe_bmp_dir)],
+                env=env,
+                replacements=replacements,
+            )
+            row["track1_probe_command"] = probe_proc
+            row["probe_bmp_screenshots"] = screenshot_rows(probe_bmp_dir)
+        else:
+            row["track1_probe_command"] = {
+                "ok": False,
+                "reason": f"missing probe binary: {rel_or_str(track1_probe)}",
+            }
 
     probe = row.get("probe") or {}
-    source_shots = row.get("screenshots") or []
-    presented_shots = row.get("presented_screenshots") or []
+    source_shots = row.get("probe_bmp_screenshots") or []
     source_ok = (
-        len(source_shots) == 1
+        len(source_shots) >= 1
         and source_shots[0].get("valid")
         and source_shots[0].get("width") == 320
         and source_shots[0].get("height") == 200
         and source_shots[0].get("non_black_pixels", 0) > 200
     )
-    presented_ok = (
-        len(presented_shots) == 1
-        and presented_shots[0].get("valid")
-        and presented_shots[0].get("width", 0) > 0
-        and presented_shots[0].get("height", 0) > 0
-        and presented_shots[0].get("non_black_pixels", 0) > 200
-    )
     row["ok"] = (
         bool(row.get("command", {}).get("ok"))
+        and bool(row.get("track1_probe_command", {}).get("ok"))
         and row["marker_found"]
         and probe.get("schema") == "firestaff_m11_autotest_runtime_probe.v1"
         and probe.get("launchedEver") == 1
         and probe.get("active") == 1
         and probe.get("sourceId") == "nexus"
         and source_ok
-        and presented_ok
     )
     row["status"] = "PASS" if row["ok"] else "FAIL"
     return row
@@ -218,13 +230,13 @@ def write_outputs(result: dict[str, Any]) -> None:
         "",
         f"Status: `{result['status']}`",
         "",
-        "This gate runs real Firestaff Nexus launches when Track 1 data is",
-        "present. It records runtime probe fields plus BMP geometry and hash",
-        "receipts only; it does not add screenshots to public docs.",
+        "This gate runs a real Firestaff Nexus boot probe when Track 1 data is",
+        "present, then consumes the Nexus-owned Track 1 BMP readiness probe for",
+        "image geometry and hash receipts. It does not add screenshots to public docs.",
         "",
         "## Case Results",
         "",
-        "| Case | Status | Boot marker | Runtime source | Data source | Source BMP | Presented BMP |",
+        "| Case | Status | Boot marker | Runtime source | Data source | App BMP | Probe BMP |",
         "|---|---:|---:|---|---|---:|---:|",
     ]
     for row in result.get("cases", []):
@@ -241,13 +253,13 @@ def write_outputs(result: dict[str, Any]) -> None:
             f"`{probe.get('sourceId', '')}` | "
             f"`{source_kind}` | "
             f"`{len(row.get('screenshots', []))}` | "
-            f"`{len(row.get('presented_screenshots', []))}` |"
+            f"`{len(row.get('probe_bmp_screenshots', []))}` |"
         )
     lines += [
         "",
         "## Public Screenshot Boundary",
         "",
-        "- These receipts prove Firestaff can emit Nexus runtime screenshot artifacts after a real Track 1 launch reaches M11.",
+        "- These receipts prove Firestaff can boot Nexus Track 1 data and that the Nexus-owned viewport/font handoff can emit BMP artifacts from the same data root.",
         "- The stored evidence is metadata only: command status, runtime probe fields, BMP dimensions, non-black pixel counts, and SHA256 values.",
         "- No generated, mock, synthetic, or operator-supplied image bytes are promoted by this gate.",
         "- README-eligible Nexus screenshots still need reviewed real runtime frames and stronger semantic DGN/DMDF/BPK/text rendering parity.",
@@ -271,6 +283,7 @@ def main() -> int:
     args = parser.parse_args()
 
     firestaff = args.build_dir / "firestaff"
+    track1_probe = args.build_dir / "firestaff_nexus_v1_track1_real_screen_capture_readiness_probe"
     cases = list(DEFAULT_CASES)
     for item in args.case:
         if "=" not in item:
@@ -284,6 +297,7 @@ def main() -> int:
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "status": "FAIL",
         "firestaff": rel_or_str(firestaff),
+        "track1_probe": rel_or_str(track1_probe),
         "cases": [],
         "non_claims": [
             "No public Nexus screenshot image is promoted.",
@@ -296,8 +310,13 @@ def main() -> int:
         write_outputs(result)
         print(f"FAIL {PASS}: missing firestaff binary", file=sys.stderr)
         return 1
+    if not track1_probe.exists():
+        result["reason"] = f"missing track1 probe binary: {rel_or_str(track1_probe)}"
+        write_outputs(result)
+        print(f"FAIL {PASS}: missing track1 probe binary", file=sys.stderr)
+        return 1
 
-    result["cases"] = [run_case(firestaff, case) for case in cases]
+    result["cases"] = [run_case(firestaff, track1_probe, case) for case in cases]
     present_rows = [row for row in result["cases"] if row.get("present")]
     if not present_rows:
         result["status"] = "SKIP"

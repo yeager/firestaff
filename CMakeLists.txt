@@ -20024,7 +20024,7 @@ add_executable(firestaff_nexus_v1_track1_real_screen_capture_readiness_probe
     probes/nexus_v1_track1_real_screen_capture_readiness_probe.c
 )
 target_link_libraries(firestaff_nexus_v1_track1_real_screen_capture_readiness_probe PRIVATE
-    firestaff_nexus firestaff_m11 firestaff_m10
+    firestaff_nexus firestaff_m10
 )
 target_include_directories(firestaff_nexus_v1_track1_real_screen_capture_readiness_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
