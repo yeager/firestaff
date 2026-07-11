@@ -1,6 +1,7 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "dm1_v1_original_save_classifier.h"
+#include "dm1_v1_original_save_pc34_handoff.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
@@ -1372,6 +1373,12 @@ int dm1_v1_startup_save_resume_capture_receipt_pc34(
     receipt.user_save_corpus_pc34 = facts->observed_user_save_corpus_pc34;
     receipt.user_save_corpus_part_envelope =
         facts->observed_user_save_corpus_part_envelope;
+    receipt.user_save_corpus_roundtrip_verified =
+        facts->observed_user_save_corpus_roundtrip_verified;
+    receipt.user_save_corpus_roundtrip_failed =
+        facts->observed_user_save_corpus_roundtrip_failed;
+    receipt.user_save_corpus_roundtrip_hash =
+        facts->observed_user_save_corpus_roundtrip_hash;
     receipt.user_save_corpus_rejected =
         facts->observed_user_save_corpus_rejected;
     receipt.user_save_corpus_truncated =
@@ -1420,7 +1427,10 @@ int dm1_v1_startup_save_resume_capture_receipt_pc34(
         (facts->observed_save_part_count ==
          DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34) ||
         (receipt.user_save_corpus_scan_consumed &&
-         receipt.user_save_corpus_part_envelope > 0);
+         receipt.user_save_corpus_part_envelope > 0 &&
+         receipt.user_save_corpus_roundtrip_verified ==
+             receipt.user_save_corpus_part_envelope &&
+         receipt.user_save_corpus_roundtrip_failed == 0);
     receipt.champion_portrait_corpus_present =
         facts->observed_champion_portrait_count ==
         DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
@@ -3174,7 +3184,10 @@ int dm1_v1_complete_support_receipt_pc34(
         original_save->observed_champion_portrait_count ==
         DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34 &&
         (!original_save->user_save_corpus_scan_consumed ||
-         original_save->user_save_corpus_part_envelope > 0);
+         (original_save->user_save_corpus_part_envelope > 0 &&
+          original_save->user_save_corpus_roundtrip_verified ==
+              original_save->user_save_corpus_part_envelope &&
+          original_save->user_save_corpus_roundtrip_failed == 0));
     receipt.user_save_corpus_scan_consumed =
         original_save->user_save_corpus_scan_consumed;
     receipt.user_save_corpus_pc34_ready =
@@ -3183,6 +3196,18 @@ int dm1_v1_complete_support_receipt_pc34(
     receipt.user_save_corpus_part_envelope_ready =
         original_save->user_save_corpus_scan_consumed &&
         original_save->user_save_corpus_part_envelope > 0;
+    receipt.user_save_corpus_roundtrip_ready =
+        original_save->user_save_corpus_scan_consumed &&
+        original_save->user_save_corpus_part_envelope > 0 &&
+        original_save->user_save_corpus_roundtrip_verified ==
+            original_save->user_save_corpus_part_envelope &&
+        original_save->user_save_corpus_roundtrip_failed == 0;
+    receipt.user_save_corpus_roundtrip_verified =
+        original_save->user_save_corpus_roundtrip_verified;
+    receipt.user_save_corpus_roundtrip_failed =
+        original_save->user_save_corpus_roundtrip_failed;
+    receipt.user_save_corpus_roundtrip_hash =
+        original_save->user_save_corpus_roundtrip_hash;
     receipt.user_save_corpus_rejected =
         original_save->user_save_corpus_rejected;
     receipt.user_save_corpus_truncated =
@@ -3220,7 +3245,8 @@ int dm1_v1_complete_support_receipt_pc34(
         receipt.redmcsb_hoc_thing_layer_suppression_ready &&
         receipt.redmcsb_save_part_corpus_ready &&
         (!receipt.user_save_corpus_scan_consumed ||
-         receipt.user_save_corpus_part_envelope_ready) &&
+         (receipt.user_save_corpus_part_envelope_ready &&
+          receipt.user_save_corpus_roundtrip_ready)) &&
         receipt.host_capture_route_packaged &&
         receipt.presented_capture_chain_ready &&
         receipt.host_draw_uses_owned_receipt &&
@@ -3377,36 +3403,34 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
         complete_facts->dungeon_loaded ? 1 : 0;
     {
         char corpus_root[DM1_ORIGINAL_SAVE_PATH_MAX];
-        DM1OriginalSaveCorpusManifest corpus;
-        memset(&corpus, 0, sizeof(corpus));
+        DM1OriginalSavePC34CorpusVerificationReceipt corpus_receipt;
+        memset(&corpus_receipt, 0, sizeof(corpus_receipt));
         if (dm1_v1_startup_resume_root_from_path_pc34(
                 resume_host.resume_path, corpus_root) &&
-            dm1_v1_original_save_classify_corpus_root(corpus_root, &corpus) &&
-            corpus.pc34_loader_part_envelope_count > 0) {
-            int first_pc34_index = -1;
+            dm1_v1_original_save_pc34_verify_corpus_root(corpus_root,
+                                                         &corpus_receipt) &&
+            corpus_receipt.ready) {
             save_facts.observed_user_save_corpus_scan = 1;
             save_facts.observed_user_save_corpus_files =
-                corpus.scanned_file_count;
+                corpus_receipt.scanned_file_count;
             save_facts.observed_user_save_corpus_classified =
-                corpus.classified_count;
+                corpus_receipt.pc34_importer_candidate_count;
             save_facts.observed_user_save_corpus_pc34 =
-                corpus.pc34_importer_candidate_count;
+                corpus_receipt.pc34_importer_candidate_count;
             save_facts.observed_user_save_corpus_part_envelope =
-                corpus.pc34_loader_part_envelope_count;
+                corpus_receipt.pc34_loader_part_envelope_count;
+            save_facts.observed_user_save_corpus_roundtrip_verified =
+                corpus_receipt.roundtrip_verified_count;
+            save_facts.observed_user_save_corpus_roundtrip_failed =
+                corpus_receipt.roundtrip_failed_count;
+            save_facts.observed_user_save_corpus_roundtrip_hash =
+                corpus_receipt.corpus_hash;
             save_facts.observed_user_save_corpus_rejected =
-                corpus.rejected_count;
+                corpus_receipt.rejected_count;
             save_facts.observed_user_save_corpus_truncated =
-                corpus.truncated_count;
-            for (int i = 0; i < corpus.present_count; ++i) {
-                if (corpus.results[i].pc34_loader_part_envelope_candidate) {
-                    first_pc34_index = i;
-                    break;
-                }
-            }
-            if (first_pc34_index >= 0) {
-                save_facts.observed_user_save_corpus_first_pc34_path =
-                    corpus.paths[first_pc34_index];
-            }
+                corpus_receipt.truncated_count;
+            save_facts.observed_user_save_corpus_first_pc34_path =
+                corpus_receipt.first_pc34_path;
             save_facts.observed_save_part_count =
                 DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34;
         }
@@ -3587,6 +3611,14 @@ int dm1_v1_startup_hoc_boot_probe_summary_pc34(
         receipt->complete_support.user_save_corpus_pc34_ready;
     summary.user_save_corpus_part_envelope_ready =
         receipt->complete_support.user_save_corpus_part_envelope_ready;
+    summary.user_save_corpus_roundtrip_ready =
+        receipt->complete_support.user_save_corpus_roundtrip_ready;
+    summary.user_save_corpus_roundtrip_verified =
+        receipt->complete_support.user_save_corpus_roundtrip_verified;
+    summary.user_save_corpus_roundtrip_failed =
+        receipt->complete_support.user_save_corpus_roundtrip_failed;
+    summary.user_save_corpus_roundtrip_hash =
+        receipt->complete_support.user_save_corpus_roundtrip_hash;
     summary.user_save_corpus_rejected =
         receipt->complete_support.user_save_corpus_rejected;
     summary.user_save_corpus_truncated =

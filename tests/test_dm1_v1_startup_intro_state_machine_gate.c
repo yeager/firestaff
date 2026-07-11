@@ -3188,6 +3188,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
     save_resume_facts.observed_user_save_corpus_classified = 2;
     save_resume_facts.observed_user_save_corpus_pc34 = 1;
     save_resume_facts.observed_user_save_corpus_part_envelope = 1;
+    save_resume_facts.observed_user_save_corpus_roundtrip_verified = 1;
+    save_resume_facts.observed_user_save_corpus_roundtrip_failed = 0;
+    save_resume_facts.observed_user_save_corpus_roundtrip_hash = 0x44533143u;
     save_resume_facts.observed_user_save_corpus_rejected = 1;
     save_resume_facts.observed_user_save_corpus_truncated = 0;
     save_resume_facts.observed_user_save_corpus_first_pc34_path =
@@ -3225,6 +3228,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
                 save_resume_capture.user_save_corpus_classified == 2 &&
                 save_resume_capture.user_save_corpus_pc34 == 1 &&
                 save_resume_capture.user_save_corpus_part_envelope == 1 &&
+                save_resume_capture.user_save_corpus_roundtrip_verified == 1 &&
+                save_resume_capture.user_save_corpus_roundtrip_failed == 0 &&
+                save_resume_capture.user_save_corpus_roundtrip_hash ==
+                    0x44533143u &&
                 save_resume_capture.user_save_corpus_rejected == 1 &&
                  save_resume_capture.user_save_corpus_truncated == 0 &&
                  strcmp(save_resume_capture.user_save_corpus_first_pc34_path,
@@ -3327,6 +3334,11 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  complete_support.user_save_corpus_scan_consumed &&
                  complete_support.user_save_corpus_pc34_ready &&
                  complete_support.user_save_corpus_part_envelope_ready &&
+                 complete_support.user_save_corpus_roundtrip_ready &&
+                 complete_support.user_save_corpus_roundtrip_verified == 1 &&
+                 complete_support.user_save_corpus_roundtrip_failed == 0 &&
+                 complete_support.user_save_corpus_roundtrip_hash ==
+                     0x44533143u &&
                  complete_support.user_save_corpus_rejected == 1 &&
                  complete_support.user_save_corpus_truncated == 0 &&
                  strcmp(complete_support.user_save_corpus_first_pc34_path,
@@ -3442,6 +3454,14 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_full_graphics.complete_support
                      .user_save_corpus_part_envelope_ready &&
                  hoc_boot_full_graphics.complete_support
+                     .user_save_corpus_roundtrip_ready &&
+                 hoc_boot_full_graphics.complete_support
+                     .user_save_corpus_roundtrip_verified == 1 &&
+                 hoc_boot_full_graphics.complete_support
+                     .user_save_corpus_roundtrip_failed == 0 &&
+                 hoc_boot_full_graphics.complete_support
+                     .user_save_corpus_roundtrip_hash != 0u &&
+                 hoc_boot_full_graphics.complete_support
                      .user_save_corpus_rejected == 1 &&
                  hoc_boot_full_graphics.complete_support
                      .user_save_corpus_truncated == 0 &&
@@ -3485,6 +3505,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_summary.complete_host_app_capture_route &&
                  hoc_boot_summary.user_save_corpus_pc34_ready &&
                  hoc_boot_summary.user_save_corpus_part_envelope_ready &&
+                 hoc_boot_summary.user_save_corpus_roundtrip_ready &&
+                 hoc_boot_summary.user_save_corpus_roundtrip_verified == 1 &&
+                 hoc_boot_summary.user_save_corpus_roundtrip_failed == 0 &&
+                 hoc_boot_summary.user_save_corpus_roundtrip_hash != 0u &&
                  hoc_boot_summary.user_save_corpus_rejected == 1 &&
                  hoc_boot_summary.user_save_corpus_truncated == 0 &&
                  strstr(hoc_boot_summary.user_save_corpus_first_pc34_path,
@@ -3718,6 +3742,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
     save_resume_facts.observed_user_save_corpus_classified = 0;
     save_resume_facts.observed_user_save_corpus_pc34 = 0;
     save_resume_facts.observed_user_save_corpus_part_envelope = 0;
+    save_resume_facts.observed_user_save_corpus_roundtrip_verified = 0;
+    save_resume_facts.observed_user_save_corpus_roundtrip_failed = 0;
+    save_resume_facts.observed_user_save_corpus_roundtrip_hash = 0u;
     save_resume_facts.observed_user_save_corpus_rejected = 0;
     save_resume_facts.observed_user_save_corpus_truncated = 0;
     save_resume_facts.observed_user_save_corpus_first_pc34_path = NULL;
