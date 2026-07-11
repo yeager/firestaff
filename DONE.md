@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 chest full-leader-hand field cleanup: renamed old `m11Item*` item contract fields in chest open/close full-leader-hand specs to DM1-owned item fields. Verification: `firestaff_m10`, `test_dm1_v1_chest_close_with_full_leader_hand_pc34_compat`, direct compile/run of `test_dm1_v1_chest_open_with_full_leader_hand_pc34_compat`, old-symbol `rg`, and `git diff HEAD --check` passed.
+
 - ✅ 2026-07-11 CSB F0282 M11 gate wrapper cleanup: removed the unused public `M11_GameView_CsbF0282ChampionPanelGateActive` export; active HoC/CSB champion-panel routing remains behind the existing ReDMCSB receipt paths. Verification: `firestaff_m11`, `test_m11_overlay_command_queue_block`, old-symbol `rg`, and `git diff HEAD --check` passed.
 
 - ✅ 2026-07-11 DM1 wall-ornament zone wrapper cleanup: removed unused public `M11_GameView_GetD1CWallOrnamentZone` and `M11_GameView_GetDm1WallOrnamentZone` exports; the HiDPI champion portrait regression now consumes the DM1/ReDMCSB `dm1_v1_wall_ornament_zone_pc34` table directly. Verification: `firestaff_m11`, `test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat`, `test_dm1_v1_wall_ornament_pc34_compat`, old-symbol `rg`, and `git diff --check` passed.
