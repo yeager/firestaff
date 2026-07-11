@@ -4077,6 +4077,24 @@ int dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
     fields.complete_save_corpus_route = summary->complete_save_corpus_route;
     fields.complete_original_save_roundtrip_route =
         summary->complete_original_save_roundtrip_route;
+    fields.user_save_corpus_pc34_ready =
+        summary->user_save_corpus_pc34_ready;
+    fields.user_save_corpus_part_envelope_ready =
+        summary->user_save_corpus_part_envelope_ready;
+    fields.user_save_corpus_roundtrip_ready =
+        summary->user_save_corpus_roundtrip_ready;
+    fields.user_save_corpus_roundtrip_verified =
+        summary->user_save_corpus_roundtrip_verified;
+    fields.user_save_corpus_roundtrip_failed =
+        summary->user_save_corpus_roundtrip_failed;
+    fields.user_save_corpus_roundtrip_hash =
+        summary->user_save_corpus_roundtrip_hash;
+    fields.user_save_corpus_rejected = summary->user_save_corpus_rejected;
+    fields.user_save_corpus_truncated = summary->user_save_corpus_truncated;
+    snprintf(fields.user_save_corpus_first_pc34_path,
+             sizeof(fields.user_save_corpus_first_pc34_path),
+             "%s",
+             summary->user_save_corpus_first_pc34_path);
     *out_fields = fields;
     return 1;
 }

@@ -1040,6 +1040,15 @@ typedef struct DM1_V1_StartupHoCBootProbeHostFields_PC34 {
     int complete_host_app_capture_route;
     int complete_save_corpus_route;
     int complete_original_save_roundtrip_route;
+    int user_save_corpus_pc34_ready;
+    int user_save_corpus_part_envelope_ready;
+    int user_save_corpus_roundtrip_ready;
+    int user_save_corpus_roundtrip_verified;
+    int user_save_corpus_roundtrip_failed;
+    unsigned int user_save_corpus_roundtrip_hash;
+    int user_save_corpus_rejected;
+    int user_save_corpus_truncated;
+    char user_save_corpus_first_pc34_path[512];
     const char* source_evidence;
 } DM1_V1_StartupHoCBootProbeHostFields_PC34;
 
