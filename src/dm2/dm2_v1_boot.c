@@ -6566,7 +6566,8 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     out_receipt->save_corpus_valid_candidate_count =
         (int)save_corpus.has_last_session +
         (int)save_corpus.has_last_session_backup +
-        (int)save_corpus.valid_slot_count;
+        (int)save_corpus.valid_slot_count +
+        (int)save_corpus.extra_valid_candidate_count;
     out_receipt->save_corpus_importable_candidate_count =
         (int)save_corpus.importable_candidate_count;
     out_receipt->save_corpus_rejected_candidate_count =
@@ -6575,6 +6576,12 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     out_receipt->save_corpus_original_candidate_count =
         (int)save_corpus.original_envelope_candidate_count +
         (int)save_corpus.original_raw_candidate_count;
+    out_receipt->save_corpus_recursive_candidate_count =
+        (int)save_corpus.recursive_candidate_count;
+    out_receipt->save_corpus_recursive_importable_candidate_count =
+        (int)save_corpus.recursive_importable_candidate_count;
+    out_receipt->save_corpus_alternate_name_candidate_count =
+        (int)save_corpus.alternate_name_candidate_count;
     out_receipt->save_corpus_valid_slot_mask =
         (unsigned int)save_corpus.valid_slot_mask;
     out_receipt->save_corpus_import_promotion_ready =
@@ -6640,6 +6647,15 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
         out_receipt->save_corpus_hash,
         (uint32_t)out_receipt->save_corpus_original_candidate_count);
+    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
+        out_receipt->save_corpus_hash,
+        (uint32_t)out_receipt->save_corpus_recursive_candidate_count);
+    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
+        out_receipt->save_corpus_hash,
+        (uint32_t)out_receipt->save_corpus_recursive_importable_candidate_count);
+    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
+        out_receipt->save_corpus_hash,
+        (uint32_t)out_receipt->save_corpus_alternate_name_candidate_count);
     out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
         out_receipt->save_corpus_hash,
         out_receipt->save_corpus_valid_slot_mask);

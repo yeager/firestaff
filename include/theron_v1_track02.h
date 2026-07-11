@@ -1191,6 +1191,17 @@ typedef struct {
     uint16_t nonstartup_level_candidate_header_level_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_header_probe_count;
     size_t nonstartup_level_candidate_loader_reject_count;
+    size_t nonstartup_level_loaded_count;
+    unsigned int nonstartup_level_loaded_anchor_mask;
+    size_t nonstartup_level_loaded_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t nonstartup_level_loaded_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t nonstartup_level_loaded_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t nonstartup_level_loaded_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int nonstartup_level_loaded_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t nonstartup_level_loaded_width[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t nonstartup_level_loaded_height[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t nonstartup_level_loaded_seed[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t nonstartup_level_loaded_level_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_descriptor_delta[THERON_TRACK02_MAX_BANK_ANCHORS];
     int nonstartup_level_candidate_after_descriptor[THERON_TRACK02_MAX_BANK_ANCHORS];
     Theron_Track02DescriptorEntryRole nonstartup_level_candidate_entry_role[THERON_TRACK02_MAX_BANK_ANCHORS];
