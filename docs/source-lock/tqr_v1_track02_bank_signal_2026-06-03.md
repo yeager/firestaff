@@ -140,9 +140,30 @@ The probe skips real-data assertions when the Track 02 images are absent.
 - the older descriptor-window handoff remains no-claim on real JP/US raw BIN
   descriptor windows until the actual per-window semantics are decoded
 
+## Post-Descriptor Cross-Region Layout Receipt (2026-07-11)
+
+`firestaff_theron_v1_track02_nonstartup_sector_receipt_probe` now captures
+the two MD5-verified raw BINs together and compares structurally
+post-descriptor windows without interpreting their bytes. All three replicated
+anchors agree on the following physical/container facts:
+
+- descriptor entry ordering;
+- 0x0400-byte window length;
+- offset relative to that anchor's descriptor table; and
+- whether the raw span begins in MODE1 user data, crosses a sector boundary,
+  contains non-user-data bytes, or stays logically contiguous.
+
+Every corresponding JP/US raw-span fingerprint differs. This establishes a
+shared descriptor-relative container layout only; it is explicit negative
+evidence against treating these windows as one region-neutral bitmap, palette,
+level, object, or text payload. The comparison receipt is permanently
+`opaque_only` and `promotion_blocked`; it exports no payload bytes and cannot
+enable a decoder or runtime route.
+
 ## Remaining Risk
 
-This now includes one bounded initial-level startup handoff, but not a decoded
-full dungeon map. Later work still needs to decode the surrounding dungeon
-records, all levels, object tables, transitions, text/palette payloads, and
-party/champion seed data.
+This now includes one bounded initial-level startup handoff and a shared
+opaque post-descriptor container-layout receipt, but not a decoded full dungeon
+map. Later work still needs original-loader evidence to decode the surrounding
+dungeon records, all levels, object tables, transitions, text/palette payloads,
+and party/champion seed data.

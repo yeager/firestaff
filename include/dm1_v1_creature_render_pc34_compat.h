@@ -307,9 +307,6 @@ void dm1_creature_render_sort(DM1_CreatureRenderList* list);
 const char* dm1_creature_type_name(int creatureType);
 
 void DM1_V1_CreatureRender_InitPc34Compat(DM1_CreatureRenderList* list);
-void DM1_V1_CreatureRender_CollectPc34Compat(DM1_CreatureRenderList* list,
-                                  int partyX, int partyY, int partyDir,
-                                  const void* dungeonData);
 void DM1_V1_CreatureRender_SortPc34Compat(DM1_CreatureRenderList* list);
 int  DM1_V1_CreatureRender_GetGraphicPc34Compat(int creatureType, int attacking, int animFrame);
 const char* DM1_V1_CreatureRender_TypeNamePc34Compat(int creatureType);

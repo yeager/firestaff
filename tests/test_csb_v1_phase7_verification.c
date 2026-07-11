@@ -491,6 +491,39 @@ static void test_dungeon_real_format_expool_db11_skin_lookup(void)
     csb_v1_dungeon_free(&d);
 }
 
+static void test_dungeon_decode_dsa_filter_location(void)
+{
+    CSB_V1_DungeonData d;
+    CSB_V1_DSAFilterLocation location;
+    uint32_t word;
+
+    memset(&d, 0, sizeof(d));
+    d.level_count = 2;
+    d.level_widths[0] = 8;
+    d.level_heights[0] = 9;
+    d.level_widths[1] = 32;
+    d.level_heights[1] = 32;
+
+    /* CSBWin DSA.cpp LOCATIONREL::Integer: p<<16 | l<<10 | x<<5 | y.
+     * Monster.cpp GetLocation adds bit 18 and bits 19..23 for movement. */
+    word = (3u << 16) | (1u << 10) | (17u << 5) | 23u |
+        (1u << 18) | (29u << 19);
+    CHECK(csb_v1_dungeon_decode_dsa_filter_location(&d, word, 1, &location) == 1,
+          "CSBWin movement filter location decodes");
+    CHECK(location.level == 1 && location.x == 17 && location.y == 23 &&
+          location.position == 3, "DSA location preserves packed LOCATIONREL fields");
+    CHECK(location.party_level_only == 1 && location.max_distance == 29,
+          "DSA movement location preserves gate and max distance");
+    CHECK(location.actuator_thing == 0xffffu,
+          "decoded DSA location has no actuator before square scan");
+    CHECK(csb_v1_dungeon_decode_dsa_filter_location(&d, word, 0, &location) == 1 &&
+          location.party_level_only == 0 && location.max_distance == 0,
+          "attack filter ignores movement-only flag fields");
+    word = (31u << 5) | 7u;
+    CHECK(csb_v1_dungeon_decode_dsa_filter_location(&d, word, 1, &location) == 0,
+          "out-of-bounds DSA filter location is rejected");
+}
+
 static void test_runtime_custom_background_skin_grid_from_expool(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -1557,6 +1590,7 @@ int main(void)
     test_dungeon_live_mutable_thing_chain();
     test_dungeon_live_mutable_thing_chain_between_levels();
     test_dungeon_real_format_expool_db11_skin_lookup();
+    test_dungeon_decode_dsa_filter_location();
     test_runtime_custom_background_skin_grid_from_expool();
     test_runtime_custom_background_skin_grid_from_csbwin_tail();
     test_dungeon_decode_square();

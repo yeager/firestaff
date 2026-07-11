@@ -315,6 +315,7 @@ int F0897d_GameConfig_Deserialize_Compat(
 #define SEC_TAG_LIFECYCLE         0x20000018u
 #define SEC_TAG_SENSOR_PENDING    0x20000019u
 #define SEC_TAG_SAVE_HEADER       0x2000001Au
+#define SEC_TAG_CHAMPION_COMBAT   0x2000001Bu
 
 #define ORCH_SCALARS_PAYLOAD_SIZE 52  /* 13 × int32: gameTick, partyDead,
                                          gameWon, partyMapIndex,
@@ -323,7 +324,60 @@ int F0897d_GameConfig_Deserialize_Compat(
                                          disabledMovementTicks,
                                          projectileDisabledMovementTicks,
                                          lastProjectileDisabledMovementDirection,
-                                         creatureAICount, reserved */
+                                         creatureAICount, pending target receipt */
+
+#define ORCH_PENDING_DAMAGE_RECEIPT_VALID_PC34 0x100
+#define ORCH_PENDING_DAMAGE_RECEIPT_CHAMPION_MASK_PC34 0x003
+#define ORCH_PENDING_DAMAGE_RECEIPT_CELL_SHIFT_PC34 2
+#define ORCH_PENDING_DAMAGE_RECEIPT_CELL_MASK_PC34 0x00C
+
+static int orch_make_pending_damage_receipt_compat(int championIndex,
+                                                    int targetCell)
+{
+    return ORCH_PENDING_DAMAGE_RECEIPT_VALID_PC34 |
+           (championIndex & ORCH_PENDING_DAMAGE_RECEIPT_CHAMPION_MASK_PC34) |
+           ((targetCell & 3) << ORCH_PENDING_DAMAGE_RECEIPT_CELL_SHIFT_PC34);
+}
+
+static int orch_read_pending_damage_receipt_compat(int receipt,
+                                                    int* outChampionIndex,
+                                                    int* outTargetCell)
+{
+    if (!(receipt & ORCH_PENDING_DAMAGE_RECEIPT_VALID_PC34)) return 0;
+    if (outChampionIndex) {
+        *outChampionIndex = receipt & ORCH_PENDING_DAMAGE_RECEIPT_CHAMPION_MASK_PC34;
+    }
+    if (outTargetCell) {
+        *outTargetCell =
+            (receipt & ORCH_PENDING_DAMAGE_RECEIPT_CELL_MASK_PC34) >>
+            ORCH_PENDING_DAMAGE_RECEIPT_CELL_SHIFT_PC34;
+    }
+    return 1;
+}
+
+static void orch_stage_champion_combat_compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    int targetCell,
+    const struct CombatResult_Compat* combat)
+{
+    struct CombatResult_Compat* pending;
+    if (!world || !combat || championIndex < 0 ||
+        championIndex >= CHAMPION_MAX_PARTY || combat->damageApplied <= 0) {
+        return;
+    }
+
+    /* ReDMCSB CHAMPION.C F0321:1909 adds the resolved attack to
+     * G0409_ai_ChampionPendingDamage[champion], while F0321:1901 ORs the
+     * selected wound into G0410.  F0320 later consumes the staged totals. */
+    pending = &world->pendingChampionCombat[championIndex];
+    pending->damageApplied += combat->damageApplied;
+    pending->woundMaskAdded |= combat->woundMaskAdded;
+    pending->poisonAttackPending += combat->poisonAttackPending;
+    pending->outcome = combat->outcome;
+    world->pendingChampionCombatTargetReceipt[championIndex] =
+        orch_make_pending_damage_receipt_compat(championIndex, targetCell);
+}
 
 /* Subsystem serialised sizes (predicted). */
 static int party_size(void)     { return PARTY_SERIALIZED_SIZE; }
@@ -337,6 +391,9 @@ static int expl_list_size(void) { return EXPLOSION_LIST_SERIALIZED_SIZE; }
 static int lifecycle_size(void) { return LIFECYCLE_STATE_SERIALIZED_SIZE; }
 static int sensor_size(void)    { return SENSOR_EFFECT_LIST_SERIALIZED_SIZE; }
 static int save_hdr_size(void)  { return SAVEGAME_HEADER_SERIALIZED_SIZE; }
+static int champion_combat_size(void) {
+    return CHAMPION_MAX_PARTY * (combat_res_size() + 4);
+}
 
 int F0899_WORLD_SerializedSize_Compat(const struct GameWorld_Compat* world) {
     int total = 0;
@@ -355,6 +412,7 @@ int F0899_WORLD_SerializedSize_Compat(const struct GameWorld_Compat* world) {
     total += 8 + party_size();
     total += 8 + timeline_size();
     total += 8 + combat_res_size();
+    total += 8 + champion_combat_size();
     total += 8 + magic_size();
     total += 8 + mutations_size();
     total += 8 + aiPayload;
@@ -452,7 +510,7 @@ int F0897_WORLD_Serialize_Compat(
     w_i32(scalars + 36, world->projectileDisabledMovementTicks);
     w_i32(scalars + 40, world->lastProjectileDisabledMovementDirection);
     w_i32(scalars + 44, ai_count);
-    w_i32(scalars + 48, 0);
+    w_i32(scalars + 48, world->pendingCombatTargetReceipt);
 
     w_u32(outBuf + off, SEC_TAG_ORCH_SCALARS); off += 4;
     w_u32(outBuf + off, ORCH_SCALARS_PAYLOAD_SIZE); off += 4;
@@ -478,14 +536,26 @@ int F0897_WORLD_Serialize_Compat(
                        combat_res_size(), ad_combat_res, &world->pendingCombat)) return 0;
 
     /* 6. Magic */
+    w_u32(outBuf + off, SEC_TAG_CHAMPION_COMBAT); off += 4;
+    w_u32(outBuf + off, (uint32_t)champion_combat_size()); off += 4;
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        if (!F0742_COMBAT_ResultSerialize_Compat(
+                &world->pendingChampionCombat[i], outBuf + off,
+                combat_res_size())) return 0;
+        off += combat_res_size();
+        w_i32(outBuf + off, world->pendingChampionCombatTargetReceipt[i]);
+        off += 4;
+    }
+
+    /* 7. Magic */
     if (!write_section(outBuf, outBufSize, &off, SEC_TAG_MAGIC,
                        magic_size(), ad_magic, &world->magic)) return 0;
 
-    /* 7. Dungeon mutations */
+    /* 8. Dungeon mutations */
     if (!write_section(outBuf, outBufSize, &off, SEC_TAG_DUNGEON_MUTATIONS,
                        mutations_size(), ad_mutations, &world->dungeonMutations)) return 0;
 
-    /* 8. Creature AI list */
+    /* 9. Creature AI list */
     w_u32(outBuf + off, SEC_TAG_CREATURE_AI); off += 4;
     w_u32(outBuf + off, (uint32_t)aiPayloadSize); off += 4;
     w_i32(outBuf + off, ai_count); off += 4;
@@ -496,23 +566,23 @@ int F0897_WORLD_Serialize_Compat(
         off += ai_size();
     }
 
-    /* 9. Projectile list */
+    /* 10. Projectile list */
     if (!write_section(outBuf, outBufSize, &off, SEC_TAG_PROJECTILES,
                        proj_list_size(), ad_proj_list, &world->projectiles)) return 0;
 
-    /* 10. Explosion list */
+    /* 11. Explosion list */
     if (!write_section(outBuf, outBufSize, &off, SEC_TAG_EXPLOSIONS,
                        expl_list_size(), ad_expl_list, &world->explosions)) return 0;
 
-    /* 11. Lifecycle */
+    /* 12. Lifecycle */
     if (!write_section(outBuf, outBufSize, &off, SEC_TAG_LIFECYCLE,
                        lifecycle_size(), ad_lifecycle, &world->lifecycle)) return 0;
 
-    /* 12. Pending sensor effects */
+    /* 13. Pending sensor effects */
     if (!write_section(outBuf, outBufSize, &off, SEC_TAG_SENSOR_PENDING,
                        sensor_size(), ad_sensor, &world->pendingSensorEffects)) return 0;
 
-    /* 13. Save header — raw write of the 64-byte SaveGameHeader_Compat */
+    /* 14. Save header — raw write of the 64-byte SaveGameHeader_Compat */
     if (off + 8 + save_hdr_size() > outBufSize) return 0;
     w_u32(outBuf + off, SEC_TAG_SAVE_HEADER); off += 4;
     w_u32(outBuf + off, (uint32_t)save_hdr_size()); off += 4;
@@ -581,6 +651,7 @@ int F0898_WORLD_Deserialize_Compat(
     world->projectileDisabledMovementTicks = r_i32(buf + off + 36);
     world->lastProjectileDisabledMovementDirection = r_i32(buf + off + 40);
     ai_count = r_i32(buf + off + 44);
+    world->pendingCombatTargetReceipt = r_i32(buf + off + 48);
     off += ORCH_SCALARS_PAYLOAD_SIZE;
 
     /* 2. Fingerprint */
@@ -608,7 +679,19 @@ int F0898_WORLD_Deserialize_Compat(
     if (!F0743_COMBAT_ResultDeserialize_Compat(&world->pendingCombat, buf + off, sz)) return 0;
     off += sz;
 
-    /* 6. Magic */
+    /* 6. F0321 per-champion pending damage/wound staging. */
+    if (!read_section_hdr(buf, bufSize, &off, SEC_TAG_CHAMPION_COMBAT, &sz)) return 0;
+    if ((int)sz != champion_combat_size()) return 0;
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        if (!F0743_COMBAT_ResultDeserialize_Compat(
+                &world->pendingChampionCombat[i], buf + off,
+                combat_res_size())) return 0;
+        off += combat_res_size();
+        world->pendingChampionCombatTargetReceipt[i] = r_i32(buf + off);
+        off += 4;
+    }
+
+    /* 7. Magic */
     if (!read_section_hdr(buf, bufSize, &off, SEC_TAG_MAGIC, &sz)) return 0;
     if ((int)sz != magic_size()) return 0;
     if (!F0768b_MAGIC_MagicStateDeserialize_Compat(&world->magic, buf + off, sz)) return 0;
@@ -860,6 +943,7 @@ int F0881_WORLD_InitDefault_Compat(struct GameWorld_Compat* world, uint32_t seed
     world->disabledMovementTicks = 0;
     world->projectileDisabledMovementTicks = 0;
     world->lastProjectileDisabledMovementDirection = 0;
+    world->pendingCombatTargetReceipt = 0;
 
     F0720_TIMELINE_Init_Compat(&world->timeline, 0);
     F0730_COMBAT_RngInit_Compat(&world->masterRng, seed ? seed : 1u);
@@ -869,6 +953,9 @@ int F0881_WORLD_InitDefault_Compat(struct GameWorld_Compat* world, uint32_t seed
     world->party.activeChampionIndex = -1;
 
     memset(&world->pendingCombat, 0, sizeof(world->pendingCombat));
+    memset(world->pendingChampionCombat, 0, sizeof(world->pendingChampionCombat));
+    memset(world->pendingChampionCombatTargetReceipt, 0,
+           sizeof(world->pendingChampionCombatTargetReceipt));
     memset(&world->magic, 0, sizeof(world->magic));
     memset(&world->dungeonMutations, 0, sizeof(world->dungeonMutations));
     memset(&world->pendingSensorEffects, 0, sizeof(world->pendingSensorEffects));
@@ -2941,6 +3028,77 @@ static int orch_set_door_state_compat(
     return 1;
 }
 
+/* ReDMCSB TIMELINE.C F0242/F0244/F0250/F0251 dispatches C07..C10
+ * square effects after F0261 extracts the event.  M10 represents that
+ * original event family as TIMELINE_EVENT_SQUARE_STATE: aux0 is the
+ * original C05..C10 type and aux1 is C00_SET/C01_CLEAR/C02_TOGGLE. */
+static int orch_dispatch_square_state_event_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev)
+{
+    const struct DungeonMapDesc_Compat* map;
+    struct DungeonMapTiles_Compat* tiles;
+    unsigned char* square;
+    int index;
+    int effect;
+
+    if (!world || !world->dungeon || !ev || !world->dungeon->maps ||
+        !world->dungeon->tiles || ev->mapIndex < 0 ||
+        ev->mapIndex >= (int)world->dungeon->header.mapCount) return 0;
+    map = &world->dungeon->maps[ev->mapIndex];
+    if (ev->mapX < 0 || ev->mapX >= (int)map->width ||
+        ev->mapY < 0 || ev->mapY >= (int)map->height) return 0;
+    tiles = &world->dungeon->tiles[ev->mapIndex];
+    if (!tiles->squareData) return 0;
+    index = ev->mapX * (int)map->height + ev->mapY;
+    square = &tiles->squareData[index];
+    effect = ev->aux1;
+    if (effect < DOOR_EFFECT_SET || effect > DOOR_EFFECT_TOGGLE) return 0;
+
+    switch (ev->aux0) {
+    case DM1_EVENT_DOOR: {
+        int resolvedEffect = -1;
+        struct TimelineEvent_Compat animation;
+        /* F0244 only resolves the requested effect and requeues the same
+         * record as C01; F0241 owns the actual state transition. */
+        if (!F0714_DOOR_ResolveAnimationEffect_Compat(
+                world->dungeon, ev->mapIndex, ev->mapX, ev->mapY,
+                effect, &resolvedEffect, NULL) ||
+            !F0713_DOOR_BuildAnimationEvent_Compat(
+                ev->mapIndex, ev->mapX, ev->mapY, resolvedEffect,
+                ev->fireAtTick, &animation)) return 0;
+        return F0721_TIMELINE_Schedule_Compat(&world->timeline, &animation);
+    }
+    case DM1_EVENT_FAKEWALL:
+        /* F0242: CLEAR is deferred while the party occupies the square.
+         * The material-group deferral is intentionally left to the later
+         * group-aware fakewall handler rather than closing over it here. */
+        if (effect == DOOR_EFFECT_TOGGLE) effect = (*square & 0x04) ?
+            DOOR_EFFECT_CLEAR : DOOR_EFFECT_SET;
+        if (effect == DOOR_EFFECT_CLEAR && world->party.mapIndex == ev->mapIndex &&
+            world->party.mapX == ev->mapX && world->party.mapY == ev->mapY) {
+            struct TimelineEvent_Compat retry = *ev;
+            retry.fireAtTick = world->gameTick + 1u;
+            return F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
+        }
+        if (effect == DOOR_EFFECT_SET) *square |= 0x04u;
+        else *square &= (unsigned char)~0x04u;
+        return 1;
+    case DM1_EVENT_TELEPORTER:
+    case DM1_EVENT_PIT:
+        /* F0250/F0251 share the same bit-3 open/toggle state transition.
+         * F0249 movement of existing things remains in the M10 F0267
+         * movement route and is not fabricated here. */
+        if (effect == DOOR_EFFECT_TOGGLE) effect = (*square & 0x08) ?
+            DOOR_EFFECT_CLEAR : DOOR_EFFECT_SET;
+        if (effect == DOOR_EFFECT_SET) *square |= 0x08u;
+        else *square &= (unsigned char)~0x08u;
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 static int orch_cmd_attack_f0407_closed_door_compat(
     struct GameWorld_Compat* world,
     const struct TickInput_Compat* input,
@@ -3992,11 +4150,12 @@ static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
     struct DungeonGroup_Compat* group,
     const struct ProjectileInstance_Compat* projectile,
     int damageOutcome);
-static void orch_schedule_projectile_hit_group_reaction_compat(
+static void orch_schedule_group_reaction_compat(
     struct GameWorld_Compat* world,
     int groupIndex,
     const struct DungeonGroup_Compat* group,
-    const struct CombatAction_Compat* action);
+    const struct CombatAction_Compat* action,
+    int reactionKind);
 static int orch_drop_group_fixed_possessions_compat(
     struct GameWorld_Compat* world,
     const struct DungeonGroup_Compat* group,
@@ -4752,8 +4911,9 @@ static int orch_apply_projectile_group_action_compat(
         }
         if (applyPlan.outcomeCode != COMBAT_OUTCOME_KILLED_ALL_CREATURES &&
             aftermath.scheduleReaction) {
-            orch_schedule_projectile_hit_group_reaction_compat(
-                world, groupIndex, group, action);
+            orch_schedule_group_reaction_compat(
+                world, groupIndex, group, action,
+                DM1_CM2_REACTION_HIT_BY_PROJECTILE);
         }
     } else {
         if (aftermath.keepSharpWeaponInGroup) {
@@ -4763,8 +4923,9 @@ static int orch_apply_projectile_group_action_compat(
             }
         }
         if (aftermath.scheduleReaction) {
-            orch_schedule_projectile_hit_group_reaction_compat(
-                world, groupIndex, group, action);
+            orch_schedule_group_reaction_compat(
+                world, groupIndex, group, action,
+                DM1_CM2_REACTION_HIT_BY_PROJECTILE);
         }
     }
     /* ReDMCSB GROUP.C:F0190 lines 892-917 mutates the live group record
@@ -4775,11 +4936,12 @@ static int orch_apply_projectile_group_action_compat(
     return associatedThingMovedToGroup ? 2 : 1;
 }
 
-static void orch_schedule_projectile_hit_group_reaction_compat(
+static void orch_schedule_group_reaction_compat(
     struct GameWorld_Compat* world,
     int groupIndex,
     const struct DungeonGroup_Compat* group,
-    const struct CombatAction_Compat* action)
+    const struct CombatAction_Compat* action,
+    int reactionKind)
 {
     int activeIndex;
     int ticksSinceLastMove = 0;
@@ -4821,7 +4983,7 @@ static void orch_schedule_projectile_hit_group_reaction_compat(
     }
     ctx.ticksSinceLastMove = ticksSinceLastMove;
     ctx.currentTickLow = (int)world->gameTick;
-    ctx.eventType = DM1_CM2_REACTION_HIT_BY_PROJECTILE;
+    ctx.eventType = reactionKind;
     ctx.eventTicks = (int)world->gameTick;
 
     activeGroup.groupThingIndex = groupIndex;
@@ -4832,10 +4994,9 @@ static void orch_schedule_projectile_hit_group_reaction_compat(
     activeGroup.priorMapX = action->targetMapX;
     activeGroup.priorMapY = action->targetMapY;
 
-    /* ReDMCSB PROJEXPL.C:F0217 lines 536-537 schedules
-     * F0209 CM2_EVENT_CREATE_REACTION_EVENT_30_HIT_BY_PROJECTILE
-     * after non-all-kill projectile creature damage.  Let the bounded
-     * F0209 port compute the concrete C30 event and source delay. */
+    /* ReDMCSB GROUP.C:F0209 creates a concrete C29-C31 reaction from the
+     * source event kind.  Projectile impacts pass CM2; F0241 door hazards
+     * pass CM3 after F0191 leaves a survivor. */
     if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
             &ctx, &activeGroup, &world->masterRng, &behavior)) {
         return;
@@ -5078,6 +5239,146 @@ static int orch_apply_explosion_group_action_compat(
         return 0;
     }
     return applyPlan.handled && applyPlan.appliedCount > 0;
+}
+
+/* ReDMCSB TIMELINE.C F0241:761-770 calls CHAMPION.C F0324 directly when
+ * a closing door catches the party.  The F0324/F0321 owner is shared with
+ * party-square explosions because its fanout and mutation contract is the
+ * same; this wrapper keeps the door's C2_ATTACK_SELF source identity local. */
+static int orch_apply_door_party_damage_f0324_compat(
+    struct GameWorld_Compat* world,
+    int attack,
+    int wounds,
+    struct TickResult_Compat* result)
+{
+    struct CombatAction_Compat action;
+    if (!world) return 0;
+    memset(&action, 0, sizeof(action));
+    action.kind = COMBAT_ACTION_APPLY_DAMAGE_CHAMPION;
+    action.rawAttackValue = attack;
+    action.allowedWounds = wounds;
+    action.attackTypeCode = COMBAT_ATTACK_SELF;
+    return orch_apply_explosion_party_action_compat(world, &action, result);
+}
+
+/* ReDMCSB TIMELINE.C F0241:783 calls GROUP.C F0191.  Its attack is
+ * randomized independently for each creature before the F0190/F0738 slot
+ * mutation; descending traversal is required because a killed slot compacts
+ * the remaining group entries. */
+static int orch_apply_door_group_damage_f0191_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int attack,
+    int* outKilledAll)
+{
+    struct CombatResult_Compat damage;
+    struct DungeonGroup_Compat* group;
+    struct DM1CreatureInfo_Compat creatureInfo;
+    int baseAttack;
+    int rngModulus;
+    int creatureIndex;
+    int outcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
+    int killedAll = 0;
+
+    if (outKilledAll) *outKilledAll = 0;
+    if (!world || !world->things || !world->things->groups ||
+        groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
+    group = &world->things->groups[groupIndex];
+    if (attack <= 0) return 1;
+    memset(&creatureInfo, 0, sizeof(creatureInfo));
+    if (!orch_get_dm1_creature_info_pc34_compat(
+            (int)group->creatureType, &creatureInfo)) {
+        return 0;
+    }
+    baseAttack = attack - ((attack >> 3) + 1);
+    rngModulus = ((attack >> 3) + 1) << 1;
+    for (creatureIndex = (int)group->count;
+         creatureIndex >= 0 && creatureIndex < 4;
+         --creatureIndex) {
+        DM1_MeleeF0190GroupDamageApplyPlanPc34 damageApplyPlan;
+        memset(&damage, 0, sizeof(damage));
+        damage.damageApplied = baseAttack +
+            F0732_COMBAT_RngRandom_Compat(&world->masterRng, rngModulus);
+        if (damage.damageApplied < 1) damage.damageApplied = 1;
+        memset(&damageApplyPlan, 0, sizeof(damageApplyPlan));
+        if (!dm1_v1_melee_apply_group_damage_plan_f0190_pc34(
+                &damage, group, creatureIndex, &damageApplyPlan) ||
+            !damageApplyPlan.valid || !damageApplyPlan.shouldApplyDamage) {
+            return 0;
+        }
+        outcome = damageApplyPlan.outcome;
+        if (outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES ||
+            outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+            DM1_MeleeF0190DeathSmokeInputPc34 smokeIn;
+            DM1_MeleeF0190DeathSmokePlanPc34 smokePlan;
+            DM1_MeleeF0190MutationDispatchInputPc34 dispatchIn;
+            DM1_MeleeF0190MutationDispatchPlanPc34 dispatchPlan;
+            struct TimelineEvent_Compat advance;
+            int slotIndex = -1;
+
+            /* ReDMCSB: GROUP.C F0191 lines 956-980 calls F0190 for each
+             * descending slot.  F0190 lines 824-917 owns the per-kill
+             * possessions, smoke, unlink, and active-group aftermath. */
+            memset(&dispatchIn, 0, sizeof(dispatchIn));
+            memset(&dispatchPlan, 0, sizeof(dispatchPlan));
+            dispatchIn.outcome = outcome;
+            dispatchIn.groupIndex = groupIndex;
+            dispatchIn.groupBehavior = (int)group->behavior;
+            dispatchIn.killedCreatureIndex = creatureIndex;
+            dispatchIn.originalGroupCount = damageApplyPlan.originalGroupCount;
+            dispatchIn.creatureType = (int)group->creatureType;
+            dispatchIn.creatureAttributes = creatureInfo.attributes;
+            dispatchIn.creatureProperties = creatureInfo.properties;
+            dispatchIn.killedCell = damageApplyPlan.killedCell;
+            dispatchIn.mapIndex = mapIndex;
+            dispatchIn.mapX = mapX;
+            dispatchIn.mapY = mapY;
+            dispatchIn.partyMapIndex = world->partyMapIndex;
+            dispatchIn.partyMapX = world->party.mapX;
+            dispatchIn.partyMapY = world->party.mapY;
+            if (!dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
+                    &dispatchIn, &dispatchPlan) || !dispatchPlan.valid) {
+                return 0;
+            }
+            (void)orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
+                world, group, &dispatchPlan);
+
+            memset(&smokeIn, 0, sizeof(smokeIn));
+            memset(&smokePlan, 0, sizeof(smokePlan));
+            smokeIn.shouldCreate = 1;
+            smokeIn.smokeAttack = dm1_v1_melee_death_smoke_attack_f0190_pc34(
+                creatureInfo.attributes);
+            smokeIn.smokeCell = damageApplyPlan.killedCell;
+            smokeIn.mapIndex = mapIndex;
+            smokeIn.mapX = mapX;
+            smokeIn.mapY = mapY;
+            smokeIn.currentTick = (int)world->gameTick;
+            if (dm1_v1_melee_death_smoke_plan_f0190_pc34(
+                    &smokeIn, &smokePlan) &&
+                smokePlan.valid && smokePlan.shouldCreate) {
+                memset(&advance, 0, sizeof(advance));
+                if (F0821_EXPLOSION_Create_Compat(
+                        &smokePlan.createInput, &world->explosions,
+                        &slotIndex, &advance)) {
+                    (void)F0721_TIMELINE_Schedule_Compat(
+                        &world->timeline, &advance);
+                }
+            }
+        }
+        if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+            killedAll = 1;
+            break;
+        }
+    }
+    orch_write_raw_group_compat(world->things, groupIndex);
+    if (outKilledAll) *outKilledAll = killedAll;
+    (void)mapIndex;
+    (void)mapX;
+    (void)mapY;
+    return 1;
 }
 
 
@@ -5430,7 +5731,7 @@ static int orch_f0267_resolve_non_group_chain_compat(
             int selfTarget;
             if (!orch_find_teleporter_on_square_compat(
                     world, *inOutMapIndex, *inOutMapX, *inOutMapY,
-                    &teleporter) || teleporter.scope == 1 ||
+                    &teleporter) || !(teleporter.scope & 0x02) ||
                 teleporter.targetMapIndex >= world->dungeon->header.mapCount) break;
             selfTarget = teleporter.targetMapIndex == *inOutMapIndex &&
                 teleporter.targetMapX == *inOutMapX &&
@@ -5438,7 +5739,13 @@ static int orch_f0267_resolve_non_group_chain_compat(
             *inOutMapIndex = teleporter.targetMapIndex;
             *inOutMapX = teleporter.targetMapX;
             *inOutMapY = teleporter.targetMapY;
-            if (type != THING_TYPE_PROJECTILE && !teleporter.absoluteRotation) {
+            /* ReDMCSB MOVESENS.C F0267 lines 450-482 admits ordinary
+             * Things and C14 projectiles only through object/party-scope
+             * teleporters. Lines 526-531 then apply F0263: a relative
+             * rotation changes the placed Thing cell; absolute rotation
+             * changes the projectile direction held by its timeline state
+             * and therefore leaves this Generic cell word intact. */
+            if (!teleporter.absoluteRotation) {
                 *inOutThing = orch_thing_with_cell_compat(
                     *inOutThing, THING_GET_CELL(*inOutThing) + teleporter.rotation);
             }
@@ -5523,6 +5830,7 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     result.finalMapIndex = resolvedRequest.destinationMapIndex;
     result.finalMapX = resolvedRequest.destinationMapX;
     result.finalMapY = resolvedRequest.destinationMapY;
+    result.finalThing = resolvedRequest.thing;
     /* ReDMCSB MOVESENS.C:F0267 lines 799-807 runs F0276 before the
      * source unlink for ordinary things.  Projectiles are levitating and
      * therefore use F0164 directly. */
@@ -6727,6 +7035,127 @@ static int orch_ai_state_to_dm1_behavior_compat(int stateKind)
     }
 }
 
+/* ReDMCSB GROUP.C F0207 lines 1695-1815 performs the action selected by
+ * F0209's C38-C41 branch.  F0810 already owns the behavior decision; this
+ * M10 bridge owns only the live projectile/champion mutation and receipt. */
+static int orch_apply_f0207_creature_attack_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct DungeonGroup_Compat* group,
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    const struct DM1ActiveGroup_Compat* activeGroup,
+    const struct DM1BehaviorResult_Compat* behavior,
+    struct TickResult_Compat* result)
+{
+    int creatureIndex;
+
+    if (!world || !ev || !group || !ctx || !activeGroup || !behavior) return 0;
+    if (behavior->actionKind != DM1_ACTION_ATTACK) return 1;
+    creatureIndex = ev->aux2 - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    if (creatureIndex < 0 || creatureIndex > (int)group->count) return 1;
+
+    if (behavior->attackIsProjectile) {
+        DM1_CreatureProjectileCreateRequestPc34 request;
+        struct ProjectileCreateInput_Compat input;
+        struct TimelineEvent_Compat firstMove;
+        int slot = -1;
+
+        memset(&request, 0, sizeof(request));
+        request.creatureGroupIndex = ev->aux0;
+        request.partyMapIndex = ev->mapIndex;
+        request.groupMapX = ev->mapX;
+        request.groupMapY = ev->mapY;
+        request.projectileThing = behavior->projectileThing;
+        request.targetCell = behavior->attackTargetCell;
+        request.direction = behavior->projectileDirection;
+        request.kineticEnergy = behavior->projectileKineticEnergy;
+        request.attack = behavior->projectileAttack;
+        request.stepEnergy = behavior->projectileStepEnergy;
+        request.gameTick = (int)world->gameTick;
+        memset(&input, 0, sizeof(input));
+        memset(&firstMove, 0, sizeof(firstMove));
+        if (!dm1_v1_build_creature_projectile_create_input_pc34(&request, &input) ||
+            !F0810_PROJECTILE_Create_Compat(
+                &input, &world->projectiles, &slot, &firstMove)) {
+            return 0;
+        }
+        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove);
+        emit(result, EMIT_CREATURE_ATTACK, ev->aux0, creatureIndex, slot, 1);
+        return 1;
+    }
+
+    {
+        int targetCell;
+        int targetChampion = -1;
+        int i;
+        struct CombatantCreatureSnapshot_Compat attacker;
+        struct CombatantChampionSnapshot_Compat defender;
+        struct CombatResult_Compat combat;
+
+        /* GROUP.C F0207 derives the party-facing target cell before it
+         * branches between ranged and melee. */
+        if (activeGroup->cells == DM1_SINGLE_CENTERED_CREATURE_CELL) {
+            targetCell = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2);
+        } else {
+            targetCell = (((activeGroup->cells >> (creatureIndex * 2)) +
+                           5 - ctx->currentGroupPrimaryDirToParty) & 2) >> 1;
+        }
+        targetCell = (targetCell + ctx->currentGroupPrimaryDirToParty) & 3;
+
+        if (ctx->creatureInfo.attributes & DM1_ATTR_ATTACK_ANY_CHAMPION) {
+            targetChampion = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4);
+            for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+                int candidate = (targetChampion + i) & 3;
+                if (world->party.champions[candidate].present &&
+                    world->party.champions[candidate].hp.current > 0) {
+                    targetChampion = candidate;
+                    break;
+                }
+            }
+            if (i == CHAMPION_MAX_PARTY) return 1;
+        } else {
+            for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+                if (world->party.champions[i].present &&
+                    world->party.champions[i].hp.current > 0 &&
+                    world->party.champions[i].cell == targetCell) {
+                    targetChampion = i;
+                    break;
+                }
+            }
+            if (targetChampion < 0) return 1;
+        }
+
+        memset(&attacker, 0, sizeof(attacker));
+        memset(&defender, 0, sizeof(defender));
+        memset(&combat, 0, sizeof(combat));
+        if (!F0888_ORCH_GetCreatureSnapshot_Compat(
+                world, ev->aux0, creatureIndex,
+                orch_cmd_attack_doubled_map_difficulty_compat(world), &attacker) ||
+            !orch_build_defender_champion_snapshot_compat(
+                world, targetChampion, attacker.attackType, &defender) ||
+            !F0736_COMBAT_ResolveCreatureMelee_Compat(
+                &attacker, &defender, &world->masterRng, &combat)) {
+            return 0;
+        }
+        orch_writeback_cmd_attack_luck_compat(world, targetChampion, &defender);
+        if (combat.wakeFromRest) {
+            world->partyIsResting = 0;
+            world->lifecycle.rest.isResting = 0;
+        }
+        if (combat.damageApplied > 0) {
+            /* ReDMCSB GROUP.C F0207 lines 1788-1797 chooses this champion
+             * and cell before F0230 calls F0321.  Keep the receipt until
+             * F0889's same-tick damage boundary rather than collapsing it
+             * onto PartyState.activeChampionIndex. */
+            orch_stage_champion_combat_compat(world, targetChampion,
+                                              targetCell, &combat);
+        }
+        emit(result, EMIT_CREATURE_ATTACK, ev->aux0, creatureIndex,
+             combat.damageApplied, 0);
+    }
+    return 1;
+}
+
 static int orch_handle_creature_reaction_event_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
@@ -6809,6 +7238,7 @@ static int orch_handle_creature_reaction_event_compat(
     activeGroup.targetMapY = ai->lastSeenPartyMapY;
     activeGroup.priorMapX = ai->groupMapX;
     activeGroup.priorMapY = ai->groupMapY;
+    memcpy(activeGroup.aspect, ai->aspect, sizeof(activeGroup.aspect));
 
     /* ReDMCSB: PROJEXPL.C F0231 calls GROUP.C F0209 with
      * CM1_EVENT_CREATE_REACTION_EVENT_31_PARTY_IS_ADJACENT unless the
@@ -6818,6 +7248,29 @@ static int orch_handle_creature_reaction_event_compat(
     if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
             &ctx, &activeGroup, &world->masterRng, &behavior)) {
         return 0;
+    }
+
+    if (!orch_apply_f0207_creature_attack_compat(
+            world, ev, group, &ctx, &activeGroup, &behavior, result)) {
+        return 0;
+    }
+
+    /* ReDMCSB GROUP.C F0179 lines 224-305 writes ACTIVE_GROUP::Aspect
+     * around each C38 attack and C33 aspect handoff.  Keep the persistent
+     * latch in M10 so a later C38 observes the prior attack state instead
+     * of receiving a freshly zeroed ACTIVE_GROUP every event.  The bitmap
+     * offset/flip fields remain owned by the renderer's F0179 frame route. */
+    if (ev->aux2 >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
+        ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        int creatureIndex = ev->aux2 - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+        if (behavior.actionKind == DM1_ACTION_ATTACK ||
+            behavior.actionKind == DM1_ACTION_STEAL) {
+            activeGroup.aspect[creatureIndex] |= 0x80;
+        }
+    } else if (ev->aux2 >= DM1_EVENT_UPDATE_ASPECT_CREATURE_0 &&
+               ev->aux2 <= DM1_EVENT_UPDATE_ASPECT_CREATURE_3) {
+        int creatureIndex = ev->aux2 - DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+        activeGroup.aspect[creatureIndex] &= (int)~0x80;
     }
 
     if (!F0810b_DM1_GROUP_PlanReactionApply_Compat(
@@ -6837,6 +7290,7 @@ static int orch_handle_creature_reaction_event_compat(
     ai->lastSeenPartyMapX = applyPlan.lastSeenPartyMapX;
     ai->lastSeenPartyMapY = applyPlan.lastSeenPartyMapY;
     ai->lastSeenPartyTick = applyPlan.lastSeenPartyTick;
+    memcpy(ai->aspect, activeGroup.aspect, sizeof(ai->aspect));
     group->behavior = (unsigned char)applyPlan.groupBehavior;
 
     if (applyPlan.shouldScheduleNextEvent) {
@@ -6963,24 +7417,6 @@ static int orch_find_material_group_on_square_compat(
         thing = orch_next_thing_compat(things, thing);
     }
     return 0;
-}
-
-static int orch_damage_group_all_creatures_compat(
-    struct DungeonGroup_Compat* group,
-    int damage)
-{
-    int i;
-    int damaged = 0;
-    if (!group || damage <= 0) return 0;
-    for (i = 0; i <= (int)group->count && i < 4; ++i) {
-        if (group->health[i] > 0) {
-            group->health[i] = (group->health[i] > (unsigned int)damage)
-                ? (unsigned short)(group->health[i] - damage)
-                : 0;
-            damaged++;
-        }
-    }
-    return damaged;
 }
 
 int F0888_ORCH_ApplyPlayerInput_Compat(
@@ -7788,11 +8224,9 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                 /* Pass 418 — source-locked F0241 closing-door hazard gate.
                  * Before the normal CLEAR (+1) step, ReDMCSB checks whether
                  * the party occupies the door square (TIMELINE.C:759-774).
-                 * If so, it forces the door back open, applies damage, and
-                 * reschedules the same event two ticks after the original
-                 * fire time.  We keep damage as deterministic emissions here;
-                 * HP mutation remains owned by the champion combat/lifecycle
-                 * layers. */
+                 * If so, it forces the door back open, applies F0324 damage,
+                 * and reschedules the same event two ticks after the original
+                 * fire time. */
                 if (effect == DOOR_EFFECT_CLEAR &&
                     F0712_DOOR_StepAnimation_Compat(
                         world->dungeon, ev.mapIndex, ev.mapX, ev.mapY,
@@ -7823,18 +8257,36 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                                 if (openStep.newDoorState == obstruction.newDoorState ||
                                     openStep.kind == DOOR_ANIM_STEP_REACHED_TARGET) break;
                             }
+                            (void)orch_apply_door_party_damage_f0324_compat(
+                                world, obstruction.damageAmount,
+                                obstruction.woundMask, result);
                             emit(result, EMIT_DAMAGE_DEALT,
                                  obstruction.damageAmount, obstruction.woundMask,
                                  world->party.championCount, ev.mapIndex);
                         } else if (obstruction.kind == DOOR_OBSTRUCTION_CREATURE) {
+                            int killedAll = 0;
+                            struct CombatAction_Compat dangerAction;
                             (void)F0712_DOOR_StepAnimation_Compat(
                                 world->dungeon, ev.mapIndex, ev.mapX, ev.mapY,
                                 DOOR_EFFECT_SET, 1, &step);
                             if (world->things && groupIndex >= 0 &&
                                 groupIndex < world->things->groupCount) {
-                                (void)orch_damage_group_all_creatures_compat(
-                                    &world->things->groups[groupIndex],
-                                    obstruction.damageAmount);
+                                (void)orch_apply_door_group_damage_f0191_compat(
+                                    world, groupIndex, ev.mapIndex, ev.mapX, ev.mapY,
+                                    obstruction.damageAmount, &killedAll);
+                                if (!killedAll) {
+                                    memset(&dangerAction, 0, sizeof(dangerAction));
+                                    dangerAction.targetMapIndex = ev.mapIndex;
+                                    dangerAction.targetMapX = ev.mapX;
+                                    dangerAction.targetMapY = ev.mapY;
+                                    /* ReDMCSB TIMELINE.C F0241:789 invokes
+                                     * GROUP.C F0209 CM3 only for survivors. */
+                                    orch_schedule_group_reaction_compat(
+                                        world, groupIndex,
+                                        &world->things->groups[groupIndex],
+                                        &dangerAction,
+                                        DM1_CM3_REACTION_DANGER_ON_SQUARE);
+                                }
                             }
                             emit(result, EMIT_DAMAGE_DEALT,
                                  obstruction.damageAmount, obstruction.woundMask,
@@ -8061,6 +8513,8 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             (void)orch_handle_deferred_group_move_event_compat(world, &ev, result);
             break;
         case TIMELINE_EVENT_SQUARE_STATE:
+            (void)orch_dispatch_square_state_event_compat(world, &ev);
+            break;
         case TIMELINE_EVENT_MOVE_TIMER:
         case TIMELINE_EVENT_SPELL_TICK:
             break;
@@ -8121,16 +8575,59 @@ void F0889_ORCH_ApplyPendingDamage_Compat(
     int i, alive = 0;
     if (!world) return;
     (void)result;
+    /* ReDMCSB CHAMPION.C F0320:1720-1727 loops over all champions after
+     * the timeline pass. Each entry is a total of every F0321 call made
+     * during this tick, with wounds ORed before HP is reduced. */
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        struct CombatResult_Compat* pending = &world->pendingChampionCombat[i];
+        int targetCell = -1;
+        int killed = 0;
+        if (pending->damageApplied <= 0) continue;
+        (void)orch_read_pending_damage_receipt_compat(
+            world->pendingChampionCombatTargetReceipt[i], NULL, &targetCell);
+        if (world->party.champions[i].present) {
+            F0737_COMBAT_ApplyDamageToChampion_Compat(
+                pending, &world->party.champions[i], &killed);
+            if (pending->poisonAttackPending > 0) {
+                world->party.champions[i].poisonDose +=
+                    (unsigned short)pending->poisonAttackPending;
+            }
+            emit(result, EMIT_CHAMPION_DAMAGED, i, targetCell,
+                 pending->damageApplied, pending->woundMaskAdded);
+            if (killed) emit(result, EMIT_CHAMPION_DOWN, i, 0, 0, 0);
+        }
+        memset(pending, 0, sizeof(*pending));
+        world->pendingChampionCombatTargetReceipt[i] = 0;
+    }
+
+    /* Compatibility for pre-DM1-008 producers that still publish one
+     * active-champion result instead of the F0321-shaped staging buffer. */
     if (world->pendingCombat.damageApplied > 0 && world->party.championCount > 0) {
-        /* Apply to active champion (simplified). */
         int idx = world->party.activeChampionIndex;
+        int targetCell = -1;
+        int hasTargetReceipt = orch_read_pending_damage_receipt_compat(
+            world->pendingCombatTargetReceipt, &idx, &targetCell);
+        /* ReDMCSB GROUP.C F0207 selects the defender before F0230/F0321.
+         * Preserve that concrete receipt.  Old producers without a receipt
+         * retain the active-champion behavior until they migrate. */
+        if (hasTargetReceipt) {
+            (void)targetCell; /* retained in state/serialization for M11 receipt use */
+        }
         if (idx >= 0 && idx < CHAMPION_MAX_PARTY) {
             int killed = 0;
             F0737_COMBAT_ApplyDamageToChampion_Compat(
                 &world->pendingCombat, &world->party.champions[idx], &killed);
+            if (world->pendingCombat.poisonAttackPending > 0) {
+                world->party.champions[idx].poisonDose +=
+                    (unsigned short)world->pendingCombat.poisonAttackPending;
+            }
+            emit(result, EMIT_CHAMPION_DAMAGED, idx, targetCell,
+                 world->pendingCombat.damageApplied,
+                 world->pendingCombat.woundMaskAdded);
             if (killed) emit(result, EMIT_CHAMPION_DOWN, idx, 0, 0, 0);
         }
         memset(&world->pendingCombat, 0, sizeof(world->pendingCombat));
+        world->pendingCombatTargetReceipt = 0;
     }
     for (i = 0; i < CHAMPION_MAX_PARTY; i++) {
         if (world->party.champions[i].present &&

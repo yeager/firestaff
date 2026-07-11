@@ -373,6 +373,17 @@ int DM1_V1_BuildAudioEmissionPlanPc34(const struct TickEmission_Compat* emission
         case EMIT_CHAMPION_DOWN:
             outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_COMBAT;
             break;
+        case EMIT_CHAMPION_DAMAGED:
+            if (emission->payload[0] < 0 ||
+                emission->payload[0] >= CHAMPION_MAX_PARTY) {
+                return 0;
+            }
+            /* ReDMCSB PROJEXPL.C F0230:1403-1404 queues the matching
+             * C09_SOUND_CHAMPION_n_DAMAGED receipt after F0321 succeeds. */
+            outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND;
+            outPlan->sourceSoundIndex = (int16_t)(
+                DM1_SND_CHAMPION_0_DAMAGED + emission->payload[0]);
+            break;
         case EMIT_SPELL_EFFECT:
             outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_SPELL;
             break;

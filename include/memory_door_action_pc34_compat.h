@@ -33,13 +33,9 @@
  *     identification helper) vs NO_ACTION.  Does not execute the
  *     sensor effect itself; Pass 32 wires that into the runtime.
  *
- * Out-of-scope for Pass 38:
- *   - Champion damage from a closing horizontal/vertical door on the
- *     party square (ReDMCSB F0241 branch, BUG0_78 in the PC 3.4 source).
- *   - Creature damage / death from a closing door on the creature
- *     square (F0191_GROUP_GetDamageAllCreaturesOutcome branch).
- *   - Sensor-driven door actuation re-entering the animation scheduler
- *     (still routed through the M11 shim in Pass 31 scope).
+ * The F0241 closing-door party and surviving-creature hazard branches are
+ * dispatched by the M10 timeline owner. Full F0190 killed-all aftermath is
+ * intentionally still tracked by DM1-004; this header does not promise it.
  */
 
 #include <stdint.h>

@@ -10153,6 +10153,18 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                               "T%u: EXPERIENCE GAINED",
                               (unsigned int)state->world.gameTick);
                 break;
+            case EMIT_CHAMPION_DAMAGED: {
+                int champIdx = (int)e->payload[0];
+                int damage = (int)e->payload[2];
+                if (damage > 0) {
+                    M11_GameView_NotifyChampionDamage(state, champIdx, damage);
+                    m11_log_event(state, M11_COLOR_LIGHT_RED,
+                                  "T%u: CHAMPION %d DAMAGED %d",
+                                  (unsigned int)state->world.gameTick,
+                                  champIdx + 1, damage);
+                }
+                break;
+            }
             case EMIT_CHAMPION_DOWN: {
                 int champIdx = (int)e->payload[0];
                 char name[16];

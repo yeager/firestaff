@@ -28,7 +28,26 @@
 #define CSB_V1_MAX_LEVELS 12
 #define CSB_V1_MAX_SQUARE_SIZE 32
 #define CSB_V1_THING_TYPE_GROUP 4
+#define CSB_V1_THING_TYPE_ACTUATOR 3
 #define CSB_V1_THING_TYPE_DSA 15  /* CSB-specific: DSA script thing */
+
+/* CSBWin DSA filter locations are Expool EDT_SpecialLocations records.
+ * Monster.cpp resolves only a type-47 DB3 actuator on the decoded square.
+ * ReDMCSB has no DSA equivalent; this is CSBWin-specific compatibility. */
+#define CSB_V1_EXPOOL_EDT_SPECIAL_LOCATIONS 3u
+#define CSB_V1_EXPOOL_ESL_MONSTER_ATTACK_FILTER 0u
+#define CSB_V1_EXPOOL_ESL_MONSTER_MOVE_FILTER 2u
+#define CSB_V1_DSA_FILTER_ACTUATOR_TYPE 47u
+
+typedef struct {
+    int level;
+    int x;
+    int y;
+    int position;
+    int party_level_only;
+    int max_distance;
+    uint16_t actuator_thing;
+} CSB_V1_DSAFilterLocation;
 
 typedef struct {
     int level_count;
@@ -127,6 +146,19 @@ int csb_v1_dungeon_expool_locate_record(
     uint32_t record_id,
     const uint8_t **out_bytes,
     size_t *out_size);
+
+/* Decode a CSBWin Monster.cpp special-location word. `movement_filter` adds
+ * the bit-18 party-level gate and bits 19..23 maximum-distance fields. */
+int csb_v1_dungeon_decode_dsa_filter_location(
+    const CSB_V1_DungeonData *d, uint32_t record_word, int movement_filter,
+    CSB_V1_DSAFilterLocation *out);
+
+/* Resolve Monster.cpp's attack key or level-specific/global movement key,
+ * then select the first type-47 actuator in the decoded square's Thing list.
+ * It decodes locations only; it deliberately does not execute DSA actions. */
+int csb_v1_dungeon_resolve_dsa_filter_location(
+    const CSB_V1_DungeonData *d, int level, int movement_filter,
+    CSB_V1_DSAFilterLocation *out);
 
 /* Adapter matching CSB_V1_SkinCacheRecordLookup. Pass CSB_V1_DungeonData*
  * as user. */

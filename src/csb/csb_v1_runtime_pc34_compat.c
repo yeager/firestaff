@@ -475,7 +475,7 @@ typedef struct {
     struct Dm1V1InputCommandQueuePc34Compat input_command_queue;
     struct Dm1V1InputQueueProcessResultPc34Compat last_input_dispatch;
     uint32_t input_dispatch_count;
-    CSB_V1_ChaosMagicState chaos_magic;
+    CSB_V1_ChaosAmbientState chaos_magic;
     CSB_V1_PartyState party_state;
     struct ProjectileList_Compat projectiles;
     struct ExplosionList_Compat explosions;
@@ -5989,13 +5989,11 @@ static void csb_v1_runtime_drop_creature_fixed_possessions(
             &weapon_dropped)) {
         return;
     }
-    (void)weapon_dropped;
-
     /* ReDMCSB GROUP.C F0186 lines 580-645 resolves fixed creature
      * possessions, allocates unused C05/C06/C10 records, stores item type
-     * plus cursed bit, assigns a floor cell, and moves the thing to the
-     * source square through F0267.  This CSB bridge materializes the raw
-     * object records and square thing-list append; sounds remain later. */
+     * plus cursed bit, assigns a floor cell, moves the thing to the source
+     * square through F0267, then requests C00 when any resolved possession
+     * is a weapon and C04 otherwise. */
     for (i = 0; i < drop_count; ++i) {
         uint16_t thing = csb_v1_runtime_allocate_fixed_possession_thing(
             dungeon,
@@ -6039,6 +6037,23 @@ static void csb_v1_runtime_drop_creature_fixed_possessions(
                 &drop_y);
         }
     }
+
+    {
+        CsbV1AudioRequest request;
+        memset(&request, 0, sizeof(request));
+        request.soundIndex = weapon_dropped
+            ? CSB_V1_SOUND_METALLIC_THUD
+            : CSB_V1_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM;
+        request.mapX = (int16_t)map_x;
+        request.mapY = (int16_t)map_y;
+        request.mode = CSB_V1_MODE_PLAY_IMMEDIATELY;
+        request.volume = 64;
+        request.priority = 4u;
+        /* ReDMCSB GROUP.C F0186 line 645 calls F0064 even when every
+         * allocation was exhausted; L0362 is based on the resolved table,
+         * not on successful F0166 allocations. */
+        (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+    }
 }
 
 static void csb_v1_runtime_drop_group_slot_possessions(
@@ -6052,6 +6067,8 @@ static void csb_v1_runtime_drop_group_slot_possessions(
     struct RngState_Compat rng;
     uint16_t thing;
     int guard;
+    int weapon_dropped = 0;
+    int saw_possession = 0;
 
     if (!profile || !dungeon || !group_record) return;
     thing = csb_v1_runtime_read_u16(group_record + 2);
@@ -6065,8 +6082,7 @@ static void csb_v1_runtime_drop_group_slot_possessions(
 
     /* ReDMCSB GROUP.C F0188 lines 724-731 walks GROUP.Slot, rewrites each
      * carried thing with a random floor cell, and moves it onto the group
-     * square before F0189 deletes the group.  Fixed possession allocation and
-     * sound mode are separate CSB runtime slices. */
+     * square before F0189 deletes the group. */
     for (guard = 0; guard < 64 && thing != 0xFFFEu && thing != 0xFFFFu;
          ++guard) {
         uint8_t *record;
@@ -6082,6 +6098,10 @@ static void csb_v1_runtime_drop_group_slot_possessions(
             &thing_size);
         if (!record || thing_size < 2) break;
         next_thing = csb_v1_runtime_read_u16(record);
+        saw_possession = 1;
+        if (thing_type == DM1_DROP_THING_TYPE_WEAPON) {
+            weapon_dropped = 1;
+        }
         dropped_thing = (uint16_t)((thing & 0x3FFFu) |
                                    (uint16_t)(F0732_COMBAT_RngRandom_Compat(
                                                   &rng,
@@ -6117,6 +6137,21 @@ static void csb_v1_runtime_drop_group_slot_possessions(
         thing = next_thing;
     }
     csb_v1_runtime_write_u16(group_record + 2, 0xFFFEu);
+    if (saw_possession) {
+        CsbV1AudioRequest request;
+        memset(&request, 0, sizeof(request));
+        request.soundIndex = weapon_dropped
+            ? CSB_V1_SOUND_METALLIC_THUD
+            : CSB_V1_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM;
+        request.mapX = (int16_t)map_x;
+        request.mapY = (int16_t)map_y;
+        request.mode = CSB_V1_MODE_PLAY_IMMEDIATELY;
+        request.volume = 64;
+        request.priority = 4u;
+        /* ReDMCSB GROUP.C F0188 lines 724-734 requests one thud after the
+         * complete Slot chain is moved, choosing C00 if any item was C05. */
+        (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+    }
 }
 
 static const unsigned char g_csb_v1_giggler_steal_slots_pc34[8] = {
@@ -9327,7 +9362,7 @@ static int csb_v1_runtime_stamina_adjusted_value(
     return value;
 }
 
-static int csb_v1_runtime_object_weight_for_thing(
+static int csb_v1_runtime_get_object_weight_internal_pc34_compat(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing,
     int depth)
@@ -9417,7 +9452,7 @@ static int csb_v1_runtime_object_weight_for_thing(
                child != THING_ENDOFLIST &&
                guard++ < DM1_SENSOR_POSSESSION_MAX_SCAN_STEPS) {
             const uint8_t *child_record;
-            total += csb_v1_runtime_object_weight_for_thing(
+            total += csb_v1_runtime_get_object_weight_internal_pc34_compat(
                 profile, child, depth + 1);
             child_record = csb_v1_dungeon_get_thing_record(
                 dungeon,
@@ -9433,6 +9468,58 @@ static int csb_v1_runtime_object_weight_for_thing(
     default:
         return 0;
     }
+}
+
+int csb_v1_runtime_get_object_weight_pc34_compat(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing)
+{
+    return csb_v1_runtime_get_object_weight_internal_pc34_compat(
+        profile, thing, 0);
+}
+
+int csb_v1_runtime_recompute_champion_load_pc34_compat(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index)
+{
+    CSB_V1_Champion *champion;
+    int slot;
+    int total = 0;
+
+    if (!profile || !profile->dungeon_handle ||
+        champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount) {
+        return -1;
+    }
+
+    champion = &profile->party_state.Champions[champion_index];
+    /* ReDMCSB CHAMPION.C maintains Load incrementally as F0297/F0298 and
+     * F0300/F0301 alter slots.  This load/import boundary rebuilds the same
+     * cached field by summing each C00..C29 Thing through DUNGEON.C F0140. */
+    for (slot = 0; slot < CSB_V1_SLOT_COUNT; ++slot) {
+        total += csb_v1_runtime_get_object_weight_pc34_compat(
+            profile, champion->Slots[slot]);
+    }
+    champion->Load = csb_v1_runtime_clamp_u16(total);
+    return total;
+}
+
+int csb_v1_runtime_recompute_party_loads_pc34_compat(
+    CSB_V1_RuntimeProfile *profile)
+{
+    int champion_index;
+    int recomputed = 0;
+
+    if (!profile || !profile->dungeon_handle) return -1;
+    for (champion_index = 0;
+         champion_index < profile->party_state.ChampionCount;
+         ++champion_index) {
+        if (csb_v1_runtime_recompute_champion_load_pc34_compat(
+                profile, champion_index) >= 0) {
+            ++recomputed;
+        }
+    }
+    return recomputed;
 }
 
 static int csb_v1_runtime_f0312_action_hand_strength(
@@ -9454,7 +9541,7 @@ static int csb_v1_runtime_f0312_action_hand_strength(
     if (!profile || !champion || !rng) return 0;
     strength = F0732_COMBAT_RngRandom_Compat(rng, 16) +
                (int)champion->Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR];
-    object_weight = csb_v1_runtime_object_weight_for_thing(profile, thing, 0);
+    object_weight = csb_v1_runtime_get_object_weight_pc34_compat(profile, thing);
     max_load = (int)csb_v1_champion_get_maximum_load(champion);
     if (max_load <= 0) {
         max_load =
@@ -12831,6 +12918,9 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
            sizeof(profile->last_timeline_dispatch));
     profile->timeline_dispatch_count = 0;
     csb_v1_skin_cache_init(&profile->skin_cache);
+    csb_v1_chaos_init(&profile->csbwin_extended_dsa_state);
+    memset(profile->csbwin_extended_level_dsa_index, 0xff,
+           sizeof(profile->csbwin_extended_level_dsa_index));
     DM1_V1_InputCommandQueue_InitPc34Compat(&profile->input_command_queue);
     memset(&profile->last_input_dispatch, 0,
            sizeof(profile->last_input_dispatch));
@@ -13993,16 +14083,27 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
     return imported;
 }
 
-int csb_v1_runtime_apply_csbwin_resume_report(
-    CSB_V1_RuntimeProfile *profile,
+static void csb_v1_runtime_cleanup_csbwin_extended_state(
+    CSB_V1_RuntimeProfile *profile)
+{
+    if (!profile) return;
+    csb_v1_chaos_cleanup(&profile->csbwin_extended_dsa_state);
+    free(profile->csbwin_extended_game_info);
+    profile->csbwin_extended_game_info = NULL;
+    profile->csbwin_extended_game_info_size = 0u;
+    profile->csbwin_extended_game_info_fnv1a = 0u;
+    profile->csbwin_extended_features_valid = 0;
+    profile->csbwin_extended_level_index_present = 0;
+}
+
+static int csb_v1_runtime_stage_csbwin_resume_report(
+    CSB_V1_RuntimeProfile *candidate,
     const CSB_V1_CSBWin512BodyReport *summary)
 {
-    CSB_V1_RuntimeProfile candidate;
-    int previous_dungeon_level;
     uint16_t champion_index;
     uint16_t queue_index;
 
-    if (!profile || !summary || !summary->header_valid ||
+    if (!candidate || !summary || !summary->header_valid ||
         summary->sections_verified < CSB_V1_CSBWIN_512_SECTION_COUNT ||
         summary->num_character > CSB_V1_MAX_CHAMPIONS ||
         summary->party_x > CSB_V1_MAX_PARTY_X ||
@@ -14042,33 +14143,101 @@ int csb_v1_runtime_apply_csbwin_resume_report(
      * the complete ordered handoff before publishing it. GAMEBLOCK2 also
      * updates the shared current-dungeon level, so restore that singleton if
      * a later candidate step fails. */
-    candidate = *profile;
-    previous_dungeon_level = csb_v1_dungeon_get_current_level();
     if (csb_v1_runtime_apply_csbwin_gameblock2_summary(
-            &candidate, summary) != 0) {
-        goto reject;
+            candidate, summary) != 0) {
+        return -1;
     }
     if (csb_v1_runtime_apply_csbwin_champion_summaries(
-            &candidate, summary) != 0) {
-        goto reject;
+            candidate, summary) != 0) {
+        return -1;
     }
     if (csb_v1_runtime_apply_csbwin_body_runtime_summaries(
-            &candidate, summary) != 0) {
-        goto reject;
+            candidate, summary) != 0) {
+        return -1;
     }
-    if (csb_v1_runtime_materialize_csbwin_item16_summaries(&candidate) < 0) {
-        goto reject;
+    if (csb_v1_runtime_materialize_csbwin_item16_summaries(candidate) < 0) {
+        return -1;
     }
-    if (csb_v1_runtime_materialize_csbwin_timer_queue(&candidate) < 0) {
-        goto reject;
+    if (csb_v1_runtime_materialize_csbwin_timer_queue(candidate) < 0) {
+        return -1;
     }
+    return 0;
+}
+
+static int csb_v1_runtime_stage_csbwin_extended_state(
+    CSB_V1_RuntimeProfile *candidate,
+    const uint8_t *bytes,
+    size_t size,
+    const CSB_V1_CSBWinExtendedFeaturesReport *features,
+    const CSB_V1_CSBWinExtendedTailReport *tail)
+{
+    char *game_info;
+
+    if (!candidate || !bytes || !features || !tail || !features->valid ||
+        !tail->valid ||
+        tail->game_info_offset > size ||
+        tail->game_info_size > size - tail->game_info_offset) {
+        return -1;
+    }
+    game_info = (char *)malloc((size_t)tail->game_info_size + 1u);
+    if (!game_info) return -1;
+    memcpy(game_info, bytes + tail->game_info_offset, tail->game_info_size);
+    game_info[tail->game_info_size] = '\0';
+
+    /* CSBWin SaveGame.cpp:211-260 authenticates DSA records before it
+     * publishes gameInfo. DSA.cpp:5637-5798 defines those records. Keep the
+     * imported action words opaque until a source-faithful interpreter exists. */
+    csb_v1_chaos_init(&candidate->csbwin_extended_dsa_state);
+    if (csb_v1_chaos_import_extended_save_dsas(
+            &candidate->csbwin_extended_dsa_state, bytes, (int)size) < 0) {
+        free(game_info);
+        return -1;
+    }
+    candidate->csbwin_extended_features_valid = 1;
+    candidate->csbwin_extended_features_version = features->version;
+    candidate->csbwin_extended_features_flags = features->flags;
+    candidate->csbwin_extended_features_flags32 = features->extended_flags;
+    candidate->csbwin_extended_cell_flag_array_size =
+        features->cell_flag_array_size;
+    candidate->csbwin_extended_game_info = game_info;
+    candidate->csbwin_extended_game_info_size = tail->game_info_size;
+    candidate->csbwin_extended_game_info_fnv1a = tail->game_info_fnv1a;
+    candidate->csbwin_extended_level_index_present =
+        tail->level_index_present;
+    memcpy(candidate->csbwin_extended_level_dsa_index,
+           tail->level_dsa_index,
+           sizeof(candidate->csbwin_extended_level_dsa_index));
+    return 0;
+}
+
+int csb_v1_runtime_apply_csbwin_resume_report(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWin512BodyReport *summary)
+{
+    CSB_V1_RuntimeProfile candidate;
+    int previous_dungeon_level;
+
+    if (!profile || !summary) return -1;
+    candidate = *profile;
+    previous_dungeon_level = csb_v1_dungeon_get_current_level();
+    if (csb_v1_runtime_stage_csbwin_resume_report(&candidate, summary) != 0) {
+        csb_v1_dungeon_set_current_level(previous_dungeon_level);
+        return -1;
+    }
+    /* A core-only report has no Extended Features preamble. CSBWin clears its
+     * DSA/game-info/index owners before loading the save body. */
+    csb_v1_chaos_init(&candidate.csbwin_extended_dsa_state);
+    candidate.csbwin_extended_game_info = NULL;
+    candidate.csbwin_extended_game_info_size = 0u;
+    candidate.csbwin_extended_game_info_fnv1a = 0u;
+    candidate.csbwin_extended_features_valid = 0;
+    candidate.csbwin_extended_level_index_present = 0;
+    memset(candidate.csbwin_extended_level_dsa_index, 0xff,
+           sizeof(candidate.csbwin_extended_level_dsa_index));
+    csb_v1_runtime_cleanup_csbwin_extended_state(profile);
     *profile = candidate;
     (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership(profile);
     return 0;
-
-reject:
-    csb_v1_dungeon_set_current_level(previous_dungeon_level);
-    return -1;
 }
 
 int csb_v1_runtime_apply_csbwin_resume_file(
@@ -14084,6 +14253,12 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     size_t got;
     int rc;
     CSB_V1_CSBWin512BodyReport report;
+    CSB_V1_CSBWinExtendedFeaturesReport features;
+    CSB_V1_CSBWinExtendedDSAReport dsa;
+    CSB_V1_CSBWinExtendedTailReport tail;
+    CSB_V1_RuntimeProfile candidate;
+    size_t core_offset = 0u;
+    int previous_dungeon_level;
 
     if (!profile || !path || path[0] == '\0') {
         return -1;
@@ -14127,13 +14302,58 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         return -1;
     }
 
-    memset(&report, 0, sizeof(report));
-    rc = csb_v1_csbwin_512_verify_save_body(bytes, file_size, 0u, &report);
-    free(bytes);
-    if (rc != CSB_V1_CSBWIN_512_OK) {
+    memset(&features, 0, sizeof(features));
+    memset(&dsa, 0, sizeof(dsa));
+    memset(&tail, 0, sizeof(tail));
+    rc = csb_v1_csbwin_512_inspect_extended_tail(
+        bytes, file_size, &tail, &dsa, &features);
+    if (rc == CSB_V1_CSBWIN_EXTENDED_ABSENT) {
+        core_offset = 0u;
+    } else if (rc == CSB_V1_CSBWIN_EXTENDED_OK && tail.valid &&
+               tail.next_payload_offset <= file_size) {
+        core_offset = tail.next_payload_offset;
+    } else {
+        free(bytes);
         return -1;
     }
-    return csb_v1_runtime_apply_csbwin_resume_report(profile, &report);
+    memset(&report, 0, sizeof(report));
+    rc = csb_v1_csbwin_512_verify_save_body(bytes + core_offset,
+                                             file_size - core_offset,
+                                             0u, &report);
+    if (rc != CSB_V1_CSBWIN_512_OK) {
+        free(bytes);
+        return -1;
+    }
+    candidate = *profile;
+    previous_dungeon_level = csb_v1_dungeon_get_current_level();
+    if (csb_v1_runtime_stage_csbwin_resume_report(&candidate, &report) != 0) {
+        csb_v1_dungeon_set_current_level(previous_dungeon_level);
+        free(bytes);
+        return -1;
+    }
+    if (core_offset != 0u) {
+        if (csb_v1_runtime_stage_csbwin_extended_state(
+                &candidate, bytes, file_size, &features, &tail) != 0) {
+            csb_v1_runtime_cleanup_csbwin_extended_state(&candidate);
+            csb_v1_dungeon_set_current_level(previous_dungeon_level);
+            free(bytes);
+            return -1;
+        }
+    } else {
+        csb_v1_chaos_init(&candidate.csbwin_extended_dsa_state);
+        candidate.csbwin_extended_game_info = NULL;
+        candidate.csbwin_extended_game_info_size = 0u;
+        candidate.csbwin_extended_game_info_fnv1a = 0u;
+        candidate.csbwin_extended_features_valid = 0;
+        candidate.csbwin_extended_level_index_present = 0;
+        memset(candidate.csbwin_extended_level_dsa_index, 0xff,
+               sizeof(candidate.csbwin_extended_level_dsa_index));
+    }
+    free(bytes);
+    csb_v1_runtime_cleanup_csbwin_extended_state(profile);
+    *profile = candidate;
+    (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership(profile);
+    return 0;
 }
 
 static int csb_v1_runtime_build_csbwin_core_summary(
@@ -14765,6 +14985,7 @@ void csb_v1_runtime_cleanup(CSB_V1_RuntimeProfile *profile) {
         profile->dungeon_handle = NULL;
     }
     csb_v1_skin_cache_cleanup(&profile->skin_cache);
+    csb_v1_runtime_cleanup_csbwin_extended_state(profile);
 }
 
 
@@ -14814,6 +15035,9 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
             profile->dungeon_handle = dungeon;
             csb_v1_dungeon_set_current(dungeon); /* singleton now points to heap */
             csb_v1_dungeon_set_current_level(0);   /* start at level 0 */
+            if (profile->party_state_valid) {
+                (void)csb_v1_runtime_recompute_party_loads_pc34_compat(profile);
+            }
         } else {
             free(dungeon);
             profile->dungeon_handle = NULL;

@@ -1417,13 +1417,44 @@ void F0504_DUNGEON_FreeThingData_Compat(
  *   29: escape (symbol), 30: escape (word), 31: end
  */
 
-static char F0508_DUNGEON_DecodeSymbolEscape29_Compat(int code)
+/* ReDMCSB DUNGEON.C G0255/G0256/G0257 (PC 3.4 I34E/I34M branch).
+ * F0168 selects G0255 for messages and scrolls, G0257 for inscriptions
+ * after escape code 30, and G0256 after escape code 29.  The inscription
+ * bank deliberately contains glyph codes rather than ASCII: DUNVIEW.C
+ * consumes those values through the inscription font. */
+static const char s_f0168_message_scroll_escape30[32][8] = {
+        "x", "y", "THE ", "YOU ", "z", "{", "|", "}",
+        "~", "\177", "", "", "", "", "", "",
+        "", "", "", "", "", "", "", "",
+        "", "", "", "", "", "", "", ""
+};
+
+static const char s_f0168_symbol_escape29[32][2] = {
+        "a", "b", "c", "d", "e", "f", "g", "h",
+        "i", "j", "k", "l", "m", "n", "o", "p",
+        "q", "r", "s", "t", "u", "v", "w", "x",
+        "0", "1", "2", "3", "4", "5", "6", "7"
+};
+
+static const char s_f0168_inscription_escape30[32][8] = {
+        "\034", "\035", "\023\007\004\032", "\030\016\024\032",
+        "\036", "\037", " ", "!", "\042", "#", "", "", "", "", "", "",
+        "", "", "", "", "", "", "", "",
+        "", "", "", "", "", "", "", ""
+};
+
+static const char* F0508_DUNGEON_EscapeReplacement_Compat(int escape,
+                                                           int code,
+                                                           int textType)
 {
-        /* ReDMCSB DUNGEON.C F0168 lines 2305-2314:
-         * code 29 indexes G0256_aac_Graphic559_EscapeReplacementCharacters,
-         * not a placeholder. */
-        static const char s_symbolEscape[] = "abcdefghijklmnopqrstuvwx01234567";
-        return (code >= 0 && code < 32) ? s_symbolEscape[code] : ' ';
+        if (code < 0 || code >= 32) return "";
+        if (escape == 29) return s_f0168_symbol_escape29[code];
+        if (escape == 30) {
+                return textType == DUNGEON_TEXT_TYPE_INSCRIPTION
+                    ? s_f0168_inscription_escape30[code]
+                    : s_f0168_message_scroll_escape30[code];
+        }
+        return "";
 }
 
 int F0507_DUNGEON_DecodeTextAtOffset_Compat(
@@ -1522,26 +1553,9 @@ int F0508_DUNGEON_DecodeTextStringThing_Compat(
                 }
 
                 if (escape) {
-                        /* Escape replacement: for v1 compat, emit placeholder */
-                        if (escape == 30) {
-                                /* Extended word strings: code indexes word table */
-                                /* "THE ", "YOU ", etc. — emit placeholder */
-                                static const char* s_wordEscape[] = {
-                                        "?", "!", "THE ", "YOU ", "", "", "", "",
-                                        "", "", "", "", "", "", "", "",
-                                        "", "", "", "", "", "", "", "",
-                                        "", "", "", "", "", "", "", ""
-                                };
-                                const char* rep = (code < 32) ? s_wordEscape[code] : "";
-                                while (*rep && pos < outBufSize - 1) {
-                                        outBuf[pos++] = *rep++;
-                                }
-                        } else if (escape == 29) {
-                                /* Wall inscriptions render this through the
-                                 * source M648 glyph path, so emitting '?' makes the M11 inscription
-                                 * renderer reject the whole line. */
-                                outBuf[pos++] = F0508_DUNGEON_DecodeSymbolEscape29_Compat(code);
-                        }
+                        const char* rep = F0508_DUNGEON_EscapeReplacement_Compat(
+                                escape, code, baseTextType);
+                        while (*rep && pos < outBufSize - 1) outBuf[pos++] = *rep++;
                         escape = 0;
                 } else if (code < 26) {
                         outBuf[pos++] = (char)('A' + code);
@@ -1627,19 +1641,10 @@ int F0506_DUNGEON_DecodeTextTable_Compat(
                 if (codeIdx >= 3) { codeIdx = 0; wi++; }
 
                 if (escape) {
-                        if (escape == 30 && pos < DUNGEON_TEXT_MAX_STRING_LEN - 5) {
-                                static const char* s_we[] = {
-                                        "?","!","THE ","YOU ","","","","",
-                                        "","","","","","","","",
-                                        "","","","","","","","",
-                                        "","","","","","","",""
-                                };
-                                const char* rep = (code < 32) ? s_we[code] : "";
-                                while (*rep && pos < DUNGEON_TEXT_MAX_STRING_LEN - 1)
-                                        buf[pos++] = *rep++;
-                        } else if (escape == 29 && pos < DUNGEON_TEXT_MAX_STRING_LEN - 1) {
-                                buf[pos++] = F0508_DUNGEON_DecodeSymbolEscape29_Compat(code);
-                        }
+                        const char* rep = F0508_DUNGEON_EscapeReplacement_Compat(
+                                escape, code, DUNGEON_TEXT_TYPE_SCROLL);
+                        while (*rep && pos < DUNGEON_TEXT_MAX_STRING_LEN - 1)
+                                buf[pos++] = *rep++;
                         escape = 0;
                 } else if (code == 31) {
                         buf[pos] = '\0';

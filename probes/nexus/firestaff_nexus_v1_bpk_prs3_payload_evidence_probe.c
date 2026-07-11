@@ -248,6 +248,47 @@ static void test_synthetic_bppk_evidence(void) {
     rc = nexus_v1_bpk_archive_prs3_payload_evidence(
         buf, size, 32U, rows, 8U, &summary);
     CHECK(rc == 0, "synthetic BPPK evidence walker returns ok");
+    {
+        Nexus_V1_BpkPrs3CandidateEvidence candidate_rows[8];
+        Nexus_V1_BpkPrs3CandidateEvidenceSummary candidate;
+        rc = nexus_v1_bpk_archive_prs3_candidate_evidence(
+            buf, size, candidate_rows, 8U, &candidate);
+        CHECK(rc == 0, "synthetic PRS3 candidate evaluator returns ok");
+        CHECK(candidate.prs3_surfaces == 3U && candidate.evaluated == 3U &&
+                  candidate.decoder_promoted == 0,
+              "synthetic candidate receipt stays diagnostic-only");
+        rc = nexus_v1_bpk_archive_prs3_candidate_evidence_with_bit_order(
+            buf, size, NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST,
+            candidate_rows, 8U, &candidate);
+        CHECK(rc == 0 && candidate.bit_order ==
+                  NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST &&
+                  candidate.decoder_promoted == 0,
+              "synthetic MSB-first candidate stays diagnostic-only");
+    }
+    {
+        Nexus_V1_BpkPrs3FramingEvidence framing_rows[8];
+        Nexus_V1_BpkPrs3FramingEvidenceSummary framing;
+        rc = nexus_v1_bpk_archive_prs3_framing_evidence(
+            buf, size, framing_rows, 8U, &framing);
+        CHECK(rc == 0 && framing.prs3_entries == 3U &&
+                  framing.decoder_promoted == 0,
+              "synthetic framing receipt stays diagnostic-only");
+    }
+    {
+        Nexus_V1_BpkPrs3FramedEvalEvidence framed_rows[8];
+        Nexus_V1_BpkPrs3FramedEvalSummary framed;
+        for (int order = NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_LSB_FIRST;
+             order <= NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST;
+             ++order) {
+            rc = nexus_v1_bpk_archive_prs3_framed_decode_evidence(
+                buf, size, (Nexus_V1_BpkPrs3CandidateBitOrder)order,
+                framed_rows, 8U, &framed);
+            CHECK(rc == 0 && framed.prs3_surfaces == 3U &&
+                      framed.complete_exact == 0U &&
+                      framed.decoder_promoted == 0,
+                  "synthetic framed evaluation remains diagnostic-only");
+        }
+    }
 
     /* 4 candidate offsets, 1 trailer + 3 PRS3 entries. */
     CHECK(summary.entries_seen == 4U, "summary.entries_seen == 4");
@@ -491,6 +532,116 @@ static void test_optional_real_menumenu_bpk(void) {
               "real MENU.BPK mode_count[22] == 39");
         CHECK(summary.mode_count[NEXUS_V1_BPK_MODE_32BPP] == 47U,
               "real MENU.BPK mode_count[30] == 47");
+
+        {
+            Nexus_V1_BpkPrs3CandidateEvidence *candidate_rows;
+            Nexus_V1_BpkPrs3CandidateEvidenceSummary candidate;
+            candidate_rows = (Nexus_V1_BpkPrs3CandidateEvidence *)calloc(
+                capacity, sizeof(*candidate_rows));
+            if (!candidate_rows) {
+                CHECK(0, "real MENU.BPK candidate receipt allocation");
+            } else {
+                rc = nexus_v1_bpk_archive_prs3_candidate_evidence(
+                    data, size, candidate_rows, capacity, &candidate);
+                CHECK(rc == 0, "real MENU.BPK candidate evaluator returns ok");
+                CHECK(candidate.prs3_surfaces == 162U &&
+                          candidate.decoder_promoted == 0,
+                      "real MENU.BPK candidate evidence cannot promote decoder");
+                printf("  INFO: candidate exact=%u trailing=%u failures=%u "
+                       "limited=%u evaluated=%u\n",
+                       candidate.complete_exact, candidate.complete_trailing,
+                       candidate.stream_failures, candidate.output_limited,
+                       candidate.evaluated);
+                CHECK(candidate.evaluated == 162U &&
+                          candidate.complete_exact == 0U &&
+                          candidate.complete_trailing == 0U &&
+                          candidate.stream_failures == 162U,
+                      "real MENU.BPK LSB-first candidate is disproven on all surfaces");
+                rc = nexus_v1_bpk_archive_prs3_candidate_evidence_with_bit_order(
+                    data, size,
+                    NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST,
+                    candidate_rows, capacity, &candidate);
+                CHECK(rc == 0 && candidate.prs3_surfaces == 162U &&
+                          candidate.evaluated == 162U &&
+                          candidate.complete_exact == 0U &&
+                          candidate.complete_trailing == 0U &&
+                          candidate.stream_failures == 162U &&
+                          candidate.decoder_promoted == 0,
+                      "real MENU.BPK MSB-first candidate is disproven without promotion");
+                printf("  INFO: msb-first exact=%u trailing=%u failures=%u "
+                       "limited=%u evaluated=%u\n",
+                       candidate.complete_exact, candidate.complete_trailing,
+                       candidate.stream_failures, candidate.output_limited,
+                       candidate.evaluated);
+                free(candidate_rows);
+            }
+        }
+
+        {
+            Nexus_V1_BpkPrs3FramingEvidence *framing_rows;
+            Nexus_V1_BpkPrs3FramingEvidenceSummary framing;
+            framing_rows = (Nexus_V1_BpkPrs3FramingEvidence *)calloc(
+                capacity, sizeof(*framing_rows));
+            if (!framing_rows) {
+                CHECK(0, "real MENU.BPK framing receipt allocation");
+            } else {
+                rc = nexus_v1_bpk_archive_prs3_framing_evidence(
+                    data, size, framing_rows, capacity, &framing);
+                CHECK(rc == 0 && framing.prs3_entries == 162U &&
+                          framing.readable_first_words == 162U &&
+                          framing.decoder_promoted == 0,
+                      "real MENU.BPK framing receipt remains diagnostic-only");
+                CHECK(framing.be_at_least_stream == 161U &&
+                          framing.be_near_stream == 161U &&
+                          framing.le_near_stream == 0U,
+                      "real MENU.BPK first word is BE span-close on 161 entries");
+                CHECK(framing.be_shorter_than_stream == 1U &&
+                          framing.first_be_short_entry == 162U &&
+                          framing.be_tail_bytes_total == 530U,
+                      "real MENU.BPK final PRS3 span exposes its 530-byte BPK tail");
+                printf("  INFO: framing be-near=%u le-near=%u be-short=%u "
+                       "tail=%u first-short=%u le-at-least=%u\n",
+                       framing.be_near_stream, framing.le_near_stream,
+                       framing.be_shorter_than_stream, framing.be_tail_bytes_total,
+                       framing.first_be_short_entry,
+                       framing.le_at_least_stream);
+                free(framing_rows);
+            }
+        }
+
+        {
+            Nexus_V1_BpkPrs3FramedEvalEvidence *framed_rows;
+            Nexus_V1_BpkPrs3FramedEvalSummary framed;
+            framed_rows = (Nexus_V1_BpkPrs3FramedEvalEvidence *)calloc(
+                capacity, sizeof(*framed_rows));
+            if (!framed_rows) {
+                CHECK(0, "real MENU.BPK framed evaluation allocation");
+            } else {
+                for (int order = NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_LSB_FIRST;
+                     order <= NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST;
+                     ++order) {
+                    rc = nexus_v1_bpk_archive_prs3_framed_decode_evidence(
+                        data, size,
+                        (Nexus_V1_BpkPrs3CandidateBitOrder)order,
+                        framed_rows, capacity, &framed);
+                    CHECK(rc == 0 && framed.prs3_surfaces == 162U &&
+                              framed.frame_validated == 161U &&
+                              framed.unvalidated_frames == 1U &&
+                              framed.evaluated == 161U &&
+                              framed.complete_exact == 0U &&
+                              framed.decoder_promoted == 0,
+                          "real MENU.BPK framed evaluation has no exact promotion");
+                    printf("  INFO: framed %s valid=%u failed=%u trailing=%u exact=%u "
+                           "unvalidated=%u\n",
+                           nexus_v1_bpk_prs3_candidate_bit_order_name(
+                               (Nexus_V1_BpkPrs3CandidateBitOrder)order),
+                           framed.frame_validated, framed.command_failures,
+                           framed.complete_trailing, framed.complete_exact,
+                           framed.unvalidated_frames);
+                }
+                free(framed_rows);
+            }
+        }
 
         CHECK(summary.total_uncompressed > 0U,
               "real MENU.BPK total_uncompressed > 0");

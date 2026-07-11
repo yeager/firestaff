@@ -141,6 +141,43 @@ static void test_symbol_escape_uses_redmcsb_table(void) {
     F0506_DUNGEON_FreeTextTable_Compat(&table);
 }
 
+static void test_code30_uses_source_text_type_banks(void) {
+    struct DungeonThings_Compat things;
+    struct DungeonTextString_Compat textStrings[1];
+    struct DungeonScroll_Compat scrolls[1];
+    struct DungeonTextTable_Compat table;
+    unsigned short textData[3];
+    unsigned char decoded[64];
+
+    seed_things(&things, textStrings, scrolls, textData);
+    textStrings[0].visible = 1;
+    /* escape-30 0, 2, 3, 6; then end. */
+    textData[0] = pack3(30, 0, 30);
+    textData[1] = pack3(2, 30, 3);
+    textData[2] = pack3(30, 6, 31);
+
+    ASSERT_EQ(F0508_DUNGEON_DecodeTextStringThing_Compat(
+                  &things, 0, DUNGEON_TEXT_TYPE_SCROLL, (char*)decoded, sizeof(decoded)),
+              10, "scroll code-30 length");
+    ASSERT_STR_EQ((char*)decoded, "xTHE YOU |", "scroll code-30 follows G0255");
+
+    ASSERT_EQ(F0508_DUNGEON_DecodeTextStringThing_Compat(
+                  &things, 0, DUNGEON_TEXT_TYPE_INSCRIPTION, (char*)decoded, sizeof(decoded)),
+              11, "inscription code-30 length includes terminator");
+    ASSERT_EQ(decoded[0], 28, "inscription code-30 index 0 follows G0257");
+    ASSERT_EQ(decoded[1], 19, "inscription code-30 index 2 is T glyph code");
+    ASSERT_EQ(decoded[4], 26, "inscription code-30 index 2 preserves space glyph code");
+    ASSERT_EQ(decoded[5], 24, "inscription code-30 index 3 is Y glyph code");
+    ASSERT_EQ(decoded[9], 32, "inscription code-30 index 6 follows G0257");
+    ASSERT_EQ(decoded[10], 0x81, "inscription code-30 keeps F0168 terminator");
+
+    memset(&table, 0, sizeof(table));
+    ASSERT_EQ(F0506_DUNGEON_DecodeTextTable_Compat(textData, 3, &table),
+              1, "table code-30 decode succeeds");
+    ASSERT_STR_EQ(table.strings[0], "xTHE YOU |", "table code-30 uses G0255 scroll bank");
+    F0506_DUNGEON_FreeTextTable_Compat(&table);
+}
+
 int main(void) {
     printf("=== Dungeon Text Scroll Source-Lock Gate ===\n");
     printf("ReDMCSB: DUNGEON.C F0168, PANEL.C F0341\n\n");
@@ -149,6 +186,7 @@ int main(void) {
     test_f0168_visibility_gate_and_message_separator();
     test_inscription_separator_and_terminator();
     test_symbol_escape_uses_redmcsb_table();
+    test_code30_uses_source_text_type_banks();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

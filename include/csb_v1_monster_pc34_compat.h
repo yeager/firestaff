@@ -26,9 +26,31 @@
 
 #include <stdint.h>
 #include "memory_combat_pc34_compat.h"  /* RngState_Compat */
+#include "csb_v1_chaos_magic_pc34_compat.h"
 
 /* Forward declarations (full definitions in respective compat headers) */
 struct CSB_V1_DungeonData_Compat;
+
+/* CSBWin Monster.cpp enters ProcessDSAFilter with a mutable integer parameter
+ * array and returns to the dungeon level active before the call.  The runner
+ * is the source-DSA interpreter boundary: it receives only program records
+ * copied from a verified CSBWin save, never caller-owned save bytes. */
+typedef int (*CSB_V1_DSAFilterRunner)(
+    const CSB_V1_DSAImportedAction *action, int *parameters,
+    int parameter_count, int flgs_inout[2], void *user);
+
+typedef struct {
+    const CSB_V1_ChaosMagicState *programs;
+    CSB_V1_DSAFilterRunner runner;
+    void *runner_user;
+    int loaded_level;
+    int attack_filter_dsa_id;
+    uint32_t attack_filter_state;
+    int attack_filter_action;
+    int movement_filter_dsa_id[12];
+    uint32_t movement_filter_state[12];
+    int movement_filter_action[12];
+} CSB_V1_DSAFilterRuntime;
 
 /* ============================================================
  *  CSB Creature Type Constants (DEFS.H:1339-1366, CSB AsciiDump)
@@ -419,6 +441,18 @@ int csb_v1_dsa_filter_movement_preprocess(
     int partyY,
     int flgs_inout[2],
     const struct CSB_V1_DungeonData_Compat *dungeon);
+
+/* Live CSBWin filter boundaries.  These APIs are intentionally separate from
+ * the legacy no-context stubs: a filter can execute only when its program
+ * arrived through csb_v1_chaos_import_extended_save_dsas() and the runtime
+ * has installed the source-faithful ProcessDSAFilter runner. */
+int csb_v1_dsa_filter_attack_preprocess_live(
+    CSB_V1_AttackParameters *params, CSB_V1_DSAFilterRuntime *runtime);
+
+int csb_v1_dsa_filter_movement_preprocess_live(
+    int level, int mapX, int mapY, int32_t monster, int partyLevel,
+    int partyX, int partyY, int flgs_inout[2],
+    CSB_V1_DSAFilterRuntime *runtime);
 
 /* ============================================================
  *  API — Drop Sound

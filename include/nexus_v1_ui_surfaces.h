@@ -81,6 +81,26 @@ typedef struct {
     Nexus_V1_BpkSurfaceClass surface_class;
 } Nexus_UI_BpkImportReceipt;
 
+/* Sega Saturn DGT2 packed-pixel image view. The pixel and CLUT pointers
+ * borrow the source container; callers keep it alive while using the view. */
+typedef struct {
+    const uint8_t *pixels;
+    const uint8_t *clut_bgr555_be;
+    size_t pixel_bytes;
+    int width;
+    int height;
+} Nexus_UI_Dgt2PpView;
+
+/* TITLE.CG on the verified Saturn disc is a 32-byte zero prefix followed by
+ * a 4bpp, high-nibble-first 328x1024 atlas. */
+#define NEXUS_UI_TITLE_CG_HEADER_BYTES 32U
+#define NEXUS_UI_TITLE_CG_WIDTH 328
+#define NEXUS_UI_TITLE_CG_HEIGHT 1024
+#define NEXUS_UI_TITLE_CG_PACKED_BYTES \
+    ((size_t)NEXUS_UI_TITLE_CG_WIDTH * (size_t)NEXUS_UI_TITLE_CG_HEIGHT / 2U)
+#define NEXUS_UI_TITLE_CG_BYTES \
+    (NEXUS_UI_TITLE_CG_HEADER_BYTES + NEXUS_UI_TITLE_CG_PACKED_BYTES)
+
 typedef struct {
     int valid;
     int header_size;
@@ -130,15 +150,26 @@ int nexus_ui_load_bpk_runtime_surface(Nexus_UI_Manager *mgr,
 
 const char *nexus_ui_bpk_import_status_name(int status);
 
-/* Load TITLE.CG (164 KB) as the title screen.
- * Expects data[0..163839] = indexed image (320×200 or larger).
- * Attempts to detect format: if first bytes == "SEGA" header,
- * skips to pixel data offset. Falls back to full data as image.    */
+/* Decode one documented Sega DGT2 PP image. This accepts an image payload
+ * beginning with "PP", not its eight-byte RES* directory record. */
+int nexus_ui_dgt2_pp_view(const uint8_t *data,
+                          size_t data_size,
+                          Nexus_UI_Dgt2PpView *out_view);
+
+/* Find and decode an id-addressed DGT2 PP resource from a Saturn RES*
+ * container. The local WARNING.BIN uses this directory form. */
+int nexus_ui_res_dgt2_pp_view(const uint8_t *data,
+                              size_t data_size,
+                              uint32_t resource_id,
+                              Nexus_UI_Dgt2PpView *out_view);
+
+/* Decode the verified Saturn TITLE.CG atlas. The loader rejects any shape
+ * other than the observed 32-byte zero prefix plus packed 4bpp payload. */
 int nexus_ui_load_title(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette);
 
-/* Load WARNING.BIN (99 KB) as disclaimer screen */
+/* Load WARNING.BIN's documented RES* container DGT2 resource 0 as disclaimer art. */
 int nexus_ui_load_warning(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette);

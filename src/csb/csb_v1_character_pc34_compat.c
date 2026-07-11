@@ -185,13 +185,13 @@ void csb_v1_champion_set_skill(CSB_V1_Champion *c, int skill_idx, int val)
     c->Skills[skill_idx] = (uint8_t)(val & 0xFF);
 }
 
-/* Compute champion load from equipment slots */
+/* CHAMPION.Load is a cached source field.  Its live F0140 rebuild needs a
+ * decoded dungeon, so csb_v1_runtime_recompute_champion_load_pc34_compat()
+ * owns that operation; this character-only accessor deliberately returns the
+ * cached value without depending on a global dungeon singleton. */
 int csb_v1_champion_get_load(CSB_V1_Champion *c)
 {
-    (void)c;
-    /* TODO: sum weight of all things in Slots.
-     * Weight lookup requires thing database (OBJECT.C). */
-    return 0;
+    return c ? (int)c->Load : 0;
 }
 
 void csb_v1_champion_recompute_load(CSB_V1_Champion *c)

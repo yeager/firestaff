@@ -12,7 +12,7 @@
  *   6. Creature palette tables (D3, D2).
  *   7. Render list sort order (back-to-front depth, then column).
  *   8. Type name table completeness.
- *   9. Legacy API backward compatibility.
+ *   9. Legacy render API delegation.
  *
  * Source references:
  *   ReDMCSB DUNVIEW.C: G0219 (line 1656), G0221-G0222 (lines 1821-1822),
@@ -315,14 +315,20 @@ static void test_type_names(void) {
     ASSERT_STR_EQ(dm1_creature_type_name(27), "Unknown", "name[27]");
 }
 
-/* ── Test 9: Legacy API ── */
+/* ── Test 9: Legacy render API delegation ── */
 static void test_legacy_api(void) {
     DM1_CreatureRenderList list;
     DM1_V1_CreatureRender_InitPc34Compat(&list);
     ASSERT_EQ(list.count, 0, "legacy init count=0");
 
-    DM1_V1_CreatureRender_CollectPc34Compat(&list, 5, 5, 0, NULL);
-    ASSERT_EQ(list.count, 0, "legacy collect stub count=0");
+    list.count = 2;
+    list.entries[0].viewDepth = 1;
+    list.entries[0].viewColumn = 1;
+    list.entries[1].viewDepth = 3;
+    list.entries[1].viewColumn = -1;
+    DM1_V1_CreatureRender_SortPc34Compat(&list);
+    ASSERT_EQ(list.entries[0].viewDepth, 3, "legacy sort uses DM1 depth order");
+    ASSERT_EQ(list.entries[0].viewColumn, -1, "legacy sort keeps DM1 column order");
 
     /* Legacy get_graphic should use aspect table, not type*18 */
     int gfx = DM1_V1_CreatureRender_GetGraphicPc34Compat(0, 0, 0);

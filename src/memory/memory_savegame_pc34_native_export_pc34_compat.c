@@ -768,9 +768,7 @@ static int pack_active_groups_from_world(
         /* ReDMCSB DEFS.H ACTIVE_GROUP lines ~574-587:
          * int16 GroupThingIndex; uint8 Directions, Cells,
          * LastMoveTime, DelayFleeingFromTarget, TargetMapX/Y,
-         * PriorMapX/Y, HomeMapX/Y, Aspect[4]. Firestaff's Phase 16
-         * state keeps the live routing fields but not per-creature
-         * Aspect bytes, so the aspect block remains zero. */
+         * PriorMapX/Y, HomeMapX/Y, Aspect[4]. */
         write_u16_le(rec + 0u, pc34_group_thing_from_ai(ai));
         rec[2] = (uint8_t)(ai->groupDirection & 0x03);
         rec[3] = (uint8_t)(ai->groupCells & 0xff);
@@ -782,6 +780,7 @@ static int pack_active_groups_from_world(
         rec[9] = pc34_u8_from_int(ai->groupMapY);
         rec[10] = pc34_u8_from_int(ai->groupMapX);
         rec[11] = pc34_u8_from_int(ai->groupMapY);
+        memcpy(rec + 12u, ai->aspect, sizeof(ai->aspect));
     }
     if (outLen) {
         *outLen = count * PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT;

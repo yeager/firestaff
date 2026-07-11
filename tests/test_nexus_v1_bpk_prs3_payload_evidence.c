@@ -293,6 +293,63 @@ static void test_rejections(void) {
            "stream plan rejects NULL output");
 }
 
+static void test_framing_evidence(void) {
+    Nexus_V1_BpkPrs3FramingEvidence rows[8];
+    Nexus_V1_BpkPrs3FramingEvidenceSummary summary;
+    int rc;
+
+    build_archive();
+    rc = nexus_v1_bpk_archive_prs3_framing_evidence(
+        archive, sizeof(archive), rows, 8U, &summary);
+    expect(rc == 0, "framing evidence accepts bounded synthetic archive");
+    expect(summary.prs3_entries == 2U && summary.readable_first_words == 2U,
+           "framing evidence reports both synthetic PRS3 entries");
+    expect(summary.be_shorter_than_stream == 0U &&
+               summary.decoder_promoted == 0,
+           "framing evidence remains diagnostic-only");
+    expect(nexus_v1_bpk_archive_prs3_framing_evidence(
+               archive, sizeof(archive), rows, 8U, NULL) != 0,
+           "framing evidence rejects NULL summary");
+}
+
+static void test_framed_decode_evaluation(void) {
+    Nexus_V1_BpkPrs3FramedEvalEvidence rows[8];
+    Nexus_V1_BpkPrs3FramedEvalSummary summary;
+    int rc;
+
+    build_archive();
+    rc = nexus_v1_bpk_archive_prs3_framed_decode_evidence(
+        archive, sizeof(archive),
+        NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_LSB_FIRST,
+        rows, 8U, &summary);
+    expect(rc == 0, "framed LSB evaluation accepts bounded synthetic archive");
+    expect(summary.prs3_surfaces == 2U && summary.frame_validated == 0U &&
+               summary.unvalidated_frames == 2U && summary.evaluated == 0U &&
+               summary.command_failures == 0U && summary.complete_exact == 0U &&
+               summary.decoder_promoted == 0,
+           "framed LSB evaluation rejects non-span-close synthetic frames");
+    expect(rows[0].status == NEXUS_V1_BPK_PRS3_FRAMED_EVAL_UNVALIDATED_FRAME &&
+               rows[1].status == NEXUS_V1_BPK_PRS3_FRAMED_EVAL_UNVALIDATED_FRAME,
+           "framed evaluation records unvalidated synthetic frame boundaries");
+    expect(strcmp(nexus_v1_bpk_prs3_framed_eval_status_name(rows[1].status),
+                  "unvalidated-frame") == 0,
+           "framed evaluation status name is stable");
+
+    rc = nexus_v1_bpk_archive_prs3_framed_decode_evidence(
+        archive, sizeof(archive),
+        NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST,
+        rows, 8U, &summary);
+    expect(rc == 0 && summary.frame_validated == 0U &&
+               summary.unvalidated_frames == 2U && summary.complete_exact == 0U &&
+               summary.decoder_promoted == 0,
+           "framed MSB evaluation is equally diagnostic-only");
+    expect(nexus_v1_bpk_archive_prs3_framed_decode_evidence(
+               archive, sizeof(archive),
+               (Nexus_V1_BpkPrs3CandidateBitOrder)99,
+               rows, 8U, &summary) != 0,
+           "framed evaluation rejects an unknown bit order");
+}
+
 static void test_optional_local_menumenu_bpk(void) {
     const char *home = getenv("HOME");
     char path[1024];
@@ -351,6 +408,25 @@ static void test_optional_local_menumenu_bpk(void) {
                "local MENU.BPK entry[1] stream plan locks bounded PRS3 header");
     }
 
+    {
+        Nexus_V1_BpkPrs3FramedEvalEvidence framed_rows[256];
+        Nexus_V1_BpkPrs3FramedEvalSummary framed;
+        for (int order = NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_LSB_FIRST;
+             order <= NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST;
+             ++order) {
+            rc = nexus_v1_bpk_archive_prs3_framed_decode_evidence(
+                data, size, (Nexus_V1_BpkPrs3CandidateBitOrder)order,
+                framed_rows, 256U, &framed);
+            expect(rc == 0 && framed.prs3_surfaces == 162U &&
+                       framed.frame_validated == 161U &&
+                       framed.unvalidated_frames == 1U &&
+                       framed.evaluated == 161U &&
+                       framed.complete_exact == 0U &&
+                       framed.decoder_promoted == 0,
+                   "local MENU.BPK framed evaluation has no promoting exact result");
+        }
+    }
+
     free(rows);
     free(data);
 }
@@ -360,6 +436,8 @@ int main(void) {
     test_capacity_exhaustion();
     test_zero_sample();
     test_rejections();
+    test_framing_evidence();
+    test_framed_decode_evaluation();
     test_optional_local_menumenu_bpk();
 
     if (g_failures) {

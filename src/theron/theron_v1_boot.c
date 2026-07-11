@@ -488,9 +488,12 @@ static int theron_md5_is_known(const char *md5) {
 int theron_v1_boot_verified_path_is_stale(const char *track02_path,
                                            const char *expected_md5) {
     char fresh_md5[33];
+    char payload_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
     if (!track02_path || !track02_path[0]) return 1;
     if (!expected_md5 || !expected_md5[0]) return 1;
-    if (!file_exists(track02_path)) {
+    if (theron_v1_track02_resolve_media_path(track02_path, payload_path) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !file_exists(payload_path)) {
         return 1;
     }
     /* Re-hash the file: same-size-different-content swaps pass an
@@ -499,7 +502,7 @@ int theron_v1_boot_verified_path_is_stale(const char *track02_path,
      * uses keeps both sides byte-comparable.  Expected cost on a real
      * Track 02 BIN is one full MD5 over a few-MB payload; this is the
      * correct price for "reuse safely" rather than "reuse blindly". */
-    if (!m12_file_md5_hex(track02_path, fresh_md5)) {
+    if (!m12_file_md5_hex(payload_path, fresh_md5)) {
         return 1;
     }
     if (strcmp(fresh_md5, expected_md5) != 0) {
@@ -537,7 +540,8 @@ int theron_v1_boot_verified_path_is_stale(const char *track02_path,
 int theron_v1_boot_load_verified_path(Theron_V1_BootProfile *profile,
                                        const char *track02_path,
                                        const char *expected_md5) {
-    const char *resolved_path = track02_path;
+    char payload_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    const char *resolved_path;
     const char *resolved_md5 = expected_md5;
     char parent[512];
     char grandparent[512];
@@ -546,6 +550,10 @@ int theron_v1_boot_load_verified_path(Theron_V1_BootProfile *profile,
     if (!profile || !track02_path || !track02_path[0]) return -1;
     if (!expected_md5 || !expected_md5[0]) return -1;
     if (!theron_md5_is_known(expected_md5)) return -1;
+
+    if (theron_v1_track02_resolve_media_path(track02_path, payload_path) !=
+        THERON_TRACK02_SIGNAL_OK) return -1;
+    resolved_path = payload_path;
 
     /* Stale-path guard: refuse if the previously verified file is no
      * longer on disk as a regular file.  Without this, the boot
@@ -556,7 +564,7 @@ int theron_v1_boot_load_verified_path(Theron_V1_BootProfile *profile,
      * way tests prove the rest of the function still skips the data
      * root.  Bumping the counter via file_exists() (rather than open-
      * coding stat()) keeps the count consistent with the scan path. */
-    if (!file_exists(track02_path)) {
+    if (!file_exists(resolved_path)) {
         return -1;
     }
 
@@ -601,12 +609,12 @@ int theron_v1_boot_load_verified_path(Theron_V1_BootProfile *profile,
      *   <root>/theron/jp/x.bin  -> <root>  (drop the last two
      *       components when the path ends in theron/jp or theron/us).
      */
-    base = track02_path;
+    base = resolved_path;
     {
-        size_t plen = strlen(track02_path);
+        size_t plen = strlen(resolved_path);
         const char *slash;
         if (plen >= sizeof(parent)) plen = sizeof(parent) - 1;
-        memcpy(parent, track02_path, plen);
+        memcpy(parent, resolved_path, plen);
         parent[plen] = '\0';
         slash = strrchr(parent, '/');
         if (!slash) slash = strrchr(parent, '\\');

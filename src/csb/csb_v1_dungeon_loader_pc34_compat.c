@@ -445,6 +445,88 @@ const uint8_t *csb_v1_dungeon_get_thing_record(
     return d->raw_data + offset;
 }
 
+int csb_v1_dungeon_decode_dsa_filter_location(
+    const CSB_V1_DungeonData *d, uint32_t record_word, int movement_filter,
+    CSB_V1_DSAFilterLocation *out)
+{
+    /* CSBWin DSA.cpp LOCATIONREL::Integer (lines 292-308) packs p/l/x/y;
+     * Monster.cpp MONSTERMOVEFILTERCACHE::GetLocation (3084-3096) overlays
+     * bit 18 and bits 19..23 for the movement filter metadata. */
+    int level = (int)((record_word >> 10) & 0x3fu);
+    int x = (int)((record_word >> 5) & 0x1fu);
+    int y = (int)(record_word & 0x1fu);
+
+    if (!d || !out || level < 0 || level >= d->level_count ||
+        x >= d->level_widths[level] || y >= d->level_heights[level]) return 0;
+    out->level = level;
+    out->x = x;
+    out->y = y;
+    out->position = (int)((record_word >> 16) & 3u);
+    out->party_level_only = movement_filter ?
+        (int)((record_word >> 18) & 1u) : 0;
+    out->max_distance = movement_filter ?
+        (int)((record_word >> 19) & 0x1fu) : 0;
+    out->actuator_thing = 0xffffu;
+    return 1;
+}
+
+static int csb_v1_dungeon_find_dsa_filter_actuator(
+    const CSB_V1_DungeonData *d, CSB_V1_DSAFilterLocation *location)
+{
+    int thing;
+    int limit = 0;
+    int type;
+    int index;
+    int size;
+    const uint8_t *record;
+
+    /* CSBWin Monster.cpp GetLocation (3098-3119, 3138-3157) chooses the
+     * first dbACTUATOR whose DB3 actuatorType is 47. */
+    if (!d || !location) return 0;
+    for (type = 0; type < CSB_THING_TYPE_COUNT; ++type) limit += d->thing_type_counts[type];
+    thing = csb_v1_dungeon_get_first_thing(d, location->level,
+                                             location->x, location->y);
+    while (thing >= 0 && thing != 0xfffe && limit-- > 0) {
+        record = csb_v1_dungeon_get_thing_record(d, (uint16_t)thing,
+                                                   &type, &index, &size);
+        (void)index;
+        if (!record || size < 4) return 0;
+        if (type == CSB_V1_THING_TYPE_ACTUATOR &&
+            (rd16(record + 2) & 0x007fu) == CSB_V1_DSA_FILTER_ACTUATOR_TYPE) {
+            location->actuator_thing = (uint16_t)thing;
+            return 1;
+        }
+        thing = (int)rd16(record);
+    }
+    return 0;
+}
+
+int csb_v1_dungeon_resolve_dsa_filter_location(
+    const CSB_V1_DungeonData *d, int level, int movement_filter,
+    CSB_V1_DSAFilterLocation *out)
+{
+    const uint8_t *bytes;
+    size_t size;
+    uint32_t key;
+    uint32_t word;
+
+    if (!d || !out || (movement_filter &&
+        (level < 0 || level >= d->level_count))) return 0;
+    key = (CSB_V1_EXPOOL_EDT_SPECIAL_LOCATIONS << 24) |
+        (movement_filter ? CSB_V1_EXPOOL_ESL_MONSTER_MOVE_FILTER :
+                           CSB_V1_EXPOOL_ESL_MONSTER_ATTACK_FILTER);
+    if (movement_filter) key |= (uint32_t)(level + 1) << 8;
+    if (!csb_v1_dungeon_expool_locate_record(d, key, &bytes, &size) && movement_filter) {
+        key = (CSB_V1_EXPOOL_EDT_SPECIAL_LOCATIONS << 24) |
+            CSB_V1_EXPOOL_ESL_MONSTER_MOVE_FILTER;
+        if (!csb_v1_dungeon_expool_locate_record(d, key, &bytes, &size)) return 0;
+    }
+    if (!bytes || size < 4) return 0;
+    word = rd32(bytes);
+    if (!csb_v1_dungeon_decode_dsa_filter_location(d, word, movement_filter, out)) return 0;
+    return csb_v1_dungeon_find_dsa_filter_actuator(d, out);
+}
+
 static uint32_t csb_v1_dungeon_read_le32_at_word(
     const CSB_V1_DungeonData *d,
     int word_index)

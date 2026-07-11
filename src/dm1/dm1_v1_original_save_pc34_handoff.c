@@ -1515,6 +1515,7 @@ int dm1_v1_original_save_pc34_handoff_apply_active_groups(
         dst->aggressionScore = 0;
         dst->rngCallCount = 0;
         dst->reserved0 = resolved_group ? thing_index : src->group_thing_index;
+        memcpy(dst->aspect, src->aspect, sizeof(dst->aspect));
         if (resolved_group) {
             report->active_group_runtime_resolved_count++;
         } else {

@@ -7432,6 +7432,225 @@ static void test_orch_periodic_effects_decrement_torches_f0338(void) {
     assert(light.paletteIndex == 5);
 }
 
+static void test_orch_closing_door_party_hazard_applies_f0324(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[4];
+    struct TimelineEvent_Compat event;
+    struct TickResult_Compat result;
+    int i;
+    int sawPartyDamaged = 0;
+
+    init_world(&world, &things, weapons, junks);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    squareData[0] = square_for_test(DUNGEON_ELEMENT_DOOR, 1);
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 2;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 4;
+    world.dungeon = &dungeon;
+    world.gameTick = 40;
+    world.partyMapIndex = 0;
+    world.party.mapIndex = 0;
+    world.party.mapX = 0;
+    world.party.mapY = 0;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+
+    memset(&event, 0, sizeof(event));
+    assert(F0713_DOOR_BuildAnimationEvent_Compat(
+        0, 0, 0, DOOR_EFFECT_CLEAR, world.gameTick, &event) == 1);
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1);
+    memset(&result, 0, sizeof(result));
+    assert(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 1);
+
+    /* TIMELINE.C F0241:759-774: reopen before F0324, then retry at +2. */
+    assert((squareData[0] & 0x07) == 0);
+    assert(world.party.champions[0].hp.current < 100);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].kind == TIMELINE_EVENT_DOOR_ANIMATE);
+    assert(world.timeline.events[0].fireAtTick == 42);
+    for (i = 0; i < result.emissionCount; ++i) {
+        if (result.emissions[i].kind == EMIT_SOUND_REQUEST &&
+            result.emissions[i].payload[0] == DM1_SND_PARTY_DAMAGED) {
+            sawPartyDamaged = 1;
+        }
+    }
+    assert(sawPartyDamaged);
+}
+
+static void test_orch_closing_door_creature_hazard_queues_f0209_danger(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonGroup_Compat groups[1];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[4];
+    unsigned short squareFirstThings[4];
+    struct TimelineEvent_Compat event;
+    struct TickResult_Compat result;
+    int i;
+    int sawDangerReaction = 0;
+
+    init_world(&world, &things, weapons, junks);
+    memset(groups, 0, sizeof(groups));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    for (i = 0; i < 4; ++i) squareFirstThings[i] = THING_NONE;
+    squareData[0] = square_for_test(DUNGEON_ELEMENT_DOOR, 1);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 0;
+    groups[0].count = 0;
+    groups[0].health[0] = 100;
+    things.loaded = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 4;
+    dungeon.header.mapCount = 1;
+    dungeon.header.squareFirstThingCount = 4;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 2;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 4;
+    world.dungeon = &dungeon;
+    world.gameTick = 60;
+    world.partyMapIndex = 0;
+    world.party.mapIndex = 0;
+    world.party.mapX = 1;
+    world.party.mapY = 1;
+
+    memset(&event, 0, sizeof(event));
+    assert(F0713_DOOR_BuildAnimationEvent_Compat(
+        0, 0, 0, DOOR_EFFECT_CLEAR, world.gameTick, &event) == 1);
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1);
+    memset(&result, 0, sizeof(result));
+    assert(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 1);
+
+    /* TIMELINE.C F0241:783-795: F0191 survivor, F0209 CM3, reopen/thud,
+     * then the original door event retries after its pre-increment. */
+    assert((squareData[0] & 0x07) == 0);
+    assert(groups[0].health[0] < 100);
+    assert(world.timeline.count == 2);
+    for (i = 0; i < world.timeline.count; ++i) {
+        if (world.timeline.events[i].kind == TIMELINE_EVENT_CREATURE_REACTION) {
+            sawDangerReaction = 1;
+        }
+    }
+    assert(sawDangerReaction);
+}
+
+static void test_orch_closing_door_creature_hazard_killed_all_runs_f0190_aftermath(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonGroup_Compat groups[1];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[4];
+    unsigned short squareFirstThings[4];
+    struct TimelineEvent_Compat event;
+    struct TickResult_Compat result;
+    int i;
+    int sawDoorRetry = 0;
+    int sawSmokeAdvance = 0;
+
+    init_world(&world, &things, weapons, junks);
+    memset(groups, 0, sizeof(groups));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    for (i = 0; i < 4; ++i) squareFirstThings[i] = THING_NONE;
+    squareData[0] = square_for_test(DUNGEON_ELEMENT_DOOR, 1);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].slot = make_thing(THING_TYPE_JUNK, 0);
+    groups[0].creatureType = 0;
+    groups[0].count = 0;
+    groups[0].cells = 0xFFu;
+    groups[0].health[0] = 1;
+    junks[0].next = THING_ENDOFLIST;
+    things.loaded = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 4;
+    dungeon.header.mapCount = 1;
+    dungeon.header.squareFirstThingCount = 4;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 2;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 4;
+    world.dungeon = &dungeon;
+    world.gameTick = 60;
+    world.partyMapIndex = 0;
+    world.party.mapIndex = 0;
+    world.party.mapX = 1;
+    world.party.mapY = 1;
+    world.creatureAICount = 1;
+    world.creatureAI[0].reserved0 = 0;
+
+    memset(&event, 0, sizeof(event));
+    assert(F0713_DOOR_BuildAnimationEvent_Compat(
+        0, 0, 0, DOOR_EFFECT_CLEAR, world.gameTick, &event) == 1);
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1);
+    memset(&result, 0, sizeof(result));
+    assert(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 1);
+
+    /* TIMELINE.C F0241:783 calls F0191; GROUP.C F0191:956-980 delegates
+     * each fatal slot to F0190, whose F0188/F0189 tail drops possessions,
+     * emits smoke, unlinks the group, and removes its active state. */
+    assert((squareData[0] & 0x07) == 0);
+    assert(groups[0].health[0] == 0);
+    assert(groups[0].next == THING_NONE);
+    assert(groups[0].slot == THING_ENDOFLIST);
+    assert(squareFirstThings[0] == make_thing(THING_TYPE_JUNK, 0));
+    assert(world.creatureAICount == 0);
+    assert(world.explosions.count == 1);
+    assert(world.explosions.entries[0].explosionType == C040_EXPLOSION_SMOKE);
+    assert(world.explosions.entries[0].mapIndex == 0);
+    assert(world.explosions.entries[0].mapX == 0);
+    assert(world.explosions.entries[0].mapY == 0);
+    assert(world.explosions.entries[0].cell == EXPLOSION_CELL_CENTERED);
+    for (i = 0; i < world.timeline.count; ++i) {
+        if (world.timeline.events[i].kind == TIMELINE_EVENT_DOOR_ANIMATE) {
+            sawDoorRetry = 1;
+        }
+        if (world.timeline.events[i].kind == TIMELINE_EVENT_EXPLOSION_ADVANCE) {
+            sawSmokeAdvance = 1;
+        }
+    }
+    assert(sawDoorRetry);
+    assert(sawSmokeAdvance);
+}
+
 int main(void) {
     test_orch_f0303_inventory_and_rest_query();
     test_orch_f0303_hidden_heal_query();
@@ -7524,6 +7743,9 @@ int main(void) {
     test_orch_cmd_attack_uses_reserved2_action_skill_index();
     test_orch_cmd_attack_writes_back_luck_after_f0735();
     test_orch_periodic_effects_decrement_torches_f0338();
+    test_orch_closing_door_party_hazard_applies_f0324();
+    test_orch_closing_door_creature_hazard_queues_f0209_danger();
+    test_orch_closing_door_creature_hazard_killed_all_runs_f0190_aftermath();
     puts("ok: M10 orchestrator DM1 F0303 skill query uses lifecycle inventory/rest inputs");
     return 0;
 }

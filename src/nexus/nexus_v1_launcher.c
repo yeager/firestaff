@@ -437,10 +437,6 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
         receipt->title_screen_loaded &&
         nexus_v1_startup_surfaces_ready(engine) &&
         nexus_v1_startup_faces_ready(engine);
-    receipt->main_menu_route_ready =
-        engine->level_loaded &&
-        receipt->startup_assets_ready &&
-        receipt->startup_audio_handoff_ready;
     receipt->title_route_ready =
         receipt->title_screen_loaded &&
         nexus_v1_startup_surfaces_ready(engine);
@@ -485,6 +481,11 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
     receipt->champion_menu_route_ready =
         receipt->save_menu_route_ready &&
         nexus_v1_startup_faces_ready(engine);
+    receipt->main_menu_route_ready =
+        engine->level_loaded &&
+        receipt->startup_assets_ready &&
+        receipt->startup_audio_handoff_ready &&
+        receipt->real_menu_surface_route_ready;
 }
 
 static int nexus_v1_launcher_startup_assets_from_runtime_state(

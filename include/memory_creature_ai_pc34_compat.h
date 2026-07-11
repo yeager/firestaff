@@ -55,7 +55,7 @@
  *  Serialised sizes (MEDIA016 / LSB-first, 4-byte int32 fields)
  * ========================================================== */
 
-#define CREATURE_AI_STATE_SERIALIZED_SIZE      72   /* 18 int32 */
+#define CREATURE_AI_STATE_SERIALIZED_SIZE      76   /* 18 int32 + 4 aspect bytes */
 #define CREATURE_TICK_INPUT_SERIALIZED_SIZE   136   /* 34 int32 (added adjacencyFakeWallMask + adjacencyFakeWallOpenMask in v2.7.14) */
 #define CREATURE_TICK_RESULT_SERIALIZED_SIZE  176   /* 16 + 48 + 16 + 44 + 4 */
 #define CREATURE_BEHAVIOR_PROFILE_SIZE         64   /* 16 int32 (internal) */
@@ -142,7 +142,7 @@
 #define CREATURE_IMPL_TIER_FULL     1
 
 /* ==========================================================
- *  Per-group persistent AI state (18 int32 = 72 bytes).
+ *  Per-group persistent AI state (18 int32 + 4 aspect bytes = 76 bytes).
  *  Saved across ticks; serialised for Phase 15 save blobs.
  * ========================================================== */
 
@@ -165,6 +165,9 @@ struct CreatureAIState_Compat {
     int aggressionScore;         /* 0..100, profile-driven */
     int rngCallCount;            /* diagnostic — summed across ticks */
     int reserved0;               /* keeps struct 18 x int32 = 72 bytes */
+    /* ReDMCSB DEFS.H ACTIVE_GROUP::Aspect[4]. GROUP.C F0179/F0209 use
+     * bit 0x80 as the per-creature attacking latch between C38 and C33. */
+    uint8_t aspect[4];
 };
 
 /* ==========================================================

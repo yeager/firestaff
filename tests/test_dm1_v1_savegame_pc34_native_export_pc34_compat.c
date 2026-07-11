@@ -1374,6 +1374,10 @@ static void test_world_pc34_export_preserves_active_groups(void) {
     world.creatureAI[0].lastSeenPartyTick = 12;
     world.creatureAI[0].fearCounter = 3;
     world.creatureAI[0].reserved0 = 1;
+    world.creatureAI[0].aspect[0] = 0x80;
+    world.creatureAI[0].aspect[1] = 0x41;
+    world.creatureAI[0].aspect[2] = 0x02;
+    world.creatureAI[0].aspect[3] = 0x03;
 
     world.creatureAI[1].stateKind = AI_STATE_ATTACK;
     world.creatureAI[1].creatureType = CREATURE_TYPE_LORD_CHAOS;
@@ -1387,6 +1391,10 @@ static void test_world_pc34_export_preserves_active_groups(void) {
     world.creatureAI[1].lastSeenPartyTick = 33;
     world.creatureAI[1].fearCounter = 4;
     world.creatureAI[1].reserved0 = 2;
+    world.creatureAI[1].aspect[0] = 0x44;
+    world.creatureAI[1].aspect[1] = 0x45;
+    world.creatureAI[1].aspect[2] = 0x46;
+    world.creatureAI[1].aspect[3] = 0x47;
 
     imported.party = &importedParty;
     imported.timeline = &importedTimeline;
@@ -1425,11 +1433,21 @@ static void test_world_pc34_export_preserves_active_groups(void) {
           report.active_groups[0].home_map_x == 5 &&
           report.active_groups[0].home_map_y == 6,
           "pc34 world export: first group coordinates exported");
+    CHECK(report.active_groups[0].aspect[0] == 0x80 &&
+          report.active_groups[0].aspect[1] == 0x41 &&
+          report.active_groups[0].aspect[2] == 0x02 &&
+          report.active_groups[0].aspect[3] == 0x03,
+          "pc34 world export: first group aspect bytes exported");
     CHECK(report.active_groups[1].group_thing_index == 0x1002,
           "pc34 world export: second group THING ref exported");
     CHECK((report.active_groups[1].directions & 0x03) == 1 &&
           report.active_groups[1].cells == 0x0f,
           "pc34 world export: second group direction/cells exported");
+    CHECK(report.active_groups[1].aspect[0] == 0x44 &&
+          report.active_groups[1].aspect[1] == 0x45 &&
+          report.active_groups[1].aspect[2] == 0x46 &&
+          report.active_groups[1].aspect[3] == 0x47,
+          "pc34 world export: second group aspect bytes exported");
     CHECK(importedParty.championCount == 1 &&
           importedParty.mapIndex == 6 &&
           importedParty.mapX == 11 &&

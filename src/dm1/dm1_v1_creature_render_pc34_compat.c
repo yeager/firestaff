@@ -1022,18 +1022,6 @@ void DM1_V1_CreatureRender_InitPc34Compat(DM1_CreatureRenderList* list) {
     dm1_creature_render_init(list);
 }
 
-void DM1_V1_CreatureRender_CollectPc34Compat(DM1_CreatureRenderList* list,
-                                  int partyX, int partyY, int partyDir,
-                                  const void* dungeonData) {
-    /* Stub: actual collection requires dungeon square iteration.
-     * The M11 layer (m11_game_view.c) collects creature data via
-     * m11_sample_viewport_cell → ViewportCell.creatureTypes[] before
-     * calling draw functions. This M10-level stub preserves the API. */
-    if (!list) return;
-    list->count = 0;
-    (void)partyX; (void)partyY; (void)partyDir; (void)dungeonData;
-}
-
 void DM1_V1_CreatureRender_SortPc34Compat(DM1_CreatureRenderList* list) {
     dm1_creature_render_sort(list);
 }

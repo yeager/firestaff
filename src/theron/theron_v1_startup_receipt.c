@@ -429,6 +429,7 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     uint8_t *data = NULL;
     size_t size = 0;
     char md5_hex[33];
+    char payload_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
     int file_size;
     int m12_hash_ok = 0;
     int bank_signal_ok = 0;
@@ -470,8 +471,24 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         return 0;
     }
 
+    /* Mount only the CUE-declared MODE1/2352 Track 02 payload.  The mount
+     * itself proves no game semantics; its bytes still pass the same MD5
+     * gate below before any decoder receives them. */
+    if (theron_v1_track02_resolve_media_path(track02_path, payload_path) !=
+        THERON_TRACK02_SIGNAL_OK) {
+        set_verdict(receipt, THERON_V1_STARTUP_RECEIPT_SKIPPED, "skipped");
+        set_variant(receipt, theron_v1_track02_variant_for_md5(expected_md5));
+        safe_str_copy(receipt->track02_path, sizeof(receipt->track02_path), track02_path);
+        safe_str_copy(receipt->track02_md5_hex, sizeof(receipt->track02_md5_hex), expected_md5);
+        safe_str_copy(receipt->skip_reason_note, sizeof(receipt->skip_reason_note),
+                      "CUE Track 02 mount did not resolve one readable MODE1/2352 payload");
+        receipt->m11_dispatch_source_kind = -1;
+        receipt->session_tick_token = theron_v1_startup_receipt_session_tick(receipt);
+        return 0;
+    }
+
     /* File presence + size (no bytes read yet). */
-    file_size = stat_size_or_zero(track02_path);
+    file_size = stat_size_or_zero(payload_path);
     if (file_size <= 0) {
         set_verdict(receipt,
                     THERON_V1_STARTUP_RECEIPT_SKIPPED,
@@ -497,7 +514,7 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
      * is the boot side of the contract; if the file drifted on disk the
      * caller-supplied MD5 is no longer trustworthy. */
     md5_hex[0] = '\0';
-    m12_hash_ok = m12_file_md5_hex(track02_path, md5_hex);
+    m12_hash_ok = m12_file_md5_hex(payload_path, md5_hex);
     if (!m12_hash_ok || strcmp(md5_hex, expected_md5) != 0) {
         set_verdict(receipt,
                     THERON_V1_STARTUP_RECEIPT_REJECTED,
@@ -582,7 +599,7 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
 
     /* Read bytes for the bank-signal decoder.  Bytes are heap-local and
      * freed before return so the repository never sees them. */
-    if (!read_file_bytes(track02_path, &data, &size)) {
+    if (!read_file_bytes(payload_path, &data, &size)) {
         set_verdict(receipt,
                     THERON_V1_STARTUP_RECEIPT_SKIPPED,
                     "skipped");
