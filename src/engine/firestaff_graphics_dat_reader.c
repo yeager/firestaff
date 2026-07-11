@@ -177,9 +177,9 @@ int fs_gfx_get_palette(const FS_GraphicsDat *gfx, uint32_t *rgba_out) {
 int fs_gfx_decompress_lzw(const uint8_t *src, int src_size,
     uint8_t *dst, int dst_size)
 {
-    M11_GFX_LZWState lzw;
+    DM1_V1_GFX_LZWStatePc34 lzw;
     memset(&lzw, 0, sizeof(lzw));
-    return m11_gfx_lzw_decompress(&lzw, src, (size_t)src_size,
+    return DM1_V1_GFX_LzwDecompressPc34Compat(&lzw, src, (size_t)src_size,
         dst, (size_t)dst_size);
 }
 
