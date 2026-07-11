@@ -3703,17 +3703,30 @@ int theron_v1_track02_capture_object_table_route_receipt(
                 ++out_receipt->object_table_candidate_count;
                 out_receipt->object_table_candidate_anchor_mask |=
                     1u << (unsigned)anchor;
-                if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS &&
-                    out_receipt->object_table_candidate_raw_offsets[anchor] ==
-                        0u) {
-                    out_receipt->object_table_candidate_entry_index[anchor] =
-                        entry_index;
-                    out_receipt->object_table_candidate_raw_offsets[anchor] =
-                        entries[entry_index].absolute_offset;
-                    out_receipt->object_table_candidate_byte_counts[anchor] =
-                        entries[entry_index].byte_count;
+                if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
+                    ++out_receipt
+                          ->object_table_candidate_anchor_counts[anchor];
+                    if (out_receipt
+                            ->object_table_candidate_anchor_counts[anchor] ==
+                        1u) {
+                        out_receipt->object_table_candidate_entry_index[anchor] =
+                            entry_index;
+                        out_receipt->object_table_candidate_raw_offsets[anchor] =
+                            entries[entry_index].absolute_offset;
+                        out_receipt->object_table_candidate_byte_counts[anchor] =
+                            entries[entry_index].byte_count;
+                        out_receipt
+                            ->object_table_candidate_nonzero_byte_counts[anchor] =
+                            entries[entry_index].byte_count;
+                    }
                     out_receipt
-                        ->object_table_candidate_nonzero_byte_counts[anchor] =
+                        ->object_table_candidate_last_entry_index[anchor] =
+                        entry_index;
+                    out_receipt
+                        ->object_table_candidate_last_raw_offsets[anchor] =
+                        entries[entry_index].absolute_offset;
+                    out_receipt
+                        ->object_table_candidate_last_byte_counts[anchor] =
                         entries[entry_index].byte_count;
                 }
             }
@@ -3740,6 +3753,9 @@ int theron_v1_track02_capture_object_table_route_receipt(
     hash ^= out_receipt->object_table_blocked_anchor_mask;
     hash *= 16777619u;
     for (anchor = 0u; anchor < THERON_TRACK02_MAX_BANK_ANCHORS; ++anchor) {
+        hash ^= (uint32_t)
+            out_receipt->object_table_candidate_anchor_counts[anchor];
+        hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->object_table_candidate_entry_index[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->object_table_candidate_raw_offsets[anchor];
@@ -3748,6 +3764,15 @@ int theron_v1_track02_capture_object_table_route_receipt(
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->object_table_candidate_nonzero_byte_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_candidate_last_entry_index[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_candidate_last_raw_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_candidate_last_byte_counts[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->object_table_anchor_binding_status[anchor];
         hash *= 16777619u;
@@ -3855,23 +3880,38 @@ int theron_v1_track02_capture_level_route_receipt(
                         ++out_receipt->nonstartup_level_candidate_count;
                         out_receipt->nonstartup_level_candidate_anchor_mask |=
                             1u << (unsigned)anchor;
-                        if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS &&
-                            out_receipt
+                        if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
+                            ++out_receipt
+                                  ->nonstartup_level_candidate_anchor_counts
+                                      [anchor];
+                            if (out_receipt
+                                    ->nonstartup_level_candidate_anchor_counts
+                                        [anchor] == 1u) {
+                                out_receipt
+                                    ->nonstartup_level_candidate_entry_index
+                                        [anchor] = entry_index;
+                                out_receipt
                                     ->nonstartup_level_candidate_raw_offsets
-                                        [anchor] == 0u) {
+                                        [anchor] =
+                                    entries[entry_index].absolute_offset;
+                                out_receipt
+                                    ->nonstartup_level_candidate_byte_counts
+                                        [anchor] =
+                                    entries[entry_index].byte_count;
+                                out_receipt
+                                    ->nonstartup_level_candidate_nonzero_byte_counts
+                                        [anchor] =
+                                    entries[entry_index].byte_count;
+                            }
                             out_receipt
-                                ->nonstartup_level_candidate_entry_index
+                                ->nonstartup_level_candidate_last_entry_index
                                     [anchor] = entry_index;
                             out_receipt
-                                ->nonstartup_level_candidate_raw_offsets
+                                ->nonstartup_level_candidate_last_raw_offsets
                                     [anchor] =
                                 entries[entry_index].absolute_offset;
                             out_receipt
-                                ->nonstartup_level_candidate_byte_counts
-                                    [anchor] =
-                                entries[entry_index].byte_count;
-                            out_receipt
-                                ->nonstartup_level_candidate_nonzero_byte_counts
+                                ->nonstartup_level_candidate_last_byte_counts
                                     [anchor] =
                                 entries[entry_index].byte_count;
                         }
@@ -3984,6 +4024,9 @@ int theron_v1_track02_capture_level_route_receipt(
     hash *= 16777619u;
     for (anchor = 0u; anchor < THERON_TRACK02_MAX_BANK_ANCHORS; ++anchor) {
         hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_anchor_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_entry_index[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)
@@ -3994,6 +4037,15 @@ int theron_v1_track02_capture_level_route_receipt(
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_nonzero_byte_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_last_entry_index[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_last_raw_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_last_byte_counts[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->startup_level_anchor_status[anchor];
         hash *= 16777619u;
