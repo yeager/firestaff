@@ -1477,11 +1477,6 @@ int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state);
 int M11_GameView_GetDm1HocMenuRouteReceipt(
     const M11_GameViewState* state,
     DM1_V1_EntranceMenuRouteReceiptPc34* outReceipt);
-int M11_GameView_CsbF0282ChampionPanelGateActive(
-    const M11_GameViewState* state,
-    int* outFrontMirrorOrdinal,
-    int* outCandidateOrdinal,
-    int* outCandidatePartyIndex);
 int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state);
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate);
