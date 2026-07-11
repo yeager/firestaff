@@ -551,7 +551,7 @@ static int inject_synthetic_csbgraphics_viewport_override(
 
     csb_v1_csbgraphics_dat_real_cache_free(&profile->csbgraphics_cache);
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
-    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
+    csb_v1_csbgraphics_runtime_plan_init(&profile->csbgraphics_runtime_plan);
     profile->csbgraphics_cache.file_buffer = bytes;
     profile->csbgraphics_cache.file_size = size;
     profile->csbgraphics_cache.loaded = 1;
@@ -574,14 +574,14 @@ static int inject_synthetic_csbgraphics_viewport_override(
     profile->csbgraphics_scan_attempted = 1;
     profile->csbgraphics_scan_result = CSB_V1_CSBGRAPHICS_DAT_REAL_OK;
     profile->csbgraphics_plan_result =
-        csb_v1_csbgraphics_m11_runtime_plan_add_explicit_entry(
+        csb_v1_csbgraphics_runtime_plan_add_explicit_entry(
             &profile->csbgraphics_cache,
             73u,
             8u,
             8u,
-            &profile->csbgraphics_m11_plan);
+            &profile->csbgraphics_runtime_plan);
     return profile->csbgraphics_plan_result ==
-           CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
+           CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK;
 }
 
 static int inject_synthetic_csbgraphics_custom_background(
@@ -658,7 +658,7 @@ static int inject_synthetic_csbgraphics_custom_background(
 
     csb_v1_csbgraphics_dat_real_cache_free(&profile->csbgraphics_cache);
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
-    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
+    csb_v1_csbgraphics_runtime_plan_init(&profile->csbgraphics_runtime_plan);
     profile->csbgraphics_cache.file_buffer = bytes;
     profile->csbgraphics_cache.file_size = size;
     profile->csbgraphics_cache.loaded = 1;
@@ -687,13 +687,13 @@ static int inject_synthetic_csbgraphics_custom_background(
     profile->csbgraphics_skin_def_words[0] = 100u;
     profile->csbgraphics_skin_def_words[4] = 104u;
     profile->csbgraphics_plan_result =
-        csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
+        csb_v1_csbgraphics_runtime_plan_add_custom_background_skin_def(
             &profile->csbgraphics_cache,
             profile->csbgraphics_skin_def_words,
             profile->csbgraphics_skin_def_word_count,
-            &profile->csbgraphics_m11_plan);
+            &profile->csbgraphics_runtime_plan);
     if (profile->csbgraphics_plan_result !=
-        CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
+        CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK) {
         return 0;
     }
 
@@ -1951,8 +1951,8 @@ int main(void) {
                     "CSB boot profile attempts CSBgraphics startup scan");
         expect_true(csb_v1_boot_csbgraphics_cache(profile) ==
                         &profile->csbgraphics_cache &&
-                    csb_v1_boot_csbgraphics_m11_plan(profile) ==
-                        &profile->csbgraphics_m11_plan,
+                    csb_v1_boot_csbgraphics_runtime_plan(profile) ==
+                        &profile->csbgraphics_runtime_plan,
                     "CSB boot profile owns CSBgraphics cache and M11 plan");
         expect_true(profile->csbgraphics_scan_result ==
                         CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND ||

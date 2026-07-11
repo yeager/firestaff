@@ -3,7 +3,7 @@
 #include "asset_find_by_hash.h"
 #include "csb_v1_cmp_import_pc34_compat.h"
 #include "csb_v1_csbgraphics_dat_real_scan.h"
-#include "csb_v1_csbgraphics_m11_runtime_plan.h"
+#include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
@@ -148,9 +148,9 @@ static int csb_v1_boot_csbgraphics_has_m11_entry_pc34(
     uint32_t entry_index)
 {
     return profile && profile->csbgraphics_cache.loaded &&
-           profile->csbgraphics_m11_plan.ready &&
-           csb_v1_csbgraphics_m11_runtime_plan_find_entry(
-               &profile->csbgraphics_m11_plan, entry_index) != NULL;
+           profile->csbgraphics_runtime_plan.ready &&
+           csb_v1_csbgraphics_runtime_plan_find_entry(
+               &profile->csbgraphics_runtime_plan, entry_index) != NULL;
 }
 
 void csb_v1_boot_startup_assets_resolve_pc34(CSB_V1_BootProfile *profile)
@@ -976,13 +976,13 @@ void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile)
     profile->csbgraphics_scan_result =
         CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
     profile->csbgraphics_plan_result =
-        CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_CACHE;
+        CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_NO_CACHE;
     profile->csbgraphics_skin_def_loaded = 0;
     profile->csbgraphics_skin_def_word_count = 0u;
     memset(profile->csbgraphics_skin_def_words, 0,
            sizeof(profile->csbgraphics_skin_def_words));
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
-    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
+    csb_v1_csbgraphics_runtime_plan_init(&profile->csbgraphics_runtime_plan);
     csb_v1_boot_startup_assets_resolve_pc34(profile);
     csb_v1_character_init_default(&profile->imported_party);
     csb_v1_runtime_init(&profile->runtime, NULL);
@@ -996,12 +996,12 @@ static void csb_v1_boot_reset_csbgraphics(CSB_V1_BootProfile *profile)
     }
     csb_v1_csbgraphics_dat_real_cache_free(&profile->csbgraphics_cache);
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
-    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
+    csb_v1_csbgraphics_runtime_plan_init(&profile->csbgraphics_runtime_plan);
     profile->csbgraphics_scan_attempted = 0;
     profile->csbgraphics_scan_result =
         CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
     profile->csbgraphics_plan_result =
-        CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_CACHE;
+        CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_NO_CACHE;
     profile->csbgraphics_skin_def_loaded = 0;
     profile->csbgraphics_skin_def_word_count = 0u;
     memset(profile->csbgraphics_skin_def_words, 0,
@@ -1089,40 +1089,40 @@ int csb_v1_boot_scan_csbgraphics(CSB_V1_BootProfile *profile,
         return profile->csbgraphics_scan_result;
     }
     profile->csbgraphics_plan_result =
-        csb_v1_csbgraphics_m11_runtime_plan_build_from_cache(
+        csb_v1_csbgraphics_runtime_plan_build_from_cache(
             &profile->csbgraphics_cache,
-            &profile->csbgraphics_m11_plan);
+            &profile->csbgraphics_runtime_plan);
     {
         size_t skin_def_word_count = 0u;
         int skin_rc =
-            csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def(
+            csb_v1_csbgraphics_runtime_plan_decode_custom_background_skin_def(
                 &profile->csbgraphics_cache,
                 profile->csbgraphics_skin_def_words,
-                CSB_V1_CSBGRAPHICS_M11_SKIN_DEF_MAX_WORDS,
+                CSB_V1_CSBGRAPHICS_RUNTIME_SKIN_DEF_MAX_WORDS,
                 &skin_def_word_count);
-        if (skin_rc == CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
+        if (skin_rc == CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK) {
             int add_rc;
             profile->csbgraphics_skin_def_loaded = 1;
             profile->csbgraphics_skin_def_word_count = skin_def_word_count;
             add_rc =
-                csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
+                csb_v1_csbgraphics_runtime_plan_add_custom_background_skin_def(
                     &profile->csbgraphics_cache,
                     profile->csbgraphics_skin_def_words,
                     profile->csbgraphics_skin_def_word_count,
-                    &profile->csbgraphics_m11_plan);
-            if (add_rc == CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
+                    &profile->csbgraphics_runtime_plan);
+            if (add_rc == CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK) {
                 profile->csbgraphics_plan_result =
-                    CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
+                    CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK;
             }
         }
     }
     return profile->csbgraphics_plan_result;
 }
 
-const CSB_V1_CSBGraphicsM11RuntimePlan *
-csb_v1_boot_csbgraphics_m11_plan(const CSB_V1_BootProfile *profile)
+const CSB_V1_CSBGraphicsRuntimePlan *
+csb_v1_boot_csbgraphics_runtime_plan(const CSB_V1_BootProfile *profile)
 {
-    return profile ? &profile->csbgraphics_m11_plan : NULL;
+    return profile ? &profile->csbgraphics_runtime_plan : NULL;
 }
 
 const CSB_V1_CSBGraphicsDatRealCache *
@@ -1188,7 +1188,7 @@ int csb_v1_boot_render_viewport_frame_pc34(
     if (drawer_binding) {
         csb_v1_viewport_apply_runtime_drawer_binding(&cfg, drawer_binding);
     }
-    cfg.csbgraphics_plan = csb_v1_boot_csbgraphics_m11_plan(profile);
+    cfg.csbgraphics_plan = csb_v1_boot_csbgraphics_runtime_plan(profile);
     cfg.csbgraphics_cache = csb_v1_boot_csbgraphics_cache(profile);
     cfg.custom_background_skin_def_words =
         csb_v1_boot_csbgraphics_skin_def_words(
@@ -1217,18 +1217,18 @@ int csb_v1_boot_render_viewport_frame_pc34(
         csb_v1_viewport_runtime_draw_counts_from_config(&cfg, out_counts);
     }
 
-    if (profile->csbgraphics_m11_plan.ready &&
+    if (profile->csbgraphics_runtime_plan.ready &&
         profile->csbgraphics_cache.loaded) {
-        for (i = 0u; i < profile->csbgraphics_m11_plan.planned_count; ++i) {
-            CSB_V1_CSBGraphicsM11Binding binding;
-            if (profile->csbgraphics_m11_plan.entries[i]
+        for (i = 0u; i < profile->csbgraphics_runtime_plan.planned_count; ++i) {
+            CSB_V1_CSBGraphicsRuntimeBinding binding;
+            if (profile->csbgraphics_runtime_plan.entries[i]
                     .deferred_masked_composite) {
                 continue;
             }
-            (void)csb_v1_csbgraphics_m11_runtime_plan_apply_entry(
-                &profile->csbgraphics_m11_plan,
+            (void)csb_v1_csbgraphics_runtime_plan_apply_entry(
+                &profile->csbgraphics_runtime_plan,
                 &profile->csbgraphics_cache,
-                profile->csbgraphics_m11_plan.entries[i].entry_index,
+                profile->csbgraphics_runtime_plan.entries[i].entry_index,
                 framebuffer,
                 framebuffer_width,
                 framebuffer_height,
@@ -1446,10 +1446,10 @@ int csb_v1_boot_startup_launch_detach_runtime_pc34(
     snprintf(out_receipt->source_id,
              sizeof(out_receipt->source_id),
              "csb");
-    out_receipt->bind_graphics_to_m11_asset_loader =
+    out_receipt->bind_graphics_to_runtime_asset_loader =
         launch->profile->graphics_path[0] != '\0';
     out_receipt->load_original_font_from_graphics =
-        out_receipt->bind_graphics_to_m11_asset_loader;
+        out_receipt->bind_graphics_to_runtime_asset_loader;
     out_receipt->real_asset_receipt_valid =
         csb_v1_startup_real_receipt_from_profile_fields(
             launch->profile->asset_root,
@@ -2832,6 +2832,10 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
     CSB_V1_StartupRenderExecutor_PC34 hud_executor;
     int render_result = 0;
     int hud_result = 0;
+    int render_draw_receipt_consumed = 0;
+    int capture_proof_consumed = 0;
+    int route_capture_proof_consumed = 0;
+    int readiness_receipt_consumed = 0;
 
     if (out_receipt) {
         csb_v1_boot_startup_host_view_draw_receipt_init_pc34(out_receipt);
@@ -2839,6 +2843,26 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
     if (!host_view || !host_view->valid || !executor) {
         return 0;
     }
+    render_draw_receipt_consumed =
+        host_view->render_draw_valid && host_view->render_draw.valid ? 1 : 0;
+    capture_proof_consumed =
+        host_view->capture_proof_valid && host_view->capture_proof.valid ? 1 : 0;
+    route_capture_proof_consumed =
+        host_view->route == CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34
+            ? host_view->capture_proof.title_route
+            : host_view->route ==
+                      CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34
+                  ? (host_view->capture_proof.closed_door_menu_route ||
+                     host_view->capture_proof.utility_menu_route)
+                  : host_view->route ==
+                            CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_FRAME_PC34
+                        ? host_view->capture_proof.opening_door_route
+                        : host_view->route ==
+                                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CREDITS_PC34
+                              ? host_view->capture_proof.credits_route
+                              : capture_proof_consumed;
+    readiness_receipt_consumed =
+        !host_view->hud_menu_draw_valid || host_view->readiness_valid ? 1 : 0;
 
     if (out_receipt) {
         out_receipt->host_view_valid = 1;
@@ -2921,8 +2945,25 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
                 ? 1
                 : 0;
         out_receipt->fallback_callbacks_stripped = 1;
+        out_receipt->render_draw_receipt_consumed =
+            render_draw_receipt_consumed;
+        out_receipt->capture_proof_consumed = capture_proof_consumed;
+        out_receipt->route_capture_proof_consumed =
+            route_capture_proof_consumed;
+        out_receipt->readiness_receipt_consumed = readiness_receipt_consumed;
+        out_receipt->no_legacy_plan_fallback =
+            render_draw_receipt_consumed && capture_proof_consumed &&
+                    route_capture_proof_consumed &&
+                    readiness_receipt_consumed
+                ? 1
+                : 0;
         out_receipt->source_evidence =
             host_view->render_draw.source_evidence;
+    }
+    if (!render_draw_receipt_consumed || !capture_proof_consumed ||
+        !route_capture_proof_consumed ||
+        !readiness_receipt_consumed) {
+        return 0;
     }
 
     render_executor = *executor;
@@ -2961,16 +3002,19 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
 
     if (out_receipt) {
         out_receipt->valid =
-            out_receipt->render_executed || out_receipt->hud_menu_executed
+            out_receipt->no_legacy_plan_fallback &&
+                    (out_receipt->render_executed ||
+                     out_receipt->hud_menu_executed)
                 ? 1
                 : 0;
         out_receipt->consumed_host_view_only = out_receipt->valid ? 1 : 0;
     }
-    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 own the visible CSB
-     * boot transaction. Consume render, HUD/menu, readiness, and packaged
-     * real-asset gates from one CSB host-view receipt so callers do not keep
-     * a compatibility layer that separately fetches render plans and HUD
-     * readiness from raw startup facts. */
+    /* ReDMCSB TITLE.C F0437 lines 424-463, ENTRANCE.C F0441 lines 620-950
+     * and F0580/F0581 lines 1123-1165 own the visible CSB boot transaction.
+     * DUNVIEW.C door/wall tables around lines 150-240 keep door drawing
+     * data-owned, so execution now requires render-draw, readiness, and
+     * route-matched packaged capture receipts before any HUD/menu draw can
+     * run. */
     return out_receipt ? out_receipt->valid : (render_result || hud_result > 0);
 }
 
@@ -7041,10 +7085,10 @@ size_t csb_v1_boot_diagnostic_report(const CSB_V1_BootProfile *profile,
                  profile->csbgraphics_scan_attempted ? "YES" : "NO",
                  csb_v1_csbgraphics_dat_real_result_name(
                      profile->csbgraphics_scan_result),
-                 csb_v1_csbgraphics_m11_runtime_plan_result_name(
+                 csb_v1_csbgraphics_runtime_plan_result_name(
                      profile->csbgraphics_plan_result),
-                 profile->csbgraphics_m11_plan.ready ? "YES" : "NO",
-                 (unsigned)profile->csbgraphics_m11_plan.planned_count,
+                 profile->csbgraphics_runtime_plan.ready ? "YES" : "NO",
+                 (unsigned)profile->csbgraphics_runtime_plan.planned_count,
                  profile->cmp_import_attempted ? "YES" : "NO",
                  profile->cmp_import_succeeded ? "YES" : "NO",
                  profile->cmp_imported_slot,

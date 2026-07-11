@@ -163,8 +163,8 @@ add_library(firestaff_m10 STATIC
     src/shared/image_backend_pc34_compat_globals.c
     src/csb/csb_v1_csbgraphics_dat_classify.c
     src/csb/csb_v1_csbgraphics_dat_real_scan.c
-    src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
-    src/csb/csb_v1_csbgraphics_m11_runtime_plan.c
+    src/csb/csb_v1_csbgraphics_runtime_binding.c
+    src/csb/csb_v1_csbgraphics_runtime_plan.c
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_csbwin_512_xor_pad_classify.c
     src/csb/csb_v1_audio_runtime_pc34_compat.c
@@ -18261,31 +18261,31 @@ if(BUILD_TESTING)
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
     )
 
-    # CSB V1 CSBgraphics.dat M11 binding-readiness contract. This is
+    # CSB V1 CSBgraphics.dat runtime binding contract. This is
     # data-free and consumes only a trusted decoded-bitmap shape plus
     # the existing payload-span handoff. It proves the future decoder
-    # can feed M11 viewport-derived graphics (#73..#74/#351..#359)
+    # can feed runtime viewport-derived graphics (#73..#74/#351..#359)
     # and HUD graphics (C017 inventory, C040 resurrect panel) without
     # adding a runtime override hook here.
-    add_executable(test_csb_v1_csbgraphics_m11_binding_readiness
-        tests/test_csb_v1_csbgraphics_m11_binding_readiness.c
-        src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
+    add_executable(test_csb_v1_csbgraphics_runtime_binding
+        tests/test_csb_v1_csbgraphics_runtime_binding.c
+        src/csb/csb_v1_csbgraphics_runtime_binding.c
         src/csb/csb_v1_csbgraphics_dat_classify.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     )
-    target_include_directories(test_csb_v1_csbgraphics_m11_binding_readiness PRIVATE
+    target_include_directories(test_csb_v1_csbgraphics_runtime_binding PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     if(NOT MSVC)
-        target_compile_options(test_csb_v1_csbgraphics_m11_binding_readiness PRIVATE
+        target_compile_options(test_csb_v1_csbgraphics_runtime_binding PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
     add_test(
-        NAME csb_v1_csbgraphics_m11_binding_readiness
-        COMMAND test_csb_v1_csbgraphics_m11_binding_readiness
+        NAME csb_v1_csbgraphics_runtime_binding
+        COMMAND test_csb_v1_csbgraphics_runtime_binding
     )
-    set_tests_properties(csb_v1_csbgraphics_m11_binding_readiness PROPERTIES
-        LABELS "tier2;csb;csbwin_custom_resource;m11;data_free"
+    set_tests_properties(csb_v1_csbgraphics_runtime_binding PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;runtime;data_free"
     )
 
     add_executable(test_csb_v1_viewport_custom_background_mask_pc34_compat
@@ -18295,14 +18295,18 @@ if(BUILD_TESTING)
         src/csb/csb_v1_viewport_custom_background_mask_apply_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
-        src/csb/csb_v1_csbgraphics_m11_runtime_plan.c
+        src/csb/csb_v1_csbgraphics_runtime_plan.c
         src/csb/csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.c
-        src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
+        src/csb/csb_v1_csbgraphics_runtime_binding.c
         src/csb/csb_v1_csbgraphics_dat_real_scan.c
         src/csb/csb_v1_csbgraphics_dat_classify.c
         src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
         src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
+        src/dm1/dm1_v1_floor_ornament_pc34_compat.c
+        src/dm1/dm1_v1_g0195_pc34_compat.c
+        src/dm1/dm1_v1_g0206_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
         src/shared/asset_find_by_hash.c
@@ -18321,47 +18325,51 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_viewport_custom_background_mask_pc34_compat
     )
     set_tests_properties(csb_v1_viewport_custom_background_mask_pc34_compat PROPERTIES
-        LABELS "tier2;csb;csbwin_custom_resource;m11;viewport;data_free"
+        LABELS "tier2;csb;csbwin_custom_resource;runtime;viewport;data_free"
     )
 
-    # CSB V1 CSBgraphics.dat M11 runtime plan. This is the startup-facing
+    # CSB V1 CSBgraphics.dat runtime plan. This is the startup-facing
     # manifest layer between the hash-owned real-scan cache and the
     # decode/apply handoff: it records which CSBgraphics.dat entries have
-    # known or caller-supplied M11 geometry before runtime tries to blit them.
-    add_executable(test_csb_v1_csbgraphics_m11_runtime_plan
-        tests/test_csb_v1_csbgraphics_m11_runtime_plan.c
-        src/csb/csb_v1_csbgraphics_m11_runtime_plan.c
+    # known or caller-supplied runtime geometry before runtime tries to blit them.
+    add_executable(test_csb_v1_csbgraphics_runtime_plan
+        tests/test_csb_v1_csbgraphics_runtime_plan.c
+        src/csb/csb_v1_csbgraphics_runtime_plan.c
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
         tests/csb_v1_runtime_overlay_link_stub.c
         src/csb/csb_v1_viewport_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/csb/csb_v1_viewport_custom_background_mask_apply_pc34_compat.c
         src/csb/csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.c
-        src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
+        src/csb/csb_v1_csbgraphics_runtime_binding.c
         src/csb/csb_v1_csbgraphics_dat_real_scan.c
         src/csb/csb_v1_csbgraphics_dat_classify.c
         src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
         src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
+        src/dm1/dm1_v1_floor_ornament_pc34_compat.c
+        src/dm1/dm1_v1_g0195_pc34_compat.c
+        src/dm1/dm1_v1_g0206_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/shared/dungeon_decompressor_ftl.c
         src/shared/fs_portable_compat.c
     )
-    target_include_directories(test_csb_v1_csbgraphics_m11_runtime_plan PRIVATE
+    target_include_directories(test_csb_v1_csbgraphics_runtime_plan PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     if(NOT MSVC)
-        target_compile_options(test_csb_v1_csbgraphics_m11_runtime_plan PRIVATE
+        target_compile_options(test_csb_v1_csbgraphics_runtime_plan PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
     add_test(
-        NAME csb_v1_csbgraphics_m11_runtime_plan
-        COMMAND test_csb_v1_csbgraphics_m11_runtime_plan
+        NAME csb_v1_csbgraphics_runtime_plan
+        COMMAND test_csb_v1_csbgraphics_runtime_plan
     )
-    set_tests_properties(csb_v1_csbgraphics_m11_runtime_plan PROPERTIES
-        LABELS "tier2;csb;csbwin_custom_resource;m11;startup;data_free"
+    set_tests_properties(csb_v1_csbgraphics_runtime_plan PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;runtime;startup;data_free"
     )
 
     # CSB V1 CSBWin skinCache source-lock. This is the bounded runtime
