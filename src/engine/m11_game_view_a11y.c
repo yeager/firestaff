@@ -43,6 +43,7 @@
 
 #include "m11_game_view.h"
 #include "dm1_v1_endgame_layout_pc34_compat.h"
+#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
 #include "firestaff_accessibility.h"
 #include "session_timer_runtime.h"
@@ -528,19 +529,17 @@ static void m11_ax_emit_inventory_panel_zones(const M11_GameViewState* state) {
         }
     }
 
-    /* Inventory equipment slots - ReDMCSB C507..C519 (READY_H,
-     * ACTION_H, HEAD, TORSO, LEGS, FEET, POUCH_2, QUIVER_LINE2_1,
-     * QUIVER_LINE1_2, QUIVER_LINE2_2, NECK, POUCH_1, QUIVER_LINE1_1).
-     * The GetV1InventorySourceSlotBoxZone() helper indexes the same
-     * layout-696 array that m11_draw_inventory_panel draws. We use
-     * indices 8..20 (C507..C519) to match the helper's 1-based
-     * source-slot-box numbering used by m11_game_view.c:26691. */
-    inventorySlotCount = M11_GameView_GetV1InventorySourceSlotBoxZoneCount();
+    /* Inventory equipment slots - ReDMCSB COMMAND.C C034..C046 route
+     * source slots C507..C519 through the viewport-relative layout table.
+     * Consume the DM1 layout API directly so a11y stays out of M11 wrapper
+     * ownership. */
+    inventorySlotCount = dm1_v1_inventory_source_slot_box_zone_count_pc34();
     if (inventorySlotCount > 20) inventorySlotCount = 20; /* C507..C519 only */
     for (i = 8; i <= 20; ++i) {
-        int zx = 0, zy = 0, zw = 0, zh = 0;
+        DM1_V1_InventorySlotBoxZonePc34 zone;
         const char* role = NULL;
-        if (!M11_GameView_GetV1InventorySourceSlotBoxZone(i, &zx, &zy, &zw, &zh)) {
+        memset(&zone, 0, sizeof(zone));
+        if (!dm1_v1_inventory_source_slot_box_zone_pc34(i, &zone)) {
             continue;
         }
         /* Use the C5xx ordinal as the role ID. Slot 8 = READY_HAND,
@@ -564,8 +563,9 @@ static void m11_ax_emit_inventory_panel_zones(const M11_GameViewState* state) {
         }
         if (!role) role = "EQUIP_SLOT";
         e = m11_ax_begin(FS_AX_SLOT,
-                         M11_AX_VIEWPORT_X + zx, M11_AX_VIEWPORT_Y + zy,
-                         zw, zh,
+                         M11_AX_VIEWPORT_X + zone.x,
+                         M11_AX_VIEWPORT_Y + zone.y,
+                         zone.w, zone.h,
                          state->inventorySelectedSlot == (i - 8) ? 1 : 0);
         if (e) {
             snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "INV_%s", role);
@@ -574,23 +574,22 @@ static void m11_ax_emit_inventory_panel_zones(const M11_GameViewState* state) {
         }
     }
 
-    /* Backpack grid - ReDMCSB C520..C536 (16 slots laid out 8x2 at
-     * the top of the inventory panel). Coordinates come straight
-     * from kV1InventoryBackpackSlotZones at m11_game_view.c:22051. */
+    /* Backpack grid - ReDMCSB COMMAND.C C047..C059 route source slots
+     * C520..C536.  Coordinates come from the DM1 slot-placement module. */
     {
-        static const struct { int x, y; } kBackpack[] = {
-            { 66, 33 },  /* C520 - slot 0 */
-            { 83, 16 }, { 100, 16 }, { 117, 16 }, { 134, 16 },
-            { 151, 16 }, { 168, 16 }, { 185, 16 }, { 202, 16 },
-            { 83, 33 }, { 100, 33 }, { 117, 33 }, { 134, 33 },
-            { 151, 33 }, { 168, 33 }, { 185, 33 }, { 202, 33 }
-        };
         int bpIdx;
-        for (bpIdx = 0; bpIdx < 16; ++bpIdx) {
+        int backpackCount = dm1_v1_inventory_backpack_slot_zone_count_pc34();
+        if (backpackCount > 16) backpackCount = 16;
+        for (bpIdx = 0; bpIdx < backpackCount; ++bpIdx) {
+            DM1_V1_InventorySlotBoxZonePc34 zone;
+            memset(&zone, 0, sizeof(zone));
+            if (!dm1_v1_inventory_backpack_slot_zone_pc34(bpIdx, &zone)) {
+                continue;
+            }
             e = m11_ax_begin(FS_AX_SLOT,
-                             M11_AX_VIEWPORT_X + kBackpack[bpIdx].x,
-                             M11_AX_VIEWPORT_Y + kBackpack[bpIdx].y,
-                             16, 16,
+                             M11_AX_VIEWPORT_X + zone.x,
+                             M11_AX_VIEWPORT_Y + zone.y,
+                             zone.w, zone.h,
                              state->inventorySelectedSlot == (13 + bpIdx) ? 1 : 0);
             if (e) {
                 snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "INV_BACKPACK_%d", bpIdx);
@@ -645,15 +644,16 @@ static void m11_ax_emit_inventory_panel_zones(const M11_GameViewState* state) {
             snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN, "Open Chest");
         }
         for (chestOrdinal = 0; chestOrdinal < 8; ++chestOrdinal) {
-            int zx = 0, zy = 0, zw = 0, zh = 0;
-            if (!M11_GameView_GetV1ChestSlotBoxZone(chestOrdinal,
-                                                    &zx, &zy, &zw, &zh)) {
+            DM1_V1_InventorySlotBoxZonePc34 zone;
+            memset(&zone, 0, sizeof(zone));
+            if (!dm1_v1_inventory_chest_slot_box_zone_pc34(chestOrdinal,
+                                                           &zone)) {
                 continue;
             }
             e = m11_ax_begin(FS_AX_SLOT,
-                             M11_AX_VIEWPORT_X + zx,
-                             M11_AX_VIEWPORT_Y + zy,
-                             zw, zh, 1);
+                             M11_AX_VIEWPORT_X + zone.x,
+                             M11_AX_VIEWPORT_Y + zone.y,
+                             zone.w, zone.h, 1);
             if (e) {
                 snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "CHEST_SLOT_%d", chestOrdinal);
                 snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN, "Chest Slot %d",
