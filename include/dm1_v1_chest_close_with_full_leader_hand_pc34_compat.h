@@ -29,12 +29,12 @@ enum {
 };
 
 typedef struct {
-    int m11ItemItemType;
-    int m11ItemWeight;
-    int m11ItemCharges;
-    int m11ItemCursed;
-    int m11ItemIdentified;
-    int m11ItemAllowedSlots;
+    int itemType;
+    int weight;
+    int charges;
+    int cursed;
+    int identified;
+    int allowedSlots;
 } DM1_V1_ChestCloseFullLeaderHandItemPc34;
 
 typedef struct {
