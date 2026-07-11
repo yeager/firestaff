@@ -948,6 +948,11 @@ typedef struct {
     int save_corpus_rejected_candidate_count;
     int save_corpus_original_candidate_count;
     unsigned int save_corpus_valid_slot_mask;
+    int save_corpus_import_promotion_ready;
+    int save_corpus_first_importable_kind;
+    size_t save_corpus_first_importable_payload_size;
+    char save_corpus_first_importable_path[256];
+    uint32_t save_corpus_import_promotion_hash;
     uint32_t save_corpus_hash;
     int complete_support_ready;
     uint32_t complete_support_hash;

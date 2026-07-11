@@ -6534,6 +6534,9 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     uint32_t hash = 0x32414353u;
     const char *save_corpus_root = NULL;
     DM2_SKSaveCorpusReceipt save_corpus;
+    uint8_t save_payload[DM2_SESSION_MAX_SIZE];
+    size_t save_payload_size = 0u;
+    DM2_V1_SaveCandidate save_candidate;
 
     dm2_v1_boot_complete_support_receipt_init(out_receipt);
     if (!profile || !out_receipt ||
@@ -6574,6 +6577,53 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         (int)save_corpus.original_raw_candidate_count;
     out_receipt->save_corpus_valid_slot_mask =
         (unsigned int)save_corpus.valid_slot_mask;
+    out_receipt->save_corpus_import_promotion_ready =
+        out_receipt->save_corpus_scan_complete &&
+        out_receipt->save_corpus_importable_candidate_count == 0;
+    out_receipt->save_corpus_first_importable_kind = -1;
+    out_receipt->save_corpus_first_importable_payload_size = 0u;
+    out_receipt->save_corpus_first_importable_path[0] = '\0';
+    out_receipt->save_corpus_import_promotion_hash = 0x32434950u;
+    if (out_receipt->save_corpus_scan_complete &&
+        out_receipt->save_corpus_importable_candidate_count > 0 &&
+        dm2_v1_sksave_corpus_load_first_importable(
+            save_corpus_root,
+            save_payload,
+            sizeof(save_payload),
+            &save_payload_size,
+            &save_corpus) &&
+        dm2_v1_session_parse_save_candidate(&save_candidate,
+                                            save_payload,
+                                            save_payload_size) == 0) {
+        out_receipt->save_corpus_import_promotion_ready = 1;
+        out_receipt->save_corpus_first_importable_kind =
+            (int)save_candidate.kind;
+        out_receipt->save_corpus_first_importable_payload_size =
+            save_payload_size;
+        snprintf(out_receipt->save_corpus_first_importable_path,
+                 sizeof(out_receipt->save_corpus_first_importable_path),
+                 "%s", save_corpus.first_importable_path);
+    }
+    out_receipt->save_corpus_import_promotion_hash =
+        dm2_v1_boot_packaged_capture_hash_step(
+            out_receipt->save_corpus_import_promotion_hash,
+            (uint32_t)out_receipt->save_corpus_import_promotion_ready);
+    out_receipt->save_corpus_import_promotion_hash =
+        dm2_v1_boot_packaged_capture_hash_step(
+            out_receipt->save_corpus_import_promotion_hash,
+            (uint32_t)out_receipt->save_corpus_first_importable_kind);
+    out_receipt->save_corpus_import_promotion_hash =
+        dm2_v1_boot_packaged_capture_hash_step(
+            out_receipt->save_corpus_import_promotion_hash,
+            (uint32_t)out_receipt->save_corpus_first_importable_payload_size);
+    for (const char *p = out_receipt->save_corpus_first_importable_path;
+         p && *p;
+         ++p) {
+        out_receipt->save_corpus_import_promotion_hash =
+            dm2_v1_boot_packaged_capture_hash_step(
+                out_receipt->save_corpus_import_promotion_hash,
+                (uint32_t)(unsigned char)*p);
+    }
     out_receipt->save_corpus_hash = 0x32534353u;
     out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
         out_receipt->save_corpus_hash,
@@ -6593,6 +6643,9 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
         out_receipt->save_corpus_hash,
         out_receipt->save_corpus_valid_slot_mask);
+    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
+        out_receipt->save_corpus_hash,
+        out_receipt->save_corpus_import_promotion_hash);
 
     out_receipt->skproject_gdat_queries_ready =
         out_receipt->startup_visual.skproject_title_query_ready &&
@@ -6787,6 +6840,8 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         hash, out_receipt->creature_atlas.frame_parity_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->save_corpus_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->save_corpus_import_promotion_hash);
     out_receipt->complete_support_hash = hash;
 
     /* skproject/SKWIN T520/T560 consumes GDAT title/menu, HUD, and dungeon
@@ -6807,6 +6862,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->raw_gdat_capture_complete &&
         out_receipt->decoded_gdat_capture_complete &&
         out_receipt->save_corpus_scan_complete &&
+        out_receipt->save_corpus_import_promotion_ready &&
         out_receipt->complete_support_hash != 0u;
     out_receipt->valid = out_receipt->complete_support_ready;
     out_receipt->status_scope = "DM2";

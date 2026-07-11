@@ -1,6 +1,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
 
 #include <stdio.h>
@@ -361,12 +362,16 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
     DM2_V1_BootCreatureAtlasCaptureReceipt creature_atlas;
     DM2_V1_CompleteSupportReceipt complete_support;
+    DM2_V1_SessionState corpus_session;
     unsigned char framebuffer[320 * 200];
+    unsigned char corpus_payload[DM2_SESSION_MAX_SIZE];
+    int corpus_payload_size = 0;
     uint32_t typed_hash = 0u;
     uint32_t typed_bytes = 0u;
     int v2_callback_count = 0;
     const char *home = getenv("HOME");
     char root[512];
+    char corpus_root[512];
     FILE *g;
     FILE *d;
     if (!home || !home[0]) {
@@ -667,12 +672,29 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               creature_atlas.animation_table_ready == 1 &&
               creature_atlas.frame_parity_hash != 0u &&
               creature_atlas.atlas_material_hash != 0u,
-          "boot creature atlas capture materializes skproject GDAT creature map-chip and animation-table routes");
+              "boot creature atlas capture materializes skproject GDAT creature map-chip and animation-table routes");
+    snprintf(corpus_root, sizeof(corpus_root),
+             "/tmp/firestaff_dm2_boot_corpus_%d", TEST_GETPID());
+    TEST_MKDIR(corpus_root);
+    dm2_v1_session_new(&corpus_session);
+    corpus_session.game_tick = 0x2468u;
+    corpus_session.rng_seed = 0x13572468u;
+    corpus_session.party_x = 8u;
+    corpus_session.party_y = 9u;
+    corpus_session.party_dir = 3u;
+    corpus_payload_size = dm2_v1_session_serialize(
+        &corpus_session, corpus_payload, sizeof(corpus_payload));
+    CHECK(corpus_payload_size > 0 &&
+              dm2_sl_save_last_session(corpus_root,
+                                       "BootCorpus",
+                                       corpus_payload,
+                                       (size_t)corpus_payload_size) == 0,
+          "boot complete-support test seeds a temporary SKSave corpus");
     memset(&complete_support, 0, sizeof(complete_support));
     CHECK(dm2_v1_boot_complete_support_receipt_from_runtime_state(
               launch.profile,
               1,
-              launch.profile->save_root,
+              corpus_root,
               1,
               1u,
               0,
@@ -695,10 +717,18 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               complete_support.save_corpus_hash != 0u &&
               complete_support.save_corpus_valid_candidate_count >=
                   complete_support.save_corpus_importable_candidate_count &&
+              complete_support.save_corpus_import_promotion_ready == 1 &&
+              complete_support.save_corpus_first_importable_kind ==
+                  DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION &&
+              complete_support.save_corpus_first_importable_payload_size ==
+                  (size_t)corpus_payload_size &&
+              strstr(complete_support.save_corpus_first_importable_path,
+                     "SKSave.dat") != NULL &&
+              complete_support.save_corpus_import_promotion_hash != 0u &&
               complete_support.complete_support_ready == 1 &&
               complete_support.complete_support_hash != 0u &&
               strcmp(complete_support.status, "complete-support-ready") == 0,
-          "boot complete-support receipt joins skproject GDAT startup, HUD, and dungeon runtime");
+          "boot complete-support receipt joins skproject GDAT startup, HUD, dungeon runtime, and importable SKSave corpus promotion");
     memset(&action, 0, sizeof(action));
     CHECK(dm2_v1_boot_runtime_action_front_cell(
               launch.profile,
@@ -723,6 +753,14 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
                   after.runtime_ready == 1 &&
                   (after.operation_result == 0 || after.operation_result == -1),
               "boot runtime move owns DM2 receipt update");
+    }
+    {
+        char p[600];
+        snprintf(p, sizeof(p), "%s/SKSave.dat", corpus_root);
+        (void)remove(p);
+        snprintf(p, sizeof(p), "%s/SKSave.bak", corpus_root);
+        (void)remove(p);
+        TEST_RMDIR(corpus_root);
     }
     dm2_v1_boot_startup_launch_cleanup(&launch);
 }
