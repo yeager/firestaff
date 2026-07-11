@@ -1547,7 +1547,6 @@ int M11_GameView_GetV1StatusBarBlankColor(void);
 int M11_GameView_GetV1StatusHandSlotGraphic(const M11_GameViewState* state,
                                             int championSlot,
                                             int handIndex);
-int M11_GameView_GetV1SlotBoxNormalGraphicId(void);
 int M11_GameView_GetV1SlotBoxWoundedGraphicId(void);
 int M11_GameView_GetV1SlotBoxActingHandGraphicId(void);
 int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
@@ -1603,7 +1602,6 @@ int M11_GameView_GetV1DamageNumberOriginPc34(int championSlot,
                                              int inventoryChampion,
                                              int* outX,
                                              int* outY);
-int M11_GameView_GetV1PoisonLabelGraphicId(void);
 int M11_GameView_GetV1ChampionSmallDamageGraphicId(void);
 int M11_GameView_GetV1ChampionBigDamageGraphicId(void);
 int M11_GameView_GetV1CreatureDamageGraphicId(void);

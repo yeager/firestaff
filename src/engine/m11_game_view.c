@@ -32028,7 +32028,7 @@ int M11_GameView_GetV1InventorySourceSlotBoxGraphicId(int sourceSlotBoxIndex) {
     if (!M11_GameView_GetV1InventorySourceSlotBoxZoneId(sourceSlotBoxIndex)) {
         return 0;
     }
-    return M11_GameView_GetV1SlotBoxNormalGraphicId();
+    return dm1_v1_graphic_slot_box_normal_pc34();
 }
 
 int M11_GameView_GetV1InventoryEquipmentSlotZoneCount(void) {
@@ -33516,9 +33516,6 @@ int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
     return 1;
 }
 
-int M11_GameView_GetV1SlotBoxNormalGraphicId(void) {
-    return dm1_v1_graphic_slot_box_normal_pc34();
-}
 
 int M11_GameView_GetV1SlotBoxWoundedGraphicId(void) {
     return dm1_v1_graphic_slot_box_wounded_pc34();
@@ -33732,9 +33729,6 @@ int M11_GameView_GetV1StatusShieldBorderGraphic(const M11_GameViewState* state) 
     return M11_GameView_GetV1StatusShieldBorderGraphicForChampion(state, -1);
 }
 
-int M11_GameView_GetV1PoisonLabelGraphicId(void) {
-    return dm1_v1_graphic_poisoned_label_pc34();
-}
 
 int M11_GameView_GetV1ChampionSmallDamageGraphicId(void) {
     return dm1_v1_graphic_champion_damage_small_pc34();
@@ -36412,7 +36406,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             if (state->assetsAvailable && champ->poisonDose > 0) {
                 const M11_AssetSlot* poisonLbl = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
-                    (unsigned int)M11_GameView_GetV1PoisonLabelGraphicId());
+                    (unsigned int)dm1_v1_graphic_poisoned_label_pc34());
                 if (poisonLbl && poisonLbl->width > 0 &&
                     poisonLbl->height > 0) {
                     /* Center the 96-wide label within the source status-box
@@ -36802,7 +36796,7 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
         else if (isDead)
             gfxIdx = (unsigned int)M11_GameView_GetV1SlotBoxWoundedGraphicId();
         else
-            gfxIdx = (unsigned int)M11_GameView_GetV1SlotBoxNormalGraphicId();
+            gfxIdx = (unsigned int)dm1_v1_graphic_slot_box_normal_pc34();
 
         const M11_AssetSlot* boxSlot = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader, gfxIdx);
@@ -37185,7 +37179,7 @@ static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state
         if (champ->poisonDose > 0) {
             const M11_AssetSlot* poison = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
-                (unsigned int)M11_GameView_GetV1PoisonLabelGraphicId());
+                (unsigned int)dm1_v1_graphic_poisoned_label_pc34());
             if (poison && poison->pixels && poison->width > 0 && poison->height > 0) {
                 M11_AssetLoader_Blit(poison, framebuffer, framebufferWidth, framebufferHeight,
                                      M11_VIEWPORT_X + panelX + 32,
@@ -37278,7 +37272,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     if (state->assetsAvailable) {
         const M11_AssetSlot* testBox = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)M11_GameView_GetV1SlotBoxNormalGraphicId());
+            (unsigned int)dm1_v1_graphic_slot_box_normal_pc34());
         if (testBox && testBox->width == 18 && testBox->height == 18)
             SZ = 18;
     }
@@ -37476,7 +37470,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 if (state->assetsAvailable) {
                     const M11_AssetSlot* boxSlot = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
-                        (unsigned int)M11_GameView_GetV1SlotBoxNormalGraphicId());
+                        (unsigned int)dm1_v1_graphic_slot_box_normal_pc34());
                     if (boxSlot && boxSlot->width == 18 && boxSlot->height == 18) {
                         M11_AssetLoader_Blit(boxSlot, framebuffer, framebufferWidth,
                                              framebufferHeight,
