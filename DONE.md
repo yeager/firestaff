@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM2 skproject item word-value GDAT receipt: `dm2_v1_asset_load_word_value()` now reads `dtWordValue` (`DME.h = 11`) from ENT1 data indices, matching `SkWinCore.cpp QUERY_GDAT_ENTRY_DATA_INDEX` and `QUERY_ITEM_VALUE`. A focused real-data test proves flags, weight, money, and equip metadata across weapon/clothes/scroll/potion/container/misc item categories. Verification: `cmake -S . -B build`, `cmake --build build --target test_dm2_v1_gdat_word_values --parallel 2`, `./build/test_dm2_v1_gdat_word_values` PASS 5/5, and `git diff --check` passed.
+
 - ✅ 2026-07-11 DM1 chest full-leader-hand field cleanup: renamed old `m11Item*` item contract fields in chest open/close full-leader-hand specs to DM1-owned item fields. Verification: `firestaff_m10`, `test_dm1_v1_chest_close_with_full_leader_hand_pc34_compat`, direct compile/run of `test_dm1_v1_chest_open_with_full_leader_hand_pc34_compat`, old-symbol `rg`, and `git diff HEAD --check` passed.
 
 - ✅ 2026-07-11 CSB F0282 M11 gate wrapper cleanup: removed the unused public `M11_GameView_CsbF0282ChampionPanelGateActive` export; active HoC/CSB champion-panel routing remains behind the existing ReDMCSB receipt paths. Verification: `firestaff_m11`, `test_m11_overlay_command_queue_block`, old-symbol `rg`, and `git diff HEAD --check` passed.
