@@ -376,6 +376,9 @@ typedef struct {
     uint32_t interface_action_table_byte_count;
     uint32_t interface_action_group_count;
     uint32_t interface_action_entry_count;
+    uint32_t interface_action_pv1_byte_count;
+    uint32_t interface_action_pv5_byte_count;
+    uint32_t interface_action_command_byte_count;
     uint32_t interface_action_tail_byte_count;
     int interface_font_table_ready;
     uint32_t interface_font_table_hash;

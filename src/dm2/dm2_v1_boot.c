@@ -4265,6 +4265,9 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
     uint32_t *out_byte_count,
     uint32_t *out_group_count,
     uint32_t *out_entry_count,
+    uint32_t *out_pv1_byte_count,
+    uint32_t *out_pv5_byte_count,
+    uint32_t *out_command_byte_count,
     uint32_t *out_tail_byte_count)
 {
     DM2_V1_BootGraphicsDat *gfx;
@@ -4273,16 +4276,23 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
     uint32_t hash = 0x32494132u;
     uint32_t group_count;
     uint32_t entry_count = 0u;
+    uint32_t pv1_byte_count;
+    uint32_t pv5_byte_count;
+    uint32_t command_byte_count;
     size_t min_payload;
 
     if (out_hash) *out_hash = 0u;
     if (out_byte_count) *out_byte_count = 0u;
     if (out_group_count) *out_group_count = 0u;
     if (out_entry_count) *out_entry_count = 0u;
+    if (out_pv1_byte_count) *out_pv1_byte_count = 0u;
+    if (out_pv5_byte_count) *out_pv5_byte_count = 0u;
+    if (out_command_byte_count) *out_command_byte_count = 0u;
     if (out_tail_byte_count) *out_tail_byte_count = 0u;
     if (!profile || !profile->graphics_dat || !out_hash ||
         !out_byte_count || !out_group_count || !out_entry_count ||
-        !out_tail_byte_count) {
+        !out_pv1_byte_count || !out_pv5_byte_count ||
+        !out_command_byte_count || !out_tail_byte_count) {
         return 0;
     }
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
@@ -4312,20 +4322,26 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
     if (raw_size < min_payload) {
         return 0;
     }
+    pv1_byte_count = entry_count;
+    pv5_byte_count = entry_count;
+    command_byte_count = (uint32_t)(raw_size - min_payload);
     for (size_t i = 0; i < raw_size; ++i) {
         hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
     }
     hash = dm2_v1_boot_packaged_capture_hash_step(hash, group_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(hash, entry_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash,
-        (uint32_t)(raw_size - min_payload));
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, pv1_byte_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, pv5_byte_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, command_byte_count);
 
     *out_hash = hash;
     *out_byte_count = (uint32_t)raw_size;
     *out_group_count = group_count;
     *out_entry_count = entry_count;
-    *out_tail_byte_count = (uint32_t)(raw_size - min_payload);
+    *out_pv1_byte_count = pv1_byte_count;
+    *out_pv5_byte_count = pv5_byte_count;
+    *out_command_byte_count = command_byte_count;
+    *out_tail_byte_count = command_byte_count;
     return entry_count > 0u;
 }
 
@@ -6056,6 +6072,9 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->interface_action_table_byte_count,
             &out_receipt->interface_action_group_count,
             &out_receipt->interface_action_entry_count,
+            &out_receipt->interface_action_pv1_byte_count,
+            &out_receipt->interface_action_pv5_byte_count,
+            &out_receipt->interface_action_command_byte_count,
             &out_receipt->interface_action_tail_byte_count);
     out_receipt->interface_font_table_ready =
         dm2_v1_boot_runtime_interface_font_table_receipt(
@@ -6089,6 +6108,15 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
             out_receipt->interface_action_entry_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->interface_action_pv1_byte_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->interface_action_pv5_byte_count);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->interface_action_command_byte_count);
     }
     if (out_receipt->interface_font_table_ready) {
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -6491,6 +6519,15 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     out_receipt->runtime_gdat_interface_placement_complete =
         out_receipt->runtime_hud.wall_gfx_image_offsets_ready &&
         out_receipt->runtime_hud.wall_gfx_image_offsets_hash != 0u &&
+        out_receipt->runtime_hud.interface_action_table_ready &&
+        out_receipt->runtime_hud.interface_action_group_count > 0u &&
+        out_receipt->runtime_hud.interface_action_entry_count > 0u &&
+        out_receipt->runtime_hud.interface_action_pv1_byte_count ==
+            out_receipt->runtime_hud.interface_action_entry_count &&
+        out_receipt->runtime_hud.interface_action_pv5_byte_count ==
+            out_receipt->runtime_hud.interface_action_entry_count &&
+        out_receipt->runtime_hud.interface_action_command_byte_count ==
+            out_receipt->runtime_hud.interface_action_tail_byte_count &&
         (!out_receipt->runtime_hud.interface_rect14_ready ||
          (out_receipt->runtime_hud.interface_rect14_stride == 14u &&
           out_receipt->runtime_hud.interface_rect14_row_count > 0u &&
@@ -6581,6 +6618,12 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         hash, out_receipt->runtime_hud.wall_gfx_image_offsets_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud.wall_gfx_image_offsets_present_mask);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.interface_action_table_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.interface_action_entry_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.interface_action_command_byte_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud.interface_rect14_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
