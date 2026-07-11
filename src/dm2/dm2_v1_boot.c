@@ -6777,6 +6777,10 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         (int)save_corpus.recursive_scan_candidate_cap;
     out_receipt->save_corpus_valid_slot_mask =
         (unsigned int)save_corpus.valid_slot_mask;
+    out_receipt->save_corpus_importable_kind_mask =
+        save_corpus.importable_kind_mask;
+    out_receipt->save_corpus_importable_payload_hash =
+        save_corpus.importable_payload_hash;
     out_receipt->save_corpus_import_promotion_ready =
         out_receipt->save_corpus_scan_complete &&
         out_receipt->save_corpus_importable_candidate_count == 0;
@@ -6861,6 +6865,12 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
         out_receipt->save_corpus_hash,
         out_receipt->save_corpus_valid_slot_mask);
+    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
+        out_receipt->save_corpus_hash,
+        out_receipt->save_corpus_importable_kind_mask);
+    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
+        out_receipt->save_corpus_hash,
+        out_receipt->save_corpus_importable_payload_hash);
     out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
         out_receipt->save_corpus_hash,
         out_receipt->save_corpus_import_promotion_hash);

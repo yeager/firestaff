@@ -1503,6 +1503,10 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.firestaff_session_candidate_count != 1 ||
         receipt.original_envelope_candidate_count != 1 ||
         receipt.original_raw_candidate_count != 0 ||
+        receipt.importable_kind_mask !=
+            ((uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION) |
+             (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE)) ||
+        receipt.importable_payload_hash == 0u ||
         receipt.total_importable_payload_size !=
             payload_b_size + (size_t)payload_c_size ||
         receipt.largest_payload_size != largest_payload_size ||
@@ -1576,6 +1580,9 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.firestaff_session_candidate_count != 1 ||
         receipt.original_envelope_candidate_count != 0 ||
         receipt.original_raw_candidate_count != 0 ||
+        receipt.importable_kind_mask !=
+            (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION) ||
+        receipt.importable_payload_hash == 0u ||
         strstr(receipt.first_importable_path, "SKSave03.dat") == NULL ||
         strstr(receipt.first_valid_path, "SKSave.bak") == NULL) {
         printf("    FAIL: backup-selected corpus receipt did not match "
@@ -1623,6 +1630,10 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.recursive_importable_candidate_count != 1 ||
         receipt.alternate_name_candidate_count != 1 ||
         receipt.extra_valid_candidate_count != 1 ||
+        receipt.importable_kind_mask !=
+            ((uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION) |
+             (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE)) ||
+        receipt.importable_payload_hash == 0u ||
         receipt.recursive_scan_depth_limit != 4 ||
         receipt.recursive_scan_candidate_cap != 64 ||
         receipt.recursive_scan_truncated != 0 ||

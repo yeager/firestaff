@@ -737,6 +737,8 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               complete_support.decoded_gdat_capture_complete == 1 &&
               complete_support.save_corpus_scan_complete == 1 &&
               complete_support.save_corpus_hash != 0u &&
+              complete_support.save_corpus_importable_kind_mask != 0u &&
+              complete_support.save_corpus_importable_payload_hash != 0u &&
               complete_support.save_corpus_valid_candidate_count >=
                   complete_support.save_corpus_importable_candidate_count &&
               complete_support.save_corpus_recursive_candidate_count == 1 &&
