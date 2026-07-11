@@ -31,7 +31,7 @@ typedef struct DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat {
 } DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat;
 
 typedef struct DM1_V1_MirrorCandidateStatusBoxResultPc34Compat {
-    Dm1V1MirrorClickClosedResultPc34Compat statusBox;
+    DM1_V1_MirrorClickClosedResultPc34 statusBox;
     int statusBoxChangedLeader;
     int previousFrontD1cMirrorChampionOrdinal;
     int newFrontD1cMirrorChampionOrdinal;
@@ -54,11 +54,11 @@ typedef DM1_V1_MirrorCandidateCommandGateResultPc34Compat
     Dm1V1MirrorCandidateCommandGateResultPc34Compat;
 
 int DM1_V1_MirrorCandidateResurrectRearm_ProcessResurrectPc34Compat(
-    Dm1V1MirrorClickClosedStatePc34Compat *state,
+    DM1_V1_MirrorClickClosedStatePc34 *state,
     DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidateResurrectRearm_ProcessStatusBoxClickPc34Compat(
-    Dm1V1MirrorClickClosedStatePc34Compat *state,
+    DM1_V1_MirrorClickClosedStatePc34 *state,
     int command,
     int x,
     int y,
@@ -66,7 +66,7 @@ int DM1_V1_MirrorCandidateResurrectRearm_ProcessStatusBoxClickPc34Compat(
     DM1_V1_MirrorCandidateStatusBoxResultPc34Compat *outResult);
 
 int DM1_V1_MirrorCandidateResurrectRearm_CanProcessCommandPc34Compat(
-    const Dm1V1MirrorClickClosedStatePc34Compat *state,
+    const DM1_V1_MirrorClickClosedStatePc34 *state,
     int command,
     DM1_V1_MirrorCandidateCommandGateResultPc34Compat *outResult);
 
