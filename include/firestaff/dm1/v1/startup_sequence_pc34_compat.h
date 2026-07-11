@@ -75,6 +75,16 @@ typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupFullGraphicsMediaReceipt_PC34;
 
+typedef struct DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 {
+    int handled;
+    int graphics_c001_usable;
+    int title_dat_fallback_usable;
+    int selected_runtime_source;
+    int require_graphics_c001_for_release_start;
+    int fallback_is_visible_last_resort;
+    const char* source_evidence;
+} DM1_V1_StartupTitleRuntimeSourceReceipt_PC34;
+
 typedef enum DM1_V1_StartupEntranceRenderKind_PC34 {
     DM1_V1_STARTUP_ENTRANCE_RENDER_NONE_PC34 = 0,
     DM1_V1_STARTUP_ENTRANCE_RENDER_DUNGEON_FRAME_PC34 = 1,
@@ -703,6 +713,23 @@ typedef struct DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34;
 
+typedef struct DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34 {
+    int handled;
+    int ready;
+    int consumed_publish_receipt;
+    int presented_capture_ready;
+    int host_window_present;
+    int captured_from_mac_window;
+    int captured_from_release_app;
+    int width;
+    int height;
+    int byte_count;
+    unsigned int framebuffer_hash;
+    unsigned int consumer_mask;
+    unsigned int chain_hash;
+    const char* source_evidence;
+} DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34;
+
 typedef struct DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34 {
     int handled;
     int ready;
@@ -854,6 +881,123 @@ typedef struct DM1_V1_StartupHoCBootProbeSummary_PC34 {
     char user_save_corpus_first_pc34_path[512];
     const char* source_evidence;
 } DM1_V1_StartupHoCBootProbeSummary_PC34;
+
+typedef enum DM1_V1_StartupHoCBootProbeExpectation_PC34 {
+    DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_COMPLETE_SUPPORT_PC34 = 1,
+    DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_RELEASE_APP_CAPTURE_PC34 = 2
+} DM1_V1_StartupHoCBootProbeExpectation_PC34;
+
+typedef struct DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34 {
+    int handled;
+    int expectation;
+    int ready;
+    int complete_support_ready;
+    int release_app_capture_ready;
+    char diagnostic[1536];
+    const char* source_evidence;
+} DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34;
+
+typedef struct DM1_V1_StartupHoCBootProbeLogReceipt_PC34 {
+    int handled;
+    int ready;
+    char fields[2048];
+    const char* source_evidence;
+} DM1_V1_StartupHoCBootProbeLogReceipt_PC34;
+
+typedef struct DM1_V1_StartupHoCBootProbeHostFields_PC34 {
+    int handled;
+    int full_graphics_ready;
+    int host_render_plan_ready;
+    int capture_proof_passed;
+    int runtime_apply_ready;
+    int production_consumer_ready;
+    int no_host_fallback_visuals;
+    int real_asset_capture;
+    int mac_window_capture;
+    int release_app_capture;
+    int host_capture_route_matches;
+    int release_capture_ownership_ready;
+    int host_render_consumer_ready;
+    int m11_boot_probe_consumer_ready;
+    int launch_path_ready;
+    int required_asset_capture;
+    int receipt_only_consumer_ready;
+    int lower_level_helpers_ready;
+    int host_draw_uses_owned_receipt;
+    int host_draw_consumes_backing_asset;
+    int host_draw_rejects_backing_fallback;
+    int hoc_asset_capture;
+    int host_window_capture;
+    int presented_capture;
+    int presented_capture_width;
+    int presented_capture_height;
+    int presented_capture_geometry;
+    int presented_capture_pixels;
+    int presented_capture_bytes;
+    unsigned int presented_capture_hash;
+    int presented_capture_chain_ready;
+    unsigned int presented_capture_consumer_mask;
+    unsigned int presented_capture_chain_hash;
+    int host_capture_route_packaged;
+    unsigned int host_capture_route_mask;
+    unsigned int host_capture_route_hash;
+    int presented_capture_route_packaged;
+    int opened_entrance_frame;
+    int hall_mirror_overlay;
+    int blocked_enter_until_champion;
+    int map_width;
+    int map_height;
+    int render_command_count;
+    int complete_support_ready;
+    int complete_source_visible_startup;
+    int complete_entrance_to_hoc;
+    int complete_hoc_render_route;
+    int complete_host_app_capture_route;
+    int complete_save_corpus_route;
+    int complete_original_save_roundtrip_route;
+    const char* source_evidence;
+} DM1_V1_StartupHoCBootProbeHostFields_PC34;
+
+typedef struct DM1_V1_StartupHoCM12CaptureFields_PC34 {
+    int handled;
+    int ready;
+    int real_asset_capture_ready;
+    int mac_window_capture_ready;
+    int release_app_capture_ready;
+    int host_capture_route_ready;
+    int release_capture_ownership_ready;
+    int host_render_consumer_ready;
+    int m12_capture_consumer_ready;
+    int launch_path_ready;
+    int required_asset_capture_ready;
+    int receipt_only_consumer_ready;
+    int no_host_fallback_visuals_ready;
+    int lower_level_helpers_ready;
+    int host_draw_uses_owned_receipt_ready;
+    int host_draw_consumes_backing_asset_ready;
+    int host_draw_rejects_backing_fallback_ready;
+    int hoc_asset_capture_ready;
+    int host_window_capture_ready;
+    int presented_capture_ready;
+    int presented_capture_width;
+    int presented_capture_height;
+    int presented_capture_geometry_ready;
+    int presented_capture_pixels_ready;
+    int presented_capture_bytes;
+    unsigned int presented_capture_hash;
+    int presented_capture_chain_ready;
+    unsigned int presented_capture_consumer_mask;
+    unsigned int presented_capture_chain_hash;
+    int host_capture_route_packaged_ready;
+    unsigned int host_capture_route_mask;
+    unsigned int host_capture_route_hash;
+    int presented_capture_route_packaged_ready;
+    int opened_entrance_frame_ready;
+    int hall_mirror_overlay_ready;
+    int blocked_enter_until_champion_ready;
+    int render_command_count;
+    const char* source_evidence;
+} DM1_V1_StartupHoCM12CaptureFields_PC34;
 
 typedef struct DM1_V1_StartupHoCRenderConsumerReceipt_PC34 {
     int handled;
@@ -1345,6 +1489,12 @@ int dm1_v1_startup_hoc_presented_capture_publish_receipt_pc34(
 int dm1_v1_startup_hoc_presented_capture_publish_from_boot_summary_pc34(
     const DM1_V1_StartupHoCBootProbeSummary_PC34* summary,
     DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_presented_capture_host_export_receipt_pc34(
+    const DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34* publish,
+    DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_presented_capture_host_export_from_boot_summary_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary,
+    DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34* out_receipt);
 int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
     const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* handoff,
     const DM1_V1_StartupHostApplyResult_PC34* host_apply,
@@ -1367,9 +1517,31 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
     const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* hoc_facts,
     const DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34* ownership,
     DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_boot_probe_summary_from_host_facts_pc34(
+    const DM1_V1_StartupHoCBootCompleteSupportFacts_PC34* complete_facts,
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* hoc_facts,
+    DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* out_receipt,
+    DM1_V1_StartupHoCBootProbeSummary_PC34* out_summary);
 int dm1_v1_startup_hoc_boot_probe_summary_pc34(
     const DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* receipt,
     DM1_V1_StartupHoCBootProbeSummary_PC34* out_summary);
+int dm1_v1_startup_hoc_boot_probe_complete_support_ready_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary);
+int dm1_v1_startup_hoc_boot_probe_release_app_capture_ready_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary);
+int dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary,
+    DM1_V1_StartupHoCBootProbeExpectation_PC34 expectation,
+    DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_boot_probe_log_receipt_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary,
+    DM1_V1_StartupHoCBootProbeLogReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary,
+    DM1_V1_StartupHoCBootProbeHostFields_PC34* out_fields);
+int dm1_v1_startup_hoc_m12_capture_fields_pc34(
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    DM1_V1_StartupHoCM12CaptureFields_PC34* out_fields);
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,
@@ -1427,6 +1599,16 @@ int dm1_v1_startup_title_menu_eligibility_receipt_pc34(
 int dm1_v1_startup_full_graphics_media_receipt_pc34(
     const char* source_id,
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt);
+int dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
+    const char* source_id,
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt);
+int dm1_v1_startup_title_runtime_source_receipt_pc34(
+    const char* source_id,
+    int graphics_c001_candidate_available,
+    unsigned int graphics_c001_width,
+    unsigned int graphics_c001_height,
+    int title_dat_fallback_available,
+    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34* out_receipt);
 unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
     int entrance_event_kind,
