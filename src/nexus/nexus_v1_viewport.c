@@ -21,6 +21,21 @@ static int viewport_count_written_pixels(const Nexus_Framebuffer *fb)
     return count;
 }
 
+static uint32_t viewport_dgn_frame_hash(const Nexus_Framebuffer *fb)
+{
+    int i;
+    uint32_t hash = 2166136261u;
+    if (!fb) return 0u;
+    for (i = 0; i < NEXUS_FB_W * NEXUS_FB_H; ++i) {
+        uint32_t z_mark = fb->z_buffer[i] < 1e30f ? 1u : 0u;
+        hash ^= (uint32_t)fb->color_buffer[i];
+        hash *= 16777619u;
+        hash ^= z_mark;
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
 static const Nexus_DMDFTextureSurface *viewport_plan_surface(
     const Nexus_V1_Engine *engine, const Nexus_V1_DgnRenderCommand *command)
 {
@@ -147,8 +162,7 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
             vp->last_dgn_render_receipt.wall_count =
                 blocked_plan->wall_count;
             vp->last_dgn_render_receipt.ceiling_count =
-                blocked_plan->command_count - blocked_plan->floor_count -
-                blocked_plan->wall_count;
+                blocked_plan->ceiling_count;
             vp->last_dgn_render_receipt.missing_material_count =
                 blocked_plan->missing_material_count;
             vp->last_dgn_render_receipt.first_missing_material_id =
@@ -163,8 +177,7 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         vp->last_dgn_render_receipt.floor_count = plan->receipt.floor_count;
         vp->last_dgn_render_receipt.wall_count = plan->receipt.wall_count;
         vp->last_dgn_render_receipt.ceiling_count =
-            plan->receipt.command_count - plan->receipt.floor_count -
-            plan->receipt.wall_count;
+            plan->receipt.ceiling_count;
         if (!viewport_sync_dgn_material_palette(vp, engine, plan)) {
             vp->last_dgn_render_receipt.blocked = 1;
             return;
@@ -232,6 +245,11 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         }
         vp->last_dgn_render_receipt.written_pixels =
             viewport_count_written_pixels(&vp->fb);
+        vp->last_dgn_render_receipt.frame_hash =
+            viewport_dgn_frame_hash(&vp->fb);
+        vp->last_dgn_render_receipt.captured_frame_ready =
+            vp->last_dgn_render_receipt.written_pixels > 0 &&
+            vp->last_dgn_render_receipt.frame_hash != 0u;
         vp->last_dgn_render_receipt.ready =
             vp->last_dgn_render_receipt.command_count > 0 &&
             vp->last_dgn_render_receipt.command_count ==
@@ -244,7 +262,7 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
                 vp->last_dgn_render_receipt.wall_material_surface_count &&
             vp->last_dgn_render_receipt.command_count ==
                 vp->last_dgn_render_receipt.rasterized_command_count &&
-            vp->last_dgn_render_receipt.written_pixels > 0;
+            vp->last_dgn_render_receipt.captured_frame_ready;
         return;
     }
 
@@ -313,4 +331,99 @@ int nexus_viewport_last_dgn_render_receipt(
     if (!vp || !out_receipt) return -1;
     *out_receipt = vp->last_dgn_render_receipt;
     return 0;
+}
+
+int nexus_viewport_dgn_host_route_receipt(
+    const Nexus_Viewport *vp,
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnViewportHostRouteReceipt *out_receipt)
+{
+    Nexus_V1_DgnRendererHandoffReceipt handoff;
+    const Nexus_V1_DgnViewportRenderReceipt *render;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_DGN_HOST_ROUTE_MISSING;
+    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->blocks_runtime_dgn = 1;
+    if (!vp || !engine) return -1;
+
+    memset(&handoff, 0, sizeof(handoff));
+    if (nexus_v1_current_level_dgn_renderer_handoff_receipt(
+            engine, &handoff) != 0) {
+        return -1;
+    }
+    render = &vp->last_dgn_render_receipt;
+    out_receipt->package_consumed = 1;
+    out_receipt->handoff_status = handoff.status;
+    out_receipt->fallback_visuals_permitted =
+        handoff.fallback_visuals_permitted || render->fallback_visuals_permitted;
+    out_receipt->level = engine->game.current_level;
+    out_receipt->party_x = render->party_x;
+    out_receipt->party_y = render->party_y;
+    out_receipt->party_dir = render->party_dir;
+    out_receipt->command_count = render->command_count;
+    out_receipt->floor_count = render->floor_count;
+    out_receipt->ceiling_count = render->ceiling_count;
+    out_receipt->wall_count = render->wall_count;
+    out_receipt->material_surface_count = render->material_surface_count;
+    out_receipt->rasterized_command_count = render->rasterized_command_count;
+    out_receipt->written_pixels = render->written_pixels;
+    out_receipt->palette_synced = render->palette_synced;
+    out_receipt->captured_frame_ready = render->captured_frame_ready;
+    out_receipt->frame_hash = render->frame_hash;
+    out_receipt->missing_material_count = render->missing_material_count;
+    out_receipt->first_missing_material_id = render->first_missing_material_id;
+    out_receipt->first_missing_material_kind =
+        render->first_missing_material_kind;
+    out_receipt->mesh_ref_unique_count = handoff.mesh_ref_unique_count;
+    out_receipt->max_mesh_ref = handoff.max_mesh_ref;
+
+    if (!handoff.can_render_dgn_mesh ||
+        handoff.blocks_real_dgn_mesh_render ||
+        handoff.fallback_visuals_permitted) {
+        out_receipt->status = NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_HANDOFF;
+        return 0;
+    }
+    if (!render->attempted || !render->used_real_dgn_route) {
+        out_receipt->status =
+            NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_VIEWPORT_NOT_RENDERED;
+        return 0;
+    }
+    out_receipt->host_route_consumed = 1;
+    if (render->missing_material_count > 0) {
+        out_receipt->status = NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_MATERIALS;
+        return 0;
+    }
+    if (!render->ready || render->blocked ||
+        render->rasterized_command_count != render->command_count ||
+        render->written_pixels <= 0 || !render->captured_frame_ready ||
+        render->frame_hash == 0u || !render->palette_synced) {
+        out_receipt->status = NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_RASTER;
+        return 0;
+    }
+    out_receipt->status = NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH;
+    out_receipt->can_present_runtime_dgn = 1;
+    out_receipt->blocks_runtime_dgn = 0;
+    return 0;
+}
+
+const char *nexus_viewport_dgn_host_route_status_name(
+    Nexus_V1_DgnViewportHostRouteStatus status)
+{
+    switch (status) {
+    case NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH:
+        return "ready-rendered-mesh";
+    case NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_HANDOFF:
+        return "blocked-handoff";
+    case NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_VIEWPORT_NOT_RENDERED:
+        return "blocked-viewport-not-rendered";
+    case NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_MATERIALS:
+        return "blocked-materials";
+    case NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_RASTER:
+        return "blocked-raster";
+    case NEXUS_V1_DGN_HOST_ROUTE_MISSING:
+    default:
+        return "missing";
+    }
 }

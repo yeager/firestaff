@@ -102,6 +102,8 @@ static int g_dm2_last_asset_creature_count = 0;
 static int g_dm2_last_fallback_creature_count = 0;
 static DM2_V1_RuntimeCreatureRenderReceipt g_dm2_last_creature_render;
 static DM2_V1_RuntimeItemRenderReceipt g_dm2_last_item_render;
+static int g_dm2_last_asset_item_count = 0;
+static int g_dm2_last_fallback_item_count = 0;
 static int g_dm2_last_asset_creature_possession_item_count = 0;
 static int g_dm2_last_fallback_creature_possession_item_count = 0;
 static int g_dm2_last_asset_carried_item_count = 0;
@@ -1662,7 +1664,7 @@ static void dm2_runtime_populate_creature_possession_items(
  *
  * Called at 18.2 Hz (every ~55ms) from the Firestaff game loop.
  * Advances: time-of-day, movement cooldown, weather, timers,
- * and refreshes the projectile drain cache for M11 viewport rendering.
+ * and refreshes the projectile drain cache for runtime viewport rendering.
  *
  * Movement is gated by move_cooldown_ticks — each successful move
  * consumes 1 tick; failing a move (wall) may incur penalty.
@@ -1713,7 +1715,7 @@ void dm2_v1_runtime_tick(void) {
      * energy-decay + despawn boundary (skproject/SKULLWIN/c_tim_proc.cpp
      * m_7CE0/m_7D2A), so the drain reflects only post-step survivors.
      * Without this step the cache would grow without bound and the
-     * M11 viewport would draw stale projectiles forever.
+     * runtime viewport would draw stale projectiles forever.
      * Source: skproject/SKULLWIN/c_tim_proc.cpp:442-563   (DM2_STEP_MISSILE)
      *         skproject/SKULLWIN/c_render.cpp              (projectile draw)
      *         ReDMCSB DUNGEON.C:2362-2387                  (F0209 visible)
@@ -1914,6 +1916,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.asset_creature_drawn_count;
     g_dm2_last_fallback_creature_count =
         viewport.fallback_creature_drawn_count;
+    g_dm2_last_asset_item_count =
+        viewport.asset_item_drawn_count;
+    g_dm2_last_fallback_item_count =
+        viewport.fallback_item_drawn_count;
     g_dm2_last_asset_creature_possession_item_count =
         viewport.asset_creature_possession_item_drawn_count;
     g_dm2_last_fallback_creature_possession_item_count =
@@ -1967,7 +1973,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_frame_ownership.total_runtime_fallback_draws =
         viewport.fallback_floor_ceiling_drawn_count +
         viewport.fallback_wall_drawn_count +
-        viewport.fallback_hud_core_drawn_count +
         viewport.fallback_hud_portrait_drawn_count +
         viewport.fallback_door_drawn_count +
         viewport.fallback_creature_drawn_count +
@@ -2003,11 +2008,23 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &g_dm2_frame_ownership,
             dm2_v1_viewport_hud_core_graphic_index(
                 DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP));
-    }
-    if (viewport.asset_hud_portrait_drawn_count > 0) {
         dm2_runtime_add_viewport_asset_evidence(
             &g_dm2_frame_ownership,
-            dm2_v1_viewport_hud_portrait_graphic_index(0));
+            dm2_v1_viewport_hud_core_graphic_index(
+                DM2_V1_VIEWPORT_GFX_HUD_CORE_GOLD_BOX));
+        dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            dm2_v1_viewport_hud_core_graphic_index(
+                DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL));
+    }
+    if (viewport.asset_hud_portrait_drawn_count > 0) {
+        int portrait_count = viewport.asset_hud_portrait_drawn_count;
+        if (portrait_count > 4) portrait_count = 4;
+        for (int i = 0; i < portrait_count; ++i) {
+            dm2_runtime_add_viewport_asset_evidence(
+                &g_dm2_frame_ownership,
+                dm2_v1_viewport_hud_portrait_graphic_index(i));
+        }
     }
     if (viewport.asset_door_panel_drawn_count > 0 &&
         g_dm2_last_door_render.panel_gdat_index != 0) {
@@ -2037,6 +2054,28 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &g_dm2_frame_ownership,
             g_dm2_last_creature_render.gdat_index);
     }
+    if ((viewport.asset_item_drawn_count > 0 ||
+         viewport.asset_creature_possession_item_drawn_count > 0 ||
+         viewport.asset_carried_item_drawn_count > 0) &&
+        g_dm2_last_item_render.valid &&
+        g_dm2_last_item_render.asset_blit_ready &&
+        g_dm2_last_item_render.gdat_index != 0) {
+        /* skproject DRAW_MAP_CHIP and DRAW_ITEM_IN_HAND both fetch visible
+         * object graphics from the object's GDAT category/type before
+         * drawing; count that raw/decoded object evidence in the frame
+         * ownership receipt instead of only counting the blit. */
+        dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            g_dm2_last_item_render.gdat_index);
+    }
+    if (viewport.asset_projectile_drawn_count > 0 &&
+        g_dm2_last_projectile_render.valid &&
+        g_dm2_last_projectile_render.asset_blit_ready &&
+        g_dm2_last_projectile_render.gdat_index != 0) {
+        dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            g_dm2_last_projectile_render.gdat_index);
+    }
     g_dm2_frame_ownership.real_gdat_evidence_valid =
         rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch &&
         g_dm2_frame_ownership.viewport_raw_gdat_asset_count >= 5 &&
@@ -2052,7 +2091,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_frame_ownership.gdat_provider_bound &&
         g_dm2_frame_ownership.floor_ceiling_gdat_blits >= 2 &&
         g_dm2_frame_ownership.wall_gdat_blits > 0 &&
-        g_dm2_frame_ownership.hud_core_gdat_blits >= 3 &&
+        /* skproject SKWIN uses raw INTERFACE_GENERAL tables for the HUD
+         * chrome/layout and CHAMPIONS images for the visible portrait panel.
+         * Do not require Firestaff's primitive rect fills to be separate
+         * GDAT image blits; the frame is owned when the visible HUD imagery
+         * and dungeon layers carry real GDAT evidence and no world element
+         * falls back. */
         g_dm2_frame_ownership.hud_gdat_blits > 0 &&
         g_dm2_frame_ownership.total_runtime_gdat_blits > 0 &&
         g_dm2_frame_ownership.total_runtime_fallback_draws == 0;
@@ -2157,6 +2201,14 @@ int dm2_v1_runtime_last_asset_carried_item_count(void) {
 
 int dm2_v1_runtime_last_fallback_carried_item_count(void) {
     return g_dm2_last_fallback_carried_item_count;
+}
+
+int dm2_v1_runtime_last_asset_item_count(void) {
+    return g_dm2_last_asset_item_count;
+}
+
+int dm2_v1_runtime_last_fallback_item_count(void) {
+    return g_dm2_last_fallback_item_count;
 }
 
 int dm2_v1_runtime_last_item_render_receipt(

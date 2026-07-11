@@ -533,8 +533,21 @@ static int nexus_v1_dgn_plan_push(
     receipt->source_cell_count++;
     if (command.kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR) {
         receipt->floor_count++;
-    } else if (command.kind != NEXUS_V1_DGN_RENDER_COMMAND_CEILING) {
+        if (command.material_source_kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR) {
+            receipt->floor_material_command_count++;
+        }
+    } else if (command.kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING) {
+        receipt->ceiling_count++;
+        if (command.material_source_kind ==
+            NEXUS_V1_DGN_RENDER_COMMAND_CEILING) {
+            receipt->ceiling_material_command_count++;
+        }
+    } else {
         receipt->wall_count++;
+        if (command.material_source_kind != NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
+            command.material_source_kind != NEXUS_V1_DGN_RENDER_COMMAND_CEILING) {
+            receipt->wall_material_command_count++;
+        }
     }
     if (command.mesh_ref != 0U && command.mesh_ref != 0x0FFFU) {
         receipt->mesh_command_count++;
@@ -583,14 +596,17 @@ static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
         level, x, y, kind, wall_dir);
     switch (kind) {
     case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
+        command.material_source_kind = NEXUS_V1_DGN_RENDER_COMMAND_FLOOR;
         command.palette_index = command.material_id;
         command.draw_order = (uint8_t)(32 - depth);
         break;
     case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
+        command.material_source_kind = NEXUS_V1_DGN_RENDER_COMMAND_CEILING;
         command.palette_index = command.material_id;
         command.draw_order = (uint8_t)(16 - depth);
         break;
     default:
+        command.material_source_kind = kind;
         command.palette_index = command.material_id;
         command.draw_order = (uint8_t)(48 - depth);
         break;
@@ -852,7 +868,15 @@ int nexus_v1_level_build_dgn_view_render_plan(
     }
 
     if (!receipt.blocks_real_dgn_mesh_render) {
-        receipt.plan_ready = receipt.command_count > 0 ? 1 : 0;
+        receipt.material_semantics_complete =
+            receipt.floor_material_command_count == receipt.floor_count &&
+            receipt.ceiling_material_command_count == receipt.ceiling_count &&
+            receipt.wall_material_command_count == receipt.wall_count;
+        receipt.plan_ready =
+            receipt.command_count > 0 && receipt.material_semantics_complete
+                ? 1 : 0;
+        receipt.blocks_real_dgn_mesh_render =
+            receipt.plan_ready ? 0 : 1;
     }
     *out_receipt = receipt;
     return 0;

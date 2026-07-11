@@ -304,6 +304,8 @@ typedef struct {
     int dgn_viewport_host_route_consumed;
     int dgn_viewport_host_route_package_consumed;
     int dgn_viewport_host_route_blocks_runtime;
+    int dgn_viewport_capture_ready;
+    uint32_t dgn_viewport_frame_hash;
     int dgn_render_floor_count;
     int dgn_render_ceiling_count;
     int dgn_render_wall_count;
@@ -362,6 +364,8 @@ typedef struct {
     int dgn_viewport_host_route_consumed;
     int dgn_viewport_host_route_package_consumed;
     int dgn_viewport_host_route_blocks_runtime;
+    int dgn_viewport_capture_ready;
+    uint32_t dgn_viewport_frame_hash;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
     int bpk_prs3_material_surface_count;
@@ -422,6 +426,8 @@ typedef struct {
     int dgn_viewport_host_route_consumed;
     int dgn_viewport_host_route_package_consumed;
     int dgn_viewport_host_route_blocks_runtime;
+    int dgn_viewport_capture_ready;
+    uint32_t dgn_viewport_frame_hash;
     Nexus_SfxRuntimeStatus startup_sfx_status;
     int startup_sfx_level_index;
     int startup_cd_track;
@@ -791,6 +797,8 @@ typedef struct {
     int dgn_viewport_host_route_consumed;
     int dgn_viewport_host_route_package_consumed;
     int dgn_viewport_host_route_blocks_runtime;
+    int dgn_viewport_capture_ready;
+    uint32_t dgn_viewport_frame_hash;
     int dgn_material_surface_coverage_complete;
     int dgn_material_semantics_complete;
     int runtime_dgn_material_path_consumed;
@@ -838,6 +846,8 @@ typedef struct {
     int dgn_viewport_host_route_consumed;
     int dgn_viewport_host_route_package_consumed;
     int dgn_viewport_host_route_blocks_runtime;
+    int dgn_viewport_capture_ready;
+    uint32_t dgn_viewport_frame_hash;
     int dgn_material_surface_coverage_complete;
     int dgn_material_semantics_complete;
     int host_runtime_dgn_material_path_consumed;
@@ -947,6 +957,8 @@ typedef struct {
     int dgn_viewport_host_route_consumed;
     int dgn_viewport_host_route_package_consumed;
     int dgn_viewport_host_route_blocks_runtime;
+    int dgn_viewport_capture_ready;
+    uint32_t dgn_viewport_frame_hash;
     int startup_package_consumed_by_all_routes;
     int host_route_matrix_complete;
     int saturn_timing_matrix_complete;

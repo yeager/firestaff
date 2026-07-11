@@ -1020,6 +1020,8 @@ int main(void)
                runtime_handoff_receipt.dgn_viewport_host_route_consumed == 1 &&
                runtime_handoff_receipt.dgn_viewport_host_route_package_consumed == 1 &&
                runtime_handoff_receipt.dgn_viewport_host_route_blocks_runtime == 0 &&
+               runtime_handoff_receipt.dgn_viewport_capture_ready == 1 &&
+               runtime_handoff_receipt.dgn_viewport_frame_hash != 0u &&
                runtime_handoff_receipt.script_receipt.status ==
                    NEXUS_SCRIPT_RUNTIME_READY_PARSED &&
                runtime_handoff_receipt.script_runtime_ready == 1 &&
@@ -1550,6 +1552,8 @@ int main(void)
                host_caller_receipt
                        .host_route_consumes_dgn_material_path == 1 &&
                host_caller_receipt.dgn_viewport_written_pixels > 0 &&
+               host_caller_receipt.dgn_viewport_capture_ready == 1 &&
+               host_caller_receipt.dgn_viewport_frame_hash != 0u &&
                host_caller_receipt.copied_dgn_command_count ==
                    host_caller_receipt.dgn_command_count &&
                host_caller_receipt.title_timing_ready == 1 &&
@@ -1694,6 +1698,8 @@ int main(void)
                complete_support_receipt.dgn_viewport_host_route_consumed == 1 &&
                complete_support_receipt.dgn_viewport_host_route_package_consumed == 1 &&
                complete_support_receipt.dgn_viewport_host_route_blocks_runtime == 0 &&
+               complete_support_receipt.dgn_viewport_capture_ready == 1 &&
+               complete_support_receipt.dgn_viewport_frame_hash != 0u &&
                complete_support_receipt.startup_package_consumed_by_all_routes == 1 &&
                complete_support_receipt.host_route_matrix_complete == 1 &&
                complete_support_receipt.saturn_timing_matrix_complete == 1 &&
@@ -1726,6 +1732,8 @@ int main(void)
                    complete_support_receipt.dgn_viewport_host_route_consumed == 1 &&
                    complete_support_receipt.dgn_viewport_host_route_package_consumed == 1 &&
                    complete_support_receipt.dgn_viewport_host_route_blocks_runtime == 1 &&
+                   complete_support_receipt.dgn_viewport_capture_ready == 1 &&
+                   complete_support_receipt.dgn_viewport_frame_hash != 0u &&
                    complete_support_receipt.dungeon_route_complete == 0 &&
                    complete_support_receipt.dgn_mesh_runtime_complete == 0 &&
                    complete_support_receipt.dgn_viewport_runtime_complete == 0 &&
@@ -2603,6 +2611,8 @@ int main(void)
                runtime_route_receipt.dgn_viewport_host_route_consumed == 1 &&
                runtime_route_receipt.dgn_viewport_host_route_package_consumed == 1 &&
                runtime_route_receipt.dgn_viewport_host_route_blocks_runtime == 0 &&
+               runtime_route_receipt.dgn_viewport_capture_ready == 1 &&
+               runtime_route_receipt.dgn_viewport_frame_hash != 0u &&
                runtime_route_receipt.dgn_viewport_rasterized_command_count ==
                    runtime_route_receipt.dgn_render_command_count &&
                runtime_route_receipt.dgn_viewport_material_surface_count ==
@@ -2660,6 +2670,8 @@ int main(void)
                route_proof_receipt.dgn_viewport_host_route_consumed == 1 &&
                route_proof_receipt.dgn_viewport_host_route_package_consumed == 1 &&
                route_proof_receipt.dgn_viewport_host_route_blocks_runtime == 0 &&
+               route_proof_receipt.dgn_viewport_capture_ready == 1 &&
+               route_proof_receipt.dgn_viewport_frame_hash != 0u &&
                route_proof_receipt.script_runtime_status ==
                    NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT &&
                route_proof_receipt.script_candidate_source_bytes == 2388 &&
@@ -2892,6 +2904,8 @@ int main(void)
                route_proof_receipt.dgn_viewport_host_route_consumed == 1 &&
                route_proof_receipt.dgn_viewport_host_route_package_consumed == 1 &&
                route_proof_receipt.dgn_viewport_host_route_blocks_runtime == 1 &&
+               route_proof_receipt.dgn_viewport_capture_ready == 0 &&
+               route_proof_receipt.dgn_viewport_frame_hash == 0u &&
                strcmp(route_proof_receipt.runtime_route,
                       "dgn-blocked") == 0,
            "Nexus route proof blocks full startup when DGN host-route blocks materials");

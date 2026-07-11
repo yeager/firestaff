@@ -35,7 +35,47 @@ typedef struct {
     int rasterized_command_count;
     int palette_synced;
     int written_pixels;
+    int captured_frame_ready;
+    uint32_t frame_hash;
 } Nexus_V1_DgnViewportRenderReceipt;
+
+typedef enum {
+    NEXUS_V1_DGN_HOST_ROUTE_MISSING = 0,
+    NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH = 1,
+    NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_HANDOFF = 2,
+    NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_VIEWPORT_NOT_RENDERED = 3,
+    NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_MATERIALS = 4,
+    NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_RASTER = 5
+} Nexus_V1_DgnViewportHostRouteStatus;
+
+typedef struct {
+    Nexus_V1_DgnViewportHostRouteStatus status;
+    Nexus_V1_DgnRendererHandoffStatus handoff_status;
+    int package_consumed;
+    int host_route_consumed;
+    int can_present_runtime_dgn;
+    int blocks_runtime_dgn;
+    int fallback_visuals_permitted;
+    int level;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int command_count;
+    int floor_count;
+    int ceiling_count;
+    int wall_count;
+    int material_surface_count;
+    int rasterized_command_count;
+    int written_pixels;
+    int palette_synced;
+    int captured_frame_ready;
+    uint32_t frame_hash;
+    int missing_material_count;
+    int first_missing_material_id;
+    Nexus_V1_DgnRenderCommandKind first_missing_material_kind;
+    int mesh_ref_unique_count;
+    int max_mesh_ref;
+} Nexus_V1_DgnViewportHostRouteReceipt;
 
 typedef struct {
     Nexus_Framebuffer fb;
@@ -61,5 +101,12 @@ void nexus_viewport_to_rgba(const Nexus_Viewport *vp, uint32_t *rgba_out);
 int nexus_viewport_last_dgn_render_receipt(
     const Nexus_Viewport *vp,
     Nexus_V1_DgnViewportRenderReceipt *out_receipt);
+
+int nexus_viewport_dgn_host_route_receipt(
+    const Nexus_Viewport *vp,
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnViewportHostRouteReceipt *out_receipt);
+const char *nexus_viewport_dgn_host_route_status_name(
+    Nexus_V1_DgnViewportHostRouteStatus status);
 
 #endif

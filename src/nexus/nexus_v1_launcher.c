@@ -1007,6 +1007,10 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
         champion_host->dgn_viewport_host_route_package_consumed ? 1 : 0;
     out_receipt->dgn_viewport_host_route_blocks_runtime =
         champion_host->dgn_viewport_host_route_blocks_runtime ? 1 : 0;
+    out_receipt->dgn_viewport_capture_ready =
+        champion_host->dgn_viewport_capture_ready ? 1 : 0;
+    out_receipt->dgn_viewport_frame_hash =
+        champion_host->dgn_viewport_frame_hash;
     out_receipt->dungeon_route_complete =
         champion_host->dungeon_host_package_route_complete &&
         out_receipt->dungeon_capture_route_consumed &&
@@ -1016,6 +1020,8 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
         champion_host->dgn_viewport_host_route_consumed &&
         champion_host->dgn_viewport_host_route_package_consumed &&
         !champion_host->dgn_viewport_host_route_blocks_runtime &&
+        champion_host->dgn_viewport_capture_ready &&
+        champion_host->dgn_viewport_frame_hash != 0u &&
         champion_host->dungeon_route_saturn_capture_exact &&
         champion_host->dungeon_startup_route_consumption_complete &&
         champion_host->host_execute_dgn_draws;
@@ -1030,6 +1036,8 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
         champion_host->dgn_viewport_host_route_consumed &&
         champion_host->dgn_viewport_host_route_package_consumed &&
         !champion_host->dgn_viewport_host_route_blocks_runtime &&
+        champion_host->dgn_viewport_capture_ready &&
+        champion_host->dgn_viewport_frame_hash != 0u &&
         champion_host->copied_dgn_command_count ==
             champion_host->dgn_command_count;
     out_receipt->dgn_viewport_runtime_complete =
@@ -1038,6 +1046,8 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
         champion_host->dgn_viewport_host_route_consumed &&
         champion_host->dgn_viewport_host_route_package_consumed &&
         !champion_host->dgn_viewport_host_route_blocks_runtime &&
+        champion_host->dgn_viewport_capture_ready &&
+        champion_host->dgn_viewport_frame_hash != 0u &&
         champion_host->dgn_viewport_rasterized_command_count ==
             champion_host->dgn_command_count &&
         champion_host->dgn_viewport_written_pixels > 0;
@@ -2151,7 +2161,9 @@ static int nexus_v1_launcher_validate_dgn_viewport_render(
            receipt.command_count > 0 &&
            receipt.command_count == receipt.material_surface_count &&
            receipt.command_count == receipt.rasterized_command_count &&
-           receipt.written_pixels > 0;
+           receipt.written_pixels > 0 &&
+           receipt.captured_frame_ready &&
+           receipt.frame_hash != 0u;
 }
 
 static int nexus_v1_launcher_dgn_viewport_host_route_receipt(
@@ -2595,6 +2607,10 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
             viewport_host_route.package_consumed ? 1 : 0;
         out_receipt->dgn_viewport_host_route_blocks_runtime =
             viewport_host_route.blocks_runtime_dgn ? 1 : 0;
+        out_receipt->dgn_viewport_capture_ready =
+            viewport_host_route.captured_frame_ready ? 1 : 0;
+        out_receipt->dgn_viewport_frame_hash =
+            viewport_host_route.frame_hash;
     }
     if (!material_plan || !render_plan.plan_ready ||
         render_plan.blocks_real_dgn_mesh_render || !out_commands ||
@@ -2644,6 +2660,10 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
             &out_receipt->bpk_truecolor_material_surface_count,
             &out_receipt->bpk_prs3_material_surface_count);
         out_receipt->viewport_written_pixels = viewport_receipt.written_pixels;
+        out_receipt->dgn_viewport_capture_ready =
+            viewport_receipt.captured_frame_ready ? 1 : 0;
+        out_receipt->dgn_viewport_frame_hash =
+            viewport_receipt.frame_hash;
         out_receipt->fallback_visuals_permitted =
             viewport_receipt.fallback_visuals_permitted;
         out_receipt->status_scope = "DGN";
@@ -2707,6 +2727,10 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         &out_receipt->bpk_truecolor_material_surface_count,
         &out_receipt->bpk_prs3_material_surface_count);
     out_receipt->viewport_written_pixels = viewport_receipt.written_pixels;
+    out_receipt->dgn_viewport_capture_ready =
+        viewport_receipt.captured_frame_ready ? 1 : 0;
+    out_receipt->dgn_viewport_frame_hash =
+        viewport_receipt.frame_hash;
     out_receipt->dgn_material_plan_consumed = 1;
     out_receipt->dgn_commands_copied_from_material_plan =
         render_plan.command_count > 0;
@@ -2923,6 +2947,10 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
         handoff->dgn_viewport_host_route_package_consumed ? 1 : 0;
     out_receipt->dgn_viewport_host_route_blocks_runtime =
         handoff->dgn_viewport_host_route_blocks_runtime ? 1 : 0;
+    out_receipt->dgn_viewport_capture_ready =
+        handoff->dgn_viewport_capture_ready ? 1 : 0;
+    out_receipt->dgn_viewport_frame_hash =
+        handoff->dgn_viewport_frame_hash;
     out_receipt->bpk_material_surface_count =
         handoff->bpk_material_surface_count;
     out_receipt->bpk_truecolor_material_surface_count =
@@ -2943,7 +2971,9 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
         handoff->render_plan.blocks_real_dgn_mesh_render ||
         !handoff->dgn_viewport_render_ready ||
         !handoff->dgn_viewport_host_route_ready ||
-        handoff->dgn_viewport_host_route_blocks_runtime;
+        handoff->dgn_viewport_host_route_blocks_runtime ||
+        !handoff->dgn_viewport_capture_ready ||
+        handoff->dgn_viewport_frame_hash == 0u;
     if (commands && handoff->render_plan.command_count > 0) {
         out_receipt->first_dgn_render_command_kind = commands[0].kind;
     }
@@ -3249,6 +3279,12 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
         out_receipt->dgn_viewport_host_route_blocks_runtime =
             out_receipt->runtime_route_receipt
                 .dgn_viewport_host_route_blocks_runtime ? 1 : 0;
+        out_receipt->dgn_viewport_capture_ready =
+            out_receipt->runtime_route_receipt
+                .dgn_viewport_capture_ready ? 1 : 0;
+        out_receipt->dgn_viewport_frame_hash =
+            out_receipt->runtime_route_receipt
+                .dgn_viewport_frame_hash;
         out_receipt->first_runtime_route_ready =
             out_receipt->runtime_handoff.render_plan.plan_ready &&
             out_receipt->runtime_handoff.command_count > 0 &&
@@ -3256,6 +3292,8 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
             out_receipt->dgn_viewport_host_route_consumed &&
             out_receipt->dgn_viewport_host_route_package_consumed &&
             !out_receipt->dgn_viewport_host_route_blocks_runtime &&
+            out_receipt->dgn_viewport_capture_ready &&
+            out_receipt->dgn_viewport_frame_hash != 0u &&
             !out_receipt->runtime_route_receipt.dgn_blocks_real_mesh_render &&
             !out_receipt->runtime_handoff.render_plan
                  .blocks_real_dgn_mesh_render;
@@ -4558,6 +4596,10 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
             runtime_route->dgn_viewport_host_route_package_consumed ? 1 : 0;
         receipt->dgn_viewport_host_route_blocks_runtime =
             runtime_route->dgn_viewport_host_route_blocks_runtime ? 1 : 0;
+        receipt->dgn_viewport_capture_ready =
+            runtime_route->dgn_viewport_capture_ready ? 1 : 0;
+        receipt->dgn_viewport_frame_hash =
+            runtime_route->dgn_viewport_frame_hash;
         receipt->bpk_material_surface_count =
             runtime_route->bpk_material_surface_count;
         receipt->bpk_truecolor_material_surface_count =
@@ -4568,6 +4610,8 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
             runtime_route->dgn_material_plan_consumed &&
             runtime_route->dgn_commands_copied_from_material_plan &&
             runtime_route->dgn_material_viewport_consumed &&
+            runtime_route->dgn_viewport_capture_ready &&
+            runtime_route->dgn_viewport_frame_hash != 0u &&
             !runtime_route->fallback_visuals_permitted;
         receipt->dgn_viewport_written_pixels =
             runtime_route->dgn_viewport_written_pixels;
@@ -5065,6 +5109,10 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.dgn_viewport_host_route_package_consumed;
     out_receipt->dgn_viewport_host_route_blocks_runtime =
         out_receipt->ownership.dgn_viewport_host_route_blocks_runtime;
+    out_receipt->dgn_viewport_capture_ready =
+        out_receipt->ownership.dgn_viewport_capture_ready;
+    out_receipt->dgn_viewport_frame_hash =
+        out_receipt->ownership.dgn_viewport_frame_hash;
     out_receipt->dgn_material_surface_coverage_complete =
         out_receipt->ownership.dgn_material_surface_coverage_complete;
     out_receipt->dgn_material_semantics_complete =
@@ -5268,7 +5316,9 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
             out_receipt->dgn_command_count &&
         out_receipt->dgn_viewport_rasterized_command_count ==
             out_receipt->dgn_command_count &&
-        out_receipt->dgn_viewport_written_pixels > 0;
+        out_receipt->dgn_viewport_written_pixels > 0 &&
+        out_receipt->dgn_viewport_capture_ready &&
+        out_receipt->dgn_viewport_frame_hash != 0u;
     out_receipt->single_saturn_startup_owner_ready =
         out_receipt->receipt_owner_is_nexus &&
         out_receipt->package_capture_consumed_by_host &&
