@@ -2,6 +2,7 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 2026-07-11 DM1 host/API cleanup follow-up: legacy M11 alias cleanup batches 1-11, shared DM1/CSB graphics-loader alias cleanup, champion-mirror aliases, and mirror-click/leader aliases are verified in DONE.md. Remaining cleanup should focus only on active runtime APIs, combat-log/UI-local names, or combat/creature/spell-adjacent aliases when their owning call sites are moved; do not reopen removed foundation/header-only alias blocks.
+  - 2026-07-11 update: unused public M11 wrappers for DM1 D4 far projectile boxes and F0108 floor-ornament source zones are removed; callers should use the DM1 viewport/projectile APIs directly. Remaining cleanup is active runtime APIs only.
   - 2026-07-11 update: public `M11_Entrance_*` runtime wrappers and `M11_ENTRANCE_RUNTIME_*` constants are retired; tests and CSB startup gates now consume `ENTRANCE_Compat_*` directly. Remaining cleanup is active runtime APIs only.
   - 2026-07-11 update: DM1/CSB V1 `TITLE` and `SWSH/SWOOSH` intro pathfinders now live under V1-owned API names and frontend source paths; M11 only calls the V1 runtime handoff. Remaining cleanup is active runtime APIs only.
   - 2026-07-11 update: V1 turning presentation now lives in DM1-owned header/source/test paths and no longer exports public `M11_V1_TURNING_*` or `m11_v1_turning_*` aliases. Remaining cleanup is active runtime APIs only.
