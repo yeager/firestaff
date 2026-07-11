@@ -741,12 +741,8 @@ static int m11_play_redmcsb_entrance_transition(
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
     if (!gameView || !gameView->active) return 0;
-    if (entranceReceipt &&
-        (!entranceReceipt->valid ||
-         entranceReceipt->mapIndex != DM1_V1_ENTRANCE_MAP_INDEX_PC34 ||
-         entranceReceipt->width != DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 ||
-         entranceReceipt->height != DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 ||
-         entranceReceipt->partyDirection != DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34)) {
+    if (!DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(
+            entranceReceipt)) {
         return 0;
     }
     framebuffer = M11_Render_GetFramebuffer();
@@ -771,16 +767,10 @@ static int m11_play_redmcsb_entrance_transition(
      * This also mirrors the ReDMCSB source order: draw C004+doors first,
      * then micro-dungeon, then fade/curtain, then wait-for-input loop.
      */
-    if (m11_draw_entrance_screen_asset(gameView, framebuffer)) {
-        (void)m11_draw_entrance_closed_doors_asset(gameView, framebuffer);
-    } else {
-        /* Palette-fill fallback: draw the entrance screen background
-         * and closed door panels so the first present is not a dungeon
-         * viewport. */
-        memset(framebuffer, 0, (size_t)M11_FB_BYTES);
-        (void)ENTRANCE_Compat_DrawFallbackClosedDoors(framebuffer,
-                                                      M11_FB_WIDTH,
-                                                      M11_FB_HEIGHT);
+    if (!m11_draw_entrance_screen_asset(gameView, framebuffer) ||
+        !m11_draw_entrance_closed_doors_asset(gameView, framebuffer)) {
+        free(dungeonFrame);
+        return 0;
     }
 
     /* ReDMCSB ENTRANCE.C presents C004/C002/C003 before it starts waiting
@@ -824,13 +814,10 @@ static int m11_play_redmcsb_entrance_transition(
             memset(framebuffer, 0, (size_t)M11_FB_BYTES);
         } else if (command.render_kind ==
                    DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34) {
-            if (m11_draw_entrance_screen_asset(gameView, framebuffer)) {
-                (void)m11_draw_entrance_closed_doors_asset(gameView, framebuffer);
-            } else {
-                memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
-                (void)ENTRANCE_Compat_DrawFallbackClosedDoors(framebuffer,
-                                                              M11_FB_WIDTH,
-                                                              M11_FB_HEIGHT);
+            if (!m11_draw_entrance_screen_asset(gameView, framebuffer) ||
+                !m11_draw_entrance_closed_doors_asset(gameView, framebuffer)) {
+                free(dungeonFrame);
+                return 0;
             }
         } else if (command.render_kind ==
                    DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34) {
@@ -854,12 +841,13 @@ static int m11_play_redmcsb_entrance_transition(
                     (void)M11_Audio_EmitMarker(&gameView->audioState,
                                                M11_AUDIO_MARKER_DOOR);
                 }
-                if (!m11_draw_entrance_opening_doors_asset(gameView, framebuffer, dungeonFrame, &door)) {
-                    memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
-                    (void)ENTRANCE_Compat_DrawFallbackOpeningDoorFrame(framebuffer,
-                                                                       M11_FB_WIDTH,
-                                                                       M11_FB_HEIGHT,
-                                                                       &door);
+                if (!m11_draw_entrance_opening_doors_asset(
+                        gameView,
+                        framebuffer,
+                        dungeonFrame,
+                        &door)) {
+                    free(dungeonFrame);
+                    return 0;
                 }
             }
         } else {
