@@ -606,6 +606,12 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.interface_action_table_byte_count > 0u &&
               hud_capture.interface_action_group_count > 0u &&
               hud_capture.interface_action_entry_count > 0u &&
+              hud_capture.interface_action_pv1_byte_count ==
+                  hud_capture.interface_action_entry_count &&
+              hud_capture.interface_action_pv5_byte_count ==
+                  hud_capture.interface_action_entry_count &&
+              hud_capture.interface_action_command_byte_count ==
+                  hud_capture.interface_action_tail_byte_count &&
               hud_capture.interface_font_table_ready == 1 &&
               hud_capture.interface_font_table_hash != 0u &&
               hud_capture.interface_font_table_byte_count == 0x300u &&
