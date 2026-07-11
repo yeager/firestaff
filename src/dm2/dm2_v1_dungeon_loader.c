@@ -828,6 +828,28 @@ int dm2_v1_dungeon_get_map_wall_gfx_list(
     return wall_gfx_count;
 }
 
+int dm2_v1_dungeon_get_map_graphics_style(
+    const DM2_V1_DungeonData *d,
+    int level)
+{
+    const uint8_t *map_desc;
+    if (!d || level < 0 || level >= d->level_count ||
+        !d->raw_data || d->raw_size <= 0) {
+        return -1;
+    }
+    if (level >= DM2_V1_MAX_LEVELS ||
+        d->raw_size < DM2_DUNGEON_HEADER_SIZE +
+                      (level + 1) * DM2_MAP_DESC_SIZE) {
+        return -1;
+    }
+    map_desc = d->raw_data + DM2_DUNGEON_HEADER_SIZE +
+               level * DM2_MAP_DESC_SIZE;
+    /* skproject/SKWIN/DME.h Map_definitions::MapGraphicsStyle() returns
+     * `(w14 >> 4) & 15`; SkWinCore.cpp uses that index for
+     * glbMapGraphicsSet before reading GRAPHICSSET scene words. */
+    return (int)((RD16(map_desc + 14) >> 4) & 0x0fu);
+}
+
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;
     return d->level_types[level] == DM2_LEVEL_OUTDOOR;

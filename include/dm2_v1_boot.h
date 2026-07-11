@@ -1436,6 +1436,19 @@ int dm2_v1_boot_gdat_typed_raw_asset_proof(
     uint32_t *out_hash,
     uint32_t *out_byte_count);
 
+int dm2_v1_boot_graphicsset_scene_control(
+    DM2_V1_BootProfile *profile,
+    int graphicsset_index,
+    uint32_t *out_hash,
+    uint32_t *out_present_mask,
+    uint32_t *out_query_count,
+    uint32_t *out_scene_flags,
+    uint32_t *out_scene_colorkey,
+    uint32_t *out_ambient_light,
+    uint32_t *out_highest_light_level,
+    uint32_t *out_void_random_fall,
+    uint32_t *out_animated_floor);
+
 /* Raw-byte and decoded-pixel evidence for one virtual viewport resource.
  * The virtual index is the one used by DM2_V1_ViewportAssetFetch. */
 typedef struct {
