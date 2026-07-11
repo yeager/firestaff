@@ -976,11 +976,14 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
         champion_host->dgn_viewport_wall_material_surface_count ==
             champion_host->ownership.dgn_render_plan.wall_count &&
         champion_host->dgn_viewport_ceiling_material_surface_count ==
-            champion_host->dgn_command_count -
-                champion_host->ownership.dgn_render_plan.floor_count -
-                champion_host->ownership.dgn_render_plan.wall_count;
+            champion_host->ownership.dgn_render_plan.ceiling_count;
+    out_receipt->dgn_material_semantics_complete =
+        out_receipt->dgn_material_surface_coverage_complete &&
+        champion_host->dgn_material_semantics_complete &&
+        champion_host->ownership.dgn_render_plan.material_semantics_complete;
     out_receipt->dgn_material_path_consumed =
         out_receipt->dgn_material_surface_coverage_complete &&
+        out_receipt->dgn_material_semantics_complete &&
         champion_host->host_route_consumes_dgn_material_path &&
         champion_host->host_runtime_dgn_material_path_consumed &&
         champion_host->host_execute_dgn_draws;
@@ -1001,6 +1004,7 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
     out_receipt->dgn_mesh_runtime_complete =
         champion_host->host_runtime_dgn_ready &&
         out_receipt->dgn_material_surface_coverage_complete &&
+        out_receipt->dgn_material_semantics_complete &&
         champion_host->dgn_handoff_consumed &&
         champion_host->host_runtime_dgn_material_path_consumed &&
         champion_host->dgn_command_count > 0 &&
@@ -2597,6 +2601,17 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         viewport_receipt.ceiling_material_surface_count;
     out_receipt->viewport_wall_material_surface_count =
         viewport_receipt.wall_material_surface_count;
+    out_receipt->dgn_render_floor_count = render_plan.floor_count;
+    out_receipt->dgn_render_ceiling_count = render_plan.ceiling_count;
+    out_receipt->dgn_render_wall_count = render_plan.wall_count;
+    out_receipt->dgn_floor_material_command_count =
+        render_plan.floor_material_command_count;
+    out_receipt->dgn_ceiling_material_command_count =
+        render_plan.ceiling_material_command_count;
+    out_receipt->dgn_wall_material_command_count =
+        render_plan.wall_material_command_count;
+    out_receipt->dgn_material_semantics_complete =
+        render_plan.material_semantics_complete;
     nexus_v1_launcher_fill_bpk_material_counts(
         state->engine,
         &out_receipt->bpk_material_surface_count,
@@ -2615,9 +2630,7 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         viewport_receipt.wall_material_surface_count ==
             render_plan.wall_count &&
         viewport_receipt.ceiling_material_surface_count ==
-            render_plan.command_count -
-                render_plan.floor_count -
-                render_plan.wall_count &&
+            render_plan.ceiling_count &&
         viewport_receipt.written_pixels > 0;
     out_receipt->bpk_material_path_consumed =
         out_receipt->bpk_material_surface_count > 0;
@@ -2788,7 +2801,17 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
     out_receipt->dgn_render_command_count =
         handoff->render_plan.command_count;
     out_receipt->dgn_render_floor_count = handoff->render_plan.floor_count;
+    out_receipt->dgn_render_ceiling_count =
+        handoff->render_plan.ceiling_count;
     out_receipt->dgn_render_wall_count = handoff->render_plan.wall_count;
+    out_receipt->dgn_floor_material_command_count =
+        handoff->render_plan.floor_material_command_count;
+    out_receipt->dgn_ceiling_material_command_count =
+        handoff->render_plan.ceiling_material_command_count;
+    out_receipt->dgn_wall_material_command_count =
+        handoff->render_plan.wall_material_command_count;
+    out_receipt->dgn_material_semantics_complete =
+        handoff->render_plan.material_semantics_complete;
     out_receipt->dgn_viewport_render_ready =
         handoff->dgn_viewport_render_ready ? 1 : 0;
     out_receipt->dgn_viewport_rasterized_command_count =
@@ -4561,14 +4584,21 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->dgn_viewport_wall_material_surface_count ==
             receipt->dgn_render_plan.wall_count &&
         receipt->dgn_viewport_ceiling_material_surface_count ==
-            receipt->dgn_draw_command_count -
-                receipt->dgn_render_plan.floor_count -
-                receipt->dgn_render_plan.wall_count &&
+            receipt->dgn_render_plan.ceiling_count &&
         receipt->dgn_viewport_written_pixels > 0;
     receipt->dgn_material_surface_coverage_complete =
         receipt->dgn_route_consumes_startup_package &&
         receipt->dgn_viewport_material_surface_count ==
             receipt->dgn_draw_command_count;
+    receipt->dgn_material_semantics_complete =
+        receipt->dgn_material_surface_coverage_complete &&
+        receipt->dgn_render_plan.material_semantics_complete &&
+        receipt->dgn_render_plan.floor_material_command_count ==
+            receipt->dgn_render_plan.floor_count &&
+        receipt->dgn_render_plan.ceiling_material_command_count ==
+            receipt->dgn_render_plan.ceiling_count &&
+        receipt->dgn_render_plan.wall_material_command_count ==
+            receipt->dgn_render_plan.wall_count;
 
     if (!receipt->no_fallback_visuals_enforced ||
         package->blocked_draw_suppressed ||
@@ -4880,6 +4910,8 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         out_receipt->ownership.dgn_viewport_wall_material_surface_count;
     out_receipt->dgn_material_surface_coverage_complete =
         out_receipt->ownership.dgn_material_surface_coverage_complete;
+    out_receipt->dgn_material_semantics_complete =
+        out_receipt->ownership.dgn_material_semantics_complete;
     out_receipt->host_runtime_dgn_material_path_consumed =
         out_receipt->ownership.runtime_dgn_material_path_consumed;
     out_receipt->host_route_consumes_dgn_material_path =
@@ -5066,6 +5098,7 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         (out_receipt->dungeon_startup_route_consumption_complete ||
          out_receipt->dungeon_host_package_route_complete) &&
         out_receipt->dgn_material_surface_coverage_complete &&
+        out_receipt->dgn_material_semantics_complete &&
         out_receipt->host_route_consumes_dgn_material_path &&
         out_receipt->copied_dgn_command_count > 0 &&
         out_receipt->dgn_viewport_material_surface_count ==
