@@ -128,7 +128,7 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build --parallel 4
+        run: cmake --build build --parallel 4 --target firestaff firestaff_m11_phase_a_probe firestaff_m11_audio_probe
 
       - name: Smoke probes
         shell: bash
@@ -217,7 +217,7 @@ jobs:
         run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel --target firestaff firestaff_m11_phase_a_probe firestaff_m11_audio_probe
 
       - name: Smoke probes
         run: |
@@ -320,7 +320,7 @@ jobs:
         run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel --target firestaff firestaff_m11_phase_a_probe firestaff_m11_audio_probe
 
       - name: Smoke probes
         run: |

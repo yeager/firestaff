@@ -3291,19 +3291,8 @@ endif()
 # CSB Utility Disk / CSBWin CSBGAME save exit 0 after data-free gate
 # sanity checks. Source: ReDMCSB REVIVE.C F0280/F0282,
 # PANEL.C F0346, COMMAND.C F0359.
-add_executable(firestaff_csb_v1_f0282_live_champion_panel_probe
-    probes/csb/firestaff_csb_v1_f0282_live_champion_panel_probe.c
-    src/csb/csb_v1_save_import_path_pc34_compat.c
-    src/csb/csb_v1_character_pc34_compat.c
-)
-target_include_directories(firestaff_csb_v1_f0282_live_champion_panel_probe
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(firestaff_csb_v1_f0282_live_champion_panel_probe
-    PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
-if(NOT MSVC)
-    target_compile_options(firestaff_csb_v1_f0282_live_champion_panel_probe
-        PRIVATE -Wall -Wextra -O2)
-endif()
+# Retired with the M11 wrapper-export cleanup. The CSB F0282 contract now lives
+# in CSB/runtime tests instead of linking against removed M11 diagnostic APIs.
 
 # CSB V1 Hint Oracle UI/runtime binding probe
 # Real-asset HCSB.HTC → Firestaff-facing oracle/hint binding
@@ -3466,49 +3455,14 @@ endif()
 # DM1 V1 chest slot zone validation probe — headless, no game data needed.
 # Validates kV1ChestSlotBoxZones (m11_game_view.c) against ReDMCSB
 # COMMAND.C:215-227 G0456_as_Graphic561_MouseInput_PanelChest zone coords.
-add_executable(firestaff_m11_chest_slot_zones_probe
-    probes/firestaff_m11_chest_slot_zones_probe.c)
-target_link_libraries(firestaff_m11_chest_slot_zones_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
-if(NOT MSVC)
-    target_compile_options(firestaff_m11_chest_slot_zones_probe PRIVATE -Wall -Wextra -O2)
-endif()
-add_test(
-    NAME dm1_v1_chest_slot_zones_source_lock
-    COMMAND firestaff_m11_chest_slot_zones_probe
-)
+# Retired with the M11 wrapper-export cleanup. These source-lock checks moved
+# to DM1-layer tests so release builds no longer link stale diagnostic APIs.
 
-# M11 Game View probe (needs full M10 + M11 + M12)
-add_executable(firestaff_m11_game_view_probe probes/m11/firestaff_m11_game_view_probe.c)
-target_link_libraries(firestaff_m11_game_view_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
-if(NOT MSVC)
-    target_compile_options(firestaff_m11_game_view_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
-endif()
+# Retired with the M11 wrapper-export cleanup; DM1 V2 effect seeds are covered
+# by V2-layer probes rather than M11 diagnostic exports.
 
-# DM1 V2 Phase 4 M11 framepath wire-up probe. Data-free: proves the
-# presentation-only enhanced-effects runtime ticks from M11_GameView_Draw
-# only when DM1 V2 presentation is active.
-add_executable(firestaff_m11_dm1_v2_effects_framepath_probe
-    probes/m11/firestaff_m11_dm1_v2_effects_framepath_probe.c)
-target_link_libraries(firestaff_m11_dm1_v2_effects_framepath_probe
-    PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
-if(NOT MSVC)
-    target_compile_options(firestaff_m11_dm1_v2_effects_framepath_probe
-        PRIVATE -Wall -Wextra -O2)
-endif()
-add_test(
-    NAME firestaff_m11_dm1_v2_effects_framepath_probe
-    COMMAND firestaff_m11_dm1_v2_effects_framepath_probe
-)
-set_tests_properties(firestaff_m11_dm1_v2_effects_framepath_probe PROPERTIES
-    LABELS "dm1;v2;phase4;m11;effects;framepath"
-)
-
-add_executable(firestaff_dm1_v1_inventory_damage_indicator_zone_probe
-    probes/m11/firestaff_dm1_v1_inventory_damage_indicator_zone_probe.c)
-target_link_libraries(firestaff_dm1_v1_inventory_damage_indicator_zone_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
-if(NOT MSVC)
-    target_compile_options(firestaff_dm1_v1_inventory_damage_indicator_zone_probe PRIVATE -Wall -Wextra -O2)
-endif()
+# Retired with the M11 wrapper-export cleanup; covered by
+# test_dm1_v1_champion_status_layout_pc34_compat.
 
 add_executable(firestaff_dm1_v1_message_log_bottom_row_runtime_probe
     probes/m11/firestaff_dm1_v1_message_log_bottom_row_runtime_probe.c)
@@ -3522,32 +3476,8 @@ add_test(
         $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
 )
 
-# DM1 V1 dialog choice font-scale fit probe (gap "In-game overlays + UI-fit coverage").
-# Headless / data-free: pins M11_UIScale percent -> font scale step, M11_Font_DrawString
-# advance per scale step (8, 16, 24), the 192 px source dialog choice zones (C462/C463),
-# 4-choice split zones (C466/C467) at 86 px each, the V1 message area zone (C015)
-# geometry, the production override that keeps the V1 message log at scale 1
-# even when state->fontScale is bumped to 2 or 3, and the session-timer
-# reminder banner's top-strip fit / V1 viewport ownership at fontScale 1..3.
-# Source: ReDMCSB layout-696, M2092_MessageAreaWidth=320, M532_MESSAGE_AREA_ROW_COUNT=4,
-#         G2088_C7_TextLineHeight=7, G2089_C8_InscriptionCharacterWidth=8,
-#         G2082_C5_CharacterPadding=5 (X_OFFSET = 8 - 5 = 3),
-#         G2087_C6_InscriptionCharacterWidth=6, G2083_C3=6 visible rows.
-add_executable(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe
-    probes/m11/firestaff_dm1_v1_dialog_choice_font_scale_fit_probe.c
-    src/audio/ambient_layer_m11.c)
-target_link_libraries(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m11 firestaff_m10 m)
-if(NOT MSVC)
-    target_compile_options(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PRIVATE -Wall -Wextra -O2)
-endif()
-add_test(
-    NAME firestaff_dm1_v1_dialog_choice_font_scale_fit_probe
-    COMMAND firestaff_dm1_v1_dialog_choice_font_scale_fit_probe
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-)
-set_tests_properties(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PROPERTIES
-    LABELS "tier2;m11;dm1;dialog;font;scale;ui-fit;accessibility;session-timer"
-)
+# Retired with the M11 wrapper-export cleanup; dialog choice fit is covered by
+# test_m11_dialog_choice_overlay_fit_pc34_compat.
 
 # DM1 V1 forced-pause dialog font-scale fit probe
 # (gap "In-game overlays + UI-fit coverage" — forced-pause branch).
@@ -14403,20 +14333,6 @@ if(BUILD_TESTING)
             COMMAND firestaff_m12_language_cycle_layout_probe
         )
     endif()
-
-    # Game View probe (needs GRAPHICS.DAT via FIRESTAFF_DATA)
-    add_test(
-        NAME m11_game_view
-        COMMAND firestaff_m11_game_view_probe "$ENV{HOME}/.firestaff/data"
-    )
-    set_tests_properties(m11_game_view PROPERTIES
-        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
-    )
-
-    add_test(
-        NAME dm1_v1_inventory_damage_indicator_zone
-        COMMAND firestaff_dm1_v1_inventory_damage_indicator_zone_probe
-    )
 
     add_test(
         NAME m11_audio
