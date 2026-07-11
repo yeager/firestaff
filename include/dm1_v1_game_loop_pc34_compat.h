@@ -185,43 +185,6 @@ void DM1_V1_GameLoop_ResetFrameStatsPc34Compat(DM1_V1_GameLoopStatePc34 *state);
 /* ── Source evidence ──────────────────────────────────────────────── */
 const char *DM1_V1_GameLoop_SourceEvidencePc34Compat(void);
 
-/* Backward-compatible M11 names for existing shared call sites. */
-typedef DM1_V1_GameLoopPhasePc34 M11_GameLoopPhase;
-typedef DM1_V1_GameLoopStatusPc34 M11_GameLoopStatus;
-typedef DM1_V1_GameLoopTickResultPc34 M11_GameLoopTickResult;
-typedef DM1_V1_FrameTimingStatsPc34 M11_FrameTimingStats;
-typedef DM1_V1_GameLoopStatePc34 M11_GameLoopState;
-
-#define M11_FRAME_RATE_HZ DM1_V1_FRAME_RATE_HZ_PC34
-#define M11_FRAME_BUDGET_MS DM1_V1_FRAME_BUDGET_MS_PC34
-#define M11_VBLANK_WAIT_MAX_DEFAULT DM1_V1_VBLANK_WAIT_MAX_DEFAULT_PC34
-#define M11_VBLANK_WAIT_MAX_EXTENDED DM1_V1_VBLANK_WAIT_MAX_EXTENDED_PC34
-#define M11_VBLANK_TIMER_BUDGET_MS DM1_V1_VBLANK_TIMER_BUDGET_MS_PC34
-#define M11_INPUT_POLL_BUDGET_MS DM1_V1_INPUT_POLL_BUDGET_MS_PC34
-#define M11_COMMAND_BUDGET_MS DM1_V1_COMMAND_BUDGET_MS_PC34
-#define M11_MOVEMENT_BUDGET_MS DM1_V1_MOVEMENT_BUDGET_MS_PC34
-#define M11_VIEWPORT_BUDGET_MS DM1_V1_VIEWPORT_BUDGET_MS_PC34
-#define M11_DIALOG_BUDGET_MS DM1_V1_DIALOG_BUDGET_MS_PC34
-#define M11_SAVELOAD_BUDGET_MS DM1_V1_SAVELOAD_BUDGET_MS_PC34
-
-#define m11_game_loop_init DM1_V1_GameLoop_InitPc34Compat
-#define m11_game_loop_set_tick_rate DM1_V1_GameLoop_SetTickRatePc34Compat
-#define m11_game_loop_tick DM1_V1_GameLoop_TickPc34Compat
-#define m11_game_loop_vblank_tick DM1_V1_GameLoop_VBlankTickPc34Compat
-#define m11_game_loop_pause DM1_V1_GameLoop_PausePc34Compat
-#define m11_game_loop_resume DM1_V1_GameLoop_ResumePc34Compat
-#define m11_game_loop_is_paused DM1_V1_GameLoop_IsPausedPc34Compat
-#define m11_game_loop_request_new_map DM1_V1_GameLoop_RequestNewMapPc34Compat
-#define m11_game_loop_set_party_dead DM1_V1_GameLoop_SetPartyDeadPc34Compat
-#define m11_game_loop_set_inventory DM1_V1_GameLoop_SetInventoryPc34Compat
-#define m11_game_loop_set_resting DM1_V1_GameLoop_SetRestingPc34Compat
-#define m11_game_loop_request_exit DM1_V1_GameLoop_RequestExitPc34Compat
-#define m11_game_loop_should_continue DM1_V1_GameLoop_ShouldContinuePc34Compat
-#define m11_game_loop_record_phase_time DM1_V1_GameLoop_RecordPhaseTimePc34Compat
-#define m11_game_loop_get_frame_stats DM1_V1_GameLoop_GetFrameStatsPc34Compat
-#define m11_game_loop_reset_frame_stats DM1_V1_GameLoop_ResetFrameStatsPc34Compat
-#define m11_game_loop_source_evidence DM1_V1_GameLoop_SourceEvidencePc34Compat
-
 #ifdef __cplusplus
 }
 #endif

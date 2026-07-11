@@ -63,28 +63,6 @@ DM1_V1_ClickResultPc34 DM1_V1_ClickRouting_TestClickPc34Compat(const DM1_V1_Clic
 void DM1_V1_ClickRouting_SetupDungeonZonesPc34Compat(DM1_V1_ClickRoutingStatePc34* state);
 void DM1_V1_ClickRouting_SetupInventoryZonesPc34Compat(DM1_V1_ClickRoutingStatePc34* state, uint8_t champion_count);
 
-typedef DM1_V1_ClickZoneTypePc34 M11_CK_ZoneType;
-typedef DM1_V1_ClickZonePc34 M11_CK_Zone;
-typedef DM1_V1_ClickResultPc34 M11_CK_ClickResult;
-typedef DM1_V1_ClickRoutingStatePc34 M11_CK_State;
-
-#define M11_CK_ZONE_NONE DM1_V1_CK_ZONE_NONE
-#define M11_CK_ZONE_VIEWPORT DM1_V1_CK_ZONE_VIEWPORT
-#define M11_CK_ZONE_CHAMPION DM1_V1_CK_ZONE_CHAMPION
-#define M11_CK_ZONE_INVENTORY DM1_V1_CK_ZONE_INVENTORY
-#define M11_CK_ZONE_MOVEMENT DM1_V1_CK_ZONE_MOVEMENT
-#define M11_CK_ZONE_SPELL DM1_V1_CK_ZONE_SPELL
-#define M11_CK_ZONE_HAND DM1_V1_CK_ZONE_HAND
-#define M11_CK_ZONE_MENU DM1_V1_CK_ZONE_MENU
-
-#define m11_ck_init DM1_V1_ClickRouting_InitPc34Compat
-#define m11_ck_clear_zones DM1_V1_ClickRouting_ClearZonesPc34Compat
-#define m11_ck_add_zone DM1_V1_ClickRouting_AddZonePc34Compat
-#define m11_ck_update_mouse DM1_V1_ClickRouting_UpdateMousePc34Compat
-#define m11_ck_test_click DM1_V1_ClickRouting_TestClickPc34Compat
-#define m11_ck_setup_dungeon_zones DM1_V1_ClickRouting_SetupDungeonZonesPc34Compat
-#define m11_ck_setup_inventory_zones DM1_V1_ClickRouting_SetupInventoryZonesPc34Compat
-
 #ifdef __cplusplus
 }
 #endif

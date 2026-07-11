@@ -184,30 +184,6 @@ bool DM1_V1_DungeonData_HasExpiredEventsPc34Compat(const DM1_V1_DungeonDataPc34 
 /* ── Source evidence ──────────────────────────────────────────────── */
 const char *DM1_V1_DungeonData_SourceEvidencePc34Compat(void);
 
-typedef DM1_V1_DungeonDataPartyPosPc34 M11_DD_PartyPos;
-typedef DM1_V1_DungeonDataChampionSlotPc34 M11_DD_ChampionSlot;
-typedef DM1_V1_DungeonDataPc34 M11_DD_DungeonData;
-
-#define M11_DD_MAX_CHAMPIONS DM1_V1_DUNGEON_DATA_MAX_CHAMPIONS_PC34
-
-#ifndef FIRESTAFF_DM1_V1_DUNGEON_DECOMPRESSOR_PC34_COMPAT_H
-#define m11_dd_init DM1_V1_DungeonData_InitPc34Compat
-#define m11_dd_load_dungeon DM1_V1_DungeonData_LoadDungeonPc34Compat
-#define m11_dd_load_objects DM1_V1_DungeonData_LoadObjectsPc34Compat
-#define m11_dd_shutdown DM1_V1_DungeonData_ShutdownPc34Compat
-#define m11_dd_set_current_map DM1_V1_DungeonData_SetCurrentMapPc34Compat
-#define m11_dd_get_tile DM1_V1_DungeonData_GetTilePc34Compat
-#define m11_dd_get_current_tile DM1_V1_DungeonData_GetCurrentTilePc34Compat
-#define m11_dd_set_party_pos DM1_V1_DungeonData_SetPartyPosPc34Compat
-#define m11_dd_get_party_pos DM1_V1_DungeonData_GetPartyPosPc34Compat
-#define m11_dd_set_champion_count DM1_V1_DungeonData_SetChampionCountPc34Compat
-#define m11_dd_advance_tick DM1_V1_DungeonData_AdvanceTickPc34Compat
-#define m11_dd_get_game_time DM1_V1_DungeonData_GetGameTimePc34Compat
-#define m11_dd_add_event DM1_V1_DungeonData_AddEventPc34Compat
-#define m11_dd_has_expired_events DM1_V1_DungeonData_HasExpiredEventsPc34Compat
-#define m11_dd_source_evidence DM1_V1_DungeonData_SourceEvidencePc34Compat
-#endif
-
 #ifdef __cplusplus
 }
 #endif

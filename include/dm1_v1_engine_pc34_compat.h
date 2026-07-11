@@ -210,26 +210,6 @@ const char *DM1_V1_Engine_ModuleNamePc34Compat(int index);
 /* ── Source evidence ──────────────────────────────────────────────── */
 const char *DM1_V1_Engine_SourceEvidencePc34Compat(void);
 
-/* Compatibility aliases for older M11 call sites. */
-typedef DM1_V1_EngineConfigPc34 M11_EngineConfig;
-typedef DM1_V1_EngineTickResultPc34 M11_EngineTickResult;
-typedef DM1_V1_EnginePc34 M11_Engine;
-#define m11_engine_init DM1_V1_Engine_InitPc34Compat
-#define m11_engine_tick DM1_V1_Engine_TickPc34Compat
-#define m11_engine_shutdown DM1_V1_Engine_ShutdownPc34Compat
-#define m11_engine_get_state DM1_V1_Engine_GetStatePc34Compat
-#define m11_engine_get_dungeon_data DM1_V1_Engine_GetDungeonDataPc34Compat
-#define m11_engine_get_input DM1_V1_Engine_GetInputPc34Compat
-#define m11_engine_get_screen DM1_V1_Engine_GetScreenPc34Compat
-#define m11_engine_get_save_load DM1_V1_Engine_GetSaveLoadPc34Compat
-#define m11_engine_new_game DM1_V1_Engine_NewGamePc34Compat
-#define m11_engine_load_game DM1_V1_Engine_LoadGamePc34Compat
-#define m11_engine_save_game DM1_V1_Engine_SaveGamePc34Compat
-#define m11_engine_request_exit DM1_V1_Engine_RequestExitPc34Compat
-#define m11_engine_module_count DM1_V1_Engine_ModuleCountPc34Compat
-#define m11_engine_module_name DM1_V1_Engine_ModuleNamePc34Compat
-#define m11_engine_source_evidence DM1_V1_Engine_SourceEvidencePc34Compat
-
 #ifdef __cplusplus
 }
 #endif

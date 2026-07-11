@@ -226,31 +226,6 @@ int DM1_V1_Input_WaitForActivityPc34Compat(const DM1_V1_InputStatePc34 *state);
 /* ── Source evidence ──────────────────────────────────────────────── */
 const char *DM1_V1_Input_SourceEvidencePc34Compat(void);
 
-typedef DM1_V1_InputEventTypePc34 M11_InputEventType;
-typedef DM1_V1_InputKeyCodePc34 M11_DM1KeyCode;
-typedef DM1_V1_InputEventPc34 M11_InputEvent;
-typedef DM1_V1_InputKeyBufferPc34 M11_KeyBuffer;
-typedef DM1_V1_InputStatePc34 M11_InputState;
-
-#define M11_KEY_BUFFER_SIZE DM1_V1_INPUT_KEY_BUFFER_SIZE_PC34
-#define m11_input_init DM1_V1_Input_InitPc34Compat
-#define m11_input_deinit DM1_V1_Input_DeinitPc34Compat
-#define m11_input_store_key DM1_V1_Input_StoreKeyPc34Compat
-#define m11_input_get_key DM1_V1_Input_GetKeyPc34Compat
-#define m11_input_key_available DM1_V1_Input_KeyAvailablePc34Compat
-#define m11_input_discard_all DM1_V1_Input_DiscardAllPc34Compat
-#define m11_input_mouse_move DM1_V1_Input_MouseMovePc34Compat
-#define m11_input_mouse_set_position DM1_V1_Input_MouseSetPositionPc34Compat
-#define m11_input_mouse_button_down DM1_V1_Input_MouseButtonDownPc34Compat
-#define m11_input_mouse_button_up DM1_V1_Input_MouseButtonUpPc34Compat
-#define m11_input_mouse_get_position DM1_V1_Input_MouseGetPositionPc34Compat
-#define m11_input_process_raw_key DM1_V1_Input_ProcessRawKeyPc34Compat
-#define m11_input_numpad_to_movement DM1_V1_Input_NumpadToMovementPc34Compat
-#define m11_input_joystick_axis DM1_V1_Input_JoystickAxisPc34Compat
-#define m11_input_any_activity DM1_V1_Input_AnyActivityPc34Compat
-#define m11_input_wait_for_activity DM1_V1_Input_WaitForActivityPc34Compat
-#define m11_input_poll_source_evidence DM1_V1_Input_SourceEvidencePc34Compat
-
 #ifdef __cplusplus
 }
 #endif

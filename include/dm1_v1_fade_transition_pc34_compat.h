@@ -63,32 +63,10 @@ bool DM1_V1_Fade_IsActivePc34Compat(const DM1_V1_FadeStatePc34* state);
 const char* DM1_V1_Fade_GetOverlayTextPc34Compat(const DM1_V1_FadeStatePc34* state);
 void DM1_V1_Fade_CancelPc34Compat(DM1_V1_FadeStatePc34* state);
 
-typedef DM1_V1_FadeModePc34 M11_FadeMode;
-typedef DM1_V1_FadeColorPc34 M11_FadeColor;
-typedef DM1_V1_FadeStatePc34 M11_FadeState;
-
 #define DM1_FADE_STEPS DM1_V1_FADE_STEPS_PC34
 #define DM1_FADE_FRAME_MS DM1_V1_FADE_FRAME_MS_PC34
 #define DM1_SWOOSH_STEPS DM1_V1_SWOOSH_STEPS_PC34
 #define DM1_OVERLAY_MAX_TEXT DM1_V1_OVERLAY_MAX_TEXT_PC34
-
-#define M11_FADE_NONE DM1_V1_FADE_NONE_PC34
-#define M11_FADE_OUT DM1_V1_FADE_OUT_PC34
-#define M11_FADE_IN DM1_V1_FADE_IN_PC34
-#define M11_FADE_TO_OVERLAY DM1_V1_FADE_TO_OVERLAY_PC34
-#define M11_FADE_SWOOSH DM1_V1_FADE_SWOOSH_PC34
-
-#define m11_fade_init DM1_V1_Fade_InitPc34Compat
-#define m11_fade_save_palette DM1_V1_Fade_SavePalettePc34Compat
-#define m11_fade_start_out DM1_V1_Fade_StartOutPc34Compat
-#define m11_fade_start_in DM1_V1_Fade_StartInPc34Compat
-#define m11_fade_start_overlay DM1_V1_Fade_StartOverlayPc34Compat
-#define m11_fade_start_swoosh DM1_V1_Fade_StartSwooshPc34Compat
-#define m11_fade_tick DM1_V1_Fade_TickPc34Compat
-#define m11_fade_get_palette DM1_V1_Fade_GetPalettePc34Compat
-#define m11_fade_is_active DM1_V1_Fade_IsActivePc34Compat
-#define m11_fade_get_overlay_text DM1_V1_Fade_GetOverlayTextPc34Compat
-#define m11_fade_cancel DM1_V1_Fade_CancelPc34Compat
 
 #ifdef __cplusplus
 }
