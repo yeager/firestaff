@@ -2,7 +2,7 @@
  * test_dm1_v1_food_water_pc34_compat.c
  *
  * DM1 V1 food/water state regression. Pins the source-locked
- * m11_fw_* API used by the fountain interaction (DM1V1_Fountain_*)
+ * DM1_V1_FoodWater_* API used by the fountain interaction (DM1V1_Fountain_*)
  * and by the food/water consume path on the inventory side
  * (dm1_inventory_consume_food_junk_pc34 / dm1_inventory_consume_water_junk_pc34).
  *
@@ -260,7 +260,7 @@ static void test_starvation_damage(void)
 static void test_inventory_handoff_lifecycle(void)
 {
     /* Lifecycle check that the inventory-consume side actually feeds
-     * the m11_fw_* state with non-zero food amounts. Mirrors what the
+     * the DM1_V1_FoodWater_* state with non-zero food amounts. Mirrors what the
      * leader-hand food/water consume path does: pick an icon, look up
      * the food amount from the DUNGEON.C:428..436 G0242 table via
      * dm1_inventory_food_amount_from_icon_pc34, then credit it through

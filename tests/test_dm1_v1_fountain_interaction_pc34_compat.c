@@ -45,7 +45,7 @@ static int expect_evidence(const char* evidence) {
 int main(void) {
     int ok = 1;
     DM1_V1_ItemPc34 item;
-    M11_FoodWaterState foodWater;
+    DM1_V1_FoodWaterStatePc34 foodWater;
     DM1V1FountainClickInputPc34Compat input;
     DM1V1FountainResultPc34Compat result;
 
@@ -109,7 +109,7 @@ int main(void) {
     ok &= expect_int("not facing fountain no action", result.action, DM1_V1_FOUNTAIN_ACTION_NONE);
     ok &= expect_int("not facing fountain item unchanged", item.itemType, DM1_V1_ICON_POTION_EMPTY_FLASK);
 
-    m11_fw_init(&foodWater, 1);
+    DM1_V1_FoodWater_InitPc34Compat(&foodWater, 1);
     foodWater.champions[0].food = 777;
     foodWater.champions[0].water = 11;
     foodWater.champions[0].thirsty = 1;
@@ -291,8 +291,8 @@ int main(void) {
      * G0423_i_InventoryChampionOrdinal (the inventory panel champion), not
      * the whole party; same source-locked invariant must hold here. */
     {
-        M11_FoodWaterState party;
-        m11_fw_init(&party, 4);
+        DM1_V1_FoodWaterStatePc34 party;
+        DM1_V1_FoodWater_InitPc34Compat(&party, 4);
         party.champions[0].water = 500;
         party.champions[0].thirsty = 1;
         party.champions[1].water = 1500;

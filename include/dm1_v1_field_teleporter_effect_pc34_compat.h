@@ -147,25 +147,6 @@ int dm1_v1_field_asset_indices_pc34(
 
 int dm1_v1_field_square_is_visible_open_pc34(int square);
 
-/* Compatibility aliases for older M11 call sites. */
-typedef DM1_V1_FieldTeleporterEffectTypePc34 M11_FT_EffectType;
-typedef DM1_V1_FieldTeleporterParticlePc34 M11_FT_Particle;
-typedef DM1_V1_FieldTeleporterEffectStatePc34 M11_FT_EffectState;
-#define M11_FT_EFFECT_NONE DM1_V1_FT_EFFECT_NONE
-#define M11_FT_EFFECT_TELEPORT DM1_V1_FT_EFFECT_TELEPORT
-#define M11_FT_EFFECT_PIT_FALL DM1_V1_FT_EFFECT_PIT_FALL
-#define M11_FT_EFFECT_STAIRS DM1_V1_FT_EFFECT_STAIRS
-#define M11_FT_EFFECT_SPELL_FLASH DM1_V1_FT_EFFECT_SPELL_FLASH
-#define M11_FT_EFFECT_EXPLOSION DM1_V1_FT_EFFECT_EXPLOSION
-#define m11_ft_init DM1_V1_FieldTeleporter_InitPc34Compat
-#define m11_ft_start_teleport DM1_V1_FieldTeleporter_StartTeleportPc34Compat
-#define m11_ft_start_pit_fall DM1_V1_FieldTeleporter_StartPitFallPc34Compat
-#define m11_ft_start_explosion DM1_V1_FieldTeleporter_StartExplosionPc34Compat
-#define m11_ft_tick DM1_V1_FieldTeleporter_TickPc34Compat
-#define m11_ft_is_active DM1_V1_FieldTeleporter_IsActivePc34Compat
-#define m11_ft_get_flash_intensity DM1_V1_FieldTeleporter_GetFlashIntensityPc34Compat
-#define m11_ft_get_particle_count DM1_V1_FieldTeleporter_GetParticleCountPc34Compat
-
 #ifdef __cplusplus
 }
 #endif

@@ -134,9 +134,9 @@ static void test_engine_scan(void) {
     char one[512];
     char bad[512];
     char path[512];
-    M11_CustomDungeonList list;
+    DM1_V1_CustomDungeonListPc34 list;
     int map_count = 0;
-    const M11_CustomDungeon* selected;
+    const DM1_V1_CustomDungeonPc34* selected;
 
     snprintf(base, sizeof(base), "/tmp/firestaff-custom-import-m11-%d", fs_pid());
     join_path(one, sizeof(one), base, "One");
@@ -153,19 +153,19 @@ static void test_engine_scan(void) {
     join_path(path, sizeof(path), bad, "dungeon.dat");
     CHECK(write_dungeon(path, 0, 0, DUNGEON_HEADER_SIZE + DUNGEON_MAP_DESC_SIZE));
 
-    M11_CustomDungeon_Init(&list);
-    CHECK(M11_CustomDungeon_Scan(&list, base) == 2);
+    DM1_V1_CustomDungeon_InitPc34Compat(&list);
+    CHECK(DM1_V1_CustomDungeon_ScanPc34Compat(&list, base) == 2);
     CHECK(list.count == 2);
-    CHECK(M11_CustomDungeon_Validate(list.entries[0].dungeonDatPath, &map_count) ==
+    CHECK(DM1_V1_CustomDungeon_ValidatePc34Compat(list.entries[0].dungeonDatPath, &map_count) ==
           list.entries[0].valid);
     CHECK((list.entries[0].valid && list.entries[0].mapCount == 3) ||
           (list.entries[1].valid && list.entries[1].mapCount == 3));
     CHECK((list.entries[0].graphicsDatPath[0] != '\0') ||
           (list.entries[1].graphicsDatPath[0] != '\0'));
     list.selectedIndex = list.entries[0].valid ? 0 : 1;
-    selected = M11_CustomDungeon_GetSelected(&list);
+    selected = DM1_V1_CustomDungeon_GetSelectedPc34Compat(&list);
     CHECK(selected != NULL && selected->valid == 1);
-    CHECK(M11_CustomDungeon_Validate(NULL, &map_count) == 0);
+    CHECK(DM1_V1_CustomDungeon_ValidatePc34Compat(NULL, &map_count) == 0);
     CHECK(map_count == 0);
 }
 
