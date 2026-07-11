@@ -99,6 +99,7 @@ static void test_variable_grid_and_mesh_ready(void) {
     Nexus_V1_DgnRendererHandoffReceipt handoff;
     Nexus_V1_Level level;
     uint8_t *structure1;
+    uint8_t *geometry;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 24,
                           structure1b_rel, geometry_bytes) == 0,
@@ -113,6 +114,16 @@ static void test_variable_grid_and_mesh_ready(void) {
     set_mesh_ref(structure1, structure1b_rel, 4, 2, 11);
     set_collision_ref(structure1, structure1b_rel, 0, 0, 0x0fff);
     cell_at(structure1, structure1b_rel, 5, 5)[1] = 0x01; /* door flag */
+    geometry = dgn + NEXUS_DGN_BLOCK_SIZE + structure1b_rel +
+               NEXUS_DGN_STRUCTURE1B_BYTES;
+    geometry[9 * 4 + 0] = (uint8_t)-10;
+    geometry[9 * 4 + 1] = (uint8_t)-5;
+    geometry[9 * 4 + 2] = 10;
+    geometry[9 * 4 + 3] = 5;
+    geometry[11 * 4 + 0] = (uint8_t)-6;
+    geometry[11 * 4 + 1] = (uint8_t)-4;
+    geometry[11 * 4 + 2] = 6;
+    geometry[11 * 4 + 3] = 4;
 
     CHECK(nexus_v1_dgn_geometry_info(&info, dgn, (int)sizeof(dgn)) == 0,
           "geometry info parses DMWeb block header");
@@ -138,6 +149,12 @@ static void test_variable_grid_and_mesh_ready(void) {
           info.mesh_ref_unique_count == 2 &&
           info.max_mesh_ref == 11,
           "Structure1F-style mesh refs are counted and deduplicated");
+    CHECK(info.structure1f_descriptor_count == geometry_bytes / 4 &&
+          info.structure1f_valid_descriptor_count == 2 &&
+          info.structure1f_solid_descriptor_count == 2 &&
+          info.structure1f_first_ref == 9 &&
+          info.structure1f_max_area == 200,
+          "Structure1F descriptors expose bounded footprint semantics");
     CHECK(info.mesh_ready == 1,
           "bounded collision and mesh descriptor budgets mark fixture mesh-ready");
 
@@ -166,8 +183,11 @@ static void test_variable_grid_and_mesh_ready(void) {
     CHECK(handoff.descriptor_capacity == geometry_bytes / 4 &&
           handoff.max_collision_ref == 5 &&
           handoff.max_mesh_ref == 11 &&
-          handoff.mesh_ref_unique_count == 2,
-          "DGN renderer handoff exposes descriptor budget and max refs");
+          handoff.mesh_ref_unique_count == 2 &&
+          handoff.structure1f_valid_descriptor_count == 2 &&
+          handoff.structure1f_solid_descriptor_count == 2 &&
+          handoff.structure1f_max_area == 200,
+          "DGN renderer handoff exposes descriptor budget and Structure1F footprint refs");
     CHECK(strcmp(nexus_v1_dgn_renderer_handoff_status_name(handoff.status),
                  "ready-mesh") == 0,
           "DGN renderer handoff has stable ready route name");
@@ -267,9 +287,12 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           "DGN render plan proves Structure1B surface semantics per command family");
     CHECK(receipt.mesh_command_count > 0 &&
           receipt.mesh_descriptor_command_count == receipt.mesh_command_count &&
+          receipt.structure1f_command_count == receipt.mesh_command_count &&
+          receipt.structure1f_solid_command_count == receipt.mesh_command_count &&
+          receipt.structure1f_max_area == 1152 &&
           receipt.first_mesh_ref == 7 &&
           receipt.max_mesh_ref == 9,
-          "DGN view render plan consumes bounded Structure1B mesh descriptors");
+          "DGN view render plan consumes bounded Structure1F mesh descriptors");
     CHECK(commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
           commands[0].x == 3 &&
           commands[0].y == 4 &&
@@ -277,6 +300,9 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           commands[0].mesh_ref == 7 &&
           commands[0].mesh_descriptor.valid == 1 &&
           commands[0].mesh_descriptor.x1 == -24 &&
+          commands[0].mesh_descriptor.width == 48 &&
+          commands[0].mesh_descriptor.height == 24 &&
+          commands[0].mesh_descriptor.area == 1152 &&
           commands[0].mesh_descriptor_projected == 1 &&
           commands[0].material_id == 21 && commands[0].floor_rotation == 1 &&
           commands[0].material_source_kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
