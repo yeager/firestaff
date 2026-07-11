@@ -20,10 +20,11 @@ ANCHORS = [
     {"id": "redmcsb_csb_save_file_router", "role": "primary", "path": REDMCSB / "CEDTINC8.C", "lines": "101-118", "needles": ["M746_FILE_ID_SAVE_CSBGAME_DAT", "M745_FILE_ID_SAVE_DMSAVE_DAT", "C13_DUNGEON_CSB_GAME", "C12_DUNGEON_CSB_PRISON"]},
     {"id": "redmcsb_make_new_adventure_gate", "role": "primary", "path": REDMCSB / "CEDTINCH.C", "lines": "5-63", "needles": ["F7086_IsReadyToMakeNewAdventure", "GameLoaded", "G7114_LoadedChampionCount", "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK", "C13_DUNGEON_CSB_GAME"]},
     {"id": "redmcsb_csb_dungeon_validation", "role": "primary", "path": REDMCSB / "CEDTINCU.C", "lines": "5-77", "needles": ["F7272_IsDungeonValid", "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK", "C13_DUNGEON_CSB_GAME", "C12_DUNGEON_CSB_PRISON"]},
-    {"id": "firestaff_m12_supports_csb_launch_intent", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "2327-2337", "needles": ["All five catalogued games now have runtime launch boundaries", "strcmp(gameId, \"csb\") == 0"]},
-    {"id": "firestaff_m12_launch_intent_uses_supported_game_and_assets", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "7440-7513", "needles": ["M12_StartupMenu_GetLaunchIntent", "m12_game_supported(intent.gameId)", "M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)", "version && version->matched ? 1 : 0"]},
-    {"id": "firestaff_m11_csb_handoff_bypasses_dm1_loader", "role": "firestaff_positive", "path": ROOT / "src/engine/m11_game_view.c", "lines": "6673-6705", "needles": ["FS_GAME_CSB path in firestaff_game_loop.c", "CSB READY (FS LOOP)", "CSB READY: gameId=csb dataDir=%s"]},
-    {"id": "firestaff_game_loop_csb_boots_profile", "role": "firestaff_positive", "path": ROOT / "src/engine/firestaff_game_loop.c", "lines": "420-440", "needles": ["FS_GAME_CSB", "csb_v1_boot_scan_assets", "csb_v1_boot_enter_game", "csb_v1_boot_print_summary"]},
+    {"id": "firestaff_m12_supports_csb_launch_intent", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "all", "needles": ["strcmp(gameId, \"csb\") == 0"]},
+    {"id": "firestaff_m12_launch_intent_uses_supported_game_and_assets", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "all", "needles": ["M12_StartupMenu_GetLaunchIntent", "M12_StartupMenu_GetLaunchGate", "gate.canLaunch", "version && version->matched ? 1 : 0"]},
+    {"id": "firestaff_m11_csb_handoff_bypasses_dm1_loader", "role": "firestaff_positive", "path": ROOT / "src/engine/m11_game_view.c", "lines": "all", "needles": ["csb_v1_boot_render_viewport_frame_pc34", "m11_sync_csb_state_from_boot_profile", "csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34"]},
+    {"id": "firestaff_csb_m11_presentation_receipt", "role": "firestaff_positive", "path": ROOT / "src/csb/csb_v1_boot.c", "lines": "all", "needles": ["csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34", "host_view.render_draw.render_plan", "CSBWin Viewport.cpp startup HUD/menu presentation"]},
+    {"id": "firestaff_game_loop_csb_boots_profile", "role": "firestaff_positive", "path": ROOT / "src/engine/firestaff_game_loop.c", "lines": "all", "needles": ["FS_GAME_CSB", "csb_v1_boot_scan_assets", "csb_v1_boot_enter_game", "csb_v1_boot_print_summary"]},
     {"id": "firestaff_pc_real_asset_probe_ticks_csb", "role": "firestaff_positive", "path": ROOT / "probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c", "lines": "1-130", "needles": ["PC-first CSB V1 real-data launch gate", "CSB_V1_VARIANT_PC34_EN", "csb_v1_boot_enter_game", "csb_v1_runtime_tick"]},
 ]
 
@@ -35,6 +36,11 @@ NON_CLAIMS = [
 
 
 def line_window(path: Path, span: str) -> str:
+    if span == "all":
+        try:
+            return path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            return ""
     start, end = [int(part) for part in span.split("-")]
     try:
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()

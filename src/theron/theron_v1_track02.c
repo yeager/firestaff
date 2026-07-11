@@ -3740,6 +3740,57 @@ int theron_v1_track02_capture_object_table_route_receipt(
                             tqr_fnv1a_bytes(
                                 track02_data + entries[entry_index].absolute_offset,
                                 entries[entry_index].byte_count);
+                        if (entries[entry_index].byte_count >= 12u &&
+                            entries[entry_index].absolute_offset <=
+                                track02_size &&
+                            entries[entry_index].byte_count <=
+                                track02_size -
+                                    entries[entry_index].absolute_offset) {
+                            const uint8_t *candidate =
+                                track02_data +
+                                entries[entry_index].absolute_offset;
+                            int startup_header_shaped;
+                            out_receipt
+                                ->object_table_candidate_header_width[anchor] =
+                                rd16be(candidate + 0u);
+                            out_receipt
+                                ->object_table_candidate_header_height[anchor] =
+                                rd16be(candidate + 2u);
+                            out_receipt
+                                ->object_table_candidate_header_seed[anchor] =
+                                rd32be(candidate + 4u);
+                            out_receipt
+                                ->object_table_candidate_header_level_index
+                                    [anchor] =
+                                rd16be(candidate + 8u);
+                            startup_header_shaped =
+                                out_receipt
+                                    ->object_table_candidate_header_width
+                                        [anchor] ==
+                                    TQR_RAW_INITIAL_LEVEL_WIDTH &&
+                                out_receipt
+                                    ->object_table_candidate_header_height
+                                        [anchor] ==
+                                    TQR_RAW_INITIAL_LEVEL_HEIGHT &&
+                                out_receipt
+                                    ->object_table_candidate_header_seed
+                                        [anchor] ==
+                                    TQR_RAW_INITIAL_LEVEL_SEED &&
+                                out_receipt
+                                    ->object_table_candidate_header_level_index
+                                        [anchor] ==
+                                    TQR_RAW_INITIAL_LEVEL_INDEX;
+                            out_receipt
+                                ->object_table_candidate_startup_header_shaped
+                                    [anchor] =
+                                startup_header_shaped ? 1 : 0;
+                            ++out_receipt
+                                  ->object_table_candidate_header_probe_count;
+                            if (startup_header_shaped) {
+                                ++out_receipt
+                                      ->object_table_candidate_startup_header_shape_count;
+                            }
+                        }
                         if (entries[entry_index].absolute_offset >=
                             descriptor_offset) {
                             out_receipt
@@ -3835,6 +3886,20 @@ int theron_v1_track02_capture_object_table_route_receipt(
         hash *= 16777619u;
         hash ^= out_receipt->object_table_candidate_last_hashes[anchor];
         hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_candidate_header_width[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_candidate_header_height[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->object_table_candidate_header_seed[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_candidate_header_level_index[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_candidate_startup_header_shaped[anchor];
+        hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->object_table_candidate_descriptor_delta[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->object_table_candidate_after_descriptor[anchor];
@@ -3848,6 +3913,11 @@ int theron_v1_track02_capture_object_table_route_receipt(
         hash ^= out_receipt->object_table_anchor_hash[anchor];
         hash *= 16777619u;
     }
+    hash ^= (uint32_t)out_receipt->object_table_candidate_header_probe_count;
+    hash *= 16777619u;
+    hash ^= (uint32_t)
+        out_receipt->object_table_candidate_startup_header_shape_count;
+    hash *= 16777619u;
     out_receipt->route_hash = hash;
     out_receipt->valid = out_receipt->verified_track02 &&
         out_receipt->descriptor_route_ready;

@@ -4764,6 +4764,19 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                         test_fnv1a_bytes(
                             track02 + post_descriptor_candidate_offsets[0],
                             0x0400u) &&
+                    object_route_receipt.object_table_candidate_header_probe_count ==
+                        3u &&
+                    object_route_receipt.object_table_candidate_startup_header_shape_count ==
+                        0u &&
+                    object_route_receipt.object_table_candidate_header_width[0] ==
+                        0x4142u &&
+                    object_route_receipt.object_table_candidate_header_height[0] ==
+                        0x4344u &&
+                    object_route_receipt.object_table_candidate_header_seed[0] ==
+                        0x45464748u &&
+                    object_route_receipt.object_table_candidate_header_level_index[0] ==
+                        0x494au &&
+                    !object_route_receipt.object_table_candidate_startup_header_shaped[0] &&
                     object_route_receipt.object_table_candidate_last_entry_index[0] == 7u &&
                     object_route_receipt.object_table_candidate_last_raw_offsets[0] ==
                         post_descriptor_candidate_last_offsets[0] &&
