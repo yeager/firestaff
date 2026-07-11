@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 status/graphic regression consumer cleanup: moved remaining inventory/full-panel/DM2 startup regression callers off pure M11 status-box and slot/poison graphic wrappers and onto DM1/ReDMCSB champion-status layout plus graphic-id APIs. Verification: `test_dm1_v1_inventory_panel_mouse_routes_pc34_compat`, `test_m11_inventory_full_panel_runtime_pc34_compat`, `test_dm2_v1_m11_startup_profile_gate`, targeted old-symbol `rg`, and focused build passed.
+
 - ✅ 2026-07-11 DM1 champion-status layout test consumer cleanup: moved `test_m11_v1_action_area_geometry_pc34_compat` off M11 status/HUD layout wrappers and onto DM1/ReDMCSB champion-status layout plus graphic-id APIs for status boxes, bars, hands, names, poison, and damage geometry. Verification: `test_m11_v1_action_area_geometry_pc34_compat`, `test_dm1_v1_champion_status_layout_pc34_compat`, focused CTest, and temp-index whitespace check passed.
 
 - ✅ 2026-07-11 DM1 endgame layout M11 export cleanup: removed public `M11_GameView_GetV1Endgame*` layout/graphic exports, wired endgame draw/input/a11y directly to DM1/ReDMCSB endgame layout and graphic-id APIs, and moved the M11 action regression off those endgame wrappers. Verification: `firestaff_m11`, `test_dm1_v1_endgame_layout_pc34_compat`, focused CTest, old-symbol `rg`, and targeted build of `test_m11_action_stamina_runtime_pc34_compat` passed. Full `test_m11_action_stamina_runtime_pc34_compat` still has unrelated THROW/action-disable failures.
