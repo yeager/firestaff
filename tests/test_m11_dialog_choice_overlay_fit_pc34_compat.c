@@ -51,7 +51,7 @@
  *   4. The M11 UIScale helpers return the documented
  *      percent -> font-scale map {100->1, 150->2, 200->3} so the
  *      dialog text zone geometry lines up with the centerX/centerY
- *      math that M11_GameView_GetV1DialogChoiceTextZone feeds into
+ *      math that dm1_v1_dialog_choice_text_rect_pc34 feeds into
  *      m11_draw_text_centered_in_rect.  This is the same contract
  *      covered by test_m11_ui_scale but is re-checked here so a
  *      future change to ui_scale_m11.c is caught by the dialog-fit
@@ -63,8 +63,8 @@
  *      sets drawX = x; the test pins this clamp.
  *
  * Source:
- *   include/m11_game_view.h (M11_GameView_GetV1DialogChoiceTextZone,
- *   M11_GameView_GetV1DialogChoiceHitZone, M11_GameView_GetV1MessageAreaZone)
+ *   include/dm1_v1_dialog_layout_pc34_compat.h
+ *   include/m11_game_view.h (M11_GameView_GetV1MessageAreaZone)
  *   include/ui_scale_m11.h
  *   include/font_m11.h (M11_Font_MeasureString)
  *   include/render_sdl_m11.h (M11_FB_WIDTH/M11_FB_HEIGHT constants)
@@ -76,6 +76,7 @@
  */
 
 #include "m11_game_view.h"
+#include "dm1_v1_dialog_layout_pc34_compat.h"
 #include "ui_scale_m11.h"
 #include "font_m11.h"
 #include "render_sdl_m11.h"
@@ -131,10 +132,45 @@ static int centered_draw_x(int x, int w, int textW) {
     return drawX;
 }
 
+static int dm1_dialog_choice_text_zone(int choiceCount,
+                                       int choiceIndex,
+                                       int* outX,
+                                       int* outY,
+                                       int* outW,
+                                       int* outH)
+{
+    DM1_V1_DialogRectPc34 r;
+    if (!dm1_v1_dialog_choice_text_rect_pc34(choiceCount, choiceIndex, &r)) {
+        return 0;
+    }
+    if (outX) *outX = r.x;
+    if (outY) *outY = r.y;
+    if (outW) *outW = r.w;
+    if (outH) *outH = r.h;
+    return 1;
+}
+
+static int dm1_dialog_choice_hit_zone(int choiceCount,
+                                      int choiceIndex,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH)
+{
+    DM1_V1_DialogRectPc34 r;
+    if (!dm1_v1_dialog_choice_hit_rect_pc34(choiceCount, choiceIndex, &r)) {
+        return 0;
+    }
+    if (outX) *outX = r.x;
+    if (outY) *outY = r.y;
+    if (outW) *outW = r.w;
+    if (outH) *outH = r.h;
+    return 1;
+}
+
 static void test_dialog_choice_text_zone_geometry(void) {
     /* Source-locked dialog text zones per
-     * M11_GameView_GetV1DialogChoiceTextZone
-     * (src/engine/m11_game_view.c:1058-1093).
+     * dm1_v1_dialog_choice_text_rect_pc34.
      *
      * choiceCount=1 -> zone 462 (single button, lower row)
      * choiceCount=2 -> zones 463 (upper), 462 (lower)
@@ -145,52 +181,52 @@ static void test_dialog_choice_text_zone_geometry(void) {
     int x, y, w, h;
 
     /* choiceCount=1 -> single button, lower row */
-    check_true("choiceCount=1 index 0 zone returns", M11_GameView_GetV1DialogChoiceTextZone(1, 0, &x, &y, &w, &h));
+    check_true("choiceCount=1 index 0 zone returns", dm1_dialog_choice_text_zone(1, 0, &x, &y, &w, &h));
     check_int("1choice idx0 zone x", x, 16);
     check_int("1choice idx0 zone y", y, 110);
     check_int("1choice idx0 zone w", w, 192);
     check_int("1choice idx0 zone h", h, 7);
 
     /* choiceCount=2 -> upper + lower (192-wide full columns) */
-    check_true("choiceCount=2 index 0 zone returns", M11_GameView_GetV1DialogChoiceTextZone(2, 0, &x, &y, &w, &h));
+    check_true("choiceCount=2 index 0 zone returns", dm1_dialog_choice_text_zone(2, 0, &x, &y, &w, &h));
     check_int("2choice idx0 (upper) zone x", x, 16);
     check_int("2choice idx0 (upper) zone y", y, 73);
     check_int("2choice idx0 (upper) zone w", w, 192);
-    check_true("choiceCount=2 index 1 zone returns", M11_GameView_GetV1DialogChoiceTextZone(2, 1, &x, &y, &w, &h));
+    check_true("choiceCount=2 index 1 zone returns", dm1_dialog_choice_text_zone(2, 1, &x, &y, &w, &h));
     check_int("2choice idx1 (lower) zone x", x, 16);
     check_int("2choice idx1 (lower) zone y", y, 110);
     check_int("2choice idx1 (lower) zone w", w, 192);
 
     /* choiceCount=3 -> upper + 2 lower (86-wide columns) */
-    check_true("choiceCount=3 index 1 zone returns", M11_GameView_GetV1DialogChoiceTextZone(3, 1, &x, &y, &w, &h));
+    check_true("choiceCount=3 index 1 zone returns", dm1_dialog_choice_text_zone(3, 1, &x, &y, &w, &h));
     check_int("3choice idx1 (lower-left) zone x", x, 16);
     check_int("3choice idx1 (lower-left) zone y", y, 110);
     check_int("3choice idx1 (lower-left) zone w", w, 86);
-    check_true("choiceCount=3 index 2 zone returns", M11_GameView_GetV1DialogChoiceTextZone(3, 2, &x, &y, &w, &h));
+    check_true("choiceCount=3 index 2 zone returns", dm1_dialog_choice_text_zone(3, 2, &x, &y, &w, &h));
     check_int("3choice idx2 (lower-right) zone x", x, 123);
     check_int("3choice idx2 (lower-right) zone w", w, 86);
 
     /* choiceCount=4 -> 2 upper + 2 lower (86-wide columns) */
-    check_true("choiceCount=4 index 0 zone returns", M11_GameView_GetV1DialogChoiceTextZone(4, 0, &x, &y, &w, &h));
+    check_true("choiceCount=4 index 0 zone returns", dm1_dialog_choice_text_zone(4, 0, &x, &y, &w, &h));
     check_int("4choice idx0 (UL) zone x", x, 16);
     check_int("4choice idx0 (UL) zone w", w, 86);
-    check_true("choiceCount=4 index 1 zone returns", M11_GameView_GetV1DialogChoiceTextZone(4, 1, &x, &y, &w, &h));
+    check_true("choiceCount=4 index 1 zone returns", dm1_dialog_choice_text_zone(4, 1, &x, &y, &w, &h));
     check_int("4choice idx1 (UR) zone x", x, 123);
     check_int("4choice idx1 (UR) zone w", w, 86);
-    check_true("choiceCount=4 index 2 zone returns", M11_GameView_GetV1DialogChoiceTextZone(4, 2, &x, &y, &w, &h));
+    check_true("choiceCount=4 index 2 zone returns", dm1_dialog_choice_text_zone(4, 2, &x, &y, &w, &h));
     check_int("4choice idx2 (LL) zone x", x, 16);
     check_int("4choice idx2 (LL) zone y", y, 110);
-    check_true("choiceCount=4 index 3 zone returns", M11_GameView_GetV1DialogChoiceTextZone(4, 3, &x, &y, &w, &h));
+    check_true("choiceCount=4 index 3 zone returns", dm1_dialog_choice_text_zone(4, 3, &x, &y, &w, &h));
     check_int("4choice idx3 (LR) zone x", x, 123);
     check_int("4choice idx3 (LR) zone w", w, 86);
 
     /* Out-of-range indices must return 0 (no zone) so
      * m11_draw_dialog_choices_source can skip them safely. */
     check_int("1choice idx1 (out-of-range) returns 0",
-              M11_GameView_GetV1DialogChoiceTextZone(1, 1, &x, &y, &w, &h),
+              dm1_dialog_choice_text_zone(1, 1, &x, &y, &w, &h),
               0);
     check_int("2choice idx2 (out-of-range) returns 0",
-              M11_GameView_GetV1DialogChoiceTextZone(2, 2, &x, &y, &w, &h),
+              dm1_dialog_choice_text_zone(2, 2, &x, &y, &w, &h),
               0);
 }
 
@@ -208,8 +244,8 @@ static void test_button_hit_zone_aligns_with_text_zone(void) {
     int sawAllAligned = 1;
     for (choiceCount = 1; choiceCount <= 4; ++choiceCount) {
         for (i = 0; i < choiceCount; ++i) {
-            if (!M11_GameView_GetV1DialogChoiceTextZone(choiceCount, i, &tx, &ty, &tw, &th)) continue;
-            if (!M11_GameView_GetV1DialogChoiceHitZone(choiceCount, i, &hx, &hy, &hw, &hh)) continue;
+            if (!dm1_dialog_choice_text_zone(choiceCount, i, &tx, &ty, &tw, &th)) continue;
+            if (!dm1_dialog_choice_hit_zone(choiceCount, i, &hx, &hy, &hw, &hh)) continue;
             ++g_assertions;
             if (hw != tw) {
                 ++g_failures;

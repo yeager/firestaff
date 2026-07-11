@@ -1893,40 +1893,6 @@ int M11_GameView_GetV1EndgameQuitBox(int inner,
                                      int* outY,
                                      int* outW,
                                      int* outH);
-int M11_GameView_GetV1DialogBackdropGraphicId(void);
-int M11_GameView_GetV1DialogVersionTextOrigin(int* outX, int* outY);
-int M11_GameView_GetV1DialogChoicePatchZone(int choiceCount,
-                                             int* outSrcX,
-                                             int* outSrcY,
-                                             int* outW,
-                                             int* outH,
-                                             int* outDstX,
-                                             int* outDstY);
-int M11_GameView_GetV1DialogMessageZone(int choiceCount,
-                                          int* outX,
-                                          int* outY,
-                                          int* outW,
-                                          int* outH);
-int M11_GameView_GetV1DialogMessageWidth(int choiceCount);
-int M11_GameView_GetV1DialogSingleChoiceMessageTextY(int lineCount);
-int M11_GameView_GetV1DialogMultiChoiceMessageTextY(int lineCount);
-int M11_GameView_GetV1DialogChoiceTextZoneId(int choiceCount,
-                                              int choiceIndex);
-int M11_GameView_GetV1DialogChoiceTextZone(int choiceCount,
-                                            int choiceIndex,
-                                            int* outX,
-                                            int* outY,
-                                            int* outW,
-                                            int* outH);
-int M11_GameView_GetV1DialogChoiceButtonZoneId(int choiceCount,
-                                                int choiceIndex);
-int M11_GameView_GetV1DialogChoiceHitZone(int choiceCount,
-                                           int choiceIndex,
-                                           int* outX,
-                                           int* outY,
-                                           int* outW,
-                                           int* outH);
-
 /* ── Forced-pause dialog fit/layout (Firestaff session timer) ───────
  * Not driven by ReDMCSB; this surface is the session-timer escalation
  * overlay that pops when the limit hits zero.  The layout shrinks or
