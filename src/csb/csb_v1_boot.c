@@ -403,7 +403,7 @@ static uint32_t csb_v1_boot_startup_asset_binding_hash_pc34(
     return hash ? hash : 1u;
 }
 
-int csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+static int csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
     const CSB_V1_BootProfile *profile,
     const CSB_V1_BootStartupLaunchReceipts_PC34 *launch_receipts,
     CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *out_receipt)
@@ -5063,95 +5063,6 @@ int csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34(
     /* The host consumes this immutable CSB transaction rather than adapting
      * separate render-plan, utility, HUD and capture compatibility facts. */
     return 1;
-}
-
-static int csb_v1_boot_startup_plan_has_no_fallback_pc34(
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    int i;
-    if (!plan || plan->fallback_status_visible || plan->fallback_frame_valid ||
-        plan->fallback_detail_visible || plan->fallback_runtime_detail_visible) {
-        return 0;
-    }
-    for (i = 0; i < plan->render_command_count &&
-                i < CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34; ++i) {
-        CSB_V1_StartupRenderCommandKind_PC34 kind = plan->render_commands[i].kind;
-        if (kind == CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34 ||
-            kind == CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34 ||
-            kind == CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-int csb_v1_boot_startup_runtime_presentation_from_snapshot_pc34(
-    const CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *asset_gate,
-    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
-    CSB_V1_BootStartupRuntimePresentationReceipt_PC34 *out_receipt)
-{
-    const CSB_V1_BootProfile *profile;
-
-    if (!out_receipt) {
-        return 0;
-    }
-    memset(out_receipt, 0, sizeof(*out_receipt));
-    csb_v1_boot_startup_runtime_asset_gate_receipt_init_pc34(
-        &out_receipt->asset_gate);
-    if (!asset_gate || !asset_gate->valid || !snapshot ||
-        !(profile = snapshot->boot_profile) ||
-        !csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34(
-            snapshot, &out_receipt->presentation)) {
-        return 0;
-    }
-    out_receipt->asset_gate = *asset_gate;
-    out_receipt->asset_gate_valid = 1;
-    if (snapshot->resume_available !=
-            asset_gate->session_state.entrance_resume_available ||
-        strcmp(snapshot->resume_path ? snapshot->resume_path : "",
-               asset_gate->session_state.entrance_resume_path) != 0) {
-        return 0;
-    }
-    if (snapshot->utility_overlay_active &&
-        (snapshot->utility_imported_champion_count !=
-             asset_gate->session_state.import_champion_count ||
-         snapshot->utility_selected_action_index !=
-             asset_gate->session_state.import_selected_action_index ||
-         snapshot->utility_preview_active !=
-             asset_gate->session_state.import_preview_active ||
-         strcmp(snapshot->utility_prompt ? snapshot->utility_prompt : "",
-                asset_gate->session_state.import_utility_prompt) != 0)) {
-        return 0;
-    }
-    out_receipt->render_plan_uses_owned_assets =
-        out_receipt->presentation.startup_render_plan_valid &&
-        csb_v1_boot_startup_render_plan_uses_real_assets_pc34(
-            profile, &out_receipt->presentation.startup_render_plan);
-    out_receipt->utility_plan_uses_owned_session =
-        !snapshot->utility_overlay_active ||
-        (out_receipt->presentation.utility_render_plan_valid &&
-         out_receipt->presentation.hud_menu_draw_valid &&
-         out_receipt->presentation.hud_menu_draw.kind ==
-             CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34);
-    out_receipt->door_plan_has_no_fallback =
-        out_receipt->render_plan_uses_owned_assets &&
-        csb_v1_boot_startup_plan_has_no_fallback_pc34(
-            &out_receipt->presentation.startup_render_plan);
-    if (out_receipt->render_plan_uses_owned_assets &&
-        !csb_v1_boot_startup_runtime_surfaces_materialize_pc34(
-            profile, &out_receipt->presentation.startup_render_plan,
-            &out_receipt->surfaces)) {
-        return 0;
-    }
-    out_receipt->valid = out_receipt->asset_gate_valid &&
-                         out_receipt->render_plan_uses_owned_assets &&
-                         out_receipt->utility_plan_uses_owned_session &&
-                         out_receipt->door_plan_has_no_fallback &&
-                         out_receipt->surfaces.valid ? 1 : 0;
-    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0438/F0441 publish title,
-     * door animation, and entrance input as one live sequence.  CSBWin's
-     * viewport owns the utility panel in that same session. */
-    return out_receipt->valid;
 }
 
 static int csb_v1_boot_startup_host_input_dispatch_from_gate_pc34(

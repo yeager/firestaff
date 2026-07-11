@@ -46,6 +46,15 @@ static void theron_v1_startup_media_capture_runtime_identity(
     identity->ready = 1;
 }
 
+void theron_v1_startup_media_capture_track02_identity(
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_RuntimeMediaIdentity *out_identity) {
+    theron_v1_startup_media_capture_runtime_identity(
+        hucard_rom, hucard_rom_size, md5_hex, out_identity);
+}
+
 void theron_v1_startup_media_state_receipt_init(
     Theron_StartupMediaStateReceipt *receipt) {
     if (!receipt) {
@@ -246,8 +255,7 @@ static void theron_v1_startup_media_record_atlas_route(
         *last_raw_offset = route->last_raw_offset;
         *first_user_data_offset = route->first_user_data_offset;
         *last_user_data_offset =
-            route->first_user_data_offset +
-            ((route->tile_count - 1u) * THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES);
+            route->user_data_offsets[route->tile_count - 1u];
     }
     if (route->tile_count >= min_wide_tiles &&
         route->width >= min_wide_width &&

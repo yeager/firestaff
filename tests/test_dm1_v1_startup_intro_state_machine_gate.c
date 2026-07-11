@@ -388,6 +388,7 @@ static void check_title_to_menu_boundary(void) {
     DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 receipt;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 badMedia;
+    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 titleSource;
     DM1_V1_StartupEntranceRenderAudioCommand_PC34 entranceCommand;
     EntranceCompatSourceAnimationStep entranceStep;
     EntranceCompatSourceAnimationStep doorStep;
@@ -412,6 +413,7 @@ static void check_title_to_menu_boundary(void) {
     memset(&entranceCommand, 0, sizeof(entranceCommand));
     memset(&media, 0, sizeof(media));
     memset(&badMedia, 0, sizeof(badMedia));
+    memset(&titleSource, 0, sizeof(titleSource));
     (void)V1_TitleFrontend_GetStepPalette(
         V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
         &expected_presents_palette);
@@ -459,6 +461,18 @@ static void check_title_to_menu_boundary(void) {
     expect_i("DM1 full graphics media receipt handled",
              media.handled,
              1);
+    memset(&badMedia, 0, sizeof(badMedia));
+    expect_i("DM1 full graphics media source helper accepts handled DM1",
+             dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
+                 "dm1",
+                 &badMedia) &&
+                 badMedia.handled,
+             1);
+    expect_i("DM1 full graphics media source helper rejects non-DM1 source",
+             dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
+                 "csb",
+                 &badMedia),
+             0);
     expect_i("DM1 full graphics media receipt plays swsh/title/entrance",
              media.play_swsh && media.play_title && media.play_entrance,
              1);
@@ -490,6 +504,33 @@ static void check_title_to_menu_boundary(void) {
     expect_i("DM1 full graphics media receipt title palette",
              media.title_zoom_palette,
              expected_title_palette);
+    expect_i("DM1 title runtime source receipt selects GRAPHICS.DAT C001",
+             dm1_v1_startup_title_runtime_source_receipt_pc34(
+                 "dm1", 1, 320u, 175u, 1, &titleSource) &&
+                 titleSource.handled &&
+                 titleSource.graphics_c001_usable &&
+                 titleSource.title_dat_fallback_usable &&
+                 titleSource.selected_runtime_source ==
+                     (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001 &&
+                 titleSource.require_graphics_c001_for_release_start &&
+                 !titleSource.fallback_is_visible_last_resort,
+             1);
+    expect_i("DM1 title runtime source receipt permits TITLE.DAT fallback only as last resort",
+             dm1_v1_startup_title_runtime_source_receipt_pc34(
+                 "dm1", 1, 319u, 175u, 1, &titleSource) &&
+                 titleSource.handled &&
+                 !titleSource.graphics_c001_usable &&
+                 titleSource.title_dat_fallback_usable &&
+                 titleSource.selected_runtime_source ==
+                     (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK &&
+                 !titleSource.require_graphics_c001_for_release_start &&
+                 titleSource.fallback_is_visible_last_resort,
+             1);
+    expect_i("DM1 title runtime source receipt no-ops non-DM1",
+             dm1_v1_startup_title_runtime_source_receipt_pc34(
+                 "csb", 1, 320u, 175u, 1, &titleSource) &&
+                 titleSource.handled == 0,
+             1);
     expect_u("DM1 full graphics media receipt entrance source steps",
              media.entrance_source_animation_steps,
              ENTRANCE_Compat_GetSourceAnimationStepCount());
@@ -682,13 +723,13 @@ static void check_menu_to_entrance_wait_boundary(void) {
      * be recycled as the first ENTER_DUNGEON command.
      */
     expect_i("interactive entrance does not auto-enter after title/menu handoff",
-             M11_Entrance_ShouldAutoEnterForTimeout(0, 1200, 6000u),
+             ENTRANCE_Compat_ShouldAutoEnterForTimeout(0, 1200, 6000u),
              0);
     expect_i("headless entrance waits until explicit timeout",
-             M11_Entrance_ShouldAutoEnterForTimeout(1, 1200, 1199u),
+             ENTRANCE_Compat_ShouldAutoEnterForTimeout(1, 1200, 1199u),
              0);
     expect_i("headless entrance may auto-enter after explicit timeout",
-             M11_Entrance_ShouldAutoEnterForTimeout(1, 1200, 1201u),
+             ENTRANCE_Compat_ShouldAutoEnterForTimeout(1, 1200, 1201u),
              1);
     expect_stage_after("entrance wait follows menu eligibility",
                        DM1_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34,
@@ -750,6 +791,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
         hoc_presented_publish_facts;
     DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34
         hoc_presented_publish;
+    DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34
+        hoc_presented_export;
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 hoc_enter_handoff;
     DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34
         hoc_save_capture_readiness;
@@ -757,6 +800,11 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34
         hoc_boot_full_graphics;
     DM1_V1_StartupHoCBootProbeSummary_PC34 hoc_boot_summary;
+    DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34
+        hoc_boot_expectation;
+    DM1_V1_StartupHoCBootProbeLogReceipt_PC34 hoc_boot_log;
+    DM1_V1_StartupHoCBootProbeHostFields_PC34 hoc_boot_host_fields;
+    DM1_V1_StartupHoCM12CaptureFields_PC34 hoc_m12_capture_fields;
     DM1_V1_StartupHoCBootCompleteSupportFacts_PC34
         hoc_boot_complete_facts;
     char corpus_dir_template[128];
@@ -2116,6 +2164,16 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  !hoc_release_capture_ownership.presented_capture &&
                  !hoc_release_capture_ownership.host_capture_route_matches,
              1);
+    memset(&hoc_m12_capture_fields, 0, sizeof(hoc_m12_capture_fields));
+    expect_i("DM1 M12 HoC capture fields reject missing presented capture",
+             dm1_v1_startup_hoc_m12_capture_fields_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_m12_capture_fields) &&
+                 hoc_m12_capture_fields.handled &&
+                 !hoc_m12_capture_fields.ready &&
+                 !hoc_m12_capture_fields.presented_capture_ready &&
+                 !hoc_m12_capture_fields.m12_capture_consumer_ready,
+             1);
     hoc_host_probe_facts.observed_presented_rgba_capture = 1;
     hoc_host_probe_facts.presented_capture_width = 319;
     hoc_host_probe_facts.presented_capture_height = 200;
@@ -2415,7 +2473,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_fallback_ownership.suppress_mirror_payload_things &&
                  hoc_fallback_ownership.suppress_materialized_item_payload,
              1);
-    expect_i("DM1 HoC fallback draw ownership carries M11 geometry",
+    expect_i("DM1 HoC fallback draw ownership carries runtime geometry",
              hoc_fallback_ownership.map_index ==
                      DM1_V1_ENTRANCE_MAP_INDEX_PC34 &&
                  hoc_fallback_ownership.map_width ==
@@ -3148,6 +3206,23 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership.launch_path_started_from_launcher &&
                  hoc_release_capture_ownership.launch_path_intro_not_bypassed,
              1);
+    memset(&hoc_m12_capture_fields, 0, sizeof(hoc_m12_capture_fields));
+    expect_i("DM1 owns M12 HoC capture readiness fields",
+             dm1_v1_startup_hoc_m12_capture_fields_pc34(
+                 &hoc_host_probe_facts,
+                 &hoc_m12_capture_fields) &&
+                 hoc_m12_capture_fields.handled &&
+                 hoc_m12_capture_fields.ready &&
+                 hoc_m12_capture_fields.m12_capture_consumer_ready &&
+                 hoc_m12_capture_fields.host_render_consumer_ready &&
+                 hoc_m12_capture_fields.mac_window_capture_ready &&
+                 hoc_m12_capture_fields.release_app_capture_ready &&
+                 hoc_m12_capture_fields.presented_capture_width == 320 &&
+                 hoc_m12_capture_fields.presented_capture_height == 200 &&
+                 hoc_m12_capture_fields.render_command_count == 3 &&
+                 strstr(hoc_m12_capture_fields.source_evidence,
+                        "ENTRANCE.C") != NULL,
+             1);
     memset(&hoc_save_capture_readiness, 0,
            sizeof(hoc_save_capture_readiness));
     expect_i("DM1 HoC save-capture host readiness consumes complete HoC path",
@@ -3315,6 +3390,19 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_full_graphics.complete_support
                      .complete_original_save_roundtrip_route,
              1);
+    expect_i("DM1 packages HoC boot probe summary from host facts",
+             dm1_v1_startup_hoc_boot_probe_summary_from_host_facts_pc34(
+                 &hoc_boot_complete_facts,
+                 &hoc_host_probe_facts,
+                 &hoc_boot_full_graphics,
+                 &hoc_boot_summary) &&
+                 hoc_boot_full_graphics.handled &&
+                 hoc_boot_full_graphics.ready &&
+                 hoc_boot_summary.handled &&
+                 hoc_boot_summary.complete_support_ready &&
+                 hoc_boot_summary.complete_host_app_capture_route &&
+                 hoc_boot_summary.complete_original_save_roundtrip_route,
+             1);
     expect_i("DM1 boot probe summary owns M11 HoC field interpretation",
              dm1_v1_startup_hoc_boot_probe_summary_pc34(
                  &hoc_boot_full_graphics,
@@ -3339,6 +3427,162 @@ static void check_dm1_launch_path_bypass_contract(void) {
                         "slot-seven-real-save.bin") != NULL &&
                  hoc_boot_summary.complete_original_save_roundtrip_route,
              1);
+    memset(&hoc_presented_export, 0, sizeof(hoc_presented_export));
+    expect_i("DM1 packages HoC presented capture for host export",
+             dm1_v1_startup_hoc_presented_capture_host_export_from_boot_summary_pc34(
+                 &hoc_boot_summary,
+                 &hoc_presented_export) &&
+                 hoc_presented_export.handled &&
+                 hoc_presented_export.ready &&
+                 hoc_presented_export.consumed_publish_receipt &&
+                 hoc_presented_export.presented_capture_ready &&
+                 hoc_presented_export.host_window_present &&
+                 hoc_presented_export.captured_from_mac_window &&
+                 hoc_presented_export.captured_from_release_app &&
+                 hoc_presented_export.width == 320 &&
+                 hoc_presented_export.height == 200 &&
+                 hoc_presented_export.byte_count == 320 * 200 * 4 &&
+                 hoc_presented_export.framebuffer_hash == 0x4d314843u &&
+                 hoc_presented_export.consumer_mask ==
+                     DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34 &&
+                 hoc_presented_export.chain_hash ==
+                     hoc_boot_summary.presented_capture_chain_hash,
+             1);
+    expect_i("DM1 boot probe summary owns complete-support readiness gate",
+             dm1_v1_startup_hoc_boot_probe_complete_support_ready_pc34(
+                 &hoc_boot_summary),
+             1);
+    expect_i("DM1 boot probe summary owns release-app readiness gate",
+             dm1_v1_startup_hoc_boot_probe_release_app_capture_ready_pc34(
+                 &hoc_boot_summary),
+             1);
+    memset(&hoc_boot_host_fields, 0, sizeof(hoc_boot_host_fields));
+    expect_i("DM1 boot probe owns legacy host field export",
+             dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
+                 &hoc_boot_summary,
+                 &hoc_boot_host_fields) &&
+                 hoc_boot_host_fields.handled &&
+                 hoc_boot_host_fields.full_graphics_ready &&
+                 hoc_boot_host_fields.mac_window_capture &&
+                 hoc_boot_host_fields.release_app_capture &&
+                 hoc_boot_host_fields.presented_capture_width == 320 &&
+                 hoc_boot_host_fields.presented_capture_height == 200 &&
+                 hoc_boot_host_fields.complete_original_save_roundtrip_route &&
+                 strstr(hoc_boot_host_fields.source_evidence, "REVIVE.C") !=
+                     NULL,
+             1);
+    memset(&hoc_boot_log, 0, sizeof(hoc_boot_log));
+    expect_i("DM1 boot probe owns HoC READY log fields",
+             dm1_v1_startup_hoc_boot_probe_log_receipt_pc34(
+                 &hoc_boot_summary,
+                 &hoc_boot_log) &&
+                 hoc_boot_log.handled &&
+                 hoc_boot_log.ready &&
+                 strstr(hoc_boot_log.fields,
+                        "dm1HoCMacWindowCapture=1") != NULL &&
+                 strstr(hoc_boot_log.fields,
+                        "dm1HoCReleaseAppCapture=1") != NULL &&
+                 strstr(hoc_boot_log.fields,
+                        "dm1HoCPresentedCaptureSize=320x200") != NULL &&
+                 strstr(hoc_boot_log.fields,
+                        "dm1CompleteOriginalSaveRoundtripRoute=1") != NULL &&
+                 strstr(hoc_boot_log.source_evidence, "LOADSAVE.C") != NULL,
+             1);
+    memset(&hoc_boot_expectation, 0, sizeof(hoc_boot_expectation));
+    expect_i("DM1 boot probe owns complete-support expectation diagnostic",
+             dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
+                 &hoc_boot_summary,
+                 DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_COMPLETE_SUPPORT_PC34,
+                 &hoc_boot_expectation) &&
+                 hoc_boot_expectation.handled &&
+                 hoc_boot_expectation.ready &&
+                 strstr(hoc_boot_expectation.diagnostic, "complete=1") !=
+                     NULL &&
+                 strstr(hoc_boot_expectation.diagnostic, "hostApp=1") !=
+                     NULL &&
+                 strstr(hoc_boot_expectation.source_evidence, "ENTRANCE.C") !=
+                     NULL,
+             1);
+    memset(&hoc_boot_expectation, 0, sizeof(hoc_boot_expectation));
+    expect_i("DM1 boot probe owns release-app expectation diagnostic",
+             dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
+                 &hoc_boot_summary,
+                 DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_RELEASE_APP_CAPTURE_PC34,
+                 &hoc_boot_expectation) &&
+                 hoc_boot_expectation.handled &&
+                 hoc_boot_expectation.ready &&
+                 strstr(hoc_boot_expectation.diagnostic, "release=1") != NULL &&
+                 strstr(hoc_boot_expectation.diagnostic, "presented=1") != NULL,
+             1);
+    {
+        DM1_V1_StartupHoCBootProbeSummary_PC34 partial_summary =
+            hoc_boot_summary;
+        partial_summary.complete_save_corpus_route = 0;
+        expect_i("DM1 complete-support gate rejects partial save corpus",
+                 dm1_v1_startup_hoc_boot_probe_complete_support_ready_pc34(
+                     &partial_summary),
+                 0);
+        partial_summary = hoc_boot_summary;
+        partial_summary.complete_host_app_capture_route = 0;
+        expect_i("DM1 release-app gate rejects partial host capture route",
+                 dm1_v1_startup_hoc_boot_probe_release_app_capture_ready_pc34(
+                     &partial_summary),
+                 0);
+        memset(&hoc_boot_expectation, 0, sizeof(hoc_boot_expectation));
+        expect_i("DM1 expectation diagnostic reports partial host capture",
+                 dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
+                     &partial_summary,
+                     DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_COMPLETE_SUPPORT_PC34,
+                     &hoc_boot_expectation) &&
+                     hoc_boot_expectation.handled &&
+                     !hoc_boot_expectation.ready &&
+                     strstr(hoc_boot_expectation.diagnostic, "hostApp=0") !=
+                         NULL,
+                 1);
+        memset(&hoc_boot_log, 0, sizeof(hoc_boot_log));
+        expect_i("DM1 READY log reports partial host capture",
+                 dm1_v1_startup_hoc_boot_probe_log_receipt_pc34(
+                     &partial_summary,
+                     &hoc_boot_log) &&
+                     hoc_boot_log.handled &&
+                     hoc_boot_log.ready &&
+                     strstr(hoc_boot_log.fields,
+                            "dm1CompleteHostAppCaptureRoute=0") != NULL,
+                 1);
+        memset(&hoc_boot_host_fields, 0, sizeof(hoc_boot_host_fields));
+        expect_i("DM1 legacy host export reports partial host capture",
+                 dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
+                     &partial_summary,
+                     &hoc_boot_host_fields) &&
+                     hoc_boot_host_fields.handled &&
+                     !hoc_boot_host_fields.complete_host_app_capture_route &&
+                     hoc_boot_host_fields.presented_capture_chain_ready,
+                 1);
+        memset(&hoc_boot_expectation, 0, sizeof(hoc_boot_expectation));
+        expect_i("DM1 release expectation diagnostic reports partial route",
+                 dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
+                     &partial_summary,
+                     DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_RELEASE_APP_CAPTURE_PC34,
+                     &hoc_boot_expectation) &&
+                     hoc_boot_expectation.handled &&
+                     !hoc_boot_expectation.ready &&
+                     strstr(hoc_boot_expectation.diagnostic, "route=1") !=
+                         NULL,
+                 1);
+        partial_summary = hoc_boot_summary;
+        partial_summary.release_app_capture = 0;
+        memset(&hoc_boot_expectation, 0, sizeof(hoc_boot_expectation));
+        expect_i("DM1 release expectation rejects missing release app capture",
+                 dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
+                     &partial_summary,
+                     DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_RELEASE_APP_CAPTURE_PC34,
+                     &hoc_boot_expectation) &&
+                     hoc_boot_expectation.handled &&
+                     !hoc_boot_expectation.ready &&
+                     strstr(hoc_boot_expectation.diagnostic, "release=0") !=
+                         NULL,
+                 1);
+    }
     memset(&hoc_presented_publish, 0, sizeof(hoc_presented_publish));
     expect_i("DM1 builds M12 presented publish receipt from boot summary",
              dm1_v1_startup_hoc_presented_capture_publish_from_boot_summary_pc34(
