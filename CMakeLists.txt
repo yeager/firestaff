@@ -10490,6 +10490,20 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_auto_close_on_leader_death_pc34_compat
     )
 
+    add_executable(test_dm1_v1_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat
+        tests/test_dm1_v1_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat
+        COMMAND test_dm1_v1_inventory_chest_drop_to_floor_full_leader_hand_pc34_compat
+    )
+
     # pass804 — chest close with full leader hand: the close path
     # (F0334 INVENTORY_CloseChest) when the leader hand is already
     # full must (a) close the open chest, (b) keep the leader hand
