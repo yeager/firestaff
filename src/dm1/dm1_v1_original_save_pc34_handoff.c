@@ -44,6 +44,7 @@
 #define DM1_PC34_THING_INDEX_MASK 0x03ffu
 #define DM1_PC34_THING_TYPE_SHIFT 10u
 #define DM1_PC34_THING_TYPE_MASK 0x000fu
+#define DM1_PC34_CORPUS_VERIFY_GAME_ID 0x46535631u
 
 static uint16_t read_u16_le(const uint8_t *p)
 {
@@ -1951,6 +1952,124 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
         bytes, size, game_id, out_bytes, out_capacity, out_size, out_report);
     free(bytes);
     return result;
+}
+
+static uint32_t dm1_pc34_corpus_hash_step(uint32_t hash, uint32_t value)
+{
+    hash ^= value + 0x9e3779b9u + (hash << 6) + (hash >> 2);
+    return hash ? hash : 0x811c9dc5u;
+}
+
+static void dm1_pc34_corpus_hash_path(uint32_t *hash, const char *path)
+{
+    const unsigned char *p;
+
+    if (!hash || !path) return;
+    p = (const unsigned char *)path;
+    while (*p) {
+        *hash = dm1_pc34_corpus_hash_step(*hash, (uint32_t)*p);
+        ++p;
+    }
+}
+
+int dm1_v1_original_save_pc34_verify_corpus_root(
+    const char *root,
+    DM1OriginalSavePC34CorpusVerificationReceipt *out_receipt)
+{
+    DM1OriginalSaveCorpusManifest corpus;
+    DM1OriginalSavePC34CorpusVerificationReceipt receipt;
+    uint8_t *roundtrip;
+    uint32_t hash = 0x44563143u;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.source_evidence =
+        "ReDMCSB SAVEHEAD.C F0429/F0430; LOADSAVE.C F0435/F0433; "
+        "READWRIT.C F0417/F0418/F0419";
+
+    if (!dm1_v1_original_save_classify_corpus_root(root, &corpus)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.handled = 1;
+    receipt.scan_consumed = 1;
+    receipt.scanned_file_count = corpus.scanned_file_count;
+    receipt.present_count = corpus.present_count;
+    receipt.pc34_importer_candidate_count =
+        corpus.pc34_importer_candidate_count;
+    receipt.pc34_loader_part_envelope_count =
+        corpus.pc34_loader_part_envelope_count;
+    receipt.rejected_count = corpus.rejected_count;
+    receipt.truncated_count = corpus.truncated_count;
+
+    roundtrip = (uint8_t *)malloc(SAVEGAME_PC34_MAX_FILE_SIZE);
+    if (!roundtrip) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    for (int i = 0; i < corpus.present_count &&
+                    i < (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP; ++i) {
+        const DM1OriginalSaveClassifyResult *classified = &corpus.results[i];
+        DM1OriginalSavePC34RoundtripReport report;
+        size_t roundtrip_size = 0u;
+        int rc;
+
+        hash = dm1_pc34_corpus_hash_step(hash, classified->prefix_checksum32);
+        hash = dm1_pc34_corpus_hash_step(hash, (uint32_t)classified->shape);
+        dm1_pc34_corpus_hash_path(&hash, corpus.paths[i]);
+
+        if (!classified->pc34_importer_candidate ||
+            !classified->pc34_loader_part_envelope_candidate) {
+            continue;
+        }
+
+        if (!receipt.first_pc34_path[0]) {
+            snprintf(receipt.first_pc34_path,
+                     sizeof(receipt.first_pc34_path),
+                     "%s",
+                     corpus.paths[i]);
+        }
+
+        memset(&report, 0, sizeof(report));
+        memset(roundtrip, 0, SAVEGAME_PC34_MAX_FILE_SIZE);
+        rc = dm1_v1_original_save_pc34_roundtrip_world_reload_file(
+            corpus.paths[i],
+            DM1_PC34_CORPUS_VERIFY_GAME_ID,
+            roundtrip,
+            SAVEGAME_PC34_MAX_FILE_SIZE,
+            &roundtrip_size,
+            &report);
+        if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+            roundtrip_size > SAVEGAME_PC34_DM_SAVE_HEADER_SIZE &&
+            report.core_state_matches) {
+            receipt.roundtrip_verified_count++;
+            hash = dm1_pc34_corpus_hash_step(hash, (uint32_t)roundtrip_size);
+            hash = dm1_pc34_corpus_hash_step(hash, report.exported_game_time);
+            hash = dm1_pc34_corpus_hash_step(
+                hash, (uint32_t)report.exported_event_count);
+        } else {
+            receipt.roundtrip_failed_count++;
+            hash = dm1_pc34_corpus_hash_step(hash, 0xBAD50000u |
+                                                   (uint32_t)(-rc & 0xffff));
+        }
+    }
+
+    free(roundtrip);
+    receipt.ready =
+        receipt.scan_consumed &&
+        receipt.pc34_loader_part_envelope_count > 0 &&
+        receipt.roundtrip_verified_count ==
+            receipt.pc34_loader_part_envelope_count &&
+        receipt.roundtrip_failed_count == 0 &&
+        receipt.truncated_count == 0;
+    receipt.corpus_hash = dm1_pc34_corpus_hash_step(
+        hash, (uint32_t)receipt.roundtrip_verified_count);
+    *out_receipt = receipt;
+    return 1;
 }
 
 const char *dm1_v1_original_save_pc34_handoff_result_name(int result)

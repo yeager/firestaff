@@ -132,6 +132,23 @@ typedef struct {
     int core_state_matches;
 } DM1OriginalSavePC34RoundtripReport;
 
+typedef struct {
+    int handled;
+    int ready;
+    int scan_consumed;
+    int scanned_file_count;
+    int present_count;
+    int pc34_importer_candidate_count;
+    int pc34_loader_part_envelope_count;
+    int roundtrip_verified_count;
+    int roundtrip_failed_count;
+    int rejected_count;
+    int truncated_count;
+    uint32_t corpus_hash;
+    char first_pc34_path[DM1_ORIGINAL_SAVE_PATH_MAX];
+    const char *source_evidence;
+} DM1OriginalSavePC34CorpusVerificationReceipt;
+
 /* Transient HoC state is not part of ReDMCSB's save parts.  Firestaff may
  * persist it beside a quicksave, but it must be re-materialized only after
  * F0435 has restored PARTY and the dungeon. */
@@ -263,6 +280,13 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
     size_t out_capacity,
     size_t *out_size,
     DM1OriginalSavePC34RoundtripReport *out_report);
+
+/* Scan a user save corpus by bytes, then promote only PC34 candidates whose
+ * ReDMCSB F0435 load path survives Firestaff export and reload verification.
+ */
+int dm1_v1_original_save_pc34_verify_corpus_root(
+    const char *root,
+    DM1OriginalSavePC34CorpusVerificationReceipt *out_receipt);
 
 /* Builds a bounded ReDMCSB PC34-shaped original-save byte stream for
  * importer/export handoff verification. This is not a full user save
