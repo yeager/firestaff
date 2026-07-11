@@ -1257,13 +1257,17 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     }
     titleGraphic = M11_AssetLoader_Load(&gameView->assetLoader, 1U);
     {
-        V1_TitleFrontendRuntimeSourceDecision sourceDecision =
-            V1_TitleFrontend_SelectRuntimeSource(
+        DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 sourceReceipt;
+        if (!dm1_v1_startup_title_runtime_source_receipt_pc34(
+                "dm1",
                 titleGraphic != NULL,
                 titleGraphic ? titleGraphic->width : 0U,
                 titleGraphic ? titleGraphic->height : 0U,
-                0);
-        if (sourceDecision.source != V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001) {
+                0,
+                &sourceReceipt) ||
+            !sourceReceipt.handled ||
+            sourceReceipt.selected_runtime_source !=
+                (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001) {
             return 0;
         }
     }

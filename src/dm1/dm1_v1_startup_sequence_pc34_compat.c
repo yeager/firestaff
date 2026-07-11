@@ -4007,6 +4007,52 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_title_runtime_source_receipt_pc34(
+    const char* source_id,
+    int graphics_c001_candidate_available,
+    unsigned int graphics_c001_width,
+    unsigned int graphics_c001_height,
+    int title_dat_fallback_available,
+    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34* out_receipt) {
+    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 receipt;
+    V1_TitleFrontendRuntimeSourceDecision decision;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    decision = V1_TitleFrontend_SelectRuntimeSource(
+        graphics_c001_candidate_available,
+        graphics_c001_width,
+        graphics_c001_height,
+        title_dat_fallback_available);
+
+    receipt.handled = 1;
+    receipt.graphics_c001_usable = decision.graphicsC001Usable ? 1 : 0;
+    receipt.title_dat_fallback_usable =
+        decision.titleDatFallbackUsable ? 1 : 0;
+    receipt.selected_runtime_source = (int)decision.source;
+    receipt.require_graphics_c001_for_release_start =
+        (decision.source == V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001)
+            ? 1
+            : 0;
+    receipt.fallback_is_visible_last_resort =
+        (decision.source == V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK)
+            ? 1
+            : 0;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 309-324 loads C001_GRAPHIC_TITLE "
+        "before PRESENTS; TITLE.DAT is Firestaff's visible fallback only "
+        "when C001 is unavailable or too small.";
+    *out_receipt = receipt;
+    return 1;
+}
+
 unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
     int entrance_event_kind,

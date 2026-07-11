@@ -75,6 +75,16 @@ typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupFullGraphicsMediaReceipt_PC34;
 
+typedef struct DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 {
+    int handled;
+    int graphics_c001_usable;
+    int title_dat_fallback_usable;
+    int selected_runtime_source;
+    int require_graphics_c001_for_release_start;
+    int fallback_is_visible_last_resort;
+    const char* source_evidence;
+} DM1_V1_StartupTitleRuntimeSourceReceipt_PC34;
+
 typedef enum DM1_V1_StartupEntranceRenderKind_PC34 {
     DM1_V1_STARTUP_ENTRANCE_RENDER_NONE_PC34 = 0,
     DM1_V1_STARTUP_ENTRANCE_RENDER_DUNGEON_FRAME_PC34 = 1,
@@ -1427,6 +1437,13 @@ int dm1_v1_startup_title_menu_eligibility_receipt_pc34(
 int dm1_v1_startup_full_graphics_media_receipt_pc34(
     const char* source_id,
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt);
+int dm1_v1_startup_title_runtime_source_receipt_pc34(
+    const char* source_id,
+    int graphics_c001_candidate_available,
+    unsigned int graphics_c001_width,
+    unsigned int graphics_c001_height,
+    int title_dat_fallback_available,
+    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34* out_receipt);
 unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
     int entrance_event_kind,
