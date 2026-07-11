@@ -43,6 +43,7 @@
 
 #include "m11_game_view.h"
 #include "dm1_v1_endgame_layout_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "firestaff_accessibility.h"
 #include "session_timer_runtime.h"
 
@@ -493,6 +494,7 @@ static void m11_ax_emit_session_timer_overlay_zones(
 /* -- Inventory panel zones ----------------------------------------- */
 
 static void m11_ax_emit_inventory_panel_zones(const M11_GameViewState* state) {
+    DM1_V1_LayoutZoneRectPc34 panelRect;
     int panelX, panelY, panelW, panelH;
     int inventorySlotCount;
     int i;
@@ -501,9 +503,14 @@ static void m11_ax_emit_inventory_panel_zones(const M11_GameViewState* state) {
     if (!state) return;
 
     /* Inventory panel region - ReDMCSB layout-696 C101_ZONE_PANEL. */
-    if (!M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
+    if (!dm1_v1_inventory_panel_zone_id_pc34()) {
         return;
     }
+    panelRect = dm1_v1_inventory_panel_rect_pc34();
+    panelX = panelRect.x;
+    panelY = panelRect.y;
+    panelW = panelRect.w;
+    panelH = panelRect.h;
     e = m11_ax_begin(FS_AX_REGION,
                      M11_AX_VIEWPORT_X + panelX,
                      M11_AX_VIEWPORT_Y + panelY,
@@ -629,18 +636,13 @@ static void m11_ax_emit_inventory_panel_zones(const M11_GameViewState* state) {
      * is active). Only emit when v1OpenChestThing != THING_NONE. */
     if (state->v1OpenChestThing != THING_NONE) {
         int chestOrdinal;
-        int chestPanelX = 0, chestPanelY = 0;
-        int chestPanelW = 0, chestPanelH = 0;
-        if (M11_GameView_GetV1InventoryPanelZone(&chestPanelX, &chestPanelY,
-                                                 &chestPanelW, &chestPanelH)) {
-            e = m11_ax_begin(FS_AX_REGION,
-                             M11_AX_VIEWPORT_X + chestPanelX,
-                             M11_AX_VIEWPORT_Y + chestPanelY,
-                             chestPanelW, chestPanelH, 1);
-            if (e) {
-                snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "CHEST_PANEL");
-                snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN, "Open Chest");
-            }
+        e = m11_ax_begin(FS_AX_REGION,
+                         M11_AX_VIEWPORT_X + panelX,
+                         M11_AX_VIEWPORT_Y + panelY,
+                         panelW, panelH, 1);
+        if (e) {
+            snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "CHEST_PANEL");
+            snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN, "Open Chest");
         }
         for (chestOrdinal = 0; chestOrdinal < 8; ++chestOrdinal) {
             int zx = 0, zy = 0, zw = 0, zh = 0;
@@ -661,7 +663,13 @@ static void m11_ax_emit_inventory_panel_zones(const M11_GameViewState* state) {
         /* Arrow / eye button at the top of the chest panel. */
         {
             int ax = 0, ay = 0, aw = 0, ah = 0;
-            if (M11_GameView_GetV1ArrowOrEyeZone(&ax, &ay, &aw, &ah)) {
+            if (dm1_v1_arrow_or_eye_zone_id_pc34()) {
+                DM1_V1_LayoutZoneRectPc34 arrowRect =
+                    dm1_v1_arrow_or_eye_rect_pc34();
+                ax = arrowRect.x;
+                ay = arrowRect.y;
+                aw = arrowRect.w;
+                ah = arrowRect.h;
                 e = m11_ax_begin(FS_AX_BUTTON,
                                  M11_AX_VIEWPORT_X + ax,
                                  M11_AX_VIEWPORT_Y + ay,
@@ -759,6 +767,7 @@ static void m11_ax_emit_dialog_overlay_zones(const M11_GameViewState* state) {
 /* -- Candidate mirror (entrance) panel zones ----------------------- */
 
 static void m11_ax_emit_entrance_mirror_zones(const M11_GameViewState* state) {
+    DM1_V1_LayoutZoneRectPc34 panelRect;
     int zx = 0, zy = 0, zw = 0, zh = 0;
     FS_AX_Element* e;
 
@@ -766,9 +775,14 @@ static void m11_ax_emit_entrance_mirror_zones(const M11_GameViewState* state) {
 
     /* Panel region (ReDMCSB layout-696 C101_ZONE_PANEL - same panel
      * the inventory uses for the resurrect/reincarnate overlay). */
-    if (!M11_GameView_GetV1InventoryPanelZone(&zx, &zy, &zw, &zh)) {
+    if (!dm1_v1_inventory_panel_zone_id_pc34()) {
         return;
     }
+    panelRect = dm1_v1_inventory_panel_rect_pc34();
+    zx = panelRect.x;
+    zy = panelRect.y;
+    zw = panelRect.w;
+    zh = panelRect.h;
     e = m11_ax_begin(FS_AX_REGION,
                      M11_AX_VIEWPORT_X + zx,
                      M11_AX_VIEWPORT_Y + zy,
