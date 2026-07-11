@@ -12,6 +12,30 @@ typedef struct {
     const char *md5_hex;
 } Theron_V1StartupRuntimeLevelLoadContext;
 
+static void theron_v1_startup_copy_object_anchor_receipt(
+    int out_status[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint32_t out_hash[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const int in_status[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint32_t in_hash[THERON_TRACK02_MAX_BANK_ANCHORS]);
+
+static void theron_v1_startup_copy_level_anchor_receipt_u64(
+    int out_status[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint64_t out_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint64_t out_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    int out_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint16_t out_width[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint16_t out_height[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint32_t out_seed[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint16_t out_level_index[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const int in_status[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint64_t in_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint64_t in_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const int in_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint16_t in_width[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint16_t in_height[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint32_t in_seed[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint16_t in_level_index[THERON_TRACK02_MAX_BANK_ANCHORS]);
+
 static int theron_v1_startup_runtime_level_load_callback(
     Theron_V1_World *world,
     Theron_DungeonID dungeon_id,
@@ -478,6 +502,40 @@ int theron_v1_startup_host_receipt_from_runtime_entry_apply(
         apply_receipt->track02_media_forcefield_first_user_data_offset;
     out_receipt->track02_media_forcefield_last_user_data_offset =
         apply_receipt->track02_media_forcefield_last_user_data_offset;
+    out_receipt->object_table_blocked_anchor_mask =
+        apply_receipt->object_table_blocked_anchor_mask;
+    out_receipt->object_table_blocked_anchor_count =
+        apply_receipt->object_table_blocked_anchor_count;
+    out_receipt->nonstartup_level_blocked_anchor_mask =
+        apply_receipt->nonstartup_level_blocked_anchor_mask;
+    out_receipt->nonstartup_level_blocked_anchor_count =
+        apply_receipt->nonstartup_level_blocked_anchor_count;
+    out_receipt->startup_level_blocked_anchor_mask =
+        apply_receipt->startup_level_blocked_anchor_mask;
+    out_receipt->startup_level_blocked_anchor_count =
+        apply_receipt->startup_level_blocked_anchor_count;
+    theron_v1_startup_copy_object_anchor_receipt(
+        out_receipt->object_table_anchor_binding_status,
+        out_receipt->object_table_anchor_hash,
+        apply_receipt->object_table_anchor_binding_status,
+        apply_receipt->object_table_anchor_hash);
+    theron_v1_startup_copy_level_anchor_receipt_u64(
+        out_receipt->startup_level_anchor_status,
+        out_receipt->startup_level_anchor_raw_offsets,
+        out_receipt->startup_level_anchor_user_data_offsets,
+        out_receipt->startup_level_anchor_user_data_valid,
+        out_receipt->startup_level_anchor_width,
+        out_receipt->startup_level_anchor_height,
+        out_receipt->startup_level_anchor_seed,
+        out_receipt->startup_level_anchor_level_index,
+        apply_receipt->startup_level_anchor_status,
+        apply_receipt->startup_level_anchor_raw_offsets,
+        apply_receipt->startup_level_anchor_user_data_offsets,
+        apply_receipt->startup_level_anchor_user_data_valid,
+        apply_receipt->startup_level_anchor_width,
+        apply_receipt->startup_level_anchor_height,
+        apply_receipt->startup_level_anchor_seed,
+        apply_receipt->startup_level_anchor_level_index);
     out_receipt->log_first_line = apply_receipt->log_first_line;
     out_receipt->log_receipt = apply_receipt->log_receipt ? 1 : 0;
     return 1;
@@ -547,10 +605,17 @@ static void theron_v1_startup_runtime_entry_capture_result(
 static void theron_v1_startup_runtime_entry_capture_failure_route(
     const char *runtime_receipt,
     int verified_track02_request,
+    const Theron_StartupMediaStateReceipt *media_receipt,
     Theron_V1StartupRuntimeEntryResult *out_result) {
 
     if (!out_result) {
         return;
+    }
+    if (verified_track02_request && media_receipt &&
+        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            media_receipt)) {
+        out_result->track02_media_route = 1;
+        out_result->track02_media = *media_receipt;
     }
     if (verified_track02_request) {
         out_result->runtime_level_source =
@@ -594,6 +659,108 @@ void theron_v1_startup_all_dungeon_route_receipt_init(
         return;
     }
     memset(receipt, 0, sizeof(*receipt));
+}
+
+static void theron_v1_startup_copy_object_anchor_receipt(
+    int out_status[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint32_t out_hash[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const int in_status[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint32_t in_hash[THERON_TRACK02_MAX_BANK_ANCHORS]) {
+
+    memcpy(out_status,
+           in_status,
+           sizeof(int) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_hash,
+           in_hash,
+           sizeof(uint32_t) * THERON_TRACK02_MAX_BANK_ANCHORS);
+}
+
+static void theron_v1_startup_copy_level_anchor_receipt(
+    int out_status[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint64_t out_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint64_t out_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    int out_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint16_t out_width[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint16_t out_height[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint32_t out_seed[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint16_t out_level_index[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const int in_status[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const size_t in_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const size_t in_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const int in_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint16_t in_width[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint16_t in_height[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint32_t in_seed[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint16_t in_level_index[THERON_TRACK02_MAX_BANK_ANCHORS]) {
+
+    size_t i;
+
+    memcpy(out_status,
+           in_status,
+           sizeof(int) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_user_data_valid,
+           in_user_data_valid,
+           sizeof(int) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_width,
+           in_width,
+           sizeof(uint16_t) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_height,
+           in_height,
+           sizeof(uint16_t) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_seed,
+           in_seed,
+           sizeof(uint32_t) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_level_index,
+           in_level_index,
+           sizeof(uint16_t) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    for (i = 0u; i < THERON_TRACK02_MAX_BANK_ANCHORS; ++i) {
+        out_raw_offsets[i] = (uint64_t)in_raw_offsets[i];
+        out_user_data_offsets[i] = (uint64_t)in_user_data_offsets[i];
+    }
+}
+
+static void theron_v1_startup_copy_level_anchor_receipt_u64(
+    int out_status[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint64_t out_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint64_t out_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    int out_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint16_t out_width[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint16_t out_height[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint32_t out_seed[THERON_TRACK02_MAX_BANK_ANCHORS],
+    uint16_t out_level_index[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const int in_status[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint64_t in_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint64_t in_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const int in_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint16_t in_width[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint16_t in_height[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint32_t in_seed[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint16_t in_level_index[THERON_TRACK02_MAX_BANK_ANCHORS]) {
+
+    memcpy(out_status,
+           in_status,
+           sizeof(int) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_raw_offsets,
+           in_raw_offsets,
+           sizeof(uint64_t) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_user_data_offsets,
+           in_user_data_offsets,
+           sizeof(uint64_t) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_user_data_valid,
+           in_user_data_valid,
+           sizeof(int) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_width,
+           in_width,
+           sizeof(uint16_t) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_height,
+           in_height,
+           sizeof(uint16_t) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_seed,
+           in_seed,
+           sizeof(uint32_t) * THERON_TRACK02_MAX_BANK_ANCHORS);
+    memcpy(out_level_index,
+           in_level_index,
+           sizeof(uint16_t) * THERON_TRACK02_MAX_BANK_ANCHORS);
 }
 
 static int theron_v1_startup_runtime_level_semantics_exact(
@@ -730,6 +897,11 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
             (int)object_table_route.object_table_blocked_anchor_count;
         out_receipt->object_table_route_hash =
             object_table_route.route_hash;
+        theron_v1_startup_copy_object_anchor_receipt(
+            out_receipt->object_table_anchor_binding_status,
+            out_receipt->object_table_anchor_hash,
+            object_table_route.object_table_anchor_binding_status,
+            object_table_route.object_table_anchor_hash);
         hash ^= object_table_route.route_hash;
         hash *= 16777619u;
     }
@@ -751,6 +923,23 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         out_receipt->startup_level_blocked_anchor_count =
             (int)level_route.startup_level_blocked_anchor_count;
         out_receipt->level_route_hash = level_route.route_hash;
+        theron_v1_startup_copy_level_anchor_receipt(
+            out_receipt->startup_level_anchor_status,
+            out_receipt->startup_level_anchor_raw_offsets,
+            out_receipt->startup_level_anchor_user_data_offsets,
+            out_receipt->startup_level_anchor_user_data_valid,
+            out_receipt->startup_level_anchor_width,
+            out_receipt->startup_level_anchor_height,
+            out_receipt->startup_level_anchor_seed,
+            out_receipt->startup_level_anchor_level_index,
+            level_route.startup_level_anchor_status,
+            level_route.startup_level_anchor_raw_offsets,
+            level_route.startup_level_anchor_user_data_offsets,
+            level_route.startup_level_anchor_user_data_valid,
+            level_route.startup_level_anchor_width,
+            level_route.startup_level_anchor_height,
+            level_route.startup_level_anchor_seed,
+            level_route.startup_level_anchor_level_index);
         hash ^= level_route.route_hash;
         hash *= 16777619u;
     }
@@ -906,6 +1095,7 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         }
         theron_v1_startup_runtime_entry_capture_failure_route(receipt,
                                                               verified_track02_request,
+                                                              &media_receipt,
                                                               out_result);
         return 0;
     }
@@ -953,6 +1143,28 @@ int theron_v1_startup_runtime_enter_from_forcefield(
             out_result->object_table_route_hash =
                 all_routes.object_table_route_hash;
             out_result->level_route_hash = all_routes.level_route_hash;
+            theron_v1_startup_copy_object_anchor_receipt(
+                out_result->object_table_anchor_binding_status,
+                out_result->object_table_anchor_hash,
+                all_routes.object_table_anchor_binding_status,
+                all_routes.object_table_anchor_hash);
+            theron_v1_startup_copy_level_anchor_receipt_u64(
+                out_result->startup_level_anchor_status,
+                out_result->startup_level_anchor_raw_offsets,
+                out_result->startup_level_anchor_user_data_offsets,
+                out_result->startup_level_anchor_user_data_valid,
+                out_result->startup_level_anchor_width,
+                out_result->startup_level_anchor_height,
+                out_result->startup_level_anchor_seed,
+                out_result->startup_level_anchor_level_index,
+                all_routes.startup_level_anchor_status,
+                all_routes.startup_level_anchor_raw_offsets,
+                all_routes.startup_level_anchor_user_data_offsets,
+                all_routes.startup_level_anchor_user_data_valid,
+                all_routes.startup_level_anchor_width,
+                all_routes.startup_level_anchor_height,
+                all_routes.startup_level_anchor_seed,
+                all_routes.startup_level_anchor_level_index);
         }
     }
     return 1;
@@ -1027,6 +1239,28 @@ int theron_v1_startup_runtime_entry_apply_receipt(
         result->startup_level_blocked_anchor_count;
     out_receipt->object_table_route_hash = result->object_table_route_hash;
     out_receipt->level_route_hash = result->level_route_hash;
+    theron_v1_startup_copy_object_anchor_receipt(
+        out_receipt->object_table_anchor_binding_status,
+        out_receipt->object_table_anchor_hash,
+        result->object_table_anchor_binding_status,
+        result->object_table_anchor_hash);
+    theron_v1_startup_copy_level_anchor_receipt_u64(
+        out_receipt->startup_level_anchor_status,
+        out_receipt->startup_level_anchor_raw_offsets,
+        out_receipt->startup_level_anchor_user_data_offsets,
+        out_receipt->startup_level_anchor_user_data_valid,
+        out_receipt->startup_level_anchor_width,
+        out_receipt->startup_level_anchor_height,
+        out_receipt->startup_level_anchor_seed,
+        out_receipt->startup_level_anchor_level_index,
+        result->startup_level_anchor_status,
+        result->startup_level_anchor_raw_offsets,
+        result->startup_level_anchor_user_data_offsets,
+        result->startup_level_anchor_user_data_valid,
+        result->startup_level_anchor_width,
+        result->startup_level_anchor_height,
+        result->startup_level_anchor_seed,
+        result->startup_level_anchor_level_index);
     if (runtime_receipt && runtime_receipt[0]) {
         snprintf(out_receipt->inspect_detail,
                  sizeof(out_receipt->inspect_detail),
@@ -1117,6 +1351,28 @@ static int theron_v1_startup_runtime_entry_failure_apply_receipt(
         out_receipt->object_table_route_hash =
             result->object_table_route_hash;
         out_receipt->level_route_hash = result->level_route_hash;
+        theron_v1_startup_copy_object_anchor_receipt(
+            out_receipt->object_table_anchor_binding_status,
+            out_receipt->object_table_anchor_hash,
+            result->object_table_anchor_binding_status,
+            result->object_table_anchor_hash);
+        theron_v1_startup_copy_level_anchor_receipt_u64(
+            out_receipt->startup_level_anchor_status,
+            out_receipt->startup_level_anchor_raw_offsets,
+            out_receipt->startup_level_anchor_user_data_offsets,
+            out_receipt->startup_level_anchor_user_data_valid,
+            out_receipt->startup_level_anchor_width,
+            out_receipt->startup_level_anchor_height,
+            out_receipt->startup_level_anchor_seed,
+            out_receipt->startup_level_anchor_level_index,
+            result->startup_level_anchor_status,
+            result->startup_level_anchor_raw_offsets,
+            result->startup_level_anchor_user_data_offsets,
+            result->startup_level_anchor_user_data_valid,
+            result->startup_level_anchor_width,
+            result->startup_level_anchor_height,
+            result->startup_level_anchor_seed,
+            result->startup_level_anchor_level_index);
     }
     snprintf(out_receipt->inspect_detail,
              sizeof(out_receipt->inspect_detail),
@@ -1167,6 +1423,90 @@ int theron_v1_startup_runtime_entry_state_receipt_from_result(
         result->structured_runtime_route;
     out_receipt->runtime_receipt_text_route =
         result->runtime_receipt_text_route;
+    out_receipt->runtime_track02_media_route =
+        result->track02_media_route;
+    out_receipt->runtime_track02_media_route_mask =
+        result->track02_media.startup_bitmap_atlas_route_mask;
+    out_receipt->runtime_track02_media_checksum =
+        result->track02_media.startup_bitmap_atlas_checksum;
+    out_receipt->runtime_track02_media_title_first_raw_offset =
+        (uint64_t)result->track02_media.startup_bitmap_title_first_raw_offset;
+    out_receipt->runtime_track02_media_title_last_raw_offset =
+        (uint64_t)result->track02_media.startup_bitmap_title_last_raw_offset;
+    out_receipt->runtime_track02_media_title_first_user_data_offset =
+        (uint64_t)
+            result->track02_media.startup_bitmap_title_first_user_data_offset;
+    out_receipt->runtime_track02_media_title_last_user_data_offset =
+        (uint64_t)
+            result->track02_media.startup_bitmap_title_last_user_data_offset;
+    out_receipt->runtime_track02_media_stage_first_raw_offset =
+        (uint64_t)result->track02_media.startup_bitmap_stage_first_raw_offset;
+    out_receipt->runtime_track02_media_stage_last_raw_offset =
+        (uint64_t)result->track02_media.startup_bitmap_stage_last_raw_offset;
+    out_receipt->runtime_track02_media_stage_first_user_data_offset =
+        (uint64_t)
+            result->track02_media.startup_bitmap_stage_first_user_data_offset;
+    out_receipt->runtime_track02_media_stage_last_user_data_offset =
+        (uint64_t)
+            result->track02_media.startup_bitmap_stage_last_user_data_offset;
+    out_receipt->runtime_track02_media_soul_room_first_raw_offset =
+        (uint64_t)
+            result->track02_media.startup_bitmap_soul_room_first_raw_offset;
+    out_receipt->runtime_track02_media_soul_room_last_raw_offset =
+        (uint64_t)
+            result->track02_media.startup_bitmap_soul_room_last_raw_offset;
+    out_receipt->runtime_track02_media_soul_room_first_user_data_offset =
+        (uint64_t)result->track02_media
+            .startup_bitmap_soul_room_first_user_data_offset;
+    out_receipt->runtime_track02_media_soul_room_last_user_data_offset =
+        (uint64_t)result->track02_media
+            .startup_bitmap_soul_room_last_user_data_offset;
+    out_receipt->runtime_track02_media_forcefield_first_raw_offset =
+        (uint64_t)
+            result->track02_media.startup_bitmap_forcefield_first_raw_offset;
+    out_receipt->runtime_track02_media_forcefield_last_raw_offset =
+        (uint64_t)
+            result->track02_media.startup_bitmap_forcefield_last_raw_offset;
+    out_receipt->runtime_track02_media_forcefield_first_user_data_offset =
+        (uint64_t)result->track02_media
+            .startup_bitmap_forcefield_first_user_data_offset;
+    out_receipt->runtime_track02_media_forcefield_last_user_data_offset =
+        (uint64_t)result->track02_media
+            .startup_bitmap_forcefield_last_user_data_offset;
+    out_receipt->runtime_object_table_blocked_anchor_mask =
+        result->object_table_blocked_anchor_mask;
+    out_receipt->runtime_object_table_blocked_anchor_count =
+        result->object_table_blocked_anchor_count;
+    out_receipt->runtime_nonstartup_level_blocked_anchor_mask =
+        result->nonstartup_level_blocked_anchor_mask;
+    out_receipt->runtime_nonstartup_level_blocked_anchor_count =
+        result->nonstartup_level_blocked_anchor_count;
+    out_receipt->runtime_startup_level_blocked_anchor_mask =
+        result->startup_level_blocked_anchor_mask;
+    out_receipt->runtime_startup_level_blocked_anchor_count =
+        result->startup_level_blocked_anchor_count;
+    theron_v1_startup_copy_object_anchor_receipt(
+        out_receipt->runtime_object_table_anchor_binding_status,
+        out_receipt->runtime_object_table_anchor_hash,
+        result->object_table_anchor_binding_status,
+        result->object_table_anchor_hash);
+    theron_v1_startup_copy_level_anchor_receipt_u64(
+        out_receipt->runtime_startup_level_anchor_status,
+        out_receipt->runtime_startup_level_anchor_raw_offsets,
+        out_receipt->runtime_startup_level_anchor_user_data_offsets,
+        out_receipt->runtime_startup_level_anchor_user_data_valid,
+        out_receipt->runtime_startup_level_anchor_width,
+        out_receipt->runtime_startup_level_anchor_height,
+        out_receipt->runtime_startup_level_anchor_seed,
+        out_receipt->runtime_startup_level_anchor_level_index,
+        result->startup_level_anchor_status,
+        result->startup_level_anchor_raw_offsets,
+        result->startup_level_anchor_user_data_offsets,
+        result->startup_level_anchor_user_data_valid,
+        result->startup_level_anchor_width,
+        result->startup_level_anchor_height,
+        result->startup_level_anchor_seed,
+        result->startup_level_anchor_level_index);
     return 1;
 }
 
@@ -1218,6 +1558,7 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
         result->result = THERON_STARTUP_ERR_LEVEL_LOAD;
         theron_v1_startup_runtime_entry_capture_failure_route(receipt,
                                                               verified_track02_request,
+                                                              &media_receipt,
                                                               result);
         theron_v1_startup_runtime_entry_failure_apply_receipt(
             plan,
@@ -1273,6 +1614,28 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
             result->object_table_route_hash =
                 all_routes.object_table_route_hash;
             result->level_route_hash = all_routes.level_route_hash;
+            theron_v1_startup_copy_object_anchor_receipt(
+                result->object_table_anchor_binding_status,
+                result->object_table_anchor_hash,
+                all_routes.object_table_anchor_binding_status,
+                all_routes.object_table_anchor_hash);
+            theron_v1_startup_copy_level_anchor_receipt_u64(
+                result->startup_level_anchor_status,
+                result->startup_level_anchor_raw_offsets,
+                result->startup_level_anchor_user_data_offsets,
+                result->startup_level_anchor_user_data_valid,
+                result->startup_level_anchor_width,
+                result->startup_level_anchor_height,
+                result->startup_level_anchor_seed,
+                result->startup_level_anchor_level_index,
+                all_routes.startup_level_anchor_status,
+                all_routes.startup_level_anchor_raw_offsets,
+                all_routes.startup_level_anchor_user_data_offsets,
+                all_routes.startup_level_anchor_user_data_valid,
+                all_routes.startup_level_anchor_width,
+                all_routes.startup_level_anchor_height,
+                all_routes.startup_level_anchor_seed,
+                all_routes.startup_level_anchor_level_index);
         }
     }
     theron_v1_startup_flow_init(&flow);
