@@ -2625,6 +2625,9 @@ static void test_startup_session_facts_wrappers(void) {
     semantic_snapshot.no_fallback_semantic_role_mask =
         (1u << THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE) |
         (1u << THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE);
+    semantic_snapshot.track02_state_predicates_consumed = 1;
+    semantic_snapshot.track02_bitmap_routes_complete = 1;
+    semantic_snapshot.track02_no_fallback_runtime_route_ready = 1;
     semantic_snapshot.object_table_no_fallback_ready = 1;
     semantic_snapshot.object_table_blocked_anchor_mask = 0x07u;
     semantic_snapshot.object_table_blocked_anchor_count = 3;
@@ -2948,6 +2951,9 @@ static void test_startup_session_facts_wrappers(void) {
     semantic_level_snapshot.exact_object_semantics_ready = 1;
     semantic_level_snapshot.no_fallback_semantic_role_mask =
         semantic_snapshot.no_fallback_semantic_role_mask;
+    semantic_level_snapshot.track02_state_predicates_consumed = 1;
+    semantic_level_snapshot.track02_bitmap_routes_complete = 1;
+    semantic_level_snapshot.track02_no_fallback_runtime_route_ready = 1;
     semantic_level_snapshot.object_table_no_fallback_ready = 1;
     semantic_level_snapshot.object_table_blocked_anchor_mask = 0x07u;
     semantic_level_snapshot.object_table_blocked_anchor_count = 3;
@@ -3073,7 +3079,7 @@ static void test_startup_session_facts_wrappers(void) {
                     strcmp(full_start_receipt.status,
                            "FORCEFIELD RUNTIME HANDOFF") == 0,
                 "boot runtime-route full-start receipt proves Track02 semantic level 2 no-fallback handoff");
-    expect_true(theron_v1_boot_startup_ui_caller_from_runtime_route_with_media_receipt(
+    expect_true(!theron_v1_boot_startup_ui_caller_from_runtime_route_with_media_receipt(
                     &ui_caller_receipt,
                     &media_receipt,
                     &media_graphics_executor,
@@ -3101,7 +3107,7 @@ static void test_startup_session_facts_wrappers(void) {
                     -1,
                     -1,
                     -1) &&
-                    ui_caller_receipt.ui_callers_ready &&
+                    !ui_caller_receipt.ui_callers_ready &&
                     ui_caller_receipt.runtime_level == 2 &&
                     ui_caller_receipt.runtime_track02_semantic_handoff &&
                     !ui_caller_receipt.semantic_first_level_ready &&
@@ -3114,7 +3120,7 @@ static void test_startup_session_facts_wrappers(void) {
                     !ui_caller_receipt.raw_prompt_roster_required &&
                     !ui_caller_receipt.raw_session_rebuild_required &&
                     !ui_caller_receipt.raw_graphics_plan_consumer_required,
-                "boot UI caller wrapper covers Track02 semantic nonzero level without fallback visuals");
+                "boot UI caller wrapper carries Track02 semantic nonzero level without fallback visuals but waits for all-dungeon proof");
     world.current_level = 0;
     save_resume_snapshot = media_snapshot;
     save_resume_snapshot.runtime_level_source =
@@ -4516,6 +4522,11 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
     static const size_t descriptor_offsets[3] = {
         0x70be06u, 0x70e2c6u, 0x710904u
     };
+    static const size_t post_descriptor_candidate_offsets[3] = {
+        (0x70be06u - 0x1584u) + 0x1820u,
+        (0x70e2c6u - 0x1584u) + 0x1820u,
+        (0x710904u - 0x1584u) + 0x1820u
+    };
     static const size_t span_offsets[3] = {
         0x2d53e0u, 0x47d040u, 0x712840u
     };
@@ -4564,6 +4575,10 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
         for (size_t i = sizeof(post_boundary_span); i < 92u; ++i) {
             track02[span_offsets[anchor] + i] =
                 (uint8_t)(0x31u + ((anchor * 17u + i * 7u) % 0xcau));
+        }
+        for (size_t i = 0u; i < 16u; ++i) {
+            track02[post_descriptor_candidate_offsets[anchor] + i] =
+                (uint8_t)(0x41u + anchor + i);
         }
     }
     for (size_t i = 0u; i < THERON_TRACK02_DUNGEON_COUNT; ++i) {
@@ -4662,8 +4677,16 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     object_route_receipt.descriptor_table_semantic_anchor_count == 3u &&
                     object_route_receipt.descriptor_table_semantic_anchor_mask == 0x07u &&
                     !object_route_receipt.object_table_role_mapped &&
-                    object_route_receipt.object_table_candidate_count == 0u &&
-                    object_route_receipt.object_table_candidate_anchor_mask == 0u &&
+                    object_route_receipt.object_table_candidate_count == 3u &&
+                    object_route_receipt.object_table_candidate_anchor_mask == 0x07u &&
+                    object_route_receipt.object_table_candidate_entry_index[0] == 6u &&
+                    object_route_receipt.object_table_candidate_raw_offsets[0] ==
+                        post_descriptor_candidate_offsets[0] &&
+                    object_route_receipt.object_table_candidate_byte_counts[0] ==
+                        0x0400u &&
+                    object_route_receipt
+                            .object_table_candidate_nonzero_byte_counts[0] ==
+                        0x0400u &&
                     object_route_receipt.object_table_blocked_anchor_count == 3u &&
                     object_route_receipt.object_table_blocked_anchor_mask == 0x07u &&
                     object_route_receipt.object_table_anchor_binding_status[0] ==
@@ -4728,7 +4751,16 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     level_route_receipt.startup_level_grid_user_data_offset ==
                         level_route_receipt.startup_user_data_offset &&
                     level_route_receipt.level_grid_role_mapped &&
-                    level_route_receipt.nonstartup_level_candidate_count == 0u &&
+                    level_route_receipt.nonstartup_level_candidate_count == 3u &&
+                    level_route_receipt.nonstartup_level_candidate_anchor_mask == 0x07u &&
+                    level_route_receipt.nonstartup_level_candidate_entry_index[0] == 6u &&
+                    level_route_receipt.nonstartup_level_candidate_raw_offsets[0] ==
+                        post_descriptor_candidate_offsets[0] &&
+                    level_route_receipt.nonstartup_level_candidate_byte_counts[0] ==
+                        0x0400u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_nonzero_byte_counts[0] ==
+                        0x0400u &&
                     level_route_receipt.nonstartup_level_blocked_anchor_count == 3u &&
                     level_route_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     !level_route_receipt.nonstartup_level_decode_ready &&

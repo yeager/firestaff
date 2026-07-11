@@ -100,6 +100,41 @@ typedef struct {
     int runtime_fallback_visuals_blocked;
     int runtime_structured_route;
     int runtime_receipt_text_route;
+    int runtime_track02_media_route;
+    unsigned int runtime_track02_media_route_mask;
+    uint32_t runtime_track02_media_checksum;
+    uint64_t runtime_track02_media_title_first_raw_offset;
+    uint64_t runtime_track02_media_title_last_raw_offset;
+    uint64_t runtime_track02_media_title_first_user_data_offset;
+    uint64_t runtime_track02_media_title_last_user_data_offset;
+    uint64_t runtime_track02_media_stage_first_raw_offset;
+    uint64_t runtime_track02_media_stage_last_raw_offset;
+    uint64_t runtime_track02_media_stage_first_user_data_offset;
+    uint64_t runtime_track02_media_stage_last_user_data_offset;
+    uint64_t runtime_track02_media_soul_room_first_raw_offset;
+    uint64_t runtime_track02_media_soul_room_last_raw_offset;
+    uint64_t runtime_track02_media_soul_room_first_user_data_offset;
+    uint64_t runtime_track02_media_soul_room_last_user_data_offset;
+    uint64_t runtime_track02_media_forcefield_first_raw_offset;
+    uint64_t runtime_track02_media_forcefield_last_raw_offset;
+    uint64_t runtime_track02_media_forcefield_first_user_data_offset;
+    uint64_t runtime_track02_media_forcefield_last_user_data_offset;
+    unsigned int runtime_object_table_blocked_anchor_mask;
+    int runtime_object_table_blocked_anchor_count;
+    unsigned int runtime_nonstartup_level_blocked_anchor_mask;
+    int runtime_nonstartup_level_blocked_anchor_count;
+    unsigned int runtime_startup_level_blocked_anchor_mask;
+    int runtime_startup_level_blocked_anchor_count;
+    int runtime_object_table_anchor_binding_status[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t runtime_object_table_anchor_hash[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int runtime_startup_level_anchor_status[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint64_t runtime_startup_level_anchor_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint64_t runtime_startup_level_anchor_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int runtime_startup_level_anchor_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t runtime_startup_level_anchor_width[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t runtime_startup_level_anchor_height[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t runtime_startup_level_anchor_seed[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t runtime_startup_level_anchor_level_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     int set_save_resume;
     int save_resume_verdict;
     int save_resume_claim;
@@ -234,6 +269,22 @@ typedef struct {
     uint64_t track02_media_forcefield_last_raw_offset;
     uint64_t track02_media_forcefield_first_user_data_offset;
     uint64_t track02_media_forcefield_last_user_data_offset;
+    unsigned int object_table_blocked_anchor_mask;
+    int object_table_blocked_anchor_count;
+    unsigned int nonstartup_level_blocked_anchor_mask;
+    int nonstartup_level_blocked_anchor_count;
+    unsigned int startup_level_blocked_anchor_mask;
+    int startup_level_blocked_anchor_count;
+    int object_table_anchor_binding_status[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t object_table_anchor_hash[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int startup_level_anchor_status[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint64_t startup_level_anchor_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint64_t startup_level_anchor_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int startup_level_anchor_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t startup_level_anchor_width[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t startup_level_anchor_height[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t startup_level_anchor_seed[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t startup_level_anchor_level_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     const char *log_first_line;
     int log_receipt;
 } Theron_StartupHostReceipt;
@@ -514,6 +565,10 @@ void theron_v1_startup_flow_capture_snapshot(
 int theron_v1_startup_state_receipt_from_flow(
     const Theron_StartupFlow *flow,
     Theron_StartupStateReceipt *out_receipt);
+int theron_v1_startup_state_receipt_has_complete_track02_bitmap_routes(
+    const Theron_StartupStateReceipt *receipt);
+int theron_v1_startup_state_receipt_has_track02_no_fallback_runtime_route(
+    const Theron_StartupStateReceipt *receipt);
 int theron_v1_startup_initial_title_state_receipt(
     const Theron_V1_World *world,
     Theron_StartupFlow *flow,

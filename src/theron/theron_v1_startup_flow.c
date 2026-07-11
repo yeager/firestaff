@@ -300,6 +300,68 @@ int theron_v1_startup_state_receipt_from_flow(
     return 1;
 }
 
+int theron_v1_startup_state_receipt_has_complete_track02_bitmap_routes(
+    const Theron_StartupStateReceipt *receipt) {
+
+    const unsigned int required_mask =
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+
+    if (!receipt || !receipt->runtime_track02_media_route) {
+        return 0;
+    }
+    if ((receipt->runtime_track02_media_route_mask & required_mask) !=
+        required_mask) {
+        return 0;
+    }
+    if (receipt->runtime_track02_media_checksum == 0u) {
+        return 0;
+    }
+    return receipt->runtime_track02_media_title_first_raw_offset <=
+               receipt->runtime_track02_media_title_last_raw_offset &&
+           receipt->runtime_track02_media_title_first_user_data_offset <=
+               receipt->runtime_track02_media_title_last_user_data_offset &&
+           receipt->runtime_track02_media_stage_first_raw_offset <=
+               receipt->runtime_track02_media_stage_last_raw_offset &&
+           receipt->runtime_track02_media_stage_first_user_data_offset <=
+               receipt->runtime_track02_media_stage_last_user_data_offset &&
+           receipt->runtime_track02_media_soul_room_first_raw_offset <=
+               receipt->runtime_track02_media_soul_room_last_raw_offset &&
+           receipt->runtime_track02_media_soul_room_first_user_data_offset <=
+               receipt->runtime_track02_media_soul_room_last_user_data_offset &&
+           receipt->runtime_track02_media_forcefield_first_raw_offset <=
+               receipt->runtime_track02_media_forcefield_last_raw_offset &&
+           receipt->runtime_track02_media_forcefield_first_user_data_offset <=
+               receipt->runtime_track02_media_forcefield_last_user_data_offset;
+}
+
+int theron_v1_startup_state_receipt_has_track02_no_fallback_runtime_route(
+    const Theron_StartupStateReceipt *receipt) {
+
+    if (!receipt || !receipt->set_runtime_level_route ||
+        !receipt->runtime_structured_route ||
+        !theron_v1_startup_state_receipt_has_complete_track02_bitmap_routes(
+            receipt)) {
+        return 0;
+    }
+    if (!receipt->runtime_track02_semantic_handoff &&
+        !receipt->runtime_track02_media_route &&
+        !receipt->runtime_fallback_visuals_blocked) {
+        return 0;
+    }
+    return receipt->runtime_object_table_blocked_anchor_mask != 0u &&
+           receipt->runtime_object_table_blocked_anchor_count > 0 &&
+           receipt->runtime_nonstartup_level_blocked_anchor_mask != 0u &&
+           receipt->runtime_nonstartup_level_blocked_anchor_count > 0 &&
+           receipt->runtime_startup_level_anchor_status[0] ==
+               THERON_TRACK02_LEVEL_HANDOFF_OK &&
+           receipt->runtime_startup_level_anchor_user_data_valid[0] &&
+           receipt->runtime_startup_level_anchor_width[0] > 0u &&
+           receipt->runtime_startup_level_anchor_height[0] > 0u;
+}
+
 int theron_v1_startup_initial_title_state_receipt(
     const Theron_V1_World *world,
     Theron_StartupFlow *flow,
