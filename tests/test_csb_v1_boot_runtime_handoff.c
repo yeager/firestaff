@@ -2204,16 +2204,13 @@ static void test_runtime_view_state_receipt_owns_scalar_handoff(void)
     csb_v1_runtime_cleanup(&runtime);
 }
 
-static void test_runtime_utility_startup_host_facts_wrappers(void)
+static void test_runtime_utility_startup_receipt_facades(void)
 {
     CSB_V1_BootProfile boot;
     CSB_V1_StartupHostFacts_PC34 facts;
     CSB_V1_UtilRenderPlan plan;
-    CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 action_receipt;
-    CSB_V1_StartupEntranceHostActionReceipt_PC34 entrance_receipt;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupActionReceipt_PC34 boot_action_receipt;
-    CSB_V1_BootStartupHostDecisionReceipt_PC34 host_decision;
     CSB_V1_UtilRenderPlan receipt_utility_plan;
     CSB_V1_StartupPresentationReceipt_PC34 presentation_receipt;
     CSB_V1_BootStartupPresentationRouteReceipt_PC34 route_receipt;
@@ -2232,8 +2229,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 host_input_dispatch;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 host_ownership;
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
-    CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 runtime_visual;
-    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 route_hardening;
     CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 runtime_host_gate;
     CSB_V1_StartupRuntimeAssetSession_PC34 full_session;
     CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
@@ -2309,59 +2304,47 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
           "boot startup visual sequence capture covers title, HUD, credits and door opening without fallback routes");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
-    CHECK(csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
-              &boot,
-              &capture_render_executor,
-              &runtime_visual) == 1 &&
-              runtime_visual.valid &&
-              runtime_visual.visual_sequence_valid &&
-              runtime_visual.real_asset_matched &&
-              runtime_visual.sequence_capture_hash ==
-                  visual_sequence.sequence_capture_hash &&
-              runtime_visual.runtime_capture_hash != 0u &&
-              runtime_visual.title_runtime_consumed &&
-              runtime_visual.title_runtime_sample_count ==
-                  CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
-              runtime_visual.title_runtime_unique_sample_hash_count ==
-                  CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
-              runtime_visual.title_runtime_all_stages_consumed &&
-              runtime_visual.title_runtime_sample_hashes[0] ==
-                  visual_sequence.title_sample_hashes[0] &&
-              runtime_visual.title_runtime_sample_hashes[1] ==
-                  visual_sequence.title_sample_hashes[1] &&
-              runtime_visual.title_runtime_sample_hashes[2] ==
-                  visual_sequence.title_sample_hashes[2] &&
-              runtime_visual.title_runtime_sample_hashes[3] ==
-                  visual_sequence.title_sample_hashes[3] &&
-              runtime_visual.closed_door_hud_runtime_consumed &&
-              runtime_visual.utility_hud_runtime_consumed &&
-              runtime_visual.door_opening_delay_runtime_consumed &&
-              runtime_visual.door_opening_frame_runtime_consumed &&
-              runtime_visual.credits_runtime_consumed &&
-              runtime_visual.title_draw_consumed &&
-              runtime_visual.closed_door_hud_draw_consumed &&
-              runtime_visual.utility_hud_draw_consumed &&
-              runtime_visual.door_opening_frame_draw_consumed &&
-              runtime_visual.credits_surface_draw_consumed &&
-              runtime_visual.no_fallback_callbacks &&
-              runtime_visual.no_wrapper_fallback_routes &&
-              runtime_visual.draw_consumes_receipt_only &&
-              runtime_visual.input_consumes_receipt_only &&
-              capture_render_probe.draw_title_count >= 1 &&
-              capture_render_probe.draw_full_surface_count >= 4 &&
-              capture_render_probe.draw_opening_frame_count >= 1 &&
-              capture_render_probe.draw_fallback_text_count == 0 &&
-              capture_render_probe.draw_door_fallback_count == 0 &&
-              strstr(runtime_visual.source_evidence, "CSBWin") != NULL,
-          "boot startup runtime visual capture consumes title, HUD and door-opening through host executor without fallback callbacks");
-    render_probe_executor_init(&capture_render_executor,
-                               &capture_render_probe);
     CHECK(csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
               &boot,
               &capture_render_executor,
               &runtime_host_gate) == 1 &&
               runtime_host_gate.valid &&
               runtime_host_gate.runtime_visual_valid &&
+              runtime_host_gate.runtime_visual.valid &&
+              runtime_host_gate.runtime_visual.visual_sequence_valid &&
+              runtime_host_gate.runtime_visual.real_asset_matched &&
+              runtime_host_gate.runtime_visual.sequence_capture_hash ==
+                  visual_sequence.sequence_capture_hash &&
+              runtime_host_gate.runtime_visual.runtime_capture_hash != 0u &&
+              runtime_host_gate.runtime_visual.title_runtime_consumed &&
+              runtime_host_gate.runtime_visual.title_runtime_sample_count ==
+                  CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
+              runtime_host_gate.runtime_visual
+                      .title_runtime_unique_sample_hash_count ==
+                  CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
+              runtime_host_gate.runtime_visual.title_runtime_all_stages_consumed &&
+              runtime_host_gate.runtime_visual.title_runtime_sample_hashes[0] ==
+                  visual_sequence.title_sample_hashes[0] &&
+              runtime_host_gate.runtime_visual.title_runtime_sample_hashes[1] ==
+                  visual_sequence.title_sample_hashes[1] &&
+              runtime_host_gate.runtime_visual.title_runtime_sample_hashes[2] ==
+                  visual_sequence.title_sample_hashes[2] &&
+              runtime_host_gate.runtime_visual.title_runtime_sample_hashes[3] ==
+                  visual_sequence.title_sample_hashes[3] &&
+              runtime_host_gate.runtime_visual.closed_door_hud_runtime_consumed &&
+              runtime_host_gate.runtime_visual.utility_hud_runtime_consumed &&
+              runtime_host_gate.runtime_visual.door_opening_delay_runtime_consumed &&
+              runtime_host_gate.runtime_visual.door_opening_frame_runtime_consumed &&
+              runtime_host_gate.runtime_visual.credits_runtime_consumed &&
+              runtime_host_gate.runtime_visual.title_draw_consumed &&
+              runtime_host_gate.runtime_visual.closed_door_hud_draw_consumed &&
+              runtime_host_gate.runtime_visual.utility_hud_draw_consumed &&
+              runtime_host_gate.runtime_visual.door_opening_frame_draw_consumed &&
+              runtime_host_gate.runtime_visual.credits_surface_draw_consumed &&
+              runtime_host_gate.runtime_visual.no_fallback_callbacks &&
+              runtime_host_gate.runtime_visual.no_wrapper_fallback_routes &&
+              runtime_host_gate.runtime_visual.draw_consumes_receipt_only &&
+              runtime_host_gate.runtime_visual.input_consumes_receipt_only &&
               runtime_host_gate.visual_sequence_valid &&
               runtime_host_gate.route_hardening_valid &&
               runtime_host_gate.all_runtime_routes_consumed &&
@@ -2375,6 +2358,16 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               runtime_host_gate.title_runtime_phase_mask == 0x0f &&
               runtime_host_gate.title_runtime_expected_phase_mask == 0x0f &&
               runtime_host_gate.title_runtime_phase_route_complete &&
+              runtime_host_gate.title_runtime_phase_hash_count ==
+                  CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
+              runtime_host_gate.title_runtime_phase_hashes[0] ==
+                  visual_sequence.title_sample_hashes[0] &&
+              runtime_host_gate.title_runtime_phase_hashes[1] ==
+                  visual_sequence.title_sample_hashes[1] &&
+              runtime_host_gate.title_runtime_phase_hashes[2] ==
+                  visual_sequence.title_sample_hashes[2] &&
+              runtime_host_gate.title_runtime_phase_hashes[3] ==
+                  visual_sequence.title_sample_hashes[3] &&
               runtime_host_gate.title_runtime_phase_hash != 0u &&
               runtime_host_gate.closed_door_hud_runtime_captured &&
               runtime_host_gate.utility_hud_runtime_captured &&
@@ -2384,18 +2377,22 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               runtime_host_gate.closed_door_host_ownership_valid &&
               runtime_host_gate.utility_host_ownership_valid &&
               runtime_host_gate.door_opening_host_ownership_valid &&
+              runtime_host_gate.credits_host_ownership_valid &&
               runtime_host_gate.title_host_draw_consumes_receipt_only &&
               runtime_host_gate.closed_door_host_draw_consumes_receipt_only &&
               runtime_host_gate.utility_host_draw_consumes_receipt_only &&
               runtime_host_gate.door_opening_host_draw_consumes_receipt_only &&
+              runtime_host_gate.credits_host_draw_consumes_receipt_only &&
               runtime_host_gate.title_host_input_consumes_receipt_only &&
               runtime_host_gate.closed_door_host_input_consumes_receipt_only &&
               runtime_host_gate.utility_host_input_consumes_receipt_only &&
               runtime_host_gate.door_opening_host_input_consumes_receipt_only &&
+              runtime_host_gate.credits_host_input_consumes_receipt_only &&
               runtime_host_gate.title_packaged_capture_hash != 0u &&
               runtime_host_gate.closed_door_packaged_capture_hash != 0u &&
               runtime_host_gate.utility_packaged_capture_hash != 0u &&
               runtime_host_gate.door_opening_packaged_capture_hash != 0u &&
+              runtime_host_gate.credits_packaged_capture_hash != 0u &&
               runtime_host_gate.draw_consumes_receipt_only &&
               runtime_host_gate.input_consumes_receipt_only &&
               runtime_host_gate.no_fallback_callbacks &&
@@ -2417,9 +2414,13 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   .utility_hud_route_covered &&
               runtime_host_gate.door_opening_route_hardening
                   .door_opening_route_covered &&
+              runtime_host_gate.credits_route_hardening.credits_route_covered &&
+              capture_render_probe.draw_title_count >= 1 &&
+              capture_render_probe.draw_full_surface_count >= 4 &&
+              capture_render_probe.draw_opening_frame_count >= 1 &&
               capture_render_probe.draw_fallback_text_count == 0 &&
               capture_render_probe.draw_door_fallback_count == 0,
-          "boot startup runtime host gate binds full capture to route hardening without wrapper fallbacks");
+          "boot startup runtime host gate binds full visual capture to route hardening without wrapper fallbacks");
     csb_v1_boot_startup_runtime_asset_session_init_pc34(&full_session);
     full_session.valid = 1;
     full_session.real_asset_matched = 1;
@@ -2450,6 +2451,16 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               complete_support.title_runtime_expected_phase_mask == 0x0f &&
               complete_support.title_runtime_phase_hash ==
                   runtime_host_gate.title_runtime_phase_hash &&
+              complete_support.title_runtime_phase_hash_count ==
+                  CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
+              complete_support.title_runtime_phase_hashes[0] ==
+                  runtime_host_gate.title_runtime_phase_hashes[0] &&
+              complete_support.title_runtime_phase_hashes[1] ==
+                  runtime_host_gate.title_runtime_phase_hashes[1] &&
+              complete_support.title_runtime_phase_hashes[2] ==
+                  runtime_host_gate.title_runtime_phase_hashes[2] &&
+              complete_support.title_runtime_phase_hashes[3] ==
+                  runtime_host_gate.title_runtime_phase_hashes[3] &&
               complete_support.title_presents_ready &&
               complete_support.title_chaos_ready &&
               complete_support.title_strikes_back_ready &&
@@ -2465,6 +2476,8 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               complete_support.host_route_wrappers_retired &&
               complete_support.no_loose_render_plan_exports &&
               complete_support.real_startup_assets_bound &&
+              complete_support.credits_packaged_capture_hash ==
+                  runtime_host_gate.credits_packaged_capture_hash &&
               complete_support.real_startup_asset_binding_hash ==
                   runtime_host_gate.real_startup_asset_binding_hash &&
               complete_support.session_generation == 19u &&
@@ -2484,16 +2497,28 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               release_app_capture.closed_door_release_app_capture_ready &&
               release_app_capture.utility_release_app_capture_ready &&
               release_app_capture.door_opening_release_app_capture_ready &&
+              release_app_capture.credits_release_app_capture_ready &&
               release_app_capture.title_host_consumer_ready &&
               release_app_capture.closed_door_host_consumer_ready &&
               release_app_capture.utility_host_consumer_ready &&
               release_app_capture.door_opening_host_consumer_ready &&
+              release_app_capture.credits_host_consumer_ready &&
               release_app_capture.route_specific_host_consumers_ready &&
               release_app_capture.title_phase_route_complete &&
               release_app_capture.title_runtime_phase_mask == 0x0f &&
               release_app_capture.title_runtime_expected_phase_mask == 0x0f &&
               release_app_capture.title_runtime_phase_hash ==
                   complete_support.title_runtime_phase_hash &&
+              release_app_capture.title_runtime_phase_hash_count ==
+                  CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
+              release_app_capture.title_runtime_phase_hashes[0] ==
+                  complete_support.title_runtime_phase_hashes[0] &&
+              release_app_capture.title_runtime_phase_hashes[1] ==
+                  complete_support.title_runtime_phase_hashes[1] &&
+              release_app_capture.title_runtime_phase_hashes[2] ==
+                  complete_support.title_runtime_phase_hashes[2] &&
+              release_app_capture.title_runtime_phase_hashes[3] ==
+                  complete_support.title_runtime_phase_hashes[3] &&
               release_app_capture.runtime_host_routes_ready &&
               release_app_capture.draw_consumes_receipt_only &&
               release_app_capture.input_consumes_receipt_only &&
@@ -2501,6 +2526,10 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               release_app_capture.no_wrapper_fallback_routes &&
               release_app_capture.host_route_wrappers_retired &&
               release_app_capture.no_loose_render_plan_exports &&
+              release_app_capture.release_app_real_asset_capture_ready &&
+              release_app_capture.full_runtime_real_asset_matched &&
+              release_app_capture.host_runtime_visual_real_asset_matched &&
+              release_app_capture.release_app_real_asset_capture_hash != 0u &&
               release_app_capture.real_startup_assets_bound &&
               release_app_capture.title_packaged_capture_hash ==
                   runtime_host_gate.title_packaged_capture_hash &&
@@ -2510,6 +2539,10 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
                   runtime_host_gate.utility_packaged_capture_hash &&
               release_app_capture.door_opening_packaged_capture_hash ==
                   runtime_host_gate.door_opening_packaged_capture_hash &&
+              release_app_capture.credits_packaged_capture_hash ==
+                  runtime_host_gate.credits_packaged_capture_hash &&
+              release_app_capture.release_app_real_asset_capture_hash !=
+                  release_app_capture.release_app_capture_hash &&
               release_app_capture.runtime_host_gate_hash ==
                   complete_support.runtime_host_gate_hash &&
               release_app_capture.complete_support_hash ==
@@ -2518,6 +2551,32 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               strstr(release_app_capture.source_evidence,
                      "ENTRANCE.C F0580") != NULL,
           "CSB release/app capture gate consumes complete title HUD and door packaged hashes");
+    partial_complete_support = complete_support;
+    partial_complete_support.full_runtime.real_asset_matched = 0;
+    CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
+              &partial_complete_support,
+              &release_app_capture) == 0 &&
+              !release_app_capture.valid &&
+              !release_app_capture.release_app_real_asset_capture_ready &&
+              !release_app_capture.full_runtime_real_asset_matched,
+          "CSB release/app capture gate rejects non-real full runtime capture");
+    partial_complete_support = complete_support;
+    partial_complete_support.host_capture_gate.runtime_visual.real_asset_matched = 0;
+    CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
+              &partial_complete_support,
+              &release_app_capture) == 0 &&
+              !release_app_capture.valid &&
+              !release_app_capture.release_app_real_asset_capture_ready &&
+              !release_app_capture.host_runtime_visual_real_asset_matched,
+          "CSB release/app capture gate rejects non-real host visual capture");
+    partial_complete_support = complete_support;
+    partial_complete_support.title_runtime_phase_hash_count = 3;
+    CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
+              &partial_complete_support,
+              &release_app_capture) == 0 &&
+              !release_app_capture.valid &&
+              release_app_capture.title_runtime_phase_hash_count == 3,
+          "CSB release/app capture gate rejects collapsed title phase hashes");
     partial_complete_support = complete_support;
     partial_complete_support.host_capture_gate.door_opening_packaged_capture_hash = 0u;
     CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
@@ -2535,6 +2594,23 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !release_app_capture.utility_host_consumer_ready &&
               !release_app_capture.route_specific_host_consumers_ready,
           "CSB release/app capture gate rejects utility HUD host wrappers");
+    partial_complete_support = complete_support;
+    partial_complete_support.host_capture_gate.credits_packaged_capture_hash = 0u;
+    CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
+              &partial_complete_support,
+              &release_app_capture) == 0 &&
+              !release_app_capture.valid &&
+              !release_app_capture.credits_release_app_capture_ready,
+          "CSB release/app capture gate rejects partial credits package");
+    partial_complete_support = complete_support;
+    partial_complete_support.host_capture_gate.credits_host_input_consumes_receipt_only = 0;
+    CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
+              &partial_complete_support,
+              &release_app_capture) == 0 &&
+              !release_app_capture.valid &&
+              !release_app_capture.credits_host_consumer_ready &&
+              !release_app_capture.route_specific_host_consumers_ready,
+          "CSB release/app capture gate rejects credits host wrappers");
     runtime_host_gate.title_chaos_hold_runtime_captured = 0;
     CHECK(csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
               &full_runtime,
@@ -2543,91 +2619,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !complete_support.valid &&
               !complete_support.title_chaos_ready,
           "CSB complete-support receipt rejects partial CHAOS title capture");
-    memset(&snapshot, 0, sizeof(snapshot));
-    snapshot.boot_profile = &boot;
-    snapshot.entrance_active = 1;
-    snapshot.entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
-    snapshot.pending_command = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
-    snapshot.resume_available = 1;
-    snapshot.resume_path = resume_path;
-    snapshot.title_active = 1;
-    snapshot.title_frame = 0;
-    snapshot.title_source_step = 1;
-    render_probe_executor_init(&capture_render_executor,
-                               &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
-              &snapshot,
-              0,
-              0,
-              &capture_render_executor,
-              &host_ownership) == 1 &&
-              csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
-                  &visual_sequence,
-                  &host_ownership,
-                  &route_hardening) == 1 &&
-              route_hardening.valid &&
-              route_hardening.title_route_covered &&
-              route_hardening.no_fallback_text_route &&
-              route_hardening.no_legacy_door_fallback_route &&
-              route_hardening.host_draw_consumes_receipt_only &&
-              route_hardening.route_hardening_hash != 0u,
-          "boot startup route hardening accepts only full-captured title ownership");
-    memset(&snapshot, 0, sizeof(snapshot));
-    snapshot.boot_profile = &boot;
-    snapshot.entrance_active = 1;
-    snapshot.entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
-    snapshot.pending_command = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
-    snapshot.resume_available = 1;
-    snapshot.resume_path = resume_path;
-    snapshot.utility_overlay_active = 1;
-    snapshot.utility_selected_action_index = 0;
-    snapshot.utility_imported_champion_count = 2;
-    snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
-    render_probe_executor_init(&capture_render_executor,
-                               &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
-              &snapshot,
-              0,
-              0,
-              &capture_render_executor,
-              &host_ownership) == 1 &&
-              csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
-                  &visual_sequence,
-                  &host_ownership,
-                  &route_hardening) == 1 &&
-              route_hardening.valid &&
-              route_hardening.utility_hud_route_covered &&
-              route_hardening.no_fallback_text_route &&
-              capture_render_probe.draw_fallback_text_count == 0,
-          "boot startup route hardening accepts only full-captured utility HUD ownership");
-    memset(&snapshot, 0, sizeof(snapshot));
-    snapshot.boot_profile = &boot;
-    snapshot.entrance_active = 1;
-    snapshot.entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
-    snapshot.resume_available = 1;
-    snapshot.resume_path = resume_path;
-    snapshot.opening_active = 1;
-    snapshot.opening_delay_ticks = 0;
-    snapshot.opening_step = 3;
-    snapshot.pending_command =
-        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
-    render_probe_executor_init(&capture_render_executor,
-                               &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
-              &snapshot,
-              0,
-              0,
-              &capture_render_executor,
-              &host_ownership) == 1 &&
-              csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
-                  &visual_sequence,
-                  &host_ownership,
-                  &route_hardening) == 1 &&
-              route_hardening.valid &&
-              route_hardening.door_opening_route_covered &&
-              route_hardening.no_legacy_door_fallback_route &&
-              capture_render_probe.draw_door_fallback_count == 0,
-          "boot startup route hardening accepts only full-captured door-opening ownership");
     memset(&facts, 0, sizeof(facts));
     facts.boot_profile = &boot;
     facts.utility_overlay_active = 1;
@@ -2659,62 +2650,76 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               facts.utility_prompt,
               facts.utility_preview_active,
               &plan) == 1,
-          "runtime utility render wrapper accepts boot profile facts");
+          "runtime utility render receipt accepts boot profile facts");
     CHECK(plan.menu_row_count == CSB_V1_UTIL_MENU_ROW_COUNT &&
               strstr(plan.prompt_row.text,
                      "CHAOS STRIKES BACK READY") != NULL,
-          "runtime utility render wrapper owns boot utility facts");
+          "runtime utility render receipt owns boot utility facts");
 
     facts.utility_selected_action_index = 0;
     snapshot.utility_selected_action_index = facts.utility_selected_action_index;
-    CHECK(csb_v1_boot_runtime_util_apply_firestaff_input_from_snapshot_pc34(
+    CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
               2,
-              &action_receipt) == 1,
-          "boot utility keyboard action wrapper accepts startup snapshot");
-    CHECK(action_receipt.util_state_receipt.selected_action_index == 1 &&
-              action_receipt.util_receipt.result == CSB_V1_UTIL_APPLY_REDRAW &&
-              !action_receipt.entrance_receipt_valid,
-          "boot utility keyboard action wrapper owns redraw receipt");
+              &boot_action_receipt) == 1,
+          "boot utility keyboard action receipt accepts startup snapshot");
+    CHECK(boot_action_receipt.kind ==
+                  CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34 &&
+              boot_action_receipt.utility_receipt.util_state_receipt
+                      .selected_action_index == 1 &&
+              boot_action_receipt.utility_receipt.util_receipt.result ==
+                  CSB_V1_UTIL_APPLY_REDRAW &&
+              !boot_action_receipt.utility_receipt.entrance_receipt_valid,
+          "boot utility keyboard action receipt owns redraw receipt");
 
-    CHECK(csb_v1_boot_runtime_util_apply_pointer_from_snapshot_pc34(
+    CHECK(csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
               &snapshot,
               72,
               126,
-              &action_receipt) == 1,
-          "boot utility pointer action wrapper accepts startup snapshot");
-    CHECK(action_receipt.util_receipt.result ==
-              CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
-              action_receipt.entrance_receipt_valid,
-          "boot utility pointer action wrapper owns M11 utility facts");
+              1u,
+              &boot_action_receipt) == 1,
+          "boot utility pointer action receipt accepts startup snapshot");
+    CHECK(boot_action_receipt.kind ==
+                  CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34 &&
+              boot_action_receipt.utility_receipt.util_receipt.result ==
+                  CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
+              boot_action_receipt.utility_receipt.entrance_receipt_valid,
+          "boot utility pointer action receipt owns utility facts");
 
     facts.utility_selected_action_index = 1;
     snapshot.utility_selected_action_index = facts.utility_selected_action_index;
-    CHECK(csb_v1_boot_runtime_util_apply_firestaff_input_from_snapshot_pc34(
+    CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
               9,
-              &action_receipt) == 1,
-          "boot utility keyboard action wrapper handles accept");
-    CHECK(action_receipt.util_receipt.result ==
-              CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
-              action_receipt.entrance_receipt_valid,
-          "boot utility keyboard action wrapper chains entrance receipt");
+              &boot_action_receipt) == 1,
+          "boot utility keyboard action receipt handles accept");
+    CHECK(boot_action_receipt.kind ==
+                  CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34 &&
+              boot_action_receipt.utility_receipt.util_receipt.result ==
+                  CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
+              boot_action_receipt.utility_receipt.entrance_receipt_valid,
+          "boot utility keyboard action receipt chains entrance receipt");
 
-    CHECK(csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_snapshot_pc34(
+    snapshot.utility_overlay_active = 0;
+    CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
               2,
-              &entrance_receipt) == 1,
-          "boot entrance keyboard action wrapper accepts startup snapshot");
-    CHECK(!entrance_receipt.handled,
-          "boot entrance keyboard action wrapper ignores navigation input");
+              &boot_action_receipt) == 1,
+          "boot entrance keyboard action receipt accepts startup snapshot");
+    CHECK(boot_action_receipt.kind ==
+                  CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34 &&
+              !boot_action_receipt.entrance_receipt.handled,
+          "boot entrance keyboard action receipt ignores navigation input");
 
-    CHECK(csb_v1_boot_runtime_execute_startup_entrance_firestaff_input_from_snapshot_pc34(
+    CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
               9,
-              &entrance_receipt) == 1,
-          "boot entrance keyboard action wrapper handles accept input");
-    CHECK(entrance_receipt.handled,
-          "boot entrance keyboard action wrapper chains command receipt");
+              &boot_action_receipt) == 1,
+          "boot entrance keyboard action receipt handles accept input");
+    CHECK(boot_action_receipt.kind ==
+                  CSB_V1_BOOT_STARTUP_ACTION_ENTRANCE_PC34 &&
+              boot_action_receipt.entrance_receipt.handled,
+          "boot entrance keyboard action receipt chains command receipt");
 
     memset(&snapshot, 0, sizeof(snapshot));
     snapshot.entrance_active = 1;
@@ -3153,18 +3158,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.input_blocked_by_title &&
               !boot_action_receipt.pre_input_route.hud_menu_state.valid,
           "boot startup action receipt captures title render-view before blocked input");
-    CHECK(csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
-              &boot_action_receipt,
-              &host_decision) == 1 &&
-              host_decision.valid &&
-              host_decision.consumed_input &&
-              host_decision.blocked_by_title &&
-              !host_decision.redraw_startup &&
-              host_decision.pre_render_route ==
-                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
-              host_decision.post_render_route ==
-                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34,
-          "boot startup host decision consumes title-block receipt");
     CHECK(csb_v1_boot_startup_host_input_dispatch_firestaff_from_snapshot_pc34(
               &snapshot,
               9,
@@ -3185,9 +3178,13 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !host_input_dispatch.input_render.startup_redraw &&
               !host_input_dispatch.input_render.startup_hud_draw_ready &&
               host_input_dispatch.input_render.host_decision.blocked_by_title &&
+              host_input_dispatch.input_render.host_decision.pre_render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34 &&
+              host_input_dispatch.input_render.host_decision.post_render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34 &&
               host_input_dispatch.input_render.pre_input_readiness
                   .post_ftl_title_active,
-          "boot startup host input dispatch receipt owns title-block snapshot");
+          "boot startup host input dispatch receipt owns title-block host decision");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     CHECK(csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
@@ -4221,38 +4218,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.post_input_render_view.route_receipt
                       .hud_menu_state.utility_selected_action_index == 1,
           "boot startup utility input carries post-input render/HUD route");
-    CHECK(csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
-              &boot_action_receipt,
-              &host_decision) == 1 &&
-              host_decision.valid &&
-              host_decision.consumed_input &&
-              host_decision.routed_to_utility &&
-              !host_decision.routed_to_entrance &&
-              host_decision.redraw_startup &&
-              host_decision.stays_on_startup &&
-              !host_decision.return_to_launcher &&
-              host_decision.utility_selected_action_index == 1 &&
-              host_decision.pre_render_route ==
-                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
-              host_decision.post_render_route ==
-                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34,
-          "boot startup host decision consumes utility redraw receipt");
-    CHECK(csb_v1_boot_startup_hud_menu_draw_receipt_from_action_pc34(
-              &boot_action_receipt,
-              1,
-              &hud_draw_receipt) == 1 &&
-              hud_draw_receipt.valid &&
-              hud_draw_receipt.from_post_input_render_view &&
-              hud_draw_receipt.host_decision_valid &&
-              hud_draw_receipt.host_decision.redraw_startup &&
-              hud_draw_receipt.host_decision.routed_to_utility &&
-              hud_draw_receipt.host_decision.utility_selected_action_index == 1 &&
-              hud_draw_receipt.kind ==
-                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
-              hud_draw_receipt.utility_render_plan_valid &&
-              hud_draw_receipt.selected_utility_action_index == 1 &&
-              hud_draw_receipt.utility_render_plan.menu_rows[1].selected,
-          "boot startup HUD/menu draw receipt consumes post-input host decision receipt");
     CHECK(csb_v1_boot_startup_host_input_dispatch_firestaff_from_snapshot_pc34(
               &snapshot,
               2,
@@ -4272,16 +4237,29 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_input_dispatch.input_render.input_consumed &&
               host_input_dispatch.input_render.startup_redraw &&
               host_input_dispatch.input_render.host_decision.routed_to_utility &&
+              !host_input_dispatch.input_render.host_decision.routed_to_entrance &&
+              host_input_dispatch.input_render.host_decision.stays_on_startup &&
+              !host_input_dispatch.input_render.host_decision.return_to_launcher &&
+              host_input_dispatch.input_render.host_decision
+                      .utility_selected_action_index == 1 &&
+              host_input_dispatch.input_render.host_decision.pre_render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
+              host_input_dispatch.input_render.host_decision.post_render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
               host_input_dispatch.input_render.startup_hud_draw_ready &&
               !host_input_dispatch.input_render.return_to_launcher &&
               host_input_dispatch.input_render.hud_menu_draw.kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
               host_input_dispatch.input_render.hud_menu_draw
                       .selected_utility_action_index == 1 &&
+              host_input_dispatch.input_render.hud_menu_draw
+                      .utility_render_plan_valid &&
+              host_input_dispatch.input_render.hud_menu_draw
+                      .utility_render_plan.menu_rows[1].selected &&
               host_input_dispatch.input_render.post_input_readiness
                       .hud_menu_kind ==
                   CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34,
-          "boot startup host input dispatch receipt owns utility redraw snapshot");
+          "boot startup host input dispatch receipt owns utility redraw snapshot and post-input HUD draw");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     CHECK(csb_v1_boot_startup_execute_host_ownership_receipt_from_snapshot_pc34(
@@ -4419,26 +4397,27 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               !boot_action_receipt.post_input_render_view.route_receipt
                    .accepts_input,
           "boot startup entrance input carries post-input door render route");
-    CHECK(csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
-              &boot_action_receipt,
-              &host_decision) == 1 &&
-              host_decision.valid &&
-              host_decision.consumed_input &&
-              !host_decision.routed_to_utility &&
-              host_decision.routed_to_entrance &&
-              host_decision.redraw_startup &&
-              host_decision.stays_on_startup &&
-              host_decision.host_input_result ==
+    CHECK(csb_v1_boot_startup_host_input_dispatch_firestaff_from_snapshot_pc34(
+              &snapshot,
+              9,
+              &host_input_dispatch) == 1 &&
+              host_input_dispatch.valid &&
+              host_input_dispatch.input_render_valid &&
+              host_input_dispatch.input_render.host_decision_valid &&
+              host_input_dispatch.input_render.input_consumed &&
+              !host_input_dispatch.input_render.host_decision.routed_to_utility &&
+              host_input_dispatch.input_render.host_decision.routed_to_entrance &&
+              host_input_dispatch.input_render.host_decision.redraw_startup &&
+              host_input_dispatch.input_render.host_decision.stays_on_startup &&
+              host_input_dispatch.input_render.host_decision.host_input_result ==
                   CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
-              host_decision.entrance_command_id ==
+              host_input_dispatch.input_render.host_decision.entrance_command_id ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
-              host_decision.post_render_route ==
-                  boot_action_receipt.post_input_render_view
-                      .route_receipt.route &&
-              host_decision.post_render_route !=
+              host_input_dispatch.input_render.host_decision.post_render_route !=
                   CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&
-              strcmp(host_decision.status, "CSB DOORS") == 0,
-          "boot startup host decision consumes entrance redraw receipt");
+              strcmp(host_input_dispatch.input_render.host_decision.status,
+                     "CSB DOORS") == 0,
+          "boot startup host input dispatch receipt owns entrance redraw host decision");
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,
               10,
@@ -4465,20 +4444,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               boot_action_receipt.pre_input_render_view.route_receipt
                   .hud_menu_state.valid,
           "boot startup Back input carries pre-render menu and launcher return");
-    CHECK(csb_v1_boot_startup_host_decision_from_action_receipt_pc34(
-              &boot_action_receipt,
-              &host_decision) == 1 &&
-              host_decision.valid &&
-              host_decision.consumed_input &&
-              host_decision.return_to_launcher &&
-              !host_decision.stays_on_startup &&
-              !host_decision.redraw_startup &&
-              host_decision.host_input_result ==
-                  CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34 &&
-              host_decision.post_render_route ==
-                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34 &&
-              strcmp(host_decision.status, "BACK TO LAUNCHER") == 0,
-          "boot startup host decision consumes launcher-return receipt");
     CHECK(csb_v1_boot_startup_host_input_dispatch_firestaff_from_snapshot_pc34(
               &snapshot,
               10,
@@ -4493,8 +4458,16 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               host_input_dispatch.input_render.return_to_launcher &&
               !host_input_dispatch.input_render.startup_redraw &&
               !host_input_dispatch.input_render.startup_hud_draw_ready &&
-              host_input_dispatch.input_render.host_decision.return_to_launcher,
-          "boot startup host input dispatch receipt owns launcher-return handoff");
+              host_input_dispatch.input_render.host_decision.return_to_launcher &&
+              !host_input_dispatch.input_render.host_decision.stays_on_startup &&
+              !host_input_dispatch.input_render.host_decision.redraw_startup &&
+              host_input_dispatch.input_render.host_decision.host_input_result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34 &&
+              host_input_dispatch.input_render.host_decision.post_render_route ==
+                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34 &&
+              strcmp(host_input_dispatch.input_render.host_decision.status,
+                     "BACK TO LAUNCHER") == 0,
+          "boot startup host input dispatch receipt owns launcher-return host decision");
     CHECK(csb_v1_boot_startup_host_input_dispatch_pointer_from_snapshot_pc34(
               &snapshot,
               enter_menu_x,
@@ -4570,7 +4543,7 @@ int main(void)
     test_enter_game_preserves_imported_party_and_switches_leader();
     test_runtime_import_dm1_party_path_owns_utility_handoff();
     test_runtime_view_state_receipt_owns_scalar_handoff();
-    test_runtime_utility_startup_host_facts_wrappers();
+    test_runtime_utility_startup_receipt_facades();
     test_startup_real_asset_receipt_is_skip_safe_and_deterministic();
     test_startup_full_runtime_receipt_requires_complete_real_session();
     test_enter_game_rotate_party_aligns_champion_state();

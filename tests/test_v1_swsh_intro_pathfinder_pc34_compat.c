@@ -1,0 +1,308 @@
+#include "v1_swsh_intro_pathfinder_pc34_compat.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+size_t M12_AssetStatus_GetVersionCount(const char *gameId)
+{
+    (void)gameId;
+    return 0U;
+}
+
+const M12_AssetVersionStatus *M12_AssetStatus_GetVersion(
+    const M12_AssetStatus *status,
+    const char *gameId,
+    size_t index)
+{
+    (void)status;
+    (void)gameId;
+    (void)index;
+    return NULL;
+}
+
+const char *M12_StartupMenu_AssetDataDir(const M12_StartupMenuState *state)
+{
+    (void)state;
+    return NULL;
+}
+
+const M12_AssetVersionStatus *M12_StartupMenu_AssetVersion(
+    const M12_StartupMenuState *state,
+    const char *gameId,
+    int index)
+{
+    (void)state;
+    return index >= 0 ? M12_AssetStatus_GetVersion(NULL, gameId, (size_t)index)
+                      : NULL;
+}
+
+#if defined(_WIN32)
+#include <direct.h>
+#include <process.h>
+#define TEST_MKDIR(path) _mkdir(path)
+#define TEST_GETPID() _getpid()
+#define TEST_SEP "\\"
+#define TEST_SETENV(name, value) _putenv_s((name), (value))
+#define TEST_UNSETENV(name) _putenv_s((name), "")
+#else
+#include <sys/stat.h>
+#include <unistd.h>
+#define TEST_MKDIR(path) mkdir((path), 0700)
+#define TEST_GETPID() getpid()
+#define TEST_SEP "/"
+#define TEST_SETENV(name, value) setenv((name), (value), 1)
+#define TEST_UNSETENV(name) unsetenv((name))
+#endif
+
+static int g_failures = 0;
+
+static void expect_true(int condition, const char *message)
+{
+    if (!condition) {
+        fprintf(stderr, "FAIL: %s\n", message);
+        ++g_failures;
+    }
+}
+
+static size_t build_raw_swsh(unsigned char *out, size_t out_bytes)
+{
+    unsigned int pos = 0U;
+    unsigned int row;
+    if (!out || out_bytes < 2048U) {
+        return 0U;
+    }
+    memset(out, 0, out_bytes);
+    out[pos++] = 0x40U;
+    out[pos++] = 0x01U;
+    out[pos++] = 0xc8U;
+    out[pos++] = 0x00U;
+    for (row = 0U; row < 51U; ++row) {
+        out[pos++] = 0xc0U;
+        out[pos++] = 0x01U;
+        out[pos++] = 0x3fU;
+    }
+    for (row = 0U; row < 119U; ++row) {
+        out[pos++] = 0x80U;
+        out[pos++] = 0x17U;
+        out[pos++] = 0x8fU;
+        out[pos++] = 0x51U;
+        out[pos++] = 0x80U;
+        out[pos++] = 0xa2U;
+        out[pos++] = 0x0fU;
+        out[pos++] = 0x80U;
+        out[pos++] = 0x31U;
+    }
+    for (row = 0U; row < 30U; ++row) {
+        out[pos++] = 0xc0U;
+        out[pos++] = 0x01U;
+        out[pos++] = 0x3fU;
+    }
+    return (size_t)pos;
+}
+
+static int write_swsh(const char *path)
+{
+    unsigned char raw[2048];
+    size_t bytes = build_raw_swsh(raw, sizeof(raw));
+    FILE *f;
+    if (!path || bytes == 0U) {
+        return 0;
+    }
+    f = fopen(path, "wb");
+    if (!f) {
+        return 0;
+    }
+    if (fwrite(raw, 1, bytes, f) != bytes) {
+        fclose(f);
+        return 0;
+    }
+    fclose(f);
+    return 1;
+}
+
+static int copy_file(const char *src, const char *dst)
+{
+    unsigned char buf[4096];
+    FILE *in;
+    FILE *out;
+    size_t n;
+    if (!src || !dst) {
+        return 0;
+    }
+    in = fopen(src, "rb");
+    if (!in) {
+        return 0;
+    }
+    out = fopen(dst, "wb");
+    if (!out) {
+        fclose(in);
+        return 0;
+    }
+    while ((n = fread(buf, 1, sizeof(buf), in)) > 0U) {
+        if (fwrite(buf, 1, n, out) != n) {
+            fclose(out);
+            fclose(in);
+            return 0;
+        }
+    }
+    if (ferror(in)) {
+        fclose(out);
+        fclose(in);
+        return 0;
+    }
+    fclose(out);
+    fclose(in);
+    return 1;
+}
+
+int main(void)
+{
+    char root[512];
+    char dm1_dir[512];
+    char csb_dir[512];
+    char extras_dir[512];
+    char extras_legacy_dir[512];
+    char extras_legacy_pc34_dir[512];
+    char scan_root[512];
+    char scan_nested_dir[512];
+    char real_hash_dir[512];
+    char dm1_swsh[512];
+    char csb_swsh[512];
+    char extras_swsh[512];
+    char arbitrary_swsh[512];
+    char renamed_real_swsh[512];
+    char found[512];
+    const char *real_swsh =
+        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/"
+        "ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH";
+
+    snprintf(root,
+             sizeof(root),
+             "%s%sfirestaff_swsh_path_%ld",
+             getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp",
+             TEST_SEP,
+             (long)TEST_GETPID());
+    snprintf(dm1_dir, sizeof(dm1_dir), "%s%sdm1", root, TEST_SEP);
+    snprintf(csb_dir, sizeof(csb_dir), "%s%scsb", root, TEST_SEP);
+    snprintf(extras_dir, sizeof(extras_dir), "%s%sdm1-extras", root, TEST_SEP);
+    snprintf(extras_legacy_dir,
+             sizeof(extras_legacy_dir),
+             "%s%slegacy-dos",
+             extras_dir,
+             TEST_SEP);
+    snprintf(extras_legacy_pc34_dir,
+             sizeof(extras_legacy_pc34_dir),
+             "%s%sDungeonMasterPC34",
+             extras_legacy_dir,
+             TEST_SEP);
+    snprintf(scan_root, sizeof(scan_root), "%s%shash-scan-root", root, TEST_SEP);
+    snprintf(scan_nested_dir,
+             sizeof(scan_nested_dir),
+             "%s%srenamed-files",
+             scan_root,
+             TEST_SEP);
+    snprintf(real_hash_dir,
+             sizeof(real_hash_dir),
+             "%s%sfirestaff_swsh_real_hash_%ld",
+             getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp",
+             TEST_SEP,
+             (long)TEST_GETPID());
+    snprintf(dm1_swsh, sizeof(dm1_swsh), "%s%sSWOOSH", dm1_dir, TEST_SEP);
+    snprintf(csb_swsh, sizeof(csb_swsh), "%s%sSWOOSH", csb_dir, TEST_SEP);
+    snprintf(extras_swsh,
+             sizeof(extras_swsh),
+             "%s%sSWOOSH",
+             extras_legacy_pc34_dir,
+             TEST_SEP);
+    snprintf(arbitrary_swsh,
+             sizeof(arbitrary_swsh),
+             "%s%sftl-logo.payload",
+             scan_nested_dir,
+             TEST_SEP);
+    snprintf(renamed_real_swsh,
+             sizeof(renamed_real_swsh),
+             "%s%snot-called-swoosh.bin",
+             real_hash_dir,
+             TEST_SEP);
+
+    expect_true(TEST_MKDIR(root) == 0, "temp root created");
+    expect_true(TEST_MKDIR(dm1_dir) == 0, "dm1 dir created");
+    expect_true(TEST_MKDIR(csb_dir) == 0, "csb dir created");
+    expect_true(TEST_MKDIR(extras_dir) == 0, "dm1-extras dir created");
+    expect_true(TEST_MKDIR(extras_legacy_dir) == 0,
+                "dm1-extras legacy dir created");
+    expect_true(TEST_MKDIR(extras_legacy_pc34_dir) == 0,
+                "dm1-extras PC34 dir created");
+    expect_true(TEST_MKDIR(scan_root) == 0, "scan root created");
+    expect_true(TEST_MKDIR(scan_nested_dir) == 0, "scan nested dir created");
+    expect_true(TEST_MKDIR(real_hash_dir) == 0, "real hash dir created");
+    expect_true(write_swsh(dm1_swsh), "dm1 SWOOSH written");
+    expect_true(write_swsh(csb_swsh), "csb SWOOSH written");
+    expect_true(write_swsh(extras_swsh), "dm1-extras SWOOSH written");
+    expect_true(write_swsh(arbitrary_swsh), "arbitrary named SWSH payload written");
+
+    memset(found, 0, sizeof(found));
+    expect_true(V1_SWSH_Intro_FindLogoPathForGame(NULL,
+                                                   root,
+                                                   "csb",
+                                                   found,
+                                                   sizeof(found)) == 1,
+                "csb SWOOSH found");
+    expect_true(strcmp(found, csb_swsh) == 0,
+                "csb SWOOSH path is preferred");
+
+    expect_true(remove(csb_swsh) == 0, "csb SWOOSH removed for fallback test");
+    expect_true(remove(dm1_swsh) == 0, "dm1 primary SWOOSH removed for fallback test");
+    memset(found, 0, sizeof(found));
+    expect_true(V1_SWSH_Intro_FindLogoPathForGame(NULL,
+                                                   root,
+                                                   "csb",
+                                                   found,
+                                                   sizeof(found)) == 1,
+                "csb SWOOSH falls back to shared DM1 extras");
+    expect_true(strcmp(found, extras_swsh) == 0,
+                "csb fallback resolves DM1 extras SWOOSH");
+    expect_true(write_swsh(dm1_swsh), "dm1 SWOOSH restored");
+
+    memset(found, 0, sizeof(found));
+    TEST_SETENV("FIRESTAFF_SWOOSH_DEEP_SCAN", "1");
+    expect_true(V1_SWSH_Intro_FindLogoPathForGame(NULL,
+                                                   scan_root,
+                                                   "csb",
+                                                   found,
+                                                   sizeof(found)) == 1,
+                "csb SWSH scan finds payload without filename dependency");
+    expect_true(strcmp(found, arbitrary_swsh) == 0,
+                "csb SWSH scan resolves arbitrary named payload by bytes");
+
+    if (copy_file(real_swsh, renamed_real_swsh)) {
+        memset(found, 0, sizeof(found));
+        expect_true(V1_SWSH_Intro_FindLogoPathForGame(NULL,
+                                                       real_hash_dir,
+                                                       "csb",
+                                                       found,
+                                                       sizeof(found)) == 1,
+                    "csb SWSH hash scan finds renamed original SWOOSH");
+        expect_true(strcmp(found, renamed_real_swsh) == 0,
+                    "csb SWSH hash scan resolves renamed original by MD5");
+    } else {
+        printf("skip: local ReDMCSB I34E/SWOOSH fixture not available\n");
+    }
+    TEST_UNSETENV("FIRESTAFF_SWOOSH_DEEP_SCAN");
+
+    memset(found, 0, sizeof(found));
+    expect_true(V1_SWSH_Intro_FindLogoPath(NULL,
+                                            root,
+                                            found,
+                                            sizeof(found)) == 1,
+                "dm1 SWOOSH found through legacy wrapper");
+    expect_true(strcmp(found, dm1_swsh) == 0,
+                "legacy wrapper still resolves dm1 SWOOSH");
+
+    if (g_failures) {
+        return 1;
+    }
+    printf("ok: SWSH intro pathfinder resolves game-specific SWOOSH roots\n");
+    return 0;
+}

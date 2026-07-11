@@ -444,6 +444,7 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
 {
     const CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *host_gate;
     uint32_t hash = 2166136261u;
+    int title_phase_i;
 
     if (!out_receipt) return 0;
     csb_v1_boot_startup_release_app_capture_receipt_init_pc34(out_receipt);
@@ -494,15 +495,38 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
                 host_gate->no_loose_render_plan_exports
             ? 1
             : 0;
+    out_receipt->full_runtime_real_asset_matched =
+        complete_support->full_runtime.real_asset_matched ? 1 : 0;
+    out_receipt->host_runtime_visual_real_asset_matched =
+        host_gate->runtime_visual.real_asset_matched ? 1 : 0;
     out_receipt->real_startup_assets_bound =
         complete_support->real_startup_assets_bound &&
                 host_gate->real_startup_assets_bound
+            ? 1
+            : 0;
+    out_receipt->release_app_real_asset_capture_ready =
+        complete_support->real_asset_matched &&
+                out_receipt->full_runtime_real_asset_matched &&
+                out_receipt->host_runtime_visual_real_asset_matched &&
+                out_receipt->real_startup_assets_bound &&
+                complete_support->real_startup_asset_binding_hash != 0u
             ? 1
             : 0;
     out_receipt->title_runtime_phase_mask =
         complete_support->title_runtime_phase_mask;
     out_receipt->title_runtime_expected_phase_mask =
         complete_support->title_runtime_expected_phase_mask;
+    out_receipt->title_runtime_phase_hash_count =
+        complete_support->title_runtime_phase_hash_count;
+    /* ReDMCSB TITLE.C F0437 renders PRESENTS, CHAOS zoom/hold, then
+     * STRIKES BACK as distinct startup phases; release capture keeps each
+     * phase hash visible instead of accepting one collapsed title proof. */
+    for (title_phase_i = 0;
+         title_phase_i < CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34;
+         ++title_phase_i) {
+        out_receipt->title_runtime_phase_hashes[title_phase_i] =
+            complete_support->title_runtime_phase_hashes[title_phase_i];
+    }
     out_receipt->title_runtime_phase_hash =
         complete_support->title_runtime_phase_hash;
     out_receipt->title_packaged_capture_hash =
@@ -513,6 +537,19 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
         host_gate->utility_packaged_capture_hash;
     out_receipt->door_opening_packaged_capture_hash =
         host_gate->door_opening_packaged_capture_hash;
+    out_receipt->credits_packaged_capture_hash =
+        host_gate->credits_packaged_capture_hash;
+    out_receipt->release_app_real_asset_capture_hash =
+        complete_support->real_startup_asset_binding_hash;
+    out_receipt->release_app_real_asset_capture_hash ^=
+        (uint32_t)out_receipt->full_runtime_real_asset_matched;
+    out_receipt->release_app_real_asset_capture_hash *= 16777619u;
+    out_receipt->release_app_real_asset_capture_hash ^=
+        (uint32_t)out_receipt->host_runtime_visual_real_asset_matched;
+    out_receipt->release_app_real_asset_capture_hash *= 16777619u;
+    if (out_receipt->release_app_real_asset_capture_hash == 0u) {
+        out_receipt->release_app_real_asset_capture_hash = 1u;
+    }
     out_receipt->title_release_app_capture_ready =
         host_gate->title_runtime_captured &&
                 host_gate->title_packaged_capture_hash != 0u
@@ -531,6 +568,14 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
     out_receipt->door_opening_release_app_capture_ready =
         host_gate->door_opening_runtime_captured &&
                 host_gate->door_opening_packaged_capture_hash != 0u
+            ? 1
+            : 0;
+    /* ReDMCSB: ENTRANCE.C F0806 keeps credits inside the entrance loop via
+     * M567_COMMAND_ENTRANCE_DRAW_CREDITS, so release/app capture must prove
+     * the credits surface uses the same receipt-owned path as title/HUD/door. */
+    out_receipt->credits_release_app_capture_ready =
+        host_gate->credits_runtime_captured &&
+                host_gate->credits_packaged_capture_hash != 0u
             ? 1
             : 0;
     out_receipt->title_host_consumer_ready =
@@ -561,11 +606,19 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
                 host_gate->door_opening_packaged_capture_hash != 0u
             ? 1
             : 0;
+    out_receipt->credits_host_consumer_ready =
+        host_gate->credits_host_ownership_valid &&
+                host_gate->credits_host_draw_consumes_receipt_only &&
+                host_gate->credits_host_input_consumes_receipt_only &&
+                host_gate->credits_packaged_capture_hash != 0u
+            ? 1
+            : 0;
     out_receipt->route_specific_host_consumers_ready =
         out_receipt->title_host_consumer_ready &&
                 out_receipt->closed_door_host_consumer_ready &&
                 out_receipt->utility_host_consumer_ready &&
-                out_receipt->door_opening_host_consumer_ready
+                out_receipt->door_opening_host_consumer_ready &&
+                out_receipt->credits_host_consumer_ready
             ? 1
             : 0;
     out_receipt->runtime_host_gate_hash =
@@ -585,6 +638,12 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
     hash *= 16777619u;
     hash ^= out_receipt->door_opening_packaged_capture_hash;
     hash *= 16777619u;
+    hash ^= out_receipt->credits_packaged_capture_hash;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->release_app_real_asset_capture_ready;
+    hash *= 16777619u;
+    hash ^= out_receipt->release_app_real_asset_capture_hash;
+    hash *= 16777619u;
     hash ^= (uint32_t)out_receipt->title_phase_route_complete;
     hash *= 16777619u;
     hash ^= (uint32_t)out_receipt->title_runtime_phase_mask;
@@ -593,6 +652,14 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
     hash *= 16777619u;
     hash ^= out_receipt->title_runtime_phase_hash;
     hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->title_runtime_phase_hash_count;
+    hash *= 16777619u;
+    for (title_phase_i = 0;
+         title_phase_i < CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34;
+         ++title_phase_i) {
+        hash ^= out_receipt->title_runtime_phase_hashes[title_phase_i];
+        hash *= 16777619u;
+    }
     hash ^= (uint32_t)out_receipt->runtime_host_routes_ready;
     hash *= 16777619u;
     hash ^= (uint32_t)out_receipt->host_route_wrappers_retired;
@@ -608,9 +675,12 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
                 out_receipt->closed_door_release_app_capture_ready &&
                 out_receipt->utility_release_app_capture_ready &&
                 out_receipt->door_opening_release_app_capture_ready &&
+                out_receipt->credits_release_app_capture_ready &&
                 out_receipt->title_phase_route_complete &&
                 out_receipt->title_runtime_phase_mask ==
                     out_receipt->title_runtime_expected_phase_mask &&
+                out_receipt->title_runtime_phase_hash_count ==
+                    CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
                 out_receipt->title_runtime_phase_hash != 0u &&
                 out_receipt->runtime_host_routes_ready &&
                 out_receipt->draw_consumes_receipt_only &&
@@ -620,6 +690,8 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
                 out_receipt->no_wrapper_fallback_routes &&
                 out_receipt->host_route_wrappers_retired &&
                 out_receipt->no_loose_render_plan_exports &&
+                out_receipt->release_app_real_asset_capture_ready &&
+                out_receipt->release_app_real_asset_capture_hash != 0u &&
                 out_receipt->real_startup_assets_bound &&
                 out_receipt->release_app_capture_hash != 0u
             ? 1
@@ -629,7 +701,10 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
      * TITLE.C F0437 lines 424-463, ENTRANCE.C F0441 lines 620-950 and
      * F0580/F0581 lines 1123-1165.  DUNVIEW.C wall/door tables around
      * lines 150-240 keep door/HUD ownership data-driven, so release capture
-     * now requires each host route to consume its own receipt-owned package. */
+     * now requires each host route to consume its own receipt-owned package.
+     * The release/app gate also requires real-data evidence from both the
+     * full runtime session and host visual capture before it can stand in for
+     * a Mac/app capture receipt. */
     return out_receipt->valid;
 }
 
@@ -639,6 +714,7 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
     CSB_V1_StartupCompleteSupportReceipt_PC34 *out_receipt)
 {
     uint32_t hash = 2166136261u;
+    int title_phase_i;
 
     if (!out_receipt) return 0;
     csb_v1_boot_startup_complete_support_receipt_init_pc34(out_receipt);
@@ -698,7 +774,8 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
                 host_capture_gate->title_host_ownership_valid &&
                 host_capture_gate->closed_door_host_ownership_valid &&
                 host_capture_gate->utility_host_ownership_valid &&
-                host_capture_gate->door_opening_host_ownership_valid
+                host_capture_gate->door_opening_host_ownership_valid &&
+                host_capture_gate->credits_host_ownership_valid
             ? 1
             : 0;
     out_receipt->draw_consumes_receipt_only =
@@ -724,8 +801,21 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
         host_capture_gate->title_runtime_phase_mask;
     out_receipt->title_runtime_expected_phase_mask =
         host_capture_gate->title_runtime_expected_phase_mask;
+    out_receipt->title_runtime_phase_hash_count =
+        host_capture_gate->title_runtime_phase_hash_count;
+    /* ReDMCSB TITLE.C F0437 has four visible title phases. Preserve the
+     * per-phase hashes through complete-support so host/app gates cannot
+     * collapse PRESENTS, CHAOS zoom, CHAOS hold, and STRIKES BACK. */
+    for (title_phase_i = 0;
+         title_phase_i < CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34;
+         ++title_phase_i) {
+        out_receipt->title_runtime_phase_hashes[title_phase_i] =
+            host_capture_gate->title_runtime_phase_hashes[title_phase_i];
+    }
     out_receipt->title_runtime_phase_hash =
         host_capture_gate->title_runtime_phase_hash;
+    out_receipt->credits_packaged_capture_hash =
+        host_capture_gate->credits_packaged_capture_hash;
     out_receipt->real_startup_asset_binding_hash =
         host_capture_gate->real_startup_asset_binding_hash;
     out_receipt->session_generation = full_runtime->session_generation;
@@ -737,6 +827,14 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
     hash *= 16777619u;
     hash ^= host_capture_gate->title_runtime_phase_hash;
     hash *= 16777619u;
+    hash ^= (uint32_t)host_capture_gate->title_runtime_phase_hash_count;
+    hash *= 16777619u;
+    for (title_phase_i = 0;
+         title_phase_i < CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34;
+         ++title_phase_i) {
+        hash ^= host_capture_gate->title_runtime_phase_hashes[title_phase_i];
+        hash *= 16777619u;
+    }
     hash ^= (uint32_t)host_capture_gate->title_runtime_phase_mask;
     hash *= 16777619u;
     hash ^= (uint32_t)host_capture_gate->title_runtime_expected_phase_mask;
@@ -758,6 +856,8 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
                 out_receipt->title_sequence_ready &&
                 out_receipt->title_runtime_phase_mask ==
                     out_receipt->title_runtime_expected_phase_mask &&
+                out_receipt->title_runtime_phase_hash_count ==
+                    CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34 &&
                 out_receipt->title_runtime_phase_hash != 0u &&
                 out_receipt->title_presents_ready &&
                 out_receipt->title_chaos_ready &&
