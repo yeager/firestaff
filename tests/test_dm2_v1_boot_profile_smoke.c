@@ -577,6 +577,11 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.real_gdat_runtime_hud_breadth_ready == 1 &&
               (hud_capture.runtime_scene_consumed_mask & 0x3u) == 0x3u &&
               hud_capture.runtime_scene_consumption_hash != 0u &&
+              hud_capture.runtime_gdat_breadth_receipt_ready == 1 &&
+              (hud_capture.runtime_gdat_breadth_mask & 0x03ffu) == 0x03ffu &&
+              hud_capture.runtime_gdat_breadth_hash != 0u &&
+              hud_capture.runtime_gdat_breadth_raw_byte_count > 0u &&
+              hud_capture.runtime_gdat_breadth_decoded_pixel_count > 0u &&
               hud_capture.raw_gdat_runtime_interface_count >= 4 &&
               hud_capture.decoded_gdat_runtime_interface_count >= 4 &&
               hud_capture.teleporter_map_chip_ready == 1 &&
@@ -724,6 +729,9 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               complete_support.runtime_gdat_interface_placement_complete == 1 &&
               complete_support.runtime_creature_atlas_complete == 1 &&
               complete_support.runtime_gdat_direction_breadth_complete == 1 &&
+              complete_support.runtime_gdat_breadth_receipt_complete == 1 &&
+              (complete_support.runtime_gdat_breadth_mask & 0x03ffu) == 0x03ffu &&
+              complete_support.runtime_gdat_breadth_hash != 0u &&
               complete_support.no_fallback_title_or_runtime_visuals == 1 &&
               complete_support.raw_gdat_capture_complete == 1 &&
               complete_support.decoded_gdat_capture_complete == 1 &&

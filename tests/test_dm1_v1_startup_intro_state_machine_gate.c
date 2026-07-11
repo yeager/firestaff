@@ -3586,6 +3586,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  strstr(hoc_boot_log.fields,
                         "dm1HoCReleaseAppCapture=1") != NULL &&
                  strstr(hoc_boot_log.fields,
+                        "dm1HoCReleaseAppIdentity=1") != NULL &&
+                 strstr(hoc_boot_log.fields,
+                        "dm1HoCReleaseAppIdentityHash=") != NULL &&
+                 strstr(hoc_boot_log.fields,
                         "dm1HoCPresentedCaptureSize=320x200") != NULL &&
                  strstr(hoc_boot_log.fields,
                         "dm1CompleteOriginalSaveRoundtripRoute=1") != NULL &&
@@ -3603,6 +3607,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      NULL &&
                  strstr(hoc_boot_expectation.diagnostic, "hostApp=1") !=
                      NULL &&
+                 strstr(hoc_boot_expectation.diagnostic,
+                        "releaseIdentity=1") != NULL &&
+                 strstr(hoc_boot_expectation.diagnostic,
+                        "releaseIdentityHash=") != NULL &&
                  strstr(hoc_boot_expectation.source_evidence, "ENTRANCE.C") !=
                      NULL,
              1);
@@ -3615,6 +3623,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_expectation.handled &&
                  hoc_boot_expectation.ready &&
                  strstr(hoc_boot_expectation.diagnostic, "release=1") != NULL &&
+                 strstr(hoc_boot_expectation.diagnostic,
+                        "releaseIdentity=1") != NULL &&
+                 strstr(hoc_boot_expectation.diagnostic,
+                        "releaseIdentityHash=") != NULL &&
                  strstr(hoc_boot_expectation.diagnostic, "presented=1") != NULL,
              1);
     {

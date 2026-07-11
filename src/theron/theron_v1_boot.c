@@ -52,6 +52,56 @@
 #define TRV_PATH_SEP '/'
 #endif
 
+static uint32_t theron_v1_boot_capture_evidence_hash(
+    uint32_t object_route_hash,
+    uint32_t level_route_hash,
+    unsigned int capture_mask,
+    unsigned int object_blocked_mask,
+    unsigned int level_blocked_mask) {
+
+    uint32_t hash = 2166136261u;
+    hash ^= object_route_hash;
+    hash *= 16777619u;
+    hash ^= level_route_hash;
+    hash *= 16777619u;
+    hash ^= capture_mask;
+    hash *= 16777619u;
+    hash ^= object_blocked_mask;
+    hash *= 16777619u;
+    hash ^= level_blocked_mask;
+    hash *= 16777619u;
+    return hash ? hash : 2166136261u;
+}
+
+static int theron_v1_boot_mac_app_capture_candidate_ready(
+    int all_dungeon_ready,
+    int all_dungeon_count,
+    unsigned int all_dungeon_mask,
+    int exact_level_ready,
+    int exact_object_ready,
+    int bitmap_routes_complete,
+    int no_fallback_runtime_ready,
+    int object_table_no_fallback_ready,
+    int nonstartup_level_no_fallback_ready,
+    uint32_t object_route_hash,
+    uint32_t level_route_hash) {
+
+    return all_dungeon_ready &&
+                   all_dungeon_count == THERON_DUNGEON_COUNT &&
+                   all_dungeon_mask ==
+                       ((1u << THERON_DUNGEON_COUNT) - 1u) &&
+                   exact_level_ready &&
+                   exact_object_ready &&
+                   bitmap_routes_complete &&
+                   no_fallback_runtime_ready &&
+                   object_table_no_fallback_ready &&
+                   nonstartup_level_no_fallback_ready &&
+                   object_route_hash != 0u &&
+                   level_route_hash != 0u
+               ? 1
+               : 0;
+}
+
 /* ── PC Engine file candidates ───────────────────────────────────── */
 
 /* Theron's Quest data files — Phase 0 locked (2026-05-27).
@@ -1375,6 +1425,30 @@ int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
     out_view_model->object_table_route_hash =
         effective_snapshot.object_table_route_hash;
     out_view_model->level_route_hash = effective_snapshot.level_route_hash;
+    out_view_model->mac_app_capture_candidate_ready =
+        theron_v1_boot_mac_app_capture_candidate_ready(
+            out_view_model->all_dungeon_real_data_capture_ready,
+            out_view_model->all_dungeon_capture_count,
+            out_view_model->all_dungeon_capture_mask,
+            out_view_model->exact_level_semantics_ready,
+            out_view_model->exact_object_semantics_ready,
+            out_view_model->track02_bitmap_routes_complete,
+            out_view_model->track02_no_fallback_runtime_route_ready,
+            out_view_model->object_table_no_fallback_ready,
+            out_view_model->nonstartup_level_no_fallback_ready,
+            out_view_model->object_table_route_hash,
+            out_view_model->level_route_hash);
+    out_view_model->mac_app_capture_requires_external_screenshot =
+        out_view_model->mac_app_capture_candidate_ready ? 1 : 0;
+    out_view_model->mac_app_capture_evidence_hash =
+        out_view_model->mac_app_capture_candidate_ready
+            ? theron_v1_boot_capture_evidence_hash(
+                  out_view_model->object_table_route_hash,
+                  out_view_model->level_route_hash,
+                  out_view_model->all_dungeon_capture_mask,
+                  out_view_model->object_table_blocked_anchor_mask,
+                  out_view_model->nonstartup_level_blocked_anchor_mask)
+            : 0u;
     if (out_view_model->runtime_level_source ==
             THERON_V1_STARTUP_RUNTIME_LEVEL_NONE &&
         effective_snapshot.world) {
@@ -1649,6 +1723,12 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
     out_receipt->object_table_route_hash =
         view_model->object_table_route_hash;
     out_receipt->level_route_hash = view_model->level_route_hash;
+    out_receipt->mac_app_capture_candidate_ready =
+        view_model->mac_app_capture_candidate_ready;
+    out_receipt->mac_app_capture_requires_external_screenshot =
+        view_model->mac_app_capture_requires_external_screenshot;
+    out_receipt->mac_app_capture_evidence_hash =
+        view_model->mac_app_capture_evidence_hash;
     out_receipt->startup_menu_render_allowed =
         view_model->render_plan_valid ? 1 : 0;
     out_receipt->track02_title_menu_ready =
@@ -1891,6 +1971,13 @@ int theron_v1_boot_startup_host_view_receipt_from_view_model(
             out_receipt->render_route.object_table_route_hash;
         out_receipt->level_route_hash =
             out_receipt->render_route.level_route_hash;
+        out_receipt->mac_app_capture_candidate_ready =
+            out_receipt->render_route.mac_app_capture_candidate_ready;
+        out_receipt->mac_app_capture_requires_external_screenshot =
+            out_receipt->render_route
+                .mac_app_capture_requires_external_screenshot;
+        out_receipt->mac_app_capture_evidence_hash =
+            out_receipt->render_route.mac_app_capture_evidence_hash;
         out_receipt->hud_ready = out_receipt->render_route.hud_ready;
         out_receipt->status_scope = out_receipt->render_route.status_scope;
         out_receipt->status = out_receipt->render_route.status;

@@ -402,6 +402,11 @@ typedef struct {
     uint32_t interface_palette_pal16_byte_count;
     uint32_t interface_palette_irgb_color_count;
     uint32_t interface_palette_pal16_color_count;
+    int runtime_gdat_breadth_receipt_ready;
+    uint32_t runtime_gdat_breadth_mask;
+    uint32_t runtime_gdat_breadth_hash;
+    uint32_t runtime_gdat_breadth_raw_byte_count;
+    uint32_t runtime_gdat_breadth_decoded_pixel_count;
     uint32_t combined_frame_hash;
     uint32_t combined_pixel_count;
     DM2_V1_BootRuntimeRenderReceipt first_frame;
@@ -943,6 +948,9 @@ typedef struct {
     int runtime_gdat_interface_placement_complete;
     int runtime_creature_atlas_complete;
     int runtime_gdat_direction_breadth_complete;
+    int runtime_gdat_breadth_receipt_complete;
+    uint32_t runtime_gdat_breadth_mask;
+    uint32_t runtime_gdat_breadth_hash;
     int no_fallback_title_or_runtime_visuals;
     int raw_gdat_capture_complete;
     int decoded_gdat_capture_complete;
