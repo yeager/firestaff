@@ -177,6 +177,12 @@ static int dm2_v1_boot_startup_menu_raw_screen_receipt(
     DM2_V1_BootProfile *profile,
     uint32_t *out_hash,
     uint32_t *out_byte_count);
+static int dm2_v1_boot_runtime_interface_rect14_placement_receipt(
+    DM2_V1_BootProfile *profile,
+    uint32_t *out_hash,
+    uint32_t *out_placement_count,
+    uint32_t *out_rotated_cell_mask,
+    uint32_t *out_max_stretched_size);
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
 
@@ -4259,6 +4265,95 @@ static int dm2_v1_boot_runtime_interface_rect14_receipt(
     return rows > 0u && image_fields > 0u;
 }
 
+static int dm2_v1_boot_runtime_interface_rect14_placement_receipt(
+    DM2_V1_BootProfile *profile,
+    uint32_t *out_hash,
+    uint32_t *out_placement_count,
+    uint32_t *out_rotated_cell_mask,
+    uint32_t *out_max_stretched_size)
+{
+    static const int k_distance_stretch64[4] = { 64, 52, 40, 32 };
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0;
+    uint32_t hash = 0x32523150u;
+    uint32_t placement_count = 0u;
+    uint32_t rotated_mask = 0u;
+    uint32_t max_stretched = 0u;
+    uint32_t rows;
+
+    if (out_hash) *out_hash = 0u;
+    if (out_placement_count) *out_placement_count = 0u;
+    if (out_rotated_cell_mask) *out_rotated_cell_mask = 0u;
+    if (out_max_stretched_size) *out_max_stretched_size = 0u;
+    if (!profile || !profile->graphics_dat || !out_hash ||
+        !out_placement_count || !out_rotated_cell_mask ||
+        !out_max_stretched_size) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_typed_sized(
+        &gfx->loader,
+        DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+        0,
+        DM2_GDAT_ENTRY_TYPE_RAW7,
+        DM2_GDAT_INTERFACE_RAW_RECT14_TABLE,
+        &raw_size);
+    if (!raw || raw_size == 0 || raw_size > UINT32_MAX ||
+        (raw_size % 14u) != 0u) {
+        return 0;
+    }
+
+    rows = (uint32_t)(raw_size / 14u);
+    for (uint32_t row = 0; row < rows; ++row) {
+        const uint8_t *r = raw + (size_t)row * 14u;
+        if (r[0] > 24u) {
+            continue;
+        }
+        for (int cell = 0; cell < 4; ++cell) {
+            DM2_V1_InterfaceRect14Placement placement;
+            if (!dm2_v1_viewport_interface_rect14_placement(
+                    r,
+                    cell,
+                    k_distance_stretch64[cell],
+                    &placement)) {
+                continue;
+            }
+            ++placement_count;
+            hash = dm2_v1_boot_packaged_capture_hash_step(hash, row);
+            hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+                                                          (uint32_t)cell);
+            hash = dm2_v1_boot_packaged_capture_hash_step(
+                hash, (uint32_t)(uint8_t)placement.lateral_offset);
+            for (int dir = 0; dir < 4; ++dir) {
+                uint32_t bit = (uint32_t)
+                    (dm2_v1_viewport_rotate_5x5_pos(r[0], dir) & 31);
+                rotated_mask |= 1u << bit;
+                if (placement.stretched_size[dir] > max_stretched) {
+                    max_stretched = placement.stretched_size[dir];
+                }
+                hash = dm2_v1_boot_packaged_capture_hash_step(
+                    hash, placement.blit_rect_id[dir]);
+                hash = dm2_v1_boot_packaged_capture_hash_step(
+                    hash, placement.image_field[dir]);
+                hash = dm2_v1_boot_packaged_capture_hash_step(
+                    hash, placement.stretched_size[dir]);
+                hash = dm2_v1_boot_packaged_capture_hash_step(
+                    hash, placement.flags[dir]);
+            }
+        }
+    }
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, placement_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, rotated_mask);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, max_stretched);
+
+    *out_hash = hash;
+    *out_placement_count = placement_count;
+    *out_rotated_cell_mask = rotated_mask;
+    *out_max_stretched_size = max_stretched;
+    return placement_count >= 4u && rotated_mask != 0u && hash != 0u;
+}
+
 static int dm2_v1_boot_runtime_interface_action_table_receipt(
     DM2_V1_BootProfile *profile,
     uint32_t *out_hash,
@@ -6065,6 +6160,13 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->interface_rect14_image_field_count,
             &out_receipt->interface_rect14_stretch_field_count,
             &out_receipt->interface_rect14_flag_field_count);
+    out_receipt->interface_rect14_placement_plan_ready =
+        dm2_v1_boot_runtime_interface_rect14_placement_receipt(
+            profile,
+            &out_receipt->interface_rect14_placement_hash,
+            &out_receipt->interface_rect14_placement_count,
+            &out_receipt->interface_rect14_rotated_cell_mask,
+            &out_receipt->interface_rect14_max_stretched_size);
     out_receipt->interface_action_table_ready =
         dm2_v1_boot_runtime_interface_action_table_receipt(
             profile,
@@ -6100,6 +6202,14 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
             out_receipt->interface_rect14_row_count);
+    }
+    if (out_receipt->interface_rect14_placement_plan_ready) {
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->interface_rect14_placement_hash);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            out_receipt->interface_rect14_placement_count);
     }
     if (out_receipt->interface_action_table_ready) {
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -6535,7 +6645,13 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
           out_receipt->runtime_hud.interface_rect14_byte_count ==
               out_receipt->runtime_hud.interface_rect14_row_count * 14u &&
           out_receipt->runtime_hud.interface_rect14_image_field_count > 0u &&
-          out_receipt->runtime_hud.interface_rect14_stretch_field_count > 0u)) &&
+          out_receipt->runtime_hud.interface_rect14_stretch_field_count > 0u &&
+          out_receipt->runtime_hud.interface_rect14_placement_plan_ready &&
+          out_receipt->runtime_hud.interface_rect14_placement_hash != 0u &&
+          out_receipt->runtime_hud.interface_rect14_placement_count >=
+              out_receipt->runtime_hud.interface_rect14_row_count &&
+          out_receipt->runtime_hud.interface_rect14_rotated_cell_mask != 0u &&
+          out_receipt->runtime_hud.interface_rect14_max_stretched_size > 0u)) &&
         out_receipt->runtime_hud.interface_font_table_ready &&
         out_receipt->runtime_hud.interface_font_table_byte_count == 0x300u &&
         out_receipt->runtime_hud.interface_font_table_row_count == 6u &&
@@ -6628,6 +6744,10 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         hash, out_receipt->runtime_hud.interface_rect14_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud.interface_rect14_row_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.interface_rect14_placement_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->runtime_hud.interface_rect14_placement_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud.interface_palette_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -6842,6 +6962,46 @@ void dm2_v1_boot_startup_launch_cleanup(
     memset(launch, 0, sizeof(*launch));
 }
 
+static int dm2_v1_boot_hud_core_asset_address(int field,
+                                              int *out_category,
+                                              int *out_index,
+                                              int *out_field)
+{
+    if (!out_category || !out_index || !out_field ||
+        field < 0 || field > DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK) {
+        return 0;
+    }
+
+    *out_category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+    *out_index = 0;
+    *out_field = field;
+
+    /* skproject/SKWINSPX loads the base interface tables with
+     * LOAD_GDAT_INTERFACE_00_02, then draws HUD pieces through
+     * QUERY_GDAT_IMAGE_ENTRY_BUFF(1, subcat, field).  PC DM2 stores these
+     * core HUD images under subcategories 2-7 rather than index 0. */
+    if (field == DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR) {
+        *out_index = 6;
+        *out_field = 0x00;
+    } else if (field == DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP) {
+        *out_index = 5;
+        *out_field = 0x0b;
+    } else if (field == DM2_V1_VIEWPORT_GFX_HUD_CORE_GOLD_BOX) {
+        *out_index = 2;
+        *out_field = 0x03;
+    } else if (field == DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL) {
+        *out_index = 4;
+        *out_field = 0x01;
+    } else if (field >= DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE &&
+               field < DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE +
+                           DM2_V1_HUD_ACTION_ICON_COUNT) {
+        *out_index = 3;
+        *out_field =
+            0x02 + (field - DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE);
+    }
+    return 1;
+}
+
 int dm2_v1_boot_viewport_asset_fetch(void *user,
                                      int gdat_index,
                                      const uint8_t **out_pixels,
@@ -6998,12 +7158,18 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index <=
                    DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK) {
+        int logical_field;
         field = DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index;
-        category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
-        index = 0;
-        cache_pixels = &gfx->hud_core_pixels[field];
-        cache_w = &gfx->hud_core_w[field];
-        cache_h = &gfx->hud_core_h[field];
+        logical_field = field;
+        if (!dm2_v1_boot_hud_core_asset_address(logical_field,
+                                                &category,
+                                                &index,
+                                                &field)) {
+            return -1;
+        }
+        cache_pixels = &gfx->hud_core_pixels[logical_field];
+        cache_w = &gfx->hud_core_w[logical_field];
+        cache_h = &gfx->hud_core_h[logical_field];
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE - gdat_index <
                    (0x100 << DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT)) {
@@ -7281,9 +7447,11 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index <=
                    DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK) {
-        *out_category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
-        *out_index = 0;
-        *out_field = DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index;
+        return dm2_v1_boot_hud_core_asset_address(
+            DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index,
+            out_category,
+            out_index,
+            out_field);
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE - gdat_index <
                    (0x100 << DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT)) {

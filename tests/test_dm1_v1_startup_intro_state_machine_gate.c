@@ -793,6 +793,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
         hoc_presented_publish;
     DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34
         hoc_presented_export;
+    DM1_V1_StartupHoCPresentedCaptureM12ImportFacts_PC34
+        hoc_presented_m12_import_facts;
+    DM1_V1_StartupHoCPresentedCaptureM12ImportReceipt_PC34
+        hoc_presented_m12_import;
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 hoc_enter_handoff;
     DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34
         hoc_save_capture_readiness;
@@ -2144,6 +2148,63 @@ static void check_dm1_launch_path_bypass_contract(void) {
              1);
     hoc_presented_publish_facts.required_consumer_mask =
         DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34;
+    memset(&hoc_presented_m12_import_facts, 0,
+           sizeof(hoc_presented_m12_import_facts));
+    memset(&hoc_presented_m12_import, 0,
+           sizeof(hoc_presented_m12_import));
+    hoc_presented_m12_import_facts.source_id = "dm1";
+    hoc_presented_m12_import_facts.presented_capture_ready = 1;
+    hoc_presented_m12_import_facts.host_window_present = 1;
+    hoc_presented_m12_import_facts.captured_from_mac_window = 1;
+    hoc_presented_m12_import_facts.captured_from_release_app = 1;
+    hoc_presented_m12_import_facts.width = 320;
+    hoc_presented_m12_import_facts.height = 200;
+    hoc_presented_m12_import_facts.byte_count = 320 * 200 * 4;
+    hoc_presented_m12_import_facts.framebuffer_hash = 0x4d314843u;
+    hoc_presented_m12_import_facts.consumer_mask =
+        DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34;
+    hoc_presented_m12_import_facts.chain_hash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            hoc_presented_m12_import_facts.width,
+            hoc_presented_m12_import_facts.height,
+            hoc_presented_m12_import_facts.byte_count,
+            hoc_presented_m12_import_facts.framebuffer_hash,
+            hoc_presented_m12_import_facts.consumer_mask);
+    expect_i("DM1 HoC M12 import consumes DM1 presented-capture chain",
+             dm1_v1_startup_hoc_presented_capture_m12_import_receipt_pc34(
+                 &hoc_presented_m12_import_facts,
+                 &hoc_presented_m12_import) &&
+                 hoc_presented_m12_import.handled &&
+                 hoc_presented_m12_import.ready &&
+                 hoc_presented_m12_import.consumed_publish_receipt &&
+                 hoc_presented_m12_import.consumed_host_export_receipt &&
+                 hoc_presented_m12_import.consumed_m12_presented_capture &&
+                 hoc_presented_m12_import.chain_hash_matches &&
+                 hoc_presented_m12_import.expected_chain_hash ==
+                     hoc_presented_m12_import_facts.chain_hash &&
+                 strstr(hoc_presented_m12_import.source_evidence,
+                        "ENTRANCE.C") != NULL,
+             1);
+    hoc_presented_m12_import_facts.chain_hash ^= 0x51u;
+    memset(&hoc_presented_m12_import, 0,
+           sizeof(hoc_presented_m12_import));
+    expect_i("DM1 HoC M12 import rejects stale presented-capture chain",
+             dm1_v1_startup_hoc_presented_capture_m12_import_receipt_pc34(
+                 &hoc_presented_m12_import_facts,
+                 &hoc_presented_m12_import) &&
+                 hoc_presented_m12_import.handled &&
+                 !hoc_presented_m12_import.ready &&
+                 !hoc_presented_m12_import.chain_hash_matches &&
+                 hoc_presented_m12_import.expected_chain_hash !=
+                     hoc_presented_m12_import.observed_chain_hash,
+             1);
+    hoc_presented_m12_import_facts.chain_hash =
+        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+            hoc_presented_m12_import_facts.width,
+            hoc_presented_m12_import_facts.height,
+            hoc_presented_m12_import_facts.byte_count,
+            hoc_presented_m12_import_facts.framebuffer_hash,
+            hoc_presented_m12_import_facts.consumer_mask);
     hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 0;
     hoc_host_probe_facts.presented_capture_consumer_mask =
         DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34;

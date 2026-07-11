@@ -2225,6 +2225,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view_receipt;
     CSB_V1_BootStartupHostViewReceipt_PC34 poisoned_host_view_receipt;
     CSB_V1_BootStartupM11PresentationReceipt_PC34 m11_presentation_receipt;
+    CSB_V1_BootStartupM11PresentationReceipt_PC34 partial_m11_presentation_receipt;
     CSB_V1_BootStartupHostViewDrawReceipt_PC34 host_view_draw_receipt;
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 host_input_dispatch;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 host_ownership;
@@ -2586,6 +2587,90 @@ static void test_runtime_utility_startup_receipt_facades(void)
               strstr(presented_capture.source_evidence,
                      "ENTRANCE.C F0441") != NULL,
           "CSB release/app presented capture export joins Mac window pixels to CSB-owned route mask");
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.boot_profile = &boot;
+    snapshot.entrance_active = 1;
+    snapshot.entrance_source_step = 4;
+    snapshot.utility_overlay_active = 1;
+    snapshot.utility_selected_action_index = 0;
+    snapshot.utility_imported_champion_count = 2;
+    snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
+    snapshot.resume_available = 1;
+    snapshot.resume_path = resume_path;
+    snapshot.title_active = 1;
+    snapshot.title_frame = 0;
+    snapshot.title_source_step = 1;
+    CHECK(csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34(
+              &snapshot,
+              &m11_presentation_receipt) == 1 &&
+              m11_presentation_receipt.valid &&
+              m11_presentation_receipt.startup_render_plan_valid &&
+              m11_presentation_receipt.capture_proof_valid &&
+              m11_presentation_receipt.capture_proof.valid &&
+              m11_presentation_receipt.capture_proof.packaged_capture_hash != 0u,
+          "CSB M11 presentation receipt packages title capture before release/app pixel promotion");
+    CHECK(csb_v1_boot_startup_release_app_presented_capture_from_m11_presentation_pc34(
+              &release_app_capture,
+              &m11_presentation_receipt,
+              1,
+              1,
+              1,
+              320,
+              200,
+              320 * 200 * 4,
+              0x4353424du,
+              &presented_capture) == 1 &&
+              presented_capture.valid &&
+              presented_capture.presented_capture_ready &&
+              presented_capture.m11_presentation_valid &&
+              presented_capture.m11_presentation_consumed &&
+              presented_capture.m11_presentation_route ==
+                  m11_presentation_receipt.route &&
+              presented_capture.m11_presentation_capture_proof_ready &&
+              presented_capture.release_app_capture_hash ==
+                  release_app_capture.release_app_capture_hash &&
+              presented_capture.release_app_real_asset_capture_hash ==
+                  release_app_capture.release_app_real_asset_capture_hash &&
+              presented_capture.consumer_mask == 0x1fu &&
+              presented_capture.expected_consumer_mask == 0x1fu &&
+              presented_capture.chain_hash != 0u &&
+              strstr(presented_capture.source_evidence,
+                     "CSBWin Viewport.cpp") != NULL,
+          "CSB release/app presented capture consumes the M11 presentation receipt before Mac window promotion");
+    CHECK(csb_v1_boot_startup_release_app_presented_capture_from_m11_presentation_pc34(
+              &release_app_capture,
+              NULL,
+              1,
+              1,
+              1,
+              320,
+              200,
+              320 * 200 * 4,
+              0x4353424du,
+              &presented_capture) == 0 &&
+              !presented_capture.valid &&
+              !presented_capture.presented_capture_ready &&
+              !presented_capture.m11_presentation_valid,
+          "CSB release/app presented capture rejects missing M11 presentation receipt");
+    partial_m11_presentation_receipt = m11_presentation_receipt;
+    partial_m11_presentation_receipt.capture_proof_valid = 0;
+    CHECK(csb_v1_boot_startup_release_app_presented_capture_from_m11_presentation_pc34(
+              &release_app_capture,
+              &partial_m11_presentation_receipt,
+              1,
+              1,
+              1,
+              320,
+              200,
+              320 * 200 * 4,
+              0x4353424du,
+              &presented_capture) == 0 &&
+              !presented_capture.valid &&
+              !presented_capture.presented_capture_ready &&
+              presented_capture.m11_presentation_valid &&
+              !presented_capture.m11_presentation_consumed &&
+              !presented_capture.m11_presentation_capture_proof_ready,
+          "CSB release/app presented capture rejects M11 routes without capture proof");
     CHECK(csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
               &release_app_capture,
               1,

@@ -742,6 +742,43 @@ typedef struct DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34;
 
+typedef struct DM1_V1_StartupHoCPresentedCaptureM12ImportFacts_PC34 {
+    const char* source_id;
+    int presented_capture_ready;
+    int host_window_present;
+    int captured_from_mac_window;
+    int captured_from_release_app;
+    int width;
+    int height;
+    int byte_count;
+    unsigned int framebuffer_hash;
+    unsigned int consumer_mask;
+    unsigned int chain_hash;
+} DM1_V1_StartupHoCPresentedCaptureM12ImportFacts_PC34;
+
+typedef struct DM1_V1_StartupHoCPresentedCaptureM12ImportReceipt_PC34 {
+    int handled;
+    int ready;
+    int consumed_publish_receipt;
+    int consumed_host_export_receipt;
+    int consumed_m12_presented_capture;
+    int presented_capture_ready;
+    int host_window_present;
+    int captured_from_mac_window;
+    int captured_from_release_app;
+    int geometry_matches;
+    int pixels_present;
+    int width;
+    int height;
+    int byte_count;
+    unsigned int framebuffer_hash;
+    unsigned int consumer_mask;
+    unsigned int expected_chain_hash;
+    unsigned int observed_chain_hash;
+    int chain_hash_matches;
+    const char* source_evidence;
+} DM1_V1_StartupHoCPresentedCaptureM12ImportReceipt_PC34;
+
 typedef struct DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34 {
     int handled;
     int ready;
@@ -1530,6 +1567,9 @@ int dm1_v1_startup_hoc_presented_capture_host_export_receipt_pc34(
 int dm1_v1_startup_hoc_presented_capture_host_export_from_boot_summary_pc34(
     const DM1_V1_StartupHoCBootProbeSummary_PC34* summary,
     DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34* out_receipt);
+int dm1_v1_startup_hoc_presented_capture_m12_import_receipt_pc34(
+    const DM1_V1_StartupHoCPresentedCaptureM12ImportFacts_PC34* facts,
+    DM1_V1_StartupHoCPresentedCaptureM12ImportReceipt_PC34* out_receipt);
 int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
     const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* handoff,
     const DM1_V1_StartupHostApplyResult_PC34* host_apply,

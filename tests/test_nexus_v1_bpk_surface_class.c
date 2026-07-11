@@ -301,6 +301,115 @@ static void test_truecolor_material_import(void) {
     free(bank.surfaces[1].pixels);
 }
 
+static void test_material_host_route_and_category_coverage(void) {
+    uint8_t data[256];
+    Nexus_DMDFMaterialBank bank;
+    Nexus_V1_BpkMaterialHostRouteReceipt host;
+    Nexus_V1_DgnMaterialCategoryCoverageReceipt coverage;
+    const uint8_t wall_refs[2] = {2U, 3U};
+    const uint8_t ceiling_refs[2] = {1U, 2U};
+    int rc;
+
+    memset(&bank, 0, sizeof(bank));
+    make_synthetic_stored_bpk(data, sizeof(data));
+    rc = nexus_v1_dmdf_import_bpk_material_bank_host_route(
+        data, sizeof(data), &bank, NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL,
+        &host);
+    expect(rc == 1, "stored BPK host route imports wall material surfaces");
+    expect(host.category == NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL &&
+               strcmp(nexus_v1_dgn_material_category_name(host.category),
+                      "wall") == 0,
+           "host route records wall material category");
+    expect(host.upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED &&
+               host.archive_entries == 4U &&
+               host.surface_entries == 3U &&
+               host.ready_uploads == 3U,
+           "host route carries stored BPK upload receipt");
+    expect(host.before_surface_count == 0 &&
+               host.after_surface_count == 2 &&
+               host.imported_surface_count == 2 &&
+               host.imported_truecolor_surface_count == 2 &&
+               host.host_consumed_surfaces == 1,
+           "host route records consumed truecolor material surfaces");
+    expect(host.fallback_visuals_permitted == 1 &&
+               host.blocks_real_surface_render == 0,
+           "ready host route does not block real material rendering");
+
+    memset(&coverage, 0, sizeof(coverage));
+    expect(nexus_v1_dmdf_material_category_coverage_receipt(
+               &bank, NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL,
+               wall_refs, 2U, &coverage) == 1,
+           "wall material coverage receipt builds");
+    expect(coverage.category == NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL &&
+               coverage.command_count == 2U &&
+               coverage.material_surface_count == 2U &&
+               coverage.missing_material_count == 0U &&
+               coverage.covered == 1 &&
+               coverage.fallback_visuals_permitted == 0,
+           "wall coverage accepts all referenced BPK materials");
+
+    memset(&coverage, 0, sizeof(coverage));
+    expect(nexus_v1_dmdf_material_category_coverage_receipt(
+               &bank, NEXUS_V1_DGN_MATERIAL_CATEGORY_CEILING,
+               ceiling_refs, 2U, &coverage) == 1,
+           "ceiling material coverage receipt builds");
+    expect(coverage.category == NEXUS_V1_DGN_MATERIAL_CATEGORY_CEILING &&
+               coverage.command_count == 2U &&
+               coverage.material_surface_count == 1U &&
+               coverage.missing_material_count == 1U &&
+               coverage.first_missing_material_id == 1U &&
+               coverage.covered == 0,
+           "ceiling coverage reports first missing material without fallback");
+
+    free(bank.surfaces[2].pixels);
+    free(bank.surfaces[3].pixels);
+}
+
+static void test_prs3_host_route_receipt(void) {
+    uint8_t data[160];
+    Nexus_DMDFMaterialBank bank;
+    Nexus_V1_BpkMaterialHostRouteReceipt host;
+    Nexus_V1_DgnMaterialCategoryCoverageReceipt coverage;
+    const uint8_t floor_refs[1] = {1U};
+    int rc;
+
+    memset(&bank, 0, sizeof(bank));
+    bank.surfaces[0].valid = 1;
+    bank.surfaces[0].palette[0x11] = 0xff112233U;
+    bank.surface_count = 1;
+    bank.valid = 1;
+
+    make_synthetic_prs3_literal_bpk(data, sizeof(data));
+    rc = nexus_v1_dmdf_import_bpk_material_bank_host_route(
+        data, sizeof(data), &bank, NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR,
+        &host);
+    expect(rc == 1, "PRS3 BPK host route imports decoded floor material");
+    expect(host.upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED &&
+               host.ready_uploads == 1U &&
+               host.blocked_prs3_uploads == 0U &&
+               host.imported_prs3_surface_count == 1 &&
+               host.imported_indexed_surface_count == 1 &&
+               host.host_consumed_surfaces == 1,
+           "PRS3 host route records decoded upload and imported surface");
+    expect(host.expected_upload_bytes == 4U &&
+               host.extractable_upload_bytes == 4U &&
+               host.fallback_visuals_permitted == 1,
+           "PRS3 host route exposes exact decoded upload byte count");
+
+    memset(&coverage, 0, sizeof(coverage));
+    expect(nexus_v1_dmdf_material_category_coverage_receipt(
+               &bank, NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR,
+               floor_refs, 1U, &coverage) == 1,
+           "floor material coverage receipt builds");
+    expect(coverage.category == NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR &&
+               coverage.command_count == 1U &&
+               coverage.material_surface_count == 1U &&
+               coverage.covered == 1,
+           "floor coverage consumes decoded PRS3-backed material");
+
+    free(bank.surfaces[1].pixels);
+}
+
 /* ---- Surface-class lookup tests ---- */
 
 static void test_mode_to_surface_class(void) {
@@ -1220,6 +1329,8 @@ int main(void) {
     test_prs3_surface_decode();
     test_prs3_material_import();
     test_truecolor_material_import();
+    test_material_host_route_and_category_coverage();
+    test_prs3_host_route_receipt();
     test_runtime_surface_handoff_blocks_prs3();
     test_runtime_surface_handoff_ready_stored();
     test_runtime_surface_handoff_truncated_and_capacity();

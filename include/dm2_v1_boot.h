@@ -371,6 +371,11 @@ typedef struct {
     uint32_t interface_rect14_image_field_count;
     uint32_t interface_rect14_stretch_field_count;
     uint32_t interface_rect14_flag_field_count;
+    int interface_rect14_placement_plan_ready;
+    uint32_t interface_rect14_placement_hash;
+    uint32_t interface_rect14_placement_count;
+    uint32_t interface_rect14_rotated_cell_mask;
+    uint32_t interface_rect14_max_stretched_size;
     int interface_action_table_ready;
     uint32_t interface_action_table_hash;
     uint32_t interface_action_table_byte_count;

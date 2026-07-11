@@ -256,7 +256,7 @@ static void probe_semantic_seed_binding(void) {
         &binding);
     check_semantic_status("entry 5 semantic status",
                           status,
-                          THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND);
+                          THERON_TRACK02_SEMANTIC_BINDING_OK);
     check_int("entry 5 semantic role",
               binding.role,
               THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE);

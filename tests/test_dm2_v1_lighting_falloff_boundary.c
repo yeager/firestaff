@@ -929,6 +929,9 @@ static void test_sprite_asset_provider(void)
     {
         DM2_V1_ViewportSpritePlacement p;
         DM2_V1_ViewportSpritePlacement slot;
+        const uint8_t rect14[14] =
+            { 7, 0xfe, 3, 4, 5, 6, 64, 48, 32, 16, 1, 2, 4, 8 };
+        DM2_V1_InterfaceRect14Placement rect_plan;
 
         CHECK("DM2 viewport projects forward map coordinate to depth row",
               dm2_v1_viewport_project_map_to_sprite(10, 8, 0, 10, 10, &p) == 1 &&
@@ -950,6 +953,24 @@ static void test_sprite_asset_provider(void)
                   slot.depth == p.depth &&
                   slot.screen_x == p.screen_x + 12 &&
                   slot.screen_y == p.screen_y + 8);
+        CHECK("DM2 viewport rotates 5x5 positions like skproject",
+              dm2_v1_viewport_rotate_5x5_pos(7, 0) == 7 &&
+                  dm2_v1_viewport_rotate_5x5_pos(7, 1) == 11 &&
+                  dm2_v1_viewport_rotate_5x5_pos(7, 2) == 17 &&
+                  dm2_v1_viewport_rotate_5x5_pos(7, 3) == 13);
+        CHECK("DM2 viewport builds skproject creature blit rect ids",
+              dm2_v1_viewport_creature_blit_rect_id(2, 7, 1) == 5061);
+        CHECK("DM2 viewport consumes rect14 row placement semantics",
+              dm2_v1_viewport_interface_rect14_placement(
+                  rect14, 2, 52, &rect_plan) == 1 &&
+                  rect_plan.valid == 1 &&
+                  rect_plan.base_5x5 == 7 &&
+                  rect_plan.lateral_offset == -2 &&
+                  rect_plan.blit_rect_id[0] == 5057 &&
+                  rect_plan.blit_rect_id[1] == 5061 &&
+                  rect_plan.image_field[3] == 6 &&
+                  rect_plan.stretched_size[0] == 52 &&
+                  rect_plan.flags[3] == 8);
     }
     {
         DM2_V1_HudChromeRenderPlan hud;

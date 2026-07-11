@@ -7028,8 +7028,8 @@ static int m12_apply_dm1_hoc_startup_capture_package(
 int M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(
     M12_StartupMenuState* state,
     const M12_DM1HoCPresentedCaptureReceipt* receipt) {
-    unsigned int expectedMask;
-    unsigned int expectedHash;
+    DM1_V1_StartupHoCPresentedCaptureM12ImportFacts_PC34 facts;
+    DM1_V1_StartupHoCPresentedCaptureM12ImportReceipt_PC34 imported;
 
     if (!state) {
         return 0;
@@ -7040,30 +7040,27 @@ int M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(
     if (!receipt || !receipt->handled) {
         return 1;
     }
-    expectedMask = DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
-                   DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
-                   DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
-    expectedHash =
-        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
-            receipt->width,
-            receipt->height,
-            receipt->byteCount,
-            receipt->framebufferHash,
-            receipt->consumerMask);
     /* ReDMCSB DRAWVIEW.C F0097 publishes the presented 320x200 view after
      * ENTRANCE.C F0797/F0441 has moved into the Hall.  M12 only consumes an
-     * explicit M11/app framebuffer receipt here; it no longer invents a HoC
-     * Mac-capture surface from asset readiness alone. */
-    if (!receipt->presentedCaptureReady ||
-        !receipt->hostWindowPresent ||
-        !receipt->capturedFromMacWindow ||
-        !receipt->capturedFromReleaseApp ||
-        receipt->width < 320 ||
-        receipt->height < 200 ||
-        receipt->byteCount < receipt->width * receipt->height * 4 ||
-        receipt->framebufferHash == 0u ||
-        receipt->consumerMask != expectedMask ||
-        receipt->chainHash != expectedHash) {
+     * explicit DM1 import receipt here; it no longer rebuilds HoC Mac-capture
+     * readiness or consumer-chain validation from loose M12 fields. */
+    memset(&facts, 0, sizeof(facts));
+    memset(&imported, 0, sizeof(imported));
+    facts.source_id = "dm1";
+    facts.presented_capture_ready = receipt->presentedCaptureReady;
+    facts.host_window_present = receipt->hostWindowPresent;
+    facts.captured_from_mac_window = receipt->capturedFromMacWindow;
+    facts.captured_from_release_app = receipt->capturedFromReleaseApp;
+    facts.width = receipt->width;
+    facts.height = receipt->height;
+    facts.byte_count = receipt->byteCount;
+    facts.framebuffer_hash = receipt->framebufferHash;
+    facts.consumer_mask = receipt->consumerMask;
+    facts.chain_hash = receipt->chainHash;
+    if (!dm1_v1_startup_hoc_presented_capture_m12_import_receipt_pc34(
+            &facts,
+            &imported) ||
+        !imported.ready) {
         return 0;
     }
     state->dm1HoCPresentedCaptureReceipt = *receipt;

@@ -161,6 +161,44 @@ typedef struct {
     int valid;
 } Nexus_DMDFMaterialBank;
 
+typedef enum {
+    NEXUS_V1_DGN_MATERIAL_CATEGORY_INVALID = 0,
+    NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR = 1,
+    NEXUS_V1_DGN_MATERIAL_CATEGORY_CEILING = 2,
+    NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL = 3
+} Nexus_V1_DgnMaterialCategory;
+
+typedef struct {
+    Nexus_V1_DgnMaterialCategory category;
+    uint32_t command_count;
+    uint32_t material_surface_count;
+    uint32_t missing_material_count;
+    uint8_t first_missing_material_id;
+    int covered;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnMaterialCategoryCoverageReceipt;
+
+typedef struct {
+    Nexus_V1_DgnMaterialCategory category;
+    Nexus_V1_BpkRuntimeUploadRoute upload_route;
+    uint32_t archive_entries;
+    uint32_t surface_entries;
+    uint32_t ready_uploads;
+    uint32_t blocked_prs3_uploads;
+    uint32_t blocked_truncated_uploads;
+    uint64_t expected_upload_bytes;
+    uint64_t extractable_upload_bytes;
+    int blocks_real_surface_render;
+    int fallback_visuals_permitted;
+    int before_surface_count;
+    int after_surface_count;
+    int imported_surface_count;
+    int imported_indexed_surface_count;
+    int imported_truecolor_surface_count;
+    int imported_prs3_surface_count;
+    int host_consumed_surfaces;
+} Nexus_V1_BpkMaterialHostRouteReceipt;
+
 /* Parser-level bounds gates. Return 1 on success, 0 on any bounds
  * failure (offset past end, count overflow, payload past end, etc).
  * Output struct is always written, with valid=0 on failure so callers
@@ -208,6 +246,24 @@ int nexus_v1_dmdf_decode_material_bank(const uint8_t *data, int size,
 int nexus_v1_dmdf_import_bpk_material_bank(const uint8_t *data,
                                            size_t data_size,
                                            Nexus_DMDFMaterialBank *out);
+
+int nexus_v1_dmdf_import_bpk_material_bank_host_route(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_DMDFMaterialBank *out,
+    Nexus_V1_DgnMaterialCategory category,
+    Nexus_V1_BpkMaterialHostRouteReceipt *out_receipt);
+
+int nexus_v1_dmdf_material_category_coverage_receipt(
+    const Nexus_DMDFMaterialBank *bank,
+    Nexus_V1_DgnMaterialCategory category,
+    const uint8_t *material_ids,
+    size_t material_id_count,
+    Nexus_V1_DgnMaterialCategoryCoverageReceipt *out_receipt);
+
+const char *nexus_v1_dgn_material_category_name(
+    Nexus_V1_DgnMaterialCategory category);
+
 void nexus_v1_dmdf_free_material_bank(Nexus_DMDFMaterialBank *bank);
 
 /* Helper: read a single palette entry out of a parsed palette block.
