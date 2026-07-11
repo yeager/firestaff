@@ -101,6 +101,7 @@ static int fs_assets_load_game_by_hash(FS_AssetBundle *bundle,
 }
 
 int fs_assets_load_game(FS_AssetBundle *bundle, const char *data_dir, const char *game_subdir) {
+    const char *known_game_id;
     if (!bundle || !data_dir) return -1;
     memset(bundle, 0, sizeof(*bundle));
 
@@ -108,8 +109,13 @@ int fs_assets_load_game(FS_AssetBundle *bundle, const char *data_dir, const char
         return 0;
     }
 
-    /* Legacy fallback for old tests and custom development folders that are
-     * not in the hash catalog. Normal DM1/CSB/DM2 launch data is resolved by
+    known_game_id = asset_pipeline_game_id(game_subdir);
+    if (known_game_id) {
+        return -1;
+    }
+
+    /* Legacy fallback for custom development folders that are not one of the
+     * hash-gated games.  Normal DM1/CSB/DM2 launch data is resolved by
      * M12_AssetStatus above, independent of filenames or layout. */
     if (try_load_dat(data_dir, game_subdir, "GRAPHICS.DAT", &bundle->graphics_data, &bundle->graphics_size) < 0) {
         try_load_dat(data_dir, game_subdir, "graphics.dat", &bundle->graphics_data, &bundle->graphics_size);
@@ -179,20 +185,6 @@ void fs_assets_expand_vga_palette(const uint8_t *vga_6bit, uint32_t *rgba_out, i
 
 
 
-static const char *g_dungeon_dat_names[FS_ASSET_LANG_COUNT] = {
-    "DUNGEON.DAT",   /* English */
-    "DUNGEONF.DAT",  /* French */
-    "DUNGEONG.DAT",  /* German */
-    "DUNGEON.DAT",   /* Swedish (uses EN dungeon + SV runtime strings) */
-};
-
-static const char *g_dungeon_dat_names_lower[FS_ASSET_LANG_COUNT] = {
-    "dungeon.dat",
-    "dungeonf.dat",
-    "dungeong.dat",
-    "dungeon.dat",   /* Swedish: EN dungeon data */
-};
-
 static const char *fs_assets_dm1_multilang_dungeon_hash(FS_AssetLanguage lang) {
     switch (lang) {
         case FS_ASSET_LANG_FR:
@@ -210,14 +202,13 @@ int fs_assets_load_dm1_multilang(FS_AssetBundle *bundle,
     const char *data_dir, FS_AssetLanguage lang)
 {
     char path[512];
-    const char *dat_name;
     if (!bundle || !data_dir) return -1;
     if (lang < 0 || lang >= FS_ASSET_LANG_COUNT) lang = FS_ASSET_LANG_EN;
 
     memset(bundle, 0, sizeof(*bundle));
 
-    /* Hash-first path for real DM1 multilingual media. Filenames are only a
-     * legacy/custom fallback; user-supplied data may be renamed. */
+    /* Hash-only path for real DM1 multilingual media; user-supplied data may
+     * be renamed or nested, and normal launch must not trust filenames. */
     if (asset_find_by_md5(data_dir,
                           "f934d97e43e1ba6e5159839acbcd0611",
                           path,
@@ -238,35 +229,7 @@ int fs_assets_load_dm1_multilang(FS_AssetBundle *bundle,
         bundle->graphics_size = 0;
     }
 
-    /* GRAPHICS.DAT is shared across all languages */
-    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", data_dir);
-    if (load_file(path, &bundle->graphics_data, &bundle->graphics_size) < 0) {
-        snprintf(path, sizeof(path), "%s/graphics.dat", data_dir);
-        if (load_file(path, &bundle->graphics_data, &bundle->graphics_size) < 0)
-            return -1;
-    }
-
-    /* Load language-specific DUNGEON.DAT */
-    dat_name = g_dungeon_dat_names[lang];
-    snprintf(path, sizeof(path), "%s/%s", data_dir, dat_name);
-    if (load_file(path, &bundle->dungeon_data, &bundle->dungeon_size) < 0) {
-        /* Try lowercase */
-        dat_name = g_dungeon_dat_names_lower[lang];
-        snprintf(path, sizeof(path), "%s/%s", data_dir, dat_name);
-        if (load_file(path, &bundle->dungeon_data, &bundle->dungeon_size) < 0) {
-            /* Fall back to English */
-            if (lang != FS_ASSET_LANG_EN) {
-                printf("Firestaff: %s not found, falling back to English\\n", dat_name);
-                return fs_assets_load_dm1_multilang(bundle, data_dir, FS_ASSET_LANG_EN);
-            }
-            return -1;
-        }
-    }
-
-    bundle->loaded = 1;
-    printf("Firestaff: loaded %s + %s\\n",
-        "GRAPHICS.DAT", g_dungeon_dat_names[lang]);
-    return 0;
+    return -1;
 }
 
 /* Map Firestaff UI language to asset language */
