@@ -57,7 +57,8 @@ typedef int (*CSB_V1_ViewportGroupSpriteDrawer)(
     uint8_t *screen_pixels,
     int screen_stride);
 
-typedef struct {
+#define CSB_V1_VIEWPORT_RUNTIME_DRAWER_BINDING_TYPE_DEFINED 1
+typedef struct CSB_V1_ViewportRuntimeDrawerBinding {
     int src_x;
     int src_y;
     int dst_x;
@@ -81,7 +82,8 @@ typedef struct {
  * Base: ReDMCSB DUNVIEW.C (shared viewport core)
  */
 
-typedef struct {
+#define CSB_V1_VIEWPORT_RUNTIME_DRAW_COUNTS_TYPE_DEFINED 1
+typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     int wall_set_index;
     int custom_background;
     int prison_door_open;  /* 0-100 open percentage for intro */
