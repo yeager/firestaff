@@ -4875,6 +4875,27 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                         test_fnv1a_bytes(
                             track02 + post_descriptor_candidate_last_offsets[0],
                             2u) &&
+                    object_route_receipt.object_table_shape_best_score[0] == 2 &&
+                    object_route_receipt.object_table_shape_best_status[0] ==
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+                    object_route_receipt.object_table_shape_best_entry_index[0] ==
+                        6u &&
+                    object_route_receipt.object_table_shape_best_raw_offsets[0] ==
+                        post_descriptor_candidate_offsets[0] &&
+                    object_route_receipt
+                            .object_table_shape_best_window_offsets[0] == 0u &&
+                    object_route_receipt
+                            .object_table_shape_best_record_counts[0] ==
+                        0x4241u &&
+                    object_route_receipt
+                            .object_table_shape_best_overflow_counts[0] ==
+                        (0x4241u - THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS) &&
+                    object_route_receipt.object_table_shape_best_byte_counts[0] ==
+                        2u &&
+                    object_route_receipt.object_table_shape_best_checksums[0] ==
+                        test_fnv1a_bytes(
+                            track02 + post_descriptor_candidate_offsets[0],
+                            2u) &&
                     object_route_receipt.object_table_inner_scan_probe_count ==
                         189u &&
                     object_route_receipt.object_table_inner_scan_anchor_counts[0] ==
@@ -4951,6 +4972,19 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                             track02_positive +
                                 post_descriptor_candidate_last_offsets[0],
                             10u) &&
+                    object_route_receipt.object_table_shape_best_score[0] == 5 &&
+                    object_route_receipt.object_table_shape_best_status[0] ==
+                        THERON_TRACK02_SEMANTIC_BINDING_OK &&
+                    object_route_receipt.object_table_shape_best_entry_index[0] ==
+                        7u &&
+                    object_route_receipt.object_table_shape_best_raw_offsets[0] ==
+                        post_descriptor_candidate_last_offsets[0] &&
+                    object_route_receipt
+                            .object_table_shape_best_window_offsets[0] == 0u &&
+                    object_route_receipt
+                            .object_table_shape_best_record_counts[0] == 1u &&
+                    object_route_receipt.object_table_shape_best_byte_counts[0] ==
+                        10u &&
                     object_route_receipt.object_table_blocked_anchor_count == 2u &&
                     object_route_receipt.object_table_blocked_anchor_mask == 0x06u &&
                     object_route_receipt.route_hash != 0u,
@@ -5019,6 +5053,22 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                                 .object_table_inner_scan_shaped_checksums[0] ==
                             test_fnv1a_bytes(track02_inner_positive + inner_raw,
                                              10u) &&
+                        object_route_receipt.object_table_shape_best_score[0] ==
+                            5 &&
+                        object_route_receipt.object_table_shape_best_status[0] ==
+                            THERON_TRACK02_SEMANTIC_BINDING_OK &&
+                        object_route_receipt
+                                .object_table_shape_best_entry_index[0] ==
+                            7u &&
+                        object_route_receipt
+                                .object_table_shape_best_raw_offsets[0] ==
+                            inner_raw &&
+                        object_route_receipt
+                                .object_table_shape_best_window_offsets[0] ==
+                            inner_offset &&
+                        object_route_receipt
+                                .object_table_shape_best_record_counts[0] ==
+                            1u &&
                         object_route_receipt.object_table_blocked_anchor_count ==
                             3u &&
                         object_route_receipt.object_table_blocked_anchor_mask ==

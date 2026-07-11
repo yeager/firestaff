@@ -837,6 +837,29 @@ static uint32_t dm2_v1_viewport_scene_hash_step(uint32_t hash,
     return hash;
 }
 
+static uint32_t dm2_v1_viewport_weather_plan_hash(
+    const DM2_V1_WeatherOverlayRenderPlan *plan)
+{
+    uint32_t hash = 0x32574c50u;
+    if (!plan) {
+        return 0u;
+    }
+    hash = dm2_v1_viewport_scene_hash_step(hash, (uint32_t)plan->kind);
+    hash = dm2_v1_viewport_scene_hash_step(hash, (uint32_t)plan->intensity);
+    hash = dm2_v1_viewport_scene_hash_step(hash, (uint32_t)plan->density);
+    hash = dm2_v1_viewport_scene_hash_step(hash, (uint32_t)plan->scroll);
+    hash = dm2_v1_viewport_scene_hash_step(hash, (uint32_t)plan->alpha);
+    hash = dm2_v1_viewport_scene_hash_step(hash,
+                                           (uint32_t)plan->lightning_flash);
+    hash = dm2_v1_viewport_scene_hash_step(hash,
+                                           (uint32_t)plan->rain_color);
+    hash = dm2_v1_viewport_scene_hash_step(hash,
+                                           (uint32_t)plan->fog_target_color);
+    hash = dm2_v1_viewport_scene_hash_step(hash,
+                                           (uint32_t)plan->lightning_color);
+    return hash;
+}
+
 int dm2_v1_viewport_scene_consumption_receipt(
     const DM2_V1_ViewportState *s,
     DM2_V1_ViewportSceneConsumptionReceipt *out_receipt)
@@ -858,6 +881,7 @@ int dm2_v1_viewport_scene_consumption_receipt(
     hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_highest_light_level);
     hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_void_random_fall);
     hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_animated_floor);
+    hash = dm2_v1_viewport_scene_hash_step(hash, s->last_weather_plan_hash);
     out_receipt->ready = s->gdat_scene_control_ready && mask != 0u;
     out_receipt->consumed_mask = mask;
     out_receipt->consumption_hash = hash;
@@ -874,6 +898,18 @@ int dm2_v1_viewport_scene_consumption_receipt(
     out_receipt->floor_anim_consumed =
         s->gdat_scene_floor_anim_consumed_count;
     out_receipt->weather_consumed = s->gdat_scene_weather_consumed_count;
+    out_receipt->weather_plan_ready = s->last_weather_plan_ready;
+    out_receipt->weather_plan_hash = s->last_weather_plan_hash;
+    out_receipt->weather_kind = s->last_weather_kind;
+    out_receipt->weather_intensity = s->last_weather_intensity;
+    out_receipt->weather_density = s->last_weather_density;
+    out_receipt->weather_scroll = s->last_weather_scroll;
+    out_receipt->weather_alpha = s->last_weather_alpha;
+    out_receipt->weather_lightning_flash = s->last_weather_lightning_flash;
+    out_receipt->weather_rain_color = s->last_weather_rain_color;
+    out_receipt->weather_fog_target_color =
+        s->last_weather_fog_target_color;
+    out_receipt->weather_lightning_color = s->last_weather_lightning_color;
     return 1;
 }
 
@@ -3888,6 +3924,17 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
         commands.command_count <= 0) {
         return;
     }
+    s->last_weather_plan_ready = 1;
+    s->last_weather_plan_hash = dm2_v1_viewport_weather_plan_hash(&plan);
+    s->last_weather_kind = (int)plan.kind;
+    s->last_weather_intensity = plan.intensity;
+    s->last_weather_density = plan.density;
+    s->last_weather_scroll = plan.scroll;
+    s->last_weather_alpha = plan.alpha;
+    s->last_weather_lightning_flash = plan.lightning_flash;
+    s->last_weather_rain_color = plan.rain_color;
+    s->last_weather_fog_target_color = plan.fog_target_color;
+    s->last_weather_lightning_color = plan.lightning_color;
     if (s->gdat_scene_control_ready) {
         ++s->gdat_scene_weather_consumed_count;
     }

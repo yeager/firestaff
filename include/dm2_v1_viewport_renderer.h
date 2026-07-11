@@ -722,6 +722,17 @@ typedef struct {
     uint16_t gdat_highest_light_level;
     uint16_t gdat_void_random_fall;
     uint16_t gdat_animated_floor;
+    int last_weather_plan_ready;
+    uint32_t last_weather_plan_hash;
+    int last_weather_kind;
+    int last_weather_intensity;
+    int last_weather_density;
+    int last_weather_scroll;
+    int last_weather_alpha;
+    int last_weather_lightning_flash;
+    uint8_t last_weather_rain_color;
+    uint8_t last_weather_fog_target_color;
+    uint8_t last_weather_lightning_color;
     int asset_door_panel_drawn_count;
     int asset_door_overlay_drawn_count;
     int asset_door_frame_drawn_count;
@@ -817,6 +828,17 @@ typedef struct {
     int light_consumed;
     int floor_anim_consumed;
     int weather_consumed;
+    int weather_plan_ready;
+    uint32_t weather_plan_hash;
+    int weather_kind;
+    int weather_intensity;
+    int weather_density;
+    int weather_scroll;
+    int weather_alpha;
+    int weather_lightning_flash;
+    uint8_t weather_rain_color;
+    uint8_t weather_fog_target_color;
+    uint8_t weather_lightning_color;
 } DM2_V1_ViewportSceneConsumptionReceipt;
 
 /* ── Initialization ────────────────────────────────────────────── */

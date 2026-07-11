@@ -978,7 +978,7 @@ typedef struct DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34 {
 typedef struct DM1_V1_StartupHoCBootProbeLogReceipt_PC34 {
     int handled;
     int ready;
-    char fields[2048];
+    char fields[3072];
     const char* source_evidence;
 } DM1_V1_StartupHoCBootProbeLogReceipt_PC34;
 
