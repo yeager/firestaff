@@ -176,47 +176,6 @@ int DM1_V1_ChestCrossChampionHandSwapBuildCasePc34(
 int DM1_V1_ChestCrossChampionHandSwapRunPc34(
     DM1_V1_ChestCrossChampionHandSwapProbePc34* out);
 
-typedef DM1_V1_ChestCrossChampionHandSwapActionPc34
-    M11_GameView_ChestCrossChampionHandSwapActionPc34;
-typedef DM1_V1_ChestCrossChampionHandSwapLogEntryPc34
-    M11_GameView_ChestCrossChampionHandSwapLogEntryPc34;
-typedef DM1_V1_ChestCrossChampionHandSwapActionLogPc34
-    M11_GameView_ChestCrossChampionHandSwapActionLogPc34;
-typedef DM1_V1_ChestCrossChampionHandSwapContextPc34
-    M11_GameView_ChestCrossChampionHandSwapContextPc34;
-typedef DM1_V1_ChestCrossChampionHandSwapExpectedPc34
-    M11_GameView_ChestCrossChampionHandSwapExpectedPc34;
-typedef DM1_V1_ChestCrossChampionHandSwapCasePc34
-    M11_GameView_ChestCrossChampionHandSwapCasePc34;
-typedef DM1_V1_ChestCrossChampionHandSwapProbePc34
-    M11_GameView_ChestCrossChampionHandSwapProbePc34;
-
-#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_NONE \
-    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_NONE
-#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_OPEN_CHEST \
-    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_OPEN_CHEST
-#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_SAME_OPEN_NOOP \
-    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_SAME_OPEN_NOOP
-#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_PICKUP_A_HAND \
-    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_PICKUP_A_HAND
-#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_ROTATE_LEADER \
-    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_ROTATE_LEADER
-#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_SWAP_WITH_B_HAND \
-    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_SWAP_WITH_B_HAND
-#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_CLOSE_CHEST \
-    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_CLOSE_CHEST
-#define M11_DM1_PC34_CHEST_CROSS_CHAMPION_ACTION_REOPEN_CHEST \
-    DM1_V1_CHEST_CROSS_CHAMPION_ACTION_REOPEN_CHEST
-
-#define M11_GameView_ChestCrossChampionHandSwapSourceEvidencePc34 \
-    DM1_V1_ChestCrossChampionHandSwapSourceEvidencePc34
-#define M11_GameView_ChestCrossChampionHandSwapCaseNamePc34 \
-    DM1_V1_ChestCrossChampionHandSwapCaseNamePc34
-#define M11_GameView_ChestCrossChampionHandSwapBuildCasePc34 \
-    DM1_V1_ChestCrossChampionHandSwapBuildCasePc34
-#define M11_GameView_ChestCrossChampionHandSwapRunPc34 \
-    DM1_V1_ChestCrossChampionHandSwapRunPc34
-
 #ifdef __cplusplus
 }
 #endif

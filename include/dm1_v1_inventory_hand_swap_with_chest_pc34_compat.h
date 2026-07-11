@@ -124,12 +124,6 @@ int DM1_V1_InventoryHandSwapWithChest_ApplyPc34Compat(
 int DM1_V1_InventoryHandSwapWithChest_RunPc34Compat(
     DM1_V1_InventoryHandSwapWithChestProbePc34* out);
 
-/* Compatibility aliases for older M11 call sites. */
-#define M11_V1_Inventory_HandSwapWithChest_ApplyPc34 \
-    DM1_V1_InventoryHandSwapWithChest_ApplyPc34Compat
-#define M11_V1_Inventory_HandSwapWithChest_RunPc34 \
-    DM1_V1_InventoryHandSwapWithChest_RunPc34Compat
-
 #ifdef __cplusplus
 }
 #endif

@@ -25,7 +25,7 @@ void DM1_V1_Entrance_InitPc34Compat(DM1_V1_EntranceCtxPc34 *ctx)
     memset(ctx, 0, sizeof(*ctx));
     ctx->state = DM1_ENTRANCE_IDLE;
     ctx->selectedMirrorIndex = -1;
-    for (int i = 0; i < M11_MAX_CHAMPIONS; i++) {
+    for (int i = 0; i < DM1_V1_MAX_CHAMPIONS_PC34; i++) {
         ctx->partyChampionIndices[i] = -1;
     }
     ctx->doorAnim.totalSteps = 10;
@@ -122,7 +122,7 @@ DM1_V1_EntranceTickResultPc34 DM1_V1_Entrance_ClickMirrorPc34Compat(DM1_V1_Entra
 
 int DM1_V1_Entrance_RecruitChampionPc34Compat(DM1_V1_EntranceCtxPc34 *ctx)
 {
-    if (ctx->partyChampionCount >= M11_MAX_CHAMPIONS) {
+    if (ctx->partyChampionCount >= DM1_V1_MAX_CHAMPIONS_PC34) {
         return 0;
     }
     if (ctx->selectedMirrorIndex < 0) {
@@ -387,7 +387,7 @@ int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
     receipt.selectedMirrorIndex = ctx->selectedMirrorIndex;
     receipt.selectedChampionIndex = -1;
     receipt.partyChampionCount = ctx->partyChampionCount;
-    receipt.partyFull = ctx->partyChampionCount >= M11_MAX_CHAMPIONS ? 1 : 0;
+    receipt.partyFull = ctx->partyChampionCount >= DM1_V1_MAX_CHAMPIONS_PC34 ? 1 : 0;
     receipt.reason = "entrance-idle";
 
     if (ctx->selectedMirrorIndex >= 0 &&

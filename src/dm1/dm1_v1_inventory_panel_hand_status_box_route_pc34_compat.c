@@ -114,7 +114,7 @@ static int run_status_row_slotbox(
     DM1_V1_InventoryStatePc34 state;
     DM1_V1_ItemPc34 slotItem;
     DM1_V1_ItemPc34 mouseItem;
-    int health[M11_MAX_CHAMPIONS] = { 0, 0, 0, 0 };
+    int health[DM1_V1_MAX_CHAMPIONS_PC34] = { 0, 0, 0, 0 };
     int championIndex = -1;
     int pc34SourceSlot = -1;
     int i;
@@ -130,7 +130,7 @@ static int run_status_row_slotbox(
     row->slotBoxBelongsToStatusRow =
         slotBoxIndex < DM1_V1_IPHSBR_INVENTORY_FIRST_SLOT_BOX;
 
-    if (healthyChampionCount <= 0 || healthyChampionCount > M11_MAX_CHAMPIONS) {
+    if (healthyChampionCount <= 0 || healthyChampionCount > DM1_V1_MAX_CHAMPIONS_PC34) {
         return 0;
     }
     for (i = 0; i < healthyChampionCount; ++i) {
@@ -234,7 +234,7 @@ static int run_status_row_slotbox_table(
 
 static int run_negative_cases(DM1_V1_InventoryPanelHandStatusBoxRouteProbePc34* out)
 {
-    int health[M11_MAX_CHAMPIONS] = { 100, 100, 100, 100 };
+    int health[DM1_V1_MAX_CHAMPIONS_PC34] = { 100, 100, 100, 100 };
 
     out->negativeSlotBoxReturn = DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat(
         -1, 4, 0, 0, health, &out->negativeSlotBoxOutChampionIndex,
@@ -248,7 +248,7 @@ static int run_negative_cases(DM1_V1_InventoryPanelHandStatusBoxRouteProbePc34* 
             &out->negativePartyCountOutPc34SourceSlot);
     out->overlargePartyCountReturn =
         DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat(
-            0, M11_MAX_CHAMPIONS + 1, 0, 0, health,
+            0, DM1_V1_MAX_CHAMPIONS_PC34 + 1, 0, 0, health,
             &out->overlargePartyCountOutChampionIndex,
             &out->overlargePartyCountOutPc34SourceSlot);
     out->nullHealthReturn = DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat(
@@ -328,7 +328,7 @@ int dm1_v1_inventory_panel_hand_status_box_route_pc34(
     }
     memset(out, 0, sizeof(*out));
     out->contractOnly = 1;
-    out->healthyChampionCount = M11_MAX_CHAMPIONS;
+    out->healthyChampionCount = DM1_V1_MAX_CHAMPIONS_PC34;
     if (!run_status_row_slotbox_table(out)) {
         return 0;
     }

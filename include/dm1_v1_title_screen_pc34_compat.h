@@ -59,18 +59,6 @@ bool DM1_V1_Title_BuildRealAssetCaptureReceiptPc34Compat(
     DM1_V1_TitleRealAssetCaptureReceiptPc34* out);
 void DM1_V1_Title_CleanupPc34Compat(DM1_V1_TitleStatePc34* state);
 
-/* Compatibility aliases for older M11 call sites. */
-typedef DM1_V1_TitleZoomStepPc34 M11_TS_ZoomStep;
-typedef DM1_V1_TitleStatePc34 M11_TS_TitleState;
-typedef DM1_V1_TitleRealAssetCaptureReceiptPc34 M11_TS_RealAssetCaptureReceipt;
-#define m11_ts_init DM1_V1_Title_InitPc34Compat
-#define m11_ts_load_title_graphics DM1_V1_Title_LoadGraphicsPc34Compat
-#define m11_ts_animate_zoom DM1_V1_Title_AnimateZoomPc34Compat
-#define m11_ts_draw_title DM1_V1_Title_DrawPc34Compat
-#define m11_ts_set_credits_palette DM1_V1_Title_SetCreditsPalettePc34Compat
-#define m11_ts_build_real_asset_capture_receipt DM1_V1_Title_BuildRealAssetCaptureReceiptPc34Compat
-#define m11_ts_cleanup DM1_V1_Title_CleanupPc34Compat
-
 #ifdef __cplusplus
 }
 #endif

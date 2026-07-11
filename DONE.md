@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 legacy M11 alias cleanup batch 3: removed unused M11 compatibility aliases from DM1 chest reopen/cross-champion/destination/full-hand helpers, inventory/champion-stats helpers, D0/D1 side-wall and D1 stairs/pit viewport helpers, entrance/champion-selection, title, and food/water headers. Replaced remaining DM1 party-limit call sites with `DM1_V1_MAX_CHAMPIONS_PC34`. Verification: `firestaff_m11`, `test_dm1_v1_entrance_champion_select_pc34_compat`, `test_dm1_v1_food_water_pc34_compat`, `test_dm1_v1_champion_stats_pc34_compat`, `test_dm1_v1_chest_cross_champion_hand_swap_pc34_compat`, targeted alias `rg` checks, and `git diff --check` passed.
+
 - ✅ 2026-07-11 DM1 legacy M11 alias cleanup batch 2: removed unused compatibility aliases from DM1 wall-ornament, door-bash stamina/feedback-chain, chest reopen/swap, chest teleport-survival, and chest reopen-cross-champion headers. Verification: `firestaff_m11` built, targeted alias `rg` checks passed, and `git diff --check` passed.
 
 - ✅ 2026-07-11 Known-game asset pipeline hash gate: the legacy asset pipeline no longer lets known DM1/CSB/DM2 launch data fall through to `GRAPHICS.DAT`/`DUNGEON.DAT` filename loading after hash scan failure; only custom/unknown development subdirs keep the filename fallback. DM1 multilingual loading is also hash-only. Verification: `cmake --build build --target test_firestaff_asset_pipeline_hash_scan firestaff_m11 --parallel 1`, `./build/test_firestaff_asset_pipeline_hash_scan`, and `git diff --check` passed.

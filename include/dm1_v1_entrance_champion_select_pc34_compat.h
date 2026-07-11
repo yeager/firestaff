@@ -20,8 +20,8 @@
 extern "C" {
 #endif
 
-/* Maximum champions in DM1 — 4 party slots, 24 mirrors total */
-#define M11_MAX_CHAMPIONS          4
+/* Maximum champions in DM1: 4 party slots, 24 mirrors total. */
+#define DM1_V1_MAX_CHAMPIONS_PC34          4
 #define DM1_V1_MAX_MIRROR_SLOTS_PC34      24
 #define DM1_V1_ENTRANCE_MICRO_DUNGEON_SIZE_PC34 25
 #define DM1_V1_ENTRANCE_MAP_INDEX_PC34 255
@@ -180,7 +180,7 @@ typedef struct {
     int mirrorCount;                    /* actual number of occupied mirrors */
     int selectedMirrorIndex;            /* currently viewed mirror, -1 if none */
     int partyChampionCount;             /* champions recruited so far */
-    int partyChampionIndices[M11_MAX_CHAMPIONS]; /* recruited champion indices */
+    int partyChampionIndices[DM1_V1_MAX_CHAMPIONS_PC34]; /* recruited champion indices */
     DM1_V1_DoorAnimationPc34 doorAnim;
     int microDungeonBuilt;              /* F0797 micro dungeon constructed */
     uint32_t lastInteractionMs;
@@ -291,31 +291,6 @@ int DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(
  * Source evidence string.
  */
 const char *DM1_V1_Entrance_SourceEvidencePc34Compat(void);
-
-typedef DM1_V1_EntranceStatePc34 M11_EntranceState;
-typedef DM1_V1_MirrorSlotPc34 M11_MirrorSlot;
-typedef DM1_V1_DoorAnimationPc34 M11_DoorAnimation;
-typedef DM1_V1_EntranceCtxPc34 M11_EntranceCtx;
-typedef DM1_V1_EntranceTickResultPc34 M11_EntranceTickResult;
-typedef DM1_V1_EntranceFullStartRenderReceiptPc34 M11_EntranceFullStartRenderReceipt;
-typedef DM1_V1_EntranceMenuRouteReceiptPc34 M11_EntranceMenuRouteReceipt;
-
-#define M11_MAX_MIRROR_SLOTS DM1_V1_MAX_MIRROR_SLOTS_PC34
-#define m11_entrance_init DM1_V1_Entrance_InitPc34Compat
-#define m11_entrance_add_mirror DM1_V1_Entrance_AddMirrorPc34Compat
-#define m11_entrance_start_door_animation DM1_V1_Entrance_StartDoorAnimationPc34Compat
-#define m11_entrance_tick_door_animation DM1_V1_Entrance_TickDoorAnimationPc34Compat
-#define m11_entrance_click_mirror DM1_V1_Entrance_ClickMirrorPc34Compat
-#define m11_entrance_recruit_champion DM1_V1_Entrance_RecruitChampionPc34Compat
-#define m11_entrance_resurrect DM1_V1_Entrance_ResurrectPc34Compat
-#define m11_entrance_reincarnate DM1_V1_Entrance_ReincarnatePc34Compat
-#define m11_entrance_cancel_selection DM1_V1_Entrance_CancelSelectionPc34Compat
-#define m11_entrance_finalize DM1_V1_Entrance_FinalizePc34Compat
-#define m11_entrance_is_complete DM1_V1_Entrance_IsCompletePc34Compat
-#define m11_entrance_get_party_count DM1_V1_Entrance_GetPartyCountPc34Compat
-#define m11_entrance_build_full_start_render_receipt DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat
-#define m11_entrance_build_menu_route_receipt DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat
-#define m11_entrance_source_evidence DM1_V1_Entrance_SourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }
