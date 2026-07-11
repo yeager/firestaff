@@ -388,6 +388,7 @@ static void check_title_to_menu_boundary(void) {
     DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 receipt;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 badMedia;
+    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 titleSource;
     DM1_V1_StartupEntranceRenderAudioCommand_PC34 entranceCommand;
     EntranceCompatSourceAnimationStep entranceStep;
     EntranceCompatSourceAnimationStep doorStep;
@@ -412,6 +413,7 @@ static void check_title_to_menu_boundary(void) {
     memset(&entranceCommand, 0, sizeof(entranceCommand));
     memset(&media, 0, sizeof(media));
     memset(&badMedia, 0, sizeof(badMedia));
+    memset(&titleSource, 0, sizeof(titleSource));
     (void)V1_TitleFrontend_GetStepPalette(
         V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
         &expected_presents_palette);
@@ -490,6 +492,33 @@ static void check_title_to_menu_boundary(void) {
     expect_i("DM1 full graphics media receipt title palette",
              media.title_zoom_palette,
              expected_title_palette);
+    expect_i("DM1 title runtime source receipt selects GRAPHICS.DAT C001",
+             dm1_v1_startup_title_runtime_source_receipt_pc34(
+                 "dm1", 1, 320u, 175u, 1, &titleSource) &&
+                 titleSource.handled &&
+                 titleSource.graphics_c001_usable &&
+                 titleSource.title_dat_fallback_usable &&
+                 titleSource.selected_runtime_source ==
+                     (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001 &&
+                 titleSource.require_graphics_c001_for_release_start &&
+                 !titleSource.fallback_is_visible_last_resort,
+             1);
+    expect_i("DM1 title runtime source receipt permits TITLE.DAT fallback only as last resort",
+             dm1_v1_startup_title_runtime_source_receipt_pc34(
+                 "dm1", 1, 319u, 175u, 1, &titleSource) &&
+                 titleSource.handled &&
+                 !titleSource.graphics_c001_usable &&
+                 titleSource.title_dat_fallback_usable &&
+                 titleSource.selected_runtime_source ==
+                     (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK &&
+                 !titleSource.require_graphics_c001_for_release_start &&
+                 titleSource.fallback_is_visible_last_resort,
+             1);
+    expect_i("DM1 title runtime source receipt no-ops non-DM1",
+             dm1_v1_startup_title_runtime_source_receipt_pc34(
+                 "csb", 1, 320u, 175u, 1, &titleSource) &&
+                 titleSource.handled == 0,
+             1);
     expect_u("DM1 full graphics media receipt entrance source steps",
              media.entrance_source_animation_steps,
              ENTRANCE_Compat_GetSourceAnimationStepCount());
