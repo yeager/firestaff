@@ -369,8 +369,8 @@ set(M11_SOURCES
     src/engine/firestaff_touch.c
     src/engine/firestaff_input.c
     src/engine/runtime_gesture_navigation_gate_pc34_compat.c
-    src/engine/swsh_intro_pathfinder_m11.c
-    src/engine/title_intro_pathfinder_m11.c
+    src/frontend/v1_swsh_intro_pathfinder_pc34_compat.c
+    src/frontend/v1_title_intro_pathfinder_pc34_compat.c
     src/engine/m11_game_input_mapping.c
     src/shared/session_timer_runtime.c
     src/engine/runtime_gesture_navigation_gate.c
@@ -17411,47 +17411,47 @@ if(BUILD_TESTING)
         COMMAND test_swsh_frontend_pc34_compat_integration
     )
 
-    add_executable(test_swsh_intro_pathfinder_m11
-        tests/test_swsh_intro_pathfinder_m11.c
-        src/engine/swsh_intro_pathfinder_m11.c
+    add_executable(test_v1_swsh_intro_pathfinder_pc34_compat
+        tests/test_v1_swsh_intro_pathfinder_pc34_compat.c
+        src/frontend/v1_swsh_intro_pathfinder_pc34_compat.c
         src/frontend/swsh_frontend_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
     )
-    target_compile_definitions(test_swsh_intro_pathfinder_m11 PRIVATE
+    target_compile_definitions(test_v1_swsh_intro_pathfinder_pc34_compat PRIVATE
         COMPILE_H
         STATICFUNCTION=static
         "SEPARATOR=,"
         "FINAL_SEPARATOR=)"
     )
     if(NOT MSVC)
-        target_compile_options(test_swsh_intro_pathfinder_m11 PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+        target_compile_options(test_v1_swsh_intro_pathfinder_pc34_compat PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
     add_test(
-        NAME swsh_intro_pathfinder_m11
-        COMMAND test_swsh_intro_pathfinder_m11
+        NAME v1_swsh_intro_pathfinder_pc34_compat
+        COMMAND test_v1_swsh_intro_pathfinder_pc34_compat
     )
 
-    add_executable(test_title_intro_pathfinder_m11
-        tests/test_title_intro_pathfinder_m11.c
-        src/engine/title_intro_pathfinder_m11.c
+    add_executable(test_v1_title_intro_pathfinder_pc34_compat
+        tests/test_v1_title_intro_pathfinder_pc34_compat.c
+        src/frontend/v1_title_intro_pathfinder_pc34_compat.c
         src/frontend/title_dat_loader_v1.c
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
     )
-    target_compile_definitions(test_title_intro_pathfinder_m11 PRIVATE
+    target_compile_definitions(test_v1_title_intro_pathfinder_pc34_compat PRIVATE
         COMPILE_H
         STATICFUNCTION=static
         "SEPARATOR=,"
         "FINAL_SEPARATOR=)"
     )
     if(NOT MSVC)
-        target_compile_options(test_title_intro_pathfinder_m11 PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+        target_compile_options(test_v1_title_intro_pathfinder_pc34_compat PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
-    firestaff_link_zlib(test_title_intro_pathfinder_m11 PRIVATE)
+    firestaff_link_zlib(test_v1_title_intro_pathfinder_pc34_compat PRIVATE)
     add_test(
-        NAME title_intro_pathfinder_m11
-        COMMAND test_title_intro_pathfinder_m11
+        NAME v1_title_intro_pathfinder_pc34_compat
+        COMMAND test_v1_title_intro_pathfinder_pc34_compat
     )
 
     # -- DM1 V1 startup intro state-machine ordering gate -------------
