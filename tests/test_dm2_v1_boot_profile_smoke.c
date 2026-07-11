@@ -689,6 +689,13 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               creature_atlas.animation_frame_sequence_ready == 1 &&
               creature_atlas.animation_frame_sequence_hash != 0u &&
               creature_atlas.animation_frame_sequence_byte_count > 0u &&
+              creature_atlas.animation_semantic_ready == 1 &&
+              creature_atlas.animation_semantic_hash != 0u &&
+              creature_atlas.animation_semantic_byte_count >=
+                  creature_atlas.animation_table_byte_count &&
+              creature_atlas.animation_semantic_nonzero_byte_count > 0u &&
+              creature_atlas.animation_semantic_sequence_ref_count > 0u &&
+              creature_atlas.animation_semantic_frame_ref_count > 0u &&
               creature_atlas.animation_table_hash != 0u &&
               creature_atlas.animation_table_byte_count > 0u &&
               creature_atlas.animation_table_ready == 1 &&
