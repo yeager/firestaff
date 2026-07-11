@@ -2,7 +2,12 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifdef _WIN32
+#include <direct.h>
+#include <process.h>
+#else
 #include <unistd.h>
+#endif
 
 static int expect(int ok, const char* message)
 {
@@ -11,6 +16,22 @@ static int expect(int ok, const char* message)
         return 0;
     }
     return 1;
+}
+
+static char* portable_mkdtemp(char* templ)
+{
+#ifdef _WIN32
+    char* marker = strstr(templ, "XXXXXX");
+    int i;
+    if (!marker) return NULL;
+    for (i = 0; i < 1000; ++i) {
+        snprintf(marker, 7, "%06ld", ((long)_getpid() + i) % 1000000L);
+        if (_mkdir(templ) == 0) return templ;
+    }
+    return NULL;
+#else
+    return mkdtemp(templ);
+#endif
 }
 
 int main(void)
@@ -23,8 +44,8 @@ int main(void)
     DM1_V1_RuntimeSidecarPc34 in;
     DM1_V1_RuntimeSidecarPc34 out;
 
-    if (!mkdtemp(dir)) {
-        perror("mkdtemp");
+    if (!portable_mkdtemp(dir)) {
+        perror("portable_mkdtemp");
         return 1;
     }
     snprintf(savePath, sizeof(savePath), "%s/save.dat", dir);
