@@ -248,7 +248,7 @@ static void test_m11_cross_reference(void) {
 
     /* The Mummy creature type index (10) and the M11 enum (0) are
      * intentionally different ordinals — the M11 sprite table sorts by
-     * M11_CR_* which places MUMMY first, whereas the M10 CreatureInfo
+     * DM1_V1_CREATURE_VIEWPORT_* which places MUMMY first, whereas the M10 CreatureInfo
      * follows the source-locked G0219 / G0243 order.  This assertion
      * documents that contract. */
     ASSERT_TRUE(DM1_CREATURE_MUMMY == 10,
