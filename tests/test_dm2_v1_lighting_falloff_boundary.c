@@ -994,6 +994,7 @@ static void test_sprite_asset_provider(void)
 
     {
         DM2_V1_HudPartyState party;
+        DM2_V1_InterfaceTheme theme;
 
         memset(&party, 0, sizeof(party));
         party.champion_count = 1;
@@ -1045,6 +1046,34 @@ static void test_sprite_asset_provider(void)
                   framebuffer[34 * 320 + 262] == 4 &&
                   framebuffer[44 * 320 + 250] == 5 &&
                   framebuffer[44 * 320 + 262] == 6);
+
+        memset(&theme, 0, sizeof(theme));
+        theme.valid = 1;
+        theme.semantic_hash = 0x12345678u;
+        theme.action_table_byte_count = 10u;
+        theme.font_table_byte_count = 20u;
+        theme.palette_byte_count = 30u;
+        theme.rect14_ready = 1;
+        theme.rect14_hash = 0x12345678u;
+        theme.rect14_byte_count = 28u;
+        theme.rect14_row_count = 2u;
+        theme.chrome_divider_color = 5u;
+        theme.action_icon_base_color = 6u;
+        theme.champion_frame_color = 9u;
+        theme.gold_coin_color = 11u;
+        theme.gold_label_color = 12u;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, 320);
+        dm2_v1_viewport_set_hud_party(&viewport, &party);
+        dm2_v1_viewport_set_interface_theme(&viewport, &theme);
+        dm2_v1_render_ui_chrome(&viewport);
+        CHECK("DM2 UI chrome consumes rect14 placement semantics live",
+              viewport.interface_semantics_consumed == 1 &&
+                  viewport.interface_rect14_consumed == 1 &&
+                  viewport.interface_semantics_hash == theme.semantic_hash &&
+                  viewport.interface_semantics_byte_count == 88u &&
+                  framebuffer[180 * 320 + 222] != 6 &&
+                  framebuffer[180 * 320 + 223] == 6);
     }
 
     memset(framebuffer, 0, sizeof(framebuffer));

@@ -283,6 +283,10 @@ typedef struct {
     uint32_t action_table_byte_count;
     uint32_t font_table_byte_count;
     uint32_t palette_byte_count;
+    int rect14_ready;
+    uint32_t rect14_hash;
+    uint32_t rect14_byte_count;
+    uint32_t rect14_row_count;
     uint8_t chrome_divider_color;
     uint8_t gold_coin_color;
     uint8_t gold_label_color;
@@ -761,6 +765,7 @@ typedef struct {
     int interface_semantics_consumed;
     uint32_t interface_semantics_hash;
     uint32_t interface_semantics_byte_count;
+    int interface_rect14_consumed;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */

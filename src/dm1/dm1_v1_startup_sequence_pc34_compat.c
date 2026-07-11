@@ -3966,6 +3966,96 @@ int dm1_v1_startup_hoc_m12_capture_fields_pc34(
     return fields.handled;
 }
 
+int dm1_v1_startup_hoc_m12_capture_fields_from_package_pc34(
+    const DM1_V1_StartupHoCM12CapturePackageFacts_PC34* facts,
+    DM1_V1_StartupHoCM12CaptureFields_PC34* out_fields) {
+    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 host_facts;
+    const DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34* presented;
+    int real_asset_ready;
+
+    if (!out_fields) {
+        return 0;
+    }
+    memset(&host_facts, 0, sizeof(host_facts));
+    if (!facts ||
+        !dm1_v1_startup_source_visible_handoff_required_pc34(
+            facts->source_id)) {
+        memset(out_fields, 0, sizeof(*out_fields));
+        return 0;
+    }
+
+    real_asset_ready =
+        facts->required_graphics_asset_ready &&
+        facts->required_dungeon_asset_ready;
+    presented = facts->presented_capture;
+
+    /* ReDMCSB: TITLE.C F0437 and ENTRANCE.C F0797/F0441 gate the
+     * source-visible startup route, REVIVE.C F0280 supplies the HoC champion
+     * mirror asset path, and LOADSAVE.C F0433/F0435 keep the same host route
+     * tied to save/resume. M12 gives only host/package observations here; DM1
+     * owns the promotion into capture-readiness facts. */
+    host_facts.source_id = facts->source_id;
+    host_facts.dungeon_loaded = facts->data_ready && facts->version_ready;
+    host_facts.map_count = host_facts.dungeon_loaded ? 1 : 0;
+    host_facts.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER;
+    host_facts.title_played = facts->startup_contract_ready;
+    host_facts.consumed_launch_path_receipt = facts->startup_contract_ready;
+    host_facts.launch_path_started_from_launcher = 1;
+    host_facts.launch_path_intro_not_bypassed = 1;
+    host_facts.captured_after_first_frame_render =
+        facts->startup_contract_ready;
+    host_facts.captured_from_real_assets = real_asset_ready;
+    host_facts.observed_required_graphics_hash_match =
+        facts->required_graphics_asset_ready;
+    host_facts.observed_required_dungeon_hash_match =
+        facts->required_dungeon_asset_ready;
+    host_facts.observed_c026_portrait_asset = real_asset_ready;
+    host_facts.observed_c346_mirror_backing_asset = real_asset_ready;
+
+    if (presented) {
+        host_facts.captured_from_mac_window =
+            presented->handled && presented->captured_from_mac_window;
+        host_facts.captured_from_release_app =
+            facts->startup_contract_ready &&
+            presented->handled &&
+            presented->captured_from_release_app;
+        host_facts.observed_host_window_present =
+            presented->handled && presented->host_window_present;
+        host_facts.observed_presented_rgba_capture =
+            facts->startup_contract_ready &&
+            presented->handled &&
+            presented->presented_capture_ready;
+        host_facts.presented_capture_width = presented->width;
+        host_facts.presented_capture_height = presented->height;
+        host_facts.presented_capture_byte_count = presented->byte_count;
+        host_facts.presented_capture_hash = presented->framebuffer_hash;
+        host_facts.presented_capture_consumer_mask =
+            presented->consumer_mask;
+        host_facts.presented_capture_chain_hash = presented->chain_hash;
+        host_facts.consumed_hoc_host_render_receipt =
+            presented->handled &&
+            (presented->consumer_mask &
+             DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34)
+                ? 1
+                : 0;
+        host_facts.consumed_m11_boot_probe_consumer =
+            presented->handled &&
+            (presented->consumer_mask &
+             DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34)
+                ? 1
+                : 0;
+        host_facts.consumed_m12_startup_capture_consumer =
+            presented->handled &&
+            (presented->consumer_mask &
+             DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34)
+                ? 1
+                : 0;
+    }
+
+    return dm1_v1_startup_hoc_m12_capture_fields_pc34(
+        &host_facts, out_fields);
+}
+
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,

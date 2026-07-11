@@ -6885,10 +6885,10 @@ static int m12_dm1_required_asset_match_ready(
 static int m12_apply_dm1_hoc_startup_capture_package(
     const M12_StartupMenuState* state,
     M12_StartupBootReadiness* receipt) {
-    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 facts;
+    DM1_V1_StartupHoCM12CapturePackageFacts_PC34 facts;
     DM1_V1_StartupHoCM12CaptureFields_PC34 capture;
+    DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34 presentedExport;
     const M12_DM1HoCPresentedCaptureReceipt* presented;
-    int realAssetReady;
     int graphicsAssetReady;
     int dungeonAssetReady;
 
@@ -6899,62 +6899,44 @@ static int m12_apply_dm1_hoc_startup_capture_package(
 
     graphicsAssetReady = m12_dm1_required_asset_match_ready(state, 0U);
     dungeonAssetReady = m12_dm1_required_asset_match_ready(state, 1U);
-    realAssetReady = graphicsAssetReady && dungeonAssetReady;
     presented = &state->dm1HoCPresentedCaptureReceipt;
     memset(&facts, 0, sizeof(facts));
     memset(&capture, 0, sizeof(capture));
-    facts.source_id = "dm1";
-    facts.dungeon_loaded = receipt->dataReady && receipt->versionReady;
-    facts.map_count = facts.dungeon_loaded ? 1 : 0;
-    facts.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER;
-    facts.title_played = receipt->startupContractReady;
-    facts.consumed_launch_path_receipt = receipt->startupContractReady;
-    facts.launch_path_started_from_launcher = 1;
-    facts.launch_path_intro_not_bypassed = 1;
-    facts.captured_after_first_frame_render = receipt->startupContractReady;
-    facts.captured_from_real_assets = realAssetReady;
-    facts.observed_required_graphics_hash_match = graphicsAssetReady;
-    facts.observed_required_dungeon_hash_match = dungeonAssetReady;
-    facts.captured_from_mac_window =
-        presented->handled && presented->capturedFromMacWindow;
-    facts.captured_from_release_app =
-        receipt->startupContractReady &&
-        presented->handled &&
-        presented->capturedFromReleaseApp;
-    facts.observed_c026_portrait_asset = realAssetReady;
-    facts.observed_c346_mirror_backing_asset = realAssetReady;
-    facts.observed_host_window_present =
-        presented->handled && presented->hostWindowPresent;
-    facts.observed_presented_rgba_capture =
-        receipt->startupContractReady &&
-        presented->handled &&
-        presented->presentedCaptureReady;
-    facts.presented_capture_width = presented->width;
-    facts.presented_capture_height = presented->height;
-    facts.presented_capture_byte_count = presented->byteCount;
-    facts.presented_capture_hash = presented->framebufferHash;
-    facts.presented_capture_consumer_mask = presented->consumerMask;
-    facts.presented_capture_chain_hash = presented->chainHash;
-    facts.consumed_hoc_host_render_receipt =
-        presented->handled &&
-        (presented->consumerMask &
-         DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34)
-            ? 1
-            : 0;
-    facts.consumed_m11_boot_probe_consumer =
-        presented->handled &&
-        (presented->consumerMask &
-         DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34)
-            ? 1
-            : 0;
-    facts.consumed_m12_startup_capture_consumer =
-        presented->handled &&
-        (presented->consumerMask &
-         DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34)
-            ? 1
-            : 0;
+    memset(&presentedExport, 0, sizeof(presentedExport));
 
-    (void)dm1_v1_startup_hoc_m12_capture_fields_pc34(&facts, &capture);
+    presentedExport.handled = presented->handled;
+    presentedExport.ready = presented->handled &&
+        presented->presentedCaptureReady &&
+        presented->hostWindowPresent &&
+        presented->capturedFromMacWindow &&
+        presented->capturedFromReleaseApp;
+    presentedExport.consumed_publish_receipt = presented->handled;
+    presentedExport.presented_capture_ready =
+        presented->presentedCaptureReady;
+    presentedExport.host_window_present = presented->hostWindowPresent;
+    presentedExport.captured_from_mac_window =
+        presented->capturedFromMacWindow;
+    presentedExport.captured_from_release_app =
+        presented->capturedFromReleaseApp;
+    presentedExport.width = presented->width;
+    presentedExport.height = presented->height;
+    presentedExport.byte_count = presented->byteCount;
+    presentedExport.framebuffer_hash = presented->framebufferHash;
+    presentedExport.consumer_mask = presented->consumerMask;
+    presentedExport.chain_hash = presented->chainHash;
+    presentedExport.source_evidence =
+        "DM1 HoC presented capture stored by M12 from DM1 host export receipt";
+
+    facts.source_id = "dm1";
+    facts.data_ready = receipt->dataReady;
+    facts.version_ready = receipt->versionReady;
+    facts.startup_contract_ready = receipt->startupContractReady;
+    facts.required_graphics_asset_ready = graphicsAssetReady;
+    facts.required_dungeon_asset_ready = dungeonAssetReady;
+    facts.presented_capture = &presentedExport;
+
+    (void)dm1_v1_startup_hoc_m12_capture_fields_from_package_pc34(
+        &facts, &capture);
 
     receipt->dm1HoCRealAssetCaptureReady =
         capture.real_asset_capture_ready;

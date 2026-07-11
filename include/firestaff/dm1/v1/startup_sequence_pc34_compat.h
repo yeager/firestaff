@@ -976,6 +976,17 @@ typedef struct DM1_V1_StartupHoCBootProbeHostFields_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupHoCBootProbeHostFields_PC34;
 
+typedef struct DM1_V1_StartupHoCM12CapturePackageFacts_PC34 {
+    const char* source_id;
+    int data_ready;
+    int version_ready;
+    int startup_contract_ready;
+    int required_graphics_asset_ready;
+    int required_dungeon_asset_ready;
+    const DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34*
+        presented_capture;
+} DM1_V1_StartupHoCM12CapturePackageFacts_PC34;
+
 typedef struct DM1_V1_StartupHoCM12CaptureFields_PC34 {
     int handled;
     int ready;
@@ -1565,6 +1576,9 @@ int dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
     DM1_V1_StartupHoCBootProbeHostFields_PC34* out_fields);
 int dm1_v1_startup_hoc_m12_capture_fields_pc34(
     const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    DM1_V1_StartupHoCM12CaptureFields_PC34* out_fields);
+int dm1_v1_startup_hoc_m12_capture_fields_from_package_pc34(
+    const DM1_V1_StartupHoCM12CapturePackageFacts_PC34* facts,
     DM1_V1_StartupHoCM12CaptureFields_PC34* out_fields);
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,

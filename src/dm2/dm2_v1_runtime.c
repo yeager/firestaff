@@ -204,6 +204,8 @@ static int dm2_runtime_build_interface_theme(
     uint32_t irgb_bytes = 0u;
     uint32_t pal16_hash = 0u;
     uint32_t pal16_bytes = 0u;
+    uint32_t rect14_hash = 0u;
+    uint32_t rect14_bytes = 0u;
     uint32_t hash = 0x32495448u;
 
     if (out_theme) memset(out_theme, 0, sizeof(*out_theme));
@@ -258,6 +260,25 @@ static int dm2_runtime_build_interface_theme(
     hash = dm2_runtime_hash_step(hash, irgb_bytes);
     hash = dm2_runtime_hash_step(hash, pal16_hash);
     hash = dm2_runtime_hash_step(hash, pal16_bytes);
+
+    if (dm2_v1_boot_gdat_typed_raw_asset_proof(
+            rt->boot,
+            DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+            0,
+            DM2_GDAT_ENTRY_TYPE_RAW7,
+            DM2_GDAT_INTERFACE_RAW_RECT14_TABLE,
+            0x32495231u,
+            &rect14_hash,
+            &rect14_bytes) &&
+        rect14_bytes >= 14u &&
+        (rect14_bytes % 14u) == 0u) {
+        hash = dm2_runtime_hash_step(hash, rect14_hash);
+        hash = dm2_runtime_hash_step(hash, rect14_bytes);
+        out_theme->rect14_ready = 1;
+        out_theme->rect14_hash = rect14_hash;
+        out_theme->rect14_byte_count = rect14_bytes;
+        out_theme->rect14_row_count = rect14_bytes / 14u;
+    }
 
     out_theme->valid = 1;
     out_theme->semantic_hash = hash;
@@ -2095,6 +2116,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.interface_semantics_hash;
     g_dm2_frame_ownership.interface_semantics_byte_count =
         viewport.interface_semantics_byte_count;
+    g_dm2_frame_ownership.interface_rect14_consumed =
+        viewport.interface_rect14_consumed;
     if (viewport.asset_floor_ceiling_drawn_count > 0) {
         dm2_runtime_add_viewport_asset_evidence(&g_dm2_frame_ownership,
                                                 DM2_V1_VIEWPORT_GFX_FLOOR);
@@ -2211,6 +2234,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_frame_ownership.interface_semantics_consumed &&
         g_dm2_frame_ownership.interface_semantics_hash != 0u &&
         g_dm2_frame_ownership.interface_semantics_byte_count > 0u &&
+        (!viewport.interface_theme.rect14_ready ||
+         g_dm2_frame_ownership.interface_rect14_consumed) &&
         g_dm2_frame_ownership.total_runtime_fallback_draws == 0;
     g_dm2_frame_ownership.valid =
         g_dm2_frame_ownership.runtime_frame_owned &&
