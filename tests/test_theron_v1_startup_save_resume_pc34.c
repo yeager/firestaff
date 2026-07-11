@@ -4982,6 +4982,8 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     object_route_receipt
                             .object_table_shape_best_window_offsets[0] == 0u &&
                     object_route_receipt
+                            .object_table_shape_best_user_data_valid[0] &&
+                    object_route_receipt
                             .object_table_shape_best_record_counts[0] == 1u &&
                     object_route_receipt.object_table_shape_best_byte_counts[0] ==
                         10u &&
@@ -5066,6 +5068,8 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                         object_route_receipt
                                 .object_table_shape_best_window_offsets[0] ==
                             inner_offset &&
+                        object_route_receipt
+                                .object_table_shape_best_user_data_valid[0] &&
                         object_route_receipt
                                 .object_table_shape_best_record_counts[0] ==
                             1u &&
