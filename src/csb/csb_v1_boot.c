@@ -3673,7 +3673,7 @@ int csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
     return out_proof->valid;
 }
 
-int csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
+static int csb_v1_boot_startup_packaged_capture_proof_from_snapshot_internal_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_BootStartupPackagedCaptureProof_PC34 *out_proof)
 {
@@ -3721,7 +3721,7 @@ static int csb_v1_boot_startup_visual_title_sample_pc34(
     snapshot.title_active = 1;
     snapshot.title_frame = frame;
     snapshot.title_source_step = source_step;
-    if (!csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
+    if (!csb_v1_boot_startup_packaged_capture_proof_from_snapshot_internal_pc34(
             &snapshot,
             &proof) ||
         !proof.valid ||
@@ -3745,7 +3745,7 @@ static int csb_v1_boot_startup_visual_packaged_snapshot_pc34(
     CSB_V1_BootStartupPackagedCaptureProof_PC34 *proof,
     uint32_t *out_hash)
 {
-    if (!csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
+    if (!csb_v1_boot_startup_packaged_capture_proof_from_snapshot_internal_pc34(
             snapshot,
             proof) ||
         !proof->valid ||
