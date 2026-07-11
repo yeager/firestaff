@@ -14237,45 +14237,6 @@ static int m11_dm1_hoc_menu_route_blocks_normal_input(
             receipt.showResurrectReincarnateChoices) ? 1 : 0;
 }
 
-int M11_GameView_CsbF0282ChampionPanelGateActive(
-    const M11_GameViewState* state,
-    int* outFrontMirrorOrdinal,
-    int* outCandidateOrdinal,
-    int* outCandidatePartyIndex) {
-    int frontOrdinal;
-
-    if (outFrontMirrorOrdinal) *outFrontMirrorOrdinal = -1;
-    if (outCandidateOrdinal) *outCandidateOrdinal = -1;
-    if (outCandidatePartyIndex) *outCandidatePartyIndex = -1;
-
-    if (!m11_source_is_csb(state)) {
-        return 0;
-    }
-
-    frontOrdinal = m11_front_cell_mirror_ordinal(state);
-    if (outFrontMirrorOrdinal) *outFrontMirrorOrdinal = frontOrdinal;
-    if (outCandidateOrdinal) *outCandidateOrdinal = state->candidateMirrorOrdinal;
-    if (outCandidatePartyIndex) {
-        *outCandidatePartyIndex = state->candidateMirrorPartyIndex;
-    }
-
-    /* ReDMCSB REVIVE.C F0280 lines 260-277 publishes the candidate
-     * champion ordinal (G0299) after a champion-mirror sensor opens the
-     * C040 panel, PANEL.C F0346 lines 1619-1635 draws that panel, and
-     * REVIVE.C F0282 lines 744-806 consumes C160/C161/C162.  The CSB
-     * M11 bridge uses the same live state gate: only a CSB source with a
-     * still-visible front mirror sensor and a valid appended candidate is
-     * allowed to route the C040 commands. */
-    return state->candidateMirrorPanelActive &&
-           state->inventoryPanelActive &&
-           frontOrdinal >= 0 &&
-           frontOrdinal == state->candidateMirrorOrdinal &&
-           state->candidateMirrorPartyIndex >= 0 &&
-           state->candidateMirrorPartyIndex < state->world.party.championCount &&
-           state->candidateMirrorPartyIndex < CHAMPION_MAX_PARTY &&
-           state->world.party.champions[state->candidateMirrorPartyIndex].present;
-}
-
 static int m11_disable_front_mirror_route(M11_GameViewState* state,
                                           int mirrorOrdinal) {
     int mapX;

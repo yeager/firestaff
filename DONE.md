@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 CSB F0282 M11 gate wrapper cleanup: removed the unused public `M11_GameView_CsbF0282ChampionPanelGateActive` export; active HoC/CSB champion-panel routing remains behind the existing ReDMCSB receipt paths. Verification: `firestaff_m11`, `test_m11_overlay_command_queue_block`, old-symbol `rg`, and `git diff HEAD --check` passed.
+
 - ✅ 2026-07-11 DM1 wall-ornament zone wrapper cleanup: removed unused public `M11_GameView_GetD1CWallOrnamentZone` and `M11_GameView_GetDm1WallOrnamentZone` exports; the HiDPI champion portrait regression now consumes the DM1/ReDMCSB `dm1_v1_wall_ornament_zone_pc34` table directly. Verification: `firestaff_m11`, `test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat`, `test_dm1_v1_wall_ornament_pc34_compat`, old-symbol `rg`, and `git diff --check` passed.
 
 - ✅ 2026-07-11 DM1 F0115 object/projectile wrapper cleanup: moved M11 render tests off public M11 object/projectile/F0115 coordinate wrappers and onto the DM1/ReDMCSB viewport APIs, then removed the now-unused public M11 exports. Verification: `firestaff_m11`, `test_m11_overlay_command_queue_block`, `test_dm1_v1_viewport_3d_pc34_compat`, and targeted old-symbol `rg` passed. `test_m11_csb_leader_hand_no_dm1_fallback` still reports unrelated SHOOT cooldown/refill failures.
