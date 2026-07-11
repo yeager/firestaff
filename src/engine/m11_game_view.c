@@ -4486,76 +4486,6 @@ static int m11_return_confirm_dialog_max_text_pixel_width(
     return max * M11_FONT_CHAR_CELL_WIDTH * scale;
 }
 
-int M11_GameView_GetV1DialogSingleChoiceMessageTextY(int lineCount) {
-    return dm1_v1_dialog_single_choice_message_text_y_pc34(lineCount);
-}
-
-int M11_GameView_GetV1DialogMultiChoiceMessageTextY(int lineCount) {
-    return dm1_v1_dialog_multi_choice_message_text_y_pc34(lineCount);
-}
-
-int M11_GameView_GetV1DialogMessageZone(int choiceCount,
-                                         int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH) {
-    DM1_V1_DialogRectPc34 r;
-    if (!dm1_v1_dialog_message_rect_pc34(choiceCount, &r)) return 0;
-    if (outX) *outX = r.x;
-    if (outY) *outY = r.y;
-    if (outW) *outW = r.w;
-    if (outH) *outH = r.h;
-    return 1;
-}
-
-int M11_GameView_GetV1DialogMessageWidth(int choiceCount) {
-    return dm1_v1_dialog_message_width_pc34(choiceCount);
-}
-
-int M11_GameView_GetV1DialogChoiceTextZoneId(int choiceCount,
-                                              int choiceIndex) {
-    return dm1_v1_dialog_choice_text_zone_id_pc34(choiceCount, choiceIndex);
-}
-
-int M11_GameView_GetV1DialogChoiceTextZone(int choiceCount,
-                                            int choiceIndex,
-                                            int* outX,
-                                            int* outY,
-                                            int* outW,
-                                            int* outH) {
-    DM1_V1_DialogRectPc34 r;
-    if (!dm1_v1_dialog_choice_text_rect_pc34(choiceCount, choiceIndex, &r)) {
-        return 0;
-    }
-    if (outX) *outX = r.x;
-    if (outY) *outY = r.y;
-    if (outW) *outW = r.w;
-    if (outH) *outH = r.h;
-    return 1;
-}
-
-int M11_GameView_GetV1DialogChoiceButtonZoneId(int choiceCount,
-                                                int choiceIndex) {
-    return dm1_v1_dialog_choice_button_zone_id_pc34(choiceCount, choiceIndex);
-}
-
-int M11_GameView_GetV1DialogChoiceHitZone(int choiceCount,
-                                           int choiceIndex,
-                                           int* outX,
-                                           int* outY,
-                                           int* outW,
-                                           int* outH) {
-    DM1_V1_DialogRectPc34 r;
-    if (!dm1_v1_dialog_choice_hit_rect_pc34(choiceCount, choiceIndex, &r)) {
-        return 0;
-    }
-    if (outX) *outX = r.x;
-    if (outY) *outY = r.y;
-    if (outW) *outW = r.w;
-    if (outH) *outH = r.h;
-    return 1;
-}
-
 void M11_GameView_GetForcedPauseDialogLayout(
     const M11_GameViewState* state,
     int framebufferWidth,
@@ -4770,7 +4700,7 @@ int M11_GameView_ReturnConfirmDialogLayoutMaxTextPixelWidth(
 }
 
 static int m11_dialog_source_message_width_for_choices(int choiceCount) {
-    return M11_GameView_GetV1DialogMessageWidth(choiceCount);
+    return dm1_v1_dialog_message_width_pc34(choiceCount);
 }
 
 static int m11_dialog_source_split_two_lines(const char* text,
@@ -4845,13 +4775,13 @@ static void m11_draw_dialog_choices_source(const M11_GameViewState* state,
     int i;
     if (!state || state->dialogChoiceCount <= 0) return;
     for (i = 0; i < state->dialogChoiceCount && i < 4; ++i) {
-        int x, y, w;
-        if (!M11_GameView_GetV1DialogChoiceTextZone(state->dialogChoiceCount,
-                                                    i, &x, &y, &w, NULL)) {
+        DM1_V1_DialogRectPc34 r;
+        if (!dm1_v1_dialog_choice_text_rect_pc34(state->dialogChoiceCount,
+                                                 i, &r)) {
             continue;
         }
         m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
-                                    x, y, w, state->dialogChoices[i]);
+                                    r.x, r.y, r.w, state->dialogChoices[i]);
     }
 }
 
@@ -4888,12 +4818,12 @@ static int m11_dialog_choice_at_point(const M11_GameViewState* state,
 
     if (vx < 0 || vy < 0 || vx >= M11_VIEWPORT_W || vy >= M11_VIEWPORT_H) return 0;
     for (i = 0; i < state->dialogChoiceCount && i < 4; ++i) {
-        int hx, hy, hw, hh;
-        if (!M11_GameView_GetV1DialogChoiceHitZone(state->dialogChoiceCount,
-                                                   i, &hx, &hy, &hw, &hh)) {
+        DM1_V1_DialogRectPc34 r;
+        if (!dm1_v1_dialog_choice_hit_rect_pc34(state->dialogChoiceCount,
+                                                i, &r)) {
             continue;
         }
-        if (vx >= hx && vx < hx + hw && vy >= hy && vy < hy + hh) {
+        if (vx >= r.x && vx < r.x + r.w && vy >= r.y && vy < r.y + r.h) {
             return i + 1;
         }
     }
@@ -24989,7 +24919,7 @@ static int m11_draw_dm_dialog_backdrop(const M11_GameViewState* state,
     const M11_AssetSlot* slot;
     if (!state || !state->assetsAvailable || !framebuffer) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                (unsigned int)M11_GameView_GetV1DialogBackdropGraphicId());
+                                (unsigned int)dm1_v1_graphic_dialog_box_pc34());
     if (!slot || !slot->loaded || !slot->pixels ||
         (int)slot->width != M11_VIEWPORT_W ||
         (int)slot->height != M11_VIEWPORT_H) {
@@ -25014,7 +24944,7 @@ static int m11_copy_dm_dialog_patch(const M11_GameViewState* state,
     int x, y;
     if (!state || !state->assetsAvailable || !framebuffer) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                (unsigned int)M11_GameView_GetV1DialogBackdropGraphicId());
+                                (unsigned int)dm1_v1_graphic_dialog_box_pc34());
     if (!slot || !slot->loaded || !slot->pixels) return 0;
     if (patchW <= 0) patchW = (int)slot->width;
     if (patchH <= 0) patchH = (int)slot->height;
@@ -25037,12 +24967,17 @@ static void m11_apply_dm_dialog_choice_patch(const M11_GameViewState* state,
                                              int framebufferWidth,
                                              int framebufferHeight) {
     int sx, sy, w, h, dx, dy;
+    DM1_V1_DialogPatchPc34 p;
     if (!state) return;
-    if (!M11_GameView_GetV1DialogChoicePatchZone(state->dialogChoiceCount,
-                                                 &sx, &sy, &w, &h,
-                                                 &dx, &dy)) {
+    if (!dm1_v1_dialog_choice_patch_pc34(state->dialogChoiceCount, &p)) {
         return;
     }
+    sx = p.srcX;
+    sy = p.srcY;
+    w = p.w;
+    h = p.h;
+    dx = p.dstX;
+    dy = p.dstY;
     m11_copy_dm_dialog_patch(state, framebuffer, framebufferWidth, framebufferHeight,
                              sx, sy, w, h, dx, dy);
 }
@@ -33167,32 +33102,6 @@ int M11_GameView_GetV1EndgameQuitBox(int inner,
     return 1;
 }
 
-int M11_GameView_GetV1DialogBackdropGraphicId(void) {
-    return dm1_v1_graphic_dialog_box_pc34();
-}
-
-int M11_GameView_GetV1DialogVersionTextOrigin(int* outX, int* outY) {
-    return dm1_v1_dialog_version_text_origin_pc34(outX, outY);
-}
-
-int M11_GameView_GetV1DialogChoicePatchZone(int choiceCount,
-                                             int* outSrcX,
-                                             int* outSrcY,
-                                             int* outW,
-                                             int* outH,
-                                             int* outDstX,
-                                             int* outDstY) {
-    DM1_V1_DialogPatchPc34 p;
-    if (!dm1_v1_dialog_choice_patch_pc34(choiceCount, &p)) return 0;
-    if (outSrcX) *outSrcX = p.srcX;
-    if (outSrcY) *outSrcY = p.srcY;
-    if (outW) *outW = p.w;
-    if (outH) *outH = p.h;
-    if (outDstX) *outDstX = p.dstX;
-    if (outDstY) *outDstY = p.dstY;
-    return 1;
-}
-
 int M11_GameView_GetV1FoodLabelGraphicId(void) {
     return dm1_v1_graphic_food_label_pc34();
 }
@@ -39501,7 +39410,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
              * type 4 / parent 4 / d1=192 / d2=7; parent zone 4 is the
              * 224×136 viewport, so screen origin is viewport + d1/d2. */
             int versionX, versionY;
-            (void)M11_GameView_GetV1DialogVersionTextOrigin(&versionX, &versionY);
+            (void)dm1_v1_dialog_version_text_origin_pc34(&versionX,
+                                                         &versionY);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           versionX,
                           versionY,
@@ -39518,13 +39428,17 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             int lineCount = m11_dialog_source_split_two_lines(
                 state->dialogOverlayText, line1, sizeof(line1), line2, sizeof(line2),
                 m11_dialog_source_message_width_for_choices(state->dialogChoiceCount));
-            int msgX = 0, msgY = 0, msgW = M11_VIEWPORT_W, msgH = 0;
+            DM1_V1_DialogRectPc34 msgRect;
+            int msgX = 0, msgW = M11_VIEWPORT_W;
             int msgLeft;
             textY = (state->dialogChoiceCount > 1)
-                        ? M11_GameView_GetV1DialogMultiChoiceMessageTextY(lineCount)
-                        : M11_GameView_GetV1DialogSingleChoiceMessageTextY(lineCount);
-            (void)M11_GameView_GetV1DialogMessageZone(state->dialogChoiceCount,
-                                                      &msgX, &msgY, &msgW, &msgH);
+                        ? dm1_v1_dialog_multi_choice_message_text_y_pc34(lineCount)
+                        : dm1_v1_dialog_single_choice_message_text_y_pc34(lineCount);
+            if (dm1_v1_dialog_message_rect_pc34(state->dialogChoiceCount,
+                                                &msgRect)) {
+                msgX = msgRect.x;
+                msgW = msgRect.w;
+            }
             /* COORD.C layout-696 records C469/C471 as a centered type-0
              * text zone: d1 is the center x, not a left edge. */
             msgLeft = M11_VIEWPORT_X + msgX - (msgW / 2);
