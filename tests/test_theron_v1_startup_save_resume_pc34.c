@@ -4819,6 +4819,42 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                             track02 + post_descriptor_candidate_offsets[0],
                             2u) &&
                     object_route_receipt.object_table_row_probe_count == 3u &&
+                    object_route_receipt.object_table_row_probe_anchor_counts[0] ==
+                        1u &&
+                    object_route_receipt.object_table_row_probe_anchor_counts[1] ==
+                        1u &&
+                    object_route_receipt.object_table_row_probe_anchor_counts[2] ==
+                        1u &&
+                    object_route_receipt.object_table_row_reject_count == 3u &&
+                    object_route_receipt.object_table_row_bad_shape_count == 3u &&
+                    object_route_receipt
+                            .object_table_row_window_too_small_count == 0u &&
+                    object_route_receipt.object_table_row_zero_fill_count == 0u &&
+                    object_route_receipt
+                            .object_table_row_first_reject_status[0] ==
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+                    object_route_receipt
+                            .object_table_row_first_reject_entry_index[0] ==
+                        7u &&
+                    object_route_receipt
+                            .object_table_row_first_reject_raw_offsets[0] ==
+                        post_descriptor_candidate_last_offsets[0] &&
+                    object_route_receipt
+                            .object_table_row_first_reject_user_data_valid[0] &&
+                    object_route_receipt
+                            .object_table_row_first_reject_record_counts[0] ==
+                        0x6261u &&
+                    object_route_receipt
+                            .object_table_row_first_reject_overflow_counts[0] ==
+                        (0x6261u - THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS) &&
+                    object_route_receipt
+                            .object_table_row_first_reject_byte_counts[0] ==
+                        2u &&
+                    object_route_receipt
+                            .object_table_row_first_reject_checksums[0] ==
+                        test_fnv1a_bytes(
+                            track02 + post_descriptor_candidate_last_offsets[0],
+                            2u) &&
                     object_route_receipt.object_table_row_shaped_count == 0u &&
                     object_route_receipt.object_table_row_shaped_anchor_mask == 0u &&
                     !object_route_receipt.object_table_decode_ready &&
@@ -4856,6 +4892,19 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     !object_route_receipt.blocked_for_missing_real_object_evidence &&
                     !object_route_receipt.fallback_visuals_allowed &&
                     object_route_receipt.object_table_row_probe_count == 3u &&
+                    object_route_receipt.object_table_row_probe_anchor_counts[0] ==
+                        1u &&
+                    object_route_receipt.object_table_row_probe_anchor_counts[1] ==
+                        1u &&
+                    object_route_receipt.object_table_row_probe_anchor_counts[2] ==
+                        1u &&
+                    object_route_receipt.object_table_row_reject_count == 2u &&
+                    object_route_receipt.object_table_row_bad_shape_count == 2u &&
+                    object_route_receipt.object_table_row_first_reject_status[0] ==
+                        0 &&
+                    object_route_receipt
+                            .object_table_row_first_reject_status[1] ==
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     object_route_receipt.object_table_row_shaped_count == 1u &&
                     object_route_receipt.object_table_row_shaped_anchor_mask == 0x01u &&
                     object_route_receipt.object_table_row_shaped_anchor_counts[0] == 1u &&

@@ -6582,6 +6582,12 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         (int)save_corpus.recursive_importable_candidate_count;
     out_receipt->save_corpus_alternate_name_candidate_count =
         (int)save_corpus.alternate_name_candidate_count;
+    out_receipt->save_corpus_recursive_scan_truncated =
+        (int)save_corpus.recursive_scan_truncated;
+    out_receipt->save_corpus_recursive_scan_depth_limit =
+        (int)save_corpus.recursive_scan_depth_limit;
+    out_receipt->save_corpus_recursive_scan_candidate_cap =
+        (int)save_corpus.recursive_scan_candidate_cap;
     out_receipt->save_corpus_valid_slot_mask =
         (unsigned int)save_corpus.valid_slot_mask;
     out_receipt->save_corpus_import_promotion_ready =
@@ -6656,6 +6662,15 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
         out_receipt->save_corpus_hash,
         (uint32_t)out_receipt->save_corpus_alternate_name_candidate_count);
+    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
+        out_receipt->save_corpus_hash,
+        (uint32_t)out_receipt->save_corpus_recursive_scan_truncated);
+    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
+        out_receipt->save_corpus_hash,
+        (uint32_t)out_receipt->save_corpus_recursive_scan_depth_limit);
+    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
+        out_receipt->save_corpus_hash,
+        (uint32_t)out_receipt->save_corpus_recursive_scan_candidate_cap);
     out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
         out_receipt->save_corpus_hash,
         out_receipt->save_corpus_valid_slot_mask);

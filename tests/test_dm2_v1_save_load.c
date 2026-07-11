@@ -1455,6 +1455,9 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.invalid_candidate_count != 0 ||
         receipt.importable_candidate_count != 0 ||
         receipt.import_rejected_candidate_count != 0 ||
+        receipt.recursive_scan_depth_limit != 4 ||
+        receipt.recursive_scan_candidate_cap != 64 ||
+        receipt.recursive_scan_truncated != 0 ||
         receipt.total_payload_size != 0) {
         printf("    FAIL: empty corpus did not produce an empty receipt\n");
         cleanup_slot_dir(tmpdir);
@@ -1620,6 +1623,9 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.recursive_importable_candidate_count != 1 ||
         receipt.alternate_name_candidate_count != 1 ||
         receipt.extra_valid_candidate_count != 1 ||
+        receipt.recursive_scan_depth_limit != 4 ||
+        receipt.recursive_scan_candidate_cap != 64 ||
+        receipt.recursive_scan_truncated != 0 ||
         strstr(receipt.first_importable_path, "SKSave03.dat") == NULL) {
         printf("    FAIL: recursive lowercase corpus receipt did not match "
                "expected fields (importable=%u rec=%u rec_imp=%u alt=%u "

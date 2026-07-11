@@ -950,6 +950,9 @@ typedef struct {
     int save_corpus_recursive_candidate_count;
     int save_corpus_recursive_importable_candidate_count;
     int save_corpus_alternate_name_candidate_count;
+    int save_corpus_recursive_scan_truncated;
+    int save_corpus_recursive_scan_depth_limit;
+    int save_corpus_recursive_scan_candidate_cap;
     unsigned int save_corpus_valid_slot_mask;
     int save_corpus_import_promotion_ready;
     int save_corpus_first_importable_kind;
