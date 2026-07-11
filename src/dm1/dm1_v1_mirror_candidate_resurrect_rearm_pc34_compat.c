@@ -9,7 +9,7 @@ static int valid_champion_index(int championIndex)
 }
 
 static int front_d1c_portrait_index(
-    const Dm1V1MirrorClickClosedStatePc34Compat *state)
+    const DM1_V1_MirrorClickClosedStatePc34 *state)
 {
     int championIndex;
 
@@ -27,7 +27,7 @@ static int front_d1c_portrait_index(
 
 static void resurrect_result_init(
     DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat *result,
-    const Dm1V1MirrorClickClosedStatePc34Compat *state)
+    const DM1_V1_MirrorClickClosedStatePc34 *state)
 {
     int candidateIndex;
 
@@ -63,7 +63,7 @@ static void resurrect_result_init(
 }
 
 int DM1_V1_MirrorCandidateResurrectRearm_ProcessResurrectPc34Compat(
-    Dm1V1MirrorClickClosedStatePc34Compat *state,
+    DM1_V1_MirrorClickClosedStatePc34 *state,
     DM1_V1_MirrorCandidateResurrectRearmResultPc34Compat *outResult)
 {
     int candidateIndex;
@@ -122,7 +122,7 @@ int DM1_V1_MirrorCandidateResurrectRearm_ProcessResurrectPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateResurrectRearm_ProcessStatusBoxClickPc34Compat(
-    Dm1V1MirrorClickClosedStatePc34Compat *state,
+    DM1_V1_MirrorClickClosedStatePc34 *state,
     int command,
     int x,
     int y,
@@ -145,7 +145,7 @@ int DM1_V1_MirrorCandidateResurrectRearm_ProcessStatusBoxClickPc34Compat(
 
     /* ReDMCSB: COMMAND.C:2158-2162 dispatches C012..C015 while G0299 is
      * clear, then COMMAND.C:484-488 routes C159 name rows through G0455. */
-    changed = DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34Compat(
+    changed = DM1_V1_MirrorClickClosed_ProcessStatusBoxClickPc34(
         state, command, x, y, mouseButtons, &outResult->statusBox);
     outResult->statusBoxChangedLeader = changed;
     if (changed && valid_champion_index(state->leaderIndex)) {
@@ -163,7 +163,7 @@ int DM1_V1_MirrorCandidateResurrectRearm_ProcessStatusBoxClickPc34Compat(
 }
 
 int DM1_V1_MirrorCandidateResurrectRearm_CanProcessCommandPc34Compat(
-    const Dm1V1MirrorClickClosedStatePc34Compat *state,
+    const DM1_V1_MirrorClickClosedStatePc34 *state,
     int command,
     DM1_V1_MirrorCandidateCommandGateResultPc34Compat *outResult)
 {
