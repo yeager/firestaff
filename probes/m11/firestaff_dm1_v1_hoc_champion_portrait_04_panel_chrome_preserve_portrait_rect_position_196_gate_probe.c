@@ -160,6 +160,9 @@
  *   firestaff_dm1_v1_hoc_champion_portrait_04_panel_chrome_preserve_portrait_rect_position_196_gate_probe DATA_DIR
  */
 #include "m11_game_view.h"
+#include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
@@ -192,7 +195,7 @@ enum {
     D1C_ZONE_Y_VP = 29,
     D1C_ZONE_W = 64,
     D1C_ZONE_H = 43,
-    /* RR panel (C040) zone from M11_GameView_GetV1InventoryPanelZone,
+    /* RR panel (C040) zone from dm1_v1_inventory_panel_zone_xywh_pc34,
      * viewport-local.  The panel covers (80, 52, 144, 73) and starts
      * at the same y as the lower 12 rows of the C026 portrait cutout
      * (rows 17..28, viewport y=52..63). */
@@ -690,7 +693,7 @@ int main(int argc, char** argv) {
         ok = 0;
     }
     bdX = bdY = bdW = bdH = 0;
-    M11_GameView_GetV1InventoryBackdropZone(&bdX, &bdY, &bdW, &bdH);
+    dm1_v1_inventory_backdrop_zone_xywh_pc34(&bdX, &bdY, &bdW, &bdH);
     if (bdX != BACKDROP_X_VP || bdY != BACKDROP_Y_VP ||
         bdW != BACKDROP_W || bdH != BACKDROP_H) {
         fprintf(stderr,
@@ -700,7 +703,7 @@ int main(int argc, char** argv) {
         ok = 0;
     }
     pzX = pzY = pzW = pzH = 0;
-    M11_GameView_GetV1InventoryPanelZone(&pzX, &pzY, &pzW, &pzH);
+    dm1_v1_inventory_panel_zone_xywh_pc34(&pzX, &pzY, &pzW, &pzH);
     if (pzX != RR_PANEL_X_VP || pzY != RR_PANEL_Y_VP ||
         pzW != RR_PANEL_W || pzH != RR_PANEL_H) {
         fprintf(stderr,
