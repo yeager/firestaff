@@ -261,6 +261,8 @@ typedef struct {
     int runtime_render_asset_projectile_count;
     int runtime_render_fallback_projectile_count;
     int runtime_render_no_core_fallbacks;
+    uint32_t runtime_render_scene_consumed_mask;
+    uint32_t runtime_render_scene_consumption_hash;
 } DM2_V1_BootRuntimeRenderReceipt;
 
 typedef struct {
@@ -305,6 +307,8 @@ typedef struct {
     int real_gdat_portrait_ready;
     int real_gdat_core_render_ready;
     int real_gdat_runtime_hud_breadth_ready;
+    uint32_t runtime_scene_consumed_mask;
+    uint32_t runtime_scene_consumption_hash;
     int raw_gdat_runtime_hud_capture_ready;
     int raw_gdat_runtime_portrait_count;
     uint32_t raw_gdat_runtime_portrait_hash;

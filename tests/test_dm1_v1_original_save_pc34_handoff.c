@@ -14,11 +14,13 @@
 #define test_mkdir(p) _mkdir(p)
 #define test_rmdir(p) _rmdir(p)
 #define test_unlink(p) remove(p)
+#define test_pid() _getpid()
 #else
 #include <unistd.h>
 #define test_mkdir(p) mkdir((p), 0700)
 #define test_rmdir(p) rmdir(p)
 #define test_unlink(p) unlink(p)
+#define test_pid() getpid()
 #endif
 
 #define CHECK(cond, msg) \
@@ -429,8 +431,9 @@ static void make_temp_save_path(char *out, size_t out_size)
         root = "/tmp";
     }
     n = snprintf(out, out_size,
-                 "%s/firestaff_dm1_original_pc34_handoff_fixture.sav",
-                 root);
+                 "%s/firestaff_dm1_original_pc34_handoff_fixture_%ld.sav",
+                 root,
+                 (long)test_pid());
     CHECK(n > 0 && (size_t)n < out_size,
           "temporary save path fits");
 }

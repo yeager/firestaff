@@ -5660,6 +5660,7 @@ int dm2_v1_boot_runtime_render_frame(
         }
     }
     if (out_receipt) {
+        DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
         out_receipt->render_result = rendered;
         out_receipt->startup_render_ready =
             rendered == 0 &&
@@ -5748,6 +5749,13 @@ int dm2_v1_boot_runtime_render_frame(
             dm2_v1_runtime_last_asset_projectile_count();
         out_receipt->runtime_render_fallback_projectile_count =
             dm2_v1_runtime_last_fallback_projectile_count();
+        memset(&frame_ownership, 0, sizeof(frame_ownership));
+        if (dm2_v1_runtime_last_frame_ownership(&frame_ownership)) {
+            out_receipt->runtime_render_scene_consumed_mask =
+                frame_ownership.gdat_scene_consumed_mask;
+            out_receipt->runtime_render_scene_consumption_hash =
+                frame_ownership.gdat_scene_consumption_hash;
+        }
         out_receipt->runtime_render_no_core_fallbacks =
             out_receipt->runtime_render_asset_floor_ceiling_count >= 2 &&
             out_receipt->runtime_render_fallback_floor_ceiling_count == 0 &&
@@ -5940,7 +5948,21 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             (uint32_t)frame_receipt.runtime_render_asset_projectile_count);
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
+            frame_receipt.runtime_render_scene_consumed_mask);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
+            frame_receipt.runtime_render_scene_consumption_hash);
+        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
+            combined_hash,
             (uint32_t)frame_receipt.runtime.party_dir);
+        out_receipt->runtime_scene_consumed_mask |=
+            frame_receipt.runtime_render_scene_consumed_mask;
+        out_receipt->runtime_scene_consumption_hash =
+            dm2_v1_boot_packaged_capture_hash_step(
+                out_receipt->runtime_scene_consumption_hash
+                    ? out_receipt->runtime_scene_consumption_hash
+                    : 0x32475343u,
+                frame_receipt.runtime_render_scene_consumption_hash);
         out_receipt->combined_pixel_count +=
             frame_receipt.runtime_hud_frame_pixel_count;
         if (out_receipt->render_sample_count == 1) {

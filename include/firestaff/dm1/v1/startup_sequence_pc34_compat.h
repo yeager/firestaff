@@ -211,6 +211,9 @@ typedef struct DM1_V1_StartupSaveResumeCaptureFacts_PC34 {
     int observed_user_save_corpus_classified;
     int observed_user_save_corpus_pc34;
     int observed_user_save_corpus_part_envelope;
+    int observed_user_save_corpus_roundtrip_verified;
+    int observed_user_save_corpus_roundtrip_failed;
+    unsigned int observed_user_save_corpus_roundtrip_hash;
     int observed_user_save_corpus_rejected;
     int observed_user_save_corpus_truncated;
     const char* observed_user_save_corpus_first_pc34_path;
@@ -243,6 +246,9 @@ typedef struct DM1_V1_StartupSaveResumeCaptureReceipt_PC34 {
     int user_save_corpus_classified;
     int user_save_corpus_pc34;
     int user_save_corpus_part_envelope;
+    int user_save_corpus_roundtrip_verified;
+    int user_save_corpus_roundtrip_failed;
+    unsigned int user_save_corpus_roundtrip_hash;
     int user_save_corpus_rejected;
     int user_save_corpus_truncated;
     char user_save_corpus_first_pc34_path[512];
@@ -837,6 +843,10 @@ typedef struct DM1_V1_CompleteSupportReceipt_PC34 {
     int user_save_corpus_scan_consumed;
     int user_save_corpus_pc34_ready;
     int user_save_corpus_part_envelope_ready;
+    int user_save_corpus_roundtrip_ready;
+    int user_save_corpus_roundtrip_verified;
+    int user_save_corpus_roundtrip_failed;
+    unsigned int user_save_corpus_roundtrip_hash;
     int user_save_corpus_rejected;
     int user_save_corpus_truncated;
     char user_save_corpus_first_pc34_path[512];
@@ -928,6 +938,10 @@ typedef struct DM1_V1_StartupHoCBootProbeSummary_PC34 {
     int complete_original_save_roundtrip_route;
     int user_save_corpus_pc34_ready;
     int user_save_corpus_part_envelope_ready;
+    int user_save_corpus_roundtrip_ready;
+    int user_save_corpus_roundtrip_verified;
+    int user_save_corpus_roundtrip_failed;
+    unsigned int user_save_corpus_roundtrip_hash;
     int user_save_corpus_rejected;
     int user_save_corpus_truncated;
     char user_save_corpus_first_pc34_path[512];
