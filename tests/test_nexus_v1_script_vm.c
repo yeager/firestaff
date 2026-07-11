@@ -11,6 +11,7 @@
 #include "nexus_v1_script_vm.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct {
@@ -35,6 +36,14 @@ static void put_u16_le(uint8_t *p, int value) {
     unsigned int v = (unsigned int)(uint16_t)value;
     p[0] = (uint8_t)(v & 0xffu);
     p[1] = (uint8_t)((v >> 8) & 0xffu);
+}
+
+static void put_u32_be(uint8_t *p, int value) {
+    unsigned int v = (unsigned int)value;
+    p[0] = (uint8_t)((v >> 24) & 0xffu);
+    p[1] = (uint8_t)((v >> 16) & 0xffu);
+    p[2] = (uint8_t)((v >> 8) & 0xffu);
+    p[3] = (uint8_t)(v & 0xffu);
 }
 
 static void receipt_handler(const Nexus_ScriptAction *action, void *user_data) {
@@ -292,12 +301,145 @@ static void test_slev_rule_table_loads_and_dispatches(void) {
           "parsed level-load rule dispatches message action");
 }
 
+static void test_real_slev_task_profile_blocks_dispatch(void) {
+    uint8_t slev[96];
+    Nexus_ScriptVM vm;
+    Nexus_ScriptRuntimeReceipt receipt;
+
+    memset(slev, 0, sizeof(slev));
+    memset(&receipt, 0, sizeof(receipt));
+    slev[0] = 0x2f; slev[1] = 0xe6; /* observed real SLEV task prologue */
+    slev[2] = 0xe2; slev[3] = 0x1a; /* mov immediate-like SH-2 word */
+    slev[4] = 0xd3; slev[5] = 0x3e;
+    slev[6] = 0x34; slev[7] = 0x23;
+    slev[28] = 0x00; slev[29] = 0x0b; /* RTS */
+    slev[32] = 0xa0; slev[33] = 0x10; /* branch-like word */
+    slev[36] = 0x43; slev[37] = 0x0b; /* JSR @R3 */
+    slev[40] = 0xd1; slev[41] = 0x23; /* MOV.L @(disp,PC),R1 */
+    slev[48] = 0xe0; slev[49] = 0xff; /* immediate-like word */
+    put_u32_be(&slev[64], 0x00202734);
+    put_u32_be(&slev[68], 0x00202840);
+
+    nexus_script_vm_init(&vm);
+    CHECK(nexus_script_vm_load_level(&vm, 0, slev, (int)sizeof(slev)) == 0,
+          "real-shaped SLEV task profile loads");
+    CHECK(nexus_script_vm_runtime_receipt(&vm, &receipt) == 0,
+          "real-shaped SLEV task profile emits receipt");
+    CHECK(receipt.status == NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT &&
+          receipt.blocks_real_script_dispatch == 1 &&
+          receipt.dispatch_enabled == 0 &&
+          receipt.rules_loaded == 0,
+          "real-shaped SLEV task profile does not enable fallback dispatch");
+    CHECK(receipt.real_task_profile_supported == 1 &&
+          receipt.real_task_word_count == 48 &&
+          receipt.real_task_first_opcode == 0x2fe6 &&
+          receipt.real_task_rts_count == 1 &&
+          receipt.real_task_branch_count == 1 &&
+          receipt.real_task_immediate_count == 2 &&
+          receipt.real_task_jsr_count == 1 &&
+          receipt.real_task_pc_relative_load_count == 2,
+          "real-shaped SLEV task profile records SH-2 opcode shape");
+    CHECK(receipt.real_task_literal_pointer_count == 2 &&
+          receipt.real_task_first_literal_offset == 64 &&
+          receipt.real_task_first_literal_address == 0x00202734 &&
+          receipt.real_task_last_literal_address == 0x00202840,
+          "real-shaped SLEV task profile records literal call operands");
+
+    slev[0] = 0x00;
+    nexus_script_vm_init(&vm);
+    CHECK(nexus_script_vm_load_level(&vm, 0, slev, (int)sizeof(slev)) == 0,
+          "malformed SLEV task bytes load as candidate");
+    CHECK(nexus_script_vm_runtime_receipt(&vm, &receipt) == 0 &&
+          receipt.real_task_profile_supported == 0 &&
+          receipt.status == NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT,
+          "malformed task bytes are not promoted to real-profile evidence");
+}
+
+static void test_optional_real_slev_corpus_profile(void) {
+    const char *home = getenv("HOME");
+    int seen = 0;
+    int profiled = 0;
+    int level;
+
+    if (!home || home[0] == '\0') return;
+
+    for (level = 0; level < 16; ++level) {
+        char path[512];
+        FILE *fp;
+        long size;
+        uint8_t *data;
+        Nexus_ScriptVM vm;
+        Nexus_ScriptRuntimeReceipt receipt;
+
+        snprintf(path, sizeof(path),
+                 "%s/.firestaff/data/nexus/SLEV%02d.BIN", home, level);
+        fp = fopen(path, "rb");
+        if (!fp) continue;
+        if (fseek(fp, 0, SEEK_END) != 0) {
+            fclose(fp);
+            continue;
+        }
+        size = ftell(fp);
+        if (size <= 0 || size > 65536L || fseek(fp, 0, SEEK_SET) != 0) {
+            fclose(fp);
+            continue;
+        }
+        data = (uint8_t *)malloc((size_t)size);
+        if (!data) {
+            fclose(fp);
+            continue;
+        }
+        if (fread(data, 1, (size_t)size, fp) != (size_t)size) {
+            free(data);
+            fclose(fp);
+            continue;
+        }
+        fclose(fp);
+
+        seen++;
+        nexus_script_vm_init(&vm);
+        CHECK(nexus_script_vm_load_level(&vm, level, data, (int)size) == 0,
+              "optional real SLEV corpus file loads");
+        CHECK(nexus_script_vm_runtime_receipt(&vm, &receipt) == 0,
+              "optional real SLEV corpus file emits receipt");
+        if (receipt.real_task_profile_supported) {
+            profiled++;
+            CHECK(receipt.status ==
+                      NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT &&
+                  receipt.blocks_real_script_dispatch == 1 &&
+                  receipt.dispatch_enabled == 0,
+                  "optional real SLEV profile stays no-dispatch");
+            CHECK(receipt.real_task_word_count == (int)(size / 2) &&
+                  receipt.real_task_first_opcode == 0x2fe6 &&
+                  receipt.real_task_rts_count > 0 &&
+                  receipt.real_task_jsr_count > 0 &&
+                  receipt.real_task_pc_relative_load_count > 0 &&
+                  receipt.real_task_checksum16 != 0,
+                  "optional real SLEV profile records SH-2 call/operand shape");
+            if (receipt.real_task_literal_pointer_count > 0) {
+                CHECK(receipt.real_task_first_literal_offset >= 0 &&
+                      receipt.real_task_first_literal_address >= 0x00200000 &&
+                      receipt.real_task_last_literal_address >= 0x00200000,
+                      "optional real SLEV profile records literal table operands");
+            }
+        }
+        free(data);
+    }
+
+    if (seen > 0) {
+        CHECK(profiled == seen,
+              "all staged real SLEV corpus files match the task profile");
+    }
+}
+
 int main(void) {
     test_vm_local_handlers();
     test_event_operand_matching();
     test_once_only_manual_fire_and_unload();
     test_runtime_receipts_block_unparsed_real_source();
     test_slev_rule_table_loads_and_dispatches();
+    test_real_slev_task_profile_blocks_dispatch();
+    test_optional_real_slev_corpus_profile();
 
     if (g_failures) {
         fprintf(stderr, "test_nexus_v1_script_vm: %d failure(s)\n", g_failures);
