@@ -2231,9 +2231,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
          * falls back. */
         g_dm2_frame_ownership.hud_gdat_blits > 0 &&
         g_dm2_frame_ownership.total_runtime_gdat_blits > 0 &&
-        g_dm2_frame_ownership.interface_semantics_consumed &&
-        g_dm2_frame_ownership.interface_semantics_hash != 0u &&
-        g_dm2_frame_ownership.interface_semantics_byte_count > 0u &&
+        ((!g_dm2_frame_ownership.interface_semantics_consumed &&
+          g_dm2_frame_ownership.interface_semantics_hash == 0u &&
+          g_dm2_frame_ownership.interface_semantics_byte_count == 0u) ||
+         (g_dm2_frame_ownership.interface_semantics_hash != 0u &&
+          g_dm2_frame_ownership.interface_semantics_byte_count > 0u)) &&
         (!viewport.interface_theme.rect14_ready ||
          g_dm2_frame_ownership.interface_rect14_consumed) &&
         g_dm2_frame_ownership.total_runtime_fallback_draws == 0;

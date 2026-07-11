@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 CSB runtime boundary verifier refresh: `csb_v1_m11_runtime_capture_boundary` now checks current M12 launch gate, M11 host-view receipt, and CSB M11 presentation receipt anchors instead of stale line-window strings. Verification: `python3 tools/verify_csb_v1_m11_runtime_capture_boundary.py` passed; focused CSB CTest pair passed 2/2.
+
+- ✅ 2026-07-11 DM2 GDAT frame ownership split: runtime full-frame ownership now allows complete provider-backed HUD/dungeon GDAT consumption while keeping `real_gdat_evidence_valid` exclusive to the real boot GDAT provider. Verification: `test_dm2_v1_runtime_handoff_smoke` passed 150/150; focused DM2 CTest pair passed 2/2.
+
+- ✅ 2026-07-11 Theron Track02 candidate header proof: object-table candidate receipts now carry first-candidate BE header words and startup-level-header match counts per anchor without promoting decode-ready semantics. Verification: `test_theron_v1_startup_save_resume_pc34` passed 313/313; focused CTest passed 1/1.
+
 - ✅ 2026-07-11 five-track startup/render integration: integrated verified DM1, CSB, DM2, Theron, and Nexus worker patches. DM1 narrows HoC/M12 presented-capture ownership into DM1 receipts, CSB release/app capture now requires M11 presentation proof, DM2 adds skproject rect14 placement-plan evidence, Theron carries Track02 candidate shape metadata with hashes, and Nexus adds BPK material host-route coverage for floor/ceiling/wall surfaces. Verification: targeted Ninja build passed and focused CTest suite passed 10/10.
 
 - ✅ 2026-07-11 Theron Track02 candidate fingerprints: object-table and non-startup level-route receipts now store FNV-1a hashes for first/last post-descriptor candidate windows per anchor, preserving byte evidence for the next real-media semantic pass. Verification: focused Theron startup save/resume tests and probe passed locally.

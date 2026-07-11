@@ -1056,6 +1056,13 @@ typedef struct {
     size_t object_table_candidate_last_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint32_t object_table_candidate_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint32_t object_table_candidate_last_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t object_table_candidate_header_width[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t object_table_candidate_header_height[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t object_table_candidate_header_seed[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t object_table_candidate_header_level_index[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int object_table_candidate_startup_header_shaped[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_candidate_header_probe_count;
+    size_t object_table_candidate_startup_header_shape_count;
     size_t object_table_candidate_descriptor_delta[THERON_TRACK02_MAX_BANK_ANCHORS];
     int object_table_candidate_after_descriptor[THERON_TRACK02_MAX_BANK_ANCHORS];
     Theron_Track02DescriptorEntryRole object_table_candidate_entry_role[THERON_TRACK02_MAX_BANK_ANCHORS];
