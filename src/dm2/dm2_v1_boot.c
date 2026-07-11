@@ -6762,15 +6762,17 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
                 dm2_v1_boot_packaged_capture_hash_step(
                     out_receipt->animation_table_hash,
                     (uint32_t)((creature << 8) | table_count));
-            (void)dm2_v1_boot_creature_animation_semantics_add(
-                profile,
-                creature,
-                out_receipt->max_frame_count,
-                &out_receipt->animation_semantic_hash,
-                &out_receipt->animation_semantic_byte_count,
-                &out_receipt->animation_semantic_nonzero_byte_count,
-                &out_receipt->animation_semantic_sequence_ref_count,
-                &out_receipt->animation_semantic_frame_ref_count);
+            if (dm2_v1_boot_creature_animation_semantics_add(
+                    profile,
+                    creature,
+                    out_receipt->max_frame_count,
+                    &out_receipt->animation_semantic_hash,
+                    &out_receipt->animation_semantic_byte_count,
+                    &out_receipt->animation_semantic_nonzero_byte_count,
+                    &out_receipt->animation_semantic_sequence_ref_count,
+                    &out_receipt->animation_semantic_frame_ref_count)) {
+                ++out_receipt->animation_semantic_creature_count;
+            }
         } else {
             out_receipt->animation_table_hash = before_hash;
             out_receipt->animation_table_byte_count = before_count;
@@ -6793,7 +6795,8 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
         out_receipt->animation_semantic_byte_count > 0u &&
         out_receipt->animation_semantic_nonzero_byte_count > 0u &&
         out_receipt->animation_semantic_sequence_ref_count > 0u &&
-        out_receipt->animation_semantic_frame_ref_count > 0u;
+        out_receipt->animation_semantic_frame_ref_count > 0u &&
+        out_receipt->animation_semantic_creature_count > 0u;
     out_receipt->animation_table_ready =
         (out_receipt->animation_table_field_mask & 0x07u) == 0x07u &&
         out_receipt->animation_attribution_ready &&
@@ -7114,6 +7117,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->creature_atlas.animation_frame_sequence_hash != 0u &&
         out_receipt->creature_atlas.animation_semantic_ready &&
         out_receipt->creature_atlas.animation_semantic_hash != 0u &&
+        out_receipt->creature_atlas.animation_semantic_creature_count > 0u &&
         out_receipt->creature_atlas.frame_parity_hash != 0u;
     out_receipt->runtime_gdat_direction_breadth_complete =
         out_receipt->runtime_hud.render_sample_count == 4 &&
@@ -7232,6 +7236,8 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         hash, out_receipt->creature_atlas.animation_semantic_sequence_ref_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->creature_atlas.animation_semantic_frame_ref_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->creature_atlas.animation_semantic_creature_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->save_corpus_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
