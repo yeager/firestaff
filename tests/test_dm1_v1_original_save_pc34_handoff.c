@@ -6,6 +6,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <direct.h>
+#include <process.h>
+#define test_mkdir(p) _mkdir(p)
+#define test_rmdir(p) _rmdir(p)
+#define test_unlink(p) remove(p)
+#else
+#include <unistd.h>
+#define test_mkdir(p) mkdir((p), 0700)
+#define test_rmdir(p) rmdir(p)
+#define test_unlink(p) unlink(p)
+#endif
 
 #define CHECK(cond, msg) \
     do { \
@@ -1244,6 +1258,116 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
     remove(fixture_path);
 }
 
+static int make_corpus_root(char out[DM1_ORIGINAL_SAVE_PATH_MAX])
+{
+#if defined(_WIN32) || defined(_WIN64)
+    int pid = _getpid();
+    int i;
+    for (i = 0; i < 32; ++i) {
+        int n = snprintf(out, DM1_ORIGINAL_SAVE_PATH_MAX,
+                         "dm1_pc34_corpus_verify_%d_%d", pid, i);
+        if (n <= 0 || n >= DM1_ORIGINAL_SAVE_PATH_MAX) return 0;
+        if (test_mkdir(out) == 0) return 1;
+    }
+    return 0;
+#else
+    strncpy(out, "/tmp/dm1_pc34_corpus_verify_XXXXXX",
+            DM1_ORIGINAL_SAVE_PATH_MAX - 1u);
+    out[DM1_ORIGINAL_SAVE_PATH_MAX - 1u] = '\0';
+    return mkdtemp(out) != NULL;
+#endif
+}
+
+static int write_corpus_file(const char *path,
+                             const unsigned char *bytes,
+                             size_t size)
+{
+    FILE *file = fopen(path, "wb");
+    if (!file) return 0;
+    if (size > 0u && fwrite(bytes, 1u, size, file) != size) {
+        fclose(file);
+        return 0;
+    }
+    return fclose(file) == 0;
+}
+
+static void test_corpus_verification_receipt_roundtrips_pc34_candidates(void)
+{
+    char root[DM1_ORIGINAL_SAVE_PATH_MAX];
+    char path[DM1_ORIGINAL_SAVE_PATH_MAX];
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    size_t written = 0u;
+    DM1OriginalSavePC34FixtureSpec spec;
+    DM1OriginalSavePC34CorpusVerificationReceipt receipt;
+    int rc;
+
+    CHECK(make_corpus_root(root), "corpus verification temp root");
+
+    memset(&spec, 0, sizeof(spec));
+    spec.champion_count = 2;
+    spec.map_index = 1;
+    spec.map_x = 8;
+    spec.map_y = 9;
+    spec.direction = 1;
+    spec.active_champion_index = 0;
+    spec.current_active_group_count = 1;
+    spec.maximum_active_group_count = ORIGINAL_PC34_ACTIVE_GROUP_COUNT;
+    spec.event_count = 2;
+    spec.event_maximum_count = ORIGINAL_PC34_EVENT_MAXIMUM_COUNT;
+    spec.game_time = 444555u;
+    spec.game_id = 0x43505231u;
+    rc = dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
+        &spec, bytes, sizeof(bytes), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "corpus verification fixture builds");
+
+    snprintf(path, sizeof(path), "%s/slot-a.original", root);
+    CHECK(write_corpus_file(path, bytes, written),
+          "corpus verification first PC34 file writes");
+    snprintf(path, sizeof(path), "%s/renamed-save-without-dmsave-name.bin",
+             root);
+    CHECK(write_corpus_file(path, bytes, written),
+          "corpus verification renamed PC34 file writes");
+    snprintf(path, sizeof(path), "%s/not-a-save.txt", root);
+    CHECK(write_corpus_file(path, (const unsigned char *)"not-a-save", 10u),
+          "corpus verification rejected file writes");
+
+    memset(&receipt, 0, sizeof(receipt));
+    rc = dm1_v1_original_save_pc34_verify_corpus_root(root, &receipt);
+    CHECK(rc == 1, "corpus verification receipt handles scan");
+    CHECK(receipt.handled == 1 && receipt.ready == 1,
+          "corpus verification receipt is ready");
+    CHECK(receipt.scan_consumed == 1 &&
+          receipt.scanned_file_count == 3 &&
+          receipt.present_count == 3,
+          "corpus verification receipt records scan counts");
+    CHECK(receipt.pc34_importer_candidate_count == 2 &&
+          receipt.pc34_loader_part_envelope_count == 2,
+          "corpus verification receipt records PC34 loader candidates");
+    CHECK(receipt.roundtrip_verified_count == 2 &&
+          receipt.roundtrip_failed_count == 0,
+          "corpus verification receipt roundtrips every PC34 candidate");
+    CHECK(receipt.rejected_count == 1 &&
+          receipt.truncated_count == 0,
+          "corpus verification receipt records rejected non-save");
+    CHECK(receipt.first_pc34_path[0] != '\0' &&
+          strstr(receipt.first_pc34_path, root) != NULL,
+          "corpus verification receipt records first PC34 path");
+    CHECK(receipt.corpus_hash != 0u,
+          "corpus verification receipt records nonzero hash");
+    CHECK(strstr(receipt.source_evidence, "LOADSAVE.C") != NULL,
+          "corpus verification receipt cites ReDMCSB load/save");
+
+    snprintf(path, sizeof(path), "%s/slot-a.original", root);
+    test_unlink(path);
+    snprintf(path, sizeof(path), "%s/renamed-save-without-dmsave-name.bin",
+             root);
+    test_unlink(path);
+    snprintf(path, sizeof(path), "%s/not-a-save.txt", root);
+    test_unlink(path);
+    test_rmdir(root);
+}
+
 static void test_strings(void)
 {
     CHECK(strcmp(dm1_v1_original_save_pc34_handoff_result_name(
@@ -1288,6 +1412,7 @@ int main(void)
     test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();
+    test_corpus_verification_receipt_roundtrips_pc34_candidates();
     test_strings();
     puts("PASS dm1_v1_original_save_pc34_handoff");
     return 0;
