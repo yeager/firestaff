@@ -162,15 +162,6 @@ typedef struct {
     int wanderEventType;
 } DM1_V1_GeneratedGroupPlacementPlanPc34;
 
-typedef DM1_V1_OrdinaryGroupMoveApplyPlanPc34 M11_OrdinaryGroupMoveApplyPlan;
-typedef DM1_V1_GroupTeleporterDestinationPlanPc34 M11_GroupTeleporterDestinationPlan;
-typedef DM1_V1_GeneratedGroupPlacementPlanPc34 M11_GeneratedGroupPlacementPlan;
-typedef DM1_V1_TeleporterDefPc34 M11_TeleporterDef;
-typedef DM1_V1_GroupMoveRemovalPlanPc34 M11_GroupMoveRemovalPlan;
-typedef DM1_V1_GroupMoveRoutePlanPc34 M11_GroupMoveRoutePlan;
-typedef DM1_V1_OrdinaryGroupMovePlanPc34 M11_OrdinaryGroupMovePlan;
-typedef DM1_V1_GroupPitFallSquarePlanPc34 M11_GroupPitFallSquarePlan;
-
 typedef struct {
     int valid;
     int shouldAttempt;
@@ -178,8 +169,6 @@ typedef struct {
     int candidateMapX;
     int candidateMapY;
 } DM1_V1_LordChaosAdjacentRetryPlanPc34;
-
-typedef DM1_V1_LordChaosAdjacentRetryPlanPc34 M11_LordChaosAdjacentRetryPlan;
 
 int  DM1_V1_ApplyTeleporterRotationF0267Pc34Compat(int thingKind,
                                    int sourceMapX,
@@ -278,53 +267,6 @@ int  DM1_V1_PlanLordChaosAdjacentRetryF0252Pc34Compat(
         int candidateBlocked,
         DM1_V1_LordChaosAdjacentRetryPlanPc34* outPlan);
 const char* DM1_V1_GroupMoveRemoval_SourceEvidencePc34Compat(void);
-
-#define M11_MAPX_PROJECTILE_ASSOCIATED_OBJECT DM1_V1_MAPX_PROJECTILE_ASSOCIATED_OBJECT_PC34
-#define M11_TELEPORTER_ROTATE_THING_PARTY DM1_V1_TELEPORTER_ROTATE_THING_PARTY_PC34
-#define M11_TELEPORTER_ROTATE_THING_PROJECTILE DM1_V1_TELEPORTER_ROTATE_THING_PROJECTILE_PC34
-#define M11_TELEPORTER_ROTATE_THING_OBJECT DM1_V1_TELEPORTER_ROTATE_THING_OBJECT_PC34
-#define M11_TELEPORTER_ROTATE_THING_GROUP DM1_V1_TELEPORTER_ROTATE_THING_GROUP_PC34
-#define M11_GROUP_MOVE_REMOVAL_REASON_NONE DM1_V1_GROUP_MOVE_REMOVAL_REASON_NONE_PC34
-#define M11_GROUP_CELL_SINGLE_CENTERED DM1_V1_GROUP_CELL_SINGLE_CENTERED_PC34
-#define M11_CREATURE_SIZE_QUARTER_SQUARE DM1_V1_CREATURE_SIZE_QUARTER_SQUARE_PC34
-#define M11_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED DM1_V1_GROUP_MOVE_REMOVAL_REASON_FALL_KILLED_PC34
-#define M11_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED DM1_V1_GROUP_MOVE_REMOVAL_REASON_NOT_ALLOWED_PC34
-#define M11_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER DM1_V1_GROUP_MOVE_REMOVAL_SOUND_ONE_TICK_LATER_PC34
-#define M11_GROUP_MOVE_ROUTE_INSERT DM1_V1_GROUP_MOVE_ROUTE_INSERT_PC34
-#define M11_GROUP_MOVE_ROUTE_REMOVE DM1_V1_GROUP_MOVE_ROUTE_REMOVE_PC34
-#define M11_GROUP_MOVE_ROUTE_RETRY DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34
-#define M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT DM1_V1_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT_PC34
-#define M11_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE DM1_V1_GROUP_MOVE_ROUTE_KILLED_BY_PROJECTILE_PC34
-#define M11_TELEPORTER_SCOPE_CREATURES DM1_V1_TELEPORTER_SCOPE_CREATURES_PC34
-#define M11_DIRECTION_NORTH DM1_V1_DIRECTION_NORTH_PC34
-#define M11_DIRECTION_EAST DM1_V1_DIRECTION_EAST_PC34
-#define M11_DIRECTION_SOUTH DM1_V1_DIRECTION_SOUTH_PC34
-#define M11_DIRECTION_WEST DM1_V1_DIRECTION_WEST_PC34
-#define M11_AI_STATE_WANDER DM1_V1_AI_STATE_WANDER_PC34
-#define m11_teleporter_rotation_source_evidence \
-    DM1_V1_TeleporterRotation_SourceEvidencePc34Compat
-#define m11_group_move_removal_source_evidence \
-    DM1_V1_GroupMoveRemoval_SourceEvidencePc34Compat
-#define m11_apply_teleporter_rotation \
-    DM1_V1_ApplyTeleporterRotationF0267Pc34Compat
-#define m11_apply_group_teleporter_rotation \
-    DM1_V1_ApplyGroupTeleporterRotationF0262Pc34Compat
-#define m11_plan_group_move_removal_after_pit_teleporter \
-    DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat
-#define m11_plan_deferred_group_move_route_f0267 \
-    DM1_V1_PlanDeferredGroupMoveRouteF0267Pc34Compat
-#define m11_plan_ordinary_group_move_f0267 \
-    DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat
-#define m11_plan_ordinary_group_move_apply_f0267 \
-    DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat
-#define m11_plan_group_pit_fall_square_f0267 \
-    DM1_V1_PlanGroupPitFallSquareF0267Pc34Compat
-#define m11_plan_group_teleporter_destination_f0267 \
-    DM1_V1_PlanGroupTeleporterDestinationF0267Pc34Compat
-#define m11_plan_generated_group_placement_f0183_f0180 \
-    DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat
-#define m11_plan_lord_chaos_adjacent_retry_f0252 \
-    DM1_V1_PlanLordChaosAdjacentRetryF0252Pc34Compat
 
 #ifdef __cplusplus
 }
