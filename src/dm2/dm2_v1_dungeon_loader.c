@@ -85,6 +85,14 @@ static uint16_t rd16le(const uint8_t *p) {
 #define DM2_THING_TYPE_COUNT 16
 #define DM2_THING_END_MARKER 0xfffeu
 
+/* PC DOS G1 keeps a 256-byte extension between the 28 Map_definitions and
+ * the c_map.cpp-owned tables.  The real EN/FR dungeon member is identical;
+ * the offsets below are derived from its 480-column monotonic prefix table.
+ * skproject/SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE reads the same table
+ * before dunGroundStacks, and c_map.cpp maps tile bit 0x10 through it. */
+#define DM2_PC_G1_MAP_EXTENSION_BYTES       256
+#define DM2_PC_G1_GROUND_STACK_COUNT_OFFSET 10
+
 static const uint8_t s_dm2_db_record_size[DM2_THING_TYPE_COUNT] = {
     0x04, 0x06, 0x04, 0x08,
     0x10, 0x04, 0x04, 0x04,
@@ -233,6 +241,12 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
                                              int size) {
     int map_count;
     int raw_map_bytes = 0;
+    int total_columns = 0;
+    int column_index_base;
+    int sft_base;
+    int text_base;
+    int thing_cursor;
+    long pool_bytes_total = 0;
 
     if (!out || !dat || size < DM2_DUNGEON_HEADER_SIZE) return 0;
     if (RD16(dat + 2) != 0x3147u || RD16(dat + 4) != DM2_DUNGEON_HEADER_SIZE)
@@ -250,7 +264,10 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     out->column_index_base = -1;
     out->square_first_thing_base = -1;
     out->text_data_base = -1;
-    out->square_first_thing_count = (int)RD16(dat + 12);
+    out->g1_extension_base = -1;
+    out->g1_extension_size = 0;
+    out->square_first_thing_count =
+        (int)RD16(dat + DM2_PC_G1_GROUND_STACK_COUNT_OFFSET);
     out->text_word_count = (int)RD16(dat + 8);
     for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i) {
         out->thing_data_bases[i] = -1;
@@ -279,25 +296,72 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
         out->map_door_set0[i] = (int)((RD16(map_desc + 14) >> 8) & 0x0fu);
         out->map_door_set1[i] = (int)((RD16(map_desc + 14) >> 12) & 0x0fu);
         out->level_types[i] = (i == 0) ? DM2_LEVEL_OUTDOOR : DM2_LEVEL_INDOOR;
+        total_columns += w;
     }
 
-    if (raw_map_bytes <= 0 || raw_map_bytes > size) {
+    /* The G1 file has an observed 256-byte extension directly after its map
+     * definitions.  Its following table is the c_map.cpp column-prefix table:
+     * 480 LE words, monotonically increasing from 0 to 1187 in the real DOS
+     * EN/FR member.  The next G1 header word bounds dunGroundStacks. */
+    column_index_base = DM2_DUNGEON_HEADER_SIZE +
+                        map_count * DM2_MAP_DESC_SIZE +
+                        DM2_PC_G1_MAP_EXTENSION_BYTES;
+    sft_base = column_index_base + total_columns * 2;
+    text_base = sft_base + out->square_first_thing_count * 2;
+    thing_cursor = text_base + out->text_word_count * 2;
+    if (total_columns <= 0 || column_index_base < 0 ||
+        sft_base < column_index_base || text_base < sft_base ||
+        thing_cursor < text_base || thing_cursor > size) {
         return 0;
     }
-    out->raw_map_data_base = size - raw_map_bytes;
 
-    /* skproject SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE reads the PC
-     * G1 map bytes after the object pools, i.e. as the trailing cbMapData
-     * block. DME.h Map_definitions::w8 stores (width-1,height-1); the
-     * square type is the high three bits and bit 0x10 marks a thing-list
-     * square. Header text/list/count metadata follows the same source
-     * File_header shape shifted behind the leading G1 marker, but the exact
-     * PC English DB-pool bases remain disabled until the extra pre-map block
-     * is identified. */
+    /* skproject SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE:40037-40056
+     * reads each c_record category immediately after dunTextData, in DB type
+     * order, using glbItemSizePerDB[type] * File_header::nRecords[type].
+     * GenericRecord::w0 is the next ObjectID (DME.h:831-847), so assigning
+     * these bases is sufficient for the bounded c_record traversal below.
+     * The later G1 extension remains outside this ownership contract. */
+    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        int count = out->thing_type_counts[type];
+        int record_size = (int)s_dm2_db_record_size[type];
+        long pool_bytes;
+
+        if (count < 0 || record_size < 0) return 0;
+        pool_bytes = (long)count * (long)record_size;
+        if (pool_bytes < 0 || pool_bytes_total + pool_bytes > INT32_MAX ||
+            thing_cursor + pool_bytes > size) {
+            return 0;
+        }
+        out->thing_data_bases[type] =
+            (count > 0 && record_size > 0) ? thing_cursor : -1;
+        thing_cursor += (int)pool_bytes;
+        pool_bytes_total += pool_bytes;
+    }
+    if (raw_map_bytes <= 0 || thing_cursor < 0 ||
+        thing_cursor + raw_map_bytes > size) {
+        return 0;
+    }
+
+    /* The trailing map tail is the only G1 region whose address is proven
+     * by every Map_definitions::w0 + dimensions span. The intervening bytes
+     * are deliberately not assigned to the standard ownership graph. */
+    out->g1_extension_base = thing_cursor;
+    out->g1_extension_size = (size - raw_map_bytes) - thing_cursor;
+    if (out->g1_extension_size <= 0) return 0;
+    out->raw_map_data_base = size - raw_map_bytes;
+    out->column_index_base = column_index_base;
+    out->square_first_thing_base = sft_base;
+    out->text_data_base = text_base;
     out->raw_data = (uint8_t *)malloc((size_t)size);
     if (!out->raw_data) return -1;
     memcpy(out->raw_data, dat, (size_t)size);
     out->raw_size = size;
+    /* The public validator intentionally rejects unpromoted graphs. Enable
+     * this candidate only for its complete bounded walk, then clear it again
+     * on the first invalid root/link/cycle. */
+    out->record_graph_complete = 1;
+    if (!dm2_v1_dungeon_validate_record_graph(out))
+        out->record_graph_complete = 0;
     return 1;
 }
 
@@ -580,9 +644,28 @@ int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
     /* skproject SKWINSPX/src/v4/skcore.cpp GET_NEXT_RECORD_LINK
      * returns GET_ADDRESS_OF_RECORD(rl)->w0; GenericRecord::w0 is the
      * first little-endian word in every bounded DB pool record. */
+    /* The PC G1 corpus proves the pool addresses but not every ObjectID
+     * shape in the ground-stack graph. Do not promote GenericRecord::w0
+     * traversal for that variant until its complete graph validates. */
+    if (d && d->square_bytes == 1 && d->g1_extension_size > 0 &&
+        !d->record_graph_complete) {
+        return -1;
+    }
     record = dm2_v1_dungeon_get_thing_record(d, thing, NULL, NULL, &size);
     if (!record || size < 2) return -1;
     return (int)RD16(record);
+}
+
+static int dm2_v1_g1_link_has_declared_shape(const DM2_V1_DungeonData *d,
+                                              uint16_t link) {
+    int type;
+    int index;
+
+    if (!d || link == DM2_THING_END_MARKER) return 0;
+    type = (int)((link >> 10) & 0x0fu);
+    index = (int)(link & 0x03ffu);
+    return s_dm2_db_record_size[type] > 0 &&
+           index >= 0 && index < d->thing_type_counts[type];
 }
 
 int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
@@ -599,11 +682,38 @@ int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
         return 0;
     }
     for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
-        if (d->thing_type_counts[type] < 0 || d->thing_data_bases[type] < 0)
+        if (d->thing_type_counts[type] < 0 ||
+            (s_dm2_db_record_size[type] > 0 &&
+             d->thing_type_counts[type] > 0 &&
+             d->thing_data_bases[type] < 0)) {
             return 0;
+        }
         total_records += d->thing_type_counts[type];
     }
     if (total_records <= 0) return 0;
+
+    /* READ_DUNGEON_STRUCTURE owns every declared c_record before map use.
+     * Do not promote a direct graph based solely on reachable roots: an
+     * unvisited pool record with a non-ObjectID w0 would leave ownership
+     * incomplete and invite guessed traversal later.  skproject
+     * SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE:40037-40056,
+     * SKWIN/DME.h GenericRecord::w0:831-847. */
+    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        int record_size = (int)s_dm2_db_record_size[type];
+        for (int index = 0; index < d->thing_type_counts[type]; ++index) {
+            int offset;
+            uint16_t next;
+            if (record_size < 2 || d->thing_data_bases[type] < 0)
+                return 0;
+            offset = d->thing_data_bases[type] + index * record_size;
+            if (offset < 0 || offset + 1 >= d->raw_size) return 0;
+            next = RD16(d->raw_data + offset);
+            if (next != DM2_THING_END_MARKER &&
+                !dm2_v1_g1_link_has_declared_shape(d, next)) {
+                return 0;
+            }
+        }
+    }
 
     for (level = 0; level < d->level_count; ++level) {
         int x;
@@ -630,6 +740,92 @@ int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
             }
         }
     }
+    return 1;
+}
+
+int dm2_v1_dungeon_collect_g1_record_pool_evidence(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1RecordPoolEvidence *out) {
+    int cursor;
+    int type;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    for (type = 0; type < DM2_THING_TYPE_COUNT; ++type)
+        out->candidate_pool_bases[type] = -1;
+    out->tail_pool_base = -1;
+
+    /* skproject READ_DUNGEON_STRUCTURE orders c_map's column, ground-stack,
+     * and text tables before c_record ownership. This receipt records only
+     * that bounded, non-tail sequence; it does not assert that the bytes are
+     * the PC G1 DB pools or allow GET_ADDRESS_OF_RECORD-style access. */
+    if (!d || !d->raw_data || d->square_bytes != 1 ||
+        d->column_index_base < 0 || d->square_first_thing_base < 0 ||
+        d->text_data_base < 0 || d->text_word_count < 0 ||
+        d->g1_extension_base < 0 || d->raw_map_data_base < 0) {
+        return 0;
+    }
+
+    cursor = d->text_data_base + d->text_word_count * 2;
+    if (cursor < d->text_data_base || cursor > d->raw_size) return 0;
+    out->text_end = cursor;
+    out->candidate_base = cursor;
+
+    for (type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        int count = d->thing_type_counts[type];
+        int record_size = (int)s_dm2_db_record_size[type];
+        long bytes;
+
+        if (count < 0 || record_size < 0) return 0;
+        bytes = (long)count * record_size;
+        if (bytes < 0 || bytes > INT32_MAX || cursor + bytes > d->raw_size)
+            return 0;
+        if (count > 0 && record_size > 0)
+            out->candidate_pool_bases[type] = cursor;
+        cursor += (int)bytes;
+    }
+    out->candidate_end = cursor;
+    out->candidate_bytes = cursor - out->candidate_base;
+
+    /* A tail-aligned span would start at raw_map_data_base - candidate_bytes.
+     * It is rejected when it differs from the source-ordered text boundary. */
+    out->tail_pool_base = d->raw_map_data_base - out->candidate_bytes;
+    out->tail_pool_base_rejected =
+        out->tail_pool_base >= 0 && out->tail_pool_base != out->candidate_base;
+    if (out->candidate_end != d->g1_extension_base) return 0;
+
+    for (int i = 0; i < d->square_first_thing_count; ++i) {
+        int offset = d->square_first_thing_base + i * 2;
+        uint16_t link;
+        if (offset < 0 || offset + 1 >= d->raw_size) return 0;
+        link = RD16(d->raw_data + offset);
+        ++out->root_count;
+        if (link == DM2_THING_END_MARKER)
+            ++out->root_end_markers;
+        else if (dm2_v1_g1_link_has_declared_shape(d, link))
+            ++out->root_shape_valid;
+        else
+            ++out->root_shape_invalid;
+    }
+
+    for (type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        int base = out->candidate_pool_bases[type];
+        int count = d->thing_type_counts[type];
+        int record_size = (int)s_dm2_db_record_size[type];
+        if (base < 0 || record_size < 2) continue;
+        for (int index = 0; index < count; ++index) {
+            uint16_t link = RD16(d->raw_data + base + index * record_size);
+            ++out->candidate_record_count;
+            if (link == DM2_THING_END_MARKER)
+                ++out->candidate_first_link_end_markers;
+            else if (dm2_v1_g1_link_has_declared_shape(d, link))
+                ++out->candidate_first_link_shape_valid;
+            else
+                ++out->candidate_first_link_shape_invalid;
+        }
+    }
+
+    out->available = 1;
     return 1;
 }
 

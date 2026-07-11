@@ -188,9 +188,9 @@ typedef enum {
 } Nexus_V1_BpkSurfaceExtractStatus;
 
 /* Decode a single renderable BPK entry to its declared unpacked surface.
- * PRS3 bodies use the Saturn PRS control stream after the bounded leading
- * size word. The decoder must produce exactly width * height * bpp bytes;
- * partial output and invalid back-references are hard failures. */
+ * Stored entries are supported. The PRS3 branch exists only for synthetic
+ * regression fixtures; real MENU.BPK routing remains blocked until an
+ * independently evidenced opcode format is available. */
 typedef enum {
     NEXUS_V1_BPK_DECODE_OK = 0,
     NEXUS_V1_BPK_DECODE_ERR_NULL = -1,
@@ -491,6 +491,134 @@ typedef struct {
     int decode_blocked;           /* true until opcode decoder exists */
 } Nexus_V1_BpkPrs3StreamPlan;
 
+/* Bounded diagnostic evaluation of LSB-first and MSB-first traversals of one
+ * literal/back-reference candidate against the declared byte target. This is
+ * evidence tooling, not a PRS3 decoder: it never exposes pixels, never feeds
+ * a renderer, and a complete candidate result does not change any runtime
+ * route. The output cap prevents an untrusted prefix from allocating an
+ * arbitrary surface. Provenance: the BPPK/PRS3 framing is the observed
+ * MENU.BPK boundary in docs/source-lock/nexus_v1_phase0_provenance_gate_H2315.md
+ * lines 291-306 and docs/VERIFIED_HASHES.md; neither source documents this
+ * candidate opcode grammar. */
+#define NEXUS_V1_BPK_PRS3_CANDIDATE_MAX_OUTPUT_BYTES (1024U * 1024U)
+
+typedef enum {
+    NEXUS_V1_BPK_PRS3_CANDIDATE_UNSUPPORTED = 0,
+    NEXUS_V1_BPK_PRS3_CANDIDATE_OUTPUT_LIMIT = 1,
+    NEXUS_V1_BPK_PRS3_CANDIDATE_STREAM_FAILURE = 2,
+    NEXUS_V1_BPK_PRS3_CANDIDATE_COMPLETE_TRAILING = 3,
+    NEXUS_V1_BPK_PRS3_CANDIDATE_COMPLETE_EXACT = 4
+} Nexus_V1_BpkPrs3CandidateStatus;
+
+/* PRS3's observed outer fields are big-endian, but no Saturn decoder has
+ * established the order in which control bits are consumed. Keep trial
+ * bit-order evaluations explicit and diagnostic-only. */
+typedef enum {
+    NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_LSB_FIRST = 0,
+    NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST = 1
+} Nexus_V1_BpkPrs3CandidateBitOrder;
+
+typedef struct {
+    uint32_t entry_index;
+    uint8_t mode;
+    uint32_t expected_output_bytes;
+    uint32_t body_size;
+    uint32_t body_bytes_consumed;
+    Nexus_V1_BpkPrs3CandidateStatus status;
+} Nexus_V1_BpkPrs3CandidateEvidence;
+
+typedef struct {
+    uint32_t archive_entries;
+    uint32_t prs3_surfaces;
+    uint32_t evaluated;
+    uint32_t unsupported;
+    uint32_t output_limited;
+    uint32_t stream_failures;
+    uint32_t complete_trailing;
+    uint32_t complete_exact;
+    uint32_t capacity;
+    uint32_t used;
+    int truncated;
+    Nexus_V1_BpkPrs3CandidateBitOrder bit_order;
+    int decoder_promoted; /* Always zero: evidence never authorizes runtime. */
+} Nexus_V1_BpkPrs3CandidateEvidenceSummary;
+
+/* PRS3 post-header framing evidence. The first four bytes after the
+ * observed PRS3 magic/version/pixel-count are not promoted to a codec
+ * field. This receipt only compares their BE/LE interpretations to the
+ * directory-bounded span ending at the next BPK entry. It exists because
+ * the verified MENU.BPK corpus has one final PRS3 entry followed by data
+ * that is not covered by its short BE declaration. */
+typedef struct {
+    uint32_t entry_index;
+    uint32_t directory_stream_size; /* bytes after the 12-byte PRS3 header */
+    uint32_t first_word_be;
+    uint32_t first_word_le;
+    int be_at_least_stream;
+    int be_near_stream; /* BE word - directory span is in [4, 7]. */
+    uint32_t be_trailing_bytes; /* directory span - BE word, if positive */
+} Nexus_V1_BpkPrs3FramingEvidence;
+
+typedef struct {
+    uint32_t prs3_entries;
+    uint32_t readable_first_words;
+    uint32_t be_at_least_stream;
+    uint32_t be_near_stream;
+    uint32_t le_at_least_stream;
+    uint32_t le_near_stream;
+    uint32_t be_shorter_than_stream;
+    uint32_t be_tail_bytes_total;
+    uint32_t first_be_short_entry;
+    uint32_t capacity;
+    uint32_t used;
+    int truncated;
+    int decoder_promoted; /* Always zero: framing does not establish opcodes. */
+} Nexus_V1_BpkPrs3FramingEvidenceSummary;
+
+/* Exact bounded evaluation after the observed BE framing word.  A frame is
+ * eligible only when its BE word covers the complete directory-bounded stream
+ * plus its four-byte framing word, allowing at most three bytes of directory
+ * padding.
+ * The command grammar is still a trial (control bit: 1 = literal, 0 = the
+ * existing two-byte back-reference form), so these receipts never promote a
+ * decoder or expose decoded pixels to runtime code. */
+typedef enum {
+    NEXUS_V1_BPK_PRS3_FRAMED_EVAL_UNVALIDATED_FRAME = 0,
+    NEXUS_V1_BPK_PRS3_FRAMED_EVAL_OUTPUT_LIMIT = 1,
+    NEXUS_V1_BPK_PRS3_FRAMED_EVAL_COMMAND_FAILURE = 2,
+    NEXUS_V1_BPK_PRS3_FRAMED_EVAL_COMPLETE_TRAILING = 3,
+    NEXUS_V1_BPK_PRS3_FRAMED_EVAL_COMPLETE_EXACT = 4
+} Nexus_V1_BpkPrs3FramedEvalStatus;
+
+typedef struct {
+    uint32_t entry_index;
+    uint8_t mode;
+    uint32_t expected_output_bytes;
+    uint32_t directory_body_size;
+    uint32_t frame_body_size;
+    uint32_t body_bytes_consumed;
+    uint32_t literal_commands;
+    uint32_t backref_commands;
+    Nexus_V1_BpkPrs3FramedEvalStatus status;
+} Nexus_V1_BpkPrs3FramedEvalEvidence;
+
+typedef struct {
+    uint32_t archive_entries;
+    uint32_t prs3_surfaces;
+    uint32_t frame_validated;
+    uint32_t evaluated;
+    uint32_t unvalidated_frames;
+    uint32_t output_limited;
+    uint32_t command_failures;
+    uint32_t complete_trailing;
+    uint32_t complete_exact;
+    uint32_t capacity;
+    uint32_t used;
+    int truncated;
+    Nexus_V1_BpkPrs3CandidateBitOrder bit_order;
+    int decoder_promoted; /* Always zero: exact trial results are evidence. */
+} Nexus_V1_BpkPrs3FramedEvalSummary;
+
 typedef enum {
     NEXUS_V1_BPK_DECODE_ROUTE_INVALID = 0,
     NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED = 1,
@@ -602,6 +730,55 @@ int nexus_v1_bpk_archive_prs3_stream_plan(
     Nexus_V1_BpkPrs3StreamPlan *out_plan);
 
 const char *nexus_v1_bpk_prs3_stream_status_name(int status);
+
+int nexus_v1_bpk_archive_prs3_candidate_evidence(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkPrs3CandidateEvidence *out_entries,
+    uint32_t entry_capacity,
+    Nexus_V1_BpkPrs3CandidateEvidenceSummary *out_summary);
+
+/* Evaluate the bounded literal/back-reference trial grammar with an explicit
+ * control-bit order. This is not a decoder and never changes runtime routes.
+ * The legacy candidate-evidence entry point remains the retired LSB-first
+ * comparison for stable callers. */
+int nexus_v1_bpk_archive_prs3_candidate_evidence_with_bit_order(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkPrs3CandidateBitOrder bit_order,
+    Nexus_V1_BpkPrs3CandidateEvidence *out_entries,
+    uint32_t entry_capacity,
+    Nexus_V1_BpkPrs3CandidateEvidenceSummary *out_summary);
+
+/* Compare the first post-header word with each entry's directory-bounded
+ * PRS3 span. This is diagnostic-only and does not alter decode or upload
+ * routing. */
+int nexus_v1_bpk_archive_prs3_framing_evidence(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkPrs3FramingEvidence *out_entries,
+    uint32_t entry_capacity,
+    Nexus_V1_BpkPrs3FramingEvidenceSummary *out_summary);
+
+/* Evaluate one explicitly selected control-bit order from immediately after
+ * the BE framing word. Exact completion requires both the declared surface
+ * byte target and complete consumption of the validated frame body. */
+int nexus_v1_bpk_archive_prs3_framed_decode_evidence(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkPrs3CandidateBitOrder bit_order,
+    Nexus_V1_BpkPrs3FramedEvalEvidence *out_entries,
+    uint32_t entry_capacity,
+    Nexus_V1_BpkPrs3FramedEvalSummary *out_summary);
+
+const char *nexus_v1_bpk_prs3_candidate_bit_order_name(
+    Nexus_V1_BpkPrs3CandidateBitOrder bit_order);
+
+const char *nexus_v1_bpk_prs3_candidate_status_name(
+    Nexus_V1_BpkPrs3CandidateStatus status);
+
+const char *nexus_v1_bpk_prs3_framed_eval_status_name(
+    Nexus_V1_BpkPrs3FramedEvalStatus status);
 
 int nexus_v1_bpk_archive_runtime_decode_receipt(
     const uint8_t *data,

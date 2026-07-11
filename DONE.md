@@ -1,5 +1,305 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 CSB-006 CSBWin extended-save runtime handoff: validated plain
+  `Extended Features` prefixes now stage `ReadDSAs`, `ReadGameInfo`,
+  `ReadDSALevelIndex`, and the encrypted core body in one candidate runtime
+  profile. The committed profile owns authenticated DSA action words,
+  NUL-terminated game-info, and the 64x32 level index; a damaged prefix leaves
+  the prior runtime unchanged. DSA words remain opaque and non-executable.
+  Source: CSBWin `SaveGame.cpp:211-260,282-390`, `DSA.cpp:5637-5798`.
+  Verification: Ninja classifier regression 19/19 pass; extended handoff
+  regression passes within `test_csb_v1_runtime_tick_accumulator`.
+
+- ✅ 2026-07-11 Theron Track 02 JP/US opaque-layout comparison: the
+  hash/anchor-gated non-startup sector receipt now compares the two original
+  raw BIN variants separately for descriptor-relative geometry and raw-byte
+  content. All three anchors agree on the post-descriptor entry layout,
+  0x400-byte span, relative boundary, and MODE1 container shape; each anchor's
+  opaque content fingerprint differs between JP and US. The result is locked
+  as opaque-only and promotion-blocked, so it proves neither a region-neutral
+  bitmap/palette payload nor a level/object record. Verification: Ninja
+  `firestaff_theron_v1_track02_nonstartup_sector_receipt_probe` and CTest
+  `theron_v1_track02_nonstartup_sector_receipt`.
+
+- ✅ 2026-07-11 DM2 G1 complete direct-graph validation: strengthened the
+  source-ordered c_record ownership gate so every declared pool record's
+  `GenericRecord::w0` must be either the end marker or a bounded declared
+  ObjectID before any G1 graph can promote. This closes the reachable-only
+  validation hole: an unreachable malformed record now blocks traversal.
+  The hash-verified real-data probe pins the full rejection census at 1,069
+  ground-stack roots and 1,029 c_record first links, preserving the explicit
+  no-guessed-traversal boundary. Source lock: skproject
+  `SKWIN/SkWinCore.cpp` `READ_DUNGEON_STRUCTURE` lines 40037-40056 and
+  `SKWIN/DME.h` `GenericRecord::w0` lines 831-847.
+
+- ✅ 2026-07-11 Nexus PRS3 original-loader-media evidence: added the optional,
+  hash-gated `firestaff_nexus_v1_prs3_loader_media_probe`. Against the locked
+  Japanese Track 1 `DM.BIN`/`MENU.BPK` pair it records two executable-side
+  PRS3 markers, including the embedded version-1/4096/997 record, and proves
+  that its 12-byte header is not any MENU.BPK surface header. This is a
+  negative correlation only: no SH-2 opcode reader or termination branch is
+  identified, decoder promotion remains zero, runtime stays `blocked-prs3`,
+  and no fallback is introduced.
+
+- ✅ 2026-07-11 DM1-004 closing-door killed-all aftermath: the M10 F0241
+  material-creature obstruction route now passes every fatal F0191 slot
+  through the DM1-owned F0190 receipts before F0241 decides whether to issue
+  its survivor-only F0209 CM3 reaction. Group possessions are dropped,
+  death smoke is created, the group is unlinked with `Next` cleared, and its
+  active-group state is removed. The door still reopens, thuds, and retries
+  in the original order. Source lock: ReDMCSB `TIMELINE.C F0241:783-795` and
+  `GROUP.C F0191:956-980`, `F0190:824-917`, `F0189:753-767`. Focused Ninja
+  build and direct `test_memory_tick_orchestrator_f0303_skill_query_pc34_compat`
+  pass, including the lethal possession/smoke/unlink/active-state regression.
+
+- ✅ 2026-07-11 Theron Track 02 non-startup sector/container receipt: added a
+  hash/anchor-gated raw-BIN receipt for structurally post-descriptor windows.
+  It captures opaque 0x400-byte physical spans, raw-sector bounds, any initial
+  MODE1 user-data coordinate, raw-span hash, and sector-envelope intersection.
+  The real JP/US probe proves that these windows cannot be treated as a
+  contiguous logical bitmap/level payload. The receipt is opaque-only and
+  promotion-blocked, exports no bytes, and changes no runtime route.
+  Verification: Ninja `firestaff_theron_v1_track02_nonstartup_sector_receipt_probe`.
+
+- ✅ 2026-07-11 DM2 G1 c_record address mapping boundary: replaced the
+  non-tail diagnostic with the source-locked `READ_DUNGEON_STRUCTURE` load
+  sequence. After `dunTextData`, the loader maps all 16 `c_record` pools in
+  DB-type order at `glbItemSizePerDB[type] * File_header::nRecords[type]`;
+  the verified PC G1 member therefore owns `[6942,23826)`, not the later
+  `[23826,31667)` extension. The real corpus does not validate direct graph
+  traversal: 1,069 ground-stack words and 1,029 pool first links are outside
+  the declared ObjectID shapes. `GenericRecord::w0` next-link traversal is
+  therefore blocked for PC G1, while direct bounded pool lookup remains
+  available for further source correlation. No c_record fields beyond `w0`,
+  and no bytes in the later extension, are assigned semantics. Source lock:
+  skproject `SKWIN/SkWinCore.cpp` `READ_DUNGEON_STRUCTURE` lines 40037-40056
+  and `SKWIN/DME.h` lines 831-847. Verification: DM2 dungeon-loader gate and
+  real-data probe.
+
+- ✅ 2026-07-11 DM1-004 closing-door production hazard slice: M10 now follows
+  ReDMCSB `TIMELINE.C F0241:752-816` for the party obstruction sequence
+  (reopen, live `CHAMPION.C F0324/F0321` damage, conditional party-damaged
+  sound, retry at +2) and the surviving material-group sequence (height gate,
+  independently randomized `GROUP.C F0191` damage, `F0209` CM3 danger
+  reaction, reopen/thud, retry at +1). Focused M10 regressions cover the
+  live party HP mutation and surviving-group reaction scheduling. The
+  killed-all F0190 aftermath is completed by the follow-up entry above.
+
+- ✅ 2026-07-11 DM1-007 creature collector API correction: retired the unused
+  `DM1_V1_CreatureRender_CollectPc34Compat()` declaration and empty body from
+  `dm1_v1_creature_render_pc34_compat`. Its untyped `void *` dungeon input had
+  no production callers and could not collect M11-private world records, so
+  retaining it falsely suggested F0115 creature traversal ownership. The
+  supported DM1-owned `dm1_creature_center_draw_plan()` and
+  `dm1_creature_side_draw_plan()` receipts remain the render-list boundary;
+  M11 still owns bounded live link traversal and active-instance discovery.
+  The creature-render integration test now verifies legacy sort delegation
+  instead of the removed no-op. Source lock: ReDMCSB `DUNVIEW.C F0115:4547-5520`
+  and `GROUP.C F0176:69-91`. Verification: Ninja
+  `test_dm1_v1_creature_render_pc34_compat_integration`.
+
+- ✅ 2026-07-11 Nexus PRS3 BPK framing evidence: added bounded
+  `nexus_v1_bpk_archive_prs3_framing_evidence()` receipts for the first word
+  after the verified PRS3 header. The local MENU.BPK proof establishes
+  big-endian directory-span proximity on 161/162 surfaces and isolates the
+  final entry's 530-byte BPK tail at entry 162. This remains diagnostic-only:
+  it cannot promote a decoder or runtime upload route. Focused Ninja targets
+  `test_nexus_v1_bpk_prs3_payload_evidence` and
+  `firestaff_nexus_v1_bpk_prs3_payload_evidence_probe` pass; the LSB/MSB
+  candidates remain 0/162 exact and runtime stays `blocked-prs3`.
+
+- ✅ 2026-07-11 Theron Track 02 non-startup evidence audit: reviewed the
+  checked-in source-lock corpus and local evidence stores for an original
+  Theron's Quest loader/disassembly trace or newly staged hash-verified Track
+  02 media that could bind a palette load address or non-startup record
+  boundary. None was available. The existing semantic probe was rebuilt and
+  run to confirm that an explicit, format-valid palette window stays
+  semantically unbound and promotion-blocked; no Track 02 layout, runtime
+  handoff, or fallback was added. Verification: isolated Ninja build of
+  `firestaff_theron_v1_track02_descriptor_entry_semantic_probe`,
+  `firestaff_theron_v1_track02_level_handoff_probe`, and
+  `firestaff_theron_v1_startup_real_asset_receipt_probe`; focused CTest passed
+  3/3.
+
+- ✅ 2026-07-11 Theron Track 02 HuC6260 palette-word decoder correction:
+  the offset-unbound 4bpp palette decoder now follows the independent
+  HuC6260 CTW/CTR layout: blue in bits 0..2, red in 3..5, and green in 6..8
+  of each little-endian 9-bit word. Reserved high bits still reject, and the
+  palette-window API still requires an explicitly supplied, hash-gated media
+  offset while leaving semantic binding and render promotion false. No
+  palette address, level/object route, or fallback was introduced. Source
+  lock: `docs/source-lock/tqr_v1_huc6260_palette_word_format_2026-07-11.md`.
+  Verification: Ninja `firestaff_theron_v1_track02_descriptor_entry_semantic_probe`.
+
+- ✅ 2026-07-11 CSB DSA authenticated-program handoff boundary: added a
+  transactional owner for CSBWin Extended Features DSA actions after the
+  existing `ReadDSAs`/`DSA::Read`/`DSAAction::Read` bounds and RCS-checksum
+  gate. It copies each source little-endian action program, preserves its DSA
+  id/state/column, and leaves live owner state untouched on malformed,
+  encrypted, truncated, or unauthenticated input. The monster-filter boundary
+  now carries CSBWin's nine attack parameters or seven movement parameters,
+  mutable movement flags, and loaded-level restoration into a future
+  `ProcessDSAFilter` runner. It deliberately does not treat source action
+  words as the private compatibility VM, select filters from dungeon data, or
+  wire save resume; those remain CSB-005/CSB-006 work. Verification: Ninja
+  `firestaff_m10` and `test_csb_v1_dsa_trigger_single_step_pc34_compat`; the
+  existing gate passed 87/87.
+
+- ✅ 2026-07-11 DM1-005 bounded C07-C10 square-event dispatch: M10 now
+  dispatches `TIMELINE_EVENT_SQUARE_STATE` using the original C05..C10 event
+  type in `aux0` and effect in `aux1`. ReDMCSB `TIMELINE.C F0244` generic door
+  events resolve SET/CLEAR/TOGGLE and enqueue C01 animation; `F0242` fakewall
+  SET/CLEAR/TOGGLE mutates the open bit and defers a party-occupied close;
+  `F0250/F0251` teleporter/pit state transitions mutate the source open bit.
+  This is deliberately not a claim of full C05-C10 parity: corridor/wall
+  thing-list handlers, opening-square movement, fakewall material-group
+  deferral, and move/spell timer owners remain in TODO. Regression coverage:
+  `test_dm1_v1_square_state_dispatch_pc34_compat` drives C10 through C01 and
+  verifies C07/C08/C09 state changes. Source lock: `TIMELINE.C:825-910`,
+  `885-910`, and `1459-1509`.
+
+- ✅ 2026-07-11 Nexus MENU.BPK PRS3 candidate-proof boundary: added a capped,
+  diagnostic-only evaluator for the existing LSB-first literal/back-reference
+  hypothesis. It targets the declared `width * height * bpp` byte count,
+  records consumed bytes and exact/trailing/failed outcomes, never returns
+  decoded pixels, and has no runtime or renderer handoff. The verified local
+  MENU.BPK receipt evaluates all 162 PRS3 surfaces and records 162 stream
+  failures, zero exact completions, and zero trailing completions. This rules
+  out that candidate as a promotion path; `blocked-prs3` and no fallback remain
+  mandatory. Verification: Ninja targets `test_nexus_v1_bpk_surface_class` and
+  `firestaff_nexus_v1_bpk_prs3_payload_evidence_probe`; focused CTest passed.
+
+- ✅ 2026-07-11 Theron Track 02 strict CUE media mount: verified launch,
+  stale-path, and startup-receipt paths can now resolve an operator-supplied
+  CUE only when it declares exactly one `TRACK 02 MODE1/2352` tied to a
+  preceding `FILE "..." BINARY`. The selected payload is then subjected to
+  the existing known-MD5 gate before boot or Track 02 decoding. Missing,
+  duplicate, audio-only, and wrong-mode declarations reject without a guessed
+  file or synthetic fallback. This is mounting/handoff only and does not
+  promote non-startup bitmap, level, object, or palette semantics. Focused
+  coverage is in `firestaff_theron_v1_track02_bank_probe`.
+
+- ✅ 2026-07-11 DM1-008 F0230/F0321 multi-hit pending-damage staging:
+  `memory_tick_orchestrator_pc34_compat.c` now mirrors ReDMCSB
+  `CHAMPION.C F0321`'s per-champion G0409/G0410 staging shape instead of
+  letting successive same-tick `GROUP.C F0207` melee hits overwrite one
+  global result. F0889 drains the four totals in champion order, applies
+  combined HP, wounds, and poison, then clears each receipt. The staging
+  buffer and target-cell receipts serialize in the world and therefore
+  participate in the world hash. `EMIT_CHAMPION_DAMAGED` carries the
+  champion, cell, total damage, and wound mask to M11, where the existing
+  champion damage overlay and `C09_SOUND_CHAMPION_n_DAMAGED` source sound
+  are used. The legacy single pending-combat route remains for unmigrated
+  producers. Regression coverage in
+  `test_dm1_v1_orch_pending_damage_flow_pc34_compat` proves two hits to one
+  champion, a simultaneous hit to another, serialization, hashing, ordered
+  receipts, and drain clearing. Honest scope: F0207's bounded creature
+  attack path and F0320-style delivery only; source-exact creature AI,
+  direct projectile/explosion staging, and real-asset runtime proof remain
+  separate work.
+
+- ✅ 2026-07-11 CSB-005 bounded DSA loader sub-slice: the standalone CSB DSA
+  compatibility loader now validates a bounded little-endian script table,
+  decodes and owns program words, and commits only a fully valid candidate.
+  Scripts remain executable after their source buffer changes; malformed odd
+  offsets or lengths reject without mutating the existing state. This does not
+  claim original-dungeon/save DSA handoff, level-context restoration, or
+  monster filter execution. Source lock: CSBWin `DSA.cpp` `DSA::Read` program
+  ownership lineage and the existing interpreter anchors. Verification:
+  CMake built `test_csb_v1_dsa_trigger_single_step_pc34_compat`; its run passed
+  87 assertions under the configured target, with a direct `-Werror` build
+  passing the same gate.
+
+- ✅ 2026-07-11 DM2 G1 `c_map` ground-stack boundary: real DOS EN and FR
+  evidence share the hash-verified `DUNGEON.DAT` member. The loader now
+  exposes only the skproject `c_map.cpp`-proven portion of its G1 pre-map
+  layout: the 256-byte post-descriptor block, 480-word column-prefix table
+  at byte 748, and bounded 2360-word ground-stack table at byte 1708. The
+  real-data probe locks map-0 `(0,4)` to ObjectID `0x04a5`. All DB pool
+  bases remain deliberately unavailable because the proposed `c_record.cpp`
+  layouts do not yet validate the complete chain graph; boot remains blocked
+  for the real map. Verification: Ninja `firestaff` build and focused
+  dungeon-loader test/probe.
+
+- ✅ 2026-07-11 Theron Track 02 US ISO non-startup layout evidence: the
+  skip-safe real-asset receipt probe now records the hash-verified US ISO's
+  one descriptor-anchor post-descriptor windows through the same bounded
+  layout receipt used for the raw JP/US media. The probe requires the ISO
+  route to remain no-fallback, non-decodable, and blocked from runtime
+  handoff; it assigns no level/object semantics. Verification: Ninja-built
+  `firestaff_theron_v1_startup_real_asset_receipt_probe` passes on no-data
+  hosts with the ISO check skipped when the original image is not staged.
+
+- ✅ 2026-07-11 DM1 F0207 champion-cell damage receipt: M10 now retains the
+  concrete champion and party-facing cell selected by ReDMCSB `GROUP.C
+  F0207_GROUP_ProcessEvent` before the F0230/F0321 damage handoff. The
+  compact receipt is serialized and hashed with world scalars; F0889 consumes
+  it at the same tick boundary, applies HP, wounds, poison, champion-down,
+  and party-death transitions to that selected champion, then clears it.
+  Legacy producers without a receipt retain the established active-champion
+  fallback. Verification: Ninja built and ran
+  `test_dm1_v1_orch_pending_damage_flow_pc34_compat`,
+  `test_m10_c006_generator_reenable_dispatch_pc34_compat`, and
+  `test_dm1_v1_creature_ai_behavior_pc34_compat`; all passed (the creature
+  behavior gate: 244 PASS, 0 FAIL).
+
+- ✅ 2026-07-11 CSB-003 live drop mechanics: the C25 creature-death runtime
+  now completes the `GROUP.C F0186`/`F0188` audio boundary after its existing
+  source-table materialization. Fixed drops retain their resolved weapon flag
+  and immediately request C00 metallic thud or C04 wooden thud at the killed
+  square, including when all bounded C05/C06/C10 pools are exhausted; the
+  final `GROUP.Slot` chain likewise emits one immediate thud after all carried
+  objects have moved, choosing metallic when any is C05. The live C25 fixture
+  covers cursed Animated Armour fixed drops and the final carried-weapon path.
+  Source lock: ReDMCSB `GROUP.C F0186` lines 580-648 and `F0188` lines
+  716-734. Verification: Ninja compiled the focused CSB runtime and test
+  objects; the manually linked `test_csb_v1_runtime_tick_accumulator` passed
+  both new F0186/F0188 assertions. Its aggregate run retains one pre-existing
+  unrelated MOVE_FORWARD failure; a normal Ninja relink is currently blocked
+  by an unrelated undeclared `idx` in
+  `src/memory/memory_tick_orchestrator_pc34_compat.c:8316`.
+
+- ✅ 2026-07-11 Theron Track 02 unsupported route retirement: after the
+  hash-verified JP/US raw-BIN receipts disproved entries 6 and 8 as
+  object-table/level candidates, removed entry 6's object semantic binding
+  and blocked both descriptor-local and startup-plus-guessed-object dungeon
+  route constructors. The runtime retains only the existing hash/anchor-gated
+  startup level decoder; no descriptor window is scanned or paired with
+  synthetic objects as a fallback. The semantic probe now locks the rejection
+  boundary. Verification: Ninja built the focused Track 02 probes;
+  `firestaff_theron_v1_track02_descriptor_entry_semantic_probe`,
+  `firestaff_theron_v1_track02_level_handoff_probe`, and
+  `firestaff_theron_v1_startup_real_asset_receipt_probe` passed (the latter
+  313 checks, 2 expected absent-ISO skips).
+
+- ✅ 2026-07-11 Theron Track 02 real-media post-descriptor layout receipt:
+  hash-verified JP and US raw Track 02 BINs now retain and probe every
+  observed post-descriptor window per anchor, including raw/MODE1 provenance,
+  byte density and FNV-1a content hash, BE header words, and the bounded
+  compact-row result. The real-media test locks entries 6 and 8 across all
+  three anchors: all spans are 1024 bytes; entry 6 is zero-count at anchors
+  0/1 and declared-overflow (52528) at anchor 2; entry 8 is zero-count.
+  This is evidence only, with no object or dungeon-record promotion, no
+  runtime route, and no fallback reopening. Verification: Ninja built and
+  ran `firestaff_theron_v1_startup_real_asset_receipt_probe` against both
+  staged originals, passing 313 checks with 2 absent-ISO skips.
+
+- ✅ 2026-07-11 DM1 F0209 active-group aspect persistence: M10 now stores
+  the PC 3.4 `ACTIVE_GROUP::Aspect[4]` bytes in its active creature state,
+  Firestaff runtime save record, and PC34 active-group export/import bridge.
+  The C29-C41 bridge restores the bytes before `GROUP.C F0209`, latches the
+  F0179 attacking bit for C38 creature attacks, and writes the cleared
+  non-attack latch back on the C33 aspect handoff. Regression coverage
+  schedules the live C38/C33 pair and proves the bit persists then clears;
+  native and PC34 save handoffs preserve all four bytes. Source anchors:
+  ReDMCSB `GROUP.C F0179` lines 224-305 and `F0209_GROUP_ProcessEvents29to41`.
+  Verification: Ninja built `test_m10_c006_generator_reenable_dispatch_pc34_compat`,
+  `test_dm1_v1_creature_ai_behavior_pc34_compat`, `test_dm1_v1_save_load`, and
+  `test_dm1_v1_savegame_pc34_native_export_pc34_compat`; focused CTest passed
+  4/4 for `m10_c006_generator_reenable_dispatch_pc34_compat`,
+  `dm1_v1_creature_ai_behavior_source_lock`, `dm1_v1_save_load_source_lock`,
+  and `dm1_v1_savegame_pc34_native_export_pc34_compat`.
+
 - ✅ 2026-07-11 DM2 original-ZIP discovery and partial-world gate: Firestaff's
   normal hash scanner found `data/GRAPHICS.DAT` and `data/DUNGEON.DAT` inside
   `Dungeon-Master-II-Skullkeep_DOS_EN.zip`, materialized only the verified
@@ -64,6 +364,20 @@
   Verification: Ninja built `test_csb_v1_phase7_verification` and
   `test_csb_v1_movement_command_step_runtime_pc34_compat`; focused CTest
   passed 2/2, including head/tail/empty-square/remove chain regression.
+
+- ✅ 2026-07-11 CSB-002 loaded-champion calculation: CSB runtime now exposes
+  source-locked `DUNGEON.C F0140` live Thing weights and rebuilds a loaded
+  party's `CHAMPION.Load` cache at dungeon boot or through explicit
+  champion/party APIs. The calculation reads decoded `F0156` records for
+  weapon, armour, junk, potion, scroll, waterskin charge, and bounded nested
+  container chains; source `F0310` movement therefore consumes real load
+  values rather than the former zero-return fallback. Verification: Ninja
+  built `test_csb_v1_runtime_champion_load_attrs` and
+  `test_csb_v1_character_import`; direct regression passed 99/99 assertions
+  and focused CTest passed 2/2. Source lock: ReDMCSB
+  `DUNGEON.C F0140` lines 1082-1133, `F0156`, `F0159`, and `CHAMPION.C`
+  `F0310` lines 1180-1214. Per-click incremental inventory UI updates remain
+  part of CSB-009's broader interaction surface.
 
 - ✅ 2026-07-11 Theron SRM cross-corpus evidence receipt: added a
   slot-for-slot comparison over two operator-staged Save Disk roots. It admits
@@ -5746,6 +6060,8 @@
 
 - ✅ 2026-07-11 DM2 live GRAPHICSSET scene-control consumption: added a DM2 dungeon-loader helper for skproject `Map_definitions::MapGraphicsStyle()` (`w14 >> 4`), exposed the boot-owned `GRAPHICSSET` scene-control typed-word query, and wired runtime frames to pass the current map's real `GRAPHICSSET` colorkey/flags into the V1 viewport. Real GDAT wall blits now consume that scene colorkey and frame ownership receipts report the scene-control hash/mask/consumption without promoting synthetic asset-provider frames as real GDAT evidence. Verified with Ninja `test_dm2_v1_boot_profile_smoke` 81/81, `test_dm2_v1_runtime_handoff_smoke` 150/150, focused CTest for both targets 2/2, and `git diff --check`.
 
+- ✅ 2026-07-11 DM2 PC G1 non-tail record-pool evidence: added `dm2_v1_dungeon_collect_g1_record_pool_evidence()`, a diagnostic-only receipt anchored after the proven c_map column, ground-stack, and text tables. It derives the header-sized candidate span, reports direct ground-stack ObjectID shapes and candidate-record first-word shapes without following any link, and explicitly rejects a tail-aligned base when it disagrees with the text anchor. The receipt never changes `thing_data_bases` or `record_graph_complete`; runtime record lookup remains blocked. Synthetic coverage exercises valid-shaped and invalid root cases, while the hash-verified real-data probe checks the `[6942,23826)` candidate span and tail rejection. The real receipt accounts for 1069 non-generic ground roots and 1029 non-generic candidate first words, so it makes no pool-ownership claim. Source boundary: skproject `READ_DUNGEON_STRUCTURE` table ordering plus the DM2 Phase 0 provenance gate; actual PC G1 c_record ownership remains unproven. Verified with focused CMake builds, direct probes, and focused CTest.
+
 - ✅ 2026-07-11 Nexus screenshot/readiness and DGN/BPK capture-route repair: the Track 1 real-screen probe now owns its 24-bit BMP writer instead of linking all of M11, creates its output directory, preserves the viewport palette after init, and stamps a real `FONT256.S2D` glyph into the indexed framebuffer for a deterministic real-data BMP receipt. The runtime screenshot readiness gate now combines a fast Firestaff boot-probe app receipt with that Nexus-owned BMP receipt, avoiding the old M12 screenshot-gallery timeout while still requiring real Track 1 launch metadata and nonblank 320×200 BMP evidence. DGN host-caller ownership now also propagates the recomputed DGN viewport capture-ready flag and frame hash from the host-route receipt. Verified with Ninja `firestaff_nexus_v1_track1_real_screen_capture_readiness_probe`, direct real-data probe PASS 30/30, `nexus_v1_runtime_screenshot_readiness`, all Track 1 real-screen readiness CTest cases, `nexus_v1_startup_menu_pc34_compat`, `nexus_v1_dgn_material_raster`, and `nexus_v1_bpk_surface_class` (focused CTest 8/8).
 
 - ✅ 2026-07-11 Nexus SNDLEV MAP event-route receipt: `nexus_v1_sound` now parses the bounded SNDLEV MAP event table into event-to-sample-index routes, stores route coverage and last consumed event/sample indices in runtime receipts, and lets blocked SFX playback still prove the MAP route while SAL sample decode and real playback remain blocked. `nexus_v1_audio_decode_supported()` now distinguishes supported MAP table parsing from unsupported SAL/CD playback. CTest now includes `nexus_v1_sound_runtime_receipt`. Verified with Ninja `test_nexus_v1_sound_runtime_receipt` and `firestaff_nexus_v1_audio_receipt_probe`, direct probe runs, and focused CTest `nexus_v1_audio_receipt|nexus_v1_sound_runtime_receipt` 2/2.
@@ -5805,7 +6121,7 @@
 
 - Added a DGN-backed new-game start receipt in `nexus_v1_game`: the verified level-0 `(11,29,N)` request records its decoded Structure1B square/collision/mesh facts and blocks runtime without fallback when the cell is invalid, out of bounds, a wall, or collision-blocked.
 - `nexus_v1_load_level()` now resolves and applies that receipt before initializing level-0 mechanics, so host, mechanics, and later material-plan rendering share the same accepted DGN start pose. `test_nexus_v1_dgn_material_raster` covers ready consumption and collision-blocked rejection.
-- ✅ 2026-07-11 Theron Track02 palette production path: added a bounded HuC6270 16-colour 9-bit RGB palette decoder and indexed-atlas-to-RGBA route builder. The route accepts only an explicit 32-byte palette payload with reserved bits clear and at least one nonblack entry; invalid, zero, or incomplete inputs leave the RGBA receipt unpublishable, so bitmap samples cannot promote a guessed fallback palette. Extended the existing Track02 semantic probe with component, colourization, and malformed-payload coverage.
+- ✅ 2026-07-11 Theron Track02 palette production path: added a bounded HuC6260 16-colour 9-bit palette decoder and indexed-atlas-to-RGBA route builder. The decoder's channel mapping is B=bits 0..2, R=3..5, G=6..8; the route accepts only an explicit 32-byte palette payload with reserved bits clear and at least one nonblack entry. Invalid, zero, or incomplete inputs leave the RGBA receipt unpublishable, so bitmap samples cannot promote a guessed fallback palette. Extended the existing Track02 semantic probe with component, colourization, and malformed-payload coverage.
 - ✅ 2026-07-11 DM1 transactional automatic backup resume: `DM1_LoadGameWithBackup()` now loads both Firestaff-native and original PC34 candidates away from the live runtime world, tries `.bak` only after a primary open failure, and promotes the backup only after complete validation. A rejected present primary preserves the active world, caller header, backup file, and `usedBackup=0`. Verification: Ninja `test_dm1_v1_save_load` passed 15/15; direct original handoff test passed; CTest `dm1_v1_save_load_source_lock` and `dm1_v1_original_save_pc34_handoff` passed.
 - ✅ 2026-07-11 DM2 live GDAT sprite/scene/light/weather material consumption: expanded the boot-owned `GRAPHICSSET` receipt with the real `SCENE_RAIN`, `MISTY_MAP`, `THUNDER_POSITION`, and `AMBIANT_DARKNESS` typed words. Dungeon map-chip sprites and HUD images now use the same validated `dtPalIRGB`/`dtPalette16` material blit as floor, wall, and door-frame imagery; scene-light consumption is recorded per material pixel. Weather commands only execute when their matching real GDAT scene material is present, so rain, mist, and thunder no longer receive an unconditional procedural route. Runtime ownership receipts expose all scene words and sprite/light/weather consumption. The DM2 live-sidecar layout advances to v3 so restored frames retain the added scene words. Verified with Ninja `test_dm2_v1_boot_profile_smoke`, `test_dm2_v1_runtime_handoff_smoke`, and `test_dm2_v1_save_load`; focused CTest passed 3/3.
 - ✅ 2026-07-11 DM2 M11 GDAT title/menu palette presentation: M11 now installs the verified `INTERFACE_GENERAL/0`, field `0xFE` `dtPalIRGB` table as the active raw 8-bit presentation palette for DM2. Startup GDAT title/menu blits map logical image indices through the paired `dtPalette16` table before writing the indexed framebuffer, while a real menu GDAT frame suppresses all rect/text fallback draws. This follows skproject `SkWinCore::INIT` lines 55606-55615 and `SHOW_MENU_SCREEN`, with `MapGraphicsStyle()` kept solely on the active `GRAPHICSSET` scene route. Regression coverage verifies the exported IRGB table and a title-source pixel after `dtPalette16` mapping. Ninja built `test_dm2_v1_m11_startup_profile_gate`; focused CTest `dm2_v1_boot_profile_smoke|dm2_v1_runtime_handoff_smoke` passed 2/2. The broad M11 startup gate retains one pre-existing composite real-visual-capture receipt failure.
@@ -5815,7 +6131,20 @@
 # ✅ 2026-07-11 CSB CSBWin runtime-resume transaction: `csb_v1_runtime_apply_csbwin_resume_report()` now validates every declared CHARDESC and timer-queue reference, stages GAMEBLOCK2, champion, ITEM16 and timer handoff in a candidate profile, then publishes it only on complete success. A rejected section reference preserves both the live profile and the shared dungeon level. Source lock: CSBWin `SaveGame.cpp` lines 1768-1867. Verification: targeted Ninja build and `test_csb_v1_runtime_tick_accumulator`, plus focused CTest.
 
 # ✅ 2026-07-11 CSB DM1 utility-import transaction: `csb_v1_import_from_dm1_save_buffer()` now constructs imported champions in a candidate party and commits it only after every declared record is complete and valid. A malformed later champion or an EOF mid-import now reports the original error while preserving the live party exactly. ReDMCSB anchor: `CEDTINCI.C F7090_MakeNewAdventure` line 10 (candidate adventure construction); CSBWin anchor: `SaveGame.cpp` DM1 import path. Verification: Ninja `test_csb_v1_utility_import_block_verify_pc34_compat` passed 16/16 and `test_csb_v1_save_import_path_pc34_compat` passed 57/57; focused CTest passed 2/2. No push.
+# 2026-07-11 - DM1 GROUP.C F0207 timeline attack application
+
+- ✅ 2026-07-11 DM1 M10 F0207 C38-C41 attack application: the existing F0209 behavior decision now applies its creature attack in the shared timeline dispatcher. Ranged actions create a creature-owned F0212 projectile and schedule its first move; melee actions retain the F0207 target-cell/champion choice, resolve F0230/F0321 through the shared combat path, wake the party when required, and apply HP/wound/poison/death state. `EMIT_CREATURE_ATTACK` records the resulting projectile slot or melee damage, with normal damage/down receipts retained for hits. Regression coverage dispatches a real C38 Lord Chaos event through M10 and requires the projectile, first move, ownership, and receipt. Verified with Ninja `test_m10_c006_generator_reenable_dispatch_pc34_compat` and `test_dm1_v1_creature_ai_behavior_pc34_compat` (244/244).
+
 # 2026-07-11 - DM1 original PC34 corpus roundtrip proof
+
+- ✅ 2026-07-11 Nexus TITLE.CG packed-atlas and BPK receipt correction:
+  verified local Saturn media establishes `TITLE.CG` as a 32-byte zero prefix
+  plus `0x29000` packed bytes, decoded high-nibble first into a 328x1024 4bpp
+  indexed atlas. Invalid shapes still reject and no fallback visual is added.
+  MENU.BPK PRS3 evidence is now non-promoting: decode/upload receipts block
+  all PRS3 entries, real-media regressions no longer assert ready uploads, and
+  the launcher requires a real menu-surface route before marking the main menu
+  ready. Verified with focused Ninja targets and Nexus startup/BPK tests.
 
 - Added `dm1_v1_original_save_pc34_roundtrip_corpus_root()` to classify a recursive corpus and verify every eligible PC34 file through the source-locked transient import, export and reload chain. It never writes an export beside user data.
 - Extended `test_dm1_v1_original_save_pc34_handoff` with nested arbitrary file names, two valid PC34 fixtures and a rejected text file; it proves that only qualified files are round-tripped and their core state survives both handoff edges.
@@ -5833,3 +6162,61 @@
 - Extended the existing skip-safe, hash-verified Track 02 real-asset probe to read staged media and publish descriptor-anchor and per-level compact-row layout evidence: matching-anchor masks, row counts, raw-row hashes, table ordinals, and position-bound hashes.
 - Kept the receipt non-promoting. It assigns no object semantics and does not affect runtime objects, Continue, synthetic menus, or palette promotion.
 - Verification: focused Ninja and CTest Track02 startup-receipt targets.
+- ✅ 2026-07-11 Nexus Saturn warning-media decoder: added an exact `RES*`
+  directory reader and Sega DGT2 packed-pixel (`PP`) decoder. The local
+  `WARNING.BIN` resource 0 now loads through its 256-entry BGR555 CLUT and
+  240x96 byte-indexed plane; arbitrary `RES*` bytes remain rejected. The
+  title path remains blocked because `TITLE.CG` has no proven header, atlas,
+  or Saturn command placement, and no raw/guessed visual fallback was added.
+  The focused startup-media gate exercises both the original warning decode and
+  the real `TITLE.CG` rejection. Source: Sega Saturn/32X Graphic References,
+  section 6 (DGT2 format).
+
+- ✅ 2026-07-11 Nexus PRS3 MSB-first candidate audit: added a bounded,
+  explicit MSB-first control-bit traversal alongside the retired LSB-first
+  literal/back-reference trial grammar, retaining the observed big-endian
+  PRS3 frame, declared output-byte target, opcode fields, and no-promotion
+  rule. The optional hash-verified `MENU.BPK` probe disproves the MSB-first
+  candidate across all 162 surfaces: zero exact and zero trailing completions;
+  runtime/upload routing remains `blocked-prs3`. The synthetic regression
+  proves the two bit orders diverge on a controlled literal stream and rejects
+  unknown orders. Verified with Ninja `test_nexus_v1_bpk_surface_class` and
+  `firestaff_nexus_v1_bpk_prs3_payload_evidence_probe`, plus direct real-media
+  probe execution (89/89).
+
+- ✅ 2026-07-11 Nexus PRS3 BE-framed exact evaluation: added a separate,
+  diagnostic-only evaluator that begins after the observed BE frame word,
+  accepts only the 161 directory-span-close real frames, bounds output to the
+  declared mode-derived byte target, and records literal/back-reference
+  command counts plus exact/trailing completion. The hash-verified local
+  `MENU.BPK` result is identical for LSB-first and MSB-first control order:
+  161 command failures, zero trailing completions, and zero exact
+  completions; final entry 162 remains unvalidated because of its 530-byte
+  BPK tail. No decoded bytes reach runtime and routes remain `blocked-prs3`.
+  Verified with Ninja `test_nexus_v1_bpk_prs3_payload_evidence` and
+  `firestaff_nexus_v1_bpk_prs3_payload_evidence_probe`; direct real-media
+  probe passed 97/97.
+
+- ✅ 2026-07-11 DM2 PC G1 pre-map extension boundary: `dm2_v1_dungeon_loader`
+  now derives the standard `READ_DUNGEON_STRUCTURE` prefix through the
+  declared DB-pool lengths, then publishes the bounded, untyped G1 extension
+  preceding the proven trailing map-data block. The hash-verified DOS English
+  `DUNGEON.DAT` proves prefix end `23826`, extension length `7841`, and map
+  base `31667`. No extension bytes are assigned DB-pool or record-link
+  semantics; `record_graph_complete` stays clear and boot continues to reject
+  the partial world. Verified with Ninja
+  `test_dm2_v1_dungeon_loader_first_map_gate`,
+  `firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe`, and
+  `firestaff_dm2`; direct focused tests passed 55/55 and 32/32.
+
+- ✅ 2026-07-11 DM2 PC G1 DB-pool placement audit: source-locked
+  `c_record.cpp` confirms the standard ObjectID type/index and first-word
+  link semantics, while `SkWinCore.cpp::READ_DUNGEON_STRUCTURE` confirms the
+  normal sequential pool reader. The canonical DOS G1 file rejects applying
+  that reader directly at the proven map tail: its declared count/size total
+  is 16,884 bytes but the map-adjacent candidate span is 7,841 bytes. The
+  real-data probe now locks that mismatch, so no accidental record alignment
+  can promote bounded traversal or real map boot. The G1-specific pool-base
+  transform remains the open blocker.
+- ✅ 2026-07-11 DM1-006 F0168 text escape expansion: `F0508_DUNGEON_DecodeTextStringThing_Compat()` and the legacy scroll-style text-table decode now use all 32 PC 3.4 ReDMCSB `G0255` message/scroll, `G0256` symbol, and `G0257` inscription replacement entries. Code 30 selects `G0255` for messages/scrolls and the raw glyph-code `G0257` table for inscriptions; code 29 remains `G0256`. ReDMCSB anchors: `DUNGEON.C` globals `G0255/G0256/G0257` and `F0168_DUNGEON_DecodeText` lines 2280-2350. Verification: Ninja `test_memory_dungeon_text_scroll_pc34_compat` (28/28), `ctest -R '^memory_dungeon_text_scroll_source_lock$'`, and Ninja `firestaff_m10` passed.
+- ✅ 2026-07-11 CSB-005 dungeon filter-location decode: added the CSBWin `Monster.cpp` `EDT_SpecialLocations` decoder for attack and level-specific/global movement filters. It unpacks `DSA.cpp` `LOCATIONREL::Integer` fields, movement-only party-level and maximum-distance bits, validates live dungeon bounds, and selects only the first DB3 actuator type 47 from the decoded square. This remains a selection boundary only: no saved DSA words are reinterpreted or executed, and no live monster decision changes yet. Verification: the focused 315-check phase-7 suite passes. A fresh Ninja configuration compiled the touched CSB sources; current Make and Ninja M10 builds stop in unrelated `memory_tick_orchestrator_pc34_compat.c` because `COMBAT_ACTION_APPLY_DAMAGE_PARTY` is undeclared.

@@ -16,6 +16,10 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
+
 #if defined(_WIN32)
 #define PATH_SEP "\\"
 #else
@@ -24,6 +28,81 @@
 
 static int g_fail = 0;
 static int g_skip = 0;
+
+static void check_int(const char *label, int got, int want);
+
+static int write_probe_file(const char *path, const char *text) {
+    FILE *fp;
+    size_t len;
+    if (!path || !text) return 0;
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    len = strlen(text);
+    if (len > 0u && fwrite(text, 1u, len, fp) != len) {
+        fclose(fp);
+        return 0;
+    }
+    fclose(fp);
+    return 1;
+}
+
+static void probe_cue_track02_mount(void) {
+#if defined(_WIN32)
+    printf("cue mount fixture: skipped on Windows\n");
+    ++g_skip;
+#else
+    char directory[] = "/tmp/firestaff_theron_cue_mount_XXXXXX";
+    char cue_path[512];
+    char payload_path[512];
+    char missing_cue_path[512];
+    char duplicate_cue_path[512];
+    char resolved[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+
+    if (!mkdtemp(directory)) {
+        printf("SKIP cue mount fixture: mkdtemp failed\n");
+        ++g_skip;
+        return;
+    }
+    snprintf(payload_path, sizeof(payload_path), "%s/track02.bin", directory);
+    snprintf(cue_path, sizeof(cue_path), "%s/disc.cue", directory);
+    snprintf(missing_cue_path, sizeof(missing_cue_path), "%s/missing.cue", directory);
+    snprintf(duplicate_cue_path, sizeof(duplicate_cue_path), "%s/duplicate.cue", directory);
+    check_int("cue mount payload fixture", write_probe_file(payload_path, "payload"), 1);
+    check_int("cue mount cue fixture",
+              write_probe_file(cue_path,
+                  "FILE \"audio.bin\" BINARY\n"
+                  "  TRACK 01 AUDIO\n"
+                  "FILE \"track02.bin\" BINARY\n"
+                  "  TRACK 02 MODE1/2352\n"), 1);
+    check_int("cue mount resolves declared Track 02",
+              theron_v1_track02_resolve_media_path(cue_path, resolved),
+              THERON_TRACK02_SIGNAL_OK);
+    check_int("cue mount selects declared payload only",
+              strcmp(resolved, payload_path) == 0, 1);
+    check_int("cue mount missing cue fixture",
+              write_probe_file(missing_cue_path,
+                  "FILE \"missing.bin\" BINARY\n  TRACK 02 MODE1/2352\n"), 1);
+    check_int("cue mount missing payload is not guessed",
+              theron_v1_track02_resolve_media_path(missing_cue_path, resolved),
+              THERON_TRACK02_SIGNAL_NOT_FOUND);
+    check_int("cue mount duplicate fixture",
+              write_probe_file(duplicate_cue_path,
+                  "FILE \"track02.bin\" BINARY\n  TRACK 02 MODE1/2352\n"
+                  "FILE \"track02.bin\" BINARY\n  TRACK 02 MODE1/2352\n"), 1);
+    check_int("cue mount duplicate Track 02 is rejected",
+              theron_v1_track02_resolve_media_path(duplicate_cue_path, resolved),
+              THERON_TRACK02_SIGNAL_NOT_FOUND);
+    check_int("plain payload path remains a direct mount",
+              theron_v1_track02_resolve_media_path(payload_path, resolved),
+              THERON_TRACK02_SIGNAL_OK);
+    check_int("plain payload remains unchanged", strcmp(resolved, payload_path) == 0, 1);
+    remove(cue_path);
+    remove(missing_cue_path);
+    remove(duplicate_cue_path);
+    remove(payload_path);
+    rmdir(directory);
+#endif
+}
 
 static const uint8_t g_descriptor[18] = {
     0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
@@ -1701,6 +1780,7 @@ int main(void) {
     printf("%s\n", theron_v1_track02_source_evidence());
 
     probe_negative_fixture();
+    probe_cue_track02_mount();
     probe_jp_zero_image_fixture();
     probe_descriptor_only_negative_fixture();
     probe_boundary_prefix_only_negative_fixture();

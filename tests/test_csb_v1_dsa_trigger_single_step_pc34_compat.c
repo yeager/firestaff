@@ -78,6 +78,48 @@ static void install_single_script(CSB_V1_ChaosMagicState *chaos,
     chaos->scripts[DSA_KNOWN_SCRIPT_ID].bytecode_len = bytecode_words;
 }
 
+/* The loader receives a short-lived byte buffer, just as the dungeon/save
+ * reader does.  The decoded script must remain executable after it changes. */
+static void test_loader_owns_validated_script_words(void)
+{
+    uint8_t data[] = {
+        1, 0,             /* one script */
+        6, 0, 6, 0,       /* byte offset / byte length */
+        CSB_DSA_OP_SET, 0, DSA_KNOWN_FLAG, 0, CSB_DSA_OP_END, 0
+    };
+    CSB_V1_ChaosMagicState chaos;
+
+    csb_v1_chaos_init(&chaos);
+    check(csb_v1_chaos_load_scripts(&chaos, data, (int)sizeof(data)) == 1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_load_scripts",
+          "loader accepts one bounded little-endian script");
+    data[6] = CSB_DSA_OP_END;
+    check(csb_v1_chaos_trigger(&chaos, 0) == 0,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "loaded script is triggerable after input changes");
+    check(csb_v1_dsa_execute_step(&chaos.scripts[0], &chaos) == 1 &&
+              chaos.flags[DSA_KNOWN_FLAG] == 1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_dsa_execute_step",
+          "loaded bytecode is owned and executes its original SET");
+    csb_v1_chaos_cleanup(&chaos);
+}
+
+static void test_loader_rejects_malformed_table_without_mutation(void)
+{
+    uint8_t malformed[] = { 1, 0, 7, 0, 2, 0, 0, 0 };
+    CSB_V1_ChaosMagicState chaos;
+
+    csb_v1_chaos_init(&chaos);
+    chaos.script_count = 17;
+    chaos.flags[DSA_KNOWN_FLAG] = 1;
+    check(csb_v1_chaos_load_scripts(&chaos, malformed, (int)sizeof(malformed)) == -1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_load_scripts",
+          "loader rejects an odd byte offset");
+    check(chaos.script_count == 17 && chaos.flags[DSA_KNOWN_FLAG] == 1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_load_scripts",
+          "malformed load leaves live chaos state unchanged");
+}
+
 /* ----------------------------------------------------------------
  * Test 1: one known script, one DSA trigger, single SET step.
  * ----------------------------------------------------------------
@@ -631,6 +673,8 @@ int main(void)
     printf("sourceEvidence=%s\n\n", csb_v1_chaos_source_evidence());
 
     test_single_step_set_flips_flag();
+    test_loader_owns_validated_script_words();
+    test_loader_rejects_malformed_table_without_mutation();
     test_single_step_toggle_flips_flag();
     test_single_step_end_deactivates_script();
     test_single_step_test_unset_flag_no_jump();

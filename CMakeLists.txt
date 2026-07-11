@@ -7902,6 +7902,43 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_character_import
     )
 
+    # CSB V1 F0140 loaded-champion inventory-load gate.  It uses live decoded
+    # Thing records for weapon/armour/junk/potion/container recursion, then
+    # proves the resulting CHAMPION.Load feeds F0310 movement behavior.
+    add_executable(test_csb_v1_runtime_champion_load_attrs
+        tests/test_csb_v1_runtime_champion_load_attrs.c
+        src/csb/csb_v1_boot.c
+        src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+        src/csb/csb_v1_startup_real_asset_receipt.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/csb/csb_v1_startup_runtime_bridge_pc34_compat.c
+        src/csb/csb_v1_startup_entrance_pointer_pc34_compat.c
+        src/csb/csb_v1_startup_sequence_pc34_compat.c
+        src/frontend/title_frontend_v1.c
+        src/frontend/title_dat_loader_v1.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+        src/csb/csb_v1_utility_flow_pc34.c
+        src/csb/csb_v1_utility_import_pc34.c
+        src/csb/csb_v1_save_load_pc34_compat.c
+        src/dm1/dm1_v1_input_command_queue_pc34_compat.c
+        src/dm1/dm1_v1_event_timer_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_v1_runtime_champion_load_attrs PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_runtime_champion_load_attrs PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_runtime_champion_load_attrs PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_runtime_champion_load_attrs
+        COMMAND test_csb_v1_runtime_champion_load_attrs
+    )
+
     # CSB V1 champion per-stat parity fixture (Champions GAP 2 + GAP 3).
     # Pins every per-stat field of the CHANGE7_24 reincarnation rule
     # so the C160/C161 panel dispatch can rely on a deterministic
@@ -9099,6 +9136,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chs02_bug78_door_wound_preserve_pc34_compat
         COMMAND test_dm1_v1_chs02_bug78_door_wound_preserve_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_square_state_dispatch_pc34_compat
+        tests/test_dm1_v1_square_state_dispatch_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_square_state_dispatch_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_square_state_dispatch_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_square_state_dispatch_pc34_compat
+        COMMAND test_dm1_v1_square_state_dispatch_pc34_compat
     )
 
     add_executable(test_dm1_v1_door_bash_stamina_feedback_source_lock_pc34_compat
@@ -20166,8 +20215,10 @@ set_tests_properties(nexus_v1_menumenu_bpk_inspect PROPERTIES
 # unknown) PRS3 compression stream — leading 4-byte BE u32, first 8 bytes
 # verbatim, byte-frequency histogram over the first `sample_size` payload
 # bytes (capped at 4 KiB), per-mode compression-ratio distributions —
-# WITHOUT claiming decompression. Includes a synthetic BPPK archive for
-# data-free CI plus an optional real MENU.BPK receipt when present.
+# WITHOUT claiming decompression. Its diagnostic-only trial evaluator compares
+# LSB-first and MSB-first control-bit consumption under the same observed
+# PRS3 frame. Includes a synthetic BPPK archive for data-free CI plus an
+# optional real MENU.BPK receipt when present.
 add_executable(firestaff_nexus_v1_bpk_prs3_payload_evidence_probe
     probes/nexus/firestaff_nexus_v1_bpk_prs3_payload_evidence_probe.c
 )
@@ -20188,6 +20239,34 @@ add_test(
 )
 set_tests_properties(nexus_v1_bpk_prs3_payload_evidence_probe PROPERTIES
     LABELS "tier4;nexus;bpx_bpk;archive;skip_safe"
+)
+
+# Nexus PRS3 original-loader-media evidence probe. This optional real-media
+# receipt MD5-locks DM.BIN and MENU.BPK, records executable-side PRS3 markers,
+# and proves only their bounded relationship to the archive. It does not
+# decode, upload, or promote any surface.
+add_executable(firestaff_nexus_v1_prs3_loader_media_probe
+    probes/nexus/firestaff_nexus_v1_prs3_loader_media_probe.c
+    src/shared/firestaff_x68k_media_classify.c
+    src/shared/firestaff_x68k_media_receipt.c
+)
+target_link_libraries(firestaff_nexus_v1_prs3_loader_media_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_prs3_loader_media_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_prs3_loader_media_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_prs3_loader_media_probe
+    COMMAND firestaff_nexus_v1_prs3_loader_media_probe
+)
+set_tests_properties(nexus_v1_prs3_loader_media_probe PROPERTIES
+    LABELS "tier4;nexus;prs3;loader_media;skip_safe"
 )
 
 # Nexus V1 BPK/BPX surface-class + BPX3 directory-trailer probe
@@ -21596,6 +21675,31 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_track02_descriptor_entry_roles
         COMMAND firestaff_theron_v1_track02_descriptor_entry_roles_probe
+    )
+
+    # ── Theron V1 Track 02 Non-startup Sector Receipt Probe ───────
+    # Hash/anchor-gated MODE1/2352 container receipt for structurally
+    # post-descriptor 0x400-byte windows. It reports physical-sector and
+    # logical-user-data bounds plus fingerprints, but stays opaque and
+    # cannot promote a bitmap, level, object, palette, text, or runtime route.
+    add_executable(firestaff_theron_v1_track02_nonstartup_sector_receipt_probe
+        probes/theron/firestaff_theron_v1_track02_nonstartup_sector_receipt_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_nonstartup_sector_receipt_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_track02_nonstartup_sector_receipt_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_track02_nonstartup_sector_receipt_probe PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_nonstartup_sector_receipt_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_nonstartup_sector_receipt
+        COMMAND firestaff_theron_v1_track02_nonstartup_sector_receipt_probe
     )
 
     # ── Theron V1 Track 02 Descriptor Entry Semantic Probe ───────

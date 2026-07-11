@@ -261,6 +261,8 @@ int   csb_v1_champion_get_stat(const CSB_V1_Champion *c, int stat_idx, int which
 void  csb_v1_champion_set_stat(CSB_V1_Champion *c, int stat_idx, int which, int val);
 int   csb_v1_champion_get_skill(const CSB_V1_Champion *c, int skill_idx);
 void  csb_v1_champion_set_skill(CSB_V1_Champion *c, int skill_idx, int val);
+/* Read the cached CHAMPION.Load field.  Rebuilding it from equipped Things
+ * requires live F0156 dungeon data and is provided by the CSB runtime API. */
 int   csb_v1_champion_get_load(CSB_V1_Champion *c);
 void  csb_v1_champion_recompute_load(CSB_V1_Champion *c);
 

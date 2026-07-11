@@ -142,6 +142,8 @@
 #define EMIT_PARTY_TELEPORTED 0x0C
 #define EMIT_SENSOR_EFFECT    0x0D  /* pass-37: party enter/leave sensor effects */
 #define EMIT_ACTION_DISABLED  0x0E  /* payload: champion, ticks, action index, slot */
+#define EMIT_CREATURE_ATTACK  0x0F  /* payload: group, creature, damage/projectile slot, ranged */
+#define EMIT_CHAMPION_DAMAGED 0x10  /* payload: champion, party cell, damage, wound mask */
 
 /* EMIT_SPELL_EFFECT payload[3] keeps the F0412 power ordinal in the
  * low byte, ReDMCSB G0487 Spell.SkillIndex in the next byte, and the
@@ -249,6 +251,9 @@ struct GameWorld_Compat {
     int32_t  disabledMovementTicks;
     int32_t  projectileDisabledMovementTicks;
     int32_t  lastProjectileDisabledMovementDirection;
+    /* Legacy single-result handoff retained for producers that have not
+     * migrated to the F0321 per-champion staging buffer below. */
+    int32_t  pendingCombatTargetReceipt;
 
     /* ---- Dungeon static layer (pointer, see D1) ---- */
     struct DungeonDatState_Compat* dungeon;
@@ -262,6 +267,11 @@ struct GameWorld_Compat {
     struct TimelineQueue_Compat        timeline;           /* Phase 12 */
     struct RngState_Compat             masterRng;          /* Phase 13 */
     struct CombatResult_Compat         pendingCombat;      /* Phase 13 */
+    /* ReDMCSB CHAMPION.C F0321 adds each hit to G0409/G0410 by champion;
+     * F0320 drains all four entries at the game-loop boundary.  Keep the
+     * same shape so multiple F0230 hits in one tick cannot overwrite. */
+    struct CombatResult_Compat         pendingChampionCombat[CHAMPION_MAX_PARTY];
+    int32_t                            pendingChampionCombatTargetReceipt[CHAMPION_MAX_PARTY];
     struct MagicState_Compat           magic;              /* Phase 14 */
     struct SaveGameHeader_Compat       saveHeader;         /* Phase 15 */
     struct DungeonMutationList_Compat  dungeonMutations;   /* Phase 15 */
@@ -370,6 +380,7 @@ struct F0267ThingMoveResultPc34Compat {
     int pitChainCount;
     int stairsChainCount;
     int chainedMoveLimitHit;
+    unsigned short finalThing;
     int finalMapIndex;
     int finalMapX;
     int finalMapY;

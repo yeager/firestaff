@@ -1569,7 +1569,7 @@ int F0804_CREATURE_Tick_Compat(
  *  game-tick counter come from the timeline queue — plan §2.1).
  * ========================================================================= */
 
-/* --- AI state (72 bytes, 18 int32) --- */
+/* --- AI state (76 bytes, 18 int32 + ACTIVE_GROUP::Aspect[4]) --- */
 
 int F0805_CREATURE_AIStateSerialize_Compat(
     const struct CreatureAIState_Compat* s,
@@ -1596,6 +1596,10 @@ int F0805_CREATURE_AIStateSerialize_Compat(
     le_write_i32(buf + 60, s->aggressionScore);
     le_write_i32(buf + 64, s->rngCallCount);
     le_write_i32(buf + 68, s->reserved0);
+    buf[72] = s->aspect[0];
+    buf[73] = s->aspect[1];
+    buf[74] = s->aspect[2];
+    buf[75] = s->aspect[3];
     return CREATURE_AI_STATE_SERIALIZED_SIZE;
 }
 
@@ -1623,6 +1627,10 @@ int F0806_CREATURE_AIStateDeserialize_Compat(
     s->aggressionScore       = le_read_i32(buf + 60);
     s->rngCallCount          = le_read_i32(buf + 64);
     s->reserved0             = le_read_i32(buf + 68);
+    s->aspect[0]             = buf[72];
+    s->aspect[1]             = buf[73];
+    s->aspect[2]             = buf[74];
+    s->aspect[3]             = buf[75];
     return CREATURE_AI_STATE_SERIALIZED_SIZE;
 }
 

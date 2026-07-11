@@ -51,6 +51,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_csbwin_512_xor_pad_classify.h"
+#include "csb_v1_chaos_magic_pc34_compat.h"
 #include "csb_v1_skin_cache_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
@@ -199,7 +200,7 @@ typedef struct {
     uint32_t spell_grid_version;  /* version key for CSB-wide spell grid */
     uint8_t  chaos_level;        /* current ambient chaos level (0-3) */
     int      magic_initialized;   /* 1 = spell grid built */
-} CSB_V1_ChaosMagicState;
+} CSB_V1_ChaosAmbientState;
 
 typedef struct {
     int valid;
@@ -326,6 +327,21 @@ typedef struct {
     uint32_t                csbwin_appended_tail_fnv1a;
     int                     csbwin_appended_tail_truncated;
     uint8_t                 csbwin_appended_tail[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
+    /* CSBWin SaveGame.cpp ReadExtendedFeatures()/ReadDSAs()/ReadGameInfo()
+     * owns this separately from the regular GAMEBLOCK sections. Imported DSA
+     * programs remain opaque source words; no compatibility opcode runner
+     * consumes them. */
+    int                     csbwin_extended_features_valid;
+    uint8_t                 csbwin_extended_features_version;
+    uint8_t                 csbwin_extended_features_flags;
+    uint32_t                csbwin_extended_features_flags32;
+    uint32_t                csbwin_extended_cell_flag_array_size;
+    char                    *csbwin_extended_game_info;
+    uint32_t                csbwin_extended_game_info_size;
+    uint32_t                csbwin_extended_game_info_fnv1a;
+    int                     csbwin_extended_level_index_present;
+    uint16_t                csbwin_extended_level_dsa_index[64][32];
+    CSB_V1_ChaosMagicState  csbwin_extended_dsa_state;
     int                     csbwin_body_runtime_summary_valid;
     int16_t                 csbwin_character_tail_brightness;
     uint8_t                 csbwin_character_tail_see_thru_walls;
@@ -376,7 +392,7 @@ typedef struct {
     uint32_t                input_dispatch_count;
 
     /* ── Chaos Magic ────────────────────────────── */
-    CSB_V1_ChaosMagicState  chaos_magic;
+    CSB_V1_ChaosAmbientState chaos_magic;
 
     /* ── Data paths ─────────────────────────────── */
     const char             *data_dir;
@@ -505,6 +521,25 @@ int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
                                    const CSB_V1_PartyState *party);
 int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
                                    CSB_V1_PartyState *out_party);
+
+/* ReDMCSB DUNGEON.C F0140: compute one live Thing's inventory weight from
+ * the loaded original dungeon data.  This includes waterskin charges and
+ * recursive container contents.  Returns zero for an invalid/unloaded Thing.
+ */
+int csb_v1_runtime_get_object_weight_pc34_compat(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing);
+
+/* ReDMCSB DUNGEON.C F0140 consumed by CHAMPION.C's Load field.  Rebuild a
+ * champion's cached Load from C00..C29 only after a live dungeon is present.
+ * The single-champion form returns the calculated load, or -1 for invalid
+ * arguments/no loaded dungeon; the party form returns recomputed champions.
+ */
+int csb_v1_runtime_recompute_champion_load_pc34_compat(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index);
+int csb_v1_runtime_recompute_party_loads_pc34_compat(
+    CSB_V1_RuntimeProfile *profile);
 int csb_v1_runtime_set_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile,
                                           int enabled);
 int csb_v1_runtime_get_load_bonus_dungeon(

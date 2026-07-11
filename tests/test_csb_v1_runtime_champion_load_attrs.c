@@ -718,6 +718,82 @@ static void test_argument_validation(void)
     }
 }
 
+/* -- Test 7: F0140 live Thing weights rebuild CHAMPION.Load ------------ */
+static void test_loaded_champion_load_calculation(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_PartyState party;
+    uint8_t raw[28];
+    const uint16_t weapon = (uint16_t)(5u << 10);
+    const uint16_t armour = (uint16_t)(6u << 10);
+    const uint16_t scroll = (uint16_t)(7u << 10);
+    const uint16_t potion = (uint16_t)(8u << 10);
+    const uint16_t container = (uint16_t)(9u << 10);
+    const uint16_t waterskin = (uint16_t)(10u << 10);
+
+    memset(&raw, 0, sizeof(raw));
+    memset(&dungeon, 0, sizeof(dungeon));
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.thing_data_bases[5] = 0;
+    dungeon.thing_data_bases[6] = 4;
+    dungeon.thing_data_bases[7] = 8;
+    dungeon.thing_data_bases[8] = 12;
+    dungeon.thing_data_bases[9] = 16;
+    dungeon.thing_data_bases[10] = 24;
+    dungeon.thing_type_counts[5] = 1;
+    dungeon.thing_type_counts[6] = 1;
+    dungeon.thing_type_counts[7] = 1;
+    dungeon.thing_type_counts[8] = 1;
+    dungeon.thing_type_counts[9] = 1;
+    dungeon.thing_type_counts[10] = 1;
+
+    /* Thing-data word +2: weapon type 2 (weight 11), armour type 0
+     * (weight 3), empty flask type 20 (weight 1), and waterskin type 1
+     * with three charges (3 + 3*2 = 9).  The container owns a scroll
+     * through Slot at +2, exactly as DEFS.H CONTAINER/F0140 specifies. */
+    raw[2] = 2;
+    raw[6] = 0;
+    raw[15] = 20;
+    raw[18] = (uint8_t)(scroll & 0xffu);
+    raw[19] = (uint8_t)(scroll >> 8);
+    raw[26] = 1;
+    raw[27] = 0xc0u;
+    raw[8] = 0xfeu;
+    raw[9] = 0xffu;
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    csb_v1_character_init_default(&party);
+    party.ChampionCount = 1;
+    party.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] = weapon;
+    party.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] = armour;
+    party.Champions[0].Slots[CSB_V1_SLOT_BELT_1] = potion;
+    party.Champions[0].Slots[CSB_V1_SLOT_BELT_2] = waterskin;
+    party.Champions[0].Slots[CSB_V1_SLOT_PACK_1] = container;
+    CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
+          "runtime accepts loaded champion fixture");
+
+    CHECK_EQ(csb_v1_runtime_get_object_weight_pc34_compat(&profile, weapon), 11,
+             "F0140 weapon weight reads live Type", "d");
+    CHECK_EQ(csb_v1_runtime_get_object_weight_pc34_compat(&profile, waterskin), 9,
+             "F0140 waterskin adds two units per charge", "d");
+    CHECK_EQ(csb_v1_runtime_get_object_weight_pc34_compat(&profile, container), 51,
+             "F0140 container includes base plus linked scroll", "d");
+    CHECK_EQ(csb_v1_runtime_recompute_champion_load_pc34_compat(&profile, 0), 75,
+             "loaded champion sums all C00..C29 F0140 weights", "d");
+    CHECK_EQ(profile.party_state.Champions[0].Load, 75,
+             "loaded champion cached Load receives F0140 total", "u");
+    CHECK_EQ(csb_v1_runtime_recompute_party_loads_pc34_compat(&profile), 1,
+             "party load rebuild reports its loaded champion", "d");
+    CHECK_EQ(csb_v1_runtime_recompute_champion_load_pc34_compat(&profile, 1), -1,
+             "out-of-range champion load rebuild is rejected", "d");
+    profile.dungeon_handle = NULL;
+    CHECK_EQ(csb_v1_runtime_recompute_party_loads_pc34_compat(&profile), -1,
+             "missing dungeon prevents invented loaded-champion total", "d");
+}
+
 /* -- Main ------------------------------------------------------------ */
 int main(void)
 {
@@ -734,13 +810,15 @@ int main(void)
     test_runtime_champion_load_attrs_post_handoff();
     printf("\n");
     test_argument_validation();
+    printf("\n");
+    test_loaded_champion_load_calculation();
 
     printf("\n========================================\n");
     printf("PASSED: %d\n", passed);
     printf("FAILED: %d\n", failed);
     if (failed == 0) {
-        puts("ok: CSB V1 champion load and attribute helpers reproduce the source-locked F0309/F0306/F0310/BUG0_72 invariants on a stand-alone fixture and on a runtime party snapshot captured by the verified boot handoff");
-        puts("sourceEvidence=ReDMCSB CHAMPION.C F0306_CHAMPION_GetStaminaAdjustedValue lines 1078-1106; F0309_CHAMPION_GetMaximumLoad lines 1157-1178; F0310_CHAMPION_GetMovementTicks lines 1180-1214; BUG0_72 line 1198");
+        puts("ok: CSB V1 champion load and attribute helpers reproduce F0140/F0309/F0306/F0310/BUG0_72 on live Things, stand-alone champions, and a verified boot-handoff party snapshot");
+        puts("sourceEvidence=ReDMCSB DUNGEON.C F0140 lines 1082-1133; CHAMPION.C F0306_CHAMPION_GetStaminaAdjustedValue lines 1078-1106; F0309_CHAMPION_GetMaximumLoad lines 1157-1178; F0310_CHAMPION_GetMovementTicks lines 1180-1214; BUG0_72 line 1198");
     }
     return failed == 0 ? 0 : 1;
 }

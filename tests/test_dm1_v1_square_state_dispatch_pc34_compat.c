@@ -1,0 +1,79 @@
+/* ReDMCSB TIMELINE.C F0242/F0244/F0250/F0251 through F0261. */
+#include "memory_tick_orchestrator_pc34_compat.h"
+#include "memory_door_action_pc34_compat.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
+
+#include <assert.h>
+#include <string.h>
+
+static void schedule(struct GameWorld_Compat* world, int type, int effect,
+                     int x, int y)
+{
+    struct TimelineEvent_Compat event;
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_SQUARE_STATE;
+    event.fireAtTick = 0;
+    event.mapIndex = 0;
+    event.mapX = x;
+    event.mapY = y;
+    event.aux0 = type;
+    event.aux1 = effect;
+    assert(F0721_TIMELINE_Schedule_Compat(&world->timeline, &event));
+}
+
+int main(void)
+{
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char squares[4];
+    struct GameWorld_Compat world;
+    struct TickResult_Compat result;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(squares, 0, sizeof(squares));
+    map.width = 2;
+    map.height = 2;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.tilesLoaded = 1;
+    tiles.squareData = squares;
+
+    memset(&world, 0, sizeof(world));
+    world.dungeon = &dungeon;
+    assert(F0881_WORLD_InitDefault_Compat(&world, 1));
+
+    /* C10 door event becomes C01 animation, which performs one opening
+     * step at the same Map_Time. */
+    squares[0] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 4);
+    schedule(&world, DM1_EVENT_DOOR, DOOR_EFFECT_SET, 0, 0);
+    memset(&result, 0, sizeof(result));
+    assert(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 2);
+    assert((squares[0] & 7) == 3);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].kind == TIMELINE_EVENT_DOOR_ANIMATE);
+
+    /* C09 and C08 share F0250/F0251's bit-3 SET/CLEAR/toggle behavior. */
+    squares[2] = (unsigned char)(DUNGEON_ELEMENT_PIT << 5);
+    schedule(&world, DM1_EVENT_PIT, DOOR_EFFECT_SET, 1, 0);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert((squares[2] & 0x08) != 0);
+
+    squares[1] = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_TOGGLE, 0, 1);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert((squares[1] & 0x08) != 0);
+
+    /* C07 SET exposes the fakewall by setting its open bit. */
+    squares[3] = (unsigned char)(DUNGEON_ELEMENT_FAKEWALL << 5);
+    schedule(&world, DM1_EVENT_FAKEWALL, DOOR_EFFECT_SET, 1, 1);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert((squares[3] & 0x04) != 0);
+    return 0;
+}

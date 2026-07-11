@@ -331,6 +331,62 @@ static size_t test_build_full_csbwin_resume_fixture(uint8_t *buf,
     return off;
 }
 
+static uint32_t test_extended_checksum(const uint8_t *bytes, size_t size,
+                                       uint32_t initial)
+{
+    uint32_t result = initial;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        result = result * 0xbb40e62du + 11u + (uint32_t)bytes[i];
+    }
+    return result;
+}
+
+static size_t test_build_csbwin_extended_prefix(uint8_t *buf, size_t capacity)
+{
+    size_t offset = 512u;
+    size_t dsa_start;
+    size_t i;
+
+    if (!buf || capacity < 660u) return 0u;
+    memset(buf, 0, 660u);
+    memcpy(buf, " Extended Features ", 19u);
+    buf[36u] = (uint8_t)'Z';
+    buf[37u] = 0x01u; /* LevelDSAInfoPresent */
+    test_write_le16(buf, 38u, 1u);
+    test_write_le32(buf, 44u, 4u);
+    test_write_le32(buf, 48u, 99u);
+    test_write_le32(buf, 64u, 0xA5u);
+    test_write_le32(buf, 32u, 0u);
+    test_write_le32(buf, 32u, test_extended_checksum(buf, 512u, 0u));
+
+    dsa_start = offset;
+    test_write_le32(buf, offset, 7u); offset += 4u;
+    for (i = 0u; i < 80u; ++i) buf[offset + i] = (uint8_t)('A' + (i % 3u));
+    offset += 80u;
+    test_write_le32(buf, offset, 3u); offset += 4u;
+    test_write_le32(buf, offset, 1u); offset += 4u;
+    test_write_le32(buf, offset, 9u); offset += 4u;
+    test_write_le32(buf, offset, 2u); offset += 4u;
+    test_write_le32(buf, offset, 0u); offset += 4u;
+    test_write_le32(buf, offset, 1u); offset += 4u;
+    test_write_le32(buf, offset, 1u); offset += 4u;
+    test_write_le32(buf, offset, 1u); offset += 4u;
+    test_write_le32(buf, offset, 3u); offset += 4u;
+    test_write_le32(buf, offset, 2u); offset += 4u;
+    test_write_le16(buf, offset, 0x1234u); offset += 2u;
+    test_write_le16(buf, offset, 0xabcdu); offset += 2u;
+    test_write_le32(buf, offset,
+                    test_extended_checksum(buf + dsa_start,
+                                           offset - dsa_start, 0xffffu));
+    offset += 4u;
+    memcpy(buf + offset, "CSB!", 4u); offset += 4u;
+    buf[offset++] = 3u; buf[offset++] = 2u; buf[offset++] = 7u;
+    buf[offset++] = 63u; buf[offset++] = 31u; buf[offset++] = 9u;
+    buf[offset++] = 0xffu; buf[offset++] = 0xffu; buf[offset++] = 0xffu;
+    return offset;
+}
+
 static void test_subquantum_frame_slices_fire_one_tick(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -3311,6 +3367,9 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 group partial kill materializes cursed animated-armour foot plate");
     CHECK((uint16_t)(raw[116] | ((uint16_t)raw[117] << 8)) == 0x010au,
           "C25 group partial kill materializes cursed animated-armour sword");
+    CHECK(profile.audio_runtime.lastPlayedSoundIndex == CSB_V1_SOUND_METALLIC_THUD &&
+              profile.audio_runtime.totalImmediatePlays == 1u,
+          "C25 fixed animated-armour possessions request F0186 metallic thud immediately");
     slot = find_live_explosion_type(&profile, C040_EXPLOSION_SMOKE);
     CHECK(slot >= 0 &&
               profile.explosions.entries[slot].attack == 110 &&
@@ -3435,6 +3494,10 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 final group kill leaves the C05 teleporter chain terminated");
     CHECK((uint16_t)(raw[104] | ((uint16_t)raw[105] << 8)) == 0xfffeu,
           "C25 final group kill terminates the dropped carried thing chain");
+    CHECK(profile.audio_runtime.lastPlayedSoundIndex ==
+              CSB_V1_SOUND_METALLIC_THUD &&
+              profile.audio_runtime.totalImmediatePlays == 2u,
+          "C25 final group Slot weapon follows F0186 with an F0188 metallic thud");
     CHECK(count_queued_event_type(&profile,
                                   DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE) == 0 &&
               count_queued_event_type(&profile,
@@ -6105,6 +6168,90 @@ static void test_csbwin_resume_file_applies_runtime_handoff(void)
     remove(path);
 }
 
+static void test_csbwin_extended_resume_file_handoff(void)
+{
+    uint8_t bytes[8192];
+    size_t prefix_size;
+    size_t core_size;
+    size_t total_size;
+    char path[512];
+    const char *tmp_root;
+    FILE *fp;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_CSBWinExtendedFeaturesReport features;
+    CSB_V1_CSBWinExtendedDSAReport dsa;
+    CSB_V1_CSBWinExtendedTailReport tail;
+    CSB_V1_CSBWin512BodyReport core_report;
+    CSB_V1_ChaosMagicState dsa_state;
+
+    printf("\n-- CSBWin extended resume runtime handoff --\n");
+    prefix_size = test_build_csbwin_extended_prefix(bytes, sizeof(bytes));
+    core_size = test_build_full_csbwin_resume_fixture(
+        bytes + prefix_size, sizeof(bytes) - prefix_size, 0);
+    total_size = prefix_size + core_size;
+    CHECK(prefix_size != 0u && core_size == 4054u,
+          "CSBWin extended fixture contains authenticated prefix and core body");
+    memset(&features, 0, sizeof(features));
+    memset(&dsa, 0, sizeof(dsa));
+    memset(&tail, 0, sizeof(tail));
+    CHECK(csb_v1_csbwin_512_inspect_extended_tail(
+              bytes, prefix_size, &tail, &dsa, &features) ==
+              CSB_V1_CSBWIN_EXTENDED_OK && tail.valid,
+          "CSBWin extended fixture passes the production prefix inspector");
+    memset(&core_report, 0, sizeof(core_report));
+    CHECK(csb_v1_csbwin_512_verify_save_body(
+              bytes + prefix_size, core_size, 0u, &core_report) ==
+              CSB_V1_CSBWIN_512_OK,
+          "CSBWin extended fixture keeps the core body at the tail boundary");
+    csb_v1_chaos_init(&dsa_state);
+    CHECK(csb_v1_chaos_import_extended_save_dsas(
+              &dsa_state, bytes, (int)prefix_size) == 1,
+          "CSBWin extended fixture imports opaque DSA words independently");
+    csb_v1_chaos_cleanup(&dsa_state);
+    tmp_root = getenv("TMPDIR");
+    if (!tmp_root || tmp_root[0] == '\0') tmp_root = ".";
+    snprintf(path, sizeof(path), "%s/firestaff_csbwin_extended_%p.sav",
+             tmp_root, (void *)&profile);
+    remove(path);
+    fp = fopen(path, "wb");
+    CHECK(fp != NULL && fwrite(bytes, 1u, total_size, fp) == total_size,
+          "CSBWin extended fixture writes complete file");
+    if (fp) fclose(fp);
+
+    csb_v1_runtime_init(&profile, NULL);
+    CHECK(csb_v1_runtime_apply_csbwin_resume_file(&profile, path, 0u) == 0,
+          "CSBWin extended resume stages prefix and body together");
+    CHECK(profile.csbwin_extended_features_valid == 1 &&
+              profile.csbwin_extended_features_version == (uint8_t)'Z' &&
+              profile.csbwin_extended_game_info_size == 4u &&
+              strcmp(profile.csbwin_extended_game_info, "CSB!") == 0,
+          "CSBWin ReadGameInfo bytes become owned runtime state");
+    CHECK(profile.csbwin_extended_level_index_present == 1 &&
+              profile.csbwin_extended_level_dsa_index[3][2] == 7u &&
+              profile.csbwin_extended_level_dsa_index[63][31] == 9u &&
+              profile.csbwin_extended_level_dsa_index[0][0] == 0xffffu,
+          "CSBWin ReadDSALevelIndex table becomes owned runtime state");
+    CHECK(profile.csbwin_extended_dsa_state.imported_action_count == 1 &&
+              profile.csbwin_extended_dsa_state.imported_actions[0].dsa_id == 7u &&
+              profile.csbwin_extended_dsa_state.imported_actions[0].state_index == 1u &&
+              profile.csbwin_extended_dsa_state.imported_actions[0].program_word_count == 2 &&
+              profile.csbwin_extended_dsa_state.imported_actions[0].program_words[0] == 0x1234u,
+          "CSBWin ReadDSAs action words are retained as opaque runtime data");
+
+    bytes[512u + 127u] ^= 0x01u; /* corrupt the RCS checksum, not core data */
+    fp = fopen(path, "wb");
+    CHECK(fp != NULL && fwrite(bytes, 1u, total_size, fp) == total_size,
+          "CSBWin corrupt extended fixture writes complete file");
+    if (fp) fclose(fp);
+    CHECK(csb_v1_runtime_apply_csbwin_resume_file(&profile, path, 0u) == -1 &&
+              profile.game_time == 0x01020304u &&
+              profile.csbwin_extended_features_valid == 1 &&
+              strcmp(profile.csbwin_extended_game_info, "CSB!") == 0,
+          "invalid CSBWin extended prefix leaves prior runtime handoff intact");
+    csb_v1_runtime_cleanup(&profile);
+    remove(path);
+}
+
 static void test_csbwin_core_save_export_roundtrips_runtime(void)
 {
     uint8_t fixture[8192];
@@ -6378,6 +6525,7 @@ int main(void)
     test_csbwin_gameblock2_summary_applies_runtime_handoff();
     test_csbwin_item16_claims_live_ai_ownership();
     test_csbwin_resume_file_applies_runtime_handoff();
+    test_csbwin_extended_resume_file_handoff();
     test_csbwin_core_save_export_roundtrips_runtime();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {

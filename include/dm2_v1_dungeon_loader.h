@@ -24,12 +24,14 @@
  *   Byte offset 14: uint16_le: 0x00d9 (217) — ???
  *   Byte offset 16: uint16_le: 0x0240 (576) — ???
  *   ...
- *   The PC G1 real-data path now reads 16-byte skproject-compatible
+ *   The PC G1 real-data path reads 16-byte skproject-compatible
  *   Map_definitions from byte 44 and byte-sized column-major map squares
- *   from the trailing map-data block.  Tile type is stored in the high
- *   three bits and bit 0x10 marks a thing-list square.  The bounded
- *   legacy loader path still accepts older Firestaff synthetic 16-bit map
- *   fixtures.
+ *   from the trailing map-data block. It also bounds the G1-specific
+ *   extension between the standard DB-pool prefix and map tail, without
+ *   assigning it record ownership before source proof. Tile type is stored
+ *   in the high three bits and bit 0x10 marks a thing-list square. The
+ *   bounded legacy loader path still accepts older Firestaff synthetic
+ *   16-bit map fixtures.
  *
  *   Confirmed against: SKULL.ASM T560 DUNGEON_Load, local DUNGEON.DAT probe.
  *   Confirmed loader contract: level_count/map_count is byte offset 6. */
@@ -42,6 +44,35 @@ typedef enum {
     DM2_LEVEL_INDOOR,
     DM2_LEVEL_BUILDING,
 } DM2_LevelType;
+
+/*
+ * Bounded provenance receipt for the PC DOS G1 c_record pool region.
+ *
+ * The candidate span is anchored immediately after the already-proven
+ * column-index, ground-stack, and text tables.  It is intentionally not a
+ * address map. The loader promotes this exact source-ordered span only after
+ * every declared direct c_record link and map-rooted chain validates. The
+ * later G1 extension remains untyped and is never included in
+ * candidate_pool_bases.
+ */
+typedef struct {
+    int available;
+    int text_end;
+    int candidate_base;
+    int candidate_end;
+    int candidate_bytes;
+    int candidate_pool_bases[16];
+    int root_count;
+    int root_end_markers;
+    int root_shape_valid;
+    int root_shape_invalid;
+    int candidate_record_count;
+    int candidate_first_link_end_markers;
+    int candidate_first_link_shape_valid;
+    int candidate_first_link_shape_invalid;
+    int tail_pool_base;
+    int tail_pool_base_rejected;
+} DM2_V1_G1RecordPoolEvidence;
 
 typedef struct {
     int level_count;
@@ -60,6 +91,8 @@ typedef struct {
     int square_first_thing_count;
     int text_data_base;
     int text_word_count;
+    int g1_extension_base;
+    int g1_extension_size;
     int thing_data_bases[16];
     int thing_type_counts[16];
     /* Set only when the source layout has materialized every map-to-record
@@ -124,10 +157,17 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
     int *out_size);
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level);
 /* Validate the source-shaped map -> ground-stack -> DB-record graph.
- * Returns 1 only when every thing-bearing square resolves to a bounded,
- * terminating chain.  PC G1 files whose pre-map ownership block is not yet
- * decoded return 0 instead of being promoted as a partial world. */
+ * Returns 1 only when every declared direct c_record link and every
+ * thing-bearing square resolve to bounded, terminating ObjectID chains.
+ * PC G1 files whose direct graph is incomplete return 0 instead of being
+ * promoted as a partial world. */
 int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d);
+/* Collect non-mutating PC G1 c_record provenance for the source-ordered pool
+ * span. Record lookup/traversal is available only when record_graph_complete
+ * is set by the independent bounded graph validator. */
+int dm2_v1_dungeon_collect_g1_record_pool_evidence(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1RecordPoolEvidence *out);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
 #endif

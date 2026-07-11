@@ -251,6 +251,43 @@ static size_t build_skproject_map_wall_gfx_list_fixture(uint8_t *buf,
     return raw_map_base + 9u;
 }
 
+static size_t build_pc_g1_record_evidence_fixture(uint8_t *buf, size_t cap)
+{
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t extension_size = 256;
+    const size_t column_base = header_size + map_desc_size + extension_size;
+    const size_t sft_base = column_base + 4u;
+    const size_t text_base = sft_base + 2u;
+    const size_t pool_base = text_base + 2u;
+    const size_t extension_base = pool_base + 8u;
+    const size_t raw_map_base = extension_base + 4u;
+    uint8_t *desc;
+
+    if (cap < raw_map_base + 4u) return 0;
+    memset(buf, 0, cap);
+    put16le(buf + 2, 0x3147U);
+    put16le(buf + 4, header_size);
+    buf[6] = 1;
+    put16le(buf + 8, 1);  /* shifted cwTextData */
+    put16le(buf + 10, 1); /* shifted cwListSize */
+    put16le(buf + 14, 2); /* dbDoor count */
+
+    desc = buf + header_size;
+    put16le(desc + 0, 0);
+    put16le(desc + 8, (uint16_t)((1u << 6) | (1u << 11)));
+    put16le(buf + column_base, 0);
+    put16le(buf + column_base + 2u, 0);
+    put16le(buf + sft_base, 0x0000); /* DB0 root, index 0 */
+    put16le(buf + pool_base, 0xfffe); /* candidate DB0 w0 end marker */
+    put16le(buf + pool_base + 4u, 0xfffe); /* unreferenced DB0 record */
+    buf[raw_map_base + 0] = 0x20;
+    buf[raw_map_base + 1] = 0x20;
+    buf[raw_map_base + 2] = 0x90;
+    buf[raw_map_base + 3] = 0x20;
+    return raw_map_base + 4u;
+}
+
 static void test_first_map_metadata_and_tiles(void)
 {
     uint8_t dat[DM2_TEST_TILE_DATA_START + 12];
@@ -477,6 +514,52 @@ static void test_skproject_map_wall_gfx_list(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
+static void test_pc_g1_record_pool_ownership_and_bounded_traversal(void)
+{
+    uint8_t dat[384];
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_G1RecordPoolEvidence evidence;
+    size_t size = build_pc_g1_record_evidence_fixture(dat, sizeof(dat));
+
+    CHECK(size > 0, "PC G1 record-evidence fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts bounded PC G1 record-evidence fixture");
+    CHECK(dm2_v1_dungeon_collect_g1_record_pool_evidence(
+              &dungeon, &evidence) == 1 && evidence.available == 1,
+          "G1 evidence receipt is available from non-tail tables");
+    CHECK(evidence.text_end == 324 && evidence.candidate_base == 324 &&
+              evidence.candidate_end == 332 && evidence.candidate_bytes == 8,
+          "G1 candidate span starts after the proven text table");
+    CHECK(evidence.candidate_pool_bases[0] == 324 &&
+              evidence.candidate_record_count == 2 &&
+              evidence.candidate_first_link_end_markers == 2,
+          "c_record DB0 provenance includes its terminating first link");
+    CHECK(evidence.root_count == 1 && evidence.root_shape_valid == 1 &&
+              evidence.root_shape_invalid == 0,
+          "ground-stack roots resolve to the declared c_record shape");
+    CHECK(evidence.tail_pool_base == 328 && evidence.tail_pool_base_rejected,
+          "tail-aligned record placement is rejected by the text anchor");
+    CHECK(dungeon.thing_data_bases[0] == 324 &&
+              dungeon.record_graph_complete == 1 &&
+              dm2_v1_dungeon_validate_record_graph(&dungeon) == 1 &&
+              dm2_v1_dungeon_get_thing_record(&dungeon, 0x0000,
+                                               NULL, NULL, NULL) != NULL,
+          "source-ordered G1 c_record ownership enables bounded traversal");
+
+    put16le(dat + 328, 0x0002); /* Unreachable DB0 index 2 exceeds count. */
+    dm2_v1_dungeon_free(&dungeon);
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts malformed direct-link fixture for diagnostics");
+    CHECK(dm2_v1_dungeon_collect_g1_record_pool_evidence(
+              &dungeon, &evidence) == 1 &&
+              evidence.candidate_first_link_shape_invalid == 1,
+          "evidence reports an invalid unreachable direct link");
+    CHECK(dungeon.record_graph_complete == 0 &&
+              dm2_v1_dungeon_validate_record_graph(&dungeon) == 0,
+          "invalid unreachable direct links keep the G1 graph disabled");
+    dm2_v1_dungeon_free(&dungeon);
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Dungeon Loader First-Map Gate ===\n\n");
@@ -489,6 +572,7 @@ int main(void)
     test_skproject_text_wall_gfx_metadata();
     test_skproject_actuator_wall_gfx_ordinal();
     test_skproject_map_wall_gfx_list();
+    test_pc_g1_record_pool_ownership_and_bounded_traversal();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

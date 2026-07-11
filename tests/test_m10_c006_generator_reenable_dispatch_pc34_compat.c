@@ -155,6 +155,157 @@ static int test_allocate_unused_junk_pool(
     return 1;
 }
 
+static int test_f0209_active_group_aspect_persists_between_c38_c33(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat event;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world F0209 aspect persistence\n");
+        return 1;
+    }
+
+    /* ReDMCSB GROUP.C F0179/F0209: C38 marks the attacking creature in
+     * ACTIVE_GROUP::Aspect, and C33 clears that attack latch on the next
+     * non-attack aspect update. */
+    world.party.mapX = 1;
+    world.party.mapY = 2;
+    world.things->groups[0].next = THING_ENDOFLIST;
+    world.things->groups[0].creatureType = 0;
+    world.things->groups[0].count = 0;
+    world.things->groups[0].cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
+    world.things->groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    world.things->groups[0].health[0] = 100;
+    world.things->squareFirstThings[0] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+
+    world.creatureAICount = 1;
+    memset(&world.creatureAI[0], 0, sizeof(world.creatureAI[0]));
+    world.creatureAI[0].reserved0 = 0;
+    world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    world.creatureAI[0].creatureType = 0;
+    world.creatureAI[0].groupMapIndex = 0;
+    world.creatureAI[0].groupMapX = 1;
+    world.creatureAI[0].groupMapY = 1;
+    world.creatureAI[0].groupCells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
+    world.creatureAI[0].lastSeenPartyTick = 0;
+    F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = 0;
+    event.aux1 = 0;
+    event.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule F0209 C38 active-group aspect event");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "dispatch F0209 C38 active-group aspect event");
+    ok &= expect((world.creatureAI[0].aspect[0] & 0x80u) != 0u,
+                 "F0209 C38 persists ACTIVE_GROUP attack aspect bit");
+
+    memset(&result, 0, sizeof(result));
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = 0;
+    event.aux1 = 0;
+    event.aux2 = DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule F0209 C33 active-group aspect event");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "dispatch F0209 C33 active-group aspect event");
+    ok &= expect((world.creatureAI[0].aspect[0] & 0x80u) == 0u,
+                 "F0209 C33 persists cleared ACTIVE_GROUP attack aspect bit");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
+static int test_f0207_c38_creature_projectile_has_runtime_receipt(void) {
+    int seed;
+
+    /* GROUP.C F0209 C38 reaches F0207, which calls PROJEXPL.C F0212.
+     * Search a bounded deterministic seed set because the PC 3.4 attack
+     * gate and the adjacent-caster ranged/melee choice both consume RNG. */
+    for (seed = 1; seed <= 128; ++seed) {
+        struct GameWorld_Compat world;
+        struct TickInput_Compat input;
+        struct TickResult_Compat result;
+        struct TimelineEvent_Compat event;
+        int i;
+        int sawReceipt = 0;
+
+        if (!build_world(&world)) return 1;
+        memset(&input, 0, sizeof(input));
+        memset(&result, 0, sizeof(result));
+        memset(&event, 0, sizeof(event));
+        world.party.mapIndex = 0;
+        world.partyMapIndex = 0;
+        world.party.mapX = 1;
+        world.party.mapY = 2;
+        world.party.championCount = 1;
+        world.party.champions[0].present = 1;
+        world.party.champions[0].hp.current = 1000;
+        world.party.champions[0].hp.maximum = 1000;
+        world.party.champions[0].cell = 0;
+        world.things->groups[0].next = THING_ENDOFLIST;
+        world.things->groups[0].creatureType = 23; /* Lord Chaos */
+        world.things->groups[0].count = 0;
+        world.things->groups[0].cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
+        world.things->groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+        world.things->groups[0].health[0] = 1000;
+        world.creatureAICount = 1;
+        world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+        world.creatureAI[0].creatureType = 23;
+        world.creatureAI[0].groupMapIndex = 0;
+        world.creatureAI[0].groupMapX = 1;
+        world.creatureAI[0].groupMapY = 1;
+        world.creatureAI[0].groupCells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
+        F0730_COMBAT_RngInit_Compat(&world.masterRng, (uint32_t)seed);
+
+        event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+        event.fireAtTick = world.gameTick;
+        event.mapIndex = 0;
+        event.mapX = 1;
+        event.mapY = 1;
+        event.aux0 = 0;
+        event.aux1 = 23;
+        event.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+        if (F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1 &&
+            F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK) {
+            for (i = 0; i < result.emissionCount; ++i) {
+                if (result.emissions[i].kind == EMIT_CREATURE_ATTACK &&
+                    result.emissions[i].payload[0] == 0 &&
+                    result.emissions[i].payload[1] == 0 &&
+                    result.emissions[i].payload[2] >= 0 &&
+                    result.emissions[i].payload[3] == 1) {
+                    sawReceipt = 1;
+                }
+            }
+            if (sawReceipt && world.projectiles.count == 1 &&
+                world.projectiles.entries[0].ownerKind == PROJECTILE_OWNER_CREATURE &&
+                world.projectiles.entries[0].ownerIndex == 0 &&
+                world.timeline.count >= 1) {
+                F0883_WORLD_Free_Compat(&world);
+                return 0;
+            }
+        }
+        F0883_WORLD_Free_Compat(&world);
+    }
+    fprintf(stderr, "FAIL: F0207 C38 projectile runtime receipt\n");
+    return 1;
+}
+
 static int test_lord_chaos_adjacent_random_retry(void) {
     struct GameWorld_Compat world;
     struct TickInput_Compat input;
@@ -1450,6 +1601,8 @@ int main(void) {
 
     F0883_WORLD_Free_Compat(&world);
     if (!ok) return 1;
+    if (test_f0209_active_group_aspect_persists_between_c38_c33() != 0) return 1;
+    if (test_f0207_c38_creature_projectile_has_runtime_receipt() != 0) return 1;
     if (test_lord_chaos_adjacent_random_retry() != 0) return 1;
     if (test_c006_generated_group_teleports_cross_map_before_link() != 0) return 1;
     if (test_c006_generated_group_multi_hop_teleporter_buzzes_each_audible_hop() != 0) return 1;

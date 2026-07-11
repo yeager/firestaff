@@ -409,6 +409,90 @@ int csb_v1_dsa_filter_movement_preprocess(
     return 0;
 }
 
+static int csb_v1_dsa_filter_run(CSB_V1_DSAFilterRuntime *runtime,
+    int dsa_id, uint32_t state, int action_ordinal, int *parameters,
+    int parameter_count, int flgs_inout[2])
+{
+    const CSB_V1_DSAImportedAction *action;
+    int saved_level;
+    int result;
+
+    if (!runtime || !runtime->programs || !runtime->runner || dsa_id < 0 ||
+        !parameters || parameter_count <= 0) return 0;
+    action = csb_v1_chaos_find_imported_action(runtime->programs, dsa_id,
+                                                state, action_ordinal);
+    if (!action) return 0;
+
+    /* CSBWin Monster.cpp:1134-1180 / 3222-3370 saves currentLevel, loads the
+     * filter's map context, and restores currentLevel after ProcessDSAFilter.
+     * This adapter has no map loader yet, so it preserves the same observable
+     * restoration guarantee around the source interpreter callback. */
+    saved_level = runtime->loaded_level;
+    result = runtime->runner(action, parameters, parameter_count, flgs_inout,
+                             runtime->runner_user);
+    runtime->loaded_level = saved_level;
+    return result > 0 ? 1 : 0;
+}
+
+int csb_v1_dsa_filter_attack_preprocess_live(
+    CSB_V1_AttackParameters *params, CSB_V1_DSAFilterRuntime *runtime)
+{
+    int p[9];
+    CSB_V1_AttackParameters candidate;
+
+    if (!params || !runtime) return 0;
+    candidate = *params;
+    p[0] = candidate.monsterID;
+    p[1] = candidate.monsterType;
+    p[2] = candidate.heroToDamage;
+    p[3] = candidate.supressPoison;
+    p[4] = candidate.missileType;
+    p[5] = candidate.missileRange;
+    p[6] = candidate.missileDamage;
+    p[7] = candidate.missileDecayRate;
+    p[8] = candidate.directionToParty;
+    if (!csb_v1_dsa_filter_run(runtime, runtime->attack_filter_dsa_id,
+            runtime->attack_filter_state, runtime->attack_filter_action,
+            p, (int)(sizeof(p) / sizeof(p[0])), NULL)) return 0;
+    candidate.monsterID = p[0];
+    candidate.monsterType = p[1];
+    candidate.heroToDamage = p[2];
+    candidate.supressPoison = (int16_t)p[3];
+    candidate.missileType = p[4];
+    candidate.missileRange = p[5];
+    candidate.missileDamage = p[6];
+    candidate.missileDecayRate = p[7];
+    candidate.directionToParty = p[8];
+    *params = candidate;
+    return 1;
+}
+
+int csb_v1_dsa_filter_movement_preprocess_live(
+    int level, int mapX, int mapY, int32_t monster, int partyLevel,
+    int partyX, int partyY, int flgs_inout[2],
+    CSB_V1_DSAFilterRuntime *runtime)
+{
+    int p[7];
+    int dsa_id;
+
+    if (!runtime || !flgs_inout || level < 0 || level >= 12) return 0;
+    dsa_id = runtime->movement_filter_dsa_id[level];
+    p[0] = level;
+    p[1] = mapX;
+    p[2] = mapY;
+    p[3] = (int)monster;
+    p[4] = partyLevel;
+    p[5] = partyX;
+    p[6] = partyY;
+    /* ProcessDSAFilter receives these seven values; the source interpreter
+     * exposes its resulting movement flags through the runner's user state. */
+    if (!csb_v1_dsa_filter_run(runtime, dsa_id,
+            runtime->movement_filter_state[level],
+            runtime->movement_filter_action[level], p,
+            (int)(sizeof(p) / sizeof(p[0])), flgs_inout)) return 0;
+    return 1;
+}
+
 /* ============================================================
  *  Fixed Possessions Drop
  *
