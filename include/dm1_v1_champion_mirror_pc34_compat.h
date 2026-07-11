@@ -298,50 +298,6 @@ int DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
 
 const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void);
 
-typedef DM1_V1_ChampionMirrorChampionPc34
-    Dm1V1ChampionMirrorChampionPc34Compat;
-typedef DM1_V1_ChampionMirrorClickStatePc34
-    Dm1V1ChampionMirrorClickStatePc34Compat;
-typedef DM1_V1_ChampionMirrorClickResultPc34
-    Dm1V1ChampionMirrorClickResultPc34Compat;
-typedef DM1_V1_ChampionMirrorFrontWallReceiptPc34
-    Dm1V1ChampionMirrorFrontWallReceiptPc34Compat;
-typedef DM1_V1_ChampionMirrorRenderReceiptPc34
-    Dm1V1ChampionMirrorRenderReceiptPc34Compat;
-typedef DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34
-    Dm1V1ChampionMirrorThingLayerBoundaryReceiptPc34Compat;
-typedef DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34
-    Dm1V1ChampionMirrorThingLayerConsumerReceiptPc34Compat;
-typedef DM1_V1_ChampionMirrorHostDrawReceiptPc34
-    Dm1V1ChampionMirrorHostDrawReceiptPc34Compat;
-
-#define DM1_V1_ChampionMirror_InitClickStatePc34Compat \
-    DM1_V1_ChampionMirror_InitClickStatePc34
-#define DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34Compat \
-    DM1_V1_ChampionMirror_F0358ChampionNamesHandsCommandPc34
-#define DM1_V1_ChampionMirror_F0380ShouldDispatchStatusBoxClickPc34Compat \
-    DM1_V1_ChampionMirror_F0380ShouldDispatchStatusBoxClickPc34
-#define DM1_V1_ChampionMirror_F0368SetLeaderPc34Compat \
-    DM1_V1_ChampionMirror_F0368SetLeaderPc34
-#define DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34Compat \
-    DM1_V1_ChampionMirror_F0367ClickChampionStatusBoxPc34
-#define DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34Compat \
-    DM1_V1_ChampionMirror_F0380ProcessStatusBoxClickPc34
-#define DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34Compat \
-    DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34
-#define DM1_V1_ChampionMirror_BuildRenderReceiptPc34Compat \
-    DM1_V1_ChampionMirror_BuildRenderReceiptPc34
-#define DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34Compat \
-    DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34
-#define DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34Compat \
-    DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34
-#define DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34Compat \
-    DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34
-#define DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34Compat \
-    DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34
-#define DM1_V1_ChampionMirror_SourceEvidencePc34Compat \
-    DM1_V1_ChampionMirror_SourceEvidencePc34
-
 #ifdef __cplusplus
 }
 #endif
