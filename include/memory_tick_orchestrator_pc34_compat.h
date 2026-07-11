@@ -336,6 +336,52 @@ int F0284_CHAMPION_SetPartyDirection_Compat(
     struct PartyState_Compat* party,
     int newDirection);
 
+/*
+ * ReDMCSB MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE (lines 799-907),
+ * non-party/non-group tail.  The group branch retains its dedicated C04
+ * active-group and deferred-event handling below; all ordinary floor
+ * objects, projectiles and explosions use this route for the source-list
+ * removal and destination-list insertion order.
+ *
+ * Coordinates are explicit because F0267 changes the current map while it
+ * resolves special squares.  Callers must supply a loaded original dungeon;
+ * this API never manufactures Thing records or square-first-Thing entries.
+ */
+struct F0267ThingMoveRequestPc34Compat {
+    unsigned short thing;
+    int sourceMapIndex;
+    int sourceMapX;
+    int sourceMapY;
+    int destinationMapIndex;
+    int destinationMapX;
+    int destinationMapY;
+};
+
+struct F0267ThingMoveResultPc34Compat {
+    int valid;
+    int moved;
+    int thingType;
+    int levitates;
+    int sourceSensorPasses;
+    int destinationSensorPasses;
+    int sensorDispatches;
+    int sensorDispatchOverflow;
+    int teleporterChainCount;
+    int pitChainCount;
+    int stairsChainCount;
+    int chainedMoveLimitHit;
+    int finalMapIndex;
+    int finalMapX;
+    int finalMapY;
+    int sourceUnlinked;
+    int destinationLinked;
+};
+
+int F0267_MOVE_MoveThingOnLoadedChain_Compat(
+    struct GameWorld_Compat* world,
+    const struct F0267ThingMoveRequestPc34Compat* request,
+    struct F0267ThingMoveResultPc34Compat* outResult);
+
 int F0886_ORCH_RunUntilCondition_Compat(
     struct GameWorld_Compat* world,
     const struct TickInput_Compat* inputs,

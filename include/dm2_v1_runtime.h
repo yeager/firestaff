@@ -38,6 +38,7 @@
 typedef struct {
     unsigned int generation;
     int runtime_frame_owned;
+    int is_outdoor;
     int gdat_provider_bound;
     int startup_title_gdat_blits;
     int startup_menu_gdat_blits;
@@ -46,39 +47,42 @@ typedef struct {
     int door_gdat_blits;
     int creature_gdat_blits;
     int floor_ceiling_gdat_blits;
+    int outdoor_sky_gdat_blits;
+    int outdoor_ground_gdat_blits;
     int wall_gdat_blits;
     int item_gdat_blits;
     int projectile_gdat_blits;
     int total_runtime_gdat_blits;
     int total_runtime_fallback_draws;
     int full_gdat_frame_valid;
+    int outdoor_gdat_frame_valid;
     int real_gdat_evidence_valid;
     int gdat_scene_control_ready;
     int gdat_scene_control_consumed;
-    int gdat_scene_light_consumed;
-    int gdat_scene_floor_anim_consumed;
-    int gdat_scene_weather_consumed;
     uint32_t gdat_scene_control_hash;
     uint32_t gdat_scene_control_present_mask;
     uint32_t gdat_scene_colorkey;
     uint32_t gdat_scene_flags;
+    int gdat_scene_material_index;
+    int gdat_scene_material_consumed;
     uint32_t gdat_scene_ambient_light;
     uint32_t gdat_scene_highest_light_level;
     uint32_t gdat_scene_void_random_fall;
     uint32_t gdat_scene_animated_floor;
-    uint32_t gdat_scene_consumed_mask;
-    uint32_t gdat_scene_consumption_hash;
-    int gdat_scene_weather_plan_ready;
-    uint32_t gdat_scene_weather_plan_hash;
-    int gdat_scene_weather_kind;
-    int gdat_scene_weather_intensity;
-    int gdat_scene_weather_density;
-    int gdat_scene_weather_scroll;
-    int gdat_scene_weather_alpha;
-    int gdat_scene_weather_lightning_flash;
-    uint32_t gdat_scene_weather_rain_color;
-    uint32_t gdat_scene_weather_fog_target_color;
-    uint32_t gdat_scene_weather_lightning_color;
+    uint32_t gdat_scene_rain;
+    uint32_t gdat_misty_map;
+    uint32_t gdat_thunder_position;
+    uint32_t gdat_ambient_darkness;
+    int gdat_scene_light_consumed;
+    int gdat_scene_weather_consumed;
+    int gdat_sprite_palette_consumed;
+    int gdat_interface_palette_ready;
+    int gdat_interface_palette_consumed;
+    int gdat_material_palette_floor_ceiling_consumed;
+    int gdat_material_palette_wall_consumed;
+    int gdat_material_palette_door_frame_consumed;
+    uint32_t gdat_interface_palette_hash;
+    uint8_t gdat_interface_palette16[16];
     int viewport_raw_gdat_asset_count;
     int viewport_decoded_gdat_asset_count;
     uint32_t viewport_raw_gdat_hash;
@@ -95,6 +99,7 @@ typedef struct {
 typedef struct {
     int ready;
     int map_graphics_style;
+    int scene_material_index;
     uint32_t hash;
     uint32_t present_mask;
     uint32_t query_count;
@@ -104,6 +109,13 @@ typedef struct {
     uint32_t highest_light_level;
     uint32_t void_random_fall;
     uint32_t animated_floor;
+    uint32_t scene_rain;
+    uint32_t misty_map;
+    uint32_t thunder_position;
+    uint32_t ambient_darkness;
+    int interface_palette_ready;
+    uint32_t interface_palette_hash;
+    uint8_t interface_palette16[16];
 } DM2_V1_RuntimeGraphicsSetSceneReceipt;
 #include "dm2_v1_weather.h"
 

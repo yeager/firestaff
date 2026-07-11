@@ -1306,6 +1306,10 @@ int theron_v1_boot_startup_menu_runtime_handoff_from_runtime_state_with_media_re
     int pointer_y);
 void theron_v1_boot_startup_ui_caller_receipt_init(
     Theron_V1_BootStartupUiCallerReceipt *receipt);
+/* A completed Track 02 atlas owns the startup frame; host render-plan
+ * primitives are only permitted while no authoritative atlas was drawn. */
+int theron_v1_boot_startup_host_render_plan_fallback_allowed(
+    const Theron_V1_BootStartupHostRenderReceipt *receipt);
 int theron_v1_boot_startup_ui_caller_from_full_start_receipt(
     const Theron_V1_BootStartupFullStartReceipt *receipt,
     int input_code,

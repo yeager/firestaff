@@ -223,6 +223,12 @@ typedef struct DM2_V1_StartupRuntimeHandoffReceipt {
     int title_frame_max;
     int title_frame_duration_ticks;
     int title_ready;
+    /* skproject fe7299.cpp: DM2_PLAY_MUSIC(0, true) immediately precedes
+     * DM2_SHOW_MENU_SCREEN. */
+    int music_cue;
+    int music_loop;
+    int music_cue_played;
+    int show_menu_screen_after_music;
     int initialize_v2_runtime;
     int initialize_hud_runtime;
     int initialize_touch_runtime;

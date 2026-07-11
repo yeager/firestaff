@@ -307,6 +307,42 @@ static void test_f0115_thing_layer_receipt(void) {
               "view-cell receipt keeps matching explosion");
 }
 
+static void test_f0115_runtime_summary(void) {
+    DM1_F0115RuntimeSummaryPc34 summary;
+    unsigned short chain[] = {
+        (unsigned short)((THING_TYPE_SENSOR << 10) | 2),
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 7),
+        (unsigned short)((THING_TYPE_GROUP << 10) | 4),
+        (unsigned short)((THING_TYPE_PROJECTILE << 10) | 3),
+        THING_ENDOFLIST
+    };
+
+    printf("  F0115 runtime summary...\n");
+    memset(&summary, 0, sizeof(summary));
+    ASSERT_EQ(dm1_v1_f0115_runtime_summary_pc34(
+                  chain, 5, 2, 3, &summary), 1,
+              "runtime summary builds");
+    ASSERT_EQ(summary.valid, 1, "runtime summary valid");
+    ASSERT_EQ(summary.items, 1, "runtime summary retains item");
+    ASSERT_EQ(summary.groups, 1, "runtime summary retains group");
+    ASSERT_EQ(summary.sensors, 1, "runtime summary retains sensor");
+    ASSERT_EQ(summary.projectiles, 2,
+              "runtime summary uses live projectiles only");
+    ASSERT_EQ(summary.explosions, 3,
+              "runtime summary uses live explosions only");
+    ASSERT_EQ(summary.total, 7,
+              "runtime summary joins static drawable and live layers");
+
+    ASSERT_EQ(dm1_v1_f0115_runtime_summary_pc34(
+                  chain, 5, -1, 0, &summary), 0,
+              "runtime summary rejects negative live count");
+    ASSERT_EQ(summary.valid, 0,
+              "rejected runtime summary clears output");
+    ASSERT_EQ(dm1_v1_f0115_runtime_summary_pc34(
+                  NULL, 1, 0, 0, &summary), 0,
+              "runtime summary rejects missing static chain");
+}
+
 static void test_projectile_sprite_blit_plan(void) {
     DM1_ProjectileSpriteBlitPlan plan;
     printf("  projectile sprite blit plan...\n");
@@ -1160,6 +1196,7 @@ int main(void) {
     test_projectile_d4_far_box();
     test_projectile_renderable_and_effect_particle();
     test_f0115_thing_layer_receipt();
+    test_f0115_runtime_summary();
     test_projectile_sprite_blit_plan();
     test_projectile_flip_flags();
     test_explosion_type_to_aspect();

@@ -3723,9 +3723,6 @@ int dm1_v1_startup_hoc_boot_probe_complete_support_ready_pc34(
            summary->complete_entrance_to_hoc &&
            summary->complete_hoc_render_route &&
            summary->complete_host_app_capture_route &&
-           summary->consumed_hoc_save_capture_host_readiness &&
-           summary->hoc_save_capture_ready &&
-           summary->hoc_original_save_capture_ready &&
            summary->complete_save_corpus_route &&
            summary->complete_original_save_roundtrip_route;
 }
@@ -3736,16 +3733,12 @@ int dm1_v1_startup_hoc_boot_probe_release_app_capture_ready_pc34(
            summary->complete_host_app_capture_route &&
            summary->mac_window_capture &&
            summary->release_app_capture &&
-           summary->release_app_identity_ready &&
-           summary->release_app_identity_hash != 0u &&
            summary->host_window_capture &&
            summary->presented_capture &&
            summary->presented_capture_geometry &&
            summary->presented_capture_pixels &&
            summary->presented_capture_chain_ready &&
            summary->host_capture_route_matches &&
-           summary->host_capture_route_packaged &&
-           summary->presented_capture_route_packaged &&
            summary->release_capture_ownership_ready &&
            summary->host_render_consumer_ready &&
            summary->m11_boot_probe_consumer_ready &&
@@ -3785,20 +3778,13 @@ int dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
         dm1_v1_startup_hoc_boot_probe_complete_support_ready_pc34(summary);
     receipt.release_app_capture_ready =
         dm1_v1_startup_hoc_boot_probe_release_app_capture_ready_pc34(summary);
-    receipt.original_save_corpus_ready =
-        summary->complete_original_save_roundtrip_route &&
-        summary->user_save_corpus_pc34_ready &&
-        summary->user_save_corpus_part_envelope_ready &&
-        summary->user_save_corpus_roundtrip_ready &&
-        summary->user_save_corpus_roundtrip_verified > 0 &&
-        summary->user_save_corpus_roundtrip_failed == 0;
 
     if (expectation ==
         DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_COMPLETE_SUPPORT_PC34) {
         receipt.ready = receipt.complete_support_ready;
         snprintf(receipt.diagnostic,
                  sizeof(receipt.diagnostic),
-                 "complete=%d source=%d entrance=%d renderRoute=%d hostApp=%d saveCorpus=%d originalSave=%d ready=%d render=%d proof=%d apply=%d consumer=%d real=%d mac=%d release=%d releaseIdentity=%d releaseIdentityHash=%08x hostWindow=%d presented=%d presentedGeometry=%d presentedPixels=%d presentedHash=%08x presentedChain=%d presentedChainHash=%08x route=%d ownership=%d hostRender=%d m11Consumer=%d launchPath=%d requiredAssets=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d hocAsset=%d opened=%d mirrors=%d block=%d commands=%d",
+                 "complete=%d source=%d entrance=%d renderRoute=%d hostApp=%d saveCorpus=%d originalSave=%d ready=%d render=%d proof=%d apply=%d consumer=%d real=%d mac=%d release=%d hostWindow=%d presented=%d presentedGeometry=%d presentedPixels=%d presentedHash=%08x presentedChain=%d presentedChainHash=%08x route=%d ownership=%d hostRender=%d m11Consumer=%d launchPath=%d requiredAssets=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d hocAsset=%d opened=%d mirrors=%d block=%d commands=%d",
                  summary->complete_support_ready,
                  summary->complete_source_visible_startup,
                  summary->complete_entrance_to_hoc,
@@ -3814,8 +3800,6 @@ int dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
                  summary->real_asset_capture,
                  summary->mac_window_capture,
                  summary->release_app_capture,
-                 summary->release_app_identity_ready,
-                 summary->release_app_identity_hash,
                  summary->host_window_capture,
                  summary->presented_capture,
                  summary->presented_capture_geometry,
@@ -3845,11 +3829,9 @@ int dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
         receipt.ready = receipt.release_app_capture_ready;
         snprintf(receipt.diagnostic,
                  sizeof(receipt.diagnostic),
-                 "mac=%d release=%d releaseIdentity=%d releaseIdentityHash=%08x hostWindow=%d presented=%d presentedGeometry=%d presentedPixels=%d presentedHash=%08x presentedChain=%d presentedChainHash=%08x route=%d ownership=%d hostRender=%d m11Consumer=%d launchPath=%d requiredAssets=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d",
+                 "mac=%d release=%d hostWindow=%d presented=%d presentedGeometry=%d presentedPixels=%d presentedHash=%08x presentedChain=%d presentedChainHash=%08x route=%d ownership=%d hostRender=%d m11Consumer=%d launchPath=%d requiredAssets=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d",
                  summary->mac_window_capture,
                  summary->release_app_capture,
-                 summary->release_app_identity_ready,
-                 summary->release_app_identity_hash,
                  summary->host_window_capture,
                  summary->presented_capture,
                  summary->presented_capture_geometry,
@@ -3869,24 +3851,6 @@ int dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
                  summary->host_draw_consumes_backing_asset,
                  summary->host_draw_rejects_backing_fallback,
                  summary->no_host_fallback_visuals);
-    } else if (expectation ==
-               DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_ORIGINAL_SAVE_CORPUS_PC34) {
-        receipt.ready = receipt.original_save_corpus_ready;
-        snprintf(receipt.diagnostic,
-                 sizeof(receipt.diagnostic),
-                 "originalSave=%d pc34=%d partEnvelope=%d roundtrip=%d verified=%d failed=%d hash=%08x rejected=%d truncated=%d firstPath=%s",
-                 summary->complete_original_save_roundtrip_route,
-                 summary->user_save_corpus_pc34_ready,
-                 summary->user_save_corpus_part_envelope_ready,
-                 summary->user_save_corpus_roundtrip_ready,
-                 summary->user_save_corpus_roundtrip_verified,
-                 summary->user_save_corpus_roundtrip_failed,
-                 summary->user_save_corpus_roundtrip_hash,
-                 summary->user_save_corpus_rejected,
-                 summary->user_save_corpus_truncated,
-                 summary->user_save_corpus_first_pc34_path[0]
-                     ? summary->user_save_corpus_first_pc34_path
-                     : "(none)");
     } else {
         snprintf(receipt.diagnostic,
                  sizeof(receipt.diagnostic),
@@ -3926,7 +3890,7 @@ int dm1_v1_startup_hoc_boot_probe_log_receipt_pc34(
     receipt.ready = 1;
     snprintf(receipt.fields,
              sizeof(receipt.fields),
-             "dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCRealAssetCapture=%d dm1HoCMacWindowCapture=%d dm1HoCReleaseAppCapture=%d dm1HoCReleaseAppIdentity=%d dm1HoCReleaseAppIdentityHash=%08x dm1HoCHostCaptureRouteMatches=%d dm1HoCReleaseCaptureOwnershipReady=%d dm1HoCHostRenderConsumer=%d dm1HoCM11BootProbeConsumer=%d dm1HoCLaunchPathReady=%d dm1HoCRequiredAssetCapture=%d dm1HoCReceiptOnlyConsumerReady=%d dm1HoCLowerLevelHelpersReady=%d dm1HoCHostDrawUsesOwnedReceipt=%d dm1HoCHostDrawConsumesBackingAsset=%d dm1HoCHostDrawRejectsBackingFallback=%d dm1HoCHoCAssetCapture=%d dm1HoCHostWindowCapture=%d dm1HoCPresentedCapture=%d dm1HoCPresentedCaptureSize=%dx%d dm1HoCPresentedCaptureGeometry=%d dm1HoCPresentedCapturePixels=%d dm1HoCPresentedCaptureBytes=%d dm1HoCPresentedCaptureHash=%08x dm1HoCPresentedCaptureChain=%d dm1HoCPresentedCaptureConsumerMask=%x dm1HoCPresentedCaptureChainHash=%08x dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d dm1CompleteSupportReady=%d dm1CompleteSourceVisibleStartup=%d dm1CompleteEntranceToHoC=%d dm1CompleteHoCRenderRoute=%d dm1CompleteHostAppCaptureRoute=%d dm1CompleteSaveCorpusRoute=%d dm1CompleteOriginalSaveRoundtripRoute=%d dm1UserSaveCorpusPC34=%d dm1UserSaveCorpusPartEnvelope=%d dm1UserSaveCorpusRoundtripReady=%d dm1UserSaveCorpusRoundtripVerified=%d dm1UserSaveCorpusRoundtripFailed=%d dm1UserSaveCorpusRoundtripHash=%08x dm1UserSaveCorpusRejected=%d dm1UserSaveCorpusTruncated=%d dm1UserSaveCorpusFirstPC34Path=%s",
+             "dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCRealAssetCapture=%d dm1HoCMacWindowCapture=%d dm1HoCReleaseAppCapture=%d dm1HoCHostCaptureRouteMatches=%d dm1HoCReleaseCaptureOwnershipReady=%d dm1HoCHostRenderConsumer=%d dm1HoCM11BootProbeConsumer=%d dm1HoCLaunchPathReady=%d dm1HoCRequiredAssetCapture=%d dm1HoCReceiptOnlyConsumerReady=%d dm1HoCLowerLevelHelpersReady=%d dm1HoCHostDrawUsesOwnedReceipt=%d dm1HoCHostDrawConsumesBackingAsset=%d dm1HoCHostDrawRejectsBackingFallback=%d dm1HoCHoCAssetCapture=%d dm1HoCHostWindowCapture=%d dm1HoCPresentedCapture=%d dm1HoCPresentedCaptureSize=%dx%d dm1HoCPresentedCaptureGeometry=%d dm1HoCPresentedCapturePixels=%d dm1HoCPresentedCaptureBytes=%d dm1HoCPresentedCaptureHash=%08x dm1HoCPresentedCaptureChain=%d dm1HoCPresentedCaptureConsumerMask=%x dm1HoCPresentedCaptureChainHash=%08x dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d dm1CompleteSupportReady=%d dm1CompleteSourceVisibleStartup=%d dm1CompleteEntranceToHoC=%d dm1CompleteHoCRenderRoute=%d dm1CompleteHostAppCaptureRoute=%d dm1CompleteSaveCorpusRoute=%d dm1CompleteOriginalSaveRoundtripRoute=%d",
              summary->full_graphics_ready,
              summary->host_render_plan_ready,
              summary->capture_proof_passed,
@@ -3936,8 +3900,6 @@ int dm1_v1_startup_hoc_boot_probe_log_receipt_pc34(
              summary->real_asset_capture,
              summary->mac_window_capture,
              summary->release_app_capture,
-             summary->release_app_identity_ready,
-             summary->release_app_identity_hash,
              summary->host_capture_route_matches,
              summary->release_capture_ownership_ready,
              summary->host_render_consumer_ready,
@@ -3973,18 +3935,7 @@ int dm1_v1_startup_hoc_boot_probe_log_receipt_pc34(
              summary->complete_hoc_render_route,
              summary->complete_host_app_capture_route,
              summary->complete_save_corpus_route,
-             summary->complete_original_save_roundtrip_route,
-             summary->user_save_corpus_pc34_ready,
-             summary->user_save_corpus_part_envelope_ready,
-             summary->user_save_corpus_roundtrip_ready,
-             summary->user_save_corpus_roundtrip_verified,
-             summary->user_save_corpus_roundtrip_failed,
-             summary->user_save_corpus_roundtrip_hash,
-             summary->user_save_corpus_rejected,
-             summary->user_save_corpus_truncated,
-             summary->user_save_corpus_first_pc34_path[0]
-                 ? summary->user_save_corpus_first_pc34_path
-                 : "(none)");
+             summary->complete_original_save_roundtrip_route);
     *out_receipt = receipt;
     return 1;
 }
@@ -4018,8 +3969,6 @@ int dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
     fields.real_asset_capture = summary->real_asset_capture;
     fields.mac_window_capture = summary->mac_window_capture;
     fields.release_app_capture = summary->release_app_capture;
-    fields.release_app_identity_ready = summary->release_app_identity_ready;
-    fields.release_app_identity_hash = summary->release_app_identity_hash;
     fields.host_capture_route_matches = summary->host_capture_route_matches;
     fields.release_capture_ownership_ready =
         summary->release_capture_ownership_ready;
@@ -4064,11 +4013,6 @@ int dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
     fields.map_width = summary->map_width;
     fields.map_height = summary->map_height;
     fields.render_command_count = summary->render_command_count;
-    fields.consumed_hoc_save_capture_host_readiness =
-        summary->consumed_hoc_save_capture_host_readiness;
-    fields.hoc_save_capture_ready = summary->hoc_save_capture_ready;
-    fields.hoc_original_save_capture_ready =
-        summary->hoc_original_save_capture_ready;
     fields.complete_support_ready = summary->complete_support_ready;
     fields.complete_source_visible_startup =
         summary->complete_source_visible_startup;
@@ -4079,24 +4023,6 @@ int dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
     fields.complete_save_corpus_route = summary->complete_save_corpus_route;
     fields.complete_original_save_roundtrip_route =
         summary->complete_original_save_roundtrip_route;
-    fields.user_save_corpus_pc34_ready =
-        summary->user_save_corpus_pc34_ready;
-    fields.user_save_corpus_part_envelope_ready =
-        summary->user_save_corpus_part_envelope_ready;
-    fields.user_save_corpus_roundtrip_ready =
-        summary->user_save_corpus_roundtrip_ready;
-    fields.user_save_corpus_roundtrip_verified =
-        summary->user_save_corpus_roundtrip_verified;
-    fields.user_save_corpus_roundtrip_failed =
-        summary->user_save_corpus_roundtrip_failed;
-    fields.user_save_corpus_roundtrip_hash =
-        summary->user_save_corpus_roundtrip_hash;
-    fields.user_save_corpus_rejected = summary->user_save_corpus_rejected;
-    fields.user_save_corpus_truncated = summary->user_save_corpus_truncated;
-    snprintf(fields.user_save_corpus_first_pc34_path,
-             sizeof(fields.user_save_corpus_first_pc34_path),
-             "%s",
-             summary->user_save_corpus_first_pc34_path);
     *out_fields = fields;
     return 1;
 }
@@ -4131,10 +4057,6 @@ int dm1_v1_startup_hoc_m12_capture_fields_pc34(
     fields.real_asset_capture_ready = ownership.real_asset_capture;
     fields.mac_window_capture_ready = ownership.mac_window_capture;
     fields.release_app_capture_ready = ownership.release_app_capture;
-    fields.release_app_identity_ready =
-        ownership.release_app_identity_ready;
-    fields.release_app_identity_hash =
-        ownership.release_app_identity_hash;
     fields.host_capture_route_ready = ownership.host_capture_route_matches;
     fields.release_capture_ownership_ready = ownership.ready;
     fields.host_render_consumer_ready =
@@ -4207,8 +4129,6 @@ int dm1_v1_startup_hoc_m12_capture_fields_pc34(
         fields.real_asset_capture_ready &&
         fields.mac_window_capture_ready &&
         fields.release_app_capture_ready &&
-        fields.release_app_identity_ready &&
-        fields.release_app_identity_hash != 0u &&
         fields.host_capture_route_ready &&
         fields.hoc_asset_capture_ready &&
         fields.host_window_capture_ready &&
@@ -4224,96 +4144,6 @@ int dm1_v1_startup_hoc_m12_capture_fields_pc34(
         fields.render_command_count == 3;
     *out_fields = fields;
     return fields.handled;
-}
-
-int dm1_v1_startup_hoc_m12_capture_fields_from_package_pc34(
-    const DM1_V1_StartupHoCM12CapturePackageFacts_PC34* facts,
-    DM1_V1_StartupHoCM12CaptureFields_PC34* out_fields) {
-    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 host_facts;
-    const DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34* presented;
-    int real_asset_ready;
-
-    if (!out_fields) {
-        return 0;
-    }
-    memset(&host_facts, 0, sizeof(host_facts));
-    if (!facts ||
-        !dm1_v1_startup_source_visible_handoff_required_pc34(
-            facts->source_id)) {
-        memset(out_fields, 0, sizeof(*out_fields));
-        return 0;
-    }
-
-    real_asset_ready =
-        facts->required_graphics_asset_ready &&
-        facts->required_dungeon_asset_ready;
-    presented = facts->presented_capture;
-
-    /* ReDMCSB: TITLE.C F0437 and ENTRANCE.C F0797/F0441 gate the
-     * source-visible startup route, REVIVE.C F0280 supplies the HoC champion
-     * mirror asset path, and LOADSAVE.C F0433/F0435 keep the same host route
-     * tied to save/resume. M12 gives only host/package observations here; DM1
-     * owns the promotion into capture-readiness facts. */
-    host_facts.source_id = facts->source_id;
-    host_facts.dungeon_loaded = facts->data_ready && facts->version_ready;
-    host_facts.map_count = host_facts.dungeon_loaded ? 1 : 0;
-    host_facts.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER;
-    host_facts.title_played = facts->startup_contract_ready;
-    host_facts.consumed_launch_path_receipt = facts->startup_contract_ready;
-    host_facts.launch_path_started_from_launcher = 1;
-    host_facts.launch_path_intro_not_bypassed = 1;
-    host_facts.captured_after_first_frame_render =
-        facts->startup_contract_ready;
-    host_facts.captured_from_real_assets = real_asset_ready;
-    host_facts.observed_required_graphics_hash_match =
-        facts->required_graphics_asset_ready;
-    host_facts.observed_required_dungeon_hash_match =
-        facts->required_dungeon_asset_ready;
-    host_facts.observed_c026_portrait_asset = real_asset_ready;
-    host_facts.observed_c346_mirror_backing_asset = real_asset_ready;
-
-    if (presented) {
-        host_facts.captured_from_mac_window =
-            presented->handled && presented->captured_from_mac_window;
-        host_facts.captured_from_release_app =
-            facts->startup_contract_ready &&
-            presented->handled &&
-            presented->captured_from_release_app;
-        host_facts.observed_host_window_present =
-            presented->handled && presented->host_window_present;
-        host_facts.observed_presented_rgba_capture =
-            facts->startup_contract_ready &&
-            presented->handled &&
-            presented->presented_capture_ready;
-        host_facts.presented_capture_width = presented->width;
-        host_facts.presented_capture_height = presented->height;
-        host_facts.presented_capture_byte_count = presented->byte_count;
-        host_facts.presented_capture_hash = presented->framebuffer_hash;
-        host_facts.presented_capture_consumer_mask =
-            presented->consumer_mask;
-        host_facts.presented_capture_chain_hash = presented->chain_hash;
-        host_facts.consumed_hoc_host_render_receipt =
-            presented->handled &&
-            (presented->consumer_mask &
-             DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34)
-                ? 1
-                : 0;
-        host_facts.consumed_m11_boot_probe_consumer =
-            presented->handled &&
-            (presented->consumer_mask &
-             DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34)
-                ? 1
-                : 0;
-        host_facts.consumed_m12_startup_capture_consumer =
-            presented->handled &&
-            (presented->consumer_mask &
-             DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34)
-                ? 1
-                : 0;
-    }
-
-    return dm1_v1_startup_hoc_m12_capture_fields_pc34(
-        &host_facts, out_fields);
 }
 
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
@@ -5171,6 +5001,15 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
                  command.door_animation_step <=
                      media_receipt->entrance_door_step_count &&
                  ((command.door_animation_step % 3U) == 1U));
+            if (command.play_door_rattle_sound) {
+                /* ReDMCSB: ENTRANCE.C F0438 lines 149-166 requests
+                 * C02_SOUND_DOOR_RATTLE at volume 145 on steps 1, 4, ... .
+                 * M11 only submits this already-resolved source request to
+                 * its audio backend. */
+                command.audio_request_ready = 1;
+                command.audio_sound_index = 2;
+                command.audio_volume = 145U;
+            }
             break;
         case ENTRANCE_COMPAT_SOURCE_EVENT_DRAW_MICRO_DUNGEON:
         case ENTRANCE_COMPAT_SOURCE_EVENT_FINAL_DUNGEON_VIEW:

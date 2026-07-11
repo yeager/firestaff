@@ -374,6 +374,12 @@ static void test_decode_envelope_progression_when_zlib(void) {
                 "envelope inflate_status OK");
     expect_true(envelope.inflate_payload_size == sizeof(payload),
                 "envelope inflate_payload_size matches fixture");
+    expect_true(envelope.body_evidence.captured == 1 &&
+                    envelope.body_evidence.gzip_trailer_verified == 1,
+                "envelope captures verified gzip body evidence");
+    expect_true(envelope.body_evidence.payload_size == sizeof(payload) &&
+                    envelope.body_evidence.gzip_trailer_isize == sizeof(payload),
+                "envelope body evidence preserves authenticated payload size");
     expect_true(envelope.progression.restored == 1,
                 "envelope progression.restored=1");
     expect_true(envelope.progression.current_dungeon ==
@@ -421,6 +427,9 @@ static void test_decode_envelope_party_when_zlib(void) {
     expect_true(envelope.party.party_gold == 777u, "party envelope gold");
     expect_true(envelope.party.imported_body_count == THERON_MAX_CHAMPIONS,
                 "party envelope imported body count");
+    expect_true(envelope.body_evidence.payload_checksum32 != 0u &&
+                    envelope.body_evidence.gzip_trailer_verified == 1,
+                "party envelope carries neutral verified body fingerprint");
     expect_true(envelope.progression.current_dungeon ==
                     THERON_DUNGEON_3_ABYSS_OF_FLAMES,
                 "party envelope progression current dungeon");
@@ -462,6 +471,260 @@ static void test_decode_envelope_real_body_unsupported(void) {
                 "tiny envelope kind NONE");
     expect_true(envelope.inflate_status == THERON_V1_SRM_PAYLOAD_PROBE_BAD_INPUT,
                 "tiny envelope inflate_status BAD_INPUT");
+}
+
+static void test_decode_envelope_rejects_bad_gzip_trailer_when_zlib(void) {
+#if FIRESTAFF_HAS_ZLIB
+    uint8_t payload[44];
+    uint8_t srm_bytes[128];
+    size_t srm_size = sizeof(srm_bytes);
+    uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    Theron_V1SrmEnvelopeReceipt envelope;
+    Theron_V1SrmEnvelopeKind kind;
+
+    build_progression_payload(payload);
+    expect_true(build_synthetic_gzip_stream(payload, sizeof(payload),
+                                             srm_bytes, sizeof(srm_bytes),
+                                             &srm_size) == 1,
+                "bad-trailer fixture gzip stream built");
+    srm_bytes[srm_size - 8u] ^= 0x01u;
+    memset(&envelope, 0xCD, sizeof(envelope));
+    memset(scratch, 0, sizeof(scratch));
+    kind = theron_v1_srm_decode_envelope(srm_bytes, srm_size,
+                                         scratch, sizeof(scratch),
+                                         &envelope);
+    expect_true(kind == THERON_V1_SRM_ENVELOPE_KIND_NONE,
+                "bad gzip trailer cannot produce an envelope");
+    expect_true(envelope.inflate_status ==
+                    THERON_V1_SRM_PAYLOAD_PROBE_TRAILER_MISMATCH,
+                "bad gzip trailer has typed mismatch status");
+    expect_true(envelope.body_evidence.captured == 0,
+                "bad gzip trailer cannot create body evidence");
+#else
+    skip_test("gzip trailer validation needs zlib (ZLIB_UNAVAILABLE)");
+    expect_true(1, "gzip trailer validation needs zlib (placeholder)");
+#endif
+}
+
+static void test_decode_envelope_rejects_non_single_member_gzip_when_zlib(void) {
+#if FIRESTAFF_HAS_ZLIB
+    uint8_t payload[44];
+    uint8_t member[128];
+    uint8_t combined[256];
+    size_t member_size = sizeof(member);
+    uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    Theron_V1SrmEnvelopeReceipt envelope;
+    Theron_V1SrmEnvelopeKind kind;
+
+    build_progression_payload(payload);
+    expect_true(build_synthetic_gzip_stream(payload, sizeof(payload),
+                                             member, sizeof(member),
+                                             &member_size) == 1,
+                "single-member fixture gzip stream built");
+    memcpy(combined, member, member_size);
+    memcpy(combined + member_size, member, member_size);
+    memset(&envelope, 0xCD, sizeof(envelope));
+    memset(scratch, 0, sizeof(scratch));
+    kind = theron_v1_srm_decode_envelope(combined, member_size * 2u,
+                                         scratch, sizeof(scratch),
+                                         &envelope);
+    expect_true(kind == THERON_V1_SRM_ENVELOPE_KIND_NONE,
+                "concatenated gzip members cannot produce an envelope");
+    expect_true(envelope.inflate_status ==
+                    THERON_V1_SRM_PAYLOAD_PROBE_TRAILING_DATA,
+                "concatenated gzip members have typed trailing-data status");
+    expect_true(envelope.body_evidence.captured == 0,
+                "concatenated gzip members cannot create body evidence");
+
+    /* Insert an FHCRC field with a deliberately invalid value.  The raw
+     * DEFLATE payload and trailer remain intact, isolating header validation. */
+    memmove(member + 12u, member + 10u, member_size - 10u);
+    member[3] |= 0x02u;
+    member[10] = 0u;
+    member[11] = 0u;
+    memset(&envelope, 0xCD, sizeof(envelope));
+    kind = theron_v1_srm_decode_envelope(member, member_size + 2u,
+                                         scratch, sizeof(scratch),
+                                         &envelope);
+    expect_true(kind == THERON_V1_SRM_ENVELOPE_KIND_NONE,
+                "invalid gzip FHCRC cannot produce an envelope");
+    expect_true(envelope.inflate_status ==
+                    THERON_V1_SRM_PAYLOAD_PROBE_INFLATE_FAILED,
+                "invalid gzip FHCRC fails before body inflate");
+#else
+    skip_test("single-member gzip validation needs zlib (ZLIB_UNAVAILABLE)");
+    expect_true(1, "single-member gzip validation placeholder");
+#endif
+}
+
+static void test_authenticated_body_evidence_catalog(void) {
+#if FIRESTAFF_HAS_ZLIB
+    uint8_t payload_a[44];
+    uint8_t payload_b[44];
+    uint8_t gzip_a[128];
+    uint8_t gzip_b[128];
+    uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    size_t gzip_a_size = sizeof(gzip_a);
+    size_t gzip_b_size = sizeof(gzip_b);
+    Theron_V1SrmEnvelopeReceipt envelopes[THERON_V1_SRM_DISK_SLOT_COUNT];
+    Theron_V1SrmBodyEvidenceCatalog catalog;
+
+    build_progression_payload(payload_a);
+    memcpy(payload_b, payload_a, sizeof(payload_b));
+    payload_b[12u] ^= 0x40u;
+    if (!build_synthetic_gzip_stream(payload_a, sizeof(payload_a),
+                                     gzip_a, sizeof(gzip_a), &gzip_a_size) ||
+        !build_synthetic_gzip_stream(payload_b, sizeof(payload_b),
+                                     gzip_b, sizeof(gzip_b), &gzip_b_size)) {
+        skip_test("authenticated body evidence catalog: gzip fixture unavailable");
+        return;
+    }
+
+    memset(envelopes, 0, sizeof(envelopes));
+    memset(scratch, 0, sizeof(scratch));
+    (void)theron_v1_srm_decode_envelope(gzip_a, gzip_a_size, scratch,
+                                         sizeof(scratch), &envelopes[0]);
+    envelopes[0].slot_index = 0;
+    memset(scratch, 0, sizeof(scratch));
+    (void)theron_v1_srm_decode_envelope(gzip_a, gzip_a_size, scratch,
+                                         sizeof(scratch), &envelopes[2]);
+    envelopes[2].slot_index = 2;
+    memset(scratch, 0, sizeof(scratch));
+    (void)theron_v1_srm_decode_envelope(gzip_b, gzip_b_size, scratch,
+                                         sizeof(scratch), &envelopes[4]);
+    envelopes[4].slot_index = 4;
+
+    expect_true(theron_v1_srm_catalog_body_evidence(
+                    envelopes, THERON_V1_SRM_DISK_SLOT_COUNT, &catalog) == 1,
+                "authenticated body evidence catalog accepts envelope set");
+    expect_true(catalog.authenticated_slot_count == 3u,
+                "authenticated body evidence catalog counts verified bodies");
+    expect_true(catalog.fingerprint_group_count == 2u,
+                "authenticated body evidence catalog separates opaque fingerprints");
+    expect_true(catalog.first_authenticated_slot == 0,
+                "authenticated body evidence catalog reports first slot");
+    expect_true(catalog.fingerprint_group_for_slot[0] ==
+                    catalog.fingerprint_group_for_slot[2] &&
+                    catalog.fingerprint_group_for_slot[4] !=
+                    catalog.fingerprint_group_for_slot[0],
+                "authenticated body evidence catalog groups only matching fingerprints");
+    expect_true(catalog.fingerprint_group_for_slot[1] == -1 &&
+                    catalog.catalog_checksum != 0u,
+                "authenticated body evidence catalog keeps unauthenticated slots ungrouped");
+#else
+    skip_test("authenticated body evidence catalog needs zlib (ZLIB_UNAVAILABLE)");
+    expect_true(1, "authenticated body evidence catalog placeholder");
+#endif
+}
+
+static void test_authenticated_body_evidence_comparison(void) {
+#if FIRESTAFF_HAS_ZLIB
+    uint8_t payload_a[44];
+    uint8_t payload_b[44];
+    uint8_t gzip_a[128];
+    uint8_t gzip_b[128];
+    uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    uint8_t left2_payload[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    uint8_t right2_payload[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    size_t gzip_a_size = sizeof(gzip_a);
+    size_t gzip_b_size = sizeof(gzip_b);
+    size_t left2_size = 0u;
+    size_t right2_size = 0u;
+    Theron_V1SrmEnvelopeReceipt left[THERON_V1_SRM_DISK_SLOT_COUNT];
+    Theron_V1SrmEnvelopeReceipt right[THERON_V1_SRM_DISK_SLOT_COUNT];
+    Theron_V1SrmBodyEvidenceComparison comparison;
+    Theron_V1SrmBodyEvidenceDelta delta;
+
+    build_progression_payload(payload_a);
+    memcpy(payload_b, payload_a, sizeof(payload_b));
+    payload_b[12u] ^= 0x40u;
+    payload_b[14u] ^= 0x20u;
+    payload_b[15u] ^= 0x80u;
+    if (!build_synthetic_gzip_stream(payload_a, sizeof(payload_a), gzip_a,
+                                     sizeof(gzip_a), &gzip_a_size) ||
+        !build_synthetic_gzip_stream(payload_b, sizeof(payload_b), gzip_b,
+                                     sizeof(gzip_b), &gzip_b_size)) {
+        skip_test("authenticated body evidence comparison: gzip fixture unavailable");
+        return;
+    }
+    memset(left, 0, sizeof(left));
+    memset(right, 0, sizeof(right));
+    memset(scratch, 0, sizeof(scratch));
+    (void)theron_v1_srm_decode_envelope(gzip_a, gzip_a_size, scratch,
+                                         sizeof(scratch), &left[0]);
+    left[0].slot_index = 0;
+    memset(scratch, 0, sizeof(scratch));
+    (void)theron_v1_srm_decode_envelope(gzip_b, gzip_b_size, scratch,
+                                         sizeof(scratch), &left[2]);
+    expect_true(theron_v1_srm_probe_gzip_payload(
+                    gzip_b, gzip_b_size, left2_payload,
+                    sizeof(left2_payload), &left2_size) ==
+                    THERON_V1_SRM_PAYLOAD_PROBE_OK,
+                "authenticated payload delta materializes left body");
+    left[2].slot_index = 2;
+    memset(scratch, 0, sizeof(scratch));
+    (void)theron_v1_srm_decode_envelope(gzip_a, gzip_a_size, scratch,
+                                         sizeof(scratch), &right[0]);
+    right[0].slot_index = 0;
+    memset(scratch, 0, sizeof(scratch));
+    (void)theron_v1_srm_decode_envelope(gzip_a, gzip_a_size, scratch,
+                                         sizeof(scratch), &right[2]);
+    expect_true(theron_v1_srm_probe_gzip_payload(
+                    gzip_a, gzip_a_size, right2_payload,
+                    sizeof(right2_payload), &right2_size) ==
+                    THERON_V1_SRM_PAYLOAD_PROBE_OK,
+                "authenticated payload delta materializes right body");
+    right[2].slot_index = 2;
+
+    expect_true(theron_v1_srm_compare_body_evidence(
+                    left, THERON_V1_SRM_DISK_SLOT_COUNT,
+                    right, THERON_V1_SRM_DISK_SLOT_COUNT, &comparison) == 1,
+                "authenticated body evidence comparison accepts two receipt sets");
+    expect_true(comparison.left_authenticated_slot_mask == 0x5u &&
+                    comparison.right_authenticated_slot_mask == 0x5u &&
+                    comparison.comparable_slot_mask == 0x5u,
+                "authenticated body evidence comparison retains only shared authenticated slots");
+    expect_true(comparison.matching_slot_mask == 0x1u &&
+                    comparison.mismatch_slot_mask == 0x4u &&
+                    comparison.comparison_checksum != 0u,
+                "authenticated body evidence comparison reports opaque exact matches and mismatches");
+    expect_true(theron_v1_srm_compare_authenticated_payloads(
+                    &left[2], left2_payload, left2_size,
+                    &right[2], right2_payload, right2_size,
+                    &delta) == 1,
+                "authenticated payload delta accepts matching authenticated receipts");
+    expect_true(delta.left_payload_size == sizeof(payload_b) &&
+                    delta.right_payload_size == sizeof(payload_a) &&
+                    delta.shared_prefix_bytes == 12u &&
+                    delta.shared_suffix_bytes == 28u &&
+                    delta.differing_byte_count == 3u &&
+                    delta.delta_checksum != 0u,
+                "authenticated payload delta reports position-bound opaque byte layout");
+    expect_true(delta.differing_run_count == 2u &&
+                    delta.retained_run_count == 2u &&
+                    delta.longest_differing_run_bytes == 2u &&
+                    delta.differing_runs_truncated == 0 &&
+                    delta.differing_runs[0].offset == 12u &&
+                    delta.differing_runs[0].byte_count == 1u &&
+                    delta.differing_runs[1].offset == 14u &&
+                    delta.differing_runs[1].byte_count == 2u,
+                "authenticated payload delta retains bounded opaque change topology");
+    left2_payload[12u] ^= 0x40u;
+    expect_true(theron_v1_srm_compare_authenticated_payloads(
+                    &left[2], left2_payload, left2_size,
+                    &right[2], right2_payload, right2_size,
+                    &delta) == 0,
+                "authenticated payload delta rejects bytes that do not match receipt fingerprints");
+    left[4] = left[0];
+    left[4].slot_index = 0;
+    expect_true(theron_v1_srm_compare_body_evidence(
+                    left, THERON_V1_SRM_DISK_SLOT_COUNT,
+                    right, THERON_V1_SRM_DISK_SLOT_COUNT, &comparison) == 0,
+                "authenticated body evidence comparison rejects duplicate authenticated slots");
+#else
+    skip_test("authenticated body evidence comparison needs zlib (ZLIB_UNAVAILABLE)");
+    expect_true(1, "authenticated body evidence comparison placeholder");
+#endif
 }
 
 static void test_decode_path_skips_when_absent(void) {
@@ -713,6 +976,10 @@ int main(void) {
     test_decode_envelope_progression_when_zlib();
     test_decode_envelope_party_when_zlib();
     test_decode_envelope_real_body_unsupported();
+    test_decode_envelope_rejects_bad_gzip_trailer_when_zlib();
+    test_decode_envelope_rejects_non_single_member_gzip_when_zlib();
+    test_authenticated_body_evidence_catalog();
+    test_authenticated_body_evidence_comparison();
     test_decode_path_skips_when_absent();
     test_decode_path_slot_file_roundtrip();
     test_probe_slot0_envelope_via_env_override();

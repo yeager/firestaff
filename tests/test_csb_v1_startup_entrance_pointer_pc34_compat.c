@@ -1,5 +1,6 @@
 #include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
+#include "csb_v1_boot.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
@@ -88,6 +89,57 @@ static void check(int condition, const char *message)
     }
 }
 
+static int build_render_plan_from_host_receipt(
+    const CSB_V1_StartupRenderState_PC34 *state,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+    CSB_V1_StartupPresentationReceipt_PC34 receipt;
+    CSB_V1_BootProfile profile;
+    const void *boot_profile = NULL;
+
+    if (!state || !out_plan) {
+        return 0;
+    }
+    if (state->runtime_start_valid) {
+        memset(&profile, 0, sizeof(profile));
+        profile.runtime.party_x = state->runtime_start_x;
+        profile.runtime.party_y = state->runtime_start_y;
+        profile.runtime.party_dir = state->runtime_start_dir;
+        boot_profile = &profile;
+    }
+    if (!csb_v1_startup_host_facts_from_runtime_state_pc34(
+            &facts,
+            state->title_active,
+            state->title_frame,
+            (int)csb_v1_startup_title_source_step_for_frame_pc34(
+                state->title_frame),
+            state->entrance_active,
+            state->entrance_source_step,
+            0,
+            state->credits_active,
+            state->credits_active ? 1 : 0,
+            state->opening_active,
+            state->opening_delay_ticks,
+            state->opening_step,
+            0,
+            state->entrance_frame,
+            state->utility_overlay_active,
+            0,
+            0,
+            0,
+            NULL,
+            state->resume_available,
+            NULL,
+            boot_profile) ||
+        !csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+            &facts, &receipt)) {
+        return 0;
+    }
+    *out_plan = receipt.render_plan;
+    return 1;
+}
+
 static void expect_action(const char *message,
                           int x,
                           int y,
@@ -112,7 +164,6 @@ int main(void)
     CSB_V1_StartupTickState_PC34 tick;
     CSB_V1_StartupTickResult_PC34 result;
     CSB_V1_StartupRenderState_PC34 render_state;
-    CSB_V1_StartupCommandStateRequest_PC34 command_request;
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupCommandStateReceipt_PC34 command_state_receipt;
@@ -155,41 +206,6 @@ int main(void)
               material.shadow_dy == 1,
           "startup shadow text material owns CSB fallback shadow");
 
-    memset(&command_request, 0, sizeof(command_request));
-    command_request.title_active = 2;
-    command_request.title_frame = 37;
-    command_request.title_source_step =
-        CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
-    command_request.entrance_active = 1;
-    command_request.entrance_source_step =
-        CSB_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34;
-    command_request.entrance_dismissed = 0;
-    command_request.credits_active = 1;
-    command_request.credits_remaining_ticks = 444;
-    command_request.opening_active = 3;
-    command_request.opening_delay_ticks = 12;
-    command_request.opening_step = 4;
-    command_request.pending_command =
-        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
-    memset(&command_state, 0, sizeof(command_state));
-    check(csb_v1_startup_command_state_from_request_pc34(
-              &command_request,
-              &command_state) &&
-              command_state.title_active == 1 &&
-              command_state.title_frame == 37 &&
-              command_state.title_source_step ==
-                  CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
-              command_state.entrance_active == 1 &&
-              command_state.entrance_source_step ==
-                  CSB_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34 &&
-              command_state.credits_active == 1 &&
-              command_state.credits_remaining_ticks == 444 &&
-              command_state.opening_active == 1 &&
-              command_state.opening_delay_ticks == 12 &&
-              command_state.opening_step == 4 &&
-              command_state.pending_command ==
-                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
-          "startup command state request owns M11 raw field normalization");
     memset(&command_state, 0, sizeof(command_state));
     check(csb_v1_startup_command_state_from_facts_pc34(
               2,
@@ -210,7 +226,7 @@ int main(void)
               command_state.credits_remaining_ticks == 444 &&
               command_state.pending_command ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
-          "startup command state facts helper owns M11 field adapter");
+          "startup command state facts helper owns CSB field adapter");
     memset(&command_state_receipt, 0, sizeof(command_state_receipt));
     check(csb_v1_startup_command_state_receipt_from_state_pc34(
               &command_state,
@@ -239,7 +255,7 @@ int main(void)
               command_state_receipt.opening_active == 1 &&
               command_state_receipt.pending_command ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
-          "startup command state receipt facts helper owns M11 copy contract");
+          "startup command state receipt facts helper owns CSB copy contract");
     memset(&command_state_receipt, 0, sizeof(command_state_receipt));
     check(csb_v1_startup_init_command_state_receipt_pc34(
               0,
@@ -453,7 +469,7 @@ int main(void)
     render_state.entrance_active = 1;
     render_state.title_active = 1;
     render_state.title_frame = 0;
-    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+    check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
               plan.source_asset_id == 1 &&
               plan.title_source_step == 1 &&
@@ -536,7 +552,7 @@ int main(void)
 
     render_state.title_frame =
         csb_v1_startup_title_presents_ticks_pc34();
-    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+    check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
               plan.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
@@ -573,7 +589,7 @@ int main(void)
     render_state.title_frame =
         csb_v1_startup_title_presents_ticks_pc34() +
         csb_v1_startup_title_chaos_zoom_ticks_pc34() - 1;
-    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+    check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
               plan.title_source_x == 0 &&
@@ -591,7 +607,7 @@ int main(void)
 
     render_state.title_frame =
         csb_v1_startup_title_total_ticks_pc34() - 1;
-    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+    check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
               plan.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
@@ -623,7 +639,7 @@ int main(void)
     memset(&render_state, 0, sizeof(render_state));
     render_state.entrance_active = 1;
     render_state.entrance_source_step = 2;
-    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+    check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34 &&
               plan.title_special_palette == -1 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
@@ -646,7 +662,7 @@ int main(void)
     render_state.runtime_start_x = 5;
     render_state.runtime_start_y = 7;
     render_state.runtime_start_dir = 2;
-    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+    check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               plan.source_asset_id == 4 &&
               plan.surface_dest_x == 0 &&
@@ -767,7 +783,7 @@ int main(void)
                   CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34,
           "startup render plan owns closed entrance command order");
     render_state.utility_overlay_active = 1;
-    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+    check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               !plan.fallback_status_visible &&
               !plan.fallback_detail_visible &&
               plan.fallback_runtime_detail_visible &&
@@ -784,7 +800,7 @@ int main(void)
 
     render_state.utility_overlay_active = 0;
     render_state.entrance_frame = 12;
-    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+    check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               !plan.blink_prompt_visible &&
               plan.fallback_text_row_count == 5 &&
               !plan.fallback_text_rows[4].visible,
@@ -793,7 +809,7 @@ int main(void)
     memset(&render_state, 0, sizeof(render_state));
     render_state.entrance_active = 1;
     render_state.credits_active = 1;
-    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+    check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34 &&
               plan.source_asset_id == 5 &&
               plan.surface_dest_x == 0 &&
@@ -840,7 +856,7 @@ int main(void)
     render_state.opening_active = 1;
     render_state.opening_delay_ticks = 1;
     render_state.opening_step = 2;
-    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+    check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 &&
               plan.source_asset_id == 4 &&
@@ -889,7 +905,7 @@ int main(void)
           "startup render plan owns door pre-open command order");
 
     render_state.opening_delay_ticks = 0;
-    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+    check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
@@ -922,11 +938,11 @@ int main(void)
               plan.opening_composite_right_asset_id == 3 &&
               plan.opening_composite_animation_step == 2 &&
               plan.opening_composite_left_box_x == 0 &&
-              plan.opening_composite_left_box_y == 0 &&
+              plan.opening_composite_left_box_y == 28 &&
               plan.opening_composite_left_box_w == 97 &&
               plan.opening_composite_left_box_h == 161 &&
               plan.opening_composite_right_box_x == 113 &&
-              plan.opening_composite_right_box_y == 0 &&
+              plan.opening_composite_right_box_y == 28 &&
               plan.opening_composite_right_box_w == 119 &&
               plan.opening_composite_right_box_h == 161 &&
               plan.opening_composite_left_source_x == 0 &&
@@ -965,15 +981,18 @@ int main(void)
               !command_state.opening_active &&
               command_state.pending_command == 0,
           "startup command state initializes new-game title");
-    check(csb_v1_startup_render_state_from_command_state_pc34(
-              &command_state,
-              37,
-              1,
-              1,
-              12,
-              22,
-              3,
-              &render_state) &&
+    memset(&render_state, 0, sizeof(render_state));
+    render_state.entrance_active = command_state.entrance_active;
+    render_state.entrance_frame = 37;
+    render_state.title_active = command_state.title_active;
+    render_state.title_frame = command_state.title_frame;
+    render_state.entrance_source_step = command_state.entrance_source_step;
+    render_state.utility_overlay_active = 1;
+    render_state.runtime_start_valid = 1;
+    render_state.runtime_start_x = 12;
+    render_state.runtime_start_y = 22;
+    render_state.runtime_start_dir = 3;
+    check(
               render_state.entrance_active == command_state.entrance_active &&
               render_state.entrance_frame == 37 &&
               render_state.title_active == command_state.title_active &&
@@ -985,7 +1004,7 @@ int main(void)
               render_state.runtime_start_x == 12 &&
               render_state.runtime_start_y == 22 &&
               render_state.runtime_start_dir == 3,
-          "startup render state is derived from command state by CSB module");
+          "startup render state fixture feeds CSB render plan without public request wrapper");
 
     memset(&host_facts, 0, sizeof(host_facts));
     host_facts.title_active = command_state.title_active;
@@ -1128,28 +1147,6 @@ int main(void)
     check(csb_v1_startup_entrance_accepts_input_from_host_facts_pc34(
               &host_facts),
           "startup entrance gate host facts helper accepts wait-loop input");
-    {
-        CSB_V1_StartupCommandStateRequest_PC34 request;
-
-        memset(&request, 0, sizeof(request));
-        request.title_active = command_state.title_active;
-        request.title_frame = command_state.title_frame;
-        request.title_source_step = command_state.title_source_step;
-        request.entrance_active = command_state.entrance_active;
-        request.entrance_source_step = command_state.entrance_source_step;
-        request.entrance_dismissed = command_state.entrance_dismissed;
-        request.credits_active = command_state.credits_active;
-        request.credits_remaining_ticks =
-            command_state.credits_remaining_ticks;
-        request.opening_active = command_state.opening_active;
-        request.opening_delay_ticks = command_state.opening_delay_ticks;
-        request.opening_step = command_state.opening_step;
-        request.pending_command = command_state.pending_command;
-        check(csb_v1_startup_entrance_accepts_input_from_request_pc34(
-                  &request),
-              "startup entrance gate request helper accepts wait-loop input");
-    }
-
     command_state.opening_active = 1;
     check(!csb_v1_startup_entrance_accepts_input_pc34(&command_state),
           "startup entrance gate blocks door-opening input");

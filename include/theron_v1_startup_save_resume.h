@@ -115,8 +115,16 @@ typedef struct {
     int srm_recognized_slots;      /* 0..total */
     int srm_first_recognized_slot; /* 0..4, or -1 */
     uint32_t srm_first_recognized_checksum32; /* 0 if no recognized slot */
+    /* First slot, in ascending Save Disk order, whose bounded body decode
+     * completed.  This is the only SRM slot that Continue may select from
+     * this snapshot; a merely gzip-recognized unknown body stays -1. */
+    int srm_first_decoded_slot;    /* 0..4, or -1 */
 
-    /* ── Bounded payload probe (zlib only) ── */
+    /* Authenticated-body correlation only.  These groups do not decode real
+     * SRM fields and never affect the Continue selection above. */
+    Theron_V1SrmBodyEvidenceCatalog srm_body_evidence_catalog;
+
+    /* ── Bounded payload probe for the selected decoded slot (zlib only) ── */
     Theron_V1SrmPayloadProbeStatus  srm_payload_probe_status;
     int                             srm_payload_probe_ran; /* 1 if zlib ran */
     size_t                          srm_payload_size;     /* 0 if none */

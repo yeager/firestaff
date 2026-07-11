@@ -234,8 +234,8 @@ static void check_boundary_names(void) {
     printf("\n[Boundary/status names]\n");
     CHECK(nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_SAL_BANK) == 0,
           "SAL decode remains unsupported");
-    CHECK(nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_MAP_TABLE) == 0,
-          "MAP decode remains unsupported");
+    CHECK(nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_MAP_TABLE) == 1,
+          "bounded MAP event table decode is supported");
     CHECK(nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_CDDA_LAYOUT) == 0,
           "CD-DA playback binding remains unsupported");
     CHECK(strcmp(nexus_v1_audio_kind_name(NEXUS_V1_AUDIO_KIND_SAL_BANK),
@@ -248,8 +248,10 @@ static void check_boundary_names(void) {
     CHECK(strcmp(nexus_v1_audio_status_string(NEXUS_V1_AUDIO_OK),
                  "ok") == 0,
           "status OK string is stable");
-    CHECK(strstr(nexus_v1_audio_source_evidence(), "no SAL decode") != NULL,
-          "source evidence states non-decode boundary");
+    CHECK(strstr(nexus_v1_audio_source_evidence(),
+                 "bounded MAP event table parse") != NULL &&
+          strstr(nexus_v1_audio_source_evidence(), "no SAL decode") != NULL,
+          "source evidence states MAP route plus SAL boundary");
 }
 
 int main(void) {

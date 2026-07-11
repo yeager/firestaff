@@ -108,6 +108,12 @@ static const uint8_t s_door_button_d2_palette_remap[16] = {
     0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
 };
 
+static void dm1_viewport_3d_draw_d3_side_square(
+    DM1_Viewport3DState *state,
+    DM1_ViewSquareIndex square,
+    int map_x,
+    int map_y);
+
 /* View square → wall frame table index mapping.
  * Placed before csb_v1_vp_get_wall_frame to avoid forward-reference errors. */
 static int view_square_to_frame_index(DM1_ViewSquareIndex sq)
@@ -1649,33 +1655,19 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
 
     /* -- Depth 3 door frames -- */
 
-    /* D3L -- side door (left of party forward direction).
-     * Draws left frame natively (G2120, zone C718), then right-side mirror
-     * via F0105 (zone C719).  Same G2120 bitmap used for both sides.
-     * DUNVIEW.C:6446-6454 (D3L left) + 6582-6590 (D3R right mirror). */
+    /* F0116/F0117 own the complete D3L/D3R element switch.  In particular,
+     * their door frames are only drawn by C17_ELEMENT_DOOR_FRONT, not before
+     * F0172 has identified the square. */
     {
-        const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3L);
-        dm1_viewport_3d_notify_pre_square_draw(
-            state, DM1_VIEW_SQUARE_D3L, 3, -1);
-        if (fr && bm_base) {
-            /* DUNVIEW.C:6446 MEDIA720_I34E -- F0104(G2120, C718) left native */
-            dm1_viewport_3d_draw_wall(state, bm_base + 20 * BMP_STRIDE, fr);
-            /* DUNVIEW.C:6448 MEDIA720_I34E -- F0105(G2120, C719) right flipped */
-            dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 20 * BMP_STRIDE, fr);
-        }
-    }
-
-    /* D3R -- side door (right of party). Only the right-side mirrored frame
-     * is drawn -- same G2120 bitmap as D3L, flipped via F0105.
-     * DUNVIEW.C:6582-6590. */
-    {
-        const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3R);
-        dm1_viewport_3d_notify_pre_square_draw(
-            state, DM1_VIEW_SQUARE_D3R, 3, 1);
-        if (fr && bm_base) {
-            /* DUNVIEW.C:6582-6590 MEDIA720_I34E -- F0105(G2120, C721) right mirror */
-            dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 20 * BMP_STRIDE, fr);
-        }
+        int16_t d3l_x = 0, d3l_y = 0, d3r_x = 0, d3r_y = 0;
+        dm1_viewport_3d_resolve_relative_map_xy(direction, 3, -1, map_x, map_y,
+                                                 &d3l_x, &d3l_y);
+        dm1_viewport_3d_resolve_relative_map_xy(direction, 3, 1, map_x, map_y,
+                                                 &d3r_x, &d3r_y);
+        dm1_viewport_3d_draw_d3_side_square(state, DM1_VIEW_SQUARE_D3L,
+                                             d3l_x, d3l_y);
+        dm1_viewport_3d_draw_d3_side_square(state, DM1_VIEW_SQUARE_D3R,
+                                             d3r_x, d3r_y);
     }
 
     /* D3C -- front door (depth 3 center). Draws left + right pair from G2119.
@@ -2055,6 +2047,67 @@ const DM1_ViewportDrawStep *dm1_viewport_3d_get_draw_order_step(size_t index)
 {
     if (index >= dm1_viewport_3d_draw_order_count()) return NULL;
     return &s_draw_order[index];
+}
+
+int dm1_v1_viewport_base_graphic_pc34(int layer,
+                                      int* outGraphic,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH)
+{
+    switch (layer) {
+        case 0:
+            /* ReDMCSB DUNVIEW.C F0098: ceiling bitmap C079, 224x39. */
+            if (outGraphic) *outGraphic = 79;
+            if (outX) *outX = 0;
+            if (outY) *outY = 0;
+            if (outW) *outW = 224;
+            if (outH) *outH = 39;
+            return 1;
+        case 1:
+            /* ReDMCSB DUNVIEW.C F0098: floor bitmap C078 below ceiling. */
+            if (outGraphic) *outGraphic = 78;
+            if (outX) *outX = 0;
+            if (outY) *outY = 39;
+            if (outW) *outW = 224;
+            if (outH) *outH = 97;
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+int dm1_v1_viewport_source_composition_order_count_pc34(void)
+{
+    return 16;
+}
+
+int dm1_v1_viewport_source_composition_order_step_pc34(int ordinal)
+{
+    static const int kCompositionOrder[] = {
+        1,  /* floor/ceiling base */
+        2,  /* pits */
+        3,  /* floor ornaments */
+        4,  /* side walls */
+        5,  /* front walls */
+        6,  /* wall ornaments */
+        7,  /* stairs */
+        8,  /* teleporter fields */
+        9,  /* side doors */
+        10, /* side door ornaments */
+        11, /* side destroyed-door masks */
+        12, /* center doors */
+        13, /* center door ornaments */
+        14, /* center destroyed-door masks */
+        15, /* center door buttons */
+        16  /* D3R door button */
+    };
+    if (ordinal < 0 ||
+        ordinal >= (int)(sizeof(kCompositionOrder) / sizeof(kCompositionOrder[0]))) {
+        return 0;
+    }
+    return kCompositionOrder[ordinal];
 }
 
 size_t dm1_viewport_3d_far_object_pass_spec_count(void)
@@ -2763,8 +2816,8 @@ static void dm1_viewport_3d_draw_field(DM1_Viewport3DState *state,
 static int dm1_viewport_3d_floor_ornament_side_for_square(
     DM1_ViewSquareIndex square)
 {
-    if (square == DM1_VIEW_SQUARE_D3L2) return -1;
-    if (square == DM1_VIEW_SQUARE_D3R2) return 1;
+    if (square == DM1_VIEW_SQUARE_D3L2 || square == DM1_VIEW_SQUARE_D3L) return -1;
+    if (square == DM1_VIEW_SQUARE_D3R2 || square == DM1_VIEW_SQUARE_D3R) return 1;
     return 0;
 }
 
@@ -2970,6 +3023,127 @@ static int dm1_viewport_3d_draw_d3_door_front_plan(
     return 1;
 }
 
+static int dm1_viewport_3d_draw_d3_side_graphic(
+    DM1_Viewport3DState *state,
+    DM1_ViewSquareIndex square,
+    int graphic_index,
+    int flipped)
+{
+    const DM1_WallFrame *frame;
+    const uint8_t *pixels = NULL;
+    int width = 0;
+    int height = 0;
+
+    if (!state || !state->viewport_pixels || graphic_index <= 0) return 0;
+    frame = dm1_viewport_3d_get_wall_frame(square);
+    if (!frame || !state->graphic_provider_callback ||
+        !state->graphic_provider_callback(state->graphic_provider_user_data,
+                                          graphic_index, &pixels, &width, &height) ||
+        !pixels || width < frame->byte_width || height < frame->height) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0676/F0677 use F0104 for D3L2 and F0105 for
+     * D3R2. F0105 reverses source X while retaining the D3-side frame. */
+    for (int y = 0; y < frame->height; ++y) {
+        const uint8_t *src = pixels + y * width;
+        uint8_t *dst = state->viewport_pixels +
+                       (frame->top_y + y) * state->viewport_stride + frame->left_x;
+        for (int x = 0; x < frame->byte_width; ++x) {
+            uint8_t pixel = src[flipped ? frame->byte_width - 1 - x : x];
+            if (pixel != COLOR_TRANSPARENT) dst[x] = pixel;
+        }
+    }
+    return 1;
+}
+
+/* ReDMCSB: DUNVIEW.C F0116:6387-6494 and F0117:6500-6634.  These are the
+ * ordinary depth-three side lanes, distinct from the MEDIA720-only D3L2/D3R2
+ * helpers below.  F0115 material emission remains at the host integration
+ * boundary; this DM1 route owns the source-selected structural pixels and
+ * their ordering around that boundary. */
+static void dm1_viewport_3d_draw_d3_side_square(
+    DM1_Viewport3DState *state,
+    DM1_ViewSquareIndex square,
+    int map_x,
+    int map_y)
+{
+    const DM1_WallFrame *frame;
+    const uint8_t *wall_base = g_dm1_wall_frame_bitmaps;
+    int cell;
+    int element;
+    int right;
+    size_t map_cell;
+
+    if (!state || !wall_base ||
+        (square != DM1_VIEW_SQUARE_D3L && square != DM1_VIEW_SQUARE_D3R)) {
+        return;
+    }
+    frame = dm1_viewport_3d_get_wall_frame(square);
+    if (!frame) return;
+    cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
+    element = state->dungeon_aspect_grid ? cell
+                                         : dm1_viewport_3d_classify_grid_cell(cell);
+    right = square == DM1_VIEW_SQUARE_D3R;
+    map_cell = (size_t)map_y * (size_t)state->dungeon_width + (size_t)map_x;
+
+    if (element == DM1_VP_ELEMENT_WALL) {
+        const uint8_t *wall = dm1_viewport_3d_selected_wall_bitmap(
+            state, wall_base, right ? DM1_WALL_D3R : DM1_WALL_D3L);
+        if (state->parity_flip) {
+            dm1_viewport_3d_draw_door_frame_flipped(state, wall, frame);
+        } else {
+            dm1_viewport_3d_draw_wall(state, wall, frame);
+        }
+        return;
+    }
+
+    if (element == DM1_VP_ELEMENT_STAIRS_FRONT || element == DM1_VP_ELEMENT_PIT) {
+        int graphic = element == DM1_VP_ELEMENT_PIT ? 49 :
+            state->stairs_indices[(state->dungeon_stairs_up_grid &&
+                                    state->dungeon_stairs_up_grid[map_cell]) ? 0 : 7];
+        int invisible = element == DM1_VP_ELEMENT_PIT &&
+            state->dungeon_pit_invisible_grid && state->dungeon_pit_invisible_grid[map_cell];
+        if (!invisible) {
+            (void)dm1_viewport_3d_draw_d3_side_graphic(state, square, graphic, right);
+        }
+    }
+
+    /* F0116/F0117 deliberately fall through from front stairs and pits to
+     * F0108 then F0115.  The source-zone plan preserves BUG0_64: a floor
+     * ornament is still drawn over a visible pit. */
+    if (element == DM1_VP_ELEMENT_CORRIDOR || element == DM1_VP_ELEMENT_PIT ||
+        element == DM1_VP_ELEMENT_TELEPORTER ||
+        element == DM1_VP_ELEMENT_STAIRS_FRONT ||
+        element == DM1_VP_ELEMENT_STAIRS_SIDE ||
+        element == DM1_VP_ELEMENT_DOOR_SIDE ||
+        element == DM1_VP_ELEMENT_DOOR_FRONT) {
+        int ornament_slot = right ? 3 : 2;
+        (void)dm1_viewport_3d_draw_floor_ornament_plan(
+            state, square, state->floor_ornament_indices[ornament_slot]);
+    }
+
+    if (element == DM1_VP_ELEMENT_DOOR_FRONT) {
+        /* ReDMCSB F0116:6446-6454 and F0117:6582-6590 place these frames
+         * between F0115's rear and front thing passes. */
+        if (right) {
+            dm1_viewport_3d_draw_door_frame_flipped(state,
+                                                     wall_base + 20 * DM1_VIEWPORT_BYTE_WIDTH,
+                                                     frame);
+        } else {
+            dm1_viewport_3d_draw_wall(state,
+                                      wall_base + 20 * DM1_VIEWPORT_BYTE_WIDTH,
+                                      frame);
+            dm1_viewport_3d_draw_door_frame_flipped(state,
+                                                     wall_base + 20 * DM1_VIEWPORT_BYTE_WIDTH,
+                                                     frame);
+        }
+    }
+    if (element == DM1_VP_ELEMENT_TELEPORTER) {
+        dm1_viewport_3d_draw_field(state, 3, right ? 1 : -1, 0x1c);
+    }
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_draw_csb_back_wall
  *
@@ -3065,7 +3239,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
         return;
     }
 
-    /* ── STAIRS_FRONT case: draw stairs bitmap, then return ──
+    /* ── STAIRS_FRONT case: draw source-selected stairs bitmap, then common tail ──
      * ReDMCSB F0676 lines 6237-6251 / F0677 lines 6304-6319.
      * M555_STAIRS_UP in aspect[2] (M555) determines up vs down.
      * Uses zone C800/C801 (up) or C813/C814 (down) for the stairs bitmap.
@@ -3076,39 +3250,22 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
      *   M716_NEGGRAPHIC_STAIRS_DOWN_D3L2 — stairs down, D3L2, index 2
      *   M717_NEGGRAPHIC_STAIRS_DOWN_D3R2 — stairs down, D3R2, index 3
      *
-     * These map to stairs_indices[0..3] in DM1_Viewport3DState.
-     * TODO (pass603): wire stairs_indices from asset system before enabling.
+     * Both side lanes use the D3L source index: C00 for up and C07 for down.
      * Source: DUNVIEW.C:6237-6251 (F0676) · DUNVIEW.C:6304-6319 (F0677) */
-    /* Check for stairs by examining bit 5 of raw cell (STAIRS type = 3).
-     * The extended aspect type 19 (STAIRS_FRONT) is detected by
-     * checking if raw_element == 3 AND this is a front-facing stairs.
-     * For simplicity, we check the extended aspect in the upper bits. */
-    {
-        /* Detect STAIRS_FRONT: raw_element == 3 with front orientation.
-         * The extended aspect type 19 (STAIRS_FRONT) is set when the
-         * stairs face toward the party (i.e., are on the front wall
-         * of a corridor).  We detect this from the upper bits of the
-         * raw cell (bit 5 = element type, but the front/stairs orientation
-         * is encoded differently in the dungeon data).
-         *
-         * For now, detect as: raw_element == 3 AND the upper bits indicate
-         * stairs facing forward.  A more accurate implementation would call
-         * F0172_SetSquareAspect to get the aspect array and check for
-         * M555_STAIRS_UP. (Currently the upper bits are not consumed here;
-         * detection is heuristic on raw_element+stairs_indices.) */
-        /* If upper_bits == 3 (STAIRS), check if it's front-facing by
-         * examining bit 10 of the original cell (not available here).
-         * As a heuristic: if the stairs_indices are populated, assume it's
-         * a valid stairs position. */
-        if (element == DM1_VP_ELEMENT_STAIRS && state->stairs_indices[0] != 0) {
-            /* STAIRS_FRONT detected — draw stairs bitmap.
-             * Uses dm1_viewport_3d_draw_wall with the stairs bitmap
-             * from stairs_indices[0..3] at the appropriate zone.
-             * TODO (pass603): look up stairs bitmap from stairs_indices[]
-             * using the M714-M717 index pattern. */
-            /* Stairs bitmap drawing — TODO (pass603): requires stairs_indices wiring */
-            return;
-        }
+    if (element == DM1_VP_ELEMENT_STAIRS_FRONT) {
+        size_t cell = (size_t)map_y * (size_t)state->dungeon_width + (size_t)map_x;
+        int stairs_up = state->dungeon_stairs_up_grid && state->dungeon_stairs_up_grid[cell];
+        int graphic_index = state->stairs_indices[stairs_up ? 0 : 7];
+        int flipped = square == DM1_VIEW_SQUARE_D3R2;
+        state->last_d3_back_wall_receipt.stairs_front_drawn = true;
+        state->last_d3_back_wall_receipt.stairs_front_up = stairs_up != 0;
+        state->last_d3_back_wall_receipt.stairs_front_flipped = flipped != 0;
+        state->last_d3_back_wall_receipt.stairs_front_graphic_index = (int16_t)graphic_index;
+        state->last_d3_back_wall_receipt.stairs_front_zone_index = (int16_t)(
+            stairs_up ? (flipped ? DM1_PC34_ZONE_STAIRS_UP_FRONT_D3R2 : DM1_PC34_ZONE_STAIRS_UP_FRONT_D3L2)
+                      : (flipped ? DM1_PC34_ZONE_STAIRS_DOWN_FRONT_D3R2 : DM1_PC34_ZONE_STAIRS_DOWN_FRONT_D3L2));
+        state->last_d3_back_wall_receipt.stairs_front_graphics_dat_bound =
+            dm1_viewport_3d_draw_d3_side_graphic(state, square, graphic_index, flipped) != 0;
     }
 
     /* ── PIT case: draw pit bitmap if not visible, then fall through ──
@@ -3117,12 +3274,25 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
      * the pit is invisible (masked).  If visible, no pit bitmap is drawn.
      * If invisible (M554==1), the pit graphic is NOT drawn.
      *
-     * TODO (pass603): check M554 from aspect array, then draw pit bitmap
-     * using zone C850 (D3L2) or C851 (D3R2) if visible.
+     * The F0172 M554 input is supplied by dungeon_pit_invisible_grid; C049
+     * is blitted through C850/C851 only when that input is clear.
      * Source: DUNVIEW.C:6275-6278 (F0676) · DUNVIEW.C:6342-6345 (F0677) */
     if (element == DM1_VP_ELEMENT_PIT) { /* C02_ELEMENT_PIT */
-        /* PIT drawing — TODO (pass603): requires M554 check and pit bitmap */
-        /* Pit falls through to TELEPORTER/CORRIDOR common path below */
+        size_t cell = (size_t)map_y * (size_t)state->dungeon_width + (size_t)map_x;
+        int invisible = state->dungeon_pit_invisible_grid && state->dungeon_pit_invisible_grid[cell];
+        int flipped = square == DM1_VIEW_SQUARE_D3R2;
+        state->last_d3_back_wall_receipt.pit_invisible = invisible != 0;
+        state->last_d3_back_wall_receipt.pit_flipped = flipped != 0;
+        state->last_d3_back_wall_receipt.pit_graphic_index = 49;
+        state->last_d3_back_wall_receipt.pit_zone_index = (int16_t)(
+            flipped ? DM1_PC34_ZONE_FLOORPIT_D3R2 : DM1_PC34_ZONE_FLOORPIT_D3L2);
+        if (!invisible) {
+            state->last_d3_back_wall_receipt.pit_drawn = true;
+            state->last_d3_back_wall_receipt.pit_graphics_dat_bound =
+                dm1_viewport_3d_draw_d3_side_graphic(state, square, 49, flipped) != 0;
+        }
+        /* ReDMCSB DUNVIEW.C F0676:6275-6278 / F0677:6342-6345 falls through
+         * to the F0108/F0115 tail, including the original BUG0_64 order. */
     }
 
     /* ── CORRIDOR / TELEPORTER: draw floor ornament + F0115 + field ──

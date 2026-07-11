@@ -809,6 +809,7 @@ static int bpk_material_surface_from_truecolor(
     out_surface->pixels = indices;
     out_surface->width = (int)surface->width;
     out_surface->height = (int)surface->height;
+    out_surface->from_bpk = 1;
     memcpy(out_surface->palette, palette, sizeof(out_surface->palette));
     out_surface->valid = 1;
     return 1;
@@ -869,6 +870,7 @@ int nexus_v1_dmdf_import_bpk_material_bank(const uint8_t *data,
             out->surfaces[index].pixels = pixels;
             out->surfaces[index].width = (int)surface.width;
             out->surfaces[index].height = (int)surface.height;
+            out->surfaces[index].from_bpk = 1;
             out->surfaces[index].valid = 1;
         } else if (!bpk_material_surface_from_truecolor(
                        pixels, &surface, &out->surfaces[index])) {
@@ -992,6 +994,16 @@ int nexus_v1_dmdf_import_bpk_material_bank_host_route(
     before_truecolor_count = out->bpk_truecolor_surface_count;
     before_prs3_count = out->bpk_prs3_surface_count;
     out_receipt->before_surface_count = before_surface_count;
+
+    /* The DGN renderer must never consume a partially decoded material
+     * archive. A valid earlier entry does not make a later truncated or
+     * undecodable PRS3 surface trustworthy, so keep the destination bank
+     * unchanged unless the complete upload plan reached a ready route. */
+    if (upload.route != NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED &&
+        upload.route != NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED) {
+        out_receipt->after_surface_count = before_surface_count;
+        return 0;
+    }
 
     imported = nexus_v1_dmdf_import_bpk_material_bank(data, data_size, out);
     out_receipt->after_surface_count = out->surface_count;
@@ -1397,8 +1409,9 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
         (out_receipt->route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 ||
          out_receipt->route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED)
             ? 1 : 0;
-    out_receipt->fallback_visuals_permitted =
-        out_receipt->blocks_real_menu_surface_render ? 0 : 1;
+    /* MENU.BPK is a production startup dependency. A stored directory entry
+     * is not permission to replace undecoded PRS3 menu media. */
+    out_receipt->fallback_visuals_permitted = 0;
     return 0;
 }
 

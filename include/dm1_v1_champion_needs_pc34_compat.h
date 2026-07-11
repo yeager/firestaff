@@ -73,6 +73,20 @@ typedef struct {
     int     starvation_damage;
 } DM1_NeedsTickResult;
 
+/* ReDMCSB CHAMPION.C F0331:2308-2330.  This is the runtime scent list
+ * consumed by Thieves Eye; it is game state, never presentation data. */
+#define DM1_V1_NEEDS_SCENT_CAPACITY 16
+typedef struct {
+    uint16_t mapX;
+    uint16_t mapY;
+    uint8_t strength;
+} DM1_V1_NeedsScentPc34Compat;
+
+typedef struct {
+    DM1_V1_NeedsScentPc34Compat entries[DM1_V1_NEEDS_SCENT_CAPACITY];
+    uint16_t count;
+} DM1_V1_NeedsScentListPc34Compat;
+
 typedef struct {
     int draw;
     int x;
@@ -92,6 +106,11 @@ void dm1_needs_apply_time_effects(
     const DM1_NeedsTickContext *ctx,
     DM1_NeedsTickResult *out
 );
+
+/* F0331 decays every scent except the newest entry.  When entry zero reaches
+ * zero it is removed through the source F0316 shift-and-decrement route. */
+void DM1_V1_Needs_DecayScentsPc34Compat(
+    DM1_V1_NeedsScentListPc34Compat* scents);
 
 int dm1_needs_compute_stamina_amount(int max_stamina);
 

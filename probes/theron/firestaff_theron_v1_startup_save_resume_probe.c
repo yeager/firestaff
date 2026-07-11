@@ -279,6 +279,10 @@ static void probe_staged_srm_claims_resume(void) {
               snap.srm_recognized_slots, 1);
     check_int("staged srm_first_recognized_slot == 0",
               snap.srm_first_recognized_slot, 0);
+#if FIRESTAFF_HAS_ZLIB
+    check_int("staged srm_first_decoded_slot == 0",
+              snap.srm_first_decoded_slot, 0);
+#endif
     {
         Theron_V1StartupSaveResume explicit_snap;
         Theron_V1StartupSaveResume external_snap;

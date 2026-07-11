@@ -354,6 +354,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_text_message_pc34_compat.c
     src/dm1/dm1_v1_inventory_consumables_pc34_compat.c
     src/dm1/dm1_v1_endgame_layout_pc34_compat.c
+    src/dm1/dm1_v1_endgame_presentation_pc34_compat.c
     src/dm1/dm1_v1_g0180_pc34_compat.c
     src/dm1/dm1_v1_g0179_pc34_compat.c
     src/dm1/dm1_v1_g0181_pc34_compat.c
@@ -6148,6 +6149,23 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_movement_command_step_runtime_pc34_compat
     )
 
+    add_executable(test_csb_v1_f0267_loaded_chain_pc34_compat
+        tests/test_csb_v1_f0267_loaded_chain_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0267_loaded_chain_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_f0267_loaded_chain_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0267_loaded_chain_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0267_loaded_chain_pc34_compat
+        COMMAND test_csb_v1_f0267_loaded_chain_pc34_compat
+    )
+
     add_executable(test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat
         tests/test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat.c
         src/shared/asset_find_by_hash.c
@@ -6353,6 +6371,21 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_startup_menu_action_contract
         COMMAND test_dm2_v1_startup_menu_action_contract
+    )
+
+    add_executable(test_dm2_v1_startup_audio_menu
+        tests/test_dm2_v1_startup_audio_menu.c
+    )
+    target_include_directories(test_dm2_v1_startup_audio_menu PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_startup_audio_menu PRIVATE firestaff_dm2)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_startup_audio_menu PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_startup_audio_menu
+        COMMAND test_dm2_v1_startup_audio_menu
     )
 
     add_executable(test_dm2_v1_m11_startup_profile_gate
@@ -15815,6 +15848,22 @@ if(NOT TARGET test_m11_inventory_scroll_panel_render_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_dm1_v1_champion_death_f0319_runtime_pc34_compat)
+    add_executable(test_dm1_v1_champion_death_f0319_runtime_pc34_compat
+        tests/test_dm1_v1_champion_death_f0319_runtime_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_death_f0319_runtime_pc34_compat
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_death_f0319_runtime_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_death_f0319_runtime_pc34_compat
+        COMMAND test_dm1_v1_champion_death_f0319_runtime_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_m11_rest_runtime_pc34_compat)
     add_executable(test_m11_rest_runtime_pc34_compat
         tests/test_m11_rest_runtime_pc34_compat.c
@@ -16148,6 +16197,22 @@ if(NOT TARGET test_dm1_v1_endgame_system_pc34_compat)
     add_test(
         NAME dm1_v1_endgame_system_source_lock
         COMMAND test_dm1_v1_endgame_system_pc34_compat
+    )
+endif()
+
+# ── DM1 V1 Endgame presentation/input ownership gate ────────────────
+if(NOT TARGET test_dm1_v1_endgame_presentation_pc34_compat)
+    add_executable(test_dm1_v1_endgame_presentation_pc34_compat
+        tests/test_dm1_v1_endgame_presentation_pc34_compat.c
+        src/dm1/dm1_v1_endgame_presentation_pc34_compat.c
+        src/dm1/dm1_v1_endgame_layout_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_endgame_presentation_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_endgame_presentation_pc34_compat
+        COMMAND test_dm1_v1_endgame_presentation_pc34_compat
     )
 endif()
 
@@ -18008,7 +18073,7 @@ if(BUILD_TESTING)
     # Nexus V1 DGN material rasterizer. Exercises the cache-ready indexed
     # sampling path without game media: non-power-of-two UV repeat, CLUT
     # remapping, transparent texel clipping and no-flat-fallback behavior.
-    add_executable(test_nexus_v1_dgn_material_raster
+add_executable(test_nexus_v1_dgn_material_raster
         tests/test_nexus_v1_dgn_material_raster.c
         src/shared/asset_find_by_hash.c
     )
@@ -18221,6 +18286,28 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_startup_menu_pc34_compat PROPERTIES
         LABELS "tier4;nexus;startup;save_load"
+    )
+
+    add_executable(test_nexus_v1_startup_media_gate
+        tests/test_nexus_v1_startup_media_gate.c
+    )
+    target_link_libraries(test_nexus_v1_startup_media_gate PRIVATE
+        firestaff_nexus firestaff_m10
+    )
+    target_include_directories(test_nexus_v1_startup_media_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_startup_media_gate PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_startup_media_gate
+        COMMAND test_nexus_v1_startup_media_gate
+    )
+    set_tests_properties(nexus_v1_startup_media_gate PROPERTIES
+        LABELS "tier4;nexus;startup;assets"
     )
 
     # ── CSB / DM hidden-code skip table (Tier 2 from FIRESTAFF_GAP_LIST) ──
@@ -20455,6 +20542,34 @@ target_include_directories(firestaff_nexus_v1_track1_screen_capture_readiness_pr
 if(NOT MSVC)
     target_compile_options(firestaff_nexus_v1_track1_screen_capture_readiness_probe PRIVATE
         -Wall -Wextra -O2
+    )
+endif()
+
+# Nexus DGN material corpus evidence. With Track 1 media this walks every
+# LEV00..LEV15 file through the existing Structure1B decoder and compares
+# typed material selectors with the viewport's decoded material banks.
+# It is deliberately a read-only provenance probe, not a parity claim.
+add_executable(firestaff_nexus_v1_dgn_material_corpus_probe
+    probes/nexus_v1_dgn_material_corpus_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_dgn_material_corpus_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_dgn_material_corpus_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_dgn_material_corpus_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME nexus_v1_dgn_material_corpus_probe
+        COMMAND firestaff_nexus_v1_dgn_material_corpus_probe
+    )
+    set_tests_properties(nexus_v1_dgn_material_corpus_probe PROPERTIES
+        LABELS "nexus;dgn;real-media;skip-safe"
     )
 endif()
 

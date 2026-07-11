@@ -26,6 +26,7 @@
 
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
+#include "theron_v1_boot.h"
 #include "theron_v1_startup_flow.h"
 
 #include <stdio.h>
@@ -166,16 +167,44 @@ static void run_empty_launcher_boundary(void) {
                 "Theron launch intent is invalid when assets are absent");
 }
 
+static void run_track02_startup_overlay_regression(void) {
+    Theron_V1_BootStartupHostRenderReceipt receipt;
+    M11_GameViewState view;
+
+    theron_v1_boot_startup_host_render_receipt_init(&receipt);
+    receipt.track02_startup_graphics_executed = 1;
+    expect_true(!theron_v1_boot_startup_host_render_plan_fallback_allowed(
+                    &receipt),
+                "completed Track 02 graphics suppress synthetic startup plan in every phase");
+    receipt.track02_startup_graphics_executed = 0;
+    expect_true(theron_v1_boot_startup_host_render_plan_fallback_allowed(
+                    &receipt),
+                "startup plan fallback remains available before Track 02 graphics execute");
+
+    M11_GameView_Init(&view);
+    view.active = 1;
+    view.sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
+    view.theronState.startup_phase = THERON_STARTUP_PHASE_TITLE;
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_RETURN_TO_MENU &&
+                    strcmp(view.lastAction, "STARTUP") == 0 &&
+                    strcmp(view.lastOutcome, "TRACK02 ATLAS ROUTES INVALID") == 0,
+                "M11 returns to launcher when Track02 startup atlas routes are absent");
+    M11_GameView_Shutdown(&view);
+}
+
 static void run_real_launcher_handoff_if_available(void) {
     M12_StartupMenuState menu;
     M12_LaunchIntent intent;
     M11_GameViewState view;
+    M11_BootProbeReceipt boot_receipt;
     const M12_MenuEntry* entry;
     char real_dir[512];
     const char* data_dir = default_data_root(real_dir);
     unsigned char framebuffer[320 * 200];
     char startup_rows[16][M11_THERON_STARTUP_RENDER_ROW_CAPACITY];
     int row_count;
+    int opened;
 
     if (!data_dir || !data_dir[0]) {
         expect_skip("HOME is unset; no default Firestaff data root");
@@ -205,7 +234,15 @@ static void run_real_launcher_handoff_if_available(void) {
     }
 
     M11_GameView_Init(&view);
-    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+    opened = M11_GameView_OpenSelectedMenuEntry(&view, &menu);
+    if (!opened) {
+        expect_true(!view.active,
+                    "M11 releases rejected Track02 startup before launcher return");
+        expect_skip("staged Track02 startup atlas routes are incomplete or invalid");
+        M11_GameView_Shutdown(&view);
+        return;
+    }
+    expect_true(opened == 1,
                 "M11 opens Theron through M12 selected-menu entry");
     expect_true(view.startedFromLauncher == 1,
                 "M11 marks Theron startup as launcher-started");
@@ -229,6 +266,12 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
                 "M11 Theron launcher stage select draws a nonblank frame");
+    memset(&boot_receipt, 0, sizeof(boot_receipt));
+    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
+                    boot_receipt.startupTitleFrame == 0 &&
+                    boot_receipt.startupTitleFrameMax == 7 &&
+                    boot_receipt.startupTitleReady == 0,
+                "M11 Theron launcher title starts on animated frame 0");
     row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
     expect_true(row_count >= 3 &&
@@ -237,6 +280,14 @@ static void run_real_launcher_handoff_if_available(void) {
                     startup_rows_contain(startup_rows, row_count,
                                          "PRESS ENTER TO START"),
                 "M11 Theron launcher rows expose title-gate state");
+    while (view.theronState.startup_title_animation_tick < 48) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    memset(&boot_receipt, 0, sizeof(boot_receipt));
+    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
+                    boot_receipt.startupTitleFrame == 7 &&
+                    boot_receipt.startupTitleReady == 1,
+                "M11 Theron launcher title reaches ready frame before accept");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,
                 "M11 Theron launcher title accept opens stage select");
@@ -273,6 +324,7 @@ int main(void) {
     printf("=== Theron V1 M12/M11 launcher handoff boundary ===\n");
 
     run_empty_launcher_boundary();
+    run_track02_startup_overlay_regression();
     run_real_launcher_handoff_if_available();
 
     printf("\nTheron V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",

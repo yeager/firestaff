@@ -480,7 +480,7 @@ static int test_vp_present(void) {
             if (m11_fb[y * 320 + x] != 0) { vp_has_data = 1; break; }
         }
     }
-    ASSERT(vp_has_data, "M11 viewport should have non-zero pixels");
+    ASSERT(vp_has_data, "runtime viewport should have non-zero pixels");
 
     /* Top bar (y=0..23) should be black */
     int top_black = 1;

@@ -585,6 +585,54 @@ int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
     return (int)RD16(record);
 }
 
+int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
+    int total_records = 0;
+    int level;
+
+    /* skproject/SKULLWIN/c_map.cpp DM2_GET_OBJECT_INDEX_FROM_TILE and
+     * DM2_GET_TILE_RECORD_LINK derive every square's first ObjectID from
+     * the column index and dunGroundStacks tables.  c_record.cpp then
+     * resolves the ObjectID through the DB pool selected by bits 10..13. */
+    if (!d || !d->record_graph_complete || !d->raw_data ||
+        d->square_bytes != 1 || d->column_index_base < 0 ||
+        d->square_first_thing_base < 0 || d->square_first_thing_count < 0) {
+        return 0;
+    }
+    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        if (d->thing_type_counts[type] < 0 || d->thing_data_bases[type] < 0)
+            return 0;
+        total_records += d->thing_type_counts[type];
+    }
+    if (total_records <= 0) return 0;
+
+    for (level = 0; level < d->level_count; ++level) {
+        int x;
+        for (x = 0; x < d->level_widths[level]; ++x) {
+            int y;
+            for (y = 0; y < d->level_heights[level]; ++y) {
+                int raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+                int thing;
+                int steps = 0;
+                if (raw < 0) return 0;
+                if ((raw & 0x10) == 0) continue;
+                thing = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+                while (thing != (int)DM2_THING_END_MARKER) {
+                    int next;
+                    if (thing < 0 || ++steps > total_records ||
+                        !dm2_v1_dungeon_get_thing_record(
+                            d, (uint16_t)thing, NULL, NULL, NULL)) {
+                        return 0;
+                    }
+                    next = dm2_v1_dungeon_get_next_thing(d, (uint16_t)thing);
+                    if (next < 0) return 0;
+                    thing = next;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
 int dm2_v1_dungeon_find_thing_of_type(const DM2_V1_DungeonData *d,
                                       uint16_t first_thing,
                                       int desired_type,
@@ -830,8 +878,7 @@ int dm2_v1_dungeon_get_map_wall_gfx_list(
 
 int dm2_v1_dungeon_get_map_graphics_style(
     const DM2_V1_DungeonData *d,
-    int level)
-{
+    int level) {
     const uint8_t *map_desc;
     if (!d || level < 0 || level >= d->level_count ||
         !d->raw_data || d->raw_size <= 0) {

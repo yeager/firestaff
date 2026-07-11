@@ -378,6 +378,95 @@ const DM1EndgameEndingParams* DM1_Endgame_GetEndingParams(void)
     return &kEndingParams;
 }
 
+static int dm1_endgame_append_fuse_mutation_step(
+    DM1EndgameFuseMutationPlan* plan,
+    DM1EndgameF0445ReplayEventType replayType,
+    int32_t attackValue,
+    int32_t creatureType,
+    int32_t spawnFireball,
+    int32_t spawnHarmNonMaterial,
+    int32_t requestBuzz,
+    int32_t setCreatureType,
+    int32_t hideFluxcages,
+    int32_t deleteOtherGroups)
+{
+    DM1EndgameFuseMutationStep* step;
+    if (!plan || plan->stepCount >= DM1_ENDGAME_F0445_REPLAY_CAPACITY) return 0;
+    step = &plan->steps[plan->stepCount++];
+    step->replayType = replayType;
+    step->attackValue = attackValue;
+    step->creatureType = creatureType;
+    step->spawnFireball = spawnFireball;
+    step->spawnHarmNonMaterial = spawnHarmNonMaterial;
+    step->requestBuzz = requestBuzz;
+    step->setCreatureType = setCreatureType;
+    step->hideFluxcages = hideFluxcages;
+    step->deleteOtherGroups = deleteOtherGroups;
+    return 1;
+}
+
+int DM1_Endgame_BuildFuseMutationPlan(DM1EndgameFuseMutationPlan* outPlan)
+{
+    const DM1EndgameEndingParams* ending;
+    int attack;
+    int cycleCount;
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+
+    /* ReDMCSB: ENDGAME.C F0446 lines 819-960.  Each row represents one
+     * F0445 redraw/timeline cadence point and its preceding mutation. */
+    if (!dm1_endgame_append_fuse_mutation_step(outPlan,
+            DM1_ENDGAME_F0445_EVENT_SETUP, 0, 0, 0, 0, 0, 0, 0, 0) ||
+        !dm1_endgame_append_fuse_mutation_step(outPlan,
+            DM1_ENDGAME_F0445_EVENT_SETUP, 0, 0, 0, 0, 0, 0, 0, 0)) return 0;
+    for (attack = 55; attack <= 255; attack += 40) {
+        if (!dm1_endgame_append_fuse_mutation_step(outPlan,
+                DM1_ENDGAME_F0445_EVENT_FIREBALL_BURST, attack, 0,
+                1, 0, 0, 0, 0, 0)) return 0;
+    }
+    if (!dm1_endgame_append_fuse_mutation_step(outPlan,
+            DM1_ENDGAME_F0445_EVENT_LORD_ORDER, 0, DM1_CREATURE_LORD_ORDER_ID,
+            0, 0, 1, 1, 0, 0)) return 0;
+    for (attack = 55; attack <= 255; attack += 40) {
+        if (!dm1_endgame_append_fuse_mutation_step(outPlan,
+                DM1_ENDGAME_F0445_EVENT_HARM_BURST, attack, 0,
+                0, 1, 0, 0, 0, 0)) return 0;
+    }
+    for (cycleCount = 4; --cycleCount; ) {
+        int switchCount;
+        for (switchCount = 5; --switchCount; ) {
+            int updateCount;
+            int32_t creatureType = DM1_Endgame_GetCycleCreatureType(switchCount);
+            for (updateCount = 0; updateCount < cycleCount; ++updateCount) {
+                if (!dm1_endgame_append_fuse_mutation_step(outPlan,
+                        DM1_ENDGAME_F0445_EVENT_CHAOS_ORDER_SWITCH, 0, creatureType,
+                        0, 0, updateCount == 0, updateCount == 0, 0, 0)) return 0;
+            }
+        }
+    }
+    if (!dm1_endgame_append_fuse_mutation_step(outPlan,
+            DM1_ENDGAME_F0445_EVENT_FINAL_EXPLOSIONS, 255, 0,
+            1, 1, 0, 0, 0, 0) ||
+        !dm1_endgame_append_fuse_mutation_step(outPlan,
+            DM1_ENDGAME_F0445_EVENT_GREY_LORD, 0, DM1_CREATURE_GREY_LORD_ID,
+            0, 0, 0, 1, 0, 0) ||
+        !dm1_endgame_append_fuse_mutation_step(outPlan,
+            DM1_ENDGAME_F0445_EVENT_FLUXCAGE_HIDE, 0, 0,
+            0, 0, 0, 0, 1, 0) ||
+        !dm1_endgame_append_fuse_mutation_step(outPlan,
+            DM1_ENDGAME_F0445_EVENT_GROUP_CLEANUP, 0, 0,
+            0, 0, 0, 0, 0, 1)) return 0;
+    ending = DM1_Endgame_GetEndingParams();
+    outPlan->totalF0445Updates = outPlan->stepCount;
+    outPlan->finalDelayTicks = ending->finalDelayTicks;
+    outPlan->restartAllowedAfterWin = ending->restartAllowedAfterWin;
+    outPlan->endgameCalledWithTrue = ending->endgameCalledWithTrue;
+    outPlan->victoryMusicId = ending->victoryMusicId;
+    outPlan->sourceEvidence =
+        "ReDMCSB ENDGAME.C F0446 lines 819-960: F0445 replay/mutation order";
+    return 1;
+}
+
 /* ===================================================================
  * Source Evidence
  * =================================================================*/
@@ -416,4 +505,3 @@ const char* DM1_Endgame_System_GetSourceEvidence(void)
  *   ENDGAME.C:705 F2162_S
  *   ENDGAME.C:470 F2163_S
  * ══════════════════════════════════════════════════════════════════════ */
-

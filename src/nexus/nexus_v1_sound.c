@@ -27,6 +27,398 @@ static const char *g_event_names[] = {
     "MAGIC_HEAL", "MAGIC_DAMAGE"
 };
 #define EVENT_COUNT (sizeof(g_event_names)/sizeof(g_event_names[0]))
+#define NEXUS_SFX_MAP_HEADER_BYTES 24
+#define NEXUS_SFX_MAP_RECORD_BYTES 8
+
+static int read_u16_be(const uint8_t *p) {
+    return p ? (int)(((uint16_t)p[0] << 8) | (uint16_t)p[1]) : 0;
+}
+
+static int read_u32_be(const uint8_t *p) {
+    return p ? (int)(((uint32_t)p[0] << 24) |
+                     ((uint32_t)p[1] << 16) |
+                     ((uint32_t)p[2] << 8) |
+                     (uint32_t)p[3]) : 0;
+}
+
+static int optional_u16_to_int(uint16_t value) {
+    return value == 0xffffU ? -1 : (int)value;
+}
+
+static void sal_window_profile(const uint8_t *data,
+                               int data_size,
+                               int offset,
+                               int size,
+                               int *checksum16,
+                               int *nonzero_count,
+                               int *high_bit_count,
+                               int *first_nonzero_relative_offset,
+                               int *last_nonzero_relative_offset,
+                               int *distinct_byte_count,
+                               int *transition_count) {
+    int i;
+    int checksum = 0;
+    int nonzero = 0;
+    int high = 0;
+    int first_nonzero = -1;
+    int last_nonzero = -1;
+    int distinct = 0;
+    int transitions = 0;
+    unsigned char seen[256];
+
+    if (checksum16) *checksum16 = 0;
+    if (nonzero_count) *nonzero_count = 0;
+    if (high_bit_count) *high_bit_count = 0;
+    if (first_nonzero_relative_offset) *first_nonzero_relative_offset = -1;
+    if (last_nonzero_relative_offset) *last_nonzero_relative_offset = -1;
+    if (distinct_byte_count) *distinct_byte_count = 0;
+    if (transition_count) *transition_count = 0;
+    if (!data || offset < 0 || size <= 0 ||
+        offset > data_size || size > data_size - offset) {
+        return;
+    }
+    memset(seen, 0, sizeof(seen));
+    for (i = 0; i < size; ++i) {
+        int b = data[offset + i];
+        checksum = (checksum + b) & 0xffff;
+        if (!seen[b]) {
+            seen[b] = 1;
+            distinct++;
+        }
+        if (i > 0 && b != data[offset + i - 1]) {
+            transitions++;
+        }
+        if (b != 0) {
+            if (first_nonzero < 0) first_nonzero = i;
+            last_nonzero = i;
+            nonzero++;
+            if ((b & 0x80) != 0) high++;
+        }
+    }
+    if (checksum16) *checksum16 = checksum;
+    if (nonzero_count) *nonzero_count = nonzero;
+    if (high_bit_count) *high_bit_count = high;
+    if (first_nonzero_relative_offset) {
+        *first_nonzero_relative_offset = first_nonzero;
+    }
+    if (last_nonzero_relative_offset) {
+        *last_nonzero_relative_offset = last_nonzero;
+    }
+    if (distinct_byte_count) *distinct_byte_count = distinct;
+    if (transition_count) *transition_count = transitions;
+}
+
+static void clear_map_route(Nexus_SoundEngine *eng) {
+    if (!eng) return;
+    eng->map_event_count = 0;
+    eng->map_mapped_event_count = 0;
+    eng->map_first_sample_index = -1;
+    eng->map_last_sample_index = -1;
+    eng->map_header_checksum16 = 0;
+    eng->map_header_nonzero_byte_count = 0;
+    eng->map_header_distinct_byte_count = 0;
+    eng->map_header_transition_count = 0;
+    eng->map_record_table_supported = 0;
+    eng->map_record_count = 0;
+    eng->map_record_terminator_offset = -1;
+    eng->map_first_record_event = -1;
+    eng->map_min_record_event = -1;
+    eng->map_max_record_event = -1;
+    eng->map_record_event_span = 0;
+    eng->map_unique_record_event_count = 0;
+    eng->map_duplicate_record_event_count = 0;
+    eng->map_has_duplicate_record_events = 0;
+    eng->map_first_record_sal_offset = -1;
+    eng->map_first_record_size = 0;
+    eng->map_last_record_sal_offset = -1;
+    eng->map_max_record_end = 0;
+    eng->map_total_record_bytes = 0;
+    eng->map_out_of_bounds_record_count = 0;
+    eng->map_first_window_checksum16 = 0;
+    eng->map_first_window_nonzero_byte_count = 0;
+    eng->map_first_window_high_bit_byte_count = 0;
+    eng->map_first_window_first_nonzero_relative_offset = -1;
+    eng->map_first_window_last_nonzero_relative_offset = -1;
+    eng->map_first_window_distinct_byte_count = 0;
+    eng->map_first_window_transition_count = 0;
+    eng->map_last_window_checksum16 = 0;
+    eng->map_last_window_nonzero_byte_count = 0;
+    eng->map_last_window_high_bit_byte_count = 0;
+    eng->map_last_window_first_nonzero_relative_offset = -1;
+    eng->map_last_window_last_nonzero_relative_offset = -1;
+    eng->map_last_window_distinct_byte_count = 0;
+    eng->map_last_window_transition_count = 0;
+    eng->last_event = 0;
+    eng->last_sample_index = -1;
+    eng->last_event_record_found = 0;
+    eng->last_event_sal_offset = -1;
+    eng->last_event_sal_size = 0;
+    eng->last_event_window_checksum16 = 0;
+    eng->last_event_window_nonzero_byte_count = 0;
+    eng->last_event_window_high_bit_byte_count = 0;
+    eng->last_event_window_first_nonzero_relative_offset = -1;
+    eng->last_event_window_last_nonzero_relative_offset = -1;
+    eng->last_event_window_distinct_byte_count = 0;
+    eng->last_event_window_transition_count = 0;
+    memset(eng->event_sample_index, 0, sizeof(eng->event_sample_index));
+    memset(eng->event_sal_offset, 0, sizeof(eng->event_sal_offset));
+    memset(eng->event_sal_size, 0, sizeof(eng->event_sal_size));
+    memset(eng->event_sal_checksum16, 0, sizeof(eng->event_sal_checksum16));
+    memset(eng->event_sal_nonzero_byte_count, 0,
+           sizeof(eng->event_sal_nonzero_byte_count));
+    memset(eng->event_sal_high_bit_byte_count, 0,
+           sizeof(eng->event_sal_high_bit_byte_count));
+    memset(eng->event_sal_first_nonzero_relative_offset, 0,
+           sizeof(eng->event_sal_first_nonzero_relative_offset));
+    memset(eng->event_sal_last_nonzero_relative_offset, 0,
+           sizeof(eng->event_sal_last_nonzero_relative_offset));
+    memset(eng->event_sal_distinct_byte_count, 0,
+           sizeof(eng->event_sal_distinct_byte_count));
+    memset(eng->event_sal_transition_count, 0,
+           sizeof(eng->event_sal_transition_count));
+}
+
+static void parse_map_record_table(Nexus_SoundEngine *eng) {
+    int off;
+    int header_high = 0;
+    int header_first = -1;
+    int header_last = -1;
+    unsigned char record_event_seen[256];
+
+    if (!eng || !eng->map_data || eng->map_size < NEXUS_SFX_MAP_HEADER_BYTES + 2)
+        return;
+
+    sal_window_profile(eng->map_data,
+                       eng->map_size,
+                       0,
+                       NEXUS_SFX_MAP_HEADER_BYTES,
+                       &eng->map_header_checksum16,
+                       &eng->map_header_nonzero_byte_count,
+                       &header_high,
+                       &header_first,
+                       &header_last,
+                       &eng->map_header_distinct_byte_count,
+                       &eng->map_header_transition_count);
+    (void)header_high;
+    (void)header_first;
+    (void)header_last;
+    memset(record_event_seen, 0, sizeof(record_event_seen));
+
+    off = NEXUS_SFX_MAP_HEADER_BYTES;
+    while (off + 2 <= eng->map_size) {
+        const uint8_t *r = eng->map_data + off;
+        int event_id;
+        int size;
+        int sal_offset;
+        int end;
+        int checksum16 = 0;
+        int nonzero = 0;
+        int high = 0;
+        int first_nonzero = -1;
+        int last_nonzero = -1;
+        int distinct = 0;
+        int transitions = 0;
+
+        if (r[0] == 0xffU && r[1] == 0xffU) {
+            eng->map_record_terminator_offset = off;
+            eng->map_record_table_supported = eng->map_record_count > 0 ? 1 : 0;
+            return;
+        }
+        if (off + NEXUS_SFX_MAP_RECORD_BYTES > eng->map_size) {
+            return;
+        }
+
+        event_id = r[0];
+        size = read_u16_be(r + 2);
+        sal_offset = read_u32_be(r + 4);
+        end = sal_offset + size;
+        sal_window_profile(eng->sal_data,
+                           eng->sal_size,
+                           sal_offset,
+                           size,
+                           &checksum16,
+                           &nonzero,
+                           &high,
+                           &first_nonzero,
+                           &last_nonzero,
+                           &distinct,
+                           &transitions);
+        if (eng->map_record_count == 0) {
+            eng->map_first_record_event = event_id;
+            eng->map_first_record_sal_offset = sal_offset;
+            eng->map_first_record_size = size;
+            eng->map_first_window_checksum16 = checksum16;
+            eng->map_first_window_nonzero_byte_count = nonzero;
+            eng->map_first_window_high_bit_byte_count = high;
+            eng->map_first_window_first_nonzero_relative_offset =
+                first_nonzero;
+            eng->map_first_window_last_nonzero_relative_offset =
+                last_nonzero;
+            eng->map_first_window_distinct_byte_count = distinct;
+            eng->map_first_window_transition_count = transitions;
+        }
+        if (eng->map_min_record_event < 0 ||
+            event_id < eng->map_min_record_event) {
+            eng->map_min_record_event = event_id;
+        }
+        if (event_id > eng->map_max_record_event) {
+            eng->map_max_record_event = event_id;
+        }
+        if (record_event_seen[(unsigned char)event_id]) {
+            eng->map_duplicate_record_event_count++;
+            eng->map_has_duplicate_record_events = 1;
+        } else {
+            record_event_seen[(unsigned char)event_id] = 1;
+            eng->map_unique_record_event_count++;
+        }
+        if (eng->map_min_record_event >= 0 &&
+            eng->map_max_record_event >= eng->map_min_record_event) {
+            eng->map_record_event_span =
+                eng->map_max_record_event - eng->map_min_record_event + 1;
+        }
+        eng->map_last_record_sal_offset = sal_offset;
+        eng->map_last_window_checksum16 = checksum16;
+        eng->map_last_window_nonzero_byte_count = nonzero;
+        eng->map_last_window_high_bit_byte_count = high;
+        eng->map_last_window_first_nonzero_relative_offset = first_nonzero;
+        eng->map_last_window_last_nonzero_relative_offset = last_nonzero;
+        eng->map_last_window_distinct_byte_count = distinct;
+        eng->map_last_window_transition_count = transitions;
+        if (event_id >= 0 &&
+            event_id < (int)(sizeof(eng->event_sal_size) /
+                             sizeof(eng->event_sal_size[0])) &&
+            size > 0 &&
+            sal_offset >= 0 &&
+            end >= sal_offset &&
+            eng->sal_data &&
+            end <= eng->sal_size) {
+            eng->event_sal_offset[event_id] = (uint32_t)sal_offset;
+            eng->event_sal_size[event_id] = (uint16_t)size;
+            eng->event_sal_checksum16[event_id] = (uint16_t)checksum16;
+            eng->event_sal_nonzero_byte_count[event_id] = (uint16_t)nonzero;
+            eng->event_sal_high_bit_byte_count[event_id] = (uint16_t)high;
+            eng->event_sal_first_nonzero_relative_offset[event_id] =
+                (uint16_t)first_nonzero;
+            eng->event_sal_last_nonzero_relative_offset[event_id] =
+                (uint16_t)last_nonzero;
+            eng->event_sal_distinct_byte_count[event_id] =
+                (uint16_t)distinct;
+            eng->event_sal_transition_count[event_id] =
+                (uint16_t)transitions;
+        }
+        if (end > eng->map_max_record_end) {
+            eng->map_max_record_end = end;
+        }
+        eng->map_total_record_bytes += size;
+        if (size <= 0 || sal_offset < 0 || end < sal_offset ||
+            !eng->sal_data || end > eng->sal_size) {
+            eng->map_out_of_bounds_record_count++;
+        }
+        eng->map_record_count++;
+        off += NEXUS_SFX_MAP_RECORD_BYTES;
+    }
+}
+
+static void clear_sal_profile(Nexus_SoundEngine *eng) {
+    if (!eng) return;
+    eng->sal_package_profile_supported = 0;
+    eng->sal_word_count = 0;
+    eng->sal_nonzero_byte_count = 0;
+    eng->sal_high_bit_byte_count = 0;
+    eng->sal_zero_run_count = 0;
+    eng->sal_max_zero_run = 0;
+    eng->sal_first_nonzero_offset = -1;
+    eng->sal_last_nonzero_offset = -1;
+    eng->sal_checksum16 = 0;
+}
+
+static void parse_sal_profile(Nexus_SoundEngine *eng) {
+    int i;
+    int zero_run = 0;
+    int checksum = 0;
+
+    if (!eng) return;
+    clear_sal_profile(eng);
+    if (!eng->sal_data || eng->sal_size <= 0 || (eng->sal_size & 1) != 0) {
+        return;
+    }
+
+    for (i = 0; i < eng->sal_size; ++i) {
+        int b = eng->sal_data[i];
+        if (b != 0) {
+            if (eng->sal_first_nonzero_offset < 0) {
+                eng->sal_first_nonzero_offset = i;
+            }
+            eng->sal_last_nonzero_offset = i;
+            eng->sal_nonzero_byte_count++;
+            if ((b & 0x80) != 0) {
+                eng->sal_high_bit_byte_count++;
+            }
+            if (zero_run > 0) {
+                eng->sal_zero_run_count++;
+                if (zero_run > eng->sal_max_zero_run) {
+                    eng->sal_max_zero_run = zero_run;
+                }
+                zero_run = 0;
+            }
+        } else {
+            zero_run++;
+        }
+    }
+    if (zero_run > 0) {
+        eng->sal_zero_run_count++;
+        if (zero_run > eng->sal_max_zero_run) {
+            eng->sal_max_zero_run = zero_run;
+        }
+    }
+    for (i = 0; i + 1 < eng->sal_size; i += 2) {
+        int word = ((int)eng->sal_data[i] << 8) | (int)eng->sal_data[i + 1];
+        checksum = (checksum + word) & 0xffff;
+    }
+
+    if (eng->sal_nonzero_byte_count > 0) {
+        eng->sal_package_profile_supported = 1;
+        eng->sal_word_count = eng->sal_size / 2;
+        eng->sal_checksum16 = checksum;
+    }
+}
+
+static void parse_map_route(Nexus_SoundEngine *eng) {
+    int i;
+    int limit;
+
+    if (!eng) return;
+    clear_map_route(eng);
+    if (!eng->map_data || eng->map_size <= 0) return;
+
+    limit = eng->map_size;
+    if (limit > (int)EVENT_COUNT) limit = (int)EVENT_COUNT;
+    if (limit > (int)(sizeof(eng->event_sample_index) /
+                      sizeof(eng->event_sample_index[0]))) {
+        limit = (int)(sizeof(eng->event_sample_index) /
+                      sizeof(eng->event_sample_index[0]));
+    }
+    eng->map_event_count = limit;
+
+    /* The verified MAP assets are compact per-level event tables. Until the
+     * SAL sample payload is decoded, Firestaff consumes the bounded event
+     * index route only: byte N maps event N to a sample index, zero means no
+     * level-local sample route. */
+    for (i = 1; i < limit; ++i) {
+        int sample = eng->map_data[i];
+        eng->event_sample_index[i] = (uint16_t)sample;
+        if (sample > 0) {
+            if (eng->map_mapped_event_count == 0 ||
+                sample < eng->map_first_sample_index) {
+                eng->map_first_sample_index = sample;
+            }
+            if (sample > eng->map_last_sample_index) {
+                eng->map_last_sample_index = sample;
+            }
+            ++eng->map_mapped_event_count;
+        }
+    }
+}
 
 /* ═══════════════════════════════════════════════════════════════════
  * Init
@@ -40,6 +432,8 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
     eng->music_enabled = 1;
     eng->current_cd_track = 2;
     eng->current_level = -1;
+    clear_map_route(eng);
+    clear_sal_profile(eng);
     printf("Nexus sound: initialized (stub — no actual audio playback)\n");
     return 0;
 }
@@ -71,6 +465,8 @@ int nexus_sound_load_level(Nexus_SoundEngine *eng, int level_index,
     if (eng->map_data) { free(eng->map_data); eng->map_data = NULL; }
     eng->sal_size = 0;
     eng->map_size = 0;
+    clear_map_route(eng);
+    clear_sal_profile(eng);
 
     eng->current_level = level_index;
 
@@ -89,6 +485,9 @@ int nexus_sound_load_level(Nexus_SoundEngine *eng, int level_index,
             eng->map_size = map_size;
         }
     }
+    parse_map_route(eng);
+    parse_map_record_table(eng);
+    parse_sal_profile(eng);
 
     printf("Nexus sound: loaded level %d SFX (SAL=%d bytes, MAP=%d bytes)\n",
         level_index, sal_size, map_size);
@@ -124,6 +523,98 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
         nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_SAL_BANK);
     out_receipt->map_decode_supported =
         nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_MAP_TABLE);
+    out_receipt->map_event_count = eng->map_event_count;
+    out_receipt->map_mapped_event_count = eng->map_mapped_event_count;
+    out_receipt->map_first_sample_index = eng->map_first_sample_index;
+    out_receipt->map_last_sample_index = eng->map_last_sample_index;
+    out_receipt->map_header_checksum16 = eng->map_header_checksum16;
+    out_receipt->map_header_nonzero_byte_count =
+        eng->map_header_nonzero_byte_count;
+    out_receipt->map_header_distinct_byte_count =
+        eng->map_header_distinct_byte_count;
+    out_receipt->map_header_transition_count =
+        eng->map_header_transition_count;
+    out_receipt->map_record_table_supported =
+        eng->map_record_table_supported;
+    out_receipt->map_record_count = eng->map_record_count;
+    out_receipt->map_record_terminator_offset =
+        eng->map_record_terminator_offset;
+    out_receipt->map_first_record_event = eng->map_first_record_event;
+    out_receipt->map_min_record_event = eng->map_min_record_event;
+    out_receipt->map_max_record_event = eng->map_max_record_event;
+    out_receipt->map_record_event_span = eng->map_record_event_span;
+    out_receipt->map_unique_record_event_count =
+        eng->map_unique_record_event_count;
+    out_receipt->map_duplicate_record_event_count =
+        eng->map_duplicate_record_event_count;
+    out_receipt->map_has_duplicate_record_events =
+        eng->map_has_duplicate_record_events;
+    out_receipt->map_first_record_sal_offset =
+        eng->map_first_record_sal_offset;
+    out_receipt->map_first_record_size = eng->map_first_record_size;
+    out_receipt->map_last_record_sal_offset =
+        eng->map_last_record_sal_offset;
+    out_receipt->map_max_record_end = eng->map_max_record_end;
+    out_receipt->map_total_record_bytes = eng->map_total_record_bytes;
+    out_receipt->map_out_of_bounds_record_count =
+        eng->map_out_of_bounds_record_count;
+    out_receipt->map_first_window_checksum16 =
+        eng->map_first_window_checksum16;
+    out_receipt->map_first_window_nonzero_byte_count =
+        eng->map_first_window_nonzero_byte_count;
+    out_receipt->map_first_window_high_bit_byte_count =
+        eng->map_first_window_high_bit_byte_count;
+    out_receipt->map_first_window_first_nonzero_relative_offset =
+        eng->map_first_window_first_nonzero_relative_offset;
+    out_receipt->map_first_window_last_nonzero_relative_offset =
+        eng->map_first_window_last_nonzero_relative_offset;
+    out_receipt->map_first_window_distinct_byte_count =
+        eng->map_first_window_distinct_byte_count;
+    out_receipt->map_first_window_transition_count =
+        eng->map_first_window_transition_count;
+    out_receipt->map_last_window_checksum16 =
+        eng->map_last_window_checksum16;
+    out_receipt->map_last_window_nonzero_byte_count =
+        eng->map_last_window_nonzero_byte_count;
+    out_receipt->map_last_window_high_bit_byte_count =
+        eng->map_last_window_high_bit_byte_count;
+    out_receipt->map_last_window_first_nonzero_relative_offset =
+        eng->map_last_window_first_nonzero_relative_offset;
+    out_receipt->map_last_window_last_nonzero_relative_offset =
+        eng->map_last_window_last_nonzero_relative_offset;
+    out_receipt->map_last_window_distinct_byte_count =
+        eng->map_last_window_distinct_byte_count;
+    out_receipt->map_last_window_transition_count =
+        eng->map_last_window_transition_count;
+    out_receipt->last_event = eng->last_event;
+    out_receipt->last_sample_index = eng->last_sample_index;
+    out_receipt->last_event_record_found = eng->last_event_record_found;
+    out_receipt->last_event_sal_offset = eng->last_event_sal_offset;
+    out_receipt->last_event_sal_size = eng->last_event_sal_size;
+    out_receipt->last_event_window_checksum16 =
+        eng->last_event_window_checksum16;
+    out_receipt->last_event_window_nonzero_byte_count =
+        eng->last_event_window_nonzero_byte_count;
+    out_receipt->last_event_window_high_bit_byte_count =
+        eng->last_event_window_high_bit_byte_count;
+    out_receipt->last_event_window_first_nonzero_relative_offset =
+        eng->last_event_window_first_nonzero_relative_offset;
+    out_receipt->last_event_window_last_nonzero_relative_offset =
+        eng->last_event_window_last_nonzero_relative_offset;
+    out_receipt->last_event_window_distinct_byte_count =
+        eng->last_event_window_distinct_byte_count;
+    out_receipt->last_event_window_transition_count =
+        eng->last_event_window_transition_count;
+    out_receipt->sal_package_profile_supported =
+        eng->sal_package_profile_supported;
+    out_receipt->sal_word_count = eng->sal_word_count;
+    out_receipt->sal_nonzero_byte_count = eng->sal_nonzero_byte_count;
+    out_receipt->sal_high_bit_byte_count = eng->sal_high_bit_byte_count;
+    out_receipt->sal_zero_run_count = eng->sal_zero_run_count;
+    out_receipt->sal_max_zero_run = eng->sal_max_zero_run;
+    out_receipt->sal_first_nonzero_offset = eng->sal_first_nonzero_offset;
+    out_receipt->sal_last_nonzero_offset = eng->sal_last_nonzero_offset;
+    out_receipt->sal_checksum16 = eng->sal_checksum16;
 
     if (eng->current_level < 0 ||
         eng->current_level >= NEXUS_V1_AUDIO_LEVEL_COUNT) {
@@ -197,10 +688,51 @@ const char *nexus_sound_sfx_runtime_status_name(
 void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
     const char *name;
     Nexus_SfxRuntimeReceipt receipt;
+    int sample_index = -1;
 
     if (!eng || !eng->initialized) return;
     if (!eng->sfx_enabled) return;
     if (event <= NEXUS_SFX_NONE || event >= EVENT_COUNT) return;
+    if ((int)event < eng->map_event_count) {
+        sample_index = eng->event_sample_index[event];
+        if (sample_index == 0) sample_index = -1;
+    }
+    eng->last_event = event;
+    eng->last_sample_index = sample_index;
+    eng->last_event_record_found = 0;
+    eng->last_event_sal_offset = -1;
+    eng->last_event_sal_size = 0;
+    eng->last_event_window_checksum16 = 0;
+    eng->last_event_window_nonzero_byte_count = 0;
+    eng->last_event_window_high_bit_byte_count = 0;
+    eng->last_event_window_first_nonzero_relative_offset = -1;
+    eng->last_event_window_last_nonzero_relative_offset = -1;
+    eng->last_event_window_distinct_byte_count = 0;
+    eng->last_event_window_transition_count = 0;
+    if ((int)event >= 0 &&
+        (int)event < (int)(sizeof(eng->event_sal_size) /
+                           sizeof(eng->event_sal_size[0])) &&
+        eng->event_sal_size[event] > 0) {
+        eng->last_event_record_found = 1;
+        eng->last_event_sal_offset = (int)eng->event_sal_offset[event];
+        eng->last_event_sal_size = (int)eng->event_sal_size[event];
+        eng->last_event_window_checksum16 =
+            (int)eng->event_sal_checksum16[event];
+        eng->last_event_window_nonzero_byte_count =
+            (int)eng->event_sal_nonzero_byte_count[event];
+        eng->last_event_window_high_bit_byte_count =
+            (int)eng->event_sal_high_bit_byte_count[event];
+        eng->last_event_window_first_nonzero_relative_offset =
+            optional_u16_to_int(
+                eng->event_sal_first_nonzero_relative_offset[event]);
+        eng->last_event_window_last_nonzero_relative_offset =
+            optional_u16_to_int(
+                eng->event_sal_last_nonzero_relative_offset[event]);
+        eng->last_event_window_distinct_byte_count =
+            (int)eng->event_sal_distinct_byte_count[event];
+        eng->last_event_window_transition_count =
+            (int)eng->event_sal_transition_count[event];
+    }
     if (nexus_sound_level_runtime_receipt(eng, &receipt) == 0 &&
         receipt.blocks_real_sfx_playback) {
         printf("Nexus SFX blocked: %s\n",
@@ -213,7 +745,7 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
 
     /* STUB: log only */
     /* TODO: real playback — MAP lookup + SAL decode + SDL_mixer */
-    printf("Nexus SFX: %s\n", name);
+    printf("Nexus SFX: %s sample_idx=%d\n", name, sample_index);
     (void)eng;
 }
 
@@ -221,6 +753,18 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
     Nexus_SfxRuntimeReceipt receipt;
     if (!eng || !eng->initialized) return;
     if (!eng->sfx_enabled) return;
+    eng->last_event = 0;
+    eng->last_sample_index = sample_index;
+    eng->last_event_record_found = 0;
+    eng->last_event_sal_offset = -1;
+    eng->last_event_sal_size = 0;
+    eng->last_event_window_checksum16 = 0;
+    eng->last_event_window_nonzero_byte_count = 0;
+    eng->last_event_window_high_bit_byte_count = 0;
+    eng->last_event_window_first_nonzero_relative_offset = -1;
+    eng->last_event_window_last_nonzero_relative_offset = -1;
+    eng->last_event_window_distinct_byte_count = 0;
+    eng->last_event_window_transition_count = 0;
     if (nexus_sound_level_runtime_receipt(eng, &receipt) == 0 &&
         receipt.blocks_real_sfx_playback) {
         printf("Nexus SFX blocked: %s\n",

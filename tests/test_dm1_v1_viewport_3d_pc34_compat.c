@@ -2518,6 +2518,8 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
     uint8_t assets[8 * DM1_VIEWPORT_BYTE_WIDTH];
     uint8_t grid[4 * 4];
+    uint8_t stairs_up[4 * 4];
+    uint8_t pit_invisible[4 * 4];
     DM1_Viewport3DState state;
     const DM1_WallFrame *d3l2_frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3L2);
     const DM1_WallFrame *d3r2_frame = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3R2);
@@ -3044,6 +3046,90 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
               viewport[25 * DM1_VIEWPORT_WIDTH + 0], 0xee);
     check_int("d3l2_d3r2_gate.d3r2_teleporter_field_row_after_untouched",
               viewport[74 * DM1_VIEWPORT_WIDTH + 223], 0xee);
+
+    /* F0676/F0677 select C00/C07 stairs graphics from M555, mirror D3R2
+     * through F0105, and only draw C049 pits when M554 is clear. */
+    {
+        uint8_t source_pixels[16 * 49];
+        DM1_TestGraphicProvider provider;
+        memset(&provider, 0, sizeof(provider));
+        memset(source_pixels, 10, sizeof(source_pixels));
+        memset(stairs_up, 0, sizeof(stairs_up));
+        memset(pit_invisible, 0, sizeof(pit_invisible));
+        source_pixels[1] = 0x51;
+        source_pixels[6] = 0x52;
+        state.graphic_provider_callback = dm1_test_graphic_provider;
+        state.graphic_provider_user_data = &provider;
+        state.dungeon_aspect_grid = grid;
+        state.dungeon_stairs_up_grid = stairs_up;
+        state.dungeon_pit_invisible_grid = pit_invisible;
+        state.stairs_indices[0] = 0x401;
+        state.stairs_indices[7] = 0x407;
+
+        memset(viewport, 0xee, sizeof(viewport));
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_STAIRS_FRONT;
+        stairs_up[1 * 4 + 1] = 1;
+        provider.expected_index = 0x401;
+        provider.pixels = source_pixels;
+        provider.width = 16;
+        provider.height = 49;
+        dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 1, 1);
+        check_int("d3l2_d3r2_gate.stairs_up_d3l2_receipt",
+                  state.last_d3_back_wall_receipt.stairs_front_drawn &&
+                  state.last_d3_back_wall_receipt.stairs_front_up &&
+                  !state.last_d3_back_wall_receipt.stairs_front_flipped &&
+                  state.last_d3_back_wall_receipt.stairs_front_graphic_index == 0x401 &&
+                  state.last_d3_back_wall_receipt.stairs_front_zone_index == 800 &&
+                  state.last_d3_back_wall_receipt.stairs_front_graphics_dat_bound, 1);
+        check_int("d3l2_d3r2_gate.stairs_up_d3l2_pixel",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 1], 0x51);
+
+        memset(viewport, 0xee, sizeof(viewport));
+        stairs_up[1 * 4 + 1] = 0;
+        provider.expected_index = 0x407;
+        dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3R2, 0, 1, 1);
+        check_int("d3l2_d3r2_gate.stairs_down_d3r2_receipt",
+                  state.last_d3_back_wall_receipt.stairs_front_drawn &&
+                  !state.last_d3_back_wall_receipt.stairs_front_up &&
+                  state.last_d3_back_wall_receipt.stairs_front_flipped &&
+                  state.last_d3_back_wall_receipt.stairs_front_graphic_index == 0x407 &&
+                  state.last_d3_back_wall_receipt.stairs_front_zone_index == 814 &&
+                  state.last_d3_back_wall_receipt.stairs_front_graphics_dat_bound, 1);
+        check_int("d3l2_d3r2_gate.stairs_down_d3r2_flipped_pixel",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 209], 0x52);
+
+        memset(viewport, 0xee, sizeof(viewport));
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_PIT;
+        provider.expected_index = 49;
+        dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 1, 1);
+        check_int("d3l2_d3r2_gate.pit_visible_d3l2_receipt",
+                  state.last_d3_back_wall_receipt.pit_drawn &&
+                  !state.last_d3_back_wall_receipt.pit_invisible &&
+                  !state.last_d3_back_wall_receipt.pit_flipped &&
+                  state.last_d3_back_wall_receipt.pit_graphic_index == 49 &&
+                  state.last_d3_back_wall_receipt.pit_zone_index == 850 &&
+                  state.last_d3_back_wall_receipt.pit_graphics_dat_bound, 1);
+        check_int("d3l2_d3r2_gate.pit_visible_d3l2_pixel",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 1], 0x51);
+
+        memset(viewport, 0xee, sizeof(viewport));
+        pit_invisible[1 * 4 + 1] = 1;
+        dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3R2, 0, 1, 1);
+        check_int("d3l2_d3r2_gate.pit_invisible_d3r2_receipt",
+                  !state.last_d3_back_wall_receipt.pit_drawn &&
+                  state.last_d3_back_wall_receipt.pit_invisible &&
+                  state.last_d3_back_wall_receipt.pit_flipped &&
+                  state.last_d3_back_wall_receipt.pit_zone_index == 851, 1);
+        check_int("d3l2_d3r2_gate.pit_invisible_d3r2_untouched",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 209], 0xee);
+
+        state.graphic_provider_callback = NULL;
+        state.graphic_provider_user_data = NULL;
+        state.dungeon_aspect_grid = NULL;
+        state.dungeon_stairs_up_grid = NULL;
+        state.dungeon_pit_invisible_grid = NULL;
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
+    }
 
     dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
 }

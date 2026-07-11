@@ -154,20 +154,20 @@ static void test_forward_command_applies_open_runtime_step(void)
     csb_v1_runtime_init(&profile, NULL);
     make_party(&party);
     CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
-          "open-step fixture party enters runtime profile");
+          "no-dungeon fixture party enters runtime profile");
 
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     CHECK(DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
               &queue,
               (struct Dm1V1InputEventPc34Compat){
                   DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }) == 1,
-          "PC-34 forward key queues one open-step movement command");
+          "PC-34 forward key queues one movement command without dungeon data");
 
     CHECK(csb_v1_runtime_process_input_queue(
               &profile, &queue, 0, 0, 0, &result) == 1,
-          "CSB runtime consumes one open-step movement command");
+          "CSB runtime consumes one movement command without dungeon data");
     CHECK(result.queue_result.command == DM1_V1_COMMAND_MOVE_FORWARD,
-          "open-step command is C003 move-forward");
+          "no-dungeon command is C003 move-forward");
     CHECK(result.queue_result.dispatchedMove == 1,
           "shared V1 queue marks the command as a move dispatch");
     CHECK(result.unsupported_runtime_command == 0,
@@ -176,32 +176,32 @@ static void test_forward_command_applies_open_runtime_step(void)
           "runtime result reports handled movement command");
     CHECK(result.movement_step_attempted == 1,
           "runtime result reports attempted movement step");
-    CHECK(result.movement_step_applied == 1,
-          "runtime result reports applied movement step");
-    CHECK(result.movement_blocked_by_wall == 0,
-          "runtime result reports no wall block on open step");
+    CHECK(result.movement_step_applied == 0,
+          "runtime blocks a movement step without authoritative dungeon data");
+    CHECK(result.movement_blocked_by_wall == 1,
+          "runtime reports the missing dungeon destination as blocked");
     CHECK(result.movement_destination_x == CSB_V1_START_PARTY_X &&
           result.movement_destination_y == CSB_V1_START_PARTY_Y - 1,
-          "runtime result exposes open-step destination");
-    CHECK(result.disabled_movement_ticks_after == 1,
-          "runtime result exposes movement cooldown after open step");
+          "runtime result still exposes the blocked destination");
+    CHECK(result.disabled_movement_ticks_after == 0,
+          "blocked no-dungeon step does not create movement cooldown");
     CHECK(result.deferred_new_party_map_index_valid == 0,
-          "open same-level movement does not publish NewPartyMapIndex");
-    CHECK(result.runtime_state_changed == 1,
-          "CSB runtime reports a coordinate state mutation");
+          "blocked no-dungeon step does not publish NewPartyMapIndex");
+    CHECK(result.runtime_state_changed == 0,
+          "CSB runtime reports no mutation without dungeon data");
     CHECK(profile.party_x == CSB_V1_START_PARTY_X,
-          "northward open step leaves x unchanged");
-    CHECK(profile.party_y == CSB_V1_START_PARTY_Y - 1,
-          "northward open step decrements y");
+          "blocked no-dungeon step leaves x unchanged");
+    CHECK(profile.party_y == CSB_V1_START_PARTY_Y,
+          "blocked no-dungeon step leaves y unchanged");
     CHECK(profile.party_dir == CSB_V1_DIR_NORTH,
-          "open step preserves party direction");
-    CHECK(profile.party_state.PartyMapY == CSB_V1_START_PARTY_Y - 1,
-          "party snapshot mirrors the open step");
+          "blocked no-dungeon step preserves party direction");
+    CHECK(profile.party_state.PartyMapY == CSB_V1_START_PARTY_Y,
+          "party snapshot remains unchanged without dungeon data");
     CHECK(profile.party_state.Champions[0].Cell == 0 &&
           profile.party_state.Champions[1].Cell == 1,
-          "open step leaves champion cells unchanged");
+          "blocked no-dungeon step leaves champion cells unchanged");
     CHECK(queue.count == 0u,
-          "input queue is empty after the consumed open step");
+          "input queue is empty after the consumed blocked step");
 }
 
 static void make_legacy_wall_dungeon(CSB_V1_DungeonData *dungeon,

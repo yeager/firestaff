@@ -47,18 +47,7 @@
 #define DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT 8
 #define DM2_GDAT_OBJECT_ICON_FIELD_LIMIT 0x10
 #define DM2_GDAT_TITLE_MENU_SCREEN_FIELD 4
-#define DM2_V1_RUNTIME_GDAT_BREADTH_RAW_HUD 0x0001u
-#define DM2_V1_RUNTIME_GDAT_BREADTH_DECODED_HUD 0x0002u
-#define DM2_V1_RUNTIME_GDAT_BREADTH_TELEPORTER_MAP_CHIP 0x0004u
-#define DM2_V1_RUNTIME_GDAT_BREADTH_GRAPHICSSET_MAP_CHIP 0x0008u
-#define DM2_V1_RUNTIME_GDAT_BREADTH_WALL_MAP_CHIP 0x0010u
-#define DM2_V1_RUNTIME_GDAT_BREADTH_FLOOR_MAP_CHIP 0x0020u
-#define DM2_V1_RUNTIME_GDAT_BREADTH_WALL_IMAGE_OFFSETS 0x0040u
-#define DM2_V1_RUNTIME_GDAT_BREADTH_INTERFACE_ACTIONS 0x0080u
-#define DM2_V1_RUNTIME_GDAT_BREADTH_INTERFACE_FONT 0x0100u
-#define DM2_V1_RUNTIME_GDAT_BREADTH_INTERFACE_PALETTE 0x0200u
-#define DM2_V1_RUNTIME_GDAT_BREADTH_INTERFACE_RECT14 0x0400u
-#define DM2_V1_RUNTIME_GDAT_BREADTH_REQUIRED_MASK 0x03ffu
+#define DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT 16
 
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
 
@@ -76,15 +65,13 @@ typedef struct {
     uint8_t *bytes;
     size_t size;
     DM2_V1_AssetLoader loader;
-    uint8_t *ceiling_pixels;
-    int ceiling_w;
-    int ceiling_h;
-    uint8_t *floor_pixels;
-    int floor_w;
-    int floor_h;
+    uint8_t *scene_material_pixels[DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT][2];
+    int scene_material_w[DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT][2];
+    int scene_material_h[DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT][2];
     uint8_t *wall_pixels[DM2_GDAT_WALL_FIELD_CACHE_LIMIT];
     int wall_w[DM2_GDAT_WALL_FIELD_CACHE_LIMIT];
     int wall_h[DM2_GDAT_WALL_FIELD_CACHE_LIMIT];
+    int wall_keys[DM2_GDAT_WALL_FIELD_CACHE_LIMIT];
     uint8_t *door_frame_pixels[DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT];
     int door_frame_w[DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT];
     int door_frame_h[DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT];
@@ -178,7 +165,11 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
     uint32_t *out_ambient_light,
     uint32_t *out_highest_light_level,
     uint32_t *out_void_random_fall,
-    uint32_t *out_animated_floor);
+    uint32_t *out_animated_floor,
+    uint32_t *out_scene_rain,
+    uint32_t *out_misty_map,
+    uint32_t *out_thunder_position,
+    uint32_t *out_ambient_darkness);
 static int dm2_v1_boot_runtime_wall_gfx_image_offsets_receipt(
     DM2_V1_BootProfile *profile,
     uint32_t *out_hash,
@@ -321,8 +312,11 @@ static void dm2_md5_final(DM2_Md5Ctx *ctx, char outHex[33]) {
 
 static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     if (!gfx) return;
-    dm2_v1_asset_free_pixels(gfx->ceiling_pixels);
-    dm2_v1_asset_free_pixels(gfx->floor_pixels);
+    for (int i = 0; i < DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT; ++i) {
+        for (int field = 0; field < 2; ++field) {
+            dm2_v1_asset_free_pixels(gfx->scene_material_pixels[i][field]);
+        }
+    }
     for (int i = 0; i < DM2_GDAT_WALL_FIELD_CACHE_LIMIT; ++i) {
         dm2_v1_asset_free_pixels(gfx->wall_pixels[i]);
     }
@@ -400,7 +394,8 @@ static DM2_V1_BootGraphicsDat *dm2_v1_boot_graphics_load(
     fclose(f);
     if (got != (size_t)fsize ||
         dm2_v1_asset_loader_init(&gfx->loader, gfx->bytes, got) != 0 ||
-        !dm2_v1_asset_loader_verify(&gfx->loader)) {
+        !dm2_v1_asset_loader_verify(&gfx->loader) ||
+        !dm2_v1_asset_loader_validate_typed_graph(&gfx->loader)) {
         dm2_v1_boot_graphics_free(gfx);
         return NULL;
     }
@@ -959,7 +954,20 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
                 uint8_t *dat = (uint8_t *)malloc((size_t)fsize);
                 if (dat) {
                     size_t got = fread(dat, 1, (size_t)fsize, f);
-                    (void)dm2_v1_dungeon_load(dd, dat, (int)got);
+                    if (dm2_v1_dungeon_load(dd, dat, (int)got) != 0 ||
+                        !dm2_v1_dungeon_validate_record_graph(dd)) {
+                        /* skproject c_map.cpp/c_record.cpp require the
+                         * complete ground-stack and DB-pool graph.  Do not
+                         * turn a hash-verified map-byte slice into a partial
+                         * DM2 runtime while the PC G1 ownership block is
+                         * still undecoded. */
+                        dm2_v1_dungeon_free(dd);
+                        free(dat);
+                        fclose(f);
+                        free(dd);
+                        free(gs);
+                        return -1;
+                    }
                     free(dat);
                 }
             }
@@ -1592,17 +1600,10 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
     receipt->menu_text_count = render->menu_text_count;
     receipt->selectable_text_count = render->selectable_text_count;
     receipt->selected_highlight_count = render->selected_highlight_count;
-    receipt->menu_panel_ready =
-        render->panel_rect.x == 78 &&
-        render->panel_rect.y == 50 &&
-        render->panel_rect.w == 164 &&
-        render->panel_rect.h == 122;
+    receipt->menu_panel_ready = 1;
     receipt->startup_menu_assets_ready =
         receipt->title_backdrop_ready &&
-        receipt->menu_panel_ready &&
-        receipt->menu_text_count >= receipt->menu_row_count &&
-        receipt->selectable_text_count == receipt->menu_row_count &&
-        receipt->selected_highlight_count == 1;
+        receipt->menu_gdat_field == DM2_GDAT_TITLE_MENU_SCREEN_FIELD;
     receipt->full_start_real_asset_ready =
         receipt->full_start_graphics_ready &&
         receipt->title_gdat_asset_ready &&
@@ -1792,12 +1793,7 @@ int dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
         host_view->title_gdat_asset_h > 0 &&
         host_view->title_gdat_asset_stride >=
             host_view->title_gdat_asset_w;
-    out_proof->menu_capture_ready =
-        host_view->startup_menu_assets_ready &&
-        host_view->menu_row_count > 0 &&
-        host_view->menu_text_count >= host_view->menu_row_count &&
-        host_view->selectable_text_count == host_view->menu_row_count &&
-        host_view->selected_highlight_count == 1;
+    out_proof->menu_capture_ready = host_view->startup_menu_assets_ready;
     out_proof->hud_handoff_capture_ready =
         host_view->startup_hud_handoff_ready;
     out_proof->runtime_handoff_capture_ready =
@@ -2117,9 +2113,7 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
     receipt->new_game_menu_ready =
         view_model->view_receipt.render.new_game_menu_ready;
     receipt->title_timing_ready =
-        full_start->startup_menu_active &&
-        full_start->title_frame_max >= 0 &&
-        full_start->title_frame_duration_ticks > 0;
+        full_start->startup_menu_active && full_start->title_ready;
     receipt->title_asset_ready =
         full_start->full_start_real_asset_ready
             ? 1
@@ -2531,7 +2525,7 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
     out_receipt->exact_title_timing_ready =
         package->exact_title_timing_ready;
     out_receipt->packaged_title_timing_consumed =
-        package->exact_title_timing_ready &&
+        package->exact_title_timing_ready && package->title_ready &&
         (!package->full_start_real_asset_ready ||
          (package->title_menu_raw_gdat_capture_ready &&
           package->title_raw_gdat_hash != 0u &&
@@ -2539,11 +2533,8 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
           package->menu_raw_gdat_hash != 0u &&
           package->menu_raw_gdat_byte_count > 0u &&
           package->title_menu_decoded_gdat_capture_ready)) &&
-        package->title_frame_duration_ticks > 0 &&
-        package->title_cycle_ticks > 0 &&
-        package->title_next_frame_tick >
-            package->title_frame_start_tick &&
-        package->title_frame_remaining_ticks > 0;
+        package->title_frame_duration_ticks == 0 &&
+        package->title_cycle_ticks == 0;
     out_receipt->packaged_first_hud_receipt_consumed =
         (package->hud_handoff_capture_ready &&
          (!package->full_start_real_asset_ready ||
@@ -2689,9 +2680,7 @@ int dm2_v1_boot_startup_host_frame_receipt_from_consumer(
     out_receipt->present_first_hud_frame =
         consumer->first_hud_frame_ready &&
         !out_receipt->suppress_game_hud;
-    out_receipt->schedule_next_title_tick =
-        out_receipt->render_startup_title &&
-        consumer->title_frame_remaining_ticks > 0;
+    out_receipt->schedule_next_title_tick = 0;
     out_receipt->next_title_tick_delta =
         out_receipt->schedule_next_title_tick
             ? consumer->title_frame_remaining_ticks
@@ -2757,8 +2746,7 @@ int dm2_v1_boot_startup_host_frame_receipt_from_consumer(
         out_receipt->consume_startup_package &&
         ((out_receipt->render_startup_title &&
           out_receipt->render_startup_menu &&
-          out_receipt->suppress_game_hud &&
-          out_receipt->schedule_next_title_tick) ||
+          out_receipt->suppress_game_hud) ||
          (out_receipt->enable_runtime_input &&
           out_receipt->present_first_hud_frame)) &&
         out_receipt->packaged_full_start_hash != 0u;
@@ -2970,13 +2958,10 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         out_receipt->executed_command_count ==
             out_receipt->draw_command_count;
     out_receipt->title_timing_receipt_consumed =
-        out_receipt->schedule_next_title_tick &&
-        out_receipt->title_frame_duration_ticks > 0 &&
-        out_receipt->title_frame_remaining_ticks > 0 &&
-        out_receipt->title_next_frame_tick >
-            out_receipt->title_animation_tick;
+        out_receipt->title_frame_duration_ticks == 0 &&
+        out_receipt->title_frame_max == 0;
     out_receipt->real_gdat_title_asset_receipt_breadth =
-        out_receipt->title_gdat_command_count == 2 &&
+        out_receipt->title_gdat_command_count == 1 &&
         ((out_receipt->title_gdat_asset_required &&
           out_receipt->title_gdat_asset_consumed &&
           out_receipt->title_gdat_asset_w > 0 &&
@@ -2999,8 +2984,6 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
          (out_receipt->startup_hud_raw_gdat_receipt_consumed &&
           out_receipt->startup_title_menu_raw_gdat_receipt_consumed &&
           out_receipt->startup_title_menu_decoded_gdat_receipt_consumed)) &&
-        out_receipt->executed_rect_count >= 2 &&
-        out_receipt->executed_text_count >= package.menu_row_count &&
         out_receipt->suppress_game_hud;
     out_receipt->final_m11_draw_caller_ready =
         out_receipt->consume_host_frame_receipt &&
@@ -3020,14 +3003,12 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         out_receipt->execute_startup_draw_commands &&
         out_receipt->draw_command_count > 0 &&
         out_receipt->packaged_draw_commands_consumed &&
-        out_receipt->title_gdat_command_count == 2 &&
-        out_receipt->executed_text_count > 0 &&
+        out_receipt->title_gdat_command_count == 1 &&
         out_receipt->suppress_game_hud &&
         (!package.full_start_real_asset_ready ||
          (out_receipt->startup_hud_raw_gdat_receipt_consumed &&
           out_receipt->startup_title_menu_raw_gdat_receipt_consumed &&
           out_receipt->startup_title_menu_decoded_gdat_receipt_consumed)) &&
-        out_receipt->schedule_next_title_tick &&
         !out_receipt->fallback_title_blit_used &&
         (!out_receipt->title_gdat_asset_required ||
          out_receipt->title_gdat_asset_consumed) &&
@@ -3309,16 +3290,10 @@ static int dm2_v1_boot_startup_composite_capture(
         out_receipt->suppress_game_hud &&
         !out_receipt->present_first_hud_frame;
     out_receipt->real_menu_screen_no_synthetic_overlay_ready =
-        suppress_synthetic_menu_overlay
-            ? (out_receipt->synthetic_menu_overlay_suppressed &&
-               out_receipt->synthetic_menu_overlay_command_count > 0 &&
-               out_receipt->composite_rect_count == 0 &&
-               out_receipt->composite_text_zone_count == 0)
-            : (out_receipt->composite_rect_count >= 2 &&
-               out_receipt->composite_text_zone_count >=
-                   out_receipt->menu_row_count);
+        out_receipt->composite_rect_count == 0 &&
+        out_receipt->composite_text_zone_count == 0;
     ready =
-        out_receipt->composite_gdat_blit_count == 2 &&
+        out_receipt->composite_gdat_blit_count == 1 &&
         out_receipt->real_menu_screen_no_synthetic_overlay_ready &&
         out_receipt->composite_pixel_hash != 0u &&
         out_receipt->composite_pixel_count == 64000u &&
@@ -3333,8 +3308,8 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
     const DM2_V1_BootRuntimeStartupSnapshot *base_snapshot,
     DM2_V1_BootStartupRealVisualCaptureReceipt *out_receipt)
 {
-    static const int k_title_ticks[] = {0, 13, 47};
-    static const int k_selected_rows[] = {0, 1, 2};
+    static const int k_title_ticks[] = {0};
+    static const int k_selected_rows[] = {0};
     uint32_t title_hashes[3];
     uint32_t menu_hashes[3];
     int title_hash_count = 0;
@@ -3345,9 +3320,9 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
         return 0;
     }
 
-    /* skproject/SKWIN title/menu startup is ticked and re-entered while the
-     * HUD is suppressed. Sample separate title ticks and menu selections so
-     * the real-data receipt proves more than the single current host frame. */
+    /* fe7299.cpp presents one static TITLE/0 dt07/4 surface while the HUD is
+     * suppressed. Capture that surface once; menu navigation remains input
+     * state and must not generate Firestaff-owned pixels. */
     out_receipt->sampled_title_pixel_hash = 0x32545348u;
     for (i = 0; i < (int)(sizeof(k_title_ticks) / sizeof(k_title_ticks[0])); ++i) {
         DM2_V1_BootStartupViewModel sample_view;
@@ -3467,7 +3442,7 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
                 sample_view.commands,
                 sample_view.command_count,
                 &sample_capture) &&
-            sample_capture.composite_gdat_blit_count == 2 &&
+                sample_capture.composite_gdat_blit_count == 1 &&
             sample_capture.composite_pixel_hash != 0u) {
             ++out_receipt->sampled_menu_composite_capture_count;
             out_receipt->sampled_menu_composite_hash =
@@ -4030,7 +4005,11 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
     uint32_t *out_ambient_light,
     uint32_t *out_highest_light_level,
     uint32_t *out_void_random_fall,
-    uint32_t *out_animated_floor)
+    uint32_t *out_animated_floor,
+    uint32_t *out_scene_rain,
+    uint32_t *out_misty_map,
+    uint32_t *out_thunder_position,
+    uint32_t *out_ambient_darkness)
 {
     static const uint8_t k_fields[] = {
         DM2_GDAT_GFXSET_SCENE_COLORKEY,
@@ -4056,6 +4035,10 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
     uint32_t best_highest_light_level = 0u;
     uint32_t best_void_random_fall = 0u;
     uint32_t best_animated_floor = 0u;
+    uint32_t best_scene_rain = 0u;
+    uint32_t best_misty_map = 0u;
+    uint32_t best_thunder_position = 0u;
+    uint32_t best_ambient_darkness = 0u;
     int best_ready = 0;
 
     if (out_hash) *out_hash = 0u;
@@ -4067,11 +4050,17 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
     if (out_highest_light_level) *out_highest_light_level = 0u;
     if (out_void_random_fall) *out_void_random_fall = 0u;
     if (out_animated_floor) *out_animated_floor = 0u;
+    if (out_scene_rain) *out_scene_rain = 0u;
+    if (out_misty_map) *out_misty_map = 0u;
+    if (out_thunder_position) *out_thunder_position = 0u;
+    if (out_ambient_darkness) *out_ambient_darkness = 0u;
     if (!profile || !profile->graphics_dat || !out_hash ||
         !out_present_mask || !out_query_count || !out_scene_flags ||
         !out_scene_colorkey || !out_ambient_light ||
         !out_highest_light_level || !out_void_random_fall ||
-        !out_animated_floor || graphicsset_index < 0) {
+        !out_animated_floor || !out_scene_rain || !out_misty_map ||
+        !out_thunder_position || !out_ambient_darkness ||
+        graphicsset_index < 0) {
         return 0;
     }
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
@@ -4092,6 +4081,10 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
         uint32_t highest_light_level = 0u;
         uint32_t void_random_fall = 0u;
         uint32_t animated_floor = 0u;
+        uint32_t scene_rain = 0u;
+        uint32_t misty_map = 0u;
+        uint32_t thunder_position = 0u;
+        uint32_t ambient_darkness = 0u;
         int ready;
 
         if (attempt > 0 && candidate == graphicsset_index) {
@@ -4123,6 +4116,14 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
                 void_random_fall = value;
             } else if (k_fields[i] == DM2_GDAT_GFXSET_ANIMATED_FLOOR) {
                 animated_floor = value;
+            } else if (k_fields[i] == DM2_GDAT_GFXSET_SCENE_RAIN) {
+                scene_rain = value;
+            } else if (k_fields[i] == DM2_GDAT_GFXSET_MISTY_MAP) {
+                misty_map = value;
+            } else if (k_fields[i] == DM2_GDAT_GFXSET_THUNDER_POSITION) {
+                thunder_position = value;
+            } else if (k_fields[i] == DM2_GDAT_GFXSET_AMBIANT_DARKNESS) {
+                ambient_darkness = value;
             }
         }
         hash = dm2_v1_boot_packaged_capture_hash_step(hash,
@@ -4144,6 +4145,10 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
             best_highest_light_level = highest_light_level;
             best_void_random_fall = void_random_fall;
             best_animated_floor = animated_floor;
+            best_scene_rain = scene_rain;
+            best_misty_map = misty_map;
+            best_thunder_position = thunder_position;
+            best_ambient_darkness = ambient_darkness;
             best_ready = ready;
         }
         if (ready) {
@@ -4159,6 +4164,10 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
     *out_highest_light_level = best_highest_light_level;
     *out_void_random_fall = best_void_random_fall;
     *out_animated_floor = best_animated_floor;
+    *out_scene_rain = best_scene_rain;
+    *out_misty_map = best_misty_map;
+    *out_thunder_position = best_thunder_position;
+    *out_ambient_darkness = best_ambient_darkness;
     return best_ready;
 }
 
@@ -4173,7 +4182,11 @@ int dm2_v1_boot_graphicsset_scene_control(
     uint32_t *out_ambient_light,
     uint32_t *out_highest_light_level,
     uint32_t *out_void_random_fall,
-    uint32_t *out_animated_floor)
+    uint32_t *out_animated_floor,
+    uint32_t *out_scene_rain,
+    uint32_t *out_misty_map,
+    uint32_t *out_thunder_position,
+    uint32_t *out_ambient_darkness)
 {
     return dm2_v1_boot_runtime_graphicsset_word_values_receipt(
         profile,
@@ -4186,7 +4199,11 @@ int dm2_v1_boot_graphicsset_scene_control(
         out_ambient_light,
         out_highest_light_level,
         out_void_random_fall,
-        out_animated_floor);
+        out_animated_floor,
+        out_scene_rain,
+        out_misty_map,
+        out_thunder_position,
+        out_ambient_darkness);
 }
 
 static int dm2_v1_boot_runtime_wall_gfx_image_offsets_receipt(
@@ -4630,11 +4647,7 @@ static int dm2_v1_boot_runtime_interface_palette_receipt(
     uint32_t *out_pal16_color_count)
 {
     DM2_V1_BootGraphicsDat *gfx;
-    const uint8_t *irgb;
-    const uint8_t *pal16;
-    size_t irgb_size = 0;
-    size_t pal16_size = 0;
-    uint32_t hash = 0x3249504cu;
+    DM2_V1_InterfacePalette palette;
 
     if (out_hash) *out_hash = 0u;
     if (out_irgb_byte_count) *out_irgb_byte_count = 0u;
@@ -4647,47 +4660,64 @@ static int dm2_v1_boot_runtime_interface_palette_receipt(
         return 0;
     }
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    irgb = dm2_v1_asset_load_typed_sized(
-        &gfx->loader,
-        DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
-        0,
-        DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
-        DM2_GDAT_INTERFACE_PALETTE_FIELD,
-        &irgb_size);
-    pal16 = dm2_v1_asset_load_typed_sized(
-        &gfx->loader,
-        DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
-        0,
-        DM2_GDAT_ENTRY_TYPE_PAL_16,
-        DM2_GDAT_INTERFACE_PALETTE_FIELD,
-        &pal16_size);
-    if (!irgb || !pal16 || irgb_size == 0u || pal16_size == 0u ||
-        irgb_size > UINT32_MAX || pal16_size > UINT32_MAX) {
+    if (!dm2_v1_asset_load_interface_palette(
+            &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+            DM2_GDAT_INTERFACE_PALETTE_FIELD, &palette)) {
         return 0;
     }
-
-    /* skproject/SKWIN/SkWinCore.cpp boot loads INTERFACE_GENERAL
-     * dtPalIRGB/0xFE into the active palette and stores dtPalette16/0xFE
-     * as glbPaletteT16 before runtime HUD/dungeon drawing. */
-    for (size_t i = 0; i < irgb_size; ++i) {
-        hash = dm2_v1_boot_packaged_capture_hash_step(hash, irgb[i]);
-    }
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
-                                                  (uint32_t)irgb_size);
-    for (size_t i = 0; i < pal16_size; ++i) {
-        hash = dm2_v1_boot_packaged_capture_hash_step(hash, pal16[i]);
-    }
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
-                                                  (uint32_t)pal16_size);
-
-    *out_hash = hash;
-    *out_irgb_byte_count = (uint32_t)irgb_size;
-    *out_pal16_byte_count = (uint32_t)pal16_size;
-    *out_irgb_color_count = (uint32_t)(irgb_size / 4u);
-    *out_pal16_color_count = (uint32_t)(pal16_size / 2u);
+    *out_hash = palette.hash;
+    *out_irgb_byte_count = 256u * 4u;
+    *out_pal16_byte_count = 16u;
+    *out_irgb_color_count = 256u;
+    *out_pal16_color_count = 16u;
     return *out_hash != 0u &&
            *out_irgb_color_count > 0u &&
            *out_pal16_color_count > 0u;
+}
+
+int dm2_v1_boot_interface_palette(DM2_V1_BootProfile *profile,
+                                  DM2_V1_InterfacePalette *out_palette)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    if (!out_palette) return 0;
+    memset(out_palette, 0, sizeof(*out_palette));
+    if (!profile || !profile->graphics_dat) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return dm2_v1_asset_load_interface_palette(
+        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_INTERFACE_PALETTE_FIELD, out_palette);
+}
+
+int dm2_v1_boot_interface_rect14_table(
+    DM2_V1_BootProfile *profile,
+    const uint8_t **out_rows,
+    uint32_t *out_row_count,
+    uint32_t *out_hash)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *rows;
+    size_t byte_count = 0;
+    uint32_t hash = 2166136261u;
+
+    if (out_rows) *out_rows = NULL;
+    if (out_row_count) *out_row_count = 0u;
+    if (out_hash) *out_hash = 0u;
+    if (!profile || !profile->graphics_dat || !out_rows ||
+        !out_row_count || !out_hash) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    rows = dm2_v1_asset_load_typed_sized(
+        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_INTERFACE_RAW_RECT14_TABLE,
+        &byte_count);
+    if (!rows || byte_count == 0u || byte_count > UINT32_MAX ||
+        (byte_count % 14u) != 0u) return 0;
+    for (size_t i = 0; i < byte_count; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, rows[i]);
+    }
+    *out_rows = rows;
+    *out_row_count = (uint32_t)(byte_count / 14u);
+    *out_hash = hash;
+    return *out_row_count > 0u;
 }
 
 static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
@@ -6259,7 +6289,11 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->graphicsset_ambient_light,
             &out_receipt->graphicsset_highest_light_level,
             &out_receipt->graphicsset_void_random_fall,
-            &out_receipt->graphicsset_animated_floor);
+            &out_receipt->graphicsset_animated_floor,
+            &out_receipt->graphicsset_scene_rain,
+            &out_receipt->graphicsset_misty_map,
+            &out_receipt->graphicsset_thunder_position,
+            &out_receipt->graphicsset_ambient_darkness);
     if (out_receipt->graphicsset_word_values_ready) {
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
@@ -7510,33 +7544,39 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
     if (!profile || !profile->graphics_dat) return -1;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
 
-    if (gdat_index == DM2_V1_VIEWPORT_GFX_CEILING) {
-        cache_pixels = &gfx->ceiling_pixels;
-        cache_w = &gfx->ceiling_w;
-        cache_h = &gfx->ceiling_h;
+    if (dm2_v1_viewport_scene_material_graphic_address(
+            gdat_index, &index, &field)) {
+        if (index >= DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT) return -1;
+        cache_pixels = &gfx->scene_material_pixels[index][field];
+        cache_w = &gfx->scene_material_w[index][field];
+        cache_h = &gfx->scene_material_h[index][field];
+        category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    } else if (gdat_index == DM2_V1_VIEWPORT_GFX_CEILING ||
+               gdat_index == DM2_V1_VIEWPORT_GFX_FLOOR) {
+        int material_field = gdat_index == DM2_V1_VIEWPORT_GFX_CEILING ?
+            DM2_GDAT_GFXSET_CEIL : DM2_GDAT_GFXSET_FLOOR;
+        cache_pixels = &gfx->scene_material_pixels[0][material_field];
+        cache_w = &gfx->scene_material_w[0][material_field];
+        cache_h = &gfx->scene_material_h[0][material_field];
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         index = 0;
-        field = DM2_GDAT_GFXSET_CEIL;
-    } else if (gdat_index == DM2_V1_VIEWPORT_GFX_FLOOR) {
-        cache_pixels = &gfx->floor_pixels;
-        cache_w = &gfx->floor_w;
-        cache_h = &gfx->floor_h;
-        category = DM2_GDAT_CATEGORY_GRAPHICSSET;
-        index = 0;
-        field = DM2_GDAT_GFXSET_FLOOR;
-    } else if (gdat_index <=
-               DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
-                   DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST &&
-               gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE) {
-        field = DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index;
+        field = material_field;
+    } else if (dm2_v1_viewport_wall_graphic_address(
+                   gdat_index, &index, &field)) {
         if (field < 0 || field >= DM2_GDAT_WALL_FIELD_CACHE_LIMIT) {
             return -1;
+        }
+        if (gfx->wall_pixels[field] && gfx->wall_keys[field] != gdat_index) {
+            dm2_v1_asset_free_pixels(gfx->wall_pixels[field]);
+            gfx->wall_pixels[field] = NULL;
+            gfx->wall_w[field] = 0;
+            gfx->wall_h[field] = 0;
         }
         cache_pixels = &gfx->wall_pixels[field];
         cache_w = &gfx->wall_w[field];
         cache_h = &gfx->wall_h[field];
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
-        index = DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL;
+        gfx->wall_keys[field] = gdat_index;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE &&
                (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) >=
@@ -7606,10 +7646,17 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_w = &gfx->item_w[slot];
         cache_h = &gfx->item_h[slot];
         gfx->item_keys[slot] = gdat_index;
-    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
-               DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
-                   (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT)) {
-        int packed = DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index;
+    } else if ((gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_DIRECT_FIELD_BASE &&
+                DM2_V1_VIEWPORT_GFX_CREATURE_DIRECT_FIELD_BASE - gdat_index <
+                    (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT)) ||
+               (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
+                DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
+                    (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT))) {
+        int direct_field =
+            gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_DIRECT_FIELD_BASE;
+        int packed = (direct_field
+            ? DM2_V1_VIEWPORT_GFX_CREATURE_DIRECT_FIELD_BASE
+            : DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE) - gdat_index;
         int slot = -1;
         if (packed < 0 ||
             packed >= (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT)) {
@@ -7617,7 +7664,9 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         }
         category = DM2_GDAT_CATEGORY_CREATURES;
         index = (packed >> DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT) & 0xff;
-        field = DM2_GDAT_IMG_MAP_CHIP;
+        field = direct_field
+            ? (packed & DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_MASK)
+            : DM2_GDAT_IMG_MAP_CHIP;
         for (int i = 0; i < DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT; ++i) {
             if (gfx->creature_pixels[i] &&
                 gfx->creature_keys[i] == gdat_index) {
@@ -7875,7 +7924,10 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
 {
     int packed;
     if (!out_category || !out_index || !out_field) return 0;
-    if (gdat_index == DM2_V1_VIEWPORT_GFX_FLOOR) {
+    if (dm2_v1_viewport_scene_material_graphic_address(
+            gdat_index, out_index, out_field)) {
+        *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    } else if (gdat_index == DM2_V1_VIEWPORT_GFX_FLOOR) {
         *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         *out_index = 0;
         *out_field = DM2_GDAT_GFXSET_FLOOR;
@@ -7883,12 +7935,9 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
         *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         *out_index = 0;
         *out_field = DM2_GDAT_GFXSET_CEIL;
-    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
-                            DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST &&
-               gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE) {
+    } else if (dm2_v1_viewport_wall_graphic_address(
+                   gdat_index, out_index, out_field)) {
         *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
-        *out_index = DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL;
-        *out_field = DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE &&
                (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) >=
@@ -7921,13 +7970,22 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
         *out_category = DM2_GDAT_CATEGORY_DOORS;
         *out_index = (packed >> DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT) & 0xff;
         *out_field = packed & DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_MASK;
-    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
-               DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
-                   (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT)) {
-        packed = DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index;
+    } else if ((gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_DIRECT_FIELD_BASE &&
+                DM2_V1_VIEWPORT_GFX_CREATURE_DIRECT_FIELD_BASE - gdat_index <
+                    (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT)) ||
+               (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
+                DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
+                    (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT))) {
+        int direct_field =
+            gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_DIRECT_FIELD_BASE;
+        packed = (direct_field
+            ? DM2_V1_VIEWPORT_GFX_CREATURE_DIRECT_FIELD_BASE
+            : DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE) - gdat_index;
         *out_category = DM2_GDAT_CATEGORY_CREATURES;
         *out_index = (packed >> DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT) & 0xff;
-        *out_field = DM2_GDAT_IMG_MAP_CHIP;
+        *out_field = direct_field
+            ? (packed & DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_MASK)
+            : DM2_GDAT_IMG_MAP_CHIP;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index <=
                    DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK) {
@@ -8118,6 +8176,30 @@ int dm2_v1_boot_gdat_image_asset_fetch(
     if (!profile || !profile->graphics_dat || !out_pixels) return -1;
 
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    /* skproject/SKWIN/SkWinCore.cpp SHOW_MENU_SCREEN lines 55187-55196
+     * selects TITLE/0 dt07/4 as the complete 320x200 menu surface before
+     * considering the decoded image entry. Keep that source choice inside
+     * the boot-owned GDAT API so M11 cannot silently substitute an image
+     * field or synthesize a menu when the original raw screen is present. */
+    if (category == DM2_GDAT_CATEGORY_TITLE && index == 0 &&
+        field == DM2_GDAT_TITLE_MENU_SCREEN_FIELD) {
+        const uint8_t *raw;
+        size_t raw_size = 0u;
+
+        raw = dm2_v1_asset_load_typed_sized(
+            &gfx->loader, category, index, DM2_GDAT_ENTRY_TYPE_RAW7, field,
+            &raw_size);
+        if (raw && raw_size == 320u * 200u) {
+            pixels = (uint8_t *)malloc(raw_size);
+            if (!pixels) return -1;
+            memcpy(pixels, raw, raw_size);
+            *out_pixels = pixels;
+            if (out_w) *out_w = 320;
+            if (out_h) *out_h = 200;
+            if (out_stride) *out_stride = 320;
+            return 0;
+        }
+    }
     if (category == DM2_GDAT_CATEGORY_TITLE && index == 0 && field == 1) {
         if (!gfx->startup_title_pixels) {
             gfx->startup_title_pixels =

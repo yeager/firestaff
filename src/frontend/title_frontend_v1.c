@@ -213,15 +213,20 @@ int V1_TitleFrontend_GetC001BlitPlanForStep(const V1_TitleFrontendSourceAnimatio
         plan.clearBeforeBlit = 1;
         break;
     case V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT:
+        /* ReDMCSB TITLE.C F0437 lines 340-360 first shrinks the complete
+         * C001 320x80 DUNGEON MASTER region, then lines 385-387 blit that
+         * prepared bitmap into its centred destination box.  Do not crop a
+         * small C001 rectangle and enlarge it: that inverts the source route
+         * and produces an obviously wrong title animation. */
         plan.kind = V1_TITLE_FRONTEND_C001_BLIT_SCALED_REGION;
-        plan.srcX = step->x;
-        plan.srcY = step->y;
-        plan.srcW = step->width;
-        plan.srcH = step->height;
-        plan.dstX = 0u;
-        plan.dstY = 0u;
-        plan.dstW = 320u;
-        plan.dstH = 80u;
+        plan.srcX = 0u;
+        plan.srcY = 0u;
+        plan.srcW = 320u;
+        plan.srcH = 80u;
+        plan.dstX = step->x;
+        plan.dstY = step->y;
+        plan.dstW = step->width;
+        plan.dstH = step->height;
         plan.clearBeforeBlit = 1;
         break;
     case V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT:

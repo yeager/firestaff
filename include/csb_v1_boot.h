@@ -736,6 +736,9 @@ typedef struct CSB_V1_BootStartupHostViewReceipt_PC34 {
     CSB_V1_BootStartupHudMenuDrawReceipt_PC34 hud_menu_draw;
     int capture_proof_valid;
     CSB_V1_BootStartupPackagedCaptureProof_PC34 capture_proof;
+    int host_draw_package_ready;
+    int host_draw_uses_receipt_package;
+    int no_legacy_render_wrapper_ready;
 } CSB_V1_BootStartupHostViewReceipt_PC34;
 
 /* Complete CSB-owned startup presentation transaction for an M11 consumer.
@@ -757,6 +760,11 @@ typedef struct CSB_V1_BootStartupM11PresentationReceipt_PC34 {
     CSB_V1_BootStartupReadinessReceipt_PC34 readiness;
     int capture_proof_valid;
     CSB_V1_BootStartupPackagedCaptureProof_PC34 capture_proof;
+    int host_view_valid;
+    int host_draw_package_ready;
+    int host_draw_uses_receipt_package;
+    int no_legacy_render_wrapper_ready;
+    int legacy_plan_exports_inspection_only;
     int input_ready;
     int hud_ready;
     int runtime_ready;
@@ -778,6 +786,8 @@ typedef enum CSB_V1_StartupRuntimeSurfaceRole_PC34 {
     CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34,
     CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34,
     CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34,
+    CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34,
+    CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34,
     CSB_V1_STARTUP_RUNTIME_SURFACE_COUNT_PC34
 } CSB_V1_StartupRuntimeSurfaceRole_PC34;
 
@@ -798,6 +808,7 @@ typedef struct CSB_V1_StartupRuntimeSurfaceSet_PC34 {
     int title_regions_ready;
     int opening_frame_ready;
     int entrance_screen_ready;
+    int hud_surfaces_ready;
     CSB_V1_StartupRuntimeSurface_PC34
         surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_COUNT_PC34];
 } CSB_V1_StartupRuntimeSurfaceSet_PC34;
@@ -854,6 +865,30 @@ typedef struct CSB_V1_StartupRuntimeAssetSession_PC34 {
     CSB_V1_StartupPlaybackState_PC34 playback;
 } CSB_V1_StartupRuntimeAssetSession_PC34;
 
+typedef enum CSB_V1_BootStartupDoorRuntimeRoute_PC34 {
+    CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_NONE_PC34 = 0,
+    CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_OPENING_PC34,
+    CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_RUNTIME_BLOCKED_PC34,
+    CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_HUD_READY_PC34
+} CSB_V1_BootStartupDoorRuntimeRoute_PC34;
+
+/* The prison-door boundary is a runtime handoff, not a new render callback.
+ * ReDMCSB ENTRANCE.C F0806 lines 857-889 leaves the entrance loop only after
+ * the door sequence, and CSBWin CSBCode.cpp lines 9515-9535 follows the same
+ * order: complete OpenPrisonDoors, release temporary entrance memory, then
+ * return to the game runtime. */
+typedef struct CSB_V1_BootStartupDoorRuntimeReceipt_PC34 {
+    int valid;
+    CSB_V1_BootStartupDoorRuntimeRoute_PC34 route;
+    int door_opening_finished;
+    int runtime_view_ready;
+    int hud_session_ready;
+    CSB_V1_StartupIdleReceipt_PC34 idle;
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 runtime_mirror;
+    const char *status_scope;
+    const char *status;
+} CSB_V1_BootStartupDoorRuntimeReceipt_PC34;
+
 /* One strict runtime-data proof for the complete CSB start.  Consumers may
  * still request a single frame, but the session is only accepted after C001
  * title regions, C002/C003 opening doors, entrance art and HUD bindings all
@@ -868,8 +903,14 @@ typedef struct CSB_V1_StartupFullRuntimeReceipt_PC34 {
     int entrance_ready;
     int hud_ready;
     int door_ready;
+    int playback_route_ready;
+    int playback_reaches_title;
+    int playback_reaches_entrance;
+    int playback_reaches_hud;
+    int title_to_hud_same_session;
     int no_legacy_wrappers;
     uint32_t session_generation;
+    uint32_t playback_route_hash;
     const char *source_evidence;
 } CSB_V1_StartupFullRuntimeReceipt_PC34;
 
@@ -886,6 +927,8 @@ typedef struct CSB_V1_StartupCompleteSupportReceipt_PC34 {
     int entrance_ready;
     int hud_ready;
     int door_ready;
+    int playback_route_ready;
+    int title_to_hud_same_session;
     int runtime_host_routes_ready;
     int draw_consumes_receipt_only;
     int input_consumes_receipt_only;
@@ -903,6 +946,7 @@ typedef struct CSB_V1_StartupCompleteSupportReceipt_PC34 {
     uint32_t credits_packaged_capture_hash;
     uint32_t real_startup_asset_binding_hash;
     uint32_t session_generation;
+    uint32_t playback_route_hash;
     uint32_t runtime_host_gate_hash;
     uint32_t complete_support_hash;
     CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
@@ -920,12 +964,18 @@ typedef struct CSB_V1_StartupReleaseAppCaptureReceipt_PC34 {
     int utility_release_app_capture_ready;
     int door_opening_release_app_capture_ready;
     int credits_release_app_capture_ready;
+    int title_sequence_capture_ready;
+    int title_sequence_host_consumer_ready;
+    int title_sequence_same_capture_route;
     int title_host_consumer_ready;
     int closed_door_host_consumer_ready;
     int utility_host_consumer_ready;
     int door_opening_host_consumer_ready;
     int credits_host_consumer_ready;
     int route_specific_host_consumers_ready;
+    int hud_door_capture_ready;
+    int hud_door_host_consumers_ready;
+    int hud_door_same_capture_route;
     int title_phase_route_complete;
     int runtime_host_routes_ready;
     int draw_consumes_receipt_only;
@@ -944,10 +994,12 @@ typedef struct CSB_V1_StartupReleaseAppCaptureReceipt_PC34 {
     uint32_t title_runtime_phase_hashes[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34];
     uint32_t title_runtime_phase_hash;
     uint32_t title_packaged_capture_hash;
+    uint32_t title_sequence_capture_hash;
     uint32_t closed_door_packaged_capture_hash;
     uint32_t utility_packaged_capture_hash;
     uint32_t door_opening_packaged_capture_hash;
     uint32_t credits_packaged_capture_hash;
+    uint32_t hud_door_capture_hash;
     uint32_t release_app_real_asset_capture_hash;
     uint32_t runtime_host_gate_hash;
     uint32_t complete_support_hash;
@@ -956,35 +1008,45 @@ typedef struct CSB_V1_StartupReleaseAppCaptureReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_StartupReleaseAppCaptureReceipt_PC34;
 
-typedef struct CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 {
+typedef struct CSB_V1_StartupPresentedAppCaptureFacts_PC34 {
+    int running_from_macos_app_bundle;
+    int mac_window_capture_ready;
+    int presented_frame_captured;
+    int presented_frame_width;
+    int presented_frame_height;
+    int presented_frame_indexed_pixels;
+    int presented_frame_uses_real_csb_assets;
+    uint32_t presented_frame_hash;
+} CSB_V1_StartupPresentedAppCaptureFacts_PC34;
+
+typedef struct CSB_V1_StartupPresentedAppCaptureReceipt_PC34 {
     int valid;
     int release_app_capture_valid;
-    int release_app_capture_ready;
-    int m11_presentation_valid;
-    int m11_presentation_consumed;
-    int m11_presentation_route;
-    int m11_presentation_capture_proof_ready;
-    int presented_capture_ready;
-    int host_window_present;
-    int captured_from_mac_window;
-    int captured_from_release_app;
-    int geometry_matches;
-    int pixels_present;
-    int route_specific_host_consumers_ready;
-    int no_loose_render_plan_exports;
-    int width;
-    int height;
-    int byte_count;
-    uint32_t framebuffer_hash;
-    uint32_t consumer_mask;
-    uint32_t expected_consumer_mask;
-    uint32_t chain_hash;
+    int running_from_macos_app_bundle;
+    int mac_window_capture_ready;
+    int presented_frame_captured;
+    int presented_frame_geometry_ready;
+    int presented_frame_pixels_ready;
+    int presented_frame_real_asset_ready;
+    int presented_runtime_capture_boundary_ready;
+    int presented_title_sequence_ready;
+    int presented_title_phase_mask_ready;
+    int presented_hud_door_ready;
+    int presented_hud_door_route_hash_ready;
+    int presented_credits_ready;
+    int presented_credits_route_hash_ready;
+    int presented_route_aggregates_ready;
+    int presented_wrapper_cleanup_ready;
     uint32_t release_app_capture_hash;
-    uint32_t release_app_real_asset_capture_hash;
+    uint32_t title_sequence_capture_hash;
+    uint32_t hud_door_capture_hash;
+    uint32_t credits_capture_hash;
+    uint32_t presented_wrapper_cleanup_hash;
+    uint32_t presented_frame_hash;
+    uint32_t presented_app_capture_hash;
     CSB_V1_StartupReleaseAppCaptureReceipt_PC34 release_app_capture;
-    CSB_V1_BootStartupM11PresentationReceipt_PC34 m11_presentation;
     const char *source_evidence;
-} CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34;
+} CSB_V1_StartupPresentedAppCaptureReceipt_PC34;
 
 /* A non-owning frame view into a startup asset session.  The source pointers
  * remain valid until csb_v1_boot_startup_runtime_asset_session_release_pc34.
@@ -1007,9 +1069,45 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     const CSB_V1_StartupRuntimeSurface_PC34 *entrance_surface;
     const CSB_V1_StartupRuntimeSurface_PC34 *left_door_surface;
     const CSB_V1_StartupRuntimeSurface_PC34 *right_door_surface;
+    const CSB_V1_StartupRuntimeSurface_PC34 *hud_inventory_surface;
+    const CSB_V1_StartupRuntimeSurface_PC34 *hud_resurrect_surface;
     int opening_step;
     int uses_verified_hud_bindings;
 } CSB_V1_StartupRuntimeAssetFrame_PC34;
+
+/* An owned indexed startup frame composed from verified GRAPHICS.DAT
+ * surfaces. ReDMCSB TITLE.C F0437 and ENTRANCE.C F0438/F0807 perform this
+ * composition before presentation, keeping it out of legacy callbacks. */
+#define CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 320
+#define CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34 200
+
+typedef struct CSB_V1_StartupRuntimeRaster_PC34 {
+    unsigned char *pixels;
+    int width;
+    int height;
+    int valid;
+    int real_asset_matched;
+    int title_composited;
+    int entrance_composited;
+    int door_composited;
+    int source_surface_count;
+    uint32_t pixel_hash;
+    uint32_t route_hash;
+} CSB_V1_StartupRuntimeRaster_PC34;
+
+/* Runtime-only startup presentation.  This is the CSB boundary for title,
+ * entrance/HUD, utility, and opening-door plans when verified game data is
+ * present.  The older snapshot helpers remain inspection adapters. */
+typedef struct CSB_V1_BootStartupRuntimePresentationReceipt_PC34 {
+    int valid;
+    int asset_gate_valid;
+    int render_plan_uses_owned_assets;
+    int utility_plan_uses_owned_session;
+    int door_plan_has_no_fallback;
+    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 asset_gate;
+    CSB_V1_BootStartupM11PresentationReceipt_PC34 presentation;
+    CSB_V1_StartupRuntimeSurfaceSet_PC34 surfaces;
+} CSB_V1_BootStartupRuntimePresentationReceipt_PC34;
 
 /* CSB-owned save/import handoff for runtime consumers.  ReDMCSB keeps
  * save/load under LOADSAVE.C F0433/F0435 while the CSB utility/import path
@@ -1194,10 +1292,10 @@ int csb_v1_boot_startup_render_plan_uses_real_assets_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan);
 void csb_v1_boot_startup_runtime_asset_gate_receipt_init_pc34(
     CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *receipt);
-int csb_v1_boot_startup_runtime_surfaces_materialize_pc34(
+int csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
     const CSB_V1_BootProfile *profile,
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    CSB_V1_StartupRuntimeSurfaceSet_PC34 *out_surfaces);
+    const CSB_V1_BootStartupLaunchReceipts_PC34 *launch_receipts,
+    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *out_receipt);
 void csb_v1_boot_startup_runtime_surface_set_release_pc34(
     CSB_V1_StartupRuntimeSurfaceSet_PC34 *surfaces);
 void csb_v1_boot_startup_runtime_asset_session_init_pc34(
@@ -1212,6 +1310,12 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     uint32_t source_tick,
     CSB_V1_StartupRuntimeAssetFrame_PC34 *out_frame);
+void csb_v1_boot_startup_runtime_raster_release_pc34(
+    CSB_V1_StartupRuntimeRaster_PC34 *raster);
+int csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+    const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
 int csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupFullRuntimeReceipt_PC34 *out_receipt);
@@ -1226,29 +1330,12 @@ void csb_v1_boot_startup_release_app_capture_receipt_init_pc34(
 int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
     const CSB_V1_StartupCompleteSupportReceipt_PC34 *complete_support,
     CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *out_receipt);
-void csb_v1_boot_startup_release_app_presented_capture_receipt_init_pc34(
-    CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 *receipt);
-int csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
+void csb_v1_boot_startup_presented_app_capture_receipt_init_pc34(
+    CSB_V1_StartupPresentedAppCaptureReceipt_PC34 *receipt);
+int csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
     const CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *release_app_capture,
-    int host_window_present,
-    int captured_from_mac_window,
-    int captured_from_release_app,
-    int width,
-    int height,
-    int byte_count,
-    uint32_t framebuffer_hash,
-    CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 *out_receipt);
-int csb_v1_boot_startup_release_app_presented_capture_from_m11_presentation_pc34(
-    const CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *release_app_capture,
-    const CSB_V1_BootStartupM11PresentationReceipt_PC34 *m11_presentation,
-    int host_window_present,
-    int captured_from_mac_window,
-    int captured_from_release_app,
-    int width,
-    int height,
-    int byte_count,
-    uint32_t framebuffer_hash,
-    CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 *out_receipt);
+    const CSB_V1_StartupPresentedAppCaptureFacts_PC34 *presented_facts,
+    CSB_V1_StartupPresentedAppCaptureReceipt_PC34 *out_receipt);
 /* ReDMCSB SWSH.C F0909/F0910 owns the pre-title sound, TITLE.C F0437 owns
  * the title timing, and ENTRANCE.C F0806 starts C0_MUSIC_ENTRANCE. */
 int csb_v1_boot_startup_playback_begin_pc34(
@@ -1322,6 +1409,12 @@ void csb_v1_boot_startup_launch_cleanup_pc34(
 int csb_v1_boot_startup_advance_idle_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_StartupIdleReceipt_PC34 *out_receipt);
+void csb_v1_boot_startup_door_runtime_receipt_init_pc34(
+    CSB_V1_BootStartupDoorRuntimeReceipt_PC34 *receipt);
+int csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_BootStartupDoorRuntimeReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_entrance_accepts_input_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot);
 int csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(

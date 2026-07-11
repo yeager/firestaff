@@ -435,6 +435,8 @@ typedef struct {
     int movement_blocked_by_wall;
     int movement_blocked_by_door;
     int movement_blocked_by_fakewall;
+    int movement_blocked_by_group;
+    int movement_group_reaction_scheduled;
     int movement_destination_x;
     int movement_destination_y;
     int movement_destination_square_type;

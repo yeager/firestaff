@@ -17,6 +17,7 @@
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_dungeon_world_pc34_compat.h"
 #include "csb_v1_movement_command_step_runtime_pc34_compat.h"
 #include "csb_v1_teleporter_rotation_runtime_pc34_compat.h"
 #include "asset_find_by_hash.h"
@@ -2091,7 +2092,9 @@ static int csb_v1_runtime_default_wall_probe(
         ? (const CSB_V1_DungeonData *)profile->dungeon_handle
         : csb_v1_dungeon_get_current();
     if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) {
-        return 0;
+        /* A CSB party step has no source-authoritative destination without
+         * the hash-verified dungeon loaded by the runtime boot boundary. */
+        return 1;
     }
     level = csb_v1_dungeon_get_current_level();
     if (level < 0 || level >= dungeon->level_count) {
@@ -2127,6 +2130,66 @@ static int csb_v1_runtime_default_wall_probe(
         return !(raw_square & 0x04) && !(raw_square & 0x01);
     }
     return square_type == 1;
+}
+
+static int csb_v1_runtime_square_has_group(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int map_x,
+    int map_y);
+
+static int csb_v1_runtime_party_destination_is_blocked(
+    const CSB_V1_RuntimeProfile *profile,
+    int map_x,
+    int map_y,
+    void *context)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int level;
+
+    (void)context;
+    if (csb_v1_runtime_default_wall_probe(profile, map_x, map_y, NULL)) {
+        return 1;
+    }
+    dungeon = (profile && profile->dungeon_handle)
+        ? (const CSB_V1_DungeonData *)profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!profile || !dungeon || !dungeon->raw_data) return 1;
+    level = profile->current_level;
+    if (level < 0 || level >= dungeon->level_count) {
+        level = csb_v1_dungeon_get_current_level();
+    }
+    if (level < 0 || level >= dungeon->level_count) return 1;
+
+    /* ReDMCSB: CLIKMENU.C F0366 lines 305-310 rejects a destination
+     * occupied by F0175_GROUP_GetThing before F0267 can commit the party. */
+    return csb_v1_runtime_square_has_group(dungeon, level, map_x, map_y);
+}
+
+static void csb_v1_runtime_schedule_party_bump_group_reaction(
+    CSB_V1_RuntimeProfile *profile,
+    int level,
+    int map_x,
+    int map_y,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    struct DM1_Event_V1 event;
+
+    if (!profile || !result || level < 0 || level > 255 ||
+        map_x < 0 || map_x > 255 || map_y < 0 || map_y > 255) {
+        return;
+    }
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE(level, profile->game_time + 1u);
+    event.type = DM1_EVENT_GROUP_REACTION_PARTY_IS_ADJACENT;
+    event.b_mapX = (uint8_t)map_x;
+    event.b_mapY = (uint8_t)map_y;
+    if (dm1v1_event_add(&profile->timeline_queue, &event) >= 0) {
+        result->movement_group_reaction_scheduled = 1;
+    }
+    /* ReDMCSB: CLIKMENU.C F0366 lines 305-310 calls GROUP.C F0209 with
+     * CM1_EVENT_CREATE_REACTION_EVENT_31_PARTY_IS_ADJACENT. GROUP.C
+     * F0209 lines 1971-1979 materializes C31 with its fixed one-tick delay. */
 }
 
 static int csb_v1_runtime_sample_destination_square(
@@ -3697,6 +3760,20 @@ static int csb_v1_runtime_move_group_thing_to_square(
         (old_level == new_level && old_x == new_x && old_y == new_y)) {
         return 0;
     }
+
+    /* ReDMCSB MOVESENS.C F0267 reaches DUNGEON.C F0164/F0163 for the
+     * ordinary same-map group relocation.  Keep that mutation in M10's live
+     * Thing-chain primitive so the compressed square-first-Thing table and
+     * Generic.Next links have one owner.  Cross-map pit/stairs moves still
+     * need F0267's map/active-group consequences below. */
+    if (csb_dungeon_move_thing_between_levels_default(
+            group_thing, old_level, old_x, old_y,
+            new_level, new_x, new_y) == 0) {
+        return 1;
+    }
+    /* Cross-map F0267 callers may use legacy decoded save layouts whose
+     * square records are not the original byte-map representation.  Those
+     * remain below until their loader boundary is retired. */
     source_first_ptr = csb_v1_runtime_square_first_thing_ptr(
         dungeon,
         old_level,
@@ -13920,6 +13997,11 @@ int csb_v1_runtime_apply_csbwin_resume_report(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_CSBWin512BodyReport *summary)
 {
+    CSB_V1_RuntimeProfile candidate;
+    int previous_dungeon_level;
+    uint16_t champion_index;
+    uint16_t queue_index;
+
     if (!profile || !summary || !summary->header_valid ||
         summary->sections_verified < CSB_V1_CSBWIN_512_SECTION_COUNT ||
         summary->num_character > CSB_V1_MAX_CHAMPIONS ||
@@ -13935,31 +14017,58 @@ int csb_v1_runtime_apply_csbwin_resume_report(
         return -1;
     }
 
+    /* CSBWin SaveGame.cpp:1838-1867 reads every declared CHARDESC and
+     * TimerQueue entry after their checked stream sections.  Do not quietly
+     * turn a malformed decoded reference into a shorter live queue. */
+    for (champion_index = 0u;
+         champion_index < summary->num_character;
+         ++champion_index) {
+        if (!summary->champions[champion_index].valid) {
+            return -1;
+        }
+    }
+    for (queue_index = 0u;
+         queue_index < summary->timer_queue_summary_count;
+         ++queue_index) {
+        if (summary->timer_queue[queue_index] >=
+            summary->timer_summary_count) {
+            return -1;
+        }
+    }
+
     /* CSBWin SaveGame.cpp:1768-1855 loads GAMEBLOCK2, ITEM16,
      * character data, timers, then the timer queue. Firestaff keeps the
-     * lower-level handoff helpers testable, but startup/resume callers use
-     * this ordered boundary so a verified CSBWin body cannot be applied as a
-     * half-imported runtime state. */
+     * lower-level handoff helpers testable, but startup/resume callers stage
+     * the complete ordered handoff before publishing it. GAMEBLOCK2 also
+     * updates the shared current-dungeon level, so restore that singleton if
+     * a later candidate step fails. */
+    candidate = *profile;
+    previous_dungeon_level = csb_v1_dungeon_get_current_level();
     if (csb_v1_runtime_apply_csbwin_gameblock2_summary(
-            profile, summary) != 0) {
-        return -1;
+            &candidate, summary) != 0) {
+        goto reject;
     }
     if (csb_v1_runtime_apply_csbwin_champion_summaries(
-            profile, summary) != 0) {
-        return -1;
+            &candidate, summary) != 0) {
+        goto reject;
     }
     if (csb_v1_runtime_apply_csbwin_body_runtime_summaries(
-            profile, summary) != 0) {
-        return -1;
+            &candidate, summary) != 0) {
+        goto reject;
     }
-    if (csb_v1_runtime_materialize_csbwin_item16_summaries(profile) < 0) {
-        return -1;
+    if (csb_v1_runtime_materialize_csbwin_item16_summaries(&candidate) < 0) {
+        goto reject;
     }
-    if (csb_v1_runtime_materialize_csbwin_timer_queue(profile) < 0) {
-        return -1;
+    if (csb_v1_runtime_materialize_csbwin_timer_queue(&candidate) < 0) {
+        goto reject;
     }
+    *profile = candidate;
     (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership(profile);
     return 0;
+
+reject:
+    csb_v1_dungeon_set_current_level(previous_dungeon_level);
+    return -1;
 }
 
 int csb_v1_runtime_apply_csbwin_resume_file(
@@ -14553,7 +14662,7 @@ int csb_v1_runtime_process_input_queue(
                 csb_v1_movement_command_step_runtime_apply_pc34_compat(
                     profile,
                     local_result.queue_result.command,
-                    csb_v1_runtime_default_wall_probe,
+                    csb_v1_runtime_party_destination_is_blocked,
                     NULL,
                     &step_result);
             if (step_status < 0) {
@@ -14588,6 +14697,20 @@ int csb_v1_runtime_process_input_queue(
                         local_result.movement_blocked_by_door = 1;
                     } else if (local_result.movement_destination_square_type == 6) {
                         local_result.movement_blocked_by_fakewall = 1;
+                    } else if (profile->dungeon_handle &&
+                               local_result.old_party_level >= 0 &&
+                               csb_v1_runtime_square_has_group(
+                                   (const CSB_V1_DungeonData *)profile->dungeon_handle,
+                                   local_result.old_party_level,
+                                   local_result.movement_destination_x,
+                                   local_result.movement_destination_y)) {
+                        local_result.movement_blocked_by_group = 1;
+                        csb_v1_runtime_schedule_party_bump_group_reaction(
+                            profile,
+                            local_result.old_party_level,
+                            local_result.movement_destination_x,
+                            local_result.movement_destination_y,
+                            &local_result);
                     }
                 }
                 csb_v1_runtime_apply_destination_chain(profile, &local_result);

@@ -99,6 +99,7 @@ int main(int argc, char** argv) {
     unsigned char* framebuffer;
     unsigned char* poisonRgba;
     V1_TitleFrontendSourceAnimationStep step;
+    V1_TitleFrontendC001BlitPlan blitPlan;
     int sampleX = 0;
     int sampleY = 0;
     unsigned char sampleIndex = 0;
@@ -179,9 +180,12 @@ int main(int argc, char** argv) {
 
     M11_Render_DiscardPresentationTexture();
 
-    if (!V1_TitleFrontend_GetSourceAnimationStep(19U, &step) ||
-        step.kind != V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT) {
-        fprintf(stderr, "FAIL source step 19 unavailable\n");
+    memset(&blitPlan, 0, sizeof(blitPlan));
+    if (!V1_TitleFrontend_GetSourceAnimationStep(2U, &step) ||
+        step.kind != V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT ||
+        !V1_TitleFrontend_GetC001BlitPlanForStep(&step, &blitPlan) ||
+        blitPlan.kind != V1_TITLE_FRONTEND_C001_BLIT_SCALED_REGION) {
+        fprintf(stderr, "FAIL source step 2 unavailable\n");
         free(poisonRgba);
         M11_AssetLoader_Shutdown(&loader);
         M11_Render_Shutdown();
@@ -189,20 +193,29 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    record(&stats,
+           "TITLE_SWOOSH_HANDOFF_ZOOM_GEOMETRY",
+           blitPlan.srcX == 0U && blitPlan.srcY == 0U &&
+               blitPlan.srcW == 320U && blitPlan.srcH == 80U &&
+               blitPlan.dstX == step.x && blitPlan.dstY == step.y &&
+               blitPlan.dstW == step.width && blitPlan.dstH == step.height &&
+               blitPlan.dstW == 48U && blitPlan.dstH == 12U,
+           "F0437 shrinks complete C001 320x80 into the centred first zoom box");
+
     memset(framebuffer, 0, (size_t)M11_FB_BYTES);
     M11_AssetLoader_BlitSubRectScaled(titleGraphic,
                                       framebuffer,
                                       M11_FB_WIDTH,
                                       M11_FB_HEIGHT,
-                                      (int)step.x,
-                                      (int)step.y,
-                                      (int)step.width,
-                                      (int)step.height,
-                                      0,
-                                      0,
-                                      320,
-                                      80,
-                                      -1);
+                                      (int)blitPlan.dstX,
+                                      (int)blitPlan.dstY,
+                                      (int)blitPlan.dstW,
+                                      (int)blitPlan.dstH,
+                                      (int)blitPlan.srcX,
+                                      (int)blitPlan.srcY,
+                                      (int)blitPlan.srcW,
+                                      (int)blitPlan.srcH,
+                                      blitPlan.transparentColor);
     record(&stats,
            "TITLE_SWOOSH_HANDOFF_SAMPLE_FOUND",
            find_title_sample(framebuffer, &sampleX, &sampleY, &sampleIndex),

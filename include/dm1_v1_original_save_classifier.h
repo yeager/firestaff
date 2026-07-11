@@ -75,6 +75,10 @@ typedef struct {
     int import_blocked_until_roundtrip;
     int pc34_importer_candidate;
     int pc34_loader_part_envelope_candidate;
+    /* ReDMCSB LOADSAVE.C F0435 probes the automatic backup only when the
+     * primary save cannot be opened. This result was classified from that
+     * sibling backup, never from a rejected primary payload. */
+    int resume_uses_backup;
     char reason[96];
 } DM1OriginalSaveClassifyResult;
 
@@ -122,6 +126,8 @@ int dm1_v1_original_save_classify_bytes(
     size_t size,
     DM1OriginalSaveClassifyResult *out_result);
 
+/* Classify a resume source. When `path` is absent, this also classifies its
+ * `.bak` sibling, matching the F0435 open-failure-only backup rule. */
 int dm1_v1_original_save_classify_file(
     const char *path,
     DM1OriginalSaveClassifyResult *out_result);

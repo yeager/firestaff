@@ -102,6 +102,9 @@ typedef struct DM1_V1_StartupEntranceRenderAudioCommand_PC34 {
     DM1_V1_StartupEntranceRenderKind_PC34 render_kind;
     int present_entrance_palette;
     int play_door_rattle_sound;
+    int audio_request_ready;
+    int audio_sound_index;
+    unsigned int audio_volume;
     unsigned int source_step;
     unsigned int door_animation_step;
     int door_geometry_ready;

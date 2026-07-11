@@ -6,6 +6,28 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int dm1_original_save_backup_path(const char *path,
+                                         char out_path[DM1_ORIGINAL_SAVE_PATH_MAX])
+{
+    size_t length;
+    if (!path || !path[0] || !out_path) return 0;
+    length = strlen(path);
+    if (length + 4u >= DM1_ORIGINAL_SAVE_PATH_MAX) return 0;
+    memcpy(out_path, path, length);
+    memcpy(out_path + length, ".bak", 5u);
+    return 1;
+}
+
+static int dm1_original_save_file_opens_for_read(const char *path)
+{
+    FILE *file;
+    if (!path || !path[0]) return 0;
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    fclose(file);
+    return 1;
+}
+
 #define DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT 319u
 #define DM1_PC34_ORIGINAL_PARTY_INFO_BYTE_COUNT 128u
 #define DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT \
@@ -1565,17 +1587,14 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_file(
     return result;
 }
 
-int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+static int load_world_from_bytes_uncommitted(
     const uint8_t *bytes,
     size_t size,
     struct GameWorld_Compat *world,
     struct DM1_EventQueue_V1 *event_queue,
-    DM1OriginalSavePC34HandoffReport *out_report)
+    DM1OriginalSavePC34HandoffReport *report)
 {
     struct SaveGame_Compat state;
-    DM1OriginalSavePC34HandoffReport local_report;
-    DM1OriginalSavePC34HandoffReport *report =
-        out_report ? out_report : &local_report;
     int result;
 
     if (!bytes || !world) {
@@ -1627,6 +1646,66 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+    const uint8_t *bytes,
+    size_t size,
+    struct GameWorld_Compat *world,
+    struct DM1_EventQueue_V1 *event_queue,
+    DM1OriginalSavePC34HandoffReport *out_report)
+{
+    struct GameWorld_Compat candidate_world;
+    struct DM1_EventQueue_V1 candidate_queue;
+    DM1OriginalSavePC34HandoffReport candidate_report;
+    int reuses_existing_dungeon;
+    int result;
+
+    if (!bytes || !world) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 restores GLOBAL_DATA, PARTY, EVENT,
+     * TIMELINE, portraits, and finally the dungeon before the resumed
+     * runtime is exposed. Keep that sequence private to a candidate world:
+     * a rejected final tail/checksum must not leak a partially loaded party
+     * or event heap into the running HoC session. */
+    memset(&candidate_world, 0, sizeof(candidate_world));
+    /* The byte-loader also serves callers that have already materialized a
+     * start dungeon. It may resolve ACTIVE_GROUP records against that data,
+     * but never owns it while validation is still in progress. */
+    candidate_world.dungeon = world->dungeon;
+    candidate_world.things = world->things;
+    candidate_world.ownsDungeon = 0;
+    memset(&candidate_queue, 0, sizeof(candidate_queue));
+    memset(&candidate_report, 0, sizeof(candidate_report));
+    result = load_world_from_bytes_uncommitted(
+        bytes, size, &candidate_world,
+        event_queue ? &candidate_queue : NULL, &candidate_report);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        F0883_WORLD_Free_Compat(&candidate_world);
+        return result;
+    }
+
+    reuses_existing_dungeon =
+        candidate_world.dungeon == world->dungeon &&
+        candidate_world.things == world->things;
+    if (reuses_existing_dungeon) {
+        candidate_world.ownsDungeon = world->ownsDungeon;
+        world->dungeon = NULL;
+        world->things = NULL;
+        world->ownsDungeon = 0;
+    }
+    F0883_WORLD_Free_Compat(world);
+    *world = candidate_world;
+    memset(&candidate_world, 0, sizeof(candidate_world));
+    if (event_queue) {
+        *event_queue = candidate_queue;
+    }
+    if (out_report) {
+        *out_report = candidate_report;
+    }
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
     const char *path,
     const struct GameWorld_Compat *start_world,
@@ -1634,16 +1713,36 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
     struct DM1_EventQueue_V1 *event_queue,
     DM1OriginalSavePC34HandoffReport *out_report)
 {
+    struct GameWorld_Compat candidate_world;
+    struct DM1_EventQueue_V1 candidate_queue;
+    DM1OriginalSavePC34HandoffReport candidate_report;
+    char backup_path[DM1_ORIGINAL_SAVE_PATH_MAX];
+    const char *load_path = path;
+    int resumed_from_backup = 0;
     int result;
 
-    if (!path || !out_world) {
+    if (!path || !out_world || out_world == start_world) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
-    memset(out_world, 0, sizeof(*out_world));
+    memset(&candidate_world, 0, sizeof(candidate_world));
+    memset(&candidate_queue, 0, sizeof(candidate_queue));
+    memset(&candidate_report, 0, sizeof(candidate_report));
+    /* ReDMCSB LOADSAVE.C F0435 lines 2560-2583 only opens the backup when
+     * the primary cannot be opened. A malformed primary must fail closed;
+     * it must never be replaced by an older backup. */
+    if (!dm1_original_save_file_opens_for_read(path)) {
+        if (!dm1_original_save_backup_path(path, backup_path) ||
+            !dm1_original_save_file_opens_for_read(backup_path)) {
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+        }
+        load_path = backup_path;
+        resumed_from_backup = 1;
+    }
     result = dm1_v1_original_save_pc34_handoff_load_world_from_file(
-        path, out_world, event_queue, out_report);
+        load_path, &candidate_world, event_queue ? &candidate_queue : NULL,
+        &candidate_report);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
-        F0883_WORLD_Free_Compat(out_world);
+        F0883_WORLD_Free_Compat(&candidate_world);
         return result;
     }
 
@@ -1651,14 +1750,34 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
      * A PC34 stream without that optional tail is therefore resumed against
      * the already materialized DM1 start dungeon, never a host-made HoC
      * substitute. */
-    if (!out_world->dungeon && start_world) {
-        out_world->dungeon = start_world->dungeon;
-        out_world->things = start_world->things;
-        out_world->ownsDungeon = 0;
+    if (!candidate_world.dungeon && start_world) {
+        candidate_world.dungeon = start_world->dungeon;
+        candidate_world.things = start_world->things;
+        candidate_world.ownsDungeon = 0;
     }
-    if (!out_world->dungeon || !out_world->things) {
-        F0883_WORLD_Free_Compat(out_world);
+    if (!candidate_world.dungeon || !candidate_world.things) {
+        F0883_WORLD_Free_Compat(&candidate_world);
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    candidate_report.resumed_from_backup = resumed_from_backup;
+    /* The save source is promoted only after every part, optional dungeon
+     * tail, and borrowed-start-dungeon invariant has passed. If promotion
+     * fails, leave both the destination world and the backup untouched. */
+    if (resumed_from_backup) {
+        if (rename(backup_path, path) != 0) {
+            F0883_WORLD_Free_Compat(&candidate_world);
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+        }
+        candidate_report.backup_promoted_to_primary = 1;
+    }
+    F0883_WORLD_Free_Compat(out_world);
+    *out_world = candidate_world;
+    memset(&candidate_world, 0, sizeof(candidate_world));
+    if (event_queue) {
+        *event_queue = candidate_queue;
+    }
+    if (out_report) {
+        *out_report = candidate_report;
     }
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
@@ -1669,7 +1788,7 @@ int dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
 {
     int reuses_start_dungeon;
 
-    if (!runtime_world || !loaded_world) {
+    if (!runtime_world || !loaded_world || runtime_world == loaded_world) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
     /* Native quicksaves serialize runtime data but retain the start dungeon
@@ -1683,6 +1802,7 @@ int dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
     reuses_start_dungeon = loaded_world->dungeon == runtime_world->dungeon &&
                          loaded_world->things == runtime_world->things;
     if (reuses_start_dungeon) {
+        loaded_world->ownsDungeon = runtime_world->ownsDungeon;
         runtime_world->dungeon = NULL;
         runtime_world->things = NULL;
         runtime_world->ownsDungeon = 0;
@@ -1954,122 +2074,84 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
     return result;
 }
 
-static uint32_t dm1_pc34_corpus_hash_step(uint32_t hash, uint32_t value)
-{
-    hash ^= value + 0x9e3779b9u + (hash << 6) + (hash >> 2);
-    return hash ? hash : 0x811c9dc5u;
-}
-
-static void dm1_pc34_corpus_hash_path(uint32_t *hash, const char *path)
-{
-    const unsigned char *p;
-
-    if (!hash || !path) return;
-    p = (const unsigned char *)path;
-    while (*p) {
-        *hash = dm1_pc34_corpus_hash_step(*hash, (uint32_t)*p);
-        ++p;
-    }
-}
-
-int dm1_v1_original_save_pc34_verify_corpus_root(
+int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     const char *root,
-    DM1OriginalSavePC34CorpusVerificationReceipt *out_receipt)
+    DM1OriginalSavePC34CorpusRoundtripReport *out_report)
 {
     DM1OriginalSaveCorpusManifest corpus;
-    DM1OriginalSavePC34CorpusVerificationReceipt receipt;
-    uint8_t *roundtrip;
-    uint32_t hash = 0x44563143u;
+    DM1OriginalSavePC34CorpusRoundtripReport report;
+    uint8_t *exported_bytes;
+    int i;
 
-    if (!out_receipt) {
-        return 0;
+    if (!root || !root[0] || !out_report) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
-    memset(&receipt, 0, sizeof(receipt));
-    receipt.source_evidence =
-        "ReDMCSB SAVEHEAD.C F0429/F0430; LOADSAVE.C F0435/F0433; "
-        "READWRIT.C F0417/F0418/F0419";
-
+    memset(&report, 0, sizeof(report));
+    report.first_failure_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+    memset(&corpus, 0, sizeof(corpus));
     if (!dm1_v1_original_save_classify_corpus_root(root, &corpus)) {
-        *out_receipt = receipt;
-        return 0;
+        *out_report = report;
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
     }
 
-    receipt.handled = 1;
-    receipt.scan_consumed = 1;
-    receipt.scanned_file_count = corpus.scanned_file_count;
-    receipt.present_count = corpus.present_count;
-    receipt.pc34_importer_candidate_count =
-        corpus.pc34_importer_candidate_count;
-    receipt.pc34_loader_part_envelope_count =
-        corpus.pc34_loader_part_envelope_count;
-    receipt.rejected_count = corpus.rejected_count;
-    receipt.truncated_count = corpus.truncated_count;
-
-    roundtrip = (uint8_t *)malloc(SAVEGAME_PC34_MAX_FILE_SIZE);
-    if (!roundtrip) {
-        *out_receipt = receipt;
-        return 0;
+    report.scan_succeeded = 1;
+    report.scanned_file_count = corpus.scanned_file_count;
+    exported_bytes = (uint8_t *)malloc(SAVEGAME_PC34_MAX_FILE_SIZE);
+    if (!exported_bytes) {
+        *out_report = report;
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
     }
 
-    for (int i = 0; i < corpus.present_count &&
-                    i < (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP; ++i) {
-        const DM1OriginalSaveClassifyResult *classified = &corpus.results[i];
-        DM1OriginalSavePC34RoundtripReport report;
-        size_t roundtrip_size = 0u;
-        int rc;
+    /* ReDMCSB LOADSAVE.C F0435 reads only a valid header plus the five
+     * checksum-protected parts. F0433 subsequently serializes the live
+     * state. Keep corpus proof in memory so validation cannot create or
+     * replace a sibling DMSAVE.DAT. */
+    for (i = 0; i < corpus.present_count &&
+                i < (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP; ++i) {
+        DM1OriginalSavePC34RoundtripReport roundtrip;
+        size_t exported_size = 0u;
+        int result;
 
-        hash = dm1_pc34_corpus_hash_step(hash, classified->prefix_checksum32);
-        hash = dm1_pc34_corpus_hash_step(hash, (uint32_t)classified->shape);
-        dm1_pc34_corpus_hash_path(&hash, corpus.paths[i]);
-
-        if (!classified->pc34_importer_candidate ||
-            !classified->pc34_loader_part_envelope_candidate) {
+        if (!corpus.results[i].pc34_loader_part_envelope_candidate) {
             continue;
         }
-
-        if (!receipt.first_pc34_path[0]) {
-            snprintf(receipt.first_pc34_path,
-                     sizeof(receipt.first_pc34_path),
-                     "%s",
-                     corpus.paths[i]);
+        ++report.pc34_candidate_count;
+        if (!report.first_pc34_path[0]) {
+            snprintf(report.first_pc34_path, sizeof(report.first_pc34_path),
+                     "%s", corpus.paths[i]);
         }
-
-        memset(&report, 0, sizeof(report));
-        memset(roundtrip, 0, SAVEGAME_PC34_MAX_FILE_SIZE);
-        rc = dm1_v1_original_save_pc34_roundtrip_world_reload_file(
+        memset(&roundtrip, 0, sizeof(roundtrip));
+        ++report.roundtrip_attempted_count;
+        result = dm1_v1_original_save_pc34_roundtrip_world_reload_file(
             corpus.paths[i],
-            DM1_PC34_CORPUS_VERIFY_GAME_ID,
-            roundtrip,
+            corpus.results[i].game_id,
+            exported_bytes,
             SAVEGAME_PC34_MAX_FILE_SIZE,
-            &roundtrip_size,
-            &report);
-        if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
-            roundtrip_size > SAVEGAME_PC34_DM_SAVE_HEADER_SIZE &&
-            report.core_state_matches) {
-            receipt.roundtrip_verified_count++;
-            hash = dm1_pc34_corpus_hash_step(hash, (uint32_t)roundtrip_size);
-            hash = dm1_pc34_corpus_hash_step(hash, report.exported_game_time);
-            hash = dm1_pc34_corpus_hash_step(
-                hash, (uint32_t)report.exported_event_count);
+            &exported_size,
+            &roundtrip);
+        if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+            roundtrip.core_state_matches) {
+            ++report.roundtrip_succeeded_count;
+            ++report.core_state_match_count;
+            if (!report.first_roundtrip_path[0]) {
+                snprintf(report.first_roundtrip_path,
+                         sizeof(report.first_roundtrip_path), "%s",
+                         corpus.paths[i]);
+            }
         } else {
-            receipt.roundtrip_failed_count++;
-            hash = dm1_pc34_corpus_hash_step(hash, 0xBAD50000u |
-                                                   (uint32_t)(-rc & 0xffff));
+            ++report.roundtrip_failed_count;
+            if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            if (report.first_failure_result ==
+                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                report.first_failure_result = result;
+            }
         }
     }
-
-    free(roundtrip);
-    receipt.ready =
-        receipt.scan_consumed &&
-        receipt.pc34_loader_part_envelope_count > 0 &&
-        receipt.roundtrip_verified_count ==
-            receipt.pc34_loader_part_envelope_count &&
-        receipt.roundtrip_failed_count == 0 &&
-        receipt.truncated_count == 0;
-    receipt.corpus_hash = dm1_pc34_corpus_hash_step(
-        hash, (uint32_t)receipt.roundtrip_verified_count);
-    *out_receipt = receipt;
-    return 1;
+    free(exported_bytes);
+    *out_report = report;
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
 const char *dm1_v1_original_save_pc34_handoff_result_name(int result)

@@ -91,28 +91,6 @@ static int diag_details_contain(const Nexus_V1_Diagnostic* diags,
     return 0;
 }
 
-static int palette_contains_color(const Nexus_Viewport* viewport,
-                                  unsigned int rgba) {
-    int i;
-    if (!viewport) return 0;
-    for (i = 0; i < 256; ++i) {
-        if (viewport->fb.palette[i] == rgba) return 1;
-    }
-    return 0;
-}
-
-static void wb16(unsigned char* p, unsigned int value) {
-    p[0] = (unsigned char)(value >> 8);
-    p[1] = (unsigned char)value;
-}
-
-static void wb32(unsigned char* p, unsigned int value) {
-    p[0] = (unsigned char)(value >> 24);
-    p[1] = (unsigned char)(value >> 16);
-    p[2] = (unsigned char)(value >> 8);
-    p[3] = (unsigned char)value;
-}
-
 static int write_iso_payload_fixture(const char* dst,
                                      const unsigned char* mns,
                                      size_t mns_size,
@@ -156,76 +134,6 @@ static int write_iso_payload_fixture(const char* dst,
     return fclose(out) == 0;
 }
 
-static void test_dgn_material_plan_cache(void) {
-    static Nexus_V1_Engine engine;
-    static Nexus_Viewport viewport;
-    static unsigned char dgn[NEXUS_DGN_BLOCK_SIZE * 20];
-    static unsigned char pixels[64];
-    Nexus_V1_DgnMaterialPlan const *first;
-    Nexus_V1_DgnMaterialPlan const *second;
-    unsigned char* structure1;
-    int i;
-
-    memset(&engine, 0, sizeof(engine));
-    memset(dgn, 0, sizeof(dgn));
-    wb16(dgn + 0x0c, 1U);
-    wb16(dgn + 0x0e, 19U);
-    wb32(dgn + 0x10,
-         (unsigned int)(0x40 + NEXUS_DGN_STRUCTURE1B_BYTES + 1024));
-    structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
-    structure1[1] = 0x50;
-    structure1[2] = 0x40;
-    structure1[3] = 0x40;
-    wb32(structure1 + 0x10, 0x38U);
-    wb32(structure1 + 0x14, 0x40U);
-    wb32(structure1 + 0x18, 0x40U + NEXUS_DGN_STRUCTURE1B_BYTES);
-    engine.level_loaded = 1;
-    engine.game.current_level = 3;
-    check_int(nexus_v1_level_load(&engine.current_level, dgn,
-                                  (int)sizeof(dgn), 3) == 0,
-              "Nexus DGN material cache fixture loads");
-    engine.current_level.squares[4][3] = 1;
-    engine.current_level.floor_material_refs[4][3] = 7;
-    engine.current_level.wall_material_refs[4][3][0] = 9;
-    engine.floor_materials.valid = 1;
-    engine.wall_materials.valid = 1;
-    for (i = 0; i < NEXUS_DMDF_MATERIAL_COUNT; ++i) {
-        engine.floor_materials.surfaces[i].valid = 1;
-        engine.floor_materials.surfaces[i].pixels = pixels;
-        engine.floor_materials.surfaces[i].width = 8;
-        engine.floor_materials.surfaces[i].height = 8;
-        engine.floor_materials.surfaces[i].palette[13] = 0xff45ab67U;
-        engine.wall_materials.surfaces[i].valid = 1;
-        engine.wall_materials.surfaces[i].pixels = pixels;
-        engine.wall_materials.surfaces[i].width = 8;
-        engine.wall_materials.surfaces[i].height = 8;
-        engine.wall_materials.surfaces[i].palette[13] = 0xff45ab67U;
-    }
-
-    first = nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0);
-    check_int(first != NULL && first->valid,
-              "Nexus DGN material plan accepts decoded DMDF/BPK surfaces");
-    second = nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0);
-    check_int(second == first && engine.dgn_material_plan.cache_hit_count == 1U,
-              "Nexus DGN material plan is shared for an already loaded level");
-    nexus_viewport_init(&viewport);
-    engine.game.party_x = 3;
-    engine.game.party_y = 4;
-    engine.game.party_dir = 0;
-    nexus_viewport_render(&viewport, &engine);
-    check_int(viewport.material_engine == &engine &&
-                  viewport.material_generation == engine.dgn_material_plan.generation &&
-                  viewport.last_dgn_render_receipt.palette_synced &&
-                  palette_contains_color(&viewport, 0xff45ab67U),
-              "Nexus viewport caches the palette from the verified DGN material plan");
-    nexus_v1_invalidate_dgn_material_plan(&engine);
-    check_int(engine.dgn_material_plan.valid == 0,
-              "Nexus DGN material plan invalidates before a new or resumed level");
-    engine.floor_materials.surfaces[7].valid = 0;
-    check_int(nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0) == NULL,
-              "Nexus DGN material plan rejects an undecoded PRS3-only surface");
-}
-
 int main(void) {
     const char* home = getenv("HOME");
     char root[FSP_PATH_MAX];
@@ -247,7 +155,6 @@ int main(void) {
     char map00_src[FSP_PATH_MAX];
     char map00_dst[FSP_PATH_MAX];
 
-    test_dgn_material_plan_cache();
     char profile_level_root[FSP_PATH_MAX];
     char profile_level_nexus_dir[FSP_PATH_MAX];
     char profile_level_dst[FSP_PATH_MAX];
@@ -424,18 +331,29 @@ int main(void) {
                   "Nexus init accepts renamed DM.BIN marker by hash");
         check_int(engine.source == NEXUS_SRC_EXTRACTED,
                   "renamed DM.BIN selects extracted Nexus source");
+        check_int(engine.floor_bpk_container.exact_name_observed == 0 &&
+                      engine.wall_bpk_container.exact_name_observed == 0 &&
+                      engine.floor_bpk_container.source_present == 0 &&
+                      engine.wall_bpk_container.source_present == 0 &&
+                      engine.floor_bpk_container.identity_verified == 0 &&
+                      engine.wall_bpk_container.identity_verified == 0 &&
+                      engine.floor_bpk_container.host_route_permitted == 0 &&
+                      engine.wall_bpk_container.host_route_permitted == 0,
+                  "renamed original MENU.BPK is never observed as DGN material");
         if (menu_bpk_copied) {
             memset(&receipt, 0, sizeof(receipt));
             check_int(nexus_v1_menu_bpk_decode_receipt_ready(&engine) == 1,
                       "Nexus init records MENU.BPK decode receipt");
             check_int(nexus_v1_menu_bpk_decode_receipt(&engine, &receipt) == 0,
                       "Nexus engine exposes MENU.BPK decode receipt");
-            check_int(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3,
-                      "Nexus MENU.BPK runtime route blocks on PRS3 decoder");
+            check_int(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED,
+                      "Nexus MENU.BPK runtime route accepts decoded PRS3 surfaces");
             check_int(receipt.blocked_prs3_surfaces == 162U,
-                      "Nexus MENU.BPK receipt preserves PRS3 surface blocker count");
-            check_int(receipt.first_blocked_entry == 1U,
-                      "Nexus MENU.BPK receipt exposes first blocked surface entry");
+                      "Nexus MENU.BPK receipt preserves PRS3 source surface count");
+            check_int(receipt.prs3_decode_successes == 162U &&
+                          receipt.prs3_decode_failures == 0U &&
+                          receipt.decode_blocked == 0,
+                      "Nexus MENU.BPK receipt records complete PRS3 decoding");
             memset(&upload_receipt, 0, sizeof(upload_receipt));
             memset(upload_rows, 0, sizeof(upload_rows));
             check_int(nexus_v1_menu_bpk_upload_plan_receipt(
@@ -443,13 +361,14 @@ int main(void) {
                           &upload_receipt) == 0,
                       "Nexus engine exposes MENU.BPK upload plan receipt");
             check_int(upload_receipt.route ==
-                          NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3,
-                      "Nexus MENU.BPK upload plan blocks on PRS3");
-            check_int(upload_receipt.blocked_prs3_uploads == 162U &&
+                          NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED,
+                      "Nexus MENU.BPK upload plan accepts decoded PRS3 surfaces");
+            check_int(upload_receipt.ready_uploads == 162U &&
+                          upload_receipt.blocked_prs3_uploads == 0U &&
                           upload_receipt.planned_rows == 162U,
-                      "Nexus MENU.BPK upload plan preserves blocker counts");
-            check_int(upload_receipt.fallback_visuals_permitted == 0,
-                      "Nexus MENU.BPK upload plan forbids fallback visuals");
+                      "Nexus MENU.BPK upload plan records every decoded surface");
+            check_int(upload_receipt.fallback_visuals_permitted == 1,
+                      "Nexus MENU.BPK upload plan permits decoded surface rendering");
             check_int(nexus_v1_menu_bpk_upload_plan_rows(
                           &engine,
                           upload_rows,
@@ -457,26 +376,28 @@ int main(void) {
                                 sizeof(upload_rows[0]))) > 0,
                       "Nexus engine exposes bounded MENU.BPK upload rows");
             check_int(upload_rows[0].entry_index == 1U &&
-                          upload_rows[0].decode_blocked == 1 &&
+                          upload_rows[0].upload_ready == 1 &&
+                          upload_rows[0].decode_blocked == 0 &&
                           upload_rows[0].stream_offset > 0U,
-                      "Nexus MENU.BPK upload row carries PRS3 stream blocker");
+                      "Nexus MENU.BPK upload row carries decoded PRS3 stream data");
             memset(&handoff, 0, sizeof(handoff));
             check_int(nexus_v1_menu_bpk_renderer_handoff_receipt(
                           &engine,
                           &handoff) == 0,
                       "Nexus engine emits MENU.BPK renderer handoff receipt");
             check_int(handoff.status ==
-                          NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3,
-                      "Nexus MENU.BPK renderer handoff blocks on PRS3");
-            check_int(handoff.blocks_real_menu_surface_render == 1 &&
-                          handoff.fallback_visuals_permitted == 0,
-                      "Nexus MENU.BPK handoff forbids fallback when real PRS3 surfaces block");
+                          NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED,
+                      "Nexus MENU.BPK renderer handoff accepts decoded PRS3 surfaces");
+            check_int(handoff.can_render_stored_surfaces == 1 &&
+                          handoff.blocks_real_menu_surface_render == 0 &&
+                          handoff.fallback_visuals_permitted == 1,
+                      "Nexus MENU.BPK handoff exposes renderable decoded surfaces");
             check_int(handoff.surface_entries == 162U &&
-                          handoff.first_blocked_entry == 1U,
-                      "Nexus MENU.BPK handoff exposes blocked surface counts to renderer");
+                          handoff.blocked_prs3_surfaces == 162U,
+                      "Nexus MENU.BPK handoff retains PRS3 source provenance");
             check_int(strcmp(nexus_v1_menu_bpk_renderer_handoff_status_name(
                                  handoff.status),
-                             "blocked-prs3") == 0,
+                             "ready-stored") == 0,
                       "Nexus MENU.BPK handoff status has stable route name");
         } else {
             puts("SKIP: local Nexus MENU.BPK not present for engine decode receipt");
@@ -552,6 +473,24 @@ int main(void) {
                   "Nexus DGN handoff exposes real 64x64 DMWeb route");
         check_int(dgn_handoff.fallback_visuals_permitted == 0,
                   "Nexus DGN handoff forbids fallback visuals");
+        {
+            Nexus_Viewport viewport;
+            Nexus_V1_DgnViewportHostRouteReceipt host_route;
+            nexus_viewport_init(&viewport);
+            nexus_viewport_render(&viewport, &engine);
+            memset(&host_route, 0, sizeof(host_route));
+            check_int(nexus_viewport_dgn_host_route_receipt(
+                          &viewport,
+                          &engine,
+                          &host_route) == 0,
+                      "Nexus real LEV00 viewport emits host-route receipt");
+            check_int(host_route.package_consumed == 1 &&
+                          host_route.handoff_status == dgn_handoff.status &&
+                          host_route.blocks_runtime_dgn == 1 &&
+                          host_route.can_present_runtime_dgn == 0 &&
+                          host_route.fallback_visuals_permitted == 0,
+                      "Nexus real LEV00 host-route keeps an incomplete material route blocked without fallback");
+        }
         memset(&script_receipt, 0, sizeof(script_receipt));
         check_int(nexus_v1_current_level_script_runtime_receipt(
                       &engine,

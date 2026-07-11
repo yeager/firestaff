@@ -156,6 +156,15 @@ typedef struct {
     uint16_t       category_entry_counts[DM2_GDAT_CATEGORY_LIMIT + 1];
 } DM2_V1_AssetLoader;
 
+/* Main 256-colour palette and the 16-colour logical-index table loaded by
+ * SkWinCore::INIT before the HUD and dungeon viewport are drawn.  RGB values
+ * are VGA 6-bit components, matching SET_GRAPHICS_RGB_PALETTE's >> 2 step. */
+typedef struct {
+    uint8_t rgb6[256][3];
+    uint8_t palette16[16];
+    uint32_t hash;
+} DM2_V1_InterfacePalette;
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -163,6 +172,11 @@ typedef struct {
  * Source: docs/dm2_graphics.md — GDAT file structure */
 int dm2_v1_asset_loader_init(DM2_V1_AssetLoader *loader,
                               const uint8_t *data, size_t size);
+
+/* Validate every typed ENT1 entry that owns a raw GDAT payload.  Scalar
+ * dtWordValue and dtImageOffset entries intentionally remain immediate
+ * values, as in skproject QUERY_GDAT_ENTRY_DATA_INDEX. */
+int dm2_v1_asset_loader_validate_typed_graph(const DM2_V1_AssetLoader *loader);
 
 /* Load asset by (category, index, field) triple.
  * Returns raw asset data pointer (NULL on failure).
@@ -204,6 +218,16 @@ int dm2_v1_asset_load_image_offset(
     int index,
     int field,
     uint16_t *out_value);
+
+/* Decode INTERFACE_GENERAL's paired dtPalIRGB/dtPalette16 entries.  The
+ * original stores 256 four-byte IRGB rows and 16 one-byte palette indices;
+ * only an exact typed pair is accepted. */
+int dm2_v1_asset_load_interface_palette(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_InterfacePalette *out_palette);
 
 /* Load image asset and decode to pixel buffer.
  * out_width, out_height set dimensions, out_format sets format.

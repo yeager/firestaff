@@ -85,6 +85,11 @@ typedef struct {
     int v2_palette_lut_built;
     unsigned char v2_palette_corrected[M11_PALETTE_LEVELS][16][3];
 
+    /* DM2 SkWinCore::INIT installs a 256-colour IRGB table before title,
+     * menu and HUD rendering.  This mode consumes raw 8-bit GDAT indices. */
+    int indexed_palette_rgb6_active;
+    unsigned char indexed_palette_rgb6[256][3];
+
     /* V2.0 visual extras (Firestaff-only, no ReDMCSB analogue). */
     int v2_phosphor_enabled;
     int v2_phosphor_decay;          /* 0..100 percent of previous frame */
@@ -113,6 +118,26 @@ typedef struct {
 } M11_RenderState;
 
 static M11_RenderState g_state = {0};
+
+static const unsigned char *m11_palette_rgb_for_pixel(unsigned char raw,
+                                                       int *out_level)
+{
+    unsigned char index;
+    int level;
+
+    if (g_state.indexed_palette_rgb6_active) {
+        if (out_level) *out_level = 0;
+        return g_state.indexed_palette_rgb6[raw];
+    }
+    index = raw & M11_FB_INDEX_MASK;
+    level = (raw & M11_FB_LEVEL_MASK) >> M11_FB_LEVEL_SHIFT;
+    if (level == 0) level = g_state.paletteLevel;
+    if (level >= M11_PALETTE_LEVELS) level = M11_PALETTE_LEVELS - 1;
+    if (out_level) *out_level = level;
+    return (g_state.v2_palette_enabled && g_state.v2_palette_lut_built)
+        ? g_state.v2_palette_corrected[level][index]
+        : G9010_auc_VgaPaletteAll_Compat[level][index];
+}
 
 /* ---------------- Helpers ---------------- */
 
@@ -502,16 +527,10 @@ static void m11_framebuffer_to_rgba(const unsigned char* src,
     pixelCount = logicalWidth * logicalHeight;
     for (int i = 0; i < pixelCount; ++i) {
         unsigned char raw = src[i];
-        unsigned char idx = raw & M11_FB_INDEX_MASK;
-        int perPixelLevel = (raw & M11_FB_LEVEL_MASK) >> M11_FB_LEVEL_SHIFT;
-        int level = perPixelLevel > 0 ? perPixelLevel : globalLevel;
+        int level = globalLevel;
         const unsigned char* rgb;
-        if (level >= M11_PALETTE_LEVELS) {
-            level = M11_PALETTE_LEVELS - 1;
-        }
-        rgb = useV2Palette
-            ? g_state.v2_palette_corrected[level][idx]
-            : G9010_auc_VgaPaletteAll_Compat[level][idx];
+        (void)useV2Palette;
+        rgb = m11_palette_rgb_for_pixel(raw, &level);
         dst[i * 4 + 0] = rgb[0];
         dst[i * 4 + 1] = rgb[1];
         dst[i * 4 + 2] = rgb[2];
@@ -536,17 +555,11 @@ static void m11_framebuffer_to_rgba_scaled(const unsigned char* src,
         int x;
         for (x = 0; x < logicalWidth; ++x) {
             unsigned char raw = src[y * logicalWidth + x];
-            unsigned char idx = raw & M11_FB_INDEX_MASK;
-            int perPixelLevel = (raw & M11_FB_LEVEL_MASK) >> M11_FB_LEVEL_SHIFT;
-            int level = perPixelLevel > 0 ? perPixelLevel : globalLevel;
+            int level = globalLevel;
             const unsigned char* rgb;
             int sy;
-            if (level >= M11_PALETTE_LEVELS) {
-                level = M11_PALETTE_LEVELS - 1;
-            }
-            rgb = useV2Palette
-                ? g_state.v2_palette_corrected[level][idx]
-                : G9010_auc_VgaPaletteAll_Compat[level][idx];
+            (void)useV2Palette;
+            rgb = m11_palette_rgb_for_pixel(raw, &level);
             for (sy = 0; sy < scale; ++sy) {
                 int sx;
                 unsigned char* row = dst + ((y * scale + sy) * outW + x * scale) * 4;
@@ -585,8 +598,6 @@ static void m11_framebuffer_to_rgba_resampled(const unsigned char* src,
         for (x = 0; x < targetWidth; ++x) {
             int srcX = (x * logicalWidth) / targetWidth;
             unsigned char raw;
-            unsigned char idx;
-            int perPixelLevel;
             int level;
             const unsigned char* rgb;
             unsigned char* px;
@@ -594,15 +605,9 @@ static void m11_framebuffer_to_rgba_resampled(const unsigned char* src,
                 srcX = logicalWidth - 1;
             }
             raw = src[srcY * logicalWidth + srcX];
-            idx = raw & M11_FB_INDEX_MASK;
-            perPixelLevel = (raw & M11_FB_LEVEL_MASK) >> M11_FB_LEVEL_SHIFT;
-            level = perPixelLevel > 0 ? perPixelLevel : globalLevel;
-            if (level >= M11_PALETTE_LEVELS) {
-                level = M11_PALETTE_LEVELS - 1;
-            }
-            rgb = useV2Palette
-                ? g_state.v2_palette_corrected[level][idx]
-                : G9010_auc_VgaPaletteAll_Compat[level][idx];
+            level = globalLevel;
+            (void)useV2Palette;
+            rgb = m11_palette_rgb_for_pixel(raw, &level);
             px = dst + ((y * targetWidth + x) * 4);
             px[0] = rgb[0];
             px[1] = rgb[1];
@@ -1110,6 +1115,27 @@ int M11_Render_SetPaletteLevel(int level) {
 
 int M11_Render_GetPaletteLevel(void) {
     return g_state.paletteLevel;
+}
+
+int M11_Render_SetIndexedPaletteRgb6(const uint8_t rgb6[256][3]) {
+    if (!rgb6) return M11_RENDER_ERR_INVALID_ARG;
+    memcpy(g_state.indexed_palette_rgb6, rgb6,
+           sizeof(g_state.indexed_palette_rgb6));
+    g_state.indexed_palette_rgb6_active = 1;
+    return M11_RENDER_OK;
+}
+
+void M11_Render_ClearIndexedPaletteRgb6(void) {
+    g_state.indexed_palette_rgb6_active = 0;
+    memset(g_state.indexed_palette_rgb6, 0,
+           sizeof(g_state.indexed_palette_rgb6));
+}
+
+int M11_Render_CopyIndexedPaletteRgb6(uint8_t out_rgb6[256][3]) {
+    if (!out_rgb6 || !g_state.indexed_palette_rgb6_active) return 0;
+    memcpy(out_rgb6, g_state.indexed_palette_rgb6,
+           sizeof(g_state.indexed_palette_rgb6));
+    return 1;
 }
 
 long M11_Render_ClearFramebuffer(unsigned char colorIndex) {

@@ -245,6 +245,103 @@ static const Nexus_DMDFTextureSurface *nexus_v1_plan_surface(
         ? &bank->surfaces[command->material_id] : NULL;
 }
 
+int nexus_v1_inspect_dgn_material_corpus(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_DgnMaterialCorpusReceipt *out_receipt)
+{
+    uint8_t *floor_refs = NULL;
+    uint8_t *ceiling_refs = NULL;
+    uint8_t *wall_refs = NULL;
+    size_t floor_count = 0U;
+    size_t ceiling_count = 0U;
+    size_t wall_count = 0U;
+    int level_index;
+    Nexus_V1_DgnMaterialCorpusReceipt receipt;
+
+    if (!engine || !out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.attempted = 1;
+    receipt.expected_level_count = 16;
+    receipt.fallback_visuals_permitted = 0;
+    receipt.floor_coverage.category = NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR;
+    receipt.ceiling_coverage.category = NEXUS_V1_DGN_MATERIAL_CATEGORY_CEILING;
+    receipt.wall_coverage.category = NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL;
+
+    floor_refs = (uint8_t *)malloc((size_t)receipt.expected_level_count *
+                                   NEXUS_MAX_MAP_SIZE * NEXUS_MAX_MAP_SIZE);
+    ceiling_refs = (uint8_t *)malloc((size_t)receipt.expected_level_count *
+                                     NEXUS_MAX_MAP_SIZE * NEXUS_MAX_MAP_SIZE);
+    wall_refs = (uint8_t *)malloc((size_t)receipt.expected_level_count *
+                                  NEXUS_MAX_MAP_SIZE * NEXUS_MAX_MAP_SIZE * 4U);
+    if (!floor_refs || !ceiling_refs || !wall_refs) goto done;
+
+    for (level_index = 0; level_index < receipt.expected_level_count;
+         ++level_index) {
+        char name[16];
+        uint8_t *data;
+        int size = 0;
+        int x;
+        int y;
+        Nexus_V1_Level level;
+        snprintf(name, sizeof(name), "LEV%02d.DGN", level_index);
+        data = nexus_v1_read_file(engine, name, &size);
+        if (!data) continue;
+        ++receipt.readable_level_count;
+        memset(&level, 0, sizeof(level));
+        if (nexus_v1_level_load(&level, data, size, level_index) != 0) {
+            free(data);
+            continue;
+        }
+        free(data);
+        ++receipt.parsed_level_count;
+        if (level.geometry_info.mesh_ready) ++receipt.geometry_ready_level_count;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
+                int dir;
+                floor_refs[floor_count++] = level.floor_material_refs[y][x];
+                ceiling_refs[ceiling_count++] =
+                    level.ceiling_material_refs[y][x];
+                for (dir = 0; dir < 4; ++dir) {
+                    wall_refs[wall_count++] =
+                        level.wall_material_refs[y][x][dir];
+                }
+            }
+        }
+    }
+    (void)nexus_v1_dmdf_material_category_coverage_receipt(
+        &engine->floor_materials, NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR,
+        floor_refs, floor_count, &receipt.floor_coverage);
+    /* The live viewport deliberately resolves typed ceiling selectors through
+     * FLOORS material data. This is recorded as bank provenance only, not a
+     * claim that the DGN selector denotes a separate asset family. */
+    (void)nexus_v1_dmdf_material_category_coverage_receipt(
+        &engine->floor_materials, NEXUS_V1_DGN_MATERIAL_CATEGORY_CEILING,
+        ceiling_refs, ceiling_count, &receipt.ceiling_coverage);
+    (void)nexus_v1_dmdf_material_category_coverage_receipt(
+        &engine->wall_materials, NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL,
+        wall_refs, wall_count, &receipt.wall_coverage);
+    receipt.floor_container = engine->floor_bpk_container;
+    receipt.wall_container = engine->wall_bpk_container;
+    receipt.bpk_host_routes_complete =
+        engine->floor_bpk_host_route.host_consumed_surfaces &&
+        engine->wall_bpk_host_route.host_consumed_surfaces;
+    receipt.material_coverage_complete =
+        receipt.parsed_level_count == receipt.expected_level_count &&
+        receipt.geometry_ready_level_count == receipt.expected_level_count &&
+        receipt.floor_coverage.covered && receipt.ceiling_coverage.covered &&
+        receipt.wall_coverage.covered;
+    receipt.host_route_evidence_complete =
+        receipt.material_coverage_complete && receipt.bpk_host_routes_complete;
+
+done:
+    free(floor_refs);
+    free(ceiling_refs);
+    free(wall_refs);
+    engine->dgn_material_corpus = receipt;
+    *out_receipt = receipt;
+    return receipt.parsed_level_count == receipt.expected_level_count ? 0 : -1;
+}
+
 void nexus_v1_invalidate_dgn_material_plan(Nexus_V1_Engine *engine) {
     Nexus_V1_DgnMaterialPlan *plan;
     if (!engine) return;
@@ -307,9 +404,11 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     }
 
     for (i = 0; i < plan->receipt.command_count; ++i) {
-        if (!nexus_v1_plan_surface(engine, &plan->commands[i])) {
-            /* DMWeb DGN structure selects IDs; DMDF/BPK decoding proves the
-             * matching source surface. PRS3 remains non-renderable here. */
+        const Nexus_DMDFTextureSurface *surface =
+            nexus_v1_plan_surface(engine, &plan->commands[i]);
+        if (!surface) {
+            /* DMWeb DGN structure selects IDs; a verified BPK host route
+             * plus the matching decoded source surface is required. */
             if (plan->receipt.missing_material_count == 0) {
                 plan->receipt.first_missing_material_id =
                     plan->commands[i].material_id;
@@ -385,6 +484,63 @@ static uint8_t *nexus_v1_read_extracted_file(Nexus_V1_Engine *engine,
         return nexus_read_host_file(path, out_size);
     }
     return NULL;
+}
+
+static uint8_t *nexus_v1_read_iso_file(Nexus_V1_Engine *engine,
+                                       const Nexus_ISOFile *file,
+                                       int *out_size);
+
+/* DGN material containers are deliberately narrower than the general asset
+ * resolver. They must be an exact source entry named FLOORS.BPK or WALLS.BPK:
+ * no hash fallback, DMDF-family scan, MENU.BPK, or opaque archive payload can
+ * stand in while canonical retail hashes remain unknown. */
+static uint8_t *nexus_v1_read_exact_material_container(
+    Nexus_V1_Engine *engine, const char *name, int *out_size) {
+    char path[512];
+    const Nexus_ISOFile *file;
+    if (!engine || !name) return NULL;
+    if (engine->source == NEXUS_SRC_EXTRACTED) {
+        snprintf(path, sizeof(path), "%s/%s", engine->data_dir, name);
+        return nexus_path_is_file(path) ? nexus_read_host_file(path, out_size)
+                                        : NULL;
+    }
+    if (engine->source != NEXUS_SRC_ISO) return NULL;
+    file = nexus_iso_find(&engine->iso, name);
+    return nexus_v1_read_iso_file(engine, file, out_size);
+}
+
+static void nexus_v1_inspect_dgn_material_container(
+    Nexus_V1_Engine *engine,
+    const char *name,
+    Nexus_V1_DgnMaterialCategory category,
+    Nexus_V1_DgnMaterialContainerReceipt *out_receipt) {
+    int size = 0;
+    uint8_t *data;
+
+    if (!out_receipt) return;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->category = category;
+    out_receipt->blocks_real_surface_render = 1;
+    if (!engine || !name) return;
+
+    data = nexus_v1_read_exact_material_container(engine, name, &size);
+    if (!data || size <= 0) {
+        free(data);
+        return;
+    }
+    out_receipt->exact_name_observed = 1;
+    out_receipt->source_present = 1;
+    out_receipt->format_valid = nexus_v1_bpk_archive_parse(
+        data, (size_t)size, &out_receipt->archive) == 0;
+    free(data);
+
+    /* No canonical FLOORS/WALLS container hash is known from the verified
+     * retail Track 1 listing. A well-formed, named file is useful evidence,
+     * but it cannot be consumed or promote material until that identity gate
+     * exists. */
+    out_receipt->identity_verified = 0;
+    out_receipt->host_route_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 0;
 }
 
 static int nexus_v1_iso_file_has_dmdf_magic(Nexus_V1_Engine *engine,
@@ -534,15 +690,16 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     if (!face_data) return;
     (void)nexus_ui_face_layout_detect(face_data, face_size, &face_layout);
 
-    /* DM Nexus FACE.BIN is the startup champion portrait source. Keep the
-     * full 24-row startup roster visible even when a specific dump exposes
-     * compact FACE records rather than raw 48x48 entries. */
+    /* The verified disc has a FACE header followed by compact records. Their
+     * pixel coding is not decoded yet, so no record may be padded or painted
+     * as a startup portrait. */
     for (i = 0; i < engine->champions.champion_count && i < 24; ++i) {
         const int portrait_index = engine->champions.champions[i].portrait_index;
         int load_result;
         if (portrait_index < 0 || portrait_index >= 24) continue;
         engine->ui_faces_expected++;
         if (face_layout.valid &&
+            face_layout.entry_size == 48 * 48 &&
             portrait_index < face_layout.entry_count &&
             face_layout.entry_size > 0 &&
             face_layout.header_size + (portrait_index + 1) * face_layout.entry_size <= face_size) {
@@ -556,10 +713,7 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
                                                     face_layout.portrait_h,
                                                     NULL);
         } else {
-            load_result = nexus_ui_load_face_placeholder(&engine->ui,
-                                                        portrait_index,
-                                                        48,
-                                                        48);
+            load_result = -1;
         }
         if (load_result > 0) {
             engine->ui_faces_loaded++;
@@ -581,12 +735,12 @@ static void nexus_v1_load_startup_surface_file(Nexus_V1_Engine *engine,
     uint8_t *data;
 
     if (!engine || !name || !loader) return;
+    engine->ui_startup_surfaces_expected++;
     data = nexus_v1_read_file(engine, name, &size);
     if (!data || size <= 0) {
         free(data);
         return;
     }
-    engine->ui_startup_surfaces_expected++;
     load_result = loader(&engine->ui, data, size, NULL);
     if (load_result > 0) {
         engine->ui_startup_surfaces_loaded++;
@@ -683,9 +837,10 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_v1_game_init(&engine->game, data_dir);
     engine->audio_enabled = 1;
 
-    /* DGN Structure1B references are material indices. These banks retain
-     * only decoded DMDF BITM/PLTB surfaces; an absent or malformed archive
-     * leaves the real DGN viewport blank instead of fabricating colours. */
+    /* DGN Structure1B references are material indices. DMDF inspection can
+     * retain source data, but runtime mesh drawing additionally requires a
+     * hash-verified FLOORS/WALLS BPK host route. The Track 1 listing contains
+     * neither container, so named files are inspected but never imported. */
     {
         int material_size = 0;
         uint8_t *material_data = nexus_v1_read_file(engine, "FLOORS.DMDF",
@@ -696,13 +851,9 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
                                                       &engine->floor_materials);
             free(material_data);
         }
-        material_data = nexus_v1_read_file(engine, "FLOORS.BPK", &material_size);
-        if (material_data) {
-            (void)nexus_v1_dmdf_import_bpk_material_bank(material_data,
-                                                          (size_t)material_size,
-                                                          &engine->floor_materials);
-            free(material_data);
-        }
+        nexus_v1_inspect_dgn_material_container(
+            engine, "FLOORS.BPK", NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR,
+            &engine->floor_bpk_container);
         material_data = nexus_v1_read_file(engine, "WALLS.DMDF",
                                             &material_size);
         if (material_data) {
@@ -711,13 +862,9 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
                                                       &engine->wall_materials);
             free(material_data);
         }
-        material_data = nexus_v1_read_file(engine, "WALLS.BPK", &material_size);
-        if (material_data) {
-            (void)nexus_v1_dmdf_import_bpk_material_bank(material_data,
-                                                          (size_t)material_size,
-                                                          &engine->wall_materials);
-            free(material_data);
-        }
+        nexus_v1_inspect_dgn_material_container(
+            engine, "WALLS.BPK", NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL,
+            &engine->wall_bpk_container);
     }
 
     /* Init champion pool */
@@ -795,6 +942,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     uint8_t *script_data;
     uint8_t *sal_data;
     uint8_t *map_data;
+    Nexus_V1_DungeonStartReceipt dungeon_start;
 
     if (!engine || level < 0 || level > 15) return -1;
     snprintf(name, sizeof(name), "LEV%02d.DGN", level);
@@ -809,6 +957,31 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     int r = nexus_v1_level_load(&engine->current_level, data, size, level);
     free(data);
     if (r < 0) return -1;
+
+    /* Nexus source-lock: docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md
+     * fixes new game at LEV00 (11,29,N). Accept it only after the real
+     * Structure1B cell has been decoded, so corrupt media or a parser change
+     * cannot start mechanics or DGN rendering inside a wall. */
+    if (level == NEXUS_V1_INITIAL_PARTY_LEVEL && !engine->game.game_started) {
+        if (!nexus_v1_game_resolve_dungeon_start(
+                &engine->current_level,
+                level,
+                NEXUS_V1_INITIAL_PARTY_X,
+                NEXUS_V1_INITIAL_PARTY_Y,
+                NEXUS_V1_INITIAL_PARTY_DIR,
+                &dungeon_start) ||
+            !nexus_v1_game_apply_dungeon_start(&engine->game,
+                                                &dungeon_start)) {
+            engine->game.dungeon_start = dungeon_start;
+            return -1;
+        }
+        if (engine->mechanics) {
+            nexus_mechanics_init(engine->mechanics,
+                                 engine->game.party_x,
+                                 engine->game.party_y,
+                                 engine->game.party_dir);
+        }
+    }
 
     engine->level_loaded = 1;
     nexus_v1_sync_dgn_runtime_pose(engine, level, engine->game.party_x,
@@ -983,8 +1156,8 @@ int nexus_v1_startup_faces_fallback_count(const Nexus_V1_Engine *engine) {
 int nexus_v1_startup_faces_ready(const Nexus_V1_Engine *engine) {
     if (!engine) return 0;
     return engine->ui_faces_expected > 0 &&
-           engine->ui_faces_loaded + engine->ui_faces_fallback ==
-               engine->ui_faces_expected;
+           engine->ui_faces_fallback == 0 &&
+           engine->ui_faces_loaded == engine->ui_faces_expected;
 }
 
 int nexus_v1_startup_surfaces_loaded_count(const Nexus_V1_Engine *engine) {
@@ -1002,8 +1175,8 @@ int nexus_v1_startup_surfaces_fallback_count(const Nexus_V1_Engine *engine) {
 int nexus_v1_startup_surfaces_ready(const Nexus_V1_Engine *engine) {
     if (!engine) return 0;
     return engine->ui_startup_surfaces_expected > 0 &&
-           engine->ui_startup_surfaces_loaded +
-                   engine->ui_startup_surfaces_fallback ==
+           engine->ui_startup_surfaces_fallback == 0 &&
+           engine->ui_startup_surfaces_loaded ==
                engine->ui_startup_surfaces_expected;
 }
 

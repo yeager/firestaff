@@ -44,6 +44,10 @@ const CSB_V1_DungeonData *csb_v1_dungeon_get_current(void) {
     return s_current_dungeon;
 }
 
+CSB_V1_DungeonData *csb_v1_dungeon_get_current_mutable(void) {
+    return s_current_dungeon;
+}
+
 void csb_v1_dungeon_set_current(CSB_V1_DungeonData *d) {
     if (s_current_dungeon != d) {
         csb_v1_dungeon_free(s_current_dungeon);

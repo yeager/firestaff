@@ -11,6 +11,8 @@
  */
 #include <stdint.h>
 
+struct TickEmission_Compat;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -111,6 +113,30 @@ typedef struct {
     int totalPendingFlushes;
 } DM1_SoundSystem;
 
+/*
+ * The M10 tick stream is a host-neutral boundary.  Keep the DM1 mapping
+ * from a source event to its presentation class here; M11 only maps the
+ * class to its audio backend.
+ *
+ * ReDMCSB: SOUND.C F0064_SOUND_RequestPlay_CPSD; COMMAND.C / TIMELINE.C
+ * callers publish the concrete sound index, while host-only emissions use
+ * their matching presentation family.
+ */
+typedef enum {
+    DM1_V1_AUDIO_EMISSION_ROUTE_NONE = 0,
+    DM1_V1_AUDIO_EMISSION_ROUTE_FOOTSTEP,
+    DM1_V1_AUDIO_EMISSION_ROUTE_DOOR,
+    DM1_V1_AUDIO_EMISSION_ROUTE_COMBAT,
+    DM1_V1_AUDIO_EMISSION_ROUTE_CREATURE,
+    DM1_V1_AUDIO_EMISSION_ROUTE_SPELL,
+    DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND
+} DM1_V1_AudioEmissionRoutePc34;
+
+typedef struct {
+    DM1_V1_AudioEmissionRoutePc34 route;
+    int16_t sourceSoundIndex;
+} DM1_V1_AudioEmissionPlanPc34;
+
 void DM1_Sound_Init(DM1_SoundSystem* sys);
 int  DM1_Sound_GetVolume(const DM1_SoundSystem* sys,
                          int16_t sourceMapX, int16_t sourceMapY,
@@ -132,6 +158,8 @@ void DM1_Music_Stop(DM1_SoundSystem* sys);
 int  DM1_Sound_GetLastPlayedIndex(const DM1_SoundSystem* sys);
 const DM1_SoundData* DM1_Sound_GetSoundData(const DM1_SoundSystem* sys, int16_t soundIndex);
 const char* DM1_Sound_Name(int16_t soundIndex);
+int DM1_V1_BuildAudioEmissionPlanPc34(const struct TickEmission_Compat* emission,
+                                      DM1_V1_AudioEmissionPlanPc34* outPlan);
 
 #ifdef __cplusplus
 }

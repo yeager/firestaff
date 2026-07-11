@@ -356,9 +356,31 @@ int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
     if (boot_frame.phase == NEXUS_V1_BOOT_PHASE_WARNING) {
         if (!title || !title->warning_loaded || !title->warning_pixels ||
             title->warning_width <= 0 || title->warning_height <= 0) {
-            return nexus_v1_title_build_warning_fallback_render_plan(
-                boot_frame.frame_in_phase,
-                out_plan);
+            /* This direct renderer may be used outside the launcher gate.
+             * Preserve real title art rather than drawing a fake warning. */
+            if (!title || !title->loaded || !title->pixels ||
+                title->width <= 0 || title->height <= 0) {
+                nexus_title_plan_reset(out_plan);
+                return 0;
+            }
+            nexus_title_plan_reset(out_plan);
+            if (!nexus_v1_title_frame(boot_frame.frame_in_phase,
+                                      NEXUS_FB_H,
+                                      &boot_frame.title)) {
+                return 0;
+            }
+            out_plan->kind = NEXUS_V1_TITLE_RENDER_PLAN_TITLE_ART;
+            out_plan->boot_phase = NEXUS_V1_BOOT_PHASE_TITLE;
+            out_plan->input_frame = frame;
+            out_plan->title_frame = boot_frame.frame_in_phase;
+            out_plan->reveal_y0 = boot_frame.title.reveal_y0;
+            out_plan->reveal_y1 = boot_frame.title.reveal_y1;
+            out_plan->edge_color = boot_frame.title.edge_color;
+            out_plan->copy_width = title->width < NEXUS_FB_W
+                                       ? title->width : NEXUS_FB_W;
+            out_plan->copy_height = title->height < NEXUS_FB_H
+                                        ? title->height : NEXUS_FB_H;
+            return 1;
         }
         nexus_title_plan_reset(out_plan);
         out_plan->kind = NEXUS_V1_TITLE_RENDER_PLAN_WARNING_ART;
@@ -375,8 +397,8 @@ int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
     }
     if (!title || !title->loaded || !title->pixels ||
         title->width <= 0 || title->height <= 0) {
-        return nexus_v1_title_build_fallback_render_plan(boot_frame.title_frame,
-                                                         out_plan);
+        nexus_title_plan_reset(out_plan);
+        return 0;
     }
     nexus_title_plan_reset(out_plan);
     out_plan->kind = NEXUS_V1_TITLE_RENDER_PLAN_TITLE_ART;

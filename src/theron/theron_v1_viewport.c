@@ -865,7 +865,7 @@ void theron_vp_present(const Theron_V1_Viewport *vp,
      *   dst_y = (200 - 192) / 2 = 4  (viewport height 192 in 200)
      *
      * Actually for Theron, we use the full 224-tall fb but scale to fit:
-     *   M11 viewport: x=32, y=24, w=256, h=192 (Theron letterboxed)
+     *   runtime viewport: x=32, y=24, w=256, h=192 (Theron letterboxed)
      *   M11 total: 320×200
      */
     int dst_x = 32;

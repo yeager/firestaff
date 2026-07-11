@@ -310,11 +310,13 @@ static void probe_synthetic_envelope_chain(void) {
                                          scratch, sizeof(scratch),
                                          &envelope);
 
-    printf("synthetic envelope chain: kind=%s inflate=%s decode=%s payload=%zu\n",
+    printf("synthetic envelope chain: kind=%s inflate=%s decode=%s payload=%zu evidence=%d crc=%08x\n",
            theron_v1_srm_envelope_kind_name(kind),
            theron_v1_srm_payload_probe_status_name(envelope.inflate_status),
            theron_v1_srm_progress_import_status_name(envelope.decode_status),
-           envelope.inflate_payload_size);
+           envelope.inflate_payload_size,
+           envelope.body_evidence.gzip_trailer_verified,
+           envelope.body_evidence.payload_checksum32);
 
     check_int("synthetic envelope kind PROGRESSION",
               kind,
@@ -334,6 +336,10 @@ static void probe_synthetic_envelope_chain(void) {
     check_int("synthetic envelope quest mask",
               envelope.progression.quest_items_bitmask,
               0x03);
+    check_int("synthetic envelope records verified body evidence",
+              envelope.body_evidence.captured &&
+                  envelope.body_evidence.gzip_trailer_verified,
+              1);
 #else
     printf("SKIP synthetic envelope chain: zlib unavailable\n");
     ++g_skip;
@@ -504,6 +510,148 @@ static void probe_real_slot0_when_staged(void) {
 #endif
 }
 
+static void probe_configured_real_slots(void) {
+    Theron_V1SrmManifest manifest;
+    Theron_V1SrmEnvelopeReceipt envelopes[THERON_V1_SRM_DISK_SLOT_COUNT];
+    Theron_V1SrmBodyEvidenceCatalog catalog;
+    char root[THERON_V1_SRM_PATH_MAX];
+    int seen = 0;
+
+    if (!theron_v1_srm_default_root(root) ||
+        !theron_v1_srm_classify_root(root, &manifest)) {
+        printf("SKIP configured real SRM slots: save root unavailable\n");
+        ++g_skip;
+        return;
+    }
+    memset(envelopes, 0, sizeof(envelopes));
+    for (int i = 0; i < THERON_V1_SRM_DISK_SLOT_COUNT; ++i) {
+        envelopes[i].slot_index = i;
+    }
+
+    for (int i = 0; i < THERON_V1_SRM_DISK_SLOT_COUNT; ++i) {
+        uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+        Theron_V1SrmEnvelopeReceipt *envelope = &envelopes[i];
+        Theron_V1SrmEnvelopeKind kind;
+
+        if (manifest.slots[i].status !=
+            THERON_V1_SRM_SLOT_PRESENT_AND_RECOGNIZED) {
+            continue;
+        }
+        seen = 1;
+        memset(scratch, 0, sizeof(scratch));
+        memset(envelope, 0, sizeof(*envelope));
+        kind = theron_v1_srm_decode_path(manifest.slots[i].path, i,
+                                         scratch, sizeof(scratch), envelope);
+        printf("configured SRM slot=%d kind=%s inflate=%s payload=%zu "
+               "evidence=%d fingerprint=%08x prefix=%08x suffix=%08x\n",
+               i,
+               theron_v1_srm_envelope_kind_name(kind),
+               theron_v1_srm_payload_probe_status_name(envelope->inflate_status),
+               envelope->body_evidence.payload_size,
+               envelope->body_evidence.gzip_trailer_verified,
+               envelope->body_evidence.payload_checksum32,
+               envelope->body_evidence.payload_prefix_checksum32,
+               envelope->body_evidence.payload_suffix_checksum32);
+        check_int("configured real SRM body stays blocked unless supported",
+                  kind == THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED ||
+                      kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
+                      kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY ||
+                      kind == THERON_V1_SRM_ENVELOPE_KIND_NONE,
+                  1);
+    }
+    if (!seen) {
+        printf("SKIP configured real SRM slots: no recognized .srm artifact\n");
+        ++g_skip;
+        return;
+    }
+    check_int("configured real SRM evidence catalog",
+              theron_v1_srm_catalog_body_evidence(
+                  envelopes, THERON_V1_SRM_DISK_SLOT_COUNT, &catalog),
+              1);
+    printf("configured SRM corpus: authenticated=%zu groups=%zu first=%d hash=%08x\n",
+           catalog.authenticated_slot_count,
+           catalog.fingerprint_group_count,
+           catalog.first_authenticated_slot,
+           catalog.catalog_checksum);
+}
+
+static void probe_configured_compare_root(void) {
+    const char *compare_root = getenv("FIRESTAFF_THERON_SRM_COMPARE_DIR");
+    Theron_V1SrmManifest primary_manifest;
+    Theron_V1SrmManifest compare_manifest;
+    Theron_V1SrmEnvelopeReceipt primary[THERON_V1_SRM_DISK_SLOT_COUNT];
+    Theron_V1SrmEnvelopeReceipt compare[THERON_V1_SRM_DISK_SLOT_COUNT];
+    uint8_t primary_payloads[THERON_V1_SRM_DISK_SLOT_COUNT]
+                            [THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    uint8_t compare_payloads[THERON_V1_SRM_DISK_SLOT_COUNT]
+                            [THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    Theron_V1SrmBodyEvidenceComparison comparison;
+    char primary_root[THERON_V1_SRM_PATH_MAX];
+    int i;
+
+    if (!compare_root || !compare_root[0]) return;
+    if (!theron_v1_srm_default_root(primary_root) ||
+        !theron_v1_srm_classify_root(primary_root, &primary_manifest) ||
+        !theron_v1_srm_classify_root(compare_root, &compare_manifest)) {
+        printf("FAIL configured SRM corpus comparison: root classification failed\n");
+        ++g_fail;
+        return;
+    }
+    memset(primary, 0, sizeof(primary));
+    memset(compare, 0, sizeof(compare));
+    memset(primary_payloads, 0, sizeof(primary_payloads));
+    memset(compare_payloads, 0, sizeof(compare_payloads));
+    for (i = 0; i < THERON_V1_SRM_DISK_SLOT_COUNT; ++i) {
+        if (primary_manifest.slots[i].status == THERON_V1_SRM_SLOT_PRESENT_AND_RECOGNIZED) {
+            (void)theron_v1_srm_decode_path(primary_manifest.slots[i].path, i,
+                                             primary_payloads[i],
+                                             sizeof(primary_payloads[i]),
+                                             &primary[i]);
+        }
+        if (compare_manifest.slots[i].status == THERON_V1_SRM_SLOT_PRESENT_AND_RECOGNIZED) {
+            (void)theron_v1_srm_decode_path(compare_manifest.slots[i].path, i,
+                                             compare_payloads[i],
+                                             sizeof(compare_payloads[i]),
+                                             &compare[i]);
+        }
+    }
+    if (!theron_v1_srm_compare_body_evidence(
+            primary, THERON_V1_SRM_DISK_SLOT_COUNT,
+            compare, THERON_V1_SRM_DISK_SLOT_COUNT, &comparison)) {
+        printf("FAIL configured SRM corpus comparison: invalid receipt set\n");
+        ++g_fail;
+        return;
+    }
+    printf("configured SRM comparison: left=0x%x right=0x%x comparable=0x%x matching=0x%x mismatch=0x%x hash=%08x\n",
+           comparison.left_authenticated_slot_mask,
+           comparison.right_authenticated_slot_mask,
+           comparison.comparable_slot_mask,
+           comparison.matching_slot_mask,
+           comparison.mismatch_slot_mask,
+           comparison.comparison_checksum);
+    for (i = 0; i < THERON_V1_SRM_DISK_SLOT_COUNT; ++i) {
+        Theron_V1SrmBodyEvidenceDelta delta;
+        unsigned int bit = 1u << (unsigned int)i;
+        if (!(comparison.comparable_slot_mask & bit)) continue;
+        if (!theron_v1_srm_compare_authenticated_payloads(
+                &primary[i], primary_payloads[i],
+                primary[i].body_evidence.payload_size,
+                &compare[i], compare_payloads[i],
+                compare[i].body_evidence.payload_size, &delta)) {
+            printf("FAIL configured SRM corpus delta: slot=%d receipt mismatch\n", i);
+            ++g_fail;
+            continue;
+        }
+        printf("configured SRM delta: slot=%d left=%zu right=%zu prefix=%zu suffix=%zu differing=%zu runs=%zu retained=%zu longest=%zu truncated=%d hash=%08x\n",
+               i, delta.left_payload_size, delta.right_payload_size,
+               delta.shared_prefix_bytes, delta.shared_suffix_bytes,
+               delta.differing_byte_count, delta.differing_run_count,
+               delta.retained_run_count, delta.longest_differing_run_bytes,
+               delta.differing_runs_truncated, delta.delta_checksum);
+    }
+    ++g_pass;
+}
+
 int main(void) {
     printf("=== Theron V1 SRM Body-Decode Envelope Probe ===\n");
     printf("%s\n", theron_v1_srm_source_evidence());
@@ -513,6 +661,8 @@ int main(void) {
     probe_synthetic_slot0_path_roundtrip();
     probe_real_slot0_skip_clean();
     probe_real_slot0_when_staged();
+    probe_configured_real_slots();
+    probe_configured_compare_root();
 
     printf("summary: pass=%d fail=%d skip=%d\n",
            g_pass, g_fail, g_skip);

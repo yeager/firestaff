@@ -37,6 +37,9 @@ int csb_v1_startup_entrance_pointer_action_pc34(
     if (credits_active) {
         return 1;
     }
+    if (button_mask & 1u) {
+        button_mask |= ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT;
+    }
     if (!ENTRANCE_Compat_HitTestMouseRoute(
             x,
             y,

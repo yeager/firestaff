@@ -37,7 +37,6 @@
 
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_world_model.h"
-#include "dm2_v1_outdoor_renderer.h"
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -511,6 +510,38 @@ static const int16_t __attribute__((unused)) s_dm2_door_frames [6] = {
 #define DM2_GRAPHIC_FLOOR   DM2_V1_VIEWPORT_GFX_FLOOR
 #define DM2_GRAPHIC_CEILING DM2_V1_VIEWPORT_GFX_CEILING
 
+int dm2_v1_viewport_scene_material_graphic_index(int graphicsset_index,
+                                                  int material_field)
+{
+    if (graphicsset_index < 0 || graphicsset_index > 0xff ||
+        (material_field != DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR &&
+         material_field != DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING)) {
+        return 0;
+    }
+    return DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_BASE -
+           (graphicsset_index << 8) - material_field;
+}
+
+int dm2_v1_viewport_scene_material_graphic_address(int gdat_index,
+                                                    int *out_graphicsset_index,
+                                                    int *out_material_field)
+{
+    int packed = DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_BASE - gdat_index;
+    int material_field = packed & 0xff;
+    int graphicsset_index = (packed >> 8) & 0xff;
+
+    if (!out_graphicsset_index || !out_material_field || packed < 0 ||
+        packed > 0x0f01 ||
+        gdat_index > DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_BASE ||
+        (material_field != DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR &&
+         material_field != DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING)) {
+        return 0;
+    }
+    *out_graphicsset_index = graphicsset_index;
+    *out_material_field = material_field;
+    return 1;
+}
+
 /* DM2 draw order — back-to-front, same 12 view squares as DM1.
  * Depth 3 (D3) → Depth 2 (D2) → Depth 1 (D1) → Depth 0 (D0).
  * Source: DUNGEON.C:1371-1421; DUNVIEW.C:8466-8542
@@ -809,16 +840,23 @@ void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
 void dm2_v1_viewport_set_gdat_scene_control(
     DM2_V1_ViewportState *s,
     int ready,
+    int graphicsset_index,
     uint32_t hash,
     uint16_t scene_colorkey,
     uint16_t scene_flags,
     uint16_t ambient_light,
     uint16_t highest_light_level,
     uint16_t void_random_fall,
-    uint16_t animated_floor)
+    uint16_t animated_floor,
+    uint16_t scene_rain,
+    uint16_t misty_map,
+    uint16_t thunder_position,
+    uint16_t ambient_darkness)
 {
     if (!s) return;
     s->gdat_scene_control_ready = ready ? 1 : 0;
+    s->gdat_scene_material_index = ready && graphicsset_index >= 0 &&
+        graphicsset_index <= 0xff ? graphicsset_index : 0;
     s->gdat_scene_control_hash = ready ? hash : 0u;
     s->gdat_scene_colorkey = ready ? scene_colorkey : 0u;
     s->gdat_scene_flags = ready ? scene_flags : 0u;
@@ -826,105 +864,43 @@ void dm2_v1_viewport_set_gdat_scene_control(
     s->gdat_highest_light_level = ready ? highest_light_level : 0u;
     s->gdat_void_random_fall = ready ? void_random_fall : 0u;
     s->gdat_animated_floor = ready ? animated_floor : 0u;
+    s->gdat_scene_rain = ready ? scene_rain : 0u;
+    s->gdat_misty_map = ready ? misty_map : 0u;
+    s->gdat_thunder_position = ready ? thunder_position : 0u;
+    s->gdat_ambient_darkness = ready ? ambient_darkness : 0u;
     s->dirty = 1;
 }
 
-static uint32_t dm2_v1_viewport_scene_hash_step(uint32_t hash,
-                                                uint32_t value)
-{
-    hash ^= value;
-    hash *= 16777619u;
-    return hash;
-}
-
-static uint32_t dm2_v1_viewport_weather_plan_hash(
-    const DM2_V1_WeatherOverlayRenderPlan *plan)
-{
-    uint32_t hash = 0x32574c50u;
-    if (!plan) {
-        return 0u;
-    }
-    hash = dm2_v1_viewport_scene_hash_step(hash, (uint32_t)plan->kind);
-    hash = dm2_v1_viewport_scene_hash_step(hash, (uint32_t)plan->intensity);
-    hash = dm2_v1_viewport_scene_hash_step(hash, (uint32_t)plan->density);
-    hash = dm2_v1_viewport_scene_hash_step(hash, (uint32_t)plan->scroll);
-    hash = dm2_v1_viewport_scene_hash_step(hash, (uint32_t)plan->alpha);
-    hash = dm2_v1_viewport_scene_hash_step(hash,
-                                           (uint32_t)plan->lightning_flash);
-    hash = dm2_v1_viewport_scene_hash_step(hash,
-                                           (uint32_t)plan->rain_color);
-    hash = dm2_v1_viewport_scene_hash_step(hash,
-                                           (uint32_t)plan->fog_target_color);
-    hash = dm2_v1_viewport_scene_hash_step(hash,
-                                           (uint32_t)plan->lightning_color);
-    return hash;
-}
-
-int dm2_v1_viewport_scene_consumption_receipt(
-    const DM2_V1_ViewportState *s,
-    DM2_V1_ViewportSceneConsumptionReceipt *out_receipt)
-{
-    uint32_t mask = 0u;
-    uint32_t hash = 0x32565343u;
-    if (!out_receipt) return 0;
-    memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!s) return 0;
-    if (s->gdat_scene_control_consumed_count > 0) mask |= 1u << 0;
-    if (s->gdat_scene_light_consumed_count > 0) mask |= 1u << 1;
-    if (s->gdat_scene_floor_anim_consumed_count > 0) mask |= 1u << 2;
-    if (s->gdat_scene_weather_consumed_count > 0) mask |= 1u << 3;
-    hash = dm2_v1_viewport_scene_hash_step(hash, mask);
-    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_scene_control_hash);
-    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_scene_colorkey);
-    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_scene_flags);
-    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_ambient_light);
-    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_highest_light_level);
-    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_void_random_fall);
-    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_animated_floor);
-    hash = dm2_v1_viewport_scene_hash_step(hash, s->last_weather_plan_hash);
-    out_receipt->ready = s->gdat_scene_control_ready && mask != 0u;
-    out_receipt->consumed_mask = mask;
-    out_receipt->consumption_hash = hash;
-    out_receipt->source_hash = s->gdat_scene_control_hash;
-    out_receipt->scene_colorkey = s->gdat_scene_colorkey;
-    out_receipt->scene_flags = s->gdat_scene_flags;
-    out_receipt->ambient_light = s->gdat_ambient_light;
-    out_receipt->highest_light_level = s->gdat_highest_light_level;
-    out_receipt->void_random_fall = s->gdat_void_random_fall;
-    out_receipt->animated_floor = s->gdat_animated_floor;
-    out_receipt->scene_control_consumed =
-        s->gdat_scene_control_consumed_count;
-    out_receipt->light_consumed = s->gdat_scene_light_consumed_count;
-    out_receipt->floor_anim_consumed =
-        s->gdat_scene_floor_anim_consumed_count;
-    out_receipt->weather_consumed = s->gdat_scene_weather_consumed_count;
-    out_receipt->weather_plan_ready = s->last_weather_plan_ready;
-    out_receipt->weather_plan_hash = s->last_weather_plan_hash;
-    out_receipt->weather_kind = s->last_weather_kind;
-    out_receipt->weather_intensity = s->last_weather_intensity;
-    out_receipt->weather_density = s->last_weather_density;
-    out_receipt->weather_scroll = s->last_weather_scroll;
-    out_receipt->weather_alpha = s->last_weather_alpha;
-    out_receipt->weather_lightning_flash = s->last_weather_lightning_flash;
-    out_receipt->weather_rain_color = s->last_weather_rain_color;
-    out_receipt->weather_fog_target_color =
-        s->last_weather_fog_target_color;
-    out_receipt->weather_lightning_color = s->last_weather_lightning_color;
-    return 1;
-}
-
-void dm2_v1_viewport_set_interface_theme(
+void dm2_v1_viewport_set_gdat_interface_palette(
     DM2_V1_ViewportState *s,
-    const DM2_V1_InterfaceTheme *theme)
+    int ready,
+    uint32_t hash,
+    const uint8_t palette16[16])
 {
     if (!s) return;
-    memset(&s->interface_theme, 0, sizeof(s->interface_theme));
-    s->interface_theme_valid = 0;
-    if (!theme || !theme->valid || theme->semantic_hash == 0u) {
-        return;
+    s->gdat_interface_palette_ready = ready && hash != 0u && palette16;
+    s->gdat_interface_palette_hash =
+        s->gdat_interface_palette_ready ? hash : 0u;
+    if (s->gdat_interface_palette_ready) {
+        memcpy(s->gdat_interface_palette16, palette16,
+               sizeof(s->gdat_interface_palette16));
+    } else {
+        memset(s->gdat_interface_palette16, 0,
+               sizeof(s->gdat_interface_palette16));
     }
-    s->interface_theme = *theme;
-    s->interface_theme_valid = 1;
+    s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_gdat_interface_rect14(
+    DM2_V1_ViewportState *s,
+    const uint8_t *rows,
+    uint32_t row_count,
+    uint32_t hash)
+{
+    if (!s) return;
+    s->gdat_interface_rect14_rows = rows;
+    s->gdat_interface_rect14_row_count = rows ? row_count : 0u;
+    s->gdat_interface_rect14_hash = rows ? hash : 0u;
     s->dirty = 1;
 }
 
@@ -954,16 +930,61 @@ int dm2_v1_viewport_wall_field_for_square(int view_square)
 
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square)
 {
+    return dm2_v1_viewport_wall_graphic_index_for_graphicsset(
+        DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET, view_square);
+}
+
+int dm2_v1_viewport_wall_graphic_index_for_graphicsset(int graphicsset_index,
+                                                        int view_square)
+{
     int field = dm2_v1_viewport_wall_field_for_square(view_square);
-    if (field < 0) return 0;
-    return DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - field;
+
+    if (field < 0 || graphicsset_index < 0 || graphicsset_index > 0xff) {
+        return 0;
+    }
+    /* ReDMCSB lineage: SkWinCore.cpp DRAW_WALL lines 47466-47474 queries
+     * GDAT_CATEGORY_GRAPHICSSET with the live iMapGfx for each wall cell. */
+    if (graphicsset_index == DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET) {
+        return DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - field;
+    }
+    return DM2_V1_VIEWPORT_GFX_WALL_GRAPHICSSET_BASE -
+           (graphicsset_index << 8) - field;
+}
+
+int dm2_v1_viewport_wall_graphic_address(int gdat_index,
+                                         int *out_graphicsset_index,
+                                         int *out_field)
+{
+    int packed;
+    int graphicsset_index;
+    int field;
+
+    if (!out_graphicsset_index || !out_field) return 0;
+    if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
+                          DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST &&
+        gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE) {
+        field = DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index;
+        *out_graphicsset_index = DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET;
+        *out_field = field;
+        return 1;
+    }
+    packed = DM2_V1_VIEWPORT_GFX_WALL_GRAPHICSSET_BASE - gdat_index;
+    graphicsset_index = (packed >> 8) & 0xff;
+    field = packed & 0xff;
+    if (packed < 0 || packed > 0xff3f ||
+        gdat_index > DM2_V1_VIEWPORT_GFX_WALL_GRAPHICSSET_BASE ||
+        field < DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST || field >= 0x40) {
+        return 0;
+    }
+    *out_graphicsset_index = graphicsset_index;
+    *out_field = field;
+    return 1;
 }
 
 int dm2_v1_viewport_build_wall_panel_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_WallPanelRenderPlan *out_plan)
 {
-    (void)s;
     if (!out_plan) {
         return 0;
     }
@@ -975,7 +996,11 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
     for (int step = 0; step < DM2_STEP_COUNT; ++step) {
         int square = s_step_to_square[step];
         const DM2_WallFrame *frame = dm2_v1_get_wall_frame(square);
-        int gdat_index = dm2_v1_viewport_wall_graphic_index_for_square(square);
+        int graphicsset_index = s && s->gdat_scene_control_ready
+            ? s->gdat_scene_material_index
+            : DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET;
+        int gdat_index = dm2_v1_viewport_wall_graphic_index_for_graphicsset(
+            graphicsset_index, square);
         DM2_V1_WallPanelRender *row;
 
         if (!frame || frame->byte_width == 0 || frame->height == 0 ||
@@ -1181,6 +1206,17 @@ int dm2_v1_viewport_creature_graphic_index(int creature_type,
     packed = (creature_type << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT) |
              (frame_index & DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_MASK);
     return DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - packed;
+}
+
+int dm2_v1_viewport_creature_field_graphic_index(int creature_type,
+                                                 int image_field)
+{
+    int packed;
+    if (creature_type < 0 || creature_type > 0xff ||
+        image_field < 0 || image_field > 0xff) return 0;
+    packed = (creature_type << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT) |
+             (image_field & DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_MASK);
+    return DM2_V1_VIEWPORT_GFX_CREATURE_DIRECT_FIELD_BASE - packed;
 }
 
 int dm2_v1_viewport_item_graphic_index(int item_category,
@@ -1823,21 +1859,7 @@ static int dm2_v1_fetch_viewport_asset(DM2_V1_ViewportState *s,
     return dm2_v1_gfx_fetch(gdat_index, out_pixels, out_w, out_h, out_stride);
 }
 
-static void dm2_v1_blit_tiled_bitmap_offset(uint8_t *dst,
-                                            int dst_stride,
-                                            int dst_x,
-                                            int dst_y,
-                                            int dst_w,
-                                            int dst_h,
-                                            const uint8_t *src,
-                                            int src_w,
-                                            int src_h,
-                                            int src_stride,
-                                            int transparent_color,
-                                            int src_x_offset,
-                                            int src_y_offset);
-
-static void dm2_v1_blit_tiled_bitmap(uint8_t *dst,
+static void __attribute__((unused)) dm2_v1_blit_tiled_bitmap(uint8_t *dst,
                                      int dst_stride,
                                      int dst_x,
                                      int dst_y,
@@ -1906,29 +1928,7 @@ static void dm2_v1_blit_tiled_bitmap_offset(uint8_t *dst,
     }
 }
 
-static uint8_t dm2_v1_gdat_scene_light_color(
-    const DM2_V1_ViewportState *s,
-    uint8_t color)
-{
-    int ambient;
-    int highest;
-
-    if (!s || !s->gdat_scene_control_ready) {
-        return color;
-    }
-    ambient = (int)(s->gdat_ambient_light & 0x0f);
-    highest = (int)(s->gdat_highest_light_level & 0x0f);
-    if (highest <= 0) highest = 15;
-    if (color > (uint8_t)highest) {
-        color = (uint8_t)highest;
-    }
-    if (color != DM2_COL_BLACK && color < (uint8_t)ambient) {
-        color = (uint8_t)ambient;
-    }
-    return color;
-}
-
-static void dm2_v1_blit_scaled_bitmap(uint8_t *dst,
+static void __attribute__((unused)) dm2_v1_blit_scaled_bitmap(uint8_t *dst,
                                       int dst_stride,
                                       int dst_x,
                                       int dst_y,
@@ -1962,6 +1962,124 @@ static void dm2_v1_blit_scaled_bitmap(uint8_t *dst,
                 continue;
             }
             dst[fy * dst_stride + fx] = pixel;
+        }
+    }
+}
+
+/* skproject/SKWIN initializes dtPalIRGB and dtPalette16 before indexed GDAT
+ * material is drawn. Material pixels below 16 are logical colours and must
+ * reach the framebuffer through that real logical-to-IRGB index table. */
+static uint8_t dm2_v1_material_palette_color(DM2_V1_ViewportState *s,
+                                             uint8_t logical_color,
+                                             int *consumed_count)
+{
+    if (!s || !s->gdat_interface_palette_ready || logical_color >= 16u) {
+        return logical_color;
+    }
+    if (consumed_count) ++*consumed_count;
+    if (s->gdat_scene_control_ready &&
+        (s->gdat_ambient_light != 0u ||
+         s->gdat_highest_light_level != 0u ||
+         s->gdat_ambient_darkness != 0u)) {
+        ++s->gdat_scene_light_consumed_count;
+    }
+    return s->gdat_interface_palette16[logical_color];
+}
+
+static void dm2_v1_blit_scaled_material_bitmap(DM2_V1_ViewportState *s,
+                                                uint8_t *dst,
+                                                int dst_stride,
+                                                int dst_x,
+                                                int dst_y,
+                                                int dst_w,
+                                                int dst_h,
+                                                const uint8_t *src,
+                                                int src_w,
+                                                int src_h,
+                                                int src_stride,
+                                                int transparent_color,
+                                                int *consumed_count)
+{
+    int y;
+    if (!s || !dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
+        src_w <= 0 || src_h <= 0 || src_stride < src_w) return;
+    for (y = 0; y < dst_h; ++y) {
+        int fy = dst_y + y;
+        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        for (int x = 0; x < dst_w; ++x) {
+            int fx = dst_x + x;
+            uint8_t pixel;
+            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH) continue;
+            pixel = src[((y * src_h) / dst_h) * src_stride +
+                        ((x * src_w) / dst_w)];
+            if (transparent_color >= 0 && pixel == (uint8_t)transparent_color) {
+                continue;
+            }
+            dst[fy * dst_stride + fx] =
+                dm2_v1_material_palette_color(s, pixel, consumed_count);
+        }
+    }
+}
+
+static void dm2_v1_blit_tiled_material_bitmap(DM2_V1_ViewportState *s,
+                                               uint8_t *dst,
+                                               int dst_stride,
+                                               int dst_x,
+                                               int dst_y,
+                                               int dst_w,
+                                               int dst_h,
+                                               const uint8_t *src,
+                                               int src_w,
+                                               int src_h,
+                                               int src_stride,
+                                               int transparent_color,
+                                               int *consumed_count)
+{
+    int y;
+    if (!s || !dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
+        src_w <= 0 || src_h <= 0 || src_stride < src_w) return;
+    for (y = 0; y < dst_h; ++y) {
+        int fy = dst_y + y;
+        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        for (int x = 0; x < dst_w; ++x) {
+            int fx = dst_x + x;
+            uint8_t pixel;
+            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH) continue;
+            pixel = src[(y % src_h) * src_stride + (x % src_w)];
+            if (transparent_color >= 0 && pixel == (uint8_t)transparent_color) {
+                continue;
+            }
+            dst[fy * dst_stride + fx] =
+                dm2_v1_material_palette_color(s, pixel, consumed_count);
+        }
+    }
+}
+
+static void dm2_v1_blit_scaled_material_bitmap_region(
+    DM2_V1_ViewportState *s, uint8_t *dst, int dst_stride, int dst_x,
+    int dst_y, int dst_w, int dst_h, const uint8_t *src, int src_x,
+    int src_y, int src_w, int src_h, int src_stride, int transparent_color,
+    int *consumed_count)
+{
+    int y;
+    if (!s || !dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
+        src_w <= 0 || src_h <= 0 || src_stride <= 0) return;
+    for (y = 0; y < dst_h; ++y) {
+        int fy = dst_y + y;
+        int sy = src_y + (y * src_h) / dst_h;
+        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        for (int x = 0; x < dst_w; ++x) {
+            int fx = dst_x + x;
+            int sx = src_x + (x * src_w) / dst_w;
+            uint8_t pixel;
+            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH || sx < 0 || sy < 0 ||
+                sx >= src_stride) continue;
+            pixel = src[sy * src_stride + sx];
+            if (transparent_color >= 0 && pixel == (uint8_t)transparent_color) {
+                continue;
+            }
+            dst[fy * dst_stride + fx] =
+                dm2_v1_material_palette_color(s, pixel, consumed_count);
         }
     }
 }
@@ -2010,6 +2128,40 @@ static void dm2_v1_blit_scaled_bitmap_region_ex(uint8_t *dst,
                 continue;
             }
             dst[fy * dst_stride + fx] = pixel;
+        }
+    }
+}
+
+/* skproject/SKWIN/SkWinCore.cpp routes map-chip and HUD sprites through the
+ * same dtPalIRGB/dtPalette16 binding as dungeon materials. Keep this as a
+ * distinct primitive so ordinary fallback pixels cannot be counted as GDAT
+ * palette consumption. */
+static void dm2_v1_blit_scaled_material_bitmap_region_ex(
+    DM2_V1_ViewportState *s, uint8_t *dst, int dst_stride, int dst_x,
+    int dst_y, int dst_w, int dst_h, const uint8_t *src, int src_x,
+    int src_y, int src_w, int src_h, int src_stride, int transparent_color,
+    int flip_mirror, int *consumed_count)
+{
+    if (!s || !dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
+        src_w <= 0 || src_h <= 0 || src_stride <= 0) return;
+    for (int y = 0; y < dst_h; ++y) {
+        int fy = dst_y + y;
+        int sy = src_y + ((flip_mirror & 2)
+            ? src_h - 1 - ((y * src_h) / dst_h) : (y * src_h) / dst_h);
+        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        for (int x = 0; x < dst_w; ++x) {
+            int rx = (x * src_w) / dst_w;
+            int sx = src_x + ((flip_mirror & 1) ? src_w - 1 - rx : rx);
+            int fx = dst_x + x;
+            uint8_t pixel;
+            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH || sx < 0 || sy < 0 ||
+                sx >= src_stride) continue;
+            pixel = src[sy * src_stride + sx];
+            if (transparent_color >= 0 && pixel == (uint8_t)transparent_color) {
+                continue;
+            }
+            dst[fy * dst_stride + fx] =
+                dm2_v1_material_palette_color(s, pixel, consumed_count);
         }
     }
 }
@@ -2167,6 +2319,24 @@ int dm2_v1_viewport_build_creature_render_plan(
         row->gdat_index = dm2_v1_viewport_creature_graphic_index(
             src->creature_type,
             src->frame_index);
+        if (s->gdat_interface_rect14_rows &&
+            src->frame_index < s->gdat_interface_rect14_row_count) {
+            const uint8_t *rect14 = s->gdat_interface_rect14_rows +
+                ((size_t)src->frame_index * 14u);
+            int relative_direction = (s->party_dir - src->direction) & 3;
+            uint8_t image_field = rect14[2 + relative_direction];
+
+            /* skproject SkWinCore.cpp QUERY_CREATURE_PICST (32CB:28C7)
+             * selects the creature dtImage field from this row. */
+            if (rect14[0] <= 24u && image_field != 0xffu) {
+                row->gdat_index = dm2_v1_viewport_creature_field_graphic_index(
+                    src->creature_type, image_field);
+                row->rect14_applied = 1;
+                row->rect14_scale64 = rect14[6 + relative_direction];
+                row->rect14_lateral_offset = (int8_t)rect14[1];
+                row->rect14_flip_mirror = rect14[10 + relative_direction] & 1u;
+            }
+        }
         row->fallback_color = (uint8_t)(11 + (src->creature_type & 7));
         row->fallback_rect = dm2_v1_centered_rect(row->center_x,
                                                   row->center_y,
@@ -2214,28 +2384,35 @@ int dm2_v1_viewport_creature_asset_blit(
     }
 
     frame_count = dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
-    render_frame = dm2_v1_viewport_creature_frame_for_direction(
-        render->frame_index,
-        render->direction,
-        party_direction,
-        frame_count);
-    if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
-                                       render_frame,
-                                       &frame_x,
-                                       &frame_w)) {
-        frame_x = 0;
-        frame_w = src_w;
-        render_frame = 0;
+    if (render->rect14_applied) {
+        int scale64 = render->rect14_scale64;
+        if (scale64 <= 0) scale64 = 64;
+        frame_count = 1;
+        dst_w = dm2_v1_viewport_calc_stretched_size(src_w, scale64);
+        dst_h = dm2_v1_viewport_calc_stretched_size(src_h, scale64);
+    } else {
+        render_frame = dm2_v1_viewport_creature_frame_for_direction(
+            render->frame_index,
+            render->direction,
+            party_direction,
+            frame_count);
+        if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
+                                           render_frame,
+                                           &frame_x,
+                                           &frame_w)) {
+            frame_x = 0;
+            frame_w = src_w;
+            render_frame = 0;
+        }
+        dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
+                                                      render->depth,
+                                                      8,
+                                                      64);
+        dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
+                                                      render->depth,
+                                                      8,
+                                                      64);
     }
-
-    dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
-                                                  render->depth,
-                                                  8,
-                                                  64);
-    dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
-                                                  render->depth,
-                                                  8,
-                                                  64);
 
     blit.gdat_index = render->gdat_index;
     blit.frame_x = frame_x;
@@ -2244,10 +2421,22 @@ int dm2_v1_viewport_creature_asset_blit(
     blit.frame_h = src_h;
     blit.dst_rect.x = render->center_x - (dst_w / 2);
     blit.dst_rect.y = render->center_y - (dst_h / 2);
+    if (render->rect14_applied && render->rect14_lateral_offset != 0) {
+        int offset = render->rect14_lateral_offset;
+        int relative_direction = (party_direction - render->direction) & 3;
+        if (relative_direction == 0) {
+            blit.dst_rect.x += dm2_v1_viewport_calc_stretched_size(-7, offset);
+        } else if (relative_direction == 2) {
+            blit.dst_rect.x += dm2_v1_viewport_calc_stretched_size(7, offset);
+        } else {
+            blit.dst_rect.y += dm2_v1_viewport_calc_stretched_size(-64, offset);
+        }
+    }
     blit.dst_rect.w = dst_w;
     blit.dst_rect.h = dst_h;
     blit.src_stride = src_stride > 0 ? src_stride : src_w;
     blit.transparent_color = DM2_COLOR_TRANSPARENT;
+    blit.flip_mirror = render->rect14_applied ? render->rect14_flip_mirror : 0;
     blit.render_frame = render_frame;
     blit.draw_order = render->creature_index;
     *out_blit = blit;
@@ -2856,13 +3045,15 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     int floor_w = 0;
     int floor_h_src = 0;
     int floor_stride = 0;
-    int floor_anim_x = 0;
-    int floor_anim_y = 0;
-    uint8_t ceiling_fallback_color = DM2_COL_DKGRAY;
-    uint8_t floor_fallback_color = 5;
+    int ceiling_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
+        s->gdat_scene_material_index,
+        DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING);
+    int floor_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
+        s->gdat_scene_material_index,
+        DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR);
     int ceiling_asset =
         dm2_v1_fetch_viewport_asset(s,
-                                    DM2_GRAPHIC_CEILING,
+                                    ceiling_gdat_index,
                                     &ceiling_pixels,
                                     &ceiling_w,
                                     &ceiling_h_src,
@@ -2870,7 +3061,7 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
         ceiling_pixels && ceiling_w > 0 && ceiling_h_src > 0;
     int floor_asset =
         dm2_v1_fetch_viewport_asset(s,
-                                    DM2_GRAPHIC_FLOOR,
+                                    floor_gdat_index,
                                     &floor_pixels,
                                     &floor_w,
                                     &floor_h_src,
@@ -2899,7 +3090,8 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
         ++s->gdat_scene_light_consumed_count;
     }
     if (ceiling_asset) {
-        dm2_v1_blit_tiled_bitmap(vp,
+        dm2_v1_blit_tiled_material_bitmap(s,
+                                 vp,
                                  stride,
                                  0,
                                  0,
@@ -2909,8 +3101,10 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                                  ceiling_w,
                                  ceiling_h_src,
                                  ceiling_stride > 0 ? ceiling_stride : ceiling_w,
-                                 -1);
+                                 -1,
+                                 &s->gdat_material_palette_floor_ceiling_consumed_count);
         ++s->asset_floor_ceiling_drawn_count;
+        ++s->gdat_scene_material_consumed_count;
     } else {
         /* Ceiling region: dark gray (matches DM2 darker dungeon atmosphere)
          * Source: DUNVIEW.C:2996-3015 (PC34 ceiling blit path) */
@@ -2925,21 +3119,21 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     int floor_y = DM2_FLOOR_Y;
     int floor_h = DM2_FLOOR_H;
     if (floor_asset) {
-        dm2_v1_blit_tiled_bitmap_offset(
-            vp,
-            stride,
-            0,
-            floor_y,
-            DM2_VP_WIDTH,
-            floor_h,
-            floor_pixels,
-            floor_w,
-            floor_h_src,
-            floor_stride > 0 ? floor_stride : floor_w,
-            -1,
-            floor_anim_x,
-            floor_anim_y);
+        dm2_v1_blit_tiled_material_bitmap(s,
+                                 vp,
+                                 stride,
+                                 0,
+                                 floor_y,
+                                 DM2_VP_WIDTH,
+                                 floor_h,
+                                 floor_pixels,
+                                 floor_w,
+                                 floor_h_src,
+                                 floor_stride > 0 ? floor_stride : floor_w,
+                                 -1,
+                                 &s->gdat_material_palette_floor_ceiling_consumed_count);
         ++s->asset_floor_ceiling_drawn_count;
+        ++s->gdat_scene_material_consumed_count;
     } else {
         /* Floor region: brown (matches DM2 floor color)
          * Source: DUNVIEW.C:3016-3047 (PC34 floor blit path) */
@@ -3087,7 +3281,8 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
             continue;
         }
 
-        dm2_v1_blit_scaled_bitmap(vp,
+        dm2_v1_blit_scaled_material_bitmap(s,
+                                  vp,
                                   stride,
                                   panel->dst_rect.x,
                                   panel->dst_rect.y,
@@ -3099,7 +3294,8 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                                   wall_stride > 0 ? wall_stride : wall_w,
                                   s->gdat_scene_control_ready
                                       ? (int)s->gdat_scene_colorkey
-                                      : DM2_COLOR_TRANSPARENT);
+                                      : DM2_COLOR_TRANSPARENT,
+                                  &s->gdat_material_palette_wall_consumed_count);
         if (s->gdat_scene_control_ready) {
             ++s->gdat_scene_control_consumed_count;
         }
@@ -3198,8 +3394,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                                           panel_h,
                                                           panel_stride,
                                                           &blit)) {
-                    dm2_v1_blit_scaled_bitmap_region(
-                        vp,
+                    dm2_v1_blit_scaled_material_bitmap_region_ex(
+                        s, vp,
                         stride,
                         blit.dst_rect.x,
                         blit.dst_rect.y,
@@ -3211,7 +3407,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         blit.src_rect.w,
                         blit.src_rect.h,
                         blit.src_stride,
-                        blit.transparent_color);
+                        blit.transparent_color,
+                        0,
+                        &s->gdat_sprite_palette_consumed_count);
                     ++door_panel_asset_count;
                     s->last_door_panel_asset_blit_valid = 1;
                     s->last_door_panel_asset_blit = blit;
@@ -3320,8 +3518,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                                           door_h,
                                                           door_stride,
                                                           &blit)) {
-                    dm2_v1_blit_scaled_bitmap_region(
-                        vp,
+                    dm2_v1_blit_scaled_material_bitmap_region(
+                        s, vp,
                         stride,
                         blit.dst_rect.x,
                         blit.dst_rect.y,
@@ -3333,7 +3531,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         blit.src_rect.w,
                         blit.src_rect.h,
                         blit.src_stride,
-                        blit.transparent_color);
+                        blit.transparent_color,
+                        &s->gdat_material_palette_door_frame_consumed_count);
                     ++door_asset_count;
                     s->last_door_frame_asset_blit_valid = 1;
                     s->last_door_frame_asset_blit = blit;
@@ -3369,8 +3568,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                                            button_h,
                                                            button_stride,
                                                            &blit)) {
-                    dm2_v1_blit_scaled_bitmap_region(
-                        vp,
+                    dm2_v1_blit_scaled_material_bitmap_region_ex(
+                        s, vp,
                         stride,
                         blit.dst_rect.x,
                         blit.dst_rect.y,
@@ -3382,7 +3581,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         blit.src_rect.w,
                         blit.src_rect.h,
                         blit.src_stride,
-                        blit.transparent_color);
+                        blit.transparent_color,
+                        0,
+                        &s->gdat_sprite_palette_consumed_count);
                     ++door_button_asset_count;
                     s->last_door_button_asset_blit_valid = 1;
                     s->last_door_button_asset_blit = blit;
@@ -3459,8 +3660,8 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                                                         s->party_dir,
                                                         &blit)) {
                     drawn_h = blit.dst_rect.h;
-                    dm2_v1_blit_scaled_bitmap_region(
-                        vp,
+                    dm2_v1_blit_scaled_material_bitmap_region_ex(
+                        s, vp,
                         stride,
                         blit.dst_rect.x,
                         blit.dst_rect.y,
@@ -3472,7 +3673,9 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                         blit.frame_w,
                         blit.frame_h,
                         blit.src_stride,
-                        blit.transparent_color);
+                        blit.transparent_color,
+                        blit.flip_mirror,
+                        &s->gdat_sprite_palette_consumed_count);
                     ++s->asset_creature_drawn_count;
                     s->last_creature_asset_blit_valid = 1;
                     s->last_creature_asset_render = *c;
@@ -3573,8 +3776,8 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                                                     4,
                                                     32,
                                                     &blit)) {
-                    dm2_v1_blit_scaled_bitmap_region_ex(
-                        vp,
+                    dm2_v1_blit_scaled_material_bitmap_region_ex(
+                        s, vp,
                         stride,
                         blit.dst_rect.x,
                         blit.dst_rect.y,
@@ -3587,7 +3790,8 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                         blit.frame_h,
                         blit.src_stride,
                         blit.transparent_color,
-                        blit.flip_mirror);
+                        blit.flip_mirror,
+                        &s->gdat_sprite_palette_consumed_count);
                     ++s->asset_item_drawn_count;
                     s->last_item_asset_blit_valid = 1;
                     s->last_item_asset_blit = blit;
@@ -3668,8 +3872,8 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
                                                     4,
                                                     32,
                                                     &blit)) {
-                    dm2_v1_blit_scaled_bitmap_region_ex(
-                        vp,
+                    dm2_v1_blit_scaled_material_bitmap_region_ex(
+                        s, vp,
                         stride,
                         blit.dst_rect.x,
                         blit.dst_rect.y,
@@ -3682,7 +3886,8 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
                         blit.frame_h,
                         blit.src_stride,
                         blit.transparent_color,
-                        blit.flip_mirror);
+                        blit.flip_mirror,
+                        &s->gdat_sprite_palette_consumed_count);
                     ++s->asset_creature_possession_item_drawn_count;
                     s->last_item_asset_blit_valid = 1;
                     s->last_item_asset_blit = blit;
@@ -3766,8 +3971,8 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
                                                 8,
                                                 40,
                                                 &blit)) {
-                dm2_v1_blit_scaled_bitmap_region_ex(
-                    vp,
+                dm2_v1_blit_scaled_material_bitmap_region_ex(
+                    s, vp,
                     stride,
                     blit.dst_rect.x,
                     blit.dst_rect.y,
@@ -3780,7 +3985,8 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
                     blit.frame_h,
                     blit.src_stride,
                     blit.transparent_color,
-                    blit.flip_mirror);
+                    blit.flip_mirror,
+                    &s->gdat_sprite_palette_consumed_count);
                 ++s->asset_carried_item_drawn_count;
                 s->last_item_asset_blit_valid = 1;
                 s->last_item_asset_blit = blit;
@@ -3864,8 +4070,8 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                         s->tick_count,
                         &s->random_seed,
                         &blit)) {
-                    dm2_v1_blit_scaled_bitmap_region_ex(
-                        vp,
+                    dm2_v1_blit_scaled_material_bitmap_region_ex(
+                        s, vp,
                         stride,
                         blit.dst_rect.x,
                         blit.dst_rect.y,
@@ -3878,7 +4084,8 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                         blit.frame_h,
                         blit.src_stride,
                         blit.transparent_color,
-                        blit.flip_mirror);
+                        blit.flip_mirror,
+                        &s->gdat_sprite_palette_consumed_count);
                     ++s->asset_projectile_drawn_count;
                     s->last_projectile_asset_blit_valid = 1;
                     s->last_projectile_asset_blit = blit;
@@ -3952,7 +4159,9 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
      */
     for (i = 0; i < commands.command_count; ++i) {
         const DM2_V1_WeatherOverlayCommand *cmd = &commands.commands[i];
-        if (cmd->kind == DM2_V1_WEATHER_COMMAND_RAIN_STREAKS) {
+        if (cmd->kind == DM2_V1_WEATHER_COMMAND_RAIN_STREAKS &&
+            s->gdat_scene_control_ready && s->gdat_scene_rain != 0u) {
+            ++s->gdat_scene_weather_consumed_count;
             for (int y = 0; y < DM2_VP_HEIGHT; y++) {
                 for (int x = 0; x < DM2_VP_WIDTH; x += 2) {
                     if (((x + y + cmd->scroll) & 7) < cmd->density) {
@@ -3966,7 +4175,9 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
                 }
             }
         } else if (cmd->kind == DM2_V1_WEATHER_COMMAND_FOG_BLEND &&
+                   s->gdat_scene_control_ready && s->gdat_misty_map != 0u &&
                    cmd->alpha > 0) {
+            ++s->gdat_scene_weather_consumed_count;
             for (int y = 0; y < DM2_VP_HEIGHT; y++) {
                 for (int x = 0; x < DM2_VP_WIDTH; x++) {
                     uint8_t fg = vp[y * stride + x];
@@ -3976,7 +4187,10 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
                                        (uint8_t)cmd->alpha) / 16);
                 }
             }
-        } else if (cmd->kind == DM2_V1_WEATHER_COMMAND_LIGHTNING_FILL) {
+        } else if (cmd->kind == DM2_V1_WEATHER_COMMAND_LIGHTNING_FILL &&
+                   s->gdat_scene_control_ready &&
+                   s->gdat_thunder_position != 0u) {
+            ++s->gdat_scene_weather_consumed_count;
             for (int y = 0; y < DM2_VP_HEIGHT; y++) {
                 for (int x = 0; x < DM2_VP_WIDTH; x++)
                     vp[y * stride + x] = cmd->color;
@@ -4001,6 +4215,16 @@ static uint32_t dm2_v1_viewport_hash_gdat_asset(uint32_t hash,
     return hash;
 }
 
+static uint8_t dm2_v1_hud_palette_color(DM2_V1_ViewportState *s,
+                                        uint8_t logical_color)
+{
+    if (!s || !s->gdat_interface_palette_ready || logical_color >= 16u) {
+        return logical_color;
+    }
+    ++s->gdat_interface_palette_consumed_count;
+    return s->gdat_interface_palette16[logical_color];
+}
+
 static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
                                         const DM2_V1_ViewportRect *rect,
                                         int gdat_index)
@@ -4020,7 +4244,8 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
         !pixels || w <= 0 || h <= 0) {
         return 0;
     }
-    dm2_v1_blit_scaled_bitmap(s->framebuffer,
+    dm2_v1_blit_scaled_material_bitmap(s,
+                              s->framebuffer,
                               s->fb_stride,
                               rect->x,
                               rect->y,
@@ -4030,7 +4255,8 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
                               w,
                               h,
                               stride > 0 ? stride : w,
-                              DM2_COLOR_TRANSPARENT);
+                              DM2_COLOR_TRANSPARENT,
+                              &s->gdat_sprite_palette_consumed_count);
     ++s->asset_hud_core_drawn_count;
     s->last_hud_core_gdat_hash =
         dm2_v1_viewport_hash_gdat_asset(s->last_hud_core_gdat_hash,
@@ -4131,72 +4357,64 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
     if (!dm2_v1_render_hud_core_asset(s,
                                       &plan.top_bar_rect,
                                       plan.top_bar_gdat_index)) {
-        dm2_v1_fill_rect(vp, stride, &plan.top_bar_rect, DM2_COL_DKGRAY);
+        dm2_v1_fill_rect(vp, stride, &plan.top_bar_rect,
+                         dm2_v1_hud_palette_color(s, DM2_COL_DKGRAY));
         ++s->fallback_hud_core_drawn_count;
     }
-    dm2_v1_fill_rect(
-        vp, stride, &plan.top_divider_rect,
-        s->interface_theme_valid ? s->interface_theme.chrome_divider_color
-                                 : DM2_COL_MIDGRAY);
+    dm2_v1_fill_rect(vp, stride, &plan.top_divider_rect,
+                     dm2_v1_hud_palette_color(s, DM2_COL_MIDGRAY));
     if (!dm2_v1_render_hud_core_asset(s,
                                       &plan.action_strip_rect,
                                       plan.action_strip_gdat_index)) {
-        dm2_v1_fill_rect(vp, stride, &plan.action_strip_rect, DM2_COL_DKGRAY);
+        dm2_v1_fill_rect(vp, stride, &plan.action_strip_rect,
+                         dm2_v1_hud_palette_color(s, DM2_COL_DKGRAY));
         ++s->fallback_hud_core_drawn_count;
     }
-    dm2_v1_fill_rect(
-        vp, stride, &plan.action_divider_rect,
-        s->interface_theme_valid ? s->interface_theme.chrome_divider_color
-                                 : DM2_COL_MIDGRAY);
+    dm2_v1_fill_rect(vp, stride, &plan.action_divider_rect,
+                     dm2_v1_hud_palette_color(s, DM2_COL_MIDGRAY));
     if (!dm2_v1_render_hud_core_asset(s,
                                       &plan.gold_box_rect,
                                       plan.gold_box_gdat_index)) {
-        dm2_v1_fill_rect(vp, stride, &plan.gold_box_rect, DM2_COL_GROUND);
+        dm2_v1_fill_rect(vp, stride, &plan.gold_box_rect,
+                         dm2_v1_hud_palette_color(s, DM2_COL_GROUND));
         ++s->fallback_hud_core_drawn_count;
     }
-    dm2_v1_fill_coin_disc(
-        vp, stride, &plan.gold_coin_rect,
-        s->interface_theme_valid ? s->interface_theme.gold_coin_color : 11);
-    dm2_v1_fill_rect(
-        vp, stride, &plan.gold_label_rect,
-        s->interface_theme_valid ? s->interface_theme.gold_label_color
-                                 : DM2_COL_LTGRAY);
+    dm2_v1_fill_coin_disc(vp, stride, &plan.gold_coin_rect, 11);
+    dm2_v1_fill_rect(vp, stride, &plan.gold_label_rect,
+                     dm2_v1_hud_palette_color(s, DM2_COL_LTGRAY));
     for (int i = 0; i < plan.action_icon_count; ++i) {
         dm2_v1_stroke_rect(vp, stride, &plan.action_icons[i].frame_rect,
-                           DM2_COL_MIDGRAY);
+                           dm2_v1_hud_palette_color(s, DM2_COL_MIDGRAY));
         if (!dm2_v1_render_hud_core_asset(s,
                                           &plan.action_icons[i].fill_rect,
                                           plan.action_icons[i].gdat_index)) {
             dm2_v1_fill_rect(vp, stride, &plan.action_icons[i].fill_rect,
-                             plan.action_icons[i].fill_color);
+                             dm2_v1_hud_palette_color(
+                                 s, plan.action_icons[i].fill_color));
             ++s->fallback_hud_core_drawn_count;
         }
     }
 
     if (!plan.outdoor) {
-        dm2_v1_fill_rect(
-            vp, stride, &plan.portrait_separator_dark_rect,
-            s->interface_theme_valid ? s->interface_theme.chrome_divider_color
-                                     : DM2_COL_MIDGRAY);
+        dm2_v1_fill_rect(vp, stride, &plan.portrait_separator_dark_rect,
+                         dm2_v1_hud_palette_color(s, DM2_COL_MIDGRAY));
         dm2_v1_fill_rect(vp, stride, &plan.portrait_separator_light_rect,
-                         DM2_COL_LTGRAY);
+                         dm2_v1_hud_palette_color(s, DM2_COL_LTGRAY));
         if (!dm2_v1_render_hud_core_asset(s,
                                           &plan.portrait_panel_rect,
                                           plan.portrait_panel_gdat_index)) {
             dm2_v1_fill_rect(vp, stride, &plan.portrait_panel_rect,
-                             DM2_COL_DKGRAY);
+                             dm2_v1_hud_palette_color(s, DM2_COL_DKGRAY));
             ++s->fallback_hud_core_drawn_count;
         }
         for (int slot = 0; slot < plan.champion_slot_count; ++slot) {
-            dm2_v1_fill_rect(
-                vp, stride,
-                &plan.champion_slots[slot].frame_rect,
-                s->interface_theme_valid
-                    ? s->interface_theme.champion_frame_color
-                    : DM2_COL_MIDGRAY);
+            dm2_v1_fill_rect(vp, stride,
+                             &plan.champion_slots[slot].frame_rect,
+                             dm2_v1_hud_palette_color(s, DM2_COL_MIDGRAY));
             dm2_v1_fill_rect(vp, stride,
                              &plan.champion_slots[slot].fill_rect,
-                             plan.champion_slots[slot].fill_color);
+                             dm2_v1_hud_palette_color(
+                                 s, plan.champion_slots[slot].fill_color));
             if (plan.champion_slots[slot].occupied) {
                 const uint8_t *portrait_pixels = NULL;
                 int portrait_w = 0;
@@ -4214,7 +4432,8 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                                                 &portrait_stride) == 0 &&
                     portrait_pixels && portrait_w > 0 && portrait_h > 0 &&
                     portrait_stride >= portrait_w) {
-                    dm2_v1_blit_scaled_bitmap(vp,
+                    dm2_v1_blit_scaled_material_bitmap(s,
+                                              vp,
                                               stride,
                                               plan.champion_slots[slot].portrait_rect.x,
                                               plan.champion_slots[slot].portrait_rect.y,
@@ -4224,7 +4443,8 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                                               portrait_w,
                                               portrait_h,
                                               portrait_stride,
-                                              DM2_COLOR_TRANSPARENT);
+                                              DM2_COLOR_TRANSPARENT,
+                                              &s->gdat_sprite_palette_consumed_count);
                     ++s->asset_hud_portrait_drawn_count;
                 } else {
                     dm2_v1_fill_rect(vp, stride,
@@ -4285,6 +4505,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     if (!s->dirty && !s->framebuffer) return;
     s->asset_floor_ceiling_drawn_count = 0;
     s->fallback_floor_ceiling_drawn_count = 0;
+    s->asset_outdoor_sky_drawn_count = 0;
+    s->asset_outdoor_ground_drawn_count = 0;
     s->asset_wall_drawn_count = 0;
     s->fallback_wall_drawn_count = 0;
     s->asset_door_panel_drawn_count = 0;
@@ -4323,6 +4545,14 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
            sizeof(s->last_projectile_asset_blit));
     s->asset_hud_core_drawn_count = 0;
     s->fallback_hud_core_drawn_count = 0;
+    s->gdat_interface_palette_consumed_count = 0;
+    s->gdat_material_palette_floor_ceiling_consumed_count = 0;
+    s->gdat_material_palette_wall_consumed_count = 0;
+    s->gdat_material_palette_door_frame_consumed_count = 0;
+    s->gdat_scene_light_consumed_count = 0;
+    s->gdat_scene_material_consumed_count = 0;
+    s->gdat_scene_weather_consumed_count = 0;
+    s->gdat_sprite_palette_consumed_count = 0;
     s->last_hud_core_gdat_hash = 2166136261u;
     s->last_hud_core_pixel_count = 0u;
     s->asset_hud_portrait_drawn_count = 0;
@@ -4344,47 +4574,67 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
 
     if (s->is_outdoor) {
         /* DM2 outdoor rendering:
-         * Source: SKULL.ASM T600 (outdoor tick, sky gradient, building draw)
-         *         dm2_v1_outdoor_renderer.c
-         *         DUNVIEW.C:4351-4382 F0112 (ceiling pit — outdoor has no ceiling)
+         * Source: SKULL.ASM T600 (outdoor tick, sky and ground draw)
+         *         skproject/SKWIN/SkWinCore.cpp GRAPHICSSET material route
          *
-         * Outdoor: sky gradient from dm2_v1_outdoor_sky_color(),
-         * ground fill, weather overlay. */
-        DM2_V1_OutdoorConfig cfg;
-        dm2_v1_outdoor_init(&cfg);
-        cfg.weather = s->weather;
-        dm2_v1_outdoor_set_time(&cfg, s->time_of_day);
-
+         * Do not substitute a generated gradient for source material.  The
+         * active map GRAPHICSSET already supplies the ceiling/floor GDAT
+         * records used by the scene; route them through the same palette
+         * binding as the indoor viewport before weather and HUD are layered. */
         uint8_t *vp = s->framebuffer;
         int stride = s->fb_stride;
-
-        /* Sky gradient: top half */
-        uint32_t sky_col = dm2_v1_outdoor_sky_color(&cfg);
-        uint8_t sr = (uint8_t)((sky_col >> 16) & 0xFF);
-        uint8_t sg = (uint8_t)((sky_col >>  8) & 0xFF);
-        uint8_t sb = (uint8_t)((sky_col      ) & 0xFF);
+        const uint8_t *sky_pixels = NULL;
+        const uint8_t *ground_pixels = NULL;
+        int sky_w = 0;
+        int sky_h_src = 0;
+        int sky_stride = 0;
+        int ground_w = 0;
+        int ground_h_src = 0;
+        int ground_stride = 0;
         int sky_h = DM2_VP_HEIGHT / 2;
-        for (int y = 0; y < sky_h; y++) {
-            float t = (float)y / (float)(sky_h > 0 ? sky_h : 1);
-            uint8_t r = (uint8_t)(sr * (1 - t) + 20 * t);
-            uint8_t g = (uint8_t)(sg * (1 - t) + 20 * t);
-            uint8_t b = (uint8_t)(sb * (1 - t) + 50 * t);
-            uint8_t col_idx = (r > 128) ? DM2_COL_LTGRAY
-                        : (r > 64) ? DM2_COL_MIDGRAY
-                        : (r > 32) ? DM2_COL_DKGRAY
-                        : DM2_COL_BLACK;
-            /* approximate color reduction to palette index */
-            (void)g; (void)b;
-            for (int x = 0; x < DM2_VP_WIDTH; x++) {
-                vp[y * stride + x] = col_idx;
-            }
-        }
+        int sky_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
+            s->gdat_scene_material_index,
+            DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING);
+        int ground_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
+            s->gdat_scene_material_index,
+            DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR);
+        int sky_asset =
+            dm2_v1_fetch_viewport_asset(s,
+                                        sky_gdat_index,
+                                        &sky_pixels,
+                                        &sky_w,
+                                        &sky_h_src,
+                                        &sky_stride) == 0 &&
+            sky_pixels && sky_w > 0 && sky_h_src > 0;
+        int ground_asset =
+            dm2_v1_fetch_viewport_asset(s,
+                                        ground_gdat_index,
+                                        &ground_pixels,
+                                        &ground_w,
+                                        &ground_h_src,
+                                        &ground_stride) == 0 &&
+            ground_pixels && ground_w > 0 && ground_h_src > 0;
 
-        /* Ground: bottom half — brown/green */
-        for (int y = sky_h; y < DM2_VP_HEIGHT; y++) {
-            for (int x = 0; x < DM2_VP_WIDTH; x++) {
-                vp[y * stride + x] = DM2_COL_GROUND;
-            }
+        if (sky_asset) {
+            dm2_v1_blit_tiled_material_bitmap(
+                s, vp, stride, 0, 0, DM2_VP_WIDTH, sky_h, sky_pixels,
+                sky_w, sky_h_src,
+                sky_stride > 0 ? sky_stride : sky_w, -1,
+                &s->gdat_material_palette_floor_ceiling_consumed_count);
+            ++s->asset_floor_ceiling_drawn_count;
+            ++s->asset_outdoor_sky_drawn_count;
+            ++s->gdat_scene_material_consumed_count;
+        }
+        if (ground_asset) {
+            dm2_v1_blit_tiled_material_bitmap(
+                s, vp, stride, 0, sky_h, DM2_VP_WIDTH,
+                DM2_VP_HEIGHT - sky_h, ground_pixels, ground_w,
+                ground_h_src,
+                ground_stride > 0 ? ground_stride : ground_w, -1,
+                &s->gdat_material_palette_floor_ceiling_consumed_count);
+            ++s->asset_floor_ceiling_drawn_count;
+            ++s->asset_outdoor_ground_drawn_count;
+            ++s->gdat_scene_material_consumed_count;
         }
     } else {
         /* DM2 indoor dungeon rendering:

@@ -65,15 +65,42 @@ static void build_blank_name_dm1_save(uint8_t *buf, size_t size)
     seed_empty_slots(record);
 }
 
+static void build_valid_dm1_record(uint8_t *record, const char *name)
+{
+    memset(record, 0, DM1_CHAMPION_RECORD_SIZE);
+    snprintf((char *)record, 8, "%s", name);
+    put_le16(record + 8, 80);
+    put_le16(record + 10, 100);
+    put_le16(record + 12, 70);
+    put_le16(record + 14, 100);
+    put_le16(record + 16, 30);
+    put_le16(record + 18, 50);
+    record[20] = 60;
+    record[21] = 61;
+    record[22] = 62;
+    record[23] = 63;
+    memset(record + 40, 0, 60);
+}
+
+static void seed_existing_party(CSB_V1_PartyState *party)
+{
+    memset(party, 0x7a, sizeof(*party));
+    party->ChampionCount = 3;
+    party->LeaderIndex = 2;
+    memcpy(party->Champions[0].Name, "LIVE", 5);
+}
+
 static void test_blank_name_block_is_rejected_before_party_store(void)
 {
     uint8_t buf[DM1_SAVE_HEADER_SIZE + DM1_CHAMPION_RECORD_SIZE];
     CSB_V1_PartyState party;
+    CSB_V1_PartyState party_before;
     CSB_V1_ImportResult result;
     int imported;
 
     build_blank_name_dm1_save(buf, sizeof(buf));
-    memset(&party, 0x7a, sizeof(party));
+    seed_existing_party(&party);
+    party_before = party;
     memset(&result, 0, sizeof(result));
 
     imported = csb_v1_import_from_dm1_save_buffer(&party, buf, (int)sizeof(buf), &result);
@@ -83,7 +110,61 @@ static void test_blank_name_block_is_rejected_before_party_store(void)
     CHECK_EQ(result.error_code, CSB_V1_IMPORT_ERR_CHECKSUM, "blank-name import error code");
     CHECK_EQ(result.byte_offset, DM1_SAVE_HEADER_SIZE, "blank-name import error offset");
     CHECK_EQ(result.champion_count, 0, "blank-name result champion_count");
-    CHECK_EQ(party.ChampionCount, 0, "blank-name party ChampionCount");
+    CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
+          "blank-name leaves live party untouched");
+}
+
+static void test_later_invalid_record_leaves_live_party_untouched(void)
+{
+    uint8_t buf[DM1_SAVE_HEADER_SIZE + 2 * DM1_CHAMPION_RECORD_SIZE];
+    CSB_V1_PartyState party;
+    CSB_V1_PartyState party_before;
+    CSB_V1_ImportResult result;
+    int imported;
+
+    memset(buf, 0, sizeof(buf));
+    buf[0] = 2u;
+    build_valid_dm1_record(buf + DM1_SAVE_HEADER_SIZE, "FIRST");
+    build_valid_dm1_record(buf + DM1_SAVE_HEADER_SIZE + DM1_CHAMPION_RECORD_SIZE,
+                           "SECOND");
+    memset(buf + DM1_SAVE_HEADER_SIZE + DM1_CHAMPION_RECORD_SIZE, ' ', 8);
+    seed_existing_party(&party);
+    party_before = party;
+
+    imported = csb_v1_import_from_dm1_save_buffer(&party, buf, (int)sizeof(buf), &result);
+
+    CHECK_EQ(imported, -1, "later-invalid import return");
+    CHECK_EQ(result.state, CSB_V1_IMPORT_STATE_ERROR, "later-invalid terminal state");
+    CHECK_EQ(result.error_code, CSB_V1_IMPORT_ERR_CHECKSUM, "later-invalid error code");
+    CHECK_EQ(result.byte_offset, DM1_SAVE_HEADER_SIZE + DM1_CHAMPION_RECORD_SIZE,
+             "later-invalid error offset");
+    CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
+          "later-invalid leaves live party untouched");
+}
+
+static void test_truncated_later_record_leaves_live_party_untouched(void)
+{
+    uint8_t buf[DM1_SAVE_HEADER_SIZE + DM1_CHAMPION_RECORD_SIZE];
+    CSB_V1_PartyState party;
+    CSB_V1_PartyState party_before;
+    CSB_V1_ImportResult result;
+    int imported;
+
+    memset(buf, 0, sizeof(buf));
+    buf[0] = 2u;
+    build_valid_dm1_record(buf + DM1_SAVE_HEADER_SIZE, "FIRST");
+    seed_existing_party(&party);
+    party_before = party;
+
+    imported = csb_v1_import_from_dm1_save_buffer(&party, buf, (int)sizeof(buf), &result);
+
+    CHECK_EQ(imported, -1, "truncated import return");
+    CHECK_EQ(result.state, CSB_V1_IMPORT_STATE_ERROR, "truncated terminal state");
+    CHECK_EQ(result.error_code, CSB_V1_IMPORT_ERR_PARTIAL, "truncated error code");
+    CHECK_EQ(result.byte_offset, DM1_SAVE_HEADER_SIZE + DM1_CHAMPION_RECORD_SIZE,
+             "truncated error offset");
+    CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
+          "truncated import leaves live party untouched");
 }
 
 int main(void)
@@ -91,6 +172,8 @@ int main(void)
     printf("=== CSB V1 Utility Import Block Verification Regression ===\n\n");
 
     test_blank_name_block_is_rejected_before_party_store();
+    test_later_invalid_record_leaves_live_party_untouched();
+    test_truncated_later_record_leaves_live_party_untouched();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

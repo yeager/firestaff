@@ -538,12 +538,27 @@ int DM1_LoadGameWithBackup(const char* path,
                            struct DM1SaveHeader* outHeader,
                            int* outUsedBackup) {
     char backupPath[512];
+    struct GameWorld_Compat candidateWorld;
+    struct DM1SaveHeader candidateHeader;
     int rc;
 
     if (outUsedBackup) *outUsedBackup = 0;
     if (!path || !outWorld) return DM1_SAVE_ERROR_NULL_ARG;
 
-    rc = DM1_LoadGame(path, outWorld, outHeader);
+    /* ReDMCSB LOADSAVE.C F0435 only tries the automatic backup after the
+     * primary open fails. Keep both formats behind one candidate-world
+     * transaction: a bad primary must neither select an older .bak nor
+     * disturb a running world while its final save part is rejected. */
+    memset(&candidateWorld, 0, sizeof(candidateWorld));
+    memset(&candidateHeader, 0, sizeof(candidateHeader));
+    rc = DM1_LoadGame(path, &candidateWorld, &candidateHeader);
+    if (rc == DM1_SAVE_OK) {
+        F0883_WORLD_Free_Compat(outWorld);
+        *outWorld = candidateWorld;
+        if (outHeader) *outHeader = candidateHeader;
+        return DM1_SAVE_OK;
+    }
+    F0883_WORLD_Free_Compat(&candidateWorld);
     if (rc != DM1_SAVE_ERROR_FILE_OPEN) {
         return rc;
     }
@@ -552,12 +567,24 @@ int DM1_LoadGameWithBackup(const char* path,
         return rc;
     }
 
-    rc = DM1_LoadGame(backupPath, outWorld, outHeader);
+    memset(&candidateWorld, 0, sizeof(candidateWorld));
+    memset(&candidateHeader, 0, sizeof(candidateHeader));
+    rc = DM1_LoadGame(backupPath, &candidateWorld, &candidateHeader);
     if (rc == DM1_SAVE_OK) {
+        /* F0435 promotes the backup only after every header/save-part and
+         * dungeon invariant has passed. Do not remove a newly-created
+         * primary: rename is the sole promotion operation. */
+        if (rename(backupPath, path) != 0) {
+            F0883_WORLD_Free_Compat(&candidateWorld);
+            return DM1_SAVE_ERROR_FILE_OPEN;
+        }
+        F0883_WORLD_Free_Compat(outWorld);
+        *outWorld = candidateWorld;
+        if (outHeader) *outHeader = candidateHeader;
         if (outUsedBackup) *outUsedBackup = 1;
-        remove(path);
-        rename(backupPath, path);
+        return DM1_SAVE_OK;
     }
+    F0883_WORLD_Free_Compat(&candidateWorld);
     return rc;
 }
 

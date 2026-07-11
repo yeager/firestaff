@@ -24,7 +24,8 @@ static uint8_t nexus_v1_decode_structure1b_wall_material(
     return cell[(wall_dir & 3) < 2 ? 3 : 4];
 }
 
-static uint16_t nexus_v1_decode_structure1b_mesh_ref(const uint8_t *cell) {
+static uint16_t nexus_v1_decode_structure1b_post_grid_0x30_ref(
+    const uint8_t *cell) {
     return (uint16_t)((((unsigned)cell[5] << 4) |
                        ((unsigned)cell[6] >> 4)) & 0x0fffU);
 }
@@ -83,6 +84,185 @@ static int nexus_v1_decode_structure1b_cell(const uint8_t *cell) {
     return 1; /* free corridor/floor */
 }
 
+int nexus_v1_dgn_structure1_layout(Nexus_V1_DgnStructure1Layout *out_layout,
+                                   const uint8_t *data,
+                                   int size) {
+    static const int header_offsets[NEXUS_DGN_STRUCTURE1_POST_GRID_POINTER_COUNT] =
+        {0x18, 0x24, 0x2c, 0x30, 0x34};
+    Nexus_V1_DgnStructure1Layout layout;
+    uint16_t block;
+    uint16_t blocks;
+    uint32_t useful;
+    int i;
+
+    if (out_layout) memset(out_layout, 0, sizeof(*out_layout));
+    if (!out_layout || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
+    block = rb16(data + 0x0c);
+    blocks = rb16(data + 0x0e);
+    useful = rb32(data + 0x10);
+    if (block == 0 || blocks == 0 ||
+        block > (uint16_t)(INT_MAX / NEXUS_DGN_BLOCK_SIZE) ||
+        blocks > (uint16_t)(INT_MAX / NEXUS_DGN_BLOCK_SIZE)) return -1;
+    memset(&layout, 0, sizeof(layout));
+    layout.structure1_offset = (int)block * NEXUS_DGN_BLOCK_SIZE;
+    if (layout.structure1_offset + 0x38 > size ||
+        (int)blocks * NEXUS_DGN_BLOCK_SIZE > size - layout.structure1_offset ||
+        useful > (uint32_t)((int)blocks * NEXUS_DGN_BLOCK_SIZE)) return -1;
+    layout.useful_size = (int)useful;
+    layout.structure1b_relative_offset =
+        (int)rb32(data + layout.structure1_offset + 0x14);
+    if (layout.structure1b_relative_offset < 0 ||
+        layout.structure1b_relative_offset > layout.useful_size ||
+        layout.structure1b_relative_offset + NEXUS_DGN_STRUCTURE1B_BYTES >
+            layout.useful_size) return -1;
+    layout.structure1b_end_relative_offset =
+        layout.structure1b_relative_offset + NEXUS_DGN_STRUCTURE1B_BYTES;
+    layout.post_grid_offset = layout.structure1b_end_relative_offset;
+    layout.post_grid_size = layout.useful_size - layout.post_grid_offset;
+    for (i = 0; i < NEXUS_DGN_STRUCTURE1_POST_GRID_POINTER_COUNT; ++i) {
+        Nexus_V1_DgnStructure1PostGridPointer *pointer = &layout.post_grid[i];
+        int next = layout.useful_size;
+        int j;
+        pointer->header_offset = header_offsets[i];
+        pointer->relative_offset =
+            (int)rb32(data + layout.structure1_offset + pointer->header_offset);
+        pointer->present = pointer->relative_offset != 0;
+        if (!pointer->present) continue;
+        if (pointer->relative_offset < layout.post_grid_offset ||
+            pointer->relative_offset > layout.useful_size) return -1;
+        for (j = 0; j < NEXUS_DGN_STRUCTURE1_POST_GRID_POINTER_COUNT; ++j) {
+            int candidate = (int)rb32(data + layout.structure1_offset +
+                                      header_offsets[j]);
+            if (candidate > pointer->relative_offset && candidate < next)
+                next = candidate;
+        }
+        pointer->size_to_next = next - pointer->relative_offset;
+        pointer->bounded = 1;
+    }
+    {
+        const Nexus_V1_DgnStructure1PostGridPointer *collision_span =
+            &layout.post_grid[0];
+        int record_count;
+
+        if (collision_span->present && collision_span->bounded &&
+            collision_span->size_to_next > 0 &&
+            collision_span->size_to_next %
+                NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES == 0) {
+            record_count = collision_span->size_to_next /
+                           NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES;
+            if (data[layout.structure1_offset +
+                     collision_span->relative_offset] ==
+                    (uint8_t)record_count) {
+                layout.structure1c.relative_offset =
+                    collision_span->relative_offset;
+                layout.structure1c.size = collision_span->size_to_next;
+                layout.structure1c.record_size =
+                    NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES;
+                layout.structure1c.record_count = record_count;
+                layout.structure1c.indexed_record_count = record_count - 1;
+                layout.structure1c.valid = 1;
+            }
+        }
+    }
+    {
+        const Nexus_V1_DgnStructure1PostGridPointer *zero_span =
+            &layout.post_grid[1];
+        const Nexus_V1_DgnStructure1PostGridPointer *records =
+            &layout.post_grid[3];
+        int i;
+
+        if (zero_span->present && zero_span->bounded &&
+            zero_span->size_to_next == NEXUS_DGN_POST_GRID_0X24_ZERO_BYTES) {
+            int all_zero = 1;
+            for (i = 0; i < zero_span->size_to_next; ++i) {
+                if (data[layout.structure1_offset + zero_span->relative_offset + i] != 0) {
+                    all_zero = 0;
+                    break;
+                }
+            }
+            if (all_zero) {
+                layout.post_grid_0x24_zero_span.relative_offset =
+                    zero_span->relative_offset;
+                layout.post_grid_0x24_zero_span.size = zero_span->size_to_next;
+                layout.post_grid_0x24_zero_span.valid = 1;
+            }
+        }
+        if (records->present && records->bounded && records->size_to_next > 0 &&
+            records->size_to_next % NEXUS_DGN_POST_GRID_0X30_RECORD_BYTES == 0) {
+            unsigned char values[NEXUS_DGN_POST_GRID_0X30_RECORD_BYTES][256];
+            int record;
+            int byte;
+            layout.post_grid_0x30_records.relative_offset = records->relative_offset;
+            layout.post_grid_0x30_records.size = records->size_to_next;
+            layout.post_grid_0x30_records.record_size =
+                NEXUS_DGN_POST_GRID_0X30_RECORD_BYTES;
+            layout.post_grid_0x30_records.record_count =
+                records->size_to_next / NEXUS_DGN_POST_GRID_0X30_RECORD_BYTES;
+            layout.post_grid_0x30_records.opaque_tail_record_count = 1;
+            layout.post_grid_0x30_records.typed_prefix_record_count =
+                layout.post_grid_0x30_records.record_count - 1;
+            layout.post_grid_0x30_records.first_row_ordinal_flagged_prefix_record =
+                -1;
+            layout.post_grid_0x30_records.last_row_ordinal_flagged_prefix_record =
+                -1;
+            memset(values, 0, sizeof(values));
+            for (record = 0;
+                 record < layout.post_grid_0x30_records.record_count;
+                 ++record) {
+                const uint8_t *src = data + layout.structure1_offset +
+                    records->relative_offset +
+                    record * NEXUS_DGN_POST_GRID_0X30_RECORD_BYTES;
+                for (byte = 0; byte < NEXUS_DGN_POST_GRID_0X30_RECORD_BYTES;
+                     ++byte) {
+                    if (!values[byte][src[byte]]) {
+                        values[byte][src[byte]] = 1U;
+                        layout.post_grid_0x30_records
+                            .field_distinct_value_count[byte]++;
+                    }
+                }
+            }
+            if (layout.post_grid_0x30_records.typed_prefix_record_count > 0) {
+                int ordinal_valid = 1;
+                for (record = 0;
+                     record < layout.post_grid_0x30_records.typed_prefix_record_count;
+                     ++record) {
+                    const uint8_t *src = data + layout.structure1_offset +
+                        records->relative_offset +
+                        record * NEXUS_DGN_POST_GRID_0X30_RECORD_BYTES;
+                    uint8_t ordinal =
+                        src[NEXUS_DGN_POST_GRID_0X30_ROW_ORDINAL_BYTE];
+                    if ((ordinal & NEXUS_DGN_POST_GRID_0X30_ROW_ORDINAL_MASK) !=
+                            (uint8_t)record ||
+                        (ordinal & ~(NEXUS_DGN_POST_GRID_0X30_ROW_ORDINAL_MASK |
+                                     NEXUS_DGN_POST_GRID_0X30_ROW_ORDINAL_FLAG_MASK)) != 0U) {
+                        ordinal_valid = 0;
+                        break;
+                    }
+                    if ((ordinal & NEXUS_DGN_POST_GRID_0X30_ROW_ORDINAL_FLAG_MASK) !=
+                        0U) {
+                        layout.post_grid_0x30_records
+                            .row_ordinal_flagged_prefix_record_count++;
+                        if (layout.post_grid_0x30_records
+                                .first_row_ordinal_flagged_prefix_record < 0) {
+                            layout.post_grid_0x30_records
+                                .first_row_ordinal_flagged_prefix_record = record;
+                        }
+                        layout.post_grid_0x30_records
+                            .last_row_ordinal_flagged_prefix_record = record;
+                    }
+                }
+                layout.post_grid_0x30_records.row_ordinal_prefix_valid =
+                    ordinal_valid;
+            }
+            layout.post_grid_0x30_records.valid =
+                layout.post_grid_0x30_records.row_ordinal_prefix_valid;
+        }
+    }
+    layout.valid = 1;
+    *out_layout = layout;
+    return 0;
+}
+
 int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
                                const uint8_t *data,
                                int size) {
@@ -97,8 +277,9 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
     int structure1b_offset;
     int geometry_offset;
     int geometry_size;
+    Nexus_V1_DgnStructure1Layout layout;
     unsigned char seen_refs[4096];
-    unsigned char seen_mesh_refs[4096];
+    unsigned char seen_post_grid_0x30_refs[4096];
     int y;
     int x;
 
@@ -147,6 +328,9 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
         geometry_offset + geometry_size > size) {
         return -1;
     }
+    if (nexus_v1_dgn_structure1_layout(&layout, data, size) != 0) {
+        return -1;
+    }
 
     /*
      * DMWeb DGN Structure1B source-lock:
@@ -155,18 +339,15 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
      * Structure1C/mesh reader can replace the procedural fallback.
      */
     memset(seen_refs, 0, sizeof(seen_refs));
-    memset(seen_mesh_refs, 0, sizeof(seen_mesh_refs));
-    info.structure1f_descriptor_count =
-        geometry_size > 0
-            ? geometry_size / NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES
-            : 0;
+    memset(seen_post_grid_0x30_refs, 0, sizeof(seen_post_grid_0x30_refs));
     for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
         for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
             int off = structure1b_offset +
                       ((y * NEXUS_MAX_MAP_SIZE + x) *
                        NEXUS_DGN_STRUCTURE1B_CELL_BYTES);
             int ref = nexus_v1_decode_structure1b_collision_ref(data + off);
-            int mesh_ref = nexus_v1_decode_structure1b_mesh_ref(data + off);
+            int post_grid_0x30_ref =
+                nexus_v1_decode_structure1b_post_grid_0x30_ref(data + off);
             if (ref != 0 && ref != 0x0FFF) {
                 info.collision_ref_count++;
                 if (!seen_refs[ref]) {
@@ -177,34 +358,14 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
                     info.max_collision_ref = ref;
                 }
             }
-            if (mesh_ref != 0 && mesh_ref != 0x0FFF) {
-                info.mesh_ref_count++;
-                if (!seen_mesh_refs[mesh_ref]) {
-                    Nexus_V1_DgnMeshDescriptor descriptor;
-                    seen_mesh_refs[mesh_ref] = 1U;
-                    info.mesh_ref_unique_count++;
-                    if (info.structure1f_first_ref == 0) {
-                        info.structure1f_first_ref = mesh_ref;
-                    }
-                    if (mesh_ref < info.structure1f_descriptor_count) {
-                        nexus_v1_decode_structure1f_descriptor(
-                            data + geometry_offset +
-                                (mesh_ref *
-                                 NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES),
-                            &descriptor);
-                        if (descriptor.valid) {
-                            info.structure1f_valid_descriptor_count++;
-                            if (descriptor.solid) {
-                                info.structure1f_solid_descriptor_count++;
-                            }
-                            if (descriptor.area > info.structure1f_max_area) {
-                                info.structure1f_max_area = descriptor.area;
-                            }
-                        }
-                    }
+            if (post_grid_0x30_ref != 0 && post_grid_0x30_ref != 0x0FFF) {
+                info.post_grid_0x30_ref_count++;
+                if (!seen_post_grid_0x30_refs[post_grid_0x30_ref]) {
+                    seen_post_grid_0x30_refs[post_grid_0x30_ref] = 1U;
+                    info.post_grid_0x30_ref_unique_count++;
                 }
-                if (mesh_ref > info.max_mesh_ref) {
-                    info.max_mesh_ref = mesh_ref;
+                if (post_grid_0x30_ref > info.max_post_grid_0x30_ref) {
+                    info.max_post_grid_0x30_ref = post_grid_0x30_ref;
                 }
             }
         }
@@ -218,11 +379,39 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
     info.structure1b_size = NEXUS_DGN_STRUCTURE1B_BYTES;
     info.geometry_offset = geometry_offset;
     info.geometry_size = geometry_size;
-    if (geometry_size > 0 &&
-        info.max_collision_ref <=
-            (geometry_size / NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES) &&
-        info.max_mesh_ref <=
-            (geometry_size / NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES)) {
+    if (layout.structure1c.valid) {
+        info.structure1c_offset = structure1_offset +
+                                  layout.structure1c.relative_offset;
+        info.structure1c_size = layout.structure1c.size;
+        info.structure1c_record_count = layout.structure1c.record_count;
+        info.structure1c_indexed_record_count =
+            layout.structure1c.indexed_record_count;
+        info.collision_records_valid =
+            info.max_collision_ref < layout.structure1c.record_count;
+    }
+    info.post_grid_0x24_zero_span_valid =
+        layout.post_grid_0x24_zero_span.valid;
+    info.post_grid_0x24_zero_span_size = layout.post_grid_0x24_zero_span.size;
+    info.post_grid_0x30_record_table_valid =
+        layout.post_grid_0x30_records.valid;
+    info.post_grid_0x30_record_count =
+        layout.post_grid_0x30_records.record_count;
+    info.post_grid_0x30_typed_prefix_record_count =
+        layout.post_grid_0x30_records.typed_prefix_record_count;
+    info.post_grid_0x30_opaque_tail_record_count =
+        layout.post_grid_0x30_records.opaque_tail_record_count;
+    info.post_grid_0x30_row_ordinal_prefix_valid =
+        layout.post_grid_0x30_records.row_ordinal_prefix_valid;
+    info.post_grid_0x30_row_ordinal_flagged_prefix_record_count =
+        layout.post_grid_0x30_records.row_ordinal_flagged_prefix_record_count;
+    info.post_grid_0x30_first_row_ordinal_flagged_prefix_record =
+        layout.post_grid_0x30_records.first_row_ordinal_flagged_prefix_record;
+    info.post_grid_0x30_last_row_ordinal_flagged_prefix_record =
+        layout.post_grid_0x30_records.last_row_ordinal_flagged_prefix_record;
+    info.post_grid_0x30_ref_value_count = info.post_grid_0x30_ref_count;
+    if (info.collision_records_valid &&
+        info.post_grid_0x30_record_table_valid &&
+        info.post_grid_0x30_row_ordinal_prefix_valid) {
         info.mesh_ready = 1;
     }
 
@@ -275,18 +464,20 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                         (uint8_t)((rb16(data + off) >> 4) & 3U);
                     level->floor_rotations[y][x] =
                         (uint8_t)(rb16(data + off) >> 14);
-                    level->mesh_refs[y][x] =
-                        nexus_v1_decode_structure1b_mesh_ref(data + off);
+                    level->post_grid_0x30_refs[y][x] =
+                        nexus_v1_decode_structure1b_post_grid_0x30_ref(data + off);
                 }
             }
             {
-                const uint8_t *sectors = data + info.geometry_offset;
-                int sector_count = sectors[0] > 0 ? sectors[0] - 1 : 0;
-                int mesh_descriptor_count =
-                    info.geometry_size / NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES;
-                if (sector_count > NEXUS_DGN_MAX_COLLISION_SECTORS - 1)
+                const uint8_t *sectors = data + info.structure1c_offset;
+                int sector_count = info.structure1c_indexed_record_count;
+                if (!info.collision_records_valid) {
+                    sectors = NULL;
+                    sector_count = 0;
+                } else if (sector_count > NEXUS_DGN_MAX_COLLISION_SECTORS - 1) {
                     sector_count = NEXUS_DGN_MAX_COLLISION_SECTORS - 1;
-                for (int sector = 1; sector <= sector_count; ++sector) {
+                }
+                for (int sector = 1; sectors && sector <= sector_count; ++sector) {
                     const uint8_t *src = sectors + sector * 4;
                     Nexus_V1_DgnCollisionSector *dst =
                         &level->collision_sectors[sector];
@@ -294,14 +485,6 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                     dst->x1 = (int8_t)src[0]; dst->y1 = (int8_t)src[1];
                     dst->x2 = (int8_t)src[2]; dst->y2 = (int8_t)src[3];
                     dst->circle = src[3] == 0x80U;
-                }
-                if (mesh_descriptor_count > NEXUS_DGN_MAX_MESH_DESCRIPTORS - 1)
-                    mesh_descriptor_count = NEXUS_DGN_MAX_MESH_DESCRIPTORS - 1;
-                for (int ref = 1; ref < mesh_descriptor_count; ++ref) {
-                    const uint8_t *src = sectors + ref * 4;
-                    nexus_v1_decode_structure1f_descriptor(
-                        src,
-                        &level->mesh_descriptors[ref]);
                 }
             }
             level->has_3d_geometry = 1;
@@ -403,7 +586,7 @@ int nexus_v1_level_get_cell_geometry(const Nexus_V1_Level *level, int x, int y,
     memset(&cell, 0, sizeof(cell));
     cell.square_type = level->squares[y][x];
     cell.collision_ref = level->collision_refs[y][x];
-    cell.mesh_ref = level->mesh_refs[y][x];
+    cell.post_grid_0x30_ref = level->post_grid_0x30_refs[y][x];
     cell.floor_material_ref = level->floor_material_refs[y][x];
     cell.ceiling_material_ref = level->ceiling_material_refs[y][x];
     memcpy(cell.wall_material_refs, level->wall_material_refs[y][x],
@@ -423,8 +606,8 @@ int nexus_v1_level_get_cell_geometry(const Nexus_V1_Level *level, int x, int y,
         cell.ceiling_height[corner] = (int8_t)(cell.floor_height[corner] + 32);
     if (cell.collision_ref < NEXUS_DGN_MAX_COLLISION_SECTORS)
         cell.collision_sector = level->collision_sectors[cell.collision_ref];
-    if (cell.mesh_ref < NEXUS_DGN_MAX_MESH_DESCRIPTORS)
-        cell.mesh_descriptor = level->mesh_descriptors[cell.mesh_ref];
+    cell.post_grid_0x30_row_prefix_valid =
+        level->geometry_info.post_grid_0x30_row_ordinal_prefix_valid;
     *out_cell = cell;
     return 0;
 }
@@ -520,21 +703,32 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
     out_receipt->collision_ref_unique_count =
         info->collision_ref_unique_count;
     out_receipt->max_collision_ref = info->max_collision_ref;
-    out_receipt->mesh_ref_count = info->mesh_ref_count;
-    out_receipt->mesh_ref_unique_count = info->mesh_ref_unique_count;
-    out_receipt->max_mesh_ref = info->max_mesh_ref;
-    out_receipt->structure1f_descriptor_count =
-        info->structure1f_descriptor_count;
-    out_receipt->structure1f_valid_descriptor_count =
-        info->structure1f_valid_descriptor_count;
-    out_receipt->structure1f_solid_descriptor_count =
-        info->structure1f_solid_descriptor_count;
-    out_receipt->structure1f_first_ref = info->structure1f_first_ref;
-    out_receipt->structure1f_max_area = info->structure1f_max_area;
-    out_receipt->descriptor_capacity =
-        info->geometry_size > 0
-            ? info->geometry_size / NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES
-            : 0;
+    out_receipt->post_grid_0x30_ref_count =
+        info->post_grid_0x30_ref_count;
+    out_receipt->post_grid_0x30_ref_unique_count =
+        info->post_grid_0x30_ref_unique_count;
+    out_receipt->max_post_grid_0x30_ref =
+        info->max_post_grid_0x30_ref;
+    out_receipt->post_grid_0x30_ref_value_count =
+        info->post_grid_0x30_ref_value_count;
+    out_receipt->post_grid_0x24_zero_span_valid =
+        info->post_grid_0x24_zero_span_valid;
+    out_receipt->post_grid_0x30_record_table_valid =
+        info->post_grid_0x30_record_table_valid;
+    out_receipt->post_grid_0x30_record_count =
+        info->post_grid_0x30_record_count;
+    out_receipt->post_grid_0x30_typed_prefix_record_count =
+        info->post_grid_0x30_typed_prefix_record_count;
+    out_receipt->post_grid_0x30_opaque_tail_record_count =
+        info->post_grid_0x30_opaque_tail_record_count;
+    out_receipt->post_grid_0x30_row_ordinal_prefix_valid =
+        info->post_grid_0x30_row_ordinal_prefix_valid;
+    out_receipt->post_grid_0x30_row_ordinal_flagged_prefix_record_count =
+        info->post_grid_0x30_row_ordinal_flagged_prefix_record_count;
+    out_receipt->post_grid_0x30_first_row_ordinal_flagged_prefix_record =
+        info->post_grid_0x30_first_row_ordinal_flagged_prefix_record;
+    out_receipt->post_grid_0x30_last_row_ordinal_flagged_prefix_record =
+        info->post_grid_0x30_last_row_ordinal_flagged_prefix_record;
 
     if (!info->dmweb_container) {
         out_receipt->status =
@@ -542,7 +736,7 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
     } else if (info->mesh_ready) {
         out_receipt->status = NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH;
         out_receipt->can_render_dgn_mesh = 1;
-    } else if (info->geometry_size <= 0) {
+    } else if (!info->post_grid_0x30_record_table_valid) {
         out_receipt->status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_NO_GEOMETRY;
     } else {
@@ -606,25 +800,17 @@ static int nexus_v1_dgn_plan_push(
             receipt->wall_material_command_count++;
         }
     }
-    if (command.mesh_ref != 0U && command.mesh_ref != 0x0FFFU) {
-        receipt->mesh_command_count++;
-        if (command.mesh_descriptor_projected) {
-            receipt->mesh_descriptor_command_count++;
+    if (command.post_grid_0x30_ref != 0U &&
+        command.post_grid_0x30_ref != 0x0FFFU) {
+        receipt->post_grid_0x30_reference_command_count++;
+        if (command.post_grid_0x30_row_prefix_valid)
+            receipt->post_grid_0x30_valid_reference_command_count++;
+        if (receipt->first_post_grid_0x30_ref == 0) {
+            receipt->first_post_grid_0x30_ref = command.post_grid_0x30_ref;
         }
-        if (command.mesh_descriptor.valid) {
-            receipt->structure1f_command_count++;
-            if (command.mesh_descriptor.solid) {
-                receipt->structure1f_solid_command_count++;
-            }
-            if (command.mesh_descriptor.area > receipt->structure1f_max_area) {
-                receipt->structure1f_max_area = command.mesh_descriptor.area;
-            }
-        }
-        if (receipt->first_mesh_ref == 0) {
-            receipt->first_mesh_ref = command.mesh_ref;
-        }
-        if ((int)command.mesh_ref > receipt->max_mesh_ref) {
-            receipt->max_mesh_ref = command.mesh_ref;
+        if ((int)command.post_grid_0x30_ref >
+            receipt->max_post_grid_0x30_ref) {
+            receipt->max_post_grid_0x30_ref = command.post_grid_0x30_ref;
         }
     }
     return 0;
@@ -650,9 +836,10 @@ static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
     command.square_type = cell.square_type;
     command.wall_dir = wall_dir & 3;
     command.collision_ref = cell.collision_ref;
-    command.mesh_ref = cell.mesh_ref;
+    command.post_grid_0x30_ref = cell.post_grid_0x30_ref;
     command.collision_sector = cell.collision_sector;
-    command.mesh_descriptor = cell.mesh_descriptor;
+    command.post_grid_0x30_row_prefix_valid =
+        cell.post_grid_0x30_row_prefix_valid;
     command.floor_rotation = cell.floor_rotation;
     command.floor_slope = cell.floor_slope;
     memcpy(command.floor_height, cell.floor_height, sizeof(command.floor_height));
@@ -695,8 +882,12 @@ static int nexus_v1_dgn_view_floor_y(int z_half) {
     return 400 + (768 / z_half);
 }
 
-static int nexus_v1_dgn_view_ceiling_y(int z_half) {
-    return 400 - (512 / z_half);
+/* Structure1B byte 3 stores signed 1/32 world-unit floor heights. Keep the
+ * copied host plan on the same vertical projection as the material viewport:
+ * a 32-unit ceiling over a zero-height floor reaches the old ceiling baseline. */
+static int nexus_v1_dgn_view_height_y(int z_half, int8_t height) {
+    return nexus_v1_dgn_view_floor_y(z_half) -
+        ((int)height * 1280) / (32 * z_half);
 }
 
 static void nexus_v1_dgn_plan_set_quad(Nexus_V1_DgnRenderCommand *command,
@@ -725,53 +916,61 @@ static void nexus_v1_dgn_plan_project_quad(Nexus_V1_DgnRenderCommand *command) {
     switch (command->kind) {
     case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
         nexus_v1_dgn_plan_set_quad(command,
-            near_left, nexus_v1_dgn_view_floor_y(near_z),
-            near_right, nexus_v1_dgn_view_floor_y(near_z),
-            far_right, nexus_v1_dgn_view_floor_y(far_z),
-            far_left, nexus_v1_dgn_view_floor_y(far_z));
+            near_left, nexus_v1_dgn_view_height_y(near_z,
+                                                   command->floor_height[0]),
+            near_right, nexus_v1_dgn_view_height_y(near_z,
+                                                    command->floor_height[1]),
+            far_right, nexus_v1_dgn_view_height_y(far_z,
+                                                   command->floor_height[2]),
+            far_left, nexus_v1_dgn_view_height_y(far_z,
+                                                  command->floor_height[3]));
         break;
     case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
         nexus_v1_dgn_plan_set_quad(command,
-            near_left, nexus_v1_dgn_view_ceiling_y(near_z),
-            far_left, nexus_v1_dgn_view_ceiling_y(far_z),
-            far_right, nexus_v1_dgn_view_ceiling_y(far_z),
-            near_right, nexus_v1_dgn_view_ceiling_y(near_z));
+            near_left, nexus_v1_dgn_view_height_y(near_z,
+                                                   command->ceiling_height[0]),
+            far_left, nexus_v1_dgn_view_height_y(far_z,
+                                                  command->ceiling_height[3]),
+            far_right, nexus_v1_dgn_view_height_y(far_z,
+                                                   command->ceiling_height[2]),
+            near_right, nexus_v1_dgn_view_height_y(near_z,
+                                                    command->ceiling_height[1]));
         break;
     case NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT:
         nexus_v1_dgn_plan_set_quad(command,
-            near_left, nexus_v1_dgn_view_floor_y(near_z),
-            near_right, nexus_v1_dgn_view_floor_y(near_z),
-            near_right, nexus_v1_dgn_view_ceiling_y(near_z),
-            near_left, nexus_v1_dgn_view_ceiling_y(near_z));
+            near_left, nexus_v1_dgn_view_height_y(near_z,
+                                                   command->floor_height[0]),
+            near_right, nexus_v1_dgn_view_height_y(near_z,
+                                                    command->floor_height[1]),
+            near_right, nexus_v1_dgn_view_height_y(near_z,
+                                                    command->ceiling_height[1]),
+            near_left, nexus_v1_dgn_view_height_y(near_z,
+                                                   command->ceiling_height[0]));
         break;
     case NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT:
         nexus_v1_dgn_plan_set_quad(command,
-            near_left, nexus_v1_dgn_view_floor_y(near_z),
-            far_left, nexus_v1_dgn_view_floor_y(far_z),
-            far_left, nexus_v1_dgn_view_ceiling_y(far_z),
-            near_left, nexus_v1_dgn_view_ceiling_y(near_z));
+            near_left, nexus_v1_dgn_view_height_y(near_z,
+                                                   command->floor_height[0]),
+            far_left, nexus_v1_dgn_view_height_y(far_z,
+                                                  command->floor_height[3]),
+            far_left, nexus_v1_dgn_view_height_y(far_z,
+                                                  command->ceiling_height[3]),
+            near_left, nexus_v1_dgn_view_height_y(near_z,
+                                                   command->ceiling_height[0]));
         break;
     case NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT:
         nexus_v1_dgn_plan_set_quad(command,
-            far_right, nexus_v1_dgn_view_floor_y(far_z),
-            near_right, nexus_v1_dgn_view_floor_y(near_z),
-            near_right, nexus_v1_dgn_view_ceiling_y(near_z),
-            far_right, nexus_v1_dgn_view_ceiling_y(far_z));
+            far_right, nexus_v1_dgn_view_height_y(far_z,
+                                                   command->floor_height[2]),
+            near_right, nexus_v1_dgn_view_height_y(near_z,
+                                                    command->floor_height[1]),
+            near_right, nexus_v1_dgn_view_height_y(near_z,
+                                                    command->ceiling_height[1]),
+            far_right, nexus_v1_dgn_view_height_y(far_z,
+                                                   command->ceiling_height[2]));
         break;
     default:
         break;
-    }
-    if (command->mesh_descriptor.valid) {
-        int x0 = command->quad_x[0] + (int)command->mesh_descriptor.x1 * 2;
-        int y0 = command->quad_y[0] + (int)command->mesh_descriptor.y1 * 2;
-        int x1 = command->quad_x[1] + (int)command->mesh_descriptor.x2 * 2;
-        int y1 = command->quad_y[1] + (int)command->mesh_descriptor.y1 * 2;
-        int x2 = command->quad_x[2] + (int)command->mesh_descriptor.x2 * 2;
-        int y2 = command->quad_y[2] + (int)command->mesh_descriptor.y2 * 2;
-        int x3 = command->quad_x[3] + (int)command->mesh_descriptor.x1 * 2;
-        int y3 = command->quad_y[3] + (int)command->mesh_descriptor.y2 * 2;
-        nexus_v1_dgn_plan_set_quad(command, x0, y0, x1, y1, x2, y2, x3, y3);
-        command->mesh_descriptor_projected = 1;
     }
 }
 
@@ -817,6 +1016,12 @@ int nexus_v1_level_build_dgn_view_render_plan(
         return 0;
     }
     receipt.status = handoff.status;
+    receipt.post_grid_0x30_row_ordinal_flagged_prefix_record_count =
+        handoff.post_grid_0x30_row_ordinal_flagged_prefix_record_count;
+    receipt.post_grid_0x30_first_row_ordinal_flagged_prefix_record =
+        handoff.post_grid_0x30_first_row_ordinal_flagged_prefix_record;
+    receipt.post_grid_0x30_last_row_ordinal_flagged_prefix_record =
+        handoff.post_grid_0x30_last_row_ordinal_flagged_prefix_record;
     if (handoff.status != NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH ||
         !handoff.can_render_dgn_mesh) {
         receipt.blocks_real_dgn_mesh_render = 1;

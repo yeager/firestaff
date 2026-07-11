@@ -62,6 +62,7 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_game_state_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
+#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "firestaff_cmp_decode.h"
 
 #include <stdio.h>
@@ -529,6 +530,16 @@ static void test_real_startup_asset_selection_rejects_generic_paths(void)
         &p, CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_CREDITS_PC34);
     CHECK(binding && binding->graphic_index == 5u && binding->verified == 1,
           "credits resolves from original C005");
+    binding = csb_v1_boot_startup_asset_binding_pc34(
+        &p, CSB_V1_STARTUP_ASSET_ROLE_HUD_INVENTORY_PC34);
+    CHECK(binding && binding->source == CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 &&
+          binding->graphic_index == 17u && binding->verified == 1,
+          "inventory HUD resolves to original C017 before any CSBWin override");
+    binding = csb_v1_boot_startup_asset_binding_pc34(
+        &p, CSB_V1_STARTUP_ASSET_ROLE_HUD_RESURRECT_PC34);
+    CHECK(binding && binding->source == CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 &&
+          binding->graphic_index == 40u && binding->verified == 1,
+          "resurrect HUD resolves to original C040 before any CSBWin override");
 
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
@@ -625,33 +636,6 @@ static void test_runtime_asset_gate_binds_session_and_owned_artwork(void)
     csb_v1_boot_cleanup(&p);
 }
 
-static void test_runtime_surface_materializer_rejects_unopened_source(void)
-{
-    CSB_V1_BootProfile p;
-    CSB_V1_StartupRenderPlan_PC34 plan;
-    CSB_V1_StartupRuntimeSurfaceSet_PC34 surfaces;
-
-    prime_verified_profile(&p);
-    csb_v1_boot_startup_assets_resolve_pc34(&p);
-    memset(&plan, 0, sizeof(plan));
-    plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
-    plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
-    plan.asset_command_count = 1;
-    plan.asset_commands[0].kind = CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34;
-    plan.asset_commands[0].asset_id = 1;
-    plan.asset_commands[0].source_w = 320;
-    plan.asset_commands[0].source_h = 80;
-    plan.asset_commands[0].dest_w = 320;
-    plan.asset_commands[0].dest_h = 80;
-    plan.asset_commands[0].visible = 1;
-    CHECK(csb_v1_boot_startup_runtime_surfaces_materialize_pc34(
-              &p, &plan, &surfaces) == 0 && !surfaces.valid &&
-              surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].pixels == NULL,
-          "surface materializer never synthesizes title pixels when GRAPHICS.DAT is unavailable");
-    csb_v1_boot_startup_runtime_surface_set_release_pc34(&surfaces);
-    csb_v1_boot_cleanup(&p);
-}
-
 static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
 {
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
@@ -665,6 +649,8 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
     unsigned char right_pixels[4] = {0};
     unsigned char entrance_pixels[4] = {0};
     unsigned char credits_pixels[4] = {0};
+    unsigned char inventory_pixels[4] = {0};
+    unsigned char resurrect_pixels[4] = {0};
 
     /* This is a decoded-session unit test: the loader is covered at the
      * GRAPHICS.DAT boundary elsewhere.  The frame resolver must never
@@ -698,6 +684,10 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].pixels = entrance_pixels;
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34].valid = 1;
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34].pixels = credits_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].pixels = inventory_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].pixels = resurrect_pixels;
 
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
@@ -707,6 +697,8 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
               &session, &plan, 41u, &frame) == 1 && frame.valid &&
               frame.title_surface->pixels == presents_pixels &&
               frame.left_door_surface->pixels == left_pixels &&
+              frame.hud_inventory_surface->pixels == inventory_pixels &&
+              frame.hud_resurrect_surface->pixels == resurrect_pixels &&
               frame.real_asset_matched &&
               frame.title_sequence_ready &&
               frame.entrance_ready &&
@@ -716,7 +708,7 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
               frame.frame_route_hash != 0u &&
               frame.uses_verified_hud_bindings && frame.source_tick == 41u &&
               frame.session_generation == 9u,
-          "asset session keeps PRESENTS, HUD, door source surfaces and route proof stable");
+          "asset session keeps PRESENTS, C017/C040 HUD, and door source surfaces stable");
     plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 42u, &frame) == 1 &&
@@ -742,12 +734,97 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
           "asset session carries the same verified doors into entrance credits");
 }
 
+static void test_runtime_rasterizer_composes_title_and_opening_from_owned_pixels(void)
+{
+    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_StartupRuntimeRaster_PC34 raster;
+    unsigned char title[320 * 80];
+    unsigned char entrance[320 * 200];
+    unsigned char left[128 * 161];
+    unsigned char right[128 * 161];
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&plan, 0, sizeof(plan));
+    memset(title, 3, sizeof(title));
+    memset(entrance, 5, sizeof(entrance));
+    memset(left, 7, sizeof(left));
+    memset(right, 9, sizeof(right));
+    frame.valid = 1;
+    frame.real_asset_matched = 1;
+    frame.no_legacy_wrappers = 1;
+    frame.frame_route_hash = 77u;
+    frame.title_surface = &(CSB_V1_StartupRuntimeSurface_PC34){
+        title, 320, 80, 1, 1, 0, 0, -1};
+    plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
+    plan.title_dest_x = 136;
+    plan.title_dest_y = 74;
+    plan.title_dest_w = 48;
+    plan.title_dest_h = 12;
+    plan.title_transparent_color = -1;
+    CHECK(csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+              &frame, &plan, &raster) == 1 && raster.valid &&
+              raster.title_composited && !raster.entrance_composited &&
+              raster.source_surface_count == 1 && raster.pixel_hash != 0u &&
+              raster.pixels[74 * 320 + 136] == 3 && raster.pixels[0] == 0,
+          "runtime rasterizer centers ReDMCSB CHAOS-scale pixels on a black title frame");
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+
+    frame.entrance_surface = &(CSB_V1_StartupRuntimeSurface_PC34){
+        entrance, 320, 200, 4, 1, 0, 0, -1};
+    frame.left_door_surface = &(CSB_V1_StartupRuntimeSurface_PC34){
+        left, 128, 161, 2, 1, 0, 0, -1};
+    frame.right_door_surface = &(CSB_V1_StartupRuntimeSurface_PC34){
+        right, 128, 161, 3, 1, 0, 0, -1};
+    memset(&plan, 0, sizeof(plan));
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
+    plan.closed_left_w = 105;
+    plan.closed_left_h = 161;
+    plan.closed_left_dest_y = 28;
+    plan.closed_right_w = 127;
+    plan.closed_right_h = 161;
+    plan.closed_right_dest_x = 105;
+    plan.closed_right_dest_y = 28;
+    CHECK(csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+              &frame, &plan, &raster) == 1 && raster.valid &&
+              raster.entrance_composited && raster.door_composited &&
+              raster.source_surface_count == 3 && raster.pixels[0] == 5 &&
+              raster.pixels[28 * 320] == 7 && raster.pixels[28 * 320 + 105] == 9,
+          "runtime rasterizer composites the closed C002/C003 entrance over C004");
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+
+    memset(&plan, 0, sizeof(plan));
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34;
+    plan.opening_composite_valid = 1;
+    plan.opening_left_w = 8;
+    plan.opening_left_h = 161;
+    plan.opening_left_dest_y = 28;
+    plan.opening_right_w = 8;
+    plan.opening_right_h = 161;
+    plan.opening_right_dest_x = 224;
+    plan.opening_right_dest_y = 28;
+    CHECK(csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+              &frame, &plan, &raster) == 1 && raster.valid &&
+              raster.entrance_composited && raster.door_composited &&
+              raster.source_surface_count == 3 && raster.pixels[0] == 5 &&
+              raster.pixels[28 * 320] == 7 && raster.pixels[28 * 320 + 224] == 9,
+          "runtime rasterizer composites verified C004/C002/C003 opening-door pixels without callbacks");
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+    plan.opening_right_source_x = 127;
+    plan.opening_right_w = 8;
+    CHECK(csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+              &frame, &plan, &raster) == 0 && !raster.valid &&
+              raster.pixels == NULL,
+          "runtime rasterizer rejects an opening frame with an unreadable verified door strip");
+}
+
 static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
 {
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
     CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupAudioAction_PC34 audio_action;
+    CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
     unsigned char title_pixels[4] = {0};
     unsigned char presents_pixels[4] = {0};
     unsigned char chaos_pixels[4] = {0};
@@ -756,6 +833,8 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
     unsigned char right_pixels[4] = {0};
     unsigned char entrance_pixels[4] = {0};
     unsigned char credits_pixels[4] = {0};
+    unsigned char inventory_pixels[4] = {0};
+    unsigned char resurrect_pixels[4] = {0};
 
     csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
     session.valid = 1;
@@ -769,9 +848,11 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
     session.hud_assets_bound = 1;
     session.full_startup_ready = 1;
     session.rejects_legacy_wrappers = 1;
+    session.generation = 31u;
     session.surfaces.valid = 1;
     session.surfaces.title_regions_ready = 1;
     session.surfaces.opening_frame_ready = 1;
+    session.surfaces.hud_surfaces_ready = 1;
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].valid = 1;
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].pixels = title_pixels;
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].valid = 1;
@@ -788,6 +869,10 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].pixels = entrance_pixels;
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34].valid = 1;
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34].pixels = credits_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].pixels = inventory_pixels;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].valid = 1;
+    session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].pixels = resurrect_pixels;
 
     CHECK(csb_v1_boot_startup_playback_begin_pc34(&session, &audio_action) == 1 &&
               audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_FTL_SWOOSH_PC34 &&
@@ -830,9 +915,68 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
     CHECK(csb_v1_boot_startup_playback_enter_hud_pc34(&session) == 1 &&
               session.playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34,
           "entrance hands the same verified session to the runtime HUD");
+    CHECK(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+              &session, &full_runtime) == 1 &&
+              full_runtime.playback_route_ready &&
+              full_runtime.playback_reaches_title &&
+              full_runtime.playback_reaches_entrance &&
+              full_runtime.playback_reaches_hud &&
+              full_runtime.title_to_hud_same_session &&
+              full_runtime.playback_route_hash != 0u,
+          "full runtime receipt proves one verified CSB session reaches title entrance and HUD");
     session.hud_assets_bound = 0;
     CHECK(csb_v1_boot_startup_playback_begin_pc34(&session, &audio_action) == 0,
           "fallback or unowned HUD state cannot open a replacement startup route");
+}
+
+static void test_pointer_quit_row_uses_entrance_without_utility_overlay(void)
+{
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupActionReceipt_PC34 receipt;
+
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.entrance_active = 1;
+    snapshot.entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
+    snapshot.utility_overlay_active = 0;
+    snapshot.utility_selected_action_index = 0;
+
+    CHECK(csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
+              &snapshot, 245, 112, 1u, &receipt) == 1 &&
+              receipt.handled == 1 &&
+              receipt.input_routed_to_entrance == 1 &&
+              receipt.input_routed_to_utility == 0 &&
+              receipt.entrance_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34 &&
+              receipt.input_requests_launcher_return == 1 &&
+              receipt.host_input_result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34,
+          "normal CSB entrance quit row is not stolen by utility panel routing");
+}
+
+static void test_pointer_load_row_stays_utility_when_overlay_active(void)
+{
+    CSB_V1_BootProfile profile;
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupActionReceipt_PC34 receipt;
+
+    prime_verified_profile(&profile);
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.entrance_active = 1;
+    snapshot.entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
+    snapshot.utility_overlay_active = 1;
+    snapshot.utility_selected_action_index = 0;
+    snapshot.utility_imported_champion_count = 2;
+    snapshot.boot_profile = &profile;
+
+    CHECK(csb_v1_boot_runtime_execute_startup_pointer_from_snapshot_pc34(
+              &snapshot, 40, 118, 1u, &receipt) == 1 &&
+              receipt.handled == 1 &&
+              receipt.input_routed_to_utility == 1 &&
+              receipt.entrance_command_id ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
+              receipt.input_requests_launcher_return == 0,
+          "CSB utility overlay still owns its LOAD row");
+    csb_v1_boot_cleanup(&profile);
 }
 
 static void test_source_evidence(void)
@@ -859,9 +1003,11 @@ int main(void)
     test_diagnostic_report_surfaces_title_import_status();
     test_real_startup_asset_selection_rejects_generic_paths();
     test_runtime_asset_gate_binds_session_and_owned_artwork();
-    test_runtime_surface_materializer_rejects_unopened_source();
     test_runtime_asset_session_frame_keeps_verified_surfaces_alive();
+    test_runtime_rasterizer_composes_title_and_opening_from_owned_pixels();
     test_verified_session_owns_swoosh_title_audio_and_hud_handoff();
+    test_pointer_quit_row_uses_entrance_without_utility_overlay();
+    test_pointer_load_row_stays_utility_when_overlay_active();
     test_source_evidence();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

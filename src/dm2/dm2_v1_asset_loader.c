@@ -685,6 +685,34 @@ int dm2_v1_asset_loader_init(DM2_V1_AssetLoader *loader,
     return 0;
 }
 
+int dm2_v1_asset_loader_validate_typed_graph(const DM2_V1_AssetLoader *loader) {
+    uint16_t i;
+
+    if (!loader || !loader->loaded || !loader->data || !loader->entries ||
+        !loader->raw_offsets || !loader->raw_sizes ||
+        loader->raw_data_count == 0 || loader->entry_count == 0) {
+        return 0;
+    }
+
+    for (i = 0; i < loader->entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader->entries[i];
+        uint16_t raw_index;
+
+        if (entry->cls3 == DM2_GDAT_ENTRY_TYPE_WORD_VALUE ||
+            entry->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET) {
+            continue;
+        }
+        raw_index = (uint16_t)(entry->data_index & 0x7fffu);
+        if (raw_index >= loader->raw_data_count ||
+            loader->raw_sizes[raw_index] == 0 ||
+            (uint64_t)loader->raw_offsets[raw_index] +
+                loader->raw_sizes[raw_index] > loader->data_size) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 const uint8_t *dm2_v1_asset_load(const DM2_V1_AssetLoader *loader,
                                    int category, int index, int field) {
     return dm2_v1_asset_load_sized(loader, category, index, field, NULL);
@@ -787,6 +815,51 @@ int dm2_v1_asset_load_image_offset(
     /* skproject/SKWIN QUERY_GDAT_PICT_OFFSET reads dtImageOffset
      * (DME.h: dtImageOffset = 12) from the ENT1 data index. */
     *out_value = entry->data_index;
+    return 1;
+}
+
+int dm2_v1_asset_load_interface_palette(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_InterfacePalette *out_palette)
+{
+    const uint8_t *irgb;
+    const uint8_t *palette16;
+    size_t irgb_size = 0u;
+    size_t palette16_size = 0u;
+    uint32_t hash = 2166136261u;
+    int color;
+
+    if (!out_palette) return 0;
+    memset(out_palette, 0, sizeof(*out_palette));
+    irgb = dm2_v1_asset_load_typed_sized(loader, category, index,
+                                          DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
+                                          field, &irgb_size);
+    palette16 = dm2_v1_asset_load_typed_sized(loader, category, index,
+                                               DM2_GDAT_ENTRY_TYPE_PAL_16,
+                                               field, &palette16_size);
+    /* ReDMCSB-compatible SKWIN INIT copies 0x400 bytes of dtPalIRGB into a
+     * 256x4 row buffer, then indexes dtPalette16 byte-wise. */
+    if (!irgb || !palette16 || irgb_size < 256u * 4u ||
+        palette16_size < sizeof(out_palette->palette16)) {
+        return 0;
+    }
+    for (color = 0; color < 256; ++color) {
+        const uint8_t *src = irgb + (size_t)color * 4u;
+        out_palette->rgb6[color][0] = (uint8_t)(src[1] >> 2);
+        out_palette->rgb6[color][1] = (uint8_t)(src[2] >> 2);
+        out_palette->rgb6[color][2] = (uint8_t)(src[3] >> 2);
+        hash = (hash ^ out_palette->rgb6[color][0]) * 16777619u;
+        hash = (hash ^ out_palette->rgb6[color][1]) * 16777619u;
+        hash = (hash ^ out_palette->rgb6[color][2]) * 16777619u;
+    }
+    memcpy(out_palette->palette16, palette16, sizeof(out_palette->palette16));
+    for (color = 0; color < (int)sizeof(out_palette->palette16); ++color) {
+        hash = (hash ^ out_palette->palette16[color]) * 16777619u;
+    }
+    out_palette->hash = hash ? hash : 1u;
     return 1;
 }
 

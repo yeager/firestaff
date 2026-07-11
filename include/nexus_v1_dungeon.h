@@ -15,11 +15,91 @@
 #define NEXUS_DGN_STRUCTURE1B_BYTES 0x8000
 #define NEXUS_DGN_STRUCTURE1B_CELL_BYTES 8
 #define NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES 4
+#define NEXUS_DGN_STRUCTURE1_POST_GRID_POINTER_COUNT 5
+#define NEXUS_DGN_POST_GRID_0X24_ZERO_BYTES 128
+#define NEXUS_DGN_POST_GRID_0X30_RECORD_BYTES 16
+#define NEXUS_DGN_POST_GRID_0X30_ROW_ORDINAL_BYTE 3
+#define NEXUS_DGN_POST_GRID_0X30_ROW_ORDINAL_MASK 0x3f
+#define NEXUS_DGN_POST_GRID_0X30_ROW_ORDINAL_FLAG_MASK 0x80
 #define NEXUS_DGN_MAX_COLLISION_SECTORS 256
-#define NEXUS_DGN_MAX_MESH_DESCRIPTORS 4096
+#define NEXUS_DGN_MAX_POST_GRID_0X30_RECORDS 4096
 #define NEXUS_V1_DGN_VIEW_DISTANCE 4
 #define NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS 48
 #define NEXUS_V1_DGN_VIEWPORT_UNITS 1024
+
+/* These are real Structure1 header offsets observed across LEV00..LEV15.
+ * Only the first span has a source-backed name: Structure1B collision
+ * indexes refer to Structure1C. The remaining spans stay opaque. */
+typedef struct {
+    int header_offset;
+    int relative_offset;
+    int size_to_next;
+    int present;
+    int bounded;
+} Nexus_V1_DgnStructure1PostGridPointer;
+
+/* The first bounded post-grid span is the Structure1C collision record
+ * table. Every real LEV00..LEV15 form is a four-byte record array whose
+ * first byte equals its record count; record zero is not addressable by a
+ * Structure1B collision index. Field meanings inside each record remain
+ * deliberately undecoded here. DMWeb DGN files: Structure1B bytes 5..7. */
+typedef struct {
+    int relative_offset;
+    int size;
+    int record_size;
+    int record_count;
+    int indexed_record_count;
+    int valid;
+} Nexus_V1_DgnStructure1CRecordTable;
+
+/* Real-media evidence, LEV00..LEV15: the bounded span selected by header
+ * offset 0x24 is exactly 128 zero bytes.  This establishes a reserved span,
+ * not a payload interpretation. */
+typedef struct {
+    int relative_offset;
+    int size;
+    int valid;
+} Nexus_V1_DgnPostGrid0x24ZeroSpan;
+
+/* Real-media evidence, LEV00..LEV15: header offset 0x30 reaches a span
+ * bounded by the following 0x34 pointer. It contains a typed prefix of
+ * 16-byte rows followed by one opaque tail row. In every prefix row, byte 3
+ * stores its six-bit row ordinal and may carry only bit 7 as an observed
+ * flag. No other record byte has a gameplay or rendering interpretation. */
+typedef struct {
+    int relative_offset;
+    int size;
+    int record_size;
+    int record_count;
+    int typed_prefix_record_count;
+    int opaque_tail_record_count;
+    int row_ordinal_prefix_valid;
+    /* Byte 3's high bit is observed per-row provenance only. It is never
+     * selected through a Structure1B packed reference value. */
+    int row_ordinal_flagged_prefix_record_count;
+    int first_row_ordinal_flagged_prefix_record;
+    int last_row_ordinal_flagged_prefix_record;
+    /* Measurements only: byte positions remain deliberately unnamed. */
+    int field_distinct_value_count[NEXUS_DGN_POST_GRID_0X30_RECORD_BYTES];
+    int referenced_field_distinct_value_count[
+        NEXUS_DGN_POST_GRID_0X30_RECORD_BYTES];
+    int valid;
+} Nexus_V1_DgnPostGrid0x30RecordTable;
+
+typedef struct {
+    int structure1_offset;
+    int useful_size;
+    int structure1b_relative_offset;
+    int structure1b_end_relative_offset;
+    int post_grid_offset;
+    int post_grid_size;
+    Nexus_V1_DgnStructure1PostGridPointer
+        post_grid[NEXUS_DGN_STRUCTURE1_POST_GRID_POINTER_COUNT];
+    Nexus_V1_DgnStructure1CRecordTable structure1c;
+    Nexus_V1_DgnPostGrid0x24ZeroSpan post_grid_0x24_zero_span;
+    Nexus_V1_DgnPostGrid0x30RecordTable post_grid_0x30_records;
+    int valid;
+} Nexus_V1_DgnStructure1Layout;
 
 typedef struct {
     int dmweb_container;
@@ -30,22 +110,35 @@ typedef struct {
     int structure1b_size;
     int geometry_offset;
     int geometry_size;
+    int structure1c_offset;
+    int structure1c_size;
+    int structure1c_record_count;
+    int structure1c_indexed_record_count;
+    int collision_records_valid;
+    int post_grid_0x24_zero_span_valid;
+    int post_grid_0x24_zero_span_size;
+    int post_grid_0x30_record_table_valid;
+    int post_grid_0x30_record_count;
+    int post_grid_0x30_typed_prefix_record_count;
+    int post_grid_0x30_opaque_tail_record_count;
+    int post_grid_0x30_row_ordinal_prefix_valid;
+    int post_grid_0x30_row_ordinal_flagged_prefix_record_count;
+    int post_grid_0x30_first_row_ordinal_flagged_prefix_record;
+    int post_grid_0x30_last_row_ordinal_flagged_prefix_record;
     int collision_ref_count;
     int collision_ref_unique_count;
     int max_collision_ref;
-    int mesh_ref_count;
-    int mesh_ref_unique_count;
-    int max_mesh_ref;
-    int structure1f_descriptor_count;
-    int structure1f_valid_descriptor_count;
-    int structure1f_solid_descriptor_count;
-    int structure1f_first_ref;
-    int structure1f_max_area;
+    int post_grid_0x30_ref_count;
+    int post_grid_0x30_ref_unique_count;
+    int max_post_grid_0x30_ref;
+    int post_grid_0x30_record_zero_referenced;
+    int post_grid_0x30_ref_value_count;
     int mesh_ready;
 } Nexus_V1_DgnGeometryInfo;
 
-/* DMWeb DGN Structure1C collision descriptor. Coordinates are signed tile
- * parts relative to the cell centre; a final value of -128 denotes a circle. */
+/* One bounded Structure1C record as used by the existing collision route.
+ * This table proof establishes only the count and four-byte record form;
+ * individual byte semantics are not inferred here. */
 typedef struct {
     int valid;
     int circle;
@@ -55,25 +148,13 @@ typedef struct {
     int8_t y2;
 } Nexus_V1_DgnCollisionSector;
 
-typedef struct {
-    int valid;
-    int8_t x1;
-    int8_t y1;
-    int8_t x2;
-    int8_t y2;
-    int width;
-    int height;
-    int area;
-    int solid;
-} Nexus_V1_DgnMeshDescriptor;
-
 /* Runtime-facing view of one Structure1B cell. Movement and rendering must
  * consume this same decoded record so a resumed party cannot collide against
  * a stale square map while the viewport uses newer mesh/material data. */
 typedef struct {
     int square_type;
     uint16_t collision_ref;
-    uint16_t mesh_ref;
+    uint16_t post_grid_0x30_ref;
     uint8_t floor_material_ref;
     uint8_t ceiling_material_ref;
     uint8_t wall_material_refs[4];
@@ -82,7 +163,7 @@ typedef struct {
     uint8_t floor_slope;
     uint8_t floor_rotation;
     Nexus_V1_DgnCollisionSector collision_sector;
-    Nexus_V1_DgnMeshDescriptor mesh_descriptor;
+    int post_grid_0x30_row_prefix_valid;
 } Nexus_V1_DgnCellGeometry;
 
 typedef struct {
@@ -95,11 +176,9 @@ typedef struct {
     int8_t floor_heights[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     uint8_t floor_slopes[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     uint8_t floor_rotations[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
-    uint16_t mesh_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    uint16_t post_grid_0x30_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     Nexus_V1_DgnCollisionSector
         collision_sectors[NEXUS_DGN_MAX_COLLISION_SECTORS];
-    Nexus_V1_DgnMeshDescriptor
-        mesh_descriptors[NEXUS_DGN_MAX_MESH_DESCRIPTORS];
     int thing_count;
     int creature_count;
     int has_3d_geometry;
@@ -130,15 +209,19 @@ typedef struct {
     int collision_ref_count;
     int collision_ref_unique_count;
     int max_collision_ref;
-    int mesh_ref_count;
-    int mesh_ref_unique_count;
-    int max_mesh_ref;
-    int structure1f_descriptor_count;
-    int structure1f_valid_descriptor_count;
-    int structure1f_solid_descriptor_count;
-    int structure1f_first_ref;
-    int structure1f_max_area;
-    int descriptor_capacity;
+    int post_grid_0x30_ref_count;
+    int post_grid_0x30_ref_unique_count;
+    int max_post_grid_0x30_ref;
+    int post_grid_0x30_ref_value_count;
+    int post_grid_0x24_zero_span_valid;
+    int post_grid_0x30_record_table_valid;
+    int post_grid_0x30_record_count;
+    int post_grid_0x30_typed_prefix_record_count;
+    int post_grid_0x30_opaque_tail_record_count;
+    int post_grid_0x30_row_ordinal_prefix_valid;
+    int post_grid_0x30_row_ordinal_flagged_prefix_record_count;
+    int post_grid_0x30_first_row_ordinal_flagged_prefix_record;
+    int post_grid_0x30_last_row_ordinal_flagged_prefix_record;
 } Nexus_V1_DgnRendererHandoffReceipt;
 
 typedef enum {
@@ -158,9 +241,8 @@ typedef struct {
     int square_type;
     int wall_dir;
     uint16_t collision_ref;
-    uint16_t mesh_ref;
+    uint16_t post_grid_0x30_ref;
     Nexus_V1_DgnCollisionSector collision_sector;
-    Nexus_V1_DgnMeshDescriptor mesh_descriptor;
     /* DGN byte3 is signed 1/32 world-unit height. The four values are
      * NW, NE, SE, SW and carry the source-cell slope where present. */
     int8_t floor_height[4];
@@ -171,7 +253,7 @@ typedef struct {
      * owns projection and material selection; hosts only rasterize it. */
     int16_t quad_x[4];
     int16_t quad_y[4];
-    int mesh_descriptor_projected;
+    int post_grid_0x30_row_prefix_valid;
     uint8_t material_id;
     Nexus_V1_DgnRenderCommandKind material_source_kind;
     uint8_t palette_index;
@@ -191,13 +273,13 @@ typedef struct {
     int ceiling_material_command_count;
     int wall_material_command_count;
     int material_semantics_complete;
-    int mesh_command_count;
-    int mesh_descriptor_command_count;
-    int structure1f_command_count;
-    int structure1f_solid_command_count;
-    int structure1f_max_area;
-    int first_mesh_ref;
-    int max_mesh_ref;
+    int post_grid_0x30_reference_command_count;
+    int post_grid_0x30_valid_reference_command_count;
+    int first_post_grid_0x30_ref;
+    int max_post_grid_0x30_ref;
+    int post_grid_0x30_row_ordinal_flagged_prefix_record_count;
+    int post_grid_0x30_first_row_ordinal_flagged_prefix_record;
+    int post_grid_0x30_last_row_ordinal_flagged_prefix_record;
     int source_cell_count;
     int missing_material_count;
     int first_missing_material_id;
@@ -223,6 +305,9 @@ int nexus_v1_level_move_allowed(const Nexus_V1_Level *level,
 int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
                                const uint8_t *data,
                                int size);
+int nexus_v1_dgn_structure1_layout(Nexus_V1_DgnStructure1Layout *out_layout,
+                                   const uint8_t *data,
+                                   int size);
 int nexus_v1_level_dgn_renderer_handoff_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnRendererHandoffReceipt *out_receipt);

@@ -97,6 +97,13 @@ typedef struct {
     uint16_t gdat_scene_highest_light_level;
     uint16_t gdat_scene_void_random_fall;
     uint16_t gdat_scene_animated_floor;
+    uint16_t gdat_scene_rain;
+    uint16_t gdat_misty_map;
+    uint16_t gdat_thunder_position;
+    uint16_t gdat_ambient_darkness;
+    int gdat_interface_palette_ready;
+    uint32_t gdat_interface_palette_hash;
+    uint8_t gdat_interface_palette16[16];
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -129,7 +136,7 @@ static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
 static int g_dm2_runtime_restore_in_progress = 0;
 
 #define DM2_RUNTIME_SAVE_MAGIC "FS2RT01"
-#define DM2_RUNTIME_SAVE_VERSION 2u
+#define DM2_RUNTIME_SAVE_VERSION 3u
 
 typedef struct {
     char magic[8];
@@ -155,6 +162,10 @@ typedef struct {
     uint16_t gdat_scene_highest_light_level;
     uint16_t gdat_scene_void_random_fall;
     uint16_t gdat_scene_animated_floor;
+    uint16_t gdat_scene_rain;
+    uint16_t gdat_misty_map;
+    uint16_t gdat_thunder_position;
+    uint16_t gdat_ambient_darkness;
 } DM2_V1_RuntimeSaveHeader;
 
 static int dm2_runtime_live_header_valid(const DM2_V1_RuntimeSaveHeader *header,
@@ -526,12 +537,17 @@ static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
 static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
 {
     DM2_V1_DungeonData *dd;
+    DM2_V1_InterfacePalette palette;
     uint32_t scene_flags = 0u;
     uint32_t scene_colorkey = 0u;
     uint32_t ambient_light = 0u;
     uint32_t highest_light_level = 0u;
     uint32_t void_random_fall = 0u;
     uint32_t animated_floor = 0u;
+    uint32_t scene_rain = 0u;
+    uint32_t misty_map = 0u;
+    uint32_t thunder_position = 0u;
+    uint32_t ambient_darkness = 0u;
 
     if (!rt) return;
     rt->map_graphics_style = -1;
@@ -545,11 +561,19 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     rt->gdat_scene_highest_light_level = 0u;
     rt->gdat_scene_void_random_fall = 0u;
     rt->gdat_scene_animated_floor = 0u;
+    rt->gdat_scene_rain = 0u;
+    rt->gdat_misty_map = 0u;
+    rt->gdat_thunder_position = 0u;
+    rt->gdat_ambient_darkness = 0u;
+    rt->gdat_interface_palette_ready = 0;
+    rt->gdat_interface_palette_hash = 0u;
+    memset(rt->gdat_interface_palette16, 0,
+           sizeof(rt->gdat_interface_palette16));
     if (!rt->boot || !rt->boot->dungeon_data) return;
 
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    rt->map_graphics_style =
-        dm2_v1_dungeon_get_map_graphics_style(dd, rt->dungeon_level);
+    rt->map_graphics_style = dm2_v1_dungeon_get_map_graphics_style(
+        dd, rt->dungeon_level);
     if (rt->map_graphics_style < 0) return;
 
     /* skproject/SKWIN/SkWinCore.cpp refreshes glbMapGraphicsSet from
@@ -566,7 +590,11 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
             &ambient_light,
             &highest_light_level,
             &void_random_fall,
-            &animated_floor)) {
+            &animated_floor,
+            &scene_rain,
+            &misty_map,
+            &thunder_position,
+            &ambient_darkness)) {
         if (rt->gdat_scene_control_hash == 0u ||
             rt->gdat_scene_control_present_mask == 0u) {
             return;
@@ -579,6 +607,16 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     rt->gdat_scene_highest_light_level = (uint16_t)highest_light_level;
     rt->gdat_scene_void_random_fall = (uint16_t)void_random_fall;
     rt->gdat_scene_animated_floor = (uint16_t)animated_floor;
+    rt->gdat_scene_rain = (uint16_t)scene_rain;
+    rt->gdat_misty_map = (uint16_t)misty_map;
+    rt->gdat_thunder_position = (uint16_t)thunder_position;
+    rt->gdat_ambient_darkness = (uint16_t)ambient_darkness;
+    if (dm2_v1_boot_interface_palette(rt->boot, &palette)) {
+        rt->gdat_interface_palette_ready = 1;
+        rt->gdat_interface_palette_hash = palette.hash;
+        memcpy(rt->gdat_interface_palette16, palette.palette16,
+               sizeof(rt->gdat_interface_palette16));
+    }
 }
 
 static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
@@ -2059,6 +2097,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                                   int view_w, int view_h) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_ViewportState viewport;
+    const uint8_t *rect14_rows = NULL;
+    uint32_t rect14_row_count = 0u;
+    uint32_t rect14_hash = 0u;
 
     if (!framebuffer || fb_stride <= 0 ||
         view_w < DM2_VP_WIDTH || view_h < DM2_VP_HEIGHT) {
@@ -2096,18 +2137,27 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport,
         rt->gdat_scene_control_ready,
+        rt->map_graphics_style,
         rt->gdat_scene_control_hash,
         rt->gdat_scene_colorkey,
         rt->gdat_scene_flags,
         rt->gdat_scene_ambient_light,
         rt->gdat_scene_highest_light_level,
         rt->gdat_scene_void_random_fall,
-        rt->gdat_scene_animated_floor);
-    {
-        DM2_V1_InterfaceTheme theme;
-        if (dm2_runtime_build_interface_theme(rt, &theme)) {
-            dm2_v1_viewport_set_interface_theme(&viewport, &theme);
-        }
+        rt->gdat_scene_animated_floor,
+        rt->gdat_scene_rain,
+        rt->gdat_misty_map,
+        rt->gdat_thunder_position,
+        rt->gdat_ambient_darkness);
+    dm2_v1_viewport_set_gdat_interface_palette(
+        &viewport,
+        rt->gdat_interface_palette_ready,
+        rt->gdat_interface_palette_hash,
+        rt->gdat_interface_palette16);
+    if (dm2_v1_boot_interface_rect14_table(
+            rt->boot, &rect14_rows, &rect14_row_count, &rect14_hash)) {
+        dm2_v1_viewport_set_gdat_interface_rect14(
+            &viewport, rect14_rows, rect14_row_count, rect14_hash);
     }
     dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
@@ -2157,10 +2207,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.fallback_hud_portrait_drawn_count;
     ++g_dm2_frame_ownership.generation;
     g_dm2_frame_ownership.runtime_frame_owned = 1;
+    g_dm2_frame_ownership.is_outdoor = viewport.is_outdoor;
     g_dm2_frame_ownership.gdat_provider_bound =
         rt->viewport_asset_fetch != NULL;
     g_dm2_frame_ownership.floor_ceiling_gdat_blits =
         viewport.asset_floor_ceiling_drawn_count;
+    g_dm2_frame_ownership.outdoor_sky_gdat_blits =
+        viewport.asset_outdoor_sky_drawn_count;
+    g_dm2_frame_ownership.outdoor_ground_gdat_blits =
+        viewport.asset_outdoor_ground_drawn_count;
     g_dm2_frame_ownership.wall_gdat_blits =
         viewport.asset_wall_drawn_count;
     g_dm2_frame_ownership.hud_core_gdat_blits =
@@ -2215,14 +2270,22 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.interface_rect14_consumed;
     if (viewport.asset_floor_ceiling_drawn_count > 0) {
         dm2_runtime_add_viewport_asset_evidence(&g_dm2_frame_ownership,
-                                                DM2_V1_VIEWPORT_GFX_FLOOR);
+            dm2_v1_viewport_scene_material_graphic_index(
+                viewport.gdat_scene_material_index,
+                DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR));
         dm2_runtime_add_viewport_asset_evidence(&g_dm2_frame_ownership,
-                                                DM2_V1_VIEWPORT_GFX_CEILING);
+            dm2_v1_viewport_scene_material_graphic_index(
+                viewport.gdat_scene_material_index,
+                DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING));
     }
     if (viewport.asset_wall_drawn_count > 0) {
+        int wall_graphicsset_index = viewport.gdat_scene_control_ready
+            ? viewport.gdat_scene_material_index
+            : DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET;
         dm2_runtime_add_viewport_asset_evidence(
             &g_dm2_frame_ownership,
-            dm2_v1_viewport_wall_graphic_index_for_square(DM2_SQ_D0C));
+            dm2_v1_viewport_wall_graphic_index_for_graphicsset(
+                wall_graphicsset_index, DM2_SQ_D0L));
     }
     if (viewport.asset_hud_core_drawn_count > 0) {
         /* skproject loads interface GDAT through
@@ -2313,18 +2376,16 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_scene_control_ready;
     g_dm2_frame_ownership.gdat_scene_control_consumed =
         viewport.gdat_scene_control_consumed_count;
-    g_dm2_frame_ownership.gdat_scene_light_consumed =
-        viewport.gdat_scene_light_consumed_count;
-    g_dm2_frame_ownership.gdat_scene_floor_anim_consumed =
-        viewport.gdat_scene_floor_anim_consumed_count;
-    g_dm2_frame_ownership.gdat_scene_weather_consumed =
-        viewport.gdat_scene_weather_consumed_count;
     g_dm2_frame_ownership.gdat_scene_control_hash =
         rt->gdat_scene_control_hash;
     g_dm2_frame_ownership.gdat_scene_control_present_mask =
         rt->gdat_scene_control_present_mask;
     g_dm2_frame_ownership.gdat_scene_colorkey = rt->gdat_scene_colorkey;
     g_dm2_frame_ownership.gdat_scene_flags = rt->gdat_scene_flags;
+    g_dm2_frame_ownership.gdat_scene_material_index =
+        viewport.gdat_scene_material_index;
+    g_dm2_frame_ownership.gdat_scene_material_consumed =
+        viewport.gdat_scene_material_consumed_count;
     g_dm2_frame_ownership.gdat_scene_ambient_light =
         rt->gdat_scene_ambient_light;
     g_dm2_frame_ownership.gdat_scene_highest_light_level =
@@ -2333,56 +2394,61 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_scene_void_random_fall;
     g_dm2_frame_ownership.gdat_scene_animated_floor =
         rt->gdat_scene_animated_floor;
-    {
-        DM2_V1_ViewportSceneConsumptionReceipt scene_receipt;
-        memset(&scene_receipt, 0, sizeof(scene_receipt));
-        if (dm2_v1_viewport_scene_consumption_receipt(&viewport,
-                                                      &scene_receipt)) {
-            g_dm2_frame_ownership.gdat_scene_consumed_mask =
-                scene_receipt.consumed_mask;
-            g_dm2_frame_ownership.gdat_scene_consumption_hash =
-                scene_receipt.consumption_hash;
-            g_dm2_frame_ownership.gdat_scene_weather_plan_ready =
-                scene_receipt.weather_plan_ready;
-            g_dm2_frame_ownership.gdat_scene_weather_plan_hash =
-                scene_receipt.weather_plan_hash;
-            g_dm2_frame_ownership.gdat_scene_weather_kind =
-                scene_receipt.weather_kind;
-            g_dm2_frame_ownership.gdat_scene_weather_intensity =
-                scene_receipt.weather_intensity;
-            g_dm2_frame_ownership.gdat_scene_weather_density =
-                scene_receipt.weather_density;
-            g_dm2_frame_ownership.gdat_scene_weather_scroll =
-                scene_receipt.weather_scroll;
-            g_dm2_frame_ownership.gdat_scene_weather_alpha =
-                scene_receipt.weather_alpha;
-            g_dm2_frame_ownership.gdat_scene_weather_lightning_flash =
-                scene_receipt.weather_lightning_flash;
-            g_dm2_frame_ownership.gdat_scene_weather_rain_color =
-                scene_receipt.weather_rain_color;
-            g_dm2_frame_ownership.gdat_scene_weather_fog_target_color =
-                scene_receipt.weather_fog_target_color;
-            g_dm2_frame_ownership.gdat_scene_weather_lightning_color =
-                scene_receipt.weather_lightning_color;
-        }
-    }
+    g_dm2_frame_ownership.gdat_scene_rain = rt->gdat_scene_rain;
+    g_dm2_frame_ownership.gdat_misty_map = rt->gdat_misty_map;
+    g_dm2_frame_ownership.gdat_thunder_position =
+        rt->gdat_thunder_position;
+    g_dm2_frame_ownership.gdat_ambient_darkness =
+        rt->gdat_ambient_darkness;
+    g_dm2_frame_ownership.gdat_scene_light_consumed =
+        viewport.gdat_scene_light_consumed_count;
+    g_dm2_frame_ownership.gdat_scene_weather_consumed =
+        viewport.gdat_scene_weather_consumed_count;
+    g_dm2_frame_ownership.gdat_sprite_palette_consumed =
+        viewport.gdat_sprite_palette_consumed_count;
+    g_dm2_frame_ownership.gdat_interface_palette_ready =
+        rt->gdat_interface_palette_ready;
+    g_dm2_frame_ownership.gdat_interface_palette_consumed =
+        viewport.gdat_interface_palette_consumed_count;
+    g_dm2_frame_ownership.gdat_material_palette_floor_ceiling_consumed =
+        viewport.gdat_material_palette_floor_ceiling_consumed_count;
+    g_dm2_frame_ownership.gdat_material_palette_wall_consumed =
+        viewport.gdat_material_palette_wall_consumed_count;
+    g_dm2_frame_ownership.gdat_material_palette_door_frame_consumed =
+        viewport.gdat_material_palette_door_frame_consumed_count;
+    g_dm2_frame_ownership.gdat_interface_palette_hash =
+        rt->gdat_interface_palette_hash;
+    memcpy(g_dm2_frame_ownership.gdat_interface_palette16,
+           rt->gdat_interface_palette16,
+           sizeof(g_dm2_frame_ownership.gdat_interface_palette16));
     /* skproject SKWIN/SkWinCore.cpp routes the runtime HUD, floor/ceiling,
      * walls and overlays through GDAT-backed surface fetches before blitting.
      * A "full" DM2 runtime frame is only accepted when the mandatory HUD and
      * dungeon base layers are GDAT-backed and no visible runtime element fell
      * back to Firestaff's bounded placeholder paths. */
+    g_dm2_frame_ownership.outdoor_gdat_frame_valid =
+        g_dm2_frame_ownership.is_outdoor &&
+        g_dm2_frame_ownership.gdat_provider_bound &&
+        g_dm2_frame_ownership.outdoor_sky_gdat_blits > 0 &&
+        g_dm2_frame_ownership.outdoor_ground_gdat_blits > 0 &&
+        g_dm2_frame_ownership.hud_gdat_blits > 0 &&
+        g_dm2_frame_ownership.total_runtime_fallback_draws == 0;
     g_dm2_frame_ownership.full_gdat_frame_valid =
         g_dm2_frame_ownership.gdat_provider_bound &&
         g_dm2_frame_ownership.floor_ceiling_gdat_blits >= 2 &&
-        g_dm2_frame_ownership.wall_gdat_blits > 0 &&
+        (g_dm2_frame_ownership.is_outdoor ||
+         g_dm2_frame_ownership.wall_gdat_blits > 0) &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
          (g_dm2_frame_ownership.gdat_scene_control_ready &&
           g_dm2_frame_ownership.gdat_scene_control_consumed > 0 &&
-          g_dm2_frame_ownership.gdat_scene_light_consumed > 0 &&
           g_dm2_frame_ownership.gdat_scene_control_hash != 0u &&
-          (g_dm2_frame_ownership.gdat_scene_weather_consumed == 0 ||
-           (g_dm2_frame_ownership.gdat_scene_weather_plan_ready &&
-            g_dm2_frame_ownership.gdat_scene_weather_plan_hash != 0u)))) &&
+          g_dm2_frame_ownership.gdat_interface_palette_ready &&
+          g_dm2_frame_ownership.gdat_interface_palette_consumed > 0 &&
+          g_dm2_frame_ownership.gdat_material_palette_floor_ceiling_consumed > 0 &&
+          g_dm2_frame_ownership.gdat_material_palette_wall_consumed > 0 &&
+          (viewport.asset_door_frame_drawn_count == 0 ||
+           g_dm2_frame_ownership.gdat_material_palette_door_frame_consumed > 0) &&
+          g_dm2_frame_ownership.gdat_interface_palette_hash != 0u)) &&
         /* skproject SKWIN uses raw INTERFACE_GENERAL tables for the HUD
          * chrome/layout and CHAMPIONS images for the visible portrait panel.
          * Do not require Firestaff's primitive rect fills to be separate
@@ -2391,14 +2457,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
          * falls back. */
         g_dm2_frame_ownership.hud_gdat_blits > 0 &&
         g_dm2_frame_ownership.total_runtime_gdat_blits > 0 &&
-        ((!g_dm2_frame_ownership.interface_semantics_consumed &&
-          g_dm2_frame_ownership.interface_semantics_hash == 0u &&
-          g_dm2_frame_ownership.interface_semantics_byte_count == 0u) ||
-         (g_dm2_frame_ownership.interface_semantics_hash != 0u &&
-          g_dm2_frame_ownership.interface_semantics_byte_count > 0u)) &&
-        (!viewport.interface_theme.rect14_ready ||
-         g_dm2_frame_ownership.interface_rect14_consumed) &&
-        g_dm2_frame_ownership.total_runtime_fallback_draws == 0;
+        g_dm2_frame_ownership.total_runtime_fallback_draws == 0 &&
+        (!g_dm2_frame_ownership.is_outdoor ||
+         g_dm2_frame_ownership.outdoor_gdat_frame_valid);
     g_dm2_frame_ownership.valid =
         g_dm2_frame_ownership.runtime_frame_owned &&
         g_dm2_frame_ownership.full_gdat_frame_valid;
@@ -2435,6 +2496,7 @@ int dm2_v1_runtime_graphicsset_scene_receipt(
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->ready = g_dm2_runtime.gdat_scene_control_ready;
     out_receipt->map_graphics_style = g_dm2_runtime.map_graphics_style;
+    out_receipt->scene_material_index = g_dm2_runtime.map_graphics_style;
     out_receipt->hash = g_dm2_runtime.gdat_scene_control_hash;
     out_receipt->present_mask = g_dm2_runtime.gdat_scene_control_present_mask;
     out_receipt->query_count = g_dm2_runtime.gdat_scene_control_query_count;
@@ -2445,6 +2507,17 @@ int dm2_v1_runtime_graphicsset_scene_receipt(
         g_dm2_runtime.gdat_scene_highest_light_level;
     out_receipt->void_random_fall = g_dm2_runtime.gdat_scene_void_random_fall;
     out_receipt->animated_floor = g_dm2_runtime.gdat_scene_animated_floor;
+    out_receipt->scene_rain = g_dm2_runtime.gdat_scene_rain;
+    out_receipt->misty_map = g_dm2_runtime.gdat_misty_map;
+    out_receipt->thunder_position = g_dm2_runtime.gdat_thunder_position;
+    out_receipt->ambient_darkness = g_dm2_runtime.gdat_ambient_darkness;
+    out_receipt->interface_palette_ready =
+        g_dm2_runtime.gdat_interface_palette_ready;
+    out_receipt->interface_palette_hash =
+        g_dm2_runtime.gdat_interface_palette_hash;
+    memcpy(out_receipt->interface_palette16,
+           g_dm2_runtime.gdat_interface_palette16,
+           sizeof(out_receipt->interface_palette16));
     return out_receipt->ready;
 }
 
@@ -2453,6 +2526,7 @@ void dm2_v1_runtime_set_viewport_asset_provider(
     void *user) {
     g_dm2_runtime.viewport_asset_fetch = fetch;
     g_dm2_runtime.viewport_asset_user = user;
+    dm2_runtime_refresh_gdat_scene_control(&g_dm2_runtime);
 }
 
 int dm2_v1_runtime_set_map_wall_gfx_list(const uint8_t *wall_gfx_list,
@@ -2790,6 +2864,7 @@ void dm2_v1_runtime_set_position(int level, int x, int y, int dir) {
     rt->dungeon_level = level;
     rt->view_dir = gs->party_dir;
     dm2_runtime_refresh_map_wall_gfx_list(rt);
+    dm2_runtime_refresh_gdat_scene_control(rt);
 }
 
 /* ── Party position accessors ─────────────────────────────────────── */
@@ -2987,6 +3062,10 @@ int dm2_v1_runtime_serialize_live_save(uint8_t *out, size_t out_size) {
         g_dm2_runtime.gdat_scene_void_random_fall;
     header.gdat_scene_animated_floor =
         g_dm2_runtime.gdat_scene_animated_floor;
+    header.gdat_scene_rain = g_dm2_runtime.gdat_scene_rain;
+    header.gdat_misty_map = g_dm2_runtime.gdat_misty_map;
+    header.gdat_thunder_position = g_dm2_runtime.gdat_thunder_position;
+    header.gdat_ambient_darkness = g_dm2_runtime.gdat_ambient_darkness;
     memcpy(out, &header, sizeof(header));
     cursor = out + sizeof(header) + (size_t)session_size;
     memcpy(cursor, &creatures, sizeof(creatures));
@@ -3033,7 +3112,13 @@ int dm2_v1_runtime_restore_live_save(const uint8_t *data, size_t data_size) {
     g_dm2_runtime.move_cooldown_ticks = header->move_cooldown_ticks;
     g_dm2_runtime.paused = header->paused;
     if (header->gdat_scene_control_ready &&
-        header->map_graphics_style == g_dm2_runtime.map_graphics_style) {
+        header->map_graphics_style == g_dm2_runtime.map_graphics_style &&
+        header->gdat_scene_control_hash != 0u &&
+        header->gdat_scene_control_present_mask != 0u) {
+        /* skproject persists the current map and dungeon DB state; the
+         * Firestaff sidecar keeps the derived GRAPHICSSET control receipt
+         * aligned with that restored map so the first post-load frame need
+         * not re-prove the handoff through fallback scene constants. */
         g_dm2_runtime.gdat_scene_control_ready = 1;
         g_dm2_runtime.gdat_scene_control_hash =
             header->gdat_scene_control_hash;
@@ -3051,6 +3136,12 @@ int dm2_v1_runtime_restore_live_save(const uint8_t *data, size_t data_size) {
             header->gdat_scene_void_random_fall;
         g_dm2_runtime.gdat_scene_animated_floor =
             header->gdat_scene_animated_floor;
+        g_dm2_runtime.gdat_scene_rain = header->gdat_scene_rain;
+        g_dm2_runtime.gdat_misty_map = header->gdat_misty_map;
+        g_dm2_runtime.gdat_thunder_position =
+            header->gdat_thunder_position;
+        g_dm2_runtime.gdat_ambient_darkness =
+            header->gdat_ambient_darkness;
     }
     return 0;
 }
@@ -3277,6 +3368,8 @@ int dm2_v1_runtime_quicksave_boot_profile_with_receipt(
         return 0;
     }
     memset(&receipt->session, 0, sizeof(receipt->session));
+    (void)dm2_v1_runtime_graphicsset_scene_receipt(
+        &receipt->graphicsset_scene);
     if (dm2_v1_runtime_export_session(&receipt->session) != 0) {
         dm2_v1_quicksave_receipt_init(receipt,
                                       DM2_V1_QUICKSAVE_EXPORT_FAILED,

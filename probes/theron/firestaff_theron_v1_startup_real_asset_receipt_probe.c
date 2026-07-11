@@ -59,6 +59,11 @@
  *      real Track 02 receipts expose Chapter 1 / Hall of Records and a
  *      0/7 quest-item summary without entering M11.
  *
+ *  13. Staged, hash-verified Track 02 media also yields a read-only
+ *      compact-object layout receipt: descriptor anchors and per-level
+ *      row/ordinal hashes. It never assigns object meaning or promotes
+ *      runtime, Continue, synthetic-menu, or palette state.
+ *
  * Exit codes:
  *   0  - all checks passed (or were appropriately skipped with a
  *        deterministic verdict)
@@ -275,6 +280,129 @@ static void check_startup_chapter_real(
 static int file_exists_nonempty(const char *path) {
     struct stat st;
     return path && path[0] && stat(path, &st) == 0 && st.st_size > 0;
+}
+
+static uint8_t *read_file_bytes(const char *path, size_t *out_size) {
+    FILE *file;
+    long file_size;
+    uint8_t *bytes;
+
+    if (out_size) {
+        *out_size = 0u;
+    }
+    if (!path || !out_size) {
+        return NULL;
+    }
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (file_size = ftell(file)) <= 0 ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) {
+            fclose(file);
+        }
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc((size_t)file_size);
+    if (!bytes || fread(bytes, 1u, (size_t)file_size, file) !=
+                      (size_t)file_size) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    *out_size = (size_t)file_size;
+    return bytes;
+}
+
+static int report_real_object_layout(const char *label,
+                                     const char *path,
+                                     const char *md5_hex,
+                                     Theron_Track02ObjectTableRouteReceipt *out_receipt) {
+    Theron_Track02ObjectTableRouteReceipt receipt;
+    uint8_t *track02_bytes;
+    size_t track02_size;
+    size_t level_index;
+
+    track02_bytes = read_file_bytes(path, &track02_size);
+    check(track02_bytes != NULL,
+          "real Track02 object-layout probe reads staged media");
+    if (!track02_bytes) {
+        return 0;
+    }
+    check(theron_v1_track02_capture_object_table_route_receipt(
+              track02_bytes, track02_size, md5_hex, &receipt) == 1 &&
+              receipt.valid && receipt.verified_track02 &&
+              receipt.descriptor_route_ready &&
+              !receipt.fallback_visuals_allowed && receipt.route_hash != 0u,
+          "real Track02 object-layout receipt stays hash-gated and no-fallback");
+    if (receipt.valid) {
+        printf("[RECEIPT] %s object-layout anchors=0x%x decoded=%d "
+               "consensus=0x%x route_hash=0x%08x\n",
+               label,
+               receipt.descriptor_anchor_mask,
+               receipt.object_table_decode_ready,
+               receipt.object_table_level_consensus_mask,
+               (unsigned)receipt.route_hash);
+        for (level_index = 0u;
+             level_index < THERON_TRACK02_DUNGEON_COUNT;
+             ++level_index) {
+            printf("[RECEIPT] %s object-layout level=%zu anchors=0x%x "
+                   "rows=%zu row_hash=0x%08x ordinals=%zu..%zu "
+                   "position_hash=0x%08x\n",
+                   label,
+                   level_index,
+                   receipt.object_table_level_consensus_anchor_masks[level_index],
+                   receipt.object_table_level_consensus_record_counts[level_index],
+                   (unsigned)receipt.object_table_level_consensus_record_hashes[level_index],
+                   receipt.object_table_level_consensus_first_record_indexes[level_index],
+                   receipt.object_table_level_consensus_last_record_indexes[level_index],
+                   (unsigned)receipt.object_table_level_consensus_position_hashes[level_index]);
+        }
+    }
+    free(track02_bytes);
+    if (out_receipt) {
+        *out_receipt = receipt;
+    }
+    return receipt.valid;
+}
+
+static int report_real_nonstartup_level_layout(
+    const char *label,
+    const char *path,
+    const char *md5_hex,
+    Theron_Track02LevelRouteReceipt *out_receipt) {
+    Theron_Track02LevelRouteReceipt receipt;
+    uint8_t *track02_bytes;
+    size_t track02_size;
+
+    track02_bytes = read_file_bytes(path, &track02_size);
+    check(track02_bytes != NULL,
+          "real Track02 nonstartup-level probe reads staged media");
+    if (!track02_bytes) {
+        return 0;
+    }
+    (void)theron_v1_track02_capture_level_route_receipt(
+        track02_bytes, track02_size, md5_hex, &receipt);
+    check(receipt.verified_track02 &&
+              receipt.descriptor_route_ready &&
+              !receipt.fallback_visuals_allowed && receipt.route_hash != 0u,
+          "real Track02 nonstartup-level evidence stays hash-gated and no-fallback");
+    if (receipt.verified_track02 && receipt.descriptor_route_ready &&
+        !receipt.fallback_visuals_allowed) {
+        printf("[RECEIPT] %s nonstartup-level anchors=0x%x candidates=%zu "
+               "blocked=0x%x route_hash=0x%08x\n",
+               label,
+               receipt.nonstartup_level_candidate_anchor_mask,
+               receipt.nonstartup_level_candidate_count,
+               receipt.nonstartup_level_blocked_anchor_mask,
+               (unsigned)receipt.route_hash);
+    }
+    free(track02_bytes);
+    if (out_receipt) {
+        *out_receipt = receipt;
+    }
+    return receipt.verified_track02 && receipt.descriptor_route_ready &&
+        !receipt.fallback_visuals_allowed;
 }
 
 static void default_data_path_for(const char *relative_name,
@@ -570,6 +698,19 @@ static const struct real_asset_case g_real_cases[] = {
 
 static void check_real_asset_path(void) {
     size_t i;
+    Theron_Track02ObjectTableRouteReceipt jp_object_layout;
+    Theron_Track02ObjectTableRouteReceipt us_object_layout;
+    Theron_Track02LevelRouteReceipt jp_nonstartup_level_layout;
+    Theron_Track02LevelRouteReceipt us_nonstartup_level_layout;
+    int have_jp_object_layout = 0;
+    int have_us_object_layout = 0;
+    int have_jp_nonstartup_level_layout = 0;
+    int have_us_nonstartup_level_layout = 0;
+
+    memset(&jp_object_layout, 0, sizeof(jp_object_layout));
+    memset(&us_object_layout, 0, sizeof(us_object_layout));
+    memset(&jp_nonstartup_level_layout, 0, sizeof(jp_nonstartup_level_layout));
+    memset(&us_nonstartup_level_layout, 0, sizeof(us_nonstartup_level_layout));
 
     for (i = 0; i < sizeof(g_real_cases) / sizeof(g_real_cases[0]); ++i) {
         const struct real_asset_case *c = &g_real_cases[i];
@@ -612,6 +753,20 @@ static void check_real_asset_path(void) {
                      "track02_md5_hex round-trips expected MD5");
         check(r.track02_byte_count > 0u,
               "track02_byte_count populated from file stat");
+        if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_BIN) == 0) {
+            have_jp_object_layout = report_real_object_layout(
+                c->label, path, c->expected_md5, &jp_object_layout);
+            have_jp_nonstartup_level_layout = report_real_nonstartup_level_layout(
+                c->label, path, c->expected_md5, &jp_nonstartup_level_layout);
+        } else if (strcmp(c->expected_md5, THERON_TRACK02_MD5_US_BIN) == 0) {
+            have_us_object_layout = report_real_object_layout(
+                c->label, path, c->expected_md5, &us_object_layout);
+            have_us_nonstartup_level_layout = report_real_nonstartup_level_layout(
+                c->label, path, c->expected_md5, &us_nonstartup_level_layout);
+        } else {
+            (void)report_real_object_layout(c->label, path, c->expected_md5,
+                                             NULL);
+        }
         check(r.boot_profile_assets_verified == 1,
               "boot profile marks assets_verified");
         check(r.boot_profile_tick_rate_hz == 18u,
@@ -883,6 +1038,45 @@ static void check_real_asset_path(void) {
             check(r2.session_tick_token == r.session_tick_token,
                   "session_tick_token stable across two real-asset calls");
         }
+    }
+
+    if (!have_jp_nonstartup_level_layout || !have_us_nonstartup_level_layout) {
+        ++g_skipped;
+        printf("[SKIP] JP/US nonstartup-level layout comparison needs both staged raw Track 02 BINs\n");
+    } else {
+        Theron_Track02NonstartupLevelLayoutComparisonReceipt comparison;
+        Theron_Track02NonstartupLevelLayoutComparisonStatus status =
+            theron_v1_track02_compare_nonstartup_level_layout_variants(
+                &jp_nonstartup_level_layout, &us_nonstartup_level_layout,
+                &comparison);
+        check(status == THERON_TRACK02_NONSTARTUP_LEVEL_LAYOUT_COMPARISON_OK &&
+                  comparison.valid && comparison.comparison_hash != 0u,
+              "JP/US nonstartup-level layout comparison stays receipt-only and hash-gated");
+        printf("[RECEIPT] JP/US nonstartup-level comparable=0x%x matching=0x%x "
+               "mismatch=0x%x comparison_hash=0x%08x\n",
+               comparison.comparable_anchor_mask,
+               comparison.matching_anchor_mask,
+               comparison.mismatch_anchor_mask,
+               (unsigned)comparison.comparison_hash);
+    }
+
+    if (!have_jp_object_layout || !have_us_object_layout) {
+        ++g_skipped;
+        printf("[SKIP] JP/US object-layout comparison needs both staged raw Track 02 BINs\n");
+    } else {
+        Theron_Track02ObjectLayoutComparisonReceipt comparison;
+        Theron_Track02ObjectLayoutComparisonStatus status =
+            theron_v1_track02_compare_object_table_layout_variants(
+                &jp_object_layout, &us_object_layout, &comparison);
+        check(status == THERON_TRACK02_OBJECT_LAYOUT_COMPARISON_OK &&
+                  comparison.valid && comparison.comparison_hash != 0u,
+              "JP/US object-layout comparison stays receipt-only and hash-gated");
+        printf("[RECEIPT] JP/US object-layout comparable=0x%x matching=0x%x "
+               "mismatch=0x%x comparison_hash=0x%08x\n",
+               comparison.comparable_level_mask,
+               comparison.matching_level_mask,
+               comparison.mismatch_level_mask,
+               (unsigned)comparison.comparison_hash);
     }
 }
 

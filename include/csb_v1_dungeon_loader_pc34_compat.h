@@ -182,6 +182,11 @@ int csb_v1_dungeon_decode_tile(const CSB_V1_DungeonData *d, int level, int x, in
  */
 const CSB_V1_DungeonData *csb_v1_dungeon_get_current(void);
 
+/* Mutable companion to csb_v1_dungeon_get_current().  The loaded dungeon
+ * remains the original decoded DUNGEON.DAT image; M10 mutates its live Thing
+ * chains in place, as ReDMCSB mutates G0283/G0284. */
+CSB_V1_DungeonData *csb_v1_dungeon_get_current_mutable(void);
+
 /* Set the current dungeon context (loaded dungeon).
  * Takes ownership of the dungeon: it will be freed on the next call
  * to csb_v1_dungeon_set_current() or csb_v1_dungeon_unload().

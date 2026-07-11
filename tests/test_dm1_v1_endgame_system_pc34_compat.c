@@ -205,6 +205,35 @@ static void test_cycle_creature_type(void)
     ASSERT_EQ(DM1_Endgame_GetCycleCreatureType(5), 25, "switch 5 -> Lord Order");
 }
 
+static void test_fuse_mutation_plan(void)
+{
+    DM1EndgameFuseMutationPlan plan;
+    int i;
+    int fireballs = 0;
+    int harms = 0;
+    int buzzes = 0;
+    int cycles = 0;
+    printf("  F0446 mutation/replay plan...\n");
+    ASSERT_EQ(DM1_Endgame_BuildFuseMutationPlan(&plan), 1, "plan builds");
+    ASSERT_EQ(plan.stepCount, 43, "F0445 cadence count");
+    ASSERT_EQ(plan.totalF0445Updates, 43, "total F0445 updates");
+    ASSERT_EQ(plan.steps[0].replayType, DM1_ENDGAME_F0445_EVENT_SETUP,
+              "first step is setup");
+    ASSERT_EQ(plan.steps[plan.stepCount - 1].deleteOtherGroups, 1,
+              "last step deletes other groups");
+    for (i = 0; i < plan.stepCount; ++i) {
+        fireballs += plan.steps[i].spawnFireball;
+        harms += plan.steps[i].spawnHarmNonMaterial;
+        buzzes += plan.steps[i].requestBuzz;
+        cycles += plan.steps[i].replayType == DM1_ENDGAME_F0445_EVENT_CHAOS_ORDER_SWITCH;
+    }
+    ASSERT_EQ(fireballs, 7, "six barrage fireballs plus final fireball");
+    ASSERT_EQ(harms, 7, "six barrage harms plus final harm");
+    ASSERT_EQ(buzzes, 13, "Lord Order plus twelve cycle buzzes");
+    ASSERT_EQ(cycles, 24, "source cycle has twenty-four F0445 updates");
+    ASSERT_EQ(plan.finalDelayTicks, 600, "F0446 final delay");
+}
+
 /* ── Test: Fuse sequence state machine ──────────────────────────── */
 static void test_fuse_sequence_full(void)
 {
@@ -317,6 +346,7 @@ int main(void)
     test_fuse_action_chaos_trapped();
     test_fuse_action_out_of_bounds();
     test_cycle_creature_type();
+    test_fuse_mutation_plan();
     test_fuse_sequence_full();
     test_fuse_sequence_explosions();
     test_ending_params();

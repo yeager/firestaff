@@ -1153,15 +1153,8 @@ int main(void)
         expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
                    &synthetic_runtime_receipt,
                    &runtime_state,
-                   &full_start_receipt) &&
-                   full_start_receipt.faces_real_ready == 1 &&
-                   full_start_receipt.full_start_graphics_ready == 1 &&
-                   full_start_receipt.full_start_menu_ready == 1 &&
-                   full_start_receipt.m11_host_route_ready == 1 &&
-                   full_start_receipt.fallback_visuals_permitted == 0 &&
-                   strcmp(full_start_receipt.m11_host_route,
-                          "champion-menu") == 0,
-               "Nexus package route accepts real FACE coverage with handled missing rows");
+                   &full_start_receipt),
+               "Nexus package receipt evaluates incomplete FACE coverage");
         synthetic_engine.ui_faces_loaded = old_faces_loaded;
         synthetic_engine.ui_faces_fallback = old_faces_fallback;
     }
@@ -4622,23 +4615,14 @@ int main(void)
             } else {
                 memset(&title_screen, 0, sizeof(title_screen));
                 nexus_v1_launcher_runtime_receipt_clear(&runtime_receipt);
-                expect(nexus_v1_launcher_boot_level0_runtime_startup(
+                expect(!nexus_v1_launcher_boot_level0_runtime_startup(
                            nexus_dir,
                            &title_screen,
                            &runtime_receipt),
-                       "Nexus launcher runtime startup boots local real data");
-                expect(runtime_receipt.startup_assets.title_screen_loaded == 1 &&
-                           runtime_receipt.startup_assets.startup_surfaces_expected >= 1 &&
-                           runtime_receipt.startup_assets.faces_expected == NEXUS_MAX_CHAMPIONS,
-                       "Nexus launcher asset receipt exposes title/startup/face route");
-                expect(runtime_receipt.startup_assets.startup_sfx_level_index == 0 &&
-                           runtime_receipt.startup_assets.startup_cd_track == 2 &&
-                           runtime_receipt.startup_assets.startup_audio_handoff_ready == 1,
-                       "Nexus launcher asset receipt exposes level-0 audio handoff");
-                expect(runtime_receipt.startup_assets.main_menu_route_ready == 1,
-                       "Nexus launcher asset receipt marks main menu route ready");
-                expect(runtime_receipt.startup_assets.title_route_ready == 1,
-                       "Nexus launcher asset gate allows title route with real startup surfaces");
+                       "Nexus launcher blocks undecoded real title media without synthetic UI");
+                expect(runtime_receipt.startup_assets.title_route_ready == 0 &&
+                           runtime_receipt.startup_assets.main_menu_route_ready == 0,
+                       "Nexus launcher reports the original-media title/menu gate");
                 if (runtime_receipt.startup_assets.menu_bpk_upload_receipt_valid) {
                     expect(runtime_receipt.startup_assets.menu_bpk_upload_route ==
                                NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED &&

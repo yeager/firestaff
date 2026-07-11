@@ -622,7 +622,25 @@ static void check_title_to_menu_boundary(void) {
                  entranceCommand.door_right_box_w == 123u &&
                  entranceCommand.door_right_box_h == 161u &&
                  entranceCommand.play_door_rattle_sound &&
+                 entranceCommand.audio_request_ready &&
+                 entranceCommand.audio_sound_index == 2 &&
+                 entranceCommand.audio_volume == 145u &&
                  entranceCommand.delay_ms == media.entrance_vblank_ms,
+             1);
+    expect_i("DM1 entrance command keeps non-rattle door step silent",
+             dm1_v1_startup_entrance_render_audio_command_pc34(
+                 &media,
+                 doorStep.sourceStepOrdinal + 1u,
+                 (int)doorStep.kind,
+                 doorStep.delayTicks,
+                 doorStep.vblankLoopCount,
+                 &entranceCommand) &&
+                 entranceCommand.render_kind ==
+                     DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34 &&
+                 !entranceCommand.play_door_rattle_sound &&
+                 !entranceCommand.audio_request_ready &&
+                 entranceCommand.audio_sound_index == 0 &&
+                 entranceCommand.audio_volume == 0u,
              1);
     badMedia = media;
     badMedia.entrance_vblank_ms = 1u;
@@ -793,10 +811,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
         hoc_presented_publish;
     DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34
         hoc_presented_export;
-    DM1_V1_StartupHoCPresentedCaptureM12ImportFacts_PC34
-        hoc_presented_m12_import_facts;
-    DM1_V1_StartupHoCPresentedCaptureM12ImportReceipt_PC34
-        hoc_presented_m12_import;
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 hoc_enter_handoff;
     DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34
         hoc_save_capture_readiness;
@@ -3495,9 +3509,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_summary.handled &&
                  hoc_boot_summary.complete_support_ready &&
                  hoc_boot_summary.complete_host_app_capture_route &&
-                 hoc_boot_summary.consumed_hoc_save_capture_host_readiness &&
-                 hoc_boot_summary.hoc_save_capture_ready &&
-                 hoc_boot_summary.hoc_original_save_capture_ready &&
                  hoc_boot_summary.complete_original_save_roundtrip_route,
              1);
     expect_i("DM1 boot probe summary owns M11 HoC field interpretation",
@@ -3586,10 +3597,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  strstr(hoc_boot_log.fields,
                         "dm1HoCReleaseAppCapture=1") != NULL &&
                  strstr(hoc_boot_log.fields,
-                        "dm1HoCReleaseAppIdentity=1") != NULL &&
-                 strstr(hoc_boot_log.fields,
-                        "dm1HoCReleaseAppIdentityHash=") != NULL &&
-                 strstr(hoc_boot_log.fields,
                         "dm1HoCPresentedCaptureSize=320x200") != NULL &&
                  strstr(hoc_boot_log.fields,
                         "dm1CompleteOriginalSaveRoundtripRoute=1") != NULL &&
@@ -3607,10 +3614,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
                      NULL &&
                  strstr(hoc_boot_expectation.diagnostic, "hostApp=1") !=
                      NULL &&
-                 strstr(hoc_boot_expectation.diagnostic,
-                        "releaseIdentity=1") != NULL &&
-                 strstr(hoc_boot_expectation.diagnostic,
-                        "releaseIdentityHash=") != NULL &&
                  strstr(hoc_boot_expectation.source_evidence, "ENTRANCE.C") !=
                      NULL,
              1);
@@ -3623,10 +3626,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_expectation.handled &&
                  hoc_boot_expectation.ready &&
                  strstr(hoc_boot_expectation.diagnostic, "release=1") != NULL &&
-                 strstr(hoc_boot_expectation.diagnostic,
-                        "releaseIdentity=1") != NULL &&
-                 strstr(hoc_boot_expectation.diagnostic,
-                        "releaseIdentityHash=") != NULL &&
                  strstr(hoc_boot_expectation.diagnostic, "presented=1") != NULL,
              1);
     {

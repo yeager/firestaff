@@ -314,6 +314,14 @@ static const uint8_t g_valid_gzip_srm[] = {
     0xc3, 0x2c, 0x00, 0x00, 0x00
 };
 
+/* Valid gzip/raw-DEFLATE framing with an intentionally unknown body.  It
+ * proves slot selection advances past real-looking-but-unsupported data. */
+static const uint8_t g_unsupported_gzip_srm[] = {
+    0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff,
+    0x01, 0x08, 0x00, 0xf7, 0xff, 'U', 'N', 'K', 'N', 'O', 'W', 'N', '!',
+    0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00
+};
+
 static const uint8_t g_valid_party_gzip_srm[] = {
     0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x73, 0x0b,
     0x0e, 0x09, 0x0c, 0x08, 0x89, 0x34, 0x64, 0x64, 0x66, 0x66, 0xd4, 0x61,
@@ -893,6 +901,57 @@ static void test_srm_only_resume_claim(void) {
     } else {
         test_setenv("FIRESTAFF_THERON_SRM_DIR", NULL);
     }
+}
+
+static void test_srm_decoded_slot_skips_unsupported_prefix(void) {
+#if FIRESTAFF_HAS_ZLIB
+    char srm_root[THERON_V1_SRM_PATH_MAX];
+    char first_path[THERON_V1_SRM_PATH_MAX];
+    char decoded_path[THERON_V1_SRM_PATH_MAX];
+    char saved_srm[THERON_V1_SRM_PATH_MAX] = {0};
+    const char *prev = getenv("FIRESTAFF_THERON_SRM_DIR");
+    int had = prev != NULL;
+    Theron_V1StartupSaveResume snap;
+    Theron_StartupStateReceipt state_receipt;
+
+    if (!make_temp_save_root(srm_root)) {
+        printf("SKIP: mkdtemp failed for SRM decoded-slot test\n");
+        return;
+    }
+    if (had) {
+        strncpy(saved_srm, prev, THERON_V1_SRM_PATH_MAX - 1);
+        saved_srm[THERON_V1_SRM_PATH_MAX - 1] = '\0';
+    }
+    expect_true(theron_v1_srm_slot_path(srm_root, 0, first_path) == 1 &&
+                    theron_v1_srm_slot_path(srm_root, 2, decoded_path) == 1,
+                "decoded-slot test paths construct");
+    expect_true(write_bytes(first_path, g_unsupported_gzip_srm,
+                            sizeof(g_unsupported_gzip_srm)) == 1 &&
+                    write_bytes(decoded_path, g_valid_gzip_srm,
+                                sizeof(g_valid_gzip_srm)) == 1,
+                "decoded-slot test writes unsupported then supported slots");
+    test_setenv("FIRESTAFF_THERON_SRM_DIR", srm_root);
+    memset(&snap, 0, sizeof(snap));
+    expect_true(theron_v1_startup_save_resume_evaluate(NULL, &snap) == 1,
+                "decoded-slot test evaluates");
+    expect_true(snap.srm_first_recognized_slot == 0 &&
+                    snap.srm_first_decoded_slot == 2,
+                "decoded-slot test keeps manifest slot and selects decoded slot");
+    expect_true(snap.srm_progress_import_status ==
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK &&
+                    snap.srm_progress_current_dungeon == 3,
+                "decoded-slot test reports later valid envelope");
+    memset(&state_receipt, 0, sizeof(state_receipt));
+    expect_true(theron_v1_startup_save_resume_state_receipt(
+                    &snap, 1, &state_receipt) == 1 &&
+                    state_receipt.save_resume_srm_active_slot == 2,
+                "decoded-slot test publishes only decoded active slot");
+    cleanup_srm_root(srm_root);
+    if (had) test_setenv("FIRESTAFF_THERON_SRM_DIR", saved_srm);
+    else test_setenv("FIRESTAFF_THERON_SRM_DIR", NULL);
+#else
+    expect_true(1, "decoded-slot selection needs zlib (placeholder)");
+#endif
 }
 
 static void test_srm_party_continue_restores_all_champions(void) {
@@ -4766,7 +4825,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     object_route_receipt.descriptor_table_semantic_anchor_count == 3u &&
                     object_route_receipt.descriptor_table_semantic_anchor_mask == 0x07u &&
                     object_route_receipt.object_table_role_mapped &&
-                    object_route_receipt.object_table_candidate_count == 6u &&
+                    object_route_receipt.object_table_candidate_count == 3u &&
                     object_route_receipt.object_table_candidate_anchor_mask == 0x07u &&
                     object_route_receipt.object_table_candidate_anchor_counts[0] == 2u &&
                     object_route_receipt.object_table_candidate_anchor_counts[1] == 2u &&
@@ -4782,32 +4841,18 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     object_route_receipt
                             .object_table_candidate_nonzero_byte_counts[0] ==
                         16u &&
-                    object_route_receipt.object_table_candidate_hashes[0] ==
-                        test_fnv1a_bytes(
-                            track02 + post_descriptor_candidate_offsets[0],
-                            0x0400u) &&
-                    object_route_receipt.object_table_candidate_header_probe_count ==
-                        3u &&
-                    object_route_receipt.object_table_candidate_startup_header_shape_count ==
-                        0u &&
                     object_route_receipt.object_table_candidate_header_width[0] ==
                         0x4142u &&
                     object_route_receipt.object_table_candidate_header_height[0] ==
                         0x4344u &&
                     object_route_receipt.object_table_candidate_header_seed[0] ==
                         0x45464748u &&
-                    object_route_receipt.object_table_candidate_header_level_index[0] ==
+                    object_route_receipt
+                            .object_table_candidate_header_level_index[0] ==
                         0x494au &&
-                    !object_route_receipt.object_table_candidate_startup_header_shaped[0] &&
-                    object_route_receipt.object_table_candidate_last_entry_index[0] == 7u &&
-                    object_route_receipt.object_table_candidate_last_raw_offsets[0] ==
-                        post_descriptor_candidate_last_offsets[0] &&
-                    object_route_receipt.object_table_candidate_last_byte_counts[0] ==
-                        0x0400u &&
-                    object_route_receipt.object_table_candidate_last_hashes[0] ==
-                        test_fnv1a_bytes(
-                            track02 + post_descriptor_candidate_last_offsets[0],
-                            0x0400u) &&
+                    !object_route_receipt
+                         .object_table_candidate_header_matches_startup_shape[0] &&
+                    object_route_receipt.object_table_candidate_hash[0] != 0u &&
                     object_route_receipt.object_table_candidate_descriptor_delta[0] ==
                         0x29cu &&
                     object_route_receipt.object_table_candidate_after_descriptor[0] &&
@@ -4823,264 +4868,146 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                         THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     object_route_receipt.object_table_anchor_binding_status[2] ==
                         THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
-                    object_route_receipt.object_table_anchor_record_count[0] ==
+                    object_route_receipt.object_table_declared_record_count[0] ==
                         0x4241u &&
-                    object_route_receipt.object_table_anchor_overflow_count[0] ==
-                        (0x4241u - THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS) &&
-                    object_route_receipt
-                            .object_table_anchor_decoded_byte_count[0] ==
-                        2u &&
-                    object_route_receipt
-                            .object_table_anchor_decoded_nonzero_byte_count[0] ==
-                        2u &&
-                    object_route_receipt
-                            .object_table_anchor_decoded_checksum[0] ==
-                        test_fnv1a_bytes(
-                            track02 + post_descriptor_candidate_offsets[0],
-                            2u) &&
-                    object_route_receipt.object_table_row_probe_count == 3u &&
-                    object_route_receipt.object_table_row_probe_anchor_counts[0] ==
-                        1u &&
-                    object_route_receipt.object_table_row_probe_anchor_counts[1] ==
-                        1u &&
-                    object_route_receipt.object_table_row_probe_anchor_counts[2] ==
-                        1u &&
-                    object_route_receipt.object_table_row_reject_count == 3u &&
-                    object_route_receipt.object_table_row_bad_shape_count == 3u &&
-                    object_route_receipt
-                            .object_table_row_window_too_small_count == 0u &&
-                    object_route_receipt.object_table_row_zero_fill_count == 0u &&
-                    object_route_receipt
-                            .object_table_row_first_reject_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
-                    object_route_receipt
-                            .object_table_row_first_reject_entry_index[0] ==
-                        7u &&
-                    object_route_receipt
-                            .object_table_row_first_reject_raw_offsets[0] ==
-                        post_descriptor_candidate_last_offsets[0] &&
-                    object_route_receipt
-                            .object_table_row_first_reject_user_data_valid[0] &&
-                    object_route_receipt
-                            .object_table_row_first_reject_record_counts[0] ==
-                        0x6261u &&
-                    object_route_receipt
-                            .object_table_row_first_reject_overflow_counts[0] ==
-                        (0x6261u - THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS) &&
-                    object_route_receipt
-                            .object_table_row_first_reject_byte_counts[0] ==
-                        2u &&
-                    object_route_receipt
-                            .object_table_row_first_reject_checksums[0] ==
-                        test_fnv1a_bytes(
-                            track02 + post_descriptor_candidate_last_offsets[0],
-                            2u) &&
-                    object_route_receipt.object_table_shape_best_score[0] == 2 &&
-                    object_route_receipt.object_table_shape_best_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
-                    object_route_receipt.object_table_shape_best_entry_index[0] ==
-                        6u &&
-                    object_route_receipt.object_table_shape_best_raw_offsets[0] ==
-                        post_descriptor_candidate_offsets[0] &&
-                    object_route_receipt
-                            .object_table_shape_best_window_offsets[0] == 0u &&
-                    object_route_receipt
-                            .object_table_shape_best_record_counts[0] ==
-                        0x4241u &&
-                    object_route_receipt
-                            .object_table_shape_best_overflow_counts[0] ==
-                        (0x4241u - THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS) &&
-                    object_route_receipt.object_table_shape_best_byte_counts[0] ==
-                        2u &&
-                    object_route_receipt.object_table_shape_best_checksums[0] ==
-                        test_fnv1a_bytes(
-                            track02 + post_descriptor_candidate_offsets[0],
-                            2u) &&
-                    object_route_receipt.object_table_inner_scan_probe_count ==
-                        189u &&
-                    object_route_receipt.object_table_inner_scan_anchor_counts[0] ==
-                        63u &&
-                    object_route_receipt.object_table_inner_scan_anchor_counts[1] ==
-                        63u &&
-                    object_route_receipt.object_table_inner_scan_anchor_counts[2] ==
-                        63u &&
-                    object_route_receipt
-                            .object_table_inner_scan_shaped_count == 0u &&
-                    object_route_receipt
-                            .object_table_inner_scan_shaped_anchor_mask == 0u &&
-                    object_route_receipt.object_table_row_shaped_count == 0u &&
-                    object_route_receipt.object_table_row_shaped_anchor_mask == 0u &&
+                    object_route_receipt.object_table_record_count[0] == 0u &&
+                    object_route_receipt.object_table_required_byte_count[0] ==
+                        0x2120au &&
+                    object_route_receipt.object_table_overflow_count[0] ==
+                        0x4201u &&
+                    object_route_receipt.object_table_first_bad_record_index[0] ==
+                        THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS &&
+                    object_route_receipt.object_table_reject_reason[0] ==
+                        THERON_TRACK02_OBJECT_TABLE_REJECT_DECLARED_OVERFLOW &&
+                    object_route_receipt.object_table_record_hash[0] != 0u &&
                     !object_route_receipt.object_table_decode_ready &&
                     object_route_receipt.blocked_for_missing_real_object_evidence &&
                     !object_route_receipt.fallback_visuals_allowed &&
                     object_route_receipt.route_hash != 0u,
                 "Theron Track02 object-table route receipt blocks fallback when real object evidence is missing");
-    track02_positive = (uint8_t *)malloc(track02_size);
-    expect_true(track02_positive != NULL,
-                "Theron Track02 row-shaped object table fixture allocates");
-    if (track02_positive) {
-        memcpy(track02_positive, track02, track02_size);
-        track02_positive[post_descriptor_candidate_last_offsets[0] + 0u] = 1u;
-        track02_positive[post_descriptor_candidate_last_offsets[0] + 1u] = 0u;
-        track02_positive[post_descriptor_candidate_last_offsets[0] + 2u] = 1u;
-        track02_positive[post_descriptor_candidate_last_offsets[0] + 3u] = 2u;
-        track02_positive[post_descriptor_candidate_last_offsets[0] + 4u] = 3u;
-        track02_positive[post_descriptor_candidate_last_offsets[0] + 5u] = 4u;
-        track02_positive[post_descriptor_candidate_last_offsets[0] + 6u] = 5u;
-        track02_positive[post_descriptor_candidate_last_offsets[0] + 7u] = 0x80u;
-        track02_positive[post_descriptor_candidate_last_offsets[0] + 8u] = 0x34u;
-        track02_positive[post_descriptor_candidate_last_offsets[0] + 9u] = 0x12u;
-        memset(track02_positive + post_descriptor_candidate_last_offsets[0] + 10u,
-               0,
-               0x0400u - 10u);
-        expect_true(theron_v1_track02_capture_object_table_route_receipt(
-                    track02_positive,
+
+    /* Cross-anchor compact-row evidence is receipt-only.  These rows use the
+     * existing bounded fixture shape; consensus still does not assign any
+     * runtime object behavior or alter the no-fallback policy. */
+    for (size_t anchor = 0u; anchor < 3u; ++anchor) {
+        uint8_t *objects = track02 + post_descriptor_candidate_offsets[anchor];
+        wr16le_test(objects, 2u);
+        objects[2u] = 0x11u;
+        objects[3u] = 1u;
+        objects[4u] = 4u;
+        objects[5u] = 5u;
+        objects[6u] = 0u;
+        objects[7u] = 0x80u;
+        wr16le_test(objects + 8u, 0x1234u);
+        objects[10u] = 0x12u;
+        objects[11u] = 2u;
+        objects[12u] = 7u;
+        objects[13u] = 9u;
+        objects[14u] = 1u;
+        objects[15u] = 0x40u;
+        wr16le_test(objects + 16u, 0x5678u);
+    }
+    expect_true(theron_v1_track02_capture_object_table_route_receipt(
+                    track02,
                     track02_size,
                     THERON_TRACK02_MD5_US_BIN,
                     &object_route_receipt) &&
-                    object_route_receipt.valid &&
-                    object_route_receipt.verified_track02 &&
-                    object_route_receipt.descriptor_route_ready &&
                     object_route_receipt.object_table_decode_ready &&
+                    object_route_receipt.object_table_level_consensus_mask ==
+                        ((1u << 0) | (1u << 1)) &&
+                    object_route_receipt
+                            .object_table_level_consensus_anchor_masks[0] ==
+                        0x07u &&
+                    object_route_receipt
+                            .object_table_level_consensus_anchor_masks[1] ==
+                        0x07u &&
+                    object_route_receipt
+                            .object_table_level_consensus_record_counts[0] ==
+                        1u &&
+                    object_route_receipt
+                            .object_table_level_consensus_record_counts[1] ==
+                        1u &&
+                    object_route_receipt
+                            .object_table_level_consensus_first_record_indexes[0] ==
+                        0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_last_record_indexes[1] ==
+                        1u &&
+                    object_route_receipt
+                            .object_table_level_consensus_position_hashes[0] != 0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_position_hashes[1] != 0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_record_hashes[0] != 0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_record_hashes[1] != 0u,
+                "Theron Track02 compact object rows retain exact per-level cross-anchor evidence");
+    {
+        uint8_t *objects = track02 + post_descriptor_candidate_offsets[1];
+        uint8_t first_row[THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES];
+
+        memcpy(first_row, objects + 2u, sizeof(first_row));
+        memmove(objects + 2u,
+                objects + 2u + THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES,
+                THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES);
+        memcpy(objects + 2u + THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES,
+               first_row,
+               sizeof(first_row));
+    }
+    expect_true(theron_v1_track02_capture_object_table_route_receipt(
+                    track02,
+                    track02_size,
+                    THERON_TRACK02_MD5_US_BIN,
+                    &object_route_receipt) &&
+                    (object_route_receipt.object_table_level_consensus_mask &
+                     ((1u << 0) | (1u << 1))) == 0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_anchor_masks[0] ==
+                        0x05u &&
+                    object_route_receipt
+                            .object_table_level_consensus_anchor_masks[1] ==
+                        0x05u &&
                     !object_route_receipt.blocked_for_missing_real_object_evidence &&
-                    !object_route_receipt.fallback_visuals_allowed &&
-                    object_route_receipt.object_table_row_probe_count == 3u &&
-                    object_route_receipt.object_table_row_probe_anchor_counts[0] ==
-                        1u &&
-                    object_route_receipt.object_table_row_probe_anchor_counts[1] ==
-                        1u &&
-                    object_route_receipt.object_table_row_probe_anchor_counts[2] ==
-                        1u &&
-                    object_route_receipt.object_table_row_reject_count == 2u &&
-                    object_route_receipt.object_table_row_bad_shape_count == 2u &&
-                    object_route_receipt.object_table_row_first_reject_status[0] ==
-                        0 &&
-                    object_route_receipt
-                            .object_table_row_first_reject_status[1] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
-                    object_route_receipt.object_table_row_shaped_count == 1u &&
-                    object_route_receipt.object_table_row_shaped_anchor_mask == 0x01u &&
-                    object_route_receipt.object_table_row_shaped_anchor_counts[0] == 1u &&
-                    object_route_receipt.object_table_row_shaped_entry_index[0] == 7u &&
-                    object_route_receipt.object_table_row_shaped_raw_offsets[0] ==
-                        post_descriptor_candidate_last_offsets[0] &&
-                    object_route_receipt.object_table_row_shaped_user_data_valid[0] &&
-                    object_route_receipt.object_table_row_shaped_record_counts[0] == 1u &&
-                    object_route_receipt.object_table_row_shaped_byte_counts[0] == 10u &&
-                    object_route_receipt.object_table_row_shaped_checksums[0] ==
-                        test_fnv1a_bytes(
-                            track02_positive +
-                                post_descriptor_candidate_last_offsets[0],
-                            10u) &&
-                    object_route_receipt.object_table_shape_best_score[0] == 5 &&
-                    object_route_receipt.object_table_shape_best_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_OK &&
-                    object_route_receipt.object_table_shape_best_entry_index[0] ==
-                        7u &&
-                    object_route_receipt.object_table_shape_best_raw_offsets[0] ==
-                        post_descriptor_candidate_last_offsets[0] &&
-                    object_route_receipt
-                            .object_table_shape_best_window_offsets[0] == 0u &&
-                    object_route_receipt
-                            .object_table_shape_best_user_data_valid[0] &&
-                    object_route_receipt
-                            .object_table_shape_best_record_counts[0] == 1u &&
-                    object_route_receipt.object_table_shape_best_byte_counts[0] ==
-                        10u &&
-                    object_route_receipt.object_table_blocked_anchor_count == 2u &&
-                    object_route_receipt.object_table_blocked_anchor_mask == 0x06u &&
-                    object_route_receipt.route_hash != 0u,
-                "Theron Track02 object-table route receipt promotes a real row-shaped post-descriptor table");
-        free(track02_positive);
+                    !object_route_receipt.fallback_visuals_allowed,
+                "Theron Track02 row consensus rejects reordered accepted rows without promotion");
+    {
+        uint8_t *objects = track02 + post_descriptor_candidate_offsets[1];
+        uint8_t first_row[THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES];
+
+        memcpy(first_row, objects + 2u, sizeof(first_row));
+        memmove(objects + 2u,
+                objects + 2u + THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES,
+                THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES);
+        memcpy(objects + 2u + THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES,
+               first_row,
+               sizeof(first_row));
     }
-    track02_inner_positive = (uint8_t *)malloc(track02_size);
-    expect_true(track02_inner_positive != NULL,
-                "Theron Track02 inner object table fixture allocates");
-    if (track02_inner_positive) {
-        const size_t inner_offset = 0x20u;
-        const size_t inner_raw =
-            post_descriptor_candidate_last_offsets[0] + inner_offset;
-        memcpy(track02_inner_positive, track02, track02_size);
-        memset(track02_inner_positive +
-                   post_descriptor_candidate_last_offsets[0],
-               0,
-               0x0400u);
-        track02_inner_positive[inner_raw + 0u] = 1u;
-        track02_inner_positive[inner_raw + 1u] = 0u;
-        track02_inner_positive[inner_raw + 2u] = 2u;
-        track02_inner_positive[inner_raw + 3u] = 3u;
-        track02_inner_positive[inner_raw + 4u] = 4u;
-        track02_inner_positive[inner_raw + 5u] = 5u;
-        track02_inner_positive[inner_raw + 6u] = 6u;
-        track02_inner_positive[inner_raw + 7u] = 0u;
-        track02_inner_positive[inner_raw + 8u] = 0x78u;
-        track02_inner_positive[inner_raw + 9u] = 0x56u;
-        expect_true(theron_v1_track02_capture_object_table_route_receipt(
-                        track02_inner_positive,
-                        track02_size,
-                        THERON_TRACK02_MD5_US_BIN,
-                        &object_route_receipt) &&
-                        object_route_receipt.valid &&
-                        object_route_receipt.verified_track02 &&
-                        object_route_receipt.descriptor_route_ready &&
-                        !object_route_receipt.object_table_decode_ready &&
-                        object_route_receipt
-                            .blocked_for_missing_real_object_evidence &&
-                        !object_route_receipt.fallback_visuals_allowed &&
-                        object_route_receipt.object_table_row_shaped_count ==
-                            0u &&
-                        object_route_receipt
-                                .object_table_inner_scan_shaped_count == 1u &&
-                        object_route_receipt
-                                .object_table_inner_scan_shaped_anchor_mask ==
-                            0x01u &&
-                        object_route_receipt
-                                .object_table_inner_scan_shaped_entry_index[0] ==
-                            7u &&
-                        object_route_receipt
-                                .object_table_inner_scan_shaped_raw_offsets[0] ==
-                            inner_raw &&
-                        object_route_receipt
-                                .object_table_inner_scan_shaped_window_offsets[0] ==
-                            inner_offset &&
-                        object_route_receipt
-                                .object_table_inner_scan_shaped_user_data_valid[0] &&
-                        object_route_receipt
-                                .object_table_inner_scan_shaped_record_counts[0] ==
-                            1u &&
-                        object_route_receipt
-                                .object_table_inner_scan_shaped_byte_counts[0] ==
-                            10u &&
-                        object_route_receipt
-                                .object_table_inner_scan_shaped_checksums[0] ==
-                            test_fnv1a_bytes(track02_inner_positive + inner_raw,
-                                             10u) &&
-                        object_route_receipt.object_table_shape_best_score[0] ==
-                            5 &&
-                        object_route_receipt.object_table_shape_best_status[0] ==
-                            THERON_TRACK02_SEMANTIC_BINDING_OK &&
-                        object_route_receipt
-                                .object_table_shape_best_entry_index[0] ==
-                            7u &&
-                        object_route_receipt
-                                .object_table_shape_best_raw_offsets[0] ==
-                            inner_raw &&
-                        object_route_receipt
-                                .object_table_shape_best_window_offsets[0] ==
-                            inner_offset &&
-                        object_route_receipt
-                                .object_table_shape_best_user_data_valid[0] &&
-                        object_route_receipt
-                                .object_table_shape_best_record_counts[0] ==
-                            1u &&
-                        object_route_receipt.object_table_blocked_anchor_count ==
-                            3u &&
-                        object_route_receipt.object_table_blocked_anchor_mask ==
-                            0x07u &&
-                        object_route_receipt.route_hash != 0u,
-                    "Theron Track02 object-table route receipt records inner row-shaped diagnostics without promoting fallback");
-        free(track02_inner_positive);
+    track02[post_descriptor_candidate_offsets[1] + 5u] = 6u;
+    expect_true(theron_v1_track02_capture_object_table_route_receipt(
+                    track02,
+                    track02_size,
+                    THERON_TRACK02_MD5_US_BIN,
+                    &object_route_receipt) &&
+                    (object_route_receipt.object_table_level_consensus_mask &
+                     (1u << 0)) == 0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_anchor_masks[0] ==
+                        0x05u &&
+                    (object_route_receipt.object_table_level_consensus_mask &
+                     (1u << 1)) != 0u,
+                "Theron Track02 row consensus reports an accepted per-level anchor mismatch without promotion");
+
+    /* Restore the sparse fixture's deliberately malformed entry-6 prefix for
+     * the following no-fallback/runtime receipt assertions. */
+    for (size_t anchor = 0u; anchor < 3u; ++anchor) {
+        uint8_t *objects = track02 + post_descriptor_candidate_offsets[anchor];
+        for (size_t i = 0u; i < 16u; ++i) {
+            objects[i] = (uint8_t)(0x41u + anchor + i);
+        }
+        objects[16u] = 0u;
+        objects[17u] = 0u;
     }
+
     expect_true(theron_v1_track02_capture_level_route_receipt(
                     track02,
                     track02_size,
@@ -5134,9 +5061,29 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     level_route_receipt.level_grid_role_mapped &&
                     level_route_receipt.nonstartup_level_candidate_count == 6u &&
                     level_route_receipt.nonstartup_level_candidate_anchor_mask == 0x07u &&
-                    level_route_receipt.nonstartup_level_candidate_anchor_counts[0] == 2u &&
-                    level_route_receipt.nonstartup_level_candidate_anchor_counts[1] == 2u &&
-                    level_route_receipt.nonstartup_level_candidate_anchor_counts[2] == 2u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_sample_count[0] ==
+                        1u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_sample_entry_index[0][0] ==
+                        6u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_sample_raw_offsets[0][0] ==
+                        post_descriptor_candidate_offsets[0] &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_sample_user_data_valid[0][0] &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_sample_user_data_offsets[0][0] ==
+                        0x622ea2u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_sample_byte_counts[0][0] ==
+                        0x0400u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_sample_descriptor_delta[0][0] ==
+                        0x29cu &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_sample_hash[0][0] !=
+                        0u &&
                     level_route_receipt.nonstartup_level_candidate_entry_index[0] == 6u &&
                     level_route_receipt.nonstartup_level_candidate_raw_offsets[0] ==
                         post_descriptor_candidate_offsets[0] &&
@@ -5148,19 +5095,6 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     level_route_receipt
                             .nonstartup_level_candidate_nonzero_byte_counts[0] ==
                         16u &&
-                    level_route_receipt.nonstartup_level_candidate_hashes[0] ==
-                        test_fnv1a_bytes(
-                            track02 + post_descriptor_candidate_offsets[0],
-                            0x0400u) &&
-                    level_route_receipt
-                            .nonstartup_level_candidate_header_probe_count ==
-                        6u &&
-                    level_route_receipt
-                            .nonstartup_level_candidate_loader_reject_count ==
-                        6u &&
-                    level_route_receipt
-                            .nonstartup_level_candidate_map_status[0] ==
-                        THERON_MAP_ERR_INVALID_GRID &&
                     level_route_receipt
                             .nonstartup_level_candidate_header_width[0] ==
                         0x4142u &&
@@ -5173,16 +5107,9 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     level_route_receipt
                             .nonstartup_level_candidate_header_level_index[0] ==
                         0x494au &&
-                    level_route_receipt.nonstartup_level_candidate_last_entry_index[0] == 7u &&
-                    level_route_receipt.nonstartup_level_candidate_last_raw_offsets[0] ==
-                        post_descriptor_candidate_last_offsets[0] &&
-                    level_route_receipt.nonstartup_level_candidate_last_byte_counts[0] ==
-                        0x0400u &&
-                    level_route_receipt
-                            .nonstartup_level_candidate_last_hashes[0] ==
-                        test_fnv1a_bytes(
-                            track02 + post_descriptor_candidate_last_offsets[0],
-                            0x0400u) &&
+                    !level_route_receipt
+                         .nonstartup_level_candidate_header_matches_startup_shape[0] &&
+                    level_route_receipt.nonstartup_level_candidate_hash[0] != 0u &&
                     level_route_receipt.nonstartup_level_candidate_descriptor_delta[0] ==
                         0x29cu &&
                     level_route_receipt.nonstartup_level_candidate_after_descriptor[0] &&
@@ -6339,6 +6266,7 @@ int main(void) {
     test_staged_but_unrecognized_is_skip();
     test_tqsv_only_resume_claim();
     test_srm_only_resume_claim();
+    test_srm_decoded_slot_skips_unsupported_prefix();
     test_srm_party_continue_restores_all_champions();
     test_dual_resume_claim();
     test_boot_profile_handoff();

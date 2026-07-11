@@ -115,7 +115,7 @@ static void m11_set_launch_failed_message(M12_StartupMenuState* menuState) {
         menuState->messageLine1 = "NEXUS LOAD FAILED";
         menuState->messageLine2 = "CHECK ISO/BIN OR EXTRACTED FILES";
     } else if (gameId && strcmp(gameId, "theron") == 0) {
-        menuState->messageLine1 = "THERON LOAD FAILED";
+        menuState->messageLine1 = "THERON STARTUP GRAPHICS INVALID";
         menuState->messageLine2 = "CHECK TRACK 02 ISO/BIN";
     } else if (gameId && strcmp(gameId, "dm2") == 0) {
         menuState->messageLine1 = "DM2 LOAD FAILED";
@@ -805,9 +805,9 @@ static int m11_play_redmcsb_entrance_transition(
                 door.rightBoxH = command.door_right_box_h;
                 door.leftSourceX = command.door_left_source_x;
                 door.rightSourceX = command.door_right_source_x;
-                if (command.play_door_rattle_sound) {
-                    (void)M11_Audio_EmitMarker(&gameView->audioState,
-                                               M11_AUDIO_MARKER_DOOR);
+                if (command.audio_request_ready) {
+                    (void)M11_Audio_EmitSourceSoundIndex(
+                        &gameView->audioState, command.audio_sound_index);
                 }
                 if (!m11_draw_entrance_opening_doors_asset(
                         gameView,
@@ -1040,8 +1040,8 @@ static void m11_swsh_indexed_to_rgba(const unsigned char* indexed,
  * pixels 160..319 of every row stay zero (logo only renders in the
  * left half) and even pixels 0..159 show alternating nibbles (visible
  * vertical stripes). ReDMCSB TITLE.C PC/F20 port uses the same Atari
- * ST logo layout; see m11_unpack_title_4bpp_to_indexed for the same
- * pattern used by the DM title animation.
+ * ST logo layout; TITLE.DAT fallback frames use the corresponding
+ * V1_TitleFrontend_Unpack4bppScreenToIndexed path.
  *
  * Source-lock: Atari ST VDI / LINEA: F0080_vq_extend / F0086_vs_clip
  * low-res Physbase layout is 4 planes of (width+1)/2 bytes per row.

@@ -42,6 +42,8 @@ typedef struct {
 typedef struct {
     DM1OriginalSaveClassifyResult classify;
     int importer_result;
+    int resumed_from_backup;
+    int backup_promoted_to_primary;
     uint16_t part_expected_checksums[5];
     uint16_t part_actual_checksums[5];
     uint32_t part_byte_counts[5];
@@ -132,22 +134,21 @@ typedef struct {
     int core_state_matches;
 } DM1OriginalSavePC34RoundtripReport;
 
+/* Corpus proof is deliberately separate from the header-only classifier.
+ * It never writes an export beside a user save: each eligible file is
+ * imported, exported into transient memory, and reloaded from that buffer. */
 typedef struct {
-    int handled;
-    int ready;
-    int scan_consumed;
+    int scan_succeeded;
     int scanned_file_count;
-    int present_count;
-    int pc34_importer_candidate_count;
-    int pc34_loader_part_envelope_count;
-    int roundtrip_verified_count;
+    int pc34_candidate_count;
+    int roundtrip_attempted_count;
+    int roundtrip_succeeded_count;
+    int core_state_match_count;
     int roundtrip_failed_count;
-    int rejected_count;
-    int truncated_count;
-    uint32_t corpus_hash;
+    int first_failure_result;
     char first_pc34_path[DM1_ORIGINAL_SAVE_PATH_MAX];
-    const char *source_evidence;
-} DM1OriginalSavePC34CorpusVerificationReceipt;
+    char first_roundtrip_path[DM1_ORIGINAL_SAVE_PATH_MAX];
+} DM1OriginalSavePC34CorpusRoundtripReport;
 
 /* Transient HoC state is not part of ReDMCSB's save parts.  Firestaff may
  * persist it beside a quicksave, but it must be re-materialized only after
@@ -206,9 +207,11 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
     DM1OriginalSavePC34HandoffReport *out_report);
 
 /* ReDMCSB LOADSAVE.C F0435 restores save parts and the dungeon before the
- * live runtime consumes HoC state.  These helpers retain the already-loaded
- * start dungeon only when the original save has no dungeon tail, and keep
- * world ownership transfer out of M11. */
+ * live runtime consumes HoC state. These helpers stage all parsed state in
+ * a candidate world and commit it only after the final dungeon/timeline
+ * handoff succeeds. On failure, world, event_queue, and out_report retain
+ * their prior values. A tail-less original save borrows start_world's
+ * already materialized dungeon; out_world may not alias start_world. */
 int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
     const char *path,
     const struct GameWorld_Compat *start_world,
@@ -281,12 +284,14 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
     size_t *out_size,
     DM1OriginalSavePC34RoundtripReport *out_report);
 
-/* Scan a user save corpus by bytes, then promote only PC34 candidates whose
- * ReDMCSB F0435 load path survives Firestaff export and reload verification.
- */
-int dm1_v1_original_save_pc34_verify_corpus_root(
+/* Verify every classifier-qualified PC34 save below `root` through the
+ * F0435 -> F0433 -> F0435 transient-memory round trip. Header-only,
+ * rejected, and non-PC34 files are reported by the classifier but are never
+ * handed to the importer. A successful scan returns OK even when a candidate
+ * fails, so the caller can inspect the complete corpus receipt. */
+int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     const char *root,
-    DM1OriginalSavePC34CorpusVerificationReceipt *out_receipt);
+    DM1OriginalSavePC34CorpusRoundtripReport *out_report);
 
 /* Builds a bounded ReDMCSB PC34-shaped original-save byte stream for
  * importer/export handoff verification. This is not a full user save

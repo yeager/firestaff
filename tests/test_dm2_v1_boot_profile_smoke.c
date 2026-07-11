@@ -546,9 +546,13 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               frame_ownership.viewport_decoded_gdat_hash != 0u &&
               frame_ownership.viewport_raw_gdat_byte_count > 0u &&
               frame_ownership.viewport_decoded_gdat_pixel_count > 0u &&
-              (frame_ownership.gdat_scene_consumed_mask & 0x3u) == 0x3u &&
-              frame_ownership.gdat_scene_consumption_hash != 0u,
-          "runtime frame ownership carries raw/decoded GDAT evidence plus live interface semantics");
+              frame_ownership.gdat_scene_control_ready == 1 &&
+              frame_ownership.gdat_scene_control_consumed > 0 &&
+              frame_ownership.gdat_scene_light_consumed > 0 &&
+              frame_ownership.gdat_sprite_palette_consumed > 0 &&
+              frame_ownership.gdat_scene_control_hash != 0u &&
+              (frame_ownership.gdat_scene_control_present_mask & 0x03u) == 0x03u,
+          "runtime frame ownership consumes real GDAT sprite palette and scene light controls");
     memset(&hud_capture, 0, sizeof(hud_capture));
     CHECK(dm2_v1_boot_runtime_hud_capture_receipt(
               launch.profile,

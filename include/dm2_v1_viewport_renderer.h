@@ -127,6 +127,7 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE (-0x20000)
 #define DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT 8
 #define DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_MASK 0xFF
+#define DM2_V1_VIEWPORT_GFX_CREATURE_DIRECT_FIELD_BASE (-0x220000)
 #define DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE (-0x40000)
 #define DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT 16
 #define DM2_V1_VIEWPORT_GFX_ITEM_INDEX_SHIFT 8
@@ -146,9 +147,19 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_HUD_CORE_GOLD_BOX 0x09
 #define DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_ICON_BASE 0x20
 #define DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK 0xFF
+#define DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_BASE (-0xD00000)
+#define DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING 0x01
+#define DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR   0x00
+#define DM2_V1_VIEWPORT_GFX_WALL_GRAPHICSSET_BASE (-0xE00000)
+#define DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET 0x01
 
 int dm2_v1_viewport_wall_field_for_square(int view_square);
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square);
+int dm2_v1_viewport_wall_graphic_index_for_graphicsset(int graphicsset_index,
+                                                        int view_square);
+int dm2_v1_viewport_wall_graphic_address(int gdat_index,
+                                         int *out_graphicsset_index,
+                                         int *out_field);
 int dm2_v1_viewport_door_frame_field_for_square(int view_square);
 int dm2_v1_viewport_door_frame_graphic_index_for_square(int view_square);
 int dm2_v1_viewport_door_panel_field_for_square(int view_square);
@@ -169,6 +180,8 @@ int dm2_v1_viewport_wall_button_graphic_index(int wall_gfx_index,
                                               int wall_gfx_field);
 int dm2_v1_viewport_creature_graphic_index(int creature_type,
                                            int frame_index);
+int dm2_v1_viewport_creature_field_graphic_index(int creature_type,
+                                                 int image_field);
 int dm2_v1_viewport_item_category_for_db_pool(int db_pool);
 int dm2_v1_viewport_item_graphic_index(int item_category,
                                        int item_type,
@@ -179,6 +192,11 @@ int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
 int dm2_v1_viewport_hud_portrait_graphic_index(int portrait_index);
 int dm2_v1_viewport_hud_core_graphic_index(int field);
 int dm2_v1_viewport_hud_action_icon_graphic_index(int icon_index);
+int dm2_v1_viewport_scene_material_graphic_index(int graphicsset_index,
+                                                  int material_field);
+int dm2_v1_viewport_scene_material_graphic_address(int gdat_index,
+                                                    int *out_graphicsset_index,
+                                                    int *out_material_field);
 int dm2_v1_viewport_map_chip_frame_width(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_count(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_index(int requested_frame,
@@ -472,6 +490,10 @@ typedef struct {
     int center_x;
     int center_y;
     int gdat_index;
+    int rect14_applied;
+    int rect14_scale64;
+    int rect14_lateral_offset;
+    int rect14_flip_mirror;
     DM2_V1_ViewportRect fallback_rect;
     uint8_t fallback_color;
     DM2_V1_ViewportRect health_bg_rect;
@@ -492,6 +514,7 @@ typedef struct {
     DM2_V1_ViewportRect dst_rect;
     int src_stride;
     int transparent_color;
+    int flip_mirror;
     int render_frame;
     int draw_order;
 } DM2_V1_CreatureAssetBlit;
@@ -708,13 +731,15 @@ typedef struct {
     void *asset_user;
     int asset_floor_ceiling_drawn_count;
     int fallback_floor_ceiling_drawn_count;
+    int asset_outdoor_sky_drawn_count;
+    int asset_outdoor_ground_drawn_count;
     int asset_wall_drawn_count;
     int fallback_wall_drawn_count;
     int gdat_scene_control_ready;
     int gdat_scene_control_consumed_count;
     int gdat_scene_light_consumed_count;
-    int gdat_scene_floor_anim_consumed_count;
     int gdat_scene_weather_consumed_count;
+    int gdat_sprite_palette_consumed_count;
     uint32_t gdat_scene_control_hash;
     uint16_t gdat_scene_colorkey;
     uint16_t gdat_scene_flags;
@@ -722,17 +747,23 @@ typedef struct {
     uint16_t gdat_highest_light_level;
     uint16_t gdat_void_random_fall;
     uint16_t gdat_animated_floor;
-    int last_weather_plan_ready;
-    uint32_t last_weather_plan_hash;
-    int last_weather_kind;
-    int last_weather_intensity;
-    int last_weather_density;
-    int last_weather_scroll;
-    int last_weather_alpha;
-    int last_weather_lightning_flash;
-    uint8_t last_weather_rain_color;
-    uint8_t last_weather_fog_target_color;
-    uint8_t last_weather_lightning_color;
+    uint16_t gdat_scene_rain;
+    uint16_t gdat_misty_map;
+    uint16_t gdat_thunder_position;
+    uint16_t gdat_ambient_darkness;
+    int gdat_scene_material_index;
+    int gdat_scene_material_consumed_count;
+    int gdat_interface_palette_ready;
+    int gdat_interface_palette_consumed_count;
+    int gdat_material_palette_floor_ceiling_consumed_count;
+    int gdat_material_palette_wall_consumed_count;
+    int gdat_material_palette_door_frame_consumed_count;
+    uint32_t gdat_interface_palette_hash;
+    uint8_t gdat_interface_palette16[16];
+    const uint8_t *gdat_interface_rect14_rows;
+    uint32_t gdat_interface_rect14_row_count;
+    uint32_t gdat_interface_rect14_hash;
+    int gdat_interface_rect14_consumed_count;
     int asset_door_panel_drawn_count;
     int asset_door_overlay_drawn_count;
     int asset_door_frame_drawn_count;
@@ -851,24 +882,36 @@ void dm2_v1_viewport_set_time(DM2_V1_ViewportState *s, float time_of_day);
 void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
                                    const DM2_V1_HudPartyState *party);
 void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
-                                        DM2_V1_ViewportAssetFetch fetch,
-                                        void *user);
+                                         DM2_V1_ViewportAssetFetch fetch,
+                                         void *user);
 void dm2_v1_viewport_set_gdat_scene_control(
     DM2_V1_ViewportState *s,
     int ready,
+    int graphicsset_index,
     uint32_t hash,
     uint16_t scene_colorkey,
     uint16_t scene_flags,
     uint16_t ambient_light,
     uint16_t highest_light_level,
     uint16_t void_random_fall,
-    uint16_t animated_floor);
-int dm2_v1_viewport_scene_consumption_receipt(
-    const DM2_V1_ViewportState *s,
-    DM2_V1_ViewportSceneConsumptionReceipt *out_receipt);
-void dm2_v1_viewport_set_interface_theme(
+    uint16_t animated_floor,
+    uint16_t scene_rain,
+    uint16_t misty_map,
+    uint16_t thunder_position,
+    uint16_t ambient_darkness);
+/* skproject SkWinCore::INIT loads dtPalIRGB/dtPalette16 before HUD drawing.
+ * The viewport accepts only the already validated logical-index table owned by
+ * the DM2 boot profile; HUD colours remain logical until this bind occurs. */
+void dm2_v1_viewport_set_gdat_interface_palette(
     DM2_V1_ViewportState *s,
-    const DM2_V1_InterfaceTheme *theme);
+    int ready,
+    uint32_t hash,
+    const uint8_t palette16[16]);
+void dm2_v1_viewport_set_gdat_interface_rect14(
+    DM2_V1_ViewportState *s,
+    const uint8_t *rows,
+    uint32_t row_count,
+    uint32_t hash);
 int dm2_v1_viewport_build_wall_panel_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_WallPanelRenderPlan *out_plan);

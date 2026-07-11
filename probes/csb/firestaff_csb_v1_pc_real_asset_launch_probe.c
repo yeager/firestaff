@@ -59,6 +59,129 @@ static int pc_data_present(const char *dir)
     return csb_v1_boot_scan_assets(&profile, dir) == 0;
 }
 
+static int raster_rows_match_surface(const CSB_V1_StartupRuntimeRaster_PC34 *raster,
+                                     const CSB_V1_StartupRuntimeSurface_PC34 *surface,
+                                     int row_count)
+{
+    size_t byte_count;
+
+    if (!raster || !surface || !raster->pixels || !surface->pixels ||
+        raster->width != 320 || surface->width != 320 || row_count <= 0 ||
+        row_count > raster->height || row_count > surface->height) {
+        return 0;
+    }
+    byte_count = (size_t)row_count * 320u;
+    return memcmp(raster->pixels, surface->pixels, byte_count) == 0;
+}
+
+static void verify_real_indexed_startup(CSB_V1_BootProfile *profile)
+{
+    CSB_V1_StartupRuntimeAssetSession_PC34 session;
+    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
+    CSB_V1_StartupRuntimeRaster_PC34 raster;
+    CSB_V1_StartupFullRuntimeReceipt_PC34 receipt;
+    CSB_V1_StartupRenderPlan_PC34 plan;
+
+    csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
+    CHECK(csb_v1_boot_startup_runtime_asset_session_open_pc34(profile, &session) == 1 &&
+              session.valid && session.full_startup_ready &&
+              session.rejects_legacy_wrappers,
+          "verified GRAPHICS.DAT opens one owned indexed startup session");
+    if (!session.valid) return;
+
+    memset(&plan, 0, sizeof(plan));
+    plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
+    plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34;
+    plan.title_dest_y = 90;
+    plan.title_dest_w = 320;
+    plan.title_dest_h = 16;
+    plan.title_transparent_color = -1;
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 1u, &frame) == 1 &&
+              csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                  &frame, &plan, &raster) == 1 && raster.valid &&
+              raster.title_composited && raster.source_surface_count == 1 &&
+              raster.real_asset_matched,
+          "C001 PRESENTS reaches a 320x200 indexed runtime raster");
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+
+    plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
+    plan.title_dest_x = 136;
+    plan.title_dest_y = 74;
+    plan.title_dest_w = 48;
+    plan.title_dest_h = 12;
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 2u, &frame) == 1 &&
+              csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                  &frame, &plan, &raster) == 1 && raster.valid &&
+              raster.title_composited && raster.pixel_hash != 0u,
+          "C001 CHAOS zoom reaches the indexed runtime raster");
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+
+    plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
+    plan.title_dest_x = 0;
+    plan.title_dest_y = 118;
+    plan.title_dest_w = 320;
+    plan.title_dest_h = 57;
+    plan.title_transparent_color = 0;
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 3u, &frame) == 1 &&
+              csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                  &frame, &plan, &raster) == 1 && raster.valid &&
+              raster.title_composited && raster.pixel_hash != 0u,
+          "C001 STRIKES BACK reaches the indexed runtime raster");
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+
+    memset(&plan, 0, sizeof(plan));
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
+    plan.surface_w = 320;
+    plan.surface_h = 200;
+    plan.closed_left_w = 105;
+    plan.closed_left_h = 161;
+    plan.closed_left_dest_y = 28;
+    plan.closed_right_w = 127;
+    plan.closed_right_h = 161;
+    plan.closed_right_dest_x = 105;
+    plan.closed_right_dest_y = 28;
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 4u, &frame) == 1 &&
+              csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                  &frame, &plan, &raster) == 1 && raster.valid &&
+              raster.entrance_composited && raster.door_composited &&
+              raster.source_surface_count == 3,
+          "C004 plus closed C002/C003 reaches one indexed entrance raster");
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+
+    memset(&plan, 0, sizeof(plan));
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34;
+    plan.surface_w = 320;
+    plan.surface_h = 200;
+    plan.opening_composite_valid = 1;
+    plan.opening_left_source_x = 0;
+    plan.opening_left_w = 97;
+    plan.opening_left_h = 161;
+    plan.opening_left_dest_y = 28;
+    plan.opening_right_source_x = 8;
+    plan.opening_right_w = 119;
+    plan.opening_right_h = 161;
+    plan.opening_right_dest_x = 113;
+    plan.opening_right_dest_y = 28;
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 5u, &frame) == 1 &&
+              csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                  &frame, &plan, &raster) == 1 && raster.valid &&
+              raster.door_composited && raster.source_surface_count == 3 &&
+              raster_rows_match_surface(&raster, frame.entrance_surface, 28),
+          "C004 opening frame preserves its first 28 rows before C002/C003 strips");
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+
+    CHECK(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+              &session, &receipt) == 1 && receipt.valid &&
+              receipt.title_to_hud_same_session && receipt.no_legacy_wrappers,
+          "indexed title and entrance session hands off to the C017/C040 HUD owner");
+    csb_v1_boot_startup_runtime_asset_session_release_pc34(&session);
+}
+
 int main(int argc, char **argv)
 {
     char default_dir[1024];
@@ -90,6 +213,8 @@ int main(int argc, char **argv)
           "variant detection selects PC DOS 3.4 English");
     CHECK(profile.graphics_kind == CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS,
           "graphics archive kind is ordinary GRAPHICS.DAT");
+
+    verify_real_indexed_startup(&profile);
 
     CHECK(csb_v1_boot_enter_game(&profile) == 0,
           "boot profile enters the CSB V1 runtime");

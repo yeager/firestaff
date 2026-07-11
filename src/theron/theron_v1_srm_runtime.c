@@ -1,6 +1,6 @@
 #include "theron_v1_srm_runtime.h"
 
-#include "theron_v1_startup_media.h"
+#include "theron_v1_startup_media_identity.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -120,17 +120,17 @@ Theron_V1SrmRuntimeStatus theron_v1_srm_runtime_export_path(const Theron_V1_Worl
 Theron_V1SrmRuntimeStatus theron_v1_srm_runtime_continue_path(Theron_V1_World *world, const char *path, const uint8_t *track, size_t track_size, const char *md5, Theron_V1SrmRuntimeReceipt *out) {
     uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES]; Theron_V1SrmEnvelopeReceipt envelope;
     Theron_DungeonProgression progression; Theron_V1_Party party; Theron_V1SrmPartyImportReceipt party_receipt;
-    Theron_StartupMediaStateReceipt media; Theron_V1SrmEnvelopeKind kind;
+    Theron_RuntimeMediaIdentity media_identity; Theron_V1SrmEnvelopeKind kind;
     runtime_receipt_init(out);
     if (!world || !path || !path[0] || !track || !track_size || !md5 || !md5[0]) return THERON_V1_SRM_RUNTIME_BAD_INPUT;
     memset(scratch, 0, sizeof(scratch)); memset(&envelope, 0, sizeof(envelope));
     kind = theron_v1_srm_decode_path(path, -1, scratch, sizeof(scratch), &envelope);
     if (kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY || !envelope.progression.restored || !envelope.party.restored) { fill_receipt(out, THERON_V1_SRM_RUNTIME_UNSUPPORTED_BODY, kind, envelope.decode_status, NULL); return THERON_V1_SRM_RUNTIME_UNSUPPORTED_BODY; }
     if (theron_v1_srm_decode_progression_party_payload(scratch, envelope.inflate_payload_size, &progression, &party, &party_receipt) != THERON_V1_SRM_PROGRESS_IMPORT_OK) { fill_receipt(out, THERON_V1_SRM_RUNTIME_UNSUPPORTED_BODY, kind, envelope.decode_status, NULL); return THERON_V1_SRM_RUNTIME_UNSUPPORTED_BODY; }
-    theron_v1_startup_media_capture_track02_state_receipt(track, track_size, md5, &media);
-    if (!media.runtime_media_identity.ready) { fill_receipt(out, THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED, kind, envelope.decode_status, NULL); return THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED; }
+    theron_v1_startup_media_capture_track02_identity(track, track_size, md5, &media_identity);
+    if (!media_identity.ready) { fill_receipt(out, THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED, kind, envelope.decode_status, NULL); return THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED; }
     world->progression = progression; world->party = party; reset_world_runtime(world); theron_v1_world_runtime_media_clear(world);
-    if (!theron_v1_world_runtime_media_set_identity(world, &media.runtime_media_identity)) return THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED;
+    if (!theron_v1_world_runtime_media_set_identity(world, &media_identity)) return THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED;
     if (out) out->srm_size = (size_t)envelope.file_size;
     fill_receipt(out, THERON_V1_SRM_RUNTIME_OK, kind, envelope.decode_status, world);
     return THERON_V1_SRM_RUNTIME_OK;

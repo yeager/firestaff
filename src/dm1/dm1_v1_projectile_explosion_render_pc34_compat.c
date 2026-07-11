@@ -527,6 +527,51 @@ int dm1_v1_f0115_thing_layer_receipt_pc34(
         -1, 0, outReceipt);
 }
 
+int dm1_v1_f0115_runtime_summary_pc34(
+    const unsigned short* thingRefs,
+    int thingCount,
+    int liveProjectileCount,
+    int liveExplosionCount,
+    DM1_F0115RuntimeSummaryPc34* outSummary)
+{
+    DM1_F0115ThingLayerReceiptPc34 staticReceipt;
+    DM1_F0115RuntimeSummaryPc34 summary;
+
+    if (!outSummary) return 0;
+    memset(outSummary, 0, sizeof(*outSummary));
+    if (thingCount < 0 || liveProjectileCount < 0 ||
+        liveExplosionCount < 0 ||
+        (thingCount > 0 && !thingRefs)) {
+        return 0;
+    }
+
+    memset(&staticReceipt, 0, sizeof(staticReceipt));
+    if (!dm1_v1_f0115_thing_layer_receipt_pc34(
+            thingRefs, thingCount, -1, 0, &staticReceipt) ||
+        !staticReceipt.valid) {
+        return 0;
+    }
+
+    /* ReDMCSB: DUNVIEW.C F0115 first classifies the square chain at
+     * 4547-4581, then consumes live F0219/F0220 projectile records at
+     * 5668-5683 and live explosion records at 5916-5933. Static C14/C15
+     * links are intentionally excluded by the runtime receipt. */
+    memset(&summary, 0, sizeof(summary));
+    summary.groups = staticReceipt.groups;
+    summary.items = staticReceipt.items;
+    summary.sensors = staticReceipt.sensors;
+    summary.textStrings = staticReceipt.textStrings;
+    summary.teleporters = staticReceipt.teleporters;
+    summary.doors = staticReceipt.doors;
+    summary.projectiles = liveProjectileCount;
+    summary.explosions = liveExplosionCount;
+    summary.total = staticReceipt.drawableTotal + liveProjectileCount +
+                    liveExplosionCount;
+    summary.valid = 1;
+    *outSummary = summary;
+    return 1;
+}
+
 int dm1_v1_f0115_thing_route_receipt_pc34(
     const DM1_F0115ThingRouteInputPc34* things,
     int thingCount,

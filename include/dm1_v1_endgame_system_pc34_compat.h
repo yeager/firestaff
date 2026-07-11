@@ -158,6 +158,51 @@ typedef struct DM1EndgameEndingParams {
 
 const DM1EndgameEndingParams* DM1_Endgame_GetEndingParams(void);
 
+/* F0446 mutation/replay plan.  DM1 owns the source ordering; the M11 host
+ * applies each requested world, audio, and redraw operation to its runtime. */
+enum {
+    DM1_ENDGAME_F0445_REPLAY_CAPACITY = 64
+};
+
+typedef enum DM1EndgameF0445ReplayEventType {
+    DM1_ENDGAME_F0445_EVENT_NONE = 0,
+    DM1_ENDGAME_F0445_EVENT_SETUP = 1,
+    DM1_ENDGAME_F0445_EVENT_FIREBALL_BURST = 2,
+    DM1_ENDGAME_F0445_EVENT_LORD_ORDER = 3,
+    DM1_ENDGAME_F0445_EVENT_HARM_BURST = 4,
+    DM1_ENDGAME_F0445_EVENT_CHAOS_ORDER_SWITCH = 5,
+    DM1_ENDGAME_F0445_EVENT_FINAL_EXPLOSIONS = 6,
+    DM1_ENDGAME_F0445_EVENT_GREY_LORD = 7,
+    DM1_ENDGAME_F0445_EVENT_FLUXCAGE_HIDE = 8,
+    DM1_ENDGAME_F0445_EVENT_GROUP_CLEANUP = 9,
+    DM1_ENDGAME_F0445_EVENT_TEXT_MESSAGE = 10
+} DM1EndgameF0445ReplayEventType;
+
+typedef struct DM1EndgameFuseMutationStep {
+    DM1EndgameF0445ReplayEventType replayType;
+    int32_t attackValue;
+    int32_t creatureType;
+    int32_t spawnFireball;
+    int32_t spawnHarmNonMaterial;
+    int32_t requestBuzz;
+    int32_t setCreatureType;
+    int32_t hideFluxcages;
+    int32_t deleteOtherGroups;
+} DM1EndgameFuseMutationStep;
+
+typedef struct DM1EndgameFuseMutationPlan {
+    DM1EndgameFuseMutationStep steps[DM1_ENDGAME_F0445_REPLAY_CAPACITY];
+    int32_t stepCount;
+    int32_t totalF0445Updates;
+    int32_t finalDelayTicks;
+    int32_t restartAllowedAfterWin;
+    int32_t endgameCalledWithTrue;
+    int32_t victoryMusicId;
+    const char* sourceEvidence;
+} DM1EndgameFuseMutationPlan;
+
+int DM1_Endgame_BuildFuseMutationPlan(DM1EndgameFuseMutationPlan* outPlan);
+
 /* -- Source evidence -- */
 const char* DM1_Endgame_System_GetSourceEvidence(void);
 

@@ -216,6 +216,8 @@ static void probe_first_map(const unsigned char *raw, int size)
               dungeon.column_index_base == -1 &&
               dungeon.square_first_thing_base == -1,
           "loader keeps unresolved PC G1 DB bases disabled");
+    CHECK(dm2_v1_dungeon_validate_record_graph(&dungeon) == 0,
+          "PC G1 map bytes are not promoted without the record ownership graph");
     CHECK(dungeon.level_widths[0] == 7,
           "loader reports map-0 width from Map_definitions.w8");
     CHECK(dungeon.level_heights[0] == 10,
