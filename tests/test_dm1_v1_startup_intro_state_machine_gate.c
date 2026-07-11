@@ -1729,6 +1729,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_capture_proof.real_asset_capture &&
                  hoc_capture_proof.mac_window_capture &&
                  hoc_capture_proof.release_app_capture &&
+                 hoc_capture_proof.release_app_identity_ready &&
+                 hoc_capture_proof.release_app_identity_hash != 0u &&
                  hoc_capture_proof.host_capture_route_matches &&
                  hoc_capture_proof.hoc_asset_capture &&
                  hoc_capture_proof.required_asset_capture &&
@@ -1764,6 +1766,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_runtime_apply.real_asset_capture &&
                  hoc_runtime_apply.mac_window_capture &&
                  hoc_runtime_apply.release_app_capture &&
+                 hoc_runtime_apply.release_app_identity_ready &&
+                 hoc_runtime_apply.release_app_identity_hash ==
+                     hoc_capture_proof.release_app_identity_hash &&
                  hoc_runtime_apply.host_capture_route_matches &&
                  hoc_runtime_apply.hoc_asset_capture &&
                  hoc_runtime_apply.host_window_capture &&
@@ -1844,6 +1849,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_production_consumer.real_asset_capture &&
                  hoc_production_consumer.mac_window_capture &&
                  hoc_production_consumer.release_app_capture &&
+                 hoc_production_consumer.release_app_identity_ready &&
+                 hoc_production_consumer.release_app_identity_hash ==
+                     hoc_capture_proof.release_app_identity_hash &&
                  hoc_production_consumer.host_capture_route_matches &&
                  hoc_production_consumer.hoc_asset_capture &&
                  hoc_production_consumer.host_window_capture &&
@@ -1972,6 +1980,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership.real_asset_capture &&
                  hoc_release_capture_ownership.mac_window_capture &&
                  hoc_release_capture_ownership.release_app_capture &&
+                 hoc_release_capture_ownership.release_app_identity_ready &&
+                 hoc_release_capture_ownership.release_app_identity_hash != 0u &&
                  hoc_release_capture_ownership.host_capture_route_matches &&
                  hoc_release_capture_ownership.hoc_asset_capture &&
                  hoc_release_capture_ownership.required_asset_capture &&
@@ -3304,6 +3314,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_save_capture_readiness.save_capture_ready &&
                  hoc_save_capture_readiness.enter_route_ready &&
                  hoc_save_capture_readiness.consume_dm1_receipts_only &&
+                 hoc_save_capture_readiness.release_app_identity_ready &&
+                 hoc_save_capture_readiness.release_app_identity_hash ==
+                     hoc_release_capture_ownership.release_app_identity_hash &&
                  hoc_save_capture_readiness.host_capture_route_matches &&
                  hoc_save_capture_readiness.render_hall_mirror_overlay &&
                  hoc_save_capture_readiness.host_draw_uses_owned_receipt &&
@@ -3496,6 +3509,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_summary.host_render_plan_ready &&
                  hoc_boot_summary.capture_proof_passed &&
                  hoc_boot_summary.release_capture_ownership_ready &&
+                 hoc_boot_summary.release_app_identity_ready &&
+                 hoc_boot_summary.release_app_identity_hash != 0u &&
                  hoc_boot_summary.host_render_consumer_ready &&
                  hoc_boot_summary.m11_boot_probe_consumer_ready &&
                  hoc_boot_summary.launch_path_ready &&
