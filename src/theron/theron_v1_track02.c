@@ -4692,6 +4692,112 @@ int theron_v1_track02_capture_level_route_receipt(
                                     ++out_receipt
                                           ->nonstartup_level_candidate_loader_reject_count;
                                 }
+                                if (map_status != THERON_MAP_OK) {
+                                    const size_t max_scan =
+                                        entries[entry_index].byte_count < 0x80u
+                                            ? entries[entry_index].byte_count
+                                            : 0x80u;
+                                    size_t inner_offset;
+                                    for (inner_offset = 2u;
+                                         inner_offset + 12u <= max_scan;
+                                         inner_offset += 2u) {
+                                        Theron_V1_Level inner_level;
+                                        const uint8_t *inner_candidate =
+                                            track02_data +
+                                            entries[entry_index].absolute_offset +
+                                            inner_offset;
+                                        Theron_MapLoadResult inner_status;
+                                        uint16_t inner_width =
+                                            rd16be(inner_candidate + 0u);
+                                        uint16_t inner_height =
+                                            rd16be(inner_candidate + 2u);
+                                        uint32_t inner_seed =
+                                            rd32be(inner_candidate + 4u);
+                                        uint16_t inner_level_index =
+                                            rd16be(inner_candidate + 8u);
+                                        inner_status = theron_v1_level_load(
+                                            &inner_level,
+                                            inner_candidate,
+                                            (int)(entries[entry_index]
+                                                      .byte_count -
+                                                  inner_offset),
+                                            1,
+                                            0);
+                                        ++out_receipt
+                                              ->nonstartup_level_inner_scan_probe_count;
+                                        if (anchor <
+                                            THERON_TRACK02_MAX_BANK_ANCHORS) {
+                                            ++out_receipt
+                                                  ->nonstartup_level_inner_scan_anchor_counts
+                                                      [anchor];
+                                        }
+                                        if (inner_status == THERON_MAP_OK) {
+                                            size_t inner_user_data_offset = 0u;
+                                            const size_t inner_raw_offset =
+                                                entries[entry_index]
+                                                    .absolute_offset +
+                                                inner_offset;
+                                            out_receipt
+                                                ->nonstartup_level_decode_ready =
+                                                1;
+                                            anchor_nonstartup_level_ready = 1;
+                                            ++out_receipt
+                                                  ->nonstartup_level_inner_scan_loaded_count;
+                                            out_receipt
+                                                ->nonstartup_level_inner_scan_loaded_anchor_mask |=
+                                                1u << (unsigned)anchor;
+                                            if (anchor <
+                                                    THERON_TRACK02_MAX_BANK_ANCHORS &&
+                                                out_receipt
+                                                        ->nonstartup_level_inner_scan_loaded_raw_offsets
+                                                            [anchor] == 0u) {
+                                                out_receipt
+                                                    ->nonstartup_level_inner_scan_loaded_entry_index
+                                                        [anchor] =
+                                                    entry_index;
+                                                out_receipt
+                                                    ->nonstartup_level_inner_scan_loaded_raw_offsets
+                                                        [anchor] =
+                                                    inner_raw_offset;
+                                                out_receipt
+                                                    ->nonstartup_level_inner_scan_loaded_window_offsets
+                                                        [anchor] =
+                                                    inner_offset;
+                                                out_receipt
+                                                    ->nonstartup_level_inner_scan_loaded_width
+                                                        [anchor] =
+                                                    inner_width;
+                                                out_receipt
+                                                    ->nonstartup_level_inner_scan_loaded_height
+                                                        [anchor] =
+                                                    inner_height;
+                                                out_receipt
+                                                    ->nonstartup_level_inner_scan_loaded_seed
+                                                        [anchor] =
+                                                    inner_seed;
+                                                out_receipt
+                                                    ->nonstartup_level_inner_scan_loaded_level_index
+                                                        [anchor] =
+                                                    inner_level_index;
+                                                if (theron_v1_track02_raw_offset_to_user_offset(
+                                                        inner_raw_offset,
+                                                        track02_size,
+                                                        md5_hex,
+                                                        &inner_user_data_offset) ==
+                                                    THERON_TRACK02_SIGNAL_OK) {
+                                                    out_receipt
+                                                        ->nonstartup_level_inner_scan_loaded_user_data_offsets
+                                                            [anchor] =
+                                                        inner_user_data_offset;
+                                                    out_receipt
+                                                        ->nonstartup_level_inner_scan_loaded_user_data_valid
+                                                            [anchor] = 1;
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
                             }
                             out_receipt
                                 ->nonstartup_level_candidate_last_entry_index
@@ -4821,6 +4927,12 @@ int theron_v1_track02_capture_level_route_receipt(
     hash *= 16777619u;
     hash ^= out_receipt->nonstartup_level_loaded_anchor_mask;
     hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->nonstartup_level_inner_scan_probe_count;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->nonstartup_level_inner_scan_loaded_count;
+    hash *= 16777619u;
+    hash ^= out_receipt->nonstartup_level_inner_scan_loaded_anchor_mask;
+    hash *= 16777619u;
     for (anchor = 0u; anchor < THERON_TRACK02_MAX_BANK_ANCHORS; ++anchor) {
         hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_anchor_counts[anchor];
@@ -4907,6 +5019,39 @@ int theron_v1_track02_capture_level_route_receipt(
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->nonstartup_level_loaded_level_index[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_inner_scan_anchor_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_inner_scan_loaded_entry_index[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_inner_scan_loaded_raw_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt
+                ->nonstartup_level_inner_scan_loaded_window_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt
+                ->nonstartup_level_inner_scan_loaded_user_data_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt
+                ->nonstartup_level_inner_scan_loaded_user_data_valid[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_inner_scan_loaded_width[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_inner_scan_loaded_height[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->nonstartup_level_inner_scan_loaded_seed[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt
+                ->nonstartup_level_inner_scan_loaded_level_index[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->startup_level_anchor_status[anchor];
         hash *= 16777619u;

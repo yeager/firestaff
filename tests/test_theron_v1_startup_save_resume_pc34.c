@@ -4613,6 +4613,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
     uint8_t *track02_positive = NULL;
     uint8_t *track02_inner_positive = NULL;
     uint8_t *track02_level_positive = NULL;
+    uint8_t *track02_level_inner_positive = NULL;
     Theron_StartupMediaStateReceipt media_receipt;
     Theron_Track02LevelRouteReceipt level_route_receipt;
     Theron_Track02ObjectTableRouteReceipt object_route_receipt;
@@ -5121,6 +5122,22 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     level_route_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     level_route_receipt.nonstartup_level_loaded_count == 0u &&
                     level_route_receipt.nonstartup_level_loaded_anchor_mask == 0u &&
+                    level_route_receipt.nonstartup_level_inner_scan_probe_count ==
+                        348u &&
+                    level_route_receipt
+                            .nonstartup_level_inner_scan_anchor_counts[0] ==
+                        116u &&
+                    level_route_receipt
+                            .nonstartup_level_inner_scan_anchor_counts[1] ==
+                        116u &&
+                    level_route_receipt
+                            .nonstartup_level_inner_scan_anchor_counts[2] ==
+                        116u &&
+                    level_route_receipt
+                            .nonstartup_level_inner_scan_loaded_count == 0u &&
+                    level_route_receipt
+                            .nonstartup_level_inner_scan_loaded_anchor_mask ==
+                        0u &&
                     !level_route_receipt.nonstartup_level_decode_ready &&
                     level_route_receipt.blocked_for_missing_nonstartup_level_evidence &&
                     !level_route_receipt.fallback_visuals_allowed &&
@@ -5190,6 +5207,12 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                                 .nonstartup_level_loaded_level_index[0] ==
                             0x0027u &&
                         level_route_receipt
+                                .nonstartup_level_inner_scan_probe_count ==
+                            290u &&
+                        level_route_receipt
+                                .nonstartup_level_inner_scan_loaded_count ==
+                            0u &&
+                        level_route_receipt
                                 .nonstartup_level_candidate_header_probe_count ==
                             6u &&
                         level_route_receipt
@@ -5205,6 +5228,86 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                         level_route_receipt.route_hash != 0u,
                     "Theron Track02 level-route receipt promotes a non-startup dungeon record when a candidate loads");
         free(track02_level_positive);
+    }
+    track02_level_inner_positive = (uint8_t *)malloc(track02_size);
+    expect_true(track02_level_inner_positive != NULL,
+                "Theron Track02 inner non-startup level fixture allocates");
+    if (track02_level_inner_positive) {
+        const size_t inner_offset = 0x20u;
+        const size_t inner_raw =
+            post_descriptor_candidate_last_offsets[0] + inner_offset;
+        memcpy(track02_level_inner_positive, track02, track02_size);
+        memset(track02_level_inner_positive +
+                   post_descriptor_candidate_last_offsets[0],
+               0,
+               0x0400u);
+        wr16be_test(track02_level_inner_positive + inner_raw + 0u, 32u);
+        wr16be_test(track02_level_inner_positive + inner_raw + 2u, 27u);
+        wr32be_test(track02_level_inner_positive + inner_raw + 4u,
+                    0x0108e93au);
+        wr16be_test(track02_level_inner_positive + inner_raw + 8u, 0x0028u);
+        memset(track02_level_inner_positive + inner_raw + 12u,
+               THERON_SQUARE_WALL,
+               32u * 27u);
+        track02_level_inner_positive[inner_raw + 12u + 1u * 32u + 1u] =
+            THERON_SQUARE_FLOOR;
+        track02_level_inner_positive[inner_raw + 12u + 1u * 32u + 2u] =
+            THERON_SQUARE_FLOOR;
+        track02_level_inner_positive[inner_raw + 12u + 2u * 32u + 2u] =
+            THERON_SQUARE_EXIT;
+        expect_true(theron_v1_track02_capture_level_route_receipt(
+                        track02_level_inner_positive,
+                        track02_size,
+                        THERON_TRACK02_MD5_US_BIN,
+                        &level_route_receipt) &&
+                        level_route_receipt.valid &&
+                        level_route_receipt.verified_track02 &&
+                        level_route_receipt.descriptor_route_ready &&
+                        level_route_receipt.startup_level_route_ready &&
+                        level_route_receipt.nonstartup_level_decode_ready &&
+                        level_route_receipt.nonstartup_level_loaded_count == 0u &&
+                        level_route_receipt
+                                .nonstartup_level_inner_scan_loaded_count ==
+                            1u &&
+                        level_route_receipt
+                                .nonstartup_level_inner_scan_loaded_anchor_mask ==
+                            0x01u &&
+                        level_route_receipt
+                                .nonstartup_level_inner_scan_loaded_entry_index[0] ==
+                            7u &&
+                        level_route_receipt
+                                .nonstartup_level_inner_scan_loaded_raw_offsets[0] ==
+                            inner_raw &&
+                        level_route_receipt
+                                .nonstartup_level_inner_scan_loaded_window_offsets[0] ==
+                            inner_offset &&
+                        level_route_receipt
+                                .nonstartup_level_inner_scan_loaded_user_data_valid[0] &&
+                        level_route_receipt
+                                .nonstartup_level_inner_scan_loaded_width[0] ==
+                            32u &&
+                        level_route_receipt
+                                .nonstartup_level_inner_scan_loaded_height[0] ==
+                            27u &&
+                        level_route_receipt
+                                .nonstartup_level_inner_scan_loaded_seed[0] ==
+                            0x0108e93au &&
+                        level_route_receipt
+                                .nonstartup_level_inner_scan_loaded_level_index[0] ==
+                            0x0028u &&
+                        level_route_receipt
+                                .nonstartup_level_inner_scan_probe_count ==
+                            306u &&
+                        level_route_receipt
+                                .nonstartup_level_blocked_anchor_count == 2u &&
+                        level_route_receipt
+                                .nonstartup_level_blocked_anchor_mask == 0x06u &&
+                        level_route_receipt
+                            .blocked_for_missing_nonstartup_level_evidence &&
+                        !level_route_receipt.fallback_visuals_allowed &&
+                        level_route_receipt.route_hash != 0u,
+                    "Theron Track02 level-route receipt promotes an inner non-startup dungeon record when a candidate loads");
+        free(track02_level_inner_positive);
     }
     expect_true(theron_v1_track02_bind_semantic_descriptor(
                     track02,
