@@ -867,6 +867,9 @@ typedef struct DM1_V1_StartupHoCBootProbeSummary_PC34 {
     int map_width;
     int map_height;
     int render_command_count;
+    int consumed_hoc_save_capture_host_readiness;
+    int hoc_save_capture_ready;
+    int hoc_original_save_capture_ready;
     int complete_support_ready;
     int complete_source_visible_startup;
     int complete_entrance_to_hoc;
@@ -948,6 +951,9 @@ typedef struct DM1_V1_StartupHoCBootProbeHostFields_PC34 {
     int map_width;
     int map_height;
     int render_command_count;
+    int consumed_hoc_save_capture_host_readiness;
+    int hoc_save_capture_ready;
+    int hoc_original_save_capture_ready;
     int complete_support_ready;
     int complete_source_visible_startup;
     int complete_entrance_to_hoc;

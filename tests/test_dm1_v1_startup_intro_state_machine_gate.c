@@ -3401,6 +3401,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_summary.handled &&
                  hoc_boot_summary.complete_support_ready &&
                  hoc_boot_summary.complete_host_app_capture_route &&
+                 hoc_boot_summary.consumed_hoc_save_capture_host_readiness &&
+                 hoc_boot_summary.hoc_save_capture_ready &&
+                 hoc_boot_summary.hoc_original_save_capture_ready &&
                  hoc_boot_summary.complete_original_save_roundtrip_route,
              1);
     expect_i("DM1 boot probe summary owns M11 HoC field interpretation",

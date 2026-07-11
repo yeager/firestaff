@@ -242,6 +242,9 @@ typedef struct {
     int dm1HoCMapWidth;
     int dm1HoCMapHeight;
     int dm1HoCRenderCommandCount;
+    int dm1HoCConsumedSaveCaptureHostReadiness;
+    int dm1HoCSaveCaptureReady;
+    int dm1HoCOriginalSaveCaptureReady;
     int dm1CompleteSupportReady;
     int dm1CompleteSourceVisibleStartup;
     int dm1CompleteEntranceToHoC;

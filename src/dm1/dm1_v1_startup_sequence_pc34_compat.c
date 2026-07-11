@@ -3425,6 +3425,14 @@ int dm1_v1_startup_hoc_boot_probe_summary_pc34(
     summary.map_height = receipt->production_consumer.map_height;
     summary.render_command_count =
         receipt->production_consumer.render_command_count;
+    summary.consumed_hoc_save_capture_host_readiness =
+        receipt->consumed_hoc_save_capture_host_readiness;
+    summary.hoc_save_capture_ready =
+        receipt->complete_support.consumed_hoc_save_capture_host_readiness &&
+        receipt->complete_support.complete_hoc_render_route;
+    summary.hoc_original_save_capture_ready =
+        receipt->complete_support.consumed_original_save_capture_receipt &&
+        receipt->complete_support.complete_original_save_roundtrip_route;
     summary.complete_support_ready = receipt->complete_support.ready;
     summary.complete_source_visible_startup =
         receipt->complete_support.complete_source_visible_startup;
@@ -3463,6 +3471,9 @@ int dm1_v1_startup_hoc_boot_probe_complete_support_ready_pc34(
            summary->complete_entrance_to_hoc &&
            summary->complete_hoc_render_route &&
            summary->complete_host_app_capture_route &&
+           summary->consumed_hoc_save_capture_host_readiness &&
+           summary->hoc_save_capture_ready &&
+           summary->hoc_original_save_capture_ready &&
            summary->complete_save_corpus_route &&
            summary->complete_original_save_roundtrip_route;
 }
@@ -3753,6 +3764,11 @@ int dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
     fields.map_width = summary->map_width;
     fields.map_height = summary->map_height;
     fields.render_command_count = summary->render_command_count;
+    fields.consumed_hoc_save_capture_host_readiness =
+        summary->consumed_hoc_save_capture_host_readiness;
+    fields.hoc_save_capture_ready = summary->hoc_save_capture_ready;
+    fields.hoc_original_save_capture_ready =
+        summary->hoc_original_save_capture_ready;
     fields.complete_support_ready = summary->complete_support_ready;
     fields.complete_source_visible_startup =
         summary->complete_source_visible_startup;
