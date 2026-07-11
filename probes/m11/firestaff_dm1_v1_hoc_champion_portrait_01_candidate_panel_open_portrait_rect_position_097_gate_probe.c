@@ -96,9 +96,9 @@
  *       those will not match the C026 strip cell, so the
  *       strip-cell-match counter is the real "is HALK here"
  *       discriminator.
- *   (7) The M11_GameView_GetV1InventoryBackdropZone helper
+ *   (7) The dm1_v1_inventory_backdrop_zone_xywh_pc34 helper
  *       returns the source-locked (0, 33, 224, 136) viewport
- *       rectangle and the M11_GameView_GetV1InventoryPanelZone
+ *       rectangle and the dm1_v1_inventory_panel_zone_xywh_pc34
  *       helper returns the source-locked (80, 52, 144, 73)
  *       viewport rectangle — the panel-open state relies on
  *       these zone identifiers being source-locked.
@@ -131,6 +131,10 @@
  *   firestaff_dm1_v1_hoc_champion_portrait_01_candidate_panel_open_portrait_rect_position_097_gate_probe DATA_DIR
  */
 #include "m11_game_view.h"
+#include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
+#include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
@@ -168,7 +172,7 @@ enum {
     PORTRAIT_W = 32,
     PORTRAIT_H = 29,
     /* D1C champion-mirror frame zone from
-     * M11_GameView_GetD1CWallOrnamentZone (coordSet 5 / index 12 per
+     * dm1_v1_wall_ornament_zone_pc34 (coordSet 5 / index 12 per
      * DUNVIEW.C G0205): dstX=80, dstY=29, w=64, h=43 viewport-local.
      * The C026 portrait cutout (96, 35, 32, 29) sits inside this
      * zone. */
@@ -176,7 +180,7 @@ enum {
     D1C_ZONE_Y_VP = 29,
     D1C_ZONE_W = 64,
     D1C_ZONE_H = 43,
-    /* RR panel (C040) zone from M11_GameView_GetV1InventoryPanelZone,
+    /* RR panel (C040) zone from dm1_v1_inventory_panel_zone_xywh_pc34,
      * viewport-local.  The panel covers (80, 52, 144, 73) and starts
      * at the same y as the lower 12 rows of the C026 portrait cutout
      * (rows 17..28, viewport y=52..63). */
@@ -503,7 +507,18 @@ int main(int argc, char** argv) {
      * a different rectangle the C017 backdrop wipe and the C040
      * panel blit both run at the wrong spot. */
     ornX = ornY = ornW = ornH = 0;
-    M11_GameView_GetD1CWallOrnamentZone(&game, &ornX, &ornY, &ornW, &ornH);
+    {
+        DM1_WallOrnamentZoneBlitPc34 wallZone;
+        if (!dm1_v1_wall_ornament_zone_pc34(5, 12, &wallZone)) {
+            fprintf(stderr, "FAIL D1C wall zone unavailable\n");
+            M11_GameView_Shutdown(&game);
+            return 0;
+        }
+        ornX = wallZone.dstX;
+        ornY = wallZone.dstY;
+        ornW = wallZone.width;
+        ornH = wallZone.height;
+    }
     if (ornX != D1C_ZONE_X_VP || ornY != D1C_ZONE_Y_VP ||
         ornW != D1C_ZONE_W || ornH != D1C_ZONE_H) {
         fprintf(stderr,
@@ -513,7 +528,7 @@ int main(int argc, char** argv) {
         ok = 0;
     }
     bdX = bdY = bdW = bdH = 0;
-    M11_GameView_GetV1InventoryBackdropZone(&bdX, &bdY, &bdW, &bdH);
+    dm1_v1_inventory_backdrop_zone_xywh_pc34(&bdX, &bdY, &bdW, &bdH);
     if (bdX != BACKDROP_X_VP || bdY != BACKDROP_Y_VP ||
         bdW != BACKDROP_W || bdH != BACKDROP_H) {
         fprintf(stderr,
@@ -523,7 +538,7 @@ int main(int argc, char** argv) {
         ok = 0;
     }
     pzX = pzY = pzW = pzH = 0;
-    M11_GameView_GetV1InventoryPanelZone(&pzX, &pzY, &pzW, &pzH);
+    dm1_v1_inventory_panel_zone_xywh_pc34(&pzX, &pzY, &pzW, &pzH);
     if (pzX != RR_PANEL_X_VP || pzY != RR_PANEL_Y_VP ||
         pzW != RR_PANEL_W || pzH != RR_PANEL_H) {
         fprintf(stderr,

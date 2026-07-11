@@ -40,6 +40,9 @@
  *     (113, 69) and (113, 92) with width 34/46 and height 6.
  */
 #include "m11_game_view.h"
+#include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
@@ -330,7 +333,7 @@ static int check_state_a_well_fed(M11_GameViewState* game,
 
     /* Caller is responsible for setting state and re-rendering. */
     foodLabelMatched = label_pixels_present(
-        game, fb, M11_GameView_GetV1FoodLabelGraphicId(),
+        game, fb, dm1_v1_graphic_food_label_pc34(),
         /* M11 blits at M11_VIEWPORT_X+panelX+32, */
         /* M11_VIEWPORT_Y+panelY+13-((food->height+1)/2). */
         /* panelX=80 panelY=52 food->height=9 → (112, 60+5) = (112, 60) */
@@ -342,7 +345,7 @@ static int check_state_a_well_fed(M11_GameViewState* game,
     ok &= expect_true(label, foodLabelMatched >= 5);
 
     waterLabelMatched = label_pixels_present(
-        game, fb, M11_GameView_GetV1WaterLabelGraphicId(),
+        game, fb, dm1_v1_graphic_water_label_pc34(),
         /* water at (panelX+32, panelY+36-5) = (112, 83), absolute (112, 116). */
         112, 116, 46, 9, 5);
     snprintf(label, sizeof(label),

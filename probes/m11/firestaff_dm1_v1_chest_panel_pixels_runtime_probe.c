@@ -30,6 +30,9 @@
  */
 #include "asset_loader_m11.h"
 #include "m11_game_view.h"
+#include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
@@ -261,7 +264,7 @@ static int check_panel_pixels(const M11_GameViewState* game,
     ok &= expect_true("V1 viewport origin",
                       M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh));
     ok &= expect_true("C101 inventory panel zone",
-                      M11_GameView_GetV1InventoryPanelZone(&x, &y, &w, &h) &&
+                      dm1_v1_inventory_panel_zone_xywh_pc34(&x, &y, &w, &h) &&
                       w > 0 && h > 0);
     panel = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
                                  PROBE_OPEN_CHEST_PANEL_GRAPHIC);
@@ -291,7 +294,7 @@ static int check_closed_panel_clears_c025(const M11_GameViewState* game,
     ok &= expect_true("closed-panel viewport origin",
                       M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh));
     ok &= expect_true("closed-panel C101 inventory panel zone",
-                      M11_GameView_GetV1InventoryPanelZone(&x, &y, &w, &h) &&
+                      dm1_v1_inventory_panel_zone_xywh_pc34(&x, &y, &w, &h) &&
                       w > 0 && h > 0);
     panel = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
                                  PROBE_OPEN_CHEST_PANEL_GRAPHIC);
@@ -412,9 +415,9 @@ static int check_arrow_or_eye_graphic(const M11_GameViewState* game,
     ok &= expect_true("C503 arrow/eye viewport origin",
                       M11_GameView_GetViewportRect(&vx, &vy, &vw, &vh));
     ok &= expect_true("C503 arrow/eye zone",
-                      M11_GameView_GetV1ArrowOrEyeZone(&x, &y, &w, &h) &&
+                      dm1_v1_arrow_or_eye_zone_xywh_pc34(&x, &y, &w, &h) &&
                       w > 0 && h > 0);
-    graphicId = M11_GameView_GetV1ArrowOrEyeGraphicId(pressingEye);
+    graphicId = dm1_v1_graphic_arrow_or_eye_pc34(pressingEye);
     graphic = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
                                    (unsigned int)graphicId);
     ok &= expect_true("C018/C019 arrow/eye source graphic",

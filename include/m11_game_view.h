@@ -1678,46 +1678,6 @@ int M11_GameView_GetV1ChampionIconZone(int championSlot,
 int M11_GameView_GetV1ChampionIconSourceIndex(const M11_GameViewState* state,
                                               int championSlot);
 int M11_GameView_GetV1ChampionIconInvisibilityRemap(int paletteIndex);
-int M11_GameView_GetV1InventoryPanelGraphicId(void);
-int M11_GameView_GetV1OpenScrollPanelGraphicId(void);
-int M11_GameView_GetV1InventoryPanelZoneId(void);
-int M11_GameView_GetV1InventoryBackdropGraphicId(void);
-int M11_GameView_GetV1InventoryBackdropZone(int* outX,
-                                             int* outY,
-                                             int* outW,
-                                             int* outH);
-int M11_GameView_GetV1InventoryPanelZone(int* outX,
-                                          int* outY,
-                                          int* outW,
-                                          int* outH);
-int M11_GameView_GetV1ObjectDescriptionPanelGraphicId(void);
-int M11_GameView_GetV1ObjectDescriptionCircleGraphicId(void);
-int M11_GameView_GetV1ObjectDescriptionCircleZoneId(void);
-int M11_GameView_GetV1ObjectDescriptionCircleZone(int* outX,
-                                                   int* outY,
-                                                   int* outW,
-                                                   int* outH);
-int M11_GameView_GetV1ObjectDescriptionIconZoneId(void);
-int M11_GameView_GetV1ObjectDescriptionIconZone(int* outX,
-                                                 int* outY,
-                                                 int* outW,
-                                                 int* outH);
-int M11_GameView_GetV1ArrowOrEyeZoneId(void);
-int M11_GameView_GetV1ArrowOrEyeZone(int* outX,
-                                      int* outY,
-                                      int* outW,
-                                      int* outH);
-int M11_GameView_GetV1ArrowOrEyeGraphicId(int pressingEye);
-int M11_GameView_GetV1ObjectDescriptionNameZoneId(void);
-int M11_GameView_GetV1ObjectDescriptionNameZoneForText(int textPixelWidth,
-                                                        int textPixelHeight,
-                                                        int* outX,
-                                                        int* outY,
-                                                        int* outW,
-                                                        int* outH);
-int M11_GameView_GetV1ObjectDescriptionContinuationOrigin(int* outX,
-                                                           int* outY);
-const char* M11_GameView_GetV1ObjectDescriptionLayoutEvidence(void);
 int M11_GameView_GetV1InventorySourceSlotBoxZoneCount(void);
 int M11_GameView_GetV1InventorySourceSlotBoxZoneId(int sourceSlotBoxIndex);
 int M11_GameView_GetV1InventorySourceSlotBoxZone(int sourceSlotBoxIndex,
@@ -1877,20 +1837,6 @@ void M11_GameView_GetReturnConfirmDialogLayout(
 int M11_GameView_ReturnConfirmDialogLayoutMaxTextPixelWidth(
     const M11_ReturnConfirmDialogLayout* layout);
 
-int M11_GameView_GetV1FoodLabelGraphicId(void);
-int M11_GameView_GetV1WaterLabelGraphicId(void);
-int M11_GameView_GetV1FoodBarZoneId(void);
-int M11_GameView_GetV1FoodBarZone(int* outX,
-                                  int* outY,
-                                  int* outW,
-                                  int* outH,
-                                  int* outSrcY);
-int M11_GameView_GetV1FoodWaterPanelZoneId(void);
-int M11_GameView_GetV1FoodWaterPanelZone(int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH,
-                                         int* outSrcY);
 int M11_GameView_GetV1SpellAreaLinesGraphicId(void);
 int M11_GameView_GetV1SpellAvailableSymbolParentZoneId(int symbolIndex);
 int M11_GameView_GetV1SpellAvailableSymbolZoneId(int symbolIndex);

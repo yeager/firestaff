@@ -1,4 +1,7 @@
 #include "m11_game_view.h"
+#include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
@@ -1626,9 +1629,9 @@ int main(int argc, char** argv) {
                      "viewport source zone C007 is locked to the DM1 224x136 rectangle at screen origin 0,33");
         probe_record(&tally,
                      "INV_GV_409",
-                     M11_GameView_GetV1InventoryPanelGraphicId() == 20 &&
-                         M11_GameView_GetV1InventoryPanelZoneId() == 101 &&
-                         M11_GameView_GetV1InventoryPanelZone(&px, &py, &pw, &ph) == 1 &&
+                     dm1_v1_graphic_panel_empty_pc34() == 20 &&
+                         dm1_v1_inventory_panel_zone_id_pc34() == 101 &&
+                         dm1_v1_inventory_panel_zone_xywh_pc34(&px, &py, &pw, &ph) == 1 &&
                          px == 80 && py == 52 && pw == 144 && ph == 73,
                      "inventory source panel seam is C020 graphic in layout-696 C101 at 80,52,144x73");
         probe_record(&tally,
@@ -8968,8 +8971,8 @@ int main(int argc, char** argv) {
         int x = -1, y = -1, w = -1, h = -1;
         probe_record(&tally,
                      "INV_GV_357",
-                     M11_GameView_GetV1InventoryBackdropGraphicId() == 17 &&
-                         M11_GameView_GetV1InventoryBackdropZone(&x, &y, &w, &h) &&
+                     dm1_v1_graphic_inventory_backdrop_pc34() == 17 &&
+                         dm1_v1_inventory_backdrop_zone_xywh_pc34(&x, &y, &w, &h) &&
                          x == 0 && y == 33 && w == 224 && h == 136,
                      "V1 inventory backdrop exposes source C017 in viewport replacement zone");
     }
@@ -8979,7 +8982,7 @@ int main(int argc, char** argv) {
     if (gameView.assetsAvailable) {
         const M11_AssetSlot* invBackdrop = M11_AssetLoader_Load(
             (M11_AssetLoader*)&gameView.assetLoader,
-            (unsigned int)M11_GameView_GetV1InventoryBackdropGraphicId());
+            (unsigned int)dm1_v1_graphic_inventory_backdrop_pc34());
         probe_record(&tally,
                      "INV_GV_358",
                      invBackdrop != NULL && invBackdrop->width == 224 && invBackdrop->height == 136,
@@ -10725,18 +10728,22 @@ int main(int argc, char** argv) {
 
         {
             int invX, invY, invW, invH;
-            int foodX, foodY, foodW, foodH, foodSrcY;
-            int waterX, waterY, waterW, waterH, waterSrcY;
+            dm1_v1_champion_panel_food_water_bar_zone_pc34_t foodBar =
+                dm1_v1_champion_panel_food_bar_zone_pc34();
+            dm1_v1_champion_panel_food_water_bar_zone_pc34_t waterBar =
+                dm1_v1_champion_panel_water_bar_zone_pc34();
             probe_record(&tally, "INV_GV_300AI",
-                         M11_GameView_GetV1InventoryPanelZoneId() == 101 &&
-                             M11_GameView_GetV1InventoryPanelZone(&invX, &invY, &invW, &invH) &&
+                         dm1_v1_inventory_panel_zone_id_pc34() == 101 &&
+                             dm1_v1_inventory_panel_zone_xywh_pc34(&invX, &invY, &invW, &invH) &&
                              invX == 80 && invY == 52 && invW == 144 && invH == 73 &&
-                             M11_GameView_GetV1FoodBarZoneId() == 103 &&
-                             M11_GameView_GetV1FoodBarZone(&foodX, &foodY, &foodW, &foodH, &foodSrcY) &&
-                             foodX == 113 && foodY == 69 && foodW == 34 && foodH == 6 && foodSrcY == 2 &&
-                             M11_GameView_GetV1FoodWaterPanelZoneId() == 104 &&
-                             M11_GameView_GetV1FoodWaterPanelZone(&waterX, &waterY, &waterW, &waterH, &waterSrcY) &&
-                             waterX == 113 && waterY == 92 && waterW == 46 && waterH == 6 && waterSrcY == 2,
+                             foodBar.zone_id == 103 &&
+                             foodBar.x == 113 && foodBar.y == 69 &&
+                             foodBar.w == 34 && foodBar.h == 6 &&
+                             foodBar.shadow_offset == 2 &&
+                             waterBar.zone_id == 104 &&
+                             waterBar.x == 113 && waterBar.y == 92 &&
+                             waterBar.w == 46 && waterBar.h == 6 &&
+                             waterBar.shadow_offset == 2,
                          "inventory panel and food/water zones expose layout-696 C101/C103/C104 geometry");
         }
 
@@ -10801,9 +10808,9 @@ int main(int argc, char** argv) {
 
         {
             probe_record(&tally, "INV_GV_300U",
-                         M11_GameView_GetV1InventoryPanelGraphicId() == 20 &&
-                             M11_GameView_GetV1FoodLabelGraphicId() == 30 &&
-                             M11_GameView_GetV1WaterLabelGraphicId() == 31,
+                         dm1_v1_graphic_panel_empty_pc34() == 20 &&
+                             dm1_v1_graphic_food_label_pc34() == 30 &&
+                             dm1_v1_graphic_water_label_pc34() == 31,
                          "V1 inventory panel status uses source C020 panel and C030/C031 food-water labels");
         }
 
