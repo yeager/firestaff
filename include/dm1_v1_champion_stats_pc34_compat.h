@@ -102,8 +102,6 @@ int DM1_V1_ChampionStats_FormatLoadPc34Compat(const DM1_V1_ChampionStatsPc34* ch
                                char* out,
                                size_t outSize);
 
-#define m11_stat_name DM1_V1_ChampionStats_StatNamePc34Compat
-#define m11_skill_name DM1_V1_ChampionStats_SkillNamePc34Compat
 #define dm1_stats_stamina_adjusted_value_pc34 DM1_V1_ChampionStats_StaminaAdjustedValuePc34Compat
 
 #ifdef __cplusplus

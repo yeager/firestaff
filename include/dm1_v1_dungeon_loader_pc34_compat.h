@@ -70,31 +70,6 @@ const DM1_V1_DungeonTilePc34 *DM1_V1_DungeonLoader_GetTilePc34Compat(const DM1_V
 void DM1_V1_DungeonLoader_StepForwardPc34Compat(int *x, int *y, uint8_t dir);
 void DM1_V1_DungeonLoader_CleanupPc34Compat(DM1_V1_DungeonStatePc34 *state);
 
-typedef DM1_V1_DungeonThingTypePc34 M11_DL_ThingType;
-typedef DM1_V1_DungeonLevelDescriptorPc34 M11_DL_LevelDescriptor;
-typedef DM1_V1_DungeonHeaderPc34 M11_DL_DungeonHeader;
-typedef DM1_V1_DungeonTilePc34 M11_DL_Tile;
-typedef DM1_V1_DungeonStatePc34 M11_DL_DungeonState;
-
-#define M11_DL_DOOR DM1_V1_DUNGEON_THING_DOOR_PC34
-#define M11_DL_TELEPORTER DM1_V1_DUNGEON_THING_TELEPORTER_PC34
-#define M11_DL_TEXT DM1_V1_DUNGEON_THING_TEXT_PC34
-#define M11_DL_SENSOR DM1_V1_DUNGEON_THING_SENSOR_PC34
-#define M11_DL_GROUP DM1_V1_DUNGEON_THING_GROUP_PC34
-#define M11_DL_WEAPON DM1_V1_DUNGEON_THING_WEAPON_PC34
-#define M11_DL_ARMOUR DM1_V1_DUNGEON_THING_ARMOUR_PC34
-#define M11_DL_SCROLL DM1_V1_DUNGEON_THING_SCROLL_PC34
-#define M11_DL_POTION DM1_V1_DUNGEON_THING_POTION_PC34
-#define M11_DL_CONTAINER DM1_V1_DUNGEON_THING_CONTAINER_PC34
-#define M11_DL_JUNK DM1_V1_DUNGEON_THING_JUNK_PC34
-#define M11_DL_PROJECTILE DM1_V1_DUNGEON_THING_PROJECTILE_PC34
-
-#define m11_dl_init DM1_V1_DungeonLoader_InitPc34Compat
-#define m11_dl_load_from_file DM1_V1_DungeonLoader_LoadFromFilePc34Compat
-#define m11_dl_get_tile DM1_V1_DungeonLoader_GetTilePc34Compat
-#define m11_dl_step_forward DM1_V1_DungeonLoader_StepForwardPc34Compat
-#define m11_dl_cleanup DM1_V1_DungeonLoader_CleanupPc34Compat
-
 #ifdef __cplusplus
 }
 #endif

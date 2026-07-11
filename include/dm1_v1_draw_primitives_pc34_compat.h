@@ -24,10 +24,6 @@ extern "C" {
 #define DM1_V1_DRAW_SCREEN_H_PC34 200
 #define DM1_V1_DRAW_BPP_PC34      1   /* 8-bit indexed color, 1 byte per pixel */
 
-#define M11_SCREEN_W  DM1_V1_DRAW_SCREEN_W_PC34
-#define M11_SCREEN_H  DM1_V1_DRAW_SCREEN_H_PC34
-#define M11_BPP       DM1_V1_DRAW_BPP_PC34
-
 /* Bitmap descriptor — wraps a pixel buffer with dimensions */
 typedef struct {
     uint8_t *pixels;
@@ -133,25 +129,6 @@ uint8_t DM1_V1_Draw_DarkenColorPc34Compat(uint8_t color, int depthLevel);
  * Source evidence string.
  */
 const char *DM1_V1_Draw_PrimitivesSourceEvidencePc34Compat(void);
-
-typedef DM1_V1_BitmapPc34 M11_Bitmap;
-typedef DM1_V1_RectPc34 M11_Rect;
-
-#define m11_draw_init_bitmap DM1_V1_Draw_InitBitmapPc34Compat
-#define m11_draw_clear DM1_V1_Draw_ClearPc34Compat
-#define m11_draw_pixel DM1_V1_Draw_PixelPc34Compat
-#define m11_draw_get_pixel DM1_V1_Draw_GetPixelPc34Compat
-#define m11_draw_hline DM1_V1_Draw_HLinePc34Compat
-#define m11_draw_vline DM1_V1_Draw_VLinePc34Compat
-#define m11_draw_rect DM1_V1_Draw_RectPc34Compat
-#define m11_draw_fill_rect DM1_V1_Draw_FillRectPc34Compat
-#define m11_draw_blit DM1_V1_Draw_BlitPc34Compat
-#define m11_draw_blit_transparent DM1_V1_Draw_BlitTransparentPc34Compat
-#define m11_draw_blit_scaled DM1_V1_Draw_BlitScaledPc34Compat
-#define m11_draw_flip_h DM1_V1_Draw_FlipHPc34Compat
-#define m11_draw_flip_v DM1_V1_Draw_FlipVPc34Compat
-#define m11_draw_darken_color DM1_V1_Draw_DarkenColorPc34Compat
-#define m11_draw_primitives_source_evidence DM1_V1_Draw_PrimitivesSourceEvidencePc34Compat
 
 #ifdef __cplusplus
 }

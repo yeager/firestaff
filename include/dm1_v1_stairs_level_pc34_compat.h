@@ -55,21 +55,6 @@ void DM1_V1_Stairs_AddLevelPc34Compat(DM1_V1_StairLevelStatePc34* s, int width, 
 void DM1_V1_Stairs_TickPc34Compat(DM1_V1_StairLevelStatePc34* s, int tickMs);
 int DM1_V1_Stairs_IsTransitioningPc34Compat(const DM1_V1_StairLevelStatePc34* s);
 
-typedef DM1_V1_StairDefPc34 M11_StairDef;
-typedef DM1_V1_LevelInfoPc34 M11_LevelInfo;
-typedef DM1_V1_StairLevelStatePc34 M11_StairLevelState;
-
-#define M11_MAX_STAIRS DM1_V1_MAX_STAIRS_PC34
-#define M11_MAX_LEVELS DM1_V1_MAX_LEVELS_PC34
-
-#define m11_stairs_init DM1_V1_Stairs_InitPc34Compat
-#define m11_stairs_add DM1_V1_Stairs_AddPc34Compat
-#define m11_stairs_check DM1_V1_Stairs_CheckPc34Compat
-#define m11_stairs_use DM1_V1_Stairs_UsePc34Compat
-#define m11_stairs_add_level DM1_V1_Stairs_AddLevelPc34Compat
-#define m11_stairs_tick DM1_V1_Stairs_TickPc34Compat
-#define m11_stairs_is_transitioning DM1_V1_Stairs_IsTransitioningPc34Compat
-
 #ifdef __cplusplus
 }
 #endif

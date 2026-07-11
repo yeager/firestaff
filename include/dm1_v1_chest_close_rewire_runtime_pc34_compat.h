@@ -61,9 +61,6 @@ const char* dm1_v1_chest_close_rewire_runtime_source_evidence_pc34(void);
 int DM1_V1_ChestCloseRewireRuntime_RunProbePc34Compat(
     DM1_V1_ChestCloseRewireRuntimeProbePc34* out);
 
-#define m11_inventory_pc34_probe_chest_close_rewire_runtime \
-    DM1_V1_ChestCloseRewireRuntime_RunProbePc34Compat
-
 #ifdef __cplusplus
 }
 #endif
