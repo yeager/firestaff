@@ -1,0 +1,252 @@
+/*
+ * csb_v1_csbgraphics_runtime_plan.h
+ *
+ * Startup/runtime manifest for CSBWin CSBgraphics.dat entries that can
+ * feed the runtime indexed framebuffer handoff.
+ *
+ * This layer deliberately does not discover files by name and does not
+ * guess bitmap geometry from compressed payload size. It consumes the
+ * hash-owned real-scan cache plus the existing CSBgraphics.dat index and
+ * records only entries whose runtime geometry is known or supplied by the
+ * caller. The actual decode/copy remains in
+ * csb_v1_csbgraphics_runtime_binding.
+ *
+ * Source references:
+ *   - CSBWin/Graphics.cpp:1838 OpenCSBgraphicsFile
+ *   - CSBWin/Graphics.cpp:1918 ReadGraphicsIndex
+ *   - CSBWin/Graphics.cpp:1643 LocateNthGraphic
+ *   - CSBWin/Graphics.cpp:1717 ReadGraphic
+ *   - ReDMCSB DEFS.H C017/C040/C000_DERIVED_BITMAP_VIEWPORT
+ *   - ReDMCSB PANEL.C F0346/F0370 viewport and panel blit lanes
+ */
+
+#ifndef FIRESTAFF_CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_H
+#define FIRESTAFF_CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_H
+
+#include "csb_v1_csbgraphics_dat_real_scan.h"
+#include "csb_v1_csbgraphics_runtime_binding.h"
+#include "csb_v1_viewport_pc34_compat.h"
+
+#include <stddef.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_MAX_ENTRIES 20
+#define CSB_V1_CSBGRAPHICS_RUNTIME_SKIN_DEF_MAX_WORDS 32
+#define CSB_V1_CSBGRAPHICS_STARTUP_PACKAGE_MAX_ASSETS 6
+
+typedef enum {
+    CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK = 0,
+    CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_ARGUMENT = -1,
+    CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_NO_CACHE = -2,
+    CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES = -3,
+    CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_FULL = -4,
+    CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_GEOMETRY = -5,
+    CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_APPLY = -6,
+    CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_DEFERRED_COMPOSITE = -7
+} CSB_V1_CSBGraphicsRuntimePlanResult;
+
+typedef enum {
+    CSB_V1_CSBGRAPHICS_RUNTIME_CUSTOM_BACKGROUND_LAYER_LARGE = 0,
+    CSB_V1_CSBGRAPHICS_RUNTIME_CUSTOM_BACKGROUND_LAYER_MIDDLE = 1,
+    CSB_V1_CSBGRAPHICS_RUNTIME_CUSTOM_BACKGROUND_LAYER_NEAR = 2
+} CSB_V1_CSBGraphicsRuntimeCustomBackgroundLayer;
+
+/* CSBWin's override index deliberately has no fixed public entry numbers for
+ * title / entrance art.  Package data therefore supplies those indices
+ * explicitly, while this contract pins the source-locked geometry. ReDMCSB
+ * ENTRANCE.C F0806 loads C002/C003 into the C430/C431 105x161 door zones and
+ * draws the C429 entrance screen behind them. */
+typedef enum {
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE = 0,
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_SCREEN,
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_LEFT_DOOR,
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_RIGHT_DOOR,
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_INVENTORY,
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_RESURRECT_PANEL,
+    CSB_V1_CSBGRAPHICS_STARTUP_ASSET_COUNT
+} CSB_V1_CSBGraphicsStartupAssetRole;
+
+typedef struct {
+    CSB_V1_CSBGraphicsStartupAssetRole role;
+    uint32_t entry_index;
+    uint16_t width;
+    uint16_t height;
+} CSB_V1_CSBGraphicsStartupPackageSpec;
+
+typedef struct {
+    CSB_V1_CSBGraphicsStartupAssetRole role;
+    uint32_t entry_index;
+    uint16_t width;
+    uint16_t height;
+    uint16_t decompressed_size;
+    int present;
+} CSB_V1_CSBGraphicsStartupPackageAsset;
+
+typedef struct {
+    int valid;
+    int startup_ready;
+    int door_pair_ready;
+    int hud_ready;
+    uint32_t asset_count;
+    CSB_V1_CSBGraphicsStartupPackageAsset
+        assets[CSB_V1_CSBGRAPHICS_STARTUP_ASSET_COUNT];
+} CSB_V1_CSBGraphicsStartupPackage;
+
+typedef struct {
+    uint8_t *pixels;
+    uint16_t width;
+    uint16_t height;
+    uint32_t entry_index;
+    CSB_V1_CSBGraphicsStartupAssetRole role;
+    int valid;
+} CSB_V1_CSBGraphicsStartupDecodedSurface;
+
+typedef struct {
+    uint32_t entry_index;
+    uint32_t mask_entry_index;
+    uint16_t expected_width;
+    uint16_t expected_height;
+    uint16_t decompressed_size;
+    uint16_t mask_decompressed_size;
+    CSB_V1_CSBGraphicsRuntimeRoute route;
+    int explicit_dimensions;
+    int needs_viewport_redraw;
+    int needs_hud_redraw;
+    int needs_custom_background_composite;
+    int deferred_masked_composite;
+    int needs_startup_redraw;
+    CSB_V1_CSBGraphicsStartupAssetRole startup_role;
+    CSB_V1_CSBGraphicsRuntimeCustomBackgroundLayer custom_background_layer;
+} CSB_V1_CSBGraphicsRuntimePlanEntry;
+
+typedef struct {
+    int ready;
+    int cache_loaded;
+    uint32_t source_entry_count;
+    uint32_t supported_present_count;
+    uint32_t planned_count;
+    uint32_t skipped_unknown_geometry_count;
+    uint32_t custom_background_pair_count;
+    char source_path[CSB_V1_CSBGRAPHICS_DAT_REAL_PATH_CAP];
+    char source_md5[CSB_V1_CSBGRAPHICS_DAT_REAL_MD5_CAP];
+    char source_label[CSB_V1_CSBGRAPHICS_DAT_REAL_LABEL_CAP];
+    CSB_V1_CSBGraphicsRuntimePlanEntry
+        entries[CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_MAX_ENTRIES];
+} CSB_V1_CSBGraphicsRuntimePlan;
+
+void csb_v1_csbgraphics_runtime_plan_init(
+    CSB_V1_CSBGraphicsRuntimePlan *plan);
+
+int csb_v1_csbgraphics_runtime_plan_build_from_cache(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    CSB_V1_CSBGraphicsRuntimePlan *plan);
+
+int csb_v1_csbgraphics_runtime_plan_add_explicit_entry(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint32_t entry_index,
+    uint16_t expected_width,
+    uint16_t expected_height,
+    CSB_V1_CSBGraphicsRuntimePlan *plan);
+
+/* Validate a caller-owned CSBgraphics package manifest and append its known
+ * HUD entries to `plan`. Startup entries remain a CSB-owned decoded-surface
+ * handoff; no runtime game-view integration is implied.  Core startup art is
+ * title + entrance screen + the C430/C431 door pair. HUD entries are
+ * optional, but only their source-locked geometry is accepted. */
+void csb_v1_csbgraphics_startup_package_init(
+    CSB_V1_CSBGraphicsStartupPackage *package);
+int csb_v1_csbgraphics_runtime_plan_add_startup_package(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsStartupPackageSpec *specs,
+    size_t spec_count,
+    CSB_V1_CSBGraphicsRuntimePlan *plan,
+    CSB_V1_CSBGraphicsStartupPackage *out_package);
+
+/* Decode one validated package asset into an owned 8-bit indexed surface.
+ * Release it with csb_v1_csbgraphics_startup_decoded_surface_release(). */
+int csb_v1_csbgraphics_startup_package_decode_surface(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsStartupPackage *package,
+    CSB_V1_CSBGraphicsStartupAssetRole role,
+    CSB_V1_CSBGraphicsStartupDecodedSurface *out_surface);
+void csb_v1_csbgraphics_startup_decoded_surface_release(
+    CSB_V1_CSBGraphicsStartupDecodedSurface *surface);
+
+int csb_v1_csbgraphics_runtime_plan_add_custom_background_skin_def(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const uint16_t *skin_def_words,
+    size_t skin_def_word_count,
+    CSB_V1_CSBGraphicsRuntimePlan *plan);
+
+int csb_v1_csbgraphics_runtime_plan_decode_custom_background_skin_def(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint16_t *out_skin_def_words,
+    size_t out_skin_def_word_capacity,
+    size_t *out_skin_def_word_count);
+
+int csb_v1_csbgraphics_runtime_plan_decode_custom_background_skin_def_for_skin(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint32_t skin_num,
+    uint16_t *out_skin_def_words,
+    size_t out_skin_def_word_capacity,
+    size_t *out_skin_def_word_count);
+
+int csb_v1_csbgraphics_runtime_plan_apply_entry(
+    const CSB_V1_CSBGraphicsRuntimePlan *plan,
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint32_t entry_index,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int framebuffer_stride,
+    CSB_V1_CSBGraphicsRuntimeBinding *out_binding);
+
+int csb_v1_csbgraphics_runtime_plan_apply_custom_background_entry(
+    const CSB_V1_CSBGraphicsRuntimePlan *plan,
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint32_t entry_index,
+    const CSB_V1_ViewportCustomBackgroundMask *mask_geometry,
+    uint32_t *viewport_words,
+    size_t viewport_word_count,
+    int viewport_width_pixels);
+
+int csb_v1_csbgraphics_runtime_plan_apply_custom_background_room_layer(
+    const CSB_V1_CSBGraphicsRuntimePlan *plan,
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    int room_num,
+    CSB_V1_CSBGraphicsRuntimeCustomBackgroundLayer layer,
+    const uint16_t *skin_def_words,
+    size_t skin_def_word_count,
+    const CSB_V1_ViewportCustomBackgroundMask *mask_geometry,
+    uint32_t *viewport_words,
+    size_t viewport_word_count,
+    int viewport_width_pixels);
+
+int csb_v1_csbgraphics_runtime_plan_apply_custom_background_room_layer_auto_mask(
+    const CSB_V1_CSBGraphicsRuntimePlan *plan,
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    int room_num,
+    CSB_V1_CSBGraphicsRuntimeCustomBackgroundLayer layer,
+    const uint16_t *skin_def_words,
+    size_t skin_def_word_count,
+    uint32_t *viewport_words,
+    size_t viewport_word_count,
+    int viewport_width_pixels);
+
+const CSB_V1_CSBGraphicsRuntimePlanEntry *
+csb_v1_csbgraphics_runtime_plan_find_entry(
+    const CSB_V1_CSBGraphicsRuntimePlan *plan,
+    uint32_t entry_index);
+
+const char *csb_v1_csbgraphics_runtime_plan_result_name(int result);
+const char *csb_v1_csbgraphics_runtime_plan_source_evidence(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FIRESTAFF_CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_H */

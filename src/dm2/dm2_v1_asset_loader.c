@@ -740,6 +740,56 @@ const uint8_t *dm2_v1_asset_load_typed_sized(
     return dm2_gdat_raw_from_entry(loader, entry, out_size);
 }
 
+int dm2_v1_asset_load_word_value(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    uint16_t *out_value)
+{
+    const DM2_V1_GdatEntry *entry;
+
+    if (out_value) *out_value = 0u;
+    if (!out_value) return 0;
+    entry = dm2_gdat_find_entry(loader,
+                                category,
+                                index,
+                                DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+                                field);
+    if (!entry) return 0;
+
+    /* skproject/SKWIN/SkWinCore.cpp QUERY_GDAT_ENTRY_DATA_INDEX reads
+     * dtWordValue (DME.h: dtWordValue = 11) from the ENT1 data index, not
+     * from a raw payload. QUERY_ITEM_VALUE uses fields 0x01/0x02 for item
+     * weight and money semantics. */
+    *out_value = entry->data_index;
+    return 1;
+}
+
+int dm2_v1_asset_load_image_offset(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    uint16_t *out_value)
+{
+    const DM2_V1_GdatEntry *entry;
+
+    if (out_value) *out_value = 0u;
+    if (!out_value) return 0;
+    entry = dm2_gdat_find_entry(loader,
+                                category,
+                                index,
+                                DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET,
+                                field);
+    if (!entry) return 0;
+
+    /* skproject/SKWIN QUERY_GDAT_PICT_OFFSET reads dtImageOffset
+     * (DME.h: dtImageOffset = 12) from the ENT1 data index. */
+    *out_value = entry->data_index;
+    return 1;
+}
+
 uint8_t *dm2_v1_asset_load_image(const DM2_V1_AssetLoader *loader,
                                    int category, int index,
                                    int *out_width, int *out_height,
