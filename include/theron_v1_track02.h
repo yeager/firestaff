@@ -1047,6 +1047,8 @@ typedef struct {
     size_t object_table_candidate_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_candidate_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int object_table_candidate_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_nonzero_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_last_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
@@ -1054,6 +1056,10 @@ typedef struct {
     size_t object_table_candidate_last_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint32_t object_table_candidate_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint32_t object_table_candidate_last_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_candidate_descriptor_delta[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int object_table_candidate_after_descriptor[THERON_TRACK02_MAX_BANK_ANCHORS];
+    Theron_Track02DescriptorEntryRole object_table_candidate_entry_role[THERON_TRACK02_MAX_BANK_ANCHORS];
+    Theron_Track02DescriptorWindowKind object_table_candidate_window_kind[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_blocked_anchor_count;
     unsigned int object_table_blocked_anchor_mask;
     int object_table_anchor_binding_status[THERON_TRACK02_MAX_BANK_ANCHORS];
@@ -1106,6 +1112,8 @@ typedef struct {
     size_t nonstartup_level_candidate_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t nonstartup_level_candidate_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int nonstartup_level_candidate_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_nonzero_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_last_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
@@ -1120,6 +1128,10 @@ typedef struct {
     uint16_t nonstartup_level_candidate_header_level_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_header_probe_count;
     size_t nonstartup_level_candidate_loader_reject_count;
+    size_t nonstartup_level_candidate_descriptor_delta[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int nonstartup_level_candidate_after_descriptor[THERON_TRACK02_MAX_BANK_ANCHORS];
+    Theron_Track02DescriptorEntryRole nonstartup_level_candidate_entry_role[THERON_TRACK02_MAX_BANK_ANCHORS];
+    Theron_Track02DescriptorWindowKind nonstartup_level_candidate_window_kind[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_blocked_anchor_count;
     unsigned int nonstartup_level_blocked_anchor_mask;
     int nonstartup_level_decode_ready;

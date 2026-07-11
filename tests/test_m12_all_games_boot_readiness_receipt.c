@@ -130,6 +130,36 @@ int main(void) {
                                     NULL,
                                     &initOptions);
     state.view = M12_MENU_VIEW_MAIN;
+    {
+        M12_DM1HoCPresentedCaptureReceipt badReceipt;
+        memset(&badReceipt, 0, sizeof(badReceipt));
+        badReceipt.handled = 1;
+        badReceipt.presentedCaptureReady = 1;
+        badReceipt.hostWindowPresent = 1;
+        badReceipt.capturedFromMacWindow = 1;
+        badReceipt.capturedFromReleaseApp = 1;
+        badReceipt.width = 320;
+        badReceipt.height = 200;
+        badReceipt.byteCount = 320 * 200 * 4;
+        badReceipt.framebufferHash = 0x4d31324du;
+        badReceipt.consumerMask =
+            DM1_V1_HOC_CAPTURE_CONSUMER_HOST_RENDER_PC34 |
+            DM1_V1_HOC_CAPTURE_CONSUMER_M11_BOOT_PROBE_PC34 |
+            DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34;
+        badReceipt.chainHash =
+            dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+                badReceipt.width,
+                badReceipt.height,
+                badReceipt.byteCount,
+                badReceipt.framebufferHash,
+                badReceipt.consumerMask) ^ 0x35u;
+        if (!expect(M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(
+                        &state,
+                        &badReceipt) == 0,
+                    "M12 should reject stale DM1 HoC presented-capture chain through DM1 import receipt")) return 1;
+        if (!expect(state.dm1HoCPresentedCaptureReceipt.handled == 0,
+                    "rejected DM1 HoC presented capture should not be stored")) return 1;
+    }
     for (i = 0; i < M12_CONFIG_GAME_COUNT; ++i) {
         M12_StartupBootReadiness boot;
         M12_StartupLaunchGate gate;

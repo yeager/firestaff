@@ -638,8 +638,14 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
                hud_capture.interface_rect14_stride == 14u &&
                hud_capture.interface_rect14_row_count > 0u &&
                hud_capture.interface_rect14_image_field_count > 0u &&
-               hud_capture.interface_rect14_stretch_field_count > 0u),
-          "boot runtime HUD capture validates optional skproject dt07/0x0A rect14 image/stretch table when present");
+               hud_capture.interface_rect14_stretch_field_count > 0u &&
+               hud_capture.interface_rect14_placement_plan_ready == 1 &&
+               hud_capture.interface_rect14_placement_hash != 0u &&
+               hud_capture.interface_rect14_placement_count >=
+                   hud_capture.interface_rect14_row_count &&
+               hud_capture.interface_rect14_rotated_cell_mask != 0u &&
+               hud_capture.interface_rect14_max_stretched_size > 0u),
+          "boot runtime HUD capture validates optional skproject dt07/0x0A rect14 placement plan when present");
     memset(&creature_atlas, 0, sizeof(creature_atlas));
     CHECK(dm2_v1_boot_creature_atlas_capture_receipt(
               launch.profile,

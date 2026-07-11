@@ -2899,6 +2899,79 @@ int dm1_v1_startup_hoc_presented_capture_host_export_from_boot_summary_pc34(
         out_receipt);
 }
 
+int dm1_v1_startup_hoc_presented_capture_m12_import_receipt_pc34(
+    const DM1_V1_StartupHoCPresentedCaptureM12ImportFacts_PC34* facts,
+    DM1_V1_StartupHoCPresentedCaptureM12ImportReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCPresentedCapturePublishFacts_PC34 publish_facts;
+    DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34 publish;
+    DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34 host_export;
+    DM1_V1_StartupHoCPresentedCaptureM12ImportReceipt_PC34 receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&publish_facts, 0, sizeof(publish_facts));
+    memset(&publish, 0, sizeof(publish));
+    memset(&host_export, 0, sizeof(host_export));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!facts || !facts->source_id || strcmp(facts->source_id, "dm1") != 0) {
+        *out_receipt = receipt;
+        return facts ? 1 : 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437 lines 424-464 and ENTRANCE.C F0797/F0441
+     * lines 850-883 publish the real 320x200 HoC view after the title and
+     * entrance loop.  M12 imports only this DM1-owned receipt chain, including
+     * the consumer mask/hash, instead of rebuilding capture readiness itself. */
+    publish_facts.source_id = facts->source_id;
+    publish_facts.presented_capture_ready = facts->presented_capture_ready;
+    publish_facts.host_window_present = facts->host_window_present;
+    publish_facts.captured_from_mac_window = facts->captured_from_mac_window;
+    publish_facts.captured_from_release_app =
+        facts->captured_from_release_app;
+    publish_facts.width = facts->width;
+    publish_facts.height = facts->height;
+    publish_facts.byte_count = facts->byte_count;
+    publish_facts.framebuffer_hash = facts->framebuffer_hash;
+    publish_facts.required_consumer_mask = facts->consumer_mask;
+    (void)dm1_v1_startup_hoc_presented_capture_publish_receipt_pc34(
+        &publish_facts,
+        &publish);
+    (void)dm1_v1_startup_hoc_presented_capture_host_export_receipt_pc34(
+        &publish,
+        &host_export);
+
+    receipt.handled = 1;
+    receipt.consumed_publish_receipt = publish.handled ? 1 : 0;
+    receipt.consumed_host_export_receipt = host_export.handled ? 1 : 0;
+    receipt.consumed_m12_presented_capture = 1;
+    receipt.presented_capture_ready = host_export.presented_capture_ready;
+    receipt.host_window_present = host_export.host_window_present;
+    receipt.captured_from_mac_window = host_export.captured_from_mac_window;
+    receipt.captured_from_release_app = host_export.captured_from_release_app;
+    receipt.geometry_matches = publish.geometry_matches;
+    receipt.pixels_present = publish.pixels_present;
+    receipt.width = host_export.width;
+    receipt.height = host_export.height;
+    receipt.byte_count = host_export.byte_count;
+    receipt.framebuffer_hash = host_export.framebuffer_hash;
+    receipt.consumer_mask = host_export.consumer_mask;
+    receipt.expected_chain_hash = host_export.chain_hash;
+    receipt.observed_chain_hash = facts->chain_hash;
+    receipt.chain_hash_matches =
+        receipt.expected_chain_hash != 0U &&
+        receipt.observed_chain_hash == receipt.expected_chain_hash;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C F0437; ENTRANCE.C F0797/F0441; DRAWVIEW.C F0097";
+    receipt.ready =
+        host_export.ready &&
+        receipt.consumed_publish_receipt &&
+        receipt.consumed_host_export_receipt &&
+        receipt.chain_hash_matches;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
     const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* handoff,
     const DM1_V1_StartupHostApplyResult_PC34* host_apply,

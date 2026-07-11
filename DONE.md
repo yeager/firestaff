@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 five-track startup/render integration: integrated verified DM1, CSB, DM2, Theron, and Nexus worker patches. DM1 narrows HoC/M12 presented-capture ownership into DM1 receipts, CSB release/app capture now requires M11 presentation proof, DM2 adds skproject rect14 placement-plan evidence, Theron carries Track02 candidate shape metadata with hashes, and Nexus adds BPK material host-route coverage for floor/ceiling/wall surfaces. Verification: targeted Ninja build passed and focused CTest suite passed 10/10.
+
 - ✅ 2026-07-11 Theron Track02 candidate fingerprints: object-table and non-startup level-route receipts now store FNV-1a hashes for first/last post-descriptor candidate windows per anchor, preserving byte evidence for the next real-media semantic pass. Verification: focused Theron startup save/resume tests and probe passed locally.
 
 - ✅ 2026-07-11 CSB release/app presented capture export: CSB now owns a release-app presented-capture receipt joining Mac/window/pixel observations with CSB route masks, capture hashes, and no-loose-render-plan proof. Verification: focused CSB runtime handoff test passed locally.

@@ -893,6 +893,133 @@ int nexus_v1_dmdf_import_bpk_material_bank(const uint8_t *data,
     return imported;
 }
 
+const char *nexus_v1_dgn_material_category_name(
+    Nexus_V1_DgnMaterialCategory category) {
+    switch (category) {
+    case NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR: return "floor";
+    case NEXUS_V1_DGN_MATERIAL_CATEGORY_CEILING: return "ceiling";
+    case NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL: return "wall";
+    case NEXUS_V1_DGN_MATERIAL_CATEGORY_INVALID: return "invalid";
+    default: return "unknown";
+    }
+}
+
+int nexus_v1_dmdf_material_category_coverage_receipt(
+    const Nexus_DMDFMaterialBank *bank,
+    Nexus_V1_DgnMaterialCategory category,
+    const uint8_t *material_ids,
+    size_t material_id_count,
+    Nexus_V1_DgnMaterialCategoryCoverageReceipt *out_receipt) {
+    size_t i;
+    int have_missing = 0;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->category = category;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (category != NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR &&
+        category != NEXUS_V1_DGN_MATERIAL_CATEGORY_CEILING &&
+        category != NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL) {
+        return 0;
+    }
+    if (!bank || (!material_ids && material_id_count > 0U)) return 0;
+
+    out_receipt->command_count = (uint32_t)material_id_count;
+    for (i = 0U; i < material_id_count; ++i) {
+        uint8_t id = material_ids[i];
+        if (bank->surfaces[id].valid) {
+            ++out_receipt->material_surface_count;
+        } else {
+            ++out_receipt->missing_material_count;
+            if (!have_missing) {
+                out_receipt->first_missing_material_id = id;
+                have_missing = 1;
+            }
+        }
+    }
+    out_receipt->covered =
+        (material_id_count > 0U &&
+         out_receipt->material_surface_count == out_receipt->command_count)
+            ? 1 : 0;
+    return 1;
+}
+
+int nexus_v1_dmdf_import_bpk_material_bank_host_route(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_DMDFMaterialBank *out,
+    Nexus_V1_DgnMaterialCategory category,
+    Nexus_V1_BpkMaterialHostRouteReceipt *out_receipt) {
+    Nexus_V1_BpkRuntimeUploadReceipt upload;
+    int before_surface_count;
+    int before_indexed_count;
+    int before_truecolor_count;
+    int before_prs3_count;
+    int imported;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->category = category;
+    out_receipt->upload_route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (category != NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR &&
+        category != NEXUS_V1_DGN_MATERIAL_CATEGORY_CEILING &&
+        category != NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL) {
+        return 0;
+    }
+    if (!data || !out) return 0;
+
+    memset(&upload, 0, sizeof(upload));
+    if (nexus_v1_bpk_archive_runtime_upload_plan(
+            data, data_size, NULL, 0U, &upload) != 0) {
+        return 0;
+    }
+    out_receipt->upload_route = upload.route;
+    out_receipt->archive_entries = upload.archive_entries;
+    out_receipt->surface_entries = upload.surface_entries;
+    out_receipt->ready_uploads = upload.ready_uploads;
+    out_receipt->blocked_prs3_uploads = upload.blocked_prs3_uploads;
+    out_receipt->blocked_truncated_uploads = upload.blocked_truncated_uploads;
+    out_receipt->expected_upload_bytes = upload.expected_upload_bytes;
+    out_receipt->extractable_upload_bytes = upload.extractable_upload_bytes;
+    out_receipt->blocks_real_surface_render =
+        upload.blocks_real_menu_surface_render;
+    out_receipt->fallback_visuals_permitted =
+        upload.fallback_visuals_permitted;
+
+    before_surface_count = out->surface_count;
+    before_indexed_count = out->bpk_indexed_surface_count;
+    before_truecolor_count = out->bpk_truecolor_surface_count;
+    before_prs3_count = out->bpk_prs3_surface_count;
+    out_receipt->before_surface_count = before_surface_count;
+
+    imported = nexus_v1_dmdf_import_bpk_material_bank(data, data_size, out);
+    out_receipt->after_surface_count = out->surface_count;
+    out_receipt->imported_surface_count =
+        out->surface_count - before_surface_count;
+    out_receipt->imported_indexed_surface_count =
+        out->bpk_indexed_surface_count - before_indexed_count;
+    out_receipt->imported_truecolor_surface_count =
+        out->bpk_truecolor_surface_count - before_truecolor_count;
+    out_receipt->imported_prs3_surface_count =
+        out->bpk_prs3_surface_count - before_prs3_count;
+    if (out_receipt->imported_surface_count < 0) {
+        out_receipt->imported_surface_count = 0;
+    }
+    if (out_receipt->imported_indexed_surface_count < 0) {
+        out_receipt->imported_indexed_surface_count = 0;
+    }
+    if (out_receipt->imported_truecolor_surface_count < 0) {
+        out_receipt->imported_truecolor_surface_count = 0;
+    }
+    if (out_receipt->imported_prs3_surface_count < 0) {
+        out_receipt->imported_prs3_surface_count = 0;
+    }
+    out_receipt->host_consumed_surfaces =
+        (imported > 0 && out_receipt->imported_surface_count > 0) ? 1 : 0;
+    return imported > 0;
+}
+
 const char *nexus_v1_bpk_surface_extract_status_name(int status) {
     switch (status) {
     case NEXUS_V1_BPK_EXTRACT_OK: return "ok";

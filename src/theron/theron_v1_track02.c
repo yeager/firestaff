@@ -3721,6 +3721,7 @@ int theron_v1_track02_capture_object_table_route_receipt(
                 out_receipt->object_table_candidate_anchor_mask |=
                     1u << (unsigned)anchor;
                 if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
+                    size_t user_data_offset = 0u;
                     ++out_receipt
                           ->object_table_candidate_anchor_counts[anchor];
                     if (out_receipt
@@ -3739,6 +3740,33 @@ int theron_v1_track02_capture_object_table_route_receipt(
                             tqr_fnv1a_bytes(
                                 track02_data + entries[entry_index].absolute_offset,
                                 entries[entry_index].byte_count);
+                        if (entries[entry_index].absolute_offset >=
+                            descriptor_offset) {
+                            out_receipt
+                                ->object_table_candidate_after_descriptor[anchor] =
+                                1;
+                            out_receipt
+                                ->object_table_candidate_descriptor_delta[anchor] =
+                                entries[entry_index].absolute_offset -
+                                descriptor_offset;
+                        }
+                        if (theron_v1_track02_raw_offset_to_user_offset(
+                                entries[entry_index].absolute_offset,
+                                track02_size,
+                                md5_hex,
+                                &user_data_offset) ==
+                            THERON_TRACK02_SIGNAL_OK) {
+                            out_receipt
+                                ->object_table_candidate_user_data_offsets[anchor] =
+                                user_data_offset;
+                            out_receipt
+                                ->object_table_candidate_user_data_valid[anchor] =
+                                1;
+                        }
+                        out_receipt->object_table_candidate_entry_role[anchor] =
+                            entries[entry_index].role;
+                        out_receipt->object_table_candidate_window_kind[anchor] =
+                            THERON_TRACK02_DESCRIPTOR_WINDOW_DATA;
                     }
                     out_receipt
                         ->object_table_candidate_last_entry_index[anchor] =
@@ -3785,6 +3813,10 @@ int theron_v1_track02_capture_object_table_route_receipt(
         hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->object_table_candidate_raw_offsets[anchor];
         hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->object_table_candidate_user_data_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->object_table_candidate_user_data_valid[anchor];
+        hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->object_table_candidate_byte_counts[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)
@@ -3802,6 +3834,14 @@ int theron_v1_track02_capture_object_table_route_receipt(
         hash ^= out_receipt->object_table_candidate_hashes[anchor];
         hash *= 16777619u;
         hash ^= out_receipt->object_table_candidate_last_hashes[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->object_table_candidate_descriptor_delta[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->object_table_candidate_after_descriptor[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->object_table_candidate_entry_role[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->object_table_candidate_window_kind[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->object_table_anchor_binding_status[anchor];
         hash *= 16777619u;
@@ -3910,6 +3950,7 @@ int theron_v1_track02_capture_level_route_receipt(
                         out_receipt->nonstartup_level_candidate_anchor_mask |=
                             1u << (unsigned)anchor;
                         if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
+                            size_t user_data_offset = 0u;
                             ++out_receipt
                                   ->nonstartup_level_candidate_anchor_counts
                                       [anchor];
@@ -3938,6 +3979,38 @@ int theron_v1_track02_capture_level_route_receipt(
                                         track02_data +
                                             entries[entry_index].absolute_offset,
                                         entries[entry_index].byte_count);
+                                if (entries[entry_index].absolute_offset >=
+                                    descriptor_offset) {
+                                    out_receipt
+                                        ->nonstartup_level_candidate_after_descriptor
+                                            [anchor] = 1;
+                                    out_receipt
+                                        ->nonstartup_level_candidate_descriptor_delta
+                                            [anchor] =
+                                        entries[entry_index].absolute_offset -
+                                        descriptor_offset;
+                                }
+                                if (theron_v1_track02_raw_offset_to_user_offset(
+                                        entries[entry_index].absolute_offset,
+                                        track02_size,
+                                        md5_hex,
+                                        &user_data_offset) ==
+                                    THERON_TRACK02_SIGNAL_OK) {
+                                    out_receipt
+                                        ->nonstartup_level_candidate_user_data_offsets
+                                            [anchor] = user_data_offset;
+                                    out_receipt
+                                        ->nonstartup_level_candidate_user_data_valid
+                                            [anchor] = 1;
+                                }
+                                out_receipt
+                                    ->nonstartup_level_candidate_entry_role
+                                        [anchor] =
+                                    entries[entry_index].role;
+                                out_receipt
+                                    ->nonstartup_level_candidate_window_kind
+                                        [anchor] =
+                                    THERON_TRACK02_DESCRIPTOR_WINDOW_DATA;
                                 if (entries[entry_index].byte_count >= 12u &&
                                     entries[entry_index].absolute_offset <=
                                         track02_size &&
@@ -4115,6 +4188,12 @@ int theron_v1_track02_capture_level_route_receipt(
             out_receipt->nonstartup_level_candidate_raw_offsets[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_user_data_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_user_data_valid[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_byte_counts[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)
@@ -4146,6 +4225,18 @@ int theron_v1_track02_capture_level_route_receipt(
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_header_level_index[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_descriptor_delta[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_after_descriptor[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_entry_role[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_window_kind[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->startup_level_anchor_status[anchor];
         hash *= 16777619u;

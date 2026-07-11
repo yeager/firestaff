@@ -134,6 +134,98 @@ int dm2_v1_viewport_possession_slot_placement(
     return 1;
 }
 
+int dm2_v1_viewport_calc_stretched_size(int value, int factor64)
+{
+    /* skproject/SKWIN/SkWinCore.cpp CALC_STRETCHED_SIZE:
+     * (i16(val * fact64) + (fact64 >> 1)) >> 6. */
+    return (int)(((int16_t)(value * factor64) + (factor64 >> 1)) >> 6);
+}
+
+int dm2_v1_viewport_rotate_5x5_pos(int pos5x5, int dir)
+{
+    int x;
+    int y;
+    int tmp;
+
+    if (pos5x5 < 0 || pos5x5 > 24) {
+        return -1;
+    }
+    x = (pos5x5 % 5) - 2;
+    y = (pos5x5 / 5) - 2;
+    switch (dir & 3) {
+    case 1:
+        tmp = x;
+        x = y;
+        y = -tmp;
+        break;
+    case 2:
+        x = -x;
+        y = -y;
+        break;
+    case 3:
+        tmp = x;
+        x = -y;
+        y = tmp;
+        break;
+    default:
+        break;
+    }
+    return x + ((y + 2) * 5) + 2;
+}
+
+int dm2_v1_viewport_creature_blit_rect_id(int cell_pos,
+                                          int pos5x5,
+                                          int dir)
+{
+    int rotated = dm2_v1_viewport_rotate_5x5_pos(pos5x5, dir);
+
+    if (cell_pos < 0 || cell_pos > 3 || rotated < 0) {
+        return -1;
+    }
+    /* skproject/SKWIN/SkWinCore.cpp QUERY_CREATURE_BLIT_RECTI returns
+     * ROTATE_5x5_POS(pos, dir) + cellPos * 25 + 5000. */
+    return rotated + (cell_pos * 25) + 5000;
+}
+
+int dm2_v1_viewport_interface_rect14_placement(
+    const uint8_t row14[14],
+    int cell_pos,
+    int distance_stretch_factor64,
+    DM2_V1_InterfaceRect14Placement *out)
+{
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!row14 || cell_pos < 0 || cell_pos > 3 ||
+        row14[0] > 24u || distance_stretch_factor64 <= 0) {
+        return 0;
+    }
+
+    /* skproject/SKWIN/SkWinCore.cpp QUERY_CREATURE_PICST consumes
+     * _4976_5a98[row][0] as the 5x5 anchor, [1] as a signed side offset,
+     * [2..5] as direction image fields, [6..9] via CALC_STRETCHED_SIZE,
+     * and [10..13] as per-direction flags. */
+    out->valid = 1;
+    out->base_5x5 = row14[0];
+    out->lateral_offset = (int8_t)row14[1];
+    out->cell_pos = (uint16_t)cell_pos;
+    for (int dir = 0; dir < 4; ++dir) {
+        int rect_id = dm2_v1_viewport_creature_blit_rect_id(
+            cell_pos, row14[0], dir);
+        if (rect_id < 0) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        out->blit_rect_id[dir] = (uint16_t)rect_id;
+        out->image_field[dir] = row14[2 + dir];
+        out->stretch_source[dir] = row14[6 + dir];
+        out->stretched_size[dir] = (uint16_t)
+            dm2_v1_viewport_calc_stretched_size(row14[6 + dir],
+                                                distance_stretch_factor64);
+        out->flags[dir] = row14[10 + dir];
+    }
+    return 1;
+}
+
 int dm2_v1_viewport_build_hud_chrome_plan(
     int is_outdoor,
     DM2_V1_HudChromeRenderPlan *out_plan)

@@ -446,6 +446,10 @@ void csb_v1_boot_startup_release_app_presented_capture_receipt_init_pc34(
     csb_v1_boot_startup_release_app_capture_receipt_init_pc34(
         &receipt->release_app_capture);
     receipt->expected_consumer_mask = 0x1fu;
+    receipt->m11_presentation_route =
+        CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34;
+    csb_v1_boot_startup_m11_presentation_receipt_init_pc34(
+        &receipt->m11_presentation);
     receipt->source_evidence =
         "ReDMCSB TITLE.C F0437 lines 424-463; "
         "ENTRANCE.C F0441/F0806/F0580 release-app startup capture";
@@ -543,6 +547,92 @@ int csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
      * under the CSB startup loop. This export is the Mac/release-app boundary:
      * host code supplies only the observed window/pixel facts, while CSB owns
      * the route mask and release capture proof. */
+    return out_receipt->valid;
+}
+
+int csb_v1_boot_startup_release_app_presented_capture_from_m11_presentation_pc34(
+    const CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *release_app_capture,
+    const CSB_V1_BootStartupM11PresentationReceipt_PC34 *m11_presentation,
+    int host_window_present,
+    int captured_from_mac_window,
+    int captured_from_release_app,
+    int width,
+    int height,
+    int byte_count,
+    uint32_t framebuffer_hash,
+    CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 *out_receipt)
+{
+    uint32_t hash;
+
+    if (!out_receipt) return 0;
+    if (!csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
+            release_app_capture,
+            host_window_present,
+            captured_from_mac_window,
+            captured_from_release_app,
+            width,
+            height,
+            byte_count,
+            framebuffer_hash,
+            out_receipt)) {
+        return 0;
+    }
+    if (!m11_presentation) {
+        out_receipt->valid = 0;
+        out_receipt->presented_capture_ready = 0;
+        return 0;
+    }
+
+    out_receipt->m11_presentation = *m11_presentation;
+    out_receipt->m11_presentation_valid =
+        m11_presentation->valid ? 1 : 0;
+    out_receipt->m11_presentation_consumed =
+        m11_presentation->valid &&
+                m11_presentation->startup_render_plan_valid &&
+                m11_presentation->capture_proof_valid
+            ? 1
+            : 0;
+    out_receipt->m11_presentation_route = m11_presentation->route;
+    out_receipt->m11_presentation_capture_proof_ready =
+        m11_presentation->capture_proof_valid &&
+                m11_presentation->capture_proof.valid &&
+                m11_presentation->capture_proof.capture_valid &&
+                m11_presentation->capture_proof.packaged_capture_hash != 0u
+            ? 1
+            : 0;
+
+    hash = out_receipt->chain_hash ? out_receipt->chain_hash : 2166136261u;
+    hash ^= (uint32_t)out_receipt->m11_presentation_valid;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->m11_presentation_consumed;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->m11_presentation_route;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->m11_presentation_capture_proof_ready;
+    hash *= 16777619u;
+    hash ^= m11_presentation->capture_proof.packaged_capture_hash;
+    out_receipt->chain_hash = hash ? hash : 1u;
+
+    out_receipt->presented_capture_ready =
+        out_receipt->presented_capture_ready &&
+                out_receipt->m11_presentation_valid &&
+                out_receipt->m11_presentation_consumed &&
+                out_receipt->m11_presentation_route !=
+                    CSB_V1_BOOT_STARTUP_RENDER_ROUTE_NONE_PC34 &&
+                out_receipt->m11_presentation_capture_proof_ready &&
+                out_receipt->chain_hash != 0u
+            ? 1
+            : 0;
+    out_receipt->valid = out_receipt->presented_capture_ready;
+    out_receipt->source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 424-463; "
+        "ENTRANCE.C F0441/F0806/F0580 release-app startup capture; "
+        "CSBWin Viewport.cpp startup HUD/menu presentation";
+    /* ReDMCSB keeps the title, entrance menu/credits, and door-opening draw
+     * inside one startup loop.  CSBWin's viewport keeps HUD/menu presentation
+     * state as the consumer-facing surface.  This stricter Mac/app export
+     * therefore requires a CSB-built M11 presentation receipt in addition to
+     * real release pixels, so callers cannot promote geometry-only captures. */
     return out_receipt->valid;
 }
 

@@ -960,6 +960,10 @@ typedef struct CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 {
     int valid;
     int release_app_capture_valid;
     int release_app_capture_ready;
+    int m11_presentation_valid;
+    int m11_presentation_consumed;
+    int m11_presentation_route;
+    int m11_presentation_capture_proof_ready;
     int presented_capture_ready;
     int host_window_present;
     int captured_from_mac_window;
@@ -978,6 +982,7 @@ typedef struct CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 {
     uint32_t release_app_capture_hash;
     uint32_t release_app_real_asset_capture_hash;
     CSB_V1_StartupReleaseAppCaptureReceipt_PC34 release_app_capture;
+    CSB_V1_BootStartupM11PresentationReceipt_PC34 m11_presentation;
     const char *source_evidence;
 } CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34;
 
@@ -1225,6 +1230,17 @@ void csb_v1_boot_startup_release_app_presented_capture_receipt_init_pc34(
     CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 *receipt);
 int csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
     const CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *release_app_capture,
+    int host_window_present,
+    int captured_from_mac_window,
+    int captured_from_release_app,
+    int width,
+    int height,
+    int byte_count,
+    uint32_t framebuffer_hash,
+    CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_release_app_presented_capture_from_m11_presentation_pc34(
+    const CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *release_app_capture,
+    const CSB_V1_BootStartupM11PresentationReceipt_PC34 *m11_presentation,
     int host_window_present,
     int captured_from_mac_window,
     int captured_from_release_app,

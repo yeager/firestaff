@@ -374,6 +374,18 @@ typedef struct {
     int screen_y;
 } DM2_V1_ViewportSpritePlacement;
 
+typedef struct {
+    int valid;
+    uint8_t base_5x5;
+    int8_t lateral_offset;
+    uint16_t cell_pos;
+    uint16_t blit_rect_id[4];
+    uint8_t image_field[4];
+    uint8_t stretch_source[4];
+    uint16_t stretched_size[4];
+    uint8_t flags[4];
+} DM2_V1_InterfaceRect14Placement;
+
 int dm2_v1_viewport_project_map_to_sprite(int map_x,
                                           int map_y,
                                           int party_dir,
@@ -384,6 +396,16 @@ int dm2_v1_viewport_possession_slot_placement(
     const DM2_V1_ViewportSpritePlacement *base,
     int possession_slot,
     DM2_V1_ViewportSpritePlacement *out);
+int dm2_v1_viewport_calc_stretched_size(int value, int factor64);
+int dm2_v1_viewport_rotate_5x5_pos(int pos5x5, int dir);
+int dm2_v1_viewport_creature_blit_rect_id(int cell_pos,
+                                          int pos5x5,
+                                          int dir);
+int dm2_v1_viewport_interface_rect14_placement(
+    const uint8_t row14[14],
+    int cell_pos,
+    int distance_stretch_factor64,
+    DM2_V1_InterfaceRect14Placement *out);
 
 int dm2_v1_viewport_door_panel_rect_for_square(int view_square,
                                                DM2_V1_ViewportRect *out_rect);

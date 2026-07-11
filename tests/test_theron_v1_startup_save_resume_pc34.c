@@ -4752,6 +4752,9 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     object_route_receipt.object_table_candidate_entry_index[0] == 6u &&
                     object_route_receipt.object_table_candidate_raw_offsets[0] ==
                         post_descriptor_candidate_offsets[0] &&
+                    object_route_receipt.object_table_candidate_user_data_valid[0] &&
+                    object_route_receipt.object_table_candidate_user_data_offsets[0] ==
+                        0x622ea2u &&
                     object_route_receipt.object_table_candidate_byte_counts[0] ==
                         0x0400u &&
                     object_route_receipt
@@ -4770,6 +4773,13 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                         test_fnv1a_bytes(
                             track02 + post_descriptor_candidate_last_offsets[0],
                             0x0400u) &&
+                    object_route_receipt.object_table_candidate_descriptor_delta[0] ==
+                        0x29cu &&
+                    object_route_receipt.object_table_candidate_after_descriptor[0] &&
+                    object_route_receipt.object_table_candidate_entry_role[0] ==
+                        THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_POST_DESCRIPTOR_DATA &&
+                    object_route_receipt.object_table_candidate_window_kind[0] ==
+                        THERON_TRACK02_DESCRIPTOR_WINDOW_DATA &&
                     object_route_receipt.object_table_blocked_anchor_count == 3u &&
                     object_route_receipt.object_table_blocked_anchor_mask == 0x07u &&
                     object_route_receipt.object_table_anchor_binding_status[0] ==
@@ -4842,6 +4852,9 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     level_route_receipt.nonstartup_level_candidate_entry_index[0] == 6u &&
                     level_route_receipt.nonstartup_level_candidate_raw_offsets[0] ==
                         post_descriptor_candidate_offsets[0] &&
+                    level_route_receipt.nonstartup_level_candidate_user_data_valid[0] &&
+                    level_route_receipt.nonstartup_level_candidate_user_data_offsets[0] ==
+                        0x622ea2u &&
                     level_route_receipt.nonstartup_level_candidate_byte_counts[0] ==
                         0x0400u &&
                     level_route_receipt
@@ -4882,6 +4895,13 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                         test_fnv1a_bytes(
                             track02 + post_descriptor_candidate_last_offsets[0],
                             0x0400u) &&
+                    level_route_receipt.nonstartup_level_candidate_descriptor_delta[0] ==
+                        0x29cu &&
+                    level_route_receipt.nonstartup_level_candidate_after_descriptor[0] &&
+                    level_route_receipt.nonstartup_level_candidate_entry_role[0] ==
+                        THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_POST_DESCRIPTOR_DATA &&
+                    level_route_receipt.nonstartup_level_candidate_window_kind[0] ==
+                        THERON_TRACK02_DESCRIPTOR_WINDOW_DATA &&
                     level_route_receipt.nonstartup_level_blocked_anchor_count == 3u &&
                     level_route_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     !level_route_receipt.nonstartup_level_decode_ready &&
