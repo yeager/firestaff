@@ -18,6 +18,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stddef.h>
+#if !defined(_WIN32)
+#include <dirent.h>
+#include <sys/stat.h>
+#endif
 
 /* docs/dm2_save_format.md § Game state block identifies skload_table_60 as
  * a fixed 56-byte SUPPRESS block. Keep this wire-layout view byte-exact so
@@ -213,6 +217,85 @@ typedef enum {
     DM2_SK_CORPUS_VALID = 2,
 } DM2_SKCorpusProbeStatus;
 
+#define DM2_SK_CORPUS_RECURSE_DEPTH 4
+#define DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP 64
+
+static int dm2_ascii_tolower(int c)
+{
+    return (c >= 'A' && c <= 'Z') ? c + ('a' - 'A') : c;
+}
+
+static int dm2_ascii_strcasecmp(const char *a, const char *b)
+{
+    while (*a && *b) {
+        int ca = dm2_ascii_tolower((unsigned char)*a);
+        int cb = dm2_ascii_tolower((unsigned char)*b);
+        if (ca != cb) return ca - cb;
+        ++a;
+        ++b;
+    }
+    return dm2_ascii_tolower((unsigned char)*a) -
+           dm2_ascii_tolower((unsigned char)*b);
+}
+
+static int dm2_sksave_basename_is_slot_ci(const char *name, int *out_slot)
+{
+    int tens;
+    int ones;
+    if (out_slot) *out_slot = -1;
+    if (!name) return 0;
+    if (dm2_ascii_tolower((unsigned char)name[0]) != 's' ||
+        dm2_ascii_tolower((unsigned char)name[1]) != 'k' ||
+        dm2_ascii_tolower((unsigned char)name[2]) != 's' ||
+        dm2_ascii_tolower((unsigned char)name[3]) != 'a' ||
+        dm2_ascii_tolower((unsigned char)name[4]) != 'v' ||
+        dm2_ascii_tolower((unsigned char)name[5]) != 'e') {
+        return 0;
+    }
+    if (name[6] < '0' || name[6] > '9' ||
+        name[7] < '0' || name[7] > '9' ||
+        name[8] != '.' ||
+        dm2_ascii_tolower((unsigned char)name[9]) != 'd' ||
+        dm2_ascii_tolower((unsigned char)name[10]) != 'a' ||
+        dm2_ascii_tolower((unsigned char)name[11]) != 't' ||
+        name[12] != '\0') {
+        return 0;
+    }
+    tens = name[6] - '0';
+    ones = name[7] - '0';
+    if (out_slot) *out_slot = tens * 10 + ones;
+    return 1;
+}
+
+static int dm2_sksave_basename_is_candidate_ci(const char *name)
+{
+    int slot = -1;
+    if (!name || !name[0]) return 0;
+    if (dm2_ascii_strcasecmp(name, "SKSave.dat") == 0 ||
+        dm2_ascii_strcasecmp(name, "SKSave.bak") == 0) {
+        return 1;
+    }
+    return dm2_sksave_basename_is_slot_ci(name, &slot) &&
+           slot >= 0 && slot < DM2_SLOT_MAX;
+}
+
+static int dm2_sksave_basename_is_canonical_direct(const char *name)
+{
+    int slot = -1;
+    char canonical[16];
+    if (!name) return 0;
+    if (strcmp(name, "SKSave.dat") == 0 ||
+        strcmp(name, "SKSave.bak") == 0) {
+        return 1;
+    }
+    if (!dm2_sksave_basename_is_slot_ci(name, &slot) ||
+        slot < 0 || slot >= DM2_SLOT_MAX) {
+        return 0;
+    }
+    snprintf(canonical, sizeof(canonical), "SKSave%02d.dat", slot);
+    return strcmp(name, canonical) == 0;
+}
+
 static DM2_SKCorpusProbeStatus dm2_sksave_probe_path(const char *path,
                                                       size_t *out_payload_size)
 {
@@ -324,6 +407,97 @@ static void dm2_sksave_corpus_classify_payload(
             break;
     }
 }
+
+static void dm2_sksave_corpus_probe_candidate(
+    DM2_SKSaveCorpusReceipt *receipt,
+    const char *path,
+    const char *basename,
+    int recursive,
+    int alternate_name)
+{
+    DM2_SKCorpusProbeStatus status;
+    size_t payload_size = 0u;
+    uint8_t before_importable;
+
+    if (!receipt || !path) return;
+    status = dm2_sksave_probe_path(path, &payload_size);
+    if (status == DM2_SK_CORPUS_VALID) {
+        if (recursive) receipt->recursive_candidate_count++;
+        if (alternate_name) receipt->alternate_name_candidate_count++;
+        dm2_sksave_corpus_accept(receipt, path, payload_size);
+        before_importable = receipt->importable_candidate_count;
+        dm2_sksave_corpus_classify_payload(receipt, path, payload_size);
+        if (receipt->importable_candidate_count > before_importable) {
+            if (recursive) receipt->recursive_importable_candidate_count++;
+        }
+        if (recursive || (basename && !dm2_sksave_basename_is_canonical_direct(basename))) {
+            receipt->extra_valid_candidate_count++;
+        }
+    } else if (status == DM2_SK_CORPUS_INVALID) {
+        if (recursive) receipt->recursive_candidate_count++;
+        if (alternate_name) receipt->alternate_name_candidate_count++;
+        receipt->invalid_candidate_count++;
+    }
+}
+
+#if !defined(_WIN32)
+static int dm2_sksave_is_dot_dir(const char *name)
+{
+    return name && (strcmp(name, ".") == 0 || strcmp(name, "..") == 0);
+}
+
+static void dm2_sksave_corpus_scan_recursive_impl(
+    const char *root,
+    const char *dir,
+    int depth,
+    DM2_SKSaveCorpusReceipt *receipt,
+    unsigned int *candidate_count)
+{
+    DIR *d;
+    struct dirent *ent;
+
+    if (!root || !dir || !receipt || !candidate_count ||
+        depth > DM2_SK_CORPUS_RECURSE_DEPTH ||
+        *candidate_count >= DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP) {
+        return;
+    }
+    d = opendir(dir);
+    if (!d) return;
+    while ((ent = readdir(d)) != NULL &&
+           *candidate_count < DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP) {
+        char path[512];
+        struct stat st;
+        int is_root_exact_canonical;
+        int alternate_name;
+
+        if (dm2_sksave_is_dot_dir(ent->d_name)) continue;
+        snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
+        if (stat(path, &st) != 0) continue;
+        if (S_ISDIR(st.st_mode)) {
+            dm2_sksave_corpus_scan_recursive_impl(root, path, depth + 1,
+                                                  receipt, candidate_count);
+            continue;
+        }
+        if (!S_ISREG(st.st_mode) ||
+            !dm2_sksave_basename_is_candidate_ci(ent->d_name)) {
+            continue;
+        }
+        /* Direct canonical names were already scanned in exact SKProject
+         * resume order above. Recursive pass adds nested or case-varied real
+         * corpus files without double-counting those primary candidates. */
+        is_root_exact_canonical =
+            depth == 0 &&
+            strcmp(dir, root) == 0 &&
+            dm2_sksave_basename_is_canonical_direct(ent->d_name);
+        if (is_root_exact_canonical) continue;
+        alternate_name = !dm2_sksave_basename_is_canonical_direct(ent->d_name);
+        (*candidate_count)++;
+        dm2_sksave_corpus_probe_candidate(receipt, path, ent->d_name,
+                                          1, alternate_name);
+    }
+    closedir(d);
+}
+#endif
 
 static int dm2_sksave_read_valid_payload(const char *path,
                                          uint8_t *out_payload,
@@ -687,6 +861,15 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
             out_receipt->invalid_candidate_count++;
         }
     }
+
+#if !defined(_WIN32)
+    {
+        unsigned int recursive_candidate_count = 0u;
+        dm2_sksave_corpus_scan_recursive_impl(save_base, save_base, 0,
+                                              out_receipt,
+                                              &recursive_candidate_count);
+    }
+#endif
 
     return true;
 }

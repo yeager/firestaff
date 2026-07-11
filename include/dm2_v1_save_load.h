@@ -106,6 +106,10 @@ typedef struct {
     uint8_t  firestaff_session_candidate_count;
     uint8_t  original_envelope_candidate_count;
     uint8_t  original_raw_candidate_count;
+    uint16_t recursive_candidate_count;
+    uint16_t recursive_importable_candidate_count;
+    uint16_t alternate_name_candidate_count;
+    uint16_t extra_valid_candidate_count;
     size_t   largest_payload_size;
     size_t   total_payload_size;
     size_t   largest_importable_payload_size;

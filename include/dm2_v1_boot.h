@@ -947,6 +947,9 @@ typedef struct {
     int save_corpus_importable_candidate_count;
     int save_corpus_rejected_candidate_count;
     int save_corpus_original_candidate_count;
+    int save_corpus_recursive_candidate_count;
+    int save_corpus_recursive_importable_candidate_count;
+    int save_corpus_alternate_name_candidate_count;
     unsigned int save_corpus_valid_slot_mask;
     int save_corpus_import_promotion_ready;
     int save_corpus_first_importable_kind;
