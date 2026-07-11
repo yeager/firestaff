@@ -88,23 +88,6 @@ const DM1_V1_DungeonDecompressorCreaturePc34*    DM1_V1_DungeonDecompressor_GetC
                                                int16_t x, int16_t y);
 void          DM1_V1_DungeonDecompressor_ClosePc34Compat(DM1_V1_DungeonDecompressorStatePc34* state);
 
-typedef DM1_V1_DungeonDecompressorFileHeaderPc34 M11_DD_FileHeader;
-typedef DM1_V1_DungeonDecompressorLevelHeaderPc34 M11_DD_LevelHeader;
-typedef DM1_V1_DungeonDecompressorTilePc34 M11_DD_Tile;
-typedef DM1_V1_DungeonDecompressorCreaturePc34 M11_DD_Creature;
-typedef DM1_V1_DungeonDecompressorStatePc34 M11_DD_State;
-
-#ifndef FIRESTAFF_DM1_V1_DUNGEON_DATA_PC34_COMPAT_H
-#define m11_dd_init DM1_V1_DungeonDecompressor_InitPc34Compat
-#define m11_dd_load_file DM1_V1_DungeonDecompressor_LoadFilePc34Compat
-#define m11_dd_get_level_count DM1_V1_DungeonDecompressor_GetLevelCountPc34Compat
-#define m11_dd_decompress_level DM1_V1_DungeonDecompressor_DecompressLevelPc34Compat
-#define m11_dd_get_level_header DM1_V1_DungeonDecompressor_GetLevelHeaderPc34Compat
-#define m11_dd_get_tile DM1_V1_DungeonDecompressor_GetTilePc34Compat
-#define m11_dd_get_creature DM1_V1_DungeonDecompressor_GetCreaturePc34Compat
-#define m11_dd_close DM1_V1_DungeonDecompressor_ClosePc34Compat
-#endif
-
 #ifdef __cplusplus
 }
 #endif

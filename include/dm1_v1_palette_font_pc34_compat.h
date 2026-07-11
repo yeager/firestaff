@@ -48,21 +48,6 @@ void DM1_V1_PaletteFont_DrawStringPc34Compat(const DM1_V1_PaletteFontFontStatePc
 const char* DM1_V1_PaletteFont_GetSkillNamePc34Compat(int level);
 void DM1_V1_PaletteFont_ConvertPortraitPlanarPc34Compat(uint8_t* buf);
 
-/* Compatibility aliases for older M11 call sites. */
-typedef DM1_V1_PaletteFontColorPc34 M11_PF_Color;
-typedef DM1_V1_PaletteFontPaletteStatePc34 M11_PF_PaletteState;
-typedef DM1_V1_PaletteFontFontStatePc34 M11_PF_FontState;
-#define m11_pf_palette_init DM1_V1_PaletteFont_PaletteInitPc34Compat
-#define m11_pf_set_palette DM1_V1_PaletteFont_SetPalettePc34Compat
-#define m11_pf_get_default_palette DM1_V1_PaletteFont_GetDefaultPalettePc34Compat
-#define m11_pf_font_init DM1_V1_PaletteFont_FontInitPc34Compat
-#define m11_pf_font_alloc DM1_V1_PaletteFont_FontAllocPc34Compat
-#define m11_pf_build_custom_colors DM1_V1_PaletteFont_BuildCustomColorsPc34Compat
-#define m11_pf_draw_char DM1_V1_PaletteFont_DrawCharPc34Compat
-#define m11_pf_draw_string DM1_V1_PaletteFont_DrawStringPc34Compat
-#define m11_pf_get_skill_name DM1_V1_PaletteFont_GetSkillNamePc34Compat
-#define m11_pf_convert_portrait_planar DM1_V1_PaletteFont_ConvertPortraitPlanarPc34Compat
-
 #ifdef __cplusplus
 }
 #endif

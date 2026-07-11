@@ -64,18 +64,6 @@ void DM1_V1_BlitVLinePc34Compat(DM1_V1_BlitFramebufferPc34* fb, int16_t x, int16
 void DM1_V1_BlitCopyRegionPc34Compat(DM1_V1_BlitFramebufferPc34* dst, const DM1_V1_BlitFramebufferPc34* src,
                          const DM1_V1_BlitRectPc34* region);
 
-typedef DM1_V1_BlitSourcePc34 M11_BF_BlitSource;
-typedef DM1_V1_BlitRectPc34 M11_BF_Rect;
-typedef DM1_V1_BlitFramebufferPc34 M11_BF_Framebuffer;
-
-#define m11_bf_fill_rect DM1_V1_BlitFillRectPc34Compat
-#define m11_bf_clear DM1_V1_BlitClearPc34Compat
-#define m11_bf_blit DM1_V1_BlitPc34Compat
-#define m11_bf_blit_scaled DM1_V1_BlitScaledPc34Compat
-#define m11_bf_hline DM1_V1_BlitHLinePc34Compat
-#define m11_bf_vline DM1_V1_BlitVLinePc34Compat
-#define m11_bf_copy_region DM1_V1_BlitCopyRegionPc34Compat
-
 #ifdef __cplusplus
 }
 #endif

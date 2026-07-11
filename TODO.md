@@ -1,6 +1,7 @@
 # Firestaff TODO - Open Work
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
+- 🔧 2026-07-11 DM1 host/API cleanup follow-up: legacy M11 alias cleanup batches 1-4 are verified in DONE.md. Remaining cleanup should focus only on active runtime APIs, CSB-shared graphics aliases, food/water callers, or combat/creature-adjacent aliases when their owning call sites are moved; do not reopen removed foundation alias blocks.
 - 🔧 2026-07-10 Theron real-asset promotion follow-up: boot/full-start/runtime receipt propagation is verified in DONE.md. Remaining work is real Mac/app screenshot promotion and wider non-startup Track02 object-table/dungeon-record decoding when new real-media evidence exists.
   - 2026-07-10 update: M11 now holds the Track02 title gate for an 8-frame startup animation, blocks accept/pointer until it is ready, and suppresses synthetic title text/rect overlay when Track02 bitmap graphics are executed. Remaining Theron startup work is real Mac/app screenshot promotion and broader non-startup Track02 dungeon/object decode.
   - 2026-07-10 verification note: later DONE entries supersede the older 2026-07-09 "final M11/UI consumer" wording below; treat those bullets as historical route receipts, not current host-wiring blockers.

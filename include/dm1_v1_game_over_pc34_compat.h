@@ -207,27 +207,6 @@ int DM1_V1_TitleScreen_IsCompletePc34Compat(const DM1_V1_TitleScreenStatePc34 *s
 /* ── Source evidence ──────────────────────────────────────────────── */
 const char *DM1_V1_GameOver_SourceEvidencePc34Compat(void);
 
-/* Compatibility aliases for older M11 call sites. */
-typedef DM1_V1_DeathEffectPhasePc34 M11_DeathEffectPhase;
-typedef DM1_V1_TitlePhasePc34 M11_TitlePhase;
-typedef DM1_V1_ChampionEndgameStatsPc34 M11_ChampionEndgameStats;
-typedef DM1_V1_DeathEffectStatePc34 M11_DeathEffectState;
-typedef DM1_V1_TitleScreenStatePc34 M11_TitleScreenState;
-#define m11_death_effect_init DM1_V1_DeathEffect_InitPc34Compat
-#define m11_death_effect_start DM1_V1_DeathEffect_StartPc34Compat
-#define m11_death_effect_tick DM1_V1_DeathEffect_TickPc34Compat
-#define m11_death_effect_set_champion DM1_V1_DeathEffect_SetChampionPc34Compat
-#define m11_death_effect_fade_level DM1_V1_DeathEffect_FadeLevelPc34Compat
-#define m11_death_effect_restart_requested DM1_V1_DeathEffect_RestartRequestedPc34Compat
-#define m11_death_effect_is_complete DM1_V1_DeathEffect_IsCompletePc34Compat
-#define m11_title_screen_init DM1_V1_TitleScreen_InitPc34Compat
-#define m11_title_screen_start DM1_V1_TitleScreen_StartPc34Compat
-#define m11_title_screen_tick DM1_V1_TitleScreen_TickPc34Compat
-#define m11_title_screen_get_zoom DM1_V1_TitleScreen_GetZoomPc34Compat
-#define m11_title_screen_get_palette DM1_V1_TitleScreen_GetPalettePc34Compat
-#define m11_title_screen_is_complete DM1_V1_TitleScreen_IsCompletePc34Compat
-#define m11_game_over_source_evidence DM1_V1_GameOver_SourceEvidencePc34Compat
-
 #ifdef __cplusplus
 }
 #endif
