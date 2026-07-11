@@ -4615,14 +4615,14 @@ int main(void)
             } else {
                 memset(&title_screen, 0, sizeof(title_screen));
                 nexus_v1_launcher_runtime_receipt_clear(&runtime_receipt);
-                expect(!nexus_v1_launcher_boot_level0_runtime_startup(
+                expect(nexus_v1_launcher_boot_level0_runtime_startup(
                            nexus_dir,
                            &title_screen,
                            &runtime_receipt),
-                       "Nexus launcher blocks undecoded real title media without synthetic UI");
-                expect(runtime_receipt.startup_assets.title_route_ready == 0 &&
+                       "Nexus launcher starts the decoded title while menu media stays gated");
+                expect(runtime_receipt.startup_assets.title_route_ready == 1 &&
                            runtime_receipt.startup_assets.main_menu_route_ready == 0,
-                       "Nexus launcher reports the original-media title/menu gate");
+                       "Nexus launcher accepts TITLE.CG but blocks the original menu route");
                 if (runtime_receipt.startup_assets.menu_bpk_upload_receipt_valid) {
                     expect(runtime_receipt.startup_assets.menu_bpk_upload_route ==
                                NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 &&

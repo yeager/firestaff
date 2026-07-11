@@ -380,6 +380,7 @@ struct F0267ThingMoveResultPc34Compat {
     int pitChainCount;
     int stairsChainCount;
     int chainedMoveLimitHit;
+    unsigned short finalThing;
     int finalMapIndex;
     int finalMapX;
     int finalMapY;

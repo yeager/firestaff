@@ -389,6 +389,7 @@ static int report_real_nonstartup_level_layout(
           "real Track02 nonstartup-level evidence stays hash-gated and no-fallback");
     if (receipt.verified_track02 && receipt.descriptor_route_ready &&
         !receipt.fallback_visuals_allowed) {
+        size_t anchor;
         printf("[RECEIPT] %s nonstartup-level anchors=0x%x candidates=%zu "
                "blocked=0x%x route_hash=0x%08x\n",
                label,
@@ -396,6 +397,41 @@ static int report_real_nonstartup_level_layout(
                receipt.nonstartup_level_candidate_count,
                receipt.nonstartup_level_blocked_anchor_mask,
                (unsigned)receipt.route_hash);
+        for (anchor = 0u;
+             anchor < THERON_TRACK02_MAX_BANK_ANCHORS;
+             ++anchor) {
+            size_t sample;
+            for (sample = 0u;
+                 sample < receipt.nonstartup_level_candidate_sample_count[anchor] &&
+                 sample < THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES;
+                 ++sample) {
+                printf("[RECEIPT] %s nonstartup-layout anchor=%zu sample=%zu "
+                       "entry=%zu raw=0x%zx user_valid=%d bytes=%zu nonzero=%zu "
+                       "header=%ux%u seed=0x%08x level=0x%04x "
+                       "object_status=%s declared=%zu rows=%zu levels=0x%x reject=%d "
+                       "hash=0x%08x\n",
+                       label,
+                       anchor,
+                       sample,
+                       receipt.nonstartup_level_candidate_sample_entry_index[anchor][sample],
+                       receipt.nonstartup_level_candidate_sample_raw_offsets[anchor][sample],
+                       receipt.nonstartup_level_candidate_sample_user_data_valid[anchor][sample],
+                       receipt.nonstartup_level_candidate_sample_byte_counts[anchor][sample],
+                       receipt.nonstartup_level_candidate_sample_nonzero_byte_counts[anchor][sample],
+                       (unsigned)receipt.nonstartup_level_candidate_sample_header_width[anchor][sample],
+                       (unsigned)receipt.nonstartup_level_candidate_sample_header_height[anchor][sample],
+                       (unsigned)receipt.nonstartup_level_candidate_sample_header_seed[anchor][sample],
+                       (unsigned)receipt.nonstartup_level_candidate_sample_header_level_index[anchor][sample],
+                       theron_v1_track02_semantic_binding_status_name(
+                           (Theron_Track02SemanticBindingStatus)
+                               receipt.nonstartup_level_candidate_sample_object_table_status[anchor][sample]),
+                       receipt.nonstartup_level_candidate_sample_object_table_declared_record_counts[anchor][sample],
+                       receipt.nonstartup_level_candidate_sample_object_table_record_counts[anchor][sample],
+                       receipt.nonstartup_level_candidate_sample_object_table_level_masks[anchor][sample],
+                       (int)receipt.nonstartup_level_candidate_sample_object_table_reject_reasons[anchor][sample],
+                       (unsigned)receipt.nonstartup_level_candidate_sample_hash[anchor][sample]);
+            }
+        }
     }
     free(track02_bytes);
     if (out_receipt) {
@@ -403,6 +439,112 @@ static int report_real_nonstartup_level_layout(
     }
     return receipt.verified_track02 && receipt.descriptor_route_ready &&
         !receipt.fallback_visuals_allowed;
+}
+
+/* These are observations from the two hash-verified raw Track 02 images,
+ * not a claim that either data window is an object table or level record.
+ * Keep the probe tied to original media so a future semantic decoder starts
+ * from byte-stable evidence rather than a constructed fixture. */
+static void check_real_nonstartup_layout_detail(
+    const char *md5_hex,
+    const Theron_Track02LevelRouteReceipt *receipt) {
+    static const size_t jp_offsets[3][2] = {
+        {0x70b772u, 0x70bf72u},
+        {0x70dc32u, 0x70e432u},
+        {0x710270u, 0x710a70u}
+    };
+    static const size_t us_offsets[3][2] = {
+        {0x70c0a2u, 0x70c8a2u},
+        {0x70e562u, 0x70ed62u},
+        {0x710ba0u, 0x7113a0u}
+    };
+    static const size_t jp_nonzero[3][2] = {
+        {294u, 66u}, {294u, 66u}, {269u, 66u}
+    };
+    static const size_t us_nonzero[3][2] = {
+        {293u, 66u}, {294u, 66u}, {269u, 66u}
+    };
+    static const uint32_t jp_hashes[3][2] = {
+        {0xf25a5477u, 0xe2a6894cu},
+        {0x370c5217u, 0xb9470088u},
+        {0x58d9c8deu, 0x63677dfcu}
+    };
+    static const uint32_t us_hashes[3][2] = {
+        {0xa38336e7u, 0xa1ae0844u},
+        {0x19f06d1fu, 0x9e7db0b0u},
+        {0x572dffbbu, 0xe26224beu}
+    };
+    const size_t (*offsets)[2];
+    const size_t (*nonzero)[2];
+    const uint32_t (*hashes)[2];
+    size_t anchor;
+
+    if (!receipt || !md5_hex) {
+        check(0, "real Track02 layout detail has an input receipt");
+        return;
+    }
+    if (strcmp(md5_hex, THERON_TRACK02_MD5_JP_BIN) == 0) {
+        offsets = jp_offsets;
+        nonzero = jp_nonzero;
+        hashes = jp_hashes;
+    } else if (strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) == 0) {
+        offsets = us_offsets;
+        nonzero = us_nonzero;
+        hashes = us_hashes;
+    } else {
+        return;
+    }
+
+    check(receipt->nonstartup_level_candidate_count == 6u &&
+              receipt->nonstartup_level_candidate_anchor_mask == 0x07u &&
+              receipt->nonstartup_level_candidate_sample_count[0] == 2u &&
+              receipt->nonstartup_level_candidate_sample_count[1] == 2u &&
+              receipt->nonstartup_level_candidate_sample_count[2] == 2u,
+          "raw Track02 has two post-descriptor layout windows per anchor");
+    for (anchor = 0u; anchor < 3u; ++anchor) {
+        size_t sample;
+        for (sample = 0u; sample < 2u; ++sample) {
+            check(receipt->nonstartup_level_candidate_sample_entry_index[anchor][sample] ==
+                      (sample == 0u ? 6u : 8u) &&
+                      receipt->nonstartup_level_candidate_sample_raw_offsets[anchor][sample] ==
+                          offsets[anchor][sample] &&
+                      receipt->nonstartup_level_candidate_sample_byte_counts[anchor][sample] ==
+                          0x0400u &&
+                      receipt->nonstartup_level_candidate_sample_nonzero_byte_counts[anchor][sample] ==
+                          nonzero[anchor][sample] &&
+                      receipt->nonstartup_level_candidate_sample_hash[anchor][sample] ==
+                          hashes[anchor][sample],
+                  "raw Track02 post-descriptor window layout stays byte-stable");
+        }
+    }
+    check(receipt->nonstartup_level_candidate_sample_object_table_status[0][0] ==
+              THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL &&
+              receipt->nonstartup_level_candidate_sample_object_table_status[1][0] ==
+              THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL &&
+              receipt->nonstartup_level_candidate_sample_object_table_status[2][0] ==
+              THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+              receipt->nonstartup_level_candidate_sample_object_table_declared_record_counts[2][0] ==
+                  52528u &&
+              receipt->nonstartup_level_candidate_sample_object_table_reject_reasons[2][0] ==
+                  THERON_TRACK02_OBJECT_TABLE_REJECT_DECLARED_OVERFLOW &&
+              !receipt->nonstartup_level_decode_ready &&
+              receipt->blocked_for_missing_nonstartup_level_evidence,
+          "raw Track02 windows stay unbound and block nonstartup promotion");
+}
+
+/* The US ISO has one independently hash-verified descriptor anchor.  Its
+ * post-descriptor windows are retained as original-media layout evidence,
+ * never as a runnable level route. */
+static void check_real_us_iso_nonstartup_layout(
+    const Theron_Track02LevelRouteReceipt *receipt) {
+    check(receipt &&
+              receipt->variant == THERON_TRACK02_VARIANT_US_ISO &&
+              receipt->descriptor_anchor_count == 1u &&
+              receipt->descriptor_anchor_mask == 0x01u &&
+              !receipt->fallback_visuals_allowed &&
+              !receipt->nonstartup_level_decode_ready &&
+              receipt->blocked_for_missing_nonstartup_level_evidence,
+          "US ISO post-descriptor layout remains evidence-only and blocked");
 }
 
 static void default_data_path_for(const char *relative_name,
@@ -702,6 +844,7 @@ static void check_real_asset_path(void) {
     Theron_Track02ObjectTableRouteReceipt us_object_layout;
     Theron_Track02LevelRouteReceipt jp_nonstartup_level_layout;
     Theron_Track02LevelRouteReceipt us_nonstartup_level_layout;
+    Theron_Track02LevelRouteReceipt us_iso_nonstartup_level_layout;
     int have_jp_object_layout = 0;
     int have_us_object_layout = 0;
     int have_jp_nonstartup_level_layout = 0;
@@ -711,6 +854,8 @@ static void check_real_asset_path(void) {
     memset(&us_object_layout, 0, sizeof(us_object_layout));
     memset(&jp_nonstartup_level_layout, 0, sizeof(jp_nonstartup_level_layout));
     memset(&us_nonstartup_level_layout, 0, sizeof(us_nonstartup_level_layout));
+    memset(&us_iso_nonstartup_level_layout, 0,
+           sizeof(us_iso_nonstartup_level_layout));
 
     for (i = 0; i < sizeof(g_real_cases) / sizeof(g_real_cases[0]); ++i) {
         const struct real_asset_case *c = &g_real_cases[i];
@@ -758,11 +903,26 @@ static void check_real_asset_path(void) {
                 c->label, path, c->expected_md5, &jp_object_layout);
             have_jp_nonstartup_level_layout = report_real_nonstartup_level_layout(
                 c->label, path, c->expected_md5, &jp_nonstartup_level_layout);
+            if (have_jp_nonstartup_level_layout) {
+                check_real_nonstartup_layout_detail(c->expected_md5,
+                                                    &jp_nonstartup_level_layout);
+            }
         } else if (strcmp(c->expected_md5, THERON_TRACK02_MD5_US_BIN) == 0) {
             have_us_object_layout = report_real_object_layout(
                 c->label, path, c->expected_md5, &us_object_layout);
             have_us_nonstartup_level_layout = report_real_nonstartup_level_layout(
                 c->label, path, c->expected_md5, &us_nonstartup_level_layout);
+            if (have_us_nonstartup_level_layout) {
+                check_real_nonstartup_layout_detail(c->expected_md5,
+                                                    &us_nonstartup_level_layout);
+            }
+        } else if (strcmp(c->expected_md5, THERON_TRACK02_MD5_US_ISO) == 0) {
+            if (report_real_nonstartup_level_layout(
+                    c->label, path, c->expected_md5,
+                    &us_iso_nonstartup_level_layout)) {
+                check_real_us_iso_nonstartup_layout(
+                    &us_iso_nonstartup_level_layout);
+            }
         } else {
             (void)report_real_object_layout(c->label, path, c->expected_md5,
                                              NULL);
