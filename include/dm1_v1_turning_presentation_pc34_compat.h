@@ -1,5 +1,5 @@
-#ifndef FIRESTAFF_M11_V1_TURNING_PRESENTATION_PC34_COMPAT_H
-#define FIRESTAFF_M11_V1_TURNING_PRESENTATION_PC34_COMPAT_H
+#ifndef FIRESTAFF_DM1_V1_TURNING_PRESENTATION_PC34_COMPAT_H
+#define FIRESTAFF_DM1_V1_TURNING_PRESENTATION_PC34_COMPAT_H
 
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
@@ -57,29 +57,8 @@ DM1_V1_Turning_ApplyPartyOriginalPresentationPc34Compat(
 
 const char* DM1_V1_Turning_PresentationSourceEvidencePc34Compat(void);
 
-#define M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL \
-    DM1_V1_TURNING_PRESENTATION_MODE_ORIGINAL_PC34
-#define M11_V1_TURNING_PRESENTATION_MODE_OTHER \
-    DM1_V1_TURNING_PRESENTATION_MODE_OTHER_PC34
-
-typedef DM1_V1_TurningChampionPosePc34Compat
-    M11V1TurningChampionPosePc34Compat;
-typedef DM1_V1_TurningPresentationResultPc34Compat
-    M11V1TurningPresentationResultPc34Compat;
-
-#define m11_v1_turning_is_turn_command_pc34_compat \
-    DM1_V1_Turning_IsTurnCommandPc34Compat
-#define m11_v1_turning_target_direction_pc34_compat \
-    DM1_V1_Turning_TargetDirectionPc34Compat
-#define m11_v1_turning_apply_original_presentation_pc34_compat \
-    DM1_V1_Turning_ApplyOriginalPresentationPc34Compat
-#define m11_v1_turning_apply_party_original_presentation_pc34_compat \
-    DM1_V1_Turning_ApplyPartyOriginalPresentationPc34Compat
-#define m11_v1_turning_presentation_source_evidence_pc34_compat \
-    DM1_V1_Turning_PresentationSourceEvidencePc34Compat
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* FIRESTAFF_DM1_V1_TURNING_PRESENTATION_PC34_COMPAT_H */
