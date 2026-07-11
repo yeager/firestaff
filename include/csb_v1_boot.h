@@ -17,15 +17,6 @@ extern "C" {
 #define CSB_V1_BOOT_GAME_ID "csb"
 #define CSB_V1_BOOT_SAVE_SUBDIR "saves/csb"
 
-#ifndef CSB_V1_VIEWPORT_RUNTIME_DRAWER_BINDING_TYPE_DEFINED
-typedef struct CSB_V1_ViewportRuntimeDrawerBinding
-    CSB_V1_ViewportRuntimeDrawerBinding;
-#endif
-#ifndef CSB_V1_VIEWPORT_RUNTIME_DRAW_COUNTS_TYPE_DEFINED
-typedef struct CSB_V1_ViewportRuntimeDrawCounts
-    CSB_V1_ViewportRuntimeDrawCounts;
-#endif
-
 typedef enum {
     CSB_V1_BOOT_STATE_EMPTY = 0,
     CSB_V1_BOOT_STATE_PROFILE_READY,
