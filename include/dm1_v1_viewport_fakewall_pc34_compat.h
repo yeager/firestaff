@@ -6,4 +6,13 @@ int DM1_V1_Viewport_SquareIsWallLikePc34Compat(unsigned char square);
 int DM1_V1_Viewport_SquareIsOpenPc34Compat(unsigned char square);
 int DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat(unsigned char square);
 
+#define M11_DM1_ViewportEffectiveElementForSquarePc34 \
+    DM1_V1_Viewport_EffectiveElementForSquarePc34Compat
+#define M11_DM1_ViewportSquareIsWallLikePc34 \
+    DM1_V1_Viewport_SquareIsWallLikePc34Compat
+#define M11_DM1_ViewportSquareIsOpenPc34 \
+    DM1_V1_Viewport_SquareIsOpenPc34Compat
+#define M11_DM1_ViewportSquareHasFloorOrnamentPathPc34 \
+    DM1_V1_Viewport_SquareHasFloorOrnamentPathPc34Compat
+
 #endif

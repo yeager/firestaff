@@ -18,8 +18,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include <dirent.h>
+#include <sys/stat.h>
+#endif
+
 enum {
-    M11_TITLE_RECURSIVE_SCAN_MAX_DEPTH = 8
+    M11_TITLE_RECURSIVE_SCAN_MAX_DEPTH = 8,
+    M11_TITLE_RECURSIVE_SCAN_MAX_FILES = 4096
 };
 
 static const char* const g_m11_title_known_md5s[] = {
@@ -85,6 +93,108 @@ static int m11_title_intro_find_known_hash(const char* dir,
     return 1;
 }
 
+static int m11_title_intro_scan_tree_for_title(const char* dir,
+                                               int depth,
+                                               int* filesVisited,
+                                               char* outPath,
+                                               size_t outPathBytes) {
+#if defined(_WIN32)
+    char pattern[FSP_PATH_MAX];
+    WIN32_FIND_DATAA data;
+    HANDLE handle;
+    if (!dir || !outPath || outPathBytes == 0U || !filesVisited ||
+        depth > M11_TITLE_RECURSIVE_SCAN_MAX_DEPTH ||
+        *filesVisited >= M11_TITLE_RECURSIVE_SCAN_MAX_FILES) {
+        return 0;
+    }
+    if (!FSP_JoinPath(pattern, sizeof(pattern), dir, "*")) {
+        return 0;
+    }
+    handle = FindFirstFileA(pattern, &data);
+    if (handle == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+    do {
+        char child[FSP_PATH_MAX];
+        if (strcmp(data.cFileName, ".") == 0 ||
+            strcmp(data.cFileName, "..") == 0) {
+            continue;
+        }
+        if (!FSP_JoinPath(child, sizeof(child), dir, data.cFileName)) {
+            continue;
+        }
+        if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            if (m11_title_intro_scan_tree_for_title(child,
+                                                    depth + 1,
+                                                    filesVisited,
+                                                    outPath,
+                                                    outPathBytes)) {
+                FindClose(handle);
+                return 1;
+            }
+        } else {
+            ++(*filesVisited);
+            if (m11_title_intro_candidate_is_valid(child)) {
+                snprintf(outPath, outPathBytes, "%s", child);
+                FindClose(handle);
+                return 1;
+            }
+            if (*filesVisited >= M11_TITLE_RECURSIVE_SCAN_MAX_FILES) {
+                break;
+            }
+        }
+    } while (FindNextFileA(handle, &data));
+    FindClose(handle);
+    return 0;
+#else
+    DIR* d;
+    struct dirent* ent;
+    if (!dir || !outPath || outPathBytes == 0U || !filesVisited ||
+        depth > M11_TITLE_RECURSIVE_SCAN_MAX_DEPTH ||
+        *filesVisited >= M11_TITLE_RECURSIVE_SCAN_MAX_FILES) {
+        return 0;
+    }
+    d = opendir(dir);
+    if (!d) {
+        return 0;
+    }
+    while ((ent = readdir(d)) != NULL) {
+        char child[FSP_PATH_MAX];
+        struct stat st;
+        if (strcmp(ent->d_name, ".") == 0 ||
+            strcmp(ent->d_name, "..") == 0) {
+            continue;
+        }
+        if (!FSP_JoinPath(child, sizeof(child), dir, ent->d_name) ||
+            stat(child, &st) != 0) {
+            continue;
+        }
+        if (S_ISDIR(st.st_mode)) {
+            if (m11_title_intro_scan_tree_for_title(child,
+                                                    depth + 1,
+                                                    filesVisited,
+                                                    outPath,
+                                                    outPathBytes)) {
+                closedir(d);
+                return 1;
+            }
+        } else if (S_ISREG(st.st_mode)) {
+            ++(*filesVisited);
+            if (m11_title_intro_candidate_is_valid(child)) {
+                snprintf(outPath, outPathBytes, "%s", child);
+                closedir(d);
+                return 1;
+            }
+            if (*filesVisited >= M11_TITLE_RECURSIVE_SCAN_MAX_FILES) {
+                break;
+            }
+        }
+    }
+    closedir(d);
+    return 0;
+#endif
+}
+
 int M11_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
                                     const char* dataDir,
                                     char* outPath,
@@ -92,14 +202,40 @@ int M11_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
     const char* envPath;
     const char* effectiveDataDir;
     const char* home;
+    char candidate[FSP_PATH_MAX];
     char parent[FSP_PATH_MAX];
     char grandparent[FSP_PATH_MAX];
-    char homeRoot[FSP_PATH_MAX];
     const M12_AssetVersionStatus* dm1v;
     size_t i;
-    static const char* homeRoots[] = {
-        ".firestaff/data",
-        ".openclaw/data/firestaff-original-games/DM"
+    static const char* suffixes[] = {
+        "TITLE", "TITLE.DAT",
+        "dm1/TITLE", "dm1/TITLE.DAT",
+        "dm1-multilingual/TITLE", "dm1-multilingual/TITLE.DAT",
+        "dm1-extras/legacy-dos/DungeonMasterPC34/TITLE",
+        "dm1-extras/legacy-dos/DungeonMasterPC34/TITLE.DAT",
+        "dm1-extras/legacy-dos/DungeonMasterPC34Multilingual/TITLE",
+        "dm1-extras/legacy-dos/DungeonMasterPC34Multilingual/TITLE.DAT",
+        "dm1-extras/dmfiles-dos-en-v34/TITLE",
+        "dm1-extras/dmfiles-dos-en-v34/TITLE.DAT",
+        "dm1-extras/dmfiles-dos-en/dungeon-master/dmaster/TITLE",
+        "dm1-extras/dmfiles-dos-en/dungeon-master/dmaster/TITLE.DAT",
+        "dm1-extras/pc-3.4-multi-3.5in/DATA/TITLE",
+        "dm1-extras/pc-3.4-multi-3.5in/DATA/TITLE.DAT",
+        "DungeonMasterPC34/TITLE", "DungeonMasterPC34/TITLE.DAT",
+        "DungeonMasterPC34Multilingual/TITLE",
+        "DungeonMasterPC34Multilingual/TITLE.DAT",
+        "dm-pc34/DungeonMasterPC34/TITLE",
+        "dm-pc34/DungeonMasterPC34/TITLE.DAT",
+        "dm-pc34/DungeonMasterPC34Multilingual/TITLE",
+        "dm-pc34/DungeonMasterPC34Multilingual/TITLE.DAT"
+    };
+    static const char* homeSuffixes[] = {
+        ".firestaff/data/TITLE",
+        ".firestaff/data/dm1/TITLE",
+        ".firestaff/data/dm1-multilingual/TITLE",
+        ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
+        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/TITLE"
     };
 
     if (!outPath || outPathBytes == 0U) {
@@ -134,24 +270,55 @@ int M11_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
             if (!FSP_ParentDir(parent, sizeof(parent), dm1v->matchedPath)) {
                 continue;
             }
-            if (m11_title_intro_find_known_hash(parent, outPath, outPathBytes)) {
+            if (FSP_JoinPath(candidate, sizeof(candidate), parent, "TITLE") &&
+                m11_title_intro_candidate_is_valid(candidate)) {
+                snprintf(outPath, outPathBytes, "%s", candidate);
+                return 1;
+            }
+            if (FSP_JoinPath(candidate, sizeof(candidate), parent, "TITLE.DAT") &&
+                m11_title_intro_candidate_is_valid(candidate)) {
+                snprintf(outPath, outPathBytes, "%s", candidate);
                 return 1;
             }
             if (FSP_ParentDir(grandparent, sizeof(grandparent), parent)) {
-                if (m11_title_intro_find_known_hash(grandparent,
-                                                    outPath,
-                                                    outPathBytes)) {
+                if (FSP_JoinPath(candidate, sizeof(candidate), grandparent, "TITLE") &&
+                    m11_title_intro_candidate_is_valid(candidate)) {
+                    snprintf(outPath, outPathBytes, "%s", candidate);
+                    return 1;
+                }
+                if (FSP_JoinPath(candidate, sizeof(candidate), grandparent, "TITLE.DAT") &&
+                    m11_title_intro_candidate_is_valid(candidate)) {
+                    snprintf(outPath, outPathBytes, "%s", candidate);
                     return 1;
                 }
             }
         }
     }
 
+    for (i = 0U; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
+        if (FSP_JoinPath(candidate, sizeof(candidate), effectiveDataDir, suffixes[i]) &&
+            m11_title_intro_candidate_is_valid(candidate)) {
+            snprintf(outPath, outPathBytes, "%s", candidate);
+            return 1;
+        }
+    }
+    {
+        int filesVisited = 0;
+        if (m11_title_intro_scan_tree_for_title(effectiveDataDir,
+                                                0,
+                                                &filesVisited,
+                                                outPath,
+                                                outPathBytes)) {
+            return 1;
+        }
+    }
+
     home = getenv("HOME");
     if (home && home[0] != '\0') {
-        for (i = 0U; i < sizeof(homeRoots) / sizeof(homeRoots[0]); ++i) {
-            if (FSP_JoinPath(homeRoot, sizeof(homeRoot), home, homeRoots[i]) &&
-                m11_title_intro_find_known_hash(homeRoot, outPath, outPathBytes)) {
+        for (i = 0U; i < sizeof(homeSuffixes) / sizeof(homeSuffixes[0]); ++i) {
+            if (FSP_JoinPath(candidate, sizeof(candidate), home, homeSuffixes[i]) &&
+                m11_title_intro_candidate_is_valid(candidate)) {
+                snprintf(outPath, outPathBytes, "%s", candidate);
                 return 1;
             }
         }

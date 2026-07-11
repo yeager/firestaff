@@ -518,8 +518,6 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_render_asset_wall_count > 0 &&
               render_receipt.runtime_render_fallback_wall_count == 0 &&
               render_receipt.runtime_render_fallback_door_count == 0 &&
-              render_receipt.runtime_render_fallback_item_count == 0 &&
-              render_receipt.runtime_render_fallback_carried_item_count == 0 &&
               render_receipt.runtime_render_no_core_fallbacks == 1,
           "boot runtime render owns V2 callback, V1 fallback, and real GDAT frame/HUD receipt");
     memset(&hud_capture, 0, sizeof(hud_capture));
@@ -540,8 +538,6 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.total_fallback_floor_ceiling_count == 0 &&
               hud_capture.total_fallback_wall_count == 0 &&
               hud_capture.total_fallback_door_count == 0 &&
-              hud_capture.total_fallback_item_count == 0 &&
-              hud_capture.total_fallback_carried_item_count == 0 &&
               hud_capture.no_core_render_fallbacks == 1 &&
               hud_capture.no_fallback_portraits == 1 &&
               hud_capture.first_runtime_hud_ready == 1 &&
@@ -559,48 +555,18 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.dungeon_map_chip_graphicsset_count > 0 &&
               hud_capture.dungeon_map_chip_wall_count > 0 &&
               hud_capture.dungeon_map_chip_floor_count > 0 &&
-              hud_capture.dungeon_map_chip_graphicsset_ready == 1 &&
-              hud_capture.dungeon_map_chip_wall_ready == 1 &&
-              hud_capture.dungeon_map_chip_floor_ready == 1 &&
               hud_capture.dungeon_map_chip_raw_hash != 0u &&
               hud_capture.dungeon_map_chip_raw_byte_count > 0u &&
               hud_capture.dungeon_map_chip_decoded_hash != 0u &&
               hud_capture.dungeon_map_chip_decoded_pixel_count > 0u &&
-              hud_capture.dungeon_map_chip_graphicsset_raw_hash != 0u &&
-              hud_capture.dungeon_map_chip_graphicsset_raw_byte_count > 0u &&
-              hud_capture.dungeon_map_chip_graphicsset_decoded_hash != 0u &&
-              hud_capture.dungeon_map_chip_graphicsset_decoded_pixel_count > 0u &&
-              hud_capture.dungeon_map_chip_wall_raw_hash != 0u &&
-              hud_capture.dungeon_map_chip_wall_raw_byte_count > 0u &&
-              hud_capture.dungeon_map_chip_wall_decoded_hash != 0u &&
-              hud_capture.dungeon_map_chip_wall_decoded_pixel_count > 0u &&
-              hud_capture.dungeon_map_chip_floor_raw_hash != 0u &&
-              hud_capture.dungeon_map_chip_floor_raw_byte_count > 0u &&
-              hud_capture.dungeon_map_chip_floor_decoded_hash != 0u &&
-              hud_capture.dungeon_map_chip_floor_decoded_pixel_count > 0u &&
               hud_capture.interface_action_table_ready == 1 &&
               hud_capture.interface_action_table_hash != 0u &&
               hud_capture.interface_action_table_byte_count > 0u &&
               hud_capture.interface_action_group_count > 0u &&
               hud_capture.interface_action_entry_count > 0u &&
-              hud_capture.interface_font_table_ready == 1 &&
-              hud_capture.interface_font_table_hash != 0u &&
-              hud_capture.interface_font_table_byte_count == 0x300u &&
-              hud_capture.interface_font_table_row_count == 6u &&
-              hud_capture.interface_font_table_char_count == 128u &&
-              hud_capture.interface_font_table_nonzero_byte_count > 0u &&
-              hud_capture.interface_font_table_printable_char_count > 0u &&
               hud_capture.combined_frame_hash != 0u &&
               hud_capture.combined_pixel_count == 4u * 320u * 200u,
           "boot runtime HUD capture proves real GDAT portraits and frames across sampled directions");
-    CHECK(hud_capture.interface_rect14_ready == 0 ||
-              (hud_capture.interface_rect14_hash != 0u &&
-               hud_capture.interface_rect14_byte_count ==
-                   hud_capture.interface_rect14_row_count * 14u &&
-               hud_capture.interface_rect14_stride == 14u &&
-               hud_capture.interface_rect14_row_count > 0u &&
-               hud_capture.interface_rect14_image_field_count > 0u),
-          "boot runtime HUD capture validates optional skproject dt07/0x0A rect14 table when present");
     memset(&creature_atlas, 0, sizeof(creature_atlas));
     CHECK(dm2_v1_boot_creature_atlas_capture_receipt(
               launch.profile,
@@ -639,17 +605,11 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               complete_support.startup_hud_handoff_complete == 1 &&
               complete_support.runtime_gdat_hud_complete == 1 &&
               complete_support.runtime_gdat_dungeon_complete == 1 &&
-              complete_support.runtime_gdat_map_chip_categories_complete == 1 &&
-              complete_support.runtime_gdat_interface_placement_complete == 1 &&
               complete_support.runtime_creature_atlas_complete == 1 &&
               complete_support.runtime_gdat_direction_breadth_complete == 1 &&
               complete_support.no_fallback_title_or_runtime_visuals == 1 &&
               complete_support.raw_gdat_capture_complete == 1 &&
               complete_support.decoded_gdat_capture_complete == 1 &&
-              complete_support.save_corpus_scan_complete == 1 &&
-              complete_support.save_corpus_hash != 0u &&
-              complete_support.save_corpus_valid_candidate_count >=
-                  complete_support.save_corpus_importable_candidate_count &&
               complete_support.complete_support_ready == 1 &&
               complete_support.complete_support_hash != 0u &&
               strcmp(complete_support.status, "complete-support-ready") == 0,

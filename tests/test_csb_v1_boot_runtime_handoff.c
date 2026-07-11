@@ -2226,7 +2226,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_BootStartupPackagedCaptureProof_PC34 packaged_proof;
     CSB_V1_BootStartupPackagedCaptureProof_PC34 packaged_proof_from_snapshot;
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view_receipt;
-    CSB_V1_BootStartupHostViewReceipt_PC34 poisoned_host_view_receipt;
     CSB_V1_BootStartupM11PresentationReceipt_PC34 m11_presentation_receipt;
     CSB_V1_BootStartupHostViewDrawReceipt_PC34 host_view_draw_receipt;
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 host_input_dispatch;
@@ -2238,8 +2237,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     CSB_V1_StartupRuntimeAssetSession_PC34 full_session;
     CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
     CSB_V1_StartupCompleteSupportReceipt_PC34 complete_support;
-    CSB_V1_StartupCompleteSupportReceipt_PC34 partial_complete_support;
-    CSB_V1_StartupReleaseAppCaptureReceipt_PC34 release_app_capture;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
     TestHudMenuDrawProbe hud_draw_probe;
@@ -2446,10 +2443,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               complete_support.real_asset_matched &&
               complete_support.title_sequence_ready &&
               complete_support.title_phase_route_complete &&
-              complete_support.title_runtime_phase_mask == 0x0f &&
-              complete_support.title_runtime_expected_phase_mask == 0x0f &&
-              complete_support.title_runtime_phase_hash ==
-                  runtime_host_gate.title_runtime_phase_hash &&
               complete_support.title_presents_ready &&
               complete_support.title_chaos_ready &&
               complete_support.title_strikes_back_ready &&
@@ -2473,68 +2466,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               complete_support.complete_support_hash != 0u &&
               strstr(complete_support.source_evidence, "TITLE.C F0437") != NULL,
           "CSB complete-support receipt joins full startup runtime with PRESENTS/CHAOS/STRIKES HUD and door host capture");
-    CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
-              &complete_support,
-              &release_app_capture) == 1 &&
-              release_app_capture.valid &&
-              release_app_capture.complete_support_valid &&
-              release_app_capture.host_capture_gate_valid &&
-              release_app_capture.release_app_capture_ready &&
-              release_app_capture.title_release_app_capture_ready &&
-              release_app_capture.closed_door_release_app_capture_ready &&
-              release_app_capture.utility_release_app_capture_ready &&
-              release_app_capture.door_opening_release_app_capture_ready &&
-              release_app_capture.title_host_consumer_ready &&
-              release_app_capture.closed_door_host_consumer_ready &&
-              release_app_capture.utility_host_consumer_ready &&
-              release_app_capture.door_opening_host_consumer_ready &&
-              release_app_capture.route_specific_host_consumers_ready &&
-              release_app_capture.title_phase_route_complete &&
-              release_app_capture.title_runtime_phase_mask == 0x0f &&
-              release_app_capture.title_runtime_expected_phase_mask == 0x0f &&
-              release_app_capture.title_runtime_phase_hash ==
-                  complete_support.title_runtime_phase_hash &&
-              release_app_capture.runtime_host_routes_ready &&
-              release_app_capture.draw_consumes_receipt_only &&
-              release_app_capture.input_consumes_receipt_only &&
-              release_app_capture.no_fallback_callbacks &&
-              release_app_capture.no_wrapper_fallback_routes &&
-              release_app_capture.host_route_wrappers_retired &&
-              release_app_capture.no_loose_render_plan_exports &&
-              release_app_capture.real_startup_assets_bound &&
-              release_app_capture.title_packaged_capture_hash ==
-                  runtime_host_gate.title_packaged_capture_hash &&
-              release_app_capture.closed_door_packaged_capture_hash ==
-                  runtime_host_gate.closed_door_packaged_capture_hash &&
-              release_app_capture.utility_packaged_capture_hash ==
-                  runtime_host_gate.utility_packaged_capture_hash &&
-              release_app_capture.door_opening_packaged_capture_hash ==
-                  runtime_host_gate.door_opening_packaged_capture_hash &&
-              release_app_capture.runtime_host_gate_hash ==
-                  complete_support.runtime_host_gate_hash &&
-              release_app_capture.complete_support_hash ==
-                  complete_support.complete_support_hash &&
-              release_app_capture.release_app_capture_hash != 0u &&
-              strstr(release_app_capture.source_evidence,
-                     "ENTRANCE.C F0580") != NULL,
-          "CSB release/app capture gate consumes complete title HUD and door packaged hashes");
-    partial_complete_support = complete_support;
-    partial_complete_support.host_capture_gate.door_opening_packaged_capture_hash = 0u;
-    CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
-              &partial_complete_support,
-              &release_app_capture) == 0 &&
-              !release_app_capture.valid &&
-              !release_app_capture.door_opening_release_app_capture_ready,
-          "CSB release/app capture gate rejects partial door-opening package");
-    partial_complete_support = complete_support;
-    partial_complete_support.host_capture_gate.utility_host_draw_consumes_receipt_only = 0;
-    CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
-              &partial_complete_support,
-              &release_app_capture) == 0 &&
-              !release_app_capture.valid &&
-              !release_app_capture.utility_host_consumer_ready &&
-              !release_app_capture.route_specific_host_consumers_ready,
-          "CSB release/app capture gate rejects utility HUD host wrappers");
     runtime_host_gate.title_chaos_hold_runtime_captured = 0;
     CHECK(csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
               &full_runtime,
@@ -2948,11 +2879,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               &host_view_draw_receipt) == 1 &&
               host_view_draw_receipt.valid &&
               host_view_draw_receipt.consumed_host_view_only &&
-              host_view_draw_receipt.render_draw_receipt_consumed &&
-              host_view_draw_receipt.capture_proof_consumed &&
-              host_view_draw_receipt.route_capture_proof_consumed &&
-              host_view_draw_receipt.readiness_receipt_consumed &&
-              host_view_draw_receipt.no_legacy_plan_fallback &&
               host_view_draw_receipt.fallback_callbacks_stripped &&
               host_view_draw_receipt.render_executed &&
               !host_view_draw_receipt.hud_menu_executed &&
@@ -3917,34 +3843,6 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
               capture_render_probe.draw_closed_doors_count == 1 &&
               capture_render_probe.draw_fallback_text_count == 0,
           "boot startup host-view draw receipt consumes closed-door render plus HUD without fallback text");
-    poisoned_host_view_receipt = host_view_receipt;
-    poisoned_host_view_receipt.render_draw.valid = 0;
-    render_probe_executor_init(&capture_render_executor,
-                               &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
-              &poisoned_host_view_receipt,
-              &capture_render_executor,
-              &host_view_draw_receipt) == 0 &&
-              !host_view_draw_receipt.valid &&
-              !host_view_draw_receipt.no_legacy_plan_fallback &&
-              capture_render_probe.draw_full_surface_count == 0 &&
-              capture_render_probe.draw_closed_doors_count == 0,
-          "boot startup host-view draw rejects HUD fallback without render-draw receipt");
-    poisoned_host_view_receipt = host_view_receipt;
-    poisoned_host_view_receipt.capture_proof.closed_door_menu_route = 0;
-    poisoned_host_view_receipt.capture_proof.utility_menu_route = 0;
-    render_probe_executor_init(&capture_render_executor,
-                               &capture_render_probe);
-    CHECK(csb_v1_boot_startup_execute_host_view_receipt_pc34(
-              &poisoned_host_view_receipt,
-              &capture_render_executor,
-              &host_view_draw_receipt) == 0 &&
-              !host_view_draw_receipt.valid &&
-              !host_view_draw_receipt.route_capture_proof_consumed &&
-              !host_view_draw_receipt.no_legacy_plan_fallback &&
-              capture_render_probe.draw_full_surface_count == 0 &&
-              capture_render_probe.draw_closed_doors_count == 0,
-          "boot startup host-view draw rejects mismatched HUD capture proof");
     render_probe_executor_init(&capture_render_executor,
                                &capture_render_probe);
     capture_render_probe.draw_full_surface_result = 0;

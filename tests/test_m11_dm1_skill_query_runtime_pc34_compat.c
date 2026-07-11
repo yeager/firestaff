@@ -6,7 +6,6 @@
  */
 #include "m11_game_view.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
-#include "inventory_item_identification_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -219,14 +218,9 @@ static void test_m11_f0352_potion_eye_uses_f0303_priest_query(void) {
         .skills20[DM1_SKILL_IDX_PRIEST].experience = 500;
 
     assert(M11_GameView_GetSkillLevel(&state, 0, DM1_SKILL_IDX_PRIEST) == 2);
-    /* ReDMCSB: PANEL.C F0352 lines 1182-1191 prefixes non-water
-     * potion names from F0303(PRIEST) > 1.  Keep the assertion on the
-     * DM1-owned formatter fed by M11's live skill query. */
-    assert(INVENTORY_Compat_FormatPotionEyeDescription(
-               THING_TYPE_POTION, 150, 80,
-               (unsigned int)M11_GameView_GetSkillLevel(
-                   &state, 0, DM1_SKILL_IDX_PRIEST),
-               "ROS POTION", text, sizeof(text), NULL) == 1);
+    assert(M11_GameView_ProbeF0352PotionEyeDescription(
+               &state, 0, THING_TYPE_POTION, 150, 80,
+               "ROS POTION", text, sizeof(text)) == 1);
     assert(strcmp(text, "a ROS POTION") == 0);
 }
 

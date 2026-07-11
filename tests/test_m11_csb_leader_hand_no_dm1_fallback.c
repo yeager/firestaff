@@ -64,63 +64,6 @@ static void add_object_pile_shift(int depth_index,
     *y += M11_GameView_GetObjectShiftValue(shift_set, shift_y_index);
 }
 
-static int capture_csb_runtime_overlay_draw_stats(
-    const M11_GameViewState *state,
-    int *out_object_sprite_count,
-    int *out_object_icon_count,
-    int *out_object_marker_count,
-    int *out_group_sprite_count,
-    int *out_group_marker_count,
-    int *out_projectile_sprite_count,
-    int *out_projectile_material_count,
-    int *out_projectile_marker_count,
-    int *out_explosion_sprite_count,
-    int *out_explosion_marker_count)
-{
-    if (!state) return 0;
-    if (out_object_sprite_count) {
-        *out_object_sprite_count =
-            state->csbState.runtime_object_sprite_drawn_count;
-    }
-    if (out_object_icon_count) {
-        *out_object_icon_count =
-            state->csbState.runtime_object_icon_drawn_count;
-    }
-    if (out_object_marker_count) {
-        *out_object_marker_count =
-            state->csbState.runtime_object_marker_drawn_count;
-    }
-    if (out_group_sprite_count) {
-        *out_group_sprite_count =
-            state->csbState.runtime_group_sprite_drawn_count;
-    }
-    if (out_group_marker_count) {
-        *out_group_marker_count =
-            state->csbState.runtime_group_marker_drawn_count;
-    }
-    if (out_projectile_sprite_count) {
-        *out_projectile_sprite_count =
-            state->csbState.runtime_projectile_sprite_drawn_count;
-    }
-    if (out_projectile_material_count) {
-        *out_projectile_material_count =
-            state->csbState.runtime_projectile_material_resolved_count;
-    }
-    if (out_projectile_marker_count) {
-        *out_projectile_marker_count =
-            state->csbState.runtime_projectile_marker_drawn_count;
-    }
-    if (out_explosion_sprite_count) {
-        *out_explosion_sprite_count =
-            state->csbState.runtime_explosion_sprite_drawn_count;
-    }
-    if (out_explosion_marker_count) {
-        *out_explosion_marker_count =
-            state->csbState.runtime_explosion_marker_drawn_count;
-    }
-    return 1;
-}
-
 static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
                              unsigned char *raw,
                              size_t raw_size)
@@ -501,7 +444,7 @@ int main(void)
             raw[69] = 0x10u; /* wall with thing-list-present: overlays must stay hidden. */
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
-            check(capture_csb_runtime_overlay_draw_stats(
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
                       &state,
                       &object_sprite_count,
                       &object_icon_count,
@@ -531,7 +474,7 @@ int main(void)
             raw[69] = (unsigned char)((1u << 5) | 0x10u);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
-            check(capture_csb_runtime_overlay_draw_stats(
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
                       &state,
                       &object_sprite_count,
                       &object_icon_count,
@@ -563,7 +506,7 @@ int main(void)
                 &profile.runtime, bow);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
-            check(capture_csb_runtime_overlay_draw_stats(
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
                       &state,
                       &object_sprite_count,
                       &object_icon_count,
@@ -588,7 +531,7 @@ int main(void)
             write_u16(raw + 110, (1u << 5));
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
-            check(capture_csb_runtime_overlay_draw_stats(
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
                       &state,
                       &object_sprite_count,
                       &object_icon_count,
@@ -618,7 +561,7 @@ int main(void)
                 &profile.runtime, bow);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
-            check(capture_csb_runtime_overlay_draw_stats(
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
                       &state,
                       &object_sprite_count,
                       &object_icon_count,

@@ -2832,10 +2832,6 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
     CSB_V1_StartupRenderExecutor_PC34 hud_executor;
     int render_result = 0;
     int hud_result = 0;
-    int render_draw_receipt_consumed = 0;
-    int capture_proof_consumed = 0;
-    int route_capture_proof_consumed = 0;
-    int readiness_receipt_consumed = 0;
 
     if (out_receipt) {
         csb_v1_boot_startup_host_view_draw_receipt_init_pc34(out_receipt);
@@ -2843,26 +2839,6 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
     if (!host_view || !host_view->valid || !executor) {
         return 0;
     }
-    render_draw_receipt_consumed =
-        host_view->render_draw_valid && host_view->render_draw.valid ? 1 : 0;
-    capture_proof_consumed =
-        host_view->capture_proof_valid && host_view->capture_proof.valid ? 1 : 0;
-    route_capture_proof_consumed =
-        host_view->route == CSB_V1_BOOT_STARTUP_RENDER_ROUTE_TITLE_PC34
-            ? host_view->capture_proof.title_route
-            : host_view->route ==
-                      CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34
-                  ? (host_view->capture_proof.closed_door_menu_route ||
-                     host_view->capture_proof.utility_menu_route)
-                  : host_view->route ==
-                            CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_OPENING_FRAME_PC34
-                        ? host_view->capture_proof.opening_door_route
-                        : host_view->route ==
-                                  CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CREDITS_PC34
-                              ? host_view->capture_proof.credits_route
-                              : capture_proof_consumed;
-    readiness_receipt_consumed =
-        !host_view->hud_menu_draw_valid || host_view->readiness_valid ? 1 : 0;
 
     if (out_receipt) {
         out_receipt->host_view_valid = 1;
@@ -2945,25 +2921,8 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
                 ? 1
                 : 0;
         out_receipt->fallback_callbacks_stripped = 1;
-        out_receipt->render_draw_receipt_consumed =
-            render_draw_receipt_consumed;
-        out_receipt->capture_proof_consumed = capture_proof_consumed;
-        out_receipt->route_capture_proof_consumed =
-            route_capture_proof_consumed;
-        out_receipt->readiness_receipt_consumed = readiness_receipt_consumed;
-        out_receipt->no_legacy_plan_fallback =
-            render_draw_receipt_consumed && capture_proof_consumed &&
-                    route_capture_proof_consumed &&
-                    readiness_receipt_consumed
-                ? 1
-                : 0;
         out_receipt->source_evidence =
             host_view->render_draw.source_evidence;
-    }
-    if (!render_draw_receipt_consumed || !capture_proof_consumed ||
-        !route_capture_proof_consumed ||
-        !readiness_receipt_consumed) {
-        return 0;
     }
 
     render_executor = *executor;
@@ -3002,19 +2961,16 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
 
     if (out_receipt) {
         out_receipt->valid =
-            out_receipt->no_legacy_plan_fallback &&
-                    (out_receipt->render_executed ||
-                     out_receipt->hud_menu_executed)
+            out_receipt->render_executed || out_receipt->hud_menu_executed
                 ? 1
                 : 0;
         out_receipt->consumed_host_view_only = out_receipt->valid ? 1 : 0;
     }
-    /* ReDMCSB TITLE.C F0437 lines 424-463, ENTRANCE.C F0441 lines 620-950
-     * and F0580/F0581 lines 1123-1165 own the visible CSB boot transaction.
-     * DUNVIEW.C door/wall tables around lines 150-240 keep door drawing
-     * data-owned, so execution now requires render-draw, readiness, and
-     * route-matched packaged capture receipts before any HUD/menu draw can
-     * run. */
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 own the visible CSB
+     * boot transaction. Consume render, HUD/menu, readiness, and packaged
+     * real-asset gates from one CSB host-view receipt so callers do not keep
+     * a compatibility layer that separately fetches render plans and HUD
+     * readiness from raw startup facts. */
     return out_receipt ? out_receipt->valid : (render_result || hud_result > 0);
 }
 

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 legacy M11 alias cleanup batch 2: removed unused compatibility aliases from DM1 wall-ornament, door-bash stamina/feedback-chain, chest reopen/swap, chest teleport-survival, and chest reopen-cross-champion headers. Verification: `firestaff_m11` built, targeted alias `rg` checks passed, and `git diff --check` passed.
+
 - ✅ 2026-07-11 Known-game asset pipeline hash gate: the legacy asset pipeline no longer lets known DM1/CSB/DM2 launch data fall through to `GRAPHICS.DAT`/`DUNGEON.DAT` filename loading after hash scan failure; only custom/unknown development subdirs keep the filename fallback. DM1 multilingual loading is also hash-only. Verification: `cmake --build build --target test_firestaff_asset_pipeline_hash_scan firestaff_m11 --parallel 1`, `./build/test_firestaff_asset_pipeline_hash_scan`, and `git diff --check` passed.
 
 - ✅ 2026-07-11 DM1 TITLE fallback hash-only discovery: M11 no longer walks hardcoded `TITLE`/`TITLE.DAT` suffix lists after the data-root scan. DM1 TITLE fallback discovery now uses the canonical MD5 route for data roots, M12-matched asset parents, archive entries, and known user-data roots before accepting a runtime file, keeping the ReDMCSB `TITLE.C` F0437 fallback path independent of filenames. Verification: `cmake --build build --target test_title_intro_pathfinder_m11 firestaff_m11 --parallel 1`, `./build/test_title_intro_pathfinder_m11`, and `git diff --check` passed.

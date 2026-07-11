@@ -102,8 +102,6 @@ static int g_dm2_last_asset_creature_count = 0;
 static int g_dm2_last_fallback_creature_count = 0;
 static DM2_V1_RuntimeCreatureRenderReceipt g_dm2_last_creature_render;
 static DM2_V1_RuntimeItemRenderReceipt g_dm2_last_item_render;
-static int g_dm2_last_asset_item_count = 0;
-static int g_dm2_last_fallback_item_count = 0;
 static int g_dm2_last_asset_creature_possession_item_count = 0;
 static int g_dm2_last_fallback_creature_possession_item_count = 0;
 static int g_dm2_last_asset_carried_item_count = 0;
@@ -1916,10 +1914,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.asset_creature_drawn_count;
     g_dm2_last_fallback_creature_count =
         viewport.fallback_creature_drawn_count;
-    g_dm2_last_asset_item_count =
-        viewport.asset_item_drawn_count;
-    g_dm2_last_fallback_item_count =
-        viewport.fallback_item_drawn_count;
     g_dm2_last_asset_creature_possession_item_count =
         viewport.asset_creature_possession_item_drawn_count;
     g_dm2_last_fallback_creature_possession_item_count =
@@ -2163,14 +2157,6 @@ int dm2_v1_runtime_last_asset_carried_item_count(void) {
 
 int dm2_v1_runtime_last_fallback_carried_item_count(void) {
     return g_dm2_last_fallback_carried_item_count;
-}
-
-int dm2_v1_runtime_last_asset_item_count(void) {
-    return g_dm2_last_asset_item_count;
-}
-
-int dm2_v1_runtime_last_fallback_item_count(void) {
-    return g_dm2_last_fallback_item_count;
 }
 
 int dm2_v1_runtime_last_item_render_receipt(

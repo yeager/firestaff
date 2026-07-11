@@ -43,19 +43,10 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
         return 0;
     }
     memset(&decision, 0, sizeof(decision));
-    if (input->relativeForward == 0 && input->relativeSide == 0) {
-        /* ReDMCSB DUNVIEW.C F0115:5675 includes the D0C projectile row
-         * through G2028[0] even though the normal forward/side helper is
-         * D1..D3-oriented. Keep the current-square live effect receipt in
-         * DM1 so M11 does not reopen static dungeon projectile fallback. */
-        decision.viewSquare = DM1_VIEW_SQUARE_D0C;
-        decision.row = 11;
-    } else {
-        decision.viewSquare = dm1_viewport_3d_f0115_view_square_index(
-            input->relativeForward, input->relativeSide);
-        decision.row = dm1_viewport_3d_f0115_c2500_c2900_row(
-            input->relativeForward, input->relativeSide);
-    }
+    decision.viewSquare = dm1_viewport_3d_f0115_view_square_index(
+        input->relativeForward, input->relativeSide);
+    decision.row = dm1_viewport_3d_f0115_c2500_c2900_row(
+        input->relativeForward, input->relativeSide);
     decision.itemZone = -1;
     decision.projectileZone = -1;
     decision.liveProjectileSlot = -1;
@@ -109,7 +100,6 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
             const struct ExplosionInstance_Compat *explosion =
                 &input->liveExplosions->entries[i];
             if (!dm1_v1_viewport_runtime_explosion_is_active_pc34(explosion) ||
-                explosion->explosionType < 0 ||
                 (input->suppressFluxcages &&
                  explosion->explosionType == C050_EXPLOSION_FLUXCAGE) ||
                 explosion->mapIndex != input->mapIndex ||
