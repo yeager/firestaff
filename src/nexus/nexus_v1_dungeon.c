@@ -29,6 +29,33 @@ static uint16_t nexus_v1_decode_structure1b_mesh_ref(const uint8_t *cell) {
                        ((unsigned)cell[6] >> 4)) & 0x0fffU);
 }
 
+static int nexus_v1_abs_i8(int value) {
+    return value < 0 ? -value : value;
+}
+
+static void nexus_v1_decode_structure1f_descriptor(
+    const uint8_t *src,
+    Nexus_V1_DgnMeshDescriptor *dst) {
+    int width;
+    int height;
+
+    if (!dst) return;
+    memset(dst, 0, sizeof(*dst));
+    if (!src) return;
+
+    dst->x1 = (int8_t)src[0];
+    dst->y1 = (int8_t)src[1];
+    dst->x2 = (int8_t)src[2];
+    dst->y2 = (int8_t)src[3];
+    width = nexus_v1_abs_i8((int)dst->x2 - (int)dst->x1);
+    height = nexus_v1_abs_i8((int)dst->y2 - (int)dst->y1);
+    dst->width = width;
+    dst->height = height;
+    dst->area = width * height;
+    dst->solid = dst->area > 0 ? 1 : 0;
+    dst->valid = 1;
+}
+
 static uint8_t nexus_v1_decode_structure1b_floor_material(const uint8_t *cell) {
     return (uint8_t)((rb16(cell) >> 7) & 0x1fU);
 }
@@ -129,6 +156,10 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
      */
     memset(seen_refs, 0, sizeof(seen_refs));
     memset(seen_mesh_refs, 0, sizeof(seen_mesh_refs));
+    info.structure1f_descriptor_count =
+        geometry_size > 0
+            ? geometry_size / NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES
+            : 0;
     for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
         for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
             int off = structure1b_offset +
@@ -149,8 +180,28 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
             if (mesh_ref != 0 && mesh_ref != 0x0FFF) {
                 info.mesh_ref_count++;
                 if (!seen_mesh_refs[mesh_ref]) {
+                    Nexus_V1_DgnMeshDescriptor descriptor;
                     seen_mesh_refs[mesh_ref] = 1U;
                     info.mesh_ref_unique_count++;
+                    if (info.structure1f_first_ref == 0) {
+                        info.structure1f_first_ref = mesh_ref;
+                    }
+                    if (mesh_ref < info.structure1f_descriptor_count) {
+                        nexus_v1_decode_structure1f_descriptor(
+                            data + geometry_offset +
+                                (mesh_ref *
+                                 NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES),
+                            &descriptor);
+                        if (descriptor.valid) {
+                            info.structure1f_valid_descriptor_count++;
+                            if (descriptor.solid) {
+                                info.structure1f_solid_descriptor_count++;
+                            }
+                            if (descriptor.area > info.structure1f_max_area) {
+                                info.structure1f_max_area = descriptor.area;
+                            }
+                        }
+                    }
                 }
                 if (mesh_ref > info.max_mesh_ref) {
                     info.max_mesh_ref = mesh_ref;
@@ -246,13 +297,11 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                 }
                 if (mesh_descriptor_count > NEXUS_DGN_MAX_MESH_DESCRIPTORS - 1)
                     mesh_descriptor_count = NEXUS_DGN_MAX_MESH_DESCRIPTORS - 1;
-                for (int ref = 1; ref <= mesh_descriptor_count; ++ref) {
+                for (int ref = 1; ref < mesh_descriptor_count; ++ref) {
                     const uint8_t *src = sectors + ref * 4;
-                    Nexus_V1_DgnMeshDescriptor *dst =
-                        &level->mesh_descriptors[ref];
-                    dst->valid = 1;
-                    dst->x1 = (int8_t)src[0]; dst->y1 = (int8_t)src[1];
-                    dst->x2 = (int8_t)src[2]; dst->y2 = (int8_t)src[3];
+                    nexus_v1_decode_structure1f_descriptor(
+                        src,
+                        &level->mesh_descriptors[ref]);
                 }
             }
             level->has_3d_geometry = 1;
@@ -474,6 +523,14 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
     out_receipt->mesh_ref_count = info->mesh_ref_count;
     out_receipt->mesh_ref_unique_count = info->mesh_ref_unique_count;
     out_receipt->max_mesh_ref = info->max_mesh_ref;
+    out_receipt->structure1f_descriptor_count =
+        info->structure1f_descriptor_count;
+    out_receipt->structure1f_valid_descriptor_count =
+        info->structure1f_valid_descriptor_count;
+    out_receipt->structure1f_solid_descriptor_count =
+        info->structure1f_solid_descriptor_count;
+    out_receipt->structure1f_first_ref = info->structure1f_first_ref;
+    out_receipt->structure1f_max_area = info->structure1f_max_area;
     out_receipt->descriptor_capacity =
         info->geometry_size > 0
             ? info->geometry_size / NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES
@@ -553,6 +610,15 @@ static int nexus_v1_dgn_plan_push(
         receipt->mesh_command_count++;
         if (command.mesh_descriptor_projected) {
             receipt->mesh_descriptor_command_count++;
+        }
+        if (command.mesh_descriptor.valid) {
+            receipt->structure1f_command_count++;
+            if (command.mesh_descriptor.solid) {
+                receipt->structure1f_solid_command_count++;
+            }
+            if (command.mesh_descriptor.area > receipt->structure1f_max_area) {
+                receipt->structure1f_max_area = command.mesh_descriptor.area;
+            }
         }
         if (receipt->first_mesh_ref == 0) {
             receipt->first_mesh_ref = command.mesh_ref;

@@ -36,6 +36,11 @@ typedef struct {
     int mesh_ref_count;
     int mesh_ref_unique_count;
     int max_mesh_ref;
+    int structure1f_descriptor_count;
+    int structure1f_valid_descriptor_count;
+    int structure1f_solid_descriptor_count;
+    int structure1f_first_ref;
+    int structure1f_max_area;
     int mesh_ready;
 } Nexus_V1_DgnGeometryInfo;
 
@@ -56,6 +61,10 @@ typedef struct {
     int8_t y1;
     int8_t x2;
     int8_t y2;
+    int width;
+    int height;
+    int area;
+    int solid;
 } Nexus_V1_DgnMeshDescriptor;
 
 /* Runtime-facing view of one Structure1B cell. Movement and rendering must
@@ -124,6 +133,11 @@ typedef struct {
     int mesh_ref_count;
     int mesh_ref_unique_count;
     int max_mesh_ref;
+    int structure1f_descriptor_count;
+    int structure1f_valid_descriptor_count;
+    int structure1f_solid_descriptor_count;
+    int structure1f_first_ref;
+    int structure1f_max_area;
     int descriptor_capacity;
 } Nexus_V1_DgnRendererHandoffReceipt;
 
@@ -179,6 +193,9 @@ typedef struct {
     int material_semantics_complete;
     int mesh_command_count;
     int mesh_descriptor_command_count;
+    int structure1f_command_count;
+    int structure1f_solid_command_count;
+    int structure1f_max_area;
     int first_mesh_ref;
     int max_mesh_ref;
     int source_cell_count;
