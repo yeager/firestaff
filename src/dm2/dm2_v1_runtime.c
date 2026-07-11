@@ -1229,6 +1229,7 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     rt->time_of_day_minutes = gs->time_of_day;
     rt->dungeon_level = gs->current_level;
     rt->view_dir = gs->party_dir;
+    dm2_v1_weather_set_seed(&rt->weather, session->rng_seed);
     dm2_runtime_refresh_map_wall_gfx_list(rt);
     dm2_runtime_refresh_gdat_scene_control(rt);
     rt->leader_hand_object = session->original_leader_hand_object;
@@ -2312,6 +2313,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_scene_control_ready;
     g_dm2_frame_ownership.gdat_scene_control_consumed =
         viewport.gdat_scene_control_consumed_count;
+    g_dm2_frame_ownership.gdat_scene_light_consumed =
+        viewport.gdat_scene_light_consumed_count;
+    g_dm2_frame_ownership.gdat_scene_floor_anim_consumed =
+        viewport.gdat_scene_floor_anim_consumed_count;
+    g_dm2_frame_ownership.gdat_scene_weather_consumed =
+        viewport.gdat_scene_weather_consumed_count;
     g_dm2_frame_ownership.gdat_scene_control_hash =
         rt->gdat_scene_control_hash;
     g_dm2_frame_ownership.gdat_scene_control_present_mask =
@@ -2338,6 +2345,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
          (g_dm2_frame_ownership.gdat_scene_control_ready &&
           g_dm2_frame_ownership.gdat_scene_control_consumed > 0 &&
+          g_dm2_frame_ownership.gdat_scene_light_consumed > 0 &&
           g_dm2_frame_ownership.gdat_scene_control_hash != 0u)) &&
         /* skproject SKWIN uses raw INTERFACE_GENERAL tables for the HUD
          * chrome/layout and CHAMPIONS images for the visible portrait panel.
@@ -3065,6 +3073,54 @@ int dm2_v1_runtime_load_last_session(const char *save_base)
         return -1;
     }
     return dm2_v1_runtime_restore_save_candidate(data, data_size);
+}
+
+int dm2_v1_runtime_import_sksave_corpus(
+    const char *save_base,
+    DM2_V1_RuntimeCorpusImportReceipt *out_receipt)
+{
+    DM2_V1_RuntimeCorpusImportReceipt local;
+    DM2_V1_RuntimeCorpusImportReceipt *receipt =
+        out_receipt ? out_receipt : &local;
+    uint8_t data[DM2_SESSION_MAX_SIZE];
+    size_t data_size = 0u;
+    DM2_V1_SaveCandidate candidate;
+
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->result = DM2_V1_RUNTIME_CORPUS_IMPORT_BAD_INPUT;
+    if (!save_base || !save_base[0]) {
+        return 0;
+    }
+    if (!dm2_v1_sksave_corpus_scan(save_base, &receipt->corpus)) {
+        receipt->result = DM2_V1_RUNTIME_CORPUS_IMPORT_READ_FAILED;
+        return 0;
+    }
+    if (receipt->corpus.importable_candidate_count == 0 ||
+        receipt->corpus.first_importable_path[0] == '\0') {
+        receipt->result =
+            DM2_V1_RUNTIME_CORPUS_IMPORT_NO_IMPORTABLE_SAVE;
+        return 0;
+    }
+    snprintf(receipt->selected_path, sizeof(receipt->selected_path), "%s",
+             receipt->corpus.first_importable_path);
+    if (!dm2_v1_sksave_corpus_load_first_importable(
+            save_base, data, sizeof(data), &data_size, &receipt->corpus)) {
+        receipt->result = DM2_V1_RUNTIME_CORPUS_IMPORT_READ_FAILED;
+        return 0;
+    }
+    receipt->selected_payload_size = data_size;
+    if (dm2_v1_session_parse_save_candidate(&candidate, data, data_size) != 0) {
+        receipt->result = DM2_V1_RUNTIME_CORPUS_IMPORT_PARSE_FAILED;
+        return 0;
+    }
+    receipt->candidate_kind = candidate.kind;
+    if (dm2_v1_runtime_restore_save_candidate(data, data_size) != 0) {
+        receipt->result = DM2_V1_RUNTIME_CORPUS_IMPORT_RESTORE_FAILED;
+        return 0;
+    }
+    receipt->restored = 1;
+    receipt->result = DM2_V1_RUNTIME_CORPUS_IMPORT_OK;
+    return 1;
 }
 
 static int dm2_runtime_write_live_sidecar(const char *save_root)

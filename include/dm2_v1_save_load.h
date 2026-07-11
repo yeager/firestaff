@@ -175,6 +175,12 @@ bool dm2_v1_save_has_valid_last_session(const char *save_base);
  * byte totals without mutating live runtime state. */
 bool dm2_v1_sksave_corpus_scan(const char *save_base,
                                DM2_SKSaveCorpusReceipt *out_receipt);
+bool dm2_v1_sksave_corpus_load_first_importable(
+    const char *save_base,
+    uint8_t *out_payload,
+    size_t out_capacity,
+    size_t *out_payload_size,
+    DM2_SKSaveCorpusReceipt *out_receipt);
 
 /* Run dm2_suppress_self_verification; returns true on success. */
 bool dm2_v1_save_suppress_self_test(void);

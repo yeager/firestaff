@@ -325,6 +325,45 @@ static void dm2_sksave_corpus_classify_payload(
     }
 }
 
+static int dm2_sksave_read_valid_payload(const char *path,
+                                         uint8_t *out_payload,
+                                         size_t out_capacity,
+                                         size_t *out_payload_size)
+{
+    FILE *f;
+    int status = 0;
+    long payload_start;
+    long end_pos;
+    size_t payload_size;
+
+    if (out_payload_size) *out_payload_size = 0u;
+    if (!path || !out_payload || out_capacity == 0u || !out_payload_size) {
+        return -1;
+    }
+    f = dm2_sl_open_valid_payload(path, &status);
+    if (!f) return -1;
+    payload_start = ftell(f);
+    if (payload_start < 0 || fseek(f, 0, SEEK_END) != 0) {
+        fclose(f);
+        return -1;
+    }
+    end_pos = ftell(f);
+    if (end_pos < payload_start) {
+        fclose(f);
+        return -1;
+    }
+    payload_size = (size_t)(end_pos - payload_start);
+    if (payload_size == 0u || payload_size > out_capacity ||
+        fseek(f, payload_start, SEEK_SET) != 0 ||
+        fread(out_payload, 1u, payload_size, f) != payload_size) {
+        fclose(f);
+        return -1;
+    }
+    fclose(f);
+    *out_payload_size = payload_size;
+    return 0;
+}
+
 void dm2_sl_init(DM2_SL_State *state, const char *save_base)
 {
     if (!state) return;
@@ -649,6 +688,36 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
         }
     }
 
+    return true;
+}
+
+bool dm2_v1_sksave_corpus_load_first_importable(
+    const char *save_base,
+    uint8_t *out_payload,
+    size_t out_capacity,
+    size_t *out_payload_size,
+    DM2_SKSaveCorpusReceipt *out_receipt)
+{
+    DM2_SKSaveCorpusReceipt local_receipt;
+    DM2_SKSaveCorpusReceipt *receipt =
+        out_receipt ? out_receipt : &local_receipt;
+
+    if (out_payload_size) *out_payload_size = 0u;
+    if (!save_base || !out_payload || out_capacity == 0u ||
+        !out_payload_size) {
+        return false;
+    }
+    if (!dm2_v1_sksave_corpus_scan(save_base, receipt) ||
+        receipt->importable_candidate_count == 0 ||
+        receipt->first_importable_path[0] == '\0') {
+        return false;
+    }
+    if (dm2_sksave_read_valid_payload(receipt->first_importable_path,
+                                      out_payload,
+                                      out_capacity,
+                                      out_payload_size) != 0) {
+        return false;
+    }
     return true;
 }
 

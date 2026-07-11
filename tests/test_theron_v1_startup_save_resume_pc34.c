@@ -4704,7 +4704,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     receipt.startup_level_blocked_anchor_count == 2 &&
                     receipt.startup_level_blocked_anchor_mask == 0x06u &&
                     receipt.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     receipt.startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     receipt.startup_level_anchor_status[1] ==
@@ -4738,12 +4738,12 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                      (1u << THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE)) &&
                     (object_route_receipt.semantic_role_mask &
                      (1u << THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE)) &&
-                    !(object_route_receipt.semantic_role_mask &
-                      (1u << THERON_TRACK02_SEMANTIC_OBJECT_TABLE)) &&
+                    (object_route_receipt.semantic_role_mask &
+                     (1u << THERON_TRACK02_SEMANTIC_OBJECT_TABLE)) &&
                     object_route_receipt.descriptor_table_semantic_count == 3u &&
                     object_route_receipt.descriptor_table_semantic_anchor_count == 3u &&
                     object_route_receipt.descriptor_table_semantic_anchor_mask == 0x07u &&
-                    !object_route_receipt.object_table_role_mapped &&
+                    object_route_receipt.object_table_role_mapped &&
                     object_route_receipt.object_table_candidate_count == 6u &&
                     object_route_receipt.object_table_candidate_anchor_mask == 0x07u &&
                     object_route_receipt.object_table_candidate_anchor_counts[0] == 2u &&
@@ -4796,11 +4796,26 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     object_route_receipt.object_table_blocked_anchor_count == 3u &&
                     object_route_receipt.object_table_blocked_anchor_mask == 0x07u &&
                     object_route_receipt.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     object_route_receipt.object_table_anchor_binding_status[1] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     object_route_receipt.object_table_anchor_binding_status[2] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+                    object_route_receipt.object_table_anchor_record_count[0] ==
+                        0x4241u &&
+                    object_route_receipt.object_table_anchor_overflow_count[0] ==
+                        (0x4241u - THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS) &&
+                    object_route_receipt
+                            .object_table_anchor_decoded_byte_count[0] ==
+                        2u &&
+                    object_route_receipt
+                            .object_table_anchor_decoded_nonzero_byte_count[0] ==
+                        2u &&
+                    object_route_receipt
+                            .object_table_anchor_decoded_checksum[0] ==
+                        test_fnv1a_bytes(
+                            track02 + post_descriptor_candidate_offsets[0],
+                            2u) &&
                     !object_route_receipt.object_table_decode_ready &&
                     object_route_receipt.blocked_for_missing_real_object_evidence &&
                     !object_route_receipt.fallback_visuals_allowed &&
@@ -4963,7 +4978,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     runtime_result.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     runtime_result.startup_level_blocked_anchor_mask == 0x06u &&
                     runtime_result.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     runtime_result.startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     runtime_result.startup_level_anchor_status[1] ==
@@ -4981,7 +4996,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     apply_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     apply_receipt.startup_level_blocked_anchor_mask == 0x06u &&
                     apply_receipt.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     apply_receipt.startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     apply_receipt.startup_level_anchor_status[1] ==
@@ -5009,7 +5024,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     state_receipt.runtime_nonstartup_level_blocked_anchor_mask == 0x07u &&
                     state_receipt.runtime_startup_level_blocked_anchor_mask == 0x06u &&
                     state_receipt.runtime_object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     state_receipt.runtime_startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     state_receipt.runtime_startup_level_anchor_raw_offsets[0] ==
@@ -5035,7 +5050,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     host_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     host_receipt.startup_level_blocked_anchor_mask == 0x06u &&
                     host_receipt.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     host_receipt.startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     host_receipt.startup_level_anchor_raw_offsets[0] ==

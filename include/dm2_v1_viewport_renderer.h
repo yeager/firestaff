@@ -712,6 +712,9 @@ typedef struct {
     int fallback_wall_drawn_count;
     int gdat_scene_control_ready;
     int gdat_scene_control_consumed_count;
+    int gdat_scene_light_consumed_count;
+    int gdat_scene_floor_anim_consumed_count;
+    int gdat_scene_weather_consumed_count;
     uint32_t gdat_scene_control_hash;
     uint16_t gdat_scene_colorkey;
     uint16_t gdat_scene_flags;

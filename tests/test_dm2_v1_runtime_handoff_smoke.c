@@ -799,6 +799,9 @@ static void test_first_tick_after_boot_profile_handoff(void)
               ownership.full_gdat_frame_valid == 1 &&
               ownership.real_gdat_evidence_valid == 0,
               "runtime frame ownership requires full GDAT HUD and dungeon consumption without fallback");
+        CHECK(ownership.gdat_scene_light_consumed >=
+                  ownership.gdat_scene_control_consumed,
+              "runtime ownership reports GRAPHICSSET light consumption with scene-control consumption");
         CHECK(framebuffer[0] != 0,
               "runtime asset-provider frame completes the shared viewport render pass");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);

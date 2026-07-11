@@ -3273,6 +3273,7 @@ const char *theron_v1_track02_descriptor_window_kind_name(
  *                                  semantic role is a re-statement of
  *                                  the existing contains_descriptor_table
  *                                  flag for the middle entry)
+ *   entry 6 -> OBJECT_TABLE    (bounded compact-row candidate)
  *   every other entry -> UNKNOWN
  *
  * This is one bound entry per the lane task.  Other entries keep their
@@ -3284,6 +3285,7 @@ Theron_Track02SemanticRole theron_v1_track02_semantic_role_for_entry(
     if (entry_index == (size_t)TQR_US_ISO_BANK_STRIDE_WINDOW_WITH_DESCRIPTOR) {
         return THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE;
     }
+    if (entry_index == 6u) return THERON_TRACK02_SEMANTIC_OBJECT_TABLE;
     return THERON_TRACK02_SEMANTIC_ROLE_UNKNOWN;
 }
 
@@ -3378,6 +3380,83 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_read_dungeon_seed_table(
                     : THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
 }
 
+Theron_Track02SemanticBindingStatus theron_v1_track02_read_object_table(
+    const uint8_t *object_bytes,
+    size_t object_size,
+    Theron_Track02ObjectTable *out_table) {
+
+    size_t record_count;
+    size_t needed;
+    uint32_t checksum = 2166136261u;
+
+    if (out_table) {
+        memset(out_table, 0, sizeof(*out_table));
+    }
+    if (!object_bytes || !out_table || object_size < 2u) {
+        return THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+    }
+
+    record_count = rd16le(object_bytes);
+    if (record_count == 0u) {
+        out_table->byte_count = 2u;
+        out_table->checksum = tqr_fnv1a_bytes(object_bytes, 2u);
+        return THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL;
+    }
+    if (record_count > THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS) {
+        out_table->record_count = record_count;
+        out_table->overflow_count =
+            record_count - THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS;
+        out_table->byte_count = 2u;
+        for (size_t i = 0u; i < 2u; ++i) {
+            if (object_bytes[i] != 0u) {
+                ++out_table->nonzero_byte_count;
+            }
+        }
+        out_table->checksum = tqr_fnv1a_bytes(object_bytes, 2u);
+        return THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
+    }
+
+    needed = 2u + record_count * THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES;
+    if (needed > object_size) {
+        return THERON_TRACK02_SEMANTIC_BINDING_WINDOW_TOO_SMALL;
+    }
+
+    out_table->record_count = record_count;
+    out_table->byte_count = needed;
+    for (size_t i = 0u; i < needed; ++i) {
+        if (object_bytes[i] != 0u) {
+            ++out_table->nonzero_byte_count;
+        }
+        checksum ^= object_bytes[i];
+        checksum *= 16777619u;
+    }
+
+    for (size_t i = 0u; i < record_count; ++i) {
+        const uint8_t *row =
+            object_bytes + 2u + i * THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES;
+        Theron_Track02ObjectTableRecord *record = &out_table->records[i];
+        record->object_id = row[0];
+        record->kind = row[1];
+        record->x = row[2];
+        record->y = row[3];
+        record->level_index = row[4];
+        record->flags = row[5];
+        record->argument = rd16le(row + 6u);
+
+        if (record->object_id == 0u || record->kind == 0u ||
+            record->x >= TQR_RAW_INITIAL_LEVEL_WIDTH ||
+            record->y >= TQR_RAW_INITIAL_LEVEL_HEIGHT ||
+            record->level_index >= THERON_TRACK02_DUNGEON_COUNT) {
+            out_table->checksum = checksum;
+            return THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
+        }
+    }
+
+    out_table->checksum = checksum;
+    out_table->shape_ok = 1;
+    return THERON_TRACK02_SEMANTIC_BINDING_OK;
+}
+
 Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -3442,8 +3521,8 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
 
     /* Role-specific decode.  DUNGEON_SEED_TABLE reads a value payload;
      * DESCRIPTOR_TABLE binds the already decoded descriptor-bearing
-     * window as a real semantic route.  Object/text/palette roles remain
-     * unclaimed until real Track 02 evidence promotes them. */
+     * window as a real semantic route.  OBJECT_TABLE uses a strict bounded
+     * compact-row shape gate before any no-fallback reduction. */
     if (out_binding->role == THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE) {
         if (window->kind == THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL) {
             status = THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL;
@@ -3460,6 +3539,15 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
         status = window->kind == THERON_TRACK02_DESCRIPTOR_WINDOW_DESCRIPTOR_TABLE
             ? THERON_TRACK02_SEMANTIC_BINDING_OK
             : THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
+    } else if (out_binding->role == THERON_TRACK02_SEMANTIC_OBJECT_TABLE) {
+        if (window->kind == THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL) {
+            status = THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL;
+        } else {
+            status = theron_v1_track02_read_object_table(
+                track02_data + window->absolute_offset,
+                window->byte_count,
+                &out_binding->object_table);
+        }
     } else {
         status = THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND;
     }
@@ -3703,11 +3791,126 @@ int theron_v1_track02_capture_object_table_route_receipt(
                         entry_index,
                         &binding);
                 if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
+                    size_t user_data_offset = 0u;
                     out_receipt->object_table_anchor_binding_status[anchor] =
                         (int)binding_status;
                     out_receipt->object_table_anchor_hash[anchor] =
                         ((uint32_t)descriptor_offset ^ (uint32_t)entry_index ^
                          ((uint32_t)binding_status << 24));
+                    out_receipt->object_table_anchor_record_count[anchor] =
+                        binding.object_table.record_count;
+                    out_receipt->object_table_anchor_overflow_count[anchor] =
+                        binding.object_table.overflow_count;
+                    out_receipt->object_table_anchor_decoded_byte_count[anchor] =
+                        binding.object_table.byte_count;
+                    out_receipt
+                        ->object_table_anchor_decoded_nonzero_byte_count[anchor] =
+                        binding.object_table.nonzero_byte_count;
+                    out_receipt->object_table_anchor_decoded_checksum[anchor] =
+                        binding.object_table.checksum;
+                    ++out_receipt
+                          ->object_table_candidate_anchor_counts[anchor];
+                    if (out_receipt
+                            ->object_table_candidate_anchor_counts[anchor] ==
+                        1u) {
+                        out_receipt->object_table_candidate_entry_index[anchor] =
+                            entry_index;
+                        out_receipt->object_table_candidate_raw_offsets[anchor] =
+                            binding.absolute_offset;
+                        out_receipt->object_table_candidate_byte_counts[anchor] =
+                            binding.byte_count;
+                        out_receipt
+                            ->object_table_candidate_nonzero_byte_counts[anchor] =
+                            entries[entry_index].nonzero_byte_count;
+                        out_receipt->object_table_candidate_hashes[anchor] =
+                            tqr_fnv1a_bytes(track02_data + binding.absolute_offset,
+                                            binding.byte_count);
+                        if (binding.byte_count >= 12u &&
+                            binding.absolute_offset <= track02_size &&
+                            binding.byte_count <=
+                                track02_size - binding.absolute_offset) {
+                            const uint8_t *candidate =
+                                track02_data + binding.absolute_offset;
+                            int startup_header_shaped;
+                            out_receipt
+                                ->object_table_candidate_header_width[anchor] =
+                                rd16be(candidate + 0u);
+                            out_receipt
+                                ->object_table_candidate_header_height[anchor] =
+                                rd16be(candidate + 2u);
+                            out_receipt
+                                ->object_table_candidate_header_seed[anchor] =
+                                rd32be(candidate + 4u);
+                            out_receipt
+                                ->object_table_candidate_header_level_index
+                                    [anchor] =
+                                rd16be(candidate + 8u);
+                            startup_header_shaped =
+                                out_receipt
+                                    ->object_table_candidate_header_width
+                                        [anchor] ==
+                                    TQR_RAW_INITIAL_LEVEL_WIDTH &&
+                                out_receipt
+                                    ->object_table_candidate_header_height
+                                        [anchor] ==
+                                    TQR_RAW_INITIAL_LEVEL_HEIGHT &&
+                                out_receipt
+                                    ->object_table_candidate_header_seed
+                                        [anchor] ==
+                                    TQR_RAW_INITIAL_LEVEL_SEED &&
+                                out_receipt
+                                    ->object_table_candidate_header_level_index
+                                        [anchor] ==
+                                    TQR_RAW_INITIAL_LEVEL_INDEX;
+                            out_receipt
+                                ->object_table_candidate_startup_header_shaped
+                                    [anchor] =
+                                startup_header_shaped ? 1 : 0;
+                            ++out_receipt
+                                  ->object_table_candidate_header_probe_count;
+                            if (startup_header_shaped) {
+                                ++out_receipt
+                                      ->object_table_candidate_startup_header_shape_count;
+                            }
+                        }
+                        if (binding.absolute_offset >= descriptor_offset) {
+                            out_receipt
+                                ->object_table_candidate_after_descriptor[anchor] =
+                                1;
+                            out_receipt
+                                ->object_table_candidate_descriptor_delta[anchor] =
+                                binding.absolute_offset - descriptor_offset;
+                        }
+                        if (theron_v1_track02_raw_offset_to_user_offset(
+                                binding.absolute_offset,
+                                track02_size,
+                                md5_hex,
+                                &user_data_offset) ==
+                            THERON_TRACK02_SIGNAL_OK) {
+                            out_receipt
+                                ->object_table_candidate_user_data_offsets[anchor] =
+                                user_data_offset;
+                            out_receipt
+                                ->object_table_candidate_user_data_valid[anchor] =
+                                1;
+                        }
+                        out_receipt->object_table_candidate_entry_role[anchor] =
+                            entries[entry_index].role;
+                        out_receipt->object_table_candidate_window_kind[anchor] =
+                            binding.window_kind;
+                    }
+                    out_receipt
+                        ->object_table_candidate_last_entry_index[anchor] =
+                        entry_index;
+                    out_receipt
+                        ->object_table_candidate_last_raw_offsets[anchor] =
+                        binding.absolute_offset;
+                    out_receipt
+                        ->object_table_candidate_last_byte_counts[anchor] =
+                        binding.byte_count;
+                    out_receipt->object_table_candidate_last_hashes[anchor] =
+                        tqr_fnv1a_bytes(track02_data + binding.absolute_offset,
+                                        binding.byte_count);
                 }
                 if (binding_status == THERON_TRACK02_SEMANTIC_BINDING_OK) {
                     out_receipt->object_table_decode_ready = 1;
@@ -3911,6 +4114,17 @@ int theron_v1_track02_capture_object_table_route_receipt(
         hash ^= (uint32_t)out_receipt->object_table_anchor_binding_status[anchor];
         hash *= 16777619u;
         hash ^= out_receipt->object_table_anchor_hash[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->object_table_anchor_record_count[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->object_table_anchor_overflow_count[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt->object_table_anchor_decoded_byte_count[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_anchor_decoded_nonzero_byte_count[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->object_table_anchor_decoded_checksum[anchor];
         hash *= 16777619u;
     }
     hash ^= (uint32_t)out_receipt->object_table_candidate_header_probe_count;
