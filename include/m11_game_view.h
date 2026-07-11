@@ -1489,76 +1489,15 @@ int M11_GameView_HandleMirrorCandidateRenameClick(M11_GameViewState* state,
                                                   int x,
                                                   int y);
 int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state);
-int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
-                                      int championSlot);
-int M11_GameView_GetV1StatusNameClearColor(void);
-int M11_GameView_GetV1StatusBoxFillColor(void);
-int M11_GameView_GetV1StatusBoxZoneId(int championSlot);
-int M11_GameView_GetV1StatusBoxZone(int championSlot,
-                                    int* outX,
-                                    int* outY,
-                                    int* outW,
-                                    int* outH);
-int M11_GameView_GetV1StatusNameClearZoneId(int championSlot);
-int M11_GameView_GetV1StatusNameTextZoneId(int championSlot);
-int M11_GameView_GetV1StatusNameZone(int championSlot,
-                                     int* outX,
-                                     int* outY,
-                                     int* outW,
-                                     int* outH);
-int M11_GameView_GetV1StatusNameTextZone(int championSlot,
-                                         int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH);
-int M11_GameView_GetV1StatusHandParentZoneId(int championSlot);
-int M11_GameView_GetV1StatusHandZoneId(int championSlot,
-                                       int handIndex);
-int M11_GameView_GetV1StatusHandZone(int championSlot,
-                                     int handIndex,
-                                     int* outX,
-                                     int* outY,
-                                     int* outW,
-                                     int* outH);
 int M11_GameView_GetV1StatusHandIconZone(int championSlot,
                                          int handIndex,
                                          int* outX,
                                          int* outY,
                                          int* outW,
                                          int* outH);
-int M11_GameView_GetV1StatusHandSlotBoxZone(int championSlot,
-                                            int handIndex,
-                                            int* outX,
-                                            int* outY,
-                                            int* outW,
-                                            int* outH);
-int M11_GameView_GetV1StatusBarGraphZoneId(int championSlot);
-int M11_GameView_GetV1StatusBarZoneId(int statIndex);
-int M11_GameView_GetV1StatusBarValueZoneId(int championSlot,
-                                           int statIndex);
-int M11_GameView_GetV1StatusBarZone(int championSlot,
-                                    int statIndex,
-                                    int* outX,
-                                    int* outY,
-                                    int* outW,
-                                    int* outH);
-int M11_GameView_GetV1ChampionBarColor(int championSlot);
-int M11_GameView_GetV1StatusBarBlankColor(void);
 int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
                                           int championSlot,
                                           int handIndex);
-int M11_GameView_GetV1PartyShieldBorderGraphicId(void);
-int M11_GameView_GetV1FireShieldBorderGraphicId(void);
-int M11_GameView_GetV1SpellShieldBorderGraphicId(void);
-int M11_GameView_GetV1StatusShieldBorderZone(int championSlot,
-                                             int* outX,
-                                             int* outY,
-                                             int* outW,
-                                             int* outH);
-int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
-                                           int championSlot);
-int M11_GameView_GetV1StatusBoxGraphicId(void);
-int M11_GameView_GetV1DeadStatusBoxGraphicId(void);
 int M11_GameView_GetV1PoisonLabelZone(int championSlot,
                                       int labelW,
                                       int labelH,
@@ -1590,7 +1529,6 @@ int M11_GameView_GetV1DamageNumberOriginPc34(int championSlot,
                                              int inventoryChampion,
                                              int* outX,
                                              int* outY);
-int M11_GameView_GetV1CreatureDamageGraphicId(void);
 int M11_GameView_GetV1MovementArrowsZoneId(void);
 int M11_GameView_GetV1MovementArrowsGraphicId(void);
 int M11_GameView_GetV1MovementArrowsOuterBox(int* outX,
