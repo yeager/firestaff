@@ -1131,6 +1131,18 @@ typedef struct {
     size_t object_table_row_first_reject_overflow_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_row_first_reject_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint32_t object_table_row_first_reject_checksums[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_inner_scan_probe_count;
+    size_t object_table_inner_scan_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_inner_scan_shaped_count;
+    unsigned int object_table_inner_scan_shaped_anchor_mask;
+    size_t object_table_inner_scan_shaped_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_inner_scan_shaped_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_inner_scan_shaped_window_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_inner_scan_shaped_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int object_table_inner_scan_shaped_user_data_valid[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_inner_scan_shaped_record_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_inner_scan_shaped_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t object_table_inner_scan_shaped_checksums[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_row_shaped_count;
     unsigned int object_table_row_shaped_anchor_mask;
     size_t object_table_row_shaped_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
