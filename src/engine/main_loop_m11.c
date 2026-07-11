@@ -36,8 +36,8 @@
 #include "vga_palette_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "screenshot_m11.h"
-#include "swsh_intro_pathfinder_m11.h"
-#include "title_intro_pathfinder_m11.h"
+#include "v1_swsh_intro_pathfinder_pc34_compat.h"
+#include "v1_title_intro_pathfinder_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1170,7 +1170,7 @@ static void m11_play_ftl_swoosh_for_game_if_available(
         hasDm1Media =
             m11_dm1_startup_media_receipt_for_source(gameId, &dm1Media);
     }
-    if (!M11_SWSH_Intro_FindLogoPathForGame(menuState,
+    if (!V1_SWSH_Intro_FindLogoPathForGame(menuState,
                                             dataDir,
                                             gameId,
                                             logoPath,
@@ -1459,7 +1459,7 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                                                           dm1MediaReceipt)) {
         return;
     }
-    if (!M11_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
+    if (!V1_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
         fprintf(stderr,
                 "Firestaff V1 original TITLE intro skipped: no GRAPHICS.DAT C001 title graphic "
                 "or DM PC 3.4 TITLE fallback file found; set FIRESTAFF_TITLE_DAT or install "

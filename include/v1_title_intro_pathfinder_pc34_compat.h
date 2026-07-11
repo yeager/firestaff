@@ -1,13 +1,13 @@
 /*
- * title_intro_pathfinder_m11.h
+ * v1_title_intro_pathfinder_pc34_compat.h
  *
- * DM1 V1 TITLE intro path finder for the M11 launcher handoff.
+ * DM1/CSB V1 TITLE intro path finder for the runtime launcher handoff.
  * The lookup validates candidates by the canonical PC 3.4 TITLE hash
  * and manifest, so data discovery does not depend on a correct filename.
  */
 
-#ifndef FIRESTAFF_TITLE_INTRO_PATHFINDER_M11_H
-#define FIRESTAFF_TITLE_INTRO_PATHFINDER_M11_H
+#ifndef FIRESTAFF_V1_TITLE_INTRO_PATHFINDER_PC34_COMPAT_H
+#define FIRESTAFF_V1_TITLE_INTRO_PATHFINDER_PC34_COMPAT_H
 
 #include <stddef.h>
 
@@ -17,7 +17,7 @@
 extern "C" {
 #endif
 
-int M11_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
+int V1_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
                                     const char* dataDir,
                                     char* outPath,
                                     size_t outPathBytes);
@@ -26,4 +26,4 @@ int M11_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
 }
 #endif
 
-#endif /* FIRESTAFF_TITLE_INTRO_PATHFINDER_M11_H */
+#endif /* FIRESTAFF_V1_TITLE_INTRO_PATHFINDER_PC34_COMPAT_H */

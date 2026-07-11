@@ -1,4 +1,4 @@
-#include "swsh_intro_pathfinder_m11.h"
+#include "v1_swsh_intro_pathfinder_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,12 +27,16 @@ const M12_AssetVersionStatus *M12_AssetStatus_GetVersion(
 #define TEST_MKDIR(path) _mkdir(path)
 #define TEST_GETPID() _getpid()
 #define TEST_SEP "\\"
+#define TEST_SETENV(name, value) _putenv_s((name), (value))
+#define TEST_UNSETENV(name) _putenv_s((name), "")
 #else
 #include <sys/stat.h>
 #include <unistd.h>
 #define TEST_MKDIR(path) mkdir((path), 0700)
 #define TEST_GETPID() getpid()
 #define TEST_SEP "/"
+#define TEST_SETENV(name, value) setenv((name), (value), 1)
+#define TEST_UNSETENV(name) unsetenv((name))
 #endif
 
 static int g_failures = 0;
@@ -223,7 +227,7 @@ int main(void)
     expect_true(write_swsh(arbitrary_swsh), "arbitrary named SWSH payload written");
 
     memset(found, 0, sizeof(found));
-    expect_true(M11_SWSH_Intro_FindLogoPathForGame(NULL,
+    expect_true(V1_SWSH_Intro_FindLogoPathForGame(NULL,
                                                    root,
                                                    "csb",
                                                    found,
@@ -235,7 +239,7 @@ int main(void)
     expect_true(remove(csb_swsh) == 0, "csb SWOOSH removed for fallback test");
     expect_true(remove(dm1_swsh) == 0, "dm1 primary SWOOSH removed for fallback test");
     memset(found, 0, sizeof(found));
-    expect_true(M11_SWSH_Intro_FindLogoPathForGame(NULL,
+    expect_true(V1_SWSH_Intro_FindLogoPathForGame(NULL,
                                                    root,
                                                    "csb",
                                                    found,
@@ -246,7 +250,8 @@ int main(void)
     expect_true(write_swsh(dm1_swsh), "dm1 SWOOSH restored");
 
     memset(found, 0, sizeof(found));
-    expect_true(M11_SWSH_Intro_FindLogoPathForGame(NULL,
+    TEST_SETENV("FIRESTAFF_SWOOSH_DEEP_SCAN", "1");
+    expect_true(V1_SWSH_Intro_FindLogoPathForGame(NULL,
                                                    scan_root,
                                                    "csb",
                                                    found,
@@ -257,7 +262,7 @@ int main(void)
 
     if (copy_file(real_swsh, renamed_real_swsh)) {
         memset(found, 0, sizeof(found));
-        expect_true(M11_SWSH_Intro_FindLogoPathForGame(NULL,
+        expect_true(V1_SWSH_Intro_FindLogoPathForGame(NULL,
                                                        real_hash_dir,
                                                        "csb",
                                                        found,
@@ -268,9 +273,10 @@ int main(void)
     } else {
         printf("skip: local ReDMCSB I34E/SWOOSH fixture not available\n");
     }
+    TEST_UNSETENV("FIRESTAFF_SWOOSH_DEEP_SCAN");
 
     memset(found, 0, sizeof(found));
-    expect_true(M11_SWSH_Intro_FindLogoPath(NULL,
+    expect_true(V1_SWSH_Intro_FindLogoPath(NULL,
                                             root,
                                             found,
                                             sizeof(found)) == 1,

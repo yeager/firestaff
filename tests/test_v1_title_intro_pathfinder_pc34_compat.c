@@ -1,4 +1,4 @@
-#include "title_intro_pathfinder_m11.h"
+#include "v1_title_intro_pathfinder_pc34_compat.h"
 #include "title_dat_loader_v1.h"
 
 #include <stdio.h>
@@ -243,7 +243,7 @@ int main(void)
                 "canonical TITLE written inside arbitrary ZIP entry");
 
     memset(found, 0, sizeof(found));
-    expect_true(M11_TitleIntro_FindTitleDatPath(NULL,
+    expect_true(V1_TitleIntro_FindTitleDatPath(NULL,
                                                 root,
                                                 found,
                                                 sizeof(found)) == 1,
@@ -253,7 +253,7 @@ int main(void)
 
     remove(renamed_title);
     memset(found, 0, sizeof(found));
-    expect_true(M11_TitleIntro_FindTitleDatPath(NULL,
+    expect_true(V1_TitleIntro_FindTitleDatPath(NULL,
                                                 archive_root,
                                                 found,
                                                 sizeof(found)) == 1,
