@@ -59,18 +59,6 @@ int DM1_V1_CustomDungeon_ValidatePc34Compat(const char* dungeonDatPath, int* map
 const DM1_V1_CustomDungeonPc34* DM1_V1_CustomDungeon_GetSelectedPc34Compat(
     const DM1_V1_CustomDungeonListPc34* list);
 
-/* Compatibility aliases for older M11 call sites. */
-#define M11_CUSTOM_DUNGEON_MAX_ENTRIES DM1_V1_CUSTOM_DUNGEON_MAX_ENTRIES
-#define M11_CUSTOM_DUNGEON_NAME_MAX DM1_V1_CUSTOM_DUNGEON_NAME_MAX
-#define M11_CUSTOM_DUNGEON_PATH_MAX DM1_V1_CUSTOM_DUNGEON_PATH_MAX
-typedef DM1_V1_CustomDungeonPc34 M11_CustomDungeon;
-typedef DM1_V1_CustomDungeonListPc34 M11_CustomDungeonList;
-#define M11_CustomDungeon_DefaultDir DM1_V1_CustomDungeon_DefaultDirPc34Compat
-#define M11_CustomDungeon_Init DM1_V1_CustomDungeon_InitPc34Compat
-#define M11_CustomDungeon_Scan DM1_V1_CustomDungeon_ScanPc34Compat
-#define M11_CustomDungeon_Validate DM1_V1_CustomDungeon_ValidatePc34Compat
-#define M11_CustomDungeon_GetSelected DM1_V1_CustomDungeon_GetSelectedPc34Compat
-
 #ifdef __cplusplus
 }
 #endif
