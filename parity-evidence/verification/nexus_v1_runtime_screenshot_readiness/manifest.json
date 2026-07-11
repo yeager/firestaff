@@ -8,36 +8,26 @@
           "nexus",
           "--data-dir",
           "<canonical_extracted_root-data-dir>",
-          "--duration",
-          "1500"
+          "--boot-probe",
+          "--boot-probe-frames",
+          "4"
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260629-011037.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260629-011037.bmp",
-        "stdout": "Nexus: using extracted files from <canonical_extracted_root-data-dir>\nNexus sound: initialized (stub \u2014 no actual audio playback)\nSaturn font: 256 chars, 16x16, 24964 bytes\nNexus V1 engine initialized (source: extracted)\nNexus launcher: initialized (data_dir='<canonical_extracted_root-data-dir>')\nNexus level 0: 64x64 Structure1B, payload=111864 bytes [DMWeb DGN]\nNexus: CD track 2 for level 0\nNexus launcher: loaded level 0"
+        "stderr": "NEXUS READY: gameId=nexus dataDir=<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso\nFIRESTAFF BOOT PROBE READY: gameId=nexus sourceKind=3 sourceId=nexus assetMd5=e88d60859f65f08fa622e1992b02280f dataDir=<canonical_extracted_root-data-dir> frames=4 inputs=0 scriptFrames=0 phase=nexus-title startupActive=1 startupFrame=4 startupAnimation=nexus-title startupAnimationActive=1 titleFrame=4 titleFrameMax=102 titleReady=0 levelLoaded=1 map=0 party=11,29,0 champions=0 runtimeTick=0 dm1WorldTick=0 startedFromLauncher=1 introBypassed=0 dm1HoCBootSummary=missing\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260711-131932.bmp\nfirestaff: autotest presented screenshot capture failed: <temp>/presented_bmp",
+        "stdout": "Nexus: opened disc image <canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso with 137 files\nNexus UI: surface 0 [TITLE.CG] loaded 320x200 (palette 64-127) own=1 size=167968\nNexus UI: surface 1 [WARNING.BIN] loaded 320x200 (palette 160-191) own=1 size=101256\nNexus UI: surface 2 [GAMEOVER.BIN] loaded 320x200 (palette 128-191) own=1 size=103024\nNexus UI: surface 27 [STABG.BIN] loaded 320x52 (palette 0-15) own=1 size=53744\nNexus sound: initialized (stub \u2014 no actual audio playback)\nSaturn font: 256 chars, 16x16, 24964 bytes\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso')\nNexus level 0: 64x64 Structure1B, payload=111864 bytes, mesh_span=604 bytes, refs=0/0 [DMWeb DGN]\nNexus script VM: level 0 source=1 bytes=2388 parser=pending rules=0\nNexus sound: loaded level 0 SFX (SAL=297082 bytes, MAP=66 bytes)\nNexus music: CD track 2 (playing)\nNexus: CD track 2 for level 0\nNexus launcher: loaded level 0"
       },
       "id": "canonical_extracted_root",
       "label": "Nexus canonical extracted Track 1 root",
       "marker_found": true,
       "ok": true,
       "present": true,
-      "presented_screenshots": [
-        {
-          "bit_count": 24,
-          "height": 540,
-          "name": "firestaff-presented-20260629-011037.bmp",
-          "non_black_pixels": 12660,
-          "sha256": "af018385cf2b70ae6a0e1cf0ccfc7243f3fcc16f14c68581a0104b1a9396e539",
-          "size": 1555254,
-          "valid": true,
-          "width": 960
-        }
-      ],
+      "presented_screenshots": [],
       "probe": {
         "active": 1,
         "gameTick": 0,
-        "lastAction": "BOOT",
-        "lastOutcome": "NEXUS READY",
+        "lastAction": "STARTUP",
+        "lastOutcome": "NEXUS TITLE",
         "launchedEver": 1,
         "party": {
           "championCount": 0,
@@ -70,20 +60,73 @@
         "sourceId": "nexus",
         "title": "DUNGEON MASTER NEXUS"
       },
+      "probe_bmp_screenshots": [
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-nexus-rscapture-01.bmp",
+          "non_black_pixels": 256,
+          "sha256": "076d4fd3141d6ddd51644ed169702242b98ba74f626e546c9167c8cf9d688256",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        },
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-nexus-rscapture-02.bmp",
+          "non_black_pixels": 256,
+          "sha256": "076d4fd3141d6ddd51644ed169702242b98ba74f626e546c9167c8cf9d688256",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        },
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-nexus-rscapture-03.bmp",
+          "non_black_pixels": 256,
+          "sha256": "eeb1442ea018bca1760dfe0ba6911021ca17f5b9dd32939f3895d232e49206c9",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        },
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-nexus-rscapture-04.bmp",
+          "non_black_pixels": 256,
+          "sha256": "eeb1442ea018bca1760dfe0ba6911021ca17f5b9dd32939f3895d232e49206c9",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        }
+      ],
       "screenshots": [
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260629-011037.bmp",
-          "non_black_pixels": 16075,
-          "sha256": "11872689628d4e115539e5c90944c0a4ad348e151ad42d884aacf9da13201dde",
+          "name": "firestaff-20260711-131932.bmp",
+          "non_black_pixels": 0,
+          "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
           "size": 192054,
           "valid": true,
           "width": 320
         }
       ],
       "status": "PASS",
-      "uses_extracted_source": true,
+      "track1_probe_command": {
+        "cmd": [
+          "<build-firestaff>_nexus_v1_track1_real_screen_capture_readiness_probe",
+          "<canonical_extracted_root-data-dir>",
+          "<temp>/probe_bmp"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "=== Nexus V1 Track 1 real-screen-capture readiness probe ===\ndata_dir: <canonical_extracted_root-data-dir>\noutput_dir: <temp>/probe_bmp\n\n=== Phase 0/1: engine API + null-safety contract ===\n  [PASS] nexus_v1_init rejects NULL engine\n  [PASS] nexus_v1_init rejects NULL data_dir\nNexus: no game data found in /tmp/nexus_rscapture_emptyt4LMbk\n  [PASS] nexus_v1_init returns -1 for empty data dir\n\n=== Phase 2: viewport init + framebuffer contract ===\n  [PASS] nexus_viewport_init(NULL) is a safe no-op\n  [PASS] nexus_viewport_init succeeds on a zeroed Nexus_Viewport\n  [PASS] Nexus_Viewport owns a 320x200 indexed framebuffer\n\n=== Phase 3: synthetic DGN + viewport render + RGBA capture ===\n  [PASS] synth Structure1B fixture built (19 DGN blocks)\nNexus level 0: 64x64 Structure1B, payload=4032 bytes, mesh_span=0 bytes, refs=1/3844 [DMWeb DGN]\n  [PASS] nexus_v1_level_load accepts synth 64x64 Structure1B\n  [PASS] synth level reports 64x64 grid\n  [PASS] synthetic capture marker reaches indexed framebuffer\n  [PASS] synthetic viewport RGBA has > 0 non-black pixels\n  [PASS] BMP receipt writer writes a 24-bit BMP from synthetic viewport\n  [PASS] first synth BMP is readable on disk\n  [PASS] second synth BMP written to a separate filename\n  [PASS] second synth BMP is readable on disk\n  [PASS] synth viewport captures are SHA256-deterministic across runs\n  [INFO] synth capture sha256: 7afd823d166116d1a215ba453eb9cef9ca2d526d66d1e601f2450ab58ee99e29\n\n=== Phase 4: real DM.BIN/FONT256.S2D/MNS handoff capture ===\nNexus: opened disc image <canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).cue with 137 files\nNexus UI: surface 0 [TITLE.CG] loaded 320x200 (palette 64-127) own=1 size=167968\nNexus UI: surface 1 [WARNING.BIN] loaded 320x200 (palette 160-191) own=1 size=101256\nNexus UI: surface 2 [GAMEOVER.BIN] loaded 320x200 (palette 128-191) own=1 size=103024\nNexus UI: surface 27 [STABG.BIN] loaded 320x52 (palette 0-15) own=1 size=53744\nNexus sound: initialized (stub \u2014 no actual audio playback)\nSaturn font: 256 chars, 16x16, 24964 bytes\nNexus V1 engine initialized (source: ISO)\n  [PASS] real engine reports ISO or EXTRACTED source\nNexus level 0: 64x64 Structure1B, payload=111864 bytes, mesh_span=604 bytes, refs=0/0 [DMWeb DGN]\nNexus script VM: level 0 source=1 bytes=2388 parser=pending rules=0\nNexus sound: loaded level 0 SFX (SAL=297082 bytes, MAP=66 bytes)\nNexus music: CD track 2 (playing)\nNexus: CD track 2 for level 0\n  [PASS] real LEV00.DGN decodes as 64x64 Structure1B\nDMDF SCORPION.MNS: size=53052 sections=1 data_offset=52\n  [PASS] real SCORPION.MNS header.magic == DMDF (0x444D4446)\n  [PASS] real SCORPION.MNS header.data_offset > 0 (parsed section table)\n  [PASS] engine.font_loaded == 1 after init (real FONT256.S2D handoff)\nSaturn font: 256 chars, 16x16, 24964 bytes\n  [PASS] real FONT256.S2D parses through nexus_v1_font_load\n  [PASS] real FONT256.S2D exposes >= 256 char slots\n  [PASS] real FONT256.S2D capture marker reaches indexed framebuffer\n  [PASS] real-data viewport RGBA has > 200 non-black pixels (visible scene)\n  [PASS] BMP receipt writer writes a 24-bit BMP from real viewport\n  [PASS] first real-data BMP is readable on disk\n  [PASS] second real-data BMP written to a separate filename\n  [PASS] second real-data BMP is readable on disk\n  [PASS] real-data viewport captures are SHA256-deterministic across runs\n  [INFO] real-data capture sha256: fdc5e4919159707d252ddce9b981a8554d1534c1e1e980ad757d6c1909d1f885\nNexus V1 engine shut down\n\n=== Summary ===\n  PASS: 30\n  FAIL: 0\nRESULT: PASS"
+      },
+      "uses_extracted_source": false,
       "uses_iso_source": false
     },
     {
@@ -94,36 +137,26 @@
           "nexus",
           "--data-dir",
           "<saturn_ja_track1_iso-data-dir>",
-          "--duration",
-          "1500"
+          "--boot-probe",
+          "--boot-probe-frames",
+          "4"
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260629-011043.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260629-011043.bmp",
-        "stdout": "Nexus: opened ISO with 137 files\nNexus sound: initialized (stub \u2014 no actual audio playback)\nSaturn font: 256 chars, 16x16, 24964 bytes\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<saturn_ja_track1_iso-data-dir>')\nNexus level 0: 64x64 Structure1B, payload=111864 bytes [DMWeb DGN]\nNexus: CD track 2 for level 0\nNexus launcher: loaded level 0"
+        "stderr": "NEXUS READY: gameId=nexus dataDir=<saturn_ja_track1_iso-data-dir>/Dungeon Master Nexus (Japan) (Track 1).bin\nFIRESTAFF BOOT PROBE READY: gameId=nexus sourceKind=3 sourceId=nexus assetMd5=e88d60859f65f08fa622e1992b02280f dataDir=<saturn_ja_track1_iso-data-dir> frames=4 inputs=0 scriptFrames=0 phase=nexus-title startupActive=1 startupFrame=4 startupAnimation=nexus-title startupAnimationActive=1 titleFrame=4 titleFrameMax=102 titleReady=0 levelLoaded=1 map=0 party=11,29,0 champions=0 runtimeTick=0 dm1WorldTick=0 startedFromLauncher=1 introBypassed=0 dm1HoCBootSummary=missing\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260711-131932.bmp\nfirestaff: autotest presented screenshot capture failed: <temp>/presented_bmp",
+        "stdout": "Nexus: opened disc image <saturn_ja_track1_iso-data-dir>/Dungeon Master Nexus (Japan) (Track 1).bin with 137 files\nNexus UI: surface 0 [TITLE.CG] loaded 320x200 (palette 64-127) own=1 size=167968\nNexus UI: surface 1 [WARNING.BIN] loaded 320x200 (palette 160-191) own=1 size=101256\nNexus UI: surface 2 [GAMEOVER.BIN] loaded 320x200 (palette 128-191) own=1 size=103024\nNexus UI: surface 27 [STABG.BIN] loaded 320x52 (palette 0-15) own=1 size=53744\nNexus sound: initialized (stub \u2014 no actual audio playback)\nSaturn font: 256 chars, 16x16, 24964 bytes\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<saturn_ja_track1_iso-data-dir>/Dungeon Master Nexus (Japan) (Track 1).bin')\nNexus level 0: 64x64 Structure1B, payload=111864 bytes, mesh_span=604 bytes, refs=0/0 [DMWeb DGN]\nNexus script VM: level 0 source=1 bytes=2388 parser=pending rules=0\nNexus sound: loaded level 0 SFX (SAL=297082 bytes, MAP=66 bytes)\nNexus music: CD track 2 (playing)\nNexus: CD track 2 for level 0\nNexus launcher: loaded level 0"
       },
       "id": "saturn_ja_track1_iso",
       "label": "Nexus Saturn JA Track 1 ISO/CUE root",
       "marker_found": true,
       "ok": true,
       "present": true,
-      "presented_screenshots": [
-        {
-          "bit_count": 24,
-          "height": 540,
-          "name": "firestaff-presented-20260629-011043.bmp",
-          "non_black_pixels": 12660,
-          "sha256": "af018385cf2b70ae6a0e1cf0ccfc7243f3fcc16f14c68581a0104b1a9396e539",
-          "size": 1555254,
-          "valid": true,
-          "width": 960
-        }
-      ],
+      "presented_screenshots": [],
       "probe": {
         "active": 1,
         "gameTick": 0,
-        "lastAction": "BOOT",
-        "lastOutcome": "NEXUS READY",
+        "lastAction": "STARTUP",
+        "lastOutcome": "NEXUS TITLE",
         "launchedEver": 1,
         "party": {
           "championCount": 0,
@@ -156,30 +189,84 @@
         "sourceId": "nexus",
         "title": "DUNGEON MASTER NEXUS"
       },
+      "probe_bmp_screenshots": [
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-nexus-rscapture-01.bmp",
+          "non_black_pixels": 256,
+          "sha256": "076d4fd3141d6ddd51644ed169702242b98ba74f626e546c9167c8cf9d688256",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        },
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-nexus-rscapture-02.bmp",
+          "non_black_pixels": 256,
+          "sha256": "076d4fd3141d6ddd51644ed169702242b98ba74f626e546c9167c8cf9d688256",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        },
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-nexus-rscapture-03.bmp",
+          "non_black_pixels": 256,
+          "sha256": "eeb1442ea018bca1760dfe0ba6911021ca17f5b9dd32939f3895d232e49206c9",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        },
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-nexus-rscapture-04.bmp",
+          "non_black_pixels": 256,
+          "sha256": "eeb1442ea018bca1760dfe0ba6911021ca17f5b9dd32939f3895d232e49206c9",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        }
+      ],
       "screenshots": [
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260629-011043.bmp",
-          "non_black_pixels": 16075,
-          "sha256": "11872689628d4e115539e5c90944c0a4ad348e151ad42d884aacf9da13201dde",
+          "name": "firestaff-20260711-131932.bmp",
+          "non_black_pixels": 0,
+          "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
           "size": 192054,
           "valid": true,
           "width": 320
         }
       ],
       "status": "PASS",
+      "track1_probe_command": {
+        "cmd": [
+          "<build-firestaff>_nexus_v1_track1_real_screen_capture_readiness_probe",
+          "<saturn_ja_track1_iso-data-dir>",
+          "<temp>/probe_bmp"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "=== Nexus V1 Track 1 real-screen-capture readiness probe ===\ndata_dir: <saturn_ja_track1_iso-data-dir>\noutput_dir: <temp>/probe_bmp\n\n=== Phase 0/1: engine API + null-safety contract ===\n  [PASS] nexus_v1_init rejects NULL engine\n  [PASS] nexus_v1_init rejects NULL data_dir\nNexus: no game data found in /tmp/nexus_rscapture_emptyQNd8Pf\n  [PASS] nexus_v1_init returns -1 for empty data dir\n\n=== Phase 2: viewport init + framebuffer contract ===\n  [PASS] nexus_viewport_init(NULL) is a safe no-op\n  [PASS] nexus_viewport_init succeeds on a zeroed Nexus_Viewport\n  [PASS] Nexus_Viewport owns a 320x200 indexed framebuffer\n\n=== Phase 3: synthetic DGN + viewport render + RGBA capture ===\n  [PASS] synth Structure1B fixture built (19 DGN blocks)\nNexus level 0: 64x64 Structure1B, payload=4032 bytes, mesh_span=0 bytes, refs=1/3844 [DMWeb DGN]\n  [PASS] nexus_v1_level_load accepts synth 64x64 Structure1B\n  [PASS] synth level reports 64x64 grid\n  [PASS] synthetic capture marker reaches indexed framebuffer\n  [PASS] synthetic viewport RGBA has > 0 non-black pixels\n  [PASS] BMP receipt writer writes a 24-bit BMP from synthetic viewport\n  [PASS] first synth BMP is readable on disk\n  [PASS] second synth BMP written to a separate filename\n  [PASS] second synth BMP is readable on disk\n  [PASS] synth viewport captures are SHA256-deterministic across runs\n  [INFO] synth capture sha256: 7afd823d166116d1a215ba453eb9cef9ca2d526d66d1e601f2450ab58ee99e29\n\n=== Phase 4: real DM.BIN/FONT256.S2D/MNS handoff capture ===\nNexus: opened disc image <saturn_ja_track1_iso-data-dir>/Dungeon Master Nexus (Japan).cue with 137 files\nNexus UI: surface 0 [TITLE.CG] loaded 320x200 (palette 64-127) own=1 size=167968\nNexus UI: surface 1 [WARNING.BIN] loaded 320x200 (palette 160-191) own=1 size=101256\nNexus UI: surface 2 [GAMEOVER.BIN] loaded 320x200 (palette 128-191) own=1 size=103024\nNexus UI: surface 27 [STABG.BIN] loaded 320x52 (palette 0-15) own=1 size=53744\nNexus sound: initialized (stub \u2014 no actual audio playback)\nSaturn font: 256 chars, 16x16, 24964 bytes\nNexus V1 engine initialized (source: ISO)\n  [PASS] real engine reports ISO or EXTRACTED source\nNexus level 0: 64x64 Structure1B, payload=111864 bytes, mesh_span=604 bytes, refs=0/0 [DMWeb DGN]\nNexus script VM: level 0 source=1 bytes=2388 parser=pending rules=0\nNexus sound: loaded level 0 SFX (SAL=297082 bytes, MAP=66 bytes)\nNexus music: CD track 2 (playing)\nNexus: CD track 2 for level 0\n  [PASS] real LEV00.DGN decodes as 64x64 Structure1B\nDMDF SCORPION.MNS: size=53052 sections=1 data_offset=52\n  [PASS] real SCORPION.MNS header.magic == DMDF (0x444D4446)\n  [PASS] real SCORPION.MNS header.data_offset > 0 (parsed section table)\n  [PASS] engine.font_loaded == 1 after init (real FONT256.S2D handoff)\nSaturn font: 256 chars, 16x16, 24964 bytes\n  [PASS] real FONT256.S2D parses through nexus_v1_font_load\n  [PASS] real FONT256.S2D exposes >= 256 char slots\n  [PASS] real FONT256.S2D capture marker reaches indexed framebuffer\n  [PASS] real-data viewport RGBA has > 200 non-black pixels (visible scene)\n  [PASS] BMP receipt writer writes a 24-bit BMP from real viewport\n  [PASS] first real-data BMP is readable on disk\n  [PASS] second real-data BMP written to a separate filename\n  [PASS] second real-data BMP is readable on disk\n  [PASS] real-data viewport captures are SHA256-deterministic across runs\n  [INFO] real-data capture sha256: fdc5e4919159707d252ddce9b981a8554d1534c1e1e980ad757d6c1909d1f885\nNexus V1 engine shut down\n\n=== Summary ===\n  PASS: 30\n  FAIL: 0\nRESULT: PASS"
+      },
       "uses_extracted_source": false,
-      "uses_iso_source": true
+      "uses_iso_source": false
     }
   ],
-  "firestaff": "build/firestaff",
-  "generated_at": "2026-06-28T23:10:18.403068+00:00",
+  "firestaff": "build-ninja/firestaff",
+  "generated_at": "2026-07-11T11:19:31.934253+00:00",
   "non_claims": [
     "No public Nexus screenshot image is promoted.",
     "No generated or mock image is used.",
     "No claim of full Nexus runtime playability or final text/3D/BPK rendering parity."
   ],
   "schema": "firestaff.parity.nexus_v1_runtime_screenshot_readiness.v1",
-  "status": "PASS"
+  "status": "PASS",
+  "track1_probe": "build-ninja/firestaff_nexus_v1_track1_real_screen_capture_readiness_probe"
 }

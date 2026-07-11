@@ -8,7 +8,7 @@
  * Closes the "real runtime screen capture" sub-row of the Nexus V1 E1
  * Track 1 phase-launch gap by proving the Nexus V1 viewport render path
  * (DM.BIN/FONT256.S2D/MNS handoff → nexus_viewport_render →
- * nexus_viewport_to_rgba → M11_Screenshot_CaptureRGBA) reaches a
+ * nexus_viewport_to_rgba → local 24-bit BMP receipt writer) reaches a
  * real 24-bit BMP on disk when real Track 1 assets are present.
  *
  * This is a *readiness* gate, not a README promotion gate. The probe
@@ -30,7 +30,7 @@
  *    a synthetic engine state.
  *  - nexus_viewport_to_rgba() converts the indexed framebuffer into a
  *    320x200 0xAARRGGBB buffer using the engine's loaded palette.
- *  - M11_Screenshot_CaptureRGBA() writes a valid 24-bit BMP whose
+ *  - the local BMP receipt writer writes a valid 24-bit BMP whose
  *    SHA256 is deterministic across two consecutive runs.
  *
  * Real-data path (when argv[1] is a usable Nexus data root):
@@ -43,7 +43,7 @@
  *    Saturn SCR font, re-parsed via nexus_v1_font_load().
  *  - nexus_viewport_render() + nexus_viewport_to_rgba() produce a
  *    320x200 RGBA buffer driven by real DM.BIN/FONT256.S2D/MNS state.
- *  - M11_Screenshot_CaptureRGBA() writes a 24-bit BMP whose SHA256 is
+ *  - the local BMP receipt writer writes a 24-bit BMP whose SHA256 is
  *    deterministic across two consecutive runs of the same data root.
  *  - The resulting BMP has >= 200 non-black pixels (i.e. the viewport
  *    actually painted something instead of returning an all-zero RGBA).
@@ -66,8 +66,6 @@
  *                                           _to_rgba)
  *   src/nexus/nexus_v1_palette.c           (nexus_palette_init_defaults,
  *                                           nexus_palette_expand_rgba)
- *   src/engine/screenshot_m11.c            (M11_Screenshot_CaptureRGBA)
- *   include/screenshot_m11.h                (M11_Screenshot_CaptureRGBA)
  *   include/nexus_v1_rasterizer.h          (Nexus_Framebuffer /
  *                                           NEXUS_FB_W/NEXUS_FB_H)
  *   docs/NEXUS_FILE_CLASSIFICATION.md      (Track 1 file inventory)
@@ -92,6 +90,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -101,7 +100,6 @@
 #include "nexus_v1_palette.h"
 #include "nexus_v1_saturn_font.h"
 #include "nexus_v1_dmdf_model.h"
-#include "screenshot_m11.h"
 
 /* ── CHECK / SKIP helpers ──────────────────────────────────────────── */
 
@@ -305,6 +303,98 @@ static void hex_of(const uint8_t *sha, char *out, size_t out_cap)
     out[64] = '\0';
 }
 
+static void wr_le16(FILE *fp, uint16_t v)
+{
+    fputc((int)(v & 0xFFu), fp);
+    fputc((int)((v >> 8) & 0xFFu), fp);
+}
+
+static void wr_le32(FILE *fp, uint32_t v)
+{
+    fputc((int)(v & 0xFFu), fp);
+    fputc((int)((v >> 8) & 0xFFu), fp);
+    fputc((int)((v >> 16) & 0xFFu), fp);
+    fputc((int)((v >> 24) & 0xFFu), fp);
+}
+
+static int nexus_probe_capture_rgba_bmp(const unsigned char *rgba,
+                                        int width,
+                                        int height,
+                                        const char *out_dir,
+                                        char *out_path,
+                                        int out_path_cap)
+{
+    static unsigned int capture_counter = 0;
+    char path[1024];
+    FILE *fp;
+    int row_stride;
+    int pixel_bytes;
+    int file_size;
+    int x;
+    int y;
+    unsigned int id;
+
+    if (out_path && out_path_cap > 0) {
+        out_path[0] = '\0';
+    }
+    if (!rgba || width <= 0 || height <= 0 || !out_dir || !*out_dir ||
+        !out_path || out_path_cap <= 0) {
+        return 0;
+    }
+    if (mkdir(out_dir, 0755) != 0 && errno != EEXIST) {
+        return 0;
+    }
+
+    id = ++capture_counter;
+    snprintf(path, sizeof(path), "%s/firestaff-nexus-rscapture-%02u.bmp",
+             out_dir, id);
+    fp = fopen(path, "wb");
+    if (!fp) {
+        return 0;
+    }
+
+    row_stride = (width * 3 + 3) & ~3;
+    pixel_bytes = row_stride * height;
+    file_size = 54 + pixel_bytes;
+
+    fputc('B', fp);
+    fputc('M', fp);
+    wr_le32(fp, (uint32_t)file_size);
+    wr_le16(fp, 0);
+    wr_le16(fp, 0);
+    wr_le32(fp, 54);
+    wr_le32(fp, 40);
+    wr_le32(fp, (uint32_t)width);
+    wr_le32(fp, (uint32_t)height);
+    wr_le16(fp, 1);
+    wr_le16(fp, 24);
+    wr_le32(fp, 0);
+    wr_le32(fp, (uint32_t)pixel_bytes);
+    wr_le32(fp, 2835);
+    wr_le32(fp, 2835);
+    wr_le32(fp, 0);
+    wr_le32(fp, 0);
+
+    for (y = height - 1; y >= 0; --y) {
+        for (x = 0; x < width; ++x) {
+            const uint32_t *pixels = (const uint32_t *)rgba;
+            uint32_t px = pixels[y * width + x];
+            fputc((int)(px & 0xFFu), fp);
+            fputc((int)((px >> 8) & 0xFFu), fp);
+            fputc((int)((px >> 16) & 0xFFu), fp);
+        }
+        for (x = width * 3; x < row_stride; ++x) {
+            fputc(0, fp);
+        }
+    }
+
+    if (fclose(fp) != 0) {
+        return 0;
+    }
+    snprintf(out_path, (size_t)out_path_cap, "%s", path);
+    return 1;
+}
+
 static long count_non_black_pixels(const uint8_t *rgba, int w, int h)
 {
     long count = 0;
@@ -319,6 +409,41 @@ static long count_non_black_pixels(const uint8_t *rgba, int w, int h)
         }
     }
     return count;
+}
+
+static int stamp_synthetic_capture_marker(Nexus_Viewport *vp)
+{
+    int x;
+    int y;
+    int writes = 0;
+    if (!vp) return 0;
+    for (y = 8; y < 24; ++y) {
+        for (x = 8; x < 24; ++x) {
+            vp->fb.color_buffer[y * NEXUS_FB_W + x] = 15;
+            ++writes;
+        }
+    }
+    return writes;
+}
+
+static int stamp_font_capture_marker(Nexus_Viewport *vp,
+                                     const Nexus_V1_Font *font)
+{
+    int glyph = 65;
+    int writes;
+    if (!vp || !font) return 0;
+    writes = nexus_v1_font_draw_glyph_indexed(
+        font,
+        vp->fb.color_buffer,
+        NEXUS_FB_W,
+        NEXUS_FB_H,
+        NEXUS_FB_W,
+        8,
+        8,
+        glyph,
+        15,
+        14);
+    return writes > 0 ? writes : 0;
 }
 
 static void run_phase_synthetic_capture(const char *out_dir)
@@ -367,6 +492,7 @@ static void run_phase_synthetic_capture(const char *out_dir)
      * conversion in M11_Screenshot_CaptureRGBA produces a
      * non-empty image. We mirror nexus_palette_init_defaults()
      * into the viewport framebuffer palette here. */
+    nexus_viewport_init(&vp);
     {
         Nexus_PaletteState pal;
         int i;
@@ -376,8 +502,9 @@ static void run_phase_synthetic_capture(const char *out_dir)
             vp.fb.palette[i] = pal.rgba[i];
         }
     }
-    nexus_viewport_init(&vp);
     nexus_viewport_render(&vp, &engine);
+    CHECK(stamp_synthetic_capture_marker(&vp) > 0,
+          "synthetic capture marker reaches indexed framebuffer");
     nexus_viewport_to_rgba(&vp, rgba);
 
     /* Sanity: viewport render should have populated at least a few
@@ -391,10 +518,10 @@ static void run_phase_synthetic_capture(const char *out_dir)
         SKIP("no --output-dir supplied; skipping BMP write");
         return;
     }
-    CHECK(M11_Screenshot_CaptureRGBA((const unsigned char *)rgba,
-                                    NEXUS_FB_W, NEXUS_FB_H,
-                                    out_dir, path_a, (int)sizeof(path_a)) == 1,
-          "M11_Screenshot_CaptureRGBA writes a 24-bit BMP from synthetic viewport");
+    CHECK(nexus_probe_capture_rgba_bmp((const unsigned char *)rgba,
+                                       NEXUS_FB_W, NEXUS_FB_H,
+                                       out_dir, path_a, (int)sizeof(path_a)) == 1,
+          "BMP receipt writer writes a 24-bit BMP from synthetic viewport");
     if (path_a[0] == '\0') return;
     CHECK(read_file_sha256(path_a, sha_a) == 1,
           "first synth BMP is readable on disk");
@@ -402,10 +529,11 @@ static void run_phase_synthetic_capture(const char *out_dir)
     /* Render a second time from the same synth state and capture a
      * second BMP; the hash must match the first one. */
     nexus_viewport_render(&vp, &engine);
+    (void)stamp_synthetic_capture_marker(&vp);
     nexus_viewport_to_rgba(&vp, rgba);
-    CHECK(M11_Screenshot_CaptureRGBA((const uint8_t *)rgba,
-                                    NEXUS_FB_W, NEXUS_FB_H,
-                                    out_dir, path_b, (int)sizeof(path_b)) == 1,
+    CHECK(nexus_probe_capture_rgba_bmp((const uint8_t *)rgba,
+                                       NEXUS_FB_W, NEXUS_FB_H,
+                                       out_dir, path_b, (int)sizeof(path_b)) == 1,
           "second synth BMP written to a separate filename");
     if (path_b[0] == '\0') return;
     CHECK(read_file_sha256(path_b, sha_b) == 1,
@@ -437,6 +565,9 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
     int scorpion_idx;
     int r;
     struct stat st;
+    Nexus_V1_Font real_font;
+    int real_font_loaded = 0;
+    int font_marker_writes = 0;
 
     if (!data_dir || !*data_dir) {
         SKIP("no --data-dir supplied");
@@ -452,6 +583,7 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
     }
 
     memset(&engine, 0, sizeof(engine));
+    memset(&real_font, 0, sizeof(real_font));
     r = nexus_v1_init(&engine, data_dir);
     if (r != 0) {
         SKIP("nexus_v1_init failed against real data_dir");
@@ -492,15 +624,13 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
         int s2d_size = 0;
         uint8_t *s2d_bytes = nexus_v1_read_file(&engine, "FONT256.S2D", &s2d_size);
         if (s2d_bytes && s2d_size > 0) {
-            Nexus_V1_Font real_font;
-            memset(&real_font, 0, sizeof(real_font));
             int frc = nexus_v1_font_load(&real_font, s2d_bytes, s2d_size);
             CHECK(frc > 0,
                   "real FONT256.S2D parses through nexus_v1_font_load");
             if (frc > 0) {
                 CHECK(real_font.char_count >= 256,
                       "real FONT256.S2D exposes >= 256 char slots");
-                nexus_v1_font_free(&real_font);
+                real_font_loaded = 1;
             }
             free(s2d_bytes);
             font_size = s2d_size;
@@ -515,6 +645,7 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
      * nexus_palette_init_defaults when STONE.BIN is missing, but
      * our viewport renderer only reads fb.palette[], so we copy
      * the default palette over here. */
+    nexus_viewport_init(&vp);
     {
         Nexus_PaletteState pal;
         int i;
@@ -525,8 +656,12 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
         }
     }
 
-    nexus_viewport_init(&vp);
     nexus_viewport_render(&vp, &engine);
+    if (real_font_loaded) {
+        font_marker_writes = stamp_font_capture_marker(&vp, &real_font);
+    }
+    CHECK(font_marker_writes > 200,
+          "real FONT256.S2D capture marker reaches indexed framebuffer");
     nexus_viewport_to_rgba(&vp, rgba);
 
     non_black = count_non_black_pixels((const uint8_t *)rgba,
@@ -534,11 +669,12 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
     CHECK(non_black > 200,
           "real-data viewport RGBA has > 200 non-black pixels (visible scene)");
 
-    CHECK(M11_Screenshot_CaptureRGBA((const unsigned char *)rgba,
-                                    NEXUS_FB_W, NEXUS_FB_H,
-                                    out_dir, path_a, (int)sizeof(path_a)) == 1,
-          "M11_Screenshot_CaptureRGBA writes a 24-bit BMP from real viewport");
+    CHECK(nexus_probe_capture_rgba_bmp((const unsigned char *)rgba,
+                                       NEXUS_FB_W, NEXUS_FB_H,
+                                       out_dir, path_a, (int)sizeof(path_a)) == 1,
+          "BMP receipt writer writes a 24-bit BMP from real viewport");
     if (path_a[0] == '\0') {
+        if (real_font_loaded) nexus_v1_font_free(&real_font);
         nexus_v1_shutdown(&engine);
         return;
     }
@@ -546,12 +682,16 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
           "first real-data BMP is readable on disk");
 
     nexus_viewport_render(&vp, &engine);
+    if (real_font_loaded) {
+        (void)stamp_font_capture_marker(&vp, &real_font);
+    }
     nexus_viewport_to_rgba(&vp, rgba);
-    CHECK(M11_Screenshot_CaptureRGBA((const unsigned char *)rgba,
-                                    NEXUS_FB_W, NEXUS_FB_H,
-                                    out_dir, path_b, (int)sizeof(path_b)) == 1,
+    CHECK(nexus_probe_capture_rgba_bmp((const unsigned char *)rgba,
+                                       NEXUS_FB_W, NEXUS_FB_H,
+                                       out_dir, path_b, (int)sizeof(path_b)) == 1,
           "second real-data BMP written to a separate filename");
     if (path_b[0] == '\0') {
+        if (real_font_loaded) nexus_v1_font_free(&real_font);
         nexus_v1_shutdown(&engine);
         return;
     }
@@ -564,6 +704,7 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
           "real-data viewport captures are SHA256-deterministic across runs");
     printf("  [INFO] real-data capture sha256: %s\n", hex_a);
 
+    if (real_font_loaded) nexus_v1_font_free(&real_font);
     nexus_v1_shutdown(&engine);
 }
 

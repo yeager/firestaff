@@ -962,6 +962,14 @@ typedef struct {
     int startup_package_consumed_by_all_routes;
     int host_route_matrix_complete;
     int saturn_timing_matrix_complete;
+    int saturn_title_capture_frame;
+    int saturn_save_capture_frame;
+    int saturn_champion_capture_frame;
+    int saturn_dungeon_capture_frame;
+    unsigned int saturn_non_title_capture_mask;
+    unsigned int saturn_expected_capture_mask;
+    int saturn_non_title_capture_count;
+    int saturn_non_title_capture_complete;
     int no_fallback_visuals_enforced;
     int fallback_visuals_permitted;
     unsigned int complete_route_mask;
