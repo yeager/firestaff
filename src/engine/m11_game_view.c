@@ -12109,6 +12109,12 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 out->dm1HoCMapHeight = boot_fields.map_height;
                 out->dm1HoCRenderCommandCount =
                     boot_fields.render_command_count;
+                out->dm1HoCConsumedSaveCaptureHostReadiness =
+                    boot_fields.consumed_hoc_save_capture_host_readiness;
+                out->dm1HoCSaveCaptureReady =
+                    boot_fields.hoc_save_capture_ready;
+                out->dm1HoCOriginalSaveCaptureReady =
+                    boot_fields.hoc_original_save_capture_ready;
                 out->dm1CompleteSupportReady =
                     boot_fields.complete_support_ready;
                 out->dm1CompleteSourceVisibleStartup =
