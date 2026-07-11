@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 champion-status layout test consumer cleanup: moved `test_m11_v1_action_area_geometry_pc34_compat` off M11 status/HUD layout wrappers and onto DM1/ReDMCSB champion-status layout plus graphic-id APIs for status boxes, bars, hands, names, poison, and damage geometry. Verification: `test_m11_v1_action_area_geometry_pc34_compat`, `test_dm1_v1_champion_status_layout_pc34_compat`, focused CTest, and temp-index whitespace check passed.
+
 - ✅ 2026-07-11 DM1 endgame layout M11 export cleanup: removed public `M11_GameView_GetV1Endgame*` layout/graphic exports, wired endgame draw/input/a11y directly to DM1/ReDMCSB endgame layout and graphic-id APIs, and moved the M11 action regression off those endgame wrappers. Verification: `firestaff_m11`, `test_dm1_v1_endgame_layout_pc34_compat`, focused CTest, old-symbol `rg`, and targeted build of `test_m11_action_stamina_runtime_pc34_compat` passed. Full `test_m11_action_stamina_runtime_pc34_compat` still has unrelated THROW/action-disable failures.
 
 - ✅ 2026-07-11 DM1 dialog layout M11 export cleanup: removed public `M11_GameView_GetV1Dialog*` layout exports, wired M11 dialog draw/input directly to `dm1_v1_dialog_layout_pc34_compat`, and moved the dialog-fit regression to the DM1/ReDMCSB layout API. Verification: `firestaff_m11`, `test_m11_dialog_choice_overlay_fit_pc34_compat`, `test_dm1_v1_dialog_layout_pc34_compat`, focused CTest, old-symbol `rg`, and `git diff HEAD --check` passed.
