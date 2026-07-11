@@ -110,6 +110,9 @@ typedef struct {
     uint16_t recursive_importable_candidate_count;
     uint16_t alternate_name_candidate_count;
     uint16_t extra_valid_candidate_count;
+    uint16_t recursive_scan_depth_limit;
+    uint16_t recursive_scan_candidate_cap;
+    uint8_t  recursive_scan_truncated;
     size_t   largest_payload_size;
     size_t   total_payload_size;
     size_t   largest_importable_payload_size;

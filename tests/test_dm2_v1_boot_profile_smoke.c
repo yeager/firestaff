@@ -727,6 +727,9 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
                   complete_support.save_corpus_importable_candidate_count &&
               complete_support.save_corpus_recursive_candidate_count == 1 &&
               complete_support.save_corpus_recursive_importable_candidate_count == 1 &&
+              complete_support.save_corpus_recursive_scan_truncated == 0 &&
+              complete_support.save_corpus_recursive_scan_depth_limit == 4 &&
+              complete_support.save_corpus_recursive_scan_candidate_cap == 64 &&
               complete_support.save_corpus_import_promotion_ready == 1 &&
               complete_support.save_corpus_first_importable_kind ==
                   DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION &&

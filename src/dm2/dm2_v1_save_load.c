@@ -457,8 +457,15 @@ static void dm2_sksave_corpus_scan_recursive_impl(
     struct dirent *ent;
 
     if (!root || !dir || !receipt || !candidate_count ||
-        depth > DM2_SK_CORPUS_RECURSE_DEPTH ||
         *candidate_count >= DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP) {
+        if (receipt && candidate_count &&
+            *candidate_count >= DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP) {
+            receipt->recursive_scan_truncated = 1u;
+        }
+        return;
+    }
+    if (depth > DM2_SK_CORPUS_RECURSE_DEPTH) {
+        receipt->recursive_scan_truncated = 1u;
         return;
     }
     d = opendir(dir);
@@ -474,8 +481,12 @@ static void dm2_sksave_corpus_scan_recursive_impl(
         snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
         if (stat(path, &st) != 0) continue;
         if (S_ISDIR(st.st_mode)) {
-            dm2_sksave_corpus_scan_recursive_impl(root, path, depth + 1,
-                                                  receipt, candidate_count);
+            if (depth + 1 > DM2_SK_CORPUS_RECURSE_DEPTH) {
+                receipt->recursive_scan_truncated = 1u;
+            } else {
+                dm2_sksave_corpus_scan_recursive_impl(root, path, depth + 1,
+                                                      receipt, candidate_count);
+            }
             continue;
         }
         if (!S_ISREG(st.st_mode) ||
@@ -819,6 +830,10 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
 
     if (!save_base || !out_receipt) return false;
     memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->recursive_scan_depth_limit =
+        (uint16_t)DM2_SK_CORPUS_RECURSE_DEPTH;
+    out_receipt->recursive_scan_candidate_cap =
+        (uint16_t)DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP;
 
     /* SKWin/DM2 resume probes SKSave.dat before SKSave.bak; keep the same
      * preference so real corpus scans tell the runtime which file would win.

@@ -4049,6 +4049,10 @@ int theron_v1_track02_capture_object_table_route_receipt(
                         entries[entry_index].byte_count,
                         &row_table);
                     ++out_receipt->object_table_row_probe_count;
+                    if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS) {
+                        ++out_receipt
+                              ->object_table_row_probe_anchor_counts[anchor];
+                    }
                 }
                 if (row_status == THERON_TRACK02_SEMANTIC_BINDING_OK) {
                     size_t user_data_offset = 0u;
@@ -4093,6 +4097,60 @@ int theron_v1_track02_capture_object_table_route_receipt(
                             }
                         }
                     }
+                } else if (row_status !=
+                           THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT) {
+                    size_t reject_user_data_offset = 0u;
+                    ++out_receipt->object_table_row_reject_count;
+                    if (row_status ==
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE) {
+                        ++out_receipt->object_table_row_bad_shape_count;
+                    } else if (row_status ==
+                               THERON_TRACK02_SEMANTIC_BINDING_WINDOW_TOO_SMALL) {
+                        ++out_receipt
+                              ->object_table_row_window_too_small_count;
+                    } else if (row_status ==
+                               THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL) {
+                        ++out_receipt->object_table_row_zero_fill_count;
+                    }
+                    if (anchor < THERON_TRACK02_MAX_BANK_ANCHORS &&
+                        out_receipt
+                                ->object_table_row_first_reject_status[anchor] ==
+                            0) {
+                        out_receipt
+                            ->object_table_row_first_reject_status[anchor] =
+                            (int)row_status;
+                        out_receipt
+                            ->object_table_row_first_reject_entry_index[anchor] =
+                            entry_index;
+                        out_receipt
+                            ->object_table_row_first_reject_raw_offsets[anchor] =
+                            entries[entry_index].absolute_offset;
+                        out_receipt
+                            ->object_table_row_first_reject_record_counts[anchor] =
+                            row_table.record_count;
+                        out_receipt
+                            ->object_table_row_first_reject_overflow_counts
+                                [anchor] = row_table.overflow_count;
+                        out_receipt
+                            ->object_table_row_first_reject_byte_counts[anchor] =
+                            row_table.byte_count;
+                        out_receipt
+                            ->object_table_row_first_reject_checksums[anchor] =
+                            row_table.checksum;
+                        if (theron_v1_track02_raw_offset_to_user_offset(
+                                entries[entry_index].absolute_offset,
+                                track02_size,
+                                md5_hex,
+                                &reject_user_data_offset) ==
+                            THERON_TRACK02_SIGNAL_OK) {
+                            out_receipt
+                                ->object_table_row_first_reject_user_data_offsets
+                                    [anchor] = reject_user_data_offset;
+                            out_receipt
+                                ->object_table_row_first_reject_user_data_valid
+                                    [anchor] = 1;
+                        }
+                    }
                 }
             }
         }
@@ -4118,6 +4176,15 @@ int theron_v1_track02_capture_object_table_route_receipt(
     hash ^= out_receipt->object_table_blocked_anchor_mask;
     hash *= 16777619u;
     hash ^= (uint32_t)out_receipt->object_table_row_probe_count;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->object_table_row_reject_count;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->object_table_row_bad_shape_count;
+    hash *= 16777619u;
+    hash ^= (uint32_t)
+        out_receipt->object_table_row_window_too_small_count;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->object_table_row_zero_fill_count;
     hash *= 16777619u;
     hash ^= (uint32_t)out_receipt->object_table_row_shaped_count;
     hash *= 16777619u;
@@ -4189,6 +4256,36 @@ int theron_v1_track02_capture_object_table_route_receipt(
             out_receipt->object_table_anchor_decoded_nonzero_byte_count[anchor];
         hash *= 16777619u;
         hash ^= out_receipt->object_table_anchor_decoded_checksum[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_row_probe_anchor_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_row_first_reject_status[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_row_first_reject_entry_index[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_row_first_reject_raw_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt
+                ->object_table_row_first_reject_user_data_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_row_first_reject_user_data_valid[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_row_first_reject_record_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_row_first_reject_overflow_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_row_first_reject_byte_counts[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->object_table_row_first_reject_checksums[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->object_table_row_shaped_anchor_counts[anchor];
