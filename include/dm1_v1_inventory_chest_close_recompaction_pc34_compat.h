@@ -74,9 +74,6 @@ const char* dm1_inventory_chest_close_recompaction_source_evidence_pc34(void);
 int DM1_V1_InventoryChestCloseRecompaction_RunProbePc34Compat(
     DM1_V1_InventoryChestCloseRecompactionProbePc34* out);
 
-#define m11_inventory_pc34_probe_chest_close_recompaction \
-    DM1_V1_InventoryChestCloseRecompaction_RunProbePc34Compat
-
 #ifdef __cplusplus
 }
 #endif

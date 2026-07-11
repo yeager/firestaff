@@ -112,26 +112,6 @@ void DM1_V1_Screen_CopyRegionPc34Compat(DM1_V1_ScreenStatePc34 *s,
  */
 const char *DM1_V1_Screen_SourceEvidencePc34Compat(void);
 
-typedef DM1_V1_PaletteEntryPc34 M11_PaletteEntry;
-typedef DM1_V1_ScreenStatePc34 M11_ScreenState;
-
-#define M11_SCREEN_W DM1_V1_SCREEN_W_PC34
-#define M11_SCREEN_H DM1_V1_SCREEN_H_PC34
-#define M11_PALETTE_SIZE DM1_V1_PALETTE_SIZE_PC34
-#define m11_screen_init DM1_V1_Screen_InitPc34Compat
-#define m11_screen_get_back_buffer DM1_V1_Screen_GetBackBufferPc34Compat
-#define m11_screen_get_front_buffer DM1_V1_Screen_GetFrontBufferPc34Compat
-#define m11_screen_swap_buffers DM1_V1_Screen_SwapBuffersPc34Compat
-#define m11_screen_present DM1_V1_Screen_PresentPc34Compat
-#define m11_screen_set_palette DM1_V1_Screen_SetPalettePc34Compat
-#define m11_screen_set_palette_block DM1_V1_Screen_SetPaletteBlockPc34Compat
-#define m11_screen_get_palette DM1_V1_Screen_GetPalettePc34Compat
-#define m11_screen_clear_back DM1_V1_Screen_ClearBackPc34Compat
-#define m11_screen_mark_dirty DM1_V1_Screen_MarkDirtyPc34Compat
-#define m11_screen_is_dirty DM1_V1_Screen_IsDirtyPc34Compat
-#define m11_screen_copy_region DM1_V1_Screen_CopyRegionPc34Compat
-#define m11_screen_source_evidence DM1_V1_Screen_SourceEvidencePc34Compat
-
 #ifdef __cplusplus
 }
 #endif

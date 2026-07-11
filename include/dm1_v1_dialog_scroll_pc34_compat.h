@@ -53,29 +53,9 @@ bool DM1_V1_Dialog_HasMessagePc34Compat(const DM1_V1_DialogStatePc34* state);
 const char* DM1_V1_Dialog_GetCurrentTextPc34Compat(const DM1_V1_DialogStatePc34* state);
 uint8_t DM1_V1_Dialog_GetCurrentColorPc34Compat(const DM1_V1_DialogStatePc34* state);
 
-typedef DM1_V1_DialogSetPc34 M11_DG_DialogSet;
-typedef DM1_V1_DialogMessagePc34 M11_DG_Message;
-typedef DM1_V1_DialogStatePc34 M11_DG_State;
-
 #define DM1_DG_MAX_MSG_LEN DM1_V1_DIALOG_MAX_MSG_LEN_PC34
 #define DM1_DG_MSG_QUEUE_SIZE DM1_V1_DIALOG_MSG_QUEUE_SIZE_PC34
 #define DM1_DG_DISPLAY_TICKS DM1_V1_DIALOG_DISPLAY_TICKS_PC34
-
-#define M11_DG_SET_VIEWPORT DM1_V1_DIALOG_SET_VIEWPORT_PC34
-#define M11_DG_SET_INVENTORY DM1_V1_DIALOG_SET_INVENTORY_PC34
-#define M11_DG_SET_MAP DM1_V1_DIALOG_SET_MAP_PC34
-#define M11_DG_SET_ENTRANCE DM1_V1_DIALOG_SET_ENTRANCE_PC34
-#define M11_DG_SET_RESURRECT DM1_V1_DIALOG_SET_RESURRECT_PC34
-#define M11_DG_SET_COUNT DM1_V1_DIALOG_SET_COUNT_PC34
-
-#define m11_dg_init DM1_V1_Dialog_InitPc34Compat
-#define m11_dg_set_bar_position DM1_V1_Dialog_SetBarPositionPc34Compat
-#define m11_dg_set_active DM1_V1_Dialog_SetActivePc34Compat
-#define m11_dg_push_message DM1_V1_Dialog_PushMessagePc34Compat
-#define m11_dg_tick DM1_V1_Dialog_TickPc34Compat
-#define m11_dg_has_message DM1_V1_Dialog_HasMessagePc34Compat
-#define m11_dg_get_current_text DM1_V1_Dialog_GetCurrentTextPc34Compat
-#define m11_dg_get_current_color DM1_V1_Dialog_GetCurrentColorPc34Compat
 
 #ifdef __cplusplus
 }

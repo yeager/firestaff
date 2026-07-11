@@ -196,13 +196,6 @@ DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat(
 
 const char *DM1_V1_ChampionPanelLeaderSwapFoodWater_SourceEvidencePc34Compat(void);
 
-#define M11_GameView_ChampionPanelLeaderSwapFoodWater_DefaultInput \
-    DM1_V1_ChampionPanelLeaderSwapFoodWater_DefaultInputPc34Compat
-#define M11_GameView_ChampionPanelLeaderSwapFoodWater_Dispatch \
-    DM1_V1_ChampionPanelLeaderSwapFoodWater_DispatchPc34Compat
-#define M11_GameView_ChampionPanelLeaderSwapFoodWater_SourceEvidence \
-    DM1_V1_ChampionPanelLeaderSwapFoodWater_SourceEvidencePc34Compat
-
 #ifdef __cplusplus
 }
 #endif
