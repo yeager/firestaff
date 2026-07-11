@@ -829,6 +829,54 @@ void dm2_v1_viewport_set_gdat_scene_control(
     s->dirty = 1;
 }
 
+static uint32_t dm2_v1_viewport_scene_hash_step(uint32_t hash,
+                                                uint32_t value)
+{
+    hash ^= value;
+    hash *= 16777619u;
+    return hash;
+}
+
+int dm2_v1_viewport_scene_consumption_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportSceneConsumptionReceipt *out_receipt)
+{
+    uint32_t mask = 0u;
+    uint32_t hash = 0x32565343u;
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!s) return 0;
+    if (s->gdat_scene_control_consumed_count > 0) mask |= 1u << 0;
+    if (s->gdat_scene_light_consumed_count > 0) mask |= 1u << 1;
+    if (s->gdat_scene_floor_anim_consumed_count > 0) mask |= 1u << 2;
+    if (s->gdat_scene_weather_consumed_count > 0) mask |= 1u << 3;
+    hash = dm2_v1_viewport_scene_hash_step(hash, mask);
+    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_scene_control_hash);
+    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_scene_colorkey);
+    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_scene_flags);
+    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_ambient_light);
+    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_highest_light_level);
+    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_void_random_fall);
+    hash = dm2_v1_viewport_scene_hash_step(hash, s->gdat_animated_floor);
+    out_receipt->ready = s->gdat_scene_control_ready && mask != 0u;
+    out_receipt->consumed_mask = mask;
+    out_receipt->consumption_hash = hash;
+    out_receipt->source_hash = s->gdat_scene_control_hash;
+    out_receipt->scene_colorkey = s->gdat_scene_colorkey;
+    out_receipt->scene_flags = s->gdat_scene_flags;
+    out_receipt->ambient_light = s->gdat_ambient_light;
+    out_receipt->highest_light_level = s->gdat_highest_light_level;
+    out_receipt->void_random_fall = s->gdat_void_random_fall;
+    out_receipt->animated_floor = s->gdat_animated_floor;
+    out_receipt->scene_control_consumed =
+        s->gdat_scene_control_consumed_count;
+    out_receipt->light_consumed = s->gdat_scene_light_consumed_count;
+    out_receipt->floor_anim_consumed =
+        s->gdat_scene_floor_anim_consumed_count;
+    out_receipt->weather_consumed = s->gdat_scene_weather_consumed_count;
+    return 1;
+}
+
 void dm2_v1_viewport_set_interface_theme(
     DM2_V1_ViewportState *s,
     const DM2_V1_InterfaceTheme *theme)
