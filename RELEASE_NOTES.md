@@ -1,6 +1,27 @@
 
 # Unreleased
 
+# Firestaff v3.0.72
+
+Firestaff v3.0.72 packages current `main` after broader startup ownership,
+capture-readiness and release verification fixes landed after `v3.0.71`.
+
+## Highlights since v3.0.71
+
+- **DM1/CSB startup**: startup ownership and capture gates continue moving into
+  game-owned ReDMCSB-backed paths.
+- **Release build fixes**: V1 SWSH/TITLE pathfinder test targets now link
+  against the current startup menu state access surface.
+- **Docs and tracking**: TODO/DONE were refreshed for current boot, capture and
+  real-data gaps across the five game targets.
+
+## Verification
+
+- Local verification covered focused pathfinder target builds, version
+  synchronization and `git diff --check`.
+- GitHub Actions release packaging builds the platform artifacts from the
+  `v3.0.72` tag.
+
 # Firestaff v3.0.71
 
 Firestaff v3.0.71 packages current `main` after DM1, DM2, Nexus and Theron

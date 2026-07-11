@@ -5,7 +5,7 @@
 #include "firestaff_retroachievements.h"
 #include "menu_startup_a11y_m12.h"
 
-#define FIRESTAFF_VERSION_STRING "v3.0.71"
+#define FIRESTAFF_VERSION_STRING "v3.0.72"
 #include "firestaff_bestiary.h"
 #include "screenshot_gallery_m12.h"
 #include "firestaff_spell_ref.h"
@@ -908,6 +908,18 @@ static int m12_entry_count(void) {
 
 int M12_StartupMenu_GetEntryCount(void) {
     return m12_entry_count();
+}
+
+const char* M12_StartupMenu_AssetDataDir(const M12_StartupMenuState* state) {
+    return state ? state->assetStatus.dataDir : NULL;
+}
+
+const M12_AssetVersionStatus* M12_StartupMenu_AssetVersion(
+    const M12_StartupMenuState* state,
+    const char* gameId,
+    int index) {
+    return state ? M12_AssetStatus_GetVersion(&state->assetStatus, gameId, index)
+                 : NULL;
 }
 
 const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
@@ -2106,6 +2118,49 @@ int M12_StartupMenu_ExportSelectedSaveBrowserDM1PC34(M12_StartupMenuState* state
                                                    dataDir,
                                                    outPath,
                                                    outPathSize);
+}
+
+int M12_StartupMenu_ExportSaveBrowserDM1PC34CorpusReceipt(
+    M12_StartupMenuState* state,
+    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt)
+{
+    const char* dataDir;
+
+    if (!state || !outReceipt || state->view != M12_MENU_VIEW_SAVE_BROWSER) {
+        return -1;
+    }
+    dataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    /*
+     * ReDMCSB SAVEHEAD.C F0430 lines ~57-109 and CEDTINCD.C F7057
+     * lines ~266-294 are consumed in the save-browser corpus receipt.
+     * M12 routes launcher export through that receipt instead of
+     * rebuilding DM1 PC34 readiness from selected-entry diagnostics.
+     */
+    return M12_SaveBrowser_ExportDM1PC34CorpusReceipt(&state->saveBrowser,
+                                                      dataDir,
+                                                      outReceipt);
+}
+
+int M12_StartupMenu_ImportDM1PC34CorpusReceipt(
+    M12_StartupMenuState* state,
+    const char* importDir,
+    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt)
+{
+    const char* dataDir;
+
+    if (!state || !importDir || !*importDir || !outReceipt) {
+        return -1;
+    }
+    dataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    /*
+     * ReDMCSB SAVEHEAD.C F0429 lines ~30-54 and CEDTINCD.C F7057
+     * lines ~266-294 remain the DM1 corpus import gate.  The launcher
+     * consumes the save-browser receipt so arbitrary filenames are not
+     * accepted unless the original save-parts pass that gate.
+     */
+    return M12_SaveBrowser_ImportDM1PC34CorpusReceipt(dataDir,
+                                                      importDir,
+                                                      outReceipt);
 }
 
 static int m12_save_browser_select_first_game(M12_StartupMenuState* state,
@@ -6830,7 +6885,7 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     const M12_StartupMenuState* state,
     M12_StartupBootReadiness* receipt) {
     DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 facts;
-    DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 ownership;
+    DM1_V1_StartupHoCM12CaptureFields_PC34 capture;
     const M12_DM1HoCPresentedCaptureReceipt* presented;
     int realAssetReady;
     int graphicsAssetReady;
@@ -6846,7 +6901,7 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     realAssetReady = graphicsAssetReady && dungeonAssetReady;
     presented = &state->dm1HoCPresentedCaptureReceipt;
     memset(&facts, 0, sizeof(facts));
-    memset(&ownership, 0, sizeof(ownership));
+    memset(&capture, 0, sizeof(capture));
     facts.source_id = "dm1";
     facts.dungeon_loaded = receipt->dataReady && receipt->versionReady;
     facts.map_count = facts.dungeon_loaded ? 1 : 0;
@@ -6898,106 +6953,78 @@ static int m12_apply_dm1_hoc_startup_capture_package(
             ? 1
             : 0;
 
-    (void)dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
-        &facts, &ownership);
+    (void)dm1_v1_startup_hoc_m12_capture_fields_pc34(&facts, &capture);
 
-    receipt->dm1HoCRealAssetCaptureReady = ownership.real_asset_capture;
-    receipt->dm1HoCMacWindowCaptureReady = ownership.mac_window_capture;
-    receipt->dm1HoCReleaseAppCaptureReady = ownership.release_app_capture;
+    receipt->dm1HoCRealAssetCaptureReady =
+        capture.real_asset_capture_ready;
+    receipt->dm1HoCMacWindowCaptureReady =
+        capture.mac_window_capture_ready;
+    receipt->dm1HoCReleaseAppCaptureReady =
+        capture.release_app_capture_ready;
     receipt->dm1HoCHostCaptureRouteReady =
-        ownership.host_capture_route_matches;
-    receipt->dm1HoCReleaseCaptureOwnershipReady = ownership.ready;
+        capture.host_capture_route_ready;
+    receipt->dm1HoCReleaseCaptureOwnershipReady =
+        capture.release_capture_ownership_ready;
     receipt->dm1HoCHostRenderConsumerReady =
-        ownership.consumed_hoc_host_render_receipt;
+        capture.host_render_consumer_ready;
     receipt->dm1HoCM12CaptureConsumerReady =
-        ownership.consumed_m12_startup_capture_consumer;
-    receipt->dm1HoCLaunchPathReady =
-        ownership.consumed_launch_path_receipt &&
-        ownership.launch_path_started_from_launcher &&
-        ownership.launch_path_intro_not_bypassed;
+        capture.m12_capture_consumer_ready;
+    receipt->dm1HoCLaunchPathReady = capture.launch_path_ready;
     receipt->dm1HoCRequiredAssetCaptureReady =
-        ownership.required_asset_capture;
+        capture.required_asset_capture_ready;
     receipt->dm1HoCReceiptOnlyConsumerReady =
-        ownership.consume_dm1_receipts_only &&
-        ownership.consumed_runtime_apply_receipt &&
-        ownership.consumed_production_consumer_receipt &&
-        ownership.publish_packaged_full_graphics_proof;
+        capture.receipt_only_consumer_ready;
     receipt->dm1HoCNoHostFallbackVisualsReady =
-        ownership.suppress_host_fallback_visuals;
+        capture.no_host_fallback_visuals_ready;
     receipt->dm1HoCLowerLevelHelpersReady =
-        ownership.lower_level_renderer_helper_owned &&
-        ownership.lower_level_audio_helper_owned;
+        capture.lower_level_helpers_ready;
     receipt->dm1HoCHostDrawUsesOwnedReceiptReady =
-        ownership.host_draw_uses_owned_receipt;
+        capture.host_draw_uses_owned_receipt_ready;
     receipt->dm1HoCHostDrawConsumesBackingAssetReady =
-        ownership.host_draw_consumes_backing_asset;
+        capture.host_draw_consumes_backing_asset_ready;
     receipt->dm1HoCHostDrawRejectsBackingFallbackReady =
-        ownership.host_draw_rejects_backing_fallback;
-    receipt->dm1HoCHoCAssetCaptureReady = ownership.hoc_asset_capture;
-    receipt->dm1HoCHostWindowCaptureReady = ownership.host_window_capture;
-    receipt->dm1HoCPresentedCaptureReady = ownership.presented_capture;
+        capture.host_draw_rejects_backing_fallback_ready;
+    receipt->dm1HoCHoCAssetCaptureReady =
+        capture.hoc_asset_capture_ready;
+    receipt->dm1HoCHostWindowCaptureReady =
+        capture.host_window_capture_ready;
+    receipt->dm1HoCPresentedCaptureReady =
+        capture.presented_capture_ready;
     receipt->dm1HoCPresentedCaptureWidth =
-        ownership.presented_capture_width;
+        capture.presented_capture_width;
     receipt->dm1HoCPresentedCaptureHeight =
-        ownership.presented_capture_height;
+        capture.presented_capture_height;
     receipt->dm1HoCPresentedCaptureGeometryReady =
-        ownership.presented_capture_geometry_matches;
+        capture.presented_capture_geometry_ready;
     receipt->dm1HoCPresentedCapturePixelsReady =
-        ownership.presented_capture_pixels_present;
+        capture.presented_capture_pixels_ready;
     receipt->dm1HoCPresentedCaptureBytes =
-        ownership.presented_capture_byte_count;
+        capture.presented_capture_bytes;
     receipt->dm1HoCPresentedCaptureHash =
-        ownership.presented_capture_hash;
+        capture.presented_capture_hash;
     receipt->dm1HoCPresentedCaptureChainReady =
-        ownership.presented_capture_chain_ready;
+        capture.presented_capture_chain_ready;
     receipt->dm1HoCPresentedCaptureConsumerMask =
-        ownership.presented_capture_consumer_mask;
+        capture.presented_capture_consumer_mask;
     receipt->dm1HoCPresentedCaptureChainHash =
-        ownership.presented_capture_chain_hash;
+        capture.presented_capture_chain_hash;
     receipt->dm1HoCHostCaptureRoutePackagedReady =
-        ownership.host_capture_route_packaged;
+        capture.host_capture_route_packaged_ready;
     receipt->dm1HoCHostCaptureRouteMask =
-        ownership.host_capture_route_mask;
+        capture.host_capture_route_mask;
     receipt->dm1HoCHostCaptureRouteHash =
-        ownership.host_capture_route_hash;
+        capture.host_capture_route_hash;
     receipt->dm1HoCPresentedCaptureRoutePackagedReady =
-        ownership.presented_capture_route_packaged;
+        capture.presented_capture_route_packaged_ready;
     receipt->dm1HoCOpenedEntranceFrameReady =
-        ownership.draw_opened_entrance_frame;
+        capture.opened_entrance_frame_ready;
     receipt->dm1HoCHallMirrorOverlayReady =
-        ownership.render_hall_mirror_overlay;
+        capture.hall_mirror_overlay_ready;
     receipt->dm1HoCBlockedEnterUntilChampionReady =
-        ownership.block_enter_until_champion_selected;
-    receipt->dm1HoCRenderCommandCount = ownership.render_command_count;
+        capture.blocked_enter_until_champion_ready;
+    receipt->dm1HoCRenderCommandCount = capture.render_command_count;
     receipt->packagedCaptureReady =
-        receipt->packagedCaptureExpected &&
-        ownership.ready &&
-        receipt->dm1HoCHostRenderConsumerReady &&
-        receipt->dm1HoCM12CaptureConsumerReady &&
-        receipt->dm1HoCLaunchPathReady &&
-        receipt->dm1HoCRequiredAssetCaptureReady &&
-        receipt->dm1HoCReceiptOnlyConsumerReady &&
-        receipt->dm1HoCNoHostFallbackVisualsReady &&
-        receipt->dm1HoCLowerLevelHelpersReady &&
-        receipt->dm1HoCHostDrawUsesOwnedReceiptReady &&
-        receipt->dm1HoCHostDrawConsumesBackingAssetReady &&
-        receipt->dm1HoCHostDrawRejectsBackingFallbackReady &&
-        ownership.real_asset_capture &&
-        receipt->dm1HoCMacWindowCaptureReady &&
-        ownership.release_app_capture &&
-        ownership.host_capture_route_matches &&
-        receipt->dm1HoCHoCAssetCaptureReady &&
-        receipt->dm1HoCHostWindowCaptureReady &&
-        receipt->dm1HoCPresentedCaptureReady &&
-        receipt->dm1HoCPresentedCaptureGeometryReady &&
-        receipt->dm1HoCPresentedCapturePixelsReady &&
-        receipt->dm1HoCPresentedCaptureChainReady &&
-        receipt->dm1HoCHostCaptureRoutePackagedReady &&
-        receipt->dm1HoCPresentedCaptureRoutePackagedReady &&
-        receipt->dm1HoCOpenedEntranceFrameReady &&
-        receipt->dm1HoCHallMirrorOverlayReady &&
-        receipt->dm1HoCBlockedEnterUntilChampionReady &&
-        receipt->dm1HoCRenderCommandCount == 3;
+        receipt->packagedCaptureExpected && capture.ready;
     if (receipt->packagedCaptureReady) {
         receipt->readyStepMask |= M12_STARTUP_BOOT_STEP_CAPTURE;
         receipt->startupStepReadyCount = receipt->startupStepCount;

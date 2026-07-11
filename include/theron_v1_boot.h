@@ -271,6 +271,9 @@ typedef struct Theron_V1_BootRuntimeStartupSnapshot {
     int exact_level_semantics_ready;
     int exact_object_semantics_ready;
     unsigned int no_fallback_semantic_role_mask;
+    int track02_state_predicates_consumed;
+    int track02_bitmap_routes_complete;
+    int track02_no_fallback_runtime_route_ready;
     int object_table_no_fallback_ready;
     unsigned int object_table_blocked_anchor_mask;
     int object_table_blocked_anchor_count;
@@ -340,6 +343,9 @@ typedef struct Theron_V1_BootStartupViewModel {
     int exact_level_semantics_ready;
     int exact_object_semantics_ready;
     unsigned int no_fallback_semantic_role_mask;
+    int track02_state_predicates_consumed;
+    int track02_bitmap_routes_complete;
+    int track02_no_fallback_runtime_route_ready;
     int object_table_no_fallback_ready;
     unsigned int object_table_blocked_anchor_mask;
     int object_table_blocked_anchor_count;
@@ -392,6 +398,9 @@ typedef struct Theron_V1_BootStartupRenderRouteReceipt {
     int exact_level_semantics_ready;
     int exact_object_semantics_ready;
     unsigned int no_fallback_semantic_role_mask;
+    int track02_state_predicates_consumed;
+    int track02_bitmap_routes_complete;
+    int track02_no_fallback_runtime_route_ready;
     int object_table_no_fallback_ready;
     unsigned int object_table_blocked_anchor_mask;
     int object_table_blocked_anchor_count;
@@ -444,6 +453,9 @@ typedef struct Theron_V1_BootStartupHostViewReceipt {
     int exact_level_semantics_ready;
     int exact_object_semantics_ready;
     unsigned int no_fallback_semantic_role_mask;
+    int track02_state_predicates_consumed;
+    int track02_bitmap_routes_complete;
+    int track02_no_fallback_runtime_route_ready;
     int object_table_no_fallback_ready;
     unsigned int object_table_blocked_anchor_mask;
     int object_table_blocked_anchor_count;
@@ -519,6 +531,9 @@ typedef struct Theron_V1_BootStartupGraphicsRouteReceipt {
     int exact_level_semantics_ready;
     int exact_object_semantics_ready;
     unsigned int no_fallback_semantic_role_mask;
+    int track02_state_predicates_consumed;
+    int track02_bitmap_routes_complete;
+    int track02_no_fallback_runtime_route_ready;
     int object_table_no_fallback_ready;
     unsigned int object_table_blocked_anchor_mask;
     int object_table_blocked_anchor_count;
@@ -598,6 +613,9 @@ typedef struct Theron_V1_BootStartupFullStartReceipt {
     int exact_level_semantics_ready;
     int exact_object_semantics_ready;
     unsigned int no_fallback_semantic_role_mask;
+    int track02_state_predicates_consumed;
+    int track02_bitmap_routes_complete;
+    int track02_no_fallback_runtime_route_ready;
     int object_table_no_fallback_ready;
     unsigned int object_table_blocked_anchor_mask;
     int object_table_blocked_anchor_count;
@@ -792,6 +810,9 @@ typedef struct Theron_V1_BootStartupUiCallerReceipt {
     int exact_object_semantics_ready;
     int complete_runtime_support_ready;
     unsigned int no_fallback_semantic_role_mask;
+    int track02_state_predicates_consumed;
+    int track02_bitmap_routes_complete;
+    int track02_no_fallback_runtime_route_ready;
     int object_table_no_fallback_ready;
     unsigned int object_table_blocked_anchor_mask;
     int object_table_blocked_anchor_count;
