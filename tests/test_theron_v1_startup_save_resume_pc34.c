@@ -4235,6 +4235,10 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
     Theron_Track02StartupBitmapAtlas atlas;
     Theron_StartupMediaStateReceipt receipt;
     Theron_V1_StartupReceipt startup_receipt;
+    const Theron_Track02StartupBitmapAtlasRoute *title_route = NULL;
+    const Theron_Track02StartupBitmapAtlasRoute *stage_route = NULL;
+    const Theron_Track02StartupBitmapAtlasRoute *soul_route = NULL;
+    const Theron_Track02StartupBitmapAtlasRoute *forcefield_route = NULL;
 
     expect_true(track02 != NULL,
                 "Track02 startup bitmap sparse fixture allocates");
@@ -4356,6 +4360,28 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
         track02_size,
         THERON_TRACK02_MD5_US_BIN,
         &receipt);
+    for (size_t route_index = 0u;
+         route_index < receipt.startup_bitmap_atlas.route_count;
+         ++route_index) {
+        const Theron_Track02StartupBitmapAtlasRoute *route =
+            &receipt.startup_bitmap_atlas.routes[route_index];
+        switch (route->route_bit) {
+        case THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE:
+            title_route = route;
+            break;
+        case THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE:
+            stage_route = route;
+            break;
+        case THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM:
+            soul_route = route;
+            break;
+        case THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD:
+            forcefield_route = route;
+            break;
+        default:
+            break;
+        }
+    }
     expect_true(receipt.startup_media_ready &&
                     receipt.startup_bitmap_decode_status ==
                         THERON_TRACK02_SIGNAL_OK &&
@@ -4399,20 +4425,40 @@ static void test_track02_startup_bitmap_decode_receipt(void) {
                         span_offsets[1] &&
                     receipt.startup_bitmap_title_last_raw_offset ==
                         span_offsets[1] + 60u &&
+                    title_route != NULL &&
+                    title_route->tile_count > 0u &&
+                    receipt.startup_bitmap_title_last_user_data_offset ==
+                        title_route->user_data_offsets[
+                            title_route->tile_count - 1u] &&
                     receipt.startup_bitmap_title_first_user_data_offset <
                         receipt.startup_bitmap_title_last_user_data_offset &&
                     receipt.startup_bitmap_stage_first_raw_offset ==
                         span_offsets[2] &&
                     receipt.startup_bitmap_stage_last_raw_offset ==
                         span_offsets[2] + 60u &&
+                    stage_route != NULL &&
+                    stage_route->tile_count > 0u &&
+                    receipt.startup_bitmap_stage_last_user_data_offset ==
+                        stage_route->user_data_offsets[
+                            stage_route->tile_count - 1u] &&
                     receipt.startup_bitmap_soul_room_first_raw_offset ==
                         span_offsets[0] &&
                     receipt.startup_bitmap_soul_room_last_raw_offset ==
                         span_offsets[1] + 28u &&
+                    soul_route != NULL &&
+                    soul_route->tile_count > 0u &&
+                    receipt.startup_bitmap_soul_room_last_user_data_offset ==
+                        soul_route->user_data_offsets[
+                            soul_route->tile_count - 1u] &&
                     receipt.startup_bitmap_forcefield_first_raw_offset ==
                         span_offsets[0] + 8u &&
                     receipt.startup_bitmap_forcefield_last_raw_offset ==
                         span_offsets[2] + 28u &&
+                    forcefield_route != NULL &&
+                    forcefield_route->tile_count > 0u &&
+                    receipt.startup_bitmap_forcefield_last_user_data_offset ==
+                        forcefield_route->user_data_offsets[
+                            forcefield_route->tile_count - 1u] &&
                     receipt.startup_bitmap_wide_route_mask ==
                         TST_THERON_FULL_START_BITMAP_ROUTES &&
                     receipt.startup_bitmap_wide_route_count == 4 &&
