@@ -2318,6 +2318,14 @@ static void test_startup_session_facts_wrappers(void) {
                     handoff_receipt.host_consumes_full_start_receipt &&
                     handoff_receipt.host_render_valid &&
                     handoff_receipt.track02_media_consumed &&
+                    handoff_receipt.track02_media_route_mask ==
+                        TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    handoff_receipt.track02_media_checksum ==
+                        media_receipt.startup_bitmap_atlas_checksum &&
+                    handoff_receipt.track02_media_title_first_raw_offset ==
+                        media_receipt.startup_bitmap_title_first_raw_offset &&
+                    handoff_receipt.track02_media_soul_room_last_user_data_offset ==
+                        media_receipt.startup_bitmap_soul_room_last_user_data_offset &&
                     handoff_receipt.startup_menu_render_allowed &&
                     handoff_receipt.soul_room_menu_ready &&
                     handoff_receipt.real_graphics_handoff_ready &&
@@ -2814,6 +2822,14 @@ static void test_startup_session_facts_wrappers(void) {
                     &handoff_receipt) &&
                     handoff_receipt.host_render_valid &&
                     handoff_receipt.track02_media_consumed &&
+                    handoff_receipt.track02_media_route_mask ==
+                        TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    handoff_receipt.track02_media_checksum ==
+                        media_receipt.startup_bitmap_atlas_checksum &&
+                    handoff_receipt.track02_media_stage_first_raw_offset ==
+                        media_receipt.startup_bitmap_stage_first_raw_offset &&
+                    handoff_receipt.track02_media_forcefield_last_user_data_offset ==
+                        media_receipt.startup_bitmap_forcefield_last_user_data_offset &&
                     handoff_receipt.runtime_handoff_ready &&
                     handoff_receipt.track02_runtime_handoff_ready &&
                     !handoff_receipt.save_resume_runtime_handoff_ready &&
@@ -2837,6 +2853,16 @@ static void test_startup_session_facts_wrappers(void) {
                     ui_caller_receipt.host_render_valid &&
                     ui_caller_receipt.menu_runtime_handoff_valid &&
                     ui_caller_receipt.track02_media_consumed &&
+                    ui_caller_receipt.track02_media_route_mask ==
+                        TST_THERON_FULL_START_BITMAP_ROUTES &&
+                    ui_caller_receipt.track02_media_checksum ==
+                        media_receipt.startup_bitmap_atlas_checksum &&
+                    ui_caller_receipt.track02_media_title_last_raw_offset ==
+                        media_receipt.startup_bitmap_title_last_raw_offset &&
+                    ui_caller_receipt.track02_media_soul_room_first_user_data_offset ==
+                        media_receipt.startup_bitmap_soul_room_first_user_data_offset &&
+                    ui_caller_receipt.track02_media_forcefield_last_raw_offset ==
+                        media_receipt.startup_bitmap_forcefield_last_raw_offset &&
                     ui_caller_receipt.title_prompt_ready &&
                     ui_caller_receipt.roster_ready &&
                     ui_caller_receipt.title_menu_ready &&
