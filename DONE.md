@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 entrance full-graphics host-ready gate: added a DM1/ReDMCSB host-ready validator for the F0797 entrance micro-dungeon and C563/G0562 asset receipt, then made M11 consume it before drawing the entrance transition; missing real GRAPHICS.DAT entrance assets now stop the full-graphics path instead of falling back to host-drawn closed/opening doors. Verification: `firestaff_m11`, `test_dm1_v1_entrance_champion_select_pc34_compat`, and whitespace scan passed.
+
 - ✅ 2026-07-11 DM1 TITLE step palette regression gate: wired `test_title_frontend_step_palette_v1_pc34_compat` into CTest and locked ReDMCSB TITLE.C/VIDEODRV.C palette phases so PRESENTS uses C12_PRESENTS and DUNGEON/MASTER/STRIKES uses C13_DUNGEON+C14_MASTER. Verification: `firestaff_m11`, `test_title_frontend_step_palette_v1_pc34_compat`, and `git diff --check` passed.
 
 - ✅ 2026-07-11 DM1 F0128 viewport ownership cleanup: moved the ReDMCSB F0128 viewport-crop readiness helper from `m11_dm1_v1_f0128_viewport_pc34_compat` engine naming into DM1-owned source/header paths and removed the public `m11_dm1_v1_f0128_*` compatibility macros. Verification: `firestaff_m11`, `test_dm1_v1_f0128_viewport_pc34_compat`, targeted M11 F0128 alias `rg`, and `git diff --check` passed.
