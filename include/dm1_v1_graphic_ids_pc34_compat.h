@@ -7,6 +7,14 @@ extern "C" {
 
 const char* dm1_v1_graphic_ids_source_evidence_pc34(void);
 
+typedef struct DM1_V1_ObjectIconSourceZonePc34 {
+    int graphic_index;
+    int x;
+    int y;
+    int w;
+    int h;
+} DM1_V1_ObjectIconSourceZonePc34;
+
 int dm1_v1_graphic_dialog_box_pc34(void);
 int dm1_v1_graphic_the_end_pc34(void);
 int dm1_v1_graphic_endgame_champion_mirror_pc34(void);
@@ -29,6 +37,13 @@ int dm1_v1_graphic_spell_shield_border_pc34(void);
 int dm1_v1_graphic_champion_damage_small_pc34(void);
 int dm1_v1_graphic_champion_damage_big_pc34(void);
 int dm1_v1_graphic_creature_damage_pc34(void);
+int dm1_v1_graphic_wallset0_index_pc34(int wallSetIndex);
+int dm1_v1_graphic_materialized_wallset_index_pc34(
+    int mapWallSet,
+    int wallSet0GraphicIndex);
+int dm1_v1_object_icon_source_zone_pc34(
+    int iconIndex,
+    DM1_V1_ObjectIconSourceZonePc34* outZone);
 
 #ifdef __cplusplus
 }

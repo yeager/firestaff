@@ -265,6 +265,33 @@ dm1_v1_resurrection_rename_ui_gate_host_text_byte_pc34(int ch)
 }
 
 int
+dm1_v1_resurrection_rename_ui_gate_host_text_byte_decision_pc34(
+    int game_active,
+    int candidate_panel_active,
+    int rename_active,
+    int ch,
+    DM1_V1_ResurrectionRenameUiHostTextByteDecisionPc34Compat *out_decision)
+{
+    DM1_V1_ResurrectionRenameUiHostTextByteDecisionPc34Compat decision;
+    memset(&decision, 0, sizeof(decision));
+    if (!out_decision) {
+        return 0;
+    }
+    if (!dm1_v1_resurrection_rename_ui_gate_host_active_pc34(
+            game_active, candidate_panel_active, rename_active)) {
+        *out_decision = decision;
+        return 0;
+    }
+    decision.handled = 1;
+    if (dm1_v1_resurrection_rename_ui_gate_host_text_byte_pc34(ch)) {
+        decision.useAscii = 1;
+        decision.ascii = ch;
+    }
+    *out_decision = decision;
+    return 1;
+}
+
+int
 dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
     const DM1_V1_ResurrectionRenameUiGatePc34Compat *state,
     int host_key,
@@ -308,10 +335,39 @@ dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
 }
 
 int
+dm1_v1_resurrection_rename_ui_gate_host_keydown_route_pc34(
+    int game_active,
+    int candidate_panel_active,
+    int rename_active,
+    const DM1_V1_ResurrectionRenameUiGatePc34Compat *state,
+    int host_key,
+    DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat *out_decision)
+{
+    DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat decision;
+    memset(&decision, 0, sizeof(decision));
+    if (!out_decision) {
+        return 0;
+    }
+    if (!dm1_v1_resurrection_rename_ui_gate_host_active_pc34(
+            game_active, candidate_panel_active, rename_active)) {
+        *out_decision = decision;
+        return 0;
+    }
+    if (!dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
+            state, host_key, &decision)) {
+        *out_decision = decision;
+        return 0;
+    }
+    *out_decision = decision;
+    return 1;
+}
+
+int
 dm1_v1_resurrection_rename_ui_gate_run_self_test_pc34(void)
 {
     DM1_V1_ResurrectionRenameUiGatePc34Compat state;
     DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat decision;
+    DM1_V1_ResurrectionRenameUiHostTextByteDecisionPc34Compat textDecision;
     int i;
 
     dm1_v1_resurrection_rename_ui_gate_init_pc34(
@@ -386,6 +442,22 @@ dm1_v1_resurrection_rename_ui_gate_run_self_test_pc34(void)
         !decision.useAscii ||
         decision.ascii != '\r' ||
         decision.useCommand) {
+        return 0;
+    }
+    if (!dm1_v1_resurrection_rename_ui_gate_host_text_byte_decision_pc34(
+            1, 1, 1, 'X', &textDecision) ||
+        !textDecision.handled ||
+        !textDecision.useAscii ||
+        textDecision.ascii != 'X') {
+        return 0;
+    }
+    if (!dm1_v1_resurrection_rename_ui_gate_host_keydown_route_pc34(
+            1, 1, 1, &state,
+            DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_RETURN_PC34_COMPAT,
+            &decision) ||
+        !decision.handled ||
+        !decision.useAscii ||
+        decision.ascii != '\r') {
         return 0;
     }
     return 1;

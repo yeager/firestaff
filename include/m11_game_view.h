@@ -704,6 +704,15 @@ typedef struct {
         int startup_blocked_route_suppresses_all_draws;
         int startup_copied_draw_command_count;
         int startup_copied_dgn_render_command_count;
+        int startup_copied_dgn_material_plan_complete;
+        int startup_dgn_viewport_host_route_ready;
+        int startup_dgn_viewport_host_route_status;
+        int startup_dgn_viewport_host_package_consumed;
+        int startup_dgn_viewport_host_route_consumed;
+        int startup_dgn_viewport_host_blocks_runtime;
+        int startup_dgn_viewport_host_written_pixels;
+        int startup_dgn_viewport_host_rasterized_commands;
+        int startup_dgn_viewport_host_material_surfaces;
         /* M11 only presents the DGN plan supplied by the Nexus startup
          * host route. Keeping the accepted plan here lets a champion start
          * or save-resume enter the dungeon without falling back to the
@@ -1519,6 +1528,28 @@ int M11_GameView_GetProjectileRawZonePointForRel(int relForward,
                                                  int* outX,
                                                  int* outY);
 int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex);
+int DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(M11_GameViewState* state,
+                                                    unsigned short thing);
+void DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(M11_GameViewState* state);
+unsigned short DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(
+    const M11_GameViewState* state);
+int DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(
+    const M11_GameViewState* state);
+int DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(
+    const M11_GameViewState* state,
+    int championSlot);
+int DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(
+    const M11_GameViewState* state,
+    char* out,
+    int outSize);
+int DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
+    const M11_GameViewState* state,
+    char* out,
+    int outSize);
+int DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(M11_GameViewState* state);
+void DM1_V1_M11Runtime_CloseOpenChestPc34Compat(M11_GameViewState* state);
+unsigned short DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(
+    const M11_GameViewState* state);
 int M11_GameView_GetViewportRect(int* outX, int* outY, int* outW, int* outH);
 int M11_GameView_GetV1ViewportBaseGraphic(int layer,
                                            int* outGraphic,

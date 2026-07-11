@@ -1,5 +1,13 @@
 #include "dm1_v1_mouse_routes_pc34_compat.h"
 
+#include "champion_status_slotbox_pc34_compat.h"
+#include "dm1_v1_champion_status_layout_pc34_compat.h"
+#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
+#include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
+#include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
+#include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
+
 #include <stddef.h>
 
 static const DM1_V1_MouseRoutePc34Compat kInterfaceRoutes[] = {
@@ -195,4 +203,172 @@ int DM1_V1_MouseRoutes_CommandForPointPc34Compat(
         }
     }
     return 0;
+}
+
+static int dm1_v1_mouse_route_zone_rect_pc34(int zoneId,
+                                             void* user,
+                                             int* outX,
+                                             int* outY,
+                                             int* outW,
+                                             int* outH) {
+    (void)user;
+    switch (zoneId) {
+        case 2:
+        {
+            DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_screen_rect_pc34();
+            if (!dm1_v1_screen_zone_id_pc34()) return 0;
+            if (outX) *outX = rect.x;
+            if (outY) *outY = rect.y;
+            if (outW) *outW = rect.w;
+            if (outH) *outH = rect.h;
+            return 1;
+        }
+        case 7:
+        {
+            DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_viewport_rect_pc34();
+            if (!dm1_v1_viewport_zone_id_pc34()) return 0;
+            if (outX) *outX = rect.x;
+            if (outY) *outY = rect.y;
+            if (outW) *outW = rect.w;
+            if (outH) *outH = rect.h;
+            return 1;
+        }
+        case 11:
+        {
+            DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_area_rect_pc34();
+            if (!dm1_v1_action_area_zone_id_pc34()) return 0;
+            if (outX) *outX = rect.x;
+            if (outY) *outY = rect.y;
+            if (outW) *outW = rect.w;
+            if (outH) *outH = rect.h;
+            return 1;
+        }
+        case 13:
+        {
+            DM1_V1_SpellAreaRectPc34 rect = dm1_v1_spell_area_click_rect_pc34();
+            if (outX) *outX = rect.x;
+            if (outY) *outY = rect.y;
+            if (outW) *outW = rect.w;
+            if (outH) *outH = rect.h;
+            return 1;
+        }
+        default:
+            break;
+    }
+
+    if (zoneId >= 151 && zoneId <= 154) {
+        DM1_V1_ChampionStatusRectPc34 rect;
+        if (!dm1_v1_champion_status_box_rect_pc34(zoneId - 151, &rect)) {
+            return 0;
+        }
+        if (outX) *outX = rect.x;
+        if (outY) *outY = rect.y;
+        if (outW) *outW = rect.w;
+        if (outH) *outH = rect.h;
+        return 1;
+    }
+    if (zoneId >= 211 && zoneId <= 218) {
+        const int slotBox = zoneId - 211;
+        const int championSlot = slotBox >> 1;
+        const int handSlot = slotBox & 1;
+        DM1_V1_ChampionStatusRectPc34 rect;
+        if (!dm1_v1_champion_status_hand_rect_pc34(championSlot, handSlot,
+                                                   &rect)) {
+            return 0;
+        }
+        if (outX) *outX = rect.x;
+        if (outY) *outY = rect.y;
+        if (outW) *outW = rect.w;
+        if (outH) *outH = rect.h;
+        return 1;
+    }
+    if (zoneId >= 187 && zoneId <= 190) {
+        ChampionStatusRectCompat rect;
+        if (!CHAMPION_Compat_StatusBarGraphRegionZone(zoneId - 187,
+                                                      &rect)) return 0;
+        if (outX) *outX = rect.x;
+        if (outY) *outY = rect.y;
+        if (outW) *outW = rect.w;
+        if (outH) *outH = rect.h;
+        return 1;
+    }
+    if (zoneId >= 68 && zoneId <= 73) {
+        DM1_V1_MovementArrowRectPc34 rect;
+        if (!dm1_v1_movement_arrow_rect_pc34(zoneId - 68, &rect)) return 0;
+        if (outX) *outX = rect.x;
+        if (outY) *outY = rect.y;
+        if (outW) *outW = rect.w;
+        if (outH) *outH = rect.h;
+        return 1;
+    }
+    if (zoneId >= 113 && zoneId <= 116) {
+        DM1_V1_LayoutZoneRectPc34 rect;
+        if (!dm1_v1_champion_icon_rect_pc34(zoneId - 113, &rect)) return 0;
+        if (outX) *outX = rect.x;
+        if (outY) *outY = rect.y;
+        if (outW) *outW = rect.w;
+        if (outH) *outH = rect.h;
+        return 1;
+    }
+    if (zoneId >= 507 && zoneId <= 536) {
+        DM1_V1_InventorySlotBoxZonePc34 zone;
+        if (!dm1_v1_inventory_source_slot_box_zone_pc34(zoneId - 499, &zone)) {
+            return 0;
+        }
+        if (outX) *outX = zone.x;
+        if (outY) *outY = zone.y;
+        if (outW) *outW = zone.w;
+        if (outH) *outH = zone.h;
+        return 1;
+    }
+    if (zoneId >= 537 && zoneId <= 544) {
+        DM1_V1_InventorySlotBoxZonePc34 zone;
+        if (!dm1_v1_inventory_chest_slot_box_zone_pc34(zoneId - 537, &zone)) {
+            return 0;
+        }
+        if (outX) *outX = zone.x;
+        if (outY) *outY = zone.y;
+        if (outW) *outW = zone.w;
+        if (outH) *outH = zone.h;
+        return 1;
+    }
+    if (zoneId == 101) {
+        DM1_V1_LayoutZoneRectPc34 panelRect =
+            dm1_v1_inventory_panel_rect_pc34();
+        if (!dm1_v1_inventory_panel_zone_id_pc34()) return 0;
+        if (outX) *outX = panelRect.x;
+        if (outY) *outY = panelRect.y;
+        if (outW) *outW = panelRect.w;
+        if (outH) *outH = panelRect.h;
+        return 1;
+    }
+    if (zoneId == 545 || zoneId == 546) {
+        if (outX) *outX = (zoneId == 545) ? 56 : 12;
+        if (outY) *outY = 13;
+        if (outW) *outW = 16;
+        if (outH) *outH = 16;
+        return 1;
+    }
+    return 0;
+}
+
+int DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+    int mouseInputList,
+    int screenX,
+    int screenY,
+    int buttonMask,
+    int* outCoordinateSpace,
+    int* outZoneId) {
+    DM1_V1_LayoutZoneRectPc34 viewport = dm1_v1_viewport_rect_pc34();
+    return DM1_V1_MouseRoutes_CommandForPointPc34Compat(
+        mouseInputList,
+        screenX,
+        screenY,
+        buttonMask,
+        viewport.x,
+        viewport.y,
+        dm1_v1_mouse_route_zone_rect_pc34,
+        NULL,
+        outCoordinateSpace,
+        outZoneId);
 }

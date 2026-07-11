@@ -120,6 +120,7 @@ enum {
     DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34 = 10,
     DM1_V1_ACTION_AREA_ZONE_ID_PC34 = 11,
     DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34 = 0,
+    DM1_V1_ACTION_AREA_DARK_GRAY_PC34 = 1,
     DM1_V1_ACTION_AREA_CYAN_PC34 = 4,
     DM1_V1_ACTION_RESULT_ZONE_ID_PC34 = 75,
     DM1_V1_ACTION_PASS_ZONE_ID_PC34 = 98,
@@ -278,7 +279,7 @@ dm1_v1_action_menu_graphic_rect_pc34(int action_row_count)
 static inline DM1_V1_ActionAreaRectPc34
 dm1_v1_action_menu_header_rect_pc34(void)
 {
-    DM1_V1_ActionAreaRectPc34 r = { 224, 77, 96, 9 };
+    DM1_V1_ActionAreaRectPc34 r = { 233, 77, 87, 9 };
     return r;
 }
 

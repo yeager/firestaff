@@ -3349,6 +3349,15 @@ int asset_find_by_md5(const char *searchDir, const char *expectedMd5,
     return scan_dir(searchDir, normalizedMd5, outPath, outPathLen, 0, maxDepth);
 }
 
+int asset_file_matches_md5(const char *path, const char *expectedMd5) {
+    char normalizedMd5[33];
+    char actualMd5[33];
+    if (!path || !expectedMd5) return 0;
+    if (!normalize_md5(expectedMd5, normalizedMd5)) return 0;
+    if (!file_md5(path, actualMd5)) return 0;
+    return strcmp(actualMd5, normalizedMd5) == 0;
+}
+
 int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
                            char *outPath, int outPathLen,
                            int *outMatchIndex, int maxDepth) {

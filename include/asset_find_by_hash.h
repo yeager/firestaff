@@ -26,6 +26,12 @@ int asset_find_by_md5(const char *searchDir, const char *expectedMd5,
                       char *outPath, int outPathLen, int maxDepth);
 
 /*
+ * Return 1 when a specific ordinary file matches the given MD5. Does not
+ * inspect virtual archive entries.
+ */
+int asset_file_matches_md5(const char *path, const char *expectedMd5);
+
+/*
  * Search for a file matching ANY of the given MD5 hashes.
  *
  * `md5List` is a NULL-terminated array of MD5 hex strings.

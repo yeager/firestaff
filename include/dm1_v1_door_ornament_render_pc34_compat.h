@@ -38,6 +38,12 @@ int dm1_v1_door_ornament_info_for_global_pc34(
     int globalIndex,
     DM1_DoorOrnamentInfoPc34* outInfo);
 
+int dm1_v1_door_ornament_info_for_ordinal_pc34(
+    int ornamentOrdinal,
+    int cacheLoaded,
+    const int localToGlobal[16],
+    DM1_DoorOrnamentInfoPc34* outInfo);
+
 int dm1_v1_door_ornament_render_plan_pc34(
     int globalIndex,
     int depthIndex,

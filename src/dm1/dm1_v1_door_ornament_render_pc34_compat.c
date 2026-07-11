@@ -49,6 +49,29 @@ int dm1_v1_door_ornament_info_for_global_pc34(
     return 1;
 }
 
+int dm1_v1_door_ornament_info_for_ordinal_pc34(
+    int ornamentOrdinal,
+    int cacheLoaded,
+    const int localToGlobal[16],
+    DM1_DoorOrnamentInfoPc34* outInfo)
+{
+    int localIndex;
+    int globalIndex;
+    if (ornamentOrdinal <= 0 || !outInfo) {
+        return 0;
+    }
+    localIndex = ornamentOrdinal - 1;
+    if (localIndex < 0 || localIndex >= 16) {
+        return 0;
+    }
+    /* ReDMCSB F0096 map graphics setup resolves map-local door ornament
+     * ordinals through the current map metadata.  If no metadata is loaded,
+     * Firestaff keeps the original identity fallback used by old loose
+     * fixtures. */
+    globalIndex = (cacheLoaded && localToGlobal) ? localToGlobal[localIndex] : localIndex;
+    return dm1_v1_door_ornament_info_for_global_pc34(globalIndex, outInfo);
+}
+
 int dm1_v1_door_ornament_render_plan_pc34(
     int globalIndex,
     int depthIndex,

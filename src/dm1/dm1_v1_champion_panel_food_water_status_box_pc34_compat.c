@@ -22,6 +22,13 @@ enum {
     DM1_V1_CPFW_ZONE_WATER_BAR_PC34 = 104,
     DM1_V1_CPFW_ZONE_FOOD_LABEL_PC34 = 500,
     DM1_V1_CPFW_ZONE_WATER_LABEL_PC34 = 501,
+    DM1_V1_CPFW_BAR_X_PC34 = 113,
+    DM1_V1_CPFW_FOOD_BAR_Y_PC34 = 69,
+    DM1_V1_CPFW_WATER_BAR_Y_PC34 = 92,
+    DM1_V1_CPFW_FOOD_BAR_W_PC34 = 34,
+    DM1_V1_CPFW_WATER_BAR_W_PC34 = 46,
+    DM1_V1_CPFW_BAR_H_PC34 = 6,
+    DM1_V1_CPFW_BAR_SHADOW_OFFSET_PC34 = 2,
     DM1_V1_CPFW_THING_NONE_PC34 = 0xFFFFu,
     DM1_V1_CPFW_THING_END_OF_LIST_PC34 = 0xFFFEu
 };
@@ -129,6 +136,34 @@ dm1_v1_champion_panel_food_water_status_box_default_input_pc34(void)
     input.chest_slots[6] = (uint16_t)DM1_V1_CPFW_THING_NONE_PC34;
     input.chest_slots[7] = (uint16_t)DM1_V1_CPFW_THING_NONE_PC34;
     return input;
+}
+
+dm1_v1_champion_panel_food_water_bar_zone_pc34_t
+dm1_v1_champion_panel_food_bar_zone_pc34(void)
+{
+    dm1_v1_champion_panel_food_water_bar_zone_pc34_t zone = {
+        DM1_V1_CPFW_ZONE_FOOD_BAR_PC34,
+        DM1_V1_CPFW_BAR_X_PC34,
+        DM1_V1_CPFW_FOOD_BAR_Y_PC34,
+        DM1_V1_CPFW_FOOD_BAR_W_PC34,
+        DM1_V1_CPFW_BAR_H_PC34,
+        DM1_V1_CPFW_BAR_SHADOW_OFFSET_PC34
+    };
+    return zone;
+}
+
+dm1_v1_champion_panel_food_water_bar_zone_pc34_t
+dm1_v1_champion_panel_water_bar_zone_pc34(void)
+{
+    dm1_v1_champion_panel_food_water_bar_zone_pc34_t zone = {
+        DM1_V1_CPFW_ZONE_WATER_BAR_PC34,
+        DM1_V1_CPFW_BAR_X_PC34,
+        DM1_V1_CPFW_WATER_BAR_Y_PC34,
+        DM1_V1_CPFW_WATER_BAR_W_PC34,
+        DM1_V1_CPFW_BAR_H_PC34,
+        DM1_V1_CPFW_BAR_SHADOW_OFFSET_PC34
+    };
+    return zone;
 }
 
 static int valid_input(

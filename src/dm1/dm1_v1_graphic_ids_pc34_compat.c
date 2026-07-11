@@ -2,8 +2,9 @@
 
 const char* dm1_v1_graphic_ids_source_evidence_pc34(void) {
     return "ReDMCSB DEFS.H C006/C007/C008/C014..C020/C023/C026/C028..C039/"
-           "C346; PANEL.C F0339/F0341/F0342; CHAMDRAW.C F0291/F0622; "
-           "ENDGAME.C F0445";
+           "C093..C107/C346; PANEL.C F0339/F0341/F0342; CHAMDRAW.C F0291/F0622; "
+           "DUNVIEW.C F0104/F0105/F0128 wall panels; ENDGAME.C F0445; "
+           "OBJECT.C F0034/F0036/F0068 object icon indices";
 }
 
 int dm1_v1_graphic_dialog_box_pc34(void) { return 17; }
@@ -32,3 +33,49 @@ int dm1_v1_graphic_spell_shield_border_pc34(void) { return 39; }
 int dm1_v1_graphic_champion_damage_small_pc34(void) { return 15; }
 int dm1_v1_graphic_champion_damage_big_pc34(void) { return 16; }
 int dm1_v1_graphic_creature_damage_pc34(void) { return 14; }
+
+int dm1_v1_graphic_wallset0_index_pc34(int wallSetIndex) {
+    if (wallSetIndex < 0 || wallSetIndex >= 15) {
+        return -1;
+    }
+    /* ReDMCSB DEFS.H C093..C107: wall set 0 source graphics are contiguous
+     * in DM1_WALL_* order used by DUNVIEW.C side/front wall draw helpers. */
+    return 93 + wallSetIndex;
+}
+
+int dm1_v1_graphic_materialized_wallset_index_pc34(
+    int mapWallSet,
+    int wallSet0GraphicIndex) {
+    enum {
+        DM1_V1_GRAPHIC_WALLSET_MATERIALIZED_FIRST_PC34 = 86,
+        DM1_V1_GRAPHIC_WALLSET_MATERIALIZED_COUNT_PC34 = 40
+    };
+    if (wallSet0GraphicIndex < DM1_V1_GRAPHIC_WALLSET_MATERIALIZED_FIRST_PC34 ||
+        wallSet0GraphicIndex >=
+            DM1_V1_GRAPHIC_WALLSET_MATERIALIZED_FIRST_PC34 +
+            DM1_V1_GRAPHIC_WALLSET_MATERIALIZED_COUNT_PC34) {
+        return wallSet0GraphicIndex;
+    }
+    if (mapWallSet < 0) {
+        mapWallSet = 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0096/F0128: current-map wall-set material is a
+     * fixed-width wall-set block; callers pass a wall-set-0 graphic id. */
+    return DM1_V1_GRAPHIC_WALLSET_MATERIALIZED_FIRST_PC34 +
+           mapWallSet * DM1_V1_GRAPHIC_WALLSET_MATERIALIZED_COUNT_PC34 +
+           (wallSet0GraphicIndex - DM1_V1_GRAPHIC_WALLSET_MATERIALIZED_FIRST_PC34);
+}
+
+int dm1_v1_object_icon_source_zone_pc34(
+    int iconIndex,
+    DM1_V1_ObjectIconSourceZonePc34* outZone) {
+    int localIndex;
+    if (!outZone || iconIndex < 0) return 0;
+    localIndex = iconIndex % 32;
+    outZone->graphic_index = 42 + (iconIndex / 32);
+    outZone->x = (localIndex & 0x0F) * 16;
+    outZone->y = (localIndex >> 4) * 16;
+    outZone->w = 16;
+    outZone->h = 16;
+    return 1;
+}
