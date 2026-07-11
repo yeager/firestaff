@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 legacy M11 alias cleanup batch 10: removed unused `M11_CR_*` and `m11_cr_*` aliases from the DM1 creature viewport header; callers use DM1-owned ReDMCSB creature viewport names directly. Verification: `firestaff_m11`, `test_dm1_v1_mummy_viewport_pc34_compat`, targeted alias `rg`, and `git diff --check` passed.
+
 - ✅ 2026-07-11 DM1 legacy M11 alias cleanup batch 9: removed unused `M11_GameView_DoorBash*` aliases from the DM1 door-bash feedback header; existing callers already use DM1-owned ReDMCSB-source-locked APIs. Verification: `firestaff_m11`, `test_dm1_v1_door_bash_feedback_source_lock_pc34_compat`, targeted alias `rg`, and `git diff --check` passed.
 
 - ✅ 2026-07-11 DM1 dead inventory pickup API cleanup: removed the unused, unimplemented `dm1_v1_inventory_item_pickup_pc34_compat.h` M11-named pickup preflight declaration. Verification: `firestaff_m11` built, targeted header/symbol `rg` passed, and `git diff --check` passed.
