@@ -101,9 +101,9 @@ int csb_atari_st_graphics_loader_read_item(const CSB_AtariStLoader* state,
     }
 
     /* LZW-decompress using the existing DM1 V1 decoder. */
-    M11_GFX_LZWState lzw;
+    DM1_V1_GFX_LZWStatePc34 lzw;
     memset(&lzw, 0, sizeof(lzw));
-    int rc = m11_gfx_lzw_decompress(&lzw, comp_buf, item->compressed_size,
+    int rc = DM1_V1_GFX_LzwDecompressPc34Compat(&lzw, comp_buf, item->compressed_size,
                                      out_buf, item->decompressed_size);
     free(comp_buf);
     if (rc <= 0) return -1;
@@ -132,7 +132,7 @@ static int build_synth_atari_dat(const char* path)
     if (!f) return -1;
 
     /* Build an LZW-encoded "ABCABCABC" payload (9 bytes).
-     * We rely on the m11_gfx_lzw_decompress round-trip semantics:
+     * We rely on the DM1_V1_GFX_LzwDecompressPc34Compat round-trip semantics:
      * we encode the bytes ourselves into LZW codes that the
      * decoder can recover. Simplest: encode a single byte stream
      * that the LZW will turn into literal codes 65/66/67/256/...

@@ -82,10 +82,10 @@ CSB_V1_HiddenSkipDecision csb_v1_graphics_hidden_should_skip_item(
 
 /* ── safe-load wrapper ─────────────────────────────────────────── */
 
-int csb_v1_graphics_hidden_item_load_safe(M11_GFX_LoaderState* state,
+int csb_v1_graphics_hidden_item_load_safe(DM1_V1_GFX_LoaderStatePc34* state,
                                            uint16_t             item_index,
                                            CSB_V1_HiddenPlatform platform,
-                                           M11_GFX_Bitmap*      out)
+                                           DM1_V1_GFX_BitmapPc34*      out)
 {
     if (!out) return -1;
 
@@ -110,7 +110,7 @@ int csb_v1_graphics_hidden_item_load_safe(M11_GFX_LoaderState* state,
     if (!state) return 0;  /* failure path: no real loader */
 
     /* Delegate to the real loader. */
-    if (m11_gfx_load_bitmap(state, item_index, out)) {
+    if (DM1_V1_GFX_LoadBitmapPc34Compat(state, item_index, out)) {
         return 1;
     }
     return 0;
@@ -194,7 +194,7 @@ int csb_v1_graphics_hidden_item_skip_self_test(void)
 
     /* 6. Safe-load wrapper with NULL loader + hidden item: skip path. */
     {
-        M11_GFX_Bitmap bmp;
+        DM1_V1_GFX_BitmapPc34 bmp;
         int rc = csb_v1_graphics_hidden_item_load_safe(
             NULL, 21, CSB_V1_HIDDEN_PLATFORM_ATARI_ST, &bmp);
         if (rc != 1) return -1;
@@ -203,7 +203,7 @@ int csb_v1_graphics_hidden_item_skip_self_test(void)
     }
     /* 7. Safe-load wrapper with NULL loader + non-hidden item: failure. */
     {
-        M11_GFX_Bitmap bmp;
+        DM1_V1_GFX_BitmapPc34 bmp;
         int rc = csb_v1_graphics_hidden_item_load_safe(
             NULL, 100, CSB_V1_HIDDEN_PLATFORM_ATARI_ST, &bmp);
         if (rc != 0) return -1;

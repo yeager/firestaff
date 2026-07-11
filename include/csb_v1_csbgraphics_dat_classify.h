@@ -152,7 +152,7 @@ int csb_v1_csbgraphics_dat_entry_span(
 
 /* Decode one CSBgraphics.dat entry into caller-owned memory. The
  * helper first uses csb_v1_csbgraphics_dat_entry_span(), then feeds
- * exactly that compressed byte range to m11_gfx_lzw_decompress().
+ * exactly that compressed byte range to DM1_V1_GFX_LzwDecompressPc34Compat().
  *
  * Returns OK only when the decoded byte count exactly matches the
  * entry's declared decompressed size. Empty entries (compressed=0,

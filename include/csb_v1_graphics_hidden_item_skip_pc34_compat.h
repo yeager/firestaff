@@ -31,14 +31,14 @@
  * INTEGRATION POINTS
  * ------------------
  * Call csb_v1_graphics_hidden_should_skip_item() before each
- * call to m11_gfx_load_bitmap() / fs_gfx_extract_bitmap() /
+ * call to DM1_V1_GFX_LoadBitmapPc34Compat() / fs_gfx_extract_bitmap() /
  * any V22 shape-cache insertion for a CSB item index. When it
  * returns true, treat the item as a successful empty load
  * (width = height = 0, data = NULL) so the calling blit
  * becomes a no-op without special-casing.
  *
  * Call csb_v1_graphics_hidden_item_load_safe() as a drop-in
- * replacement for m11_gfx_load_bitmap() that performs the
+ * replacement for DM1_V1_GFX_LoadBitmapPc34Compat() that performs the
  * skip check internally. When the item is hidden code it
  * returns true with bmp->data == NULL, bmp->width == 0,
  * bmp->height == 0, and the byte region of the framebuffer
@@ -118,9 +118,9 @@ CSB_V1_HiddenSkipDecision csb_v1_graphics_hidden_should_skip_item(
     uint16_t              item_index);
 
 /*
- * Safe-load wrapper around m11_gfx_load_bitmap().
+ * Safe-load wrapper around DM1_V1_GFX_LoadBitmapPc34Compat().
  *
- * On normal items: behaves exactly like m11_gfx_load_bitmap().
+ * On normal items: behaves exactly like DM1_V1_GFX_LoadBitmapPc34Compat().
  *
  * On hidden-code items (CSB Atari ST 21/538/548/558-562 or
  * CSB Amiga 21/676/686/558-562): returns true, sets
@@ -140,10 +140,10 @@ CSB_V1_HiddenSkipDecision csb_v1_graphics_hidden_should_skip_item(
  *      treat as hidden code)
  *  -1  on invalid arguments
  */
-int csb_v1_graphics_hidden_item_load_safe(M11_GFX_LoaderState* state,
+int csb_v1_graphics_hidden_item_load_safe(DM1_V1_GFX_LoaderStatePc34* state,
                                            uint16_t             item_index,
                                            CSB_V1_HiddenPlatform platform,
-                                           M11_GFX_Bitmap*      out);
+                                           DM1_V1_GFX_BitmapPc34*      out);
 
 /*
  * Round-trip self-test. Returns 0 on success, -1 on failure.

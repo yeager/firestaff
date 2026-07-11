@@ -245,7 +245,7 @@ int csb_v1_csbgraphics_dat_decode_entry(
     size_t *out_written)
 {
     CSB_V1_CSBGraphicsEntrySpan span;
-    M11_GFX_LZWState lzw;
+    DM1_V1_GFX_LZWStatePc34 lzw;
     int rc;
 
     if (out_written) {
@@ -279,7 +279,7 @@ int csb_v1_csbgraphics_dat_decode_entry(
     }
 
     memset(&lzw, 0, sizeof(lzw));
-    rc = m11_gfx_lzw_decompress(&lzw,
+    rc = DM1_V1_GFX_LzwDecompressPc34Compat(&lzw,
                                 bytes + (size_t)span.payload_offset,
                                 (size_t)span.compressed_size,
                                 out_bytes,

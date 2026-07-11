@@ -5,7 +5,7 @@
  *
  * Builds a synthetic CSB-style GRAPHICS.DAT file with 700
  * dummy bitmaps, opens it with the existing DM1 V1 graphics
- * loader (m11_gfx_open_dat + m11_gfx_load_bitmap), and
+ * loader (DM1_V1_GFX_OpenDatPc34Compat + DM1_V1_GFX_LoadBitmapPc34Compat), and
  * exercises the safe-load wrapper to confirm:
  *
  *   1. CSB Atari ST hidden-code items 21, 538, 548 are
@@ -149,11 +149,11 @@ static int test_atari_st_hidden_items_skip(void)
         return 0;
     }
 
-    M11_GFX_LoaderState state;
-    m11_gfx_init(&state);
-    ASSERT_TRUE(m11_gfx_open_dat(&state, path));
+    DM1_V1_GFX_LoaderStatePc34 state;
+    DM1_V1_GFX_InitPc34Compat(&state);
+    ASSERT_TRUE(DM1_V1_GFX_OpenDatPc34Compat(&state, path));
 
-    M11_GFX_Bitmap bmp;
+    DM1_V1_GFX_BitmapPc34 bmp;
 
     /* Item 21: hidden code -> skip. */
     int rc = csb_v1_graphics_hidden_item_load_safe(
@@ -182,7 +182,7 @@ static int test_atari_st_hidden_items_skip(void)
     ASSERT_EQ(rc, 1);
     ASSERT_TRUE(bmp.data == NULL);
 
-    m11_gfx_close(&state);
+    DM1_V1_GFX_ClosePc34Compat(&state);
     return 1;
 }
 
@@ -191,11 +191,11 @@ static int test_amiga_hidden_items_skip(void)
     const char* path = "/tmp/test_csb_v1_graphics_hidden_synth.dat";
     if (build_synth_dat(path) != 0) return 0;
 
-    M11_GFX_LoaderState state;
-    m11_gfx_init(&state);
-    ASSERT_TRUE(m11_gfx_open_dat(&state, path));
+    DM1_V1_GFX_LoaderStatePc34 state;
+    DM1_V1_GFX_InitPc34Compat(&state);
+    ASSERT_TRUE(DM1_V1_GFX_OpenDatPc34Compat(&state, path));
 
-    M11_GFX_Bitmap bmp;
+    DM1_V1_GFX_BitmapPc34 bmp;
 
     /* Item 21: hidden code on Amiga too. */
     int rc = csb_v1_graphics_hidden_item_load_safe(
@@ -215,7 +215,7 @@ static int test_amiga_hidden_items_skip(void)
     ASSERT_EQ(rc, 1);
     ASSERT_TRUE(bmp.data == NULL);
 
-    m11_gfx_close(&state);
+    DM1_V1_GFX_ClosePc34Compat(&state);
     return 1;
 }
 
@@ -224,11 +224,11 @@ static int test_pc34_does_not_skip(void)
     const char* path = "/tmp/test_csb_v1_graphics_hidden_synth.dat";
     if (build_synth_dat(path) != 0) return 0;
 
-    M11_GFX_LoaderState state;
-    m11_gfx_init(&state);
-    ASSERT_TRUE(m11_gfx_open_dat(&state, path));
+    DM1_V1_GFX_LoaderStatePc34 state;
+    DM1_V1_GFX_InitPc34Compat(&state);
+    ASSERT_TRUE(DM1_V1_GFX_OpenDatPc34Compat(&state, path));
 
-    M11_GFX_Bitmap bmp;
+    DM1_V1_GFX_BitmapPc34 bmp;
 
     /* The skip decision itself must say false on PC 3.4 for
      * all hidden items (21/538/548/676/686). This is the
@@ -272,7 +272,7 @@ static int test_pc34_does_not_skip(void)
         ASSERT_EQ(bmp.height, 8);
         ASSERT_TRUE(bmp.data != NULL);
         /* Free the decoded bitmap so we don't leak. */
-        m11_gfx_free_bitmap(&bmp);
+        DM1_V1_GFX_FreeBitmapPc34Compat(&bmp);
     }
     /* If rc == 0, the loader rejected the synthetic LZW, which
      * is also acceptable for PC 3.4. The important property is
@@ -281,7 +281,7 @@ static int test_pc34_does_not_skip(void)
     /* Sanity: Atari ST invocation of the same item must skip
      * with empty bitmap -- this proves PC 3.4 differs from
      * Atari ST for the same index. */
-    M11_GFX_Bitmap bmp2;
+    DM1_V1_GFX_BitmapPc34 bmp2;
     rc = csb_v1_graphics_hidden_item_load_safe(
         &state, 21, CSB_V1_HIDDEN_PLATFORM_ATARI_ST, &bmp2);
     ASSERT_EQ(rc, 1);
@@ -289,7 +289,7 @@ static int test_pc34_does_not_skip(void)
     ASSERT_EQ(bmp2.width, 0);
     ASSERT_EQ(bmp2.height, 0);
 
-    m11_gfx_close(&state);
+    DM1_V1_GFX_ClosePc34Compat(&state);
     return 1;
 }
 
@@ -327,9 +327,9 @@ static int test_framebuffer_not_corrupted_by_hidden_items(void)
     const char* path = "/tmp/test_csb_v1_graphics_hidden_synth.dat";
     if (build_synth_dat(path) != 0) return 0;
 
-    M11_GFX_LoaderState state;
-    m11_gfx_init(&state);
-    ASSERT_TRUE(m11_gfx_open_dat(&state, path));
+    DM1_V1_GFX_LoaderStatePc34 state;
+    DM1_V1_GFX_InitPc34Compat(&state);
+    ASSERT_TRUE(DM1_V1_GFX_OpenDatPc34Compat(&state, path));
 
     /* Pretend framebuffer region for the would-be blit. */
     enum { REGION = 256 };
@@ -345,7 +345,7 @@ static int test_framebuffer_not_corrupted_by_hidden_items(void)
      * on Atari ST (Amiga test is in test_amiga_hidden_items_skip). */
     uint16_t atari_hidden[] = { 21, 538, 548 };
     uint16_t amiga_hidden[] = { 676, 686 };
-    M11_GFX_Bitmap bmp;
+    DM1_V1_GFX_BitmapPc34 bmp;
     for (size_t i = 0; i < sizeof(atari_hidden) / sizeof(atari_hidden[0]); ++i) {
         int rc = csb_v1_graphics_hidden_item_load_safe(
             &state, atari_hidden[i], CSB_V1_HIDDEN_PLATFORM_ATARI_ST, &bmp);
@@ -361,7 +361,7 @@ static int test_framebuffer_not_corrupted_by_hidden_items(void)
         ASSERT_EQ(memcmp(framebuffer, snapshot, sizeof(framebuffer)), 0);
     }
 
-    m11_gfx_close(&state);
+    DM1_V1_GFX_ClosePc34Compat(&state);
     return 1;
 }
 

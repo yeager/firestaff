@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1/CSB graphics loader M11 alias cleanup: moved CSB graphics classification, Atari ST graphics loading, hidden-item loading tests, and shared GRAPHICS.DAT decompression callers from `M11_GFX_*`/`m11_gfx_*` aliases to the DM1-owned ReDMCSB graphics loader API, then removed the public aliases from `dm1_v1_graphics_loader_pc34_compat.h`. Verification: `firestaff_m11`, `test_dm1_lzw_round_trip`, `test_csb_v1_csbgraphics_dat_classify`, `test_csb_v1_graphics_hidden_item_skip`, targeted alias `rg`, and `git diff --check` passed.
+
 - ✅ 2026-07-11 DM1 legacy M11 alias cleanup batch 11: removed unused creature-render, spell-render, and teleporter/pit `M11_*`/`m11_*` compatibility aliases; the movement pipeline test now uses DM1-owned ReDMCSB names directly. Verification: `firestaff_m11`, `test_dm1_v1_creature_render_pc34_compat_integration`, `test_dm1_v1_spell_casting_pc34_compat`, `test_dm1_v1_movement_pipeline_pc34_compat`, targeted alias `rg`, and `git diff --check` passed.
 
 - ✅ 2026-07-11 DM1 legacy M11 alias cleanup batch 10: removed unused `M11_CR_*` and `m11_cr_*` aliases from the DM1 creature viewport header; callers use DM1-owned ReDMCSB creature viewport names directly. Verification: `firestaff_m11`, `test_dm1_v1_mummy_viewport_pc34_compat`, targeted alias `rg`, and `git diff --check` passed.

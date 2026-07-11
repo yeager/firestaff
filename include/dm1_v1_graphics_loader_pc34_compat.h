@@ -72,18 +72,6 @@ int  DM1_V1_GFX_LzwDecompressPc34Compat(DM1_V1_GFX_LZWStatePc34* lzw,
                              uint8_t* output, size_t out_size);
 void DM1_V1_GFX_ClosePc34Compat(DM1_V1_GFX_LoaderStatePc34* state);
 
-typedef DM1_V1_GFX_BitmapHeaderPc34 M11_GFX_BitmapHeader;
-typedef DM1_V1_GFX_BitmapPc34 M11_GFX_Bitmap;
-typedef DM1_V1_GFX_LZWStatePc34 M11_GFX_LZWState;
-typedef DM1_V1_GFX_LoaderStatePc34 M11_GFX_LoaderState;
-
-#define m11_gfx_init DM1_V1_GFX_InitPc34Compat
-#define m11_gfx_open_dat DM1_V1_GFX_OpenDatPc34Compat
-#define m11_gfx_load_bitmap DM1_V1_GFX_LoadBitmapPc34Compat
-#define m11_gfx_free_bitmap DM1_V1_GFX_FreeBitmapPc34Compat
-#define m11_gfx_lzw_decompress DM1_V1_GFX_LzwDecompressPc34Compat
-#define m11_gfx_close DM1_V1_GFX_ClosePc34Compat
-
 #ifdef __cplusplus
 }
 #endif

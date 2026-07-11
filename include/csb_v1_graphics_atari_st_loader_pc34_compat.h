@@ -20,7 +20,7 @@
  *
  *   1. Parse the DMCSB1 header (count + comp/decomp pairs)
  *   2. LZW-decompress each item's data via the existing
- *      m11_gfx_lzw_decompress() from the DM1 V1 graphics loader
+ *      DM1_V1_GFX_LzwDecompressPc34Compat() from the DM1 V1 graphics loader
  *   3. Return the decompressed byte buffer for each item
  *
  * The decompressed buffer for items 21/538/548 (Atari ST CSB
