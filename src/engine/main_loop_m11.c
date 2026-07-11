@@ -677,14 +677,6 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
 static int m11_boot_probe_expected_source_kind(const char* gameId,
                                                M11_GameSourceKind* outKind);
 
-int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
-                                                    int framebufferY,
-                                                    unsigned int buttonMask) {
-    return ENTRANCE_Compat_DispatchMouseRouteCommand(framebufferX,
-                                                     framebufferY,
-                                                     buttonMask);
-}
-
 static EntranceCompatKey m11_entrance_compat_key_from_sdl_key(int keyCode) {
     switch (keyCode) {
     case SDLK_RETURN:
@@ -702,34 +694,12 @@ static EntranceCompatKey m11_entrance_compat_key_from_sdl_key(int keyCode) {
     }
 }
 
-int M11_Entrance_DispatchSourceLockedKeyCommand(int keyCode) {
+static int m11_entrance_dispatch_source_locked_key_command(int keyCode) {
     return ENTRANCE_Compat_DispatchKeyCommand(m11_entrance_compat_key_from_sdl_key(keyCode));
-}
-
-int M11_Entrance_ResolveDm1ResumeSavePath(const char* sourceId,
-                                          int quickResumeAvailable,
-                                          const char* quickResumeGameId,
-                                          const char* quickResumeSavePath,
-                                          char* outPath,
-                                          size_t outPathBytes) {
-    return ENTRANCE_Compat_ResolveDm1ResumeSavePath(sourceId,
-                                                    quickResumeAvailable,
-                                                    quickResumeGameId,
-                                                    quickResumeSavePath,
-                                                    outPath,
-                                                    outPathBytes);
 }
 
 static M11_EntranceCommand m11_entrance_command_path_from_source_command(int commandId) {
     return (M11_EntranceCommand)ENTRANCE_Compat_CommandPathFromSourceCommand(commandId);
-}
-
-int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
-                                           int autoEnterAfterMs,
-                                           uint64_t elapsedMs) {
-    return ENTRANCE_Compat_ShouldAutoEnterForTimeout(allowHeadlessTimeout,
-                                                     autoEnterAfterMs,
-                                                     (unsigned long long)elapsedMs);
 }
 
 static int m11_play_redmcsb_entrance_transition(
@@ -969,7 +939,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
             if (ev.type == SDL_EVENT_KEY_DOWN) {
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
-                        M11_Entrance_DispatchSourceLockedKeyCommand((int)ev.key.key));
+                        m11_entrance_dispatch_source_locked_key_command((int)ev.key.key));
                 if (keyCommand != M11_ENTRANCE_COMMAND_NONE) return keyCommand;
             }
             if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
@@ -1000,7 +970,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
             if (ev.type == SDL_KEYDOWN) {
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
-                        M11_Entrance_DispatchSourceLockedKeyCommand((int)ev.key.keysym.sym));
+                        m11_entrance_dispatch_source_locked_key_command((int)ev.key.keysym.sym));
                 if (keyCommand != M11_ENTRANCE_COMMAND_NONE) return keyCommand;
             }
             if (ev.type == SDL_MOUSEBUTTONDOWN) {
@@ -1033,9 +1003,10 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
          * drained above and must not count as that command.  Therefore timeout
          * auto-enter is strictly a dummy-video/autotest escape hatch, never an
          * interactive runtime behavior. */
-        if (M11_Entrance_ShouldAutoEnterForTimeout(allowHeadlessTimeout,
-                                                   autoEnterAfterMs,
-                                                   (uint64_t)(SDL_GetTicks() - started))) {
+        if (ENTRANCE_Compat_ShouldAutoEnterForTimeout(
+                allowHeadlessTimeout,
+                autoEnterAfterMs,
+                (unsigned long long)(SDL_GetTicks() - started))) {
             return M11_ENTRANCE_COMMAND_ENTER;
         }
         SDL_Delay(16);
@@ -1728,7 +1699,7 @@ static int m11_dm1_host_resolve_resume_save_path(void* user,
     if (!ctx || !ctx->menuState) {
         return 0;
     }
-    return M11_Entrance_ResolveDm1ResumeSavePath(
+    return ENTRANCE_Compat_ResolveDm1ResumeSavePath(
         source_id,
         ctx->menuState->quickResumeAvailable,
         ctx->menuState->quickResumeGameId,
