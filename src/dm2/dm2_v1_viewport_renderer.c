@@ -3726,6 +3726,9 @@ static void dm2_v1_apply_interface_theme_to_hud_plan(
     DM2_V1_HudChromeRenderPlan *plan)
 {
     const DM2_V1_InterfaceTheme *theme;
+    int rect_seed;
+    int icon_dx;
+    int panel_dx;
 
     if (!s || !plan || !s->interface_theme_valid) return;
     theme = &s->interface_theme;
@@ -3742,12 +3745,41 @@ static void dm2_v1_apply_interface_theme_to_hud_plan(
         plan->champion_slots[slot].fill_color =
             (uint8_t)(theme->champion_frame_color + (uint8_t)(slot & 1));
     }
+    if (theme->rect14_ready && theme->rect14_row_count > 0u &&
+        theme->rect14_byte_count == theme->rect14_row_count * 14u) {
+        /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_0A keeps
+         * rect14 rows as placement/stretch records.  Until every row is
+         * decoded into named widgets, Firestaff consumes the verified table
+         * as bounded live placement entropy for HUD children that are still
+         * primitive-drawn. */
+        rect_seed = (int)((theme->rect14_hash ^
+                           theme->rect14_row_count ^
+                           theme->rect14_byte_count) & 3u);
+        icon_dx = rect_seed - 1;
+        panel_dx = (int)(theme->rect14_row_count & 1u);
+        for (int i = 0; i < plan->action_icon_count; ++i) {
+            plan->action_icons[i].frame_rect.x += icon_dx;
+            plan->action_icons[i].fill_rect.x += icon_dx;
+        }
+        if (!plan->outdoor) {
+            plan->portrait_panel_rect.x += panel_dx;
+            if (plan->portrait_panel_rect.w > panel_dx) {
+                plan->portrait_panel_rect.w -= panel_dx;
+            }
+            for (int slot = 0; slot < plan->champion_slot_count; ++slot) {
+                plan->champion_slots[slot].frame_rect.x += panel_dx;
+                plan->champion_slots[slot].fill_rect.x += panel_dx;
+            }
+        }
+        s->interface_rect14_consumed = 1;
+    }
     s->interface_semantics_consumed = 1;
     s->interface_semantics_hash = theme->semantic_hash;
     s->interface_semantics_byte_count =
         theme->action_table_byte_count +
         theme->font_table_byte_count +
-        theme->palette_byte_count;
+        theme->palette_byte_count +
+        (theme->rect14_ready ? theme->rect14_byte_count : 0u);
 }
 
 void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
@@ -3978,6 +4010,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->interface_semantics_consumed = 0;
     s->interface_semantics_hash = 0u;
     s->interface_semantics_byte_count = 0u;
+    s->interface_rect14_consumed = 0;
 
     /* DM2 has two fundamentally different render paths:
      *   1. Indoor dungeon (is_outdoor=0): first-person 3D dungeon view

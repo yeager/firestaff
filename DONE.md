@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM2 rect14 live interface placement consumption: runtime HUD themes now carry optional skproject `INTERFACE_GENERAL` `dt07/0x0A` rect14 proof into the viewport renderer, use the verified row/hash/byte counts to adjust live HUD child placement, and expose rect14 consumption through runtime frame ownership when that table is present. Verification: focused DM2 lighting and boot smoke targets passed locally.
+
+- ✅ 2026-07-11 DM1 HoC M12 capture package ownership: M12 now passes data/version, required-asset, and presented-capture host-export facts into `dm1_v1_startup_hoc_m12_capture_fields_from_package_pc34()`, and DM1/ReDMCSB owns the HoC startup capture facts used for real-asset, Mac-window, release-app, host-route, and M12-consumer readiness. Verification: focused DM1/M12 startup targets passed locally.
+
 - ✅ 2026-07-11 CSB host-view loose render-plan facade cleanup: `CSB_V1_BootStartupHostViewReceipt_PC34` no longer exports its own duplicate `render_plan`; title/PRESENTS/CHAOS/STRIKES, utility/closed-door HUD, credits, and door-opening host consumers now inspect the CSB-owned `render_draw.render_plan` receipt path. Verification: `cmake --build build-ninja --target test_csb_v1_boot_runtime_handoff --parallel 4` passed; `./build-ninja/test_csb_v1_boot_runtime_handoff` passed 442/442.
 
 - ✅ 2026-07-11 all-game startup gate after worker integrations: clean Ninja `firestaff` build is green, and the focused startup/boot gates pass for DM1, CSB, DM2, Theron, and Nexus in the main worktree. Verification: `cmake --build build-ninja --target firestaff --parallel 4` passed; `ctest --test-dir build-ninja -R 'dm1_v1_startup_intro_state_machine_gate|csb_v1_boot_runtime_handoff|dm2_v1_boot_profile_smoke|theron_v1_startup_save_resume_pc34|nexus_v1_startup_menu_pc34_compat' --output-on-failure` passed 5/5.
