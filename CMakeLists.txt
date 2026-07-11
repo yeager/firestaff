@@ -10883,16 +10883,16 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_cross_champion_pickup_race_pc34_compat
     )
 
-    add_executable(test_m11_v1_turning_presentation_pc34_compat
-        tests/test_m11_v1_turning_presentation_pc34_compat.c
+    add_executable(test_dm1_v1_turning_presentation_pc34_compat
+        tests/test_dm1_v1_turning_presentation_pc34_compat.c
     )
-    target_link_libraries(test_m11_v1_turning_presentation_pc34_compat PRIVATE firestaff_m10)
+    target_link_libraries(test_dm1_v1_turning_presentation_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
-        target_compile_options(test_m11_v1_turning_presentation_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_turning_presentation_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
-        NAME m11_v1_turning_presentation_pc34_compat
-        COMMAND test_m11_v1_turning_presentation_pc34_compat
+        NAME dm1_v1_turning_presentation_pc34_compat
+        COMMAND test_dm1_v1_turning_presentation_pc34_compat
     )
 
     # v2.8.x: keyboard overlay block contract for the new arrow
