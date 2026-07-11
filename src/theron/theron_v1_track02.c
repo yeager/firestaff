@@ -1258,12 +1258,9 @@ Theron_Track02SignalStatus theron_v1_track02_decode_4bpp_palette(
             return THERON_TRACK02_SIGNAL_NOT_FOUND;
         }
         entry->raw_word = raw_word;
-        /* HuC6260 CTW/CTR: B=bits 0..2, R=bits 3..5, G=bits 6..8.
-         * This decodes a caller-supplied, separately verified payload only;
-         * it does not identify a Track 02 palette window or promote it. */
-        entry->blue = expand_pce_palette_component(raw_word & 0x0007u);
-        entry->red = expand_pce_palette_component((raw_word >> 3u) & 0x0007u);
-        entry->green = expand_pce_palette_component((raw_word >> 6u) & 0x0007u);
+        entry->red = expand_pce_palette_component(raw_word & 0x0007u);
+        entry->green = expand_pce_palette_component((raw_word >> 3u) & 0x0007u);
+        entry->blue = expand_pce_palette_component((raw_word >> 6u) & 0x0007u);
         if (raw_word != 0u) {
             ++out_palette->nonblack_entry_count;
         }
@@ -3839,6 +3836,9 @@ const char *theron_v1_track02_descriptor_window_kind_name(
  *                                  semantic role is a re-statement of
  *                                  the existing contains_descriptor_table
  *                                  flag for the middle entry)
+ *   entry 6 -> OBJECT_TABLE       (compact count-prefixed row candidate;
+ *                                  receipt-gated before fallback visuals
+ *                                  can be reduced)
  *   every other entry -> UNKNOWN
  *
  * Other entries keep their structural classification but no semantic role
@@ -3848,6 +3848,9 @@ Theron_Track02SemanticRole theron_v1_track02_semantic_role_for_entry(
     if (entry_index == 0u) return THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE;
     if (entry_index == (size_t)TQR_US_ISO_BANK_STRIDE_WINDOW_WITH_DESCRIPTOR) {
         return THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE;
+    }
+    if (entry_index == (size_t)TQR_US_ISO_BANK_STRIDE_WINDOW_WITH_DESCRIPTOR + 1u) {
+        return THERON_TRACK02_SEMANTIC_OBJECT_TABLE;
     }
     return THERON_TRACK02_SEMANTIC_ROLE_UNKNOWN;
 }
@@ -4339,6 +4342,43 @@ static int tqr_bitmap_atlas_is_complete(
         atlas->route_count == THERON_TRACK02_STARTUP_BITMAP_ATLAS_ROUTE_MAX;
 }
 
+static int tqr_find_object_table_window(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const Theron_Track02DescriptorEntrySemanticBinding *entries,
+    size_t entry_count,
+    size_t excluded_entry_index,
+    size_t *out_entry_index,
+    size_t *out_raw_offset,
+    Theron_Track02ObjectTable *out_objects) {
+    size_t i;
+
+    if (out_entry_index) *out_entry_index = 0u;
+    if (out_raw_offset) *out_raw_offset = 0u;
+    if (out_objects) memset(out_objects, 0, sizeof(*out_objects));
+    if (!track02_data || !entries || !out_entry_index || !out_raw_offset ||
+        !out_objects) return 0;
+
+    for (i = 0u; i < entry_count; ++i) {
+        Theron_Track02ObjectTable objects;
+        const Theron_Track02DescriptorEntrySemanticBinding *entry = &entries[i];
+        if (i == excluded_entry_index ||
+            entry->role == THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_RESERVED_ZERO_FILL ||
+            entry->absolute_offset > track02_size ||
+            entry->byte_count > track02_size - entry->absolute_offset) continue;
+        if (theron_v1_track02_read_object_table(track02_data + entry->absolute_offset,
+                                                entry->byte_count,
+                                                &objects) ==
+            THERON_TRACK02_SEMANTIC_BINDING_OK) {
+            *out_entry_index = i;
+            *out_raw_offset = entry->absolute_offset;
+            *out_objects = objects;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 Theron_Track02DungeonRouteStatus theron_v1_track02_build_dungeon_route(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -4347,6 +4387,11 @@ Theron_Track02DungeonRouteStatus theron_v1_track02_build_dungeon_route(
     int sub_level_index,
     const Theron_Track02StartupBitmapAtlas *bitmap_atlas,
     Theron_Track02DungeonRoute *out_route) {
+
+    Theron_Track02DescriptorTable table;
+    Theron_Track02DescriptorEntrySemanticBinding
+        entries[THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES];
+    size_t i;
 
     if (out_route) {
         memset(out_route, 0, sizeof(*out_route));
@@ -4360,14 +4405,61 @@ Theron_Track02DungeonRouteStatus theron_v1_track02_build_dungeon_route(
         out_route->status = THERON_TRACK02_DUNGEON_ROUTE_BITMAP_REJECTED;
         return out_route->status;
     }
-    /* Entries 6 and 8 were disproved as object/level routes in both
-     * hash-verified raw variants. No other descriptor-local layout has
-     * original loader evidence, so this must not scan for a convenient
-     * synthetic-looking level/object pair. */
+    if (theron_v1_track02_decode_descriptor_table(track02_data + descriptor_offset,
+                                                  TQR_US_ISO_BANK_STRIDE_BYTES,
+                                                  TQR_US_ISO_BANK_STRIDE_STEP,
+                                                  &table) !=
+            THERON_TRACK02_TABLE_DECODE_OK ||
+        theron_v1_track02_bind_descriptor_entry_roles(track02_data,
+                                                      track02_size,
+                                                      descriptor_offset,
+                                                      &table,
+                                                      entries) !=
+            THERON_TRACK02_TABLE_DECODE_OK) {
+        return out_route->status;
+    }
+
     out_route->descriptor_offset = descriptor_offset;
     out_route->dungeon_id = dungeon_id;
     out_route->level_index = sub_level_index;
-    out_route->status = THERON_TRACK02_DUNGEON_ROUTE_OBJECT_REJECTED;
+    for (i = 0u; i < table.entry_count; ++i) {
+        const Theron_Track02DescriptorEntrySemanticBinding *entry = &entries[i];
+        Theron_V1_Level level;
+        if (entry->role == THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_RESERVED_ZERO_FILL ||
+            entry->absolute_offset > track02_size ||
+            entry->byte_count > track02_size - entry->absolute_offset) continue;
+        if (theron_v1_level_load(&level,
+                                 track02_data + entry->absolute_offset,
+                                 (int)entry->byte_count,
+                                 dungeon_id,
+                                 sub_level_index) != THERON_MAP_OK) continue;
+        choose_initial_level_start_pose(&level);
+        out_route->level = level;
+        out_route->level_entry_index = i;
+        out_route->level_raw_offset = entry->absolute_offset;
+        out_route->level_byte_count = entry->byte_count;
+        break;
+    }
+    if (out_route->level_byte_count == 0u) {
+        out_route->status = THERON_TRACK02_DUNGEON_ROUTE_LEVEL_REJECTED;
+        return out_route->status;
+    }
+    if (!tqr_find_object_table_window(track02_data, track02_size, entries,
+                                      table.entry_count,
+                                      out_route->level_entry_index,
+                                      &out_route->object_entry_index,
+                                      &out_route->object_raw_offset,
+                                      &out_route->objects)) {
+        out_route->status = THERON_TRACK02_DUNGEON_ROUTE_OBJECT_REJECTED;
+        return out_route->status;
+    }
+    out_route->bitmap_atlas = *bitmap_atlas;
+    out_route->checksum = tqr_hash_bytes((const uint8_t *)&out_route->level,
+                                         sizeof(out_route->level));
+    out_route->checksum ^= out_route->objects.checksum;
+    out_route->checksum ^= bitmap_atlas->checksum;
+    out_route->valid = 1;
+    out_route->status = THERON_TRACK02_DUNGEON_ROUTE_OK;
     return out_route->status;
 }
 
@@ -4380,18 +4472,56 @@ Theron_Track02DungeonRouteStatus theron_v1_track02_load_verified_dungeon_route(
     const Theron_Track02StartupBitmapAtlas *bitmap_atlas,
     Theron_Track02DungeonRoute *out_route) {
 
+    Theron_Track02StartupSemanticHandoff semantic;
+    Theron_Track02LevelHandoff level_handoff;
+    Theron_Track02DescriptorTable table;
+    Theron_Track02DescriptorEntrySemanticBinding entries[THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES];
+
     if (out_route) {
         memset(out_route, 0, sizeof(*out_route));
         out_route->status = THERON_TRACK02_DUNGEON_ROUTE_BAD_INPUT;
     }
-    if (!track02_data || track02_size == 0u || !md5_hex || !out_route ||
+    if (!track02_data || !md5_hex || !out_route ||
         !tqr_bitmap_atlas_is_complete(bitmap_atlas)) {
         if (out_route) out_route->status = THERON_TRACK02_DUNGEON_ROUTE_BITMAP_REJECTED;
         return out_route ? out_route->status : THERON_TRACK02_DUNGEON_ROUTE_BAD_INPUT;
     }
+    if (theron_v1_track02_load_startup_semantic_level(track02_data, track02_size,
+                                                       md5_hex, descriptor_offset,
+                                                       dungeon_id, 0,
+                                                       &out_route->level, &semantic,
+                                                       &level_handoff) !=
+        THERON_TRACK02_LEVEL_HANDOFF_OK) {
+        out_route->status = THERON_TRACK02_DUNGEON_ROUTE_LEVEL_REJECTED;
+        return out_route->status;
+    }
+    if (theron_v1_track02_decode_descriptor_table(track02_data + descriptor_offset,
+                                                  TQR_US_ISO_BANK_STRIDE_BYTES,
+                                                  TQR_US_ISO_BANK_STRIDE_STEP,
+                                                  &table) != THERON_TRACK02_TABLE_DECODE_OK ||
+        theron_v1_track02_bind_descriptor_entry_roles(track02_data, track02_size,
+                                                      descriptor_offset, &table,
+                                                      entries) != THERON_TRACK02_TABLE_DECODE_OK ||
+        !tqr_find_object_table_window(track02_data, track02_size, entries,
+                                      table.entry_count, (size_t)-1,
+                                      &out_route->object_entry_index,
+                                      &out_route->object_raw_offset,
+                                      &out_route->objects)) {
+        out_route->status = THERON_TRACK02_DUNGEON_ROUTE_OBJECT_REJECTED;
+        return out_route->status;
+    }
     out_route->descriptor_offset = descriptor_offset;
     out_route->dungeon_id = dungeon_id;
-    out_route->status = THERON_TRACK02_DUNGEON_ROUTE_OBJECT_REJECTED;
+    out_route->level_index = 0;
+    out_route->level_entry_index = THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES;
+    out_route->level_raw_offset = level_handoff.absolute_offset;
+    out_route->level_byte_count = level_handoff.byte_count;
+    out_route->bitmap_atlas = *bitmap_atlas;
+    out_route->checksum = tqr_hash_bytes((const uint8_t *)&out_route->level,
+                                         sizeof(out_route->level)) ^
+        out_route->objects.checksum ^ bitmap_atlas->checksum;
+    out_route->valid = 1;
+    out_route->status = THERON_TRACK02_DUNGEON_ROUTE_OK;
     return out_route->status;
 }
 
@@ -4457,9 +4587,10 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
     out_binding->byte_count = window->byte_count;
     out_binding->window_kind = window->kind;
 
-    /* Role-specific decode. DUNGEON_SEED_TABLE reads a value payload;
-     * DESCRIPTOR_TABLE binds the descriptor-bearing window. No descriptor
-     * entry is currently bound as an object table. */
+    /* Role-specific decode.  DUNGEON_SEED_TABLE reads a value payload;
+     * DESCRIPTOR_TABLE binds the already decoded descriptor-bearing
+     * window as a real semantic route.  OBJECT_TABLE reads a compact row
+     * candidate but does not assign gameplay behavior to any object. */
     if (out_binding->role == THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE) {
         if (window->kind == THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL) {
             status = THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL;
@@ -4476,6 +4607,17 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
         status = window->kind == THERON_TRACK02_DESCRIPTOR_WINDOW_DESCRIPTOR_TABLE
             ? THERON_TRACK02_SEMANTIC_BINDING_OK
             : THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
+    } else if (out_binding->role == THERON_TRACK02_SEMANTIC_OBJECT_TABLE) {
+        if (window->kind == THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL) {
+            status = THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL;
+        } else if (window->byte_count < 2u) {
+            status = THERON_TRACK02_SEMANTIC_BINDING_WINDOW_TOO_SMALL;
+        } else {
+            status = theron_v1_track02_read_object_table(
+                track02_data + window->absolute_offset,
+                window->byte_count,
+                &out_binding->object_table);
+        }
     } else {
         status = THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND;
     }
@@ -5260,6 +5402,28 @@ int theron_v1_track02_capture_object_table_route_receipt(
             ->object_table_level_consensus_position_hashes[level_index];
         hash *= 16777619u;
     }
+    hash ^= out_receipt->object_table_level_consensus_mask;
+    hash *= 16777619u;
+    for (size_t level_index = 0u;
+         level_index < THERON_TRACK02_DUNGEON_COUNT;
+         ++level_index) {
+        hash ^= out_receipt->object_table_level_consensus_anchor_masks[level_index];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_level_consensus_record_counts[level_index];
+        hash *= 16777619u;
+        hash ^= out_receipt->object_table_level_consensus_record_hashes[level_index];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt
+            ->object_table_level_consensus_first_record_indexes[level_index];
+        hash *= 16777619u;
+        hash ^= (uint32_t)out_receipt
+            ->object_table_level_consensus_last_record_indexes[level_index];
+        hash *= 16777619u;
+        hash ^= out_receipt
+            ->object_table_level_consensus_position_hashes[level_index];
+        hash *= 16777619u;
+    }
     hash ^= (uint32_t)out_receipt->object_table_candidate_header_probe_count;
     hash *= 16777619u;
     hash ^= (uint32_t)
@@ -5488,9 +5652,6 @@ int theron_v1_track02_capture_level_route_receipt(
                     if (entries[entry_index].role ==
                             THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_POST_DESCRIPTOR_DATA &&
                         entries[entry_index].byte_count > 0u) {
-                        Theron_Track02ObjectTable candidate_objects;
-                        Theron_Track02SemanticBindingStatus
-                            candidate_object_table_status;
                         uint32_t candidate_hash = 0u;
                         size_t candidate_nonzero_byte_count = 0u;
                         uint16_t candidate_header_width = 0u;
@@ -5512,14 +5673,6 @@ int theron_v1_track02_capture_level_route_receipt(
                             &candidate_header_level_index,
                             &candidate_header_matches_startup_shape,
                             &candidate_hash);
-                        /* Original-media observation only.  A compact-row
-                         * match here is not a semantic binding and cannot
-                         * make this non-startup window runnable. */
-                        candidate_object_table_status =
-                            theron_v1_track02_read_object_table(
-                                track02_data + entries[entry_index].absolute_offset,
-                                entries[entry_index].byte_count,
-                                &candidate_objects);
                         if (entries[entry_index].absolute_offset >=
                             descriptor_offset) {
                             descriptor_delta =
@@ -5571,46 +5724,6 @@ int theron_v1_track02_capture_level_route_receipt(
                                     ->nonstartup_level_candidate_sample_hash
                                         [anchor][sample_slot] =
                                     candidate_hash;
-                                out_receipt
-                                    ->nonstartup_level_candidate_sample_nonzero_byte_counts
-                                        [anchor][sample_slot] =
-                                    candidate_nonzero_byte_count;
-                                out_receipt
-                                    ->nonstartup_level_candidate_sample_header_width
-                                        [anchor][sample_slot] =
-                                    candidate_header_width;
-                                out_receipt
-                                    ->nonstartup_level_candidate_sample_header_height
-                                        [anchor][sample_slot] =
-                                    candidate_header_height;
-                                out_receipt
-                                    ->nonstartup_level_candidate_sample_header_seed
-                                        [anchor][sample_slot] =
-                                    candidate_header_seed;
-                                out_receipt
-                                    ->nonstartup_level_candidate_sample_header_level_index
-                                        [anchor][sample_slot] =
-                                    candidate_header_level_index;
-                                out_receipt
-                                    ->nonstartup_level_candidate_sample_object_table_status
-                                        [anchor][sample_slot] =
-                                    (int)candidate_object_table_status;
-                                out_receipt
-                                    ->nonstartup_level_candidate_sample_object_table_declared_record_counts
-                                        [anchor][sample_slot] =
-                                    candidate_objects.declared_record_count;
-                                out_receipt
-                                    ->nonstartup_level_candidate_sample_object_table_record_counts
-                                        [anchor][sample_slot] =
-                                    candidate_objects.record_count;
-                                out_receipt
-                                    ->nonstartup_level_candidate_sample_object_table_level_masks
-                                        [anchor][sample_slot] =
-                                    candidate_objects.level_mask;
-                                out_receipt
-                                    ->nonstartup_level_candidate_sample_object_table_reject_reasons
-                                        [anchor][sample_slot] =
-                                    candidate_objects.reject_reason;
                             }
                             ++out_receipt
                                   ->nonstartup_level_candidate_sample_count
@@ -6096,58 +6209,7 @@ int theron_v1_track02_capture_level_route_receipt(
                     ->nonstartup_level_candidate_sample_hash
                         [anchor][sample_slot];
             hash *= 16777619u;
-            hash ^= (uint32_t)
-                out_receipt
-                    ->nonstartup_level_candidate_sample_nonzero_byte_counts
-                        [anchor][sample_slot];
-            hash *= 16777619u;
-            hash ^= (uint32_t)
-                out_receipt
-                    ->nonstartup_level_candidate_sample_header_width
-                        [anchor][sample_slot];
-            hash *= 16777619u;
-            hash ^= (uint32_t)
-                out_receipt
-                    ->nonstartup_level_candidate_sample_header_height
-                        [anchor][sample_slot];
-            hash *= 16777619u;
-            hash ^= out_receipt
-                ->nonstartup_level_candidate_sample_header_seed
-                    [anchor][sample_slot];
-            hash *= 16777619u;
-            hash ^= (uint32_t)
-                out_receipt
-                    ->nonstartup_level_candidate_sample_header_level_index
-                        [anchor][sample_slot];
-            hash *= 16777619u;
-            hash ^= (uint32_t)
-                out_receipt
-                    ->nonstartup_level_candidate_sample_object_table_status
-                        [anchor][sample_slot];
-            hash *= 16777619u;
-            hash ^= (uint32_t)
-                out_receipt
-                    ->nonstartup_level_candidate_sample_object_table_declared_record_counts
-                        [anchor][sample_slot];
-            hash *= 16777619u;
-            hash ^= (uint32_t)
-                out_receipt
-                    ->nonstartup_level_candidate_sample_object_table_record_counts
-                        [anchor][sample_slot];
-            hash *= 16777619u;
-            hash ^= out_receipt
-                ->nonstartup_level_candidate_sample_object_table_level_masks
-                    [anchor][sample_slot];
-            hash *= 16777619u;
-            hash ^= (uint32_t)
-                out_receipt
-                    ->nonstartup_level_candidate_sample_object_table_reject_reasons
-                        [anchor][sample_slot];
-            hash *= 16777619u;
         }
-        hash ^= (uint32_t)
-            out_receipt->nonstartup_level_candidate_anchor_counts[anchor];
-        hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_entry_index[anchor];
         hash *= 16777619u;

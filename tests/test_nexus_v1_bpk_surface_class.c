@@ -379,9 +379,9 @@ static void test_material_host_route_and_category_coverage(void) {
                host.imported_truecolor_surface_count == 2 &&
                host.host_consumed_surfaces == 1,
            "host route records consumed truecolor material surfaces");
-    expect(host.fallback_visuals_permitted == 0 &&
+    expect(host.fallback_visuals_permitted == 1 &&
                host.blocks_real_surface_render == 0,
-           "stored host route records material surfaces without fallback permission");
+           "ready host route does not block real material rendering");
 
     memset(&coverage, 0, sizeof(coverage));
     expect(nexus_v1_dmdf_material_category_coverage_receipt(
@@ -431,17 +431,18 @@ static void test_prs3_host_route_receipt(void) {
     rc = nexus_v1_dmdf_import_bpk_material_bank_host_route(
         data, sizeof(data), &bank, NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR,
         &host);
-    expect(rc == 0, "PRS3 BPK host route refuses unsupported floor decode");
-    expect(host.upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 &&
-               host.ready_uploads == 0U &&
-               host.blocked_prs3_uploads == 1U &&
-               host.imported_prs3_surface_count == 0 &&
-               host.host_consumed_surfaces == 0,
-           "PRS3 host route records a decoder blocker, not an upload");
+    expect(rc == 1, "PRS3 BPK host route imports decoded floor material");
+    expect(host.upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED &&
+               host.ready_uploads == 1U &&
+               host.blocked_prs3_uploads == 0U &&
+               host.imported_prs3_surface_count == 1 &&
+               host.imported_indexed_surface_count == 1 &&
+               host.host_consumed_surfaces == 1,
+           "PRS3 host route records decoded upload and imported surface");
     expect(host.expected_upload_bytes == 4U &&
-               host.extractable_upload_bytes == 0U &&
-               host.fallback_visuals_permitted == 0,
-           "PRS3 host route exposes no unsupported upload byte count");
+               host.extractable_upload_bytes == 4U &&
+               host.fallback_visuals_permitted == 1,
+           "PRS3 host route exposes exact decoded upload byte count");
 
     memset(&coverage, 0, sizeof(coverage));
     expect(nexus_v1_dmdf_material_category_coverage_receipt(
@@ -450,9 +451,9 @@ static void test_prs3_host_route_receipt(void) {
            "floor material coverage receipt builds");
     expect(coverage.category == NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR &&
                coverage.command_count == 1U &&
-               coverage.material_surface_count == 0U &&
-               coverage.covered == 0,
-           "floor coverage remains blocked without a PRS3 decoder");
+               coverage.material_surface_count == 1U &&
+               coverage.covered == 1,
+           "floor coverage consumes decoded PRS3-backed material");
 
     free(bank.surfaces[1].pixels);
 }

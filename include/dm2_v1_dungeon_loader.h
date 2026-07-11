@@ -157,17 +157,10 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
     int *out_size);
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level);
 /* Validate the source-shaped map -> ground-stack -> DB-record graph.
- * Returns 1 only when every declared direct c_record link and every
- * thing-bearing square resolve to bounded, terminating ObjectID chains.
- * PC G1 files whose direct graph is incomplete return 0 instead of being
- * promoted as a partial world. */
+ * Returns 1 only when every thing-bearing square resolves to a bounded,
+ * terminating chain.  PC G1 files whose pre-map ownership block is not yet
+ * decoded return 0 instead of being promoted as a partial world. */
 int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d);
-/* Collect non-mutating PC G1 c_record provenance for the source-ordered pool
- * span. Record lookup/traversal is available only when record_graph_complete
- * is set by the independent bounded graph validator. */
-int dm2_v1_dungeon_collect_g1_record_pool_evidence(
-    const DM2_V1_DungeonData *d,
-    DM2_V1_G1RecordPoolEvidence *out);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
 #endif

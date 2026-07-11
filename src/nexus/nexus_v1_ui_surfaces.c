@@ -26,17 +26,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static uint16_t nexus_ui_read_be16(const uint8_t *data)
-{
-    return (uint16_t)(((uint16_t)data[0] << 8) | data[1]);
-}
-
-static uint32_t nexus_ui_read_be32_u(const uint8_t *data)
-{
-    return ((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16) |
-           ((uint32_t)data[2] << 8) | data[3];
-}
-
 static void surface_clear_gray(Nexus_UI_Surface *surf)
 {
     int i;
@@ -304,45 +293,25 @@ int nexus_ui_res_dgt2_pp_view(const uint8_t *data,
 
 /* ── Surface-specific loaders ──────────────────────────────────── */
 
+/* TITLE.CG is not an indexed 320x200 raster on the verified Saturn disc.
+ * This helper accepts only a plane decoded by a format-aware caller. Treating
+ * the packed file prefix as pixels fabricated plausible title art. */
 int nexus_ui_load_title(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette)
 {
-    uint8_t *pixels;
-    size_t i;
     (void)palette;
-    if (!mgr || !data || data_size != (int)NEXUS_UI_TITLE_CG_BYTES) {
-        printf("Nexus UI: TITLE.CG requires the verified 328x1024 4bpp layout\n");
+    if (!mgr) return -1;
+    if (!data || data_size != 320 * 200) {
+        printf("Nexus UI: TITLE.CG requires a verified decoder; raw prefix rejected\n");
         return -1;
     }
-    for (i = 0U; i < NEXUS_UI_TITLE_CG_HEADER_BYTES; ++i) {
-        if (data[i] != 0U) {
-            printf("Nexus UI: TITLE.CG requires the verified 328x1024 4bpp layout\n");
-            return -1;
-        }
-    }
-    pixels = (uint8_t *)malloc((size_t)NEXUS_UI_TITLE_CG_WIDTH *
-                               (size_t)NEXUS_UI_TITLE_CG_HEIGHT);
-    if (!pixels) return -1;
-    for (i = 0U; i < NEXUS_UI_TITLE_CG_PACKED_BYTES; ++i) {
-        uint8_t packed = data[NEXUS_UI_TITLE_CG_HEADER_BYTES + i];
-        pixels[i * 2U] = (uint8_t)(packed >> 4);
-        pixels[i * 2U + 1U] = (uint8_t)(packed & 0x0fU);
-    }
-    i = (size_t)nexus_ui_surface_load(mgr, NEXUS_SURFACE_TITLE,
-                                      pixels,
-                                      NEXUS_UI_TITLE_CG_WIDTH *
-                                          NEXUS_UI_TITLE_CG_HEIGHT,
-                                      NEXUS_UI_TITLE_CG_WIDTH,
-                                      NEXUS_UI_TITLE_CG_HEIGHT,
-                                      0, 16, "TITLE.CG/4bpp-atlas");
-    free(pixels);
-    return (int)i;
+    return nexus_ui_surface_load(mgr, NEXUS_SURFACE_TITLE,
+        data, data_size,
+        320, 200, 64, 64, "TITLE.CG");
 }
 
-/* WARNING.BIN is a RES* directory of DGT2 PP images. Sega's Saturn/32X
- * Graphic References, section 6, defines PP as a 256-entry BGR555 CLUT
- * followed by one byte per pixel. Resource 0 is the initial warning plane. */
+/* WARNING.BIN on the verified disc is a RES* container, not a raw raster. */
 int nexus_ui_load_warning(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette)
@@ -350,9 +319,8 @@ int nexus_ui_load_warning(Nexus_UI_Manager *mgr,
     Nexus_UI_Dgt2PpView view;
     (void)palette;
     if (!mgr) return -1;
-    if (!data || data_size <= 0 ||
-        nexus_ui_res_dgt2_pp_view(data, (size_t)data_size, 0U, &view) != 0) {
-        printf("Nexus UI: WARNING.BIN requires a valid RES* container DGT2 PP image\n");
+    if (!data || data_size != 320 * 200) {
+        printf("Nexus UI: WARNING.BIN requires a verified decoder; raw prefix rejected\n");
         return -1;
     }
     return nexus_ui_surface_load(mgr, NEXUS_SURFACE_WARNING,
