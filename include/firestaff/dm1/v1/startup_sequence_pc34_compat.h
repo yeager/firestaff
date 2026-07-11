@@ -466,6 +466,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
+    int release_app_identity_ready;
+    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int hoc_asset_capture;
     int required_asset_capture;
@@ -502,6 +504,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
+    int release_app_identity_ready;
+    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int hoc_asset_capture;
     int host_window_capture;
@@ -571,6 +575,8 @@ typedef struct DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
+    int release_app_identity_ready;
+    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int hoc_asset_capture;
     int host_window_capture;
@@ -663,6 +669,8 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
+    int release_app_identity_ready;
+    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int hoc_asset_capture;
     int required_asset_capture;
@@ -798,6 +806,8 @@ typedef struct DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
+    int release_app_identity_ready;
+    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int hoc_asset_capture;
     int host_window_capture;
@@ -893,6 +903,8 @@ typedef struct DM1_V1_StartupHoCBootProbeSummary_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
+    int release_app_identity_ready;
+    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int release_capture_ownership_ready;
     int host_render_consumer_ready;
@@ -981,6 +993,8 @@ typedef struct DM1_V1_StartupHoCBootProbeHostFields_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
+    int release_app_identity_ready;
+    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int release_capture_ownership_ready;
     int host_render_consumer_ready;
@@ -1044,6 +1058,8 @@ typedef struct DM1_V1_StartupHoCM12CaptureFields_PC34 {
     int real_asset_capture_ready;
     int mac_window_capture_ready;
     int release_app_capture_ready;
+    int release_app_identity_ready;
+    unsigned int release_app_identity_hash;
     int host_capture_route_ready;
     int release_capture_ownership_ready;
     int host_render_consumer_ready;

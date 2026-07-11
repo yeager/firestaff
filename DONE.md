@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 HoC release-app identity proof: HoC full-graphics capture, runtime apply, production consumer, release ownership, save-capture readiness, boot summary, host fields, and M12 capture fields now carry a deterministic release-app identity hash. Complete HoC readiness requires that identity proof in addition to real asset, Mac window, presented capture, and host route proof. Verification: focused DM1 startup/original-save CTest set passed 2/2.
+
 - ✅ 2026-07-11 Theron Track02 inner non-startup level diagnostics: level-route capture now scans bounded inner offsets inside post-descriptor data windows, records loadable inner dungeon-record candidates with raw/user offsets and header fields, and keeps fallback blocked until broader real-media evidence is complete. Verification: focused Theron Track02 CTest set passed 3/3.
 
 - ✅ 2026-07-11 DM2 viewport-owned scene-consumption receipt: GRAPHICSSET scene/light/floor/weather consumption is now exposed by the viewport renderer as a structured receipt carrying source values, consumed mask, and consumption hash; runtime frame ownership consumes that receipt instead of duplicating hash logic locally. Verification: `test_dm2_v1_lighting_falloff_boundary` passed 149/149; focused DM2 boot/runtime/light CTest passed 3/3; `firestaff` Ninja target built; `git diff --check` passed.

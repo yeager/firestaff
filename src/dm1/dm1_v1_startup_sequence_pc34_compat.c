@@ -41,6 +41,27 @@ static unsigned int dm1_v1_startup_hoc_host_capture_route_hash_pc34(
     return hash ? hash : 1u;
 }
 
+static unsigned int dm1_v1_startup_hoc_release_app_identity_hash_pc34(
+    const char* source_id,
+    unsigned int consumer_hash,
+    unsigned int route_hash,
+    unsigned int presented_chain_hash) {
+    unsigned int hash = 2166136261u;
+    const unsigned char* p = (const unsigned char*)source_id;
+    while (p && *p) {
+        hash ^= (unsigned int)*p++;
+        hash *= 16777619u;
+    }
+    hash ^= consumer_hash;
+    hash *= 16777619u;
+    hash ^= route_hash;
+    hash *= 16777619u;
+    hash ^= presented_chain_hash;
+    hash *= 16777619u;
+    hash ^= 0xA9C0DEu;
+    return hash ? hash : 1u;
+}
+
 static int dm1_v1_startup_resume_root_from_path_pc34(
     const char *resume_path,
     char out_root[DM1_ORIGINAL_SAVE_PATH_MAX]) {
@@ -2044,6 +2065,25 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
                 facts->presented_capture_byte_count,
                 facts->presented_capture_hash,
                 facts->presented_capture_consumer_mask);
+    receipt.release_app_identity_ready =
+        receipt.release_app_capture &&
+        receipt.mac_window_capture &&
+        receipt.host_window_capture &&
+        receipt.real_asset_capture &&
+        receipt.required_asset_capture &&
+        receipt.presented_capture_chain_ready;
+    receipt.release_app_identity_hash =
+        receipt.release_app_identity_ready
+            ? dm1_v1_startup_hoc_release_app_identity_hash_pc34(
+                  "dm1",
+                  dm1_v1_startup_hoc_capture_consumer_hash_pc34(
+                      facts->presented_capture_consumer_mask),
+                  dm1_v1_startup_hoc_host_capture_route_hash_pc34(
+                      facts->presented_capture_consumer_mask,
+                      receipt.presented_capture_chain_hash,
+                      receipt.presented_capture_hash),
+                  receipt.presented_capture_chain_hash)
+            : 0u;
     receipt.capture_phase = artifact->capture_phase;
     receipt.source_evidence =
         "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
@@ -2079,6 +2119,7 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         receipt.presented_capture_geometry_matches &&
         receipt.presented_capture_pixels_present &&
         receipt.presented_capture_chain_ready &&
+        receipt.release_app_identity_ready &&
         receipt.release_app_capture;
     receipt.stale_title_absent =
         artifact->title_surface_forbidden && !facts->saw_title_surface;
@@ -2111,6 +2152,8 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         receipt.presented_capture_pixels_present &&
         receipt.presented_capture_chain_ready &&
         receipt.release_app_capture &&
+        receipt.release_app_identity_ready &&
+        receipt.release_app_identity_hash != 0u &&
         receipt.stale_title_absent &&
         receipt.stale_door_absent &&
         receipt.host_fallback_absent &&
@@ -2142,6 +2185,8 @@ int dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
     receipt.real_asset_capture = proof->real_asset_capture;
     receipt.mac_window_capture = proof->mac_window_capture;
     receipt.release_app_capture = proof->release_app_capture;
+    receipt.release_app_identity_ready = proof->release_app_identity_ready;
+    receipt.release_app_identity_hash = proof->release_app_identity_hash;
     receipt.host_capture_route_matches = proof->host_capture_route_matches;
     receipt.hoc_asset_capture = proof->hoc_asset_capture;
     receipt.host_window_capture = proof->host_window_capture;
@@ -2294,6 +2339,8 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     receipt.real_asset_capture = apply->real_asset_capture;
     receipt.mac_window_capture = apply->mac_window_capture;
     receipt.release_app_capture = apply->release_app_capture;
+    receipt.release_app_identity_ready = apply->release_app_identity_ready;
+    receipt.release_app_identity_hash = apply->release_app_identity_hash;
     receipt.host_capture_route_matches = apply->host_capture_route_matches;
     receipt.hoc_asset_capture = apply->hoc_asset_capture;
     receipt.host_window_capture = apply->host_window_capture;
@@ -2326,6 +2373,8 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     receipt.real_asset_capture = apply->real_asset_capture;
     receipt.mac_window_capture = apply->mac_window_capture;
     receipt.release_app_capture = apply->release_app_capture;
+    receipt.release_app_identity_ready = apply->release_app_identity_ready;
+    receipt.release_app_identity_hash = apply->release_app_identity_hash;
     receipt.host_capture_route_matches = apply->host_capture_route_matches;
     receipt.hoc_asset_capture = apply->hoc_asset_capture;
     receipt.host_window_capture = apply->host_window_capture;
@@ -2667,6 +2716,28 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
     receipt.presented_capture_route_packaged =
         receipt.presented_capture_chain_ready &&
         receipt.host_capture_route_hash != 0u;
+    receipt.release_app_identity_ready =
+        dm1_v1_startup_source_visible_handoff_required_pc34(
+            facts->source_id) &&
+        receipt.consumed_launch_path_receipt &&
+        receipt.launch_path_started_from_launcher &&
+        receipt.launch_path_intro_not_bypassed &&
+        receipt.consumed_all_named_host_consumers &&
+        receipt.release_app_capture &&
+        consumer.release_app_identity_ready &&
+        receipt.mac_window_capture &&
+        receipt.host_window_capture &&
+        receipt.real_asset_capture &&
+        receipt.required_asset_capture &&
+        receipt.presented_capture_route_packaged;
+    receipt.release_app_identity_hash =
+        receipt.release_app_identity_ready
+            ? dm1_v1_startup_hoc_release_app_identity_hash_pc34(
+                  facts->source_id,
+                  receipt.named_consumer_hash,
+                  receipt.host_capture_route_hash,
+                  receipt.presented_capture_chain_hash)
+            : 0u;
     receipt.draw_opened_entrance_frame = consumer.draw_opened_entrance_frame;
     receipt.render_hall_mirror_overlay = consumer.render_hall_mirror_overlay;
     receipt.suppress_host_fallback_visuals =
@@ -2713,6 +2784,8 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         receipt.real_asset_capture &&
         receipt.mac_window_capture &&
         receipt.release_app_capture &&
+        receipt.release_app_identity_ready &&
+        receipt.release_app_identity_hash != 0u &&
         receipt.host_capture_route_matches &&
         receipt.presented_capture &&
         receipt.presented_capture_geometry_matches &&
@@ -3024,6 +3097,10 @@ int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
     receipt.real_asset_capture = ownership->real_asset_capture;
     receipt.mac_window_capture = ownership->mac_window_capture;
     receipt.release_app_capture = ownership->release_app_capture;
+    receipt.release_app_identity_ready =
+        ownership->release_app_identity_ready;
+    receipt.release_app_identity_hash =
+        ownership->release_app_identity_hash;
     receipt.host_capture_route_matches =
         ownership->host_capture_route_matches;
     receipt.hoc_asset_capture = ownership->hoc_asset_capture;
@@ -3064,6 +3141,8 @@ int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
         receipt.real_asset_capture &&
         receipt.mac_window_capture &&
         receipt.release_app_capture &&
+        receipt.release_app_identity_ready &&
+        receipt.release_app_identity_hash != 0u &&
         receipt.host_capture_route_matches &&
         receipt.hoc_asset_capture &&
         receipt.host_window_capture &&
@@ -3522,6 +3601,10 @@ int dm1_v1_startup_hoc_boot_probe_summary_pc34(
     summary.mac_window_capture = receipt->production_consumer.mac_window_capture;
     summary.release_app_capture =
         receipt->production_consumer.release_app_capture;
+    summary.release_app_identity_ready =
+        receipt->ownership.release_app_identity_ready;
+    summary.release_app_identity_hash =
+        receipt->ownership.release_app_identity_hash;
     summary.host_capture_route_matches =
         receipt->production_consumer.host_capture_route_matches;
     summary.release_capture_ownership_ready = receipt->ownership.ready;
@@ -3653,6 +3736,8 @@ int dm1_v1_startup_hoc_boot_probe_release_app_capture_ready_pc34(
            summary->complete_host_app_capture_route &&
            summary->mac_window_capture &&
            summary->release_app_capture &&
+           summary->release_app_identity_ready &&
+           summary->release_app_identity_hash != 0u &&
            summary->host_window_capture &&
            summary->presented_capture &&
            summary->presented_capture_geometry &&
@@ -3889,6 +3974,8 @@ int dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
     fields.real_asset_capture = summary->real_asset_capture;
     fields.mac_window_capture = summary->mac_window_capture;
     fields.release_app_capture = summary->release_app_capture;
+    fields.release_app_identity_ready = summary->release_app_identity_ready;
+    fields.release_app_identity_hash = summary->release_app_identity_hash;
     fields.host_capture_route_matches = summary->host_capture_route_matches;
     fields.release_capture_ownership_ready =
         summary->release_capture_ownership_ready;
@@ -3982,6 +4069,10 @@ int dm1_v1_startup_hoc_m12_capture_fields_pc34(
     fields.real_asset_capture_ready = ownership.real_asset_capture;
     fields.mac_window_capture_ready = ownership.mac_window_capture;
     fields.release_app_capture_ready = ownership.release_app_capture;
+    fields.release_app_identity_ready =
+        ownership.release_app_identity_ready;
+    fields.release_app_identity_hash =
+        ownership.release_app_identity_hash;
     fields.host_capture_route_ready = ownership.host_capture_route_matches;
     fields.release_capture_ownership_ready = ownership.ready;
     fields.host_render_consumer_ready =
@@ -4054,6 +4145,8 @@ int dm1_v1_startup_hoc_m12_capture_fields_pc34(
         fields.real_asset_capture_ready &&
         fields.mac_window_capture_ready &&
         fields.release_app_capture_ready &&
+        fields.release_app_identity_ready &&
+        fields.release_app_identity_hash != 0u &&
         fields.host_capture_route_ready &&
         fields.hoc_asset_capture_ready &&
         fields.host_window_capture_ready &&
