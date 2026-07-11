@@ -278,6 +278,23 @@ typedef struct {
 } DM2_V1_HudIconRender;
 
 typedef struct {
+    int valid;
+    uint32_t semantic_hash;
+    uint32_t action_table_byte_count;
+    uint32_t font_table_byte_count;
+    uint32_t palette_byte_count;
+    uint8_t chrome_divider_color;
+    uint8_t gold_coin_color;
+    uint8_t gold_label_color;
+    uint8_t champion_frame_color;
+    uint8_t champion_name_color;
+    uint8_t action_icon_base_color;
+    uint8_t hp_fill_color;
+    uint8_t stamina_fill_color;
+    uint8_t mana_fill_color;
+} DM2_V1_InterfaceTheme;
+
+typedef struct {
     DM2_V1_ViewportRect frame_rect;
     DM2_V1_ViewportRect fill_rect;
     uint8_t fill_color;
@@ -739,6 +756,11 @@ typedef struct {
     uint32_t last_hud_core_pixel_count;
     int asset_hud_portrait_drawn_count;
     int fallback_hud_portrait_drawn_count;
+    DM2_V1_InterfaceTheme interface_theme;
+    int interface_theme_valid;
+    int interface_semantics_consumed;
+    uint32_t interface_semantics_hash;
+    uint32_t interface_semantics_byte_count;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */
@@ -753,6 +775,9 @@ void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
 void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
                                         DM2_V1_ViewportAssetFetch fetch,
                                         void *user);
+void dm2_v1_viewport_set_interface_theme(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_InterfaceTheme *theme);
 int dm2_v1_viewport_build_wall_panel_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_WallPanelRenderPlan *out_plan);

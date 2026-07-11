@@ -529,13 +529,16 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               frame_ownership.valid == 1 &&
               frame_ownership.full_gdat_frame_valid == 1 &&
               frame_ownership.real_gdat_evidence_valid == 1 &&
+              frame_ownership.interface_semantics_consumed == 1 &&
+              frame_ownership.interface_semantics_hash != 0u &&
+              frame_ownership.interface_semantics_byte_count > 0u &&
               frame_ownership.viewport_raw_gdat_asset_count >= 5 &&
               frame_ownership.viewport_decoded_gdat_asset_count >= 5 &&
               frame_ownership.viewport_raw_gdat_hash != 0u &&
               frame_ownership.viewport_decoded_gdat_hash != 0u &&
               frame_ownership.viewport_raw_gdat_byte_count > 0u &&
               frame_ownership.viewport_decoded_gdat_pixel_count > 0u,
-          "runtime frame ownership carries raw/decoded GDAT evidence for HUD, dungeon, and overlay assets");
+          "runtime frame ownership carries raw/decoded GDAT evidence plus live interface semantics");
     memset(&hud_capture, 0, sizeof(hud_capture));
     CHECK(dm2_v1_boot_runtime_hud_capture_receipt(
               launch.profile,

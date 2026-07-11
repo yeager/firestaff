@@ -714,6 +714,21 @@ void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_interface_theme(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_InterfaceTheme *theme)
+{
+    if (!s) return;
+    memset(&s->interface_theme, 0, sizeof(s->interface_theme));
+    s->interface_theme_valid = 0;
+    if (!theme || !theme->valid || theme->semantic_hash == 0u) {
+        return;
+    }
+    s->interface_theme = *theme;
+    s->interface_theme_valid = 1;
+    s->dirty = 1;
+}
+
 /* ── Wall frame lookup ────────────────────────────────────────────── */
 
 const DM2_WallFrame *dm2_v1_get_wall_frame(int view_square)
@@ -3706,6 +3721,35 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
     return 1;
 }
 
+static void dm2_v1_apply_interface_theme_to_hud_plan(
+    DM2_V1_ViewportState *s,
+    DM2_V1_HudChromeRenderPlan *plan)
+{
+    const DM2_V1_InterfaceTheme *theme;
+
+    if (!s || !plan || !s->interface_theme_valid) return;
+    theme = &s->interface_theme;
+    if (!theme->valid || theme->semantic_hash == 0u) return;
+
+    /* skproject/SKWIN loads interface action, font and palette records before
+     * the HUD pass. Firestaff consumes the already verified GDAT semantics
+     * here for live HUD colors and records that this frame used them. */
+    for (int i = 0; i < plan->action_icon_count; ++i) {
+        plan->action_icons[i].fill_color =
+            (uint8_t)(theme->action_icon_base_color + (uint8_t)(i & 3));
+    }
+    for (int slot = 0; slot < plan->champion_slot_count; ++slot) {
+        plan->champion_slots[slot].fill_color =
+            (uint8_t)(theme->champion_frame_color + (uint8_t)(slot & 1));
+    }
+    s->interface_semantics_consumed = 1;
+    s->interface_semantics_hash = theme->semantic_hash;
+    s->interface_semantics_byte_count =
+        theme->action_table_byte_count +
+        theme->font_table_byte_count +
+        theme->palette_byte_count;
+}
+
 void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
 {
     DM2_V1_HudChromeRenderPlan plan;
@@ -3730,6 +3774,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
             &plan)) {
         return;
     }
+    dm2_v1_apply_interface_theme_to_hud_plan(s, &plan);
 
     if (!dm2_v1_render_hud_core_asset(s,
                                       &plan.top_bar_rect,
@@ -3737,22 +3782,33 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         dm2_v1_fill_rect(vp, stride, &plan.top_bar_rect, DM2_COL_DKGRAY);
         ++s->fallback_hud_core_drawn_count;
     }
-    dm2_v1_fill_rect(vp, stride, &plan.top_divider_rect, DM2_COL_MIDGRAY);
+    dm2_v1_fill_rect(
+        vp, stride, &plan.top_divider_rect,
+        s->interface_theme_valid ? s->interface_theme.chrome_divider_color
+                                 : DM2_COL_MIDGRAY);
     if (!dm2_v1_render_hud_core_asset(s,
                                       &plan.action_strip_rect,
                                       plan.action_strip_gdat_index)) {
         dm2_v1_fill_rect(vp, stride, &plan.action_strip_rect, DM2_COL_DKGRAY);
         ++s->fallback_hud_core_drawn_count;
     }
-    dm2_v1_fill_rect(vp, stride, &plan.action_divider_rect, DM2_COL_MIDGRAY);
+    dm2_v1_fill_rect(
+        vp, stride, &plan.action_divider_rect,
+        s->interface_theme_valid ? s->interface_theme.chrome_divider_color
+                                 : DM2_COL_MIDGRAY);
     if (!dm2_v1_render_hud_core_asset(s,
                                       &plan.gold_box_rect,
                                       plan.gold_box_gdat_index)) {
         dm2_v1_fill_rect(vp, stride, &plan.gold_box_rect, DM2_COL_GROUND);
         ++s->fallback_hud_core_drawn_count;
     }
-    dm2_v1_fill_coin_disc(vp, stride, &plan.gold_coin_rect, 11);
-    dm2_v1_fill_rect(vp, stride, &plan.gold_label_rect, DM2_COL_LTGRAY);
+    dm2_v1_fill_coin_disc(
+        vp, stride, &plan.gold_coin_rect,
+        s->interface_theme_valid ? s->interface_theme.gold_coin_color : 11);
+    dm2_v1_fill_rect(
+        vp, stride, &plan.gold_label_rect,
+        s->interface_theme_valid ? s->interface_theme.gold_label_color
+                                 : DM2_COL_LTGRAY);
     for (int i = 0; i < plan.action_icon_count; ++i) {
         dm2_v1_stroke_rect(vp, stride, &plan.action_icons[i].frame_rect,
                            DM2_COL_MIDGRAY);
@@ -3766,8 +3822,10 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
     }
 
     if (!plan.outdoor) {
-        dm2_v1_fill_rect(vp, stride, &plan.portrait_separator_dark_rect,
-                         DM2_COL_MIDGRAY);
+        dm2_v1_fill_rect(
+            vp, stride, &plan.portrait_separator_dark_rect,
+            s->interface_theme_valid ? s->interface_theme.chrome_divider_color
+                                     : DM2_COL_MIDGRAY);
         dm2_v1_fill_rect(vp, stride, &plan.portrait_separator_light_rect,
                          DM2_COL_LTGRAY);
         if (!dm2_v1_render_hud_core_asset(s,
@@ -3778,9 +3836,12 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
             ++s->fallback_hud_core_drawn_count;
         }
         for (int slot = 0; slot < plan.champion_slot_count; ++slot) {
-            dm2_v1_fill_rect(vp, stride,
-                             &plan.champion_slots[slot].frame_rect,
-                             DM2_COL_MIDGRAY);
+            dm2_v1_fill_rect(
+                vp, stride,
+                &plan.champion_slots[slot].frame_rect,
+                s->interface_theme_valid
+                    ? s->interface_theme.champion_frame_color
+                    : DM2_COL_MIDGRAY);
             dm2_v1_fill_rect(vp, stride,
                              &plan.champion_slots[slot].fill_rect,
                              plan.champion_slots[slot].fill_color);
@@ -3819,27 +3880,36 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                                      plan.champion_slots[slot].portrait_fill_color);
                     ++s->fallback_hud_portrait_drawn_count;
                 }
-                dm2_v1_fill_rect(vp, stride,
-                                 &plan.champion_slots[slot].name_marker_rect,
-                                 DM2_COL_WHITE);
+                dm2_v1_fill_rect(
+                    vp, stride,
+                    &plan.champion_slots[slot].name_marker_rect,
+                    s->interface_theme_valid
+                        ? s->interface_theme.champion_name_color
+                        : DM2_COL_WHITE);
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].hp_bar_rect,
                                  DM2_COL_BLACK);
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].hp_fill_rect,
-                                 2);
+                                 s->interface_theme_valid
+                                     ? s->interface_theme.hp_fill_color
+                                     : 2);
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].stamina_bar_rect,
                                  DM2_COL_BLACK);
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].stamina_fill_rect,
-                                 11);
+                                 s->interface_theme_valid
+                                     ? s->interface_theme.stamina_fill_color
+                                     : 11);
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].mana_bar_rect,
                                  DM2_COL_BLACK);
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].mana_fill_rect,
-                                 12);
+                                 s->interface_theme_valid
+                                     ? s->interface_theme.mana_fill_color
+                                     : 12);
                 if (plan.champion_slots[slot].leader) {
                     dm2_v1_fill_rect(
                         vp, stride,
@@ -3905,6 +3975,9 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->last_hud_core_pixel_count = 0u;
     s->asset_hud_portrait_drawn_count = 0;
     s->fallback_hud_portrait_drawn_count = 0;
+    s->interface_semantics_consumed = 0;
+    s->interface_semantics_hash = 0u;
+    s->interface_semantics_byte_count = 0u;
 
     /* DM2 has two fundamentally different render paths:
      *   1. Indoor dungeon (is_outdoor=0): first-person 3D dungeon view
