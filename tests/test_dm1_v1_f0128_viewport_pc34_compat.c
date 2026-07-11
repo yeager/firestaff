@@ -12,7 +12,7 @@
  * readiness flag that the DM1 caller drives after every
  * party-tuple change.
  */
-#include "m11_dm1_v1_f0128_viewport_pc34_compat.h"
+#include "dm1_v1_f0128_viewport_pc34_compat.h"
 
 #include <stdio.h>
 

@@ -24,8 +24,8 @@
  * alternation is delegated to the existing DM1 wall
  * path (no need to re-implement the alternation here).
  */
-#ifndef REDMCSB_M11_DM1_V1_F0128_VIEWPORT_PC34_COMPAT_H
-#define REDMCSB_M11_DM1_V1_F0128_VIEWPORT_PC34_COMPAT_H
+#ifndef FIRESTAFF_DM1_V1_F0128_VIEWPORT_PC34_COMPAT_H
+#define FIRESTAFF_DM1_V1_F0128_VIEWPORT_PC34_COMPAT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,17 +63,8 @@ void DM1_V1_F0128_ComposeViewportForTuplePc34Compat(
 int  DM1_V1_F0128_G0076GetPc34Compat(void);
 void DM1_V1_F0128_G0076SetPc34Compat(int enabled);
 
-#define m11_dm1_v1_f0128_viewport_crop_ready \
-    DM1_V1_F0128_ViewportCropReadyPc34Compat
-#define m11_dm1_v1_f0128_compose_viewport_for_tuple \
-    DM1_V1_F0128_ComposeViewportForTuplePc34Compat
-#define m11_dm1_v1_f0128_g0076_get \
-    DM1_V1_F0128_G0076GetPc34Compat
-#define m11_dm1_v1_f0128_g0076_set \
-    DM1_V1_F0128_G0076SetPc34Compat
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* REDMCSB_M11_DM1_V1_F0128_VIEWPORT_PC34_COMPAT_H */
+#endif /* FIRESTAFF_DM1_V1_F0128_VIEWPORT_PC34_COMPAT_H */
