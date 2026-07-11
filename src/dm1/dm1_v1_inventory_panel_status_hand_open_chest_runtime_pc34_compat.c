@@ -100,7 +100,7 @@ static int seed_party(DM1_V1_InventoryStatePc34* state, int healthyChampionCount
     int i;
 
     if (healthyChampionCount <= 0 ||
-        healthyChampionCount > M11_MAX_CHAMPIONS) {
+        healthyChampionCount > DM1_V1_MAX_CHAMPIONS_PC34) {
         return 0;
     }
     DM1_V1_Inventory_InitPc34Compat(state, healthyChampionCount);
@@ -147,7 +147,7 @@ static int capture_row(DM1_V1_InventoryPanelStatusHandOpenChestRowPc34* row,
 {
     int championIndex = -1;
     int pc34SourceSlot = -1;
-    int health[M11_MAX_CHAMPIONS] = {0};
+    int health[DM1_V1_MAX_CHAMPIONS_PC34] = {0};
     DM1_V1_ItemPc34 slotItem;
     DM1_V1_ItemPc34 mouseItem;
     int i;
@@ -228,8 +228,8 @@ static int capture_status_hand_table(
 static int capture_rejections_with_chest_open(
     DM1_V1_InventoryPanelStatusHandOpenChestProbePc34* out)
 {
-    int health[M11_MAX_CHAMPIONS] = {100, 100, 100, 100};
-    int deadHealth[M11_MAX_CHAMPIONS] = {0, 100, 100, 100};
+    int health[DM1_V1_MAX_CHAMPIONS_PC34] = {100, 100, 100, 100};
+    int deadHealth[DM1_V1_MAX_CHAMPIONS_PC34] = {0, 100, 100, 100};
     int championIndex;
     int pc34SourceSlot;
 

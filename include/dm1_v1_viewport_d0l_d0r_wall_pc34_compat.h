@@ -89,17 +89,6 @@ uint8_t DM1_V1_D0LD0RWall_BlendPixelPc34Compat(
 
 const char *DM1_V1_D0LD0RWall_SourceLockPc34Compat(void);
 
-#define M11_GameView_D0LD0RWallResolvePc34 \
-    DM1_V1_D0LD0RWall_ResolvePc34Compat
-#define M11_GameView_D0LD0RWallMapViewportXToSourcePc34 \
-    DM1_V1_D0LD0RWall_MapViewportXToSourcePc34Compat
-#define M11_GameView_D0LD0RWallApplyPixelSlicePc34 \
-    DM1_V1_D0LD0RWall_ApplyPixelSlicePc34Compat
-#define M11_GameView_D0LD0RWallBlendPixelPc34 \
-    DM1_V1_D0LD0RWall_BlendPixelPc34Compat
-#define M11_GameView_D0LD0RWallSourceLockPc34 \
-    DM1_V1_D0LD0RWall_SourceLockPc34Compat
-
 #ifdef __cplusplus
 }
 #endif

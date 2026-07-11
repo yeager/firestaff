@@ -255,11 +255,11 @@ static void test_capacity(void)
     expect_int("capacity.full", DM1_V1_Entrance_AddMirrorPc34Compat(&ctx, 99, 0, 0, 0, 0), -1);
 
     ctx.state = DM1_ENTRANCE_VIEWING;
-    for (int i = 0; i < M11_MAX_CHAMPIONS; i++) {
+    for (int i = 0; i < DM1_V1_MAX_CHAMPIONS_PC34; i++) {
         (void)DM1_V1_Entrance_ClickMirrorPc34Compat(&ctx, i, 9000u + (uint32_t)i);
         expect_int("capacity.recruit", DM1_V1_Entrance_RecruitChampionPc34Compat(&ctx), 1);
     }
-    (void)DM1_V1_Entrance_ClickMirrorPc34Compat(&ctx, M11_MAX_CHAMPIONS, 9100u);
+    (void)DM1_V1_Entrance_ClickMirrorPc34Compat(&ctx, DM1_V1_MAX_CHAMPIONS_PC34, 9100u);
     expect_int("capacity.route", DM1_V1_Entrance_BuildMenuRouteReceiptPc34Compat(&ctx, &route), 1);
     expect_int("capacity.route.kind", route.route, DM1_V1_ENTRANCE_MENU_ROUTE_PARTY_FULL_PC34);
     expect_int("capacity.route.full", route.partyFull, 1);

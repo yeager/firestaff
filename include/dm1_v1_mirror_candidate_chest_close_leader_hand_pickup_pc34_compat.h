@@ -151,13 +151,6 @@ int DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat(
 const DM1_V1_MirrorCandidateChestCloseLeaderHandPickupEvidencePc34Compat *
 DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_EvidencePc34Compat(void);
 
-#define M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compat \
-    DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_InitContextPc34Compat
-#define M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat \
-    DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_RunCasePc34Compat
-#define M11_GameView_MirrorCandidateChestCloseLeaderHandPickup_EvidencePc34Compat \
-    DM1_V1_MirrorCandidateChestCloseLeaderHandPickup_EvidencePc34Compat
-
 int dm1_v1_mirror_candidate_chest_close_leader_hand_pickup_pc34_compat_run(
     int *passed,
     int *failed);

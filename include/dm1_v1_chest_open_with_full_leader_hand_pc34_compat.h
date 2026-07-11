@@ -145,13 +145,6 @@ DM1_V1_ChestOpenWithFullLeaderHand_SpecPc34Compat(void);
 int DM1_V1_ChestOpenWithFullLeaderHand_RuntimeGatePc34Compat(
     DM1_V1_ChestOpenFullLeaderHandProbePc34* out);
 
-#define M11_GameView_ChestOpenWithFullLeaderHandSourceEvidencePc34 \
-    DM1_V1_ChestOpenWithFullLeaderHand_SourceEvidencePc34Compat
-#define M11_GameView_ChestOpenWithFullLeaderHandSpecPc34 \
-    DM1_V1_ChestOpenWithFullLeaderHand_SpecPc34Compat
-#define M11_GameView_ChestOpenWithFullLeaderHandRuntimeGatePc34 \
-    DM1_V1_ChestOpenWithFullLeaderHand_RuntimeGatePc34Compat
-
 #ifdef __cplusplus
 }
 #endif

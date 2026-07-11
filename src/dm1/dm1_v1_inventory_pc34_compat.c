@@ -397,7 +397,7 @@ int DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat(int slotBoxIndex,
     }
 
     if (slotBoxIndex < 0 || slotBoxIndex >= 8 || partyChampionCount < 0 ||
-        partyChampionCount > M11_MAX_CHAMPIONS || !championCurrentHealth) {
+        partyChampionCount > DM1_V1_MAX_CHAMPIONS_PC34 || !championCurrentHealth) {
         return 0;
     }
 

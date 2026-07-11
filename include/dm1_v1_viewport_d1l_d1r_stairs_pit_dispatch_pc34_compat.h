@@ -174,21 +174,6 @@ bool DM1_V1_D1LD1RStairsPitDispatch_AssertPc34Compat(
 
 const char *DM1_V1_D1LD1RStairsPitDispatch_SourceEvidencePc34Compat(void);
 
-#define M11_GameView_ViewportD1LD1RStairsPitDispatch_InitContextPc34 \
-    DM1_V1_D1LD1RStairsPitDispatch_InitContextPc34Compat
-#define M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidencePc34 \
-    DM1_V1_D1LD1RStairsPitDispatch_EvidencePc34Compat
-#define M11_GameView_ViewportD1LD1RStairsPitDispatch_EvidenceForPc34 \
-    DM1_V1_D1LD1RStairsPitDispatch_EvidenceForPc34Compat
-#define M11_GameView_ViewportD1LD1RStairsPitDispatch_RenderPc34 \
-    DM1_V1_D1LD1RStairsPitDispatch_RenderPc34Compat
-#define M11_GameView_ViewportD1LD1RStairsPitDispatch_BlitPc34 \
-    DM1_V1_D1LD1RStairsPitDispatch_BlitPc34Compat
-#define M11_GameView_ViewportD1LD1RStairsPitDispatch_AssertPc34 \
-    DM1_V1_D1LD1RStairsPitDispatch_AssertPc34Compat
-#define M11_GameView_ViewportD1LD1RStairsPitDispatch_SourceEvidencePc34 \
-    DM1_V1_D1LD1RStairsPitDispatch_SourceEvidencePc34Compat
-
 #ifdef __cplusplus
 }
 #endif
