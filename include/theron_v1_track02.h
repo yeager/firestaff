@@ -384,9 +384,11 @@ Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas_wide(
     const Theron_Track02StartupBitmapCatalog *catalog,
     Theron_Track02StartupBitmapAtlas *out_atlas);
 
-/* HuC6270/VCE palette payload used by one 4bpp tile bank: sixteen
- * little-endian 9-bit RGB words.  Bits 0..2, 3..5, and 6..8 are red,
- * green, and blue respectively; bits 9..15 must be clear.  Track 02 image
+/* HuC6260/VCE palette payload used by one 4bpp tile bank: sixteen
+ * little-endian 9-bit words. Bits 0..2 are blue, 3..5 red, and 6..8 green;
+ * bits 9..15 must be clear. See
+ * docs/source-lock/tqr_v1_huc6260_palette_word_format_2026-07-11.md.
+ * Track 02 image
  * discovery deliberately does not guess a palette address: callers must
  * provide the exact, separately verified 32-byte payload. */
 typedef struct {
@@ -1044,17 +1046,16 @@ const char *theron_v1_track02_descriptor_window_kind_name(
  * role needs the working hypothesis that one specific entry maps to a
  * named in-game concept.
  *
- * This release binds three descriptor entries to bounded semantic roles: the
+ * This release binds two descriptor entries to bounded semantic roles: the
  * first entry (descriptor.entry_index == 0, window relative offset
  * 0x0020) is bound to the role THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE,
  * which reads the documented 7 × uint32 little-endian dungeon_seeds from
  * tqr_v1_phase2_data_formats_H2339.md §9.1 (a.k.a. the THQUEST.ASM T560
  * `dungeon_seed` table, sourced from theron_v1_boot.c:318-345 /
  * theron_v1_dungeon_progression.c:38-110); entry 5 restates the
- * descriptor-table-bearing window; entry 6 is a compact object-table row
- * candidate.  Real-data promotion is still receipt-gated: object rows must
- * pass theron_v1_track02_read_object_table() before fallback visuals are
- * reduced.
+ * descriptor-table-bearing window. The former entry-6 compact-row claim was
+ * disproven by the hash-verified JP/US raw Track 02 receipts and is not a
+ * semantic binding or decoder route.
  *
  * Source-locks:
  *   docs/source-lock/tqr_v1_phase2_data_formats_H2339.md §9.1
@@ -1256,8 +1257,7 @@ typedef struct {
  *
  * The mapping is the documented working hypothesis from this header's
  * source-locks section: entry 0 is the dungeon_seed table, entry 5 is
- * the descriptor-table-bearing window, entry 6 is the bounded compact
- * object-table candidate, every other entry is UNKNOWN.
+ * the descriptor-table-bearing window, and every other entry is UNKNOWN.
  * Returning UNKNOWN is not an error; it simply means no semantic role is
  * currently bound. */
 Theron_Track02SemanticRole theron_v1_track02_semantic_role_for_entry(
@@ -1341,12 +1341,13 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_read_object_table(
     size_t object_size,
     Theron_Track02ObjectTable *out_table);
 
-/* Build one descriptor-local dungeon route.  The level record must be a
- * complete big-endian Theron level header/grid in a descriptor data window;
- * the object table must pass the compact-row decoder in a different data
- * window.  `bitmap_atlas` is copied only when it carries all four verified
- * startup bitmap routes.  This helper is usable with byte fixtures; the
- * verified wrapper below adds the Track 02 hash/anchor gate. */
+/* Build one descriptor-local dungeon route.
+ *
+ * No descriptor-local level/object layout is currently supported by original
+ * Track 02 evidence. This API returns OBJECT_REJECTED after input and atlas
+ * validation; it must not infer a route from arbitrary data windows. The
+ * separately hash-gated startup candidate remains the only supported level
+ * decoder route. */
 Theron_Track02DungeonRouteStatus theron_v1_track02_build_dungeon_route(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -1356,9 +1357,10 @@ Theron_Track02DungeonRouteStatus theron_v1_track02_build_dungeon_route(
     const Theron_Track02StartupBitmapAtlas *bitmap_atlas,
     Theron_Track02DungeonRoute *out_route);
 
-/* Hash/anchor-gated Track 02 route.  It starts from the source-locked
- * startup level, requires a separately decoded object-table window, and
- * attaches the real title/stage/Soul Room/forcefield bitmap atlas. */
+/* Hash/anchor-gated Track 02 route constructor. It remains blocked with
+ * OBJECT_REJECTED until original media identifies a genuine non-startup
+ * level/object handoff, and never combines the startup level with a guessed
+ * descriptor window. */
 Theron_Track02DungeonRouteStatus theron_v1_track02_load_verified_dungeon_route(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -1636,6 +1638,51 @@ typedef struct {
             [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
     uint32_t
         nonstartup_level_candidate_sample_hash
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    /* Raw-media layout evidence for every sampled post-descriptor data
+     * window.  These fields intentionally do not bind a window to an object
+     * table or a dungeon record: they preserve what the existing bounded
+     * compact-row reader and big-endian header view observed so that staged
+     * original JP/US Track 02 media can establish a layout first. */
+    size_t
+        nonstartup_level_candidate_sample_nonzero_byte_counts
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    uint16_t
+        nonstartup_level_candidate_sample_header_width
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    uint16_t
+        nonstartup_level_candidate_sample_header_height
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    uint32_t
+        nonstartup_level_candidate_sample_header_seed
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    uint16_t
+        nonstartup_level_candidate_sample_header_level_index
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    int
+        nonstartup_level_candidate_sample_object_table_status
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    size_t
+        nonstartup_level_candidate_sample_object_table_declared_record_counts
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    size_t
+        nonstartup_level_candidate_sample_object_table_record_counts
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    unsigned int
+        nonstartup_level_candidate_sample_object_table_level_masks
+            [THERON_TRACK02_MAX_BANK_ANCHORS]
+            [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
+    Theron_Track02ObjectTableRejectReason
+        nonstartup_level_candidate_sample_object_table_reject_reasons
             [THERON_TRACK02_MAX_BANK_ANCHORS]
             [THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES];
     size_t nonstartup_level_candidate_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];

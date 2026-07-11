@@ -5731,7 +5731,7 @@ static int orch_f0267_resolve_non_group_chain_compat(
             int selfTarget;
             if (!orch_find_teleporter_on_square_compat(
                     world, *inOutMapIndex, *inOutMapX, *inOutMapY,
-                    &teleporter) || teleporter.scope == 1 ||
+                    &teleporter) || !(teleporter.scope & 0x02) ||
                 teleporter.targetMapIndex >= world->dungeon->header.mapCount) break;
             selfTarget = teleporter.targetMapIndex == *inOutMapIndex &&
                 teleporter.targetMapX == *inOutMapX &&
@@ -5739,7 +5739,13 @@ static int orch_f0267_resolve_non_group_chain_compat(
             *inOutMapIndex = teleporter.targetMapIndex;
             *inOutMapX = teleporter.targetMapX;
             *inOutMapY = teleporter.targetMapY;
-            if (type != THING_TYPE_PROJECTILE && !teleporter.absoluteRotation) {
+            /* ReDMCSB MOVESENS.C F0267 lines 450-482 admits ordinary
+             * Things and C14 projectiles only through object/party-scope
+             * teleporters. Lines 526-531 then apply F0263: a relative
+             * rotation changes the placed Thing cell; absolute rotation
+             * changes the projectile direction held by its timeline state
+             * and therefore leaves this Generic cell word intact. */
+            if (!teleporter.absoluteRotation) {
                 *inOutThing = orch_thing_with_cell_compat(
                     *inOutThing, THING_GET_CELL(*inOutThing) + teleporter.rotation);
             }
@@ -5824,6 +5830,7 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     result.finalMapIndex = resolvedRequest.destinationMapIndex;
     result.finalMapX = resolvedRequest.destinationMapX;
     result.finalMapY = resolvedRequest.destinationMapY;
+    result.finalThing = resolvedRequest.thing;
     /* ReDMCSB MOVESENS.C:F0267 lines 799-807 runs F0276 before the
      * source unlink for ordinary things.  Projectiles are levitating and
      * therefore use F0164 directly. */
