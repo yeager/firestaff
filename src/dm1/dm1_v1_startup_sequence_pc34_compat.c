@@ -3482,32 +3482,30 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
         complete_facts->dungeon_loaded ? 1 : 0;
     {
         char corpus_root[DM1_ORIGINAL_SAVE_PATH_MAX];
-        DM1OriginalSavePC34CorpusVerificationReceipt corpus_receipt;
+        DM1OriginalSavePC34CorpusRoundtripReport corpus_receipt;
         memset(&corpus_receipt, 0, sizeof(corpus_receipt));
         if (dm1_v1_startup_resume_root_from_path_pc34(
                 resume_host.resume_path, corpus_root) &&
-            dm1_v1_original_save_pc34_verify_corpus_root(corpus_root,
-                                                         &corpus_receipt) &&
-            corpus_receipt.ready) {
+            dm1_v1_original_save_pc34_roundtrip_corpus_root(corpus_root,
+                                                             &corpus_receipt) ==
+                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+            corpus_receipt.scan_succeeded) {
             save_facts.observed_user_save_corpus_scan = 1;
             save_facts.observed_user_save_corpus_files =
                 corpus_receipt.scanned_file_count;
             save_facts.observed_user_save_corpus_classified =
-                corpus_receipt.pc34_importer_candidate_count;
+                corpus_receipt.pc34_candidate_count;
             save_facts.observed_user_save_corpus_pc34 =
-                corpus_receipt.pc34_importer_candidate_count;
+                corpus_receipt.pc34_candidate_count;
             save_facts.observed_user_save_corpus_part_envelope =
-                corpus_receipt.pc34_loader_part_envelope_count;
+                corpus_receipt.pc34_candidate_count;
             save_facts.observed_user_save_corpus_roundtrip_verified =
-                corpus_receipt.roundtrip_verified_count;
+                corpus_receipt.roundtrip_succeeded_count;
             save_facts.observed_user_save_corpus_roundtrip_failed =
                 corpus_receipt.roundtrip_failed_count;
-            save_facts.observed_user_save_corpus_roundtrip_hash =
-                corpus_receipt.corpus_hash;
-            save_facts.observed_user_save_corpus_rejected =
-                corpus_receipt.rejected_count;
-            save_facts.observed_user_save_corpus_truncated =
-                corpus_receipt.truncated_count;
+            save_facts.observed_user_save_corpus_roundtrip_hash = 0u;
+            save_facts.observed_user_save_corpus_rejected = 0;
+            save_facts.observed_user_save_corpus_truncated = 0;
             save_facts.observed_user_save_corpus_first_pc34_path =
                 corpus_receipt.first_pc34_path;
             save_facts.observed_save_part_count =
