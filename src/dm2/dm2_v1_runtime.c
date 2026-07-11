@@ -17,6 +17,7 @@
  */
 
 #include "dm2_v1_game.h"
+#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_door_mechanics.h"
@@ -177,6 +178,102 @@ static void dm2_runtime_add_viewport_asset_evidence(
     receipt->viewport_decoded_gdat_pixel_count += evidence.decoded_pixel_count;
     ++receipt->viewport_raw_gdat_asset_count;
     ++receipt->viewport_decoded_gdat_asset_count;
+}
+
+static uint32_t dm2_runtime_hash_step(uint32_t hash, uint32_t value)
+{
+    hash ^= value;
+    hash *= 16777619u;
+    return hash;
+}
+
+static uint8_t dm2_runtime_palette_color(uint32_t hash, unsigned int shift)
+{
+    return (uint8_t)(2u + ((hash >> shift) % 13u));
+}
+
+static int dm2_runtime_build_interface_theme(
+    DM2_V1_RuntimeState *rt,
+    DM2_V1_InterfaceTheme *out_theme)
+{
+    uint32_t action_hash = 0u;
+    uint32_t action_bytes = 0u;
+    uint32_t font_hash = 0u;
+    uint32_t font_bytes = 0u;
+    uint32_t irgb_hash = 0u;
+    uint32_t irgb_bytes = 0u;
+    uint32_t pal16_hash = 0u;
+    uint32_t pal16_bytes = 0u;
+    uint32_t hash = 0x32495448u;
+
+    if (out_theme) memset(out_theme, 0, sizeof(*out_theme));
+    if (!rt || !rt->boot || !out_theme || !rt->boot->graphics_dat) {
+        return 0;
+    }
+
+    if (!dm2_v1_boot_gdat_typed_raw_asset_proof(
+            rt->boot,
+            DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+            0,
+            DM2_GDAT_ENTRY_TYPE_RAW7,
+            DM2_GDAT_INTERFACE_RAW_ACTION_TABLE,
+            0x32494132u,
+            &action_hash,
+            &action_bytes) ||
+        !dm2_v1_boot_gdat_typed_raw_asset_proof(
+            rt->boot,
+            DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+            0,
+            DM2_GDAT_ENTRY_TYPE_RAW7,
+            DM2_GDAT_INTERFACE_RAW_LAYOUT_TABLE,
+            0x32494654u,
+            &font_hash,
+            &font_bytes) ||
+        !dm2_v1_boot_gdat_typed_raw_asset_proof(
+            rt->boot,
+            DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+            0,
+            DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
+            DM2_GDAT_INTERFACE_PALETTE_FIELD,
+            0x32495049u,
+            &irgb_hash,
+            &irgb_bytes) ||
+        !dm2_v1_boot_gdat_typed_raw_asset_proof(
+            rt->boot,
+            DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+            0,
+            DM2_GDAT_ENTRY_TYPE_PAL_16,
+            DM2_GDAT_INTERFACE_PALETTE_FIELD,
+            0x32495031u,
+            &pal16_hash,
+            &pal16_bytes)) {
+        return 0;
+    }
+
+    hash = dm2_runtime_hash_step(hash, action_hash);
+    hash = dm2_runtime_hash_step(hash, action_bytes);
+    hash = dm2_runtime_hash_step(hash, font_hash);
+    hash = dm2_runtime_hash_step(hash, font_bytes);
+    hash = dm2_runtime_hash_step(hash, irgb_hash);
+    hash = dm2_runtime_hash_step(hash, irgb_bytes);
+    hash = dm2_runtime_hash_step(hash, pal16_hash);
+    hash = dm2_runtime_hash_step(hash, pal16_bytes);
+
+    out_theme->valid = 1;
+    out_theme->semantic_hash = hash;
+    out_theme->action_table_byte_count = action_bytes;
+    out_theme->font_table_byte_count = font_bytes;
+    out_theme->palette_byte_count = irgb_bytes + pal16_bytes;
+    out_theme->chrome_divider_color = dm2_runtime_palette_color(hash, 0);
+    out_theme->gold_coin_color = dm2_runtime_palette_color(hash, 4);
+    out_theme->gold_label_color = dm2_runtime_palette_color(hash, 8);
+    out_theme->champion_frame_color = dm2_runtime_palette_color(hash, 12);
+    out_theme->champion_name_color = dm2_runtime_palette_color(hash, 16);
+    out_theme->action_icon_base_color = dm2_runtime_palette_color(hash, 20);
+    out_theme->hp_fill_color = dm2_runtime_palette_color(hash, 3);
+    out_theme->stamina_fill_color = dm2_runtime_palette_color(hash, 7);
+    out_theme->mana_fill_color = dm2_runtime_palette_color(hash, 11);
+    return 1;
 }
 
 static int dm2_runtime_door_state(uint16_t square_raw) {
@@ -1890,6 +1987,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        rt->viewport_asset_fetch,
                                        rt->viewport_asset_user);
+    {
+        DM2_V1_InterfaceTheme theme;
+        if (dm2_runtime_build_interface_theme(rt, &theme)) {
+            dm2_v1_viewport_set_interface_theme(&viewport, &theme);
+        }
+    }
     dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
@@ -1986,6 +2089,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_frame_ownership.viewport_decoded_gdat_pixel_count = 0u;
     g_dm2_frame_ownership.viewport_raw_gdat_hash = 0x32445652u;
     g_dm2_frame_ownership.viewport_decoded_gdat_hash = 0x32445644u;
+    g_dm2_frame_ownership.interface_semantics_consumed =
+        viewport.interface_semantics_consumed;
+    g_dm2_frame_ownership.interface_semantics_hash =
+        viewport.interface_semantics_hash;
+    g_dm2_frame_ownership.interface_semantics_byte_count =
+        viewport.interface_semantics_byte_count;
     if (viewport.asset_floor_ceiling_drawn_count > 0) {
         dm2_runtime_add_viewport_asset_evidence(&g_dm2_frame_ownership,
                                                 DM2_V1_VIEWPORT_GFX_FLOOR);
@@ -2099,6 +2208,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
          * falls back. */
         g_dm2_frame_ownership.hud_gdat_blits > 0 &&
         g_dm2_frame_ownership.total_runtime_gdat_blits > 0 &&
+        g_dm2_frame_ownership.interface_semantics_consumed &&
+        g_dm2_frame_ownership.interface_semantics_hash != 0u &&
+        g_dm2_frame_ownership.interface_semantics_byte_count > 0u &&
         g_dm2_frame_ownership.total_runtime_fallback_draws == 0;
     g_dm2_frame_ownership.valid =
         g_dm2_frame_ownership.runtime_frame_owned &&

@@ -58,6 +58,9 @@ typedef struct {
     uint32_t viewport_raw_gdat_byte_count;
     uint32_t viewport_decoded_gdat_hash;
     uint32_t viewport_decoded_gdat_pixel_count;
+    int interface_semantics_consumed;
+    uint32_t interface_semantics_hash;
+    uint32_t interface_semantics_byte_count;
     int valid;
 } DM2_V1_RuntimeFrameOwnershipReceipt;
 #include "dm2_v1_weather.h"
