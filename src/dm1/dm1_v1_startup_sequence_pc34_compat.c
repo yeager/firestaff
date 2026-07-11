@@ -2761,6 +2761,80 @@ int dm1_v1_startup_hoc_presented_capture_publish_from_boot_summary_pc34(
         out_receipt);
 }
 
+int dm1_v1_startup_hoc_presented_capture_host_export_receipt_pc34(
+    const DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34* publish,
+    DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34 receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!publish || !publish->handled) {
+        *out_receipt = receipt;
+        return publish ? 1 : 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437 hands off to ENTRANCE.C F0797/F0441 before the
+     * first Hall frame is published.  Keep the host/M12 export as a DM1-owned
+     * receipt so app/Mac capture cannot be reconstructed from loose M11
+     * booleans after the fact. */
+    receipt.handled = 1;
+    receipt.consumed_publish_receipt = 1;
+    receipt.presented_capture_ready = publish->presented_capture_ready;
+    receipt.host_window_present = publish->host_window_present;
+    receipt.captured_from_mac_window = publish->captured_from_mac_window;
+    receipt.captured_from_release_app = publish->captured_from_release_app;
+    receipt.width = publish->width;
+    receipt.height = publish->height;
+    receipt.byte_count = publish->byte_count;
+    receipt.framebuffer_hash = publish->framebuffer_hash;
+    receipt.consumer_mask = publish->consumer_mask;
+    receipt.chain_hash = publish->chain_hash;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C F0437; ENTRANCE.C F0797/F0441; DRAWVIEW.C F0097";
+    receipt.ready =
+        publish->ready &&
+        receipt.presented_capture_ready &&
+        receipt.host_window_present &&
+        receipt.captured_from_mac_window &&
+        receipt.captured_from_release_app &&
+        receipt.width >= 320 &&
+        receipt.height >= 200 &&
+        receipt.byte_count >= receipt.width * receipt.height * 4 &&
+        receipt.framebuffer_hash != 0U &&
+        receipt.consumer_mask == DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34 &&
+        receipt.chain_hash ==
+            dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
+                receipt.width,
+                receipt.height,
+                receipt.byte_count,
+                receipt.framebuffer_hash,
+                receipt.consumer_mask);
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm1_v1_startup_hoc_presented_capture_host_export_from_boot_summary_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary,
+    DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34 publish;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&publish, 0, sizeof(publish));
+    if (!dm1_v1_startup_hoc_presented_capture_publish_from_boot_summary_pc34(
+            summary,
+            &publish)) {
+        return 0;
+    }
+    return dm1_v1_startup_hoc_presented_capture_host_export_receipt_pc34(
+        &publish,
+        out_receipt);
+}
+
 int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
     const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* handoff,
     const DM1_V1_StartupHostApplyResult_PC34* host_apply,
@@ -3213,6 +3287,50 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
         out_receipt);
 }
 
+int dm1_v1_startup_hoc_boot_probe_summary_from_host_facts_pc34(
+    const DM1_V1_StartupHoCBootCompleteSupportFacts_PC34* complete_facts,
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* hoc_facts,
+    DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* out_receipt,
+    DM1_V1_StartupHoCBootProbeSummary_PC34* out_summary) {
+    DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 ownership;
+    DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34 receipt;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (out_summary) {
+        memset(out_summary, 0, sizeof(*out_summary));
+    }
+    memset(&ownership, 0, sizeof(ownership));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!complete_facts || !hoc_facts || !out_summary) {
+        return 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437 -> ENTRANCE.C F0797/F0441 -> REVIVE.C F0280
+     * is a DM1 startup chain.  Host code supplies observed pixels/assets; DM1
+     * owns the complete HoC boot receipt and the public probe summary. */
+    if (!dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+            hoc_facts,
+            &ownership) ||
+        !dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
+            complete_facts,
+            hoc_facts,
+            &ownership,
+            &receipt) ||
+        !dm1_v1_startup_hoc_boot_probe_summary_pc34(&receipt,
+                                                    out_summary)) {
+        if (out_receipt) {
+            *out_receipt = receipt;
+        }
+        return 0;
+    }
+    if (out_receipt) {
+        *out_receipt = receipt;
+    }
+    return 1;
+}
+
 int dm1_v1_startup_hoc_boot_probe_summary_pc34(
     const DM1_V1_StartupHoCBootFullGraphicsReceipt_PC34* receipt,
     DM1_V1_StartupHoCBootProbeSummary_PC34* out_summary) {
@@ -3336,6 +3454,436 @@ int dm1_v1_startup_hoc_boot_probe_summary_pc34(
         "ReDMCSB TITLE.C F0437; ENTRANCE.C F0797/F0441; REVIVE.C F0280; LOADSAVE.C F0433/F0435";
     *out_summary = summary;
     return 1;
+}
+
+int dm1_v1_startup_hoc_boot_probe_complete_support_ready_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary) {
+    return summary && summary->handled && summary->complete_support_ready &&
+           summary->complete_source_visible_startup &&
+           summary->complete_entrance_to_hoc &&
+           summary->complete_hoc_render_route &&
+           summary->complete_host_app_capture_route &&
+           summary->complete_save_corpus_route &&
+           summary->complete_original_save_roundtrip_route;
+}
+
+int dm1_v1_startup_hoc_boot_probe_release_app_capture_ready_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary) {
+    return dm1_v1_startup_hoc_boot_probe_complete_support_ready_pc34(summary) &&
+           summary->complete_host_app_capture_route &&
+           summary->mac_window_capture &&
+           summary->release_app_capture &&
+           summary->host_window_capture &&
+           summary->presented_capture &&
+           summary->presented_capture_geometry &&
+           summary->presented_capture_pixels &&
+           summary->presented_capture_chain_ready &&
+           summary->host_capture_route_matches &&
+           summary->release_capture_ownership_ready &&
+           summary->host_render_consumer_ready &&
+           summary->m11_boot_probe_consumer_ready &&
+           summary->launch_path_ready &&
+           summary->required_asset_capture &&
+           summary->receipt_only_consumer_ready &&
+           summary->no_host_fallback_visuals;
+}
+
+int dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary,
+    DM1_V1_StartupHoCBootProbeExpectation_PC34 expectation,
+    DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34 receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.expectation = (int)expectation;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C F0437; ENTRANCE.C F0797/F0441; REVIVE.C F0280; LOADSAVE.C F0433/F0435";
+    if (!summary || !summary->handled) {
+        snprintf(receipt.diagnostic,
+                 sizeof(receipt.diagnostic),
+                 "missing DM1 HoC boot summary");
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437, ENTRANCE.C F0797/F0441, REVIVE.C F0280, and
+     * LOADSAVE.C F0433/F0435 define the DM1 startup->HoC->save path.  Keep
+     * the boot-probe expectation and its host/app capture diagnostic in DM1 so
+     * M11 does not duplicate DM1 startup ownership rules. */
+    receipt.handled = 1;
+    receipt.complete_support_ready =
+        dm1_v1_startup_hoc_boot_probe_complete_support_ready_pc34(summary);
+    receipt.release_app_capture_ready =
+        dm1_v1_startup_hoc_boot_probe_release_app_capture_ready_pc34(summary);
+
+    if (expectation ==
+        DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_COMPLETE_SUPPORT_PC34) {
+        receipt.ready = receipt.complete_support_ready;
+        snprintf(receipt.diagnostic,
+                 sizeof(receipt.diagnostic),
+                 "complete=%d source=%d entrance=%d renderRoute=%d hostApp=%d saveCorpus=%d originalSave=%d ready=%d render=%d proof=%d apply=%d consumer=%d real=%d mac=%d release=%d hostWindow=%d presented=%d presentedGeometry=%d presentedPixels=%d presentedHash=%08x presentedChain=%d presentedChainHash=%08x route=%d ownership=%d hostRender=%d m11Consumer=%d launchPath=%d requiredAssets=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d hocAsset=%d opened=%d mirrors=%d block=%d commands=%d",
+                 summary->complete_support_ready,
+                 summary->complete_source_visible_startup,
+                 summary->complete_entrance_to_hoc,
+                 summary->complete_hoc_render_route,
+                 summary->complete_host_app_capture_route,
+                 summary->complete_save_corpus_route,
+                 summary->complete_original_save_roundtrip_route,
+                 summary->full_graphics_ready,
+                 summary->host_render_plan_ready,
+                 summary->capture_proof_passed,
+                 summary->runtime_apply_ready,
+                 summary->production_consumer_ready,
+                 summary->real_asset_capture,
+                 summary->mac_window_capture,
+                 summary->release_app_capture,
+                 summary->host_window_capture,
+                 summary->presented_capture,
+                 summary->presented_capture_geometry,
+                 summary->presented_capture_pixels,
+                 summary->presented_capture_hash,
+                 summary->presented_capture_chain_ready,
+                 summary->presented_capture_chain_hash,
+                 summary->host_capture_route_matches,
+                 summary->release_capture_ownership_ready,
+                 summary->host_render_consumer_ready,
+                 summary->m11_boot_probe_consumer_ready,
+                 summary->launch_path_ready,
+                 summary->required_asset_capture,
+                 summary->receipt_only_consumer_ready,
+                 summary->lower_level_helpers_ready,
+                 summary->host_draw_uses_owned_receipt,
+                 summary->host_draw_consumes_backing_asset,
+                 summary->host_draw_rejects_backing_fallback,
+                 summary->no_host_fallback_visuals,
+                 summary->hoc_asset_capture,
+                 summary->opened_entrance_frame,
+                 summary->hall_mirror_overlay,
+                 summary->blocked_enter_until_champion,
+                 summary->render_command_count);
+    } else if (expectation ==
+               DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_RELEASE_APP_CAPTURE_PC34) {
+        receipt.ready = receipt.release_app_capture_ready;
+        snprintf(receipt.diagnostic,
+                 sizeof(receipt.diagnostic),
+                 "mac=%d release=%d hostWindow=%d presented=%d presentedGeometry=%d presentedPixels=%d presentedHash=%08x presentedChain=%d presentedChainHash=%08x route=%d ownership=%d hostRender=%d m11Consumer=%d launchPath=%d requiredAssets=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d",
+                 summary->mac_window_capture,
+                 summary->release_app_capture,
+                 summary->host_window_capture,
+                 summary->presented_capture,
+                 summary->presented_capture_geometry,
+                 summary->presented_capture_pixels,
+                 summary->presented_capture_hash,
+                 summary->presented_capture_chain_ready,
+                 summary->presented_capture_chain_hash,
+                 summary->host_capture_route_matches,
+                 summary->release_capture_ownership_ready,
+                 summary->host_render_consumer_ready,
+                 summary->m11_boot_probe_consumer_ready,
+                 summary->launch_path_ready,
+                 summary->required_asset_capture,
+                 summary->receipt_only_consumer_ready,
+                 summary->lower_level_helpers_ready,
+                 summary->host_draw_uses_owned_receipt,
+                 summary->host_draw_consumes_backing_asset,
+                 summary->host_draw_rejects_backing_fallback,
+                 summary->no_host_fallback_visuals);
+    } else {
+        snprintf(receipt.diagnostic,
+                 sizeof(receipt.diagnostic),
+                 "unknown DM1 HoC boot expectation=%d",
+                 (int)expectation);
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm1_v1_startup_hoc_boot_probe_log_receipt_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary,
+    DM1_V1_StartupHoCBootProbeLogReceipt_PC34* out_receipt) {
+    DM1_V1_StartupHoCBootProbeLogReceipt_PC34 receipt;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C F0437; ENTRANCE.C F0797/F0441; REVIVE.C F0280; LOADSAVE.C F0433/F0435";
+    if (!summary || !summary->handled) {
+        snprintf(receipt.fields,
+                 sizeof(receipt.fields),
+                 "dm1HoCBootSummary=missing");
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437 leads into ENTRANCE.C F0797/F0441, REVIVE.C
+     * F0280, and LOADSAVE.C F0433/F0435.  Keep the HoC/capture/save probe log
+     * fields in DM1 so host code only appends a DM1-owned receipt. */
+    receipt.handled = 1;
+    receipt.ready = 1;
+    snprintf(receipt.fields,
+             sizeof(receipt.fields),
+             "dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCRealAssetCapture=%d dm1HoCMacWindowCapture=%d dm1HoCReleaseAppCapture=%d dm1HoCHostCaptureRouteMatches=%d dm1HoCReleaseCaptureOwnershipReady=%d dm1HoCHostRenderConsumer=%d dm1HoCM11BootProbeConsumer=%d dm1HoCLaunchPathReady=%d dm1HoCRequiredAssetCapture=%d dm1HoCReceiptOnlyConsumerReady=%d dm1HoCLowerLevelHelpersReady=%d dm1HoCHostDrawUsesOwnedReceipt=%d dm1HoCHostDrawConsumesBackingAsset=%d dm1HoCHostDrawRejectsBackingFallback=%d dm1HoCHoCAssetCapture=%d dm1HoCHostWindowCapture=%d dm1HoCPresentedCapture=%d dm1HoCPresentedCaptureSize=%dx%d dm1HoCPresentedCaptureGeometry=%d dm1HoCPresentedCapturePixels=%d dm1HoCPresentedCaptureBytes=%d dm1HoCPresentedCaptureHash=%08x dm1HoCPresentedCaptureChain=%d dm1HoCPresentedCaptureConsumerMask=%x dm1HoCPresentedCaptureChainHash=%08x dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d dm1CompleteSupportReady=%d dm1CompleteSourceVisibleStartup=%d dm1CompleteEntranceToHoC=%d dm1CompleteHoCRenderRoute=%d dm1CompleteHostAppCaptureRoute=%d dm1CompleteSaveCorpusRoute=%d dm1CompleteOriginalSaveRoundtripRoute=%d",
+             summary->full_graphics_ready,
+             summary->host_render_plan_ready,
+             summary->capture_proof_passed,
+             summary->runtime_apply_ready,
+             summary->production_consumer_ready,
+             summary->no_host_fallback_visuals,
+             summary->real_asset_capture,
+             summary->mac_window_capture,
+             summary->release_app_capture,
+             summary->host_capture_route_matches,
+             summary->release_capture_ownership_ready,
+             summary->host_render_consumer_ready,
+             summary->m11_boot_probe_consumer_ready,
+             summary->launch_path_ready,
+             summary->required_asset_capture,
+             summary->receipt_only_consumer_ready,
+             summary->lower_level_helpers_ready,
+             summary->host_draw_uses_owned_receipt,
+             summary->host_draw_consumes_backing_asset,
+             summary->host_draw_rejects_backing_fallback,
+             summary->hoc_asset_capture,
+             summary->host_window_capture,
+             summary->presented_capture,
+             summary->presented_capture_width,
+             summary->presented_capture_height,
+             summary->presented_capture_geometry,
+             summary->presented_capture_pixels,
+             summary->presented_capture_bytes,
+             summary->presented_capture_hash,
+             summary->presented_capture_chain_ready,
+             summary->presented_capture_consumer_mask,
+             summary->presented_capture_chain_hash,
+             summary->opened_entrance_frame,
+             summary->hall_mirror_overlay,
+             summary->blocked_enter_until_champion,
+             summary->map_width,
+             summary->map_height,
+             summary->render_command_count,
+             summary->complete_support_ready,
+             summary->complete_source_visible_startup,
+             summary->complete_entrance_to_hoc,
+             summary->complete_hoc_render_route,
+             summary->complete_host_app_capture_route,
+             summary->complete_save_corpus_route,
+             summary->complete_original_save_roundtrip_route);
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
+    const DM1_V1_StartupHoCBootProbeSummary_PC34* summary,
+    DM1_V1_StartupHoCBootProbeHostFields_PC34* out_fields) {
+    DM1_V1_StartupHoCBootProbeHostFields_PC34 fields;
+
+    if (!out_fields) {
+        return 0;
+    }
+    memset(&fields, 0, sizeof(fields));
+    fields.source_evidence =
+        "ReDMCSB TITLE.C F0437; ENTRANCE.C F0797/F0441; REVIVE.C F0280; LOADSAVE.C F0433/F0435";
+    if (!summary || !summary->handled) {
+        *out_fields = fields;
+        return 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437 -> ENTRANCE.C F0797/F0441 -> REVIVE.C F0280 ->
+     * LOADSAVE.C F0433/F0435 owns these HoC/capture/save probe semantics.
+     * Host-facing legacy fields remain for callers, but their mapping is DM1. */
+    fields.handled = 1;
+    fields.full_graphics_ready = summary->full_graphics_ready;
+    fields.host_render_plan_ready = summary->host_render_plan_ready;
+    fields.capture_proof_passed = summary->capture_proof_passed;
+    fields.runtime_apply_ready = summary->runtime_apply_ready;
+    fields.production_consumer_ready = summary->production_consumer_ready;
+    fields.no_host_fallback_visuals = summary->no_host_fallback_visuals;
+    fields.real_asset_capture = summary->real_asset_capture;
+    fields.mac_window_capture = summary->mac_window_capture;
+    fields.release_app_capture = summary->release_app_capture;
+    fields.host_capture_route_matches = summary->host_capture_route_matches;
+    fields.release_capture_ownership_ready =
+        summary->release_capture_ownership_ready;
+    fields.host_render_consumer_ready = summary->host_render_consumer_ready;
+    fields.m11_boot_probe_consumer_ready =
+        summary->m11_boot_probe_consumer_ready;
+    fields.launch_path_ready = summary->launch_path_ready;
+    fields.required_asset_capture = summary->required_asset_capture;
+    fields.receipt_only_consumer_ready = summary->receipt_only_consumer_ready;
+    fields.lower_level_helpers_ready = summary->lower_level_helpers_ready;
+    fields.host_draw_uses_owned_receipt =
+        summary->host_draw_uses_owned_receipt;
+    fields.host_draw_consumes_backing_asset =
+        summary->host_draw_consumes_backing_asset;
+    fields.host_draw_rejects_backing_fallback =
+        summary->host_draw_rejects_backing_fallback;
+    fields.hoc_asset_capture = summary->hoc_asset_capture;
+    fields.host_window_capture = summary->host_window_capture;
+    fields.presented_capture = summary->presented_capture;
+    fields.presented_capture_width = summary->presented_capture_width;
+    fields.presented_capture_height = summary->presented_capture_height;
+    fields.presented_capture_geometry = summary->presented_capture_geometry;
+    fields.presented_capture_pixels = summary->presented_capture_pixels;
+    fields.presented_capture_bytes = summary->presented_capture_bytes;
+    fields.presented_capture_hash = summary->presented_capture_hash;
+    fields.presented_capture_chain_ready =
+        summary->presented_capture_chain_ready;
+    fields.presented_capture_consumer_mask =
+        summary->presented_capture_consumer_mask;
+    fields.presented_capture_chain_hash =
+        summary->presented_capture_chain_hash;
+    fields.host_capture_route_packaged =
+        summary->host_capture_route_packaged;
+    fields.host_capture_route_mask = summary->host_capture_route_mask;
+    fields.host_capture_route_hash = summary->host_capture_route_hash;
+    fields.presented_capture_route_packaged =
+        summary->presented_capture_route_packaged;
+    fields.opened_entrance_frame = summary->opened_entrance_frame;
+    fields.hall_mirror_overlay = summary->hall_mirror_overlay;
+    fields.blocked_enter_until_champion =
+        summary->blocked_enter_until_champion;
+    fields.map_width = summary->map_width;
+    fields.map_height = summary->map_height;
+    fields.render_command_count = summary->render_command_count;
+    fields.complete_support_ready = summary->complete_support_ready;
+    fields.complete_source_visible_startup =
+        summary->complete_source_visible_startup;
+    fields.complete_entrance_to_hoc = summary->complete_entrance_to_hoc;
+    fields.complete_hoc_render_route = summary->complete_hoc_render_route;
+    fields.complete_host_app_capture_route =
+        summary->complete_host_app_capture_route;
+    fields.complete_save_corpus_route = summary->complete_save_corpus_route;
+    fields.complete_original_save_roundtrip_route =
+        summary->complete_original_save_roundtrip_route;
+    *out_fields = fields;
+    return 1;
+}
+
+int dm1_v1_startup_hoc_m12_capture_fields_pc34(
+    const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
+    DM1_V1_StartupHoCM12CaptureFields_PC34* out_fields) {
+    DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 ownership;
+    DM1_V1_StartupHoCM12CaptureFields_PC34 fields;
+
+    if (!out_fields) {
+        return 0;
+    }
+    memset(&ownership, 0, sizeof(ownership));
+    memset(&fields, 0, sizeof(fields));
+    fields.source_evidence =
+        "ReDMCSB TITLE.C F0437; ENTRANCE.C F0797/F0441; REVIVE.C F0280; LOADSAVE.C F0433/F0435";
+    if (!facts ||
+        !dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
+            facts,
+            &ownership)) {
+        *out_fields = fields;
+        return 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0797/F0441 define when the HoC
+     * frame is a real startup capture; REVIVE.C F0280 and LOADSAVE.C F0433/
+     * F0435 keep mirror/save runtime consumers on the same DM1-owned route.
+     * M12 supplies host observations, but this receipt owns the readiness
+     * rules it displays. */
+    fields.handled = ownership.handled;
+    fields.real_asset_capture_ready = ownership.real_asset_capture;
+    fields.mac_window_capture_ready = ownership.mac_window_capture;
+    fields.release_app_capture_ready = ownership.release_app_capture;
+    fields.host_capture_route_ready = ownership.host_capture_route_matches;
+    fields.release_capture_ownership_ready = ownership.ready;
+    fields.host_render_consumer_ready =
+        ownership.consumed_hoc_host_render_receipt;
+    fields.m12_capture_consumer_ready =
+        ownership.consumed_m12_startup_capture_consumer;
+    fields.launch_path_ready =
+        ownership.consumed_launch_path_receipt &&
+        ownership.launch_path_started_from_launcher &&
+        ownership.launch_path_intro_not_bypassed;
+    fields.required_asset_capture_ready = ownership.required_asset_capture;
+    fields.receipt_only_consumer_ready =
+        ownership.consume_dm1_receipts_only &&
+        ownership.consumed_runtime_apply_receipt &&
+        ownership.consumed_production_consumer_receipt &&
+        ownership.publish_packaged_full_graphics_proof;
+    fields.no_host_fallback_visuals_ready =
+        ownership.suppress_host_fallback_visuals;
+    fields.lower_level_helpers_ready =
+        ownership.lower_level_renderer_helper_owned &&
+        ownership.lower_level_audio_helper_owned;
+    fields.host_draw_uses_owned_receipt_ready =
+        ownership.host_draw_uses_owned_receipt;
+    fields.host_draw_consumes_backing_asset_ready =
+        ownership.host_draw_consumes_backing_asset;
+    fields.host_draw_rejects_backing_fallback_ready =
+        ownership.host_draw_rejects_backing_fallback;
+    fields.hoc_asset_capture_ready = ownership.hoc_asset_capture;
+    fields.host_window_capture_ready = ownership.host_window_capture;
+    fields.presented_capture_ready = ownership.presented_capture;
+    fields.presented_capture_width = ownership.presented_capture_width;
+    fields.presented_capture_height = ownership.presented_capture_height;
+    fields.presented_capture_geometry_ready =
+        ownership.presented_capture_geometry_matches;
+    fields.presented_capture_pixels_ready =
+        ownership.presented_capture_pixels_present;
+    fields.presented_capture_bytes = ownership.presented_capture_byte_count;
+    fields.presented_capture_hash = ownership.presented_capture_hash;
+    fields.presented_capture_chain_ready =
+        ownership.presented_capture_chain_ready;
+    fields.presented_capture_consumer_mask =
+        ownership.presented_capture_consumer_mask;
+    fields.presented_capture_chain_hash =
+        ownership.presented_capture_chain_hash;
+    fields.host_capture_route_packaged_ready =
+        ownership.host_capture_route_packaged;
+    fields.host_capture_route_mask = ownership.host_capture_route_mask;
+    fields.host_capture_route_hash = ownership.host_capture_route_hash;
+    fields.presented_capture_route_packaged_ready =
+        ownership.presented_capture_route_packaged;
+    fields.opened_entrance_frame_ready =
+        ownership.draw_opened_entrance_frame;
+    fields.hall_mirror_overlay_ready =
+        ownership.render_hall_mirror_overlay;
+    fields.blocked_enter_until_champion_ready =
+        ownership.block_enter_until_champion_selected;
+    fields.render_command_count = ownership.render_command_count;
+    fields.ready =
+        ownership.ready &&
+        fields.host_render_consumer_ready &&
+        fields.m12_capture_consumer_ready &&
+        fields.launch_path_ready &&
+        fields.required_asset_capture_ready &&
+        fields.receipt_only_consumer_ready &&
+        fields.no_host_fallback_visuals_ready &&
+        fields.lower_level_helpers_ready &&
+        fields.host_draw_uses_owned_receipt_ready &&
+        fields.host_draw_consumes_backing_asset_ready &&
+        fields.host_draw_rejects_backing_fallback_ready &&
+        fields.real_asset_capture_ready &&
+        fields.mac_window_capture_ready &&
+        fields.release_app_capture_ready &&
+        fields.host_capture_route_ready &&
+        fields.hoc_asset_capture_ready &&
+        fields.host_window_capture_ready &&
+        fields.presented_capture_ready &&
+        fields.presented_capture_geometry_ready &&
+        fields.presented_capture_pixels_ready &&
+        fields.presented_capture_chain_ready &&
+        fields.host_capture_route_packaged_ready &&
+        fields.presented_capture_route_packaged_ready &&
+        fields.opened_entrance_frame_ready &&
+        fields.hall_mirror_overlay_ready &&
+        fields.blocked_enter_until_champion_ready &&
+        fields.render_command_count == 3;
+    *out_fields = fields;
+    return fields.handled;
 }
 
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
@@ -4003,6 +4551,65 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
      * zoom, STRIKES BACK, and final guard before ENTRANCE.C F0441. */
     receipt.source_evidence =
         "ReDMCSB NECIO.C:3592-3609; TITLE.C:319-409; ENTRANCE.C:850-883";
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
+    const char* source_id,
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt) {
+    if (!out_receipt) {
+        return 0;
+    }
+    if (!dm1_v1_startup_full_graphics_media_receipt_pc34(source_id,
+                                                         out_receipt)) {
+        return 0;
+    }
+    return out_receipt->handled ? 1 : 0;
+}
+
+int dm1_v1_startup_title_runtime_source_receipt_pc34(
+    const char* source_id,
+    int graphics_c001_candidate_available,
+    unsigned int graphics_c001_width,
+    unsigned int graphics_c001_height,
+    int title_dat_fallback_available,
+    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34* out_receipt) {
+    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 receipt;
+    V1_TitleFrontendRuntimeSourceDecision decision;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    decision = V1_TitleFrontend_SelectRuntimeSource(
+        graphics_c001_candidate_available,
+        graphics_c001_width,
+        graphics_c001_height,
+        title_dat_fallback_available);
+
+    receipt.handled = 1;
+    receipt.graphics_c001_usable = decision.graphicsC001Usable ? 1 : 0;
+    receipt.title_dat_fallback_usable =
+        decision.titleDatFallbackUsable ? 1 : 0;
+    receipt.selected_runtime_source = (int)decision.source;
+    receipt.require_graphics_c001_for_release_start =
+        (decision.source == V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001)
+            ? 1
+            : 0;
+    receipt.fallback_is_visible_last_resort =
+        (decision.source == V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK)
+            ? 1
+            : 0;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 309-324 loads C001_GRAPHIC_TITLE "
+        "before PRESENTS; TITLE.DAT is Firestaff's visible fallback only "
+        "when C001 is unavailable or too small.";
     *out_receipt = receipt;
     return 1;
 }

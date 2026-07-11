@@ -64,6 +64,12 @@ typedef struct DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat {
     int command;
 } DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat;
 
+typedef struct DM1_V1_ResurrectionRenameUiHostTextByteDecisionPc34Compat {
+    int handled;
+    int useAscii;
+    int ascii;
+} DM1_V1_ResurrectionRenameUiHostTextByteDecisionPc34Compat;
+
 void
 dm1_v1_resurrection_rename_ui_gate_init_pc34(
     DM1_V1_ResurrectionRenameUiGatePc34Compat *state,
@@ -90,7 +96,24 @@ dm1_v1_resurrection_rename_ui_gate_host_text_byte_pc34(
     int ch);
 
 int
+dm1_v1_resurrection_rename_ui_gate_host_text_byte_decision_pc34(
+    int game_active,
+    int candidate_panel_active,
+    int rename_active,
+    int ch,
+    DM1_V1_ResurrectionRenameUiHostTextByteDecisionPc34Compat *out_decision);
+
+int
 dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
+    const DM1_V1_ResurrectionRenameUiGatePc34Compat *state,
+    int host_key,
+    DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat *out_decision);
+
+int
+dm1_v1_resurrection_rename_ui_gate_host_keydown_route_pc34(
+    int game_active,
+    int candidate_panel_active,
+    int rename_active,
     const DM1_V1_ResurrectionRenameUiGatePc34Compat *state,
     int host_key,
     DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat *out_decision);

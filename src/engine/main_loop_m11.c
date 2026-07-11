@@ -23,6 +23,7 @@
 #include "dm1_v1_automap_pc34_compat.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
+#include "dm1_v1_mouse_routes_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "asset_status_m12.h"
@@ -36,8 +37,8 @@
 #include "vga_palette_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "screenshot_m11.h"
-#include "swsh_intro_pathfinder_m11.h"
-#include "title_intro_pathfinder_m11.h"
+#include "v1_swsh_intro_pathfinder_pc34_compat.h"
+#include "v1_title_intro_pathfinder_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -317,7 +318,7 @@ static void m11_publish_dm1_hoc_presented_capture_to_m12(
     const M11_GameViewState* gameView,
     M12_StartupMenuState* menuState) {
     M11_BootProbeReceipt boot;
-    DM1_V1_StartupHoCPresentedCapturePublishReceipt_PC34 publish;
+    DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34 export_receipt;
     M12_DM1HoCPresentedCaptureReceipt capture;
 
     if (!gameView || !menuState ||
@@ -326,29 +327,26 @@ static void m11_publish_dm1_hoc_presented_capture_to_m12(
         return;
     }
 
-    memset(&publish, 0, sizeof(publish));
-    if (!dm1_v1_startup_hoc_presented_capture_publish_from_boot_summary_pc34(
+    memset(&export_receipt, 0, sizeof(export_receipt));
+    if (!dm1_v1_startup_hoc_presented_capture_host_export_from_boot_summary_pc34(
             &boot.dm1HoCBootSummary,
-            &publish) ||
-        !publish.ready) {
+            &export_receipt) ||
+        !export_receipt.ready) {
         return;
     }
 
     memset(&capture, 0, sizeof(capture));
-    capture.handled = 1;
-    capture.presentedCaptureReady = publish.presented_capture_ready;
-    capture.hostWindowPresent = publish.host_window_present;
-    capture.capturedFromMacWindow = publish.captured_from_mac_window;
-    capture.capturedFromReleaseApp = publish.captured_from_release_app;
-    capture.width = publish.width;
-    capture.height = publish.height;
-    capture.byteCount = publish.byte_count;
-    capture.framebufferHash = publish.framebuffer_hash;
-    capture.consumerMask = publish.consumer_mask;
-    capture.chainHash = publish.chain_hash;
-    /* ReDMCSB DRAWVIEW.C F0097 publishes the post-ENTRANCE viewport.  This
-     * bridge lets M12 consume the actual M11-presented RGBA frame instead of
-     * manufacturing a readiness receipt before the app has drawn HoC. */
+    capture.handled = export_receipt.handled;
+    capture.presentedCaptureReady = export_receipt.presented_capture_ready;
+    capture.hostWindowPresent = export_receipt.host_window_present;
+    capture.capturedFromMacWindow = export_receipt.captured_from_mac_window;
+    capture.capturedFromReleaseApp = export_receipt.captured_from_release_app;
+    capture.width = export_receipt.width;
+    capture.height = export_receipt.height;
+    capture.byteCount = export_receipt.byte_count;
+    capture.framebufferHash = export_receipt.framebuffer_hash;
+    capture.consumerMask = export_receipt.consumer_mask;
+    capture.chainHash = export_receipt.chain_hash;
     (void)M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(menuState,
                                                            &capture);
 }
@@ -677,14 +675,6 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
 static int m11_boot_probe_expected_source_kind(const char* gameId,
                                                M11_GameSourceKind* outKind);
 
-int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
-                                                    int framebufferY,
-                                                    unsigned int buttonMask) {
-    return ENTRANCE_Compat_DispatchMouseRouteCommand(framebufferX,
-                                                     framebufferY,
-                                                     buttonMask);
-}
-
 static EntranceCompatKey m11_entrance_compat_key_from_sdl_key(int keyCode) {
     switch (keyCode) {
     case SDLK_RETURN:
@@ -702,34 +692,12 @@ static EntranceCompatKey m11_entrance_compat_key_from_sdl_key(int keyCode) {
     }
 }
 
-int M11_Entrance_DispatchSourceLockedKeyCommand(int keyCode) {
+static int m11_entrance_dispatch_source_locked_key_command(int keyCode) {
     return ENTRANCE_Compat_DispatchKeyCommand(m11_entrance_compat_key_from_sdl_key(keyCode));
-}
-
-int M11_Entrance_ResolveDm1ResumeSavePath(const char* sourceId,
-                                          int quickResumeAvailable,
-                                          const char* quickResumeGameId,
-                                          const char* quickResumeSavePath,
-                                          char* outPath,
-                                          size_t outPathBytes) {
-    return ENTRANCE_Compat_ResolveDm1ResumeSavePath(sourceId,
-                                                    quickResumeAvailable,
-                                                    quickResumeGameId,
-                                                    quickResumeSavePath,
-                                                    outPath,
-                                                    outPathBytes);
 }
 
 static M11_EntranceCommand m11_entrance_command_path_from_source_command(int commandId) {
     return (M11_EntranceCommand)ENTRANCE_Compat_CommandPathFromSourceCommand(commandId);
-}
-
-int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
-                                           int autoEnterAfterMs,
-                                           uint64_t elapsedMs) {
-    return ENTRANCE_Compat_ShouldAutoEnterForTimeout(allowHeadlessTimeout,
-                                                     autoEnterAfterMs,
-                                                     (unsigned long long)elapsedMs);
 }
 
 static int m11_play_redmcsb_entrance_transition(
@@ -741,12 +709,8 @@ static int m11_play_redmcsb_entrance_transition(
     unsigned char* dungeonFrame;
     unsigned int sourceStep;
     if (!gameView || !gameView->active) return 0;
-    if (entranceReceipt &&
-        (!entranceReceipt->valid ||
-         entranceReceipt->mapIndex != DM1_V1_ENTRANCE_MAP_INDEX_PC34 ||
-         entranceReceipt->width != DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 ||
-         entranceReceipt->height != DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34 ||
-         entranceReceipt->partyDirection != DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34)) {
+    if (!DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(
+            entranceReceipt)) {
         return 0;
     }
     framebuffer = M11_Render_GetFramebuffer();
@@ -771,16 +735,10 @@ static int m11_play_redmcsb_entrance_transition(
      * This also mirrors the ReDMCSB source order: draw C004+doors first,
      * then micro-dungeon, then fade/curtain, then wait-for-input loop.
      */
-    if (m11_draw_entrance_screen_asset(gameView, framebuffer)) {
-        (void)m11_draw_entrance_closed_doors_asset(gameView, framebuffer);
-    } else {
-        /* Palette-fill fallback: draw the entrance screen background
-         * and closed door panels so the first present is not a dungeon
-         * viewport. */
-        memset(framebuffer, 0, (size_t)M11_FB_BYTES);
-        (void)ENTRANCE_Compat_DrawFallbackClosedDoors(framebuffer,
-                                                      M11_FB_WIDTH,
-                                                      M11_FB_HEIGHT);
+    if (!m11_draw_entrance_screen_asset(gameView, framebuffer) ||
+        !m11_draw_entrance_closed_doors_asset(gameView, framebuffer)) {
+        free(dungeonFrame);
+        return 0;
     }
 
     /* ReDMCSB ENTRANCE.C presents C004/C002/C003 before it starts waiting
@@ -824,13 +782,10 @@ static int m11_play_redmcsb_entrance_transition(
             memset(framebuffer, 0, (size_t)M11_FB_BYTES);
         } else if (command.render_kind ==
                    DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34) {
-            if (m11_draw_entrance_screen_asset(gameView, framebuffer)) {
-                (void)m11_draw_entrance_closed_doors_asset(gameView, framebuffer);
-            } else {
-                memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
-                (void)ENTRANCE_Compat_DrawFallbackClosedDoors(framebuffer,
-                                                              M11_FB_WIDTH,
-                                                              M11_FB_HEIGHT);
+            if (!m11_draw_entrance_screen_asset(gameView, framebuffer) ||
+                !m11_draw_entrance_closed_doors_asset(gameView, framebuffer)) {
+                free(dungeonFrame);
+                return 0;
             }
         } else if (command.render_kind ==
                    DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34) {
@@ -854,12 +809,13 @@ static int m11_play_redmcsb_entrance_transition(
                     (void)M11_Audio_EmitMarker(&gameView->audioState,
                                                M11_AUDIO_MARKER_DOOR);
                 }
-                if (!m11_draw_entrance_opening_doors_asset(gameView, framebuffer, dungeonFrame, &door)) {
-                    memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
-                    (void)ENTRANCE_Compat_DrawFallbackOpeningDoorFrame(framebuffer,
-                                                                       M11_FB_WIDTH,
-                                                                       M11_FB_HEIGHT,
-                                                                       &door);
+                if (!m11_draw_entrance_opening_doors_asset(
+                        gameView,
+                        framebuffer,
+                        dungeonFrame,
+                        &door)) {
+                    free(dungeonFrame);
+                    return 0;
                 }
             }
         } else {
@@ -981,7 +937,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
             if (ev.type == SDL_EVENT_KEY_DOWN) {
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
-                        M11_Entrance_DispatchSourceLockedKeyCommand((int)ev.key.key));
+                        m11_entrance_dispatch_source_locked_key_command((int)ev.key.key));
                 if (keyCommand != M11_ENTRANCE_COMMAND_NONE) return keyCommand;
             }
             if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
@@ -1012,7 +968,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
             if (ev.type == SDL_KEYDOWN) {
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
-                        M11_Entrance_DispatchSourceLockedKeyCommand((int)ev.key.keysym.sym));
+                        m11_entrance_dispatch_source_locked_key_command((int)ev.key.keysym.sym));
                 if (keyCommand != M11_ENTRANCE_COMMAND_NONE) return keyCommand;
             }
             if (ev.type == SDL_MOUSEBUTTONDOWN) {
@@ -1045,9 +1001,10 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
          * drained above and must not count as that command.  Therefore timeout
          * auto-enter is strictly a dummy-video/autotest escape hatch, never an
          * interactive runtime behavior. */
-        if (M11_Entrance_ShouldAutoEnterForTimeout(allowHeadlessTimeout,
-                                                   autoEnterAfterMs,
-                                                   (uint64_t)(SDL_GetTicks() - started))) {
+        if (ENTRANCE_Compat_ShouldAutoEnterForTimeout(
+                allowHeadlessTimeout,
+                autoEnterAfterMs,
+                (unsigned long long)(SDL_GetTicks() - started))) {
             return M11_ENTRANCE_COMMAND_ENTER;
         }
         SDL_Delay(16);
@@ -1127,18 +1084,6 @@ static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs) {
     return 0;
 }
 
-static int m11_dm1_startup_media_receipt_for_source(
-    const char* sourceId,
-    DM1_V1_StartupFullGraphicsMediaReceipt_PC34* outReceipt) {
-    if (!outReceipt) {
-        return 0;
-    }
-    if (!dm1_v1_startup_full_graphics_media_receipt_pc34(sourceId, outReceipt)) {
-        return 0;
-    }
-    return outReceipt->handled ? 1 : 0;
-}
-
 /* ReDMCSB NECIO.C F0022 lines 3592-3609 and TITLE.C F0437 lines 319-409:
  * DM1 startup presents SWSH palette waits and TITLE C001 palette/timing in
  * source order.  Keep production rendering on the DM1 receipt so M11 does
@@ -1180,9 +1125,11 @@ static void m11_play_ftl_swoosh_for_game_if_available(
         hasDm1Media = 1;
     } else if (gameId && strcmp(gameId, "dm1") == 0) {
         hasDm1Media =
-            m11_dm1_startup_media_receipt_for_source(gameId, &dm1Media);
+            dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
+                gameId,
+                &dm1Media);
     }
-    if (!M11_SWSH_Intro_FindLogoPathForGame(menuState,
+    if (!V1_SWSH_Intro_FindLogoPathForGame(menuState,
                                             dataDir,
                                             gameId,
                                             logoPath,
@@ -1298,13 +1245,17 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     }
     titleGraphic = M11_AssetLoader_Load(&gameView->assetLoader, 1U);
     {
-        V1_TitleFrontendRuntimeSourceDecision sourceDecision =
-            V1_TitleFrontend_SelectRuntimeSource(
+        DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 sourceReceipt;
+        if (!dm1_v1_startup_title_runtime_source_receipt_pc34(
+                "dm1",
                 titleGraphic != NULL,
                 titleGraphic ? titleGraphic->width : 0U,
                 titleGraphic ? titleGraphic->height : 0U,
-                0);
-        if (sourceDecision.source != V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001) {
+                0,
+                &sourceReceipt) ||
+            !sourceReceipt.handled ||
+            sourceReceipt.selected_runtime_source !=
+                (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001) {
             return 0;
         }
     }
@@ -1319,7 +1270,9 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         hasDm1Media = 1;
     } else {
         hasDm1Media =
-            m11_dm1_startup_media_receipt_for_source("dm1", &dm1Media);
+            dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
+                "dm1",
+                &dm1Media);
     }
 
     memset(&titleAudio, 0, sizeof(titleAudio));
@@ -1471,7 +1424,7 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                                                           dm1MediaReceipt)) {
         return;
     }
-    if (!M11_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
+    if (!V1_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
         fprintf(stderr,
                 "Firestaff V1 original TITLE intro skipped: no GRAPHICS.DAT C001 title graphic "
                 "or DM PC 3.4 TITLE fallback file found; set FIRESTAFF_TITLE_DAT or install "
@@ -1494,7 +1447,9 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
         hasDm1Media = 1;
     } else {
         hasDm1Media =
-            m11_dm1_startup_media_receipt_for_source("dm1", &dm1Media);
+            dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
+                "dm1",
+                &dm1Media);
     }
 
     memset(&titleAudio, 0, sizeof(titleAudio));
@@ -1740,7 +1695,7 @@ static int m11_dm1_host_resolve_resume_save_path(void* user,
     if (!ctx || !ctx->menuState) {
         return 0;
     }
-    return M11_Entrance_ResolveDm1ResumeSavePath(
+    return ENTRANCE_Compat_ResolveDm1ResumeSavePath(
         source_id,
         ctx->menuState->quickResumeAvailable,
         ctx->menuState->quickResumeGameId,
@@ -2266,8 +2221,14 @@ static void m11_phase_a_print_boot_probe_receipt(
                 scriptFrames);
         return;
     }
+    {
+        DM1_V1_StartupHoCBootProbeLogReceipt_PC34 dm1Log;
+        memset(&dm1Log, 0, sizeof(dm1Log));
+        dm1_v1_startup_hoc_boot_probe_log_receipt_pc34(
+            &receipt.dm1HoCBootSummary,
+            &dm1Log);
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCRealAssetCapture=%d dm1HoCMacWindowCapture=%d dm1HoCReleaseAppCapture=%d dm1HoCHostCaptureRouteMatches=%d dm1HoCReleaseCaptureOwnershipReady=%d dm1HoCHostRenderConsumer=%d dm1HoCM11BootProbeConsumer=%d dm1HoCLaunchPathReady=%d dm1HoCRequiredAssetCapture=%d dm1HoCReceiptOnlyConsumerReady=%d dm1HoCLowerLevelHelpersReady=%d dm1HoCHostDrawUsesOwnedReceipt=%d dm1HoCHostDrawConsumesBackingAsset=%d dm1HoCHostDrawRejectsBackingFallback=%d dm1HoCHoCAssetCapture=%d dm1HoCHostWindowCapture=%d dm1HoCPresentedCapture=%d dm1HoCPresentedCaptureSize=%dx%d dm1HoCPresentedCaptureGeometry=%d dm1HoCPresentedCapturePixels=%d dm1HoCPresentedCaptureBytes=%d dm1HoCPresentedCaptureHash=%08x dm1HoCPresentedCaptureChain=%d dm1HoCPresentedCaptureConsumerMask=%x dm1HoCPresentedCaptureChainHash=%08x dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d dm1CompleteSupportReady=%d dm1CompleteSourceVisibleStartup=%d dm1CompleteEntranceToHoC=%d dm1CompleteHoCRenderRoute=%d dm1CompleteHostAppCaptureRoute=%d dm1CompleteSaveCorpusRoute=%d dm1CompleteOriginalSaveRoundtripRoute=%d\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d %s\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -2294,51 +2255,8 @@ static void m11_phase_a_print_boot_probe_receipt(
             (unsigned int)receipt.dm1WorldTick,
             receipt.startedFromLauncher,
             receipt.dm1StartupIntroBypassed,
-            receipt.dm1HoCFullGraphicsReady,
-            receipt.dm1HoCHostRenderPlanReady,
-            receipt.dm1HoCCaptureProofPassed,
-            receipt.dm1HoCRuntimeApplyReady,
-            receipt.dm1HoCProductionConsumerReady,
-            receipt.dm1HoCNoHostFallbackVisuals,
-            receipt.dm1HoCRealAssetCapture,
-            receipt.dm1HoCMacWindowCapture,
-            receipt.dm1HoCReleaseAppCapture,
-            receipt.dm1HoCHostCaptureRouteMatches,
-            receipt.dm1HoCReleaseCaptureOwnershipReady,
-            receipt.dm1HoCHostRenderConsumerReady,
-            receipt.dm1HoCM11BootProbeConsumerReady,
-            receipt.dm1HoCLaunchPathReady,
-            receipt.dm1HoCRequiredAssetCapture,
-            receipt.dm1HoCReceiptOnlyConsumerReady,
-            receipt.dm1HoCLowerLevelHelpersReady,
-            receipt.dm1HoCHostDrawUsesOwnedReceipt,
-            receipt.dm1HoCHostDrawConsumesBackingAsset,
-            receipt.dm1HoCHostDrawRejectsBackingFallback,
-            receipt.dm1HoCHoCAssetCapture,
-            receipt.dm1HoCHostWindowCapture,
-            receipt.dm1HoCPresentedCapture,
-            receipt.dm1HoCPresentedCaptureWidth,
-            receipt.dm1HoCPresentedCaptureHeight,
-            receipt.dm1HoCPresentedCaptureGeometry,
-            receipt.dm1HoCPresentedCapturePixels,
-            receipt.dm1HoCPresentedCaptureBytes,
-            receipt.dm1HoCPresentedCaptureHash,
-            receipt.dm1HoCPresentedCaptureChainReady,
-            receipt.dm1HoCPresentedCaptureConsumerMask,
-            receipt.dm1HoCPresentedCaptureChainHash,
-            receipt.dm1HoCOpenedEntranceFrame,
-            receipt.dm1HoCHallMirrorOverlay,
-            receipt.dm1HoCBlockedEnterUntilChampion,
-            receipt.dm1HoCMapWidth,
-            receipt.dm1HoCMapHeight,
-            receipt.dm1HoCRenderCommandCount,
-            receipt.dm1CompleteSupportReady,
-            receipt.dm1CompleteSourceVisibleStartup,
-            receipt.dm1CompleteEntranceToHoC,
-            receipt.dm1CompleteHoCRenderRoute,
-            receipt.dm1CompleteHostAppCaptureRoute,
-            receipt.dm1CompleteSaveCorpusRoute,
-            receipt.dm1CompleteOriginalSaveRoundtripRoute);
+            dm1Log.fields[0] ? dm1Log.fields : "dm1HoCBootSummary=missing");
+    }
 }
 
 static int m11_boot_probe_expected_phase_is_runtime(const char *phase) {
@@ -2364,27 +2282,6 @@ static int m11_boot_probe_runtime_receipt_ready(
            !receipt->startupActive &&
            receipt->levelLoaded;
 }
-
-static int m11_dm1_boot_probe_complete_support_ready(
-    const M11_BootProbeReceipt* receipt)
-{
-    return receipt &&
-           receipt->dm1CompleteSupportReady &&
-           receipt->dm1CompleteSourceVisibleStartup &&
-           receipt->dm1CompleteEntranceToHoC &&
-           receipt->dm1CompleteHoCRenderRoute &&
-           receipt->dm1CompleteHostAppCaptureRoute &&
-           receipt->dm1CompleteSaveCorpusRoute &&
-           receipt->dm1CompleteOriginalSaveRoundtripRoute;
-}
-
-static int m11_dm1_boot_probe_release_app_capture_ready(
-    const M11_BootProbeReceipt* receipt)
-{
-    return m11_dm1_boot_probe_complete_support_ready(receipt) &&
-           receipt->dm1CompleteHostAppCaptureRoute;
-}
-
 
 static void m11_write_autotest_runtime_probe(const char* path,
                                              int launchedEver,
@@ -2832,10 +2729,10 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
         m11_map_presented_game_point_to_source(gameView, &x, &y);
         if (outResult) {
             *outResult = M11_GameView_HandlePointerButton(
-                gameView, x, y, M11_DM1_MOUSE_MASK_LEFT);
+                gameView, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
         } else {
             (void)M11_GameView_HandlePointerButton(
-                gameView, x, y, M11_DM1_MOUSE_MASK_LEFT);
+                gameView, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
         }
         return 1;
     }
@@ -3247,13 +3144,19 @@ static int m11_dm1_rename_consume_text_input(M11_GameViewState* gameView,
                                              M11_GameInputResult* outResult) {
     int changed = 0;
     const unsigned char* p = (const unsigned char*)text;
-    if (!m11_dm1_rename_text_input_active(gameView)) {
-        return 0;
-    }
     while (p && *p) {
         unsigned char ch = *p++;
-        if (dm1_v1_resurrection_rename_ui_gate_host_text_byte_pc34((int)ch) &&
-            m11_dm1_rename_apply_ascii(gameView, (int)ch) ==
+        DM1_V1_ResurrectionRenameUiHostTextByteDecisionPc34Compat decision;
+        if (!dm1_v1_resurrection_rename_ui_gate_host_text_byte_decision_pc34(
+                gameView ? gameView->active : 0,
+                gameView ? gameView->candidateMirrorPanelActive : 0,
+                gameView ? gameView->candidateMirrorRenameActive : 0,
+                (int)ch,
+                &decision)) {
+            return 0;
+        }
+        if (decision.useAscii &&
+            m11_dm1_rename_apply_ascii(gameView, decision.ascii) ==
                 M11_GAME_INPUT_REDRAW) {
             changed = 1;
         }
@@ -3288,9 +3191,6 @@ m11_dm1_rename_handle_keydown(M11_GameViewState* gameView,
                               int keypadEnterKey) {
     DM1_V1_ResurrectionRenameUiHostKeyDecisionPc34Compat decision;
     int hostKey = DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_OTHER_PC34_COMPAT;
-    if (!m11_dm1_rename_text_input_active(gameView)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
     /* ReDMCSB REVIVE.C F0281:535-545 uses Return to move from name to
      * title, F0281:549-567 uses backspace within the active field, and
      * F0282:806-808 enters F0281 from C161.  Consume all other keydown
@@ -3305,8 +3205,11 @@ m11_dm1_rename_handle_keydown(M11_GameViewState* gameView,
     } else if (key == keypadEnterKey) {
         hostKey = DM1_V1_RESURRECTION_RENAME_UI_HOST_KEY_KEYPAD_RETURN_PC34_COMPAT;
     }
-    if (!dm1_v1_resurrection_rename_ui_gate_host_keydown_decision_pc34(
-            &gameView->candidateMirrorRename,
+    if (!dm1_v1_resurrection_rename_ui_gate_host_keydown_route_pc34(
+            gameView ? gameView->active : 0,
+            gameView ? gameView->candidateMirrorPanelActive : 0,
+            gameView ? gameView->candidateMirrorRenameActive : 0,
+            gameView ? &gameView->candidateMirrorRename : NULL,
             hostKey,
             &decision)) {
         return M11_GAME_INPUT_IGNORED;
@@ -3432,8 +3335,8 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     mappedX,
                     mappedY,
                     ev.button.button == SDL_BUTTON_RIGHT
-                        ? M11_DM1_MOUSE_MASK_RIGHT
-                        : M11_DM1_MOUSE_MASK_LEFT);
+                        ? DM1_V1_MOUSE_MASK_RIGHT_PC34
+                        : DM1_V1_MOUSE_MASK_LEFT_PC34);
                 if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
                     return M12_MENU_INPUT_NONE;
                 }
@@ -3794,8 +3697,8 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     mappedX,
                     mappedY,
                     ev.button.button == SDL_BUTTON_RIGHT
-                        ? M11_DM1_MOUSE_MASK_RIGHT
-                        : M11_DM1_MOUSE_MASK_LEFT);
+                        ? DM1_V1_MOUSE_MASK_RIGHT_PC34
+                        : DM1_V1_MOUSE_MASK_LEFT_PC34);
                 if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
                     return M12_MENU_INPUT_NONE;
                 }
@@ -4540,76 +4443,34 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
             if (o->bootProbeExpectDm1HoCFullGraphics) {
-                if (!m11_dm1_boot_probe_complete_support_ready(&receipt)) {
+                DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34 expectation;
+                memset(&expectation, 0, sizeof(expectation));
+                if (!dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
+                        &receipt.dm1HoCBootSummary,
+                        DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_COMPLETE_SUPPORT_PC34,
+                        &expectation) ||
+                    !expectation.ready) {
                     fprintf(stderr,
-                            "firestaff: boot-probe expected DM1 HoC complete support but got complete=%d source=%d entrance=%d renderRoute=%d hostApp=%d saveCorpus=%d originalSave=%d ready=%d render=%d proof=%d apply=%d consumer=%d real=%d mac=%d release=%d hostWindow=%d presented=%d presentedGeometry=%d presentedPixels=%d presentedHash=%08x presentedChain=%d presentedChainHash=%08x route=%d ownership=%d hostRender=%d m11Consumer=%d launchPath=%d requiredAssets=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d hocAsset=%d opened=%d mirrors=%d block=%d commands=%d\n",
-                            receipt.dm1CompleteSupportReady,
-                            receipt.dm1CompleteSourceVisibleStartup,
-                            receipt.dm1CompleteEntranceToHoC,
-                            receipt.dm1CompleteHoCRenderRoute,
-                            receipt.dm1CompleteHostAppCaptureRoute,
-                            receipt.dm1CompleteSaveCorpusRoute,
-                            receipt.dm1CompleteOriginalSaveRoundtripRoute,
-                            receipt.dm1HoCFullGraphicsReady,
-                            receipt.dm1HoCHostRenderPlanReady,
-                            receipt.dm1HoCCaptureProofPassed,
-                            receipt.dm1HoCRuntimeApplyReady,
-                            receipt.dm1HoCProductionConsumerReady,
-                            receipt.dm1HoCRealAssetCapture,
-                            receipt.dm1HoCMacWindowCapture,
-                            receipt.dm1HoCReleaseAppCapture,
-                            receipt.dm1HoCHostWindowCapture,
-                            receipt.dm1HoCPresentedCapture,
-                            receipt.dm1HoCPresentedCaptureGeometry,
-                            receipt.dm1HoCPresentedCapturePixels,
-                            receipt.dm1HoCPresentedCaptureHash,
-                            receipt.dm1HoCPresentedCaptureChainReady,
-                            receipt.dm1HoCPresentedCaptureChainHash,
-                            receipt.dm1HoCHostCaptureRouteMatches,
-                            receipt.dm1HoCReleaseCaptureOwnershipReady,
-                            receipt.dm1HoCHostRenderConsumerReady,
-                            receipt.dm1HoCM11BootProbeConsumerReady,
-                            receipt.dm1HoCLaunchPathReady,
-                            receipt.dm1HoCRequiredAssetCapture,
-                            receipt.dm1HoCReceiptOnlyConsumerReady,
-                            receipt.dm1HoCLowerLevelHelpersReady,
-                            receipt.dm1HoCHostDrawUsesOwnedReceipt,
-                            receipt.dm1HoCHostDrawConsumesBackingAsset,
-                            receipt.dm1HoCHostDrawRejectsBackingFallback,
-                            receipt.dm1HoCNoHostFallbackVisuals,
-                            receipt.dm1HoCHoCAssetCapture,
-                            receipt.dm1HoCOpenedEntranceFrame,
-                            receipt.dm1HoCHallMirrorOverlay,
-                            receipt.dm1HoCBlockedEnterUntilChampion,
-                            receipt.dm1HoCRenderCommandCount);
+                            "firestaff: boot-probe expected DM1 HoC complete support but got %s\n",
+                            expectation.diagnostic[0] ?
+                                expectation.diagnostic :
+                                "missing DM1 expectation diagnostic");
                     runRc = 4;
                 }
             }
             if (o->bootProbeExpectDm1HoCReleaseAppCapture) {
-                if (!m11_dm1_boot_probe_release_app_capture_ready(&receipt)) {
+                DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34 expectation;
+                memset(&expectation, 0, sizeof(expectation));
+                if (!dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
+                        &receipt.dm1HoCBootSummary,
+                        DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_RELEASE_APP_CAPTURE_PC34,
+                        &expectation) ||
+                    !expectation.ready) {
                     fprintf(stderr,
-                            "firestaff: boot-probe expected DM1 HoC release-app host capture but got mac=%d release=%d hostWindow=%d presented=%d presentedGeometry=%d presentedPixels=%d presentedHash=%08x presentedChain=%d presentedChainHash=%08x route=%d ownership=%d hostRender=%d m11Consumer=%d launchPath=%d requiredAssets=%d receiptOnly=%d helpers=%d ownedHostDraw=%d backingAsset=%d rejectBackingFallback=%d noFallback=%d\n",
-                            receipt.dm1HoCMacWindowCapture,
-                            receipt.dm1HoCReleaseAppCapture,
-                            receipt.dm1HoCHostWindowCapture,
-                            receipt.dm1HoCPresentedCapture,
-                            receipt.dm1HoCPresentedCaptureGeometry,
-                            receipt.dm1HoCPresentedCapturePixels,
-                            receipt.dm1HoCPresentedCaptureHash,
-                            receipt.dm1HoCPresentedCaptureChainReady,
-                            receipt.dm1HoCPresentedCaptureChainHash,
-                            receipt.dm1HoCHostCaptureRouteMatches,
-                            receipt.dm1HoCReleaseCaptureOwnershipReady,
-                            receipt.dm1HoCHostRenderConsumerReady,
-                            receipt.dm1HoCM11BootProbeConsumerReady,
-                            receipt.dm1HoCLaunchPathReady,
-                            receipt.dm1HoCRequiredAssetCapture,
-                            receipt.dm1HoCReceiptOnlyConsumerReady,
-                            receipt.dm1HoCLowerLevelHelpersReady,
-                            receipt.dm1HoCHostDrawUsesOwnedReceipt,
-                            receipt.dm1HoCHostDrawConsumesBackingAsset,
-                            receipt.dm1HoCHostDrawRejectsBackingFallback,
-                            receipt.dm1HoCNoHostFallbackVisuals);
+                            "firestaff: boot-probe expected DM1 HoC release-app host capture but got %s\n",
+                            expectation.diagnostic[0] ?
+                                expectation.diagnostic :
+                                "missing DM1 expectation diagnostic");
                     runRc = 4;
                 }
             }

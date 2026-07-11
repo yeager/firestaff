@@ -205,3 +205,30 @@ int dm1_v1_door_panel_graphic_for_set_depth_pc34(
     depthOffset = 2 - depthIndex;
     return DM1_GFX_DOOR_SET0_D3_PC34 + doorSet * 3 + depthOffset;
 }
+
+int dm1_v1_door_panel_graphic_for_map_depth_pc34(
+    int doorType,
+    int mapDoorSet0,
+    int mapDoorSet1,
+    int depthIndex)
+{
+    int doorSet = (doorType & 1) ? mapDoorSet1 : mapDoorSet0;
+    return dm1_v1_door_panel_graphic_for_set_depth_pc34(doorSet, depthIndex);
+}
+
+int dm1_v1_door_panel_graphic_for_current_map_depth_pc34(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int doorType,
+    int depthIndex)
+{
+    if (!dungeon || !dungeon->maps || mapIndex < 0 ||
+        mapIndex >= dungeon->header.mapCount) {
+        return -1;
+    }
+    return dm1_v1_door_panel_graphic_for_map_depth_pc34(
+        doorType,
+        (int)dungeon->maps[mapIndex].doorSet0,
+        (int)dungeon->maps[mapIndex].doorSet1,
+        depthIndex);
+}

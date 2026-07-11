@@ -39,8 +39,7 @@
  *
  *   MAGIC + CHAMPION.C runtime shield state (partyShieldDefense,
  *   spellShieldDefense, fireShieldDefense):
- *     - The M11 G0493/G0494/G0495 stack already exposed by
- *       M11_GameView_GetV1StatusShieldBorderGraphicForChampion copies
+ *     - dm1_v1_champion_status_shield_border_graphics_pc34 copies
  *       the ReDMCSB F0292 append order (fire, spell, party — drawn
  *       in reverse).  When ALL three defenses are zero the count is
  *       0, which is the DISABLED side of the shield-border active
@@ -49,10 +48,10 @@
  * Companion to:
  *   - dm1_v1_graphic560_action_disabled_ticks_pc34_compat
  *     (G0491 table bytes contract)
- *   - M11_GameView_GetV1StatusShieldBorderGraphicForChampion
+ *   - dm1_v1_champion_status_shield_border_graphics_pc34
  *     (shield-border ENABLED pixel path — separate lane)
- *   - M11_GameView_ShouldHatchV1ActionIconCells
- *     (global hatch gate — separate lane)
+ *   - dm1_v1_champion_panel_action_icon_global_hatch_pc34
+ *     (global hatch gate)
  *   - firestaff_dm1_v1_champion_panel_shield_border_pixel_probe
  *     (asset-backed ENABLED shield pixel probe — separate lane)
  *   - firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe
@@ -200,6 +199,19 @@ typedef struct DM1_V1_ChampionPanelDisabledIconResolveResultPc34Compat {
  * pulling in another shared module. */
 int DM1_V1_ChampionPanelDisabledIconState_DisabledTicksPc34Compat(
     int action_index);
+
+int dm1_v1_champion_panel_action_icon_global_hatch_pc34(
+    int candidate_champion_ordinal,
+    bool candidate_mirror_panel_active,
+    bool party_is_resting);
+
+int dm1_v1_champion_panel_action_icon_map_palette_color_pc34(
+    int color_index,
+    bool apply_action_palette);
+
+int dm1_v1_champion_panel_action_icon_cell_backdrop_color_pc34(
+    bool champion_present,
+    bool champion_dead);
 
 const DM1_V1_ChampionPanelDisabledIconEvidencePc34Compat *
 DM1_V1_ChampionPanelDisabledIconState_EvidencePc34Compat(void);

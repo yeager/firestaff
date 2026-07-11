@@ -68,6 +68,15 @@ typedef struct {
 } dm1_v1_champion_panel_food_water_status_box_input_pc34_t;
 
 typedef struct {
+    int zone_id;
+    int x;
+    int y;
+    int w;
+    int h;
+    int shadow_offset;
+} dm1_v1_champion_panel_food_water_bar_zone_pc34_t;
+
+typedef struct {
     dm1_v1_champion_panel_food_water_status_box_operation_kind_pc34_t kind;
     int sequence;
     int graphic_id;
@@ -136,6 +145,12 @@ dm1_v1_champion_panel_food_water_status_box_source_evidence_pc34(void);
 
 dm1_v1_champion_panel_food_water_status_box_input_pc34_t
 dm1_v1_champion_panel_food_water_status_box_default_input_pc34(void);
+
+dm1_v1_champion_panel_food_water_bar_zone_pc34_t
+dm1_v1_champion_panel_food_bar_zone_pc34(void);
+
+dm1_v1_champion_panel_food_water_bar_zone_pc34_t
+dm1_v1_champion_panel_water_bar_zone_pc34(void);
 
 dm1_v1_champion_panel_food_water_status_box_result_pc34_t
 dm1_v1_champion_panel_food_water_status_box_probe_pc34(
