@@ -32165,7 +32165,14 @@ static int m11_v1_mouse_route_zone_rect(int zoneId,
                                                   outX, outY, outW, outH);
     }
     if (zoneId == 101) {
-        return M11_GameView_GetV1InventoryPanelZone(outX, outY, outW, outH);
+        DM1_V1_LayoutZoneRectPc34 panelRect =
+            dm1_v1_inventory_panel_rect_pc34();
+        if (!dm1_v1_inventory_panel_zone_id_pc34()) return 0;
+        if (outX) *outX = panelRect.x;
+        if (outY) *outY = panelRect.y;
+        if (outW) *outW = panelRect.w;
+        if (outH) *outH = panelRect.h;
+        return 1;
     }
     if (zoneId == 545 || zoneId == 546) {
         if (outX) *outX = (zoneId == 545) ? 56 : 12;
@@ -32544,8 +32551,17 @@ static int m11_draw_v1_inventory_champion_stats_panel(
         M11_GameView_GetV1LeaderHandThing(state) != THING_NONE ||
         state->world.party.activeChampionIndex < 0 ||
         state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY ||
-        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
+        !dm1_v1_inventory_panel_zone_id_pc34()) {
         return 0;
+    }
+
+    {
+        DM1_V1_LayoutZoneRectPc34 panelRect =
+            dm1_v1_inventory_panel_rect_pc34();
+        panelX = panelRect.x;
+        panelY = panelRect.y;
+        panelW = panelRect.w;
+        panelH = panelRect.h;
     }
 
     champ = &state->world.party.champions[state->world.party.activeChampionIndex];
@@ -32554,7 +32570,7 @@ static int m11_draw_v1_inventory_champion_stats_panel(
     if (state->assetsAvailable) {
         const M11_AssetSlot* panel = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)M11_GameView_GetV1ObjectDescriptionPanelGraphicId());
+            (unsigned int)dm1_v1_graphic_panel_empty_pc34());
         if (panel && (int)panel->width == panelW && (int)panel->height == panelH) {
             M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
                                  M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
@@ -36689,8 +36705,16 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
             state, decoded, sizeof(decoded))) {
         return 0;
     }
-    if (!M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
-        return 0;
+    {
+        DM1_V1_LayoutZoneRectPc34 panelRect =
+            dm1_v1_inventory_panel_rect_pc34();
+        if (!dm1_v1_inventory_panel_zone_id_pc34()) {
+            return 0;
+        }
+        panelX = panelRect.x;
+        panelY = panelRect.y;
+        panelW = panelRect.w;
+        panelH = panelRect.h;
     }
 
     /* ReDMCSB PANEL.C F0347 chooses the action-hand scroll as panel
@@ -36699,7 +36723,7 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
     if (state && state->assetsAvailable) {
         const M11_AssetSlot* scrollPanel = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)M11_GameView_GetV1OpenScrollPanelGraphicId());
+            (unsigned int)dm1_v1_graphic_panel_open_scroll_pc34());
         if (scrollPanel && (int)scrollPanel->width == panelW &&
             (int)scrollPanel->height == panelH) {
             M11_AssetLoader_Blit(scrollPanel,
@@ -36758,11 +36782,30 @@ static int m11_draw_v1_inventory_object_description_panel(
         M11_GameView_GetV1LeaderHandThing(state) != state->v1ObjectDescriptionThing) {
         return 0;
     }
-    if (!M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH) ||
-        !M11_GameView_GetV1ObjectDescriptionCircleZone(&circleX, &circleY, &circleW, &circleH) ||
-        !M11_GameView_GetV1ObjectDescriptionIconZone(&iconX, &iconY, &iconW, &iconH) ||
-        !M11_GameView_GetV1ObjectDescriptionContinuationOrigin(&bodyX, &bodyY)) {
-        return 0;
+    {
+        DM1_V1_LayoutZoneRectPc34 panelRect =
+            dm1_v1_inventory_panel_rect_pc34();
+        DM1_V1_LayoutZoneRectPc34 circleRect =
+            dm1_v1_object_description_circle_rect_pc34();
+        DM1_V1_LayoutZoneRectPc34 iconRect =
+            dm1_v1_object_description_icon_rect_pc34();
+        panelX = panelRect.x;
+        panelY = panelRect.y;
+        panelW = panelRect.w;
+        panelH = panelRect.h;
+        circleX = circleRect.x;
+        circleY = circleRect.y;
+        circleW = circleRect.w;
+        circleH = circleRect.h;
+        iconX = iconRect.x;
+        iconY = iconRect.y;
+        iconW = iconRect.w;
+        iconH = iconRect.h;
+        if (!dm1_v1_inventory_panel_zone_id_pc34() ||
+            !dm1_v1_object_description_continuation_origin_pc34(
+                &bodyX, &bodyY)) {
+            return 0;
+        }
     }
 
     textStyle.color = M11_COLOR_SILVER;
@@ -36773,7 +36816,7 @@ static int m11_draw_v1_inventory_object_description_panel(
     if (state->assetsAvailable) {
         const M11_AssetSlot* panel = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)M11_GameView_GetV1ObjectDescriptionPanelGraphicId());
+            (unsigned int)dm1_v1_graphic_panel_empty_pc34());
         if (panel && (int)panel->width == panelW && (int)panel->height == panelH) {
             M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
                                  M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
@@ -36793,7 +36836,7 @@ static int m11_draw_v1_inventory_object_description_panel(
     if (state->assetsAvailable) {
         const M11_AssetSlot* circle = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)M11_GameView_GetV1ObjectDescriptionCircleGraphicId());
+            (unsigned int)dm1_v1_graphic_object_description_circle_pc34());
         if (circle && circle->pixels && circle->width > 0 && circle->height > 0 &&
             (int)circle->width <= circleW &&
             (int)circle->height <= circleH) {
@@ -36828,9 +36871,22 @@ static int m11_draw_v1_inventory_object_description_panel(
                       iconW, iconH, M11_COLOR_SILVER);
     }
 
-    if (M11_GameView_GetV1ObjectDescriptionNameZoneForText(
-            m11_measure_text_pixels(state->v1ObjectDescriptionName, &textStyle),
-            7, &nameX, &nameY, &nameW, &nameH)) {
+    {
+        DM1_V1_LayoutZoneRectPc34 nameRect;
+        if (dm1_v1_object_description_name_rect_for_text_pc34(
+                m11_measure_text_pixels(state->v1ObjectDescriptionName,
+                                        &textStyle),
+                7, &nameRect)) {
+            nameX = nameRect.x;
+            nameY = nameRect.y;
+            nameW = nameRect.w;
+            nameH = nameRect.h;
+        } else {
+            nameW = 0;
+            nameH = 0;
+        }
+    }
+    if (nameW > 0 && nameH > 0) {
         (void)nameW;
         (void)nameH;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
@@ -36891,14 +36947,22 @@ static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     champ = &state->world.party.champions[championIndex];
     if (!champ->present) return 0;
-    if (!M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH)) {
-        return 0;
+    {
+        DM1_V1_LayoutZoneRectPc34 panelRect =
+            dm1_v1_inventory_panel_rect_pc34();
+        if (!dm1_v1_inventory_panel_zone_id_pc34()) {
+            return 0;
+        }
+        panelX = panelRect.x;
+        panelY = panelRect.y;
+        panelW = panelRect.w;
+        panelH = panelRect.h;
     }
 
     if (state->assetsAvailable) {
         const M11_AssetSlot* panel = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)M11_GameView_GetV1InventoryPanelGraphicId());
+            (unsigned int)dm1_v1_graphic_panel_empty_pc34());
         if (panel && (int)panel->width == panelW && (int)panel->height == panelH) {
             M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
                                  M11_VIEWPORT_X + panelX,
@@ -36919,10 +36983,10 @@ static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state
     if (state->assetsAvailable) {
         const M11_AssetSlot* food = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)M11_GameView_GetV1FoodLabelGraphicId());
+            (unsigned int)dm1_v1_graphic_food_label_pc34());
         const M11_AssetSlot* water = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)M11_GameView_GetV1WaterLabelGraphicId());
+            (unsigned int)dm1_v1_graphic_water_label_pc34());
         if (food && food->pixels && food->width > 0 && food->height > 0) {
             M11_AssetLoader_Blit(food, framebuffer, framebufferWidth, framebufferHeight,
                                  M11_VIEWPORT_X + panelX + 32,
@@ -37045,8 +37109,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         const M11_AssetSlot* panelBg = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
             (unsigned int)(state->showDebugHUD
-                ? M11_GameView_GetV1InventoryPanelGraphicId()
-                : M11_GameView_GetV1InventoryBackdropGraphicId()));
+                ? dm1_v1_graphic_panel_empty_pc34()
+                : dm1_v1_graphic_inventory_backdrop_pc34()));
         if (panelBg && panelBg->width > 0 && panelBg->height > 0) {
             if (!state->showDebugHUD &&
                 panelBg->width == M11_VIEWPORT_W && panelBg->height == M11_VIEWPORT_H) {
@@ -37063,8 +37127,15 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     if (!state->showDebugHUD && state->candidateMirrorPanelActive) {
         int zx = 0, zy = 0, zw = 0, zh = 0;
         int drewPanel = 0;
-        if (M11_GameView_GetV1InventoryPanelZone(&zx, &zy, &zw, &zh) &&
-            state->assetsAvailable) {
+        {
+            DM1_V1_LayoutZoneRectPc34 panelRect =
+                dm1_v1_inventory_panel_rect_pc34();
+            zx = panelRect.x;
+            zy = panelRect.y;
+            zw = panelRect.w;
+            zh = panelRect.h;
+        }
+        if (dm1_v1_inventory_panel_zone_id_pc34() && state->assetsAvailable) {
             const M11_AssetSlot* rrPanel = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
                 (unsigned int)(state->candidateMirrorRenameActive
@@ -37078,7 +37149,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 drewPanel = 1;
             }
         }
-        if (!drewPanel && M11_GameView_GetV1InventoryPanelZone(&zx, &zy, &zw, &zh)) {
+        if (!drewPanel && dm1_v1_inventory_panel_zone_id_pc34()) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
                           zw, zh, M11_COLOR_GREEN);
@@ -37203,14 +37274,19 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             int chestOrdinal;
             int chestPanelX = 0, chestPanelY = 0, chestPanelW = 0, chestPanelH = 0;
             (void)m11_v1_read_open_chest_slots(state, chestSlots);
+            {
+                DM1_V1_LayoutZoneRectPc34 panelRect =
+                    dm1_v1_inventory_panel_rect_pc34();
+                chestPanelX = panelRect.x;
+                chestPanelY = panelRect.y;
+                chestPanelW = panelRect.w;
+                chestPanelH = panelRect.h;
+            }
             /* ReDMCSB PANEL.C:1132-1133 routes containers to CHEST.C F0333;
              * CHEST.C:43-48 opens G0426_T_OpenChest and blits C025 into
              * G0032/C101 before F0038 draws C537..C544 slot boxes. */
             if (state->assetsAvailable &&
-                M11_GameView_GetV1InventoryPanelZone(&chestPanelX,
-                                                     &chestPanelY,
-                                                     &chestPanelW,
-                                                     &chestPanelH)) {
+                dm1_v1_inventory_panel_zone_id_pc34()) {
                 const M11_AssetSlot* chestPanel = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
                     (unsigned int)M11_GFX_PANEL_OPEN_CHEST);
@@ -37264,10 +37340,18 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                  * chest content and C019 when P0707_B_PressingEye is true. */
                 arrowOrEye = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
-                    (unsigned int)M11_GameView_GetV1ArrowOrEyeGraphicId(
+                    (unsigned int)dm1_v1_graphic_arrow_or_eye_pc34(
                         state->v1OpenChestOpenedByEye));
+                {
+                    DM1_V1_LayoutZoneRectPc34 arrowRect =
+                        dm1_v1_arrow_or_eye_rect_pc34();
+                    ax = arrowRect.x;
+                    ay = arrowRect.y;
+                    aw = arrowRect.w;
+                    ah = arrowRect.h;
+                }
                 if (arrowOrEye && arrowOrEye->loaded && arrowOrEye->pixels &&
-                    M11_GameView_GetV1ArrowOrEyeZone(&ax, &ay, &aw, &ah) &&
+                    dm1_v1_arrow_or_eye_zone_id_pc34() &&
                     arrowOrEye->width == (unsigned short)aw &&
                     arrowOrEye->height == (unsigned short)ah) {
                     M11_AssetLoader_Blit(arrowOrEye, framebuffer,
@@ -37522,10 +37606,10 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         if (state->assetsAvailable) {
             const M11_AssetSlot* foodLbl = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
-                (unsigned int)M11_GameView_GetV1FoodLabelGraphicId());
+                (unsigned int)dm1_v1_graphic_food_label_pc34());
             const M11_AssetSlot* waterLbl = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
-                (unsigned int)M11_GameView_GetV1WaterLabelGraphicId());
+                (unsigned int)dm1_v1_graphic_water_label_pc34());
             if (foodLbl && foodLbl->width > 0 && foodLbl->height > 0 &&
                 waterLbl && waterLbl->width > 0 && waterLbl->height > 0) {
                 char numBuf[8];
