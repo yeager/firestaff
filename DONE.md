@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 TITLE step palette regression gate: wired `test_title_frontend_step_palette_v1_pc34_compat` into CTest and locked ReDMCSB TITLE.C/VIDEODRV.C palette phases so PRESENTS uses C12_PRESENTS and DUNGEON/MASTER/STRIKES uses C13_DUNGEON+C14_MASTER. Verification: `firestaff_m11`, `test_title_frontend_step_palette_v1_pc34_compat`, and `git diff --check` passed.
+
 - ✅ 2026-07-11 DM1 F0128 viewport ownership cleanup: moved the ReDMCSB F0128 viewport-crop readiness helper from `m11_dm1_v1_f0128_viewport_pc34_compat` engine naming into DM1-owned source/header paths and removed the public `m11_dm1_v1_f0128_*` compatibility macros. Verification: `firestaff_m11`, `test_dm1_v1_f0128_viewport_pc34_compat`, targeted M11 F0128 alias `rg`, and `git diff --check` passed.
 
 - ✅ 2026-07-11 DM1/CSB graphics loader M11 alias cleanup: moved CSB graphics classification, Atari ST graphics loading, hidden-item loading tests, and shared GRAPHICS.DAT decompression callers from `M11_GFX_*`/`m11_gfx_*` aliases to the DM1-owned ReDMCSB graphics loader API, then removed the public aliases from `dm1_v1_graphics_loader_pc34_compat.h`. Verification: `firestaff_m11`, `test_dm1_lzw_round_trip`, `test_csb_v1_csbgraphics_dat_classify`, `test_csb_v1_graphics_hidden_item_skip`, targeted alias `rg`, and `git diff --check` passed.
