@@ -1052,6 +1052,8 @@ typedef struct {
     size_t object_table_candidate_last_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_last_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_last_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t object_table_candidate_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t object_table_candidate_last_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_blocked_anchor_count;
     unsigned int object_table_blocked_anchor_mask;
     int object_table_anchor_binding_status[THERON_TRACK02_MAX_BANK_ANCHORS];
@@ -1109,6 +1111,8 @@ typedef struct {
     size_t nonstartup_level_candidate_last_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_last_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_last_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t nonstartup_level_candidate_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t nonstartup_level_candidate_last_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
     int nonstartup_level_candidate_map_status[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint16_t nonstartup_level_candidate_header_width[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint16_t nonstartup_level_candidate_header_height[THERON_TRACK02_MAX_BANK_ANCHORS];

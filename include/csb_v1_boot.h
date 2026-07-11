@@ -956,6 +956,31 @@ typedef struct CSB_V1_StartupReleaseAppCaptureReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_StartupReleaseAppCaptureReceipt_PC34;
 
+typedef struct CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 {
+    int valid;
+    int release_app_capture_valid;
+    int release_app_capture_ready;
+    int presented_capture_ready;
+    int host_window_present;
+    int captured_from_mac_window;
+    int captured_from_release_app;
+    int geometry_matches;
+    int pixels_present;
+    int route_specific_host_consumers_ready;
+    int no_loose_render_plan_exports;
+    int width;
+    int height;
+    int byte_count;
+    uint32_t framebuffer_hash;
+    uint32_t consumer_mask;
+    uint32_t expected_consumer_mask;
+    uint32_t chain_hash;
+    uint32_t release_app_capture_hash;
+    uint32_t release_app_real_asset_capture_hash;
+    CSB_V1_StartupReleaseAppCaptureReceipt_PC34 release_app_capture;
+    const char *source_evidence;
+} CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34;
+
 /* A non-owning frame view into a startup asset session.  The source pointers
  * remain valid until csb_v1_boot_startup_runtime_asset_session_release_pc34.
  * No fallback text or synthetic door pixels are represented here. */
@@ -1196,6 +1221,18 @@ void csb_v1_boot_startup_release_app_capture_receipt_init_pc34(
 int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
     const CSB_V1_StartupCompleteSupportReceipt_PC34 *complete_support,
     CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *out_receipt);
+void csb_v1_boot_startup_release_app_presented_capture_receipt_init_pc34(
+    CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 *receipt);
+int csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
+    const CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *release_app_capture,
+    int host_window_present,
+    int captured_from_mac_window,
+    int captured_from_release_app,
+    int width,
+    int height,
+    int byte_count,
+    uint32_t framebuffer_hash,
+    CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 *out_receipt);
 /* ReDMCSB SWSH.C F0909/F0910 owns the pre-title sound, TITLE.C F0437 owns
  * the title timing, and ENTRANCE.C F0806 starts C0_MUSIC_ENTRANCE. */
 int csb_v1_boot_startup_playback_begin_pc34(

@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 Theron Track02 candidate fingerprints: object-table and non-startup level-route receipts now store FNV-1a hashes for first/last post-descriptor candidate windows per anchor, preserving byte evidence for the next real-media semantic pass. Verification: focused Theron startup save/resume tests and probe passed locally.
+
+- ✅ 2026-07-11 CSB release/app presented capture export: CSB now owns a release-app presented-capture receipt joining Mac/window/pixel observations with CSB route masks, capture hashes, and no-loose-render-plan proof. Verification: focused CSB runtime handoff test passed locally.
+
 - ✅ 2026-07-11 DM2 rect14 live interface placement consumption: runtime HUD themes now carry optional skproject `INTERFACE_GENERAL` `dt07/0x0A` rect14 proof into the viewport renderer, use the verified row/hash/byte counts to adjust live HUD child placement, and expose rect14 consumption through runtime frame ownership when that table is present. Verification: focused DM2 lighting and boot smoke targets passed locally.
 
 - ✅ 2026-07-11 DM1 HoC M12 capture package ownership: M12 now passes data/version, required-asset, and presented-capture host-export facts into `dm1_v1_startup_hoc_m12_capture_fields_from_package_pc34()`, and DM1/ReDMCSB owns the HoC startup capture facts used for real-asset, Mac-window, release-app, host-route, and M12-consumer readiness. Verification: focused DM1/M12 startup targets passed locally.

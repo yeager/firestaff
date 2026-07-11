@@ -2235,6 +2235,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
     CSB_V1_StartupCompleteSupportReceipt_PC34 complete_support;
     CSB_V1_StartupCompleteSupportReceipt_PC34 partial_complete_support;
     CSB_V1_StartupReleaseAppCaptureReceipt_PC34 release_app_capture;
+    CSB_V1_StartupReleaseAppPresentedCaptureReceipt_PC34 presented_capture;
     CSB_V1_StartupRenderExecutor_PC34 hud_draw_executor;
     CSB_V1_StartupRenderExecutor_PC34 capture_render_executor;
     TestHudMenuDrawProbe hud_draw_probe;
@@ -2551,6 +2552,70 @@ static void test_runtime_utility_startup_receipt_facades(void)
               strstr(release_app_capture.source_evidence,
                      "ENTRANCE.C F0580") != NULL,
           "CSB release/app capture gate consumes complete title HUD and door packaged hashes");
+    CHECK(csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
+              &release_app_capture,
+              1,
+              1,
+              1,
+              320,
+              200,
+              320 * 200 * 4,
+              0x4353424du,
+              &presented_capture) == 1 &&
+              presented_capture.valid &&
+              presented_capture.release_app_capture_valid &&
+              presented_capture.presented_capture_ready &&
+              presented_capture.host_window_present &&
+              presented_capture.captured_from_mac_window &&
+              presented_capture.captured_from_release_app &&
+              presented_capture.geometry_matches &&
+              presented_capture.pixels_present &&
+              presented_capture.consumer_mask == 0x1fu &&
+              presented_capture.expected_consumer_mask == 0x1fu &&
+              presented_capture.route_specific_host_consumers_ready &&
+              presented_capture.no_loose_render_plan_exports &&
+              presented_capture.width == 320 &&
+              presented_capture.height == 200 &&
+              presented_capture.byte_count == 320 * 200 * 4 &&
+              presented_capture.framebuffer_hash == 0x4353424du &&
+              presented_capture.release_app_capture_hash ==
+                  release_app_capture.release_app_capture_hash &&
+              presented_capture.release_app_real_asset_capture_hash ==
+                  release_app_capture.release_app_real_asset_capture_hash &&
+              presented_capture.chain_hash != 0u &&
+              strstr(presented_capture.source_evidence,
+                     "ENTRANCE.C F0441") != NULL,
+          "CSB release/app presented capture export joins Mac window pixels to CSB-owned route mask");
+    CHECK(csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
+              &release_app_capture,
+              1,
+              0,
+              1,
+              320,
+              200,
+              320 * 200 * 4,
+              0x4353424du,
+              &presented_capture) == 0 &&
+              !presented_capture.valid &&
+              !presented_capture.presented_capture_ready &&
+              !presented_capture.captured_from_mac_window &&
+              presented_capture.consumer_mask == 0x1fu,
+          "CSB release/app presented capture export rejects non-Mac-window captures");
+    CHECK(csb_v1_boot_startup_release_app_presented_capture_receipt_pc34(
+              &release_app_capture,
+              1,
+              1,
+              1,
+              319,
+              200,
+              320 * 200 * 4,
+              0x4353424du,
+              &presented_capture) == 0 &&
+              !presented_capture.valid &&
+              !presented_capture.presented_capture_ready &&
+              !presented_capture.geometry_matches &&
+              presented_capture.pixels_present,
+          "CSB release/app presented capture export rejects host geometry drift");
     partial_complete_support = complete_support;
     partial_complete_support.full_runtime.real_asset_matched = 0;
     CHECK(csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
