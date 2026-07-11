@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "csb_v1_csbgraphics_m11_runtime_plan.h"
+#include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_csbwin_save_loader_boundary_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_startup_real_asset_receipt.h"
@@ -105,10 +105,10 @@ typedef struct CSB_V1_BootProfile {
     int csbgraphics_plan_result;
     int csbgraphics_skin_def_loaded;
     uint16_t csbgraphics_skin_def_words
-        [CSB_V1_CSBGRAPHICS_M11_SKIN_DEF_MAX_WORDS];
+        [CSB_V1_CSBGRAPHICS_RUNTIME_SKIN_DEF_MAX_WORDS];
     size_t csbgraphics_skin_def_word_count;
     CSB_V1_CSBGraphicsDatRealCache csbgraphics_cache;
-    CSB_V1_CSBGraphicsM11RuntimePlan csbgraphics_m11_plan;
+    CSB_V1_CSBGraphicsRuntimePlan csbgraphics_runtime_plan;
     CSB_V1_StartupAssetSelection_PC34 startup_assets;
 
     CSB_V1_RuntimeProfile runtime;
@@ -152,7 +152,7 @@ typedef struct CSB_V1_BootStartupRuntimeReceipt_PC34 {
     char boot_asset_md5[33];
     char title[64];
     char source_id[32];
-    int bind_graphics_to_m11_asset_loader;
+    int bind_graphics_to_runtime_asset_loader;
     int load_original_font_from_graphics;
     int real_asset_receipt_valid;
     CSB_V1_StartupRealReceipt real_asset_receipt;
@@ -692,6 +692,7 @@ typedef struct CSB_V1_BootStartupRenderDrawReceipt_PC34 {
     int opening_frame_command_ready;
     int real_asset_matched;
     CSB_V1_StartupRenderPlan_PC34 render_plan;
+    const char *source_evidence;
 } CSB_V1_BootStartupRenderDrawReceipt_PC34;
 
 typedef struct CSB_V1_BootStartupHostViewReceipt_PC34 {
@@ -890,6 +891,9 @@ typedef struct CSB_V1_StartupCompleteSupportReceipt_PC34 {
     int host_route_wrappers_retired;
     int no_loose_render_plan_exports;
     int real_startup_assets_bound;
+    int title_runtime_phase_mask;
+    int title_runtime_expected_phase_mask;
+    uint32_t title_runtime_phase_hash;
     uint32_t real_startup_asset_binding_hash;
     uint32_t session_generation;
     uint32_t runtime_host_gate_hash;
@@ -899,11 +903,55 @@ typedef struct CSB_V1_StartupCompleteSupportReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_StartupCompleteSupportReceipt_PC34;
 
+typedef struct CSB_V1_StartupReleaseAppCaptureReceipt_PC34 {
+    int valid;
+    int complete_support_valid;
+    int host_capture_gate_valid;
+    int release_app_capture_ready;
+    int title_release_app_capture_ready;
+    int closed_door_release_app_capture_ready;
+    int utility_release_app_capture_ready;
+    int door_opening_release_app_capture_ready;
+    int title_host_consumer_ready;
+    int closed_door_host_consumer_ready;
+    int utility_host_consumer_ready;
+    int door_opening_host_consumer_ready;
+    int route_specific_host_consumers_ready;
+    int title_phase_route_complete;
+    int runtime_host_routes_ready;
+    int draw_consumes_receipt_only;
+    int input_consumes_receipt_only;
+    int no_fallback_callbacks;
+    int no_wrapper_fallback_routes;
+    int host_route_wrappers_retired;
+    int no_loose_render_plan_exports;
+    int real_startup_assets_bound;
+    int title_runtime_phase_mask;
+    int title_runtime_expected_phase_mask;
+    uint32_t title_runtime_phase_hash;
+    uint32_t title_packaged_capture_hash;
+    uint32_t closed_door_packaged_capture_hash;
+    uint32_t utility_packaged_capture_hash;
+    uint32_t door_opening_packaged_capture_hash;
+    uint32_t runtime_host_gate_hash;
+    uint32_t complete_support_hash;
+    uint32_t release_app_capture_hash;
+    CSB_V1_StartupCompleteSupportReceipt_PC34 complete_support;
+    const char *source_evidence;
+} CSB_V1_StartupReleaseAppCaptureReceipt_PC34;
+
 /* A non-owning frame view into a startup asset session.  The source pointers
  * remain valid until csb_v1_boot_startup_runtime_asset_session_release_pc34.
  * No fallback text or synthetic door pixels are represented here. */
 typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     int valid;
+    int real_asset_matched;
+    int title_sequence_ready;
+    int entrance_ready;
+    int door_ready;
+    int no_legacy_wrappers;
+    int title_phase_mask;
+    uint32_t frame_route_hash;
     uint32_t source_tick;
     uint32_t session_generation;
     CSB_V1_StartupStage_PC34 stage;
@@ -1000,6 +1048,12 @@ typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
     int fallback_text_suppressed;
     int fallback_callbacks_stripped;
     int consumed_host_view_only;
+    int render_draw_receipt_consumed;
+    int capture_proof_consumed;
+    int route_capture_proof_consumed;
+    int readiness_receipt_consumed;
+    int no_legacy_plan_fallback;
+    const char *source_evidence;
 } CSB_V1_BootStartupHostViewDrawReceipt_PC34;
 
 typedef struct CSB_V1_BootStartupHostInputDispatchReceipt_PC34 {
@@ -1143,6 +1197,11 @@ int csb_v1_boot_startup_complete_support_receipt_from_runtime_and_host_pc34(
     const CSB_V1_StartupFullRuntimeReceipt_PC34 *full_runtime,
     const CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *host_capture_gate,
     CSB_V1_StartupCompleteSupportReceipt_PC34 *out_receipt);
+void csb_v1_boot_startup_release_app_capture_receipt_init_pc34(
+    CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *receipt);
+int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
+    const CSB_V1_StartupCompleteSupportReceipt_PC34 *complete_support,
+    CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *out_receipt);
 /* ReDMCSB SWSH.C F0909/F0910 owns the pre-title sound, TITLE.C F0437 owns
  * the title timing, and ENTRANCE.C F0806 starts C0_MUSIC_ENTRANCE. */
 int csb_v1_boot_startup_playback_begin_pc34(
@@ -1171,8 +1230,8 @@ int csb_v1_boot_mark_imported_party_ready(CSB_V1_BootProfile *profile);
 void csb_v1_boot_reset_engine_version_to_dm1(void);
 int csb_v1_boot_scan_csbgraphics(CSB_V1_BootProfile *profile,
                                  const char *cache_dir);
-const CSB_V1_CSBGraphicsM11RuntimePlan *
-csb_v1_boot_csbgraphics_m11_plan(const CSB_V1_BootProfile *profile);
+const CSB_V1_CSBGraphicsRuntimePlan *
+csb_v1_boot_csbgraphics_runtime_plan(const CSB_V1_BootProfile *profile);
 const CSB_V1_CSBGraphicsDatRealCache *
 csb_v1_boot_csbgraphics_cache(const CSB_V1_BootProfile *profile);
 const uint16_t *
