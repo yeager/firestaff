@@ -4785,6 +4785,19 @@ static void m11_draw_dialog_choices_source(const M11_GameViewState* state,
     }
 }
 
+static void m11_copy_endgame_rect(const DM1_V1_EndgameRectPc34* rect,
+                                  int* outX,
+                                  int* outY,
+                                  int* outW,
+                                  int* outH)
+{
+    if (!rect) return;
+    if (outX) *outX = rect->x;
+    if (outY) *outY = rect->y;
+    if (outW) *outW = rect->w;
+    if (outH) *outH = rect->h;
+}
+
 static int m11_dialog_choice_at_point(const M11_GameViewState* state,
                                       int x,
                                       int y) {
@@ -16033,13 +16046,22 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             !state->endgameRestartAllowed) {
             return M11_GAME_INPUT_IGNORED;
         }
-        (void)M11_GameView_GetV1EndgameRestartBox(0, &boxX, &boxY, &boxW, &boxH);
+        DM1_V1_EndgameRectPc34 box;
+        (void)dm1_v1_endgame_restart_box_pc34(0, &box);
+        boxX = box.x;
+        boxY = box.y;
+        boxW = box.w;
+        boxH = box.h;
         if (m11_point_in_rect(x, y, boxX, boxY, boxW, boxH)) {
             state->endgameRestartRequested = 1;
             m11_set_status(state, "ENDGAME", "RESTART REQUESTED");
             return M11_GAME_INPUT_RESTART_GAME;
         }
-        (void)M11_GameView_GetV1EndgameQuitBox(0, &boxX, &boxY, &boxW, &boxH);
+        (void)dm1_v1_endgame_quit_box_pc34(0, &box);
+        boxX = box.x;
+        boxY = box.y;
+        boxW = box.w;
+        boxH = box.h;
         if (m11_point_in_rect(x, y, boxX, boxY, boxW, boxH)) {
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
@@ -32997,111 +33019,6 @@ static int m11_process_dm2_inventory_slot_box_click(M11_GameViewState* state,
     return 1;
 }
 
-int M11_GameView_GetV1EndgameTheEndGraphicId(void) {
-    return dm1_v1_graphic_the_end_pc34();
-}
-
-int M11_GameView_GetV1EndgameTheEndZone(int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH) {
-    DM1_V1_EndgameRectPc34 r;
-    if (!dm1_v1_endgame_the_end_rect_pc34(&r)) return 0;
-    if (outX) *outX = r.x;
-    if (outY) *outY = r.y;
-    if (outW) *outW = r.w;
-    if (outH) *outH = r.h;
-    return 1;
-}
-
-int M11_GameView_GetV1EndgameChampionMirrorGraphicId(void) {
-    return dm1_v1_graphic_endgame_champion_mirror_pc34();
-}
-
-int M11_GameView_GetV1EndgameChampionMirrorZoneId(int championSlot) {
-    return dm1_v1_endgame_champion_mirror_zone_id_pc34(championSlot);
-}
-
-int M11_GameView_GetV1EndgameChampionMirrorZone(int championSlot,
-                                                int* outX,
-                                                int* outY,
-                                                int* outW,
-                                                int* outH) {
-    DM1_V1_EndgameRectPc34 r;
-    if (!dm1_v1_endgame_champion_mirror_rect_pc34(championSlot, &r)) return 0;
-    if (outX) *outX = r.x;
-    if (outY) *outY = r.y;
-    if (outW) *outW = r.w;
-    if (outH) *outH = r.h;
-    return 1;
-}
-
-int M11_GameView_GetV1EndgameChampionPortraitZoneId(int championSlot) {
-    return dm1_v1_endgame_champion_portrait_zone_id_pc34(championSlot);
-}
-
-int M11_GameView_GetV1EndgameChampionPortraitZone(int championSlot,
-                                                  int* outX,
-                                                  int* outY,
-                                                  int* outW,
-                                                  int* outH) {
-    DM1_V1_EndgameRectPc34 r;
-    if (!dm1_v1_endgame_champion_portrait_rect_pc34(championSlot, &r)) {
-        return 0;
-    }
-    if (outX) *outX = r.x;
-    if (outY) *outY = r.y;
-    if (outW) *outW = r.w;
-    if (outH) *outH = r.h;
-    return 1;
-}
-
-int M11_GameView_GetV1EndgameChampionNameOrigin(int championSlot,
-                                                int* outX,
-                                                int* outY) {
-    return dm1_v1_endgame_champion_name_origin_pc34(championSlot,
-                                                    outX,
-                                                    outY);
-}
-
-int M11_GameView_GetV1EndgameChampionSkillOrigin(int championSlot,
-                                                 int skillLineIndex,
-                                                 int* outX,
-                                                 int* outY) {
-    return dm1_v1_endgame_champion_skill_origin_pc34(championSlot,
-                                                     skillLineIndex,
-                                                     outX,
-                                                     outY);
-}
-
-int M11_GameView_GetV1EndgameRestartBox(int inner,
-                                        int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH) {
-    DM1_V1_EndgameRectPc34 r;
-    if (!dm1_v1_endgame_restart_box_pc34(inner, &r)) return 0;
-    if (outX) *outX = r.x;
-    if (outY) *outY = r.y;
-    if (outW) *outW = r.w;
-    if (outH) *outH = r.h;
-    return 1;
-}
-
-int M11_GameView_GetV1EndgameQuitBox(int inner,
-                                     int* outX,
-                                     int* outY,
-                                     int* outW,
-                                     int* outH) {
-    DM1_V1_EndgameRectPc34 r;
-    if (!dm1_v1_endgame_quit_box_pc34(inner, &r)) return 0;
-    if (outX) *outX = r.x;
-    if (outY) *outY = r.y;
-    if (outW) *outW = r.w;
-    if (outH) *outH = r.h;
-    return 1;
-}
-
 int M11_GameView_GetV1FoodLabelGraphicId(void) {
     return dm1_v1_graphic_food_label_pc34();
 }
@@ -39158,10 +39075,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         if (m11_v1_chrome_mode_enabled() && state->assetsAvailable) {
             const M11_AssetSlot* theEnd = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
-                (unsigned int)M11_GameView_GetV1EndgameTheEndGraphicId());
+                (unsigned int)dm1_v1_graphic_the_end_pc34());
             const M11_AssetSlot* mirror = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
-                (unsigned int)M11_GameView_GetV1EndgameChampionMirrorGraphicId());
+                (unsigned int)dm1_v1_graphic_endgame_champion_mirror_pc34());
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_DARK_GRAY);
@@ -39169,9 +39086,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 int i;
                 for (i = 0; i < 4; ++i) {
                     int mirrorX, mirrorY;
-                    (void)M11_GameView_GetV1EndgameChampionMirrorZone(i,
-                                                                       &mirrorX, &mirrorY,
-                                                                       NULL, NULL);
+                    DM1_V1_EndgameRectPc34 mirrorRect;
+                    (void)dm1_v1_endgame_champion_mirror_rect_pc34(
+                        i, &mirrorRect);
+                    m11_copy_endgame_rect(&mirrorRect, &mirrorX, &mirrorY,
+                                          NULL, NULL);
                     M11_AssetLoader_Blit(mirror, framebuffer, framebufferWidth,
                                          framebufferHeight, mirrorX, mirrorY, 10);
                     if (i < state->world.party.championCount &&
@@ -39187,9 +39106,14 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                             if (srcPX + M11_PORTRAIT_W <= (int)portraits->width &&
                                 srcPY + M11_PORTRAIT_H <= (int)portraits->height) {
                                 int portraitX, portraitY;
-                                (void)M11_GameView_GetV1EndgameChampionPortraitZone(i,
-                                                                                     &portraitX, &portraitY,
-                                                                                     NULL, NULL);
+                                DM1_V1_EndgameRectPc34 portraitRect;
+                                (void)dm1_v1_endgame_champion_portrait_rect_pc34(
+                                    i, &portraitRect);
+                                m11_copy_endgame_rect(&portraitRect,
+                                                      &portraitX,
+                                                      &portraitY,
+                                                      NULL,
+                                                      NULL);
                                 M11_AssetLoader_BlitRegion(portraits,
                                     srcPX, srcPY,
                                     M11_PORTRAIT_W, M11_PORTRAIT_H,
@@ -39204,8 +39128,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                         m11_format_champion_name(state->world.party.champions[i].name,
                                                  champName, sizeof(champName));
                         int nameX, nameY;
-                        (void)M11_GameView_GetV1EndgameChampionNameOrigin(i,
-                                                                           &nameX, &nameY);
+                        (void)dm1_v1_endgame_champion_name_origin_pc34(
+                            i, &nameX, &nameY);
                         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                                       nameX, nameY, champName, &nameStyle);
                         {
@@ -39244,9 +39168,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                 }
                                 if (level > 16) level = 16;
                                 int skillX, skillY;
-                                (void)M11_GameView_GetV1EndgameChampionSkillOrigin(i,
-                                                                                   visibleSkillLine,
-                                                                                   &skillX, &skillY);
+                                (void)dm1_v1_endgame_champion_skill_origin_pc34(
+                                    i, visibleSkillLine, &skillX, &skillY);
                                 ++visibleSkillLine;
                                 snprintf(skillLine, sizeof(skillLine), "%s %s",
                                          kEndgameSkillLevelNames[level - 2],
@@ -39260,8 +39183,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             }
             if (theEnd && theEnd->loaded && theEnd->pixels) {
                 int theEndX, theEndY;
-                (void)M11_GameView_GetV1EndgameTheEndZone(&theEndX, &theEndY,
-                                                           NULL, NULL);
+                DM1_V1_EndgameRectPc34 theEndRect;
+                (void)dm1_v1_endgame_the_end_rect_pc34(&theEndRect);
+                m11_copy_endgame_rect(&theEndRect, &theEndX, &theEndY,
+                                      NULL, NULL);
                 M11_AssetLoader_Blit(theEnd, framebuffer, framebufferWidth,
                                      framebufferHeight,
                                      theEndX,
@@ -39275,24 +39200,26 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             if (state->endgameRestartAllowed) {
                 int outerX, outerY, outerW, outerH;
                 int innerX, innerY, innerW, innerH;
-                (void)M11_GameView_GetV1EndgameRestartBox(0,
-                                                          &outerX, &outerY,
-                                                          &outerW, &outerH);
-                (void)M11_GameView_GetV1EndgameRestartBox(1,
-                                                          &innerX, &innerY,
-                                                          &innerW, &innerH);
+                DM1_V1_EndgameRectPc34 outerRect;
+                DM1_V1_EndgameRectPc34 innerRect;
+                (void)dm1_v1_endgame_restart_box_pc34(0, &outerRect);
+                (void)dm1_v1_endgame_restart_box_pc34(1, &innerRect);
+                m11_copy_endgame_rect(&outerRect, &outerX, &outerY,
+                                      &outerW, &outerH);
+                m11_copy_endgame_rect(&innerRect, &innerX, &innerY,
+                                      &innerW, &innerH);
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               outerX, outerY, outerW, outerH, M11_COLOR_DARK_GRAY);
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               innerX, innerY, innerW, innerH, M11_COLOR_BLACK);
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                               innerX + 5, innerY + 7, "RESTART THIS GAME", &g_text_small);
-                (void)M11_GameView_GetV1EndgameQuitBox(0,
-                                                       &outerX, &outerY,
-                                                       &outerW, &outerH);
-                (void)M11_GameView_GetV1EndgameQuitBox(1,
-                                                       &innerX, &innerY,
-                                                       &innerW, &innerH);
+                (void)dm1_v1_endgame_quit_box_pc34(0, &outerRect);
+                (void)dm1_v1_endgame_quit_box_pc34(1, &innerRect);
+                m11_copy_endgame_rect(&outerRect, &outerX, &outerY,
+                                      &outerW, &outerH);
+                m11_copy_endgame_rect(&innerRect, &innerX, &innerY,
+                                      &innerW, &innerH);
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               outerX, outerY, outerW, outerH, M11_COLOR_DARK_GRAY);
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,

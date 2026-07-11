@@ -18,10 +18,9 @@
  * external screen reader can announce the live state without
  * parsing the framebuffer.
  *
- * Source-lock: this layer does not consult ReDMCSB at runtime.
- * The geometry constants are all from the public
- * M11_GameView_GetV1*Zone() helpers in include/m11_game_view.h,
- * which themselves cite the source-locked layout-696 zones
+ * Source-lock: this layer reads source-locked DM1 layout modules for
+ * original V1 geometry and public M11 helpers for M11-owned overlays.
+ * The DM1 helpers cite the source-locked layout-696 zones
  * (ReDMCSB DEFS.H:821-826, 1693-1749, 2186, 2552, 2596-2611, ...
  * and PANEL.C / ENDGAME.C / MAPUI.C).  The screen reader only
  * reads M11_GameViewState fields and the public zone helpers.
@@ -43,6 +42,7 @@
 #include "m11_game_view_a11y.h"
 
 #include "m11_game_view.h"
+#include "dm1_v1_endgame_layout_pc34_compat.h"
 #include "firestaff_accessibility.h"
 #include "session_timer_runtime.h"
 
@@ -836,9 +836,9 @@ static void m11_ax_emit_endgame_zones(const M11_GameViewState* state) {
      * dungeon viewport origin or the fourth mirror/portrait extends
      * below the 320x200 frame. */
     {
-        int ex = 0, ey = 0, ew = 0, eh = 0;
-        if (M11_GameView_GetV1EndgameTheEndZone(&ex, &ey, &ew, &eh)) {
-            e = m11_ax_begin(FS_AX_TEXT, ex, ey, ew, eh, 1);
+        DM1_V1_EndgameRectPc34 r;
+        if (dm1_v1_endgame_the_end_rect_pc34(&r)) {
+            e = m11_ax_begin(FS_AX_TEXT, r.x, r.y, r.w, r.h, 1);
             if (e) {
                 snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "ENDGAME_THE_END");
                 snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN, "The End");
@@ -849,25 +849,33 @@ static void m11_ax_emit_endgame_zones(const M11_GameViewState* state) {
     /* Endgame champion portraits - ReDMCSB C412..C415 mirrors +
      * C416..C419 portraits (4 slots). */
     for (slot = 0; slot < 4; ++slot) {
-        int mx = 0, my = 0, mw = 0, mh = 0;
-        if (!M11_GameView_GetV1EndgameChampionMirrorZone(slot,
-                                                        &mx, &my, &mw, &mh)) {
+        DM1_V1_EndgameRectPc34 mirrorRect;
+        if (!dm1_v1_endgame_champion_mirror_rect_pc34(slot, &mirrorRect)) {
             continue;
         }
-        e = m11_ax_begin(FS_AX_CHAMPION_MIRROR, mx, my, mw, mh, 1);
+        e = m11_ax_begin(FS_AX_CHAMPION_MIRROR,
+                         mirrorRect.x,
+                         mirrorRect.y,
+                         mirrorRect.w,
+                         mirrorRect.h,
+                         1);
         if (e) {
             snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "ENDGAME_MIRROR_%d", slot);
             snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN, "Champion Mirror %d",
                      slot + 1);
         }
         {
-            int px = 0, py = 0, pw = 0, ph = 0;
-            if (!M11_GameView_GetV1EndgameChampionPortraitZone(slot,
-                                                              &px, &py,
-                                                              &pw, &ph)) {
+            DM1_V1_EndgameRectPc34 portraitRect;
+            if (!dm1_v1_endgame_champion_portrait_rect_pc34(slot,
+                                                            &portraitRect)) {
                 continue;
             }
-            e = m11_ax_begin(FS_AX_PORTRAIT, px, py, pw, ph, 1);
+            e = m11_ax_begin(FS_AX_PORTRAIT,
+                             portraitRect.x,
+                             portraitRect.y,
+                             portraitRect.w,
+                             portraitRect.h,
+                             1);
             if (e) {
                 snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "ENDGAME_PORTRAIT_%d", slot);
                 snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
