@@ -2469,6 +2469,9 @@ Theron_Track02TableDecodeStatus theron_v1_track02_bind_descriptor_entry_roles(
         entry->relative_offset = window->relative_offset;
         entry->absolute_offset = window->absolute_offset;
         entry->byte_count = window->byte_count;
+        entry->nonzero_byte_count = window->nonzero_byte_count;
+        entry->first_nonzero_offset = window->first_nonzero_offset;
+        entry->last_nonzero_offset = window->last_nonzero_offset;
         entry->is_descriptor_window = window->contains_descriptor_table ? 1 : 0;
 
         /* Order the role assignment deterministically.  Descriptor-window
@@ -3717,7 +3720,7 @@ int theron_v1_track02_capture_object_table_route_receipt(
                             entries[entry_index].byte_count;
                         out_receipt
                             ->object_table_candidate_nonzero_byte_counts[anchor] =
-                            entries[entry_index].byte_count;
+                            entries[entry_index].nonzero_byte_count;
                     }
                     out_receipt
                         ->object_table_candidate_last_entry_index[anchor] =
@@ -3901,7 +3904,46 @@ int theron_v1_track02_capture_level_route_receipt(
                                 out_receipt
                                     ->nonstartup_level_candidate_nonzero_byte_counts
                                         [anchor] =
-                                    entries[entry_index].byte_count;
+                                    entries[entry_index].nonzero_byte_count;
+                                if (entries[entry_index].byte_count >= 12u &&
+                                    entries[entry_index].absolute_offset <=
+                                        track02_size &&
+                                    entries[entry_index].byte_count <=
+                                        track02_size -
+                                            entries[entry_index].absolute_offset) {
+                                    Theron_V1_Level probe_level;
+                                    const uint8_t *candidate =
+                                        track02_data +
+                                        entries[entry_index].absolute_offset;
+                                    Theron_MapLoadResult map_status;
+                                    out_receipt
+                                        ->nonstartup_level_candidate_header_width
+                                            [anchor] = rd16be(candidate + 0u);
+                                    out_receipt
+                                        ->nonstartup_level_candidate_header_height
+                                            [anchor] = rd16be(candidate + 2u);
+                                    out_receipt
+                                        ->nonstartup_level_candidate_header_seed
+                                            [anchor] = rd32be(candidate + 4u);
+                                    out_receipt
+                                        ->nonstartup_level_candidate_header_level_index
+                                            [anchor] = rd16be(candidate + 8u);
+                                    map_status = theron_v1_level_load(
+                                        &probe_level,
+                                        candidate,
+                                        (int)entries[entry_index].byte_count,
+                                        1,
+                                        0);
+                                    out_receipt
+                                        ->nonstartup_level_candidate_map_status
+                                            [anchor] = (int)map_status;
+                                    ++out_receipt
+                                          ->nonstartup_level_candidate_header_probe_count;
+                                    if (map_status != THERON_MAP_OK) {
+                                        ++out_receipt
+                                              ->nonstartup_level_candidate_loader_reject_count;
+                                    }
+                                }
                             }
                             out_receipt
                                 ->nonstartup_level_candidate_last_entry_index
@@ -4046,6 +4088,20 @@ int theron_v1_track02_capture_level_route_receipt(
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->nonstartup_level_candidate_last_byte_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_map_status[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_header_width[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_header_height[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->nonstartup_level_candidate_header_seed[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->nonstartup_level_candidate_header_level_index[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)out_receipt->startup_level_anchor_status[anchor];
         hash *= 16777619u;

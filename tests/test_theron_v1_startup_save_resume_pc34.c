@@ -4742,7 +4742,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                         0x0400u &&
                     object_route_receipt
                             .object_table_candidate_nonzero_byte_counts[0] ==
-                        0x0400u &&
+                        16u &&
                     object_route_receipt.object_table_candidate_last_entry_index[0] == 7u &&
                     object_route_receipt.object_table_candidate_last_raw_offsets[0] ==
                         post_descriptor_candidate_last_offsets[0] &&
@@ -4824,7 +4824,28 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                         0x0400u &&
                     level_route_receipt
                             .nonstartup_level_candidate_nonzero_byte_counts[0] ==
-                        0x0400u &&
+                        16u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_header_probe_count ==
+                        3u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_loader_reject_count ==
+                        3u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_map_status[0] ==
+                        THERON_MAP_ERR_INVALID_GRID &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_header_width[0] ==
+                        0x4142u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_header_height[0] ==
+                        0x4344u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_header_seed[0] ==
+                        0x45464748u &&
+                    level_route_receipt
+                            .nonstartup_level_candidate_header_level_index[0] ==
+                        0x494au &&
                     level_route_receipt.nonstartup_level_candidate_last_entry_index[0] == 7u &&
                     level_route_receipt.nonstartup_level_candidate_last_raw_offsets[0] ==
                         post_descriptor_candidate_last_offsets[0] &&

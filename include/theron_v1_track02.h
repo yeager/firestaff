@@ -560,6 +560,9 @@ typedef struct {
     uint16_t relative_offset;
     size_t absolute_offset;
     size_t byte_count;
+    size_t nonzero_byte_count;
+    size_t first_nonzero_offset;
+    size_t last_nonzero_offset;
     Theron_Track02DescriptorEntryRole role;
     /* True iff role == CONTAINS_DESCRIPTOR_TABLE.  Duplicated for
      * easy single-entry checks without re-deriving role from the
@@ -1106,6 +1109,13 @@ typedef struct {
     size_t nonstartup_level_candidate_last_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_last_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t nonstartup_level_candidate_last_byte_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int nonstartup_level_candidate_map_status[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t nonstartup_level_candidate_header_width[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t nonstartup_level_candidate_header_height[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t nonstartup_level_candidate_header_seed[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint16_t nonstartup_level_candidate_header_level_index[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t nonstartup_level_candidate_header_probe_count;
+    size_t nonstartup_level_candidate_loader_reject_count;
     size_t nonstartup_level_blocked_anchor_count;
     unsigned int nonstartup_level_blocked_anchor_mask;
     int nonstartup_level_decode_ready;
