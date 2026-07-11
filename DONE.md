@@ -1,6 +1,8 @@
 # Firestaff DONE - Completed Work
 
-- ✅ 2026-07-11 DM2 viewport-owned scene-consumption receipt: GRAPHICSSET scene/light/floor/weather consumption is now exposed by the viewport renderer as a structured receipt, and runtime frame ownership consumes that receipt instead of duplicating hash logic locally. Verification: focused DM2 boot/runtime/light CTest set passed 3/3.
+- ✅ 2026-07-11 Theron Track02 inner non-startup level diagnostics: level-route capture now scans bounded inner offsets inside post-descriptor data windows, records loadable inner dungeon-record candidates with raw/user offsets and header fields, and keeps fallback blocked until broader real-media evidence is complete. Verification: focused Theron Track02 CTest set passed 3/3.
+
+- ✅ 2026-07-11 DM2 viewport-owned scene-consumption receipt: GRAPHICSSET scene/light/floor/weather consumption is now exposed by the viewport renderer as a structured receipt carrying source values, consumed mask, and consumption hash; runtime frame ownership consumes that receipt instead of duplicating hash logic locally. Verification: `test_dm2_v1_lighting_falloff_boundary` passed 149/149; focused DM2 boot/runtime/light CTest passed 3/3; `firestaff` Ninja target built; `git diff --check` passed.
 
 - ✅ 2026-07-11 DM1 startup consumes verified user-save corpus receipts: HoC complete-support now routes user-save corpus capture through the DM1 PC34 roundtrip verifier, exposes verified/failed/hash receipt fields through save-resume, complete-support, and boot-summary receipts, and rejects user-save corpus readiness unless every save-part-envelope candidate survives export/reload. Verification: Ninja built `test_dm1_v1_startup_intro_state_machine_gate`, `test_dm1_v1_original_save_pc34_handoff`, and `test_dm1_v1_original_save_classifier_pc34`; direct runs passed; focused DM1 CTest passed 3/3.
 
