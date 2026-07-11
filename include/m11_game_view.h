@@ -980,144 +980,6 @@ void M11_MessageLog_Push(M11_MessageLog* log, const char* text, unsigned char co
 int M11_GameView_GetMessageLogCount(const M11_GameViewState* state);
 const char* M11_GameView_GetMessageLogEntry(const M11_GameViewState* state, int reverseIndex);
 
-int M11_GameView_ProbeViewportFloorItemCounts(const M11_GameViewState* state,
-                                              int relForward,
-                                              int relSide,
-                                              int* outMapX,
-                                              int* outMapY,
-                                              int* outElementType,
-                                              int* outFloorItemCount,
-                                              int* outSummaryItemCount);
-int M11_GameView_ProbeViewportCreatureCounts(const M11_GameViewState* state,
-                                             int relForward,
-                                             int relSide,
-                                             int* outMapX,
-                                             int* outMapY,
-                                             int* outElementType,
-                                             int* outCreatureGroupCount,
-                                             int* outSummaryGroupCount,
-                                             int* outFirstCreatureType);
-int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
-                                             int relForward,
-                                             int relSide,
-                                             int* outMapX,
-                                             int* outMapY,
-                                             int* outElementType,
-                                             int* outProjectileCount,
-                                             int* outExplosionCount,
-                                             int* outFirstProjectileGfx,
-                                             int* outFirstExplosionType);
-int M11_GameView_ProbeViewportRenderMetadata(const M11_GameViewState* state,
-                                             int relForward,
-                                             int relSide,
-                                             int* outMapX,
-                                             int* outMapY,
-                                             int* outElementType,
-                                             int* outWallOrnamentOrdinal,
-                                             int* outChampionPortraitOrdinal,
-                                             int* outInscriptionTextIndex,
-                                             int* outFloorOrnamentOrdinal);
-int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
-    int* outTitleReceiptReady,
-    int* outTitleDrawExecuted,
-    int* outTitleHudExecuted,
-    int* outClosedDoorReceiptReady,
-    int* outClosedDoorDrawExecuted,
-    int* outClosedDoorHudExecuted,
-    int* outUtilityReceiptReady,
-    int* outUtilityDrawExecuted,
-    int* outUtilityHudExecuted,
-    int* outOpeningReceiptReady,
-    int* outOpeningDrawExecuted,
-    int* outConsumedHostViewOnly,
-    int* outSuppressLegacyUtilityFallback,
-    int* outPackagedVisualCaptureReady,
-    int* outInputConsumesReceiptOnly,
-    int* outUtilityInputDispatchReady,
-    int* outTitleAssetDrawReady,
-    int* outClosedDoorFallbackSuppressed,
-    int* outOpeningFrameDrawReady,
-    int* outFullVisualSequenceConsumed,
-    int* outRuntimeRouteHardeningReady,
-    int* outRuntimeRouteHardeningHashReady,
-    int* outRuntimeHostCaptureGateReady,
-    int* outRuntimeHostCaptureGateHashReady,
-    int* outTitleStageRuntimeCaptureReady,
-    int* outTitleStageRuntimeCaptureHashReady);
-int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
-    const M11_GameViewState* state,
-    int* outObjectSpriteCount,
-    int* outObjectIconCount,
-    int* outObjectMarkerCount,
-    int* outGroupSpriteCount,
-    int* outGroupMarkerCount,
-    int* outProjectileSpriteCount,
-    int* outProjectileMaterialCount,
-    int* outProjectileMarkerCount,
-    int* outExplosionSpriteCount,
-    int* outExplosionMarkerCount);
-int M11_GameView_ProbeDm1V2LiveEffectSeedCount(const M11_GameViewState* state);
-int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
-                                        int relForward,
-                                        int relSide,
-                                        int* outMapX,
-                                        int* outMapY,
-                                        unsigned char* outRawSquare,
-                                        int* outElementType,
-                                        int* outEffectiveElementType,
-                                        int* outIsWallLike,
-                                        int* outIsOpen);
-int M11_GameView_ProbeSideWallDrawEligibility(const M11_GameViewState* state,
-                                              int relForward,
-                                              int relSide,
-                                              int* outLegacyLaneClear,
-                                              int* outDrawsWithSourceOrder);
-int M11_GameView_ProbeDm1NearestBlockingCenterDepth(const M11_GameViewState* state,
-                                                    int* outDepthIndex,
-                                                    int* outRelForward,
-                                                    int* outMapX,
-                                                    int* outMapY,
-                                                    int* outElementType);
-int M11_GameView_ProbeDm1CenterContentVisibleDepthMask(const M11_GameViewState* state,
-                                                       int* outDepthMask);
-int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
-                                          int relSide,
-                                          int* outGraphicIndex,
-                                          int* outDstX,
-                                          int* outDstY,
-                                          int* outWidth,
-                                          int* outHeight);
-int M11_GameView_ProbeDm1PrimarySideWallMaxForward(int centerMaxVisibleForward);
-int M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(int doorState,
-                                               int* outSrcX,
-                                               int* outSrcY,
-                                               int* outDstX,
-                                               int* outDstY,
-                                               int* outWidth,
-                                               int* outHeight);
-int M11_GameView_ProbeDm1CenterDoorPanelBlit(int depth,
-                                             int doorState,
-                                             int doorVertical,
-                                             int blitIndex,
-                                             int* outSrcX,
-                                             int* outSrcY,
-                                             int* outDstX,
-                                             int* outDstY,
-                                             int* outWidth,
-                                             int* outHeight);
-int M11_GameView_ProbeDm1SideDoorPanelBlit(int relForward,
-                                           int relSide,
-                                           int doorState,
-                                           int doorVertical,
-                                           int blitIndex,
-                                           int* outSrcX,
-                                           int* outSrcY,
-                                           int* outDstX,
-                                           int* outDstY,
-                                           int* outWidth,
-                                           int* outHeight);
-int M11_GameView_ProbeDm1WallOrnamentFlip(int viewWallIndex);
-
 /* Post-move environmental transition check (pits, teleporters).
  * Returns 1 if a transition occurred. */
 int M11_GameView_CheckPostMoveTransitions(M11_GameViewState* state);
@@ -1134,15 +996,6 @@ int M11_GameView_ProbeF0230ParryAdjustedAttack(
     int random16,
     int creatureBaseAttack,
     int doubledMapDifficulty);
-int M11_GameView_ProbeF0352PotionEyeDescription(
-    const M11_GameViewState* state,
-    int championIndex,
-    unsigned int thingType,
-    unsigned int iconIndex,
-    unsigned int potionPower,
-    const char* objectName,
-    char* outText,
-    size_t outTextSize);
 int M11_GameView_ProbeF0407ShootAttack(
     const M11_GameViewState* state,
     int championIndex,
@@ -1484,19 +1337,6 @@ int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex);
 int M11_GameView_GetObjectSourceScaleIndex(int depthIndex, int relativeCell);
 int M11_GameView_GetF0115ViewSquareIndex(int relForward, int relSide);
 int M11_GameView_GetF0115C2500C2900Row(int relForward, int relSide);
-int M11_GameView_GetDm1D4FarProjectileBox(int relSide,
-                                          int* outX,
-                                          int* outY,
-                                          int* outW,
-                                          int* outH);
-int M11_GameView_GetDM1FloorOrnamentSourceZone(int relForward,
-                                               int relSide,
-                                               int* outIncrement,
-                                               int* outFlipHorizontal,
-                                               int* outX,
-                                               int* outY,
-                                               int* outW,
-                                               int* outH);
 int M11_GameView_GetC2500ObjectZonePoint(int scaleIndex,
                                          int relativeCell,
                                          int* outX,
