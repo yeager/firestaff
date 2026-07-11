@@ -372,6 +372,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     const char *home = getenv("HOME");
     char root[512];
     char corpus_root[512];
+    char corpus_nested[512];
     FILE *g;
     FILE *d;
     if (!home || !home[0]) {
@@ -690,6 +691,13 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
                                        corpus_payload,
                                        (size_t)corpus_payload_size) == 0,
           "boot complete-support test seeds a temporary SKSave corpus");
+    snprintf(corpus_nested, sizeof(corpus_nested), "%s/nested", corpus_root);
+    TEST_MKDIR(corpus_nested);
+    CHECK(dm2_sl_save_last_session(corpus_nested,
+                                   "NestedBootCorpus",
+                                   corpus_payload,
+                                   (size_t)corpus_payload_size) == 0,
+          "boot complete-support test seeds a nested SKSave corpus");
     memset(&complete_support, 0, sizeof(complete_support));
     CHECK(dm2_v1_boot_complete_support_receipt_from_runtime_state(
               launch.profile,
@@ -717,6 +725,8 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               complete_support.save_corpus_hash != 0u &&
               complete_support.save_corpus_valid_candidate_count >=
                   complete_support.save_corpus_importable_candidate_count &&
+              complete_support.save_corpus_recursive_candidate_count == 1 &&
+              complete_support.save_corpus_recursive_importable_candidate_count == 1 &&
               complete_support.save_corpus_import_promotion_ready == 1 &&
               complete_support.save_corpus_first_importable_kind ==
                   DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION &&
@@ -760,6 +770,11 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
         (void)remove(p);
         snprintf(p, sizeof(p), "%s/SKSave.bak", corpus_root);
         (void)remove(p);
+        snprintf(p, sizeof(p), "%s/SKSave.dat", corpus_nested);
+        (void)remove(p);
+        snprintf(p, sizeof(p), "%s/SKSave.bak", corpus_nested);
+        (void)remove(p);
+        TEST_RMDIR(corpus_nested);
         TEST_RMDIR(corpus_root);
     }
     dm2_v1_boot_startup_launch_cleanup(&launch);
