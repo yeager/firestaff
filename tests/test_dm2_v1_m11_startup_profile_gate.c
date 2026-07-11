@@ -10,6 +10,7 @@
  * dm2_v1_boot_enter_game() -> M11_GAME_SOURCE_DM2_BOOT.
  */
 
+#include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_dungeon_loader.h"
@@ -2527,12 +2528,16 @@ int main(void) {
                     "M11 DM2 resume Back closes champion 0 inventory before champion switch");
         expect_true(!M11_GameView_IsInventoryPanelActive(&view),
                     "M11 DM2 champion 0 inventory is closed before champion switch");
-        expect_true(M11_GameView_GetV1StatusBoxZone(1,
-                                                    &status_x,
-                                                    &status_y,
-                                                    &status_w,
-                                                    &status_h),
+        {
+            DM1_V1_ChampionStatusRectPc34 status_rect;
+            expect_true(dm1_v1_champion_status_box_rect_pc34(1,
+                                                             &status_rect),
                     "M11 DM2 champion 1 status box zone is available");
+            status_x = status_rect.x;
+            status_y = status_rect.y;
+            status_w = status_rect.w;
+            status_h = status_rect.h;
+        }
         expect_true(M11_GameView_HandlePointerButton(
                         &view,
                         status_x + (status_w / 2),

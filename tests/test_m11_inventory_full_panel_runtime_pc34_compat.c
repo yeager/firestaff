@@ -63,6 +63,7 @@
  *     rewrites only the eight visible slots and drops the hidden tail.
  */
 
+#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "m11_game_view.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
@@ -399,7 +400,7 @@ static int framebuffer_matches_chest_slot_box_pixels(
     (void)zw;
     (void)zh;
     slotBox = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                   (unsigned int)M11_GameView_GetV1SlotBoxNormalGraphicId());
+                                   (unsigned int)dm1_v1_graphic_slot_box_normal_pc34());
     if (!slotBox || !slotBox->pixels || slotBox->width != 18 || slotBox->height != 18) {
         return 0;
     }
@@ -479,7 +480,7 @@ static int framebuffer_matches_food_water_source_panel_pixels(
     water = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                  (unsigned int)M11_GameView_GetV1WaterLabelGraphicId());
     poison = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                  (unsigned int)M11_GameView_GetV1PoisonLabelGraphicId());
+                                  (unsigned int)dm1_v1_graphic_poisoned_label_pc34());
     if (!panel || !panel->pixels || !food || !food->pixels ||
         !water || !water->pixels ||
         panel->width != (unsigned short)panelW ||

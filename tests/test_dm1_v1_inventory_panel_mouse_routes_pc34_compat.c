@@ -64,6 +64,7 @@
  *      keeps C144 because F0333 returns before the C09 action-icon draw.
  */
 
+#include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "m11_game_view.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -666,7 +667,7 @@ static void test_inventory_status_hand_runtime_routes(void) {
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
     struct DungeonContainer_Compat containers[1];
-    int statusZoneX = 0, statusZoneY = 0, statusZoneW = 0, statusZoneH = 0;
+    int statusZoneX = 0, statusZoneY = 0;
     int space = M11_DM1_MOUSE_SPACE_NONE;
     int zoneId = 0;
     int command = 0;
@@ -694,10 +695,12 @@ static void test_inventory_status_hand_runtime_routes(void) {
     for (slotBox = 0; slotBox < 8u; ++slotBox) {
         const int championIndex = (int)(slotBox >> 1);
         const int handSlot = (int)(slotBox & 1u);
-        ASSERT_TRUE(M11_GameView_GetV1StatusBoxZone(championIndex,
-                                                    &statusZoneX, &statusZoneY,
-                                                    &statusZoneW, &statusZoneH),
+        DM1_V1_ChampionStatusRectPc34 statusRect;
+        ASSERT_TRUE(dm1_v1_champion_status_box_rect_pc34(championIndex,
+                                                         &statusRect),
                     "status box zone is available");
+        statusZoneX = statusRect.x;
+        statusZoneY = statusRect.y;
         /* Status hand box is at status-box origin + (4 or 24) horizontally,
          * same y=10..25. */
         leftButton = statusZoneX + (handSlot ? 24 : 4) + 2;
