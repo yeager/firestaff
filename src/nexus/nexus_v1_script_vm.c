@@ -27,6 +27,17 @@ static int nexus_read_s16_le(const uint8_t *p) {
     return (v & 0x8000u) ? (int)v - 0x10000 : (int)v;
 }
 
+static int nexus_read_u16_be(const uint8_t *p) {
+    return p ? (int)(((uint16_t)p[0] << 8) | (uint16_t)p[1]) : 0;
+}
+
+static int nexus_read_u32_be(const uint8_t *p) {
+    return p ? (int)(((uint32_t)p[0] << 24) |
+                     ((uint32_t)p[1] << 16) |
+                     ((uint32_t)p[2] << 8) |
+                     (uint32_t)p[3]) : 0;
+}
+
 static int nexus_script_is_condition_opcode(int opcode) {
     return opcode >= NEXUS_OP_WHEN_PARTY_ON_XY &&
            opcode <= NEXUS_OP_WHEN_ITEM_USED;
@@ -99,6 +110,78 @@ static int nexus_script_parse_slev_rule_table(Nexus_ScriptVM *vm,
     return 1;
 }
 
+static void nexus_script_profile_real_slev_task(Nexus_ScriptVM *vm,
+                                                const uint8_t *data,
+                                                int size) {
+    int i;
+    int checksum = 0;
+    int first_opcode;
+    int rts_count = 0;
+    int branch_count = 0;
+    int immediate_count = 0;
+    int jsr_count = 0;
+    int pc_relative_load_count = 0;
+    int literal_pointer_count = 0;
+    int first_literal_offset = -1;
+    int first_literal_address = 0;
+    int last_literal_address = 0;
+
+    if (!vm) return;
+    if (!data || size < 64 || (size & 1) != 0) return;
+
+    first_opcode = nexus_read_u16_be(data);
+    for (i = 0; i + 1 < size; i += 2) {
+        int word = nexus_read_u16_be(data + i);
+        checksum = (checksum + word) & 0xffff;
+        if (word == 0x000b) {
+            rts_count++;
+        }
+        if ((word & 0xf000) == 0xa000 || (word & 0xf000) == 0xb000) {
+            branch_count++;
+        }
+        if ((word & 0xf000) == 0xe000) {
+            immediate_count++;
+        }
+        if ((word & 0xf0ff) == 0x400b) {
+            jsr_count++;
+        }
+        if ((word & 0xf000) == 0x9000 || (word & 0xf000) == 0xd000) {
+            pc_relative_load_count++;
+        }
+        if (i + 3 < size) {
+            int ptr = nexus_read_u32_be(data + i);
+            if ((ptr & 0xffff0000) == 0x00200000) {
+                if (literal_pointer_count == 0) {
+                    first_literal_offset = i;
+                    first_literal_address = ptr;
+                }
+                last_literal_address = ptr;
+                literal_pointer_count++;
+            }
+        }
+    }
+
+    /* Local verified SLEV00-15 assets are SH-2 task-like code streams:
+     * first opcode 0x2fe6, even 16-bit words, one or more RTS opcodes.
+     * This is a real-format profile only; it intentionally does not enable
+     * condition/action dispatch until the call table and operands are decoded. */
+    if (first_opcode == 0x2fe6 && rts_count > 0) {
+        vm->real_task_profile_supported = 1;
+        vm->real_task_word_count = size / 2;
+        vm->real_task_first_opcode = first_opcode;
+        vm->real_task_rts_count = rts_count;
+        vm->real_task_branch_count = branch_count;
+        vm->real_task_immediate_count = immediate_count;
+        vm->real_task_jsr_count = jsr_count;
+        vm->real_task_pc_relative_load_count = pc_relative_load_count;
+        vm->real_task_literal_pointer_count = literal_pointer_count;
+        vm->real_task_first_literal_offset = first_literal_offset;
+        vm->real_task_first_literal_address = first_literal_address;
+        vm->real_task_last_literal_address = last_literal_address;
+        vm->real_task_checksum16 = checksum;
+    }
+}
+
 /* ═══════════════════════════════════════════════════════════════════
  * Init
  * ═══════════════════════════════════════════════════════════════════ */
@@ -132,9 +215,24 @@ int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
     vm->dispatch_enabled = 0;
     vm->parsed_record_size = 0;
     vm->parsed_rule_count = 0;
+    vm->real_task_profile_supported = 0;
+    vm->real_task_word_count = 0;
+    vm->real_task_first_opcode = 0;
+    vm->real_task_rts_count = 0;
+    vm->real_task_branch_count = 0;
+    vm->real_task_immediate_count = 0;
+    vm->real_task_jsr_count = 0;
+    vm->real_task_pc_relative_load_count = 0;
+    vm->real_task_literal_pointer_count = 0;
+    vm->real_task_first_literal_offset = -1;
+    vm->real_task_first_literal_address = 0;
+    vm->real_task_last_literal_address = 0;
+    vm->real_task_checksum16 = 0;
 
     if (vm->candidate_source_loaded) {
-        (void)nexus_script_parse_slev_rule_table(vm, data, size);
+        if (!nexus_script_parse_slev_rule_table(vm, data, size)) {
+            nexus_script_profile_real_slev_task(vm, data, size);
+        }
     }
 
     /* No synthetic fallback rules here: SLEV*.BIN/DGN trigger bytes that do
@@ -160,6 +258,19 @@ void nexus_script_vm_unload(Nexus_ScriptVM *vm) {
     vm->dispatch_enabled = 0;
     vm->parsed_record_size = 0;
     vm->parsed_rule_count = 0;
+    vm->real_task_profile_supported = 0;
+    vm->real_task_word_count = 0;
+    vm->real_task_first_opcode = 0;
+    vm->real_task_rts_count = 0;
+    vm->real_task_branch_count = 0;
+    vm->real_task_immediate_count = 0;
+    vm->real_task_jsr_count = 0;
+    vm->real_task_pc_relative_load_count = 0;
+    vm->real_task_literal_pointer_count = 0;
+    vm->real_task_first_literal_offset = -1;
+    vm->real_task_first_literal_address = 0;
+    vm->real_task_last_literal_address = 0;
+    vm->real_task_checksum16 = 0;
 }
 
 int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
@@ -178,6 +289,25 @@ int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
     out_receipt->dispatch_enabled = vm->dispatch_enabled;
     out_receipt->parsed_record_size = vm->parsed_record_size;
     out_receipt->parsed_rule_count = vm->parsed_rule_count;
+    out_receipt->real_task_profile_supported =
+        vm->real_task_profile_supported;
+    out_receipt->real_task_word_count = vm->real_task_word_count;
+    out_receipt->real_task_first_opcode = vm->real_task_first_opcode;
+    out_receipt->real_task_rts_count = vm->real_task_rts_count;
+    out_receipt->real_task_branch_count = vm->real_task_branch_count;
+    out_receipt->real_task_immediate_count = vm->real_task_immediate_count;
+    out_receipt->real_task_jsr_count = vm->real_task_jsr_count;
+    out_receipt->real_task_pc_relative_load_count =
+        vm->real_task_pc_relative_load_count;
+    out_receipt->real_task_literal_pointer_count =
+        vm->real_task_literal_pointer_count;
+    out_receipt->real_task_first_literal_offset =
+        vm->real_task_first_literal_offset;
+    out_receipt->real_task_first_literal_address =
+        vm->real_task_first_literal_address;
+    out_receipt->real_task_last_literal_address =
+        vm->real_task_last_literal_address;
+    out_receipt->real_task_checksum16 = vm->real_task_checksum16;
     out_receipt->rules_loaded = vm->rule_count;
 
     if (!vm->candidate_source_loaded) {

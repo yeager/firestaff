@@ -20145,8 +20145,8 @@ set_tests_properties(nexus_v1_bpk_surface_class_probe PROPERTIES
 # Nexus V1 SAL/MAP/CD-DA audio receipt probe. Headless and data-free:
 # verifies the documented SNDLEV00-15.SAL / SNDLEV00-15.MAP size+hash
 # receipt table and the CD-DA layout contract (Track 1 data + audio
-# tracks 2-9). Skip-safe boundary only: no SAL decode, MAP parse,
-# CD sector read, or playback binding.
+# tracks 2-9). Skip-safe boundary: bounded MAP event table parse is owned
+# here; SAL decode, CD sector read, and playback binding remain blocked.
 add_executable(firestaff_nexus_v1_audio_receipt_probe
     probes/nexus/firestaff_nexus_v1_audio_receipt_probe.c
 )
@@ -20496,6 +20496,13 @@ if(NOT MSVC)
         -Wall -Wextra -O2
     )
 endif()
+add_test(
+    NAME nexus_v1_sound_runtime_receipt
+    COMMAND test_nexus_v1_sound_runtime_receipt
+)
+set_tests_properties(nexus_v1_sound_runtime_receipt PROPERTIES
+    LABELS "tier4;nexus;audio;runtime;receipt"
+)
 
 if(BUILD_TESTING)
     add_test(
@@ -20769,6 +20776,28 @@ add_test(
 )
 set_tests_properties(nexus_v1_launch_smoke PROPERTIES
     LABELS "tier1;nexus;launch;smoke;skip_safe"
+)
+
+add_executable(test_nexus_v1_script_vm
+    tests/test_nexus_v1_script_vm.c
+)
+target_link_libraries(test_nexus_v1_script_vm PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(test_nexus_v1_script_vm PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_script_vm PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_script_vm
+    COMMAND test_nexus_v1_script_vm
+)
+set_tests_properties(nexus_v1_script_vm PROPERTIES
+    LABELS "tier4;nexus;slev;script;runtime"
 )
 
 # ── Nexus V1 Phase 7 — Mechanics Parity Verification ─────────────────
