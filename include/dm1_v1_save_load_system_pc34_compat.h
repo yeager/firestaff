@@ -67,20 +67,6 @@ bool DM1_V1_SaveLoad_SlotOccupiedPc34Compat(const DM1_V1_SaveLoadStatePc34* stat
 bool DM1_V1_SaveLoad_SourceRuntimeSlotSupportedPc34Compat(uint8_t slot);
 uint8_t DM1_V1_SaveLoad_SourceRuntimeSlotCountPc34Compat(void);
 
-typedef DM1_V1_SaveLoadHeaderPc34 M11_SL_SaveHeader;
-typedef DM1_V1_SaveLoadSlotInfoPc34 M11_SL_SlotInfo;
-typedef DM1_V1_SaveLoadStatePc34 M11_SL_State;
-
-#define m11_sl_init DM1_V1_SaveLoad_InitPc34Compat
-#define m11_sl_scan_slots DM1_V1_SaveLoad_ScanSlotsPc34Compat
-#define m11_sl_save DM1_V1_SaveLoad_SavePc34Compat
-#define m11_sl_load_header DM1_V1_SaveLoad_LoadHeaderPc34Compat
-#define m11_sl_load_data DM1_V1_SaveLoad_LoadDataPc34Compat
-#define m11_sl_delete DM1_V1_SaveLoad_DeletePc34Compat
-#define m11_sl_slot_occupied DM1_V1_SaveLoad_SlotOccupiedPc34Compat
-#define m11_sl_source_runtime_slot_supported DM1_V1_SaveLoad_SourceRuntimeSlotSupportedPc34Compat
-#define m11_sl_source_runtime_slot_count DM1_V1_SaveLoad_SourceRuntimeSlotCountPc34Compat
-
 #ifdef __cplusplus
 }
 #endif
