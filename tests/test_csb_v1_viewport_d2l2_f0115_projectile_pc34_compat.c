@@ -28,15 +28,15 @@ static int test_route_rows_and_teleporters(void)
 {
     int ok = 1;
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *d2l2 =
-        M11_GameView_D2L2F0115ProjectileRouteSpecForSquare(9);
+        csb_v1_viewport_d2l2_f0115_projectile_route_spec_for_square_pc34_compat(9);
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *d2r2 =
-        M11_GameView_D2L2F0115ProjectileRouteSpecForSquare(10);
+        csb_v1_viewport_d2l2_f0115_projectile_route_spec_for_square_pc34_compat(10);
 
     /* ReDMCSB: DEFS.H lines 2605-2606 define C09/C10; DUNVIEW.C lines
      * 371-377 map D2L2/D2R2 to depth 2, missing F0115 rows, and field
      * aspects 5/6; F0678/F0679 lines 6863-6865/6894-6896 draw only F0113. */
     ok &= expect_int("route.count",
-                     (int)M11_GameView_D2L2F0115ProjectileRouteSpecCount(), 2,
+                     (int)csb_v1_viewport_d2l2_f0115_projectile_route_spec_count_pc34_compat(), 2,
                      "ReDMCSB DUNVIEW.C:6847-6896");
     ok &= expect_int("d2l2.present", d2l2 != NULL, 1,
                      "ReDMCSB DEFS.H:2605 C09_VIEW_SQUARE_D2L2");
@@ -51,13 +51,13 @@ static int test_route_rows_and_teleporters(void)
     ok &= expect_int("d2r2.field_aspect", d2r2 ? d2r2->field_aspect_index : -99, 6,
                      "ReDMCSB DUNVIEW.C:377 G2035[10]");
     ok &= expect_int("d2l2.field_zone",
-                     M11_GameView_D2L2F0115ProjectileTeleporterFieldZone(d2l2), 707,
+                     csb_v1_viewport_d2l2_f0115_projectile_teleporter_field_zone_pc34_compat(d2l2), 707,
                      "ReDMCSB DUNVIEW.C:6863-6865 C707_ZONE_WALL_D2L2");
     ok &= expect_int("d2r2.field_zone",
-                     M11_GameView_D2L2F0115ProjectileTeleporterFieldZone(d2r2), 708,
+                     csb_v1_viewport_d2l2_f0115_projectile_teleporter_field_zone_pc34_compat(d2r2), 708,
                      "ReDMCSB DUNVIEW.C:6894-6896 C708_ZONE_WALL_D2R2");
     ok &= expect_int("unknown.square",
-                     M11_GameView_D2L2F0115ProjectileRouteSpecForSquare(14) == NULL, 1,
+                     csb_v1_viewport_d2l2_f0115_projectile_route_spec_for_square_pc34_compat(14) == NULL, 1,
                      "D2L2/D2R2-only gate");
 
     return ok;
@@ -67,9 +67,9 @@ static int test_projectile_gate(void)
 {
     int ok = 1;
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *d2l2 =
-        M11_GameView_D2L2F0115ProjectileRouteSpecForSquare(9);
+        csb_v1_viewport_d2l2_f0115_projectile_route_spec_for_square_pc34_compat(9);
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *d2r2 =
-        M11_GameView_D2L2F0115ProjectileRouteSpecForSquare(10);
+        csb_v1_viewport_d2l2_f0115_projectile_route_spec_for_square_pc34_compat(10);
 
     /* ReDMCSB: F0115 lines 5668-5683 select G2028 and then compute
      * C2900_ZONE_ + row*4 + ViewCell only when the row is non-negative. */
@@ -94,16 +94,16 @@ static int test_projectile_gate(void)
                      d2l2 ? d2l2->projectile_suppresses_depth0_back_cells : -99, 0,
                      "ReDMCSB DUNVIEW.C:5675 applies only at depth 0");
     ok &= expect_int("projectile.d2_front_cell_gate",
-                     M11_GameView_D2L2F0115ProjectileZone(d2l2, 0), -1,
+                     csb_v1_viewport_d2l2_f0115_projectile_zone_pc34_compat(d2l2, 0), -1,
                      "ReDMCSB DUNVIEW.C:5668-5670 rejects missing D2L2 row");
     ok &= expect_int("projectile.d2_back_cell_gate",
-                     M11_GameView_D2L2F0115ProjectileZone(d2r2, 3), -1,
+                     csb_v1_viewport_d2l2_f0115_projectile_zone_pc34_compat(d2r2, 3), -1,
                      "ReDMCSB DUNVIEW.C:5668-5670 rejects missing D2R2 row");
     ok &= expect_int("projectile.bad_cell",
-                     M11_GameView_D2L2F0115ProjectileZone(d2l2, 4), -1,
+                     csb_v1_viewport_d2l2_f0115_projectile_zone_pc34_compat(d2l2, 4), -1,
                      "ReDMCSB DUNVIEW.C:5683 has four view cells");
     ok &= expect_int("projectile.null_zone",
-                     M11_GameView_D2L2F0115ProjectileZone(NULL, 0), -1,
+                     csb_v1_viewport_d2l2_f0115_projectile_zone_pc34_compat(NULL, 0), -1,
                      "route helper rejects unresolved spec");
     ok &= expect_int("projectile.cm1_none",
                      d2l2 ? d2l2->projectile_derived_bitmap_none : 0, -1,
@@ -122,9 +122,9 @@ static int test_object_creature_explosion_gates(void)
 {
     int ok = 1;
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *d2l2 =
-        M11_GameView_D2L2F0115ProjectileRouteSpecForSquare(9);
+        csb_v1_viewport_d2l2_f0115_projectile_route_spec_for_square_pc34_compat(9);
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *d2r2 =
-        M11_GameView_D2L2F0115ProjectileRouteSpecForSquare(10);
+        csb_v1_viewport_d2l2_f0115_projectile_route_spec_for_square_pc34_compat(10);
 
     /* ReDMCSB: F0115 lines 4923 and 5071-5079 gate object blits through
      * C2500|MASK0x8000, while lines 5201-5214/5615-5627 gate creatures
@@ -136,7 +136,7 @@ static int test_object_creature_explosion_gates(void)
     ok &= expect_int("object.shift_mask", d2l2 ? d2l2->shift_objects_and_creatures_mask : -99, 0x8000,
                      "ReDMCSB DEFS.H:3517 MASK0x8000_SHIFT_OBJECTS_AND_CREATURES");
     ok &= expect_int("object.zone_rejected",
-                     M11_GameView_D2L2F0115ProjectileObjectZone(d2l2, 2), -1,
+                     csb_v1_viewport_d2l2_f0115_projectile_object_zone_pc34_compat(d2l2, 2), -1,
                      "ReDMCSB DUNVIEW.C:4923 L2476_i_ >= 0");
     ok &= expect_int("object.pile_shift", d2l2 ? d2l2->object_pile_shift_advances : -99, 1,
                      "ReDMCSB DUNVIEW.C:5077-5082 pile shift");
@@ -149,7 +149,7 @@ static int test_object_creature_explosion_gates(void)
     ok &= expect_int("creature.coord_stride", d2l2 ? d2l2->creature_coordinate_set_stride : -99, 65,
                      "ReDMCSB DUNVIEW.C:5616 CoordinateSet*65");
     ok &= expect_int("creature.zone_rejected",
-                     M11_GameView_D2L2F0115ProjectileCreatureZone(d2l2, 1, 2), -1,
+                     csb_v1_viewport_d2l2_f0115_projectile_creature_zone_pc34_compat(d2l2, 1, 2), -1,
                      "ReDMCSB DUNVIEW.C:5211-5213 rejects G2033<0");
 
     /* ReDMCSB: F0115 lines 5915-5933 restart the explosion pass; lines
@@ -167,16 +167,16 @@ static int test_object_creature_explosion_gates(void)
     ok &= expect_int("explosion.side_base", d2l2 ? d2l2->explosion_side_zone_base : -99, 3031,
                      "ReDMCSB DEFS.H:4235 C3031_ZONE_");
     ok &= expect_int("explosion.step1_rejected",
-                     M11_GameView_D2L2F0115ProjectileExplosionRebirthStep1Zone(d2l2), -1,
+                     csb_v1_viewport_d2l2_f0115_projectile_explosion_rebirth_step1_zone_pc34_compat(d2l2), -1,
                      "ReDMCSB DUNVIEW.C:5948 rebirth rejects row <0");
     ok &= expect_int("explosion.step2_rejected",
-                     M11_GameView_D2L2F0115ProjectileExplosionRebirthStep2Zone(d2l2), -1,
+                     csb_v1_viewport_d2l2_f0115_projectile_explosion_rebirth_step2_zone_pc34_compat(d2l2), -1,
                      "ReDMCSB DUNVIEW.C:6094-6096 row unavailable");
     ok &= expect_int("explosion.center_rejected",
-                     M11_GameView_D2L2F0115ProjectileExplosionCenteredZone(d2l2), -1,
+                     csb_v1_viewport_d2l2_f0115_projectile_explosion_centered_zone_pc34_compat(d2l2), -1,
                      "ReDMCSB DUNVIEW.C:6106-6107 row unavailable");
     ok &= expect_int("explosion.side_rejected",
-                     M11_GameView_D2L2F0115ProjectileExplosionSideZone(d2l2, 1), -1,
+                     csb_v1_viewport_d2l2_f0115_projectile_explosion_side_zone_pc34_compat(d2l2, 1), -1,
                      "ReDMCSB DUNVIEW.C:6121-6122 row unavailable");
     ok &= expect_int("fluxcage.defers",
                      d2l2 ? d2l2->fluxcage_defers_to_field : -99, 1,
@@ -192,7 +192,7 @@ static int test_door_order_absence_and_synthetic_blit(void)
 {
     int ok = 1;
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *d2l2 =
-        M11_GameView_D2L2F0115ProjectileRouteSpecAt(0);
+        csb_v1_viewport_d2l2_f0115_projectile_route_spec_at_pc34_compat(0);
     uint8_t source[6] = { 1, 10, 2, 10, 3, 4 };
     uint8_t destination[6] = { 77, 77, 77, 77, 77, 77 };
 
@@ -216,7 +216,7 @@ static int test_door_order_absence_and_synthetic_blit(void)
      * with C10 transparency when a visible row exists; the D2 route gate keeps
      * the missing-row block separate from this synthetic C10 copy contract. */
     ok &= expect_int("blit.copied",
-                     M11_GameView_D2L2F0115ProjectileApplySyntheticC10Blit(
+                     csb_v1_viewport_d2l2_f0115_projectile_apply_synthetic_c10_blit_pc34_compat(
                          d2l2, source, 3, destination, 3, 3, 2),
                      4,
                      "ReDMCSB DUNVIEW.C:5881-5882 F0791 C10");
@@ -231,7 +231,7 @@ static int test_door_order_absence_and_synthetic_blit(void)
     ok &= expect_int("blit.pixel4", destination[4], 3,
                      "synthetic F0791 pixel copy");
     ok &= expect_int("blit.reject_null",
-                     M11_GameView_D2L2F0115ProjectileApplySyntheticC10Blit(
+                     csb_v1_viewport_d2l2_f0115_projectile_apply_synthetic_c10_blit_pc34_compat(
                          NULL, source, 3, destination, 3, 3, 2),
                      -1,
                      "route helper rejects unresolved spec");
@@ -242,7 +242,7 @@ static int test_door_order_absence_and_synthetic_blit(void)
 static int test_source_evidence(void)
 {
     int ok = 1;
-    const char *e = M11_GameView_D2L2F0115ProjectileSourceEvidence();
+    const char *e = csb_v1_viewport_d2l2_f0115_projectile_source_evidence_pc34_compat();
 
     ok &= expect_contains("evidence.f0115", e, "F0115:5668-5683",
                           "ReDMCSB DUNVIEW.C F0115 projectile gate");

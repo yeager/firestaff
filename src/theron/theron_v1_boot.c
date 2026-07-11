@@ -1721,6 +1721,13 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
             &state_receipt)) {
         out_receipt->state_receipt = state_receipt;
         out_receipt->state_receipt_valid = 1;
+        out_receipt->track02_state_predicates_consumed = 1;
+        out_receipt->track02_bitmap_routes_complete =
+            theron_v1_startup_state_receipt_has_complete_track02_bitmap_routes(
+                &state_receipt);
+        out_receipt->track02_no_fallback_runtime_route_ready =
+            theron_v1_startup_state_receipt_has_track02_no_fallback_runtime_route(
+                &state_receipt);
     }
     return out_receipt->render_plan_valid ||
            out_receipt->state_receipt_valid ||
@@ -1849,6 +1856,13 @@ int theron_v1_boot_startup_host_view_receipt_from_view_model(
             out_receipt->render_route.exact_object_semantics_ready;
         out_receipt->no_fallback_semantic_role_mask =
             out_receipt->render_route.no_fallback_semantic_role_mask;
+        out_receipt->track02_state_predicates_consumed =
+            out_receipt->render_route.track02_state_predicates_consumed;
+        out_receipt->track02_bitmap_routes_complete =
+            out_receipt->render_route.track02_bitmap_routes_complete;
+        out_receipt->track02_no_fallback_runtime_route_ready =
+            out_receipt->render_route
+                .track02_no_fallback_runtime_route_ready;
         out_receipt->object_table_no_fallback_ready =
             out_receipt->render_route.object_table_no_fallback_ready;
         out_receipt->object_table_blocked_anchor_mask =
@@ -1877,6 +1891,13 @@ int theron_v1_boot_startup_host_view_receipt_from_view_model(
             view_model,
             &out_receipt->state_receipt)) {
         out_receipt->state_receipt_valid = 1;
+        out_receipt->track02_state_predicates_consumed = 1;
+        out_receipt->track02_bitmap_routes_complete =
+            theron_v1_startup_state_receipt_has_complete_track02_bitmap_routes(
+                &out_receipt->state_receipt);
+        out_receipt->track02_no_fallback_runtime_route_ready =
+            theron_v1_startup_state_receipt_has_track02_no_fallback_runtime_route(
+                &out_receipt->state_receipt);
     }
     out_receipt->track02_media_consumed =
         view_model->startup_media_state_valid &&
@@ -2644,6 +2665,12 @@ static int theron_v1_boot_startup_prepare_graphics_route_receipt(
         render_route.exact_object_semantics_ready;
     out_receipt->no_fallback_semantic_role_mask =
         render_route.no_fallback_semantic_role_mask;
+    out_receipt->track02_state_predicates_consumed =
+        render_route.track02_state_predicates_consumed;
+    out_receipt->track02_bitmap_routes_complete =
+        render_route.track02_bitmap_routes_complete;
+    out_receipt->track02_no_fallback_runtime_route_ready =
+        render_route.track02_no_fallback_runtime_route_ready;
     out_receipt->object_table_no_fallback_ready =
         render_route.object_table_no_fallback_ready;
     out_receipt->object_table_blocked_anchor_mask =
@@ -3226,6 +3253,12 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
             render_route.exact_object_semantics_ready;
         out_receipt->no_fallback_semantic_role_mask =
             render_route.no_fallback_semantic_role_mask;
+        out_receipt->track02_state_predicates_consumed =
+            render_route.track02_state_predicates_consumed;
+        out_receipt->track02_bitmap_routes_complete =
+            render_route.track02_bitmap_routes_complete;
+        out_receipt->track02_no_fallback_runtime_route_ready =
+            render_route.track02_no_fallback_runtime_route_ready;
         out_receipt->object_table_no_fallback_ready =
             render_route.object_table_no_fallback_ready;
         out_receipt->object_table_blocked_anchor_mask =
@@ -3477,6 +3510,13 @@ int theron_v1_boot_startup_full_start_receipt_from_view_model(
             out_receipt->host_view.exact_object_semantics_ready;
         out_receipt->no_fallback_semantic_role_mask =
             out_receipt->host_view.no_fallback_semantic_role_mask;
+        out_receipt->track02_state_predicates_consumed =
+            out_receipt->host_view.track02_state_predicates_consumed;
+        out_receipt->track02_bitmap_routes_complete =
+            out_receipt->host_view.track02_bitmap_routes_complete;
+        out_receipt->track02_no_fallback_runtime_route_ready =
+            out_receipt->host_view
+                .track02_no_fallback_runtime_route_ready;
         out_receipt->object_table_no_fallback_ready =
             out_receipt->host_view.object_table_no_fallback_ready;
         out_receipt->object_table_blocked_anchor_mask =
@@ -4576,6 +4616,12 @@ int theron_v1_boot_startup_ui_caller_from_full_start_receipt(
         receipt->exact_object_semantics_ready ? 1 : 0;
     out_receipt->no_fallback_semantic_role_mask =
         receipt->no_fallback_semantic_role_mask;
+    out_receipt->track02_state_predicates_consumed =
+        receipt->track02_state_predicates_consumed ? 1 : 0;
+    out_receipt->track02_bitmap_routes_complete =
+        receipt->track02_bitmap_routes_complete ? 1 : 0;
+    out_receipt->track02_no_fallback_runtime_route_ready =
+        receipt->track02_no_fallback_runtime_route_ready ? 1 : 0;
     out_receipt->object_table_no_fallback_ready =
         receipt->object_table_no_fallback_ready ? 1 : 0;
     out_receipt->object_table_blocked_anchor_mask =
@@ -4599,6 +4645,9 @@ int theron_v1_boot_startup_ui_caller_from_full_start_receipt(
         out_receipt->all_dungeon_capture_count == THERON_DUNGEON_COUNT &&
         out_receipt->exact_level_semantics_ready &&
         out_receipt->exact_object_semantics_ready &&
+        out_receipt->track02_state_predicates_consumed &&
+        out_receipt->track02_bitmap_routes_complete &&
+        out_receipt->track02_no_fallback_runtime_route_ready &&
         out_receipt->object_table_no_fallback_ready &&
         out_receipt->nonstartup_level_no_fallback_ready
             ? 1
@@ -4626,6 +4675,9 @@ int theron_v1_boot_startup_ui_caller_from_full_start_receipt(
         out_receipt->title_prompt_ready &&
         out_receipt->roster_ready &&
         out_receipt->real_bitmap_decode_ready &&
+        out_receipt->track02_state_predicates_consumed &&
+        out_receipt->track02_bitmap_routes_complete &&
+        out_receipt->track02_no_fallback_runtime_route_ready &&
         out_receipt->host_must_not_draw_fallback_visuals &&
         !out_receipt->fallback_visuals_allowed &&
         !out_receipt->fallback_startup_graphics_executed &&
