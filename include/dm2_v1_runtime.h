@@ -68,6 +68,17 @@ typedef struct {
     uint32_t gdat_scene_animated_floor;
     uint32_t gdat_scene_consumed_mask;
     uint32_t gdat_scene_consumption_hash;
+    int gdat_scene_weather_plan_ready;
+    uint32_t gdat_scene_weather_plan_hash;
+    int gdat_scene_weather_kind;
+    int gdat_scene_weather_intensity;
+    int gdat_scene_weather_density;
+    int gdat_scene_weather_scroll;
+    int gdat_scene_weather_alpha;
+    int gdat_scene_weather_lightning_flash;
+    uint32_t gdat_scene_weather_rain_color;
+    uint32_t gdat_scene_weather_fog_target_color;
+    uint32_t gdat_scene_weather_lightning_color;
     int viewport_raw_gdat_asset_count;
     int viewport_decoded_gdat_asset_count;
     uint32_t viewport_raw_gdat_hash;
@@ -358,6 +369,7 @@ int dm2_v1_runtime_get_party_y(void);
 int dm2_v1_runtime_get_party_dir(void);
 int dm2_v1_runtime_get_weather(void);
 int dm2_v1_runtime_get_weather_intensity(void);
+void dm2_v1_runtime_set_weather(int weather, int intensity);
 uint32_t dm2_v1_runtime_get_leader_hand_object(void);
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,

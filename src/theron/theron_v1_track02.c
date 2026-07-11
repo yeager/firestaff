@@ -3556,6 +3556,67 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
     return status;
 }
 
+static int theron_v1_track02_object_table_shape_score(
+    Theron_Track02SemanticBindingStatus status,
+    const Theron_Track02ObjectTable *table) {
+
+    if (!table) {
+        return 0;
+    }
+    if (status == THERON_TRACK02_SEMANTIC_BINDING_OK) {
+        return 5;
+    }
+    if (status == THERON_TRACK02_SEMANTIC_BINDING_WINDOW_TOO_SMALL &&
+        table->record_count > 0u &&
+        table->record_count <= THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS) {
+        return 4;
+    }
+    if (status == THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+        table->record_count > 0u &&
+        table->record_count <= THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS) {
+        return 3;
+    }
+    if (status == THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+        table->overflow_count > 0u) {
+        return 2;
+    }
+    if (status == THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL) {
+        return 1;
+    }
+    return 0;
+}
+
+static void theron_v1_track02_object_table_note_shape_candidate(
+    Theron_Track02ObjectTableRouteReceipt *receipt,
+    size_t anchor,
+    size_t entry_index,
+    size_t raw_offset,
+    size_t window_offset,
+    Theron_Track02SemanticBindingStatus status,
+    const Theron_Track02ObjectTable *table) {
+
+    int score;
+
+    if (!receipt || !table || anchor >= THERON_TRACK02_MAX_BANK_ANCHORS) {
+        return;
+    }
+    score = theron_v1_track02_object_table_shape_score(status, table);
+    if (score <= receipt->object_table_shape_best_score[anchor]) {
+        return;
+    }
+    receipt->object_table_shape_best_score[anchor] = score;
+    receipt->object_table_shape_best_status[anchor] = (int)status;
+    receipt->object_table_shape_best_entry_index[anchor] = entry_index;
+    receipt->object_table_shape_best_raw_offsets[anchor] = raw_offset;
+    receipt->object_table_shape_best_window_offsets[anchor] = window_offset;
+    receipt->object_table_shape_best_record_counts[anchor] =
+        table->record_count;
+    receipt->object_table_shape_best_overflow_counts[anchor] =
+        table->overflow_count;
+    receipt->object_table_shape_best_byte_counts[anchor] = table->byte_count;
+    receipt->object_table_shape_best_checksums[anchor] = table->checksum;
+}
+
 Theron_Track02LevelHandoffStatus theron_v1_track02_bind_startup_semantic_handoff(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -3912,6 +3973,14 @@ int theron_v1_track02_capture_object_table_route_receipt(
                     out_receipt->object_table_candidate_last_hashes[anchor] =
                         tqr_fnv1a_bytes(track02_data + binding.absolute_offset,
                                         binding.byte_count);
+                    theron_v1_track02_object_table_note_shape_candidate(
+                        out_receipt,
+                        anchor,
+                        entry_index,
+                        binding.absolute_offset,
+                        0u,
+                        binding_status,
+                        &binding.object_table);
                 }
                 if (binding_status == THERON_TRACK02_SEMANTIC_BINDING_OK) {
                     out_receipt->object_table_decode_ready = 1;
@@ -4053,6 +4122,14 @@ int theron_v1_track02_capture_object_table_route_receipt(
                         ++out_receipt
                               ->object_table_row_probe_anchor_counts[anchor];
                     }
+                    theron_v1_track02_object_table_note_shape_candidate(
+                        out_receipt,
+                        anchor,
+                        entry_index,
+                        entries[entry_index].absolute_offset,
+                        0u,
+                        row_status,
+                        &row_table);
                 }
                 if (row_status == THERON_TRACK02_SEMANTIC_BINDING_OK) {
                     size_t user_data_offset = 0u;
@@ -4124,6 +4201,15 @@ int theron_v1_track02_capture_object_table_route_receipt(
                                   ->object_table_inner_scan_anchor_counts
                                       [anchor];
                         }
+                        theron_v1_track02_object_table_note_shape_candidate(
+                            out_receipt,
+                            anchor,
+                            entry_index,
+                            entries[entry_index].absolute_offset +
+                                inner_offset,
+                            inner_offset,
+                            inner_status,
+                            &inner_table);
                         if (inner_status ==
                             THERON_TRACK02_SEMANTIC_BINDING_OK) {
                             size_t inner_user_data_offset = 0u;
@@ -4373,6 +4459,32 @@ int theron_v1_track02_capture_object_table_route_receipt(
             out_receipt->object_table_row_first_reject_byte_counts[anchor];
         hash *= 16777619u;
         hash ^= out_receipt->object_table_row_first_reject_checksums[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_shape_best_score[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_shape_best_status[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_shape_best_entry_index[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_shape_best_raw_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_shape_best_window_offsets[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_shape_best_record_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_shape_best_overflow_counts[anchor];
+        hash *= 16777619u;
+        hash ^= (uint32_t)
+            out_receipt->object_table_shape_best_byte_counts[anchor];
+        hash *= 16777619u;
+        hash ^= out_receipt->object_table_shape_best_checksums[anchor];
         hash *= 16777619u;
         hash ^= (uint32_t)
             out_receipt->object_table_inner_scan_anchor_counts[anchor];

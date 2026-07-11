@@ -3899,7 +3899,7 @@ int dm1_v1_startup_hoc_boot_probe_log_receipt_pc34(
     receipt.ready = 1;
     snprintf(receipt.fields,
              sizeof(receipt.fields),
-             "dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCRealAssetCapture=%d dm1HoCMacWindowCapture=%d dm1HoCReleaseAppCapture=%d dm1HoCReleaseAppIdentity=%d dm1HoCReleaseAppIdentityHash=%08x dm1HoCHostCaptureRouteMatches=%d dm1HoCReleaseCaptureOwnershipReady=%d dm1HoCHostRenderConsumer=%d dm1HoCM11BootProbeConsumer=%d dm1HoCLaunchPathReady=%d dm1HoCRequiredAssetCapture=%d dm1HoCReceiptOnlyConsumerReady=%d dm1HoCLowerLevelHelpersReady=%d dm1HoCHostDrawUsesOwnedReceipt=%d dm1HoCHostDrawConsumesBackingAsset=%d dm1HoCHostDrawRejectsBackingFallback=%d dm1HoCHoCAssetCapture=%d dm1HoCHostWindowCapture=%d dm1HoCPresentedCapture=%d dm1HoCPresentedCaptureSize=%dx%d dm1HoCPresentedCaptureGeometry=%d dm1HoCPresentedCapturePixels=%d dm1HoCPresentedCaptureBytes=%d dm1HoCPresentedCaptureHash=%08x dm1HoCPresentedCaptureChain=%d dm1HoCPresentedCaptureConsumerMask=%x dm1HoCPresentedCaptureChainHash=%08x dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d dm1CompleteSupportReady=%d dm1CompleteSourceVisibleStartup=%d dm1CompleteEntranceToHoC=%d dm1CompleteHoCRenderRoute=%d dm1CompleteHostAppCaptureRoute=%d dm1CompleteSaveCorpusRoute=%d dm1CompleteOriginalSaveRoundtripRoute=%d",
+             "dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCRealAssetCapture=%d dm1HoCMacWindowCapture=%d dm1HoCReleaseAppCapture=%d dm1HoCReleaseAppIdentity=%d dm1HoCReleaseAppIdentityHash=%08x dm1HoCHostCaptureRouteMatches=%d dm1HoCReleaseCaptureOwnershipReady=%d dm1HoCHostRenderConsumer=%d dm1HoCM11BootProbeConsumer=%d dm1HoCLaunchPathReady=%d dm1HoCRequiredAssetCapture=%d dm1HoCReceiptOnlyConsumerReady=%d dm1HoCLowerLevelHelpersReady=%d dm1HoCHostDrawUsesOwnedReceipt=%d dm1HoCHostDrawConsumesBackingAsset=%d dm1HoCHostDrawRejectsBackingFallback=%d dm1HoCHoCAssetCapture=%d dm1HoCHostWindowCapture=%d dm1HoCPresentedCapture=%d dm1HoCPresentedCaptureSize=%dx%d dm1HoCPresentedCaptureGeometry=%d dm1HoCPresentedCapturePixels=%d dm1HoCPresentedCaptureBytes=%d dm1HoCPresentedCaptureHash=%08x dm1HoCPresentedCaptureChain=%d dm1HoCPresentedCaptureConsumerMask=%x dm1HoCPresentedCaptureChainHash=%08x dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d dm1CompleteSupportReady=%d dm1CompleteSourceVisibleStartup=%d dm1CompleteEntranceToHoC=%d dm1CompleteHoCRenderRoute=%d dm1CompleteHostAppCaptureRoute=%d dm1CompleteSaveCorpusRoute=%d dm1CompleteOriginalSaveRoundtripRoute=%d dm1UserSaveCorpusPC34=%d dm1UserSaveCorpusPartEnvelope=%d dm1UserSaveCorpusRoundtripReady=%d dm1UserSaveCorpusRoundtripVerified=%d dm1UserSaveCorpusRoundtripFailed=%d dm1UserSaveCorpusRoundtripHash=%08x dm1UserSaveCorpusRejected=%d dm1UserSaveCorpusTruncated=%d dm1UserSaveCorpusFirstPC34Path=%s",
              summary->full_graphics_ready,
              summary->host_render_plan_ready,
              summary->capture_proof_passed,
@@ -3946,7 +3946,18 @@ int dm1_v1_startup_hoc_boot_probe_log_receipt_pc34(
              summary->complete_hoc_render_route,
              summary->complete_host_app_capture_route,
              summary->complete_save_corpus_route,
-             summary->complete_original_save_roundtrip_route);
+             summary->complete_original_save_roundtrip_route,
+             summary->user_save_corpus_pc34_ready,
+             summary->user_save_corpus_part_envelope_ready,
+             summary->user_save_corpus_roundtrip_ready,
+             summary->user_save_corpus_roundtrip_verified,
+             summary->user_save_corpus_roundtrip_failed,
+             summary->user_save_corpus_roundtrip_hash,
+             summary->user_save_corpus_rejected,
+             summary->user_save_corpus_truncated,
+             summary->user_save_corpus_first_pc34_path[0]
+                 ? summary->user_save_corpus_first_pc34_path
+                 : "(none)");
     *out_receipt = receipt;
     return 1;
 }

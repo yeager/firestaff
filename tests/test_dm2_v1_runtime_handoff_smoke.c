@@ -813,6 +813,27 @@ static void test_first_tick_after_boot_profile_handoff(void)
               "runtime ownership hashes consumed GRAPHICSSET scene/light words when real scene control is bound");
         CHECK(framebuffer[0] != 0,
               "runtime asset-provider frame completes the shared viewport render pass");
+        dm2_v1_runtime_set_outdoor(1);
+        dm2_v1_runtime_set_weather(DM2_WEATHER_RAIN, 64);
+        memset(framebuffer, 0, sizeof(framebuffer));
+        fetch_count = 0;
+        CHECK(dm2_v1_runtime_render_frame(
+                  dm2_v1_runtime_get_party_dir(),
+                  dm2_v1_runtime_get_party_x(),
+                  dm2_v1_runtime_get_party_y(),
+                  framebuffer, 320, 320, 200) == 0,
+              "runtime renders outdoor weather ownership fixture");
+        memset(&ownership, 0, sizeof(ownership));
+        (void)dm2_v1_runtime_last_frame_ownership(&ownership);
+        CHECK(ownership.runtime_frame_owned == 1 &&
+              ownership.gdat_scene_weather_plan_ready == 1 &&
+              ownership.gdat_scene_weather_plan_hash != 0u &&
+              ownership.gdat_scene_weather_kind ==
+                  DM2_V1_WEATHER_OVERLAY_RAIN &&
+              ownership.gdat_scene_weather_intensity >= 64 &&
+              ownership.gdat_scene_weather_density > 0,
+              "runtime ownership carries outdoor weather overlay plan evidence");
+        dm2_v1_runtime_set_outdoor(0);
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
     }
 

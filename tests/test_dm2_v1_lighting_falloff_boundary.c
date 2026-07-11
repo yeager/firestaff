@@ -539,6 +539,13 @@ static void test_weather_overlay_render_plan(void)
               receipt.ready == 1 &&
               receipt.consumed_mask == 0x8u &&
               receipt.weather_consumed == 1 &&
+              receipt.weather_plan_ready == 1 &&
+              receipt.weather_plan_hash != 0u &&
+              receipt.weather_kind == DM2_V1_WEATHER_OVERLAY_RAIN &&
+              receipt.weather_intensity == 67 &&
+              receipt.weather_density == 7 &&
+              receipt.weather_scroll == 7 &&
+              receipt.weather_rain_color == 12 &&
               receipt.source_hash == 0x32475357u &&
               receipt.void_random_fall == 3 &&
               receipt.consumption_hash != 0u);

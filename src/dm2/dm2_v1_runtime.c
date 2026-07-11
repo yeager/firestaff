@@ -2342,6 +2342,28 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                 scene_receipt.consumed_mask;
             g_dm2_frame_ownership.gdat_scene_consumption_hash =
                 scene_receipt.consumption_hash;
+            g_dm2_frame_ownership.gdat_scene_weather_plan_ready =
+                scene_receipt.weather_plan_ready;
+            g_dm2_frame_ownership.gdat_scene_weather_plan_hash =
+                scene_receipt.weather_plan_hash;
+            g_dm2_frame_ownership.gdat_scene_weather_kind =
+                scene_receipt.weather_kind;
+            g_dm2_frame_ownership.gdat_scene_weather_intensity =
+                scene_receipt.weather_intensity;
+            g_dm2_frame_ownership.gdat_scene_weather_density =
+                scene_receipt.weather_density;
+            g_dm2_frame_ownership.gdat_scene_weather_scroll =
+                scene_receipt.weather_scroll;
+            g_dm2_frame_ownership.gdat_scene_weather_alpha =
+                scene_receipt.weather_alpha;
+            g_dm2_frame_ownership.gdat_scene_weather_lightning_flash =
+                scene_receipt.weather_lightning_flash;
+            g_dm2_frame_ownership.gdat_scene_weather_rain_color =
+                scene_receipt.weather_rain_color;
+            g_dm2_frame_ownership.gdat_scene_weather_fog_target_color =
+                scene_receipt.weather_fog_target_color;
+            g_dm2_frame_ownership.gdat_scene_weather_lightning_color =
+                scene_receipt.weather_lightning_color;
         }
     }
     /* skproject SKWIN/SkWinCore.cpp routes the runtime HUD, floor/ceiling,
@@ -2357,7 +2379,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
          (g_dm2_frame_ownership.gdat_scene_control_ready &&
           g_dm2_frame_ownership.gdat_scene_control_consumed > 0 &&
           g_dm2_frame_ownership.gdat_scene_light_consumed > 0 &&
-          g_dm2_frame_ownership.gdat_scene_control_hash != 0u)) &&
+          g_dm2_frame_ownership.gdat_scene_control_hash != 0u &&
+          (g_dm2_frame_ownership.gdat_scene_weather_consumed == 0 ||
+           (g_dm2_frame_ownership.gdat_scene_weather_plan_ready &&
+            g_dm2_frame_ownership.gdat_scene_weather_plan_hash != 0u)))) &&
         /* skproject SKWIN uses raw INTERFACE_GENERAL tables for the HUD
          * chrome/layout and CHAMPIONS images for the visible portrait panel.
          * Do not require Firestaff's primitive rect fills to be separate
@@ -2801,6 +2826,17 @@ int dm2_v1_runtime_get_weather(void) {
 
 int dm2_v1_runtime_get_weather_intensity(void) {
     return g_dm2_runtime.weather.weather_intensity;
+}
+
+void dm2_v1_runtime_set_weather(int weather, int intensity) {
+    if (intensity < 0) {
+        intensity = 0;
+    } else if (intensity > 100) {
+        intensity = 100;
+    }
+    dm2_v1_weather_set(&g_dm2_runtime.weather,
+                       intensity > 0 ? weather : DM2_WEATHER_CLEAR);
+    g_dm2_runtime.weather.weather_intensity = intensity;
 }
 
 uint32_t dm2_v1_runtime_get_leader_hand_object(void) {
