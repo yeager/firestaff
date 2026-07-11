@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include "dm2_v1_boot.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_viewport_renderer.h"
 
@@ -54,6 +55,9 @@ typedef struct {
     int real_gdat_evidence_valid;
     int gdat_scene_control_ready;
     int gdat_scene_control_consumed;
+    int gdat_scene_light_consumed;
+    int gdat_scene_floor_anim_consumed;
+    int gdat_scene_weather_consumed;
     uint32_t gdat_scene_control_hash;
     uint32_t gdat_scene_control_present_mask;
     uint32_t gdat_scene_colorkey;
@@ -377,6 +381,28 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
                                           size_t data_size);
 int dm2_v1_runtime_load_save_slot(const char *save_base, uint8_t slot);
 int dm2_v1_runtime_load_last_session(const char *save_base);
+
+typedef enum DM2_V1_RuntimeCorpusImportResult {
+    DM2_V1_RUNTIME_CORPUS_IMPORT_OK = 0,
+    DM2_V1_RUNTIME_CORPUS_IMPORT_BAD_INPUT,
+    DM2_V1_RUNTIME_CORPUS_IMPORT_NO_IMPORTABLE_SAVE,
+    DM2_V1_RUNTIME_CORPUS_IMPORT_READ_FAILED,
+    DM2_V1_RUNTIME_CORPUS_IMPORT_PARSE_FAILED,
+    DM2_V1_RUNTIME_CORPUS_IMPORT_RESTORE_FAILED
+} DM2_V1_RuntimeCorpusImportResult;
+
+typedef struct DM2_V1_RuntimeCorpusImportReceipt {
+    DM2_V1_RuntimeCorpusImportResult result;
+    DM2_SKSaveCorpusReceipt corpus;
+    DM2_V1_SaveCandidateKind candidate_kind;
+    char selected_path[256];
+    size_t selected_payload_size;
+    int restored;
+} DM2_V1_RuntimeCorpusImportReceipt;
+
+int dm2_v1_runtime_import_sksave_corpus(
+    const char *save_base,
+    DM2_V1_RuntimeCorpusImportReceipt *out_receipt);
 
 typedef enum DM2_V1_QuicksaveResult {
     DM2_V1_QUICKSAVE_OK = 0,

@@ -1348,11 +1348,16 @@ static int test_sksave_corpus_scan_receipt(void)
     uint8_t payload_a[2048];
     uint8_t payload_b[2048];
     uint8_t payload_c[4096];
+    uint8_t imported_payload[4096];
     size_t payload_a_size = 0u;
     size_t payload_b_size = 0u;
+    size_t imported_payload_size = 0u;
     size_t largest_payload_size = 0u;
     size_t enc_gs_size = 0u;
     size_t enc_champ_size = 0u;
+    uint8_t loaded_payload[DM2_SESSION_MAX_SIZE];
+    size_t loaded_payload_size = 0u;
+    DM2_V1_SaveCandidate loaded_candidate;
     int payload_c_size;
     DM2_TestGameStateStorage gs_store;
     DM2_GameStateBlock *gs = &gs_store.block;
@@ -1488,6 +1493,35 @@ static int test_sksave_corpus_scan_receipt(void)
         cleanup_slot_dir(tmpdir);
         return 0;
     }
+    memset(loaded_payload, 0, sizeof(loaded_payload));
+    loaded_payload_size = 0u;
+    memset(&loaded_candidate, 0, sizeof(loaded_candidate));
+    if (!dm2_v1_sksave_corpus_load_first_importable(
+            tmpdir, loaded_payload, sizeof(loaded_payload),
+            &loaded_payload_size, &receipt) ||
+        loaded_payload_size != payload_b_size ||
+        dm2_v1_session_parse_save_candidate(&loaded_candidate,
+                                             loaded_payload,
+                                             loaded_payload_size) != 0 ||
+        loaded_candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE ||
+        strstr(receipt.first_importable_path, "SKSave.dat") == NULL) {
+        printf("    FAIL: corpus loader did not promote last-session "
+               "importable envelope candidate\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+
+    memset(imported_payload, 0, sizeof(imported_payload));
+    imported_payload_size = 0u;
+    if (!dm2_v1_sksave_corpus_load_first_importable(
+            tmpdir, imported_payload, sizeof(imported_payload),
+            &imported_payload_size, &receipt) ||
+        imported_payload_size != payload_b_size ||
+        memcmp(imported_payload, payload_b, payload_b_size) != 0) {
+        printf("    FAIL: first importable corpus payload was not loaded\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
 
     if (write_bad_last_session_file(tmpdir) != 0) {
         printf("    FAIL: could not corrupt last-session primary\n");
@@ -1513,9 +1547,27 @@ static int test_sksave_corpus_scan_receipt(void)
         cleanup_slot_dir(tmpdir);
         return 0;
     }
+    memset(loaded_payload, 0, sizeof(loaded_payload));
+    loaded_payload_size = 0u;
+    memset(&loaded_candidate, 0, sizeof(loaded_candidate));
+    if (!dm2_v1_sksave_corpus_load_first_importable(
+            tmpdir, loaded_payload, sizeof(loaded_payload),
+            &loaded_payload_size, &receipt) ||
+        loaded_payload_size != (size_t)payload_c_size ||
+        dm2_v1_session_parse_save_candidate(&loaded_candidate,
+                                             loaded_payload,
+                                             loaded_payload_size) != 0 ||
+        loaded_candidate.kind != DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION ||
+        strstr(receipt.first_importable_path, "SKSave03.dat") == NULL) {
+        printf("    FAIL: corpus loader did not fall through to first "
+               "importable slot candidate\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
 
     printf("    PASS: corpus scan reports resume order, slot mask, importable "
-           "Firestaff/envelope saves, payload sizes and invalid saves\n");
+           "Firestaff/envelope saves, payload sizes, invalid saves and "
+           "first-importable payload promotion\n");
     cleanup_slot_dir(tmpdir);
     return 1;
 }
@@ -2009,6 +2061,79 @@ done:
     return 1;
 }
 
+static int test_sksave_corpus_runtime_import(void)
+{
+    char tmpdir[256];
+    uint8_t payload[DM2_SESSION_MAX_SIZE];
+    int payload_size;
+    DM2_V1_SessionState session;
+    DM2_V1_RuntimeCorpusImportReceipt receipt;
+    DM2_V1_BootProfile boot;
+    DM2_V1_GameState game;
+    DM2_V1_DungeonData dungeon;
+    int result = 0;
+
+    printf("  SKSave corpus promotes first importable save into runtime...\n");
+    snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_corpus_import_%d",
+             FS_GETPID());
+    FS_MKDIR(tmpdir);
+    dm2_v1_session_new(&session);
+    session.game_tick = 0x7788u;
+    session.party_x = 6;
+    session.party_y = 7;
+    session.party_dir = 2;
+    session.party_level = 0;
+    session.rng_seed = 0x11223344u;
+    payload_size = dm2_v1_session_serialize(&session, payload,
+                                            sizeof(payload));
+    if (payload_size <= 0 ||
+        dm2_sl_save_last_session(tmpdir, "CorpusRuntime",
+                                 payload, (size_t)payload_size) != 0) {
+        goto done;
+    }
+
+    memset(&boot, 0, sizeof(boot));
+    memset(&game, 0, sizeof(game));
+    memset(&dungeon, 0, sizeof(dungeon));
+    dungeon.raw_data = (uint8_t *)calloc(32u, 1u);
+    if (!dungeon.raw_data) goto done;
+    dungeon.raw_size = 32;
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 2;
+    dungeon.level_heights[0] = 2;
+    dungeon.square_bytes = 1;
+    boot.dm2_state = &game;
+    boot.dungeon_data = &dungeon;
+    snprintf(boot.graphics_md5, sizeof(boot.graphics_md5), "corpus-gdat");
+    dm2_v1_runtime_init(&boot);
+
+    memset(&receipt, 0xCC, sizeof(receipt));
+    if (!dm2_v1_runtime_import_sksave_corpus(tmpdir, &receipt) ||
+        receipt.result != DM2_V1_RUNTIME_CORPUS_IMPORT_OK ||
+        !receipt.restored ||
+        receipt.candidate_kind != DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION ||
+        receipt.selected_payload_size != (size_t)payload_size ||
+        strstr(receipt.selected_path, "SKSave.dat") == NULL ||
+        game.party_x != 6 ||
+        game.party_y != 7 ||
+        game.party_dir != 2 ||
+        dm2_v1_runtime_get_tick_count() != 0x7788 ||
+        dm2_v1_runtime_get_weather_seed() != 0x11223344u) {
+        goto done;
+    }
+    result = 1;
+
+done:
+    if (dungeon.raw_data) free(dungeon.raw_data);
+    cleanup_slot_dir(tmpdir);
+    if (!result) {
+        printf("    FAIL: corpus import did not restore selected runtime session\n");
+        return 0;
+    }
+    printf("    PASS: first importable SKSave corpus candidate restored runtime state\n");
+    return 1;
+}
+
 /* ════════════════════════════════════════════════════════════════ */
 
 int main(void)
@@ -2042,6 +2167,7 @@ int main(void)
     RUN(18, test_champion_death_permanence_source_lock);
     RUN(19, test_live_runtime_state_roundtrip);
     RUN(20, test_original_save_candidate_live_restore);
+    RUN(21, test_sksave_corpus_runtime_import);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);

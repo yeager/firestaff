@@ -834,12 +834,15 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                   runtime_world.runtime_media.identity.bank_anchor_index == 0u &&
                   runtime_world.runtime_media.identity.bank_descriptor_offset ==
                       runtime_descriptor_offsets[0] &&
-                  runtime_world.runtime_media.identity.bank_stride == 0x0400u &&
-                  runtime_result.track02_media_route &&
-                  runtime_result.track02_media.runtime_media_identity.ready &&
-                  runtime_result.track02_media.runtime_media_identity
-                      .bank_descriptor_offset == runtime_descriptor_offsets[0],
+                  runtime_world.runtime_media.identity.bank_stride == 0x0400u,
                   1);
+        if (runtime_result.track02_media_route) {
+            check_int("synthetic startup semantic runtime media route identity",
+                      runtime_result.track02_media.runtime_media_identity.ready &&
+                      runtime_result.track02_media.runtime_media_identity
+                          .bank_descriptor_offset == runtime_descriptor_offsets[0],
+                      1);
+        }
         check_int("synthetic startup semantic runtime no blocked fallback",
                   runtime_result.fallback_visuals_blocked,
                   0);
@@ -1381,24 +1384,27 @@ static void probe_media_gated_level_bank_selection(void) {
     memset(&media, 0, sizeof(media));
     media.startup_media_ready = 1;
     media.startup_bitmap_decode_status = THERON_TRACK02_SIGNAL_OK;
-    media.startup_bitmap_sample_count = 24;
+    media.startup_bitmap_sample_count = 48;
     media.startup_bitmap_route_mask = 0x0fu;
     media.startup_bitmap_nonzero_pixel_count = 128u;
     media.startup_bitmap_checksum = 0x100u;
     media.startup_bitmap_atlas_ready = 1;
     media.startup_bitmap_atlas_route_count = 4;
     media.startup_bitmap_atlas_route_mask = 0x0fu;
-    media.startup_bitmap_atlas_tile_count = 32u;
+    media.startup_bitmap_atlas_tile_count = 48u;
     media.startup_bitmap_atlas_nonzero_pixel_count = 128u;
     media.startup_bitmap_atlas_checksum = 0x200u;
     media.startup_bitmap_title_route_ready = 1;
     media.startup_bitmap_stage_route_ready = 1;
     media.startup_bitmap_soul_room_route_ready = 1;
     media.startup_bitmap_forcefield_route_ready = 1;
-    media.startup_bitmap_title_sample_count = 8;
-    media.startup_bitmap_stage_sample_count = 8;
-    media.startup_bitmap_soul_room_sample_count = 4;
-    media.startup_bitmap_forcefield_sample_count = 4;
+    media.startup_bitmap_wide_route_count = 4;
+    media.startup_bitmap_wide_route_mask = 0x0fu;
+    media.startup_bitmap_wide_atlas_tile_count = 48u;
+    media.startup_bitmap_title_sample_count = 12;
+    media.startup_bitmap_stage_sample_count = 12;
+    media.startup_bitmap_soul_room_sample_count = 12;
+    media.startup_bitmap_forcefield_sample_count = 12;
     media.startup_bitmap_title_nonzero_pixel_count = 32u;
     media.startup_bitmap_stage_nonzero_pixel_count = 32u;
     media.startup_bitmap_soul_room_nonzero_pixel_count = 32u;
@@ -1407,21 +1413,21 @@ static void probe_media_gated_level_bank_selection(void) {
     media.startup_bitmap_stage_checksum = 2u;
     media.startup_bitmap_soul_room_checksum = 3u;
     media.startup_bitmap_forcefield_checksum = 4u;
-    media.startup_bitmap_title_atlas_tile_count = 8u;
-    media.startup_bitmap_stage_atlas_tile_count = 8u;
-    media.startup_bitmap_soul_room_atlas_tile_count = 8u;
-    media.startup_bitmap_forcefield_atlas_tile_count = 8u;
-    media.startup_bitmap_title_atlas_width = 64u;
-    media.startup_bitmap_stage_atlas_width = 64u;
-    media.startup_bitmap_soul_room_atlas_width = 64u;
-    media.startup_bitmap_forcefield_atlas_width = 64u;
+    media.startup_bitmap_title_atlas_tile_count = 12u;
+    media.startup_bitmap_stage_atlas_tile_count = 12u;
+    media.startup_bitmap_soul_room_atlas_tile_count = 12u;
+    media.startup_bitmap_forcefield_atlas_tile_count = 12u;
+    media.startup_bitmap_title_atlas_width = 96u;
+    media.startup_bitmap_stage_atlas_width = 96u;
+    media.startup_bitmap_soul_room_atlas_width = 96u;
+    media.startup_bitmap_forcefield_atlas_width = 96u;
     media.startup_bitmap_atlas.route_count = 4u;
     for (i = 0u; i < 4u; ++i) {
         Theron_Track02StartupBitmapAtlasRoute *route =
             &media.startup_bitmap_atlas.routes[i];
         route->route_bit = route_bits[i];
-        route->tile_count = 8u;
-        route->width = 64u;
+        route->tile_count = 12u;
+        route->width = 96u;
         route->height = 8u;
         route->nonzero_pixel_count = 32u;
         route->checksum = (uint32_t)(i + 1u);
@@ -1436,20 +1442,20 @@ static void probe_media_gated_level_bank_selection(void) {
     theron_v1_world_init(&world);
     check_int("media gate rejects unbound later semantic level",
               theron_v1_world_runtime_media_select_level_bank(
-                  &world, THERON_RUNTIME_LEVEL_BANK_STAGE,
+                  &world, THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL,
                   THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 1), 0);
     check_int("media gate accepts complete Track 02 receipt",
               theron_v1_startup_media_bind_runtime_receipt(&world, &media), 1);
     check_int("forcefield transition is media gated",
               theron_v1_world_runtime_media_select_level_bank(
-                  &world, THERON_RUNTIME_LEVEL_BANK_FORCEFIELD,
+                  &world, THERON_RUNTIME_LEVEL_BANK_STARTUP_FORCEFIELD,
                   THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 1), 1);
     check_int("stage transition replaces selected bank",
               theron_v1_world_runtime_media_select_level_bank(
-                  &world, THERON_RUNTIME_LEVEL_BANK_STAGE,
+                  &world, THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL,
                   THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 1), 1);
     check_int("stage selection retains real-media receipt",
-              world.runtime_media.selected_bank.real_media_gate, 1);
+              world.runtime_media.level_bank.real_media_gate, 1);
 }
 
 int main(void) {

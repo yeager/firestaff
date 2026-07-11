@@ -506,6 +506,32 @@ static void test_weather_overlay_render_plan(void)
     CHECK("DM2 weather command plan rejects null output",
           dm2_v1_viewport_build_weather_overlay_commands(
               &plan, NULL) == 0);
+
+    memset(framebuffer, 7, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.weather = DM2_V1_WEATHER_OVERLAY_RAIN;
+    viewport.rain_intensity = 60;
+    viewport.tick_count = 3;
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport,
+        1,
+        0x32475357u,
+        10,
+        0x0004,
+        3,
+        12,
+        3,
+        0);
+    CHECK("GRAPHICSSET void/flags bias weather plan intensity",
+          dm2_v1_viewport_build_weather_overlay_render_plan(
+              &viewport, &plan) == 1 &&
+              plan.kind == DM2_V1_WEATHER_OVERLAY_RAIN &&
+              plan.intensity == 67 &&
+              plan.density == 7 &&
+              plan.rain_color == 12);
+    dm2_v1_render_weather_overlay(&viewport);
+    CHECK("GRAPHICSSET weather fields are consumed by overlay render",
+          viewport.gdat_scene_weather_consumed_count == 1);
 }
 
 static void test_floor_ceiling_asset_provider(void)
@@ -564,6 +590,31 @@ static void test_floor_ceiling_asset_provider(void)
               framebuffer[(67 * 320)] == 8 &&
               framebuffer[(67 * 320) + 1] == 9 &&
               framebuffer[(66 * 320) + 2] == 6);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.tick_count = 5;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport,
+        1,
+        0x32475343u,
+        10,
+        0x0004,
+        3,
+        12,
+        0,
+        0x000a);
+    dm2_v1_render_floor_ceiling(&viewport);
+    CHECK("GRAPHICSSET scene light is consumed by floor/ceiling pass",
+          viewport.gdat_scene_light_consumed_count == 1 &&
+              viewport.gdat_scene_floor_anim_consumed_count == 1);
+    CHECK("GRAPHICSSET animated floor offsets the live floor tile source",
+          framebuffer[(66 * 320)] == 9 &&
+              framebuffer[(66 * 320) + 1] == 8 &&
+              framebuffer[(67 * 320)] == 7);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);

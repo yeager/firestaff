@@ -1739,6 +1739,20 @@ static int dm2_v1_fetch_viewport_asset(DM2_V1_ViewportState *s,
     return dm2_v1_gfx_fetch(gdat_index, out_pixels, out_w, out_h, out_stride);
 }
 
+static void dm2_v1_blit_tiled_bitmap_offset(uint8_t *dst,
+                                            int dst_stride,
+                                            int dst_x,
+                                            int dst_y,
+                                            int dst_w,
+                                            int dst_h,
+                                            const uint8_t *src,
+                                            int src_w,
+                                            int src_h,
+                                            int src_stride,
+                                            int transparent_color,
+                                            int src_x_offset,
+                                            int src_y_offset);
+
 static void dm2_v1_blit_tiled_bitmap(uint8_t *dst,
                                      int dst_stride,
                                      int dst_x,
@@ -1751,6 +1765,35 @@ static void dm2_v1_blit_tiled_bitmap(uint8_t *dst,
                                      int src_stride,
                                      int transparent_color)
 {
+    dm2_v1_blit_tiled_bitmap_offset(dst,
+                                    dst_stride,
+                                    dst_x,
+                                    dst_y,
+                                    dst_w,
+                                    dst_h,
+                                    src,
+                                    src_w,
+                                    src_h,
+                                    src_stride,
+                                    transparent_color,
+                                    0,
+                                    0);
+}
+
+static void dm2_v1_blit_tiled_bitmap_offset(uint8_t *dst,
+                                            int dst_stride,
+                                            int dst_x,
+                                            int dst_y,
+                                            int dst_w,
+                                            int dst_h,
+                                            const uint8_t *src,
+                                            int src_w,
+                                            int src_h,
+                                            int src_stride,
+                                            int transparent_color,
+                                            int src_x_offset,
+                                            int src_y_offset)
+{
     int y;
 
     if (!dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
@@ -1758,14 +1801,16 @@ static void dm2_v1_blit_tiled_bitmap(uint8_t *dst,
         return;
     }
     for (y = 0; y < dst_h; ++y) {
-        int sy = y % src_h;
+        int sy = (y + src_y_offset) % src_h;
         int fy = dst_y + y;
         int x;
+        if (sy < 0) sy += src_h;
         if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
         for (x = 0; x < dst_w; ++x) {
-            int sx = x % src_w;
+            int sx = (x + src_x_offset) % src_w;
             int fx = dst_x + x;
             uint8_t pixel;
+            if (sx < 0) sx += src_w;
             if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH) continue;
             pixel = src[sy * src_stride + sx];
             if (transparent_color >= 0 &&
@@ -1775,6 +1820,28 @@ static void dm2_v1_blit_tiled_bitmap(uint8_t *dst,
             dst[fy * dst_stride + fx] = pixel;
         }
     }
+}
+
+static uint8_t dm2_v1_gdat_scene_light_color(
+    const DM2_V1_ViewportState *s,
+    uint8_t color)
+{
+    int ambient;
+    int highest;
+
+    if (!s || !s->gdat_scene_control_ready) {
+        return color;
+    }
+    ambient = (int)(s->gdat_ambient_light & 0x0f);
+    highest = (int)(s->gdat_highest_light_level & 0x0f);
+    if (highest <= 0) highest = 15;
+    if (color > (uint8_t)highest) {
+        color = (uint8_t)highest;
+    }
+    if (color != DM2_COL_BLACK && color < (uint8_t)ambient) {
+        color = (uint8_t)ambient;
+    }
+    return color;
 }
 
 static void dm2_v1_blit_scaled_bitmap(uint8_t *dst,
@@ -2496,20 +2563,32 @@ int dm2_v1_viewport_build_weather_overlay_render_plan(
     out_plan->rain_color = DM2_COL_WHITE;
     out_plan->fog_target_color = DM2_COL_BLACK;
     out_plan->lightning_color = DM2_COL_WHITE;
+    if (s->gdat_scene_control_ready) {
+        int weather_bias = (int)((s->gdat_void_random_fall ^
+                                  s->gdat_scene_flags) & 7u);
+        if (weather_bias > 0) {
+            out_plan->intensity += weather_bias;
+            if (out_plan->intensity > 100) out_plan->intensity = 100;
+        }
+        out_plan->rain_color =
+            dm2_v1_gdat_scene_light_color(s, out_plan->rain_color);
+        out_plan->lightning_color =
+            dm2_v1_gdat_scene_light_color(s, out_plan->lightning_color);
+    }
 
     /* skproject SKWIN outdoor weather resolves overlay density and animated
      * scroll from the weather/tick state before the blitline_48-style pass.
      * Keep those render decisions in a DM2-owned plan; the pass below only
      * applies the already-bound overlay command. */
     if (s->weather == DM2_V1_WEATHER_OVERLAY_RAIN) {
-        out_plan->density = (s->rain_intensity + 9) / 10;
-        stride2 = s->rain_intensity / 5;
+        out_plan->density = (out_plan->intensity + 9) / 10;
+        stride2 = out_plan->intensity / 5;
         out_plan->scroll = (s->tick_count * stride2) & 7;
     } else if (s->weather == DM2_V1_WEATHER_OVERLAY_FOG) {
-        out_plan->alpha = (s->rain_intensity + 7) / 8;
+        out_plan->alpha = (out_plan->intensity + 7) / 8;
     } else if (s->weather == DM2_V1_WEATHER_OVERLAY_STORM) {
-        out_plan->density = (s->rain_intensity + 5) / 10;
-        stride2 = s->rain_intensity / 4;
+        out_plan->density = (out_plan->intensity + 5) / 10;
+        stride2 = out_plan->intensity / 4;
         out_plan->scroll = (s->tick_count * stride2) & 7;
         out_plan->lightning_flash = ((s->tick_count % 120) < 2);
     } else {
@@ -2693,6 +2772,10 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     int floor_w = 0;
     int floor_h_src = 0;
     int floor_stride = 0;
+    int floor_anim_x = 0;
+    int floor_anim_y = 0;
+    uint8_t ceiling_fallback_color = DM2_COL_DKGRAY;
+    uint8_t floor_fallback_color = 5;
     int ceiling_asset =
         dm2_v1_fetch_viewport_asset(s,
                                     DM2_GRAPHIC_CEILING,
@@ -2717,6 +2800,20 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
      * For now: fill with solid color (actual graphics deferred to asset system). */
 
     int ceiling_h = DM2_CEILING_H;
+    if (s->gdat_scene_control_ready) {
+        ceiling_fallback_color =
+            dm2_v1_gdat_scene_light_color(s, ceiling_fallback_color);
+        floor_fallback_color =
+            dm2_v1_gdat_scene_light_color(s, floor_fallback_color);
+        if (s->gdat_animated_floor != 0u) {
+            floor_anim_x = (int)((s->tick_count +
+                                  (int)(s->gdat_animated_floor & 7u)) & 7);
+            floor_anim_y = (int)(((s->tick_count >> 1) +
+                                  (int)((s->gdat_animated_floor >> 3) & 7u)) & 7);
+            ++s->gdat_scene_floor_anim_consumed_count;
+        }
+        ++s->gdat_scene_light_consumed_count;
+    }
     if (ceiling_asset) {
         dm2_v1_blit_tiled_bitmap(vp,
                                  stride,
@@ -2735,7 +2832,8 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
          * Source: DUNVIEW.C:2996-3015 (PC34 ceiling blit path) */
         for (int y = 0; y < ceiling_h; y++) {
             /* DM2 ceiling is slightly darker than DM1 (gray-8 vs gray-9) */
-            memset(vp + y * stride, DM2_COL_DKGRAY, (size_t)DM2_VP_WIDTH);
+            memset(vp + y * stride, ceiling_fallback_color,
+                   (size_t)DM2_VP_WIDTH);
         }
         ++s->fallback_floor_ceiling_drawn_count;
     }
@@ -2743,24 +2841,28 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     int floor_y = DM2_FLOOR_Y;
     int floor_h = DM2_FLOOR_H;
     if (floor_asset) {
-        dm2_v1_blit_tiled_bitmap(vp,
-                                 stride,
-                                 0,
-                                 floor_y,
-                                 DM2_VP_WIDTH,
-                                 floor_h,
-                                 floor_pixels,
-                                 floor_w,
-                                 floor_h_src,
-                                 floor_stride > 0 ? floor_stride : floor_w,
-                                 -1);
+        dm2_v1_blit_tiled_bitmap_offset(
+            vp,
+            stride,
+            0,
+            floor_y,
+            DM2_VP_WIDTH,
+            floor_h,
+            floor_pixels,
+            floor_w,
+            floor_h_src,
+            floor_stride > 0 ? floor_stride : floor_w,
+            -1,
+            floor_anim_x,
+            floor_anim_y);
         ++s->asset_floor_ceiling_drawn_count;
     } else {
         /* Floor region: brown (matches DM2 floor color)
          * Source: DUNVIEW.C:3016-3047 (PC34 floor blit path) */
         for (int y = floor_y; y < floor_y + floor_h; y++) {
             if (y < DM2_VP_HEIGHT) {
-                memset(vp + y * stride, 5, (size_t)DM2_VP_WIDTH);  /* brown */
+                memset(vp + y * stride, floor_fallback_color,
+                       (size_t)DM2_VP_WIDTH);
             }
         }
         ++s->fallback_floor_ceiling_drawn_count;
@@ -3738,6 +3840,9 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
         commands.command_count <= 0) {
         return;
     }
+    if (s->gdat_scene_control_ready) {
+        ++s->gdat_scene_weather_consumed_count;
+    }
 
     /* DM2 outdoor weather: rain, fog, storm.
      * Source: SKULL.ASM T600 (outdoor tick, weather effects)
@@ -4132,6 +4237,9 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->interface_semantics_byte_count = 0u;
     s->interface_rect14_consumed = 0;
     s->gdat_scene_control_consumed_count = 0;
+    s->gdat_scene_light_consumed_count = 0;
+    s->gdat_scene_floor_anim_consumed_count = 0;
+    s->gdat_scene_weather_consumed_count = 0;
 
     /* DM2 has two fundamentally different render paths:
      *   1. Indoor dungeon (is_outdoor=0): first-person 3D dungeon view

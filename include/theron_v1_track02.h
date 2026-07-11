@@ -850,15 +850,17 @@ const char *theron_v1_track02_descriptor_window_kind_name(
  * role needs the working hypothesis that one specific entry maps to a
  * named in-game concept.
  *
- * This release binds ONE descriptor entry to ONE semantic role: the
+ * This release binds three descriptor entries to bounded semantic roles: the
  * first entry (descriptor.entry_index == 0, window relative offset
  * 0x0020) is bound to the role THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE,
  * which reads the documented 7 × uint32 little-endian dungeon_seeds from
  * tqr_v1_phase2_data_formats_H2339.md §9.1 (a.k.a. the THQUEST.ASM T560
  * `dungeon_seed` table, sourced from theron_v1_boot.c:318-345 /
- * theron_v1_dungeon_progression.c:38-110).  No other entry has a semantic
- * role yet; it remains UNKNOWN.  Real-data promotion is still no-claim
- * until the Track 02 dungeon block offset is verified.
+ * theron_v1_dungeon_progression.c:38-110); entry 5 restates the
+ * descriptor-table-bearing window; entry 6 is a compact object-table row
+ * candidate. Real-data promotion is still receipt-gated: object rows must
+ * pass theron_v1_track02_read_object_table() before fallback visuals are
+ * reduced.
  *
  * Source-locks:
  *   docs/source-lock/tqr_v1_phase2_data_formats_H2339.md §9.1
@@ -888,6 +890,30 @@ typedef struct {
     int shape_ok;
 } Theron_Track02DungeonSeedTable;
 
+#define THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS 64u
+#define THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES 8u
+
+typedef struct {
+    uint8_t object_id;
+    uint8_t kind;
+    uint8_t x;
+    uint8_t y;
+    uint8_t level_index;
+    uint8_t flags;
+    uint16_t argument;
+} Theron_Track02ObjectTableRecord;
+
+typedef struct {
+    size_t record_count;
+    size_t overflow_count;
+    size_t byte_count;
+    size_t nonzero_byte_count;
+    uint32_t checksum;
+    int shape_ok;
+    Theron_Track02ObjectTableRecord
+        records[THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS];
+} Theron_Track02ObjectTable;
+
 typedef enum {
     THERON_TRACK02_SEMANTIC_ROLE_UNKNOWN = 0,
     THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE,
@@ -916,6 +942,9 @@ typedef struct {
     /* Populated when role == DUNGEON_SEED_TABLE.  shape_ok mirrors the
      * decoder gate; seeds[] is byte-faithful regardless of shape_ok. */
     Theron_Track02DungeonSeedTable dungeon_seed_table;
+    /* Populated when role == OBJECT_TABLE.  This is a bounded compact-row
+     * shape claim only; it does not assign gameplay behavior to objects. */
+    Theron_Track02ObjectTable object_table;
     Theron_Track02SemanticBindingStatus status;
 } Theron_Track02SemanticBinding;
 
@@ -923,7 +952,8 @@ typedef struct {
  *
  * The mapping is the documented working hypothesis from this header's
  * source-locks section: entry 0 is the dungeon_seed table, entry 5 is
- * the descriptor-table-bearing window, every other entry is UNKNOWN.
+ * the descriptor-table-bearing window, entry 6 is the bounded compact
+ * object-table candidate, every other entry is UNKNOWN.
  * Returning UNKNOWN is not an error; it simply means no semantic role is
  * currently bound. */
 Theron_Track02SemanticRole theron_v1_track02_semantic_role_for_entry(
@@ -990,6 +1020,16 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_read_dungeon_seed_table(
     const uint8_t *seed_bytes,
     size_t seed_size,
     Theron_Track02DungeonSeedTable *out_table);
+
+/* Lower-level: read a compact object-table candidate from `object_bytes`.
+ * The working layout is count-prefixed: uint16 LE record_count followed by
+ * 8-byte rows `{object_id, kind, x, y, level_index, flags, argument_le16}`.
+ * The decoder is intentionally strict and bounded; success only proves the
+ * row shape is coherent, not final gameplay semantics. */
+Theron_Track02SemanticBindingStatus theron_v1_track02_read_object_table(
+    const uint8_t *object_bytes,
+    size_t object_size,
+    Theron_Track02ObjectTable *out_table);
 
 const char *theron_v1_track02_semantic_binding_status_name(
     Theron_Track02SemanticBindingStatus status);
@@ -1071,6 +1111,11 @@ typedef struct {
     unsigned int object_table_blocked_anchor_mask;
     int object_table_anchor_binding_status[THERON_TRACK02_MAX_BANK_ANCHORS];
     uint32_t object_table_anchor_hash[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_anchor_record_count[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_anchor_overflow_count[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_anchor_decoded_byte_count[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t object_table_anchor_decoded_nonzero_byte_count[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t object_table_anchor_decoded_checksum[THERON_TRACK02_MAX_BANK_ANCHORS];
     int object_table_decode_ready;
     int blocked_for_missing_real_object_evidence;
     int fallback_visuals_allowed;
