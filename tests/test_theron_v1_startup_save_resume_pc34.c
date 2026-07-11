@@ -2527,6 +2527,10 @@ static void test_startup_session_facts_wrappers(void) {
                     !host_view_receipt.runtime_graphics_handoff &&
                     !host_view_receipt.track02_runtime_graphics_handoff &&
                     !host_view_receipt.save_resume_runtime_graphics_handoff &&
+                    !host_view_receipt.mac_app_capture_candidate_ready &&
+                    !host_view_receipt
+                         .mac_app_capture_requires_external_screenshot &&
+                    host_view_receipt.mac_app_capture_evidence_hash == 0u &&
                     strcmp(host_view_receipt.status,
                            "TRACK02 RUNTIME BLOCKED") == 0,
                 "boot host-view receipt exposes Track02 blocked route without status fallback parsing");
@@ -2649,6 +2653,10 @@ static void test_startup_session_facts_wrappers(void) {
                     semantic_view_model.object_table_blocked_anchor_mask == 0x07u &&
                     semantic_view_model.nonstartup_level_no_fallback_ready &&
                     semantic_view_model.nonstartup_level_blocked_anchor_mask == 0x07u &&
+                    semantic_view_model.mac_app_capture_candidate_ready &&
+                    semantic_view_model
+                        .mac_app_capture_requires_external_screenshot &&
+                    semantic_view_model.mac_app_capture_evidence_hash != 0u &&
                     semantic_view_model.runtime_level == 0,
                 "boot startup view model carries Track02 semantic first-level route");
     expect_true(theron_v1_boot_startup_render_route_receipt_from_view_model(
@@ -2698,6 +2706,11 @@ static void test_startup_session_facts_wrappers(void) {
                         semantic_snapshot.object_table_route_hash &&
                     render_route_receipt.level_route_hash ==
                         semantic_snapshot.level_route_hash &&
+                    render_route_receipt.mac_app_capture_candidate_ready &&
+                    render_route_receipt
+                        .mac_app_capture_requires_external_screenshot &&
+                    render_route_receipt.mac_app_capture_evidence_hash ==
+                        semantic_view_model.mac_app_capture_evidence_hash &&
                     strcmp(render_route_receipt.status,
                            "TRACK02 RUNTIME READY") == 0,
                 "boot startup render route receipt marks Track02 semantic first level HUD-ready without fallback visuals");
@@ -2725,6 +2738,11 @@ static void test_startup_session_facts_wrappers(void) {
                     host_view_receipt.object_table_blocked_anchor_mask == 0x07u &&
                     host_view_receipt.nonstartup_level_no_fallback_ready &&
                     host_view_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
+                    host_view_receipt.mac_app_capture_candidate_ready &&
+                    host_view_receipt
+                        .mac_app_capture_requires_external_screenshot &&
+                    host_view_receipt.mac_app_capture_evidence_hash ==
+                        semantic_view_model.mac_app_capture_evidence_hash &&
                     host_view_receipt.runtime_level_render_allowed &&
                     host_view_receipt.runtime_readiness_ready &&
                     host_view_receipt.title_menu_runtime_handoff_ready &&

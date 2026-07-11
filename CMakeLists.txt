@@ -15339,6 +15339,21 @@ if(BUILD_TESTING)
         LABELS "tier2;dm1;save;interop;real_data;skip_safe"
     )
 
+    add_executable(firestaff_dm1_v1_release_app_identity_diagnostic_probe
+        probes/dm1/firestaff_dm1_v1_release_app_identity_diagnostic_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_release_app_identity_diagnostic_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_release_app_identity_diagnostic_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_release_app_identity_diagnostic_probe
+        COMMAND firestaff_dm1_v1_release_app_identity_diagnostic_probe
+    )
+    set_tests_properties(dm1_v1_release_app_identity_diagnostic_probe PROPERTIES
+        LABELS "tier2;dm1;startup;hoc;capture;release_app"
+    )
+
     # DM1 V1 Combat & Damage System source-lock gate
     add_executable(test_dm1_v1_grp02_f0192_poison_resistance_source_lock_pc34_compat
         tests/test_dm1_v1_grp02_f0192_poison_resistance_source_lock_pc34_compat.c

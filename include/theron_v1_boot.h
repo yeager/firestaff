@@ -356,6 +356,9 @@ typedef struct Theron_V1_BootStartupViewModel {
     int startup_level_blocked_anchor_count;
     uint32_t object_table_route_hash;
     uint32_t level_route_hash;
+    int mac_app_capture_candidate_ready;
+    int mac_app_capture_requires_external_screenshot;
+    uint32_t mac_app_capture_evidence_hash;
     int continue_focus;
     int resume_claim;
     int tqsv_slot;
@@ -411,6 +414,9 @@ typedef struct Theron_V1_BootStartupRenderRouteReceipt {
     int startup_level_blocked_anchor_count;
     uint32_t object_table_route_hash;
     uint32_t level_route_hash;
+    int mac_app_capture_candidate_ready;
+    int mac_app_capture_requires_external_screenshot;
+    uint32_t mac_app_capture_evidence_hash;
     const char *status_scope;
     const char *status;
 } Theron_V1_BootStartupRenderRouteReceipt;
@@ -466,6 +472,9 @@ typedef struct Theron_V1_BootStartupHostViewReceipt {
     int startup_level_blocked_anchor_count;
     uint32_t object_table_route_hash;
     uint32_t level_route_hash;
+    int mac_app_capture_candidate_ready;
+    int mac_app_capture_requires_external_screenshot;
+    uint32_t mac_app_capture_evidence_hash;
     int hud_ready;
     int state_receipt_valid;
     Theron_StartupStateReceipt state_receipt;
