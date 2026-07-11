@@ -223,8 +223,8 @@ static void test_status_boxes_stay_source_locked(void)
     state.actingChampionOrdinal = 0;
     check_int("status action wounded graphic",
               dm1_v1_champion_status_hand_slot_graphic_pc34(1, 0x0002u, 0), 34);
-    check_int("food label graphic", M11_GameView_GetV1FoodLabelGraphicId(), 30);
-    check_int("water label graphic", M11_GameView_GetV1WaterLabelGraphicId(), 31);
+    check_int("food label graphic", dm1_v1_graphic_food_label_pc34(), 30);
+    check_int("water label graphic", dm1_v1_graphic_water_label_pc34(), 31);
     check_int("poison label graphic", dm1_v1_graphic_poisoned_label_pc34(), 32);
 
     check_int("name clear champ3", dm1_v1_champion_status_name_clear_zone_id_pc34(3), 162);

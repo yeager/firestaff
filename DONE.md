@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM1 inventory panel a11y/test consumer cleanup: moved M11 accessibility inventory-panel zones and inventory mouse/scroll/full-panel/action-geometry regressions from M11 inventory panel/object-description wrappers to DM1/ReDMCSB layout and graphic-id APIs. Verification: `firestaff_m11`, `test_dm1_v1_inventory_panel_mouse_routes_pc34_compat`, `test_m11_inventory_scroll_panel_render_pc34_compat`, `test_m11_inventory_full_panel_runtime_pc34_compat`, `test_m11_v1_action_area_geometry_pc34_compat`, and targeted source/test `rg` passed.
+
 - ✅ 2026-07-11 DM1 inventory panel runtime consumer cleanup: moved active M11 inventory panel, scroll, object-description, arrow/eye, and food/water label rendering toward DM1/ReDMCSB-owned layout and graphic-id APIs. Verification: `firestaff_m11`, `test_m11_inventory_scroll_panel_render_pc34_compat`, `test_m11_inventory_full_panel_runtime_pc34_compat`, `test_m11_v1_action_area_geometry_pc34_compat`, and targeted runtime wrapper `rg` passed.
 
 - ✅ 2026-07-11 DM1 status box/name/bar wrapper retirement: removed remaining public M11 status box/name/bar/shield/creature-damage wrappers and routed M11 mouse zones plus runtime drawing directly to DM1/ReDMCSB status-layout and graphic-id APIs. Verification: `firestaff_m11`, `test_dm1_v1_champion_status_layout_pc34_compat`, `test_m11_v1_action_area_geometry_pc34_compat`, `test_m11_inventory_full_panel_runtime_pc34_compat`, `test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat`, and targeted old-symbol `rg` passed.

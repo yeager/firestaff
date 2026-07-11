@@ -65,6 +65,7 @@
  */
 
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "m11_game_view.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -84,6 +85,16 @@ unsigned char* G2160_puc_Bitmap_Destination;
 
 static int g_pass = 0;
 static int g_fail = 0;
+
+static int test_inventory_panel_zone(int* outX, int* outY, int* outW, int* outH) {
+    DM1_V1_LayoutZoneRectPc34 rect = dm1_v1_inventory_panel_rect_pc34();
+    if (!dm1_v1_inventory_panel_zone_id_pc34()) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return 1;
+}
 
 #define ASSERT_TRUE(expr, msg) do { \
     if (expr) { ++g_pass; } \
@@ -410,7 +421,7 @@ static void test_inventory_open_chest_panel_click_route_priority(void) {
     seed_panel_view(&state, &things, weapons, containers);
     state.v1OpenChestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
 
-    ASSERT_TRUE(M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY,
+    ASSERT_TRUE(test_inventory_panel_zone(&panelX, &panelY,
                                                      &panelW, &panelH),
                 "C101 inventory panel zone is available");
     command = M11_GameView_GetV1MouseCommandForPoint(
@@ -562,7 +573,7 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
     /* ReDMCSB PANEL.C F0352 lines 1182-1191 uses the inventory
      * champion's F0303 Priest level when deciding whether to prefix a
      * non-water potion with '_' + Power/40.  Exercise the real C071
-     * runtime route, not just M11_GameView_ProbeF0352PotionEyeDescription. */
+     * runtime route, not just the DM1 formatter contract. */
     memset(potions, 0, sizeof(potions));
     potions[0].next = THING_ENDOFLIST;
     potions[0].type = 6;  /* ROS POTION */
