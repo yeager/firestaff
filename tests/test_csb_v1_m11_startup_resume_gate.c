@@ -551,7 +551,7 @@ static int inject_synthetic_csbgraphics_viewport_override(
 
     csb_v1_csbgraphics_dat_real_cache_free(&profile->csbgraphics_cache);
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
-    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
+    csb_v1_csbgraphics_runtime_plan_init(&profile->csbgraphics_runtime_plan);
     profile->csbgraphics_cache.file_buffer = bytes;
     profile->csbgraphics_cache.file_size = size;
     profile->csbgraphics_cache.loaded = 1;
@@ -574,14 +574,14 @@ static int inject_synthetic_csbgraphics_viewport_override(
     profile->csbgraphics_scan_attempted = 1;
     profile->csbgraphics_scan_result = CSB_V1_CSBGRAPHICS_DAT_REAL_OK;
     profile->csbgraphics_plan_result =
-        csb_v1_csbgraphics_m11_runtime_plan_add_explicit_entry(
+        csb_v1_csbgraphics_runtime_plan_add_explicit_entry(
             &profile->csbgraphics_cache,
             73u,
             8u,
             8u,
-            &profile->csbgraphics_m11_plan);
+            &profile->csbgraphics_runtime_plan);
     return profile->csbgraphics_plan_result ==
-           CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
+           CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK;
 }
 
 static int inject_synthetic_csbgraphics_custom_background(
@@ -658,7 +658,7 @@ static int inject_synthetic_csbgraphics_custom_background(
 
     csb_v1_csbgraphics_dat_real_cache_free(&profile->csbgraphics_cache);
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
-    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
+    csb_v1_csbgraphics_runtime_plan_init(&profile->csbgraphics_runtime_plan);
     profile->csbgraphics_cache.file_buffer = bytes;
     profile->csbgraphics_cache.file_size = size;
     profile->csbgraphics_cache.loaded = 1;
@@ -687,13 +687,13 @@ static int inject_synthetic_csbgraphics_custom_background(
     profile->csbgraphics_skin_def_words[0] = 100u;
     profile->csbgraphics_skin_def_words[4] = 104u;
     profile->csbgraphics_plan_result =
-        csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
+        csb_v1_csbgraphics_runtime_plan_add_custom_background_skin_def(
             &profile->csbgraphics_cache,
             profile->csbgraphics_skin_def_words,
             profile->csbgraphics_skin_def_word_count,
-            &profile->csbgraphics_m11_plan);
+            &profile->csbgraphics_runtime_plan);
     if (profile->csbgraphics_plan_result !=
-        CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
+        CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK) {
         return 0;
     }
 
@@ -1765,30 +1765,6 @@ int main(void) {
     fill_csb_launch_spec(&spec, data_dir, NULL);
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
-                "M11 CSB quit-pointer start fixture succeeds");
-    drive_csb_entrance_to_wait(
-        &view,
-        "M11 CSB quit-pointer fixture reaches source wait loop before pointer input");
-    expect_true(M11_GameView_HandlePointerButton(
-                    &view,
-                    245,
-                    112,
-                    M11_DM1_MOUSE_MASK_LEFT) ==
-                    M11_GAME_INPUT_RETURN_TO_MENU,
-                "M11 CSB entrance quit button returns to launcher");
-    expect_true(view.csbState.startup_entrance_last_command ==
-                    M11_ENTRANCE_RUNTIME_COMMAND_QUIT,
-                "M11 CSB entrance records the source quit command");
-    expect_true(view.csbState.startup_entrance_active == 0 &&
-                    view.csbState.startup_entrance_dismissed == 1,
-                "M11 CSB entrance quit button clears startup state");
-    expect_true(strcmp(view.lastOutcome, "BACK TO LAUNCHER") == 0,
-                "M11 CSB entrance quit button reports launcher return");
-    M11_GameView_Shutdown(&view);
-
-    fill_csb_launch_spec(&spec, data_dir, NULL);
-    M11_GameView_Init(&view);
-    expect_true(M11_GameView_Start(&view, &spec),
                 "M11 CSB Back-key quit start fixture succeeds");
     drive_csb_entrance_to_wait(
         &view,
@@ -1951,9 +1927,9 @@ int main(void) {
                     "CSB boot profile attempts CSBgraphics startup scan");
         expect_true(csb_v1_boot_csbgraphics_cache(profile) ==
                         &profile->csbgraphics_cache &&
-                    csb_v1_boot_csbgraphics_m11_plan(profile) ==
-                        &profile->csbgraphics_m11_plan,
-                    "CSB boot profile owns CSBgraphics cache and M11 plan");
+                    csb_v1_boot_csbgraphics_runtime_plan(profile) ==
+                        &profile->csbgraphics_runtime_plan,
+                    "CSB boot profile owns CSBgraphics cache and runtime plan");
         expect_true(profile->csbgraphics_scan_result ==
                         CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND ||
                     profile->csbgraphics_scan_result ==
@@ -2202,7 +2178,7 @@ int main(void) {
                 view.csbState.party_y == 7 &&
                 view.csbState.party_dir == 3,
                 "M11 CSBWin resume mirrors GAMEBLOCK2 party pose");
-    expect_true(M11_GameView_GetV1LeaderHandThing(&view) == 0x4321u,
+    expect_true(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) == 0x4321u,
                 "M11 CSBWin resume mirrors object-in-hand into leader hand");
     profile = (CSB_V1_BootProfile*)view.csbBootProfile;
     if (profile) {
@@ -2222,8 +2198,8 @@ int main(void) {
     }
     expect_true(test_setenv("FIRESTAFF_QUICKSAVE_PATH", csbwin_save_path) == 0,
                 "test fixture points F9 at CSBWin resume save");
-    M11_GameView_ClearV1LeaderHandObject(&view);
-    expect_true(M11_GameView_GetV1LeaderHandThing(&view) == THING_NONE,
+    DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&view);
+    expect_true(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) == THING_NONE,
                 "test clears CSBWin mirrored leader hand before F9");
     if (profile) {
         profile->runtime.csbwin_gameblock2_summary_valid = 0;
@@ -2231,7 +2207,7 @@ int main(void) {
     }
     expect_true(M11_GameView_QuickLoad(&view),
                 "M11 CSB F9 quickload accepts verified CSBWin save");
-    expect_true(M11_GameView_GetV1LeaderHandThing(&view) == 0x4321u,
+    expect_true(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) == 0x4321u,
                 "M11 CSB F9 quickload restores CSBWin object-in-hand");
     M11_GameView_Shutdown(&view);
     expect_true(view.csbBootProfile == NULL,

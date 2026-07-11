@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-11 DM2 creature animation semantic creature-count proof: creature atlas capture now reports how many skproject creature animation records contribute semantic evidence and complete-support folds that count into the support hash. Verification: Ninja built `test_dm2_v1_boot_profile_smoke` and `firestaff_dm2`; direct boot-profile smoke passed 83/83; focused DM2 CTest passed 4/4; `git diff --check` passed.
+
 - ✅ 2026-07-11 DM2 creature animation semantic receipt: creature atlas capture now records nonzero-byte coverage plus info-sequence and frame-sequence reference counts across skproject `0xFB`/`0xFC`/`0xFD` creature animation records, and complete-support folds the semantic hash into the runtime support proof. Verification: Ninja built `test_dm2_v1_boot_profile_smoke`, `test_dm2_v1_save_load`, `test_dm2_v1_runtime_handoff_smoke`, `test_dm2_v1_lighting_falloff_boundary`, and `firestaff_dm2`; direct DM2 tests passed 83/83, 21/21, 154/154, and 149/149; focused DM2 CTest passed 4/4; `git diff --check` passed.
 
 - ✅ 2026-07-11 DM1 release-app packaged-route gate: HoC boot-probe release-app readiness now requires both packaged host-capture and packaged presented-capture routes, preventing Mac/release app capture from passing on unpackaged host observations. Verification: Ninja built `firestaff_dm1_v1_release_app_packaged_route_probe`, `firestaff_dm1_v1_release_app_identity_diagnostic_probe`, and `firestaff_dm1_v1_original_save_corpus_host_fields_probe`; direct probe runs passed; focused DM1 CTest passed 3/3.

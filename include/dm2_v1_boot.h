@@ -446,6 +446,7 @@ typedef struct {
     uint32_t animation_semantic_nonzero_byte_count;
     uint32_t animation_semantic_sequence_ref_count;
     uint32_t animation_semantic_frame_ref_count;
+    uint32_t animation_semantic_creature_count;
     uint32_t animation_table_hash;
     uint32_t animation_table_byte_count;
     int animation_table_ready;
