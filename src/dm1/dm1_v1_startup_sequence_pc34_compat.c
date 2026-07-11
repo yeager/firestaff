@@ -3783,6 +3783,13 @@ int dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
         dm1_v1_startup_hoc_boot_probe_complete_support_ready_pc34(summary);
     receipt.release_app_capture_ready =
         dm1_v1_startup_hoc_boot_probe_release_app_capture_ready_pc34(summary);
+    receipt.original_save_corpus_ready =
+        summary->complete_original_save_roundtrip_route &&
+        summary->user_save_corpus_pc34_ready &&
+        summary->user_save_corpus_part_envelope_ready &&
+        summary->user_save_corpus_roundtrip_ready &&
+        summary->user_save_corpus_roundtrip_verified > 0 &&
+        summary->user_save_corpus_roundtrip_failed == 0;
 
     if (expectation ==
         DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_COMPLETE_SUPPORT_PC34) {
@@ -3860,6 +3867,24 @@ int dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
                  summary->host_draw_consumes_backing_asset,
                  summary->host_draw_rejects_backing_fallback,
                  summary->no_host_fallback_visuals);
+    } else if (expectation ==
+               DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_ORIGINAL_SAVE_CORPUS_PC34) {
+        receipt.ready = receipt.original_save_corpus_ready;
+        snprintf(receipt.diagnostic,
+                 sizeof(receipt.diagnostic),
+                 "originalSave=%d pc34=%d partEnvelope=%d roundtrip=%d verified=%d failed=%d hash=%08x rejected=%d truncated=%d firstPath=%s",
+                 summary->complete_original_save_roundtrip_route,
+                 summary->user_save_corpus_pc34_ready,
+                 summary->user_save_corpus_part_envelope_ready,
+                 summary->user_save_corpus_roundtrip_ready,
+                 summary->user_save_corpus_roundtrip_verified,
+                 summary->user_save_corpus_roundtrip_failed,
+                 summary->user_save_corpus_roundtrip_hash,
+                 summary->user_save_corpus_rejected,
+                 summary->user_save_corpus_truncated,
+                 summary->user_save_corpus_first_pc34_path[0]
+                     ? summary->user_save_corpus_first_pc34_path
+                     : "(none)");
     } else {
         snprintf(receipt.diagnostic,
                  sizeof(receipt.diagnostic),

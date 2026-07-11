@@ -962,7 +962,8 @@ typedef struct DM1_V1_StartupHoCBootProbeSummary_PC34 {
 
 typedef enum DM1_V1_StartupHoCBootProbeExpectation_PC34 {
     DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_COMPLETE_SUPPORT_PC34 = 1,
-    DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_RELEASE_APP_CAPTURE_PC34 = 2
+    DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_RELEASE_APP_CAPTURE_PC34 = 2,
+    DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_ORIGINAL_SAVE_CORPUS_PC34 = 3
 } DM1_V1_StartupHoCBootProbeExpectation_PC34;
 
 typedef struct DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34 {
@@ -971,6 +972,7 @@ typedef struct DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34 {
     int ready;
     int complete_support_ready;
     int release_app_capture_ready;
+    int original_save_corpus_ready;
     char diagnostic[1536];
     const char* source_evidence;
 } DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34;
