@@ -278,7 +278,7 @@ dm1_v1_action_menu_graphic_rect_pc34(int action_row_count)
 static inline DM1_V1_ActionAreaRectPc34
 dm1_v1_action_menu_header_rect_pc34(void)
 {
-    DM1_V1_ActionAreaRectPc34 r = { 224, 77, 96, 9 };
+    DM1_V1_ActionAreaRectPc34 r = { 233, 77, 87, 9 };
     return r;
 }
 

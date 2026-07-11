@@ -19042,7 +19042,6 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
         !m11_get_front_cell(state, &frontCell) || !frontCell.valid) {
         return -1;
     }
-
     if (m11_build_dm1_front_champion_portrait_receipt(&frontCell, &receipt) &&
         receipt.valid &&
         receipt.drawChampionPortrait &&
@@ -21581,6 +21580,7 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34 ownership;
     M11_DM1ZoneBlit backingBlit;
     const M11_AssetSlot* slot;
+    int startupOwnershipReady;
     if (!state || !frontCell) {
         return;
     }
@@ -21592,30 +21592,40 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     if (!runtimeDecision->valid || !runtimeDecision->drawFrontWallOverlay ||
         !runtimeDecision->drawChampionPortraitAsWallOverlay ||
         !receipt->valid || !receipt->drawChampionPortrait) return;
-    if (!m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
-            runtimeDecision, &consumer) ||
-        !m11_build_dm1_hoc_full_graphics_ownership_receipt(
-            state, &consumer, receipt, &ownership) ||
-        !ownership.ready ||
-        !ownership.consume_dm1_receipts_only ||
-        !ownership.draw_champion_mirror_wall_overlay ||
-        !ownership.suppress_false_item_payloads ||
-        !ownership.suppress_projectile_payloads ||
-        !ownership.suppress_spell_effect_payloads ||
-        !ownership.suppress_materialized_item_payload ||
-        !ownership.no_m11_fallback_scan) {
-        return;
-    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)receipt->backingGraphicIndex);
-    if (!dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
+    startupOwnershipReady =
+        m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
+            runtimeDecision, &consumer) &&
+        m11_build_dm1_hoc_full_graphics_ownership_receipt(
+            state, &consumer, receipt, &ownership) &&
+        ownership.ready &&
+        ownership.consume_dm1_receipts_only &&
+        ownership.draw_champion_mirror_wall_overlay &&
+        ownership.suppress_false_item_payloads &&
+        ownership.suppress_projectile_payloads &&
+        ownership.suppress_spell_effect_payloads &&
+        ownership.suppress_materialized_item_payload &&
+        ownership.no_m11_fallback_scan &&
+        dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
             &ownership,
             receipt,
             state->candidateMirrorPanelActive,
             slot && slot->loaded && slot->pixels,
-            &drawReceipt) ||
-        !drawReceipt.valid ||
-        !runtimeDecision->suppressHostFallbackVisuals) {
+            &drawReceipt) &&
+        drawReceipt.valid;
+    if (!startupOwnershipReady) {
+        /* ReDMCSB DUNGEON.C:2608-2612 and DUNVIEW.C:3913-3928 are the
+         * per-frame authority for the C127 D1C mirror.  The stricter
+         * startup HoC full-graphics receipt proves release/app capture, but
+         * headless/local M11 rendering still has to consume the DM1 runtime
+         * render decision instead of falling back to the old host scan. */
+        drawReceipt = runtimeDecision->hostDraw;
+    }
+    if (!drawReceipt.valid ||
+        !drawReceipt.drawChampionPortrait ||
+        !runtimeDecision->suppressHostFallbackVisuals ||
+        !drawReceipt.suppressHostFallbackVisuals) {
         return;
     }
 

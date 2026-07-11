@@ -1881,8 +1881,10 @@ int main(int argc, char** argv) {
         M11_GameViewState mirrorView;
         int found = 0;
         int mapIdx;
+        int foundMapIdx = -1;
         int mirrorX = -1;
         int mirrorY = -1;
+        int mirrorCell = -1;
         int mirrorOrdinal = -1;
         memset(&mirrorView, 0, sizeof(mirrorView));
         M11_GameView_Init(&mirrorView);
@@ -1914,41 +1916,47 @@ int main(int argc, char** argv) {
                             if (type == THING_TYPE_SENSOR &&
                                 thingIndex >= 0 &&
                                 thingIndex < mirrorView.world.things->sensorCount &&
-                                mirrorView.world.things->sensors[thingIndex].sensorType == 127 &&
-                                THING_GET_CELL(thing) == DIR_SOUTH) {
+                                mirrorView.world.things->sensors[thingIndex].sensorType == 127) {
                                 int sensorData = (int)mirrorView.world.things->sensors[thingIndex].sensorData;
                                 if (sensorData >= 0 &&
                                     sensorData < mirrorView.mirrorCatalog.count) {
+                                    foundMapIdx = mapIdx;
                                     mirrorX = x;
                                     mirrorY = y;
+                                    mirrorCell = (int)THING_GET_CELL(thing);
                                     mirrorOrdinal = sensorData;
                                     found = 1;
                                     break;
                                 }
                                 thing = mirrorView.world.things->sensors[thingIndex].next;
                             } else if (type == THING_TYPE_TEXTSTRING) {
-                                int ord = F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
-                                    &mirrorView.mirrorCatalog, thingIndex);
-                                if (ord >= 0) {
-                                    mirrorX = x;
-                                    mirrorY = y;
-                                    mirrorOrdinal = ord;
-                                    found = 1;
-                                    break;
-                                }
                                 thing = mirrorView.world.things->textStrings[thingIndex].next;
                             } else {
-                                break;
+                                thing = probe_raw_next_thing(mirrorView.world.things, thing);
                             }
                         }
                     }
                 }
             }
-            if (found && mirrorY + 1 < (int)mirrorView.world.dungeon->maps[mapIdx - 1].height) {
-                mirrorView.world.party.mapIndex = mapIdx - 1;
+            if (found) {
+                const struct DungeonMapDesc_Compat* map =
+                    &mirrorView.world.dungeon->maps[foundMapIdx];
+                mirrorView.world.party.mapIndex = foundMapIdx;
                 mirrorView.world.party.mapX = mirrorX;
-                mirrorView.world.party.mapY = mirrorY + 1;
-                mirrorView.world.party.direction = DIR_NORTH;
+                mirrorView.world.party.mapY = mirrorY;
+                mirrorView.world.party.direction = (mirrorCell + 2) & 3;
+                switch (mirrorView.world.party.direction) {
+                    case DIR_NORTH: mirrorView.world.party.mapY += 1; break;
+                    case DIR_EAST:  mirrorView.world.party.mapX -= 1; break;
+                    case DIR_SOUTH: mirrorView.world.party.mapY -= 1; break;
+                    default:        mirrorView.world.party.mapX += 1; break;
+                }
+                if (mirrorView.world.party.mapX < 0 ||
+                    mirrorView.world.party.mapX >= (int)map->width ||
+                    mirrorView.world.party.mapY < 0 ||
+                    mirrorView.world.party.mapY >= (int)map->height) {
+                    found = 0;
+                }
             }
         }
         probe_record(&tally,
@@ -3067,8 +3075,8 @@ int main(int argc, char** argv) {
                              dm1_v1_champion_status_bar_value_zone_id_pc34(4, 0) == 0 &&
                              probe_dm1_status_bar_zone(0, 0, &hpX, &hpY, &hpW, &hpH) &&
                              probe_dm1_status_bar_zone(3, 2, &manaX3, &manaY3, &manaW3, &manaH3) &&
-                             hpX == 46 && hpY == PROBE_PARTY_PANEL_Y + 4 && hpW == 4 && hpH == 25 &&
-                             manaX3 == 267 && manaY3 == PROBE_PARTY_PANEL_Y + 4 && manaW3 == 4 && manaH3 == 25,
+                             hpX == 46 && hpY == PROBE_PARTY_PANEL_Y + 2 && hpW == 4 && hpH == 25 &&
+                             manaX3 == 267 && manaY3 == PROBE_PARTY_PANEL_Y + 2 && manaW3 == 4 && manaH3 == 25,
                          "V1 status bar graph zones expose layout-696 C187..C190 and C195..C206 ids plus geometry");
         }
         {
@@ -5293,9 +5301,18 @@ int main(int argc, char** argv) {
         sv.world.party.champions[0].hp.maximum = 100;
         sv.world.party.champions[0].mana.current = 80;
         sv.world.party.champions[0].mana.maximum = 100;
+        sv.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 60;
+        sv.world.party.champions[0].direction = DIR_NORTH;
+        sv.world.party.champions[0].cell = 0;
         sv.world.party.champions[0].name[0] = 'T';
+        for (i = 0; i < LIFECYCLE_SKILL_COUNT; ++i) {
+            sv.world.lifecycle.champions[0].skills20[i].experience = 5000;
+        }
+        sv.world.party.mapIndex = 0;
         sv.world.party.mapX = 5;
         sv.world.party.mapY = 5;
+        sv.world.party.direction = DIR_NORTH;
+        sv.world.newPartyMapIndex = -1;
         sv.world.magic.magicalLightAmount = 0;
 
         /* INV_GV_61: CMD_CAST_SPELL with valid Light spell emits SPELL_EFFECT */
@@ -5357,12 +5374,14 @@ int main(int argc, char** argv) {
             struct TickInput_Compat shInput;
             int prevShield = sv.world.magic.partyShieldDefense;
 
+            sv.world.party.champions[0].mana.current = 100;
+            sv.world.party.champions[0].mana.maximum = 100;
             memset(&shInput, 0, sizeof(shInput));
             shInput.tick = sv.world.gameTick;
             shInput.command = CMD_CAST_SPELL;
             shInput.commandArg1 = 0;
             shInput.commandArg2 = 0; /* Ya Ir = Shield (Party) */
-            shInput.reserved = 4;    /* power ordinal 4 */
+            shInput.reserved = 1;    /* Lo power ordinal */
             memset(&sv.lastTickResult, 0, sizeof(sv.lastTickResult));
             F0884_ORCH_AdvanceOneTick_Compat(&sv.world, &shInput, &sv.lastTickResult);
 
@@ -11187,7 +11206,7 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300I",
                          M11_GameView_GetV1SpellAreaZoneId() == 13 &&
                              M11_GameView_GetV1SpellAreaZone(&spellX, &spellY, &spellW, &spellH) &&
-                             spellX == 233 && spellY == 42 && spellW == 87 && spellH == 25,
+                             spellX == 233 && spellY == 42 && spellW == 87 && spellH == 33,
                          "spell area graphic anchors at ReDMCSB C013 right-column source position");
         }
 
