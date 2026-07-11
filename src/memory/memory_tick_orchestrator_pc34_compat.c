@@ -6017,7 +6017,7 @@ static int orch_materialize_generated_group_compat(
             return 0;
         }
 
-        if (routePlan.route == M11_GROUP_MOVE_ROUTE_REMOVE) {
+        if (routePlan.route == DM1_V1_GROUP_MOVE_ROUTE_REMOVE_PC34) {
             if (!fallKilledGroup) {
                 (void)orch_drop_moving_fixed_possessions_compat(
                     world, group->creatureType, movingFixedDropCells,
@@ -6039,7 +6039,7 @@ static int orch_materialize_generated_group_compat(
             world, group->creatureType, movingFixedDropCells,
             movingFixedDropCellCount, destMapIndex, destMapX, destMapY);
 
-        if (routePlan.route == M11_GROUP_MOVE_ROUTE_RETRY) {
+        if (routePlan.route == DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34) {
             if (!orch_schedule_deferred_group_move_compat(world, &resolvedEvent, groupIndex, 0)) {
                 return 0;
             }
@@ -6135,7 +6135,7 @@ static int orch_handle_deferred_group_move_event_compat(
             !routePlan.valid) {
             return 0;
         }
-        if (routePlan.route == M11_GROUP_MOVE_ROUTE_REMOVE) {
+        if (routePlan.route == DM1_V1_GROUP_MOVE_ROUTE_REMOVE_PC34) {
             if (routePlan.shouldEmitAudibleBuzz) {
                 emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
                      routePlan.mapX, routePlan.mapY, retry.mapIndex);
@@ -6148,7 +6148,7 @@ static int orch_handle_deferred_group_move_event_compat(
                 fallKilledGroup, creatureAllowed, -1, 0,
                 retry.mapIndex, routePlan.mapX, routePlan.mapY);
         }
-        if (routePlan.route == M11_GROUP_MOVE_ROUTE_RETRY) {
+        if (routePlan.route == DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34) {
             retry.fireAtTick = routePlan.retryFireAtTick;
             retry.mapX = routePlan.mapX;
             retry.mapY = routePlan.mapY;
@@ -6156,18 +6156,18 @@ static int orch_handle_deferred_group_move_event_compat(
         }
         if (routePlan.shouldEmitAudibleBuzz) {
             int buzzMapIndex =
-                routePlan.route == M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT
+                routePlan.route == DM1_V1_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT_PC34
                     ? ev->mapIndex
                     : retry.mapIndex;
             emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
                  routePlan.mapX, routePlan.mapY, buzzMapIndex);
         }
-        if (routePlan.route != M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT) {
+        if (routePlan.route != DM1_V1_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT_PC34) {
             orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
         }
         return orch_link_existing_group_to_square_compat(
             world, groupIndex,
-            routePlan.route == M11_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT
+            routePlan.route == DM1_V1_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT_PC34
                 ? ev->mapIndex
                 : retry.mapIndex,
             routePlan.mapX, routePlan.mapY);
@@ -6245,7 +6245,7 @@ static int orch_handle_creature_tick_group_move_compat(
         !movePlan.valid) {
         return 0;
     }
-    if (movePlan.route != M11_GROUP_MOVE_ROUTE_RETRY) {
+    if (movePlan.route != DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34) {
         if (!orch_apply_f0266_group_projectile_precheck_compat(
                 world, groupIndex, ev->mapIndex, ev->mapX, ev->mapY,
                 destMapX, destMapY, &killedByProjectile)) {
