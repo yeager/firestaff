@@ -142,6 +142,8 @@
 #include "dm1_v2_settings_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
 #include "csb_v2_settings_pc34.h"
+#include "csb_v22_modern_assets_pc34.h"
+#include "csb_v22_finished_art_material_gate_pc34.h"
 #include "theron_v2_presentation_mode_pc34.h"
 #include "theron_v2_settings_pc34.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
@@ -11316,7 +11318,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
         }
     } else if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
+        csb_v22_set_manifest_path(spec->dataDir);
+        csb_v22_famg_set_manifest_path(spec->dataDir);
         csb_v2_presentation_mode_set_m12(spec->presentationMode);
+        if (csb_v2_presentation_mode_get() == CSB_V2_PM_V21_UPSCALED &&
+            spec->presentationMode == M12_PRESENTATION_V22_MODERN) {
+            state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
+        }
     } else if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
         theron_v2_presentation_mode_set_m12(spec->presentationMode);
         theron_v2_hud_launch_mode_apply_m11_startup(

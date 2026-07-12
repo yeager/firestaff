@@ -6,9 +6,9 @@
 #include "csb_v2_presentation_mode_pc34.h"
 #include "csb_v2_texture_upscale_pc34.h"
 #include "csb_v22_shapes.h"
+#include "csb_v22_modern_assets_pc34.h"
+#include "csb_v22_finished_art_material_gate_pc34.h"
 #include <string.h>
-
-extern int m11_v22_modern_assets_available(void);
 
 static CSB_V2_PresentationModeState g_csb_pm_state;
 static int g_csb_pm_pack_override_valid = 0;
@@ -16,7 +16,8 @@ static int g_csb_pm_pack_override_value = 0;
 
 static int csb_pm_modern_pack_detected(void) {
     if (g_csb_pm_pack_override_valid) return g_csb_pm_pack_override_value;
-    return m11_v22_modern_assets_available();
+    return csb_v22_modern_assets_available() &&
+           csb_v22_famg_is_finished_real();
 }
 
 static void csb_pm_recompute(CSB_V2_PresentationModeKind resolved) {
