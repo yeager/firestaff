@@ -144,6 +144,22 @@ const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type) {
     return &g_ai_table[creature_type];
 }
 
+int dm2_v1_creature_item_click_rect_evidence(int creature_type,
+                                             uint16_t *out_rectno) {
+    const DM2_AIDefinition *spec;
+    if (out_rectno) *out_rectno = 0u;
+    if (!out_rectno || !g_ai_table_gdat_bound || creature_type < 0 ||
+        creature_type >= DM2_AI_TABLE_SIZE ||
+        !g_creature_ai_row_loaded[creature_type]) return 0;
+    spec = dm2_v1_creature_ai_spec(creature_type);
+    if (!spec || spec->w32 == 0u) return 0;
+    /* skproject SKWIN/SkWinCore.cpp DRAW_PUT_DOWN_ITEM lines ~39C0-3A4E:
+     * creature type -> CREATURES dtWordValue(0x05) -> AIDefinition::w32 ->
+     * QUERY_EXPANDED_RECT. This is evidence only; no click target is made. */
+    *out_rectno = spec->w32;
+    return 1;
+}
+
 void dm2_v1_creature_reset_ai_table(void) {
     memset(g_ai_table, 0, sizeof(g_ai_table));
     memset(g_ai_table_loaded, 0, sizeof(g_ai_table_loaded));

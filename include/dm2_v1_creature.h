@@ -168,6 +168,11 @@ const char *dm2_v1_creature_ai_name(int ai_index);
 /* Returns NULL when a mounted GDAT has no verified CREATURES[type] ->
  * CREATURE_AI row binding.  Callers must treat that as unavailable/no action. */
 const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type);
+
+/* skproject DRAW_PUT_DOWN_ITEM reads AIDefinition::w32 only after the
+ * CREATURES[type] -> GDAT AI-row indirection has been bound from real data. */
+int dm2_v1_creature_item_click_rect_evidence(int creature_type,
+                                             uint16_t *out_rectno);
 int  dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader);
 int  dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader,
                                                   int field);
