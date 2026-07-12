@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_DM2_V1_VIEWPORT_RENDERER_H
 #define FIRESTAFF_DM2_V1_VIEWPORT_RENDERER_H
 #include <stdint.h>
+#include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -763,6 +764,7 @@ typedef struct {
     const uint8_t *gdat_interface_font_rows;
     uint32_t gdat_interface_font_hash;
     int gdat_interface_font_consumed_count;
+    const DM2_V1_InterfaceHudLayout *gdat_interface_hud_layout;
     const uint8_t *gdat_interface_rect14_rows;
     uint32_t gdat_interface_rect14_row_count;
     uint32_t gdat_interface_rect14_hash;
@@ -890,6 +892,9 @@ void dm2_v1_viewport_set_gdat_interface_font(
     DM2_V1_ViewportState *s,
     const uint8_t *rows,
     uint32_t hash);
+void dm2_v1_viewport_set_gdat_interface_hud_layout(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_InterfaceHudLayout *layout);
 void dm2_v1_viewport_set_gdat_interface_rect14(
     DM2_V1_ViewportState *s,
     const uint8_t *rows,

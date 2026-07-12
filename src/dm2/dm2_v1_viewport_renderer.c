@@ -939,6 +939,15 @@ void dm2_v1_viewport_set_gdat_interface_font(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_gdat_interface_hud_layout(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_InterfaceHudLayout *layout)
+{
+    if (!s) return;
+    s->gdat_interface_hud_layout = layout && layout->valid ? layout : NULL;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_gdat_interface_rect14(
     DM2_V1_ViewportState *s,
     const uint8_t *rows,
@@ -4279,6 +4288,33 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
             s->is_outdoor, s->hud_party_valid ? &s->hud_party : NULL,
             &plan)) {
         return;
+    }
+    if (!plan.outdoor && s->gdat_interface_hud_layout) {
+        /* skproject _098d_1208 expands the original 640-wide dt04/0 rect
+         * table. Firestaff's indexed game surface is 320 wide, so consume
+         * the source rectangles through the matching half-resolution path. */
+        for (int slot = 0; slot < plan.champion_slot_count; ++slot) {
+            const DM2_V1_InterfaceHudLayout *layout = s->gdat_interface_hud_layout;
+            DM2_V1_HudChampionSlotRender *champ = &plan.champion_slots[slot];
+            champ->portrait_rect = (DM2_V1_ViewportRect){
+                layout->portrait[slot].x / 2, layout->portrait[slot].y / 2,
+                layout->portrait[slot].w / 2, layout->portrait[slot].h / 2 };
+            champ->name_marker_rect = (DM2_V1_ViewportRect){
+                layout->name[slot].x / 2, layout->name[slot].y / 2,
+                layout->name[slot].w / 2, layout->name[slot].h / 2 };
+            champ->hp_bar_rect = (DM2_V1_ViewportRect){
+                layout->status[slot][0].x / 2, layout->status[slot][0].y / 2,
+                layout->status[slot][0].w / 2, layout->status[slot][0].h / 2 };
+            champ->stamina_bar_rect = (DM2_V1_ViewportRect){
+                layout->status[slot][1].x / 2, layout->status[slot][1].y / 2,
+                layout->status[slot][1].w / 2, layout->status[slot][1].h / 2 };
+            champ->mana_bar_rect = (DM2_V1_ViewportRect){
+                layout->status[slot][2].x / 2, layout->status[slot][2].y / 2,
+                layout->status[slot][2].w / 2, layout->status[slot][2].h / 2 };
+            champ->hp_fill_rect = dm2_v1_hud_bar_fill(&champ->hp_bar_rect, champ->hp_pct);
+            champ->stamina_fill_rect = dm2_v1_hud_bar_fill(&champ->stamina_bar_rect, champ->stamina_pct);
+            champ->mana_fill_rect = dm2_v1_hud_bar_fill(&champ->mana_bar_rect, champ->mana_pct);
+        }
     }
 
     if (!dm2_v1_render_hud_core_asset(s,

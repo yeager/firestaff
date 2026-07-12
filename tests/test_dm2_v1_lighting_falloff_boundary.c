@@ -1127,6 +1127,27 @@ static void test_sprite_asset_provider(void)
                   viewport.fallback_hud_portrait_drawn_count == 1);
 
         {
+            DM2_V1_InterfaceHudLayout layout;
+            memset(&layout, 0, sizeof(layout));
+            layout.valid = 1;
+            layout.table_hash = 0x098d1208u;
+            layout.portrait[0] = (DM2_V1_InterfaceRect){ 16, 8, 32, 28 };
+            layout.name[0] = (DM2_V1_InterfaceRect){ 8, 4, 48, 12 };
+            layout.status[0][0] = (DM2_V1_InterfaceRect){ 100, 10, 6, 26 };
+            layout.status[0][1] = (DM2_V1_InterfaceRect){ 116, 10, 6, 26 };
+            layout.status[0][2] = (DM2_V1_InterfaceRect){ 132, 10, 6, 26 };
+            memset(framebuffer, 0, sizeof(framebuffer));
+            dm2_v1_viewport_init(&viewport, framebuffer, 320);
+            dm2_v1_viewport_set_hud_party(&viewport, &party);
+            dm2_v1_viewport_set_gdat_interface_hud_layout(&viewport, &layout);
+            dm2_v1_render_ui_chrome(&viewport);
+            CHECK("DM2 HUD consumes expanded dt04 champion placement rows",
+                  framebuffer[5 * 320 + 50] == 2 &&
+                      framebuffer[5 * 320 + 58] == 11 &&
+                      framebuffer[5 * 320 + 66] == 0);
+        }
+
+        {
             uint8_t font_rows[6 * 128] = { 0 };
             uint8_t palette16[16];
             for (int i = 0; i < 16; ++i) {
