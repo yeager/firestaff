@@ -596,6 +596,33 @@ int csb_v1_runtime_locate_csbwin_appended_expool_record(
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report);
+
+/* CSBWin Monster.cpp resolves a type-47 filter actuator from Expool, then
+ * obtains its DSAselector from DB3::word2 bits 7..11 and maps that slot
+ * through the save-owned DSALevelIndex[level][selector] table.  This receipt
+ * binds those already-decoded source values without executing an opcode. */
+typedef struct {
+    CSB_V1_DSAFilterLocation location;
+    uint8_t dsa_selector;
+    uint8_t dsa_id;
+} CSB_V1_RuntimeDSAFilterBinding;
+
+int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *location,
+    CSB_V1_RuntimeDSAFilterBinding *out_binding);
+
+/* Prepare the source-authenticated pure-stack runner only after a concrete
+ * imported action was selected. World opcodes, DSA master-state persistence,
+ * and movement post-filter flags remain outside this bounded bridge. */
+int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeDSAFilterBinding *binding,
+    uint32_t state_index,
+    int action_ordinal,
+    uint32_t master_location,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner);
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
 int csb_v1_runtime_select_champion_portrait_render_source(
