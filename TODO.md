@@ -64,8 +64,9 @@ The canonical `CD_EXEC` handoff is locked: record `0x0003e7` loads and enters
 local RAM at `$4000`. Mednafen HuC6280/CD traces bind the first stage-two
 `CD_READ` to record `0x0004df` (JP) or `0x0004e0` (US), one sector to `$3800`.
 Remaining work is to bind the loaded record's semantic role and later
-stage-two reads; do not treat this loader receipt as a graphics, palette,
-object, or dungeon-record binding.
+stage-two reads. The first loaded payload is now structurally verified as a
+218-unit manifest envelope, but its entries remain unclassified; do not treat
+it as a graphics, palette, object, or dungeon-record binding.
 
 ## Theron Track 02 Semantic Binding Follow-up (2026-07-11)
 

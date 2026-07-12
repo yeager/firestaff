@@ -57,9 +57,15 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
     };
     size_t executable_sector = index01 + THERON_TRACK02_IPL_RECORD;
     size_t stage2_sector = index01 + THERON_TRACK02_IPL_STAGE2_RECORD;
-    uint8_t *data = (uint8_t *)calloc(stage2_sector +
-                                      THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
-                                      RAW_SECTOR_BYTES);
+    size_t dynamic_sector = executable_sectors == 3u
+                                ? THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP
+                                : THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US;
+    size_t sector_count = dynamic_sector + 1u;
+    uint8_t *data;
+    if (sector_count < stage2_sector + THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT) {
+        sector_count = stage2_sector + THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT;
+    }
+    data = (uint8_t *)calloc(sector_count, RAW_SECTOR_BYTES);
     if (!data) return NULL;
     put_user(data, index01 + 1u, 0u, 0x00u);
     put_user(data, index01 + 1u, 1u, 0x03u);
@@ -75,8 +81,12 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
     put_bytes(data, executable_sector, 0xd5u, exec_record, sizeof(exec_record));
     put_bytes(data, stage2_sector, 0x80u, stage2_read_setup,
               sizeof(stage2_read_setup));
-    *out_size = (stage2_sector + THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT) *
-                RAW_SECTOR_BYTES;
+    put_user(data, dynamic_sector, 0u, 0x00u);
+    put_user(data, dynamic_sector, 1u, 0xffu);
+    put_user(data, dynamic_sector, 2u, 0x03u);
+    put_user(data, dynamic_sector, 3u, 0x08u);
+    put_user(data, dynamic_sector, 4u, 0x01u);
+    *out_size = sector_count * RAW_SECTOR_BYTES;
     return data;
 }
 
@@ -139,6 +149,7 @@ static void check_real_media(const char *path, const char *md5,
     uint8_t *data;
     char actual_md5[33];
     Theron_Track02IplLoaderReceipt receipt;
+    Theron_Track02Stage2DynamicPayloadReceipt dynamic_payload;
 
     if (!path) return;
     file = fopen(path, "rb");
@@ -164,6 +175,21 @@ static void check_real_media(const char *path, const char *md5,
           "real IPL loader receipt");
     check(receipt.variant == variant && receipt.executable_user_data_hash != 0u,
           "real IPL loader identity/hash");
+    check(theron_v1_track02_inspect_stage2_dynamic_payload(
+              data, (size_t)length, md5, &dynamic_payload) == THERON_TRACK02_SIGNAL_OK &&
+              dynamic_payload.valid && dynamic_payload.variant == variant &&
+              dynamic_payload.track02_record == receipt.stage2_cd_read_record &&
+              dynamic_payload.raw_sector == receipt.stage2_cd_read_raw_sector &&
+              dynamic_payload.user_data_bytes ==
+                  THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES &&
+              dynamic_payload.header_word0 == 0x00ffu &&
+              dynamic_payload.header_word1 == 0x0308u &&
+              dynamic_payload.manifest_bytes ==
+                  THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_BYTES &&
+              dynamic_payload.manifest_entry_count ==
+                  THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT &&
+              dynamic_payload.nonzero_byte_count > 0u && dynamic_payload.user_data_hash != 0u,
+          "real Track 02 dynamic payload manifest receipt");
     free(data);
 }
 
@@ -171,6 +197,7 @@ int main(void) {
     uint8_t *data;
     size_t data_size;
     Theron_Track02IplLoaderReceipt receipt;
+    Theron_Track02Stage2DynamicPayloadReceipt dynamic_payload;
 
     data = make_fixture(225u, 4u, &data_size);
     check(data != NULL, "US IPL fixture allocation");
@@ -181,6 +208,20 @@ int main(void) {
               "US IPL fixture accepted");
         check_receipt(&receipt, THERON_TRACK02_VARIANT_US_BIN, 225u, 4u,
                       "US IPL fixture identity");
+        check(theron_v1_track02_inspect_stage2_dynamic_payload(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &dynamic_payload) == THERON_TRACK02_SIGNAL_OK &&
+                  dynamic_payload.track02_record ==
+                      THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US &&
+                  dynamic_payload.manifest_entry_count ==
+                      THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT,
+              "US dynamic payload fixture accepted");
+        put_user(data, THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US,
+                 THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_BYTES, 0x01u);
+        check(theron_v1_track02_inspect_stage2_dynamic_payload(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &dynamic_payload) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "dynamic payload tail rejects");
         put_user(data, 226u, 3u, 3u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_US_BIN,
