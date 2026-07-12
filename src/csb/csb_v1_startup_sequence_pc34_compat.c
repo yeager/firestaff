@@ -1141,7 +1141,9 @@ static void csb_v1_startup_set_opening_composite_pc34(
     plan->opening_composite_right_box_w = plan->opening_right_w;
     plan->opening_composite_right_box_h = plan->opening_right_h;
     plan->opening_composite_left_source_x = plan->opening_left_source_x;
+    plan->opening_composite_left_source_y = plan->opening_left_source_y;
     plan->opening_composite_right_source_x = plan->opening_right_source_x;
+    plan->opening_composite_right_source_y = plan->opening_right_source_y;
 }
 
 static void csb_v1_startup_set_title_rect_pc34(

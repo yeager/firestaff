@@ -944,12 +944,14 @@ int main(void)
               plan.opening_composite_left_box_y == 28 &&
               plan.opening_composite_left_box_w == 97 &&
               plan.opening_composite_left_box_h == 161 &&
+              plan.opening_composite_left_source_y == 0 &&
               plan.opening_composite_right_box_x == 113 &&
               plan.opening_composite_right_box_y == 28 &&
               plan.opening_composite_right_box_w == 119 &&
               plan.opening_composite_right_box_h == 161 &&
               plan.opening_composite_left_source_x == 0 &&
               plan.opening_composite_right_source_x == 8 &&
+              plan.opening_composite_right_source_y == 0 &&
               plan.primitive_command_count == 3 &&
               plan.primitive_commands[1].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34 &&

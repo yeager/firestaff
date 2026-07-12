@@ -3349,8 +3349,8 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
         return;
     }
     /* ReDMCSB TITLE.C F0437 clears to black before its C424/C425/C426
-     * phase work.  Clearing afterwards discards phase primitives on the
-     * real title route. */
+     * phase work.  Do this before consuming the CSB-owned primitive plan;
+     * clearing afterwards discards phase primitives on the real title route. */
     memset(framebuffer, 0,
            (size_t)framebufferWidth * (size_t)framebufferHeight);
     m11_execute_csb_startup_primitive_commands(framebuffer,
@@ -3575,19 +3575,19 @@ static int m11_draw_csb_entrance_opening_frame_asset(
            m11_csb_copy_startup_rect(leftDoor->pixels, leftDoor->width,
                                      leftDoor->height,
                                      composite->left_source_x,
-                                     composite->left_box_y, framebuffer,
+                                     composite->left_source_y, framebuffer,
                                      framebufferWidth, framebufferHeight,
                                      composite->left_box_x,
-                                     28 + composite->left_box_y,
+                                     composite->left_box_y,
                                      composite->left_box_w,
                                      composite->left_box_h) &&
            m11_csb_copy_startup_rect(rightDoor->pixels, rightDoor->width,
                                      rightDoor->height,
                                      composite->right_source_x,
-                                     composite->right_box_y, framebuffer,
+                                     composite->right_source_y, framebuffer,
                                      framebufferWidth, framebufferHeight,
                                      composite->right_box_x,
-                                     28 + composite->right_box_y,
+                                     composite->right_box_y,
                                      composite->right_box_w,
                                      composite->right_box_h);
 }
@@ -3630,7 +3630,9 @@ static int m11_execute_csb_entrance_opening_composite(
     composite.right_box_w = plan->opening_composite_right_box_w;
     composite.right_box_h = plan->opening_composite_right_box_h;
     composite.left_source_x = plan->opening_composite_left_source_x;
+    composite.left_source_y = plan->opening_composite_left_source_y;
     composite.right_source_x = plan->opening_composite_right_source_x;
+    composite.right_source_y = plan->opening_composite_right_source_y;
     return m11_draw_csb_entrance_opening_frame_asset(&context, &composite);
 }
 
