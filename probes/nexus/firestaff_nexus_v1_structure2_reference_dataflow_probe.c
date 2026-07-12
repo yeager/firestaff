@@ -70,6 +70,9 @@ int main(int argc, char **argv) {
     int sequence_unclassified_instruction_count = 0;
     int sequence_descriptor_nonzero_target_count = 0;
     int sequence_descriptor_target_outside_count = 0;
+    int sequence_descriptor_target_unaligned_count = 0;
+    int sequence_descriptor_target_unique_count = 0;
+    int sequence_descriptor_target_duplicate_count = 0;
     int unique_descriptor_count = 0;
     int nonzero_target_count = 0;
     int outside_target_count = 0;
@@ -90,10 +93,13 @@ int main(int argc, char **argv) {
         Nexus_V1_Level level;
         Nexus_V1_DgnStructure1Layout layout;
         unsigned char seen[NEXUS_DGN_MAX_STRUCTURE2_TEXTURES];
+        uint32_t seen_sequence_targets[NEXUS_DGN_MAX_STRUCTURE2_TEXTURES * 2];
+        int seen_sequence_target_count = 0;
         int entry_index;
 
         memset(&level, 0, sizeof(level));
         memset(seen, 0, sizeof(seen));
+        memset(seen_sequence_targets, 0, sizeof(seen_sequence_targets));
         if (snprintf(path, sizeof(path), "%s/LEV%02d.DGN", data_dir,
                      level_index) <= 0 || !read_file(path, &data, &size)) {
             fprintf(stderr, "FAIL: LEV%02d.DGN is unavailable\n", level_index);
@@ -212,6 +218,31 @@ int main(int argc, char **argv) {
                         if (offset < opaque_begin || offset >= opaque_end) {
                             ++sequence_descriptor_target_outside_count;
                         }
+                        if ((offset & 1U) != 0U) {
+                            ++sequence_descriptor_target_unaligned_count;
+                        }
+                        {
+                            int target_index;
+                            int seen_before = 0;
+                            for (target_index = 0;
+                                 target_index < seen_sequence_target_count;
+                                 ++target_index) {
+                                if (seen_sequence_targets[target_index] == offset) {
+                                    seen_before = 1;
+                                    break;
+                                }
+                            }
+                            if (seen_before) {
+                                ++sequence_descriptor_target_duplicate_count;
+                            } else if (seen_sequence_target_count <
+                                       (int)(sizeof(seen_sequence_targets) /
+                                             sizeof(seen_sequence_targets[0]))) {
+                                seen_sequence_targets[seen_sequence_target_count++] = offset;
+                                ++sequence_descriptor_target_unique_count;
+                            } else {
+                                ++sequence_descriptor_target_outside_count;
+                            }
+                        }
                     }
                 }
             }
@@ -265,6 +296,8 @@ int main(int argc, char **argv) {
     check(sequence_descriptor_nonzero_target_count > 0 &&
               sequence_descriptor_target_outside_count == 0,
           "Structure1G sequence descriptors target bounded opaque payload spans");
+    check(sequence_descriptor_target_unaligned_count == 0,
+          "Structure1G sequence descriptor targets are word-aligned");
     check(sequence_terminator_count == structure1g_reference_count &&
               sequence_unclassified_instruction_count == 0,
           "Structure1G sequences terminate without unclassified instructions");
@@ -275,6 +308,7 @@ int main(int argc, char **argv) {
            "sequence-images=%d image-mismatches=%d unique-descriptors=%d "
            "gotos=%d goto-mismatches=%d terminators=%d unclassified=%d "
            "sequence-targets=%d targets-outside=%d "
+           "unaligned=%d unique=%d duplicate=%d "
            "nonzero-targets=%d outside=%d; "
            "decoder/render-proof=0\n",
            levels_loaded, structure1g_reference_count, global_to_local_binding_count,
@@ -285,6 +319,9 @@ int main(int argc, char **argv) {
            sequence_terminator_count, sequence_unclassified_instruction_count,
            sequence_descriptor_nonzero_target_count,
            sequence_descriptor_target_outside_count,
+           sequence_descriptor_target_unaligned_count,
+           sequence_descriptor_target_unique_count,
+           sequence_descriptor_target_duplicate_count,
            nonzero_target_count, outside_target_count);
     return failures == 0 ? 0 : 1;
 }

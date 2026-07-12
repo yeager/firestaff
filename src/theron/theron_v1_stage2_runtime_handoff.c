@@ -14,6 +14,7 @@
 #define THERON_V1_MODE1_USER_DATA_BYTES 2048u
 #define THERON_V1_IPL_PRELOAD_TABLE_USER_OFFSET 0xdcu
 #define THERON_V1_STAGE2_CD_EXEC_TABLE_USER_OFFSET 0xd5u
+#define THERON_V1_STAGE2_CD_READ_SETUP_USER_OFFSET 0x80u
 #define THERON_V1_IPL_PRELOAD_SETUP_USER_OFFSET 0xc1u
 #define THERON_V1_IPL_PRELOAD_CALL_DELTA 12u
 #define THERON_V1_IPL_PRELOAD_RECORD 0x0003e3u
@@ -134,11 +135,26 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     size_t preload_raw_offset;
     size_t preload_call_offset;
     size_t stage2_exec_table_offset;
+    size_t stage2_read_setup_offset;
     static const uint8_t preload_return_sequence[] = {
         0x20u, 0x09u, 0xe0u, /* JSR $e009 */
         0xc9u, 0x00u,       /* CMP #$00 */
         0xd0u, 0xd5u,       /* BNE $40a9 */
         0x60u               /* RTS */
+    };
+    static const uint8_t stage2_read_setup[] = {
+        0xa9u, 0x01u, 0x85u, 0xf8u, /* AL = 1 */
+        0xa9u, 0x01u, 0x85u, 0xffu, /* DH = local RAM */
+        0xa9u, 0x00u, 0x85u, 0xfau,
+        0xa9u, 0x38u, 0x85u, 0xfbu, /* BX = $3800 */
+        0x20u, 0x09u, 0xe0u        /* JSR $e009 */
+    };
+    static const uint8_t stage2_post_read_transfer[] = {
+        0xc9u, 0x00u, 0xd0u, 0xe7u, /* retry on nonzero status */
+        0xadu, 0x8au, 0x27u, 0xaeu, 0x8bu, 0x27u,
+        0xacu, 0x8cu, 0x27u, 0xc8u, 0x9cu, 0xffu, 0x26u,
+        0x73u, 0xffu, 0x26u, 0x00u, 0x27u, 0x00u, 0x11u,
+        0x4cu, 0x00u, 0x38u        /* JMP $3800 */
     };
 
     if (!out_handoff) return 0;
@@ -205,11 +221,17 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     if (loader.data_track_index01_raw_sector > SIZE_MAX -
             THERON_V1_IPL_PRELOAD_RECORD ||
         loader.executable_raw_sector > SIZE_MAX / THERON_V1_RAW_SECTOR_BYTES ||
+        loader.stage2_raw_sector > SIZE_MAX / THERON_V1_RAW_SECTOR_BYTES ||
         loader.executable_raw_sector * THERON_V1_RAW_SECTOR_BYTES >
+            track02_size ||
+        loader.stage2_raw_sector * THERON_V1_RAW_SECTOR_BYTES >
             track02_size ||
         THERON_V1_MODE1_USER_DATA_OFFSET + THERON_V1_IPL_PRELOAD_TABLE_USER_OFFSET +
             4u > track02_size -
-                loader.executable_raw_sector * THERON_V1_RAW_SECTOR_BYTES) {
+                loader.executable_raw_sector * THERON_V1_RAW_SECTOR_BYTES ||
+        THERON_V1_MODE1_USER_DATA_OFFSET + THERON_V1_STAGE2_CD_READ_SETUP_USER_OFFSET +
+            sizeof(stage2_read_setup) + sizeof(stage2_post_read_transfer) >
+            track02_size - loader.stage2_raw_sector * THERON_V1_RAW_SECTOR_BYTES) {
         memset(out_handoff, 0, sizeof(*out_handoff));
         return 0;
     }
@@ -231,10 +253,18 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     stage2_exec_table_offset = loader.executable_raw_sector *
         THERON_V1_RAW_SECTOR_BYTES + THERON_V1_MODE1_USER_DATA_OFFSET +
         THERON_V1_STAGE2_CD_EXEC_TABLE_USER_OFFSET;
+    stage2_read_setup_offset = loader.stage2_raw_sector *
+        THERON_V1_RAW_SECTOR_BYTES + THERON_V1_MODE1_USER_DATA_OFFSET +
+        THERON_V1_STAGE2_CD_READ_SETUP_USER_OFFSET;
     if (memcmp(track02_data + preload_table_offset,
                "\x00\xe3\x03\x02", 4u) != 0 ||
         memcmp(track02_data + stage2_exec_table_offset,
                "\x00\xe7\x03\x11", 4u) != 0 ||
+        memcmp(track02_data + stage2_read_setup_offset, stage2_read_setup,
+               sizeof(stage2_read_setup)) != 0 ||
+        memcmp(track02_data + stage2_read_setup_offset +
+                   sizeof(stage2_read_setup), stage2_post_read_transfer,
+               sizeof(stage2_post_read_transfer)) != 0 ||
         memcmp(track02_data + preload_call_offset, preload_return_sequence,
                sizeof(preload_return_sequence)) != 0 ||
         !theron_v1_mode1_sector_is_valid(track02_data + preload_raw_offset) ||
@@ -256,6 +286,8 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     out_handoff->ipl_preload_raw_sector = preload_raw_sector;
     out_handoff->ipl_preload_returns_to_ipl_proven = 1;
     out_handoff->stage2_cd_exec_table_verified = 1;
+    out_handoff->stage2_cd_read_setup_verified = 1;
+    out_handoff->stage2_post_read_transfer_verified = 1;
     out_handoff->ipl_preload_user_data_bytes =
         THERON_V1_IPL_PRELOAD_SECTOR_COUNT * THERON_V1_MODE1_USER_DATA_BYTES;
     theron_v1_mode1_user_data_summary(
