@@ -723,6 +723,30 @@ set_tests_properties(theron_v1_startup_flow_probe PROPERTIES
     LABELS "tier4;theron;startup;soul-room;stage-select"
 )
 
+# Opt-in: reads only explicitly supplied Track 02 paths and reports the
+# redacted raw-media state alongside the no-fallback startup bitmap boundary.
+add_executable(firestaff_theron_v1_raw_media_bitmap_gate_probe
+    probes/theron/firestaff_theron_v1_raw_media_bitmap_gate_probe.c
+    src/theron/theron_v1_track_media_availability.c
+    src/theron/theron_v1_iso_end_receipt.c
+)
+target_include_directories(firestaff_theron_v1_raw_media_bitmap_gate_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v1_raw_media_bitmap_gate_probe
+    PRIVATE firestaff_m12 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v1_raw_media_bitmap_gate_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME theron_v1_raw_media_bitmap_gate_probe
+    COMMAND firestaff_theron_v1_raw_media_bitmap_gate_probe --selftest
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(theron_v1_raw_media_bitmap_gate_probe PROPERTIES
+    LABELS "theron;track02;media;startup"
+)
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/theron/firestaff_theron_v1_startup_real_asset_receipt_probe.c"
    AND NOT TARGET firestaff_theron_v1_startup_real_asset_receipt_probe)
     add_executable(firestaff_theron_v1_startup_real_asset_receipt_probe
