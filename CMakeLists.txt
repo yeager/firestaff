@@ -747,6 +747,30 @@ set_tests_properties(theron_v1_raw_media_bitmap_gate_probe PROPERTIES
     LABELS "theron;track02;media;startup"
 )
 
+# Opt-in capture preflight.  It never starts Mednafen; it only reports whether
+# explicit raw Track 02 and System Card 3.0 inputs satisfy the capture gate.
+add_executable(firestaff_theron_v1_mednafen_capture_preflight_smoke
+    probes/theron/firestaff_theron_v1_mednafen_capture_preflight_smoke.c
+    src/theron/theron_v1_track_media_availability.c
+    src/theron/theron_v1_iso_end_receipt.c
+)
+target_include_directories(firestaff_theron_v1_mednafen_capture_preflight_smoke PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v1_mednafen_capture_preflight_smoke
+    PRIVATE firestaff_m12 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v1_mednafen_capture_preflight_smoke PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME theron_v1_mednafen_capture_preflight_smoke
+    COMMAND firestaff_theron_v1_mednafen_capture_preflight_smoke --selftest
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(theron_v1_mednafen_capture_preflight_smoke PROPERTIES
+    LABELS "theron;track02;system-card;capture"
+)
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/theron/firestaff_theron_v1_startup_real_asset_receipt_probe.c"
    AND NOT TARGET firestaff_theron_v1_startup_real_asset_receipt_probe)
     add_executable(firestaff_theron_v1_startup_real_asset_receipt_probe
