@@ -32,12 +32,13 @@
   parsing. That runtime path now also requires the original IPL `CD_EXEC`
   `$3e7` -> 17-sector `$4000` stage-two handoff and its traced `$4090`
   one-sector `$3800` read with complete live-record-register mask, so a
-  changed selector or disconnected loader chain cannot reach M11. This proves
-  only the physical loader-to-dispatch boundary, not manifest, palette,
-  object, level, or later-CD semantics. Verification: strict-C11 runtime-entry
-  syntax check plus direct original-media JP/US IPL-chain and stage-three
-  probe, 0 failed. Ninja could not run: this worktree has no
-  `build/build.ninja`.
+  changed selector or disconnected loader chain cannot reach M11. The startup
+  receipt consumes the identical chain before publishing its dynamic-manifest
+  handoff. This proves only the physical loader-to-dispatch boundary, not
+  manifest, palette, object, level, or later-CD semantics. Verification:
+  strict-C11 startup-receipt/runtime-entry syntax checks plus direct
+  original-media JP/US IPL-chain and stage-three probe, 0 failed. Ninja could
+  not run: this worktree has no `build/build.ninja`.
 
 - 2026-07-12 DM2 V1 weather GDAT receipt: fail-closed receipt requires
   ENVIRONMENT dtImage fields 64/67/6A/6D/71 and GRAPHICSSET dtWordValue 69

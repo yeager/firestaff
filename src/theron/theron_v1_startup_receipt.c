@@ -419,6 +419,53 @@ static int read_file_bytes(const char *path, uint8_t **out, size_t *out_size) {
     return 1;
 }
 
+/* The static IPL parser and the original runtime trace establish one complete
+ * JP/US route only: CD_EXEC $3e7 -> $4000, then $4090 CD_READ -> $3800.
+ * Keep startup receipt publication behind that whole chain, not merely a
+ * structurally similar stage-three sector. */
+static int theron_v1_startup_receipt_stage3_loader_chain_valid(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    const Theron_Track02Stage2DynamicPayloadReceipt *payload) {
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_V1Stage3Irq2DispatchReceipt dispatch;
+
+    if (!track02_data || track02_size == 0u || !md5_hex || !payload ||
+        !payload->valid) {
+        return 0;
+    }
+    memset(&loader, 0, sizeof(loader));
+    memset(&dispatch, 0, sizeof(dispatch));
+    if (theron_v1_track02_find_ipl_loader(
+            track02_data, track02_size, md5_hex, &loader) !=
+            THERON_TRACK02_SIGNAL_OK || !loader.valid ||
+        loader.stage2_record != THERON_TRACK02_IPL_STAGE2_RECORD ||
+        loader.stage2_sector_count != THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT ||
+        loader.stage2_destination != THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM ||
+        loader.stage2_load_address != THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS ||
+        loader.stage2_entry_address != THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS ||
+        loader.stage2_cd_read_cpu_address !=
+            THERON_TRACK02_IPL_STAGE2_CD_READ_CPU_ADDRESS ||
+        loader.stage2_cd_read_sector_count != 1u ||
+        loader.stage2_cd_read_destination !=
+            THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM ||
+        loader.stage2_cd_read_local_destination !=
+            THERON_TRACK02_IPL_STAGE2_CD_READ_LOCAL_DESTINATION ||
+        !loader.stage2_cd_read_record_proven ||
+        !loader.stage2_cd_read_dynamic_boundary_valid ||
+        loader.stage2_cd_read_live_record_register_mask !=
+            THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_MASK ||
+        loader.vram_transfer_proven ||
+        payload->track02_record != loader.stage2_cd_read_record ||
+        payload->raw_sector != loader.stage2_cd_read_raw_sector) {
+        return 0;
+    }
+    return theron_v1_stage3_irq2_dispatch_from_original_media(
+               track02_data, track02_size, payload, &dispatch) &&
+           dispatch.valid && dispatch.irq2_dispatch_proven;
+}
+
 /* ── Real-asset receipt ───────────────────────────────────────────── */
 
 int theron_v1_startup_receipt_from_file(const char *track02_path,
@@ -427,7 +474,6 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     Theron_V1_BootProfile profile;
     Theron_Track02BankSignal signal;
     Theron_Track02Stage2DynamicPayloadReceipt stage2_dynamic;
-    Theron_V1Stage3Irq2DispatchReceipt stage3_dispatch;
     Theron_Track02SignalStatus signal_status;
     uint8_t *data = NULL;
     size_t size = 0;
@@ -620,7 +666,6 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
      * startup so later runtime code can consume the exact record without
      * reopening a byte scan.  Its 218 entries remain deliberately opaque. */
     memset(&stage2_dynamic, 0, sizeof(stage2_dynamic));
-    memset(&stage3_dispatch, 0, sizeof(stage3_dispatch));
     if (receipt->variant == THERON_TRACK02_VARIANT_JP_BIN ||
         receipt->variant == THERON_TRACK02_VARIANT_US_BIN) {
         if (theron_v1_track02_inspect_stage2_dynamic_payload(
@@ -639,14 +684,13 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         /* The stage-two loader enters this exact sector at $3800. Require
          * the physical BRK $ff bytes before its loader handoff can reach
          * runtime; descriptor contents stay deliberately unclassified. */
-        if (!theron_v1_stage3_irq2_dispatch_from_original_media(
-                data, size, &stage2_dynamic, &stage3_dispatch) ||
-            !stage3_dispatch.valid || !stage3_dispatch.irq2_dispatch_proven) {
+        if (!theron_v1_startup_receipt_stage3_loader_chain_valid(
+                data, size, expected_md5, &stage2_dynamic)) {
             free(data);
             set_verdict(receipt, THERON_V1_STARTUP_RECEIPT_SKIPPED, "skipped");
             safe_str_copy(receipt->skip_reason_note,
                           sizeof(receipt->skip_reason_note),
-                          "stage-three executable bytes did not validate");
+                          "IPL-to-stage-three loader chain did not validate");
             receipt->m11_dispatch_source_kind = -1;
             receipt->session_tick_token =
                 theron_v1_startup_receipt_session_tick(receipt);
