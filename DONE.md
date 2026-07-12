@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0407 shield-HUD ownership: only SPELLSHIELD and FIRESHIELD
+  receive original C039/C038 status-graphic routes; every other action is
+  rejected without a substitute panel graphic. Verification: F0407 tail test
+  passed and graphic-id test 58 passed.
+
 - 2026-07-12 DM1 C026 portrait ownership: champion portrait source zones now
   accept only ordinals 0..23 and the native 256x87 PC34 atlas. Invalid data
   produces no substitute portrait. Verification: graphic-id test 58 passed.

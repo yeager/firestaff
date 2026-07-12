@@ -1,5 +1,6 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
@@ -34,6 +35,27 @@ static void test_melee_contact_gate(void) {
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(DM1_ACTION_FIREBALL, &tail), 1,
              "fireball tail builds");
     CHECK_EQ(tail.isMeleeContact, 0, "fireball is not contact melee");
+}
+
+static void test_status_graphic_ownership(void) {
+    DM1_ActionStatusGraphicRoutePc34 route;
+
+    CHECK_EQ(dm1_v1_action_status_graphic_route_f0407_pc34(
+                 DM1_ACTION_SPELLSHIELD, &route), 1,
+             "spellshield owns source HUD graphic");
+    CHECK_EQ(route.valid, 1, "spellshield graphic route valid");
+    CHECK_EQ(route.graphicIndex, DM1_V1_GRAPHIC_SPELL_SHIELD_BORDER_PC34,
+             "spellshield owns C039 only");
+    CHECK_EQ(dm1_v1_action_status_graphic_route_f0407_pc34(
+                 DM1_ACTION_FIRESHIELD, &route), 1,
+             "fireshield owns source HUD graphic");
+    CHECK_EQ(route.graphicIndex, DM1_V1_GRAPHIC_FIRE_SHIELD_BORDER_PC34,
+             "fireshield owns C038 only");
+    CHECK_EQ(dm1_v1_action_status_graphic_route_f0407_pc34(
+                 DM1_ACTION_FIREBALL, &route), 0,
+             "unowned action gets no substitute graphic");
+    CHECK_EQ(route.valid, 0, "unowned action route invalid");
+    CHECK_EQ(route.graphicIndex, -1, "unowned action has no graphic");
 }
 
 static void test_stamina_and_special_flags(void) {
@@ -3265,6 +3287,7 @@ static void test_invalid_action(void) {
 
 int main(void) {
     test_melee_contact_gate();
+    test_status_graphic_ownership();
     test_stamina_and_special_flags();
     test_xp_award_and_direct_dispatch_plans();
     test_tail_adjustments();

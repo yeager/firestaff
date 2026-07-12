@@ -8,6 +8,7 @@
  * See header for full provenance and citation table.
  */
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "firestaff/dm1/v1/G0496_pc34_compat.h"
 #include "firestaff/dm1/v1/G0497_pc34_compat.h"
@@ -121,6 +122,29 @@ int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex) {
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex) {
     return actionIndex == DM1_ACTION_SPELLSHIELD ||
            actionIndex == DM1_ACTION_FIRESHIELD;
+}
+
+int dm1_v1_action_status_graphic_route_f0407_pc34(
+    int actionIndex,
+    DM1_ActionStatusGraphicRoutePc34* out)
+{
+    if (!out) return 0;
+    out->valid = 0;
+    out->actionIndex = actionIndex;
+    out->graphicIndex = -1;
+
+    /* ReDMCSB MENU.C F0407 C033/C034 applies the shield action state;
+     * PANEL.C F0339/F0341 redraws C039 spell shield or C038 fire shield.
+     * Do not reuse a shield border for unrelated valid actions. */
+    if (actionIndex == DM1_ACTION_SPELLSHIELD) {
+        out->graphicIndex = DM1_V1_GRAPHIC_SPELL_SHIELD_BORDER_PC34;
+    } else if (actionIndex == DM1_ACTION_FIRESHIELD) {
+        out->graphicIndex = DM1_V1_GRAPHIC_FIRE_SHIELD_BORDER_PC34;
+    } else {
+        return 0;
+    }
+    out->valid = 1;
+    return 1;
 }
 
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex) {
