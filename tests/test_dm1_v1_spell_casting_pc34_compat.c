@@ -10,6 +10,7 @@
  * - Experience per MENU.C F0412
  */
 #include "dm1_v1_spell_casting_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
@@ -1011,6 +1012,51 @@ static void test_f0412_runtime_receipt_projectile_open_door(void) {
     printf("    PASS\n");
 }
 
+static void test_f0412_projectile_graphic_routes(void) {
+    printf("  [30b] F0412 projectile receipts -> original viewport material...\n");
+
+    DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 60);
+    DM1_SpellF0412RuntimeReceipt receipt;
+    DM1_SpellProjectileGraphicRoutePc34 route;
+    static const struct {
+        int tableIndex;
+        int expectedAspect;
+        int expectedGraphic;
+    } cases[] = {
+        {3,  DM1_PROJ_ASPECT_POISON,          485}, /* Poison Cloud */
+        {5,  DM1_PROJ_ASPECT_LIGHTNING_BOLT,  463}, /* Lightning Bolt */
+        {8,  DM1_PROJ_ASPECT_FIREBALL,        482}, /* Fireball */
+        {11, DM1_PROJ_ASPECT_DEFAULT,         483}, /* Harm Non-Material */
+        {12, DM1_PROJ_ASPECT_POISON,          485}, /* Poison Bolt */
+        {14, DM1_PROJ_ASPECT_DEFAULT,         483}, /* Open Door */
+    };
+    size_t i;
+
+    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        memset(&receipt, 0, sizeof(receipt));
+        assert(dm1_spell_f0412RuntimeReceiptForTableIndex(
+                   cases[i].tableIndex, 3, 0, &stats, 0x0001,
+                   0, 0, 0, &receipt) == 1);
+        assert(dm1_spell_f0412ProjectileGraphicRoutePc34(
+                   &receipt, 0, &route) == 1);
+        assert(route.valid == 1);
+        assert(route.projectileThing == receipt.projectileThing);
+        assert(route.projectileAspectIndex == cases[i].expectedAspect);
+        assert(route.graphicIndex == cases[i].expectedGraphic);
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.castResult = DM1_SPELL_CAST_SUCCESS;
+    receipt.spellKind = DM1_SPELL_KIND_PROJECTILE;
+    receipt.createsProjectile = 1;
+    receipt.projectileThing = 0xFF81u; /* Slime: not in F0412's spell table. */
+    assert(dm1_spell_f0412ProjectileGraphicRoutePc34(&receipt, 0, &route) == 0);
+    assert(route.valid == 0);
+    assert(route.graphicIndex == -1);
+
+    printf("    PASS\n");
+}
+
 static void test_f0412_runtime_receipt_needs_practice_no_projectile(void) {
     printf("  [31] F0412 runtime receipt — failure suppresses projectile...\n");
 
@@ -1124,6 +1170,39 @@ static void test_f0412_runtime_receipt_status_durations(void) {
     printf("    PASS\n");
 }
 
+static void test_f0412_thieves_eye_viewport_material_route(void) {
+    printf("  [33b] F0412 Thieves' Eye -> D1C original wall material...\n");
+
+    DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 60);
+    DM1_SpellF0412RuntimeReceipt receipt;
+    DM1_SpellThievesEyeViewportMaterialRoutePc34 route;
+
+    stats.skillLevels[DM1_SKILL_EARTH] = 10;
+    assert(dm1_spell_f0412RuntimeReceiptForTableIndex(
+               4, 3, 0, &stats, 0x0001, 0, 0, 0, &receipt) == 1);
+    assert(dm1_spell_f0412ThievesEyeD1CViewportMaterialRoutePc34(
+               &receipt, 1, 1, &route) == 1);
+    assert(route.valid == 1);
+    assert(route.graphicIndex == 41);
+    assert(route.transparentColor == 10);
+
+    assert(dm1_spell_f0412ThievesEyeD1CViewportMaterialRoutePc34(
+               &receipt, 0, 1, &route) == 0);
+    assert(route.valid == 0);
+    assert(route.graphicIndex == -1);
+    assert(dm1_spell_f0412ThievesEyeD1CViewportMaterialRoutePc34(
+               &receipt, 1, 0, &route) == 0);
+    assert(route.valid == 0);
+
+    assert(dm1_spell_f0412RuntimeReceiptForTableIndex(
+               2, 3, 0, &stats, 0x0001, 0, 0, 0, &receipt) == 1);
+    assert(dm1_spell_f0412ThievesEyeD1CViewportMaterialRoutePc34(
+               &receipt, 1, 1, &route) == 0);
+    assert(route.valid == 0);
+
+    printf("    PASS\n");
+}
+
 static void test_f0412_receipt_to_spell_effect(void) {
     printf("  [34] F0412 receipt -> M10 effect adapter...\n");
 
@@ -1227,9 +1306,11 @@ int main(void) {
     test_spell_cast_click_cleanup_predicate();
     test_f0412_runtime_receipt_projectile_fireball();
     test_f0412_runtime_receipt_projectile_open_door();
+    test_f0412_projectile_graphic_routes();
     test_f0412_runtime_receipt_needs_practice_no_projectile();
     test_f0412_runtime_receipt_light_event();
     test_f0412_runtime_receipt_status_durations();
+    test_f0412_thieves_eye_viewport_material_route();
     test_f0412_receipt_to_spell_effect();
     test_f0412_potion_receipt_to_spell_effect();
 

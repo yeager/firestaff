@@ -27,6 +27,7 @@ typedef struct DM1_V1_ObjectIconSourceZonePc34 {
 #define DM1_V1_GRAPHIC_PARTY_SHIELD_BORDER_PC34 37
 #define DM1_V1_GRAPHIC_FIRE_SHIELD_BORDER_PC34 38
 #define DM1_V1_GRAPHIC_SPELL_SHIELD_BORDER_PC34 39
+#define DM1_V1_GRAPHIC_THIEVES_EYE_HOLE_IN_WALL_PC34 41
 
 int dm1_v1_graphic_dialog_box_pc34(void);
 int dm1_v1_graphic_the_end_pc34(void);
