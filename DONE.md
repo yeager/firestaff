@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0438 entrance doors: source door-strip geometry now ends
+  the left half at step 26 while retaining the right half through step 31,
+  matching ENTRANCE.C rather than extending invalid left strips. Verification:
+  C001 fallback gate 280 checks and entrance palette 103/103 passed.
+
+- 2026-07-12 DM1 F0412 viewport materials: projectile spells now select
+  their original Graphic558 route, and active Thieves' Eye uses only C041 on
+  the D1C front-wall route with C10 transparency. Verification: spell casting
+  37/37 passed.
+
 - 2026-07-12 DM1 F0412 visual ownership: PARTY SHIELD and FIRESHIELD now
   expose only C037/C038; LIGHT, TORCH, and DARKNESS request the original
   dungeon-palette refresh; all other spell families retain no invented HUD

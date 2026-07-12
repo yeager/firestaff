@@ -18,6 +18,9 @@
  */
 
 #include "asset_loader_m11.h"
+#include "entrance_frontend_pc34_compat.h"
+#include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
+#include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include "vga_palette_pc34_compat.h"
 
@@ -292,6 +295,194 @@ static void check_palette_cross_source_contract(void) {
              (unsigned int)V1_TITLE_FRONTEND_C001_BLIT_NONE);
 }
 
+static void check_startup_source_timing_contract(void) {
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
+    SWSH_CompatSourceAnimationStep swshStep;
+    EntranceCompatSourceAnimationStep doorStep;
+    EntranceCompatSourceAnimationStep finalDoorStep;
+    DM1_V1_StartupEntranceRenderAudioCommand_PC34 command;
+    unsigned int sourceStep;
+    unsigned int swshColorSetCount = 0u;
+    unsigned int swshWaitCount = 0u;
+    unsigned int swshWaitVblankCount = 0u;
+    unsigned int doorCommandCount = 0u;
+    unsigned int doorRattleCount = 0u;
+
+    memset(&media, 0, sizeof(media));
+    memset(&swshStep, 0, sizeof(swshStep));
+    memset(&doorStep, 0, sizeof(doorStep));
+    memset(&finalDoorStep, 0, sizeof(finalDoorStep));
+    memset(&command, 0, sizeof(command));
+
+    expect_i("DM1 startup source media receipt builds",
+             dm1_v1_startup_full_graphics_media_receipt_pc34("dm1", &media),
+             1);
+    expect_truth("startup receipt keeps all original startup surfaces",
+                 media.handled && media.play_swsh && media.play_title &&
+                     media.play_entrance);
+    expect_u("startup SWSH uses source VBlank cadence",
+             media.swsh_vblank_ms,
+             SWSH_COMPAT_RUNTIME_VBLANK_MS);
+    expect_u("startup SWSH initial hold comes from source helper",
+             media.swsh_initial_logo_hold_ms,
+             SWSH_Compat_GetRuntimeInitialLogoHoldMs());
+    expect_u("startup SWSH palette wait comes from source helper",
+             media.swsh_palette_wait_ms,
+             SWSH_Compat_GetRuntimeDelayMsForVblankCount(
+                 SWSH_COMPAT_SOURCE_PALETTE_WAIT_VBLANK_COUNT));
+    expect_u("startup SWSH sound wait comes from source helper",
+             media.swsh_sound_wait_ms,
+             SWSH_Compat_GetRuntimeDelayMsForVblankCount(
+                 SWSH_COMPAT_SOURCE_SOUND_WAIT_VBLANK_COUNT));
+    expect_u("startup SWSH final hold comes from source helper",
+             media.swsh_final_hold_ms,
+             SWSH_Compat_GetRuntimeFinalHoldMs());
+    for (sourceStep = 1u;
+         sourceStep <= SWSH_Compat_GetSourceAnimationStepCount();
+         ++sourceStep) {
+        memset(&swshStep, 0, sizeof(swshStep));
+        expect_i("startup SWSH source event resolves",
+                 SWSH_Compat_GetSourceAnimationStep(sourceStep, &swshStep),
+                 1);
+        if (swshStep.kind == SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR) {
+            ++swshColorSetCount;
+        } else if (swshStep.kind == SWSH_COMPAT_SOURCE_EVENT_WAIT_VBLANKS) {
+            ++swshWaitCount;
+            swshWaitVblankCount += swshStep.vblankCount;
+        }
+    }
+    expect_u("startup SWSH executes every original palette write",
+             swshColorSetCount,
+             SWSH_COMPAT_SOURCE_PALETTE_COLOR_SET_COUNT);
+    expect_u("startup SWSH executes every original VBlank wait",
+             swshWaitCount,
+             SWSH_COMPAT_SOURCE_PALETTE_WAIT_COMMAND_COUNT);
+    expect_u("startup SWSH preserves cumulative VBlank wait count",
+             swshWaitVblankCount,
+             SWSH_COMPAT_SOURCE_PALETTE_WAIT_VBLANK_COUNT);
+    expect_u("startup TITLE has 23 source events",
+             media.title_source_animation_steps,
+             dm1_v1_startup_title_source_animation_steps_pc34());
+    expect_u("startup TITLE uses 18 source zoom steps",
+             media.title_zoom_step_count,
+             18u);
+    expect_u("startup TITLE has no synthetic PRESENTS hold",
+             media.title_presents_hold_ms,
+             0u);
+    expect_u("startup TITLE uses 20ms VBlank zoom cadence",
+             media.title_zoom_frame_delay_ms,
+             dm1_v1_startup_title_vblank_tick_ms_pc34());
+    expect_u("startup TITLE retains only source post-zoom guard",
+             media.title_post_zoom_guard_ms,
+             dm1_v1_startup_title_post_zoom_vblanks_pc34() *
+                 dm1_v1_startup_title_vblank_tick_ms_pc34() +
+                 dm1_v1_startup_title_final_guard_vblanks_pc34() *
+                     dm1_v1_startup_title_vblank_tick_ms_pc34());
+    expect_u("startup TITLE has no fallback cadence padding",
+             media.title_c001_cadence_pad_ms,
+             0u);
+    expect_u("startup TITLE enters menu after final source event",
+             media.title_menu_boundary_frame,
+             dm1_v1_startup_title_source_animation_steps_pc34() + 1u);
+    expect_i("startup TITLE palette transition is C12 then C13/C14",
+             media.title_presents_palette ==
+                     VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
+                 media.title_zoom_palette == VGA_PALETTE_PC34_SPECIAL_TITLE,
+             1);
+    expect_i("startup entrance has no interactive auto-advance",
+             media.entrance_auto_enter_ms,
+             0);
+    expect_truth("startup entrance receipt is source-timed",
+                 dm1_v1_startup_entrance_timing_receipt_valid_pc34(&media));
+    expect_i("startup entrance first door source step exists",
+             ENTRANCE_Compat_GetSourceAnimationStep(7u, &doorStep),
+             1);
+    expect_i("startup entrance final door source step exists",
+             ENTRANCE_Compat_GetSourceAnimationStep(
+                 6u + ENTRANCE_Compat_GetDoorAnimationStepCount(),
+                 &finalDoorStep),
+             1);
+    expect_i("startup entrance executes canonical first door step",
+             dm1_v1_startup_entrance_render_audio_command_pc34(
+                 &media, doorStep.sourceStepOrdinal, (int)doorStep.kind,
+                 doorStep.delayTicks, doorStep.vblankLoopCount, &command),
+             1);
+    expect_u("startup entrance door command keeps source VBlank delay",
+             command.delay_ms,
+             media.entrance_vblank_ms);
+    expect_i("startup entrance executes final source door step",
+             dm1_v1_startup_entrance_render_audio_command_pc34(
+                 &media, finalDoorStep.sourceStepOrdinal,
+                 (int)finalDoorStep.kind, finalDoorStep.delayTicks,
+                 finalDoorStep.vblankLoopCount, &command),
+             1);
+    expect_truth("startup entrance final door step is source step 31 with rattle",
+                 command.door_animation_step ==
+                     ENTRANCE_Compat_GetDoorAnimationStepCount() &&
+                     command.play_door_rattle_sound &&
+                     command.audio_request_ready && command.audio_sound_index == 2 &&
+                     command.delay_ms == media.entrance_vblank_ms);
+    for (sourceStep = 7u;
+         sourceStep < 7u + ENTRANCE_Compat_GetDoorAnimationStepCount();
+         ++sourceStep) {
+        EntranceCompatSourceAnimationStep scheduledDoor;
+        unsigned int expectedDoorStep = sourceStep - 6u;
+
+        memset(&scheduledDoor, 0, sizeof(scheduledDoor));
+        expect_i("startup entrance scheduled door event resolves",
+                 ENTRANCE_Compat_GetSourceAnimationStep(sourceStep,
+                                                         &scheduledDoor),
+                 1);
+        expect_i("startup entrance executes scheduled door event",
+                 dm1_v1_startup_entrance_render_audio_command_pc34(
+                     &media, scheduledDoor.sourceStepOrdinal,
+                     (int)scheduledDoor.kind, scheduledDoor.delayTicks,
+                     scheduledDoor.vblankLoopCount, &command),
+                 1);
+        expect_truth("startup entrance door command keeps source step and VBlank",
+                     command.render_kind ==
+                             DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34 &&
+                         command.door_animation_step == expectedDoorStep &&
+                         command.delay_ms == media.entrance_vblank_ms);
+        if (expectedDoorStep <= 26u) {
+            expect_truth("startup entrance left strip follows F0438 signed bound",
+                         command.door_left_box_x == 0u &&
+                             command.door_left_box_w ==
+                                 101u - 4u * (expectedDoorStep - 1u) &&
+                             command.door_left_box_h == 161u);
+        } else {
+            expect_truth("startup entrance left strip stops after step 26",
+                         command.door_left_box_w == 0u &&
+                             command.door_left_box_h == 0u);
+        }
+        expect_truth("startup entrance right strip follows F0438 through step 31",
+                     command.door_right_box_x ==
+                             109u + 4u * (expectedDoorStep - 1u) &&
+                         command.door_right_box_w ==
+                             123u - 4u * (expectedDoorStep - 1u) &&
+                         command.door_right_box_h == 161u);
+        ++doorCommandCount;
+        if (command.play_door_rattle_sound) {
+            ++doorRattleCount;
+            expect_truth("startup entrance rattle command is source-owned",
+                         command.audio_request_ready &&
+                             command.audio_sound_index == 2 &&
+                             command.audio_volume == 145u);
+        }
+    }
+    expect_u("startup entrance executes all 31 original door steps",
+             doorCommandCount,
+             ENTRANCE_Compat_GetDoorAnimationStepCount());
+    expect_u("startup entrance preserves 11 original door rattles",
+             doorRattleCount,
+             11u);
+    expect_i("startup entrance rejects synthetic zero-delay door step",
+             dm1_v1_startup_entrance_render_audio_command_pc34(
+                 &media, doorStep.sourceStepOrdinal, (int)doorStep.kind,
+                 doorStep.delayTicks, 0u, &command),
+             0);
+}
+
 static unsigned int count_non_black(const unsigned char* pixels,
                                     unsigned int width,
                                     unsigned int x,
@@ -399,6 +590,7 @@ static void check_real_pc34_c001(const char* graphics_path) {
 int main(int argc, char** argv) {
     check_selection_contract();
     check_palette_cross_source_contract();
+    check_startup_source_timing_contract();
     check_real_pc34_c001(argc > 1 ? argv[1] : getenv("FIRESTAFF_DM1_GRAPHICS_DAT"));
 
     if (g_fail) {

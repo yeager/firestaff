@@ -6,6 +6,7 @@
  */
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
 #include <string.h>
 
@@ -1026,6 +1027,91 @@ int dm1_spell_f0412ReceiptToSpellEffectPc34(
             break;
     }
 
+    return 1;
+}
+
+int dm1_spell_f0412ProjectileGraphicRoutePc34(
+    const DM1_SpellF0412RuntimeReceipt* receipt,
+    int relativeDirection,
+    DM1_SpellProjectileGraphicRoutePc34* outRoute)
+{
+    int aspectIndex;
+
+    if (!outRoute) return 0;
+    memset(outRoute, 0, sizeof(*outRoute));
+    outRoute->projectileThing = DM1_SPELL_THING_NONE_PC34;
+    outRoute->projectileAspectIndex = -1;
+    outRoute->graphicIndex = -1;
+
+    if (!receipt || receipt->castResult != DM1_SPELL_CAST_SUCCESS ||
+        receipt->spellKind != DM1_SPELL_KIND_PROJECTILE ||
+        !receipt->createsProjectile) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNGEON.C F0142 maps F0412's actual spell explosion things:
+     * C0 fireball -> C10, C2 lightning -> C3, C6/C7 poison -> C13, and
+     * C3 harm/C4 open-door -> C11 default spell. Do not apply F0142's
+     * generic explosion default to a thing outside F0412's G0487 corpus. */
+    switch (receipt->projectileThing) {
+        case (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
+                        DM1_EXPLOSION_FIREBALL):
+            aspectIndex = DM1_PROJ_ASPECT_FIREBALL;
+            break;
+        case (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
+                        DM1_EXPLOSION_LIGHTNING_BOLT):
+            aspectIndex = DM1_PROJ_ASPECT_LIGHTNING_BOLT;
+            break;
+        case (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
+                        DM1_EXPLOSION_HARM_NON_MATERIAL):
+        case (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
+                        DM1_EXPLOSION_OPEN_DOOR):
+            aspectIndex = DM1_PROJ_ASPECT_DEFAULT;
+            break;
+        case (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
+                        DM1_EXPLOSION_POISON_BOLT):
+        case (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
+                        DM1_EXPLOSION_POISON_CLOUD):
+            aspectIndex = DM1_PROJ_ASPECT_POISON;
+            break;
+        default:
+            return 0;
+    }
+
+    outRoute->projectileThing = receipt->projectileThing;
+    outRoute->projectileAspectIndex = aspectIndex;
+    outRoute->graphicIndex =
+        dm1_v1_projectile_graphic_index(aspectIndex, relativeDirection);
+    if (outRoute->graphicIndex < 0) return 0;
+    outRoute->valid = 1;
+    return 1;
+}
+
+int dm1_spell_f0412ThievesEyeD1CViewportMaterialRoutePc34(
+    const DM1_SpellF0412RuntimeReceipt* receipt,
+    int activeThievesEyeCount,
+    int frontWallD1C,
+    DM1_SpellThievesEyeViewportMaterialRoutePc34* outRoute)
+{
+    if (!outRoute) return 0;
+    outRoute->valid = 0;
+    outRoute->graphicIndex = -1;
+    outRoute->transparentColor = -1;
+
+    if (!receipt || receipt->castResult != DM1_SPELL_CAST_SUCCESS ||
+        receipt->spellKind != DM1_SPELL_KIND_OTHER ||
+        receipt->spellType != DM1_SPELL_TYPE_OTHER_THIEVES_EYE ||
+        receipt->eventType != DM1_SPELL_EVENT_THIEVES_EYE_PC34 ||
+        activeThievesEyeCount <= 0 || !frontWallD1C) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0117 D1C wall branch: after C73 becomes active,
+     * C041_GRAPHIC_HOLE_IN_WALL is copied into the visible-area buffer with
+     * C10_COLOR_FLESH transparency. No other F0412 spell takes this route. */
+    outRoute->graphicIndex = DM1_V1_GRAPHIC_THIEVES_EYE_HOLE_IN_WALL_PC34;
+    outRoute->transparentColor = 10; /* DEFS.H C10_COLOR_FLESH */
+    outRoute->valid = 1;
     return 1;
 }
 

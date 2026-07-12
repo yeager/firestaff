@@ -281,6 +281,24 @@ typedef struct {
     int appliesChampionIconInvisibilityPalette;
 } DM1_SpellF0412RuntimeReceipt;
 
+/* Original viewport material created by an F0412 projectile spell.  The
+ * route terminates at a native Graphic558 projectile bitmap; it does not
+ * select a synthetic particle or an arbitrary explosion graphic. */
+typedef struct {
+    int valid;
+    uint16_t projectileThing;
+    int projectileAspectIndex;
+    int graphicIndex;
+} DM1_SpellProjectileGraphicRoutePc34;
+
+/* DUNVIEW.C's Thieves' Eye wall material is valid only for its front D1C
+ * wall branch while the C73 event is active. */
+typedef struct {
+    int valid;
+    int graphicIndex;
+    int transparentColor;
+} DM1_SpellThievesEyeViewportMaterialRoutePc34;
+
 /* ── Symbol encoding helpers ───────────────────────────────────── */
 
 /** Encode a symbol step + index into the stored character (SYMBOL.C:36). */
@@ -431,6 +449,22 @@ int dm1_spell_f0412ReceiptToSpellEffectPc34(
     const DM1_SpellF0412RuntimeReceipt* receipt,
     int currentFireShieldDefense,
     struct SpellEffect_Compat* outEffect);
+
+/* ReDMCSB MENU.C F0412 -> CHAMPION.C F0327 -> DUNGEON.C F0142 ->
+ * DUNVIEW.C F0115.  Accepts only the six projectile spell types in PC34
+ * G0487; unknown receipts fail closed. */
+int dm1_spell_f0412ProjectileGraphicRoutePc34(
+    const DM1_SpellF0412RuntimeReceipt* receipt,
+    int relativeDirection,
+    DM1_SpellProjectileGraphicRoutePc34* outRoute);
+
+/* ReDMCSB MENU.C F0412 C2 -> DUNVIEW.C D1C front-wall Thieves' Eye path.
+ * frontWallD1C must be the already-resolved source view condition. */
+int dm1_spell_f0412ThievesEyeD1CViewportMaterialRoutePc34(
+    const DM1_SpellF0412RuntimeReceipt* receipt,
+    int activeThievesEyeCount,
+    int frontWallD1C,
+    DM1_SpellThievesEyeViewportMaterialRoutePc34* outRoute);
 
 /** Get the name string for a symbol character. */
 const char* dm1_spell_symbolName(char sym);

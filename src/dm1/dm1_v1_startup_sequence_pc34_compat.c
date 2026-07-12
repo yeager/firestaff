@@ -394,6 +394,42 @@ static int dm1_v1_startup_hoc_host_draw_no_backing_fallback_pc34(
            !out_receipt->drawMirrorBackingFallbackRect;
 }
 
+static void dm1_v1_startup_entrance_door_geometry_pc34(
+    unsigned int animation_step,
+    DM1_V1_StartupEntranceRenderAudioCommand_PC34* command) {
+    unsigned int left_right;
+    unsigned int right_left;
+
+    if (!command || animation_step == 0U || animation_step >= 32U) {
+        return;
+    }
+
+    /* ReDMCSB ENTRANCE.C F0438:189-231 starts with left {0,100} and
+     * right {109,231}; each source step draws the remaining strips, then
+     * moves them four pixels outward.  Keep signed source bounds here: the
+     * final five steps intentionally have no left strip, while the right
+     * strip remains visible through step 31. */
+    right_left = 109U + 4U * (animation_step - 1U);
+    command->door_geometry_ready = 1;
+    if (animation_step <= 26U) {
+        left_right = 100U - 4U * (animation_step - 1U);
+        command->door_left_box_x = 0U;
+        command->door_left_box_y = 0U;
+        command->door_left_box_w = left_right + 1U;
+        command->door_left_box_h = 161U;
+        command->door_left_source_x =
+            (animation_step & 0x00FCU) << 2;
+    }
+    if (right_left <= 231U) {
+        command->door_right_box_x = right_left;
+        command->door_right_box_y = 0U;
+        command->door_right_box_w = 231U - right_left + 1U;
+        command->door_right_box_h = 161U;
+        command->door_right_source_x =
+            (animation_step & 0x0003U) << 2;
+    }
+}
+
 static int dm1_v1_startup_hoc_host_draw_rejects_backing_fallback_pc34(
     int* out_consumes_backing_asset) {
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 front_wall;
@@ -5011,17 +5047,9 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
                         &door_step)) {
                     return 0;
                 }
-                command.door_geometry_ready = 1;
-                command.door_left_box_x = door_step.leftBoxX;
-                command.door_left_box_y = door_step.leftBoxY;
-                command.door_left_box_w = door_step.leftBoxW;
-                command.door_left_box_h = door_step.leftBoxH;
-                command.door_right_box_x = door_step.rightBoxX;
-                command.door_right_box_y = door_step.rightBoxY;
-                command.door_right_box_w = door_step.rightBoxW;
-                command.door_right_box_h = door_step.rightBoxH;
-                command.door_left_source_x = door_step.leftSourceX;
-                command.door_right_source_x = door_step.rightSourceX;
+                (void)door_step;
+                dm1_v1_startup_entrance_door_geometry_pc34(
+                    command.door_animation_step, &command);
             }
             command.play_door_rattle_sound =
                 (command.door_animation_step > 0U &&
