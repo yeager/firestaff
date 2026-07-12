@@ -2165,9 +2165,16 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &viewport, &rt->g1_map0_teleporter_transition);
         rt->g1_map0_teleporter_transition_viewport_consumed = 1;
     }
+    /* skproject/SKULLWIN/c_weather.cpp DM2_UPDATE_WEATHER owns the live
+     * weather state.  Outdoor rendering must consume that state, rather than
+     * treating every outdoor map as rain.  Indoor maps receive no weather
+     * command.  This does not create an overlay: the viewport stays
+     * fail-closed until a source-backed weather material is proven. */
     dm2_v1_viewport_set_weather(&viewport,
-                                rt->outdoor ? 1 : 0,
-                                rt->weather.weather_intensity);
+                                rt->outdoor ? rt->weather.weather
+                                            : DM2_WEATHER_CLEAR,
+                                rt->outdoor ? rt->weather.weather_intensity
+                                            : 0);
     dm2_v1_viewport_set_time(
         &viewport,
         (float)(rt->time_of_day_minutes % 1440) / 1440.0f);
@@ -2262,6 +2269,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     ++g_dm2_frame_ownership.generation;
     g_dm2_frame_ownership.runtime_frame_owned = 1;
     g_dm2_frame_ownership.is_outdoor = viewport.is_outdoor;
+    g_dm2_frame_ownership.runtime_weather = viewport.weather;
+    g_dm2_frame_ownership.runtime_weather_intensity =
+        viewport.rain_intensity;
     g_dm2_frame_ownership.gdat_provider_bound =
         rt->viewport_asset_fetch != NULL;
     g_dm2_frame_ownership.floor_ceiling_gdat_blits =
