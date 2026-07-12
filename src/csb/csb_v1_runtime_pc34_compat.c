@@ -3757,6 +3757,7 @@ static void csb_v1_runtime_schedule_move_group_event(
 }
 
 static int csb_v1_runtime_move_group_thing_to_square(
+    CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
     uint16_t group_thing,
     int old_level,
@@ -3776,7 +3777,7 @@ static int csb_v1_runtime_move_group_thing_to_square(
     int thing_size;
     int guard;
 
-    if (!dungeon ||
+    if (!profile || !dungeon ||
         (old_level == new_level && old_x == new_x && old_y == new_y)) {
         return 0;
     }
@@ -3789,6 +3790,13 @@ static int csb_v1_runtime_move_group_thing_to_square(
     if (csb_dungeon_move_thing_between_levels_default(
             group_thing, old_level, old_x, old_y,
             new_level, new_x, new_y) == 0) {
+        /* F0267 has unlinked and linked before each corresponding F0276
+         * pass.  The common helper excludes group_thing while it scans, so
+         * this post-move source pass observes the same occupancy state. */
+        csb_v1_runtime_process_object_floor_sensors_at(
+            profile, dungeon, group_thing, old_level, old_x, old_y, 0);
+        csb_v1_runtime_process_object_floor_sensors_at(
+            profile, dungeon, group_thing, new_level, new_x, new_y, 1);
         return 1;
     }
     /* Cross-map F0267 callers may use legacy decoded save layouts whose
@@ -3818,6 +3826,9 @@ static int csb_v1_runtime_move_group_thing_to_square(
             } else {
                 csb_v1_runtime_write_u16(source_first_ptr, next_thing);
             }
+            csb_v1_runtime_process_object_floor_sensors_at(
+                profile, dungeon, group_thing,
+                old_level, old_x, old_y, 0);
             dest_first_ptr = csb_v1_runtime_square_first_thing_ptr(
                 dungeon,
                 new_level,
@@ -3828,6 +3839,9 @@ static int csb_v1_runtime_move_group_thing_to_square(
                     group_record,
                     csb_v1_runtime_read_u16(dest_first_ptr));
                 csb_v1_runtime_write_u16(dest_first_ptr, group_thing);
+                csb_v1_runtime_process_object_floor_sensors_at(
+                    profile, dungeon, group_thing,
+                    new_level, new_x, new_y, 1);
                 return 1;
             }
             dest_first_ptr = csb_v1_runtime_create_square_first_thing_ptr(
@@ -3852,6 +3866,9 @@ static int csb_v1_runtime_move_group_thing_to_square(
              * bounded by refusing insertion when no trailing THING_NONE slot
              * exists. */
             csb_v1_runtime_write_u16(group_record, 0xFFFEu);
+            csb_v1_runtime_process_object_floor_sensors_at(
+                profile, dungeon, group_thing,
+                new_level, new_x, new_y, 1);
             return 1;
         }
         previous_record = group_record;
@@ -4014,6 +4031,7 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
                 break;
             }
             if (!csb_v1_runtime_move_group_thing_to_square(
+                    profile,
                     dungeon,
                     group_thing,
                     current_map_index,
@@ -4112,6 +4130,7 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
             break;
         }
         if (!csb_v1_runtime_move_group_thing_to_square(
+                profile,
                 dungeon,
                 group_thing,
                 current_map_index,
@@ -4418,6 +4437,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                             0,
                             0);
                         moved = csb_v1_runtime_move_group_thing_to_square(
+                            profile,
                             dungeon,
                             group_thing,
                             record->mapIndex,
@@ -4511,6 +4531,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                             0,
                             0);
                         moved = csb_v1_runtime_move_group_thing_to_square(
+                            profile,
                             dungeon,
                             group_thing,
                             record->mapIndex,
@@ -4694,6 +4715,7 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
         }
     }
     if (!csb_v1_runtime_move_group_thing_to_square(
+            profile,
             dungeon,
             group_thing,
             source_level,
@@ -8152,6 +8174,7 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
 {
     int first_thing;
     int thing;
+    int placed_thing_type;
     int object_type;
     int guard;
     int pending_local_effect = DM1_EFFECT_NONE;
@@ -8159,8 +8182,16 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
     if (!profile || !dungeon || !dungeon->raw_data) return;
     if (profile->dungeon_handle != dungeon) return;
     if (level < 0 || level >= dungeon->level_count) return;
+    if (!csb_v1_dungeon_get_thing_record(
+            dungeon,
+            placed_thing,
+            &placed_thing_type,
+            NULL,
+            NULL)) {
+        return;
+    }
     object_type = csb_v1_runtime_object_type_from_thing(dungeon, placed_thing);
-    if (object_type < 0) return;
+    if (placed_thing_type != 4 && object_type < 0) return;
 
     first_thing = csb_v1_dungeon_get_first_thing(
         dungeon,
@@ -8174,9 +8205,9 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
     /* ReDMCSB MOVESENS.C F0276 lines 1608-1655 unlinks before a removal,
      * scans the resulting list, and links after an addition. C001 checks
      * pre-link object/group/party occupancy; C004 checks the same-type
-     * guard. The caller performs that source ordering, so a linked addition
-     * excludes placed_thing from the pre-link-equivalent scan while an
-     * unlinked removal sees only the remaining objects. */
+     * guard; C002/C007 admit a C04 group only when neither party nor another
+     * group occupies the square. The caller performs that source ordering,
+     * and this scan excludes placed_thing for the equivalent post-link view. */
     thing = first_thing;
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
          ++guard) {
@@ -8207,7 +8238,7 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
             NULL,
             &thing_size);
         if (!record) break;
-        if (thing_type >= 4) break;
+        if (thing_type >= 4 && placed_thing_type != 4) break;
         if (thing_type != 3 || thing_size < 8) {
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
@@ -8218,8 +8249,12 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         target_word = csb_v1_runtime_read_u16(record + 6);
         sensor_type = (int)(type_data & 0x007Fu);
         sensor_data = (int)(type_data >> 7);
-        if (sensor_type != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
-            sensor_type != DM1_SENSOR_FLOOR_OBJECT) {
+        if ((placed_thing_type == 4 &&
+             sensor_type != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE &&
+             sensor_type != DM1_SENSOR_FLOOR_CREATURE) ||
+            (placed_thing_type != 4 &&
+             sensor_type != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
+             sensor_type != DM1_SENSOR_FLOOR_OBJECT)) {
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
@@ -8236,7 +8271,7 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
                 NULL,
                 NULL);
             if (!scan_record) break;
-            if (scan_type == 4) {
+            if (scan_type == 4 && (uint16_t)scan != placed_thing) {
                 group_present = 1;
             } else if ((uint16_t)scan != placed_thing &&
                        scan_type > 4 && scan_type < 14) {
@@ -8251,10 +8286,13 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         party_on_square = profile->champion_count > 0 &&
             profile->current_level == level &&
             profile->party_x == map_x && profile->party_y == map_y;
-        if ((sensor_type == DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
-             (party_on_square || other_object_present || group_present)) ||
-            (sensor_type == DM1_SENSOR_FLOOR_OBJECT &&
-             (sensor_data != object_type || same_type_present))) {
+        if ((placed_thing_type == 4 &&
+             (party_on_square || group_present)) ||
+            (placed_thing_type != 4 &&
+             ((sensor_type == DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
+               (party_on_square || other_object_present || group_present)) ||
+              (sensor_type == DM1_SENSOR_FLOOR_OBJECT &&
+               (sensor_data != object_type || same_type_present))))) {
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
