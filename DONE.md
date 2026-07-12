@@ -1,5 +1,134 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 PRS3 original merged-value branch receipt: the separate
+  hash-locked branch-flow probe now proves `ADD R4,R7`, `CMP/GT R7,R4`, and
+  the following `BT` to the outer R11 control loop after the zero-side merge.
+  This is register-to-branch evidence only, not a token, length, output,
+  decoder, completion, or rendering claim. Verification:
+  `nexus_v1_prs3_branch_flow_probe` CTest PASS against locked Japanese
+  `DM.BIN`.
+
+- 2026-07-12 DM2 V1 door click receipt: runtime door receipts now preserve
+  skproject `MAKE_BUTTON_CLICKABLE` eligibility and rectno for default door
+  buttons, while custom wall-GFX buttons remain non-clickable. Verification:
+  strict C11 runtime syntax PASS; focused handoff assertions added.
+
+- 2026-07-12 Nexus V1 PRS3 original zero-side merge receipt: the separate
+  hash-locked branch-flow probe now proves R7-to-R3, two SHLL2 steps, a
+  PC-relative `0x0f00` AND, OR into R4, and a separate R2=`0x0f` AND on R7.
+  This is register algebra only, not a token, offset, palette, output,
+  decoder, completion, or rendering claim. Verification:
+  `nexus_v1_prs3_branch_flow_probe` CTest PASS against locked Japanese
+  `DM.BIN`.
+
+- 2026-07-12 Nexus V1 PRS3 original low-bit consumption receipt: the separate
+  hash-locked branch-flow probe now binds `TST R11,R3` / `BT` to both observed
+  branch-local shapes: nonzero decrements R14 by one and reads R12 into R2;
+  zero decrements R14 by two and reads R12 into R4/R7. This is control-
+  dependent byte flow only, not a command, payload, decoder, completion, or
+  rendering claim. Verification: `nexus_v1_prs3_branch_flow_probe` CTest PASS
+  against locked Japanese `DM.BIN`.
+
+- 2026-07-12 DM2 V1 dt04 HUD placement: the runtime now expands the
+  original `INTERFACE_GENERAL/0/dt04/0` rectangle graph and routes champion
+  portraits, names, and three status fields into the V1 HUD. Source IDs are
+  173–176, 165–168, and 185–204 respectively; unresolved original data does
+  not enable the route. Verification: focused dt04 HUD placement assertion
+  PASS and strict C11 syntax check PASS.
+
+- 2026-07-12 Nexus V1 PRS3 original control-bit receipt: the hash-locked
+  version-1 loop now proves `SHAR R11`, `TST R11,R2` with PC-relative
+  `R2=0x0100`, and the exact `BF` choice between continuation and the
+  R14-guarded `@R12+` refill. This is a control-mask decision only, not a
+  payload, command, successful-completion, decoder, or rendering claim.
+  Verification: `firestaff_nexus_v1_prs3_loader_media_probe` PASS against
+  locked Japanese `DM.BIN`.
+
+- 2026-07-12 Nexus V1 PRS3 original failure-termination receipt: the separate
+  hash-locked branch-flow probe now proves that all three R14 guard branches
+  converge at the same epilog prolog, which reaches `MOV #0,R0` and `RTS`.
+  This is failure-return shape only, not a successful-frame termination,
+  payload, decoder, or rendering claim. Verification:
+  `nexus_v1_prs3_branch_flow_probe` CTest PASS against locked Japanese
+  `DM.BIN`.
+
+- 2026-07-12 DM1 PC34 F0248 wall-event M10 consumption: `TIMELINE_EVENT_SQUARE_STATE`
+  now routes C06 into the source-ordered wall list handler. It changes only
+  same-cell TextStrings, applies C005/C006 counter and gate data, schedules
+  their resolved remote wall/square events, and invokes the F0271 local
+  sensor-chain rotation once after the batch. ReDMCSB source: `TIMELINE.C`
+  F0248:1136-1350 and `MOVESENS.C` F0270/F0271:1080-1153.
+  Verification: rebuilt current orchestrator object and linked
+  `test_dm1_v1_square_state_dispatch_pc34_compat` against M10; PASS.
+
+- 2026-07-12 DM1 PC34 F0245 typed corridor adapter: source-ordered corridor
+  records now produce bounded TEXTSTRING visibility and C006 generator plans,
+  including count, health-multiplier, disable, and re-enable timing rules.
+  It deliberately performs no M10 mutation, RNG, allocation, audio, or
+  timeline scheduling. Source: ReDMCSB `TIMELINE.C F0245:912-1006`.
+  Verification: `test_dm1_v1_f0245_corridor_pc34_compat` PASS.
+
+- 2026-07-12 Nexus V1 PRS3 original side-repeat receipt: the selected
+  hash-locked `DM.BIN` side path now proves `CMP/EQ R1,R10`, `ADD #1,R10`, a
+  delayed `BF/S` local repeat, and the following outer control-loop `BRA`.
+  This is a compare/repeat relation only, not a decoded length, token,
+  payload, completion, decoder, or rendering claim. Verification:
+  `firestaff_nexus_v1_prs3_loader_media_probe` PASS against locked Japanese
+  `DM.BIN`.
+
+- 2026-07-12 Theron V1 stage-three IRQ2 dispatch: the authenticated `$3800`
+  entry is now represented as HuC6280 `BRK $ff`, dispatching through IRQ2 at
+  `$fff6/$fff7` with continuation `$3802`. This proves the first loader-bound
+  semantic role and prevents treating manifest descriptors as linear CPU
+  instructions; it identifies no later record, object, level, palette, or
+  graphics meaning. Verification:
+  `firestaff_theron_v1_stage3_irq2_dispatch_probe` against local raw JP/US
+  Track 02 media, 0 failed, 0 skipped.
+
+- 2026-07-12 DM2 V1 source HUD name font: champion names now consume the
+  boot-owned, hash-checked `INTERFACE_GENERAL dt07/0` six-row font through
+  skproject `QUERY_FONT` bit order (`0x10`, `0x04`, `0x01`), instead of a
+  synthetic white marker. The runtime ownership receipt records the source
+  font handoff and per-frame glyph consumption; source-required frames block
+  missing font material. Verification: focused
+  `test_dm2_v1_lighting_falloff_boundary` font assertion PASS.
+
+- 2026-07-12 Nexus V1 PRS3 original zero-side read receipt: the separate
+  hash-locked branch-flow probe now verifies that the accepted zero-bit route,
+  after its R14 gate, reads two post-increment R12 bytes and zero-extends them
+  into R4 and R7. This is a byte-flow observation only, not a token, payload,
+  palette, output, completion, decoder, or rendering claim. Verification:
+  `nexus_v1_prs3_branch_flow_probe` CTest PASS against locked Japanese
+  `DM.BIN`.
+
+- 2026-07-12 Theron V1 later Track 02 coordinate correlation: descriptor
+  zero's opaque `0x000a` selector in the authenticated stage-three table now
+  resolves back to the proven stage-three sector with JP base `0x4d5` and US
+  base `0x4d6`. This is a self-reference and coordinate fact only; it assigns
+  no later selector, object, level, graphics, palette, or command semantics.
+  Verification: `firestaff_theron_v1_later_record_correlation_probe` against
+  local raw JP/US Track 02 media, 0 failed, 0 skipped.
+
+- 2026-07-12 DM1 PC34 F0249 party re-entry: opening a teleporter/pit below
+  the party now applies the existing F0267 post-move environment resolution
+  before resident object processing, including target map/square, rotation,
+  and pit fall damage. Source: ReDMCSB `TIMELINE.C F0249:1382-1385`.
+  Verification: focused `test_dm1_v1_square_state_dispatch_pc34_compat`
+  PASS.
+
+- 2026-07-12 Nexus V1 PRS3 original zero-bit gate receipt: the hash-locked
+  version-1 side route now proves `ADD #-2,R14`, `CMP/PZ R14`, and its direct
+  `BF` rejection edge. This establishes only a branch-local R14 counter gate;
+  it does not assign a token length, payload boundary, command, completion,
+  decoder, or rendering meaning. Verification:
+  `firestaff_nexus_v1_prs3_loader_media_probe` PASS against locked Japanese
+  `DM.BIN`.
+
+- 2026-07-12 DM2 V1 champion HUD palette consumption: dynamic name markers,
+  HP, stamina, mana, and leader rows now map logical colours through the
+  bound original `dtPalette16`, matching the GDAT-backed portrait/chrome
+  material path. Verification: focused HUD palette assertion PASS.
+
 - 2026-07-12 Nexus V1 PRS3 original branch-flow receipt: a separate
   hash-locked `DM.BIN` probe now verifies the selected version-1 low-bit
   branch and its nonzero fallthrough. `R3=1` / `TST R11,R3` / `BT` routes a
@@ -8131,6 +8260,20 @@
 # ✅ 2026-07-12 CSB F0267 object sensor-to-event bridge: loaded ordinary-object movement now carries each F0276 remote floor-sensor result through F0272 target-square resolution and schedules its F0268 `TIMELINE_EVENT_SQUARE_STATE` in source order. The route supports source event types fakewall, teleporter, pit, and door; it preserves same-map target context, target cell, SET/CLEAR/TOGGLE effect, and the one-tick minimum for zero delay. The existing square-state dispatcher owns the final mutation. Source: ReDMCSB `MOVESENS.C F0267/F0268/F0272/F0276` and `TIMELINE.C F0242/F0244/F0250/F0251`. Verified by `test_csb_v1_f0267_loaded_chain_pc34_compat`, including an object C004 sensor routed to a delayed door event.
 
 # ✅ 2026-07-12 CSB F0276 object source-unlink ordering: the live C49 associated-object teleporter route now calls the real-format C004 sensor pass both after source materialization/link and immediately after its source unlink, before target relink. The shared C004 path models ReDMCSB `MOVESENS.C F0276` `AddThing ^ RevertEffect` behavior, including HOLD resolving to SET for addition and CLEAR for removal. Object pit and stairs hops use the same source-removal pass. Regression: `test_csb_v1_runtime_tick_accumulator` locks the C49 C004/C05 source chain and its coalesced pending CLEAR result; `test_csb_v1_teleporter_rotation_runtime_pc34_compat` passes 114/114. The broad runtime accumulator has one pre-existing unrelated `MOVE_FORWARD boundary reaches the bounded open-step runtime movement` failure.
+
+# ✅ 2026-07-12 CSB F0276 C001 object pressure-plate chain: extended the live real-format ordinary-object sensor pass from C004 to source C001 floor plates. The C001 path follows ReDMCSB `MOVESENS.C F0276` lines 1608-1655 and 1664-1667: it evaluates the pre-link-equivalent object/group/party occupancy state, then resolves `AddThing ^ RevertEffect` and HOLD. The dedicated C49 associated-object → object-scope C05 regression proves source C001/C05 preservation, target relink, and the ordered add SET/source-unlink CLEAR result. Verification: `test_csb_v1_f0276_object_chain_pc34_compat` passed 8/8; `test_csb_v1_f0267_loaded_chain_pc34_compat` passed.
+
+# ✅ 2026-07-12 CSB F0276 audible C004 object route: triggered Audible C004 floor-object sensors now request ReDMCSB's prioritized switch sound before publishing their ordinary F0272/F0268 square event. Source: `MOVESENS.C F0276` lines 1770-1772 and `SOUND.C F0064`. Verification: the dedicated real-format C49 materialization regression passed 7/7 and locks `SOUND_SWITCH`, volume 64, priority 4, one audio request, and the target fakewall SET event; the focused F0267/F0276 CTest group passed 3/3.
+
+# ✅ 2026-07-12 CSB F0276/F0272 C004 OnceOnly writeback: a triggered real-format C004 floor-object sensor now disables itself before publishing its first effect, preserving its data bits. Source: ReDMCSB `MOVESENS.C F0272` lines 1191-1193 and F0276 trigger path. Verification: the dedicated C49 materialization regression passed 7/7 and proves sensor-type zeroing plus the initial fakewall SET event; the focused F0267/F0276 CTest group passed 4/4.
+
+# ✅ 2026-07-12 CSB F0276/F0272 C004 Value timing: C004 object sensor remote effects now carry the original four-bit `Remote.Value` delay into F0268 timeline scheduling instead of always using the current tick. Source: ReDMCSB `MOVESENS.C F0272` lines 1194-1203. Verification: the dedicated C49 materialization regression passed 6/6 and proves a source `Value=3` trigger at game time 1 queues its fakewall SET for time 4; the focused F0267/F0276 CTest group passed 5/5.
+
+# ✅ 2026-07-12 CSB F0276/F0272 C004 target-cell semantics: remote C004 effects now preserve `Remote.TargetCell` only for wall targets; fakewalls, doors, pits, teleporters, and corridors queue `CELL_NORTHWEST` as in ReDMCSB F0272. Source: `MOVESENS.C F0272` lines 1201-1207. Verification: the dedicated C49 C004 regression passed 5/5 and proves an encoded cell 3 fakewall target queues cell 0; the focused F0267/F0276 CTest group passed 6/6.
+
+# ✅ 2026-07-12 CSB F0276 C004 Revert ordering: locked the existing source `AddThing ^ RevertEffect` behavior with a real-format C49 associated-object → object-scope C05 chain. A non-HOLD Revert C004 suppresses the source materialization/addition and publishes its SET only when F0267 unlinks the object before teleporter relink. Source: ReDMCSB `MOVESENS.C F0276` lines 1663-1694 and 1760-1778. Verification: the dedicated regression passed 7/7; the focused F0267/F0276 CTest group passed 7/7.
+
+# ✅ 2026-07-12 CSB F0276/F0270/F0271 C004 LocalEffect: object-triggered local C004 effects now retain the final local `CLEAR`/`TOGGLE` while scanning the square and rotate the complete source sensor run only after the pass, with no F0268 remote event. Source: ReDMCSB `MOVESENS.C F0270` lines 1080-1098, F0271 lines 1100-1158, and F0272/F0276 local-effect path. Verification: the dedicated C49 two-sensor regression passed 6/6; the focused F0267/F0276 CTest group passed 8/8. The separate C10 steal-skill local effect remains outside this bounded rotation route.
 
 # ✅ 2026-07-12 CSB DSA transfer runner: the authenticated filter callback now promotes only CSBWin `Execute`'s already source-locked transfer-only `JUMP`/`GOSUB` subset. It invokes the bounded complete transfer chain, publishes its final state and receipt only on success, and preserves the caller parameter surface. Unsupported targets, malformed paths, and depth/transfer limits remain rejection paths. No world opcode or synthetic state transition is enabled. Source: CSBWin `DSA.cpp` lines 764-849 and 5053-5293. Verified by `test_csb_v1_dsa_trigger_single_step_pc34_compat`: 124 assertions, 0 failures.
 
