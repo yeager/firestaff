@@ -916,6 +916,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(dm2_v1_runtime_last_frame_ownership(&ownership) &&
               ownership.runtime_frame_owned &&
               ownership.gdat_provider_bound &&
+              ownership.runtime_weather == DM2_WEATHER_CLEAR &&
+              ownership.runtime_weather_intensity == 0 &&
               ownership.floor_ceiling_gdat_blits == 2 &&
               ownership.wall_gdat_blits == 10 &&
               ownership.hud_core_gdat_blits == 9 &&
@@ -930,7 +932,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
               ownership.real_gdat_evidence_valid == 0 &&
               ownership.gdat_scene_control_ready == 0 &&
               ownership.gdat_scene_control_consumed == 0,
-              "runtime frame ownership requires full GDAT HUD and dungeon consumption without fallback");
+              "indoor runtime frame clears the outdoor weather command while consuming full GDAT HUD and dungeon layers without fallback");
         CHECK(framebuffer[0] != 0,
               "runtime asset-provider frame completes the shared viewport render pass");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
@@ -962,6 +964,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
               "outdoor viewport fetches both real material planes without a generated fallback");
         CHECK(dm2_v1_runtime_last_frame_ownership(&ownership) &&
               ownership.is_outdoor == 1 &&
+              ownership.runtime_weather == DM2_WEATHER_RAIN &&
+              ownership.runtime_weather_intensity == 64 &&
               ownership.outdoor_sky_gdat_blits == 1 &&
               ownership.outdoor_ground_gdat_blits == 1 &&
               ownership.gdat_scene_material_index == 0 &&

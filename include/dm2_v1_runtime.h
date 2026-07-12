@@ -38,6 +38,11 @@ typedef struct {
     unsigned int generation;
     int runtime_frame_owned;
     int is_outdoor;
+    /* Exact live weather state forwarded into the V1 viewport.  This is
+     * state/command provenance only; the viewport remains fail-closed until
+     * skproject's source-backed weather material route is decoded. */
+    int runtime_weather;
+    int runtime_weather_intensity;
     int gdat_provider_bound;
     int startup_title_gdat_blits;
     int startup_menu_gdat_blits;
