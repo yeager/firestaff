@@ -540,16 +540,26 @@ int nexus_v1_inspect_dgn_material_corpus(
         wall_refs, wall_count, &receipt.wall_coverage);
     receipt.floor_container = engine->floor_bpk_container;
     receipt.wall_container = engine->wall_bpk_container;
+    receipt.static_mns_sources = engine->dgn_static_material_sources;
     receipt.bpk_host_routes_complete =
         engine->floor_bpk_host_route.host_consumed_surfaces &&
         engine->wall_bpk_host_route.host_consumed_surfaces;
+    receipt.static_mns_host_route_complete =
+        receipt.static_mns_sources.canonical_pair_bound &&
+        !receipt.static_mns_sources.fallback_visuals_permitted &&
+        engine->floor_mns_material_route_valid &&
+        engine->wall_mns_material_route_valid;
     receipt.material_coverage_complete =
         receipt.parsed_level_count == receipt.expected_level_count &&
         receipt.geometry_ready_level_count == receipt.expected_level_count &&
         receipt.floor_coverage.covered && receipt.ceiling_coverage.covered &&
         receipt.wall_coverage.covered;
+    /* Retail Track 1 static geometry consumes only the authenticated MNS
+     * pair. BPK remains an independent optional route and cannot hold the
+     * real corpus receipt hostage or promote opaque MENU.BPK PRS3 bytes. */
     receipt.host_route_evidence_complete =
-        receipt.material_coverage_complete && receipt.bpk_host_routes_complete;
+        receipt.material_coverage_complete &&
+        receipt.static_mns_host_route_complete;
 
 done:
     free(floor_refs);

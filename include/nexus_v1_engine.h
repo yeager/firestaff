@@ -190,8 +190,10 @@ typedef struct {
     Nexus_V1_DgnMaterialCategoryCoverageReceipt wall_coverage;
     Nexus_V1_DgnMaterialContainerReceipt floor_container;
     Nexus_V1_DgnMaterialContainerReceipt wall_container;
+    Nexus_V1_DgnStaticMaterialSourceReceipt static_mns_sources;
     Nexus_V1_DgnStructure2SourceReceipt structure2_sources[16];
     int bpk_host_routes_complete;
+    int static_mns_host_route_complete;
     int material_coverage_complete;
     int host_route_evidence_complete;
     int fallback_visuals_permitted;

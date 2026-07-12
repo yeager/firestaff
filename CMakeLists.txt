@@ -5716,6 +5716,20 @@ if(BUILD_TESTING)
         add_test(NAME firestaff_l10n COMMAND test_firestaff_l10n)
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_hud_hero_type_gdat_route.c")
+        add_executable(test_dm2_v1_hud_hero_type_gdat_route
+            tests/test_dm2_v1_hud_hero_type_gdat_route.c)
+        target_link_libraries(test_dm2_v1_hud_hero_type_gdat_route PRIVATE
+            firestaff_dm2 firestaff_m10)
+        target_include_directories(test_dm2_v1_hud_hero_type_gdat_route PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        if(NOT MSVC)
+            target_compile_options(test_dm2_v1_hud_hero_type_gdat_route PRIVATE -Wall -Wextra -Werror)
+        endif()
+        add_test(NAME dm2_v1_hud_hero_type_gdat_route
+            COMMAND test_dm2_v1_hud_hero_type_gdat_route)
+    endif()
+
     function(firestaff_add_test_if_missing test_name)
         get_property(_firestaff_existing_tests DIRECTORY PROPERTY TESTS)
         list(FIND _firestaff_existing_tests "${test_name}" _firestaff_test_index)

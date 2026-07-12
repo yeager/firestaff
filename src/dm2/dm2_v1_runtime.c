@@ -107,6 +107,8 @@ typedef struct {
     DM2_V1_G1TeleporterTransitionReceipt g1_map0_teleporter_transition;
     DM2_V1_G1Map5TextRuntimeReceipt g1_map5_text_runtime;
     DM2_V1_G1TextWallGfxRuntimeReceipt g1_map5_text_wall_gfx_runtime;
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt g1_actuator_wall_gfx_runtime;
+    DM2_V1_G1CreatureMapChipRuntimeReceipt g1_creature_map_chip_runtime;
     int g1_first_map_viewport_consumed;
     int g1_map0_teleporter_transition_viewport_consumed;
 } DM2_V1_RuntimeState;
@@ -1214,6 +1216,12 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
                 boot_profile, &g_dm2_runtime.g1_map5_text_runtime,
                 &g_dm2_runtime.g1_map5_text_wall_gfx_runtime);
         }
+        (void)dm2_v1_boot_g1_actuator_wall_gfx_materials(
+            boot_profile, g_dm2_runtime.dungeon_level,
+            &g_dm2_runtime.g1_actuator_wall_gfx_runtime);
+        (void)dm2_v1_boot_g1_creature_map_chip_materials(
+            boot_profile, g_dm2_runtime.dungeon_level,
+            &g_dm2_runtime.g1_creature_map_chip_runtime);
     }
     if (boot_profile->dm2_state) {
         DM2_V1_GameState *gs = (DM2_V1_GameState *)boot_profile->dm2_state;
@@ -1263,6 +1271,26 @@ int dm2_v1_runtime_g1_map5_text_wall_gfx_receipt(
         return 0;
     }
     *out_receipt = g_dm2_runtime.g1_map5_text_wall_gfx_runtime;
+    return 1;
+}
+
+int dm2_v1_runtime_g1_actuator_wall_gfx_receipt(
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out_receipt)
+{
+    if (!out_receipt || !g_dm2_runtime.g1_actuator_wall_gfx_runtime.valid) {
+        return 0;
+    }
+    *out_receipt = g_dm2_runtime.g1_actuator_wall_gfx_runtime;
+    return 1;
+}
+
+int dm2_v1_runtime_g1_creature_map_chip_receipt(
+    DM2_V1_G1CreatureMapChipRuntimeReceipt *out_receipt)
+{
+    if (!out_receipt || !g_dm2_runtime.g1_creature_map_chip_runtime.valid) {
+        return 0;
+    }
+    *out_receipt = g_dm2_runtime.g1_creature_map_chip_runtime;
     return 1;
 }
 
@@ -1446,6 +1474,7 @@ static void dm2_runtime_append_creature_sprite(
      * lines 10557-10619 then routes it through QUERY_DUNGEON_MAP_CHIP_PICT
      * before DRAW_CHIP_OF_MAGIC_MAP. */
     dst->creature_type = record[4];
+    dst->source_kind = 2;
     dst->frame_index = 0;
     dst->depth = (int16_t)depth;
     dst->screen_x = (int16_t)screen_x;
@@ -1515,6 +1544,7 @@ static void dm2_runtime_append_creature_instance_sprite(
     dst = &viewport->creatures[viewport->creature_count++];
     memset(dst, 0, sizeof(*dst));
     dst->creature_type = (uint8_t)(inst->ai_index & 0xff);
+    dst->source_kind = 1;
     dst->frame_index = (uint8_t)dm2_runtime_creature_frame_from_instance(inst);
     dst->depth = (int16_t)placement->depth;
     dst->screen_x = (int16_t)placement->screen_x;
@@ -2142,6 +2172,10 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         dst->mana_pct = dm2_runtime_hud_pct_from_current(champ->mana);
         dst->portrait_index =
             (uint8_t)(champ->portrait_index % DM2_V1_HUD_PORTRAIT_COUNT);
+        /* DM2_ChampionRecord.portrait_index is Firestaff session-tail
+         * metadata. skproject DRAW_CHAMPION_PICTURE requires HeroType(), so
+         * this cannot authorize a real CHAMPIONS GDAT fetch. */
+        dst->portrait_type_source_bound = 0;
         memcpy(dst->name, champ->first_name, DM2_V1_HUD_CHAMPION_NAME_MAX);
         dst->name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
     }
@@ -2239,6 +2273,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         &viewport,
         rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch &&
         rt->viewport_asset_user != NULL);
+    dm2_v1_viewport_set_g1_creature_map_chip_materials(
+        &viewport, &rt->g1_creature_map_chip_runtime);
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport,
         rt->gdat_scene_control_ready,
@@ -3011,6 +3047,10 @@ void dm2_v1_runtime_set_position(int level, int x, int y, int dir) {
     rt->dungeon_level = level;
     rt->view_dir = gs->party_dir;
     dm2_runtime_refresh_g1_map0_teleporter_transition(rt, level, x, y);
+    (void)dm2_v1_boot_g1_actuator_wall_gfx_materials(
+        rt->boot, level, &rt->g1_actuator_wall_gfx_runtime);
+    (void)dm2_v1_boot_g1_creature_map_chip_materials(
+        rt->boot, level, &rt->g1_creature_map_chip_runtime);
     dm2_runtime_refresh_map_wall_gfx_list(rt);
     dm2_runtime_refresh_gdat_scene_control(rt);
 }

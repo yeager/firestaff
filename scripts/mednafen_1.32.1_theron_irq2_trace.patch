@@ -1,0 +1,110 @@
+--- a/src/drivers/debugger.cpp
++++ b/src/drivers/debugger.cpp
+@@ -36,7 +36,59 @@
+ static std::string TraceLogSpec;
+ static int64 TraceLogEnd;
+ static unsigned TraceLogRTO;
++static std::unique_ptr<FileStream> TheronIrq2Trace;
++static bool TheronIrq2TraceSeen[768];
++static unsigned TheronIrq2TraceCallbackCount;
++
++/* Local Firestaff evidence hook. It records raw logical-memory snapshots at
++ * known loader PCs; it deliberately assigns no branch or record semantics. */
++static void DoTheronIrq2Trace(const uint32 PC)
++{
++ if(!TheronIrq2Trace || MDFN_strazicmp(CurGame->shortname, "pce"))
++  return;
++const uint32 logical_pc = PC & 0xffff;
++
++ if(TheronIrq2TraceCallbackCount < 128)
++ {
++  TheronIrq2TraceCallbackCount++;
++  TheronIrq2Trace->print_format("callback_pc=%08x logical_pc=%04x\n", PC, logical_pc);
++ }
++
++ if((logical_pc >= 0x4000 && logical_pc < 0x4100) || (logical_pc >= 0xe700 && logical_pc < 0xe900))
++ {
++  const unsigned probe_index = logical_pc < 0x4100 ? logical_pc - 0x4000 : 256 + logical_pc - 0xe700;
++  if(!TheronIrq2TraceSeen[probe_index])
++  {
++   TheronIrq2TraceSeen[probe_index] = true;
++   TheronIrq2Trace->print_format("probe_pc=%04x physical_pc=%08x\n", logical_pc, PC);
++   if(logical_pc == 0xe8ec || logical_pc == 0xe8ed)
++   {
++    uint32 disassembly_pc = logical_pc;
++    char disassembly[256];
++    const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
++    const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
++    const uint32 cd_1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
++    const uint32 cd_1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
++
++    CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, disassembly);
++    TheronIrq2Trace->print_format("cd_loop_pc=%04x physical_pc=%08x instruction=%s cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x\n",
++                                  logical_pc, PC, disassembly, cd_1800, cd_1801, cd_1802, cd_1803);
++   }
++  }
++ }
++
++ if(logical_pc == 0x4093 || logical_pc == 0xe736 || logical_pc == 0xe742 || logical_pc == 0xe74c)
++ {
++  const uint32 f5 = CurGame->Debugger->MemPeek(0x00f5, 1, true, true) & 0xff;
++  const uint32 f2 = CurGame->Debugger->MemPeek(0x00f2, 1, true, true) & 0xff;
++  const uint32 status_1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
++  const uint32 status_1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
++
++  TheronIrq2Trace->print_format("pc=%04x physical_pc=%08x f5=%02x f2=%02x status_1802=%02x status_1803=%02x\n",
++                                logical_pc, PC, f5, f2, status_1802, status_1803);
++ }
++}
+ 
+ static bool NeedInit;
+ static bool WatchLogical; // Watch logical memory addresses, not physical
+ static bool IsActive;
+@@ -162,10 +193,10 @@
+ {
+  bool BPInUse = PCBreakPoints.size() || ReadBreakpoints.size() || WriteBreakpoints.size() || IOReadBreakpoints.size() ||
+ 	IOWriteBreakpoints.size() || AuxReadBreakpoints.size() || AuxWriteBreakpoints.size() || OpBreakpoints.size();
+- bool CPUCBNeeded = BPInUse || TraceLog || InSteppingMode || (NeedStep == 2);
++ bool CPUCBNeeded = BPInUse || TraceLog || TheronIrq2Trace || InSteppingMode || (NeedStep == 2);
+ 
+- CurGame->Debugger->EnableBranchTrace(BPInUse || TraceLog || IsActive);
+- CurGame->Debugger->SetCPUCallback(CPUCBNeeded ? CPUCallback : NULL, TraceLog || InSteppingMode || (NeedStep == 2));
++ CurGame->Debugger->EnableBranchTrace(BPInUse || TraceLog || TheronIrq2Trace || IsActive);
++ CurGame->Debugger->SetCPUCallback(CPUCBNeeded ? CPUCallback : NULL, TraceLog || TheronIrq2Trace || InSteppingMode || (NeedStep == 2));
+ }
+ 
+ static void UpdatePCBreakpoints(void)
+@@ -1367,6 +1398,8 @@
+  //
+  if(TraceLog)
+   DoTraceLog(PC);
++ if(TheronIrq2Trace)
++  DoTheronIrq2Trace(PC);
+ }
+ 
+ 
+@@ -1873,6 +1913,15 @@
+ 	TraceLogSpec = "";
+ 	TraceLogEnd = 0;
+ 	TraceLogRTO = 0;
++	if(const char* theron_trace_path = getenv("FIRESTAFF_THERON_IRQ2_TRACE"))
++	 if(*theron_trace_path)
++	 {
++	  memset(TheronIrq2TraceSeen, 0, sizeof(TheronIrq2TraceSeen));
++	  TheronIrq2TraceCallbackCount = 0;
++	  TheronIrq2Trace.reset(new FileStream(theron_trace_path, FileStream::MODE_WRITE_INPLACE));
++	  TheronIrq2Trace->print_format("source=mednafen-pce-instrumented\n");
++	  UpdateCoreHooks();
++	 }
+ 
+ 	NeedInit = true;
+ 	WatchLogical = true;
+@@ -1916,6 +1956,8 @@
+ {
+ 	if(TraceLog)
+ 	 TraceLog.reset(nullptr);
++	if(TheronIrq2Trace)
++	 TheronIrq2Trace.reset(nullptr);
+ 
+ 	if(memdbg != NULL)
+ 	{

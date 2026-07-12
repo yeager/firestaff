@@ -9,6 +9,13 @@ English-scaffold `startup-menu.*.po` entries with reviewed translations and
 add a twentieth locale only with a shaped/font-covered script; do not claim a
 locale is translated merely because it falls back to English.
 
+## Theron Authentic CD Trace Follow-up (2026-07-12)
+
+The Mednafen trace harness now forces System Card 3.0 and the correct raw-CUE
+PCE route. It records reproducible CPU progress but still lacks the original
+target-PC snapshots required to select the IRQ2 hardware branch. Continue with
+real trace evidence only; no inferred CD register value may enter runtime.
+
 ## DM1/CSB Render Follow-up (2026-07-12)
 
 DM1 F0115 now consumes only ReDMCSB's compact 13 `G0205` ornament zones.

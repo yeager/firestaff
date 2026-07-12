@@ -1459,6 +1459,14 @@ int dm2_v1_boot_g1_text_wall_gfx_materials(
     DM2_V1_BootProfile *profile,
     const DM2_V1_G1Map5TextRuntimeReceipt *texts,
     DM2_V1_G1TextWallGfxRuntimeReceipt *out);
+int dm2_v1_boot_g1_actuator_wall_gfx_materials(
+    DM2_V1_BootProfile *profile,
+    int map,
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out);
+int dm2_v1_boot_g1_creature_map_chip_materials(
+    DM2_V1_BootProfile *profile,
+    int map,
+    DM2_V1_G1CreatureMapChipRuntimeReceipt *out);
 
 #define DM2_V1_INTERFACE_HUD_CHAMPION_COUNT 4u
 typedef struct {

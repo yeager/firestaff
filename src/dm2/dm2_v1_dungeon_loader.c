@@ -1309,9 +1309,41 @@ int dm2_v1_dungeon_materialize_g1_map5_text_runtime(
     return 1;
 }
 
+typedef struct {
+    uint16_t colorkey;
+    uint16_t position;
+    uint16_t do_not_flip;
+    uint16_t alcove_type;
+    uint16_t image_offset;
+} DM2_V1_G1WallGfxScalars;
+
+static int dm2_v1_g1_read_wall_gfx_scalars(
+    DM2_V1_G1GdatScalarRead read_scalar,
+    void *read_userdata,
+    uint8_t wall_gfx_index,
+    DM2_V1_G1WallGfxScalars *out)
+{
+    if (!read_scalar || !out ||
+        !read_scalar(read_userdata, 0x0b, 0x09, wall_gfx_index, 0x04,
+                     &out->colorkey) ||
+        !read_scalar(read_userdata, 0x0b, 0x09, wall_gfx_index, 0x05,
+                     &out->position) ||
+        !read_scalar(read_userdata, 0x0b, 0x09, wall_gfx_index, 0x07,
+                     &out->do_not_flip) ||
+        !read_scalar(read_userdata, 0x0b, 0x09, wall_gfx_index, 0x0a,
+                     &out->alcove_type) ||
+        !read_scalar(read_userdata, 0x0c, 0x09, wall_gfx_index, 0xfd,
+                     &out->image_offset) ||
+        out->position > 24u || out->alcove_type > 3u) {
+        return 0;
+    }
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
     const DM2_V1_G1Map5TextRuntimeReceipt *texts,
-    const DM2_V1_AssetLoader *loader,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    void *read_userdata,
     DM2_V1_G1TextWallGfxRuntimeReceipt *out)
 {
     DM2_V1_G1TextWallGfxRuntimeReceipt candidate;
@@ -1319,8 +1351,9 @@ int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    if (!texts || !loader || !texts->committed || !texts->incomplete_world ||
-        texts->map != 5 || texts->text_root_count < 0 ||
+    if (!texts || !read_scalar || !texts->committed ||
+        !texts->incomplete_world || texts->map != 5 ||
+        texts->text_root_count < 0 ||
         texts->text_root_count > DM2_V1_G1_MAP5_MAX_TEXT_ROOTS) {
         return 0;
     }
@@ -1331,11 +1364,7 @@ int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
     for (i = 0; i < texts->text_root_count; ++i) {
         const DM2_V1_G1TextRoot *text = &texts->texts[i];
         DM2_V1_G1TextWallGfxMaterial *material;
-        uint16_t colorkey;
-        uint16_t position;
-        uint16_t do_not_flip;
-        uint16_t alcove_type;
-        uint16_t image_offset;
+        DM2_V1_G1WallGfxScalars scalars;
         uint8_t wall_gfx_index;
 
         /* skproject/SKWIN/SkWinCore.cpp QUERY_CLS2_OF_TEXT_RECORD:
@@ -1347,22 +1376,8 @@ int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
 
         /* skproject DRAW_WALL_ORNATE requires these scalar source inputs
          * before it selects a picture. Do not produce a partial material. */
-        if (!dm2_v1_asset_load_word_value(
-                loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0x04,
-                &colorkey) ||
-            !dm2_v1_asset_load_word_value(
-                loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0x05,
-                &position) ||
-            !dm2_v1_asset_load_word_value(
-                loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0x07,
-                &do_not_flip) ||
-            !dm2_v1_asset_load_word_value(
-                loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0x0a,
-                &alcove_type) ||
-            !dm2_v1_asset_load_image_offset(
-                loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0xfd,
-                &image_offset) ||
-            position > 24u || alcove_type > 3u) {
+        if (!dm2_v1_g1_read_wall_gfx_scalars(
+                read_scalar, read_userdata, wall_gfx_index, &scalars)) {
             return 0;
         }
 
@@ -1370,11 +1385,91 @@ int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
         material->object_id = text->object_id;
         material->text_index = text->text_index;
         material->wall_gfx_index = wall_gfx_index;
-        material->colorkey = colorkey;
-        material->position = position;
-        material->do_not_flip = do_not_flip;
-        material->alcove_type = alcove_type;
-        material->image_offset = image_offset;
+        material->colorkey = scalars.colorkey;
+        material->position = scalars.position;
+        material->do_not_flip = scalars.do_not_flip;
+        material->alcove_type = scalars.alcove_type;
+        material->image_offset = scalars.image_offset;
+    }
+    candidate.valid = 1;
+    *out = candidate;
+    return 1;
+}
+
+int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    void *read_userdata,
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out)
+{
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt candidate;
+    uint8_t wall_gfx_list[16];
+    int wall_gfx_count;
+    int x;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !d->raw_data || !read_scalar || d->square_bytes != 1 ||
+        map < 0 || map >= d->level_count) {
+        return 0;
+    }
+    wall_gfx_count = dm2_v1_dungeon_get_map_wall_gfx_list(
+        d, map, wall_gfx_list, (int)sizeof(wall_gfx_list));
+    if (wall_gfx_count <= 0) return 0;
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.map = map;
+    for (x = 0; x < d->level_widths[map]; ++x) {
+        int y;
+        for (y = 0; y < d->level_heights[map]; ++y) {
+            uint16_t root;
+            const uint8_t *record;
+            DM2_V1_G1ActuatorWallGfxMaterial *material;
+            DM2_V1_G1WallGfxScalars scalars;
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            int first_thing;
+            int ordinal;
+            uint8_t wall_gfx_index;
+
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            first_thing = dm2_v1_dungeon_get_first_thing(d, map, x, y);
+            if (first_thing < 0) return 0;
+            root = (uint16_t)first_thing;
+            if (root == DM2_THING_END_MARKER) return 0;
+            if (((root >> 10) & 0x0f) != 3) continue;
+            if (!dm2_v1_g1_link_has_record_shape(d, root)) return 0;
+            record = dm2_v1_dungeon_get_thing_record(d, root, NULL, NULL, NULL);
+            if (!record) return 0;
+            ++candidate.source_actuator_root_count;
+
+            /* skproject/SKWIN/DME.h Actuator::GraphicNumber is w4 bits
+             * 12..15. GET_WALL_DECORATION_OF_ACTUATOR maps it one-based. */
+            ordinal = (int)((RD16(record + 4) >> 12) & 0x0fu);
+            if (ordinal == 0) continue;
+            if (ordinal > wall_gfx_count ||
+                candidate.material_count >= DM2_V1_G1_ACTUATOR_WALL_GFX_MAX) {
+                return 0;
+            }
+            wall_gfx_index = wall_gfx_list[ordinal - 1];
+            if (!dm2_v1_g1_read_wall_gfx_scalars(
+                    read_scalar, read_userdata, wall_gfx_index, &scalars)) {
+                return 0;
+            }
+            material = &candidate.materials[candidate.material_count++];
+            material->x = x;
+            material->y = y;
+            material->object_id = root;
+            material->direction = (uint8_t)(root >> 14);
+            material->graphic_ordinal = (uint8_t)ordinal;
+            material->wall_gfx_index = wall_gfx_index;
+            material->colorkey = scalars.colorkey;
+            material->position = scalars.position;
+            material->do_not_flip = scalars.do_not_flip;
+            material->alcove_type = scalars.alcove_type;
+            material->image_offset = scalars.image_offset;
+        }
     }
     candidate.valid = 1;
     *out = candidate;
@@ -1643,6 +1738,133 @@ int dm2_v1_dungeon_get_map_graphics_style(
      * `(w14 >> 4) & 15`; SkWinCore.cpp uses that index for
      * glbMapGraphicsSet before reading GRAPHICSSET scene words. */
     return (int)((RD16(map_desc + 14) >> 4) & 0x0fu);
+}
+
+static uint32_t dm2_v1_g1_raw_hash(const uint8_t *data, uint32_t byte_count)
+{
+    uint32_t hash = 2166136261u;
+    uint32_t i;
+
+    for (i = 0; i < byte_count; ++i) {
+        hash ^= data[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1GdatRawRead read_raw,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    void *read_userdata,
+    DM2_V1_G1CreatureMapChipRuntimeReceipt *out)
+{
+    DM2_V1_G1CreatureMapChipRuntimeReceipt candidate;
+    int x;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !d->raw_data || !read_raw || !read_image_metadata ||
+        d->square_bytes != 1 ||
+        map < 0 || map >= d->level_count) {
+        return 0;
+    }
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.map = map;
+    for (x = 0; x < d->level_widths[map]; ++x) {
+        int y;
+        for (y = 0; y < d->level_heights[map]; ++y) {
+            int first_thing;
+            int raw;
+            uint16_t root;
+            const uint8_t *record;
+            const uint8_t *raw_map_chip = NULL;
+            uint32_t raw_byte_count = 0u;
+            uint8_t creature_type;
+            int image_width = 0;
+            int image_height = 0;
+            int image_format = 0;
+            DM2_V1_G1CreatureMapChipMaterial *material;
+
+            raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            first_thing = dm2_v1_dungeon_get_first_thing(d, map, x, y);
+            if (first_thing < 0) return 0;
+            root = (uint16_t)first_thing;
+            if (((root >> 10) & 0x0f) != 4) continue;
+            if (!dm2_v1_g1_link_has_record_shape(d, root)) return 0;
+            record = dm2_v1_dungeon_get_thing_record(d, root, NULL, NULL, NULL);
+            if (!record || candidate.material_count >=
+                               DM2_V1_G1_CREATURE_MAP_CHIP_MAX) {
+                return 0;
+            }
+            ++candidate.source_creature_root_count;
+
+            /* skproject/SKWIN/DME.h Creature::CreatureType is DB4 b4.
+             * QUERY_DUNGEON_MAP_CHIP_PICT asks CREATURES/type dtImage F9
+             * for the original map-chip surface. */
+            creature_type = record[4];
+            if (!read_raw(read_userdata, 0x01, 0x0f, creature_type, 0xf9,
+                          &raw_map_chip, &raw_byte_count) ||
+                !raw_map_chip || raw_byte_count == 0u) {
+                return 0;
+            }
+            /* The actual GDAT image route must accept the original F9 data
+             * before it can become runtime material. Metadata only: decoded
+             * pixels are owned and discarded by the boot adapter. */
+            if (!read_image_metadata(read_userdata, 0x0f, creature_type,
+                                     0xf9, &image_width, &image_height,
+                                     &image_format) ||
+                image_width <= 0 || image_height <= 0 ||
+                (image_format != 3 && image_format != 4 &&
+                 image_format != 8 && image_format != 9)) {
+                return 0;
+            }
+            material = &candidate.materials[candidate.material_count++];
+            material->x = x;
+            material->y = y;
+            material->object_id = root;
+            material->direction = (uint8_t)(root >> 14);
+            material->creature_type = creature_type;
+            material->raw_byte_count = raw_byte_count;
+            material->raw_hash = dm2_v1_g1_raw_hash(raw_map_chip,
+                                                     raw_byte_count);
+            material->image_width = image_width;
+            material->image_height = image_height;
+            material->image_format = image_format;
+            if (material->raw_hash == 0u) return 0;
+        }
+    }
+    candidate.valid = 1;
+    *out = candidate;
+    return 1;
+}
+
+int dm2_v1_g1_creature_map_chip_matches_decoded_material(
+    const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt,
+    int creature_type,
+    int image_width,
+    int image_height)
+{
+    int i;
+
+    if (!receipt || !receipt->valid || creature_type < 0 ||
+        creature_type > 0xff || image_width <= 0 || image_height <= 0) {
+        return 0;
+    }
+    for (i = 0; i < receipt->material_count; ++i) {
+        const DM2_V1_G1CreatureMapChipMaterial *material =
+            &receipt->materials[i];
+        if (material->creature_type == (uint8_t)creature_type &&
+            material->image_width == image_width &&
+            material->image_height == image_height) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int dm2_v1_dungeon_stone_room_input_receipt(const DM2_V1_DungeonData *d,int level,int dir,int x,int y,DM2_V1_StoneRoomInputReceipt *out){

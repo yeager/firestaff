@@ -32,8 +32,10 @@ if [ ! -s "$trace" ]; then
     printf 'TRACE REQUIRED: launch Mednafen debugger and export ordered key=value registers to %s\n' "$trace" >&2
     printf 'Required: source, variant, stage3_track02_record, cd_read_return_pc, irq2_entry_pc, cd_state_pc, cd_state_branch_pc, f5_after_cd_read, f5_at_irq2_entry, cd_status_1802, cd_status_1803, f2_before_merge, f2_at_branch\n' >&2
     printf 'Stock Mednafen trace logs (debugger key l) include CPU registers only, not RAM $f5, $f2, $1802, or $1803.\n' >&2
+    printf 'Use scripts/build_mednafen_theron_irq2_trace.sh, then set MEDNAFEN to its output and rerun.\n' >&2
     printf 'The harness therefore rejects stock trace logs and does not invent register values.\n' >&2
-    exec "$mednafen" -sound 0 -debugger.autostepmode 1 -pce.cdbios "$syscard" "$cue"
+    exec env FIRESTAFF_THERON_IRQ2_TRACE="$trace" "$mednafen" -sound 0 \
+        -debugger.autostepmode 0 -pce.arcadecard 0 -pce.cdbios "$syscard" "$cue"
 fi
 
 out=${TMPDIR:-/tmp}/firestaff_theron_irq2_trace_harness

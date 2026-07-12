@@ -1,5 +1,24 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0201 stored-scent fallback: when the direct F0199 route
+  fails, source-ordered fresh party scent uses the ReDMCSB F0228 direction
+  choice and original RNG. The direct route remains higher priority.
+  Verification: creature AI source-lock test 264/264.
+
+- 2026-07-12 DM2 GDAT material gates: DB4 creature map-chip metadata and
+  actuator/text wall graphics are bound through typed G1/GDAT receipts. A
+  live HUD champion cannot fetch a CHAMPIONS portrait until original
+  `HeroType` is parsed. Verification: HeroType gate test 3/3 and full build.
+
+- 2026-07-12 Nexus DGN material corpus: real Track 1 evidence now requires
+  authenticated `SN_FLOOR.MNS`/`SN_WALL.MNS` host material, while BPK remains
+  untrusted for this route. Verification: local Saturn ISO corpus probe.
+
+- 2026-07-12 Theron trace tooling: the optional Mednafen 1.32.1 patch/build
+  path forces System Card 3.0 and records only raw IRQ2 state snapshots. The
+  absent target PCs continue to reject the trace rather than selecting a
+  branch.
+
 - 2026-07-12 M12 locale and flag-popup repair: system locale detection now
   handles all 19 shipped UI locales, including `nb`/`nn` for Norwegian, in
   standard POSIX precedence. A language remains system-derived until an

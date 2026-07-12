@@ -974,6 +974,96 @@ int F0819a_DM1_GROUP_GetSmelledPartyDirOrdinalFromRoute_Compat(
     return 1;
 }
 
+static int f0228_group_direction_from_scent_pc34(
+    int sourceX, int sourceY, int destinationX, int destinationY,
+    struct RngState_Compat* rng, int* outPrimary, int* outSecondary)
+{
+    int primary;
+    int secondary;
+
+    if (!rng || !outPrimary || !outSecondary) return 0;
+
+    /* ReDMCSB PROJEXPL.C F0228 lines 1228-1282.  Its loop tests cardinal
+     * view cones in N/E/S/W order; the two diagonal cones are then randomly
+     * ordered with M005_RANDOM(2). */
+    if (sourceX == destinationX) {
+        primary = sourceY > destinationY ? 0 : 2;
+        secondary = (F0732_COMBAT_RngRandom_Compat(rng, 65536) & 0x02) + 1;
+    } else if (sourceY == destinationY) {
+        primary = sourceX > destinationX ? 3 : 1;
+        secondary = F0732_COMBAT_RngRandom_Compat(rng, 65536) & 0x02;
+    } else {
+        if (destinationY < sourceY) {
+            primary = 0;
+            secondary = destinationX > sourceX ? 1 : 3;
+        } else if (destinationX > sourceX) {
+            primary = 1;
+            secondary = 2;
+        } else {
+            primary = 2;
+            secondary = 3;
+        }
+        if (F0732_COMBAT_RngRandom_Compat(rng, 2) != 0) {
+            int swap = primary;
+            primary = secondary;
+            secondary = swap;
+        }
+    }
+
+    *outPrimary = primary;
+    *outSecondary = secondary;
+    return 1;
+}
+
+int F0819b_DM1_GROUP_BuildSmelledPartyDirectionPlan_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    int smellRouteDistance,
+    const struct DM1GroupScent_Compat* scent,
+    struct RngState_Compat* rng,
+    struct DM1GroupSmellDirectionPlan_Compat* out)
+{
+    int smellRange;
+    int effectiveSmellRange;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!ctx) return 0;
+
+    out->valid = 1;
+    smellRange = DM1_SMELL_RANGE(ctx->creatureInfo.ranges);
+    if (smellRange == 0) return 1;
+
+    effectiveSmellRange = (smellRange + 1) >> 1;
+    if (effectiveSmellRange >= ctx->currentGroupDistanceToParty &&
+        ctx->currentGroupDistanceToParty > 0 &&
+        smellRouteDistance > 0) {
+        out->primaryDirection = ctx->currentGroupPrimaryDirToParty & 3;
+        out->secondaryDirection = ctx->currentGroupSecondaryDirToParty & 3;
+        out->directionOrdinal = out->primaryDirection + 1;
+        out->usedDirectPartyRoute = 1;
+        return 1;
+    }
+
+    /* GROUP.C F0201 only samples party scent after the direct F0199 branch
+     * failed. The strict comparison and M004_RANDOM(4) are source order. */
+    if (!scent || !scent->present || !rng ||
+        scent->strength + F0732_COMBAT_RngRandom_Compat(rng, 4) <=
+            30 - (smellRange << 1)) {
+        return 1;
+    }
+
+    if (!f0228_group_direction_from_scent_pc34(
+            ctx->currentGroupMapX, ctx->currentGroupMapY,
+            scent->mapX, scent->mapY, rng,
+            &out->primaryDirection, &out->secondaryDirection)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    out->directionOrdinal = out->primaryDirection + 1;
+    out->usedStoredScent = 1;
+    return 1;
+}
+
 /* =========================================================================
  *  F0820: Flee direction computation
  *
