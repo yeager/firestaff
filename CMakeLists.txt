@@ -22312,6 +22312,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND firestaff_theron_v1_system_card_irq2_first_transfer_probe
     )
 
+    add_executable(firestaff_theron_v1_system_card_irq2_cd_state_gate_probe
+        probes/theron/firestaff_theron_v1_system_card_irq2_cd_state_gate_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_system_card_irq2_cd_state_gate_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_system_card_irq2_cd_state_gate_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_system_card_irq2_cd_state_gate_probe PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_system_card_irq2_cd_state_gate_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_system_card_irq2_cd_state_gate
+        COMMAND firestaff_theron_v1_system_card_irq2_cd_state_gate_probe
+    )
+
     add_executable(firestaff_theron_v1_track02_ipl_loader_probe
         probes/theron/firestaff_theron_v1_track02_ipl_loader_probe.c
     )
