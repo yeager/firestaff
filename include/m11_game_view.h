@@ -1642,6 +1642,27 @@ int M11_GameView_ReturnConfirmDialogLayoutMaxTextPixelWidth(
  */
 int m11_point_in_source_box(int px, int py, const int box[4]);
 
+/* Read-only observation from the last actual DM1 F0115 floor-item blit.
+ * It remains invalid until the real M11 asset/material path reaches its
+ * final destination geometry. */
+typedef struct M11_Dm1FloorItemHostPresentationReceipt {
+    int valid;
+    int graphicsId;
+    int transparentColor;
+    int usesF0791Blit;
+    int sourceZone;
+    int sourceZoneRow;
+    int destinationX;
+    int destinationY;
+    int destinationW;
+    int destinationH;
+    int assetWidth;
+    int assetHeight;
+} M11_Dm1FloorItemHostPresentationReceipt;
+
+void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
+    M11_Dm1FloorItemHostPresentationReceipt* outReceipt);
+
 #ifdef __cplusplus
 }
 #endif

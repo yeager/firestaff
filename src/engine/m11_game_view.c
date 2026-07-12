@@ -353,6 +353,8 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
 /* Forward declaration: set by M11_GameView_Draw to give nested draw
  * helpers access to the current game state for asset-backed rendering. */
 static const M11_GameViewState* g_drawState = NULL;
+static M11_Dm1FloorItemHostPresentationReceipt
+    s_m11_dm1_floor_item_host_presentation_receipt;
 
 /* The M11 game view owns one active DM2 launch at a time.  Keep the V2
  * phase gate alive for the HUD/touch/lighting runtimes rather than handing
@@ -12007,6 +12009,7 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
     facts.observed_live_hoc_c127_material_request =
         m11_front_cell_mirror_ordinal(state) >= 0;
     facts.observed_live_hoc_f0115_material_request =
+        s_m11_dm1_floor_item_host_presentation_receipt.valid &&
         m11_front_cell_has_live_f0115_material_request(state);
     facts.observed_host_window_present = host_window_present;
     facts.consumed_hoc_host_render_receipt = 1;
@@ -22919,6 +22922,21 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
             plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
             depthIndex + 1, plan.use_mirror ? 1 : 0) > 0;
     }
+    s_m11_dm1_floor_item_host_presentation_receipt.valid = 1;
+    s_m11_dm1_floor_item_host_presentation_receipt.graphicsId = (int)gfxIdx;
+    s_m11_dm1_floor_item_host_presentation_receipt.transparentColor =
+        effectiveTransparentColor;
+    s_m11_dm1_floor_item_host_presentation_receipt.usesF0791Blit =
+        usesF0791Blit ? 1 : 0;
+    s_m11_dm1_floor_item_host_presentation_receipt.sourceZone = sourceZone;
+    s_m11_dm1_floor_item_host_presentation_receipt.sourceZoneRow =
+        effectiveSourceZoneRow;
+    s_m11_dm1_floor_item_host_presentation_receipt.destinationX = plan.draw_x;
+    s_m11_dm1_floor_item_host_presentation_receipt.destinationY = plan.draw_y;
+    s_m11_dm1_floor_item_host_presentation_receipt.destinationW = plan.draw_w;
+    s_m11_dm1_floor_item_host_presentation_receipt.destinationH = plan.draw_h;
+    s_m11_dm1_floor_item_host_presentation_receipt.assetWidth = (int)slot->width;
+    s_m11_dm1_floor_item_host_presentation_receipt.assetHeight = (int)slot->height;
     if (plan.use_mirror) {
         M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
                                          plan.draw_x, plan.draw_y,
@@ -38843,4 +38861,12 @@ int M11_GameView_GetFloorOrnamentOrdinal(const M11_GameViewState* state,
     if (!state || !state->active) return 0;
     if (!m11_sample_viewport_cell(state, relForward, relSide, &cell)) return 0;
     return cell.floorOrnamentOrdinal;
+}
+
+void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
+    M11_Dm1FloorItemHostPresentationReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_floor_item_host_presentation_receipt;
+    }
 }
