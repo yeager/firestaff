@@ -1663,6 +1663,19 @@ typedef struct M11_Dm1FloorItemHostPresentationReceipt {
 void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
     M11_Dm1FloorItemHostPresentationReceipt* outReceipt);
 
+/* Test probes for the actual F0115 item and projectile blitters. They do not
+ * synthesize a receipt; callers must provide an M11 asset-loader cache slot. */
+int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
+int M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
+
 #ifdef __cplusplus
 }
 #endif
