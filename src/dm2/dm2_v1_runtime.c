@@ -340,6 +340,7 @@ static void dm2_runtime_apply_door_record_metadata(
     int size = 0;
     const uint8_t *record;
     uint16_t w2;
+    uint16_t wall_button_object_id = 0xffffu;
     int wall_gfx_index = -1;
     int wall_gfx_field = -1;
 
@@ -366,21 +367,28 @@ static void dm2_runtime_apply_door_record_metadata(
         door->door_gfx_index = door_gfx_list[door->door_record_type & 1u];
     }
     if (!door->door_button &&
-        dm2_v1_dungeon_find_text_wall_gfx(dd, (uint16_t)thing,
-                                          view_dir, 2, 8,
-                                          &wall_gfx_index,
-                                          &wall_gfx_field) == 0) {
+        dm2_v1_dungeon_find_text_wall_gfx_owner(
+            dd, (uint16_t)thing, view_dir, 2, 8,
+            &wall_gfx_index, &wall_gfx_field,
+            &wall_button_object_id) == 0) {
         door->door_wall_button = 1;
         door->door_wall_button_index = (uint8_t)wall_gfx_index;
         door->door_wall_button_field = (uint8_t)wall_gfx_field;
+        door->door_wall_button_x = (int16_t)x;
+        door->door_wall_button_y = (int16_t)y;
+        door->door_wall_button_object_id = wall_button_object_id;
     } else if (!door->door_button &&
-               dm2_v1_dungeon_resolve_actuator_wall_gfx(
+               dm2_v1_dungeon_resolve_actuator_wall_gfx_owner(
                    dd, (uint16_t)thing, view_dir, 2, 8,
                    wall_gfx_list, wall_gfx_count,
-                   &wall_gfx_index, &wall_gfx_field) == 0) {
+                   &wall_gfx_index, &wall_gfx_field,
+                   &wall_button_object_id) == 0) {
         door->door_wall_button = 1;
         door->door_wall_button_index = (uint8_t)wall_gfx_index;
         door->door_wall_button_field = (uint8_t)wall_gfx_field;
+        door->door_wall_button_x = (int16_t)x;
+        door->door_wall_button_y = (int16_t)y;
+        door->door_wall_button_object_id = wall_button_object_id;
     }
 }
 

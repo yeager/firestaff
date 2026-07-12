@@ -1751,6 +1751,9 @@ int dm2_v1_viewport_build_door_render_plan(
                 row->button_source_kind = 2;
                 row->wall_button_index = vs->door_wall_button_index;
                 row->wall_button_field = vs->door_wall_button_field;
+                row->wall_button_x = vs->door_wall_button_x;
+                row->wall_button_y = vs->door_wall_button_y;
+                row->wall_button_object_id = vs->door_wall_button_object_id;
             }
         }
     }
@@ -3193,6 +3196,49 @@ static void dm2_v1_block_source_material(DM2_V1_ViewportState *s,
     s->blocked_material_mask |= material_mask;
 }
 
+static int dm2_v1_wall_button_receipt_matches(
+    const DM2_V1_ViewportState *s,
+    const DM2_V1_DoorRender *door)
+{
+    int i;
+
+    if (!s || !door || door->button_source_kind != 2 ||
+        door->wall_button_field != 1) {
+        return 0;
+    }
+    if (s->g1_text_wall_gfx_materials &&
+        s->g1_text_wall_gfx_materials->map == s->dungeon_level) {
+        const DM2_V1_G1TextWallGfxRuntimeReceipt *receipt =
+            s->g1_text_wall_gfx_materials;
+        for (i = 0; i < receipt->material_count; ++i) {
+            const DM2_V1_G1TextWallGfxMaterial *material =
+                &receipt->materials[i];
+            if (material->x == door->wall_button_x &&
+                material->y == door->wall_button_y &&
+                material->object_id == door->wall_button_object_id &&
+                material->wall_gfx_index == (uint8_t)door->wall_button_index) {
+                return 1;
+            }
+        }
+    }
+    if (s->g1_actuator_wall_gfx_materials &&
+        s->g1_actuator_wall_gfx_materials->map == s->dungeon_level) {
+        const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *receipt =
+            s->g1_actuator_wall_gfx_materials;
+        for (i = 0; i < receipt->material_count; ++i) {
+            const DM2_V1_G1ActuatorWallGfxMaterial *material =
+                &receipt->materials[i];
+            if (material->x == door->wall_button_x &&
+                material->y == door->wall_button_y &&
+                material->object_id == door->wall_button_object_id &&
+                material->wall_gfx_index == (uint8_t)door->wall_button_index) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 void dm2_v1_render_walls(DM2_V1_ViewportState *s)
 {
     if (!s || !s->framebuffer) return;
@@ -3570,18 +3616,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int button_stride = 0;
             int wall_button_material_bound =
                 door->button_source_kind != 2 ||
-                (s->g1_text_wall_gfx_materials &&
-                 s->g1_text_wall_gfx_materials->map == s->dungeon_level &&
-                 dm2_v1_g1_text_wall_gfx_allows_button_material(
-                     s->g1_text_wall_gfx_materials,
-                     door->wall_button_index,
-                     door->wall_button_field)) ||
-                (s->g1_actuator_wall_gfx_materials &&
-                 s->g1_actuator_wall_gfx_materials->map == s->dungeon_level &&
-                 dm2_v1_g1_actuator_wall_gfx_allows_button_material(
-                     s->g1_actuator_wall_gfx_materials,
-                     door->wall_button_index,
-                     door->wall_button_field));
+                dm2_v1_wall_button_receipt_matches(s, door);
 
             /* skproject DRAW_DEFAULT_DOOR_BUTTON reaches the custom button
              * through the current WALL_GFX owner. Do not let the generic

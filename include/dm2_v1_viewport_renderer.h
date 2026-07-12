@@ -278,6 +278,9 @@ typedef struct {
     int button_source_kind; /* 1=default door button, 2=wall-gfx button */
     int wall_button_index;
     int wall_button_field;
+    int wall_button_x;
+    int wall_button_y;
+    uint16_t wall_button_object_id;
     DM2_V1_ViewportRect panel_rect;
     DM2_V1_ViewportRect panel_visible_rect;
     DM2_V1_ViewportRect frame_rect;
@@ -445,6 +448,9 @@ typedef struct {
     uint8_t  door_record_type; /* skproject door->DoorType() */
     uint8_t  door_opening_dir; /* skproject door->OpeningDir() */
     uint8_t  door_state;       /* low 3 bits of tile door state */
+    int16_t  door_wall_button_x;
+    int16_t  door_wall_button_y;
+    uint16_t door_wall_button_object_id;
     int16_t  sprite_depth;    /* depth sort key */
 } DM2_ViewSquare;
 

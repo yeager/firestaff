@@ -921,6 +921,14 @@ int F0818_DM1_GROUP_GetDistanceToVisibleParty_Compat(
 
     if (!ctx || !outDistance) return 0;
 
+    /* ReDMCSB GROUP.C F0200 only walks the current map. An active group
+     * outside the party's map cannot retain a stale visible-party distance
+     * across a teleporter/pit map handoff. */
+    if (ctx->currentMapIndex != ctx->partyMapIndex) {
+        *outDistance = 0;
+        return 1;
+    }
+
     /* Source: F0200 returns the pre-computed distance-to-visible-party.
      * The actual visibility walk (F0199/F0197/F0198) is done by the caller
      * and stored in ctx->distanceToVisibleParty. */
