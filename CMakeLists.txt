@@ -27545,3 +27545,28 @@ foreach(_firestaff_csb_boot_target
         target_link_libraries(${_firestaff_csb_boot_target} PRIVATE firestaff_m10)
     endif()
 endforeach()
+
+# DM2 GDAT weather controls are valid only when all four GRAPHICSSET
+# dtWordValue entries are present; this keeps non-weather ENVIRONMENT rows
+# from becoming a synthetic overlay source.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_gdat_receipt.c")
+    add_executable(test_dm2_v1_weather_gdat_receipt
+        tests/test_dm2_v1_weather_gdat_receipt.c
+    )
+    target_include_directories(test_dm2_v1_weather_gdat_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_weather_gdat_receipt PRIVATE
+        firestaff_dm2 firestaff_m10 m
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_weather_gdat_receipt PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME dm2_v1_weather_gdat_receipt
+        COMMAND test_dm2_v1_weather_gdat_receipt
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+endif()

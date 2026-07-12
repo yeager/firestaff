@@ -837,8 +837,10 @@ typedef struct CSB_V1_StartupPlaybackState_PC34 {
     CSB_V1_StartupPlaybackStage_PC34 stage;
     CSB_V1_StartupStage_PC34 title_stage;
     int title_frame;
+    int title_phase_mask;
     int swoosh_active;
     int entrance_music_active;
+    int entrance_complete;
     int no_fallback_routes;
 } CSB_V1_StartupPlaybackState_PC34;
 
@@ -1357,6 +1359,8 @@ int csb_v1_boot_startup_playback_title_frame_pc34(
     int title_frame,
     CSB_V1_StartupRenderPlan_PC34 *out_plan,
     CSB_V1_StartupAudioAction_PC34 *out_audio_action);
+int csb_v1_boot_startup_playback_complete_entrance_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session);
 int csb_v1_boot_startup_playback_enter_hud_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session);
 const char *csb_v1_boot_startup_asset_source_name_pc34(

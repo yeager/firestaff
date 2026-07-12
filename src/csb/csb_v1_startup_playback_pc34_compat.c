@@ -10,6 +10,15 @@ static void csb_v1_startup_playback_clear_action_pc34(
     }
 }
 
+static int csb_v1_startup_playback_title_phase_mask_pc34(
+    CSB_V1_StartupStage_PC34 stage)
+{
+    if (stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) return 0x01;
+    if (stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34) return 0x02;
+    if (stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) return 0x08;
+    return 0;
+}
+
 static int csb_v1_startup_playback_session_owned_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
 {
@@ -78,6 +87,11 @@ int csb_v1_boot_startup_playback_title_frame_pc34(
         return 0;
     }
     if (title_frame >= csb_v1_startup_title_total_ticks_pc34()) {
+        /* ReDMCSB TITLE.C F0437 must have presented all C001 phase routes
+         * before ENTRANCE.C F0806 owns the next screen/session. */
+        if (session->playback.title_phase_mask != 0x0b) {
+            return 0;
+        }
         /* ReDMCSB ENTRANCE.C F0806:733 starts entrance music as its owned
          * screen/door/HUD session becomes active. */
         session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34;
@@ -102,6 +116,8 @@ int csb_v1_boot_startup_playback_title_frame_pc34(
             : CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34;
     session->playback.title_frame = title_frame;
     session->playback.title_stage = title_stage;
+    session->playback.title_phase_mask |=
+        csb_v1_startup_playback_title_phase_mask_pc34(title_stage);
     return 1;
 }
 
@@ -110,11 +126,26 @@ int csb_v1_boot_startup_playback_enter_hud_pc34(
 {
     if (!csb_v1_startup_playback_session_owned_pc34(session) ||
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
-        !session->playback.entrance_music_active) {
+        !session->playback.entrance_music_active ||
+        !session->playback.entrance_complete) {
         return 0;
     }
     /* ENTRANCE.C F0806 owns the closed-door menu until entering the dungeon;
      * the same verified HUD bindings then become the runtime owner. */
     session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34;
+    return 1;
+}
+
+int csb_v1_boot_startup_playback_complete_entrance_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    if (!csb_v1_startup_playback_session_owned_pc34(session) ||
+        session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
+        !session->playback.entrance_music_active) {
+        return 0;
+    }
+    /* ReDMCSB ENTRANCE.C F0806:857-889 / CSBWin CSBCode.cpp:9515-9535:
+     * only the completed door action returns control to the game/HUD. */
+    session->playback.entrance_complete = 1;
     return 1;
 }
