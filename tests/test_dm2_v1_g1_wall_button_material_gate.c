@@ -43,6 +43,9 @@ static void setup_custom_button(DM2_V1_ViewportState *viewport,
     viewport->squares[DM2_SQ_D0C].door_wall_button = 1;
     viewport->squares[DM2_SQ_D0C].door_wall_button_index = 0x2a;
     viewport->squares[DM2_SQ_D0C].door_wall_button_field = 1;
+    viewport->squares[DM2_SQ_D0C].door_wall_button_x = 6;
+    viewport->squares[DM2_SQ_D0C].door_wall_button_y = 7;
+    viewport->squares[DM2_SQ_D0C].door_wall_button_object_id = 0x8abcu;
     dm2_v1_viewport_set_asset_provider(viewport, fetch_asset, NULL);
     dm2_v1_viewport_set_source_materials_required(viewport, 1);
 }
@@ -68,6 +71,9 @@ int main(void)
     text_receipt.valid = 1;
     text_receipt.map = 5;
     text_receipt.material_count = 1;
+    text_receipt.materials[0].x = 6;
+    text_receipt.materials[0].y = 7;
+    text_receipt.materials[0].object_id = 0x8abcu;
     text_receipt.materials[0].wall_gfx_index = 0x2a;
     CHECK("text receipt accepts source WALL_GFX field one",
           dm2_v1_g1_text_wall_gfx_allows_button_material(
@@ -90,6 +96,21 @@ int main(void)
     memset(framebuffer, 0, sizeof(framebuffer));
     setup_custom_button(&viewport, framebuffer);
     dm2_v1_viewport_set_level(&viewport, 5);
+    text_receipt.materials[0].object_id = 0x8abdu;
+    dm2_v1_viewport_set_g1_wall_gfx_materials(
+        &viewport, &text_receipt, NULL);
+    custom_button_fetches = 0;
+    dm2_v1_render_doors(&viewport);
+    CHECK("same-index receipt from another record cannot authorize a button",
+          custom_button_fetches == 0 &&
+              viewport.asset_door_button_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) != 0u);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    setup_custom_button(&viewport, framebuffer);
+    dm2_v1_viewport_set_level(&viewport, 5);
+    text_receipt.materials[0].object_id = 0x8abcu;
     dm2_v1_viewport_set_g1_wall_gfx_materials(
         &viewport, &text_receipt, NULL);
     custom_button_fetches = 0;

@@ -650,6 +650,23 @@ static void test_smell_direction(void) {
 }
 
 /* =========================================================
+ *  Test 13a: F0200 cannot see party through a map handoff
+ * ========================================================= */
+static void test_visible_distance_requires_party_map(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    int distance = 99;
+
+    ctx.distanceToVisibleParty = 3;
+    ctx.currentMapIndex = 2;
+    ctx.partyMapIndex = 1;
+    EXPECT_EQ(F0818_DM1_GROUP_GetDistanceToVisibleParty_Compat(
+                  &ctx, -1, &distance),
+              1, "visible_map: source adapter succeeds");
+    EXPECT_EQ(distance, 0,
+              "visible_map: cross-map group cannot retain visible party distance");
+}
+
+/* =========================================================
  *  Test 13b: F0201 direct-party scent requires F0198/F0199 route
  * ========================================================= */
 static void test_smell_direction_requires_unblocked_route(void) {
@@ -1425,6 +1442,7 @@ int main(void) {
     test_group_movement_facts();
     test_single_square_move_uses_typed_facts();
     test_smell_direction();
+    test_visible_distance_requires_party_map();
     test_smell_direction_requires_unblocked_route();
     test_smell_direction_stored_scent_fallback();
     test_per_creature_attack_event();

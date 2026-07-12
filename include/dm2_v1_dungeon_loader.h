@@ -168,7 +168,10 @@ typedef struct {
  * ornament. This remains material metadata only: no chain traversal, text
  * decoding, rectangle selection, or image blit is inferred here. */
 typedef struct {
+    int x;
+    int y;
     uint16_t object_id;
+    uint8_t direction;
     uint16_t text_index;
     uint8_t wall_gfx_index;
     uint16_t colorkey;
@@ -400,6 +403,15 @@ int dm2_v1_dungeon_find_text_wall_gfx(
     int max_steps,
     int *out_wall_gfx_index,
     int *out_wall_gfx_field);
+int dm2_v1_dungeon_find_text_wall_gfx_owner(
+    const DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int view_dir,
+    int side_index,
+    int max_steps,
+    int *out_wall_gfx_index,
+    int *out_wall_gfx_field,
+    uint16_t *out_object_id);
 int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
     const DM2_V1_DungeonData *d,
     uint16_t first_thing,
@@ -417,6 +429,17 @@ int dm2_v1_dungeon_resolve_actuator_wall_gfx(
     int wall_gfx_count,
     int *out_wall_gfx_index,
     int *out_wall_gfx_field);
+int dm2_v1_dungeon_resolve_actuator_wall_gfx_owner(
+    const DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int view_dir,
+    int side_index,
+    int max_steps,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    int *out_wall_gfx_index,
+    int *out_wall_gfx_field,
+    uint16_t *out_object_id);
 int dm2_v1_dungeon_get_map_wall_gfx_list(
     const DM2_V1_DungeonData *d,
     int level,

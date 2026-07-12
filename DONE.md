@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0200 map boundary: a group on another map now clears its
+  visible-party distance before LoS-dependent movement can act on stale data.
+  Verification: DM1 creature AI 281/281.
+
+- 2026-07-12 DM2 WALL_GFX owner gate: custom door buttons now require the
+  exact map/cell/object/field receipt from the DB2/DB3 owner, not merely a
+  matching GDAT index. Verification: WALL_GFX material gate 6/6 and
+  `firestaff_dm2` build.
+
 - 2026-07-12 DM1 F0204 movement correction: archenemy movement no longer
   doubles an already successful F0202 one-square route. The second-square
   branch remains separate, as in ReDMCSB GROUP.C. Verification: DM1 creature

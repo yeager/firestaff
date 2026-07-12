@@ -1382,7 +1382,10 @@ int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
         }
 
         material = &candidate.materials[candidate.material_count++];
+        material->x = text->x;
+        material->y = text->y;
         material->object_id = text->object_id;
+        material->direction = text->direction;
         material->text_index = text->text_index;
         material->wall_gfx_index = wall_gfx_index;
         material->colorkey = scalars.colorkey;
@@ -1541,17 +1544,19 @@ int dm2_v1_dungeon_find_thing_of_type(const DM2_V1_DungeonData *d,
     return -1;
 }
 
-int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
-                                      uint16_t first_thing,
-                                      int view_dir,
-                                      int side_index,
-                                      int max_steps,
-                                      int *out_wall_gfx_index,
-                                      int *out_wall_gfx_field) {
+int dm2_v1_dungeon_find_text_wall_gfx_owner(const DM2_V1_DungeonData *d,
+                                            uint16_t first_thing,
+                                            int view_dir,
+                                            int side_index,
+                                            int max_steps,
+                                            int *out_wall_gfx_index,
+                                            int *out_wall_gfx_field,
+                                            uint16_t *out_object_id) {
     uint16_t thing = first_thing;
 
     if (out_wall_gfx_index) *out_wall_gfx_index = -1;
     if (out_wall_gfx_field) *out_wall_gfx_field = -1;
+    if (out_object_id) *out_object_id = DM2_THING_END_MARKER;
     if (!d || !out_wall_gfx_index || !out_wall_gfx_field) return -1;
     if (side_index < 0 || side_index > 3) return -1;
     if (max_steps <= 0) max_steps = 32;
@@ -1616,6 +1621,7 @@ int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
                     packed = (frame << 10) | ornate;
                     *out_wall_gfx_index = packed & 0xff;
                     *out_wall_gfx_field = ((packed >> 8) & 0xff) + 1;
+                    if (out_object_id) *out_object_id = thing;
                     return 0;
                 }
             }
@@ -1626,6 +1632,18 @@ int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
         thing = (uint16_t)next;
     }
     return -1;
+}
+
+int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
+                                      uint16_t first_thing,
+                                      int view_dir,
+                                      int side_index,
+                                      int max_steps,
+                                      int *out_wall_gfx_index,
+                                      int *out_wall_gfx_field) {
+    return dm2_v1_dungeon_find_text_wall_gfx_owner(
+        d, first_thing, view_dir, side_index, max_steps,
+        out_wall_gfx_index, out_wall_gfx_field, NULL);
 }
 
 int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
@@ -1677,6 +1695,67 @@ int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
     return -1;
 }
 
+int dm2_v1_dungeon_resolve_actuator_wall_gfx_owner(
+    const DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int view_dir,
+    int side_index,
+    int max_steps,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    int *out_wall_gfx_index,
+    int *out_wall_gfx_field,
+    uint16_t *out_object_id) {
+    int ordinal = -1;
+    uint16_t thing = first_thing;
+
+    if (out_wall_gfx_index) *out_wall_gfx_index = -1;
+    if (out_wall_gfx_field) *out_wall_gfx_field = -1;
+    if (out_object_id) *out_object_id = DM2_THING_END_MARKER;
+    if (!wall_gfx_list || wall_gfx_count <= 0 ||
+        !out_wall_gfx_index || !out_wall_gfx_field) {
+        return -1;
+    }
+    if (dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
+            d, first_thing, view_dir, side_index, max_steps, &ordinal) != 0) {
+        return -1;
+    }
+    /* Repeat only the bounded source-order search to retain the resolved
+     * record identity. The public ordinal helper intentionally exposes no
+     * record pointer. */
+    for (int step = 0; step < (max_steps > 0 ? max_steps : 32); ++step) {
+        int type = -1;
+        int size = 0;
+        const uint8_t *record;
+        int relative_side;
+        int candidate_ordinal;
+        int next;
+        if (thing == DM2_THING_END_MARKER) return -1;
+        record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, &size);
+        if (!record || size < 8 || type > 3) return -1;
+        if (type == 3) {
+            candidate_ordinal = (int)((RD16(record + 4) >> 12) & 0x0fu);
+            relative_side = (((int)(thing >> 14) - (view_dir & 3)) & 3);
+            if (relative_side == side_index && candidate_ordinal == ordinal) {
+                if (out_object_id) *out_object_id = thing;
+                break;
+            }
+        }
+        next = dm2_v1_dungeon_get_next_thing(d, thing);
+        if (next < 0 || next == (int)thing) return -1;
+        thing = (uint16_t)next;
+    }
+    if (out_object_id && *out_object_id == DM2_THING_END_MARKER) return -1;
+    /* skproject GET_WALL_DECORATION_OF_ACTUATOR treats GraphicNumber() as
+     * one-based and returns current_map_wall_gfx_list[ordinal - 1].  The
+     * DRAW_DOOR_FRAMES custom-button path then uses field high-byte + 1;
+     * a plain resolved actuator graphic has no animation frame here. */
+    if (ordinal <= 0 || ordinal > wall_gfx_count) return -1;
+    *out_wall_gfx_index = (int)wall_gfx_list[ordinal - 1];
+    *out_wall_gfx_field = 1;
+    return 0;
+}
+
 int dm2_v1_dungeon_resolve_actuator_wall_gfx(
     const DM2_V1_DungeonData *d,
     uint16_t first_thing,
@@ -1687,26 +1766,10 @@ int dm2_v1_dungeon_resolve_actuator_wall_gfx(
     int wall_gfx_count,
     int *out_wall_gfx_index,
     int *out_wall_gfx_field) {
-    int ordinal = -1;
-
-    if (out_wall_gfx_index) *out_wall_gfx_index = -1;
-    if (out_wall_gfx_field) *out_wall_gfx_field = -1;
-    if (!wall_gfx_list || wall_gfx_count <= 0 ||
-        !out_wall_gfx_index || !out_wall_gfx_field) {
-        return -1;
-    }
-    if (dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
-            d, first_thing, view_dir, side_index, max_steps, &ordinal) != 0) {
-        return -1;
-    }
-    /* skproject GET_WALL_DECORATION_OF_ACTUATOR treats GraphicNumber() as
-     * one-based and returns current_map_wall_gfx_list[ordinal - 1].  The
-     * DRAW_DOOR_FRAMES custom-button path then uses field high-byte + 1;
-     * a plain resolved actuator graphic has no animation frame here. */
-    if (ordinal <= 0 || ordinal > wall_gfx_count) return -1;
-    *out_wall_gfx_index = (int)wall_gfx_list[ordinal - 1];
-    *out_wall_gfx_field = 1;
-    return 0;
+    return dm2_v1_dungeon_resolve_actuator_wall_gfx_owner(
+        d, first_thing, view_dir, side_index, max_steps,
+        wall_gfx_list, wall_gfx_count,
+        out_wall_gfx_index, out_wall_gfx_field, NULL);
 }
 
 int dm2_v1_dungeon_get_map_wall_gfx_list(
