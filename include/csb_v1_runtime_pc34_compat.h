@@ -637,8 +637,8 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     uint32_t master_location,
     CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner);
 /* Execute one prepared authenticated pure-stack action against the profile's
- * save-owned global bank. Publication occurs only after complete execution;
- * world/filter opcodes and CSBWin EXPOOL serialization remain outside it. */
+ * save-owned global bank. Publication and the existing global EXPOOL records
+ * update only after complete execution; world/filter opcodes remain outside. */
 int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSAFilterStackRunnerContext *runner,

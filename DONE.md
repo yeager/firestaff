@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM2 V1 synthetic startup timers removed: absent an original
+  timer corpus, the DM2 timeline initializes with no built-in events, text,
+  coordinates, or fires. Verification: focused no-startup-timers test PASS.
+
+- 2026-07-12 Nexus V1 DGN Structure1G sequence-envelope receipt: the
+  original LEV00-LEV15 probe now proves all 51 validated sequence windows
+  reach one `FFFF` terminator with no unclassified instruction words before
+  it (154 image-index instructions and 51 backward gotos). This is a bounded
+  raw control envelope only, not timing/stepping, payload semantics, decoder,
+  or rendering. Verification: direct strict-C11 probe against all 16 original
+  DGN files PASS.
+
 - 2026-07-12 Nexus V1 PRS3 original caller-to-callee receipt: the hash-locked
   branch-flow probe now proves the selected caller reads its incoming `R6+12`
   word into R3, moves it through R11 into callee R6 on the delayed BSR path,

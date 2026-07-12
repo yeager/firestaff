@@ -62,6 +62,8 @@ static int csb_v1_runtime_stage_csbwin_dsa_tracing(
     CSB_V1_RuntimeProfile *candidate);
 static int csb_v1_runtime_stage_csbwin_global_variables(
     CSB_V1_RuntimeProfile *candidate);
+static int csb_v1_runtime_write_csbwin_global_variables(
+    CSB_V1_RuntimeProfile *candidate);
 static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_dy);
 static int csb_v1_runtime_square_type_from_raw(
     const CSB_V1_DungeonData *dungeon,
@@ -14918,6 +14920,26 @@ static uint32_t csb_v1_runtime_read_le32(const uint8_t *bytes)
            ((uint32_t)bytes[3] << 24);
 }
 
+static void csb_v1_runtime_write_le32(uint8_t *bytes, uint32_t value)
+{
+    bytes[0] = (uint8_t)value;
+    bytes[1] = (uint8_t)(value >> 8);
+    bytes[2] = (uint8_t)(value >> 16);
+    bytes[3] = (uint8_t)(value >> 24);
+}
+
+static uint32_t csb_v1_runtime_fnv1a32(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static int csb_v1_runtime_stage_csbwin_global_variables(
     CSB_V1_RuntimeProfile *candidate)
 {
@@ -14980,6 +15002,63 @@ static int csb_v1_runtime_stage_csbwin_global_variables(
            count * sizeof(staged[0]));
     candidate->csbwin_global_variable_count = (uint16_t)count;
     candidate->csbwin_global_variables_valid = 1;
+    return 0;
+}
+
+static int csb_v1_runtime_write_csbwin_global_variables(
+    CSB_V1_RuntimeProfile *candidate)
+{
+    const uint32_t record_base = (5u << 24) | (4u << 16);
+    const uint32_t words_per_record = 16u;
+    uint32_t record_count;
+    uint32_t record_index;
+
+    if (!candidate || !candidate->csbwin_global_variables_valid) return -1;
+    if (candidate->csbwin_global_variable_count == 0u) return 0;
+    if ((candidate->csbwin_global_variable_count % words_per_record) != 0u ||
+        candidate->csbwin_global_variable_count >
+            CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY ||
+        !candidate->csbwin_appended_tail_valid ||
+        candidate->csbwin_appended_tail_truncated ||
+        candidate->csbwin_appended_tail_size == 0u ||
+        candidate->csbwin_appended_tail_size !=
+            candidate->csbwin_appended_tail_preserved_size ||
+        candidate->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
+        return -1;
+    }
+
+    record_count = candidate->csbwin_global_variable_count / words_per_record;
+    for (record_index = 0u; record_index < record_count; ++record_index) {
+        const uint8_t *payload = NULL;
+        size_t payload_size = 0u;
+        size_t payload_offset;
+        uint32_t word;
+
+        if (!csb_v1_runtime_locate_appended_expool_record_internal(
+                candidate, record_base | record_index,
+                &payload, &payload_size) ||
+            !payload || payload_size < words_per_record * sizeof(uint32_t) ||
+            payload < candidate->csbwin_appended_tail) {
+            return -1;
+        }
+        payload_offset = (size_t)(payload - candidate->csbwin_appended_tail);
+        if (payload_offset > candidate->csbwin_appended_tail_preserved_size ||
+            payload_size > candidate->csbwin_appended_tail_preserved_size -
+                payload_offset) {
+            return -1;
+        }
+        for (word = 0u; word < words_per_record; ++word) {
+            csb_v1_runtime_write_le32(
+                candidate->csbwin_appended_tail + payload_offset +
+                    word * sizeof(uint32_t),
+                candidate->csbwin_global_variables[
+                    record_index * words_per_record + word]);
+        }
+    }
+    candidate->csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
+        candidate->csbwin_appended_tail,
+        candidate->csbwin_appended_tail_preserved_size);
     return 0;
 }
 
@@ -15179,8 +15258,11 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     int flgs_inout[2])
 {
     CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
+    CSB_V1_RuntimeProfile profile_candidate;
     const CSB_V1_DSAImportedAction *expected;
+    int staged_parameters[26];
     int global_count;
+    int i;
 
     if (!profile || !runner || !action || !parameters ||
         parameter_count < 1 || parameter_count > 26 ||
@@ -15208,16 +15290,36 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.global_variable_count = global_count;
     memcpy(candidate.global_variables, profile->csbwin_global_variables,
            (size_t)global_count * sizeof(candidate.global_variables[0]));
+    for (i = 0; i < parameter_count; ++i) {
+        staged_parameters[i] = parameters[i];
+    }
     if (!csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
-            action, parameters, parameter_count, flgs_inout, &candidate)) {
+            action, staged_parameters, parameter_count, flgs_inout,
+            &candidate)) {
         return 0;
     }
 
-    /* The callback already stages its parameters and globals through a full
-     * action. Publish that same completed bank; EXPOOL writeback stays a
-     * separate CSBWin save task. */
-    memcpy(profile->csbwin_global_variables, candidate.global_variables,
+    /* CSBWin SaveGame.cpp writes the same global bank back through EXPOOL.
+     * Stage that byte-level update before committing either caller parameters
+     * or the runtime bank, so a malformed preserved tail remains atomic. */
+    profile_candidate = *profile;
+    memcpy(profile_candidate.csbwin_global_variables,
+           candidate.global_variables,
            (size_t)global_count * sizeof(candidate.global_variables[0]));
+    if (csb_v1_runtime_write_csbwin_global_variables(&profile_candidate) != 0) {
+        return 0;
+    }
+    memcpy(profile->csbwin_global_variables,
+           profile_candidate.csbwin_global_variables,
+           sizeof(profile->csbwin_global_variables));
+    memcpy(profile->csbwin_appended_tail,
+           profile_candidate.csbwin_appended_tail,
+           sizeof(profile->csbwin_appended_tail));
+    profile->csbwin_appended_tail_fnv1a =
+        profile_candidate.csbwin_appended_tail_fnv1a;
+    for (i = 0; i < parameter_count; ++i) {
+        parameters[i] = staged_parameters[i];
+    }
     *runner = candidate;
     return 1;
 }

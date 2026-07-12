@@ -221,6 +221,11 @@ carry negative, instruction-aligned targets to earlier words within their own
 validated Structure1G sequences (zero out-of-sequence targets). This is only
 bounded original control-flow evidence, not animation timing, stepping,
 payload interpretation, decoder, or rendering.
+2026-07-12 update: all 51 validated original Structure1G sequence windows
+reach one `FFFF` terminator and contain no unclassified instruction words
+before it (154 image-index instructions and 51 backward gotos). This proves a
+bounded raw control envelope only, not timing, stepping, payload semantics,
+decoder, or rendering.
 
 The Structure1F handoff and DGN render-plan receipt now separate the six
 documented direct-coordinate records (items, floor decorations, floor
