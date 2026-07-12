@@ -192,7 +192,8 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
                 blocked_plan->first_missing_material_kind;
             vp->last_dgn_render_receipt.no_draw_structure2_source =
                 blocked_plan->status ==
-                NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
+                NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE &&
+                engine->current_level.structure2_payload.valid;
             vp->last_dgn_render_receipt.blocked = 1;
             return;
         }
