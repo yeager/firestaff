@@ -34,3 +34,6 @@ cmake --build build --target test_dm2_v1_boot_profile_smoke \
 ./build/test_dm2_v1_runtime_handoff_smoke
 ./build/test_dm2_v1_weather_no_synthetic_overlay
 ```
+
+For the GDAT record chain, interface tables, and host receipts, see [DM2 GDAT
+Internals](DM2-GDAT-Internals).
