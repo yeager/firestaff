@@ -1185,6 +1185,10 @@ static void test_f0412_thieves_eye_viewport_material_route(void) {
     assert(route.valid == 1);
     assert(route.graphicIndex == 41);
     assert(route.transparentColor == 10);
+    assert(dm1_spell_activeThievesEyeD1CViewportMaterialRoutePc34(
+               1, 1, &route) == 1);
+    assert(route.graphicIndex == 41);
+    assert(route.transparentColor == 10);
 
     assert(dm1_spell_f0412ThievesEyeD1CViewportMaterialRoutePc34(
                &receipt, 0, 1, &route) == 0);
@@ -1252,6 +1256,7 @@ static void test_f0412_potion_receipt_to_spell_effect(void) {
     assert(receipt.spellType == 11);
     assert(receipt.potionType == 11);
     assert(receipt.potionPower == 91);
+    assert(receipt.requestsChangedObjectIconRedraw == 1);
     assert(dm1_spell_f0412ReceiptToSpellEffectPc34(
                &receipt, 0, &effect) == 1);
     assert(effect.castResult == SPELL_CAST_SUCCESS);
@@ -1265,6 +1270,7 @@ static void test_f0412_potion_receipt_to_spell_effect(void) {
                16, 2, 0, &stats, 0x0001, 0x000Bu, 0, &receipt) == 1);
     assert(receipt.castResult == DM1_SPELL_CAST_FAILURE_NEEDS_FLASK);
     assert(receipt.failureType == DM1_FAILURE_NEEDS_FLASK_IN_HAND);
+    assert(receipt.requestsChangedObjectIconRedraw == 0);
 
     printf("    PASS\n");
 }

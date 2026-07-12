@@ -75,6 +75,7 @@
 #include "dm1_v1_live_action_effects_pc34_compat.h"
 #include "dm1_v1_runtime_sidecar_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
 #include "dm1_v2_boot_pc34.h"
@@ -20969,6 +20970,42 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
     }
 }
 
+static void m11_draw_dm1_thieves_eye_d1c_wall_material(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH,
+    const M11_ViewportCell cells[3][3])
+{
+    DM1_SpellThievesEyeViewportMaterialRoutePc34 route;
+    const M11_AssetSlot* slot;
+
+    if (!state || !state->assetsAvailable || !framebuffer || !cells ||
+        !cells[0][1].valid ||
+        !m11_viewport_cell_is_wall_like(&cells[0][1]) ||
+        !dm1_spell_activeThievesEyeD1CViewportMaterialRoutePc34(
+            state->world.lifecycle.status.thievesEyeCount, 1, &route)) {
+        return;
+    }
+
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)route.graphicIndex);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width != 96 || slot->height != 95) {
+        return;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0117:7789-7856 builds the 96x95 D1C visible-area
+     * buffer, composites C041 with C10 transparency, then returns it at
+     * viewport (64,19). Reject mismatched original material rather than
+     * scaling or substituting another wall/ornament asset. */
+    M11_AssetLoader_BlitRegion(slot, 0, 0, 96, 95,
+                               framebuffer, fbW, fbH,
+                               M11_VIEWPORT_X + 64,
+                               M11_VIEWPORT_Y + 19,
+                               route.transparentColor);
+}
+
 static int m11_dm1_side_lane_clear_for_rel(const M11_ViewportCell cells[3][3],
                                            int relForward,
                                            int relSide);
@@ -33923,6 +33960,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
+    m11_draw_dm1_thieves_eye_d1c_wall_material(
+        state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
                         maxVisibleForward, cells);
     m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,

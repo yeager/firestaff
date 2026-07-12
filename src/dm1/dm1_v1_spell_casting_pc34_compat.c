@@ -933,6 +933,10 @@ int dm1_spell_f0412PotionReceiptForTableIndex(
     receipt.potionType = receipt.spellType;
     receipt.potionPower = (int)(potionPowerRng16 & 0x000Fu) +
                           (receipt.powerOrdinal * 40);
+    /* ReDMCSB MENU.C F0412:1850-1856 mutates the real flask, then calls
+     * F0296_CHAMPION_DrawChangedObjectIcons.  The icon itself remains owned
+     * by the mutated potion/object record; do not invent an icon from type. */
+    receipt.requestsChangedObjectIconRedraw = 1;
     receipt.symbolsCleared =
         dm1_spell_castClearsSymbolsForResult(receipt.castResult);
     *outReceipt = receipt;
@@ -1093,22 +1097,38 @@ int dm1_spell_f0412ThievesEyeD1CViewportMaterialRoutePc34(
     int frontWallD1C,
     DM1_SpellThievesEyeViewportMaterialRoutePc34* outRoute)
 {
+    if (!receipt || receipt->castResult != DM1_SPELL_CAST_SUCCESS ||
+        receipt->spellKind != DM1_SPELL_KIND_OTHER ||
+        receipt->spellType != DM1_SPELL_TYPE_OTHER_THIEVES_EYE ||
+        receipt->eventType != DM1_SPELL_EVENT_THIEVES_EYE_PC34) {
+        if (outRoute) {
+            outRoute->valid = 0;
+            outRoute->graphicIndex = -1;
+            outRoute->transparentColor = -1;
+        }
+        return 0;
+    }
+
+    return dm1_spell_activeThievesEyeD1CViewportMaterialRoutePc34(
+        activeThievesEyeCount, frontWallD1C, outRoute);
+}
+
+int dm1_spell_activeThievesEyeD1CViewportMaterialRoutePc34(
+    int activeThievesEyeCount,
+    int frontWallD1C,
+    DM1_SpellThievesEyeViewportMaterialRoutePc34* outRoute)
+{
     if (!outRoute) return 0;
     outRoute->valid = 0;
     outRoute->graphicIndex = -1;
     outRoute->transparentColor = -1;
 
-    if (!receipt || receipt->castResult != DM1_SPELL_CAST_SUCCESS ||
-        receipt->spellKind != DM1_SPELL_KIND_OTHER ||
-        receipt->spellType != DM1_SPELL_TYPE_OTHER_THIEVES_EYE ||
-        receipt->eventType != DM1_SPELL_EVENT_THIEVES_EYE_PC34 ||
-        activeThievesEyeCount <= 0 || !frontWallD1C) {
-        return 0;
-    }
+    if (activeThievesEyeCount <= 0 || !frontWallD1C) return 0;
 
     /* ReDMCSB DUNVIEW.C F0117 D1C wall branch: after C73 becomes active,
      * C041_GRAPHIC_HOLE_IN_WALL is copied into the visible-area buffer with
-     * C10_COLOR_FLESH transparency. No other F0412 spell takes this route. */
+     * C10_COLOR_FLESH transparency. This state gate also covers a C73
+     * restored from an original save, which DUNVIEW consumes identically. */
     outRoute->graphicIndex = DM1_V1_GRAPHIC_THIEVES_EYE_HOLE_IN_WALL_PC34;
     outRoute->transparentColor = 10; /* DEFS.H C10_COLOR_FLESH */
     outRoute->valid = 1;
