@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 TITLE/entrance source timing: C001 now uses TITLE.C's 23
+  visible events at 20 ms VBlank cadence instead of TITLE.DAT's 53-record
+  fallback bank; the entrance waits for a fresh command and rejects altered
+  source event timing. Verification: C001 fallback gate 56 checks, title
+  cadence test, and entrance palette 103/103 all passed.
+
 - 2026-07-12 DM1 F0181 killed-all timeline cleanup: M10 now removes the
   complete local C29–C41 range after the typed F0190 compaction plan, while
   preserving other-square events and the off-party-map ACTIVE_GROUP state.

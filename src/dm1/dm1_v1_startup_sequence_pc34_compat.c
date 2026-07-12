@@ -5,15 +5,18 @@
 #include "entrance_frontend_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
+#include "vga_palette_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 
 #define DM1_V1_STARTUP_TITLE_ZOOM_STEPS_PC34 18u
 #define DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34 23u
-#define DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 53u
 #define DM1_V1_STARTUP_TITLE_POST_ZOOM_VBLANKS_PC34 2u
 #define DM1_V1_STARTUP_TITLE_FINAL_GUARD_VBLANKS_PC34 1u
-#define DM1_V1_STARTUP_TITLE_VBLANK_TICK_MS_PC34 55u
+/* ReDMCSB TITLE.C F0437 uses the PC VGA vertical-retrace primitive, as
+ * SWSH.C does. Keep the runtime cadence on the shared 50 Hz/20 ms VBlank,
+ * not the unrelated decoded TITLE.DAT frame-bank duration. */
+#define DM1_V1_STARTUP_TITLE_VBLANK_TICK_MS_PC34 20u
 
 static unsigned int dm1_v1_startup_hoc_capture_consumer_hash_pc34(
     unsigned int mask) {
@@ -4750,12 +4753,19 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     }
 
     title_timing = V1_TitleFrontend_GetSourceTimingEvidence();
-    (void)V1_TitleFrontend_GetStepPalette(
-        V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
-        &presents_palette);
-    (void)V1_TitleFrontend_GetStepPalette(
-        V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT,
-        &title_palette);
+    if (!V1_TitleFrontend_GetStepPalette(
+            V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
+            &presents_palette) ||
+        !V1_TitleFrontend_GetStepPalette(
+            V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT,
+            &title_palette) ||
+        presents_palette != VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS ||
+        title_palette != VGA_PALETTE_PC34_SPECIAL_TITLE) {
+        /* ReDMCSB TITLE.C F0437:319-324 uses C12_PRESENTS, then
+         * F0437:362-402 installs C13_DUNGEON + C14_MASTER.  A shared or
+         * unresolved palette would visibly corrupt the original transition. */
+        return 0;
+    }
 
     receipt.handled = 1;
     receipt.play_swsh = 1;
@@ -4784,13 +4794,20 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
         title_timing.sourceAnimationStepCount;
     receipt.title_frame_bank_equivalent_steps =
         title_timing.frameBankEquivalentStepCount;
+    /* TITLE.DAT exposes 53 decoded fallback records, but the production
+     * PC/F20 path has only the 23 source-visible TITLE.C events. Do not
+     * let the fallback-bank boundary hold the C001 title surface before
+     * ENTRANCE.C gets control. */
     receipt.title_menu_boundary_frame =
-        title_timing.firstMenuEligibleStep;
+        DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34 + 1U;
     receipt.title_presents_palette = presents_palette;
     receipt.title_zoom_palette = title_palette;
     receipt.title_menu_eligible = 1;
     receipt.title_consume_pending_input = 1;
-    receipt.entrance_auto_enter_ms = 1200;
+    /* ReDMCSB ENTRANCE.C F0441:850-883 drains the command that reached
+     * the entrance, then waits for a fresh command. Headless verification
+     * has its separately gated escape hatch at the SDL boundary. */
+    receipt.entrance_auto_enter_ms = 0;
     receipt.entrance_source_animation_steps =
         ENTRANCE_Compat_GetSourceAnimationStepCount();
     receipt.entrance_door_step_count =
@@ -4932,6 +4949,7 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
     unsigned int vblank_loop_count,
     DM1_V1_StartupEntranceRenderAudioCommand_PC34* out_command) {
     DM1_V1_StartupEntranceRenderAudioCommand_PC34 command;
+    EntranceCompatSourceAnimationStep source_step_evidence;
 
     /* ReDMCSB ENTRANCE.C F0441 lines 850-883 drives the entrance as an
      * ordered render/wait loop before the dungeon handoff.  Keep M11 on this
@@ -4941,6 +4959,17 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
         !dm1_v1_startup_entrance_timing_receipt_valid_pc34(media_receipt) ||
         source_step == 0U ||
         source_step > media_receipt->entrance_source_animation_steps) {
+        return 0;
+    }
+    memset(&source_step_evidence, 0, sizeof(source_step_evidence));
+    if (!ENTRANCE_Compat_GetSourceAnimationStep(
+            source_step, &source_step_evidence) ||
+        (int)source_step_evidence.kind != entrance_event_kind ||
+        source_step_evidence.delayTicks != delay_ticks ||
+        source_step_evidence.vblankLoopCount != vblank_loop_count) {
+        /* ReDMCSB ENTRANCE.C F0441/F0438 owns the event ordering; do not
+         * execute a caller-supplied delay or event kind that differs from
+         * the original entrance schedule. */
         return 0;
     }
     memset(&command, 0, sizeof(command));
@@ -5052,18 +5081,19 @@ unsigned int dm1_v1_startup_title_zoom_steps_pc34(void) {
 
 unsigned int dm1_v1_startup_title_source_animation_steps_pc34(void) {
     /* PRESENTS + 18 zoom blits + 2 post-zoom waits + STRIKES BACK + final
-     * guard. This is the source event count before Firestaff's frame-bank
-     * cadence padding. */
+     * guard. This is the complete PC/F20 C001 source event count. */
     return DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34;
 }
 
 unsigned int dm1_v1_startup_title_frame_bank_equivalent_steps_pc34(void) {
-    return DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34;
+    /* C001 is the production title route. TITLE.DAT's 53 records are a
+     * fallback asset and must not stretch the source-visible cadence. */
+    return DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34;
 }
 
 unsigned int dm1_v1_startup_title_presents_hold_vblanks_pc34(void) {
-    return DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 -
-           DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34;
+    /* TITLE.C has no timed hold between PRESENTS and C001 preparation. */
+    return 0u;
 }
 
 unsigned int dm1_v1_startup_title_vblank_tick_ms_pc34(void) {
