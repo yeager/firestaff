@@ -2770,6 +2770,20 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     CHECK_EQ(dispatchApplyOut.killedAllStatePlan.groupIndex, 9,
              "F0190 mutation dispatch killed-all apply group");
 
+    dispatchIn.partyMapIndex = 3;
+    CHECK_EQ(dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
+                 &dispatchIn, &dispatchOut), 1,
+             "F0190 off-map killed-all dispatch builds");
+    CHECK_EQ(dispatchOut.shouldApplyKilledAllSideEffects, 1,
+             "F0190 off-map killed-all retains unlink aftermath");
+    CHECK_EQ(dispatchOut.killedAllStatePlan.shouldUnlinkGroupFromSquare, 1,
+             "F0190 off-map killed-all unlinks source group");
+    CHECK_EQ(dispatchOut.killedAllStatePlan.shouldClearGroupNext, 1,
+             "F0190 off-map killed-all clears source group next");
+    CHECK_EQ(dispatchOut.killedAllStatePlan.shouldRemoveActiveGroupState, 0,
+             "F0190 off-map killed-all keeps non-party active state");
+    dispatchIn.partyMapIndex = 2;
+
     dispatchIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
     dispatchIn.killedCell = 6;
     CHECK_EQ(dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(

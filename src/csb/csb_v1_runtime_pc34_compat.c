@@ -15343,24 +15343,28 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         return 0;
     }
 
-    /* CSBWin SaveGame.cpp writes the same global bank back through EXPOOL.
-     * Stage that byte-level update before committing either caller parameters
-     * or the runtime bank, so a malformed preserved tail remains atomic. */
-    profile_candidate = *profile;
-    memcpy(profile_candidate.csbwin_global_variables,
-           candidate.global_variables,
-           (size_t)global_count * sizeof(candidate.global_variables[0]));
-    if (csb_v1_runtime_write_csbwin_global_variables(&profile_candidate) != 0) {
-        return 0;
+    /* CSBWin SaveGame.cpp writes changed GLOBALSTORE state through EXPOOL.
+     * A source-pure DSA action such as AMPERSAND2 NUMPARAM must not rewrite a
+     * save tail merely because it crossed the runtime boundary. */
+    if (memcmp(candidate.global_variables, profile->csbwin_global_variables,
+               (size_t)global_count * sizeof(candidate.global_variables[0])) !=
+        0) {
+        profile_candidate = *profile;
+        memcpy(profile_candidate.csbwin_global_variables,
+               candidate.global_variables,
+               (size_t)global_count * sizeof(candidate.global_variables[0]));
+        if (csb_v1_runtime_write_csbwin_global_variables(&profile_candidate) != 0) {
+            return 0;
+        }
+        memcpy(profile->csbwin_global_variables,
+               profile_candidate.csbwin_global_variables,
+               sizeof(profile->csbwin_global_variables));
+        memcpy(profile->csbwin_appended_tail,
+               profile_candidate.csbwin_appended_tail,
+               sizeof(profile->csbwin_appended_tail));
+        profile->csbwin_appended_tail_fnv1a =
+            profile_candidate.csbwin_appended_tail_fnv1a;
     }
-    memcpy(profile->csbwin_global_variables,
-           profile_candidate.csbwin_global_variables,
-           sizeof(profile->csbwin_global_variables));
-    memcpy(profile->csbwin_appended_tail,
-           profile_candidate.csbwin_appended_tail,
-           sizeof(profile->csbwin_appended_tail));
-    profile->csbwin_appended_tail_fnv1a =
-        profile_candidate.csbwin_appended_tail_fnv1a;
     for (i = 0; i < parameter_count; ++i) {
         parameters[i] = staged_parameters[i];
     }
