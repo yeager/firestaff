@@ -75,6 +75,12 @@ static int read_trace(const char *path, Theron_Track02Variant expected_variant,
         newline = strchr(line, '\n');
         if (newline) *newline = '\0';
         if (line[0] == '\0' || line[0] == '#') continue;
+        /* Mednafen's stock "l" trace contains CPU registers only. It has no
+         * snapshots for the authenticated RAM values this receipt requires. */
+        if (strcmp(line, "Tracing began:") == 0) {
+            fclose(file);
+            return 0;
+        }
         if (index >= sizeof(keys) / sizeof(keys[0]) ||
             !(equals = strchr(line, '='))) {
             fclose(file);
