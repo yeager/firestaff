@@ -2518,6 +2518,11 @@ static int orch_unlink_thing_from_square_compat(
 static void orch_remove_active_group_state_compat(
     struct GameWorld_Compat* world,
     int groupIndex);
+static void orch_cmd_attack_cleanup_f0190_killed_all_events_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY);
 
 static unsigned short orch_make_thing_ref_compat(int type, int index);
 
@@ -2714,8 +2719,16 @@ static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
         world->things->groups[applyPlan.groupIndex].next =
             applyPlan.clearedNextThing;
     }
-    if (applyPlan.shouldRemoveActiveGroupState) {
+    /* ReDMCSB GROUP.C F0189 lines 759-766 retires ACTIVE_GROUP only while
+     * the killed group is on the party's current map. The unlink, Next clear,
+     * and F0181 event cleanup remain source-square operations even off-map. */
+    if (applyPlan.shouldRemoveActiveGroupState &&
+        applyPlan.mapIndex == world->partyMapIndex) {
         orch_remove_active_group_state_compat(world, applyPlan.groupIndex);
+    }
+    if (applyPlan.shouldDeleteGroupEvents) {
+        orch_cmd_attack_cleanup_f0190_killed_all_events_compat(
+            world, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY);
     }
 }
 
@@ -7631,6 +7644,45 @@ static void orch_cmd_attack_cleanup_f0190_creature_events_compat(
     world->timeline.count = cleanupPlan.newEventCount;
 }
 
+static void orch_cmd_attack_cleanup_f0190_killed_all_events_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    DM1_MeleeF0190TimelineCleanupBatchInputPc34 cleanupIn;
+    DM1_MeleeF0190TimelineCleanupBatchPlanPc34 cleanupPlan;
+    int i;
+
+    if (!world) return;
+    memset(&cleanupIn, 0, sizeof(cleanupIn));
+    memset(&cleanupPlan, 0, sizeof(cleanupPlan));
+    cleanupIn.eventCount = world->timeline.count;
+    if (cleanupIn.eventCount < 0 ||
+        cleanupIn.eventCount > TIMELINE_QUEUE_CAPACITY) {
+        return;
+    }
+    for (i = 0; i < cleanupIn.eventCount; ++i) {
+        cleanupIn.events[i] = world->timeline.events[i];
+    }
+    cleanupIn.targetMapIndex = mapIndex;
+    cleanupIn.targetMapX = mapX;
+    cleanupIn.targetMapY = mapY;
+    if (!dm1_v1_melee_timeline_cleanup_batch_plan_f0190_pc34(
+            &cleanupIn, &cleanupPlan) || !cleanupPlan.valid) {
+        return;
+    }
+    for (i = 0; i < cleanupPlan.newEventCount; ++i) {
+        world->timeline.events[i] = cleanupPlan.events[i];
+    }
+    while (i < cleanupPlan.oldEventCount) {
+        memset(&world->timeline.events[i], 0,
+               sizeof(world->timeline.events[i]));
+        ++i;
+    }
+    world->timeline.count = cleanupPlan.newEventCount;
+}
+
 static int orch_cmd_attack_apply_f0190_fear_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
@@ -8731,6 +8783,19 @@ static int orch_handle_creature_reaction_event_compat(
                 world, ai, group, &activeGroup, direction, ctx.creatureSize)) {
             return 0;
         }
+    }
+
+    /* ReDMCSB GROUP.C F0209 lines 2368-2410 changes an eligible quarter-
+     * square creature's ACTIVE_GROUP::Cells before its next C38 attempt.
+     * The DM1 resolver already produces that typed plan; M10 must commit it
+     * to both the live C04 record and its active-group analogue before the
+     * common F0209 next-event plan snapshots group cells. */
+    if (behavior.actionKind == DM1_ACTION_ADJUST_CELL &&
+        behavior.meleeCellAdjustment) {
+        group->cells = (unsigned char)(behavior.updatedGroupCells & 0xff);
+        activeGroup.cells = group->cells;
+        ai->groupCells = group->cells;
+        orch_write_raw_group_compat(world->things, groupIndex);
     }
 
     if (!orch_apply_f0207_creature_attack_compat(
