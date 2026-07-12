@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 DGN Structure1G-to-Structure2 reference receipt: a
+  real LEV00-LEV15 corpus probe now follows 51 Structure1G first-image
+  references into 45 local Structure2 descriptors. All 95 nonzero referenced
+  descriptor offsets remain inside their own opaque post-`FFFF` spans, with
+  zero outside. This is a bounded reference/window fact only, not an offset
+  base, payload grammar, palette/image role, decoder, animation, or rendering
+  claim. Verification: direct strict-C11 probe against all 16 original DGN
+  files PASS.
+
 - 2026-07-12 Nexus V1 PRS3 original entry alternate-call receipt: the
   hash-locked branch-flow probe now proves the R13 branch either bypasses or
   falls through a second raw literal-fed `JSR @R3` with delay-slot `R5=70`,
@@ -39,6 +48,14 @@
   strict-C11 startup-receipt/runtime-entry syntax checks plus direct
   original-media JP/US IPL-chain and stage-three probe, 0 failed. Ninja could
   not run: this worktree has no `build/build.ninja`.
+
+- 2026-07-12 Theron V1 stage-two work-RAM transfer binding: the existing
+  runtime handoff now records and runtime entry requires the original
+  stage-two `TII` clear of `$2700..$37ff` immediately before `jmp $3800`.
+  This is loader-state metadata only; it assigns no role to the stage-three
+  manifest, bank descriptors, objects, levels, palettes, or later CD reads.
+  Verification: strict-C11 syntax checks plus hash-verified JP/US original
+  media probe, 0 failed.
 
 - 2026-07-12 DM2 V1 weather GDAT receipt: fail-closed receipt requires
   ENVIRONMENT dtImage fields 64/67/6A/6D/71 and GRAPHICSSET dtWordValue 69
@@ -189,6 +206,15 @@
   payload, decoder, or rendering claim. Verification:
   `nexus_v1_prs3_branch_flow_probe` CTest PASS against locked Japanese
   `DM.BIN`.
+
+- 2026-07-12 DM1 PC34 F0330 C11 production: M10 now converts each
+  `EMIT_ACTION_DISABLED` command result into the source C11 refill event,
+  targeting the ready hand for the existing F0259 owner. A later disabled
+  action removes the prior per-champion C11 event and applies ReDMCSB's
+  half-distance rescheduling formula instead of duplicating refills. Source:
+  ReDMCSB `CHAMPION.C` F0330:2233-2255 and `TIMELINE.C` F0259:1767-1822.
+  Verification: rebuilt the current orchestrator object and linked
+  `test_dm1_v1_f0330_c11_production_pc34_compat`; PASS.
 
 - 2026-07-12 DM1 PC34 F0248 C10 local Steal XP: wall C006 countdown
   triggers now consume `C10_EFFECT_ADD_300XP_STEAL_SKILL` through the
@@ -8495,6 +8521,8 @@
 # ✅ 2026-07-12 CSB DSA transfer runner: the authenticated filter callback now promotes only CSBWin `Execute`'s already source-locked transfer-only `JUMP`/`GOSUB` subset. It invokes the bounded complete transfer chain, publishes its final state and receipt only on success, and preserves the caller parameter surface. Unsupported targets, malformed paths, and depth/transfer limits remain rejection paths. No world opcode or synthetic state transition is enabled. Source: CSBWin `DSA.cpp` lines 764-849 and 5053-5293. Verified by `test_csb_v1_dsa_trigger_single_step_pc34_compat`: 124 assertions, 0 failures.
 
 # ✅ 2026-07-12 CSB DSA runtime binding: `csb_v1_runtime_resolve_csbwin_dsa_filter_binding()` now follows CSBWin `Monster.cpp` / `DSA.cpp` selector ownership: a verified type-47 DB3 actuator contributes `word2` bits 7..11, the staged `DSALevelIndex[level][selector]` resolves its absolute DSA ID, and that ID must own an imported authenticated action before it is usable. `csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner()` then prepares the existing pure-stack callback only for an exact selected action. It rejects missing level-table slots and unowned IDs without a fallback. Verified by `test_csb_v1_phase7_verification`: 324 passed, 0 failed.
+
+# ✅ 2026-07-12 CSB EXPOOL global-variable DSA handoff: CSBWin saves now restore their contiguous `EDT_Database | EDBT_GlobalVariables | i` EXPOOL records into Firestaff's bounded source-sized DSA global bank before the existing tracing handoff, matching `SaveGame.cpp`'s sixteen-`ui32` record order and first-missing-record stop. A malformed present record rejects transactionally, and authenticated filter runners inherit the restored bank rather than a synthetic zero bank. Source: CSBWin `SaveGame.cpp` global-variable save/load loops and `data.cpp EXPOOL::Locate`. Verified by `test_csb_v1_phase7_verification`: source-order two-record import plus malformed-record preservation.
 
 # ✅ 2026-07-12 CSB authenticated DSA filter runner: added `csb_v1_csbwin_dsa_run_authenticated_filter_stack_action()` as the runtime callback for the supported CSBWin `ProcessDSAFilter` pure stack subset. It requires exact pointer identity with the imported `(dsa,state,ordinal)` action, stages the signed parameter surface and its owned global bank, and publishes a receipt only after a complete supported action. Forged pointers and world-mutating `AMPERSAND` code leave all caller state unchanged. Source: CSBWin `DSA.cpp` `ProcessDSAFilter`/`ProcessDSATimer6` lines 5315-5460 and `Execute` lines 5053-5293. Verified by `test_csb_v1_dsa_trigger_single_step_pc34_compat`: 123 assertions, 0 failures.
 
