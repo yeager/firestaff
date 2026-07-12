@@ -627,6 +627,11 @@ typedef struct DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 {
     int captured_from_release_app;
     int observed_c026_portrait_asset;
     int observed_c346_mirror_backing_asset;
+    /* Live DUNVIEW.C material observation, distinct from startup's static
+     * C127/C026/C346 receipt. M11 leaves both false until it has sampled an
+     * actual Hall viewport cell after ENTRANCE.C hands off. */
+    int observed_live_hoc_c127_material_request;
+    int observed_live_hoc_f0115_material_request;
     int observed_required_graphics_hash_match;
     int observed_required_dungeon_hash_match;
     int observed_host_window_present;
@@ -676,6 +681,7 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int hoc_asset_capture;
+    int observed_live_hoc_material_request;
     int required_asset_capture;
     int host_window_capture;
     int presented_capture;

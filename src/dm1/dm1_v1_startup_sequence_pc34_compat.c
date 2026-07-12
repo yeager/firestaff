@@ -2839,6 +2839,7 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         receipt.presented_capture_pixels_present &&
         receipt.presented_capture_chain_ready &&
         receipt.hoc_asset_capture &&
+        receipt.observed_live_hoc_material_request &&
         receipt.required_asset_capture &&
         receipt.host_window_capture &&
         receipt.draw_opened_entrance_frame &&
