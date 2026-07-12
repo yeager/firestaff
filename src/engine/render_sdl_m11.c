@@ -50,6 +50,7 @@ typedef struct {
     int displayAspectMode;
     int paletteLevel;
     int windowMode;
+    int restoreWindowMode; /* last explicit non-fullscreen mode */
     int integerScaling;
     int scaleFilter;
     int vsync;
@@ -492,6 +493,23 @@ static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH)
      * here causes the game content to render at half size. */
     int rw = g_state.renderW > 0 ? g_state.renderW : g_state.windowW;
     int rh = g_state.renderH > 0 ? g_state.renderH : g_state.windowH;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    /* Cocoa can expose the newly maximized drawable before its resize event
+     * reaches the game loop.  Rendering from the cached 960x540 output in
+     * that interval leaves the native 320x200 frame tiny inside a correctly
+     * maximized window.  Prefer only a larger live drawable here: it covers
+     * the asynchronous maximize path while preserving deterministic probes
+     * that intentionally inject synthetic smaller/larger resize dimensions. */
+    if (g_state.renderer) {
+        int liveW = 0;
+        int liveH = 0;
+        SDL_GetRenderOutputSize(g_state.renderer, &liveW, &liveH);
+        if (liveW >= rw && liveH >= rh && (liveW > rw || liveH > rh)) {
+            rw = liveW;
+            rh = liveH;
+        }
+    }
+#endif
     (void)M11_Render_ComputePresentationRect(rw,
                                              rh,
                                              contentW,
@@ -511,6 +529,9 @@ static int m11_apply_window_mode(int windowMode) {
     }
     if (!m11_validate_window_mode(windowMode)) {
         return M11_RENDER_ERR_INVALID_ARG;
+    }
+    if (windowMode != M11_WINDOW_MODE_FULLSCREEN) {
+        g_state.restoreWindowMode = windowMode;
     }
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     if (!SDL_SetWindowFullscreen(g_state.window,
@@ -1063,6 +1084,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.displayAspectMode = M11_DISPLAY_ASPECT_CONTENT; /* content-native aspect */
     g_state.paletteLevel = 0;
     g_state.windowMode = M11_WINDOW_MODE_MAXIMIZED;
+    g_state.restoreWindowMode = M11_WINDOW_MODE_MAXIMIZED;
     g_state.integerScaling = 0; /* non-integer scaling for full-window FIT */
     g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
     g_state.vsync = M11_VSYNC_ON;
@@ -1074,6 +1096,17 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.presentedW = 0;
     g_state.presentedH = 0;
     g_state.initialised = 1;
+
+    /* SDL_WINDOW_MAXIMIZED is only an initial creation hint on macOS.  Some
+     * SDL3/Cocoa combinations create a normal window while the renderer's
+     * cached mode still says maximized, so the launcher never issues a real
+     * maximize request.  Ask the native window manager explicitly after the
+     * renderer and drawable have been created; M12 can still restore a saved
+     * explicit Windowed setting immediately afterwards. */
+    if (m11_apply_window_mode(M11_WINDOW_MODE_MAXIMIZED) != M11_RENDER_OK) {
+        M11_Render_Shutdown();
+        return M11_RENDER_ERR_WINDOW;
+    }
     return M11_RENDER_OK;
 }
 
@@ -2227,9 +2260,14 @@ int M11_Render_ToggleFullscreen(void) {
     if (!g_state.initialised) {
         return M11_RENDER_ERR_NOT_INIT;
     }
-    return m11_apply_window_mode(g_state.windowMode == M11_WINDOW_MODE_FULLSCREEN
-                                     ? M11_WINDOW_MODE_WINDOWED
-                                     : M11_WINDOW_MODE_FULLSCREEN);
+    if (g_state.windowMode == M11_WINDOW_MODE_FULLSCREEN) {
+        int restoreMode = m11_validate_window_mode(g_state.restoreWindowMode) &&
+                              g_state.restoreWindowMode != M11_WINDOW_MODE_FULLSCREEN
+            ? g_state.restoreWindowMode
+            : M11_WINDOW_MODE_MAXIMIZED;
+        return m11_apply_window_mode(restoreMode);
+    }
+    return m11_apply_window_mode(M11_WINDOW_MODE_FULLSCREEN);
 }
 
 int M11_Render_GetPresentRect(int* outX, int* outY, int* outW, int* outH) {
@@ -2373,6 +2411,9 @@ int M11_Render_SyncWindowModeFromWindow(void) {
         return M11_RENDER_ERR_NOT_INIT;
     }
     g_state.windowMode = m11_window_mode_from_sdl_window();
+    if (g_state.windowMode != M11_WINDOW_MODE_FULLSCREEN) {
+        g_state.restoreWindowMode = g_state.windowMode;
+    }
     return g_state.windowMode;
 }
 
