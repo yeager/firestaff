@@ -1577,6 +1577,7 @@ int dm1_v1_original_save_pc34_handoff_apply_event_queue(
     const DM1OriginalSavePC34HandoffReport *report,
     struct DM1_EventQueue_V1 *queue)
 {
+    struct DM1_EventQueue_V1 candidate_queue;
     int i;
 
     if (!report || !queue) {
@@ -1584,6 +1585,10 @@ int dm1_v1_original_save_pc34_handoff_apply_event_queue(
     }
     if (report->original_event_count < 0 ||
         report->original_event_count > DM1_EVENT_MAX_COUNT ||
+        report->decoded_event_count < 0 ||
+        report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        report->decoded_timeline_index_count < 0 ||
+        report->decoded_timeline_index_count > DM1_EVENT_MAX_COUNT ||
         report->original_event_count > report->decoded_event_count ||
         report->original_event_count > report->decoded_timeline_index_count ||
         report->original_first_unused_event_index < 0 ||
@@ -1591,22 +1596,30 @@ int dm1_v1_original_save_pc34_handoff_apply_event_queue(
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
 
-    if (!dm1v1_event_queue_init(queue, report->original_game_time)) {
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
-    }
-    queue->eventCount = report->original_event_count;
-    queue->firstUnusedIndex = report->original_first_unused_event_index;
-    queue->maxEvents = DM1_EVENT_MAX_COUNT;
-    for (i = 0; i < report->decoded_event_count; ++i) {
-        queue->events[i] = report->events[i];
-    }
+    /* ReDMCSB LOADSAVE.C F0435:2780-2800 reads EVENTS and TIMELINE before
+     * F0651 publishes optimized timeline management. Validate and build the
+     * complete Firestaff queue first, so a malformed timeline cannot replace
+     * the runtime's previously valid queue with a partial load. */
     for (i = 0; i < report->original_event_count; ++i) {
         if (report->timeline_indices[i] >=
             (uint16_t)report->decoded_event_count) {
             return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
         }
-        queue->timeline[i] = report->timeline_indices[i];
     }
+
+    if (!dm1v1_event_queue_init(&candidate_queue, report->original_game_time)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    candidate_queue.eventCount = report->original_event_count;
+    candidate_queue.firstUnusedIndex = report->original_first_unused_event_index;
+    candidate_queue.maxEvents = DM1_EVENT_MAX_COUNT;
+    for (i = 0; i < report->decoded_event_count; ++i) {
+        candidate_queue.events[i] = report->events[i];
+    }
+    for (i = 0; i < report->original_event_count; ++i) {
+        candidate_queue.timeline[i] = report->timeline_indices[i];
+    }
+    *queue = candidate_queue;
     return queue->eventCount;
 }
 

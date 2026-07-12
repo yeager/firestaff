@@ -192,6 +192,10 @@ int dm1_v1_original_save_pc34_handoff_apply_active_groups(
     DM1OriginalSavePC34HandoffReport *report,
     struct GameWorld_Compat *world);
 
+/* ReDMCSB LOADSAVE.C F0435 reads EVENTS/TIMELINE before F0651 exposes the
+ * resumed timeline. This validates every source index and commits a fully
+ * staged queue in one assignment; malformed reports leave `queue` unchanged.
+ */
 int dm1_v1_original_save_pc34_handoff_apply_event_queue(
     const DM1OriginalSavePC34HandoffReport *report,
     struct DM1_EventQueue_V1 *queue);

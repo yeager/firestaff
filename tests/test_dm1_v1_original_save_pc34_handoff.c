@@ -868,6 +868,12 @@ static void test_rejects_non_pc34_and_truncated_parts(void)
 
     memset(&report, 0, sizeof(report));
     memset(&event_queue, 0, sizeof(event_queue));
+    CHECK(dm1v1_event_queue_init(&event_queue, 77u),
+          "initialize live event queue before malformed import");
+    event_queue.eventCount = 1;
+    event_queue.firstUnusedIndex = 1;
+    event_queue.events[0].type = DM1_EVENT_WALL;
+    event_queue.timeline[0] = 0u;
     report.original_game_time = 10u;
     report.original_event_count = 1;
     report.original_first_unused_event_index = 1;
@@ -878,6 +884,11 @@ static void test_rejects_non_pc34_and_truncated_parts(void)
         &report, &event_queue);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
           "malformed timeline index rejected");
+    CHECK(event_queue.gameTick == 77u && event_queue.eventCount == 1 &&
+          event_queue.firstUnusedIndex == 1 &&
+          event_queue.events[0].type == DM1_EVENT_WALL &&
+          event_queue.timeline[0] == 0u,
+          "malformed timeline import leaves live queue untouched");
 }
 
 static void test_file_runtime_world_loader(void)
