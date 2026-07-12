@@ -326,6 +326,11 @@ int dm2_v1_dungeon_get_map_wall_gfx_list(
 int dm2_v1_dungeon_get_map_graphics_style(
     const DM2_V1_DungeonData *d,
     int level);
+
+typedef struct { int valid; int dir,x,y; uint8_t tile_w2,tile_type,oriented_bits[4]; int first_record_link; uint8_t neighbor_tile_w2[4]; } DM2_V1_StoneRoomInputReceipt;
+int dm2_v1_dungeon_stone_room_input_receipt(const DM2_V1_DungeonData *d,int level,int dir,int x,int y,DM2_V1_StoneRoomInputReceipt *out);
+typedef struct { int valid; uint8_t w0,w2,w6[4]; uint16_t xvalue; } DM2_V1_StoneRoomBaseCellReceipt;
+int dm2_v1_dungeon_stone_room_base_cell(const DM2_V1_StoneRoomInputReceipt *in,DM2_V1_StoneRoomBaseCellReceipt *out);
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
     uint16_t thing,
