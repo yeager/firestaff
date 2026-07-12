@@ -16765,6 +16765,8 @@ typedef struct M11_ViewportCell {
     /* Wall/door ornament ordinal from thing data (0-15, -1 if none) */
     int wallOrnamentOrdinal;
     int championPortraitOrdinal; /* ReDMCSB G0289: 0-based portrait index, or -1 */
+    /* Original C127 sensor cell accepted by F0172 for this visible wall. */
+    int championPortraitWallCell;
     int doorOrnamentOrdinal;
     /* First projectile graphic index (416-438) from GRAPHICS.DAT, or -1 */
     int firstProjectileGfxIndex;
@@ -17991,6 +17993,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.wallOrnamentOrdinal = -1;
     cell.inscriptionTextIndex = -1;
     cell.championPortraitOrdinal = -1;
+    cell.championPortraitWallCell = -1;
     cell.doorOrnamentOrdinal = -1;
     cell.firstProjectileGfxIndex = -1;
     cell.firstProjectileSubtype = -1;
@@ -18417,6 +18420,8 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                         mirrorReceipt.isFrontMirror) {
                         cell.championPortraitOrdinal =
                             mirrorReceipt.championPortraitRenderIndex;
+                        cell.championPortraitWallCell =
+                            (int)THING_GET_CELL(scanThing);
                         if (mirrorReceipt.wallOrnamentOrdinal > 0) {
                             cell.wallOrnamentOrdinal =
                                 mirrorReceipt.wallOrnamentOrdinal;
@@ -21377,8 +21382,11 @@ static int m11_build_dm1_front_champion_portrait_receipt(
     if (portraitIdx < 0) {
         return 0;
     }
-    if (!DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
-            127, portraitIdx, 0, 2, 2, &frontReceipt)) {
+    if (cell->championPortraitWallCell < 0 ||
+        !DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, portraitIdx, cell->wallOrnamentOrdinal,
+            cell->championPortraitWallCell, cell->championPortraitWallCell,
+            &frontReceipt)) {
         return 0;
     }
     return DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
@@ -21419,9 +21427,13 @@ static int m11_build_dm1_hoc_front_mirror_runtime_decision(
     runtimeInput.wallSquareVisible = 1;
     runtimeInput.sensorType = 127;
     runtimeInput.sensorData = renderReceipt.renderIndex;
-    runtimeInput.ornamentOrdinal = renderReceipt.backingGraphicIndex;
-    runtimeInput.thingCell = 2;
-    runtimeInput.visibleWallCell = 2;
+    /* ReDMCSB DUNGEON.C:2608-2612 keeps the C127 sensor's wall-ornament
+     * ordinal beside its portrait data.  C346 is selected later by the
+     * source-owned render receipt; feeding its GRAPHICS.DAT id back into
+     * F0172 loses the original sensor fact and lets a host route drift. */
+    runtimeInput.ornamentOrdinal = frontCell->wallOrnamentOrdinal;
+    runtimeInput.thingCell = frontCell->championPortraitWallCell;
+    runtimeInput.visibleWallCell = frontCell->championPortraitWallCell;
     runtimeInput.candidatePanelActive = state->candidateMirrorPanelActive;
     runtimeInput.backingAssetAvailable =
         backing && backing->loaded && backing->pixels && backing->width > 0 &&
@@ -21431,47 +21443,7 @@ static int m11_build_dm1_hoc_front_mirror_runtime_decision(
         &runtimeInput, outDecision);
 }
 
-static int m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
-    const DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* runtimeDecision,
-    DM1_V1_StartupHoCRenderConsumerReceipt_PC34* outReceipt) {
-    DM1_V1_StartupHandoffPostLaunchPlan_PC34 postPlan;
-    DM1_V1_StartupHandoffOutcome_PC34 outcome;
-    DM1_V1_StartupHoCFirstFrameReceipt_PC34 firstFrame;
-    if (!runtimeDecision || !outReceipt) {
-        return 0;
-    }
-    memset(outReceipt, 0, sizeof(*outReceipt));
-    outReceipt->zone = -1;
-    outReceipt->row = -1;
-    outReceipt->view_cell = -1;
-    if (!runtimeDecision->valid ||
-        !runtimeDecision->drawChampionPortraitAsWallOverlay) {
-        return 1;
-    }
-    if (!dm1_v1_startup_handoff_post_launch_plan_pc34("dm1", &postPlan) ||
-        !dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
-            ENTRANCE_COMPAT_COMMAND_PATH_ENTER, &outcome) ||
-        !dm1_v1_startup_hoc_first_frame_receipt_pc34(
-            "dm1", &postPlan, &outcome, &firstFrame) ||
-        !runtimeDecision->consumedF0172Sensor ||
-        !runtimeDecision->consumedF0115ThingReceipt) {
-        memset(outReceipt, 0, sizeof(*outReceipt));
-        outReceipt->zone = -1;
-        outReceipt->row = -1;
-        outReceipt->view_cell = -1;
-        return 0;
-    }
-    if (!dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
-            &firstFrame, &runtimeDecision->thingConsumer, outReceipt)) {
-        memset(outReceipt, 0, sizeof(*outReceipt));
-        outReceipt->zone = -1;
-        outReceipt->row = -1;
-        outReceipt->view_cell = -1;
-        return 0;
-    }
-    return 1;
-}
-
+#if 0 /* Superseded: capture proof is not an M11 per-frame draw authority. */
 static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     const M11_GameViewState* state,
     const DM1_V1_StartupHoCRenderConsumerReceipt_PC34* renderReceipt,
@@ -21607,6 +21579,7 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     }
     return 1;
 }
+#endif
 
 static void m11_draw_dm1_front_champion_portrait_host_receipt(
     const M11_GameViewState* state,
@@ -21644,10 +21617,7 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     const DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* runtimeDecision;
     const DM1_V1_ChampionMirrorRenderReceiptPc34* receipt;
     DM1_V1_ChampionMirrorHostDrawReceiptPc34 drawReceipt;
-    DM1_V1_StartupHoCRenderConsumerReceipt_PC34 consumer;
-    DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34 ownership;
     const M11_AssetSlot* slot;
-    int startupOwnershipReady;
     if (!state || !frontCell) {
         return;
     }
@@ -21661,34 +21631,12 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         !receipt->valid || !receipt->drawChampionPortrait) return;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)receipt->backingGraphicIndex);
-    startupOwnershipReady =
-        m11_build_dm1_hoc_front_mirror_render_consumer_receipt(
-            runtimeDecision, &consumer) &&
-        m11_build_dm1_hoc_full_graphics_ownership_receipt(
-            state, &consumer, receipt, &ownership) &&
-        ownership.ready &&
-        ownership.consume_dm1_receipts_only &&
-        ownership.draw_champion_mirror_wall_overlay &&
-        ownership.suppress_false_item_payloads &&
-        ownership.suppress_projectile_payloads &&
-        ownership.suppress_spell_effect_payloads &&
-        ownership.suppress_materialized_item_payload &&
-        ownership.no_m11_fallback_scan &&
-        dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
-            &ownership,
-            receipt,
-            state->candidateMirrorPanelActive,
-            slot && slot->loaded && slot->pixels,
-            &drawReceipt) &&
-        drawReceipt.valid;
-    if (!startupOwnershipReady) {
-        /* ReDMCSB DUNGEON.C:2608-2612 and DUNVIEW.C:3913-3928 are the
-         * per-frame authority for the C127 D1C mirror.  The stricter
-         * startup HoC full-graphics receipt proves release/app capture, but
-         * headless/local M11 rendering still has to consume the DM1 runtime
-         * render decision instead of falling back to the old host scan. */
-        drawReceipt = runtimeDecision->hostDraw;
-    }
+    /* ReDMCSB DUNGEON.C:2608-2612 publishes the C127 fact for this frame
+     * and DUNVIEW.C:3913-3928 consumes its C346/C026 pair.  A release-capture
+     * proof is useful evidence, but cannot be a second renderer selector:
+     * it is unavailable before the first SDL presentation and on headless
+     * hosts.  Draw from the one DM1-owned runtime decision in every host. */
+    drawReceipt = runtimeDecision->hostDraw;
     if (!drawReceipt.valid ||
         !drawReceipt.drawChampionPortrait ||
         !runtimeDecision->suppressHostFallbackVisuals ||
