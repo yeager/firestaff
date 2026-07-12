@@ -343,6 +343,58 @@ static void test_f0115_runtime_summary(void) {
               "runtime summary rejects missing static chain");
 }
 
+static void test_f0115_runtime_instance_summary(void) {
+    unsigned short things[1] = { 0x1001u };
+    struct ProjectileList_Compat projectiles;
+    struct ExplosionList_Compat explosions;
+    DM1_F0115RuntimeInstanceInputPc34 input;
+    DM1_F0115RuntimeSummaryPc34 summary;
+
+    memset(&projectiles, 0, sizeof(projectiles));
+    memset(&explosions, 0, sizeof(explosions));
+    memset(&input, 0, sizeof(input));
+    projectiles.count = 3;
+    projectiles.entries[0].slotIndex = 0;
+    projectiles.entries[0].reserved3 = 1;
+    projectiles.entries[0].mapIndex = 2;
+    projectiles.entries[0].mapX = 4;
+    projectiles.entries[0].mapY = 5;
+    projectiles.entries[1] = projectiles.entries[0];
+    projectiles.entries[1].slotIndex = 1;
+    projectiles.entries[1].mapX = 6;
+    projectiles.entries[2] = projectiles.entries[0];
+    projectiles.entries[2].slotIndex = 2;
+    projectiles.entries[2].reserved3 = 0;
+
+    explosions.count = 3;
+    explosions.entries[0].slotIndex = 0;
+    explosions.entries[0].reserved0 = 1;
+    explosions.entries[0].explosionType = 4;
+    explosions.entries[0].mapIndex = 2;
+    explosions.entries[0].mapX = 4;
+    explosions.entries[0].mapY = 5;
+    explosions.entries[1] = explosions.entries[0];
+    explosions.entries[1].slotIndex = 1;
+    explosions.entries[1].explosionType = -1;
+    explosions.entries[2] = explosions.entries[0];
+    explosions.entries[2].slotIndex = 2;
+    explosions.entries[2].mapY = 6;
+
+    input.thingRefs = things;
+    input.thingCount = 1;
+    input.projectiles = &projectiles;
+    input.explosions = &explosions;
+    input.mapIndex = 2;
+    input.mapX = 4;
+    input.mapY = 5;
+    ASSERT_EQ(dm1_v1_f0115_runtime_instance_summary_pc34(&input, &summary), 1,
+              "F0115 typed runtime instance summary builds");
+    ASSERT_EQ(summary.projectiles, 1,
+              "F0115 typed runtime summary filters inactive and off-square projectiles");
+    ASSERT_EQ(summary.explosions, 1,
+              "F0115 typed runtime summary filters invalid and off-square explosions");
+}
+
 static void test_projectile_sprite_blit_plan(void) {
     DM1_ProjectileSpriteBlitPlan plan;
     printf("  projectile sprite blit plan...\n");
@@ -1197,6 +1249,7 @@ int main(void) {
     test_projectile_renderable_and_effect_particle();
     test_f0115_thing_layer_receipt();
     test_f0115_runtime_summary();
+    test_f0115_runtime_instance_summary();
     test_projectile_sprite_blit_plan();
     test_projectile_flip_flags();
     test_explosion_type_to_aspect();

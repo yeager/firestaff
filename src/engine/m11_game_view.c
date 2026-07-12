@@ -198,6 +198,8 @@ static int m11_projectile_aspect_flip_flags(int aspectIndex,
                                             int relativeCell,
                                             int mapX,
                                             int mapY);
+static int m11_projectile_instance_active(
+    const struct ProjectileInstance_Compat* projectile);
 static int m11_dm1_hoc_menu_route_blocks_normal_input(
     const M11_GameViewState* state);
 static int m11_draw_projectile_sprite(const M11_GameViewState* state,
@@ -5834,14 +5836,12 @@ void M11_GameView_GetCreatureFrontSlotPoint(int coordSet,
     if (outBottomY) *outBottomY = (int)s_creatureFrontCoordSets[depthIndex][coordSet][pointIndex][1];
 }
 
+/* Other M11 combat/update paths still need this cache-slot predicate. The
+ * F0115 viewport route below deliberately delegates its instance discovery
+ * to DM1's typed runtime input instead. */
 static int m11_projectile_instance_active(
-    const struct ProjectileInstance_Compat* p) {
-    return p && p->slotIndex >= 0 && p->reserved3 != 0;
-}
-
-static int m11_explosion_instance_active(
-    const struct ExplosionInstance_Compat* e) {
-    return e && e->slotIndex >= 0 && e->reserved0 != 0;
+    const struct ProjectileInstance_Compat* projectile) {
+    return projectile && projectile->slotIndex >= 0 && projectile->reserved3 != 0;
 }
 
 static void m11_summarize_square_things(const struct GameWorld_Compat* world,
@@ -5850,11 +5850,10 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
                                         int mapY,
                                         DM1_F0115RuntimeSummaryPc34* outSummary) {
     DM1_F0115RuntimeSummaryPc34 summary;
+    DM1_F0115RuntimeInstanceInputPc34 input;
     unsigned short thingRefs[32];
     unsigned short thing = m11_get_viewport_static_first_thing(world, mapIndex, mapX, mapY);
     int thingRefCount = 0;
-    int liveProjectiles = 0;
-    int liveExplosions = 0;
 
     memset(&summary, 0, sizeof(summary));
     while (thing != THING_ENDOFLIST && thing != THING_NONE &&
@@ -5862,38 +5861,18 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
         thingRefs[thingRefCount++] = thing;
         thing = m11_raw_next_thing(world->things, thing);
     }
-    if (world) {
-        int i;
-        for (i = 0; i < world->projectiles.count &&
-                    i < PROJECTILE_LIST_CAPACITY; ++i) {
-            const struct ProjectileInstance_Compat *projectile =
-                &world->projectiles.entries[i];
-            if (m11_projectile_instance_active(projectile) &&
-                projectile->mapIndex == mapIndex &&
-                projectile->mapX == mapX &&
-                projectile->mapY == mapY) {
-                ++liveProjectiles;
-            }
-        }
-        for (i = 0; i < world->explosions.count &&
-                    i < EXPLOSION_LIST_CAPACITY; ++i) {
-            const struct ExplosionInstance_Compat *explosion =
-                &world->explosions.entries[i];
-            if (m11_explosion_instance_active(explosion) &&
-                explosion->explosionType >= 0 &&
-                explosion->mapIndex == mapIndex &&
-                explosion->mapX == mapX &&
-                explosion->mapY == mapY) {
-                ++liveExplosions;
-            }
-        }
-    }
-
     /* ReDMCSB: DUNVIEW.C F0115 layers the static chain before restarting
-     * for live projectile/explosion passes. M11 only follows its world-owned
-     * links and supplies active instance counts; DM1 owns the receipt. */
-    (void)dm1_v1_f0115_runtime_summary_pc34(
-        thingRefs, thingRefCount, liveProjectiles, liveExplosions, &summary);
+     * for live projectile/explosion passes. M11 follows only its private
+     * world links; DM1 owns typed active-instance discovery and the receipt. */
+    memset(&input, 0, sizeof(input));
+    input.thingRefs = thingRefs;
+    input.thingCount = thingRefCount;
+    input.projectiles = world ? &world->projectiles : NULL;
+    input.explosions = world ? &world->explosions : NULL;
+    input.mapIndex = mapIndex;
+    input.mapX = mapX;
+    input.mapY = mapY;
+    (void)dm1_v1_f0115_runtime_instance_summary_pc34(&input, &summary);
 
     if (outSummary) {
         *outSummary = summary;

@@ -72,6 +72,8 @@
 
 #include <stdint.h>
 
+#include "memory_projectile_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -295,6 +297,19 @@ typedef struct DM1_F0115RuntimeSummaryPc34 {
     int doors;
 } DM1_F0115RuntimeSummaryPc34;
 
+/* ReDMCSB DUNVIEW.C F0115 restarts the static thing chain for its live
+ * projectile/explosion passes. M11 supplies its private static chain, while
+ * DM1 owns active-instance filtering against the typed runtime lists. */
+typedef struct DM1_F0115RuntimeInstanceInputPc34 {
+    const unsigned short* thingRefs;
+    int thingCount;
+    const struct ProjectileList_Compat* projectiles;
+    const struct ExplosionList_Compat* explosions;
+    int mapIndex;
+    int mapX;
+    int mapY;
+} DM1_F0115RuntimeInstanceInputPc34;
+
 int dm1_v1_verify_f0115_draw_order(const int* order, int count);
 int dm1_v1_f0115_thing_layer_receipt_pc34(
     const unsigned short* thingRefs,
@@ -315,6 +330,9 @@ int dm1_v1_f0115_runtime_summary_pc34(
     int thingCount,
     int liveProjectileCount,
     int liveExplosionCount,
+    DM1_F0115RuntimeSummaryPc34* outSummary);
+int dm1_v1_f0115_runtime_instance_summary_pc34(
+    const DM1_F0115RuntimeInstanceInputPc34* input,
     DM1_F0115RuntimeSummaryPc34* outSummary);
 
 #ifdef __cplusplus
