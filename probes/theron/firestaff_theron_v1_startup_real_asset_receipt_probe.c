@@ -1107,6 +1107,24 @@ static void check_real_asset_path(void) {
                       "raw Track 02 receipt has 1 initial-candidate user-data window");
                 check(r.user_data_window_overflow_count == 0u,
                       "raw Track 02 receipt has no user-data window overflow");
+                check(r.stage2_dynamic_manifest_valid == 1 &&
+                          r.stage2_dynamic_record ==
+                              (strcmp(c->expected_md5,
+                                      THERON_TRACK02_MD5_US_BIN) == 0
+                                  ? THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US
+                                  : THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP) &&
+                          r.stage2_dynamic_raw_sector > 0u &&
+                          r.stage2_dynamic_user_data_offset > 0u &&
+                          r.stage2_dynamic_user_data_bytes ==
+                              THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES &&
+                          r.stage2_dynamic_header_word0 == 0x00ffu &&
+                          r.stage2_dynamic_header_word1 == 0x0308u &&
+                          r.stage2_dynamic_manifest_bytes ==
+                              THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_BYTES &&
+                          r.stage2_dynamic_manifest_entry_count ==
+                              THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT &&
+                          r.stage2_dynamic_user_data_hash != 0u,
+                      "raw Track 02 receipt carries the traced stage-two manifest handoff");
                 check(r.startup_text_marker_count == 7u,
                       "raw Track 02 receipt has 7 startup text markers");
                 check(r.startup_text_marker_overflow_count == 0u,

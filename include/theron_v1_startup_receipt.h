@@ -118,6 +118,12 @@ typedef enum {
  *                                        exposes the bounded 32x27 payload,
  *                                        including both raw and logical
  *                                        MODE1/2048 user-data offsets
+ *   - stage2_dynamic_*                  : Mednafen-trace-proven first
+ *                                        stage-two CD_READ record and its
+ *                                        bounded manifest envelope.  These
+ *                                        are transport facts only: no entry
+ *                                        is classified as graphics, palette,
+ *                                        object, or dungeon data.
  *   - startup_mirror_*                 : public Soul Room mirror contract
  *                                        from theron_v1_startup_flow.c, so
  *                                        receipt/probe consumers can verify
@@ -223,6 +229,18 @@ typedef struct {
     uint64_t initial_candidate_expected_offset;
     int      initial_candidate_user_data_offset_valid;
     uint64_t initial_candidate_user_data_offset;
+
+    /* ── Track 02 first dynamic stage-two record handoff ─────── */
+    int      stage2_dynamic_manifest_valid;
+    uint32_t stage2_dynamic_record;
+    uint64_t stage2_dynamic_raw_sector;
+    uint64_t stage2_dynamic_user_data_offset;
+    uint64_t stage2_dynamic_user_data_bytes;
+    uint32_t stage2_dynamic_header_word0;
+    uint32_t stage2_dynamic_header_word1;
+    uint64_t stage2_dynamic_manifest_bytes;
+    uint64_t stage2_dynamic_manifest_entry_count;
+    uint32_t stage2_dynamic_user_data_hash;
 
     /* ── startup Soul Room mirror summary ─────────────────────── */
     uint32_t startup_mirror_count;
