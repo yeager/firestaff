@@ -148,6 +148,12 @@ typedef struct {
     int roundtrip_succeeded_count;
     int core_state_match_count;
     int roundtrip_failed_count;
+    /* Files below the corpus root that were deliberately not eligible for
+     * F0435 import, including truncated/non-PC34 payloads. */
+    int rejected_count;
+    /* Stable FNV-1a fingerprint of successful transient F0435->F0433
+     * exports. Zero means no original save completed the round trip. */
+    uint32_t roundtrip_hash;
     int firestaff_manifest_rejected_count;
     int nonoriginal_envelope_rejected_count;
     int first_failure_result;

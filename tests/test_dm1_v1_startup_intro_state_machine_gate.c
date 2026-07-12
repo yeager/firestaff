@@ -1959,6 +1959,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_host_probe_facts.captured_from_release_app = 1;
     hoc_host_probe_facts.observed_c026_portrait_asset = 1;
     hoc_host_probe_facts.observed_c346_mirror_backing_asset = 1;
+    /* This fixture represents the first actual Hall frame after ENTRANCE.C,
+     * not the static bootstrap receipt. */
+    hoc_host_probe_facts.observed_live_hoc_c127_material_request = 1;
+    hoc_host_probe_facts.observed_live_hoc_f0115_material_request = 1;
     hoc_host_probe_facts.observed_host_window_present = 1;
     hoc_host_probe_facts.observed_presented_rgba_capture = 1;
     hoc_host_probe_facts.presented_capture_width = 320;
@@ -3302,6 +3306,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_host_probe_facts.captured_from_release_app = 1;
     hoc_host_probe_facts.observed_c026_portrait_asset = 1;
     hoc_host_probe_facts.observed_c346_mirror_backing_asset = 1;
+    hoc_host_probe_facts.observed_live_hoc_c127_material_request = 1;
+    hoc_host_probe_facts.observed_live_hoc_f0115_material_request = 1;
     hoc_host_probe_facts.observed_host_window_present = 1;
     hoc_host_probe_facts.observed_presented_rgba_capture = 1;
     hoc_host_probe_facts.presented_capture_width = 320;
