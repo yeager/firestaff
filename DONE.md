@@ -65,6 +65,15 @@
   Verification: strict-C11 syntax checks plus hash-verified JP/US original
   media probe, 0 failed.
 
+- 2026-07-12 Theron V1 CUE/M11 loader-chain consumer: strict CUE boot
+  validation now consumes the same stage-two work-RAM transfer and physical
+  `$3800` `BRK $ff` dispatch gates as direct runtime entry after rereading the
+  authenticated original payload. A manifest-shaped sector alone cannot pass
+  the M11 handoff. This does not select an IRQ2 branch or assign manifest,
+  bank, level, object, palette, or later-CD semantics. Verification:
+  strict-C11 boot syntax check plus hash-verified JP/US IPL-chain/stage-three
+  media probe, 0 failed.
+
 - 2026-07-12 DM2 V1 weather GDAT receipt: fail-closed receipt requires
   ENVIRONMENT dtImage fields 64/67/6A/6D/71 and GRAPHICSSET dtWordValue 69
   together; it performs no weather rendering. Verification: fixture PASS.
