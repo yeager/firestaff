@@ -7,6 +7,7 @@
 
 #include "asset_status_m12.h"
 #include "theron_v1_boot.h"
+#include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_track02.h"
 
 #include <stdio.h>
@@ -151,6 +152,7 @@ static void check_real_media(const char *path, const char *md5,
     char actual_md5[33];
     Theron_Track02IplLoaderReceipt receipt;
     Theron_Track02Stage2DynamicPayloadReceipt dynamic_payload;
+    Theron_V1Stage2RuntimeHandoff runtime_handoff;
 
     if (!path) return;
     file = fopen(path, "rb");
@@ -191,6 +193,16 @@ static void check_real_media(const char *path, const char *md5,
                   THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT &&
               dynamic_payload.nonzero_byte_count > 0u && dynamic_payload.user_data_hash != 0u,
           "real Track 02 dynamic payload manifest receipt");
+    check(theron_v1_stage2_runtime_handoff_from_dynamic_payload(
+              &dynamic_payload, &runtime_handoff) && runtime_handoff.valid &&
+              runtime_handoff.variant == variant &&
+              runtime_handoff.track02_record == dynamic_payload.track02_record &&
+              runtime_handoff.load_address == 0x3800u &&
+              runtime_handoff.entry_address == 0x3800u &&
+              runtime_handoff.execute_after_load &&
+              runtime_handoff.manifest_entries_semantically_unbound &&
+              runtime_handoff.user_data_hash == dynamic_payload.user_data_hash,
+          "real Track 02 dynamic record binds only a stage-three executable handoff");
     free(data);
 }
 

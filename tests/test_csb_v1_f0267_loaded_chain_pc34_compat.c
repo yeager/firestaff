@@ -1,4 +1,5 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -19,6 +20,7 @@ int main(void)
     struct DungeonWeapon_Compat weapons[1];
     struct DungeonProjectile_Compat projectiles[1];
     struct DungeonTeleporter_Compat teleporters[1];
+    struct DungeonSensor_Compat sensors[1];
     unsigned char raw_weapon[4];
     unsigned char raw_projectile[8];
     struct F0267ThingMoveRequestPc34Compat request;
@@ -26,6 +28,7 @@ int main(void)
     unsigned short weapon = (unsigned short)(THING_TYPE_WEAPON << 10);
     unsigned short projectile = (unsigned short)(THING_TYPE_PROJECTILE << 10);
     unsigned short teleporter = (unsigned short)(THING_TYPE_TELEPORTER << 10);
+    unsigned short sensor = (unsigned short)(THING_TYPE_SENSOR << 10);
     int i;
 
     memset(&world, 0, sizeof(world));
@@ -38,6 +41,7 @@ int main(void)
     memset(weapons, 0, sizeof(weapons));
     memset(projectiles, 0, sizeof(projectiles));
     memset(teleporters, 0, sizeof(teleporters));
+    memset(sensors, 0, sizeof(sensors));
     memset(raw_weapon, 0, sizeof(raw_weapon));
     memset(raw_projectile, 0, sizeof(raw_projectile));
 
@@ -52,6 +56,7 @@ int main(void)
     square_data[0][1 * 3 + 0] = (DUNGEON_ELEMENT_TELEPORTER << 5) | 0x18;
     square_data[1][1 * 3 + 1] = (DUNGEON_ELEMENT_PIT << 5) | 0x08;
     square_data[2][1 * 3 + 1] = (DUNGEON_ELEMENT_STAIRS << 5) | 0x10;
+    square_data[3][0] = DUNGEON_ELEMENT_DOOR << 5;
     /* DUNGEON.DAT stores FirstThing entries only for squares carrying the
      * thing-list flag; this fixture must use the same packed ordering. */
     square_data[0][0 * 3 + 0] |= DUNGEON_SQUARE_MASK_THING_LIST;
@@ -59,6 +64,9 @@ int main(void)
     square_data[3][2 * 3 + 1] |= DUNGEON_SQUARE_MASK_THING_LIST;
     first_things[0] = weapon;
     first_things[1] = teleporter;
+    /* The open stairs byte carries bit 0x10 in this native-format fixture,
+     * so its packed square-list slot precedes the final level-3 square. */
+    first_things[3] = sensor;
     weapons[0].next = THING_ENDOFLIST;
     weapons[0].type = 1;
     teleporters[0].next = THING_ENDOFLIST;
@@ -66,6 +74,13 @@ int main(void)
     teleporters[0].targetMapIndex = 1;
     teleporters[0].targetMapX = 1;
     teleporters[0].targetMapY = 1;
+    sensors[0].next = THING_ENDOFLIST;
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_OBJECT;
+    sensors[0].sensorData = 1;
+    sensors[0].effect = DM1_EFFECT_TOGGLE;
+    sensors[0].value = 3;
+    sensors[0].targetMapX = 0;
+    sensors[0].targetMapY = 0;
     raw_weapon[0] = 0xfe;
     raw_weapon[1] = 0xff;
     raw_weapon[2] = 1;
@@ -82,6 +97,8 @@ int main(void)
     things.projectileCount = 1;
     things.teleporters = teleporters;
     things.teleporterCount = 1;
+    things.sensors = sensors;
+    things.sensorCount = 1;
     things.rawThingData[THING_TYPE_WEAPON] = raw_weapon;
     things.thingCounts[THING_TYPE_WEAPON] = 1;
     things.rawThingData[THING_TYPE_PROJECTILE] = raw_projectile;
@@ -89,6 +106,8 @@ int main(void)
     things.loaded = 1;
     world.dungeon = &dungeon;
     world.things = &things;
+    world.gameTick = 100u;
+    F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick);
 
     memset(&request, 0, sizeof(request));
     request.thing = weapon;
@@ -115,6 +134,17 @@ int main(void)
           "F0267 unlinks the source and links the final destination only");
     CHECK(raw_weapon[0] == 0xfe && raw_weapon[1] == 0xff,
           "F0267 persists the terminal raw Generic.Next word after relink");
+    CHECK(result.destinationSensorPasses == 1 && result.sensorDispatches == 1 &&
+          world.pendingSensorEffects.count == 1,
+          "F0267 evaluates the final-square C004 sensor and publishes its F0276 receipt");
+    CHECK(world.timeline.count == 1 &&
+          world.timeline.events[0].kind == TIMELINE_EVENT_SQUARE_STATE &&
+          world.timeline.events[0].fireAtTick == 103u &&
+          world.timeline.events[0].mapIndex == 3 &&
+          world.timeline.events[0].mapX == 0 && world.timeline.events[0].mapY == 0 &&
+          world.timeline.events[0].aux0 == DM1_EVENT_DOOR &&
+          world.timeline.events[0].aux1 == DM1_EFFECT_TOGGLE,
+          "F0267 routes the F0276 remote result to ordered F0268 door state event");
 
     /* C14 is levitating, but F0267 still applies its relative teleporter
      * cell rotation before it appends to the target's live list. */
