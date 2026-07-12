@@ -965,6 +965,16 @@ typedef struct {
 
 typedef struct {
     int valid;
+    uint32_t table_hash;
+    uint32_t row_count;
+    uint32_t placement_hash;
+    uint32_t placement_count;
+    uint32_t rotated_cell_mask;
+    uint32_t max_stretched_size;
+} DM2_V1_InterfaceRect14HostReceipt;
+
+typedef struct {
+    int valid;
     int draw_startup_menu;
     int command_count;
     int selected_row;
@@ -1008,6 +1018,8 @@ typedef struct {
     int first_hud_frame_ready;
     int startup_hud_handoff_ready;
     int runtime_handoff_ready;
+    int interface_rect14_host_ready;
+    DM2_V1_InterfaceRect14HostReceipt interface_rect14;
     int m11_host_view_ready;
     const char *status_scope;
     const char *status;
@@ -1394,6 +1406,32 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
 int dm2_v1_boot_interface_palette(DM2_V1_BootProfile *profile,
                                   DM2_V1_InterfacePalette *out_palette);
 
+/* skproject LOAD_GDAT_INTERFACE_00_02 materialises dt07/2 as a group-count
+ * byte, one length byte per group, one primary and one secondary variable
+ * span per group, then a command tail. Storage is owned by graphics_dat. */
+#define DM2_V1_INTERFACE_ACTION_GROUP_MAX 255u
+typedef struct {
+    uint8_t length;
+    uint32_t primary_offset;
+    uint32_t secondary_offset;
+} DM2_V1_InterfaceActionGroup;
+
+typedef struct {
+    int valid;
+    const uint8_t *raw;
+    uint32_t raw_size;
+    uint32_t hash;
+    uint32_t group_count;
+    uint32_t entry_count;
+    uint32_t tail_offset;
+    uint32_t tail_size;
+    DM2_V1_InterfaceActionGroup groups[DM2_V1_INTERFACE_ACTION_GROUP_MAX];
+} DM2_V1_InterfaceActionTable;
+
+int dm2_v1_boot_interface_action_table(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_InterfaceActionTable *out_table);
+
 /* skproject LOAD_GDAT_INTERFACE_00_0A table. Storage remains owned by the
  * boot graphics handle and is valid while profile->graphics_dat is alive. */
 int dm2_v1_boot_interface_rect14_table(
@@ -1401,6 +1439,12 @@ int dm2_v1_boot_interface_rect14_table(
     const uint8_t **out_rows,
     uint32_t *out_row_count,
     uint32_t *out_hash);
+
+/* Host-facing dt07/0x0A receipt. It carries only proven placement metadata;
+ * pixel decode and drawing remain owned by the original GDAT material path. */
+int dm2_v1_boot_interface_rect14_host_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_InterfaceRect14HostReceipt *out_receipt);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */
