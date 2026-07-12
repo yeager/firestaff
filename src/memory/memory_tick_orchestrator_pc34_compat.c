@@ -76,7 +76,8 @@ static int orch_f0249_move_non_group_square_things_compat(
     int mapY);
 static int orch_dispatch_wall_event_f0248_compat(
     struct GameWorld_Compat* world,
-    const struct TimelineEvent_Compat* ev);
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result);
 static int orch_dispatch_corridor_event_f0245_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
@@ -3369,7 +3370,7 @@ static int orch_dispatch_square_state_event_compat(
     case DM1_EVENT_CORRIDOR:
         return orch_dispatch_corridor_event_f0245_compat(world, ev, result);
     case DM1_EVENT_WALL:
-        return orch_dispatch_wall_event_f0248_compat(world, ev);
+        return orch_dispatch_wall_event_f0248_compat(world, ev, result);
     case DM1_EVENT_DOOR: {
         int resolvedEffect = -1;
         struct TimelineEvent_Compat animation;
@@ -4046,13 +4047,45 @@ static int orch_f0248_consume_new_object_launcher_compat(
     return applied;
 }
 
+/* ReDMCSB MOVESENS.C F0269/F0270:1043-1097 awards C10 local-effect
+ * Steal XP through F0304. Wall events always carry a real cell, so F0270
+ * selects G0411_i_LeaderIndex rather than splitting the award across party
+ * members. Firestaff's lifecycle state is the F0304 owner; ChampionState
+ * persists only the four base skills, so mirror Ninja while keeping hidden
+ * Steal experience in the lifecycle's 20-skill source state. */
+static int orch_f0248_award_steal_skill_xp_compat(
+    struct GameWorld_Compat* world,
+    int eventCell,
+    struct TickResult_Compat* result)
+{
+    int championIndex;
+    struct ChampionState_Compat* champion;
+    struct ChampionLifecycleState_Compat* lifecycleChampion;
+
+    if (!world || (eventCell & 3) != eventCell) return 0;
+    championIndex = world->party.activeChampionIndex;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champion = &world->party.champions[championIndex];
+    lifecycleChampion = &world->lifecycle.champions[championIndex];
+    if (!champion->present) return 0;
+    (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
+        lifecycleChampion, DM1_SKILL_IDX_STEAL, 300,
+        orch_cmd_attack_map_difficulty_compat(world), world->gameTick,
+        world->lifecycle.lastCreatureAttackTime, NULL, NULL);
+    champion->skillExperience[DM1_SKILL_IDX_NINJA] =
+        (unsigned long)lifecycleChampion->skills20[DM1_SKILL_IDX_NINJA].experience;
+    emit(result, EMIT_XP_AWARD, championIndex, DM1_SKILL_IDX_STEAL, 300, 1);
+    return 1;
+}
+
 /* ReDMCSB TIMELINE.C F0248:1136-1350 walks the complete wall list in
  * order, changes only TextStrings on the event cell, evaluates C005/C006,
  * consumes C007/C009 F0167 materialized, C008/C010 explosion, and C014/C015
  * live-object launchers, then calls F0271 once after the batch. */
 static int orch_dispatch_wall_event_f0248_compat(
     struct GameWorld_Compat* world,
-    const struct TimelineEvent_Compat* ev)
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
 {
     int squareIndex;
     unsigned short thing;
@@ -4149,7 +4182,10 @@ static int orch_dispatch_wall_event_f0248_compat(
                     applied = 1;
                 }
                 if (trigger.triggered && trigger.isLocal &&
-                    trigger.localEffectValue != DM1_EFFECT_ADD_300XP_STEAL_SKILL) {
+                    trigger.localEffectValue == DM1_EFFECT_ADD_300XP_STEAL_SKILL) {
+                    applied |= orch_f0248_award_steal_skill_xp_compat(
+                        world, ev->cell, result);
+                } else if (trigger.triggered && trigger.isLocal) {
                     /* F0270 stores the last non-XP local effect. */
                     rotationEffect = trigger.localEffectValue;
                 }
