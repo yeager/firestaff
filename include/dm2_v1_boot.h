@@ -1432,6 +1432,13 @@ int dm2_v1_boot_interface_action_table(
     DM2_V1_BootProfile *profile,
     DM2_V1_InterfaceActionTable *out_table);
 
+/* skproject QUERY_FONT reads this six-row, 128-glyph dt07/0 table directly.
+ * Storage remains boot-owned and is valid while profile->graphics_dat lives. */
+int dm2_v1_boot_interface_font_table(
+    DM2_V1_BootProfile *profile,
+    const uint8_t **out_rows,
+    uint32_t *out_hash);
+
 /* skproject LOAD_GDAT_INTERFACE_00_0A table. Storage remains owned by the
  * boot graphics handle and is valid while profile->graphics_dat is alive. */
 int dm2_v1_boot_interface_rect14_table(

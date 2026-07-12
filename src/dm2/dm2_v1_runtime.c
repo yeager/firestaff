@@ -2138,6 +2138,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     const uint8_t *rect14_rows = NULL;
     uint32_t rect14_row_count = 0u;
     uint32_t rect14_hash = 0u;
+    const uint8_t *font_rows = NULL;
+    uint32_t font_hash = 0u;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
 
     if (!framebuffer || fb_stride <= 0 ||
@@ -2216,6 +2218,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_interface_palette_ready,
         rt->gdat_interface_palette_hash,
         rt->gdat_interface_palette16);
+    /* skproject LOAD_GDAT_INTERFACE_00_02 loads dt07/0 before
+     * DRAW_PLAYER_3STAT_HEALTH_BAR and DRAW_STRING consume it.  Pass only
+     * the exact boot-owned six-row table; a missing table leaves text absent
+     * and the source-material gate rejects the frame. */
+    if (dm2_v1_boot_interface_font_table(
+            rt->boot, &font_rows, &font_hash)) {
+        dm2_v1_viewport_set_gdat_interface_font(
+            &viewport, font_rows, font_hash);
+    }
     memset(&rect14_host, 0, sizeof(rect14_host));
     if (dm2_v1_boot_interface_rect14_host_receipt(rt->boot, &rect14_host) &&
         rect14_host.valid &&
@@ -2479,6 +2490,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_interface_palette_ready;
     g_dm2_frame_ownership.gdat_interface_palette_consumed =
         viewport.gdat_interface_palette_consumed_count;
+    g_dm2_frame_ownership.gdat_interface_font_host_ready =
+        font_rows != NULL && font_hash != 0u;
+    g_dm2_frame_ownership.gdat_interface_font_consumed =
+        viewport.gdat_interface_font_consumed_count;
+    g_dm2_frame_ownership.gdat_interface_font_hash = font_hash;
     g_dm2_frame_ownership.gdat_interface_rect14_host_ready =
         rect14_host.valid;
     g_dm2_frame_ownership.gdat_interface_rect14_consumed =
