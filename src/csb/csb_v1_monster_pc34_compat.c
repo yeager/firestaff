@@ -437,32 +437,59 @@ static int csb_v1_dsa_filter_run(CSB_V1_DSAFilterRuntime *runtime,
 int csb_v1_dsa_filter_attack_preprocess_live(
     CSB_V1_AttackParameters *params, CSB_V1_DSAFilterRuntime *runtime)
 {
-    int p[9];
+    /* CSBWin Monster.cpp:916-938 defines ATTACK_PARAMETERES as twenty
+     * consecutive 32-bit values. Monster.cpp:1164-1167 copies that entire
+     * object through pDSAparameters+1 before ProcessDSAFilter and copies it
+     * back afterwards. Do not use Firestaff's field declaration order here:
+     * it is an API struct, whereas this array is the source DSA ABI. */
+    int p[20];
     CSB_V1_AttackParameters candidate;
 
     if (!params || !runtime) return 0;
     candidate = *params;
     p[0] = candidate.monsterID;
     p[1] = candidate.monsterType;
-    p[2] = candidate.heroToDamage;
-    p[3] = candidate.supressPoison;
-    p[4] = candidate.missileType;
-    p[5] = candidate.missileRange;
-    p[6] = candidate.missileDamage;
-    p[7] = candidate.missileDecayRate;
-    p[8] = candidate.directionToParty;
+    p[2] = candidate.monsterIndex;
+    p[3] = candidate.monsterLevel;
+    p[4] = candidate.monsterX;
+    p[5] = candidate.monsterY;
+    p[6] = candidate.monsterPos;
+    p[7] = candidate.missileOriginPosition;
+    p[8] = candidate.missileRange;
+    p[9] = candidate.missileDamage;
+    p[10] = candidate.missileDecayRate;
+    p[11] = candidate.directionToParty;
+    p[12] = candidate.distanceToParty;
+    p[13] = candidate.missileType;
+    p[14] = candidate.monsterShouldLaunchMissile;
+    p[15] = candidate.monsterShouldSteal;
+    p[16] = candidate.heroToDamage;
+    p[17] = candidate.attackSoundOrdinal;
+    p[18] = candidate.disableTime;
+    p[19] = candidate.supressPoison;
     if (!csb_v1_dsa_filter_run(runtime, runtime->attack_filter_dsa_id,
             runtime->attack_filter_state, runtime->attack_filter_action,
             p, (int)(sizeof(p) / sizeof(p[0])), NULL)) return 0;
     candidate.monsterID = p[0];
     candidate.monsterType = p[1];
-    candidate.heroToDamage = p[2];
-    candidate.supressPoison = (int16_t)p[3];
-    candidate.missileType = p[4];
-    candidate.missileRange = p[5];
-    candidate.missileDamage = p[6];
-    candidate.missileDecayRate = p[7];
-    candidate.directionToParty = p[8];
+    candidate.monsterIndex = p[2];
+    candidate.monsterLevel = p[3];
+    candidate.monsterX = p[4];
+    candidate.monsterY = p[5];
+    candidate.monsterPos = p[6];
+    candidate.missileOriginPosition = p[7];
+    candidate.missileRange = p[8];
+    candidate.missileDamage = p[9];
+    candidate.missileDecayRate = p[10];
+    candidate.directionToParty = p[11];
+    candidate.distanceToParty = p[12];
+    candidate.missileType = p[13];
+    candidate.monsterShouldLaunchMissile = p[14];
+    candidate.monsterShouldSteal = p[15];
+    candidate.heroToDamage = p[16];
+    candidate.attackSoundOrdinal = p[17];
+    candidate.disableTime = p[18];
+    candidate.supressPoison = (int16_t)p[19];
     *params = candidate;
     return 1;
 }
