@@ -160,7 +160,7 @@ static void test_archenemy_ignores_freeze(void) {
 }
 
 /* =========================================================
- *  Test 4b: Archenemy approach uses F0204 double movement
+ *  Test 4b: Archenemy does not double a successful F0202 move
  * ========================================================= */
 static void test_archenemy_approach_double_move(void) {
     struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
@@ -199,12 +199,12 @@ static void test_archenemy_approach_double_move(void) {
               "archenemy_double: approach moves");
     EXPECT_EQ(result.moveDirection, 1,
               "archenemy_double: moves east toward party");
-    EXPECT_EQ(result.moveDestMapX, ctx.currentGroupMapX + 2,
-              "archenemy_double: F0204 target is two squares east");
+    EXPECT_EQ(result.moveDestMapX, ctx.currentGroupMapX + 1,
+              "archenemy_double: successful F0202 move remains one square");
     EXPECT_EQ(result.moveDestMapY, ctx.currentGroupMapY,
               "archenemy_double: Y unchanged for east double move");
-    EXPECT_EQ(result.archenemyDoubleMove, 1,
-              "archenemy_double: F0204 double-move flag set");
+    EXPECT_EQ(result.archenemyDoubleMove, 0,
+              "archenemy_double: F0204 is not entered after a successful F0202 move");
 }
 
 /* =========================================================

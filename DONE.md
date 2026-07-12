@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0204 movement correction: archenemy movement no longer
+  doubles an already successful F0202 one-square route. The second-square
+  branch remains separate, as in ReDMCSB GROUP.C. Verification: DM1 creature
+  AI 279/279.
+
 - 2026-07-12 DM1/CSB/DM2/Nexus runtime material pass: DM1 F0202/F0813 now
   consumes typed destination facts in ReDMCSB source order; CSB validates the
   C017/C040 HUD pair before either original-data blit; DM2 blocks custom
