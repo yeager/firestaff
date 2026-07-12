@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 M12 20-language and settings l10n pass: added Indonesian (`id`)
+  as the twentieth launcher locale with POSIX `LC_ALL`/`LC_MESSAGES`/`LANG`
+  detection, PO catalog, font fallback, and correct modern/legacy flag marker.
+  The modern settings renderer now reads labels and values solely through the
+  shared PO-backed settings contract instead of bypassing translations with
+  duplicate hard-coded labels. Verification: l10n test passed; language layout
+  63/63; settings mouse hit test 113/113; menu mouse probe 14/14.
+
 - 2026-07-12 M12 complete settings catalogue: the modern renderer, keyboard
   navigation, and mouse hit-testing now use one shared six-tab row catalogue.
   Every displayed functional setting is clickable, including presentation,

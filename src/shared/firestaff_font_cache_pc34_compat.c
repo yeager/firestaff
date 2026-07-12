@@ -11,7 +11,7 @@
  * cache is a stub that returns NULL for all lookups, and the
  * existing bitmap-glyph path is used.
  *
- * Source-locked to the 19-language l10n set in
+ * Source-locked to the 20-language l10n set in
  * include/firestaff_l10n.h.  Fonts are looked up by language
  * code, not by user preference.
  */
@@ -54,6 +54,7 @@ static const LangFontEntry kLangFontTable[] = {
     {FS_LANG_FI, "fi", "NotoSans-fi.ttf",          "Latin"},
     {FS_LANG_HU, "hu", "NotoSans-hu.ttf",          "Latin"},
     {FS_LANG_TR, "tr", "NotoSans-tr.ttf",          "Latin"},
+    {FS_LANG_ID, "id", "NotoSans-Regular.ttf",     "Latin"},
 };
 
 static const size_t kLangFontTableCount =

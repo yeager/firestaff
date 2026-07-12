@@ -9,7 +9,7 @@
  * keeps them resident until shutdown.
  *
  * Font selection per language:
- *   - FS_LANG_EN/SV/DE/FR/ES/IT/PT/NL/PL/CS/DA/NO/FI/HU/TR
+ *   - FS_LANG_EN/SV/DE/FR/ES/IT/PT/NL/PL/CS/DA/NO/FI/HU/TR/ID
  *     Latin Extended: assets/fonts/NotoSans-<lang>.ttf if
  *     present, else system Arial Unicode, else DejaVu Sans
  *   - FS_LANG_RU  Cyrillic: assets/fonts/NotoSans-Regular.ttf

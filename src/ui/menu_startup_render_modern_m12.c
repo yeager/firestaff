@@ -747,6 +747,8 @@ static void draw_language_flag(M12_ModernCanvas* c, int x, int y, int w, int h,
     } else if (language_code_is(code, "TR")) {
         fill_rect(c, x + 2, y + 2, w - 4, h - 4, red);
         fill_rect(c, x + w / 2 - 10, y + h / 2 - 7, 10, 14, white);
+    } else if (language_code_is(code, "ID")) {
+        fill_rect(c, x + 2, y + 2, w - 4, (h - 4) / 2, red);
     } else {
         fill_rect(c, x + 2, y + 2, w - 4, h - 4, blue);
         fill_rect(c, x + 2, y + 2, w - 4, h / 3, red);
@@ -1529,35 +1531,15 @@ static void draw_setting_row(M12_ModernCanvas* c, int x, int y, int w,
     draw_text(c, x + w - 20 - vw, y + 14, value, &V);
 }
 
-static void format_settings_path_value(const M12_StartupMenuState* state,
-                                       char* out,
-                                       size_t outSize) {
-    const char* dir = M12_StartupMenu_GetVisibleDataDir(state);
-    size_t len;
-    enum { KEEP = 44 };
-    if (!out || outSize == 0U) {
-        return;
-    }
-    if (!dir || dir[0] == '\0') {
-        snprintf(out, outSize, "%s", "BROWSE...");
-        return;
-    }
-    len = strlen(dir);
-    if (len <= KEEP || state->settings.streamerMode) {
-        snprintf(out, outSize, "%s", dir);
-    } else {
-        snprintf(out, outSize, "...%s", dir + len - KEEP);
-    }
-}
-
-static const char* modern_settings_tab_label(int tab) {
+static const char* modern_settings_tab_label(const M12_StartupMenuState* state,
+                                             int tab) {
     static const char* labels[M12_SETTINGS_TAB_COUNT] = {
         "GAME", "GRAPHICS", "CONTROLS", "AUDIO", "ACCESSIBILITY", "ONLINE"
     };
     if (tab < 0 || tab >= M12_SETTINGS_TAB_COUNT) {
         tab = M12_SETTINGS_TAB_GAME;
     }
-    return labels[tab];
+    return M12_StartupMenu_Translate(state, labels[tab]);
 }
 
 static const int* modern_settings_rows_for_tab(int tab, int* outCount) {
@@ -1580,7 +1562,7 @@ static void draw_modern_settings_tabs(M12_ModernCanvas* c,
                           selected ? rgb(42, 38, 74) : rgb(16, 18, 38));
         stroke_rounded_rect(c, x, tabY, tabW - 8, tabH, 8,
                             selected ? COLOR_ACCENT() : COLOR_PANEL_EDGE());
-        draw_text(c, x + 14, tabY + 9, modern_settings_tab_label(i),
+        draw_text(c, x + 14, tabY + 9, modern_settings_tab_label(state, i),
                   selected ? &tabTextSel : &tabText);
     }
 }
@@ -1591,7 +1573,9 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
     draw_text(c, 160, 130, fs_l10n_get(FS_STR_SETTINGS), &h);
     ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_text(c, 160, 210, "CHANGES ARE PERSISTED IMMEDIATELY", &sub);
+    draw_text(c, 160, 210,
+              M12_StartupMenu_Translate(state, "CHANGES ARE PERSISTED IMMEDIATELY"),
+              &sub);
 
     int panelX = 96;
     int panelY = 260;
@@ -1599,50 +1583,6 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     int panelH = 800;
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
-
-    static const char* grf[]   = {"ORIGINAL", "ORIGINAL + FILTERS", "ORIGINAL 10X UPSCALE", "MODERN GRAPHICS"};
-    static const char* win[]   = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
-    char dataDir[96];
-    char sessionTimer[24];
-    char raEnabledValue[56];
-    int li = state->settings.languageIndex;
-    int gi = state->settings.graphicsIndex;
-    int wi = state->settings.windowModeIndex;
-    int sessionMinutes = M12_StartupMenu_SessionTimerLimitMinutes(state);
-    const char* raUserValue = state->settings.retroAchievementsUsername[0]
-                                  ? state->settings.retroAchievementsUsername
-                                  : "NOT SET";
-    const char* raTokenValue = M12_StartupMenu_GetRetroAchievementsTokenValue(state);
-    const char* raEndpointValue = M12_StartupMenu_GetRetroAchievementsEndpointValue(state);
-    if (li < 0) li = 0;
-    if (li >= M12_StartupMenu_GetLanguageCount()) li = 0;
-    if (gi < 0) gi = 0;
-    if (gi > 3) gi = 3;
-    if (wi < 0) wi = 0;
-    if (wi > 2) wi = 2;
-    format_settings_path_value(state, dataDir, sizeof(dataDir));
-    if (state->settings.retroAchievementsEnabled) {
-        snprintf(raEnabledValue,
-                 sizeof(raEnabledValue),
-                 "ON / %s",
-                 M12_StartupMenu_GetRetroAchievementsStatusValue(state));
-    } else {
-        snprintf(raEnabledValue, sizeof(raEnabledValue), "%s", "OFF");
-    }
-    if (sessionMinutes <= 0) {
-        snprintf(sessionTimer, sizeof(sessionTimer), "%s", "OFF");
-    } else {
-        snprintf(sessionTimer, sizeof(sessionTimer), "%d MIN", sessionMinutes);
-    }
-    if (M12_StartupMenu_TextEditActive(state)) {
-        if (state->settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RA_USERNAME) {
-            raUserValue = state->textEditBuffer[0] ? state->textEditBuffer : "EDITING";
-        } else if (state->settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RA_TOKEN) {
-            raTokenValue = "EDITING";
-        } else if (state->settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT) {
-            raEndpointValue = state->textEditBuffer[0] ? state->textEditBuffer : "EDITING";
-        }
-    }
 
     int rowX = panelX + 36;
     int rowW = panelW - 72;
@@ -1656,97 +1596,9 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
         if (row == M12_STARTUP_SETTINGS_ROW_LANGUAGE) {
             draw_language_button(c, rowX, y, rowW, state,
                                  state->settingsSelectedIndex == row);
-        } else if (row == M12_STARTUP_SETTINGS_ROW_GRAPHICS) {
-            draw_setting_row(c, rowX, y, rowW, "GRAPHICS MODE", grf[gi],
-                             state->settingsSelectedIndex == row);
-        } else if (row == M12_STARTUP_SETTINGS_ROW_WINDOW_MODE) {
-            draw_setting_row(c, rowX, y, rowW, "WINDOW MODE", win[wi],
-                             state->settingsSelectedIndex == row);
-        } else if (row == M12_STARTUP_SETTINGS_ROW_SMOOTH_TURN_PAN) {
-            draw_setting_row(c, rowX, y, rowW, "SMOOTH TURN PAN",
-                             state->settings.dm1V2SmoothTurnPanEnabled ? "ON" : "OFF",
-                             state->settingsSelectedIndex == row);
-        } else if (row == M12_STARTUP_SETTINGS_ROW_DATA_DIR) {
-            draw_setting_row(c, rowX, y, rowW, "DATA DIRECTORY", dataDir,
-                             state->settingsSelectedIndex == row);
-        } else if (row == M12_STARTUP_SETTINGS_ROW_DATA_STATUS) {
-            draw_setting_row(c, rowX, y, rowW, "ORIGINAL DATA",
-                             M12_StartupMenu_GetDataStatusValue(state),
-                             state->settingsSelectedIndex == row);
-        } else if (row == M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS) {
-            draw_setting_row(c, rowX, y, rowW, "RETROACHIEVEMENTS",
-                             raEnabledValue,
-                             state->settingsSelectedIndex == row);
-        } else if (row == M12_STARTUP_SETTINGS_ROW_RA_HARDCORE) {
-            draw_setting_row(c, rowX, y, rowW, "RETROACHIEVEMENTS HARDCORE",
-                             state->settings.retroAchievementsHardcore ? "ON" : "OFF",
-                             state->settingsSelectedIndex == row);
-        } else if (row == M12_STARTUP_SETTINGS_ROW_RA_USERNAME) {
-            draw_setting_row(c, rowX, y, rowW, "RETROACHIEVEMENTS USER",
-                             raUserValue,
-                             state->settingsSelectedIndex == row);
-        } else if (row == M12_STARTUP_SETTINGS_ROW_RA_TOKEN) {
-            draw_setting_row(c, rowX, y, rowW, "RETROACHIEVEMENTS API TOKEN",
-                             raTokenValue,
-                             state->settingsSelectedIndex == row);
-        } else if (row == M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT) {
-            draw_setting_row(c, rowX, y, rowW, "RETROACHIEVEMENTS SERVER",
-                             raEndpointValue,
-                             state->settingsSelectedIndex == row);
-        } else if (row == M12_STARTUP_SETTINGS_ROW_SESSION_TIMER) {
-            draw_setting_row(c, rowX, y, rowW, "SESSION TIMER", sessionTimer,
-                             state->settingsSelectedIndex == row);
         } else {
-            char value[32];
             const char* label = M12_StartupMenu_GetSettingsLabel(state, row);
             const char* shown = M12_StartupMenu_GetSettingsValue(state, row);
-            if (row == 10) {
-                static const char* inputModes[] = { "KEYBOARD", "MOUSE", "TOUCH", "GAMEPAD" };
-                int idx = state->settings.inputModeIndex;
-                if (idx < 0 || idx > 3) idx = 0;
-                label = "INPUT MODE";
-                shown = inputModes[idx];
-            } else if (row == 12) {
-                static const char* touchModes[] = { "AUTO", "ON", "OFF" };
-                int idx = state->settings.touchControlsIndex;
-                if (idx < 0 || idx > 2) idx = 0;
-                label = "TOUCH CONTROLS";
-                shown = touchModes[idx];
-            } else if (row == 13) {
-                static const char* moveModes[] = { "CLASSIC", "MODERN" };
-                int idx = state->settings.movementModeIndex;
-                if (idx < 0 || idx > 1) idx = 0;
-                label = "MOVEMENT MODE";
-                shown = moveModes[idx];
-            } else if (row == 19) {
-                snprintf(value, sizeof(value), "%d%%", state->settings.audioMasterVolume);
-                label = "MASTER VOLUME";
-                shown = value;
-            } else if (row == 20) {
-                snprintf(value, sizeof(value), "%d%%", state->settings.audioMusicVolume);
-                label = "MUSIC VOLUME";
-                shown = value;
-            } else if (row == 21) {
-                snprintf(value, sizeof(value), "%d%%", state->settings.audioSfxVolume);
-                label = "SFX VOLUME";
-                shown = value;
-            } else if (row == 22) {
-                label = "MUTED";
-                shown = state->settings.audioMuted ? "YES" : "NO";
-            } else if (row == 23) {
-                snprintf(value, sizeof(value), "%d%%", state->settings.fontScale);
-                label = "FONT SCALE";
-                shown = value;
-            } else if (row == 24) {
-                label = "HIGH CONTRAST";
-                shown = state->settings.highContrast ? "ON" : "OFF";
-            } else if (row == 25) {
-                label = "COLORBLIND MODE";
-                shown = state->settings.colorblindMode ? "ON" : "OFF";
-            } else if (row == 26) {
-                label = "AUTO PAUSE";
-                shown = state->settings.autoPause ? "ON" : "OFF";
-            }
             draw_setting_row(c, rowX, y, rowW, label, shown,
                              state->settingsSelectedIndex == row);
         }

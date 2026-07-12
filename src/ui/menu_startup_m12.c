@@ -366,7 +366,7 @@ static const M12_ResolutionSize g_resolutionSizes[M12_RES_COUNT] = {
 static const char* g_patchModes[] = {_("ORIGINAL"), _("PATCHED")};
 /* UI language cycle.  Order = display order in the LANGUAGE row.
  * Codes are also used to resolve `po/startup-menu.<code>.po` at runtime.
- * Codes match the second column of the dm1.<lang>.po 19-language list.
+ * Codes match the second column of the dm1.<lang>.po locale list.
  *
  * Fallback behaviour (see m12_resolve_catalog_path):
  *   - localeIndex 0 (EN) and missing .po files fall through to the English
@@ -377,13 +377,13 @@ static const char* g_patchModes[] = {_("ORIGINAL"), _("PATCHED")};
 static const char* g_languages[] = {
     _("EN"), _("SV"), _("FR"), _("DE"), _("JA"), _("ZH"),
     _("CS"), _("DA"), _("ES"), _("FI"), _("HU"), _("IT"),
-    _("KO"), _("NL"), _("NO"), _("PL"), _("PT"), _("RU"), _("TR")
+    _("KO"), _("NL"), _("NO"), _("PL"), _("PT"), _("RU"), _("TR"), _("ID")
 };
 static const char* g_languageNames[] = {
     _("ENGLISH"), _("SVENSKA"), "FRANÇAIS", _("DEUTSCH"), "日本語", "简体中文",
     "ČEŠTINA", "DANSK", "ESPAÑOL", "SUOMI", "MAGYAR", "ITALIANO",
     "한국어", "NEDERLANDS", "NORSK BOKMÅL", "POLSKI", "PORTUGUÊS",
-    "РУССКИЙ", "TÜRKÇE"
+    "РУССКИЙ", "TÜRKÇE", "BAHASA INDONESIA"
 };
 enum { M12_UI_LANGUAGE_COUNT = (int)(sizeof(g_languages) / sizeof(g_languages[0])) };
 static const char* g_cheatsToggle[] = {_("OFF"), _("ON")};
@@ -486,6 +486,7 @@ static FS_Language m12_fs_language_from_menu_index(int index) {
         case 16: return FS_LANG_PT;
         case 17: return FS_LANG_RU;
         case 18: return FS_LANG_TR;
+        case 19: return FS_LANG_ID;
         case 0:
         default: return FS_LANG_EN;
     }
@@ -959,7 +960,7 @@ static int m12_entry_index_for_game_id(const M12_StartupMenuState* state,
 
 /* Language cycle accessors.  g_languages[] / g_languageNames[] are
  * file-local to this module; these getters expose just the count
- * and the per-index strings so probes can drive the 19-language
+ * and the per-index strings so probes can drive the 20-language
  * cycle from the production source of truth without hardcoding 19
  * (or the locale codes) inline. */
 int M12_StartupMenu_GetLanguageCount(void) {
@@ -4013,6 +4014,11 @@ const char* M12_StartupMenu_GetSettingsValue(const M12_StartupMenuState* state,
     }
 }
 
+const char* M12_StartupMenu_Translate(const M12_StartupMenuState* state,
+                                      const char* msgid) {
+    return m12_tr(state, msgid);
+}
+
 const char* M12_StartupMenu_GetDataStatusValue(const M12_StartupMenuState* state) {
     return m12_settings_value_data_status(state);
 }
@@ -5533,6 +5539,101 @@ static void m12_draw_language_flag(unsigned char* framebuffer,
                           x + 1, y + 4, 16, 3, M12_COLOR_LIGHT_RED);
             m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           x + 1, y + 7, 16, 4, M12_COLOR_YELLOW);
+            break;
+        case 4: /* Japan */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 6, y + 3, 6, 6, M12_COLOR_LIGHT_RED);
+            break;
+        case 5: /* China */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 10, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 3, y + 3, 3, 3, M12_COLOR_YELLOW);
+            break;
+        case 6: /* Czechia */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 6, 16, 5, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 5, 10, M12_COLOR_LIGHT_BLUE);
+            break;
+        case 7: /* Denmark */
+        case 14: /* Norway */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 10, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 6, y + 1, 2, 10, M12_COLOR_WHITE);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 5, 16, 2, M12_COLOR_WHITE);
+            if (idx == 14) {
+                m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 7, y + 1, 1, 10, M12_COLOR_LIGHT_BLUE);
+                m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 1, y + 6, 16, 1, M12_COLOR_LIGHT_BLUE);
+            }
+            break;
+        case 8: /* Spain */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 10, M12_COLOR_YELLOW);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 2, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 9, 16, 2, M12_COLOR_LIGHT_RED);
+            break;
+        case 9: /* Finland */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 6, y + 1, 2, 10, M12_COLOR_LIGHT_BLUE);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 5, 16, 2, M12_COLOR_LIGHT_BLUE);
+            break;
+        case 10: /* Hungary */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 3, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 8, 16, 3, M12_COLOR_GREEN);
+            break;
+        case 11: /* Italy */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 5, 10, M12_COLOR_GREEN);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 12, y + 1, 5, 10, M12_COLOR_LIGHT_RED);
+            break;
+        case 12: /* Korea */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 6, y + 3, 6, 3, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 6, y + 6, 6, 3, M12_COLOR_LIGHT_BLUE);
+            break;
+        case 13: /* Netherlands */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 3, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 8, 16, 3, M12_COLOR_LIGHT_BLUE);
+            break;
+        case 15: /* Poland */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 6, 16, 5, M12_COLOR_LIGHT_RED);
+            break;
+        case 16: /* Portugal */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 10, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 6, 10, M12_COLOR_GREEN);
+            break;
+        case 17: /* Russia */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 4, 16, 3, M12_COLOR_LIGHT_BLUE);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 7, 16, 4, M12_COLOR_LIGHT_RED);
+            break;
+        case 18: /* Turkey */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 10, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 7, y + 4, 4, 4, M12_COLOR_WHITE);
+            break;
+        case 19: /* Indonesia */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 5, M12_COLOR_LIGHT_RED);
             break;
         case 0:
         default: /* UK-ish English marker, bounded and recognisable */
