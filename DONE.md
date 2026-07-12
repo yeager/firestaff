@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 M648 real-data inscription capture: the direct M11 probe
+  now validates all 56 local PC34 wall inscriptions against raw 8x8 glyph
+  pixels, C10 transparency, and multiple F0337 palette levels. Verification:
+  real `firestaff_dm1_v1_hoc_inscription_readability_runtime_probe` 722/722.
+
 - 2026-07-12 DM1 HoC C127 runtime consumer: M11 now preserves the C127 wall
   ornament ordinal and renders C346/C026 solely from the DM1-owned runtime
   decision, rather than using release-capture state as a second renderer
