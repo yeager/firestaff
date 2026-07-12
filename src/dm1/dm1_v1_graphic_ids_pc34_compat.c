@@ -10,7 +10,42 @@ const char* dm1_v1_graphic_ids_source_evidence_pc34(void) {
 int dm1_v1_graphic_dialog_box_pc34(void) { return 17; }
 int dm1_v1_graphic_the_end_pc34(void) { return 6; }
 int dm1_v1_graphic_endgame_champion_mirror_pc34(void) { return 346; }
-int dm1_v1_graphic_champion_portraits_pc34(void) { return 26; }
+int dm1_v1_graphic_champion_portraits_pc34(void) {
+    return DM1_V1_CHAMPION_PORTRAIT_GRAPHIC_PC34;
+}
+
+int dm1_v1_graphic_champion_portrait_source_zone_pc34(
+    int portrait_ordinal,
+    DM1_V1_ObjectIconSourceZonePc34* outZone)
+{
+    if (!outZone || portrait_ordinal < 0 ||
+        portrait_ordinal >= DM1_V1_CHAMPION_PORTRAIT_COUNT_PC34) {
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C:3913-3928: C026 is 256x87, arranged as eight
+     * 32x29 champion portraits per row. The sensor/mirror ordinal chooses
+     * the source cell directly; an invalid ordinal draws nothing. */
+    outZone->graphic_index = DM1_V1_CHAMPION_PORTRAIT_GRAPHIC_PC34;
+    outZone->x = (portrait_ordinal % DM1_V1_CHAMPION_PORTRAIT_COLUMNS_PC34) *
+                 DM1_V1_CHAMPION_PORTRAIT_WIDTH_PC34;
+    outZone->y = (portrait_ordinal / DM1_V1_CHAMPION_PORTRAIT_COLUMNS_PC34) *
+                 DM1_V1_CHAMPION_PORTRAIT_HEIGHT_PC34;
+    outZone->w = DM1_V1_CHAMPION_PORTRAIT_WIDTH_PC34;
+    outZone->h = DM1_V1_CHAMPION_PORTRAIT_HEIGHT_PC34;
+    return 1;
+}
+
+int dm1_v1_graphic_validate_champion_portrait_atlas_pc34(
+    int atlas_width,
+    int atlas_height)
+{
+    return atlas_width ==
+               DM1_V1_CHAMPION_PORTRAIT_COLUMNS_PC34 *
+               DM1_V1_CHAMPION_PORTRAIT_WIDTH_PC34 &&
+           atlas_height ==
+               DM1_V1_CHAMPION_PORTRAIT_ROWS_PC34 *
+               DM1_V1_CHAMPION_PORTRAIT_HEIGHT_PC34;
+}
 int dm1_v1_graphic_champion_icons_pc34(void) { return 28; }
 int dm1_v1_graphic_inventory_backdrop_pc34(void) { return 17; }
 int dm1_v1_graphic_panel_empty_pc34(void) { return 20; }
