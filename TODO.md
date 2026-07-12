@@ -88,9 +88,13 @@ and both have the sync/mode-1/user-data envelope at byte 16. This identifies
 transport only, not a payload format or semantic record role.
 The runtime-facing IRQ2 receipt now additionally rereads those authenticated
 MODE1 user-data bytes and requires the actual `$3800` prefix `00 ff` before
-publishing the stage-three `BRK $ff` dispatch. A changed selector fails closed.
-This binds the loader's executable transfer to physical Track 02 bytes, but
-still identifies no descriptor, palette, object, level, or later CD request.
+publishing the stage-three `BRK $ff` dispatch. Startup now consumes that gate
+before it publishes the raw JP/US dynamic-manifest handoff; a changed selector
+fails closed and cannot reach M11. Direct Track 02 runtime-level entry now
+consumes the same gate before it examines bank anchors, so it cannot bypass
+startup receipt construction. This binds the loader's executable transfer to
+physical Track 02 bytes, but still identifies no descriptor, palette, object,
+level, or later CD request.
 The first loaded payload is now structurally verified as a
 218-unit manifest envelope, but its entries remain unclassified; do not treat
 it as a graphics, palette, object, or dungeon-record binding. The hash-gated
@@ -450,7 +454,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the same `R3=1; TST R11,R3` block reached after `OR R9,R11`, before its
   zero-low-bit branch. This proves a shared original control block only, not
   a control-bit meaning, payload, token, decoder, completion, or rendering
-  contract.
+  contract. 2026-07-12 update: the converged failure target now has a raw
+  dataflow receipt: its PC-relative literal loads R3 with `0x060284e0`, then
+  `JSR @R3` executes with `MOV R13,R4` in the delay slot before the recorded
+  zero-result return. The pointer is un-mapped and the callee is unnamed;
+  this is neither a decoder, payload, output, completion, nor rendering
+  claim.
 - 🔧 2026-07-11 Nexus startup/title real-media follow-up: `WARNING.BIN` has a
   spec-backed `RES*`/DGT2 PP decoder for resource 0, including its BGR555 CLUT
   boundary and 240x96 indexed plane. `TITLE.CG` now has a strict local-media
@@ -506,7 +515,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - CSB-001 — ReDMCSB `CLIKMENU.C F0366_COMMAND_ProcessTypes3To6_MoveParty` (lines 180-351) calls `MOVESENS.C F0267_MOVE_GetMoveResult_CPSCE` before committing party movement and checks destination groups. The CSB runtime now blocks movement without a loaded original dungeon and rejects a live C04 group before coordinate commit, queuing the source C31 party-adjacent reaction after one tick. C04 group relocation now enters the live M10 F0267 chain primitive for same-map and cross-level pit/teleporter moves, preserving the F0163 tail-link rule and restoring current-map context. The common M10 route accepts only placed Things from loaded original chains, handles object/projectile teleporter, pit, and stairs chains, evaluates F0276 before ordinary-object source unlink and destination append, and routes supported remote results through F0272/F0268 in source order. C14 remains levitating and every changed `Generic.Next` word persists to decoded raw Thing data. Its opt-in regression opens only `FIRESTAFF_CSB_DUNGEON_DAT`; absent real media is neutral. Remaining work is broader generic-object sensor/side-effect coverage and real-data route proof. C04 remains on its dedicated path.
     - 2026-07-12 verified F0276 remote-event route: after a source-ordered ordinary-object move, each supported remote floor result now resolves its target square through F0272 and queues the corresponding F0268 `SQUARE_STATE` event (fakewall, teleporter, pit, door) for the existing timeline dispatcher. The original map context, target cell, resolved SET/CLEAR/TOGGLE effect, and source zero-delay one-tick rule are retained. Local effects, corridor/wall targets, and broader sensor families remain outside this branch.
     - 2026-07-12 verified runtime object-chain ordering: CSB C49 associated-object materialization now runs the C004 F0276 add pass after link and the source C004 removal pass after its teleporter unlink. The common helper applies the source `AddThing ^ RevertEffect` rule, so HOLD becomes SET on materialization and CLEAR on removal; the existing timeline queue coalesces that ordered pair to the pending CLEAR event. Pit and stairs object hops use the same post-unlink removal pass. Broader object sensor families, audio, and real-data route proof remain open.
-    - 2026-07-12 verified C001 object-chain coverage: the same real-format F0276 pass now evaluates C001 floor pressure plates for ordinary objects. It excludes the just-linked object for the source pre-link occupancy test, preserves group/party suppression, and applies `AddThing ^ RevertEffect` before HOLD resolution. A C49 associated object crossing an object-scope C05 now proves C001 add SET followed by source-unlink CLEAR through the live timeline. Non-C04 C007 paths and real-data proof remain open.
+    - 2026-07-12 verified C001 object-chain coverage: the same real-format F0276 pass now evaluates C001 floor pressure plates for ordinary objects and C04 group arrivals. It excludes the just-linked Thing for the source pre-link occupancy test, preserves source party/object/group suppression, and applies `AddThing ^ RevertEffect` before HOLD resolution. A C49 associated object crossing an object-scope C05 now proves C001 add SET followed by source-unlink CLEAR through the live timeline; a dedicated C04 move proves C001 -> F0268 fakewall SET. Non-C04 C007 paths and real-data proof remain open.
     - 2026-07-12 verified C004 audible route: a triggered Audible C004 object sensor now requests the source prioritized `SOUND_SWITCH` through CSB's audio runtime while retaining its F0272/F0268 remote event. The dedicated live C49 materialization fixture proves the pending sound index, volume, priority, request count, and fakewall SET event. C002/C007 object-adjacent cases and real-data proof remain open.
     - 2026-07-12 verified C004 OnceOnly writeback: triggered C004 object sensors now follow F0272's pre-effect disable writeback, clearing their low sensor-type bits while preserving source data. The dedicated C49 fixture proves that the first fakewall SET is still queued and the sensor is disabled before a later route can retrigger it. C002/C007 object-adjacent cases and real-data proof remain open.
     - 2026-07-12 verified C004 Value timing: the C004 object route now passes Remote.Value to F0272/F0268 scheduling, adding the source 4-bit delay to game time instead of always firing on the current tick. The dedicated C49 fixture locks `Value=3` at trigger time one to a fakewall event at time four. C002/C007 object-adjacent cases and real-data proof remain open.
