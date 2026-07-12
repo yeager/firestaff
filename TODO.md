@@ -78,6 +78,15 @@ can restore progression, party, or runtime state.
 
 ## Nexus Structure1G Material Follow-up (2026-07-11)
 
+2026-07-12 update: original `SN_FLOOR.MNS` and `SN_WALL.MNS` now feed the
+runtime through their bounded top-level `TEXT` sections (`22528 + 27236` and
+`16384 + 27236` bytes respectively). Their 15 BGR555 descriptors decode into
+the indexed material banks without quantization, and the DGN viewport accepts
+both validated MNS banks as the real material route. Remaining Nexus material
+work is full descriptor/UV semantics and Saturn capture comparison. Do not
+substitute these resources with `MENU.BPK`, guessed BPK names, flat colours,
+or generated art.
+
 Structure1G declarations, their canonical Structure2 descriptor IDs, and the
 only canonical Structure1B animated-floor binding are now validated across
 LEV00-LEV15. The 41 LEV08 cells bind animation ID 0 through a typed

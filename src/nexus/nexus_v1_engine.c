@@ -30,6 +30,8 @@ static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"FACE.BIN", "bd9ca16ea68043984e2804067b6cd66f"},
     {"FONT256.S2D", "427735a9997e692d85f2d81158dba423"},
     {"MENU.BPK", "c2776768ff25287c79013a1452253ca0"},
+    {"SN_FLOOR.MNS", "85c517e8e0bd84e00da58295dca5b409"},
+    {"SN_WALL.MNS", "ae67ca9fa8d09481e1849a42aaaa2eb6"},
     {"LEV00.DGN", "603ec9c531a92539babdda84ab09e78e"},
     {"LEV01.DGN", "751e1442bf7dccbd41bf146b5be144ab"},
     {"LEV02.DGN", "e2cb85d9fedc27f894a84e0f465fcde1"},
@@ -1044,29 +1046,32 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_v1_game_init(&engine->game, data_dir);
     engine->audio_enabled = 1;
 
-    /* DGN Structure1B references are material indices. DMDF inspection can
-     * retain source data, but runtime mesh drawing additionally requires a
-     * hash-verified FLOORS/WALLS BPK host route. The Track 1 listing contains
-     * neither container, so named files are inspected but never imported. */
+    /* DGN Structure1B references resolve through the retail environment
+     * resources, not guessed FLOORS/WALLS BPK names.  SN_FLOOR.MNS and
+     * SN_WALL.MNS are named Track 1 DMDF files whose top-level TEXT sections
+     * carry the original BGR555 material descriptors. MENU.BPK remains a
+     * separate PRS3-gated menu route and is never substituted here. */
     {
         int material_size = 0;
-        uint8_t *material_data = nexus_v1_read_file(engine, "FLOORS.DMDF",
+        uint8_t *material_data = nexus_v1_read_file(engine, "SN_FLOOR.MNS",
                                                      &material_size);
         if (material_data) {
-            (void)nexus_v1_dmdf_decode_material_bank(material_data,
-                                                      material_size,
-                                                      &engine->floor_materials);
+            engine->floor_mns_material_route_valid =
+                nexus_v1_dmdf_decode_text_material_bank(material_data,
+                                                         material_size,
+                                                         &engine->floor_materials);
             free(material_data);
         }
         nexus_v1_inspect_dgn_material_container(
             engine, "FLOORS.BPK", NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR,
             &engine->floor_bpk_container);
-        material_data = nexus_v1_read_file(engine, "WALLS.DMDF",
+        material_data = nexus_v1_read_file(engine, "SN_WALL.MNS",
                                             &material_size);
         if (material_data) {
-            (void)nexus_v1_dmdf_decode_material_bank(material_data,
-                                                      material_size,
-                                                      &engine->wall_materials);
+            engine->wall_mns_material_route_valid =
+                nexus_v1_dmdf_decode_text_material_bank(material_data,
+                                                         material_size,
+                                                         &engine->wall_materials);
             free(material_data);
         }
         nexus_v1_inspect_dgn_material_container(

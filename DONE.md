@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 retail MNS TEXT boundary: added a bounded parser for
+  the authentic top-level `TEXT` section referenced by the DMDF header at
+  offset `0x24`. It validates the 15 retail descriptors and decodes their
+  BGR555 texels into the existing indexed material bank without quantization.
+  Nexus now consumes the named `SN_FLOOR.MNS` and `SN_WALL.MNS` routes for
+  DGN rendering, separately from the still-blocked `MENU.BPK` PRS3 menu
+  stream. Real local receipts prove floor `22528 + 27236` and wall
+  `16384 + 27236`. Verification: fresh Ninja `firestaff` build, DMDF test
+  52/52 against both original resources, and headless local Nexus launch.
+
 - 2026-07-12 DM2 V2.2 fail-closed launch: M11 now initializes the DM2 modern
   manifest and finished-art gate before boot, then resolves a V2.2 request to
   the real-data V2.1 EPX path while the legacy V2.2 cache remains no-draw.

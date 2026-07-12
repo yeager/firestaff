@@ -10,6 +10,7 @@ static uint32_t rb32(const uint8_t *p) {
 }
 static uint16_t rb16(const uint8_t *p) { return ((uint16_t)p[0]<<8)|p[1]; }
 static int16_t rbs16(const uint8_t *p) { return (int16_t)rb16(p); }
+static uint32_t dmdf_bgr555_rgba(uint16_t value);
 
 int nexus_v1_dmdf_is_valid(const uint8_t *data, int size) {
     if (!data || size < 32) return 0;
@@ -438,6 +439,127 @@ int nexus_v1_dmdf_estimate_raw_texture_payload(
     out->bytes = (uint32_t)((uint64_t)size - texture_offset);
     out->valid = 1;
     return 1;
+}
+
+int nexus_v1_dmdf_parse_texture_section(const uint8_t *data, int size,
+                                        Nexus_DMDFTextureSection *out)
+{
+    uint32_t offset;
+    uint32_t bytes;
+    uint32_t count;
+    uint32_t descriptor_offset;
+    uint32_t pixel_data_offset;
+    uint32_t i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!data || size < 40 || !nexus_v1_dmdf_is_valid(data, size)) return 0;
+
+    /* Retail Saturn MNS header: TEXT section offset at 0x24.  This is
+     * observed in SN_FLOOR.MNS/SN_WALL.MNS, whose section ends exactly at
+     * EOF; retaining the declared range prevents the renderer from treating
+     * arbitrary model bytes as a texture stream. */
+    offset = rb32(data + 0x24);
+    if (offset > (uint32_t)size || (uint64_t)offset + 16U > (uint64_t)size) {
+        return 0;
+    }
+    if (rb32(data + offset) != NEXUS_DMDF_TEXTURE_SECTION_MAGIC) return 0;
+    bytes = rb32(data + offset + 4U);
+    if (bytes < 16U || (uint64_t)offset + bytes > (uint64_t)size) return 0;
+
+    out->offset = offset;
+    out->bytes = bytes;
+    count = rb32(data + offset + 8U);
+    descriptor_offset = rb32(data + offset + 28U);
+    pixel_data_offset = rb32(data + offset + 24U);
+    if (count == 0U || count > NEXUS_DMDF_MAX_TEXTURE_DESCRIPTORS ||
+        descriptor_offset < 32U || pixel_data_offset < descriptor_offset ||
+        (uint64_t)descriptor_offset + (uint64_t)count * 20U > bytes ||
+        pixel_data_offset > bytes) {
+        return 0;
+    }
+    out->declared_entry_count = count;
+    out->flags = rb32(data + offset + 12U);
+    out->descriptor_offset = descriptor_offset;
+    out->pixel_data_offset = pixel_data_offset;
+    out->descriptor_count = count;
+    for (i = 0; i < count; ++i) {
+        const uint8_t *entry = data + offset + descriptor_offset + i * 20U;
+        Nexus_DMDFTextureDescriptor *descriptor = &out->descriptors[i];
+        uint32_t id_flags = rb32(entry);
+        uint32_t height_word = rb32(entry + 8U);
+        uint64_t pixel_bytes;
+        descriptor->material_id = (uint16_t)(id_flags >> 16);
+        descriptor->flags = (uint16_t)id_flags;
+        descriptor->width = (uint16_t)rb32(entry + 4U);
+        descriptor->height = (uint16_t)(height_word >> 16);
+        descriptor->pixel_offset = rb32(entry + 12U);
+        descriptor->reserved = rb32(entry + 16U);
+        pixel_bytes = (uint64_t)descriptor->width * descriptor->height * 2U;
+        descriptor->valid = descriptor->width >= 8U && descriptor->width <= 256U &&
+            descriptor->height >= 8U && descriptor->height <= 256U &&
+            descriptor->pixel_offset >= pixel_data_offset &&
+            (uint64_t)descriptor->pixel_offset + pixel_bytes <= bytes;
+        if (!descriptor->valid) return 0;
+    }
+    out->valid = 1;
+    return 1;
+}
+
+int nexus_v1_dmdf_decode_text_material_bank(const uint8_t *data, int size,
+                                            Nexus_DMDFMaterialBank *out)
+{
+    Nexus_DMDFTextureSection section;
+    uint32_t i;
+
+    if (!out || !nexus_v1_dmdf_parse_texture_section(data, size, &section)) {
+        return 0;
+    }
+    nexus_v1_dmdf_free_material_bank(out);
+    for (i = 0; i < section.descriptor_count; ++i) {
+        const Nexus_DMDFTextureDescriptor *descriptor = &section.descriptors[i];
+        Nexus_DMDFTextureSurface *surface;
+        uint16_t colors[256];
+        int color_count = 0;
+        int pixel_count;
+        int p;
+
+        if (!descriptor->valid || descriptor->material_id >= NEXUS_DMDF_MATERIAL_COUNT) {
+            continue;
+        }
+        surface = &out->surfaces[descriptor->material_id];
+        pixel_count = (int)descriptor->width * descriptor->height;
+        surface->pixels = (uint8_t *)malloc((size_t)pixel_count);
+        if (!surface->pixels) continue;
+        for (p = 0; p < pixel_count; ++p) {
+            const uint8_t *source = data + section.offset + descriptor->pixel_offset +
+                (size_t)p * 2U;
+            uint16_t bgr555 = rb16(source);
+            int palette_index = 0;
+            while (palette_index < color_count && colors[palette_index] != bgr555) {
+                ++palette_index;
+            }
+            if (palette_index == color_count) {
+                if (color_count == 256) break;
+                colors[color_count] = bgr555;
+                surface->palette[color_count] = dmdf_bgr555_rgba(bgr555);
+                ++color_count;
+            }
+            surface->pixels[p] = (uint8_t)palette_index;
+        }
+        if (p != pixel_count) {
+            free(surface->pixels);
+            memset(surface, 0, sizeof(*surface));
+            continue;
+        }
+        surface->width = descriptor->width;
+        surface->height = descriptor->height;
+        surface->from_bpk = 0;
+        surface->valid = 1;
+        ++out->surface_count;
+    }
+    out->valid = out->surface_count > 0;
+    return out->valid;
 }
 
 static uint32_t dmdf_bgr555_rgba(uint16_t value) {

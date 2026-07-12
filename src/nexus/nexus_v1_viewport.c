@@ -152,12 +152,14 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
          * containers and completed host routes; missing Track 1 containers
          * leave this route blocked with no legacy visual fallback. */
         if (engine->initialized &&
-            (!engine->floor_bpk_container.host_route_permitted ||
-             !engine->wall_bpk_container.host_route_permitted ||
-             !engine->floor_bpk_host_route_valid ||
-             !engine->wall_bpk_host_route_valid ||
-             !engine->floor_bpk_host_route.host_consumed_surfaces ||
-             !engine->wall_bpk_host_route.host_consumed_surfaces)) {
+            !((engine->floor_mns_material_route_valid &&
+               engine->wall_mns_material_route_valid) ||
+              (engine->floor_bpk_container.host_route_permitted &&
+               engine->wall_bpk_container.host_route_permitted &&
+               engine->floor_bpk_host_route_valid &&
+               engine->wall_bpk_host_route_valid &&
+               engine->floor_bpk_host_route.host_consumed_surfaces &&
+               engine->wall_bpk_host_route.host_consumed_surfaces))) {
             vp->last_dgn_render_receipt.blocked = 1;
             return;
         }

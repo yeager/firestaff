@@ -299,6 +299,38 @@ static void test_material_decode(void) {
           "material bank free clears owned raster surfaces");
 }
 
+static void test_texture_section_boundary(void) {
+    uint8_t buf[256];
+    Nexus_DMDFTextureSection section;
+
+    memset(buf, 0, sizeof(buf));
+    buf[0] = 'D'; buf[1] = 'M'; buf[2] = 'D'; buf[3] = 'F';
+    /* Retail MNS header word at 0x24 points at the top-level TEXT section. */
+    buf[0x24] = 0; buf[0x25] = 0; buf[0x26] = 0; buf[0x27] = 48;
+    buf[48] = 'T'; buf[49] = 'E'; buf[50] = 'X'; buf[51] = 'T';
+    buf[55] = 192; /* section byte count */
+    buf[59] = 1;  /* declared entry count */
+    buf[63] = 1;  /* opaque flags */
+    buf[75] = 56; /* pixel data offset relative to TEXT */
+    buf[79] = 32; /* descriptor table offset relative to TEXT */
+    buf[83] = 0xa8; /* material 0, opaque format flags */
+    buf[87] = 8;    /* width */
+    buf[89] = 8;    /* height in high half-word */
+    buf[95] = 56;   /* descriptor pixel offset */
+    CHECK(nexus_v1_dmdf_parse_texture_section(buf, (int)sizeof(buf),
+                                               &section) == 1,
+          "top-level TEXT section parses");
+    CHECK(section.valid == 1 && section.offset == 48 && section.bytes == 192,
+          "TEXT section preserves bounded range");
+    CHECK(section.declared_entry_count == 1 && section.flags == 1 &&
+          section.descriptor_count == 1 &&
+          section.descriptors[0].width == 8 && section.descriptors[0].height == 8,
+          "TEXT section preserves opaque metadata");
+    buf[55] = 96;
+    CHECK(nexus_v1_dmdf_parse_texture_section(buf, 64, &section) == 0,
+          "truncated TEXT section is rejected");
+}
+
 static void test_optional_real_mns(void) {
     const char *path = getenv("FIRESTAFF_NEXUS_MNS");
     char fallback[1024];
@@ -306,6 +338,8 @@ static void test_optional_real_mns(void) {
     size_t size = 0;
     Nexus_DMDFEmbeddedScan scan;
     Nexus_DMDFRawTexturePayload raw;
+    Nexus_DMDFTextureSection section;
+    Nexus_DMDFMaterialBank bank;
 
     if (!path || path[0] == '\0') {
         const char *home = getenv("HOME");
@@ -336,6 +370,21 @@ static void test_optional_real_mns(void) {
     } else {
         printf("  SKIP: optional real .MNS raw texture tail not classified by current stride contract\n");
     }
+    if (nexus_v1_dmdf_parse_texture_section(data, (int)size, &section)) {
+        CHECK(section.valid == 1 && section.bytes >= 16U,
+              "optional real .MNS TEXT section is bounded");
+        CHECK((uint64_t)section.offset + section.bytes <= size,
+              "optional real .MNS TEXT section stays inside file");
+        printf("  NOTE: real .MNS TEXT section offset=%u bytes=%u entries=%u flags=%u\n",
+               section.offset, section.bytes, section.declared_entry_count,
+               section.flags);
+    }
+    memset(&bank, 0, sizeof(bank));
+    CHECK(nexus_v1_dmdf_decode_text_material_bank(data, (int)size, &bank) == 1,
+          "optional real .MNS TEXT descriptors decode original surfaces");
+    CHECK(bank.valid == 1 && bank.surface_count > 0,
+          "optional real .MNS exposes decoded original surfaces");
+    nexus_v1_dmdf_free_material_bank(&bank);
     free(data);
 }
 
@@ -348,6 +397,7 @@ int main(void) {
     test_bitmap_block_rejections();
     test_embedded_scan_and_raw_tail();
     test_material_decode();
+    test_texture_section_boundary();
     test_optional_real_mns();
 
     printf("\nResults: %d PASS, %d FAIL\n", g_pass, g_fail);
