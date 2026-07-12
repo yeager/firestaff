@@ -194,6 +194,7 @@ typedef struct {
     int32_t  heroToDamage;       /* target champion index (0-3) */
     int32_t  missileOriginPosition; /* cell for missile origin */
     int32_t  attackSoundOrdinal;    /* from MONSTERDESC.attackSound */
+    int32_t  disableTime;           /* CSBWin ATTACK_PARAMETERES::disableTime */
     int16_t  supressPoison;      /* poison suppression (-1 = not suppressed) */
 } CSB_V1_AttackParameters;
 
