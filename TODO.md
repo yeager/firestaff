@@ -61,11 +61,11 @@ must not be presented as raw CDDA sectors.
 The strict CUE route now carries an authenticated Track 02 IPL/stage-two
 loader receipt from M12 into M11, with no filename fallback or cache payload.
 The canonical `CD_EXEC` handoff is locked: record `0x0003e7` loads and enters
-local RAM at `$4000`; the first stage-two `CD_READ` remains one sector to
-`$3800` with `CL/DL/CH` live. Remaining work requires authenticated original
-stage-two control flow that proves a later dynamic CD read boundary or its
-record context. Do not treat this receipt as a graphics, palette, object, or
-dungeon-record binding.
+local RAM at `$4000`. Mednafen HuC6280/CD traces bind the first stage-two
+`CD_READ` to record `0x0004df` (JP) or `0x0004e0` (US), one sector to `$3800`.
+Remaining work is to bind the loaded record's semantic role and later
+stage-two reads; do not treat this loader receipt as a graphics, palette,
+object, or dungeon-record binding.
 
 ## Theron Track 02 Semantic Binding Follow-up (2026-07-11)
 

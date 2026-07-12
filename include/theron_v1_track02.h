@@ -2550,6 +2550,11 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS 0x4000u
 #define THERON_TRACK02_IPL_STAGE2_CD_READ_CPU_ADDRESS 0x4090u
 #define THERON_TRACK02_IPL_STAGE2_CD_READ_LOCAL_DESTINATION 0x3800u
+/* Mednafen PCE debugger/CD traces against the authenticated original CUEs:
+ * the live CL/DL/CH register triplet at $4090 resolves to these Track 02
+ * records.  JP and US differ by the executable's one-sector size delta. */
+#define THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP 0x0004dfu
+#define THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US 0x0004e0u
 /* The verified $4090 setup writes AL, DH, and BX only.  CL/DL/CH remain
  * live across this boundary and jointly form the CD_READ record number. */
 #define THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_CL 0x01u
@@ -2599,10 +2604,12 @@ typedef struct {
     uint8_t stage2_cd_read_sector_count;
     Theron_Track02IplDestination stage2_cd_read_destination;
     uint16_t stage2_cd_read_local_destination;
+    uint32_t stage2_cd_read_record;
+    size_t stage2_cd_read_raw_sector;
     int stage2_cd_read_record_proven;
-    /* A dynamic boundary, not a dynamic record value.  It is valid only
-     * when the authenticated stage-two instruction sequence leaves every
-     * CD record register live at the $4090 CD_READ call. */
+    /* The static code leaves CL/DL/CH live; their values are bound by the
+     * original CUE runtime trace rather than inferred from the instruction
+     * bytes alone. */
     int stage2_cd_read_dynamic_boundary_valid;
     uint8_t stage2_cd_read_live_record_register_mask;
     int vram_transfer_proven;
