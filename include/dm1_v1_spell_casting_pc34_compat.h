@@ -262,6 +262,7 @@ typedef struct {
     int lightAmountDelta;
     int potionType;
     int potionPower;
+    int requestsChangedObjectIconRedraw;
     int shieldDefenseBefore;
     int shieldDefenseDelta;
     int shieldDefenseAfter;
@@ -462,6 +463,13 @@ int dm1_spell_f0412ProjectileGraphicRoutePc34(
  * frontWallD1C must be the already-resolved source view condition. */
 int dm1_spell_f0412ThievesEyeD1CViewportMaterialRoutePc34(
     const DM1_SpellF0412RuntimeReceipt* receipt,
+    int activeThievesEyeCount,
+    int frontWallD1C,
+    DM1_SpellThievesEyeViewportMaterialRoutePc34* outRoute);
+
+/* Runtime DUNVIEW consumer for a live or save-restored C73 count.  It shares
+ * the same source-locked D1C material gate as the F0412 receipt adapter. */
+int dm1_spell_activeThievesEyeD1CViewportMaterialRoutePc34(
     int activeThievesEyeCount,
     int frontWallD1C,
     DM1_SpellThievesEyeViewportMaterialRoutePc34* outRoute);
