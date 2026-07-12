@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 PC34 F0205/F0206 packed active-group directions: M10 now
+  promotes legacy scalar group direction state into ReDMCSB `ACTIVE_GROUP`
+  packed `Directions`, consumes the real F0205 opposite-turn RNG and F0206
+  per-creature gate when C37 changes direction, and preserves all four slots
+  across C29-C41 runtime dispatch. Raw C04 `GROUP.Direction` receives only
+  `M021_NORMALIZE(Directions)`, as `GROUP.C F0184` does when the active group
+  leaves the party map. Verification: direct strict-C11 compile of M10 and
+  `test_dm1_v1_f0206_packed_directions_runtime_pc34_compat` PASS; targeted
+  `git diff --check` PASS. No CMake build or push.
+
 - 2026-07-12 Nexus V1 DGN Structure1F copied-field receipt: the real
   LEV00-LEV15 probe now verifies every byte field copied by runtime for the
   1,006 direct records: item location/ID/selected attributes; decoration
