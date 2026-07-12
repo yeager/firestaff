@@ -62,6 +62,8 @@ int main(int argc, char **argv) {
     int global_to_local_mismatch_count = 0;
     int raw_sequence_binding_count = 0;
     int raw_sequence_mismatch_count = 0;
+    int sequence_image_instruction_count = 0;
+    int sequence_image_descriptor_mismatch_count = 0;
     int unique_descriptor_count = 0;
     int nonzero_target_count = 0;
     int outside_target_count = 0;
@@ -110,7 +112,10 @@ int main(int argc, char **argv) {
             const uint8_t *raw_descriptor;
             int animation_data_relative_offset;
             uint16_t sequence_word_offset;
+            uint16_t next_sequence_word_offset;
             int sequence_byte_offset;
+            int next_sequence_byte_offset;
+            int cursor;
             uint32_t offsets[2];
             int offset_index;
 
@@ -140,6 +145,32 @@ int main(int argc, char **argv) {
                 ++raw_sequence_mismatch_count;
             } else {
                 ++raw_sequence_binding_count;
+            }
+            next_sequence_word_offset = entry_index + 1 <
+                level.structure1g_entry_count
+                ? read_be16(raw_descriptor +
+                            NEXUS_DGN_STRUCTURE1G_DESCRIPTOR_BYTES + 6)
+                : (uint16_t)((layout.structure1g.size -
+                              animation_data_relative_offset) / 4);
+            next_sequence_byte_offset = animation_data_relative_offset +
+                (int)next_sequence_word_offset * 4;
+            for (cursor = sequence_byte_offset;
+                 cursor < next_sequence_byte_offset; cursor += 4) {
+                uint16_t instruction = read_be16(structure1g + cursor);
+                uint16_t local_image_id;
+                if (instruction == 0xffffU) break;
+                if (instruction == 0xfffeU) continue;
+                ++sequence_image_instruction_count;
+                if (instruction < 0x014cU) {
+                    ++sequence_image_descriptor_mismatch_count;
+                    continue;
+                }
+                local_image_id = (uint16_t)(instruction - 0x014cU);
+                if (local_image_id >= (uint16_t)level.structure2_texture_count ||
+                    level.structure2_textures[local_image_id].image_id !=
+                        local_image_id) {
+                    ++sequence_image_descriptor_mismatch_count;
+                }
             }
             if (animation->first_image_index < 0x014cU ||
                 (uint16_t)(animation->first_image_index - 0x014cU) !=
@@ -182,16 +213,20 @@ int main(int argc, char **argv) {
     check(raw_sequence_binding_count == structure1g_reference_count &&
               raw_sequence_mismatch_count == 0,
           "Structure1G first-image fields match original sequence instructions");
+    check(sequence_image_instruction_count > 0 &&
+              sequence_image_descriptor_mismatch_count == 0,
+          "Structure1G sequence image indexes bind local Structure2 descriptors");
     check(nonzero_target_count > 0 && outside_target_count == 0,
           "referenced descriptor offsets remain within opaque payload spans");
     printf("Nexus DGN Structure2 reference flow: levels=%d references=%d "
            "global-local=%d mismatches=%d raw-sequences=%d sequence-mismatches=%d "
-           "unique-descriptors=%d "
+           "sequence-images=%d image-mismatches=%d unique-descriptors=%d "
            "nonzero-targets=%d outside=%d; "
            "decoder/render-proof=0\n",
            levels_loaded, structure1g_reference_count, global_to_local_binding_count,
            global_to_local_mismatch_count, raw_sequence_binding_count,
-           raw_sequence_mismatch_count, unique_descriptor_count,
+           raw_sequence_mismatch_count, sequence_image_instruction_count,
+           sequence_image_descriptor_mismatch_count, unique_descriptor_count,
            nonzero_target_count, outside_target_count);
     return failures == 0 ? 0 : 1;
 }
