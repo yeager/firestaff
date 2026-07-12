@@ -6286,6 +6286,23 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_f0276_object_chain_pc34_compat
     )
 
+    add_executable(test_csb_v1_f0276_object_audio_pc34_compat
+        tests/test_csb_v1_f0276_object_audio_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0276_object_audio_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_f0276_object_audio_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0276_object_audio_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0276_object_audio_pc34_compat
+        COMMAND test_csb_v1_f0276_object_audio_pc34_compat
+    )
+
     add_executable(test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat
         tests/test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat.c
         src/shared/asset_find_by_hash.c
@@ -22116,6 +22133,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_later_record_correlation
         COMMAND firestaff_theron_v1_later_record_correlation_probe
+    )
+
+    add_executable(firestaff_theron_v1_stage3_irq2_dispatch_probe
+        probes/theron/firestaff_theron_v1_stage3_irq2_dispatch_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_stage3_irq2_dispatch_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_stage3_irq2_dispatch_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_stage3_irq2_dispatch_probe PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_stage3_irq2_dispatch_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_stage3_irq2_dispatch
+        COMMAND firestaff_theron_v1_stage3_irq2_dispatch_probe
     )
 
     add_executable(firestaff_theron_v1_track02_ipl_loader_probe
