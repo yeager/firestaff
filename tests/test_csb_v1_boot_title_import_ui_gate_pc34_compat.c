@@ -899,11 +899,19 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
               frame.title_surface->pixels == chaos_pixels,
           "CHAOS render plan retains the resident verified title surface");
     CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 80, &plan, &audio_action) == 1 &&
-              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
-              plan.title_source_step == 20,
-          "STRIKES BACK follows the CHAOS hold without a synthetic frame");
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+              plan.title_source_step == 21,
+          "completed CHAOS hold retains the verified title bitmap");
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 3u, &frame) == 1 &&
+              frame.title_surface->pixels == chaos_pixels,
+          "completed CHAOS hold retains the resident verified title surface");
+    CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 100, &plan, &audio_action) == 1 &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+              plan.title_source_step == 22,
+          "STRIKES BACK follows the completed CHAOS hold without a synthetic frame");
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 4u, &frame) == 1 &&
               frame.title_surface->pixels == strikes_pixels,
           "STRIKES BACK render plan retains the resident verified title surface");
     CHECK(csb_v1_boot_startup_playback_title_frame_pc34(
@@ -912,6 +920,10 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
               audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_ENTRANCE_MUSIC_PC34 &&
               session.playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34,
           "title completion hands original entrance music to the owned entrance session");
+    CHECK(csb_v1_boot_startup_playback_enter_hud_pc34(&session) == 0,
+          "HUD remains blocked until the source entrance door completes");
+    CHECK(csb_v1_boot_startup_playback_complete_entrance_pc34(&session) == 1,
+          "completed entrance door releases the owned runtime handoff");
     CHECK(csb_v1_boot_startup_playback_enter_hud_pc34(&session) == 1 &&
               session.playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34,
           "entrance hands the same verified session to the runtime HUD");
