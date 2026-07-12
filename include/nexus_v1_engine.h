@@ -143,6 +143,16 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_LevelAuxRuntimeReceipt;
 
+/* Canonical ownership for the two retail MNS banks consumed by Structure1B
+ * material selectors.  A parseable file is not enough: each bank must be
+ * tied to its known Track 1 identity before its pixels reach the viewport. */
+typedef struct {
+    Nexus_V1_LevelAuxSourceReceipt floor_mns;
+    Nexus_V1_LevelAuxSourceReceipt wall_mns;
+    int canonical_pair_bound;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStaticMaterialSourceReceipt;
+
 /* Read-only real-media evidence for the fixed LEV00..LEV15 corpus.  It
  * counts only the already typed Structure1B material selectors and checks
  * them against the same banks used by the DGN viewport; it does not infer
@@ -219,6 +229,7 @@ struct Nexus_V1_Engine {
      * MENU.BPK or an unnamed archive. */
     int floor_mns_material_route_valid;
     int wall_mns_material_route_valid;
+    Nexus_V1_DgnStaticMaterialSourceReceipt dgn_static_material_sources;
     Nexus_V1_DgnMaterialPlan dgn_material_plan;
     Nexus_V1_DgnMaterialCorpusReceipt dgn_material_corpus;
     Nexus_V1_DgnStructure2SourceReceipt current_level_structure2_source;
@@ -299,6 +310,9 @@ int nexus_v1_current_level_structure2_source_receipt(
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);
+int nexus_v1_dgn_static_material_source_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt);
 
 /* Return the DGN plan whose commands and material surfaces have been checked
  * together for this level and party pose. The returned pointer is owned by
