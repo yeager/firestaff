@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 CSB C017/C040 runtime HUD binding: the startup runtime frame
+  now records hashes for the decoded original inventory and resurrection
+  surfaces and mixes them into its source route receipt. Verification with
+  PC CSB `GRAPHICS.DAT`: C017 224x136 hash `7117c9c5`, C040 144x73 hash
+  `35fb6d05`, full C001-C005 to C017/C040 probe 43/43.
+
 - 2026-07-12 Nexus startup title-transition gate: M11 now consumes an
   immutable launcher receipt for WARNING.BIN at frame 47 and TITLE.CG from
   frame 48 through start-ready frame 102. A mismatched command or timing

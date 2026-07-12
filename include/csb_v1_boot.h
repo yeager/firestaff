@@ -1073,6 +1073,12 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     const CSB_V1_StartupRuntimeSurface_PC34 *right_door_surface;
     const CSB_V1_StartupRuntimeSurface_PC34 *hud_inventory_surface;
     const CSB_V1_StartupRuntimeSurface_PC34 *hud_resurrect_surface;
+    /* ReDMCSB PANEL.C F0352/F0376 consumes C017/C040 after the entrance
+     * handoff.  Bind their original decoded pixels to this frame so a later
+     * HUD consumer cannot silently substitute a wrapper-owned surface. */
+    uint32_t hud_inventory_pixel_hash;
+    uint32_t hud_resurrect_pixel_hash;
+    uint32_t hud_binding_hash;
     int opening_step;
     int uses_verified_hud_bindings;
 } CSB_V1_StartupRuntimeAssetFrame_PC34;
