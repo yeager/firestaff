@@ -392,6 +392,7 @@ static void m11_publish_dm1_hoc_presented_capture_to_m12(
 
 void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
     int requestedWindowMode;
+    int requestedScaleMode;
     int actualWindowMode;
     if (!menuState) {
         return;
@@ -411,14 +412,26 @@ void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
         requestedWindowMode = actualWindowMode;
         menuState->settings.windowModeIndex = actualWindowMode;
     }
+    requestedScaleMode = menuState->settings.scaleModeIndex;
+    /* A fixed 1x--4x framebuffer inside a maximized Cocoa window leaves
+     * every game looking like a 320x200 thumbnail. M11 is the shared host
+     * for all five engines, so maximized/fullscreen presentation must use
+     * FIT unless the user explicitly selects the stretch mode. Windowed mode
+     * keeps the original fixed-scale choices for pixel inspection. */
+    if (requestedWindowMode != M11_WINDOW_MODE_WINDOWED &&
+        requestedScaleMode >= M11_SCALE_1X &&
+        requestedScaleMode <= M11_SCALE_4X) {
+        requestedScaleMode = M11_SCALE_FIT;
+        menuState->settings.scaleModeIndex = requestedScaleMode;
+    }
     if (M11_Render_GetPaletteLevel() != M12_StartupMenu_GetRenderPaletteLevel(menuState)) {
         M11_Render_SetPaletteLevel(M12_StartupMenu_GetRenderPaletteLevel(menuState));
     }
     if (M11_Render_GetWindowMode() != requestedWindowMode) {
         M11_Render_SetWindowMode(requestedWindowMode);
     }
-    if (M11_Render_GetScaleMode() != menuState->settings.scaleModeIndex) {
-        M11_Render_SetScaleMode(menuState->settings.scaleModeIndex);
+    if (M11_Render_GetScaleMode() != requestedScaleMode) {
+        M11_Render_SetScaleMode(requestedScaleMode);
     }
     if (M11_Render_GetDisplayAspectMode() != menuState->settings.displayAspectMode) {
         M11_Render_SetDisplayAspectMode(menuState->settings.displayAspectMode);
