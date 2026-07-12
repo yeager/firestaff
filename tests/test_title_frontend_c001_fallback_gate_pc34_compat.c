@@ -300,6 +300,8 @@ static void check_startup_source_timing_contract(void) {
     SWSH_CompatSourceAnimationStep swshStep;
     EntranceCompatSourceAnimationStep doorStep;
     EntranceCompatSourceAnimationStep finalDoorStep;
+    EntranceCompatSourceAnimationStep switchStep;
+    EntranceCompatSourceAnimationStep preOpenStep;
     DM1_V1_StartupEntranceRenderAudioCommand_PC34 command;
     unsigned int sourceStep;
     unsigned int swshColorSetCount = 0u;
@@ -312,6 +314,8 @@ static void check_startup_source_timing_contract(void) {
     memset(&swshStep, 0, sizeof(swshStep));
     memset(&doorStep, 0, sizeof(doorStep));
     memset(&finalDoorStep, 0, sizeof(finalDoorStep));
+    memset(&switchStep, 0, sizeof(switchStep));
+    memset(&preOpenStep, 0, sizeof(preOpenStep));
     memset(&command, 0, sizeof(command));
 
     expect_i("DM1 startup source media receipt builds",
@@ -394,6 +398,32 @@ static void check_startup_source_timing_contract(void) {
              0);
     expect_truth("startup entrance receipt is source-timed",
                  dm1_v1_startup_entrance_timing_receipt_valid_pc34(&media));
+    expect_i("startup entrance switch source step exists",
+             ENTRANCE_Compat_GetSourceAnimationStep(5u, &switchStep),
+             1);
+    expect_i("startup entrance executes source switch sound",
+             dm1_v1_startup_entrance_render_audio_command_pc34(
+                 &media, switchStep.sourceStepOrdinal, (int)switchStep.kind,
+                 switchStep.delayTicks, switchStep.vblankLoopCount, &command),
+             1);
+    expect_truth("startup entrance switch is C01 at source volume 112",
+                 command.render_kind ==
+                         DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34 &&
+                     command.audio_request_ready && command.audio_sound_index == 1 &&
+                     command.audio_volume == 112u && command.delay_ms == 0u);
+    expect_i("startup entrance pre-open source step exists",
+             ENTRANCE_Compat_GetSourceAnimationStep(6u, &preOpenStep),
+             1);
+    expect_i("startup entrance executes source pre-open delay",
+             dm1_v1_startup_entrance_render_audio_command_pc34(
+                 &media, preOpenStep.sourceStepOrdinal, (int)preOpenStep.kind,
+                 preOpenStep.delayTicks, preOpenStep.vblankLoopCount, &command),
+             1);
+    expect_truth("startup entrance pre-open delay follows switch without audio",
+                 command.render_kind ==
+                         DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34 &&
+                     !command.audio_request_ready && command.delay_ms ==
+                         media.entrance_pre_open_delay_ms);
     expect_i("startup entrance first door source step exists",
              ENTRANCE_Compat_GetSourceAnimationStep(7u, &doorStep),
              1);

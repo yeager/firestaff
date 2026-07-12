@@ -5029,10 +5029,19 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
             break;
         case ENTRANCE_COMPAT_SOURCE_EVENT_DRAW_ENTRANCE_SCREEN:
         case ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT:
-        case ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND:
         case ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY:
             command.render_kind =
                 DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34;
+            break;
+        case ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND:
+            command.render_kind =
+                DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34;
+            /* ReDMCSB ENTRANCE.C F0441:906-920 submits C01_SOUND_SWITCH
+             * at volume 112 immediately after a real entrance command,
+             * before F0022_MAIN_Delay(20) and F0438 door opening. */
+            command.audio_request_ready = 1;
+            command.audio_sound_index = 1;
+            command.audio_volume = 112U;
             break;
         case ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP:
             command.render_kind =
