@@ -555,6 +555,39 @@ static void test_smell_direction(void) {
 }
 
 /* =========================================================
+ *  Test 13b: F0201 direct-party scent requires F0198/F0199 route
+ * ========================================================= */
+static void test_smell_direction_requires_unblocked_route(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    int dirOrd = 99;
+
+    ctx.creatureInfo.ranges = 0x1403; /* smell = 4, direct range = 2 */
+    ctx.currentGroupDistanceToParty = 2;
+    ctx.currentGroupPrimaryDirToParty = 3;
+
+    EXPECT_EQ(F0819a_DM1_GROUP_GetSmelledPartyDirOrdinalFromRoute_Compat(
+                  &ctx, 2, &dirOrd),
+              1, "smell_route: source adapter succeeds");
+    EXPECT_EQ(dirOrd, 4,
+              "smell_route: unblocked F0199 route returns primary ordinal");
+
+    dirOrd = 99;
+    EXPECT_EQ(F0819a_DM1_GROUP_GetSmelledPartyDirOrdinalFromRoute_Compat(
+                  &ctx, 0, &dirOrd),
+              1, "smell_route: blocked route adapter succeeds");
+    EXPECT_EQ(dirOrd, 0,
+              "smell_route: F0198/F0199 blocked route suppresses scent");
+
+    ctx.currentGroupDistanceToParty = 3;
+    dirOrd = 99;
+    EXPECT_EQ(F0819a_DM1_GROUP_GetSmelledPartyDirOrdinalFromRoute_Compat(
+                  &ctx, 3, &dirOrd),
+              1, "smell_route: range gate adapter succeeds");
+    EXPECT_EQ(dirOrd, 0,
+              "smell_route: out-of-range direct route suppresses scent");
+}
+
+/* =========================================================
  *  Test 14: Per-creature attack event (C38)
  * ========================================================= */
 static void test_per_creature_attack_event(void) {
@@ -1235,6 +1268,7 @@ int main(void) {
     test_dispatch_projectile_payload();
     test_set_group_direction();
     test_smell_direction();
+    test_smell_direction_requires_unblocked_route();
     test_per_creature_attack_event();
     test_reaction_during_freeze();
     test_negative_reaction_event_creation();

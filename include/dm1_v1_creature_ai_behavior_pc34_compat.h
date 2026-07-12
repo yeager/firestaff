@@ -562,6 +562,19 @@ int F0819_DM1_GROUP_GetSmelledPartyDirOrdinal_Compat(
     int* outDirectionOrdinal);
 
 /*
+ * F0819a: Resolve F0201's direct-party scent branch from the already
+ * source-walked F0199 smell route. A positive route distance means that
+ * F0198/F0199 found no smell-path blocker. This never infers a route from
+ * Manhattan distance.
+ *
+ * Source: ReDMCSB GROUP.C F0201 lines 1430-1437.
+ */
+int F0819a_DM1_GROUP_GetSmelledPartyDirOrdinalFromRoute_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    int smellRouteDistance,
+    int* outDirectionOrdinal);
+
+/*
  * F0820: Calculate flee direction (opposite of toward-party).
  *
  * Source: GROUP.C F0209 label T0209094_FleeFromTarget

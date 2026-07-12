@@ -158,7 +158,9 @@ static int write_manifest(const char *path,
                           int viewport_nonzero,
                           int font_glyph_index,
                           int font_writes,
-                          uint64_t viewport_hash)
+                          uint64_t viewport_hash,
+                          const Nexus_V1_DgnStaticMaterialSourceReceipt
+                              *static_materials)
 {
     FILE *fp = fopen(path, "wb");
     if (!fp) return 0;
@@ -183,6 +185,25 @@ static int write_manifest(const char *path,
     fprintf(fp, "  \"mns_model\": { \"name\": \"SCORPION.MNS\", \"index\": %d, \"vertices\": %d, \"faces\": %d },\n",
             model_index, model_vertices, model_faces);
     fprintf(fp, "  \"level0\": { \"width\": %d, \"height\": %d },\n", level_w, level_h);
+    fprintf(fp, "  \"static_mns_materials\": { \"canonical_pair_bound\": %s, \"fallback_visuals_permitted\": %s,\n",
+            static_materials && static_materials->canonical_pair_bound
+                ? "true" : "false",
+            static_materials && static_materials->fallback_visuals_permitted
+                ? "true" : "false");
+    fprintf(fp, "    \"floor\": { \"name\": \"");
+    json_escape(fp, static_materials ? static_materials->floor_mns.canonical_name : "");
+    fprintf(fp, "\", \"md5\": \"");
+    json_escape(fp, static_materials ? static_materials->floor_mns.canonical_md5 : "");
+    fprintf(fp, "\", \"hash_verified\": %s },\n",
+            static_materials && static_materials->floor_mns.canonical_hash_verified
+                ? "true" : "false");
+    fprintf(fp, "    \"wall\": { \"name\": \"");
+    json_escape(fp, static_materials ? static_materials->wall_mns.canonical_name : "");
+    fprintf(fp, "\", \"md5\": \"");
+    json_escape(fp, static_materials ? static_materials->wall_mns.canonical_md5 : "");
+    fprintf(fp, "\", \"hash_verified\": %s }\n  },\n",
+            static_materials && static_materials->wall_mns.canonical_hash_verified
+                ? "true" : "false");
     fprintf(fp, "  \"viewport\": { \"width\": %d, \"height\": %d, \"nonzero_pixels\": %d, \"fnv1a64\": \"0x%016llx\", \"ppm_path\": \"",
             NEXUS_FB_W, NEXUS_FB_H, viewport_nonzero,
             (unsigned long long)viewport_hash);
@@ -257,7 +278,8 @@ static void probe_no_data_skip(const char *data_dir, const char *manifest_path)
     SKIP("no Nexus Track 1 data root found; wrote SKIP readiness manifest");
     CHECK(write_manifest(manifest_path, "SKIP_NO_TRACK1_DATA",
                          data_dir ? data_dir : "",
-                         "none", "", 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0),
+                         "none", "", 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0,
+                         0, NULL),
           "skip manifest written");
 }
 
@@ -269,6 +291,7 @@ static void probe_real_data(const char *data_dir,
     Nexus_Viewport vp;
     Nexus_V1_DgnViewportRenderReceipt dgn_render;
     Nexus_V1_DgnViewportHostRouteReceipt dgn_host_route;
+    Nexus_V1_DgnStaticMaterialSourceReceipt static_materials;
     uint8_t *dm = NULL;
     uint8_t *font = NULL;
     uint32_t rgba[NEXUS_FB_W * NEXUS_FB_H];
@@ -304,6 +327,16 @@ static void probe_real_data(const char *data_dir,
     CHECK(engine.level_loaded == 1 && engine.current_level.width == 64 &&
           engine.current_level.height == 64,
           "level 0 is resident as a 64x64 Nexus level");
+    memset(&static_materials, 0, sizeof(static_materials));
+    CHECK(nexus_v1_dgn_static_material_source_receipt(
+              &engine, &static_materials) == 0 &&
+          static_materials.canonical_pair_bound &&
+          !static_materials.fallback_visuals_permitted &&
+          static_materials.floor_mns.canonical_hash_verified &&
+          static_materials.wall_mns.canonical_hash_verified &&
+          engine.floor_mns_material_route_valid &&
+          engine.wall_mns_material_route_valid,
+          "SN_FLOOR.MNS and SN_WALL.MNS are hash-bound static DGN material sources");
 
     font = nexus_v1_read_file(&engine, "FONT256.S2D", &font_size);
     CHECK(font != NULL && font_size > 0,
@@ -329,6 +362,7 @@ static void probe_real_data(const char *data_dir,
           dgn_render.command_count > 0 &&
           dgn_render.command_count == dgn_render.material_surface_count &&
           dgn_render.command_count == dgn_render.rasterized_command_count &&
+          dgn_render.bpk_material_surface_count == 0 &&
           dgn_render.written_pixels > 0,
           "real DGN/MNS viewport route produces a complete raster receipt");
     memset(&dgn_host_route, 0, sizeof(dgn_host_route));
@@ -365,7 +399,8 @@ static void probe_real_data(const char *data_dir,
                          model_index >= 0 ? engine.models[model_index].vertex_count : 0,
                          model_index >= 0 ? engine.models[model_index].face_count : 0,
                          engine.current_level.width, engine.current_level.height,
-                         nonzero, font_glyph, font_writes, viewport_hash),
+                         nonzero, font_glyph, font_writes, viewport_hash,
+                         &static_materials),
           "readiness JSON manifest written");
 
     free(dm);

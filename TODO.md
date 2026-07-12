@@ -19,6 +19,10 @@ Nexus M11 now presents only the verified WARNING.BIN/TITLE.CG transition at
 Saturn frames 47, 48, and 102. MENU.BPK remains blocked until its PRS3 pixel
 and palette decoder is proven; the next Nexus work is real DGN rendering.
 
+Nexus Track 1 capture now requires hash-bound SN_FLOOR.MNS and SN_WALL.MNS
+and forbids BPK material surfaces. Remaining work is full DGN semantics and
+texture decoding, not a substitute material path.
+
 ## DM2 V2.0 Runtime Follow-up (2026-07-12)
 
 M11 now binds the selected DM2 V2 presentation mode to the persistent V2

@@ -948,6 +948,32 @@ int F0819_DM1_GROUP_GetSmelledPartyDirOrdinal_Compat(
     return 1;
 }
 
+int F0819a_DM1_GROUP_GetSmelledPartyDirOrdinalFromRoute_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    int smellRouteDistance,
+    int* outDirectionOrdinal)
+{
+    int smellRange;
+    int effectiveSmellRange;
+
+    if (!ctx || !outDirectionOrdinal) return 0;
+    *outDirectionOrdinal = 0;
+
+    /* ReDMCSB GROUP.C F0201: the direct scent branch requires both the
+     * half-smell-range gate and a non-zero F0199 walk using F0198. M10
+     * supplies that path result because this pure DM1 layer owns no map. */
+    smellRange = DM1_SMELL_RANGE(ctx->creatureInfo.ranges);
+    effectiveSmellRange = (smellRange + 1) >> 1;
+    if (smellRange != 0 &&
+        effectiveSmellRange >= ctx->currentGroupDistanceToParty &&
+        ctx->currentGroupDistanceToParty > 0 &&
+        smellRouteDistance > 0) {
+        *outDirectionOrdinal = (ctx->currentGroupPrimaryDirToParty & 3) + 1;
+    }
+
+    return 1;
+}
+
 /* =========================================================================
  *  F0820: Flee direction computation
  *

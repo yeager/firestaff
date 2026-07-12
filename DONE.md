@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0201 scent-route gate: direct scent pursuit now requires a
+  positive ReDMCSB F0198/F0199 route result as well as its source range gate.
+  Blocked and over-range paths cannot infer Manhattan-distance pursuit.
+  Verification: DM1 creature AI test 250/250.
+
+- 2026-07-12 Nexus Track 1 static material receipt: the real DGN viewport
+  capture now proves hash-verified `SN_FLOOR.MNS` and `SN_WALL.MNS`, with zero
+  BPK material surfaces and no visual fallback. Verification: original ISO
+  capture-readiness probe 17/17.
+
 - 2026-07-12 Theron System Card IRQ2 entry gate: added a source-backed,
   fail-closed probe for the authenticated System Card 3.0 IRQ2 vector
   `$fff6 -> $e736`, including its `$f5` branch boundary. It does not select a
