@@ -4742,6 +4742,21 @@ int dm2_v1_boot_interface_font_table(
     return hash != 0u;
 }
 
+int dm2_v1_boot_g1_text_wall_gfx_materials(
+    DM2_V1_BootProfile *profile,
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!profile || !profile->graphics_dat) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
+        texts, &gfx->loader, out);
+}
+
 static uint16_t dm2_v1_boot_le16(const uint8_t *p)
 {
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);

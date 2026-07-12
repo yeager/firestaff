@@ -77,6 +77,10 @@ typedef enum {
 
 typedef enum {
     DM2_GDAT_ENTRY_TYPE_IMAGE        = 0x01,
+    /* skproject/SKWIN/DME.h dtIndex: dtRectangle/dt04 = 4.
+     * LOAD_RECTS_AND_COMPRESS reads this exact typed payload before it
+     * expands the title-menu and HUD rectangle tables. */
+    DM2_GDAT_ENTRY_TYPE_RAW4         = 0x04,
     DM2_GDAT_ENTRY_TYPE_RAW6         = 0x06,
     DM2_GDAT_ENTRY_TYPE_RAW7         = 0x07,
     DM2_GDAT_ENTRY_TYPE_RAW8         = 0x08,
