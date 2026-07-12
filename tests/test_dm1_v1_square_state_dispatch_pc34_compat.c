@@ -7,7 +7,7 @@
 #include <string.h>
 
 static void schedule(struct GameWorld_Compat* world, int type, int effect,
-                     int x, int y)
+                     int x, int y, int cell)
 {
     struct TimelineEvent_Compat event;
     memset(&event, 0, sizeof(event));
@@ -16,9 +16,25 @@ static void schedule(struct GameWorld_Compat* world, int type, int effect,
     event.mapIndex = 0;
     event.mapX = x;
     event.mapY = y;
+    event.cell = cell;
     event.aux0 = type;
     event.aux1 = effect;
     assert(F0721_TIMELINE_Schedule_Compat(&world->timeline, &event));
+}
+
+static int has_square_state_event(const struct GameWorld_Compat* world,
+                                  int type, int effect, int x, int y)
+{
+    int i;
+    for (i = 0; i < world->timeline.count; ++i) {
+        const struct TimelineEvent_Compat* event = &world->timeline.events[i];
+        if (event->kind == TIMELINE_EVENT_SQUARE_STATE &&
+            event->aux0 == type && event->aux1 == effect &&
+            event->mapX == x && event->mapY == y) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int main(void)
@@ -30,7 +46,9 @@ int main(void)
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapon;
     struct DungeonTeleporter_Compat teleporter;
-    unsigned short squareFirstThings[2];
+    struct DungeonTextString_Compat text;
+    struct DungeonSensor_Compat sensors[3];
+    unsigned short squareFirstThings[4];
     struct GameWorld_Compat world;
     struct TickResult_Compat result;
 
@@ -51,6 +69,8 @@ int main(void)
     memset(&things, 0, sizeof(things));
     memset(&weapon, 0, sizeof(weapon));
     memset(&teleporter, 0, sizeof(teleporter));
+    memset(&text, 0, sizeof(text));
+    memset(sensors, 0, sizeof(sensors));
     memset(squareFirstThings, 0, sizeof(squareFirstThings));
     things.loaded = 1;
     things.weapons = &weapon;
@@ -58,6 +78,10 @@ int main(void)
     things.thingCounts[THING_TYPE_WEAPON] = 1;
     things.teleporters = &teleporter;
     things.teleporterCount = 1;
+    things.textStrings = &text;
+    things.textStringCount = 1;
+    things.sensors = sensors;
+    things.sensorCount = 3;
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 2;
     weapon.next = THING_ENDOFLIST;
@@ -71,7 +95,7 @@ int main(void)
     /* C10 door event becomes C01 animation, which performs one opening
      * step at the same Map_Time. */
     squares[0] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 4);
-    schedule(&world, DM1_EVENT_DOOR, DOOR_EFFECT_SET, 0, 0);
+    schedule(&world, DM1_EVENT_DOOR, DOOR_EFFECT_SET, 0, 0, 0);
     memset(&result, 0, sizeof(result));
     assert(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 2);
     assert((squares[0] & 7) == 3);
@@ -80,13 +104,13 @@ int main(void)
 
     /* C09 and C08 share F0250/F0251's bit-3 SET/CLEAR/toggle behavior. */
     squares[2] = (unsigned char)(DUNGEON_ELEMENT_PIT << 5);
-    schedule(&world, DM1_EVENT_PIT, DOOR_EFFECT_SET, 1, 0);
+    schedule(&world, DM1_EVENT_PIT, DOOR_EFFECT_SET, 1, 0, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert((squares[2] & 0x08) != 0);
 
     squares[1] = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
-    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_TOGGLE, 0, 1);
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_TOGGLE, 0, 1, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert((squares[1] & 0x08) != 0);
@@ -110,7 +134,7 @@ int main(void)
     world.partyMapIndex = 0;
     world.party.mapX = 1;
     world.party.mapY = 1;
-    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0);
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(squareFirstThings[0] == (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0));
@@ -121,7 +145,7 @@ int main(void)
     world.party.mapX = 0;
     world.party.mapY = 0;
     world.party.direction = 1;
-    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0);
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(world.party.mapIndex == 0 && world.party.mapX == 0 &&
@@ -129,9 +153,56 @@ int main(void)
 
     /* C07 SET exposes the fakewall by setting its open bit. */
     squares[3] = (unsigned char)(DUNGEON_ELEMENT_FAKEWALL << 5);
-    schedule(&world, DM1_EVENT_FAKEWALL, DOOR_EFFECT_SET, 1, 1);
+    schedule(&world, DM1_EVENT_FAKEWALL, DOOR_EFFECT_SET, 1, 1, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert((squares[3] & 0x04) != 0);
+
+    /* F0248: only TextStrings on the event wall cell change. C006 then
+     * remembers a local TOGGLE and F0271 rotates the matching sensor run
+     * once after the whole source-list batch. */
+    squares[0] = (unsigned char)((DUNGEON_ELEMENT_WALL << 5) |
+                                 DUNGEON_SQUARE_MASK_THING_LIST);
+    text.visible = 0;
+    text.next = (unsigned short)((1u << 14) | (THING_TYPE_SENSOR << 10) | 0);
+    sensors[0].next = (unsigned short)((1u << 14) | (THING_TYPE_SENSOR << 10) | 1);
+    sensors[0].sensorType = DM1_SENSOR_WALL_COUNTDOWN;
+    sensors[0].sensorData = 1;
+    sensors[0].effect = DM1_EFFECT_SET;
+    sensors[0].localEffect = 1;
+    sensors[0].localMultiple = DM1_EFFECT_TOGGLE;
+    sensors[1].next = (unsigned short)((2u << 14) | (THING_TYPE_SENSOR << 10) | 2);
+    sensors[1].sensorType = DM1_SENSOR_WALL_COUNTDOWN;
+    sensors[2].next = THING_ENDOFLIST;
+    sensors[2].sensorType = DM1_SENSOR_WALL_AND_OR_GATE;
+    sensors[2].sensorData = 0x20;
+    sensors[2].effect = DM1_EFFECT_SET;
+    sensors[2].targetMapX = 1;
+    sensors[2].targetMapY = 1;
+    squareFirstThings[0] = (unsigned short)((1u << 14) |
+                                             (THING_TYPE_TEXTSTRING << 10));
+
+    schedule(&world, DM1_EVENT_WALL, DM1_EFFECT_SET, 0, 0, 1);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert(text.visible == 1);
+    assert(sensors[0].sensorData == 2);
+    assert(text.next == (unsigned short)((1u << 14) |
+                                          (THING_TYPE_SENSOR << 10) | 0));
+    assert(has_square_state_event(&world, DM1_EVENT_FAKEWALL,
+                                  DM1_EFFECT_SET, 1, 1));
+
+    sensors[0].sensorData = 1;
+    schedule(&world, DM1_EVENT_WALL, DM1_EFFECT_CLEAR, 0, 0, 1);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert(text.visible == 0);
+    assert(sensors[0].sensorData == 0);
+    assert(text.next == (unsigned short)((1u << 14) |
+                                          (THING_TYPE_SENSOR << 10) | 1));
+    assert(sensors[1].next == (unsigned short)((1u << 14) |
+                                                 (THING_TYPE_SENSOR << 10) | 0));
+    assert(sensors[0].next == (unsigned short)((2u << 14) |
+                                                 (THING_TYPE_SENSOR << 10) | 2));
     return 0;
 }

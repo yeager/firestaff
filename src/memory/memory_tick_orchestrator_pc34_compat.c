@@ -73,6 +73,9 @@ static int orch_f0249_move_non_group_square_things_compat(
     int mapIndex,
     int mapX,
     int mapY);
+static int orch_dispatch_wall_event_f0248_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev);
 
 /* ================================================================
  *  Local LE helpers
@@ -3348,6 +3351,8 @@ static int orch_dispatch_square_state_event_compat(
     if (effect < DOOR_EFFECT_SET || effect > DOOR_EFFECT_TOGGLE) return 0;
 
     switch (ev->aux0) {
+    case DM1_EVENT_WALL:
+        return orch_dispatch_wall_event_f0248_compat(world, ev);
     case DM1_EVENT_DOOR: {
         int resolvedEffect = -1;
         struct TimelineEvent_Compat animation;
@@ -3431,6 +3436,224 @@ static int orch_dispatch_square_state_event_compat(
     default:
         return 0;
     }
+}
+
+static int orch_f0248_target_square_type_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonMapTiles_Compat* tiles;
+    int squareIndex;
+
+    if (!world || !world->dungeon || !world->dungeon->maps ||
+        !world->dungeon->tiles || mapIndex < 0 ||
+        mapIndex >= (int)world->dungeon->header.mapCount) {
+        return -1;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= (int)map->width ||
+        mapY < 0 || mapY >= (int)map->height) {
+        return -1;
+    }
+    tiles = &world->dungeon->tiles[mapIndex];
+    if (!tiles->squareData) return -1;
+    squareIndex = mapX * (int)map->height + mapY;
+    return (tiles->squareData[squareIndex] & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+}
+
+/* ReDMCSB MOVESENS.C F0271: the last local rotation effect from a
+ * processed sensor batch moves the first matching sensor behind the last
+ * matching sensor in the contiguous sensor run. */
+static int orch_f0248_rotate_wall_sensor_chain_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int cell,
+    int effect)
+{
+    int squareIndex;
+    unsigned short thing;
+    unsigned short previous = THING_NONE;
+    unsigned short first = THING_NONE;
+    unsigned short firstPrevious = THING_NONE;
+    unsigned short last = THING_NONE;
+    unsigned short nextFirst;
+    unsigned short nextLast;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->squareFirstThings ||
+        (effect != DM1_EFFECT_CLEAR && effect != DM1_EFFECT_TOGGLE)) {
+        return 0;
+    }
+    squareIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    thing = world->things->squareFirstThings[squareIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        unsigned short next = orch_next_thing_compat(world->things, thing);
+
+        if (first == THING_NONE) {
+            if (type == THING_TYPE_SENSOR && THING_GET_CELL(thing) == (unsigned int)(cell & 3)) {
+                first = thing;
+                firstPrevious = previous;
+                last = thing;
+            }
+        } else {
+            /* F0271 only extends the candidate run while Things remain
+             * sensors; a later group/object is not part of the rotation. */
+            if (type != THING_TYPE_SENSOR) break;
+            if (THING_GET_CELL(thing) == (unsigned int)(cell & 3)) {
+                last = thing;
+            }
+        }
+        previous = thing;
+        thing = next;
+    }
+    if (first == THING_NONE || first == last) return 0;
+
+    nextFirst = orch_next_thing_compat(world->things, first);
+    nextLast = orch_next_thing_compat(world->things, last);
+    if (firstPrevious == THING_NONE) {
+        world->things->squareFirstThings[squareIndex] = nextFirst;
+    } else {
+        orch_set_thing_next_compat(world->things, firstPrevious, nextFirst);
+    }
+    orch_set_thing_next_compat(world->things, first, nextLast);
+    orch_set_thing_next_compat(world->things, last, first);
+    return 1;
+}
+
+static int orch_f0248_schedule_remote_effect_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* source,
+    const struct SensorTriggerResult_Compat* trigger)
+{
+    struct TimelineEvent_Compat event;
+
+    if (!world || !source || !trigger || !trigger->triggered ||
+        trigger->isLocal ||
+        (trigger->targetEventType != DM1_EVENT_WALL &&
+         (trigger->targetEventType < DM1_EVENT_FAKEWALL ||
+          trigger->targetEventType > DM1_EVENT_DOOR))) {
+        return 0;
+    }
+    /* F0268 queues the resolved square event.  Keep M10's existing
+     * zero-delay convention: it becomes observable on the next tick. */
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_SQUARE_STATE;
+    event.fireAtTick = world->gameTick +
+        (uint32_t)(trigger->delayTicks > 0 ? trigger->delayTicks : 1);
+    event.mapIndex = source->mapIndex;
+    event.mapX = trigger->targetMapX;
+    event.mapY = trigger->targetMapY;
+    event.cell = trigger->targetCell;
+    event.aux0 = trigger->targetEventType;
+    event.aux1 = trigger->resolvedEffect;
+    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
+}
+
+/* ReDMCSB TIMELINE.C F0248:1136-1350 walks the complete wall list in
+ * order, changes only TextStrings on the event cell, evaluates C005/C006,
+ * and calls F0271 once after the batch.  Projectiles and endgame retain
+ * their dedicated owners; this consumer deliberately does not synthesize
+ * their runtime objects. */
+static int orch_dispatch_wall_event_f0248_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev)
+{
+    int squareIndex;
+    unsigned short thing;
+    int rotationEffect = DM1_EFFECT_NONE;
+    int safety = 0;
+    int applied = 0;
+
+    if (!world || !world->dungeon || !world->things || !ev ||
+        !world->things->loaded || !world->things->squareFirstThings ||
+        ev->aux1 < DM1_EFFECT_SET || ev->aux1 > DM1_EFFECT_TOGGLE ||
+        orch_f0248_target_square_type_compat(
+            world, ev->mapIndex, ev->mapX, ev->mapY) != DM1_SQUARE_WALL) {
+        return 0;
+    }
+    squareIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, ev->mapIndex, ev->mapX, ev->mapY);
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    thing = world->things->squareFirstThings[squareIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int thingIndex = THING_GET_INDEX(thing);
+        unsigned short next = orch_next_thing_compat(world->things, thing);
+
+        if (type == THING_TYPE_TEXTSTRING &&
+            thingIndex >= 0 && thingIndex < world->things->textStringCount &&
+            THING_GET_CELL(thing) == (unsigned int)(ev->cell & 3)) {
+            struct DungeonTextString_Compat* text =
+                &world->things->textStrings[thingIndex];
+            text->visible = (unsigned char)(ev->aux1 == DM1_EFFECT_TOGGLE ?
+                !text->visible : ev->aux1 == DM1_EFFECT_SET);
+            applied = 1;
+        } else if (type == THING_TYPE_SENSOR &&
+                   thingIndex >= 0 && thingIndex < world->things->sensorCount) {
+            struct DungeonSensor_Compat* sensor = &world->things->sensors[thingIndex];
+            struct SensorTriggerResult_Compat trigger;
+            int targetSquareType = -1;
+            int evaluated = 0;
+
+            memset(&trigger, 0, sizeof(trigger));
+            if (sensor->sensorType == DM1_SENSOR_WALL_COUNTDOWN) {
+                /* F0248 passes the event cell, not the sensor Thing cell,
+                 * through F0272 to F0270/F0271. */
+                evaluated = F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
+                    sensor, ev->aux1, ev->mapX, ev->mapY, ev->cell, &trigger);
+            } else if (sensor->sensorType == DM1_SENSOR_WALL_AND_OR_GATE) {
+                targetSquareType = orch_f0248_target_square_type_compat(
+                    world, ev->mapIndex, sensor->targetMapX, sensor->targetMapY);
+                if (targetSquareType >= 0) {
+                    evaluated = F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat(
+                        sensor, ev->cell, ev->aux1, targetSquareType,
+                        ev->mapX, ev->mapY, &trigger);
+                }
+            }
+            if (evaluated) {
+                if (trigger.sensorDataChanged) {
+                    sensor->sensorData = (unsigned short)trigger.sensorDataAfter;
+                    applied = 1;
+                }
+                if (trigger.triggered && trigger.sensorDisabled) {
+                    sensor->sensorType = DM1_SENSOR_DISABLED;
+                    applied = 1;
+                }
+                if (trigger.triggered && trigger.isLocal &&
+                    trigger.localEffectValue != DM1_EFFECT_ADD_300XP_STEAL_SKILL) {
+                    /* F0270 stores the last non-XP local effect. */
+                    rotationEffect = trigger.localEffectValue;
+                }
+                if (trigger.triggered && !trigger.isLocal) {
+                    applied |= orch_f0248_schedule_remote_effect_compat(
+                        world, ev, &trigger);
+                }
+            }
+        }
+        thing = next;
+    }
+
+    if (rotationEffect != DM1_EFFECT_NONE) {
+        applied |= orch_f0248_rotate_wall_sensor_chain_compat(
+            world, ev->mapIndex, ev->mapX, ev->mapY, ev->cell,
+            rotationEffect);
+    }
+    return applied;
 }
 
 static int orch_cmd_attack_f0407_closed_door_compat(
