@@ -173,6 +173,19 @@ const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type);
  * CREATURES[type] -> GDAT AI-row indirection has been bound from real data. */
 int dm2_v1_creature_item_click_rect_evidence(int creature_type,
                                              uint16_t *out_rectno);
+
+typedef struct {
+    int valid;
+    int creature_type;
+    uint16_t ai_flags_w30;
+    uint16_t rectno_w32;
+} DM2_V1_CreatureItemClickEvidence;
+
+/* skproject DRAW_PUT_DOWN_ITEM permits QUERY_EXPANDED_RECT(w32) only when
+ * `(w30 & 0x0400) == 0` and the w30 high-nibble gate is clear. */
+int dm2_v1_creature_item_click_evidence(
+    int creature_type,
+    DM2_V1_CreatureItemClickEvidence *out_evidence);
 int  dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader);
 int  dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader,
                                                   int field);

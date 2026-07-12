@@ -76,6 +76,19 @@ static int orch_f0249_move_non_group_square_things_compat(
 static int orch_dispatch_wall_event_f0248_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev);
+static int orch_dispatch_corridor_event_f0245_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result);
+static int orch_f0248_target_square_type_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY);
+static int orch_handle_group_generator_trigger_runtime_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result);
 
 /* ================================================================
  *  Local LE helpers
@@ -3323,13 +3336,14 @@ static int orch_set_door_state_compat(
     return 1;
 }
 
-/* ReDMCSB TIMELINE.C F0242/F0244/F0250/F0251 dispatches C07..C10
+/* ReDMCSB TIMELINE.C F0242/F0244/F0245/F0248/F0250/F0251 dispatches C05..C10
  * square effects after F0261 extracts the event.  M10 represents that
  * original event family as TIMELINE_EVENT_SQUARE_STATE: aux0 is the
  * original C05..C10 type and aux1 is C00_SET/C01_CLEAR/C02_TOGGLE. */
 static int orch_dispatch_square_state_event_compat(
     struct GameWorld_Compat* world,
-    const struct TimelineEvent_Compat* ev)
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
 {
     const struct DungeonMapDesc_Compat* map;
     struct DungeonMapTiles_Compat* tiles;
@@ -3351,6 +3365,8 @@ static int orch_dispatch_square_state_event_compat(
     if (effect < DOOR_EFFECT_SET || effect > DOOR_EFFECT_TOGGLE) return 0;
 
     switch (ev->aux0) {
+    case DM1_EVENT_CORRIDOR:
+        return orch_dispatch_corridor_event_f0245_compat(world, ev, result);
     case DM1_EVENT_WALL:
         return orch_dispatch_wall_event_f0248_compat(world, ev);
     case DM1_EVENT_DOOR: {
@@ -3436,6 +3452,64 @@ static int orch_dispatch_square_state_event_compat(
     default:
         return 0;
     }
+}
+
+/* ReDMCSB TIMELINE.C F0245:920-1006 walks every corridor Thing in source
+ * list order. TextStrings are not cell-filtered here, unlike F0248 wall
+ * text. Each C006 is consumed immediately through the established F0185
+ * runtime materializer, with aux4 carrying an explicit 1-based sensor index
+ * so a later C006 cannot accidentally reuse the first one on the square. */
+static int orch_dispatch_corridor_event_f0245_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
+{
+    int squareIndex;
+    unsigned short thing;
+    int safety = 0;
+    int applied = 0;
+
+    if (!world || !world->dungeon || !world->things || !ev || !result ||
+        !world->things->loaded || !world->things->squareFirstThings ||
+        ev->aux1 < DM1_EFFECT_SET || ev->aux1 > DM1_EFFECT_TOGGLE ||
+        orch_f0248_target_square_type_compat(
+            world, ev->mapIndex, ev->mapX, ev->mapY) != DM1_SQUARE_CORRIDOR) {
+        return 0;
+    }
+    squareIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, ev->mapIndex, ev->mapX, ev->mapY);
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    thing = world->things->squareFirstThings[squareIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int thingIndex = THING_GET_INDEX(thing);
+        unsigned short next = orch_next_thing_compat(world->things, thing);
+
+        if (type == THING_TYPE_TEXTSTRING &&
+            thingIndex >= 0 && thingIndex < world->things->textStringCount) {
+            struct DungeonTextString_Compat* text =
+                &world->things->textStrings[thingIndex];
+            text->visible = (unsigned char)(ev->aux1 == DM1_EFFECT_TOGGLE ?
+                !text->visible : ev->aux1 == DM1_EFFECT_SET);
+            applied = 1;
+        } else if (type == THING_TYPE_SENSOR &&
+                   thingIndex >= 0 && thingIndex < world->things->sensorCount &&
+                   world->things->sensors[thingIndex].sensorType ==
+                       DM1_SENSOR_FLOOR_GROUP_GENERATOR) {
+            struct TimelineEvent_Compat generatorEvent = *ev;
+
+            generatorEvent.kind = TIMELINE_EVENT_GROUP_GENERATOR;
+            generatorEvent.aux0 = GENERATOR_EVENT_AUX0_TRIGGER;
+            generatorEvent.aux4 = thingIndex + 1;
+            applied |= orch_handle_group_generator_trigger_runtime_compat(
+                world, &generatorEvent, result);
+        }
+        thing = next;
+    }
+    return applied;
 }
 
 static int orch_f0248_target_square_type_compat(
@@ -8033,9 +8107,17 @@ static int orch_handle_group_generator_trigger_runtime_compat(
     struct OrchTeleporterBuzzList_Compat teleporterBuzzes;
 
     if (!world || !ev || !result || !world->dungeon || !world->things) return 0;
-    if (!orch_find_generator_sensor_on_square_compat(
-            world->dungeon, world->things, ev->mapIndex, ev->mapX, ev->mapY,
-            &sensorIndex)) {
+    if (ev->aux4 > 0) {
+        sensorIndex = ev->aux4 - 1;
+        if (sensorIndex < 0 || sensorIndex >= world->things->sensorCount ||
+            !world->things->sensors ||
+            world->things->sensors[sensorIndex].sensorType !=
+                RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR) {
+            return 0;
+        }
+    } else if (!orch_find_generator_sensor_on_square_compat(
+                   world->dungeon, world->things, ev->mapIndex, ev->mapX,
+                   ev->mapY, &sensorIndex)) {
         return 0;
     }
     if (sensorIndex < 0 || sensorIndex >= world->things->sensorCount) return 0;
@@ -9226,7 +9308,7 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             (void)orch_handle_deferred_group_move_event_compat(world, &ev, result);
             break;
         case TIMELINE_EVENT_SQUARE_STATE:
-            (void)orch_dispatch_square_state_event_compat(world, &ev);
+            (void)orch_dispatch_square_state_event_compat(world, &ev, result);
             break;
         case TIMELINE_EVENT_MOVE_TIMER:
         case TIMELINE_EVENT_SPELL_TICK:
