@@ -126,6 +126,29 @@ void fs_init_default_palette(void) {
 static void fs_game_render_viewport(FS_GameState *state) {
     int x, y, px, py, dir;
     if (!state) return;
+
+    /* skproject's startup/render route does not invent a dungeon surface
+     * while GRAPHICS.DAT and DUNGEON.DAT are unavailable.  Keep the prior
+     * launcher frame visible and publish an explicit failure instead of the
+     * old red/brown DM2 placeholder viewport. */
+    if (state->config.game == FS_GAME_DM2) {
+        DM2_V1_BootProfile *boot =
+            (DM2_V1_BootProfile *)state->dm2_boot;
+        if (!boot || !boot->assets_verified || !boot->graphics_dat ||
+            !boot->dungeon_data || !boot->dm2_state) {
+            state->last_error.code = -2;
+            snprintf(state->last_error.message,
+                     sizeof(state->last_error.message),
+                     "DM2 ORIGINAL DATA REQUIRED");
+            snprintf(state->last_error.detail,
+                     sizeof(state->last_error.detail),
+                     "Verified GRAPHICS.DAT and DUNGEON.DAT must finish boot before rendering.");
+            snprintf(state->last_error.suggestion,
+                     sizeof(state->last_error.suggestion),
+                     "Select a hash-verified DM2 installation in the launcher.");
+            return;
+        }
+    }
     px = state->party_x;
     py = state->party_y;
     dir = state->party_direction;
@@ -187,14 +210,6 @@ static void fs_game_render_viewport(FS_GameState *state) {
              * Per V1 tick cadence (55ms).  No-op when V1 is active
              * (lighting state preserved for V1 palette). */
             dm2_v2_lighting_runtime_tick(0.055f /* V1 tick = 55ms */, 0);
-        } else {
-            /* DM2 boot not complete — render placeholder ceiling/floor */
-            for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
-                for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
-                    g_framebuffer[y * FS_FB_W + x] = 4;  /* dark red ceiling */
-            for (y = FS_VP_Y + FS_VP_H / 2; y < FS_VP_Y + FS_VP_H; y++)
-                for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
-                    g_framebuffer[y * FS_FB_W + x] = 6;  /* brown floor */
         }
 
     } else {

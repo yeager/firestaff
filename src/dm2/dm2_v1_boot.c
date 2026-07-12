@@ -3491,20 +3491,23 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
     }
 
     out_receipt->real_gdat_capture_breadth_ready =
-        out_receipt->sampled_title_timing_capture_count >= 3 &&
-        out_receipt->sampled_title_pixel_capture_count >= 3 &&
+        /* fe7299 SHOW_MENU_SCREEN keeps one original TITLE surface while
+         * startup HUD is suppressed.  The probe intentionally samples that
+         * static surface once; requiring invented frames 2/7 would turn an
+         * original-data route into a synthetic-animation requirement. */
+        out_receipt->sampled_title_timing_capture_count >= 1 &&
+        out_receipt->sampled_title_pixel_capture_count >= 1 &&
         out_receipt->sampled_title_unique_pixel_hash_count >= 1 &&
         out_receipt->sampled_title_pixel_hash != 0u &&
         (out_receipt->sampled_title_frame_mask & (1 << 0)) &&
-        (out_receipt->sampled_title_frame_mask & (1 << 2)) &&
-        (out_receipt->sampled_title_frame_mask & (1 << 7)) &&
-        out_receipt->sampled_menu_selection_capture_count >= 3 &&
-        out_receipt->sampled_menu_composite_capture_count >= 3 &&
-        (out_receipt->menu_raw_screen_route_ready
-             ? out_receipt->sampled_menu_unique_composite_hash_count >= 1
-             : out_receipt->sampled_menu_unique_composite_hash_count >= 3) &&
+        /* Menu navigation is input state over a static original screen.  The
+         * sole captured selection must therefore be an original GDAT
+         * composite with no generated rows, not three fabricated variants. */
+        out_receipt->sampled_menu_selection_capture_count >= 1 &&
+        out_receipt->sampled_menu_composite_capture_count >= 1 &&
+        out_receipt->sampled_menu_unique_composite_hash_count >= 1 &&
         out_receipt->sampled_menu_composite_hash != 0u &&
-        (out_receipt->sampled_menu_selection_mask & 0x7) == 0x7 &&
+        (out_receipt->sampled_menu_selection_mask & 0x1) == 0x1 &&
         out_receipt->sampled_runtime_hud_handoff_capture_ready;
     return out_receipt->real_gdat_capture_breadth_ready;
 }
@@ -5025,9 +5028,26 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->full_title_frame_capture_ready &&
         out_receipt->menu_gdat_capture_ready &&
         out_receipt->menu_capture_ready &&
-        out_receipt->menu_gdat_command_count == 2 &&
-        (out_receipt->menu_raw_screen_route_ready ||
-         (out_receipt->menu_rect_command_count >= 2 &&
+        /* skproject SHOW_MENU_SCREEN may consume the complete menu through
+         * its verified raw screen instead of emitting Firestaff text/rect
+         * commands.  That route has one title image command; accept it only
+         * when the raw screen is actually consumed and the later composite
+         * receipt proves no synthetic overlay. */
+        ((out_receipt->menu_raw_screen_route_ready &&
+          out_receipt->menu_raw_screen_consumed &&
+          !out_receipt->menu_image_field_fallback_used &&
+          out_receipt->menu_gdat_command_count >= 1) ||
+         /* This verified PC GDAT uses the decoded IMAGE field when no raw
+          * SHOW_MENU_SCREEN record is present.  It is still an original
+          * 320x200 menu surface; the composite gate below remains responsible
+          * for rejecting any generated text/rect overlay. */
+         (!out_receipt->menu_raw_screen_route_ready &&
+          out_receipt->menu_image_field_fallback_used &&
+          out_receipt->menu_gdat_command_count >= 1) ||
+         (!out_receipt->menu_raw_screen_route_ready &&
+          !out_receipt->menu_image_field_fallback_used &&
+          out_receipt->menu_gdat_command_count == 2 &&
+          out_receipt->menu_rect_command_count >= 2 &&
           out_receipt->menu_text_command_count >=
               out_receipt->menu_row_count &&
           out_receipt->selected_highlight_count >= 1));
@@ -5642,6 +5662,7 @@ int dm2_v1_boot_runtime_render_frame(
     DM2_V1_BootRuntimeRenderReceipt *out_receipt)
 {
     DM2_V1_BootRuntimeReceipt runtime;
+    DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
     int rendered = -1;
     dm2_v1_boot_runtime_render_receipt_clear(out_receipt);
     if (!profile || !profile->dm2_state || !framebuffer) {
@@ -5688,6 +5709,11 @@ int dm2_v1_boot_runtime_render_frame(
             out_receipt->v1_succeeded = 1;
         }
     }
+    /* Keep the ownership decision for the exact frame this API presented.
+     * The later raw/decoded HUD probes render independent sample frames and
+     * must not replace this frame's no-fallback/no-block decision. */
+    memset(&frame_ownership, 0, sizeof(frame_ownership));
+    (void)dm2_v1_runtime_last_frame_ownership(&frame_ownership);
     if (out_receipt) {
         out_receipt->render_result = rendered;
         out_receipt->startup_render_ready =
@@ -5777,6 +5803,10 @@ int dm2_v1_boot_runtime_render_frame(
             dm2_v1_runtime_last_asset_projectile_count();
         out_receipt->runtime_render_fallback_projectile_count =
             dm2_v1_runtime_last_fallback_projectile_count();
+        out_receipt->runtime_render_blocked_material_draw_count =
+            frame_ownership.blocked_material_draws;
+        out_receipt->runtime_render_blocked_material_mask =
+            frame_ownership.blocked_material_mask;
         out_receipt->runtime_render_no_core_fallbacks =
             out_receipt->runtime_render_asset_floor_ceiling_count >= 2 &&
             out_receipt->runtime_render_fallback_floor_ceiling_count == 0 &&
@@ -5787,7 +5817,9 @@ int dm2_v1_boot_runtime_render_frame(
             out_receipt->runtime_render_fallback_item_count == 0 &&
             out_receipt->runtime_render_fallback_creature_possession_item_count == 0 &&
             out_receipt->runtime_render_fallback_carried_item_count == 0 &&
-            out_receipt->runtime_render_fallback_projectile_count == 0;
+            out_receipt->runtime_render_fallback_projectile_count == 0 &&
+            out_receipt->runtime_render_blocked_material_draw_count == 0 &&
+            out_receipt->runtime_render_blocked_material_mask == 0u;
         out_receipt->runtime_render_real_asset_ready =
             out_receipt->runtime_hud_capture_ready &&
             out_receipt->runtime_render_no_core_fallbacks;

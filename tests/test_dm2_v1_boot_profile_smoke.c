@@ -522,6 +522,8 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_render_fallback_door_count == 0 &&
               render_receipt.runtime_render_fallback_item_count == 0 &&
               render_receipt.runtime_render_fallback_carried_item_count == 0 &&
+              render_receipt.runtime_render_blocked_material_draw_count == 0 &&
+              render_receipt.runtime_render_blocked_material_mask == 0u &&
               render_receipt.runtime_render_no_core_fallbacks == 1,
           "boot runtime render owns V2 callback, V1 fallback, and real GDAT frame/HUD receipt");
     memset(&frame_ownership, 0, sizeof(frame_ownership));
@@ -540,7 +542,8 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               frame_ownership.gdat_scene_control_ready == 1 &&
               frame_ownership.gdat_scene_control_consumed > 0 &&
               frame_ownership.gdat_scene_light_consumed > 0 &&
-              frame_ownership.gdat_sprite_palette_consumed > 0 &&
+              frame_ownership.gdat_interface_palette_ready == 1 &&
+              frame_ownership.gdat_interface_palette_consumed > 0 &&
               frame_ownership.gdat_scene_control_hash != 0u &&
               (frame_ownership.gdat_scene_control_present_mask & 0x03u) == 0x03u,
           "real-profile frame consumes GDAT materials without blocked or painted fallbacks");

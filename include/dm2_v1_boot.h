@@ -261,9 +261,13 @@ typedef struct {
     int runtime_render_fallback_carried_item_count;
     int runtime_render_asset_projectile_count;
     int runtime_render_fallback_projectile_count;
+    /* The runtime owns this receipt after the viewport has decided whether
+     * every requested GDAT material was available.  A zero fallback count is
+     * insufficient: a source-required frame can intentionally leave missing
+     * pixels untouched instead of painting a substitute. */
+    int runtime_render_blocked_material_draw_count;
+    uint32_t runtime_render_blocked_material_mask;
     int runtime_render_no_core_fallbacks;
-    uint32_t runtime_render_scene_consumed_mask;
-    uint32_t runtime_render_scene_consumption_hash;
 } DM2_V1_BootRuntimeRenderReceipt;
 
 typedef struct {
@@ -308,8 +312,6 @@ typedef struct {
     int real_gdat_portrait_ready;
     int real_gdat_core_render_ready;
     int real_gdat_runtime_hud_breadth_ready;
-    uint32_t runtime_scene_consumed_mask;
-    uint32_t runtime_scene_consumption_hash;
     int raw_gdat_runtime_hud_capture_ready;
     int raw_gdat_runtime_portrait_count;
     uint32_t raw_gdat_runtime_portrait_hash;
@@ -390,9 +392,6 @@ typedef struct {
     uint32_t interface_action_table_byte_count;
     uint32_t interface_action_group_count;
     uint32_t interface_action_entry_count;
-    uint32_t interface_action_pv1_byte_count;
-    uint32_t interface_action_pv5_byte_count;
-    uint32_t interface_action_command_byte_count;
     uint32_t interface_action_tail_byte_count;
     int interface_font_table_ready;
     uint32_t interface_font_table_hash;
@@ -407,11 +406,6 @@ typedef struct {
     uint32_t interface_palette_pal16_byte_count;
     uint32_t interface_palette_irgb_color_count;
     uint32_t interface_palette_pal16_color_count;
-    int runtime_gdat_breadth_receipt_ready;
-    uint32_t runtime_gdat_breadth_mask;
-    uint32_t runtime_gdat_breadth_hash;
-    uint32_t runtime_gdat_breadth_raw_byte_count;
-    uint32_t runtime_gdat_breadth_decoded_pixel_count;
     uint32_t combined_frame_hash;
     uint32_t combined_pixel_count;
     DM2_V1_BootRuntimeRenderReceipt first_frame;
@@ -435,23 +429,6 @@ typedef struct {
     int animation_attribution_count;
     int animation_info_sequence_count;
     int animation_frame_sequence_count;
-    uint32_t animation_table_field_mask;
-    int animation_attribution_ready;
-    uint32_t animation_attribution_hash;
-    uint32_t animation_attribution_byte_count;
-    int animation_info_sequence_ready;
-    uint32_t animation_info_sequence_hash;
-    uint32_t animation_info_sequence_byte_count;
-    int animation_frame_sequence_ready;
-    uint32_t animation_frame_sequence_hash;
-    uint32_t animation_frame_sequence_byte_count;
-    int animation_semantic_ready;
-    uint32_t animation_semantic_hash;
-    uint32_t animation_semantic_byte_count;
-    uint32_t animation_semantic_nonzero_byte_count;
-    uint32_t animation_semantic_sequence_ref_count;
-    uint32_t animation_semantic_frame_ref_count;
-    uint32_t animation_semantic_creature_count;
     uint32_t animation_table_hash;
     uint32_t animation_table_byte_count;
     int animation_table_ready;
@@ -970,9 +947,6 @@ typedef struct {
     int runtime_gdat_interface_placement_complete;
     int runtime_creature_atlas_complete;
     int runtime_gdat_direction_breadth_complete;
-    int runtime_gdat_breadth_receipt_complete;
-    uint32_t runtime_gdat_breadth_mask;
-    uint32_t runtime_gdat_breadth_hash;
     int no_fallback_title_or_runtime_visuals;
     int raw_gdat_capture_complete;
     int decoded_gdat_capture_complete;
@@ -981,20 +955,7 @@ typedef struct {
     int save_corpus_importable_candidate_count;
     int save_corpus_rejected_candidate_count;
     int save_corpus_original_candidate_count;
-    int save_corpus_recursive_candidate_count;
-    int save_corpus_recursive_importable_candidate_count;
-    int save_corpus_alternate_name_candidate_count;
-    int save_corpus_recursive_scan_truncated;
-    int save_corpus_recursive_scan_depth_limit;
-    int save_corpus_recursive_scan_candidate_cap;
     unsigned int save_corpus_valid_slot_mask;
-    uint32_t save_corpus_importable_kind_mask;
-    uint32_t save_corpus_importable_payload_hash;
-    int save_corpus_import_promotion_ready;
-    int save_corpus_first_importable_kind;
-    size_t save_corpus_first_importable_payload_size;
-    char save_corpus_first_importable_path[256];
-    uint32_t save_corpus_import_promotion_hash;
     uint32_t save_corpus_hash;
     int complete_support_ready;
     uint32_t complete_support_hash;

@@ -4249,7 +4249,19 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
                               h,
                               stride > 0 ? stride : w,
                               DM2_COLOR_TRANSPARENT,
-                              &s->gdat_sprite_palette_consumed_count);
+                              /* skproject LOAD_GDAT_INTERFACE_00_02
+                               * initializes the INTERFACE_GENERAL palette
+                               * used by these chrome images.  Keep its
+                               * consumption distinct from map-chip sprite
+                               * palettes in the frame ownership receipt. */
+                              &s->gdat_interface_palette_consumed_count);
+    /* skproject binds dtPalIRGB/dtPalette16 before selecting the chrome
+     * bitmap.  Count that source palette binding even if this particular
+     * image contains no logical index below 16 (where the pixel loop above
+     * would otherwise have no individual remap to count). */
+    if (s->gdat_interface_palette_ready) {
+        ++s->gdat_interface_palette_consumed_count;
+    }
     ++s->asset_hud_core_drawn_count;
     s->last_hud_core_gdat_hash =
         dm2_v1_viewport_hash_gdat_asset(s->last_hud_core_gdat_hash,
@@ -4416,7 +4428,10 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                                               portrait_h,
                                               portrait_stride,
                                               DM2_COLOR_TRANSPARENT,
-                                              &s->gdat_sprite_palette_consumed_count);
+                                              &s->gdat_interface_palette_consumed_count);
+                    if (s->gdat_interface_palette_ready) {
+                        ++s->gdat_interface_palette_consumed_count;
+                    }
                     ++s->asset_hud_portrait_drawn_count;
                 } else {
                     if (s->source_materials_required) {
