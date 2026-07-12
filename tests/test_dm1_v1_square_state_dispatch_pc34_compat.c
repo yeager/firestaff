@@ -37,6 +37,21 @@ static int has_square_state_event(const struct GameWorld_Compat* world,
     return 0;
 }
 
+static int has_generator_reenable_event(const struct GameWorld_Compat* world,
+                                        int x, int y)
+{
+    int i;
+    for (i = 0; i < world->timeline.count; ++i) {
+        const struct TimelineEvent_Compat* event = &world->timeline.events[i];
+        if (event->kind == TIMELINE_EVENT_GROUP_GENERATOR &&
+            event->aux0 == GENERATOR_EVENT_AUX0_REENABLE &&
+            event->mapX == x && event->mapY == y) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int main(void)
 {
     struct DungeonDatState_Compat dungeon;
@@ -48,6 +63,7 @@ int main(void)
     struct DungeonTeleporter_Compat teleporter;
     struct DungeonTextString_Compat text;
     struct DungeonSensor_Compat sensors[3];
+    struct DungeonGroup_Compat group;
     unsigned short squareFirstThings[4];
     struct GameWorld_Compat world;
     struct TickResult_Compat result;
@@ -58,6 +74,8 @@ int main(void)
     memset(squares, 0, sizeof(squares));
     map.width = 2;
     map.height = 2;
+    map.creatureTypeCount = 1;
+    map.allowedCreatureTypes[0] = 0;
     dungeon.header.mapCount = 1;
     dungeon.maps = &map;
     dungeon.tiles = &tiles;
@@ -71,6 +89,7 @@ int main(void)
     memset(&teleporter, 0, sizeof(teleporter));
     memset(&text, 0, sizeof(text));
     memset(sensors, 0, sizeof(sensors));
+    memset(&group, 0, sizeof(group));
     memset(squareFirstThings, 0, sizeof(squareFirstThings));
     things.loaded = 1;
     things.weapons = &weapon;
@@ -82,6 +101,9 @@ int main(void)
     things.textStringCount = 1;
     things.sensors = sensors;
     things.sensorCount = 3;
+    things.groups = &group;
+    things.groupCount = 1;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 2;
     weapon.next = THING_ENDOFLIST;
@@ -204,5 +226,36 @@ int main(void)
                                                  (THING_TYPE_SENSOR << 10) | 0));
     assert(sensors[0].next == (unsigned short)((2u << 14) |
                                                  (THING_TYPE_SENSOR << 10) | 2));
+
+    /* F0245: corridor TextStrings have no wall-cell filter, and each C006
+     * is materialized immediately in list order through F0185. */
+    squares[1] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                 DUNGEON_SQUARE_MASK_THING_LIST);
+    text.visible = 0;
+    text.next = (unsigned short)(THING_TYPE_SENSOR << 10);
+    sensors[0].next = THING_ENDOFLIST;
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_GROUP_GENERATOR;
+    sensors[0].sensorData = 0;
+    sensors[0].value = 1;
+    sensors[0].onceOnly = 0;
+    sensors[0].audible = 1;
+    sensors[0].localMultiple = (unsigned short)((2u << 4) | 1u);
+    group.next = THING_NONE;
+    squareFirstThings[1] = (unsigned short)(THING_TYPE_TEXTSTRING << 10);
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 1;
+    world.party.mapY = 1;
+    assert(F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick));
+
+    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1, 3);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert(text.visible == 1);
+    assert(sensors[0].sensorType == RUNTIME_SENSOR_TYPE_DISABLED);
+    assert(squareFirstThings[1] == (unsigned short)(THING_TYPE_GROUP << 10));
+    assert(group.next == (unsigned short)(THING_TYPE_TEXTSTRING << 10));
+    assert(group.creatureType == 0 && group.health[0] > 0);
+    assert(has_generator_reenable_event(&world, 0, 1));
     return 0;
 }
