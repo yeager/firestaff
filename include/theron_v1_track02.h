@@ -2555,6 +2555,10 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
  * records.  JP and US differ by the executable's one-sector size delta. */
 #define THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP 0x0004dfu
 #define THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US 0x0004e0u
+#define THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES 2048u
+#define THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_BYTES 0x520u
+#define THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_BYTES 6u
+#define THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT 218u
 /* The verified $4090 setup writes AL, DH, and BX only.  CL/DL/CH remain
  * live across this boundary and jointly form the CD_READ record number. */
 #define THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_CL 0x01u
@@ -2615,6 +2619,26 @@ typedef struct {
     int vram_transfer_proven;
 } Theron_Track02IplLoaderReceipt;
 
+/* Byte-level receipt for the first dynamically addressed stage-two payload.
+ * It proves the original one-sector payload's shared manifest shape only;
+ * entry meanings remain unclassified until loader control flow establishes
+ * them. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t track02_record;
+    size_t raw_sector;
+    size_t raw_offset;
+    size_t user_data_offset;
+    size_t user_data_bytes;
+    uint16_t header_word0;
+    uint16_t header_word1;
+    size_t manifest_bytes;
+    size_t manifest_entry_count;
+    size_t nonzero_byte_count;
+    uint32_t user_data_hash;
+} Theron_Track02Stage2DynamicPayloadReceipt;
+
 /* Scanner-to-M11 launch contract for an original CUE-mounted Track 02.
  * It binds the hash-verified MODE1/2352 payload to the IPL bootstrap and
  * stage-two receipt; it never materializes a replacement/cache payload. */
@@ -2640,5 +2664,11 @@ Theron_Track02SignalStatus theron_v1_track02_find_ipl_loader(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02IplLoaderReceipt *out_receipt);
+
+Theron_Track02SignalStatus theron_v1_track02_inspect_stage2_dynamic_payload(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2DynamicPayloadReceipt *out_receipt);
 
 #endif /* THERON_V1_TRACK02_H */

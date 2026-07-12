@@ -8316,3 +8316,58 @@ Theron_Track02SignalStatus theron_v1_track02_find_ipl_loader(
     out_receipt->vram_transfer_proven = 0;
     return THERON_TRACK02_SIGNAL_OK;
 }
+
+Theron_Track02SignalStatus theron_v1_track02_inspect_stage2_dynamic_payload(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2DynamicPayloadReceipt *out_receipt) {
+    Theron_Track02IplLoaderReceipt loader;
+    size_t raw_offset;
+    size_t user_offset;
+    size_t i;
+    const uint8_t *payload;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt ||
+        theron_v1_track02_find_ipl_loader(track02_data, track02_size, md5_hex,
+                                          &loader) != THERON_TRACK02_SIGNAL_OK ||
+        !loader.valid || !loader.stage2_cd_read_record_proven ||
+        loader.stage2_cd_read_raw_sector >
+            (SIZE_MAX - TQR_RAW_SECTOR_USER_DATA_OFFSET) / TQR_RAW_SECTOR_BYTES) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    raw_offset = loader.stage2_cd_read_raw_sector * TQR_RAW_SECTOR_BYTES;
+    user_offset = raw_offset + TQR_RAW_SECTOR_USER_DATA_OFFSET;
+    if (user_offset > track02_size ||
+        THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES >
+            track02_size - user_offset) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    payload = track02_data + user_offset;
+    if (rd16be(payload) != 0x00ffu || rd16be(payload + 2u) != 0x0308u) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    for (i = THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_BYTES;
+         i < THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES;
+         ++i) {
+        if (payload[i] != 0u) return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    out_receipt->valid = 1;
+    out_receipt->variant = loader.variant;
+    out_receipt->track02_record = loader.stage2_cd_read_record;
+    out_receipt->raw_sector = loader.stage2_cd_read_raw_sector;
+    out_receipt->raw_offset = raw_offset;
+    out_receipt->user_data_offset = user_offset;
+    out_receipt->user_data_bytes = THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES;
+    out_receipt->header_word0 = rd16be(payload);
+    out_receipt->header_word1 = rd16be(payload + 2u);
+    out_receipt->manifest_bytes = THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_BYTES;
+    out_receipt->manifest_entry_count =
+        THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT;
+    out_receipt->nonzero_byte_count = tqr_count_nonzero_bytes(
+        payload, THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES);
+    out_receipt->user_data_hash = tqr_hash_bytes(
+        payload, THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES);
+    return THERON_TRACK02_SIGNAL_OK;
+}

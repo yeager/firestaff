@@ -186,6 +186,13 @@
   revalidates the proven record/raw-sector fields in its IPL receipt; this is
   loader provenance only, not a semantic classification of either payload.
 
+- 2026-07-12 Theron dynamic stage-two payload receipt: the first live `$4090`
+  CD_READ payload is now hash-gated and structurally verified in Firestaff for
+  both original variants. It is one 2 KiB user-data sector with BE lead words
+  `$00ff/$0308`, a bounded nonzero `$000..$51f` prefix, 218 six-byte units,
+  and required zero fill through `$7ff`. The new receipt deliberately assigns
+  no semantics to those units. Focused real-media probe passed with `fail=0`.
+
 - 2026-07-12 CSB F0115 native Rockpile group front: type 7 now resolves only
   through `G0243 -> G0219 -> M618` to PC CSB `GRAPHICS.DAT` 605. Its G0219
   offset 21 and `0x04` coordinate/transparency byte are consumed by the

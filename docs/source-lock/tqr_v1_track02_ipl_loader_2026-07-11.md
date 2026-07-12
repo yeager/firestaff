@@ -68,3 +68,12 @@ The CUE TOC maps those LBAs to the shown Track 02-relative records. This binds
 the live `CL|DL|CH` state at `$4090`; it does not classify the loaded payload,
 derive a graphics format, or authorize a VRAM transfer. Neither validated
 stage uses `DH=$fe` or `$ff`.
+
+## Dynamic Payload Shape
+
+Both traced one-sector payloads have the same bounded structural envelope:
+the first two big-endian words are `$00ff` and `$0308`, bytes `$520..$7ff`
+are zero-filled, and the nonzero `$000..$51f` prefix fits exactly 218
+six-byte units after the four-byte lead. Firestaff exposes this as a
+hash-gated manifest receipt only. The entries have no assigned object, level,
+text, palette, or graphics semantics yet.
