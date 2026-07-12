@@ -819,6 +819,8 @@ typedef struct {
     int asset_creature_possession_item_drawn_count;
     int fallback_creature_possession_item_drawn_count;
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *g1_creature_map_chip_materials;
+    const DM2_V1_G1TextWallGfxRuntimeReceipt *g1_text_wall_gfx_materials;
+    const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *g1_actuator_wall_gfx_materials;
     int asset_carried_item_drawn_count;
     int fallback_carried_item_drawn_count;
     int last_item_render_valid;
@@ -900,6 +902,10 @@ void dm2_v1_viewport_set_gdat_interface_font(
 void dm2_v1_viewport_set_g1_creature_map_chip_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt);
+void dm2_v1_viewport_set_g1_wall_gfx_materials(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_G1TextWallGfxRuntimeReceipt *text_receipt,
+    const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *actuator_receipt);
 void dm2_v1_viewport_set_gdat_interface_hud_layout(
     DM2_V1_ViewportState *s,
     const DM2_V1_InterfaceHudLayout *layout);

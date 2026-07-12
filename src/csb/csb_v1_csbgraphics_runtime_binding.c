@@ -60,6 +60,41 @@ static int decoded_pixel_count_fits(
            decoded->indexed_pixel_count >= required;
 }
 
+static int binding_can_apply(
+    const CSB_V1_CSBGraphicsRuntimeBinding *binding,
+    const CSB_V1_CSBGraphicsDecodedBitmap *decoded,
+    const uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int framebuffer_stride)
+{
+    int copy_w;
+    int copy_h;
+
+    if (!binding || !decoded || !framebuffer ||
+        binding->decision !=
+            CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_BIND_OVERRIDE ||
+        binding->route == CSB_V1_CSBGRAPHICS_RUNTIME_ROUTE_NONE ||
+        !decoded->decoded_ok || !decoded->trusted ||
+        decoded->entry_index != binding->entry_index ||
+        decoded->bits_per_pixel != 4u ||
+        decoded->max_palette_index > CSB_V1_CSBGRAPHICS_RUNTIME_PALETTE_MAX ||
+        !decoded_pixel_count_fits(decoded) ||
+        framebuffer_width <= 0 || framebuffer_height <= 0 ||
+        framebuffer_stride < framebuffer_width ||
+        binding->destination_x < 0 || binding->destination_y < 0 ||
+        binding->destination_w <= 0 || binding->destination_h <= 0) {
+        return 0;
+    }
+    copy_w = (int)decoded->width;
+    copy_h = (int)decoded->height;
+    return copy_w > 0 && copy_h > 0 &&
+           copy_w <= binding->destination_w &&
+           copy_h <= binding->destination_h &&
+           binding->destination_x + copy_w <= framebuffer_width &&
+           binding->destination_y + copy_h <= framebuffer_height;
+}
+
 int csb_v1_csbgraphics_runtime_prepare_binding(
     const CSB_V1_CSBGraphicsEntrySpan *span,
     const CSB_V1_CSBGraphicsDecodedBitmap *decoded,
@@ -171,40 +206,13 @@ int csb_v1_csbgraphics_runtime_apply_binding(
     int copy_w;
     int copy_h;
 
-    if (!binding || !decoded || !framebuffer) {
+    if (!binding_can_apply(binding, decoded, framebuffer,
+                           framebuffer_width, framebuffer_height,
+                           framebuffer_stride)) {
         return 0;
     }
-    if (binding->decision != CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_BIND_OVERRIDE ||
-        binding->route == CSB_V1_CSBGRAPHICS_RUNTIME_ROUTE_NONE) {
-        return 0;
-    }
-    if (!decoded->decoded_ok || !decoded->trusted ||
-        decoded->entry_index != binding->entry_index ||
-        decoded->bits_per_pixel != 4u ||
-        decoded->max_palette_index > CSB_V1_CSBGRAPHICS_RUNTIME_PALETTE_MAX ||
-        !decoded_pixel_count_fits(decoded)) {
-        return 0;
-    }
-    if (framebuffer_width <= 0 || framebuffer_height <= 0 ||
-        framebuffer_stride < framebuffer_width) {
-        return 0;
-    }
-    if (binding->destination_x < 0 || binding->destination_y < 0 ||
-        binding->destination_w <= 0 || binding->destination_h <= 0) {
-        return 0;
-    }
-
     copy_w = (int)decoded->width;
     copy_h = (int)decoded->height;
-    if (copy_w <= 0 || copy_h <= 0 ||
-        copy_w > binding->destination_w ||
-        copy_h > binding->destination_h) {
-        return 0;
-    }
-    if (binding->destination_x + copy_w > framebuffer_width ||
-        binding->destination_y + copy_h > framebuffer_height) {
-        return 0;
-    }
 
     /* Source-lock boundary: CSBWin Graphics.cpp:1717 ReadGraphic delivers
      * indexed bitmap payloads for graphics overrides. Runtime keeps V1's
@@ -245,6 +253,70 @@ int csb_v1_csbgraphics_runtime_prepare_and_apply(
                                                 framebuffer_width,
                                                 framebuffer_height,
                                                 framebuffer_stride);
+}
+
+int csb_v1_csbgraphics_runtime_prepare_and_apply_hud_pair(
+    const CSB_V1_CSBGraphicsEntrySpan *inventory_span,
+    const CSB_V1_CSBGraphicsDecodedBitmap *inventory_decoded,
+    const CSB_V1_CSBGraphicsEntrySpan *resurrect_span,
+    const CSB_V1_CSBGraphicsDecodedBitmap *resurrect_decoded,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int framebuffer_stride,
+    CSB_V1_CSBGraphicsRuntimeBinding *out_inventory_binding,
+    CSB_V1_CSBGraphicsRuntimeBinding *out_resurrect_binding)
+{
+    CSB_V1_CSBGraphicsRuntimeBinding inventory_binding;
+    CSB_V1_CSBGraphicsRuntimeBinding resurrect_binding;
+
+    if (out_inventory_binding) {
+        memset(out_inventory_binding, 0, sizeof(*out_inventory_binding));
+    }
+    if (out_resurrect_binding) {
+        memset(out_resurrect_binding, 0, sizeof(*out_resurrect_binding));
+    }
+    if (!framebuffer ||
+        !csb_v1_csbgraphics_runtime_prepare_binding(inventory_span,
+                                                    inventory_decoded,
+                                                    &inventory_binding) ||
+        !csb_v1_csbgraphics_runtime_prepare_binding(resurrect_span,
+                                                    resurrect_decoded,
+                                                    &resurrect_binding) ||
+        inventory_binding.decision !=
+            CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_BIND_OVERRIDE ||
+        inventory_binding.route !=
+            CSB_V1_CSBGRAPHICS_RUNTIME_ROUTE_HUD_INVENTORY ||
+        resurrect_binding.decision !=
+            CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_BIND_OVERRIDE ||
+        resurrect_binding.route !=
+            CSB_V1_CSBGRAPHICS_RUNTIME_ROUTE_HUD_RESURRECT_PANEL ||
+        !binding_can_apply(&inventory_binding, inventory_decoded, framebuffer,
+                           framebuffer_width, framebuffer_height,
+                           framebuffer_stride) ||
+        !binding_can_apply(&resurrect_binding, resurrect_decoded, framebuffer,
+                           framebuffer_width, framebuffer_height,
+                           framebuffer_stride)) {
+        return 0;
+    }
+
+    /* ReDMCSB PANEL.C F0346/F0352: C017 establishes the viewport HUD;
+     * F0346 then overlays the C040 resurrect/reincarnate panel. */
+    if (!csb_v1_csbgraphics_runtime_apply_binding(
+            &inventory_binding, inventory_decoded, framebuffer,
+            framebuffer_width, framebuffer_height, framebuffer_stride) ||
+        !csb_v1_csbgraphics_runtime_apply_binding(
+            &resurrect_binding, resurrect_decoded, framebuffer,
+            framebuffer_width, framebuffer_height, framebuffer_stride)) {
+        return 0;
+    }
+    if (out_inventory_binding) {
+        *out_inventory_binding = inventory_binding;
+    }
+    if (out_resurrect_binding) {
+        *out_resurrect_binding = resurrect_binding;
+    }
+    return 1;
 }
 
 int csb_v1_csbgraphics_runtime_decode_entry_and_apply(

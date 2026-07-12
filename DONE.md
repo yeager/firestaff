@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1/CSB/DM2/Nexus runtime material pass: DM1 F0202/F0813 now
+  consumes typed destination facts in ReDMCSB source order; CSB validates the
+  C017/C040 HUD pair before either original-data blit; DM2 blocks custom
+  WALL_GFX buttons and wall graphics without their live G1/GRAPHICSSET
+  receipts; Nexus now retains real Structure1F/1G/Structure2 provenance and
+  proves unbound selectors block DGN plans rather than falling back. Verification:
+  DM1 creature AI 279/279, CSB binding 91/91, DM2 gates 5/5 and 2/2, plus the
+  real Nexus ISO material corpus probe.
+
 - 2026-07-12 M12 20-language and settings l10n pass: added Indonesian (`id`)
   as the twentieth launcher locale with POSIX `LC_ALL`/`LC_MESSAGES`/`LANG`
   detection, PO catalog, font fallback, and correct modern/legacy flag marker.

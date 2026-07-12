@@ -1317,6 +1317,57 @@ static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
     return command;
 }
 
+static void nexus_v1_dgn_plan_bind_direct_structure1f(
+    const Nexus_V1_Level *level,
+    const Nexus_V1_DgnRenderCommand *commands,
+    Nexus_V1_DgnRenderPlanReceipt *receipt)
+{
+    int entry_index;
+
+    if (!level || !commands || !receipt ||
+        !receipt->structure1f_spatial.valid) {
+        return;
+    }
+    for (entry_index = 0; entry_index < level->structure1f_entry_count;
+         ++entry_index) {
+        const Nexus_V1_DgnStructure1FEntry *entry =
+            &level->structure1f_entries[entry_index];
+        int command_index;
+        int visible = 0;
+
+        if (entry->family != NEXUS_V1_DGN_STRUCTURE1F_ITEMS &&
+            entry->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS &&
+            entry->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS) {
+            continue;
+        }
+        for (command_index = 0; command_index < receipt->command_count;
+             ++command_index) {
+            if (commands[command_index].x == entry->x &&
+                commands[command_index].y == entry->y) {
+                visible = 1;
+                break;
+            }
+        }
+        if (!visible) {
+            continue;
+        }
+        ++receipt->structure1f_plan_direct_entry_count;
+        switch (entry->family) {
+        case NEXUS_V1_DGN_STRUCTURE1F_ITEMS:
+            ++receipt->structure1f_plan_item_entry_count;
+            break;
+        case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS:
+            ++receipt->structure1f_plan_floor_decoration_entry_count;
+            break;
+        case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS:
+            ++receipt->structure1f_plan_floor_sensor_entry_count;
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 static int16_t nexus_v1_dgn_view_clamp(int value) {
     if (value < -NEXUS_V1_DGN_VIEWPORT_UNITS) return -NEXUS_V1_DGN_VIEWPORT_UNITS;
     if (value > NEXUS_V1_DGN_VIEWPORT_UNITS * 2) return NEXUS_V1_DGN_VIEWPORT_UNITS * 2;
@@ -1609,6 +1660,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
 
     if (!receipt.blocks_real_dgn_mesh_render) {
         int command_index;
+        nexus_v1_dgn_plan_bind_direct_structure1f(level, commands, &receipt);
         for (command_index = 0; command_index < receipt.command_count;
              ++command_index) {
             if (commands[command_index].animated_texture_declared) {

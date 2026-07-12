@@ -564,7 +564,7 @@ int F0811_DM1_GROUP_IsMovementPossible_Compat(
     int* outBlockedByParty,
     int* outBlockedByGroup)
 {
-    (void)allowImaginaryPitsAndFakeWalls; /* Caller pre-bakes into masks */
+    const struct DM1GroupMovementFacts_Compat* facts;
 
     if (!ctx || direction < 0 || direction > 3) return 0;
     if (outBlockedByWall)  *outBlockedByWall  = 0;
@@ -575,14 +575,50 @@ int F0811_DM1_GROUP_IsMovementPossible_Compat(
     /* Source: F0202 checks immobility first */
     if (ctx->creatureInfo.movementTicks == DM1_IMMOBILE) return 0;
 
-    /* Source: F0202 wall/stairs/pit/fakewall check */
-    if (ctx->groupMovementTestedDirs[direction]) return 0;
+    facts = &ctx->groupMovementFacts[direction];
+    if (!facts->available) {
+        /* Compatibility boundary for callers not yet upgraded to the typed
+         * M10 destination snapshot. A tested direction remains unavailable
+         * only on this legacy path; real F0202 marks it tested before it
+         * evaluates the destination. */
+        return ctx->groupMovementTestedDirs[direction] ? 0 : 1;
+    }
 
-    /* Party blocking (source: F0202 G0390 check) */
-    /* In the real engine this checks if dest == party pos.
-     * We use adjacency info from context. */
+    /* ReDMCSB GROUP.C F0202 lines 1603-1623: bounds, wall, stairs, open
+     * pit, fakewall, then Fluxcage and creature-scoped teleporters. */
+    if (!facts->inBounds || facts->isWall || facts->isStairs ||
+        (facts->isOpenPit &&
+         !(facts->isImaginaryPit && allowImaginaryPitsAndFakeWalls) &&
+         !(ctx->creatureInfo.attributes & DM1_ATTR_LEVITATION)) ||
+        (facts->isFakeWall && !facts->isOpenFakeWall &&
+         !(facts->isImaginaryFakeWall && allowImaginaryPitsAndFakeWalls))) {
+        if (outBlockedByWall) *outBlockedByWall = 1;
+        return 0;
+    }
 
-    return 1; /* Movement is possible by default */
+    if ((ctx->creatureInfo.attributes & DM1_ATTR_ARCHENEMY) &&
+        facts->hasFluxcage) {
+        if (outBlockedByWall) *outBlockedByWall = 1;
+        return 0;
+    }
+    if (facts->teleporterBlocksCreature) {
+        if (outBlockedByWall) *outBlockedByWall = 1;
+        return 0;
+    }
+    if (facts->occupiedByParty) {
+        if (outBlockedByParty) *outBlockedByParty = 1;
+        return 0;
+    }
+    if (facts->doorBlocksCreature) {
+        if (outBlockedByDoor) *outBlockedByDoor = 1;
+        return 0;
+    }
+    if (facts->occupiedByGroup) {
+        if (outBlockedByGroup) *outBlockedByGroup = 1;
+        return 0;
+    }
+
+    return 1;
 }
 
 /* =========================================================================
@@ -649,7 +685,7 @@ int F0813_DM1_GROUP_PickSingleSquareMove_Compat(
     if (secondaryDir >= 0 && secondaryDir <= 3) {
         roll = F0732_COMBAT_RngRandom_Compat(rng, 2);
         if (F0811_DM1_GROUP_IsMovementPossible_Compat(
-                ctx, secondaryDir, allowFakeWalls && (roll == 0),
+                ctx, secondaryDir, allowFakeWalls && (roll != 0),
                 &bw, &bd, &bp, &bg)) {
             *outDirection = secondaryDir;
             return 1;

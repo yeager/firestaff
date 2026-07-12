@@ -537,6 +537,88 @@ static void test_hud_c040_panel_binding(void)
               0, "CSBgraphics C040 override preserves pixels outside panel");
 }
 
+static void test_hud_pair_preserves_source_blit_order(void)
+{
+    uint8_t inventory_pixels[CSB_V1_CSBGRAPHICS_RUNTIME_VIEWPORT_W *
+                             CSB_V1_CSBGRAPHICS_RUNTIME_VIEWPORT_H];
+    uint8_t resurrect_pixels[CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_W *
+                             CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_H];
+    uint8_t framebuffer[CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W *
+                        CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H];
+    uint8_t before[sizeof(framebuffer)];
+    CSB_V1_CSBGraphicsEntrySpan inventory_span = span_for(17u);
+    CSB_V1_CSBGraphicsEntrySpan resurrect_span = span_for(40u);
+    CSB_V1_CSBGraphicsDecodedBitmap inventory =
+        decoded_for(17u, CSB_V1_CSBGRAPHICS_RUNTIME_VIEWPORT_W,
+                    CSB_V1_CSBGRAPHICS_RUNTIME_VIEWPORT_H, 4u,
+                    inventory_pixels, sizeof(inventory_pixels));
+    CSB_V1_CSBGraphicsDecodedBitmap resurrect =
+        decoded_for(40u, CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_W,
+                    CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_H, 6u,
+                    resurrect_pixels, sizeof(resurrect_pixels));
+    CSB_V1_CSBGraphicsRuntimeBinding inventory_binding;
+    CSB_V1_CSBGraphicsRuntimeBinding resurrect_binding;
+
+    memset(inventory_pixels, 4, sizeof(inventory_pixels));
+    memset(resurrect_pixels, 6, sizeof(resurrect_pixels));
+    memset(framebuffer, 1, sizeof(framebuffer));
+    check_int("hud_pair.apply",
+              csb_v1_csbgraphics_runtime_prepare_and_apply_hud_pair(
+                  &inventory_span, &inventory, &resurrect_span, &resurrect,
+                  framebuffer, CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W,
+                  CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H,
+                  CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W,
+                  &inventory_binding, &resurrect_binding),
+              1, "PANEL.C F0346 C017 then C040 transaction");
+    check_int("hud_pair.inventory_route", inventory_binding.route,
+              CSB_V1_CSBGRAPHICS_RUNTIME_ROUTE_HUD_INVENTORY,
+              inventory_binding.source_evidence);
+    check_int("hud_pair.resurrect_route", resurrect_binding.route,
+              CSB_V1_CSBGRAPHICS_RUNTIME_ROUTE_HUD_RESURRECT_PANEL,
+              resurrect_binding.source_evidence);
+    check_int("hud_pair.inventory_visible_outside_panel",
+              framebuffer[CSB_V1_CSBGRAPHICS_RUNTIME_VIEWPORT_Y *
+                          CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W],
+              4, "C017 owns viewport before C040 overlay");
+    check_int("hud_pair.c040_overlays_inventory",
+              framebuffer[CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_Y *
+                          CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W +
+                          CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_X],
+              6, "C040 is drawn after C017");
+    check_int("hud_pair.outside_hud_unchanged", framebuffer[0], 1,
+              "HUD pair does not touch title/entrance pixels");
+
+    memcpy(before, framebuffer, sizeof(before));
+    resurrect.width = 1u;
+    check_int("hud_pair.rejects_bad_c040_before_write",
+              csb_v1_csbgraphics_runtime_prepare_and_apply_hud_pair(
+                  &inventory_span, &inventory, &resurrect_span, &resurrect,
+                  framebuffer, CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W,
+                  CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H,
+                  CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W,
+                  &inventory_binding, &resurrect_binding),
+              0, "C040 geometry is validated before C017 writes");
+    check_int("hud_pair.reject_keeps_frame", memcmp(framebuffer, before,
+                                                      sizeof(framebuffer)),
+              0, "bad C040 cannot leave a partial C017 HUD frame");
+
+    resurrect = decoded_for(40u, CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_W,
+                            CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_H, 6u,
+                            resurrect_pixels, sizeof(resurrect_pixels));
+    memset(framebuffer, 1, sizeof(framebuffer));
+    memcpy(before, framebuffer, sizeof(before));
+    check_int("hud_pair.rejects_short_frame_before_write",
+              csb_v1_csbgraphics_runtime_prepare_and_apply_hud_pair(
+                  &inventory_span, &inventory, &resurrect_span, &resurrect,
+                  framebuffer, CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W,
+                  168, CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W,
+                  &inventory_binding, &resurrect_binding),
+              0, "framebuffer limits are checked before either HUD blit");
+    check_int("hud_pair.short_frame_keeps_prefix", memcmp(framebuffer, before,
+                                                            sizeof(framebuffer)),
+              0, "short framebuffer cannot leave a partial C017 HUD frame");
+}
+
 static void test_fallbacks_are_explicit(void)
 {
     uint8_t pixels[32 * 32];
@@ -625,6 +707,7 @@ int main(void)
     test_decode_entry_and_apply_viewport();
     test_hud_inventory_binding();
     test_hud_c040_panel_binding();
+    test_hud_pair_preserves_source_blit_order();
     test_fallbacks_are_explicit();
 
     printf("csb_v1_csbgraphics_runtime_binding: %d assertions, %d failures\n",

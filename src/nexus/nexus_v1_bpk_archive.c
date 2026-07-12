@@ -919,6 +919,8 @@ int nexus_v1_dmdf_material_category_coverage_receipt(
     Nexus_V1_DgnMaterialCategoryCoverageReceipt *out_receipt) {
     size_t i;
     int have_missing = 0;
+    uint8_t seen[256] = {0};
+    uint8_t seen_covered[256] = {0};
 
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
@@ -934,8 +936,16 @@ int nexus_v1_dmdf_material_category_coverage_receipt(
     out_receipt->command_count = (uint32_t)material_id_count;
     for (i = 0U; i < material_id_count; ++i) {
         uint8_t id = material_ids[i];
+        if (!seen[id]) {
+            seen[id] = 1;
+            ++out_receipt->unique_material_id_count;
+        }
         if (bank->surfaces[id].valid) {
             ++out_receipt->material_surface_count;
+            if (!seen_covered[id]) {
+                seen_covered[id] = 1;
+                ++out_receipt->covered_unique_material_id_count;
+            }
         } else {
             ++out_receipt->missing_material_count;
             if (!have_missing) {

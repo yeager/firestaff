@@ -2275,6 +2275,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->viewport_asset_user != NULL);
     dm2_v1_viewport_set_g1_creature_map_chip_materials(
         &viewport, &rt->g1_creature_map_chip_runtime);
+    dm2_v1_viewport_set_g1_wall_gfx_materials(
+        &viewport,
+        &rt->g1_map5_text_wall_gfx_runtime,
+        &rt->g1_actuator_wall_gfx_runtime);
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport,
         rt->gdat_scene_control_ready,
