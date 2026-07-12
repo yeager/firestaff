@@ -2207,6 +2207,9 @@ static int nexus_v1_launcher_dgn_viewport_host_route_receipt(
            receipt.status == NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH;
 }
 
+/* M11 receives the dungeon only through the launcher handoff. Keep the
+ * source-validated Structure1F/1G receipt intact at that boundary; this is a
+ * data gate, not a Structure2 pixel decoder or animation executor. */
 int nexus_v1_launcher_startup_title_route_receipt_from_runtime_state(
     const Nexus_V1_StartupRuntimeState *state,
     int menu_input,
@@ -5426,6 +5429,98 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_snapshot(
         out_dgn_commands,
         max_dgn_commands,
         out_receipt);
+}
+
+void nexus_v1_launcher_startup_title_transition_capture_receipt_clear(
+    Nexus_V1_StartupTitleTransitionCaptureReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->active_frame = -1;
+    receipt->expected_title_frame = -1;
+    receipt->expected_draw_kind = NEXUS_V1_STARTUP_DRAW_NONE;
+    receipt->status = "invalid";
+}
+
+int nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
+    const Nexus_V1_StartupHostCallerReceipt *host,
+    int active_frame,
+    const Nexus_V1_StartupDrawCommand *commands,
+    int command_count,
+    Nexus_V1_StartupTitleTransitionCaptureReceipt *out_receipt)
+{
+    const Nexus_V1_StartupFullStartPackageReceipt *package;
+    Nexus_V1_BootFrame boot_frame;
+    const Nexus_V1_StartupDrawCommand *command;
+
+    nexus_v1_launcher_startup_title_transition_capture_receipt_clear(
+        out_receipt);
+    if (!host || !out_receipt || !commands || command_count != 1 ||
+        active_frame < 0) {
+        return 0;
+    }
+    package = &host->ownership.startup_bundle.package;
+    memset(&boot_frame, 0, sizeof(boot_frame));
+    if (!nexus_v1_boot_frame(active_frame, NEXUS_FB_H, &boot_frame)) {
+        return 0;
+    }
+
+    command = &commands[0];
+    out_receipt->active_frame = active_frame;
+    out_receipt->warning_boundary =
+        active_frame == nexus_v1_boot_warning_frames() - 1;
+    out_receipt->title_boundary =
+        active_frame == nexus_v1_boot_warning_frames();
+    out_receipt->start_ready_boundary =
+        active_frame == nexus_v1_boot_start_ready_frames();
+    out_receipt->warning_surface_verified =
+        package->consumer.full_start.assets.warning_surface_loaded &&
+        package->warning_capture_surface_ready;
+    out_receipt->title_surface_verified =
+        package->consumer.full_start.assets.title_surface_loaded &&
+        package->title_capture_surface_ready;
+    out_receipt->timing_verified =
+        nexus_v1_launcher_startup_base_saturn_capture_exact(package);
+    out_receipt->menu_bpk_prs3_blocked =
+        package->consumer.full_start.assets.menu_bpk_upload_receipt_valid &&
+        package->consumer.full_start.assets.menu_bpk_upload_route ==
+            NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 &&
+        package->consumer.full_start.assets
+            .menu_bpk_blocks_real_menu_surface_render &&
+        !package->consumer.full_start.assets.real_menu_surface_route_ready;
+
+    if (boot_frame.warning_visible) {
+        out_receipt->expected_draw_kind =
+            NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND;
+        out_receipt->command_verified =
+            command->kind == out_receipt->expected_draw_kind;
+        out_receipt->consumer_ready =
+            host->host_execute_startup_draws &&
+            out_receipt->warning_surface_verified &&
+            out_receipt->timing_verified &&
+            out_receipt->command_verified;
+        out_receipt->status = out_receipt->consumer_ready
+            ? "warning-capture"
+            : "blocked-warning-capture";
+    } else {
+        out_receipt->expected_draw_kind =
+            NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME;
+        out_receipt->expected_title_frame = boot_frame.title_frame;
+        out_receipt->command_verified =
+            command->kind == out_receipt->expected_draw_kind &&
+            command->title_frame == out_receipt->expected_title_frame;
+        out_receipt->consumer_ready =
+            host->host_execute_startup_draws &&
+            out_receipt->title_surface_verified &&
+            out_receipt->timing_verified &&
+            out_receipt->command_verified;
+        out_receipt->status = out_receipt->consumer_ready
+            ? (boot_frame.start_ready ? "title-start-ready" : "title-capture")
+            : "blocked-title-capture";
+    }
+    return out_receipt->consumer_ready;
 }
 
 int nexus_v1_launcher_startup_route_proof_from_snapshot(

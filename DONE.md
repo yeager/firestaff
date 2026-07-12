@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus startup title-transition gate: M11 now consumes an
+  immutable launcher receipt for WARNING.BIN at frame 47 and TITLE.CG from
+  frame 48 through start-ready frame 102. A mismatched command or timing
+  cannot draw; MENU.BPK remains explicitly blocked on unproven PRS3 decode.
+  Verification: `test_m11_nexus_startup_runtime_handoff` and
+  `test_m11_nexus_startup_gate` PASS.
+
 - 2026-07-12 DM1 F0115 wall-inscription zone correction: the ornament pass
   now uses ReDMCSB `DUNVIEW.C F0107/G0205`'s compact 13-zone order; D3L2 and
   D3R2 remain F0676/F0677 planes and cannot draw a second ornament.  The

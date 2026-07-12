@@ -3333,8 +3333,6 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        const CSB_V1_BootStartupRenderDrawReceipt_PC34 *drawReceipt)
 {
     const M11_AssetSlot *title_graphic = NULL;
-    int i;
-    int visible = 0;
 
     if (!state || !framebuffer || !plan || !drawReceipt ||
         !drawReceipt->primitive_commands_ready ||
@@ -3396,13 +3394,6 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                           plan->title_source_h,
                                           plan->title_transparent_color);
     }
-    for (i = 0; i < framebufferWidth * framebufferHeight; ++i) {
-        if (framebuffer[i] != M11_COLOR_BLACK) {
-            visible = 1;
-            break;
-        }
-    }
-    (void)visible;
 }
 
 static const M11_TextStyle *m11_csb_startup_text_style(int style)
@@ -3777,8 +3768,9 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     executor.draw_opening_frame =
         m11_csb_startup_executor_draw_opening_frame;
     executor.draw_closed_doors = m11_csb_startup_executor_draw_closed_doors;
-    /* A CSB host receipt rejects fallback draw routes.  Leaving these absent
-     * ensures only the source-backed C001-C005/C017/C040 path can present. */
+    /* The CSB host receipt rejects fallback draw routes.  Leave both
+     * callbacks absent so an invalid receipt cannot revive M11 text or door
+     * stand-ins after the verified C001-C005/C017/C040 session is active. */
     executor.draw_door_fallback = NULL;
     executor.draw_fallback_text = NULL;
     executor.draw_utility_panel =
@@ -21355,8 +21347,10 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
                                                          decoded + drawPlan.glyphStart,
                                                          drawPlan.glyphCount)) {
                 /* ReDMCSB DUNVIEW.C F0107:3682 restores C735 from its
-                 * negative D1C bitmap before M648. This M11 path already
-                 * leaves the composed original wall intact. */
+                 * negative D1C bitmap before M648.  This M11 path already
+                 * skipped the unreadable-inscription ornament, leaving the
+                 * original wall pixels intact.  Drawing a made-up patch here
+                 * would overwrite them with the wrong source coordinates. */
                 (void)m11_draw_dm1_inscription_glyph_line(state, framebuffer,
                                                           fbW, fbH, textX, textY,
                                                           decoded + drawPlan.glyphStart,
@@ -32895,10 +32889,61 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
 
 typedef struct M11_NexusStartupDrawContext {
     const M11_GameViewState *state;
+    const Nexus_V1_StartupFullStartPackageReceipt *startup_package;
+    const Nexus_V1_StartupTitleTransitionCaptureReceipt *transition_capture;
     unsigned char *framebuffer;
     int framebufferWidth;
     int framebufferHeight;
 } M11_NexusStartupDrawContext;
+
+static int m11_nexus_startup_warning_receipt_ready(
+    const M11_NexusStartupDrawContext *context)
+{
+    const Nexus_V1_StartupFullStartPackageReceipt *package;
+
+    if (!context || !context->state || !context->startup_package) {
+        return 0;
+    }
+    package = context->startup_package;
+    return context->transition_capture &&
+           context->transition_capture->consumer_ready &&
+           context->transition_capture->expected_draw_kind ==
+               NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND &&
+           package->consumer.full_start.assets.warning_surface_loaded &&
+           package->warning_capture_surface_ready &&
+           package->saturn_timing_exact &&
+           package->saturn_capture_frames_exact &&
+           context->state->nexusState.title_frame >= 0 &&
+           context->state->nexusState.title_frame < package->boot_warning_frames;
+}
+
+static int m11_nexus_startup_title_receipt_ready(
+    const M11_NexusStartupDrawContext *context,
+    const Nexus_V1_StartupDrawCommand *command)
+{
+    const Nexus_V1_StartupFullStartPackageReceipt *package;
+    int title_frame;
+
+    if (!context || !context->state || !context->startup_package ||
+        !command) {
+        return 0;
+    }
+    package = context->startup_package;
+    title_frame = context->state->nexusState.title_frame -
+                  package->boot_warning_frames;
+    return context->transition_capture &&
+           context->transition_capture->consumer_ready &&
+           context->transition_capture->expected_draw_kind ==
+               NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME &&
+           context->transition_capture->expected_title_frame == title_frame &&
+           package->consumer.full_start.assets.title_surface_loaded &&
+           package->title_capture_surface_ready &&
+           package->saturn_timing_exact &&
+           package->saturn_capture_frames_exact &&
+           context->state->nexusState.title_frame >=
+               package->boot_warning_frames &&
+           command->title_frame == title_frame;
+}
 
 static void m11_draw_nexus_portrait_scaled(const Nexus_UI_Surface* surface,
                                            unsigned char* framebuffer,
@@ -32939,8 +32984,10 @@ static void m11_nexus_startup_exec_title_background(
     int y;
     int copyW;
     int copyH;
-    (void)command;
     if (!context || !context->framebuffer) {
+        return;
+    }
+    if (!m11_nexus_startup_title_receipt_ready(context, command)) {
         return;
     }
     title = context->state
@@ -32982,8 +33029,11 @@ static void m11_nexus_startup_exec_warning_background(
     int y;
     int copyW;
     int copyH;
-    (void)command;
     if (!context || !context->framebuffer) {
+        return;
+    }
+    if (!m11_nexus_startup_warning_receipt_ready(context) ||
+        !command || command->kind != NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND) {
         return;
     }
     title = context->state
@@ -33166,6 +33216,8 @@ static void m11_draw_nexus_startup_commands(
     unsigned char *framebuffer,
     int framebufferWidth,
     int framebufferHeight,
+    const Nexus_V1_StartupFullStartPackageReceipt *startup_package,
+    const Nexus_V1_StartupTitleTransitionCaptureReceipt *transition_capture,
     const Nexus_V1_StartupDrawCommand *commands,
     int command_count)
 {
@@ -33176,6 +33228,8 @@ static void m11_draw_nexus_startup_commands(
     }
     memset(&context, 0, sizeof(context));
     context.state = state;
+    context.startup_package = startup_package;
+    context.transition_capture = transition_capture;
     context.framebuffer = framebuffer;
     context.framebufferWidth = framebufferWidth;
     context.framebufferHeight = framebufferHeight;
@@ -37184,11 +37238,14 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
             Nexus_V1_LauncherRuntimeReceipt runtime_receipt;
             Nexus_V1_StartupHostCallerReceipt host_caller_receipt;
+            Nexus_V1_StartupTitleTransitionCaptureReceipt transition_capture;
             Nexus_V1_StartupDrawCommand commands[80];
             Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
             int command_count;
             int host_caller_ready = 0;
             directDraw = 1;
+            nexus_v1_launcher_startup_title_transition_capture_receipt_clear(
+                &transition_capture);
             m11_nexus_runtime_startup_snapshot(state, &snapshot);
             memset(&runtime_receipt, 0, sizeof(runtime_receipt));
             (void)m11_nexus_runtime_receipt_from_state(state,
@@ -37209,6 +37266,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                     host_caller_receipt.host_execute_startup_draws
                         ? host_caller_receipt.copied_startup_command_count
                         : 0;
+                if (state->nexusState.title_active && command_count > 0 &&
+                    !nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
+                        &host_caller_receipt,
+                        state->nexusState.title_frame,
+                        commands,
+                        command_count,
+                        &transition_capture)) {
+                    command_count = 0;
+                }
                 if (host_caller_receipt.host_execute_dgn_draws &&
                     host_caller_receipt.copied_dgn_command_count > 0) {
                     m11_draw_nexus_dgn_commands(
@@ -37232,6 +37298,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                                 framebuffer,
                                                 framebufferWidth,
                                                 framebufferHeight,
+                                                &host_caller_receipt.ownership
+                                                     .startup_bundle.package,
+                                                state->nexusState.title_active
+                                                    ? &transition_capture
+                                                    : NULL,
                                                 commands,
                                                 command_count);
             } else if (host_caller_ready) {

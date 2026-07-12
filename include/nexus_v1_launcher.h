@@ -953,6 +953,25 @@ typedef struct {
     const char *status;
 } Nexus_V1_StartupHostCallerReceipt;
 
+/* M11 consumes this immutable title-transition receipt immediately before
+ * drawing a boot frame. It is intentionally limited to verified WARNING.BIN
+ * and TITLE.CG routing; MENU.BPK remains a separately fail-closed route. */
+typedef struct {
+    int active_frame;
+    int warning_boundary;
+    int title_boundary;
+    int start_ready_boundary;
+    int warning_surface_verified;
+    int title_surface_verified;
+    int timing_verified;
+    int command_verified;
+    int menu_bpk_prs3_blocked;
+    int consumer_ready;
+    Nexus_V1_StartupDrawKind expected_draw_kind;
+    int expected_title_frame;
+    const char *status;
+} Nexus_V1_StartupTitleTransitionCaptureReceipt;
+
 typedef struct {
     Nexus_V1_StartupHostCallerReceipt title_host;
     Nexus_V1_StartupHostCallerReceipt save_host;
@@ -1028,6 +1047,14 @@ void nexus_v1_launcher_startup_real_asset_ownership_receipt_clear(
     Nexus_V1_StartupRealAssetOwnershipReceipt *receipt);
 void nexus_v1_launcher_startup_host_caller_receipt_clear(
     Nexus_V1_StartupHostCallerReceipt *receipt);
+void nexus_v1_launcher_startup_title_transition_capture_receipt_clear(
+    Nexus_V1_StartupTitleTransitionCaptureReceipt *receipt);
+int nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
+    const Nexus_V1_StartupHostCallerReceipt *host,
+    int active_frame,
+    const Nexus_V1_StartupDrawCommand *commands,
+    int command_count,
+    Nexus_V1_StartupTitleTransitionCaptureReceipt *out_receipt);
 void nexus_v1_launcher_complete_support_receipt_clear(
     Nexus_V1_CompleteSupportReceipt *receipt);
 const char *nexus_v1_launcher_startup_real_asset_ownership_route_name(
