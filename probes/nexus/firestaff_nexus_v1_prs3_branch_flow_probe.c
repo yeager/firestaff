@@ -288,6 +288,52 @@ typedef struct {
     size_t return_offset;
 } Nexus_Prs3V1FailureCallReceipt;
 
+/* The selected callee's entry establishes registers used by the bounded loop.
+ * Literal pointers and indirect calls remain raw facts; this receipt does not
+ * name either callee or assign an ABI/payload role to any register. */
+typedef struct {
+    int valid;
+    size_t r4_to_r12_offset;
+    size_t r5_to_r10_offset;
+    size_t first_call_literal_load_offset;
+    size_t first_call_literal_offset;
+    uint32_t first_call_literal_word;
+    unsigned int first_call_literal_register;
+    size_t first_indirect_call_offset;
+    unsigned int first_indirect_call_register;
+    size_t first_call_delay_offset;
+    unsigned int first_call_delay_source_register;
+    unsigned int first_call_delay_destination_register;
+    size_t post_call_copy_offset;
+    unsigned int post_call_copy_source_register;
+    unsigned int post_call_copy_destination_register;
+    size_t post_call_test_offset;
+    size_t post_call_branch_offset;
+    size_t post_call_branch_target;
+    size_t r11_zero_offset;
+} Nexus_Prs3V1EntryRegisterReceipt;
+
+/* The entry's R13 test either bypasses or falls through a second literal-fed
+ * indirect call. Both routes reach the same R11 initialization. Literal words
+ * are raw original data only; no callee, ABI, or decoder role is inferred. */
+typedef struct {
+    int valid;
+    size_t bypass_branch_offset;
+    size_t bypass_target;
+    size_t second_r4_literal_load_offset;
+    size_t second_r4_literal_offset;
+    uint32_t second_r4_literal_word;
+    size_t second_r3_literal_load_offset;
+    size_t second_r3_literal_offset;
+    uint32_t second_r3_literal_word;
+    size_t second_indirect_call_offset;
+    unsigned int second_indirect_call_register;
+    size_t second_call_delay_offset;
+    unsigned int second_call_delay_register;
+    int second_call_delay_immediate;
+    size_t r11_zero_offset;
+} Nexus_Prs3V1EntryBypassReceipt;
+
 static int failures;
 
 static void check(int condition, const char *message) {
@@ -1206,6 +1252,134 @@ static int prs3_v1_failure_call_receipt(
     return 1;
 }
 
+static int prs3_v1_entry_register_receipt(
+    const uint8_t *data, size_t size, Nexus_Prs3V1EntryRegisterReceipt *out) {
+    Nexus_Prs3V1EntryRegisterReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+    unsigned int source = 0U, destination = 0U;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 276U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.r4_to_r12_offset = entry + 6U;
+    receipt.first_call_literal_load_offset = entry + 8U;
+    receipt.r5_to_r10_offset = entry + 14U;
+    receipt.first_indirect_call_offset = entry + 24U;
+    receipt.first_call_delay_offset = entry + 26U;
+    receipt.post_call_copy_offset = entry + 28U;
+    receipt.post_call_test_offset = entry + 30U;
+    receipt.post_call_branch_offset = entry + 32U;
+    receipt.r11_zero_offset = entry + 42U;
+    if (!sh2_mov_register_fields(read_be16(data + receipt.r4_to_r12_offset),
+                                 &source, &destination) ||
+        source != 4U || destination != 12U ||
+        read_be16(data + receipt.first_call_literal_load_offset) != 0xd341U ||
+        !sh2_movl_pc_literal_target(
+            receipt.first_call_literal_load_offset,
+            read_be16(data + receipt.first_call_literal_load_offset),
+            &receipt.first_call_literal_offset) ||
+        receipt.first_call_literal_offset + 4U > size ||
+        !sh2_mov_register_fields(read_be16(data + receipt.r5_to_r10_offset),
+                                 &source, &destination) ||
+        source != 5U || destination != 10U ||
+        !sh2_jsr_register(read_be16(data + receipt.first_indirect_call_offset),
+                          &receipt.first_indirect_call_register) ||
+        !sh2_mov_register_fields(read_be16(data + receipt.first_call_delay_offset),
+                                 &receipt.first_call_delay_source_register,
+                                 &receipt.first_call_delay_destination_register) ||
+        !sh2_mov_register_fields(read_be16(data + receipt.post_call_copy_offset),
+                                 &receipt.post_call_copy_source_register,
+                                 &receipt.post_call_copy_destination_register) ||
+        !sh2_tst_register_fields(read_be16(data + receipt.post_call_test_offset),
+                                 &source, &destination) ||
+        source != 13U || destination != 13U ||
+        !sh2_conditional_branch_target(
+            receipt.post_call_branch_offset,
+            read_be16(data + receipt.post_call_branch_offset), size,
+            &receipt.post_call_branch_target) ||
+        read_be16(data + receipt.r11_zero_offset) != 0xeb00U ||
+        receipt.first_indirect_call_register != 3U ||
+        receipt.first_call_delay_source_register != 6U ||
+        receipt.first_call_delay_destination_register != 14U ||
+        receipt.post_call_copy_source_register != 0U ||
+        receipt.post_call_copy_destination_register != 13U ||
+        receipt.post_call_branch_target != receipt.r11_zero_offset) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.first_call_literal_register = 3U;
+    receipt.first_call_literal_word =
+        read_be32(data + receipt.first_call_literal_offset);
+    if (receipt.first_call_literal_word != 0x06028490U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
+static int prs3_v1_entry_bypass_receipt(
+    const uint8_t *data, size_t size, Nexus_Prs3V1EntryBypassReceipt *out) {
+    Nexus_Prs3V1EntryBypassReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 284U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.bypass_branch_offset = entry + 32U;
+    receipt.second_r4_literal_load_offset = entry + 34U;
+    receipt.second_r3_literal_load_offset = entry + 36U;
+    receipt.second_indirect_call_offset = entry + 38U;
+    receipt.second_call_delay_offset = entry + 40U;
+    receipt.r11_zero_offset = entry + 42U;
+    if (read_be16(data + receipt.bypass_branch_offset) != 0x8b03U ||
+        !sh2_conditional_branch_target(
+            receipt.bypass_branch_offset,
+            read_be16(data + receipt.bypass_branch_offset), size,
+            &receipt.bypass_target) ||
+        read_be16(data + receipt.second_r4_literal_load_offset) != 0xd43cU ||
+        !sh2_movl_pc_literal_target(
+            receipt.second_r4_literal_load_offset,
+            read_be16(data + receipt.second_r4_literal_load_offset),
+            &receipt.second_r4_literal_offset) ||
+        receipt.second_r4_literal_offset + 4U > size ||
+        read_be16(data + receipt.second_r3_literal_load_offset) != 0xd33cU ||
+        !sh2_movl_pc_literal_target(
+            receipt.second_r3_literal_load_offset,
+            read_be16(data + receipt.second_r3_literal_load_offset),
+            &receipt.second_r3_literal_offset) ||
+        receipt.second_r3_literal_offset + 4U > size ||
+        !sh2_jsr_register(read_be16(data + receipt.second_indirect_call_offset),
+                          &receipt.second_indirect_call_register) ||
+        !sh2_mov_immediate_fields(
+            read_be16(data + receipt.second_call_delay_offset),
+            &receipt.second_call_delay_register,
+            &receipt.second_call_delay_immediate) ||
+        read_be16(data + receipt.r11_zero_offset) != 0xeb00U ||
+        receipt.bypass_target != receipt.r11_zero_offset ||
+        receipt.second_indirect_call_register != 3U ||
+        receipt.second_call_delay_register != 5U ||
+        receipt.second_call_delay_immediate != 70) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.second_r4_literal_word = read_be32(data + receipt.second_r4_literal_offset);
+    receipt.second_r3_literal_word = read_be32(data + receipt.second_r3_literal_offset);
+    if (receipt.second_r4_literal_word != 0x06047048U ||
+        receipt.second_r3_literal_word != 0x06024084U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
 static void test_synthetic_branch_flow(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Nexus_Prs3V1BranchFlowReceipt receipt;
@@ -1550,6 +1724,69 @@ static void test_synthetic_failure_call(void) {
           "SH-2 PRS3 failure receipt rejects a non-JSR failure call");
 }
 
+static void test_synthetic_entry_registers(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 512U];
+    Nexus_Prs3V1EntryRegisterReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 6U] = 0x6cU; fixture[entry + 7U] = 0x43U;
+    fixture[entry + 8U] = 0xd3U; fixture[entry + 9U] = 0x41U;
+    fixture[entry + 14U] = 0x6aU; fixture[entry + 15U] = 0x53U;
+    fixture[entry + 24U] = 0x43U; fixture[entry + 25U] = 0x0bU;
+    fixture[entry + 26U] = 0x6eU; fixture[entry + 27U] = 0x63U;
+    fixture[entry + 28U] = 0x6dU; fixture[entry + 29U] = 0x03U;
+    fixture[entry + 30U] = 0x2dU; fixture[entry + 31U] = 0xd8U;
+    fixture[entry + 32U] = 0x8bU; fixture[entry + 33U] = 0x03U;
+    fixture[entry + 42U] = 0xebU; fixture[entry + 43U] = 0x00U;
+    fixture[entry + 272U] = 0x06U; fixture[entry + 273U] = 0x02U;
+    fixture[entry + 274U] = 0x84U; fixture[entry + 275U] = 0x90U;
+    check(prs3_v1_entry_register_receipt(
+              fixture, sizeof(fixture), &receipt) && receipt.valid &&
+              receipt.first_call_literal_word == 0x06028490U &&
+              receipt.first_call_delay_source_register == 6U &&
+              receipt.first_call_delay_destination_register == 14U &&
+              receipt.post_call_copy_source_register == 0U &&
+              receipt.post_call_copy_destination_register == 13U &&
+              receipt.post_call_branch_target == entry + 42U,
+          "SH-2 PRS3 entry receipt locks loop-register setup dataflow");
+    fixture[entry + 27U] = 0x62U;
+    check(!prs3_v1_entry_register_receipt(
+              fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 entry receipt rejects a changed R6-to-R14 delay copy");
+}
+
+static void test_synthetic_entry_bypass(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 512U];
+    Nexus_Prs3V1EntryBypassReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 32U] = 0x8bU; fixture[entry + 33U] = 0x03U;
+    fixture[entry + 34U] = 0xd4U; fixture[entry + 35U] = 0x3cU;
+    fixture[entry + 36U] = 0xd3U; fixture[entry + 37U] = 0x3cU;
+    fixture[entry + 38U] = 0x43U; fixture[entry + 39U] = 0x0bU;
+    fixture[entry + 40U] = 0xe5U; fixture[entry + 41U] = 0x46U;
+    fixture[entry + 42U] = 0xebU; fixture[entry + 43U] = 0x00U;
+    fixture[entry + 276U] = 0x06U; fixture[entry + 277U] = 0x04U;
+    fixture[entry + 278U] = 0x70U; fixture[entry + 279U] = 0x48U;
+    fixture[entry + 280U] = 0x06U; fixture[entry + 281U] = 0x02U;
+    fixture[entry + 282U] = 0x40U; fixture[entry + 283U] = 0x84U;
+    check(prs3_v1_entry_bypass_receipt(
+              fixture, sizeof(fixture), &receipt) && receipt.valid &&
+              receipt.bypass_target == entry + 42U &&
+              receipt.second_r4_literal_word == 0x06047048U &&
+              receipt.second_r3_literal_word == 0x06024084U &&
+              receipt.second_indirect_call_register == 3U &&
+              receipt.second_call_delay_register == 5U &&
+              receipt.second_call_delay_immediate == 70,
+          "SH-2 PRS3 entry receipt locks the alternate call/bypass dataflow");
+    fixture[entry + 41U] = 0x45U;
+    check(!prs3_v1_entry_bypass_receipt(
+              fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 entry receipt rejects a changed alternate-call delay");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -1599,6 +1836,8 @@ int main(int argc, char **argv) {
     Nexus_Prs3V1OuterLoopReentryReceipt outer_loop_reentry_receipt;
     Nexus_Prs3V1OuterLoopLowBitJoinReceipt outer_loop_low_bit_join_receipt;
     Nexus_Prs3V1FailureCallReceipt failure_call_receipt;
+    Nexus_Prs3V1EntryRegisterReceipt entry_register_receipt;
+    Nexus_Prs3V1EntryBypassReceipt entry_bypass_receipt;
 
     test_synthetic_branch_flow();
     test_synthetic_zero_side_read();
@@ -1613,6 +1852,8 @@ int main(int argc, char **argv) {
     test_synthetic_outer_loop_reentry();
     test_synthetic_outer_loop_low_bit_join();
     test_synthetic_failure_call();
+    test_synthetic_entry_registers();
+    test_synthetic_entry_bypass();
     if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
@@ -1680,6 +1921,12 @@ int main(int argc, char **argv) {
         check(prs3_v1_failure_call_receipt(data, size, &failure_call_receipt) &&
                   failure_call_receipt.valid,
               "DM.BIN locks the PRS3 v1 failure literal/call dataflow");
+        check(prs3_v1_entry_register_receipt(data, size, &entry_register_receipt) &&
+                  entry_register_receipt.valid,
+              "DM.BIN locks the PRS3 v1 entry loop-register dataflow");
+        check(prs3_v1_entry_bypass_receipt(data, size, &entry_bypass_receipt) &&
+                  entry_bypass_receipt.valid,
+              "DM.BIN locks the PRS3 v1 entry alternate-call/bypass dataflow");
         if (receipt.valid) {
             printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
                    "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
@@ -1852,6 +2099,32 @@ int main(int argc, char **argv) {
                    failure_call_receipt.call_delay_destination_register,
                    failure_call_receipt.failure_result_offset,
                    failure_call_receipt.return_offset);
+        }
+        if (entry_register_receipt.valid) {
+            printf("SH-2 PRS3 v1 entry: R4->R12 R5->R10 literal=%zu R%u=%08x "
+                   "jsr=@R%u delay=R%u->R%u post=R%u->R%u branch=%zu->%zu "
+                   "R11=0; callee/ABI-proof=0\n",
+                   entry_register_receipt.first_call_literal_offset,
+                   entry_register_receipt.first_call_literal_register,
+                   (unsigned int)entry_register_receipt.first_call_literal_word,
+                   entry_register_receipt.first_indirect_call_register,
+                   entry_register_receipt.first_call_delay_source_register,
+                   entry_register_receipt.first_call_delay_destination_register,
+                   entry_register_receipt.post_call_copy_source_register,
+                   entry_register_receipt.post_call_copy_destination_register,
+                   entry_register_receipt.post_call_branch_offset,
+                   entry_register_receipt.post_call_branch_target);
+        }
+        if (entry_bypass_receipt.valid) {
+            printf("SH-2 PRS3 v1 entry bypass: branch=%zu->%zu R4=%08x R3=%08x "
+                   "jsr=@R%u delay=R%u=%d R11=0; callee/ABI-proof=0\n",
+                   entry_bypass_receipt.bypass_branch_offset,
+                   entry_bypass_receipt.bypass_target,
+                   (unsigned int)entry_bypass_receipt.second_r4_literal_word,
+                   (unsigned int)entry_bypass_receipt.second_r3_literal_word,
+                   entry_bypass_receipt.second_indirect_call_register,
+                   entry_bypass_receipt.second_call_delay_register,
+                   entry_bypass_receipt.second_call_delay_immediate);
         }
     }
     free(data);
