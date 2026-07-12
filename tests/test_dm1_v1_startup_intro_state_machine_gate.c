@@ -4218,6 +4218,8 @@ static void check_m11_floor_item_host_receipt_direct_draw(void) {
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
     expect_i("M11 F0115 receipt begins invalid", receipt.valid, 0);
+    expect_i("M11 HoC item-present capture rejects bootstrap receipt",
+             M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(1), 0);
     expect_i("M11 F0115 projectile draw completes",
              M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(
                  &view, framebuffer, 320, 200),
@@ -4225,6 +4227,8 @@ static void check_m11_floor_item_host_receipt_direct_draw(void) {
     M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
     expect_i("M11 F0115 projectile never publishes floor receipt",
              receipt.valid, 0);
+    expect_i("M11 HoC projectile capture rejects item-present claim",
+             M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(1), 0);
 
     view.assetsAvailable = 0;
     expect_i("M11 F0115 invalid item draw rejects",
@@ -4246,16 +4250,24 @@ static void check_m11_floor_item_host_receipt_direct_draw(void) {
     expect_i("M11 F0115 item receipt records F0791", receipt.usesF0791Blit, 1);
     expect_truth("M11 F0115 item receipt has destination geometry",
                  receipt.destinationW > 0 && receipt.destinationH > 0);
+    expect_i("M11 HoC item-present capture requires actual item receipt",
+             M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(1), 1);
+    expect_i("M11 HoC midair capture rejects item receipt without item",
+             M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(0), 0);
 
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
     expect_i("M11 next frame clears F0115 receipt", receipt.valid, 0);
+    expect_i("M11 HoC stale item receipt rejects next-frame capture",
+             M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(1), 0);
     expect_i("M11 F0115 projectile after clear completes",
              M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(
                  &view, framebuffer, 320, 200),
              1);
     M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
     expect_i("M11 projectile after clear remains receipt-free", receipt.valid, 0);
+    expect_i("M11 HoC projectile after clear rejects capture",
+             M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(1), 0);
 
     /* The fixture pixels are stack-owned, not asset-loader allocations. */
     view.assetLoader.cacheUsed = 0;

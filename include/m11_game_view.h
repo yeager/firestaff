@@ -1663,6 +1663,10 @@ typedef struct M11_Dm1FloorItemHostPresentationReceipt {
 void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
     M11_Dm1FloorItemHostPresentationReceipt* outReceipt);
 
+/* Probe the exact receipt predicate consumed by the HoC capture facts.
+ * itemPresent must come from the current F0115 floor-item pass. */
+int M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(int itemPresent);
+
 /* Test probes for the actual F0115 item and projectile blitters. They do not
  * synthesize a receipt; callers must provide an M11 asset-loader cache slot. */
 int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
