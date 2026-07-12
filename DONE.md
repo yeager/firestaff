@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0181 killed-all timeline cleanup: M10 now removes the
+  complete local C29–C41 range after the typed F0190 compaction plan, while
+  preserving other-square events and the off-party-map ACTIVE_GROUP state.
+  Verification: new normal and off-party-map runtime cases passed.
+
 - 2026-07-12 DM1 F0407 shield-HUD ownership: only SPELLSHIELD and FIRESHIELD
   receive original C039/C038 status-graphic routes; every other action is
   rejected without a substitute panel graphic. Verification: F0407 tail test

@@ -7652,7 +7652,8 @@ static void orch_cmd_attack_cleanup_f0190_killed_all_events_compat(
 {
     DM1_MeleeF0190TimelineCleanupBatchInputPc34 cleanupIn;
     DM1_MeleeF0190TimelineCleanupBatchPlanPc34 cleanupPlan;
-    int i;
+    int readIndex;
+    int writeIndex = 0;
 
     if (!world) return;
     memset(&cleanupIn, 0, sizeof(cleanupIn));
@@ -7662,25 +7663,42 @@ static void orch_cmd_attack_cleanup_f0190_killed_all_events_compat(
         cleanupIn.eventCount > TIMELINE_QUEUE_CAPACITY) {
         return;
     }
-    for (i = 0; i < cleanupIn.eventCount; ++i) {
-        cleanupIn.events[i] = world->timeline.events[i];
+    for (readIndex = 0; readIndex < cleanupIn.eventCount; ++readIndex) {
+        cleanupIn.events[readIndex] = world->timeline.events[readIndex];
     }
     cleanupIn.targetMapIndex = mapIndex;
     cleanupIn.targetMapX = mapX;
     cleanupIn.targetMapY = mapY;
+    /* Use the current typed F0190 timeline receipt for its bounded queue
+     * validation and compaction contract. F0181 then removes the whole
+     * group range, not merely one creature's aspect/behavior entries. */
+    cleanupIn.killedCreatureIndex = 0;
     if (!dm1_v1_melee_timeline_cleanup_batch_plan_f0190_pc34(
             &cleanupIn, &cleanupPlan) || !cleanupPlan.valid) {
         return;
     }
-    for (i = 0; i < cleanupPlan.newEventCount; ++i) {
-        world->timeline.events[i] = cleanupPlan.events[i];
+    for (readIndex = 0; readIndex < cleanupPlan.newEventCount; ++readIndex) {
+        const struct TimelineEvent_Compat* event =
+            &cleanupPlan.events[readIndex];
+
+        /* ReDMCSB GROUP.C F0181 lines 340-371 deletes every C29..C41
+         * entry on the dead group's square. This is intentionally broader
+         * than F0190 killed-some's per-creature timeline compaction. */
+        if (event->kind == TIMELINE_EVENT_CREATURE_REACTION &&
+            event->mapIndex == mapIndex && event->mapX == mapX &&
+            event->mapY == mapY &&
+            event->aux2 >= DM1_EVENT_REACTION_DANGER_ON_SQUARE &&
+            event->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+            continue;
+        }
+        world->timeline.events[writeIndex++] = *event;
     }
-    while (i < cleanupPlan.oldEventCount) {
-        memset(&world->timeline.events[i], 0,
-               sizeof(world->timeline.events[i]));
-        ++i;
+    world->timeline.count = writeIndex;
+    while (writeIndex < cleanupPlan.oldEventCount) {
+        memset(&world->timeline.events[writeIndex], 0,
+               sizeof(world->timeline.events[writeIndex]));
+        ++writeIndex;
     }
-    world->timeline.count = cleanupPlan.newEventCount;
 }
 
 static int orch_cmd_attack_apply_f0190_fear_compat(
