@@ -2,6 +2,7 @@
 #ifndef FIRESTAFF_DM2_V1_DUNGEON_LOADER_H
 #define FIRESTAFF_DM2_V1_DUNGEON_LOADER_H
 #include <stdint.h>
+#include "dm2_v1_asset_loader.h"
 
 /* DM2: The Legend of Skullkeep (1993)
  * Uses enhanced dungeon.dat format:
@@ -161,6 +162,30 @@ typedef struct {
     int blocked_record_reads;
     DM2_V1_G1TextRoot texts[DM2_V1_G1_MAP5_MAX_TEXT_ROOTS];
 } DM2_V1_G1Map5TextRuntimeReceipt;
+
+#define DM2_V1_G1_TEXT_WALL_GFX_MAX 16
+
+/* A source-bound DB2 Text root which skproject dispatches as a WALL_GFX
+ * ornament. This remains material metadata only: no chain traversal, text
+ * decoding, rectangle selection, or image blit is inferred here. */
+typedef struct {
+    uint16_t object_id;
+    uint16_t text_index;
+    uint8_t wall_gfx_index;
+    uint16_t colorkey;
+    uint16_t position;
+    uint16_t do_not_flip;
+    uint16_t alcove_type;
+    uint16_t image_offset;
+} DM2_V1_G1TextWallGfxMaterial;
+
+typedef struct {
+    int valid;
+    int map;
+    int source_text_root_count;
+    int material_count;
+    DM2_V1_G1TextWallGfxMaterial materials[DM2_V1_G1_TEXT_WALL_GFX_MAX];
+} DM2_V1_G1TextWallGfxRuntimeReceipt;
 
 /* Why a selected DB1 teleporter did not move the party. `DestinationMap()` is
  * the raw high byte of Teleporter::w4. skproject c_moverec.cpp passes it
@@ -375,6 +400,15 @@ int dm2_v1_dungeon_materialize_g1_first_map_runtime(
 int dm2_v1_dungeon_materialize_g1_map5_text_runtime(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1Map5TextRuntimeReceipt *out);
+
+/* Consumes only direct DB2 TextMode()==1 roots already materialized by the
+ * G1 map-5 receipt. skproject QUERY_CLS2_OF_TEXT_RECORD maps their low
+ * TextIndex byte to WALL_GFX; DRAW_WALL_ORNATE consumes the exact five GDAT
+ * fields recorded here. Missing or malformed source material rejects all. */
+int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_G1TextWallGfxRuntimeReceipt *out);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
 #endif

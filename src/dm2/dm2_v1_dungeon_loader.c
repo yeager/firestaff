@@ -1309,6 +1309,78 @@ int dm2_v1_dungeon_materialize_g1_map5_text_runtime(
     return 1;
 }
 
+int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
+{
+    DM2_V1_G1TextWallGfxRuntimeReceipt candidate;
+    int i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!texts || !loader || !texts->committed || !texts->incomplete_world ||
+        texts->map != 5 || texts->text_root_count < 0 ||
+        texts->text_root_count > DM2_V1_G1_MAP5_MAX_TEXT_ROOTS) {
+        return 0;
+    }
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.map = texts->map;
+    candidate.source_text_root_count = texts->text_root_count;
+    for (i = 0; i < texts->text_root_count; ++i) {
+        const DM2_V1_G1TextRoot *text = &texts->texts[i];
+        DM2_V1_G1TextWallGfxMaterial *material;
+        uint16_t colorkey;
+        uint16_t position;
+        uint16_t do_not_flip;
+        uint16_t alcove_type;
+        uint16_t image_offset;
+        uint8_t wall_gfx_index;
+
+        /* skproject/SKWIN/SkWinCore.cpp QUERY_CLS2_OF_TEXT_RECORD:
+         * TextMode()==1 selects the decorative cases and returns
+         * TextIndex() & 0xff as the WALL_GFX cls2 value. */
+        if (text->mode != 1u) continue;
+        if (candidate.material_count >= DM2_V1_G1_TEXT_WALL_GFX_MAX) return 0;
+        wall_gfx_index = (uint8_t)(text->text_index & 0xffu);
+
+        /* skproject DRAW_WALL_ORNATE requires these scalar source inputs
+         * before it selects a picture. Do not produce a partial material. */
+        if (!dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0x04,
+                &colorkey) ||
+            !dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0x05,
+                &position) ||
+            !dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0x07,
+                &do_not_flip) ||
+            !dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0x0a,
+                &alcove_type) ||
+            !dm2_v1_asset_load_image_offset(
+                loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0xfd,
+                &image_offset) ||
+            position > 24u || alcove_type > 3u) {
+            return 0;
+        }
+
+        material = &candidate.materials[candidate.material_count++];
+        material->object_id = text->object_id;
+        material->text_index = text->text_index;
+        material->wall_gfx_index = wall_gfx_index;
+        material->colorkey = colorkey;
+        material->position = position;
+        material->do_not_flip = do_not_flip;
+        material->alcove_type = alcove_type;
+        material->image_offset = image_offset;
+    }
+    candidate.valid = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_find_thing_of_type(const DM2_V1_DungeonData *d,
                                       uint16_t first_thing,
                                       int desired_type,

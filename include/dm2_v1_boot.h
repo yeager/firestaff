@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_dungeon_loader.h"
 #include <stddef.h>
 
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
@@ -1452,6 +1453,12 @@ int dm2_v1_boot_interface_font_table(
     DM2_V1_BootProfile *profile,
     const uint8_t **out_rows,
     uint32_t *out_hash);
+
+/* Bridges a source-proven G1 DB2 text receipt to boot-owned GDAT only. */
+int dm2_v1_boot_g1_text_wall_gfx_materials(
+    DM2_V1_BootProfile *profile,
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1TextWallGfxRuntimeReceipt *out);
 
 #define DM2_V1_INTERFACE_HUD_CHAMPION_COUNT 4u
 typedef struct {
