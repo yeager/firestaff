@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 DGN Structure1G sequence-origin receipt: the original
+  LEV00-LEV15 probe now proves all 51 stored `first_image_index` values match
+  both their raw descriptor words and the first word at the descriptors'
+  validated sequence offsets (zero mismatches). This is raw
+  descriptor-to-sequence dataflow only, not instruction timing, image/palette
+  bytes, payload grammar, decoder, animation, or rendering. Verification:
+  direct strict-C11 probe against all 16 original DGN files PASS.
+
 - 2026-07-12 Nexus V1 DGN Structure1G global-to-local receipt: the original
   LEV00-LEV15 probe now proves all 51 Structure1G `first_image_index` values
   are at least `0x14c`, subtract exactly to their stored local Structure2 IDs,

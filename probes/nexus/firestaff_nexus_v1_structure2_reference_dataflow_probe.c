@@ -16,6 +16,10 @@
 
 static int failures;
 
+static uint16_t read_be16(const uint8_t *p) {
+    return (uint16_t)(((uint16_t)p[0] << 8) | (uint16_t)p[1]);
+}
+
 static void check(int condition, const char *message) {
     if (condition) printf("PASS: %s\n", message);
     else { fprintf(stderr, "FAIL: %s\n", message); ++failures; }
@@ -56,6 +60,8 @@ int main(int argc, char **argv) {
     int structure1g_reference_count = 0;
     int global_to_local_binding_count = 0;
     int global_to_local_mismatch_count = 0;
+    int raw_sequence_binding_count = 0;
+    int raw_sequence_mismatch_count = 0;
     int unique_descriptor_count = 0;
     int nonzero_target_count = 0;
     int outside_target_count = 0;
@@ -74,6 +80,7 @@ int main(int argc, char **argv) {
         uint8_t *data = NULL;
         int size = 0;
         Nexus_V1_Level level;
+        Nexus_V1_DgnStructure1Layout layout;
         unsigned char seen[NEXUS_DGN_MAX_STRUCTURE2_TEXTURES];
         int entry_index;
 
@@ -90,11 +97,20 @@ int main(int argc, char **argv) {
                   level.structure2_payload.valid &&
                   level.structure2_payload.material_or_image_data_proven == 0,
               "real DGN retains the bounded, non-decoding Structure2 envelope");
+        check(nexus_v1_dgn_structure1_layout(&layout, data, size) == 0 &&
+                  layout.valid &&
+                  (level.structure1g_entry_count == 0 || layout.structure1g.valid),
+              "real DGN retains the validated Structure1G sequence envelope");
         for (entry_index = 0; entry_index < level.structure1g_entry_count;
              ++entry_index) {
             const Nexus_V1_DgnStructure1GEntry *animation =
                 &level.structure1g_entries[entry_index];
             const Nexus_V1_DgnStructure2Texture *descriptor;
+            const uint8_t *structure1g;
+            const uint8_t *raw_descriptor;
+            int animation_data_relative_offset;
+            uint16_t sequence_word_offset;
+            int sequence_byte_offset;
             uint32_t offsets[2];
             int offset_index;
 
@@ -108,6 +124,23 @@ int main(int argc, char **argv) {
             ++structure1g_reference_count;
             descriptor = &level.structure2_textures[
                 animation->first_structure2_image_id];
+            structure1g = data + layout.structure1_offset +
+                layout.structure1g.relative_offset;
+            raw_descriptor = structure1g + NEXUS_DGN_STRUCTURE1G_HEADER_BYTES +
+                entry_index * NEXUS_DGN_STRUCTURE1G_DESCRIPTOR_BYTES;
+            animation_data_relative_offset = (int)read_be16(structure1g + 2);
+            sequence_word_offset = read_be16(raw_descriptor + 6);
+            sequence_byte_offset = animation_data_relative_offset +
+                (int)sequence_word_offset * 4;
+            if (sequence_byte_offset < animation_data_relative_offset ||
+                sequence_byte_offset > layout.structure1g.size - 4 ||
+                read_be16(raw_descriptor + 4) != animation->first_image_index ||
+                read_be16(structure1g + sequence_byte_offset) !=
+                    animation->first_image_index) {
+                ++raw_sequence_mismatch_count;
+            } else {
+                ++raw_sequence_binding_count;
+            }
             if (animation->first_image_index < 0x014cU ||
                 (uint16_t)(animation->first_image_index - 0x014cU) !=
                     animation->first_structure2_image_id ||
@@ -146,14 +179,19 @@ int main(int argc, char **argv) {
     check(global_to_local_binding_count == structure1g_reference_count &&
               global_to_local_mismatch_count == 0,
           "global Structure1G image indexes bind their local Structure2 IDs");
+    check(raw_sequence_binding_count == structure1g_reference_count &&
+              raw_sequence_mismatch_count == 0,
+          "Structure1G first-image fields match original sequence instructions");
     check(nonzero_target_count > 0 && outside_target_count == 0,
           "referenced descriptor offsets remain within opaque payload spans");
     printf("Nexus DGN Structure2 reference flow: levels=%d references=%d "
-           "global-local=%d mismatches=%d unique-descriptors=%d "
+           "global-local=%d mismatches=%d raw-sequences=%d sequence-mismatches=%d "
+           "unique-descriptors=%d "
            "nonzero-targets=%d outside=%d; "
            "decoder/render-proof=0\n",
            levels_loaded, structure1g_reference_count, global_to_local_binding_count,
-           global_to_local_mismatch_count, unique_descriptor_count,
+           global_to_local_mismatch_count, raw_sequence_binding_count,
+           raw_sequence_mismatch_count, unique_descriptor_count,
            nonzero_target_count, outside_target_count);
     return failures == 0 ? 0 : 1;
 }
