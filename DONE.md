@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 V2.2 real-art launch gate: V2.2 selection now requires the
+  existing finished-art material gate to report `FINISHED_REAL`; a manifest
+  or cache containing synthetic/partial placeholders resolves to V2.1, which
+  preserves the original indexed DM1 assets. The explicit test override
+  remains test-only. Verification: `test_dm1_v2_presentation_mode_pc34`
+  passed 57/57, including a placeholder-manifest regression that verifies the
+  V2.2 -> V2.1 fallback.
+
 - 2026-07-12 DM2 canonical G1 map-5 direct DB2 text receipt: after the
   map-0 DB1 teleporter route proved non-transitional, the next admissible
   direct family is map 5's seven DB2 roots. `dm2_v1_dungeon_loader` now reads

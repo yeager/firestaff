@@ -1,6 +1,9 @@
 /* test_dm1_v2_presentation_mode_pc34.c */
 #include "dm1_v2_presentation_mode_pc34.h"
 #include "dm1_v2_settings_pc34.h"
+#include "dm1_v2_asset_pipeline_pc34.h"
+#include "dm1_v22_finished_art_material_gate_pc34.h"
+#include "fs_portable_compat.h"
 #include <stdio.h>
 #include <string.h>
 static int g_failed = 0, g_total = 0;
@@ -115,6 +118,47 @@ static void t_pack_change(void) {
     dm1_v2_presentation_mode_set_modern_pack_available(0);
     check(dm1_v2_presentation_mode_get() == DM1_V2_PM_V21_UPSCALED, "pack off mid-V22 V21");
 }
+static void t_synthetic_pack_falls_back_to_v21(void) {
+    const char* data_dir =
+        "firestaff-dm1-v2-placeholder-test/.firestaff/data/dm1";
+    const char* modern_dir =
+        "firestaff-dm1-v2-placeholder-test/.firestaff/assets/dm1/modern";
+    char manifest_path[FSP_PATH_MAX];
+    FILE* fp;
+    static const char manifest[] =
+        "{\"wall_shapes\":[{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"placeholder\",\"source_file\":\"wall.png\",\"width\":1,\"height\":1}],"
+        "\"floor_shapes\":[{\"id\":\"floor_plain_hero_01\",\"generator\":\"placeholder\",\"source_file\":\"floor.png\",\"width\":1,\"height\":1},{\"id\":\"floor_pit_hero_01\",\"generator\":\"placeholder\",\"source_file\":\"pit.png\",\"width\":1,\"height\":1}],"
+        "\"creature_shapes\":[{\"id\":\"creature_demon_hero_01\",\"generator\":\"placeholder\",\"source_file\":\"creature.png\",\"width\":1,\"height\":1}],"
+        "\"champion_portraits\":[{\"id\":\"champion_warrior_hero_01\",\"generator\":\"placeholder\",\"source_file\":\"champion.png\",\"width\":1,\"height\":1}],"
+        "\"door_shapes\":[{\"id\":\"door_hero_01\",\"generator\":\"placeholder\",\"source_file\":\"door.png\",\"width\":1,\"height\":1}],"
+        "\"field_shapes\":[{\"id\":\"field_teleporter_hero_01\",\"generator\":\"placeholder\",\"source_file\":\"field.png\",\"width\":1,\"height\":1}]}";
+
+    check(FSP_CreateDirectoryRecursive(data_dir) == 1,
+          "placeholder data directory");
+    check(FSP_CreateDirectoryRecursive(modern_dir) == 1,
+          "placeholder modern directory");
+    snprintf(manifest_path, sizeof(manifest_path),
+             "%s/modern_asset_manifest.json", modern_dir);
+    fp = fopen(manifest_path, "wb");
+    check(fp != NULL, "placeholder manifest opened");
+    if (fp) {
+        check(fwrite(manifest, 1, strlen(manifest), fp) == strlen(manifest),
+              "placeholder manifest written");
+        check(fclose(fp) == 0, "placeholder manifest closed");
+    }
+
+    dm1_v2_presentation_mode_reset();
+    m11_v22_set_manifest_path(data_dir);
+    dm1_v22_famg_set_manifest_path(data_dir);
+    check(dm1_v22_famg_is_finished_real() == 0,
+          "placeholder pack is not finished art");
+    dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
+    check(dm1_v2_presentation_mode_get() == DM1_V2_PM_V21_UPSCALED,
+          "placeholder pack falls back to V21");
+    dm1_v2_presentation_mode_reset();
+    m11_v22_set_manifest_path(NULL);
+    dm1_v22_famg_set_manifest_path(NULL);
+}
 static void t_settings(void) {
     DM1_V2_Settings s20, s21, s22;
     memset(&s20, 0x55, sizeof(s20));
@@ -149,7 +193,7 @@ int main(void) {
     t_default(); t_set_v20(); t_set_v21();
     t_set_v22_with_pack(); t_set_v22_no_pack();
     t_m12_enum(); t_names(); t_set_count(); t_reset();
-    t_evidence(); t_resolve(); t_pack_change();
+    t_evidence(); t_resolve(); t_pack_change(); t_synthetic_pack_falls_back_to_v21();
     t_settings(); t_reseat();
     printf("--- %d / %d passed ---\n", g_total - g_failed, g_total);
     return g_failed == 0 ? 0 : 1;
