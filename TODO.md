@@ -121,6 +121,10 @@ The original table at `$40dc` now proves record `$03e3`, two sectors, and both
 physical MODE1 sectors are validated in JP/US media. Its payload role remains
 unknown, so it contributes a verified local-RAM loader boundary, never a bank
 or level route.
+The actual 4096-byte logical preload payload is now retained as strict
+provenance: both variants agree on its FNV receipt, first nonzero byte 243,
+and 2911 nonzero bytes. This binds bytes and size only, not code, compression,
+bank, object, palette, or level semantics.
 The first loaded payload is now structurally verified as a
 218-unit manifest envelope, but its entries remain unclassified; do not treat
 it as a graphics, palette, object, or dungeon-record binding. The hash-gated
@@ -250,6 +254,12 @@ Structure1F coordinate records (items, floor decorations, floor sensors)
 across LEV00-LEV15 into their typed runtime entries with zero mismatches. This
 does not assign object, sensor, trigger, draw, gameplay, or rendering
 semantics, and leaves Structure1A-bound alcove/wall records unresolved.
+2026-07-12 update: the same corpus probe now verifies every byte field that
+the runtime copies for those 1,006 direct records (item location/ID/selected
+attributes; decoration offsets, model/aspect, rotation, control, extent; and
+sensor model/aspect, rotation, extent, control, destination) with zero
+mismatches. Uncopied source bytes remain unclassified; no gameplay, trigger,
+decoder, or rendering semantics are inferred.
 
 The launcher/package route itself is verified: M12 availability may open the
 Nexus runtime but cannot claim package readiness, and M11 consumes one
