@@ -2140,6 +2140,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     uint32_t rect14_hash = 0u;
     const uint8_t *font_rows = NULL;
     uint32_t font_hash = 0u;
+    DM2_V1_InterfaceHudLayout hud_layout;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
 
     if (!framebuffer || fb_stride <= 0 ||
@@ -2226,6 +2227,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             rt->boot, &font_rows, &font_hash)) {
         dm2_v1_viewport_set_gdat_interface_font(
             &viewport, font_rows, font_hash);
+    }
+    memset(&hud_layout, 0, sizeof(hud_layout));
+    if (dm2_v1_boot_interface_hud_layout(rt->boot, &hud_layout)) {
+        dm2_v1_viewport_set_gdat_interface_hud_layout(&viewport, &hud_layout);
     }
     memset(&rect14_host, 0, sizeof(rect14_host));
     if (dm2_v1_boot_interface_rect14_host_receipt(rt->boot, &rect14_host) &&
@@ -2495,6 +2500,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_frame_ownership.gdat_interface_font_consumed =
         viewport.gdat_interface_font_consumed_count;
     g_dm2_frame_ownership.gdat_interface_font_hash = font_hash;
+    g_dm2_frame_ownership.gdat_interface_hud_layout_ready = hud_layout.valid;
+    g_dm2_frame_ownership.gdat_interface_hud_layout_hash = hud_layout.table_hash;
     g_dm2_frame_ownership.gdat_interface_rect14_host_ready =
         rect14_host.valid;
     g_dm2_frame_ownership.gdat_interface_rect14_consumed =

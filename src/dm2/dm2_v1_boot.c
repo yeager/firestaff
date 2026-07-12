@@ -4692,6 +4692,97 @@ int dm2_v1_boot_interface_font_table(
     return hash != 0u;
 }
 
+static uint16_t dm2_v1_boot_le16(const uint8_t *p)
+{
+    return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+static int dm2_v1_boot_rect_raw(const uint8_t *raw, size_t raw_size,
+                                uint16_t rect_id, DM2_V1_InterfaceRect *out)
+{
+    uint16_t groups;
+    size_t pos;
+    if (!raw || raw_size < 4u || !out || dm2_v1_boot_le16(raw) != 0xfc0du) return 0;
+    groups = dm2_v1_boot_le16(raw + 2);
+    if (groups == 0u || 4u + (size_t)groups * 4u > raw_size) return 0;
+    pos = 4u + (size_t)groups * 4u;
+    for (uint16_t group = 0; group < groups; ++group) {
+        uint16_t first = dm2_v1_boot_le16(raw + 4u + (size_t)group * 4u);
+        uint16_t last = dm2_v1_boot_le16(raw + 6u + (size_t)group * 4u);
+        size_t count = last >= first ? (size_t)(last - first + 1u) : 0u;
+        if (count == 0u || pos + count * 8u > raw_size) return 0;
+        if (rect_id >= first && rect_id <= last) {
+            const uint8_t *row = raw + pos + (size_t)(rect_id - first) * 8u;
+            out->x = (int16_t)dm2_v1_boot_le16(row);
+            out->y = (int16_t)dm2_v1_boot_le16(row + 2);
+            out->w = (int16_t)dm2_v1_boot_le16(row + 4);
+            out->h = (int16_t)dm2_v1_boot_le16(row + 6);
+            return 1;
+        }
+        pos += count * 8u;
+    }
+    return 0;
+}
+
+static int dm2_v1_boot_expand_hud_rect(const uint8_t *raw, size_t raw_size,
+                                       uint16_t rect_id,
+                                       DM2_V1_InterfaceRect *out)
+{
+    DM2_V1_InterfaceRect current, next;
+    int anchor, x, y, w, h;
+    if (!dm2_v1_boot_rect_raw(raw, raw_size, rect_id, &current) ||
+        current.y == 0 || !dm2_v1_boot_rect_raw(raw, raw_size,
+                                                  (uint16_t)current.y, &next) ||
+        next.x != 9) return 0;
+    anchor = current.x; x = current.w; y = current.h; w = next.w; h = next.h;
+    for (int guard = 0; current.y != 0 && guard < 16; ++guard) {
+        if (!dm2_v1_boot_rect_raw(raw, raw_size, (uint16_t)current.y, &next)) return 0;
+        if (next.x == 1) { x += next.w; y += next.h; }
+        else if (next.x == 9) {
+            int dx, dy;
+            switch (current.x) {
+            case 1: dx = current.w; dy = current.h; break;
+            case 4: dx = current.w; dy = current.h - (next.h - 1); break;
+            case 7: dx = current.w - ((next.w + 1) >> 1); dy = current.h - (next.h - 1); break;
+            default: return 0;
+            }
+            x += dx; y += dy;
+        } else return 0;
+        current = next;
+    }
+    if (current.y != 0 || anchor < 1 || anchor > 8 || w <= 0 || h <= 0) return 0;
+    if (anchor == 1 || anchor == 4 || anchor == 8) out->x = x;
+    else out->x = x - ((w + 1) >> 1);
+    if (anchor == 1 || anchor == 2 || anchor == 5) out->y = y;
+    else out->y = y - (h - 1);
+    out->w = w; out->h = h;
+    return 1;
+}
+
+int dm2_v1_boot_interface_hud_layout(DM2_V1_BootProfile *profile,
+                                     DM2_V1_InterfaceHudLayout *out_layout)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint32_t hash = 2166136261u;
+    if (!out_layout) return 0;
+    memset(out_layout, 0, sizeof(*out_layout));
+    if (!profile || !profile->graphics_dat) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_typed_sized(&gfx->loader, 1, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
+    if (!raw || raw_size < 4u) return 0;
+    for (size_t i = 0; i < raw_size; ++i) hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
+    for (uint16_t slot = 0; slot < DM2_V1_INTERFACE_HUD_CHAMPION_COUNT; ++slot) {
+        if (!dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(173u + slot), &out_layout->portrait[slot]) ||
+            !dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(165u + slot), &out_layout->name[slot])) return 0;
+        for (uint16_t stat = 0; stat < 3u; ++stat)
+            if (!dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(185u + slot + stat * 4u), &out_layout->status[slot][stat])) return 0;
+    }
+    out_layout->table_hash = hash; out_layout->valid = 1; return 1;
+}
+
 int dm2_v1_boot_interface_rect14_table(
     DM2_V1_BootProfile *profile,
     const uint8_t **out_rows,

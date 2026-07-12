@@ -1439,6 +1439,27 @@ int dm2_v1_boot_interface_font_table(
     const uint8_t **out_rows,
     uint32_t *out_hash);
 
+#define DM2_V1_INTERFACE_HUD_CHAMPION_COUNT 4u
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+} DM2_V1_InterfaceRect;
+typedef struct {
+    int valid;
+    uint32_t table_hash;
+    DM2_V1_InterfaceRect portrait[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT];
+    DM2_V1_InterfaceRect name[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT];
+    DM2_V1_InterfaceRect status[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT][3];
+} DM2_V1_InterfaceHudLayout;
+
+/* skproject _098d_1208 loads INTERFACE_GENERAL/0/dt04/0 and expands these
+ * champion rect IDs: names 165..168, portraits 173..176, status 185..204. */
+int dm2_v1_boot_interface_hud_layout(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_InterfaceHudLayout *out_layout);
+
 /* skproject LOAD_GDAT_INTERFACE_00_0A table. Storage remains owned by the
  * boot graphics handle and is valid while profile->graphics_dat is alive. */
 int dm2_v1_boot_interface_rect14_table(
