@@ -1,6 +1,7 @@
 #include "theron_v1_startup_runtime_entry.h"
 
 #include "theron_v1_boot.h"
+#include "theron_v1_stage3_irq2_dispatch.h"
 #include "theron_v1_track02.h"
 
 #include <stdio.h>
@@ -40,6 +41,36 @@ static int theron_v1_startup_runtime_publish_track02_route(
     Theron_V1_World *world,
     Theron_DungeonID dungeon_id,
     const Theron_Track02DungeonRoute *route);
+
+/* The only original dynamic stage-two CD_READ proved so far is the JP/US
+ * one-sector stage-three load. Direct runtime entry must verify its physical
+ * `$3800` BRK $ff bytes too, rather than trusting a previously built startup
+ * receipt. No descriptor semantics are admitted at this boundary. */
+static int theron_v1_startup_runtime_stage3_loader_ready(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex) {
+    Theron_Track02Variant variant;
+    Theron_Track02Stage2DynamicPayloadReceipt payload;
+    Theron_V1Stage3Irq2DispatchReceipt dispatch;
+
+    if (!track02_data || track02_size == 0u || !md5_hex || !md5_hex[0]) {
+        return 0;
+    }
+    variant = theron_v1_track02_variant_for_md5(md5_hex);
+    if (variant != THERON_TRACK02_VARIANT_JP_BIN &&
+        variant != THERON_TRACK02_VARIANT_US_BIN) {
+        return 1;
+    }
+    memset(&payload, 0, sizeof(payload));
+    memset(&dispatch, 0, sizeof(dispatch));
+    return theron_v1_track02_inspect_stage2_dynamic_payload(
+               track02_data, track02_size, md5_hex, &payload) ==
+               THERON_TRACK02_SIGNAL_OK &&
+           theron_v1_stage3_irq2_dispatch_from_original_media(
+               track02_data, track02_size, &payload, &dispatch) &&
+           dispatch.valid && dispatch.irq2_dispatch_proven;
+}
 
 static int theron_v1_startup_runtime_level_load_callback(
     Theron_V1_World *world,
@@ -99,6 +130,14 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
         !md5_hex || md5_hex[0] == '\0') {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt, receipt_cap, "no raw Track 02 bytes");
+        }
+        return 0;
+    }
+    if (!theron_v1_startup_runtime_stage3_loader_ready(
+            hucard_rom, hucard_rom_size, md5_hex)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "Track 02 stage-three loader bytes rejected");
         }
         return 0;
     }
