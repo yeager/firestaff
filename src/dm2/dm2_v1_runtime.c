@@ -610,6 +610,14 @@ static void dm2_runtime_capture_door_render_receipt(
         door->button_gdat_index;
     g_dm2_last_door_render.button_source_kind =
         door->button_source_kind;
+    /* skproject MAKE_BUTTON_CLICKABLE is called only for rectnos 3/4 in
+     * DRAW_DEFAULT_DOOR_BUTTON; retain that source gate in the runtime
+     * receipt instead of treating every drawn button as interactive. */
+    g_dm2_last_door_render.button_rectno =
+        dm2_v1_viewport_door_button_rectno_for_square(door->view_square);
+    g_dm2_last_door_render.button_clickable =
+        door->button_source_kind == 1 &&
+        dm2_v1_viewport_door_button_clickable_for_square(door->view_square);
     g_dm2_last_door_render.wall_button_index =
         door->wall_button_index;
     g_dm2_last_door_render.wall_button_field =

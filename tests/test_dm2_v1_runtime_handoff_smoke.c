@@ -1420,6 +1420,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       door_receipt.button_gdat_index ==
                           dm2_v1_viewport_door_button_graphic_index_for_state(1) &&
                       door_receipt.button_source_kind == 1 &&
+                      door_receipt.button_clickable == 1 &&
+                      door_receipt.button_rectno == 4 &&
                       door_receipt.wall_button_index == 0 &&
                       door_receipt.wall_button_field == 0 &&
                       door_receipt.panel_blit_ready == 1 &&
@@ -1633,6 +1635,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
                     CHECK(dm2_v1_runtime_last_door_render_receipt(
                               &door_receipt) == 1 &&
                           door_receipt.button_source_kind == 2 &&
+                          door_receipt.button_clickable == 0 &&
+                          door_receipt.button_rectno == 4 &&
                           door_receipt.wall_button_index == 0x2a &&
                           door_receipt.wall_button_field > 0 &&
                           door_receipt.button_gdat_index ==
