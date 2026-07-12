@@ -125,6 +125,10 @@ The actual 4096-byte logical preload payload is now retained as strict
 provenance: both variants agree on its FNV receipt, first nonzero byte 243,
 and 2911 nonzero bytes. This binds bytes and size only, not code, compression,
 bank, object, palette, or level semantics.
+The original post-read sequence is also locked: `JSR $e009; CMP #$00; BNE
+$40a9; RTS`. Thus `$03e3` returns to the IPL retry loop rather than transferring
+control to `$3000`; runtime must keep it as unclassified staging data pending
+a later original consumer.
 The first loaded payload is now structurally verified as a
 218-unit manifest envelope, but its entries remain unclassified; do not treat
 it as a graphics, palette, object, or dungeon-record binding. The hash-gated

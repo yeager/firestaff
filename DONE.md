@@ -182,6 +182,13 @@
   data. Verification: strict-C11 syntax checks plus direct hash-verified
   JP/US media probe, 0 failed.
 
+- 2026-07-12 Theron V1 IPL preload return-control binding: the authenticated
+  `$40cd` bytes now prove `JSR $e009; CMP #$00; BNE $40a9; RTS` after loading
+  record `$03e3` to `$3000`. The shared runtime handoff therefore marks the
+  payload as returning staging data, not an executable or level route.
+  Verification: strict-C11 syntax checks plus direct hash-verified JP/US media
+  probe, 0 failed.
+
 - 2026-07-12 Theron V1 CUE/M11 loader-chain consumer: strict CUE boot
   validation now consumes the same stage-two work-RAM transfer and physical
   `$3800` `BRK $ff` dispatch gates as direct runtime entry after rereading the

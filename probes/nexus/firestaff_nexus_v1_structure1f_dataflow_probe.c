@@ -14,6 +14,10 @@
 
 static int failures;
 
+static uint16_t read_be16(const uint8_t *p) {
+    return (uint16_t)(((uint16_t)p[0] << 8) | (uint16_t)p[1]);
+}
+
 static void check(int condition, const char *message) {
     if (condition) printf("PASS: %s\n", message);
     else { fprintf(stderr, "FAIL: %s\n", message); ++failures; }
@@ -54,6 +58,8 @@ int main(int argc, char **argv) {
     int direct_record_count = 0;
     int direct_record_mismatch_count = 0;
     int direct_typed_field_mismatch_count = 0;
+    int typed_record_count = 0;
+    int typed_field_mismatch_count = 0;
 
     if (!data_dir) {
         home = getenv("HOME");
@@ -97,6 +103,65 @@ int main(int argc, char **argv) {
                     layout.structure1f.family_record_size[family];
                 const Nexus_V1_DgnStructure1FEntry *typed =
                     &level.structure1f_entries[typed_index];
+                ++typed_record_count;
+                if (typed->family != (Nexus_V1_DgnStructure1FFamily)family ||
+                    typed->tag != source[0]) {
+                    ++typed_field_mismatch_count;
+                    continue;
+                }
+                switch (family) {
+                case NEXUS_V1_DGN_STRUCTURE1F_ITEMS:
+                    if (typed->x != source[1] || typed->y != source[2] ||
+                        typed->location != source[3] || typed->item_id != source[4] ||
+                        typed->attribute1 != source[5] || typed->attribute2 != source[7])
+                        ++typed_field_mismatch_count;
+                    break;
+                case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS:
+                    if (typed->x != source[1] || typed->y != source[2] ||
+                        typed->offset_x != (int8_t)source[3] ||
+                        typed->offset_y != (int8_t)source[4] ||
+                        typed->model_or_aspect != source[5] || typed->rotation != source[6] ||
+                        typed->type_or_control != source[7] || typed->width != source[8] ||
+                        typed->height != source[9]) ++typed_field_mismatch_count;
+                    break;
+                case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS:
+                    if (typed->x != source[1] || typed->y != source[2] ||
+                        typed->model_or_aspect != source[5] || typed->rotation != source[6] ||
+                        typed->width != source[10] || typed->height != source[11] ||
+                        typed->type_or_control != source[12] ||
+                        typed->destination_x != source[13] ||
+                        typed->destination_y != source[14] ||
+                        typed->destination_orientation != source[15])
+                        ++typed_field_mismatch_count;
+                    break;
+                case NEXUS_V1_DGN_STRUCTURE1F_ALCOVES:
+                    if (typed->face != source[1] ||
+                        typed->structure1a_index != read_be16(source + 2) ||
+                        typed->rotation != source[4] || typed->offset_x != (int8_t)source[5] ||
+                        typed->offset_y != (int8_t)source[6] || typed->item_id != source[7])
+                        ++typed_field_mismatch_count;
+                    break;
+                case NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS:
+                    if (typed->face != source[1] ||
+                        typed->structure1a_index != read_be16(source + 2) ||
+                        typed->rotation != source[4] || typed->offset_x != (int8_t)source[5] ||
+                        typed->offset_y != (int8_t)source[6] ||
+                        typed->model_or_aspect != source[7])
+                        ++typed_field_mismatch_count;
+                    break;
+                case NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS:
+                    if (typed->face != source[1] ||
+                        typed->structure1a_index != read_be16(source + 2) ||
+                        typed->rotation != source[4] || typed->offset_x != (int8_t)source[5] ||
+                        typed->offset_y != (int8_t)source[6] ||
+                        typed->model_or_aspect != source[7] ||
+                        typed->type_or_control != source[12] ||
+                        typed->destination_x != source[13] ||
+                        typed->destination_y != source[14] ||
+                        typed->destination_orientation != source[15])
+                        ++typed_field_mismatch_count;
+                    break;
+                }
                 if (family > NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS) continue;
                 ++direct_record_count;
                 if (typed->family != (Nexus_V1_DgnStructure1FFamily)family ||
@@ -141,10 +206,14 @@ int main(int argc, char **argv) {
           "Structure1F direct coordinates match typed runtime records");
     check(direct_typed_field_mismatch_count == 0,
           "Structure1F copied direct-record fields match original bytes");
+    check(typed_record_count > 0 && typed_field_mismatch_count == 0,
+          "Structure1F copied fields match original bytes across all families");
     printf("Nexus DGN Structure1F direct flow: levels=%d direct-records=%d "
            "coordinate-mismatches=%d field-mismatches=%d; "
+           "typed-records=%d typed-field-mismatches=%d; "
            "object/sensor/render-proof=0\n",
            levels_loaded, direct_record_count, direct_record_mismatch_count,
-           direct_typed_field_mismatch_count);
+           direct_typed_field_mismatch_count, typed_record_count,
+           typed_field_mismatch_count);
     return failures == 0 ? 0 : 1;
 }
