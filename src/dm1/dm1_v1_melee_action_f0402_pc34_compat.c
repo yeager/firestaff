@@ -1646,6 +1646,14 @@ int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
         memset(out, 0, sizeof(*out));
         return 0;
     }
+    /* ReDMCSB GROUP.C F0189 lines 759-766 removes the ACTIVE_GROUP entry
+     * only when G0272_CurrentMapIndex is G0309_PartyMapIndex. F0190 can
+     * kill an off-map group through a moving/falling timeline route: its
+     * Thing must still unlink and clear Next, but its non-party-map active
+     * state must not be retired by this aftermath consumer. */
+    if (in->mapIndex != in->partyMapIndex) {
+        out->killedAllStatePlan.shouldRemoveActiveGroupState = 0;
+    }
     out->shouldApplyKilledAllSideEffects =
         out->killedAllStatePlan.shouldUnlinkGroupFromSquare ||
         out->killedAllStatePlan.shouldClearGroupNext ||

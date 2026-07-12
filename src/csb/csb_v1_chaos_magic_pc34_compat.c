@@ -669,8 +669,8 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 }
 
 static CSB_V1_CSBWinDSAStackResult
-csb_v1_csbwin_dsa_execute_stack_subcode(uint8_t subcode, uint32_t *stack,
-    int *depth, int *forced_state)
+csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
+    int *depth, int *forced_state, int parameter_count)
 {
     uint32_t v;
     uint32_t w;
@@ -678,7 +678,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint8_t subcode, uint32_t *stack,
     int32_t sv;
     int32_t sw;
 
-    if (!stack || !depth || !forced_state) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+    if (!stack || !depth || !forced_state || parameter_count < 0 ||
+        parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
     case 1u: /* STKOP_Plus */
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
@@ -821,6 +822,15 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint8_t subcode, uint32_t *stack,
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
             !csb_v1_csbwin_dsa_stack_push(stack, depth, w * v)) goto underflow;
+        break;
+    case 139u: /* STKOP_NumParam, reached via AMPERSAND2 + 128 */
+        /* CSBWin DSA.cpp:4949-4955 pushes pDSAparameters[0].  Firestaff's
+         * authenticated filter context keeps that source count separately
+         * from its A..Z payload, so no world or filter state is invented. */
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                           (uint32_t)parameter_count)) {
+            goto underflow;
+        }
         break;
     default:
         return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
@@ -965,19 +975,24 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
             }
             next_state = relative_state;
-        } else if (opcode == CSB_V1_CSBWIN_DSACMD_AMPERSAND) {
-            uint8_t subcode = (uint8_t)((command >> 6) & 0x7fu);
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_AMPERSAND ||
+                   opcode == CSB_V1_CSBWIN_DSACMD_AMPERSAND2) {
+            uint16_t subcode = (uint16_t)((command >> 6) & 0x7fu);
             next_state = csb_v1_csbwin_dsa_sign_extend((uint16_t)(command >> 13), 3);
             if (next_state == -4) {
                 if (cursor >= action->program_word_count) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
                 /* EX_AMPERSAND reads this extension as an unsigned source word. */
                 next_state = (int)action->program_words[cursor++];
             }
-            rc = csb_v1_csbwin_dsa_execute_stack_subcode(subcode, stack, &depth,
-                                                           &candidate.forced_state);
+            if (opcode == CSB_V1_CSBWIN_DSACMD_AMPERSAND2) {
+                /* CSBWin DSA.cpp:5143-5148 dispatches AMPERSAND2 through
+                 * EX_AMPERSAND(exPkt, 128), not a distinct bytecode grammar. */
+                subcode = (uint16_t)(subcode + 128u);
+            }
+            rc = csb_v1_csbwin_dsa_execute_stack_subcode(
+                subcode, stack, &depth, &candidate.forced_state,
+                context->parameter_count);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
-        } else if (opcode == CSB_V1_CSBWIN_DSACMD_AMPERSAND2) {
-            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
     }

@@ -531,7 +531,8 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     uint16_t program[] = {
         0x0686u, 0x55aau, 0x0054u, 0x0053u, 0x000du
     };
-    int parameters[] = { 0 };
+    uint16_t num_param_program[] = { 0x02d5u, 0x004du };
+    int parameters[] = { 0, 0 };
     uint8_t exported[8192];
     const uint8_t *global_payload = NULL;
     size_t global_payload_size = 0u;
@@ -615,6 +616,23 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               global_payload_size == 64u && global_payload[4] == 0xaau &&
               global_payload[5] == 0x55u,
           "CSB DSA GLOBALSTORE commits through runtime and CSBWin EXPOOL"); }
+
+    action.program_words = num_param_program;
+    action.program_word_count =
+        (int)(sizeof(num_param_program) / sizeof(num_param_program[0]));
+    parameters[0] = 0;
+    parameters[1] = 0;
+    {
+        const int ampersand2_result =
+            csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                &profile, &runner, &action, parameters, 2, NULL);
+        CHECK(ampersand2_result == 1 && parameters[0] == 0 &&
+                  parameters[1] == 2 &&
+                  runner.last_execution.words_consumed == 2u &&
+                  runner.execution_count == 2 &&
+                  profile.csbwin_global_variables[1] == 0x55aau,
+              "CSBWin DSA.cpp:5143-5148,4949-4955 AMPERSAND2 NUMPARAM runs through the loaded runtime binding");
+    }
 
     profile.party_state_valid = 1;
     profile.party_state.ChampionCount = 0;
