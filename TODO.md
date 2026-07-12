@@ -10,6 +10,10 @@ or another game. Remaining V2 presentation work is an operator-reviewed,
 complete real-art pack and packaged Mac capture; do not re-enable placeholder
 art as a runtime fallback.
 
+DM1 V2.1 now presents the live indexed framebuffer through source-preserving
+EPX/Scale2x before the normal palette route, including special-palette title
+and entrance frames. Remaining V2.1 work is packaged Mac/app capture only.
+
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 
 The strict CUE route now carries an authenticated Track 02 IPL/stage-two

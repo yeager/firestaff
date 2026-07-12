@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 V2.1 live EPX presentation: M11 now expands the live
+  320x200 indexed DM1 framebuffer through Scale2x before normal original
+  palette presentation, including title/entrance special palettes. The source
+  framebuffer remains read-only. Verification: full local build, Phase A
+  25/25 including the new live-EPX invariant, and Apple-Silicon V2.1 probe
+  7/7.
+
 - 2026-07-12 DM1 V2.0 runtime isolation: persisted V2.0 filter preferences
   are now active only for the DM1 V2.0 presentation route. V1 and every
   non-DM1 game bypass the corrected palette and all V2.0 post-filters while

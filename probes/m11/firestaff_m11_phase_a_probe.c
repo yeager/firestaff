@@ -188,6 +188,20 @@ int main(int argc, char** argv) {
            scaledPresentOk,
            "2x indexed presentation renders the 320x200 framebuffer as 640x400");
 
+    /* ---------- INV_A09B1: V2.1 EPX presentation path -------------- */
+    {
+        unsigned char source_before[M11_FB_BYTES];
+        int presentedW = 0;
+        int presentedH = 0;
+        memcpy(source_before, fb, sizeof(source_before));
+        rc = M11_Render_PresentEpxIndexed(fb, M11_FB_WIDTH, M11_FB_HEIGHT);
+        (void)M11_Render_GetPresentedRGBA(&presentedW, &presentedH);
+        record(&t, "INV_A09B1",
+               rc == M11_RENDER_OK && presentedW >= 640 && presentedH >= 400 &&
+                   memcmp(source_before, fb, sizeof(source_before)) == 0,
+               "V2.1 EPX presents 640x400 without mutating the source framebuffer");
+    }
+
     /* ---------- INV_A09C: arbitrary V2.1/V2.2 target --------------- */
     rc = M11_Render_PresentIndexedToResolution(fb,
                                                M11_FB_WIDTH,
