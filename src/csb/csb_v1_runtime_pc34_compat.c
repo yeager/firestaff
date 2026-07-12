@@ -8075,11 +8075,11 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
     }
 
     /* ReDMCSB MOVESENS.C F0276 lines 1608-1655 unlinks before a removal,
-     * scans the resulting list, and links after an addition.  Both paths
-     * then evaluate C004 using the same-type guard.  The caller performs
-     * that source ordering, so a linked addition excludes placed_thing from
-     * the pre-link-equivalent scan while an unlinked removal sees only the
-     * remaining objects. */
+     * scans the resulting list, and links after an addition. C001 checks
+     * pre-link object/group/party occupancy; C004 checks the same-type
+     * guard. The caller performs that source ordering, so a linked addition
+     * excludes placed_thing from the pre-link-equivalent scan while an
+     * unlinked removal sees only the remaining objects. */
     thing = first_thing;
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
          ++guard) {
@@ -8092,6 +8092,9 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         int sensor_type;
         int sensor_data;
         int same_type_present = 0;
+        int other_object_present = 0;
+        int group_present = 0;
+        int party_on_square;
         int scan;
         int scan_guard;
         int sensor_effect;
@@ -8118,8 +8121,8 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         target_word = csb_v1_runtime_read_u16(record + 6);
         sensor_type = (int)(type_data & 0x007Fu);
         sensor_data = (int)(type_data >> 7);
-        if (sensor_type != DM1_SENSOR_FLOOR_OBJECT ||
-            sensor_data != object_type) {
+        if (sensor_type != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
+            sensor_type != DM1_SENSOR_FLOOR_OBJECT) {
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
@@ -8136,18 +8139,25 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
                 NULL,
                 NULL);
             if (!scan_record) break;
-            if ((uint16_t)scan != placed_thing &&
-                scan_type > 4 &&
-                scan_type < 14 &&
-                csb_v1_runtime_object_type_from_thing(
-                    dungeon,
-                    (uint16_t)scan) == object_type) {
-                same_type_present = 1;
-                break;
+            if (scan_type == 4) {
+                group_present = 1;
+            } else if ((uint16_t)scan != placed_thing &&
+                       scan_type > 4 && scan_type < 14) {
+                other_object_present = 1;
+                if (csb_v1_runtime_object_type_from_thing(
+                        dungeon, (uint16_t)scan) == object_type) {
+                    same_type_present = 1;
+                }
             }
             scan = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)scan);
         }
-        if (same_type_present) {
+        party_on_square = profile->champion_count > 0 &&
+            profile->current_level == level &&
+            profile->party_x == map_x && profile->party_y == map_y;
+        if ((sensor_type == DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
+             (party_on_square || other_object_present || group_present)) ||
+            (sensor_type == DM1_SENSOR_FLOOR_OBJECT &&
+             (sensor_data != object_type || same_type_present))) {
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
