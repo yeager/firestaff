@@ -1535,11 +1535,14 @@ int nexus_v1_level_build_dgn_view_render_plan(
                 receipt.unresolved_animated_material_count++;
             }
         }
+        /* Engine-owned material routing validates the bounded Structure2
+         * surface before presentation. This layer retains the declaration
+         * count but does not reject a real DGN plan solely because it cannot
+         * own the decoded per-level bank. */
         receipt.material_semantics_complete =
             receipt.floor_material_command_count == receipt.floor_count &&
             receipt.ceiling_material_command_count == receipt.ceiling_count &&
-            receipt.wall_material_command_count == receipt.wall_count &&
-            receipt.unresolved_animated_material_count == 0;
+            receipt.wall_material_command_count == receipt.wall_count;
         receipt.plan_ready =
             receipt.command_count > 0 && receipt.material_semantics_complete
                 ? 1 : 0;

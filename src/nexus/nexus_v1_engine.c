@@ -99,6 +99,96 @@ static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {NULL, NULL}
 };
 
+static uint16_t nexus_be16(const uint8_t *p) {
+    return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
+}
+
+static uint32_t nexus_be32(const uint8_t *p) {
+    return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+           ((uint32_t)p[2] << 8) | p[3];
+}
+
+static uint32_t nexus_bgr555_rgba(uint16_t value) {
+    uint32_t r = (value >> 10) & 31U;
+    uint32_t g = (value >> 5) & 31U;
+    uint32_t b = value & 31U;
+    return 0xff000000U | ((r * 255U / 31U) << 16) |
+           ((g * 255U / 31U) << 8) | (b * 255U / 31U);
+}
+
+static int nexus_v1_decode_structure2_animation_materials(
+    Nexus_V1_Engine *engine, const uint8_t *data, int size) {
+    uint32_t useful;
+    size_t base;
+    int entry;
+    int decoded = 0;
+    if (!engine || !data || size < 0x1c ||
+        !engine->current_level.structure2_payload.valid) return 0;
+    base = (size_t)nexus_be16(data + 0x14) * NEXUS_DGN_BLOCK_SIZE;
+    useful = nexus_be32(data + 0x18);
+    if (base > (size_t)size || useful > (size_t)size - base) return 0;
+    nexus_v1_dmdf_free_material_bank(&engine->animated_floor_materials);
+    for (entry = 0; entry < engine->current_level.structure1g_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1GEntry *animation =
+            &engine->current_level.structure1g_entries[entry];
+        const Nexus_V1_DgnStructure2Texture *texture;
+        Nexus_DMDFTextureSurface *surface;
+        size_t pixels, image_bytes, palette_bytes, i;
+        if (!animation->first_structure2_image_valid ||
+            animation->first_structure2_image_id >=
+                engine->current_level.structure2_texture_count) continue;
+        texture = &engine->current_level.structure2_textures[
+            animation->first_structure2_image_id];
+        if (texture->width == 0U || texture->height == 0U ||
+            texture->width > 256U || texture->height > 256U ||
+            (texture->encoding != 0x0008U && texture->encoding != 0x0028U)) continue;
+        pixels = (size_t)texture->width * texture->height;
+        image_bytes = texture->encoding == 0x0008U ? (pixels + 1U) / 2U : pixels * 2U;
+        palette_bytes = texture->encoding == 0x0008U ? 32U : 0U;
+        if (texture->image_relative_offset > useful || image_bytes > useful - texture->image_relative_offset ||
+            (palette_bytes && (texture->palette_relative_offset > useful ||
+             palette_bytes > useful - texture->palette_relative_offset))) continue;
+        surface = &engine->animated_floor_materials.surfaces[texture->image_id];
+        surface->pixels = (uint8_t *)malloc(pixels);
+        if (!surface->pixels) {
+            nexus_v1_dmdf_free_material_bank(&engine->animated_floor_materials);
+            return 0;
+        }
+        if (texture->encoding == 0x0008U) {
+            for (i = 0; i < 16U; ++i)
+                surface->palette[i] = nexus_bgr555_rgba(nexus_be16(data + base + texture->palette_relative_offset + i * 2U));
+            for (i = 0; i < pixels; ++i) {
+                uint8_t packed = data[base + texture->image_relative_offset + i / 2U];
+                surface->pixels[i] = (uint8_t)((i & 1U) ? (packed & 0x0fU) : (packed >> 4));
+            }
+        } else {
+            uint16_t colors[256];
+            size_t color_count = 0U;
+            for (i = 0; i < pixels; ++i) {
+                uint16_t color = nexus_be16(data + base + texture->image_relative_offset + i * 2U);
+                size_t index;
+                for (index = 0; index < color_count && colors[index] != color; ++index) {}
+                if (index == color_count) {
+                    if (color_count == 256U) { free(surface->pixels); memset(surface, 0, sizeof(*surface)); break; }
+                    colors[color_count] = color;
+                    surface->palette[color_count] = nexus_bgr555_rgba(color);
+                    ++color_count;
+                }
+                surface->pixels[i] = (uint8_t)index;
+            }
+            if (i != pixels) continue;
+        }
+        surface->width = texture->width;
+        surface->height = texture->height;
+        surface->valid = 1;
+        ++engine->animated_floor_materials.surface_count;
+        ++decoded;
+    }
+    engine->animated_floor_materials.valid = decoded > 0;
+    engine->animated_floor_material_route_valid = decoded == engine->current_level.structure1g_entry_count;
+    return engine->animated_floor_material_route_valid;
+}
+
 static const char *nexus_known_boot_file_md5(const char *name) {
     int i;
     if (!name) return NULL;
@@ -374,6 +464,14 @@ static const Nexus_DMDFTextureSurface *nexus_v1_plan_surface(
 {
     const Nexus_DMDFMaterialBank *bank;
     if (!engine || !command) return NULL;
+    if (command->animated_texture_declared &&
+        command->animated_texture_structure2_image_valid &&
+        engine->animated_floor_material_route_valid) {
+        const Nexus_DMDFTextureSurface *surface =
+            &engine->animated_floor_materials.surfaces[
+                command->animated_texture_structure2_image_id];
+        return surface->valid ? surface : NULL;
+    }
     bank = (command->kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
             command->kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
         ? &engine->floor_materials : &engine->wall_materials;
@@ -1166,8 +1264,12 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
 
     nexus_v1_invalidate_dgn_material_plan(engine);
     int r = nexus_v1_level_load(&engine->current_level, data, size, level);
+    if (r < 0) {
+        free(data);
+        return -1;
+    }
+    (void)nexus_v1_decode_structure2_animation_materials(engine, data, size);
     free(data);
-    if (r < 0) return -1;
     (void)nexus_v1_structure2_source_receipt(
         engine, level, &engine->current_level,
         &engine->current_level_structure2_source);
