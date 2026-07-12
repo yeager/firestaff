@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0441 entrance audio: the real C01 sound-switch request now
+  plays at source volume 112 before the original pre-open delay and F0438.
+  Verification: C001 fallback gate 286 checks and entrance palette 103/103
+  passed.
+
 - 2026-07-12 DM1 F0438 entrance doors: source door-strip geometry now ends
   the left half at step 26 while retaining the right half through step 31,
   matching ENTRANCE.C rather than extending invalid left strips. Verification:
