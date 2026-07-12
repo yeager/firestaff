@@ -11260,8 +11260,8 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
     /* ReDMCSB: MOVESENS.C F0267 lines 800-822 calls
      * F0276_SENSOR_ProcessThingAdditionOrRemoval when the party leaves and
      * enters a square.  F0276 lines 1658-1785 walks C03 sensor things until
-     * the first non-sensor, checks floor sensor types C003/C005/C009 for the
-     * party, resolves HOLD into SET/CLEAR, then calls F0272/F0268 to enqueue
+     * the first non-sensor, checks C002/C003/C005/C008/C009 floor sensors for
+     * the party, resolves HOLD into SET/CLEAR, then calls F0272/F0268 to enqueue
      * the square-effect event.  This CSB runtime slice covers party floor
      * sensors, including C008 party-possession checks over imported champion
      * slots; object/group movement sensors remain separate runtime work. */
@@ -11306,6 +11306,16 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
 
         trigger = add_party ? 1 : 0;
         switch (sensor_type) {
+        case 2: /* C002_SENSOR_FLOOR_THERON_PARTY_CREATURE */
+            /* ReDMCSB MOVESENS.C F0276 lines 1686-1689 accepts the party
+             * only while it is moving onto a square without a C04 group.
+             * F0267 removes a destination group before this pass; retaining
+             * the occupancy guard covers direct/runtime callers as well. */
+            trigger = (profile->champion_count > 0 &&
+                       !csb_v1_runtime_square_has_group(
+                           dungeon, level, map_x, map_y))
+                ? trigger : 0;
+            break;
         case 3: /* C003_SENSOR_FLOOR_PARTY */
             if (profile->champion_count <= 0) {
                 trigger = 0;
