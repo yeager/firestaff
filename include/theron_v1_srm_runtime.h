@@ -17,7 +17,11 @@ typedef enum {
     THERON_V1_SRM_RUNTIME_BAD_INPUT = -1,
     THERON_V1_SRM_RUNTIME_IO_FAILED = -2,
     THERON_V1_SRM_RUNTIME_UNSUPPORTED_BODY = -3,
-    THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED = -4
+    THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED = -4,
+    /* Native Firestaff envelopes must never replace a pre-existing Save
+     * Disk artifact.  In particular, an original SRM stays available for
+     * the opaque corpus/import route until its body layout is source-bound. */
+    THERON_V1_SRM_RUNTIME_DESTINATION_EXISTS = -5
 } Theron_V1SrmRuntimeStatus;
 
 typedef struct {
@@ -33,9 +37,10 @@ typedef struct {
     Theron_RuntimeMediaIdentity track02_identity;
 } Theron_V1SrmRuntimeReceipt;
 
-/* Writes one gzip-wrapped FSTQPTY1 .srm body.  It is intended for the
- * same bounded import route below and never overwrites a destination until
- * compression and the complete write have succeeded. */
+/* Writes one gzip-wrapped Firestaff FSTQPTY1 body through the same bounded
+ * import route below.  Publication is atomic and no-replace: an existing
+ * Save Disk path, including an original SRM under corpus investigation, is
+ * left byte-for-byte untouched. */
 Theron_V1SrmRuntimeStatus theron_v1_srm_runtime_export_path(
     const Theron_V1_World *world,
     const char *srm_path,

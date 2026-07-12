@@ -1119,6 +1119,28 @@ static void test_runtime_export_continue_roundtrip(void) {
     expect_true(theron_v1_srm_runtime_export_path(&source, path, &receipt) == THERON_V1_SRM_RUNTIME_OK && receipt.srm_size > 10u,
                 "runtime export writes gzip .srm bytes");
 
+    {
+        static const uint8_t original_save_bytes[] = {
+            0x1f, 0x8b, 0x08, 0x00, 'O', 'R', 'I', 'G', 'I', 'N', 'A', 'L'
+        };
+        uint8_t protected_bytes[sizeof(original_save_bytes)];
+        expect_true(write_bytes(path, original_save_bytes,
+                                sizeof(original_save_bytes)),
+                    "runtime export no-replace fixture stages an original Save Disk");
+        expect_true(theron_v1_srm_runtime_export_path(
+                        &source, path, &receipt) ==
+                        THERON_V1_SRM_RUNTIME_DESTINATION_EXISTS &&
+                    receipt.status == THERON_V1_SRM_RUNTIME_DESTINATION_EXISTS &&
+                    read_bytes(path, protected_bytes, sizeof(protected_bytes)) &&
+                    memcmp(protected_bytes, original_save_bytes,
+                           sizeof(original_save_bytes)) == 0,
+                    "runtime export never replaces an existing original Save Disk");
+        bd_unlink(path);
+        expect_true(theron_v1_srm_runtime_export_path(&source, path, &receipt) ==
+                        THERON_V1_SRM_RUNTIME_OK,
+                    "runtime export can publish after the protected path is removed");
+    }
+
     memset(track, 0, sizeof(track));
     memcpy(track + 0x1584u, descriptor, sizeof(descriptor));
     memcpy(track + 0x3000u, span, sizeof(span));
