@@ -359,6 +359,7 @@ int theron_v1_startup_runtime_load_initial_level(
     uint32_t seed;
     Theron_MapLoadResult r;
     int verified_track02_request;
+    Theron_V1_World staged_world;
 
     if (!world) {
         return 0;
@@ -371,13 +372,19 @@ int theron_v1_startup_runtime_load_initial_level(
     verified_track02_request =
         theron_v1_startup_runtime_has_verified_track02_request(
             hucard_rom, hucard_rom_size, md5_hex);
-    if (theron_v1_startup_runtime_try_track02_initial_level(world,
+    /* A real Track 02 route may validate its level and object records in
+     * several steps.  Keep every tentative write in a candidate world so a
+     * rejected later object/media check cannot leak a partial dungeon into
+     * the live runtime. */
+    staged_world = *world;
+    if (theron_v1_startup_runtime_try_track02_initial_level(&staged_world,
                                                             hucard_rom,
                                                             hucard_rom_size,
                                                             md5_hex,
                                                             dungeon_id,
                                                             receipt,
                                                             receipt_cap)) {
+        *world = staged_world;
         return 1;
     }
     if (verified_track02_request) {
