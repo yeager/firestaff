@@ -837,6 +837,9 @@ int theron_v1_boot_validate_track02_loader_receipt(
         !stage2_handoff.ipl_preload_local_read_verified ||
         stage2_handoff.ipl_preload_cpu_address != 0x40cdu ||
         stage2_handoff.ipl_preload_destination != 0x3000u ||
+        !stage2_handoff.ipl_preload_record_proven ||
+        stage2_handoff.ipl_preload_record != 0x0003e3u ||
+        stage2_handoff.ipl_preload_sector_count != 2u ||
         !stage2_handoff.work_ram_cleared_before_entry ||
         stage2_handoff.cleared_work_ram_start != 0x2700u ||
         stage2_handoff.cleared_work_ram_bytes != 0x1100u ||

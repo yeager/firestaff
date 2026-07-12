@@ -66,6 +66,8 @@ int main(int argc, char **argv) {
     int sequence_image_descriptor_mismatch_count = 0;
     int sequence_goto_instruction_count = 0;
     int sequence_goto_target_mismatch_count = 0;
+    int sequence_terminator_count = 0;
+    int sequence_unclassified_instruction_count = 0;
     int unique_descriptor_count = 0;
     int nonzero_target_count = 0;
     int outside_target_count = 0;
@@ -118,6 +120,7 @@ int main(int argc, char **argv) {
             int sequence_byte_offset;
             int next_sequence_byte_offset;
             int cursor;
+            int terminated = 0;
             uint32_t offsets[2];
             int offset_index;
 
@@ -160,7 +163,11 @@ int main(int argc, char **argv) {
                  cursor < next_sequence_byte_offset; cursor += 4) {
                 uint16_t instruction = read_be16(structure1g + cursor);
                 uint16_t local_image_id;
-                if (instruction == 0xffffU) break;
+                if (instruction == 0xffffU) {
+                    terminated = 1;
+                    ++sequence_terminator_count;
+                    break;
+                }
                 if (instruction == 0xfffeU) {
                     int target_words =
                         (int)(int16_t)read_be16(structure1g + cursor + 2);
@@ -176,6 +183,7 @@ int main(int argc, char **argv) {
                 ++sequence_image_instruction_count;
                 if (instruction < 0x014cU) {
                     ++sequence_image_descriptor_mismatch_count;
+                    ++sequence_unclassified_instruction_count;
                     continue;
                 }
                 local_image_id = (uint16_t)(instruction - 0x014cU);
@@ -185,6 +193,7 @@ int main(int argc, char **argv) {
                     ++sequence_image_descriptor_mismatch_count;
                 }
             }
+            if (!terminated) ++sequence_unclassified_instruction_count;
             if (animation->first_image_index < 0x014cU ||
                 (uint16_t)(animation->first_image_index - 0x014cU) !=
                     animation->first_structure2_image_id ||
@@ -231,12 +240,15 @@ int main(int argc, char **argv) {
           "Structure1G sequence image indexes bind local Structure2 descriptors");
     check(sequence_goto_target_mismatch_count == 0,
           "Structure1G backward gotos stay within their original sequences");
+    check(sequence_terminator_count == structure1g_reference_count &&
+              sequence_unclassified_instruction_count == 0,
+          "Structure1G sequences terminate without unclassified instructions");
     check(nonzero_target_count > 0 && outside_target_count == 0,
           "referenced descriptor offsets remain within opaque payload spans");
     printf("Nexus DGN Structure2 reference flow: levels=%d references=%d "
            "global-local=%d mismatches=%d raw-sequences=%d sequence-mismatches=%d "
            "sequence-images=%d image-mismatches=%d unique-descriptors=%d "
-           "gotos=%d goto-mismatches=%d "
+           "gotos=%d goto-mismatches=%d terminators=%d unclassified=%d "
            "nonzero-targets=%d outside=%d; "
            "decoder/render-proof=0\n",
            levels_loaded, structure1g_reference_count, global_to_local_binding_count,
@@ -244,6 +256,7 @@ int main(int argc, char **argv) {
            raw_sequence_mismatch_count, sequence_image_instruction_count,
            sequence_image_descriptor_mismatch_count, unique_descriptor_count,
            sequence_goto_instruction_count, sequence_goto_target_mismatch_count,
+           sequence_terminator_count, sequence_unclassified_instruction_count,
            nonzero_target_count, outside_target_count);
     return failures == 0 ? 0 : 1;
 }
