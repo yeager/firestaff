@@ -41,6 +41,7 @@ typedef struct {
     size_t ipl_preload_first_nonzero_offset;
     size_t ipl_preload_nonzero_byte_count;
     uint32_t ipl_preload_user_data_hash;
+    int stage2_cd_exec_table_verified;
     uint16_t cleared_work_ram_start;
     size_t cleared_work_ram_bytes;
     uint16_t cleared_work_ram_end;

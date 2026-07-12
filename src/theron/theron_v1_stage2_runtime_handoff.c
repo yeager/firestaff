@@ -13,6 +13,7 @@
 #define THERON_V1_MODE1_USER_DATA_OFFSET 16u
 #define THERON_V1_MODE1_USER_DATA_BYTES 2048u
 #define THERON_V1_IPL_PRELOAD_TABLE_USER_OFFSET 0xdcu
+#define THERON_V1_STAGE2_CD_EXEC_TABLE_USER_OFFSET 0xd5u
 #define THERON_V1_IPL_PRELOAD_SETUP_USER_OFFSET 0xc1u
 #define THERON_V1_IPL_PRELOAD_CALL_DELTA 12u
 #define THERON_V1_IPL_PRELOAD_RECORD 0x0003e3u
@@ -132,6 +133,7 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     size_t preload_table_offset;
     size_t preload_raw_offset;
     size_t preload_call_offset;
+    size_t stage2_exec_table_offset;
     static const uint8_t preload_return_sequence[] = {
         0x20u, 0x09u, 0xe0u, /* JSR $e009 */
         0xc9u, 0x00u,       /* CMP #$00 */
@@ -226,8 +228,13 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
         THERON_V1_RAW_SECTOR_BYTES + THERON_V1_MODE1_USER_DATA_OFFSET +
         loader.cd_read_user_data_offset + THERON_V1_IPL_PRELOAD_CALL_DELTA;
     preload_raw_offset = preload_raw_sector * THERON_V1_RAW_SECTOR_BYTES;
+    stage2_exec_table_offset = loader.executable_raw_sector *
+        THERON_V1_RAW_SECTOR_BYTES + THERON_V1_MODE1_USER_DATA_OFFSET +
+        THERON_V1_STAGE2_CD_EXEC_TABLE_USER_OFFSET;
     if (memcmp(track02_data + preload_table_offset,
                "\x00\xe3\x03\x02", 4u) != 0 ||
+        memcmp(track02_data + stage2_exec_table_offset,
+               "\x00\xe7\x03\x11", 4u) != 0 ||
         memcmp(track02_data + preload_call_offset, preload_return_sequence,
                sizeof(preload_return_sequence)) != 0 ||
         !theron_v1_mode1_sector_is_valid(track02_data + preload_raw_offset) ||
@@ -248,6 +255,7 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     out_handoff->ipl_preload_sector_count = THERON_V1_IPL_PRELOAD_SECTOR_COUNT;
     out_handoff->ipl_preload_raw_sector = preload_raw_sector;
     out_handoff->ipl_preload_returns_to_ipl_proven = 1;
+    out_handoff->stage2_cd_exec_table_verified = 1;
     out_handoff->ipl_preload_user_data_bytes =
         THERON_V1_IPL_PRELOAD_SECTOR_COUNT * THERON_V1_MODE1_USER_DATA_BYTES;
     theron_v1_mode1_user_data_summary(
