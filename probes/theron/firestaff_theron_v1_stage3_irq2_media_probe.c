@@ -146,6 +146,7 @@ int main(int argc, char **argv) {
               jp_original_handoff.ipl_preload_first_nonzero_offset == 243u &&
               jp_original_handoff.ipl_preload_nonzero_byte_count == 2911u &&
               jp_original_handoff.ipl_preload_user_data_hash != 0u &&
+              jp_original_handoff.stage2_cd_exec_table_verified &&
               jp_original_handoff.stage3_mode1_header_verified &&
               jp_original_handoff.stage3_minute_bcd == 0x01u &&
               jp_original_handoff.stage3_second_bcd == 0x03u &&
@@ -162,6 +163,7 @@ int main(int argc, char **argv) {
               us_original_handoff.ipl_preload_nonzero_byte_count == 2911u &&
               us_original_handoff.ipl_preload_user_data_hash ==
                   jp_original_handoff.ipl_preload_user_data_hash &&
+              us_original_handoff.stage2_cd_exec_table_verified &&
               us_original_handoff.stage3_mode1_header_verified &&
               us_original_handoff.stage3_minute_bcd == 0x00u &&
               us_original_handoff.stage3_second_bcd == 0x58u &&

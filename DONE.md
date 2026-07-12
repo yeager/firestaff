@@ -1,5 +1,21 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 DGN Structure2 target-layout receipt: the original
+  LEV00-LEV15 probe now measures all 282 sequence-referenced numeric targets
+  as word-aligned; per level, 232 target positions are distinct and 50 reused.
+  This is opaque-span layout evidence only, not record boundaries, field
+  meanings, payload grammar, palette/image semantics, decoder, animation, or
+  rendering. Verification: direct strict-C11 probe against all 16 original
+  DGN files PASS.
+
+- 2026-07-12 DM1 PC34 F0209 C38 facing gate: a visible non-side-attacking
+  creature that faces away from the party now follows `GROUP.C F0209`
+  lines 2414-2442 in M10: F0205 changes only its packed active-group slot,
+  it retries C38 two ticks later, and it cannot begin an attack first.
+  Verification: direct strict-C11 compile and
+  `test_dm1_v1_f0206_packed_directions_runtime_pc34_compat` PASS. No CMake
+  build or push.
+
 - 2026-07-12 Nexus V1 DGN Structure1G sequence-to-payload-window receipt:
   the original LEV00-LEV15 probe now proves all 154 raw sequence image indexes
   reach local Structure2 descriptors whose 282 nonzero numeric targets stay
@@ -195,6 +211,13 @@
   `$40cd` bytes now prove `JSR $e009; CMP #$00; BNE $40a9; RTS` after loading
   record `$03e3` to `$3000`. The shared runtime handoff therefore marks the
   payload as returning staging data, not an executable or level route.
+  Verification: strict-C11 syntax checks plus direct hash-verified JP/US media
+  probe, 0 failed.
+
+- 2026-07-12 Theron V1 IPL CD_EXEC table binding: the shared runtime handoff
+  now reads the authentic IPL `$40d5` bytes `00 e7 03 11` before accepting the
+  existing record `$03e7`, 17-sector `CD_EXEC` transfer to `$4000`. This is a
+  transfer-table proof only and assigns no game-data role to stage two.
   Verification: strict-C11 syntax checks plus direct hash-verified JP/US media
   probe, 0 failed.
 
@@ -8697,3 +8720,9 @@
 # ✅ 2026-07-12 CSB DSA attack-filter ABI: `csb_v1_dsa_filter_attack_preprocess_live()` now maps the complete 20-word CSBWin `ATTACK_PARAMETERES` surface exactly as `Monster.cpp:916-938,1164-1167` copies it through `pDSAparameters+1`. This fixes the prior nine-word, incorrectly ordered bridge and preserves mutations to monster position/origin, range/damage, party direction/distance, projectile flags, hero target, sound, `disableTime`, and signed poison suppression. The callback still restores the caller's loaded level. `test_csb_v1_phase7_verification` covers source order plus mutations in the middle and tail of the struct. Verified: 321 passed, 0 failed.
 
 # ✅ 2026-07-12 DM1 PC34 ACTIVE_GROUP native save transaction: `F0796_SAVEGAME_ImportPC34_Compat()` now validates the exact ordered ACTIVE_GROUP payload after GLOBAL_DATA before it publishes staged header/party/timeline state. Per ReDMCSB `LOADSAVE.C F0435` lines 2749-2754, the block must be `sizeof(ACTIVE_GROUP) * GLOBAL_DATA.MaximumActiveGroupCount`; an inconsistent length now rejects even in lenient checksum mode, and strict checksum corruption also rejects without changing the destination. The existing world handoff remains the runtime owner for decoded records. `test_dm1_v1_savegame_pc34_native_export_pc34_compat` now covers a real `F0802` PC34 world export -> `F0796` import, malformed active-group length and ciphertext with byte-for-byte destination preservation, and the two-group PC34 -> runtime -> PC34 -> runtime replay. Verified with `ctest -R 'dm1_v1_savegame_pc34_native_export_pc34_compat|dm1_v1_original_save_pc34_handoff'` (2/2).
+- 2026-07-12 DM2 V1 CCM provenance gate: skproject
+  `EXTENDED_LOAD_AI_DEFINITION` establishes `CREATURE_AI` `dtWordValue`
+  fields 0–35 only as AIDefinition members, not CCM programs. The boot auto
+  loader now rejects decodable candidate fields instead of promoting guessed
+  bytecode into runtime. Verification: focused CCM fixture and strict C11
+  syntax PASS.
