@@ -21,12 +21,15 @@
   the loader-bound IRQ2 handoff. `theron_v1_startup_receipt_from_file()` now
   consumes that gate before publishing the raw JP/US dynamic-manifest handoff,
   and direct Track 02 runtime-level entry consumes it before bank-anchor
-  parsing, so a changed selector cannot reach M11 by either route. This proves
+  parsing. That runtime path now also requires the original IPL `CD_EXEC`
+  `$3e7` -> 17-sector `$4000` stage-two handoff and its traced `$4090`
+  one-sector `$3800` read with complete live-record-register mask, so a
+  changed selector or disconnected loader chain cannot reach M11. This proves
   only the physical loader-to-dispatch boundary, not manifest, palette,
-  object, level, or later-CD semantics. Verification: strict-C11 syntax checks
-  for startup-receipt and runtime-entry sources plus direct original-media
-  probe against both known-MD5 Track 02 files, 0 failed. Ninja could not run:
-  this worktree has no `build/build.ninja`.
+  object, level, or later-CD semantics. Verification: strict-C11 runtime-entry
+  syntax check plus direct original-media JP/US IPL-chain and stage-three
+  probe, 0 failed. Ninja could not run: this worktree has no
+  `build/build.ninja`.
 
 - 2026-07-12 DM2 V1 weather GDAT receipt: fail-closed receipt requires
   ENVIRONMENT dtImage fields 64/67/6A/6D/71 and GRAPHICSSET dtWordValue 69

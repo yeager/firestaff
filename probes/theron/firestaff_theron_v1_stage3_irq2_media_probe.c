@@ -4,6 +4,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* The raw Track 02 parser also contains unrelated level-route entry points.
+ * This media-only probe exercises only its IPL loader scanner. */
+Theron_MapLoadResult theron_v1_level_load(Theron_V1_Level *level,
+                                          const uint8_t *data,
+                                          int data_size,
+                                          int dungeon_id,
+                                          int sub_level_index) {
+    (void)level;
+    (void)data;
+    (void)data_size;
+    (void)dungeon_id;
+    (void)sub_level_index;
+    return THERON_MAP_ERR_NULL;
+}
+
+void theron_v1_world_runtime_media_invalidate_cache(Theron_V1_World *world) {
+    (void)world;
+}
+
 static int g_fail;
 
 static void check(int condition, const char *name) {
@@ -61,6 +80,8 @@ int main(int argc, char **argv) {
     size_t us_size;
     Theron_V1Stage3Irq2DispatchReceipt jp;
     Theron_V1Stage3Irq2DispatchReceipt us;
+    Theron_Track02IplLoaderReceipt jp_loader;
+    Theron_Track02IplLoaderReceipt us_loader;
     Theron_Track02Stage2DynamicPayloadReceipt jp_payload;
     Theron_Track02Stage2DynamicPayloadReceipt us_payload;
 
@@ -73,6 +94,30 @@ int main(int argc, char **argv) {
     check(jp_bytes && us_bytes, "raw JP/US Track02 files read");
     jp_payload = payload(THERON_TRACK02_VARIANT_JP_BIN, 0x0004dfu);
     us_payload = payload(THERON_TRACK02_VARIANT_US_BIN, 0x0004e0u);
+    check(jp_bytes && theron_v1_track02_find_ipl_loader(
+              jp_bytes, jp_size, "b7afb338ad31be1025b53f9aff12d73a",
+              &jp_loader) == THERON_TRACK02_SIGNAL_OK &&
+              jp_loader.stage2_record == 0x0003e7u &&
+              jp_loader.stage2_sector_count == 17u &&
+              jp_loader.stage2_load_address == 0x4000u &&
+              jp_loader.stage2_entry_address == 0x4000u &&
+              jp_loader.stage2_cd_read_cpu_address == 0x4090u &&
+              jp_loader.stage2_cd_read_local_destination == 0x3800u &&
+              jp_loader.stage2_cd_read_record == 0x0004dfu &&
+              jp_loader.stage2_cd_read_dynamic_boundary_valid,
+          "JP original IPL chain reaches the proven stage-three record");
+    check(us_bytes && theron_v1_track02_find_ipl_loader(
+              us_bytes, us_size, "f23601102138f87c33025877767ebf76",
+              &us_loader) == THERON_TRACK02_SIGNAL_OK &&
+              us_loader.stage2_record == 0x0003e7u &&
+              us_loader.stage2_sector_count == 17u &&
+              us_loader.stage2_load_address == 0x4000u &&
+              us_loader.stage2_entry_address == 0x4000u &&
+              us_loader.stage2_cd_read_cpu_address == 0x4090u &&
+              us_loader.stage2_cd_read_local_destination == 0x3800u &&
+              us_loader.stage2_cd_read_record == 0x0004e0u &&
+              us_loader.stage2_cd_read_dynamic_boundary_valid,
+          "US original IPL chain reaches the proven stage-three record");
     check(jp_bytes && theron_v1_stage3_irq2_dispatch_from_original_media(
               jp_bytes, jp_size, &jp_payload, &jp),
           "JP stage-three bytes authenticate BRK $ff IRQ2 entry");

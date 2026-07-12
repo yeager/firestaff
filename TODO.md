@@ -92,7 +92,10 @@ publishing the stage-three `BRK $ff` dispatch. Startup now consumes that gate
 before it publishes the raw JP/US dynamic-manifest handoff; a changed selector
 fails closed and cannot reach M11. Direct Track 02 runtime-level entry now
 consumes the same gate before it examines bank anchors, so it cannot bypass
-startup receipt construction. This binds the loader's executable transfer to
+startup receipt construction. For raw JP/US media it also requires the entire
+original IPL chain: `CD_EXEC` record `$3e7`, 17 sectors to/entry at `$4000`,
+then the traced `$4090` one-sector local `CD_READ` to `$3800` with its full
+live-record-register mask. This binds the loader's executable transfer to
 physical Track 02 bytes, but still identifies no descriptor, palette, object,
 level, or later CD request.
 The first loaded payload is now structurally verified as a
