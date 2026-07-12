@@ -242,6 +242,11 @@ typedef struct {
     int dm1HoCOpenedEntranceFrame;
     int dm1HoCHallMirrorOverlay;
     int dm1HoCBlockedEnterUntilChampion;
+    /* Live M11 evidence only: static HoC asset receipts must not open a
+     * release/app capture route before the active front cell requests C127
+     * or F0115 material. */
+    int dm1HoCLiveC127MaterialRequest;
+    int dm1HoCLiveF0115MaterialRequest;
     int dm1HoCMapWidth;
     int dm1HoCMapHeight;
     int dm1HoCRenderCommandCount;

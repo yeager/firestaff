@@ -6007,6 +6007,8 @@ static int m11_inspect_front_cell(M11_GameViewState* state);
 static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
 static int m11_front_cell_is_door(const M11_GameViewState* state);
 static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state);
+static int m11_front_cell_has_live_f0115_material_request(
+    const M11_GameViewState* state);
 static int m11_source_is_csb(const M11_GameViewState* state);
 static int m11_get_front_cell(const M11_GameViewState* state, struct M11_ViewportCell* outCell);
 static int m11_toggle_front_door(M11_GameViewState* state);
@@ -11998,6 +12000,14 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
         portraits && portraits->loaded && portraits->pixels ? 1 : 0;
     facts.observed_c346_mirror_backing_asset =
         backing && backing->loaded && backing->pixels ? 1 : 0;
+    /* ReDMCSB DUNGEON.C F0172:2573/2608-2612 publishes C127 only for the
+     * current visible wall face. DUNVIEW.C F0115:5645-5683 consumes the
+     * current floor/projectile materialization decision. Do not promote the
+     * static asset-readiness receipt into live Hall evidence. */
+    facts.observed_live_hoc_c127_material_request =
+        m11_front_cell_mirror_ordinal(state) >= 0;
+    facts.observed_live_hoc_f0115_material_request =
+        m11_front_cell_has_live_f0115_material_request(state);
     facts.observed_host_window_present = host_window_present;
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m11_boot_probe_consumer = 1;
@@ -12363,6 +12373,10 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                     boot_fields.hall_mirror_overlay;
                 out->dm1HoCBlockedEnterUntilChampion =
                     boot_fields.blocked_enter_until_champion;
+                out->dm1HoCLiveC127MaterialRequest =
+                    hoc_facts.observed_live_hoc_c127_material_request;
+                out->dm1HoCLiveF0115MaterialRequest =
+                    hoc_facts.observed_live_hoc_f0115_material_request;
                 out->dm1HoCMapWidth = boot_fields.map_width;
                 out->dm1HoCMapHeight = boot_fields.map_height;
                 out->dm1HoCRenderCommandCount =
@@ -19303,6 +19317,26 @@ static int m11_get_front_cell(const M11_GameViewState* state, M11_ViewportCell* 
         *outCell = frontCell;
     }
     return 1;
+}
+
+static int m11_front_cell_has_live_f0115_material_request(
+    const M11_GameViewState* state)
+{
+    M11_ViewportCell frontCell;
+
+    if (!m11_get_front_cell(state, &frontCell) || !frontCell.valid ||
+        !frontCell.dm1MaterializationDecisionReady) {
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0115:5645-5683 only reaches these material
+     * consumers after the live viewport decision has accepted them. */
+    return (frontCell.floorItemCount > 0 &&
+            frontCell.dm1MaterializationDecision.drawFloorItems &&
+            frontCell.elementType != DUNGEON_ELEMENT_WALL) ||
+           (frontCell.dm1MaterializationDecision.drawRuntimeProjectiles &&
+            m11_viewport_cell_has_renderable_projectile(&frontCell)) ||
+           (frontCell.dm1MaterializationDecision.drawDeferredSpellEffects &&
+            m11_viewport_cell_has_renderable_explosion(&frontCell));
 }
 
 static int m11_front_cell_has_attack_target(const M11_GameViewState* state) {
