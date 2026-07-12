@@ -200,6 +200,10 @@ struct Nexus_V1_Engine {
     /* DGN material references resolve through these decoded DMDF banks. */
     Nexus_DMDFMaterialBank floor_materials;
     Nexus_DMDFMaterialBank wall_materials;
+    /* Per-level Structure2 animation surfaces. These are decoded only from
+     * bounded DGN descriptor spans; they never replace static MNS banks. */
+    Nexus_DMDFMaterialBank animated_floor_materials;
+    int animated_floor_material_route_valid;
     Nexus_V1_DgnMaterialContainerReceipt floor_bpk_container;
     Nexus_V1_DgnMaterialContainerReceipt wall_bpk_container;
     /* FLOORS/WALLS.BPK must cross the validated BPK host route before a

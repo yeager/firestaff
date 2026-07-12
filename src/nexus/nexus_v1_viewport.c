@@ -39,6 +39,14 @@ static uint32_t viewport_dgn_frame_hash(const Nexus_Framebuffer *fb)
 static const Nexus_DMDFTextureSurface *viewport_plan_surface(
     const Nexus_V1_Engine *engine, const Nexus_V1_DgnRenderCommand *command)
 {
+    if (command->animated_texture_declared &&
+        command->animated_texture_structure2_image_valid &&
+        engine->animated_floor_material_route_valid) {
+        const Nexus_DMDFTextureSurface *animated =
+            &engine->animated_floor_materials.surfaces[
+                command->animated_texture_structure2_image_id];
+        if (animated->valid) return animated;
+    }
     const Nexus_DMDFMaterialBank *bank =
         (command->kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
          command->kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
