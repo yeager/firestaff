@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Theron V1 documented split-CUE Track 02 mount: the exact
+  MyAbandonware CUE declarations `TQJP02.iso` and `TQUS02.iso` now resolve
+  their documented sibling payloads `TQJP02End.iso` and `TQUS02End.iso`,
+  including MODE1/2048. This is an explicit two-entry media-layout rule, not
+  a filename search, and the existing known-MD5 boot gate still authenticates
+  the resulting Track 02 before decode. Generic absent CUE members remain
+  rejected. Verification: Track 02 bank probe CUE mount coverage and a fresh
+  Ninja build.
+
 - 2026-07-12 Nexus V1 retail MNS TEXT boundary: added a bounded parser for
   the authentic top-level `TEXT` section referenced by the DMDF header at
   offset `0x24`. It validates the 15 retail descriptors and decodes their

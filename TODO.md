@@ -50,6 +50,14 @@ back to V2.1 otherwise. Remaining work is real CSB art and runtime capture.
 
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 
+The documented converted CUE layout now resolves only its explicit
+`TQJP02.iso -> TQJP02End.iso` and `TQUS02.iso -> TQUS02End.iso` split-data
+aliases, including MODE1/2048. The resolved member still crosses the normal
+known-MD5 gate before any loader reads it; arbitrary missing CUE members do
+not resolve. This provides real-media startup access, not original CDDA
+provenance: the supplied `.wav` references remain absent and OGG companions
+must not be presented as raw CDDA sectors.
+
 The strict CUE route now carries an authenticated Track 02 IPL/stage-two
 loader receipt from M12 into M11, with no filename fallback or cache payload.
 The canonical `CD_EXEC` handoff is locked: record `0x0003e7` loads and enters
