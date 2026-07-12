@@ -174,6 +174,15 @@ static const char *g_strings[FS_LANG_COUNT][FS_STR_COUNT] = {
         "Eşya ansiklopedisi", "Değişiklik günlüğü", "Ekran görüntüsü galerisi",
         "Dil", "Açık", "Kapalı"
     },
+    [FS_LANG_ID] = {
+        "MAIN", "PENGATURAN", "EKSTRA", "KELUAR",
+        "PILIH PERMAINAN", "Permainan baru (asli)", "Permainan baru (skala 10x)",
+        "Permainan baru (grafik modern)", "Lanjutkan permainan tersimpan", "Segera hadir",
+        "Kembali", "Tampilan", "Video", "Audio", "Kontrol", "Aksesibilitas",
+        "Museum pengetahuan", "Panduan / dokumen", "Bestiari", "Referensi mantra", "Penampil peta",
+        "Ensiklopedia benda", "Catatan perubahan", "Galeri tangkapan layar",
+        "Bahasa", "Aktif", "Nonaktif"
+    },
 };
 
 static const char *g_lang_names[FS_LANG_COUNT] = {
@@ -181,7 +190,7 @@ static const char *g_lang_names[FS_LANG_COUNT] = {
     "Español", "Italiano", "Português", "Nederlands",
     "Polski", "Čeština", "Русский", "日本語",
     "한국어", "简体中文", "Dansk", "Norsk",
-    "Suomi", "Magyar", "Türkçe"
+    "Suomi", "Magyar", "Türkçe", "Bahasa Indonesia"
 };
 
 void fs_l10n_set_language(FS_Language lang) {
@@ -238,6 +247,7 @@ FS_Language fs_l10n_language_from_locale(const char* locale) {
     if (language[0] == 'f' && language[1] == 'i') return FS_LANG_FI;
     if (language[0] == 'h' && language[1] == 'u') return FS_LANG_HU;
     if (language[0] == 't' && language[1] == 'r') return FS_LANG_TR;
+    if (language[0] == 'i' && language[1] == 'd') return FS_LANG_ID;
     return FS_LANG_EN;
 }
 

@@ -27,7 +27,7 @@ int main(void) {
         {"ko_KR", FS_LANG_KO}, {"zh_CN", FS_LANG_ZH},
         {"da_DK", FS_LANG_DA}, {"nb_NO", FS_LANG_NO},
         {"fi_FI", FS_LANG_FI}, {"hu_HU", FS_LANG_HU},
-        {"tr_TR", FS_LANG_TR}
+        {"tr_TR", FS_LANG_TR}, {"id_ID.UTF-8", FS_LANG_ID}
     };
     size_t i;
 

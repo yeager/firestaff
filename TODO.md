@@ -2,16 +2,23 @@
 
 ## M12 Localization Completion (2026-07-12)
 
-The launcher now resolves all 19 shipped locales from `LC_ALL`, `LC_MESSAGES`,
+The launcher now resolves all 20 shipped locales from `LC_ALL`, `LC_MESSAGES`,
 or `LANG`, and the flag popup commits mouse selection through the same PO/l10n
-path as keyboard input. Remaining localization work is to replace the
-English-scaffold `startup-menu.*.po` entries with reviewed translations and
-add a twentieth locale only with a shaped/font-covered script; do not claim a
+path as keyboard input. Indonesian is the twentieth Latin-script locale and
+uses the normal Noto Sans fallback. Remaining localization work is to replace
+the English-scaffold `startup-menu.*.po` entries with reviewed translations;
+do not claim a
 locale is translated merely because it falls back to English.
 
 Per-game cheats are still a single enable/speed gate. Expand them only where a
 game runtime has a real, bounded capability to consume the option; a launcher
 toggle with no game-side implementation must stay unavailable.
+
+The shared graphics tab now exposes real global V1/V2 presentation, scaling,
+aspect, filter, vsync, viewport, and smooth-turn settings. The remaining
+per-game V2 filter chains (DM1 palette/CRT/postprocess and CSB/Theron V2
+filters) are persisted but do not yet have a dedicated editable advanced UI;
+add those rows only with runtime application coverage.
 
 ## Theron Authentic CD Trace Follow-up (2026-07-12)
 

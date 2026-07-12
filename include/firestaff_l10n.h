@@ -23,7 +23,8 @@ typedef enum {
     FS_LANG_FI,    /* Finnish */
     FS_LANG_HU,    /* Hungarian */
     FS_LANG_TR,    /* Turkish */
-    FS_LANG_COUNT  /* 19 languages */
+    FS_LANG_ID,    /* Indonesian */
+    FS_LANG_COUNT  /* 20 languages */
 } FS_Language;
 
 typedef enum {

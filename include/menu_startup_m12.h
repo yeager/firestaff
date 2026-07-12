@@ -638,18 +638,18 @@ void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state);
 
 /* ── Language cycle accessors ───────────────────────────────────────
  * M12_StartupMenu_GetLanguageCount() returns the number of locales
- * the user can cycle through in the launcher (currently 19).  The
+ * the user can cycle through in the launcher (currently 20).  The
  * same index range feeds the M12 settings row, the credits panel
  * overlay, and the in-game M11 l10n switch.
  *
  * GetLanguageCode(index) returns the short locale code that maps to
  * po/startup-menu.<code>.po on disk (e.g. "EN", "SV", "FR", "DE",
  * "JA", "ZH", "CS", "DA", "ES", "FI", "HU", "IT", "KO", "NL", "NO",
- * "PL", "PT", "RU", "TR").  GetLanguageName(index) returns the
+ * "PL", "PT", "RU", "TR", "ID").  GetLanguageName(index) returns the
  * human-readable display name for the same slot.
  *
  * Exposed so layout/l10n probes and the screen-reader manifest can
- * drive the 19-language cycle from the production source of truth
+ * drive the 20-language cycle from the production source of truth
  * (g_languages[] / g_languageNames[]) without hardcoding a magic
  * number that drifts the moment a locale is added or removed. */
 int M12_StartupMenu_GetLanguageCount(void);
@@ -660,6 +660,8 @@ const char* M12_StartupMenu_GetSettingsLabel(const M12_StartupMenuState* state,
                                              int row);
 const char* M12_StartupMenu_GetSettingsValue(const M12_StartupMenuState* state,
                                              int row);
+const char* M12_StartupMenu_Translate(const M12_StartupMenuState* state,
+                                      const char* msgid);
 
 /* ── Museum of Lore content accessors ───────────────────────────────
  * The category table itself is private to menu_startup_m12.c (it is

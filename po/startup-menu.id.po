@@ -1,0 +1,92 @@
+# Firestaff -- startup-menu domain, Indonesian catalog.
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-startup-menu\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "SETTINGS"
+msgstr "PENGATURAN"
+
+msgid "LANGUAGE"
+msgstr "BAHASA"
+
+msgid "GAME"
+msgstr "PERMAINAN"
+
+msgid "GRAPHICS"
+msgstr "GRAFIK"
+
+msgid "CONTROLS"
+msgstr "KONTROL"
+
+msgid "AUDIO"
+msgstr "AUDIO"
+
+msgid "ACCESSIBILITY"
+msgstr "AKSESIBILITAS"
+
+msgid "ONLINE"
+msgstr "DARING"
+
+msgid "CHANGES ARE PERSISTED IMMEDIATELY"
+msgstr "PERUBAHAN DISIMPAN SEGERA"
+
+msgid "GRAPHICS MODE"
+msgstr "MODE GRAFIK"
+
+msgid "WINDOW MODE"
+msgstr "MODE JENDELA"
+
+msgid "DATA DIRECTORY"
+msgstr "DIREKTORI DATA"
+
+msgid "ORIGINAL DATA"
+msgstr "DATA ASLI"
+
+msgid "RETROACHIEVEMENTS"
+msgstr "RETROACHIEVEMENTS"
+
+msgid "RETROACHIEVEMENTS USER"
+msgstr "PENGGUNA RETROACHIEVEMENTS"
+
+msgid "RETROACHIEVEMENTS API TOKEN"
+msgstr "TOKEN API RETROACHIEVEMENTS"
+
+msgid "RETROACHIEVEMENTS SERVER"
+msgstr "SERVER RETROACHIEVEMENTS"
+
+msgid "ON"
+msgstr "AKTIF"
+
+msgid "OFF"
+msgstr "NONAKTIF"
+
+msgid "NOT SET"
+msgstr "BELUM DIATUR"
+
+msgid "EDITING"
+msgstr "MENGUBAH"
+
+msgid "SCALE"
+msgstr "SKALA"
+
+msgid "FILTER"
+msgstr "FILTER"
+
+msgid "VSYNC"
+msgstr "VSYNC"
+
+msgid "SOUNDTRACK"
+msgstr "MUSIK LATAR"
+
+msgid "MASTER VOLUME"
+msgstr "VOLUME UTAMA"
+
+msgid "MUSIC VOLUME"
+msgstr "VOLUME MUSIK"
+
+msgid "SFX VOLUME"
+msgstr "VOLUME EFEK"
