@@ -83,6 +83,7 @@ typedef struct {
     int v2_sharpen_enabled;
     int v2_sharpen_strength;
     int v2_palette_lut_built;
+    int v2_presentation_active;
     unsigned char v2_palette_corrected[M11_PALETTE_LEVELS][16][3];
 
     /* DM2 SkWinCore::INIT installs a 256-colour IRGB table before title,
@@ -134,7 +135,8 @@ static const unsigned char *m11_palette_rgb_for_pixel(unsigned char raw,
     if (level == 0) level = g_state.paletteLevel;
     if (level >= M11_PALETTE_LEVELS) level = M11_PALETTE_LEVELS - 1;
     if (out_level) *out_level = level;
-    return (g_state.v2_palette_enabled && g_state.v2_palette_lut_built)
+    return (g_state.v2_presentation_active &&
+            g_state.v2_palette_enabled && g_state.v2_palette_lut_built)
         ? g_state.v2_palette_corrected[level][index]
         : G9010_auc_VgaPaletteAll_Compat[level][index];
 }
@@ -623,6 +625,9 @@ static void m11_framebuffer_to_rgba_resampled(const unsigned char* src,
 static void m11_apply_v2_filters_indexed_pre(unsigned char* fb,
                                              int w,
                                              int h) {
+    if (!g_state.v2_presentation_active) {
+        return;
+    }
     /* Run on indexed framebuffer before palette expansion.
      * Order: palette_interpolate -> dither_cleanup.
      * Palette interpolation requires the original indexed level field
@@ -736,7 +741,7 @@ static void m11_snapshot_prev_frame(int w, int h) {
 
 static void m11_apply_v2_filters_rgba_post(int w, int h) {
     unsigned char* rgba = g_state.presentBuffer;
-    if (!rgba) {
+    if (!g_state.v2_presentation_active || !rgba) {
         return;
     }
     if (g_state.v2_sharpen_enabled && g_state.v2_sharpen_strength > 0) {
@@ -2440,6 +2445,10 @@ int M11_Render_SetV2Filters(int crtEnabled,
     g_state.v2_dither_enabled = ditherEnabled ? 1 : 0;
     g_state.v2_sharpen_enabled = sharpenEnabled ? 1 : 0;
     g_state.v2_sharpen_strength = sharpenStrength;
+    /* Direct render callers and the M12 configuration path retain the
+     * historical active default. M11 disables this per frame for V1/other
+     * games through M11_Render_SetV2PresentationActive(). */
+    g_state.v2_presentation_active = 1;
 
     if (needRebuild) {
         if (dm1_v2_filter_palette_build_lut(paletteGamma100,
@@ -2452,6 +2461,10 @@ int M11_Render_SetV2Filters(int crtEnabled,
         }
     }
     return M11_RENDER_OK;
+}
+
+void M11_Render_SetV2PresentationActive(int active) {
+    g_state.v2_presentation_active = active ? 1 : 0;
 }
 
 int M11_Render_GetV2Filters(int* outCrtEnabled,

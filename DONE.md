@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 V2.0 runtime isolation: persisted V2.0 filter preferences
+  are now active only for the DM1 V2.0 presentation route. V1 and every
+  non-DM1 game bypass the corrected palette and all V2.0 post-filters while
+  retaining saved preferences for a later DM1 V2.0 launch. Verification:
+  full local `firestaff` build, Phase A 24/24, and Apple-Silicon V2.0 renderer
+  probe 9/9, including the active/inactive presentation gate.
+
 - 2026-07-12 DM1 V2.0 independent palette interpolation: the indexed
   pre-filter route now runs when palette interpolation is enabled even if
   dither cleanup is disabled. It still operates on the presentation scratch
