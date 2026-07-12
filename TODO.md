@@ -95,9 +95,11 @@ consumes the same gate before it examines bank anchors, so it cannot bypass
 startup receipt construction. For raw JP/US media it also requires the entire
 original IPL chain: `CD_EXEC` record `$3e7`, 17 sectors to/entry at `$4000`,
 then the traced `$4090` one-sector local `CD_READ` to `$3800` with its full
-live-record-register mask. This binds the loader's executable transfer to
-physical Track 02 bytes, but still identifies no descriptor, palette, object,
-level, or later CD request.
+live-record-register mask. The startup receipt now requires this same chain
+before it publishes the dynamic-manifest handoff, so M12/M11 and direct
+runtime entry share one authentic media boundary. This binds the loader's
+executable transfer to physical Track 02 bytes, but still identifies no
+descriptor, palette, object, level, or later CD request.
 The first loaded payload is now structurally verified as a
 218-unit manifest envelope, but its entries remain unclassified; do not treat
 it as a graphics, palette, object, or dungeon-record binding. The hash-gated
