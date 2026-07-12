@@ -116,6 +116,7 @@ struct DM1CreatureInfo_Compat {
 
 /* Range extraction macros (source: DEFS.H lines 1651-1654) */
 #define DM1_SIGHT_RANGE(r)   ((r) & 0x000F)
+#define DM1_XXX_RANGE(r)     (((r) >> 4) & 0x000F)
 #define DM1_SMELL_RANGE(r)   (((r) >> 8) & 0x000F)
 #define DM1_ATTACK_RANGE(r)  ((r) >> 12)
 
