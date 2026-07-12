@@ -572,6 +572,64 @@ int dm1_v1_f0115_runtime_summary_pc34(
     return 1;
 }
 
+int dm1_v1_f0115_runtime_instance_summary_pc34(
+    const DM1_F0115RuntimeInstanceInputPc34* input,
+    DM1_F0115RuntimeSummaryPc34* outSummary)
+{
+    int projectileCount = 0;
+    int explosionCount = 0;
+    int i;
+
+    if (!outSummary) return 0;
+    memset(outSummary, 0, sizeof(*outSummary));
+    if (!input || input->thingCount < 0 ||
+        (input->thingCount > 0 && !input->thingRefs)) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0115:5668-5683 consumes only a live F0219
+     * projectile on the current map square. An allocated cache slot is not
+     * enough: reserved3 is the M10 active marker. */
+    if (input->projectiles) {
+        int count = input->projectiles->count;
+        if (count < 0) count = 0;
+        if (count > PROJECTILE_LIST_CAPACITY) count = PROJECTILE_LIST_CAPACITY;
+        for (i = 0; i < count; ++i) {
+            const struct ProjectileInstance_Compat* projectile =
+                &input->projectiles->entries[i];
+            if (projectile->slotIndex >= 0 && projectile->reserved3 != 0 &&
+                projectile->mapIndex == input->mapIndex &&
+                projectile->mapX == input->mapX &&
+                projectile->mapY == input->mapY) {
+                ++projectileCount;
+            }
+        }
+    }
+
+    /* ReDMCSB DUNVIEW.C F0115:5916-5933 similarly restarts for live F0220
+     * explosion records. Keep invalid/empty slots out of the render receipt. */
+    if (input->explosions) {
+        int count = input->explosions->count;
+        if (count < 0) count = 0;
+        if (count > EXPLOSION_LIST_CAPACITY) count = EXPLOSION_LIST_CAPACITY;
+        for (i = 0; i < count; ++i) {
+            const struct ExplosionInstance_Compat* explosion =
+                &input->explosions->entries[i];
+            if (explosion->slotIndex >= 0 && explosion->reserved0 != 0 &&
+                explosion->explosionType >= 0 &&
+                explosion->mapIndex == input->mapIndex &&
+                explosion->mapX == input->mapX &&
+                explosion->mapY == input->mapY) {
+                ++explosionCount;
+            }
+        }
+    }
+
+    return dm1_v1_f0115_runtime_summary_pc34(
+        input->thingRefs, input->thingCount, projectileCount, explosionCount,
+        outSummary);
+}
+
 int dm1_v1_f0115_thing_route_receipt_pc34(
     const DM1_F0115ThingRouteInputPc34* things,
     int thingCount,
