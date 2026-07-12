@@ -86,6 +86,28 @@ typedef struct {
     size_t return_offset;
 } Nexus_Prs3V1TerminationReceipt;
 
+/* This joins the R11 low-bit test with the two directly observed branch-local
+ * R14/read shapes. It records control-dependent consumption only; neither
+ * branch is named as a PRS3 command or an output format. */
+typedef struct {
+    int valid;
+    size_t low_bit_test_offset;
+    unsigned int low_bit_test_source_register;
+    unsigned int low_bit_test_destination_register;
+    size_t zero_bit_branch_offset;
+    size_t zero_bit_branch_target;
+    size_t nonzero_counter_decrement_offset;
+    int nonzero_counter_decrement;
+    size_t nonzero_byte_load_offset;
+    unsigned int nonzero_byte_value_register;
+    size_t zero_counter_decrement_offset;
+    int zero_counter_decrement;
+    size_t zero_first_byte_load_offset;
+    unsigned int zero_first_byte_value_register;
+    size_t zero_second_byte_load_offset;
+    unsigned int zero_second_byte_value_register;
+} Nexus_Prs3V1LowBitConsumptionReceipt;
+
 static int failures;
 
 static void check(int condition, const char *message) {
@@ -370,6 +392,65 @@ static int prs3_v1_termination_receipt(
     return 1;
 }
 
+static int prs3_v1_low_bit_consumption_receipt(
+    const uint8_t *data, size_t size, Nexus_Prs3V1LowBitConsumptionReceipt *out) {
+    Nexus_Prs3V1LowBitConsumptionReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+    unsigned int counter_register = 0U;
+    unsigned int cursor_register = 0U;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 116U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.low_bit_test_offset = entry + 74U;
+    receipt.zero_bit_branch_offset = entry + 76U;
+    receipt.nonzero_counter_decrement_offset = entry + 82U;
+    receipt.nonzero_byte_load_offset = entry + 84U;
+    receipt.zero_counter_decrement_offset = entry + 100U;
+    receipt.zero_first_byte_load_offset = entry + 108U;
+    receipt.zero_second_byte_load_offset = entry + 112U;
+    if (read_be16(data + entry + 72U) != 0xe301U ||
+        !sh2_tst_register_fields(read_be16(data + receipt.low_bit_test_offset),
+                                 &receipt.low_bit_test_source_register,
+                                 &receipt.low_bit_test_destination_register) ||
+        read_be16(data + receipt.zero_bit_branch_offset) != 0x890aU ||
+        !sh2_conditional_branch_target(
+            receipt.zero_bit_branch_offset,
+            read_be16(data + receipt.zero_bit_branch_offset), size,
+            &receipt.zero_bit_branch_target) ||
+        !sh2_add_immediate_fields(
+            read_be16(data + receipt.nonzero_counter_decrement_offset),
+            &counter_register, &receipt.nonzero_counter_decrement) ||
+        !sh2_movb_postinc_fields(read_be16(data + receipt.nonzero_byte_load_offset),
+                                 &cursor_register,
+                                 &receipt.nonzero_byte_value_register) ||
+        !sh2_add_immediate_fields(
+            read_be16(data + receipt.zero_counter_decrement_offset),
+            &counter_register, &receipt.zero_counter_decrement) ||
+        !sh2_movb_postinc_fields(read_be16(data + receipt.zero_first_byte_load_offset),
+                                 &cursor_register,
+                                 &receipt.zero_first_byte_value_register) ||
+        !sh2_movb_postinc_fields(read_be16(data + receipt.zero_second_byte_load_offset),
+                                 &cursor_register,
+                                 &receipt.zero_second_byte_value_register) ||
+        receipt.low_bit_test_source_register != 11U ||
+        receipt.low_bit_test_destination_register != 3U ||
+        receipt.zero_bit_branch_target != entry + 100U ||
+        counter_register != 14U || receipt.nonzero_counter_decrement != -1 ||
+        receipt.nonzero_byte_value_register != 2U ||
+        receipt.zero_counter_decrement != -2 ||
+        receipt.zero_first_byte_value_register != 4U ||
+        receipt.zero_second_byte_value_register != 7U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
 static void test_synthetic_branch_flow(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Nexus_Prs3V1BranchFlowReceipt receipt;
@@ -445,6 +526,34 @@ static void test_synthetic_termination(void) {
           "SH-2 PRS3 termination receipt rejects a nonzero failure result");
 }
 
+static void test_synthetic_low_bit_consumption(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
+    Nexus_Prs3V1LowBitConsumptionReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 72U] = 0xe3U; fixture[entry + 73U] = 0x01U;
+    fixture[entry + 74U] = 0x23U; fixture[entry + 75U] = 0xb8U;
+    fixture[entry + 76U] = 0x89U; fixture[entry + 77U] = 0x0aU;
+    fixture[entry + 82U] = 0x7eU; fixture[entry + 83U] = 0xffU;
+    fixture[entry + 84U] = 0x62U; fixture[entry + 85U] = 0xc4U;
+    fixture[entry + 100U] = 0x7eU; fixture[entry + 101U] = 0xfeU;
+    fixture[entry + 108U] = 0x64U; fixture[entry + 109U] = 0xc4U;
+    fixture[entry + 112U] = 0x67U; fixture[entry + 113U] = 0xc4U;
+    check(prs3_v1_low_bit_consumption_receipt(
+              fixture, sizeof(fixture), &receipt) && receipt.valid &&
+              receipt.nonzero_counter_decrement == -1 &&
+              receipt.nonzero_byte_value_register == 2U &&
+              receipt.zero_counter_decrement == -2 &&
+              receipt.zero_first_byte_value_register == 4U &&
+              receipt.zero_second_byte_value_register == 7U,
+          "SH-2 PRS3 low-bit receipt locks the two branch-local read shapes");
+    fixture[entry + 101U] = 0xffU;
+    check(!prs3_v1_low_bit_consumption_receipt(
+              fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 low-bit receipt rejects a changed zero-side decrement");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -484,10 +593,12 @@ int main(int argc, char **argv) {
     Nexus_Prs3V1BranchFlowReceipt receipt;
     Nexus_Prs3V1ZeroSideReadReceipt zero_side_receipt;
     Nexus_Prs3V1TerminationReceipt termination_receipt;
+    Nexus_Prs3V1LowBitConsumptionReceipt low_bit_receipt;
 
     test_synthetic_branch_flow();
     test_synthetic_zero_side_read();
     test_synthetic_termination();
+    test_synthetic_low_bit_consumption();
     if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
@@ -516,6 +627,10 @@ int main(int argc, char **argv) {
         check(prs3_v1_termination_receipt(data, size, &termination_receipt) &&
                   termination_receipt.valid,
               "DM.BIN locks the PRS3 v1 converged failure return");
+        check(prs3_v1_low_bit_consumption_receipt(
+                  data, size, &low_bit_receipt) &&
+                  low_bit_receipt.valid,
+              "DM.BIN locks the PRS3 v1 low-bit branch-local read shapes");
         if (receipt.valid) {
             printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
                    "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
@@ -555,6 +670,20 @@ int main(int argc, char **argv) {
                    termination_receipt.failure_result_register,
                    termination_receipt.failure_result_immediate,
                    termination_receipt.return_offset);
+        }
+        if (low_bit_receipt.valid) {
+            printf("SH-2 PRS3 v1 low-bit reads: test=R%u&R%u zero=%zu->%zu "
+                   "nonzero=R14%+d @R12+->R%u zero=R14%+d @R12+->R%u,R%u; "
+                   "codec/termination-proof=0\n",
+                   low_bit_receipt.low_bit_test_source_register,
+                   low_bit_receipt.low_bit_test_destination_register,
+                   low_bit_receipt.zero_bit_branch_offset,
+                   low_bit_receipt.zero_bit_branch_target,
+                   low_bit_receipt.nonzero_counter_decrement,
+                   low_bit_receipt.nonzero_byte_value_register,
+                   low_bit_receipt.zero_counter_decrement,
+                   low_bit_receipt.zero_first_byte_value_register,
+                   low_bit_receipt.zero_second_byte_value_register);
         }
     }
     free(data);
