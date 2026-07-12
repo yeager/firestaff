@@ -2,7 +2,6 @@
 #ifndef FIRESTAFF_DM2_V1_DUNGEON_LOADER_H
 #define FIRESTAFF_DM2_V1_DUNGEON_LOADER_H
 #include <stdint.h>
-#include "dm2_v1_asset_loader.h"
 
 /* DM2: The Legend of Skullkeep (1993)
  * Uses enhanced dungeon.dat format:
@@ -186,6 +185,81 @@ typedef struct {
     int material_count;
     DM2_V1_G1TextWallGfxMaterial materials[DM2_V1_G1_TEXT_WALL_GFX_MAX];
 } DM2_V1_G1TextWallGfxRuntimeReceipt;
+
+#define DM2_V1_G1_ACTUATOR_WALL_GFX_MAX 32
+
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint8_t direction;
+    uint8_t graphic_ordinal;
+    uint8_t wall_gfx_index;
+    uint16_t colorkey;
+    uint16_t position;
+    uint16_t do_not_flip;
+    uint16_t alcove_type;
+    uint16_t image_offset;
+} DM2_V1_G1ActuatorWallGfxMaterial;
+
+typedef struct {
+    int valid;
+    int map;
+    int source_actuator_root_count;
+    int material_count;
+    DM2_V1_G1ActuatorWallGfxMaterial
+        materials[DM2_V1_G1_ACTUATOR_WALL_GFX_MAX];
+} DM2_V1_G1ActuatorWallGfxRuntimeReceipt;
+
+#define DM2_V1_G1_CREATURE_MAP_CHIP_MAX 32
+
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint8_t direction;
+    uint8_t creature_type;
+    uint32_t raw_hash;
+    uint32_t raw_byte_count;
+    int image_width;
+    int image_height;
+    int image_format;
+} DM2_V1_G1CreatureMapChipMaterial;
+
+typedef struct {
+    int valid;
+    int map;
+    int source_creature_root_count;
+    int material_count;
+    DM2_V1_G1CreatureMapChipMaterial
+        materials[DM2_V1_G1_CREATURE_MAP_CHIP_MAX];
+} DM2_V1_G1CreatureMapChipRuntimeReceipt;
+
+/* The dungeon layer owns G1 record addressing. The boot layer supplies this
+ * exact typed-GDAT reader so standalone dungeon validation has no loader or
+ * renderer dependency. */
+typedef int (*DM2_V1_G1GdatScalarRead)(void *userdata,
+                                       int entry_type,
+                                       int category,
+                                       int index,
+                                       int field,
+                                       uint16_t *out_value);
+
+typedef int (*DM2_V1_G1GdatRawRead)(void *userdata,
+                                    int entry_type,
+                                    int category,
+                                    int index,
+                                    int field,
+                                    const uint8_t **out_data,
+                                    uint32_t *out_byte_count);
+
+typedef int (*DM2_V1_G1GdatImageMetadataRead)(void *userdata,
+                                               int category,
+                                               int index,
+                                               int field,
+                                               int *out_width,
+                                               int *out_height,
+                                               int *out_format);
 
 /* Why a selected DB1 teleporter did not move the party. `DestinationMap()` is
  * the raw high byte of Teleporter::w4. skproject c_moverec.cpp passes it
@@ -407,8 +481,39 @@ int dm2_v1_dungeon_materialize_g1_map5_text_runtime(
  * fields recorded here. Missing or malformed source material rejects all. */
 int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
     const DM2_V1_G1Map5TextRuntimeReceipt *texts,
-    const DM2_V1_AssetLoader *loader,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    void *read_userdata,
     DM2_V1_G1TextWallGfxRuntimeReceipt *out);
+
+/* Direct DB3 roots only. c_record resolves the address; skproject
+ * Actuator::GraphicNumber() maps through the current map's one-based
+ * WallGraphics list before DRAW_WALL_ORNATE consumes the GDAT fields. */
+int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    void *read_userdata,
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out);
+
+/* Direct or source-proven extension DB4 roots only. It binds
+ * Creature::CreatureType() to CREATURES/type dtImage/F9 raw ownership, not
+ * sprite decoding, animation selection, palette conversion, or drawing. */
+int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1GdatRawRead read_raw,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    void *read_userdata,
+    DM2_V1_G1CreatureMapChipRuntimeReceipt *out);
+
+/* Used by the dungeon viewport after the real F9 fetch/decode. A DB4
+ * creature is drawable only when its decoded surface matches the source
+ * metadata receipt for that creature type. */
+int dm2_v1_g1_creature_map_chip_matches_decoded_material(
+    const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt,
+    int creature_type,
+    int image_width,
+    int image_height);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
 #endif

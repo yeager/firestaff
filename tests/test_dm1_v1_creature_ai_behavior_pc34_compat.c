@@ -588,6 +588,66 @@ static void test_smell_direction_requires_unblocked_route(void) {
 }
 
 /* =========================================================
+ *  Test 13c: F0201 falls back to a fresh stored party scent
+ * ========================================================= */
+static void test_smell_direction_stored_scent_fallback(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1GroupScent_Compat scent;
+    struct DM1GroupSmellDirectionPlan_Compat plan;
+    struct RngState_Compat rng = make_rng(7);
+
+    memset(&scent, 0, sizeof(scent));
+    ctx.creatureInfo.ranges = 0x1403; /* smell = 4 */
+    ctx.currentGroupMapX = 5;
+    ctx.currentGroupMapY = 5;
+    ctx.currentGroupDistanceToParty = 3; /* outside direct scent range */
+    scent.present = 1;
+    scent.strength = 30; /* always clears F0201's freshness comparison */
+    scent.mapX = 8;
+    scent.mapY = 5;
+
+    EXPECT_EQ(F0819b_DM1_GROUP_BuildSmelledPartyDirectionPlan_Compat(
+                  &ctx, 0, &scent, &rng, &plan),
+              1, "smell_scent: source plan builds");
+    EXPECT_EQ(plan.valid, 1, "smell_scent: plan valid");
+    EXPECT_EQ(plan.usedDirectPartyRoute, 0,
+              "smell_scent: blocked direct route not selected");
+    EXPECT_EQ(plan.usedStoredScent, 1,
+              "smell_scent: fresh stored scent selected");
+    EXPECT_EQ(plan.directionOrdinal, 2,
+              "smell_scent: east stored scent returns east ordinal");
+    EXPECT_EQ(plan.primaryDirection, 1,
+              "smell_scent: east stored scent keeps east primary");
+    EXPECT_EQ((plan.secondaryDirection == 0 || plan.secondaryDirection == 2),
+              1, "smell_scent: row scent gets north/south secondary");
+
+    scent.strength = 0;
+    rng = make_rng(7);
+    EXPECT_EQ(F0819b_DM1_GROUP_BuildSmelledPartyDirectionPlan_Compat(
+                  &ctx, 0, &scent, &rng, &plan),
+              1, "smell_scent_stale: source plan builds");
+    EXPECT_EQ(plan.directionOrdinal, 0,
+              "smell_scent_stale: stale scent is rejected");
+
+    ctx.currentGroupDistanceToParty = 2;
+    ctx.currentGroupPrimaryDirToParty = 3;
+    ctx.currentGroupSecondaryDirToParty = 1;
+    scent.strength = 30;
+    rng = make_rng(7);
+    EXPECT_EQ(F0819b_DM1_GROUP_BuildSmelledPartyDirectionPlan_Compat(
+                  &ctx, 2, &scent, &rng, &plan),
+              1, "smell_direct: source plan builds");
+    EXPECT_EQ(plan.usedDirectPartyRoute, 1,
+              "smell_direct: clear direct route wins over stored scent");
+    EXPECT_EQ(plan.usedStoredScent, 0,
+              "smell_direct: stored scent remains unused");
+    EXPECT_EQ(plan.directionOrdinal, 4,
+              "smell_direct: direct route uses party primary ordinal");
+    EXPECT_EQ(plan.secondaryDirection, 1,
+              "smell_direct: direct route preserves party secondary direction");
+}
+
+/* =========================================================
  *  Test 14: Per-creature attack event (C38)
  * ========================================================= */
 static void test_per_creature_attack_event(void) {
@@ -1269,6 +1329,7 @@ int main(void) {
     test_set_group_direction();
     test_smell_direction();
     test_smell_direction_requires_unblocked_route();
+    test_smell_direction_stored_scent_fallback();
     test_per_creature_attack_event();
     test_reaction_during_freeze();
     test_negative_reaction_event_creation();

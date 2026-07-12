@@ -384,6 +384,7 @@ int dm2_v1_viewport_build_hud_chrome_plan_for_party(
         dst->mana_pct = dm2_v1_hud_clamp_pct((int)src->mana_pct);
         dst->portrait_index =
             (uint8_t)(src->portrait_index % DM2_V1_HUD_PORTRAIT_COUNT);
+        dst->portrait_type_source_bound = src->portrait_type_source_bound;
         dst->portrait_fill_color =
             (uint8_t)(8u + (dst->portrait_index & 7u));
         memcpy(dst->name, src->name, sizeof(dst->name));
@@ -936,6 +937,16 @@ void dm2_v1_viewport_set_gdat_interface_font(
     if (!s) return;
     s->gdat_interface_font_rows = rows;
     s->gdat_interface_font_hash = rows && hash != 0u ? hash : 0u;
+    s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_g1_creature_map_chip_materials(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt)
+{
+    if (!s) return;
+    s->g1_creature_map_chip_materials =
+        receipt && receipt->valid ? receipt : NULL;
     s->dirty = 1;
 }
 
@@ -2259,6 +2270,7 @@ int dm2_v1_viewport_build_creature_render_plan(
         row = &out_plan->creatures[out_plan->creature_count++];
         row->creature_index = i;
         row->creature_type = src->creature_type;
+        row->source_kind = src->source_kind;
         row->frame_index = src->frame_index;
         row->direction = src->direction;
         row->depth = src->depth;
@@ -3644,6 +3656,15 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                                             &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_CreatureAssetBlit blit;
+                if (c->source_kind == 2 &&
+                    s->g1_creature_map_chip_materials &&
+                    !dm2_v1_g1_creature_map_chip_matches_decoded_material(
+                        s->g1_creature_map_chip_materials,
+                        c->creature_type, src_w, src_h)) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
+                    continue;
+                }
                 if (dm2_v1_viewport_creature_asset_blit(c,
                                                         src_w,
                                                         src_h,
@@ -4423,7 +4444,15 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                 int portrait_gdat =
                     dm2_v1_viewport_hud_portrait_graphic_index(
                         plan.champion_slots[slot].portrait_index);
-                if (portrait_gdat != 0 &&
+                /* DRAW_CHAMPION_PICTURE uses glbChampionSquad.HeroType(),
+                 * not Firestaff's session-tail portrait ordinal. Until the
+                 * original save/session parser binds that field, a real-data
+                 * profile must not select a CHAMPIONS image by inference. */
+                if (s->source_materials_required &&
+                    !plan.champion_slots[slot].portrait_type_source_bound) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT);
+                } else if (portrait_gdat != 0 &&
                     dm2_v1_fetch_viewport_asset(s,
                                                 portrait_gdat,
                                                 &portrait_pixels,

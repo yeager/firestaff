@@ -317,6 +317,7 @@ typedef struct {
     uint8_t stamina_pct;
     uint8_t mana_pct;
     uint8_t portrait_index;
+    int portrait_type_source_bound;
     uint8_t portrait_fill_color;
     char name[DM2_V1_HUD_CHAMPION_NAME_MAX + 1];
     DM2_V1_ViewportRect leader_mark_rect;
@@ -334,6 +335,7 @@ typedef struct {
     int occupied;
     int leader;
     uint8_t portrait_index;
+    int portrait_type_source_bound;
     uint8_t hp_pct;
     uint8_t stamina_pct;
     uint8_t mana_pct;
@@ -471,11 +473,13 @@ typedef struct {
     uint8_t  health_pct;       /* 0–100 for health bar */
     uint8_t  light_radius;     /* light emitted by creature */
     uint8_t  direction;        /* 0=N, 1=E, 2=S, 3=W */
+    uint8_t  source_kind;      /* 1=live runtime, 2=G1 DB4 record */
 } DM2_CreatureSprite;
 
 typedef struct {
     int creature_index;
     int creature_type;
+    int source_kind;
     int frame_index;
     int direction;
     int depth;
@@ -814,6 +818,7 @@ typedef struct {
     int fallback_item_drawn_count;
     int asset_creature_possession_item_drawn_count;
     int fallback_creature_possession_item_drawn_count;
+    const DM2_V1_G1CreatureMapChipRuntimeReceipt *g1_creature_map_chip_materials;
     int asset_carried_item_drawn_count;
     int fallback_carried_item_drawn_count;
     int last_item_render_valid;
@@ -892,6 +897,9 @@ void dm2_v1_viewport_set_gdat_interface_font(
     DM2_V1_ViewportState *s,
     const uint8_t *rows,
     uint32_t hash);
+void dm2_v1_viewport_set_g1_creature_map_chip_materials(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt);
 void dm2_v1_viewport_set_gdat_interface_hud_layout(
     DM2_V1_ViewportState *s,
     const DM2_V1_InterfaceHudLayout *layout);

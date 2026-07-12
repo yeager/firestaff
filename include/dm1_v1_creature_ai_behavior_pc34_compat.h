@@ -574,6 +574,36 @@ int F0819a_DM1_GROUP_GetSmelledPartyDirOrdinalFromRoute_Compat(
     int smellRouteDistance,
     int* outDirectionOrdinal);
 
+/* F0201's stored-scent fallback. The caller supplies only an already-read
+ * party scent entry; this DM1 layer never fabricates a scent trail. */
+struct DM1GroupScent_Compat {
+    int present;
+    int strength;
+    int mapX;
+    int mapY;
+};
+
+struct DM1GroupSmellDirectionPlan_Compat {
+    int valid;
+    int directionOrdinal;
+    int primaryDirection;
+    int secondaryDirection;
+    int usedDirectPartyRoute;
+    int usedStoredScent;
+};
+
+/*
+ * F0819b: Complete F0201 direction choice after M10 supplies the F0199
+ * direct smell-route result and, when available, the current-square scent.
+ * Source: ReDMCSB GROUP.C F0201 and PROJEXPL.C F0228.
+ */
+int F0819b_DM1_GROUP_BuildSmelledPartyDirectionPlan_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    int smellRouteDistance,
+    const struct DM1GroupScent_Compat* scent,
+    struct RngState_Compat* rng,
+    struct DM1GroupSmellDirectionPlan_Compat* out);
+
 /*
  * F0820: Calculate flee direction (opposite of toward-party).
  *

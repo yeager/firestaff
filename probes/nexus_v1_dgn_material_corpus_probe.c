@@ -54,9 +54,11 @@ int main(int argc, char **argv) {
            receipt.structure2_descriptor_offsets_in_opaque_payload_count,
            receipt.structure2_descriptor_offsets_outside_opaque_payload_count,
            receipt.structure2_local_payload_offset_pattern_level_count);
-    printf("Coverage: floor=%d ceiling=%d wall=%d bpk-host=%d complete=%d\n",
+    printf("Coverage: floor=%d ceiling=%d wall=%d mns-host=%d bpk-host=%d complete=%d\n",
            receipt.floor_coverage.covered, receipt.ceiling_coverage.covered,
-           receipt.wall_coverage.covered, receipt.bpk_host_routes_complete,
+           receipt.wall_coverage.covered,
+           receipt.static_mns_host_route_complete,
+           receipt.bpk_host_routes_complete,
            receipt.host_route_evidence_complete);
     printf("Containers: floors present=%d format=%d identity=%d host=%d; "
            "walls present=%d format=%d identity=%d host=%d\n",
@@ -70,6 +72,8 @@ int main(int argc, char **argv) {
            receipt.wall_container.host_route_permitted);
     nexus_v1_shutdown(&engine);
     return receipt.parsed_level_count == receipt.expected_level_count &&
-           receipt.geometry_ready_level_count == receipt.expected_level_count
+           receipt.geometry_ready_level_count == receipt.expected_level_count &&
+           receipt.static_mns_host_route_complete &&
+           !receipt.bpk_host_routes_complete
         ? 0 : 1;
 }

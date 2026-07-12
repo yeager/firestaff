@@ -156,6 +156,10 @@ int dm2_v1_runtime_g1_map5_text_receipt(
     DM2_V1_G1Map5TextRuntimeReceipt *out_receipt);
 int dm2_v1_runtime_g1_map5_text_wall_gfx_receipt(
     DM2_V1_G1TextWallGfxRuntimeReceipt *out_receipt);
+int dm2_v1_runtime_g1_actuator_wall_gfx_receipt(
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out_receipt);
+int dm2_v1_runtime_g1_creature_map_chip_receipt(
+    DM2_V1_G1CreatureMapChipRuntimeReceipt *out_receipt);
 int  dm2_v1_runtime_bind_boot_profile_with_receipt(
     DM2_V1_BootProfile *boot_profile,
     DM2_V1_StartupHostReceipt *out_receipt);

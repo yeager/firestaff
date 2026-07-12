@@ -4742,6 +4742,89 @@ int dm2_v1_boot_interface_font_table(
     return hash != 0u;
 }
 
+static int dm2_v1_boot_g1_wall_gfx_scalar_read(
+    void *userdata,
+    int entry_type,
+    int category,
+    int index,
+    int field,
+    uint16_t *out_value)
+{
+    const DM2_V1_BootGraphicsDat *gfx =
+        (const DM2_V1_BootGraphicsDat *)userdata;
+
+    if (!gfx || !out_value) return 0;
+    if (entry_type == DM2_GDAT_ENTRY_TYPE_WORD_VALUE) {
+        return dm2_v1_asset_load_word_value(&gfx->loader, category, index,
+                                            field, out_value);
+    }
+    if (entry_type == DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET) {
+        return dm2_v1_asset_load_image_offset(&gfx->loader, category, index,
+                                               field, out_value);
+    }
+    return 0;
+}
+
+static int dm2_v1_boot_g1_raw_read(
+    void *userdata,
+    int entry_type,
+    int category,
+    int index,
+    int field,
+    const uint8_t **out_data,
+    uint32_t *out_byte_count)
+{
+    const DM2_V1_BootGraphicsDat *gfx =
+        (const DM2_V1_BootGraphicsDat *)userdata;
+    size_t byte_count = 0u;
+    const uint8_t *data;
+
+    if (out_data) *out_data = NULL;
+    if (out_byte_count) *out_byte_count = 0u;
+    if (!gfx || !out_data || !out_byte_count) return 0;
+    data = dm2_v1_asset_load_typed_sized(&gfx->loader, category, index,
+                                          entry_type, field, &byte_count);
+    if (!data || byte_count == 0u || byte_count > UINT32_MAX) return 0;
+    *out_data = data;
+    *out_byte_count = (uint32_t)byte_count;
+    return 1;
+}
+
+static int dm2_v1_boot_g1_image_metadata_read(
+    void *userdata,
+    int category,
+    int index,
+    int field,
+    int *out_width,
+    int *out_height,
+    int *out_format)
+{
+    const DM2_V1_BootGraphicsDat *gfx =
+        (const DM2_V1_BootGraphicsDat *)userdata;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+    uint8_t *pixels;
+    int width = 0;
+    int height = 0;
+
+    if (out_width) *out_width = 0;
+    if (out_height) *out_height = 0;
+    if (out_format) *out_format = DM2_IMG_FMT_UNKNOWN;
+    if (!gfx || !out_width || !out_height || !out_format) return 0;
+    pixels = dm2_v1_asset_load_image_field(&gfx->loader, category, index,
+                                            field, &width, &height, &format);
+    if (!pixels || width <= 0 || height <= 0 ||
+        (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4 &&
+         format != DM2_IMG_FMT_U8 && format != DM2_IMG_FMT_IMG9)) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    dm2_v1_asset_free_pixels(pixels);
+    *out_width = width;
+    *out_height = height;
+    *out_format = format;
+    return 1;
+}
+
 int dm2_v1_boot_g1_text_wall_gfx_materials(
     DM2_V1_BootProfile *profile,
     const DM2_V1_G1Map5TextRuntimeReceipt *texts,
@@ -4754,7 +4837,39 @@ int dm2_v1_boot_g1_text_wall_gfx_materials(
     if (!profile || !profile->graphics_dat) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
     return dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
-        texts, &gfx->loader, out);
+        texts, dm2_v1_boot_g1_wall_gfx_scalar_read, gfx, out);
+}
+
+int dm2_v1_boot_g1_actuator_wall_gfx_materials(
+    DM2_V1_BootProfile *profile,
+    int map,
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!profile || !profile->graphics_dat || !profile->dungeon_data) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
+        (const DM2_V1_DungeonData *)profile->dungeon_data, map,
+        dm2_v1_boot_g1_wall_gfx_scalar_read, gfx, out);
+}
+
+int dm2_v1_boot_g1_creature_map_chip_materials(
+    DM2_V1_BootProfile *profile,
+    int map,
+    DM2_V1_G1CreatureMapChipRuntimeReceipt *out)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!profile || !profile->graphics_dat || !profile->dungeon_data) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
+        (const DM2_V1_DungeonData *)profile->dungeon_data, map,
+        dm2_v1_boot_g1_raw_read, dm2_v1_boot_g1_image_metadata_read, gfx, out);
 }
 
 static uint16_t dm2_v1_boot_le16(const uint8_t *p)
