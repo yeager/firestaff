@@ -1043,12 +1043,15 @@ static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(vo
           "valid HoC candidate reopens inventory panel");
 
     hoc.candidate_party_index = CHAMPION_MAX_PARTY;
+    hoc.inventory_panel_active = 1;
     dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
         &start_world, &hoc);
     CHECK(hoc.candidate_panel_active == 0,
           "invalid HoC candidate is cleared after resume");
     CHECK(hoc.candidate_mirror_ordinal == -1 && hoc.candidate_party_index == -1,
           "invalid HoC candidate resets both source indices");
+    CHECK(hoc.inventory_panel_active == 0,
+          "invalid HoC candidate closes dependent inventory render panel");
     F0883_WORLD_Free_Compat(&start_world);
 }
 

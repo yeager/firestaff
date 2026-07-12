@@ -1890,6 +1890,12 @@ void dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
         state->candidate_mirror_ordinal = -1;
         state->candidate_party_index = -1;
         state->candidate_panel_active = 0;
+        /* ReDMCSB LOADSAVE.C F0435 restores PARTY and dungeon state, not
+         * Firestaff's transient C040 panel. A rejected/stale candidate must
+         * therefore also close its dependent inventory surface; otherwise a
+         * quicksave sidecar can paint a false HoC panel after the restored
+         * world has no live mirror candidate. */
+        state->inventory_panel_active = 0;
         return;
     }
     /* F0280 has already appended the candidate when C040 opens. */
