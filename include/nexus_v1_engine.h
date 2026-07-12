@@ -210,6 +210,11 @@ struct Nexus_V1_Engine {
     int wall_bpk_host_route_attempted;
     int wall_bpk_host_route_valid;
     Nexus_V1_BpkMaterialHostRouteReceipt wall_bpk_host_route;
+    /* Retail SN_FLOOR.MNS / SN_WALL.MNS TEXT sections are a separate,
+     * direct-colour DMDF material route.  They are never inferred from
+     * MENU.BPK or an unnamed archive. */
+    int floor_mns_material_route_valid;
+    int wall_mns_material_route_valid;
     Nexus_V1_DgnMaterialPlan dgn_material_plan;
     Nexus_V1_DgnMaterialCorpusReceipt dgn_material_corpus;
     Nexus_V1_DgnStructure2SourceReceipt current_level_structure2_source;
