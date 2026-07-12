@@ -18,6 +18,10 @@ DM1 V2.2 now consumes boot's finished-art decision in M11 and has no
 placeholder-overlay route. Remaining V2.2 work is external: a complete,
 operator-reviewed real-art pack and packaged Mac/app capture.
 
+CSB V2.0 now applies its real indexed filter chain to an M11 presentation
+copy. Remaining CSB V2.0 work is the RGBA CRT post-filter handoff and real
+Mac/app capture.
+
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 
 The strict CUE route now carries an authenticated Track 02 IPL/stage-two

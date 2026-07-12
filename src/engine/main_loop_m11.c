@@ -18,6 +18,7 @@
 #include "firestaff_retroachievements.h"
 #include "audio_sdl_m11.h"
 #include "render_sdl_m11.h"
+#include "csb_v2_filter_config_pc34.h"
 #include "m11_qol_runtime.h"
 #include "dm1_v1_minimap_pc34_compat.h"
 #include "dm1_v1_automap_pc34_compat.h"
@@ -248,6 +249,17 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
         (gameView->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG ||
          gameView->sourceKind == M11_GAME_SOURCE_CUSTOM_DUNGEON ||
          gameView->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON);
+    const unsigned char* presented_frame = M11_Render_GetFramebuffer();
+    int csb_v20_active = gameView &&
+        gameView->presentationMode == M12_PRESENTATION_V20_FILTERED &&
+        gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT;
+    if (csb_v20_active && presented_frame) {
+        static unsigned char csb_v20_scratch[M11_FB_BYTES];
+        memcpy(csb_v20_scratch, presented_frame, sizeof(csb_v20_scratch));
+        (void)csb_v2_filter_chain_apply_indexed(csb_v20_scratch,
+                                                 M11_FB_WIDTH, M11_FB_HEIGHT);
+        presented_frame = csb_v20_scratch;
+    }
 
     /* M12 persists V2.0 preferences globally, but those post-filters are
      * only valid for the DM1 V2.0 framebuffer route. */
@@ -268,7 +280,7 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
         if (gameView &&
             gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
             result = M11_Render_PresentEpxIndexedWithSpecialPalette(
-                M11_Render_GetFramebuffer(), M11_FB_WIDTH, M11_FB_HEIGHT,
+                presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
                 specialPalette);
             if (restoreFilter) {
                 M11_Render_SetScaleFilter(requestedFilter);
@@ -282,7 +294,7 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
                 &targetW,
                 &targetH)) {
             result = M11_Render_PresentIndexedToResolutionWithSpecialPalette(
-                M11_Render_GetFramebuffer(),
+                presented_frame,
                 M11_FB_WIDTH,
                 M11_FB_HEIGHT,
                 targetW,
@@ -290,7 +302,7 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
                 specialPalette);
         } else {
             result = M11_Render_PresentIndexedWithSpecialPalette(
-                M11_Render_GetFramebuffer(),
+                presented_frame,
                 M11_FB_WIDTH,
                 M11_FB_HEIGHT,
                 specialPalette);
@@ -302,7 +314,7 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
     }
     if (gameView &&
         gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
-        result = M11_Render_PresentEpxIndexed(M11_Render_GetFramebuffer(),
+        result = M11_Render_PresentEpxIndexed(presented_frame,
                                               M11_FB_WIDTH, M11_FB_HEIGHT);
         if (restoreFilter) {
             M11_Render_SetScaleFilter(requestedFilter);
@@ -310,7 +322,7 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
         return result;
     }
     if (scale > 1) {
-        result = M11_Render_PresentScaledIndexed(M11_Render_GetFramebuffer(),
+        result = M11_Render_PresentScaledIndexed(presented_frame,
                                                  M11_FB_WIDTH,
                                                  M11_FB_HEIGHT,
                                                  scale);
@@ -324,7 +336,7 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
                                          gameView ? gameView->presentationHeight : 0,
                                          &targetW,
                                          &targetH)) {
-        result = M11_Render_PresentIndexedToResolution(M11_Render_GetFramebuffer(),
+        result = M11_Render_PresentIndexedToResolution(presented_frame,
                                                        M11_FB_WIDTH,
                                                        M11_FB_HEIGHT,
                                                        targetW,
