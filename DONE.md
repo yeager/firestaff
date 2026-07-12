@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Theron System Card IRQ2 entry gate: added a source-backed,
+  fail-closed probe for the authenticated System Card 3.0 IRQ2 vector
+  `$fff6 -> $e736`, including its `$f5` branch boundary. It does not select a
+  hardware branch or later CD record. Verification: clean Ninja target builds;
+  original-media probe skips without both authenticated raw JP/US Track 02
+  BINs.
+
 - 2026-07-12 CSB C017/C040 runtime HUD binding: the startup runtime frame
   now records hashes for the decoded original inventory and resurrection
   surfaces and mixes them into its source route receipt. Verification with
