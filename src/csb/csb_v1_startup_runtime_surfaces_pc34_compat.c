@@ -505,6 +505,28 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
     out_frame->hud_resurrect_surface = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+    if (out_frame->hud_inventory_surface->valid &&
+        out_frame->hud_inventory_surface->pixels &&
+        out_frame->hud_inventory_surface->width > 0 &&
+        out_frame->hud_inventory_surface->height > 0) {
+        out_frame->hud_inventory_pixel_hash = csb_v1_startup_raster_hash_pc34(
+            out_frame->hud_inventory_surface->pixels,
+            (size_t)out_frame->hud_inventory_surface->width *
+                (size_t)out_frame->hud_inventory_surface->height);
+    }
+    if (out_frame->hud_resurrect_surface->valid &&
+        out_frame->hud_resurrect_surface->pixels &&
+        out_frame->hud_resurrect_surface->width > 0 &&
+        out_frame->hud_resurrect_surface->height > 0) {
+        out_frame->hud_resurrect_pixel_hash = csb_v1_startup_raster_hash_pc34(
+            out_frame->hud_resurrect_surface->pixels,
+            (size_t)out_frame->hud_resurrect_surface->width *
+                (size_t)out_frame->hud_resurrect_surface->height);
+    }
+    out_frame->hud_binding_hash = csb_v1_startup_frame_hash_step_pc34(
+        csb_v1_startup_frame_hash_step_pc34(2166136261u,
+                                            out_frame->hud_inventory_pixel_hash),
+        out_frame->hud_resurrect_pixel_hash);
     if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
         out_frame->title_phase_tick = plan->title_source_step;
         out_frame->title_phase_tick_count = csb_v1_startup_title_total_ticks_pc34();
@@ -536,6 +558,8 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
         out_frame->frame_route_hash, (uint32_t)out_frame->opening_step);
     out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
         out_frame->frame_route_hash, (uint32_t)out_frame->title_phase_mask);
+    out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
+        out_frame->frame_route_hash, out_frame->hud_binding_hash);
     out_frame->valid =
         out_frame->real_asset_matched &&
         out_frame->title_sequence_ready &&

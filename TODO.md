@@ -11,6 +11,10 @@ CSB startup has no M11 text or door fallback callbacks.  Only the verified
 C001-C005/C017/C040 graphics route can present title, entrance, door opening,
 or HUD.  Remaining work is packaged real-data capture through that route.
 
+CSB's runtime frame now binds original C017 inventory and C040 resurrection
+pixels into its route hash. Remaining CSB startup work is the clean-build
+regression repair and packaged Mac/app capture, not a substitute HUD.
+
 Nexus M11 now presents only the verified WARNING.BIN/TITLE.CG transition at
 Saturn frames 47, 48, and 102. MENU.BPK remains blocked until its PRS3 pixel
 and palette decoder is proven; the next Nexus work is real DGN rendering.

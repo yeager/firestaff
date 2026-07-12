@@ -83,6 +83,75 @@ static int title_palette_matches_rgb(const unsigned char *rgb,
     return rgb && rgb[0] == r && rgb[1] == g && rgb[2] == b;
 }
 
+static uint32_t real_surface_hash(const unsigned char *pixels, size_t count)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    if (!pixels || count == 0u) return 0u;
+    for (i = 0; i < count; ++i) {
+        hash ^= pixels[i];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 2166136261u;
+}
+
+static void verify_real_c017_c040_hud_handoff(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
+    CSB_V1_StartupAudioAction_PC34 audio_action;
+    const CSB_V1_StartupRuntimeSurface_PC34 *inventory;
+    const CSB_V1_StartupRuntimeSurface_PC34 *resurrect;
+
+    if (!session) return;
+    inventory = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+    resurrect = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+    CHECK(inventory->valid && inventory->pixels &&
+              inventory->width == 224 && inventory->height == 136 &&
+              resurrect->valid && resurrect->pixels &&
+              resurrect->width == 144 && resurrect->height == 73,
+          "C017/C040 decode to their original PC HUD dimensions");
+    CHECK(real_surface_hash(inventory->pixels,
+                            (size_t)inventory->width * inventory->height) ==
+                  0x7117c9c5u &&
+              real_surface_hash(resurrect->pixels,
+                                (size_t)resurrect->width * resurrect->height) ==
+                  0x35fb6d05u,
+          "C017/C040 captures match verified PC CSB GRAPHICS.DAT pixels");
+
+    memset(&plan, 0, sizeof(plan));
+    CHECK(csb_v1_boot_startup_playback_begin_pc34(session, &audio_action) == 1 &&
+              audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_FTL_SWOOSH_PC34 &&
+              csb_v1_boot_startup_playback_complete_swoosh_pc34(
+                  session, &audio_action) == 1 &&
+              csb_v1_boot_startup_playback_title_frame_pc34(
+                  session, csb_v1_startup_title_total_ticks_pc34(),
+                  &plan, &audio_action) == 1 &&
+              audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_ENTRANCE_MUSIC_PC34 &&
+              csb_v1_boot_startup_playback_enter_hud_pc34(session) == 1 &&
+              session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34,
+          "C001-C005 playback reaches the C017/C040 runtime HUD owner");
+
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
+    plan.title_stage = CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34;
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              session, &plan, 102u, &frame) == 1 && frame.valid &&
+              frame.uses_verified_hud_bindings &&
+              frame.hud_inventory_surface == inventory &&
+              frame.hud_resurrect_surface == resurrect &&
+              frame.hud_inventory_pixel_hash ==
+                  real_surface_hash(inventory->pixels,
+                                    (size_t)inventory->width * inventory->height) &&
+              frame.hud_resurrect_pixel_hash ==
+                  real_surface_hash(resurrect->pixels,
+                                    (size_t)resurrect->width * resurrect->height) &&
+              frame.hud_binding_hash != 0u,
+          "runtime frame binds original C017/C040 pixels without a wrapper surface");
+}
+
 static int real_c001_title_plan(int title_frame,
                                 CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
@@ -223,6 +292,7 @@ static void verify_real_indexed_startup(CSB_V1_BootProfile *profile)
     if (!session.valid) return;
 
     verify_real_c001_title_sequence(&session);
+    verify_real_c017_c040_hud_handoff(&session);
 
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
