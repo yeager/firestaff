@@ -1,6 +1,26 @@
 
 # Unreleased
 
+# Firestaff v3.0.73
+
+Firestaff v3.0.73 packages the latest DM1 source-faithful runtime and startup
+work from `main`.
+
+## Highlights since v3.0.72
+
+- **DM1 runtime**: killed-all materialization now preserves source-owned fixed
+  drops, delayed thuds, raw group state, and off-map lifecycle behavior.
+- **DM1 visuals**: HoC/projectile and party-HUD real-data probes were expanded;
+  Thieves' Eye now consumes its original D1C wall material path.
+- **DM1 startup**: entrance switch audio, credits loop ownership, and source
+  door timing/geometry gained stricter ReDMCSB-backed coverage.
+
+## Verification
+
+- Focused DM1 spell, startup, F0190 runtime, real-data viewport, and HUD
+  checks passed locally.
+- GitHub Actions packages the platform artifacts from the `v3.0.73` tag.
+
 # Firestaff v3.0.72
 
 Firestaff v3.0.72 packages current `main` after broader startup ownership,
