@@ -243,6 +243,29 @@ typedef struct {
     size_t next_control_test_offset;
 } Sh2Prs3Version1StreamReadEvidence;
 
+/* The selected callee's R11 state has an original-code sentinel protocol:
+ * a PC-relative word loads R2 with 0x0100, a PC-relative long loads R9 with
+ * 0x0000ff00, and refill ORs R9 into the byte-expanded R11 state before the
+ * loop returns to the R11 shift/test. This proves control-state framing, not
+ * a PRS3 command grammar, the meaning of either test outcome, payload ABI,
+ * frame termination, or pixel output. */
+typedef struct {
+    int valid;
+    size_t sentinel_literal_load_offset;
+    size_t sentinel_literal_offset;
+    uint16_t sentinel_word;
+    unsigned int sentinel_register;
+    size_t refill_marker_literal_load_offset;
+    size_t refill_marker_literal_offset;
+    uint32_t refill_marker_word;
+    unsigned int refill_marker_register;
+    size_t refill_marker_or_offset;
+    unsigned int refill_marker_or_source_register;
+    unsigned int refill_marker_or_destination_register;
+    size_t loop_back_branch_offset;
+    size_t loop_back_target;
+} Sh2Prs3Version1ControlSentinelEvidence;
+
 /* The available flat DM.BIN image has no encoded direct predecessor for the
  * dispatcher entry and no PC-relative literal that materializes its work-RAM
  * address. This is a negative locator receipt only: an external, indirect, or
@@ -393,6 +416,23 @@ static int sh2_movl_pc_literal_target(size_t instruction_offset,
     if (!out_target || (instruction & 0xf000U) != 0xd000U) return 0;
     base = (instruction_offset + 4U) & ~(size_t)3U;
     displacement = (size_t)(instruction & 0x00ffU) * 4U;
+    if (displacement > SIZE_MAX - base) return 0;
+    *out_target = base + displacement;
+    return 1;
+}
+
+/* SH-2 MOV.W @(disp,PC),Rn is 1001nnnndddddddd. The displacement is a
+ * word count from PC + 4 and does not carry a DM.BIN image-base claim. */
+static int sh2_movw_pc_literal_target(size_t instruction_offset,
+                                      uint16_t instruction,
+                                      size_t *out_target) {
+    size_t base;
+    size_t displacement;
+
+    if (!out_target || (instruction & 0xf000U) != 0x9000U) return 0;
+    if (instruction_offset > SIZE_MAX - 4U) return 0;
+    base = instruction_offset + 4U;
+    displacement = (size_t)(instruction & 0x00ffU) * 2U;
     if (displacement > SIZE_MAX - base) return 0;
     *out_target = base + displacement;
     return 1;
@@ -985,6 +1025,19 @@ static int sh2_add_immediate_fields(uint16_t instruction,
     return 1;
 }
 
+/* SH-2 OR Rm,Rn is 0010nnnnmmmm1011. */
+static int sh2_or_register_fields(uint16_t instruction,
+                                  unsigned int *out_source_register,
+                                  unsigned int *out_destination_register) {
+    if ((instruction & 0xf00fU) != 0x200bU || !out_source_register ||
+        !out_destination_register) {
+        return 0;
+    }
+    *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
 static int sh2_prs3_version1_stream_read_evidence(
     const uint8_t *data, size_t data_size,
     Sh2Prs3Version1StreamReadEvidence *out_evidence) {
@@ -1048,6 +1101,66 @@ static int sh2_prs3_version1_stream_read_evidence(
         evidence.byte_extend_source_register != 11U ||
         evidence.byte_extend_destination_register != 11U ||
         read_be16(data + evidence.next_control_test_offset) != 0x23b8U) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+    evidence.valid = 1;
+    if (out_evidence) *out_evidence = evidence;
+    return 1;
+}
+
+static int sh2_prs3_version1_control_sentinel_evidence(
+    const uint8_t *data, size_t data_size,
+    Sh2Prs3Version1ControlSentinelEvidence *out_evidence) {
+    Sh2Prs3Version1ControlSentinelEvidence evidence;
+
+    memset(&evidence, 0, sizeof(evidence));
+    if (!data || NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 164U > data_size) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+    evidence.refill_marker_literal_load_offset =
+        NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 48U;
+    evidence.sentinel_literal_load_offset =
+        NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 52U;
+    evidence.refill_marker_or_offset =
+        NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 70U;
+    evidence.loop_back_branch_offset =
+        NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 162U;
+
+    if (read_be16(data + evidence.refill_marker_literal_load_offset) != 0xd93aU ||
+        !sh2_movl_pc_literal_target(
+            evidence.refill_marker_literal_load_offset,
+            read_be16(data + evidence.refill_marker_literal_load_offset),
+            &evidence.refill_marker_literal_offset) ||
+        evidence.refill_marker_literal_offset + 4U > data_size ||
+        read_be16(data + evidence.sentinel_literal_load_offset) != 0x926aU ||
+        !sh2_movw_pc_literal_target(
+            evidence.sentinel_literal_load_offset,
+            read_be16(data + evidence.sentinel_literal_load_offset),
+            &evidence.sentinel_literal_offset) ||
+        evidence.sentinel_literal_offset + 2U > data_size ||
+        !sh2_or_register_fields(
+            read_be16(data + evidence.refill_marker_or_offset),
+            &evidence.refill_marker_or_source_register,
+            &evidence.refill_marker_or_destination_register) ||
+        !sh2_bra_target(evidence.loop_back_branch_offset,
+                        read_be16(data + evidence.loop_back_branch_offset),
+                        data_size, &evidence.loop_back_target)) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+
+    evidence.refill_marker_word =
+        read_be32(data + evidence.refill_marker_literal_offset);
+    evidence.sentinel_word = read_be16(data + evidence.sentinel_literal_offset);
+    evidence.refill_marker_register = 9U;
+    evidence.sentinel_register = 2U;
+    if (evidence.refill_marker_word != 0x0000ff00U ||
+        evidence.sentinel_word != 0x0100U ||
+        evidence.refill_marker_or_source_register != evidence.refill_marker_register ||
+        evidence.refill_marker_or_destination_register != 11U ||
+        evidence.loop_back_target != NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 52U) {
         if (out_evidence) *out_evidence = evidence;
         return 0;
     }
@@ -1338,6 +1451,43 @@ static void test_sh2_version1_stream_read_evidence(void) {
           "SH-2 stream reader evidence rejects a non-post-increment refill load");
 }
 
+static void test_sh2_version1_control_sentinel_evidence(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 512U];
+    Sh2Prs3Version1ControlSentinelEvidence evidence;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    /* MOV.L @(0x3a,PC),R9 -> entry+284 = 0x0000ff00. */
+    fixture[entry + 48U] = 0xd9U;
+    fixture[entry + 49U] = 0x3aU;
+    fixture[entry + 284U] = 0x00U;
+    fixture[entry + 285U] = 0x00U;
+    fixture[entry + 286U] = 0xffU;
+    fixture[entry + 287U] = 0x00U;
+    /* MOV.W @(0x6a,PC),R2 -> entry+268 = 0x0100. */
+    fixture[entry + 52U] = 0x92U;
+    fixture[entry + 53U] = 0x6aU;
+    fixture[entry + 268U] = 0x01U;
+    fixture[entry + 269U] = 0x00U;
+    fixture[entry + 70U] = 0x2bU;
+    fixture[entry + 71U] = 0x9bU; /* OR R9,R11 */
+    fixture[entry + 162U] = 0xafU;
+    fixture[entry + 163U] = 0xc7U; /* BRA back to entry+52 */
+
+    check(sh2_prs3_version1_control_sentinel_evidence(
+              fixture, sizeof(fixture), &evidence) && evidence.valid &&
+              evidence.sentinel_word == 0x0100U &&
+              evidence.refill_marker_word == 0x0000ff00U &&
+              evidence.refill_marker_or_source_register == 9U &&
+              evidence.refill_marker_or_destination_register == 11U &&
+              evidence.loop_back_target == entry + 52U,
+          "SH-2 control-sentinel evidence locks the refill marker protocol");
+    fixture[entry + 71U] = 0x9aU;
+    check(!sh2_prs3_version1_control_sentinel_evidence(
+              fixture, sizeof(fixture), &evidence),
+          "SH-2 control-sentinel evidence rejects a non-OR refill operation");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -1383,6 +1533,7 @@ int main(int argc, char **argv) {
     Sh2Prs3Version1ArgumentEvidence argument_evidence;
     Sh2Prs3Version1WordLifetimeEvidence word_lifetime_evidence;
     Sh2Prs3Version1StreamReadEvidence stream_read_evidence;
+    Sh2Prs3Version1ControlSentinelEvidence control_sentinel_evidence;
     Sh2Prs3DispatcherCallerEvidence dispatcher_caller_evidence;
     Sh2Prs3BootstrapEvidence bootstrap_evidence;
     Sh2Prs3MapBoundaryEvidence map_boundary_evidence;
@@ -1395,6 +1546,7 @@ int main(int argc, char **argv) {
     test_sh2_argument_field_decoders();
     test_sh2_dispatcher_caller_scanner();
     test_sh2_version1_stream_read_evidence();
+    test_sh2_version1_control_sentinel_evidence();
 
     if (!data_dir) {
         home = getenv("HOME");
@@ -1467,6 +1619,12 @@ int main(int argc, char **argv) {
                   stream_read_evidence.remaining_register == 14U &&
                   stream_read_evidence.remaining_decrement == -1,
               "DM.BIN version-1 callee proves a bounded R4-origin byte refill path");
+        check(sh2_prs3_version1_control_sentinel_evidence(
+                  dm, dm_size, &control_sentinel_evidence) &&
+                  control_sentinel_evidence.valid &&
+                  control_sentinel_evidence.sentinel_word == 0x0100U &&
+                  control_sentinel_evidence.refill_marker_word == 0x0000ff00U,
+              "DM.BIN version-1 callee proves its R11 refill sentinel protocol");
         check(sh2_prs3_dispatcher_caller_evidence(
                   dm, dm_size, &dispatcher_caller_evidence) &&
                   dispatcher_caller_evidence.valid &&
@@ -1631,6 +1789,24 @@ int main(int argc, char **argv) {
                    stream_read_evidence.byte_extend_source_register,
                    stream_read_evidence.byte_extend_destination_register,
                    stream_read_evidence.next_control_test_offset);
+        }
+        if (control_sentinel_evidence.valid) {
+            printf("SH-2 PRS3 version-1 control sentinel: R%u word=%04x load=%zu->%zu "
+                   "R%u marker=%08x load=%zu->%zu or=%zu R%u->R%u "
+                   "loop=%zu->%zu; opcode/payload/termination-proof=0\n",
+                   control_sentinel_evidence.sentinel_register,
+                   (unsigned int)control_sentinel_evidence.sentinel_word,
+                   control_sentinel_evidence.sentinel_literal_load_offset,
+                   control_sentinel_evidence.sentinel_literal_offset,
+                   control_sentinel_evidence.refill_marker_register,
+                   (unsigned int)control_sentinel_evidence.refill_marker_word,
+                   control_sentinel_evidence.refill_marker_literal_load_offset,
+                   control_sentinel_evidence.refill_marker_literal_offset,
+                   control_sentinel_evidence.refill_marker_or_offset,
+                   control_sentinel_evidence.refill_marker_or_source_register,
+                   control_sentinel_evidence.refill_marker_or_destination_register,
+                   control_sentinel_evidence.loop_back_branch_offset,
+                   control_sentinel_evidence.loop_back_target);
         }
         if (dispatcher_caller_evidence.valid) {
             printf("SH-2 PRS3 dispatcher caller scan: entry=%zu address=%08x "
