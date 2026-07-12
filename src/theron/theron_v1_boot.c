@@ -36,6 +36,8 @@
 #include "theron_v1_boot.h"
 #include "asset_find_by_hash.h"
 #include "theron_v1_mechanics.h"
+#include "theron_v1_stage2_runtime_handoff.h"
+#include "theron_v1_stage3_irq2_dispatch.h"
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "theron_v2_hud_overlay_pc34.h"
@@ -734,6 +736,8 @@ int theron_v1_boot_validate_track02_loader_receipt(
     Theron_Track02Variant variant;
     Theron_Track02IplLoaderReceipt observed;
     Theron_Track02Stage2DynamicPayloadReceipt dynamic_observed;
+    Theron_V1Stage2RuntimeHandoff stage2_handoff;
+    Theron_V1Stage3Irq2DispatchReceipt stage3_dispatch;
 
     if (!receipt || !receipt->valid || !receipt->cue_backed ||
         !receipt->track02_md5_verified || !receipt->mode1_2352 ||
@@ -806,6 +810,8 @@ int theron_v1_boot_validate_track02_loader_receipt(
         return 0;
     }
     memset(&dynamic_observed, 0, sizeof(dynamic_observed));
+    memset(&stage2_handoff, 0, sizeof(stage2_handoff));
+    memset(&stage3_dispatch, 0, sizeof(stage3_dispatch));
     if (theron_v1_track02_inspect_stage2_dynamic_payload(
             bytes, required, verified_md5, &dynamic_observed) !=
             THERON_TRACK02_SIGNAL_OK ||
@@ -821,6 +827,21 @@ int theron_v1_boot_validate_track02_loader_receipt(
         dynamic_observed.manifest_entry_count !=
             THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT ||
         dynamic_observed.user_data_hash == 0u) {
+        free(bytes);
+        return 0;
+    }
+    /* CUE/M11 boot reaches runtime only through the same authentic stage-two
+     * transfer contract as direct Track 02 entry: cleared work RAM then the
+     * physical $3800 BRK $ff dispatch. */
+    if (!theron_v1_stage2_runtime_handoff_from_dynamic_payload(
+            &dynamic_observed, &stage2_handoff) ||
+        !stage2_handoff.work_ram_cleared_before_entry ||
+        stage2_handoff.cleared_work_ram_start != 0x2700u ||
+        stage2_handoff.cleared_work_ram_bytes != 0x1100u ||
+        stage2_handoff.cleared_work_ram_end != 0x3800u ||
+        !theron_v1_stage3_irq2_dispatch_from_original_media(
+            bytes, required, &dynamic_observed, &stage3_dispatch) ||
+        !stage3_dispatch.valid || !stage3_dispatch.irq2_dispatch_proven) {
         free(bytes);
         return 0;
     }

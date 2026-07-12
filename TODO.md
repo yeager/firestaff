@@ -103,6 +103,11 @@ descriptor, palette, object, level, or later CD request.
 The runtime handoff now also carries the stage-two work-RAM precondition from
 the original `TII`: `$2700..$37ff` is cleared before entry at `$3800`. This
 is strict loader-state metadata, not a manifest layout or a bank/level role.
+The strict CUE/M11 boot validator now consumes both the work-RAM transfer
+contract and the physical `$3800` `BRK $ff` gate after rereading the original
+payload. A CUE receipt can therefore no longer reach runtime on manifest facts
+alone. Later IRQ2 branch selection and every bank/level meaning remain
+separately unbound.
 The first loaded payload is now structurally verified as a
 218-unit manifest envelope, but its entries remain unclassified; do not treat
 it as a graphics, palette, object, or dungeon-record binding. The hash-gated
@@ -190,6 +195,11 @@ least `0x14c`, subtracts to its stored local Structure2 ID, and matches that
 descriptor's `image_id` (zero mismatches). This remains an index relation,
 not image/palette data, a payload grammar, decoder, animation, or rendering
 claim.
+2026-07-12 update: all 51 stored `first_image_index` fields now also match
+their original Structure1G descriptor word and the first word at that
+descriptor's validated sequence offset (zero mismatches). This proves only a
+raw descriptor-to-sequence dataflow relation, not instruction timing, image
+bytes, palette bytes, a payload grammar, decoder, animation, or rendering.
 
 The Structure1F handoff and DGN render-plan receipt now separate the six
 documented direct-coordinate records (items, floor decorations, floor
