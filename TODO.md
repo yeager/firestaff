@@ -22,6 +22,9 @@ CSB V2.0 now applies its real indexed filter chain to an M11 presentation
 copy. Remaining CSB V2.0 work is the RGBA CRT post-filter handoff and real
 Mac/app capture.
 
+CSB V2.1 consumes the shared live M11 EPX route, including special palettes.
+Its remaining work is real CSB runtime/Mac capture, not scaler code.
+
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 
 The strict CUE route now carries an authenticated Track 02 IPL/stage-two

@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 CSB V2.1 live EPX: CSB now uses the shared M11 V2.1 EPX
+  presentation route, preserving its indexed source framebuffer and special
+  palette frames. Verification: CSB V2.1 texture probe 13/13 and unit test
+  30/30.
+
 - 2026-07-12 CSB V2.0 M11 filter handoff: the live CSB V2.0 present path now
   copies the original indexed framebuffer and applies the CSB-owned indexed
   dither/palette filter chain only to that presentation copy. V1 source pixels
