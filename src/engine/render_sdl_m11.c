@@ -1209,7 +1209,7 @@ int M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
     }
     g_state.presentedW = uploadW;
     g_state.presentedH = uploadH;
-    if (g_state.v2_dither_enabled
+    if ((g_state.v2_palette_interp_enabled || g_state.v2_dither_enabled)
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
         static unsigned char v2DitherScratch[M11_FB_BYTES];
@@ -1362,7 +1362,7 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
     }
     g_state.presentedW = uploadW;
     g_state.presentedH = uploadH;
-    if (g_state.v2_dither_enabled
+    if ((g_state.v2_palette_interp_enabled || g_state.v2_dither_enabled)
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
         static unsigned char v2DitherScratch[M11_FB_BYTES];
@@ -1631,7 +1631,7 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     }
     g_state.presentedW = uploadW;
     g_state.presentedH = uploadH;
-    if (g_state.v2_dither_enabled
+    if ((g_state.v2_palette_interp_enabled || g_state.v2_dither_enabled)
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
         static unsigned char v2DitherScratch[M11_FB_BYTES];
