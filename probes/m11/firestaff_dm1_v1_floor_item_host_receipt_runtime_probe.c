@@ -6,6 +6,8 @@
 int main(int argc, char **argv)
 {
     M11_GameViewState state;
+    M11_BootProbeReceipt before_draw;
+    M11_BootProbeReceipt after_draw;
     M11_Dm1FloorItemHostPresentationReceipt receipt;
     unsigned char framebuffer[320 * 200];
     const char *data_dir = argc > 1 ? argv[1] : NULL;
@@ -20,13 +22,25 @@ int main(int argc, char **argv)
         M11_GameView_Shutdown(&state);
         return 0;
     }
+    if (!M11_GameView_GetBootProbeReceipt(&state, &before_draw) ||
+        before_draw.dm1HoCLiveF0115MaterialRequest) {
+        puts("FAIL DM1 floor-item host receipt was live before a draw");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&state, framebuffer, 320, 200);
     memset(&receipt, 0, sizeof(receipt));
     M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
-    M11_GameView_Shutdown(&state);
     if (!receipt.valid) {
+        if (!M11_GameView_GetBootProbeReceipt(&state, &after_draw) ||
+            after_draw.dm1HoCLiveF0115MaterialRequest) {
+            puts("FAIL DM1 projectile/midair view opened F0115 observation");
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
         puts("SKIP DM1 floor-item host receipt: no naturally visible F0115 item");
+        M11_GameView_Shutdown(&state);
         return 0;
     }
     if (receipt.graphicsId <= 0 || receipt.transparentColor != 10 ||
@@ -34,11 +48,19 @@ int main(int argc, char **argv)
         receipt.destinationH <= 0 || receipt.assetWidth <= 0 ||
         receipt.assetHeight <= 0) {
         puts("FAIL DM1 floor-item host receipt is incomplete");
+        M11_GameView_Shutdown(&state);
         return 1;
+    }
+    if (!M11_GameView_GetBootProbeReceipt(&state, &after_draw) ||
+        !after_draw.dm1HoCLiveF0115MaterialRequest) {
+        puts("SKIP DM1 floor-item host receipt: no qualifying front F0115 item");
+        M11_GameView_Shutdown(&state);
+        return 0;
     }
     printf("ok: DM1 floor-item host receipt gfx=%d zone=%d row=%d dst=%d,%d %dx%d asset=%dx%d\n",
            receipt.graphicsId, receipt.sourceZone, receipt.sourceZoneRow,
            receipt.destinationX, receipt.destinationY, receipt.destinationW,
            receipt.destinationH, receipt.assetWidth, receipt.assetHeight);
+    M11_GameView_Shutdown(&state);
     return 0;
 }

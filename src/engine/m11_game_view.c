@@ -6009,7 +6009,7 @@ static int m11_inspect_front_cell(M11_GameViewState* state);
 static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
 static int m11_front_cell_is_door(const M11_GameViewState* state);
 static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state);
-static int m11_front_cell_has_live_f0115_material_request(
+static int m11_front_cell_has_live_f0115_floor_item_request(
     const M11_GameViewState* state);
 static int m11_source_is_csb(const M11_GameViewState* state);
 static int m11_get_front_cell(const M11_GameViewState* state, struct M11_ViewportCell* outCell);
@@ -12010,7 +12010,7 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
         m11_front_cell_mirror_ordinal(state) >= 0;
     facts.observed_live_hoc_f0115_material_request =
         s_m11_dm1_floor_item_host_presentation_receipt.valid &&
-        m11_front_cell_has_live_f0115_material_request(state);
+        m11_front_cell_has_live_f0115_floor_item_request(state);
     facts.observed_host_window_present = host_window_present;
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m11_boot_probe_consumer = 1;
@@ -19322,7 +19322,7 @@ static int m11_get_front_cell(const M11_GameViewState* state, M11_ViewportCell* 
     return 1;
 }
 
-static int m11_front_cell_has_live_f0115_material_request(
+static int m11_front_cell_has_live_f0115_floor_item_request(
     const M11_GameViewState* state)
 {
     M11_ViewportCell frontCell;
@@ -19331,15 +19331,13 @@ static int m11_front_cell_has_live_f0115_material_request(
         !frontCell.dm1MaterializationDecisionReady) {
         return 0;
     }
-    /* ReDMCSB DUNVIEW.C F0115:5645-5683 only reaches these material
-     * consumers after the live viewport decision has accepted them. */
-    return (frontCell.floorItemCount > 0 &&
-            frontCell.dm1MaterializationDecision.drawFloorItems &&
-            frontCell.elementType != DUNGEON_ELEMENT_WALL) ||
-           (frontCell.dm1MaterializationDecision.drawRuntimeProjectiles &&
-            m11_viewport_cell_has_renderable_projectile(&frontCell)) ||
-           (frontCell.dm1MaterializationDecision.drawDeferredSpellEffects &&
-            m11_viewport_cell_has_renderable_explosion(&frontCell));
+    /* ReDMCSB DUNVIEW.C F0115:4547-4581 dispatches items before the
+     * separate projectile/explosion passes. The host receipt records only
+     * the completed item blit, so a midair effect cannot satisfy this HoC
+     * material observation. */
+    return frontCell.floorItemCount > 0 &&
+           frontCell.dm1MaterializationDecision.drawFloorItems &&
+           frontCell.elementType != DUNGEON_ELEMENT_WALL;
 }
 
 static int m11_front_cell_has_attack_target(const M11_GameViewState* state) {
@@ -37147,6 +37145,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
+    /* The receipt is frame-local evidence from F0115's completed floor-item
+     * blit. Do not let a prior frame authorize a later projectile-only view. */
+    memset(&s_m11_dm1_floor_item_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_floor_item_host_presentation_receipt));
     if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         state->dm2BootProfile) {
         DM2_V1_InterfacePalette palette;
