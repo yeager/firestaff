@@ -148,6 +148,8 @@ typedef struct {
     int roundtrip_succeeded_count;
     int core_state_match_count;
     int roundtrip_failed_count;
+    int firestaff_manifest_rejected_count;
+    int nonoriginal_envelope_rejected_count;
     int first_failure_result;
     char first_pc34_path[DM1_ORIGINAL_SAVE_PATH_MAX];
     char first_roundtrip_path[DM1_ORIGINAL_SAVE_PATH_MAX];
@@ -291,11 +293,13 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
     size_t *out_size,
     DM1OriginalSavePC34RoundtripReport *out_report);
 
-/* Verify every classifier-qualified PC34 save below `root` through the
- * F0435 -> F0433 -> F0435 transient-memory round trip. Header-only,
- * rejected, and non-PC34 files are reported by the classifier but are never
- * handed to the importer. A successful scan returns OK even when a candidate
- * fails, so the caller can inspect the complete corpus receipt. */
+/* Verify every external, classifier-qualified PC34 save below `root` through
+ * the F0435 -> F0433 -> F0435 transient-memory round trip. Firestaff's own
+ * versioned PC34 manifest is rejected as corpus provenance, and a CSBWin
+ * GAMEBLOCK1 cannot qualify without ReDMCSB's five length/key/checksum save
+ * parts. Header-only, rejected, and non-PC34 files are never handed to the
+ * importer. A successful scan returns OK even when a candidate fails, so the
+ * caller can inspect the complete corpus receipt. */
 int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     const char *root,
     DM1OriginalSavePC34CorpusRoundtripReport *out_report);
