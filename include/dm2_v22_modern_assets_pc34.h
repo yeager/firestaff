@@ -39,6 +39,8 @@ extern "C" {
  *   V1 → V2.0 (filtered) → V2.1 (upscaled) → V2.2 (modern)
  * Reuses the DM1_V22_ShapeSource enum for cross-game compatibility;
  * the same fallback chain applies per game. */
+#ifndef FIRESTAFF_DM2_V22_SHAPE_SOURCE_DEFINED
+#define FIRESTAFF_DM2_V22_SHAPE_SOURCE_DEFINED
 typedef enum {
     DM2_V22_SHAPE_SOURCE_V1_ORIGINAL = 0,
     DM2_V22_SHAPE_SOURCE_V2_FILTERED = 1,
@@ -46,6 +48,7 @@ typedef enum {
     DM2_V22_SHAPE_SOURCE_V2_MODERN   = 3,
     DM2_V22_SHAPE_SOURCE_COUNT
 } DM2_V22_ShapeSource;
+#endif
 
 /* ── Public API ──────────────────────────────────────────────────── */
 
