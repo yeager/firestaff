@@ -109,6 +109,14 @@ static void csb_v1_runtime_trigger_remote_sensor_event(
     int target_x,
     int target_y,
     int target_cell);
+static void csb_v1_runtime_trigger_remote_sensor_event_after(
+    CSB_V1_RuntimeProfile *profile,
+    int level,
+    int sensor_effect,
+    int target_x,
+    int target_y,
+    int target_cell,
+    int delay);
 static void csb_v1_runtime_process_object_floor_sensors_at(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
@@ -8202,13 +8210,14 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         target_cell = (int)((target_word >> 4) & 0x03u);
         target_x = (int)((target_word >> 6) & 0x1Fu);
         target_y = (int)((target_word >> 11) & 0x1Fu);
-        csb_v1_runtime_trigger_remote_sensor_event(
+        csb_v1_runtime_trigger_remote_sensor_event_after(
             profile,
             level,
             sensor_effect,
             target_x,
             target_y,
-            target_cell);
+            target_cell,
+            (int)((flags_word >> 7) & 0x0Fu));
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
     }
 }
@@ -11324,13 +11333,14 @@ static void csb_v1_runtime_mark_deferred_new_party_map_index(
     result->deferred_new_party_map_index = result->new_party_level;
 }
 
-static void csb_v1_runtime_trigger_remote_sensor_event(
+static void csb_v1_runtime_trigger_remote_sensor_event_after(
     CSB_V1_RuntimeProfile *profile,
     int level,
     int sensor_effect,
     int target_x,
     int target_y,
-    int target_cell)
+    int target_cell,
+    int delay)
 {
     CSB_V1_DungeonData *dungeon;
     struct DM1_Event_V1 event;
@@ -11354,13 +11364,28 @@ static void csb_v1_runtime_trigger_remote_sensor_event(
     if (event_type == DM1_EVENT_NONE) return;
 
     memset(&event, 0, sizeof(event));
-    event.map_time = DM1_MAP_TIME_MAKE(level, profile->game_time);
+    /* ReDMCSB MOVESENS.C F0272 lines 1194-1203 adds Remote.Value to
+     * G0313_ul_GameTime before F0268 queues the target square event. */
+    event.map_time = DM1_MAP_TIME_MAKE(
+        level, profile->game_time + (uint32_t)((delay > 0) ? delay : 0));
     event.type = (uint8_t)event_type;
     event.b_mapX = (uint8_t)target_x;
     event.b_mapY = (uint8_t)target_y;
     event.c_cell = (uint8_t)target_cell;
     event.c_effect = (uint8_t)sensor_effect;
     (void)dm1v1_event_add(&profile->timeline_queue, &event);
+}
+
+static void csb_v1_runtime_trigger_remote_sensor_event(
+    CSB_V1_RuntimeProfile *profile,
+    int level,
+    int sensor_effect,
+    int target_x,
+    int target_y,
+    int target_cell)
+{
+    csb_v1_runtime_trigger_remote_sensor_event_after(
+        profile, level, sensor_effect, target_x, target_y, target_cell, 0);
 }
 
 static uint8_t *csb_v1_runtime_square_byte_ptr(
