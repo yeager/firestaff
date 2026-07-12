@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 original-save provenance: product-facing PC34 file
+  roundtrips now reject Firestaff-manifest exports, so only external original
+  save envelopes can supply corpus evidence. Verification:
+  `test_dm1_v1_original_save_pc34_handoff` passed; absent external corpus
+  remains an explicit skip.
+
 - 2026-07-12 DM1 F0189/F0190 M10 map ownership: killed-all cleanup now
   retires ACTIVE_GROUP only on the party map while unlinking the source group
   and compacting its source-square timeline events. The F0209 cell adjustment

@@ -2143,6 +2143,15 @@ int dm1_v1_original_save_pc34_roundtrip_world_file(
     if (!path || !out_bytes || !out_size) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
+    if (!dm1_original_save_file_opens_for_read(path)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    }
+    /* Product-facing file round trips accept only external PC34 envelopes.
+     * F0433 verification output carries Firestaff's manifest and must never
+     * re-enter the original-save corpus/product import route as evidence. */
+    if (!dm1_original_save_corpus_external_pc34_file(path, NULL)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
+    }
     result = read_original_pc34_file_bytes(path, &bytes, &size);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
@@ -2173,6 +2182,12 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
 
     if (!path || !out_bytes || !out_size) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    if (!dm1_original_save_file_opens_for_read(path)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    }
+    if (!dm1_original_save_corpus_external_pc34_file(path, NULL)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
     }
     result = read_original_pc34_file_bytes(path, &bytes, &size);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {

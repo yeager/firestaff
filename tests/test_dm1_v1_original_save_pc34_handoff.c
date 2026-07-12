@@ -1275,6 +1275,7 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
     unsigned char roundtrip[SAVEGAME_PC34_MAX_FILE_SIZE];
     char fixture_path[256];
+    char exported_path[256];
     FILE *fixture_file;
     size_t written = 0u;
     size_t roundtrip_written = 0u;
@@ -1343,6 +1344,22 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
           "roundtrip helper preserves current active group count");
     CHECK(verify_report.original_event_count == ORIGINAL_PC34_EVENT_COUNT,
           "roundtrip helper preserves event count");
+
+    snprintf(exported_path, sizeof(exported_path),
+             "/tmp/firestaff_dm1_manifest_save_roundtrip_%lu.dat",
+             (unsigned long)spec.game_id);
+    fixture_file = fopen(exported_path, "wb");
+    CHECK(fixture_file != NULL, "manifest export fixture opens");
+    CHECK(fwrite(roundtrip, 1u, roundtrip_written, fixture_file) ==
+              roundtrip_written,
+          "manifest export fixture writes");
+    CHECK(fclose(fixture_file) == 0, "manifest export fixture closes");
+    CHECK(dm1_v1_original_save_pc34_roundtrip_world_file(
+              exported_path, 0x52544d32u,
+              roundtrip, sizeof(roundtrip), &roundtrip_written,
+              &import_report, &verify_report) ==
+              DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34,
+          "manifest-bearing export is rejected by original-save file route");
 
     rc = dm1_v1_original_save_classify_bytes(
         roundtrip, roundtrip_written, &classified);
@@ -1460,6 +1477,7 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
         &import_report, &verify_report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE,
           "roundtrip file helper reports missing file");
+    remove(exported_path);
     remove(fixture_path);
 }
 
