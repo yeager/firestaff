@@ -6456,6 +6456,23 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_f0248_explosion_launcher_runtime_pc34_compat
     )
 
+    add_executable(test_dm1_v1_f0248_square_object_launcher_runtime_pc34_compat
+        tests/test_dm1_v1_f0248_square_object_launcher_runtime_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0248_square_object_launcher_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_f0248_square_object_launcher_runtime_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0248_square_object_launcher_runtime_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0248_square_object_launcher_runtime_pc34_compat
+        COMMAND test_dm1_v1_f0248_square_object_launcher_runtime_pc34_compat
+    )
+
     add_executable(test_dm2_v1_wall_ornament_receipt
         tests/test_dm2_v1_wall_ornament_receipt.c
     )
@@ -22418,6 +22435,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_irq2_live_trace_gate
         COMMAND firestaff_theron_v1_irq2_live_trace_gate_probe
+    )
+
+    add_executable(firestaff_theron_v1_stage3_irq2_media_probe
+        probes/theron/firestaff_theron_v1_stage3_irq2_media_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_stage3_irq2_media_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_stage3_irq2_media_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_stage3_irq2_media_probe PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_stage3_irq2_media_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_stage3_irq2_media
+        COMMAND firestaff_theron_v1_stage3_irq2_media_probe
     )
 
     add_executable(firestaff_theron_v1_track02_ipl_loader_probe

@@ -3,6 +3,7 @@
 
 #include "theron_v1_track02.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 /*
@@ -28,6 +29,20 @@ typedef struct {
 } Theron_V1Stage3Irq2DispatchReceipt;
 
 int theron_v1_stage3_irq2_dispatch_from_dynamic_payload(
+    const Theron_Track02Stage2DynamicPayloadReceipt *payload,
+    Theron_V1Stage3Irq2DispatchReceipt *out_receipt);
+
+/* Runtime-consumable form of the dispatch receipt.  Unlike the metadata-only
+ * helper above, this reads the authenticated MODE1 user-data window and
+ * verifies the bytes that stage two transfers to $3800 before exposing BRK
+ * $ff dispatch.  It deliberately stops at the IRQ2 boundary: no manifest
+ * descriptor, palette, object, level, or subsequent CD request is inferred.
+ * ReDMCSB is not applicable here; original evidence is the Theron's Quest
+ * stage-two loader at docs/source-lock/theron-disassembly/
+ * theron-us-stage2-huc6280.asm:163-181. */
+int theron_v1_stage3_irq2_dispatch_from_original_media(
+    const uint8_t *track02_data,
+    size_t track02_size,
     const Theron_Track02Stage2DynamicPayloadReceipt *payload,
     Theron_V1Stage3Irq2DispatchReceipt *out_receipt);
 
