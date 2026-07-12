@@ -9474,6 +9474,21 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_f0249_timeline_relocation_pc34_compat
     )
 
+    add_executable(test_dm1_v1_f0245_corridor_pc34_compat
+        tests/test_dm1_v1_f0245_corridor_pc34_compat.c
+        src/dm1/dm1_v1_f0245_corridor_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0245_corridor_pc34_compat
+        PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0245_corridor_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0245_corridor_pc34_compat
+        COMMAND test_dm1_v1_f0245_corridor_pc34_compat
+    )
+
     add_executable(test_dm1_v1_group_visible_distance_pc34_compat
         tests/test_dm1_v1_group_visible_distance_pc34_compat.c
     )
