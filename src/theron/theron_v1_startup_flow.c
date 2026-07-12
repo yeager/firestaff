@@ -3076,8 +3076,7 @@ int theron_v1_startup_render_rows_build(
     }
 
     if (state->phase == THERON_STARTUP_PHASE_TITLE) {
-        return tqr_startup_render_add_row(
-            rows, max_rows, count, "PRESS ENTER TO START");
+        return count;
     }
 
     if (state->phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
