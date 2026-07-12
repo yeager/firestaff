@@ -21393,44 +21393,6 @@ static int m11_draw_dm1_inscription_glyph_line(const M11_GameViewState* state,
     return 1;
 }
 
-static void m11_draw_dm1_front_wall_inscription_patch(const M11_GameViewState* state,
-                                                      unsigned char* framebuffer,
-                                                      int fbW,
-                                                      int fbH,
-                                                      int textX,
-                                                      int textY,
-                                                      const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* plan) {
-    const M11_AssetSlot* wallSlot;
-    if (!state || !state->assetsAvailable || !framebuffer || !plan ||
-        !plan->wallPatchReady || plan->textWidth <= 0) {
-        return;
-    }
-    wallSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    M11_GFX_WALLSET0_D1C);
-    if (!wallSlot || !wallSlot->loaded || !wallSlot->pixels ||
-        wallSlot->width < 160 || wallSlot->height < 111) {
-        return;
-    }
-    /* ReDMCSB STARTUP2.C:656 binds M712_NEGGRAPHIC_ to the current
-     * D1C wall bitmap; DUNVIEW.C:3682 restores that wall patch before
-     * DUNVIEW.C:3697-3706 blits M648 glyph cells with C10 transparency.
-     * Firestaff previously painted a synthetic black/dark-gray text box,
-     * which made HoC inscriptions look unlike the source path and could
-     * mute low-index glyph strokes.  Restore the source D1C wall pixels
-     * under each 8-pixel glyph row instead. */
-    M11_AssetLoader_BlitRegion(wallSlot,
-                               plan->wallPatchSrcX,
-                               plan->wallPatchSrcY,
-                               plan->textWidth,
-                               plan->wallPatchHeight,
-                               framebuffer,
-                               fbW,
-                               fbH,
-                               textX,
-                               textY,
-                               -1);
-}
-
 static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* state,
                                                      const M11_ViewportCell* cell,
                                                      unsigned char* framebuffer,
@@ -21456,8 +21418,9 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
             if (m11_dm1_inscription_font_slot_for_glyphs(state,
                                                          decoded + drawPlan.glyphStart,
                                                          drawPlan.glyphCount)) {
-                m11_draw_dm1_front_wall_inscription_patch(state, framebuffer, fbW, fbH,
-                                                          textX, textY, &drawPlan);
+                /* ReDMCSB DUNVIEW.C F0107:3682 restores C735 from its
+                 * negative D1C bitmap before M648. This M11 path already
+                 * leaves the composed original wall intact. */
                 (void)m11_draw_dm1_inscription_glyph_line(state, framebuffer,
                                                           fbW, fbH, textX, textY,
                                                           decoded + drawPlan.glyphStart,

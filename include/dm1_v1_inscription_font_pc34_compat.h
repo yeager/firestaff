@@ -34,10 +34,6 @@ typedef struct DM1_V1_InscriptionFrontWallLineDrawPlanPc34 {
     int textX;
     int textY;
     int textWidth;
-    int wallPatchSrcX;
-    int wallPatchSrcY;
-    int wallPatchHeight;
-    int wallPatchReady;
     int nextCursor;
     int done;
 } DM1_V1_InscriptionFrontWallLineDrawPlanPc34;
@@ -416,15 +412,14 @@ static inline int DM1_V1_InscriptionBuildFrontWallLineDrawPlanPc34(
     plan.textX = linePlan.textX;
     plan.textY = linePlan.textY;
     plan.textWidth = linePlan.textWidth;
-    plan.wallPatchSrcX = linePlan.textX - 32;
-    plan.wallPatchSrcY = linePlan.textY - 9;
-    plan.wallPatchHeight = DM1_V1_INSCRIPTION_GLYPH_HEIGHT;
-    plan.wallPatchReady =
-        linePlan.textWidth > 0 &&
-        plan.wallPatchSrcX >= 0 &&
-        plan.wallPatchSrcY >= 0 &&
-        plan.wallPatchSrcX + linePlan.textWidth <= wallWidth &&
-        plan.wallPatchSrcY + plan.wallPatchHeight <= wallHeight;
+    /* ReDMCSB DUNVIEW.C F0107:3682 restores the PC 3.4 C735 zone from
+     * M712_NEGGRAPHIC_ before it blits M648.  M11 does not first paint the
+     * unreadable-inscription ornament for a readable D1C inscription, so
+     * its already-composed source wall is that zone.  Do not manufacture a
+     * per-line wall patch from unrelated coordinates: it displaces genuine
+     * GRAPHICS.DAT pixels and makes the original 8x8 glyphs look blurred. */
+    (void)wallWidth;
+    (void)wallHeight;
     plan.nextCursor = linePlan.nextCursor;
     plan.done = linePlan.done;
     *outPlan = plan;
