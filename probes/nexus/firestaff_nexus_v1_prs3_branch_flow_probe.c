@@ -69,6 +69,23 @@ typedef struct {
     size_t second_byte_extend_offset;
 } Nexus_Prs3V1ZeroSideReadReceipt;
 
+/* Direct R14 guard branches in the selected v1 route converge on one shared
+ * failure epilogue. The receipt records only that architecture-level failure
+ * return shape; it does not classify successful PRS3 data or decode it. */
+typedef struct {
+    int valid;
+    size_t refill_guard_branch_offset;
+    size_t refill_guard_target;
+    size_t fallthrough_guard_branch_offset;
+    size_t fallthrough_guard_target;
+    size_t zero_side_guard_branch_offset;
+    size_t zero_side_guard_target;
+    size_t failure_result_offset;
+    unsigned int failure_result_register;
+    int failure_result_immediate;
+    size_t return_offset;
+} Nexus_Prs3V1TerminationReceipt;
+
 static int failures;
 
 static void check(int condition, const char *message) {
@@ -310,6 +327,49 @@ static int prs3_v1_zero_side_read_receipt(
     return 1;
 }
 
+static int prs3_v1_termination_receipt(
+    const uint8_t *data, size_t size, Nexus_Prs3V1TerminationReceipt *out) {
+    Nexus_Prs3V1TerminationReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 190U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.refill_guard_branch_offset = entry + 62U;
+    receipt.fallthrough_guard_branch_offset = entry + 80U;
+    receipt.zero_side_guard_branch_offset = entry + 104U;
+    receipt.failure_result_offset = entry + 174U;
+    receipt.return_offset = entry + 188U;
+    if (!sh2_conditional_branch_target(
+            receipt.refill_guard_branch_offset,
+            read_be16(data + receipt.refill_guard_branch_offset), size,
+            &receipt.refill_guard_target) ||
+        !sh2_conditional_branch_target(
+            receipt.fallthrough_guard_branch_offset,
+            read_be16(data + receipt.fallthrough_guard_branch_offset), size,
+            &receipt.fallthrough_guard_target) ||
+        !sh2_conditional_branch_target(
+            receipt.zero_side_guard_branch_offset,
+            read_be16(data + receipt.zero_side_guard_branch_offset), size,
+            &receipt.zero_side_guard_target) ||
+        !sh2_mov_immediate_fields(read_be16(data + receipt.failure_result_offset),
+                                  &receipt.failure_result_register,
+                                  &receipt.failure_result_immediate) ||
+        read_be16(data + receipt.return_offset) != 0x000bU ||
+        receipt.refill_guard_target != entry + 166U ||
+        receipt.fallthrough_guard_target != entry + 166U ||
+        receipt.zero_side_guard_target != entry + 166U ||
+        receipt.failure_result_register != 0U || receipt.failure_result_immediate != 0) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
 static void test_synthetic_branch_flow(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Nexus_Prs3V1BranchFlowReceipt receipt;
@@ -362,6 +422,29 @@ static void test_synthetic_zero_side_read(void) {
           "SH-2 PRS3 zero side receipt rejects a non-byte-extension path");
 }
 
+static void test_synthetic_termination(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
+    Nexus_Prs3V1TerminationReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 62U] = 0x89U; fixture[entry + 63U] = 0x32U;
+    fixture[entry + 80U] = 0x89U; fixture[entry + 81U] = 0x29U;
+    fixture[entry + 104U] = 0x8bU; fixture[entry + 105U] = 0x1dU;
+    fixture[entry + 174U] = 0xe0U; fixture[entry + 175U] = 0x00U;
+    fixture[entry + 188U] = 0x00U; fixture[entry + 189U] = 0x0bU;
+    check(prs3_v1_termination_receipt(fixture, sizeof(fixture), &receipt) &&
+              receipt.valid && receipt.refill_guard_target == entry + 166U &&
+              receipt.fallthrough_guard_target == entry + 166U &&
+              receipt.zero_side_guard_target == entry + 166U &&
+              receipt.failure_result_register == 0U &&
+              receipt.failure_result_immediate == 0,
+          "SH-2 PRS3 termination receipt locks converged failure return");
+    fixture[entry + 175U] = 0x01U;
+    check(!prs3_v1_termination_receipt(fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 termination receipt rejects a nonzero failure result");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -400,9 +483,11 @@ int main(int argc, char **argv) {
     size_t size = 0U;
     Nexus_Prs3V1BranchFlowReceipt receipt;
     Nexus_Prs3V1ZeroSideReadReceipt zero_side_receipt;
+    Nexus_Prs3V1TerminationReceipt termination_receipt;
 
     test_synthetic_branch_flow();
     test_synthetic_zero_side_read();
+    test_synthetic_termination();
     if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
@@ -428,6 +513,9 @@ int main(int argc, char **argv) {
         check(prs3_v1_zero_side_read_receipt(data, size, &zero_side_receipt) &&
                   zero_side_receipt.valid,
               "DM.BIN locks the PRS3 v1 zero-side two-byte continuation");
+        check(prs3_v1_termination_receipt(data, size, &termination_receipt) &&
+                  termination_receipt.valid,
+              "DM.BIN locks the PRS3 v1 converged failure return");
         if (receipt.valid) {
             printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
                    "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
@@ -455,6 +543,18 @@ int main(int argc, char **argv) {
                    zero_side_receipt.second_byte_load_offset,
                    zero_side_receipt.second_byte_cursor_register,
                    zero_side_receipt.second_byte_value_register);
+        }
+        if (termination_receipt.valid) {
+            printf("SH-2 PRS3 v1 termination: guards=%zu,%zu,%zu->%zu "
+                   "result=%zu R%u=%d return=%zu; codec-success-proof=0\n",
+                   termination_receipt.refill_guard_branch_offset,
+                   termination_receipt.fallthrough_guard_branch_offset,
+                   termination_receipt.zero_side_guard_branch_offset,
+                   termination_receipt.failure_result_offset,
+                   termination_receipt.failure_result_offset,
+                   termination_receipt.failure_result_register,
+                   termination_receipt.failure_result_immediate,
+                   termination_receipt.return_offset);
         }
     }
     free(data);
