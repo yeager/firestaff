@@ -1278,6 +1278,7 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
 
 static int m11_play_redmcsb_title_graphic_intro_if_available(
     M11_GameViewState* gameView,
+    const char* sourceId,
     int* outPlayedAnyFrame,
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* dm1MediaReceipt) {
     const M11_AssetSlot* titleGraphic;
@@ -1292,7 +1293,11 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
     }
-    if (!gameView || !gameView->assetsAvailable) {
+    /* ReDMCSB TITLE.C has separate PC/F20 and CSB/A31 implementations.
+     * C001 plus C12/C13/C14 is the PC/F20 DM1 contract only; never let a
+     * caller selecting CSB consume this DM1 asset/palette route. */
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(sourceId) ||
+        !gameView || !gameView->assetsAvailable) {
         return 0;
     }
     titleGraphic = M11_AssetLoader_Load(&gameView->assetLoader, 1U);
@@ -1441,6 +1446,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
 
 static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState* menuState,
                                                       M11_GameViewState* gameView,
+                                                      const char* sourceId,
                                                       int* outPlayedAnyFrame,
                                                       const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
                                                           dm1MediaReceipt) {
@@ -1456,10 +1462,16 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media;
 
+    /* TITLE.C:309-409 is the DM1 PC/F20 branch. CSB enters the distinct
+     * A31 branch at TITLE.C:412 and must use its own title implementation. */
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(sourceId)) {
+        return;
+    }
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
     }
     if (m11_play_redmcsb_title_graphic_intro_if_available(gameView,
+                                                          sourceId,
                                                           outPlayedAnyFrame,
                                                           dm1MediaReceipt)) {
         return;
@@ -1672,8 +1684,8 @@ static int m11_dm1_handoff_play_title(void* user,
                                       int* out_played_any_frame) {
     M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media = NULL;
-    (void)source_id;
-    if (!ctx) {
+    if (!ctx ||
+        !dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
         return 0;
     }
     if (ctx->activePostLaunchPlanValid &&
@@ -1682,6 +1694,7 @@ static int m11_dm1_handoff_play_title(void* user,
     }
     m11_play_redmcsb_title_intro_if_available(ctx->menuState,
                                               ctx->gameView,
+                                              source_id,
                                               out_played_any_frame,
                                               media);
     return 1;

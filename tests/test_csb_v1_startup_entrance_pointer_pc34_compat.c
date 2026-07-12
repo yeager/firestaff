@@ -540,13 +540,16 @@ int main(void)
                   CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34,
           "startup render plan owns title clear and draw command");
     check(csb_v1_startup_title_presents_ticks_pc34() == 60 &&
-              csb_v1_startup_title_total_ticks_pc34() == 81 &&
+              csb_v1_startup_title_chaos_zoom_ticks_pc34() == 20 &&
+              csb_v1_startup_title_chaos_hold_ticks_pc34() == 20 &&
+              csb_v1_startup_title_strikes_back_ticks_pc34() == 2 &&
+              csb_v1_startup_title_total_ticks_pc34() == 102 &&
               csb_v1_startup_title_source_step_for_frame_pc34(59) == 1 &&
               csb_v1_startup_title_source_step_for_frame_pc34(60) == 2 &&
-              csb_v1_startup_title_source_step_for_frame_pc34(77) == 19 &&
-              csb_v1_startup_title_source_step_for_frame_pc34(79) == 19 &&
-              csb_v1_startup_title_source_step_for_frame_pc34(80) == 20 &&
-              csb_v1_startup_title_stage_for_frame_pc34(80) ==
+              csb_v1_startup_title_source_step_for_frame_pc34(79) == 21 &&
+              csb_v1_startup_title_source_step_for_frame_pc34(99) == 21 &&
+              csb_v1_startup_title_source_step_for_frame_pc34(100) == 22 &&
+              csb_v1_startup_title_stage_for_frame_pc34(100) ==
                   CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
           "startup title timing preserves CSB PRESENTS/CHAOS/STRIKES timing");
 
@@ -564,10 +567,10 @@ int main(void)
                   CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34 &&
               plan.title_transparent_color == -1 &&
               plan.title_empty_fallback_text == NULL &&
-              plan.title_dest_x == 136 &&
-              plan.title_dest_y == 74 &&
-              plan.title_dest_w == 48 &&
-              plan.title_dest_h == 12 &&
+              plan.title_dest_x == 152 &&
+              plan.title_dest_y == 78 &&
+              plan.title_dest_w == 16 &&
+              plan.title_dest_h == 4 &&
               plan.title_special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
               plan.special_palette ==
@@ -580,10 +583,10 @@ int main(void)
               plan.asset_commands[0].source_y == 0 &&
               plan.asset_commands[0].source_w == 320 &&
               plan.asset_commands[0].source_h == 80 &&
-              plan.asset_commands[0].dest_x == 136 &&
-              plan.asset_commands[0].dest_y == 74 &&
-              plan.asset_commands[0].dest_w == 48 &&
-              plan.asset_commands[0].dest_h == 12,
+              plan.asset_commands[0].dest_x == 152 &&
+              plan.asset_commands[0].dest_y == 78 &&
+              plan.asset_commands[0].dest_w == 16 &&
+              plan.asset_commands[0].dest_h == 4,
           "startup render plan exposes title CHAOS zoom stage, boxes, palette, and asset blit");
 
     render_state.title_frame =

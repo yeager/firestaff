@@ -3348,6 +3348,11 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
         framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
+    /* ReDMCSB TITLE.C F0437 clears to black before its C424/C425/C426
+     * phase work.  Clearing afterwards discards phase primitives on the
+     * real title route. */
+    memset(framebuffer, 0,
+           (size_t)framebufferWidth * (size_t)framebufferHeight);
     m11_execute_csb_startup_primitive_commands(framebuffer,
                                                framebufferWidth,
                                                framebufferHeight,
@@ -3379,8 +3384,6 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                            plan);
         return;
     }
-    memset(framebuffer, 0,
-           (size_t)framebufferWidth * (size_t)framebufferHeight);
     if (plan->title_blit_kind == CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34) {
         M11_AssetLoader_BlitRegion(title_graphic,
                                    plan->title_source_x,
