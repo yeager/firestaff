@@ -3379,13 +3379,50 @@ static int orch_dispatch_square_state_event_compat(
     case DM1_EVENT_TELEPORTER:
     case DM1_EVENT_PIT:
         /* ReDMCSB TIMELINE.C F0250/F0251 opens the square before F0249
-         * re-submits its resident Things to F0267 at the same coordinates.
-         * The non-group live-chain branch is complete here; party/group
-         * transitions retain their dedicated F0267 owners. */
+         * re-submits party and its resident Things to F0267 at the same
+         * coordinates. The group branch retains its dedicated active-group
+         * F0267 owner. */
         if (effect == DOOR_EFFECT_TOGGLE) effect = (*square & 0x08) ?
             DOOR_EFFECT_CLEAR : DOOR_EFFECT_SET;
         if (effect == DOOR_EFFECT_SET) {
+            int championIndex;
+
             *square |= 0x08u;
+            /* ReDMCSB TIMELINE.C F0249:1382-1385 re-enters F0267 with
+             * THING_PARTY before it walks the group/object chain. Reuse the
+             * existing party F0267 environment resolver so opening a square
+             * below the party immediately applies its original destination,
+             * rotation, and pit damage. */
+            if (world->party.mapIndex == ev->mapIndex &&
+                world->party.mapX == ev->mapX &&
+                world->party.mapY == ev->mapY) {
+                struct PostMoveResolution_Compat postMove;
+
+                memset(&postMove, 0, sizeof(postMove));
+                if (F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+                        world->dungeon, world->things, &world->party,
+                        world->gameTick, &postMove)) {
+                    world->party.mapIndex = postMove.finalMapIndex;
+                    world->party.mapX = postMove.finalMapX;
+                    world->party.mapY = postMove.finalMapY;
+                    (void)F0284_CHAMPION_SetPartyDirection_Compat(
+                        &world->party, postMove.finalDirection);
+                    world->partyMapIndex = postMove.finalMapIndex;
+                    for (championIndex = 0;
+                         championIndex < CHAMPION_MAX_PARTY;
+                         ++championIndex) {
+                        int damage = postMove.championFallDamage[championIndex];
+                        if (damage > 0 &&
+                            world->party.champions[championIndex].present &&
+                            world->party.champions[championIndex].hp.current > 0) {
+                            int health = world->party.champions[championIndex].hp.current -
+                                         damage;
+                            world->party.champions[championIndex].hp.current =
+                                (int16_t)(health > 0 ? health : 0);
+                        }
+                    }
+                }
+            }
             return orch_f0249_move_non_group_square_things_compat(
                 world, ev->mapIndex, ev->mapX, ev->mapY);
         }

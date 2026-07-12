@@ -266,6 +266,23 @@ typedef struct {
     size_t loop_back_target;
 } Sh2Prs3Version1ControlSentinelEvidence;
 
+/* The zero-low-bit side branch has a separate bounded gate: it subtracts two
+ * from R14, checks R14 with CMP/PZ, and takes a direct rejection edge before
+ * the remaining side-path body when that check fails. This proves only an
+ * R14 counter transition and branch shape, not a PRS3 token length, command,
+ * payload boundary, or frame completion condition. */
+typedef struct {
+    int valid;
+    size_t zero_bit_branch_offset;
+    size_t zero_bit_branch_target;
+    size_t counter_decrement_offset;
+    unsigned int counter_register;
+    int counter_decrement;
+    size_t counter_nonnegative_test_offset;
+    size_t rejection_branch_offset;
+    size_t rejection_target;
+} Sh2Prs3Version1ZeroBitGateEvidence;
+
 /* The available flat DM.BIN image has no encoded direct predecessor for the
  * dispatcher entry and no PC-relative literal that materializes its work-RAM
  * address. This is a negative locator receipt only: an external, indirect, or
@@ -1169,6 +1186,43 @@ static int sh2_prs3_version1_control_sentinel_evidence(
     return 1;
 }
 
+static int sh2_prs3_version1_zero_bit_gate_evidence(
+    const uint8_t *data, size_t data_size,
+    Sh2Prs3Version1ZeroBitGateEvidence *out_evidence) {
+    Sh2Prs3Version1ZeroBitGateEvidence evidence;
+
+    memset(&evidence, 0, sizeof(evidence));
+    if (!data || NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 168U > data_size) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+    evidence.zero_bit_branch_offset = NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 76U;
+    evidence.counter_decrement_offset = NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 100U;
+    evidence.counter_nonnegative_test_offset = evidence.counter_decrement_offset + 2U;
+    evidence.rejection_branch_offset = evidence.counter_decrement_offset + 4U;
+    if (!sh2_conditional_branch_target(
+            evidence.zero_bit_branch_offset,
+            read_be16(data + evidence.zero_bit_branch_offset), data_size,
+            &evidence.zero_bit_branch_target) ||
+        !sh2_add_immediate_fields(
+            read_be16(data + evidence.counter_decrement_offset),
+            &evidence.counter_register, &evidence.counter_decrement) ||
+        read_be16(data + evidence.counter_nonnegative_test_offset) != 0x4e11U ||
+        !sh2_conditional_branch_target(
+            evidence.rejection_branch_offset,
+            read_be16(data + evidence.rejection_branch_offset), data_size,
+            &evidence.rejection_target) ||
+        evidence.zero_bit_branch_target != evidence.counter_decrement_offset ||
+        evidence.counter_register != 14U || evidence.counter_decrement != -2 ||
+        evidence.rejection_target != NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 166U) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+    evidence.valid = 1;
+    if (out_evidence) *out_evidence = evidence;
+    return 1;
+}
+
 static int sh2_prs3_header_guard_evidence(const uint8_t *data,
                                           size_t data_size) {
     static const uint16_t predicate[] = {
@@ -1488,6 +1542,32 @@ static void test_sh2_version1_control_sentinel_evidence(void) {
           "SH-2 control-sentinel evidence rejects a non-OR refill operation");
 }
 
+static void test_sh2_version1_zero_bit_gate_evidence(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
+    Sh2Prs3Version1ZeroBitGateEvidence evidence;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 76U] = 0x89U;
+    fixture[entry + 77U] = 0x0aU; /* BT -> entry + 100 */
+    fixture[entry + 100U] = 0x7eU;
+    fixture[entry + 101U] = 0xfeU; /* ADD #-2,R14 */
+    fixture[entry + 102U] = 0x4eU;
+    fixture[entry + 103U] = 0x11U; /* CMP/PZ R14 */
+    fixture[entry + 104U] = 0x8bU;
+    fixture[entry + 105U] = 0x1dU; /* BF -> entry + 166 */
+    check(sh2_prs3_version1_zero_bit_gate_evidence(
+              fixture, sizeof(fixture), &evidence) && evidence.valid &&
+              evidence.zero_bit_branch_target == entry + 100U &&
+              evidence.counter_register == 14U && evidence.counter_decrement == -2 &&
+              evidence.rejection_target == entry + 166U,
+          "SH-2 zero-bit gate evidence locks the R14 decrement and rejection edge");
+    fixture[entry + 101U] = 0xffU;
+    check(!sh2_prs3_version1_zero_bit_gate_evidence(
+              fixture, sizeof(fixture), &evidence),
+          "SH-2 zero-bit gate evidence rejects a different counter decrement");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -1534,6 +1614,7 @@ int main(int argc, char **argv) {
     Sh2Prs3Version1WordLifetimeEvidence word_lifetime_evidence;
     Sh2Prs3Version1StreamReadEvidence stream_read_evidence;
     Sh2Prs3Version1ControlSentinelEvidence control_sentinel_evidence;
+    Sh2Prs3Version1ZeroBitGateEvidence zero_bit_gate_evidence;
     Sh2Prs3DispatcherCallerEvidence dispatcher_caller_evidence;
     Sh2Prs3BootstrapEvidence bootstrap_evidence;
     Sh2Prs3MapBoundaryEvidence map_boundary_evidence;
@@ -1547,6 +1628,7 @@ int main(int argc, char **argv) {
     test_sh2_dispatcher_caller_scanner();
     test_sh2_version1_stream_read_evidence();
     test_sh2_version1_control_sentinel_evidence();
+    test_sh2_version1_zero_bit_gate_evidence();
 
     if (!data_dir) {
         home = getenv("HOME");
@@ -1625,6 +1707,12 @@ int main(int argc, char **argv) {
                   control_sentinel_evidence.sentinel_word == 0x0100U &&
                   control_sentinel_evidence.refill_marker_word == 0x0000ff00U,
               "DM.BIN version-1 callee proves its R11 refill sentinel protocol");
+        check(sh2_prs3_version1_zero_bit_gate_evidence(
+                  dm, dm_size, &zero_bit_gate_evidence) &&
+                  zero_bit_gate_evidence.valid &&
+                  zero_bit_gate_evidence.counter_register == 14U &&
+                  zero_bit_gate_evidence.counter_decrement == -2,
+              "DM.BIN version-1 zero-bit side route proves its bounded R14 gate");
         check(sh2_prs3_dispatcher_caller_evidence(
                   dm, dm_size, &dispatcher_caller_evidence) &&
                   dispatcher_caller_evidence.valid &&
@@ -1807,6 +1895,19 @@ int main(int argc, char **argv) {
                    control_sentinel_evidence.refill_marker_or_destination_register,
                    control_sentinel_evidence.loop_back_branch_offset,
                    control_sentinel_evidence.loop_back_target);
+        }
+        if (zero_bit_gate_evidence.valid) {
+            printf("SH-2 PRS3 version-1 zero-bit gate: branch=%zu->%zu "
+                   "counter=%zu R%u%+d cmp-pz=%zu reject=%zu->%zu; "
+                   "token/termination-proof=0\n",
+                   zero_bit_gate_evidence.zero_bit_branch_offset,
+                   zero_bit_gate_evidence.zero_bit_branch_target,
+                   zero_bit_gate_evidence.counter_decrement_offset,
+                   zero_bit_gate_evidence.counter_register,
+                   zero_bit_gate_evidence.counter_decrement,
+                   zero_bit_gate_evidence.counter_nonnegative_test_offset,
+                   zero_bit_gate_evidence.rejection_branch_offset,
+                   zero_bit_gate_evidence.rejection_target);
         }
         if (dispatcher_caller_evidence.valid) {
             printf("SH-2 PRS3 dispatcher caller scan: entry=%zu address=%08x "
