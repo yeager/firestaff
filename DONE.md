@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 DGN Structure1G sequence-to-payload-window receipt:
+  the original LEV00-LEV15 probe now proves all 154 raw sequence image indexes
+  reach local Structure2 descriptors whose 282 nonzero numeric targets stay
+  inside their opaque post-`FFFF` spans (zero outside). This is numeric
+  sequence-to-window dataflow only, not an offset base, record grammar,
+  payload bytes, palette/image role, decoder, animation, or rendering.
+  Verification: direct strict-C11 probe against all 16 original DGN files
+  PASS.
+
 - 2026-07-12 Nexus V1 DGN Structure1F all-family receipt: the real
   LEV00-LEV15 probe now verifies copied raw fields for all 1,749 typed
   Structure1F records across all six families, including copied Structure1A

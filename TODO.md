@@ -236,6 +236,11 @@ reach one `FFFF` terminator and contain no unclassified instruction words
 before it (154 image-index instructions and 51 backward gotos). This proves a
 bounded raw control envelope only, not timing, stepping, payload semantics,
 decoder, or rendering.
+2026-07-12 update: the 154 raw sequence image indexes now each reach their
+local Structure2 descriptor fields; together their 282 nonzero numeric
+targets stay within the descriptors' opaque post-`FFFF` spans (zero outside).
+This is numeric sequence-to-window dataflow only, not an offset base, record
+grammar, payload bytes, palette/image role, decoder, animation, or rendering.
 
 The Structure1F handoff and DGN render-plan receipt now separate the six
 documented direct-coordinate records (items, floor decorations, floor
