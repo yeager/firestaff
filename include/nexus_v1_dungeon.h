@@ -473,6 +473,13 @@ typedef struct {
     int structure1f_family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
     int structure1f_typed_entry_count;
     Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
+    /* Direct-coordinate Structure1F records whose documented 64x64 source
+     * cell appears in this DGN plan. This is provenance only: no record is
+     * interpreted as an object, sensor, trigger, or draw command. */
+    int structure1f_plan_direct_entry_count;
+    int structure1f_plan_item_entry_count;
+    int structure1f_plan_floor_decoration_entry_count;
+    int structure1f_plan_floor_sensor_entry_count;
     int structure1g_present;
     int structure1g_valid;
     int structure1g_animated_texture_count;

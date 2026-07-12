@@ -103,6 +103,22 @@ int csb_v1_csbgraphics_runtime_prepare_and_apply(
     int framebuffer_stride,
     CSB_V1_CSBGraphicsRuntimeBinding *out_binding);
 
+/* ReDMCSB PANEL.C F0346 line 1632 draws C040 after F0346/F0352 has
+ * expanded C017 into the viewport (line 2376).  Validate both trusted
+ * original-data bindings before touching the framebuffer, then preserve that
+ * source order so a rejected C040 can never leave a half-updated HUD. */
+int csb_v1_csbgraphics_runtime_prepare_and_apply_hud_pair(
+    const CSB_V1_CSBGraphicsEntrySpan *inventory_span,
+    const CSB_V1_CSBGraphicsDecodedBitmap *inventory_decoded,
+    const CSB_V1_CSBGraphicsEntrySpan *resurrect_span,
+    const CSB_V1_CSBGraphicsDecodedBitmap *resurrect_decoded,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int framebuffer_stride,
+    CSB_V1_CSBGraphicsRuntimeBinding *out_inventory_binding,
+    CSB_V1_CSBGraphicsRuntimeBinding *out_resurrect_binding);
+
 int csb_v1_csbgraphics_runtime_decode_entry_and_apply(
     const uint8_t *csbgraphics_bytes,
     size_t csbgraphics_size,

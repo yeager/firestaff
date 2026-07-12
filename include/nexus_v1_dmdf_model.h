@@ -207,6 +207,8 @@ typedef struct {
     uint32_t command_count;
     uint32_t material_surface_count;
     uint32_t missing_material_count;
+    uint32_t unique_material_id_count;
+    uint32_t covered_unique_material_id_count;
     uint8_t first_missing_material_id;
     int covered;
     int fallback_visuals_permitted;

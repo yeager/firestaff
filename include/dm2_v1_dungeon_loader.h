@@ -495,6 +495,18 @@ int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
     void *read_userdata,
     DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out);
 
+/* DRAW_DEFAULT_DOOR_BUTTON can consume a WALL_GFX image only after the
+ * direct DB2/DB3 record path has materialized that exact graphic index.
+ * Both currently source-bounded paths select image field 1. */
+int dm2_v1_g1_text_wall_gfx_allows_button_material(
+    const DM2_V1_G1TextWallGfxRuntimeReceipt *receipt,
+    int wall_gfx_index,
+    int image_field);
+int dm2_v1_g1_actuator_wall_gfx_allows_button_material(
+    const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *receipt,
+    int wall_gfx_index,
+    int image_field);
+
 /* Direct or source-proven extension DB4 roots only. It binds
  * Creature::CreatureType() to CREATURES/type dtImage/F9 raw ownership, not
  * sprite decoding, animation selection, palette conversion, or drawing. */

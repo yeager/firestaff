@@ -950,6 +950,19 @@ void dm2_v1_viewport_set_g1_creature_map_chip_materials(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_g1_wall_gfx_materials(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_G1TextWallGfxRuntimeReceipt *text_receipt,
+    const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *actuator_receipt)
+{
+    if (!s) return;
+    s->g1_text_wall_gfx_materials =
+        text_receipt && text_receipt->valid ? text_receipt : NULL;
+    s->g1_actuator_wall_gfx_materials =
+        actuator_receipt && actuator_receipt->valid ? actuator_receipt : NULL;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_gdat_interface_hud_layout(
     DM2_V1_ViewportState *s,
     const DM2_V1_InterfaceHudLayout *layout)
@@ -3213,6 +3226,15 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         return;
     }
 
+    /* skproject DRAW_WALL queries GRAPHICSSET with the live MapGraphicsStyle.
+     * The default set is only a data-free renderer convenience; it must not
+     * substitute for a missing source-owned scene-control receipt. */
+    if (s->source_materials_required && !s->gdat_scene_control_ready) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
+        return;
+    }
+
     if (!dm2_v1_viewport_build_wall_panel_render_plan(s, &plan)) {
         return;
     }
@@ -3546,8 +3568,27 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int button_w = 0;
             int button_h = 0;
             int button_stride = 0;
+            int wall_button_material_bound =
+                door->button_source_kind != 2 ||
+                (s->g1_text_wall_gfx_materials &&
+                 s->g1_text_wall_gfx_materials->map == s->dungeon_level &&
+                 dm2_v1_g1_text_wall_gfx_allows_button_material(
+                     s->g1_text_wall_gfx_materials,
+                     door->wall_button_index,
+                     door->wall_button_field)) ||
+                (s->g1_actuator_wall_gfx_materials &&
+                 s->g1_actuator_wall_gfx_materials->map == s->dungeon_level &&
+                 dm2_v1_g1_actuator_wall_gfx_allows_button_material(
+                     s->g1_actuator_wall_gfx_materials,
+                     door->wall_button_index,
+                     door->wall_button_field));
 
-            if (dm2_v1_fetch_viewport_asset(s,
+            /* skproject DRAW_DEFAULT_DOOR_BUTTON reaches the custom button
+             * through the current WALL_GFX owner. Do not let the generic
+             * view-square helper pick a same-numbered GDAT image unless the
+             * direct DB2/DB3 receipt proves that ownership. */
+            if ((!s->source_materials_required || wall_button_material_bound) &&
+                dm2_v1_fetch_viewport_asset(s,
                                             door->button_gdat_index,
                                             &button_pixels,
                                             &button_w,
@@ -3592,7 +3633,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 }
             }
             if (s->source_materials_required &&
-                !button_drawn_asset) {
+                (!wall_button_material_bound || !button_drawn_asset)) {
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
             }

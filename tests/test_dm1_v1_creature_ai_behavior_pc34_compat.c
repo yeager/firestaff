@@ -536,6 +536,101 @@ static void test_set_group_direction(void) {
 }
 
 /* =========================================================
+ *  Test 12b: F0202 typed destination facts keep source order
+ * ========================================================= */
+static void test_group_movement_facts(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1GroupMovementFacts_Compat* facts;
+    int wall = 0, door = 0, party = 0, group = 0;
+
+    facts = &ctx.groupMovementFacts[1];
+    memset(facts, 0, sizeof(*facts));
+    facts->available = 1;
+    facts->inBounds = 1;
+
+    EXPECT_EQ(F0811_DM1_GROUP_IsMovementPossible_Compat(
+                  &ctx, 1, 0, &wall, &door, &party, &group),
+              1, "movement_facts: clear corridor is possible");
+
+    facts->isOpenPit = 1;
+    wall = door = party = group = 0;
+    EXPECT_EQ(F0811_DM1_GROUP_IsMovementPossible_Compat(
+                  &ctx, 1, 0, &wall, &door, &party, &group),
+              0, "movement_facts: open pit blocks non-levitating group");
+    EXPECT_EQ(wall, 1, "movement_facts: open pit reports F0202 terrain block");
+
+    facts->isImaginaryPit = 1;
+    wall = 0;
+    EXPECT_EQ(F0811_DM1_GROUP_IsMovementPossible_Compat(
+                  &ctx, 1, 1, &wall, &door, &party, &group),
+              1, "movement_facts: permitted imaginary pit is passable");
+
+    facts->isOpenPit = 0;
+    facts->isImaginaryPit = 0;
+    facts->occupiedByParty = 1;
+    party = 0;
+    EXPECT_EQ(F0811_DM1_GROUP_IsMovementPossible_Compat(
+                  &ctx, 1, 0, &wall, &door, &party, &group),
+              0, "movement_facts: party blocks after terrain checks");
+    EXPECT_EQ(party, 1, "movement_facts: party gets its F0202 blocker flag");
+
+    facts->occupiedByParty = 0;
+    facts->doorBlocksCreature = 1;
+    door = 0;
+    EXPECT_EQ(F0811_DM1_GROUP_IsMovementPossible_Compat(
+                  &ctx, 1, 0, &wall, &door, &party, &group),
+              0, "movement_facts: closed door blocks after party check");
+    EXPECT_EQ(door, 1, "movement_facts: closed door gets F0202 door flag");
+
+    facts->doorBlocksCreature = 0;
+    facts->occupiedByGroup = 1;
+    group = 0;
+    EXPECT_EQ(F0811_DM1_GROUP_IsMovementPossible_Compat(
+                  &ctx, 1, 0, &wall, &door, &party, &group),
+              0, "movement_facts: destination group blocks last");
+    EXPECT_EQ(group, 1, "movement_facts: group gets F0202 group flag");
+
+    facts->occupiedByGroup = 0;
+    facts->hasFluxcage = 1;
+    ctx.creatureInfo.attributes = 0;
+    EXPECT_EQ(F0811_DM1_GROUP_IsMovementPossible_Compat(
+                  &ctx, 1, 0, &wall, &door, &party, &group),
+              1, "movement_facts: Fluxcage does not block ordinary group");
+    ctx.creatureInfo.attributes = DM1_ATTR_ARCHENEMY;
+    wall = 0;
+    EXPECT_EQ(F0811_DM1_GROUP_IsMovementPossible_Compat(
+                  &ctx, 1, 0, &wall, &door, &party, &group),
+              0, "movement_facts: Fluxcage blocks archenemy group");
+    EXPECT_EQ(wall, 1, "movement_facts: Fluxcage reports terrain blocker");
+}
+
+/* =========================================================
+ *  Test 12c: F0209 single-square move consumes F0202 facts
+ * ========================================================= */
+static void test_single_square_move_uses_typed_facts(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct RngState_Compat rng = make_rng(3);
+    int direction = -1;
+
+    /* Primary east is a wall. Secondary south is a closed imaginary
+     * fakewall; ReDMCSB GROUP.C F0209 permits it only when M005_RANDOM(2)
+     * is non-zero. Seed 3 takes that original branch. */
+    ctx.groupMovementFacts[1].available = 1;
+    ctx.groupMovementFacts[1].inBounds = 1;
+    ctx.groupMovementFacts[1].isWall = 1;
+    ctx.groupMovementFacts[2].available = 1;
+    ctx.groupMovementFacts[2].inBounds = 1;
+    ctx.groupMovementFacts[2].isFakeWall = 1;
+    ctx.groupMovementFacts[2].isImaginaryFakeWall = 1;
+
+    EXPECT_EQ(F0813_DM1_GROUP_PickSingleSquareMove_Compat(
+                  &ctx, 1, 2, 1, &rng, &direction),
+              1, "single_square_facts: source move selection succeeds");
+    EXPECT_EQ(direction, 2,
+              "single_square_facts: F0209 accepts secondary imaginary fakewall on nonzero RNG");
+}
+
+/* =========================================================
  *  Test 13: Smell direction
  * ========================================================= */
 static void test_smell_direction(void) {
@@ -1327,6 +1422,8 @@ int main(void) {
     test_vexirk_projectile_type_table();
     test_dispatch_projectile_payload();
     test_set_group_direction();
+    test_group_movement_facts();
+    test_single_square_move_uses_typed_facts();
     test_smell_direction();
     test_smell_direction_requires_unblocked_route();
     test_smell_direction_stored_scent_fallback();

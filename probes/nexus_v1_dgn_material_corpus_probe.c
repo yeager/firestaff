@@ -3,12 +3,134 @@
 #include <stdio.h>
 #include <string.h>
 
+/* The corpus audit identifies selector values but does not itself exercise a
+ * runtime pose. This verifies that the first real, unbound ceiling selector
+ * reaches the plan gate and remains no-draw. */
+static int prove_missing_ceiling_selector_blocks(Nexus_V1_Engine *engine,
+                                                 int *out_level,
+                                                 int *out_x,
+                                                 int *out_y,
+                                                 int *out_selector)
+{
+    int level_index;
+
+    if (out_level) *out_level = -1;
+    if (out_x) *out_x = -1;
+    if (out_y) *out_y = -1;
+    if (out_selector) *out_selector = -1;
+    if (!engine) return 0;
+
+    for (level_index = 0; level_index < 16; ++level_index) {
+        int y;
+        if (nexus_v1_load_level(engine, level_index) != 0) continue;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
+            int x;
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
+                const Nexus_V1_DgnMaterialPlan *plan;
+                const Nexus_V1_DgnRenderPlanReceipt *receipt;
+                int selector = engine->current_level.ceiling_material_refs[y][x];
+
+                if (selector < 0 || selector >= NEXUS_DMDF_MATERIAL_COUNT ||
+                    engine->floor_materials.surfaces[selector].valid ||
+                    engine->current_level.squares[y][x] == 0 ||
+                    engine->current_level.floor_animation_ids[y][x] != 0xffU) {
+                    continue;
+                }
+                nexus_v1_sync_dgn_runtime_pose(engine, level_index, x, y, 0);
+                plan = nexus_v1_prepare_dgn_material_plan(engine, x, y, 0);
+                receipt = &engine->dgn_material_plan.receipt;
+                if (!plan && receipt->blocks_real_dgn_mesh_render &&
+                    !receipt->fallback_visuals_permitted &&
+                    receipt->missing_material_count > 0 &&
+                    receipt->first_missing_material_id == (uint8_t)selector) {
+                    if (out_level) *out_level = level_index;
+                    if (out_x) *out_x = x;
+                    if (out_y) *out_y = y;
+                    if (out_selector) *out_selector = selector;
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+static int prove_structure1f_direct_entries_reach_plan(Nexus_V1_Engine *engine,
+                                                        int *out_level,
+                                                        int *out_x,
+                                                        int *out_y,
+                                                        int *out_entry_count)
+{
+    int level_index;
+
+    if (out_level) *out_level = -1;
+    if (out_x) *out_x = -1;
+    if (out_y) *out_y = -1;
+    if (out_entry_count) *out_entry_count = 0;
+    if (!engine) return 0;
+
+    for (level_index = 0; level_index < 16; ++level_index) {
+        int entry_index;
+        if (nexus_v1_load_level(engine, level_index) != 0) continue;
+        for (entry_index = 0;
+             entry_index < engine->current_level.structure1f_entry_count;
+             ++entry_index) {
+            const Nexus_V1_DgnStructure1FEntry *entry =
+                &engine->current_level.structure1f_entries[entry_index];
+            int direction;
+
+            if (entry->family != NEXUS_V1_DGN_STRUCTURE1F_ITEMS &&
+                entry->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS &&
+                entry->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS) {
+                continue;
+            }
+            if (entry->x >= NEXUS_MAX_MAP_SIZE || entry->y >= NEXUS_MAX_MAP_SIZE ||
+                engine->current_level.squares[entry->y][entry->x] == 0 ||
+                engine->current_level.floor_animation_ids[entry->y][entry->x] != 0xffU) {
+                continue;
+            }
+            for (direction = 0; direction < 4; ++direction) {
+                const Nexus_V1_DgnMaterialPlan *plan;
+                const Nexus_V1_DgnRenderPlanReceipt *receipt;
+
+                nexus_v1_sync_dgn_runtime_pose(engine, level_index,
+                                                entry->x, entry->y, direction);
+                plan = nexus_v1_prepare_dgn_material_plan(
+                    engine, entry->x, entry->y, direction);
+                receipt = &engine->dgn_material_plan.receipt;
+                if (plan && receipt->plan_ready &&
+                    !receipt->blocks_real_dgn_mesh_render &&
+                    !receipt->fallback_visuals_permitted &&
+                    receipt->structure1f_plan_direct_entry_count > 0) {
+                    if (out_level) *out_level = level_index;
+                    if (out_x) *out_x = entry->x;
+                    if (out_y) *out_y = entry->y;
+                    if (out_entry_count) {
+                        *out_entry_count =
+                            receipt->structure1f_plan_direct_entry_count;
+                    }
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 /* Skip-safe real-media probe. It reports typed Structure1B selectors,
  * Structure1G declarations, and the bounded Structure2 descriptor envelope;
  * opaque Structure2 bytes remain unexamined and never become materials. */
 int main(int argc, char **argv) {
     Nexus_V1_Engine engine;
     Nexus_V1_DgnMaterialCorpusReceipt receipt;
+    int missing_level;
+    int missing_x;
+    int missing_y;
+    int missing_selector;
+    int structure1f_level;
+    int structure1f_x;
+    int structure1f_y;
+    int structure1f_entry_count;
     const char *root = argc > 1 ? argv[1] : NULL;
 
     memset(&engine, 0, sizeof(engine));
@@ -21,10 +143,13 @@ int main(int argc, char **argv) {
     printf("LEV corpus: readable=%d parsed=%d geometry=%d expected=%d\n",
            receipt.readable_level_count, receipt.parsed_level_count,
            receipt.geometry_ready_level_count, receipt.expected_level_count);
-    printf("Material refs: floor=%u ceiling=%u wall=%u\n",
+    printf("Material refs: floor=%u/%u ceiling=%u/%u wall=%u/%u\n",
            receipt.floor_coverage.command_count,
+           receipt.floor_coverage.unique_material_id_count,
            receipt.ceiling_coverage.command_count,
-           receipt.wall_coverage.command_count);
+           receipt.ceiling_coverage.unique_material_id_count,
+           receipt.wall_coverage.command_count,
+           receipt.wall_coverage.unique_material_id_count);
     printf("Typed DGN: 1F levels=%d entries=%d; 1G present=%d valid=%d "
            "animations=%d sequences=%d images=%d gotos=%d "
            "animated-floors=%d bound=%d\n",
@@ -60,6 +185,37 @@ int main(int argc, char **argv) {
            receipt.static_mns_host_route_complete,
            receipt.bpk_host_routes_complete,
            receipt.host_route_evidence_complete);
+    printf("Selector surfaces: floor=%u/%u ceiling=%u/%u wall=%u/%u; "
+           "first missing ceiling=%u wall=%u\n",
+           receipt.floor_coverage.covered_unique_material_id_count,
+           receipt.floor_coverage.unique_material_id_count,
+           receipt.ceiling_coverage.covered_unique_material_id_count,
+           receipt.ceiling_coverage.unique_material_id_count,
+           receipt.wall_coverage.covered_unique_material_id_count,
+           receipt.wall_coverage.unique_material_id_count,
+           receipt.ceiling_coverage.first_missing_material_id,
+           receipt.wall_coverage.first_missing_material_id);
+    if (prove_missing_ceiling_selector_blocks(&engine, &missing_level,
+                                              &missing_x, &missing_y,
+                                              &missing_selector)) {
+        printf("Fail-closed ceiling selector: level=%d cell=%d,%d id=%d\n",
+               missing_level, missing_x, missing_y, missing_selector);
+    } else {
+        fprintf(stderr, "FAIL: no real missing ceiling selector reached the no-draw plan gate\n");
+        nexus_v1_shutdown(&engine);
+        return 1;
+    }
+    if (prove_structure1f_direct_entries_reach_plan(
+            &engine, &structure1f_level, &structure1f_x, &structure1f_y,
+            &structure1f_entry_count)) {
+        printf("Structure1F plan provenance: level=%d cell=%d,%d entries=%d\n",
+               structure1f_level, structure1f_x, structure1f_y,
+               structure1f_entry_count);
+    } else {
+        fprintf(stderr, "FAIL: no direct Structure1F entry reached a real no-fallback DGN plan\n");
+        nexus_v1_shutdown(&engine);
+        return 1;
+    }
     printf("Containers: floors present=%d format=%d identity=%d host=%d; "
            "walls present=%d format=%d identity=%d host=%d\n",
            receipt.floor_container.source_present,
@@ -74,6 +230,8 @@ int main(int argc, char **argv) {
     return receipt.parsed_level_count == receipt.expected_level_count &&
            receipt.geometry_ready_level_count == receipt.expected_level_count &&
            receipt.static_mns_host_route_complete &&
-           !receipt.bpk_host_routes_complete
+           !receipt.bpk_host_routes_complete &&
+           missing_selector == (int)receipt.ceiling_coverage.first_missing_material_id &&
+           structure1f_entry_count > 0
         ? 0 : 1;
 }

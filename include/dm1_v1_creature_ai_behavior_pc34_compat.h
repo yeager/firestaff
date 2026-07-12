@@ -214,6 +214,25 @@ struct DM1ActiveGroup_Compat {
     int aspect[4];           /* per-creature aspect flags */
 };
 
+/* One destination-square snapshot for GROUP.C F0202. M10 owns tile/Thing
+ * decoding and supplies these facts; DM1 owns the original branch order. */
+struct DM1GroupMovementFacts_Compat {
+    int available;
+    int inBounds;
+    int isWall;
+    int isStairs;
+    int isOpenPit;
+    int isImaginaryPit;
+    int isFakeWall;
+    int isOpenFakeWall;
+    int isImaginaryFakeWall;
+    int hasFluxcage;
+    int teleporterBlocksCreature;
+    int occupiedByParty;
+    int doorBlocksCreature;
+    int occupiedByGroup;
+};
+
 /* ==========================================================
  *  DM1 V1 Group Behavior Context
  *
@@ -246,6 +265,7 @@ struct DM1GroupBehaviorContext_Compat {
 
     /* Movement testing results */
     int groupMovementTestedDirs[4];
+    struct DM1GroupMovementFacts_Compat groupMovementFacts[4];
 
     /* Distance to visible party (0 if not visible) */
     int distanceToVisibleParty;

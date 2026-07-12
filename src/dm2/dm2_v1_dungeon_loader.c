@@ -1476,6 +1476,48 @@ int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
     return 1;
 }
 
+int dm2_v1_g1_text_wall_gfx_allows_button_material(
+    const DM2_V1_G1TextWallGfxRuntimeReceipt *receipt,
+    int wall_gfx_index,
+    int image_field)
+{
+    int i;
+
+    if (!receipt || !receipt->valid || receipt->material_count < 0 ||
+        receipt->material_count > DM2_V1_G1_TEXT_WALL_GFX_MAX ||
+        wall_gfx_index < 0 || wall_gfx_index > 0xff || image_field != 1) {
+        return 0;
+    }
+    for (i = 0; i < receipt->material_count; ++i) {
+        if (receipt->materials[i].wall_gfx_index ==
+            (uint8_t)wall_gfx_index) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int dm2_v1_g1_actuator_wall_gfx_allows_button_material(
+    const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *receipt,
+    int wall_gfx_index,
+    int image_field)
+{
+    int i;
+
+    if (!receipt || !receipt->valid || receipt->material_count < 0 ||
+        receipt->material_count > DM2_V1_G1_ACTUATOR_WALL_GFX_MAX ||
+        wall_gfx_index < 0 || wall_gfx_index > 0xff || image_field != 1) {
+        return 0;
+    }
+    for (i = 0; i < receipt->material_count; ++i) {
+        if (receipt->materials[i].wall_gfx_index ==
+            (uint8_t)wall_gfx_index) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int dm2_v1_dungeon_find_thing_of_type(const DM2_V1_DungeonData *d,
                                       uint16_t first_thing,
                                       int desired_type,
