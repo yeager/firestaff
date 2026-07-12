@@ -115,7 +115,8 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
     uint16_t placed_thing,
     int level,
     int map_x,
-    int map_y);
+    int map_y,
+    int add_thing);
 static uint16_t csb_v1_runtime_csbwin_item16_group_thing(
     uint16_t monster_index);
 
@@ -5570,6 +5571,9 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                         old_y)) {
                     break;
                 }
+                csb_v1_runtime_process_object_floor_sensors_at(
+                    profile, dungeon, *inout_thing,
+                    old_level, old_x, old_y, 0);
                 *inout_map_index = target_level;
                 *inout_map_x = target_x;
                 *inout_map_y = target_y;
@@ -5619,6 +5623,9 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                     *inout_map_y = old_y;
                     break;
                 }
+                csb_v1_runtime_process_object_floor_sensors_at(
+                    profile, dungeon, *inout_thing,
+                    old_level, old_x, old_y, 0);
                 *inout_thing = moved_thing;
             } else {
                 break;
@@ -5648,7 +5655,8 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                 *inout_thing,
                 *inout_map_index,
                 *inout_map_x,
-                *inout_map_y);
+                *inout_map_y,
+                1);
             continue;
         }
         if ((raw_square & 0x08) == 0) break;
@@ -5681,6 +5689,9 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                 *inout_map_y)) {
             break;
         }
+        csb_v1_runtime_process_object_floor_sensors_at(
+            profile, dungeon, *inout_thing,
+            *inout_map_index, *inout_map_x, *inout_map_y, 0);
         *inout_thing = result.thing;
         *inout_map_index = teleporter.target_map_index;
         *inout_map_x = teleporter.target_map_x;
@@ -5700,7 +5711,8 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
             *inout_thing,
             *inout_map_index,
             *inout_map_x,
-            *inout_map_y);
+            *inout_map_y,
+            1);
         if (self_target) break;
     }
     /* ReDMCSB MOVESENS.C F0267 lines 450-530 lets non-party, non-group
@@ -5708,9 +5720,10 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
      * teleporters, rotates object cells only for relative teleporters unless
      * the object came from the CM2 projectile-associated-object path, and
      * continues into open non-imaginary pits and non-projectile stairs in the
-     * same PC34 100-step chain. This CSB bridge also dispatches bounded C004
-     * object floor sensors after successful materialization/movement; buzz
-     * audio and broader floor sensor types remain separate runtime work. */
+     * same PC34 100-step chain. This CSB bridge dispatches bounded C004
+     * object floor sensors after each link and immediately after each source
+     * unlink, preserving F0276 AddThing ordering; buzz audio and broader
+     * floor sensor types remain separate runtime work. */
     return moved_count;
 }
 
@@ -5776,7 +5789,8 @@ static int csb_v1_runtime_materialize_projectile_associated_object(
         placed_thing,
         map_index,
         map_x,
-        map_y);
+        map_y,
+        1);
     return csb_v1_runtime_apply_object_consequences_at_square(
                profile,
                dungeon,
@@ -6031,7 +6045,8 @@ static void csb_v1_runtime_drop_creature_fixed_possessions(
                 thing,
                 drop_level,
                 drop_x,
-                drop_y);
+                drop_y,
+                1);
             (void)csb_v1_runtime_apply_object_consequences_at_square(
                 profile,
                 dungeon,
@@ -6129,7 +6144,8 @@ static void csb_v1_runtime_drop_group_slot_possessions(
                 dropped_thing,
                 drop_level,
                 drop_x,
-                drop_y);
+                drop_y,
+                1);
             (void)csb_v1_runtime_apply_object_consequences_at_square(
                 profile,
                 dungeon,
@@ -8035,7 +8051,8 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
     uint16_t placed_thing,
     int level,
     int map_x,
-    int map_y)
+    int map_y,
+    int add_thing)
 {
     int first_thing;
     int thing;
@@ -8057,13 +8074,12 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         return;
     }
 
-    /* ReDMCSB MOVESENS.C F0276 lines 1608-1655 classifies the moving
-     * THING, scans the square for matching object types before add, then
-     * lines 1691-1694 trigger C004 only when the sensor data matches
-     * F0032_OBJECT_GetType(P0590_T_Thing) and no same-type object is already
-     * present. Firestaff calls this after link, so the scan ignores the
-     * just-placed THING and treats any other same-type object as the source
-     * L0775_B_SquareContainsThingOfSameType guard. */
+    /* ReDMCSB MOVESENS.C F0276 lines 1608-1655 unlinks before a removal,
+     * scans the resulting list, and links after an addition.  Both paths
+     * then evaluate C004 using the same-type guard.  The caller performs
+     * that source ordering, so a linked addition excludes placed_thing from
+     * the pre-link-equivalent scan while an unlinked removal sees only the
+     * remaining objects. */
     thing = first_thing;
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
          ++guard) {
@@ -8079,6 +8095,7 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         int scan;
         int scan_guard;
         int sensor_effect;
+        int trigger;
         int target_cell;
         int target_x;
         int target_y;
@@ -8135,13 +8152,16 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
             continue;
         }
 
-        sensor_effect = (int)((flags_word >> 3) & 0x03u);
+        trigger = add_thing ? 1 : 0;
         if ((flags_word >> 5) & 0x01u) {
+            trigger ^= 1;
+        }
+        sensor_effect = (int)((flags_word >> 3) & 0x03u);
+        if (sensor_effect == DM1_EFFECT_HOLD) {
+            sensor_effect = trigger ? DM1_EFFECT_SET : DM1_EFFECT_CLEAR;
+        } else if (!trigger) {
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
-        }
-        if (sensor_effect == DM1_EFFECT_HOLD) {
-            sensor_effect = DM1_EFFECT_SET;
         }
         target_cell = (int)((target_word >> 4) & 0x03u);
         target_x = (int)((target_word >> 6) & 0x1Fu);

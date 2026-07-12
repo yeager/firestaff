@@ -89,6 +89,7 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_asset_loader.h"
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_stage3_manifest_evidence.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
@@ -358,6 +359,52 @@ static uint8_t *read_file_bytes(const char *path, size_t *out_size) {
     fclose(file);
     *out_size = (size_t)file_size;
     return bytes;
+}
+
+static int report_real_stage3_manifest(
+    const char *label,
+    const char *path,
+    const char *md5_hex,
+    Theron_V1Stage3ManifestEvidence *out_evidence) {
+    Theron_Track02Stage2DynamicPayloadReceipt payload;
+    Theron_V1Stage3ManifestEvidence evidence;
+    uint8_t *track02_bytes;
+    size_t track02_size;
+
+    memset(&payload, 0, sizeof(payload));
+    memset(&evidence, 0, sizeof(evidence));
+    track02_bytes = read_file_bytes(path, &track02_size);
+    check(track02_bytes != NULL,
+          "real Track02 stage-three manifest probe reads staged media");
+    if (!track02_bytes) {
+        return 0;
+    }
+    check(theron_v1_track02_inspect_stage2_dynamic_payload(
+              track02_bytes, track02_size, md5_hex, &payload) ==
+              THERON_TRACK02_SIGNAL_OK && payload.valid,
+          "real Track02 stage-three payload stays hash-gated");
+    check(theron_v1_stage3_manifest_evidence_from_payload(
+              track02_bytes, track02_size, &payload, &evidence) &&
+              evidence.valid &&
+              evidence.descriptor_bytes == 0x051cu &&
+              evidence.descriptor_count == 218u &&
+              evidence.prefix_word0 == 0x00ffu &&
+              evidence.prefix_word1 == 0x0308u &&
+              evidence.descriptor_hash != 0u,
+          "real Track02 stage-three manifest remains an opaque receipt");
+    if (evidence.valid) {
+        printf("[RECEIPT] %s stage3-manifest record=0x%06x descriptors=%zu "
+               "hash=0x%08x zero-word2=%zu nonmonotonic=%zu\n",
+               label, (unsigned)evidence.track02_record,
+               evidence.descriptor_count, (unsigned)evidence.descriptor_hash,
+               evidence.zero_word2_count,
+               evidence.nonmonotonic_word2_transitions);
+    }
+    free(track02_bytes);
+    if (out_evidence) {
+        *out_evidence = evidence;
+    }
+    return evidence.valid;
 }
 
 static int report_real_object_layout(const char *label,
@@ -891,10 +938,14 @@ static void check_real_asset_path(void) {
     Theron_Track02LevelRouteReceipt jp_nonstartup_level_layout;
     Theron_Track02LevelRouteReceipt us_nonstartup_level_layout;
     Theron_Track02LevelRouteReceipt us_iso_nonstartup_level_layout;
+    Theron_V1Stage3ManifestEvidence jp_stage3_manifest;
+    Theron_V1Stage3ManifestEvidence us_stage3_manifest;
     int have_jp_object_layout = 0;
     int have_us_object_layout = 0;
     int have_jp_nonstartup_level_layout = 0;
     int have_us_nonstartup_level_layout = 0;
+    int have_jp_stage3_manifest = 0;
+    int have_us_stage3_manifest = 0;
 
     memset(&jp_object_layout, 0, sizeof(jp_object_layout));
     memset(&us_object_layout, 0, sizeof(us_object_layout));
@@ -902,6 +953,8 @@ static void check_real_asset_path(void) {
     memset(&us_nonstartup_level_layout, 0, sizeof(us_nonstartup_level_layout));
     memset(&us_iso_nonstartup_level_layout, 0,
            sizeof(us_iso_nonstartup_level_layout));
+    memset(&jp_stage3_manifest, 0, sizeof(jp_stage3_manifest));
+    memset(&us_stage3_manifest, 0, sizeof(us_stage3_manifest));
 
     for (i = 0; i < sizeof(g_real_cases) / sizeof(g_real_cases[0]); ++i) {
         const struct real_asset_case *c = &g_real_cases[i];
@@ -945,6 +998,8 @@ static void check_real_asset_path(void) {
         check(r.track02_byte_count > 0u,
               "track02_byte_count populated from file stat");
         if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_BIN) == 0) {
+            have_jp_stage3_manifest = report_real_stage3_manifest(
+                c->label, path, c->expected_md5, &jp_stage3_manifest);
             have_jp_object_layout = report_real_object_layout(
                 c->label, path, c->expected_md5, &jp_object_layout);
             have_jp_nonstartup_level_layout = report_real_nonstartup_level_layout(
@@ -954,6 +1009,8 @@ static void check_real_asset_path(void) {
                                                     &jp_nonstartup_level_layout);
             }
         } else if (strcmp(c->expected_md5, THERON_TRACK02_MD5_US_BIN) == 0) {
+            have_us_stage3_manifest = report_real_stage3_manifest(
+                c->label, path, c->expected_md5, &us_stage3_manifest);
             have_us_object_layout = report_real_object_layout(
                 c->label, path, c->expected_md5, &us_object_layout);
             have_us_nonstartup_level_layout = report_real_nonstartup_level_layout(
@@ -1263,6 +1320,26 @@ static void check_real_asset_path(void) {
             check(r2.session_tick_token == r.session_tick_token,
                   "session_tick_token stable across two real-asset calls");
         }
+    }
+
+    if (!have_jp_stage3_manifest || !have_us_stage3_manifest) {
+        ++g_skipped;
+        printf("[SKIP] JP/US stage-three manifest comparison needs both staged raw Track 02 BINs\n");
+    } else {
+        Theron_V1Stage3ManifestComparison comparison;
+        check(theron_v1_stage3_manifest_compare(
+                  &jp_stage3_manifest, &us_stage3_manifest, &comparison) &&
+                  comparison.valid &&
+                  comparison.compared_descriptor_count == 218u &&
+                  comparison.byte_identical_descriptor_count == 211u &&
+                  comparison.differing_descriptor_count == 7u &&
+                  comparison.first_descriptor_hash != 0u &&
+                  comparison.second_descriptor_hash != 0u &&
+                  comparison.first_descriptor_hash != comparison.second_descriptor_hash,
+              "JP/US stage-three manifest comparison remains opaque and exact");
+        printf("[RECEIPT] JP/US stage3-manifest matching=%zu differing=%zu\n",
+               comparison.byte_identical_descriptor_count,
+               comparison.differing_descriptor_count);
     }
 
     if (!have_jp_nonstartup_level_layout || !have_us_nonstartup_level_layout) {

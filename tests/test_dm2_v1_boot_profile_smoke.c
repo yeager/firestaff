@@ -544,6 +544,10 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               frame_ownership.gdat_scene_light_consumed > 0 &&
               frame_ownership.gdat_interface_palette_ready == 1 &&
               frame_ownership.gdat_interface_palette_consumed > 0 &&
+              (frame_ownership.gdat_interface_rect14_host_ready == 0 ||
+               (frame_ownership.gdat_interface_rect14_table_hash != 0u &&
+                frame_ownership.gdat_interface_rect14_placement_hash != 0u &&
+                frame_ownership.gdat_interface_rect14_placement_count > 0u)) &&
               frame_ownership.gdat_scene_control_hash != 0u &&
               (frame_ownership.gdat_scene_control_present_mask & 0x03u) == 0x03u,
           "real-profile frame consumes GDAT materials without blocked or painted fallbacks");

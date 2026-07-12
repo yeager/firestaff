@@ -9425,6 +9425,33 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_square_state_dispatch_pc34_compat
     )
 
+    add_executable(test_dm1_v1_f0249_timeline_relocation_pc34_compat
+        tests/test_dm1_v1_f0249_timeline_relocation_pc34_compat.c
+        src/dm1/dm1_v1_f0249_timeline_relocation_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0249_timeline_relocation_pc34_compat
+        PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0249_timeline_relocation_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0249_timeline_relocation_pc34_compat
+        COMMAND test_dm1_v1_f0249_timeline_relocation_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_group_visible_distance_pc34_compat
+        tests/test_dm1_v1_group_visible_distance_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_group_visible_distance_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_group_visible_distance_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_group_visible_distance_pc34_compat
+        COMMAND test_dm1_v1_group_visible_distance_pc34_compat
+    )
+
     add_executable(test_dm1_v1_door_bash_stamina_feedback_source_lock_pc34_compat
         tests/test_dm1_v1_door_bash_stamina_feedback_source_lock_pc34_compat.c
     )
@@ -20504,6 +20531,33 @@ add_test(
 )
 set_tests_properties(nexus_v1_prs3_loader_media_probe PROPERTIES
     LABELS "tier4;nexus;prs3;loader_media;skip_safe"
+)
+
+# Nexus PRS3 selected version-1 branch-flow receipt. This separate original
+# executable probe locks one low-bit branch and its byte-store fallthrough;
+# it never decodes or uploads a PRS3 surface.
+add_executable(firestaff_nexus_v1_prs3_branch_flow_probe
+    probes/nexus/firestaff_nexus_v1_prs3_branch_flow_probe.c
+    src/shared/firestaff_x68k_media_classify.c
+    src/shared/firestaff_x68k_media_receipt.c
+)
+target_link_libraries(firestaff_nexus_v1_prs3_branch_flow_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_prs3_branch_flow_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_prs3_branch_flow_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_prs3_branch_flow_probe
+    COMMAND firestaff_nexus_v1_prs3_branch_flow_probe
+)
+set_tests_properties(nexus_v1_prs3_branch_flow_probe PROPERTIES
+    LABELS "tier4;nexus;prs3;branch_flow;skip_safe"
 )
 
 # Nexus FACE.BIN original-media receipt. The probe locks canonical FACE/PRS3

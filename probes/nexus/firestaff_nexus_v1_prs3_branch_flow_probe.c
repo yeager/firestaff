@@ -1,0 +1,319 @@
+/*
+ * Original Saturn PRS3 version-1 branch-flow receipt.
+ *
+ * This is deliberately not a decoder. It MD5-locks the Japanese DM.BIN and
+ * records one selected SH-2 branch outcome: after R11 refill/control setup,
+ * `TST R11,R3` with R3=1 sends a zero low-bit to a separate target. Its
+ * nonzero fallthrough bounds a byte read through R12 and a byte store through
+ * R13/R0 before returning to the control loop. The receipt proves neither
+ * payload identity, command semantics, output format, nor frame completion.
+ */
+
+#include "firestaff_x68k_media_receipt.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define NEXUS_PRS3_DM_MD5 "e88d60859f65f08fa622e1992b02280f"
+#define NEXUS_PRS3_DM_SIZE 555144U
+#define NEXUS_PRS3_VERSION1_CALLEE_OFFSET 85376U
+
+typedef struct {
+    int valid;
+    size_t low_bit_immediate_offset;
+    unsigned int low_bit_register;
+    int low_bit_immediate;
+    size_t low_bit_test_offset;
+    unsigned int low_bit_test_source_register;
+    unsigned int low_bit_test_destination_register;
+    size_t zero_bit_branch_offset;
+    size_t zero_bit_branch_target;
+    size_t fallthrough_remaining_test_offset;
+    size_t fallthrough_exhausted_branch_offset;
+    size_t fallthrough_exhausted_target;
+    size_t fallthrough_byte_load_offset;
+    unsigned int byte_load_cursor_register;
+    unsigned int byte_load_value_register;
+    size_t output_index_copy_offset;
+    unsigned int output_index_source_register;
+    unsigned int output_index_destination_register;
+    size_t output_byte_store_offset;
+    unsigned int output_byte_source_register;
+    unsigned int output_byte_base_register;
+    unsigned int output_byte_index_register;
+    size_t loop_back_branch_offset;
+    size_t loop_back_target;
+} Nexus_Prs3V1BranchFlowReceipt;
+
+static int failures;
+
+static void check(int condition, const char *message) {
+    if (condition) printf("PASS: %s\n", message);
+    else { fprintf(stderr, "FAIL: %s\n", message); ++failures; }
+}
+
+static uint16_t read_be16(const uint8_t *p) {
+    return (uint16_t)(((uint16_t)p[0] << 8) | (uint16_t)p[1]);
+}
+
+static int sh2_conditional_branch_target(size_t instruction_offset,
+                                         uint16_t instruction,
+                                         size_t size,
+                                         size_t *out_target) {
+    int displacement;
+    long target;
+    uint16_t opcode = instruction & 0xff00U;
+
+    if (!out_target || (opcode != 0x8900U && opcode != 0x8b00U &&
+                        opcode != 0x8d00U && opcode != 0x8f00U)) return 0;
+    displacement = (int)(int8_t)(instruction & 0x00ffU) * 2;
+    target = (long)instruction_offset + 4L + (long)displacement;
+    if (target < 0L || (size_t)target + 2U > size) return 0;
+    *out_target = (size_t)target;
+    return 1;
+}
+
+static int sh2_bra_target(size_t instruction_offset, uint16_t instruction,
+                          size_t size, size_t *out_target) {
+    int displacement;
+    long target;
+
+    if (!out_target || (instruction & 0xf000U) != 0xa000U) return 0;
+    displacement = (int)(instruction & 0x0fffU);
+    if ((displacement & 0x0800) != 0) displacement -= 0x1000;
+    target = (long)instruction_offset + 4L + (long)displacement * 2L;
+    if (target < 0L || (size_t)target + 2U > size) return 0;
+    *out_target = (size_t)target;
+    return 1;
+}
+
+static int sh2_mov_immediate_fields(uint16_t instruction,
+                                    unsigned int *out_register,
+                                    int *out_immediate) {
+    if ((instruction & 0xf000U) != 0xe000U || !out_register ||
+        !out_immediate) return 0;
+    *out_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_immediate = (int)(int8_t)(instruction & 0x00ffU);
+    return 1;
+}
+
+static int sh2_tst_register_fields(uint16_t instruction,
+                                   unsigned int *out_source_register,
+                                   unsigned int *out_destination_register) {
+    if ((instruction & 0xf00fU) != 0x2008U || !out_source_register ||
+        !out_destination_register) return 0;
+    *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
+static int sh2_movb_postinc_fields(uint16_t instruction,
+                                   unsigned int *out_cursor_register,
+                                   unsigned int *out_value_register) {
+    if ((instruction & 0xf00fU) != 0x6004U || !out_cursor_register ||
+        !out_value_register) return 0;
+    *out_value_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_cursor_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
+static int sh2_mov_register_fields(uint16_t instruction,
+                                   unsigned int *out_source_register,
+                                   unsigned int *out_destination_register) {
+    if ((instruction & 0xf00fU) != 0x6003U || !out_source_register ||
+        !out_destination_register) return 0;
+    *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
+/* SH-2 MOV.B Rm,@(R0,Rn) is 0000nnnnmmmm0100. */
+static int sh2_movb_r0_index_store_fields(uint16_t instruction,
+                                          unsigned int *out_source_register,
+                                          unsigned int *out_base_register) {
+    if ((instruction & 0xf00fU) != 0x0004U || !out_source_register ||
+        !out_base_register) return 0;
+    *out_base_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
+static int prs3_v1_branch_flow_receipt(const uint8_t *data, size_t size,
+                                       Nexus_Prs3V1BranchFlowReceipt *out) {
+    Nexus_Prs3V1BranchFlowReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 164U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.low_bit_immediate_offset = entry + 72U;
+    receipt.low_bit_test_offset = entry + 74U;
+    receipt.zero_bit_branch_offset = entry + 76U;
+    receipt.fallthrough_remaining_test_offset = entry + 78U;
+    receipt.fallthrough_exhausted_branch_offset = entry + 80U;
+    receipt.fallthrough_byte_load_offset = entry + 84U;
+    receipt.output_index_copy_offset = entry + 86U;
+    receipt.output_byte_store_offset = entry + 88U;
+    receipt.loop_back_branch_offset = entry + 96U;
+
+    if (!sh2_mov_immediate_fields(
+            read_be16(data + receipt.low_bit_immediate_offset),
+            &receipt.low_bit_register, &receipt.low_bit_immediate) ||
+        !sh2_tst_register_fields(read_be16(data + receipt.low_bit_test_offset),
+                                 &receipt.low_bit_test_source_register,
+                                 &receipt.low_bit_test_destination_register) ||
+        !sh2_conditional_branch_target(
+            receipt.zero_bit_branch_offset,
+            read_be16(data + receipt.zero_bit_branch_offset), size,
+            &receipt.zero_bit_branch_target) ||
+        read_be16(data + receipt.fallthrough_remaining_test_offset) != 0x2ee8U ||
+        !sh2_conditional_branch_target(
+            receipt.fallthrough_exhausted_branch_offset,
+            read_be16(data + receipt.fallthrough_exhausted_branch_offset), size,
+            &receipt.fallthrough_exhausted_target) ||
+        read_be16(data + receipt.fallthrough_byte_load_offset - 2U) != 0x7effU ||
+        !sh2_movb_postinc_fields(read_be16(data + receipt.fallthrough_byte_load_offset),
+                                 &receipt.byte_load_cursor_register,
+                                 &receipt.byte_load_value_register) ||
+        !sh2_mov_register_fields(read_be16(data + receipt.output_index_copy_offset),
+                                 &receipt.output_index_source_register,
+                                 &receipt.output_index_destination_register) ||
+        !sh2_movb_r0_index_store_fields(read_be16(data + receipt.output_byte_store_offset),
+                                        &receipt.output_byte_source_register,
+                                        &receipt.output_byte_base_register) ||
+        !sh2_bra_target(receipt.loop_back_branch_offset,
+                        read_be16(data + receipt.loop_back_branch_offset), size,
+                        &receipt.loop_back_target)) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.output_byte_index_register = 0U;
+    if (receipt.low_bit_register != 3U || receipt.low_bit_immediate != 1 ||
+        receipt.low_bit_test_source_register != 11U ||
+        receipt.low_bit_test_destination_register != 3U ||
+        receipt.zero_bit_branch_target != entry + 100U ||
+        receipt.fallthrough_exhausted_target != entry + 166U ||
+        receipt.byte_load_cursor_register != 12U ||
+        receipt.byte_load_value_register != 2U ||
+        receipt.output_index_source_register != 6U ||
+        receipt.output_index_destination_register != 0U ||
+        receipt.output_byte_source_register != 2U ||
+        receipt.output_byte_base_register != 13U ||
+        receipt.loop_back_target != entry + 52U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
+static void test_synthetic_branch_flow(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
+    Nexus_Prs3V1BranchFlowReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 72U] = 0xe3U; fixture[entry + 73U] = 0x01U;
+    fixture[entry + 74U] = 0x23U; fixture[entry + 75U] = 0xb8U;
+    fixture[entry + 76U] = 0x89U; fixture[entry + 77U] = 0x0aU;
+    fixture[entry + 78U] = 0x2eU; fixture[entry + 79U] = 0xe8U;
+    fixture[entry + 80U] = 0x89U; fixture[entry + 81U] = 0x29U;
+    fixture[entry + 82U] = 0x7eU; fixture[entry + 83U] = 0xffU;
+    fixture[entry + 84U] = 0x62U; fixture[entry + 85U] = 0xc4U;
+    fixture[entry + 86U] = 0x60U; fixture[entry + 87U] = 0x63U;
+    fixture[entry + 88U] = 0x0dU; fixture[entry + 89U] = 0x24U;
+    fixture[entry + 96U] = 0xafU; fixture[entry + 97U] = 0xe8U;
+    check(prs3_v1_branch_flow_receipt(fixture, sizeof(fixture), &receipt) &&
+              receipt.valid && receipt.zero_bit_branch_target == entry + 100U &&
+              receipt.output_byte_source_register == 2U &&
+              receipt.output_byte_base_register == 13U &&
+              receipt.loop_back_target == entry + 52U,
+          "SH-2 PRS3 branch-flow receipt locks the low-bit fallthrough path");
+    fixture[entry + 89U] = 0x20U;
+    check(!prs3_v1_branch_flow_receipt(fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 branch-flow receipt rejects a non-indexed byte store");
+}
+
+static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
+    FILE *fp;
+    long file_size;
+    uint8_t *data;
+
+    if (!out_data || !out_size) return 0;
+    *out_data = NULL;
+    *out_size = 0U;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    if (fseek(fp, 0L, SEEK_END) != 0 || (file_size = ftell(fp)) <= 0L ||
+        fseek(fp, 0L, SEEK_SET) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    data = (uint8_t *)malloc((size_t)file_size);
+    if (!data) { fclose(fp); return 0; }
+    if (fread(data, 1U, (size_t)file_size, fp) != (size_t)file_size) {
+        free(data);
+        fclose(fp);
+        return 0;
+    }
+    fclose(fp);
+    *out_data = data;
+    *out_size = (size_t)file_size;
+    return 1;
+}
+
+int main(int argc, char **argv) {
+    const char *data_dir = argc > 1 ? argv[1] : NULL;
+    char default_dir[1024];
+    char dm_path[1200];
+    char md5[33];
+    const char *home;
+    uint8_t *data = NULL;
+    size_t size = 0U;
+    Nexus_Prs3V1BranchFlowReceipt receipt;
+
+    test_synthetic_branch_flow();
+    if (!data_dir) {
+        home = getenv("HOME");
+        if (!home || snprintf(default_dir, sizeof(default_dir),
+                              "%s/.firestaff/data/nexus", home) <= 0) {
+            puts("SKIP: no Nexus data directory argument or HOME");
+            return failures == 0 ? 0 : 1;
+        }
+        data_dir = default_dir;
+    }
+    if (snprintf(dm_path, sizeof(dm_path), "%s/DM.BIN", data_dir) <= 0 ||
+        !read_file(dm_path, &data, &size)) {
+        puts("SKIP: hash-verified DM.BIN is not available");
+        return failures == 0 ? 0 : 1;
+    }
+    check(size == NEXUS_PRS3_DM_SIZE,
+          "DM.BIN has the locked Japanese Track 1 size");
+    check(firestaff_x68k_media_receipt_md5_hex(data, size, md5, sizeof(md5)) == 0 &&
+              strcmp(md5, NEXUS_PRS3_DM_MD5) == 0,
+          "DM.BIN matches its locked MD5");
+    if (failures == 0) {
+        check(prs3_v1_branch_flow_receipt(data, size, &receipt) && receipt.valid,
+              "DM.BIN locks the PRS3 v1 low-bit branch and byte-store fallthrough");
+        if (receipt.valid) {
+            printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
+                   "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
+                   "loop=%zu->%zu; codec/termination-proof=0\n",
+                   receipt.low_bit_test_source_register,
+                   receipt.low_bit_test_destination_register,
+                   receipt.zero_bit_branch_offset, receipt.zero_bit_branch_target,
+                   receipt.fallthrough_byte_load_offset,
+                   receipt.byte_load_cursor_register, receipt.byte_load_value_register,
+                   receipt.output_byte_store_offset, receipt.output_byte_source_register,
+                   receipt.output_byte_base_register, receipt.output_byte_index_register,
+                   receipt.loop_back_branch_offset, receipt.loop_back_target);
+        }
+    }
+    free(data);
+    return failures == 0 ? 0 : 1;
+}

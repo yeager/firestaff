@@ -84,6 +84,11 @@ typedef struct {
     int gdat_sprite_palette_consumed;
     int gdat_interface_palette_ready;
     int gdat_interface_palette_consumed;
+    int gdat_interface_rect14_host_ready;
+    int gdat_interface_rect14_consumed;
+    uint32_t gdat_interface_rect14_table_hash;
+    uint32_t gdat_interface_rect14_placement_hash;
+    uint32_t gdat_interface_rect14_placement_count;
     int gdat_material_palette_floor_ceiling_consumed;
     int gdat_material_palette_wall_consumed;
     int gdat_material_palette_door_frame_consumed;
