@@ -29,6 +29,9 @@ typedef struct {
     uint16_t load_address;
     uint16_t entry_address;
     int execute_after_load;
+    int ipl_preload_local_read_verified;
+    uint16_t ipl_preload_cpu_address;
+    uint16_t ipl_preload_destination;
     uint16_t cleared_work_ram_start;
     size_t cleared_work_ram_bytes;
     uint16_t cleared_work_ram_end;

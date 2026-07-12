@@ -105,6 +105,13 @@
   Verification: strict-C11 syntax checks plus direct hash-verified JP/US media
   probe, 0 failed.
 
+- 2026-07-12 Theron V1 IPL preload consumer: the shared original-media
+  handoff now also requires the documented IPL `CD_READ` at `$40cd` through
+  System Card `$e009` into local RAM `$3000`, before the later `CD_EXEC` and
+  stage-three gates. The record and payload role remain unbound. Verification:
+  strict-C11 syntax checks plus direct hash-verified JP/US media probe, 0
+  failed.
+
 - 2026-07-12 Theron V1 CUE/M11 loader-chain consumer: strict CUE boot
   validation now consumes the same stage-two work-RAM transfer and physical
   `$3800` `BRK $ff` dispatch gates as direct runtime entry after rereading the
@@ -8590,6 +8597,8 @@
 # ✅ 2026-07-12 CSB EXPOOL global-variable DSA handoff: CSBWin saves now restore their contiguous `EDT_Database | EDBT_GlobalVariables | i` EXPOOL records into Firestaff's bounded source-sized DSA global bank before the existing tracing handoff, matching `SaveGame.cpp`'s sixteen-`ui32` record order and first-missing-record stop. A malformed present record rejects transactionally, and authenticated filter runners inherit the restored bank rather than a synthetic zero bank. Source: CSBWin `SaveGame.cpp` global-variable save/load loops and `data.cpp EXPOOL::Locate`. Verified by `test_csb_v1_phase7_verification`: source-order two-record import plus malformed-record preservation.
 
 # ✅ 2026-07-12 CSB DSA global-bank runtime commit: the profile-owned CSBWin global bank is now rehydrated into an authenticated pure-stack runner immediately before execution and receives its `GLOBALSTORE` result only after the existing full-action commit succeeds. Caller/stale runner globals cannot become profile state, while world and filter opcodes remain outside this route and EXPOOL serialization remains open. Source: CSBWin `DSA.cpp` `EX_GLOBALFETCH`/`EX_GLOBALSTORE` and `SaveGame.cpp` global-variable ownership. Verified by `test_csb_v1_phase7_verification`: authenticated `GLOBALSTORE` updates runner and profile bank together.
+
+# ✅ 2026-07-12 CSB DSA global EXPOOL writeback: a successful authenticated `GLOBALSTORE` now stages the profile global bank and rewrites its existing CSBWin `EDT_Database | EDBT_GlobalVariables` payload words in the preserved EXPOOL tail before committing either caller parameters or runtime state. The tail hash is refreshed, so the existing CSBWin core exporter retains the real updated record rather than a stale copy. Missing, malformed, truncated, oversized, or partial-record tails reject without publication. Source: CSBWin `SaveGame.cpp` global-variable save loop and `data.cpp EXPOOL::Locate`. Verified by `test_csb_v1_phase7_verification`: one source record updates the runner, profile bank, and located EXPOOL little-endian word.
 
 # ✅ 2026-07-12 CSB authenticated DSA filter runner: added `csb_v1_csbwin_dsa_run_authenticated_filter_stack_action()` as the runtime callback for the supported CSBWin `ProcessDSAFilter` pure stack subset. It requires exact pointer identity with the imported `(dsa,state,ordinal)` action, stages the signed parameter surface and its owned global bank, and publishes a receipt only after a complete supported action. Forged pointers and world-mutating `AMPERSAND` code leave all caller state unchanged. Source: CSBWin `DSA.cpp` `ProcessDSAFilter`/`ProcessDSATimer6` lines 5315-5460 and `Execute` lines 5053-5293. Verified by `test_csb_v1_dsa_trigger_single_step_pc34_compat`: 123 assertions, 0 failures.
 

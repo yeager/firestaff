@@ -89,6 +89,8 @@ int main(int argc, char **argv) {
               jp_loader.stage2_cd_read_cpu_address == 0x4090u &&
               jp_loader.stage2_cd_read_local_destination == 0x3800u &&
               jp_loader.stage2_cd_read_record == 0x0004dfu &&
+              jp_loader.cd_read_cpu_address == 0x40cdu &&
+              jp_loader.cd_read_local_destination == 0x3000u &&
               jp_loader.stage2_cd_read_dynamic_boundary_valid,
           "JP original IPL chain reaches the proven stage-three record");
     check(us_bytes && theron_v1_track02_find_ipl_loader(
@@ -101,6 +103,8 @@ int main(int argc, char **argv) {
               us_loader.stage2_cd_read_cpu_address == 0x4090u &&
               us_loader.stage2_cd_read_local_destination == 0x3800u &&
               us_loader.stage2_cd_read_record == 0x0004e0u &&
+              us_loader.cd_read_cpu_address == 0x40cdu &&
+              us_loader.cd_read_local_destination == 0x3000u &&
               us_loader.stage2_cd_read_dynamic_boundary_valid,
           "US original IPL chain reaches the proven stage-three record");
     check(jp_bytes && theron_v1_track02_inspect_stage2_dynamic_payload(
@@ -130,11 +134,15 @@ int main(int argc, char **argv) {
               jp_original_handoff.stage3_entry_opcode == 0x00u &&
               jp_original_handoff.stage3_irq2_selector == 0xffu &&
               jp_original_handoff.stage3_continuation_address == 0x3802u &&
+              jp_original_handoff.ipl_preload_local_read_verified &&
+              jp_original_handoff.ipl_preload_cpu_address == 0x40cdu &&
+              jp_original_handoff.ipl_preload_destination == 0x3000u &&
               jp_original_handoff.stage3_mode1_header_verified &&
               jp_original_handoff.stage3_minute_bcd == 0x01u &&
               jp_original_handoff.stage3_second_bcd == 0x03u &&
               jp_original_handoff.stage3_frame_bcd == 0x38u &&
               us_original_handoff.physical_stage3_entry_verified &&
+              us_original_handoff.ipl_preload_local_read_verified &&
               us_original_handoff.stage3_mode1_header_verified &&
               us_original_handoff.stage3_minute_bcd == 0x00u &&
               us_original_handoff.stage3_second_bcd == 0x58u &&
