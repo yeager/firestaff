@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 PRS3 original caller-to-callee receipt: the hash-locked
+  branch-flow probe now proves the selected caller reads its incoming `R6+12`
+  word into R3, moves it through R11 into callee R6 on the delayed BSR path,
+  and callee moves R6 into R14. This is an untyped cross-call register chain,
+  not construction of the caller R6 object or a descriptor, payload, counter,
+  decoder, completion, or rendering claim. Verification: direct strict-C11
+  probe build against locked Japanese `DM.BIN` PASS.
+
 - 2026-07-12 Nexus V1 DGN Structure1G backward-goto receipt: the original
   LEV00-LEV15 probe now proves all 51 raw `FFFE` instructions use negative,
   instruction-aligned targets to earlier words within their own validated

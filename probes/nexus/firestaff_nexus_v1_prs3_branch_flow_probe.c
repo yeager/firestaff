@@ -18,6 +18,7 @@
 
 #define NEXUS_PRS3_DM_MD5 "e88d60859f65f08fa622e1992b02280f"
 #define NEXUS_PRS3_DM_SIZE 555144U
+#define NEXUS_PRS3_DISPATCH_VERSION_COMPARE_OFFSET 85252U
 #define NEXUS_PRS3_VERSION1_CALLEE_OFFSET 85376U
 
 typedef struct {
@@ -334,6 +335,24 @@ typedef struct {
     size_t r11_zero_offset;
 } Nexus_Prs3V1EntryBypassReceipt;
 
+/* Crosses only the selected original version-1 call boundary. The caller's
+ * R6+12 word reaches callee R14 through delayed register moves; it is not
+ * named as a descriptor, payload pointer, counter, or decode input. */
+typedef struct {
+    int valid;
+    size_t caller_word_load_offset;
+    unsigned int caller_word_base_register;
+    unsigned int caller_word_value_register;
+    unsigned int caller_word_byte_displacement;
+    size_t version1_branch_offset;
+    size_t version1_branch_target;
+    size_t version1_branch_delay_offset;
+    size_t version1_call_offset;
+    size_t version1_call_target;
+    size_t version1_call_delay_offset;
+    size_t callee_r6_to_r14_offset;
+} Nexus_Prs3V1CallerToCalleeReceipt;
+
 static int failures;
 
 static void check(int condition, const char *message) {
@@ -424,6 +443,34 @@ static int sh2_movl_pc_literal_target(size_t instruction_offset,
 static int sh2_jsr_register(uint16_t instruction, unsigned int *out_register) {
     if ((instruction & 0xf0ffU) != 0x400bU || !out_register) return 0;
     *out_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    return 1;
+}
+
+/* SH-2 MOV.L @(disp,Rm),Rn is 0101nnnnmmmmdddd. */
+static int sh2_movl_disp_register_fields(uint16_t instruction,
+                                         unsigned int *out_base_register,
+                                         unsigned int *out_value_register,
+                                         unsigned int *out_byte_displacement) {
+    if ((instruction & 0xf000U) != 0x5000U || !out_base_register ||
+        !out_value_register || !out_byte_displacement) return 0;
+    *out_value_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_base_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    *out_byte_displacement = (unsigned int)(instruction & 0x000fU) * 4U;
+    return 1;
+}
+
+/* SH-2 BSR disp12 is 1011dddddddddddd. */
+static int sh2_bsr_target(size_t instruction_offset, uint16_t instruction,
+                          size_t size, size_t *out_target) {
+    int displacement;
+    long target;
+
+    if (!out_target || (instruction & 0xf000U) != 0xb000U) return 0;
+    displacement = (int)(instruction & 0x0fffU);
+    if ((displacement & 0x0800) != 0) displacement -= 0x1000;
+    target = (long)instruction_offset + 4L + (long)displacement * 2L;
+    if (target < 0L || (size_t)target + 2U > size) return 0;
+    *out_target = (size_t)target;
     return 1;
 }
 
@@ -1380,6 +1427,65 @@ static int prs3_v1_entry_bypass_receipt(
     return 1;
 }
 
+static int prs3_v1_caller_to_callee_receipt(
+    const uint8_t *data, size_t size, Nexus_Prs3V1CallerToCalleeReceipt *out) {
+    Nexus_Prs3V1CallerToCalleeReceipt receipt;
+    unsigned int move_source = 0U, move_destination = 0U;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 28U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.caller_word_load_offset =
+        NEXUS_PRS3_DISPATCH_VERSION_COMPARE_OFFSET - 6U;
+    receipt.version1_branch_offset =
+        NEXUS_PRS3_DISPATCH_VERSION_COMPARE_OFFSET + 2U;
+    receipt.version1_branch_delay_offset =
+        NEXUS_PRS3_DISPATCH_VERSION_COMPARE_OFFSET + 4U;
+    receipt.version1_call_offset =
+        NEXUS_PRS3_DISPATCH_VERSION_COMPARE_OFFSET + 26U;
+    receipt.version1_call_delay_offset =
+        NEXUS_PRS3_DISPATCH_VERSION_COMPARE_OFFSET + 28U;
+    receipt.callee_r6_to_r14_offset = NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 26U;
+    if (!sh2_movl_disp_register_fields(
+            read_be16(data + receipt.caller_word_load_offset),
+            &receipt.caller_word_base_register,
+            &receipt.caller_word_value_register,
+            &receipt.caller_word_byte_displacement) ||
+        read_be16(data + receipt.version1_branch_offset) != 0x8d0aU ||
+        !sh2_conditional_branch_target(
+            receipt.version1_branch_offset,
+            read_be16(data + receipt.version1_branch_offset), size,
+            &receipt.version1_branch_target) ||
+        !sh2_mov_register_fields(
+            read_be16(data + receipt.version1_branch_delay_offset),
+            &move_source, &move_destination) ||
+        move_source != 3U || move_destination != 11U ||
+        !sh2_bsr_target(receipt.version1_call_offset,
+                        read_be16(data + receipt.version1_call_offset), size,
+                        &receipt.version1_call_target) ||
+        !sh2_mov_register_fields(
+            read_be16(data + receipt.version1_call_delay_offset),
+            &move_source, &move_destination) ||
+        move_source != 11U || move_destination != 6U ||
+        !sh2_mov_register_fields(
+            read_be16(data + receipt.callee_r6_to_r14_offset),
+            &move_source, &move_destination) ||
+        receipt.caller_word_base_register != 6U ||
+        receipt.caller_word_value_register != 3U ||
+        receipt.caller_word_byte_displacement != 12U ||
+        receipt.version1_branch_target != receipt.version1_call_offset ||
+        receipt.version1_call_target != NEXUS_PRS3_VERSION1_CALLEE_OFFSET ||
+        move_source != 6U || move_destination != 14U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
 static void test_synthetic_branch_flow(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Nexus_Prs3V1BranchFlowReceipt receipt;
@@ -1787,6 +1893,32 @@ static void test_synthetic_entry_bypass(void) {
           "SH-2 PRS3 entry receipt rejects a changed alternate-call delay");
 }
 
+static void test_synthetic_caller_to_callee(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
+    Nexus_Prs3V1CallerToCalleeReceipt receipt;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[85246U] = 0x53U; fixture[85247U] = 0x63U;
+    fixture[85254U] = 0x8dU; fixture[85255U] = 0x0aU;
+    fixture[85256U] = 0x6bU; fixture[85257U] = 0x33U;
+    fixture[85278U] = 0xb0U; fixture[85279U] = 0x2fU;
+    fixture[85280U] = 0x66U; fixture[85281U] = 0xb3U;
+    fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 26U] = 0x6eU;
+    fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 27U] = 0x63U;
+    check(prs3_v1_caller_to_callee_receipt(
+              fixture, sizeof(fixture), &receipt) && receipt.valid &&
+              receipt.caller_word_base_register == 6U &&
+              receipt.caller_word_value_register == 3U &&
+              receipt.caller_word_byte_displacement == 12U &&
+              receipt.version1_branch_target == 85278U &&
+              receipt.version1_call_target == NEXUS_PRS3_VERSION1_CALLEE_OFFSET,
+          "SH-2 PRS3 caller receipt locks R6+12 through callee R14");
+    fixture[85281U] = 0xb2U;
+    check(!prs3_v1_caller_to_callee_receipt(
+              fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 caller receipt rejects a changed callee-argument move");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -1838,6 +1970,7 @@ int main(int argc, char **argv) {
     Nexus_Prs3V1FailureCallReceipt failure_call_receipt;
     Nexus_Prs3V1EntryRegisterReceipt entry_register_receipt;
     Nexus_Prs3V1EntryBypassReceipt entry_bypass_receipt;
+    Nexus_Prs3V1CallerToCalleeReceipt caller_to_callee_receipt;
 
     test_synthetic_branch_flow();
     test_synthetic_zero_side_read();
@@ -1854,6 +1987,7 @@ int main(int argc, char **argv) {
     test_synthetic_failure_call();
     test_synthetic_entry_registers();
     test_synthetic_entry_bypass();
+    test_synthetic_caller_to_callee();
     if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
@@ -1927,6 +2061,10 @@ int main(int argc, char **argv) {
         check(prs3_v1_entry_bypass_receipt(data, size, &entry_bypass_receipt) &&
                   entry_bypass_receipt.valid,
               "DM.BIN locks the PRS3 v1 entry alternate-call/bypass dataflow");
+        check(prs3_v1_caller_to_callee_receipt(
+                  data, size, &caller_to_callee_receipt) &&
+                  caller_to_callee_receipt.valid,
+              "DM.BIN locks the PRS3 v1 caller R6+12-to-R14 dataflow");
         if (receipt.valid) {
             printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
                    "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
@@ -2125,6 +2263,19 @@ int main(int argc, char **argv) {
                    entry_bypass_receipt.second_indirect_call_register,
                    entry_bypass_receipt.second_call_delay_register,
                    entry_bypass_receipt.second_call_delay_immediate);
+        }
+        if (caller_to_callee_receipt.valid) {
+            printf("SH-2 PRS3 v1 caller: @R%u+%u->R%u branch=%zu->%zu "
+                   "call=%zu->%zu delay=R11->R6 callee=%zu R6->R14; "
+                   "descriptor/payload-proof=0\n",
+                   caller_to_callee_receipt.caller_word_base_register,
+                   caller_to_callee_receipt.caller_word_byte_displacement,
+                   caller_to_callee_receipt.caller_word_value_register,
+                   caller_to_callee_receipt.version1_branch_offset,
+                   caller_to_callee_receipt.version1_branch_target,
+                   caller_to_callee_receipt.version1_call_offset,
+                   caller_to_callee_receipt.version1_call_target,
+                   caller_to_callee_receipt.callee_r6_to_r14_offset);
         }
     }
     free(data);
