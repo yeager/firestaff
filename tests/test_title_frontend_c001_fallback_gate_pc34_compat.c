@@ -513,6 +513,30 @@ static void check_startup_source_timing_contract(void) {
              0);
 }
 
+static void check_entrance_credits_runtime_boundary(void) {
+    DM1_V1_StartupHandoffOutcome_PC34 outcome;
+
+    memset(&outcome, 0, sizeof(outcome));
+    /* ReDMCSB ENTRANCE.C F0442:993 and :1067-1091 display credits with
+     * L1406=1800 VBlanks, then restore C202 so F0441 redraws the entrance.
+     * Credits is an entrance-local loop, never a game/runtime handoff. */
+    expect_u("entrance credits preserves F0442 1800-VBlank duration",
+             ENTRANCE_Compat_GetCreditsWaitTicks(),
+             1800u);
+    expect_i("entrance credits source command stays on credits route",
+             (int)ENTRANCE_Compat_CommandPathFromSourceCommand(
+                 ENTRANCE_COMPAT_RUNTIME_COMMAND_DRAW_CREDITS),
+             (int)ENTRANCE_COMPAT_COMMAND_PATH_CREDITS);
+    expect_i("startup outcome accepts credits boundary receipt",
+             dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
+                 ENTRANCE_COMPAT_COMMAND_PATH_CREDITS, &outcome),
+             1);
+    expect_truth("credits cannot become dungeon, resume, or quit handoff",
+                 outcome.action != DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34 &&
+                     outcome.action != DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34 &&
+                     outcome.action != DM1_V1_STARTUP_HANDOFF_ACTION_QUIT_PC34);
+}
+
 static unsigned int count_non_black(const unsigned char* pixels,
                                     unsigned int width,
                                     unsigned int x,
@@ -621,6 +645,7 @@ int main(int argc, char** argv) {
     check_selection_contract();
     check_palette_cross_source_contract();
     check_startup_source_timing_contract();
+    check_entrance_credits_runtime_boundary();
     check_real_pc34_c001(argc > 1 ? argv[1] : getenv("FIRESTAFF_DM1_GRAPHICS_DAT"));
 
     if (g_fail) {

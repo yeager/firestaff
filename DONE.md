@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0442 credits handoff: startup verification now proves the
+  exact 1800-VBlank credits wait and rejects credits as a dungeon, resume, or
+  quit handoff. Verification: C001 fallback gate 290 checks and entrance
+  palette 103/103 passed.
+
 - 2026-07-12 DM1 F0441 entrance audio: the real C01 sound-switch request now
   plays at source volume 112 before the original pre-open delay and F0438.
   Verification: C001 fallback gate 286 checks and entrance palette 103/103
