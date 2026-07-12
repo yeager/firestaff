@@ -1,12 +1,25 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 PRS3 original failure-call receipt: the hash-locked
+  branch-flow probe now proves the shared failure target's PC-relative literal
+  `0x060284e0 -> R3`, `JSR @R3`, and delay-slot `MOV R13,R4` before the
+  recorded zero-result return. The raw pointer remains unmapped and the callee
+  unnamed. This is control/dataflow evidence only, not a decoder, payload,
+  output, completion, or rendering claim. Verification: direct strict-C11
+  probe build against locked Japanese `DM.BIN` PASS.
+
 - 2026-07-12 Theron V1 stage-three executable-byte gate: the runtime-facing
   IRQ2 dispatch receipt now rereads the authenticated JP/US MODE1 user-data
   sector and requires the actual `$3800` prefix `BRK $ff` before publishing
-  the loader-bound IRQ2 handoff. A changed selector fails closed. This proves
+  the loader-bound IRQ2 handoff. `theron_v1_startup_receipt_from_file()` now
+  consumes that gate before publishing the raw JP/US dynamic-manifest handoff,
+  and direct Track 02 runtime-level entry consumes it before bank-anchor
+  parsing, so a changed selector cannot reach M11 by either route. This proves
   only the physical loader-to-dispatch boundary, not manifest, palette,
-  object, level, or later-CD semantics. Verification: direct strict-C11
-  original-media probe against both known-MD5 Track 02 files, 0 failed.
+  object, level, or later-CD semantics. Verification: strict-C11 syntax checks
+  for startup-receipt and runtime-entry sources plus direct original-media
+  probe against both known-MD5 Track 02 files, 0 failed. Ninja could not run:
+  this worktree has no `build/build.ninja`.
 
 - 2026-07-12 DM2 V1 weather GDAT receipt: fail-closed receipt requires
   ENVIRONMENT dtImage fields 64/67/6A/6D/71 and GRAPHICSSET dtWordValue 69
@@ -8436,6 +8449,8 @@
 # ✅ 2026-07-12 CSB F0276 C002 party route: party movement now evaluates C002 floor Theron/party/creature sensors at the live F0267 destination. It follows ReDMCSB's party/no-group eligibility, then uses the existing F0272/F0268 remote effect route. Source: ReDMCSB `MOVESENS.C F0267` lines 792-857 and `F0276` lines 1686-1689. Verification: `test_csb_v1_f0276_party_c002_sensor_pc34_compat` passed 5/5 through `MOVE_FORWARD`; the manually rebuilt focused ten-binary F0276 group passed with strict runtime compilation.
 
 # ✅ 2026-07-12 CSB F0276 C002 group route: the shared C002/C007 group eligibility route now has a dedicated live C04 move regression. A C04 group landing on a C002 floor Theron/party/creature sensor publishes the normal F0272/F0268 fakewall SET event. Source: ReDMCSB `MOVESENS.C F0267` lines 800-867 and `F0276` lines 1686-1689. Verification: `test_csb_v1_f0276_group_c002_sensor_pc34_compat` passed 4/4; the manually rebuilt focused eleven-binary F0276 group passed with strict runtime compilation.
+
+# ✅ 2026-07-12 CSB F0276 C001 group route: live C04 group movement now admits the ReDMCSB C001 floor Theron/party/creature/object branch only when party, ordinary objects, and another group are absent. A C04 group landing on C001 publishes the normal F0272/F0268 fakewall SET event. Source: ReDMCSB `MOVESENS.C F0276` lines 1678-1685. Verification: `test_csb_v1_f0276_group_c001_sensor_pc34_compat` passed 4/4; the manually rebuilt focused twelve-binary F0276 group passed with strict runtime compilation.
 
 # ✅ 2026-07-12 CSB DSA transfer runner: the authenticated filter callback now promotes only CSBWin `Execute`'s already source-locked transfer-only `JUMP`/`GOSUB` subset. It invokes the bounded complete transfer chain, publishes its final state and receipt only on success, and preserves the caller parameter surface. Unsupported targets, malformed paths, and depth/transfer limits remain rejection paths. No world opcode or synthetic state transition is enabled. Source: CSBWin `DSA.cpp` lines 764-849 and 5053-5293. Verified by `test_csb_v1_dsa_trigger_single_step_pc34_compat`: 124 assertions, 0 failures.
 
