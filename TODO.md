@@ -116,6 +116,9 @@ binding.
 That shared handoff now also consumes the physical MODE1 header: JP stage
 three is BCD `01:03:38`, US is `00:58:57`, with the proven user-data window.
 This is transport provenance only, not a sector-to-level or payload-role map.
+It also requires the earlier IPL `CD_READ` at `$40cd` into local RAM `$3000`.
+Its record number and payload role remain unknown, so it contributes only a
+verified local-RAM loader boundary, never a bank or level route.
 The first loaded payload is now structurally verified as a
 218-unit manifest envelope, but its entries remain unclassified; do not treat
 it as a graphics, palette, object, or dungeon-record binding. The hash-gated
@@ -429,7 +432,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   expose a caller/callsite or an R6 construction site. Retain the untyped
   metadata boundary until external or indirect-route evidence exists, then
   trace the version-1 loop's stream-facing register/dataflow and completion
-  condition. 2026-07-12 update: the selected loop now also has a
+  condition. 2026-07-12 update: the selected version-1 caller/callee boundary
+  now has a direct register receipt: the caller reads its incoming `R6+12`
+  word into R3, moves it through R11 into callee R6 on the delayed BSR path,
+  and callee moves R6 into R14. This proves only an untyped cross-call
+  register chain; it does not construct the caller's R6 object or identify a
+  descriptor, payload, counter, decoder, completion, or rendering role.
+  2026-07-12 update: the selected loop now also has a
   machine-checked control-sentinel receipt: a PC-relative word loads R2 with
   `0x0100`, a PC-relative long loads R9 with `0x0000ff00`, refill ORs R9 into
   R11 after byte expansion, and the loop returns to the R2/R11 test. This
@@ -587,7 +596,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     - 2026-07-12 verified ABI correction: `Monster.cpp:916-938,1164-1167` copies all 20 words of `ATTACK_PARAMETERES`, not the former Firestaff nine-word subset. The live filter boundary now uses that exact order, including `monsterIndex`, source position/origin, distance, launch/steal flags, sound, `disableTime`, and signed `supressPoison`; focused Phase 7 coverage mutates fields across the entire array and proves level restoration. Full source DSA dispatch remains open.
     - 2026-07-12 runtime runner: `csb_v1_csbwin_dsa_run_authenticated_filter_stack_action()` is now the source-shaped callback for the admitted pure stack subset and complete transfer-only `JUMP`/`GOSUB` chains. It requires pointer identity with the checksum-authenticated `(dsa,state,ordinal)` record, stages its parameter words and owned global bank, and publishes only a fully consumed action/transfer receipt. Forged actions and world-mutating stack subcodes reject without mutating parameters, globals, or the receipt. It deliberately does not interpret pre-move flags, persist a DSA master object, or widen opcode support; those full `ProcessDSAFilter` requirements remain open.
     - 2026-07-12 runtime binding: a resolved type-47 filter actuator now reads its CSBWin `DB3::DSAselector` bits 7..11 and maps that slot through the authenticated save's `DSALevelIndex[level][selector]` before a pure-stack runner can be prepared. The binding rejects mismatched actuator types, missing level-index entries, undefined DSA IDs, and actions absent from the staged extension. It does not infer a master DSA state or execute world/filter commands; those `ProcessDSATimer6` responsibilities remain open.
-  - CSB-007 — CSBWin `SaveGame.cpp` global-variable EXPOOL records and `DSAINDEX::ReadTracing` now restore transactionally into the CSB runtime. Authenticated DSA runners rehydrate from and publish successful `GLOBALSTORE` writes to that bounded save-owned bank, but Firestaff still does not emit faithful CSBWin EXPOOL writeback. The same EXPOOL database also backs palettes and other runtime records.
+  - CSB-007 — CSBWin `SaveGame.cpp` global-variable EXPOOL records and `DSAINDEX::ReadTracing` now restore transactionally into the CSB runtime. Authenticated DSA runners rehydrate from and publish successful `GLOBALSTORE` writes to the bounded save-owned bank and its original records. The same EXPOOL database also backs palettes and other runtime records, whose source restore/writeback paths remain open.
   - 2026-07-11 original-data boundary audit: local `SKWIN/data_csb` bytes do
     not match any supported CSB graphics or dungeon hash and therefore remain
     unusable for rendering, menus, or runtime state. The locally staged Amiga,

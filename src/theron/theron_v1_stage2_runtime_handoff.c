@@ -93,6 +93,12 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
             THERON_TRACK02_SIGNAL_OK || !loader.valid ||
         loader.variant != variant ||
         loader.stage2_record != THERON_TRACK02_IPL_STAGE2_RECORD ||
+        loader.cd_read_cpu_address != THERON_TRACK02_IPL_CD_READ_CPU_ADDRESS ||
+        loader.cd_read_system_card_address !=
+            THERON_TRACK02_IPL_CD_READ_SYSTEM_CARD_ADDRESS ||
+        loader.cd_read_destination != THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM ||
+        loader.cd_read_local_destination !=
+            THERON_TRACK02_IPL_CD_READ_LOCAL_DESTINATION ||
         loader.stage2_sector_count != THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT ||
         loader.stage2_destination != THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM ||
         loader.stage2_load_address != THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS ||
@@ -131,6 +137,9 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     out_handoff->stage3_entry_opcode = dispatch.opcode;
     out_handoff->stage3_irq2_selector = dispatch.irq2_selector;
     out_handoff->stage3_continuation_address = dispatch.continuation_address;
+    out_handoff->ipl_preload_local_read_verified = 1;
+    out_handoff->ipl_preload_cpu_address = loader.cd_read_cpu_address;
+    out_handoff->ipl_preload_destination = loader.cd_read_local_destination;
     out_handoff->stage3_mode1_header_verified = 1;
     out_handoff->stage3_minute_bcd = mode1_header.minute_bcd;
     out_handoff->stage3_second_bcd = mode1_header.second_bcd;

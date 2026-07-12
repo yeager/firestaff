@@ -64,6 +64,9 @@ static int theron_v1_startup_runtime_stage3_loader_ready(
     memset(&stage2_handoff, 0, sizeof(stage2_handoff));
     return theron_v1_stage2_runtime_handoff_from_original_media(
                track02_data, track02_size, md5_hex, &stage2_handoff) &&
+           stage2_handoff.ipl_preload_local_read_verified &&
+           stage2_handoff.ipl_preload_cpu_address == 0x40cdu &&
+           stage2_handoff.ipl_preload_destination == 0x3000u &&
            stage2_handoff.work_ram_cleared_before_entry &&
            stage2_handoff.cleared_work_ram_start == 0x2700u &&
            stage2_handoff.cleared_work_ram_bytes == 0x1100u &&

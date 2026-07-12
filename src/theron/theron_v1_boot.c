@@ -834,6 +834,9 @@ int theron_v1_boot_validate_track02_loader_receipt(
             bytes, required, verified_md5, &stage2_handoff) ||
         stage2_handoff.track02_record != dynamic_observed.track02_record ||
         stage2_handoff.user_data_hash != dynamic_observed.user_data_hash ||
+        !stage2_handoff.ipl_preload_local_read_verified ||
+        stage2_handoff.ipl_preload_cpu_address != 0x40cdu ||
+        stage2_handoff.ipl_preload_destination != 0x3000u ||
         !stage2_handoff.work_ram_cleared_before_entry ||
         stage2_handoff.cleared_work_ram_start != 0x2700u ||
         stage2_handoff.cleared_work_ram_bytes != 0x1100u ||
