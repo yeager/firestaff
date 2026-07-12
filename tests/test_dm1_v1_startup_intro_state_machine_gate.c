@@ -2,6 +2,7 @@
 #include "entrance_frontend_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
+#include "vga_palette_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_original_save_classifier.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
@@ -497,13 +498,19 @@ static void check_title_to_menu_boundary(void) {
              V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&titleTiming));
     expect_u("DM1 full graphics media receipt menu boundary",
              media.title_menu_boundary_frame,
-             V1_TITLE_DAT_FRAME_MAX + 1u);
+             dm1_v1_startup_title_frame_bank_equivalent_steps_pc34() + 1u);
     expect_i("DM1 full graphics media receipt PRESENTS palette",
              media.title_presents_palette,
              expected_presents_palette);
     expect_i("DM1 full graphics media receipt title palette",
              media.title_zoom_palette,
              expected_title_palette);
+    expect_i("DM1 full graphics receipt locks TITLE palette transition",
+             media.title_presents_palette ==
+                     VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
+                 media.title_zoom_palette == VGA_PALETTE_PC34_SPECIAL_TITLE &&
+                 media.title_presents_palette != media.title_zoom_palette,
+             1);
     expect_i("DM1 title runtime source receipt selects GRAPHICS.DAT C001",
              dm1_v1_startup_title_runtime_source_receipt_pc34(
                  "dm1", 1, 320u, 175u, 1, &titleSource) &&
@@ -642,6 +649,24 @@ static void check_title_to_menu_boundary(void) {
                  entranceCommand.audio_sound_index == 0 &&
                  entranceCommand.audio_volume == 0u,
              1);
+    expect_i("DM1 entrance command rejects altered source vblank",
+             dm1_v1_startup_entrance_render_audio_command_pc34(
+                 &media,
+                 doorStep.sourceStepOrdinal,
+                 (int)doorStep.kind,
+                 doorStep.delayTicks,
+                 0u,
+                 &entranceCommand),
+             0);
+    expect_i("DM1 entrance command rejects altered source kind",
+             dm1_v1_startup_entrance_render_audio_command_pc34(
+                 &media,
+                 doorStep.sourceStepOrdinal,
+                 (int)ENTRANCE_COMPAT_SOURCE_EVENT_DRAW_ENTRANCE_SCREEN,
+                 doorStep.delayTicks,
+                 doorStep.vblankLoopCount,
+                 &entranceCommand),
+             0);
     badMedia = media;
     badMedia.entrance_vblank_ms = 1u;
     expect_i("DM1 entrance command rejects bad timing receipt",
@@ -811,6 +836,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
         hoc_presented_publish;
     DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34
         hoc_presented_export;
+    DM1_V1_StartupHoCPresentedCaptureM12ImportFacts_PC34
+        hoc_presented_m12_import_facts;
+    DM1_V1_StartupHoCPresentedCaptureM12ImportReceipt_PC34
+        hoc_presented_m12_import;
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 hoc_enter_handoff;
     DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34
         hoc_save_capture_readiness;
@@ -1349,9 +1378,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  post.media_receipt.entrance_vblank_ms ==
                      ENTRANCE_Compat_GetVblankDelayMs(),
              1);
-    expect_i("DM1 post-launch plan keeps entrance timeout",
+    expect_i("DM1 post-launch plan requires fresh entrance command",
              post.entrance_auto_enter_ms,
-             1200);
+             0);
     expect_i("DM1 post-launch plan carries title boundary frame",
              post.title_menu_boundary_frame,
              (int)dm1_v1_startup_title_frame_bank_equivalent_steps_pc34() + 1);
@@ -2934,9 +2963,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 post-launch executor returns entrance command",
              entrance_command,
              2);
-    expect_i("DM1 post-launch executor keeps entrance timeout",
+    expect_i("DM1 post-launch executor requires fresh entrance command",
              fake.entrance_timeout_ms,
-             1200);
+             0);
     memset(&outcome, 0, sizeof(outcome));
     expect_i("DM1 post-launch outcome executor succeeds",
              dm1_v1_startup_execute_handoff_post_launch_outcome_pc34(
