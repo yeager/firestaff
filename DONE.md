@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM2 V2.1 pipeline synchronization: the M11 DM2 handoff now
+  configures the DM2 per-surface pipeline for V2.1 EPX exactly when the
+  launcher selects V2.1 (or V2.2's source-data fallback), while V1/V2.0
+  remain native indexed and retain the original palette. Verification: fresh
+  Ninja `firestaff` build.
+
 - 2026-07-12 DM2 V2.0 M11 GDAT handoff: the direct M11 DM2 boot path now
   persists the V2 phase gate, selects the DM2 V2.0/V2.1/V2.2 asset-pipeline
   mode, and binds HUD, lighting, touch, and the boot-owned verified GDAT

@@ -9,6 +9,11 @@ after the source viewport frame; absent data remains absent. Remaining V2.0
 work is real packaged Mac capture and wider GDAT/save corpus coverage, not a
 new fallback HUD or menu.
 
+DM2 V2.1 now keeps its internal per-surface pipeline in lockstep with M11:
+the selected upscaled mode enables source-preserving EPX while retaining the
+original palette. Remaining V2.1 work is real packaged capture and broader
+GDAT material coverage, not a separate synthetic upscale route.
+
 ## DM1 V2.2 Finished-Art Follow-up (2026-07-12)
 
 The live V2.2 selection path now rejects synthetic and partial modern-art
