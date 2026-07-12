@@ -113,6 +113,9 @@ than duplicating loader checks: IPL `CD_EXEC`, traced `$4090` read, cleared
 work RAM, and physical `$3800` `BRK $ff` are validated together. This reduces
 gate drift only; it does not create a new level, bank, palette, or manifest
 binding.
+That shared handoff now also consumes the physical MODE1 header: JP stage
+three is BCD `01:03:38`, US is `00:58:57`, with the proven user-data window.
+This is transport provenance only, not a sector-to-level or payload-role map.
 The first loaded payload is now structurally verified as a
 218-unit manifest envelope, but its entries remain unclassified; do not treat
 it as a graphics, palette, object, or dungeon-record binding. The hash-gated

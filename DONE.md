@@ -97,6 +97,14 @@
   syntax checks for all consumers plus direct hash-verified JP/US media probe,
   0 failed.
 
+- 2026-07-12 Theron V1 unified MODE1 transport handoff: the shared original
+  media runtime gate now requires the authenticated stage-three MODE1 header
+  as well as loader bytes. It retains JP BCD `01:03:38` and US `00:58:57`
+  provenance before publishing the handoff. This is transport-only evidence,
+  not a level, bank, manifest, palette, object, or later-CD binding.
+  Verification: strict-C11 syntax checks plus direct hash-verified JP/US media
+  probe, 0 failed.
+
 - 2026-07-12 Theron V1 CUE/M11 loader-chain consumer: strict CUE boot
   validation now consumes the same stage-two work-RAM transfer and physical
   `$3800` `BRK $ff` dispatch gates as direct runtime entry after rereading the
