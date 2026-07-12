@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 C026 portrait ownership: champion portrait source zones now
+  accept only ordinals 0..23 and the native 256x87 PC34 atlas. Invalid data
+  produces no substitute portrait. Verification: graphic-id test 58 passed.
+
 - 2026-07-12 DM1 original-save provenance: product-facing PC34 file
   roundtrips now reject Firestaff-manifest exports, so only external original
   save envelopes can supply corpus evidence. Verification:
