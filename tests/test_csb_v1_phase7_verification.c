@@ -527,10 +527,16 @@ static void test_dungeon_decode_dsa_filter_location(void)
 static void test_runtime_csbwin_dsa_filter_binding(void)
 {
     uint8_t actuator_record[8] = { 0, 0, 0x2f, 0x01, 0, 0, 0, 0 };
+    uint8_t appended_tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
     uint16_t program[] = {
         0x0686u, 0x55aau, 0x0054u, 0x0053u, 0x000du
     };
     int parameters[] = { 0 };
+    const uint8_t *global_payload = NULL;
+    size_t global_payload_size = 0u;
+    const uint32_t global_record_id = (5u << 24) | (4u << 16);
+    const uint32_t global_bucket = 32u +
+        ((global_record_id * 0xbb40e62du) >> 27);
     CSB_V1_DungeonData dungeon;
     CSB_V1_DSAFilterLocation location;
     CSB_V1_DSAImportedAction action;
@@ -551,14 +557,26 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     location.actuator_thing =
         (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10);
 
+    memset(appended_tail, 0, sizeof(appended_tail));
+    put_le16(appended_tail, 2, 18u);
+    put_le32(appended_tail, (int)global_bucket * 4, 1u);
+    put_le32(appended_tail, 1 * 4, 0u);
+    put_le32(appended_tail, 2 * 4, global_record_id);
+    put_le32(appended_tail, 3 * 4, 0x1234u);
+    put_le32(appended_tail, 4 * 4, 0x5678u);
+
     csb_v1_runtime_init(&profile, NULL);
     profile.csbwin_extended_features_valid = 1;
     profile.csbwin_extended_level_index_present = 1;
     profile.csbwin_extended_level_dsa_index[3][2] = 7u;
     profile.csbwin_global_variables_valid = 1;
-    profile.csbwin_global_variable_count = 2u;
+    profile.csbwin_global_variable_count = 16u;
     profile.csbwin_global_variables[0] = 0x1234u;
     profile.csbwin_global_variables[1] = 0x5678u;
+    profile.csbwin_appended_tail_valid = 1;
+    profile.csbwin_appended_tail_size = sizeof(appended_tail);
+    profile.csbwin_appended_tail_preserved_size = sizeof(appended_tail);
+    memcpy(profile.csbwin_appended_tail, appended_tail, sizeof(appended_tail));
     action.dsa_id = 7u;
     action.state_index = 4u;
     action.program_words = program;
@@ -575,7 +593,7 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               runner.programs == &profile.csbwin_extended_dsa_state &&
               runner.dsa_id == 7 && runner.state_index == 4u &&
               runner.master_location == 0x0c345u &&
-              runner.global_variable_count == 2 &&
+              runner.global_variable_count == 16 &&
               runner.global_variables[0] == 0x1234u &&
               runner.global_variables[1] == 0x5678u,
           "CSB runtime prepares its authenticated DSA runner with save-owned globals");
@@ -584,8 +602,13 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     CHECK(run_result == 1 &&
               parameters[0] == 0x55aa &&
               profile.csbwin_global_variables[1] == 0x55aau &&
-              runner.global_variables[1] == 0x55aau,
-          "CSB DSA GLOBALSTORE commits through the save-owned runtime bank"); }
+              runner.global_variables[1] == 0x55aau &&
+              csb_v1_runtime_locate_csbwin_appended_expool_record(
+                  &profile, global_record_id, &global_payload,
+                  &global_payload_size) == 1 &&
+              global_payload_size == 64u && global_payload[4] == 0xaau &&
+              global_payload[5] == 0x55u,
+          "CSB DSA GLOBALSTORE commits through runtime and CSBWin EXPOOL"); }
 
     profile.csbwin_extended_level_dsa_index[3][2] = 8u;
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
