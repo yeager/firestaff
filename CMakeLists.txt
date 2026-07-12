@@ -5704,6 +5704,18 @@ endif()
 # ── CTest integration ────────────────────────────────────────────────
 include(CTest)
 if(BUILD_TESTING)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_l10n.c")
+        add_executable(test_firestaff_l10n
+            tests/test_firestaff_l10n.c
+            src/shared/firestaff_l10n.c)
+        target_include_directories(test_firestaff_l10n PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        if(NOT MSVC)
+            target_compile_options(test_firestaff_l10n PRIVATE -Wall -Wextra -Werror)
+        endif()
+        add_test(NAME firestaff_l10n COMMAND test_firestaff_l10n)
+    endif()
+
     function(firestaff_add_test_if_missing test_name)
         get_property(_firestaff_existing_tests DIRECTORY PROPERTY TESTS)
         list(FIND _firestaff_existing_tests "${test_name}" _firestaff_test_index)

@@ -640,8 +640,7 @@ void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state);
  * M12_StartupMenu_GetLanguageCount() returns the number of locales
  * the user can cycle through in the launcher (currently 19).  The
  * same index range feeds the M12 settings row, the credits panel
- * overlay, and the in-game M11 l10n switch (see
- * m12_fs_language_from_menu_index for the >5 fallback to EN).
+ * overlay, and the in-game M11 l10n switch.
  *
  * GetLanguageCode(index) returns the short locale code that maps to
  * po/startup-menu.<code>.po on disk (e.g. "EN", "SV", "FR", "DE",

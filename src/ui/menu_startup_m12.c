@@ -491,6 +491,16 @@ static FS_Language m12_fs_language_from_menu_index(int index) {
     }
 }
 
+static int m12_menu_index_from_fs_language(FS_Language language) {
+    int index;
+    for (index = 0; index < M12_UI_LANGUAGE_COUNT; ++index) {
+        if (m12_fs_language_from_menu_index(index) == language) {
+            return index;
+        }
+    }
+    return 0;
+}
+
 static void m12_sync_l10n_language(const M12_StartupMenuState* state) {
     int index = state ? state->settings.languageIndex : 0;
     fs_l10n_set_language(m12_fs_language_from_menu_index(index));
@@ -3043,6 +3053,14 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     hasExplicitDataDirOverride =
         (dataDirOverride && dataDirOverride[0] != '\0') ? 1 : 0;
     M12_Config_Load(&config, dataDirOverride);
+    if (!config.languageExplicit) {
+        int systemLanguageIndex =
+            m12_menu_index_from_fs_language(fs_l10n_detect_system_language());
+        config.languageIndex = systemLanguageIndex;
+        for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+            config.gameLanguageIndex[gi] = systemLanguageIndex;
+        }
+    }
     state->settings.languageIndex = m12_clamp_index(config.languageIndex,
                                                     M12_UI_LANGUAGE_COUNT);
     m12_sync_l10n_language(state);
