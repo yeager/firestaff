@@ -47,6 +47,28 @@ typedef struct {
     size_t loop_back_target;
 } Nexus_Prs3V1BranchFlowReceipt;
 
+/* Read-only continuation of the zero-low-bit branch. After its R14 gate
+ * accepts, the original code consumes two post-increment R12 bytes and
+ * zero-extends each. This does not assign those bytes a token, offset,
+ * palette, or output meaning. */
+typedef struct {
+    int valid;
+    size_t counter_decrement_offset;
+    unsigned int counter_register;
+    int counter_decrement;
+    size_t counter_gate_test_offset;
+    size_t counter_rejection_branch_offset;
+    size_t counter_rejection_target;
+    size_t first_byte_load_offset;
+    unsigned int first_byte_cursor_register;
+    unsigned int first_byte_value_register;
+    size_t first_byte_extend_offset;
+    size_t second_byte_load_offset;
+    unsigned int second_byte_cursor_register;
+    unsigned int second_byte_value_register;
+    size_t second_byte_extend_offset;
+} Nexus_Prs3V1ZeroSideReadReceipt;
+
 static int failures;
 
 static void check(int condition, const char *message) {
@@ -99,6 +121,17 @@ static int sh2_mov_immediate_fields(uint16_t instruction,
     return 1;
 }
 
+/* SH-2 ADD #imm,Rn is 0111nnnniiiiiiii. */
+static int sh2_add_immediate_fields(uint16_t instruction,
+                                    unsigned int *out_register,
+                                    int *out_immediate) {
+    if ((instruction & 0xf000U) != 0x7000U || !out_register ||
+        !out_immediate) return 0;
+    *out_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_immediate = (int)(int8_t)(instruction & 0x00ffU);
+    return 1;
+}
+
 static int sh2_tst_register_fields(uint16_t instruction,
                                    unsigned int *out_source_register,
                                    unsigned int *out_destination_register) {
@@ -116,6 +149,17 @@ static int sh2_movb_postinc_fields(uint16_t instruction,
         !out_value_register) return 0;
     *out_value_register = (unsigned int)((instruction >> 8) & 0x0fU);
     *out_cursor_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
+/* SH-2 EXTU.B Rm,Rn is 0110nnnnmmmm1100. */
+static int sh2_extub_fields(uint16_t instruction,
+                            unsigned int *out_source_register,
+                            unsigned int *out_destination_register) {
+    if ((instruction & 0xf00fU) != 0x600cU || !out_source_register ||
+        !out_destination_register) return 0;
+    *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
     return 1;
 }
 
@@ -212,6 +256,60 @@ static int prs3_v1_branch_flow_receipt(const uint8_t *data, size_t size,
     return 1;
 }
 
+static int prs3_v1_zero_side_read_receipt(
+    const uint8_t *data, size_t size, Nexus_Prs3V1ZeroSideReadReceipt *out) {
+    Nexus_Prs3V1ZeroSideReadReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 168U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.counter_decrement_offset = entry + 100U;
+    receipt.counter_gate_test_offset = entry + 102U;
+    receipt.counter_rejection_branch_offset = entry + 104U;
+    receipt.first_byte_load_offset = entry + 108U;
+    receipt.first_byte_extend_offset = entry + 110U;
+    receipt.second_byte_load_offset = entry + 112U;
+    receipt.second_byte_extend_offset = entry + 114U;
+    if (!sh2_add_immediate_fields(
+            read_be16(data + receipt.counter_decrement_offset),
+            &receipt.counter_register, &receipt.counter_decrement) ||
+        read_be16(data + receipt.counter_gate_test_offset) != 0x4e11U ||
+        !sh2_conditional_branch_target(
+            receipt.counter_rejection_branch_offset,
+            read_be16(data + receipt.counter_rejection_branch_offset), size,
+            &receipt.counter_rejection_target) ||
+        !sh2_movb_postinc_fields(read_be16(data + receipt.first_byte_load_offset),
+                                 &receipt.first_byte_cursor_register,
+                                 &receipt.first_byte_value_register) ||
+        !sh2_extub_fields(read_be16(data + receipt.first_byte_extend_offset),
+                          &receipt.first_byte_value_register,
+                          &receipt.first_byte_value_register) ||
+        !sh2_movb_postinc_fields(read_be16(data + receipt.second_byte_load_offset),
+                                 &receipt.second_byte_cursor_register,
+                                 &receipt.second_byte_value_register) ||
+        !sh2_extub_fields(read_be16(data + receipt.second_byte_extend_offset),
+                          &receipt.second_byte_value_register,
+                          &receipt.second_byte_value_register)) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    if (receipt.counter_register != 14U || receipt.counter_decrement != -2 ||
+        receipt.counter_rejection_target != entry + 166U ||
+        receipt.first_byte_cursor_register != 12U ||
+        receipt.first_byte_value_register != 4U ||
+        receipt.second_byte_cursor_register != 12U ||
+        receipt.second_byte_value_register != 7U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
 static void test_synthetic_branch_flow(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Nexus_Prs3V1BranchFlowReceipt receipt;
@@ -237,6 +335,31 @@ static void test_synthetic_branch_flow(void) {
     fixture[entry + 89U] = 0x20U;
     check(!prs3_v1_branch_flow_receipt(fixture, sizeof(fixture), &receipt),
           "SH-2 PRS3 branch-flow receipt rejects a non-indexed byte store");
+}
+
+static void test_synthetic_zero_side_read(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
+    Nexus_Prs3V1ZeroSideReadReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 100U] = 0x7eU; fixture[entry + 101U] = 0xfeU;
+    fixture[entry + 102U] = 0x4eU; fixture[entry + 103U] = 0x11U;
+    fixture[entry + 104U] = 0x8bU; fixture[entry + 105U] = 0x1dU;
+    fixture[entry + 108U] = 0x64U; fixture[entry + 109U] = 0xc4U;
+    fixture[entry + 110U] = 0x64U; fixture[entry + 111U] = 0x4cU;
+    fixture[entry + 112U] = 0x67U; fixture[entry + 113U] = 0xc4U;
+    fixture[entry + 114U] = 0x67U; fixture[entry + 115U] = 0x7cU;
+    check(prs3_v1_zero_side_read_receipt(fixture, sizeof(fixture), &receipt) &&
+              receipt.valid && receipt.counter_decrement == -2 &&
+              receipt.first_byte_cursor_register == 12U &&
+              receipt.first_byte_value_register == 4U &&
+              receipt.second_byte_cursor_register == 12U &&
+              receipt.second_byte_value_register == 7U,
+          "SH-2 PRS3 zero side receipt locks two post-increment byte reads");
+    fixture[entry + 115U] = 0x70U;
+    check(!prs3_v1_zero_side_read_receipt(fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 zero side receipt rejects a non-byte-extension path");
 }
 
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
@@ -276,8 +399,10 @@ int main(int argc, char **argv) {
     uint8_t *data = NULL;
     size_t size = 0U;
     Nexus_Prs3V1BranchFlowReceipt receipt;
+    Nexus_Prs3V1ZeroSideReadReceipt zero_side_receipt;
 
     test_synthetic_branch_flow();
+    test_synthetic_zero_side_read();
     if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
@@ -300,6 +425,9 @@ int main(int argc, char **argv) {
     if (failures == 0) {
         check(prs3_v1_branch_flow_receipt(data, size, &receipt) && receipt.valid,
               "DM.BIN locks the PRS3 v1 low-bit branch and byte-store fallthrough");
+        check(prs3_v1_zero_side_read_receipt(data, size, &zero_side_receipt) &&
+                  zero_side_receipt.valid,
+              "DM.BIN locks the PRS3 v1 zero-side two-byte continuation");
         if (receipt.valid) {
             printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
                    "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
@@ -312,6 +440,21 @@ int main(int argc, char **argv) {
                    receipt.output_byte_store_offset, receipt.output_byte_source_register,
                    receipt.output_byte_base_register, receipt.output_byte_index_register,
                    receipt.loop_back_branch_offset, receipt.loop_back_target);
+        }
+        if (zero_side_receipt.valid) {
+            printf("SH-2 PRS3 v1 zero-side read: counter=R%u%+d reject=%zu->%zu "
+                   "reads=%zu @R%u+->R%u,%zu @R%u+->R%u; "
+                   "token/termination-proof=0\n",
+                   zero_side_receipt.counter_register,
+                   zero_side_receipt.counter_decrement,
+                   zero_side_receipt.counter_rejection_branch_offset,
+                   zero_side_receipt.counter_rejection_target,
+                   zero_side_receipt.first_byte_load_offset,
+                   zero_side_receipt.first_byte_cursor_register,
+                   zero_side_receipt.first_byte_value_register,
+                   zero_side_receipt.second_byte_load_offset,
+                   zero_side_receipt.second_byte_cursor_register,
+                   zero_side_receipt.second_byte_value_register);
         }
     }
     free(data);
