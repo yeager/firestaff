@@ -70,6 +70,49 @@ static int system_card_md5(const char *path, size_t bytes, char md5[33])
            strcmp(md5, THERON_CHAIN_SYSCARD3_MD5) == 0;
 }
 
+static int requested_route(const char *name, unsigned int *out_route_bit,
+                           size_t *out_anchor_index, const char **out_name)
+{
+    if (!name || !out_route_bit || !out_anchor_index || !out_name) {
+        return 0;
+    }
+    if (strcmp(name, "title") == 0) {
+        *out_route_bit = THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE;
+        *out_anchor_index = 1u;
+        *out_name = "title";
+        return 1;
+    }
+    if (strcmp(name, "stage") == 0) {
+        *out_route_bit = THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE;
+        *out_anchor_index = 2u;
+        *out_name = "stage";
+        return 1;
+    }
+    if (strcmp(name, "soul_room") == 0) {
+        *out_route_bit = THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM;
+        *out_anchor_index = 0u;
+        *out_name = "soul_room";
+        return 1;
+    }
+    return 0;
+}
+
+static const Theron_Track02StartupBitmapAtlasRoute *find_route(
+    const Theron_Track02StartupBitmapAtlas *atlas, unsigned int route_bit)
+{
+    size_t i;
+
+    if (!atlas) {
+        return NULL;
+    }
+    for (i = 0u; i < atlas->route_count; ++i) {
+        if (atlas->routes[i].route_bit == route_bit) {
+            return &atlas->routes[i];
+        }
+    }
+    return NULL;
+}
+
 int main(void)
 {
     const char *track02_path = getenv("THERON_RAW_TRACK02");
@@ -82,13 +125,24 @@ int main(void)
     char system_card_md5_hex[33];
     Theron_Track02IplLoaderReceipt ipl;
     Theron_Track02Stage2DynamicPayloadReceipt payload;
+    Theron_Track02BankSignal bank;
     Theron_V1SystemCardIrq2EntryGate system_card_gate;
     Theron_StartupMediaStateReceipt bitmap;
+    const Theron_Track02StartupBitmapAtlasRoute *route;
+    const char *route_name = NULL;
+    unsigned int route_bit = 0u;
+    size_t route_anchor_index = 0u;
     int result = 1;
 
     if (!track02_path || !track02_path[0] || !system_card_path ||
         !system_card_path[0]) {
         printf("status=skip reason=explicit_raw_track02_and_system_card_required "
+               "emulator=not_started fallback=not_run\n");
+        return 0;
+    }
+    if (!requested_route(getenv("THERON_BITMAP_ROUTE"), &route_bit,
+                         &route_anchor_index, &route_name)) {
+        printf("status=skip reason=explicit_bitmap_route_title_stage_or_soul_room_required "
                "emulator=not_started fallback=not_run\n");
         return 0;
     }
@@ -149,12 +203,25 @@ int main(void)
                "emulator=not_started fallback=not_run\n");
         goto done;
     }
+    if (theron_v1_track02_find_bank_signal(track02, track02_bytes, track02_md5,
+                                            &bank) != THERON_TRACK02_SIGNAL_OK ||
+        route_anchor_index >= bank.anchor_count ||
+        (bitmap.startup_bitmap_raw_route_mask & route_bit) == 0u ||
+        !(route = find_route(&bitmap.startup_bitmap_atlas, route_bit)) ||
+        route->tile_count == 0u || route->checksum == 0u ||
+        route->first_raw_offset !=
+            bank.post_boundary_span_offsets[route_anchor_index]) {
+        printf("status=blocked reason=bitmap_descriptor_relation_unproven "
+               "emulator=not_started fallback=not_run\n");
+        goto done;
+    }
 
-    printf("status=ready cd_read=validated bitmap_route_mask=0x%x "
-           "bitmap_candidate_hash=%08x emulator=not_started fallback=not_run\n",
-           bitmap.startup_bitmap_raw_route_mask,
-           bitmap.startup_bitmap_atlas_checksum);
-    result = 0;
+    /* The bounded route-to-bank relation is proven, but the palette API is
+     * intentionally unbound: no loader reference names a palette window for
+     * this route.  Do not inspect arbitrary 32-byte spans or publish pixels. */
+    printf("status=blocked route=%s bitmap_descriptor_hash=%08x "
+           "palette_descriptor=unproven emulator=not_started fallback=not_run\n",
+           route_name, route->checksum);
 
 done:
     free(track02);
