@@ -5,6 +5,16 @@
 #include <stdio.h>
 #include <string.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#define TQR_SRM_PUBLISH_NO_REPLACE(temp_path, destination_path) \
+    (CreateHardLinkA((destination_path), (temp_path), NULL) ? 1 : 0)
+#else
+#include <unistd.h>
+#define TQR_SRM_PUBLISH_NO_REPLACE(temp_path, destination_path) \
+    (link((temp_path), (destination_path)) == 0)
+#endif
+
 #if FIRESTAFF_HAS_ZLIB
 #include <zlib.h>
 #endif
@@ -78,6 +88,15 @@ static void fill_receipt(Theron_V1SrmRuntimeReceipt *out, Theron_V1SrmRuntimeSta
     out->track02_identity = world->runtime_media.identity;
 }
 
+static int srm_path_exists(const char *path) {
+    FILE *fp;
+    if (!path || !path[0]) return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    fclose(fp);
+    return 1;
+}
+
 Theron_V1SrmRuntimeStatus theron_v1_srm_runtime_export_path(const Theron_V1_World *world, const char *path, Theron_V1SrmRuntimeReceipt *out) {
     runtime_receipt_init(out);
     if (!world || !path || !path[0]) return THERON_V1_SRM_RUNTIME_BAD_INPUT;
@@ -105,10 +124,25 @@ Theron_V1SrmRuntimeStatus theron_v1_srm_runtime_export_path(const Theron_V1_Worl
         remove(temp);
         return THERON_V1_SRM_RUNTIME_IO_FAILED;
     }
-    if (fclose(fp) != 0 || rename(temp, path) != 0) {
+    if (fclose(fp) != 0) {
         remove(temp);
         return THERON_V1_SRM_RUNTIME_IO_FAILED;
     }
+    /* `rename` would silently replace a real Save Disk.  Link the fully
+     * written private file into place instead: the publication either makes
+     * a new destination visible or leaves the existing corpus artifact
+     * untouched. */
+    if (!TQR_SRM_PUBLISH_NO_REPLACE(temp, path)) {
+        int destination_exists = srm_path_exists(path);
+        Theron_V1SrmRuntimeStatus publish_status = destination_exists
+            ? THERON_V1_SRM_RUNTIME_DESTINATION_EXISTS
+            : THERON_V1_SRM_RUNTIME_IO_FAILED;
+        remove(temp);
+        fill_receipt(out, publish_status, THERON_V1_SRM_ENVELOPE_KIND_NONE,
+                     THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT, world);
+        return publish_status;
+    }
+    remove(temp);
     if (out) out->srm_size = compressed_size;
     fill_receipt(out, THERON_V1_SRM_RUNTIME_OK, THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY, THERON_V1_SRM_PROGRESS_IMPORT_OK, world);
     return THERON_V1_SRM_RUNTIME_OK;
@@ -137,5 +171,5 @@ Theron_V1SrmRuntimeStatus theron_v1_srm_runtime_continue_path(Theron_V1_World *w
 }
 
 const char *theron_v1_srm_runtime_status_name(Theron_V1SrmRuntimeStatus status) {
-    switch (status) { case THERON_V1_SRM_RUNTIME_OK: return "OK"; case THERON_V1_SRM_RUNTIME_ZLIB_UNAVAILABLE: return "ZLIB_UNAVAILABLE"; case THERON_V1_SRM_RUNTIME_BAD_INPUT: return "BAD_INPUT"; case THERON_V1_SRM_RUNTIME_IO_FAILED: return "IO_FAILED"; case THERON_V1_SRM_RUNTIME_UNSUPPORTED_BODY: return "UNSUPPORTED_BODY"; case THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED: return "MEDIA_UNVERIFIED"; default: return "UNKNOWN"; }
+    switch (status) { case THERON_V1_SRM_RUNTIME_OK: return "OK"; case THERON_V1_SRM_RUNTIME_ZLIB_UNAVAILABLE: return "ZLIB_UNAVAILABLE"; case THERON_V1_SRM_RUNTIME_BAD_INPUT: return "BAD_INPUT"; case THERON_V1_SRM_RUNTIME_IO_FAILED: return "IO_FAILED"; case THERON_V1_SRM_RUNTIME_UNSUPPORTED_BODY: return "UNSUPPORTED_BODY"; case THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED: return "MEDIA_UNVERIFIED"; case THERON_V1_SRM_RUNTIME_DESTINATION_EXISTS: return "DESTINATION_EXISTS"; default: return "UNKNOWN"; }
 }
