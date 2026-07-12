@@ -2395,6 +2395,10 @@ int dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
         return 0;
     }
     *out_receipt = view_model.host_view_receipt;
+    out_receipt->interface_rect14_host_ready =
+        dm2_v1_boot_interface_rect14_host_receipt(
+            (DM2_V1_BootProfile *)profile,
+            &out_receipt->interface_rect14);
     return 1;
 }
 
@@ -4416,6 +4420,57 @@ static int dm2_v1_boot_runtime_interface_rect14_placement_receipt(
     return placement_count >= 4u && rotated_mask != 0u && hash != 0u;
 }
 
+static int dm2_v1_boot_parse_interface_action_table(
+    const uint8_t *raw,
+    size_t raw_size,
+    DM2_V1_InterfaceActionTable *out_table)
+{
+    size_t cursor;
+    uint32_t hash = 0x32494132u;
+    uint32_t group_count;
+    uint32_t entry_count = 0u;
+
+    if (!out_table) return 0;
+    memset(out_table, 0, sizeof(*out_table));
+    if (!raw || raw_size < 2u || raw_size > UINT32_MAX) return 0;
+    group_count = raw[0];
+    if (group_count == 0u || group_count > DM2_V1_INTERFACE_ACTION_GROUP_MAX ||
+        raw_size < 1u + (size_t)group_count) {
+        return 0;
+    }
+    cursor = 1u + (size_t)group_count;
+    for (uint32_t i = 0; i < group_count; ++i) {
+        out_table->groups[i].length = raw[1u + i];
+        entry_count += raw[1u + i];
+    }
+    if (entry_count > (raw_size - cursor) / 2u) return 0;
+    for (uint32_t i = 0; i < group_count; ++i) {
+        out_table->groups[i].primary_offset = (uint32_t)cursor;
+        cursor += out_table->groups[i].length;
+    }
+    for (uint32_t i = 0; i < group_count; ++i) {
+        out_table->groups[i].secondary_offset = (uint32_t)cursor;
+        cursor += out_table->groups[i].length;
+    }
+    for (size_t i = 0; i < raw_size; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
+    }
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, group_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, entry_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, (uint32_t)cursor);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)(raw_size - cursor));
+    out_table->valid = 1;
+    out_table->raw = raw;
+    out_table->raw_size = (uint32_t)raw_size;
+    out_table->hash = hash;
+    out_table->group_count = group_count;
+    out_table->entry_count = entry_count;
+    out_table->tail_offset = (uint32_t)cursor;
+    out_table->tail_size = (uint32_t)(raw_size - cursor);
+    return 1;
+}
+
 static int dm2_v1_boot_runtime_interface_action_table_receipt(
     DM2_V1_BootProfile *profile,
     uint32_t *out_hash,
@@ -4427,10 +4482,7 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
     DM2_V1_BootGraphicsDat *gfx;
     const uint8_t *raw;
     size_t raw_size = 0;
-    uint32_t hash = 0x32494132u;
-    uint32_t group_count;
-    uint32_t entry_count = 0u;
-    size_t min_payload;
+    DM2_V1_InterfaceActionTable table;
 
     if (out_hash) *out_hash = 0u;
     if (out_byte_count) *out_byte_count = 0u;
@@ -4450,40 +4502,16 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
         DM2_GDAT_ENTRY_TYPE_RAW7,
         DM2_GDAT_INTERFACE_RAW_ACTION_TABLE,
         &raw_size);
-    if (!raw || raw_size < 2 || raw_size > UINT32_MAX) {
+    if (!dm2_v1_boot_parse_interface_action_table(raw, raw_size, &table)) {
         return 0;
     }
 
-    /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_02 reads the
-     * first byte as group count, copies one length byte per group into
-     * _4976_4bde[].b0, then binds two variable-length blocks (pv1/pv5)
-     * before the trailing _4976_4be2 command table. */
-    group_count = raw[0];
-    if (group_count == 0u || raw_size < 1u + (size_t)group_count) {
-        return 0;
-    }
-    for (uint32_t i = 0; i < group_count; ++i) {
-        entry_count += raw[1u + i];
-    }
-    min_payload = 1u + (size_t)group_count + ((size_t)entry_count * 2u);
-    if (raw_size < min_payload) {
-        return 0;
-    }
-    for (size_t i = 0; i < raw_size; ++i) {
-        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
-    }
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash, group_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash, entry_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash,
-        (uint32_t)(raw_size - min_payload));
-
-    *out_hash = hash;
-    *out_byte_count = (uint32_t)raw_size;
-    *out_group_count = group_count;
-    *out_entry_count = entry_count;
-    *out_tail_byte_count = (uint32_t)(raw_size - min_payload);
-    return entry_count > 0u;
+    *out_hash = table.hash;
+    *out_byte_count = table.raw_size;
+    *out_group_count = table.group_count;
+    *out_entry_count = table.entry_count;
+    *out_tail_byte_count = table.tail_size;
+    return table.entry_count > 0u;
 }
 
 static int dm2_v1_boot_runtime_interface_font_table_receipt(
@@ -4605,6 +4633,31 @@ int dm2_v1_boot_interface_palette(DM2_V1_BootProfile *profile,
         DM2_GDAT_INTERFACE_PALETTE_FIELD, out_palette);
 }
 
+int dm2_v1_boot_interface_action_table(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_InterfaceActionTable *out_table)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+
+    if (!out_table) return 0;
+    memset(out_table, 0, sizeof(*out_table));
+    if (!profile || !profile->graphics_dat) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_typed_sized(
+        &gfx->loader,
+        DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+        0,
+        DM2_GDAT_ENTRY_TYPE_RAW7,
+        DM2_GDAT_INTERFACE_RAW_ACTION_TABLE,
+        &raw_size);
+    /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_02 binds the
+     * two group spans and command tail directly from this original dt07/2
+     * payload. Firestaff retains those offsets without inventing actions. */
+    return dm2_v1_boot_parse_interface_action_table(raw, raw_size, out_table);
+}
+
 int dm2_v1_boot_interface_rect14_table(
     DM2_V1_BootProfile *profile,
     const uint8_t **out_rows,
@@ -4635,6 +4688,33 @@ int dm2_v1_boot_interface_rect14_table(
     *out_row_count = (uint32_t)(byte_count / 14u);
     *out_hash = hash;
     return *out_row_count > 0u;
+}
+
+int dm2_v1_boot_interface_rect14_host_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_InterfaceRect14HostReceipt *out_receipt)
+{
+    const uint8_t *rows;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_boot_interface_rect14_table(profile, &rows,
+                                             &out_receipt->row_count,
+                                             &out_receipt->table_hash) ||
+        !rows ||
+        !dm2_v1_boot_runtime_interface_rect14_placement_receipt(
+            profile,
+            &out_receipt->placement_hash,
+            &out_receipt->placement_count,
+            &out_receipt->rotated_cell_mask,
+            &out_receipt->max_stretched_size)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_0A supplies the
+     * 14-byte rows; the host receives only its bounded placement proof. */
+    out_receipt->valid = 1;
+    return 1;
 }
 
 static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
