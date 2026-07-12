@@ -256,8 +256,11 @@ int  M11_Render_SetV2Filters(int crtEnabled,
                              int paletteInterpEnabled,
                              int paletteInterpStrength,
                              int ditherEnabled,
-                             int sharpenEnabled,
-                             int sharpenStrength);
+                            int sharpenEnabled,
+                            int sharpenStrength);
+/* Enables the configured DM1 V2.0 filter chain for the current game frame.
+ * Filter preferences may remain persisted while V1 and other games render. */
+void M11_Render_SetV2PresentationActive(int active);
 int  M11_Render_GetV2Filters(int* outCrtEnabled,
                              int* outCrtStrength,
                              int* outPaletteEnabled,

@@ -243,6 +243,15 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
         requestedFilter);
     int restoreFilter = 0;
     int result;
+    int dm1_v20_active = gameView &&
+        gameView->presentationMode == M12_PRESENTATION_V20_FILTERED &&
+        (gameView->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG ||
+         gameView->sourceKind == M11_GAME_SOURCE_CUSTOM_DUNGEON ||
+         gameView->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON);
+
+    /* M12 persists V2.0 preferences globally, but those post-filters are
+     * only valid for the DM1 V2.0 framebuffer route. */
+    M11_Render_SetV2PresentationActive(dm1_v20_active);
     /* ReDMCSB DUNVIEW.C:3619-3638 draws DM1 inscriptions as hard-edged
      * M648 8x8 glyphs into the 320x200 viewport.  If the launcher's global
      * scaling filter is LINEAR, SDL smooths those glyphs during window

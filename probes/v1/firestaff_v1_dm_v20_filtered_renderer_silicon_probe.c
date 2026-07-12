@@ -140,6 +140,9 @@ int main(void) {
     RgbSample filtered_odd_repeat;
     RgbSample interpolation_baseline;
     RgbSample interpolation_filtered;
+    RgbSample interpolation_odd;
+    RgbSample inactive_even;
+    RgbSample inactive_odd;
     int rc;
     int crt_enabled = -1;
     int crt_strength = -1;
@@ -162,6 +165,9 @@ int main(void) {
     memset(&filtered_odd_repeat, 0, sizeof(filtered_odd_repeat));
     memset(&interpolation_baseline, 0, sizeof(interpolation_baseline));
     memset(&interpolation_filtered, 0, sizeof(interpolation_filtered));
+    memset(&interpolation_odd, 0, sizeof(interpolation_odd));
+    memset(&inactive_even, 0, sizeof(inactive_even));
+    memset(&inactive_odd, 0, sizeof(inactive_odd));
 
     if (!is_apple_silicon()) {
         printf("skip: not Apple Silicon (host is x86_64 / non-macOS); probe target is __APPLE__ + __arm64__\n");
@@ -230,7 +236,7 @@ int main(void) {
     rc = M11_Render_PresentIndexed(interpolation_framebuffer,
                                    M11_FB_WIDTH, M11_FB_HEIGHT);
     if (rc != M11_RENDER_OK || !read_pixel_pair(&interpolation_baseline,
-                                                 &baseline_odd)) {
+                                                 &interpolation_odd)) {
         fprintf(stderr, "FAIL interpolation baseline readback: rc=%d\n", rc);
         M11_Render_Shutdown();
         SDL_Quit();
@@ -241,7 +247,7 @@ int main(void) {
     rc = M11_Render_PresentIndexed(interpolation_framebuffer,
                                    M11_FB_WIDTH, M11_FB_HEIGHT);
     if (rc != M11_RENDER_OK || !read_pixel_pair(&interpolation_filtered,
-                                                 &baseline_odd)) {
+                                                 &interpolation_odd)) {
         fprintf(stderr, "FAIL interpolation filtered readback: rc=%d\n", rc);
         M11_Render_Shutdown();
         SDL_Quit();
@@ -280,6 +286,20 @@ int main(void) {
                  dither_enabled == 0 && sharpen_enabled == 0 &&
                  sharpen_strength == 0,
                  "renderer accepted V2.0 CRT + palette correction config");
+
+    M11_Render_SetV2PresentationActive(0);
+    rc = M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    if (rc != M11_RENDER_OK || !read_pixel_pair(&inactive_even, &inactive_odd)) {
+        fprintf(stderr, "FAIL inactive V2.0 gate readback: rc=%d\n", rc);
+        M11_Render_Shutdown();
+        SDL_Quit();
+        return 1;
+    }
+    probe_record(&stats, "AS_V20_ACTIVE_GATE",
+                 rgb_equal(inactive_even, baseline_even) &&
+                 rgb_equal(inactive_odd, baseline_odd),
+                 "persisted V2.0 filters are inert outside the V2.0 presentation route");
+    M11_Render_SetV2PresentationActive(1);
 
     rc = M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     if (rc != M11_RENDER_OK || !read_pixel_pair(&filtered_even, &filtered_odd)) {

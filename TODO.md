@@ -5,8 +5,10 @@
 The live V2.2 selection path now rejects synthetic and partial modern-art
 packs and falls back to the original-data V2.1 presentation route. V2.0 now
 also applies palette interpolation without requiring dither cleanup. Remaining
-V2 presentation work is an operator-reviewed, complete real-art pack and
-packaged Mac capture; do not re-enable placeholder art as a runtime fallback.
+V2.0 filter preferences are now gated to DM1 V2.0 so they cannot affect V1
+or another game. Remaining V2 presentation work is an operator-reviewed,
+complete real-art pack and packaged Mac capture; do not re-enable placeholder
+art as a runtime fallback.
 
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 
