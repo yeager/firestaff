@@ -1,11 +1,12 @@
 /*
  * test_m11_asset_loader_blit_pc34_compat.c
  *
- * Data-free CTest unit for the public M11 asset-loader blit helpers.
+ * CTest unit for the public M11 asset-loader blit helpers.
  * The loader expands GRAPHICS.DAT entries into M11_AssetSlot pixels, but
  * the compositing helpers operate on that plain slot shape.  This test
- * uses a synthetic slot so the renderer contract is covered without
- * requiring user-supplied GRAPHICS.DAT.
+ * uses a synthetic slot so the base renderer contract is covered without
+ * requiring user-supplied GRAPHICS.DAT.  An opt-in DM1 M648 lane consumes
+ * FIRESTAFF_DM1_GRAPHICS_DAT when real PC34 media is available.
  *
  * Source of truth:
  *   - include/asset_loader_m11.h public blit API.
@@ -14,13 +15,14 @@
  *   - ReDMCSB DUNVIEW.C:3916 champion-portrait extraction shape for
  *     M11_AssetLoader_BlitSubRectScaled().
  *
- * Honest scope: M11 renderer-helper contract only; no asset decode,
- * no live SDL presentation, no real game data, no original pixel parity.
+ * Honest scope: no live SDL presentation.  The opt-in lane verifies the
+ * original M648 bitmap decode and its C10-transparent source-pixel blit.
  */
 
 #include "asset_loader_m11.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define FB_W 12
@@ -258,6 +260,60 @@ static void test_subrect_scaled(const M11_AssetSlot* slot) {
                pixel_eq(fb, 2, 0, SENTINEL));
 }
 
+static void test_dm1_m648_real_graphics_dat(void) {
+    const char* graphicsPath = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
+    M11_AssetLoader loader;
+    const M11_AssetSlot* m648;
+    unsigned char framebuffer[288 * 8];
+    unsigned long opaqueCount = 0;
+    int pixelsMatch = 1;
+    int i;
+
+    if (!graphicsPath || !graphicsPath[0]) {
+        printf("SKIP dm1_m648_real_graphics_dat (FIRESTAFF_DM1_GRAPHICS_DAT unset)\n");
+        return;
+    }
+    memset(&loader, 0, sizeof(loader));
+    check_true("dm1_m648_real.init", M11_AssetLoader_Init(&loader, graphicsPath));
+    if (!M11_AssetLoader_IsReady(&loader)) {
+        return;
+    }
+    m648 = M11_AssetLoader_Load(&loader, 258U);
+    check_true("dm1_m648_real.load_index_258", m648 != NULL);
+    if (!m648) {
+        M11_AssetLoader_Shutdown(&loader);
+        return;
+    }
+    check_true("dm1_m648_real.dimensions", m648->width == 288 && m648->height == 8);
+    if (m648->width != 288 || m648->height != 8) {
+        M11_AssetLoader_Shutdown(&loader);
+        return;
+    }
+    memset(framebuffer, SENTINEL, sizeof(framebuffer));
+    M11_AssetLoader_Blit(m648, framebuffer, 288, 8, 0, 0, 10);
+    for (i = 0; i < (int)sizeof(framebuffer); ++i) {
+        if (m648->pixels[i] == 10) {
+            if (framebuffer[i] != SENTINEL) {
+                pixelsMatch = 0;
+            }
+        } else {
+            ++opaqueCount;
+            if (framebuffer[i] != m648->pixels[i]) {
+                pixelsMatch = 0;
+            }
+        }
+    }
+    ++checks;
+    if (opaqueCount != 908) {
+        ++failures;
+        printf("FAIL dm1_m648_real.opaque_count got=%lu want=908\n", opaqueCount);
+    } else {
+        printf("PASS dm1_m648_real.opaque_count=908\n");
+    }
+    check_true("dm1_m648_real.pixel_blit_matches_graphics_dat", pixelsMatch);
+    M11_AssetLoader_Shutdown(&loader);
+}
+
 int main(void) {
     static const unsigned char pixels[20] = {
         1,  2,  0,  4,  5,
@@ -280,6 +336,7 @@ int main(void) {
     test_scaled_and_mirror_blits(&slot);
     test_replacement_blits(&slot);
     test_subrect_scaled(&slot);
+    test_dm1_m648_real_graphics_dat();
 
     printf("# summary: %d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;

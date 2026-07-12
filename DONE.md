@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0115 wall-inscription zone correction: the ornament pass
+  now uses ReDMCSB `DUNVIEW.C F0107/G0205`'s compact 13-zone order; D3L2 and
+  D3R2 remain F0676/F0677 planes and cannot draw a second ornament.  The
+  M648 `GRAPHICS.DAT` lane verifies original pixels and C10 transparency.
+  Verification: wall-zone test 110/110; real M648 asset test 31/31.
+
+- 2026-07-12 CSB startup fallback removal: M11 no longer registers legacy
+  text or door fallback callbacks for CSB.  Verified source-backed
+  C001-C005/C017/C040 receipts are the sole title, entrance, opening-door,
+  and HUD presentation route.  Verification: startup test 139/139 and PC
+  real-asset launch probe 39/39.
+
 - 2026-07-12 DM2 V1 original title-menu NEW pointer route: M11 now sends
   startup clicks only through the `INTERFACE_GENERAL/0/dt04/0` rectangle
   expanded for original event `0xD7`, which skproject `HANDLE_UI_EVENT`

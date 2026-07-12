@@ -3325,12 +3325,6 @@ int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
     return host_view.special_palette;
 }
 
-static void m11_draw_csb_startup_fallback_text(
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const CSB_V1_StartupRenderPlan_PC34 *plan);
-
 static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        unsigned char *framebuffer,
                                        int framebufferWidth,
@@ -3444,33 +3438,6 @@ static void m11_draw_csb_startup_plan_text(
                   y,
                   text,
                   m11_csb_startup_text_style(style));
-}
-
-static void m11_draw_csb_startup_fallback_text(
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    int row;
-    if (!framebuffer || !plan) {
-        return;
-    }
-    for (row = 0; row < plan->fallback_text_row_count; ++row) {
-        const CSB_V1_StartupFallbackTextRow_PC34 *text_row =
-            &plan->fallback_text_rows[row];
-        if (!text_row->visible || !text_row->text ||
-            text_row->text[0] == '\0') {
-            continue;
-        }
-        m11_draw_csb_startup_plan_text(framebuffer,
-                                       framebufferWidth,
-                                       framebufferHeight,
-                                       text_row->x,
-                                       text_row->y,
-                                       text_row->style,
-                                       text_row->text);
-    }
 }
 
 static int m11_csb_copy_startup_rect(const unsigned char *source,
@@ -3743,22 +3710,6 @@ static void m11_csb_startup_executor_draw_closed_doors(
         plan);
 }
 
-static void m11_csb_startup_executor_suppress_door_fallback(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    (void)user;
-    (void)plan;
-}
-
-static void m11_csb_startup_executor_suppress_fallback_text(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    (void)user;
-    (void)plan;
-}
-
 static void m11_csb_startup_executor_draw_utility_panel(
     void *user,
     const CSB_V1_StartupRenderPlan_PC34 *plan,
@@ -3826,10 +3777,10 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     executor.draw_opening_frame =
         m11_csb_startup_executor_draw_opening_frame;
     executor.draw_closed_doors = m11_csb_startup_executor_draw_closed_doors;
-    executor.draw_door_fallback =
-        m11_csb_startup_executor_suppress_door_fallback;
-    executor.draw_fallback_text =
-        m11_csb_startup_executor_suppress_fallback_text;
+    /* A CSB host receipt rejects fallback draw routes.  Leaving these absent
+     * ensures only the source-backed C001-C005/C017/C040 path can present. */
+    executor.draw_door_fallback = NULL;
+    executor.draw_fallback_text = NULL;
     executor.draw_utility_panel =
         m11_csb_startup_executor_draw_utility_panel;
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0580/F0581 keep CSB
