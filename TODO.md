@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+## M12 Localization Completion (2026-07-12)
+
+The launcher now resolves all 19 shipped locales from `LC_ALL`, `LC_MESSAGES`,
+or `LANG`, and the flag popup commits mouse selection through the same PO/l10n
+path as keyboard input. Remaining localization work is to replace the
+English-scaffold `startup-menu.*.po` entries with reviewed translations and
+add a twentieth locale only with a shaped/font-covered script; do not claim a
+locale is translated merely because it falls back to English.
+
 ## DM1/CSB Render Follow-up (2026-07-12)
 
 DM1 F0115 now consumes only ReDMCSB's compact 13 `G0205` ornament zones.

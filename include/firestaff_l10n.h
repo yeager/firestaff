@@ -62,7 +62,8 @@ FS_Language fs_l10n_get_language(void);
 const char *fs_l10n_get(FS_StringId id);
 const char *fs_l10n_language_name(FS_Language lang);
 
-
+/* Resolve a POSIX/BCP-47 locale such as sv_SE.UTF-8 or pt-BR. */
+FS_Language fs_l10n_language_from_locale(const char* locale);
 FS_Language fs_l10n_detect_system_language(void);
 int fs_l10n_to_asset_language(FS_Language ui_lang);
 void fs_l10n_init_from_system(void);

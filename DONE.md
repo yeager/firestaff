@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 M12 locale and flag-popup repair: system locale detection now
+  handles all 19 shipped UI locales, including `nb`/`nn` for Norwegian, in
+  standard POSIX precedence. A language remains system-derived until an
+  explicit user choice. Mouse selection in the language flag popup now commits
+  through the same l10n/PO route as keyboard ACCEPT. Verification:
+  `test_firestaff_l10n` PASS; M12 mouse probe 14/14; settings hit test 61/61.
+
 - 2026-07-12 DM1 F0201 scent-route gate: direct scent pursuit now requires a
   positive ReDMCSB F0198/F0199 route result as well as its source range gate.
   Blocked and over-range paths cannot infer Manhattan-distance pursuit.

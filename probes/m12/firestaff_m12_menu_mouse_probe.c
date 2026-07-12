@@ -186,35 +186,54 @@ int main(void) {
     /* ---------- INV_MOUSE_03 ---------- */
     {
         M12_StartupMenuState s;
+        int initialLanguage;
+        int expectedLanguage;
         init_probe_menu_state(&s);
         s.view = M12_MENU_VIEW_SETTINGS;
         s.settingsSelectedIndex = 0;
-        s.settings.languageIndex = 0;
+        initialLanguage = s.settings.languageIndex;
+        expectedLanguage = (initialLanguage + 1) %
+            M12_StartupMenu_GetLanguageCount();
 
         memset(a, 0, rgbaBytes);
         M12_ModernMenu_Render(&s, a, W, H);
         unsigned long sigEN = checksum(a, rgbaBytes);
 
-        /* Click the right half of the LANGUAGE row (row 0) so the
-         * value cycles 0 -> 1. */
+        /* The language row opens the flag popup. The initial value may
+         * originate from LANG, so select the next source-of-truth item by
+         * its actual popup hit rectangle instead of assuming English. */
         int rowX = 96 + 36;
         int rowY = 260 + 36; /* panelY + 36 */
         int rowW = (W - 2 * 96) - 72;
         int clickX = rowX + (rowW * 85) / 100;
         int clickY = rowY + 20;
-        int changed = M12_ModernMenu_HandlePointer(&s, clickX, clickY, 1, NULL);
+        int opened = M12_ModernMenu_HandlePointer(&s, clickX, clickY, 1, NULL);
+        int popupX = 96 + 36 + ((W - 2 * 96 - 2 * 36) - 632);
+        int popupY = 260 + 36 + 56;
+        int popupItemW = (632 - 2 * 18 - 14) / 2;
+        int popupClickX = popupX + 18 +
+            (expectedLanguage % 2) * (popupItemW + 14) + popupItemW / 2;
+        int popupClickY = popupY + 18 +
+            (expectedLanguage / 2) * (42 + 8) + 21;
+        M12_MouseHit popupHit = M12_ModernMenu_HitTest(&s, popupClickX,
+                                                       popupClickY);
+        int changed = M12_ModernMenu_HandlePointer(&s, popupClickX,
+                                                    popupClickY, 1, NULL);
 
         memset(b, 0, rgbaBytes);
         M12_ModernMenu_Render(&s, b, W, H);
         unsigned long sigSV = checksum(b, rgbaBytes);
 
-        int ok = changed == 1 &&
-                 s.settings.languageIndex == 1 &&
+        int ok = opened == 1 && changed == 1 &&
+                 s.languagePopupOpen == 0 &&
+                 popupHit.kind == M12_HIT_LANGUAGE_POPUP_ITEM &&
+                 popupHit.index == expectedLanguage &&
+                 s.settings.languageIndex == expectedLanguage &&
                  sigEN != sigSV &&
                  s.languageExplicit == 1;
         record(&t, "INV_MOUSE_03", ok,
-               "clicking the settings language row cycles immediately and "
-               "changes the rendered output without restart");
+               "flag popup selects a language by mouse and changes the "
+               "rendered output without restart");
     }
 
     /* ---------- INV_MOUSE_04 ---------- */

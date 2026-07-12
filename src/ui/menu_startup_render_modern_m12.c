@@ -671,7 +671,14 @@ static void draw_language_flag(M12_ModernCanvas* c, int x, int y, int w, int h,
     M12_RGB orange = rgb(234, 128, 42);
     fill_rounded_rect(c, x, y, w, h, 4, white);
     stroke_rounded_rect(c, x, y, w, h, 4, rgb(72, 78, 96));
-    if (language_code_is(code, "SV")) {
+    if (language_code_is(code, "EN")) {
+        /* Compact Union Jack marker for the English locale. */
+        fill_rect(c, x + 2, y + 2, w - 4, h - 4, blue);
+        fill_rect(c, x + 2, y + h / 2 - h / 7, w - 4, h / 3, white);
+        fill_rect(c, x + w / 2 - w / 10, y + 2, w / 5, h - 4, white);
+        fill_rect(c, x + 2, y + h / 2 - h / 14, w - 4, h / 7, red);
+        fill_rect(c, x + w / 2 - w / 20, y + 2, w / 10, h - 4, red);
+    } else if (language_code_is(code, "SV")) {
         fill_rect(c, x + 2, y + 2, w - 4, h - 4, blue);
         fill_rect(c, x + w / 3, y + 2, w / 7, h - 4, yellow);
         fill_rect(c, x + 2, y + h / 2 - h / 10, w - 4, h / 5, yellow);

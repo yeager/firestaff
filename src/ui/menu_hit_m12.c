@@ -498,15 +498,15 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
             return 1;
         case M12_HIT_LANGUAGE_POPUP_ITEM:
         {
-            int guard = 0;
             int count = M12_StartupMenu_GetLanguageCount();
             if (hit.index < 0 || hit.index >= count) return 0;
             state->settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_LANGUAGE;
-            state->languagePopupOpen = 0;
-            while (state->settings.languageIndex != hit.index && guard++ < count + 1) {
-                M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_VALUE_RIGHT);
-            }
-            state->languagePopupSelectedIndex = state->settings.languageIndex;
+            /* Match keyboard popup semantics: set the highlighted flag then
+             * commit it through ACCEPT, which synchronizes PO/l10n state and
+             * marks the choice explicit. Cycling while the popup is open
+            * only moves its cursor and leaves the selected language intact. */
+            state->languagePopupSelectedIndex = hit.index;
+            M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
             return 1;
         }
         case M12_HIT_SETTINGS_TAB:
