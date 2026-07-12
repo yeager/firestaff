@@ -50,3 +50,6 @@ cmake --build build --target firestaff --parallel
 
 Release visual claims additionally require a real original-data capture through
 the packaged application path.
+
+For the detailed PC34 chain, timeline, render-plan, and save invariants, see
+[DM1 PC34 Internals](DM1-PC34-Internals).

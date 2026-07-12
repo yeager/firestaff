@@ -48,3 +48,6 @@ cmake --build build --target test_nexus_v1_dgn_geometry_readiness \
 ./build/test_nexus_v1_bpk_surface_class
 ./build/test_nexus_v1_startup_menu_pc34_compat
 ```
+
+For DGN record ownership, MNS material provenance, Structure2, and PRS3
+evidence, see [Nexus DGN and PRS3 Internals](Nexus-DGN-and-PRS3-Internals).

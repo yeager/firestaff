@@ -55,3 +55,6 @@ FIRESTAFF_THERON_TRACK02_JP_BIN="/path/to/jp-track02.bin" \
 
 Open technical work remains semantic binding for later loader records, object
 tables, non-startup levels, original SRM bodies, and packaged-app capture.
+
+For strict CUE/record handling and Stage 2/3 receipts, see [Theron's Quest
+Track 02 Internals](Therons-Quest-Track02-Internals).

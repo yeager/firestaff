@@ -43,3 +43,6 @@ cmake --build build --target test_csb_v1_phase7_verification \
 ./build/test_csb_v1_phase7_verification
 ./build/test_csb_v1_dsa_trigger_single_step_pc34_compat
 ```
+
+For authenticated DSA, actuator, save, and raster contracts, see [CSB DSA and
+Save Internals](CSB-DSA-and-Save-Internals).
