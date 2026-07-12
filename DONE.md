@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0189/F0190 M10 map ownership: killed-all cleanup now
+  retires ACTIVE_GROUP only on the party map while unlinking the source group
+  and compacting its source-square timeline events. The F0209 cell adjustment
+  is committed before the next event snapshot. Verification: `firestaff_m10`
+  build and creature AI 281/281.
+
 - 2026-07-12 DM1 F0200 map boundary: a group on another map now clears its
   visible-party distance before LoS-dependent movement can act on stale data.
   Verification: DM1 creature AI 281/281.
