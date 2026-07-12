@@ -337,6 +337,36 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     const CSB_V1_ChaosMagicState *state, int dsa_id, uint32_t state_index,
     int action_ordinal, CSB_V1_CSBWinDSAStackContext *context,
     CSB_V1_CSBWinDSAStackExecution *out_execution);
+
+/* Runtime-owned adapter for the already admitted pure ProcessDSAFilter action
+ * subset.  It has the same callback shape as the CSB monster-filter boundary,
+ * but remains independent of monster code: the caller supplies a source-owned
+ * action pointer and this context proves that it is the exact authenticated
+ * `(dsa,state,ordinal)` record before execution.  The global bank and receipt
+ * belong to the context; unsupported, malformed, or forged actions leave all
+ * caller parameters and that bank unchanged.  `flgs_inout` is deliberately
+ * not interpreted here: pre-move filters carry seven source parameters, while
+ * post-move flag parameters require their separate CSBWin call boundary.
+ *
+ * Source: CSBWin DSA.cpp ProcessDSAFilter/ProcessDSATimer6 lines 5315-5460,
+ * Execute lines 5053-5293, and Monster.cpp lines 1125-1167. */
+typedef struct {
+    const CSB_V1_ChaosMagicState *programs;
+    int dsa_id;
+    uint32_t state_index;
+    int action_ordinal;
+    uint32_t master_location;
+    uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
+    int global_variable_count;
+    CSB_V1_CSBWinDSAStackExecution last_execution;
+    CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
+    int execution_count;
+    int transfer_execution_count;
+} CSB_V1_CSBWinDSAFilterStackRunnerContext;
+
+int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
+    const CSB_V1_DSAImportedAction *action, int *parameters,
+    int parameter_count, int flgs_inout[2], void *user);
 const char *csb_v1_chaos_source_evidence(void);
 
 #endif
