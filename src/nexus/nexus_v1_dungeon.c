@@ -928,6 +928,59 @@ int nexus_v1_level_get_cell_geometry(const Nexus_V1_Level *level, int x, int y,
     return 0;
 }
 
+int nexus_v1_level_structure1f_spatial_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FSpatialReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FSpatialReceipt receipt;
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!level || !level->geometry_info.structure1f_valid ||
+        level->structure1f_entry_count < 0 ||
+        level->structure1f_entry_count !=
+            level->geometry_info.structure1f_total_entry_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.typed_entry_count = level->structure1f_entry_count;
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        switch (record->family) {
+        case NEXUS_V1_DGN_STRUCTURE1F_ITEMS:
+            ++receipt.item_entry_count;
+            break;
+        case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS:
+            ++receipt.floor_decoration_entry_count;
+            break;
+        case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS:
+            ++receipt.floor_sensor_entry_count;
+            break;
+        case NEXUS_V1_DGN_STRUCTURE1F_ALCOVES:
+        case NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS:
+        case NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS:
+            ++receipt.structure1a_bound_entry_count;
+            continue;
+        default:
+            *out_receipt = receipt;
+            return 0;
+        }
+        if (record->x >= (uint8_t)level->width ||
+            record->y >= (uint8_t)level->height) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        ++receipt.direct_coordinate_entry_count;
+    }
+    receipt.valid = receipt.typed_entry_count ==
+        receipt.direct_coordinate_entry_count +
+            receipt.structure1a_bound_entry_count;
+    *out_receipt = receipt;
+    return 0;
+}
+
 static int nexus_v1_dgn_sign(int value) {
     return (value > 0) - (value < 0);
 }
@@ -1052,6 +1105,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
            info->structure1f_family_count,
            sizeof(out_receipt->structure1f_family_count));
     out_receipt->structure1f_typed_entry_count = level->structure1f_entry_count;
+    (void)nexus_v1_level_structure1f_spatial_receipt(
+        level, &out_receipt->structure1f_spatial);
     out_receipt->structure1g_present = info->structure1g_present;
     out_receipt->structure1g_valid = info->structure1g_valid;
     out_receipt->structure1g_animated_texture_count =
@@ -1392,6 +1447,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
     memcpy(receipt.structure1f_family_count, handoff.structure1f_family_count,
            sizeof(receipt.structure1f_family_count));
     receipt.structure1f_typed_entry_count = handoff.structure1f_typed_entry_count;
+    receipt.structure1f_spatial = handoff.structure1f_spatial;
     receipt.structure1g_present = handoff.structure1g_present;
     receipt.structure1g_valid = handoff.structure1g_valid;
     receipt.structure1g_animated_texture_count =
@@ -1535,10 +1591,18 @@ int nexus_v1_level_build_dgn_view_render_plan(
                 receipt.unresolved_animated_material_count++;
             }
         }
-        /* Engine-owned material routing validates the bounded Structure2
-         * surface before presentation. This layer retains the declaration
-         * count but does not reject a real DGN plan solely because it cannot
-         * own the decoded per-level bank. */
+        /* A Structure2 descriptor is not a pixel/palette decoder. Keep all
+         * declared animated commands no-draw until the engine can supply a
+         * separately evidenced image route. Static Structure1B MNS commands
+         * do not set this counter and remain eligible for their own route. */
+        if (receipt.unresolved_animated_material_count > 0) {
+            receipt.status =
+                NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
+            receipt.blocks_real_dgn_mesh_render = 1;
+            receipt.fallback_visuals_permitted = 0;
+            *out_receipt = receipt;
+            return 0;
+        }
         receipt.material_semantics_complete =
             receipt.floor_material_command_count == receipt.floor_count &&
             receipt.ceiling_material_command_count == receipt.ceiling_count &&

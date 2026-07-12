@@ -145,6 +145,19 @@ typedef struct {
     uint8_t destination_orientation;
 } Nexus_V1_DgnStructure1FEntry;
 
+/* Only items, floor decorations, and floor sensors expose documented direct
+ * 64x64 cell coordinates. Alcove/wall families bind through Structure1A and
+ * remain unresolved until that table has a source-backed parser. */
+typedef struct {
+    int valid;
+    int typed_entry_count;
+    int direct_coordinate_entry_count;
+    int item_entry_count;
+    int floor_decoration_entry_count;
+    int floor_sensor_entry_count;
+    int structure1a_bound_entry_count;
+} Nexus_V1_DgnStructure1FSpatialReceipt;
+
 /* DMWeb DGN files, Structure1G: optional animated-texture declarations.
  * A present table has a counted descriptor prefix and four-byte instruction
  * streams. Image instructions, backward FF FE gotos, and FF FF terminators
@@ -368,6 +381,7 @@ typedef struct {
     int structure1f_total_entry_count;
     int structure1f_family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
     int structure1f_typed_entry_count;
+    Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
     int structure1g_present;
     int structure1g_valid;
     int structure1g_animated_texture_count;
@@ -450,6 +464,7 @@ typedef struct {
     int structure1f_total_entry_count;
     int structure1f_family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
     int structure1f_typed_entry_count;
+    Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
     int structure1g_present;
     int structure1g_valid;
     int structure1g_animated_texture_count;
@@ -480,6 +495,9 @@ int nexus_v1_level_get_material_ref(const Nexus_V1_Level *level, int x, int y,
                                     int wall_dir);
 int nexus_v1_level_get_cell_geometry(const Nexus_V1_Level *level, int x, int y,
                                      Nexus_V1_DgnCellGeometry *out_cell);
+int nexus_v1_level_structure1f_spatial_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FSpatialReceipt *out_receipt);
 /* Returns non-zero only when the DGN target cell and its collision sector
  * admit a center-to-center party step. */
 int nexus_v1_level_move_allowed(const Nexus_V1_Level *level,

@@ -493,6 +493,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnGeometryInfo info;
     Nexus_V1_Level level;
     Nexus_V1_DgnRendererHandoffReceipt handoff;
+    Nexus_V1_DgnStructure1FSpatialReceipt spatial;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
                           structure1b_rel, 512) == 0,
@@ -524,9 +525,20 @@ static void test_structure1f_semantics_and_bounds(void) {
           level.structure1f_entries[4].model_or_aspect == 0x27U &&
           level.structure1f_entries[4].destination_orientation == 2,
           "Structure1F retains documented item, decoration, and sensor fields");
+    CHECK(nexus_v1_level_structure1f_spatial_receipt(&level, &spatial) == 0 &&
+          spatial.valid && spatial.typed_entry_count == 14 &&
+          spatial.direct_coordinate_entry_count == 6 &&
+          spatial.item_entry_count == 2 &&
+          spatial.floor_decoration_entry_count == 2 &&
+          spatial.floor_sensor_entry_count == 2 &&
+          spatial.structure1a_bound_entry_count == 8,
+          "Structure1F separates direct cell records from unresolved Structure1A records");
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
           handoff.structure1f_valid && handoff.structure1f_total_entry_count == 14 &&
           handoff.structure1f_typed_entry_count == level.structure1f_entry_count &&
+          handoff.structure1f_spatial.valid &&
+          handoff.structure1f_spatial.direct_coordinate_entry_count == 6 &&
+          handoff.structure1f_spatial.structure1a_bound_entry_count == 8 &&
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
     structure1[structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 312 + 16] = 0x13U;

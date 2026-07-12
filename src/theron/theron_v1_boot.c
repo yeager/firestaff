@@ -729,7 +729,11 @@ int theron_v1_boot_validate_track02_loader_receipt(
     FILE *file;
     unsigned char *bytes;
     size_t required;
+    size_t stage2_required;
+    uint32_t expected_dynamic_record;
+    Theron_Track02Variant variant;
     Theron_Track02IplLoaderReceipt observed;
+    Theron_Track02Stage2DynamicPayloadReceipt dynamic_observed;
 
     if (!receipt || !receipt->valid || !receipt->cue_backed ||
         !receipt->track02_md5_verified || !receipt->mode1_2352 ||
@@ -740,9 +744,25 @@ int theron_v1_boot_validate_track02_loader_receipt(
             THERON_TRACK02_SIGNAL_OK ||
         strcmp(payload, receipt->track02_path) != 0 ||
         !m12_file_md5_hex(payload, md5) || strcmp(md5, verified_md5) != 0) return 0;
+    variant = theron_v1_track02_variant_for_md5(verified_md5);
+    if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        expected_dynamic_record = THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP;
+    } else if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+        expected_dynamic_record = THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US;
+    } else {
+        /* The dynamic $4090 trace is proven only for raw JP/US media. */
+        return 0;
+    }
+    if (!receipt->ipl_loader.stage2_cd_read_record_proven ||
+        receipt->ipl_loader.stage2_cd_read_record != expected_dynamic_record) {
+        return 0;
+    }
     required = ((size_t)THERON_TRACK02_IPL_STAGE2_RECORD +
                 (size_t)THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT) *
                THERON_TRACK02_RAW_SECTOR_BYTES;
+    stage2_required = ((size_t)expected_dynamic_record + 1u) *
+        THERON_TRACK02_RAW_SECTOR_BYTES;
+    if (stage2_required > required) required = stage2_required;
     file = fopen(payload, "rb");
     if (!file) return 0;
     bytes = (unsigned char*)malloc(required);
@@ -782,6 +802,25 @@ int theron_v1_boot_validate_track02_loader_receipt(
         observed.stage2_cd_read_live_record_register_mask !=
             receipt->ipl_loader.stage2_cd_read_live_record_register_mask ||
         observed.vram_transfer_proven != receipt->ipl_loader.vram_transfer_proven) {
+        free(bytes);
+        return 0;
+    }
+    memset(&dynamic_observed, 0, sizeof(dynamic_observed));
+    if (theron_v1_track02_inspect_stage2_dynamic_payload(
+            bytes, required, verified_md5, &dynamic_observed) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !dynamic_observed.valid ||
+        dynamic_observed.track02_record != expected_dynamic_record ||
+        dynamic_observed.raw_sector != receipt->ipl_loader.stage2_cd_read_raw_sector ||
+        dynamic_observed.user_data_bytes !=
+            THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES ||
+        dynamic_observed.header_word0 != 0x00ffu ||
+        dynamic_observed.header_word1 != 0x0308u ||
+        dynamic_observed.manifest_bytes !=
+            THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_BYTES ||
+        dynamic_observed.manifest_entry_count !=
+            THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT ||
+        dynamic_observed.user_data_hash == 0u) {
         free(bytes);
         return 0;
     }

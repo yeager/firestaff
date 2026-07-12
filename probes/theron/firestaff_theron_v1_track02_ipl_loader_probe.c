@@ -6,6 +6,7 @@
  * FIRESTAFF_THERON_TRACK02_{JP,US}_BIN. */
 
 #include "asset_status_m12.h"
+#include "theron_v1_boot.h"
 #include "theron_v1_track02.h"
 
 #include <stdio.h>
@@ -193,6 +194,62 @@ static void check_real_media(const char *path, const char *md5,
     free(data);
 }
 
+static void check_real_cue_boot_handoff(const char *cue_path, const char *md5) {
+    char payload[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    FILE *file;
+    long length;
+    size_t required;
+    uint8_t *data;
+    Theron_Track02StartupLoaderReceipt receipt;
+
+    if (!cue_path || !cue_path[0]) {
+        printf("SKIP real CUE boot handoff: no CUE staged\n");
+        return;
+    }
+    if (theron_v1_track02_resolve_media_path(cue_path, payload) !=
+        THERON_TRACK02_SIGNAL_OK) {
+        ++g_failures;
+        printf("FAIL real CUE payload resolve\n");
+        return;
+    }
+    required = ((size_t)THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US + 1u) *
+        RAW_SECTOR_BYTES;
+    file = fopen(payload, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (length = ftell(file)) < 0 || (size_t)length < required ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        ++g_failures;
+        printf("FAIL real CUE payload read\n");
+        return;
+    }
+    data = (uint8_t *)malloc(required);
+    if (!data || fread(data, 1u, required, file) != required) {
+        free(data);
+        fclose(file);
+        ++g_failures;
+        printf("FAIL real CUE payload allocation/read\n");
+        return;
+    }
+    fclose(file);
+    memset(&receipt, 0, sizeof(receipt));
+    check(theron_v1_track02_find_ipl_loader(data, required, md5,
+                                             &receipt.ipl_loader) ==
+              THERON_TRACK02_SIGNAL_OK,
+          "real CUE scanner IPL receipt");
+    receipt.valid = 1;
+    receipt.cue_backed = 1;
+    receipt.track02_md5_verified = 1;
+    receipt.mode1_2352 = 1;
+    receipt.no_synthetic_cache = 1;
+    snprintf(receipt.cue_path, sizeof(receipt.cue_path), "%s", cue_path);
+    snprintf(receipt.track02_path, sizeof(receipt.track02_path), "%s", payload);
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s", md5);
+    check(theron_v1_boot_validate_track02_loader_receipt(&receipt, md5),
+          "real CUE M11 handoff revalidates the traced dynamic record payload");
+    free(data);
+}
+
 int main(void) {
     uint8_t *data;
     size_t data_size;
@@ -269,6 +326,8 @@ int main(void) {
                      THERON_TRACK02_MD5_JP_BIN, THERON_TRACK02_VARIANT_JP_BIN);
     check_real_media(getenv("FIRESTAFF_THERON_TRACK02_US_BIN"),
                      THERON_TRACK02_MD5_US_BIN, THERON_TRACK02_VARIANT_US_BIN);
+    check_real_cue_boot_handoff(getenv("FIRESTAFF_THERON_TRACK02_US_CUE"),
+                                THERON_TRACK02_MD5_US_BIN);
     printf("summary: fail=%d\n", g_failures);
     return g_failures ? 1 : 0;
 }
