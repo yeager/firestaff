@@ -79,6 +79,7 @@
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 
 /* ================================================================
@@ -443,6 +444,14 @@ void F0889_ORCH_ApplyPendingDamage_Compat(
 void F0890_ORCH_ApplyPeriodicEffects_Compat(
     struct GameWorld_Compat* world,
     struct TickResult_Compat* result);
+
+/* ReDMCSB GROUP.C F0200/F0199 runtime sight query.  The creature-event
+ * dispatcher uses this exact route; it is public so M10 callers and
+ * regressions cannot substitute a straight-line approximation. */
+int F0890c_ORCH_GetGroupVisibleDistance_Compat(
+    struct GameWorld_Compat* world,
+    const struct DM1GroupBehaviorContext_Compat* context,
+    const struct DungeonGroup_Compat* group);
 
 int F0890b_ORCH_ComputeDungeonViewLight_Compat(
     const struct GameWorld_Compat* world,

@@ -2970,67 +2970,247 @@ static int orch_f0200_closed_door_blocks_view_compat(
     return 1;
 }
 
-static int orch_f0200_get_distance_to_visible_party_compat(
+/* ReDMCSB PROJEXPL.C F0227 lines 1144-1207 normalizes each facing
+ * direction onto the west-facing cone, then accepts a destination in that
+ * 90-degree cone.  GROUP.C F0200 uses it before F0199 walks the actual
+ * unblocked-square path. */
+static int orch_f0227_destination_visible_from_source_compat(
+    int direction,
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY)
+{
+    int temporary;
+
+    switch (direction & 3) {
+    case 2: /* South */
+        temporary = sourceMapX;
+        sourceMapX = destinationMapY;
+        destinationMapY = temporary;
+        temporary = destinationMapX;
+        destinationMapX = sourceMapY;
+        sourceMapY = temporary;
+        break;
+    case 1: /* East */
+        temporary = sourceMapX;
+        sourceMapX = destinationMapX;
+        destinationMapX = temporary;
+        temporary = destinationMapY;
+        destinationMapY = sourceMapY;
+        sourceMapY = temporary;
+        break;
+    case 0: /* North */
+        temporary = sourceMapX;
+        sourceMapX = sourceMapY;
+        sourceMapY = temporary;
+        temporary = destinationMapX;
+        destinationMapX = destinationMapY;
+        destinationMapY = temporary;
+        break;
+    default: /* West is the canonical cone. */
+        break;
+    }
+
+    sourceMapX -= destinationMapX - 1;
+    return sourceMapX > 0 &&
+           abs(sourceMapY - destinationMapY) <= sourceMapX;
+}
+
+static int orch_f0199_square_blocks_view_compat(
     const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    unsigned char squareByte;
+    int squareType;
+
+    if (!orch_read_square_byte_compat(
+            world ? world->dungeon : NULL, mapIndex, mapX, mapY,
+            &squareByte)) {
+        return 1;
+    }
+    squareType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    /* ReDMCSB GROUP.C F0197 lines 1191-1207: walls, closed fakewalls,
+     * and opaque three-quarter/closed doors stop creature sight. */
+    return squareType == DUNGEON_ELEMENT_WALL ||
+           (squareType == DUNGEON_ELEMENT_FAKEWALL &&
+            !(squareByte & 0x04u)) ||
+           orch_f0200_closed_door_blocks_view_compat(
+               world, mapIndex, mapX, mapY, squareByte);
+}
+
+/* ReDMCSB GROUP.C F0199 lines 1239-1320.  This is deliberately not a
+ * generic Bresenham walk: equal-axis paths test both orthogonal corners,
+ * while non-equal paths retain F0199's fixed-point tie behavior. */
+static int orch_f0199_distance_between_unblocked_squares_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY)
+{
+    int distanceX;
+    int distanceY;
+    int pathMapX;
+    int pathMapY;
+    int xAxisStep;
+    int yAxisStep;
+    int largestAxisDistance;
+    int valueA;
+    int valueB;
+    int valueC;
+    int distanceXSmallerThanDistanceY;
+    int distanceXEqualsDistanceY;
+    int distance;
+
+    distance = abs(sourceMapX - destinationMapX) +
+               abs(sourceMapY - destinationMapY);
+    if (distance <= 1) return 1;
+
+    distanceX = abs(destinationMapX - sourceMapX);
+    distanceY = abs(destinationMapY - sourceMapY);
+    distanceXSmallerThanDistanceY = distanceX < distanceY;
+    distanceXEqualsDistanceY = distanceX == distanceY;
+    pathMapX = destinationMapX;
+    pathMapY = destinationMapY;
+    xAxisStep = (pathMapX - sourceMapX) > 0 ? -1 : 1;
+    yAxisStep = (pathMapY - sourceMapY) > 0 ? -1 : 1;
+
+    largestAxisDistance = distanceXSmallerThanDistanceY
+        ? pathMapY - sourceMapY : pathMapX - sourceMapX;
+    valueC = largestAxisDistance != 0
+        ? ((distanceXSmallerThanDistanceY
+                ? pathMapX - sourceMapX : pathMapY - sourceMapY) * 64) /
+              largestAxisDistance
+        : 0x80;
+
+    do {
+        if (distanceXEqualsDistanceY) {
+            if ((orch_f0199_square_blocks_view_compat(
+                     world, mapIndex, pathMapX + xAxisStep, pathMapY) &&
+                 orch_f0199_square_blocks_view_compat(
+                     world, mapIndex, pathMapX, pathMapY + yAxisStep)) ||
+                orch_f0199_square_blocks_view_compat(
+                    world, mapIndex, pathMapX += xAxisStep,
+                    pathMapY += yAxisStep)) {
+                return 0;
+            }
+        } else {
+            int candidateXAxis;
+            int candidateYAxis;
+
+            largestAxisDistance = distanceXSmallerThanDistanceY
+                ? pathMapY - sourceMapY : pathMapX + xAxisStep - sourceMapX;
+            candidateXAxis = largestAxisDistance != 0
+                ? ((distanceXSmallerThanDistanceY
+                        ? pathMapX + xAxisStep - sourceMapX
+                        : pathMapY - sourceMapY) * 64) / largestAxisDistance
+                : 0x80;
+            valueA = abs(candidateXAxis - valueC);
+
+            largestAxisDistance = distanceXSmallerThanDistanceY
+                ? pathMapY + yAxisStep - sourceMapY : pathMapX - sourceMapX;
+            candidateYAxis = largestAxisDistance != 0
+                ? ((distanceXSmallerThanDistanceY
+                        ? pathMapX - sourceMapX
+                        : pathMapY + yAxisStep - sourceMapY) * 64) /
+                      largestAxisDistance
+                : 0x80;
+            valueB = abs(candidateYAxis - valueC);
+
+            if (valueA < valueB) pathMapX += xAxisStep;
+            else pathMapY += yAxisStep;
+
+            if (orch_f0199_square_blocks_view_compat(
+                    world, mapIndex, pathMapX, pathMapY) &&
+                (valueA != valueB ||
+                 orch_f0199_square_blocks_view_compat(
+                     world, mapIndex, pathMapX += xAxisStep,
+                     pathMapY -= yAxisStep))) {
+                return 0;
+            }
+        }
+    } while (abs(pathMapX - sourceMapX) + abs(pathMapY - sourceMapY) > 1);
+
+    return distance;
+}
+
+static int orch_f0200_get_distance_to_visible_party_compat(
+    struct GameWorld_Compat* world,
     const struct DM1GroupBehaviorContext_Compat* ctx,
     const struct DungeonGroup_Compat* group)
 {
+    struct DungeonViewLight_Compat dungeonLight;
     int dx;
     int dy;
     int distance;
     int direction;
-    int stepX;
-    int stepY;
-    int mapX;
-    int mapY;
-
+    int sightRange;
     if (!world || !ctx || !group || !world->dungeon ||
         ctx->currentMapIndex != ctx->partyMapIndex) {
         return 0;
     }
     dx = ctx->partyMapX - ctx->currentGroupMapX;
     dy = ctx->partyMapY - ctx->currentGroupMapY;
-    if (dx != 0 && dy != 0) return 0; /* Straight-line M10 F0199 slice. */
-    distance = dx < 0 ? -dx : dx;
-    if (distance == 0) distance = dy < 0 ? -dy : dy;
-    if (distance > DM1_SIGHT_RANGE(ctx->creatureInfo.ranges)) return 0;
+    distance = abs(dx) + abs(dy);
 
-    if (dx > 0) direction = 1;
-    else if (dx < 0) direction = 3;
-    else if (dy > 0) direction = 2;
-    else direction = 0;
+    direction = (int)group->direction & 3;
     if (!(ctx->creatureInfo.attributes & DM1_ATTR_SIDE_ATTACK) &&
-        ((int)group->direction & 3) != direction) {
+        !orch_f0227_destination_visible_from_source_compat(
+            direction, ctx->currentGroupMapX, ctx->currentGroupMapY,
+            ctx->partyMapX, ctx->partyMapY)) {
         return 0;
     }
 
-    stepX = (dx > 0) - (dx < 0);
-    stepY = (dy > 0) - (dy < 0);
-    mapX = ctx->currentGroupMapX;
-    mapY = ctx->currentGroupMapY;
-    while (mapX != ctx->partyMapX || mapY != ctx->partyMapY) {
-        unsigned char squareByte;
-        int squareType;
-
-        mapX += stepX;
-        mapY += stepY;
-        if (!orch_read_square_byte_compat(
-                world->dungeon, ctx->currentMapIndex, mapX, mapY,
-                &squareByte)) {
-            return 0;
+    /* ReDMCSB GROUP.C F0200 lines 1367-1405: PC34 first applies the
+     * invisibility hard gate, then dims ordinary sight by the current
+     * dungeon-view palette. Adjacent detection retains the source's bounded
+     * random awareness exception, so this path advances only masterRng. */
+    sightRange = DM1_SIGHT_RANGE(ctx->creatureInfo.ranges);
+    if (world->magic.event71CountInvisibility > 0 &&
+        !(ctx->creatureInfo.attributes & DM1_ATTR_SEE_INVISIBLE)) {
+        sightRange = -10;
+    } else if (!(ctx->creatureInfo.attributes & DM1_ATTR_NIGHT_VISION)) {
+        memset(&dungeonLight, 0, sizeof(dungeonLight));
+        if (F0890b_ORCH_ComputeDungeonViewLight_Compat(world, &dungeonLight)) {
+            sightRange -= dungeonLight.paletteIndex >> 1;
         }
-        squareType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
-        /* ReDMCSB GROUP.C F0197 lines 1191-1207 blocks sight on walls,
-         * closed fakewalls, and opaque C3/C4 doors. */
-        if (squareType == DUNGEON_ELEMENT_WALL ||
-            (squareType == DUNGEON_ELEMENT_FAKEWALL &&
-             !(squareByte & 0x04u)) ||
-            orch_f0200_closed_door_blocks_view_compat(
-                world, ctx->currentMapIndex, mapX, mapY, squareByte)) {
+    }
+    if (distance > sightRange) {
+        if (distance == 1) {
+            sightRange += F0732_COMBAT_RngRandom_Compat(
+                              &world->masterRng,
+                              DM1_XXX_RANGE(ctx->creatureInfo.ranges) + 1) +
+                          F0732_COMBAT_RngRandom_Compat(
+                              &world->masterRng,
+                              DM1_SMELL_RANGE(ctx->creatureInfo.ranges) + 1);
+            if (F0732_COMBAT_RngRandom_Compat(&world->masterRng, 8) == 0) {
+                sightRange += F0732_COMBAT_RngRandom_Compat(
+                    &world->masterRng, 1) + 5;
+            }
+        }
+        if (distance > sightRange +
+                           F0732_COMBAT_RngRandom_Compat(
+                               &world->masterRng, 8) - 3) {
             return 0;
         }
     }
-    return distance;
+
+    return orch_f0199_distance_between_unblocked_squares_compat(
+        world, ctx->currentMapIndex, ctx->currentGroupMapX,
+        ctx->currentGroupMapY, ctx->partyMapX, ctx->partyMapY);
+}
+
+int F0890c_ORCH_GetGroupVisibleDistance_Compat(
+    struct GameWorld_Compat* world,
+    const struct DM1GroupBehaviorContext_Compat* context,
+    const struct DungeonGroup_Compat* group)
+{
+    return orch_f0200_get_distance_to_visible_party_compat(
+        world, context, group);
 }
 
 static int orch_cmd_attack_find_door_on_square_compat(
@@ -7330,7 +7510,7 @@ static int orch_handle_creature_reaction_event_compat(
     ctx.currentGroupDistanceToParty =
         abs(ctx.partyMapX - ctx.currentGroupMapX) +
         abs(ctx.partyMapY - ctx.currentGroupMapY);
-    ctx.distanceToVisibleParty = orch_f0200_get_distance_to_visible_party_compat(
+    ctx.distanceToVisibleParty = F0890c_ORCH_GetGroupVisibleDistance_Compat(
         world, &ctx, group);
     if (ctx.partyMapX > ctx.currentGroupMapX) ctx.currentGroupPrimaryDirToParty = 1;
     else if (ctx.partyMapX < ctx.currentGroupMapX) ctx.currentGroupPrimaryDirToParty = 3;
