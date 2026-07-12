@@ -7630,6 +7630,21 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_timeline_pc34_compat
     )
 
+    add_executable(test_dm2_v1_no_synthetic_startup_timers
+        tests/test_dm2_v1_no_synthetic_startup_timers.c
+        src/dm2/dm2_v1_timeline.c
+    )
+    target_include_directories(test_dm2_v1_no_synthetic_startup_timers PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_no_synthetic_startup_timers PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_no_synthetic_startup_timers
+        COMMAND test_dm2_v1_no_synthetic_startup_timers
+    )
+
     add_executable(firestaff_dm2_v1_timeline_probe
         probes/dm2/firestaff_dm2_v1_timeline_probe.c
         src/dm2/dm2_v1_timeline.c

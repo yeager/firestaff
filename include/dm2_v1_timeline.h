@@ -42,7 +42,7 @@ extern "C" {
 
 /* ── Constants ───────────────────────────────────────────────────── */
 #define DM2_TIMELINE_MAX_EVENTS        32
-#define DM2_TIMELINE_NUM_BUILTIN        6
+#define DM2_TIMELINE_NUM_BUILTIN        0 /* Original timer corpus not bound. */
 #define DM2_TIMELINE_NONE               -1  /* "no event" sentinel */
 
 /* Event kinds */

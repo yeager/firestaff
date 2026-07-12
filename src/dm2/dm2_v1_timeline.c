@@ -38,38 +38,9 @@
 
 #include <string.h>
 
-/* ── Built-in timeline catalog (6 events) ─────────────────────────── */
-static const DM2_V1_TimelineEvent g_builtin_events[DM2_TIMELINE_NUM_BUILTIN] = {
-    /* 1: NPC_MOVE at t=0 (immediate, NPC walks to throne) */
-    {
-        1, DM2_TIMELINE_EVENT_NPC_MOVE, 0,
-        8, 8, 0, 0, 0, NULL
-    },
-    /* 2: CREATURE_SPAWN at t=5000 (5s after start) */
-    {
-        2, DM2_TIMELINE_EVENT_CREATURE_SPAWN, 5000,
-        10, 10, 0, 1, 0, NULL
-    },
-    /* 3: DOOR_LOCK at t=10000 (10s, lock the throne room door) */
-    {
-        3, DM2_TIMELINE_EVENT_DOOR_LOCK, 10000,
-        8, 9, 0, 0, 1, NULL
-    },
-    /* 4: DOOR_UNLOCK at t=30000 (30s, unlock after combat) */
-    {
-        4, DM2_TIMELINE_EVENT_DOOR_UNLOCK, 30000,
-        8, 9, 0, 0, 1, NULL
-    },
-    /* 5: MESSAGE_DISPLAY at t=2000 (2s after start) */
-    {
-        5, DM2_TIMELINE_EVENT_MESSAGE_DISPLAY, 2000,
-        0, 0, 0, 0, 0, "The dungeon awakens..."
-    },
-    /* 6: MESSAGE_DISPLAY at t=15000 (periodic reminder) */
-    {
-        6, DM2_TIMELINE_EVENT_MESSAGE_DISPLAY, 15000,
-        0, 0, 0, 0, 0, "You feel a chill down your spine."
-    },
+/* No synthetic startup timers: original DM2 timer corpus is not bound. */
+static const DM2_V1_TimelineEvent g_builtin_events[1] = {
+    { 0, 0, 0, 0, 0, 0, 0, 0, NULL },
 };
 
 /* ── Module state ─────────────────────────────────────────────────── */

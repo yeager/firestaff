@@ -117,8 +117,10 @@ That shared handoff now also consumes the physical MODE1 header: JP stage
 three is BCD `01:03:38`, US is `00:58:57`, with the proven user-data window.
 This is transport provenance only, not a sector-to-level or payload-role map.
 It also requires the earlier IPL `CD_READ` at `$40cd` into local RAM `$3000`.
-Its record number and payload role remain unknown, so it contributes only a
-verified local-RAM loader boundary, never a bank or level route.
+The original table at `$40dc` now proves record `$03e3`, two sectors, and both
+physical MODE1 sectors are validated in JP/US media. Its payload role remains
+unknown, so it contributes a verified local-RAM loader boundary, never a bank
+or level route.
 The first loaded payload is now structurally verified as a
 218-unit manifest envelope, but its entries remain unclassified; do not treat
 it as a graphics, palette, object, or dungeon-record binding. The hash-gated
