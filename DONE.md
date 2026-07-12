@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 DGN Structure1G sequence-image receipt: the original
+  LEV00-LEV15 probe now proves all 154 non-control image-index instructions
+  in the 51 validated sequences subtract from global base `0x14c` into
+  present local Structure2 descriptors (zero mismatches). This is
+  sequence-index reachability only, not timing, payload/palette bytes,
+  decoder, animation stepping, or rendering. Verification: direct strict-C11
+  probe against all 16 original DGN files PASS.
+
 - 2026-07-12 Nexus V1 DGN Structure1G sequence-origin receipt: the original
   LEV00-LEV15 probe now proves all 51 stored `first_image_index` values match
   both their raw descriptor words and the first word at the descriptors'
@@ -231,6 +239,14 @@
   payload, decoder, or rendering claim. Verification:
   `nexus_v1_prs3_branch_flow_probe` CTest PASS against locked Japanese
   `DM.BIN`.
+
+- 2026-07-12 DM1 PC34 F0242 material-group fakewall deferral: C07 CLEAR
+  now retries one tick later when a material group occupies the fakewall
+  square, matching the existing party-occupancy retry without relocating or
+  mutating the group. Once the square is clear, the preserved C07 event
+  clears the source open bit. Source: ReDMCSB `TIMELINE.C` F0242:820-870.
+  Verification: rebuilt the current orchestrator object and linked
+  `test_dm1_v1_f0242_fakewall_material_group_deferral_pc34_compat`; PASS.
 
 - 2026-07-12 DM1 PC34 F0330 C11 production: M10 now converts each
   `EMIT_ACTION_DISABLED` command result into the source C11 refill event,
@@ -8548,6 +8564,8 @@
 # ✅ 2026-07-12 CSB DSA runtime binding: `csb_v1_runtime_resolve_csbwin_dsa_filter_binding()` now follows CSBWin `Monster.cpp` / `DSA.cpp` selector ownership: a verified type-47 DB3 actuator contributes `word2` bits 7..11, the staged `DSALevelIndex[level][selector]` resolves its absolute DSA ID, and that ID must own an imported authenticated action before it is usable. `csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner()` then prepares the existing pure-stack callback only for an exact selected action. It rejects missing level-table slots and unowned IDs without a fallback. Verified by `test_csb_v1_phase7_verification`: 324 passed, 0 failed.
 
 # ✅ 2026-07-12 CSB EXPOOL global-variable DSA handoff: CSBWin saves now restore their contiguous `EDT_Database | EDBT_GlobalVariables | i` EXPOOL records into Firestaff's bounded source-sized DSA global bank before the existing tracing handoff, matching `SaveGame.cpp`'s sixteen-`ui32` record order and first-missing-record stop. A malformed present record rejects transactionally, and authenticated filter runners inherit the restored bank rather than a synthetic zero bank. Source: CSBWin `SaveGame.cpp` global-variable save/load loops and `data.cpp EXPOOL::Locate`. Verified by `test_csb_v1_phase7_verification`: source-order two-record import plus malformed-record preservation.
+
+# ✅ 2026-07-12 CSB DSA global-bank runtime commit: the profile-owned CSBWin global bank is now rehydrated into an authenticated pure-stack runner immediately before execution and receives its `GLOBALSTORE` result only after the existing full-action commit succeeds. Caller/stale runner globals cannot become profile state, while world and filter opcodes remain outside this route and EXPOOL serialization remains open. Source: CSBWin `DSA.cpp` `EX_GLOBALFETCH`/`EX_GLOBALSTORE` and `SaveGame.cpp` global-variable ownership. Verified by `test_csb_v1_phase7_verification`: authenticated `GLOBALSTORE` updates runner and profile bank together.
 
 # ✅ 2026-07-12 CSB authenticated DSA filter runner: added `csb_v1_csbwin_dsa_run_authenticated_filter_stack_action()` as the runtime callback for the supported CSBWin `ProcessDSAFilter` pure stack subset. It requires exact pointer identity with the imported `(dsa,state,ordinal)` action, stages the signed parameter surface and its owned global bank, and publishes a receipt only after a complete supported action. Forged pointers and world-mutating `AMPERSAND` code leave all caller state unchanged. Source: CSBWin `DSA.cpp` `ProcessDSAFilter`/`ProcessDSATimer6` lines 5315-5460 and `Execute` lines 5053-5293. Verified by `test_csb_v1_dsa_trigger_single_step_pc34_compat`: 123 assertions, 0 failures.
 

@@ -91,6 +91,14 @@ static int orch_handle_group_generator_trigger_runtime_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
     struct TickResult_Compat* result);
+static int orch_find_material_group_on_square_compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int* outGroupIndex,
+    int* outCreatureHeight);
 
 static int orch_f0330_schedule_enable_champion_action_compat(
     struct GameWorld_Compat* world,
@@ -3390,13 +3398,21 @@ static int orch_dispatch_square_state_event_compat(
         return F0721_TIMELINE_Schedule_Compat(&world->timeline, &animation);
     }
     case DM1_EVENT_FAKEWALL:
-        /* F0242: CLEAR is deferred while the party occupies the square.
-         * The material-group deferral is intentionally left to the later
-         * group-aware fakewall handler rather than closing over it here. */
+        /* ReDMCSB TIMELINE.C F0242:820-870 defers a CLEAR while either the
+         * party or a material group occupies the fakewall square. It does
+         * not relocate or mutate that group; the same C07 retries next tick. */
         if (effect == DOOR_EFFECT_TOGGLE) effect = (*square & 0x04) ?
             DOOR_EFFECT_CLEAR : DOOR_EFFECT_SET;
         if (effect == DOOR_EFFECT_CLEAR && world->party.mapIndex == ev->mapIndex &&
             world->party.mapX == ev->mapX && world->party.mapY == ev->mapY) {
+            struct TimelineEvent_Compat retry = *ev;
+            retry.fireAtTick = world->gameTick + 1u;
+            return F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
+        }
+        if (effect == DOOR_EFFECT_CLEAR &&
+            orch_find_material_group_on_square_compat(
+                world->dungeon, world->things, ev->mapIndex, ev->mapX,
+                ev->mapY, NULL, NULL)) {
             struct TimelineEvent_Compat retry = *ev;
             retry.fireAtTick = world->gameTick + 1u;
             return F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
