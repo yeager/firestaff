@@ -1182,8 +1182,13 @@ static int m11_dm2_boot_runtime_startup_pointer(
         return 0;
     }
     m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
-    return dm2_v1_boot_startup_execute_pointer_from_snapshot(
-        &snapshot,
+    return dm2_v1_boot_startup_execute_original_pointer_from_runtime_state(
+        snapshot.profile,
+        snapshot.startup_menu_active,
+        snapshot.startup_save_root,
+        snapshot.resume_available,
+        snapshot.slot_mask,
+        snapshot.selected_row,
         x,
         y,
         m11_dm2_startup_apply_session_callback,

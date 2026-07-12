@@ -2514,6 +2514,7 @@ int main(void) {
                 "M11 DM2 startup slot-menu fixture launch succeeds");
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     if (profile) {
+        DM2_V1_StartupMenuPointerLayout pointer_layout;
         dm2_v1_boot_set_save_root(profile, save_root);
         view.dm2State.startup_menu_active = 1;
         view.dm2State.startup_menu_selected_row = 0;
@@ -2524,28 +2525,25 @@ int main(void) {
                  sizeof(view.dm2State.startup_save_root),
                  "%s",
                  profile->save_root);
+        memset(&pointer_layout, 0, sizeof(pointer_layout));
+        expect_true(dm2_v1_boot_startup_menu_pointer_layout(
+                        profile, &pointer_layout) == 1 &&
+                    pointer_layout.valid == 1 &&
+                    pointer_layout.table_hash != 0u &&
+                    pointer_layout.new_game.w > 0 &&
+                    pointer_layout.new_game.h > 0,
+                    "DM2 startup derives the original NEW hit rectangle from dt04/0");
         expect_true(M11_GameView_HandlePointerButton(
-                        &view, 82, 54, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        &view,
+                        pointer_layout.new_game.x + pointer_layout.new_game.w / 2,
+                        pointer_layout.new_game.y + pointer_layout.new_game.h / 2,
+                        DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 startup menu panel consumes non-row pointer hits");
-        expect_true(view.dm2State.startup_menu_active == 1 &&
-                    view.dm2State.startup_menu_selected_row == 0 &&
-                    view.dm2State.tick_count == 0,
-                    "M11 DM2 startup menu panel hit does not enter runtime");
-        expect_true(M11_GameView_HandlePointerButton(
-                        &view, 100, 78, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
-                        M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 startup menu pointer loads SKSave03.dat slot");
+                    "M11 DM2 startup pointer consumes original NEW rectangle");
         expect_true(view.dm2State.startup_menu_active == 0,
-                    "M11 DM2 startup slot menu dismisses after pointer load");
-        expect_true(strstr(view.lastOutcome, "DM2 SLOT LOADED") != NULL,
-                    "M11 DM2 startup slot pointer reports slot-loaded status");
-        expect_true(view.dm2State.party_x == 23 &&
-                    view.dm2State.party_y == 11 &&
-                    view.dm2State.party_dir == 2,
-                    "M11 DM2 startup slot pointer mirrors saved party pose");
-        expect_true(view.dm2State.tick_count == 42,
-                    "M11 DM2 startup slot pointer mirrors saved game tick");
+                    "M11 DM2 startup NEW pointer dismisses the title menu");
+        expect_true(strstr(view.lastOutcome, "DM2 NEW GAME") != NULL,
+                    "M11 DM2 startup NEW pointer reports source event result");
     }
     M11_GameView_Shutdown(&view);
 

@@ -1302,6 +1302,56 @@ int dm2_v1_boot_startup_execute_pointer_from_snapshot(
         out_receipt);
 }
 
+static int dm2_v1_boot_startup_rect_contains(
+    const DM2_V1_InterfaceRect *rect,
+    int x,
+    int y)
+{
+    return rect && rect->w > 0 && rect->h > 0 &&
+           x >= rect->x && x < rect->x + rect->w &&
+           y >= rect->y && y < rect->y + rect->h;
+}
+
+int dm2_v1_boot_startup_execute_original_pointer_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int x,
+    int y,
+    int (*apply_session)(void *userdata, const DM2_V1_SessionState *session),
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt)
+{
+    DM2_V1_StartupHostFacts facts;
+    DM2_V1_StartupMenuPointerLayout layout;
+    DM2_V1_StartupAction action;
+
+    if (!out_receipt || !startup_menu_active ||
+        !dm2_v1_boot_startup_host_facts_from_runtime_state(
+            profile, startup_menu_active, startup_save_root, resume_available,
+            slot_mask, selected_row, &facts) ||
+        !dm2_v1_boot_startup_menu_pointer_layout(
+            (DM2_V1_BootProfile *)profile, &layout) ||
+        !dm2_v1_boot_startup_rect_contains(&layout.new_game, x, y)) {
+        return 0;
+    }
+
+    /* skproject SkWinCore.cpp HANDLE_UI_EVENT:32001-32007 maps 0xD7 to
+     * NEW GAME. The original 0xD9 resume selector is not bound yet, so it
+     * remains unavailable rather than being redirected to a synthetic row. */
+    memset(&action, 0, sizeof(action));
+    action.kind = DM2_V1_STARTUP_ACTION_NEW_GAME;
+    action.row = -1;
+    action.slot = -1;
+    return dm2_v1_startup_execute_action_from_host_facts_with_receipt(
+        &action, &facts, apply_session, apply_userdata, out_execution,
+        out_receipt);
+}
+
 int dm2_v1_boot_startup_presentation_build_from_runtime_state(
     const DM2_V1_BootProfile *profile,
     int startup_menu_active,
@@ -4781,6 +4831,39 @@ int dm2_v1_boot_interface_hud_layout(DM2_V1_BootProfile *profile,
             if (!dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(185u + slot + stat * 4u), &out_layout->status[slot][stat])) return 0;
     }
     out_layout->table_hash = hash; out_layout->valid = 1; return 1;
+}
+
+int dm2_v1_boot_startup_menu_pointer_layout(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_StartupMenuPointerLayout *out_layout)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint32_t hash = 2166136261u;
+
+    if (!out_layout) return 0;
+    memset(out_layout, 0, sizeof(*out_layout));
+    if (!profile || !profile->graphics_dat) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_typed_sized(
+        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
+    if (!raw || raw_size < 4u) return 0;
+    for (size_t i = 0; i < raw_size; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
+    }
+    /* skproject _098d_1208 -> LOAD_RECTS_AND_COMPRESS loads raw4, then
+     * HANDLE_UI_EVENT uses the title-menu event codes 0xD7 and 0xD9. */
+    if (!dm2_v1_boot_expand_hud_rect(raw, raw_size, 0x00d7u,
+                                     &out_layout->new_game) ||
+        !dm2_v1_boot_expand_hud_rect(raw, raw_size, 0x00d9u,
+                                     &out_layout->resume_game)) {
+        return 0;
+    }
+    out_layout->table_hash = hash;
+    out_layout->valid = 1;
+    return 1;
 }
 
 int dm2_v1_boot_interface_rect14_table(
