@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM2 V2.0 M11 GDAT handoff: the direct M11 DM2 boot path now
+  persists the V2 phase gate, selects the DM2 V2.0/V2.1/V2.2 asset-pipeline
+  mode, and binds HUD, lighting, touch, and the boot-owned verified GDAT
+  fetcher. During a non-startup V2 frame the HUD draws only decoded original
+  GDAT pixels; unavailable images have no generated fallback. Verification:
+  fresh Ninja `firestaff` build, `firestaff_dm2_v2_hud_runtime_probe`
+  64009/64009, and `firestaff_dm2_v2_phase1_launch_profile_separation_probe`
+  42/42.
+
 - 2026-07-12 CSB V2.2 pack isolation: CSB now resolves V2.2 availability
   against its own manifest and finished-art gate, never DM1's pack. A missing,
   partial, or placeholder CSB pack resolves to V2.1. Verification:

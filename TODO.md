@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+## DM2 V2.0 Runtime Follow-up (2026-07-12)
+
+M11 now binds the selected DM2 V2 presentation mode to the persistent V2
+phase gate and boot-owned, hash-verified GDAT provider. The runtime HUD can
+therefore consume only decoded `INTERFACE_GENERAL` and `CHAMPIONS` pixels
+after the source viewport frame; absent data remains absent. Remaining V2.0
+work is real packaged Mac capture and wider GDAT/save corpus coverage, not a
+new fallback HUD or menu.
+
 ## DM1 V2.2 Finished-Art Follow-up (2026-07-12)
 
 The live V2.2 selection path now rejects synthetic and partial modern-art

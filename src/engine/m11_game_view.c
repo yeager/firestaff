@@ -38,7 +38,10 @@
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v2_runtime.h"
+#include "dm2_v2_asset_pipeline.h"
 #include "dm2_v2_hud_runtime.h"
+#include "dm2_v2_lighting_runtime.h"
+#include "dm2_v2_phase_gate.h"
 #include "dm2_v2_touch_runtime.h"
 #include "theron/theron_v1_asset_loader.h"
 
@@ -345,6 +348,47 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
 /* Forward declaration: set by M11_GameView_Draw to give nested draw
  * helpers access to the current game state for asset-backed rendering. */
 static const M11_GameViewState* g_drawState = NULL;
+
+/* The M11 game view owns one active DM2 launch at a time.  Keep the V2
+ * phase gate alive for the HUD/touch/lighting runtimes rather than handing
+ * them a stack-local configuration.  skproject's c_gui_vp.cpp consumes
+ * decoded GDAT UI images after the game profile is mounted; no M11 artwork
+ * is substituted when that original source is unavailable. */
+static DM2_V2_PhaseGateConfig g_m11_dm2_v2_gate;
+
+static void m11_dm2_configure_v2_presentation(
+    const M11_GameViewState *state,
+    DM2_V1_BootProfile *profile)
+{
+    DM2_V2_GfxMode mode = DM2_V2_GFX_MODE_V1_ORIGINAL;
+    int v2_active;
+
+    if (!state || !profile) {
+        return;
+    }
+    v2_active = state->presentationMode != M12_PRESENTATION_V1_ORIGINAL;
+    dm2_v2_phase_gate_defaults(&g_m11_dm2_v2_gate);
+    g_m11_dm2_v2_gate.v2LaunchEnabled = v2_active;
+    g_m11_dm2_v2_gate.v2ProfileEnabled = v2_active;
+
+    dm2_v2_asset_pipeline_init();
+    if (state->presentationMode == M12_PRESENTATION_V20_FILTERED) {
+        mode = DM2_V2_GFX_MODE_V2_FILTERED;
+    } else if (state->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
+        mode = DM2_V2_GFX_MODE_V2_UPSCALED;
+    } else if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
+        mode = DM2_V2_GFX_MODE_V2_MODERN;
+    }
+    dm2_v2_asset_set_gfx_mode(mode);
+
+    dm2_v2_hud_runtime_set_gate_config(&g_m11_dm2_v2_gate);
+    dm2_v2_lighting_runtime_set_gate_config(&g_m11_dm2_v2_gate);
+    dm2_v2_touch_runtime_set_gate_config(&g_m11_dm2_v2_gate);
+    dm2_v2_hud_runtime_set_gdat_source(
+        dm2_v1_boot_viewport_asset_fetch,
+        profile,
+        profile->assets_verified && profile->graphics_dat != NULL);
+}
 
 static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
 {
@@ -884,6 +928,7 @@ static int m11_dm2_apply_boot_runtime_receipt(
     state->dm2BootProfile = receipt->profile;
     state->dm2World = receipt->dm2_state;
     state->dm2State.level_loaded = 1;
+    m11_dm2_configure_v2_presentation(state, receipt->profile);
     m11_sync_dm2_state_from_runtime(state);
     return 1;
 }
@@ -37340,6 +37385,19 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           &g_text_title);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           18, 36, boot_status, &g_text_shadow);
+        }
+        if (rendered == 0 &&
+            state->presentationMode != M12_PRESENTATION_V1_ORIGINAL &&
+            !state->dm2State.startup_menu_active) {
+            /* The V1 viewport has already established the authoritative
+             * scene.  V2.0 reuses only the mounted GDAT HUD pixels through
+             * the boot-profile fetcher configured at hand-off above.
+             * skproject/SKWIN/c_gui_vp.cpp: GUI chrome follows viewport
+             * presentation; unavailable GDAT images deliberately draw
+             * nothing here. */
+            dm2_v2_hud_runtime_render(framebuffer,
+                                      framebufferWidth,
+                                      framebufferHeight);
         }
         startup_menu_drawn = m11_draw_dm2_startup_menu(
             state,
