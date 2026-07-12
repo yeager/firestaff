@@ -3883,11 +3883,173 @@ static int orch_f0248_consume_square_object_launcher_compat(
     return applied;
 }
 
+/* ReDMCSB DUNGEON.C F0167:2140-2200 is the only object factory used by
+ * C007/C009.  Keep its exact launcher-icon subset here rather than inventing
+ * an item from a generic icon or allocating a new host-side record. */
+static int orch_f0248_launcher_icon_to_object_compat(
+    int iconIndex,
+    int* outThingType,
+    int* outObjectType)
+{
+    int thingType = THING_TYPE_WEAPON;
+    int objectType;
+
+    if (iconIndex >= 4 && iconIndex <= 7) iconIndex = 4;
+    switch (iconIndex) {
+    case 4:   objectType = 2; break;   /* C004 torch -> C02 weapon torch */
+    case 32:  objectType = 8; break;   /* C032 dagger */
+    case 51:  objectType = 27; break;  /* C051 arrow */
+    case 52:  objectType = 28; break;  /* C052 slayer */
+    case 54:  objectType = 30; break;  /* C054 rock */
+    case 55:  objectType = 31; break;  /* C055 poison dart */
+    case 56:  objectType = 32; break;  /* C056 throwing star */
+    case 128:
+        objectType = 25;               /* C128 boulder */
+        thingType = THING_TYPE_JUNK;
+        break;
+    default:
+        return 0;
+    }
+    if (outThingType) *outThingType = thingType;
+    if (outObjectType) *outObjectType = objectType;
+    return 1;
+}
+
+static int orch_f0248_allocate_new_launcher_object_compat(
+    struct GameWorld_Compat* world,
+    int iconIndex,
+    unsigned short* outThing)
+{
+    int thingType;
+    int objectType;
+    int i;
+
+    if (outThing) *outThing = THING_NONE;
+    if (!world || !world->things || !outThing ||
+        !orch_f0248_launcher_icon_to_object_compat(
+            iconIndex, &thingType, &objectType)) {
+        return 0;
+    }
+    if (thingType == THING_TYPE_WEAPON) {
+        if (!world->things->weapons) return 0;
+        for (i = 0; i < world->things->weaponCount; ++i) {
+            struct DungeonWeapon_Compat* weapon = &world->things->weapons[i];
+            if (weapon->next != THING_NONE) continue;
+            /* F0166 clears the complete source record before F0167 assigns
+             * Type; an unlit generator torch consequently has no charges. */
+            memset(weapon, 0, sizeof(*weapon));
+            weapon->next = THING_ENDOFLIST;
+            weapon->type = (unsigned char)objectType;
+            orch_write_raw_weapon_compat(world->things, i);
+            *outThing = orch_make_thing_ref_compat(THING_TYPE_WEAPON, i);
+            return 1;
+        }
+    } else if (thingType == THING_TYPE_JUNK) {
+        if (!world->things->junks) return 0;
+        for (i = 0; i < world->things->junkCount; ++i) {
+            struct DungeonJunk_Compat* junk = &world->things->junks[i];
+            if (junk->next != THING_NONE) continue;
+            memset(junk, 0, sizeof(*junk));
+            junk->next = THING_ENDOFLIST;
+            junk->type = (unsigned char)objectType;
+            orch_write_raw_junk_compat(world->things, i);
+            *outThing = orch_make_thing_ref_compat(THING_TYPE_JUNK, i);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int orch_f0248_consume_new_object_launcher_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct DungeonSensor_Compat* sensor,
+    int sensorCell)
+{
+    struct ProjectileLauncherContext_Compat context;
+    struct ProjectileLauncherResult_Compat launcher;
+    int launchIndex;
+    int applied = 0;
+
+    if (!world || !ev || !sensor ||
+        (sensor->sensorType != DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_NEW_OBJ &&
+         sensor->sensorType != DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_NEW_OBJ) ||
+        (sensorCell & 3) != (ev->cell & 3)) {
+        return 0;
+    }
+    memset(&context, 0, sizeof(context));
+    context.newObjectThings[0] = THING_NONE;
+    context.newObjectThings[1] = THING_NONE;
+    if (!orch_f0248_allocate_new_launcher_object_compat(
+            world, sensor->sensorData, &context.newObjectThings[0])) {
+        /* F0248 disables an once-only source sensor after F0247 returns,
+         * including F0167 allocation failure. */
+        if (sensor->onceOnly) {
+            sensor->sensorType = DM1_SENSOR_DISABLED;
+            return 1;
+        }
+        return 0;
+    }
+    if (sensor->sensorType == DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_NEW_OBJ) {
+        (void)orch_f0248_allocate_new_launcher_object_compat(
+            world, sensor->sensorData, &context.newObjectThings[1]);
+    }
+    memset(&launcher, 0, sizeof(launcher));
+    if (!F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+            sensor, sensorCell, ev->mapX, ev->mapY, ev->cell,
+            &context, &launcher) || !launcher.triggered) {
+        return 0;
+    }
+    if (launcher.launchSingleProjectile) {
+        context.randomBit = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2);
+        if (!F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+                sensor, sensorCell, ev->mapX, ev->mapY, ev->cell,
+                &context, &launcher) || !launcher.triggered) {
+            return 0;
+        }
+    }
+    if (launcher.sensorDisabled) {
+        sensor->sensorType = DM1_SENSOR_DISABLED;
+        applied = 1;
+    }
+    for (launchIndex = 0; launchIndex < launcher.launchCount; ++launchIndex) {
+        const struct ProjectileLauncherLaunch_Compat* launch =
+            &launcher.launches[launchIndex];
+        struct ProjectileCreateInput_Compat input;
+        struct TimelineEvent_Compat firstMove;
+        int slot = -1;
+
+        if (!launch->valid) continue;
+        memset(&input, 0, sizeof(input));
+        input.category = PROJECTILE_CATEGORY_KINETIC;
+        input.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+        input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+        input.ownerIndex = -1;
+        input.mapIndex = ev->mapIndex;
+        input.mapX = launch->mapX;
+        input.mapY = launch->mapY;
+        input.cell = launch->cell;
+        input.direction = launch->direction;
+        input.kineticEnergy = launch->kineticEnergy;
+        input.attack = launch->attack;
+        input.launcherStrength = launch->attack;
+        input.stepEnergy = launch->stepEnergy;
+        input.currentTick = (int)world->gameTick;
+        input.attackTypeCode = COMBAT_ATTACK_BLUNT;
+        input.associatedThing = (int)launch->associatedThing;
+        if (F0810_PROJECTILE_Create_Compat(
+                &input, &world->projectiles, &slot, &firstMove) &&
+            F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
+            applied = 1;
+        }
+    }
+    return applied;
+}
+
 /* ReDMCSB TIMELINE.C F0248:1136-1350 walks the complete wall list in
  * order, changes only TextStrings on the event cell, evaluates C005/C006,
- * consumes C008/C010 explosions and C014/C015 live-object launchers, and
- * calls F0271 once after the batch. C007/C009 and their allocation owner
- * remain separate. */
+ * consumes C007/C009 F0167 materialized, C008/C010 explosion, and C014/C015
+ * live-object launchers, then calls F0271 once after the batch. */
 static int orch_dispatch_wall_event_f0248_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev)
@@ -3957,6 +4119,12 @@ static int orch_dispatch_wall_event_f0248_compat(
                        sensor->sensorType ==
                            DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_SQUARE_OBJ) {
                 applied |= orch_f0248_consume_square_object_launcher_compat(
+                    world, ev, sensor, THING_GET_CELL(thing));
+            } else if (sensor->sensorType ==
+                           DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_NEW_OBJ ||
+                       sensor->sensorType ==
+                           DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_NEW_OBJ) {
+                applied |= orch_f0248_consume_new_object_launcher_compat(
                     world, ev, sensor, THING_GET_CELL(thing));
             } else if (sensor->sensorType == DM1_SENSOR_WALL_END_GAME) {
                 /* ReDMCSB TIMELINE.C F0248:1317-1339 does not cell-filter
