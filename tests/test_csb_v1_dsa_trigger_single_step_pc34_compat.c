@@ -816,6 +816,76 @@ static void test_csbwin_authenticated_stack_opcode_family(void)
     csb_v1_chaos_cleanup(&state);
 }
 
+static void test_csbwin_authenticated_filter_stack_runner(void)
+{
+    uint16_t store_parameter[] = { 0x0686u, 0x1234u, 0x000du };
+    uint16_t unsupported[] = { 0x084bu };
+    uint16_t direct_jump[] = { 0x014cu };
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_DSAImportedAction forged;
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    int parameters[] = { 77 };
+
+    memset(&action, 0, sizeof(action));
+    memset(&forged, 0, sizeof(forged));
+    memset(&runner, 0, sizeof(runner));
+    csb_v1_chaos_init(&state);
+    action.dsa_id = 9u;
+    action.state_index = 4u;
+    action.program_words = store_parameter;
+    action.program_word_count = (int)(sizeof(store_parameter) /
+                                      sizeof(store_parameter[0]));
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+    runner.programs = &state;
+    runner.dsa_id = 9;
+    runner.state_index = 4u;
+    runner.action_ordinal = 0;
+    runner.master_location = 0x12345u;
+
+    check(csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
+              &action, parameters, 1, NULL, &runner) == 1 &&
+              parameters[0] == 0x1234 && runner.execution_count == 1 &&
+              runner.last_execution.words_consumed == 3u,
+          "CSBWin/DSA.cpp:5315-5460 ProcessDSAFilter",
+          "runtime filter runner executes only its authenticated pure stack action");
+
+    forged = action;
+    parameters[0] = 71;
+    check(csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
+              &forged, parameters, 1, NULL, &runner) == 0 &&
+              parameters[0] == 71 && runner.execution_count == 1,
+          "CSBWin/SaveGame.cpp ReadDSAs + DSA.cpp:5315-5460",
+          "filter runner rejects a forged action pointer without publishing state");
+
+    action.program_words = unsupported;
+    action.program_word_count = 1;
+    parameters[0] = 70;
+    check(csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
+              &action, parameters, 1, NULL, &runner) == 0 &&
+              parameters[0] == 70 && runner.execution_count == 1,
+          "CSBWin/DSA.cpp:2859-2915 EX_AMPERSAND",
+          "filter runner rejects unsupported world behavior without parameter commit");
+
+    action.program_words = direct_jump;
+    action.program_word_count = 1;
+    action.column = 2u;
+    parameters[0] = 69;
+    check(csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
+              &action, parameters, 1, NULL, &runner) == 1 &&
+              parameters[0] == 69 && runner.execution_count == 2 &&
+              runner.transfer_execution_count == 1 &&
+              runner.last_transfer.transfer_count == 1u &&
+              runner.last_transfer.final_state == 4 && runner.state_index == 4u,
+          "CSBWin/DSA.cpp:5053-5293 Execute",
+          "filter runner consumes an authenticated JUMP chain without a synthetic action");
+
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
 static void test_csbwin_authenticated_local_variable_opcode_family(void)
 {
     uint16_t round_trip[] = {
@@ -1204,6 +1274,7 @@ int main(void)
     test_csbwin_load_opcode_family();
     test_csbwin_load_store_rejects_unowned_action();
     test_csbwin_authenticated_stack_opcode_family();
+    test_csbwin_authenticated_filter_stack_runner();
     test_csbwin_authenticated_local_variable_opcode_family();
     test_csbwin_authenticated_global_variable_opcode_family();
     test_csbwin_authenticated_state_column_jump_dispatch();

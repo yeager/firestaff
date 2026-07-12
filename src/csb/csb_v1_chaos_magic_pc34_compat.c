@@ -991,6 +991,78 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     return CSB_V1_CSBWIN_DSA_STACK_OK;
 }
 
+int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
+    const CSB_V1_DSAImportedAction *action, int *parameters,
+    int parameter_count, int flgs_inout[2], void *user)
+{
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *runner = user;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    CSB_V1_CSBWinDSAExecuteReceipt transfer;
+    const CSB_V1_DSAImportedAction *expected;
+    uint32_t parameter_words[26];
+    uint16_t opcode;
+    int i;
+
+    (void)flgs_inout;
+    if (!action || !parameters || parameter_count < 1 ||
+        parameter_count > 26 || !runner || !runner->programs ||
+        runner->dsa_id < 0 || runner->action_ordinal < 0 ||
+        runner->global_variable_count < 0 ||
+        runner->global_variable_count > CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY) {
+        return 0;
+    }
+
+    /* Do not allow a compatible-looking caller action to borrow the runtime
+     * executor. The action pointer must be the exact item selected from the
+     * checksum-authenticated CSBWin import, preserving file-order ownership. */
+    expected = csb_v1_chaos_find_imported_action(runner->programs,
+        runner->dsa_id, runner->state_index, runner->action_ordinal);
+    if (expected != action) return 0;
+
+    opcode = (uint16_t)(action->program_words[0] & 0x3fu);
+    if (opcode == CSB_V1_CSBWIN_DSACMD_JUMP ||
+        opcode == CSB_V1_CSBWIN_DSACMD_GOSUB) {
+        /* CSBWin DSA.cpp Execute() owns this transfer as a whole, including
+         * nested GOSUB frame handling. It has no parameter/world side effect
+         * in the bounded subset, so retain the caller surface exactly while
+         * publishing only the completed source final state. */
+        if (csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
+                runner->programs, runner->dsa_id, runner->state_index,
+                action->column, 0, &transfer) !=
+                CSB_V1_CSBWIN_DSA_EXECUTE_OK || transfer.final_state < 0) {
+            return 0;
+        }
+        runner->last_transfer = transfer;
+        runner->state_index = (uint32_t)transfer.final_state;
+        ++runner->execution_count;
+        ++runner->transfer_execution_count;
+        return 1;
+    }
+
+    for (i = 0; i < parameter_count; ++i) {
+        parameter_words[i] = (uint32_t)parameters[i];
+    }
+    memset(&context, 0, sizeof(context));
+    context.master_location = runner->master_location;
+    context.parameters = parameter_words;
+    context.parameter_count = parameter_count;
+    context.global_variables = runner->global_variables;
+    context.global_variable_count = runner->global_variable_count;
+    if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+            runner->programs, runner->dsa_id, runner->state_index,
+            runner->action_ordinal, &context, &execution) !=
+        CSB_V1_CSBWIN_DSA_STACK_OK) {
+        return 0;
+    }
+    for (i = 0; i < parameter_count; ++i) {
+        parameters[i] = (int)parameter_words[i];
+    }
+    runner->last_execution = execution;
+    ++runner->execution_count;
+    return 1;
+}
+
 int csb_v1_chaos_load_scripts(CSB_V1_ChaosMagicState *state,
     const uint8_t *data, int data_size)
 {
