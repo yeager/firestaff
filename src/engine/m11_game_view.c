@@ -43,6 +43,8 @@
 #include "dm2_v2_lighting_runtime.h"
 #include "dm2_v2_phase_gate.h"
 #include "dm2_v2_touch_runtime.h"
+#include "dm2_v22_finished_art_material_gate_pc34.h"
+#include "dm2_v22_modern_assets_pc34.h"
 #include "theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
@@ -928,7 +930,9 @@ static int m11_dm2_apply_boot_runtime_receipt(
              sizeof(state->bootAssetMd5),
              "%s",
              receipt->boot_asset_md5);
-    state->presentationMode = spec->presentationMode;
+    /* The DM2 branch resolves a V2.2 request before boot and stores the
+     * effective mode on state.  Do not overwrite that fail-closed decision
+     * with the raw launcher intent here. */
     state->presentationWidth = spec->presentationWidth;
     state->presentationHeight = spec->presentationHeight;
     snprintf(state->title,
@@ -11546,6 +11550,20 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         M11_GameView_Shutdown(state);
         M11_GameView_Init(state);
         state->showDebugHUD = savedDebugHUD;
+        state->presentationMode = spec->presentationMode;
+        state->presentationWidth = spec->presentationWidth;
+        state->presentationHeight = spec->presentationHeight;
+        if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
+            dm2_v22_set_manifest_path(dd);
+            dm2_v22_famg_set_manifest_path(dd);
+            /* The legacy V22 cache is explicitly no-draw until it has an
+             * end-to-end real-material consumer.  Even a complete external
+             * pack must not silently turn into generated or placeholder
+             * surfaces, so route this request through the verified V2.1
+             * indexed EPX presentation for now. */
+            (void)dm2_v22_famg_gate();
+            state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
+        }
         if (!dm2_v1_boot_startup_launch_alloc(dd, &launch)) {
             DM2_V1_StartupHostReceipt failureReceipt;
             (void)dm2_v1_boot_startup_prepare_failure_host_receipt(

@@ -14,6 +14,12 @@ the selected upscaled mode enables source-preserving EPX while retaining the
 original palette. Remaining V2.1 work is real packaged capture and broader
 GDAT material coverage, not a separate synthetic upscale route.
 
+DM2 V2.2 is fail-closed in M11. A V2.2 request records the finished-art
+manifest gate but resolves to V2.1 because the legacy modern cache has no
+live real-material renderer. Remaining V2.2 work is a renderer that consumes
+a complete, operator-reviewed pack through every active GDAT scene route;
+placeholder or partial assets must never be promoted.
+
 ## DM1 V2.2 Finished-Art Follow-up (2026-07-12)
 
 The live V2.2 selection path now rejects synthetic and partial modern-art

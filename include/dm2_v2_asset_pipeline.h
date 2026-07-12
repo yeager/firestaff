@@ -261,6 +261,8 @@ void dm2_v2_asset_get_modern_asset_root(char* out, size_t out_size);
  * Shape source selection
  * ================================================================= */
 
+#ifndef FIRESTAFF_DM2_V22_SHAPE_SOURCE_DEFINED
+#define FIRESTAFF_DM2_V22_SHAPE_SOURCE_DEFINED
 typedef enum {
     DM2_V22_SHAPE_SOURCE_V1_ORIGINAL = 0,
     DM2_V22_SHAPE_SOURCE_V2_FILTERED,
@@ -268,6 +270,7 @@ typedef enum {
     DM2_V22_SHAPE_SOURCE_V2_MODERN,
     DM2_V22_SHAPE_SOURCE_COUNT
 } DM2_V22_ShapeSource;
+#endif
 
 DM2_V22_ShapeSource dm2_v2_best_available_shape_source(int presentation_mode_index);
 const char*         dm2_v2_shape_source_name(DM2_V22_ShapeSource src);
