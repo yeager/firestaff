@@ -1,4 +1,5 @@
 #include "main_loop_m11.h"
+#include "m11_game_view.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
@@ -4165,11 +4166,34 @@ static void check_dm1_launch_path_bypass_contract(void) {
     }
 }
 
+static void check_m11_hoc_live_material_observation_gate(void) {
+    M11_GameViewState view;
+    M11_BootProbeReceipt receipt;
+
+    M11_GameView_Init(&view);
+    snprintf(view.sourceId, sizeof(view.sourceId), "%s", "dm1");
+    view.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+    expect_i("M11 HoC bootstrap boot receipt succeeds",
+             M11_GameView_GetBootProbeReceipt(&view, &receipt),
+             1);
+    expect_i("M11 HoC bootstrap has no live C127 material request",
+             receipt.dm1HoCLiveC127MaterialRequest,
+             0);
+    expect_i("M11 HoC bootstrap has no live F0115 material request",
+             receipt.dm1HoCLiveF0115MaterialRequest,
+             0);
+    expect_i("M11 HoC bootstrap keeps release capture closed",
+             receipt.dm1HoCReleaseAppCapture,
+             0);
+    M11_GameView_Shutdown(&view);
+}
+
 int main(void) {
     check_swsh_to_title_boundary();
     check_title_to_menu_boundary();
     check_menu_to_entrance_wait_boundary();
     check_dm1_launch_path_bypass_contract();
+    check_m11_hoc_live_material_observation_gate();
 
     expect_truth("startup stage order is source-valid",
                  dm1_v1_startup_sequence_source_order_valid_pc34());
