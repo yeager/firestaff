@@ -23,6 +23,8 @@ typedef struct DM1_V1_ObjectIconSourceZonePc34 {
      DM1_V1_CHAMPION_PORTRAIT_ROWS_PC34)
 #define DM1_V1_CHAMPION_PORTRAIT_WIDTH_PC34 32
 #define DM1_V1_CHAMPION_PORTRAIT_HEIGHT_PC34 29
+#define DM1_V1_GRAPHIC_FIRE_SHIELD_BORDER_PC34 38
+#define DM1_V1_GRAPHIC_SPELL_SHIELD_BORDER_PC34 39
 
 int dm1_v1_graphic_dialog_box_pc34(void);
 int dm1_v1_graphic_the_end_pc34(void);

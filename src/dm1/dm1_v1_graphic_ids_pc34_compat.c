@@ -63,8 +63,12 @@ int dm1_v1_graphic_slot_box_normal_pc34(void) { return 33; }
 int dm1_v1_graphic_slot_box_wounded_pc34(void) { return 34; }
 int dm1_v1_graphic_slot_box_acting_hand_pc34(void) { return 35; }
 int dm1_v1_graphic_party_shield_border_pc34(void) { return 37; }
-int dm1_v1_graphic_fire_shield_border_pc34(void) { return 38; }
-int dm1_v1_graphic_spell_shield_border_pc34(void) { return 39; }
+int dm1_v1_graphic_fire_shield_border_pc34(void) {
+    return DM1_V1_GRAPHIC_FIRE_SHIELD_BORDER_PC34;
+}
+int dm1_v1_graphic_spell_shield_border_pc34(void) {
+    return DM1_V1_GRAPHIC_SPELL_SHIELD_BORDER_PC34;
+}
 int dm1_v1_graphic_champion_damage_small_pc34(void) { return 15; }
 int dm1_v1_graphic_champion_damage_big_pc34(void) { return 16; }
 int dm1_v1_graphic_creature_damage_pc34(void) { return 14; }
