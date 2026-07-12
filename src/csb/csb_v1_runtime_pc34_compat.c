@@ -8173,6 +8173,21 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
+        if ((flags_word >> 6) & 0x01u) {
+            CsbV1AudioRequest request;
+
+            memset(&request, 0, sizeof(request));
+            request.soundIndex = CSB_V1_SOUND_SWITCH;
+            request.mapX = (int16_t)map_x;
+            request.mapY = (int16_t)map_y;
+            request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+            request.volume = 64;
+            request.priority = 4u;
+            /* ReDMCSB MOVESENS.C F0276 lines 1770-1772 requests F0064's
+             * prioritized switch sound for every triggered Audible sensor. */
+            (void)csb_v1_audio_runtime_request(&profile->audio_runtime,
+                                                &request);
+        }
         target_cell = (int)((target_word >> 4) & 0x03u);
         target_x = (int)((target_word >> 6) & 0x1Fu);
         target_y = (int)((target_word >> 11) & 0x1Fu);

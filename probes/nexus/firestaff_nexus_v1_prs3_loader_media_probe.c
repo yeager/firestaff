@@ -283,6 +283,25 @@ typedef struct {
     size_t rejection_target;
 } Sh2Prs3Version1ZeroBitGateEvidence;
 
+/* After the accepted zero-bit side path has read its bounded R12 bytes, the
+ * original code compares R1 with R10 and uses a delayed BF/S to repeat a
+ * local block or a following BRA to return to the outer control loop. This
+ * proves a local compare/repeat relation only; it is not a token length,
+ * payload boundary, opcode, or completion interpretation. */
+typedef struct {
+    int valid;
+    size_t compare_offset;
+    unsigned int compare_source_register;
+    unsigned int compare_destination_register;
+    size_t counter_increment_offset;
+    unsigned int counter_register;
+    int counter_increment;
+    size_t delayed_repeat_branch_offset;
+    size_t delayed_repeat_target;
+    size_t outer_loop_branch_offset;
+    size_t outer_loop_target;
+} Sh2Prs3Version1SideRepeatEvidence;
+
 /* The available flat DM.BIN image has no encoded direct predecessor for the
  * dispatcher entry and no PC-relative literal that materializes its work-RAM
  * address. This is a negative locator receipt only: an external, indirect, or
@@ -1055,6 +1074,19 @@ static int sh2_or_register_fields(uint16_t instruction,
     return 1;
 }
 
+/* SH-2 CMP/EQ Rm,Rn is 0010nnnnmmmm0000. */
+static int sh2_cmp_eq_register_fields(uint16_t instruction,
+                                      unsigned int *out_source_register,
+                                      unsigned int *out_destination_register) {
+    if ((instruction & 0xf00fU) != 0x2000U || !out_source_register ||
+        !out_destination_register) {
+        return 0;
+    }
+    *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
 static int sh2_prs3_version1_stream_read_evidence(
     const uint8_t *data, size_t data_size,
     Sh2Prs3Version1StreamReadEvidence *out_evidence) {
@@ -1215,6 +1247,47 @@ static int sh2_prs3_version1_zero_bit_gate_evidence(
         evidence.zero_bit_branch_target != evidence.counter_decrement_offset ||
         evidence.counter_register != 14U || evidence.counter_decrement != -2 ||
         evidence.rejection_target != NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 166U) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+    evidence.valid = 1;
+    if (out_evidence) *out_evidence = evidence;
+    return 1;
+}
+
+static int sh2_prs3_version1_side_repeat_evidence(
+    const uint8_t *data, size_t data_size,
+    Sh2Prs3Version1SideRepeatEvidence *out_evidence) {
+    Sh2Prs3Version1SideRepeatEvidence evidence;
+
+    memset(&evidence, 0, sizeof(evidence));
+    if (!data || NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 164U > data_size) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+    evidence.compare_offset = NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 154U;
+    evidence.counter_increment_offset = evidence.compare_offset + 2U;
+    evidence.delayed_repeat_branch_offset = evidence.compare_offset + 4U;
+    evidence.outer_loop_branch_offset = evidence.compare_offset + 8U;
+    if (!sh2_cmp_eq_register_fields(
+            read_be16(data + evidence.compare_offset),
+            &evidence.compare_source_register,
+            &evidence.compare_destination_register) ||
+        !sh2_add_immediate_fields(
+            read_be16(data + evidence.counter_increment_offset),
+            &evidence.counter_register, &evidence.counter_increment) ||
+        !sh2_conditional_branch_target(
+            evidence.delayed_repeat_branch_offset,
+            read_be16(data + evidence.delayed_repeat_branch_offset), data_size,
+            &evidence.delayed_repeat_target) ||
+        !sh2_bra_target(evidence.outer_loop_branch_offset,
+                        read_be16(data + evidence.outer_loop_branch_offset), data_size,
+                        &evidence.outer_loop_target) ||
+        evidence.compare_source_register != 1U ||
+        evidence.compare_destination_register != 10U ||
+        evidence.counter_register != 10U || evidence.counter_increment != 1 ||
+        evidence.delayed_repeat_target != NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 136U ||
+        evidence.outer_loop_target != NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 52U) {
         if (out_evidence) *out_evidence = evidence;
         return 0;
     }
@@ -1568,6 +1641,33 @@ static void test_sh2_version1_zero_bit_gate_evidence(void) {
           "SH-2 zero-bit gate evidence rejects a different counter decrement");
 }
 
+static void test_sh2_version1_side_repeat_evidence(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
+    Sh2Prs3Version1SideRepeatEvidence evidence;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 154U] = 0x2aU;
+    fixture[entry + 155U] = 0x10U; /* CMP/EQ R1,R10 */
+    fixture[entry + 156U] = 0x7aU;
+    fixture[entry + 157U] = 0x01U; /* ADD #1,R10 */
+    fixture[entry + 158U] = 0x8fU;
+    fixture[entry + 159U] = 0xf3U; /* BF/S -> entry + 136 */
+    fixture[entry + 162U] = 0xafU;
+    fixture[entry + 163U] = 0xc7U; /* BRA -> entry + 52 */
+    check(sh2_prs3_version1_side_repeat_evidence(
+              fixture, sizeof(fixture), &evidence) && evidence.valid &&
+              evidence.compare_source_register == 1U &&
+              evidence.compare_destination_register == 10U &&
+              evidence.delayed_repeat_target == entry + 136U &&
+              evidence.outer_loop_target == entry + 52U,
+          "SH-2 side-repeat evidence locks compare, delayed repeat, and outer loop");
+    fixture[entry + 159U] = 0xf2U;
+    check(!sh2_prs3_version1_side_repeat_evidence(
+              fixture, sizeof(fixture), &evidence),
+          "SH-2 side-repeat evidence rejects a changed delayed branch target");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -1615,6 +1715,7 @@ int main(int argc, char **argv) {
     Sh2Prs3Version1StreamReadEvidence stream_read_evidence;
     Sh2Prs3Version1ControlSentinelEvidence control_sentinel_evidence;
     Sh2Prs3Version1ZeroBitGateEvidence zero_bit_gate_evidence;
+    Sh2Prs3Version1SideRepeatEvidence side_repeat_evidence;
     Sh2Prs3DispatcherCallerEvidence dispatcher_caller_evidence;
     Sh2Prs3BootstrapEvidence bootstrap_evidence;
     Sh2Prs3MapBoundaryEvidence map_boundary_evidence;
@@ -1629,6 +1730,7 @@ int main(int argc, char **argv) {
     test_sh2_version1_stream_read_evidence();
     test_sh2_version1_control_sentinel_evidence();
     test_sh2_version1_zero_bit_gate_evidence();
+    test_sh2_version1_side_repeat_evidence();
 
     if (!data_dir) {
         home = getenv("HOME");
@@ -1713,6 +1815,11 @@ int main(int argc, char **argv) {
                   zero_bit_gate_evidence.counter_register == 14U &&
                   zero_bit_gate_evidence.counter_decrement == -2,
               "DM.BIN version-1 zero-bit side route proves its bounded R14 gate");
+        check(sh2_prs3_version1_side_repeat_evidence(
+                  dm, dm_size, &side_repeat_evidence) && side_repeat_evidence.valid &&
+                  side_repeat_evidence.compare_source_register == 1U &&
+                  side_repeat_evidence.compare_destination_register == 10U,
+              "DM.BIN version-1 side route proves its local delayed repeat relation");
         check(sh2_prs3_dispatcher_caller_evidence(
                   dm, dm_size, &dispatcher_caller_evidence) &&
                   dispatcher_caller_evidence.valid &&
@@ -1908,6 +2015,21 @@ int main(int argc, char **argv) {
                    zero_bit_gate_evidence.counter_nonnegative_test_offset,
                    zero_bit_gate_evidence.rejection_branch_offset,
                    zero_bit_gate_evidence.rejection_target);
+        }
+        if (side_repeat_evidence.valid) {
+            printf("SH-2 PRS3 version-1 side repeat: cmp=%zu R%u,R%u "
+                   "increment=%zu R%u%+d delayed=%zu->%zu outer=%zu->%zu; "
+                   "token/termination-proof=0\n",
+                   side_repeat_evidence.compare_offset,
+                   side_repeat_evidence.compare_source_register,
+                   side_repeat_evidence.compare_destination_register,
+                   side_repeat_evidence.counter_increment_offset,
+                   side_repeat_evidence.counter_register,
+                   side_repeat_evidence.counter_increment,
+                   side_repeat_evidence.delayed_repeat_branch_offset,
+                   side_repeat_evidence.delayed_repeat_target,
+                   side_repeat_evidence.outer_loop_branch_offset,
+                   side_repeat_evidence.outer_loop_target);
         }
         if (dispatcher_caller_evidence.valid) {
             printf("SH-2 PRS3 dispatcher caller scan: entry=%zu address=%08x "
