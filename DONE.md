@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 PRS3 original entry alternate-call receipt: the
+  hash-locked branch-flow probe now proves the R13 branch either bypasses or
+  falls through a second raw literal-fed `JSR @R3` with delay-slot `R5=70`,
+  and both paths converge at `R11=0`. The raw pointers are unmapped and no
+  ABI, payload, decoder, completion, or rendering role is inferred.
+  Verification: direct strict-C11 probe build against locked Japanese `DM.BIN`
+  PASS.
+
 - 2026-07-12 Nexus V1 PRS3 original entry-register receipt: the hash-locked
   branch-flow probe now proves `R4 -> R12`, `R5 -> R10`, raw literal-fed
   `JSR @R3` with delay-slot `R6 -> R14`, then `R0 -> R13` and the branch to
@@ -180,6 +188,14 @@
   payload, decoder, or rendering claim. Verification:
   `nexus_v1_prs3_branch_flow_probe` CTest PASS against locked Japanese
   `DM.BIN`.
+
+- 2026-07-12 DM1 PC34 F0248 C10 local Steal XP: wall C006 countdown
+  triggers now consume `C10_EFFECT_ADD_300XP_STEAL_SKILL` through the
+  ReDMCSB F0269/F0270 leader-only path. M10 updates the lifecycle's hidden
+  Steal and base Ninja experience, mirrors the persistable Ninja base value,
+  and emits an XP receipt for M11. Source: ReDMCSB `MOVESENS.C`
+  F0269/F0270:1043-1097. Verification: rebuilt the current orchestrator
+  object and linked `test_dm1_v1_f0248_local_xp_runtime_pc34_compat`; PASS.
 
 - 2026-07-12 DM1 PC34 F0248 C007/C009 F0167 launcher materialization:
   M10 now uses ReDMCSB's F0167 launcher-icon map to allocate only unused
