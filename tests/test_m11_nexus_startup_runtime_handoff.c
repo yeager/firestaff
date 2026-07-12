@@ -284,6 +284,91 @@ int main(void)
     fill_ready_engine(&engine);
     {
         Nexus_V1_StartupRuntimeState startup_state;
+        Nexus_V1_StartupDrawCommand startup_commands[4];
+        Nexus_V1_DgnRenderCommand ignored_dgn_commands[1];
+        Nexus_V1_StartupHostCallerReceipt host_receipt;
+        Nexus_V1_StartupTitleTransitionCaptureReceipt transition_receipt;
+
+        memset(&startup_state, 0, sizeof(startup_state));
+        startup_state.title_active = 1;
+        startup_state.engine = &engine;
+        engine.menu_bpk_upload_receipt.route =
+            NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3;
+        engine.menu_bpk_upload_receipt.ready_uploads = 0;
+        engine.menu_bpk_upload_receipt.blocked_prs3_uploads = 162;
+        engine.menu_bpk_upload_receipt.blocks_real_menu_surface_render = 1;
+
+        startup_state.title_frame = 47;
+        memset(startup_commands, 0, sizeof(startup_commands));
+        expect_true(nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
+                        NULL, &startup_state, M12_MENU_INPUT_NONE,
+                        NULL, NULL, startup_commands,
+                        (int)(sizeof(startup_commands) /
+                              sizeof(startup_commands[0])),
+                        ignored_dgn_commands, 1, &host_receipt) &&
+                        nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
+                            &host_receipt, 47, startup_commands,
+                            host_receipt.copied_startup_command_count,
+                            &transition_receipt) &&
+                        transition_receipt.warning_boundary == 1 &&
+                        transition_receipt.expected_draw_kind ==
+                            NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND &&
+                        transition_receipt.warning_surface_verified == 1 &&
+                        transition_receipt.menu_bpk_prs3_blocked == 1 &&
+                        strcmp(transition_receipt.status,
+                               "warning-capture") == 0,
+                    "Nexus title transition receipt consumes WARNING.BIN at frame 47 while PRS3 stays blocked");
+
+        startup_state.title_frame = 48;
+        memset(startup_commands, 0, sizeof(startup_commands));
+        expect_true(nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
+                        NULL, &startup_state, M12_MENU_INPUT_NONE,
+                        NULL, NULL, startup_commands,
+                        (int)(sizeof(startup_commands) /
+                              sizeof(startup_commands[0])),
+                        ignored_dgn_commands, 1, &host_receipt) &&
+                        nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
+                            &host_receipt, 48, startup_commands,
+                            host_receipt.copied_startup_command_count,
+                            &transition_receipt) &&
+                        transition_receipt.title_boundary == 1 &&
+                        transition_receipt.expected_title_frame == 0 &&
+                        transition_receipt.title_surface_verified == 1 &&
+                        strcmp(transition_receipt.status,
+                               "title-capture") == 0,
+                    "Nexus title transition receipt consumes TITLE.CG frame 0 at 48");
+
+        startup_state.title_frame = 102;
+        memset(startup_commands, 0, sizeof(startup_commands));
+        expect_true(nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
+                        NULL, &startup_state, M12_MENU_INPUT_NONE,
+                        NULL, NULL, startup_commands,
+                        (int)(sizeof(startup_commands) /
+                              sizeof(startup_commands[0])),
+                        ignored_dgn_commands, 1, &host_receipt) &&
+                        nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
+                            &host_receipt, 102, startup_commands,
+                            host_receipt.copied_startup_command_count,
+                            &transition_receipt) &&
+                        transition_receipt.start_ready_boundary == 1 &&
+                        transition_receipt.expected_title_frame == 54 &&
+                        strcmp(transition_receipt.status,
+                               "title-start-ready") == 0,
+                    "Nexus title transition receipt consumes start-ready TITLE.CG at 102");
+        ++startup_commands[0].title_frame;
+        expect_true(!nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
+                        &host_receipt, 102, startup_commands,
+                        host_receipt.copied_startup_command_count,
+                        &transition_receipt) &&
+                        transition_receipt.consumer_ready == 0 &&
+                        strcmp(transition_receipt.status,
+                               "blocked-title-capture") == 0,
+                    "Nexus title transition receipt rejects a mismatched start-ready frame");
+    }
+
+    fill_ready_engine(&engine);
+    {
+        Nexus_V1_StartupRuntimeState startup_state;
         Nexus_V1_StartupDrawCommand startup_commands[80];
         Nexus_V1_DgnRenderCommand truncated_dgn_commands[1];
         Nexus_V1_StartupHostCallerReceipt host_receipt;
