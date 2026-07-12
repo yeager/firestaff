@@ -231,7 +231,10 @@ static Theron_V1StartupResumeClaim compute_claim(
     const Theron_V1StartupSaveResume *snap) {
 
     int tqsv = snap->tqsv_valid_slots > 0;
-    int srm = snap->srm_recognized_slots > 0;
+    /* An original SRM has no source-locked body decoder yet.  Its only
+     * supported startup surface is a verified opaque transfer, never a
+     * runtime resume claim. */
+    int srm = 0;
 
     if (tqsv && srm) return THERON_V1_STARTUP_RESUME_DUAL;
     if (tqsv)        return THERON_V1_STARTUP_RESUME_TQSV;
@@ -286,6 +289,8 @@ static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
     snap->srm_first_recognized_slot = -1;
     snap->srm_first_recognized_checksum32 = 0u;
     snap->srm_first_decoded_slot = -1;
+    snap->srm_first_opaque_transfer_slot = -1;
+    snap->srm_opaque_transfer_slots = 0;
     snap->srm_payload_probe_status = THERON_V1_SRM_PAYLOAD_PROBE_BAD_INPUT;
     snap->srm_payload_probe_ran = 0;
     snap->srm_payload_size = 0u;
@@ -330,11 +335,9 @@ static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
         }
     }
 
-    /* Decode recognized slots in Save Disk order until one passes the
-     * existing bounded envelope contract.  A gzip-recognized custom body
-     * is evidence of a real artifact, but not evidence that Continue can
-     * restore it.  Therefore an unknown slot cannot prevent a later
-     * explicitly supported envelope from becoming the selected slot. */
+    /* Decode only far enough to authenticate the complete gzip member and
+     * classify its body as opaque.  FSTQ envelopes are Firestaff fixtures,
+     * not original save bodies, and are deliberately not surfaced here. */
     if (snap->srm_first_recognized_slot < 0) {
         return;
     }
@@ -345,7 +348,6 @@ static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
         uint8_t payload[TSR_INFLATE_BUFFER_BYTES];
         Theron_V1SrmEnvelopeReceipt *envelope = &envelopes[i];
         Theron_V1SrmEnvelopeKind kind;
-        int decoded;
 
         if (manifest.slots[i].status !=
             THERON_V1_SRM_SLOT_PRESENT_AND_RECOGNIZED ||
@@ -356,43 +358,23 @@ static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
         memset(envelope, 0, sizeof(*envelope));
         kind = theron_v1_srm_decode_path(slot_path, i, payload,
                                          sizeof(payload), envelope);
-        decoded = (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
-                   kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) &&
-                  envelope->decode_status == THERON_V1_SRM_PROGRESS_IMPORT_OK;
-
-        /* Keep a diagnostic for the first recognized artifact if none is
-         * decodable, but replace it only with a complete decoded receipt. */
-        if (i == snap->srm_first_recognized_slot ||
-            (decoded && snap->srm_first_decoded_slot < 0)) {
+        if (i == snap->srm_first_recognized_slot) {
             snap->srm_envelope_kind = kind;
             snap->srm_payload_probe_status = envelope->inflate_status;
             snap->srm_payload_probe_ran = 1;
             snap->srm_payload_size = envelope->inflate_payload_size;
-            snap->srm_payload_hits_fstq_magic =
-                (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
-                 kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) ? 1 : 0;
-            snap->srm_progress_import_status = decoded
-                ? envelope->decode_status
-                : THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
-            snap->srm_progress_import_ran = decoded ? 1 : 0;
+            snap->srm_payload_hits_fstq_magic = 0;
+            snap->srm_progress_import_status =
+                THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY;
         }
-        if (!decoded || snap->srm_first_decoded_slot >= 0) {
-            continue;
-        }
-
-        snap->srm_first_decoded_slot = i;
-        snap->srm_progress_current_dungeon =
-            (int)envelope->progression.current_dungeon;
-        snap->srm_progress_current_level =
-            (int)envelope->progression.current_level;
-        snap->srm_progress_quest_mask =
-            (int)envelope->progression.quest_items_bitmask;
-        if (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) {
-            snap->srm_party_import_ran = 1;
-            snap->srm_party_restored = envelope->party.restored ? 1 : 0;
-            snap->srm_party_champion_count =
-                (int)envelope->party.champion_count;
-            snap->srm_party_gold = envelope->party.party_gold;
+        if (kind == THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED &&
+            envelope->inflate_status == THERON_V1_SRM_PAYLOAD_PROBE_OK &&
+            envelope->body_evidence.captured &&
+            envelope->body_evidence.gzip_trailer_verified) {
+            ++snap->srm_opaque_transfer_slots;
+            if (snap->srm_first_opaque_transfer_slot < 0) {
+                snap->srm_first_opaque_transfer_slot = i;
+            }
         }
     }
     (void)theron_v1_srm_catalog_body_evidence(
@@ -417,6 +399,7 @@ int theron_v1_startup_save_resume_evaluate(
     out_snapshot->tqsv_active_slot = -1;
     out_snapshot->srm_first_recognized_slot = -1;
     out_snapshot->srm_first_decoded_slot = -1;
+    out_snapshot->srm_first_opaque_transfer_slot = -1;
     out_snapshot->srm_progress_current_dungeon = -1;
     out_snapshot->srm_progress_current_level = -1;
     out_snapshot->srm_progress_quest_mask = -1;
@@ -502,9 +485,10 @@ int theron_v1_startup_save_resume_apply_explicit_path(
                                           scratch,
                                           sizeof(scratch),
                                           &envelope);
-        if ((kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION &&
-             kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) ||
-            !envelope.progression.restored) {
+        if (kind != THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED ||
+            envelope.inflate_status != THERON_V1_SRM_PAYLOAD_PROBE_OK ||
+            !envelope.body_evidence.captured ||
+            !envelope.body_evidence.gzip_trailer_verified) {
             return 0;
         }
         copy_name(snap->srm_root, sizeof(snap->srm_root), root);
@@ -516,28 +500,17 @@ int theron_v1_startup_save_resume_apply_explicit_path(
             snap->srm_recognized_slots = 1;
         }
         snap->srm_first_recognized_slot = slot;
-        snap->srm_first_decoded_slot = slot;
+        snap->srm_first_decoded_slot = -1;
+        snap->srm_first_opaque_transfer_slot = slot;
+        snap->srm_opaque_transfer_slots = 1;
         snap->srm_envelope_kind = kind;
         snap->srm_payload_probe_status = envelope.inflate_status;
         snap->srm_payload_probe_ran =
             envelope.inflate_status != THERON_V1_SRM_PAYLOAD_PROBE_BAD_INPUT;
         snap->srm_payload_size = envelope.inflate_payload_size;
-        snap->srm_payload_hits_fstq_magic = 1;
-        snap->srm_progress_import_status = envelope.decode_status;
-        snap->srm_progress_import_ran = 1;
-        snap->srm_progress_current_dungeon =
-            (int)envelope.progression.current_dungeon;
-        snap->srm_progress_current_level =
-            (int)envelope.progression.current_level;
-        snap->srm_progress_quest_mask =
-            (int)envelope.progression.quest_items_bitmask;
-        if (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) {
-            snap->srm_party_import_ran = 1;
-            snap->srm_party_restored = envelope.party.restored ? 1 : 0;
-            snap->srm_party_champion_count =
-                (int)envelope.party.champion_count;
-            snap->srm_party_gold = envelope.party.party_gold;
-        }
+        snap->srm_payload_hits_fstq_magic = 0;
+        snap->srm_progress_import_status =
+            THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY;
         recompute_verdict_and_claim(snap);
         return 1;
     }
@@ -562,7 +535,7 @@ int theron_v1_startup_save_resume_state_receipt(
     out_receipt->save_resume_active_slot =
         (snapshot_ready && snapshot) ? snapshot->tqsv_active_slot : -1;
     out_receipt->save_resume_srm_active_slot =
-        (snapshot_ready && snapshot) ? snapshot->srm_first_decoded_slot : -1;
+        (snapshot_ready && snapshot) ? snapshot->srm_first_opaque_transfer_slot : -1;
     out_receipt->save_resume_srm_import_status =
         (snapshot_ready && snapshot)
             ? (int)snapshot->srm_progress_import_status
@@ -587,7 +560,7 @@ int theron_v1_startup_save_resume_state_receipt(
         (snapshot_ready && snapshot) ? snapshot->srm_recognized_slots : 0;
     if (snapshot_ready &&
         snapshot &&
-        snapshot->srm_first_decoded_slot >= 0 &&
+        snapshot->srm_first_opaque_transfer_slot >= 0 &&
         snapshot->srm_root[0] != '\0') {
         snprintf(out_receipt->save_resume_srm_root,
                  sizeof(out_receipt->save_resume_srm_root),
@@ -666,9 +639,8 @@ int theron_v1_startup_continue_tqsv_apply(
         return 0;
     }
 
-    world->progression = loaded_progression;
-    theron_v1_startup_continue_reset_world_runtime(world);
-    if (theron_v1_party_unpack(&world->party,
+    Theron_V1_Party loaded_party;
+    if (theron_v1_party_unpack(&loaded_party,
                                champion_data,
                                sizeof(champion_data)) != 0) {
         if (receipt && receipt_cap > 0u) {
@@ -676,8 +648,11 @@ int theron_v1_startup_continue_tqsv_apply(
         }
         return 0;
     }
-    world->party.champion_count = 1;
-    world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
+    loaded_party.champion_count = 1;
+    loaded_party.active_slot = THERON_CHAMPION_SLOT_THERON;
+    world->progression = loaded_progression;
+    world->party = loaded_party;
+    theron_v1_startup_continue_reset_world_runtime(world);
 
     if (receipt && receipt_cap > 0u) {
         snprintf(receipt,
@@ -844,43 +819,15 @@ int theron_v1_startup_continue_srm_apply(
     if (!world) {
         return 0;
     }
-    if (slot_index < 0 || slot_index >= THERON_V1_SRM_DISK_SLOT_COUNT) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "Continue requires decoded SRM progress");
-        }
-        return 0;
-    }
-    if (srm_root && srm_root[0] != '\0') {
-        snprintf(root, sizeof(root), "%s", srm_root);
-    } else if (!theron_v1_srm_default_root(root)) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "SRM root failed");
-        }
-        return 0;
-    }
-    if (!theron_v1_srm_slot_path(root, slot_index, path)) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "SRM slot path failed");
-        }
-        return 0;
-    }
-
+    if (slot_index < 0 || slot_index >= THERON_V1_SRM_DISK_SLOT_COUNT) return 0;
+    if (srm_root && srm_root[0] != '\0') snprintf(root, sizeof(root), "%s", srm_root);
+    else if (!theron_v1_srm_default_root(root)) return 0;
+    if (!theron_v1_srm_slot_path(root, slot_index, path)) return 0;
     memset(scratch, 0, sizeof(scratch));
     memset(&envelope, 0, sizeof(envelope));
-    kind = theron_v1_srm_decode_path(path,
-                                     slot_index,
-                                     scratch,
-                                     sizeof(scratch),
-                                     &envelope);
+    kind = theron_v1_srm_decode_path(path, slot_index, scratch, sizeof(scratch), &envelope);
     return theron_v1_startup_continue_srm_envelope_apply(
-        world,
-        &envelope,
-        kind,
-        scratch,
-        "slot",
-        slot_index,
-        receipt,
-        receipt_cap);
+        world, &envelope, kind, scratch, "slot", slot_index, receipt, receipt_cap);
 }
 
 int theron_v1_startup_continue_srm_path_apply(
@@ -905,20 +852,9 @@ int theron_v1_startup_continue_srm_path_apply(
 
     memset(scratch, 0, sizeof(scratch));
     memset(&envelope, 0, sizeof(envelope));
-    kind = theron_v1_srm_decode_path(srm_path,
-                                     -1,
-                                     scratch,
-                                     sizeof(scratch),
-                                     &envelope);
+    kind = theron_v1_srm_decode_path(srm_path, -1, scratch, sizeof(scratch), &envelope);
     return theron_v1_startup_continue_srm_envelope_apply(
-        world,
-        &envelope,
-        kind,
-        scratch,
-        "path",
-        -1,
-        receipt,
-        receipt_cap);
+        world, &envelope, kind, scratch, "path", -1, receipt, receipt_cap);
 }
 
 void theron_v1_startup_continue_request_init(
@@ -1088,6 +1024,7 @@ void theron_v1_startup_continue_availability_init(
     memset(availability, 0, sizeof(*availability));
     availability->tqsv_slot = -1;
     availability->srm_slot = -1;
+    availability->srm_opaque_transfer_slot = -1;
 }
 
 int theron_v1_startup_continue_availability_from_state(
@@ -1107,9 +1044,17 @@ int theron_v1_startup_continue_availability_from_state(
         tqsv_slot_index >= 0 &&
         (resume_claim == THERON_V1_STARTUP_RESUME_TQSV ||
          resume_claim == THERON_V1_STARTUP_RESUME_DUAL);
+    /* This adapter also serves historical explicit, already-decoded test
+     * receipts. Startup profile selection never emits OK for an SRM body;
+     * it emits UNSUPPORTED_BODY plus the opaque transfer candidate instead. */
     out_availability->has_srm_continue =
         srm_slot_index >= 0 &&
         srm_import_status == THERON_V1_SRM_PROGRESS_IMPORT_OK;
+    out_availability->has_srm_opaque_transfer =
+        srm_slot_index >= 0 &&
+        srm_import_status == THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY;
+    out_availability->srm_opaque_transfer_slot =
+        out_availability->has_srm_opaque_transfer ? srm_slot_index : -1;
     out_availability->has_any_continue =
         out_availability->has_tqsv_continue ||
         out_availability->has_srm_continue;
@@ -1291,6 +1236,7 @@ int theron_v1_startup_continue_apply_request(
 
     int tqsv_available;
     int srm_available;
+    Theron_V1_World staged_world;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -1321,9 +1267,10 @@ int theron_v1_startup_continue_apply_request(
         request->srm_slot_index < THERON_V1_SRM_DISK_SLOT_COUNT &&
         request->srm_import_status == THERON_V1_SRM_PROGRESS_IMPORT_OK;
 
+    staged_world = *world;
     if (tqsv_available) {
         if (!theron_v1_startup_continue_tqsv_apply(
-                world,
+                &staged_world,
                 request->tqsv_root,
                 request->tqsv_slot_index,
                 receipt,
@@ -1331,17 +1278,18 @@ int theron_v1_startup_continue_apply_request(
             return 0;
         }
         theron_v1_startup_continue_capture_result(
-            world,
+            &staged_world,
             THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV,
             request->tqsv_slot_index,
             THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT,
             out_result);
         return theron_v1_startup_continue_attach_track02_media(
-            world, out_result, request->track02_media_receipt, receipt, receipt_cap);
+            &staged_world, out_result, request->track02_media_receipt, receipt, receipt_cap)
+            ? (*world = staged_world, 1) : 0;
     }
     if (srm_available) {
         if (!theron_v1_startup_continue_srm_apply(
-                world,
+                &staged_world,
                 request->srm_root,
                 request->srm_slot_index,
                 receipt,
@@ -1349,13 +1297,14 @@ int theron_v1_startup_continue_apply_request(
             return 0;
         }
         theron_v1_startup_continue_capture_result(
-            world,
+            &staged_world,
             THERON_V1_STARTUP_CONTINUE_SOURCE_SRM,
             request->srm_slot_index,
             request->srm_import_status,
             out_result);
         return theron_v1_startup_continue_attach_track02_media(
-            world, out_result, request->track02_media_receipt, receipt, receipt_cap);
+            &staged_world, out_result, request->track02_media_receipt, receipt, receipt_cap)
+            ? (*world = staged_world, 1) : 0;
     }
 
     if (receipt && receipt_cap > 0u) {

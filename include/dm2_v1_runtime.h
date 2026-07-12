@@ -28,7 +28,6 @@
 #include <stdint.h>
 #include "dm2_v1_boot.h"
 #include "dm2_v1_new_game.h"
-#include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_viewport_renderer.h"
 
@@ -54,6 +53,8 @@ typedef struct {
     int projectile_gdat_blits;
     int total_runtime_gdat_blits;
     int total_runtime_fallback_draws;
+    int blocked_material_draws;
+    uint32_t blocked_material_mask;
     int full_gdat_frame_valid;
     int outdoor_gdat_frame_valid;
     int real_gdat_evidence_valid;
@@ -89,10 +90,6 @@ typedef struct {
     uint32_t viewport_raw_gdat_byte_count;
     uint32_t viewport_decoded_gdat_hash;
     uint32_t viewport_decoded_gdat_pixel_count;
-    int interface_semantics_consumed;
-    uint32_t interface_semantics_hash;
-    uint32_t interface_semantics_byte_count;
-    int interface_rect14_consumed;
     int valid;
 } DM2_V1_RuntimeFrameOwnershipReceipt;
 
@@ -127,6 +124,17 @@ extern "C" {
 
 void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile);
 int  dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile);
+/* Returns the map-0 bounded receipt when a canonical G1 partial world was
+ * consumed. Only source-defined direct DB1 teleporter fields are available;
+ * no generic object or link traversal is exposed through this API. */
+int dm2_v1_runtime_g1_first_map_receipt(
+    DM2_V1_G1FirstMapRuntimeReceipt *out_receipt);
+/* Returns the DB1 teleporter receipt for the current map-0 party pose. It
+ * applies a transition only when the source and complete-world gates pass;
+ * otherwise the receipt is a strict no-transition result. GenericRecord::w0
+ * and blocked roots remain unavailable. */
+int dm2_v1_runtime_g1_map0_teleporter_transition_receipt(
+    DM2_V1_G1TeleporterTransitionReceipt *out_receipt);
 int  dm2_v1_runtime_bind_boot_profile_with_receipt(
     DM2_V1_BootProfile *boot_profile,
     DM2_V1_StartupHostReceipt *out_receipt);
@@ -381,7 +389,6 @@ int dm2_v1_runtime_get_party_y(void);
 int dm2_v1_runtime_get_party_dir(void);
 int dm2_v1_runtime_get_weather(void);
 int dm2_v1_runtime_get_weather_intensity(void);
-void dm2_v1_runtime_set_weather(int weather, int intensity);
 uint32_t dm2_v1_runtime_get_leader_hand_object(void);
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
@@ -407,28 +414,6 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
                                           size_t data_size);
 int dm2_v1_runtime_load_save_slot(const char *save_base, uint8_t slot);
 int dm2_v1_runtime_load_last_session(const char *save_base);
-
-typedef enum DM2_V1_RuntimeCorpusImportResult {
-    DM2_V1_RUNTIME_CORPUS_IMPORT_OK = 0,
-    DM2_V1_RUNTIME_CORPUS_IMPORT_BAD_INPUT,
-    DM2_V1_RUNTIME_CORPUS_IMPORT_NO_IMPORTABLE_SAVE,
-    DM2_V1_RUNTIME_CORPUS_IMPORT_READ_FAILED,
-    DM2_V1_RUNTIME_CORPUS_IMPORT_PARSE_FAILED,
-    DM2_V1_RUNTIME_CORPUS_IMPORT_RESTORE_FAILED
-} DM2_V1_RuntimeCorpusImportResult;
-
-typedef struct DM2_V1_RuntimeCorpusImportReceipt {
-    DM2_V1_RuntimeCorpusImportResult result;
-    DM2_SKSaveCorpusReceipt corpus;
-    DM2_V1_SaveCandidateKind candidate_kind;
-    char selected_path[256];
-    size_t selected_payload_size;
-    int restored;
-} DM2_V1_RuntimeCorpusImportReceipt;
-
-int dm2_v1_runtime_import_sksave_corpus(
-    const char *save_base,
-    DM2_V1_RuntimeCorpusImportReceipt *out_receipt);
 
 typedef enum DM2_V1_QuicksaveResult {
     DM2_V1_QUICKSAVE_OK = 0,

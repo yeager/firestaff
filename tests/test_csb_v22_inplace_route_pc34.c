@@ -9,11 +9,11 @@
  *   1. V22 inactive -> use_v22=0, reason "v22_inactive"
  *   2. Out-of-range depth / lateral -> use_v22=0, reason ends in
  *      "_out_of_range"
- *   3. Walls / doors / floors / creatures / pit / stairs / ceiling
+ *   3. Walls / doors / floors / creatures / pit / stairs
  *      route to distinct per-cell asset_ids (depth-driven variation)
  *   4. PIT / STAIRS_UP / STAIRS_DOWN are depth-invariant
- *   5. Fields (teleporter / fluxcage / explosion / chaos_rift)
- *      return no asset, with a "field_*_no_asset" reason
+ *   5. Ceilings, items, and fields return no asset and retain the V1
+ *      original-material path until a matching source bitmap is decoded
  *   6. CSB-only narrative shapes (PRISON_DOOR / CHAOS_RUNE /
  *      DSA_SCROLL / LORD_ORDER) have their own asset_ids
  *   7. Chaos-rune index varies with lateral (-1/0/+1)
@@ -206,18 +206,20 @@ static void t_floors_depth_invariant(void) {
 
 /* ── Ceiling / doors / creatures per-depth ─────────────────────── */
 
-static void t_ceiling_per_depth(void) {
+static void t_ceiling_v1_original_material(void) {
     int depth;
     for (depth = 0; depth < 3; ++depth) {
         CSB_V22_AssetRouteDecision d;
         /* raw 0x07 -> CEILING_PLAIN */
         csb_v22_inplace_route_cell(depth, 0, 0x07, 1, &d);
-        CHECK(strcmp(d.asset_id, "ceiling_01") == 0,
-              "ceiling_plain depth-invariant");
+        CHECK(d.use_v22 == 0 && d.asset_id[0] == '\0' && d.category[0] == '\0' &&
+              strcmp(d.fallback_reason, "v1_original_material_unbound_ceiling") == 0,
+              "ceiling_plain retains V1 original-material route");
         /* raw 0x08 -> CEILING_VAULTED */
         csb_v22_inplace_route_cell(depth, 0, 0x08, 1, &d);
-        CHECK(strcmp(d.asset_id, "ceiling_01") == 0,
-              "ceiling_vaulted depth-invariant");
+        CHECK(d.use_v22 == 0 && d.asset_id[0] == '\0' && d.category[0] == '\0' &&
+              strcmp(d.fallback_reason, "v1_original_material_unbound_ceiling") == 0,
+              "ceiling_vaulted retains V1 original-material route");
     }
 }
 
@@ -267,13 +269,34 @@ static void t_creature_per_depth_route_for_shape(void) {
     }
 }
 
-/* ── Field no-asset / wrong-wall fallback ──────────────────────── */
+/* ── Unbound source materials retain V1 rendering ─────────────── */
 
-static void t_field_no_asset(void) {
+static void t_item_v1_original_material(void) {
+    const int item_types[] = {
+        CSB_V22_SHAPE_ITEM,
+        CSB_V22_SHAPE_ITEM_FLOOR,
+        CSB_V22_SHAPE_ITEM_PROJECTILE
+    };
+    int k;
+    for (k = 0; k < 3; ++k) {
+        char asset_id[CSB_V22_ASSET_ID_MAX];
+        char category[CSB_V22_CATEGORY_MAX];
+        char reason[CSB_V22_REASON_MAX];
+        int rc = csb_v22_inplace_route_for_shape(item_types[k], 1,
+                                                  asset_id, sizeof(asset_id),
+                                                  category, sizeof(category),
+                                                  reason, sizeof(reason));
+        CHECK(rc == 0 && asset_id[0] == '\0' && category[0] == '\0' &&
+              strcmp(reason, "v1_original_material_unbound_item") == 0,
+              "item retains V1 original-material route");
+    }
+}
+
+static void t_field_v1_original_material(void) {
     int shape;
     /* Teleporter / fluxcage / explosion / chaos_rift must NOT
      * fall through to wall_dungeon_d*_01. The gate must return
-     * use_v22=0 with a field_*_no_asset reason. */
+     * use_v22=0 with an explicit V1 original-material reason. */
     int shape_types[] = {
         CSB_V22_SHAPE_FIELD_TELEPORTER,
         CSB_V22_SHAPE_FIELD_FLUXCAGE,
@@ -292,8 +315,8 @@ static void t_field_no_asset(void) {
         CHECK(rc == 0, "field shape -> no asset");
         CHECK(aid[0] == '\0' && cat[0] == '\0',
               "field shape -> empty asset_id and category");
-        CHECK(strncmp(rsn, "field_", 6) == 0 && strstr(rsn, "_no_asset") != NULL,
-              "field shape -> field_*_no_asset reason");
+        CHECK(strncmp(rsn, "v1_original_material_unbound_field_", 35) == 0,
+              "field shape retains V1 original-material reason");
         (void)shape;
     }
 }
@@ -439,7 +462,7 @@ static void t_pair_recognized_table(void) {
      * 3 floor specials (pit/stairs_up/stairs_down) + 1 ceiling +
      * 3 creatures + 4 chaos_rune index variants + 1 dsa_scroll +
      * 2 narrative wall_shapes (prison + lord_order) = 29. */
-    CHECK(count == 29, "pair_count == 29");
+    CHECK(count == 28, "pair_count == 28 after removing unbound ceiling substitute");
     CHECK(csb_v22_inplace_route_pair_recognized("wall_shapes", "wall_dungeon_d0_01") == 1,
           "wall_dungeon_d0_01 recognized");
     CHECK(csb_v22_inplace_route_pair_recognized("wall_shapes", "wall_dungeon_d1_01") == 1,
@@ -536,10 +559,11 @@ int main(void) {
     t_walls_per_depth();
     t_floors_per_depth();
     t_floors_depth_invariant();
-    t_ceiling_per_depth();
+    t_ceiling_v1_original_material();
     t_doors_per_depth();
     t_creature_per_depth_route_for_shape();
-    t_field_no_asset();
+    t_item_v1_original_material();
+    t_field_v1_original_material();
     t_csb_narrative_shapes();
     t_chaos_rune_lateral();
     t_ui_chrome_no_inplace();

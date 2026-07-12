@@ -1,5 +1,6 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_sound.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
 
@@ -23,7 +24,10 @@ int main(void)
         handoff.title_ready != 1 ||
         handoff.music_cue != 0 ||
         handoff.music_loop != 1 ||
-        handoff.music_cue_played != 1 ||
+        handoff.music_asset_resolved != 0 ||
+        handoff.music_request_queued != 0 ||
+        handoff.music_queue_result != DM2_V1_MUSIC_QUEUE_ASSET_ROOT_UNVERIFIED ||
+        handoff.music_cue_played != 0 ||
         handoff.show_menu_screen_after_music != 1) {
         fprintf(stderr, "DM2 startup music/menu handoff mismatch\n");
         return 1;

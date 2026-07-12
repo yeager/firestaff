@@ -112,9 +112,9 @@ typedef struct DM1_V1_ActionIconReceiptPc34 {
 
 /*
  * ReDMCSB PC34: ACTIDRAW.C F0387 fills G0001_ai_Graphic562_Box_ActionArea
- * then blits C010 through C011/C077/C079 zones. The visible C011 screen
- * graphic is 87 pixels wide at x=233..319; G0001 remains the older/full
- * byte box used by clear/hatch paths.
+ * then blits C010 through C011/C077/C079. G0001 and the menu bitmap are the
+ * 96-pixel physical source box at x=224..319. C011 is the smaller 87-pixel
+ * input zone at x=233..319 and must not crop the bitmap.
  */
 enum {
     DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34 = 10,
@@ -141,7 +141,7 @@ enum {
 static inline DM1_V1_ActionAreaRectPc34
 dm1_v1_action_area_rect_pc34(void)
 {
-    DM1_V1_ActionAreaRectPc34 r = { 233, 77, 87, 45 };
+    DM1_V1_ActionAreaRectPc34 r = { 224, 77, 96, 45 };
     return r;
 }
 
@@ -266,7 +266,7 @@ dm1_v1_action_menu_graphic_zone_id_pc34(int action_row_count)
 static inline DM1_V1_ActionAreaRectPc34
 dm1_v1_action_menu_graphic_rect_pc34(int action_row_count)
 {
-    DM1_V1_ActionAreaRectPc34 r = { 233, 77, 87, 45 };
+    DM1_V1_ActionAreaRectPc34 r = { 224, 77, 96, 45 };
     int zone_id = dm1_v1_action_menu_graphic_zone_id_pc34(action_row_count);
     if (zone_id == 79) {
         r.h = 21;
@@ -279,7 +279,7 @@ dm1_v1_action_menu_graphic_rect_pc34(int action_row_count)
 static inline DM1_V1_ActionAreaRectPc34
 dm1_v1_action_menu_header_rect_pc34(void)
 {
-    DM1_V1_ActionAreaRectPc34 r = { 233, 77, 87, 9 };
+    DM1_V1_ActionAreaRectPc34 r = { 224, 77, 96, 9 };
     return r;
 }
 

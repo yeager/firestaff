@@ -74,22 +74,19 @@ static const CSB_V22_SwapShapeMapping kCSBV22SwapMappingTable[] = {
     { CSB_V22_SWAP_SHAPE_FLOOR_STAIRS_DOWN, "floor_shapes", "floor_stairs_01" },
     { CSB_V22_SWAP_SHAPE_FLOOR_DOOR,        "door_shapes",  "door_iron_portcullis_01" },
 
-    /* Ceilings */
-    { CSB_V22_SWAP_SHAPE_CEILING_PLAIN,     "floor_shapes", "ceiling_plain_01" },
-    { CSB_V22_SWAP_SHAPE_CEILING_VAULTED,   "floor_shapes", "ceiling_plain_01" }, /* placeholder */
-
-    /* Creatures / items */
+    /* Creatures. */
     { CSB_V22_SWAP_SHAPE_CREATURE,             "creature_shapes", "creature_chaos_fiend_01" },
     { CSB_V22_SWAP_SHAPE_CREATURE_PROJECTILE,  "creature_shapes", "creature_chaos_fiend_01" },
-    { CSB_V22_SWAP_SHAPE_ITEM,                 "creature_shapes", "creature_chaos_fiend_01" }, /* placeholder */
-    { CSB_V22_SWAP_SHAPE_ITEM_FLOOR,           "creature_shapes", "creature_chaos_fiend_01" }, /* placeholder */
-    { CSB_V22_SWAP_SHAPE_ITEM_PROJECTILE,      "creature_shapes", "creature_chaos_fiend_01" }, /* placeholder */
 
-    /* Fields (CSB-only routing) */
-    { CSB_V22_SWAP_SHAPE_FIELD_TELEPORTER,     "floor_shapes", "field_teleporter_01" },
-    { CSB_V22_SWAP_SHAPE_FIELD_FLUXCAGE,       "floor_shapes", "field_chaos_rift_01" }, /* placeholder */
-    { CSB_V22_SWAP_SHAPE_FIELD_EXPLOSION,      "floor_shapes", "field_explosion_01" },
-    { CSB_V22_SWAP_SHAPE_FIELD_CHAOS_RIFT,     "floor_shapes", "field_chaos_rift_01" },
+    /*
+     * Ceilings, items, and fields intentionally have no V2.2 entry.
+     * ReDMCSB DUNVIEW.C F0112/F0115 selects their original bitmaps and
+     * composition order. The local, hash-verified Atari ST GRAPHICS.DAT
+     * establishes source provenance, but Firestaff has not decoded the
+     * matching bitmap identities yet. Returning no mapping leaves the V1
+     * original-material pass visible instead of substituting unrelated
+     * modern art.
+     */
 
     /* UI chrome */
     { CSB_V22_SWAP_SHAPE_UI_CHROME,            "ui_chrome",         "ui_panel_01" },

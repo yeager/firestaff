@@ -17,7 +17,6 @@
  */
 
 #include "dm2_v1_game.h"
-#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_door_mechanics.h"
@@ -104,6 +103,10 @@ typedef struct {
     int gdat_interface_palette_ready;
     uint32_t gdat_interface_palette_hash;
     uint8_t gdat_interface_palette16[16];
+    DM2_V1_G1FirstMapRuntimeReceipt g1_first_map_runtime;
+    DM2_V1_G1TeleporterTransitionReceipt g1_map0_teleporter_transition;
+    int g1_first_map_viewport_consumed;
+    int g1_map0_teleporter_transition_viewport_consumed;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -211,123 +214,6 @@ static void dm2_runtime_add_viewport_asset_evidence(
     receipt->viewport_decoded_gdat_pixel_count += evidence.decoded_pixel_count;
     ++receipt->viewport_raw_gdat_asset_count;
     ++receipt->viewport_decoded_gdat_asset_count;
-}
-
-static uint32_t dm2_runtime_hash_step(uint32_t hash, uint32_t value)
-{
-    hash ^= value;
-    hash *= 16777619u;
-    return hash;
-}
-
-static uint8_t dm2_runtime_palette_color(uint32_t hash, unsigned int shift)
-{
-    return (uint8_t)(2u + ((hash >> shift) % 13u));
-}
-
-static int dm2_runtime_build_interface_theme(
-    DM2_V1_RuntimeState *rt,
-    DM2_V1_InterfaceTheme *out_theme)
-{
-    uint32_t action_hash = 0u;
-    uint32_t action_bytes = 0u;
-    uint32_t font_hash = 0u;
-    uint32_t font_bytes = 0u;
-    uint32_t irgb_hash = 0u;
-    uint32_t irgb_bytes = 0u;
-    uint32_t pal16_hash = 0u;
-    uint32_t pal16_bytes = 0u;
-    uint32_t rect14_hash = 0u;
-    uint32_t rect14_bytes = 0u;
-    uint32_t hash = 0x32495448u;
-
-    if (out_theme) memset(out_theme, 0, sizeof(*out_theme));
-    if (!rt || !rt->boot || !out_theme || !rt->boot->graphics_dat) {
-        return 0;
-    }
-
-    if (!dm2_v1_boot_gdat_typed_raw_asset_proof(
-            rt->boot,
-            DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
-            0,
-            DM2_GDAT_ENTRY_TYPE_RAW7,
-            DM2_GDAT_INTERFACE_RAW_ACTION_TABLE,
-            0x32494132u,
-            &action_hash,
-            &action_bytes) ||
-        !dm2_v1_boot_gdat_typed_raw_asset_proof(
-            rt->boot,
-            DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
-            0,
-            DM2_GDAT_ENTRY_TYPE_RAW7,
-            DM2_GDAT_INTERFACE_RAW_LAYOUT_TABLE,
-            0x32494654u,
-            &font_hash,
-            &font_bytes) ||
-        !dm2_v1_boot_gdat_typed_raw_asset_proof(
-            rt->boot,
-            DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
-            0,
-            DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
-            DM2_GDAT_INTERFACE_PALETTE_FIELD,
-            0x32495049u,
-            &irgb_hash,
-            &irgb_bytes) ||
-        !dm2_v1_boot_gdat_typed_raw_asset_proof(
-            rt->boot,
-            DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
-            0,
-            DM2_GDAT_ENTRY_TYPE_PAL_16,
-            DM2_GDAT_INTERFACE_PALETTE_FIELD,
-            0x32495031u,
-            &pal16_hash,
-            &pal16_bytes)) {
-        return 0;
-    }
-
-    hash = dm2_runtime_hash_step(hash, action_hash);
-    hash = dm2_runtime_hash_step(hash, action_bytes);
-    hash = dm2_runtime_hash_step(hash, font_hash);
-    hash = dm2_runtime_hash_step(hash, font_bytes);
-    hash = dm2_runtime_hash_step(hash, irgb_hash);
-    hash = dm2_runtime_hash_step(hash, irgb_bytes);
-    hash = dm2_runtime_hash_step(hash, pal16_hash);
-    hash = dm2_runtime_hash_step(hash, pal16_bytes);
-
-    if (dm2_v1_boot_gdat_typed_raw_asset_proof(
-            rt->boot,
-            DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
-            0,
-            DM2_GDAT_ENTRY_TYPE_RAW7,
-            DM2_GDAT_INTERFACE_RAW_RECT14_TABLE,
-            0x32495231u,
-            &rect14_hash,
-            &rect14_bytes) &&
-        rect14_bytes >= 14u &&
-        (rect14_bytes % 14u) == 0u) {
-        hash = dm2_runtime_hash_step(hash, rect14_hash);
-        hash = dm2_runtime_hash_step(hash, rect14_bytes);
-        out_theme->rect14_ready = 1;
-        out_theme->rect14_hash = rect14_hash;
-        out_theme->rect14_byte_count = rect14_bytes;
-        out_theme->rect14_row_count = rect14_bytes / 14u;
-    }
-
-    out_theme->valid = 1;
-    out_theme->semantic_hash = hash;
-    out_theme->action_table_byte_count = action_bytes;
-    out_theme->font_table_byte_count = font_bytes;
-    out_theme->palette_byte_count = irgb_bytes + pal16_bytes;
-    out_theme->chrome_divider_color = dm2_runtime_palette_color(hash, 0);
-    out_theme->gold_coin_color = dm2_runtime_palette_color(hash, 4);
-    out_theme->gold_label_color = dm2_runtime_palette_color(hash, 8);
-    out_theme->champion_frame_color = dm2_runtime_palette_color(hash, 12);
-    out_theme->champion_name_color = dm2_runtime_palette_color(hash, 16);
-    out_theme->action_icon_base_color = dm2_runtime_palette_color(hash, 20);
-    out_theme->hp_fill_color = dm2_runtime_palette_color(hash, 3);
-    out_theme->stamina_fill_color = dm2_runtime_palette_color(hash, 7);
-    out_theme->mana_fill_color = dm2_runtime_palette_color(hash, 11);
-    return 1;
 }
 
 static int dm2_runtime_door_state(uint16_t square_raw) {
@@ -1145,6 +1031,114 @@ static void dm2_runtime_process_timeline(DM2_V1_RuntimeState *rt, int now_ms) {
     }
 }
 
+static void dm2_runtime_refresh_g1_map0_teleporter_transition(
+    DM2_V1_RuntimeState *rt, int level, int x, int y)
+{
+    DM2_V1_G1TeleporterTransitionReceipt candidate;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_GameState *state;
+    int raw;
+
+    if (!rt) return;
+    memset(&rt->g1_map0_teleporter_transition, 0,
+           sizeof(rt->g1_map0_teleporter_transition));
+    if (!rt->g1_first_map_runtime.committed || level != 0) {
+        return;
+    }
+
+    if (!rt->boot || !rt->boot->dm2_state || !rt->boot->dungeon_data) return;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    state = (DM2_V1_GameState *)rt->boot->dm2_state;
+
+    /* skproject/SKWIN/DME.h Teleporter lines 367-382 defines w2/w4.
+     * SkWinCore.cpp _2fcf_0434 lines 51052-51090 dispatches DB1 only after
+     * the source tile is ttTeleporter (5) and bit 0x08 is enabled; a DB1
+     * root on an ordinary map cell is not a transition. It then checks party
+     * scope bit 2 before applying destination, sound, and rotation.
+     * c_map.cpp CHANGE_CURRENT_MAP_TO lines 328-370 has no
+     * 0xff destination-map sentinel branch, so reject that byte explicitly. */
+    for (int i = 0; i < rt->g1_first_map_runtime.teleporter_root_count; ++i) {
+        const DM2_V1_G1TeleporterRoot *teleporter =
+            &rt->g1_first_map_runtime.teleporters[i];
+        if (teleporter->x != x || teleporter->y != y) continue;
+        memset(&candidate, 0, sizeof(candidate));
+        candidate.committed = 1;
+        candidate.incomplete_world = rt->g1_first_map_runtime.incomplete_world;
+        candidate.source_map = 0;
+        candidate.source_x = x;
+        candidate.source_y = y;
+        candidate.source_object_id = teleporter->object_id;
+        candidate.source_index = teleporter->index;
+        candidate.destination_x = teleporter->destination_x;
+        candidate.destination_y = teleporter->destination_y;
+        candidate.destination_map = teleporter->destination_map;
+        candidate.scope = teleporter->scope;
+        candidate.sound = teleporter->sound;
+        candidate.rotation = teleporter->rotation;
+        candidate.rotation_type = teleporter->rotation_type;
+        candidate.resolved_destination_map = -1;
+        candidate.source_tile_active = 0;
+        candidate.party_scope_allowed =
+            (teleporter->scope & 2u) != 0u;
+        candidate.destination_map_valid =
+            teleporter->destination_map != 0xffu &&
+            teleporter->destination_map < dungeon->level_count;
+        if (candidate.destination_map_valid) {
+            candidate.resolved_destination_map = teleporter->destination_map;
+            candidate.destination_coordinates_valid =
+                teleporter->destination_x <
+                    dungeon->level_widths[teleporter->destination_map] &&
+                teleporter->destination_y <
+                    dungeon->level_heights[teleporter->destination_map];
+        }
+        raw = dm2_v1_dungeon_get_tile_raw(dungeon, 0, x, y);
+        if (raw >= 0 &&
+            dm2_v1_dungeon_get_square_type(dungeon, 0, x, y) == 5 &&
+            (raw & 0x08) != 0) {
+            candidate.source_tile_active = 1;
+        }
+        if (!dungeon->record_graph_complete || candidate.incomplete_world) {
+            candidate.no_transition_reason =
+                DM2_V1_G1_TELEPORT_NO_TRANSITION_INCOMPLETE_WORLD;
+        } else if (raw < 0 ||
+                   dm2_v1_dungeon_get_square_type(dungeon, 0, x, y) != 5) {
+            candidate.no_transition_reason =
+                DM2_V1_G1_TELEPORT_NO_TRANSITION_SOURCE_TILE;
+        } else if ((raw & 0x08) == 0) {
+            candidate.no_transition_reason =
+                DM2_V1_G1_TELEPORT_NO_TRANSITION_SOURCE_DISABLED;
+        } else if (!candidate.party_scope_allowed) {
+            candidate.no_transition_reason =
+                DM2_V1_G1_TELEPORT_NO_TRANSITION_SCOPE;
+        } else if (teleporter->destination_map == 0xffu) {
+            candidate.no_transition_reason =
+                DM2_V1_G1_TELEPORT_NO_TRANSITION_DESTINATION_MAP_SENTINEL;
+        } else if (!candidate.destination_map_valid) {
+            candidate.no_transition_reason =
+                DM2_V1_G1_TELEPORT_NO_TRANSITION_DESTINATION_MAP_RANGE;
+        } else if (!candidate.destination_coordinates_valid) {
+            candidate.no_transition_reason =
+                DM2_V1_G1_TELEPORT_NO_TRANSITION_DESTINATION_COORDINATES;
+        } else {
+            candidate.transition_applied = 1;
+            candidate.sound_requested = teleporter->sound != 0;
+            state->current_level = candidate.resolved_destination_map;
+            state->party_x = teleporter->destination_x;
+            state->party_y = teleporter->destination_y;
+            state->party_dir = teleporter->rotation_type
+                ? teleporter->rotation
+                : ((state->party_dir + teleporter->rotation) & 3);
+            state->outdoor = dm2_v1_dungeon_is_outdoor(
+                dungeon, candidate.resolved_destination_map);
+            rt->dungeon_level = state->current_level;
+            rt->view_dir = state->party_dir;
+            rt->outdoor = state->outdoor;
+        }
+        rt->g1_map0_teleporter_transition = candidate;
+        return;
+    }
+}
+
 /* ── Runtime init ──────────────────────────────────────────────────── */
 
 void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
@@ -1198,8 +1192,39 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
            sizeof(g_dm2_runtime.map_wall_gfx_list));
     g_dm2_runtime.map_wall_gfx_count = 0;
     g_dm2_runtime.map_graphics_style = -1;
+    if (boot_profile->dungeon_data) {
+        (void)dm2_v1_dungeon_materialize_g1_first_map_runtime(
+            (const DM2_V1_DungeonData *)boot_profile->dungeon_data,
+            &g_dm2_runtime.g1_first_map_runtime);
+    }
+    if (boot_profile->dm2_state) {
+        DM2_V1_GameState *gs = (DM2_V1_GameState *)boot_profile->dm2_state;
+        dm2_runtime_refresh_g1_map0_teleporter_transition(
+            &g_dm2_runtime, gs->current_level, gs->party_x, gs->party_y);
+    }
     dm2_runtime_refresh_map_wall_gfx_list(&g_dm2_runtime);
     dm2_runtime_refresh_gdat_scene_control(&g_dm2_runtime);
+}
+
+int dm2_v1_runtime_g1_first_map_receipt(
+    DM2_V1_G1FirstMapRuntimeReceipt *out_receipt)
+{
+    if (!out_receipt || !g_dm2_runtime.g1_first_map_runtime.committed) {
+        return 0;
+    }
+    *out_receipt = g_dm2_runtime.g1_first_map_runtime;
+    return 1;
+}
+
+int dm2_v1_runtime_g1_map0_teleporter_transition_receipt(
+    DM2_V1_G1TeleporterTransitionReceipt *out_receipt)
+{
+    if (!out_receipt ||
+        !g_dm2_runtime.g1_map0_teleporter_transition.committed) {
+        return 0;
+    }
+    *out_receipt = g_dm2_runtime.g1_map0_teleporter_transition;
+    return 1;
 }
 
 int dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile) {
@@ -1267,7 +1292,6 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     rt->time_of_day_minutes = gs->time_of_day;
     rt->dungeon_level = gs->current_level;
     rt->view_dir = gs->party_dir;
-    dm2_v1_weather_set_seed(&rt->weather, session->rng_seed);
     dm2_runtime_refresh_map_wall_gfx_list(rt);
     dm2_runtime_refresh_gdat_scene_control(rt);
     rt->leader_hand_object = session->original_leader_hand_object;
@@ -2115,6 +2139,18 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_party(&viewport, party_dir, party_x, party_y);
     dm2_v1_viewport_set_level(&viewport, rt->dungeon_level);
     dm2_v1_viewport_set_outdoor(&viewport, rt->outdoor);
+    if (rt->g1_first_map_runtime.committed) {
+        dm2_v1_viewport_set_g1_first_map_runtime(
+            &viewport, &rt->g1_first_map_runtime);
+        rt->g1_first_map_viewport_consumed = 1;
+    }
+    dm2_runtime_refresh_g1_map0_teleporter_transition(
+        rt, rt->dungeon_level, party_x, party_y);
+    if (rt->g1_map0_teleporter_transition.committed) {
+        dm2_v1_viewport_set_g1_map0_teleporter_transition(
+            &viewport, &rt->g1_map0_teleporter_transition);
+        rt->g1_map0_teleporter_transition_viewport_consumed = 1;
+    }
     dm2_v1_viewport_set_weather(&viewport,
                                 rt->outdoor ? 1 : 0,
                                 rt->weather.weather_intensity);
@@ -2134,6 +2170,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        rt->viewport_asset_fetch,
                                        rt->viewport_asset_user);
+    dm2_v1_viewport_set_source_materials_required(
+        &viewport,
+        rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch &&
+        rt->viewport_asset_user != NULL);
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport,
         rt->gdat_scene_control_ready,
@@ -2247,6 +2287,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_frame_ownership.total_runtime_fallback_draws =
         viewport.fallback_floor_ceiling_drawn_count +
         viewport.fallback_wall_drawn_count +
+        viewport.fallback_hud_core_drawn_count +
         viewport.fallback_hud_portrait_drawn_count +
         viewport.fallback_door_drawn_count +
         viewport.fallback_creature_drawn_count +
@@ -2254,20 +2295,16 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.fallback_creature_possession_item_drawn_count +
         viewport.fallback_carried_item_drawn_count +
         viewport.fallback_projectile_drawn_count;
+    g_dm2_frame_ownership.blocked_material_draws =
+        viewport.blocked_material_draw_count;
+    g_dm2_frame_ownership.blocked_material_mask =
+        viewport.blocked_material_mask;
     g_dm2_frame_ownership.viewport_raw_gdat_asset_count = 0;
     g_dm2_frame_ownership.viewport_decoded_gdat_asset_count = 0;
     g_dm2_frame_ownership.viewport_raw_gdat_byte_count = 0u;
     g_dm2_frame_ownership.viewport_decoded_gdat_pixel_count = 0u;
     g_dm2_frame_ownership.viewport_raw_gdat_hash = 0x32445652u;
     g_dm2_frame_ownership.viewport_decoded_gdat_hash = 0x32445644u;
-    g_dm2_frame_ownership.interface_semantics_consumed =
-        viewport.interface_semantics_consumed;
-    g_dm2_frame_ownership.interface_semantics_hash =
-        viewport.interface_semantics_hash;
-    g_dm2_frame_ownership.interface_semantics_byte_count =
-        viewport.interface_semantics_byte_count;
-    g_dm2_frame_ownership.interface_rect14_consumed =
-        viewport.interface_rect14_consumed;
     if (viewport.asset_floor_ceiling_drawn_count > 0) {
         dm2_runtime_add_viewport_asset_evidence(&g_dm2_frame_ownership,
             dm2_v1_viewport_scene_material_graphic_index(
@@ -2458,6 +2495,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_frame_ownership.hud_gdat_blits > 0 &&
         g_dm2_frame_ownership.total_runtime_gdat_blits > 0 &&
         g_dm2_frame_ownership.total_runtime_fallback_draws == 0 &&
+        g_dm2_frame_ownership.blocked_material_draws == 0 &&
         (!g_dm2_frame_ownership.is_outdoor ||
          g_dm2_frame_ownership.outdoor_gdat_frame_valid);
     g_dm2_frame_ownership.valid =
@@ -2788,6 +2826,8 @@ int dm2_v1_runtime_move(int dir) {
         }
         (void)dm2_v1_runtime_invoke_square_actuators(
             rt->dungeon_level, nx, ny);
+        dm2_runtime_refresh_g1_map0_teleporter_transition(
+            rt, rt->dungeon_level, gs->party_x, gs->party_y);
     }
 
     /* Fire smooth turn callback when facing changes.
@@ -2797,8 +2837,10 @@ int dm2_v1_runtime_move(int dir) {
         rt->turn_callback(old_dir, dir);
     }
 
-    gs->party_dir = dir;
-    rt->view_dir = dir;
+    if (!rt->g1_map0_teleporter_transition.transition_applied) {
+        gs->party_dir = dir;
+        rt->view_dir = dir;
+    }
 
     /* Set movement cooldown: dungeon=1 tick, outdoor=0.5 tick */
     rt->move_cooldown_ticks = rt->outdoor ? 0 : 1;
@@ -2863,6 +2905,7 @@ void dm2_v1_runtime_set_position(int level, int x, int y, int dir) {
     gs->party_dir = dir & 3;
     rt->dungeon_level = level;
     rt->view_dir = gs->party_dir;
+    dm2_runtime_refresh_g1_map0_teleporter_transition(rt, level, x, y);
     dm2_runtime_refresh_map_wall_gfx_list(rt);
     dm2_runtime_refresh_gdat_scene_control(rt);
 }
@@ -2901,17 +2944,6 @@ int dm2_v1_runtime_get_weather(void) {
 
 int dm2_v1_runtime_get_weather_intensity(void) {
     return g_dm2_runtime.weather.weather_intensity;
-}
-
-void dm2_v1_runtime_set_weather(int weather, int intensity) {
-    if (intensity < 0) {
-        intensity = 0;
-    } else if (intensity > 100) {
-        intensity = 100;
-    }
-    dm2_v1_weather_set(&g_dm2_runtime.weather,
-                       intensity > 0 ? weather : DM2_WEATHER_CLEAR);
-    g_dm2_runtime.weather.weather_intensity = intensity;
 }
 
 uint32_t dm2_v1_runtime_get_leader_hand_object(void) {
@@ -3213,54 +3245,6 @@ int dm2_v1_runtime_load_last_session(const char *save_base)
     return dm2_v1_runtime_restore_save_candidate(data, data_size);
 }
 
-int dm2_v1_runtime_import_sksave_corpus(
-    const char *save_base,
-    DM2_V1_RuntimeCorpusImportReceipt *out_receipt)
-{
-    DM2_V1_RuntimeCorpusImportReceipt local;
-    DM2_V1_RuntimeCorpusImportReceipt *receipt =
-        out_receipt ? out_receipt : &local;
-    uint8_t data[DM2_SESSION_MAX_SIZE];
-    size_t data_size = 0u;
-    DM2_V1_SaveCandidate candidate;
-
-    memset(receipt, 0, sizeof(*receipt));
-    receipt->result = DM2_V1_RUNTIME_CORPUS_IMPORT_BAD_INPUT;
-    if (!save_base || !save_base[0]) {
-        return 0;
-    }
-    if (!dm2_v1_sksave_corpus_scan(save_base, &receipt->corpus)) {
-        receipt->result = DM2_V1_RUNTIME_CORPUS_IMPORT_READ_FAILED;
-        return 0;
-    }
-    if (receipt->corpus.importable_candidate_count == 0 ||
-        receipt->corpus.first_importable_path[0] == '\0') {
-        receipt->result =
-            DM2_V1_RUNTIME_CORPUS_IMPORT_NO_IMPORTABLE_SAVE;
-        return 0;
-    }
-    snprintf(receipt->selected_path, sizeof(receipt->selected_path), "%s",
-             receipt->corpus.first_importable_path);
-    if (!dm2_v1_sksave_corpus_load_first_importable(
-            save_base, data, sizeof(data), &data_size, &receipt->corpus)) {
-        receipt->result = DM2_V1_RUNTIME_CORPUS_IMPORT_READ_FAILED;
-        return 0;
-    }
-    receipt->selected_payload_size = data_size;
-    if (dm2_v1_session_parse_save_candidate(&candidate, data, data_size) != 0) {
-        receipt->result = DM2_V1_RUNTIME_CORPUS_IMPORT_PARSE_FAILED;
-        return 0;
-    }
-    receipt->candidate_kind = candidate.kind;
-    if (dm2_v1_runtime_restore_save_candidate(data, data_size) != 0) {
-        receipt->result = DM2_V1_RUNTIME_CORPUS_IMPORT_RESTORE_FAILED;
-        return 0;
-    }
-    receipt->restored = 1;
-    receipt->result = DM2_V1_RUNTIME_CORPUS_IMPORT_OK;
-    return 1;
-}
-
 static int dm2_runtime_write_live_sidecar(const char *save_root)
 {
     char path[512];
@@ -3403,8 +3387,6 @@ int dm2_v1_runtime_quicksave_boot_profile_with_receipt(
                       profile->save_root, "SKSave.dat")) {
         receipt->save_path[0] = '\0';
     }
-    (void)dm2_v1_runtime_graphicsset_scene_receipt(
-        &receipt->graphicsset_scene);
     receipt->result = DM2_V1_QUICKSAVE_OK;
     receipt->status_scope = "SAVE";
     receipt->status = "DM2 SKSAVE WRITTEN";

@@ -7651,6 +7651,110 @@ static void test_orch_closing_door_creature_hazard_killed_all_runs_f0190_afterma
     assert(sawSmokeAdvance);
 }
 
+static void run_orch_f0200_straight_los_case(
+    int blockerElement,
+    int blockerAttributes,
+    int doorSet,
+    int expectAttack)
+{
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonGroup_Compat groups[1];
+    struct DungeonDoor_Compat doors[1];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[4];
+    unsigned short squareFirstThings[2];
+    struct TimelineEvent_Compat event;
+    struct TickResult_Compat result;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    memset(groups, 0, sizeof(groups));
+    memset(doors, 0, sizeof(doors));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    for (i = 0; i < 4; ++i) squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    squareData[0] = square_for_test(
+        DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    if (blockerElement >= 0) {
+        squareData[1] = square_for_test(blockerElement, blockerAttributes);
+        if (blockerElement == DUNGEON_ELEMENT_DOOR) {
+            squareData[1] |= DUNGEON_SQUARE_MASK_THING_LIST;
+        }
+    }
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    squareFirstThings[1] = make_thing(THING_TYPE_DOOR, 0);
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = CREATURE_TYPE_VEXIRK;
+    groups[0].count = 0;
+    groups[0].cells = 0xFFu;
+    groups[0].health[0] = 100;
+    groups[0].direction = DIR_EAST;
+    doors[0].next = THING_ENDOFLIST;
+    doors[0].type = 0;
+
+    things.loaded = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = blockerElement == DUNGEON_ELEMENT_DOOR ? 2 : 1;
+    things.doors = doors;
+    things.doorCount = blockerElement == DUNGEON_ELEMENT_DOOR ? 1 : 0;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 1;
+    maps[0].doorSet0 = (unsigned char)doorSet;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 4;
+    world.dungeon = &dungeon;
+    world.partyMapIndex = 0;
+    world.party.mapIndex = 0;
+    world.party.mapX = 3;
+    world.party.mapY = 0;
+    world.gameTick = 100;
+    world.creatureAICount = 1;
+    world.creatureAI[0].stateKind = AI_STATE_WANDER;
+    world.creatureAI[0].creatureType = groups[0].creatureType;
+    world.creatureAI[0].groupMapIndex = 0;
+    world.creatureAI[0].groupMapX = 0;
+    world.creatureAI[0].groupMapY = 0;
+    world.creatureAI[0].groupDirection = DIR_EAST;
+    world.creatureAI[0].groupCells = groups[0].cells;
+
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 0;
+    event.mapY = 0;
+    event.aux0 = 0;
+    event.aux1 = CREATURE_TYPE_VEXIRK;
+    event.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1);
+    memset(&result, 0, sizeof(result));
+    assert(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 1);
+    assert((world.creatureAI[0].stateKind == AI_STATE_ATTACK) == expectAttack);
+}
+
+static void test_orch_f0200_straight_los_blocks_c37_attack(void) {
+    /* ReDMCSB GROUP.C F0200/F0197/F0199: a facing Vexirk sees down an
+     * unblocked row, but walls, closed fakewalls, and opaque C4 doors block
+     * the C37 attack transition. Portcullis is explicitly see-through. */
+    run_orch_f0200_straight_los_case(-1, 0, 0, 1);
+    run_orch_f0200_straight_los_case(DUNGEON_ELEMENT_WALL, 0, 0, 0);
+    run_orch_f0200_straight_los_case(DUNGEON_ELEMENT_FAKEWALL, 0, 0, 0);
+    run_orch_f0200_straight_los_case(DUNGEON_ELEMENT_DOOR, 4, 1, 0);
+    run_orch_f0200_straight_los_case(DUNGEON_ELEMENT_DOOR, 4, 0, 1);
+}
+
 int main(void) {
     test_orch_f0303_inventory_and_rest_query();
     test_orch_f0303_hidden_heal_query();
@@ -7746,6 +7850,7 @@ int main(void) {
     test_orch_closing_door_party_hazard_applies_f0324();
     test_orch_closing_door_creature_hazard_queues_f0209_danger();
     test_orch_closing_door_creature_hazard_killed_all_runs_f0190_aftermath();
+    test_orch_f0200_straight_los_blocks_c37_attack();
     puts("ok: M10 orchestrator DM1 F0303 skill query uses lifecycle inventory/rest inputs");
     return 0;
 }

@@ -115,6 +115,25 @@ static int count_changed_pixels(const unsigned char* a,
     return changed;
 }
 
+static int count_nonzero_pixels_in_rows(const unsigned char* pixels,
+                                        int first_row,
+                                        int last_row) {
+    int x;
+    int y;
+    int count = 0;
+    if (!pixels || first_row < 0 || last_row > 200 || first_row >= last_row) {
+        return 0;
+    }
+    for (y = first_row; y < last_row; ++y) {
+        for (x = 0; x < 320; ++x) {
+            if (pixels[y * 320 + x] != 0u) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
 static void drive_csb_entrance_opening(M11_GameViewState *view,
                                        const char *message) {
     unsigned int guard =
@@ -295,7 +314,7 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
                 "M11 CSB launcher title prelude draws a visible first frame");
     expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
-                    VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS,
+                    VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS,
                 "M11 CSB launcher PRESENTS frame keeps C001 special palette");
     memcpy(title_presents_frame, framebuffer, sizeof(title_presents_frame));
 
@@ -333,7 +352,7 @@ static void run_real_launcher_handoff_if_available(void) {
                                      sizeof(title_chaos_frame)) > 0,
                 "M11 CSB launcher CHAOS title phase draws visible pixels");
     expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
-                    VGA_PALETTE_PC34_SPECIAL_TITLE,
+                    VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS,
                 "M11 CSB launcher CHAOS frame switches to C001 title palette");
     expect_true(count_changed_pixels(title_presents_frame,
                                      title_chaos_frame,
@@ -393,6 +412,18 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(view.csbState.startup_entrance_last_command ==
                     ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON,
                 "M11 CSB launcher handoff records source enter-dungeon command");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    expect_true(view.csbState.level_loaded == 1 &&
+                    view.csbState.current_level >= 0,
+                "M11 CSB post-entrance handoff retains the loaded source dungeon");
+    expect_true(count_nonzero_pixels_in_rows(framebuffer, 169, 200) > 0,
+                "M11 CSB post-entrance handoff draws the V1 champion/control HUD band");
+    expect_true(view.csbState.runtime_object_marker_drawn_count == 0 &&
+                    view.csbState.runtime_group_marker_drawn_count == 0 &&
+                    view.csbState.runtime_projectile_marker_drawn_count == 0 &&
+                    view.csbState.runtime_explosion_marker_drawn_count == 0,
+                "M11 CSB post-entrance runtime frame contains no diagnostic material markers");
 
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);

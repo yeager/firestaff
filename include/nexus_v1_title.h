@@ -69,16 +69,8 @@ int nexus_title_full_boot_start_ready(int frame);
 int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
                                      int frame,
                                      Nexus_V1_TitleRenderPlan *out_plan);
-int nexus_v1_title_build_fallback_render_plan(
-    int frame,
-    Nexus_V1_TitleRenderPlan *out_plan);
-int nexus_v1_title_build_warning_fallback_render_plan(
-    int frame,
-    Nexus_V1_TitleRenderPlan *out_plan);
 void nexus_render_title(const Nexus_TitleScreen *title,
                         Nexus_Framebuffer *fb,
                         int frame);
-void nexus_render_title_fallback(Nexus_Framebuffer *fb, int frame);
-void nexus_render_title_warning_fallback(Nexus_Framebuffer *fb, int frame);
 
 #endif

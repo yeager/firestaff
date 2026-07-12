@@ -61,6 +61,12 @@ static int orch_square_first_thing_list_index_compat(
     int mapIndex,
     int mapX,
     int mapY);
+static int orch_cmd_attack_find_door_on_square_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int* outDoorIndex);
 
 /* ================================================================
  *  Local LE helpers
@@ -2925,6 +2931,106 @@ static int orch_read_square_byte_compat(
         *outSquare = tiles->squareData[(mapX * (int)map->height) + mapY];
     }
     return 1;
+}
+
+static int orch_f0200_closed_door_blocks_view_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned char squareByte)
+{
+    const struct DungeonMapDesc_Compat* map;
+    int doorIndex = -1;
+    int doorSet;
+
+    if ((squareByte & DUNGEON_SQUARE_MASK_TYPE) !=
+        (DUNGEON_ELEMENT_DOOR << 5) ||
+        ((squareByte & 0x07u) != 3u && (squareByte & 0x07u) != 4u)) {
+        return 0;
+    }
+    if (!world || !world->dungeon || !world->dungeon->maps ||
+        mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 1;
+    }
+
+    /* ReDMCSB GROUP.C F0197 lines 1200-1207 asks the active map's
+     * DoorInfo whether a three-quarter or closed door is see-through.
+     * DUNGEON.C lines 560-565 defines Portcullis (0) and Ra (3) as the
+     * two see-through DM1 door types. */
+    map = &world->dungeon->maps[mapIndex];
+    if (orch_cmd_attack_find_door_on_square_compat(
+            world, mapIndex, mapX, mapY, &doorIndex) &&
+        doorIndex >= 0 && world->things && world->things->doors &&
+        doorIndex < world->things->doorCount) {
+        doorSet = world->things->doors[doorIndex].type ? map->doorSet1
+                                                        : map->doorSet0;
+        return (doorSet & 3) != 0 && (doorSet & 3) != 3;
+    }
+    return 1;
+}
+
+static int orch_f0200_get_distance_to_visible_party_compat(
+    const struct GameWorld_Compat* world,
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    const struct DungeonGroup_Compat* group)
+{
+    int dx;
+    int dy;
+    int distance;
+    int direction;
+    int stepX;
+    int stepY;
+    int mapX;
+    int mapY;
+
+    if (!world || !ctx || !group || !world->dungeon ||
+        ctx->currentMapIndex != ctx->partyMapIndex) {
+        return 0;
+    }
+    dx = ctx->partyMapX - ctx->currentGroupMapX;
+    dy = ctx->partyMapY - ctx->currentGroupMapY;
+    if (dx != 0 && dy != 0) return 0; /* Straight-line M10 F0199 slice. */
+    distance = dx < 0 ? -dx : dx;
+    if (distance == 0) distance = dy < 0 ? -dy : dy;
+    if (distance > DM1_SIGHT_RANGE(ctx->creatureInfo.ranges)) return 0;
+
+    if (dx > 0) direction = 1;
+    else if (dx < 0) direction = 3;
+    else if (dy > 0) direction = 2;
+    else direction = 0;
+    if (!(ctx->creatureInfo.attributes & DM1_ATTR_SIDE_ATTACK) &&
+        ((int)group->direction & 3) != direction) {
+        return 0;
+    }
+
+    stepX = (dx > 0) - (dx < 0);
+    stepY = (dy > 0) - (dy < 0);
+    mapX = ctx->currentGroupMapX;
+    mapY = ctx->currentGroupMapY;
+    while (mapX != ctx->partyMapX || mapY != ctx->partyMapY) {
+        unsigned char squareByte;
+        int squareType;
+
+        mapX += stepX;
+        mapY += stepY;
+        if (!orch_read_square_byte_compat(
+                world->dungeon, ctx->currentMapIndex, mapX, mapY,
+                &squareByte)) {
+            return 0;
+        }
+        squareType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+        /* ReDMCSB GROUP.C F0197 lines 1191-1207 blocks sight on walls,
+         * closed fakewalls, and opaque C3/C4 doors. */
+        if (squareType == DUNGEON_ELEMENT_WALL ||
+            (squareType == DUNGEON_ELEMENT_FAKEWALL &&
+             !(squareByte & 0x04u)) ||
+            orch_f0200_closed_door_blocks_view_compat(
+                world, ctx->currentMapIndex, mapX, mapY, squareByte)) {
+            return 0;
+        }
+    }
+    return distance;
 }
 
 static int orch_cmd_attack_find_door_on_square_compat(
@@ -6907,7 +7013,11 @@ static int orch_handle_creature_reaction_event_compat(
     const struct TimelineEvent_Compat* ev,
     struct TickResult_Compat* result);
 
-static int orch_handle_creature_tick_group_move_compat(
+/* ReDMCSB GROUP.C F0209 lines 2173-2185 selects a direction through the
+ * visibility/behavior chain, then enters MOVESENS.C F0267 from the source
+ * square.  Keep the physical half separate from timeline routing so C37 can
+ * consume that decision without re-dispatching F0209. */
+static int orch_apply_creature_tick_group_move_f0267_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
     struct TickResult_Compat* result)
@@ -6928,14 +7038,6 @@ static int orch_handle_creature_tick_group_move_compat(
     (void)result;
     if (!world || !ev || !world->things || !world->dungeon) return 0;
 
-    /* ReDMCSB GROUP.C F0209 owns C29-C41.  C37 is also the initial
-     * wandering event created by F0180, so route it before the older F0267
-     * movement-only slice.  The shared handler schedules the next source
-     * event; physical move/attack application remains explicitly separate. */
-    if (ev->aux2 >= DM1_EVENT_REACTION_DANGER_ON_SQUARE &&
-        ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
-        return orch_handle_creature_reaction_event_compat(world, ev, result);
-    }
     groupIndex = ev->aux0;
     if (groupIndex < 0 || groupIndex >= world->things->groupCount || !world->things->groups) return 0;
     activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
@@ -7020,6 +7122,21 @@ static int orch_handle_creature_tick_group_move_compat(
     nextEvent.mapX = applyPlan.nextEventMapX;
     nextEvent.mapY = applyPlan.nextEventMapY;
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &nextEvent);
+}
+
+static int orch_handle_creature_tick_group_move_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
+{
+    /* C37 is the F0180 wander event as well as a F0209 behavior update.
+     * ReDMCSB GROUP.C F0209 owns the decision first; only its selected move
+     * enters MOVESENS.C F0267. */
+    if (ev && ev->aux2 >= DM1_EVENT_REACTION_DANGER_ON_SQUARE &&
+        ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        return orch_handle_creature_reaction_event_compat(world, ev, result);
+    }
+    return orch_apply_creature_tick_group_move_f0267_compat(world, ev, result);
 }
 
 static int orch_ai_state_to_dm1_behavior_compat(int stateKind)
@@ -7213,11 +7330,8 @@ static int orch_handle_creature_reaction_event_compat(
     ctx.currentGroupDistanceToParty =
         abs(ctx.partyMapX - ctx.currentGroupMapX) +
         abs(ctx.partyMapY - ctx.currentGroupMapY);
-    if (ctx.partyMapIndex == ctx.currentMapIndex &&
-        (ctx.currentGroupMapX == ctx.partyMapX ||
-         ctx.currentGroupMapY == ctx.partyMapY)) {
-        ctx.distanceToVisibleParty = ctx.currentGroupDistanceToParty;
-    }
+    ctx.distanceToVisibleParty = orch_f0200_get_distance_to_visible_party_compat(
+        world, &ctx, group);
     if (ctx.partyMapX > ctx.currentGroupMapX) ctx.currentGroupPrimaryDirToParty = 1;
     else if (ctx.partyMapX < ctx.currentGroupMapX) ctx.currentGroupPrimaryDirToParty = 3;
     else if (ctx.partyMapY > ctx.currentGroupMapY) ctx.currentGroupPrimaryDirToParty = 2;
@@ -7292,6 +7406,20 @@ static int orch_handle_creature_reaction_event_compat(
     ai->lastSeenPartyTick = applyPlan.lastSeenPartyTick;
     memcpy(ai->aspect, activeGroup.aspect, sizeof(ai->aspect));
     group->behavior = (unsigned char)applyPlan.groupBehavior;
+
+    if (behavior.actionKind == DM1_ACTION_MOVE ||
+        behavior.actionKind == DM1_ACTION_FLEE_MOVE) {
+        /* ReDMCSB GROUP.C F0209 lines 2173-2185: the F0200/F0199 visibility
+         * decision supplies this direction, then F0267 commits the move or
+         * retains the source square for the next C37 retry. */
+        if (behavior.moveDirection < 0 || behavior.moveDirection > 3) {
+            return 0;
+        }
+        ai->groupDirection = behavior.moveDirection;
+        group->direction = (unsigned char)behavior.moveDirection;
+        return orch_apply_creature_tick_group_move_f0267_compat(
+            world, ev, result);
+    }
 
     if (applyPlan.shouldScheduleNextEvent) {
         memset(&next, 0, sizeof(next));

@@ -83,6 +83,7 @@ static uint16_t rd16le(const uint8_t *p) {
 #define DM2_TILE_DATA_START       (DM2_DUNGEON_HEADER_SIZE + 28 * 16)
 #define DM2_MAP_DESC_SIZE 16
 #define DM2_THING_TYPE_COUNT 16
+#define DM2_THING_NULL_MARKER 0xffffu
 #define DM2_THING_END_MARKER 0xfffeu
 
 /* PC DOS G1 keeps a 256-byte extension between the 28 Map_definitions and
@@ -92,6 +93,9 @@ static uint16_t rd16le(const uint8_t *p) {
  * before dunGroundStacks, and c_map.cpp maps tile bit 0x10 through it. */
 #define DM2_PC_G1_MAP_EXTENSION_BYTES       256
 #define DM2_PC_G1_GROUND_STACK_COUNT_OFFSET 10
+#define DM2_PC_G1_DB3_EXTENDED_COUNT         1024
+#define DM2_PC_G1_DB4_EXTENDED_COUNT          300
+#define DM2_PC_G1_EXTENSION_UNTYPED_TAIL_BYTES 9
 
 static const uint8_t s_dm2_db_record_size[DM2_THING_TYPE_COUNT] = {
     0x04, 0x06, 0x04, 0x08,
@@ -99,6 +103,70 @@ static const uint8_t s_dm2_db_record_size[DM2_THING_TYPE_COUNT] = {
     0x04, 0x08, 0x04, 0x00,
     0x00, 0x00, 0x08, 0x04
 };
+
+/* The canonical PC G1 continuation has two source-sized c_record runs after
+ * the declared pools. c_map.cpp supplies raw ObjectIDs from dunGroundStacks;
+ * c_record.cpp defines the 10-bit index and per-DB byte stride. The corpus
+ * fixes DB3's continuation at the ObjectID ceiling, then DB4's at 300 rows.
+ * Its final nine bytes are not records and remain deliberately untyped. */
+static void dm2_v1_configure_pc_g1_extension_records(
+    DM2_V1_DungeonData *d) {
+    int db3_bytes;
+    int db4_bytes;
+
+    if (!d) return;
+    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        d->g1_extension_record_bases[type] = -1;
+        d->g1_extension_record_counts[type] = 0;
+    }
+    if (d->square_bytes != 1 || d->g1_extension_base < 0 ||
+        d->thing_type_counts[3] != 299 || d->thing_type_counts[4] != 173) {
+        return;
+    }
+    db3_bytes = (DM2_PC_G1_DB3_EXTENDED_COUNT -
+                 d->thing_type_counts[3]) * s_dm2_db_record_size[3];
+    db4_bytes = (DM2_PC_G1_DB4_EXTENDED_COUNT -
+                 d->thing_type_counts[4]) * s_dm2_db_record_size[4];
+    if (d->g1_extension_size != db3_bytes + db4_bytes +
+                                DM2_PC_G1_EXTENSION_UNTYPED_TAIL_BYTES) {
+        return;
+    }
+    d->g1_extension_record_bases[3] = d->g1_extension_base;
+    d->g1_extension_record_counts[3] =
+        DM2_PC_G1_DB3_EXTENDED_COUNT - d->thing_type_counts[3];
+    d->g1_extension_record_bases[4] = d->g1_extension_base + db3_bytes;
+    d->g1_extension_record_counts[4] =
+        DM2_PC_G1_DB4_EXTENDED_COUNT - d->thing_type_counts[4];
+}
+
+static int dm2_v1_g1_extension_record_offset(const DM2_V1_DungeonData *d,
+                                              int type,
+                                              int index,
+                                              int *out_offset) {
+    int extension_index;
+    int record_size;
+    int offset;
+
+    if (!d || !out_offset || type < 0 || type >= DM2_THING_TYPE_COUNT ||
+        index < d->thing_type_counts[type] ||
+        d->g1_extension_record_bases[type] < 0) {
+        return 0;
+    }
+    extension_index = index - d->thing_type_counts[type];
+    record_size = s_dm2_db_record_size[type];
+    if (record_size <= 0 || extension_index < 0 ||
+        extension_index >= d->g1_extension_record_counts[type]) {
+        return 0;
+    }
+    offset = d->g1_extension_record_bases[type] +
+             extension_index * record_size;
+    if (offset < d->g1_extension_record_bases[type] ||
+        offset + record_size > d->g1_extension_base + d->g1_extension_size) {
+        return 0;
+    }
+    *out_offset = offset;
+    return 1;
+}
 
 static int dm2_v1_level_tiles_fit(const DM2_V1_DungeonData *d,
                                   int level,
@@ -159,6 +227,8 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
         return 0;
 
     memset(out, 0, sizeof(*out));
+    for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i)
+        out->g1_extension_record_bases[i] = -1;
     out->level_count = map_count;
     out->square_bytes = 1;
     out->raw_map_data_base = -1;
@@ -258,6 +328,8 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
         return 0;
 
     memset(out, 0, sizeof(*out));
+    for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i)
+        out->g1_extension_record_bases[i] = -1;
     out->level_count = map_count;
     out->square_bytes = 1;
     out->raw_map_data_base = -1;
@@ -352,16 +424,27 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     out->column_index_base = column_index_base;
     out->square_first_thing_base = sft_base;
     out->text_data_base = text_base;
+    dm2_v1_configure_pc_g1_extension_records(out);
     out->raw_data = (uint8_t *)malloc((size_t)size);
     if (!out->raw_data) return -1;
     memcpy(out->raw_data, dat, (size_t)size);
     out->raw_size = size;
-    /* The public validator intentionally rejects unpromoted graphs. Enable
-     * this candidate only for its complete bounded walk, then clear it again
-     * on the first invalid root/link/cycle. */
-    out->record_graph_complete = 1;
-    if (!dm2_v1_dungeon_validate_record_graph(out))
-        out->record_graph_complete = 0;
+    /* First classify every map-owned root without following GenericRecord::w0.
+     * The canonical G1 corpus has five DB8/DB10 roots outside the direct and
+     * DB3/DB4 address transforms, so a complete graph must not be attempted
+     * for it.  ReDMCSB DUNGEON.C F0159 only follows Next after GetThingData;
+     * partial boot deliberately stops before that operation. */
+    {
+        DM2_V1_G1RecordPoolEvidence evidence;
+        if (dm2_v1_dungeon_collect_g1_record_pool_evidence(out, &evidence) &&
+            evidence.map_root_shape_invalid == 0) {
+            out->record_graph_complete = 1;
+            if (!dm2_v1_dungeon_validate_record_graph(out))
+                out->record_graph_complete = 0;
+        }
+    }
+    (void)dm2_v1_dungeon_materialize_g1_partial_map_boot(
+        out, &out->partial_map_boot);
     return 1;
 }
 
@@ -626,9 +709,13 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
     index = (int)(thing & 0x03ffu);
     if (type < 0 || type >= DM2_THING_TYPE_COUNT) return NULL;
     size = (int)s_dm2_db_record_size[type];
-    if (size <= 0 || index < 0 || index >= d->thing_type_counts[type])
+    if (size <= 0 || index < 0)
         return NULL;
-    offset = d->thing_data_bases[type] + index * size;
+    if (index < d->thing_type_counts[type]) {
+        offset = d->thing_data_bases[type] + index * size;
+    } else if (!dm2_v1_g1_extension_record_offset(d, type, index, &offset)) {
+        return NULL;
+    }
     if (offset < 0 || offset + size > d->raw_size) return NULL;
     if (out_type) *out_type = type;
     if (out_index) *out_index = index;
@@ -668,6 +755,61 @@ static int dm2_v1_g1_link_has_declared_shape(const DM2_V1_DungeonData *d,
            index >= 0 && index < d->thing_type_counts[type];
 }
 
+static int dm2_v1_g1_link_has_extension_shape(const DM2_V1_DungeonData *d,
+                                               uint16_t link) {
+    int type;
+    int index;
+    int offset;
+
+    if (!d || link == DM2_THING_END_MARKER) return 0;
+    type = (int)((link >> 10) & 0x0fu);
+    index = (int)(link & 0x03ffu);
+    return dm2_v1_g1_extension_record_offset(d, type, index, &offset);
+}
+
+static int dm2_v1_g1_link_has_record_shape(const DM2_V1_DungeonData *d,
+                                            uint16_t link) {
+    return dm2_v1_g1_link_has_declared_shape(d, link) ||
+           dm2_v1_g1_link_has_extension_shape(d, link);
+}
+
+static int dm2_v1_g1_read_teleporter_root(
+    const DM2_V1_DungeonData *d,
+    uint16_t object_id,
+    int x,
+    int y,
+    DM2_V1_G1TeleporterRoot *out) {
+    const uint8_t *record;
+    int offset;
+    int index;
+
+    /* skproject/SKULLWIN/c_record.cpp DM2_GET_ADDRESS_OF_RECORD lines 45-52
+     * resolves a DB1 ObjectID by its 10-bit index and six-byte stride.
+     * skproject/SKWIN/DME.h Teleporter lines 367-382 fixes w2/w4, including
+     * destination coordinates/map, scope, sound, and rotation.
+     * This deliberately does not call GET_NEXT_RECORD_LINK or read w0. */
+    if (!d || !out || ((object_id >> 10) & 0x0fu) != 1u) return 0;
+    index = object_id & 0x03ffu;
+    if (index >= d->thing_type_counts[1]) {
+        return 0;
+    }
+    offset = d->thing_data_bases[1] + index * s_dm2_db_record_size[1];
+    if (offset < 0 || offset + s_dm2_db_record_size[1] > d->raw_size) return 0;
+    record = d->raw_data + offset;
+    out->x = x;
+    out->y = y;
+    out->object_id = object_id;
+    out->index = index;
+    out->destination_x = (uint8_t)(RD16(record + 2) & 0x001fu);
+    out->destination_y = (uint8_t)((RD16(record + 2) >> 5) & 0x001fu);
+    out->destination_map = (uint8_t)(RD16(record + 4) >> 8);
+    out->scope = (uint8_t)((RD16(record + 2) >> 13) & 0x0003u);
+    out->sound = (uint8_t)((RD16(record + 2) >> 15) & 0x0001u);
+    out->rotation = (uint8_t)((RD16(record + 2) >> 10) & 0x0003u);
+    out->rotation_type = (uint8_t)((RD16(record + 2) >> 12) & 0x0001u);
+    return 1;
+}
+
 int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
     int total_records = 0;
     int level;
@@ -688,32 +830,10 @@ int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
              d->thing_data_bases[type] < 0)) {
             return 0;
         }
-        total_records += d->thing_type_counts[type];
+        total_records += d->thing_type_counts[type] +
+                         d->g1_extension_record_counts[type];
     }
     if (total_records <= 0) return 0;
-
-    /* READ_DUNGEON_STRUCTURE owns every declared c_record before map use.
-     * Do not promote a direct graph based solely on reachable roots: an
-     * unvisited pool record with a non-ObjectID w0 would leave ownership
-     * incomplete and invite guessed traversal later.  skproject
-     * SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE:40037-40056,
-     * SKWIN/DME.h GenericRecord::w0:831-847. */
-    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
-        int record_size = (int)s_dm2_db_record_size[type];
-        for (int index = 0; index < d->thing_type_counts[type]; ++index) {
-            int offset;
-            uint16_t next;
-            if (record_size < 2 || d->thing_data_bases[type] < 0)
-                return 0;
-            offset = d->thing_data_bases[type] + index * record_size;
-            if (offset < 0 || offset + 1 >= d->raw_size) return 0;
-            next = RD16(d->raw_data + offset);
-            if (next != DM2_THING_END_MARKER &&
-                !dm2_v1_g1_link_has_declared_shape(d, next)) {
-                return 0;
-            }
-        }
-    }
 
     for (level = 0; level < d->level_count; ++level) {
         int x;
@@ -723,24 +843,90 @@ int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
                 int raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
                 int thing;
                 int steps = 0;
+                uint8_t seen[DM2_THING_TYPE_COUNT][1024] = {{0}};
                 if (raw < 0) return 0;
                 if ((raw & 0x10) == 0) continue;
                 thing = dm2_v1_dungeon_get_first_thing(d, level, x, y);
                 while (thing != (int)DM2_THING_END_MARKER) {
                     int next;
-                    if (thing < 0 || ++steps > total_records ||
-                        !dm2_v1_dungeon_get_thing_record(
+                    int type;
+                    int index;
+
+                    /* skproject SKWINSPX/src/v4/skcore.cpp:1184-1200 reads
+                     * GenericRecord::w0 only after GET_ADDRESS_OF_RECORD()
+                     * has accepted the ObjectID.  Therefore only records
+                     * reached from a map-owned root participate here; unused
+                     * pool slots are allocation state, not inferred links.
+                     * SKWIN/DME.h:831-847 names w0 the next ObjectID. */
+                    if (thing < 0 || !dm2_v1_g1_link_has_record_shape(
+                                         d, (uint16_t)thing) ||
+                        ++steps > total_records) {
+                        return 0;
+                    }
+                    type = ((uint16_t)thing >> 10) & 0x0f;
+                    index = (uint16_t)thing & 0x03ff;
+                    if (seen[type][index]) return 0;
+                    seen[type][index] = 1;
+                    if (!dm2_v1_dungeon_get_thing_record(
                             d, (uint16_t)thing, NULL, NULL, NULL)) {
                         return 0;
                     }
                     next = dm2_v1_dungeon_get_next_thing(d, (uint16_t)thing);
-                    if (next < 0) return 0;
+                    if (next < 0 || (next != (int)DM2_THING_END_MARKER &&
+                                     !dm2_v1_g1_link_has_record_shape(
+                                         d, (uint16_t)next))) {
+                        return 0;
+                    }
                     thing = next;
                 }
             }
         }
     }
     return 1;
+}
+
+int dm2_v1_dungeon_validate_record_pools(const DM2_V1_DungeonData *d) {
+    int cursor;
+
+    /* ReDMCSB/skproject c_record.cpp DM2_GET_ADDRESS_OF_RECORD lines 46-52
+     * resolves recordptr[type] + glbItemSizePerDB[type] * (ObjectID & 0x3ff).
+     * skproject SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE lines 40037-40056
+     * loads those recordptr bases consecutively after dunTextData. PC DOS G1
+     * proves this bounded pool transform, but not GenericRecord::w0 graph
+     * semantics, so boot may validate addresses without enabling traversal. */
+    if (!d || !d->raw_data || d->text_data_base < 0 ||
+        d->text_word_count < 0 || d->raw_size < 0) {
+        return 0;
+    }
+    cursor = d->text_data_base + d->text_word_count * 2;
+    if (cursor < d->text_data_base || cursor > d->raw_size) return 0;
+
+    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        int count = d->thing_type_counts[type];
+        int record_size = (int)s_dm2_db_record_size[type];
+        long pool_bytes;
+        int expected_base;
+
+        if (count < 0 || record_size < 0) return 0;
+        pool_bytes = (long)count * (long)record_size;
+        if (pool_bytes < 0 || pool_bytes > INT32_MAX ||
+            cursor + pool_bytes > d->raw_size) {
+            return 0;
+        }
+        expected_base = (count > 0 && record_size > 0) ? cursor : -1;
+        if (d->thing_data_bases[type] != expected_base) return 0;
+        cursor += (int)pool_bytes;
+    }
+
+    /* G1 has a proven untyped extension between c_record pools and map data.
+     * Other accepted layouts place map bytes immediately after the pools. */
+    if (d->square_bytes == 1 && d->g1_extension_base >= 0) {
+        return cursor == d->g1_extension_base &&
+               d->g1_extension_size >= 0 &&
+               d->g1_extension_base + d->g1_extension_size ==
+                   d->raw_map_data_base;
+    }
+    return cursor == d->raw_map_data_base;
 }
 
 int dm2_v1_dungeon_collect_g1_record_pool_evidence(
@@ -808,6 +994,60 @@ int dm2_v1_dungeon_collect_g1_record_pool_evidence(
             ++out->root_shape_invalid;
     }
 
+    /* skproject/SKULLWIN/c_map.cpp DM2_GET_OBJECT_INDEX_FROM_TILE only
+     * indexes dunGroundStacks for squares whose raw map byte has bit 0x10.
+     * Do not infer map roots from unused capacity entries. c_record.h:10-11
+     * separately defines OBJECT_NULL (-1) and OBJECT_END_MARKER (-2). */
+    for (int level = 0; level < d->level_count; ++level) {
+        int column_index = 0;
+        for (int previous = 0; previous < level; ++previous)
+            column_index += d->level_widths[previous];
+        for (int x = 0; x < d->level_widths[level]; ++x) {
+            int thing_index;
+            int column_offset = d->column_index_base + (column_index + x) * 2;
+            int square_offset = d->raw_map_data_base + d->level_offsets[level] +
+                                x * d->level_heights[level];
+
+            if (column_offset < 0 || column_offset + 1 >= d->raw_size ||
+                square_offset < 0 ||
+                square_offset + d->level_heights[level] > d->raw_size) {
+                return 0;
+            }
+            thing_index = (int)RD16(d->raw_data + column_offset);
+            for (int y = 0; y < d->level_heights[level]; ++y) {
+                uint16_t link;
+                if ((d->raw_data[square_offset + y] & 0x10u) == 0)
+                    continue;
+                if (thing_index < 0 ||
+                    thing_index >= d->square_first_thing_count) {
+                    return 0;
+                }
+                link = RD16(d->raw_data + d->square_first_thing_base +
+                            thing_index * 2);
+                ++out->map_root_count;
+                ++out->map_root_count_by_map[level];
+                if (link == DM2_THING_END_MARKER)
+                    ++out->map_root_end_markers;
+                else if (link == DM2_THING_NULL_MARKER)
+                    ++out->map_root_null_markers;
+                else if (dm2_v1_g1_link_has_declared_shape(d, link)) {
+                    ++out->map_root_shape_valid;
+                    ++out->map_root_direct_by_type[(link >> 10) & 0x0f];
+                } else if (dm2_v1_g1_link_has_extension_shape(d, link)) {
+                    ++out->map_root_extension_shape_valid;
+                    ++out->map_root_extension_by_type[(link >> 10) & 0x0f];
+                    ++out->map_root_extension_by_map[level];
+                } else {
+                    ++out->map_root_shape_invalid;
+                    ++out->map_root_unresolved_after_extension;
+                    ++out->map_root_unresolved_by_type[(link >> 10) & 0x0f];
+                    ++out->map_root_unresolved_by_map[level];
+                }
+                ++thing_index;
+            }
+        }
+    }
+
     for (type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
         int base = out->candidate_pool_bases[type];
         int count = d->thing_type_counts[type];
@@ -826,6 +1066,172 @@ int dm2_v1_dungeon_collect_g1_record_pool_evidence(
     }
 
     out->available = 1;
+    return 1;
+}
+
+int dm2_v1_dungeon_materialize_g1_partial_map_boot(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1PartialMapBootReceipt *out) {
+    DM2_V1_G1PartialMapBootReceipt candidate;
+    int column_index = 0;
+
+    if (!out || !d || !d->raw_data || d->square_bytes != 1 ||
+        d->record_graph_complete || d->column_index_base < 0 ||
+        d->square_first_thing_base < 0 || d->raw_map_data_base < 0) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.level_count = d->level_count;
+
+    /* c_map.cpp selects dunGroundStacks only for bit 0x10 squares.  Read the
+     * root ObjectID once, classify its source-proven address transform, and
+     * never read its GenericRecord::w0. */
+    for (int level = 0; level < d->level_count; ++level) {
+        for (int x = 0; x < d->level_widths[level]; ++x) {
+            int stack = (int)RD16(d->raw_data + d->column_index_base +
+                                  (column_index + x) * 2);
+            for (int y = 0; y < d->level_heights[level]; ++y) {
+                int raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+                uint16_t root;
+                int type;
+                int index;
+
+                if (raw < 0) return 0;
+                if ((raw & 0x10) == 0) continue;
+                if (stack < 0 || stack >= d->square_first_thing_count)
+                    return 0;
+                root = RD16(d->raw_data + d->square_first_thing_base +
+                            stack * 2);
+                ++candidate.map_root_count;
+                type = (root >> 10) & 0x0f;
+                index = root & 0x03ff;
+                if (dm2_v1_g1_link_has_declared_shape(d, root)) {
+                    ++candidate.direct_root_count;
+                    ++candidate.materialized_root_count;
+                } else if (dm2_v1_g1_link_has_extension_shape(d, root)) {
+                    if (type == 3) ++candidate.db3_root_count;
+                    else if (type == 4) ++candidate.db4_root_count;
+                    else return 0;
+                    ++candidate.materialized_root_count;
+                } else {
+                    DM2_V1_G1BlockedRoot *blocked;
+                    if ((type != 8 && type != 10) ||
+                        candidate.blocked_root_count >=
+                            DM2_V1_G1_PARTIAL_BOOT_MAX_BLOCKED_ROOTS) {
+                        return 0;
+                    }
+                    blocked = &candidate.blocked_roots[
+                        candidate.blocked_root_count++];
+                    blocked->map = level;
+                    blocked->x = x;
+                    blocked->y = y;
+                    blocked->object_id = root;
+                    blocked->type = type;
+                    blocked->index = index;
+                    ++candidate.blocked_root_count_by_map[level];
+                }
+                ++stack;
+            }
+        }
+        column_index += d->level_widths[level];
+    }
+
+    if (candidate.map_root_count != 883 ||
+        candidate.direct_root_count != 676 || candidate.db3_root_count != 174 ||
+        candidate.db4_root_count != 28 || candidate.materialized_root_count != 878 ||
+        candidate.blocked_root_count != DM2_V1_G1_PARTIAL_BOOT_MAX_BLOCKED_ROOTS) {
+        return 0;
+    }
+    candidate.incomplete = 1;
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
+int dm2_v1_dungeon_materialize_g1_first_map_runtime(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1FirstMapRuntimeReceipt *out) {
+    DM2_V1_G1PartialMapBootReceipt partial;
+    DM2_V1_G1FirstMapRuntimeReceipt candidate;
+    int stack;
+
+    if (!out || !d || d->level_count < 1 || !d->raw_data ||
+        !dm2_v1_dungeon_materialize_g1_partial_map_boot(d, &partial) ||
+        !partial.committed || !partial.incomplete) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.committed = 1;
+    candidate.incomplete_world = 1;
+    candidate.map = 0;
+    candidate.width = d->level_widths[0];
+    candidate.height = d->level_heights[0];
+    if (candidate.width <= 0 || candidate.height <= 0) return 0;
+
+    /* ReDMCSB c_map.cpp GET_TILE_RECORD_LINK: map squares select a
+     * dunGroundStacks word through the column index. Stop at that ObjectID;
+     * DUNGEON.C F0159 is the later boundary that reads GenericRecord::w0. */
+    stack = (int)RD16(d->raw_data + d->column_index_base);
+    for (int x = 0; x < candidate.width; ++x) {
+        for (int y = 0; y < candidate.height; ++y) {
+            int raw = dm2_v1_dungeon_get_tile_raw(d, 0, x, y);
+            uint16_t root;
+            int type;
+            DM2_V1_G1VerifiedRoot *verified;
+
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
+            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
+            type = (root >> 10) & 0x0f;
+            if (candidate.root_count >= DM2_V1_G1_FIRST_MAP_MAX_ROOTS) {
+                return 0;
+            }
+            verified = &candidate.roots[candidate.root_count];
+            verified->x = x;
+            verified->y = y;
+            verified->object_id = root;
+            verified->type = type;
+            verified->index = root & 0x03ff;
+            ++candidate.root_count;
+            if (dm2_v1_g1_link_has_declared_shape(d, root)) {
+                ++candidate.direct_root_count;
+                ++candidate.verified_root_count;
+            } else if (dm2_v1_g1_link_has_extension_shape(d, root)) {
+                if (type == 3) ++candidate.db3_root_count;
+                else if (type == 4) ++candidate.db4_root_count;
+                else return 0;
+                ++candidate.verified_root_count;
+            } else {
+                /* Map 0 cannot consume an unresolved root. The five known
+                 * DB8/DB10 roots stay represented by the world receipt. */
+                ++candidate.blocked_root_count;
+                return 0;
+            }
+            if (type == 1) {
+                if (candidate.teleporter_root_count >=
+                    DM2_V1_G1_FIRST_MAP_MAX_ROOTS ||
+                    !dm2_v1_g1_read_teleporter_root(
+                        d, root, x, y,
+                        &candidate.teleporters[candidate.teleporter_root_count])) {
+                    return 0;
+                }
+                ++candidate.teleporter_root_count;
+                ++candidate.teleporter_record_reads;
+            }
+            ++stack;
+        }
+        if (x + 1 < candidate.width) {
+            stack = (int)RD16(d->raw_data + d->column_index_base +
+                              (x + 1) * 2);
+        }
+    }
+    if (candidate.root_count <= 0 ||
+        candidate.verified_root_count != candidate.root_count ||
+        candidate.object_count != 0 || candidate.blocked_record_reads != 0) {
+        return 0;
+    }
+    *out = candidate;
     return 1;
 }
 

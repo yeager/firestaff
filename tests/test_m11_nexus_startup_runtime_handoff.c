@@ -1,7 +1,9 @@
 #include "m11_game_view.h"
 #include "nexus_v1_champions.h"
 #include "nexus_v1_engine.h"
+#include "nexus_v1_launcher.h"
 #include "nexus_v1_startup_layout.h"
+#include "nexus_v1_viewport.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -74,11 +76,21 @@ static void fill_ready_engine(Nexus_V1_Engine *engine)
     engine->current_level.geometry_info.collision_ref_count = 4;
     engine->current_level.geometry_info.collision_ref_unique_count = 1;
     engine->current_level.geometry_info.max_collision_ref = 5;
+    /* Parsed DGN levels use 0xff for cells without a Structure1G animation.
+     * Keep the synthetic render fixture equally explicit so it cannot invent
+     * opaque Structure2 animation use. */
+    memset(engine->current_level.floor_animation_ids,
+           0xff,
+           sizeof(engine->current_level.floor_animation_ids));
     engine->current_level.squares[4][3] = 1;
     engine->current_level.squares[3][3] = 1;
     engine->current_level.squares[4][4] = 1;
     engine->current_level.collision_refs[4][3] = 0x0100;
     engine->current_level.collision_refs[3][3] = 0x0fff;
+    engine->current_level_structure2_source.level_index = 0;
+    engine->current_level_structure2_source.canonical_hash_verified = 1;
+    engine->current_level_structure2_source.structure2_payload_envelope_valid = 1;
+    engine->current_level_structure2_source.materialization_bound = 1;
     engine->floor_materials.valid = 1;
     engine->floor_materials.surface_count = 1;
     engine->floor_materials.surfaces[0].pixels = &g_material_pixel;
@@ -230,14 +242,91 @@ int main(void)
                     view.nexusState.startup_runtime_dgn_route_joined == 1 &&
                     view.nexusState.startup_blocked_route_suppresses_all_draws == 0 &&
                     view.nexusState.startup_copied_draw_command_count > 0 &&
-                    view.nexusState.startup_copied_dgn_render_command_count > 0,
+                    view.nexusState.startup_copied_dgn_render_command_count > 0 &&
+                    view.nexusState.startup_copied_dgn_material_plan_complete == 1,
                 "M11 Nexus startup gate consumes host-caller receipt for capture and DGN handoff");
     expect_true(view.nexusState.startup_dgn_render_cached_count > 0,
                 "M11 Nexus caches the host-owned DGN command plan");
+    expect_true(view.nexusState.startup_dgn_viewport_host_route_ready == 1 &&
+                    view.nexusState.startup_dgn_viewport_host_route_status ==
+                        NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
+                    view.nexusState.startup_dgn_viewport_host_package_consumed == 1 &&
+                    view.nexusState.startup_dgn_viewport_host_route_consumed == 1 &&
+                    view.nexusState.startup_dgn_viewport_host_blocks_runtime == 0 &&
+                    view.nexusState.startup_dgn_viewport_host_written_pixels > 0 &&
+                    view.nexusState.startup_dgn_viewport_host_rasterized_commands ==
+                        view.nexusState.startup_copied_dgn_render_command_count &&
+                    view.nexusState.startup_dgn_viewport_host_material_surfaces ==
+                        view.nexusState.startup_copied_dgn_render_command_count,
+                "M11 Nexus consumes the viewport DGN host-route before runtime draw");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(count_nonzero_pixels(framebuffer, (int)sizeof(framebuffer)) > 0,
                 "M11 Nexus runtime consumes cached DGN commands");
+
+    fill_ready_engine(&engine);
+    fill_view(&view, &engine);
+    {
+        Nexus_V1_StartupRect footer;
+
+        memset(&footer, 0, sizeof(footer));
+        expect_true(nexus_v1_startup_champion_footer_rect(&footer) == 1 &&
+                        M11_GameView_HandlePointer(
+                            &view, footer.x + 1, footer.y + 1, 1) ==
+                            M11_GAME_INPUT_REDRAW &&
+                        view.nexusState.champion_select_active == 0 &&
+                        view.nexusState.startup_host_execute_dgn_draws == 1 &&
+                        view.nexusState.startup_dgn_viewport_host_package_consumed == 1 &&
+                        view.nexusState.startup_dgn_viewport_host_blocks_runtime == 0,
+                    "M11 Nexus footer start consumes the canonical package and Structure2-bound DGN route");
+    }
+
+    fill_ready_engine(&engine);
+    {
+        Nexus_V1_StartupRuntimeState startup_state;
+        Nexus_V1_StartupDrawCommand startup_commands[80];
+        Nexus_V1_DgnRenderCommand truncated_dgn_commands[1];
+        Nexus_V1_StartupHostCallerReceipt host_receipt;
+
+        memset(&startup_state, 0, sizeof(startup_state));
+        startup_state.champion_select_active = 1;
+        startup_state.engine = &engine;
+        startup_state.champion_cursor = 0;
+        startup_state.champion_frame = 0;
+        memset(startup_commands, 0, sizeof(startup_commands));
+        memset(truncated_dgn_commands, 0, sizeof(truncated_dgn_commands));
+        expect_true(nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
+                        NULL,
+                        &startup_state,
+                        M12_MENU_INPUT_ACTION,
+                        NULL,
+                        NULL,
+                        startup_commands,
+                        (int)(sizeof(startup_commands) /
+                              sizeof(startup_commands[0])),
+                        truncated_dgn_commands,
+                        (int)(sizeof(truncated_dgn_commands) /
+                              sizeof(truncated_dgn_commands[0])),
+                        &host_receipt) == 1,
+                    "Nexus host caller receipt builds with truncated DGN command buffer");
+        expect_true(host_receipt.host_runtime_dgn_ready == 1 &&
+                        host_receipt.dgn_command_count > 1 &&
+                        host_receipt.ownership.copied_dgn_command_count ==
+                            host_receipt.dgn_command_count &&
+                        memcmp(truncated_dgn_commands,
+                               host_receipt.ownership.dgn_commands,
+                               sizeof(truncated_dgn_commands)) == 0 &&
+                        host_receipt.dgn_viewport_host_route_status ==
+                            NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
+                        host_receipt.dgn_viewport_host_route_ready == 1 &&
+                        host_receipt.dgn_viewport_host_route_consumed == 1 &&
+                        host_receipt.dgn_viewport_host_route_package_consumed == 1 &&
+                        host_receipt.dgn_viewport_host_route_blocks_runtime == 0 &&
+                        host_receipt.copied_dgn_command_count == 1 &&
+                        host_receipt.copied_dgn_material_plan_complete == 0 &&
+                        host_receipt.host_execute_dgn_draws == 0,
+                    "Nexus host caller copies its immutable action-owned DGN plan and blocks partial plans");
+    }
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);
@@ -246,8 +335,24 @@ int main(void)
     expect_true(result == M11_GAME_INPUT_REDRAW &&
                     view.nexusState.startup_runtime_handoff_ready == 0 &&
                     view.nexusState.startup_dgn_render_ready == 0 &&
-                    view.nexusState.startup_dgn_render_blocked == 1,
+                    view.nexusState.startup_dgn_render_blocked == 1 &&
+                    view.nexusState.startup_dgn_viewport_host_route_ready == 0 &&
+                    view.nexusState.startup_dgn_viewport_host_blocks_runtime == 1,
                 "M11 Nexus champion start blocks DGN geometry without decoded floor textures");
+
+    fill_ready_engine(&engine);
+    fill_view(&view, &engine);
+    engine.current_level_structure2_source.materialization_bound = 0;
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION);
+    expect_true(result == M11_GAME_INPUT_REDRAW &&
+                    view.nexusState.champion_select_active == 0 &&
+                    view.nexusState.startup_runtime_handoff_ready == 0 &&
+                    view.nexusState.startup_dgn_render_ready == 0 &&
+                    view.nexusState.startup_dgn_render_blocked == 1 &&
+                    view.nexusState.startup_dgn_viewport_host_route_ready == 0 &&
+                    view.nexusState.startup_dgn_viewport_host_blocks_runtime == 1 &&
+                    view.nexusState.startup_no_fallback_visuals_enforced == 1,
+                "M11 Nexus full-start package preserves the Structure2 no-draw gate");
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);
@@ -324,8 +429,8 @@ int main(void)
     result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION);
     expect_true(result == M11_GAME_INPUT_REDRAW,
                 "M11 Nexus PRS3 startup action still redraws");
-    expect_true(view.nexusState.champion_select_active == 0,
-                "M11 Nexus PRS3 startup action consumes package route");
+    expect_true(view.nexusState.champion_select_active == 1,
+                "M11 Nexus PRS3 startup action remains at the blocked champion route");
     expect_true(view.nexusState.startup_runtime_handoff_ready == 0 &&
                     view.nexusState.startup_dgn_render_ready == 0 &&
                     view.nexusState.startup_hud_ready == 0,
@@ -334,25 +439,11 @@ int main(void)
                     view.nexusState.startup_no_fallback_visuals_enforced == 1 &&
                     view.nexusState.startup_suppress_fallback_visuals == 1 &&
                     view.nexusState.startup_suppress_legacy_placeholder_visuals == 1 &&
-                    view.nexusState.startup_saturn_warning_frame == 0 &&
-                    view.nexusState.startup_saturn_title_capture_frame == 48 &&
-                    view.nexusState.startup_saturn_title_ready_frame == 102 &&
-                    view.nexusState.startup_saturn_gameover_capture_frame == 0 &&
-                    view.nexusState.startup_host_route_consumes_active_capture_frame == 0 &&
-                    view.nexusState.startup_host_route_consumes_dungeon_capture_frame == 0 &&
-                    view.nexusState.startup_host_route_capture_matrix_ready == 0 &&
-                    view.nexusState.startup_save_route_consumes_package_capture == 0 &&
-                    view.nexusState.startup_champion_route_consumes_package_capture == 0 &&
-                    view.nexusState.startup_dungeon_route_consumes_package_capture == 0 &&
-                    view.nexusState.startup_save_route_saturn_capture_exact == 0 &&
-                    view.nexusState.startup_champion_route_saturn_capture_exact == 0 &&
-                    view.nexusState.startup_dungeon_route_saturn_capture_exact == 0 &&
-                    view.nexusState.startup_save_host_package_route_complete == 0 &&
-                    view.nexusState.startup_champion_host_package_route_complete == 0 &&
-                    view.nexusState.startup_dungeon_host_package_route_complete == 0 &&
-                    view.nexusState.startup_host_package_route_complete_mask == 0u &&
-                    view.nexusState.startup_host_package_route_expected_mask == 0u &&
-                    view.nexusState.startup_host_package_route_matrix_complete == 0,
+                    view.nexusState.startup_host_execute_startup_draws == 0 &&
+                    view.nexusState.startup_host_execute_dgn_draws == 0 &&
+                    view.nexusState.startup_copied_draw_command_count == 0 &&
+                    view.nexusState.startup_copied_dgn_render_command_count == 0 &&
+                    view.nexusState.startup_host_package_route_complete_mask == 0u,
                 "M11 Nexus PRS3 startup consumes blocker without legacy fallback");
 
     fill_ready_engine(&engine);

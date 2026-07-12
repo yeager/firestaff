@@ -666,6 +666,524 @@ static void test_source_evidence_anchors(void)
           "source evidence cites ReDMCSB TEXT.C message surface");
 }
 
+static void test_csbwin_load_opcode_family(void)
+{
+    uint16_t integer[] = { 0x0686u, 0x1234u };
+    uint16_t integer32[] = { 0x0786u, 0x5678u, 0x1234u };
+    uint16_t dollar[] = { 0x0706u };
+    uint16_t parameter[] = { 0x0006u };
+    uint16_t illegal_abs32[] = { 0x0746u };
+    uint32_t parameters[] = { 0x55u };
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSALoadContext context;
+    CSB_V1_CSBWinDSALoadExecution execution;
+
+    memset(&action, 0, sizeof(action));
+    memset(&context, 0, sizeof(context));
+    context.master_location = (2u << 16) | (3u << 10) | (4u << 5) | 5u;
+    context.parameters = parameters;
+    context.parameter_count = 1;
+
+    action.program_words = integer;
+    action.program_word_count = 2;
+    check(csb_v1_csbwin_dsa_execute_load_action(&action, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_LOAD_OK && execution.value == 0x1234u &&
+              execution.next_state == 0 && execution.words_consumed == 2u,
+          "CSBWin/DSA.cpp:1074-1189 EX_LOAD",
+          "source LOAD INTEGER decodes exact command and operand words");
+    action.program_words = integer32;
+    action.program_word_count = 3;
+    check(csb_v1_csbwin_dsa_execute_load_action(&action, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_LOAD_OK && execution.value == 0x12345678u,
+          "CSBWin/DSA.cpp:1125-1137 EX_LOAD",
+          "source LOAD INTEGER32 preserves little-endian word order");
+    action.program_words = dollar;
+    action.program_word_count = 1;
+    check(csb_v1_csbwin_dsa_execute_load_action(&action, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_LOAD_OK &&
+              execution.value == context.master_location,
+          "CSBWin/DSA.cpp:1118-1124 EX_LOAD",
+          "source LOAD DOLLAR returns packed master location");
+    action.program_words = parameter;
+    action.program_word_count = 1;
+    check(csb_v1_csbwin_dsa_execute_load_action(&action, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_LOAD_OK && execution.value == 0x55u,
+          "CSBWin/DSA.cpp:1138-1189 EX_LOAD",
+          "source LOAD A reads the authenticated actuator-chain parameter");
+    action.program_words = illegal_abs32;
+    action.program_word_count = 1;
+    check(csb_v1_csbwin_dsa_execute_load_action(&action, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_LOAD_SOURCE_ILLEGAL,
+          "CSBWin/DSA.cpp:1138-1143 EX_LOAD",
+          "source-unhandled LOAD ABS32 remains illegal rather than guessed");
+}
+
+static void test_csbwin_load_store_rejects_unowned_action(void)
+{
+    uint32_t parameters[] = { 0u };
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSALoadStoreContext context;
+    CSB_V1_CSBWinDSALoadStoreExecution execution;
+
+    csb_v1_chaos_init(&state);
+    memset(&context, 0, sizeof(context));
+    memset(&execution, 0, sizeof(execution));
+    context.parameters = parameters;
+    context.parameter_count = 1;
+    check(csb_v1_csbwin_dsa_execute_authenticated_load_store_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_LOAD_STORE_NOT_AUTHENTICATED &&
+              parameters[0] == 0u,
+          "CSBWin/SaveGame.cpp ReadDSAs + DSA.cpp:1317-1385",
+          "unowned action lookup rejects before STORE can mutate parameters");
+    csb_v1_chaos_cleanup(&state);
+}
+
+static void test_csbwin_authenticated_stack_opcode_family(void)
+{
+    uint16_t arithmetic[] = {
+        0x0686u, 3u, 0x0686u, 4u, 0x004bu,
+        0x0686u, 2u, 0x094bu, 0x000du
+    };
+    uint16_t set_new_state[] = { 0x0686u, 9u, 0x068bu };
+    uint16_t extended_state[] = { 0x0686u, 3u, 0x0686u, 4u, 0x804bu, 0xfffcu };
+    uint16_t extended_store[] = { 0x0686u, 1u, 0x800du, 0xfffcu };
+    uint16_t unsupported[] = { 0x0686u, 9u, 0x084bu, 0x000du };
+    uint32_t parameters[] = { 0u };
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+
+    memset(&action, 0, sizeof(action));
+    csb_v1_chaos_init(&state);
+    memset(&context, 0, sizeof(context));
+    context.parameters = parameters;
+    context.parameter_count = 1;
+    action.dsa_id = 7u;
+    action.state_index = 1u;
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+
+    action.program_words = arithmetic;
+    action.program_word_count = (int)(sizeof(arithmetic) / sizeof(arithmetic[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && parameters[0] == 14u &&
+              execution.words_consumed == action.program_word_count &&
+              execution.command_count == 6u && execution.stack_depth == 0u,
+          "CSBWin/DSA.cpp:2324-2719 EX_AMPERSAND",
+          "authenticated LOAD/AMPERSAND/STORE executes source stack arithmetic");
+
+    action.program_words = set_new_state;
+    action.program_word_count = (int)(sizeof(set_new_state) / sizeof(set_new_state[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && execution.forced_state == 9 &&
+              execution.stack_depth == 0u,
+          "CSBWin/DSA.cpp:2852-2858 STKOP_SetNewState",
+          "SETNEWSTATE consumes its stack word and reports the source forced state");
+
+    action.program_words = extended_state;
+    action.program_word_count = (int)(sizeof(extended_state) / sizeof(extended_state[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && execution.next_state == 65532 &&
+              execution.stack_depth == 1u,
+          "CSBWin/DSA.cpp:2324-2344 EX_AMPERSAND",
+          "AMPERSAND -4 sentinel consumes its raw unsigned extension word");
+
+    action.program_words = extended_store;
+    action.program_word_count = (int)(sizeof(extended_store) / sizeof(extended_store[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && parameters[0] == 1u &&
+              execution.next_state == 65532,
+          "CSBWin/DSA.cpp:1317-1385 EX_STORE",
+          "STORE -16 sentinel preserves its raw unsigned extension word");
+
+    parameters[0] = 77u;
+    action.program_words = unsupported;
+    action.program_word_count = (int)(sizeof(unsupported) / sizeof(unsupported[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED && parameters[0] == 77u,
+          "CSBWin/DSA.cpp:2859-2915 EX_AMPERSAND",
+          "unsupported world-mutating AMPERSAND subcode rejects without commit");
+
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
+static void test_csbwin_authenticated_local_variable_opcode_family(void)
+{
+    uint16_t round_trip[] = {
+        0x0686u, 0x1234u, 0x0012u, 0x0011u, 0x000du
+    };
+    uint16_t undefined_fetch[] = { 0x00d1u, 0x000du };
+    uint16_t extended_state[] = {
+        0x0686u, 7u, 0x8012u, 0xfffcu, 0x8011u, 0xfffcu
+    };
+    uint16_t invalid_index[] = { 0x1f91u, 0x000du };
+    uint32_t parameters[] = { 99u };
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+
+    memset(&action, 0, sizeof(action));
+    csb_v1_chaos_init(&state);
+    memset(&context, 0, sizeof(context));
+    context.parameters = parameters;
+    context.parameter_count = 1;
+    action.dsa_id = 7u;
+    action.state_index = 2u;
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+
+    action.program_words = round_trip;
+    action.program_word_count = (int)(sizeof(round_trip) / sizeof(round_trip[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 2u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && parameters[0] == 0x1234u &&
+              execution.stack_depth == 0u && execution.next_state == 0,
+          "CSBWin/DSA.cpp:1191-1244 EX_VARIABLESTORE/EX_VARIABLEFETCH",
+          "authenticated local variable store/fetch round-trips through the source stack");
+
+    parameters[0] = 99u;
+    action.program_words = undefined_fetch;
+    action.program_word_count = (int)(sizeof(undefined_fetch) / sizeof(undefined_fetch[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 2u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && parameters[0] == 0u,
+          "CSBWin/DSA.cpp:141-142,227-239 DSADBANK::Var/NoValue",
+          "an undefined source local fetch supplies the source zero value");
+
+    parameters[0] = 99u;
+    action.program_words = extended_state;
+    action.program_word_count = (int)(sizeof(extended_state) / sizeof(extended_state[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 2u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && parameters[0] == 99u &&
+              execution.next_state == -4 && execution.stack_depth == 1u &&
+              execution.words_consumed ==
+              action.program_word_count,
+          "CSBWin/DSA.cpp:1191-1244 EX_VARIABLESTORE/EX_VARIABLEFETCH",
+          "variable MAXSTATE extensions decode as signed source i16 values");
+
+    parameters[0] = 99u;
+    action.program_words = invalid_index;
+    action.program_word_count = (int)(sizeof(invalid_index) / sizeof(invalid_index[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 2u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL && parameters[0] == 99u,
+          "CSBWin/CSB.h:2881-2886 DSAVARS",
+          "out-of-bank variable indices reject before transactional parameter commit");
+
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
+static void test_csbwin_authenticated_global_variable_opcode_family(void)
+{
+    uint16_t round_trip[] = {
+        0x0686u, 0x55aau, 0x0054u, 0x0053u, 0x000du
+    };
+    uint16_t extended_state[] = {
+        0x8053u, 0xfffcu
+    };
+    uint16_t absent_global[] = { 0x0093u, 0x000du };
+    uint32_t parameters[] = { 99u };
+    uint32_t globals[] = { 0u, 0u };
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+
+    memset(&action, 0, sizeof(action));
+    csb_v1_chaos_init(&state);
+    memset(&context, 0, sizeof(context));
+    context.parameters = parameters;
+    context.parameter_count = 1;
+    context.global_variables = globals;
+    context.global_variable_count = 2;
+    action.dsa_id = 7u;
+    action.state_index = 3u;
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+
+    action.program_words = round_trip;
+    action.program_word_count = (int)(sizeof(round_trip) / sizeof(round_trip[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 3u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && globals[1] == 0x55aau &&
+              parameters[0] == 0x55aau && execution.next_state == 0,
+          "CSBWin/DSA.cpp:1244-1312 EX_GLOBALSTORE/EX_GLOBALFETCH",
+          "authenticated global store/fetch stages then commits the source global bank");
+
+    parameters[0] = 99u;
+    globals[1] = 0x1234u;
+    action.program_words = extended_state;
+    action.program_word_count = (int)(sizeof(extended_state) / sizeof(extended_state[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 3u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && parameters[0] == 99u &&
+              execution.next_state == -4 && execution.stack_depth == 1u,
+          "CSBWin/Data.h:2268-2295 + DSA.cpp:1279-1312",
+          "global MAXSTATE extension uses the source signed i16 decode");
+
+    parameters[0] = 99u;
+    globals[1] = 0x1234u;
+    action.program_words = absent_global;
+    action.program_word_count = (int)(sizeof(absent_global) / sizeof(absent_global[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 3u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL && parameters[0] == 99u &&
+              globals[1] == 0x1234u,
+          "CSBWin/DSA.cpp:1267-1275,1302-1311",
+          "out-of-bank global access rejects before either runtime-owned surface commits");
+
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
+static void test_csbwin_authenticated_state_column_jump_dispatch(void)
+{
+    uint16_t ignored[] = { 0x0686u, 1u };
+    uint16_t direct_jump[] = { 0x014cu };
+    uint16_t extended_jump[] = { 0x9fccu, 0xfffeu, 300u, 9u };
+    uint16_t malformed_jump[] = { 0x9fccu, 0xfffeu, 300u };
+    CSB_V1_DSAImportedAction actions[5];
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAJumpDispatch dispatch;
+
+    memset(actions, 0, sizeof(actions));
+    csb_v1_chaos_init(&state);
+    actions[0].dsa_id = 7u;
+    actions[0].state_index = 4u;
+    actions[0].column = 2u;
+    actions[0].program_words = ignored;
+    actions[0].program_word_count = 2;
+    actions[1].dsa_id = 7u;
+    actions[1].state_index = 4u;
+    actions[1].column = 4u;
+    actions[1].program_words = direct_jump;
+    actions[1].program_word_count = 1;
+    actions[2].dsa_id = 7u;
+    actions[2].state_index = 7u;
+    actions[2].column = 3u;
+    actions[2].program_words = extended_jump;
+    actions[2].program_word_count = 4;
+    actions[3].dsa_id = 7u;
+    actions[3].state_index = 8u;
+    actions[3].column = 3u;
+    actions[3].program_words = malformed_jump;
+    actions[3].program_word_count = 3;
+    actions[4].dsa_id = 7u;
+    actions[4].state_index = 4u;
+    actions[4].column = 2u;
+    actions[4].program_words = direct_jump;
+    actions[4].program_word_count = 1;
+    state.imported_actions = actions;
+    state.imported_action_count = 5;
+
+    check(csb_v1_chaos_find_imported_action_column(&state, 7, 4u, 2u) ==
+              &actions[0],
+          "CSBWin/DSA.cpp:5717-5740 DSAState::Program",
+          "state/column lookup preserves source file-order first-match ownership");
+    check(csb_v1_csbwin_dsa_resolve_authenticated_jump_dispatch(
+              &state, 7, 4u, 2u, &dispatch) ==
+              CSB_V1_CSBWIN_DSA_JUMP_NOT_JUMP,
+          "CSBWin/DSA.cpp:5104-5108 Execute",
+          "a selected non-JUMP action is not reinterpreted as a dispatch opcode");
+    check(csb_v1_csbwin_dsa_resolve_authenticated_jump_dispatch(
+              &state, 7, 4u, 4u, &dispatch) == CSB_V1_CSBWIN_DSA_JUMP_OK &&
+              dispatch.continuation_state == 4 && dispatch.target_state == 5u &&
+              dispatch.target_column == 0u && dispatch.words_consumed == 1u,
+          "CSBWin/Data.h:2090-2116 + DSA.cpp:812-849 EX_JUMP",
+          "compact JUMP keeps its implicit column zero and source continuation");
+    check(csb_v1_csbwin_dsa_resolve_authenticated_jump_dispatch(
+              &state, 7, 7u, 3u, &dispatch) == CSB_V1_CSBWIN_DSA_JUMP_OK &&
+              dispatch.continuation_state == 5 && dispatch.target_state == 300u &&
+              dispatch.target_column == 9u && dispatch.words_consumed == 4u,
+          "CSBWin/Data.h:2090-2116 + DSA.cpp:812-849 EX_JUMP",
+          "JUMP decodes state and column extensions in source order without execution");
+    dispatch.target_state = 77u;
+    check(csb_v1_csbwin_dsa_resolve_authenticated_jump_dispatch(
+              &state, 7, 8u, 3u, &dispatch) ==
+              CSB_V1_CSBWIN_DSA_JUMP_MALFORMED && dispatch.target_state == 77u,
+          "CSBWin/DSA.cpp:812-849 EX_JUMP",
+          "truncated JUMP rejects transactionally without publishing a partial dispatch");
+    check(csb_v1_csbwin_dsa_resolve_authenticated_jump_dispatch(
+              &state, 7, 99u, 3u, &dispatch) ==
+              CSB_V1_CSBWIN_DSA_JUMP_NOT_FOUND,
+          "CSBWin/DSA.cpp:5092-5105 Execute",
+          "missing state/column action leaves dispatch resolution inert");
+
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
+static void test_csbwin_authenticated_state_column_gosub_dispatch(void)
+{
+    uint16_t ignored[] = { 0x0686u, 1u };
+    uint16_t direct_gosub[] = { 0x0145u };
+    uint16_t extended_gosub[] = { 0x9fc5u, 0xfffeu, 300u, 9u };
+    uint16_t malformed_gosub[] = { 0x9fc5u, 0xfffeu, 300u };
+    CSB_V1_DSAImportedAction actions[5];
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAGosubDispatch dispatch;
+
+    memset(actions, 0, sizeof(actions));
+    csb_v1_chaos_init(&state);
+    actions[0].dsa_id = 7u;
+    actions[0].state_index = 4u;
+    actions[0].column = 2u;
+    actions[0].program_words = ignored;
+    actions[0].program_word_count = 2;
+    actions[1].dsa_id = 7u;
+    actions[1].state_index = 4u;
+    actions[1].column = 4u;
+    actions[1].program_words = direct_gosub;
+    actions[1].program_word_count = 1;
+    actions[2].dsa_id = 7u;
+    actions[2].state_index = 7u;
+    actions[2].column = 3u;
+    actions[2].program_words = extended_gosub;
+    actions[2].program_word_count = 4;
+    actions[3].dsa_id = 7u;
+    actions[3].state_index = 8u;
+    actions[3].column = 3u;
+    actions[3].program_words = malformed_gosub;
+    actions[3].program_word_count = 3;
+    actions[4].dsa_id = 7u;
+    actions[4].state_index = 4u;
+    actions[4].column = 2u;
+    actions[4].program_words = direct_gosub;
+    actions[4].program_word_count = 1;
+    state.imported_actions = actions;
+    state.imported_action_count = 5;
+
+    check(csb_v1_csbwin_dsa_resolve_authenticated_gosub_dispatch(
+              &state, 7, 4u, 2u, &dispatch) ==
+              CSB_V1_CSBWIN_DSA_GOSUB_NOT_GOSUB,
+          "CSBWin/DSA.cpp:764-808 EX_GOSUB",
+          "a source-selected non-GOSUB action is not reinterpreted as a subroutine");
+    check(csb_v1_csbwin_dsa_resolve_authenticated_gosub_dispatch(
+              &state, 7, 4u, 4u, &dispatch) == CSB_V1_CSBWIN_DSA_GOSUB_OK &&
+              dispatch.continuation_state == 4 && dispatch.target_state == 5u &&
+              dispatch.target_column == 0u && dispatch.subroutine_depth_delta == 1u &&
+              dispatch.words_consumed == 1u,
+          "CSBWin/Data.h:2093-2119 + DSA.cpp:764-808 EX_GOSUB",
+          "compact GOSUB preserves its outer continuation and implicit column zero");
+    check(csb_v1_csbwin_dsa_resolve_authenticated_gosub_dispatch(
+              &state, 7, 7u, 3u, &dispatch) == CSB_V1_CSBWIN_DSA_GOSUB_OK &&
+              dispatch.continuation_state == 65541 && dispatch.target_state == 300u &&
+              dispatch.target_column == 9u && dispatch.subroutine_depth_delta == 1u &&
+              dispatch.words_consumed == 4u,
+          "CSBWin/Data.h:2093-2119 + DSA.cpp:764-808 EX_GOSUB",
+          "GOSUB preserves its raw unsigned MAXSTATE extension without entering Execute");
+    dispatch.target_state = 77u;
+    check(csb_v1_csbwin_dsa_resolve_authenticated_gosub_dispatch(
+              &state, 7, 8u, 3u, &dispatch) ==
+              CSB_V1_CSBWIN_DSA_GOSUB_MALFORMED && dispatch.target_state == 77u,
+          "CSBWin/DSA.cpp:764-808 EX_GOSUB",
+          "truncated GOSUB rejects transactionally without publishing a partial receipt");
+    check(csb_v1_csbwin_dsa_resolve_authenticated_gosub_dispatch(
+              &state, 7, 99u, 3u, &dispatch) ==
+              CSB_V1_CSBWIN_DSA_GOSUB_NOT_FOUND,
+          "CSBWin/DSA.cpp:764-808 EX_GOSUB",
+          "missing source state and column leaves GOSUB resolution inert");
+
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
+static void test_csbwin_authenticated_execute_transfer_subset(void)
+{
+    uint16_t jump[] = { 0x014cu };
+    uint16_t gosub[] = { 0x0185u };
+    uint16_t nested_gosub[] = { 0x01c5u };
+    uint16_t nested_jump[] = { 0x020cu };
+    uint16_t unsupported[] = { 0x0006u };
+    CSB_V1_DSAImportedAction actions[5];
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAExecuteReceipt receipt;
+
+    memset(actions, 0, sizeof(actions));
+    csb_v1_chaos_init(&state);
+    actions[0].dsa_id = 7u;
+    actions[0].state_index = 4u;
+    actions[0].column = 2u;
+    actions[0].program_words = jump;
+    actions[0].program_word_count = 1;
+    actions[1].dsa_id = 7u;
+    actions[1].state_index = 5u;
+    actions[1].column = 0u;
+    actions[1].program_words = unsupported;
+    actions[1].program_word_count = 1;
+    actions[2].dsa_id = 7u;
+    actions[2].state_index = 6u;
+    actions[2].column = 0u;
+    actions[2].program_words = nested_gosub;
+    actions[2].program_word_count = 1;
+    actions[3].dsa_id = 7u;
+    actions[3].state_index = 7u;
+    actions[3].column = 0u;
+    actions[3].program_words = nested_jump;
+    actions[3].program_word_count = 1;
+    actions[4].dsa_id = 7u;
+    actions[4].state_index = 5u;
+    actions[4].column = 0u;
+    actions[4].program_words = gosub;
+    actions[4].program_word_count = 1;
+    state.imported_actions = actions;
+    state.imported_action_count = 4;
+
+    receipt.final_state = 77;
+    check(csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
+              &state, 7, 4u, 2u, 0, &receipt) ==
+              CSB_V1_CSBWIN_DSA_EXECUTE_UNSUPPORTED && receipt.final_state == 77,
+          "CSBWin/DSA.cpp:5053-5293 Execute",
+          "JUMP follows the first exact target action and rejects unsupported execution transactionally");
+
+    actions[1].program_words = gosub;
+    check(csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
+              &state, 7, 4u, 2u, 0, &receipt) ==
+              CSB_V1_CSBWIN_DSA_EXECUTE_OK && receipt.final_state == 4 &&
+              receipt.transfer_count == 4u && receipt.maximum_subroutine_depth == 2u &&
+              receipt.words_consumed == 4u,
+          "CSBWin/DSA.cpp:764-808,5053-5293 Execute",
+          "JUMP stays in-frame while nested GOSUB frames unwind to the outer first continuation");
+
+    actions[1].program_words = unsupported;
+    receipt.final_state = 88;
+    check(csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
+              &state, 7, 5u, 0u, 3, &receipt) ==
+              CSB_V1_CSBWIN_DSA_EXECUTE_UNSUPPORTED && receipt.final_state == 88,
+          "CSBWin/DSA.cpp:5092-5108 Execute",
+          "first file-order exact state-column action remains authoritative in the continuation executor");
+
+    actions[1].program_words = gosub;
+    receipt.final_state = 99;
+    check(csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
+              &state, 7, 5u, 0u,
+              CSB_V1_CSBWIN_DSA_EXECUTE_MAX_SUBROUTINE_DEPTH - 1,
+              &receipt) == CSB_V1_CSBWIN_DSA_EXECUTE_DEPTH_LIMIT &&
+              receipt.final_state == 99,
+          "CSBWin/DSA.cpp:764-808 EX_GOSUB",
+          "bounded continuation stack rejects a further nested Execute frame without publishing a receipt");
+
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
 int main(void)
 {
     printf("=== CSB V1 DSA Trigger Single Step Gate ===\n");
@@ -683,6 +1201,14 @@ int main(void)
     test_malformed_target_operands_reject_cleanly();
     test_trigger_out_of_range_script_id_rejects_cleanly();
     test_single_step_message_records_dispatch();
+    test_csbwin_load_opcode_family();
+    test_csbwin_load_store_rejects_unowned_action();
+    test_csbwin_authenticated_stack_opcode_family();
+    test_csbwin_authenticated_local_variable_opcode_family();
+    test_csbwin_authenticated_global_variable_opcode_family();
+    test_csbwin_authenticated_state_column_jump_dispatch();
+    test_csbwin_authenticated_state_column_gosub_dispatch();
+    test_csbwin_authenticated_execute_transfer_subset();
     test_source_evidence_anchors();
 
     printf("\nassertions=%d failures=%d\n", g_assertions, g_failures);

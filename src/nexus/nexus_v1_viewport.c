@@ -114,11 +114,7 @@ static int viewport_sync_dgn_material_palette(
 
 /* Render visible dungeon squares from party position */
 void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
-    int px, py, pdir, d;
-    int dir_dx[4] = {0, 1, 0, -1};
-    int dir_dy[4] = {-1, 0, 1, 0};
-    int left_dx[4] = {-1, 0, 1, 0};
-    int left_dy[4] = {0, -1, 0, 1};
+    int px, py, pdir;
 
     if (!vp || !engine || !engine->level_loaded) return;
     memset(&vp->last_dgn_render_receipt, 0,
@@ -183,6 +179,9 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
                 blocked_plan->first_missing_material_id;
             vp->last_dgn_render_receipt.first_missing_material_kind =
                 blocked_plan->first_missing_material_kind;
+            vp->last_dgn_render_receipt.no_draw_structure2_source =
+                blocked_plan->status ==
+                NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
             vp->last_dgn_render_receipt.blocked = 1;
             return;
         }
@@ -295,54 +294,10 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         return;
     }
 
-    vp->last_dgn_render_receipt.fallback_visuals_permitted = 1;
-
-    /* Render squares in view cone: D0 (closest) to D3 (farthest) */
-    for (d = 0; d < NEXUS_VIEW_DISTANCE; d++) {
-        int cx = px + dir_dx[pdir] * d;
-        int cy = py + dir_dy[pdir] * d;
-        int lx, ly, rx, ry;
-        int sq, sq_l, sq_r;
-
-        /* Center, left, right columns */
-        lx = cx + left_dx[pdir];
-        ly = cy + left_dy[pdir];
-        rx = cx - left_dx[pdir];
-        ry = cy - left_dy[pdir];
-
-        /* Get square types */
-        sq   = nexus_v1_level_get_square(&engine->current_level, cx, cy);
-        sq_l = nexus_v1_level_get_square(&engine->current_level, lx, ly);
-        sq_r = nexus_v1_level_get_square(&engine->current_level, rx, ry);
-
-        /* Draw floor/ceiling for open squares */
-        if (sq != 0) {
-            nexus_draw_floor(&vp->fb, &vp->cam, (float)cx, (float)cy, 8, 9);
-        }
-        if (sq_l != 0) {
-            nexus_draw_floor(&vp->fb, &vp->cam, (float)lx, (float)ly, 8, 9);
-        }
-        if (sq_r != 0) {
-            nexus_draw_floor(&vp->fb, &vp->cam, (float)rx, (float)ry, 8, 9);
-        }
-
-        /* Draw walls where square is wall (type 0) or at boundaries */
-        if (sq == 0) {
-            /* Solid wall — draw front face */
-            int wall_face = (pdir + 2) & 3; /* facing toward party */
-            nexus_draw_wall_simple(&vp->fb, &vp->cam, (float)cx, (float)cy, wall_face, 5 + (d % 3));
-        } else {
-            /* Open square — draw side walls if neighbors are walls */
-            if (sq_l == 0) {
-                int side = (pdir + 3) & 3; /* left wall */
-                nexus_draw_wall_simple(&vp->fb, &vp->cam, (float)cx, (float)cy, side, 6);
-            }
-            if (sq_r == 0) {
-                int side = (pdir + 1) & 3; /* right wall */
-                nexus_draw_wall_simple(&vp->fb, &vp->cam, (float)cx, (float)cy, side, 6);
-            }
-        }
-    }
+    /* A non-DMWeb level is not a Nexus runtime scene. Do not draw the old
+     * procedural grid when authoritative Saturn DGN parsing failed. */
+    vp->last_dgn_render_receipt.blocked = 1;
+    vp->last_dgn_render_receipt.fallback_visuals_permitted = 0;
 }
 
 void nexus_viewport_to_rgba(const Nexus_Viewport *vp, uint32_t *rgba_out) {
@@ -387,6 +342,8 @@ int nexus_viewport_dgn_host_route_receipt(
     out_receipt->handoff_status = handoff.status;
     out_receipt->fallback_visuals_permitted =
         handoff.fallback_visuals_permitted || render->fallback_visuals_permitted;
+    out_receipt->no_draw_structure2_source =
+        render->no_draw_structure2_source ? 1 : 0;
     out_receipt->level = engine->game.current_level;
     out_receipt->party_x = render->party_x;
     out_receipt->party_y = render->party_y;
@@ -422,6 +379,11 @@ int nexus_viewport_dgn_host_route_receipt(
         handoff.blocks_real_dgn_mesh_render ||
         handoff.fallback_visuals_permitted) {
         out_receipt->status = NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_HANDOFF;
+        return 0;
+    }
+    if (render->no_draw_structure2_source) {
+        out_receipt->status =
+            NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE2_SOURCE;
         return 0;
     }
     if (!render->attempted || !render->used_real_dgn_route) {
@@ -461,6 +423,8 @@ const char *nexus_viewport_dgn_host_route_status_name(
         return "blocked-materials";
     case NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_RASTER:
         return "blocked-raster";
+    case NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE2_SOURCE:
+        return "blocked-structure2-source";
     case NEXUS_V1_DGN_HOST_ROUTE_MISSING:
     default:
         return "missing";

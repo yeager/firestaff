@@ -176,6 +176,31 @@ const unsigned char G9013_auc_VgaPaletteSpecial_Compat[VGA_PALETTE_PC34_SPECIAL_
                 {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
                 {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
                 {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {255, 255, 255}
+        },
+        /* CSB C001 PRESENTS. ReDMCSB TITLE.C F0437:113-132 begins with
+         * M501_RGB_DARK_BLUE for every entry and changes only index 15 to
+         * white after the C424 PRESENTS blit. */
+        {
+                {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109},
+                {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109},
+                {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109},
+                {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109}, {255, 255, 255}
+        },
+        /* CSB C001 CHAOS. ReDMCSB TITLE.C F0437:190-199 changes only the
+         * gold artwork indices; all other slots retain the dark-blue base. */
+        {
+                {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109}, {188, 156,  60},
+                {156,  92,  60}, {220, 188,  60}, {188,  92,  60}, {  0,   0, 109},
+                {255, 255,  60}, {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109},
+                {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109}, {255,   0,   0}
+        },
+        /* CSB C001 STRIKES BACK. TITLE.C F0437:239-249 changes CHAOS slot
+         * 10 to black and slot 12 to red after the source C426 blit. */
+        {
+                {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109}, {188, 156,  60},
+                {156,  92,  60}, {220, 188,  60}, {188,  92,  60}, {  0,   0, 109},
+                {255, 255,  60}, {  0,   0, 109}, {  0,   0,   0}, {  0,   0, 109},
+                {255,   0,   0}, {  0,   0, 109}, {  0,   0, 109}, {255,   0,   0}
         }
 };
 

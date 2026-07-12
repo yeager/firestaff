@@ -80,6 +80,12 @@
  * rather than silently growing the heap. */
 #define THERON_V1_SRM_BODY_DECODE_MAX_BYTES 4096u
 
+/* Maximum compressed Save Disk member accepted by the opaque transfer path.
+ * This is a file-I/O work bound only; it does not claim a real body size or
+ * field layout.  The member must still inflate and trailer-authenticate
+ * within THERON_V1_SRM_BODY_DECODE_MAX_BYTES before it can be copied. */
+#define THERON_V1_SRM_CONTAINER_TRANSFER_MAX_BYTES 65536u
+
 /* Retained change runs in an authenticated two-corpus body comparison.
  * The receipt is deliberately bounded: it profiles byte topology without
  * retaining or assigning semantics to a whole unknown Save Disk body. */
@@ -319,6 +325,23 @@ typedef struct {
                                                  * verified gzip body inflate */
 } Theron_V1SrmEnvelopeReceipt;
 
+/* Receipt for a lossless Save Disk container transfer.  This is the only
+ * original-SRM write path currently supported: it preserves an authenticated
+ * gzip member byte-for-byte and deliberately does not write a generated
+ * body.  `body_kind` may be UNSUPPORTED, which is the expected state for a
+ * real Sphenx/Greatstone body whose field layout is still unknown. */
+typedef struct {
+    Theron_V1SrmPayloadProbeStatus validation_status;
+    Theron_V1SrmEnvelopeKind body_kind;
+    uint64_t source_size;
+    uint64_t destination_size;
+    uint32_t source_checksum32;
+    uint32_t destination_checksum32;
+    int copied;
+    int byte_exact;
+    Theron_V1SrmBodyEvidence body_evidence;
+} Theron_V1SrmOpaqueTransferReceipt;
+
 /* Decode one raw .srm buffer (a gzip-wrapped deflate stream with the
  * Firestaff readiness envelope) and write a single envelope receipt.
  *
@@ -354,6 +377,23 @@ Theron_V1SrmEnvelopeKind theron_v1_srm_decode_path(
     uint8_t *scratch,
     size_t scratch_capacity,
     Theron_V1SrmEnvelopeReceipt *out_envelope);
+
+/* Validate and atomically copy one original `.srm` gzip member without
+ * interpreting or generating its custom body.  The source must be a regular
+ * file no larger than THERON_V1_SRM_CONTAINER_TRANSFER_MAX_BYTES and must
+ * pass the existing complete-member gzip/trailer validation.  The complete
+ * container is verified in a private exclusive staging file before an atomic
+ * no-replace publication, so corruption or destination conflicts leave an
+ * existing destination untouched.  Destination must not already exist.  On
+ * success it contains the exact original bytes;
+ * this never changes Continue selection, runtime state, or Track 02's
+ * no-generated-presentation gate. */
+int theron_v1_srm_transfer_opaque_path(
+    const char *source_path,
+    const char *destination_path,
+    uint8_t *scratch,
+    size_t scratch_capacity,
+    Theron_V1SrmOpaqueTransferReceipt *out_receipt);
 
 /* Group authenticated body evidence from up to the five Save Disk slots.
  * `envelopes` may include NONE/UNSUPPORTED/decoded receipts; only receipts

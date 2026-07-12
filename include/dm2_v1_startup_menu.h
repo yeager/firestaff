@@ -227,6 +227,12 @@ typedef struct DM2_V1_StartupRuntimeHandoffReceipt {
      * DM2_SHOW_MENU_SCREEN. */
     int music_cue;
     int music_loop;
+    int music_asset_resolved;
+    int music_request_queued;
+    int music_queue_result;
+    int music_schedule_ready;
+    uint32_t music_loop_duration_us;
+    uint32_t music_schedule_event_count;
     int music_cue_played;
     int show_menu_screen_after_music;
     int initialize_v2_runtime;

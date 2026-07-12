@@ -29,6 +29,7 @@
 #include "dm2_v1_shop.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
+#include "dm2_v1_sound.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "asset_find_by_hash.h"
 #include <stdio.h>
@@ -669,6 +670,7 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     profile->dungeon_size = 0U;
     profile->assets_verified = 0;
     profile->use_dm2_filenames = 0;
+    dm2_v1_sound_bind_verified_music_assets(NULL, 0);
 
     /* Source-lock: SKULL.ASM T560 owns the DM2 data load. Firestaff
      * discovers user-supplied files by hash first so launch does not
@@ -773,6 +775,8 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
 
     /* Determine if we found both required files */
     if (profile->graphics_path[0] && profile->dungeon_path[0]) {
+        dm2_v1_sound_bind_verified_music_assets(profile->asset_root,
+                                                profile->assets_verified);
         return 0;  /* success */
     }
     return -1;  /* missing assets */
@@ -955,12 +959,11 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
                 if (dat) {
                     size_t got = fread(dat, 1, (size_t)fsize, f);
                     if (dm2_v1_dungeon_load(dd, dat, (int)got) != 0 ||
-                        !dm2_v1_dungeon_validate_record_graph(dd)) {
-                        /* skproject c_map.cpp/c_record.cpp require the
-                         * complete ground-stack and DB-pool graph.  Do not
-                         * turn a hash-verified map-byte slice into a partial
-                         * DM2 runtime while the PC G1 ownership block is
-                         * still undecoded. */
+                        !dm2_v1_dungeon_validate_record_pools(dd)) {
+                        /* skproject READ_DUNGEON_STRUCTURE owns the c_record
+                         * pool transform before map use. G1 GenericRecord::w0
+                         * links remain separately gated by the stricter graph
+                         * validator, so map boot never guesses a chain. */
                         dm2_v1_dungeon_free(dd);
                         free(dat);
                         fclose(f);
@@ -3715,79 +3718,6 @@ static int dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
     return 1;
 }
 
-static int dm2_v1_boot_creature_animation_semantics_add(
-    DM2_V1_BootProfile *profile,
-    int creature,
-    int max_frame_count,
-    uint32_t *io_hash,
-    uint32_t *io_byte_count,
-    uint32_t *io_nonzero_byte_count,
-    uint32_t *io_sequence_ref_count,
-    uint32_t *io_frame_ref_count)
-{
-    typedef struct {
-        int type;
-        int field;
-    } DM2_V1_CreatureAnimRawSpec;
-    static const DM2_V1_CreatureAnimRawSpec k_specs[] = {
-        { DM2_GDAT_ENTRY_TYPE_RAW8, DM2_GDAT_CREATURE_ANIM_ATTRIBUTION },
-        { DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE },
-        { DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_CREATURE_ANIM_FRAME_SEQUENCE },
-    };
-    DM2_V1_BootGraphicsDat *gfx;
-    int present_count = 0;
-
-    if (!profile || !profile->graphics_dat || !io_hash || !io_byte_count ||
-        !io_nonzero_byte_count || !io_sequence_ref_count ||
-        !io_frame_ref_count) {
-        return 0;
-    }
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    for (size_t spec_i = 0; spec_i < sizeof(k_specs) / sizeof(k_specs[0]);
-         ++spec_i) {
-        const uint8_t *raw;
-        size_t raw_size = 0;
-        raw = dm2_v1_asset_load_typed_sized(&gfx->loader,
-                                            DM2_GDAT_CATEGORY_CREATURES,
-                                            creature,
-                                            k_specs[spec_i].type,
-                                            k_specs[spec_i].field,
-                                            &raw_size);
-        if (!raw || raw_size == 0 || raw_size > UINT32_MAX) {
-            continue;
-        }
-        ++present_count;
-        *io_hash = dm2_v1_boot_packaged_capture_hash_step(
-            *io_hash ? *io_hash : 0x32434153u,
-            (uint32_t)((creature << 16) |
-                       (k_specs[spec_i].type << 8) |
-                       k_specs[spec_i].field));
-        *io_hash = dm2_v1_boot_packaged_capture_hash_step(
-            *io_hash,
-            (uint32_t)raw_size);
-        *io_byte_count += (uint32_t)raw_size;
-        for (size_t i = 0; i < raw_size; ++i) {
-            uint8_t value = raw[i];
-            *io_hash =
-                dm2_v1_boot_packaged_capture_hash_step(*io_hash, value);
-            if (value != 0u) {
-                ++(*io_nonzero_byte_count);
-            }
-            if (k_specs[spec_i].field ==
-                    DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE &&
-                value != 0xffu) {
-                ++(*io_sequence_ref_count);
-            }
-            if (k_specs[spec_i].field ==
-                    DM2_GDAT_CREATURE_ANIM_FRAME_SEQUENCE &&
-                max_frame_count > 0 && value < (uint8_t)max_frame_count) {
-                ++(*io_frame_ref_count);
-            }
-        }
-    }
-    return present_count > 0;
-}
-
 static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
     DM2_V1_BootProfile *profile,
     int *out_portrait_count,
@@ -4489,9 +4419,6 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
     uint32_t *out_byte_count,
     uint32_t *out_group_count,
     uint32_t *out_entry_count,
-    uint32_t *out_pv1_byte_count,
-    uint32_t *out_pv5_byte_count,
-    uint32_t *out_command_byte_count,
     uint32_t *out_tail_byte_count)
 {
     DM2_V1_BootGraphicsDat *gfx;
@@ -4500,23 +4427,16 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
     uint32_t hash = 0x32494132u;
     uint32_t group_count;
     uint32_t entry_count = 0u;
-    uint32_t pv1_byte_count;
-    uint32_t pv5_byte_count;
-    uint32_t command_byte_count;
     size_t min_payload;
 
     if (out_hash) *out_hash = 0u;
     if (out_byte_count) *out_byte_count = 0u;
     if (out_group_count) *out_group_count = 0u;
     if (out_entry_count) *out_entry_count = 0u;
-    if (out_pv1_byte_count) *out_pv1_byte_count = 0u;
-    if (out_pv5_byte_count) *out_pv5_byte_count = 0u;
-    if (out_command_byte_count) *out_command_byte_count = 0u;
     if (out_tail_byte_count) *out_tail_byte_count = 0u;
     if (!profile || !profile->graphics_dat || !out_hash ||
         !out_byte_count || !out_group_count || !out_entry_count ||
-        !out_pv1_byte_count || !out_pv5_byte_count ||
-        !out_command_byte_count || !out_tail_byte_count) {
+        !out_tail_byte_count) {
         return 0;
     }
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
@@ -4546,26 +4466,20 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
     if (raw_size < min_payload) {
         return 0;
     }
-    pv1_byte_count = entry_count;
-    pv5_byte_count = entry_count;
-    command_byte_count = (uint32_t)(raw_size - min_payload);
     for (size_t i = 0; i < raw_size; ++i) {
         hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
     }
     hash = dm2_v1_boot_packaged_capture_hash_step(hash, group_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(hash, entry_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash, pv1_byte_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash, pv5_byte_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash, command_byte_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash,
+        (uint32_t)(raw_size - min_payload));
 
     *out_hash = hash;
     *out_byte_count = (uint32_t)raw_size;
     *out_group_count = group_count;
     *out_entry_count = entry_count;
-    *out_pv1_byte_count = pv1_byte_count;
-    *out_pv5_byte_count = pv5_byte_count;
-    *out_command_byte_count = command_byte_count;
-    *out_tail_byte_count = command_byte_count;
+    *out_tail_byte_count = (uint32_t)(raw_size - min_payload);
     return entry_count > 0u;
 }
 
@@ -5775,7 +5689,6 @@ int dm2_v1_boot_runtime_render_frame(
         }
     }
     if (out_receipt) {
-        DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
         out_receipt->render_result = rendered;
         out_receipt->startup_render_ready =
             rendered == 0 &&
@@ -5864,13 +5777,6 @@ int dm2_v1_boot_runtime_render_frame(
             dm2_v1_runtime_last_asset_projectile_count();
         out_receipt->runtime_render_fallback_projectile_count =
             dm2_v1_runtime_last_fallback_projectile_count();
-        memset(&frame_ownership, 0, sizeof(frame_ownership));
-        if (dm2_v1_runtime_last_frame_ownership(&frame_ownership)) {
-            out_receipt->runtime_render_scene_consumed_mask =
-                frame_ownership.gdat_scene_consumed_mask;
-            out_receipt->runtime_render_scene_consumption_hash =
-                frame_ownership.gdat_scene_consumption_hash;
-        }
         out_receipt->runtime_render_no_core_fallbacks =
             out_receipt->runtime_render_asset_floor_ceiling_count >= 2 &&
             out_receipt->runtime_render_fallback_floor_ceiling_count == 0 &&
@@ -6063,21 +5969,7 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             (uint32_t)frame_receipt.runtime_render_asset_projectile_count);
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
-            frame_receipt.runtime_render_scene_consumed_mask);
-        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
-            combined_hash,
-            frame_receipt.runtime_render_scene_consumption_hash);
-        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
-            combined_hash,
             (uint32_t)frame_receipt.runtime.party_dir);
-        out_receipt->runtime_scene_consumed_mask |=
-            frame_receipt.runtime_render_scene_consumed_mask;
-        out_receipt->runtime_scene_consumption_hash =
-            dm2_v1_boot_packaged_capture_hash_step(
-                out_receipt->runtime_scene_consumption_hash
-                    ? out_receipt->runtime_scene_consumption_hash
-                    : 0x32475343u,
-                frame_receipt.runtime_render_scene_consumption_hash);
         out_receipt->combined_pixel_count +=
             frame_receipt.runtime_hud_frame_pixel_count;
         if (out_receipt->render_sample_count == 1) {
@@ -6342,9 +6234,6 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->interface_action_table_byte_count,
             &out_receipt->interface_action_group_count,
             &out_receipt->interface_action_entry_count,
-            &out_receipt->interface_action_pv1_byte_count,
-            &out_receipt->interface_action_pv5_byte_count,
-            &out_receipt->interface_action_command_byte_count,
             &out_receipt->interface_action_tail_byte_count);
     out_receipt->interface_font_table_ready =
         dm2_v1_boot_runtime_interface_font_table_receipt(
@@ -6386,15 +6275,6 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
             out_receipt->interface_action_entry_count);
-        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
-            combined_hash,
-            out_receipt->interface_action_pv1_byte_count);
-        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
-            combined_hash,
-            out_receipt->interface_action_pv5_byte_count);
-        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
-            combined_hash,
-            out_receipt->interface_action_command_byte_count);
     }
     if (out_receipt->interface_font_table_ready) {
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -6414,158 +6294,6 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         combined_hash = dm2_v1_boot_packaged_capture_hash_step(
             combined_hash,
             out_receipt->interface_palette_pal16_color_count);
-    }
-    if (out_receipt->raw_gdat_runtime_hud_capture_ready) {
-        out_receipt->runtime_gdat_breadth_mask |=
-            DM2_V1_RUNTIME_GDAT_BREADTH_RAW_HUD;
-        out_receipt->runtime_gdat_breadth_raw_byte_count +=
-            out_receipt->raw_gdat_runtime_portrait_byte_count +
-            out_receipt->raw_gdat_runtime_core_byte_count;
-    }
-    if (out_receipt->decoded_gdat_runtime_hud_capture_ready) {
-        out_receipt->runtime_gdat_breadth_mask |=
-            DM2_V1_RUNTIME_GDAT_BREADTH_DECODED_HUD;
-        out_receipt->runtime_gdat_breadth_decoded_pixel_count +=
-            out_receipt->decoded_gdat_runtime_portrait_pixel_count +
-            out_receipt->decoded_gdat_runtime_core_pixel_count;
-    }
-    if (out_receipt->teleporter_map_chip_ready) {
-        out_receipt->runtime_gdat_breadth_mask |=
-            DM2_V1_RUNTIME_GDAT_BREADTH_TELEPORTER_MAP_CHIP;
-        out_receipt->runtime_gdat_breadth_raw_byte_count +=
-            out_receipt->teleporter_map_chip_raw_byte_count;
-        out_receipt->runtime_gdat_breadth_decoded_pixel_count +=
-            out_receipt->teleporter_map_chip_decoded_pixel_count;
-    }
-    if (out_receipt->dungeon_map_chip_graphicsset_ready) {
-        out_receipt->runtime_gdat_breadth_mask |=
-            DM2_V1_RUNTIME_GDAT_BREADTH_GRAPHICSSET_MAP_CHIP;
-        out_receipt->runtime_gdat_breadth_raw_byte_count +=
-            out_receipt->dungeon_map_chip_graphicsset_raw_byte_count;
-        out_receipt->runtime_gdat_breadth_decoded_pixel_count +=
-            out_receipt->dungeon_map_chip_graphicsset_decoded_pixel_count;
-    }
-    if (out_receipt->dungeon_map_chip_wall_ready) {
-        out_receipt->runtime_gdat_breadth_mask |=
-            DM2_V1_RUNTIME_GDAT_BREADTH_WALL_MAP_CHIP;
-        out_receipt->runtime_gdat_breadth_raw_byte_count +=
-            out_receipt->dungeon_map_chip_wall_raw_byte_count;
-        out_receipt->runtime_gdat_breadth_decoded_pixel_count +=
-            out_receipt->dungeon_map_chip_wall_decoded_pixel_count;
-    }
-    if (out_receipt->dungeon_map_chip_floor_ready) {
-        out_receipt->runtime_gdat_breadth_mask |=
-            DM2_V1_RUNTIME_GDAT_BREADTH_FLOOR_MAP_CHIP;
-        out_receipt->runtime_gdat_breadth_raw_byte_count +=
-            out_receipt->dungeon_map_chip_floor_raw_byte_count;
-        out_receipt->runtime_gdat_breadth_decoded_pixel_count +=
-            out_receipt->dungeon_map_chip_floor_decoded_pixel_count;
-    }
-    if (out_receipt->wall_gfx_image_offsets_ready) {
-        out_receipt->runtime_gdat_breadth_mask |=
-            DM2_V1_RUNTIME_GDAT_BREADTH_WALL_IMAGE_OFFSETS;
-    }
-    if (out_receipt->interface_action_table_ready) {
-        out_receipt->runtime_gdat_breadth_mask |=
-            DM2_V1_RUNTIME_GDAT_BREADTH_INTERFACE_ACTIONS;
-        out_receipt->runtime_gdat_breadth_raw_byte_count +=
-            out_receipt->interface_action_table_byte_count;
-    }
-    if (out_receipt->interface_font_table_ready) {
-        out_receipt->runtime_gdat_breadth_mask |=
-            DM2_V1_RUNTIME_GDAT_BREADTH_INTERFACE_FONT;
-        out_receipt->runtime_gdat_breadth_raw_byte_count +=
-            out_receipt->interface_font_table_byte_count;
-    }
-    if (out_receipt->interface_palette_ready) {
-        out_receipt->runtime_gdat_breadth_mask |=
-            DM2_V1_RUNTIME_GDAT_BREADTH_INTERFACE_PALETTE;
-        out_receipt->runtime_gdat_breadth_raw_byte_count +=
-            out_receipt->interface_palette_irgb_byte_count +
-            out_receipt->interface_palette_pal16_byte_count;
-    }
-    if (out_receipt->interface_rect14_ready &&
-        out_receipt->interface_rect14_placement_plan_ready) {
-        out_receipt->runtime_gdat_breadth_mask |=
-            DM2_V1_RUNTIME_GDAT_BREADTH_INTERFACE_RECT14;
-        out_receipt->runtime_gdat_breadth_raw_byte_count +=
-            out_receipt->interface_rect14_byte_count;
-    }
-    out_receipt->runtime_gdat_breadth_hash = 0x32425244u;
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->runtime_gdat_breadth_mask);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->raw_gdat_runtime_portrait_hash);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->raw_gdat_runtime_core_hash);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->decoded_gdat_runtime_portrait_hash);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->decoded_gdat_runtime_core_hash);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->teleporter_map_chip_raw_hash);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->dungeon_map_chip_graphicsset_raw_hash);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->dungeon_map_chip_wall_raw_hash);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->dungeon_map_chip_floor_raw_hash);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->wall_gfx_image_offsets_hash);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->interface_action_table_hash);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->interface_font_table_hash);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->interface_palette_hash);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->runtime_gdat_breadth_raw_byte_count);
-    out_receipt->runtime_gdat_breadth_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->runtime_gdat_breadth_hash,
-            out_receipt->runtime_gdat_breadth_decoded_pixel_count);
-    out_receipt->runtime_gdat_breadth_receipt_ready =
-        (out_receipt->runtime_gdat_breadth_mask &
-         DM2_V1_RUNTIME_GDAT_BREADTH_REQUIRED_MASK) ==
-            DM2_V1_RUNTIME_GDAT_BREADTH_REQUIRED_MASK &&
-        out_receipt->runtime_gdat_breadth_hash != 0u &&
-        out_receipt->runtime_gdat_breadth_raw_byte_count > 0u &&
-        out_receipt->runtime_gdat_breadth_decoded_pixel_count > 0u;
-    if (out_receipt->runtime_gdat_breadth_receipt_ready) {
-        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
-            combined_hash,
-            out_receipt->runtime_gdat_breadth_hash);
-        combined_hash = dm2_v1_boot_packaged_capture_hash_step(
-            combined_hash,
-            out_receipt->runtime_gdat_breadth_mask);
     }
     out_receipt->combined_frame_hash = combined_hash;
     out_receipt->real_gdat_runtime_hud_breadth_ready =
@@ -6587,7 +6315,6 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         out_receipt->interface_action_table_ready &&
         out_receipt->interface_font_table_ready &&
         out_receipt->interface_palette_ready &&
-        out_receipt->runtime_gdat_breadth_receipt_ready &&
         out_receipt->combined_frame_hash != 0u &&
         out_receipt->combined_pixel_count == 4u * 320u * 200u;
     out_receipt->valid =
@@ -6737,106 +6464,47 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
                 creature,
                 DM2_GDAT_ENTRY_TYPE_RAW8,
                 DM2_GDAT_CREATURE_ANIM_ATTRIBUTION,
-                &out_receipt->animation_attribution_hash,
-                &out_receipt->animation_attribution_byte_count)) {
+                &out_receipt->animation_table_hash,
+                &out_receipt->animation_table_byte_count)) {
             ++out_receipt->animation_attribution_count;
             ++table_count;
-            out_receipt->animation_table_field_mask |= 0x01u;
         }
-        (void)dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
-            profile,
-            DM2_GDAT_CATEGORY_CREATURES,
-            creature,
-            DM2_GDAT_ENTRY_TYPE_RAW8,
-            DM2_GDAT_CREATURE_ANIM_ATTRIBUTION,
-            &out_receipt->animation_table_hash,
-            &out_receipt->animation_table_byte_count);
         if (dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
                 profile,
                 DM2_GDAT_CATEGORY_CREATURES,
                 creature,
                 DM2_GDAT_ENTRY_TYPE_RAW7,
                 DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE,
-                &out_receipt->animation_info_sequence_hash,
-                &out_receipt->animation_info_sequence_byte_count)) {
+                &out_receipt->animation_table_hash,
+                &out_receipt->animation_table_byte_count)) {
             ++out_receipt->animation_info_sequence_count;
             ++table_count;
-            out_receipt->animation_table_field_mask |= 0x02u;
         }
-        (void)dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
-            profile,
-            DM2_GDAT_CATEGORY_CREATURES,
-            creature,
-            DM2_GDAT_ENTRY_TYPE_RAW7,
-            DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE,
-            &out_receipt->animation_table_hash,
-            &out_receipt->animation_table_byte_count);
         if (dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
                 profile,
                 DM2_GDAT_CATEGORY_CREATURES,
                 creature,
                 DM2_GDAT_ENTRY_TYPE_RAW7,
                 DM2_GDAT_CREATURE_ANIM_FRAME_SEQUENCE,
-                &out_receipt->animation_frame_sequence_hash,
-                &out_receipt->animation_frame_sequence_byte_count)) {
+                &out_receipt->animation_table_hash,
+                &out_receipt->animation_table_byte_count)) {
             ++out_receipt->animation_frame_sequence_count;
             ++table_count;
-            out_receipt->animation_table_field_mask |= 0x04u;
         }
-        (void)dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
-            profile,
-            DM2_GDAT_CATEGORY_CREATURES,
-            creature,
-            DM2_GDAT_ENTRY_TYPE_RAW7,
-            DM2_GDAT_CREATURE_ANIM_FRAME_SEQUENCE,
-            &out_receipt->animation_table_hash,
-            &out_receipt->animation_table_byte_count);
         if (table_count > 0) {
             out_receipt->animation_table_hash =
                 dm2_v1_boot_packaged_capture_hash_step(
                     out_receipt->animation_table_hash,
                     (uint32_t)((creature << 8) | table_count));
-            if (dm2_v1_boot_creature_animation_semantics_add(
-                    profile,
-                    creature,
-                    out_receipt->max_frame_count,
-                    &out_receipt->animation_semantic_hash,
-                    &out_receipt->animation_semantic_byte_count,
-                    &out_receipt->animation_semantic_nonzero_byte_count,
-                    &out_receipt->animation_semantic_sequence_ref_count,
-                    &out_receipt->animation_semantic_frame_ref_count)) {
-                ++out_receipt->animation_semantic_creature_count;
-            }
         } else {
             out_receipt->animation_table_hash = before_hash;
             out_receipt->animation_table_byte_count = before_count;
         }
     }
-    out_receipt->animation_attribution_ready =
-        out_receipt->animation_attribution_count > 0 &&
-        out_receipt->animation_attribution_hash != 0u &&
-        out_receipt->animation_attribution_byte_count > 0u;
-    out_receipt->animation_info_sequence_ready =
-        out_receipt->animation_info_sequence_count > 0 &&
-        out_receipt->animation_info_sequence_hash != 0u &&
-        out_receipt->animation_info_sequence_byte_count > 0u;
-    out_receipt->animation_frame_sequence_ready =
-        out_receipt->animation_frame_sequence_count > 0 &&
-        out_receipt->animation_frame_sequence_hash != 0u &&
-        out_receipt->animation_frame_sequence_byte_count > 0u;
-    out_receipt->animation_semantic_ready =
-        out_receipt->animation_semantic_hash != 0u &&
-        out_receipt->animation_semantic_byte_count > 0u &&
-        out_receipt->animation_semantic_nonzero_byte_count > 0u &&
-        out_receipt->animation_semantic_sequence_ref_count > 0u &&
-        out_receipt->animation_semantic_frame_ref_count > 0u &&
-        out_receipt->animation_semantic_creature_count > 0u;
     out_receipt->animation_table_ready =
-        (out_receipt->animation_table_field_mask & 0x07u) == 0x07u &&
-        out_receipt->animation_attribution_ready &&
-        out_receipt->animation_info_sequence_ready &&
-        out_receipt->animation_frame_sequence_ready &&
-        out_receipt->animation_semantic_ready &&
+        out_receipt->animation_attribution_count > 0 &&
+        out_receipt->animation_info_sequence_count > 0 &&
+        out_receipt->animation_frame_sequence_count > 0 &&
         out_receipt->animation_table_hash != 0u &&
         out_receipt->animation_table_byte_count > 0u;
     if (out_receipt->min_frame_count == 9999) {
@@ -6887,9 +6555,6 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     uint32_t hash = 0x32414353u;
     const char *save_corpus_root = NULL;
     DM2_SKSaveCorpusReceipt save_corpus;
-    uint8_t save_payload[DM2_SESSION_MAX_SIZE];
-    size_t save_payload_size = 0u;
-    DM2_V1_SaveCandidate save_candidate;
 
     dm2_v1_boot_complete_support_receipt_init(out_receipt);
     if (!profile || !out_receipt ||
@@ -6919,8 +6584,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     out_receipt->save_corpus_valid_candidate_count =
         (int)save_corpus.has_last_session +
         (int)save_corpus.has_last_session_backup +
-        (int)save_corpus.valid_slot_count +
-        (int)save_corpus.extra_valid_candidate_count;
+        (int)save_corpus.valid_slot_count;
     out_receipt->save_corpus_importable_candidate_count =
         (int)save_corpus.importable_candidate_count;
     out_receipt->save_corpus_rejected_candidate_count =
@@ -6929,71 +6593,8 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     out_receipt->save_corpus_original_candidate_count =
         (int)save_corpus.original_envelope_candidate_count +
         (int)save_corpus.original_raw_candidate_count;
-    out_receipt->save_corpus_recursive_candidate_count =
-        (int)save_corpus.recursive_candidate_count;
-    out_receipt->save_corpus_recursive_importable_candidate_count =
-        (int)save_corpus.recursive_importable_candidate_count;
-    out_receipt->save_corpus_alternate_name_candidate_count =
-        (int)save_corpus.alternate_name_candidate_count;
-    out_receipt->save_corpus_recursive_scan_truncated =
-        (int)save_corpus.recursive_scan_truncated;
-    out_receipt->save_corpus_recursive_scan_depth_limit =
-        (int)save_corpus.recursive_scan_depth_limit;
-    out_receipt->save_corpus_recursive_scan_candidate_cap =
-        (int)save_corpus.recursive_scan_candidate_cap;
     out_receipt->save_corpus_valid_slot_mask =
         (unsigned int)save_corpus.valid_slot_mask;
-    out_receipt->save_corpus_importable_kind_mask =
-        save_corpus.importable_kind_mask;
-    out_receipt->save_corpus_importable_payload_hash =
-        save_corpus.importable_payload_hash;
-    out_receipt->save_corpus_import_promotion_ready =
-        out_receipt->save_corpus_scan_complete &&
-        out_receipt->save_corpus_importable_candidate_count == 0;
-    out_receipt->save_corpus_first_importable_kind = -1;
-    out_receipt->save_corpus_first_importable_payload_size = 0u;
-    out_receipt->save_corpus_first_importable_path[0] = '\0';
-    out_receipt->save_corpus_import_promotion_hash = 0x32434950u;
-    if (out_receipt->save_corpus_scan_complete &&
-        out_receipt->save_corpus_importable_candidate_count > 0 &&
-        dm2_v1_sksave_corpus_load_first_importable(
-            save_corpus_root,
-            save_payload,
-            sizeof(save_payload),
-            &save_payload_size,
-            &save_corpus) &&
-        dm2_v1_session_parse_save_candidate(&save_candidate,
-                                            save_payload,
-                                            save_payload_size) == 0) {
-        out_receipt->save_corpus_import_promotion_ready = 1;
-        out_receipt->save_corpus_first_importable_kind =
-            (int)save_candidate.kind;
-        out_receipt->save_corpus_first_importable_payload_size =
-            save_payload_size;
-        snprintf(out_receipt->save_corpus_first_importable_path,
-                 sizeof(out_receipt->save_corpus_first_importable_path),
-                 "%s", save_corpus.first_importable_path);
-    }
-    out_receipt->save_corpus_import_promotion_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->save_corpus_import_promotion_hash,
-            (uint32_t)out_receipt->save_corpus_import_promotion_ready);
-    out_receipt->save_corpus_import_promotion_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->save_corpus_import_promotion_hash,
-            (uint32_t)out_receipt->save_corpus_first_importable_kind);
-    out_receipt->save_corpus_import_promotion_hash =
-        dm2_v1_boot_packaged_capture_hash_step(
-            out_receipt->save_corpus_import_promotion_hash,
-            (uint32_t)out_receipt->save_corpus_first_importable_payload_size);
-    for (const char *p = out_receipt->save_corpus_first_importable_path;
-         p && *p;
-         ++p) {
-        out_receipt->save_corpus_import_promotion_hash =
-            dm2_v1_boot_packaged_capture_hash_step(
-                out_receipt->save_corpus_import_promotion_hash,
-                (uint32_t)(unsigned char)*p);
-    }
     out_receipt->save_corpus_hash = 0x32534353u;
     out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
         out_receipt->save_corpus_hash,
@@ -7012,34 +6613,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         (uint32_t)out_receipt->save_corpus_original_candidate_count);
     out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
         out_receipt->save_corpus_hash,
-        (uint32_t)out_receipt->save_corpus_recursive_candidate_count);
-    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
-        out_receipt->save_corpus_hash,
-        (uint32_t)out_receipt->save_corpus_recursive_importable_candidate_count);
-    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
-        out_receipt->save_corpus_hash,
-        (uint32_t)out_receipt->save_corpus_alternate_name_candidate_count);
-    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
-        out_receipt->save_corpus_hash,
-        (uint32_t)out_receipt->save_corpus_recursive_scan_truncated);
-    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
-        out_receipt->save_corpus_hash,
-        (uint32_t)out_receipt->save_corpus_recursive_scan_depth_limit);
-    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
-        out_receipt->save_corpus_hash,
-        (uint32_t)out_receipt->save_corpus_recursive_scan_candidate_cap);
-    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
-        out_receipt->save_corpus_hash,
         out_receipt->save_corpus_valid_slot_mask);
-    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
-        out_receipt->save_corpus_hash,
-        out_receipt->save_corpus_importable_kind_mask);
-    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
-        out_receipt->save_corpus_hash,
-        out_receipt->save_corpus_importable_payload_hash);
-    out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
-        out_receipt->save_corpus_hash,
-        out_receipt->save_corpus_import_promotion_hash);
 
     out_receipt->skproject_gdat_queries_ready =
         out_receipt->startup_visual.skproject_title_query_ready &&
@@ -7103,15 +6677,6 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     out_receipt->runtime_gdat_interface_placement_complete =
         out_receipt->runtime_hud.wall_gfx_image_offsets_ready &&
         out_receipt->runtime_hud.wall_gfx_image_offsets_hash != 0u &&
-        out_receipt->runtime_hud.interface_action_table_ready &&
-        out_receipt->runtime_hud.interface_action_group_count > 0u &&
-        out_receipt->runtime_hud.interface_action_entry_count > 0u &&
-        out_receipt->runtime_hud.interface_action_pv1_byte_count ==
-            out_receipt->runtime_hud.interface_action_entry_count &&
-        out_receipt->runtime_hud.interface_action_pv5_byte_count ==
-            out_receipt->runtime_hud.interface_action_entry_count &&
-        out_receipt->runtime_hud.interface_action_command_byte_count ==
-            out_receipt->runtime_hud.interface_action_tail_byte_count &&
         (!out_receipt->runtime_hud.interface_rect14_ready ||
          (out_receipt->runtime_hud.interface_rect14_stride == 14u &&
           out_receipt->runtime_hud.interface_rect14_row_count > 0u &&
@@ -7144,14 +6709,6 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->creature_atlas.raw_gdat_hash != 0u &&
         out_receipt->creature_atlas.decoded_gdat_hash != 0u &&
         out_receipt->creature_atlas.animation_table_ready &&
-        (out_receipt->creature_atlas.animation_table_field_mask & 0x07u) ==
-            0x07u &&
-        out_receipt->creature_atlas.animation_attribution_hash != 0u &&
-        out_receipt->creature_atlas.animation_info_sequence_hash != 0u &&
-        out_receipt->creature_atlas.animation_frame_sequence_hash != 0u &&
-        out_receipt->creature_atlas.animation_semantic_ready &&
-        out_receipt->creature_atlas.animation_semantic_hash != 0u &&
-        out_receipt->creature_atlas.animation_semantic_creature_count > 0u &&
         out_receipt->creature_atlas.frame_parity_hash != 0u;
     out_receipt->runtime_gdat_direction_breadth_complete =
         out_receipt->runtime_hud.render_sample_count == 4 &&
@@ -7160,18 +6717,6 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_hud.runtime_direction_mask == 0x0f &&
         out_receipt->runtime_hud.runtime_turn_count == 4 &&
         out_receipt->runtime_hud.unique_frame_hash_count > 0;
-    out_receipt->runtime_gdat_breadth_receipt_complete =
-        out_receipt->runtime_hud.runtime_gdat_breadth_receipt_ready &&
-        (out_receipt->runtime_hud.runtime_gdat_breadth_mask &
-         DM2_V1_RUNTIME_GDAT_BREADTH_REQUIRED_MASK) ==
-            DM2_V1_RUNTIME_GDAT_BREADTH_REQUIRED_MASK &&
-        out_receipt->runtime_hud.runtime_gdat_breadth_hash != 0u &&
-        out_receipt->runtime_hud.runtime_gdat_breadth_raw_byte_count > 0u &&
-        out_receipt->runtime_hud.runtime_gdat_breadth_decoded_pixel_count > 0u;
-    out_receipt->runtime_gdat_breadth_mask =
-        out_receipt->runtime_hud.runtime_gdat_breadth_mask;
-    out_receipt->runtime_gdat_breadth_hash =
-        out_receipt->runtime_hud.runtime_gdat_breadth_hash;
     out_receipt->no_fallback_title_or_runtime_visuals =
         out_receipt->startup_visual.no_fallback_title_blit &&
         out_receipt->runtime_hud.no_fallback_portraits &&
@@ -7229,12 +6774,6 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud.wall_gfx_image_offsets_present_mask);
     hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->runtime_hud.interface_action_table_hash);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->runtime_hud.interface_action_entry_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->runtime_hud.interface_action_command_byte_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud.interface_rect14_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud.interface_rect14_row_count);
@@ -7249,33 +6788,11 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->runtime_hud.interface_palette_pal16_color_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->runtime_gdat_breadth_mask);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->runtime_gdat_breadth_hash);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->creature_atlas.atlas_material_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->creature_atlas.frame_parity_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->creature_atlas.animation_table_field_mask);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->creature_atlas.animation_attribution_hash);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->creature_atlas.animation_info_sequence_hash);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->creature_atlas.animation_frame_sequence_hash);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->creature_atlas.animation_semantic_hash);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->creature_atlas.animation_semantic_sequence_ref_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->creature_atlas.animation_semantic_frame_ref_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->creature_atlas.animation_semantic_creature_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->save_corpus_hash);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->save_corpus_import_promotion_hash);
     out_receipt->complete_support_hash = hash;
 
     /* skproject/SKWIN T520/T560 consumes GDAT title/menu, HUD, and dungeon
@@ -7292,12 +6809,10 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_gdat_interface_placement_complete &&
         out_receipt->runtime_creature_atlas_complete &&
         out_receipt->runtime_gdat_direction_breadth_complete &&
-        out_receipt->runtime_gdat_breadth_receipt_complete &&
         out_receipt->no_fallback_title_or_runtime_visuals &&
         out_receipt->raw_gdat_capture_complete &&
         out_receipt->decoded_gdat_capture_complete &&
         out_receipt->save_corpus_scan_complete &&
-        out_receipt->save_corpus_import_promotion_ready &&
         out_receipt->complete_support_hash != 0u;
     out_receipt->valid = out_receipt->complete_support_ready;
     out_receipt->status_scope = "DM2";

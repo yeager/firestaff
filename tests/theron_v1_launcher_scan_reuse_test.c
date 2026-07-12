@@ -70,6 +70,16 @@ static int write_file(const char* path, const char* text) {
     return fclose(fp) == 0;
 }
 
+static int write_bytes(const char* path, const void* bytes, size_t size) {
+    FILE* fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (size > 0U && fwrite(bytes, 1U, size, fp) != size) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 int main(void) {
     static const char trackPayload[] =
         "Firestaff synthetic Theron launcher scan reuse fixture v1\n";
@@ -80,16 +90,20 @@ int main(void) {
     char looseDir[512];
     char trackPath[512];
     char extrasTrackPath[512];
+    char extrasCuePath[512];
+    char extrasAudioPath[512];
     char looseTrackPath[512];
     char trackMd5[M12_ASSET_MD5_CAPACITY];
     M12_AssetStatus status;
     M12_AssetStatus directRootStatus;
+    M12_AssetStatus directCueStatus;
     M12_AssetStatus specificTheronStatus;
     M12_AssetStatus looseDirStatus;
     M12_AssetStatusScanMetrics directRootMetrics;
     M12_AssetStatusScanMetrics looseDirMetrics;
     M12_AssetStatusScanMetrics firstMetrics;
     M12_AssetStatusScanMetrics refreshMetrics;
+    const FirestaffTheronMediaStatus* media;
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* required;
 
@@ -110,6 +124,21 @@ int main(void) {
     snprintf(extrasTrackPath, sizeof(extrasTrackPath), "%s/track02.bin", extrasJapanDir);
     check_int(write_file(extrasTrackPath, trackPayload),
               "synthetic Theron raw Track 02 fixture written");
+    snprintf(extrasAudioPath, sizeof(extrasAudioPath), "%s/track01.bin", extrasJapanDir);
+    {
+        unsigned char audio[2352] = {0};
+        check_int(write_bytes(extrasAudioPath, audio, sizeof(audio)),
+                  "synthetic Theron Track 01 CDDA fixture written");
+    }
+    snprintf(extrasCuePath, sizeof(extrasCuePath), "%s/original.cue", extrasJapanDir);
+    check_int(write_file(extrasCuePath,
+                         "FILE \"track01.bin\" BINARY\n"
+                         "  TRACK 01 AUDIO\n"
+                         "    INDEX 01 00:00:00\n"
+                         "FILE \"track02.bin\" BINARY\n"
+                         "  TRACK 02 MODE1/2352\n"
+                         "    INDEX 01 00:00:00\n"),
+              "strict paired Theron CUE fixture written");
     snprintf(looseDir, sizeof(looseDir), "%s/renamed-media", root);
     check_int(make_dir_if_needed(looseDir),
               "arbitrary renamed Theron media directory created");
@@ -146,10 +175,29 @@ int main(void) {
                   strcmp(required->matchedPath, extrasTrackPath) == 0 &&
                   strcmp(required->matchedHash, trackMd5) == 0,
               "Theron direct-launch scan propagates the raw Track 02 required marker");
+    media = M12_AssetStatus_GetTheronMediaStatus(&directRootStatus);
+    check_int(media && media->paired_track01_track02 &&
+                  strcmp(media->cue_path, extrasCuePath) == 0 &&
+                  strcmp(media->track01_path, extrasAudioPath) == 0 &&
+                  strcmp(media->track02_path, extrasTrackPath) == 0,
+              "Theron scanner records canonical CUE Track 01 and verified Track 02 paths");
+    check_int(!M12_AssetStatus_GetTheronTrack02LoaderReceipt(&directRootStatus)->valid,
+              "synthetic hash fixture cannot manufacture a Track02 IPL loader receipt");
+    check_int(strcmp(M12_AssetStatus_GetTheronLaunchMediaPath(&directRootStatus),
+                     extrasCuePath) == 0,
+              "Theron launch profile receives the strict paired CUE path");
     check_int(directRootMetrics.rootCount == 0U,
               "Theron direct-launch scan skips root-wide search-root construction");
     check_int(directRootMetrics.requiredHashLookups == 0U,
               "Theron direct-launch scan skips root-wide required-file hash lookups");
+
+    memset(&directCueStatus, 0, sizeof(directCueStatus));
+    M12_AssetStatus_ScanGame(&directCueStatus, extrasCuePath, "theron");
+    check_int(M12_AssetStatus_GameAvailable(&directCueStatus, "theron") == 1,
+              "Theron direct CUE scan accepts a canonical paired media file");
+    check_int(strcmp(M12_AssetStatus_GetTheronLaunchMediaPath(&directCueStatus),
+                     extrasCuePath) == 0,
+              "Theron direct CUE scan preserves CUE provenance for launch");
 
     memset(&specificTheronStatus, 0, sizeof(specificTheronStatus));
     M12_AssetStatus_ScanGame(&specificTheronStatus, theronDir, "theron");

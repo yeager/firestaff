@@ -1470,7 +1470,7 @@ static void nexus_v1_launcher_m12_finalize_startup_display(
     }
 }
 
-int nexus_v1_launcher_m12_startup_package_from_flags(
+int nexus_v1_launcher_m12_startup_package_from_data_gate(
     int supported,
     int data_ready,
     int version_ready,
@@ -1486,19 +1486,12 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
     out_receipt->supported = supported ? 1 : 0;
     out_receipt->data_ready = data_ready ? 1 : 0;
     out_receipt->version_ready = version_ready ? 1 : 0;
-    out_receipt->packaged_capture_expected = out_receipt->supported;
+    out_receipt->packaged_capture_expected = 0;
     out_receipt->startup_step_count = 7;
     out_receipt->boot_warning_frames = nexus_v1_boot_warning_frames();
     out_receipt->boot_start_ready_frames = nexus_v1_boot_start_ready_frames();
-    out_receipt->warning_surface_loaded = out_receipt->data_ready;
-    out_receipt->title_surface_loaded = out_receipt->data_ready;
-    out_receipt->gameover_surface_loaded = out_receipt->data_ready;
-    out_receipt->warning_capture_surface_ready =
-        out_receipt->data_ready && out_receipt->version_ready;
-    out_receipt->title_capture_surface_ready =
-        out_receipt->data_ready && out_receipt->version_ready;
-    out_receipt->gameover_capture_surface_ready =
-        out_receipt->data_ready && out_receipt->version_ready;
+    /* Scanner availability proves only that launch may be attempted. Surface
+     * ownership and every capture frame are runtime receipts, never flags. */
     out_receipt->saturn_warning_frame = out_receipt->warning_capture_frame;
     out_receipt->saturn_title_capture_frame =
         out_receipt->title_capture_frame;
@@ -1525,19 +1518,11 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
         nexus_v1_launcher_m12_finalize_startup_display(out_receipt);
         return 1;
     }
-    if (out_receipt->data_ready) {
-        out_receipt->startup_step_ready_count++;
-    }
-    if (out_receipt->version_ready) {
-        out_receipt->startup_step_ready_count++;
-    }
-    out_receipt->startup_menu_ready =
-        out_receipt->data_ready && out_receipt->version_ready;
-    out_receipt->full_start_graphics_ready =
-        out_receipt->packaged_capture_expected &&
-        out_receipt->startup_menu_ready;
-    out_receipt->startup_contract_ready =
-        out_receipt->full_start_graphics_ready;
+    if (out_receipt->data_ready) out_receipt->startup_step_ready_count++;
+    if (out_receipt->version_ready) out_receipt->startup_step_ready_count++;
+    out_receipt->startup_menu_ready = 0;
+    out_receipt->full_start_graphics_ready = 0;
+    out_receipt->startup_contract_ready = 0;
     out_receipt->saturn_timing_exact =
         nexus_v1_launcher_saturn_timing_exact(
             out_receipt->boot_warning_frames,
@@ -1548,16 +1533,9 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
             out_receipt->warning_capture_frame,
             out_receipt->title_capture_frame,
             out_receipt->gameover_capture_frame);
-    out_receipt->packaged_capture_ready =
-        out_receipt->startup_contract_ready &&
-        out_receipt->saturn_timing_exact &&
-        out_receipt->saturn_capture_frames_exact;
-    out_receipt->full_start_package_receipt_ready =
-        out_receipt->packaged_capture_ready &&
-        out_receipt->saturn_timing_exact &&
-        out_receipt->saturn_capture_frames_exact;
-    out_receipt->host_display_caller_expected =
-        out_receipt->full_start_package_receipt_ready;
+    out_receipt->packaged_capture_ready = 0;
+    out_receipt->full_start_package_receipt_ready = 0;
+    out_receipt->host_display_caller_expected = 0;
     if (!out_receipt->data_ready) {
         out_receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_BLOCKED;
     } else if (!out_receipt->version_ready) {
@@ -1566,15 +1544,11 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
         out_receipt->next_step_label = "SELECTED VERSION";
         out_receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_BLOCKED;
     } else {
-        out_receipt->startup_step_ready_count =
-            out_receipt->startup_step_count;
-        out_receipt->status_label = out_receipt->ready_status_label;
-        out_receipt->detail_label = out_receipt->ready_detail_label;
-        out_receipt->next_step_label = "READY";
-        out_receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_TITLE;
-        out_receipt->capture_command_count = 1;
-        out_receipt->first_capture_draw_kind =
-            NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND;
+        out_receipt->status_label = "RUNTIME RECEIPT REQUIRED";
+        out_receipt->detail_label =
+            "CANONICAL NEXUS DATA MUST REACH THE RUNTIME";
+        out_receipt->next_step_label = "CANONICAL RUNTIME RECEIPT";
+        out_receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_BLOCKED;
     }
     nexus_v1_launcher_m12_finalize_startup_display(out_receipt);
     return 1;
@@ -2551,6 +2525,13 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     int viewport_render_valid;
 
     nexus_v1_launcher_startup_runtime_handoff_receipt_clear(out_receipt);
+    /* A caller may reuse its command array across startup frames. Clear it
+     * before any gate so a rejected Structure2 source can never leave an old
+     * plan drawable by the host. */
+    if (out_commands && max_commands > 0) {
+        memset(out_commands, 0,
+               (size_t)max_commands * sizeof(out_commands[0]));
+    }
     if (!state || !execution || !out_receipt ||
         !nexus_v1_launcher_startup_assets_from_runtime_state(state,
                                                              &assets) ||
@@ -2609,6 +2590,8 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     }
 
     out_receipt->dgn_handoff = dgn_handoff;
+    (void)nexus_v1_current_level_structure2_source_receipt(
+        state->engine, &out_receipt->structure2_source);
     out_receipt->dgn_route =
         nexus_v1_dgn_renderer_handoff_status_name(dgn_handoff.status);
     /* The runtime handoff must share the viewport's material-validated DGN
@@ -2619,6 +2602,8 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         state->engine->game.party_y,
         state->engine->game.party_dir);
     render_plan = state->engine->dgn_material_plan.receipt;
+    out_receipt->structure2_source_materialization_bound =
+        render_plan.structure2_source_materialization_bound;
     (void)nexus_v1_launcher_dgn_viewport_host_route_receipt(
         state->engine,
         &viewport_host_route);
@@ -2654,7 +2639,10 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
                       (Nexus_V1_DgnViewportHostRouteStatus)
                           out_receipt->dgn_viewport_host_route_status)
             : !material_plan
-            ? "blocked-dgn-material"
+            ? render_plan.status ==
+                  NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE
+            ? "blocked-structure2-source"
+            : "blocked-dgn-material"
             : out_receipt->dgn_route
             ? out_receipt->dgn_route
             : "blocked-dgn-render";
@@ -2952,6 +2940,8 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
         handoff->render_plan.wall_material_command_count;
     out_receipt->dgn_material_semantics_complete =
         handoff->render_plan.material_semantics_complete;
+    out_receipt->structure2_source_materialization_bound =
+        handoff->structure2_source_materialization_bound ? 1 : 0;
     out_receipt->dgn_viewport_render_ready =
         handoff->dgn_viewport_render_ready ? 1 : 0;
     out_receipt->dgn_viewport_rasterized_command_count =
@@ -4937,7 +4927,6 @@ int nexus_v1_launcher_startup_real_asset_ownership_from_runtime_state(
     Nexus_V1_StartupRealAssetOwnershipReceipt *out_receipt)
 {
     Nexus_V1_StartupDrawCommand startup_commands[80];
-    Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
 
     nexus_v1_launcher_startup_real_asset_ownership_receipt_clear(
         out_receipt);
@@ -4954,13 +4943,24 @@ int nexus_v1_launcher_startup_real_asset_ownership_from_runtime_state(
         return 0;
     }
 
-    memset(dgn_commands, 0, sizeof(dgn_commands));
+    memset(out_receipt->dgn_commands, 0, sizeof(out_receipt->dgn_commands));
     (void)nexus_v1_launcher_startup_runtime_route_from_host_state(
         state,
         menu_input,
-        dgn_commands,
-        (int)(sizeof(dgn_commands) / sizeof(dgn_commands[0])),
+        out_receipt->dgn_commands,
+        (int)(sizeof(out_receipt->dgn_commands) /
+              sizeof(out_receipt->dgn_commands[0])),
         &out_receipt->runtime_route);
+    out_receipt->copied_dgn_command_count =
+        out_receipt->runtime_route.dgn_render_command_count;
+    if (out_receipt->copied_dgn_command_count < 0) {
+        out_receipt->copied_dgn_command_count = 0;
+    }
+    if (out_receipt->copied_dgn_command_count >
+        NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS) {
+        out_receipt->copied_dgn_command_count =
+            NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS;
+    }
     nexus_v1_launcher_fill_real_asset_ownership(state, out_receipt);
     return 1;
 }
@@ -5036,7 +5036,6 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
     Nexus_V1_StartupHostCallerReceipt *out_receipt)
 {
     Nexus_V1_StartupReceiptBundle bundle;
-    Nexus_V1_StartupRuntimeRouteReceipt runtime_route;
     int startup_copied;
     int dgn_copied = 0;
 
@@ -5058,32 +5057,30 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         return 0;
     }
 
-    nexus_v1_launcher_startup_receipt_bundle_clear(&bundle);
-    if (nexus_v1_launcher_startup_receipt_bundle_from_runtime_state(
-            runtime,
-            state,
-            menu_input,
-            load_save,
-            load_userdata,
-            out_startup_commands,
-            max_startup_commands,
-            &bundle)) {
-        startup_copied = bundle.copied_command_count;
-    } else {
-        startup_copied = 0;
-    }
+    /* Ownership already built the canonical full-start package above.  The
+     * host consumes that exact package instead of rebuilding it, so a save
+     * or champion action cannot be evaluated twice while assembling a frame.
+     * The package remains the sole source for title/save/champion capture
+     * commands and its no-draw blocker state. */
+    bundle = out_receipt->ownership.startup_bundle;
+    startup_copied = nexus_v1_launcher_build_full_start_package_commands(
+        state,
+        &bundle.package,
+        out_startup_commands,
+        max_startup_commands);
+    bundle.copied_command_count = startup_copied;
 
-    nexus_v1_launcher_startup_runtime_route_receipt_clear(&runtime_route);
-    if (nexus_v1_launcher_startup_runtime_route_from_host_state(
-            state,
-            menu_input,
-            out_dgn_commands,
-            max_dgn_commands,
-            &runtime_route)) {
-        dgn_copied = runtime_route.dgn_render_command_count;
-        if (dgn_copied > max_dgn_commands) {
-            dgn_copied = max_dgn_commands > 0 ? max_dgn_commands : 0;
-        }
+    /* The ownership receipt already evaluated the action and material plan.
+     * Copy its immutable DGN command package; do not execute the route again
+     * here, since ACTION start and save confirmation are stateful. */
+    dgn_copied = out_receipt->ownership.copied_dgn_command_count;
+    if (dgn_copied > max_dgn_commands) {
+        dgn_copied = max_dgn_commands > 0 ? max_dgn_commands : 0;
+    }
+    if (dgn_copied > 0 && out_dgn_commands) {
+        memcpy(out_dgn_commands,
+               out_receipt->ownership.dgn_commands,
+               (size_t)dgn_copied * sizeof(out_dgn_commands[0]));
     }
 
     out_receipt->receipt_owner_is_nexus =

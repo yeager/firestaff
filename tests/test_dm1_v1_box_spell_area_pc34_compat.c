@@ -49,16 +49,18 @@ static void test_screen_contract_helpers(void)
         dm1_v1_spell_caster_tab_rect_pc34();
 
     CHECK(DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 == 9);
-    CHECK(DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 == 9);
+    /* ReDMCSB DEFS.H C011 and MENUDRAW.C F0396: C011 is a separate
+     * 96x36 three-row bitmap; C009 is only the background. */
+    CHECK(DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 == 11);
     CHECK(DM1_V1_SPELL_AREA_ZONE_ID_PC34 == 13);
     CHECK(DM1_V1_SPELL_CASTER_PANEL_ZONE_ID_PC34 == 221);
     CHECK(DM1_V1_SPELL_CASTER_TAB_ZONE_ID_PC34 == 224);
     CHECK(DM1_V1_SPELL_AREA_CAST_ZONE_ID_PC34 == 252);
     CHECK(DM1_V1_SPELL_AREA_RECANT_ZONE_ID_PC34 == 254);
 
-    CHECK(graphic.x == 233);
+    CHECK(graphic.x == 224);
     CHECK(graphic.y == 42);
-    CHECK(graphic.w == 87);
+    CHECK(graphic.w == 96);
     CHECK(graphic.h == 33);
     CHECK(click.x == 233);
     CHECK(click.y == 42);

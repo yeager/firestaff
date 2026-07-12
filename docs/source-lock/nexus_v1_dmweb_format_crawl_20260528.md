@@ -34,3 +34,21 @@ Structure1 contains the dungeon grid as Structure1B.
 Firestaff must not treat real Nexus DGN files as raw 32x32 data at offset 0. `nexus_v1_level_load()` first parses the DMWeb block header and Structure1B. The old 32x32 reader remains only as a legacy synthetic-fixture fallback while old probes and one-off tests are migrated.
 
 Do not describe `geometry_offset = 2048` as a real Nexus layout rule. After Structure1B, the remaining data is still being separated into Structure1C through Structure1F and render payloads.
+
+## Structure1G to Structure2 animated-floor route
+
+DMWeb's DGN reference identifies Structure1G as the optional animated-texture
+table. Its image instructions use a global image index: `0x14c` is the first
+image after ITEM.IBS's 332 images, and `0x156` is therefore texture 10 in the
+DGN file. Structure2 follows Structure1 in the block container and stores
+20-byte texture descriptors whose image IDs are local to that DGN texture
+table, terminated by `FFFF`.
+
+Firestaff consequently derives a Structure1G image's typed Structure2
+descriptor ID only as `global_image_id - 0x14c`, and accepts it only when the
+bounded Structure2 table has the canonical local descriptor ID. Structure1B
+byte4 low-nibble value `3` is the documented animated-floor declaration, so
+this route is `floor -> Structure2`; it does not apply to arbitrary model
+faces. This is identifier/host provenance only: raw Structure2 palette and
+image payload decoding has not been established, so animated materials remain
+blocked with no fallback surface.

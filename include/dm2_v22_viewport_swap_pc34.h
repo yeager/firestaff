@@ -1,7 +1,7 @@
 /*
  * dm2_v22_viewport_swap_pc34.h
  *
- * DM2 V2.2 GPU render path: bounded PER-CELL modern-art swap.
+ * DM2 V2.2 legacy per-cell cache inspection boundary.
  *
  * This module is the next step after dm2_v22_inplace_draw_pc34.{c,h}:
  * it pairs the per-cell V22 cache with the DM2 viewport state and
@@ -18,9 +18,10 @@
  *     ground variations L/C/R)
  *     -> uses dm2_v22_kOutdoorCellRects (sky band + 3 ground cells)
  *
- * Both paths share the same per-cell asset_id resolution table
- * (Dm2_V22_ShapeType -> asset_id) but expose a different rect
- * layout to the renderer. The render pass is gated on:
+ * Both paths retain their legacy descriptors for inspection, but no cached
+ * RGBA asset is a drawable dungeon material. skproject's active-map GDAT
+ * route remains authoritative. The render pass is permanently no-draw.
+ * The legacy cache availability checks are retained only for descriptors:
  *   - V22 modern pack installed (dm2_v22_get_installed()==1)
  *   - presentation_mode_index == 3 (M12_PRESENTATION_V22_MODERN)
  *   - best_available_shape_source(3) == DM2_V22_SHAPE_SOURCE_V2_MODERN

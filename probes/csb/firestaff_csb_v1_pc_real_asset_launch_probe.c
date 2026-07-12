@@ -17,6 +17,7 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,6 +75,138 @@ static int raster_rows_match_surface(const CSB_V1_StartupRuntimeRaster_PC34 *ras
     return memcmp(raster->pixels, surface->pixels, byte_count) == 0;
 }
 
+static int title_palette_matches_rgb(const unsigned char *rgb,
+                                     unsigned char r,
+                                     unsigned char g,
+                                     unsigned char b)
+{
+    return rgb && rgb[0] == r && rgb[1] == g && rgb[2] == b;
+}
+
+static int real_c001_title_plan(int title_frame,
+                                CSB_V1_StartupRenderPlan_PC34 *out_plan)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+    CSB_V1_StartupPresentationReceipt_PC34 receipt;
+
+    if (!out_plan) return 0;
+    csb_v1_startup_host_facts_init_pc34(&facts);
+    facts.title_active = 1;
+    facts.entrance_active = 1;
+    facts.title_frame = title_frame;
+    facts.title_source_step = (int)
+        csb_v1_startup_title_source_step_for_frame_pc34(title_frame);
+    if (!csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+            &facts, &receipt) || !receipt.valid) {
+        return 0;
+    }
+    *out_plan = receipt.render_plan;
+    return 1;
+}
+
+static void verify_real_c001_title_sequence(CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
+    CSB_V1_StartupRuntimeRaster_PC34 raster;
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    const unsigned char *rgb;
+
+    if (!session) return;
+
+    CHECK(csb_v1_startup_title_presents_ticks_pc34() == 60 &&
+              csb_v1_startup_title_chaos_zoom_ticks_pc34() == 18 &&
+              csb_v1_startup_title_chaos_hold_ticks_pc34() == 2 &&
+              csb_v1_startup_title_strikes_back_ticks_pc34() == 1 &&
+              csb_v1_startup_title_total_ticks_pc34() == 81,
+          "C001 title timing matches TITLE.C F0437's PC 18-frame cadence");
+
+    CHECK(real_c001_title_plan(0, &plan) &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              plan.title_source_x == 0 && plan.title_source_y == 137 &&
+              plan.title_source_w == 320 && plan.title_source_h == 16 &&
+              plan.title_dest_x == 0 && plan.title_dest_y == 90 &&
+              plan.title_dest_w == 320 && plan.title_dest_h == 16 &&
+              plan.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS,
+          "C001 PRESENTS uses the source crop, destination, and palette phase");
+    rgb = F9011_VGA_GetSpecialColorRgb_Compat(
+        0, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS);
+    CHECK(title_palette_matches_rgb(rgb, 0, 0, 109) &&
+              title_palette_matches_rgb(
+                  F9011_VGA_GetSpecialColorRgb_Compat(
+                      15, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS),
+                  255, 255, 255),
+          "C001 PRESENTS keeps TITLE.C's dark-blue base and white index 15");
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              session, &plan, 0u, &frame) == 1 &&
+              csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                  &frame, &plan, &raster) == 1 && raster.valid,
+          "C001 PRESENTS preserves the verified source raster order");
+    if (raster.valid) {
+        CHECK(raster.pixel_hash == 0x38c165c5u,
+              "C001 PRESENTS raster hash matches verified PC CSB graphics");
+        csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+    }
+
+    CHECK(real_c001_title_plan(60, &plan) &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+              plan.title_source_step == 2 &&
+              plan.title_source_x == 0 && plan.title_source_y == 0 &&
+              plan.title_source_w == 320 && plan.title_source_h == 80 &&
+              plan.title_dest_x == 136 && plan.title_dest_y == 74 &&
+              plan.title_dest_w == 48 && plan.title_dest_h == 12 &&
+              plan.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
+              csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+                  session, &plan, 60u, &frame) == 1 &&
+              csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                  &frame, &plan, &raster) == 1 && raster.valid,
+          "C001 CHAOS first raster preserves TITLE.C source order and 48x12 geometry");
+    if (raster.valid) {
+        CHECK(raster.pixel_hash == 0x7a4b9ab7u,
+              "C001 CHAOS first raster hash matches verified PC CSB graphics");
+        csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+    }
+    CHECK(title_palette_matches_rgb(
+                  F9011_VGA_GetSpecialColorRgb_Compat(
+                      3, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS),
+                  188, 156, 60) &&
+              title_palette_matches_rgb(
+                  F9011_VGA_GetSpecialColorRgb_Compat(
+                      10, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS),
+                  0, 0, 109),
+          "C001 CHAOS keeps gold artwork indices over the dark-blue source base");
+
+    CHECK(real_c001_title_plan(80, &plan) &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+              plan.title_source_x == 0 && plan.title_source_y == 80 &&
+              plan.title_source_w == 320 && plan.title_source_h == 57 &&
+              plan.title_dest_x == 0 && plan.title_dest_y == 118 &&
+              plan.title_dest_w == 320 && plan.title_dest_h == 57 &&
+              plan.title_transparent_color == 0 &&
+              plan.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES &&
+              csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+                  session, &plan, 80u, &frame) == 1 &&
+              csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                  &frame, &plan, &raster) == 1 && raster.valid,
+          "C001 STRIKES BACK retains source crop, black key, and final palette phase");
+    if (raster.valid) {
+        CHECK(raster.pixel_hash == 0x8e96cf09u,
+              "C001 STRIKES BACK raster hash matches verified PC CSB graphics");
+        csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+    }
+    CHECK(title_palette_matches_rgb(
+                  F9011_VGA_GetSpecialColorRgb_Compat(
+                      10, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES),
+                  0, 0, 0) &&
+              title_palette_matches_rgb(
+                  F9011_VGA_GetSpecialColorRgb_Compat(
+                      12, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES),
+                  255, 0, 0),
+          "C001 STRIKES BACK applies TITLE.C's final black/red slot changes");
+}
+
 static void verify_real_indexed_startup(CSB_V1_BootProfile *profile)
 {
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
@@ -88,6 +221,8 @@ static void verify_real_indexed_startup(CSB_V1_BootProfile *profile)
               session.rejects_legacy_wrappers,
           "verified GRAPHICS.DAT opens one owned indexed startup session");
     if (!session.valid) return;
+
+    verify_real_c001_title_sequence(&session);
 
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;

@@ -238,6 +238,10 @@ unsigned int dm1_creature_sprite_for_view(int creatureType,
                                           int partyDir,
                                           int attacking,
                                           int *outMirror);
+/* ReDMCSB DUNVIEW.C F0115 G0221/G0222 palette changes after the PC34
+ * G2025 replacement-color entries for indices 9 and 10 are installed. */
+int dm1_creature_palette_for_depth(int creatureType, int depthIndex,
+                                   uint8_t outPalette[16]);
 unsigned int dm1_creature_graphic_info(int creatureType);
 int dm1_creature_additional(int creatureType);
 int dm1_creature_has_special_d2_front(int creatureType);

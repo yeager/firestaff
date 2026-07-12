@@ -18,7 +18,7 @@
 
 #define VGA_PALETTE_PC34_COLOR_COUNT 16
 #define VGA_PALETTE_PC34_BRIGHTNESS_LEVELS 6
-#define VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT 4
+#define VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT 7
 
 #define VGA_PALETTE_PC34_SPECIAL_CREDITS         0
 #define VGA_PALETTE_PC34_SPECIAL_ENTRANCE        1
@@ -32,6 +32,14 @@
  * word was lit with a brown/gold palette that made it look red.
  */
 #define VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS  3
+
+/* CSB's C001 title does not use the DM/PC34 C12-C14 palette sequence.
+ * ReDMCSB TITLE.C F0437 changes the whole indexed palette after PRESENTS,
+ * before CHAOS, and once more after STRIKES BACK.  Keep those phases separate
+ * so the CSB renderer never inherits DM1 title colours. */
+#define VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS 4
+#define VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS    5
+#define VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES  6
 
 /* Brightest palette (index 0) — title/menu/brightest dungeon */
 extern const unsigned char G9010_auc_VgaPaletteBrightest_Compat[16][3];

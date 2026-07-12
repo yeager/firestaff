@@ -457,6 +457,16 @@ void nexus_sound_shutdown(Nexus_SoundEngine *eng) {
 int nexus_sound_load_level(Nexus_SoundEngine *eng, int level_index,
                             const uint8_t *sal_data, int sal_size,
                             const uint8_t *map_data, int map_size) {
+    return nexus_sound_load_canonical_level(eng, level_index,
+                                            sal_data, sal_size,
+                                            map_data, map_size, 0, 0);
+}
+
+int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
+                                      const uint8_t *sal_data, int sal_size,
+                                      const uint8_t *map_data, int map_size,
+                                      int sal_canonical_source_verified,
+                                      int map_canonical_source_verified) {
     if (!eng || !eng->initialized) return -1;
     if (level_index < 0 || level_index > 15) return -1;
 
@@ -469,6 +479,10 @@ int nexus_sound_load_level(Nexus_SoundEngine *eng, int level_index,
     clear_sal_profile(eng);
 
     eng->current_level = level_index;
+    eng->sal_canonical_source_verified =
+        sal_canonical_source_verified ? 1 : 0;
+    eng->map_canonical_source_verified =
+        map_canonical_source_verified ? 1 : 0;
 
     if (sal_data && sal_size > 0) {
         eng->sal_data = (uint8_t *)malloc(sal_size);
@@ -519,6 +533,10 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
         : -1;
     out_receipt->sal_loaded = eng->sal_data && eng->sal_size > 0;
     out_receipt->map_loaded = eng->map_data && eng->map_size > 0;
+    out_receipt->sal_canonical_source_verified =
+        eng->sal_canonical_source_verified;
+    out_receipt->map_canonical_source_verified =
+        eng->map_canonical_source_verified;
     out_receipt->sal_decode_supported =
         nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_SAL_BANK);
     out_receipt->map_decode_supported =
@@ -653,7 +671,9 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
         return 0;
     }
 
-    if (!out_receipt->sal_decode_supported ||
+    if (!out_receipt->sal_canonical_source_verified ||
+        !out_receipt->map_canonical_source_verified ||
+        !out_receipt->sal_decode_supported ||
         !out_receipt->map_decode_supported) {
         out_receipt->status = NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE;
         out_receipt->blocks_real_sfx_playback = 1;

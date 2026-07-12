@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "firestaff_theron_media_classify.h"
+#include "theron_v1_track02.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -102,6 +103,7 @@ typedef struct {
     char runtimeDataDirs[M12_ASSET_GAME_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
     M12_NexusBpkTrailerMetadata nexusBpkTrailer;
     FirestaffTheronMediaStatus theronMedia;
+    Theron_Track02StartupLoaderReceipt theronTrack02LoaderReceipt;
     M12_AssetScanProgress scanProgress;
 } M12_AssetStatus;
 
@@ -141,6 +143,13 @@ const M12_NexusBpkTrailerMetadata* M12_AssetStatus_GetNexusBpkTrailerMetadata(
     const M12_AssetStatus* status);
 int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId);
 const FirestaffTheronMediaStatus* M12_AssetStatus_GetTheronMediaStatus(
+    const M12_AssetStatus* status);
+const Theron_Track02StartupLoaderReceipt*
+M12_AssetStatus_GetTheronTrack02LoaderReceipt(const M12_AssetStatus* status);
+/* Returns a strict CUE pair when it canonically names the verified Track 02;
+ * otherwise returns the verified Track 02 path.  Theron launch uses this
+ * media path so the Track 01 CDDA and Track 02 startup gates share provenance. */
+const char* M12_AssetStatus_GetTheronLaunchMediaPath(
     const M12_AssetStatus* status);
 
 /* Returns 1 if the V2.2 Modern Graphics asset pack is installed and

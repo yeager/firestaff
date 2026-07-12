@@ -18,6 +18,9 @@
 
 #include "asset_find_by_hash.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_game.h"
+#include "dm2_v1_runtime.h"
+#include "dm2_v1_viewport_renderer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,6 +74,138 @@ static unsigned g1_declared_record_pool_bytes(const unsigned char *raw)
     for (type = 0; type < 16; ++type)
         total += read16le(raw + 14 + type * 2) * k_skproject_record_sizes[type];
     return total;
+}
+
+static int g1_source_ordered_pool_bases_match(
+    const unsigned char *raw,
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_G1RecordPoolEvidence *evidence)
+{
+    unsigned cursor;
+    int type;
+
+    if (!raw || !dungeon || !evidence || evidence->candidate_base < 0)
+        return 0;
+    cursor = (unsigned)evidence->candidate_base;
+    for (type = 0; type < 16; ++type) {
+        unsigned count = read16le(raw + 14 + type * 2);
+        unsigned bytes = count * k_skproject_record_sizes[type];
+        int expected_base = (count != 0 &&
+                             k_skproject_record_sizes[type] != 0)
+                                ? (int)cursor : -1;
+        if (dungeon->thing_data_bases[type] != expected_base ||
+            evidence->candidate_pool_bases[type] != expected_base) {
+            return 0;
+        }
+        cursor += bytes;
+    }
+    return cursor == (unsigned)evidence->candidate_end;
+}
+
+/* skproject c_map.cpp supplies one ground-stack word for every byte-square
+ * with bit 0x10. c_record.cpp dispatches it as type=(link>>10)&0xf and
+ * index=link&0x3ff, then adds index * table_recordsizes[type]. These are the
+ * only five map-owned roots not covered by the declared pools or the proven
+ * DB3/DB4 continuation. The nine bytes after that continuation cannot make
+ * five distinct 4-byte addresses; keep this as an exclusion proof, not a
+ * synthetic continuation. */
+static int g1_unresolved_roots_and_tail_match(
+    const unsigned char *raw, const DM2_V1_DungeonData *dungeon)
+{
+    static const unsigned char expected_tail[9] = {
+        0x00, 0xe0, 0x00, 0x00, 0x30, 0x00, 0x00, 0x10, 0x20
+    };
+    static const struct {
+        int map;
+        int x;
+        int y;
+        unsigned stack;
+        unsigned root;
+        unsigned type;
+        unsigned index;
+    } expected[] = {
+        {16, 10,  1,  872, 0x2818, 10,  24},
+        {16, 11, 12,  873, 0x2814, 10,  20},
+        {16, 17,  2,  889, 0xe88a, 10, 138},
+        {23, 13, 16, 1053, 0x285d, 10,  93},
+        {26, 11, 10, 1154, 0xa037,  8,  55}
+    };
+    unsigned found = 0;
+    unsigned column_index = 0;
+    int level;
+
+    if (!raw || !dungeon || dungeon->g1_extension_base != 23826 ||
+        dungeon->g1_extension_size != 7841 || dungeon->raw_map_data_base != 31667 ||
+        memcmp(raw + 31658, expected_tail, sizeof(expected_tail)) != 0) {
+        return 0;
+    }
+
+    for (level = 0; level < dungeon->level_count; ++level) {
+        int x;
+        for (x = 0; x < dungeon->level_widths[level]; ++x) {
+            unsigned stack = read16le(raw + dungeon->column_index_base +
+                                      (column_index + (unsigned)x) * 2u);
+            int y;
+            for (y = 0; y < dungeon->level_heights[level]; ++y) {
+                unsigned raw_tile = raw[dungeon->raw_map_data_base +
+                                        dungeon->level_offsets[level] +
+                                        x * dungeon->level_heights[level] + y];
+                unsigned root;
+                unsigned type;
+                unsigned index;
+                int declared;
+                int extension;
+
+                if ((raw_tile & 0x10u) == 0) continue;
+                root = read16le(raw + dungeon->square_first_thing_base +
+                                  stack * 2u);
+                type = (root >> 10) & 0x0fu;
+                index = root & 0x03ffu;
+                declared = type < 16 && index < read16le(raw + 14 + type * 2) &&
+                           k_skproject_record_sizes[type] != 0;
+                extension = (type == 3 && index >= 299 && index < 1024) ||
+                            (type == 4 && index >= 173 && index < 300);
+                if (!declared && !extension) {
+                    if (found >= sizeof(expected) / sizeof(expected[0]) ||
+                        expected[found].map != level || expected[found].x != x ||
+                        expected[found].y != y || expected[found].stack != stack ||
+                        expected[found].root != root || expected[found].type != type ||
+                        expected[found].index != index) {
+                        return 0;
+                    }
+                    ++found;
+                }
+                ++stack;
+            }
+        }
+        column_index += (unsigned)dungeon->level_widths[level];
+    }
+    return found == sizeof(expected) / sizeof(expected[0]);
+}
+
+/* SkWinCore.cpp _2fcf_0434 (51052-51057) reads a DB1 payload as a movement
+ * teleporter only on ttTeleporter (5) tiles. Map 0's 22 direct DB1 roots are
+ * deliberately retained as payload evidence, but the canonical corpus must
+ * prove they do not fabricate a map transition from ordinary cells. */
+static int g1_map0_db1_roots_are_not_teleporter_tiles(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_G1FirstMapRuntimeReceipt *receipt)
+{
+    int roots = 0;
+
+    if (!dungeon || !receipt || receipt->map != 0 ||
+        receipt->root_count != receipt->teleporter_root_count) {
+        return 0;
+    }
+    for (int i = 0; i < receipt->root_count; ++i) {
+        const DM2_V1_G1VerifiedRoot *root = &receipt->roots[i];
+        if (root->type != 1 ||
+            dm2_v1_dungeon_get_square_type(dungeon, 0, root->x, root->y) == 5) {
+            return 0;
+        }
+        ++roots;
+    }
+    return roots == 22;
 }
 
 static const char *dm2_data_root(int argc, char **argv,
@@ -187,6 +322,8 @@ static void probe_first_map(const unsigned char *raw, int size)
 {
     DM2_V1_DungeonData dungeon;
     DM2_V1_G1RecordPoolEvidence evidence;
+    DM2_V1_G1PartialMapBootReceipt partial_boot;
+    DM2_V1_G1FirstMapRuntimeReceipt first_map_runtime;
     int load_rc;
     unsigned declared_pool_bytes;
 
@@ -256,6 +393,10 @@ static void probe_first_map(const unsigned char *raw, int size)
               evidence.candidate_bytes == (int)declared_pool_bytes &&
               evidence.candidate_end == dungeon.g1_extension_base,
           "c_record span is anchored after text data, before the untyped G1 extension");
+    CHECK(g1_source_ordered_pool_bases_match(raw, &dungeon, &evidence),
+          "all sixteen c_record pools retain skproject source order and bounds");
+    CHECK(dm2_v1_dungeon_validate_record_pools(&dungeon) == 1,
+          "G1 c_record pool locator validates for real map boot");
     CHECK(evidence.tail_pool_base == 14783 && evidence.tail_pool_base_rejected,
           "tail-aligned pool base remains rejected by the non-tail text anchor");
     CHECK(evidence.root_count == dungeon.square_first_thing_count &&
@@ -270,17 +411,196 @@ static void probe_first_map(const unsigned char *raw, int size)
     CHECK(evidence.root_shape_invalid == 1069 &&
               evidence.candidate_first_link_shape_invalid == 1029,
           "real G1 pins every observed non-direct root and c_record link");
+    CHECK(evidence.map_root_count == 883 &&
+              evidence.map_root_end_markers == 0 &&
+              evidence.map_root_null_markers == 0 &&
+              evidence.map_root_shape_valid == 676 &&
+              evidence.map_root_extension_shape_valid == 202 &&
+              evidence.map_root_shape_invalid == 5 &&
+              evidence.map_root_unresolved_after_extension == 5,
+          "map-owned G1 roots separate declared, DB3/DB4-extension, and still-unresolved ObjectIDs");
+    CHECK(dungeon.g1_extension_record_bases[3] == 23826 &&
+              dungeon.g1_extension_record_counts[3] == 725 &&
+              dungeon.g1_extension_record_bases[4] == 29626 &&
+              dungeon.g1_extension_record_counts[4] == 127,
+          "G1 extension follows the proven DB3-to-ObjectID-limit then DB4 record transform");
+    CHECK(evidence.map_root_extension_by_type[3] == 174 &&
+              evidence.map_root_extension_by_type[4] == 28 &&
+              evidence.map_root_unresolved_by_type[8] == 1 &&
+              evidence.map_root_unresolved_by_type[10] == 4,
+          "G1 raw-root type clusters retain only DB8/DB10 as unresolved families");
+    CHECK(g1_unresolved_roots_and_tail_match(raw, &dungeon),
+          "raw G1 proves five distinct DB8/DB10 roots cannot fit the nine-byte tail");
+    CHECK(dm2_v1_dungeon_materialize_g1_partial_map_boot(
+              &dungeon, &partial_boot) == 1 &&
+              partial_boot.committed == 1 && partial_boot.incomplete == 1 &&
+              dungeon.partial_map_boot.committed == 1 &&
+              dungeon.partial_map_boot.materialized_root_count == 878 &&
+              partial_boot.map_root_count == 883 &&
+              partial_boot.direct_root_count == 676 &&
+              partial_boot.db3_root_count == 174 &&
+              partial_boot.db4_root_count == 28 &&
+              partial_boot.materialized_root_count == 878 &&
+              partial_boot.blocked_root_count == 5,
+          "real G1 commits an incomplete map boot for only the 878 proven roots");
+    CHECK(partial_boot.blocked_roots[0].map == 16 &&
+              partial_boot.blocked_roots[0].x == 10 &&
+              partial_boot.blocked_roots[0].y == 1 &&
+              partial_boot.blocked_roots[0].type == 10 &&
+              partial_boot.blocked_roots[4].map == 26 &&
+              partial_boot.blocked_roots[4].type == 8 &&
+              partial_boot.blocked_root_count_by_map[16] == 3 &&
+              partial_boot.blocked_root_count_by_map[23] == 1 &&
+              partial_boot.blocked_root_count_by_map[26] == 1,
+          "partial boot receipt preserves only the five blocked source roots");
+    CHECK(dm2_v1_dungeon_materialize_g1_first_map_runtime(
+              &dungeon, &first_map_runtime) == 1 &&
+              first_map_runtime.committed == 1 &&
+              first_map_runtime.incomplete_world == 1 &&
+              first_map_runtime.map == 0 &&
+              first_map_runtime.verified_root_count ==
+                  first_map_runtime.root_count &&
+              first_map_runtime.blocked_root_count == 0 &&
+              first_map_runtime.object_count == 0 &&
+              first_map_runtime.root_count == 22 &&
+              first_map_runtime.direct_root_count == 22 &&
+              first_map_runtime.teleporter_root_count == 22 &&
+              first_map_runtime.teleporter_record_reads == 22 &&
+              first_map_runtime.blocked_record_reads == 0 &&
+              first_map_runtime.roots[0].x == 0 &&
+              first_map_runtime.roots[0].y == 4 &&
+              first_map_runtime.roots[0].object_id == 0x04a5 &&
+              first_map_runtime.roots[0].type == 1 &&
+              first_map_runtime.roots[0].index == 165 &&
+              first_map_runtime.teleporters[0].x == 0 &&
+              first_map_runtime.teleporters[0].y == 4 &&
+              first_map_runtime.teleporters[0].object_id == 0x04a5 &&
+              first_map_runtime.teleporters[0].index == 165 &&
+              first_map_runtime.teleporters[0].destination_x == 10 &&
+              first_map_runtime.teleporters[0].destination_y == 14 &&
+              first_map_runtime.teleporters[0].destination_map == 255 &&
+              first_map_runtime.teleporters[0].scope == 0 &&
+              first_map_runtime.teleporters[0].sound == 1 &&
+              first_map_runtime.teleporters[0].rotation == 2 &&
+              first_map_runtime.teleporters[0].rotation_type == 0 &&
+              first_map_runtime.teleporters[21].object_id == 0x04da &&
+              first_map_runtime.teleporters[21].x == 6 &&
+              first_map_runtime.teleporters[21].y == 7 &&
+              first_map_runtime.teleporters[21].destination_x == 30 &&
+              first_map_runtime.teleporters[21].destination_y == 31 &&
+              first_map_runtime.teleporters[21].destination_map == 2,
+          "first-map receipt reads only source-defined direct DB1 teleporter fields");
+    CHECK(g1_map0_db1_roots_are_not_teleporter_tiles(
+              &dungeon, &first_map_runtime),
+          "canonical map-0 DB1 roots cannot enter the source teleporter transition path");
+    {
+        DM2_V1_BootProfile profile;
+        DM2_V1_GameState game_state;
+        DM2_V1_G1FirstMapRuntimeReceipt runtime_receipt;
+        DM2_V1_G1TeleporterTransitionReceipt transition_receipt;
+        DM2_V1_ViewportState viewport;
+        uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+
+        dm2_v1_boot_profile_init(&profile);
+        memset(&game_state, 0, sizeof(game_state));
+        profile.dm2_state = &game_state;
+        profile.dungeon_data = &dungeon;
+        CHECK(dm2_v1_runtime_bind_boot_profile(&profile) == 1 &&
+                  dm2_v1_runtime_g1_first_map_receipt(&runtime_receipt) == 1 &&
+                  runtime_receipt.committed == 1 &&
+                  runtime_receipt.incomplete_world == 1 &&
+                  runtime_receipt.verified_root_count ==
+                      first_map_runtime.verified_root_count &&
+                  runtime_receipt.roots[0].object_id == 0x04a5 &&
+                  runtime_receipt.object_count == 0 &&
+                  runtime_receipt.teleporter_root_count == 22 &&
+                  runtime_receipt.teleporter_record_reads == 22 &&
+                  runtime_receipt.teleporters[0].destination_map == 255 &&
+                  runtime_receipt.blocked_record_reads == 0,
+              "runtime retains the bounded teleporter incomplete-world receipt");
+        dm2_v1_runtime_set_position(0, 0, 4, 0);
+        CHECK(dm2_v1_runtime_g1_map0_teleporter_transition_receipt(
+                  &transition_receipt) == 1 &&
+                  transition_receipt.committed == 1 &&
+                  transition_receipt.incomplete_world == 1 &&
+                  transition_receipt.source_map == 0 &&
+                  transition_receipt.source_x == 0 &&
+                  transition_receipt.source_y == 4 &&
+                  transition_receipt.source_object_id == 0x04a5 &&
+                  transition_receipt.source_index == 165 &&
+                  transition_receipt.destination_x == 10 &&
+                  transition_receipt.destination_y == 14 &&
+                  transition_receipt.destination_map == 255 &&
+                  transition_receipt.scope == 0 &&
+                  transition_receipt.sound == 1 &&
+                  transition_receipt.rotation == 2 &&
+                  transition_receipt.rotation_type == 0 &&
+                  transition_receipt.generic_record_reads == 0 &&
+                  transition_receipt.blocked_record_reads == 0 &&
+                  transition_receipt.destination_map_valid == 0 &&
+                  transition_receipt.resolved_destination_map == -1 &&
+                  transition_receipt.transition_applied == 0 &&
+                  transition_receipt.no_transition_reason ==
+                      DM2_V1_G1_TELEPORT_NO_TRANSITION_INCOMPLETE_WORLD &&
+                  game_state.current_level == 0 && game_state.party_x == 0 &&
+                  game_state.party_y == 4 && game_state.party_dir == 0,
+              "runtime retains a strict no-transition receipt for incomplete canonical G1");
+        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+        dm2_v1_viewport_set_g1_first_map_runtime(&viewport, &runtime_receipt);
+        dm2_v1_viewport_set_g1_map0_teleporter_transition(
+            &viewport, &transition_receipt);
+        CHECK(viewport.g1_first_map_runtime.committed == 1 &&
+                  viewport.g1_first_map_runtime.incomplete_world == 1 &&
+                  viewport.g1_first_map_runtime.verified_root_count ==
+                      runtime_receipt.verified_root_count &&
+                  viewport.g1_first_map_runtime.roots[0].object_id == 0x04a5 &&
+                  viewport.g1_first_map_runtime.object_count == 0 &&
+                  viewport.g1_first_map_runtime.teleporter_root_count == 22 &&
+                  viewport.g1_first_map_runtime.teleporter_record_reads == 22 &&
+                  viewport.g1_first_map_runtime.teleporters[21].destination_map == 2 &&
+                  viewport.g1_first_map_runtime.blocked_record_reads == 0,
+              "viewport receives the bounded teleporter receipt without objects");
+        CHECK(viewport.g1_map0_teleporter_transition.committed == 1 &&
+                  viewport.g1_map0_teleporter_transition.source_object_id ==
+                      0x04a5 &&
+                  viewport.g1_map0_teleporter_transition.destination_map == 255 &&
+                  viewport.g1_map0_teleporter_transition.rotation == 2 &&
+                  viewport.g1_map0_teleporter_transition.generic_record_reads == 0 &&
+                  viewport.g1_map0_teleporter_transition.blocked_record_reads == 0 &&
+                  viewport.g1_map0_teleporter_transition.transition_applied == 0 &&
+                  viewport.g1_map0_teleporter_transition.destination_map_valid == 0 &&
+                  viewport.g1_map0_teleporter_transition.no_transition_reason ==
+                      DM2_V1_G1_TELEPORT_NO_TRANSITION_INCOMPLETE_WORLD,
+              "viewport receives the canonical strict no-transition receipt without traversal");
+    }
+    CHECK(evidence.map_root_extension_by_map[16] == 13 &&
+              evidence.map_root_unresolved_by_map[16] == 3 &&
+              evidence.map_root_extension_by_map[23] == 4 &&
+              evidence.map_root_unresolved_by_map[23] == 1 &&
+              evidence.map_root_extension_by_map[26] == 5 &&
+              evidence.map_root_unresolved_by_map[26] == 1,
+          "G1 map ownership cluster pins every remaining raw-root family to its source map");
     printf("  INFO: G1 candidate [%d,%d), roots end=%d valid=%d invalid=%d, "
+           "map roots end=%d null=%d declared=%d extension=%d unresolved=%d, "
+           "extension DB3=%d DB4=%d; unresolved DB8=%d DB10=%d, "
            "records end=%d valid=%d invalid=%d\n",
            evidence.candidate_base, evidence.candidate_end,
            evidence.root_end_markers, evidence.root_shape_valid,
            evidence.root_shape_invalid,
+           evidence.map_root_end_markers, evidence.map_root_null_markers,
+           evidence.map_root_shape_valid,
+           evidence.map_root_extension_shape_valid,
+           evidence.map_root_shape_invalid,
+           evidence.map_root_extension_by_type[3],
+           evidence.map_root_extension_by_type[4],
+           evidence.map_root_unresolved_by_type[8],
+           evidence.map_root_unresolved_by_type[10],
            evidence.candidate_first_link_end_markers,
            evidence.candidate_first_link_shape_valid,
            evidence.candidate_first_link_shape_invalid);
     CHECK(dungeon.record_graph_complete == 0 &&
               dm2_v1_dungeon_validate_record_graph(&dungeon) == 0,
-          "PC G1 c_record addresses stay non-traversable while real links remain unbound");
+          "PC G1 blocks map-reachable traversal when a real w0 link is invalid");
     CHECK(dungeon.level_widths[0] == 7,
           "loader reports map-0 width from Map_definitions.w8");
     CHECK(dungeon.level_heights[0] == 10,

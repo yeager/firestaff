@@ -84,14 +84,13 @@ typedef struct DM1_V1_SpellPanelReceiptPc34 {
 } DM1_V1_SpellPanelReceiptPc34;
 
 /*
- * ReDMCSB PC 3.x: CASTER.C F0394 draws C009_GRAPHIC_MENU_SPELL_AREA_LINES
- * through C013_ZONE_SPELL_AREA.  G0000 is the older full byte box used by
- * clear/hatch paths; the visible PC34 screen graphic is the 87-pixel C013
- * zone at x=233..319.
+ * ReDMCSB PC 3.x: CASTER.C F0394 blits C009 into G0000, the 96-pixel
+ * physical source box at x=224..319. C013 is the smaller 87-pixel input
+ * zone at x=233..319; it must not be used to validate or crop C009.
  */
 enum {
     DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 = 9,
-    DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 = 9,
+    DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 = 11,
     DM1_V1_SPELL_AREA_ZONE_ID_PC34 = 13,
     DM1_V1_SPELL_CASTER_PANEL_ZONE_ID_PC34 = 221,
     DM1_V1_SPELL_CASTER_TAB_ZONE_ID_PC34 = 224,
@@ -115,7 +114,7 @@ enum {
 static inline DM1_V1_SpellAreaRectPc34
 dm1_v1_spell_area_graphic_rect_pc34(void)
 {
-    DM1_V1_SpellAreaRectPc34 r = { 233, 42, 87, 33 };
+    DM1_V1_SpellAreaRectPc34 r = { 224, 42, 96, 33 };
     return r;
 }
 

@@ -23,7 +23,6 @@
 #include "dm1_v1_automap_pc34_compat.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
-#include "dm1_v1_mouse_routes_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "asset_status_m12.h"
@@ -1309,6 +1308,16 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         if (blitPlan.clearBeforeBlit) {
             memset(framebuffer, 0, (size_t)M11_FB_BYTES);
         }
+        /* ReDMCSB TITLE.C F0437:385-387 waits before each prepared
+         * zoom bitmap is blitted. Steps 20, 21, and 23 model the two
+         * post-zoom waits and the final guard individually, so do not add
+         * an aggregate delay after this loop. */
+        if (step.vblankBeforeEvent &&
+            m11_delay_ms_with_intro_event_pump(
+                hasDm1Media ? dm1Media.title_zoom_frame_delay_ms :
+                              V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
+            break;
+        }
         if (blitPlan.kind == V1_TITLE_FRONTEND_C001_BLIT_REGION) {
             M11_AssetLoader_BlitRegion(titleGraphic,
                                        (int)blitPlan.srcX,
@@ -1336,11 +1345,6 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
                                               (int)blitPlan.srcH,
                                               blitPlan.transparentColor);
         } else {
-            if (m11_delay_ms_with_intro_event_pump(
-                    hasDm1Media ? dm1Media.title_zoom_frame_delay_ms :
-                                  V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
-                break;
-            }
             continue;
         }
 
@@ -1374,24 +1378,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
                                   V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing))) {
                 break;
             }
-        } else {
-            if (m11_delay_ms_with_intro_event_pump(
-                    hasDm1Media ? dm1Media.title_zoom_frame_delay_ms :
-                                  V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
-                break;
-            }
         }
-    }
-    /* ReDMCSB TITLE.C:395-409 leaves two post-zoom VBlanks plus the final
-     * BUG0_71 guard before STARTUP1.C advances into the entrance.  The
-     * TITLE.DAT fallback below already observes this; keep the GRAPHICS.DAT
-     * C001 runtime path on the same source cadence. */
-    if (!m11_delay_ms_with_intro_event_pump(
-            hasDm1Media ? dm1Media.title_post_zoom_guard_ms :
-                          V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing))) {
-        (void)m11_delay_ms_with_intro_event_pump(
-            hasDm1Media ? dm1Media.title_c001_cadence_pad_ms :
-                          V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&timing));
     }
     if (titleAudioInitialized) {
         M11_Audio_Shutdown(&titleAudio);

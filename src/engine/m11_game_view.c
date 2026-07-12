@@ -19,6 +19,7 @@
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_f0093_replacement_palette_pc34_compat.h"
 #include "csb_v1_input_command_bridge_pc34_compat.h"
 #include "csb_v1_neophyte_mode_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
@@ -30,6 +31,7 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_sound.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_startup_layout.h"
 #include "dm2_v1_startup_menu.h"
@@ -157,6 +159,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* verifiedPath,
                                     const char* verifiedMd5,
+                                    const Theron_Track02StartupLoaderReceipt* loaderReceipt,
                                     const char* savePath);
 static void m11_set_status(M11_GameViewState* state,
                            const char* title,
@@ -313,6 +316,26 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
                                          int sourceZoneRow,
                                          int transparentColor,
                                          int usesF0791Blit);
+static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
+                                        unsigned char* framebuffer,
+                                        int framebufferWidth,
+                                        int framebufferHeight);
+static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
+                                           unsigned char* framebuffer,
+                                           int framebufferWidth,
+                                           int framebufferHeight);
+static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
+                                       unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight);
+static void m11_draw_party_panel(const M11_GameViewState* state,
+                                 unsigned char* framebuffer,
+                                 int framebufferWidth,
+                                 int framebufferHeight);
+static void m11_draw_v1_message_area(const M11_GameViewState* state,
+                                     unsigned char* framebuffer,
+                                     int framebufferWidth,
+                                     int framebufferHeight);
 /* (M11_GameView_StartDm2 is the DM2 hand-off branch inlined inside
  * M11_GameView_Start above, mirroring the CSB-style handoff. The
  * Theron + Nexus handoffs also live inline; there is no separate
@@ -429,6 +452,7 @@ static void m11_dm2_mirror_session_party(M11_GameViewState *state,
                 src->inventory[slot];
         }
     }
+
 }
 
 static M11_GameInputResult m11_handle_dm2_shop_input(M11_GameViewState *state,
@@ -1174,6 +1198,24 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         !screen_pixels || screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
+    if (((blit->aspect_index == 0 && blit->graphic_index >= 454 &&
+          blit->graphic_index <= 455) ||
+         (blit->aspect_index == 1 && blit->graphic_index >= 457 &&
+          blit->graphic_index <= 458) ||
+         (blit->aspect_index == 2 && blit->graphic_index >= 460 &&
+          blit->graphic_index <= 462))) {
+        const M11_AssetSlot *slot = M11_AssetLoader_Load(
+            (M11_AssetLoader *)&ctx->state->assetLoader,
+            (unsigned int)blit->graphic_index);
+        if (!slot || !slot->pixels || slot->width == 0 || slot->height == 0) {
+            return 0;
+        }
+        return csb_v1_viewport_f0115_blit_m715_m716_m717_projectile_family_pc34(
+            blit->graphic_index, slot->pixels, (int)slot->width,
+            (int)slot->height, screen_pixels, ctx->framebuffer_width,
+            ctx->framebuffer_height, screen_stride, blit->x, blit->y,
+            blit->w, blit->h, blit->forward, blit->flip_flags);
+    }
     /* ReDMCSB DUNVIEW.C F0115 lines 5710-5722 picks the scale row from
      * view depth/cell before the F0791 C10 projectile blit.  Reuse the
      * M11 DM1 sprite path here; CSB PC34 shares the projectile bitmap
@@ -1343,19 +1385,40 @@ static int m11_csb_viewport_group_sprite_drawer(
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
-    return m11_draw_creature_sprite_ex_material(ctx->state,
-        screen_pixels,
-        screen_stride,
-        ctx->framebuffer_height,
-        blit->x,
-        blit->y,
-        blit->w,
-        blit->h,
-        blit->creature_type,
-        blit->depth_index,
-        blit->relative_side,
-        blit->direction,
-        blit->transparent_color);
+    /* ReDMCSB DUNVIEW.C F0115:5222-5627. The CSB resolver owns the G0243 /
+     * G0219 family-aspect route, including C13/C11 transparency, so the
+     * generic C10 overlay receipt cannot alter native creature material. */
+    {
+        const struct DungeonMapDesc_Compat *map = NULL;
+        const int graphic_index =
+            csb_v1_viewport_f0115_native_group_front_graphic_pc34(
+                blit->creature_type);
+        if (graphic_index < 0) return 0;
+        const M11_AssetSlot *slot = M11_AssetLoader_Load(
+            (M11_AssetLoader *)&ctx->state->assetLoader,
+            (unsigned int)graphic_index);
+        if (!slot || !slot->pixels || slot->width == 0 || slot->height == 0) {
+            return 0;
+        }
+        if (blit->creature_type >= 3 && blit->creature_type <= 5) {
+            if (!ctx->state->world.dungeon ||
+                ctx->state->world.party.mapIndex >= ctx->state->world.dungeon->header.mapCount) {
+                return 0;
+            }
+            map = &ctx->state->world.dungeon->maps[ctx->state->world.party.mapIndex];
+            return csb_v1_viewport_f0115_blit_f0093_group_front_family_pc34(
+                blit->creature_type, map, slot->pixels, (int)slot->width,
+                (int)slot->height, screen_pixels, ctx->framebuffer_width,
+                ctx->framebuffer_height, screen_stride, blit->x, blit->y,
+                blit->w, blit->h, blit->depth_index + 1, blit->source_zone, 0);
+        }
+        return csb_v1_viewport_f0115_blit_native_group_front_family_pc34(
+            blit->creature_type, graphic_index, slot->pixels, (int)slot->width,
+            (int)slot->height, screen_pixels, ctx->framebuffer_width,
+            ctx->framebuffer_height, screen_stride, blit->x, blit->y,
+            blit->w, blit->h, blit->depth_index + 1, blit->source_zone,
+            0);
+    }
 }
 
 static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
@@ -1449,6 +1512,31 @@ static void m11_draw_csb_runtime_hud(const M11_GameViewState *state,
     csb_v2_hud_runtime_set_gate_config(&gate);
     csb_v2_hud_runtime_apply_frame(&frame);
     csb_v2_hud_runtime_render(framebuffer, framebufferWidth, framebufferHeight);
+}
+
+static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
+                                        unsigned char *framebuffer,
+                                        int framebufferWidth,
+                                        int framebufferHeight)
+{
+    if (!state || !framebuffer || framebufferWidth < 320 ||
+        framebufferHeight < 200) {
+        return;
+    }
+    /* ReDMCSB CHAMDRAW.C F0287/F0290 and DUNVIEW.C F0097 redraw the
+     * champion/control surfaces after the dungeon view.  Use the V1 draw
+     * lane already backed by the selected CSB GRAPHICS.DAT; do not insert
+     * diagnostic labels or substitute generated HUD artwork. */
+    m11_draw_party_panel(state, framebuffer, framebufferWidth,
+                         framebufferHeight);
+    m11_draw_v1_champion_icons(state, framebuffer, framebufferWidth,
+                               framebufferHeight);
+    m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,
+                                   framebufferHeight);
+    m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
+    m11_draw_v1_message_area(state, framebuffer, framebufferWidth,
+                             framebufferHeight);
 }
 
 static void m11_apply_csb_runtime_m11_mirror_receipt(
@@ -8940,6 +9028,84 @@ static void m11_apply_kill_notify_plan(
 static void m11_remove_creature_ai_for_group_f0446(M11_GameViewState* state,
                                                    int groupIndex);
 
+static int m11_drop_group_slot_possessions_f0188(
+    M11_GameViewState* state,
+    struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    DM1_MeleeF0188GroupSlotDropInputPc34 in;
+    DM1_MeleeF0188GroupSlotDropPlanPc34 plan;
+    unsigned short thing;
+    int i;
+
+    if (!state || !state->world.things || !group) return 0;
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.slotHead = group->slot;
+    thing = group->slot;
+    while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+           in.chainEntryCount < DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34) {
+        in.chain[in.chainEntryCount].thing = thing;
+        in.chain[in.chainEntryCount].nextThing =
+            m11_get_raw_next_thing(state->world.things, thing);
+        in.randomCells[in.randomCellCount++] = (unsigned char)
+            F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 4);
+        thing = in.chain[in.chainEntryCount].nextThing;
+        ++in.chainEntryCount;
+    }
+    if (!dm1_v1_melee_group_slot_drop_plan_f0188_pc34(&in, &plan) ||
+        !plan.valid || plan.truncated) {
+        return 0;
+    }
+    for (i = 0; i < plan.stepCount; ++i) {
+        if (!m11_prepend_thing_to_square(&state->world, mapIndex, mapX, mapY,
+                                         plan.steps[i].droppedThing)) {
+            return 0;
+        }
+    }
+    if (plan.shouldClearGroupSlot) group->slot = THING_ENDOFLIST;
+    if (plan.shouldDrop && state->audioState.lastSoundIndex >= -1) {
+        m11_audio_emit_source_sound(
+            state, plan.weaponDropped ? DM1_SND_METALLIC_THUD : DM1_SND_WOODEN_THUD,
+            M11_AUDIO_MARKER_COMBAT);
+    }
+
+    /* ReDMCSB: GROUP.C F0188 lines 723-736 snapshots each Slot.Next,
+     * assigns RANDOM(4) cell bits, moves it through F0267 in chain order,
+     * and only then F0189 deletes the group. */
+    return 1;
+}
+
+static void m11_delete_group_events_f0181(M11_GameViewState* state,
+                                          int mapIndex, int mapX, int mapY) {
+    int readIndex;
+    int writeIndex = 0;
+    int oldCount;
+
+    if (!state) return;
+    oldCount = state->world.timeline.count;
+    for (readIndex = 0; readIndex < oldCount; ++readIndex) {
+        struct TimelineEvent_Compat event = state->world.timeline.events[readIndex];
+        if (event.mapIndex == mapIndex && event.mapX == mapX && event.mapY == mapY &&
+            event.aux2 >= DM1_EVENT_REACTION_DANGER_ON_SQUARE &&
+            event.aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+            continue;
+        }
+        state->world.timeline.events[writeIndex++] = event;
+    }
+    state->world.timeline.count = writeIndex;
+    while (writeIndex < oldCount) {
+        memset(&state->world.timeline.events[writeIndex], 0,
+               sizeof(state->world.timeline.events[writeIndex]));
+        ++writeIndex;
+    }
+
+    /* ReDMCSB: GROUP.C F0181 lines 340-371 removes C29-C41 events at the
+     * deleted group's square by map, location, and source event type; F0189
+     * invokes it after the F0267 unlink. */
+}
+
 static int m11_check_group_death_and_drop(
     M11_GameViewState* state,
     unsigned short groupThing,
@@ -8952,8 +9118,10 @@ static int m11_check_group_death_and_drop(
     int slotI;
     DM1_MeleeF0190KilledAllStateInputPc34 killedAllIn;
     DM1_MeleeF0190KilledAllStatePlanPc34 killedAllPlan;
+    DM1_MeleeF0190KilledAllStateApplyPlanPc34 killedAllApply;
     DM1_MeleeF0190PossessionDropInputPc34 dropIn;
     DM1_MeleeF0190PossessionDropPlanPc34 dropPlan;
+    DM1_MeleeF0190PossessionDropApplyPlanPc34 dropApply;
 
     if (!state || !state->world.things ||
         groupThing == THING_NONE || groupThing == THING_ENDOFLIST) {
@@ -8975,6 +9143,7 @@ static int m11_check_group_death_and_drop(
 
     memset(&killedAllIn, 0, sizeof(killedAllIn));
     memset(&killedAllPlan, 0, sizeof(killedAllPlan));
+    memset(&killedAllApply, 0, sizeof(killedAllApply));
     killedAllIn.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
     killedAllIn.groupIndex = gIdx;
     killedAllIn.targetMapIndex = groupMapIndex;
@@ -8985,8 +9154,13 @@ static int m11_check_group_death_and_drop(
         !killedAllPlan.valid) {
         return 0;
     }
+    if (!dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
+            &killedAllPlan, &killedAllApply) || !killedAllApply.valid) {
+        return 0;
+    }
     memset(&dropIn, 0, sizeof(dropIn));
     memset(&dropPlan, 0, sizeof(dropPlan));
+    memset(&dropApply, 0, sizeof(dropApply));
     dropIn.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
     dropIn.creatureType = (int)g->creatureType;
     dropIn.creatureAttributes = 0;
@@ -8998,51 +9172,21 @@ static int m11_check_group_death_and_drop(
         !dropPlan.valid) {
         return 0;
     }
-
-    if (dropPlan.shouldDropGroupFixedPossessions) {
-        DM1_MeleeF0190FixedDropCellsPlanPc34 fixedCellsPlan;
-
-        memset(&fixedCellsPlan, 0, sizeof(fixedCellsPlan));
-        if (dm1_v1_melee_group_fixed_drop_cells_plan_f0190_pc34(
-                g, &fixedCellsPlan) &&
-            fixedCellsPlan.valid) {
-            int cellI;
-            for (cellI = 0; cellI < fixedCellsPlan.dropCellCount; ++cellI) {
-                (void)m11_materialize_creature_fixed_possession_drops(
-                    state, (int)g->creatureType,
-                    fixedCellsPlan.dropCells[cellI],
-                    dropPlan.mapIndex, dropPlan.mapX, dropPlan.mapY);
-            }
+    if (!dm1_v1_melee_possession_drop_apply_plan_f0190_pc34(
+            &dropPlan, g, &dropApply) || !dropApply.valid) {
+        return 0;
+    }
+    if (dropApply.shouldDropGroupFixedPossessions) {
+        int cellI;
+        for (cellI = 0; cellI < dropApply.groupFixedCellCount; ++cellI) {
+            (void)m11_materialize_creature_fixed_possession_drops(
+                state, (int)g->creatureType, dropApply.groupFixedCells[cellI],
+                dropApply.mapIndex, dropApply.mapX, dropApply.mapY);
         }
     }
-
-    if (dropPlan.shouldDropGroupSlotPossessions) {
-        unsigned short possession = g->slot;
-        int dropCount = 0;
-        int safety = 0;
-        while (possession != THING_NONE && possession != THING_ENDOFLIST
-               && safety++ < 32) {
-            unsigned short nextPossession = THING_NONE;
-            /* Read the next pointer before we unlink */
-            nextPossession = m11_get_raw_next_thing(state->world.things, possession);
-            /* Place on floor */
-            if (m11_prepend_thing_to_square(&state->world,
-                                           dropPlan.mapIndex,
-                                           dropPlan.mapX,
-                                           dropPlan.mapY,
-                                           possession)) {
-                dropCount++;
-            }
-            possession = nextPossession;
-        }
-        g->slot = THING_NONE;
-        if (dropCount > 0) {
-            m11_log_event(state, M11_COLOR_YELLOW,
-                          "T%u: %s DROPS %d ITEM%s",
-                          (unsigned int)state->world.gameTick,
-                          m11_creature_name((int)g->creatureType),
-                          dropCount, dropCount == 1 ? "" : "S");
-        }
+    if (dropApply.shouldDropGroupSlotPossessions) {
+        (void)m11_drop_group_slot_possessions_f0188(
+            state, g, dropApply.mapIndex, dropApply.mapX, dropApply.mapY);
     }
 
     {
@@ -9053,17 +9197,25 @@ static int m11_check_group_death_and_drop(
         }
     }
 
-    if (killedAllPlan.shouldUnlinkGroupFromSquare) {
+    if (killedAllApply.shouldUnlinkGroupFromSquare) {
         (void)m11_unlink_thing_from_square(
-            &state->world, killedAllPlan.mapIndex, killedAllPlan.mapX,
-            killedAllPlan.mapY, groupThing);
+            &state->world, killedAllApply.mapIndex, killedAllApply.mapX,
+            killedAllApply.mapY, killedAllApply.groupThing);
     }
-    if (killedAllPlan.shouldClearGroupNext) {
-        m11_set_raw_next_thing(state->world.things, groupThing, THING_NONE);
-        g->next = THING_NONE;
+    if (killedAllApply.shouldClearGroupNext) {
+        m11_set_raw_next_thing(state->world.things, killedAllApply.groupThing,
+                               killedAllApply.clearedNextThing);
+        g->next = killedAllApply.clearedNextThing;
     }
-    if (killedAllPlan.shouldRemoveActiveGroupState) {
-        m11_remove_creature_ai_for_group_f0446(state, killedAllPlan.groupIndex);
+    if (killedAllApply.shouldRemoveActiveGroupState &&
+        groupMapIndex == state->world.party.mapIndex) {
+        /* ReDMCSB: GROUP.C F0189 lines 763-766 only retires an
+         * ACTIVE_GROUP when the deleted group is on the party map. */
+        m11_remove_creature_ai_for_group_f0446(state, killedAllApply.groupIndex);
+    }
+    m11_delete_group_events_f0181(state, groupMapIndex, groupMapX, groupMapY);
+    if (killedAllPlan.shouldWriteRawGroup) {
+        m11_write_raw_group_record(state->world.things, killedAllApply.groupIndex);
     }
     return 1;
 }
@@ -10369,6 +10521,7 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (!state) {
         return;
     }
+    theron_v1_track01_cdda_stream_stop(&state->theronTrack01CddaStream);
     m11_nexus_release_title(state);
     {
         Theron_V1_BootProfile *theronProfile =
@@ -10792,17 +10945,6 @@ static int m11_nexus_refresh_startup_host_caller(
     return 1;
 }
 
-static int m11_nexus_startup_action_receipt_is_asset_blocked(
-    const Nexus_V1_StartupHostActionReceipt *receipt)
-{
-    const char *status;
-    if (!receipt) {
-        return 0;
-    }
-    status = receipt->host_receipt.status;
-    return status && strncmp(status, "blocked-menu-bpk", 16) == 0;
-}
-
 static int m11_path_has_extension(const char* path, const char* ext) {
     size_t pathLen;
     size_t extLen;
@@ -11084,8 +11226,6 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
-    Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
-    Nexus_V1_StartupSaveExecution execution;
     Nexus_V1_StartupHostActionReceipt receipt;
     Nexus_V1_StartupDrawCommand startup_commands[80];
     Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
@@ -11095,34 +11235,34 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
     if (!state || !state->nexusState.startup_save_select_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_nexus_runtime_startup_snapshot(state, &snapshot);
-    if (!nexus_v1_launcher_startup_execute_save_firestaff_input_from_snapshot(
-            &snapshot,
-            (int)input,
-            m11_nexus_startup_load_save_callback,
+    if (!m11_nexus_refresh_startup_host_caller(
             state,
-            &execution,
-            &receipt)) {
+            input,
+            startup_commands,
+            (int)(sizeof(startup_commands) / sizeof(startup_commands[0])),
+            dgn_commands,
+            (int)(sizeof(dgn_commands) / sizeof(dgn_commands[0])),
+            &host_caller_receipt)) {
         return input == M12_MENU_INPUT_NONE
                    ? M11_GAME_INPUT_IGNORED
                    : M11_GAME_INPUT_REDRAW;
     }
-    if (m11_nexus_startup_action_receipt_is_asset_blocked(&receipt)) {
-        Nexus_V1_StartupHostFacts facts;
-        memset(&facts, 0, sizeof(facts));
-        if (nexus_v1_launcher_startup_host_facts_from_snapshot(
-                &snapshot,
-                &facts)) {
-            (void)nexus_v1_startup_execute_save_firestaff_input_from_host_facts_with_receipt(
-                &facts,
-                (int)input,
-                m11_nexus_startup_load_save_callback,
-                state,
-                &execution,
-                &receipt);
-        }
+    /* Save selection and confirmation are evaluated while constructing the
+     * canonical package. Consume that exact embedded action receipt; calling
+     * the save helper again here would re-run a stateful load route. */
+    if (!host_caller_receipt.ownership.startup_bundle.package.consumer
+             .save_route_valid ||
+        !host_caller_receipt.ownership.startup_bundle.package.consumer
+             .save_route.action_receipt_valid) {
+        return input == M12_MENU_INPUT_NONE
+                   ? M11_GAME_INPUT_IGNORED
+                   : M11_GAME_INPUT_REDRAW;
     }
+    receipt = host_caller_receipt.ownership.startup_bundle.package.consumer
+        .save_route.action_receipt;
     result = m11_nexus_apply_startup_action_receipt(state, &receipt);
+    /* This is a new, post-commit frame receipt. It carries no input action
+     * and therefore cannot duplicate the save/load confirmation above. */
     (void)m11_nexus_refresh_startup_host_caller(
         state,
         M12_MENU_INPUT_NONE,
@@ -11177,6 +11317,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                                       dd,
                                       spec->verifiedAssetPath,
                                       spec->verifiedAssetMd5,
+                                      spec->theronTrack02LoaderReceipt,
                                       spec->savePath);
         if (ok) {
             state->presentationMode = spec->presentationMode;
@@ -11622,6 +11763,15 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
             }
         }
     }
+    if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
+        const char* launchMediaPath =
+            M12_AssetStatus_GetTheronLaunchMediaPath(&menuState->assetStatus);
+        spec.theronTrack02LoaderReceipt =
+            M12_AssetStatus_GetTheronTrack02LoaderReceipt(&menuState->assetStatus);
+        if (launchMediaPath && launchMediaPath[0] != '\0') {
+            spec.verifiedAssetPath = launchMediaPath;
+        }
+    }
     if (menuState->launchRequested) {
         M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
         spec.savePath = intent.savePath;
@@ -11728,7 +11878,6 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
     DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* out_facts)
 {
     DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 facts;
-    DM1_V1_StartupHoCHostCaptureObservation_PC34 observation;
     DM1_V1_ChampionMirrorFrontWallReceiptPc34 front_wall;
     DM1_V1_ChampionMirrorRenderReceiptPc34 mirror_render;
     const M11_AssetSlot* portraits;
@@ -11740,7 +11889,6 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
     int presented_capture_ready;
 
     memset(&facts, 0, sizeof(facts));
-    memset(&observation, 0, sizeof(observation));
     memset(&front_wall, 0, sizeof(front_wall));
     memset(&mirror_render, 0, sizeof(mirror_render));
     portraits = NULL;
@@ -11804,26 +11952,29 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
     facts.launch_path_intro_not_bypassed =
         state && !state->dm1StartupIntroBypassed ? 1 : 0;
     facts.captured_after_first_frame_render = 1;
-    observation.host_window_present = host_window_present;
-    observation.presented_capture_ready = presented_capture_ready;
-    observation.started_from_launcher =
-        state && state->startedFromLauncher ? 1 : 0;
-    observation.intro_not_bypassed =
-        state && !state->dm1StartupIntroBypassed ? 1 : 0;
-    observation.captured_from_real_assets =
+    facts.captured_from_real_assets =
         state && state->assetsAvailable && state->assetLoader.fileState &&
         hoc_assets_ready;
-    observation.observed_required_graphics_hash_match =
-        observation.captured_from_real_assets;
-    observation.observed_required_dungeon_hash_match =
+    facts.observed_required_graphics_hash_match =
+        facts.captured_from_real_assets;
+    facts.observed_required_dungeon_hash_match =
         facts.dungeon_loaded && facts.map_count > 0;
-    observation.observed_c026_portrait_asset =
+    facts.captured_from_mac_window =
+#ifdef __APPLE__
+        host_window_present && presented_capture_ready;
+#else
+        0;
+#endif
+    facts.captured_from_release_app =
+        state && state->startedFromLauncher &&
+        !state->dm1StartupIntroBypassed &&
+        host_window_present &&
+        presented_capture_ready;
+    facts.observed_c026_portrait_asset =
         portraits && portraits->loaded && portraits->pixels ? 1 : 0;
-    observation.observed_c346_mirror_backing_asset =
+    facts.observed_c346_mirror_backing_asset =
         backing && backing->loaded && backing->pixels ? 1 : 0;
-    (void)dm1_v1_startup_hoc_host_probe_facts_apply_host_observation_pc34(
-        &facts,
-        &observation);
+    facts.observed_host_window_present = host_window_present;
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m11_boot_probe_consumer = 1;
     facts.consumed_m12_startup_capture_consumer = 1;
@@ -12192,12 +12343,6 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                 out->dm1HoCMapHeight = boot_fields.map_height;
                 out->dm1HoCRenderCommandCount =
                     boot_fields.render_command_count;
-                out->dm1HoCConsumedSaveCaptureHostReadiness =
-                    boot_fields.consumed_hoc_save_capture_host_readiness;
-                out->dm1HoCSaveCaptureReady =
-                    boot_fields.hoc_save_capture_ready;
-                out->dm1HoCOriginalSaveCaptureReady =
-                    boot_fields.hoc_original_save_capture_ready;
                 out->dm1CompleteSupportReady =
                     boot_fields.complete_support_ready;
                 out->dm1CompleteSourceVisibleStartup =
@@ -12549,6 +12694,8 @@ static M11_GameInputResult m11_theron_apply_startup_host_receipt(
     return M11_GAME_INPUT_IGNORED;
 }
 
+static void m11_theron_update_track01_cdda_lifecycle(M11_GameViewState *state);
+
 static M11_GameInputResult m11_theron_apply_startup_action_host_receipt(
     M11_GameViewState *state,
     const Theron_StartupActionHostReceipt *receipt)
@@ -12559,10 +12706,29 @@ static M11_GameInputResult m11_theron_apply_startup_action_host_receipt(
     if (receipt->state_receipt_valid) {
         m11_theron_apply_startup_state_receipt(state, &receipt->state_receipt);
     }
-    return m11_theron_apply_startup_host_receipt(
+    {
+        M11_GameInputResult result = m11_theron_apply_startup_host_receipt(
         state,
         &receipt->host_receipt,
         receipt->runtime_receipt);
+        m11_theron_update_track01_cdda_lifecycle(state);
+        return result;
+    }
+}
+
+static void m11_theron_update_track01_cdda_lifecycle(M11_GameViewState *state)
+{
+    int title_active;
+
+    if (!state) {
+        return;
+    }
+    title_active = state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+        state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE;
+    (void)theron_v1_track01_cdda_lifecycle_update(
+        &state->theronTrack01CddaHandoff,
+        title_active,
+        &state->theronTrack01CddaStream);
 }
 
 static int m11_theron_apply_boot_runtime_receipt(
@@ -12593,6 +12759,7 @@ static int m11_theron_apply_boot_runtime_receipt(
     state->theronWorld = receipt->world;
     state->theronViewport = receipt->viewport;
     state->theronAssets = receipt->assets;
+    state->theronTrack01CddaHandoff = receipt->track01_cdda_handoff;
     /* THQUEST.ASM T400 startup handoff: boot owns the fresh Track 02
      * title-gate receipts through runtime detach. Accept then advances to
      * stage-select; the next explicit input opens the Soul Room. */
@@ -12609,6 +12776,7 @@ static int m11_theron_apply_boot_runtime_receipt(
         state,
         &receipt->launch_host_receipt,
         NULL);
+    m11_theron_update_track01_cdda_lifecycle(state);
     return 1;
 }
 
@@ -12935,6 +13103,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* verifiedPath,
                                     const char* verifiedMd5,
+                                    const Theron_Track02StartupLoaderReceipt* loaderReceipt,
                                     const char* savePath) {
     Theron_V1_BootStartupLaunch launch;
     Theron_V1_BootStartupRuntimeReceipt runtime_receipt;
@@ -12948,6 +13117,15 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     M11_GameView_Shutdown(state);
     M11_GameView_Init(state);
     state->showDebugHUD = savedDebugHUD;
+
+    if (loaderReceipt && !theron_v1_boot_validate_track02_loader_receipt(
+                             loaderReceipt, verifiedMd5)) {
+        m11_set_status(state, "STARTUP", "TRACK02 CUE LOADER RECEIPT INVALID");
+        goto fail;
+    }
+    if (loaderReceipt) {
+        state->theronTrack02LoaderReceipt = *loaderReceipt;
+    }
 
     if (!theron_v1_boot_startup_launch_alloc(dataDir,
                                              verifiedPath,
@@ -13444,8 +13622,10 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                     (M11_THERON_STARTUP_TITLE_FRAME_COUNT *
                      M11_THERON_STARTUP_TITLE_FRAME_TICKS)) {
                 state->theronState.startup_title_animation_tick++;
+                m11_theron_update_track01_cdda_lifecycle(state);
                 return M11_GAME_INPUT_REDRAW;
             }
+            m11_theron_update_track01_cdda_lifecycle(state);
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         (void)theron_v1_boot_runtime_tick_world(
@@ -13497,6 +13677,26 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         if (state->dm2State.startup_menu_active) {
             DM2_V1_StartupIdleReceipt receipt;
+            DM2_V1_MusicScheduleReceipt music_schedule;
+            /* M11's idle scheduler is the only clock available while the
+             * static DM2 title menu owns the frame.  Advance the MIDI-only
+             * timeline at its 60 Hz handoff cadence; no due event is sent to
+             * SDL audio until a proven MIDI device backend is installed. */
+            if (state->dm2State.music_elapsed_us <= UINT32_MAX - 16667u) {
+                state->dm2State.music_elapsed_us += 16667u;
+            }
+            memset(&music_schedule, 0, sizeof(music_schedule));
+            if (dm2_v1_sound_schedule_music(
+                    state->dm2State.music_elapsed_us,
+                    &music_schedule)) {
+                state->dm2State.music_schedule_ready =
+                    music_schedule.midi_handoff_ready;
+                state->dm2State.music_loop_duration_us =
+                    music_schedule.loop_duration_us;
+                state->dm2State.music_loop_count = music_schedule.loop_count;
+                state->dm2State.music_events_due =
+                    music_schedule.event_count_due;
+            }
             if (m11_dm2_boot_runtime_startup_idle(
                     state,
                     mouthRedraw,
@@ -14925,14 +15125,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
             Nexus_V1_StartupTitleExecution execution;
             Nexus_V1_StartupHostActionReceipt receipt;
-            Nexus_V1_StartupHostFacts facts;
             m11_nexus_runtime_startup_snapshot(state, &snapshot);
-            memset(&facts, 0, sizeof(facts));
-            if (!nexus_v1_launcher_startup_host_facts_from_snapshot(
+            if (!nexus_v1_launcher_startup_execute_title_firestaff_input_from_snapshot(
                     &snapshot,
-                    &facts) ||
-                !nexus_v1_startup_execute_title_firestaff_input_from_host_facts_with_receipt(
-                    &facts,
                     (int)input,
                     &execution,
                     &receipt)) {
@@ -14944,65 +15139,28 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return m11_nexus_startup_handle_save_input(state, input);
         }
         if (state->nexusState.champion_select_active) {
-            Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
-            Nexus_V1_StartupChampionExecution execution;
             Nexus_V1_StartupHostActionReceipt receipt;
             Nexus_V1_StartupDrawCommand startup_commands[80];
             Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
             Nexus_V1_StartupHostCallerReceipt host_caller_receipt;
             M11_GameInputResult result;
-            int host_caller_valid = 0;
-            m11_nexus_runtime_startup_snapshot(state, &snapshot);
-            if (!nexus_v1_launcher_startup_execute_champion_firestaff_input_from_snapshot(
-                    &snapshot,
-                    (int)input,
-                    &execution,
-                    &receipt)) {
-                return M11_GAME_INPUT_IGNORED;
-            }
-            if (m11_nexus_startup_action_receipt_is_asset_blocked(&receipt)) {
-                Nexus_V1_StartupHostFacts facts;
-                memset(&facts, 0, sizeof(facts));
-                if (nexus_v1_launcher_startup_host_facts_from_snapshot(
-                        &snapshot,
-                        &facts)) {
-                    (void)nexus_v1_startup_execute_champion_firestaff_input_from_host_facts_with_receipt(
-                        &facts,
-                        (int)input,
-                        &execution,
-                        &receipt);
-                }
-            }
-            if (input == M12_MENU_INPUT_ACTION ||
-                execution.kind ==
-                    NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON) {
-                host_caller_valid =
-                    m11_nexus_refresh_startup_host_caller(
-                        state,
-                        input,
-                        startup_commands,
-                        (int)(sizeof(startup_commands) /
-                              sizeof(startup_commands[0])),
-                        commands,
-                        (int)(sizeof(commands) / sizeof(commands[0])),
-                        &host_caller_receipt);
-            }
-            result = m11_nexus_apply_startup_action_receipt(
-                state,
-                &receipt);
-            if (host_caller_valid) {
-                (void)host_caller_receipt.host_caller_ready;
-            } else {
-                (void)m11_nexus_refresh_startup_host_caller(
+            if (!m11_nexus_refresh_startup_host_caller(
                     state,
-                    M12_MENU_INPUT_NONE,
+                    input,
                     startup_commands,
                     (int)(sizeof(startup_commands) /
                           sizeof(startup_commands[0])),
                     commands,
                     (int)(sizeof(commands) / sizeof(commands[0])),
-                    &host_caller_receipt);
+                    &host_caller_receipt)) {
+                return M11_GAME_INPUT_IGNORED;
             }
+            /* The host caller evaluates the champion command while producing
+             * the canonical full-start package.  Applying its embedded action
+             * receipt keeps M11 from evaluating an ACTION start a second time. */
+            receipt = host_caller_receipt.ownership.runtime_route
+                .host_action_receipt;
+            result = m11_nexus_apply_startup_action_receipt(state, &receipt);
             return result;
         }
         if (input == M12_MENU_INPUT_BACK) {
@@ -15094,9 +15252,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     state,
                     &receipt);
             }
-            return m11_theron_apply_startup_action_host_receipt(
-                state,
-                &receipt);
+            return m11_theron_apply_startup_action_host_receipt(state, &receipt);
         }
         /* v2.8.x: arrow Left/Right now mean strafe (matches original
          * DM1 PC 3.4 convention).  TURN_LEFT/RIGHT comes from Home /
@@ -15755,18 +15911,6 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
                 &receipt)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        if (m11_nexus_startup_action_receipt_is_asset_blocked(&receipt)) {
-            Nexus_V1_StartupHostFacts facts;
-            memset(&facts, 0, sizeof(facts));
-            if (nexus_v1_launcher_startup_host_facts_from_snapshot(
-                    &snapshot,
-                    &facts)) {
-                (void)nexus_v1_startup_execute_title_pointer_from_host_facts_with_receipt(
-                    &facts,
-                    &execution,
-                    &receipt);
-            }
-        }
         return m11_nexus_apply_startup_action_receipt(state, &receipt);
     }
     if (state->nexusState.startup_save_select_active) {
@@ -15784,26 +15928,13 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
                 &receipt)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        if (m11_nexus_startup_action_receipt_is_asset_blocked(&receipt)) {
-            Nexus_V1_StartupHostFacts facts;
-            memset(&facts, 0, sizeof(facts));
-            if (nexus_v1_launcher_startup_host_facts_from_snapshot(
-                    &snapshot,
-                    &facts)) {
-                (void)nexus_v1_startup_execute_save_pointer_from_host_facts_with_receipt(
-                    &facts,
-                    x,
-                    y,
-                    m11_nexus_startup_load_save_callback,
-                    state,
-                    &execution,
-                    &receipt);
-            }
-        }
         return m11_nexus_apply_startup_action_receipt(state, &receipt);
     }
     if (state->nexusState.champion_select_active) {
         Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
+        Nexus_V1_StartupHostFacts facts;
+        Nexus_V1_StartupChampionSnapshot pointer_snapshot;
+        Nexus_V1_StartupAction pointer_action;
         Nexus_V1_StartupChampionExecution execution;
         Nexus_V1_StartupHostActionReceipt receipt;
         Nexus_V1_StartupDrawCommand startup_commands[80];
@@ -15811,6 +15942,38 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         Nexus_V1_StartupHostCallerReceipt host_caller_receipt;
         M11_GameInputResult result;
         int host_caller_valid = 0;
+
+        memset(&facts, 0, sizeof(facts));
+        memset(&pointer_snapshot, 0, sizeof(pointer_snapshot));
+        memset(&pointer_action, 0, sizeof(pointer_action));
+        m11_nexus_runtime_startup_snapshot(state, &snapshot);
+        if (nexus_v1_launcher_startup_host_facts_from_snapshot(
+                &snapshot, &facts) &&
+            nexus_v1_startup_champion_handle_pointer_from_facts(
+                facts.champion_pool,
+                &pointer_snapshot,
+                facts.slot_mask,
+                facts.champion_cursor,
+                facts.champion_frame,
+                x,
+                y,
+                &pointer_action) &&
+            pointer_action.kind == NEXUS_V1_STARTUP_ACTION_START_DUNGEON) {
+            if (!m11_nexus_refresh_startup_host_caller(
+                    state,
+                    M12_MENU_INPUT_ACTION,
+                    startup_commands,
+                    (int)(sizeof(startup_commands) /
+                          sizeof(startup_commands[0])),
+                    commands,
+                    (int)(sizeof(commands) / sizeof(commands[0])),
+                    &host_caller_receipt)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            receipt = host_caller_receipt.ownership.runtime_route
+                .host_action_receipt;
+            return m11_nexus_apply_startup_action_receipt(state, &receipt);
+        }
         m11_nexus_runtime_startup_snapshot(state, &snapshot);
         if (!nexus_v1_launcher_startup_execute_champion_pointer_from_snapshot(
                 &snapshot,
@@ -15820,46 +15983,19 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
                 &receipt)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        if (m11_nexus_startup_action_receipt_is_asset_blocked(&receipt)) {
-            Nexus_V1_StartupHostFacts facts;
-            memset(&facts, 0, sizeof(facts));
-            if (nexus_v1_launcher_startup_host_facts_from_snapshot(
-                    &snapshot,
-                    &facts)) {
-                (void)nexus_v1_startup_execute_champion_pointer_from_host_facts_with_receipt(
-                    &facts,
-                    x,
-                    y,
-                    &execution,
-                    &receipt);
-            }
-        }
         if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON) {
-            host_caller_valid =
-                m11_nexus_refresh_startup_host_caller(
-                    state,
-                    M12_MENU_INPUT_ACTION,
-                    startup_commands,
-                    (int)(sizeof(startup_commands) /
-                          sizeof(startup_commands[0])),
-                    commands,
-                    (int)(sizeof(commands) / sizeof(commands[0])),
-                    &host_caller_receipt);
+            host_caller_valid = m11_nexus_refresh_startup_host_caller(
+                state, M12_MENU_INPUT_ACTION, startup_commands,
+                (int)(sizeof(startup_commands) / sizeof(startup_commands[0])),
+                commands, (int)(sizeof(commands) / sizeof(commands[0])),
+                &host_caller_receipt);
         }
-        result = m11_nexus_apply_startup_action_receipt(
-            state,
-            &receipt);
-        if (host_caller_valid) {
-            (void)host_caller_receipt.host_caller_ready;
-        } else {
+        result = m11_nexus_apply_startup_action_receipt(state, &receipt);
+        if (!host_caller_valid) {
             (void)m11_nexus_refresh_startup_host_caller(
-                state,
-                M12_MENU_INPUT_NONE,
-                startup_commands,
-                (int)(sizeof(startup_commands) /
-                      sizeof(startup_commands[0])),
-                commands,
-                (int)(sizeof(commands) / sizeof(commands[0])),
+                state, M12_MENU_INPUT_NONE, startup_commands,
+                (int)(sizeof(startup_commands) / sizeof(startup_commands[0])),
+                commands, (int)(sizeof(commands) / sizeof(commands[0])),
                 &host_caller_receipt);
         }
         return result;
@@ -16934,28 +17070,6 @@ static void m11_draw_creature_cue(unsigned char* framebuffer,
                   bodyX + (bodyW * 2) / 3, eyeY, M11_COLOR_BLACK);
 }
 
-static void m11_draw_item_cue(unsigned char* framebuffer,
-                              int framebufferWidth,
-                              int framebufferHeight,
-                              int x,
-                              int y,
-                              int w,
-                              int h,
-                              int count) {
-    int items = count > 3 ? 3 : count;
-    int i;
-    int baseY = y + h - 6;
-
-    for (i = 0; i < items; ++i) {
-        int cx = x + w / 2 - 8 + i * 7;
-        m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, cx, baseY - 2, M11_COLOR_WHITE);
-        m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, cx - 1, baseY - 1, M11_COLOR_WHITE);
-        m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight, cx + 1, baseY - 1, M11_COLOR_WHITE);
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      cx - 1, baseY, 3, 2, M11_COLOR_YELLOW);
-    }
-}
-
 /* Draw a GRAPHICS.DAT-backed projectile sprite in the given area.
  * relativeDir: projectile direction relative to party facing (0-3), or -1.
  *   0 = flying away, 1 = flying right, 2 = flying toward, 3 = flying left.
@@ -17467,8 +17581,12 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
     /* Teleporter fields are source bitmap overlays, not procedural cue art.
      * Normal V1 draws them in m11_draw_dm1_teleporter_fields(), using
      * DUNVIEW.C F0113 + G0188/G2035 field-aspect rows. */
-    /* Pit darkness effect — only if PIT_OPEN (MASK0x0008, DEFS.H:1027) */
-    if (cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
+    /* The source pit pass has already selected and blitted C049..C063 at
+     * this point (DUNVIEW.C F0128/F0104).  Keep the old cue only for
+     * asset-free fixtures; painting it in an authoritative session masks
+     * the verified original pit bitmap with invented geometry. */
+    if ((!g_drawState || !g_drawState->assetsAvailable) &&
+        cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
         m11_draw_pit_effect(framebuffer, framebufferWidth, framebufferHeight,
                             x, y, w, h, depthIndex);
     }
@@ -18343,7 +18461,6 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * G0290_T_DungeonView_InscriptionThing when the current wall ornament
      * matches the synthetic current-map inscription ornament. */
     if (DM1_V1_Viewport_SquareIsWallLikePc34Compat(cell.square) &&
-        cell.wallOrnamentOrdinal >= 0 &&
         state->world.dungeon &&
         state->world.things &&
         state->world.things->textStrings) {
@@ -18359,8 +18476,12 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
              * global ornament 0 for drawing.  Match the local slot here;
              * comparing against the global ornament value drops every map
              * whose inscription slot is not local index 0. */
-            if (inscSlot >= 0 && inscSlot < 16 && localIdx == inscSlot) {
-                unsigned short tScan = firstThing;
+            if (inscSlot >= 0 && inscSlot < 16) {
+                /* TextString chains use the packed F0511 square-list
+                 * index.  `firstThing` is the broad viewport summary and
+                 * may be map-local on later maps; retain the F0172-visible
+                 * static chain selected above. */
+                unsigned short tScan = viewportStaticFirstThing;
                 int tSafety = 0;
                 while (tScan != THING_ENDOFLIST && tScan != THING_NONE &&
                        tSafety++ < 64) {
@@ -18370,6 +18491,13 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                             tsIdx >= 0 &&
                             tsIdx < state->world.things->textStringCount &&
                             state->world.things->textStrings[tsIdx].visible) {
+                            /* ReDMCSB DUNGEON.C F0172/F0174 turns this
+                             * visible wall TextString into the map-local
+                             * synthetic inscription ornament before
+                             * DUNVIEW.C F0107 renders M648. */
+                            if (localIdx != inscSlot) {
+                                cell.wallOrnamentOrdinal = inscSlot + 1;
+                            }
                             cell.inscriptionTextIndex = tsIdx;
                             break;
                         }
@@ -19114,15 +19242,14 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
     M11_ViewportCell frontCell;
     DM1_V1_ChampionMirrorRenderReceiptPc34 receipt;
 
-    if (!state || !state->active || !state->mirrorCatalogAvailable ||
+    if (!state || !state->active ||
         !m11_get_front_cell(state, &frontCell) || !frontCell.valid) {
         return -1;
     }
     if (m11_build_dm1_front_champion_portrait_receipt(&frontCell, &receipt) &&
         receipt.valid &&
         receipt.drawChampionPortrait &&
-        receipt.renderIndex >= 0 &&
-        receipt.renderIndex < state->mirrorCatalog.count) {
+        receipt.renderIndex >= 0) {
         /* ReDMCSB DUNGEON.C F0172 lines 2573/2608-2612 publishes C127
          * portrait data only for the visible wall face, and DUNVIEW.C
          * 3913-3928 consumes G0289 as the C026 atlas render index.  Use the
@@ -19644,21 +19771,17 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         int itemsToShow = cell->floorItemCount;
         for (ii = 0; ii < itemsToShow; ++ii) {
             if (cell->floorItemTypes[ii] < 0) continue;
-            if (!g_drawState ||
-                !m11_draw_item_sprite(g_drawState, framebuffer,
-                                      framebufferWidth, framebufferHeight,
-                                      faceX + 2, faceY + 2, faceW - 4, faceH - 4,
-                                      cell->floorItemTypes[ii],
-                                      cell->floorItemSubtypes[ii],
-                                      cell->floorItemCells[ii], ii,
-                                      depthIndex,
-                                      sourceZoneRow)) {
-                /* Fallback cue only for the first item to avoid clutter */
-                if (ii == 0) {
-                    m11_draw_item_cue(framebuffer, framebufferWidth, framebufferHeight,
-                                      faceX + 2, faceY + 2, faceW - 4, faceH - 4,
-                                      cell->summary.items);
-                }
+            if (g_drawState) {
+                /* ReDMCSB DUNVIEW.C F0115 has no synthetic object route:
+                 * missing PC34 aspect/material deliberately draws nothing. */
+                (void)m11_draw_item_sprite(g_drawState, framebuffer,
+                                           framebufferWidth, framebufferHeight,
+                                           faceX + 2, faceY + 2, faceW - 4, faceH - 4,
+                                           cell->floorItemTypes[ii],
+                                           cell->floorItemSubtypes[ii],
+                                           cell->floorItemCells[ii], ii,
+                                           depthIndex,
+                                           sourceZoneRow);
             }
         }
     }
@@ -19689,12 +19812,19 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                                           placement->w, placement->h,
                                           entry->creature_type, depthIndex,
                                           entry->creature_direction)) {
-                m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
-                                      placement->x, placement->y,
-                                      placement->w, placement->h,
-                                      depthIndex);
+                /* ReDMCSB DUNVIEW.C F0115 has no synthetic creature path.
+                 * On a verified GRAPHICS.DAT session, an absent C584+ pose
+                 * is intentionally no-draw; retain the cue for asset-free
+                 * fixture sessions only. */
+                if (!g_drawState || !g_drawState->assetsAvailable) {
+                    m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
+                                          placement->x, placement->y,
+                                          placement->w, placement->h,
+                                          depthIndex);
+                }
             }
-            if (entry->first_in_group && entry->creature_count > 1 &&
+            if ((!g_drawState || !g_drawState->assetsAvailable) &&
+                entry->first_in_group && entry->creature_count > 1 &&
                 placement->w >= 12 && placement->h >= 12) {
                 char countStr[4];
                 int badgeX = placement->x + placement->w - 8;
@@ -20104,24 +20234,15 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
     if (state->assetsAvailable) {
         /* ReDMCSB DUNVIEW.C F0094: select floor/ceiling bitmaps from the
          * current map's floor set.  Floor set 0 = entries 78/79, floor
-         * set 1 = 80/81, etc.  Fall back to set 0 if the set-specific
-         * graphics are not available in GRAPHICS.DAT. */
+         * set 1 = 80/81, etc.  An authoritative GRAPHICS.DAT session must
+         * not substitute a different floor set or procedural art when an
+         * exact source bitmap is unavailable. */
         unsigned int floorGfx = m11_floor_set_floor_graphic(state);
         unsigned int ceilingGfx = m11_floor_set_ceiling_graphic(state);
         const M11_AssetSlot* ceilingSlot = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader, ceilingGfx);
         const M11_AssetSlot* floorSlot = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader, floorGfx);
-        /* Fall back to floor set 0 if the map's floor set assets are
-         * missing (e.g. GRAPHICS.DAT only has sets 0-1 but map says 2). */
-        if ((!ceilingSlot || !ceilingSlot->loaded) && ceilingGfx != M11_GFX_CEILING_PANEL) {
-            ceilingSlot = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&state->assetLoader, M11_GFX_CEILING_PANEL);
-        }
-        if ((!floorSlot || !floorSlot->loaded) && floorGfx != M11_GFX_FLOOR_PANEL) {
-            floorSlot = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&state->assetLoader, M11_GFX_FLOOR_PANEL);
-        }
         if (ceilingSlot && floorSlot &&
             ceilingSlot->width == 224 && ceilingSlot->height == 39 &&
             floorSlot->width == 224 && floorSlot->height == 97 &&
@@ -20143,8 +20264,8 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
                                                 framebuffer, fbW, fbH,
                                                 vpX, vpY + 39,
                                                 parityFlip ? 1 : 0);
-            return;
         }
+        return;
     }
     /* Fallback: solid fills.
      *
@@ -20969,7 +21090,7 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
             cell->floorItemCells[ii] != alcoveCellRelativeToParty) {
             continue;
         }
-        if (!m11_draw_item_sprite(state, framebuffer, fbW, fbH,
+        (void)m11_draw_item_sprite(state, framebuffer, fbW, fbH,
                                   M11_VIEWPORT_X + blit->dstX,
                                   M11_VIEWPORT_Y + blit->dstY,
                                   blit->width,
@@ -20979,14 +21100,7 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
                                   cell->floorItemCells[ii],
                                   ii,
                                   cell->relForward,
-                                  sourceZoneRow)) {
-            if (ii == 0) {
-                m11_fill_rect(framebuffer, fbW, fbH,
-                              M11_VIEWPORT_X + blit->dstX + blit->width / 2 - 2,
-                              M11_VIEWPORT_Y + blit->dstY + blit->height - 4,
-                              5, 2, M11_COLOR_YELLOW);
-            }
-        }
+                                  sourceZoneRow);
     }
 }
 
@@ -21380,7 +21494,6 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     DM1_V1_StartupHoCFullStartProductionReceipt_PC34 productionStart;
     DM1_V1_StartupHoCFullGraphicsCaptureArtifact_PC34 captureArtifact;
     DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 captureFacts;
-    DM1_V1_StartupHoCHostCaptureObservation_PC34 captureObservation;
     DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 captureProof;
     DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 runtimeApply;
     DM1_V1_StartupHoCFullGraphicsThingSuppressionFacts_PC34 suppressionFacts;
@@ -21438,7 +21551,6 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
     }
 
     memset(&captureFacts, 0, sizeof(captureFacts));
-    memset(&captureObservation, 0, sizeof(captureObservation));
     {
         const unsigned char* presented_rgba =
             M11_Render_GetPresentedRGBA(&presented_width, &presented_height);
@@ -21453,24 +21565,19 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
                 DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34);
     }
     captureFacts.captured_after_first_frame_render = 1;
-    captureObservation.host_window_present = host_window_present;
-    captureObservation.presented_capture_ready = presented_capture_ready;
-    captureObservation.started_from_launcher =
-        state && state->startedFromLauncher ? 1 : 0;
-    captureObservation.intro_not_bypassed =
-        state && !state->dm1StartupIntroBypassed ? 1 : 0;
-    captureObservation.captured_from_real_assets = hoc_assets_ready;
-    captureObservation.observed_c026_portrait_asset =
-        portraits && portraits->loaded && portraits->pixels ? 1 : 0;
-    captureObservation.observed_c346_mirror_backing_asset =
-        backing && backing->loaded && backing->pixels ? 1 : 0;
-    captureObservation.observed_required_graphics_hash_match =
-        hoc_assets_ready;
-    captureObservation.observed_required_dungeon_hash_match =
-        state && state->world.dungeon && state->world.dungeon->maps ? 1 : 0;
-    (void)dm1_v1_startup_hoc_capture_facts_apply_host_observation_pc34(
-        &captureFacts,
-        &captureObservation);
+    captureFacts.captured_from_real_assets = hoc_assets_ready;
+    captureFacts.captured_from_mac_window =
+        host_window_present && presented_capture_ready;
+    captureFacts.captured_from_release_app =
+        state && state->startedFromLauncher &&
+        !state->dm1StartupIntroBypassed &&
+        host_window_present &&
+        presented_capture_ready;
+    captureFacts.observed_c026_portrait_asset =
+        portraits && portraits->loaded && portraits->pixels;
+    captureFacts.observed_c346_mirror_backing_asset =
+        backing && backing->loaded && backing->pixels;
+    captureFacts.observed_host_window_present = host_window_present;
     captureFacts.captured_map_index = renderReceipt->map_index;
     captureFacts.captured_map_width =
         productionStart.packaged_proof.expected_map_width;
@@ -21541,40 +21648,6 @@ static void m11_draw_dm1_front_champion_portrait_host_receipt(
                                receipt->portraitTransparentColor);
 }
 
-static void m11_draw_dm1_front_mirror_backing(unsigned char* framebuffer,
-                                              int fbW,
-                                              int fbH,
-                                              const M11_DM1ZoneBlit* blit) {
-    int x;
-    int y;
-    int w;
-    int h;
-    if (!framebuffer || !blit) {
-        return;
-    }
-    x = M11_VIEWPORT_X + blit->dstX;
-    y = M11_VIEWPORT_Y + blit->dstY;
-    w = blit->width;
-    h = blit->height;
-    if (w <= 2 || h <= 2) {
-        return;
-    }
-    /* ReDMCSB DUNVIEW.C:3922-3928 draws C346 before C026.
-     * Keep the D1C champion-mirror frame opaque even if the extracted
-     * wall-ornament bitmap contributes only transparent/stone-like pixels. */
-    m11_fill_rect(framebuffer, fbW, fbH, x, y, w, h, M11_COLOR_BLACK);
-    m11_fill_rect(framebuffer, fbW, fbH, x + 2, y + 2, w - 4, h - 4,
-                  M11_COLOR_DARK_GRAY);
-    m11_draw_hline(framebuffer, fbW, fbH, x + 1, x + w - 2, y + 1,
-                   M11_COLOR_LIGHT_GRAY);
-    m11_draw_vline(framebuffer, fbW, fbH, x + 1, y + 1, y + h - 2,
-                   M11_COLOR_LIGHT_GRAY);
-    m11_draw_hline(framebuffer, fbW, fbH, x + 1, x + w - 2, y + h - 2,
-                   M11_COLOR_GRAY);
-    m11_draw_vline(framebuffer, fbW, fbH, x + w - 2, y + 1, y + h - 2,
-                   M11_COLOR_GRAY);
-}
-
 static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                             const M11_ViewportCell* frontCell,
                                             unsigned char* framebuffer,
@@ -21585,7 +21658,6 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     DM1_V1_ChampionMirrorHostDrawReceiptPc34 drawReceipt;
     DM1_V1_StartupHoCRenderConsumerReceipt_PC34 consumer;
     DM1_V1_StartupHoCFallbackDrawOwnershipReceipt_PC34 ownership;
-    M11_DM1ZoneBlit backingBlit;
     const M11_AssetSlot* slot;
     int startupOwnershipReady;
     if (!state || !frontCell) {
@@ -21636,6 +21708,12 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         return;
     }
 
+    if (!drawReceipt.candidatePanelOwnsCell &&
+        (!drawReceipt.drawMirrorBackingAsset || !slot || !slot->loaded ||
+         !slot->pixels)) {
+        return;
+    }
+
     /* ReDMCSB DUNGEON.C:2608-2612 stores the C127 champion portrait in
      * G0289 and DUNVIEW.C:3913-3928 blits the fixed D1C portrait-on-wall
      * rectangle from that state.  M11 must execute the draw through the
@@ -21659,23 +21737,6 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                                drawReceipt.backingPaletteMapValid ?
                                                    drawReceipt.backingPaletteMap : NULL,
                                                drawReceipt.backingFlipHorizontal);
-    }
-    /* ReDMCSB DUNVIEW.C:3913-3928 draws the C346 D1C wall ornament
-     * before the C026 champion portrait, with coord-set 5 from
-     * G0205_aaauc_Graphic558_WallOrnamentCoordinateSets (80,143,29,71)
-     * and G0109_ac_Box_ChampionPortraitOnWall (96,127,35,63) inside it.
-     * Make that source geometry an invariant for every C127 route: the
-     * extracted C346 bitmap may still contribute source pixels above, but
-     * the portrait must never sit directly on stone or appear to float. */
-    if (drawReceipt.drawInvariantBackingRect) {
-        backingBlit.graphicIndex = drawReceipt.backingGraphicIndex;
-        backingBlit.srcX = drawReceipt.backingSourceX;
-        backingBlit.srcY = drawReceipt.backingSourceY;
-        backingBlit.dstX = drawReceipt.backingDstX;
-        backingBlit.dstY = drawReceipt.backingDstY;
-        backingBlit.width = drawReceipt.backingWidth;
-        backingBlit.height = drawReceipt.backingHeight;
-        m11_draw_dm1_front_mirror_backing(framebuffer, fbW, fbH, &backingBlit);
     }
     m11_draw_dm1_front_champion_portrait_host_receipt(
         state, &drawReceipt, framebuffer, fbW, fbH);
@@ -21830,6 +21891,22 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                                        spec.relSide));
                 }
             }
+        }
+    }
+
+    /* ReDMCSB DUNGEON.C F0172/F0174 records the selected front-wall
+     * TextString independently of the map-local ornament lookup, then
+     * DUNVIEW.C F0107:3592-3706 restores the D1C wall patch and draws M648.
+     * Keep that final text handoff independent of a sparse/uncached local
+     * ornament slot: otherwise a valid source inscription can fall through
+     * to the unreadable ornament path and never reach the source font. */
+    if (cells && cells[0][1].valid &&
+        m11_viewport_cell_is_wall_like(&cells[0][1])) {
+        unsigned char glyph_probe[2];
+        if (m11_decode_visible_wall_text_raw_glyphs(
+                state, &cells[0][1], glyph_probe, (int)sizeof(glyph_probe))) {
+            m11_draw_dm1_front_wall_inscription_text(state, &cells[0][1],
+                                                     framebuffer, fbW, fbH);
         }
     }
 }
@@ -22785,9 +22862,21 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
     DM1_ItemSpriteBlitPlan plan;
     int effectiveSourceZoneRow;
     int effectiveTransparentColor;
+    int csb_native_graphic = -1;
 
     if (!state || !state->assetsAvailable || thingType < 0) return 0;
-    gfxIdx = dm1_item_sprite_index(thingType, subtype);
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        csb_native_graphic =
+            csb_v1_viewport_f0115_first_object_native_graphic_pc34(
+                thingType, subtype);
+        /* F0115 object aspects without an exact PC34 G0237 -> G0209 mapping
+         * are not eligible for the shared DM1 item bank. A real CSB session
+         * blocks them until their native composition family is source-locked. */
+        if (csb_native_graphic < 0) return 0;
+    }
+    gfxIdx = csb_native_graphic >= 0
+        ? (unsigned int)csb_native_graphic
+        : dm1_item_sprite_index(thingType, subtype);
     if (gfxIdx == 0 || gfxIdx >= M11_GFX_ITEM_SPRITE_END) return 0;
 
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
@@ -22813,6 +22902,16 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
         (usesF0791Blit && transparentColor >= 0)
             ? transparentColor
             : plan.transparent_color;
+    if (csb_native_graphic >= 0) {
+        /* CSB F0115's G0209 -> M612 object route is source-owned. Do not
+         * substitute DM1 object art when its mapping is present; unsupported
+         * CSB aspects still fail closed at the native mapping boundary. */
+        return csb_v1_viewport_f0115_blit_first_object_native_family_pc34(
+            csb_native_graphic, slot->pixels, (int)slot->width,
+            (int)slot->height, framebuffer, fbW, fbH, fbW,
+            plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
+            depthIndex + 1, plan.use_mirror ? 1 : 0) > 0;
+    }
     if (plan.use_mirror) {
         M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
                                          plan.draw_x, plan.draw_y,
@@ -23240,6 +23339,38 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
         dm1_creature_transparent_color(creatureType));
 }
 
+/* ReDMCSB: DUNVIEW.C F0115:5442-5463 derives D2/D3 creature surfaces from
+ * native C584+ records through G0222/G0221, after F0093 has installed the
+ * per-creature G2025 replacements for palette slots 9 and 10. */
+static void m11_blit_creature_pc34_palette(const M11_AssetSlot* slot,
+                                           unsigned char* framebuffer,
+                                           int fbW, int fbH,
+                                           int drawX, int drawY,
+                                           int drawW, int drawH,
+                                           int transparentColor,
+                                           int mirror,
+                                           const uint8_t palette[16]) {
+    int dy;
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer || !palette ||
+        drawW <= 0 || drawH <= 0) return;
+    for (dy = 0; dy < drawH; ++dy) {
+        int dx;
+        int sy = dy * (int)slot->height / drawH;
+        int fbY = drawY + dy;
+        if (fbY < 0 || fbY >= fbH) continue;
+        for (dx = 0; dx < drawW; ++dx) {
+            int sx = dx * (int)slot->width / drawW;
+            int fbX = drawX + dx;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW) continue;
+            if (mirror) sx = (int)slot->width - 1 - sx;
+            pixel = slot->pixels[sy * (int)slot->width + sx];
+            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) continue;
+            framebuffer[fbY * fbW + fbX] = palette[pixel & 0x0F];
+        }
+    }
+}
+
 static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
                                                 unsigned char* framebuffer,
                                                 int fbW,
@@ -23259,8 +23390,7 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
     int drawW, drawH, drawX, drawY;
     int useAttackPose = 0;
     int useMirror = 0;
-    int hasReplColors = 0;
-    int replDst9 = 9, replDst10 = 10;
+    uint8_t palette[16];
 
     if (!state->assetsAvailable || creatureType < 0) return 0;
 
@@ -23270,8 +23400,7 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
      * pose selection and front-facing attack selection instead of reusing
      * the same generic sprite for every view. */
     if (state->attackCueTimer > 0 &&
-        state->attackCueCreatureType == creatureType &&
-        depthIndex == 0) {
+        state->attackCueCreatureType == creatureType) {
         useAttackPose = 1;
     }
     spriteIdx = dm1_creature_sprite_for_view(creatureType,
@@ -23282,13 +23411,7 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
                                              &useMirror);
     if (spriteIdx == 0) return 0;
 
-    /* Query replacement colors from the creature aspect data.
-     * In DM1, creatures that share the same graphic set are
-     * differentiated by replacing palette indices 9 and 10 with
-     * creature-specific colors during compositing.
-     * Ref: ReDMCSB VIDEODRV.C VIDRV_12_SetCreatureReplacementColors. */
-    hasReplColors = dm1_creature_replacement_colors(creatureType,
-                                                    &replDst9, &replDst10);
+    if (!dm1_creature_palette_for_depth(creatureType, depthIndex, palette)) return 0;
 
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, spriteIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
@@ -23351,69 +23474,9 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
     }
     drawY = y + (h - drawH) / 2;
 
-    /* Attack cue should keep creature identity stable. Use a subtle
-     * forward lunge on the same sprite instead of swapping graphic sets. */
-    if (useAttackPose) {
-        int lungeW = drawW / 8;
-        int lungeH = drawH / 10;
-        if (lungeW < 1) lungeW = 1;
-        if (lungeH < 1) lungeH = 1;
-        if (drawW + lungeW <= w) {
-            drawX -= lungeW / 2;
-            drawW += lungeW;
-        }
-        if (drawH + lungeH <= h) {
-            drawY -= lungeH;
-            drawH += lungeH;
-        }
-    }
-
-    /* Idle animation: on frame 1, bob the creature up by 1-2 pixels
-     * to give a breathing / pulsing effect.  Frame 0 is the base pose.
-     * Attack pose skips the bob for a snappier look. */
-    if (!useAttackPose) {
-        int animFrame = M11_GameView_CreatureAnimFrame(state, creatureType);
-        if (animFrame == 1) {
-            int bob = (depthIndex == 0) ? 2 : 1;
-            drawY -= bob;
-        }
-    }
-
-    /* Composite the creature sprite with transparent color keying and
-     * optional replacement color remapping.
-     *
-     * In DM1, each creature type specifies its transparent (key) color
-     * index via the CoordinateSet_TransparentColor field.  Most creatures
-     * use color index 10, but some use 0 (black) or other indices.
-     * Ref: ReDMCSB DEFS.H M072_TRANSPARENT_COLOR.
-     *
-     * Creature types that share graphic sets are differentiated by
-     * replacing palette indices 9 and 10 with creature-specific colors.
-     * This is how e.g. PainRat and Mummy share set 0 but look different. */
-    {
-        int transpColor = transparentColor;
-        if (hasReplColors) {
-            if (useMirror) {
-                M11_AssetLoader_BlitScaledMirrorReplace(
-                    slot, framebuffer, fbW, fbH,
-                    drawX, drawY, drawW, drawH, transpColor,
-                    9, replDst9, 10, replDst10);
-            } else {
-                M11_AssetLoader_BlitScaledReplace(
-                    slot, framebuffer, fbW, fbH,
-                    drawX, drawY, drawW, drawH, transpColor,
-                    9, replDst9, 10, replDst10);
-            }
-        } else {
-            if (useMirror) {
-                M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
-                                                 drawX, drawY, drawW, drawH, transpColor);
-            } else {
-                M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
-                                           drawX, drawY, drawW, drawH, transpColor);
-            }
-        }
-    }
+    m11_blit_creature_pc34_palette(slot, framebuffer, fbW, fbH,
+                                   drawX, drawY, drawW, drawH,
+                                   transparentColor, useMirror, palette);
     return 1;
 }
 
@@ -23592,8 +23655,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
             int itemBaseY = paneY + paneH - itemArea - 2;
             for (ii = 0; ii < cell->floorItemCount; ++ii) {
                 if (cell->floorItemTypes[ii] < 0) continue;
-                if (!g_drawState ||
-                    !m11_draw_item_sprite(g_drawState, framebuffer,
+                if (g_drawState) {
+                    (void)m11_draw_item_sprite(g_drawState, framebuffer,
                                           framebufferWidth, framebufferHeight,
                                           paneX + 1, itemBaseY,
                                           paneW - 2, itemArea,
@@ -23601,18 +23664,9 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                           cell->floorItemSubtypes[ii],
                                           cell->floorItemCells[ii], ii,
                                           depthIndex + 1,
-                                          sourceZoneRow)) {
-                    if (ii == 0) {
-                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                      paneX + paneW / 2 - 2, paneY + paneH - 4,
-                                      5, 2, M11_COLOR_YELLOW);
-                    }
+                                          sourceZoneRow);
                 }
             }
-        } else if (cell->summary.items > 0) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          paneX + paneW / 2 - 2, paneY + paneH - 4,
-                          5, 2, M11_COLOR_YELLOW);
         }
         /* Layer 2: Side-pane creatures.
          * Duplicate sprites with vertical offsets in narrow pane. */
@@ -23641,12 +23695,15 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                                  entry->creature_type, depthIndex,
                                                  placement->side_hint,
                                                  entry->creature_direction)) {
-                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                  paneX + paneW / 2 - 1,
-                                  placement->y + placement->h / 2 - 2,
-                                  3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+                    if (!g_drawState || !g_drawState->assetsAvailable) {
+                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                      paneX + paneW / 2 - 1,
+                                      placement->y + placement->h / 2 - 2,
+                                      3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+                    }
                 }
-                if (entry->first_in_group && entry->creature_count > 1 &&
+                if ((!g_drawState || !g_drawState->assetsAvailable) &&
+                    entry->first_in_group && entry->creature_count > 1 &&
                     paneW >= 10 && placement->h >= 10) {
                     char countStr[4];
                     int badgeX = paneX + paneW - 9;
@@ -23786,8 +23843,8 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                 int itemBaseY = paneY + paneH - itemArea - 2;
                 for (ii = 0; ii < cell->floorItemCount; ++ii) {
                     if (cell->floorItemTypes[ii] < 0) continue;
-                    if (!g_drawState ||
-                        !m11_draw_item_sprite(g_drawState, framebuffer,
+                    if (g_drawState) {
+                        (void)m11_draw_item_sprite(g_drawState, framebuffer,
                                               framebufferWidth, framebufferHeight,
                                               paneX + 1, itemBaseY,
                                               paneW - 2, itemArea,
@@ -23795,12 +23852,7 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                                               cell->floorItemSubtypes[ii],
                                               cell->floorItemCells[ii], ii,
                                               depth + 1,
-                                              sourceZoneRow)) {
-                        if (ii == 0) {
-                            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                          paneX + paneW / 2 - 2, paneY + paneH - 4,
-                                          5, 2, M11_COLOR_YELLOW);
-                        }
+                                              sourceZoneRow);
                     }
                 }
             }
@@ -23830,10 +23882,12 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                                                      entry->creature_type, depth,
                                                      placement->side_hint,
                                                      entry->creature_direction)) {
-                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                      paneX + paneW / 2 - 1,
-                                      placement->y + placement->h / 2 - 2,
-                                      3, 5, depth == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+                        if (!g_drawState || !g_drawState->assetsAvailable) {
+                            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                          paneX + paneW / 2 - 1,
+                                          placement->y + placement->h / 2 - 2,
+                                          3, 5, depth == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
+                        }
                     }
                 }
             }
@@ -24591,25 +24645,17 @@ int M11_GameView_GetDungeonPaletteIndex(const M11_GameViewState* state) {
 
 /* Classic-DM right column geometry (320x200 screen).
  *
- *   C013_ZONE_SPELL_AREA click/input box is at x=233..319, y=42..73
- *     in ReDMCSB COMMAND.C; GRAPHICS.DAT graphic 9 is the 87x33
- *     PC34 spell-area lines graphic that starts at the same source x/y.
- *   C011 action-area screen zone is x=233..319, y=77..121
- *     (87x45), matching the current PC right-column stack.  The
- *     older G0499_ai_Graphic560_Box_ActionArea* byte boxes in MENU.C
- *     name x=224..319 for pre-layout bitmap crops; those are not the
- *     resolved screen/action zone exposed here.
- *
- * Earlier Firestaff V1 builds placed these panels at x=224 with the
- * action graphic up at y=45, leaving the action/menu chrome detached
- * from the original right-column stack.  Keep the asset sizes native
- * but anchor them at the source PC 3.4 screen coordinates.
+ *   C013/C011 are the 87-pixel click zones at x=233..319.  Their bitmap
+ *   sources are the 96-pixel G0000/G0001 boxes at x=224..319.  ReDMCSB
+ *   CASTER.C F0394 and ACTIDRAW.C F0387 use those full boxes for C009/C010
+ *   blits; treating the click zone as the bitmap bounds rejects the real
+ *   PC34 assets and silently falls back to generated chrome.
  * Reference: ReDMCSB COMMAND.C primary mouse input; ACTIDRAW.C F0387;
  * CASTER.C F0394; DATA.C C009/C010 graphics.
  */
-#define M11_DM_ACTION_AREA_X    233
+#define M11_DM_ACTION_AREA_X    224
 #define M11_DM_ACTION_AREA_Y     77
-#define M11_DM_ACTION_AREA_W     87
+#define M11_DM_ACTION_AREA_W     96
 #define M11_DM_ACTION_AREA_H     45
 
 /* Try to blit GRAPHICS.DAT graphic `gfxIdx` at its native size anchored
@@ -24636,6 +24682,38 @@ static int m11_blit_panel_asset_native(const M11_GameViewState* state,
         return 0;
     }
     M11_AssetLoader_BlitRegion(slot, 0, 0, expectedW, expectedH,
+                               framebuffer, framebufferWidth, framebufferHeight,
+                               x, y, -1);
+    return 1;
+}
+
+/* ReDMCSB MENUDRAW.C F0396 loads C011 as three 96x12 rows.  Only rows
+ * one and two are copied to the logical screen by CASTER.C F0394. */
+static int m11_blit_panel_asset_region_native(const M11_GameViewState* state,
+                                              unsigned char* framebuffer,
+                                              int framebufferWidth,
+                                              int framebufferHeight,
+                                              unsigned int gfxIdx,
+                                              int expectedW,
+                                              int expectedH,
+                                              int sourceX,
+                                              int sourceY,
+                                              int sourceW,
+                                              int sourceH,
+                                              int x,
+                                              int y) {
+    const M11_AssetSlot* slot;
+    if (!state || !state->assetsAvailable || sourceW <= 0 || sourceH <= 0) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        (int)slot->width != expectedW || (int)slot->height != expectedH ||
+        sourceX < 0 || sourceY < 0 || sourceX + sourceW > expectedW ||
+        sourceY + sourceH > expectedH) {
+        return 0;
+    }
+    M11_AssetLoader_BlitRegion(slot, sourceX, sourceY, sourceW, sourceH,
                                framebuffer, framebufferWidth, framebufferHeight,
                                x, y, -1);
     return 1;
@@ -24734,7 +24812,8 @@ static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
             int fbX = dstX + x;
             unsigned char px;
             if (fbX < 0 || fbX >= framebufferWidth) continue;
-            px = slot->pixels[(srcY + y) * (int)slot->width + srcX + x];
+            px = (unsigned char)(slot->pixels[
+                (srcY + y) * (int)slot->width + srcX + x] & M11_FB_INDEX_MASK);
             /* ACTIDRAW.C applies G0498 palette changes only for
              * action-area object icons: color 12 is remapped to C04 cyan.
              * Inventory slot icons use F0038_OBJECT_DrawIconInSlotBox and
@@ -33301,6 +33380,36 @@ static int m11_draw_nexus_title_from_real_assets(
     return 1;
 }
 
+/* ReDMCSB STARTUP2.C:411-423 completes F0394's spell-area update before
+ * F0387 redraws the action area, then F0395 draws movement arrows.  Keep
+ * the action area as a final-panel pass so later M11 HUD work cannot retain
+ * stale pixels in the C093..C096 empty-hand icon boxes. */
+static void m11_draw_v1_action_area_overlay(const M11_GameViewState* state,
+                                            unsigned char* framebuffer,
+                                            int framebufferWidth,
+                                            int framebufferHeight) {
+    if (!state || state->showDebugHUD || m11_v2_vertical_slice_enabled() ||
+        !m11_v1_chrome_mode_enabled()) {
+        return;
+    }
+
+    if (state->actingChampionOrdinal != 0 &&
+        m11_draw_dm_action_menu(state, framebuffer,
+                                framebufferWidth, framebufferHeight)) {
+        return;
+    }
+
+    {
+        DM1_V1_ActionAreaRectPc34 action = dm1_v1_action_area_rect_pc34();
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      action.x, action.y, action.w, action.h,
+                      (unsigned char)dm1_v1_action_area_clear_color_pc34());
+        (void)m11_draw_dm_action_icon_cells(state, framebuffer,
+                                            framebufferWidth,
+                                            framebufferHeight);
+    }
+}
+
 static void m11_draw_utility_panel(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -33357,21 +33466,28 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     if (!state->showDebugHUD && !m11_v2_vertical_slice_enabled()) {
         DM1_V1_ActionAreaRectPc34 action = dm1_v1_action_area_rect_pc34();
         DM1_V1_SpellAreaRectPc34 spell = dm1_v1_spell_area_graphic_rect_pc34();
-        int drewAction;
-        int drewSpell;
-        drewAction = m11_blit_panel_asset_native(state,
-            framebuffer, framebufferWidth, framebufferHeight,
-            (unsigned int)dm1_v1_action_area_graphic_id_pc34(),
-            action.w, action.h, action.x, action.y);
-        drewSpell = m11_blit_panel_asset_native(state,
-            framebuffer, framebufferWidth, framebufferHeight,
-            (unsigned int)DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34,
-            spell.w, spell.h, spell.x, spell.y);
-        if (drewAction && drewSpell) {
+        const M11_AssetSlot* actionAsset = NULL;
+        const M11_AssetSlot* spellAsset = NULL;
+
+        /* C010 belongs only to F0387 menu mode and C009 only to an active
+         * F0394 caster.  Validate their real PC34 dimensions here, but do
+         * not prepaint either surface before its source-owned state path. */
+        if (state->assetsAvailable) {
+            actionAsset = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader,
+                (unsigned int)dm1_v1_action_area_graphic_id_pc34());
+            spellAsset = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader,
+                (unsigned int)DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34);
+        }
+        if (actionAsset && spellAsset && actionAsset->loaded && spellAsset->loaded &&
+            (int)actionAsset->width == action.w &&
+            (int)actionAsset->height == action.h &&
+            (int)spellAsset->width == spell.w &&
+            (int)spellAsset->height == spell.h) {
             drewAuthenticFrames = 1;
         } else {
-            /* If only part loaded, clear and fall back to procedural so
-             * we don't leave a half-original frame. */
+            /* Missing real data leaves this source-owned strip black. */
             int stripX, stripY, stripW, stripH;
             (void)m11_v1_action_spell_strip_zone(
                 &stripX, &stripY, &stripW, &stripH);
@@ -33441,45 +33557,6 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
 
     m11_draw_v1_leader_hand_object_name(state, framebuffer,
                                         framebufferWidth, framebufferHeight);
-
-    /* DM1 action-area mode selection — mirror
-     * F0387_MENUS_DrawActionArea's branch on
-     * G0509_B_ActionAreaContainsIcons / G0506_ui_ActingChampionOrdinal.
-     *
-     *  actingChampionOrdinal == 0  -> icon-mode (four action-hand
-     *                                 cells, one per champion)
-     *  actingChampionOrdinal >  0  -> menu-mode (graphic 10 header
-     *                                 with champion name + up to
-     *                                 three action names)
-     *
-     * Both modes only engage once the authentic frame blits have
-     * succeeded and the V1 presentation is active.  Debug HUD keeps
-     * the legacy utility-panel rendering untouched. */
-    if (drewAuthenticFrames && !state->showDebugHUD) {
-        if (state->actingChampionOrdinal != 0 &&
-            m11_draw_dm_action_menu(state, framebuffer,
-                                    framebufferWidth,
-                                    framebufferHeight)) {
-            /* Menu mode rendered; icon cells are suppressed, matching
-             * DM1's F0387 menu-mode branch which fills the whole
-             * action area before drawing the menu. */
-        } else {
-            /* F0387 icon-mode branch fills C011_ZONE_ACTION_AREA black
-             * before drawing the four action-hand cells.  Keep the
-             * spell-area frame below intact; the tall cyan cells then
-             * overdraw y=86..120 exactly like F0386. */
-            {
-                DM1_V1_ActionAreaRectPc34 action =
-                    dm1_v1_action_area_rect_pc34();
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              action.x, action.y, action.w, action.h,
-                              (unsigned char)dm1_v1_action_area_clear_color_pc34());
-            }
-            (void)m11_draw_dm_action_icon_cells(state, framebuffer,
-                                                framebufferWidth,
-                                                framebufferHeight);
-        }
-    }
 
     if (state->showDebugHUD) {
         /* Debug mode: show I/S/L button labels */
@@ -33598,9 +33675,9 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                                            int framebufferHeight) {
     int spellX, spellY, spellW, spellH;
     int i;
-    M11_TextStyle symbolStyle = g_text_small;
-    if (!state || !state->spellPanelOpen || state->showDebugHUD ||
-        !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
+    const M11_AssetSlot* linesAsset;
+    if (!state || state->showDebugHUD || !m11_v1_chrome_mode_enabled() ||
+        m11_v2_vertical_slice_enabled()) {
         return;
     }
     {
@@ -33611,21 +33688,42 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         spellW = spell.w;
         spellH = spell.h;
     }
+    if (!state->spellPanelOpen) {
+        /* ReDMCSB CASTER.C F0394 clears the physical G0000 spell box when
+         * no caster is active. The input zone is narrower, but the retained
+         * M11 framebuffer must clear the full source rectangle. */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      spellX, spellY, spellW, spellH, M11_COLOR_BLACK);
+        return;
+    }
 
-    /* Normal V1 spell entry belongs to the source right-column spell
-     * area, not to Firestaff's old large modal workbench panel.  ReDMCSB
-     * CASTER.C F0394 draws C009 in {224,319,42,74}; MENUDRAW.C
-     * F0397 lines 67-75 pre-increment to x=239+14*i,y=58 and F0398
-     * lines 101-116 prints selected symbols at x=241+9*i,y=70. */
+    /* CASTER.C F0394: clear G0000, paint C009, then copy C011 rows 1 and 2
+     * to the two symbol lines.  C011 is not optional decoration: it owns
+     * the controls behind the source-font glyphs. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   spellX, spellY, spellW, spellH, M11_COLOR_BLACK);
-    (void)m11_blit_panel_asset_native(state,
+    if (!m11_blit_panel_asset_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
         (unsigned int)DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34,
-        spellW, spellH, spellX, spellY);
-
-    symbolStyle.color = M11_COLOR_CYAN;
-    symbolStyle.shadowColor = M11_COLOR_BLACK;
+        87, 25, spellX, spellY)) {
+        return;
+    }
+    if (!m11_blit_panel_asset_region_native(state,
+        framebuffer, framebufferWidth, framebufferHeight,
+        (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
+        14, 39, 0, 13, 14, 12, 224, 50) ||
+        !m11_blit_panel_asset_region_native(state,
+        framebuffer, framebufferWidth, framebufferHeight,
+        (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
+        14, 39, 0, 26, 14, 12, 224, 62)) {
+        return;
+    }
+    linesAsset = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                       (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34);
+    if (!linesAsset || !g_activeOriginalFont ||
+        !M11_Font_IsLoaded(g_activeOriginalFont)) {
+        return;
+    }
 
     if (state->spellBuffer.runeCount < 4) {
         int row = state->spellRuneRow < 4 ? state->spellRuneRow : 3;
@@ -33633,20 +33731,22 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
             char text[2];
             text[0] = (char)m11_encode_rune(row, i);
             text[1] = '\0';
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          239 + 14 * i,
-                          58,
-                          text, &symbolStyle);
+            (void)M11_Font_DrawChar(g_activeOriginalFont, framebuffer,
+                                    framebufferWidth, framebufferHeight,
+                                    239 + 14 * i, 58,
+                                    (unsigned char)text[0], M11_COLOR_CYAN,
+                                    M11_COLOR_BLACK, 1);
         }
     }
     for (i = 0; i < state->spellBuffer.runeCount && i < 4; ++i) {
         char text[2];
         text[0] = (char)state->spellBuffer.runes[i];
         text[1] = '\0';
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      241 + 9 * i,
-                      70,
-                      text, &symbolStyle);
+        (void)M11_Font_DrawChar(g_activeOriginalFont, framebuffer,
+                                framebufferWidth, framebufferHeight,
+                                241 + 9 * i, 70,
+                                (unsigned char)text[0], M11_COLOR_CYAN,
+                                M11_COLOR_BLACK, 1);
     }
 }
 
@@ -34050,6 +34150,22 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                         M11_VIEWPORT_X, M11_VIEWPORT_Y,
                                         M11_VIEWPORT_W, M11_VIEWPORT_H,
                                         paletteIndex);
+    }
+    /* DUNVIEW.C F0107 completes a readable D1C inscription with its M648
+     * glyph cells.  Firestaff's software palette pass occurs after the wall
+     * batches, so replay the source-indexed glyphs after that pass: otherwise
+     * its palette map changes the M648 pixels before presentation. */
+    if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
+        M11_ViewportCell front_cell;
+        unsigned char glyph_probe[2];
+        if (m11_sample_viewport_cell(state, 1, 0, &front_cell) &&
+            front_cell.valid && m11_viewport_cell_is_wall_like(&front_cell) &&
+            m11_decode_visible_wall_text_raw_glyphs(
+                state, &front_cell, glyph_probe, (int)sizeof(glyph_probe))) {
+            m11_draw_dm1_front_wall_inscription_text(state, &front_cell,
+                                                     framebuffer, framebufferWidth,
+                                                     framebufferHeight);
+        }
     }
     if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
         /* V2.2 render path: prefer cached in-place modern-art bitmaps when the
@@ -34960,10 +35076,17 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 }
             }
         } else {
-            /* Empty V1 party slots are not drawn by CHAMPION.C; only
-             * present champions have status boxes.  Keep the old
-             * structural empty cells for debug/V2 surfaces only. */
+            /* ReDMCSB CHAMDRAW.C F0293:1134-1138 visits only party
+             * indices below G0305_ui_PartyChampionCount. M11 retains
+             * its framebuffer across HUD draws, so restore the unused
+             * V1 status rectangle before taking that source-faithful
+             * no-draw branch; otherwise a departed fourth champion
+             * remains visible after a party-size transition. Keep the
+             * old structural empty cells for debug/V2 surfaces only. */
             if (!useV2PartyHud && !state->showDebugHUD) {
+                m11_fill_rect(framebuffer, framebufferWidth,
+                              framebufferHeight, x, y, slotW, slotH,
+                              M11_COLOR_BLACK);
                 continue;
             }
             m11_fill_rect(framebuffer, framebufferWidth,
@@ -37038,17 +37161,20 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         if (!m11_render_csb_boot_viewport(state, framebuffer,
                                           framebufferWidth,
                                           framebufferHeight)) {
-            const char *boot_status = state->lastOutcome[0]
-                ? state->lastOutcome
-                : "CSB RUNTIME NOT READY";
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          18, 18, "CHAOS STRIKES BACK",
-                          &g_text_title);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          18, 36, boot_status, &g_text_shadow);
+            /* A verified CSB launch must not exchange missing source
+             * material for a Firestaff status screen. */
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          0, 0, framebufferWidth, framebufferHeight,
+                          M11_COLOR_BLACK);
         } else {
-            m11_draw_csb_runtime_hud(state, framebuffer,
-                                     framebufferWidth, framebufferHeight);
+            if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
+                m11_draw_csb_v1_runtime_hud(state, framebuffer,
+                                            framebufferWidth,
+                                            framebufferHeight);
+            } else {
+                m11_draw_csb_runtime_hud(state, framebuffer,
+                                         framebufferWidth, framebufferHeight);
+            }
         }
         m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                             framebufferHeight);
@@ -37458,10 +37584,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_v1_champion_icons(state, framebuffer, framebufferWidth, framebufferHeight);
 
-    m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth, framebufferHeight);
-    m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth, framebufferHeight);
-    m11_draw_v1_message_area(state, framebuffer, framebufferWidth, framebufferHeight);
-
     /* Spell panel overlay.
      * ReDMCSB CASTER.C F0394/MENU.C F0392 draws the DM1 spell/action
      * controls in the fixed right-column spell area {224,319,42,74}.
@@ -37841,6 +37963,21 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             }
         }
     }
+
+    /* ReDMCSB STARTUP2.C:411-423 panel order: F0394 spell area, F0387
+     * action area, then F0395 movement arrows.  These are deliberately
+     * late in M11's normal V1 lane: the earlier party/utility and optional
+     * spell-workbench passes must not repaint C011 line 2 or C093..C096.
+     * Modal and fullscreen overlays remain later and therefore retain their
+     * intentional ownership of the screen. */
+    m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,
+                                   framebufferHeight);
+    m11_draw_v1_action_area_overlay(state, framebuffer, framebufferWidth,
+                                    framebufferHeight);
+    m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
+    m11_draw_v1_message_area(state, framebuffer, framebufferWidth,
+                             framebufferHeight);
 
     /* Dialog box overlay for text plaque inspection */
     if (state->dialogOverlayActive && state->dialogOverlayText[0] != '\0') {

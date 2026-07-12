@@ -487,9 +487,9 @@ int main(void)
               plan.title_dest_w == 320 &&
               plan.title_dest_h == 16 &&
               plan.title_special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS &&
               plan.special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS &&
               plan.fallback_title_x == 38 &&
               plan.fallback_title_y == 52 &&
               plan.fallback_title_style == 1 &&
@@ -569,9 +569,9 @@ int main(void)
               plan.title_dest_w == 48 &&
               plan.title_dest_h == 12 &&
               plan.title_special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
               plan.special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
               plan.asset_command_count == 1 &&
               plan.asset_commands[0].kind ==
                   CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34 &&
@@ -624,9 +624,9 @@ int main(void)
               plan.title_dest_w == 320 &&
               plan.title_dest_h == 57 &&
               plan.title_special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES &&
               plan.special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES &&
               plan.asset_command_count == 1 &&
               plan.asset_commands[0].kind ==
                   CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34 &&

@@ -58,6 +58,8 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
     uint32_t record_id,
     const uint8_t **out_bytes,
     size_t *out_size);
+static int csb_v1_runtime_stage_csbwin_dsa_tracing(
+    CSB_V1_RuntimeProfile *candidate);
 static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_dy);
 static int csb_v1_runtime_square_type_from_raw(
     const CSB_V1_DungeonData *dungeon,
@@ -1239,6 +1241,9 @@ static int csb_v1_runtime_apply_save_image(
         profile->csbwin_appended_tail_truncated = 0;
         memset(profile->csbwin_appended_tail, 0,
                sizeof(profile->csbwin_appended_tail));
+    }
+    if (csb_v1_runtime_stage_csbwin_dsa_tracing(profile) != 0) {
+        return -1;
     }
     if (csb_v1_runtime_apply_active_group_state_from_save_image(
             profile,
@@ -14224,6 +14229,10 @@ int csb_v1_runtime_apply_csbwin_resume_report(
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
         return -1;
     }
+    if (csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
+        csb_v1_dungeon_set_current_level(previous_dungeon_level);
+        return -1;
+    }
     /* A core-only report has no Extended Features preamble. CSBWin clears its
      * DSA/game-info/index owners before loading the save body. */
     csb_v1_chaos_init(&candidate.csbwin_extended_dsa_state);
@@ -14348,6 +14357,12 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         candidate.csbwin_extended_level_index_present = 0;
         memset(candidate.csbwin_extended_level_dsa_index, 0xff,
                sizeof(candidate.csbwin_extended_level_dsa_index));
+    }
+    if (csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
+        csb_v1_runtime_cleanup_csbwin_extended_state(&candidate);
+        csb_v1_dungeon_set_current_level(previous_dungeon_level);
+        free(bytes);
+        return -1;
     }
     free(bytes);
     csb_v1_runtime_cleanup_csbwin_extended_state(profile);
@@ -14596,6 +14611,52 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
     return 1;
 }
 
+static int csb_v1_runtime_stage_csbwin_dsa_tracing(
+    CSB_V1_RuntimeProfile *candidate)
+{
+    CSB_V1_CSBWin512BodyReport report;
+    int rc;
+
+    if (!candidate) return -1;
+    memset(&candidate->csbwin_dsa_tracing, 0,
+           sizeof(candidate->csbwin_dsa_tracing));
+    candidate->csbwin_dsa_tracing.valid = 1;
+    candidate->csbwin_dsa_tracing.record_id =
+        CSB_V1_CSBWIN_DSA_TRACING_RECORD_ID;
+
+    /* CSBWin DSA.cpp DSAINDEX::ReadTracing lines 5553-5583 asks EXPOOL for
+     * this optional record only after its save body is available. A save
+     * without an appended database therefore has a valid absent bitmap. */
+    if (!candidate->csbwin_appended_tail_valid ||
+        candidate->csbwin_appended_tail_size == 0u) {
+        return 0;
+    }
+    if (candidate->csbwin_appended_tail_truncated ||
+        candidate->csbwin_appended_tail_size !=
+            candidate->csbwin_appended_tail_preserved_size ||
+        candidate->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
+        return -1;
+    }
+
+    memset(&report, 0, sizeof(report));
+    report.appended_size = candidate->csbwin_appended_tail_size;
+    report.appended_preserved_size =
+        candidate->csbwin_appended_tail_preserved_size;
+    report.appended_fnv1a = candidate->csbwin_appended_tail_fnv1a;
+    report.appended_truncated = candidate->csbwin_appended_tail_truncated;
+    if ((report.appended_size % CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES) == 0u) {
+        report.appended_expool_candidate = 1;
+        report.appended_expool_block_count = (uint16_t)(
+            report.appended_size / CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
+    }
+    memcpy(report.appended_preserved, candidate->csbwin_appended_tail,
+           report.appended_preserved_size);
+    rc = csb_v1_csbwin_512_inspect_appended_dsa_tracing(
+        &report, &candidate->csbwin_dsa_tracing);
+    return rc == CSB_V1_CSBWIN_512_OK ? 0 : -1;
+}
+
 int csb_v1_runtime_locate_csbwin_appended_expool_record(
     const CSB_V1_RuntimeProfile *profile,
     uint32_t record_id,
@@ -14607,6 +14668,17 @@ int csb_v1_runtime_locate_csbwin_appended_expool_record(
         record_id,
         out_bytes,
         out_size);
+}
+
+int csb_v1_runtime_get_csbwin_dsa_tracing(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_CSBWinDSATracingReport *out_report)
+{
+    if (!profile || !out_report || !profile->csbwin_dsa_tracing.valid) {
+        return -1;
+    }
+    *out_report = profile->csbwin_dsa_tracing;
+    return 0;
 }
 
 int csb_v1_runtime_export_csbwin_core_save_to_memory(

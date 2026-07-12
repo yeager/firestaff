@@ -73,7 +73,8 @@ static int g_opcode_table_lookup(int i) {
         0x00, 0x01, 0x02, 0x05, 0x09, 0x0A, 0x0D, 0x0F,
         0x13, 0x15, 0x17, 0x26, 0x03, 0x04, 0x06, 0x07,
         0x08, 0x0B, 0x0C, 0x0E, 0x10, 0x11, 0x12, 0x14,
-        0x16, 0x18, 0x19, 0x1A, 0x1F, 0x20, 0x21, 0xFF
+        0x16, 0x18, 0x19, 0x1A, 0x1F, 0x20, 0x21, 0x3B,
+        0x3C, 0x3D, 0x3E, 0x3F, 0x40, 0xFF
     };
     (void)known;  /* referenced in test functions */
     if (i < 0 || i >= DM2_CCM_MAX_OPCODES) return -1;
@@ -303,6 +304,25 @@ static int test_step_explode_or_summon(void) {
     int args[] = { 99 };
     int rc = dm2_v1_ccm_step(&s, 0x26, args, 1, 0);
     return rc == (int)DM2_CCM_RESULT_OK && s.flags[10] == 1;
+}
+
+static int test_transform_family_state_flow(void) {
+    DM2_V1_CCMState s;
+    dm2_v1_ccm_init_state(&s);
+    if (dm2_v1_ccm_step(&s, DM2_CCM_OP_TRANSFORM_STAGE, NULL, 0, 0) !=
+        (int)DM2_CCM_RESULT_OK || !s.transform_requested ||
+        s.transform_phase != 1 || s.next_state != -1) return 0;
+    s.transform_phase = 3;
+    s.transform_requested = 0;
+    if (dm2_v1_ccm_step(&s, DM2_CCM_OP_TRANSFORM_STAGE, NULL, 0, 0) !=
+        (int)DM2_CCM_RESULT_OK || !s.transform_requested ||
+        s.transform_phase != 0 ||
+        s.next_state != DM2_CCM_OP_TRANSFORM_FINAL) return 0;
+    s.transform_requested = 0;
+    return dm2_v1_ccm_step(&s, DM2_CCM_OP_TRANSFORM_FINAL, NULL, 0, 0) ==
+               (int)DM2_CCM_RESULT_OK &&
+           s.transform_requested && s.transform_phase == 0 &&
+           s.next_state == DM2_CCM_OP_TRANSFORM_FINAL;
 }
 
 /* ── Halt + unknown (24-26) ───────────────────────────────────── */
@@ -573,6 +593,52 @@ static int test_decode_program_accepts_skproject_deferred_aliases(void) {
            s.next_state == DM2_CCM_OP_WALK_NOW;
 }
 
+static int test_decode_program_transform_family(void) {
+    const uint8_t bytes[] = {
+        DM2_CCM_OP_TRANSFORM_STAGE,
+        DM2_CCM_OP_TRANSFORM_FINAL,
+        DM2_CCM_OP_HALT
+    };
+    DM2_V1_CCMProgram program;
+    DM2_V1_CCMState s;
+    if (dm2_v1_ccm_decode_program(bytes, sizeof(bytes), &program) !=
+        (int)DM2_CCM_RESULT_OK || program.count != 3 ||
+        program.ops[0].arg_count != 0 ||
+        program.ops[1].opcode != DM2_CCM_OP_TRANSFORM_FINAL) return 0;
+    dm2_v1_ccm_init_state(&s);
+    s.transform_phase = 3;
+    return dm2_v1_ccm_run_program(&s, &program, 0) ==
+               (int)DM2_CCM_RESULT_HALTED &&
+           s.transform_requested && s.transform_phase == 0 &&
+           s.next_state == DM2_CCM_OP_TRANSFORM_FINAL;
+}
+
+static int test_explode_or_summon_phase_family_mode_two_resets_state(void) {
+    DM2_V1_CCMState s;
+    int opcode;
+    for (opcode = DM2_CCM_OP_EXPLODE_OR_SUMMON_PHASE;
+         opcode <= DM2_CCM_OP_EXPLODE_OR_SUMMON_PHASE_40; ++opcode) {
+        dm2_v1_ccm_init_state(&s);
+        s.transform_phase = 3;
+        s.explode_or_summon_mode = 2;
+        if (dm2_v1_ccm_step(&s, opcode, NULL, 0, 0) !=
+                (int)DM2_CCM_RESULT_OK ||
+            !s.explode_or_summon_requested || s.transform_phase != 0 ||
+            s.next_state != DM2_CCM_OP_SPAWN_DEFERRED) return 0;
+    }
+    return 1;
+}
+
+static int test_decode_program_accepts_explode_or_summon_phase_family(void) {
+    const uint8_t bytes[] = { 0x3D, 0x3E, 0x3F, 0x40 };
+    DM2_V1_CCMProgram program;
+    return dm2_v1_ccm_decode_program(bytes, sizeof(bytes), &program) ==
+           (int)DM2_CCM_RESULT_OK && program.count == 4 &&
+           program.ops[0].opcode == DM2_CCM_OP_EXPLODE_OR_SUMMON_PHASE &&
+           program.ops[0].arg_count == 0 &&
+           program.ops[3].opcode == DM2_CCM_OP_EXPLODE_OR_SUMMON_PHASE_40;
+}
+
 /* ── Main ─────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -615,6 +681,8 @@ int main(void) {
     TEST(step_cast_spell);
     TEST(step_attacks_party);
     TEST(step_explode_or_summon);
+    TEST(transform_family_state_flow);
+    TEST(explode_or_summon_phase_family_mode_two_resets_state);
 
     /* Halt + unknown */
     TEST(step_halt);
@@ -660,6 +728,8 @@ int main(void) {
     TEST(decode_program_rejects_stubbed_opcode);
     TEST(decode_program_accepts_extra_ccm_opcodes);
     TEST(decode_program_accepts_skproject_deferred_aliases);
+    TEST(decode_program_transform_family);
+    TEST(decode_program_accepts_explode_or_summon_phase_family);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return (tests_passed == tests_run) ? 0 : 1;

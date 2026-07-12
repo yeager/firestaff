@@ -167,6 +167,7 @@ int main(void) {
     Nexus_V1_BpkRuntimeUploadRow upload_rows[4];
     Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
+    Nexus_V1_DgnStructure2SourceReceipt structure2_source;
     Nexus_ScriptRuntimeReceipt script_receipt;
     Nexus_SfxRuntimeReceipt sfx_receipt;
     uint8_t* data;
@@ -462,6 +463,20 @@ int main(void) {
                   "Nexus init accepts renamed LEV00.DGN for runtime DGN handoff");
         check_int(nexus_v1_load_level(&engine, 0) == 0,
                   "Nexus runtime loads renamed LEV00.DGN by hash");
+        memset(&structure2_source, 0, sizeof(structure2_source));
+        check_int(nexus_v1_current_level_structure2_source_receipt(
+                      &engine, &structure2_source) == 0,
+                  "Nexus engine exposes Structure2 source identity receipt");
+        check_int(strcmp(structure2_source.canonical_name, "LEV00.DGN") == 0 &&
+                      strcmp(structure2_source.canonical_md5,
+                             "603ec9c531a92539babdda84ab09e78e") == 0 &&
+                      structure2_source.hash_discovery_attempted == 1 &&
+                      structure2_source.canonical_hash_verified == 1 &&
+                      structure2_source.materialization_bound ==
+                          structure2_source.structure2_payload_envelope_valid &&
+                      structure2_source.payload_decoder_permitted == 0 &&
+                      structure2_source.fallback_visuals_permitted == 0,
+                  "hash-resolved LEV00 remains the only authenticated Structure2 source without decoder promotion");
         memset(&dgn_handoff, 0, sizeof(dgn_handoff));
         check_int(nexus_v1_current_level_dgn_renderer_handoff_receipt(
                       &engine,

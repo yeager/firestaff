@@ -1,4 +1,7 @@
 #include "m11_game_view.h"
+#include "menu_startup_m12.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
+#include "dm1_v1_creature_render_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,6 +49,13 @@ typedef struct ProbeCounts {
     int items;
     int projectiles;
     int explosions;
+    int objectBankGraphics;
+    int objectBankPixelAssertions;
+    int objectBankPixelFailures;
+    int creatureBankPixelAssertions;
+    int creatureBankPixelFailures;
+    int creatureAttackPixelAssertions;
+    int creatureAttackPixelFailures;
 } ProbeCounts;
 
 static void ensure_output_dir(const char* outDir) {
@@ -292,6 +302,84 @@ static int viewport_pixel_delta(const unsigned char* a,
     return count;
 }
 
+/* ReDMCSB DUNVIEW.C:1423-1508 MEDIA720 G0209 maps every PC34 object
+ * aspect to C498..C583. Verify actual decoded graphics, not just metadata. */
+static void assert_object_bank_pixels(M11_GameViewState* game,
+                                      ProbeCounts* counts) {
+    unsigned int graphic;
+    if (!game || !counts || !game->assetsAvailable) return;
+    for (graphic = DM1_GRAPHIC_FIRST_OBJECT;
+         graphic <= DM1_GRAPHIC_OBJECT_LAST;
+         ++graphic) {
+        const M11_AssetSlot* slot = M11_AssetLoader_Load(&game->assetLoader,
+                                                          graphic);
+        size_t pixelCount;
+        size_t pixel;
+        int opaque = 0;
+        ++counts->objectBankPixelAssertions;
+        if (!slot || slot->width == 0 || slot->height == 0 || !slot->pixels) {
+            ++counts->objectBankPixelFailures;
+            continue;
+        }
+        pixelCount = (size_t)slot->width * (size_t)slot->height;
+        for (pixel = 0; pixel < pixelCount; ++pixel) {
+            if (slot->pixels[pixel] != 10) {
+                opaque = 1;
+                break;
+            }
+        }
+        if (!opaque) {
+            ++counts->objectBankPixelFailures;
+        } else {
+            ++counts->objectBankGraphics;
+        }
+    }
+}
+
+/* ReDMCSB DUNVIEW.C F0115:5312-5463: every real creature view must resolve
+ * to an opaque C584+ source record. Exercise all direction deltas and the
+ * attack branch against the mounted PC34 bank, not a synthetic sprite cue. */
+static void assert_creature_bank_pixels(M11_GameViewState* game,
+                                        ProbeCounts* counts) {
+    int creatureType;
+    if (!game || !counts || !game->assetsAvailable) return;
+    for (creatureType = 0; creatureType < DM1_CREATURE_TYPE_COUNT; ++creatureType) {
+        int creatureDir;
+        for (creatureDir = 0; creatureDir < 4; ++creatureDir) {
+            int attacking;
+            for (attacking = 0; attacking <= 1; ++attacking) {
+                const M11_AssetSlot* slot;
+                unsigned int graphic;
+                size_t pixelCount;
+                size_t pixel;
+                int opaque = 0;
+                graphic = dm1_creature_sprite_for_view(creatureType, 2,
+                                                       creatureDir, 0,
+                                                       attacking, NULL);
+                if (attacking) ++counts->creatureAttackPixelAssertions;
+                else ++counts->creatureBankPixelAssertions;
+                slot = M11_AssetLoader_Load(&game->assetLoader, graphic);
+                if (!slot || slot->width == 0 || slot->height == 0 || !slot->pixels) {
+                    if (attacking) ++counts->creatureAttackPixelFailures;
+                    else ++counts->creatureBankPixelFailures;
+                    continue;
+                }
+                pixelCount = (size_t)slot->width * (size_t)slot->height;
+                for (pixel = 0; pixel < pixelCount; ++pixel) {
+                    if (slot->pixels[pixel] != dm1_creature_transparent_color(creatureType)) {
+                        opaque = 1;
+                        break;
+                    }
+                }
+                if (!opaque) {
+                    if (attacking) ++counts->creatureAttackPixelFailures;
+                    else ++counts->creatureBankPixelFailures;
+                }
+            }
+        }
+    }
+}
+
 static int pose_has_pixel_backed_things(const ProbeCounts* poseCounts) {
     if (!poseCounts) return 0;
     return (poseCounts->items + poseCounts->groups +
@@ -378,6 +466,16 @@ static int write_report(const char* outDir,
     fprintf(md, "| item objects | %d |\n", counts->items);
     fprintf(md, "| projectiles | %d |\n", counts->projectiles);
     fprintf(md, "| explosions | %d |\n", counts->explosions);
+    fprintf(md, "| object-bank decoded graphics | %d / %d |\n",
+            counts->objectBankGraphics, counts->objectBankPixelAssertions);
+    fprintf(md, "| object-bank opaque-pixel failures | %d |\n",
+            counts->objectBankPixelFailures);
+    fprintf(md, "| creature direction-pose real pixels | %d / %d |\n",
+            counts->creatureBankPixelAssertions - counts->creatureBankPixelFailures,
+            counts->creatureBankPixelAssertions);
+    fprintf(md, "| creature attack-pose real pixels | %d / %d |\n",
+            counts->creatureAttackPixelAssertions - counts->creatureAttackPixelFailures,
+            counts->creatureAttackPixelAssertions);
     fprintf(md, "| status | %s |\n\n", pass ? "PASS" : "FAIL");
     fprintf(md, "## Maps\n\n");
     fprintf(md, "| map | level | size | floor set | wall set | door sets | ornaments | difficulty |\n");
@@ -419,6 +517,13 @@ static int write_report(const char* outDir,
             "  \"visibleThingSamples\": %d,\n"
             "  \"thingChains\": %d,\n"
             "  \"chainOverflows\": %d,\n"
+            "  \"objectBankGraphics\": %d,\n"
+            "  \"objectBankPixelAssertions\": %d,\n"
+            "  \"objectBankPixelFailures\": %d,\n"
+            "  \"creatureBankPixelAssertions\": %d,\n"
+            "  \"creatureBankPixelFailures\": %d,\n"
+            "  \"creatureAttackPixelAssertions\": %d,\n"
+            "  \"creatureAttackPixelFailures\": %d,\n"
             "  \"things\": {\"doors\": %d, \"teleporters\": %d, \"textStrings\": %d, \"sensors\": %d, \"groups\": %d, \"items\": %d, \"projectiles\": %d, \"explosions\": %d}\n"
             "}\n",
             pass ? "PASS" : "FAIL",
@@ -430,6 +535,10 @@ static int write_report(const char* outDir,
             counts->totalThingDeltaPixels, counts->maxThingDeltaPixels,
             counts->visibleSamples, counts->visibleThingSamples,
             counts->thingChains, counts->chainOverflows,
+            counts->objectBankGraphics, counts->objectBankPixelAssertions,
+            counts->objectBankPixelFailures,
+            counts->creatureBankPixelAssertions, counts->creatureBankPixelFailures,
+            counts->creatureAttackPixelAssertions, counts->creatureAttackPixelFailures,
             counts->doors, counts->teleporters, counts->textStrings,
             counts->sensors, counts->groups, counts->items,
             counts->projectiles, counts->explosions);
@@ -443,6 +552,8 @@ static int write_report(const char* outDir,
 int main(int argc, char** argv) {
     const char* dataDir;
     const char* outDir;
+    M12_StartupMenuState menu;
+    M12_StartupMenuInitOptions menuOptions;
     M11_GameViewState game;
     M11_GameViewState noThingsGame;
     unsigned char framebuffer[kFbW * kFbH];
@@ -460,9 +571,17 @@ int main(int argc, char** argv) {
     outDir = argv[2];
     memset(&counts, 0, sizeof(counts));
 
+    memset(&menuOptions, 0, sizeof(menuOptions));
+    menuOptions.skipScreenshotGalleryScan = 1;
+    M12_StartupMenu_InitWithOptions(&menu, dataDir, NULL, &menuOptions);
+    if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1")) {
+        printf("SKIP dm1_v1_all_map_render_probe no hash-verified DM1 data under %s\n",
+               dataDir);
+        return 0;
+    }
     M11_GameView_Init(&game);
-    if (!M11_GameView_StartDm1(&game, dataDir)) {
-        fprintf(stderr, "FAIL open DM1 data dir=%s\n", dataDir);
+    if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
+        fprintf(stderr, "FAIL open hash-verified DM1 data dir=%s\n", dataDir);
         M11_GameView_Shutdown(&game);
         return 1;
     }
@@ -472,6 +591,8 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&game);
         return 1;
     }
+    assert_object_bank_pixels(&game, &counts);
+    assert_creature_bank_pixels(&game, &counts);
 
     for (m = 0; m < (int)game.world.dungeon->header.mapCount; ++m) {
         const struct DungeonMapDesc_Compat* map = &game.world.dungeon->maps[m];
@@ -543,6 +664,13 @@ int main(int argc, char** argv) {
            counts.rendered == counts.poses &&
            counts.blank == 0 &&
            counts.chainOverflows == 0 &&
+           counts.objectBankPixelAssertions ==
+               (DM1_GRAPHIC_OBJECT_LAST - DM1_GRAPHIC_FIRST_OBJECT + 1) &&
+           counts.objectBankPixelFailures == 0 &&
+           counts.creatureBankPixelAssertions == DM1_CREATURE_TYPE_COUNT * 4 &&
+           counts.creatureBankPixelFailures == 0 &&
+           counts.creatureAttackPixelAssertions == DM1_CREATURE_TYPE_COUNT * 4 &&
+           counts.creatureAttackPixelFailures == 0 &&
            counts.thingBackedPoses > 0 &&
            counts.thingPixelDeltaPoses > 0 &&
            counts.itemPixelDeltaPoses > 0 &&
@@ -554,12 +682,19 @@ int main(int argc, char** argv) {
             counts.textStrings + counts.teleporters) > 0;
 
     (void)write_report(outDir, &game, &counts, pass);
-    printf("%s DM1 V1 all-map M11 render probe: maps=%d/%d poses=%d rendered=%d thingPixelDeltaPoses=%d/%d itemsDelta=%d groupsDelta=%d sensorTextDelta=%d visibleThingSamples=%d items=%d groups=%d doors=%d sensors=%d text=%d teleporters=%d\n",
+    printf("%s DM1 V1 all-map M11 render probe: maps=%d/%d poses=%d rendered=%d objectBank=%d/%d objectBankFailures=%d creature=%d/%d creatureAttack=%d/%d thingPixelDeltaPoses=%d/%d itemsDelta=%d groupsDelta=%d sensorTextDelta=%d visibleThingSamples=%d items=%d groups=%d doors=%d sensors=%d text=%d teleporters=%d\n",
            pass ? "PASS" : "FAIL",
            counts.mapsTouched,
            (int)game.world.dungeon->header.mapCount,
            counts.poses,
            counts.rendered,
+           counts.objectBankGraphics,
+           counts.objectBankPixelAssertions,
+           counts.objectBankPixelFailures,
+           counts.creatureBankPixelAssertions - counts.creatureBankPixelFailures,
+           counts.creatureBankPixelAssertions,
+           counts.creatureAttackPixelAssertions - counts.creatureAttackPixelFailures,
+           counts.creatureAttackPixelAssertions,
            counts.thingPixelDeltaPoses,
            counts.thingBackedPoses,
            counts.itemPixelDeltaPoses,

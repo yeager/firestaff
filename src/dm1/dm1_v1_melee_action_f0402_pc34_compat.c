@@ -1385,12 +1385,13 @@ int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
     out->shouldUnlinkGroupFromSquare = 1;
     out->shouldClearGroupNext = 1;
     out->shouldRemoveActiveGroupState = 1;
+    out->shouldDeleteGroupEvents = 1;
     out->shouldWriteRawGroup = 1;
 
-    /* ReDMCSB: GROUP.C F0190 lines 824-829 drops possessions and calls
-     * F0189_GROUP_Delete when the last creature dies.  Firestaff keeps the
-     * live unlink/raw-write operations in M10, but DM1 owns the branch
-     * policy and target square. */
+    /* ReDMCSB: GROUP.C F0190 lines 834-839 drops possessions then calls
+     * F0189_GROUP_Delete. F0189 lines 759-766 clears health, unlinks the
+     * group, retires active state, and calls F0181 to delete C29-C41 events.
+     * Firestaff keeps the live writes in its hosts, but DM1 owns their gate. */
     return 1;
 }
 
@@ -1413,14 +1414,15 @@ int dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
     out->shouldClearGroupNext = statePlan->shouldClearGroupNext;
     out->shouldRemoveActiveGroupState =
         statePlan->shouldRemoveActiveGroupState;
+    out->shouldDeleteGroupEvents = statePlan->shouldDeleteGroupEvents;
     out->groupThing = (unsigned short)(
         ((unsigned short)THING_TYPE_GROUP << 10) |
         ((unsigned short)statePlan->groupIndex & 0x03FFu));
     out->clearedNextThing = THING_NONE;
 
     /* ReDMCSB: GROUP.C F0189 lines 753-767 unlinks the GROUP thing,
-     * clears GROUP.Next, and removes the active-group entry.  DM1 owns the
-     * concrete apply receipt; M10 only performs the requested live writes. */
+     * clears GROUP.Next, retires active state, and deletes C29-C41 events.
+     * DM1 owns the concrete apply receipt; hosts only perform its writes. */
     return 1;
 }
 
@@ -1647,7 +1649,8 @@ int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
     out->shouldApplyKilledAllSideEffects =
         out->killedAllStatePlan.shouldUnlinkGroupFromSquare ||
         out->killedAllStatePlan.shouldClearGroupNext ||
-        out->killedAllStatePlan.shouldRemoveActiveGroupState;
+        out->killedAllStatePlan.shouldRemoveActiveGroupState ||
+        out->killedAllStatePlan.shouldDeleteGroupEvents;
 
     /* ReDMCSB: GROUP.C F0190 lines 824-917 orders possession drops,
      * killed-some event/fear cleanup, killed-all group deletion, and death

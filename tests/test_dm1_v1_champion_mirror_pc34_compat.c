@@ -363,7 +363,7 @@ static void test_f0172_front_wall_sensor_receipt(void)
                 hostDraw.drawChampionPortrait == 1 &&
                 hostDraw.drawMirrorBackingAsset == 1 &&
                 hostDraw.drawMirrorBackingFallbackRect == 0 &&
-                hostDraw.drawInvariantBackingRect == 1 &&
+                hostDraw.drawInvariantBackingRect == 0 &&
                 hostDraw.suppressHostFallbackVisuals == 1 &&
                 hostDraw.portraitGraphicIndex ==
                     DM1_V1_CHAMPION_MIRROR_PORTRAIT_GRAPHIC_PC34_COMPAT &&
@@ -374,12 +374,12 @@ static void test_f0172_front_wall_sensor_receipt(void)
         CHECK_ANCHOR(
             DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
                 &render, 0, 0, &hostDraw) == 1 &&
-                hostDraw.valid == 1 &&
+                hostDraw.valid == 0 &&
                 hostDraw.drawMirrorBackingAsset == 0 &&
-                hostDraw.drawMirrorBackingFallbackRect == 1 &&
-                hostDraw.drawInvariantBackingRect == 1 &&
-                hostDraw.suppressHostFallbackVisuals == 1,
-            "host draw receipt owns missing C346 backing fallback",
+                hostDraw.drawMirrorBackingFallbackRect == 0 &&
+                hostDraw.drawInvariantBackingRect == 0 &&
+                hostDraw.suppressHostFallbackVisuals == 0,
+            "host draw receipt gates missing C346 backing material",
             "DUNVIEW.C:3922-3928");
 
         CHECK_ANCHOR(

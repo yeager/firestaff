@@ -39,6 +39,8 @@
  *   0x17 CREATURE_ATTACKS_PARTY - fallback attack
  *   0x18 ATTACK_DOOR       - door-target attack phase
  *   0x26 EXPLODE_OR_SUMMON - self-destruct or spawn minion
+ *   0x3B/0x3C TRANSFORM    - source transform phase sequence
+ *   0x3D EXPLODE_OR_SUMMON_PHASE - mode-2 state reset to 0x11
  *
  * The remaining 200+ opcodes in skproject's full CCM are STUB'd in
  * this implementation (returns DM2_CCM_RESULT_UNKNOWN_OPCODE).
@@ -55,7 +57,7 @@ extern "C" {
 #endif
 
 /* ── Constants ───────────────────────────────────────────────────── */
-#define DM2_CCM_MAX_OPCODES        32    /* implemented opcodes */
+#define DM2_CCM_MAX_OPCODES        38    /* implemented opcodes */
 #define DM2_CCM_STACK_SIZE         16    /* operand stack depth */
 #define DM2_CCM_FLAG_COUNT         16    /* flag registers */
 #define DM2_CCM_MAX_PROGRAM_OPS    64    /* bounded imported CCM bytecode */
@@ -91,6 +93,12 @@ typedef enum {
     DM2_CCM_OP_PUTS_DOWN_ITEM_19 = 0x19,
     DM2_CCM_OP_TAKES_ITEM_1A    = 0x1A,
     DM2_CCM_OP_EXPLODE_OR_SUMMON = 0x26,
+    DM2_CCM_OP_TRANSFORM_STAGE  = 0x3B,
+    DM2_CCM_OP_TRANSFORM_FINAL  = 0x3C,
+    DM2_CCM_OP_EXPLODE_OR_SUMMON_PHASE = 0x3D,
+    DM2_CCM_OP_EXPLODE_OR_SUMMON_PHASE_3E = 0x3E,
+    DM2_CCM_OP_EXPLODE_OR_SUMMON_PHASE_3F = 0x3F,
+    DM2_CCM_OP_EXPLODE_OR_SUMMON_PHASE_40 = 0x40,
     /* Aliases for state-machine register names from dm2_v1_creature.h */
     DM2_CCM_OP_HALT             = 0xFF,
 } DM2_CCM_Opcode;
@@ -117,6 +125,10 @@ typedef struct {
     int   target_id;
     int   target_x, target_y, target_level;
     int   next_state;                  /* requested b_1a writeback, -1 = none */
+    int   transform_phase;             /* skproject c_creature b_1f */
+    int   transform_requested;         /* transform visual/effect handoff */
+    int   explode_or_summon_mode;      /* skproject c_creature b_20 */
+    int   explode_or_summon_requested; /* bounded 0x3d..0x40 handoff */
     int   step_count;
     /* Result of last execution */
     int   last_opcode;

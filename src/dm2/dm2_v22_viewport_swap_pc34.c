@@ -404,13 +404,9 @@ int dm2_v22_viewport_swap_populated(void) {
 }
 
 int dm2_v22_viewport_swap_active(void) {
-    if (!g_swap_cache.populated) return 0;
-    if (!dm2_v22_inplace_draw_active()) return 0;
-    if (!dm2_v22_get_installed()) return 0;
-    if (dm2_v22_best_available_shape_source(3) != DM2_V22_SHAPE_SOURCE_V2_MODERN) {
-        return 0;
-    }
-    return 1;
+    /* DM2-GDAT-FB-07: the legacy V22 cache only contains generated RGBA
+     * assets. It is never an active dungeon-material provider. */
+    return 0;
 }
 
 int dm2_v22_viewport_swap_cells_painted_indoor(void) {
@@ -489,109 +485,17 @@ static int clampi(int v, int lo, int hi) {
  * via dm2_v22_inplace_get_bitmap_by_id, which gives the per-cell
  * swap a clean direct lookup independent of the sibling shape
  * cache. Returns 1 on success, 0 on missing bitmap. */
-static int paint_cell_for_shape(unsigned char* framebuffer, int fbW, int fbH,
-                                 int dst_x, int dst_y, int dst_w, int dst_h,
-                                 Dm2_V22_ShapeType shape) {
-    const char* category = NULL;
-    const char* asset_id = NULL;
-    int w = 0, h = 0;
-    const uint32_t* rgba;
-    int x, y;
-
-    if (!resolve_shape_mapping(shape, &category, &asset_id)) return 0;
-    if (!category || !asset_id) return 0;
-
-    rgba = dm2_v22_inplace_get_bitmap_by_id(category, asset_id, &w, &h);
-    if (!rgba || w <= 0 || h <= 0) return 0;
-
-    if (dst_w <= 0 || dst_h <= 0) return 0;
-    for (y = 0; y < dst_h; ++y) {
-        int sy = (y * h) / dst_h;
-        if (sy >= h) sy = h - 1;
-        int py = dst_y + y;
-        if (py < 0 || py >= fbH) continue;
-        for (x = 0; x < dst_w; ++x) {
-            int sx = (x * w) / dst_w;
-            if (sx >= w) sx = w - 1;
-            uint32_t px = rgba[sy * w + sx];
-            unsigned char r = (unsigned char)((px >> 16) & 0xFFu);
-            unsigned char g = (unsigned char)((px >>  8) & 0xFFu);
-            unsigned char b = (unsigned char)((px      ) & 0xFFu);
-            /* Same 2-bit-per-channel quantizer as
-             * dm2_v22_inplace_render_pass (the existing V22 pass). */
-            int ri = (r * 3 + 127) / 255;
-            int gi = (g * 3 + 127) / 255;
-            int bi = (b * 3 + 127) / 255;
-            unsigned char idx = (unsigned char)((ri << 4) | (gi << 2) | bi);
-            int px_x = dst_x + x;
-            if (px_x < 0 || px_x >= fbW) continue;
-            framebuffer[py * fbW + px_x] = idx;
-        }
-    }
-    return 1;
-}
-
 int dm2_v22_viewport_swap_render(unsigned char* framebuffer,
                                    int fbW, int fbH,
                                    int is_outdoor) {
-    int cells_painted = 0;
-    if (!framebuffer || fbW <= 0 || fbH <= 0) return 0;
-    if (!dm2_v22_viewport_swap_active()) return 0;
-    if (!dm2_v22_viewport_swap_populated()) return 0;
-
-    if (is_outdoor) {
-        if (!g_swap_cache.is_outdoor) return 0;
-        /* Outdoor T600: paint the 3 outdoor rects (sky, horizon, ground). */
-        int i;
-        static const Dm2_V22_ShapeType kOutdoorShapes[3] = {
-            DM2_V22_SHAPE_OUTDOOR_SKY,
-            DM2_V22_SHAPE_OUTDOOR_HORIZON,
-            DM2_V22_SHAPE_OUTDOOR_GROUND
-        };
-        for (i = 0; i < 3; ++i) {
-            const DM2_V22_OutdoorCellRect* r = &dm2_v22_kOutdoorCellRects[i];
-            int dx = clampi(r->x, 0, fbW);
-            int dy = clampi(r->y, 0, fbH);
-            int dw = clampi(r->x + r->w, 0, fbW) - dx;
-            int dh = clampi(r->y + r->h, 0, fbH) - dy;
-            if (dw <= 0 || dh <= 0) continue;
-            if (paint_cell_for_shape(framebuffer, fbW, fbH,
-                                      dx, dy, dw, dh,
-                                      kOutdoorShapes[i])) {
-                cells_painted++;
-            }
-        }
-        g_cells_painted_outdoor += cells_painted;
-        return cells_painted;
-    }
-
-    /* Indoor T560: paint the 9 cells (D0..D2 x L/C/R). */
-    if (g_swap_cache.is_outdoor) return 0;
-    {
-        int depth, lateral;
-        for (depth = 0; depth < 3; ++depth) {
-            for (lateral = -1; lateral <= 1; ++lateral) {
-                const DM2_V22_CellRect* rect =
-                    &dm2_v22_kCellRects[depth][lateral + 1];
-                Dm2_V22_ShapeType shape = g_swap_cache.shapes[depth][lateral + 1];
-                if (shape == DM2_V22_SHAPE_NONE) continue;
-                {
-                    int dx = clampi(rect->x, 0, fbW);
-                    int dy = clampi(rect->y, 0, fbH);
-                    int dw = clampi(rect->x + rect->w, 0, fbW) - dx;
-                    int dh = clampi(rect->y + rect->h, 0, fbH) - dy;
-                    if (dw <= 0 || dh <= 0) continue;
-                    if (paint_cell_for_shape(framebuffer, fbW, fbH,
-                                              dx, dy, dw, dh,
-                                              shape)) {
-                        cells_painted++;
-                    }
-                }
-            }
-        }
-    }
-    g_cells_painted_indoor += cells_painted;
-    return cells_painted;
+    (void)framebuffer;
+    (void)fbW;
+    (void)fbH;
+    (void)is_outdoor;
+    /* DM2-GDAT-FB-07: V1 has already drawn the active-map GDAT route.
+     * A modern cache is not permitted to overwrite it. Missing selected
+     * original material remains no-draw in the V1 provider/renderer. */
+    return 0;
 }
 
 /* ── Source evidence ─────────────────────────────────────────────── */
@@ -604,10 +508,12 @@ const char* dm2_v22_viewport_swap_source_evidence(void) {
                 "D1C/D1R2/D0L/D0R wall/floor zone tables — owns the position-"
                 "aware indoor T560 per-cell discriminator); "
            "include/dm2_v22_modern_assets_pc34.h (asset pack paths + flags); "
-           "include/dm2_v22_inplace_draw_pc34.h (cache bitmap lookup); "
+           "skproject/SKWINSPX/src/v4/skcore.cpp:2284-2334 (MapGraphicsStyle "
+           "and DRAW_MAP_CHIP); dm2_v1_boot_viewport_asset_fetch (active-map "
+           "GDAT provider); "
            "include/dm2_v22_shape_cache_pc34.h (raw cell type store); "
            "dm2_v22_inplace_draw_pc34.c (cache file format + bitmap blit); "
            "dm2_v22_modern_assets_pc34.c (manifest path resolution); "
            "include/csb_v22_shapes.h (parallel CSB_V22_ShapeType pattern); "
-           "v22_inplace_cache.bin (build-time RGBA pack from PNG via PIL).";
+           "DM2-GDAT-FB-07 (synthetic RGBA cache is explicit no-draw).";
 }

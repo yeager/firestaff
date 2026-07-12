@@ -658,6 +658,7 @@ typedef struct {
     int shouldUnlinkGroupFromSquare;
     int shouldClearGroupNext;
     int shouldRemoveActiveGroupState;
+    int shouldDeleteGroupEvents;
     int shouldWriteRawGroup;
     int groupIndex;
     int mapIndex;
@@ -670,6 +671,7 @@ typedef struct {
     int shouldUnlinkGroupFromSquare;
     int shouldClearGroupNext;
     int shouldRemoveActiveGroupState;
+    int shouldDeleteGroupEvents;
     int groupIndex;
     int mapIndex;
     int mapX;

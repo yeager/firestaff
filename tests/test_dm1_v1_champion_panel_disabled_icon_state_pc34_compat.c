@@ -5,13 +5,13 @@
  *   - ReDMCSB CHAMPION.C F0330_CHAMPION_DisableAction:2208-2255
  *   - ReDMCSB ACTIDRAW.C F0386_MENUS_DrawActionIcon:201-296
  *   - ReDMCSB MENU.C G0491_auc_Graphic560_ActionDisabledTicks[44]:27,157
- *   - M11 m11_collect_v1_status_shield_border_graphics
- *   - M11_GameView_ShouldHatchV1ActionIconCells (m11_game_view.c:17904)
+ *   - dm1_v1_champion_status_shield_border_graphics_pc34
+ *   - dm1_v1_champion_panel_action_icon_global_hatch_pc34
  *
  * Companion to:
  *   - dm1_v1_graphic560_action_disabled_ticks_pc34_compat (table bytes)
- *   - M11_GameView_GetV1StatusShieldBorderGraphicForChampion (asset path)
- *   - M11_GameView_ShouldHatchV1ActionIconCells (global gate)
+ *   - dm1_v1_champion_status_shield_border_graphics_pc34 (asset path)
+ *   - dm1_v1_champion_panel_action_icon_global_hatch_pc34 (global gate)
  *   - firestaff_dm1_v1_champion_panel_shield_border_pixel_probe
  *     (asset-backed ENABLED shield pixel probe)
  *   - firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe
@@ -125,11 +125,11 @@ static void test_evidence_and_invariants(void)
                     "MENU.C:27,157 anchor");
     expect_contains("evidence.shield_disabled",
                     evidence->shield_border_disabled_anchor,
-                    "m11_collect_v1_status_shield_border_graphics",
-                    "M11 shield-border disabled contract anchor");
+                    "dm1_v1_champion_status_shield_border_graphics_pc34",
+                    "DM1 shield-border disabled contract anchor");
     expect_contains("evidence.global_hatch", evidence->global_hatch_gate_anchor,
-                    "M11_GameView_ShouldHatchV1ActionIconCells",
-                    "M11 global hatch gate anchor");
+                    "dm1_v1_champion_panel_action_icon_global_hatch_pc34",
+                    "DM1 global hatch gate anchor");
     expect_str_eq("evidence.defs_action_hand",
                   evidence->defs_action_hand_anchor,
                   "DEFS.H MASK0x8000_ACTION_HAND = 0x8000",
@@ -231,6 +231,60 @@ static void test_g0491_disabled_ticks_table(void)
     expect_int("g0491.oob[999]",
                DM1_V1_ChampionPanelDisabledIconState_DisabledTicksPc34Compat(999),
                -1, "CHAMPION.C F0330:2270 OOB guard");
+}
+
+static void test_action_icon_host_helpers(void)
+{
+    expect_int("helper.global_hatch.none",
+               dm1_v1_champion_panel_action_icon_global_hatch_pc34(
+                   0, false, false),
+               0,
+               "ACTIDRAW.C F0386:282 hatch gate");
+    expect_int("helper.global_hatch.candidate_ordinal",
+               dm1_v1_champion_panel_action_icon_global_hatch_pc34(
+                   1, false, false),
+               1,
+               "ACTIDRAW.C F0386:282 G0299");
+    expect_int("helper.global_hatch.candidate_panel",
+               dm1_v1_champion_panel_action_icon_global_hatch_pc34(
+                   0, true, false),
+               1,
+               "ACTIDRAW.C F0386:282 C040 host panel equivalent");
+    expect_int("helper.global_hatch.resting",
+               dm1_v1_champion_panel_action_icon_global_hatch_pc34(
+                   0, false, true),
+               1,
+               "ACTIDRAW.C F0386:282 G0300");
+    expect_int("helper.palette.dark_gray_to_cyan",
+               dm1_v1_champion_panel_action_icon_map_palette_color_pc34(
+                   12, true),
+               4,
+               "ACTIDRAW.C G0498[12] action icon palette changes");
+    expect_int("helper.palette.no_apply",
+               dm1_v1_champion_panel_action_icon_map_palette_color_pc34(
+                   12, false),
+               12,
+               "ACTIDRAW.C F0386 non-action palette path");
+    expect_int("helper.palette.other_color",
+               dm1_v1_champion_panel_action_icon_map_palette_color_pc34(
+                   1, true),
+               1,
+               "ACTIDRAW.C F0386 action icon palette changes");
+    expect_int("helper.backdrop.missing",
+               dm1_v1_champion_panel_action_icon_cell_backdrop_color_pc34(
+                   false, false),
+               -1,
+               "ACTIDRAW.C F0386 only present champions draw cells");
+    expect_int("helper.backdrop.dead",
+               dm1_v1_champion_panel_action_icon_cell_backdrop_color_pc34(
+                   true, true),
+               0,
+               "ACTIDRAW.C F0386 dead champion fills BLACK");
+    expect_int("helper.backdrop.living",
+               dm1_v1_champion_panel_action_icon_cell_backdrop_color_pc34(
+                   true, false),
+               4,
+               "ACTIDRAW.C F0386 living champion fills CYAN");
 }
 
 /*
@@ -549,7 +603,7 @@ static void test_empty_hand_available(void)
 /*
  * ReDMCSB shield-border DISABLED side — when ALL three of
  * partyShieldDefense, spellShieldDefense, fireShieldDefense are 0,
- * the M11 m11_collect_v1_status_shield_border_graphics append loop
+ * the dm1_v1_champion_status_shield_border_graphics_pc34 append loop
  * produces 0 borders.  This pins the inactive side of the
  * shield-border state; the active side is covered by the asset-
  * backed shield_border_pixel_probe ENABLED lane.
@@ -563,7 +617,7 @@ static void test_shield_border_disabled_state(void)
     DM1_V1_ChampionPanelDisabledIconState_InitStatePc34Compat(&state, 4);
     DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(&state, &r);
     expect_bool("shield.disabled.flag", r.any_shield_border_active, false,
-                "M11 m11_collect_v1_status_shield_border_graphics 0 borders");
+                "dm1_v1_champion_status_shield_border_graphics_pc34 0 borders");
     for (int i = 0; i < 4; ++i) {
         char id[64];
         snprintf(id, sizeof(id), "shield.disabled.count%d", i);
@@ -588,8 +642,7 @@ static void test_shield_border_disabled_state(void)
                 "F0292 active side");
 
     /* All three defenses → 3 borders in reversed append order
-     * (party, spell, fire — same order the M11
-     * m11_collect_v1_status_shield_border_graphics helper uses). */
+     * (party, spell, fire — same order the DM1 shield-border helper uses). */
     DM1_V1_ChampionPanelDisabledIconState_InitStatePc34Compat(&state, 4);
     state.champions[1].party_shield_defense = 4;
     state.champions[1].spell_shield_defense = 4;
@@ -785,6 +838,7 @@ int main(void)
 {
     test_evidence_and_invariants();
     test_g0491_disabled_ticks_table();
+    test_action_icon_host_helpers();
     test_apply_disable_action_attribute_paths();
     test_advance_timeline_enable_event();
     test_global_hatch_gates();
