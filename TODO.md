@@ -245,6 +245,12 @@ commands; it must not hide static MNS-backed geometry. Opaque Structure2 bytes
 remain non-drawable. Remaining work is the retail animated payload grammar,
 animation timing, and Saturn comparison capture.
 
+2026-07-12 update: a separate real-corpus probe now traces all 1,006 direct
+Structure1F coordinate records (items, floor decorations, floor sensors)
+across LEV00-LEV15 into their typed runtime entries with zero mismatches. This
+does not assign object, sensor, trigger, draw, gameplay, or rendering
+semantics, and leaves Structure1A-bound alcove/wall records unresolved.
+
 The launcher/package route itself is verified: M12 availability may open the
 Nexus runtime but cannot claim package readiness, and M11 consumes one
 canonical full-start receipt through champion/save/dungeon handoff. Save
