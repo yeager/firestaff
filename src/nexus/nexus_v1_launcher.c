@@ -413,6 +413,14 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
     if (nexus_v1_menu_bpk_upload_plan_receipt(engine, &bpk) == 0) {
         receipt->menu_bpk_upload_receipt_valid = 1;
         receipt->menu_bpk_upload_route = bpk.route;
+        receipt->menu_bpk_archive_entries = (int)bpk.archive_entries;
+        receipt->menu_bpk_surface_entries = (int)bpk.surface_entries;
+        receipt->menu_bpk_directory_trailer_found =
+            bpk.directory_trailer_found;
+        receipt->menu_bpk_directory_trailer_at_entry_zero =
+            bpk.directory_trailer_at_entry_zero;
+        receipt->menu_bpk_directory_trailer_valid =
+            bpk.directory_trailer_valid;
         receipt->menu_bpk_planned_rows = (int)bpk.planned_rows;
         receipt->menu_bpk_blocked_prs3_uploads =
             (int)bpk.blocked_prs3_uploads;
@@ -2592,6 +2600,12 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     out_receipt->dgn_handoff = dgn_handoff;
     (void)nexus_v1_current_level_structure2_source_receipt(
         state->engine, &out_receipt->structure2_source);
+    (void)nexus_v1_dgn_static_material_source_receipt(
+        state->engine, &out_receipt->static_material_sources);
+    out_receipt->dgn_static_material_source_consumed =
+        out_receipt->static_material_sources.canonical_pair_bound &&
+        state->engine->floor_mns_material_route_valid &&
+        state->engine->wall_mns_material_route_valid;
     out_receipt->dgn_route =
         nexus_v1_dgn_renderer_handoff_status_name(dgn_handoff.status);
     /* The runtime handoff must share the viewport's material-validated DGN
@@ -2942,6 +2956,8 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
         handoff->render_plan.material_semantics_complete;
     out_receipt->structure2_source_materialization_bound =
         handoff->structure2_source_materialization_bound ? 1 : 0;
+    out_receipt->dgn_static_material_source_consumed =
+        handoff->dgn_static_material_source_consumed ? 1 : 0;
     out_receipt->dgn_viewport_render_ready =
         handoff->dgn_viewport_render_ready ? 1 : 0;
     out_receipt->dgn_viewport_rasterized_command_count =
@@ -4583,6 +4599,8 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
         receipt->dgn_handoff = runtime_route->runtime_handoff.dgn_handoff;
         receipt->dgn_render_plan =
             runtime_route->runtime_handoff.render_plan;
+        receipt->static_material_sources =
+            runtime_route->runtime_handoff.static_material_sources;
         receipt->consumes_dgn_handoff = 1;
         receipt->runtime_dgn_handoff_ready =
             runtime_route->runtime_route_ready &&
@@ -4630,6 +4648,8 @@ static void nexus_v1_launcher_fill_real_asset_ownership(
             runtime_route->dgn_viewport_capture_ready &&
             runtime_route->dgn_viewport_frame_hash != 0u &&
             !runtime_route->fallback_visuals_permitted;
+        receipt->dgn_static_material_source_consumed =
+            runtime_route->dgn_static_material_source_consumed ? 1 : 0;
         receipt->dgn_viewport_written_pixels =
             runtime_route->dgn_viewport_written_pixels;
         receipt->first_dgn_draw_kind =

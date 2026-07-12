@@ -901,6 +901,12 @@ int main(void)
     synthetic_engine.menu_bpk_upload_receipt_valid = 1;
     synthetic_engine.menu_bpk_upload_receipt.route =
         NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED;
+    synthetic_engine.menu_bpk_upload_receipt.archive_entries = 4;
+    synthetic_engine.menu_bpk_upload_receipt.surface_entries = 3;
+    synthetic_engine.menu_bpk_upload_receipt.directory_trailer_entries = 1;
+    synthetic_engine.menu_bpk_upload_receipt.directory_trailer_found = 1;
+    synthetic_engine.menu_bpk_upload_receipt.directory_trailer_at_entry_zero = 1;
+    synthetic_engine.menu_bpk_upload_receipt.directory_trailer_valid = 1;
     synthetic_engine.menu_bpk_upload_receipt.ready_uploads = 3;
     synthetic_engine.menu_bpk_upload_receipt.planned_rows = 3;
     synthetic_engine.menu_bpk_decode_receipt_valid = 1;
@@ -1001,6 +1007,15 @@ int main(void)
                &runtime_state,
                &synthetic_runtime_receipt.startup_assets),
            "Nexus synthetic runtime assets build for route proof");
+    expect(synthetic_runtime_receipt.startup_assets.menu_bpk_archive_entries == 4 &&
+               synthetic_runtime_receipt.startup_assets.menu_bpk_surface_entries == 3 &&
+               synthetic_runtime_receipt.startup_assets
+                       .menu_bpk_directory_trailer_found == 1 &&
+               synthetic_runtime_receipt.startup_assets
+                       .menu_bpk_directory_trailer_at_entry_zero == 1 &&
+               synthetic_runtime_receipt.startup_assets
+                       .menu_bpk_directory_trailer_valid == 1,
+           "Nexus launcher carries the MENU.BPK directory trailer metadata");
     expect(nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
                &synthetic_runtime_receipt,
                &asset_handoff_receipt) &&
@@ -1069,6 +1084,7 @@ int main(void)
                runtime_handoff_receipt.dgn_render_ceiling_count ==
                    runtime_handoff_receipt.render_plan.ceiling_count &&
                runtime_handoff_receipt.dgn_material_semantics_complete == 1 &&
+               runtime_handoff_receipt.dgn_static_material_source_consumed == 0 &&
                runtime_handoff_receipt.dgn_material_plan_consumed == 1 &&
                runtime_handoff_receipt
                        .dgn_commands_copied_from_material_plan == 1 &&
@@ -1122,6 +1138,8 @@ int main(void)
                route_proof_receipt.runtime_route_receipt.runtime_route_ready == 1 &&
                route_proof_receipt.runtime_route_receipt
                        .runtime_handoff.asset_handoff.real_asset_route_ready == 1 &&
+               route_proof_receipt.runtime_route_receipt
+                       .dgn_static_material_source_consumed == 0 &&
                route_proof_receipt.title_menu_route_ready == 1 &&
                route_proof_receipt.menu_runtime_route_ready == 1 &&
                route_proof_receipt.first_runtime_route_ready == 1 &&

@@ -66,6 +66,11 @@ typedef struct {
     int faces_fallback;
     int menu_bpk_upload_receipt_valid;
     Nexus_V1_BpkRuntimeUploadRoute menu_bpk_upload_route;
+    int menu_bpk_archive_entries;
+    int menu_bpk_surface_entries;
+    int menu_bpk_directory_trailer_found;
+    int menu_bpk_directory_trailer_at_entry_zero;
+    int menu_bpk_directory_trailer_valid;
     int menu_bpk_planned_rows;
     int menu_bpk_blocked_prs3_uploads;
     int menu_bpk_blocks_real_menu_surface_render;
@@ -282,6 +287,7 @@ typedef struct {
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
     Nexus_V1_DgnRenderPlanReceipt render_plan;
     Nexus_V1_DgnStructure2SourceReceipt structure2_source;
+    Nexus_V1_DgnStaticMaterialSourceReceipt static_material_sources;
     Nexus_ScriptRuntimeReceipt script_receipt;
     int runtime_ready;
     int dgn_render_ready;
@@ -315,6 +321,7 @@ typedef struct {
     int dgn_wall_material_command_count;
     int dgn_material_semantics_complete;
     int structure2_source_materialization_bound;
+    int dgn_static_material_source_consumed;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
     int bpk_prs3_material_surface_count;
@@ -356,6 +363,7 @@ typedef struct {
     int dgn_wall_material_command_count;
     int dgn_material_semantics_complete;
     int structure2_source_materialization_bound;
+    int dgn_static_material_source_consumed;
     int dgn_viewport_render_ready;
     int dgn_viewport_rasterized_command_count;
     int dgn_viewport_material_surface_count;
@@ -709,6 +717,7 @@ typedef struct {
     Nexus_V1_MenuBpkRendererHandoffReceipt menu_bpk_handoff;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
     Nexus_V1_DgnRenderPlanReceipt dgn_render_plan;
+    Nexus_V1_DgnStaticMaterialSourceReceipt static_material_sources;
     /* The ownership pass builds this immutable plan once. Host callers copy
      * it rather than re-running the action route while assembling a frame. */
     Nexus_V1_DgnRenderCommand
@@ -810,6 +819,7 @@ typedef struct {
     int dgn_material_surface_coverage_complete;
     int dgn_material_semantics_complete;
     int runtime_dgn_material_path_consumed;
+    int dgn_static_material_source_consumed;
     int host_route_consumes_dgn_material_path;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
@@ -955,6 +965,7 @@ typedef struct {
     int dgn_material_surface_coverage_complete;
     int dgn_material_semantics_complete;
     int dgn_material_path_consumed;
+    int dgn_static_material_source_consumed;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
     int bpk_prs3_material_surface_count;
