@@ -1,4 +1,5 @@
 #include "theron_v1_system_card_irq2_cd_state_gate.h"
+#include "theron_v1_stage2_runtime_handoff.h"
 
 #include <string.h>
 
@@ -61,4 +62,37 @@ int theron_v1_system_card_irq2_cd_state_gate_from_original_media(
     out_gate->hardware_state_merged_and_stored = 1;
     out_gate->selected_branch_unobserved = 1;
     return 1;
+}
+
+int theron_v1_system_card_irq2_cd_state_gate_from_full_track02_media(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5_hex,
+    const uint8_t *system_card_rom,
+    size_t system_card_rom_size,
+    const char *system_card_rom_md5_hex,
+    Theron_V1SystemCardIrq2CdStateGate *out_gate) {
+    Theron_V1Stage2RuntimeHandoff handoff;
+    Theron_Track02Stage2DynamicPayloadReceipt payload;
+
+    if (!out_gate) return 0;
+    memset(out_gate, 0, sizeof(*out_gate));
+    memset(&handoff, 0, sizeof(handoff));
+    memset(&payload, 0, sizeof(payload));
+    if (!theron_v1_stage2_runtime_handoff_from_original_media(
+            track02_data, track02_size, track02_md5_hex, &handoff) ||
+        !handoff.physical_stage3_entry_verified ||
+        !handoff.stage3_mode1_header_verified ||
+        !handoff.stage2_cd_read_setup_verified ||
+        !handoff.stage2_post_read_transfer_verified ||
+        theron_v1_track02_inspect_stage2_dynamic_payload(
+            track02_data, track02_size, track02_md5_hex, &payload) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        payload.track02_record != handoff.track02_record ||
+        payload.user_data_hash != handoff.user_data_hash) {
+        return 0;
+    }
+    return theron_v1_system_card_irq2_cd_state_gate_from_original_media(
+        &payload, system_card_rom, system_card_rom_size,
+        system_card_rom_md5_hex, out_gate);
 }

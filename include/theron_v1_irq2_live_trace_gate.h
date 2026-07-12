@@ -2,7 +2,9 @@
 #define THERON_V1_IRQ2_LIVE_TRACE_GATE_H
 
 #include "theron_v1_track02.h"
+#include "theron_v1_system_card_irq2_cd_state_gate.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 /*
@@ -44,10 +46,38 @@ typedef struct {
     int cd_state_branch_to_e7b3_selected;
 } Theron_V1Irq2LiveBranchReceipt;
 
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage3_track02_record;
+    uint16_t handler_address;
+    uint16_t cd_state_address;
+    uint16_t cd_state_branch_address;
+    uint8_t f5_after_cd_read;
+    uint8_t f5_at_irq2_entry;
+    uint8_t cd_status_1802;
+    uint8_t cd_status_1803;
+    uint8_t f2_before_merge;
+    uint8_t f2_at_branch;
+    Theron_V1Irq2LiveBranchReceipt branch;
+} Theron_V1Irq2FullMediaTraceReceipt;
+
 /* Rejects unless a complete original Mednafen PCE trace proves every state
  * boundary from CD_READ return through the first IRQ2 CD-state branch. */
 int theron_v1_irq2_live_branch_from_trace(
     const Theron_V1Irq2LiveTrace *trace,
     Theron_V1Irq2LiveBranchReceipt *out_receipt);
+
+/* Requires the complete authenticated Track 02/System Card chain and a live
+ * Mednafen trace. Media-only inputs and partial register snapshots reject. */
+int theron_v1_irq2_live_branch_from_full_track02_media(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5_hex,
+    const uint8_t *system_card_rom,
+    size_t system_card_rom_size,
+    const char *system_card_rom_md5_hex,
+    const Theron_V1Irq2LiveTrace *trace,
+    Theron_V1Irq2FullMediaTraceReceipt *out_receipt);
 
 #endif /* THERON_V1_IRQ2_LIVE_TRACE_GATE_H */

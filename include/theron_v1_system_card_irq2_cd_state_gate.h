@@ -35,4 +35,16 @@ int theron_v1_system_card_irq2_cd_state_gate_from_original_media(
     const char *system_card_rom_md5_hex,
     Theron_V1SystemCardIrq2CdStateGate *out_gate);
 
+/* Optional host/emulator continuation of the full Track 02 handoff. The
+ * caller supplies an authenticated System Card image; missing system-card
+ * media must not weaken ordinary Track 02 boot. */
+int theron_v1_system_card_irq2_cd_state_gate_from_full_track02_media(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5_hex,
+    const uint8_t *system_card_rom,
+    size_t system_card_rom_size,
+    const char *system_card_rom_md5_hex,
+    Theron_V1SystemCardIrq2CdStateGate *out_gate);
+
 #endif /* THERON_V1_SYSTEM_CARD_IRQ2_CD_STATE_GATE_H */
