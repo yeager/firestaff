@@ -132,6 +132,13 @@
   strict-C11 syntax checks plus direct hash-verified JP/US media probe, 0
   failed.
 
+- 2026-07-12 Theron V1 IPL preload record provenance: the `$40dc` table is
+  now read from each authenticated IPL executable and binds the preceding
+  `$40cd` CD_READ to record `$03e3`, two MODE1 sectors, and raw sectors
+  JP `$4c3` / US `$4c4`. The payload remains unclassified and cannot become a
+  bank or level route. Verification: strict-C11 syntax checks plus direct
+  hash-verified JP/US media probe, 0 failed.
+
 - 2026-07-12 Theron V1 CUE/M11 loader-chain consumer: strict CUE boot
   validation now consumes the same stage-two work-RAM transfer and physical
   `$3800` `BRK $ff` dispatch gates as direct runtime entry after rereading the
