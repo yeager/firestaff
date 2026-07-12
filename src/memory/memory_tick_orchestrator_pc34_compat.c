@@ -2524,6 +2524,25 @@ static unsigned short orch_make_thing_ref_compat(int type, int index);
 static int orch_group_creature_cell_compat(
     const struct DungeonGroup_Compat* group,
     int creatureIndex);
+static int orch_pack_group_directions_compat(int direction, int creatureCount);
+static int orch_active_group_directions_compat(
+    const struct CreatureAIState_Compat* ai,
+    const struct DungeonGroup_Compat* group);
+static int orch_apply_f0206_active_group_directions_compat(
+    struct GameWorld_Compat* world,
+    struct CreatureAIState_Compat* ai,
+    struct DungeonGroup_Compat* group,
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int direction,
+    int creatureSize);
+static int orch_apply_f0205_active_creature_direction_compat(
+    struct GameWorld_Compat* world,
+    struct CreatureAIState_Compat* ai,
+    struct DungeonGroup_Compat* group,
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int direction,
+    int creatureIndex,
+    int creatureSize);
 static int orch_ai_state_to_dm1_behavior_compat(int stateKind);
 
 static void orch_cmd_attack_apply_f0231_side_effects_compat(
@@ -4930,6 +4949,76 @@ static int orch_group_creature_cell_compat(
     return (group->cells >> (creatureIndex << 1)) & 0x03;
 }
 
+static int orch_pack_group_directions_compat(int direction, int creatureCount)
+{
+    int packed = 0;
+    int creatureIndex;
+    if (creatureCount < 0) creatureCount = 0;
+    if (creatureCount > 3) creatureCount = 3;
+    for (creatureIndex = 0; creatureIndex <= creatureCount; ++creatureIndex) {
+        packed |= (direction & 0x03) << (creatureIndex << 1);
+    }
+    return packed;
+}
+
+static int orch_active_group_directions_compat(
+    const struct CreatureAIState_Compat* ai,
+    const struct DungeonGroup_Compat* group)
+{
+    int packed;
+    if (!group) return 0;
+    packed = ai ? ai->groupDirection : 0;
+    /* Older in-memory/save records held only GROUP.Direction.  Promote that
+     * scalar at the M10 boundary instead of treating missing high slots as
+     * North-facing creatures. */
+    if ((packed & ~0x03) == 0) {
+        packed = orch_pack_group_directions_compat(packed, (int)group->count);
+    }
+    return packed & 0xff;
+}
+
+static int orch_apply_f0206_active_group_directions_compat(
+    struct GameWorld_Compat* world,
+    struct CreatureAIState_Compat* ai,
+    struct DungeonGroup_Compat* group,
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int direction,
+    int creatureSize)
+{
+    if (!world || !ai || !group || !activeGroup || direction < 0 || direction > 3 ||
+        !F0817a_DM1_GROUP_SetGroupDirectionsWithRng_Compat(
+            activeGroup, direction, creatureSize, (int)group->count,
+            &world->masterRng)) {
+        return 0;
+    }
+    /* ReDMCSB GROUP.C F0184 line 474 writes only M021_NORMALIZE(Directions)
+     * back to the raw GROUP record.  ACTIVE_GROUP keeps the per-creature
+     * packed view while it remains on the party map. */
+    ai->groupDirection = activeGroup->directions & 0xff;
+    group->direction = (unsigned char)(activeGroup->directions & 0x03);
+    return 1;
+}
+
+static int orch_apply_f0205_active_creature_direction_compat(
+    struct GameWorld_Compat* world,
+    struct CreatureAIState_Compat* ai,
+    struct DungeonGroup_Compat* group,
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int direction,
+    int creatureIndex,
+    int creatureSize)
+{
+    if (!world || !ai || !group || !activeGroup || direction < 0 || direction > 3 ||
+        !F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
+            activeGroup, direction, creatureIndex, creatureSize,
+            (int)group->count, &world->masterRng)) {
+        return 0;
+    }
+    ai->groupDirection = activeGroup->directions & 0xff;
+    group->direction = (unsigned char)(activeGroup->directions & 0x03);
+    return 1;
+}
+
 static int orch_group_set_creature_cell_compat(
     int cells,
     int creatureIndex,
@@ -6186,7 +6275,9 @@ static void orch_schedule_group_reaction_compat(
 
     activeGroup.groupThingIndex = groupIndex;
     activeGroup.cells = group->cells;
-    activeGroup.directions = group->direction;
+    activeGroup.directions = (activeIndex >= 0)
+        ? orch_active_group_directions_compat(&world->creatureAI[activeIndex], group)
+        : orch_pack_group_directions_compat(group->direction, (int)group->count);
     activeGroup.lastMoveTime = (activeIndex >= 0)
         ? world->creatureAI[activeIndex].lastSeenPartyTick : 0;
     activeGroup.priorMapX = action->targetMapX;
@@ -7869,7 +7960,8 @@ static int orch_add_generated_group_active_state_compat(
     ai->groupMapX = plan.activeMapX;
     ai->groupMapY = plan.activeMapY;
     ai->groupCells = plan.activeCells;
-    ai->groupDirection = plan.activeDirection;
+    ai->groupDirection = orch_pack_group_directions_compat(
+        plan.activeDirection, (int)group->count);
     ai->targetChampionIndex = plan.activeTargetChampionIndex;
     ai->lastSeenPartyMapX = plan.activeLastSeenPartyMapX;
     ai->lastSeenPartyMapY = plan.activeLastSeenPartyMapY;
@@ -8571,13 +8663,44 @@ static int orch_handle_creature_reaction_event_compat(
 
     activeGroup.groupThingIndex = groupIndex;
     activeGroup.cells = group->cells;
-    activeGroup.directions = group->direction;
+    activeGroup.directions = orch_active_group_directions_compat(ai, group);
     activeGroup.lastMoveTime = ai->lastSeenPartyTick;
     activeGroup.targetMapX = ai->lastSeenPartyMapX;
     activeGroup.targetMapY = ai->lastSeenPartyMapY;
     activeGroup.priorMapX = ai->groupMapX;
     activeGroup.priorMapY = ai->groupMapY;
     memcpy(activeGroup.aspect, ai->aspect, sizeof(activeGroup.aspect));
+
+    if (ev->aux2 >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
+        ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        int creatureIndex = ev->aux2 - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+        int currentDirection;
+
+        /* ReDMCSB GROUP.C F0209 lines 2414-2442: a non-side-attacking C38
+         * creature that can see the party but is not facing it turns through
+         * F0205 and retries C38 two ticks later.  It must not fall through
+         * Firestaff's broader attack resolver before that source turn. */
+        currentDirection =
+            (activeGroup.directions >> (creatureIndex << 1)) & 0x03;
+        if (creatureIndex <= (int)group->count &&
+            !(activeGroup.aspect[creatureIndex] & 0x80) &&
+            ctx.distanceToVisibleParty > 0 &&
+            !(ctx.creatureInfo.attributes & DM1_ATTR_SIDE_ATTACK) &&
+            currentDirection != ctx.currentGroupPrimaryDirToParty) {
+            struct TimelineEvent_Compat retry = *ev;
+            if (!orch_apply_f0205_active_creature_direction_compat(
+                    world, ai, group, &activeGroup,
+                    ctx.currentGroupPrimaryDirToParty, creatureIndex,
+                    ctx.creatureSize)) {
+                return 0;
+            }
+            ai->lastSeenPartyMapX = world->party.mapX;
+            ai->lastSeenPartyMapY = world->party.mapY;
+            retry.fireAtTick = world->gameTick + 2u;
+            (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
+            return 1;
+        }
+    }
 
     /* ReDMCSB: PROJEXPL.C F0231 calls GROUP.C F0209 with
      * CM1_EVENT_CREATE_REACTION_EVENT_31_PARTY_IS_ADJACENT unless the
@@ -8587,6 +8710,27 @@ static int orch_handle_creature_reaction_event_compat(
     if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
             &ctx, &activeGroup, &world->masterRng, &behavior)) {
         return 0;
+    }
+
+    /* ReDMCSB GROUP.C F0209 enters F0206 at T0209073 for a movement or
+     * reaction turn, and calls F0205 once per creature at T0209044 before
+     * scheduling C38-C41 attacks.  Keep that packed ACTIVE_GROUP state in
+     * M10 rather than collapsing it to GROUP.Direction after each event. */
+    if (ev->aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP) {
+        int direction = -1;
+        if (behavior.actionKind == DM1_ACTION_MOVE ||
+            behavior.actionKind == DM1_ACTION_FLEE_MOVE) {
+            direction = behavior.moveDirection;
+        } else if (behavior.actionKind == DM1_ACTION_ATTACK ||
+                   behavior.actionKind == DM1_ACTION_SET_DIRECTION ||
+                   behavior.setDirectionOnly) {
+            direction = behavior.newDirectionForGroup;
+        }
+        if (direction >= 0 &&
+            !orch_apply_f0206_active_group_directions_compat(
+                world, ai, group, &activeGroup, direction, ctx.creatureSize)) {
+            return 0;
+        }
     }
 
     if (!orch_apply_f0207_creature_attack_compat(
@@ -8640,8 +8784,9 @@ static int orch_handle_creature_reaction_event_compat(
         if (behavior.moveDirection < 0 || behavior.moveDirection > 3) {
             return 0;
         }
-        ai->groupDirection = behavior.moveDirection;
-        group->direction = (unsigned char)behavior.moveDirection;
+        /* The F0206 write above owns the persistent packed directions; raw
+         * GROUP.Direction is only its low two-bit F0184-compatible view. */
+        group->direction = (unsigned char)(ai->groupDirection & 0x03);
         return orch_apply_creature_tick_group_move_f0267_compat(
             world, ev, result);
     }

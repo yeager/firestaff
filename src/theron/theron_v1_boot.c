@@ -846,6 +846,8 @@ int theron_v1_boot_validate_track02_loader_receipt(
         stage2_handoff.ipl_preload_nonzero_byte_count != 2911u ||
         stage2_handoff.ipl_preload_user_data_hash == 0u ||
         !stage2_handoff.stage2_cd_exec_table_verified ||
+        !stage2_handoff.stage2_cd_read_setup_verified ||
+        !stage2_handoff.stage2_post_read_transfer_verified ||
         !stage2_handoff.work_ram_cleared_before_entry ||
         stage2_handoff.cleared_work_ram_start != 0x2700u ||
         stage2_handoff.cleared_work_ram_bytes != 0x1100u ||

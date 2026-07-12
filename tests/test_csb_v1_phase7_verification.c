@@ -722,6 +722,55 @@ static void test_runtime_csbwin_expool_global_variable_handoff(void)
     csb_v1_runtime_cleanup(&profile);
 }
 
+static void test_runtime_csbwin_disable_saves_expool_policy(void)
+{
+    uint8_t tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
+    const uint32_t record_id = (5u << 24) | (5u << 16);
+    const uint32_t bucket = 32u + ((record_id * 0xbb40e62du) >> 27);
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_RuntimeProfile loaded;
+    const char *tmp_root;
+    char source_path[512];
+    char blocked_path[512];
+
+    memset(tail, 0, sizeof(tail));
+    put_le16(tail, 2, 3u); /* key plus one ui32: positive EXPOOL Read size */
+    put_le32(tail, (int)bucket * 4, 1u);
+    put_le32(tail, 1 * 4, 0u);
+    put_le32(tail, 2 * 4, record_id);
+    put_le32(tail, 3 * 4, 1u);
+
+    tmp_root = getenv("TMPDIR");
+    if (!tmp_root || tmp_root[0] == '\0') tmp_root = ".";
+    snprintf(source_path, sizeof(source_path),
+             "%s/firestaff_csb_disable_saves_%p.fsav", tmp_root,
+             (void *)&profile);
+    snprintf(blocked_path, sizeof(blocked_path),
+             "%s/firestaff_csb_disable_saves_blocked_%p.fsav", tmp_root,
+             (void *)&profile);
+    remove(source_path);
+    remove(blocked_path);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.party_state_valid = 1;
+    profile.csbwin_appended_tail_valid = 1;
+    profile.csbwin_appended_tail_size = sizeof(tail);
+    profile.csbwin_appended_tail_preserved_size = sizeof(tail);
+    memcpy(profile.csbwin_appended_tail, tail, sizeof(tail));
+    csb_v1_runtime_init(&loaded, NULL);
+    CHECK(csb_v1_runtime_save_game_to_path(&profile, source_path) == 0 &&
+              csb_v1_runtime_load_game_from_path(&loaded, source_path) == 0 &&
+              csb_v1_runtime_csbwin_saves_disabled(&loaded) == 1 &&
+              csb_v1_runtime_save_game_to_path(&loaded, blocked_path) == -1,
+          "CSBWin EDBT_DisableSaves blocks native runtime saves after reload");
+    CHECK(csb_v1_runtime_csbwin_saves_disabled(NULL) == 0,
+          "CSBWin save-policy accessor rejects null runtime state");
+    csb_v1_runtime_cleanup(&loaded);
+    csb_v1_runtime_cleanup(&profile);
+    remove(source_path);
+    remove(blocked_path);
+}
+
 static void test_runtime_custom_background_skin_grid_from_expool(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -1891,6 +1940,7 @@ int main(void)
     test_dungeon_decode_dsa_filter_location();
     test_runtime_csbwin_dsa_filter_binding();
     test_runtime_csbwin_expool_global_variable_handoff();
+    test_runtime_csbwin_disable_saves_expool_policy();
     test_runtime_custom_background_skin_grid_from_expool();
     test_runtime_custom_background_skin_grid_from_csbwin_tail();
     test_dungeon_decode_square();

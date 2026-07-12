@@ -335,6 +335,9 @@ typedef struct {
     int                     csbwin_global_variables_valid;
     uint16_t                csbwin_global_variable_count;
     uint32_t                csbwin_global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
+    /* CSBWin SaveGame.cpp reads EDBT_DisableSaves from EXPOOL. It is a
+     * source save-policy gate, not a Firestaff preference. */
+    int                     csbwin_saves_disabled;
     /* CSBWin DSA.cpp DSAINDEX::ReadTracing restores this EXPOOL-owned
      * eight-word bitmap after the save body. It is source trace state only:
      * no Firestaff diagnostic mode or DSA execution is enabled from it. */
@@ -609,6 +612,8 @@ int csb_v1_runtime_get_csbwin_dsa_tracing(
  * malformed present record leaves the prior profile bank unchanged. */
 int csb_v1_runtime_restore_csbwin_expool_global_variables(
     CSB_V1_RuntimeProfile *profile);
+int csb_v1_runtime_csbwin_saves_disabled(
+    const CSB_V1_RuntimeProfile *profile);
 
 /* CSBWin Monster.cpp resolves a type-47 filter actuator from Expool, then
  * obtains its DSAselector from DB3::word2 bits 7..11 and maps that slot

@@ -64,6 +64,8 @@ static int csb_v1_runtime_stage_csbwin_global_variables(
     CSB_V1_RuntimeProfile *candidate);
 static int csb_v1_runtime_write_csbwin_global_variables(
     CSB_V1_RuntimeProfile *candidate);
+static int csb_v1_runtime_stage_csbwin_save_policy(
+    CSB_V1_RuntimeProfile *candidate);
 static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_dy);
 static int csb_v1_runtime_square_type_from_raw(
     const CSB_V1_DungeonData *dungeon,
@@ -1262,7 +1264,8 @@ static int csb_v1_runtime_apply_save_image(
                sizeof(profile->csbwin_appended_tail));
     }
     if (csb_v1_runtime_stage_csbwin_global_variables(profile) != 0 ||
-        csb_v1_runtime_stage_csbwin_dsa_tracing(profile) != 0) {
+        csb_v1_runtime_stage_csbwin_dsa_tracing(profile) != 0 ||
+        csb_v1_runtime_stage_csbwin_save_policy(profile) != 0) {
         return -1;
     }
     if (csb_v1_runtime_apply_active_group_state_from_save_image(
@@ -1292,7 +1295,7 @@ int csb_v1_runtime_save_game_to_path(const CSB_V1_RuntimeProfile *profile,
     CSB_V1_SaveHeader header;
     uint16_t game_id;
 
-    if (!profile || !path) return -1;
+    if (!profile || !path || profile->csbwin_saves_disabled) return -1;
     game_id = csb_v1_runtime_effective_game_id(profile);
     csb_v1_runtime_capture_save_image(profile, &image);
     memset(&header, 0, sizeof(header));
@@ -14529,7 +14532,8 @@ int csb_v1_runtime_apply_csbwin_resume_report(
         return -1;
     }
     if (csb_v1_runtime_stage_csbwin_global_variables(&candidate) != 0 ||
-        csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
+        csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0 ||
+        csb_v1_runtime_stage_csbwin_save_policy(&candidate) != 0) {
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
         return -1;
     }
@@ -14659,7 +14663,8 @@ int csb_v1_runtime_apply_csbwin_resume_file(
                sizeof(candidate.csbwin_extended_level_dsa_index));
     }
     if (csb_v1_runtime_stage_csbwin_global_variables(&candidate) != 0 ||
-        csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
+        csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0 ||
+        csb_v1_runtime_stage_csbwin_save_policy(&candidate) != 0) {
         csb_v1_runtime_cleanup_csbwin_extended_state(&candidate);
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
         free(bytes);
@@ -15062,6 +15067,39 @@ static int csb_v1_runtime_write_csbwin_global_variables(
     return 0;
 }
 
+static int csb_v1_runtime_stage_csbwin_save_policy(
+    CSB_V1_RuntimeProfile *candidate)
+{
+    const uint32_t record_id = (5u << 24) | (5u << 16);
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+
+    if (!candidate) return -1;
+    candidate->csbwin_saves_disabled = 0;
+
+    /* CSBWin SaveGame.cpp lines 1972-1976 reads EDBT_DisableSaves with
+     * EXPOOL::Read(..., 32) and disables saves exactly when the record has a
+     * positive word count. Preserve that source policy after the tail has
+     * passed the same complete/truncation checks used by other EXPOOL owners. */
+    if (!candidate->csbwin_appended_tail_valid ||
+        candidate->csbwin_appended_tail_size == 0u) {
+        return 0;
+    }
+    if (candidate->csbwin_appended_tail_truncated ||
+        candidate->csbwin_appended_tail_size !=
+            candidate->csbwin_appended_tail_preserved_size ||
+        candidate->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
+        return -1;
+    }
+    if (csb_v1_runtime_locate_appended_expool_record_internal(
+            candidate, record_id, &payload, &payload_size)) {
+        if (!payload || payload_size == 0u) return -1;
+        candidate->csbwin_saves_disabled = 1;
+    }
+    return 0;
+}
+
 static int csb_v1_runtime_stage_csbwin_dsa_tracing(
     CSB_V1_RuntimeProfile *candidate)
 {
@@ -15150,6 +15188,12 @@ int csb_v1_runtime_restore_csbwin_expool_global_variables(
            candidate.csbwin_global_variables,
            sizeof(profile->csbwin_global_variables));
     return 0;
+}
+
+int csb_v1_runtime_csbwin_saves_disabled(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    return profile && profile->csbwin_saves_disabled ? 1 : 0;
 }
 
 int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(

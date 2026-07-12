@@ -519,6 +519,30 @@ int F0817_DM1_GROUP_SetGroupDirection_Compat(
     int creatureCount);
 
 /*
+ * F0817a: Live-RNG form of GROUP.C F0205/F0206.  Unlike the legacy
+ * single-creature adapter above, this consumes the original random gates:
+ * F0206 visits the group from its highest creature index down and gives
+ * non-zero indices the M005_RANDOM(2) gate; F0205 consumes M006_RANDOM(65536)
+ * only for an opposite-direction turn.  M10 uses this form when it persists
+ * ACTIVE_GROUP::Directions between C29-C41 events.
+ */
+int F0817a_DM1_GROUP_SetGroupDirectionsWithRng_Compat(
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int direction,
+    int creatureSize,
+    int creatureCount,
+    struct RngState_Compat* rng);
+
+/* F0817b is the single-creature F0205 form used by C38-C41. */
+int F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int direction,
+    int creatureIndex,
+    int creatureSize,
+    int creatureCount,
+    struct RngState_Compat* rng);
+
+/*
  * F0818: Get distance to visible party considering sight/LoS.
  *
  * Source: GROUP.C F0200_GROUP_GetDistanceToVisibleParty

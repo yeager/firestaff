@@ -821,6 +821,76 @@ int F0817_DM1_GROUP_SetGroupDirection_Compat(
     return 1;
 }
 
+int F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int direction,
+    int creatureIndex,
+    int creatureSize,
+    int creatureCount,
+    struct RngState_Compat* rng)
+{
+    if (!activeGroup || !rng || direction < 0 || direction > 3 ||
+        creatureCount < 0 || creatureCount > 3 || creatureIndex < 0 ||
+        creatureIndex > creatureCount) {
+        return 0;
+    }
+
+    {
+        int currentDir = (activeGroup->directions >> (creatureIndex * 2)) & 0x03;
+        int newDir = direction;
+        if (normalize_dir(currentDir - direction) == 2) {
+            newDir = next_dir((F0732_COMBAT_RngRandom_Compat(rng, 65536) & 0x02) +
+                              direction);
+        }
+        activeGroup->directions &= ~(0x03 << (creatureIndex * 2));
+        activeGroup->directions |= (newDir & 0x03) << (creatureIndex * 2);
+        if (creatureSize == DM1_SIZE_HALF_SQUARE && creatureCount > 0) {
+            int pairIndex = creatureIndex ^ 1;
+            if (pairIndex <= creatureCount) {
+                activeGroup->directions &= ~(0x03 << (pairIndex * 2));
+                activeGroup->directions |= (newDir & 0x03) << (pairIndex * 2);
+            }
+        }
+    }
+    return 1;
+}
+
+int F0817a_DM1_GROUP_SetGroupDirectionsWithRng_Compat(
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int direction,
+    int creatureSize,
+    int creatureCount,
+    struct RngState_Compat* rng)
+{
+    int creatureIndex;
+    int twoHalfSquareCreatures;
+
+    if (!activeGroup || !rng || direction < 0 || direction > 3 ||
+        creatureCount < 0 || creatureCount > 3) {
+        return 0;
+    }
+
+    /* ReDMCSB GROUP.C F0206 lines 1620-1636: a two-creature half-square
+     * group starts at creature zero because F0205 writes its paired slot. */
+    twoHalfSquareCreatures = creatureCount != 0 &&
+        creatureSize == DM1_SIZE_HALF_SQUARE;
+    creatureIndex = twoHalfSquareCreatures ? creatureCount - 1 : creatureCount;
+
+    do {
+        /* F0206: slot zero always turns; each higher slot gets M005_RANDOM(2). */
+        if (creatureIndex != 0 && F0732_COMBAT_RngRandom_Compat(rng, 2) == 0) {
+            continue;
+        }
+        if (!F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
+                activeGroup, direction, creatureIndex, creatureSize,
+                creatureCount, rng)) {
+            return 0;
+        }
+    } while (creatureIndex-- != 0);
+
+    return 1;
+}
+
 /* =========================================================================
  *  F0818: Distance to visible party
  *
