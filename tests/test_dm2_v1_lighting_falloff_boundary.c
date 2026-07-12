@@ -1126,6 +1126,25 @@ static void test_sprite_asset_provider(void)
               viewport.asset_hud_portrait_drawn_count == 0 &&
                   viewport.fallback_hud_portrait_drawn_count == 1);
 
+        {
+            uint8_t palette16[16];
+            for (int i = 0; i < 16; ++i) {
+                palette16[i] = (uint8_t)(0xa0 + i);
+            }
+            memset(framebuffer, 0, sizeof(framebuffer));
+            dm2_v1_viewport_init(&viewport, framebuffer, 320);
+            dm2_v1_viewport_set_hud_party(&viewport, &party);
+            dm2_v1_viewport_set_gdat_interface_palette(
+                &viewport, 1, 0x51a7c0deu, palette16);
+            dm2_v1_render_ui_chrome(&viewport);
+            CHECK("DM2 champion HUD state bars consume bound GDAT palette16",
+                  viewport.gdat_interface_palette_consumed_count > 0 &&
+                      framebuffer[33 * 320 + 246] == palette16[15] &&
+                      framebuffer[39 * 320 + 270] == palette16[2] &&
+                      framebuffer[44 * 320 + 292] == palette16[11] &&
+                      framebuffer[49 * 320 + 272] == palette16[12]);
+        }
+
         memset(framebuffer, 0, sizeof(framebuffer));
         dm2_v1_viewport_init(&viewport, framebuffer, 320);
         dm2_v1_viewport_set_hud_party(&viewport, &party);

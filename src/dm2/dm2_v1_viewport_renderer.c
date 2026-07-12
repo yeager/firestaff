@@ -4374,30 +4374,34 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                 }
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].name_marker_rect,
-                                 DM2_COL_WHITE);
+                                 dm2_v1_hud_palette_color(
+                                     s, DM2_COL_WHITE));
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].hp_bar_rect,
-                                 DM2_COL_BLACK);
+                                 dm2_v1_hud_palette_color(
+                                     s, DM2_COL_BLACK));
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].hp_fill_rect,
-                                 2);
+                                 dm2_v1_hud_palette_color(s, 2));
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].stamina_bar_rect,
-                                 DM2_COL_BLACK);
+                                 dm2_v1_hud_palette_color(
+                                     s, DM2_COL_BLACK));
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].stamina_fill_rect,
-                                 11);
+                                 dm2_v1_hud_palette_color(s, 11));
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].mana_bar_rect,
-                                 DM2_COL_BLACK);
+                                 dm2_v1_hud_palette_color(
+                                     s, DM2_COL_BLACK));
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].mana_fill_rect,
-                                 12);
+                                 dm2_v1_hud_palette_color(s, 12));
                 if (plan.champion_slots[slot].leader) {
                     dm2_v1_fill_rect(
                         vp, stride,
                         &plan.champion_slots[slot].leader_mark_rect,
-                        DM2_COL_WHITE);
+                        dm2_v1_hud_palette_color(s, DM2_COL_WHITE));
                 }
             }
         }
