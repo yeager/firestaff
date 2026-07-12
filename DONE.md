@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 retail DGN/MNS dungeon route: static Structure1B floor,
+  ceiling, and wall commands now render through the hash-verified
+  `SN_FLOOR.MNS` / `SN_WALL.MNS` TEXT banks without being blocked by the
+  separate opaque Structure2 animation payload. Structure2 remains fail-closed
+  for declared animated image commands. Verification: real English Saturn
+  Track 1 LEV00 load produces a complete DGN/MNS raster receipt and an M11
+  host route marked `ready-rendered-mesh`, with no fallback visuals.
+
 - 2026-07-12 Theron V1 documented split-CUE Track 02 mount: the exact
   MyAbandonware CUE declarations `TQJP02.iso` and `TQUS02.iso` now resolve
   their documented sibling payloads `TQJP02End.iso` and `TQUS02End.iso`,

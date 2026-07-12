@@ -267,6 +267,8 @@ static void probe_real_data(const char *data_dir,
 {
     Nexus_V1_Engine engine;
     Nexus_Viewport vp;
+    Nexus_V1_DgnViewportRenderReceipt dgn_render;
+    Nexus_V1_DgnViewportHostRouteReceipt dgn_host_route;
     uint8_t *dm = NULL;
     uint8_t *font = NULL;
     uint32_t rgba[NEXUS_FB_W * NEXUS_FB_H];
@@ -319,6 +321,26 @@ static void probe_real_data(const char *data_dir,
 
     nexus_viewport_init(&vp);
     nexus_viewport_render(&vp, &engine);
+    memset(&dgn_render, 0, sizeof(dgn_render));
+    CHECK(nexus_viewport_last_dgn_render_receipt(&vp, &dgn_render) == 0 &&
+          dgn_render.attempted && dgn_render.used_real_dgn_route &&
+          dgn_render.ready && !dgn_render.blocked &&
+          !dgn_render.fallback_visuals_permitted &&
+          dgn_render.command_count > 0 &&
+          dgn_render.command_count == dgn_render.material_surface_count &&
+          dgn_render.command_count == dgn_render.rasterized_command_count &&
+          dgn_render.written_pixels > 0,
+          "real DGN/MNS viewport route produces a complete raster receipt");
+    memset(&dgn_host_route, 0, sizeof(dgn_host_route));
+    CHECK(nexus_viewport_dgn_host_route_receipt(&vp, &engine,
+                                                &dgn_host_route) == 0 &&
+          dgn_host_route.status == NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
+          dgn_host_route.host_route_consumed &&
+          dgn_host_route.can_present_runtime_dgn &&
+          !dgn_host_route.blocks_runtime_dgn &&
+          dgn_host_route.command_count == dgn_render.command_count &&
+          dgn_host_route.rasterized_command_count == dgn_render.command_count,
+          "real DGN/MNS raster receipt reaches the runtime host route");
     nonzero = count_nonzero(vp.fb.color_buffer, NEXUS_FB_W * NEXUS_FB_H);
     CHECK(nonzero > 0, "runtime viewport render writes non-zero indexed pixels");
 

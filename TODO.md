@@ -109,12 +109,12 @@ animated-material route without fallback until the retail LEV corpus proves a
 payload record grammar and host surface evidence exists. Model-face animated
 textures and animation timing/flag execution are also still open.
 
-The engine, launcher, viewport, and M11 command handoff now consume that
-per-level source/materialization receipt as one no-draw gate: absent or
-unbound Track 1 provenance yields `blocked-structure2-source`, clears copied
-commands, and records a no-draw viewport receipt. This does not make opaque
-Structure2 bytes drawable; the remaining work is still the retail payload
-grammar and independently verified material-surface host route.
+The engine, launcher, viewport, and M11 command handoff now consume direct
+retail MNS material for static Structure1B floor, ceiling, and wall commands.
+Structure2 provenance remains a gate only for declared animated-image
+commands; it must not hide static MNS-backed geometry. Opaque Structure2 bytes
+remain non-drawable. Remaining work is the retail animated payload grammar,
+animation timing, and Saturn comparison capture.
 
 The launcher/package route itself is verified: M12 availability may open the
 Nexus runtime but cannot claim package readiness, and M11 consumes one
