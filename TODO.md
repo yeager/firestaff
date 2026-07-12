@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+## DM1 V2.2 Finished-Art Follow-up (2026-07-12)
+
+The live V2.2 selection path now rejects synthetic and partial modern-art
+packs and falls back to the original-data V2.1 presentation route. Remaining
+V2.2 work is an operator-reviewed, complete real-art pack and packaged
+Mac capture; do not re-enable placeholder art as a runtime fallback.
+
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 
 The strict CUE route now carries an authenticated Track 02 IPL/stage-two
