@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 PRS3 original entry-register receipt: the hash-locked
+  branch-flow probe now proves `R4 -> R12`, `R5 -> R10`, raw literal-fed
+  `JSR @R3` with delay-slot `R6 -> R14`, then `R0 -> R13` and the branch to
+  `R11=0`. The literal remains unmapped and no ABI, payload, decoder,
+  completion, or rendering role is inferred. Verification: direct strict-C11
+  probe build against locked Japanese `DM.BIN` PASS.
+
 - 2026-07-12 Nexus V1 PRS3 original failure-call receipt: the hash-locked
   branch-flow probe now proves the shared failure target's PC-relative literal
   `0x060284e0 -> R3`, `JSR @R3`, and delay-slot `MOV R13,R4` before the
