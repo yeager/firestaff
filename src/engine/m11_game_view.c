@@ -38872,3 +38872,31 @@ void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
         *outReceipt = s_m11_dm1_floor_item_host_presentation_receipt;
     }
 }
+
+int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    /* ReDMCSB DUNVIEW.C F0115:4567-4577 processes the object pass before
+     * creature/projectile passes. This invokes that same M11 object blitter. */
+    return m11_draw_item_sprite_material(
+        state, framebuffer, framebufferWidth, framebufferHeight,
+        M11_VIEWPORT_X + 32, M11_VIEWPORT_Y + 32, 32, 20,
+        THING_TYPE_WEAPON, 0, 0, 0, 0, 0, 0, 10, 1);
+}
+
+int M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    /* ReDMCSB DUNVIEW.C F0115:5645-5683 enters this later projectile pass;
+     * it must never publish the object-only host receipt. */
+    return m11_draw_projectile_sprite(
+        state, framebuffer, framebufferWidth, framebufferHeight,
+        M11_VIEWPORT_X + 48, M11_VIEWPORT_Y + 40, 24, 16,
+        454, 0, 0, 0, 0, 0);
+}

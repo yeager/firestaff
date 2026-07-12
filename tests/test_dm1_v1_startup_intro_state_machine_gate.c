@@ -4194,12 +4194,83 @@ static void check_m11_hoc_live_material_observation_gate(void) {
     M11_GameView_Shutdown(&view);
 }
 
+static void check_m11_floor_item_host_receipt_direct_draw(void) {
+    M11_GameViewState view;
+    M11_Dm1FloorItemHostPresentationReceipt receipt;
+    unsigned char framebuffer[320 * 200];
+    unsigned char source_pixels[32 * 32];
+    int i;
+
+    M11_GameView_Init(&view);
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(source_pixels, 7, sizeof(source_pixels));
+    view.assetsAvailable = 1;
+    view.assetLoader.initialized = 1;
+    view.assetLoader.cacheUsed = M11_ASSET_CACHE_SLOTS;
+    for (i = 0; i < M11_ASSET_CACHE_SLOTS; ++i) {
+        view.assetLoader.cache[i].loaded = 1;
+        view.assetLoader.cache[i].graphicIndex = (unsigned int)i;
+        view.assetLoader.cache[i].width = 32;
+        view.assetLoader.cache[i].height = 32;
+        view.assetLoader.cache[i].pixels = source_pixels;
+    }
+
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
+    expect_i("M11 F0115 receipt begins invalid", receipt.valid, 0);
+    expect_i("M11 F0115 projectile draw completes",
+             M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(
+                 &view, framebuffer, 320, 200),
+             1);
+    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
+    expect_i("M11 F0115 projectile never publishes floor receipt",
+             receipt.valid, 0);
+
+    view.assetsAvailable = 0;
+    expect_i("M11 F0115 invalid item draw rejects",
+             M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
+                 &view, framebuffer, 320, 200),
+             0);
+    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
+    expect_i("M11 F0115 invalid item draw keeps receipt invalid",
+             receipt.valid, 0);
+
+    view.assetsAvailable = 1;
+    expect_i("M11 F0115 item draw completes",
+             M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
+                 &view, framebuffer, 320, 200),
+             1);
+    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
+    expect_i("M11 F0115 item draw publishes receipt", receipt.valid, 1);
+    expect_i("M11 F0115 item receipt uses C10", receipt.transparentColor, 10);
+    expect_i("M11 F0115 item receipt records F0791", receipt.usesF0791Blit, 1);
+    expect_truth("M11 F0115 item receipt has destination geometry",
+                 receipt.destinationW > 0 && receipt.destinationH > 0);
+
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
+    expect_i("M11 next frame clears F0115 receipt", receipt.valid, 0);
+    expect_i("M11 F0115 projectile after clear completes",
+             M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(
+                 &view, framebuffer, 320, 200),
+             1);
+    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
+    expect_i("M11 projectile after clear remains receipt-free", receipt.valid, 0);
+
+    /* The fixture pixels are stack-owned, not asset-loader allocations. */
+    view.assetLoader.cacheUsed = 0;
+    view.assetLoader.initialized = 0;
+    view.assetsAvailable = 0;
+    M11_GameView_Shutdown(&view);
+}
+
 int main(void) {
     check_swsh_to_title_boundary();
     check_title_to_menu_boundary();
     check_menu_to_entrance_wait_boundary();
     check_dm1_launch_path_bypass_contract();
     check_m11_hoc_live_material_observation_gate();
+    check_m11_floor_item_host_receipt_direct_draw();
 
     expect_truth("startup stage order is source-valid",
                  dm1_v1_startup_sequence_source_order_valid_pc34());
