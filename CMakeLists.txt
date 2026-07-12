@@ -6422,6 +6422,23 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_f0276_group_creature_sensor_pc34_compat
     )
 
+    add_executable(test_dm2_v1_wall_ornament_receipt
+        tests/test_dm2_v1_wall_ornament_receipt.c
+    )
+    target_include_directories(test_dm2_v1_wall_ornament_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_wall_ornament_receipt
+        PRIVATE firestaff_dm2)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_wall_ornament_receipt
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_wall_ornament_receipt
+        COMMAND test_dm2_v1_wall_ornament_receipt
+    )
+
     add_executable(test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat
         tests/test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat.c
         src/shared/asset_find_by_hash.c
