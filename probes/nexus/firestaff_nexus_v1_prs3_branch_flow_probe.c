@@ -108,6 +108,24 @@ typedef struct {
     unsigned int zero_second_byte_value_register;
 } Nexus_Prs3V1LowBitConsumptionReceipt;
 
+/* The accepted zero-side path combines the two already proven byte registers
+ * through a bounded SH-2 shift/mask/OR sequence. This records register
+ * algebra only, never a PRS3 token, offset, palette, or output interpretation. */
+typedef struct {
+    int valid;
+    size_t upper_mask_literal_load_offset;
+    size_t upper_mask_literal_offset;
+    uint16_t upper_mask_word;
+    size_t low_mask_load_offset;
+    int low_mask_immediate;
+    size_t second_byte_copy_offset;
+    size_t first_shift_offset;
+    size_t second_shift_offset;
+    size_t upper_mask_and_offset;
+    size_t merge_or_offset;
+    size_t low_mask_and_offset;
+} Nexus_Prs3V1ZeroSideMergeReceipt;
+
 static int failures;
 
 static void check(int condition, const char *message) {
@@ -160,6 +178,20 @@ static int sh2_mov_immediate_fields(uint16_t instruction,
     return 1;
 }
 
+/* SH-2 MOV.W @(disp,PC),Rn is 1001nnnndddddddd. */
+static int sh2_movw_pc_literal_target(size_t instruction_offset,
+                                      uint16_t instruction,
+                                      size_t *out_target) {
+    size_t displacement;
+
+    if (!out_target || (instruction & 0xf000U) != 0x9000U ||
+        instruction_offset > SIZE_MAX - 4U) return 0;
+    displacement = (size_t)(instruction & 0x00ffU) * 2U;
+    if (displacement > SIZE_MAX - (instruction_offset + 4U)) return 0;
+    *out_target = instruction_offset + 4U + displacement;
+    return 1;
+}
+
 /* SH-2 ADD #imm,Rn is 0111nnnniiiiiiii. */
 static int sh2_add_immediate_fields(uint16_t instruction,
                                     unsigned int *out_register,
@@ -206,6 +238,17 @@ static int sh2_mov_register_fields(uint16_t instruction,
                                    unsigned int *out_source_register,
                                    unsigned int *out_destination_register) {
     if ((instruction & 0xf00fU) != 0x6003U || !out_source_register ||
+        !out_destination_register) return 0;
+    *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
+/* SH-2 AND/OR Rm,Rn are 0010nnnnmmmm1001/1011. */
+static int sh2_logic_register_fields(uint16_t instruction, uint16_t opcode,
+                                     unsigned int *out_source_register,
+                                     unsigned int *out_destination_register) {
+    if ((instruction & 0xf00fU) != opcode || !out_source_register ||
         !out_destination_register) return 0;
     *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
     *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
@@ -451,6 +494,63 @@ static int prs3_v1_low_bit_consumption_receipt(
     return 1;
 }
 
+static int prs3_v1_zero_side_merge_receipt(
+    const uint8_t *data, size_t size, Nexus_Prs3V1ZeroSideMergeReceipt *out) {
+    Nexus_Prs3V1ZeroSideMergeReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+    unsigned int source = 0U, destination = 0U;
+    unsigned int low_mask_register = 0U;
+    unsigned int copy_source = 0U, copy_destination = 0U;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 130U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.upper_mask_literal_load_offset = entry + 44U;
+    receipt.low_mask_load_offset = entry + 106U;
+    receipt.second_byte_copy_offset = entry + 116U;
+    receipt.first_shift_offset = entry + 118U;
+    receipt.second_shift_offset = entry + 120U;
+    receipt.upper_mask_and_offset = entry + 122U;
+    receipt.merge_or_offset = entry + 124U;
+    receipt.low_mask_and_offset = entry + 126U;
+    if (read_be16(data + receipt.upper_mask_literal_load_offset) != 0x986cU ||
+        !sh2_movw_pc_literal_target(
+            receipt.upper_mask_literal_load_offset,
+            read_be16(data + receipt.upper_mask_literal_load_offset),
+            &receipt.upper_mask_literal_offset) ||
+        receipt.upper_mask_literal_offset + 2U > size ||
+        !sh2_mov_immediate_fields(read_be16(data + receipt.low_mask_load_offset),
+                                  &low_mask_register, &receipt.low_mask_immediate) ||
+        !sh2_mov_register_fields(read_be16(data + receipt.second_byte_copy_offset),
+                                 &copy_source, &copy_destination) ||
+        read_be16(data + receipt.first_shift_offset) != 0x4308U ||
+        read_be16(data + receipt.second_shift_offset) != 0x4308U ||
+        !sh2_logic_register_fields(read_be16(data + receipt.upper_mask_and_offset),
+                                   0x2009U, &source, &destination) ||
+        source != 8U || destination != 3U ||
+        !sh2_logic_register_fields(read_be16(data + receipt.merge_or_offset),
+                                   0x200bU, &source, &destination) ||
+        source != 3U || destination != 4U ||
+        !sh2_logic_register_fields(read_be16(data + receipt.low_mask_and_offset),
+                                   0x2009U, &source, &destination) ||
+        source != 2U || destination != 7U ||
+        low_mask_register != 2U || copy_source != 7U || copy_destination != 3U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.upper_mask_word = read_be16(data + receipt.upper_mask_literal_offset);
+    if (receipt.upper_mask_word != 0x0f00U ||
+        receipt.low_mask_immediate != 15) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
 static void test_synthetic_branch_flow(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Nexus_Prs3V1BranchFlowReceipt receipt;
@@ -554,6 +654,32 @@ static void test_synthetic_low_bit_consumption(void) {
           "SH-2 PRS3 low-bit receipt rejects a changed zero-side decrement");
 }
 
+static void test_synthetic_zero_side_merge(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 512U];
+    Nexus_Prs3V1ZeroSideMergeReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 44U] = 0x98U; fixture[entry + 45U] = 0x6cU;
+    fixture[entry + 264U] = 0x0fU; fixture[entry + 265U] = 0x00U;
+    fixture[entry + 106U] = 0xe2U; fixture[entry + 107U] = 0x0fU;
+    fixture[entry + 116U] = 0x63U; fixture[entry + 117U] = 0x73U;
+    fixture[entry + 118U] = 0x43U; fixture[entry + 119U] = 0x08U;
+    fixture[entry + 120U] = 0x43U; fixture[entry + 121U] = 0x08U;
+    fixture[entry + 122U] = 0x23U; fixture[entry + 123U] = 0x89U;
+    fixture[entry + 124U] = 0x24U; fixture[entry + 125U] = 0x3bU;
+    fixture[entry + 126U] = 0x27U; fixture[entry + 127U] = 0x29U;
+    check(prs3_v1_zero_side_merge_receipt(
+              fixture, sizeof(fixture), &receipt) && receipt.valid &&
+              receipt.upper_mask_word == 0x0f00U &&
+              receipt.low_mask_immediate == 15,
+          "SH-2 PRS3 zero-side receipt locks shift/mask/OR register algebra");
+    fixture[entry + 125U] = 0x39U;
+    check(!prs3_v1_zero_side_merge_receipt(
+              fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 zero-side receipt rejects a non-R4 merge operation");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -594,11 +720,13 @@ int main(int argc, char **argv) {
     Nexus_Prs3V1ZeroSideReadReceipt zero_side_receipt;
     Nexus_Prs3V1TerminationReceipt termination_receipt;
     Nexus_Prs3V1LowBitConsumptionReceipt low_bit_receipt;
+    Nexus_Prs3V1ZeroSideMergeReceipt zero_side_merge_receipt;
 
     test_synthetic_branch_flow();
     test_synthetic_zero_side_read();
     test_synthetic_termination();
     test_synthetic_low_bit_consumption();
+    test_synthetic_zero_side_merge();
     if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
@@ -631,6 +759,10 @@ int main(int argc, char **argv) {
                   data, size, &low_bit_receipt) &&
                   low_bit_receipt.valid,
               "DM.BIN locks the PRS3 v1 low-bit branch-local read shapes");
+        check(prs3_v1_zero_side_merge_receipt(
+                  data, size, &zero_side_merge_receipt) &&
+                  zero_side_merge_receipt.valid,
+              "DM.BIN locks the PRS3 v1 zero-side shift/mask/OR operation");
         if (receipt.valid) {
             printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
                    "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
@@ -684,6 +816,16 @@ int main(int argc, char **argv) {
                    low_bit_receipt.zero_counter_decrement,
                    low_bit_receipt.zero_first_byte_value_register,
                    low_bit_receipt.zero_second_byte_value_register);
+        }
+        if (zero_side_merge_receipt.valid) {
+            printf("SH-2 PRS3 v1 zero-side merge: R7->R3 shifts=%zu,%zu "
+                   "and-mask=%04x or-R4=%zu low-mask=%d; "
+                   "token/output-proof=0\n",
+                   zero_side_merge_receipt.first_shift_offset,
+                   zero_side_merge_receipt.second_shift_offset,
+                   (unsigned int)zero_side_merge_receipt.upper_mask_word,
+                   zero_side_merge_receipt.merge_or_offset,
+                   zero_side_merge_receipt.low_mask_immediate);
         }
     }
     free(data);
