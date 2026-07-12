@@ -3636,11 +3636,129 @@ static int orch_f0248_schedule_remote_effect_compat(
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
 }
 
+/* ReDMCSB TIMELINE.C F0247:1033-1133 creates C008/C010 launcher
+ * projectiles from a Fontanel explosion Thing.  These two launcher forms
+ * need no object allocation or linked-list transfer, so M10 can consume
+ * them directly without guessing at C007/C009/C014/C015 ownership. */
+static int orch_f0248_explosion_launcher_subtype_compat(
+    unsigned short associatedThing)
+{
+    unsigned int explosionType;
+
+    if (associatedThing < DM1_THING_FIRST_EXPLOSION) {
+        return PROJECTILE_SUBTYPE_FIREBALL;
+    }
+    explosionType = (unsigned int)(associatedThing - DM1_THING_FIRST_EXPLOSION);
+    switch (explosionType) {
+    case C000_EXPLOSION_FIREBALL:          return PROJECTILE_SUBTYPE_FIREBALL;
+    case C001_EXPLOSION_SLIME:             return PROJECTILE_SUBTYPE_SLIME;
+    case C002_EXPLOSION_LIGHTNING_BOLT:    return PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+    case C003_EXPLOSION_HARM_NON_MATERIAL: return PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+    case C004_EXPLOSION_OPEN_DOOR:         return PROJECTILE_SUBTYPE_OPEN_DOOR;
+    case C007_EXPLOSION_POISON_CLOUD:      return PROJECTILE_SUBTYPE_POISON_CLOUD;
+    default:                               return PROJECTILE_SUBTYPE_FIREBALL;
+    }
+}
+
+static int orch_f0248_explosion_launcher_attack_type_compat(int subtype)
+{
+    switch (subtype) {
+    case PROJECTILE_SUBTYPE_FIREBALL:
+        return COMBAT_ATTACK_FIRE;
+    case PROJECTILE_SUBTYPE_LIGHTNING_BOLT:
+        return COMBAT_ATTACK_LIGHTNING;
+    case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL:
+    case PROJECTILE_SUBTYPE_OPEN_DOOR:
+        return COMBAT_ATTACK_MAGIC;
+    default:
+        return COMBAT_ATTACK_NORMAL;
+    }
+}
+
+static int orch_f0248_consume_explosion_launcher_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct DungeonSensor_Compat* sensor,
+    int sensorCell)
+{
+    struct ProjectileLauncherContext_Compat context;
+    struct ProjectileLauncherResult_Compat launcher;
+    int launchIndex;
+    int applied = 0;
+
+    if (!world || !ev || !sensor ||
+        (sensor->sensorType != DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_EXPLOSION &&
+         sensor->sensorType != DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION)) {
+        return 0;
+    }
+    /* F0248 reaches F0247 only after the wall-event cell selects this
+     * sensor.  In particular, a C008 on another cell must not consume
+     * M005_RANDOM(2). */
+    if ((sensorCell & 3) != (ev->cell & 3)) return 0;
+    memset(&context, 0, sizeof(context));
+    context.newObjectThings[0] = THING_NONE;
+    context.newObjectThings[1] = THING_NONE;
+    /* F0247 calls M005_RANDOM(2) only for C008 after it has selected the
+     * explosion Thing; C010 must not advance the source RNG. */
+    if (sensor->sensorType == DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_EXPLOSION) {
+        context.randomBit = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2);
+    }
+    memset(&launcher, 0, sizeof(launcher));
+    if (!F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+            sensor, sensorCell, ev->mapX, ev->mapY, ev->cell,
+            &context, &launcher) || !launcher.triggered) {
+        return 0;
+    }
+    if (launcher.sensorDisabled) {
+        sensor->sensorType = DM1_SENSOR_DISABLED;
+        applied = 1;
+    }
+    for (launchIndex = 0; launchIndex < launcher.launchCount; ++launchIndex) {
+        const struct ProjectileLauncherLaunch_Compat* launch =
+            &launcher.launches[launchIndex];
+        struct ProjectileCreateInput_Compat input;
+        struct TimelineEvent_Compat firstMove;
+        int slot = -1;
+        int subtype;
+
+        if (!launch->valid) continue;
+        subtype = orch_f0248_explosion_launcher_subtype_compat(
+            launch->associatedThing);
+        memset(&input, 0, sizeof(input));
+        input.category = PROJECTILE_CATEGORY_MAGICAL;
+        input.subtype = subtype;
+        input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+        input.ownerIndex = -1;
+        input.mapIndex = ev->mapIndex;
+        input.mapX = launch->mapX;
+        input.mapY = launch->mapY;
+        input.cell = launch->cell;
+        input.direction = launch->direction;
+        input.kineticEnergy = launch->kineticEnergy;
+        input.attack = launch->attack;
+        input.launcherStrength = launch->attack;
+        input.stepEnergy = launch->stepEnergy;
+        input.currentTick = (int)world->gameTick;
+        input.poisonAttack = subtype == PROJECTILE_SUBTYPE_POISON_CLOUD
+            ? launch->attack : 0;
+        input.attackTypeCode =
+            orch_f0248_explosion_launcher_attack_type_compat(subtype);
+        input.associatedThing = (int)launch->associatedThing;
+        input.firstMoveGraceFlag = 0;
+        memset(&firstMove, 0, sizeof(firstMove));
+        if (F0810_PROJECTILE_Create_Compat(
+                &input, &world->projectiles, &slot, &firstMove) &&
+            F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
+            applied = 1;
+        }
+    }
+    return applied;
+}
+
 /* ReDMCSB TIMELINE.C F0248:1136-1350 walks the complete wall list in
  * order, changes only TextStrings on the event cell, evaluates C005/C006,
- * and calls F0271 once after the batch.  Projectiles and endgame retain
- * their dedicated owners; this consumer deliberately does not synthesize
- * their runtime objects. */
+ * consumes allocation-free C008/C010 launchers, and calls F0271 once after
+ * the batch. C007/C009/C014/C015 and endgame retain their dedicated owners. */
 static int orch_dispatch_wall_event_f0248_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev)
@@ -3698,6 +3816,24 @@ static int orch_dispatch_wall_event_f0248_compat(
                     evaluated = F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat(
                         sensor, ev->cell, ev->aux1, targetSquareType,
                         ev->mapX, ev->mapY, &trigger);
+                }
+            } else if (sensor->sensorType ==
+                           DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_EXPLOSION ||
+                       sensor->sensorType ==
+                           DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION) {
+                applied |= orch_f0248_consume_explosion_launcher_compat(
+                    world, ev, sensor, THING_GET_CELL(thing));
+            } else if (sensor->sensorType == DM1_SENSOR_WALL_END_GAME) {
+                /* ReDMCSB TIMELINE.C F0248:1317-1339 does not cell-filter
+                 * C018.  Its M10-visible state transition is immediate;
+                 * the F0444/F0446 presentation sequence remains the M11
+                 * consumer of world->gameWon. */
+                if (F0731_SENSOR_EvaluateWallEndGameEvent_Compat(
+                        sensor, THING_GET_CELL(thing), ev->aux1, ev->cell,
+                        &trigger) && trigger.triggered &&
+                    trigger.endGameGameWon) {
+                    world->gameWon = 1;
+                    applied = 1;
                 }
             }
             if (evaluated) {
@@ -4906,7 +5042,8 @@ static int orch_materialize_projectile_associated_thing_compat(
         return 0;
     }
     if (world->things->projectiles &&
-        world->things->projectileCount > THING_GET_INDEX(receipt.projectileThing) &&
+        world->things->projectileCount >
+            (int)THING_GET_INDEX(receipt.projectileThing) &&
         !orch_set_next_thing_compat(
             world->things, receipt.projectileThing,
             receipt.projectileNextAfterDelete)) {
