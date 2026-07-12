@@ -201,6 +201,26 @@ typedef struct {
     size_t outer_loop_target;
 } Nexus_Prs3V1PostReadBranchReceipt;
 
+/* The local-repeat and outer-loop paths share an R6 increment/mask sequence.
+ * This is a bounded register-state receipt only; it does not classify R6 as
+ * a decoded output length or buffer cursor. */
+typedef struct {
+    int valid;
+    size_t mask_literal_load_offset;
+    size_t mask_literal_offset;
+    uint16_t mask_word;
+    size_t local_entry_offset;
+    size_t local_r6_copy_offset;
+    size_t r6_increment_offset;
+    int r6_increment;
+    size_t delayed_branch_offset;
+    size_t delay_slot_mask_offset;
+    unsigned int delay_slot_mask_source_register;
+    unsigned int delay_slot_mask_destination_register;
+    size_t local_repeat_target;
+    size_t outer_loop_target;
+} Nexus_Prs3V1RepeatR6MaskReceipt;
+
 static int failures;
 
 static void check(int condition, const char *message) {
@@ -859,6 +879,64 @@ static int prs3_v1_post_read_branch_receipt(
     return 1;
 }
 
+static int prs3_v1_repeat_r6_mask_receipt(
+    const uint8_t *data, size_t size, Nexus_Prs3V1RepeatR6MaskReceipt *out) {
+    Nexus_Prs3V1RepeatR6MaskReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+    unsigned int copy_source = 0U, copy_destination = 0U;
+    unsigned int increment_register = 0U;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 164U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.mask_literal_load_offset = entry + 50U;
+    receipt.local_entry_offset = entry + 136U;
+    receipt.local_r6_copy_offset = entry + 136U;
+    receipt.r6_increment_offset = entry + 138U;
+    receipt.delayed_branch_offset = entry + 158U;
+    receipt.delay_slot_mask_offset = entry + 160U;
+    if (read_be16(data + receipt.mask_literal_load_offset) != 0x956aU ||
+        !sh2_movw_pc_literal_target(
+            receipt.mask_literal_load_offset,
+            read_be16(data + receipt.mask_literal_load_offset),
+            &receipt.mask_literal_offset) ||
+        receipt.mask_literal_offset + 2U > size ||
+        !sh2_mov_register_fields(read_be16(data + receipt.local_r6_copy_offset),
+                                 &copy_source, &copy_destination) ||
+        !sh2_add_immediate_fields(read_be16(data + receipt.r6_increment_offset),
+                                  &increment_register, &receipt.r6_increment) ||
+        read_be16(data + receipt.delayed_branch_offset) != 0x8ff3U ||
+        !sh2_conditional_branch_target(
+            receipt.delayed_branch_offset,
+            read_be16(data + receipt.delayed_branch_offset), size,
+            &receipt.local_repeat_target) ||
+        !sh2_logic_register_fields(read_be16(data + receipt.delay_slot_mask_offset),
+                                   0x2009U,
+                                   &receipt.delay_slot_mask_source_register,
+                                   &receipt.delay_slot_mask_destination_register) ||
+        !sh2_bra_target(entry + 162U, read_be16(data + entry + 162U), size,
+                        &receipt.outer_loop_target) ||
+        copy_source != 6U || copy_destination != 3U ||
+        increment_register != 6U || receipt.r6_increment != 1 ||
+        receipt.delay_slot_mask_source_register != 5U ||
+        receipt.delay_slot_mask_destination_register != 6U ||
+        receipt.local_repeat_target != receipt.local_entry_offset ||
+        receipt.outer_loop_target != entry + 52U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.mask_word = read_be16(data + receipt.mask_literal_offset);
+    if (receipt.mask_word != 0x0fffU) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
 static void test_synthetic_branch_flow(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Nexus_Prs3V1BranchFlowReceipt receipt;
@@ -1089,6 +1167,33 @@ static void test_synthetic_post_read_branch(void) {
           "SH-2 PRS3 post-read branch receipt rejects a changed delay-slot operation");
 }
 
+static void test_synthetic_repeat_r6_mask(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 512U];
+    Nexus_Prs3V1RepeatR6MaskReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 50U] = 0x95U; fixture[entry + 51U] = 0x6aU;
+    fixture[entry + 266U] = 0x0fU; fixture[entry + 267U] = 0xffU;
+    fixture[entry + 136U] = 0x63U; fixture[entry + 137U] = 0x63U;
+    fixture[entry + 138U] = 0x76U; fixture[entry + 139U] = 0x01U;
+    fixture[entry + 158U] = 0x8fU; fixture[entry + 159U] = 0xf3U;
+    fixture[entry + 160U] = 0x26U; fixture[entry + 161U] = 0x59U;
+    fixture[entry + 162U] = 0xafU; fixture[entry + 163U] = 0xc7U;
+    check(prs3_v1_repeat_r6_mask_receipt(
+              fixture, sizeof(fixture), &receipt) && receipt.valid &&
+              receipt.mask_word == 0x0fffU && receipt.r6_increment == 1 &&
+              receipt.delay_slot_mask_source_register == 5U &&
+              receipt.delay_slot_mask_destination_register == 6U &&
+              receipt.local_repeat_target == entry + 136U &&
+              receipt.outer_loop_target == entry + 52U,
+          "SH-2 PRS3 repeat receipt locks shared R6 increment/mask paths");
+    fixture[entry + 161U] = 0x58U;
+    check(!prs3_v1_repeat_r6_mask_receipt(
+              fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 repeat receipt rejects a changed R6 delay-slot mask");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -1134,6 +1239,7 @@ int main(int argc, char **argv) {
     Nexus_Prs3V1MergedValueReadReceipt merged_value_read_receipt;
     Nexus_Prs3V1PostReadControlReceipt post_read_control_receipt;
     Nexus_Prs3V1PostReadBranchReceipt post_read_branch_receipt;
+    Nexus_Prs3V1RepeatR6MaskReceipt repeat_r6_mask_receipt;
 
     test_synthetic_branch_flow();
     test_synthetic_zero_side_read();
@@ -1144,6 +1250,7 @@ int main(int argc, char **argv) {
     test_synthetic_merged_value_read();
     test_synthetic_post_read_control();
     test_synthetic_post_read_branch();
+    test_synthetic_repeat_r6_mask();
     if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
@@ -1196,6 +1303,10 @@ int main(int argc, char **argv) {
                   data, size, &post_read_branch_receipt) &&
                   post_read_branch_receipt.valid,
               "DM.BIN locks the PRS3 v1 post-read BF/S delay and branch targets");
+        check(prs3_v1_repeat_r6_mask_receipt(
+                  data, size, &repeat_r6_mask_receipt) &&
+                  repeat_r6_mask_receipt.valid,
+              "DM.BIN locks the PRS3 v1 shared R6 increment/mask continuation");
         if (receipt.valid) {
             printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
                    "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
@@ -1312,6 +1423,18 @@ int main(int argc, char **argv) {
                    post_read_branch_receipt.delay_slot_destination_register,
                    post_read_branch_receipt.outer_loop_branch_offset,
                    post_read_branch_receipt.outer_loop_target);
+        }
+        if (repeat_r6_mask_receipt.valid) {
+            printf("SH-2 PRS3 v1 repeat R6: local=%zu R6->R3 increment=R6%+d "
+                   "mask=%04x delay=R%u,R%u repeat=%zu outer=%zu; "
+                   "token/output-proof=0\n",
+                   repeat_r6_mask_receipt.local_entry_offset,
+                   repeat_r6_mask_receipt.r6_increment,
+                   (unsigned int)repeat_r6_mask_receipt.mask_word,
+                   repeat_r6_mask_receipt.delay_slot_mask_source_register,
+                   repeat_r6_mask_receipt.delay_slot_mask_destination_register,
+                   repeat_r6_mask_receipt.local_repeat_target,
+                   repeat_r6_mask_receipt.outer_loop_target);
         }
     }
     free(data);
