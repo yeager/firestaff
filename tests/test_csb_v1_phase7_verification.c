@@ -532,8 +532,11 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
         0x0686u, 0x55aau, 0x0054u, 0x0053u, 0x000du
     };
     int parameters[] = { 0 };
+    uint8_t exported[8192];
     const uint8_t *global_payload = NULL;
     size_t global_payload_size = 0u;
+    size_t exported_size = 0u;
+    CSB_V1_CSBWin512BodyReport exported_report;
     const uint32_t global_record_id = (5u << 24) | (4u << 16);
     const uint32_t global_bucket = 32u +
         ((global_record_id * 0xbb40e62du) >> 27);
@@ -609,6 +612,21 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               global_payload_size == 64u && global_payload[4] == 0xaau &&
               global_payload[5] == 0x55u,
           "CSB DSA GLOBALSTORE commits through runtime and CSBWin EXPOOL"); }
+
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 0;
+    memset(&exported_report, 0, sizeof(exported_report));
+    CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
+              &profile, exported, sizeof(exported), &exported_size) == 0 &&
+              csb_v1_csbwin_512_verify_save_body(
+                  exported, exported_size, 0u, &exported_report) ==
+                  CSB_V1_CSBWIN_512_OK &&
+              csb_v1_csbwin_512_appended_expool_locate_record(
+                  &exported_report, global_record_id, &global_payload,
+                  &global_payload_size) == 1 &&
+              global_payload_size == 64u && global_payload[4] == 0xaau &&
+              global_payload[5] == 0x55u,
+          "CSB core export retains the committed source global EXPOOL word");
 
     profile.csbwin_extended_level_dsa_index[3][2] = 8u;
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
