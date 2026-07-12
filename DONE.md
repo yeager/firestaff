@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 HoC projectile artifact capture: the real-data probe now
+  opens only DM1 directly and verifies all 2,172 viewport cells without
+  static projectile/explosion leakage or false fireball markers. Verification:
+  real local PC34 probe 9/9 passed.
+
 - 2026-07-12 DM1 F0442 credits loop: the C202 credits command now returns
   explicitly to the entrance loop and cannot fall through to dungeon, resume,
   or quit. Verification: C001 fallback gate 291 checks passed.
