@@ -83,8 +83,11 @@ HuC6280 software manual specifies that `BRK` pushes `PC+2` and dispatches
 through the IRQ2 vector at `$fff6/$fff7`; the immediate `$ff` therefore
 belongs to the loader's interrupt protocol. Execution continues through the
 installed handler rather than treating the following manifest units as CPU
-code. The System Card software manual independently describes Track 02 data
-as record-numbered content and requires a generated record table for access.
-This explains the control-transfer shape but still does not name the 218
-manifest units. Sources: [PCEDev HuC6280 Software Manual](https://archive.org/details/PCEDev)
-and [PCEDev CD System Software Manual](https://archive.org/details/PCEDev).
+code. The System Card API accesses Track 02 through record numbers relative
+to a configured CD base. The original Hu7 toolchain emits those record
+constants into the executable; the finished disc has no runtime directory to
+scan. Firestaff must therefore follow proven runtime record handoffs, never
+infer file names or ISO-9660 paths. This explains the control-transfer shape
+but still does not name the 218 manifest units. Sources: [PCEDev HuC6280
+Software Manual](https://archive.org/details/PCEDev) and [PC Engine CD record
+format analysis](https://retrocomputing.stackexchange.com/questions/27518/did-the-pc-engine-turbografx-super-cd-rom-have-a-standardized-file-system).
