@@ -106,12 +106,26 @@ int main(void)
     weapon.next = THING_ENDOFLIST;
     squareFirstThings[0] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0);
     squareFirstThings[1] = THING_ENDOFLIST;
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 1;
+    world.party.mapY = 1;
     schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(squareFirstThings[0] == (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0));
     assert(teleporter.next == THING_ENDOFLIST);
     assert(squareFirstThings[1] == (unsigned short)((THING_TYPE_WEAPON << 10) | 0));
+
+    /* F0249 sends party through F0267 before ordinary source-chain things. */
+    world.party.mapX = 0;
+    world.party.mapY = 0;
+    world.party.direction = 1;
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert(world.party.mapIndex == 0 && world.party.mapX == 0 &&
+           world.party.mapY == 1);
 
     /* C07 SET exposes the fakewall by setting its open bit. */
     squares[3] = (unsigned char)(DUNGEON_ELEMENT_FAKEWALL << 5);
