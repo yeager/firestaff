@@ -18,6 +18,7 @@
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_f0249_timeline_relocation_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_movement_timing_pc34_compat.h"
@@ -6270,6 +6271,7 @@ static int orch_f0249_move_non_group_square_things_compat(
     for (i = 0; i < snapshotCount; ++i) {
         struct F0267ThingMoveRequestPc34Compat request;
         struct F0267ThingMoveResultPc34Compat moveResult;
+        int thingType = THING_GET_TYPE(snapshot[i]);
 
         memset(&request, 0, sizeof(request));
         memset(&moveResult, 0, sizeof(moveResult));
@@ -6282,8 +6284,20 @@ static int orch_f0249_move_non_group_square_things_compat(
         request.destinationMapY = mapY;
         /* A prior F0249 move can have consumed this snapshot entry. F0267
          * validates source membership and makes that case a no-op. */
-        (void)F0267_MOVE_MoveThingOnLoadedChain_Compat(
-            world, &request, &moveResult);
+        if (F0267_MOVE_MoveThingOnLoadedChain_Compat(
+                world, &request, &moveResult) && moveResult.moved &&
+            (thingType == DM1_F0249_THING_PROJECTILE_PC34 ||
+             thingType == DM1_F0249_THING_EXPLOSION_PC34)) {
+            /* ReDMCSB TIMELINE.C F0249:1420-1452 repairs runtime event
+             * coordinates only after F0267 has published the final chain
+             * location and cell. Fluxcage removal remains source-faithfully
+             * excluded inside the DM1-owned relocation helper. */
+            (void)DM1_V1_F0249_RelocateTimelineForMovedThingPc34Compat(
+                world->timeline.events, world->timeline.count, thingType,
+                THING_GET_INDEX(snapshot[i]), moveResult.finalMapIndex,
+                moveResult.finalMapX, moveResult.finalMapY,
+                THING_GET_CELL(moveResult.finalThing));
+        }
     }
     return 1;
 }

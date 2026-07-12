@@ -2138,6 +2138,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     const uint8_t *rect14_rows = NULL;
     uint32_t rect14_row_count = 0u;
     uint32_t rect14_hash = 0u;
+    DM2_V1_InterfaceRect14HostReceipt rect14_host;
 
     if (!framebuffer || fb_stride <= 0 ||
         view_w < DM2_VP_WIDTH || view_h < DM2_VP_HEIGHT) {
@@ -2215,8 +2216,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_interface_palette_ready,
         rt->gdat_interface_palette_hash,
         rt->gdat_interface_palette16);
-    if (dm2_v1_boot_interface_rect14_table(
-            rt->boot, &rect14_rows, &rect14_row_count, &rect14_hash)) {
+    memset(&rect14_host, 0, sizeof(rect14_host));
+    if (dm2_v1_boot_interface_rect14_host_receipt(rt->boot, &rect14_host) &&
+        rect14_host.valid &&
+        dm2_v1_boot_interface_rect14_table(
+            rt->boot, &rect14_rows, &rect14_row_count, &rect14_hash) &&
+        rect14_hash == rect14_host.table_hash &&
+        rect14_row_count == rect14_host.row_count) {
+        /* The renderer receives Rect14 only after the host has consumed the
+         * source table's bounded placement receipt. */
         dm2_v1_viewport_set_gdat_interface_rect14(
             &viewport, rect14_rows, rect14_row_count, rect14_hash);
     }
@@ -2471,6 +2479,16 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_interface_palette_ready;
     g_dm2_frame_ownership.gdat_interface_palette_consumed =
         viewport.gdat_interface_palette_consumed_count;
+    g_dm2_frame_ownership.gdat_interface_rect14_host_ready =
+        rect14_host.valid;
+    g_dm2_frame_ownership.gdat_interface_rect14_consumed =
+        viewport.gdat_interface_rect14_consumed_count;
+    g_dm2_frame_ownership.gdat_interface_rect14_table_hash =
+        rect14_host.table_hash;
+    g_dm2_frame_ownership.gdat_interface_rect14_placement_hash =
+        rect14_host.placement_hash;
+    g_dm2_frame_ownership.gdat_interface_rect14_placement_count =
+        rect14_host.placement_count;
     g_dm2_frame_ownership.gdat_material_palette_floor_ceiling_consumed =
         viewport.gdat_material_palette_floor_ceiling_consumed_count;
     g_dm2_frame_ownership.gdat_material_palette_wall_consumed =

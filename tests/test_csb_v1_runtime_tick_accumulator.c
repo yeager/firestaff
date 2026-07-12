@@ -4725,15 +4725,18 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
     dungeon.square_first_thing_count = 2;
     dungeon.thing_data_bases[1] = 72;
     dungeon.thing_type_counts[1] = 1;
+    dungeon.thing_data_bases[3] = 88;
+    dungeon.thing_type_counts[3] = 1;
     dungeon.thing_data_bases[5] = 80;
     dungeon.thing_type_counts[5] = 1;
+    raw[real_format_square_offset(0, 0)] = (uint8_t)(6u << 5);
     raw[real_format_square_offset(1, 0)] =
         (uint8_t)((5u << 5) | 0x10u | 0x08u);
     raw[real_format_square_offset(2, 0)] =
         (uint8_t)((1u << 5) | 0x10u);
     test_put_le16(raw, 60 + 1 * 2, 0);
     test_put_le16(raw, 60 + 2 * 2, 1);
-    test_put_le16(raw, 66, (uint16_t)(1u << 10));
+    test_put_le16(raw, 66, (uint16_t)(3u << 10));
     test_put_le16(raw, 68, 0xfffeu);
     test_put_le16(raw, 72, 0xfffeu);
     test_put_le16(raw, 74,
@@ -4742,6 +4745,11 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
     test_put_le16(raw, 76, 0u);
     test_put_le16(raw, 80, 0xfffeu);
     test_put_le16(raw, 82, 27u);
+    test_put_le16(raw, 88, (uint16_t)(1u << 10));
+    test_put_le16(raw, 90,
+                  (uint16_t)((27u << 7) | DM1_SENSOR_FLOOR_OBJECT));
+    test_put_le16(raw, 92, (uint16_t)(DM1_EFFECT_HOLD << 3));
+    test_put_le16(raw, 94, make_sensor_target(0, 0, 0));
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
     profile.dungeon_handle = &dungeon;
@@ -4781,12 +4789,16 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
           "C49 associated-object teleporter wall-impact event dispatches");
     CHECK(profile.projectiles.count == 0,
           "C49 associated-object teleporter impact despawns the projectile");
-    CHECK(test_get_le16(raw, 66) == (uint16_t)(1u << 10) &&
+    CHECK(test_get_le16(raw, 66) == (uint16_t)(3u << 10) &&
+              test_get_le16(raw, 88) == (uint16_t)(1u << 10) &&
               test_get_le16(raw, 72) == 0xfffeu,
-          "C49 associated-object teleporter leaves the C05 thing in place");
+          "C49 associated-object teleporter preserves the source C004/C05 chain");
     CHECK(test_get_le16(raw, 68) == (uint16_t)(5u << 10) &&
               test_get_le16(raw, 80) == 0xfffeu,
           "C49 associated-object teleporter moves the object to the target square without CM2 cell rotation");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_FAKEWALL) == 1 &&
+              profile.timeline_queue.events[0].c_effect == DM1_EFFECT_CLEAR,
+          "C49 object teleporter coalesces F0276 add SET then source-unlink CLEAR in order");
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     dungeon.square_first_thing_base = 66;
