@@ -18,7 +18,9 @@ enum {
     CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34 = 4,
     CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
     CSB_V1_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
-    CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34 = 28,
+    /* ReDMCSB DATA.C MEDIA351 PC layout: C002/C003 occupy rows 30-190.
+     * The y=28 variant belongs to the later F20J/PC-Engine layout. */
+    CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34 = 30,
     CSB_V1_GRAPHIC_TITLE_PC34 = 1,
     CSB_V1_GRAPHIC_ENTRANCE_LEFT_DOOR_PC34 = 2,
     CSB_V1_GRAPHIC_ENTRANCE_RIGHT_DOOR_PC34 = 3,
@@ -1049,7 +1051,7 @@ static void csb_v1_startup_set_closed_door_rects_pc34(
     }
     /* ReDMCSB ENTRANCE.C F0806 lines 721-778 loads C002/C003 door
      * bitmaps before F0439/F0441 presents C004 at the entrance wait loop.
-     * DATA.C places the closed left and right doors at screen y=28. */
+     * DATA.C's PC layout places the closed left and right doors at y=30. */
     plan->closed_left_source_x = 0;
     plan->closed_left_source_y = 0;
     plan->closed_left_asset_id = CSB_V1_GRAPHIC_ENTRANCE_LEFT_DOOR_PC34;
@@ -1087,7 +1089,7 @@ static void csb_v1_startup_set_opening_door_rects_pc34(
         return;
     }
     /* ReDMCSB ENTRANCE.C F0438/F0807 lines 142-304 run 31 source
-     * animation steps, with moving C002/C003 strips copied at screen y=28. */
+     * animation steps, with moving C002/C003 strips copied at screen y=30. */
     if (plan->opening_step < 1 || plan->opening_step >= 32) {
         return;
     }
@@ -1124,7 +1126,7 @@ static void csb_v1_startup_set_opening_composite_pc34(
         return;
     }
     /* ReDMCSB ENTRANCE.C F0438 lines 172-239 composites C004 with the live
-     * dungeon viewport and moving C002/C003 door strips at screen y=28.
+     * dungeon viewport and moving C002/C003 door strips at screen y=30.
      * M11 supplies pixels, but CSB owns the source asset ids and destination
      * rectangle contract. */
     plan->opening_composite_valid = 1;

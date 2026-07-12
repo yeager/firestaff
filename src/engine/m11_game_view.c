@@ -3361,14 +3361,8 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
      * zones.  Consume its CSB plan directly; do not route title frames
      * through the older shared title frontend or textual fallback path. */
     if (!state->assetsAvailable || plan->source_asset_id != 1 ||
-        plan->title_source_step <= 0 || plan->title_source_w <= 0 ||
+        plan->title_source_w <= 0 ||
         plan->title_source_h <= 0) {
-        /* The CSB receipt owns this fallback label. It keeps the first
-         * PRESENTS frame visible while the C001 title bitmap is unavailable. */
-        m11_draw_csb_startup_fallback_text(framebuffer,
-                                           framebufferWidth,
-                                           framebufferHeight,
-                                           plan);
         return;
     }
     title_graphic = M11_AssetLoader_Load(
@@ -3378,10 +3372,6 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                                plan->title_source_w) ||
         title_graphic->height < (unsigned int)(plan->title_source_y +
                                                 plan->title_source_h)) {
-        m11_draw_csb_startup_fallback_text(framebuffer,
-                                           framebufferWidth,
-                                           framebufferHeight,
-                                           plan);
         return;
     }
     if (plan->title_blit_kind == CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34) {
@@ -3418,13 +3408,7 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
             break;
         }
     }
-    if (!visible && plan->fallback_title_text &&
-        plan->fallback_title_text[0]) {
-        m11_draw_csb_startup_fallback_text(framebuffer,
-                                           framebufferWidth,
-                                           framebufferHeight,
-                                           plan);
-    }
+    (void)visible;
 }
 
 static const M11_TextStyle *m11_csb_startup_text_style(int style)
@@ -3559,9 +3543,10 @@ static int m11_draw_csb_entrance_opening_frame_asset(
     if (!entranceScreen || !leftDoor || !rightDoor) {
         return 0;
     }
-    /* ReDMCSB ENTRANCE.C F0806 lines 175-231: C004 is the background,
-     * the runtime viewport fills the aperture, then C002/C003 strips move.
-     * This is intentionally local to the CSB route, with no DM1 wrapper. */
+    /* ReDMCSB DATA.C PC layout: the C004 door composite has a 224x136
+     * aperture at (0,3); F0438 then presents that composite at screen y=30.
+     * M11's live viewport remains at (48,33), so copy it into C004's native
+     * local aperture at (0,33), never back into the normal gameplay box. */
     return m11_csb_copy_startup_rect(entranceScreen->pixels,
                                      entranceScreen->width,
                                      entranceScreen->height,
@@ -3571,7 +3556,7 @@ static int m11_draw_csb_entrance_opening_frame_asset(
                                      (unsigned int)framebufferWidth,
                                      (unsigned int)framebufferHeight,
                                      48, 33, framebuffer, framebufferWidth,
-                                     framebufferHeight, 48, 33, 224, 136) &&
+                                     framebufferHeight, 0, 33, 224, 136) &&
            m11_csb_copy_startup_rect(leftDoor->pixels, leftDoor->width,
                                      leftDoor->height,
                                      composite->left_source_x,
