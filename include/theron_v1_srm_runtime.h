@@ -35,6 +35,9 @@ typedef struct {
     uint8_t champion_count;
     uint32_t party_gold;
     Theron_RuntimeMediaIdentity track02_identity;
+    unsigned int track02_media_route_mask;
+    uint32_t track02_media_checksum;
+    Theron_RuntimeLevelBankSelection track02_level_bank;
 } Theron_V1SrmRuntimeReceipt;
 
 /* Writes one gzip-wrapped Firestaff FSTQPTY1 body through the same bounded
@@ -47,9 +50,10 @@ Theron_V1SrmRuntimeStatus theron_v1_srm_runtime_export_path(
     Theron_V1SrmRuntimeReceipt *out_receipt);
 
 /* The single Continue runtime route: read/decode a real .srm file, restore
- * party/progression/quest/level bytes, then derive and bind Track 02 media
- * identity from the supplied hash-profiled Track 02 bytes.  No world state
- * is changed until both restore and media identity verification succeed. */
+ * party/progression/quest/level bytes, then bind the complete hash-profiled
+ * Track 02 startup media receipt from the supplied bytes.  An identity-only
+ * or incomplete media receipt is rejected, so Continue cannot commit a
+ * restored world that would draw fallback visuals. */
 Theron_V1SrmRuntimeStatus theron_v1_srm_runtime_continue_path(
     Theron_V1_World *world,
     const char *srm_path,

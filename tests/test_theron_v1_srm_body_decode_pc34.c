@@ -139,6 +139,39 @@ static int read_bytes(const char *path, uint8_t *buf, size_t size) {
     return fclose(fp) == 0;
 }
 
+static uint8_t *read_file_alloc(const char *path, size_t *out_size) {
+    FILE *fp;
+    long file_size;
+    uint8_t *bytes;
+
+    if (out_size) *out_size = 0u;
+    if (!path || !path[0] || !out_size) return NULL;
+    fp = fopen(path, "rb");
+    if (!fp) return NULL;
+    if (fseek(fp, 0L, SEEK_END) != 0 ||
+        (file_size = ftell(fp)) <= 0 ||
+        fseek(fp, 0L, SEEK_SET) != 0) {
+        fclose(fp);
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc((size_t)file_size);
+    if (!bytes) {
+        fclose(fp);
+        return NULL;
+    }
+    {
+        int read_ok = fread(bytes, 1u, (size_t)file_size, fp) ==
+            (size_t)file_size;
+        int close_ok = fclose(fp) == 0;
+        if (read_ok && close_ok) {
+            *out_size = (size_t)file_size;
+            return bytes;
+        }
+        free(bytes);
+        return NULL;
+    }
+}
+
 static int write_bytes(const char *path, const uint8_t *buf, size_t size) {
     FILE *fp = fopen(path, "wb");
     if (!fp) return 0;
@@ -1100,7 +1133,7 @@ static void test_runtime_export_continue_roundtrip(void) {
     char root[THERON_V1_SRM_PATH_MAX];
     char path[THERON_V1_SRM_PATH_MAX];
     uint8_t track[0x3000u + 160u];
-    Theron_V1_World source, restored;
+    Theron_V1_World source, restored, before_continue;
     Theron_V1SrmRuntimeReceipt receipt;
 
     if (!make_temp_root(root) || !theron_v1_srm_slot_path(root, 0, path)) {
@@ -1146,17 +1179,84 @@ static void test_runtime_export_continue_roundtrip(void) {
     memcpy(track + 0x3000u, span, sizeof(span));
     for (size_t i = sizeof(span); i < 160u; ++i) track[0x3000u + i] = (uint8_t)(0x21u + i);
     theron_v1_world_init(&restored);
-    expect_true(theron_v1_srm_runtime_continue_path(&restored, path, track, sizeof(track), THERON_TRACK02_MD5_US_ISO, &receipt) == THERON_V1_SRM_RUNTIME_OK &&
-                    restored.progression.current_dungeon == THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
-                    restored.progression.current_level == 2u &&
-                    restored.progression.quest_items_collected == 0x03u &&
-                    restored.party.gold == 444u && restored.party.champion_count == THERON_MAX_CHAMPIONS &&
-                    restored.runtime_media.identity.ready,
-                "runtime Continue restores party progression quest level and Track02 identity from bytes");
+    before_continue = restored;
+    expect_true(theron_v1_srm_runtime_continue_path(
+                    &restored, path, track, sizeof(track),
+                    THERON_TRACK02_MD5_US_ISO, &receipt) ==
+                    THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED &&
+                    receipt.status == THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED &&
+                    memcmp(&restored, &before_continue, sizeof(restored)) == 0,
+                "runtime Continue rejects identity-only Track02 bytes before restoring world state");
     cleanup_root_with_slot0(root);
 #else
     skip_test("runtime SRM roundtrip needs zlib (ZLIB_UNAVAILABLE)");
     expect_true(1, "runtime SRM roundtrip placeholder");
+#endif
+}
+
+static void test_runtime_continue_binds_real_track02_when_staged(void) {
+#if FIRESTAFF_HAS_ZLIB
+    const char *track_path = getenv("FIRESTAFF_THERON_TRACK02_US_BIN");
+    char root[THERON_V1_SRM_PATH_MAX];
+    char path[THERON_V1_SRM_PATH_MAX];
+    uint8_t *track;
+    size_t track_size;
+    Theron_V1_World source, restored;
+    Theron_V1SrmRuntimeReceipt receipt;
+
+    if (!track_path || !track_path[0]) {
+        skip_test("runtime real Track 02 Continue: no US raw Track 02 staged");
+        return;
+    }
+    track = read_file_alloc(track_path, &track_size);
+    if (!track || !make_temp_root(root) ||
+        !theron_v1_srm_slot_path(root, 0, path)) {
+        free(track);
+        skip_test("runtime real Track 02 Continue: staged data unavailable");
+        cleanup_root_with_slot0(root);
+        return;
+    }
+    theron_v1_world_init(&source);
+    source.progression.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+    source.progression.current_level = 2u;
+    source.progression.quest_items_collected = 0x03u;
+    source.party.champion_count = THERON_MAX_CHAMPIONS;
+    source.party.gold = 444u;
+    if (theron_v1_srm_runtime_export_path(&source, path, &receipt) !=
+        THERON_V1_SRM_RUNTIME_OK) {
+        free(track);
+        cleanup_root_with_slot0(root);
+        skip_test("runtime real Track 02 Continue: SRM staging unavailable");
+        return;
+    }
+    theron_v1_world_init(&restored);
+    expect_true(theron_v1_srm_runtime_continue_path(
+                    &restored, path, track, track_size,
+                    THERON_TRACK02_MD5_US_BIN, &receipt) ==
+                    THERON_V1_SRM_RUNTIME_OK &&
+                    restored.progression.current_dungeon ==
+                        THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                    restored.progression.current_level == 2u &&
+                    restored.party.gold == 444u &&
+                    restored.runtime_media.restored &&
+                    restored.runtime_media.identity.ready &&
+                    restored.runtime_media.level_bank.ready &&
+                    restored.runtime_media.level_bank.kind ==
+                        THERON_RUNTIME_LEVEL_BANK_SAVE_RESUME &&
+                    receipt.track02_media_route_mask ==
+                        restored.runtime_media.route_mask &&
+                    receipt.track02_media_checksum ==
+                        restored.runtime_media.checksum &&
+                    receipt.track02_level_bank.ready &&
+                    receipt.track02_level_bank.kind ==
+                        THERON_RUNTIME_LEVEL_BANK_SAVE_RESUME &&
+                    receipt.track02_level_bank.surface_checksum ==
+                        restored.runtime_media.level_bank.surface_checksum,
+                "runtime Continue commits and receipts complete real US Track 02 media");
+    free(track);
+    cleanup_root_with_slot0(root);
+#else
+    skip_test("runtime real Track 02 Continue needs zlib (ZLIB_UNAVAILABLE)");
 #endif
 }
 
@@ -1177,6 +1277,7 @@ int main(void) {
     test_opaque_original_container_transfer();
     test_runtime_refuses_unsupported_original_body();
     test_runtime_export_continue_roundtrip();
+    test_runtime_continue_binds_real_track02_when_staged();
 
     printf("=====================================================\n");
     printf("Results: %d/%d passed (failures=%d, skipped=%d)\n",
