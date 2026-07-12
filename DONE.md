@@ -1,5 +1,63 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Theron V1 IRQ2 live-trace gate: a fail-closed receipt now
+  requires an end-to-end Mednafen PCE observation from `$4093` through IRQ2
+  `$e736` and CD-state branch `$e74c`; it validates `$f5` continuity and the
+  original `$1802/$1803/$f2` merge before selecting any branch. Without that
+  trace it returns no receipt. Verification: strict-C11 negative probe, 0
+  failed and 1 expected missing-trace skip.
+
+- 2026-07-12 Theron V1 System Card IRQ2 CD-state gate: the authentic `$e736`
+  clear path now binds `LDA $1802; AND $1803; ORA $f2; STA $f2`, followed by
+  `BBR2 $f2,$e7b3`. This is the next verified handler state effect after entry;
+  the hardware-dependent branch and all later record/object/level semantics
+  remain unselected. Verification: direct strict-C11 probe with authenticated
+  local System Card 3.0 container, JP, and US receipts: 0 failed, 0 skipped.
+
+- 2026-07-12 Nexus V1 PRS3 original post-read branch receipt: the separate
+  hash-locked branch-flow probe now proves `CMP/EQ R1,R10`, `ADD #1,R10`,
+  delayed `BF/S` to the local repeat, `AND R5,R6` in its delay slot, and the
+  following outer-loop `BRA`. This is control-flow evidence only, not a write,
+  token, output, decoder, completion, or rendering claim. Verification:
+  direct strict-C11 probe build against locked Japanese `DM.BIN` PASS.
+
+- 2026-07-12 Nexus V1 PRS3 original post-read control receipt: the separate
+  hash-locked branch-flow probe now proves that `CMP/GT R7,R4` is followed by
+  `CMP/EQ R1,R3` and `CMP/EQ R1,R10` before the delayed repeat branch. It
+  therefore records an overwrite boundary, not a false R4/R7 branch claim.
+  This is register/control evidence only, not a token, output, decoder,
+  completion, or rendering claim. Verification: direct strict-C11 probe build
+  against locked Japanese `DM.BIN` PASS.
+
+- 2026-07-12 DM2 V1 creature item eligibility evidence: the source-owned
+  `CREATURES[type] -> CREATURE_AI -> AIDefinition` receipt preserves the
+  `DRAW_PUT_DOWN_ITEM` w30 gates before publishing w32 as a candidate rect.
+  It remains evidence only, with no owner, hitbox, or UI promotion.
+  Verification: focused fixture assertion and strict C11 syntax PASS.
+
+- 2026-07-12 Theron V1 genuine System Card IRQ2 entry gate: the authenticated
+  System Card 3.0 container's 0x200-byte header is now accounted for, binding
+  IRQ2 `$fff6` to `$e736`. The real entry gates on `$f5` bit 0: set transfers
+  indirectly through `$2200`; clear saves A/X/Y, calls `$e742`, and returns
+  with `RTI`. The post-`CD_READ` flag value remains unobserved, so no branch,
+  later record request, or game-data semantics are inferred. Verification:
+  `firestaff_theron_v1_system_card_irq2_entry_gate_probe` with local JP, US,
+  and System Card media: 0 failed, 0 skipped.
+
+- 2026-07-12 Nexus V1 PRS3 original merged-value read receipt: the separate
+  hash-locked branch-flow probe now proves `MOV R4,R0`, PC-relative
+  `R5=0x0fff` / `AND R5,R0`, and `MOV.B @(R0,R13),R1`. This is masked
+  register/memory dataflow only, not an output-buffer, token, decoder,
+  completion, or rendering claim. Verification: direct strict-C11 probe build
+  against locked Japanese `DM.BIN` PASS; shared CMake regeneration is currently
+  blocked by unrelated missing Theron probe sources.
+
+- 2026-07-12 DM2 V1 creature item rect evidence: the bounded source chain
+  from creature type through `CREATURES dtWordValue(0x05)` to the loaded
+  `CREATURE_AI` row now exposes `AIDefinition.w32` only when real GDAT owns
+  both links. This is evidence for skproject `DRAW_PUT_DOWN_ITEM`, not a
+  hitbox. Verification: focused fixture assertion and strict C11 syntax PASS.
+
 - 2026-07-12 Nexus V1 PRS3 original merged-value branch receipt: the separate
   hash-locked branch-flow probe now proves `ADD R4,R7`, `CMP/GT R7,R4`, and
   the following `BT` to the outer R11 control loop after the zero-side merge.
@@ -51,6 +109,23 @@
   payload, decoder, or rendering claim. Verification:
   `nexus_v1_prs3_branch_flow_probe` CTest PASS against locked Japanese
   `DM.BIN`.
+
+- 2026-07-12 DM1 PC34 F0259 C11 move-timer owner: added a bounded DM1
+  quiver-refill plan and M10 `TIMELINE_EVENT_MOVE_TIMER` consumer. The
+  explicit event contract moves a weapon only into an empty destination hand,
+  with ReDMCSB C12/C07/C08/C09 source priority. Source: `TIMELINE.C`
+  F0258/F0259:1767-1822. Verification: rebuilt the current orchestrator
+  object and linked `test_dm1_v1_square_state_dispatch_pc34_compat`; PASS.
+
+- 2026-07-12 DM1 PC34 F0245 live corridor consumption: C05 square-state
+  events now walk the real corridor Thing chain in source order, mutate all
+  TextStrings, and route every C006 through the existing F0185 group
+  materializer. An explicit one-based sensor index prevents a later C006 on
+  the same square from reusing the first generator. ReDMCSB source:
+  `TIMELINE.C` F0245:920-1006. Verification: rebuilt the current
+  orchestrator object and linked `test_dm1_v1_square_state_dispatch_pc34_compat`;
+  PASS, including TextString visibility, disabled C006, generated group, and
+  scheduled C65 re-enable.
 
 - 2026-07-12 DM1 PC34 F0248 wall-event M10 consumption: `TIMELINE_EVENT_SQUARE_STATE`
   now routes C06 into the source-ordered wall list handler. It changes only
@@ -8274,6 +8349,8 @@
 # ✅ 2026-07-12 CSB F0276 C004 Revert ordering: locked the existing source `AddThing ^ RevertEffect` behavior with a real-format C49 associated-object → object-scope C05 chain. A non-HOLD Revert C004 suppresses the source materialization/addition and publishes its SET only when F0267 unlinks the object before teleporter relink. Source: ReDMCSB `MOVESENS.C F0276` lines 1663-1694 and 1760-1778. Verification: the dedicated regression passed 7/7; the focused F0267/F0276 CTest group passed 7/7.
 
 # ✅ 2026-07-12 CSB F0276/F0270/F0271 C004 LocalEffect: object-triggered local C004 effects now retain the final local `CLEAR`/`TOGGLE` while scanning the square and rotate the complete source sensor run only after the pass, with no F0268 remote event. Source: ReDMCSB `MOVESENS.C F0270` lines 1080-1098, F0271 lines 1100-1158, and F0272/F0276 local-effect path. Verification: the dedicated C49 two-sensor regression passed 6/6; the focused F0267/F0276 CTest group passed 8/8. The separate C10 steal-skill local effect remains outside this bounded rotation route.
+
+# ✅ 2026-07-12 CSB F0276/F0270 C10 local skill XP: a real-format C004 LocalEffect value 10 now follows ReDMCSB's immediate F0269 path instead of being treated as a deferred sensor rotation. Object-triggered C49 materialization divides the original 300 Steal XP by party count, skips dead champions after division, and credits both hidden Steal (8) and base Ninja skill XP. Source: ReDMCSB `MOVESENS.C F0269` lines 1038-1078, `F0270` lines 1088-1094, and `CHAMPION.C F0304` lines 879-906. Verification: dedicated live C49 regression passed 8/8; the manually rebuilt focused nine-binary F0267/F0276 group passed while shared CMake regeneration was blocked by two unrelated missing Theron probe sources.
 
 # ✅ 2026-07-12 CSB DSA transfer runner: the authenticated filter callback now promotes only CSBWin `Execute`'s already source-locked transfer-only `JUMP`/`GOSUB` subset. It invokes the bounded complete transfer chain, publishes its final state and receipt only on success, and preserves the caller parameter surface. Unsupported targets, malformed paths, and depth/transfer limits remain rejection paths. No world opcode or synthetic state transition is enabled. Source: CSBWin `DSA.cpp` lines 764-849 and 5053-5293. Verified by `test_csb_v1_dsa_trigger_single_step_pc34_compat`: 124 assertions, 0 failures.
 
