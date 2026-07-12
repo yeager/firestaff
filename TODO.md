@@ -25,6 +25,9 @@ Mac/app capture.
 CSB V2.1 consumes the shared live M11 EPX route, including special palettes.
 Its remaining work is real CSB runtime/Mac capture, not scaler code.
 
+CSB V2.2 now resolves only against its own completed real-art pack and falls
+back to V2.1 otherwise. Remaining work is real CSB art and runtime capture.
+
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 
 The strict CUE route now carries an authenticated Track 02 IPL/stage-two

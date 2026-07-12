@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 CSB V2.2 pack isolation: CSB now resolves V2.2 availability
+  against its own manifest and finished-art gate, never DM1's pack. A missing,
+  partial, or placeholder CSB pack resolves to V2.1. Verification:
+  `test_csb_v2_presentation_mode_pc34` 36/36 and local `firestaff` build.
+
 - 2026-07-12 CSB V2.1 live EPX: CSB now uses the shared M11 V2.1 EPX
   presentation route, preserving its indexed source framebuffer and special
   palette frames. Verification: CSB V2.1 texture probe 13/13 and unit test
