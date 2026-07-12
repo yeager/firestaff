@@ -53,6 +53,7 @@ int main(int argc, char **argv) {
     int levels_loaded = 0;
     int direct_record_count = 0;
     int direct_record_mismatch_count = 0;
+    int direct_typed_field_mismatch_count = 0;
 
     if (!data_dir) {
         home = getenv("HOME");
@@ -104,6 +105,32 @@ int main(int argc, char **argv) {
                     typed->y >= NEXUS_MAX_MAP_SIZE) {
                     ++direct_record_mismatch_count;
                 }
+                if (typed->tag != source[0]) {
+                    ++direct_typed_field_mismatch_count;
+                    continue;
+                }
+                if (family == NEXUS_V1_DGN_STRUCTURE1F_ITEMS &&
+                    (typed->location != source[3] || typed->item_id != source[4] ||
+                     typed->attribute1 != source[5] || typed->attribute2 != source[7])) {
+                    ++direct_typed_field_mismatch_count;
+                } else if (family == NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS &&
+                           (typed->offset_x != (int8_t)source[3] ||
+                            typed->offset_y != (int8_t)source[4] ||
+                            typed->model_or_aspect != source[5] ||
+                            typed->rotation != source[6] ||
+                            typed->type_or_control != source[7] ||
+                            typed->width != source[8] || typed->height != source[9])) {
+                    ++direct_typed_field_mismatch_count;
+                } else if (family == NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS &&
+                           (typed->model_or_aspect != source[5] ||
+                            typed->rotation != source[6] || typed->width != source[10] ||
+                            typed->height != source[11] ||
+                            typed->type_or_control != source[12] ||
+                            typed->destination_x != source[13] ||
+                            typed->destination_y != source[14] ||
+                            typed->destination_orientation != source[15])) {
+                    ++direct_typed_field_mismatch_count;
+                }
             }
         }
         ++levels_loaded;
@@ -112,8 +139,12 @@ int main(int argc, char **argv) {
     check(levels_loaded == 16, "all 16 original LEV DGN files load");
     check(direct_record_count > 0 && direct_record_mismatch_count == 0,
           "Structure1F direct coordinates match typed runtime records");
+    check(direct_typed_field_mismatch_count == 0,
+          "Structure1F copied direct-record fields match original bytes");
     printf("Nexus DGN Structure1F direct flow: levels=%d direct-records=%d "
-           "mismatches=%d; object/sensor/render-proof=0\n",
-           levels_loaded, direct_record_count, direct_record_mismatch_count);
+           "coordinate-mismatches=%d field-mismatches=%d; "
+           "object/sensor/render-proof=0\n",
+           levels_loaded, direct_record_count, direct_record_mismatch_count,
+           direct_typed_field_mismatch_count);
     return failures == 0 ? 0 : 1;
 }

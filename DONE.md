@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 DGN Structure1F copied-field receipt: the real
+  LEV00-LEV15 probe now verifies every byte field copied by runtime for the
+  1,006 direct records: item location/ID/selected attributes; decoration
+  offsets, model/aspect, rotation, control, extent; and sensor model/aspect,
+  rotation, extent, control, destination. Zero mismatches. Uncopied source
+  bytes remain unclassified; no gameplay, trigger, decoder, or rendering
+  semantics are inferred. Verification: direct strict-C11 probe against all
+  16 original DGN files PASS.
+
 - 2026-07-12 Nexus V1 DGN Structure1F direct-coordinate receipt: a real
   LEV00-LEV15 corpus probe now traces all 1,006 direct-coordinate records
   (items, floor decorations, floor sensors) into typed runtime entries with
@@ -146,6 +155,14 @@
   JP `$4c3` / US `$4c4`. The payload remains unclassified and cannot become a
   bank or level route. Verification: strict-C11 syntax checks plus direct
   hash-verified JP/US media probe, 0 failed.
+
+- 2026-07-12 Theron V1 IPL preload payload provenance: the two record `$03e3`
+  MODE1 user-data sectors now pass as one 4096-byte logical payload through
+  the shared runtime handoff. JP/US agree on the receipt hash, first nonzero
+  byte 243, and 2911 nonzero bytes. This is payload-format provenance only;
+  it does not classify code, compression, bank, object, palette, or level
+  data. Verification: strict-C11 syntax checks plus direct hash-verified
+  JP/US media probe, 0 failed.
 
 - 2026-07-12 Theron V1 CUE/M11 loader-chain consumer: strict CUE boot
   validation now consumes the same stage-two work-RAM transfer and physical

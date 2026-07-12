@@ -70,6 +70,10 @@ static int theron_v1_startup_runtime_stage3_loader_ready(
            stage2_handoff.ipl_preload_record_proven &&
            stage2_handoff.ipl_preload_record == 0x0003e3u &&
            stage2_handoff.ipl_preload_sector_count == 2u &&
+           stage2_handoff.ipl_preload_user_data_bytes == 4096u &&
+           stage2_handoff.ipl_preload_first_nonzero_offset == 243u &&
+           stage2_handoff.ipl_preload_nonzero_byte_count == 2911u &&
+           stage2_handoff.ipl_preload_user_data_hash != 0u &&
            stage2_handoff.work_ram_cleared_before_entry &&
            stage2_handoff.cleared_work_ram_start == 0x2700u &&
            stage2_handoff.cleared_work_ram_bytes == 0x1100u &&

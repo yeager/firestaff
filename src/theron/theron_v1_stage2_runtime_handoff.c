@@ -11,6 +11,7 @@
 #define THERON_V1_STAGE3_WORK_RAM_CLEAR_END 0x3800u
 #define THERON_V1_RAW_SECTOR_BYTES 2352u
 #define THERON_V1_MODE1_USER_DATA_OFFSET 16u
+#define THERON_V1_MODE1_USER_DATA_BYTES 2048u
 #define THERON_V1_IPL_PRELOAD_TABLE_USER_OFFSET 0xdcu
 #define THERON_V1_IPL_PRELOAD_RECORD 0x0003e3u
 #define THERON_V1_IPL_PRELOAD_SECTOR_COUNT 2u
@@ -26,6 +27,40 @@ static int theron_v1_mode1_sector_is_valid(const uint8_t *sector) {
         if (sector[index] != 0xffu) return 0;
     }
     return 1;
+}
+
+static void theron_v1_mode1_user_data_summary(
+    const uint8_t *first_sector,
+    const uint8_t *second_sector,
+    size_t *out_first_nonzero_offset,
+    size_t *out_nonzero_byte_count,
+    uint32_t *out_hash) {
+    const uint8_t *sectors[2] = {first_sector, second_sector};
+    uint32_t hash = 2166136261u;
+    size_t first_nonzero = 2u * THERON_V1_MODE1_USER_DATA_BYTES;
+    size_t nonzero_count = 0u;
+    size_t sector_index;
+
+    for (sector_index = 0u; sector_index < 2u; ++sector_index) {
+        size_t index;
+        for (index = 0u; index < THERON_V1_MODE1_USER_DATA_BYTES; ++index) {
+            uint8_t value = sectors[sector_index][
+                THERON_V1_MODE1_USER_DATA_OFFSET + index];
+            size_t logical_offset = sector_index *
+                THERON_V1_MODE1_USER_DATA_BYTES + index;
+            hash ^= value;
+            hash *= 16777619u;
+            if (value != 0u) {
+                if (first_nonzero == 2u * THERON_V1_MODE1_USER_DATA_BYTES) {
+                    first_nonzero = logical_offset;
+                }
+                ++nonzero_count;
+            }
+        }
+    }
+    if (out_first_nonzero_offset) *out_first_nonzero_offset = first_nonzero;
+    if (out_nonzero_byte_count) *out_nonzero_byte_count = nonzero_count;
+    if (out_hash) *out_hash = hash;
 }
 
 int theron_v1_stage2_runtime_handoff_from_dynamic_payload(
@@ -196,6 +231,21 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     out_handoff->ipl_preload_record = THERON_V1_IPL_PRELOAD_RECORD;
     out_handoff->ipl_preload_sector_count = THERON_V1_IPL_PRELOAD_SECTOR_COUNT;
     out_handoff->ipl_preload_raw_sector = preload_raw_sector;
+    out_handoff->ipl_preload_user_data_bytes =
+        THERON_V1_IPL_PRELOAD_SECTOR_COUNT * THERON_V1_MODE1_USER_DATA_BYTES;
+    theron_v1_mode1_user_data_summary(
+        track02_data + preload_raw_offset,
+        track02_data + preload_raw_offset + THERON_V1_RAW_SECTOR_BYTES,
+        &out_handoff->ipl_preload_first_nonzero_offset,
+        &out_handoff->ipl_preload_nonzero_byte_count,
+        &out_handoff->ipl_preload_user_data_hash);
+    if (out_handoff->ipl_preload_first_nonzero_offset >=
+            out_handoff->ipl_preload_user_data_bytes ||
+        out_handoff->ipl_preload_nonzero_byte_count == 0u ||
+        out_handoff->ipl_preload_user_data_hash == 0u) {
+        memset(out_handoff, 0, sizeof(*out_handoff));
+        return 0;
+    }
     out_handoff->stage3_mode1_header_verified = 1;
     out_handoff->stage3_minute_bcd = mode1_header.minute_bcd;
     out_handoff->stage3_second_bcd = mode1_header.second_bcd;
