@@ -1,5 +1,16 @@
 # Firestaff TODO - Open Work
 
+## DM1/CSB Render Follow-up (2026-07-12)
+
+DM1 F0115 now consumes only ReDMCSB's compact 13 `G0205` ornament zones.
+The F0676/F0677 D3L2/D3R2 planes are deliberately outside that pass, so they
+cannot duplicate inscriptions.  The remaining DM1 inscription work is a
+packaged Mac/app pixel capture, not a replacement font or host-side patch.
+
+CSB startup has no M11 text or door fallback callbacks.  Only the verified
+C001-C005/C017/C040 graphics route can present title, entrance, door opening,
+or HUD.  Remaining work is packaged real-data capture through that route.
+
 ## DM2 V2.0 Runtime Follow-up (2026-07-12)
 
 M11 now binds the selected DM2 V2 presentation mode to the persistent V2

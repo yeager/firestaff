@@ -102,24 +102,29 @@ int main(void)
 
     /* DM1-owned F0107 projection list. */
     expect_int("view_spec.count",
-               dm1_v1_wall_ornament_view_spec_count_pc34(), 15);
+               dm1_v1_wall_ornament_view_spec_count_pc34(), 13);
     expect_int("view_spec.null",
                dm1_v1_wall_ornament_view_spec_pc34(0, NULL), 0);
     expect_int("view_spec.bad_low",
                dm1_v1_wall_ornament_view_spec_pc34(-1, &spec), 0);
     expect_int("view_spec.bad_high",
-               dm1_v1_wall_ornament_view_spec_pc34(15, &spec), 0);
+               dm1_v1_wall_ornament_view_spec_pc34(13, &spec), 0);
     expect_int("view_spec.0.ok",
                dm1_v1_wall_ornament_view_spec_pc34(0, &spec), 1);
     expect_int("view_spec.0.forward", spec.relForward, 3);
-    expect_int("view_spec.0.side", spec.relSide, -2);
+    expect_int("view_spec.0.side", spec.relSide, -1);
     expect_int("view_spec.0.view", spec.viewWallIndex, 0);
     expect_int("view_spec.0.compact", spec.unreadableInscriptionCompactBox, 1);
-    expect_int("view_spec.14.ok",
-               dm1_v1_wall_ornament_view_spec_pc34(14, &spec), 1);
-    expect_int("view_spec.14.forward", spec.relForward, 1);
-    expect_int("view_spec.14.side", spec.relSide, 0);
-    expect_int("view_spec.14.view", spec.viewWallIndex, 12);
+    expect_int("view_spec.1.ok",
+               dm1_v1_wall_ornament_view_spec_pc34(1, &spec), 1);
+    expect_int("view_spec.1.forward", spec.relForward, 3);
+    expect_int("view_spec.1.side", spec.relSide, 1);
+    expect_int("view_spec.1.view", spec.viewWallIndex, 1);
+    expect_int("view_spec.12.ok",
+               dm1_v1_wall_ornament_view_spec_pc34(12, &spec), 1);
+    expect_int("view_spec.12.forward", spec.relForward, 1);
+    expect_int("view_spec.12.side", spec.relSide, 0);
+    expect_int("view_spec.12.view", spec.viewWallIndex, 12);
 
     /* Render plans own native graphic binding, palette, transparency,
      * flip, and optional unreadable-inscription height clamp. */
