@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 CSB V2.0 M11 filter handoff: the live CSB V2.0 present path now
+  copies the original indexed framebuffer and applies the CSB-owned indexed
+  dither/palette filter chain only to that presentation copy. V1 source pixels
+  remain untouched. Verification: local `firestaff` build and Phase A 25/25.
+
 - 2026-07-12 DM1 V2.2 strict real-art handoff: M11 now consumes the resolved
   boot presentation mode, so a missing, partial, or synthetic modern-art pack
   falls back to source-data V2.1 before rendering. The live V2.2 path uses
