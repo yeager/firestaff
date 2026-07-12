@@ -73,6 +73,9 @@ typedef struct {
     int decoded_event_count;
     int decoded_timeline_index_count;
     int event_decode_truncated_count;
+    uint32_t external_portrait_byte_count;
+    int external_portrait_payload_count;
+    int external_portrait_imported_count;
     int dungeon_tail_present;
     uint32_t dungeon_tail_byte_count;
     uint16_t dungeon_tail_expected_checksum;

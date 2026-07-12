@@ -288,6 +288,45 @@ static size_t build_pc_g1_record_evidence_fixture(uint8_t *buf, size_t cap)
     return raw_map_base + 4u;
 }
 
+static size_t build_pc_g1_extension_record_fixture(uint8_t *buf, size_t cap)
+{
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t column_base = header_size + map_desc_size + 256u;
+    const size_t sft_base = column_base + 2u;
+    const size_t text_base = sft_base + 4u;
+    const size_t pool_base = text_base + 514u;
+    const size_t db3_base = pool_base;
+    const size_t db4_base = db3_base + 299u * 8u;
+    const size_t extension_base = db4_base + 173u * 16u;
+    const size_t db3_extension_base = extension_base;
+    const size_t db4_extension_base = db3_extension_base + (1024u - 299u) * 8u;
+    const size_t raw_map_base = extension_base + 7841u;
+    uint8_t *desc;
+
+    if (cap < raw_map_base + 2u) return 0;
+    memset(buf, 0, cap);
+    put16le(buf + 2, 0x3147U);
+    put16le(buf + 4, header_size);
+    buf[6] = 1;
+    put16le(buf + 8, 257);  /* shifted cwTextData */
+    put16le(buf + 10, 2);   /* shifted cwListSize */
+    put16le(buf + 20, 299); /* dbActuator */
+    put16le(buf + 22, 173); /* dbCreature */
+
+    desc = buf + header_size;
+    put16le(desc + 0, 0);
+    put16le(desc + 8, (uint16_t)(1u << 11)); /* width=1, height=2 */
+    put16le(buf + column_base, 0);
+    put16le(buf + sft_base, 0x0d2b); /* DB3 index 299 */
+    put16le(buf + sft_base + 2u, 0x10ad); /* DB4 index 173 */
+    put16le(buf + db3_extension_base, 0xfffe);
+    put16le(buf + db4_extension_base, 0xfffe);
+    buf[raw_map_base + 0] = 0x90;
+    buf[raw_map_base + 1] = 0x90;
+    return raw_map_base + 2u;
+}
+
 static void test_first_map_metadata_and_tiles(void)
 {
     uint8_t dat[DM2_TEST_TILE_DATA_START + 12];
@@ -537,10 +576,17 @@ static void test_pc_g1_record_pool_ownership_and_bounded_traversal(void)
     CHECK(evidence.root_count == 1 && evidence.root_shape_valid == 1 &&
               evidence.root_shape_invalid == 0,
           "ground-stack roots resolve to the declared c_record shape");
+    CHECK(evidence.map_root_count == 1 &&
+              evidence.map_root_end_markers == 0 &&
+              evidence.map_root_null_markers == 0 &&
+              evidence.map_root_shape_valid == 1 &&
+              evidence.map_root_shape_invalid == 0,
+          "map-owned roots are reported separately from ground-stack capacity");
     CHECK(evidence.tail_pool_base == 328 && evidence.tail_pool_base_rejected,
           "tail-aligned record placement is rejected by the text anchor");
     CHECK(dungeon.thing_data_bases[0] == 324 &&
               dungeon.record_graph_complete == 1 &&
+              dm2_v1_dungeon_validate_record_pools(&dungeon) == 1 &&
               dm2_v1_dungeon_validate_record_graph(&dungeon) == 1 &&
               dm2_v1_dungeon_get_thing_record(&dungeon, 0x0000,
                                                NULL, NULL, NULL) != NULL,
@@ -554,9 +600,81 @@ static void test_pc_g1_record_pool_ownership_and_bounded_traversal(void)
               &dungeon, &evidence) == 1 &&
               evidence.candidate_first_link_shape_invalid == 1,
           "evidence reports an invalid unreachable direct link");
+    CHECK(dungeon.record_graph_complete == 1 &&
+              dm2_v1_dungeon_validate_record_pools(&dungeon) == 1 &&
+              dm2_v1_dungeon_validate_record_graph(&dungeon) == 1,
+          "unreachable pool words do not become inferred G1 links");
+    dm2_v1_dungeon_free(&dungeon);
+
+    put16le(dat + 324, 0x0002); /* Root-reachable DB0 index 2 exceeds count. */
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts out-of-range reachable-link fixture for diagnostics");
+    CHECK(dungeon.record_graph_complete == 0 &&
+              dm2_v1_dungeon_get_next_thing(&dungeon, 0x0000) == -1,
+          "reachable out-of-range w0 blocks G1 traversal");
+    dm2_v1_dungeon_free(&dungeon);
+
+    put16le(dat + 324, 0x0001); /* DB0[0] -> DB0[1]. */
+    put16le(dat + 328, 0x0000); /* DB0[1] -> DB0[0]. */
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts reachable-cycle fixture for diagnostics");
     CHECK(dungeon.record_graph_complete == 0 &&
               dm2_v1_dungeon_validate_record_graph(&dungeon) == 0,
-          "invalid unreachable direct links keep the G1 graph disabled");
+          "reachable w0 cycle blocks G1 traversal");
+    dm2_v1_dungeon_free(&dungeon);
+}
+
+static void test_pc_g1_extension_record_transform(void)
+{
+    uint8_t dat[14000];
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_G1RecordPoolEvidence evidence;
+    size_t size = build_pc_g1_extension_record_fixture(dat, sizeof(dat));
+
+    CHECK(size > 0, "PC G1 DB3/DB4 extension fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts the exact G1 extension profile");
+    CHECK(dungeon.g1_extension_record_bases[3] == dungeon.g1_extension_base &&
+              dungeon.g1_extension_record_counts[3] == 725 &&
+              dungeon.g1_extension_record_bases[4] ==
+                  dungeon.g1_extension_base + 725 * 8 &&
+              dungeon.g1_extension_record_counts[4] == 127,
+          "G1 extension keeps DB3 stride through the ObjectID ceiling then DB4 stride");
+    CHECK(dm2_v1_dungeon_get_thing_record(&dungeon, 0x0d2b,
+                                           NULL, NULL, NULL) != NULL &&
+              dm2_v1_dungeon_get_thing_record(&dungeon, 0x10ad,
+                                               NULL, NULL, NULL) != NULL,
+          "extended DB3 and DB4 map roots resolve by c_record stride");
+    CHECK(dm2_v1_dungeon_collect_g1_record_pool_evidence(
+              &dungeon, &evidence) == 1 &&
+              evidence.map_root_extension_shape_valid == 2 &&
+              evidence.map_root_shape_invalid == 0 &&
+              dungeon.record_graph_complete == 1,
+          "extension ownership does not invent a new ObjectID encoding");
+    dm2_v1_dungeon_free(&dungeon);
+}
+
+static void test_pc_g1_partial_boot_is_transactional(void)
+{
+    uint8_t dat[14000];
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_G1PartialMapBootReceipt receipt;
+    DM2_V1_G1FirstMapRuntimeReceipt first_map_receipt;
+    size_t size = build_pc_g1_extension_record_fixture(dat, sizeof(dat));
+
+    CHECK(size > 0 && dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "partial G1 boot fixture loads");
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.committed = -12345;
+    CHECK(dm2_v1_dungeon_materialize_g1_partial_map_boot(&dungeon, &receipt) == 0 &&
+              receipt.committed == -12345,
+          "partial boot leaves its receipt untouched when the corpus contract is incomplete");
+    memset(&first_map_receipt, 0, sizeof(first_map_receipt));
+    first_map_receipt.committed = -54321;
+    CHECK(dm2_v1_dungeon_materialize_g1_first_map_runtime(
+              &dungeon, &first_map_receipt) == 0 &&
+              first_map_receipt.committed == -54321,
+          "first-map runtime receipt leaves its output untouched without the full G1 contract");
     dm2_v1_dungeon_free(&dungeon);
 }
 
@@ -573,6 +691,8 @@ int main(void)
     test_skproject_actuator_wall_gfx_ordinal();
     test_skproject_map_wall_gfx_list();
     test_pc_g1_record_pool_ownership_and_bounded_traversal();
+    test_pc_g1_extension_record_transform();
+    test_pc_g1_partial_boot_is_transactional();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

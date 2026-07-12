@@ -15,7 +15,7 @@
 #define NEXUS_DGN_STRUCTURE1B_BYTES 0x8000
 #define NEXUS_DGN_STRUCTURE1B_CELL_BYTES 8
 #define NEXUS_DGN_GEOMETRY_DESCRIPTOR_MIN_BYTES 4
-#define NEXUS_DGN_STRUCTURE1_POST_GRID_POINTER_COUNT 5
+#define NEXUS_DGN_STRUCTURE1_POST_GRID_POINTER_COUNT 6
 #define NEXUS_DGN_POST_GRID_0X24_ZERO_BYTES 128
 #define NEXUS_DGN_POST_GRID_0X30_RECORD_BYTES 16
 #define NEXUS_DGN_POST_GRID_0X30_ROW_ORDINAL_BYTE 3
@@ -23,6 +23,15 @@
 #define NEXUS_DGN_POST_GRID_0X30_ROW_ORDINAL_FLAG_MASK 0x80
 #define NEXUS_DGN_MAX_COLLISION_SECTORS 256
 #define NEXUS_DGN_MAX_POST_GRID_0X30_RECORDS 4096
+#define NEXUS_DGN_STRUCTURE1F_HEADER_BYTES 16
+#define NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT 6
+#define NEXUS_DGN_MAX_STRUCTURE1F_ENTRIES 4096
+#define NEXUS_DGN_STRUCTURE1G_DESCRIPTOR_BYTES 8
+#define NEXUS_DGN_STRUCTURE1G_HEADER_BYTES 4
+#define NEXUS_DGN_MAX_STRUCTURE1G_ENTRIES 256
+#define NEXUS_DGN_STRUCTURE1G_FIRST_IMAGE_INDEX 0x014c
+#define NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES 20
+#define NEXUS_DGN_MAX_STRUCTURE2_TEXTURES 256
 #define NEXUS_V1_DGN_VIEW_DISTANCE 4
 #define NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS 48
 #define NEXUS_V1_DGN_VIEWPORT_UNITS 1024
@@ -86,6 +95,113 @@ typedef struct {
     int valid;
 } Nexus_V1_DgnPostGrid0x30RecordTable;
 
+/* DMWeb DGN files, Structure1F: a 16-byte header followed by six counted
+ * families in this fixed order. These record forms are retained as dungeon
+ * semantics; rendering and mechanics do not infer behaviour from fields that
+ * the Saturn format reference still marks unknown. */
+typedef enum {
+    NEXUS_V1_DGN_STRUCTURE1F_ITEMS = 0,
+    NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS = 1,
+    NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS = 2,
+    NEXUS_V1_DGN_STRUCTURE1F_ALCOVES = 3,
+    NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS = 4,
+    NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS = 5
+} Nexus_V1_DgnStructure1FFamily;
+
+typedef struct {
+    int relative_offset;
+    int size;
+    uint16_t wall_sensor_first_texture_index;
+    uint16_t wall_sensor_first_model_index;
+    int family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
+    int family_offset[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
+    int family_record_size[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
+    int total_entry_count;
+    int valid;
+} Nexus_V1_DgnStructure1FTable;
+
+typedef struct {
+    Nexus_V1_DgnStructure1FFamily family;
+    uint8_t tag;
+    uint8_t x;
+    uint8_t y;
+    /* Items use location/item_id/attribute1/attribute2. Decorations and
+     * sensors retain their documented positional/model fields below. */
+    uint8_t location;
+    uint8_t item_id;
+    uint8_t attribute1;
+    uint8_t attribute2;
+    int8_t offset_x;
+    int8_t offset_y;
+    uint8_t model_or_aspect;
+    uint8_t rotation;
+    uint8_t type_or_control;
+    uint8_t width;
+    uint8_t height;
+    uint16_t structure1a_index;
+    uint8_t face;
+    uint8_t destination_x;
+    uint8_t destination_y;
+    uint8_t destination_orientation;
+} Nexus_V1_DgnStructure1FEntry;
+
+/* DMWeb DGN files, Structure1G: optional animated-texture declarations.
+ * A present table has a counted descriptor prefix and four-byte instruction
+ * streams. Image instructions, backward FF FE gotos, and FF FF terminators
+ * are validated here; timing flags and runtime stepping remain unexecuted. */
+typedef struct {
+    int relative_offset;
+    int size;
+    int descriptor_count;
+    int animated_texture_count;
+    int animation_data_relative_offset;
+    int sequence_count;
+    int image_instruction_count;
+    int goto_instruction_count;
+    int valid;
+} Nexus_V1_DgnStructure1GTable;
+
+typedef struct {
+    uint8_t animation_id;
+    uint16_t first_image_index;
+    /* Structure1G uses the global image space: ITEM.IBS owns 0..0x14b,
+     * while Structure2 starts at 0x14c. This is a descriptor ID, never a
+     * decoded texture or a substitute material selector. */
+    uint16_t first_structure2_image_id;
+    int first_structure2_image_valid;
+    uint16_t sequence_word_offset;
+    int sequence_instruction_count;
+    int image_instruction_count;
+    int goto_instruction_count;
+} Nexus_V1_DgnStructure1GEntry;
+
+/* DMWeb DGN files, Structure2: 20-byte texture descriptors followed by a
+ * FFFF terminator and raw palette/image data. Structure1G's global image
+ * index is routed here only after subtracting 0x14c and finding this local
+ * descriptor ID. Payload decoding remains a separate host gate. */
+typedef struct {
+    uint16_t image_id;
+    uint16_t encoding;
+    uint16_t palette_id;
+    uint16_t width;
+    uint16_t height;
+    uint32_t image_relative_offset;
+    uint32_t palette_relative_offset;
+} Nexus_V1_DgnStructure2Texture;
+
+/* The only established Structure2 payload grammar is the descriptor envelope:
+ * Descriptor[20]... FFFF opaque_bytes[].  The bytes after FFFF are retained
+ * as a bounded span, but are deliberately not called image or palette records
+ * until the retail LEV corpus establishes their offset base and encoding. */
+typedef struct {
+    int descriptor_bytes;
+    int terminator_offset;
+    int opaque_payload_offset;
+    int opaque_payload_size;
+    int valid;
+    int material_or_image_data_proven;
+} Nexus_V1_DgnStructure2Payload;
+
 typedef struct {
     int structure1_offset;
     int useful_size;
@@ -98,6 +214,8 @@ typedef struct {
     Nexus_V1_DgnStructure1CRecordTable structure1c;
     Nexus_V1_DgnPostGrid0x24ZeroSpan post_grid_0x24_zero_span;
     Nexus_V1_DgnPostGrid0x30RecordTable post_grid_0x30_records;
+    Nexus_V1_DgnStructure1FTable structure1f;
+    Nexus_V1_DgnStructure1GTable structure1g;
     int valid;
 } Nexus_V1_DgnStructure1Layout;
 
@@ -133,6 +251,13 @@ typedef struct {
     int max_post_grid_0x30_ref;
     int post_grid_0x30_record_zero_referenced;
     int post_grid_0x30_ref_value_count;
+    int structure1f_valid;
+    int structure1f_total_entry_count;
+    int structure1f_family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
+    int structure1g_present;
+    int structure1g_valid;
+    int structure1g_animated_texture_count;
+    int structure1g_sequence_count;
     int mesh_ready;
 } Nexus_V1_DgnGeometryInfo;
 
@@ -171,6 +296,7 @@ typedef struct {
     uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     uint16_t collision_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     uint8_t floor_material_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    uint8_t floor_animation_ids[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     uint8_t ceiling_material_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     uint8_t wall_material_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE][4];
     int8_t floor_heights[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
@@ -185,6 +311,19 @@ typedef struct {
     int geometry_offset;
     int geometry_size;
     Nexus_V1_DgnGeometryInfo geometry_info;
+    Nexus_V1_DgnStructure1FEntry
+        structure1f_entries[NEXUS_DGN_MAX_STRUCTURE1F_ENTRIES];
+    int structure1f_entry_count;
+    Nexus_V1_DgnStructure1GEntry
+        structure1g_entries[NEXUS_DGN_MAX_STRUCTURE1G_ENTRIES];
+    int structure1g_entry_count;
+    int structure1g_floor_animation_cell_count;
+    int structure1g_floor_animation_bound_count;
+    Nexus_V1_DgnStructure2Texture
+        structure2_textures[NEXUS_DGN_MAX_STRUCTURE2_TEXTURES];
+    int structure2_texture_count;
+    int structure2_texture_table_valid;
+    Nexus_V1_DgnStructure2Payload structure2_payload;
 } Nexus_V1_Level;
 
 typedef enum {
@@ -192,7 +331,10 @@ typedef enum {
     NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH = 1,
     NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_NO_GEOMETRY = 2,
     NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_DESCRIPTOR_BUDGET = 3,
-    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_LEGACY_FALLBACK = 4
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_LEGACY_FALLBACK = 4,
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE_SEMANTICS = 5,
+    /* The parsed DGN has no committed canonical Track 1 Structure2 source. */
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE = 6
 } Nexus_V1_DgnRendererHandoffStatus;
 
 typedef struct {
@@ -222,6 +364,18 @@ typedef struct {
     int post_grid_0x30_row_ordinal_flagged_prefix_record_count;
     int post_grid_0x30_first_row_ordinal_flagged_prefix_record;
     int post_grid_0x30_last_row_ordinal_flagged_prefix_record;
+    int structure1f_valid;
+    int structure1f_total_entry_count;
+    int structure1f_family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
+    int structure1f_typed_entry_count;
+    int structure1g_present;
+    int structure1g_valid;
+    int structure1g_animated_texture_count;
+    int structure1g_sequence_count;
+    int structure1g_floor_animation_cell_count;
+    int structure1g_floor_animation_bound_count;
+    int structure1g_image_instruction_count;
+    int structure1g_goto_instruction_count;
 } Nexus_V1_DgnRendererHandoffReceipt;
 
 typedef enum {
@@ -231,6 +385,12 @@ typedef enum {
     NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT = 4,
     NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT = 5
 } Nexus_V1_DgnRenderCommandKind;
+
+typedef enum {
+    NEXUS_V1_DGN_ANIMATED_MATERIAL_ROUTE_NONE = 0,
+    /* DMWeb: Structure1B byte4 low nibble 3 declares an animated floor. */
+    NEXUS_V1_DGN_ANIMATED_MATERIAL_ROUTE_STRUCTURE2_FLOOR = 1
+} Nexus_V1_DgnAnimatedMaterialRoute;
 
 typedef struct {
     Nexus_V1_DgnRenderCommandKind kind;
@@ -255,6 +415,12 @@ typedef struct {
     int16_t quad_y[4];
     int post_grid_0x30_row_prefix_valid;
     uint8_t material_id;
+    int animated_texture_declared;
+    uint8_t animated_texture_id;
+    uint16_t animated_texture_first_image_index;
+    uint16_t animated_texture_structure2_image_id;
+    int animated_texture_structure2_image_valid;
+    Nexus_V1_DgnAnimatedMaterialRoute animated_texture_host_route;
     Nexus_V1_DgnRenderCommandKind material_source_kind;
     uint8_t palette_index;
     uint8_t draw_order;
@@ -280,6 +446,20 @@ typedef struct {
     int post_grid_0x30_row_ordinal_flagged_prefix_record_count;
     int post_grid_0x30_first_row_ordinal_flagged_prefix_record;
     int post_grid_0x30_last_row_ordinal_flagged_prefix_record;
+    int structure1f_valid;
+    int structure1f_total_entry_count;
+    int structure1f_family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
+    int structure1f_typed_entry_count;
+    int structure1g_present;
+    int structure1g_valid;
+    int structure1g_animated_texture_count;
+    int structure1g_sequence_count;
+    int structure1g_floor_animation_cell_count;
+    int structure1g_floor_animation_bound_count;
+    int structure1g_image_instruction_count;
+    int structure1g_goto_instruction_count;
+    int animated_material_command_count;
+    int unresolved_animated_material_count;
     int source_cell_count;
     int missing_material_count;
     int first_missing_material_id;
@@ -287,6 +467,9 @@ typedef struct {
     int first_blocking_depth;
     int first_blocking_x;
     int first_blocking_y;
+    /* Set only by the engine after the loaded level's Structure2 source
+     * receipt is bound to its canonical Track 1 materialization. */
+    int structure2_source_materialization_bound;
 } Nexus_V1_DgnRenderPlanReceipt;
 
 int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, int level_index);

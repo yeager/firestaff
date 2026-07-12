@@ -712,6 +712,30 @@ static void theron_v1_startup_runtime_entry_capture_failure_route(
     }
 }
 
+/* A verified Track 02 may legitimately bind the initial level while later
+ * object-table evidence remains unbound.  Preserve that bound level route,
+ * but make the receipt fail closed for every synthetic continuation surface.
+ * ReDMCSB has no Theron's Quest implementation; this is constrained by the
+ * hash/anchor-gated Track 02 receipts in theron_v1_track02.c. */
+static int theron_v1_startup_runtime_entry_has_not_bound_object_route(
+    const Theron_V1StartupRuntimeEntryResult *result) {
+
+    unsigned int i;
+
+    if (!result || !result->object_table_no_fallback_ready ||
+        result->object_table_blocked_anchor_mask == 0u) {
+        return 0;
+    }
+    for (i = 0; i < THERON_TRACK02_MAX_BANK_ANCHORS; ++i) {
+        if ((result->object_table_blocked_anchor_mask & (1u << i)) != 0u &&
+            result->object_table_anchor_binding_status[i] ==
+                THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static const char *theron_v1_startup_runtime_level_source_name(
     int runtime_level_source) {
 
@@ -1243,6 +1267,10 @@ int theron_v1_startup_runtime_enter_from_forcefield(
                 all_routes.startup_level_anchor_height,
                 all_routes.startup_level_anchor_seed,
                 all_routes.startup_level_anchor_level_index);
+            if (theron_v1_startup_runtime_entry_has_not_bound_object_route(
+                    out_result)) {
+                out_result->fallback_visuals_blocked = 1;
+            }
         }
     }
     return 1;
@@ -1714,6 +1742,10 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
                 all_routes.startup_level_anchor_height,
                 all_routes.startup_level_anchor_seed,
                 all_routes.startup_level_anchor_level_index);
+            if (theron_v1_startup_runtime_entry_has_not_bound_object_route(
+                    result)) {
+                result->fallback_visuals_blocked = 1;
+            }
         }
     }
     theron_v1_startup_flow_init(&flow);

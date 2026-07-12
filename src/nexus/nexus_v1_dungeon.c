@@ -9,6 +9,232 @@ static uint32_t rb32(const uint8_t *p) {
 }
 static uint16_t rb16(const uint8_t *p) { return ((uint16_t)p[0]<<8)|p[1]; }
 
+static int nexus_v1_level_find_structure2_texture(
+    const Nexus_V1_Level *level, uint16_t image_id)
+{
+    int index;
+    if (!level || !level->structure2_texture_table_valid) return 0;
+    for (index = 0; index < level->structure2_texture_count; ++index) {
+        if (level->structure2_textures[index].image_id == image_id) return 1;
+    }
+    return 0;
+}
+
+static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
+                                                    const uint8_t *data,
+                                                    int size)
+{
+    uint16_t structure2_block;
+    uint16_t structure2_blocks;
+    uint32_t structure2_useful;
+    int structure2_offset;
+    int structure2_size;
+    int cursor;
+
+    if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
+    structure2_block = rb16(data + 0x14);
+    structure2_blocks = rb16(data + 0x16);
+    structure2_useful = rb32(data + 0x18);
+    if (structure2_block == 0U && structure2_blocks == 0U &&
+        structure2_useful == 0U) return 0;
+    if (structure2_block == 0U || structure2_blocks == 0U ||
+        structure2_useful < NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES ||
+        structure2_useful > (uint32_t)INT_MAX) return -1;
+    structure2_offset = (int)structure2_block * NEXUS_DGN_BLOCK_SIZE;
+    structure2_size = (int)structure2_blocks * NEXUS_DGN_BLOCK_SIZE;
+    if (structure2_offset > size || structure2_size > size - structure2_offset ||
+        structure2_useful > (uint32_t)structure2_size) return -1;
+
+    /* DMWeb establishes only this envelope: Descriptor[20]... FFFF followed
+     * by raw palette/image bytes. The bytes after FFFF have no corpus-proven
+     * record grammar yet, so keep their span bounded and prohibit promotion. */
+    for (cursor = 0; cursor <= (int)structure2_useful - 2;) {
+        const uint8_t *src = data + structure2_offset + cursor;
+        Nexus_V1_DgnStructure2Texture *dst;
+        uint16_t image_id = rb16(src);
+        if (image_id == 0xffffU) {
+            level->structure2_texture_table_valid = 1;
+            level->structure2_payload.descriptor_bytes = cursor;
+            level->structure2_payload.terminator_offset = cursor;
+            level->structure2_payload.opaque_payload_offset = cursor + 2;
+            level->structure2_payload.opaque_payload_size =
+                (int)structure2_useful - (cursor + 2);
+            level->structure2_payload.valid = 1;
+            /* No decoder may promote this opaque span into a material. */
+            level->structure2_payload.material_or_image_data_proven = 0;
+            return 0;
+        }
+        if (cursor > (int)structure2_useful -
+                NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES ||
+            level->structure2_texture_count >= NEXUS_DGN_MAX_STRUCTURE2_TEXTURES ||
+            image_id != (uint16_t)level->structure2_texture_count) return -1;
+        dst = &level->structure2_textures[level->structure2_texture_count];
+        dst->image_id = image_id;
+        dst->encoding = rb16(src + 2);
+        dst->palette_id = rb16(src + 4);
+        dst->width = rb16(src + 6);
+        dst->height = rb16(src + 8);
+        dst->image_relative_offset = rb32(src + 12);
+        dst->palette_relative_offset = rb32(src + 16);
+        level->structure2_texture_count++;
+        cursor += NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES;
+    }
+    return -1;
+}
+
+static int nexus_v1_dgn_parse_structure1g(
+    Nexus_V1_DgnStructure1GTable *out_table,
+    const uint8_t *data,
+    const Nexus_V1_DgnStructure1Layout *layout)
+{
+    const Nexus_V1_DgnStructure1PostGridPointer *span;
+    Nexus_V1_DgnStructure1GTable table;
+    const uint8_t *src;
+    int descriptor;
+
+    if (out_table) memset(out_table, 0, sizeof(*out_table));
+    if (!out_table || !data || !layout) return -1;
+    span = &layout->post_grid[1];
+    if (!span->present) return 0;
+    if (!span->bounded || span->relative_offset < 0 ||
+        span->relative_offset > layout->useful_size - NEXUS_DGN_STRUCTURE1G_HEADER_BYTES)
+        return -1;
+
+    memset(&table, 0, sizeof(table));
+    table.relative_offset = span->relative_offset;
+    /* Structure1 header pointers are not address ordered. Structure1G ends
+     * at its own FF FF instruction, so its enclosing bound is useful
+     * Structure1 data, never the next named header pointer. */
+    table.size = layout->useful_size - span->relative_offset;
+    src = data + layout->structure1_offset + span->relative_offset;
+    table.descriptor_count = (int)rb16(src);
+    table.animation_data_relative_offset = (int)rb16(src + 2);
+    if (table.descriptor_count < 1 ||
+        table.descriptor_count > NEXUS_DGN_MAX_STRUCTURE1G_ENTRIES ||
+        table.animation_data_relative_offset !=
+            NEXUS_DGN_STRUCTURE1G_HEADER_BYTES +
+            table.descriptor_count * NEXUS_DGN_STRUCTURE1G_DESCRIPTOR_BYTES ||
+        table.animation_data_relative_offset > table.size) return -1;
+
+    for (descriptor = 0; descriptor < table.descriptor_count; ++descriptor) {
+        const uint8_t *entry = src + NEXUS_DGN_STRUCTURE1G_HEADER_BYTES +
+            descriptor * NEXUS_DGN_STRUCTURE1G_DESCRIPTOR_BYTES;
+        uint16_t sequence_word_offset;
+        int next_sequence_word_offset;
+        int sequence_byte_offset;
+        int cursor;
+        int terminated = 0;
+        if (descriptor == table.descriptor_count - 1) {
+            if (entry[0] != 0xffU) return -1;
+            continue;
+        }
+        if (entry[0] == 0xffU || entry[1] != 0U || rb16(entry + 2) != 1U)
+            return -1;
+        sequence_word_offset = rb16(entry + 6);
+        next_sequence_word_offset = descriptor + 1 < table.descriptor_count - 1
+            ? (int)rb16(entry + NEXUS_DGN_STRUCTURE1G_DESCRIPTOR_BYTES + 6)
+            : (table.size - table.animation_data_relative_offset) / 4;
+        sequence_byte_offset = table.animation_data_relative_offset +
+            (int)sequence_word_offset * 4;
+        if (sequence_byte_offset < table.animation_data_relative_offset ||
+            sequence_word_offset >= (uint16_t)next_sequence_word_offset ||
+            sequence_byte_offset > table.size - 4 ||
+            rb16(src + sequence_byte_offset) != rb16(entry + 4)) return -1;
+        for (cursor = sequence_byte_offset;
+             cursor < table.animation_data_relative_offset +
+                 next_sequence_word_offset * 4;
+             cursor += 4) {
+            uint16_t instruction = rb16(src + cursor);
+            if (instruction == 0xffffU) {
+                terminated = 1;
+                break;
+            }
+            if (instruction == 0xfffeU) {
+                int target = (int)(int16_t)rb16(src + cursor + 2);
+                int instruction_index =
+                    (cursor - sequence_byte_offset) / 4;
+                if (target >= 0 || -target > instruction_index) return -1;
+                table.goto_instruction_count++;
+                continue;
+            }
+            if (instruction < NEXUS_DGN_STRUCTURE1G_FIRST_IMAGE_INDEX)
+                return -1;
+            table.image_instruction_count++;
+        }
+        if (!terminated) return -1;
+        table.animated_texture_count++;
+        table.sequence_count++;
+    }
+    table.valid = 1;
+    *out_table = table;
+    return 0;
+}
+
+static int nexus_v1_dgn_parse_structure1f(
+    Nexus_V1_DgnStructure1FTable *out_table,
+    const uint8_t *data,
+    const Nexus_V1_DgnStructure1Layout *layout)
+{
+    static const int record_sizes[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT] =
+        {8, 12, 16, 12, 12, 16};
+    static const uint8_t tags[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT] =
+        {0x10U, 0x11U, 0x12U, 0x20U, 0x21U, 0x22U};
+    const Nexus_V1_DgnStructure1PostGridPointer *span;
+    Nexus_V1_DgnStructure1FTable table;
+    const uint8_t *src;
+    int cursor;
+    int family;
+
+    if (out_table) memset(out_table, 0, sizeof(*out_table));
+    if (!out_table || !data || !layout) return -1;
+    span = &layout->post_grid[5];
+    if (!span->present || !span->bounded ||
+        span->size_to_next < NEXUS_DGN_STRUCTURE1F_HEADER_BYTES) return -1;
+
+    memset(&table, 0, sizeof(table));
+    table.relative_offset = span->relative_offset;
+    table.size = span->size_to_next;
+    src = data + layout->structure1_offset + span->relative_offset;
+    table.wall_sensor_first_texture_index = rb16(src);
+    table.wall_sensor_first_model_index = rb16(src + 2);
+    cursor = NEXUS_DGN_STRUCTURE1F_HEADER_BYTES;
+    for (family = 0; family < NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT; ++family) {
+        int count = (int)rb16(src + 4 + family * 2);
+        int bytes;
+        if (count > NEXUS_DGN_MAX_STRUCTURE1F_ENTRIES ||
+            count > (INT_MAX - cursor) / record_sizes[family]) return -1;
+        bytes = count * record_sizes[family];
+        if (bytes > table.size - cursor ||
+            table.total_entry_count > NEXUS_DGN_MAX_STRUCTURE1F_ENTRIES - count)
+            return -1;
+        table.family_count[family] = count;
+        table.family_offset[family] = span->relative_offset + cursor;
+        table.family_record_size[family] = record_sizes[family];
+        table.total_entry_count += count;
+        cursor += bytes;
+    }
+    /* Structure1F is the final useful Structure1 span. Its six counts must
+     * account for the complete span: padding belongs outside useful data. */
+    if (cursor != table.size) return -1;
+    for (family = 0; family < NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT; ++family) {
+        int record;
+        const uint8_t *records = data + layout->structure1_offset +
+            table.family_offset[family];
+        for (record = 0; record < table.family_count[family]; ++record) {
+            const uint8_t *entry = records + record * record_sizes[family];
+            if (entry[0] != tags[family]) return -1;
+            /* Structure1Fa through Structure1Fc carry documented 64x64
+             * coordinates. Alcove and wall records bind through Structure1A. */
+            if (family <= NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS &&
+                (entry[1] >= NEXUS_MAX_MAP_SIZE || entry[2] >= NEXUS_MAX_MAP_SIZE))
+                return -1;
+        }
+    }
+    table.valid = 1;
+    *out_table = table;
+    return 0;
+}
+
 static int nexus_v1_decode_structure1b_collision_ref(const uint8_t *cell) {
     if (!cell) {
         return 0;
@@ -30,35 +256,15 @@ static uint16_t nexus_v1_decode_structure1b_post_grid_0x30_ref(
                        ((unsigned)cell[6] >> 4)) & 0x0fffU);
 }
 
-static int nexus_v1_abs_i8(int value) {
-    return value < 0 ? -value : value;
-}
-
-static void nexus_v1_decode_structure1f_descriptor(
-    const uint8_t *src,
-    Nexus_V1_DgnMeshDescriptor *dst) {
-    int width;
-    int height;
-
-    if (!dst) return;
-    memset(dst, 0, sizeof(*dst));
-    if (!src) return;
-
-    dst->x1 = (int8_t)src[0];
-    dst->y1 = (int8_t)src[1];
-    dst->x2 = (int8_t)src[2];
-    dst->y2 = (int8_t)src[3];
-    width = nexus_v1_abs_i8((int)dst->x2 - (int)dst->x1);
-    height = nexus_v1_abs_i8((int)dst->y2 - (int)dst->y1);
-    dst->width = width;
-    dst->height = height;
-    dst->area = width * height;
-    dst->solid = dst->area > 0 ? 1 : 0;
-    dst->valid = 1;
-}
-
 static uint8_t nexus_v1_decode_structure1b_floor_material(const uint8_t *cell) {
     return (uint8_t)((rb16(cell) >> 7) & 0x1fU);
+}
+
+static int nexus_v1_decode_structure1b_floor_animation_id(
+    const uint8_t *cell, uint8_t *out_id) {
+    if (!cell || !out_id || (cell[4] & 0x0fU) != 3U) return 0;
+    *out_id = nexus_v1_decode_structure1b_floor_material(cell);
+    return 1;
 }
 
 static uint8_t nexus_v1_decode_structure1b_ceiling_material(
@@ -88,7 +294,7 @@ int nexus_v1_dgn_structure1_layout(Nexus_V1_DgnStructure1Layout *out_layout,
                                    const uint8_t *data,
                                    int size) {
     static const int header_offsets[NEXUS_DGN_STRUCTURE1_POST_GRID_POINTER_COUNT] =
-        {0x18, 0x24, 0x2c, 0x30, 0x34};
+        {0x18, 0x1c, 0x24, 0x2c, 0x30, 0x34};
     Nexus_V1_DgnStructure1Layout layout;
     uint16_t block;
     uint16_t blocks;
@@ -166,9 +372,9 @@ int nexus_v1_dgn_structure1_layout(Nexus_V1_DgnStructure1Layout *out_layout,
     }
     {
         const Nexus_V1_DgnStructure1PostGridPointer *zero_span =
-            &layout.post_grid[1];
+            &layout.post_grid[2];
         const Nexus_V1_DgnStructure1PostGridPointer *records =
-            &layout.post_grid[3];
+            &layout.post_grid[4];
         int i;
 
         if (zero_span->present && zero_span->bounded &&
@@ -258,6 +464,11 @@ int nexus_v1_dgn_structure1_layout(Nexus_V1_DgnStructure1Layout *out_layout,
                 layout.post_grid_0x30_records.row_ordinal_prefix_valid;
         }
     }
+    /* DMWeb DGN files: pointer 0x34 is Structure1F, not an opaque tail.
+     * Its counted families are decoded only when the entire final useful span
+     * has an exact, source-backed layout. */
+    (void)nexus_v1_dgn_parse_structure1f(&layout.structure1f, data, &layout);
+    (void)nexus_v1_dgn_parse_structure1g(&layout.structure1g, data, &layout);
     layout.valid = 1;
     *out_layout = layout;
     return 0;
@@ -409,6 +620,15 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
     info.post_grid_0x30_last_row_ordinal_flagged_prefix_record =
         layout.post_grid_0x30_records.last_row_ordinal_flagged_prefix_record;
     info.post_grid_0x30_ref_value_count = info.post_grid_0x30_ref_count;
+    info.structure1f_valid = layout.structure1f.valid;
+    info.structure1f_total_entry_count = layout.structure1f.total_entry_count;
+    memcpy(info.structure1f_family_count, layout.structure1f.family_count,
+           sizeof(info.structure1f_family_count));
+    info.structure1g_present = layout.post_grid[1].present;
+    info.structure1g_valid = layout.structure1g.valid;
+    info.structure1g_animated_texture_count =
+        layout.structure1g.animated_texture_count;
+    info.structure1g_sequence_count = layout.structure1g.sequence_count;
     if (info.collision_records_valid &&
         info.post_grid_0x30_record_table_valid &&
         info.post_grid_0x30_row_ordinal_prefix_valid) {
@@ -417,6 +637,109 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
 
     *out_info = info;
     return 0;
+}
+
+static void nexus_v1_level_copy_structure1g_entries(
+    Nexus_V1_Level *level,
+    const uint8_t *data,
+    const Nexus_V1_DgnStructure1Layout *layout)
+{
+    const Nexus_V1_DgnStructure1GTable *table;
+    const uint8_t *src;
+    int descriptor;
+    int output = 0;
+    if (!level || !data || !layout || !layout->structure1g.valid) return;
+    table = &layout->structure1g;
+    src = data + layout->structure1_offset + table->relative_offset;
+    for (descriptor = 0; descriptor < table->descriptor_count - 1; ++descriptor) {
+        const uint8_t *entry = src + NEXUS_DGN_STRUCTURE1G_HEADER_BYTES +
+            descriptor * NEXUS_DGN_STRUCTURE1G_DESCRIPTOR_BYTES;
+        const int sequence_offset = table->animation_data_relative_offset +
+            (int)rb16(entry + 6) * 4;
+        int cursor;
+        Nexus_V1_DgnStructure1GEntry *dst = &level->structure1g_entries[output++];
+        dst->animation_id = entry[0];
+        dst->first_image_index = rb16(entry + 4);
+        if (dst->first_image_index >= NEXUS_DGN_STRUCTURE1G_FIRST_IMAGE_INDEX) {
+            dst->first_structure2_image_id = (uint16_t)(
+                dst->first_image_index - NEXUS_DGN_STRUCTURE1G_FIRST_IMAGE_INDEX);
+            dst->first_structure2_image_valid =
+                nexus_v1_level_find_structure2_texture(
+                    level, dst->first_structure2_image_id);
+        }
+        dst->sequence_word_offset = rb16(entry + 6);
+        for (cursor = sequence_offset; cursor <= table->size - 4; cursor += 4) {
+            uint16_t instruction = rb16(src + cursor);
+            dst->sequence_instruction_count++;
+            if (instruction == 0xffffU) break;
+            if (instruction == 0xfffeU) dst->goto_instruction_count++;
+            else dst->image_instruction_count++;
+        }
+    }
+    level->structure1g_entry_count = output;
+}
+
+static void nexus_v1_level_copy_structure1f_entries(
+    Nexus_V1_Level *level,
+    const uint8_t *data,
+    const Nexus_V1_DgnStructure1Layout *layout)
+{
+    int family;
+    int output = 0;
+    if (!level || !data || !layout || !layout->structure1f.valid) return;
+    for (family = 0; family < NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT; ++family) {
+        const int count = layout->structure1f.family_count[family];
+        const int record_size = layout->structure1f.family_record_size[family];
+        const uint8_t *records = data + layout->structure1_offset +
+            layout->structure1f.family_offset[family];
+        int record;
+        for (record = 0; record < count; ++record) {
+            const uint8_t *src = records + record * record_size;
+            Nexus_V1_DgnStructure1FEntry *dst =
+                &level->structure1f_entries[output++];
+            dst->family = (Nexus_V1_DgnStructure1FFamily)family;
+            dst->tag = src[0];
+            switch (family) {
+            case NEXUS_V1_DGN_STRUCTURE1F_ITEMS:
+                dst->x = src[1]; dst->y = src[2]; dst->location = src[3];
+                dst->item_id = src[4]; dst->attribute1 = src[5];
+                dst->attribute2 = src[7];
+                break;
+            case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS:
+                dst->x = src[1]; dst->y = src[2];
+                dst->offset_x = (int8_t)src[3]; dst->offset_y = (int8_t)src[4];
+                dst->model_or_aspect = src[5]; dst->rotation = src[6];
+                dst->type_or_control = src[7]; dst->width = src[8];
+                dst->height = src[9];
+                break;
+            case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS:
+                dst->x = src[1]; dst->y = src[2];
+                dst->model_or_aspect = src[5]; dst->rotation = src[6];
+                dst->width = src[10]; dst->height = src[11];
+                dst->type_or_control = src[12]; dst->destination_x = src[13];
+                dst->destination_y = src[14]; dst->destination_orientation = src[15];
+                break;
+            case NEXUS_V1_DGN_STRUCTURE1F_ALCOVES:
+                dst->face = src[1]; dst->structure1a_index = rb16(src + 2);
+                dst->rotation = src[4]; dst->offset_x = (int8_t)src[5];
+                dst->offset_y = (int8_t)src[6]; dst->item_id = src[7];
+                break;
+            case NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS:
+                dst->face = src[1]; dst->structure1a_index = rb16(src + 2);
+                dst->rotation = src[4]; dst->offset_x = (int8_t)src[5];
+                dst->offset_y = (int8_t)src[6]; dst->model_or_aspect = src[7];
+                break;
+            case NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS:
+                dst->face = src[1]; dst->structure1a_index = rb16(src + 2);
+                dst->rotation = src[4]; dst->offset_x = (int8_t)src[5];
+                dst->offset_y = (int8_t)src[6]; dst->model_or_aspect = src[7];
+                dst->type_or_control = src[12]; dst->destination_x = src[13];
+                dst->destination_y = src[14]; dst->destination_orientation = src[15];
+                break;
+            }
+        }
+    }
+    level->structure1f_entry_count = output;
 }
 
 int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, int level_index) {
@@ -429,13 +752,13 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
      *   DGN files are 2048-byte block containers. Header offsets at 0x0C,
      *   0x0E and 0x10 locate Structure1; Structure1 offset 0x14 locates
      *   Structure1B, always 0x8000 bytes: 64x64 cells, 8 bytes each.
-     *   The old raw-32x32 reader below is a synthetic-fixture fallback only.
      */
 
     if (size >= NEXUS_DGN_BLOCK_SIZE) {
         Nexus_V1_DgnGeometryInfo info;
         if (nexus_v1_dgn_geometry_info(&info, data, size) == 0) {
             int y, x;
+            Nexus_V1_DgnStructure1Layout layout;
             level->width = NEXUS_MAX_MAP_SIZE;
             level->height = NEXUS_MAX_MAP_SIZE;
             for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
@@ -448,6 +771,20 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                     level->collision_refs[y][x] = (uint16_t)ref;
                     level->floor_material_refs[y][x] =
                         nexus_v1_decode_structure1b_floor_material(data + off);
+                    level->floor_animation_ids[y][x] = 0xffU;
+                    if (nexus_v1_decode_structure1b_floor_animation_id(
+                            data + off, &level->floor_animation_ids[y][x])) {
+                        int entry;
+                        level->structure1g_floor_animation_cell_count++;
+                        for (entry = 0; entry < level->structure1g_entry_count;
+                             ++entry) {
+                            if (level->structure1g_entries[entry].animation_id ==
+                                level->floor_animation_ids[y][x]) {
+                                level->structure1g_floor_animation_bound_count++;
+                                break;
+                            }
+                        }
+                    }
                     level->ceiling_material_refs[y][x] =
                         nexus_v1_decode_structure1b_ceiling_material(
                             data + info.structure1_offset, data + off);
@@ -491,53 +828,32 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
             level->geometry_offset = info.geometry_offset;
             level->geometry_size = size - info.geometry_offset;
             level->geometry_info = info;
+            if (nexus_v1_dgn_structure1_layout(&layout, data, size) == 0) {
+                if (nexus_v1_level_copy_structure2_textures(level, data, size) != 0) {
+                    level->structure2_texture_count = 0;
+                    level->structure2_texture_table_valid = 0;
+                }
+                nexus_v1_level_copy_structure1f_entries(level, data, &layout);
+                nexus_v1_level_copy_structure1g_entries(level, data, &layout);
+                level->structure1g_floor_animation_bound_count = 0;
+                for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
+                    for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
+                        int entry;
+                        if (level->floor_animation_ids[y][x] == 0xffU) continue;
+                        for (entry = 0; entry < level->structure1g_entry_count;
+                             ++entry) {
+                            if (level->structure1g_entries[entry].animation_id ==
+                                level->floor_animation_ids[y][x]) {
+                                level->structure1g_floor_animation_bound_count++;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
             printf("Nexus level %d: 64x64 Structure1B, payload=%d bytes, mesh_span=%d bytes, refs=%d/%d [DMWeb DGN]\n",
                    level_index, level->geometry_size, info.geometry_size,
                    info.collision_ref_unique_count, info.collision_ref_count);
-            return 0;
-        }
-    }
-
-    /* --- Legacy synthetic fallback: width/height header at byte 0-3 --- */
-    {
-        uint16_t w = rb16(data);
-        uint16_t h = rb16(data + 2);
-        if (w > 0 && w <= 32 && h > 0 && h <= 32) {
-            level->width = w;
-            level->height = h;
-            int grid_offset = 4;
-            for (int y = 0; y < h && grid_offset + 2 <= size; y++) {
-                for (int x = 0; x < w && grid_offset + 2 <= size; x++) {
-                    level->squares[y][x] = rb16(data + grid_offset) & 0x1F;
-                    grid_offset += 2;
-                }
-            }
-            level->has_3d_geometry = 1;
-            level->geometry_offset = grid_offset;
-            level->geometry_size = size - grid_offset;
-            printf("Nexus level %d: %dx%d, geometry=%d bytes [legacy synthetic w/h]\n",
-                   level_index, level->width, level->height, level->geometry_size);
-            return 0;
-        }
-    }
-
-    /* --- Legacy synthetic fallback: raw 32x32 grid at offset 0 --- */
-    {
-        int grid_bytes = 32 * 32 * 2;
-        if (size >= grid_bytes) {
-            for (int gy = 0; gy < 32; gy++) {
-                for (int gx = 0; gx < 32; gx++) {
-                    int off = (gy * 32 + gx) * 2;
-                    level->squares[gy][gx] = rb16(data + off) & 0x1F;
-                }
-            }
-            level->width = 32;
-            level->height = 32;
-            level->has_3d_geometry = 1;
-            level->geometry_offset = grid_bytes;
-            level->geometry_size = size - grid_bytes;
-            printf("Nexus level %d: 32x32, geometry=%d bytes [legacy synthetic raw grid]\n",
-                   level_index, level->geometry_size);
             return 0;
         }
     }
@@ -729,10 +1045,35 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         info->post_grid_0x30_first_row_ordinal_flagged_prefix_record;
     out_receipt->post_grid_0x30_last_row_ordinal_flagged_prefix_record =
         info->post_grid_0x30_last_row_ordinal_flagged_prefix_record;
+    out_receipt->structure1f_valid = info->structure1f_valid;
+    out_receipt->structure1f_total_entry_count =
+        info->structure1f_total_entry_count;
+    memcpy(out_receipt->structure1f_family_count,
+           info->structure1f_family_count,
+           sizeof(out_receipt->structure1f_family_count));
+    out_receipt->structure1f_typed_entry_count = level->structure1f_entry_count;
+    out_receipt->structure1g_present = info->structure1g_present;
+    out_receipt->structure1g_valid = info->structure1g_valid;
+    out_receipt->structure1g_animated_texture_count =
+        info->structure1g_animated_texture_count;
+    out_receipt->structure1g_sequence_count = info->structure1g_sequence_count;
+    out_receipt->structure1g_floor_animation_cell_count =
+        level->structure1g_floor_animation_cell_count;
+    out_receipt->structure1g_floor_animation_bound_count =
+        level->structure1g_floor_animation_bound_count;
+    for (int entry = 0; entry < level->structure1g_entry_count; ++entry) {
+        out_receipt->structure1g_image_instruction_count +=
+            level->structure1g_entries[entry].image_instruction_count;
+        out_receipt->structure1g_goto_instruction_count +=
+            level->structure1g_entries[entry].goto_instruction_count;
+    }
 
     if (!info->dmweb_container) {
         out_receipt->status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_LEGACY_FALLBACK;
+    } else if (info->structure1g_present && !info->structure1g_valid) {
+        out_receipt->status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE_SEMANTICS;
     } else if (info->mesh_ready) {
         out_receipt->status = NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH;
         out_receipt->can_render_dgn_mesh = 1;
@@ -760,6 +1101,10 @@ const char *nexus_v1_dgn_renderer_handoff_status_name(
         return "blocked-descriptor-budget";
     case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_LEGACY_FALLBACK:
         return "blocked-legacy-fallback";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE_SEMANTICS:
+        return "blocked-structure-semantics";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE:
+        return "blocked-structure2-source";
     default: return "unknown";
     }
 }
@@ -847,6 +1192,26 @@ static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
            sizeof(command.ceiling_height));
     command.material_id = (uint8_t)nexus_v1_level_get_material_ref(
         level, x, y, kind, wall_dir);
+    if (kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
+        level->floor_animation_ids[y][x] != 0xffU) {
+        int entry;
+        command.animated_texture_declared = 1;
+        command.animated_texture_id = level->floor_animation_ids[y][x];
+        for (entry = 0; entry < level->structure1g_entry_count; ++entry) {
+            if (level->structure1g_entries[entry].animation_id ==
+                command.animated_texture_id) {
+                command.animated_texture_first_image_index =
+                    level->structure1g_entries[entry].first_image_index;
+                command.animated_texture_structure2_image_id =
+                    level->structure1g_entries[entry].first_structure2_image_id;
+                command.animated_texture_structure2_image_valid =
+                    level->structure1g_entries[entry].first_structure2_image_valid;
+                command.animated_texture_host_route =
+                    NEXUS_V1_DGN_ANIMATED_MATERIAL_ROUTE_STRUCTURE2_FLOOR;
+                break;
+            }
+        }
+    }
     switch (kind) {
     case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
         command.material_source_kind = NEXUS_V1_DGN_RENDER_COMMAND_FLOOR;
@@ -1022,6 +1387,24 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.post_grid_0x30_first_row_ordinal_flagged_prefix_record;
     receipt.post_grid_0x30_last_row_ordinal_flagged_prefix_record =
         handoff.post_grid_0x30_last_row_ordinal_flagged_prefix_record;
+    receipt.structure1f_valid = handoff.structure1f_valid;
+    receipt.structure1f_total_entry_count = handoff.structure1f_total_entry_count;
+    memcpy(receipt.structure1f_family_count, handoff.structure1f_family_count,
+           sizeof(receipt.structure1f_family_count));
+    receipt.structure1f_typed_entry_count = handoff.structure1f_typed_entry_count;
+    receipt.structure1g_present = handoff.structure1g_present;
+    receipt.structure1g_valid = handoff.structure1g_valid;
+    receipt.structure1g_animated_texture_count =
+        handoff.structure1g_animated_texture_count;
+    receipt.structure1g_sequence_count = handoff.structure1g_sequence_count;
+    receipt.structure1g_floor_animation_cell_count =
+        handoff.structure1g_floor_animation_cell_count;
+    receipt.structure1g_floor_animation_bound_count =
+        handoff.structure1g_floor_animation_bound_count;
+    receipt.structure1g_image_instruction_count =
+        handoff.structure1g_image_instruction_count;
+    receipt.structure1g_goto_instruction_count =
+        handoff.structure1g_goto_instruction_count;
     if (handoff.status != NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH ||
         !handoff.can_render_dgn_mesh) {
         receipt.blocks_real_dgn_mesh_render = 1;
@@ -1139,10 +1522,24 @@ int nexus_v1_level_build_dgn_view_render_plan(
     }
 
     if (!receipt.blocks_real_dgn_mesh_render) {
+        int command_index;
+        for (command_index = 0; command_index < receipt.command_count;
+             ++command_index) {
+            if (commands[command_index].animated_texture_declared) {
+                receipt.animated_material_command_count++;
+                /* DMWeb DGN files, Structure1B byte4 / Structure1G / Structure2:
+                 * animated-floor IDs route through the local Structure2 image
+                 * descriptor (global ID - 0x14c). The host still has no verified
+                 * Structure2 payload decoder, so a descriptor is provenance,
+                 * not a drawable DMDF/BPK surface or static substitution. */
+                receipt.unresolved_animated_material_count++;
+            }
+        }
         receipt.material_semantics_complete =
             receipt.floor_material_command_count == receipt.floor_count &&
             receipt.ceiling_material_command_count == receipt.ceiling_count &&
-            receipt.wall_material_command_count == receipt.wall_count;
+            receipt.wall_material_command_count == receipt.wall_count &&
+            receipt.unresolved_animated_material_count == 0;
         receipt.plan_ready =
             receipt.command_count > 0 && receipt.material_semantics_complete
                 ? 1 : 0;

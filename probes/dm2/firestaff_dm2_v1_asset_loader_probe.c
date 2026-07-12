@@ -366,6 +366,37 @@ int main(int argc, char **argv) {
                          fnv1a32_pixels(pixels, (size_t)w * (size_t)h) == 0x7cdc6addu,
                      "GDAT DOOR_BUTTONS pushed button IMG3 realizes from real image entry");
         dm2_v1_asset_free_pixels(pixels);
+
+        /* DM2-GDAT-FB-07: these are the original categories consumed by
+         * skproject's active-map MapGraphicsStyle / DRAW_MAP_CHIP route.
+         * They must decode as GDAT pixels; a V2.2 RGBA cache is never a
+         * substitute for any of them. */
+        w = h = 0;
+        fmt = DM2_IMG_FMT_UNKNOWN;
+        pixels = dm2_v1_asset_load_image_field(
+            &loader, DM2_GDAT_CATEGORY_WALL_GFX, 0, 0xf0,
+            &w, &h, &fmt);
+        PROBE_ASSERT(pixels != NULL && w > 0 && h > 0,
+                     "real GDAT WALL_GFX material decodes for the active-map route");
+        dm2_v1_asset_free_pixels(pixels);
+
+        w = h = 0;
+        fmt = DM2_IMG_FMT_UNKNOWN;
+        pixels = dm2_v1_asset_load_image_field(
+            &loader, DM2_GDAT_CATEGORY_FLOOR_GFX, 0, 0xf0,
+            &w, &h, &fmt);
+        PROBE_ASSERT(pixels != NULL && w > 0 && h > 0,
+                     "real GDAT FLOOR_GFX material decodes for the active-map route");
+        dm2_v1_asset_free_pixels(pixels);
+
+        w = h = 0;
+        fmt = DM2_IMG_FMT_UNKNOWN;
+        pixels = dm2_v1_asset_load_image_field(
+            &loader, DM2_GDAT_CATEGORY_CREATURES, 0, 0xf9,
+            &w, &h, &fmt);
+        PROBE_ASSERT(pixels != NULL && w > 0 && h > 0,
+                     "real GDAT CREATURES map-chip material decodes for the active-map route");
+        dm2_v1_asset_free_pixels(pixels);
     }
 
     /* ── Test category entry count ── */
@@ -377,6 +408,34 @@ int main(int argc, char **argv) {
                  "GDAT wall graphics category has indexed entries");
     PROBE_ASSERT(dm2_v1_asset_category_entry_count(&loader, DM2_GDAT_CATEGORY_FLOOR_GFX) > 0,
                  "GDAT floor graphics category has indexed entries");
+    if (raw) {
+        int controls = 0;
+
+        /* GRAPHICSSET weather entries are source control words, not image
+         * addresses. They may select a future GDAT-backed pass but cannot
+         * authorize generated rain, fog, or lightning pixels. */
+        for (int index = 0; index < count; ++index) {
+            uint16_t value;
+            if (dm2_v1_asset_load_word_value(
+                    &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, index,
+                    DM2_GDAT_GFXSET_SCENE_RAIN, &value)) {
+                ++controls;
+            }
+            if (dm2_v1_asset_load_word_value(
+                    &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, index,
+                    DM2_GDAT_GFXSET_MISTY_MAP, &value)) {
+                ++controls;
+            }
+            if (dm2_v1_asset_load_word_value(
+                    &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, index,
+                    DM2_GDAT_GFXSET_THUNDER_POSITION, &value)) {
+                ++controls;
+            }
+        }
+        PROBE_ASSERT(controls > 0,
+                     "real GDAT GRAPHICSSET weather controls are typed words, not image payloads (%d)",
+                     controls);
+    }
 
     /* ── Test asset load API ── */
     fprintf(stderr, "\n--- Testing dm2_v1_asset_load --- \n");

@@ -549,23 +549,25 @@ int DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
         outReceipt->backingPaletteMap[i] = renderReceipt->backingPaletteMap[i];
     }
 
-    /* ReDMCSB draws C346 before C026 in the front wall route.  When the C040
-     * champion panel owns the cell, the wall ornament asset is suppressed; the
-     * portrait remains the live mirror candidate.  Otherwise this DM1 receipt
-     * owns whether the host should draw the extracted C346 bitmap or the
-     * invariant backing rectangle. */
+    /* ReDMCSB DUNVIEW.C:3913-3928 draws C346 before C026 in the front wall
+     * route.  When C040 owns the cell, it owns the live candidate portrait.
+     * Otherwise C346 is required original material: an unavailable backing
+     * blocks this route rather than permitting an invented host-side frame. */
     if (outReceipt->candidatePanelOwnsCell) {
         outReceipt->suppressWallOrnamentAsset = 1;
         outReceipt->suppressHostFallbackVisuals = 1;
         return 1;
     }
 
-    outReceipt->drawMirrorBackingAsset =
-        renderReceipt->drawMirrorBacking && backingAssetAvailable ? 1 : 0;
-    outReceipt->drawMirrorBackingFallbackRect =
-        renderReceipt->drawMirrorBacking && !backingAssetAvailable ? 1 : 0;
-    outReceipt->drawInvariantBackingRect =
-        renderReceipt->drawMirrorBacking ? 1 : 0;
+    if (renderReceipt->drawMirrorBacking && !backingAssetAvailable) {
+        memset(outReceipt, 0, sizeof(*outReceipt));
+        outReceipt->sourceOrdinal = DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
+        outReceipt->renderIndex = DM1_V1_CHAMPION_MIRROR_NONE_PC34_COMPAT;
+        outReceipt->sourceAnchor =
+            "ReDMCSB DUNVIEW.C:3913-3928 C346/C026 front mirror draw";
+        return 1;
+    }
+    outReceipt->drawMirrorBackingAsset = renderReceipt->drawMirrorBacking ? 1 : 0;
     outReceipt->suppressHostFallbackVisuals = 1;
     return 1;
 }

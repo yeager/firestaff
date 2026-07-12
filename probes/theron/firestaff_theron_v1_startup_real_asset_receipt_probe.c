@@ -87,8 +87,11 @@
 #include "asset_status_m12.h"
 #include "theron_v1_startup_receipt.h"
 #include "theron_v1_boot.h"
+#include "theron_v1_asset_loader.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_viewport.h"
+#include "theron_v1_world.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -104,6 +107,49 @@
 static int g_total = 0;
 static int g_failed = 0;
 static int g_skipped = 0;
+
+static void check(int cond, const char *name);
+
+/* The asset loader does not own the hash gate; this probe does.  Once a
+ * known original container is accepted, an unbound graphics bank must not
+ * reach the generated V1 palette/tile/UI renderer. */
+static void check_verified_media_render_boundary(const char *path) {
+    TrAssetBundle assets;
+    Theron_V1_World world;
+    Theron_V1_Viewport viewport;
+    unsigned char framebuffer[320u * 200u];
+    unsigned char expected_framebuffer[320u * 200u];
+
+    memset(&assets, 0, sizeof(assets));
+    check(tr_asset_load(path, &assets) == TR_ASSET_OK,
+          "verified Track 02 container stays loadable for semantic routes");
+    if (!assets.hucard_rom || assets.hucard_rom_size == 0u) {
+        tr_asset_free(&assets);
+        return;
+    }
+    if (assets.palette.tile_count == 0 && !assets.track03_data) {
+        theron_v1_world_init(&world);
+        check(theron_vp_init(&viewport),
+              "render-boundary viewport initializes");
+        check(assets.synthetic_rendering_blocked == 0,
+              "unverified loader result has not self-authorized a block");
+        assets.assets_verified = 1;
+        check(tr_asset_generated_v1_rendering_allowed(&assets) == 0,
+              "hash-verified original container self-blocks generated V1 rendering");
+        memset(framebuffer, 0xa5, sizeof(framebuffer));
+        memcpy(expected_framebuffer, framebuffer, sizeof(framebuffer));
+        check(theron_v1_boot_runtime_render_frame(&world, &viewport, &assets,
+                                                  0, 0, framebuffer, 320, 200) == 0,
+              "verified unbound Track 02 cannot present generated graphics");
+        check(memcmp(framebuffer, expected_framebuffer, sizeof(framebuffer)) == 0,
+              "verified unbound Track 02 leaves the generated V1 framebuffer untouched");
+        tr_asset_block_synthetic_rendering_for_verified_media(&assets);
+        check(assets.synthetic_rendering_blocked == 1,
+              "verified original container retains the explicit boot block");
+        theron_vp_free(&viewport);
+    }
+    tr_asset_free(&assets);
+}
 
 static void check(int cond, const char *name) {
     ++g_total;
@@ -929,6 +975,7 @@ static void check_real_asset_path(void) {
         }
         check(r.boot_profile_assets_verified == 1,
               "boot profile marks assets_verified");
+        check_verified_media_render_boundary(path);
         check(r.boot_profile_tick_rate_hz == 18u,
               "boot profile carries the documented 18 Hz tick rate");
         check(r.boot_profile_max_champions == 4u,

@@ -324,8 +324,16 @@ static void test_log_render_plan(void) {
                   "YOU SEE A SCROLL", "strip tick prefix");
     ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat("SPELL PANEL OPENED"),
               0, "suppress debug spell panel");
+    ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat(
+                  "NO FOCUS: PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"),
+              0, "suppress Firestaff synthetic no-focus inspect reroute");
+    ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat(
+                  "PRESS ENTER ON A REAL FRONT-CELL TARGET"),
+              0, "suppress Firestaff synthetic fallback inspect reroute");
     ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat("A DOOR OPENS"),
               1, "accept player-facing message");
+    ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat("THE WALL READS RUN"),
+              1, "keep explicit wall inscription reads player-facing");
 
     DM1_V1_TextMessage_BuildLogRenderPlanPc34Compat(texts, colors, 6, &plan);
     ASSERT_EQ(plan.rowCount, 3, "render plan accepted count");

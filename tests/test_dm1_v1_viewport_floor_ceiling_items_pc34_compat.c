@@ -185,6 +185,7 @@ static void test_item_pile_zone_flip_and_transparency_contract(void)
 static void test_item_sprite_metadata_ownership(void)
 {
     DM1_ItemSpriteBlitPlan plan;
+    int aspect;
 
     expect_int("item.graphic.first_object", DM1_GRAPHIC_FIRST_OBJECT, 498,
                "DEFS.H:2386 M612_GRAPHIC_FIRST_OBJECT");
@@ -203,7 +204,7 @@ static void test_item_sprite_metadata_ownership(void)
                "M612 + G0209 FirstNativeBitmapRelativeIndex");
     expect_int("item.aspect.potion0", dm1_item_aspect_index(8, 0), 67,
                "DUNVIEW.C G0208 potion object-info offset");
-    expect_int("item.sprite.potion0", (int)dm1_item_sprite_index(8, 0), 567,
+    expect_int("item.sprite.potion0", (int)dm1_item_sprite_index(8, 0), 566,
                "M612 + G0209 FirstNativeBitmapRelativeIndex");
     expect_int("item.aspect.container0", dm1_item_aspect_index(9, 0), 0,
                "DUNVIEW.C G0208 container object-info offset");
@@ -214,6 +215,20 @@ static void test_item_sprite_metadata_ownership(void)
                "non-object THING type has no F0115 item sprite");
     expect_int("item.sprite.invalid", (int)dm1_item_sprite_index(1, 0), 0,
                "non-object THING type has no F0115 item sprite");
+
+    for (aspect = 0; aspect < 85; ++aspect) {
+        int expectedGraphic = aspect == 0 ? 498 : 499 + aspect;
+        expect_int("item.aspect.pc34_native_bank",
+                   (int)dm1_object_aspect_graphic_index(aspect),
+                   expectedGraphic,
+                   "DUNVIEW.C:1423-1508 MEDIA720 G0209 PC34 native bank");
+    }
+    expect_int("item.aspect.pc34_native_bank.reject",
+               (int)dm1_object_aspect_graphic_index(85), 0,
+               "C584 begins creatures; unmapped object aspects do not draw");
+    expect_int("item.sprite.invalid_subtype",
+               (int)dm1_item_sprite_index(5, 46), 0,
+               "unmapped weapon subtype does not borrow subtype zero art");
 
     expect_int("thing.item.weapon",
                dm1_v1_thing_type_is_floor_item_pc34(5), 1,

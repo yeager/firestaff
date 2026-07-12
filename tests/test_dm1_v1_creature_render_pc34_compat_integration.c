@@ -371,14 +371,14 @@ static void test_m11_query_surface(void) {
 
     ASSERT_EQ(dm1_creature_sprite_for_depth(0, 0), 584,
               "query depth scorpion native front");
-    ASSERT_EQ(dm1_creature_sprite_for_depth(0, 1), 496,
-              "query depth scorpion derived D2 front");
-    ASSERT_EQ(dm1_creature_sprite_for_view(3, 0, 0, 0, 0, &mirror), 596,
-              "query view WizardEye back keeps M11 native offset");
+    ASSERT_EQ(dm1_creature_sprite_for_depth(0, 1), 584,
+              "query depth scorpion keeps C584 native source");
+    ASSERT_EQ(dm1_creature_sprite_for_view(3, 0, 0, 0, 0, &mirror), 595,
+              "query view WizardEye back follows PC34 bank order");
     ASSERT_EQ(mirror, 0, "query view back mirror off");
     ASSERT_EQ(dm1_creature_sprite_for_view(14, 0, 1, 0, 0, &mirror), 628,
               "query view Vexirk side native");
-    ASSERT_EQ(mirror, 1, "query view side mirror on");
+    ASSERT_EQ(mirror, 0, "query view side mirror uses F0115 delta");
     ASSERT_EQ(dm1_creature_sprite_for_view(14, 0, 2, 0, 1, &mirror), 630,
               "query view Vexirk attack native");
 
@@ -398,7 +398,7 @@ static void test_m11_query_surface(void) {
               "query has flip attack WizardEye");
     ASSERT_EQ(dm1_creature_replacement_colors(0, &repl9, &repl10), 1,
               "query replacement colors scorpion");
-    ASSERT_EQ(repl9, 4, "query replacement color9 scorpion");
+    ASSERT_EQ(repl9, 9, "query replacement color9 scorpion");
     ASSERT_EQ(repl10, 10, "query replacement color10 scorpion fallback");
     ASSERT_EQ(dm1_creature_replacement_colors(2, &repl9, &repl10), 0,
               "query no replacement colors Giggler");

@@ -128,12 +128,14 @@ static void test_asset_id_mapping_creatures_fields(void) {
     CHECK(strcmp(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_CREATURE),
                  "creature_chaos_fiend_01") == 0,
           "CREATURE -> creature_chaos_fiend_01");
-    CHECK(strcmp(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FIELD_TELEPORTER),
-                 "field_teleporter_01") == 0,
-          "FIELD_TELEPORTER -> field_teleporter_01");
-    CHECK(strcmp(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FIELD_CHAOS_RIFT),
-                 "field_chaos_rift_01") == 0,
-          "FIELD_CHAOS_RIFT -> field_chaos_rift_01");
+    CHECK(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_CEILING_PLAIN) == NULL,
+          "CEILING_PLAIN retains V1 original-material route");
+    CHECK(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_ITEM) == NULL,
+          "ITEM retains V1 original-material route");
+    CHECK(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FIELD_TELEPORTER) == NULL,
+          "FIELD_TELEPORTER retains V1 original-material route");
+    CHECK(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FIELD_CHAOS_RIFT) == NULL,
+          "FIELD_CHAOS_RIFT retains V1 original-material route");
 }
 
 static void test_asset_id_mapping_csb_only_shapes(void) {

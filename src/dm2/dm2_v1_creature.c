@@ -106,6 +106,9 @@ static const char *const g_ai_names[DM2_AI_TABLE_SIZE] = {
  * Stub shows field offsets consistent with DME.h:1505-1545. */
 static DM2_AIDefinition g_ai_table[DM2_AI_TABLE_SIZE];
 static uint8_t g_ai_table_loaded[DM2_AI_TABLE_SIZE];
+static uint8_t g_creature_ai_row[DM2_AI_TABLE_SIZE];
+static uint8_t g_creature_ai_row_loaded[DM2_AI_TABLE_SIZE];
+static int g_ai_table_gdat_bound;
 static DM2_V1_CCMProgram g_ccm_programs[DM2_AI_TABLE_SIZE];
 static uint8_t g_ccm_program_loaded[DM2_AI_TABLE_SIZE];
 static int g_ccm_program_count = 0;
@@ -122,20 +125,31 @@ const char *dm2_v1_creature_ai_name(int ai_index) {
 }
 
 const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type) {
-    /* QUERY_CREATURE_AI_SPEC_FROM_TYPE at SkWinCore.cpp:2995
-     * In extended mode: uses EXTENDED_LOAD_AI_DEFINITION() result
-     * In fixed mode: uses hardcoded dAITableGenuine[]
-     * Stub: index by creature_type (capped) */
-    int idx = creature_type;
-    if (idx < 0) idx = 0;
-    if (idx >= DM2_AI_TABLE_SIZE) idx = DM2_AI_TABLE_SIZE - 1;
-    (void)creature_type;
-    return &g_ai_table[idx];
+    int ai_row;
+
+    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) return NULL;
+
+    /* skproject/SKWINSPX/src/v4/skcrture.cpp:28-36 resolves the creature
+     * type through CREATURES dtWordValue field 0x05 before indexing the
+     * AIDefinition table.  A mounted real GDAT must not inherit a type-index
+     * fallback when either half of that binding is absent. */
+    if (g_ai_table_gdat_bound) {
+        if (!g_creature_ai_row_loaded[creature_type]) return NULL;
+        ai_row = g_creature_ai_row[creature_type];
+        if (ai_row < 0 || ai_row >= DM2_AI_TABLE_SIZE ||
+            !g_ai_table_loaded[ai_row]) return NULL;
+        return &g_ai_table[ai_row];
+    }
+
+    return &g_ai_table[creature_type];
 }
 
 void dm2_v1_creature_reset_ai_table(void) {
     memset(g_ai_table, 0, sizeof(g_ai_table));
     memset(g_ai_table_loaded, 0, sizeof(g_ai_table_loaded));
+    memset(g_creature_ai_row, 0, sizeof(g_creature_ai_row));
+    memset(g_creature_ai_row_loaded, 0, sizeof(g_creature_ai_row_loaded));
+    g_ai_table_gdat_bound = 0;
 }
 
 void dm2_v1_creature_reset_ccm_programs(void) {
@@ -174,21 +188,36 @@ static void dm2_v1_creature_decode_ai_spec(const uint8_t *raw,
 
 int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
     int loaded = 0;
-    int i;
+    int creature_type;
 
     if (!loader || !loader->loaded) return -1;
+    dm2_v1_creature_reset_ai_table();
+    g_ai_table_gdat_bound = 1;
 
-    /* skproject/SKWIN/SkWinCore.cpp EXTENDED_LOAD_AI_DEFINITION lines
-     * ~233-400 loads 36 AIDefinition bytes per creature AI index from
-     * GDAT_CATEGORY_CREATURE_AI (0x19).  QUERY_CREATURE_AI_SPEC_FROM_TYPE
-     * line ~2995 then indexes this table by creature type. */
-    for (i = 0; i < DM2_AI_TABLE_SIZE; ++i) {
+    /* skproject/SKWINSPX/src/v4/skcrture.cpp:28-36 first reads
+     * CREATURES[type] dtWordValue(0x05), then indexes the AIDefinition table
+     * by that result.  Keep that indirection instead of treating creature
+     * type as a CREATURE_AI row. */
+    for (creature_type = 0; creature_type < DM2_AI_TABLE_SIZE;
+         ++creature_type) {
+        uint16_t ai_row;
         size_t raw_size = 0;
-        const uint8_t *raw = dm2_v1_asset_load_sized(
-            loader, DM2_GDAT_CATEGORY_CREATURE_AI, i, 0, &raw_size);
+        const uint8_t *raw;
+
+        if (!dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_CREATURES, creature_type, 0x05,
+                &ai_row) || ai_row >= DM2_AI_TABLE_SIZE) {
+            continue;
+        }
+        raw = dm2_v1_asset_load_sized(loader, DM2_GDAT_CATEGORY_CREATURE_AI,
+                                       ai_row, 0, &raw_size);
         if (!raw || raw_size < sizeof(DM2_AIDefinition)) continue;
-        dm2_v1_creature_decode_ai_spec(raw, &g_ai_table[i]);
-        g_ai_table_loaded[i] = 1;
+        if (!g_ai_table_loaded[ai_row]) {
+            dm2_v1_creature_decode_ai_spec(raw, &g_ai_table[ai_row]);
+            g_ai_table_loaded[ai_row] = 1;
+        }
+        g_creature_ai_row[creature_type] = (uint8_t)ai_row;
+        g_creature_ai_row_loaded[creature_type] = 1;
         ++loaded;
     }
 
@@ -299,11 +328,6 @@ static int dm2_v1_creature_door_blocks_creature(int door_state,
     return 1;
 }
 
-static int dm2_v1_creature_ai_has_gdat_spec(int ai_index) {
-    return ai_index >= 0 && ai_index < DM2_AI_TABLE_SIZE &&
-           g_ai_table_loaded[ai_index] != 0;
-}
-
 static int dm2_v1_creature_is_static_ai_index(int ai_index) {
     return ai_index == 0  || ai_index == 1  || ai_index == 4
         || ai_index == 5  || ai_index == 6  || ai_index == 7
@@ -330,22 +354,23 @@ static int dm2_v1_creature_attack_flags_are_ranged(uint16_t flags) {
  * Attack decision: based on AI_ATTACK_FLAGS and distance check.
  * b_1a command byte 0x17+ = fallback to CREATURE_ATTACKS_PARTY.
  * Melee range: distance == 1 tile. Ranged: AI_ATTACK_FLAGS__SHOOT.
- * GDAT path: use AIDefinition.AttacksSpells loaded by
- * EXTENDED_LOAD_AI_DEFINITION (SkWinCore.cpp:233-400), with static
- * objects suppressed by w0AIFlags. Data-free fallback preserves the
- * original no-assets probe behavior for rows not yet imported. */
+ * Uses AIDefinition.AttacksSpells loaded by EXTENDED_LOAD_AI_DEFINITION
+ * (SkWinCore.cpp:233-400), with static objects suppressed by w0AIFlags.
+ * A specifically loaded row must control the result even before a full GDAT
+ * mount: otherwise the data-free probe's adjacency rule preempts
+ * DM2_THINK_CREATURE's walk writeback for a known non-attacking creature. */
 int dm2_v1_creature_attacks_party(int ai_index, int distance) {
+    const DM2_AIDefinition *spec;
+    uint16_t attacks;
+
     if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return 0;
     if (distance < 0) return 0;
-
-    if (dm2_v1_creature_ai_has_gdat_spec(ai_index)) {
-        const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(ai_index);
-        uint16_t attacks = spec ? spec->AttacksSpells : 0;
-
+    if (g_ai_table_gdat_bound || g_ai_table_loaded[ai_index]) {
+        spec = dm2_v1_creature_ai_spec(ai_index);
+        attacks = spec ? spec->AttacksSpells : 0;
         if (!spec || (spec->w0AIFlags & DM2_AIFLAG_STATIC) != 0) return 0;
         if ((attacks & AI_ATTACK_FLAGS__MELEE) != 0 && distance <= 1) return 1;
-        if (dm2_v1_creature_attack_flags_are_ranged(attacks) && distance <= 6) return 1;
-        return 0;
+        return dm2_v1_creature_attack_flags_are_ranged(attacks) && distance <= 6;
     }
 
     if (dm2_v1_creature_is_static_ai_index(ai_index)) return 0;
@@ -362,7 +387,7 @@ int dm2_v1_creature_resolves_spell(int ai_index, uint16_t attack_flags) {
     if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return 0;
     if (!dm2_v1_creature_attack_flags_are_ranged(attack_flags)) return 0;
 
-    if (dm2_v1_creature_ai_has_gdat_spec(ai_index)) {
+    if (g_ai_table_gdat_bound) {
         const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(ai_index);
         return spec && (spec->AttacksSpells & attack_flags) != 0;
     }
@@ -427,7 +452,11 @@ static void dm2_v1_creature_write_render_state(DM2_V1_CreatureInstance *c,
  * healthMultiplier: 0=default (8), 1–16 scale HP. DM2_CREATURE_SPAWN_MAX=64. */
 int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
                           int map_index, int direction, int health_multiplier) {
+    const DM2_AIDefinition *spec;
     int slot = -1;
+    if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return -1;
+    spec = dm2_v1_creature_ai_spec(ai_index);
+    if (g_ai_table_gdat_bound && !spec) return -1;
     for (int i = 0; i < DM2_MAX_CREATURE_INSTANCES; i++) {
         if (!g_creature_pool[i].alive) { slot = i; break; }
     }
@@ -436,7 +465,7 @@ int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
     DM2_V1_CreatureInstance *c = &g_creature_pool[slot];
     memset(c, 0, sizeof(*c));
     c->instance_id = g_next_instance_id++;
-    c->ai_index    = (ai_index >= 0 && ai_index < DM2_AI_TABLE_SIZE) ? ai_index : 0;
+    c->ai_index    = ai_index;
     c->world_x     = world_x;
     c->world_y     = world_y;
     c->map_index   = map_index;
@@ -450,9 +479,8 @@ int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
     dm2_v1_creature_write_render_state(c, 0);
 
     int mult = (health_multiplier > 0) ? health_multiplier : 8;
-    const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(ai_index);
     int hp = spec ? (int)spec->BaseHP * mult / 8 : 10;
-    if (hp <= 0) hp = 1;  /* minimum 1 HP so zero-init stub creatures can die */
+    if (!g_ai_table_gdat_bound && hp <= 0) hp = 1;
     c->hp_max     = hp;
     c->hp_current = c->hp_max;
     ++c->render_revision;
@@ -565,6 +593,20 @@ void dm2_v1_creature_test_set_ccm_state(int instance_id,
     g_creature_pool[instance_id].b_17 = b_17;
     g_creature_pool[instance_id].target_x = target_x;
     g_creature_pool[instance_id].target_y = target_y;
+}
+
+void dm2_v1_creature_test_set_ccm_transform_phase(int instance_id,
+                                                   uint8_t phase) {
+    if (instance_id < 0 || instance_id >= DM2_MAX_CREATURE_INSTANCES) return;
+    if (!g_creature_pool[instance_id].alive) return;
+    g_creature_pool[instance_id].ccm_transform_phase = phase;
+}
+
+void dm2_v1_creature_test_set_ccm_explode_or_summon_mode(int instance_id,
+                                                          uint8_t mode) {
+    if (instance_id < 0 || instance_id >= DM2_MAX_CREATURE_INSTANCES) return;
+    if (!g_creature_pool[instance_id].alive) return;
+    g_creature_pool[instance_id].ccm_explode_or_summon_mode = mode;
 }
 
 void dm2_v1_creature_test_reset_instances(void) {
@@ -752,8 +794,8 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
                                   door_y,
                                   &door_state,
                                   &door_attributes) == 1) {
-        int nonmaterial = dm2_v1_creature_ai_spec(c->ai_index)->w0AIFlags &
-                          DM2_AIFLAG_NONMATERIAL;
+        const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(c->ai_index);
+        int nonmaterial = spec && (spec->w0AIFlags & DM2_AIFLAG_NONMATERIAL);
         door_valid = 1;
         door_blocks = dm2_v1_creature_door_blocks_creature(
             door_state, door_attributes, nonmaterial != 0);
@@ -767,6 +809,8 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     state.target_x = c->target_x;
     state.target_y = c->target_y;
     state.target_level = c->map_index;
+    state.transform_phase = c->ccm_transform_phase;
+    state.explode_or_summon_mode = c->ccm_explode_or_summon_mode;
     if (imported_op) {
         int i;
         argc = imported_op->arg_count;
@@ -793,6 +837,9 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     g_last_ccm_tick.ccm_flag_shoot = state.flags[5];
     g_last_ccm_tick.ccm_flag_cast_spell = state.flags[8];
     g_last_ccm_tick.ccm_flag_explode_or_summon = state.flags[10];
+    g_last_ccm_tick.ccm_explode_or_summon_requested =
+        state.explode_or_summon_requested;
+    g_last_ccm_tick.ccm_explode_or_summon_mode = state.explode_or_summon_mode;
     g_last_ccm_tick.ccm_flag_path = state.flags[11];
     g_last_ccm_tick.ccm_flag_rotate = state.flags[12];
     g_last_ccm_tick.ccm_flag_special = state.flags[13];
@@ -817,6 +864,7 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     g_last_ccm_tick.attack_cooldown_before = before_cooldown;
 
     if (rc == (int)DM2_CCM_RESULT_OK) {
+        c->ccm_transform_phase = (uint8_t)state.transform_phase;
         if (state.flags[9]) {
             c->b_1a = DM2_CCM_WALK_NOW;
             c->attack_cooldown = 18;
@@ -899,6 +947,12 @@ void dm2_v1_creature_tick(void) {
     for (int i = 0; i < DM2_MAX_CREATURE_INSTANCES; i++) {
         DM2_V1_CreatureInstance *c = &g_creature_pool[i];
         if (!c->alive) continue;
+        if (g_ai_table_gdat_bound && !dm2_v1_creature_ai_spec(c->ai_index)) {
+            /* A row can disappear only across an explicit table remount.
+             * Keep the instance inert rather than carrying forward any
+             * data-free CCM, attack, spell, or HP behavior. */
+            continue;
+        }
 
         if (c->attack_cooldown > 0) c->attack_cooldown--;
 

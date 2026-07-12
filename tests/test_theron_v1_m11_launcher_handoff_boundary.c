@@ -170,6 +170,8 @@ static void run_empty_launcher_boundary(void) {
 static void run_track02_startup_overlay_regression(void) {
     Theron_V1_BootStartupHostRenderReceipt receipt;
     M11_GameViewState view;
+    M11_GameLaunchSpec spec;
+    Theron_Track02StartupLoaderReceipt bad_loader_receipt;
 
     theron_v1_boot_startup_host_render_receipt_init(&receipt);
     receipt.track02_startup_graphics_executed = 1;
@@ -190,6 +192,22 @@ static void run_track02_startup_overlay_regression(void) {
                     strcmp(view.lastAction, "STARTUP") == 0 &&
                     strcmp(view.lastOutcome, "TRACK02 ATLAS ROUTES INVALID") == 0,
                 "M11 returns to launcher when Track02 startup atlas routes are absent");
+    M11_GameView_Shutdown(&view);
+
+    memset(&spec, 0, sizeof(spec));
+    memset(&bad_loader_receipt, 0, sizeof(bad_loader_receipt));
+    bad_loader_receipt.valid = 1;
+    spec.gameId = "theron";
+    spec.title = "THERON'S QUEST";
+    spec.dataDir = ".";
+    spec.verifiedAssetPath = "not-a-track02";
+    spec.verifiedAssetMd5 = "f23601102138f87c33025877767ebf76";
+    spec.theronTrack02LoaderReceipt = &bad_loader_receipt;
+    M11_GameView_Init(&view);
+    expect_true(!M11_GameView_Start(&view, &spec) &&
+                    strcmp(view.lastOutcome,
+                           "TRACK02 CUE LOADER RECEIPT INVALID") == 0,
+                "M11 rejects an invalid scanner Track02 CUE loader receipt before boot");
     M11_GameView_Shutdown(&view);
 }
 

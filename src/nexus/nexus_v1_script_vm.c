@@ -3,29 +3,17 @@
 #include <string.h>
 #include <stdio.h>
 
-/* Nexus V1 provisional trigger VM + dispatcher.
- * Bounded implementation: the real trigger owner/record format is unresolved.
- * docs/nexus_triggers.md and docs/nexus_sensors.md currently classify
- * SDDRVS.TSK as Saturn sound-driver data; SLEV*.BIN / DGN metadata remain
- * candidate trigger sources. This module provides deterministic runtime
- * condition/action dispatch and accepts only an explicit SLEV rule-table
- * envelope before enabling parsed runtime dispatch. */
+/* Nexus V1 SLEV task receipt.
+ *
+ * The hash-verified SLEV00-15 corpus is big-endian SH-2 task code, not the
+ * former Firestaff-only condition/action envelope. Every canonical file has
+ * the same 36-byte entry spine below. Its MOV #imm,R2 setup operand and two
+ * PC-relative MOV.L operands resolve to bounded entry receipts; only the
+ * MOV.L values resolve to in-file literals in the observed 0x0020xxxx range.
+ * This recognizes that header grammar only; task-body bytes remain opaque and
+ * cannot create rules or dispatch actions. */
 
-#define NEXUS_SLEV_RULE_MAGIC_SIZE 4
-#define NEXUS_SLEV_RULE_HEADER_SIZE 8
-#define NEXUS_SLEV_RULE_VERSION 1
-#define NEXUS_SLEV_RULE_RECORD_SIZE 32
-
-static int nexus_read_u16_le(const uint8_t *p) {
-    return p ? (int)((uint16_t)p[0] | ((uint16_t)p[1] << 8)) : 0;
-}
-
-static int nexus_read_s16_le(const uint8_t *p) {
-    uint16_t v;
-    if (!p) return 0;
-    v = (uint16_t)nexus_read_u16_le(p);
-    return (v & 0x8000u) ? (int)v - 0x10000 : (int)v;
-}
+#define NEXUS_SLEV_TASK_HEADER_SIZE 36
 
 static int nexus_read_u16_be(const uint8_t *p) {
     return p ? (int)(((uint16_t)p[0] << 8) | (uint16_t)p[1]) : 0;
@@ -38,75 +26,61 @@ static int nexus_read_u32_be(const uint8_t *p) {
                      (uint32_t)p[3]) : 0;
 }
 
-static int nexus_script_is_condition_opcode(int opcode) {
-    return opcode >= NEXUS_OP_WHEN_PARTY_ON_XY &&
-           opcode <= NEXUS_OP_WHEN_ITEM_USED;
+static int nexus_slev_is_observed_literal(int value) {
+    return (value & 0xffff0000) == 0x00200000;
 }
 
-static int nexus_script_is_action_opcode(int opcode) {
-    return opcode >= NEXUS_OP_TELEPORT &&
-           opcode <= NEXUS_OP_END_GAME;
-}
-
-static int nexus_script_parse_slev_rule_table(Nexus_ScriptVM *vm,
-                                              const uint8_t *data,
-                                              int size) {
-    int record_size;
-    int count;
+static int nexus_script_parse_slev_task_header(Nexus_ScriptVM *vm,
+                                                const uint8_t *data,
+                                                int size) {
+    static const uint8_t fixed_spine[] = {
+        0x2f, 0xe6, 0x00, 0x00, 0x00, 0x00, 0x34, 0x23,
+        0x4f, 0x22, 0x7f, 0xfc, 0x2f, 0x52, 0x8d, 0x02,
+        0x23, 0x42, 0x44, 0x11, 0x89, 0x04, 0xe0, 0xff,
+        0x7f, 0x04, 0x4f, 0x26, 0x00, 0x0b, 0x6e, 0xf6,
+        0x00, 0x00, 0x00, 0x00
+    };
+    int primary_literal_offset;
+    int aux_literal_offset;
+    int primary_literal;
+    int aux_literal;
     int i;
 
-    if (!vm || !data || size < NEXUS_SLEV_RULE_HEADER_SIZE) return 0;
-    if (data[0] != 'S' || data[1] != 'L' ||
-        data[2] != 'E' || data[3] != 'V') {
+    if (!vm || !data || size < NEXUS_SLEV_TASK_HEADER_SIZE ||
+        (size & 1) != 0) return 0;
+    for (i = 0; i < NEXUS_SLEV_TASK_HEADER_SIZE; i++) {
+        if (i == 2 || i == 3 || i == 4 || i == 5 || i == 32 || i == 33 ||
+            i == 34 || i == 35) continue;
+        if (data[i] != fixed_spine[i]) return 0;
+    }
+    if ((data[2] & 0xf0u) != 0xe0u || (data[4] & 0xf0u) != 0xd0u ||
+        (data[32] & 0xf0u) != 0xd0u) return 0;
+
+    primary_literal_offset = 8 + (int)data[5] * 4;
+    aux_literal_offset = 36 + (int)data[33] * 4;
+    if (primary_literal_offset < NEXUS_SLEV_TASK_HEADER_SIZE ||
+        aux_literal_offset < NEXUS_SLEV_TASK_HEADER_SIZE ||
+        primary_literal_offset > size - 4 || aux_literal_offset > size - 4) {
         return 0;
     }
-    if (data[4] != NEXUS_SLEV_RULE_VERSION) return 0;
-    record_size = data[5];
-    if (record_size != NEXUS_SLEV_RULE_RECORD_SIZE) return 0;
+    primary_literal = nexus_read_u32_be(data + primary_literal_offset);
+    aux_literal = nexus_read_u32_be(data + aux_literal_offset);
+    if (!nexus_slev_is_observed_literal(primary_literal) ||
+        !nexus_slev_is_observed_literal(aux_literal)) return 0;
 
-    count = nexus_read_u16_le(&data[6]);
-    if (count < 0 || count > NEXUS_SCRIPT_MAX_RULES) return 0;
-    if (size != NEXUS_SLEV_RULE_HEADER_SIZE + count * record_size) return 0;
-
-    for (i = 0; i < count; i++) {
-        const uint8_t *r = data + NEXUS_SLEV_RULE_HEADER_SIZE +
-                           i * record_size;
-        if (!nexus_script_is_condition_opcode(r[0])) return 0;
-        if (!nexus_script_is_action_opcode(r[1])) return 0;
-    }
-
-    for (i = 0; i < count; i++) {
-        const uint8_t *src = data + NEXUS_SLEV_RULE_HEADER_SIZE +
-                             i * record_size;
-        Nexus_ScriptRule *dst = &vm->rules[i];
-
-        memset(dst, 0, sizeof(*dst));
-        dst->rule_id = nexus_read_u16_le(&src[4]);
-        if (dst->rule_id == 0) dst->rule_id = i + 1;
-        dst->enabled = (src[2] & 0x02u) ? 0 : 1;
-        dst->once_only = (src[2] & 0x01u) ? 1 : 0;
-        dst->cond.opcode = (Nexus_WorldOpcode)src[0];
-        dst->cond.x = nexus_read_s16_le(&src[6]);
-        dst->cond.y = nexus_read_s16_le(&src[8]);
-        dst->cond.value = nexus_read_s16_le(&src[10]);
-        dst->cond.target_x = nexus_read_s16_le(&src[12]);
-        dst->cond.target_y = nexus_read_s16_le(&src[14]);
-        dst->cond.target_level = nexus_read_s16_le(&src[16]);
-        dst->action.opcode = (Nexus_WorldOpcode)src[1];
-        dst->action.x = nexus_read_s16_le(&src[18]);
-        dst->action.y = nexus_read_s16_le(&src[20]);
-        dst->action.value = nexus_read_s16_le(&src[22]);
-        dst->action.level = nexus_read_s16_le(&src[24]);
-        dst->action.item_id = nexus_read_s16_le(&src[26]);
-        dst->action.message_id = nexus_read_s16_le(&src[28]);
-        dst->action.flag_index = nexus_read_s16_le(&src[30]);
-    }
-
-    vm->rule_count = count;
-    vm->parser_supported = 1;
-    vm->dispatch_enabled = count > 0 ? 1 : 0;
-    vm->parsed_record_size = record_size;
-    vm->parsed_rule_count = count;
+    vm->real_task_header_supported = 1;
+    vm->real_task_header_size = NEXUS_SLEV_TASK_HEADER_SIZE;
+    vm->real_task_setup_immediate = data[3];
+    vm->real_task_setup_immediate_provenance =
+        NEXUS_SLEV_SETUP_IMMEDIATE_SH2_MOV_R2;
+    vm->real_task_primary_literal_offset = primary_literal_offset;
+    vm->real_task_primary_literal_address = primary_literal;
+    vm->real_task_primary_literal_provenance =
+        NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R3;
+    vm->real_task_aux_literal_offset = aux_literal_offset;
+    vm->real_task_aux_literal_address = aux_literal;
+    vm->real_task_aux_literal_provenance =
+        NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R0;
     return 1;
 }
 
@@ -161,11 +135,10 @@ static void nexus_script_profile_real_slev_task(Nexus_ScriptVM *vm,
         }
     }
 
-    /* Local verified SLEV00-15 assets are SH-2 task-like code streams:
-     * first opcode 0x2fe6, even 16-bit words, one or more RTS opcodes.
-     * This is a real-format profile only; it intentionally does not enable
-     * condition/action dispatch until the call table and operands are decoded. */
-    if (first_opcode == 0x2fe6 && rts_count > 0) {
+    /* The canonical SLEV00-15 corpus is SH-2 task-shaped: an observed entry
+     * spine, even 16-bit words, and at least one RTS. This is profile-only. */
+    if (nexus_script_parse_slev_task_header(vm, data, size) &&
+        first_opcode == 0x2fe6 && rts_count > 0) {
         vm->real_task_profile_supported = 1;
         vm->real_task_word_count = size / 2;
         vm->real_task_first_opcode = first_opcode;
@@ -194,14 +167,18 @@ void nexus_script_vm_init(Nexus_ScriptVM *vm) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
- * Load candidate trigger data for a level.
- * Real SLEV ownership remains unresolved, so dispatch is enabled only for
- * the explicit SLEV rule-table envelope documented in the public header.
- * Source: docs/nexus_triggers.md — unresolved trigger owner.
+ * Load candidate task data for a level. Canonical SLEV parsing is receipt-only.
  * ═══════════════════════════════════════════════════════════════════ */
 
 int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
                                 const uint8_t *data, int size) {
+    return nexus_script_vm_load_canonical_level(vm, level_index, data, size,
+                                                0);
+}
+
+int nexus_script_vm_load_canonical_level(Nexus_ScriptVM *vm, int level_index,
+                                         const uint8_t *data, int size,
+                                         int canonical_source_verified) {
     if (!vm || !vm->initialized) return -1;
     if (level_index < 0 || level_index > 15) return -1;
 
@@ -211,6 +188,7 @@ int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
     vm->current_level = level_index;
     vm->candidate_source_loaded = (data && size > 0) ? 1 : 0;
     vm->candidate_source_bytes = vm->candidate_source_loaded ? size : 0;
+    vm->canonical_source_verified = canonical_source_verified ? 1 : 0;
     vm->parser_supported = 0;
     vm->dispatch_enabled = 0;
     vm->parsed_record_size = 0;
@@ -228,23 +206,28 @@ int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
     vm->real_task_first_literal_address = 0;
     vm->real_task_last_literal_address = 0;
     vm->real_task_checksum16 = 0;
+    vm->real_task_header_supported = 0;
+    vm->real_task_header_size = 0;
+    vm->real_task_setup_immediate = 0;
+    vm->real_task_setup_immediate_provenance =
+        NEXUS_SLEV_SETUP_IMMEDIATE_NONE;
+    vm->real_task_primary_literal_offset = -1;
+    vm->real_task_primary_literal_address = 0;
+    vm->real_task_primary_literal_provenance = NEXUS_SLEV_LITERAL_NONE;
+    vm->real_task_aux_literal_offset = -1;
+    vm->real_task_aux_literal_address = 0;
+    vm->real_task_aux_literal_provenance = NEXUS_SLEV_LITERAL_NONE;
 
-    if (vm->candidate_source_loaded) {
-        if (!nexus_script_parse_slev_rule_table(vm, data, size)) {
-            nexus_script_profile_real_slev_task(vm, data, size);
-        }
-    }
+    if (vm->candidate_source_loaded && vm->canonical_source_verified)
+        nexus_script_profile_real_slev_task(vm, data, size);
 
-    /* No synthetic fallback rules here: SLEV*.BIN/DGN trigger bytes that do
-     * not match the bounded rule-table envelope are routed into a receipt.
-     *
-     * Evidence so far:
-     * - docs/nexus_triggers.md: SDDRVS.TSK is the 26,610-byte sound driver.
-     * - Per-level SLEV*.BIN files (2-12 KB) remain plausible event/script data. */
+    /* No SLEV task-body opcode or record has a source-evidenced meaning yet. */
 
-    printf("Nexus script VM: level %d source=%d bytes=%d parser=%s rules=%d\n",
-        level_index, vm->candidate_source_loaded, vm->candidate_source_bytes,
-        vm->parser_supported ? "parsed" : "pending", vm->rule_count);
+    printf("Nexus script VM: level %d source=%d verified=%d bytes=%d parser=%s rules=%d\n",
+        level_index, vm->candidate_source_loaded, vm->canonical_source_verified,
+        vm->candidate_source_bytes,
+        vm->real_task_header_supported ? "task-header" : "pending",
+        vm->rule_count);
     return 0;
 }
 
@@ -254,6 +237,7 @@ void nexus_script_vm_unload(Nexus_ScriptVM *vm) {
     vm->current_level = -1;
     vm->candidate_source_loaded = 0;
     vm->candidate_source_bytes = 0;
+    vm->canonical_source_verified = 0;
     vm->parser_supported = 0;
     vm->dispatch_enabled = 0;
     vm->parsed_record_size = 0;
@@ -271,6 +255,17 @@ void nexus_script_vm_unload(Nexus_ScriptVM *vm) {
     vm->real_task_first_literal_address = 0;
     vm->real_task_last_literal_address = 0;
     vm->real_task_checksum16 = 0;
+    vm->real_task_header_supported = 0;
+    vm->real_task_header_size = 0;
+    vm->real_task_setup_immediate = 0;
+    vm->real_task_setup_immediate_provenance =
+        NEXUS_SLEV_SETUP_IMMEDIATE_NONE;
+    vm->real_task_primary_literal_offset = -1;
+    vm->real_task_primary_literal_address = 0;
+    vm->real_task_primary_literal_provenance = NEXUS_SLEV_LITERAL_NONE;
+    vm->real_task_aux_literal_offset = -1;
+    vm->real_task_aux_literal_address = 0;
+    vm->real_task_aux_literal_provenance = NEXUS_SLEV_LITERAL_NONE;
 }
 
 int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
@@ -285,6 +280,7 @@ int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
     out_receipt->level_index = vm->current_level;
     out_receipt->candidate_source_loaded = vm->candidate_source_loaded;
     out_receipt->candidate_source_bytes = vm->candidate_source_bytes;
+    out_receipt->canonical_source_verified = vm->canonical_source_verified;
     out_receipt->parser_supported = vm->parser_supported;
     out_receipt->dispatch_enabled = vm->dispatch_enabled;
     out_receipt->parsed_record_size = vm->parsed_record_size;
@@ -308,16 +304,30 @@ int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
     out_receipt->real_task_last_literal_address =
         vm->real_task_last_literal_address;
     out_receipt->real_task_checksum16 = vm->real_task_checksum16;
+    out_receipt->real_task_header_supported = vm->real_task_header_supported;
+    out_receipt->real_task_header_size = vm->real_task_header_size;
+    out_receipt->real_task_setup_immediate = vm->real_task_setup_immediate;
+    out_receipt->real_task_setup_immediate_provenance =
+        vm->real_task_setup_immediate_provenance;
+    out_receipt->real_task_primary_literal_offset =
+        vm->real_task_primary_literal_offset;
+    out_receipt->real_task_primary_literal_address =
+        vm->real_task_primary_literal_address;
+    out_receipt->real_task_primary_literal_provenance =
+        vm->real_task_primary_literal_provenance;
+    out_receipt->real_task_aux_literal_offset = vm->real_task_aux_literal_offset;
+    out_receipt->real_task_aux_literal_address =
+        vm->real_task_aux_literal_address;
+    out_receipt->real_task_aux_literal_provenance =
+        vm->real_task_aux_literal_provenance;
     out_receipt->rules_loaded = vm->rule_count;
 
     if (!vm->candidate_source_loaded) {
         out_receipt->status = NEXUS_SCRIPT_RUNTIME_NO_SOURCE;
-    } else if (!vm->parser_supported) {
+    } else {
         out_receipt->status =
             NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT;
         out_receipt->blocks_real_script_dispatch = 1;
-    } else {
-        out_receipt->status = NEXUS_SCRIPT_RUNTIME_READY_PARSED;
     }
     return 0;
 }

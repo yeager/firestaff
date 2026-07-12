@@ -17,9 +17,11 @@
  * selection seam those probes intentionally do not own.
  */
 
+#include "asset_loader_m11.h"
 #include "title_frontend_v1.h"
 #include "vga_palette_pc34_compat.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -290,9 +292,114 @@ static void check_palette_cross_source_contract(void) {
              (unsigned int)V1_TITLE_FRONTEND_C001_BLIT_NONE);
 }
 
-int main(void) {
+static unsigned int count_non_black(const unsigned char* pixels,
+                                    unsigned int width,
+                                    unsigned int x,
+                                    unsigned int y,
+                                    unsigned int region_width,
+                                    unsigned int region_height) {
+    unsigned int count = 0u;
+    unsigned int row;
+    unsigned int col;
+
+    for (row = 0u; row < region_height; ++row) {
+        for (col = 0u; col < region_width; ++col) {
+            if (pixels[(y + row) * width + x + col] != 0u) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
+static void check_real_pc34_c001(const char* graphics_path) {
+    M11_AssetLoader loader;
+    const M11_AssetSlot* c001;
+    unsigned char framebuffer[320u * 200u];
+    V1_TitleFrontendSourceAnimationStep first_zoom;
+    V1_TitleFrontendSourceAnimationStep last_zoom;
+    V1_TitleFrontendSourceAnimationStep strikes_back;
+    V1_TitleFrontendC001BlitPlan plan;
+
+    if (!graphics_path || !graphics_path[0]) {
+        printf("SKIP real C001 fixture: pass hash-verified GRAPHICS.DAT path\n");
+        return;
+    }
+    memset(&loader, 0, sizeof(loader));
+    expect_i("real C001: loader opens supplied PC34 GRAPHICS.DAT",
+             M11_AssetLoader_Init(&loader, graphics_path), 1);
+    if (!M11_AssetLoader_IsReady(&loader)) {
+        return;
+    }
+    c001 = M11_AssetLoader_Load(&loader, 1u);
+    expect_truth("real C001: graphic 1 decodes", c001 != NULL);
+    if (!c001) {
+        M11_AssetLoader_Shutdown(&loader);
+        return;
+    }
+    expect_u("real C001: width", c001->width, 320u);
+    expect_u("real C001: height", c001->height, 200u);
+    expect_truth("real C001: PRESENTS source strip has original pixels",
+                 count_non_black(c001->pixels, c001->width,
+                                 0u, 137u, 320u, 16u) > 0u);
+    expect_truth("real C001: DUNGEON MASTER source strip has original pixels",
+                 count_non_black(c001->pixels, c001->width,
+                                 0u, 0u, 320u, 80u) > 0u);
+    expect_truth("real C001: MASTER STRIKES BACK source strip has original pixels",
+                 count_non_black(c001->pixels, c001->width,
+                                 0u, 80u, 320u, 57u) > 0u);
+
+    expect_i("real C001: first zoom step resolves",
+             V1_TitleFrontend_GetSourceAnimationStep(2u, &first_zoom), 1);
+    expect_i("real C001: last zoom step resolves",
+             V1_TitleFrontend_GetSourceAnimationStep(19u, &last_zoom), 1);
+    expect_i("real C001: strikes-back step resolves",
+             V1_TitleFrontend_GetSourceAnimationStep(22u, &strikes_back), 1);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    expect_i("real C001: first zoom plan resolves",
+             V1_TitleFrontend_GetC001BlitPlanForStep(&first_zoom, &plan), 1);
+    M11_AssetLoader_BlitSubRectScaled(c001, framebuffer, 320, 200,
+                                      (int)plan.dstX, (int)plan.dstY,
+                                      (int)plan.dstW, (int)plan.dstH,
+                                      (int)plan.srcX, (int)plan.srcY,
+                                      (int)plan.srcW, (int)plan.srcH,
+                                      plan.transparentColor);
+    expect_truth("real C001: first source-ordered zoom blit is visible",
+                 count_non_black(framebuffer, 320u, plan.dstX, plan.dstY,
+                                 plan.dstW, plan.dstH) > 0u);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    expect_i("real C001: final zoom plan resolves",
+             V1_TitleFrontend_GetC001BlitPlanForStep(&last_zoom, &plan), 1);
+    M11_AssetLoader_BlitSubRectScaled(c001, framebuffer, 320, 200,
+                                      (int)plan.dstX, (int)plan.dstY,
+                                      (int)plan.dstW, (int)plan.dstH,
+                                      (int)plan.srcX, (int)plan.srcY,
+                                      (int)plan.srcW, (int)plan.srcH,
+                                      plan.transparentColor);
+    expect_truth("real C001: final source-ordered zoom blit is visible",
+                 count_non_black(framebuffer, 320u, plan.dstX, plan.dstY,
+                                 plan.dstW, plan.dstH) > 0u);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    expect_i("real C001: strikes-back plan resolves",
+             V1_TitleFrontend_GetC001BlitPlanForStep(&strikes_back, &plan), 1);
+    M11_AssetLoader_BlitRegion(c001, (int)plan.srcX, (int)plan.srcY,
+                               (int)plan.srcW, (int)plan.srcH,
+                               framebuffer, 320, 200,
+                               (int)plan.dstX, (int)plan.dstY,
+                               plan.transparentColor);
+    expect_truth("real C001: strikes-back source blit is visible",
+                 count_non_black(framebuffer, 320u, plan.dstX, plan.dstY,
+                                 plan.dstW, plan.dstH) > 0u);
+    M11_AssetLoader_Shutdown(&loader);
+}
+
+int main(int argc, char** argv) {
     check_selection_contract();
     check_palette_cross_source_contract();
+    check_real_pc34_c001(argc > 1 ? argv[1] : getenv("FIRESTAFF_DM1_GRAPHICS_DAT"));
 
     if (g_fail) {
         printf("summary=%d passed %d failed\n", g_pass, g_fail);

@@ -320,17 +320,17 @@ int main(void) {
                                                      cat, sizeof(cat),
                                                      rsn_r, sizeof(rsn_r));
         probe_record(&stats, "CSB_V22_PER_CELL_FIELD_TELEPORTER",
-                     rc_t == 0 && strcmp(rsn_t, "field_teleporter_no_asset") == 0,
-                     "teleporter -> no asset (not wall_dungeon_d*)");
+                     rc_t == 0 && strcmp(rsn_t, "v1_original_material_unbound_field_teleporter") == 0,
+                     "teleporter retains V1 original-material route");
         probe_record(&stats, "CSB_V22_PER_CELL_FIELD_FLUXCAGE",
-                     rc_f == 0 && strcmp(rsn_f, "field_fluxcage_no_asset") == 0,
-                     "fluxcage -> no asset");
+                     rc_f == 0 && strcmp(rsn_f, "v1_original_material_unbound_field_fluxcage") == 0,
+                     "fluxcage retains V1 original-material route");
         probe_record(&stats, "CSB_V22_PER_CELL_FIELD_EXPLOSION",
-                     rc_e == 0 && strcmp(rsn_e, "field_explosion_no_asset") == 0,
-                     "explosion -> no asset");
+                     rc_e == 0 && strcmp(rsn_e, "v1_original_material_unbound_field_explosion") == 0,
+                     "explosion retains V1 original-material route");
         probe_record(&stats, "CSB_V22_PER_CELL_FIELD_CHAOS_RIFT",
-                     rc_r == 0 && strcmp(rsn_r, "field_chaos_rift_no_asset") == 0,
-                     "chaos_rift -> no asset");
+                     rc_r == 0 && strcmp(rsn_r, "v1_original_material_unbound_field_chaos_rift") == 0,
+                     "chaos_rift retains V1 original-material route");
     }
 
     /* ── Scene 4: CSB narrative shapes have their own assets ── */
@@ -356,8 +356,8 @@ int main(void) {
     {
         int pc = csb_v22_inplace_route_pair_count();
         probe_record(&stats, "CSB_V22_PER_CELL_PAIR_COUNT",
-                     pc == 29,
-                     "pair_count == 29 (3 walls + 3 doors + 9 floors + 3 specials + 1 ceiling + 3 creatures + 4 chaos_rune variants + 1 dsa + 2 narrative)");
+                     pc == 28,
+                     "pair_count == 28 after removing the unbound ceiling substitute");
     }
 
     /* ── Scene 6: 4-direction sweep paints 4x9 cells ──────────── */

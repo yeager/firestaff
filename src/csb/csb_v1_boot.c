@@ -407,7 +407,7 @@ static uint32_t csb_v1_boot_startup_asset_binding_hash_pc34(
     return hash ? hash : 1u;
 }
 
-static int csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+int csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
     const CSB_V1_BootProfile *profile,
     const CSB_V1_BootStartupLaunchReceipts_PC34 *launch_receipts,
     CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *out_receipt)
@@ -1195,6 +1195,12 @@ int csb_v1_boot_render_viewport_frame_pc34(
     if (drawer_binding) {
         csb_v1_viewport_apply_runtime_drawer_binding(&cfg, drawer_binding);
     }
+    /* ReDMCSB DUNVIEW.C F0115 consumes original GRAPHICS.DAT materials.
+     * Once the boot profile has accepted that paired CSB media, a failed
+     * material draw is a missing-data receipt, never permission to paint a
+     * Firestaff diagnostic marker into the live viewport. */
+    cfg.real_graphics_session =
+        profile->assets_verified && profile->graphics_verified ? 1 : 0;
     cfg.csbgraphics_plan = csb_v1_boot_csbgraphics_runtime_plan(profile);
     cfg.csbgraphics_cache = csb_v1_boot_csbgraphics_cache(profile);
     cfg.custom_background_skin_def_words =
@@ -1713,6 +1719,54 @@ int csb_v1_boot_startup_entrance_accepts_input_from_snapshot_pc34(
     }
     return csb_v1_startup_entrance_accepts_input_from_host_facts_pc34(
         &facts);
+}
+
+int csb_v1_boot_startup_presentation_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    int *out_startup_frame,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready)
+{
+    CSB_V1_StartupPresentationReceipt_PC34 receipt;
+
+    if (!csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
+            snapshot,
+            &receipt)) {
+        return 0;
+    }
+    if (out_phase && out_phase_size > 0) {
+        snprintf(out_phase, (size_t)out_phase_size, "%s", receipt.phase);
+    }
+    if (out_startup_active) {
+        *out_startup_active = receipt.startup_active;
+    }
+    if (out_startup_frame) {
+        *out_startup_frame = receipt.startup_frame;
+    }
+    if (out_animation && out_animation_size > 0) {
+        snprintf(out_animation, (size_t)out_animation_size, "%s",
+                 receipt.animation);
+    }
+    if (out_animation_active) {
+        *out_animation_active = receipt.animation_active;
+    }
+    if (out_title_frame) {
+        *out_title_frame = receipt.title_frame;
+    }
+    if (out_title_frame_max) {
+        *out_title_frame_max = receipt.title_frame_max;
+    }
+    if (out_title_ready) {
+        *out_title_ready = receipt.title_ready;
+    }
+    return 1;
 }
 
 int csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
@@ -3772,7 +3826,7 @@ int csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
     return out_proof->valid;
 }
 
-static int csb_v1_boot_startup_packaged_capture_proof_from_snapshot_internal_pc34(
+int csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_BootStartupPackagedCaptureProof_PC34 *out_proof)
 {
@@ -3820,7 +3874,7 @@ static int csb_v1_boot_startup_visual_title_sample_pc34(
     snapshot.title_active = 1;
     snapshot.title_frame = frame;
     snapshot.title_source_step = source_step;
-    if (!csb_v1_boot_startup_packaged_capture_proof_from_snapshot_internal_pc34(
+    if (!csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
             &snapshot,
             &proof) ||
         !proof.valid ||
@@ -3844,7 +3898,7 @@ static int csb_v1_boot_startup_visual_packaged_snapshot_pc34(
     CSB_V1_BootStartupPackagedCaptureProof_PC34 *proof,
     uint32_t *out_hash)
 {
-    if (!csb_v1_boot_startup_packaged_capture_proof_from_snapshot_internal_pc34(
+    if (!csb_v1_boot_startup_packaged_capture_proof_from_snapshot_pc34(
             snapshot,
             proof) ||
         !proof->valid ||
@@ -5066,6 +5120,10 @@ int csb_v1_boot_startup_host_view_receipt_from_capture_pc34(
             hud->selected_utility_action_index;
     }
 
+    out_receipt->render_plan_valid =
+        csb_v1_boot_startup_capture_render_plan_pc34(
+            capture_receipt,
+            &out_receipt->render_plan);
     out_receipt->render_draw_valid =
         csb_v1_boot_startup_render_draw_receipt_from_capture_pc34(
             capture_receipt,
@@ -5121,11 +5179,9 @@ int csb_v1_boot_startup_m11_presentation_receipt_from_snapshot_pc34(
     }
 
     out_receipt->route = host_view.route;
-    out_receipt->startup_render_plan_valid =
-        host_view.render_draw_valid &&
-        host_view.render_draw.render_plan_valid;
+    out_receipt->startup_render_plan_valid = host_view.render_plan_valid;
     if (out_receipt->startup_render_plan_valid) {
-        out_receipt->startup_render_plan = host_view.render_draw.render_plan;
+        out_receipt->startup_render_plan = host_view.render_plan;
     }
     out_receipt->hud_menu_draw_valid = host_view.hud_menu_draw_valid;
     if (out_receipt->hud_menu_draw_valid) {

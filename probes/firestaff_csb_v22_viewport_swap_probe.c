@@ -102,9 +102,6 @@ static int write_minimal_csb_v22_cache(const char* cache_path) {
         { "floor_shapes", "floor_pit_01",                  0xFF808000u },
         { "floor_shapes", "floor_stairs_01",               0xFF008080u },
         { "floor_shapes", "ceiling_plain_01",              0xFF808080u },
-        { "floor_shapes", "field_teleporter_01",           0xFF404040u },
-        { "floor_shapes", "field_chaos_rift_01",           0xFF606060u },
-        { "floor_shapes", "field_explosion_01",            0xFFA0A0A0u },
         /* Creatures / items */
         { "creature_shapes", "creature_chaos_fiend_01",    0xFF800080u },
         /* Doors */
@@ -364,10 +361,9 @@ int main(void) {
                  strcmp(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_CREATURE),
                         "creature_chaos_fiend_01") == 0,
                  "CREATURE -> creature_chaos_fiend_01");
-    probe_record(&stats, "CSB_V22_ASSET_FIELD_TELEPORTER",
-                 strcmp(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FIELD_TELEPORTER),
-                        "field_teleporter_01") == 0,
-                 "FIELD_TELEPORTER -> field_teleporter_01");
+    probe_record(&stats, "CSB_V22_ASSET_FIELD_TELEPORTER_V1",
+                 csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FIELD_TELEPORTER) == NULL,
+                 "FIELD_TELEPORTER retains V1 original-material route");
     probe_record(&stats, "CSB_V22_ASSET_PRISON_DOOR",
                  strcmp(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_PRISON_DOOR),
                         "door_prison_01") == 0,

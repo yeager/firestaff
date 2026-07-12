@@ -113,6 +113,32 @@ static void cleanup_root_with_slot0(const char *root) {
     bd_rmdir(root);
 }
 
+static void cleanup_root_with_transfer_files(const char *root) {
+    char source[THERON_V1_SRM_PATH_MAX];
+    char destination[THERON_V1_SRM_PATH_MAX];
+    char legacy_temporary[THERON_V1_SRM_PATH_MAX + 5u];
+    if (!root || !root[0]) return;
+    snprintf(source, sizeof(source), "%s%csource.srm", root, BD_PATH_SEP);
+    snprintf(destination, sizeof(destination), "%s%cdestination.srm", root, BD_PATH_SEP);
+    snprintf(legacy_temporary, sizeof(legacy_temporary), "%s.tmp", destination);
+    bd_unlink(source);
+    bd_unlink(destination);
+    bd_unlink(legacy_temporary);
+    bd_rmdir(root);
+}
+
+static int read_bytes(const char *path, uint8_t *buf, size_t size) {
+    FILE *fp;
+    if (!path || !buf || size == 0u) return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    if (fread(buf, 1, size, fp) != size) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 static int write_bytes(const char *path, const uint8_t *buf, size_t size) {
     FILE *fp = fopen(path, "wb");
     if (!fp) return 0;
@@ -915,6 +941,148 @@ static void test_probe_slot0_envelope_skip_when_absent(void) {
     else bd_setenv("FIRESTAFF_THERON_SRM_DIR", NULL);
 }
 
+static void test_opaque_original_container_transfer(void) {
+#if FIRESTAFF_HAS_ZLIB
+    static const uint8_t unknown_body[] = {
+        'T', 'Q', 'R', '-', 'R', 'E', 'A', 'L', '-', 'B', 'O', 'D', 'Y', 0x01, 0x02
+    };
+    uint8_t srm_bytes[128];
+    uint8_t destination_bytes[sizeof(srm_bytes)];
+    uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    size_t srm_size = sizeof(srm_bytes);
+    Theron_V1SrmOpaqueTransferReceipt receipt;
+    char root[THERON_V1_SRM_PATH_MAX];
+    char source[THERON_V1_SRM_PATH_MAX];
+    char destination[THERON_V1_SRM_PATH_MAX];
+    char legacy_temporary[THERON_V1_SRM_PATH_MAX + 5u];
+
+    if (!make_temp_root(root)) {
+        skip_test("opaque original container transfer: temporary root unavailable");
+        return;
+    }
+    snprintf(source, sizeof(source), "%s%csource.srm", root, BD_PATH_SEP);
+    snprintf(destination, sizeof(destination), "%s%cdestination.srm", root, BD_PATH_SEP);
+    snprintf(legacy_temporary, sizeof(legacy_temporary), "%s.tmp", destination);
+    if (!build_synthetic_gzip_stream(unknown_body, sizeof(unknown_body), srm_bytes,
+                                     sizeof(srm_bytes), &srm_size) ||
+        !write_bytes(source, srm_bytes, srm_size)) {
+        skip_test("opaque original container transfer: gzip fixture unavailable");
+        cleanup_root_with_transfer_files(root);
+        return;
+    }
+    memset(&receipt, 0xCD, sizeof(receipt));
+    memset(scratch, 0, sizeof(scratch));
+    expect_true(theron_v1_srm_transfer_opaque_path(
+                    source, destination, scratch, sizeof(scratch), &receipt) == 1,
+                "opaque transfer accepts an authenticated unknown SRM body");
+    expect_true(receipt.validation_status == THERON_V1_SRM_PAYLOAD_PROBE_OK &&
+                    receipt.body_kind == THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED &&
+                    receipt.body_evidence.gzip_trailer_verified == 1,
+                "opaque transfer records authenticated container without body promotion");
+    expect_true(receipt.copied == 1 && receipt.byte_exact == 1 &&
+                    receipt.source_size == receipt.destination_size &&
+                    receipt.source_checksum32 == receipt.destination_checksum32 &&
+                    read_bytes(destination, destination_bytes, srm_size) &&
+                    memcmp(srm_bytes, destination_bytes, srm_size) == 0,
+                "opaque transfer round-trips exact original container bytes");
+    expect_true(theron_v1_srm_transfer_opaque_path(
+                    source, destination, scratch, sizeof(scratch), &receipt) == 0,
+                "opaque transfer refuses to overwrite an existing destination");
+    cleanup_root_with_transfer_files(root);
+
+    if (!make_temp_root(root)) {
+        skip_test("opaque original container transfer stale-temp: temporary root unavailable");
+        return;
+    }
+    snprintf(source, sizeof(source), "%s%csource.srm", root, BD_PATH_SEP);
+    snprintf(destination, sizeof(destination), "%s%cdestination.srm", root, BD_PATH_SEP);
+    snprintf(legacy_temporary, sizeof(legacy_temporary), "%s.tmp", destination);
+    if (!write_bytes(source, srm_bytes, srm_size) ||
+        !write_bytes(legacy_temporary, (const uint8_t *)"old", 3u)) {
+        skip_test("opaque original container transfer stale-temp: fixture write failed");
+        cleanup_root_with_transfer_files(root);
+        return;
+    }
+    memset(&receipt, 0xCD, sizeof(receipt));
+    expect_true(theron_v1_srm_transfer_opaque_path(
+                    source, destination, scratch, sizeof(scratch), &receipt) == 1 &&
+                    receipt.byte_exact == 1,
+                "opaque transfer ignores a stale legacy temporary without weakening exact copy");
+    cleanup_root_with_transfer_files(root);
+
+    if (!make_temp_root(root)) {
+        skip_test("opaque original container transfer rejection: temporary root unavailable");
+        return;
+    }
+    snprintf(source, sizeof(source), "%s%csource.srm", root, BD_PATH_SEP);
+    snprintf(destination, sizeof(destination), "%s%cdestination.srm", root, BD_PATH_SEP);
+    srm_bytes[srm_size - 8u] ^= 0x01u;
+    if (!write_bytes(source, srm_bytes, srm_size)) {
+        skip_test("opaque original container transfer rejection: source write failed");
+        cleanup_root_with_transfer_files(root);
+        return;
+    }
+    memset(&receipt, 0xCD, sizeof(receipt));
+    expect_true(theron_v1_srm_transfer_opaque_path(
+                    source, destination, scratch, sizeof(scratch), &receipt) == 0 &&
+                    receipt.validation_status == THERON_V1_SRM_PAYLOAD_PROBE_TRAILER_MISMATCH &&
+                    receipt.copied == 0 && stat(destination, &(struct stat){0}) != 0,
+                "opaque transfer rejects corruption before creating a destination");
+    {
+        static const uint8_t destination_before[] = {'k', 'e', 'e', 'p'};
+        uint8_t destination_after[sizeof(destination_before)];
+        expect_true(write_bytes(destination, destination_before, sizeof(destination_before)),
+                    "opaque transfer corruption fixture creates protected destination");
+        expect_true(theron_v1_srm_transfer_opaque_path(
+                        source, destination, scratch, sizeof(scratch), &receipt) == 0 &&
+                        receipt.copied == 0 &&
+                        read_bytes(destination, destination_after, sizeof(destination_after)) &&
+                        memcmp(destination_before, destination_after,
+                               sizeof(destination_before)) == 0,
+                    "opaque transfer never changes an existing destination");
+    }
+    cleanup_root_with_transfer_files(root);
+#else
+    skip_test("opaque original container transfer needs zlib (ZLIB_UNAVAILABLE)");
+    expect_true(1, "opaque original container transfer placeholder");
+#endif
+}
+
+static void test_runtime_refuses_unsupported_original_body(void) {
+#if FIRESTAFF_HAS_ZLIB
+    static const uint8_t unknown_body[] = {'T', 'Q', 'R', '-', 'O', 'P', 'A', 'Q', 'U', 'E'};
+    uint8_t srm_bytes[128];
+    size_t srm_size = sizeof(srm_bytes);
+    char root[THERON_V1_SRM_PATH_MAX];
+    char path[THERON_V1_SRM_PATH_MAX];
+    Theron_V1_World world;
+    Theron_V1_World before;
+    Theron_V1SrmRuntimeReceipt receipt;
+    uint8_t track = 0u;
+
+    if (!make_temp_root(root) || !theron_v1_srm_slot_path(root, 0, path) ||
+        !build_synthetic_gzip_stream(unknown_body, sizeof(unknown_body), srm_bytes,
+                                     sizeof(srm_bytes), &srm_size) ||
+        !write_bytes(path, srm_bytes, srm_size)) {
+        skip_test("runtime unsupported original SRM: fixture unavailable");
+        cleanup_root_with_slot0(root);
+        return;
+    }
+    theron_v1_world_init(&world);
+    before = world;
+    expect_true(theron_v1_srm_runtime_continue_path(
+                    &world, path, &track, 1u, "unverified-track", &receipt) ==
+                    THERON_V1_SRM_RUNTIME_UNSUPPORTED_BODY &&
+                    receipt.envelope_kind == THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED &&
+                    memcmp(&world, &before, sizeof(world)) == 0,
+                "runtime refuses an unsupported original body before mutating world state");
+    cleanup_root_with_slot0(root);
+#else
+    skip_test("runtime unsupported original SRM needs zlib (ZLIB_UNAVAILABLE)");
+    expect_true(1, "runtime unsupported original SRM placeholder");
+#endif
+}
+
 static void test_runtime_export_continue_roundtrip(void) {
 #if FIRESTAFF_HAS_ZLIB
     static const uint8_t descriptor[18] = {
@@ -984,6 +1152,8 @@ int main(void) {
     test_decode_path_slot_file_roundtrip();
     test_probe_slot0_envelope_via_env_override();
     test_probe_slot0_envelope_skip_when_absent();
+    test_opaque_original_container_transfer();
+    test_runtime_refuses_unsupported_original_body();
     test_runtime_export_continue_roundtrip();
 
     printf("=====================================================\n");

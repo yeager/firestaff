@@ -68,6 +68,54 @@ typedef enum {
     THERON_TRACK02_SIGNAL_INSUFFICIENT_ZERO_IMAGE = -3
 } Theron_Track02SignalStatus;
 
+/* Track 01 is original CD-DA narration, not a Track 02 graphics or ADPCM
+ * payload.  This handoff intentionally describes media only; the audio host
+ * owns decoding and playback. */
+typedef enum {
+    THERON_TRACK01_CDDA_UNAVAILABLE = 0,
+    THERON_TRACK01_CDDA_AVAILABLE = 1,
+    THERON_TRACK01_CDDA_BAD_INPUT = -1,
+    THERON_TRACK01_CDDA_UNVERIFIED = -2
+} Theron_Track01CddaStatus;
+
+#define THERON_TRACK01_CDDA_SECTOR_BYTES 2352u
+#define THERON_TRACK01_CDDA_SAMPLE_RATE 44100u
+#define THERON_TRACK01_CDDA_CHANNELS 2u
+#define THERON_TRACK01_CDDA_MAX_QUEUED_SECTORS 8u
+
+typedef struct {
+    Theron_Track01CddaStatus status;
+    Theron_Track02Variant track02_variant;
+    unsigned int track_number;
+    unsigned int index_minute;
+    unsigned int index_second;
+    unsigned int index_frame;
+    unsigned int index_lba;
+    size_t audio_file_bytes;
+    size_t audio_start_byte;
+    size_t audio_sector_count;
+    int original_cdda;
+    int playback_handoff_ready;
+    char cue_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char audio_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char track02_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char unavailable_reason[128];
+} Theron_Track01CddaHandoff;
+
+/* A bounded raw-CDDA reader and SDL3 output stream.  PCM is always original
+ * 44.1 kHz stereo signed-16-bit little-endian sectors; no decoder, mixer, or
+ * generated substitute is involved. */
+typedef struct {
+    void *audio_file;
+    void *sdl_stream;
+    size_t audio_start_byte;
+    size_t audio_sector_count;
+    size_t sectors_read;
+    size_t sectors_queued;
+    size_t loop_count;
+    int output_started;
+} Theron_Track01CddaStream;
+
 typedef struct {
     Theron_Track02Variant variant;
     size_t anchor_count;
@@ -126,6 +174,33 @@ Theron_Track02Variant theron_v1_track02_variant_for_md5(const char *md5_hex);
 Theron_Track02SignalStatus theron_v1_track02_resolve_media_path(
     const char *media_path,
     char out_payload_path[THERON_TRACK02_MOUNT_PATH_CAPACITY]);
+
+/* Produce a Track 01 CD-DA playback handoff from original CUE metadata.
+ * `verified_track02_md5` must be the known MD5 already verified by the
+ * caller against the CUE-declared Track 02 payload.  This function never
+ * decodes, synthesizes, or plays audio.  Plain BIN/ISO paths deliberately
+ * report UNAVAILABLE because they contain no Track 01 provenance metadata. */
+Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
+    const char *media_path,
+    const char *verified_track02_md5,
+    Theron_Track01CddaHandoff *out_handoff);
+
+/* Starts an SDL3 output-only stream from a verified Track 01 handoff.
+ * Pumping queues at most THERON_TRACK01_CDDA_MAX_QUEUED_SECTORS. */
+int theron_v1_track01_cdda_stream_start(
+    const Theron_Track01CddaHandoff *handoff,
+    Theron_Track01CddaStream *out_stream);
+int theron_v1_track01_cdda_stream_pump(Theron_Track01CddaStream *stream);
+void theron_v1_track01_cdda_stream_stop(Theron_Track01CddaStream *stream);
+
+/* Applies the original Track 01 title lifecycle.  The stream starts and
+ * pumps only while the title is active, loops only over the CUE-derived
+ * Track 01 sector bounds, and stops as soon as title ownership ends.
+ * Unavailable or unverified media is deliberately a no-playback gate. */
+int theron_v1_track01_cdda_lifecycle_update(
+    const Theron_Track01CddaHandoff *handoff,
+    int title_active,
+    Theron_Track01CddaStream *stream);
 
 Theron_Track02SignalStatus theron_v1_track02_find_bank_signal(
     const uint8_t *track02_data,
@@ -640,6 +715,542 @@ theron_v1_track02_compare_nonstartup_sector_layout_variants(
     const Theron_Track02NonstartupSectorReceipt *second,
     Theron_Track02NonstartupSectorLayoutComparisonReceipt *out_receipt);
 
+/* Byte-addressed index for the non-startup containers observed in the two
+ * hash-verified raw Track 02 variants. This is a locator, not a decoder:
+ * container roles remain unassigned until original loader evidence identifies
+ * them. Each record retains its physical raw-BIN span and MODE1 user-data
+ * segments, so later decoders need not scan or choose a fallback entry. */
+#define THERON_TRACK02_NONSTARTUP_CONTAINER_USER_SEGMENTS_MAX 2u
+#define THERON_TRACK02_MAX_NONSTARTUP_CONTAINERS \
+    (THERON_TRACK02_MAX_BANK_ANCHORS * 2u)
+
+typedef struct {
+    size_t raw_offset;
+    size_t user_data_offset;
+    size_t byte_count;
+} Theron_Track02NonstartupContainerUserSegment;
+
+typedef struct {
+    size_t anchor_index;
+    size_t descriptor_entry_index;
+    size_t descriptor_raw_offset;
+    size_t descriptor_relative_raw_offset;
+    size_t raw_offset;
+    size_t raw_byte_count;
+    size_t first_raw_sector;
+    size_t last_raw_sector;
+    size_t user_data_byte_count;
+    size_t user_data_segment_count;
+    Theron_Track02NonstartupContainerUserSegment user_data_segments
+        [THERON_TRACK02_NONSTARTUP_CONTAINER_USER_SEGMENTS_MAX];
+    uint32_t raw_span_hash;
+    uint32_t user_data_hash;
+    int opaque;
+    int promotion_blocked;
+} Theron_Track02NonstartupContainer;
+
+typedef struct {
+    Theron_Track02Variant variant;
+    size_t anchor_count;
+    size_t container_count;
+    Theron_Track02NonstartupContainer
+        containers[THERON_TRACK02_MAX_NONSTARTUP_CONTAINERS];
+    int valid;
+    int verified_track02;
+    int opaque_only;
+    int promotion_blocked;
+    uint32_t index_hash;
+} Theron_Track02NonstartupContainerIndex;
+
+/* Typed physical-sector descriptor for one indexed opaque container.
+ * This classifies only MODE1/2352 framing: bytes 0..15 are sync/header,
+ * bytes 16..2063 are user data, and bytes 2064..2351 are the EDC/ECC tail.
+ * It is a prerequisite for a
+ * later decoder to avoid treating sector-tail bytes as payload; it neither
+ * exports payload bytes nor assigns a game-data role. */
+#define THERON_TRACK02_NONSTARTUP_SECTOR_SPANS_MAX 4u
+
+typedef enum {
+    THERON_TRACK02_NONSTARTUP_SECTOR_SPAN_UNKNOWN = 0,
+    THERON_TRACK02_NONSTARTUP_SECTOR_SPAN_MODE1_SYNC_HEADER,
+    THERON_TRACK02_NONSTARTUP_SECTOR_SPAN_MODE1_USER_DATA,
+    THERON_TRACK02_NONSTARTUP_SECTOR_SPAN_MODE1_SECTOR_TAIL
+} Theron_Track02NonstartupSectorSpanRole;
+
+typedef struct {
+    Theron_Track02NonstartupSectorSpanRole role;
+    size_t raw_offset;
+    size_t byte_count;
+    size_t raw_sector_number;
+    size_t sector_offset;
+} Theron_Track02NonstartupSectorSpan;
+
+typedef struct {
+    size_t anchor_index;
+    size_t descriptor_entry_index;
+    size_t raw_offset;
+    size_t raw_byte_count;
+    size_t span_count;
+    size_t mode1_sync_header_byte_count;
+    size_t mode1_user_data_byte_count;
+    size_t mode1_sector_tail_byte_count;
+    Theron_Track02NonstartupSectorSpan
+        spans[THERON_TRACK02_NONSTARTUP_SECTOR_SPANS_MAX];
+    int valid;
+    int opaque_only;
+    int promotion_blocked;
+} Theron_Track02NonstartupSectorDescriptor;
+
+/* Build the complete non-startup container index from a known raw Track 02
+ * BIN. It accepts only the known JP/US raw-BIN MD5 variants and requires all
+ * three replicated descriptor anchors to expose exactly entries 6 and 8 as
+ * post-descriptor data while entry 7 remains zero-fill. It validates every
+ * physical/user-data segment boundary and hashes both representations. No
+ * bitmap, level, object, palette, text, or runtime route is inferred. */
+Theron_Track02SignalStatus theron_v1_track02_build_nonstartup_container_index(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02NonstartupContainerIndex *out_index);
+
+/* Find one validated opaque container by its replicated anchor and descriptor
+ * entry. This only returns an index record; it cannot select a fallback or
+ * decode a payload. */
+const Theron_Track02NonstartupContainer *
+theron_v1_track02_find_nonstartup_container(
+    const Theron_Track02NonstartupContainerIndex *index,
+    size_t anchor_index,
+    size_t descriptor_entry_index);
+
+/* Describe MODE1 sector framing for one indexed opaque container. Unknown
+ * containers, malformed indexes, or spans crossing an unclassified header
+ * area are rejected. */
+Theron_Track02SignalStatus
+theron_v1_track02_describe_nonstartup_container_sectors(
+    const Theron_Track02NonstartupContainerIndex *index,
+    size_t anchor_index,
+    size_t descriptor_entry_index,
+    Theron_Track02NonstartupSectorDescriptor *out_descriptor);
+
+const char *theron_v1_track02_nonstartup_sector_span_role_name(
+    Theron_Track02NonstartupSectorSpanRole role);
+
+/* Opaque local-format evidence for the six descriptor-derived containers.
+ * Every raw 0x400 window intersects MODE1 framing, so a future loader must
+ * reassemble user-data pieces before inspecting any payload. No local header,
+ * count, stride, or compression format is identified by this API. */
+typedef enum {
+    THERON_TRACK02_OPAQUE_CONTAINER_HEADER_NOT_IDENTIFIED = 0
+} Theron_Track02OpaqueContainerHeaderState;
+
+typedef enum {
+    THERON_TRACK02_OPAQUE_CONTAINER_COUNT_NOT_IDENTIFIED = 0
+} Theron_Track02OpaqueContainerCountState;
+
+typedef enum {
+    THERON_TRACK02_OPAQUE_CONTAINER_COMPRESSION_NOT_IDENTIFIED = 0
+} Theron_Track02OpaqueContainerCompressionState;
+
+typedef struct {
+    size_t anchor_index;
+    size_t descriptor_entry_index;
+    size_t raw_byte_count;
+    size_t first_user_data_container_offset;
+    size_t user_data_byte_count;
+    size_t user_data_segment_count;
+    size_t non_user_data_byte_count;
+    int logical_reassembly_required;
+    Theron_Track02OpaqueContainerHeaderState header_state;
+    Theron_Track02OpaqueContainerCountState count_state;
+    Theron_Track02OpaqueContainerCompressionState compression_state;
+    uint32_t transport_shape_hash;
+    int opaque_only;
+    int promotion_blocked;
+} Theron_Track02OpaqueContainerLocalFormat;
+
+typedef struct {
+    Theron_Track02Variant variant;
+    size_t container_count;
+    Theron_Track02OpaqueContainerLocalFormat
+        containers[THERON_TRACK02_MAX_NONSTARTUP_CONTAINERS];
+    int valid;
+    int verified_track02;
+    int opaque_only;
+    int promotion_blocked;
+    uint32_t receipt_hash;
+} Theron_Track02OpaqueContainerFormatReceipt;
+
+typedef struct {
+    unsigned int comparable_container_mask;
+    unsigned int transport_matching_container_mask;
+    unsigned int logical_reassembly_required_mask;
+    int valid;
+    int opaque_only;
+    int promotion_blocked;
+    uint32_t comparison_hash;
+} Theron_Track02OpaqueContainerFormatComparisonReceipt;
+
+Theron_Track02SignalStatus theron_v1_track02_capture_opaque_container_format(
+    const uint8_t *track02_data, size_t track02_size, const char *md5_hex,
+    Theron_Track02OpaqueContainerFormatReceipt *out_receipt);
+
+Theron_Track02SignalStatus theron_v1_track02_compare_opaque_container_formats(
+    const Theron_Track02OpaqueContainerFormatReceipt *first,
+    const Theron_Track02OpaqueContainerFormatReceipt *second,
+    Theron_Track02OpaqueContainerFormatComparisonReceipt *out_receipt);
+
+/* Validation-only logical reassembly prerequisite for the six opaque
+ * containers. The known JP/US media proves that, after MODE1 framing is
+ * removed and segments are appended in raw order, every logical byte is zero.
+ * This establishes an empty transport boundary, not a payload format: no
+ * header, offset, count, stride, compression, or game role is identified and
+ * no payload bytes are returned. A later parser must reject this receipt and
+ * wait for separately evidenced non-empty loader input. */
+typedef struct {
+    size_t anchor_index;
+    size_t descriptor_entry_index;
+    size_t reassembled_byte_count;
+    size_t segment_count;
+    int logical_bytes_all_zero;
+    int header_signature_absent;
+    int count_signature_absent;
+    int stride_signature_absent;
+    int compression_signature_absent;
+    uint32_t reassembly_shape_hash;
+} Theron_Track02OpaqueContainerReassemblyBoundary;
+
+typedef struct {
+    Theron_Track02Variant variant;
+    size_t container_count;
+    Theron_Track02OpaqueContainerReassemblyBoundary
+        containers[THERON_TRACK02_MAX_NONSTARTUP_CONTAINERS];
+    int valid;
+    int verified_track02;
+    int opaque_only;
+    int promotion_blocked;
+    uint32_t receipt_hash;
+} Theron_Track02OpaqueContainerReassemblyReceipt;
+
+typedef struct {
+    unsigned int comparable_container_mask;
+    unsigned int zero_filled_container_mask;
+    unsigned int matching_reassembly_shape_mask;
+    int valid;
+    int opaque_only;
+    int promotion_blocked;
+    uint32_t comparison_hash;
+} Theron_Track02OpaqueContainerReassemblyComparisonReceipt;
+
+Theron_Track02SignalStatus
+theron_v1_track02_capture_opaque_container_reassembly_boundary(
+    const uint8_t *track02_data, size_t track02_size, const char *md5_hex,
+    Theron_Track02OpaqueContainerReassemblyReceipt *out_receipt);
+
+Theron_Track02SignalStatus
+theron_v1_track02_compare_opaque_container_reassembly_boundaries(
+    const Theron_Track02OpaqueContainerReassemblyReceipt *first,
+    const Theron_Track02OpaqueContainerReassemblyReceipt *second,
+    Theron_Track02OpaqueContainerReassemblyComparisonReceipt *out_receipt);
+
+/* Cross-variant locator catalog for substantial nonzero MODE1 user-data
+ * regions outside the six indexed empty containers. A record exists only
+ * when a JP/US raw-BIN sector run has at least eight consecutive nonzero
+ * user-data sectors, identical user-data bytes, and the observed one-sector
+ * physical offset between variants. These are byte-location facts only:
+ * no loader, record, compression, graphics, level, object, text, palette,
+ * or audio meaning is assigned, and no fallback candidate is exposed. */
+#define THERON_TRACK02_MIN_REPEATABLE_REGION_SECTORS 8u
+#define THERON_TRACK02_MAX_REPEATABLE_REGIONS 16u
+/* The only supported analysis corpus is the 11-region JP/US consensus
+ * produced by the hash-gated catalog below. This is a structural guard, not
+ * an assertion about the purpose of any region. */
+#define THERON_TRACK02_CONSENSUS_NONSTARTUP_REGION_COUNT 11u
+#define THERON_TRACK02_REGION_SIGNATURE_BYTES 32u
+#define THERON_TRACK02_MAX_REGION_CORRELATIONS \
+    ((THERON_TRACK02_MAX_REPEATABLE_REGIONS * \
+      (THERON_TRACK02_MAX_REPEATABLE_REGIONS - 1u)) / 2u)
+
+typedef struct {
+    size_t jp_first_raw_sector;
+    size_t jp_last_raw_sector;
+    size_t jp_raw_offset;
+    size_t us_first_raw_sector;
+    size_t us_last_raw_sector;
+    size_t us_raw_offset;
+    size_t sector_count;
+    size_t user_data_byte_count;
+    size_t nonzero_user_data_byte_count;
+    uint32_t user_data_hash;
+    int excludes_indexed_empty_containers;
+    int opaque_only;
+    int promotion_blocked;
+} Theron_Track02RepeatableRegion;
+
+typedef struct {
+    size_t jp_scanned_run_count;
+    size_t us_scanned_run_count;
+    size_t rejected_nonrepeatable_run_count;
+    size_t region_count;
+    Theron_Track02RepeatableRegion
+        regions[THERON_TRACK02_MAX_REPEATABLE_REGIONS];
+    int valid;
+    int verified_track02;
+    int opaque_only;
+    int promotion_blocked;
+    uint32_t catalog_hash;
+} Theron_Track02RepeatableRegionCatalog;
+
+/* Scan only the two hash-verified raw Track 02 BIN variants as one pair.
+ * Either ordering is accepted. The result is all-or-nothing and rejects
+ * unknown/same variants, incomplete sectors, nonempty indexed containers,
+ * overflow, and any candidate that intersects an indexed empty container. */
+Theron_Track02SignalStatus
+theron_v1_track02_catalog_repeatable_nonstartup_regions(
+    const uint8_t *first_data, size_t first_size, const char *first_md5_hex,
+    const uint8_t *second_data, size_t second_size, const char *second_md5_hex,
+    Theron_Track02RepeatableRegionCatalog *out_catalog);
+
+/* Structural-only analysis of the 11 hash-verified JP/US consensus regions.
+ *
+ * This is deliberately not a format detector. "prefix" and "suffix" mean
+ * only byte positions in the logical MODE1 user-data run; a matching prefix
+ * is not called a header and a matching sector is not called a record. The
+ * two boundary flags say only that the consensus run is adjacent to an
+ * all-zero user-data sector in the original image. The function rejects a
+ * corpus that is not the exact 11-region consensus, incomplete raw sectors,
+ * a non-identical JP/US user-data run, or a run without those zero boundaries.
+ * No bytes are returned and every successful receipt remains opaque and
+ * promotion-blocked.
+ *
+ * Evidence: the JP/US raw Track 02 MD5 gate and sector framing in this module;
+ * the 11 regions are discovered by
+ * theron_v1_track02_catalog_repeatable_nonstartup_regions(). No original
+ * loader or format source identifies their game-data meaning. */
+typedef struct {
+    size_t region_index;
+    size_t sector_count;
+    size_t user_data_byte_count;
+    uint32_t prefix_signature;
+    uint32_t suffix_signature;
+    uint32_t first_sector_signature;
+    uint32_t last_sector_signature;
+    unsigned int matching_prefix_region_mask;
+    unsigned int matching_first_sector_region_mask;
+    int leading_zero_sector_boundary;
+    int trailing_zero_sector_boundary;
+} Theron_Track02RepeatableRegionStructuralSignature;
+
+typedef struct {
+    size_t first_region_index;
+    size_t second_region_index;
+    size_t shared_prefix_byte_count;
+    size_t shared_suffix_byte_count;
+    size_t matching_leading_sector_count;
+    size_t matching_trailing_sector_count;
+    int whole_region_equal;
+} Theron_Track02RepeatableRegionCorrelation;
+
+typedef struct {
+    Theron_Track02RepeatableRegionCatalog catalog;
+    size_t signature_count;
+    Theron_Track02RepeatableRegionStructuralSignature
+        signatures[THERON_TRACK02_CONSENSUS_NONSTARTUP_REGION_COUNT];
+    size_t correlation_count;
+    Theron_Track02RepeatableRegionCorrelation
+        correlations[THERON_TRACK02_MAX_REGION_CORRELATIONS];
+    int valid;
+    int verified_track02;
+    int opaque_only;
+    int promotion_blocked;
+    uint32_t receipt_hash;
+} Theron_Track02RepeatableRegionStructuralClusterReceipt;
+
+Theron_Track02SignalStatus
+theron_v1_track02_cluster_repeatable_nonstartup_regions(
+    const uint8_t *first_data, size_t first_size, const char *first_md5_hex,
+    const uint8_t *second_data, size_t second_size, const char *second_md5_hex,
+    Theron_Track02RepeatableRegionStructuralClusterReceipt *out_receipt);
+
+/* Cross-reference the consensus regions against the already source-locked
+ * descriptor/post-boundary anchors and bounded startup candidate. This is a
+ * locator prerequisite for a future original loader/disassembly trace: it
+ * reports only whether known raw addresses fall in a consensus region. It
+ * does not identify a loader table, boot routine, or data role.
+ *
+ * The one source-adjacent observation is deliberately typed as MODE1
+ * transport geometry: in the verified JP/US pair, anchor 2's 44-byte
+ * post-boundary span is region 5's logical user-data bytes 0..43. It is not
+ * a record boundary or a semantic claim about the span's bytes. */
+typedef struct {
+    size_t anchor_index;
+    size_t jp_descriptor_raw_offset;
+    size_t us_descriptor_raw_offset;
+    size_t jp_post_boundary_raw_offset;
+    size_t us_post_boundary_raw_offset;
+    size_t jp_startup_candidate_raw_offset;
+    size_t us_startup_candidate_raw_offset;
+    size_t post_boundary_byte_count;
+    size_t post_boundary_region_index;
+    size_t post_boundary_region_first_raw_sector;
+    size_t post_boundary_logical_user_data_offset;
+    size_t post_boundary_first_sector_user_data_byte_count;
+    int post_boundary_in_consensus_region;
+    int post_boundary_starts_at_mode1_user_data;
+    int post_boundary_within_first_mode1_user_data_sector;
+    int startup_candidate_in_consensus_region;
+} Theron_Track02KnownAnchorRegionCrossReference;
+
+typedef struct {
+    Theron_Track02RepeatableRegionCatalog catalog;
+    size_t anchor_count;
+    Theron_Track02KnownAnchorRegionCrossReference
+        anchors[THERON_TRACK02_MAX_BANK_ANCHORS];
+    unsigned int post_boundary_region_mask;
+    unsigned int startup_candidate_region_mask;
+    int valid;
+    int verified_track02;
+    int opaque_only;
+    int promotion_blocked;
+    uint32_t receipt_hash;
+} Theron_Track02KnownAnchorRegionCrossReferenceReceipt;
+
+Theron_Track02SignalStatus
+theron_v1_track02_cross_reference_known_anchors_to_repeatable_regions(
+    const uint8_t *first_data, size_t first_size, const char *first_md5_hex,
+    const uint8_t *second_data, size_t second_size, const char *second_md5_hex,
+    Theron_Track02KnownAnchorRegionCrossReferenceReceipt *out_receipt);
+
+/* Exact first-user-data fragment at the one known anchor/region overlap.
+ *
+ * This is a paired JP/US raw-MODE1 observation only. The 44 bytes begin at
+ * anchor 2 / consensus region 5 user-data byte zero. The receipt reports
+ * byte/layout fingerprints and never assigns a record, loader, graphics,
+ * gameplay, palette, audio, or other semantic role to the fragment. */
+typedef struct {
+    size_t anchor_index;
+    size_t region_index;
+    size_t byte_count;
+    size_t jp_raw_offset;
+    size_t us_raw_offset;
+    size_t jp_raw_sector;
+    size_t us_raw_sector;
+    size_t jp_user_data_stream_offset;
+    size_t us_user_data_stream_offset;
+    size_t region_first_sector_user_data_offset;
+    size_t nonzero_byte_count;
+    size_t zero_byte_count;
+    uint16_t first_le_word;
+    uint16_t last_le_word;
+    uint32_t first_16_byte_hash;
+    uint32_t fragment_hash;
+    int exact_jp_signature;
+    int exact_us_signature;
+    int variants_match;
+    int valid;
+    int verified_track02;
+    int opaque_only;
+    int promotion_blocked;
+    uint32_t receipt_hash;
+} Theron_Track02Anchor2Region5FragmentReceipt;
+
+Theron_Track02SignalStatus
+theron_v1_track02_capture_anchor2_region5_first_user_data_fragment(
+    const uint8_t *first_data, size_t first_size, const char *first_md5_hex,
+    const uint8_t *second_data, size_t second_size, const char *second_md5_hex,
+    Theron_Track02Anchor2Region5FragmentReceipt *out_receipt);
+
+/* Half-block correlation rooted at the anchor-2/region-5 fragment.
+ *
+ * The paired JP/US raw images expose three 2048-byte MODE1 user-data blocks
+ * at the known post-boundary offsets. Each pair agrees for the complete
+ * 2048-byte block, including both 1024-byte halves, and its following byte
+ * first differs at +0x800. This receipt retains that byte-layout fact as pair
+ * masks, half fingerprints, and MODE1 sector context. It deliberately does
+ * not identify a record, loader, or payload interpretation. */
+#define THERON_TRACK02_ANCHOR_REPEAT_BLOCK_BYTES 2048u
+#define THERON_TRACK02_ANCHOR_REPEAT_HALF_BLOCK_BYTES 1024u
+#define THERON_TRACK02_ANCHOR_REPEAT_PAIR_COUNT 3u
+typedef struct {
+    size_t anchor_count;
+    size_t block_byte_count;
+    size_t half_block_byte_count;
+    size_t first_nonmatching_byte_offset;
+    size_t fragment_prefix_byte_count;
+    size_t pair_count;
+    size_t jp_post_block_first_mismatch_offsets[THERON_TRACK02_ANCHOR_REPEAT_PAIR_COUNT];
+    size_t us_post_block_first_mismatch_offsets[THERON_TRACK02_ANCHOR_REPEAT_PAIR_COUNT];
+    size_t jp_fragment_prefix_match_count;
+    size_t us_fragment_prefix_match_count;
+    size_t jp_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t us_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t jp_raw_sectors[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t us_raw_sectors[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t jp_sector_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t us_sector_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    unsigned int region5_anchor_mask;
+    unsigned int jp_first_half_matching_pair_mask;
+    unsigned int us_first_half_matching_pair_mask;
+    unsigned int jp_second_half_matching_pair_mask;
+    unsigned int us_second_half_matching_pair_mask;
+    unsigned int jp_full_block_matching_pair_mask;
+    unsigned int us_full_block_matching_pair_mask;
+    uint32_t shared_first_half_hash;
+    uint32_t shared_second_half_hash;
+    uint32_t repeated_user_data_hash;
+    int all_offsets_start_at_mode1_user_data;
+    int all_blocks_within_one_mode1_user_data_sector;
+    int variants_match;
+    int valid;
+    int verified_track02;
+    int opaque_only;
+    int promotion_blocked;
+    uint32_t receipt_hash;
+} Theron_Track02Anchor2RepeatCorrelationReceipt;
+
+Theron_Track02SignalStatus
+theron_v1_track02_capture_anchor2_repeat_correlation(
+    const uint8_t *first_data, size_t first_size, const char *first_md5_hex,
+    const uint8_t *second_data, size_t second_size, const char *second_md5_hex,
+    Theron_Track02Anchor2RepeatCorrelationReceipt *out_receipt);
+
+/* Immediate-sector transport geometry around the three opaque repeated
+ * user-data blocks. The receipt is intentionally limited to physical MODE1
+ * adjacency, sector gaps, and opaque fingerprints. It neither identifies a
+ * directory/count/offset table nor assigns a payload role. */
+typedef struct {
+    size_t anchor_count;
+    size_t jp_preceding_raw_sectors[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t jp_repeated_raw_sectors[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t jp_following_raw_sectors[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t us_preceding_raw_sectors[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t us_repeated_raw_sectors[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t us_following_raw_sectors[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t jp_sector_gaps[THERON_TRACK02_MAX_BANK_ANCHORS - 1u];
+    size_t us_sector_gaps[THERON_TRACK02_MAX_BANK_ANCHORS - 1u];
+    size_t jp_us_sector_displacements[THERON_TRACK02_MAX_BANK_ANCHORS];
+    unsigned int jp_preceding_matches_repeat_mask;
+    unsigned int jp_following_matches_repeat_mask;
+    unsigned int us_preceding_matches_repeat_mask;
+    unsigned int us_following_matches_repeat_mask;
+    uint32_t jp_preceding_user_data_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t jp_following_user_data_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t us_preceding_user_data_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
+    uint32_t us_following_user_data_hashes[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int all_adjacent_sectors_available;
+    int variants_match;
+    int valid;
+    int verified_track02;
+    int opaque_only;
+    int promotion_blocked;
+    uint32_t receipt_hash;
+} Theron_Track02AnchorRepeatSectorNeighborReceipt;
+
+Theron_Track02SignalStatus
+theron_v1_track02_capture_anchor_repeat_sector_neighbors(
+    const uint8_t *first_data, size_t first_size, const char *first_md5_hex,
+    const uint8_t *second_data, size_t second_size, const char *second_md5_hex,
+    Theron_Track02AnchorRepeatSectorNeighborReceipt *out_receipt);
+
 /* Decode a 9-word little-endian stride table starting at `descriptor_bytes`.
  *
  * `descriptor_bytes` must be at least 18 bytes; the decoder reads 9 little-
@@ -756,9 +1367,6 @@ typedef struct {
     uint16_t relative_offset;
     size_t absolute_offset;
     size_t byte_count;
-    size_t nonzero_byte_count;
-    size_t first_nonzero_offset;
-    size_t last_nonzero_offset;
     Theron_Track02DescriptorEntryRole role;
     /* True iff role == CONTAINS_DESCRIPTOR_TABLE.  Duplicated for
      * easy single-entry checks without re-deriving role from the
@@ -1475,7 +2083,6 @@ typedef struct {
     int object_table_role_mapped;
     size_t object_table_candidate_count;
     unsigned int object_table_candidate_anchor_mask;
-    size_t object_table_candidate_anchor_counts[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_entry_index[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_raw_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t object_table_candidate_user_data_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
@@ -1833,5 +2440,190 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
     Theron_V1_Level *out_level,
     Theron_Track02StartupSemanticHandoff *out_semantic_handoff,
     Theron_Track02LevelHandoff *out_level_handoff);
+
+/* Cross-variant graphics-format reconnaissance.
+ *
+ * This is intentionally narrower than the older non-startup transport
+ * receipts.  It scans only JP/US MODE1 user-data sectors that agree exactly
+ * at the documented JP n / US n+1 physical-sector displacement, looking for
+ * two hardware-shaped byte forms:
+ *
+ *   - 16 HuC6260 9-bit palette words (32 bytes, first word black, at least
+ *     eight distinct nonblack colours); and
+ *   - eight LE uint16 values with a positive constant 0x20-aligned stride.
+ *
+ * Neither byte shape establishes ownership, a loader, compression, a tile
+ * bank, or a display route.  The catalog is a strict next-evidence gate: no
+ * candidate can enable a decoder until an original-loader reference binds
+ * its exact user-data offset and intended payload length.
+ */
+#define THERON_TRACK02_MAX_GRAPHICS_FORMAT_CANDIDATES 64u
+
+typedef enum {
+    THERON_TRACK02_GRAPHICS_FORMAT_UNKNOWN = 0,
+    THERON_TRACK02_GRAPHICS_FORMAT_HUC6260_PALETTE_4BPP,
+    THERON_TRACK02_GRAPHICS_FORMAT_LE16_STRIDE_TABLE
+} Theron_Track02GraphicsFormat;
+
+typedef struct {
+    Theron_Track02GraphicsFormat format;
+    size_t jp_raw_offset;
+    size_t us_raw_offset;
+    size_t jp_user_data_offset;
+    size_t us_user_data_offset;
+    size_t byte_count;
+    uint32_t payload_checksum;
+    uint16_t first_word;
+    uint16_t stride;
+    size_t value_count;
+    size_t nonblack_or_distinct_count;
+} Theron_Track02GraphicsFormatCandidate;
+
+typedef struct {
+    int valid;
+    Theron_Track02Variant jp_variant;
+    Theron_Track02Variant us_variant;
+    size_t compared_sector_count;
+    size_t matching_nonzero_sector_count;
+    /* Total strict shapes observed before the bounded detail list.  These
+     * counts make an overflowed real-media receipt auditable without turning
+     * any repeated byte pattern into a decode or ownership claim. */
+    size_t huc6260_palette_candidate_count;
+    size_t le16_stride_table_candidate_count;
+    size_t candidate_count;
+    size_t overflow_count;
+    int compression_signature_detected;
+    int source_loader_binding_verified;
+    int decoder_blocked;
+    Theron_Track02GraphicsFormatCandidate
+        candidates[THERON_TRACK02_MAX_GRAPHICS_FORMAT_CANDIDATES];
+} Theron_Track02GraphicsFormatCatalog;
+
+const char *theron_v1_track02_graphics_format_name(
+    Theron_Track02GraphicsFormat format);
+
+Theron_Track02SignalStatus theron_v1_track02_catalog_graphics_format_candidates(
+    const uint8_t *jp_track02_data,
+    size_t jp_track02_size,
+    const char *jp_md5_hex,
+    const uint8_t *us_track02_data,
+    size_t us_track02_size,
+    const char *us_md5_hex,
+    Theron_Track02GraphicsFormatCatalog *out_catalog);
+
+int theron_v1_track02_graphics_format_catalog_can_decode(
+    const Theron_Track02GraphicsFormatCatalog *catalog);
+
+/* Original PC Engine CD-ROM IPL loader receipt.
+ *
+ * The CUE-declared Track 01 is CD-DA narration; the bootstrap lives in the
+ * MODE1 Track 02 data stream.  The second logical Track 02 sector is the
+ * standard IPL information block.  On both known raw variants it selects
+ * record 0x0003a3, local load/entry address 0x4000, and a 3-sector (JP) or
+ * 4-sector (US) initial executable.  The executable's first verified
+ * System-Card CD_READ call is at CPU address 0x40cd and asks for a local-RAM
+ * destination at 0x3000.  It is not a VRAM transfer proof.
+ *
+ * The bootstrap then CD_EXECs record 0x0003e7 (17 sectors) into $4000.  That
+ * second-stage body has a literal one-sector CD_READ into local RAM $3800,
+ * but its record registers are dynamic and intentionally remain unbound.
+ * None of these fixed calls use the System Card VRAM destination modes.
+ *
+ * This receipt intentionally carries only media/bootstrap provenance.  It
+ * does not classify dynamic CD records, derive graphics roles, or enable
+ * palette/tile/VRAM rendering.  See
+ * docs/source-lock/tqr_v1_track02_ipl_loader_2026-07-11.md.
+ */
+#define THERON_TRACK02_IPL_RECORD 0x0003a3u
+#define THERON_TRACK02_IPL_LOAD_ADDRESS 0x4000u
+#define THERON_TRACK02_IPL_CD_READ_CPU_ADDRESS 0x40cdu
+#define THERON_TRACK02_IPL_CD_READ_SYSTEM_CARD_ADDRESS 0xe009u
+#define THERON_TRACK02_IPL_CD_READ_LOCAL_DESTINATION 0x3000u
+#define THERON_TRACK02_IPL_CD_EXEC_CPU_ADDRESS 0x40a4u
+#define THERON_TRACK02_IPL_CD_EXEC_SYSTEM_CARD_ADDRESS 0xe00fu
+#define THERON_TRACK02_IPL_STAGE2_RECORD 0x0003e7u
+#define THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT 17u
+#define THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS 0x4000u
+#define THERON_TRACK02_IPL_STAGE2_CD_READ_CPU_ADDRESS 0x4090u
+#define THERON_TRACK02_IPL_STAGE2_CD_READ_LOCAL_DESTINATION 0x3800u
+/* The verified $4090 setup writes AL, DH, and BX only.  CL/DL/CH remain
+ * live across this boundary and jointly form the CD_READ record number. */
+#define THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_CL 0x01u
+#define THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_DL 0x02u
+#define THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_CH 0x04u
+#define THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_MASK \
+    (THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_CL | \
+     THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_DL | \
+     THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_CH)
+
+typedef enum {
+    THERON_TRACK02_IPL_DESTINATION_UNKNOWN = 0,
+    THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM = 1
+} Theron_Track02IplDestination;
+
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    size_t data_track_index01_raw_sector;
+    size_t information_raw_sector;
+    size_t executable_raw_sector;
+    size_t executable_sector_count;
+    size_t executable_user_data_bytes;
+    uint32_t executable_user_data_hash;
+    uint32_t record;
+    uint16_t load_address;
+    uint16_t entry_address;
+    size_t cd_read_user_data_offset;
+    uint16_t cd_read_cpu_address;
+    uint16_t cd_read_system_card_address;
+    Theron_Track02IplDestination cd_read_destination;
+    uint16_t cd_read_local_destination;
+    uint16_t cd_exec_cpu_address;
+    uint16_t cd_exec_system_card_address;
+    uint32_t stage2_record;
+    uint8_t stage2_sector_count;
+    Theron_Track02IplDestination stage2_destination;
+    uint16_t stage2_load_address;
+    size_t stage2_raw_sector;
+    size_t stage2_user_data_bytes;
+    uint32_t stage2_user_data_hash;
+    uint16_t stage2_cd_read_cpu_address;
+    uint8_t stage2_cd_read_sector_count;
+    Theron_Track02IplDestination stage2_cd_read_destination;
+    uint16_t stage2_cd_read_local_destination;
+    int stage2_cd_read_record_proven;
+    /* A dynamic boundary, not a dynamic record value.  It is valid only
+     * when the authenticated stage-two instruction sequence leaves every
+     * CD record register live at the $4090 CD_READ call. */
+    int stage2_cd_read_dynamic_boundary_valid;
+    uint8_t stage2_cd_read_live_record_register_mask;
+    int vram_transfer_proven;
+} Theron_Track02IplLoaderReceipt;
+
+/* Scanner-to-M11 launch contract for an original CUE-mounted Track 02.
+ * It binds the hash-verified MODE1/2352 payload to the IPL bootstrap and
+ * stage-two receipt; it never materializes a replacement/cache payload. */
+typedef struct {
+    int valid;
+    int cue_backed;
+    int track02_md5_verified;
+    int mode1_2352;
+    int no_synthetic_cache;
+    char cue_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char track02_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char track02_md5[33];
+    Theron_Track02IplLoaderReceipt ipl_loader;
+} Theron_Track02StartupLoaderReceipt;
+
+/* Validates the actual IPL information block and its initial executable's
+ * local-RAM CD_READ setup for one known raw JP/US Track 02 image.  Callers
+ * must still authenticate the supplied file MD5 before this byte-level API is
+ * used.  Non-raw and unknown variants reject; no fallback scan is attempted.
+ */
+Theron_Track02SignalStatus theron_v1_track02_find_ipl_loader(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02IplLoaderReceipt *out_receipt);
 
 #endif /* THERON_V1_TRACK02_H */

@@ -1323,6 +1323,7 @@ int dm2_v1_startup_runtime_handoff_receipt_from_tick(
     int animation_tick)
 {
     int active;
+    DM2_V1_MusicQueueReceipt music_receipt;
     if (!out_receipt) {
         return 0;
     }
@@ -1345,10 +1346,20 @@ int dm2_v1_startup_runtime_handoff_receipt_from_tick(
     out_receipt->title_ready = 1;
     out_receipt->music_cue = active ? 0 : -1;
     out_receipt->music_loop = active;
-    out_receipt->music_cue_played = active ?
-        (dm2_v1_sound_play_music(0) == 0) : 0;
-    out_receipt->show_menu_screen_after_music =
-        active ? out_receipt->music_cue_played : 0;
+    memset(&music_receipt, 0, sizeof(music_receipt));
+    if (active) {
+        (void)dm2_v1_sound_queue_music(0, 1, &music_receipt);
+        out_receipt->music_asset_resolved = music_receipt.asset_resolved;
+        out_receipt->music_request_queued = music_receipt.request_queued;
+        out_receipt->music_queue_result = (int)music_receipt.result;
+        out_receipt->music_schedule_ready = music_receipt.schedule_handoff_ready;
+        out_receipt->music_loop_duration_us = music_receipt.loop_duration_us;
+        out_receipt->music_schedule_event_count = music_receipt.schedule_event_count;
+    }
+    /* skproject c_sound.cpp returns from DM2_PLAY_MUSIC() before its caller
+     * enters SHOW_MENU_SCREEN; unavailable audio must not suppress the menu. */
+    out_receipt->music_cue_played = 0;
+    out_receipt->show_menu_screen_after_music = active;
     /* skproject/SKWIN SkWinCore startup keeps title/menu presentation and
      * HUD/game runtime as one boot handoff; Firestaff records the same
      * boundary here so M11 does not infer HUD/runtime init from text status. */

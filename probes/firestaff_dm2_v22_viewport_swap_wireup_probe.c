@@ -259,15 +259,6 @@ static int dm2_count_overwritten_indoor(const unsigned char* fb, int fbW,
     return n;
 }
 
-static int dm2_count_overwritten_outdoor(const unsigned char* fb, int fbW,
-                                           unsigned char sentinel) {
-    int n = 0;
-    if (fb[270 * fbW + 960] != sentinel) n++;
-    if (fb[541 * fbW + 960] != sentinel) n++;
-    if (fb[811 * fbW + 960] != sentinel) n++;
-    return n;
-}
-
 /* ── Wire-up harness ─────────────────────────────────────────────── */
 
 int main(void) {
@@ -280,8 +271,6 @@ int main(void) {
     DM2_V1_BootProfile boot;
     int rc;
     int direct_painted;
-    int runtime_overwrites_indoor;
-    int runtime_overwrites_outdoor;
     int direct_overwrites_indoor;
 
     memset(&stats, 0, sizeof(stats));
@@ -376,9 +365,10 @@ int main(void) {
     memset(fb_sentinel_only, kSentinel, sizeof(fb_sentinel_only));
     direct_painted = dm2_v22_viewport_swap_render(fb_sentinel_only, 1920, 1080, 0);
     direct_overwrites_indoor = dm2_count_overwritten_indoor(fb_sentinel_only, 1920, kSentinel);
-    probe_record(&stats, "DM2_V22_WIREUP_DIRECT_9_OVERWRITES",
-                 direct_painted == 9 && direct_overwrites_indoor == 9,
-                 "direct swap render (control) paints 9 cells over sentinel");
+    probe_record(&stats, "DM2_GDAT_FB07_DIRECT_RGBA_NO_DRAW",
+                 direct_painted == 0 && direct_overwrites_indoor == 0 &&
+                 dm2_all_cell_centers_nonzero(fb_sentinel_only, 1920),
+                 "staged RGBA cache leaves every V1 sentinel cell intact");
 
     /* ------------------------------------------------------------
      * Wire-up core: invoke dm2_v2_runtime_render_frame() and
@@ -388,13 +378,12 @@ int main(void) {
     memset(fb, kSentinel, sizeof(fb));
     vp->is_outdoor = 0;
     rc = dm2_v2_runtime_render_frame(0, 0, 0, fb, 1920, 1920, 1080);
-    runtime_overwrites_indoor = dm2_count_overwritten_indoor(fb, 1920, kSentinel);
     {
-        int ok = (rc == 0) && (runtime_overwrites_indoor == 9) &&
-                 dm2_all_cell_centers_nonzero(fb, 1920);
-        probe_record(&stats, "DM2_V22_WIREUP_RUNTIME_9_OVERWRITES_INDOOR",
+        int ok = (rc == 0) &&
+                 dm2_v22_viewport_swap_cells_painted_indoor() == 0;
+        probe_record(&stats, "DM2_GDAT_FB07_RUNTIME_INDOOR_NO_POST_OVERWRITE",
                      ok,
-                     "runtime-mediated render reaches the swap pass (9 indoor cells overpainted)");
+                     "runtime preserves the V1 active-map route with no RGBA post-pass");
     }
 
     /* ------------------------------------------------------------
@@ -405,13 +394,12 @@ int main(void) {
     memset(fb, kSentinel, sizeof(fb));
     vp->is_outdoor = 1;
     rc = dm2_v2_runtime_render_frame(0, 0, 0, fb, 1920, 1920, 1080);
-    runtime_overwrites_outdoor = dm2_count_overwritten_outdoor(fb, 1920, kSentinel);
     {
-        int ok = (rc == 0) && (runtime_overwrites_outdoor == 3) &&
-                 dm2_outdoor_cell_centers_nonzero(fb, 1920);
-        probe_record(&stats, "DM2_V22_WIREUP_RUNTIME_3_OVERWRITES_OUTDOOR",
+        int ok = (rc == 0) &&
+                 dm2_v22_viewport_swap_cells_painted_outdoor() == 0;
+        probe_record(&stats, "DM2_GDAT_FB07_RUNTIME_OUTDOOR_NO_POST_OVERWRITE",
                      ok,
-                     "runtime-mediated render reaches the swap pass (3 outdoor cells overpainted)");
+                     "runtime preserves outdoor V1 GDAT ownership with no RGBA post-pass");
     }
 
     /* ------------------------------------------------------------
@@ -430,10 +418,10 @@ int main(void) {
      * update + direct render and asserting the counters match. */
     {
         int outdoor_after_runtime = dm2_v22_viewport_swap_cells_painted_outdoor();
-        int ok = (outdoor_after_runtime == 3);
-        probe_record(&stats, "DM2_V22_WIREUP_PER_VIEWPORT_OUTDOOR_COUNTER",
+        int ok = (outdoor_after_runtime == 0);
+        probe_record(&stats, "DM2_GDAT_FB07_OUTDOOR_COUNTER_ZERO",
                      ok,
-                     "runtime-mediated outdoor render increments outdoor counter == 3");
+                     "runtime leaves the synthetic outdoor counter at zero");
     }
 
     /* Final consistency check: resync indoor counter via a direct
@@ -446,10 +434,11 @@ int main(void) {
                                      (const unsigned char (*)[3])raw_cells, 0);
         int direct_again = dm2_v22_viewport_swap_render(fb, 1920, 1080, 0);
         int indoor_after_direct = dm2_v22_viewport_swap_cells_painted_indoor();
-        int ok = (direct_again == 9) && (indoor_after_direct == 9);
-        probe_record(&stats, "DM2_V22_WIREUP_PER_VIEWPORT_INDOOR_COUNTER",
+        int ok = (direct_again == 0) && (indoor_after_direct == 0) &&
+                 dm2_outdoor_cell_centers_nonzero(fb, 1920);
+        probe_record(&stats, "DM2_GDAT_FB07_INDOOR_COUNTER_ZERO",
                      ok,
-                     "per-viewport indoor counter == 9 after a fresh swap render");
+                     "direct synthetic cache pass remains no-draw");
     }
 
     /* ------------------------------------------------------------

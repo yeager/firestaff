@@ -104,6 +104,45 @@ typedef struct {
     Nexus_V1_BpkArchiveInfo archive;
 } Nexus_V1_DgnMaterialContainerReceipt;
 
+/* Structure2's descriptor envelope and opaque payload live in the canonical
+ * LEV00.DGN..LEV15.DGN Track 1 entries, not in MENU.BPK or an inferred
+ * FLOORS/WALLS container. This receipt authenticates that source boundary
+ * only. `materialization_bound` means the loaded level's bounded payload is
+ * tied to its canonical source; it never means that payload bytes are
+ * decoded or renderable. */
+typedef struct {
+    int level_index;
+    char canonical_name[16];
+    char canonical_md5[33];
+    int exact_source_entry_observed;
+    int hash_discovery_attempted;
+    int canonical_hash_verified;
+    int structure2_payload_envelope_valid;
+    int materialization_bound;
+    int payload_decoder_permitted;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure2SourceReceipt;
+
+/* Hash-bound ownership for level-local script and audio inputs. The receipt
+ * establishes only the canonical Track 1 source; it never assigns opcode,
+ * trigger, sample, or playback semantics to the bytes. */
+typedef struct {
+    char canonical_name[16];
+    char canonical_md5[33];
+    int exact_source_entry_observed;
+    int hash_discovery_attempted;
+    int canonical_hash_verified;
+} Nexus_V1_LevelAuxSourceReceipt;
+
+typedef struct {
+    int level_index;
+    Nexus_V1_LevelAuxSourceReceipt slev;
+    Nexus_V1_LevelAuxSourceReceipt sal;
+    Nexus_V1_LevelAuxSourceReceipt map;
+    int canonical_pair_bound;
+    int fallback_visuals_permitted;
+} Nexus_V1_LevelAuxRuntimeReceipt;
+
 /* Read-only real-media evidence for the fixed LEV00..LEV15 corpus.  It
  * counts only the already typed Structure1B material selectors and checks
  * them against the same banks used by the DGN viewport; it does not infer
@@ -114,11 +153,30 @@ typedef struct {
     int readable_level_count;
     int parsed_level_count;
     int geometry_ready_level_count;
+    int structure1f_valid_level_count;
+    int structure1f_typed_entry_count;
+    int structure1g_present_level_count;
+    int structure1g_valid_level_count;
+    int structure1g_animated_texture_count;
+    int structure1g_sequence_count;
+    int structure1g_image_instruction_count;
+    int structure1g_goto_instruction_count;
+    int structure1g_floor_animation_cell_count;
+    int structure1g_floor_animation_bound_count;
+    int structure2_valid_level_count;
+    int structure2_texture_count;
+    int structure1g_structure2_first_image_bound_count;
+    int structure2_payload_envelope_valid_level_count;
+    int structure2_opaque_payload_byte_count;
+    int structure2_material_or_image_data_proven_level_count;
+    int structure2_canonical_source_verified_level_count;
+    int structure2_materialization_bound_level_count;
     Nexus_V1_DgnMaterialCategoryCoverageReceipt floor_coverage;
     Nexus_V1_DgnMaterialCategoryCoverageReceipt ceiling_coverage;
     Nexus_V1_DgnMaterialCategoryCoverageReceipt wall_coverage;
     Nexus_V1_DgnMaterialContainerReceipt floor_container;
     Nexus_V1_DgnMaterialContainerReceipt wall_container;
+    Nexus_V1_DgnStructure2SourceReceipt structure2_sources[16];
     int bpk_host_routes_complete;
     int material_coverage_complete;
     int host_route_evidence_complete;
@@ -154,6 +212,7 @@ struct Nexus_V1_Engine {
     Nexus_V1_BpkMaterialHostRouteReceipt wall_bpk_host_route;
     Nexus_V1_DgnMaterialPlan dgn_material_plan;
     Nexus_V1_DgnMaterialCorpusReceipt dgn_material_corpus;
+    Nexus_V1_DgnStructure2SourceReceipt current_level_structure2_source;
 
     /* 3D models (loaded on demand) */
     Nexus_V1_Model models[NEXUS_MAX_MODELS];
@@ -187,6 +246,7 @@ struct Nexus_V1_Engine {
      * dispatch remains blocked until a source-locked parser exists. */
     Nexus_ScriptVM script_vm;
     Nexus_ScriptRuntimeReceipt script_runtime_receipt;
+    Nexus_V1_LevelAuxRuntimeReceipt level_aux_runtime_receipt;
 
     /* Creature manager */
     Nexus_V1_CreatureManager creatures;
@@ -221,6 +281,15 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level);
 int nexus_v1_inspect_dgn_material_corpus(
     Nexus_V1_Engine *engine,
     Nexus_V1_DgnMaterialCorpusReceipt *out_receipt);
+
+/* Read-only source identity receipt for a loaded LEVxx.DGN Structure2
+ * payload. This is intentionally not a decoder or a material import route. */
+int nexus_v1_current_level_structure2_source_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure2SourceReceipt *out_receipt);
+int nexus_v1_current_level_aux_runtime_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);
 
 /* Return the DGN plan whose commands and material surfaces have been checked
  * together for this level and party pose. The returned pointer is owned by

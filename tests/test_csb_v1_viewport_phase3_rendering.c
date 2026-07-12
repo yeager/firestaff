@@ -429,6 +429,21 @@ static void test_runtime_projectile_and_explosion_overlays(void)
                   cfg.runtime_projectile_material_icon_drawn_count, 1);
         check_int("runtime.projectile_overlay.runtime_material_marker_count",
                   cfg.runtime_projectile_marker_drawn_count, 0);
+        memset(framebuffer, 0, sizeof(framebuffer));
+        cfg.real_graphics_session = 1;
+        cfg.runtime_projectile_material_icon_drawn_count = 0;
+        cfg.runtime_projectile_marker_drawn_count = 0;
+        cfg.runtime_real_asset_blocked_count = 0;
+        csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+        check_int("runtime.projectile_overlay.real_graphics_icon_fallback_blocked",
+                  icon_capture.object_icon_calls, 1);
+        check_int("runtime.projectile_overlay.real_graphics_icon_count_blocked",
+                  cfg.runtime_projectile_material_icon_drawn_count, 0);
+        check_int("runtime.projectile_overlay.real_graphics_marker_blocked",
+                  cfg.runtime_projectile_marker_drawn_count, 0);
+        check_int("runtime.projectile_overlay.real_graphics_missing_material_receipt",
+                  cfg.runtime_real_asset_blocked_count, 1);
+        cfg.real_graphics_session = 0;
         cfg.object_icon_drawer = NULL;
         cfg.object_icon_user = NULL;
         cfg.runtime_profile = NULL;
@@ -3645,6 +3660,16 @@ static void test_csb_runtime_thing_pass_render_config(void)
               cfg.runtime_group_sprite_drawn_count, 0);
     check_int("csb.runtime_thing_pass.render.fallback_group_markers",
               cfg.runtime_group_marker_drawn_count, 2);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    cfg.real_graphics_session = 1;
+    csb_v1_viewport_render_frame(&cfg, 1, 0, 0);
+    check_int("csb.runtime_thing_pass.render.real_graphics_object_markers_blocked",
+              cfg.runtime_object_marker_drawn_count, 0);
+    check_int("csb.runtime_thing_pass.render.real_graphics_group_markers_blocked",
+              cfg.runtime_group_marker_drawn_count, 0);
+    check_int("csb.runtime_thing_pass.render.real_graphics_missing_material_receipt",
+              cfg.runtime_real_asset_blocked_count, 4);
 }
 
 static void test_csb_d3l2_d3r2_thing_pass_route_binding_contracts(void)
@@ -3796,6 +3821,86 @@ static void test_source_evidence(void)
                e && strstr(e, "6919-7140 sixteen background room slots") != NULL);
 }
 
+static void test_csb_f0115_first_real_projectile_family(void)
+{
+    /* This is the decoded indexed-pixel boundary used by the real
+     * GRAPHICS.DAT loader.  It deliberately supplies no icon or marker path. */
+    uint8_t source[4] = { 1, 10, 6, 7 };
+    uint8_t screen[320 * 200];
+    int drawn;
+
+    memset(screen, 0x55, sizeof(screen));
+    drawn = csb_v1_viewport_f0115_blit_first_projectile_family_pc34(
+        454, source, 2, 2, screen, 320, 200, 320,
+        0, 33, 4, 4, 2, 0);
+    check_true("f0115.first_family.drawn", drawn > 0);
+    check_int("f0115.first_family.d2_palette", screen[33 * 320], 1);
+    check_int("f0115.first_family.c10_occludes", screen[33 * 320 + 2], 0x55);
+    check_int("f0115.first_family.d2_palette_6", screen[35 * 320], 6);
+    check_int("f0115.first_family.d2_palette_7", screen[35 * 320 + 2], 7);
+    check_int("f0115.first_family.rejects_second_aspect",
+              csb_v1_viewport_f0115_blit_first_projectile_family_pc34(
+                  457, source, 2, 2, screen, 320, 200, 320,
+                  0, 33, 2, 2, 1, 0),
+              0);
+    check_int("f0115.first_family.clips_viewport",
+              csb_v1_viewport_f0115_blit_first_projectile_family_pc34(
+                  455, source, 2, 2, screen, 320, 200, 320,
+                  223, 168, 2, 2, 1, 0),
+              1);
+    memset(screen, 0x55, sizeof(screen));
+    drawn = csb_v1_viewport_f0115_blit_m715_m716_projectile_family_pc34(
+        457, source, 2, 2, screen, 320, 200, 320,
+        0, 33, 4, 4, 3, 0x03);
+    check_true("f0115.m716_family.drawn", drawn > 0);
+    check_int("f0115.m716_family.d3_palette_flip", screen[33 * 320], 6);
+    check_int("f0115.m716_family.c10_occludes", screen[35 * 320], 0x55);
+    check_int("f0115.m716_family.clips_viewport",
+              csb_v1_viewport_f0115_blit_m715_m716_projectile_family_pc34(
+                  458, source, 2, 2, screen, 320, 200, 320,
+                  223, 168, 2, 2, 1, 0),
+              1);
+    check_int("f0115.m716_family.rejects_derived_gap",
+              csb_v1_viewport_f0115_blit_m715_m716_projectile_family_pc34(
+                  456, source, 2, 2, screen, 320, 200, 320,
+                  0, 33, 2, 2, 1, 0),
+              0);
+    memset(screen, 0x55, sizeof(screen));
+    drawn = csb_v1_viewport_f0115_blit_m715_m716_m717_projectile_family_pc34(
+        462, source, 2, 2, screen, 320, 200, 320,
+        0, 33, 4, 4, 3, 0x03);
+    check_true("f0115.m717_family.drawn", drawn > 0);
+    check_int("f0115.m717_family.d3_palette_flip", screen[33 * 320], 6);
+    check_int("f0115.m717_family.c10_occludes", screen[35 * 320], 0x55);
+    check_int("f0115.m717_family.clips_viewport",
+              csb_v1_viewport_f0115_blit_m715_m716_m717_projectile_family_pc34(
+                  460, source, 2, 2, screen, 320, 200, 320,
+                  223, 168, 2, 2, 1, 0),
+              1);
+    check_int("f0115.m717_family.rejects_derived_gap",
+              csb_v1_viewport_f0115_blit_m715_m716_m717_projectile_family_pc34(
+                  459, source, 2, 2, screen, 320, 200, 320,
+                  0, 33, 2, 2, 1, 0),
+              0);
+    memset(screen, 0x55, sizeof(screen));
+    drawn = csb_v1_viewport_f0115_blit_m715_m716_m717_m718_projectile_family_pc34(
+        464, source, 2, 2, screen, 320, 200, 320,
+        0, 33, 4, 4, 3, 0x03);
+    check_true("f0115.m718_family.drawn", drawn > 0);
+    check_int("f0115.m718_family.d3_palette_flip", screen[33 * 320], 6);
+    check_int("f0115.m718_family.c10_occludes", screen[35 * 320], 0x55);
+    check_int("f0115.m718_family.clips_viewport",
+              csb_v1_viewport_f0115_blit_m715_m716_m717_m718_projectile_family_pc34(
+                  463, source, 2, 2, screen, 320, 200, 320,
+                  223, 168, 2, 2, 1, 0),
+              1);
+    check_int("f0115.m718_family.rejects_unproven_next_entry",
+              csb_v1_viewport_f0115_blit_m715_m716_m717_m718_projectile_family_pc34(
+                  465, source, 2, 2, screen, 320, 200, 320,
+                  0, 33, 2, 2, 1, 0),
+              0);
+}
+
 int main(void)
 {
     test_config_defaults_and_setters();
@@ -3824,6 +3929,7 @@ int main(void)
     test_csb_f0115_explosion_blit_contracts();
     test_csb_teleporter_field_route_contracts();
     test_csb_f0111_door_panel_blit_contracts();
+    test_csb_f0115_first_real_projectile_family();
     test_source_evidence();
 
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);

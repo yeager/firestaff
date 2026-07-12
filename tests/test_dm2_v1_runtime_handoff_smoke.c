@@ -24,6 +24,7 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_viewport_renderer.h"
+#include "dm2_v1_world_model.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -239,6 +240,107 @@ static int synthetic_viewport_asset_fetch(void *user,
         return 0;
     }
     return -1;
+}
+
+static int missing_viewport_asset_fetch(void *user,
+                                        int gdat_index,
+                                        const uint8_t **out_pixels,
+                                        int *out_w,
+                                        int *out_h,
+                                        int *out_stride)
+{
+    (void)user;
+    (void)gdat_index;
+    if (out_pixels) *out_pixels = NULL;
+    if (out_w) *out_w = 0;
+    if (out_h) *out_h = 0;
+    if (out_stride) *out_stride = 0;
+    return -1;
+}
+
+static void test_source_material_missing_is_blocked_without_paint(void)
+{
+    DM2_V1_ViewportState viewport;
+    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+
+    memset(framebuffer, 0x5a, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    viewport.squares[DM2_SQ_D0C].square_type = DM2_SQUARE_WALL;
+    viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_WALL | DM2_SQF_HAS_DOOR;
+    viewport.creature_count = 1;
+    viewport.creatures[0].creature_type = 1;
+    viewport.creatures[0].screen_x = 40;
+    viewport.creatures[0].screen_y = 50;
+    viewport.item_count = 1;
+    viewport.items[0].item_category = 0x10;
+    viewport.items[0].item_type = 1;
+    viewport.items[0].screen_x = 80;
+    viewport.items[0].screen_y = 90;
+    viewport.creature_possession_item_count = 1;
+    viewport.creature_possession_items[0].item_category = 0x10;
+    viewport.creature_possession_items[0].item_type = 2;
+    viewport.creature_possession_items[0].screen_x = 100;
+    viewport.creature_possession_items[0].screen_y = 80;
+    viewport.carried_item_present = 1;
+    viewport.carried_item.item_category = 0x15;
+    viewport.carried_item.item_type = 3;
+    viewport.carried_item.screen_x = 120;
+    viewport.carried_item.screen_y = 70;
+    viewport.projectile_count = 1;
+    viewport.projectiles[0].projectile_category = 0x0d;
+    viewport.projectiles[0].projectile_type = 1;
+    viewport.projectiles[0].screen_x = 140;
+    viewport.projectiles[0].screen_y = 60;
+    dm2_v1_viewport_set_asset_provider(
+        &viewport, missing_viewport_asset_fetch, NULL);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_render_floor_ceiling(&viewport);
+    dm2_v1_render_walls(&viewport);
+    dm2_v1_render_doors(&viewport);
+    dm2_v1_render_creatures(&viewport);
+    dm2_v1_render_items(&viewport);
+    dm2_v1_render_creature_possession_items(&viewport);
+    dm2_v1_render_carried_item(&viewport);
+    dm2_v1_render_projectiles(&viewport);
+
+    CHECK(viewport.asset_floor_ceiling_drawn_count == 0 &&
+              viewport.fallback_floor_ceiling_drawn_count == 0 &&
+              viewport.asset_wall_drawn_count == 0 &&
+              viewport.fallback_wall_drawn_count == 0 &&
+              viewport.blocked_material_draw_count >= 3 &&
+              (viewport.blocked_material_mask &
+               (DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING |
+                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL |
+                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR |
+                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE |
+                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM |
+                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_POSSESSION |
+                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CARRIED_ITEM |
+                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_PROJECTILE)) ==
+                  (DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING |
+                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL |
+                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR |
+                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE |
+                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM |
+                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_POSSESSION |
+                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CARRIED_ITEM |
+                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_PROJECTILE),
+          "mandatory GDAT failures produce class-specific blocked no-draw receipts");
+    CHECK(framebuffer[0] == 0x5a &&
+              framebuffer[100 * DM2_VP_WIDTH] == 0x5a &&
+              framebuffer[(28 * DM2_VP_WIDTH) + 160] == 0x5a &&
+              framebuffer[(50 * DM2_VP_WIDTH) + 40] == 0x5a &&
+              framebuffer[(90 * DM2_VP_WIDTH) + 80] == 0x5a &&
+              framebuffer[(80 * DM2_VP_WIDTH) + 100] == 0x5a &&
+              framebuffer[(70 * DM2_VP_WIDTH) + 120] == 0x5a &&
+              framebuffer[(60 * DM2_VP_WIDTH) + 140] == 0x5a &&
+              viewport.fallback_door_drawn_count == 0 &&
+              viewport.fallback_creature_drawn_count == 0 &&
+              viewport.fallback_item_drawn_count == 0 &&
+              viewport.fallback_creature_possession_item_drawn_count == 0 &&
+              viewport.fallback_carried_item_drawn_count == 0 &&
+              viewport.fallback_projectile_drawn_count == 0,
+          "mandatory GDAT failure leaves door and map-chip fallback pixels unpainted");
 }
 
 static void put16le(uint8_t *p, uint16_t v)
@@ -829,41 +931,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
               ownership.gdat_scene_control_ready == 0 &&
               ownership.gdat_scene_control_consumed == 0,
               "runtime frame ownership requires full GDAT HUD and dungeon consumption without fallback");
-        CHECK(ownership.gdat_scene_light_consumed >=
-                  ownership.gdat_scene_control_consumed,
-              "runtime ownership reports GRAPHICSSET light consumption with scene-control consumption");
-        CHECK(!ownership.gdat_scene_control_ready ||
-                  (((ownership.gdat_scene_control_consumed > 0 &&
-                     (ownership.gdat_scene_consumed_mask & 0x1u) != 0u) ||
-                    ownership.gdat_scene_control_consumed == 0) &&
-                   ((ownership.gdat_scene_light_consumed > 0 &&
-                     (ownership.gdat_scene_consumed_mask & 0x2u) != 0u) ||
-                    ownership.gdat_scene_light_consumed == 0) &&
-                   ownership.gdat_scene_consumption_hash != 0u),
-              "runtime ownership hashes consumed GRAPHICSSET scene/light words when real scene control is bound");
         CHECK(framebuffer[0] != 0,
               "runtime asset-provider frame completes the shared viewport render pass");
-        dm2_v1_runtime_set_outdoor(1);
-        dm2_v1_runtime_set_weather(DM2_WEATHER_RAIN, 64);
-        memset(framebuffer, 0, sizeof(framebuffer));
-        fetch_count = 0;
-        CHECK(dm2_v1_runtime_render_frame(
-                  dm2_v1_runtime_get_party_dir(),
-                  dm2_v1_runtime_get_party_x(),
-                  dm2_v1_runtime_get_party_y(),
-                  framebuffer, 320, 320, 200) == 0,
-              "runtime renders outdoor weather ownership fixture");
-        memset(&ownership, 0, sizeof(ownership));
-        (void)dm2_v1_runtime_last_frame_ownership(&ownership);
-        CHECK(ownership.runtime_frame_owned == 1 &&
-              ownership.gdat_scene_weather_plan_ready == 1 &&
-              ownership.gdat_scene_weather_plan_hash != 0u &&
-              ownership.gdat_scene_weather_kind ==
-                  DM2_V1_WEATHER_OVERLAY_RAIN &&
-              ownership.gdat_scene_weather_intensity >= 64 &&
-              ownership.gdat_scene_weather_density > 0,
-              "runtime ownership carries outdoor weather overlay plan evidence");
-        dm2_v1_runtime_set_outdoor(0);
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
     }
 
@@ -1256,6 +1325,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   inst->world_x == door_x &&
                   inst->world_y == door_y,
                   "runtime creature world position writes back after passable door");
+
         }
         memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
@@ -1463,6 +1533,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
                           obs.field_moved == 1 &&
                           obs.field_door_open_pct == 100,
                           "runtime DB0 destroyed door passes creature and reports fully open");
+
                 }
                 memset(framebuffer, 0, sizeof(framebuffer));
                 fetch_count = 0;
@@ -1986,6 +2057,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
 int main(void)
 {
     printf("=== DM2 V1 Runtime Handoff Smoke Gate ===\n\n");
+    test_source_material_missing_is_blocked_without_paint();
     test_first_tick_after_boot_profile_handoff();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

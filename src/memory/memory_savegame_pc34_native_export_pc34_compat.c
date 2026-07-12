@@ -812,6 +812,20 @@ static void unpack_global_data(const unsigned char* src,
     state->party->activeChampionIndex = (int)gd.leaderIndex;
 }
 
+static int pc34_validate_active_group_part(int partLen,
+                                           const struct PC34GlobalData* globalData)
+{
+    size_t expectedLen;
+
+    if (partLen < 0 || globalData == 0) {
+        return 0;
+    }
+    expectedLen = (size_t)globalData->maximumActiveGroupCount *
+                  PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT;
+    return expectedLen <= (size_t)SAVEGAME_PC34_TIMELINE_BYTE_COUNT &&
+           (size_t)partLen == expectedLen;
+}
+
 static void pack_champion_excluding_portrait(
     unsigned char* dst,
     const struct ChampionState_Compat* champion)
@@ -1969,7 +1983,7 @@ static int export_pc34_core(
                   + SAVEGAME_PC34_PARTY_PART_BYTE_COUNT
                   + eventsLen
                   + timelineLen
-                  + CHAMPION_MAX_PARTY * CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT
+                  + SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT
                   + dungeonTailLen;
     if (outBufSize < totalNeeded)
         return SAVEGAME_PC34_ERROR_BUFFER_TOO_SMALL;
@@ -2196,11 +2210,32 @@ int F0796_SAVEGAME_ImportPC34_Compat(
     int eventsLen = 0;
     int timelineLen = 0;
     uint16_t actualChecksum = 0;
+    struct SaveGame_Compat stagedState;
+    struct PartyState_Compat stagedParty;
+    struct TimelineQueue_Compat stagedTimeline;
+    int hasStagedParty = 0;
+    int hasStagedTimeline = 0;
     if (buf == 0 || outState == 0) return SAVEGAME_PC34_ERROR_NULL_ARG;
     if (bufSize < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE)
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     if (bufSize > (int)SAVEGAME_PC34_MAX_FILE_SIZE)
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
+    /* ReDMCSB LOADSAVE.C F0435 reads every section into the loaded
+     * game state only after the preceding envelope has succeeded.
+     * Keep the Firestaff publication boundary equivalent: all parser
+     * writes target local candidates until the five parts and the four
+     * fixed portrait bitmaps have been consumed. */
+    stagedState = *outState;
+    if (outState->party != 0) {
+        stagedParty = *outState->party;
+        stagedState.party = &stagedParty;
+        hasStagedParty = 1;
+    }
+    if (outState->timeline != 0) {
+        stagedTimeline = *outState->timeline;
+        stagedState.timeline = &stagedTimeline;
+        hasStagedTimeline = 1;
+    }
     memset(&globalData, 0, sizeof(globalData));
 
     if (pc34_read_header(buf, bufSize, &gameID, keys, checksums,
@@ -2237,10 +2272,14 @@ int F0796_SAVEGAME_ImportPC34_Compat(
         return SAVEGAME_PC34_ERROR_BAD_CHECKSUM;
     }
     if (partLen == SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT) {
-        unpack_global_data(partBuf, outState, &globalData);
+        unpack_global_data(partBuf, &stagedState, &globalData);
     }
 
-    /* Part 1: ACTIVE_GROUP (skip; LSV-01 v1 does not restore). */
+    /* ReDMCSB LOADSAVE.C F0435 lines 2749-2754 initializes the active
+     * group storage, then reads exactly sizeof(ACTIVE_GROUP) times the
+     * MaximumActiveGroupCount restored from GLOBAL_DATA. F0796 has no
+     * GameWorld destination to publish these records into, but it must
+     * still validate this native block before any staged state commits. */
     partLen = pc34_read_part(buf, bufSize, &cursor, partBuf,
                              (int)sizeof(partBuf),
                              keys[SAVEGAME_PC34_PART_ACTIVE_GROUP],
@@ -2249,6 +2288,9 @@ int F0796_SAVEGAME_ImportPC34_Compat(
     if (strictChecksums &&
         actualChecksum != checksums[SAVEGAME_PC34_PART_ACTIVE_GROUP]) {
         return SAVEGAME_PC34_ERROR_BAD_CHECKSUM;
+    }
+    if (!pc34_validate_active_group_part(partLen, &globalData)) {
+        return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
 
     /* Part 2: PARTY. */
@@ -2261,7 +2303,7 @@ int F0796_SAVEGAME_ImportPC34_Compat(
         actualChecksum != checksums[SAVEGAME_PC34_PART_PARTY]) {
         return SAVEGAME_PC34_ERROR_BAD_CHECKSUM;
     }
-    unpack_party(partBuf, partLen, outState,
+    unpack_party(partBuf, partLen, &stagedState,
                  portraitIndexes, portraitIndexesPresent);
 
     /* Part 3: EVENTS. */
@@ -2297,31 +2339,36 @@ int F0796_SAVEGAME_ImportPC34_Compat(
     memset(timelinePart, 0, sizeof(timelinePart));
     memcpy(timelinePart, partBuf, (size_t)partLen);
     timelineLen = partLen;
-    if (outState->timeline != 0) {
+    if (stagedState.timeline != 0) {
         unpack_events_and_timeline(&globalData,
                                    eventsPart, eventsLen,
                                    timelinePart, timelineLen,
-                                   outState->timeline);
+                                   stagedState.timeline);
     }
-    if (outState->party != 0) {
+    /* LOADSAVE.C F0433 lines 1630-1635 writes four 32x29 portrait
+     * payloads after the five save parts. They are a fixed section,
+     * not optional trailing decoration: reject a short read before
+     * publishing any staged GLOBAL_DATA/PARTY/TIMELINE state. */
+    if (cursor + SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT > bufSize) {
+        return SAVEGAME_PC34_ERROR_BAD_SIZE;
+    }
+    if (stagedState.party != 0) {
         int slot;
-        for (slot = 0; slot < outState->party->championCount &&
-                       slot < CHAMPION_MAX_PARTY; ++slot) {
-            if (cursor + CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT > bufSize) {
-                break;
-            }
-            memcpy(outState->party->champions[slot].portraitBitmap,
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            memcpy(stagedState.party->champions[slot].portraitBitmap,
                    buf + cursor,
                    CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
-            outState->party->champions[slot].portraitBitmapValid = 1;
+            stagedState.party->champions[slot].portraitBitmapValid = 1;
             cursor += CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT;
         }
+    } else {
+        cursor += SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT;
     }
 
     /* Stash gameID into the Firestaff header reserved area so the
      * rest of the engine can find it. The reserved[] array is always
      * present in the header struct, so no null check is needed. */
-    write_u32_le(outState->header.reserved +
+    write_u32_le(stagedState.header.reserved +
                  SAVEGAME_HEADER_RESERVED_GAME_ID_OFFSET, gameID);
     /* LSV-02: also stamp the manifest-derived gameCode into the
      * reserved area (next to gameID) so a M12 launcher can quote
@@ -2329,8 +2376,15 @@ int F0796_SAVEGAME_ImportPC34_Compat(
      * reserved[36] to avoid clashing with the existing
      * MusicOn slot at byte 4. */
     if (manifestPresent) {
-        outState->header.reserved[5] = (unsigned char)(manifestGameCode & 0xFFu);
-        outState->header.reserved[6] = (unsigned char)((manifestGameCode >> 8) & 0xFFu);
+        stagedState.header.reserved[5] = (unsigned char)(manifestGameCode & 0xFFu);
+        stagedState.header.reserved[6] = (unsigned char)((manifestGameCode >> 8) & 0xFFu);
+    }
+    outState->header = stagedState.header;
+    if (hasStagedParty) {
+        *outState->party = stagedParty;
+    }
+    if (hasStagedTimeline) {
+        *outState->timeline = stagedTimeline;
     }
     /* Suppress unused-warnings for now. */
     (void)platform;

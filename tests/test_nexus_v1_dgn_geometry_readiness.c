@@ -119,6 +119,100 @@ static void set_floor_flags(uint8_t *structure1, int structure1b_rel,
     cell[1] = (uint8_t)(flags & 0xffU);
 }
 
+static void build_structure1f_fixture(uint8_t *structure1,
+                                      int structure1b_rel) {
+    uint8_t *structure1f = structure1 + structure1b_rel +
+        NEXUS_DGN_STRUCTURE1B_BYTES + 312;
+    static const uint8_t tags[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT] =
+        {0x10U, 0x11U, 0x12U, 0x20U, 0x21U, 0x22U};
+    static const int sizes[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT] =
+        {8, 12, 16, 12, 12, 16};
+    static const int counts[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT] =
+        {2, 2, 2, 2, 2, 4};
+    int family;
+    int cursor = NEXUS_DGN_STRUCTURE1F_HEADER_BYTES;
+
+    wb32(structure1 + 0x34, (uint32_t)(structure1b_rel +
+                                        NEXUS_DGN_STRUCTURE1B_BYTES + 312));
+    wb16(structure1f, 0x0034U);
+    wb16(structure1f + 2, 0x0012U);
+    for (family = 0; family < NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT; ++family) {
+        int record;
+        wb16(structure1f + 4 + family * 2, (uint16_t)counts[family]);
+        for (record = 0; record < counts[family]; ++record) {
+            uint8_t *entry = structure1f + cursor + record * sizes[family];
+            entry[0] = tags[family];
+            if (family <= NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS) {
+                entry[1] = (uint8_t)(10 + record);
+                entry[2] = (uint8_t)(20 + record);
+            }
+        }
+        cursor += counts[family] * sizes[family];
+    }
+    structure1f[NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 3] = 4;
+    structure1f[NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 4] = 0x8eU;
+    structure1f[NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 5] = 7;
+    structure1f[NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 7] = 15;
+    /* Floor-decoration and sensor fields retain their source-backed slots. */
+    structure1f[32 + 3] = (uint8_t)-30;
+    structure1f[32 + 4] = 30;
+    structure1f[32 + 5] = 0x28U;
+    structure1f[56 + 5] = 0x27U;
+    structure1f[56 + 6] = 0x28U;
+    structure1f[56 + 10] = 80;
+    structure1f[56 + 11] = 40;
+    structure1f[56 + 12] = 3;
+    structure1f[56 + 13] = 30;
+    structure1f[56 + 14] = 31;
+    structure1f[56 + 15] = 2;
+}
+
+static void build_structure1g_fixture(uint8_t *structure1,
+                                      int structure1b_rel) {
+    const int post_grid = structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES;
+    uint8_t *structure1g = structure1 + post_grid + 24;
+    uint8_t *structure1f = structure1 + post_grid + 212;
+
+    /* C (24 bytes), G (28 bytes), D (128 bytes), E (32-byte opaque tail),
+     * F (empty counted header). This is the exact source-backed G framing. */
+    wb32(structure1 + 0x1c, (uint32_t)(post_grid + 24));
+    wb32(structure1 + 0x24, (uint32_t)(post_grid + 52));
+    wb32(structure1 + 0x30, (uint32_t)(post_grid + 180));
+    wb32(structure1 + 0x34, (uint32_t)(post_grid + 212));
+    wb32(structure1 - NEXUS_DGN_BLOCK_SIZE + 0x10,
+         (uint32_t)(structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 228));
+    wb16(structure1g, 2U);
+    wb16(structure1g + 2, 20U);
+    structure1g[4] = 7U;
+    wb16(structure1g + 6, 1U);
+    wb16(structure1g + 8, 0x0156U);
+    wb16(structure1g + 10, 0U);
+    structure1g[12] = 0xffU;
+    wb16(structure1g + 20, 0x0156U);
+    wb16(structure1g + 24, 0xffffU);
+    (void)structure1f;
+}
+
+static void build_structure2_fixture(uint8_t *dgn) {
+    uint8_t *structure2 = dgn + NEXUS_DGN_BLOCK_SIZE * 20;
+    int descriptor;
+
+    /* DMWeb DGN Structure2: local IDs 0..10 and FFFF. Structure1G's
+     * global 0x156 image ID therefore resolves to local descriptor 10. */
+    wb16(dgn + 0x14, 20U);
+    wb16(dgn + 0x16, 1U);
+    wb32(dgn + 0x18, 240U);
+    for (descriptor = 0; descriptor <= 10; ++descriptor) {
+        uint8_t *entry = structure2 +
+            descriptor * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES;
+        wb16(entry, (uint16_t)descriptor);
+        wb16(entry + 2, 0x0008U);
+        wb16(entry + 6, 16U);
+        wb16(entry + 8, 16U);
+    }
+    wb16(structure2 + 11 * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES, 0xffffU);
+}
+
 static void test_variable_grid_and_mesh_ready(void) {
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 25];
     const int structure1b_rel = 0x1a90;
@@ -228,6 +322,13 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         {-1, 1, 0, 1, 0, 0, 10, 2, 0, -1, 13, 9, 2, 4, 3, 0};
     static const int expected_last_flagged_prefix_records[16] =
         {-1, 3, 22, 48, 20, 29, 14, 43, 28, -1, 13, 19, 58, 7, 9, 15};
+    static const int expected_structure1g_entries[16] =
+        {0, 1, 5, 10, 2, 4, 2, 1, 6, 3, 4, 2, 1, 2, 0, 8};
+    static const int expected_structure1g_animated_floors[16] =
+        {0, 0, 0, 0, 0, 0, 0, 0, 41, 0, 0, 0, 0, 0, 0, 0};
+    static const int expected_structure2_textures[16] =
+        {82, 122, 100, 126, 97, 98, 85, 104,
+         122, 113, 114, 118, 102, 106, 95, 94};
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     int level;
     int checked = 0;
@@ -239,6 +340,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         uint8_t *data;
         Nexus_V1_DgnStructure1Layout layout;
         Nexus_V1_DgnGeometryInfo info;
+        Nexus_V1_Level loaded_level;
+        Nexus_V1_DgnRendererHandoffReceipt handoff;
         snprintf(path, sizeof(path), "%s/LEV%02d.DGN", data_dir, level);
         file = fopen(path, "rb");
         CHECK(file != NULL, "real DGN corpus file opens");
@@ -258,10 +361,11 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               layout.valid && layout.post_grid_offset ==
                   layout.structure1b_end_relative_offset &&
               layout.post_grid[0].header_offset == 0x18 &&
-              layout.post_grid[1].header_offset == 0x24 &&
-              layout.post_grid[2].header_offset == 0x2c &&
-              layout.post_grid[3].header_offset == 0x30 &&
-              layout.post_grid[4].header_offset == 0x34,
+              layout.post_grid[1].header_offset == 0x1c &&
+              layout.post_grid[2].header_offset == 0x24 &&
+              layout.post_grid[3].header_offset == 0x2c &&
+              layout.post_grid[4].header_offset == 0x30 &&
+              layout.post_grid[5].header_offset == 0x34,
               "real DGN layout retains bounded observed post-grid header pointers");
         CHECK(layout.structure1c.valid &&
               layout.structure1c.relative_offset == layout.post_grid_offset &&
@@ -305,6 +409,50 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               info.post_grid_0x30_row_ordinal_flagged_prefix_record_count ==
                   expected_flagged_prefix_records[level],
               "real DGN corpus proves the bounded typed 0x30 row prefix and opaque tail");
+        CHECK(layout.structure1f.valid && info.structure1f_valid &&
+              layout.structure1f.total_entry_count == info.structure1f_total_entry_count &&
+              layout.structure1f.family_count[NEXUS_V1_DGN_STRUCTURE1F_ITEMS] >= 0 &&
+              layout.structure1f.family_count[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS] >= 0 &&
+              layout.structure1f.family_count[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS] >= 0 &&
+              layout.structure1f.family_count[NEXUS_V1_DGN_STRUCTURE1F_ALCOVES] >= 0 &&
+              layout.structure1f.family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS] >= 0 &&
+              layout.structure1f.family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] >= 0,
+              "real DGN corpus validates the complete counted Structure1F family layout");
+        CHECK(nexus_v1_level_load(&loaded_level, data, (int)size, level) == 0 &&
+              loaded_level.structure1f_entry_count ==
+                  layout.structure1f.total_entry_count &&
+              nexus_v1_level_dgn_renderer_handoff_receipt(&loaded_level,
+                                                          &handoff) == 0 &&
+              handoff.structure1f_valid &&
+              handoff.structure1f_total_entry_count ==
+                  layout.structure1f.total_entry_count &&
+              handoff.structure1f_typed_entry_count ==
+                  loaded_level.structure1f_entry_count &&
+              memcmp(handoff.structure1f_family_count,
+                     layout.structure1f.family_count,
+                     sizeof(handoff.structure1f_family_count)) == 0 &&
+              handoff.structure1g_present == layout.post_grid[1].present &&
+              handoff.structure1g_valid == layout.structure1g.valid &&
+              handoff.structure1g_animated_texture_count ==
+                  loaded_level.structure1g_entry_count &&
+              handoff.structure1g_sequence_count ==
+                  layout.structure1g.sequence_count &&
+              layout.structure1g.valid == (expected_structure1g_entries[level] > 0) &&
+              loaded_level.structure1g_entry_count ==
+                  expected_structure1g_entries[level] &&
+              loaded_level.structure1g_floor_animation_cell_count ==
+                  expected_structure1g_animated_floors[level] &&
+              loaded_level.structure1g_floor_animation_bound_count ==
+                  expected_structure1g_animated_floors[level] &&
+              loaded_level.structure2_texture_table_valid &&
+              loaded_level.structure2_texture_count ==
+                  expected_structure2_textures[level],
+              "real Structure1F and optional Structure1G typed records survive level load and reach host handoff");
+        for (int entry = 0; entry < loaded_level.structure1g_entry_count;
+             ++entry) {
+            CHECK(loaded_level.structure1g_entries[entry].first_structure2_image_valid,
+                  "every canonical Structure1G first image binds Structure2");
+        }
         checked++;
         free(data);
     }
@@ -335,6 +483,165 @@ static void test_structure1c_record_table_bounds(void) {
     CHECK(nexus_v1_dgn_structure1_layout(&layout, dgn, (int)sizeof(dgn)) == 0 &&
           !layout.structure1c.valid,
           "mismatched Structure1C count leaves the post-grid span untyped");
+}
+
+static void test_structure1f_semantics_and_bounds(void) {
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
+    const int structure1b_rel = 0x40;
+    uint8_t *structure1;
+    Nexus_V1_DgnStructure1Layout layout;
+    Nexus_V1_DgnGeometryInfo info;
+    Nexus_V1_Level level;
+    Nexus_V1_DgnRendererHandoffReceipt handoff;
+
+    CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
+                          structure1b_rel, 512) == 0,
+          "Structure1F fixture builds");
+    structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
+    build_structure1f_fixture(structure1, structure1b_rel);
+    CHECK(nexus_v1_dgn_structure1_layout(&layout, dgn, (int)sizeof(dgn)) == 0 &&
+          layout.structure1f.valid && layout.structure1f.relative_offset ==
+              structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 312 &&
+          layout.structure1f.size == 200 &&
+          layout.structure1f.wall_sensor_first_texture_index == 0x34 &&
+          layout.structure1f.wall_sensor_first_model_index == 0x12 &&
+          layout.structure1f.total_entry_count == 14 &&
+          layout.structure1f.family_count[NEXUS_V1_DGN_STRUCTURE1F_ITEMS] == 2 &&
+          layout.structure1f.family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
+          "Structure1F accepts only an exact counted six-family span");
+    CHECK(nexus_v1_dgn_geometry_info(&info, dgn, (int)sizeof(dgn)) == 0 &&
+          info.structure1f_valid && info.structure1f_total_entry_count == 14 &&
+          info.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS] == 2,
+          "Structure1F coverage reaches DGN geometry provenance");
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          level.structure1f_entry_count == 14 &&
+          level.structure1f_entries[0].family == NEXUS_V1_DGN_STRUCTURE1F_ITEMS &&
+          level.structure1f_entries[0].location == 4 &&
+          level.structure1f_entries[0].item_id == 0x8eU &&
+          level.structure1f_entries[0].attribute1 == 7 &&
+          level.structure1f_entries[0].attribute2 == 15 &&
+          level.structure1f_entries[2].offset_x == -30 &&
+          level.structure1f_entries[4].model_or_aspect == 0x27U &&
+          level.structure1f_entries[4].destination_orientation == 2,
+          "Structure1F retains documented item, decoration, and sensor fields");
+    CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
+          handoff.structure1f_valid && handoff.structure1f_total_entry_count == 14 &&
+          handoff.structure1f_typed_entry_count == level.structure1f_entry_count &&
+          handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
+          "Structure1F typed records are consumed by the no-fallback host handoff");
+    structure1[structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 312 + 16] = 0x13U;
+    CHECK(nexus_v1_dgn_structure1_layout(&layout, dgn, (int)sizeof(dgn)) == 0 &&
+          !layout.structure1f.valid,
+          "Structure1F rejects a family tag that is not documented by the original format");
+}
+
+static void test_structure1g_semantics_and_bounds(void) {
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
+    const int structure1b_rel = 0x40;
+    uint8_t *structure1;
+    Nexus_V1_DgnStructure1Layout layout;
+    Nexus_V1_DgnGeometryInfo info;
+    Nexus_V1_Level level;
+    Nexus_V1_DgnRendererHandoffReceipt handoff;
+
+    CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
+                          structure1b_rel, 512) == 0,
+          "Structure1G fixture builds");
+    structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
+    build_structure1g_fixture(structure1, structure1b_rel);
+    CHECK(nexus_v1_dgn_structure1_layout(&layout, dgn, (int)sizeof(dgn)) == 0 &&
+          layout.structure1g.valid && layout.structure1g.descriptor_count == 2 &&
+          layout.structure1g.animated_texture_count == 1 &&
+          layout.structure1g.sequence_count == 1,
+          "Structure1G accepts a bounded descriptor and terminated instruction stream");
+    CHECK(nexus_v1_dgn_geometry_info(&info, dgn, (int)sizeof(dgn)) == 0 &&
+          info.structure1g_present && info.structure1g_valid &&
+          info.structure1g_animated_texture_count == 1,
+          "Structure1G provenance reaches geometry information");
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          level.structure1g_entry_count == 1 &&
+          level.structure1g_entries[0].animation_id == 7U &&
+          level.structure1g_entries[0].first_image_index == 0x0156U &&
+          level.structure1g_entries[0].sequence_instruction_count == 2 &&
+          level.structure1g_entries[0].image_instruction_count == 1 &&
+          nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
+          handoff.structure1g_present && handoff.structure1g_valid &&
+          handoff.structure1g_animated_texture_count == level.structure1g_entry_count,
+          "Structure1G typed animation declarations are consumed by host handoff");
+    structure1[structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 24 + 24] = 0U;
+    CHECK(nexus_v1_dgn_structure1_layout(&layout, dgn, (int)sizeof(dgn)) == 0 &&
+          !layout.structure1g.valid,
+          "Structure1G rejects an unterminated animation instruction stream");
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
+          handoff.status == NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE_SEMANTICS &&
+          handoff.blocks_real_dgn_mesh_render && !handoff.fallback_visuals_permitted,
+          "invalid declared Structure1G blocks host promotion without fallback visuals");
+}
+
+static void test_structure1g_animated_floor_material_handoff(void) {
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 21];
+    const int structure1b_rel = 0x40;
+    uint8_t *structure1;
+    uint8_t *cell;
+    Nexus_V1_Level level;
+    Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_DgnRenderPlanReceipt receipt;
+
+    CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
+                          structure1b_rel, 512) == 0,
+          "Structure1G animated-floor fixture builds");
+    structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
+    build_structure1g_fixture(structure1, structure1b_rel);
+    build_structure2_fixture(dgn);
+    cell = cell_at(structure1, structure1b_rel, 1, 1);
+    cell[0] = 0x03U;
+    cell[1] = 0x80U;
+    cell[4] = 3U;
+    set_collision_ref(structure1, structure1b_rel, 1, 0, 0x0fff);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          level.structure1g_floor_animation_cell_count == 1 &&
+          level.structure1g_floor_animation_bound_count == 1,
+          "Structure1B animated-floor flag binds only a declared Structure1G id");
+    CHECK(level.structure2_texture_table_valid && level.structure2_texture_count == 11 &&
+          level.structure1g_entries[0].first_structure2_image_valid &&
+          level.structure1g_entries[0].first_structure2_image_id == 10U,
+          "Structure1G global image ID binds the canonical local Structure2 descriptor");
+    CHECK(level.structure2_payload.valid &&
+          level.structure2_payload.descriptor_bytes == 220 &&
+          level.structure2_payload.terminator_offset == 220 &&
+          level.structure2_payload.opaque_payload_offset == 222 &&
+          level.structure2_payload.opaque_payload_size == 18 &&
+          !level.structure2_payload.material_or_image_data_proven,
+          "Structure2 retains only a bounded opaque payload after its FFFF terminator");
+    CHECK(level.geometry_info.mesh_ready,
+          "animated-floor fixture retains a mesh-ready DGN handoff");
+    CHECK(nexus_v1_level_build_dgn_view_render_plan(
+              &level, 1, 1, 0, commands,
+              NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &receipt) == 0,
+          "animated-floor render plan builds");
+    CHECK(receipt.animated_material_command_count == 1,
+          "animated floor declaration reaches one host material command");
+    CHECK(commands[0].animated_texture_structure2_image_valid &&
+          commands[0].animated_texture_structure2_image_id == 10U &&
+          commands[0].animated_texture_host_route ==
+              NEXUS_V1_DGN_ANIMATED_MATERIAL_ROUTE_STRUCTURE2_FLOOR,
+          "animated floor host route retains its typed Structure2 image identifier");
+    CHECK(receipt.unresolved_animated_material_count == 1,
+          "animated floor declaration remains unresolved without Structure2 handoff");
+    CHECK(receipt.blocks_real_dgn_mesh_render && !receipt.fallback_visuals_permitted,
+          "animated floor declaration blocks until a proven Structure2 material handoff exists");
+    wb32(dgn + 0x18, 221U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          !level.structure2_texture_table_valid && !level.structure2_payload.valid,
+          "Structure2 rejects a terminator that is not fully bounded by useful bytes");
+    wb32(dgn + 0x18, 240U);
+    wb16(dgn + NEXUS_DGN_BLOCK_SIZE * 20 +
+             10 * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES, 11U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          !level.structure2_texture_table_valid &&
+          !level.structure1g_entries[0].first_structure2_image_valid,
+          "noncanonical Structure2 descriptor IDs cannot fabricate an animated-material route");
 }
 
 static void test_dgn_view_render_plan_from_structure1b(void) {
@@ -561,8 +868,6 @@ static void test_bounds_and_legacy_non_promotion(void) {
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 21];
     uint8_t legacy[64];
     Nexus_V1_DgnGeometryInfo info;
-    Nexus_V1_DgnRendererHandoffReceipt handoff;
-    Nexus_V1_Level level;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 20, 0x40, 16) == 0,
           "bounds fixture builds");
@@ -575,20 +880,13 @@ static void test_bounds_and_legacy_non_promotion(void) {
     wb16(legacy + 2, 4U);
     CHECK(nexus_v1_dgn_geometry_info(&info, legacy, (int)sizeof(legacy)) != 0,
           "legacy synthetic layout does not parse as DMWeb geometry info");
-    CHECK(nexus_v1_level_load(&level, legacy, (int)sizeof(legacy), 99) == 0,
-          "legacy synthetic fallback still loads");
-    CHECK(level.geometry_info.dmweb_container == 0,
-          "legacy fallback does not promote DMWeb geometry info");
-    CHECK(level.geometry_info.mesh_ready == 0,
-          "legacy fallback cannot be mesh-ready");
-    CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0,
-          "legacy level still emits renderer handoff receipt");
-    CHECK(handoff.status ==
-          NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_LEGACY_FALLBACK,
-          "legacy synthetic level blocks real DGN mesh handoff");
-    CHECK(handoff.blocks_real_dgn_mesh_render == 1 &&
-          handoff.fallback_visuals_permitted == 0,
-          "legacy handoff forbids fallback visuals for real DGN route");
+    CHECK(nexus_v1_level_load(NULL, legacy, (int)sizeof(legacy), 99) != 0,
+          "Nexus DGN loader rejects unsupported input before mutating runtime state");
+    {
+        Nexus_V1_Level level;
+        CHECK(nexus_v1_level_load(&level, legacy, (int)sizeof(legacy), 99) != 0,
+              "legacy raw-grid fixture cannot become a Nexus runtime level");
+    }
 }
 
 static void test_determinism(void) {
@@ -620,6 +918,9 @@ int main(void) {
     test_bounds_and_legacy_non_promotion();
     test_determinism();
     test_structure1c_record_table_bounds();
+    test_structure1f_semantics_and_bounds();
+    test_structure1g_semantics_and_bounds();
+    test_structure1g_animated_floor_material_handoff();
     test_real_dgn_structure1_layout_corpus();
 
     if (g_fail != 0) {

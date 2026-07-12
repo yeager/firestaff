@@ -95,6 +95,8 @@ struct GameWorld_Compat;
 #define SAVEGAME_PC34_PARTY_PART_BYTE_COUNT \
     ((SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4) + \
      SAVEGAME_PC34_PARTY_INFO_BYTE_COUNT)
+#define SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT \
+    (CHAMPION_MAX_PARTY * CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT)
 #define SAVEGAME_PC34_EVENTS_BYTE_COUNT         128   /* legacy scratch cap */
 #define SAVEGAME_PC34_TIMELINE_BYTE_COUNT       4096  /* generous cut for v1 */
 
@@ -195,10 +197,12 @@ struct GameWorld_Compat;
  *   - `buf` / `bufSize` is a PC 3.4 native save file.
  *   - `outState` is the destination Firestaff composite. The
  *     caller is responsible for owning the subsystem structs
- *     (party / timeline / magic). The importer copies bytes
- *     in-place into the supplied buffers; if the destination
- *     struct is smaller than the PC 3.4 blob, the call fails
- *     with SAVEGAME_PC34_ERROR_BUFFER_TOO_SMALL.
+ *     (party / timeline / magic). The importer stages the header,
+ *     party, and timeline and commits them only after every source
+ *     part (including the GLOBAL_DATA-sized ACTIVE_GROUP block) and
+ *     the four fixed external portrait payloads validate.
+ *     A truncated or corrupt later section therefore leaves the
+ *     caller's state unchanged.
  */
 int F0795_SAVEGAME_ExportPC34_Compat(
     const struct SaveGame_Compat* state,

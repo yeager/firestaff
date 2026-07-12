@@ -116,6 +116,7 @@ typedef struct {
     const char* dungeonPath;
     const char* verifiedAssetPath; /* Optional: hash-verified single-file launch path. */
     const char* verifiedAssetMd5;  /* Optional: expected MD5 for verifiedAssetPath. */
+    const Theron_Track02StartupLoaderReceipt* theronTrack02LoaderReceipt;
     const char* savePath; /* Optional quick-resume save to restore after dungeon init. */
     const char* entranceResumeSavePath; /* Optional validated save for in-entrance Resume buttons. */
     const char* csbImportDm1SavePath; /* Optional CSB utility startup import candidate. */
@@ -244,9 +245,6 @@ typedef struct {
     int dm1HoCMapWidth;
     int dm1HoCMapHeight;
     int dm1HoCRenderCommandCount;
-    int dm1HoCConsumedSaveCaptureHostReadiness;
-    int dm1HoCSaveCaptureReady;
-    int dm1HoCOriginalSaveCaptureReady;
     int dm1CompleteSupportReady;
     int dm1CompleteSourceVisibleStartup;
     int dm1CompleteEntranceToHoC;
@@ -728,6 +726,11 @@ typedef struct {
     void *theronWorld;        /* Theron_V1_World* */
     void *theronViewport;     /* Theron_V1_Viewport* */
     void *theronAssets;       /* TrAssetBundle* */
+    /* Scanner-issued CUE -> verified Track 02 -> IPL/stage-two provenance.
+     * Present only for strict raw CUE launches; plain media has a zero receipt. */
+    Theron_Track02StartupLoaderReceipt theronTrack02LoaderReceipt;
+    Theron_Track01CddaHandoff theronTrack01CddaHandoff;
+    Theron_Track01CddaStream theronTrack01CddaStream;
     struct {
         int level_loaded;
         int party_x, party_y, party_dir;
@@ -862,6 +865,11 @@ typedef struct {
         int startup_menu_selected_row;
         int startup_menu_row_count;
         int startup_title_animation_tick;
+        uint32_t music_elapsed_us;
+        uint32_t music_loop_duration_us;
+        uint32_t music_loop_count;
+        uint32_t music_events_due;
+        int music_schedule_ready;
         int startup_resume_available;
         unsigned int startup_slot_mask;
         char startup_save_root[512];
@@ -1313,28 +1321,6 @@ int M11_GameView_CountCellExplosions(
     int mapY);
 
 int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex);
-int DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(M11_GameViewState* state,
-                                                    unsigned short thing);
-void DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(M11_GameViewState* state);
-unsigned short DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(
-    const M11_GameViewState* state);
-int DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(
-    const M11_GameViewState* state);
-int DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(
-    const M11_GameViewState* state,
-    int championSlot);
-int DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(
-    const M11_GameViewState* state,
-    char* out,
-    int outSize);
-int DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
-    const M11_GameViewState* state,
-    char* out,
-    int outSize);
-int DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(M11_GameViewState* state);
-void DM1_V1_M11Runtime_CloseOpenChestPc34Compat(M11_GameViewState* state);
-unsigned short DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(
-    const M11_GameViewState* state);
 int M11_GameView_GetViewportRect(int* outX, int* outY, int* outW, int* outH);
 int M11_GameView_GetObjectIconIndexForThing(const M11_GameViewState* state,
                                             unsigned short thingId);

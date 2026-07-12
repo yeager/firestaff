@@ -18,8 +18,7 @@
  * TITLE.CG on the verified Saturn disc is a 32-byte zero prefix followed by
  * 0x29000 bytes. That payload is exactly 328x1024 packed 4bpp pixels.
  *
- * Deterministic fallback: failure to load produces a deterministic
- * mid-gray (palette 7) filled rectangle, no crash. */
+ * Failed real-media decodes leave the surface unavailable. */
 
 #include "nexus_v1_ui_surfaces.h"
 #include <string.h>
@@ -35,15 +34,6 @@ static uint32_t nexus_ui_read_be32_u(const uint8_t *data)
 {
     return ((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16) |
            ((uint32_t)data[2] << 8) | data[3];
-}
-
-static void surface_clear_gray(Nexus_UI_Surface *surf)
-{
-    int i;
-    if (!surf || !surf->data) return;
-    for (i = 0; i < surf->w * surf->h; ++i) {
-        surf->data[i] = 7;
-    }
 }
 
 /* ── Manager lifecycle ──────────────────────────────────────────── */
@@ -415,13 +405,76 @@ static int nexus_ui_read_be32(const uint8_t *p) {
            (int)p[3];
 }
 
+enum {
+    NEXUS_UI_FACE_HEADER_BYTES = 56,
+    NEXUS_UI_FACE_COMPACT_PREFIX_BYTES = 128,
+    NEXUS_UI_FACE_PRS3_HEADER_BYTES = 16,
+    NEXUS_UI_FACE_CANONICAL_FRAME_COUNT = 20,
+    NEXUS_UI_FACE_CANONICAL_PIXEL_COUNT = 56 * 56
+};
+
+static int nexus_ui_face_compact_walk(const uint8_t *data, int data_size,
+                                      int wanted_index,
+                                      Nexus_UI_FaceCompactRecordDescriptor *out)
+{
+    size_t cursor = NEXUS_UI_FACE_HEADER_BYTES;
+    int index;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!data || data_size < NEXUS_UI_FACE_HEADER_BYTES ||
+        memcmp(data, "FACE", 4) != 0 ||
+        nexus_ui_read_be32(data + 4) != data_size ||
+        data[8] != 0 || data[9] != NEXUS_UI_FACE_CANONICAL_FRAME_COUNT) {
+        return 0;
+    }
+    for (index = 0; index < NEXUS_UI_FACE_CANONICAL_FRAME_COUNT; ++index) {
+        size_t prs3_offset;
+        size_t stream_size;
+        size_t frame_end;
+        if (cursor > (size_t)data_size ||
+            (size_t)data_size - cursor < NEXUS_UI_FACE_COMPACT_PREFIX_BYTES +
+                                      NEXUS_UI_FACE_PRS3_HEADER_BYTES) {
+            return 0;
+        }
+        prs3_offset = cursor + NEXUS_UI_FACE_COMPACT_PREFIX_BYTES;
+        prs3_offset = (prs3_offset + 3U) & ~(size_t)3U;
+        if (memcmp(data + prs3_offset, "PRS3", 4) != 0 ||
+            nexus_ui_read_be32(data + prs3_offset + 4) != 1 ||
+            nexus_ui_read_be32(data + prs3_offset + 8) !=
+                NEXUS_UI_FACE_CANONICAL_PIXEL_COUNT) {
+            return 0;
+        }
+        stream_size = (size_t)nexus_ui_read_be32(data + prs3_offset + 12);
+        if (stream_size == 0 || stream_size > (size_t)data_size - prs3_offset -
+                                               NEXUS_UI_FACE_PRS3_HEADER_BYTES) {
+            return 0;
+        }
+        frame_end = prs3_offset + NEXUS_UI_FACE_PRS3_HEADER_BYTES + stream_size;
+        if (index == wanted_index && out) {
+            out->valid = 1;
+            out->face_index = index;
+            out->prefix_offset = cursor;
+            out->prefix_size = prs3_offset - cursor;
+            out->prs3_offset = prs3_offset;
+            out->prs3_size = NEXUS_UI_FACE_PRS3_HEADER_BYTES + stream_size;
+            out->stream_offset = prs3_offset + NEXUS_UI_FACE_PRS3_HEADER_BYTES;
+            out->stream_size = stream_size;
+            out->prs3_version = (uint32_t)nexus_ui_read_be32(data + prs3_offset + 4);
+            out->declared_pixel_count = NEXUS_UI_FACE_CANONICAL_PIXEL_COUNT;
+        }
+        cursor = frame_end;
+    }
+    /* The canonical file has a two-byte zero tail after the final stream.
+     * It is container alignment, never PRS3 input or portrait output. */
+    return cursor + 2U == (size_t)data_size &&
+           data[cursor] == 0U && data[cursor + 1U] == 0U;
+}
+
 int nexus_ui_face_layout_detect(const uint8_t *data,
     int data_size,
     Nexus_UI_FaceLayout *out_layout)
 {
     Nexus_UI_FaceLayout layout;
-    int declared_size;
-    int payload_size;
     memset(&layout, 0, sizeof(layout));
     layout.portrait_w = 48;
     layout.portrait_h = 48;
@@ -429,19 +482,15 @@ int nexus_ui_face_layout_detect(const uint8_t *data,
         if (out_layout) *out_layout = layout;
         return 0;
     }
-    if (data_size >= 32 && memcmp(data, "FACE", 4) == 0) {
-        declared_size = nexus_ui_read_be32(data + 4);
-        payload_size = data_size - 32;
-        if (declared_size == data_size &&
-            payload_size > 0 &&
-            (payload_size % 24) == 0) {
-            layout.valid = 1;
-            layout.header_size = 32;
-            layout.entry_count = 24;
-            layout.entry_size = payload_size / 24;
-            if (out_layout) *out_layout = layout;
-            return 1;
-        }
+    if (nexus_ui_face_compact_walk(data, data_size, -1, NULL)) {
+        layout.valid = 1;
+        layout.header_size = NEXUS_UI_FACE_HEADER_BYTES;
+        layout.entry_count = NEXUS_UI_FACE_CANONICAL_FRAME_COUNT;
+        layout.entry_size = 0; /* Frames are variable-length PRS3 spans. */
+        layout.portrait_w = 56;
+        layout.portrait_h = 56;
+        if (out_layout) *out_layout = layout;
+        return 1;
     }
     layout.valid = 1;
     layout.header_size = 0;
@@ -451,6 +500,18 @@ int nexus_ui_face_layout_detect(const uint8_t *data,
     return layout.entry_count > 0;
 }
 
+int nexus_ui_face_compact_record_descriptor(const uint8_t *data,
+    int data_size,
+    int face_index,
+    Nexus_UI_FaceCompactRecordDescriptor *out_descriptor)
+{
+    if (face_index < 0 || face_index >= NEXUS_UI_FACE_CANONICAL_FRAME_COUNT) {
+        if (out_descriptor) memset(out_descriptor, 0, sizeof(*out_descriptor));
+        return 0;
+    }
+    return nexus_ui_face_compact_walk(data, data_size, face_index, out_descriptor);
+}
+
 int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
     int record_size,
     uint8_t *out_pixels,
@@ -458,7 +519,6 @@ int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
     Nexus_UI_FaceRecordDecodeInfo *out_info)
 {
     Nexus_UI_FaceRecordDecodeInfo info;
-    int copy_size;
     const int entry_size = 48 * 48;
     memset(&info, 0, sizeof(info));
     info.kind = NEXUS_UI_FACE_RECORD_NONE;
@@ -469,19 +529,25 @@ int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
         if (out_info) *out_info = info;
         return -1;
     }
-    memset(out_pixels, 0, (size_t)entry_size);
-    info.zero_padded_pixels = entry_size;
     if (!record_data || record_size <= 0) {
         if (out_info) *out_info = info;
         return 0;
     }
-    copy_size = record_size < entry_size ? record_size : entry_size;
-    memcpy(out_pixels, record_data, (size_t)copy_size);
-    info.copied_pixels = copy_size;
-    info.zero_padded_pixels = entry_size - copy_size;
-    info.kind = (record_size >= entry_size)
-                    ? NEXUS_UI_FACE_RECORD_RAW_48X48
-                    : NEXUS_UI_FACE_RECORD_COMPACT_PADDED;
+    if (record_size >= NEXUS_UI_FACE_PRS3_HEADER_BYTES &&
+        memcmp(record_data, "PRS3", 4) == 0) {
+        /* The descriptor has proven a bounded PRS3 frame, not its opcode
+         * grammar. Keeping this blocked protects the real portrait route. */
+        info.kind = NEXUS_UI_FACE_RECORD_PRS3_UNPROVEN;
+        if (out_info) *out_info = info;
+        return 0;
+    }
+    if (record_size != entry_size) {
+        if (out_info) *out_info = info;
+        return 0;
+    }
+    memcpy(out_pixels, record_data, (size_t)entry_size);
+    info.copied_pixels = entry_size;
+    info.kind = NEXUS_UI_FACE_RECORD_RAW_48X48;
     if (out_info) *out_info = info;
     return 1;
 }
@@ -505,19 +571,13 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     }
     entry_size = portrait_w * portrait_h;
     if (entry_size <= 0 || !record_data || record_size <= 0) {
-        return nexus_ui_load_face_placeholder(mgr, face_index,
-                                              portrait_w, portrait_h);
+        return -1;
     }
     surf = &mgr->surfaces[NEXUS_SURFACE_FACE0 + face_index];
     if (surf->owns_data && surf->data) {
         free(surf->data);
     }
     memset(surf, 0, sizeof(*surf));
-    surf->w = portrait_w;
-    surf->h = portrait_h;
-    surf->pal_start = 192;
-    surf->pal_count = 16;
-    surf->source = "FACE.BIN";
     surf->data = (uint8_t *)calloc(entry_size, 1);
     if (!surf->data) {
         return -1;
@@ -528,46 +588,22 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
                                                       surf->data,
                                                       entry_size,
                                                       NULL);
-    if (expand_result < 0) {
+    if (expand_result <= 0) {
+        free(surf->data);
+        memset(surf, 0, sizeof(*surf));
         return -1;
     }
-    return expand_result > 0 ? 1 : 0;
-}
-
-int nexus_ui_load_face_placeholder(Nexus_UI_Manager *mgr,
-    int face_index, int portrait_w, int portrait_h)
-{
-    int entry_size;
-    Nexus_UI_Surface *surf;
-    if (!mgr) return -1;
-    if (face_index < 0 || face_index >= 24) return -1;
-    if (portrait_w <= 0 || portrait_h <= 0) {
-        portrait_w = 48; portrait_h = 48;
-    }
-    entry_size = portrait_w * portrait_h;
-    if (entry_size <= 0) return -1;
-
-    surf = &mgr->surfaces[NEXUS_SURFACE_FACE0 + face_index];
-    if (surf->owns_data && surf->data) {
-        free(surf->data);
-    }
-    memset(surf, 0, sizeof(*surf));
     surf->w = portrait_w;
     surf->h = portrait_h;
     surf->pal_start = 192;
     surf->pal_count = 16;
     surf->source = "FACE.BIN";
-    surf->data = (uint8_t *)calloc(entry_size, 1);
-    if (!surf->data) {
-        return -1;
-    }
     surf->owns_data = 1;
-    surface_clear_gray(surf);
-    return 0;
+    return 1;
 }
 
-/* Generic raw-face helper. Startup code must not call this with a partial
- * record; only a completed decoder may provide compact Saturn FACE records. */
+/* Generic raw-face helper. Real FACE.BIN records must be complete: a short
+ * record is a decode failure, never a gray/prefix-filled portrait. */
 int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_of_face,
     int data_size, int face_index,
@@ -605,24 +641,11 @@ int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
         } else {
             surf->data = (uint8_t *)calloc(entry_size, 1);
         }
-    } else if (data && data_of_face < data_size) {
-        /* Partial/short: load what is available */
-        int available = data_size > data_of_face ? data_size - data_of_face : 0;
-        printf("Nexus UI: WARNING FACE.BIN data short for portrait %d "
-               "(need=%d have=%d) — gray placeholder\n",
-               face_index, entry_size, available);
-        surf->data = (uint8_t *)calloc(entry_size, 1);
-        if (surf->data && data && available > 0) {
-            memcpy(surf->data, data + data_of_face,
-                   available < entry_size ? (size_t)available : (size_t)entry_size);
-        }
-        if (surf->data) surface_clear_gray(surf);
     } else {
-        surf->data = (uint8_t *)calloc(entry_size, 1);
-        if (surf->data) surface_clear_gray(surf);
+        return -1;
     }
     /* Face surfaces are stored individually in the manager */
-    return copied_real ? 1 : 0;
+    return copied_real ? 1 : -1;
 }
 
 void nexus_ui_surface_free(Nexus_UI_Manager *mgr,

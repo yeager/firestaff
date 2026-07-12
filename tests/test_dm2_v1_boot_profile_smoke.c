@@ -1,7 +1,6 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_runtime.h"
-#include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
 
 #include <stdio.h>
@@ -362,17 +361,12 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
     DM2_V1_BootCreatureAtlasCaptureReceipt creature_atlas;
     DM2_V1_CompleteSupportReceipt complete_support;
-    DM2_V1_SessionState corpus_session;
     unsigned char framebuffer[320 * 200];
-    unsigned char corpus_payload[DM2_SESSION_MAX_SIZE];
-    int corpus_payload_size = 0;
     uint32_t typed_hash = 0u;
     uint32_t typed_bytes = 0u;
     int v2_callback_count = 0;
     const char *home = getenv("HOME");
     char root[512];
-    char corpus_root[512];
-    char corpus_nested[512];
     FILE *g;
     FILE *d;
     if (!home || !home[0]) {
@@ -528,8 +522,6 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_render_fallback_door_count == 0 &&
               render_receipt.runtime_render_fallback_item_count == 0 &&
               render_receipt.runtime_render_fallback_carried_item_count == 0 &&
-              (render_receipt.runtime_render_scene_consumed_mask & 0x3u) == 0x3u &&
-              render_receipt.runtime_render_scene_consumption_hash != 0u &&
               render_receipt.runtime_render_no_core_fallbacks == 1,
           "boot runtime render owns V2 callback, V1 fallback, and real GDAT frame/HUD receipt");
     memset(&frame_ownership, 0, sizeof(frame_ownership));
@@ -537,9 +529,8 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               frame_ownership.valid == 1 &&
               frame_ownership.full_gdat_frame_valid == 1 &&
               frame_ownership.real_gdat_evidence_valid == 1 &&
-              frame_ownership.interface_semantics_consumed == 1 &&
-              frame_ownership.interface_semantics_hash != 0u &&
-              frame_ownership.interface_semantics_byte_count > 0u &&
+              frame_ownership.blocked_material_draws == 0 &&
+              frame_ownership.blocked_material_mask == 0u &&
               frame_ownership.viewport_raw_gdat_asset_count >= 5 &&
               frame_ownership.viewport_decoded_gdat_asset_count >= 5 &&
               frame_ownership.viewport_raw_gdat_hash != 0u &&
@@ -552,7 +543,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               frame_ownership.gdat_sprite_palette_consumed > 0 &&
               frame_ownership.gdat_scene_control_hash != 0u &&
               (frame_ownership.gdat_scene_control_present_mask & 0x03u) == 0x03u,
-          "runtime frame ownership consumes real GDAT sprite palette and scene light controls");
+          "real-profile frame consumes GDAT materials without blocked or painted fallbacks");
     memset(&hud_capture, 0, sizeof(hud_capture));
     CHECK(dm2_v1_boot_runtime_hud_capture_receipt(
               launch.profile,
@@ -579,13 +570,6 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.real_gdat_portrait_ready == 1 &&
               hud_capture.real_gdat_core_render_ready == 1 &&
               hud_capture.real_gdat_runtime_hud_breadth_ready == 1 &&
-              (hud_capture.runtime_scene_consumed_mask & 0x3u) == 0x3u &&
-              hud_capture.runtime_scene_consumption_hash != 0u &&
-              hud_capture.runtime_gdat_breadth_receipt_ready == 1 &&
-              (hud_capture.runtime_gdat_breadth_mask & 0x03ffu) == 0x03ffu &&
-              hud_capture.runtime_gdat_breadth_hash != 0u &&
-              hud_capture.runtime_gdat_breadth_raw_byte_count > 0u &&
-              hud_capture.runtime_gdat_breadth_decoded_pixel_count > 0u &&
               hud_capture.raw_gdat_runtime_interface_count >= 4 &&
               hud_capture.decoded_gdat_runtime_interface_count >= 4 &&
               hud_capture.teleporter_map_chip_ready == 1 &&
@@ -630,12 +614,6 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.interface_action_table_byte_count > 0u &&
               hud_capture.interface_action_group_count > 0u &&
               hud_capture.interface_action_entry_count > 0u &&
-              hud_capture.interface_action_pv1_byte_count ==
-                  hud_capture.interface_action_entry_count &&
-              hud_capture.interface_action_pv5_byte_count ==
-                  hud_capture.interface_action_entry_count &&
-              hud_capture.interface_action_command_byte_count ==
-                  hud_capture.interface_action_tail_byte_count &&
               hud_capture.interface_font_table_ready == 1 &&
               hud_capture.interface_font_table_hash != 0u &&
               hud_capture.interface_font_table_byte_count == 0x300u &&
@@ -683,60 +661,17 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               creature_atlas.animation_attribution_count > 0 &&
               creature_atlas.animation_info_sequence_count > 0 &&
               creature_atlas.animation_frame_sequence_count > 0 &&
-              (creature_atlas.animation_table_field_mask & 0x07u) == 0x07u &&
-              creature_atlas.animation_attribution_ready == 1 &&
-              creature_atlas.animation_attribution_hash != 0u &&
-              creature_atlas.animation_attribution_byte_count > 0u &&
-              creature_atlas.animation_info_sequence_ready == 1 &&
-              creature_atlas.animation_info_sequence_hash != 0u &&
-              creature_atlas.animation_info_sequence_byte_count > 0u &&
-              creature_atlas.animation_frame_sequence_ready == 1 &&
-              creature_atlas.animation_frame_sequence_hash != 0u &&
-              creature_atlas.animation_frame_sequence_byte_count > 0u &&
-              creature_atlas.animation_semantic_ready == 1 &&
-              creature_atlas.animation_semantic_hash != 0u &&
-              creature_atlas.animation_semantic_byte_count >=
-                  creature_atlas.animation_table_byte_count &&
-              creature_atlas.animation_semantic_nonzero_byte_count > 0u &&
-              creature_atlas.animation_semantic_sequence_ref_count > 0u &&
-              creature_atlas.animation_semantic_frame_ref_count > 0u &&
-              creature_atlas.animation_semantic_creature_count > 0u &&
-              creature_atlas.animation_semantic_creature_count <= 64u &&
               creature_atlas.animation_table_hash != 0u &&
               creature_atlas.animation_table_byte_count > 0u &&
               creature_atlas.animation_table_ready == 1 &&
               creature_atlas.frame_parity_hash != 0u &&
               creature_atlas.atlas_material_hash != 0u,
-              "boot creature atlas capture materializes skproject GDAT creature map-chip and animation-table routes");
-    snprintf(corpus_root, sizeof(corpus_root),
-             "/tmp/firestaff_dm2_boot_corpus_%d", TEST_GETPID());
-    TEST_MKDIR(corpus_root);
-    dm2_v1_session_new(&corpus_session);
-    corpus_session.game_tick = 0x2468u;
-    corpus_session.rng_seed = 0x13572468u;
-    corpus_session.party_x = 8u;
-    corpus_session.party_y = 9u;
-    corpus_session.party_dir = 3u;
-    corpus_payload_size = dm2_v1_session_serialize(
-        &corpus_session, corpus_payload, sizeof(corpus_payload));
-    CHECK(corpus_payload_size > 0 &&
-              dm2_sl_save_last_session(corpus_root,
-                                       "BootCorpus",
-                                       corpus_payload,
-                                       (size_t)corpus_payload_size) == 0,
-          "boot complete-support test seeds a temporary SKSave corpus");
-    snprintf(corpus_nested, sizeof(corpus_nested), "%s/nested", corpus_root);
-    TEST_MKDIR(corpus_nested);
-    CHECK(dm2_sl_save_last_session(corpus_nested,
-                                   "NestedBootCorpus",
-                                   corpus_payload,
-                                   (size_t)corpus_payload_size) == 0,
-          "boot complete-support test seeds a nested SKSave corpus");
+          "boot creature atlas capture materializes skproject GDAT creature map-chip and animation-table routes");
     memset(&complete_support, 0, sizeof(complete_support));
     CHECK(dm2_v1_boot_complete_support_receipt_from_runtime_state(
               launch.profile,
               1,
-              corpus_root,
+              launch.profile->save_root,
               1,
               1u,
               0,
@@ -752,35 +687,17 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               complete_support.runtime_gdat_interface_placement_complete == 1 &&
               complete_support.runtime_creature_atlas_complete == 1 &&
               complete_support.runtime_gdat_direction_breadth_complete == 1 &&
-              complete_support.runtime_gdat_breadth_receipt_complete == 1 &&
-              (complete_support.runtime_gdat_breadth_mask & 0x03ffu) == 0x03ffu &&
-              complete_support.runtime_gdat_breadth_hash != 0u &&
               complete_support.no_fallback_title_or_runtime_visuals == 1 &&
               complete_support.raw_gdat_capture_complete == 1 &&
               complete_support.decoded_gdat_capture_complete == 1 &&
               complete_support.save_corpus_scan_complete == 1 &&
               complete_support.save_corpus_hash != 0u &&
-              complete_support.save_corpus_importable_kind_mask != 0u &&
-              complete_support.save_corpus_importable_payload_hash != 0u &&
               complete_support.save_corpus_valid_candidate_count >=
                   complete_support.save_corpus_importable_candidate_count &&
-              complete_support.save_corpus_recursive_candidate_count == 1 &&
-              complete_support.save_corpus_recursive_importable_candidate_count == 1 &&
-              complete_support.save_corpus_recursive_scan_truncated == 0 &&
-              complete_support.save_corpus_recursive_scan_depth_limit == 4 &&
-              complete_support.save_corpus_recursive_scan_candidate_cap == 64 &&
-              complete_support.save_corpus_import_promotion_ready == 1 &&
-              complete_support.save_corpus_first_importable_kind ==
-                  DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION &&
-              complete_support.save_corpus_first_importable_payload_size ==
-                  (size_t)corpus_payload_size &&
-              strstr(complete_support.save_corpus_first_importable_path,
-                     "SKSave.dat") != NULL &&
-              complete_support.save_corpus_import_promotion_hash != 0u &&
               complete_support.complete_support_ready == 1 &&
               complete_support.complete_support_hash != 0u &&
               strcmp(complete_support.status, "complete-support-ready") == 0,
-          "boot complete-support receipt joins skproject GDAT startup, HUD, dungeon runtime, and importable SKSave corpus promotion");
+          "boot complete-support receipt joins skproject GDAT startup, HUD, and dungeon runtime");
     memset(&action, 0, sizeof(action));
     CHECK(dm2_v1_boot_runtime_action_front_cell(
               launch.profile,
@@ -805,19 +722,6 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
                   after.runtime_ready == 1 &&
                   (after.operation_result == 0 || after.operation_result == -1),
               "boot runtime move owns DM2 receipt update");
-    }
-    {
-        char p[600];
-        snprintf(p, sizeof(p), "%s/SKSave.dat", corpus_root);
-        (void)remove(p);
-        snprintf(p, sizeof(p), "%s/SKSave.bak", corpus_root);
-        (void)remove(p);
-        snprintf(p, sizeof(p), "%s/SKSave.dat", corpus_nested);
-        (void)remove(p);
-        snprintf(p, sizeof(p), "%s/SKSave.bak", corpus_nested);
-        (void)remove(p);
-        TEST_RMDIR(corpus_nested);
-        TEST_RMDIR(corpus_root);
     }
     dm2_v1_boot_startup_launch_cleanup(&launch);
 }

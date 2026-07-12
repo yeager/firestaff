@@ -7,7 +7,7 @@ Detail: Probe exercised full4 HUD, single1 status panel, two-/three-champion int
 ## Probe
 
 - Source: `probes/m11/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe.c`
-- Binary: `/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees-builds/20260626101715562127000_dm1_v1_full_party_hud_runtime_pairing_gate_build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe`
+- Binary: `/Users/bosse/Documents/Firestaff/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe`
 - Data dir: `/Users/bosse/.firestaff/data/dm1`
 - Return code: `0`
 - Pass count: `276`
@@ -23,13 +23,13 @@ These 64-bit FNV-1a hashes cover the 274x29 party panel region (C151..C154 statu
 
 | Case | Panel-region FNV-1a64 |
 |---|---:|
-| `full4_panel_fnv1a64` | `0x46204c70fa361433` |
-| `single1_panel_fnv1a64` | `0xcae5465af0f96ba4` |
-| `two2_panel_fnv1a64` | `0x275fb9537963913d` |
-| `three3_panel_fnv1a64` | `0x3f0011f93f1a4be2` |
-| `single1_to_full4_panel_fnv1a64` | `0x46204c70fa361433` |
-| `full4_to_single1_panel_fnv1a64` | `0xcae5465af0f96ba4` |
-| `two2_to_full4_panel_fnv1a64` | `0x46204c70fa361433` |
+| `full4_panel_fnv1a64` | `0xfec48c4dbba15293` |
+| `single1_panel_fnv1a64` | `0x5b6a1404706055bc` |
+| `two2_panel_fnv1a64` | `0x5366f97bf40c07dd` |
+| `three3_panel_fnv1a64` | `0xe4b73fa645698c8a` |
+| `single1_to_full4_panel_fnv1a64` | `0xfec48c4dbba15293` |
+| `full4_to_single1_panel_fnv1a64` | `0x5b6a1404706055bc` |
+| `two2_to_full4_panel_fnv1a64` | `0xfec48c4dbba15293` |
 
 ## Honesty Boundary
 

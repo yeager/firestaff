@@ -61,6 +61,8 @@ typedef struct {
     int sal_size;
     uint8_t *map_data;
     int map_size;
+    int sal_canonical_source_verified;
+    int map_canonical_source_verified;
     int map_event_count;
     int map_mapped_event_count;
     int map_first_sample_index;
@@ -146,6 +148,8 @@ typedef struct {
     int cd_track;
     int sal_loaded;
     int map_loaded;
+    int sal_canonical_source_verified;
+    int map_canonical_source_verified;
     int sal_decode_supported;
     int map_decode_supported;
     int map_event_count;
@@ -225,6 +229,11 @@ void nexus_sound_shutdown(Nexus_SoundEngine *eng);
 int nexus_sound_load_level(Nexus_SoundEngine *eng, int level_index,
                             const uint8_t *sal_data, int sal_size,
                             const uint8_t *map_data, int map_size);
+int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
+                                      const uint8_t *sal_data, int sal_size,
+                                      const uint8_t *map_data, int map_size,
+                                      int sal_canonical_source_verified,
+                                      int map_canonical_source_verified);
 int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
                                       Nexus_SfxRuntimeReceipt *out_receipt);
 const char *nexus_sound_sfx_runtime_status_name(

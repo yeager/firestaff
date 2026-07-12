@@ -51,35 +51,34 @@ static const unsigned char kObjectAspectFirstNative[85] = {
     17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
     33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
     49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64,
-    65, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 82,
-    84, 85, 86, 87, 88
+    65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+    81, 82, 83, 84, 85
 };
 
 int dm1_item_aspect_index(int thingType, int subtype) {
     int objectInfoIndex;
-    if (subtype < 0) subtype = 0;
     switch (thingType) {
         case THING_TYPE_WEAPON:
-            if (subtype > 45) subtype = 0;
+            if (subtype < 0 || subtype > 45) return -1;
             objectInfoIndex = 23 + subtype;
             break;
         case THING_TYPE_ARMOUR:
-            if (subtype > 57) subtype = 0;
+            if (subtype < 0 || subtype > 57) return -1;
             objectInfoIndex = 69 + subtype;
             break;
         case THING_TYPE_SCROLL:
             objectInfoIndex = 0;
             break;
         case THING_TYPE_POTION:
-            if (subtype > 20) subtype = 0;
+            if (subtype < 0 || subtype > 20) return -1;
             objectInfoIndex = 2 + subtype;
             break;
         case THING_TYPE_CONTAINER:
-            if (subtype > 0) subtype = 0;
+            if (subtype != 0) return -1;
             objectInfoIndex = 1 + subtype;
             break;
         case THING_TYPE_JUNK:
-            if (subtype > 52) subtype = 0;
+            if (subtype < 0 || subtype > 52) return -1;
             objectInfoIndex = 127 + subtype;
             break;
         default:
@@ -89,11 +88,15 @@ int dm1_item_aspect_index(int thingType, int subtype) {
     return (int)kObjectInfoAspect[objectInfoIndex];
 }
 
-unsigned int dm1_item_sprite_index(int thingType, int subtype) {
-    int aspectIndex = dm1_item_aspect_index(thingType, subtype);
+unsigned int dm1_object_aspect_graphic_index(int aspectIndex) {
     if (aspectIndex < 0 || aspectIndex >= 85) return 0u;
     return DM1_GRAPHIC_FIRST_OBJECT +
            (unsigned int)kObjectAspectFirstNative[aspectIndex];
+}
+
+unsigned int dm1_item_sprite_index(int thingType, int subtype) {
+    return dm1_object_aspect_graphic_index(
+        dm1_item_aspect_index(thingType, subtype));
 }
 
 unsigned int dm1_object_aspect_graphic_info(int aspectIndex) {

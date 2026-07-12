@@ -45,6 +45,27 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <fcntl.h>
+#include <io.h>
+#include <process.h>
+#define TSRM_OPEN _open
+#define TSRM_CLOSE _close
+#define TSRM_FDOPEN _fdopen
+#define TSRM_LINK _link
+#define TSRM_GETPID _getpid
+#define TSRM_OPEN_BINARY _O_BINARY
+#else
+#include <fcntl.h>
+#include <unistd.h>
+#define TSRM_OPEN open
+#define TSRM_CLOSE close
+#define TSRM_FDOPEN fdopen
+#define TSRM_LINK link
+#define TSRM_GETPID getpid
+#define TSRM_OPEN_BINARY 0
+#endif
+
 #if FIRESTAFF_HAS_ZLIB
 #include <zlib.h>
 #endif
@@ -171,6 +192,85 @@ static uint32_t rd32le(const uint8_t *p) {
 
 static uint16_t rd16le(const uint8_t *p) {
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+/* Publish an already-validated opaque container without ever replacing a
+ * destination.  `link` is an atomic no-replace commit when both paths live
+ * in the destination directory; the temporary name is consequently only a
+ * private staging file, never a visible partial import. */
+static int publish_opaque_container_no_replace(const char *destination_path,
+                                               const uint8_t *bytes,
+                                               size_t byte_count) {
+    char temporary_path[THERON_V1_SRM_PATH_MAX + 64u];
+    uint8_t *written_bytes = NULL;
+    FILE *fp = NULL;
+    int fd = -1;
+    unsigned int attempt;
+    int published = 0;
+
+    if (!destination_path || !destination_path[0] || !bytes || byte_count == 0u) {
+        return 0;
+    }
+
+    for (attempt = 0u; attempt < 32u; ++attempt) {
+        int written;
+        written = snprintf(temporary_path, sizeof(temporary_path),
+                           "%s.firestaff-srm-%lu-%u.tmp",
+                           destination_path,
+                           (unsigned long)TSRM_GETPID(), attempt);
+        if (written <= 0 || (size_t)written >= sizeof(temporary_path)) {
+            return 0;
+        }
+        fd = TSRM_OPEN(temporary_path,
+                       O_WRONLY | O_CREAT | O_EXCL | TSRM_OPEN_BINARY,
+                       0600);
+        if (fd >= 0) break;
+    }
+    if (fd < 0) return 0;
+
+    fp = TSRM_FDOPEN(fd, "wb");
+    if (!fp) {
+        TSRM_CLOSE(fd);
+        remove(temporary_path);
+        return 0;
+    }
+    {
+        int write_ok = fwrite(bytes, 1, byte_count, fp) == byte_count;
+        if (fclose(fp) != 0) write_ok = 0;
+        fp = NULL;
+        if (!write_ok) {
+            remove(temporary_path);
+            return 0;
+        }
+    }
+
+    /* Verify the private staging file before its no-replace commit.  A
+     * verification failure leaves no destination behind. */
+    written_bytes = (uint8_t *)malloc(byte_count);
+    if (!written_bytes) goto done;
+    fp = fopen(temporary_path, "rb");
+    if (!fp) goto done;
+    {
+        int read_ok = fread(written_bytes, 1, byte_count, fp) == byte_count;
+        if (fclose(fp) != 0) read_ok = 0;
+        fp = NULL;
+        if (!read_ok || memcmp(bytes, written_bytes, byte_count) != 0) {
+            goto done;
+        }
+    }
+
+    /* Re-check immediately before the atomic no-replace publication. */
+    if (file_exists_regular(destination_path) ||
+        TSRM_LINK(temporary_path, destination_path) != 0) {
+        goto done;
+    }
+    published = 1;
+
+done:
+    if (fp) fclose(fp);
+    free(written_bytes);
+    remove(temporary_path);
+    return published;
 }
 
 /* Read up to `max_bytes` from `path` into a heap buffer.  Returns the
@@ -960,6 +1060,89 @@ Theron_V1SrmEnvelopeKind theron_v1_srm_decode_path(
     return kind;
 }
 
+int theron_v1_srm_transfer_opaque_path(
+    const char *source_path,
+    const char *destination_path,
+    uint8_t *scratch,
+    size_t scratch_capacity,
+    Theron_V1SrmOpaqueTransferReceipt *out_receipt) {
+
+    struct stat source_stat;
+    struct stat destination_stat;
+    uint8_t *source_bytes = NULL;
+    size_t source_size;
+    size_t payload_size = 0u;
+    Theron_V1SrmEnvelopeReceipt envelope;
+    Theron_V1SrmEnvelopeKind kind;
+    FILE *fp;
+    int ok = 0;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->validation_status = THERON_V1_SRM_PAYLOAD_PROBE_BAD_INPUT;
+        out_receipt->body_kind = THERON_V1_SRM_ENVELOPE_KIND_NONE;
+    }
+    if (!source_path || !source_path[0] || !destination_path ||
+        !destination_path[0] || !scratch || scratch_capacity == 0u ||
+        strcmp(source_path, destination_path) == 0 ||
+        stat(source_path, &source_stat) != 0 ||
+        !S_ISREG(source_stat.st_mode) || source_stat.st_size <= 0 ||
+        (uint64_t)source_stat.st_size > THERON_V1_SRM_CONTAINER_TRANSFER_MAX_BYTES ||
+        stat(destination_path, &destination_stat) == 0) {
+        return 0;
+    }
+    if (scratch_capacity > THERON_V1_SRM_BODY_DECODE_MAX_BYTES) {
+        scratch_capacity = THERON_V1_SRM_BODY_DECODE_MAX_BYTES;
+    }
+    source_size = (size_t)source_stat.st_size;
+    source_bytes = (uint8_t *)malloc(source_size);
+    if (!source_bytes) goto done;
+
+    fp = fopen(source_path, "rb");
+    if (!fp) goto done;
+    if (fread(source_bytes, 1, source_size, fp) != source_size) {
+        fclose(fp);
+        goto done;
+    }
+    if (fclose(fp) != 0) goto done;
+
+    memset(&envelope, 0, sizeof(envelope));
+    kind = theron_v1_srm_decode_envelope(source_bytes, source_size,
+                                          scratch, scratch_capacity, &envelope);
+    payload_size = envelope.inflate_payload_size;
+    if (out_receipt) {
+        out_receipt->validation_status = envelope.inflate_status;
+        out_receipt->body_kind = kind;
+        out_receipt->source_size = (uint64_t)source_size;
+        out_receipt->source_checksum32 = rolling_checksum32(source_bytes, source_size);
+        out_receipt->body_evidence = envelope.body_evidence;
+    }
+    /* Complete gzip authentication, rather than body semantics, authorizes
+     * the transfer.  Unknown real bodies remain unsupported and cannot
+     * reach Continue or any rendering route through this helper. */
+    if (envelope.inflate_status != THERON_V1_SRM_PAYLOAD_PROBE_OK ||
+        payload_size == 0u || !envelope.body_evidence.captured ||
+        !envelope.body_evidence.gzip_trailer_verified) {
+        goto done;
+    }
+    if (!publish_opaque_container_no_replace(destination_path,
+                                             source_bytes, source_size)) {
+        goto done;
+    }
+    if (out_receipt) {
+        out_receipt->destination_size = (uint64_t)source_size;
+        out_receipt->destination_checksum32 =
+            rolling_checksum32(source_bytes, source_size);
+        out_receipt->byte_exact = 1;
+        out_receipt->copied = out_receipt->byte_exact;
+    }
+    ok = 1;
+
+done:
+    free(source_bytes);
+    return ok;
+}
+
 int theron_v1_srm_catalog_body_evidence(
     const Theron_V1SrmEnvelopeReceipt *envelopes,
     size_t envelope_count,
@@ -1385,7 +1568,7 @@ const char *theron_v1_srm_source_evidence(void) {
         "  - THQUEST.ASM T080  — between-dungeon save/load (no in-dungeon)\n"
         "  - THQUEST.ASM T800  — champion persistence between dungeons\n"
         "\n"
-        "Status (2026-06-27/28):\n"
+        "Status (2026-06-27 through 2026-07-11):\n"
         "  - Data-free classifier with 5-slot disk manifest, gzip magic\n"
         "    detection (0x1F 0x8B 0x08), 1 KiB rolling prefix checksum,\n"
         "    present/recognized rollup, and stable string status names.\n"
@@ -1413,6 +1596,11 @@ const char *theron_v1_srm_source_evidence(void) {
         "    real-artifact entry point; when no .srm is staged it\n"
         "    returns ENVELOPE_KIND_NONE without disturbing the\n"
         "    caller's envelope buffer.\n"
+        "  - 2026-07-11 opaque transfer validates a complete authenticated\n"
+        "    gzip member and atomically preserves its exact original bytes.\n"
+        "    It records unsupported real bodies as opaque receipts and cannot\n"
+        "    select Continue, mutate runtime state, or relax Track 02's\n"
+        "    no-generated-presentation gate.\n"
         "  - Default save-disk root: $HOME/.firestaff/data/theron/save.\n"
         "  - Override: env FIRESTAFF_THERON_SRM_DIR.\n"
         "  - No real .srm file is present in the local data root on this\n"

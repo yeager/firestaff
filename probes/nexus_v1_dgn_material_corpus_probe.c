@@ -3,8 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 
-/* Skip-safe real-media probe. The parser exposes only existing Structure1B
- * material selectors; opaque DGN spans are never examined here. */
+/* Skip-safe real-media probe. It reports typed Structure1B selectors,
+ * Structure1G declarations, and the bounded Structure2 descriptor envelope;
+ * opaque Structure2 bytes remain unexamined and never become materials. */
 int main(int argc, char **argv) {
     Nexus_V1_Engine engine;
     Nexus_V1_DgnMaterialCorpusReceipt receipt;
@@ -24,6 +25,30 @@ int main(int argc, char **argv) {
            receipt.floor_coverage.command_count,
            receipt.ceiling_coverage.command_count,
            receipt.wall_coverage.command_count);
+    printf("Typed DGN: 1F levels=%d entries=%d; 1G present=%d valid=%d "
+           "animations=%d sequences=%d images=%d gotos=%d "
+           "animated-floors=%d bound=%d\n",
+           receipt.structure1f_valid_level_count,
+           receipt.structure1f_typed_entry_count,
+           receipt.structure1g_present_level_count,
+           receipt.structure1g_valid_level_count,
+           receipt.structure1g_animated_texture_count,
+           receipt.structure1g_sequence_count,
+           receipt.structure1g_image_instruction_count,
+           receipt.structure1g_goto_instruction_count,
+           receipt.structure1g_floor_animation_cell_count,
+           receipt.structure1g_floor_animation_bound_count);
+    printf("Structure2: valid-levels=%d descriptors=%d 1G-first-bound=%d "
+           "payload-envelopes=%d opaque-bytes=%d proven-material-levels=%d "
+           "canonical-sources=%d bound-payloads=%d\n",
+           receipt.structure2_valid_level_count,
+           receipt.structure2_texture_count,
+           receipt.structure1g_structure2_first_image_bound_count,
+           receipt.structure2_payload_envelope_valid_level_count,
+           receipt.structure2_opaque_payload_byte_count,
+           receipt.structure2_material_or_image_data_proven_level_count,
+           receipt.structure2_canonical_source_verified_level_count,
+           receipt.structure2_materialization_bound_level_count);
     printf("Coverage: floor=%d ceiling=%d wall=%d bpk-host=%d complete=%d\n",
            receipt.floor_coverage.covered, receipt.ceiling_coverage.covered,
            receipt.wall_coverage.covered, receipt.bpk_host_routes_complete,

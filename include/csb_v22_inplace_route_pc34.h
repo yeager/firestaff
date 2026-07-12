@@ -49,7 +49,7 @@
  *   fallback_reason is a static short string that names the
  *                    contract that was applied (e.g.
  *                    "wall_dungeon_by_depth",
- *                    "field_teleporter_no_asset",
+ *                    "v1_original_material_unbound_field_teleporter",
  *                    "csb_prison_door_iron",
  *                    "v22_inactive"). This is the seam a future
  *                    pixel/material verification gate can read

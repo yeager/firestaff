@@ -47,7 +47,9 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "firestaff_cmp_decode.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +57,11 @@
 
 static int checks;
 static int failures;
+
+enum {
+    CSB_ENTRANCE_CLOSED_RASTER_HASH_PC34 = 0xc9db1e1du,
+    CSB_ENTRANCE_OPEN_STEP2_RASTER_HASH_PC34 = 0x74e48371u
+};
 
 #define CHECK(cond, msg) do { \
     ++checks; \
@@ -89,6 +96,92 @@ static int pc_data_present(const char *dir)
     if (!dir || dir[0] == '\0') return 0;
     csb_v1_boot_profile_init(&profile);
     return csb_v1_boot_scan_assets(&profile, dir) == 0;
+}
+
+/* ReDMCSB ENTRANCE.C F0438/F0441: C004 is the entrance base, C002/C003
+ * are composed at the F20J y=28 origin, with a 20-vblank hold followed by
+ * 31 four-pixel door steps.  Keep this at the hash-verified asset boundary:
+ * a synthetic raster cannot prove the archive decoder or the actual art. */
+static void check_real_entrance_composition(const CSB_V1_BootProfile *profile)
+{
+    CSB_V1_StartupRuntimeAssetSession_PC34 session;
+    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
+    CSB_V1_StartupRuntimeRaster_PC34 closed_raster;
+    CSB_V1_StartupRuntimeRaster_PC34 opening_raster;
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_StartupPresentationReceipt_PC34 receipt;
+
+    memset(&session, 0, sizeof(session));
+    memset(&frame, 0, sizeof(frame));
+    memset(&closed_raster, 0, sizeof(closed_raster));
+    memset(&opening_raster, 0, sizeof(opening_raster));
+    memset(&snapshot, 0, sizeof(snapshot));
+    memset(&receipt, 0, sizeof(receipt));
+    snapshot.entrance_active = 1;
+    snapshot.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    snapshot.boot_profile = profile;
+
+    CHECK(csb_v1_boot_startup_runtime_asset_session_open_pc34(profile, &session) == 1 &&
+              session.valid && session.real_asset_matched &&
+              session.full_startup_ready && session.rejects_legacy_wrappers,
+          "verified CSB GRAPHICS.DAT opens C001-C005 startup surfaces");
+    if (!session.valid) return;
+
+    CHECK(csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
+              &snapshot, &receipt) == 1 && receipt.valid &&
+              receipt.render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+              receipt.render_plan.special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+              receipt.render_plan.closed_left_dest_y == 28 &&
+              receipt.render_plan.closed_right_dest_y == 28 &&
+              receipt.redmcsb_pre_open_delay_ticks == 20 &&
+              receipt.redmcsb_door_step_count == 31,
+          "C004 closed entrance keeps the F0438 palette, y=28, and timing");
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &receipt.render_plan, 100u, &frame) == 1 &&
+              frame.valid && frame.real_asset_matched && frame.entrance_ready &&
+              frame.door_ready &&
+              csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                  &frame, &receipt.render_plan, &closed_raster) == 1 &&
+              closed_raster.valid && closed_raster.entrance_composited &&
+              closed_raster.door_composited &&
+              closed_raster.source_surface_count == 3,
+          "real C004/C002/C003 closed frame rasterizes without a fallback");
+
+    snapshot.opening_active = 1;
+    snapshot.opening_delay_ticks = 0;
+    snapshot.opening_step = 2;
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(csb_v1_boot_startup_presentation_state_receipt_from_snapshot_pc34(
+              &snapshot, &receipt) == 1 && receipt.valid &&
+              receipt.render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+              receipt.render_plan.special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+              receipt.render_plan.opening_composite_valid &&
+              receipt.render_plan.opening_left_dest_y == 28 &&
+              receipt.render_plan.opening_right_dest_y == 28 &&
+              receipt.render_plan.opening_left_w == 97 &&
+              receipt.render_plan.opening_right_dest_x == 113 &&
+              receipt.render_plan.opening_right_w == 119,
+          "F0438 step 2 moves real C002/C003 strips four pixels per side");
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &receipt.render_plan, 101u, &frame) == 1 &&
+              csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                  &frame, &receipt.render_plan, &opening_raster) == 1 &&
+              opening_raster.valid && opening_raster.entrance_composited &&
+              opening_raster.door_composited &&
+              opening_raster.source_surface_count == 3 &&
+              closed_raster.pixel_hash == CSB_ENTRANCE_CLOSED_RASTER_HASH_PC34 &&
+              opening_raster.pixel_hash == CSB_ENTRANCE_OPEN_STEP2_RASTER_HASH_PC34 &&
+              opening_raster.pixel_hash != closed_raster.pixel_hash,
+          "real C004/C002/C003 frame hashes lock F0438 opening geometry");
+
+    csb_v1_boot_startup_runtime_raster_release_pc34(&closed_raster);
+    csb_v1_boot_startup_runtime_raster_release_pc34(&opening_raster);
+    csb_v1_boot_startup_runtime_asset_session_release_pc34(&session);
 }
 
 /* Build a synthetic CMP buffer that the csb_v1_cmp_import_to_party
@@ -136,6 +229,7 @@ int main(int argc, char **argv)
     csb_v1_boot_profile_init(&profile);
     CHECK(csb_v1_boot_scan_assets(&profile, dir) == 0,
           "PC CSB assets scan by hash");
+    check_real_entrance_composition(&profile);
     CHECK(strcmp(csb_v1_engine_version_display_get(), "v2.0") == 0,
           "engine version helper reports v2.0 before CSB enter_game");
 

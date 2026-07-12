@@ -42,6 +42,13 @@
  *      exporter is byte-stable across identical inputs, and the
  *      gameCode name helper returns stable strings for all
  *      known codes.
+ *   9. The original four-portrait section is transactional: a
+ *      truncated final portrait rejects the file and preserves the
+ *      caller's header, party, and timeline byte-for-byte.
+ *  10. ACTIVE_GROUP is the next ordered native PC34 block after
+ *      GLOBAL_DATA: its byte count must equal sizeof(ACTIVE_GROUP) *
+ *      GLOBAL_DATA.MaximumActiveGroupCount, and malformed length or
+ *      ciphertext leaves the destination untouched.
  *
  * ReDMCSB anchors:
  *   - READWRIT.C F0417_SAVEUTIL_GetChecksumAndObfuscate
@@ -727,6 +734,157 @@ static void test_strict_checksum_rejects_corrupt_part(void) {
     puts("  PASS strict_checksum_rejects_corrupt_part");
 }
 
+static void test_portrait_section_is_transactional(void) {
+    struct SaveGame_Compat state;
+    struct PartyState_Compat party;
+    struct TimelineQueue_Compat timeline;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat importedParty;
+    struct TimelineQueue_Compat importedTimeline;
+    struct SaveGameHeader_Compat headerBefore;
+    struct PartyState_Compat partyBefore;
+    struct TimelineQueue_Compat timelineBefore;
+    unsigned char exportBuf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int written = 0;
+    int rc;
+
+    memset(&state, 0, sizeof(state));
+    memset(&party, 0, sizeof(party));
+    memset(&timeline, 0, sizeof(timeline));
+    state.party = &party;
+    state.timeline = &timeline;
+    party.championCount = 1;
+    party.activeChampionIndex = 0;
+    fill_pc34_export_test_champion(&party.champions[0]);
+    fill_pc34_export_test_timeline(&timeline);
+    rc = F0795_SAVEGAME_ExportPC34_Compat(
+        &state, 0x54584E31u, exportBuf, (int)sizeof(exportBuf), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "portrait transaction: export rc == OK");
+
+    memset(&imported, 0xA5, sizeof(imported));
+    memset(&importedParty, 0x5A, sizeof(importedParty));
+    memset(&importedTimeline, 0x3C, sizeof(importedTimeline));
+    imported.party = &importedParty;
+    imported.timeline = &importedTimeline;
+    headerBefore = imported.header;
+    partyBefore = importedParty;
+    timelineBefore = importedTimeline;
+
+    /* ReDMCSB LOADSAVE.C F0433 writes all four portrait bitmaps.
+     * Drop one byte from that final fixed section after valid parts,
+     * proving the importer never publishes a half-loaded candidate. */
+    rc = F0796_SAVEGAME_ImportPC34_Compat(
+        exportBuf, written - 1, &imported, /* strict = */ 1);
+    CHECK(rc == SAVEGAME_PC34_ERROR_BAD_SIZE,
+          "portrait transaction: truncated fourth portrait rejected");
+    CHECK(memcmp(&imported.header, &headerBefore, sizeof(headerBefore)) == 0,
+          "portrait transaction: header unchanged on late truncation");
+    CHECK(memcmp(&importedParty, &partyBefore, sizeof(partyBefore)) == 0,
+          "portrait transaction: party unchanged on late truncation");
+    CHECK(memcmp(&importedTimeline, &timelineBefore, sizeof(timelineBefore)) == 0,
+          "portrait transaction: timeline unchanged on late truncation");
+
+    rc = F0796_SAVEGAME_ImportPC34_Compat(
+        exportBuf, written, &imported, /* strict = */ 1);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "portrait transaction: complete original section imports");
+    CHECK(importedParty.champions[0].portraitBitmapValid == 1 &&
+          memcmp(importedParty.champions[0].portraitBitmap,
+                 party.champions[0].portraitBitmap,
+                 CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT) == 0,
+          "portrait transaction: complete portrait round-trips");
+    puts("  PASS portrait_section_is_transactional");
+}
+
+static void test_active_group_section_is_transactional(void) {
+    struct GameWorld_Compat world;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat importedParty;
+    struct TimelineQueue_Compat importedTimeline;
+    struct SaveGameHeader_Compat headerBefore;
+    struct PartyState_Compat partyBefore;
+    struct TimelineQueue_Compat timelineBefore;
+    unsigned char exportBuf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    const int activeGroupLengthOffset =
+        SAVEGAME_PC34_DM_SAVE_HEADER_SIZE + 2 +
+        SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT;
+    int written = 0;
+    int rc;
+
+    memset(&world, 0, sizeof(world));
+    memset(&imported, 0xA5, sizeof(imported));
+    memset(&importedParty, 0x5A, sizeof(importedParty));
+    memset(&importedTimeline, 0x3C, sizeof(importedTimeline));
+    imported.party = &importedParty;
+    imported.timeline = &importedTimeline;
+    world.party.championCount = 1;
+    world.party.mapIndex = 6;
+    world.party.mapX = 11;
+    world.party.mapY = 12;
+    world.party.direction = 2;
+    world.party.activeChampionIndex = 0;
+    world.partyMapIndex = 6;
+    world.creatureAICount = 1;
+    world.creatureAI[0].groupMapX = 5;
+    world.creatureAI[0].groupMapY = 6;
+    world.creatureAI[0].groupCells = 0x0f;
+    world.creatureAI[0].groupDirection = 2;
+    world.creatureAI[0].reserved0 = 1;
+
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &world, 0x66778899u, exportBuf, (int)sizeof(exportBuf), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "active-group transaction: native world export succeeds");
+    CHECK(exportBuf[activeGroupLengthOffset] == 16u &&
+          exportBuf[activeGroupLengthOffset + 1] == 0u,
+          "active-group transaction: native block is one 16-byte record");
+
+    rc = F0796_SAVEGAME_ImportPC34_Compat(
+        exportBuf, written, &imported, /* strict = */ 1);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "active-group transaction: complete native block imports");
+    CHECK(importedParty.mapIndex == 6 && importedParty.mapX == 11 &&
+          importedParty.mapY == 12,
+          "active-group transaction: complete stream round-trips party state");
+
+    memset(&imported, 0xA5, sizeof(imported));
+    memset(&importedParty, 0x5A, sizeof(importedParty));
+    memset(&importedTimeline, 0x3C, sizeof(importedTimeline));
+    imported.party = &importedParty;
+    imported.timeline = &importedTimeline;
+    headerBefore = imported.header;
+    partyBefore = importedParty;
+    timelineBefore = importedTimeline;
+    exportBuf[activeGroupLengthOffset] = 0u;
+    exportBuf[activeGroupLengthOffset + 1] = 0u;
+    rc = F0796_SAVEGAME_ImportPC34_Compat(
+        exportBuf, written, &imported, /* strict = */ 0);
+    CHECK(rc == SAVEGAME_PC34_ERROR_BAD_SIZE,
+          "active-group transaction: count-sized block mismatch rejected");
+    CHECK(memcmp(&imported.header, &headerBefore, sizeof(headerBefore)) == 0,
+          "active-group transaction: header unchanged after length corruption");
+    CHECK(memcmp(&importedParty, &partyBefore, sizeof(partyBefore)) == 0,
+          "active-group transaction: party unchanged after length corruption");
+    CHECK(memcmp(&importedTimeline, &timelineBefore, sizeof(timelineBefore)) == 0,
+          "active-group transaction: timeline unchanged after length corruption");
+
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &world, 0x66778899u, exportBuf, (int)sizeof(exportBuf), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "active-group transaction: fresh native stream exports");
+    exportBuf[activeGroupLengthOffset + 2] ^= 0x80u;
+    rc = F0796_SAVEGAME_ImportPC34_Compat(
+        exportBuf, written, &imported, /* strict = */ 1);
+    CHECK(rc == SAVEGAME_PC34_ERROR_BAD_CHECKSUM,
+          "active-group transaction: corrupt ciphertext rejected");
+    CHECK(memcmp(&imported.header, &headerBefore, sizeof(headerBefore)) == 0 &&
+          memcmp(&importedParty, &partyBefore, sizeof(partyBefore)) == 0 &&
+          memcmp(&importedTimeline, &timelineBefore, sizeof(timelineBefore)) == 0,
+          "active-group transaction: ciphertext corruption commits nothing");
+    puts("  PASS active_group_section_is_transactional");
+}
+
 /* Test 4: the file size, header magic, and the per-part LENGTH
  * prefix match the CPSC layout. */
 static void test_cpsc_layout(void) {
@@ -1341,7 +1499,10 @@ static void test_world_pc34_export_preserves_active_groups(void) {
     struct PartyState_Compat importedParty;
     struct TimelineQueue_Compat importedTimeline;
     DM1OriginalSavePC34HandoffReport report;
+    DM1OriginalSavePC34RoundtripReport roundtripReport;
     unsigned char exportBuf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char roundtripBuf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    size_t roundtripSize = 0u;
     int written = 0;
     int rc;
 
@@ -1453,6 +1614,18 @@ static void test_world_pc34_export_preserves_active_groups(void) {
           importedParty.mapX == 11 &&
           importedParty.mapY == 12,
           "pc34 world export: party fields still preserved");
+
+    memset(&roundtripReport, 0, sizeof(roundtripReport));
+    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+        exportBuf, (size_t)written, 0x66778899u,
+        roundtripBuf, sizeof(roundtripBuf), &roundtripSize, &roundtripReport);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && roundtripSize > 0u,
+          "pc34 world export: active groups survive runtime round-trip");
+    CHECK(roundtripReport.source_active_group_count == 2 &&
+          roundtripReport.exported_active_group_count == 2 &&
+          roundtripReport.reloaded_active_group_count == 2 &&
+          roundtripReport.core_state_matches == 1,
+          "pc34 world export: active-group count round-trips through runtime");
     puts("  PASS world_pc34_export_preserves_active_groups");
 }
 
@@ -1783,6 +1956,8 @@ int main(void) {
     test_pc34_remove_fluxcage_exports_source_cslot();
     test_bad_inputs_rejected();
     test_strict_checksum_rejects_corrupt_part();
+    test_portrait_section_is_transactional();
+    test_active_group_section_is_transactional();
     test_cpsc_layout();
     test_error_string_lookup();
     test_format_id_tolerance();

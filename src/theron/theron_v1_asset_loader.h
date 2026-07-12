@@ -65,6 +65,11 @@ typedef struct {
     int               is_cdrom;      /* 1=CD-ROM disc, 0=HuCard image   */
     int               region;        /* 0=JP, 1=US (TurboGrafx-16)     */
     int               assets_verified;/* 1=hash verified, 0=unverified  */
+    /* Set only by the hash-verified boot path when original Track 02 bytes
+     * are present but no source-locked graphics bank has been decoded.
+     * Rendering must stop at this boundary rather than draw generated
+     * palette, tile, or UI substitutes over authoritative media. */
+    int               synthetic_rendering_blocked;
 } TrAssetBundle;
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -86,6 +91,19 @@ typedef struct {
  */
 TrAssetResult tr_asset_load(const char *file_path,
                              TrAssetBundle *bundle);
+
+/* Apply the original-media rendering boundary after the boot profile has
+ * verified the Track 02 hash.  Raw bytes remain available to the semantic
+ * Track 02 routes; only generated rendering is forbidden. */
+void tr_asset_block_synthetic_rendering_for_verified_media(
+    TrAssetBundle *bundle);
+
+/* Returns zero when a hash-verified Track 02 container is present but no
+ * source-evidenced V1 graphics bank has been decoded.  This is deliberately
+ * derived from the bundle state rather than only the sticky block flag, so a
+ * later render caller cannot accidentally route original media through the
+ * generated tile/UI fallback merely by omitting the boot helper above. */
+int tr_asset_generated_v1_rendering_allowed(const TrAssetBundle *bundle);
 
 /* Free all asset resources owned by the bundle.
  * Does NOT free the bundle itself. */

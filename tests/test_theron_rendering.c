@@ -613,8 +613,8 @@ static int test_asset_selection_wiring(void) {
     return 1;
 }
 
-static int test_asset_load_raw_track02_fallback(void) {
-    TEST("Runtime: raw Track 02 without supplemental markers stays loadable");
+static int test_asset_load_raw_track02_semantic_only(void) {
+    TEST("Runtime: raw Track 02 stays loadable for semantic routing");
 
     const char *path = "/tmp/firestaff_theron_raw_track02_test.bin";
     static const uint8_t raw_track02[32] = {
@@ -632,11 +632,26 @@ static int test_asset_load_raw_track02_fallback(void) {
     TrAssetBundle bundle;
     TrAssetResult r = tr_asset_load(path, &bundle);
     remove(path);
-    ASSERT(r == TR_ASSET_OK, "raw Track 02 fallback should return OK");
+    ASSERT(r == TR_ASSET_OK, "raw Track 02 semantic route should return OK");
     ASSERT(bundle.hucard_rom != NULL, "raw Track 02 bytes not retained");
     ASSERT(bundle.hucard_rom_size == sizeof(raw_track02), "raw Track 02 size mismatch");
     ASSERT(bundle.track03_data == NULL, "raw fallback should not invent Track 03");
     ASSERT(bundle.track04_data == NULL, "raw fallback should not invent Track 04");
+    ASSERT(bundle.palette.tile_count == 0,
+           "raw Track 02 route does not initialize synthetic tiles");
+    ASSERT(bundle.synthetic_rendering_blocked == 0,
+           "unverified fixture remains usable by data-free tests");
+    ASSERT(tr_asset_generated_v1_rendering_allowed(&bundle) == 1,
+           "unverified fixture may use deterministic test rendering");
+    bundle.assets_verified = 1;
+    ASSERT(tr_asset_generated_v1_rendering_allowed(&bundle) == 0,
+           "verified original Track 02 blocks generated V1 rendering without a caller flag");
+    bundle.assets_verified = 0;
+    tr_asset_block_synthetic_rendering_for_verified_media(&bundle);
+    ASSERT(bundle.synthetic_rendering_blocked == 1,
+           "verified-media boundary blocks synthetic rendering");
+    ASSERT(tr_asset_generated_v1_rendering_allowed(&bundle) == 0,
+           "explicit verified-media block remains authoritative");
     tr_asset_free(&bundle);
 
     PASS();
@@ -783,7 +798,7 @@ int main(void) {
     test_vp_tile_for_square();
     test_palette_state_init();
     test_asset_selection_wiring();
-    test_asset_load_raw_track02_fallback();
+    test_asset_load_raw_track02_semantic_only();
     test_vp_render_dungeon();
     test_vp_render_ui_zones();
     test_vp_draw_bar();

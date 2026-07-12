@@ -160,6 +160,45 @@ level, object, or text payload. The comparison receipt is permanently
 `opaque_only` and `promotion_blocked`; it exports no payload bytes and cannot
 enable a decoder or runtime route.
 
+## Six-Container MODE1 Sector Descriptor (2026-07-11)
+
+The six indexed windows (descriptor entries 6 and 8 at all three raw-BIN
+anchors) are all exactly `0x400` raw bytes and all cross a MODE1/2352 sector
+boundary. The bounded `Theron_Track02NonstartupSectorDescriptor` records their
+complete physical framing as ordered `mode1-sync-header`, `mode1-user-data`,
+and `mode1-sector-tail` spans. This is a typed decoder prerequisite, not a
+payload decoder.
+
+The JP and US profiles agree for every corresponding anchor/entry despite the
+one-sector regional displacement and different opaque content fingerprints:
+
+| Anchor | Entry | Header | User data | Sector tail | Span order |
+|--------|-------|--------|-----------|-------------|------------|
+| 0 | 6 | 16 | 720 | 288 | user, tail, header, user |
+| 0 | 8 | 16 | 720 | 288 | user, tail, header, user |
+| 1 | 6 | 16 | 720 | 288 | user, tail, header, user |
+| 1 | 8 | 16 | 720 | 288 | user, tail, header, user |
+| 2 | 6 | 16 | 752 | 256 | tail, header, user |
+| 2 | 8 | 16 | 720 | 288 | user, tail, header, user |
+
+MODE1 sync/header is `0..15`, user data is `16..2063`, and the sector tail is
+`2064..2351` (EDC/ECC). The anchor-2 entry-6 tail-leading case is especially
+important: a future decoder must reconstruct only the typed user-data spans,
+never read the raw `0x400` window as contiguous payload. The descriptor exports
+no bytes, assigns no compression/table/object/level/bitmap/palette/text role,
+and remains opaque and promotion-blocked pending original loader evidence.
+
+## Six-Container Local-Format Boundary (2026-07-11)
+
+All six raw windows require MODE1 user-data reassembly before a local payload
+byte can be inspected. Five contain two separated user-data pieces; anchor 2,
+entry 6 starts 272 raw bytes before its first user-data byte (sector tail then
+the next sector header). The JP and US variants agree on all six transport
+shapes. Firestaff records only first-user offsets, user-data counts, segment
+counts, and transport fingerprints. It explicitly identifies no local header,
+count, stride, or compression scheme, and cannot enable a payload or visual
+route.
+
 ## Remaining Risk
 
 This now includes one bounded initial-level startup handoff and a shared

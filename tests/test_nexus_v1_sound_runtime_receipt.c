@@ -81,6 +81,8 @@ static void test_size_matched_assets_block_decode(void) {
           receipt.playback_enabled == 0,
           "runtime receipt exposes level 0 CD track without enabling playback");
     CHECK(receipt.sal_decode_supported == 0 &&
+          receipt.sal_canonical_source_verified == 0 &&
+          receipt.map_canonical_source_verified == 0 &&
           receipt.map_decode_supported == 1 &&
           receipt.map_event_count == 27 &&
           receipt.map_mapped_event_count == 2 &&
@@ -102,6 +104,30 @@ static void test_size_matched_assets_block_decode(void) {
     CHECK(strcmp(nexus_sound_sfx_runtime_status_name(receipt.status),
                  "blocked-unsupported-decode") == 0,
           "unsupported decode status name is stable");
+    nexus_sound_shutdown(&eng);
+}
+
+static void test_canonical_source_handoff_stays_decode_blocked(void) {
+    Nexus_SoundEngine eng;
+    Nexus_SfxRuntimeReceipt receipt;
+    static unsigned char sal_data[297082];
+    static unsigned char map_data[66];
+
+    memset(&eng, 0, sizeof(eng));
+    memset(&receipt, 0, sizeof(receipt));
+    sal_data[0] = 1;
+    CHECK(nexus_sound_init(&eng) == 0, "canonical handoff engine initializes");
+    CHECK(nexus_sound_load_canonical_level(&eng, 0, sal_data,
+                                           (int)sizeof(sal_data), map_data,
+                                           (int)sizeof(map_data), 1, 1) == 0,
+          "canonical source handoff loads");
+    CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
+          receipt.sal_canonical_source_verified == 1 &&
+          receipt.map_canonical_source_verified == 1 &&
+          receipt.status == NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
+          receipt.blocks_real_sfx_playback == 1 &&
+          receipt.playback_enabled == 0,
+          "verified source does not promote unproven SAL playback");
     nexus_sound_shutdown(&eng);
 }
 
@@ -491,6 +517,7 @@ int main(void) {
     test_sfx_map_record_table_receipt();
     test_sfx_map_duplicate_event_receipt();
     test_mismatched_assets_block_playback();
+    test_canonical_source_handoff_stays_decode_blocked();
     test_optional_real_sal_corpus_profile();
     if (g_failures) {
         printf("test_nexus_v1_sound_runtime_receipt: %d failure(s)\n",

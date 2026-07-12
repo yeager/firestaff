@@ -60,7 +60,7 @@ int main(void) {
     uint8_t raw_data[108];
     uint32_t raw_offsets[3] = { 0, 36, 72 };
     uint32_t raw_sizes[3] = { 36, 36, 36 };
-    DM2_V1_GdatEntry entries[3];
+    DM2_V1_GdatEntry entries[6];
     DM2_V1_AssetLoader loader;
 
     make_ai_raw(raw_data,
@@ -98,18 +98,36 @@ int main(void) {
                 0);
 
     memset(entries, 0, sizeof(entries));
-    entries[0].cls1 = DM2_GDAT_CATEGORY_CREATURE_AI;
+    /* skproject QUERY_CREATURE_AI_SPEC_FROM_TYPE reads CREATURES[type]
+     * dtWordValue field 0x05 before resolving the CREATURE_AI row.  Deliberately
+     * use non-type row numbers to prove the runtime does not conflate them. */
+    entries[0].cls1 = DM2_GDAT_CATEGORY_CREATURES;
     entries[0].cls2 = DM2_AI_THORN_DEMON;
-    entries[0].cls4 = 0;
-    entries[0].data_index = 0;
-    entries[1].cls1 = DM2_GDAT_CATEGORY_CREATURE_AI;
+    entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[0].cls4 = 0x05;
+    entries[0].data_index = 7;
+    entries[1].cls1 = DM2_GDAT_CATEGORY_CREATURES;
     entries[1].cls2 = DM2_AI_CAVE_BAT;
-    entries[1].cls4 = 0;
-    entries[1].data_index = 1;
-    entries[2].cls1 = DM2_GDAT_CATEGORY_CREATURE_AI;
+    entries[1].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[1].cls4 = 0x05;
+    entries[1].data_index = 11;
+    entries[2].cls1 = DM2_GDAT_CATEGORY_CREATURES;
     entries[2].cls2 = 0;
-    entries[2].cls4 = 0;
-    entries[2].data_index = 2;
+    entries[2].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[2].cls4 = 0x05;
+    entries[2].data_index = 3;
+    entries[3].cls1 = DM2_GDAT_CATEGORY_CREATURE_AI;
+    entries[3].cls2 = 7;
+    entries[3].cls4 = 0;
+    entries[3].data_index = 0;
+    entries[4].cls1 = DM2_GDAT_CATEGORY_CREATURE_AI;
+    entries[4].cls2 = 11;
+    entries[4].cls4 = 0;
+    entries[4].data_index = 1;
+    entries[5].cls1 = DM2_GDAT_CATEGORY_CREATURE_AI;
+    entries[5].cls2 = 3;
+    entries[5].cls4 = 0;
+    entries[5].data_index = 2;
 
     memset(&loader, 0, sizeof(loader));
     loader.data = raw_data;
@@ -119,7 +137,7 @@ int main(void) {
     loader.raw_offsets = raw_offsets;
     loader.raw_sizes = raw_sizes;
     loader.entries = entries;
-    loader.entry_count = 3;
+    loader.entry_count = 6;
 
     dm2_v1_creature_reset_ai_table();
 
@@ -172,8 +190,14 @@ int main(void) {
     CHECK(dm2_v1_creature_attacks_party(0, 0) == 0,
           "imported static AI row suppresses attack routing");
 
-    CHECK(unused->BaseHP == 0 && unused->AttacksSpells == 0,
-          "missing GDAT AI entries leave unrelated table slots unchanged");
+    CHECK(unused == NULL &&
+              dm2_v1_creature_attacks_party(DM2_AI_GIGGLER, 1) == 0 &&
+              dm2_v1_creature_resolves_spell(DM2_AI_GIGGLER,
+                                             AI_ATTACK_FLAGS__FIREBALL) == 0,
+          "missing mapped row is explicitly unavailable with no action");
+
+    CHECK(dm2_v1_creature_spawn(DM2_AI_GIGGLER, 1, 2, 0, 0, 8) == -1,
+          "missing mapped row blocks spawn instead of inventing HP");
 
     int slot = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 1, 2, 0, 0, 16);
     const DM2_V1_CreatureInstance *inst = dm2_v1_creature_get_instance(slot);

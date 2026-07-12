@@ -36,13 +36,11 @@
  *   Floor CRACKED/MOSSY         -> floor_cracked_01
  *   Floor PIT                   -> floor_pit_01
  *   Stairs (up/down)            -> floor_stairs_01
- *   Ceiling PLAIN/VAULTED       -> ceiling_plain_01
+ *   Ceiling PLAIN/VAULTED       -> V1 original-material pass (unbound)
  *   Creature (any)              -> creature_chaos_fiend_01
- *   Item (floor/projectile)     -> creature_chaos_fiend_01
+ *   Item (floor/projectile)     -> V1 original-material pass (unbound)
  *   Door                        -> door_iron_portcullis_01
- *   Field TELEPORTER            -> field_teleporter_01
- *   Field FLUXCAGE/CHAOS_RIFT   -> field_chaos_rift_01
- *   Field EXPLOSION             -> field_explosion_01
+ *   Fields                      -> V1 original-material pass (unbound)
  *   UI chrome                   -> ui_panel_01
  *   UI portrait                 -> champion_warrior_csb
  *   UI message log              -> ui_message_log_01

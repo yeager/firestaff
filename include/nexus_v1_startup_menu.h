@@ -240,6 +240,10 @@ typedef struct {
     int slot_mask;
     int save_state_receipt_valid;
     Nexus_V1_StartupMenuStateReceipt save_state_receipt;
+    /* Retain the one action evaluation that selected/confirmed this route.
+     * Host consumers must not reconstruct it from availability-only facts. */
+    Nexus_V1_StartupHostActionReceipt action_receipt;
+    int action_receipt_valid;
     Nexus_V1_StartupActionKind action_kind;
     Nexus_V1_StartupSaveExecutionKind execution_kind;
     Nexus_V1_StartupHostInputResult host_input_result;

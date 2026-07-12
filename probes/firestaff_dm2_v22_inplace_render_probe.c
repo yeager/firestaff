@@ -466,7 +466,7 @@ static int dm2_check_t560_route_table(const unsigned char raw_cells[3][3]) {
             } else if (route.clipped_w != 640) {
                 return 0;
             }
-            if (!route.render_gate_active) return 0;
+            if (route.render_gate_active) return 0;
         }
     }
     return 1;
@@ -682,8 +682,8 @@ int main(void) {
     dm2_v22_viewport_swap_update(0, (const unsigned char (*)[3])raw_cells, 0);
     probe_record(&stats, "DM2_V22_INDOOR_POPULATED",
                  dm2_v22_viewport_swap_populated() &&
-                 dm2_v22_viewport_swap_active(),
-                 "indoor T560 cache populated + swap active");
+                 !dm2_v22_viewport_swap_active(),
+                 "indoor T560 cache is inspectable but explicit no-draw");
 
     probe_record(&stats, "DM2_V22_T560_ROUTE_TABLE",
                  dm2_check_t560_route_table((const unsigned char (*)[3])raw_cells),
@@ -713,26 +713,26 @@ int main(void) {
     memset(fb, 0x00, sizeof(fb));
     painted = dm2_v22_viewport_swap_render(fb, 1920, 1080, 0);
     changed = count_changed_pixels(fb, sizeof(fb));
-    probe_record(&stats, "DM2_V22_INDOOR_RENDER_9_CELLS",
-                 painted == 9 && changed > 0 &&
-                 dm2_all_cell_centers_nonzero(fb, 1920),
-                 "indoor render pass paints 9 cells + non-zero centers");
+    probe_record(&stats, "DM2_GDAT_FB07_INDOOR_RGBA_NO_DRAW",
+                 painted == 0 && changed == 0 &&
+                 !dm2_all_cell_centers_nonzero(fb, 1920),
+                 "synthetic RGBA cache cannot overwrite the V1 active-map route");
 
     /* Capture the indoor counter IMMEDIATELY after the indoor render,
      * before the outdoor update() resets both counters to 0. */
     {
         int indoor_after_indoor = dm2_v22_viewport_swap_cells_painted_indoor();
-        probe_record(&stats, "DM2_V22_INDOOR_COUNTER_NONZERO",
-                     indoor_after_indoor == 9,
-                     "indoor painted-cell counter == 9 after indoor render");
+        probe_record(&stats, "DM2_GDAT_FB07_INDOOR_COUNTER_ZERO",
+                     indoor_after_indoor == 0,
+                     "no synthetic indoor cell is painted");
     }
 
     /* 8. Outdoor T600 path — sky/horizon/ground */
     dm2_v22_viewport_swap_update(0, NULL, 1);
     probe_record(&stats, "DM2_V22_OUTDOOR_POPULATED",
                  dm2_v22_viewport_swap_populated() &&
-                 dm2_v22_viewport_swap_active(),
-                 "outdoor T600 cache populated + swap active");
+                 !dm2_v22_viewport_swap_active(),
+                 "outdoor T600 cache is inspectable but explicit no-draw");
 
     {
         DM2_V22_T560IndoorRoute stale_indoor_route;
@@ -746,19 +746,19 @@ int main(void) {
     memset(fb, 0x00, sizeof(fb));
     painted = dm2_v22_viewport_swap_render(fb, 1920, 1080, 1);
     changed = count_changed_pixels(fb, sizeof(fb));
-    probe_record(&stats, "DM2_V22_OUTDOOR_RENDER_3_CELLS",
-                 painted == 3 && changed > 0 &&
-                 dm2_outdoor_cell_centers_nonzero(fb, 1920),
-                 "outdoor render pass paints sky/horizon/ground + non-zero centers");
+    probe_record(&stats, "DM2_GDAT_FB07_OUTDOOR_RGBA_NO_DRAW",
+                 painted == 0 && changed == 0 &&
+                 !dm2_outdoor_cell_centers_nonzero(fb, 1920),
+                 "synthetic outdoor RGBA cache cannot overwrite V1 pixels");
 
     /* 9. Per-viewport counters — capture BEFORE the sweep resets them.
      *    Each update() call resets both counters to 0; the sweep that
      *    follows would wipe the outdoor count to 0. */
     {
         int outdoor_before = dm2_v22_viewport_swap_cells_painted_outdoor();
-        probe_record(&stats, "DM2_V22_COUNTERS_INDOOR_OUTDOOR",
-                     outdoor_before > 0,
-                     "outdoor painted-cell counter > 0 after outdoor render");
+        probe_record(&stats, "DM2_GDAT_FB07_OUTDOOR_COUNTER_ZERO",
+                     outdoor_before == 0,
+                     "no synthetic outdoor cell is painted");
     }
 
     /* 10. 4-direction sweep (indoor) */
@@ -769,9 +769,9 @@ int main(void) {
         memset(fb, 0x00, sizeof(fb));
         sweep_painted += dm2_v22_viewport_swap_render(fb, 1920, 1080, 0);
     }
-    probe_record(&stats, "DM2_V22_DIRECTION_SWEEP_4X9",
-                 sweep_painted == 36,
-                 "all 4 directions paint 4x9 DM2 V22 indoor cells");
+    probe_record(&stats, "DM2_GDAT_FB07_DIRECTION_SWEEP_NO_DRAW",
+                 sweep_painted == 0,
+                 "no facing can promote synthetic RGBA cells");
 
     /* 11. Missing one synthetic cache bitmap: the renderer must skip
      * only that cell and leave the already-drawn V1 framebuffer byte
@@ -785,11 +785,11 @@ int main(void) {
     dm2_v22_viewport_swap_update(0, (const unsigned char (*)[3])raw_cells, 0);
     memset(fb, 0xA5, sizeof(fb));
     painted = dm2_v22_viewport_swap_render(fb, 1920, 1080, 0);
-    probe_record(&stats, "DM2_V22_MISSING_CELL_PRESERVES_V1",
-                 painted == 8 &&
+    probe_record(&stats, "DM2_GDAT_FB07_PARTIAL_CACHE_NO_DRAW",
+                 painted == 0 &&
                  fb[540 * 1920 + 1280] == 0xA5 &&
-                 fb[900 * 1920 + 640] != 0xA5,
-                 "missing T560 pit bitmap skips that cell and preserves V1 pixels");
+                 fb[900 * 1920 + 640] == 0xA5,
+                 "partial synthetic cache cannot alter any V1 pixel");
 
     /* 12. Idempotent shutdown */
     dm2_v22_inplace_draw_shutdown();

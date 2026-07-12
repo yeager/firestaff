@@ -1,11 +1,11 @@
 /*
  * dm2_v22_inplace_draw_pc34.h
  *
- * DM2 V2.2 GPU render path: V22 modern-art IN-PLACE bitmap lookup.
+ * DM2 V2.2 legacy modern-cache compatibility boundary.
  *
- * This is the foundation for switching the V22 render mode from
- * "overlay" (placeholder colored rectangle on top of V1) to
- * "in-place" (replace V1 sprite with V22 PBR PNG at the same cell).
+ * The cache may still be inspected by compatibility tooling, but it is never
+ * permitted to replace a DM2 dungeon cell. The V1 active-map GDAT route owns
+ * original material selection and missing original material is no-draw.
  *
  * Architecture:
  *   dm2_v22_shape_cache_update -> per-cell V22 shape (params, variant)
@@ -99,7 +99,8 @@ const uint32_t* dm2_v22_inplace_get_bitmap_by_id(const char* category,
                                                   const char* asset_id,
                                                   int* out_w, int* out_h);
 
-/* dm2_v22_inplace_render_pass — paints the cached V22 bitmaps into
+/* dm2_v22_inplace_render_pass — legacy compatibility no-op. It never paints
+ * cached V22 bitmaps into
  * the framebuffer at the DM2 4x3 cell rectangles (same coords as the
  * overlay pass: D1/D2/D3 × L/C/R). For each V22-active cell with a
  * cached bitmap, nearest-neighbor scales the bitmap into the cell
@@ -111,7 +112,7 @@ const uint32_t* dm2_v22_inplace_get_bitmap_by_id(const char* category,
  * Z-order. The bitmap's color_tint-tinted average is mapped to the
  * nearest EGA palette index for the indexed framebuffer.
  *
- * Returns the number of cells painted. */
+ * Returns zero. */
 int dm2_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH);
 
 /* Source evidence for tests/probes. */

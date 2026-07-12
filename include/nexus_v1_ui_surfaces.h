@@ -10,7 +10,7 @@
  *   TITLE.CG   — title screen color graphics (164 KB)
  *   WARNING.BIN — warning/disclaimer screen  (99 KB)
  *   GAMEOVER.BIN — game over screen         (101 KB)
- *   FACE.BIN    — champion portrait sprites (44 KB, 24 entries)
+ *   FACE.BIN    — champion portrait PRS3 frames (44 KB, 20 observed frames)
  *   STABG.BIN   — status-area background  (52 KB)
  *   FONT256.S2D — Saturn SCR font           (already nexus_v1_saturn_font.c)
  *
@@ -110,10 +110,34 @@ typedef struct {
     int portrait_h;
 } Nexus_UI_FaceLayout;
 
+/*
+ * Structural receipt for one canonical FACE.BIN frame. The initial 56-byte
+ * FACE header is followed by a 128..131-byte opaque frame prefix and a PRS3
+ * frame. The prefix palette semantics and the PRS3 opcode grammar are not established,
+ * so this descriptor deliberately exposes boundaries only, never pixels.
+ */
+typedef struct {
+    int valid;
+    int face_index;
+    size_t prefix_offset;
+    size_t prefix_size;
+    size_t prs3_offset;
+    size_t prs3_size;
+    size_t stream_offset;
+    size_t stream_size;
+    /* The original DM.BIN loader guards PRS3 and dispatches its following
+     * version word before entering a codec route. This is framing evidence,
+     * not a claim about any route's bitstream grammar. */
+    uint32_t prs3_version;
+    uint32_t declared_pixel_count;
+} Nexus_UI_FaceCompactRecordDescriptor;
+
 typedef enum {
     NEXUS_UI_FACE_RECORD_NONE = 0,
     NEXUS_UI_FACE_RECORD_RAW_48X48,
-    NEXUS_UI_FACE_RECORD_COMPACT_PADDED
+    /* Canonical Saturn FACE.BIN frames are PRS3-compressed 56x56 records.
+     * Their opcode grammar is not established, so no pixel output is legal. */
+    NEXUS_UI_FACE_RECORD_PRS3_UNPROVEN
 } Nexus_UI_FaceRecordDecodeKind;
 
 typedef struct {
@@ -184,10 +208,8 @@ int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette);
 
-/* Load FACE.BIN (44 KB) as champion portraits.
- * Layout: 24 portraits laid out in a horizontal strip.
- * Each portrait: 48×48 pixels (or closest power-of-2).
- * face_index: 0..23 → portrait number. */
+/* Load a complete FACE.BIN portrait record. Short or missing data is rejected;
+ * the real-data route must not synthesize a portrait surface. */
 int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_of_face,
     int data_size, int face_index,
@@ -198,6 +220,10 @@ int nexus_ui_face_full_entry_count(int data_size, int portrait_w, int portrait_h
 int nexus_ui_face_layout_detect(const uint8_t *data,
     int data_size,
     Nexus_UI_FaceLayout *out_layout);
+int nexus_ui_face_compact_record_descriptor(const uint8_t *data,
+    int data_size,
+    int face_index,
+    Nexus_UI_FaceCompactRecordDescriptor *out_descriptor);
 int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
     int record_size,
     uint8_t *out_pixels,
@@ -210,8 +236,6 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     int portrait_w,
     int portrait_h,
     const uint32_t *palette);
-int nexus_ui_load_face_placeholder(Nexus_UI_Manager *mgr,
-    int face_index, int portrait_w, int portrait_h);
 
 /* Free a specific surface */
 void nexus_ui_surface_free(Nexus_UI_Manager *mgr, Nexus_UISurfaceType which);

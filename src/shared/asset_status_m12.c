@@ -801,6 +801,20 @@ static void m12_refresh_theron_media_status(
     FirestaffTheronMedia_Init(&status->theronMedia);
     version = m12_first_matched_version(status, theronIndex);
     if (version && version->matchedPath[0] != '\0') {
+        char parent[M12_ASSET_DATA_DIR_CAPACITY];
+        if (FSP_ParentDir(parent, sizeof(parent), version->matchedPath) &&
+            FirestaffTheronMedia_FindCuePairForTrack02(parent,
+                                                        version->matchedPath,
+                                                        &status->theronMedia) == 0) {
+            return;
+        }
+        for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+            if (FirestaffTheronMedia_FindCuePairForTrack02(
+                    roots[rootIndex], version->matchedPath,
+                    &status->theronMedia) == 0) {
+                return;
+            }
+        }
         m12_classify_theron_media_path(status, version->matchedPath);
         if (status->theronMedia.layout != FIRESTAFF_THERON_MEDIA_LAYOUT_UNKNOWN) {
             return;
@@ -812,6 +826,67 @@ static void m12_refresh_theron_media_status(
             return;
         }
     }
+}
+
+/* The scanner is the sole authority that pairs a CUE declaration with the
+ * hash-matched payload.  Keep the IPL receipt bounded to the bootstrap span;
+ * this is provenance, not a synthetic extracted Track 02 cache. */
+static void m12_refresh_theron_track02_loader_receipt(M12_AssetStatus* status) {
+    const M12_AssetVersionStatus* version;
+    FILE* file;
+    unsigned char* bytes;
+    long end;
+    size_t required;
+    Theron_Track02StartupLoaderReceipt* receipt;
+    int theronIndex = m12_game_index_from_id("theron");
+
+    if (!status || theronIndex < 0) return;
+    receipt = &status->theronTrack02LoaderReceipt;
+    memset(receipt, 0, sizeof(*receipt));
+    version = m12_first_matched_version(status, theronIndex);
+    if (!version || !version->matched ||
+        !status->theronMedia.paired_track01_track02 ||
+        status->theronMedia.cue_path[0] == '\0' ||
+        status->theronMedia.track02_path[0] == '\0' ||
+        strcmp(version->matchedPath, status->theronMedia.track02_path) != 0 ||
+        theron_v1_track02_variant_for_md5(version->matchedMd5) ==
+            THERON_TRACK02_VARIANT_UNKNOWN) return;
+
+    /* The largest inspected sector is the second-stage IPL body. */
+    required = ((size_t)THERON_TRACK02_IPL_STAGE2_RECORD +
+                (size_t)THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT) *
+               THERON_TRACK02_RAW_SECTOR_BYTES;
+    file = fopen(version->matchedPath, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (end = ftell(file)) < 0 || (size_t)end < required ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return;
+    }
+    bytes = (unsigned char*)malloc(required);
+    if (!bytes || fread(bytes, 1U, required, file) != required) {
+        free(bytes);
+        fclose(file);
+        return;
+    }
+    fclose(file);
+    if (theron_v1_track02_find_ipl_loader(bytes, required,
+                                           version->matchedMd5,
+                                           &receipt->ipl_loader) ==
+        THERON_TRACK02_SIGNAL_OK) {
+        receipt->valid = 1;
+        receipt->cue_backed = 1;
+        receipt->track02_md5_verified = 1;
+        receipt->mode1_2352 = 1;
+        receipt->no_synthetic_cache = 1;
+        m12_copy_string(receipt->cue_path, sizeof(receipt->cue_path),
+                        status->theronMedia.cue_path);
+        m12_copy_string(receipt->track02_path, sizeof(receipt->track02_path),
+                        version->matchedPath);
+        m12_copy_string(receipt->track02_md5, sizeof(receipt->track02_md5),
+                        version->matchedMd5);
+    }
+    free(bytes);
 }
 
 static int m12_copy_file_to_path(const char* srcPath, const char* dstPath) {
@@ -1691,17 +1766,23 @@ static int m12_try_match_direct_theron_request(
         return 0;
     }
     if (FSP_FileExists(requestedDataDir)) {
-        if (!m12_file_md5_hex(requestedDataDir, md5)) {
+        const char* payloadPath = requestedDataDir;
+        FirestaffTheronMediaStatus cueMedia;
+        if (FirestaffTheronMedia_ClassifyPath(requestedDataDir, &cueMedia) == 0 &&
+            cueMedia.paired_track01_track02) {
+            payloadPath = cueMedia.track02_path;
+        }
+        if (!m12_file_md5_hex(payloadPath, md5)) {
             return 0;
         }
         versionIndex = m12_theron_version_index_for_md5(md5);
         if (versionIndex < 0) {
             return 0;
         }
-        if (!m12_derive_theron_runtime_root_for_file(requestedDataDir, runtimeRoot)) {
+        if (!m12_derive_theron_runtime_root_for_file(payloadPath, runtimeRoot)) {
             return 0;
         }
-        m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, requestedDataDir);
+        m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, payloadPath);
         m12_copy_string(matchedMd5, M12_ASSET_MD5_CAPACITY, md5);
         if (outVersionIndex) {
             *outVersionIndex = versionIndex;
@@ -2362,8 +2443,15 @@ static int m12_publish_direct_theron_match(
         return 0;
     }
     m12_refresh_nexus_bpk_trailer_metadata(status, NULL, 0U);
-    m12_classify_theron_media_path(status,
-                                   status->versions[theronIndex][versionIndex].matchedPath);
+    if (FirestaffTheronMedia_FindCuePairForTrack02(
+            runtimeRoot,
+            status->versions[theronIndex][versionIndex].matchedPath,
+            &status->theronMedia) != 0) {
+        m12_classify_theron_media_path(
+            status,
+            status->versions[theronIndex][versionIndex].matchedPath);
+    }
+    m12_refresh_theron_track02_loader_receipt(status);
     m12_refresh_v22_modern_asset_status(status);
     return 1;
 }
@@ -2612,6 +2700,16 @@ static int m12_reuse_verified_theron_refresh(M12_AssetStatus* status,
                 strcmp(required->matchedHash, version->matchedMd5) != 0) {
                 return 0;
             }
+            /* The payload MD5 is the durable launch gate; paired CUE media
+             * is refreshed on reuse so a removed or replaced Track 01 never
+             * leaves a stale CDDA handoff in the launcher. */
+            if (FirestaffTheronMedia_FindCuePairForTrack02(
+                    status->runtimeDataDirs[theronIndex],
+                    version->matchedPath,
+                    &status->theronMedia) != 0) {
+                m12_classify_theron_media_path(status, version->matchedPath);
+            }
+            m12_refresh_theron_track02_loader_receipt(status);
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
             g_m12ScanMetrics.reusableTheronRefreshes++;
 #endif
@@ -2879,6 +2977,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         return 0;
     }
     m12_refresh_theron_media_status(status, roots, rootCount);
+    m12_refresh_theron_track02_loader_receipt(status);
 
     m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
     m12_refresh_v22_modern_asset_status(status);
@@ -2967,6 +3066,7 @@ void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
     }
     if (strcmp(gameId, "theron") == 0) {
         m12_refresh_theron_media_status(status, roots, rootCount);
+        m12_refresh_theron_track02_loader_receipt(status);
     } else if (strcmp(gameId, "nexus") == 0) {
         m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
     } else if (strcmp(gameId, "dm1") == 0) {
@@ -3142,6 +3242,31 @@ int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId) 
 const FirestaffTheronMediaStatus* M12_AssetStatus_GetTheronMediaStatus(
     const M12_AssetStatus* status) {
     return status ? &status->theronMedia : NULL;
+}
+
+const Theron_Track02StartupLoaderReceipt*
+M12_AssetStatus_GetTheronTrack02LoaderReceipt(const M12_AssetStatus* status) {
+    return status ? &status->theronTrack02LoaderReceipt : NULL;
+}
+
+const char* M12_AssetStatus_GetTheronLaunchMediaPath(
+    const M12_AssetStatus* status) {
+    int theronIndex = m12_game_index_from_id("theron");
+    const M12_AssetVersionStatus* version;
+    if (!status) {
+        return NULL;
+    }
+    if (status->theronMedia.paired_track01_track02 &&
+        status->theronMedia.cue_path[0] != '\0' &&
+        status->theronMedia.track02_path[0] != '\0') {
+        version = m12_first_matched_version(status, theronIndex);
+        if (version && strcmp(version->matchedPath,
+                              status->theronMedia.track02_path) == 0) {
+            return status->theronMedia.cue_path;
+        }
+    }
+    version = m12_first_matched_version(status, theronIndex);
+    return version && version->matchedPath[0] != '\0' ? version->matchedPath : NULL;
 }
 
 /* Returns 1 if the V2.2 Modern Graphics asset pack is installed and

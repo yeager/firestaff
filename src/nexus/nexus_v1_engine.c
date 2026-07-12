@@ -108,6 +108,143 @@ static const char *nexus_known_boot_file_md5(const char *name) {
     return NULL;
 }
 
+static int nexus_path_is_file(const char *path);
+
+static int nexus_v1_level_aux_source_receipt(
+    Nexus_V1_Engine *engine, const char *name,
+    Nexus_V1_LevelAuxSourceReceipt *out_receipt) {
+    char path[512];
+    char search_root[512];
+    char found_path[ASSET_PATH_MAX];
+    const char *md5;
+    const Nexus_ISOFile *file;
+    const char *slash;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!engine || !name) return 0;
+    strncpy(out_receipt->canonical_name, name,
+            sizeof(out_receipt->canonical_name) - 1U);
+    md5 = nexus_known_boot_file_md5(name);
+    if (!md5) return 0;
+    strncpy(out_receipt->canonical_md5, md5,
+            sizeof(out_receipt->canonical_md5) - 1U);
+
+    if (engine->source == NEXUS_SRC_EXTRACTED) {
+        snprintf(path, sizeof(path), "%s/%s", engine->data_dir, name);
+        out_receipt->exact_source_entry_observed = nexus_path_is_file(path);
+        out_receipt->hash_discovery_attempted = 1;
+        if (out_receipt->exact_source_entry_observed) {
+            out_receipt->canonical_hash_verified =
+                asset_file_matches_md5(path, md5) ? 1 : 0;
+        } else {
+            out_receipt->canonical_hash_verified = asset_find_by_md5(
+                engine->data_dir, md5, found_path, (int)sizeof(found_path), 8);
+        }
+    } else if (engine->source == NEXUS_SRC_ISO) {
+        file = nexus_iso_find(&engine->iso, name);
+        out_receipt->exact_source_entry_observed = file != NULL;
+        strncpy(search_root, engine->data_dir, sizeof(search_root) - 1U);
+        search_root[sizeof(search_root) - 1U] = '\0';
+        if (nexus_path_is_file(search_root)) {
+            slash = strrchr(search_root, '/');
+            if (!slash) slash = strrchr(search_root, '\\');
+            if (slash) search_root[slash - search_root] = '\0';
+        }
+        out_receipt->hash_discovery_attempted = 1;
+        if (asset_find_by_md5(search_root, md5, found_path,
+                              (int)sizeof(found_path), 8)) {
+            snprintf(path, sizeof(path), "%s::%s", engine->iso.path, name);
+            out_receipt->canonical_hash_verified =
+                strcasecmp(found_path, path) == 0;
+            if (!out_receipt->canonical_hash_verified) {
+                snprintf(path, sizeof(path), "%s::%s", engine->data_dir,
+                         name);
+                out_receipt->canonical_hash_verified =
+                    strcasecmp(found_path, path) == 0;
+            }
+        }
+    }
+    return 0;
+}
+
+static int nexus_v1_structure2_source_receipt(
+    Nexus_V1_Engine *engine, int level_index, const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure2SourceReceipt *out_receipt) {
+    char name[16];
+    char path[512];
+    char search_root[512];
+    char found_path[ASSET_PATH_MAX];
+    const char *md5;
+    const Nexus_ISOFile *file;
+    const char *slash;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->level_index = level_index;
+    out_receipt->payload_decoder_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (!engine || !level || level_index < 0 || level_index > 15) return 0;
+
+    snprintf(name, sizeof(name), "LEV%02d.DGN", level_index);
+    strncpy(out_receipt->canonical_name, name,
+            sizeof(out_receipt->canonical_name) - 1U);
+    md5 = nexus_known_boot_file_md5(name);
+    if (!md5) return 0;
+    strncpy(out_receipt->canonical_md5, md5,
+            sizeof(out_receipt->canonical_md5) - 1U);
+    out_receipt->structure2_payload_envelope_valid =
+        level->structure2_payload.valid ? 1 : 0;
+
+    if (engine->source == NEXUS_SRC_EXTRACTED) {
+        snprintf(path, sizeof(path), "%s/%s", engine->data_dir, name);
+        out_receipt->exact_source_entry_observed = nexus_path_is_file(path);
+        out_receipt->hash_discovery_attempted = 1;
+        if (out_receipt->exact_source_entry_observed) {
+            out_receipt->canonical_hash_verified =
+                asset_file_matches_md5(path, md5) ? 1 : 0;
+        } else {
+            /* Match nexus_v1_read_extracted_file(): when the canonical name
+             * is absent, the materialized bytes came from hash discovery. */
+            out_receipt->canonical_hash_verified = asset_find_by_md5(
+                engine->data_dir, md5, found_path, (int)sizeof(found_path), 8);
+        }
+    } else if (engine->source == NEXUS_SRC_ISO) {
+        file = nexus_iso_find(&engine->iso, name);
+        out_receipt->exact_source_entry_observed = file != NULL;
+        /* The generic scanner hashes ISO entries. Bind its match to this
+         * already-opened Track 1 entry, rather than merely accepting an
+         * equal hash from an unrelated neighbouring container. */
+        strncpy(search_root, engine->data_dir, sizeof(search_root) - 1U);
+        search_root[sizeof(search_root) - 1U] = '\0';
+        if (nexus_path_is_file(search_root)) {
+            slash = strrchr(search_root, '/');
+            if (!slash) slash = strrchr(search_root, '\\');
+            if (slash) search_root[slash - search_root] = '\0';
+        }
+        out_receipt->hash_discovery_attempted = 1;
+        if (asset_find_by_md5(search_root, md5, found_path,
+                              (int)sizeof(found_path), 8)) {
+            snprintf(path, sizeof(path), "%s::%s", engine->iso.path, name);
+            out_receipt->canonical_hash_verified =
+                strcasecmp(found_path, path) == 0;
+            /* Hash discovery may retain the CUE virtual-path spelling while
+             * the runtime reader opens its first Track 1 BIN. Both forms
+             * identify the same configured media source. */
+            if (!out_receipt->canonical_hash_verified) {
+                snprintf(path, sizeof(path), "%s::%s", engine->data_dir,
+                         name);
+                out_receipt->canonical_hash_verified =
+                    strcasecmp(found_path, path) == 0;
+            }
+        }
+    }
+    out_receipt->materialization_bound =
+        out_receipt->canonical_hash_verified &&
+        out_receipt->structure2_payload_envelope_valid;
+    return 0;
+}
+
 static int nexus_path_has_ext(const char *path, const char *ext) {
     size_t path_len;
     size_t ext_len;
@@ -295,6 +432,52 @@ int nexus_v1_inspect_dgn_material_corpus(
         free(data);
         ++receipt.parsed_level_count;
         if (level.geometry_info.mesh_ready) ++receipt.geometry_ready_level_count;
+        if (level.geometry_info.structure1f_valid) {
+            ++receipt.structure1f_valid_level_count;
+            receipt.structure1f_typed_entry_count += level.structure1f_entry_count;
+        }
+        if (level.geometry_info.structure1g_present)
+            ++receipt.structure1g_present_level_count;
+        if (level.geometry_info.structure1g_valid) {
+            ++receipt.structure1g_valid_level_count;
+            receipt.structure1g_animated_texture_count +=
+                level.structure1g_entry_count;
+            receipt.structure1g_sequence_count +=
+                level.geometry_info.structure1g_sequence_count;
+            receipt.structure1g_floor_animation_cell_count +=
+                level.structure1g_floor_animation_cell_count;
+            receipt.structure1g_floor_animation_bound_count +=
+                level.structure1g_floor_animation_bound_count;
+            for (int entry = 0; entry < level.structure1g_entry_count; ++entry) {
+                receipt.structure1g_image_instruction_count +=
+                    level.structure1g_entries[entry].image_instruction_count;
+                receipt.structure1g_goto_instruction_count +=
+                    level.structure1g_entries[entry].goto_instruction_count;
+                if (level.structure1g_entries[entry].first_structure2_image_valid)
+                    receipt.structure1g_structure2_first_image_bound_count++;
+            }
+        }
+        if (level.structure2_texture_table_valid) {
+            receipt.structure2_valid_level_count++;
+            receipt.structure2_texture_count += level.structure2_texture_count;
+        }
+        if (level.structure2_payload.valid) {
+            receipt.structure2_payload_envelope_valid_level_count++;
+            receipt.structure2_opaque_payload_byte_count +=
+                level.structure2_payload.opaque_payload_size;
+            if (level.structure2_payload.material_or_image_data_proven) {
+                receipt.structure2_material_or_image_data_proven_level_count++;
+            }
+        }
+        (void)nexus_v1_structure2_source_receipt(
+            engine, level_index, &level,
+            &receipt.structure2_sources[level_index]);
+        if (receipt.structure2_sources[level_index].canonical_hash_verified) {
+            ++receipt.structure2_canonical_source_verified_level_count;
+        }
+        if (receipt.structure2_sources[level_index].materialization_bound) {
+            ++receipt.structure2_materialization_bound_level_count;
+        }
         for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
             for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
                 int dir;
@@ -396,12 +579,32 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     plan->generation++;
     plan->geometry_generation = plan->generation;
     plan->rebuild_count++;
+    /* Structure2 may be parsed from a DGN-shaped buffer, but it reaches a
+     * host only when this exact loaded level was authenticated and bound to
+     * canonical Track 1 materialization. Gate before building commands so
+     * every launcher and viewport consumer receives one no-draw receipt. */
+    plan->receipt.structure2_source_materialization_bound =
+        engine->current_level_structure2_source.level_index ==
+            engine->game.current_level &&
+        engine->current_level_structure2_source.materialization_bound &&
+        !engine->current_level_structure2_source.fallback_visuals_permitted;
+    if (!plan->receipt.structure2_source_materialization_bound) {
+        plan->receipt.status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
+        plan->receipt.blocks_real_dgn_mesh_render = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
+        return NULL;
+    }
     if (nexus_v1_level_build_dgn_view_render_plan(
             &engine->current_level, party_x, party_y, party_dir,
             plan->commands, NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
             &plan->receipt) != 0 || !plan->receipt.plan_ready) {
         return NULL;
     }
+    /* The lower-level plan builder owns its receipt initialization. Restore
+     * the already-validated canonical source binding afterward so every
+     * launcher, viewport, and host handoff sees the same Structure2 gate. */
+    plan->receipt.structure2_source_materialization_bound = 1;
 
     for (i = 0; i < plan->receipt.command_count; ++i) {
         const Nexus_DMDFTextureSurface *surface =
@@ -690,34 +893,38 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     if (!face_data) return;
     (void)nexus_ui_face_layout_detect(face_data, face_size, &face_layout);
 
-    /* The verified disc has a FACE header followed by compact records. Their
-     * pixel coding is not decoded yet, so no record may be padded or painted
-     * as a startup portrait. */
+    /* Canonical FACE.BIN has 20 variable-length PRS3 frames. The descriptor
+     * proves their boundaries but not PRS3's opcode grammar, so no record may
+     * be padded or painted as a startup portrait. */
     for (i = 0; i < engine->champions.champion_count && i < 24; ++i) {
         const int portrait_index = engine->champions.champions[i].portrait_index;
         int load_result;
         if (portrait_index < 0 || portrait_index >= 24) continue;
         engine->ui_faces_expected++;
-        if (face_layout.valid &&
-            face_layout.entry_size == 48 * 48 &&
-            portrait_index < face_layout.entry_count &&
-            face_layout.entry_size > 0 &&
-            face_layout.header_size + (portrait_index + 1) * face_layout.entry_size <= face_size) {
-            const int record_offset =
-                face_layout.header_size + portrait_index * face_layout.entry_size;
+        if (face_layout.valid && portrait_index < face_layout.entry_count) {
+            Nexus_UI_FaceCompactRecordDescriptor descriptor;
+            if (!nexus_ui_face_compact_record_descriptor(face_data, face_size,
+                                                         portrait_index,
+                                                         &descriptor)) {
+                load_result = -1;
+            } else {
             load_result = nexus_ui_load_face_record(&engine->ui,
-                                                    face_data + record_offset,
-                                                    face_layout.entry_size,
+                                                    face_data + descriptor.prs3_offset,
+                                                    (int)descriptor.prs3_size,
                                                     portrait_index,
                                                     face_layout.portrait_w,
                                                     face_layout.portrait_h,
                                                     NULL);
+            }
         } else {
             load_result = -1;
         }
         if (load_result > 0) {
             engine->ui_faces_loaded++;
-        } else if (load_result == 0) {
+        } else {
+            /* A missing, malformed, or codec-unsupported record is a
+             * readiness failure. It is counted for the receipt but never
+             * materialized as a fallback portrait. */
             engine->ui_faces_fallback++;
         }
     }
@@ -957,6 +1164,9 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     int r = nexus_v1_level_load(&engine->current_level, data, size, level);
     free(data);
     if (r < 0) return -1;
+    (void)nexus_v1_structure2_source_receipt(
+        engine, level, &engine->current_level,
+        &engine->current_level_structure2_source);
 
     /* Nexus source-lock: docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md
      * fixes new game at LEV00 (11,29,N). Accept it only after the real
@@ -988,25 +1198,36 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
                                    engine->game.party_y, engine->game.party_dir);
 
     snprintf(script_name, sizeof(script_name), "SLEV%02d.BIN", level);
+    memset(&engine->level_aux_runtime_receipt, 0,
+           sizeof(engine->level_aux_runtime_receipt));
+    engine->level_aux_runtime_receipt.level_index = level;
+    engine->level_aux_runtime_receipt.fallback_visuals_permitted = 0;
+    (void)nexus_v1_level_aux_source_receipt(
+        engine, script_name, &engine->level_aux_runtime_receipt.slev);
     script_data = nexus_v1_read_file(engine, script_name, &script_size);
-    (void)nexus_script_vm_load_level(&engine->script_vm,
-                                     level,
-                                     script_data,
-                                     script_size);
+    (void)nexus_script_vm_load_canonical_level(
+        &engine->script_vm, level, script_data, script_size,
+        engine->level_aux_runtime_receipt.slev.canonical_hash_verified);
     (void)nexus_script_vm_runtime_receipt(&engine->script_vm,
                                           &engine->script_runtime_receipt);
     free(script_data);
 
     snprintf(sal_name, sizeof(sal_name), "SNDLEV%02d.SAL", level);
     snprintf(map_name, sizeof(map_name), "SNDLEV%02d.MAP", level);
+    (void)nexus_v1_level_aux_source_receipt(
+        engine, sal_name, &engine->level_aux_runtime_receipt.sal);
+    (void)nexus_v1_level_aux_source_receipt(
+        engine, map_name, &engine->level_aux_runtime_receipt.map);
+    engine->level_aux_runtime_receipt.canonical_pair_bound =
+        engine->level_aux_runtime_receipt.slev.canonical_hash_verified &&
+        engine->level_aux_runtime_receipt.sal.canonical_hash_verified &&
+        engine->level_aux_runtime_receipt.map.canonical_hash_verified;
     sal_data = nexus_v1_read_file(engine, sal_name, &sal_size);
     map_data = nexus_v1_read_file(engine, map_name, &map_size);
-    (void)nexus_sound_load_level(&engine->audio,
-                                 level,
-                                 sal_data,
-                                 sal_size,
-                                 map_data,
-                                 map_size);
+    (void)nexus_sound_load_canonical_level(
+        &engine->audio, level, sal_data, sal_size, map_data, map_size,
+        engine->level_aux_runtime_receipt.sal.canonical_hash_verified,
+        engine->level_aux_runtime_receipt.map.canonical_hash_verified);
     (void)nexus_sound_level_runtime_receipt(&engine->audio,
                                             &engine->sfx_runtime_receipt);
     free(sal_data);
@@ -1022,6 +1243,28 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
          * DM Nexus (Saturn) uses CD-DA tracks for music. */
     }
 
+    return 0;
+}
+
+int nexus_v1_current_level_structure2_source_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure2SourceReceipt *out_receipt) {
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!engine || !engine->level_loaded) return 0;
+    *out_receipt = engine->current_level_structure2_source;
+    return 0;
+}
+
+int nexus_v1_current_level_aux_runtime_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelAuxRuntimeReceipt *out_receipt) {
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->level_index = -1;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded) return 0;
+    *out_receipt = engine->level_aux_runtime_receipt;
     return 0;
 }
 

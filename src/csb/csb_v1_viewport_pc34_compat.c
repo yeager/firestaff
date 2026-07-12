@@ -21,6 +21,7 @@
  */
 
 #include "csb_v1_viewport_pc34_compat.h"
+#include "csb_v1_f0093_replacement_palette_pc34_compat.h"
 #include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.h"
 #include "csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.h"
@@ -618,6 +619,47 @@ int csb_v1_viewport_draw_runtime_group_marker(
         placement->marker_screen_y,
         (uint8_t)csb_v1_viewport_creature_marker_overlay_color(creature_type),
         2);
+}
+
+static int csb_v1_viewport_marker_fallback_allowed(
+    CSB_V1_ViewportConfig *cfg)
+{
+    if (!cfg) {
+        return 0;
+    }
+    if (cfg->real_graphics_session) {
+        ++cfg->runtime_real_asset_blocked_count;
+        return 0;
+    }
+    return 1;
+}
+
+static int csb_v1_viewport_draw_runtime_object_marker_if_allowed(
+    CSB_V1_ViewportConfig *cfg,
+    int screen_height,
+    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    int material_icon_index)
+{
+    if (!csb_v1_viewport_marker_fallback_allowed(cfg)) {
+        return 0;
+    }
+    return csb_v1_viewport_draw_runtime_object_marker(
+        cfg->viewport_pixels, cfg->viewport_stride, screen_height,
+        placement, material_icon_index);
+}
+
+static int csb_v1_viewport_draw_runtime_group_marker_if_allowed(
+    CSB_V1_ViewportConfig *cfg,
+    int screen_height,
+    const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement,
+    int creature_type)
+{
+    if (!csb_v1_viewport_marker_fallback_allowed(cfg)) {
+        return 0;
+    }
+    return csb_v1_viewport_draw_runtime_group_marker(
+        cfg->viewport_pixels, cfg->viewport_stride, screen_height,
+        placement, creature_type);
 }
 
 static int csb_v1_viewport_runtime_overlay_position(
@@ -1276,6 +1318,497 @@ static int csb_v1_viewport_c2900_source_zone_point(
     return 1;
 }
 
+static int csb_v1_viewport_f0115_blit_native_projectile_family_pc34(
+    int graphic_index,
+    const uint8_t *source_pixels,
+    int source_width,
+    int source_height,
+    uint8_t *screen_pixels,
+    int screen_width,
+    int screen_height,
+    int screen_stride,
+    int destination_x,
+    int destination_y,
+    int destination_width,
+    int destination_height,
+    int view_depth,
+    int flip_flags)
+{
+    static const uint8_t k_palette_d2[16] =
+        {0, 1, 2, 3, 4, 3, 6, 7, 5, 9, 10, 11, 12, 13, 14, 15};
+    static const uint8_t k_palette_d3[16] =
+        {0, 12, 1, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 2, 14, 13};
+    const uint8_t *palette = NULL;
+    int x;
+    int y;
+    int written = 0;
+
+    (void)graphic_index;
+
+    if (!source_pixels ||
+        !screen_pixels || source_width <= 0 || source_height <= 0 ||
+        screen_width < 224 || screen_height < 169 || screen_stride < screen_width ||
+        destination_width <= 0 || destination_height <= 0 ||
+        view_depth < 0 || view_depth > 4) {
+        return 0;
+    }
+
+    /* ReDMCSB STARTUP2.C:818-830 assigns projectile palette rows: D2 uses
+     * G0214, D3 uses G0213; D0/D1 remain original palette indices. */
+    if (view_depth == 2) palette = k_palette_d2;
+    if (view_depth >= 3) palette = k_palette_d3;
+
+    /* F0791 -> F0132 clips the C2900 zone draw to the 224x136 viewport and
+     * skips C10_COLOR_FLESH.  Nearest-neighbour reduction is the indexed
+     * counterpart of F0129's derived bitmap before that final composition. */
+    for (y = 0; y < destination_height; ++y) {
+        int dst_y = destination_y + y;
+        int src_y;
+        if (dst_y < 33 || dst_y >= 169 || dst_y >= screen_height) continue;
+        src_y = (y * source_height) / destination_height;
+        if (flip_flags & 0x02) src_y = source_height - 1 - src_y;
+        for (x = 0; x < destination_width; ++x) {
+            int dst_x = destination_x + x;
+            int src_x;
+            uint8_t pixel;
+            if (dst_x < 0 || dst_x >= 224 || dst_x >= screen_width) continue;
+            src_x = (x * source_width) / destination_width;
+            if (flip_flags & 0x01) src_x = source_width - 1 - src_x;
+            pixel = source_pixels[src_y * source_width + src_x];
+            if (pixel > 15 || pixel == 10) continue;
+            screen_pixels[dst_y * screen_stride + dst_x] =
+                palette ? palette[pixel] : pixel;
+            ++written;
+        }
+    }
+    return written;
+}
+
+int csb_v1_viewport_f0115_blit_first_projectile_family_pc34(
+    int graphic_index,
+    const uint8_t *source_pixels,
+    int source_width,
+    int source_height,
+    uint8_t *screen_pixels,
+    int screen_width,
+    int screen_height,
+    int screen_stride,
+    int destination_x,
+    int destination_y,
+    int destination_width,
+    int destination_height,
+    int view_depth,
+    int flip_flags)
+{
+    /* ReDMCSB DUNVIEW.C F0115:5691-5807. M715's type-1 aspect resolves
+     * M613 + 0/1, the native PC34 pair GRAPHICS.DAT 454/455. */
+    if (graphic_index < 454 || graphic_index > 455) return 0;
+    return csb_v1_viewport_f0115_blit_native_projectile_family_pc34(
+        graphic_index, source_pixels, source_width, source_height,
+        screen_pixels, screen_width, screen_height, screen_stride,
+        destination_x, destination_y, destination_width, destination_height,
+        view_depth, flip_flags);
+}
+
+int csb_v1_viewport_f0115_blit_m715_m716_m717_projectile_family_pc34(
+    int graphic_index,
+    const uint8_t *source_pixels,
+    int source_width,
+    int source_height,
+    uint8_t *screen_pixels,
+    int screen_width,
+    int screen_height,
+    int screen_stride,
+    int destination_x,
+    int destination_y,
+    int destination_width,
+    int destination_height,
+    int view_depth,
+    int flip_flags)
+{
+    /* ReDMCSB: DUNVIEW.C G0210 rows 1305-1307 and F0115:5691-5885.
+     * M715 starts at relative 0 (454/455), M716 at 3 (457/458), and M717
+     * at 6 with aspect type 0 (460/461/462).  F0791 retains C10
+     * transparency, F0132 viewport clipping, palette changes, and both
+     * source flip flags.  The gaps 456 and 459 are not native aspect art. */
+    if (!((graphic_index >= 454 && graphic_index <= 455) ||
+          (graphic_index >= 457 && graphic_index <= 458) ||
+          (graphic_index >= 460 && graphic_index <= 462))) {
+        return 0;
+    }
+    return csb_v1_viewport_f0115_blit_native_projectile_family_pc34(
+        graphic_index, source_pixels, source_width, source_height,
+        screen_pixels, screen_width, screen_height, screen_stride,
+        destination_x, destination_y, destination_width, destination_height,
+        view_depth, flip_flags);
+}
+
+int csb_v1_viewport_f0115_blit_m715_m716_m717_m718_projectile_family_pc34(
+    int graphic_index,
+    const uint8_t *source_pixels,
+    int source_width,
+    int source_height,
+    uint8_t *screen_pixels,
+    int screen_width,
+    int screen_height,
+    int screen_stride,
+    int destination_x,
+    int destination_y,
+    int destination_width,
+    int destination_height,
+    int view_depth,
+    int flip_flags)
+{
+    /* ReDMCSB: DUNVIEW.C G0210:1514 and F0115:5691-5885. M718 has
+     * FirstNativeBitmapRelativeIndex 9 and aspect type 2, which supplies
+     * only delta 0/1 after rotation: GRAPHICS.DAT 463/464. Its next entry
+     * (465) is not native M718 art; positive F0142 results use the separate
+     * object-as-projectile branch at F0115:5886-5904 and stay blocked here. */
+    if (!((graphic_index >= 454 && graphic_index <= 455) ||
+          (graphic_index >= 457 && graphic_index <= 458) ||
+          (graphic_index >= 460 && graphic_index <= 462) ||
+          (graphic_index >= 463 && graphic_index <= 464))) {
+        return 0;
+    }
+    return csb_v1_viewport_f0115_blit_native_projectile_family_pc34(
+        graphic_index, source_pixels, source_width, source_height,
+        screen_pixels, screen_width, screen_height, screen_stride,
+        destination_x, destination_y, destination_width, destination_height,
+        view_depth, flip_flags);
+}
+
+int csb_v1_viewport_f0115_native_group_front_graphic_pc34(int creature_type)
+{
+    /* ReDMCSB: DUNVIEW.C F0115:5222-5225 routes GROUP.Type through G0243
+     * into G0219. G0219:1627-1629 gives type 0/1/2 native offsets 0/4/6,
+     * :1633 gives Screamer type 6 offset 19, and :1634 gives Rockpile type 7
+     * offset 21. With DEFS.H:2392 M618, those default fronts are PC CSB
+     * graphics 584/588/590/603/605. Types 3-5 stay closed: G0219:1630-1632
+     * assigns map-configured replacement colors which F0093 applies in
+     * current-map allowed-type order. */
+    if (creature_type == 0) return 584;
+    if (creature_type == 1) return 588;
+    if (creature_type == 2) return 590;
+    if (creature_type == 3) return 594;
+    if (creature_type == 4) return 596;
+    if (creature_type == 5) return 600;
+    if (creature_type == 6) return 603;
+    if (creature_type == 7) return 605;
+    return -1;
+}
+
+int csb_v1_viewport_f0115_blit_f0093_group_front_family_pc34(
+    int creature_type, const struct DungeonMapDesc_Compat *loaded_map,
+    const uint8_t *source_pixels, int source_width, int source_height,
+    uint8_t *screen_pixels, int screen_width, int screen_height, int screen_stride,
+    int destination_x, int destination_y, int destination_width, int destination_height,
+    int view_depth, int source_zone, int flip_flags)
+{
+    static const uint8_t k_palette_d2[16] =
+        {0, 1, 2, 3, 4, 3, 6, 7, 5, 0, 0, 11, 12, 13, 14, 15};
+    static const uint8_t k_palette_d3[16] =
+        {0, 12, 1, 3, 4, 3, 0, 6, 3, 0, 0, 11, 0, 2, 0, 13};
+    CSB_V1_F0093Graphics558ReceiptPc34 graphics;
+    CSB_V1_F0093ReplacementPaletteReceiptPc34 receipt;
+    uint8_t palette[16];
+    int transparent_color;
+    int unshifted_source_zone = source_zone;
+    int written = 0;
+    int y;
+
+    /* ReDMCSB DUNVIEW.C F0093:2805-2815 restores slots 9/10 then lets the
+     * final allowed creature own each replacement. The receipt carries all
+     * six native RGB rows; this indexed C3200 surface consumes its D2/D3
+     * remaps while preserving native D1 indices for the host palette. */
+    if ((creature_type != 3 && creature_type != 4 && creature_type != 5) ||
+        !csb_v1_f0093_pc34_graphics558_receipt(&graphics) ||
+        !csb_v1_f0093_build_replacement_palette_receipt_pc34(
+            loaded_map, &graphics, &receipt)) return 0;
+    transparent_color = creature_type == 3 ? 4 : creature_type == 4 ? 4 : 8;
+    if (unshifted_source_zone & 0x8000) unshifted_source_zone &= ~0x8000;
+    if (csb_v1_viewport_f0115_native_group_front_graphic_pc34(creature_type) < 0 ||
+        !source_pixels || !screen_pixels || source_width <= 0 || source_height <= 0 ||
+        screen_width < 224 || screen_height < 169 || screen_stride < screen_width ||
+        destination_width <= 0 || destination_height <= 0 || view_depth < 1 ||
+        view_depth > 3 || unshifted_source_zone < 3200 || unshifted_source_zone > 3364) return 0;
+    if (view_depth == 2) memcpy(palette, k_palette_d2, sizeof(palette));
+    else if (view_depth == 3) memcpy(palette, k_palette_d3, sizeof(palette));
+    else { for (y = 0; y < 16; ++y) palette[y] = (uint8_t)y; }
+    if (view_depth == 2 && receipt.palette_9.assigned)
+        palette[9] = receipt.palette_9.values.d2_replacement_color;
+    if (view_depth == 2 && receipt.palette_10.assigned)
+        palette[10] = receipt.palette_10.values.d2_replacement_color;
+    if (view_depth == 3 && receipt.palette_9.assigned)
+        palette[9] = receipt.palette_9.values.d3_replacement_color;
+    if (view_depth == 3 && receipt.palette_10.assigned)
+        palette[10] = receipt.palette_10.values.d3_replacement_color;
+    for (y = 0; y < destination_height; ++y) {
+        int dst_y = destination_y + y;
+        int src_y;
+        int x;
+        if (dst_y < 33 || dst_y >= 169 || dst_y >= screen_height) continue;
+        src_y = (y * source_height) / destination_height;
+        if (flip_flags & 0x02) src_y = source_height - 1 - src_y;
+        for (x = 0; x < destination_width; ++x) {
+            int dst_x = destination_x + x;
+            int src_x;
+            uint8_t pixel;
+            if (dst_x < 0 || dst_x >= 224 || dst_x >= screen_width) continue;
+            src_x = (x * source_width) / destination_width;
+            if (flip_flags & 0x01) src_x = source_width - 1 - src_x;
+            pixel = source_pixels[src_y * source_width + src_x];
+            if (pixel > 15 || pixel == (uint8_t)transparent_color) continue;
+            screen_pixels[dst_y * screen_stride + dst_x] = palette[pixel];
+            ++written;
+        }
+    }
+    return written;
+}
+
+int csb_v1_viewport_f0115_blit_native_group_front_family_pc34(
+    int creature_type,
+    int graphic_index,
+    const uint8_t *source_pixels,
+    int source_width,
+    int source_height,
+    uint8_t *screen_pixels,
+    int screen_width,
+    int screen_height,
+    int screen_stride,
+    int destination_x,
+    int destination_y,
+    int destination_width,
+    int destination_height,
+    int view_depth,
+    int source_zone,
+    int flip_flags)
+{
+    static const uint8_t k_palette_d2[16] =
+        {0, 1, 2, 3, 4, 3, 6, 7, 5, 0, 0, 11, 12, 13, 14, 15};
+    static const uint8_t k_palette_d3[16] =
+        {0, 12, 1, 3, 4, 3, 0, 6, 3, 0, 0, 11, 0, 2, 0, 13};
+    const uint8_t *palette = NULL;
+    int aspect_transparent_color;
+    int unshifted_source_zone;
+    int written = 0;
+    int y;
+
+    /* ReDMCSB: DUNVIEW.C F0115:5222-5225 identifies GROUP.Type through
+     * G0243/G0219. G0219:1627 gives Scorpion offset 0/C13, :1628 gives
+     * Swamp Slime offset 4/C11, :1629 gives Giggler offset 6/C11, and
+     * :1633 gives Screamer offset 19/C13, and :1634 gives Rockpile offset
+     * 21/C4, both with no replacement-color selectors.
+     * F0115:5315 chooses each default front, then :5616-5627 admits the
+     * material only through C3200 before F0791. */
+    if (creature_type == 0) {
+        aspect_transparent_color = 13;
+    } else if (creature_type == 1) {
+        aspect_transparent_color = 11;
+    } else if (creature_type == 2) {
+        aspect_transparent_color = 11;
+    } else if (creature_type == 6) {
+        aspect_transparent_color = 13;
+    } else if (creature_type == 7) {
+        aspect_transparent_color = 4;
+    } else {
+        return 0;
+    }
+    unshifted_source_zone = source_zone;
+    if (unshifted_source_zone & 0x8000) {
+        unshifted_source_zone &= ~0x8000;
+    }
+    if (graphic_index != csb_v1_viewport_f0115_native_group_front_graphic_pc34(
+                             creature_type) ||
+        !source_pixels || !screen_pixels || source_width <= 0 ||
+        source_height <= 0 || screen_width < 224 || screen_height < 169 ||
+        screen_stride < screen_width || destination_width <= 0 ||
+        destination_height <= 0 || view_depth < 1 || view_depth > 3 ||
+        unshifted_source_zone < 3200 || unshifted_source_zone > 3364) {
+        return 0;
+    }
+
+    /* ReDMCSB: DUNVIEW.C F0115:5440-5463 selects G0222 for D2 and G0221
+     * for D3 while deriving the native indexed bitmap. D1 retains native
+     * palette indices. The final F0791 route clips to the viewport. */
+    if (view_depth == 2) palette = k_palette_d2;
+    if (view_depth == 3) palette = k_palette_d3;
+    for (y = 0; y < destination_height; ++y) {
+        int dst_y = destination_y + y;
+        int src_y;
+        int x;
+        if (dst_y < 33 || dst_y >= 169 || dst_y >= screen_height) continue;
+        src_y = (y * source_height) / destination_height;
+        if (flip_flags & 0x02) src_y = source_height - 1 - src_y;
+        for (x = 0; x < destination_width; ++x) {
+            int dst_x = destination_x + x;
+            int src_x;
+            uint8_t pixel;
+            if (dst_x < 0 || dst_x >= 224 || dst_x >= screen_width) continue;
+            src_x = (x * source_width) / destination_width;
+            if (flip_flags & 0x01) src_x = source_width - 1 - src_x;
+            pixel = source_pixels[src_y * source_width + src_x];
+            if (pixel > 15 || pixel == (uint8_t)aspect_transparent_color) continue;
+            screen_pixels[dst_y * screen_stride + dst_x] =
+                palette ? palette[pixel] : pixel;
+            ++written;
+        }
+    }
+    return written;
+}
+
+int csb_v1_viewport_f0115_object_native_graphic_pc34(
+    int thing_type,
+    int subtype_index,
+    int draw_alcove_objects)
+{
+    /* ReDMCSB is the source authority here. Greatstone d_items.html is
+     * supplemental IMG5 extraction-format evidence only; it does not prove
+     * PC CSB G0237/G0209 object or aspect mappings. ReDMCSB: DUNVIEW.C
+     * F0115:4795-4800 identifies zero cell-order as the
+     * alcove pass. F0115:4854-4860 selects G0209's native bitmap and uses
+     * its MASK0x0010_ALCOVE alternate. G0209:1423-1515 makes Chest 498/499.
+     * DUNGEON.C F0141:1136-1165 and G0237:79-258 map the bounded potion
+     * subtypes below to G0209 aspects 67, 2, 68, and 80. F0141:1147-1154
+     * maps scroll, weapon, armour, and junk records into G0237 before F0115
+     * reads that row's ObjectAspectIndex. */
+    static const unsigned char weapon_object_aspects[46] = {
+        38, 38, 35, 37, 11, 12, 12, 39, 17, 12, 12, 12,
+        12, 12, 12, 12, 42, 12, 13, 13, 21, 21, 33, 43,
+        44, 14, 45, 16, 46, 11, 47, 48, 49, 50, 11, 31,
+        31, 11, 11, 11, 51, 32, 30, 65, 45, 82
+    };
+    static const unsigned char armour_object_aspects[58] = {
+        23, 23, 23, 55,  8, 24, 24, 24, 24, 69, 24, 24,
+        69,  7,  7, 57, 23, 23, 29, 69, 69, 24, 24, 53,
+        53,  9,  9,  9, 54, 54, 10, 54, 19, 19, 19, 19,
+         9, 19, 52, 20, 22, 56, 10, 52, 20, 22, 56, 10,
+        52, 20, 22, 56, 10, 52, 19, 22, 81, 84
+    };
+    static const unsigned char junk_object_aspects[53] = {
+        34,  6, 15, 15, 40, 41,  4, 83,  4, 18, 18, 18,
+        18, 18, 18, 18, 18, 62, 62, 62, 62, 62, 62, 62,
+        62,  3, 60, 61, 27, 28, 25, 26, 71, 70,  5, 66,
+        15, 15, 58, 59, 59, 79, 63, 64, 72, 73, 74, 75,
+        77, 78, 74, 41
+    };
+    static const unsigned char object_native_relatives[85] = {
+         0,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,
+        13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+        25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+        37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
+        49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72,
+        73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84,
+        85
+    };
+    int aspect_index = -1;
+
+    if (thing_type == THING_TYPE_CONTAINER && subtype_index == 0) {
+        return draw_alcove_objects ? 499 : 498;
+    }
+    if (thing_type == THING_TYPE_SCROLL && subtype_index == 0) return 500;
+    if (thing_type == THING_TYPE_POTION) {
+        if (subtype_index >= 0 && subtype_index <= 5) return 565;
+        if (subtype_index >= 6 && subtype_index <= 15) return 500;
+        if (subtype_index >= 16 && subtype_index <= 19) return 566;
+        if (subtype_index == 20) return 578;
+    }
+    if (thing_type == THING_TYPE_WEAPON &&
+        subtype_index >= 0 && subtype_index < 46) {
+        aspect_index = weapon_object_aspects[subtype_index];
+    } else if (thing_type == THING_TYPE_ARMOUR &&
+               subtype_index >= 0 && subtype_index < 58) {
+        /* ReDMCSB DUNGEON.C G0237 rows 69-126: Cape through Halter. */
+        aspect_index = armour_object_aspects[subtype_index];
+    } else if (thing_type == THING_TYPE_JUNK &&
+               subtype_index >= 0 && subtype_index < 53) {
+        /* ReDMCSB DUNGEON.C G0237 rows 127-179: Compass through Bones. */
+        aspect_index = junk_object_aspects[subtype_index];
+    }
+    if (aspect_index >= 0 && aspect_index < (int)(sizeof(object_native_relatives) /
+                                                   sizeof(object_native_relatives[0]))) {
+        return 498 + object_native_relatives[aspect_index];
+    }
+    return -1;
+}
+
+int csb_v1_viewport_f0115_first_object_native_graphic_pc34(
+    int thing_type,
+    int subtype_index)
+{
+    return csb_v1_viewport_f0115_object_native_graphic_pc34(
+        thing_type, subtype_index, 0);
+}
+
+int csb_v1_viewport_f0115_blit_first_object_native_family_pc34(
+    int graphic_index,
+    const uint8_t *source_pixels,
+    int source_width,
+    int source_height,
+    uint8_t *screen_pixels,
+    int screen_width,
+    int screen_height,
+    int screen_stride,
+    int destination_x,
+    int destination_y,
+    int destination_width,
+    int destination_height,
+    int view_depth,
+    int flip_flags)
+{
+    int allow_horizontal_flip = 0;
+
+    /* F0115:4893-4910 creates depth-scaled object bitmaps, then 5071-5110
+     * composes into the C2500 zone with C10 transparency. The PC34 palette
+     * rows are the same G0214/G0213 D2/D3 rows used for floor objects. */
+    /* PC34 G0209:1423-1515 defines native object relatives 0 and 2..85,
+     * hence GRAPHICS.DAT 498 and 500..583. Graphic 499 is the Chest alcove
+     * alternate selected by F0115:4933-4937. No derived bitmap is admitted. */
+    if (graphic_index < 498 || graphic_index > 583) {
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0115:4923-4927 does not apply the ordinary
+     * MASK0x0001_FLIP_ON_RIGHT path when it selected the Chest's alcove
+     * alternate. Keep 499 unflipped even if a generic compositor supplies
+     * a right-lane flip request. */
+    if (graphic_index == 498 || graphic_index == 563 || graphic_index == 579) {
+        allow_horizontal_flip = 1;
+    }
+    if (!allow_horizontal_flip) flip_flags &= ~CSB_V1_FLIP_HORIZONTAL;
+    return csb_v1_viewport_f0115_blit_native_projectile_family_pc34(
+        graphic_index, source_pixels, source_width, source_height,
+        screen_pixels, screen_width, screen_height, screen_stride,
+        destination_x, destination_y, destination_width, destination_height,
+        view_depth, flip_flags);
+}
+
+int csb_v1_viewport_f0115_blit_m715_m716_projectile_family_pc34(
+    int graphic_index,
+    const uint8_t *source_pixels,
+    int source_width,
+    int source_height,
+    uint8_t *screen_pixels,
+    int screen_width,
+    int screen_height,
+    int screen_stride,
+    int destination_x,
+    int destination_y,
+    int destination_width,
+    int destination_height,
+    int view_depth,
+    int flip_flags)
+{
+    if (!((graphic_index >= 454 && graphic_index <= 455) ||
+          (graphic_index >= 457 && graphic_index <= 458))) {
+        return 0;
+    }
+    return csb_v1_viewport_f0115_blit_m715_m716_m717_projectile_family_pc34(
+        graphic_index, source_pixels, source_width, source_height,
+        screen_pixels, screen_width, screen_height, screen_stride,
+        destination_x, destination_y, destination_width, destination_height,
+        view_depth, flip_flags);
+}
+
 int csb_v1_viewport_runtime_projectile_sprite_rect(
     int source_zone,
     int viewport_x,
@@ -1825,9 +2358,9 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
             cfg->runtime_profile,
             projectile,
             &placement);
-        /* ReDMCSB DUNVIEW.C F0115 lines 5668-5683 map projectiles through
-         * G2028 and C2900_ZONE_ + row*4 + ViewCell.  OBJECT.C F0032/F0033
-         * resolves the material thing identity used by the fallback marker. */
+        /* ReDMCSB: DUNVIEW.C F0115 lines 5668-5683 maps projectiles through
+         * G2028 and C2900_ZONE_ + row*4 + ViewCell, then F0791 composites
+         * the original GRAPHICS.DAT bitmap with C10 transparency. */
         if (cfg->projectile_sprite_drawer) {
             CSB_V1_ViewportRuntimeProjectileSpriteBlit blit;
             if (csb_v1_viewport_runtime_projectile_sprite_blit(
@@ -1841,7 +2374,10 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
                 continue;
             }
         }
-        if (placement.material_icon_index >= 0) {
+        /* Icons exist only for asset-free focused fixtures.  A verified CSB
+         * GRAPHICS.DAT route must either execute its F0115 bitmap blit or
+         * record a missing-material block; an icon is not source material. */
+        if (!cfg->real_graphics_session && placement.material_icon_index >= 0) {
             ++cfg->runtime_projectile_material_resolved_count;
             if (cfg->object_icon_drawer) {
                 CSB_V1_ViewportRuntimeObjectIconBlit icon_blit;
@@ -1857,15 +2393,17 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
                 }
             }
         }
-        color = (uint8_t)csb_v1_viewport_projectile_material_overlay_color(
-            placement.material_icon_index);
-        csb_v1_viewport_draw_runtime_overlay_cross(
-            cfg,
-            placement.viewport_x,
-            placement.viewport_y,
-            color,
-            placement.source_zone >= 0 ? 2 : 1);
-        ++cfg->runtime_projectile_marker_drawn_count;
+        if (csb_v1_viewport_marker_fallback_allowed(cfg)) {
+            color = (uint8_t)csb_v1_viewport_projectile_material_overlay_color(
+                placement.material_icon_index);
+            csb_v1_viewport_draw_runtime_overlay_cross(
+                cfg,
+                placement.viewport_x,
+                placement.viewport_y,
+                color,
+                placement.source_zone >= 0 ? 2 : 1);
+            ++cfg->runtime_projectile_marker_drawn_count;
+        }
     }
 }
 
@@ -1918,7 +2456,7 @@ static void csb_v1_viewport_draw_runtime_thing_overlays(
                         cfg->viewport_pixels,
                         cfg->viewport_stride)) {
                     ++cfg->runtime_object_sprite_drawn_count;
-                } else if (icon >= 0 &&
+                } else if (!cfg->real_graphics_session && icon >= 0 &&
                            cfg->object_icon_drawer) {
                     CSB_V1_ViewportRuntimeObjectIconBlit icon_blit;
                     if (csb_v1_viewport_runtime_object_icon_blit(
@@ -1929,23 +2467,15 @@ static void csb_v1_viewport_draw_runtime_thing_overlays(
                             cfg->viewport_pixels,
                             cfg->viewport_stride)) {
                         ++cfg->runtime_object_icon_drawn_count;
-                    } else if (csb_v1_viewport_draw_runtime_object_marker(
-                                   cfg->viewport_pixels,
-                                   cfg->viewport_stride,
-                                   screen_height,
-                                   placement,
-                                   icon)) {
+                    } else if (csb_v1_viewport_draw_runtime_object_marker_if_allowed(
+                                   cfg, screen_height, placement, icon)) {
                         ++cfg->runtime_object_marker_drawn_count;
                     }
-                } else if (csb_v1_viewport_draw_runtime_object_marker(
-                               cfg->viewport_pixels,
-                               cfg->viewport_stride,
-                               screen_height,
-                               placement,
-                               icon)) {
+                } else if (csb_v1_viewport_draw_runtime_object_marker_if_allowed(
+                               cfg, screen_height, placement, icon)) {
                     ++cfg->runtime_object_marker_drawn_count;
                 }
-            } else if (icon >= 0 &&
+            } else if (!cfg->real_graphics_session && icon >= 0 &&
                        cfg->object_icon_drawer) {
                 CSB_V1_ViewportRuntimeObjectIconBlit icon_blit;
                 if (csb_v1_viewport_runtime_object_icon_blit(
@@ -1956,20 +2486,12 @@ static void csb_v1_viewport_draw_runtime_thing_overlays(
                         cfg->viewport_pixels,
                         cfg->viewport_stride)) {
                     ++cfg->runtime_object_icon_drawn_count;
-                } else if (csb_v1_viewport_draw_runtime_object_marker(
-                               cfg->viewport_pixels,
-                               cfg->viewport_stride,
-                               screen_height,
-                               placement,
-                               icon)) {
+                } else if (csb_v1_viewport_draw_runtime_object_marker_if_allowed(
+                               cfg, screen_height, placement, icon)) {
                     ++cfg->runtime_object_marker_drawn_count;
                 }
-            } else if (csb_v1_viewport_draw_runtime_object_marker(
-                           cfg->viewport_pixels,
-                           cfg->viewport_stride,
-                           screen_height,
-                           placement,
-                           icon)) {
+            } else if (csb_v1_viewport_draw_runtime_object_marker_if_allowed(
+                           cfg, screen_height, placement, icon)) {
                 ++cfg->runtime_object_marker_drawn_count;
             }
         } else if (overlay->kind == CSB_V1_VIEWPORT_RUNTIME_OVERLAY_GROUP) {
@@ -1988,20 +2510,12 @@ static void csb_v1_viewport_draw_runtime_thing_overlays(
                         cfg->viewport_pixels,
                         cfg->viewport_stride)) {
                     ++cfg->runtime_group_sprite_drawn_count;
-                } else if (csb_v1_viewport_draw_runtime_group_marker(
-                               cfg->viewport_pixels,
-                               cfg->viewport_stride,
-                               screen_height,
-                               placement,
-                               creature_type)) {
+                } else if (csb_v1_viewport_draw_runtime_group_marker_if_allowed(
+                               cfg, screen_height, placement, creature_type)) {
                     ++cfg->runtime_group_marker_drawn_count;
                 }
-            } else if (csb_v1_viewport_draw_runtime_group_marker(
-                           cfg->viewport_pixels,
-                           cfg->viewport_stride,
-                           screen_height,
-                           placement,
-                           creature_type)) {
+            } else if (csb_v1_viewport_draw_runtime_group_marker_if_allowed(
+                           cfg, screen_height, placement, creature_type)) {
                 ++cfg->runtime_group_marker_drawn_count;
             }
         }
@@ -2054,13 +2568,15 @@ static void csb_v1_viewport_draw_runtime_explosion_overlays(
                 continue;
             }
         }
-        csb_v1_viewport_draw_runtime_overlay_cross(
-            cfg,
-            placement.viewport_x,
-            placement.viewport_y,
-            0x0Cu,
-            placement.used_source_zone ? 3 : 2);
-        ++cfg->runtime_explosion_marker_drawn_count;
+        if (csb_v1_viewport_marker_fallback_allowed(cfg)) {
+            csb_v1_viewport_draw_runtime_overlay_cross(
+                cfg,
+                placement.viewport_x,
+                placement.viewport_y,
+                0x0Cu,
+                placement.used_source_zone ? 3 : 2);
+            ++cfg->runtime_explosion_marker_drawn_count;
+        }
     }
 }
 
@@ -2932,6 +3448,7 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
         cfg->projectile_sprite_user = NULL;
         cfg->explosion_sprite_drawer = NULL;
         cfg->explosion_sprite_user = NULL;
+        cfg->real_graphics_session = 0;
         return;
     }
     cfg->object_sprite_drawer = binding->object_sprite_drawer;
@@ -2944,6 +3461,7 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
     cfg->projectile_sprite_user = binding->projectile_sprite_user;
     cfg->explosion_sprite_drawer = binding->explosion_sprite_drawer;
     cfg->explosion_sprite_user = binding->explosion_sprite_user;
+    cfg->real_graphics_session = binding->real_graphics_session ? 1 : 0;
 }
 
 void csb_v1_viewport_runtime_draw_counts_reset(
@@ -2987,6 +3505,8 @@ void csb_v1_viewport_runtime_draw_counts_from_config(
         cfg->runtime_explosion_sprite_drawn_count;
     counts->explosion_marker_drawn_count =
         cfg->runtime_explosion_marker_drawn_count;
+    counts->real_asset_blocked_count =
+        cfg->runtime_real_asset_blocked_count;
 }
 
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set) {

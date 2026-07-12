@@ -285,14 +285,12 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
     memset(bundle, 0, sizeof(*bundle));
     bundle->assets_verified = 0;
 
-    /* Initialize palette with defaults */
-    tqr_palette_init_defaults(&bundle->palette);
-
     FILE *fp = fopen(file_path, "rb");
     if (!fp) {
         printf("[TQR] Could not open %s: no asset file (using defaults)\n",
                file_path);
-        /* Phase 0: not an error — fall back to deterministic defaults */
+        /* No original media was opened, so this remains a data-free path. */
+        tqr_palette_init_defaults(&bundle->palette);
         return TR_ASSET_OK;
     }
 
@@ -370,18 +368,19 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
     /* Scan for Track 03/04 magic signatures */
     TrAssetResult r = find_tracks_in_buffer(bundle, data, (size_t)file_size);
     if (r < 0) {
-        /* Real Track 02 images are still valid Theron runtime containers even
-         * when supplemental THG3/THS4 markers are not present in the raw data.
-         * Keep the verified HuCard/data-track bytes and let the renderer use
-         * deterministic fallback tiles until the exact embedded bank offsets
-         * are source-locked. Source: THQUEST.ASM T400/T410 boundary. */
+        /* Track 02 remains an original runtime container even when the old
+         * supplemental-marker guess cannot locate graphics.  Keep its bytes;
+         * the hash-verified boot path will block synthetic rendering until a
+         * source-locked graphics route exists. */
         bundle->hucard_rom = data;
         bundle->hucard_rom_size = (size_t)file_size;
         bundle->region = 1;
         printf("[TQR] No Track 03/04 markers in %s; keeping raw Track 02 data "
-               "with deterministic fallback assets\n", file_path);
+               "for semantic routing only\n", file_path);
         return TR_ASSET_OK;
     }
+
+    tqr_palette_init_defaults(&bundle->palette);
 
     /* Parse Track 03 if found */
     if (bundle->track03_data) {
@@ -422,6 +421,31 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
     return TR_ASSET_OK;
 }
 
+void tr_asset_block_synthetic_rendering_for_verified_media(
+    TrAssetBundle *bundle) {
+    if (!bundle || !bundle->hucard_rom || bundle->hucard_rom_size == 0u) {
+        return;
+    }
+    if (bundle->palette.tile_count == 0 && !bundle->track03_data) {
+        bundle->synthetic_rendering_blocked = 1;
+    }
+}
+
+int tr_asset_generated_v1_rendering_allowed(const TrAssetBundle *bundle) {
+    if (!bundle) {
+        return 1;
+    }
+    if (bundle->synthetic_rendering_blocked) {
+        return 0;
+    }
+    if (bundle->assets_verified && bundle->hucard_rom &&
+        bundle->hucard_rom_size > 0u && bundle->palette.tile_count == 0 &&
+        !bundle->track03_data) {
+        return 0;
+    }
+    return 1;
+}
+
 TrAssetResult tr_asset_verify(const TrAssetBundle *bundle,
                               const char *expected_sha256) {
     (void)bundle; (void)expected_sha256;
@@ -459,6 +483,7 @@ void tr_asset_free(TrAssetBundle *bundle) {
     bundle->track04_size = 0;
     bundle->hucard_rom_size = 0;
     bundle->assets_verified = 0;
+    bundle->synthetic_rendering_blocked = 0;
 }
 
 /* ── Source citation ─────────────────────────────────────────────── */

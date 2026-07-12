@@ -66,7 +66,6 @@ static int dm1_original_save_file_opens_for_read(const char *path)
 #define DM1_PC34_THING_INDEX_MASK 0x03ffu
 #define DM1_PC34_THING_TYPE_SHIFT 10u
 #define DM1_PC34_THING_TYPE_MASK 0x000fu
-#define DM1_PC34_CORPUS_VERIFY_GAME_ID 0x46535631u
 
 static uint16_t read_u16_le(const uint8_t *p)
 {
@@ -754,24 +753,28 @@ static int materialize_original_pc34_timeline(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
-static size_t import_original_pc34_external_portraits(
+static int import_original_pc34_external_portraits(
     const uint8_t *bytes,
     size_t size,
     size_t cursor,
-    struct SaveGame_Compat *out_state)
+    struct SaveGame_Compat *out_state,
+    DM1OriginalSavePC34HandoffReport *out_report)
 {
     int slot;
     int count;
-    if (!bytes) {
-        return cursor;
+    const size_t portrait_bytes = SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT;
+
+    /* ReDMCSB LOADSAVE.C F0435 lines ~2810-2816 reads all four fixed
+     * 32x29 portrait payloads after the five save parts. Validate the
+     * whole section before copying portrait 0, so truncation cannot leave
+     * a partially updated party. */
+    if (!bytes || cursor > size || portrait_bytes > size - cursor) {
+        return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
     count = (out_state && out_state->party) ? out_state->party->championCount : 0;
     if (count < 0) count = 0;
     if (count > CHAMPION_MAX_PARTY) count = CHAMPION_MAX_PARTY;
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-        if (cursor + CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT > size) {
-            return cursor;
-        }
         if (out_state && out_state->party && slot < count) {
             memcpy(out_state->party->champions[slot].portraitBitmap,
                    bytes + cursor,
@@ -780,7 +783,12 @@ static size_t import_original_pc34_external_portraits(
         }
         cursor += CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT;
     }
-    return cursor;
+    if (out_report) {
+        out_report->external_portrait_byte_count = (uint32_t)portrait_bytes;
+        out_report->external_portrait_payload_count = CHAMPION_MAX_PARTY;
+        out_report->external_portrait_imported_count = count;
+    }
+    return SAVEGAME_PC34_OK;
 }
 
 static uint16_t original_pc34_byte_checksum(const uint8_t *bytes,
@@ -1114,8 +1122,12 @@ static int import_original_pc34_global_data(
         }
     }
 
-    cursor = import_original_pc34_external_portraits(bytes, size, cursor,
-                                                     out_state);
+    rc = import_original_pc34_external_portraits(bytes, size, cursor,
+                                                 out_state, out_report);
+    if (rc != SAVEGAME_PC34_OK) {
+        return rc;
+    }
+    cursor += SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT;
     rc = decode_original_pc34_dungeon_tail(bytes, size, cursor, out_report);
     if (rc != SAVEGAME_PC34_OK) {
         return rc;
@@ -1157,6 +1169,7 @@ int dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
     uint8_t events[DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT *
                    DM1_PC34_ORIGINAL_EVENT_FIXTURE_COUNT];
     uint8_t timeline[2u * DM1_PC34_ORIGINAL_EVENT_FIXTURE_COUNT];
+    uint8_t portraits[SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT];
     uint16_t keys[SAVEGAME_PC34_DM_KEYS_COUNT];
     uint16_t checksums[SAVEGAME_PC34_DM_CHECKSUMS_COUNT];
     size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
@@ -1219,6 +1232,7 @@ int dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
     memset(party, 0, sizeof(party));
     memset(events, 0, sizeof(events));
     memset(timeline, 0, sizeof(timeline));
+    memset(portraits, 0, sizeof(portraits));
     memset(checksums, 0, sizeof(checksums));
 
     for (i = 0; i < 127; ++i) {
@@ -1298,6 +1312,10 @@ int dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
     write_u16_le(timeline + 2u, 2u);
     write_u16_le(timeline + 4u, 0u);
     write_u16_le(timeline + 6u, 3u);
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        memset(portraits + (size_t)i * CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT,
+               0x30 + i, CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
+    }
 
     rc = write_original_part(out_bytes + cursor, out_capacity - cursor,
                              global, sizeof(global),
@@ -1335,6 +1353,12 @@ int dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
     if (rc < 0) return rc;
     cursor += (size_t)rc;
 
+    if (out_capacity - cursor < sizeof(portraits)) {
+        return SAVEGAME_PC34_ERROR_BUFFER_TOO_SMALL;
+    }
+    memcpy(out_bytes + cursor, portraits, sizeof(portraits));
+    cursor += sizeof(portraits);
+
     for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
         write_u16_le(header + 310u + (size_t)i * 2u, keys[i]);
         write_u16_le(header + 342u + (size_t)i * 2u, checksums[i]);
@@ -1366,8 +1390,14 @@ int dm1_v1_original_save_pc34_handoff_bytes(
     DM1OriginalSavePC34HandoffReport *out_report)
 {
     DM1OriginalSaveClassifyResult classify;
+    DM1OriginalSavePC34HandoffReport staged_report;
+    struct SaveGame_Compat staged_state;
+    struct PartyState_Compat staged_party;
+    struct TimelineQueue_Compat staged_timeline;
     int rc;
 
+    memset(&staged_report, 0, sizeof(staged_report));
+    staged_report.importer_result = SAVEGAME_PC34_ERROR_INTERNAL;
     if (out_report) {
         memset(out_report, 0, sizeof(*out_report));
         out_report->importer_result = SAVEGAME_PC34_ERROR_INTERNAL;
@@ -1404,13 +1434,27 @@ int dm1_v1_original_save_pc34_handoff_bytes(
      * PC34 native-export layout;
      * this path handles the real original header envelope classified
      * above. */
-    rc = import_original_pc34_global_data(bytes, size, out_state, out_report);
-    if (out_report) {
-        out_report->importer_result = rc;
+    staged_report.classify = classify;
+    staged_state = *out_state;
+    if (out_state->party) {
+        staged_party = *out_state->party;
+        staged_state.party = &staged_party;
     }
+    if (out_state->timeline) {
+        staged_timeline = *out_state->timeline;
+        staged_state.timeline = &staged_timeline;
+    }
+    rc = import_original_pc34_global_data(bytes, size, &staged_state,
+                                          &staged_report);
+    staged_report.importer_result = rc;
+    if (out_report) *out_report = staged_report;
     if (rc != SAVEGAME_PC34_OK) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
+
+    out_state->header = staged_state.header;
+    if (out_state->party) *out_state->party = staged_party;
+    if (out_state->timeline) *out_state->timeline = staged_timeline;
 
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }

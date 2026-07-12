@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_DM2_V1_SOUND_H
 #define FIRESTAFF_DM2_V1_SOUND_H
 #include <stdint.h>
+#include <stddef.h>
 
 /* DM2 V1 — Sound System
  * Phase 6 source-lock (2026-05-26)
@@ -82,6 +83,120 @@
 
 #define DM2_MUSIC_TRACK_COUNT          28  /* 00-1c = 28 tracks */
 #define DM2_MUSIC_MAP_COUNT             64  /* tMusicMaps[64] lookup table */
+#define DM2_V1_MUSIC_MAX_FILE_BYTES     (4u * 1024u * 1024u)
+#define DM2_V1_MUSIC_MAX_TRACKS         32u
+#define DM2_V1_MUSIC_MAX_EVENTS         262144u
+/* The title stream has 564 events.  Keep the M11 handoff bounded even when
+ * inspecting a hostile but otherwise valid MIDI file. */
+#define DM2_V1_MUSIC_MAX_SCHEDULE_EVENTS 4096u
+
+typedef struct DM2_V1_MusicScheduledEvent {
+    uint32_t tick;
+    uint32_t time_us;
+    uint8_t status;
+    uint8_t data1;
+    uint8_t data2;
+    uint8_t data_size;
+    uint32_t payload;
+} DM2_V1_MusicScheduledEvent;
+
+/* `00.hmp.mid` is loaded by SKWin's Allegro MIDI path.  The shipped
+ * SKWin title fixture is an SMF (`MThd`) under that original filename, while
+ * original HMI SOS HMP streams start `HMIMIDIP`.  Preserve both forms as
+ * MIDI event streams; neither form contains PCM samples. */
+typedef enum DM2_V1_MusicFormat {
+    DM2_V1_MUSIC_FORMAT_NONE = 0,
+    DM2_V1_MUSIC_FORMAT_STANDARD_MIDI,
+    DM2_V1_MUSIC_FORMAT_HMP_V1,
+    DM2_V1_MUSIC_FORMAT_HMP_013195
+} DM2_V1_MusicFormat;
+
+typedef enum DM2_V1_MusicInspectResult {
+    DM2_V1_MUSIC_INSPECT_OK = 0,
+    DM2_V1_MUSIC_INSPECT_EMPTY,
+    DM2_V1_MUSIC_INSPECT_FILE_TOO_LARGE,
+    DM2_V1_MUSIC_INSPECT_BAD_SIGNATURE,
+    DM2_V1_MUSIC_INSPECT_TRUNCATED,
+    DM2_V1_MUSIC_INSPECT_BAD_HEADER,
+    DM2_V1_MUSIC_INSPECT_BAD_TRACK,
+    DM2_V1_MUSIC_INSPECT_BAD_EVENT,
+    DM2_V1_MUSIC_INSPECT_LIMIT_EXCEEDED
+} DM2_V1_MusicInspectResult;
+
+typedef struct DM2_V1_MusicTrackReceipt {
+    uint32_t byte_offset;
+    uint32_t byte_size;
+    uint32_t event_count;
+    uint32_t end_of_track_count;
+    uint32_t duration_ticks;
+} DM2_V1_MusicTrackReceipt;
+
+typedef struct DM2_V1_MusicStreamReceipt {
+    DM2_V1_MusicInspectResult result;
+    DM2_V1_MusicFormat format;
+    uint32_t file_size;
+    uint32_t track_count;
+    uint32_t event_count;
+    uint32_t channel_event_count;
+    uint32_t meta_event_count;
+    uint32_t sysex_event_count;
+    uint16_t time_division;
+    uint32_t duration_ticks;
+    uint32_t loop_duration_us;
+    uint32_t schedule_event_count;
+    int schedule_handoff_ready;
+    int midi_handoff_ready;
+    int pcm_handoff_ready;
+    DM2_V1_MusicTrackReceipt tracks[DM2_V1_MUSIC_MAX_TRACKS];
+    DM2_V1_MusicScheduledEvent
+        schedule_events[DM2_V1_MUSIC_MAX_SCHEDULE_EVENTS];
+} DM2_V1_MusicStreamReceipt;
+
+/* M11 advances this receipt from its monotonic audio-timing handoff. Due
+ * events may be handed to a capability-proven native MIDI device; no PCM
+ * queue is implied. */
+typedef struct DM2_V1_MusicScheduleReceipt {
+    int valid;
+    int loop;
+    int backend_proven;
+    int midi_handoff_ready;
+    int pcm_handoff_ready;
+    uint32_t elapsed_us;
+    uint32_t loop_duration_us;
+    uint32_t loop_count;
+    uint32_t event_count_due;
+    uint32_t backend_event_count_sent;
+    uint32_t first_event_index;
+    uint32_t event_count_available;
+} DM2_V1_MusicScheduleReceipt;
+
+/* skproject/SKULLWIN/c_sound.cpp DM2_PLAY_MUSIC() calls c_midi::do_music(),
+ * which loads ./DATA/%02x.hmp.mid and asks the original backend to loop it. */
+typedef enum DM2_V1_MusicQueueResult {
+    DM2_V1_MUSIC_QUEUE_READY = 0,
+    DM2_V1_MUSIC_QUEUE_ASSET_ROOT_UNVERIFIED,
+    DM2_V1_MUSIC_QUEUE_TRACK_OUT_OF_RANGE,
+    DM2_V1_MUSIC_QUEUE_ASSET_MISSING,
+    DM2_V1_MUSIC_QUEUE_STREAM_INVALID,
+    DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE
+} DM2_V1_MusicQueueResult;
+
+typedef struct DM2_V1_MusicQueueReceipt {
+    DM2_V1_MusicQueueResult result;
+    int track;
+    int loop;
+    int asset_resolved;
+    int request_queued;
+    int decoder_proven;
+    int backend_proven;
+    int midi_handoff_ready;
+    int pcm_handoff_ready;
+    int schedule_handoff_ready;
+    uint32_t loop_duration_us;
+    uint32_t schedule_event_count;
+    DM2_V1_MusicStreamReceipt stream;
+    char asset_path[512];
+} DM2_V1_MusicQueueReceipt;
 
 /* ── Sound queue ────────────────────────────────────────────────────────
  * Source: skproject/SKULLWIN/c_sound.h/cpp, c_sfx.cpp
@@ -112,6 +227,14 @@ typedef struct {
 int  dm2_v1_sound_query_entry(uint8_t cat, uint8_t c1, uint8_t c2, uint8_t sfx);
 int  dm2_v1_sound_play(int sound_id, int volume);
 int  dm2_v1_sound_play_positional(int sound_id, int world_x, int world_y, int listener_x, int listener_y);
+void dm2_v1_sound_bind_verified_music_assets(const char *asset_root,
+                                             int primary_assets_verified);
+int  dm2_v1_sound_inspect_music_data(const uint8_t *data, size_t size,
+                                     DM2_V1_MusicStreamReceipt *out_receipt);
+int  dm2_v1_sound_queue_music(int track, int loop,
+                              DM2_V1_MusicQueueReceipt *out_receipt);
+int  dm2_v1_sound_schedule_music(uint32_t elapsed_us,
+                                  DM2_V1_MusicScheduleReceipt *out_receipt);
 int  dm2_v1_sound_play_music(int track);
 int  dm2_v1_sound_stop_music(void);
 const char *dm2_v1_sound_name(int category, int sound_id);

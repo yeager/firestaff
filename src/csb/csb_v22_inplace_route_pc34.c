@@ -26,15 +26,15 @@
  *   FLOOR_STAIRS_UP:    floor_stairs_up_01       (depth-invariant)
  *   FLOOR_STAIRS_DOWN:  floor_stairs_down_01     (depth-invariant)
  *   CEILING_PLAIN / CEILING_VAULTED:
- *     depth-invariant ceiling_01                  ("wall_shapes")
+ *     no V2.2 asset; retain the V1 original-material pass
  *   CREATURE / CREATURE_PROJECTILE:
  *     creature_demon_d<depth>_01                  ("creature_shapes")
  *   ITEM / ITEM_FLOOR / ITEM_PROJECTILE:
- *     creature_demon_d<depth>_01 (placeholder until item art)
+ *     no V2.2 asset; retain the V1 original-material pass
  *   FIELD_TELEPORTER / FIELD_FLUXCAGE / FIELD_EXPLOSION / FIELD_CHAOS_RIFT:
- *     no asset (returns use_v22=0 with reason
- *     "field_<type>_no_asset"); the in-place draw pass leaves
- *     these cells to V1 instead of painting wrong wall art.
+ *     no asset (returns use_v22=0 with an explicit
+ *     "v1_original_material_unbound_field_*" reason); the in-place draw
+ *     pass leaves these cells to V1 instead of inventing a substitute.
  *   PRISON_DOOR:           prison_door_01          ("wall_shapes")
  *   CHAOS_RUNE:            chaos_rune_<index>_01   ("chaos_runes")
  *   DSA_SCROLL:            dsa_scroll_01           ("dsa_scrolls")
@@ -91,8 +91,6 @@ static const RoutePair kRoutePairs[] = {
     { CAT_FLOOR, "floor_pit_01" },
     { CAT_FLOOR, "floor_stairs_up_01" },
     { CAT_FLOOR, "floor_stairs_down_01" },
-    /* Ceiling. */
-    { CAT_WALL, "ceiling_01" },
     /* Creature per depth (depth-invariant would also work, but the
      * per-depth split leaves room for size-perspective swaps). */
     { CAT_CR, "creature_demon_d0_01" },
@@ -238,35 +236,42 @@ int csb_v22_inplace_route_for_shape(int shape_type,
             copy_str(out_reason, out_reason_size, "floor_door_needs_depth");
             return 0;
 
-        /* ── Ceiling (depth-invariant) ──────────────────────── */
+        /* ReDMCSB DUNVIEW.C F0112/F0115 owns the source bitmap
+         * selection. No matching Atari ST bitmap identity is decoded yet. */
         case CSB_V22_SHAPE_CEILING_PLAIN:
         case CSB_V22_SHAPE_CEILING_VAULTED:
-            copy_str(out_asset_id, out_asset_id_size, "ceiling_01");
-            copy_str(out_category, out_category_size, CAT_WALL);
-            copy_str(out_reason,   out_reason_size,   "ceiling_depth_invariant");
-            return 1;
+            copy_str(out_reason, out_reason_size,
+                     "v1_original_material_unbound_ceiling");
+            return 0;
 
-        /* ── Creatures / items (per-depth; placeholder) ─────── */
+        /* Creatures need depth; items remain on the V1 material path. */
         case CSB_V22_SHAPE_CREATURE:
         case CSB_V22_SHAPE_CREATURE_PROJECTILE:
+            copy_str(out_reason, out_reason_size, "creature_needs_depth");
+            return 0;
         case CSB_V22_SHAPE_ITEM:
         case CSB_V22_SHAPE_ITEM_FLOOR:
         case CSB_V22_SHAPE_ITEM_PROJECTILE:
-            copy_str(out_reason, out_reason_size, "creature_needs_depth");
+            copy_str(out_reason, out_reason_size,
+                     "v1_original_material_unbound_item");
             return 0;
 
-        /* ── Fields: no asset, V1 fallback ─────────────────── */
+        /* Fields are composited by ReDMCSB DUNVIEW.C F0115. */
         case CSB_V22_SHAPE_FIELD_TELEPORTER:
-            copy_str(out_reason, out_reason_size, "field_teleporter_no_asset");
+            copy_str(out_reason, out_reason_size,
+                     "v1_original_material_unbound_field_teleporter");
             return 0;
         case CSB_V22_SHAPE_FIELD_FLUXCAGE:
-            copy_str(out_reason, out_reason_size, "field_fluxcage_no_asset");
+            copy_str(out_reason, out_reason_size,
+                     "v1_original_material_unbound_field_fluxcage");
             return 0;
         case CSB_V22_SHAPE_FIELD_EXPLOSION:
-            copy_str(out_reason, out_reason_size, "field_explosion_no_asset");
+            copy_str(out_reason, out_reason_size,
+                     "v1_original_material_unbound_field_explosion");
             return 0;
         case CSB_V22_SHAPE_FIELD_CHAOS_RIFT:
-            copy_str(out_reason, out_reason_size, "field_chaos_rift_no_asset");
+            copy_str(out_reason, out_reason_size,
+                     "v1_original_material_unbound_field_chaos_rift");
             return 0;
 
         /* ── CSB-specific shapes ────────────────────────────── */
@@ -492,18 +497,12 @@ void csb_v22_inplace_route_cell(int depth,
 
         case CSB_V22_SHAPE_CEILING_PLAIN:
         case CSB_V22_SHAPE_CEILING_VAULTED:
-            copy_str(out->asset_id, sizeof(out->asset_id), "ceiling_01");
-            copy_str(out->category, sizeof(out->category), CAT_WALL);
             copy_str(out->fallback_reason, sizeof(out->fallback_reason),
-                     "ceiling_depth_invariant");
-            out->use_v22 = 1;
+                     "v1_original_material_unbound_ceiling");
             return;
 
         case CSB_V22_SHAPE_CREATURE:
         case CSB_V22_SHAPE_CREATURE_PROJECTILE:
-        case CSB_V22_SHAPE_ITEM:
-        case CSB_V22_SHAPE_ITEM_FLOOR:
-        case CSB_V22_SHAPE_ITEM_PROJECTILE:
             assign_creature_by_depth(depth,
                                      out->asset_id, sizeof(out->asset_id),
                                      out->category, sizeof(out->category),
@@ -512,21 +511,28 @@ void csb_v22_inplace_route_cell(int depth,
             out->use_v22 = 1;
             return;
 
+        case CSB_V22_SHAPE_ITEM:
+        case CSB_V22_SHAPE_ITEM_FLOOR:
+        case CSB_V22_SHAPE_ITEM_PROJECTILE:
+            copy_str(out->fallback_reason, sizeof(out->fallback_reason),
+                     "v1_original_material_unbound_item");
+            return;
+
         case CSB_V22_SHAPE_FIELD_TELEPORTER:
             copy_str(out->fallback_reason, sizeof(out->fallback_reason),
-                     "field_teleporter_no_asset");
+                     "v1_original_material_unbound_field_teleporter");
             return;
         case CSB_V22_SHAPE_FIELD_FLUXCAGE:
             copy_str(out->fallback_reason, sizeof(out->fallback_reason),
-                     "field_fluxcage_no_asset");
+                     "v1_original_material_unbound_field_fluxcage");
             return;
         case CSB_V22_SHAPE_FIELD_EXPLOSION:
             copy_str(out->fallback_reason, sizeof(out->fallback_reason),
-                     "field_explosion_no_asset");
+                     "v1_original_material_unbound_field_explosion");
             return;
         case CSB_V22_SHAPE_FIELD_CHAOS_RIFT:
             copy_str(out->fallback_reason, sizeof(out->fallback_reason),
-                     "field_chaos_rift_no_asset");
+                     "v1_original_material_unbound_field_chaos_rift");
             return;
 
         case CSB_V22_SHAPE_PRISON_DOOR:

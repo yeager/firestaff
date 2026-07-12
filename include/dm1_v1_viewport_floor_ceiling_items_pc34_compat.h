@@ -61,6 +61,7 @@ extern "C" {
 #define DM1_GRAPHIC_FIRST_OBJECT        498
 #define DM1_GRAPHIC_FIRST_CREATURE      584
 #define DM1_GRAPHIC_ITEM_SCROLL         500
+#define DM1_GRAPHIC_OBJECT_LAST          (DM1_GRAPHIC_FIRST_CREATURE - 1)
 
 /* Compute floor panel GRAPHICS.DAT index for a given floor set.
  * ReDMCSB DUNVIEW.C F0094_DUNGEONVIEW_LoadFloorSet. */
@@ -113,6 +114,7 @@ static inline int dm1_is_alcove_ornament(int globalIndex) {
 }
 
 int dm1_item_aspect_index(int thingType, int subtype);
+unsigned int dm1_object_aspect_graphic_index(int aspectIndex);
 unsigned int dm1_item_sprite_index(int thingType, int subtype);
 unsigned int dm1_object_aspect_graphic_info(int aspectIndex);
 int dm1_object_aspect_coordinate_set(int aspectIndex);

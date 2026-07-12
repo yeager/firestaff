@@ -1173,9 +1173,10 @@ static void csb_v1_startup_set_title_rect_pc34(
     /* ReDMCSB TITLE.C F0437 lines 430, 433-457, and 461 draw the title
      * through C424 PRESENTS, C425 CHAOS, and C426 STRIKES BACK zones. */
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
-        /* ReDMCSB TITLE.C F0437: C12_PRESENTS is installed for C424. */
+        /* ReDMCSB TITLE.C F0437:113-132 draws C424 on the CSB dark-blue
+         * base, then promotes index 15 to white. This is not DM1 C12. */
         plan->title_special_palette =
-            VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS;
+            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS;
         plan->special_palette = plan->title_special_palette;
         plan->title_source_x = 0;
         plan->title_source_y = 137;
@@ -1196,8 +1197,9 @@ static void csb_v1_startup_set_title_rect_pc34(
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
         plan->title_source_step >= 2 &&
         plan->title_source_step <= 19) {
-        /* ReDMCSB TITLE.C F0437: C13_DUNGEON + C14_MASTER for C425. */
-        plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_TITLE;
+        /* ReDMCSB TITLE.C F0437:190-199 applies C425's CSB-only gold and
+         * dark-blue slots before the source-ordered zoom raster. */
+        plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS;
         plan->special_palette = plan->title_special_palette;
         /* ReDMCSB PC TITLE.C F0437 lines 340-360 creates shrinked
          * bitmaps from the full 320x80 title source, and lines 385-387
@@ -1221,8 +1223,9 @@ static void csb_v1_startup_set_title_rect_pc34(
         return;
     }
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
-        /* ReDMCSB TITLE.C F0437: C13_DUNGEON + C14_MASTER for C426. */
-        plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_TITLE;
+        /* ReDMCSB TITLE.C F0437:233-249 draws C426 with black transparent
+         * pixels, then changes palette slots 10 and 12 for STRIKES BACK. */
+        plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES;
         plan->special_palette = plan->title_special_palette;
         plan->title_source_x = 0;
         plan->title_source_y = 80;

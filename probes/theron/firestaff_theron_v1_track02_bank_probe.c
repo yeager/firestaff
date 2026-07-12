@@ -46,6 +46,23 @@ static int write_probe_file(const char *path, const char *text) {
     return 1;
 }
 
+static int write_cdda_probe_file(const char *path, size_t sector_count) {
+    uint8_t sector[THERON_TRACK01_CDDA_SECTOR_BYTES] = {0};
+    FILE *fp;
+    size_t i;
+    if (!path || sector_count == 0u) return 0;
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    for (i = 0u; i < sector_count; ++i) {
+        if (fwrite(sector, 1u, sizeof(sector), fp) != sizeof(sector)) {
+            fclose(fp);
+            return 0;
+        }
+    }
+    fclose(fp);
+    return 1;
+}
+
 static void probe_cue_track02_mount(void) {
 #if defined(_WIN32)
     printf("cue mount fixture: skipped on Windows\n");
@@ -100,6 +117,70 @@ static void probe_cue_track02_mount(void) {
     remove(missing_cue_path);
     remove(duplicate_cue_path);
     remove(payload_path);
+    rmdir(directory);
+#endif
+}
+
+static void probe_cue_track01_cdda_handoff(void) {
+#if defined(_WIN32)
+    printf("cue Track 01 handoff fixture: skipped on Windows\n");
+    ++g_skip;
+#else
+    char directory[] = "/tmp/firestaff_theron_cdda_XXXXXX";
+    char cue_path[512];
+    char audio_path[512];
+    char data_path[512];
+    char duplicate_path[512];
+    Theron_Track01CddaHandoff handoff;
+    if (!mkdtemp(directory)) {
+        printf("SKIP cue Track 01 handoff fixture: mkdtemp failed\n");
+        ++g_skip;
+        return;
+    }
+    snprintf(cue_path, sizeof(cue_path), "%s/disc.cue", directory);
+    snprintf(audio_path, sizeof(audio_path), "%s/track01.bin", directory);
+    snprintf(data_path, sizeof(data_path), "%s/track02.bin", directory);
+    snprintf(duplicate_path, sizeof(duplicate_path), "%s/duplicate.cue", directory);
+    check_int("cdda audio fixture", write_cdda_probe_file(audio_path, 161u), 1);
+    check_int("cdda data fixture", write_probe_file(data_path, "verified data"), 1);
+    check_int("cdda cue fixture",
+              write_probe_file(cue_path,
+                  "FILE \"track01.bin\" BINARY\n"
+                  "  TRACK 01 AUDIO\n"
+                  "    INDEX 01 00:02:10\n"
+                  "FILE \"track02.bin\" BINARY\n"
+                  "  TRACK 02 MODE1/2352\n"
+                  "    INDEX 01 00:00:00\n"), 1);
+    check_int("cdda verified CUE handoff",
+              theron_v1_track01_cdda_handoff_from_verified_media(
+                  cue_path, THERON_TRACK02_MD5_US_BIN, &handoff),
+              THERON_TRACK01_CDDA_AVAILABLE);
+    check_int("cdda handoff is original media", handoff.original_cdda, 1);
+    check_int("cdda handoff playback ready", handoff.playback_handoff_ready, 1);
+    check_int("cdda handoff audio path", strcmp(handoff.audio_path, audio_path) == 0, 1);
+    check_int("cdda handoff Track 02 path", strcmp(handoff.track02_path, data_path) == 0, 1);
+    check_int("cdda handoff index LBA", (int)handoff.index_lba, 160);
+    check_int("cdda plain ISO explicitly unavailable",
+              theron_v1_track01_cdda_handoff_from_verified_media(
+                  data_path, THERON_TRACK02_MD5_US_BIN, &handoff),
+              THERON_TRACK01_CDDA_UNAVAILABLE);
+    check_int("cdda unverified provenance rejected",
+              theron_v1_track01_cdda_handoff_from_verified_media(
+                  cue_path, "00000000000000000000000000000000", &handoff),
+              THERON_TRACK01_CDDA_UNVERIFIED);
+    check_int("cdda duplicate audio cue fixture",
+              write_probe_file(duplicate_path,
+                  "FILE \"track01.bin\" BINARY\n  TRACK 01 AUDIO\n"
+                  "FILE \"track01.bin\" BINARY\n  TRACK 01 AUDIO\n"
+                  "FILE \"track02.bin\" BINARY\n  TRACK 02 MODE1/2352\n"), 1);
+    check_int("cdda duplicate Track 01 explicitly unavailable",
+              theron_v1_track01_cdda_handoff_from_verified_media(
+                  duplicate_path, THERON_TRACK02_MD5_US_BIN, &handoff),
+              THERON_TRACK01_CDDA_UNAVAILABLE);
+    remove(cue_path);
+    remove(duplicate_path);
+    remove(audio_path);
+    remove(data_path);
     rmdir(directory);
 #endif
 }
@@ -1781,6 +1862,7 @@ int main(void) {
 
     probe_negative_fixture();
     probe_cue_track02_mount();
+    probe_cue_track01_cdda_handoff();
     probe_jp_zero_image_fixture();
     probe_descriptor_only_negative_fixture();
     probe_boundary_prefix_only_negative_fixture();

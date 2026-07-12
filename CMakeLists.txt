@@ -215,6 +215,13 @@ if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(firestaff_dm2 PUBLIC firestaff_m10 m)
+    if(APPLE)
+        find_library(COREMIDI_FRAMEWORK CoreMIDI REQUIRED)
+        find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+        target_link_libraries(firestaff_dm2 PUBLIC
+            ${COREMIDI_FRAMEWORK}
+            ${COREFOUNDATION_FRAMEWORK})
+    endif()
     if(NOT MSVC)
         target_compile_options(firestaff_dm2 PRIVATE -Wall -Wextra -O2)
     endif()
@@ -246,6 +253,7 @@ file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/thero
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES})
     target_include_directories(firestaff_theron PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(firestaff_theron PUBLIC SDL3::SDL3)
     firestaff_link_zlib(firestaff_theron PUBLIC)
     if(NOT MSVC)
         target_compile_options(firestaff_theron PRIVATE -Wall -Wextra -O2 -fcommon)
@@ -263,11 +271,6 @@ if(DM2_V2_SOURCES)
     # Without this link, Linux/Windows release builds fail with
     # undefined reference errors. Source: dm1v2/dm1_v2_movement_command_adapter_pc34.c.
     target_link_libraries(firestaff_dm2_v2 PUBLIC firestaff_m10 firestaff_v2 m)
-    # dm2_v2_hud_widget_bitmap_blit.c decodes synthetic 1x1 PNG IDAT
-    # chunks via the bundled miniz. Linking PUBLIC so the standalone
-    # bitmap-blit probe (and any future real-art blit path) inherit
-    # FIRESTAFF_HAS_ZLIB without re-declaring the linkage contract.
-    # Source: src/dm2/dm2_v2_hud_widget_bitmap_blit.c
     firestaff_link_zlib(firestaff_dm2_v2 PUBLIC)
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v2 PRIVATE -Wall -Wextra -O2)
@@ -727,7 +730,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/theron/firestaff_theron_v1_startup
     )
     target_include_directories(firestaff_theron_v1_startup_real_asset_receipt_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src)
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron)
     target_link_libraries(firestaff_theron_v1_startup_real_asset_receipt_probe
         PRIVATE firestaff_theron firestaff_m12 firestaff_v2 firestaff_m10 m)
     if(NOT MSVC)
@@ -1873,6 +1877,26 @@ target_link_libraries(firestaff_csb_v22_per_cell_route_probe
     PRIVATE firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v22_per_cell_route_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# CSB-A02 real-media guard: the hash-verified Atari ST pair must keep
+# unbound ceiling/item/field material on the V1 original route.
+add_executable(firestaff_csb_v22_atari_st_original_material_probe
+    probes/firestaff_csb_v22_atari_st_original_material_probe.c)
+target_include_directories(firestaff_csb_v22_atari_st_original_material_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_csb_v22_atari_st_original_material_probe
+    PRIVATE firestaff_m12 firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v22_atari_st_original_material_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME csb_v22_atari_st_original_material_probe
+        COMMAND firestaff_csb_v22_atari_st_original_material_probe)
+    set_tests_properties(csb_v22_atari_st_original_material_probe PROPERTIES
+        LABELS "tier2;csb;v2.2;real-media;original-material")
 endif()
 if(BUILD_TESTING)
     add_test(
@@ -3292,8 +3316,19 @@ endif()
 # CSB Utility Disk / CSBWin CSBGAME save exit 0 after data-free gate
 # sanity checks. Source: ReDMCSB REVIVE.C F0280/F0282,
 # PANEL.C F0346, COMMAND.C F0359.
-# Retired with the M11 wrapper-export cleanup. The CSB F0282 contract now lives
-# in CSB/runtime tests instead of linking against removed M11 diagnostic APIs.
+add_executable(firestaff_csb_v1_f0282_live_champion_panel_probe
+    probes/csb/firestaff_csb_v1_f0282_live_champion_panel_probe.c
+    src/csb/csb_v1_save_import_path_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+)
+target_include_directories(firestaff_csb_v1_f0282_live_champion_panel_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_f0282_live_champion_panel_probe
+    PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_f0282_live_champion_panel_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
 
 # CSB V1 Hint Oracle UI/runtime binding probe
 # Real-asset HCSB.HTC → Firestaff-facing oracle/hint binding
@@ -3456,14 +3491,49 @@ endif()
 # DM1 V1 chest slot zone validation probe — headless, no game data needed.
 # Validates kV1ChestSlotBoxZones (m11_game_view.c) against ReDMCSB
 # COMMAND.C:215-227 G0456_as_Graphic561_MouseInput_PanelChest zone coords.
-# Retired with the M11 wrapper-export cleanup. These source-lock checks moved
-# to DM1-layer tests so release builds no longer link stale diagnostic APIs.
+add_executable(firestaff_m11_chest_slot_zones_probe
+    probes/firestaff_m11_chest_slot_zones_probe.c)
+target_link_libraries(firestaff_m11_chest_slot_zones_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_chest_slot_zones_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME dm1_v1_chest_slot_zones_source_lock
+    COMMAND firestaff_m11_chest_slot_zones_probe
+)
 
-# Retired with the M11 wrapper-export cleanup; DM1 V2 effect seeds are covered
-# by V2-layer probes rather than M11 diagnostic exports.
+# M11 Game View probe (needs full M10 + M11 + M12)
+add_executable(firestaff_m11_game_view_probe probes/m11/firestaff_m11_game_view_probe.c)
+target_link_libraries(firestaff_m11_game_view_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_game_view_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
+endif()
 
-# Retired with the M11 wrapper-export cleanup; covered by
-# test_dm1_v1_champion_status_layout_pc34_compat.
+# DM1 V2 Phase 4 M11 framepath wire-up probe. Data-free: proves the
+# presentation-only enhanced-effects runtime ticks from M11_GameView_Draw
+# only when DM1 V2 presentation is active.
+add_executable(firestaff_m11_dm1_v2_effects_framepath_probe
+    probes/m11/firestaff_m11_dm1_v2_effects_framepath_probe.c)
+target_link_libraries(firestaff_m11_dm1_v2_effects_framepath_probe
+    PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_dm1_v2_effects_framepath_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_m11_dm1_v2_effects_framepath_probe
+    COMMAND firestaff_m11_dm1_v2_effects_framepath_probe
+)
+set_tests_properties(firestaff_m11_dm1_v2_effects_framepath_probe PROPERTIES
+    LABELS "dm1;v2;phase4;m11;effects;framepath"
+)
+
+add_executable(firestaff_dm1_v1_inventory_damage_indicator_zone_probe
+    probes/m11/firestaff_dm1_v1_inventory_damage_indicator_zone_probe.c)
+target_link_libraries(firestaff_dm1_v1_inventory_damage_indicator_zone_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_inventory_damage_indicator_zone_probe PRIVATE -Wall -Wextra -O2)
+endif()
 
 add_executable(firestaff_dm1_v1_message_log_bottom_row_runtime_probe
     probes/m11/firestaff_dm1_v1_message_log_bottom_row_runtime_probe.c)
@@ -3477,8 +3547,32 @@ add_test(
         $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
 )
 
-# Retired with the M11 wrapper-export cleanup; dialog choice fit is covered by
-# test_m11_dialog_choice_overlay_fit_pc34_compat.
+# DM1 V1 dialog choice font-scale fit probe (gap "In-game overlays + UI-fit coverage").
+# Headless / data-free: pins M11_UIScale percent -> font scale step, M11_Font_DrawString
+# advance per scale step (8, 16, 24), the 192 px source dialog choice zones (C462/C463),
+# 4-choice split zones (C466/C467) at 86 px each, the V1 message area zone (C015)
+# geometry, the production override that keeps the V1 message log at scale 1
+# even when state->fontScale is bumped to 2 or 3, and the session-timer
+# reminder banner's top-strip fit / V1 viewport ownership at fontScale 1..3.
+# Source: ReDMCSB layout-696, M2092_MessageAreaWidth=320, M532_MESSAGE_AREA_ROW_COUNT=4,
+#         G2088_C7_TextLineHeight=7, G2089_C8_InscriptionCharacterWidth=8,
+#         G2082_C5_CharacterPadding=5 (X_OFFSET = 8 - 5 = 3),
+#         G2087_C6_InscriptionCharacterWidth=6, G2083_C3=6 visible rows.
+add_executable(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe
+    probes/m11/firestaff_dm1_v1_dialog_choice_font_scale_fit_probe.c
+    src/audio/ambient_layer_m11.c)
+target_link_libraries(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m11 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_dm1_v1_dialog_choice_font_scale_fit_probe
+    COMMAND firestaff_dm1_v1_dialog_choice_font_scale_fit_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PROPERTIES
+    LABELS "tier2;m11;dm1;dialog;font;scale;ui-fit;accessibility;session-timer"
+)
 
 # DM1 V1 forced-pause dialog font-scale fit probe
 # (gap "In-game overlays + UI-fit coverage" — forced-pause branch).
@@ -3918,6 +4012,15 @@ endif()
         )
     endif()
 endforeach()
+
+# DM1 PC34 real-data inscription capture: every front-readable wall
+# TextString across all maps must match the original M648 glyph pixels.
+# ReDMCSB DUNGEON.C F0172/F0174 + F0168; DUNVIEW.C F0107:3592-3706.
+add_test(
+    NAME dm1_v1_all_inscription_real_data_capture_regression
+    COMMAND firestaff_dm1_v1_hoc_inscription_readability_runtime_probe
+        "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+)
 
 # DM1 V1 Hall-of-Champions probes recovered from local worktree triage.
 # The probe sources were already present on main; keep registration
@@ -6388,6 +6491,66 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_startup_audio_menu
     )
 
+    add_executable(test_dm2_v1_startup_music_queue
+        tests/test_dm2_v1_startup_music_queue.c
+    )
+    target_include_directories(test_dm2_v1_startup_music_queue PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_startup_music_queue PRIVATE firestaff_dm2)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_startup_music_queue PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_startup_music_queue
+        COMMAND test_dm2_v1_startup_music_queue
+    )
+
+    add_executable(test_dm2_v1_hmp_music_parser
+        tests/test_dm2_v1_hmp_music_parser.c
+    )
+    target_include_directories(test_dm2_v1_hmp_music_parser PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_hmp_music_parser PRIVATE firestaff_dm2)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_hmp_music_parser PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_hmp_music_parser
+        COMMAND test_dm2_v1_hmp_music_parser
+    )
+
+    add_executable(test_dm2_v1_midi_backend_capability
+        tests/test_dm2_v1_midi_backend_capability.c
+    )
+    target_include_directories(test_dm2_v1_midi_backend_capability PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_midi_backend_capability PRIVATE firestaff_dm2)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_midi_backend_capability PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_midi_backend_capability
+        COMMAND test_dm2_v1_midi_backend_capability
+    )
+
+    add_executable(firestaff_dm2_v1_startup_hmp_real_data_probe
+        probes/dm2/firestaff_dm2_v1_startup_hmp_real_data_probe.c
+    )
+    target_include_directories(firestaff_dm2_v1_startup_hmp_real_data_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_startup_hmp_real_data_probe PRIVATE firestaff_dm2)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_startup_hmp_real_data_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_startup_hmp_real_data_probe
+        COMMAND firestaff_dm2_v1_startup_hmp_real_data_probe
+    )
+
     add_executable(test_dm2_v1_m11_startup_profile_gate
         tests/test_dm2_v1_m11_startup_profile_gate.c
     )
@@ -6439,13 +6602,14 @@ if(BUILD_TESTING)
 
     add_executable(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe
         probes/dm2/firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe.c
-        src/dm2/dm2_v1_dungeon_loader.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
     )
+    target_link_libraries(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe
+        PRIVATE firestaff_dm2 firestaff_m10 m)
     firestaff_link_zlib(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe PRIVATE)
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe PRIVATE -Wall -Wextra -O2)
@@ -6976,6 +7140,26 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_creature_gdat_ai_table
     )
 
+    # DM2-GDAT-FB-08: optional canonical GRAPHICS.DAT proof for skproject's
+    # CREATURES[type] -> CREATURE_AI row indirection.
+    add_executable(firestaff_dm2_v1_creature_ai_real_data_probe
+        probes/dm2/firestaff_dm2_v1_creature_ai_real_data_probe.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+    )
+    target_include_directories(firestaff_dm2_v1_creature_ai_real_data_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_creature_ai_real_data_probe
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_creature_ai_real_data_probe
+            PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+
     # ── DM2 V1 Phase 5: Creature death/drop headless probe ──
     # Headless, data-free sibling of the CTest gate above; suitable for
     # the firestaff pool workers.
@@ -7375,6 +7559,26 @@ if(BUILD_TESTING)
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
+    add_executable(test_dm2_v1_weather_no_synthetic_overlay
+        tests/test_dm2_v1_weather_no_synthetic_overlay.c
+    )
+    target_include_directories(test_dm2_v1_weather_no_synthetic_overlay PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_weather_no_synthetic_overlay PRIVATE
+        firestaff_dm2 firestaff_m10 m
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_weather_no_synthetic_overlay PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME dm2_v1_weather_no_synthetic_overlay
+        COMMAND test_dm2_v1_weather_no_synthetic_overlay
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
     # ── DM2 V1 Phase 5: Combat headless probe (creature/combat parity) ──
     add_executable(firestaff_dm2_v1_combat_probe
         probes/firestaff_dm2_v1_combat_probe.c
@@ -7623,29 +7827,6 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm2_v2_hud_widget_real_slot_receipt_probe
     )
 
-    # Phase 3 widget bitmap follow-up: runtime hook probe. Verifies that
-    # the dm2_v2_hud_runtime_render_with_assets() entry point correctly
-    # consults the dm2_v2_hud_widget_assets gate per slot, that a REAL
-    # classification routes the runtime through the real-bitmap
-    # substitute path (anchor stamp + path-mode record), that the
-    # placeholder fallback path is byte-stable when no manifest is
-    # installed or when slots classify as PLACEHOLDER/MISSING/PARTIAL,
-    # and that the V1 framebuffer invariant is preserved when V2 is
-    # off. Companion to firestaff_dm2_v2_hud_widget_assets_probe
-    # (gate) and firestaff_dm2_v2_hud_runtime_probe (no-gate baseline).
-    add_executable(firestaff_dm2_v2_hud_widget_runtime_hook_probe
-        probes/firestaff_dm2_v2_hud_widget_runtime_hook_probe.c
-    )
-    target_link_libraries(firestaff_dm2_v2_hud_widget_runtime_hook_probe
-        PRIVATE firestaff_dm2_v2 firestaff_m10 m)
-    if(NOT MSVC)
-        target_compile_options(firestaff_dm2_v2_hud_widget_runtime_hook_probe PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME firestaff_dm2_v2_hud_widget_runtime_hook_probe
-        COMMAND firestaff_dm2_v2_hud_widget_runtime_hook_probe
-    )
-
     # Phase 3 widget bitmap follow-up: bounded bitmap blit probe.
     # Verifies the dm2_v2_hud_widget_bitmap_blit module reads the
     # synthetic 1x1 RGBA PNG fixtures from
@@ -7794,6 +7975,98 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_viewport_phase3_rendering
         COMMAND test_csb_v1_viewport_phase3_rendering
+    )
+
+    # Opt-in real-media regression. The test is neutral when no user-supplied
+    # CSB data path is present, and otherwise verifies the first four F0115
+    # native projectile families against GRAPHICS.DAT 454/455, 457/458,
+    # 460/461/462, and 463/464.
+    add_executable(test_csb_v1_f0115_first_projectile_real_asset_pc34_compat
+        tests/test_csb_v1_f0115_first_projectile_real_asset_pc34_compat.c
+        src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
+        src/shared/asset_loader_m11.c
+    )
+    target_include_directories(test_csb_v1_f0115_first_projectile_real_asset_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_f0115_first_projectile_real_asset_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0115_first_projectile_real_asset_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0115_first_projectile_real_asset_pc34_compat
+        COMMAND test_csb_v1_f0115_first_projectile_real_asset_pc34_compat
+    )
+    set_tests_properties(csb_v1_f0115_first_projectile_real_asset_pc34_compat PROPERTIES
+        LABELS "tier2;csb;viewport;f0115;real-asset;optional"
+    )
+
+    add_executable(test_csb_v1_f0115_first_object_real_asset_pc34_compat
+        tests/test_csb_v1_f0115_first_object_real_asset_pc34_compat.c
+        src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
+        src/shared/asset_loader_m11.c
+    )
+    target_include_directories(test_csb_v1_f0115_first_object_real_asset_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_f0115_first_object_real_asset_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0115_first_object_real_asset_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0115_first_object_real_asset_pc34_compat
+        COMMAND test_csb_v1_f0115_first_object_real_asset_pc34_compat
+    )
+    set_tests_properties(csb_v1_f0115_first_object_real_asset_pc34_compat PROPERTIES
+        LABELS "tier2;csb;viewport;f0115;real-asset;optional"
+    )
+
+    # The verified native CSB group-material fronts are Giant Scorpion, Swamp
+    # Slime, Giggler, Screamer, and Rockpile: G0219 offsets 0/4/6/19/21 +
+    # M618 map to 584/588/590/603/605. Types 3-5 use F0093 only with a
+    # complete current-map ordering and PC Graphic 558 receipt.
+    # The regression always covers palette/occlusion fail-closed behavior and
+    # additionally decodes entries 584, 590, 603, and 605 with user-provided media.
+    add_executable(test_csb_v1_f0115_first_group_real_asset_pc34_compat
+        tests/test_csb_v1_f0115_first_group_real_asset_pc34_compat.c
+        src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
+        src/shared/asset_loader_m11.c
+    )
+    target_include_directories(test_csb_v1_f0115_first_group_real_asset_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_f0115_first_group_real_asset_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0115_first_group_real_asset_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0115_first_group_real_asset_pc34_compat
+        COMMAND test_csb_v1_f0115_first_group_real_asset_pc34_compat
+    )
+    set_tests_properties(csb_v1_f0115_first_group_real_asset_pc34_compat PROPERTIES
+        LABELS "tier2;csb;viewport;f0115;real-asset;optional"
+    )
+
+    add_executable(test_csb_v1_f0093_replacement_palette_pc34_compat
+        tests/test_csb_v1_f0093_replacement_palette_pc34_compat.c
+        src/csb/csb_v1_f0093_replacement_palette_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0093_replacement_palette_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0093_replacement_palette_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0093_replacement_palette_pc34_compat
+        COMMAND test_csb_v1_f0093_replacement_palette_pc34_compat
+    )
+    set_tests_properties(csb_v1_f0093_replacement_palette_pc34_compat PROPERTIES
+        LABELS "tier2;csb;viewport;palette;data-free"
     )
 
     add_executable(test_csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat
@@ -8240,6 +8513,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_dsa_trigger_single_step_pc34_compat
         tests/test_csb_v1_dsa_trigger_single_step_pc34_compat.c
         src/csb/csb_v1_chaos_magic_pc34_compat.c
+        src/csb/csb_v1_csbwin_512_xor_pad_classify.c
     )
     target_include_directories(test_csb_v1_dsa_trigger_single_step_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -14416,6 +14690,20 @@ if(BUILD_TESTING)
         )
     endif()
 
+    # Game View probe (needs GRAPHICS.DAT via FIRESTAFF_DATA)
+    add_test(
+        NAME m11_game_view
+        COMMAND firestaff_m11_game_view_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(m11_game_view PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_inventory_damage_indicator_zone
+        COMMAND firestaff_dm1_v1_inventory_damage_indicator_zone_probe
+    )
+
     add_test(
         NAME m11_audio
         COMMAND firestaff_m11_audio_probe
@@ -15335,81 +15623,6 @@ if(BUILD_TESTING)
     )
     set_tests_properties(dm1_v1_original_save_classifier_probe PROPERTIES
         LABELS "tier2;dm1;save;interop;real_data;skip_safe"
-    )
-
-    add_executable(firestaff_dm1_v1_release_app_identity_diagnostic_probe
-        probes/dm1/firestaff_dm1_v1_release_app_identity_diagnostic_probe.c
-    )
-    target_link_libraries(firestaff_dm1_v1_release_app_identity_diagnostic_probe PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(firestaff_dm1_v1_release_app_identity_diagnostic_probe PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm1_v1_release_app_identity_diagnostic_probe
-        COMMAND firestaff_dm1_v1_release_app_identity_diagnostic_probe
-    )
-    set_tests_properties(dm1_v1_release_app_identity_diagnostic_probe PROPERTIES
-        LABELS "tier2;dm1;startup;hoc;capture;release_app"
-    )
-
-    add_executable(firestaff_dm1_v1_original_save_corpus_log_probe
-        probes/dm1/firestaff_dm1_v1_original_save_corpus_log_probe.c
-    )
-    target_link_libraries(firestaff_dm1_v1_original_save_corpus_log_probe PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(firestaff_dm1_v1_original_save_corpus_log_probe PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm1_v1_original_save_corpus_log_probe
-        COMMAND firestaff_dm1_v1_original_save_corpus_log_probe
-    )
-    set_tests_properties(dm1_v1_original_save_corpus_log_probe PROPERTIES
-        LABELS "tier2;dm1;startup;save;interop;probe"
-    )
-
-    add_executable(firestaff_dm1_v1_original_save_corpus_expectation_probe
-        probes/dm1/firestaff_dm1_v1_original_save_corpus_expectation_probe.c
-    )
-    target_link_libraries(firestaff_dm1_v1_original_save_corpus_expectation_probe PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(firestaff_dm1_v1_original_save_corpus_expectation_probe PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm1_v1_original_save_corpus_expectation_probe
-        COMMAND firestaff_dm1_v1_original_save_corpus_expectation_probe
-    )
-    set_tests_properties(dm1_v1_original_save_corpus_expectation_probe PROPERTIES
-        LABELS "tier2;dm1;startup;save;interop;probe"
-    )
-
-    add_executable(firestaff_dm1_v1_original_save_corpus_host_fields_probe
-        probes/dm1/firestaff_dm1_v1_original_save_corpus_host_fields_probe.c
-    )
-    target_link_libraries(firestaff_dm1_v1_original_save_corpus_host_fields_probe PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(firestaff_dm1_v1_original_save_corpus_host_fields_probe PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm1_v1_original_save_corpus_host_fields_probe
-        COMMAND firestaff_dm1_v1_original_save_corpus_host_fields_probe
-    )
-    set_tests_properties(dm1_v1_original_save_corpus_host_fields_probe PROPERTIES
-        LABELS "tier2;dm1;startup;save;interop;probe"
-    )
-
-    add_executable(firestaff_dm1_v1_release_app_packaged_route_probe
-        probes/dm1/firestaff_dm1_v1_release_app_packaged_route_probe.c
-    )
-    target_link_libraries(firestaff_dm1_v1_release_app_packaged_route_probe PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(firestaff_dm1_v1_release_app_packaged_route_probe PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm1_v1_release_app_packaged_route_probe
-        COMMAND firestaff_dm1_v1_release_app_packaged_route_probe
-    )
-    set_tests_properties(dm1_v1_release_app_packaged_route_probe PROPERTIES
-        LABELS "tier2;dm1;startup;hoc;capture;release_app"
     )
 
     # DM1 V1 Combat & Damage System source-lock gate
@@ -17901,6 +18114,7 @@ if(BUILD_TESTING)
     )
     add_executable(test_title_frontend_c001_fallback_gate_pc34_compat
         tests/test_title_frontend_c001_fallback_gate_pc34_compat.c
+        src/shared/asset_loader_m11.c
         src/dm1/dm1_v1_startup_sequence_pc34_compat.c
         src/dm1/dm1_v1_entrance_champion_select_pc34_compat.c
         src/frontend/entrance_frontend_pc34_compat.c
@@ -18335,6 +18549,28 @@ add_executable(test_nexus_v1_dgn_material_raster
     )
     set_tests_properties(nexus_v1_startup_menu_pc34_compat PROPERTIES
         LABELS "tier4;nexus;startup;save_load"
+    )
+
+    add_executable(test_nexus_v1_structure2_no_draw_receipt
+        tests/test_nexus_v1_structure2_no_draw_receipt.c
+    )
+    target_link_libraries(test_nexus_v1_structure2_no_draw_receipt PRIVATE
+        firestaff_nexus firestaff_m10
+    )
+    target_include_directories(test_nexus_v1_structure2_no_draw_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_structure2_no_draw_receipt PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_structure2_no_draw_receipt
+        COMMAND test_nexus_v1_structure2_no_draw_receipt
+    )
+    set_tests_properties(nexus_v1_structure2_no_draw_receipt PROPERTIES
+        LABELS "tier4;nexus;structure2;track1;no_draw"
     )
 
     add_executable(test_nexus_v1_startup_media_gate
@@ -20242,8 +20478,8 @@ set_tests_properties(nexus_v1_bpk_prs3_payload_evidence_probe PROPERTIES
 )
 
 # Nexus PRS3 original-loader-media evidence probe. This optional real-media
-# receipt MD5-locks DM.BIN and MENU.BPK, records executable-side PRS3 markers,
-# and proves only their bounded relationship to the archive. It does not
+# receipt MD5-locks DM.BIN, records executable-side PRS3 markers and SH-2
+# bootstrap/map boundaries, and proves no dispatcher route. It does not
 # decode, upload, or promote any surface.
 add_executable(firestaff_nexus_v1_prs3_loader_media_probe
     probes/nexus/firestaff_nexus_v1_prs3_loader_media_probe.c
@@ -20267,6 +20503,30 @@ add_test(
 )
 set_tests_properties(nexus_v1_prs3_loader_media_probe PROPERTIES
     LABELS "tier4;nexus;prs3;loader_media;skip_safe"
+)
+
+# Nexus FACE.BIN original-media receipt. The probe locks canonical FACE/PRS3
+# frame boundaries but intentionally proves no portrait decode or fallback.
+add_executable(firestaff_nexus_v1_face_media_probe
+    probes/nexus/firestaff_nexus_v1_face_media_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_face_media_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_face_media_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_face_media_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_face_media_probe
+    COMMAND firestaff_nexus_v1_face_media_probe
+)
+set_tests_properties(nexus_v1_face_media_probe PROPERTIES
+    LABELS "tier4;nexus;face;prs3;loader_media;skip_safe"
 )
 
 # Nexus V1 BPK/BPX surface-class + BPX3 directory-trailer probe
@@ -21595,6 +21855,25 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND firestaff_theron_v1_track02_bank_probe
     )
 
+    add_executable(test_theron_v1_track01_cdda_handoff
+        tests/test_theron_v1_track01_cdda_handoff.c
+    )
+    target_link_libraries(test_theron_v1_track01_cdda_handoff PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track01_cdda_handoff PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track01_cdda_handoff PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track01_cdda_handoff
+        COMMAND test_theron_v1_track01_cdda_handoff
+    )
+    set_tests_properties(theron_v1_track01_cdda_handoff PROPERTIES
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy")
+
     # ── Theron V1 Track 02 Descriptor Table Decoder Probe ─────────
     # Narrow semantic Track 02 decoder probe: regression-locks the
     # 9-word little-endian stride table shape (0x0020..0x2020, stride
@@ -21725,6 +22004,46 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_track02_descriptor_entry_semantic
         COMMAND firestaff_theron_v1_track02_descriptor_entry_semantic_probe
+    )
+
+    add_executable(firestaff_theron_v1_track02_graphics_format_probe
+        probes/theron/firestaff_theron_v1_track02_graphics_format_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_graphics_format_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_track02_graphics_format_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_track02_graphics_format_probe PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_graphics_format_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_graphics_format
+        COMMAND firestaff_theron_v1_track02_graphics_format_probe
+    )
+
+    add_executable(firestaff_theron_v1_track02_ipl_loader_probe
+        probes/theron/firestaff_theron_v1_track02_ipl_loader_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_ipl_loader_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_track02_ipl_loader_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_track02_ipl_loader_probe PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_ipl_loader_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_ipl_loader
+        COMMAND firestaff_theron_v1_track02_ipl_loader_probe
     )
     if(Python3_EXECUTABLE)
         add_test(

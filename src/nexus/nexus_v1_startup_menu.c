@@ -1638,6 +1638,8 @@ static void nexus_v1_startup_save_route_fill_from_action_receipt(
         return;
     }
     receipt->handled = 1;
+    receipt->action_receipt = *action_receipt;
+    receipt->action_receipt_valid = 1;
     receipt->action_kind = NEXUS_V1_STARTUP_ACTION_NONE;
     receipt->execution_kind = execution->kind;
     receipt->host_input_result = action_receipt->host_receipt.input_result;

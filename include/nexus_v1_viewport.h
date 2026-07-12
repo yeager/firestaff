@@ -18,6 +18,7 @@ typedef struct {
     int used_real_dgn_route;
     int blocked;
     int fallback_visuals_permitted;
+    int no_draw_structure2_source;
     int party_x;
     int party_y;
     int party_dir;
@@ -49,7 +50,8 @@ typedef enum {
     NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_HANDOFF = 2,
     NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_VIEWPORT_NOT_RENDERED = 3,
     NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_MATERIALS = 4,
-    NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_RASTER = 5
+    NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_RASTER = 5,
+    NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE2_SOURCE = 6
 } Nexus_V1_DgnViewportHostRouteStatus;
 
 typedef struct {
@@ -60,6 +62,7 @@ typedef struct {
     int can_present_runtime_dgn;
     int blocks_runtime_dgn;
     int fallback_visuals_permitted;
+    int no_draw_structure2_source;
     int level;
     int party_x;
     int party_y;

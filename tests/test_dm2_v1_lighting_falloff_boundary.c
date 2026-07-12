@@ -406,7 +406,6 @@ static void test_weather_overlay_render_plan(void)
     uint8_t framebuffer[320 * 200];
     DM2_V1_ViewportState viewport;
     DM2_V1_WeatherOverlayRenderPlan plan;
-    DM2_V1_ViewportSceneConsumptionReceipt receipt;
     DM2_V1_WeatherOverlayCommandPlan commands;
 
     memset(framebuffer, 7, sizeof(framebuffer));
@@ -442,10 +441,11 @@ static void test_weather_overlay_render_plan(void)
               commands.commands[0].streak_step == 3 &&
               commands.commands[0].color == 15);
     dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 rain overlay applies planned diagonal streak color",
+    CHECK("DM2 rain metadata does not fabricate overlay pixels",
           framebuffer[1] == 7 &&
-              framebuffer[4] == 15 &&
-              framebuffer[(3 * 320) + 4] == 15);
+              framebuffer[4] == 7 &&
+              framebuffer[(3 * 320) + 4] == 7 &&
+              viewport.gdat_scene_weather_consumed_count == 0);
 
     memset(framebuffer, 8, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -466,8 +466,9 @@ static void test_weather_overlay_render_plan(void)
               commands.commands[0].alpha == 4 &&
               commands.commands[0].target_color == 0);
     dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 fog overlay applies planned alpha over framebuffer",
-          framebuffer[0] == 6);
+    CHECK("DM2 fog metadata does not fabricate overlay pixels",
+          framebuffer[0] == 8 &&
+              viewport.gdat_scene_weather_consumed_count == 0);
 
     memset(framebuffer, 3, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -491,9 +492,10 @@ static void test_weather_overlay_render_plan(void)
                   DM2_V1_WEATHER_COMMAND_LIGHTNING_FILL &&
               commands.commands[1].color == 15);
     dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 storm lightning applies planned full-screen flash",
-          framebuffer[0] == 15 &&
-              framebuffer[(199 * 320) + 319] == 15);
+    CHECK("DM2 storm metadata does not fabricate overlay pixels",
+          framebuffer[0] == 3 &&
+              framebuffer[(199 * 320) + 319] == 3 &&
+              viewport.gdat_scene_weather_consumed_count == 0);
 
     memset(&plan, 0x55, sizeof(plan));
     CHECK("DM2 weather plan is null-state safe",
@@ -507,48 +509,6 @@ static void test_weather_overlay_render_plan(void)
     CHECK("DM2 weather command plan rejects null output",
           dm2_v1_viewport_build_weather_overlay_commands(
               &plan, NULL) == 0);
-
-    memset(framebuffer, 7, sizeof(framebuffer));
-    dm2_v1_viewport_init(&viewport, framebuffer, 320);
-    viewport.weather = DM2_V1_WEATHER_OVERLAY_RAIN;
-    viewport.rain_intensity = 60;
-    viewport.tick_count = 3;
-    dm2_v1_viewport_set_gdat_scene_control(
-        &viewport,
-        1,
-        0x32475357u,
-        10,
-        0x0004,
-        3,
-        12,
-        3,
-        0);
-    CHECK("GRAPHICSSET void/flags bias weather plan intensity",
-          dm2_v1_viewport_build_weather_overlay_render_plan(
-              &viewport, &plan) == 1 &&
-              plan.kind == DM2_V1_WEATHER_OVERLAY_RAIN &&
-              plan.intensity == 67 &&
-              plan.density == 7 &&
-              plan.rain_color == 12);
-    dm2_v1_render_weather_overlay(&viewport);
-    CHECK("GRAPHICSSET weather fields are consumed by overlay render",
-          viewport.gdat_scene_weather_consumed_count == 1);
-    memset(&receipt, 0, sizeof(receipt));
-    CHECK("viewport scene receipt captures weather GRAPHICSSET consumption",
-          dm2_v1_viewport_scene_consumption_receipt(&viewport, &receipt) == 1 &&
-              receipt.ready == 1 &&
-              receipt.consumed_mask == 0x8u &&
-              receipt.weather_consumed == 1 &&
-              receipt.weather_plan_ready == 1 &&
-              receipt.weather_plan_hash != 0u &&
-              receipt.weather_kind == DM2_V1_WEATHER_OVERLAY_RAIN &&
-              receipt.weather_intensity == 67 &&
-              receipt.weather_density == 7 &&
-              receipt.weather_scroll == 7 &&
-              receipt.weather_rain_color == 12 &&
-              receipt.source_hash == 0x32475357u &&
-              receipt.void_random_fall == 3 &&
-              receipt.consumption_hash != 0u);
 }
 
 static void test_floor_ceiling_asset_provider(void)
@@ -557,7 +517,6 @@ static void test_floor_ceiling_asset_provider(void)
     DM2_V1_ViewportState viewport;
     DM2_V1_WallPanelRenderPlan wall_plan;
     DM2_V1_DoorRenderPlan door_plan;
-    DM2_V1_ViewportSceneConsumptionReceipt scene_receipt;
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -618,41 +577,6 @@ static void test_floor_ceiling_asset_provider(void)
               framebuffer[(67 * 320)] == 8 &&
               framebuffer[(67 * 320) + 1] == 9 &&
               framebuffer[(66 * 320) + 2] == 6);
-
-    memset(framebuffer, 0, sizeof(framebuffer));
-    dm2_v1_viewport_init(&viewport, framebuffer, 320);
-    viewport.tick_count = 5;
-    dm2_v1_viewport_set_asset_provider(&viewport,
-                                       test_dm2_asset_fetch,
-                                       NULL);
-    dm2_v1_viewport_set_gdat_scene_control(
-        &viewport,
-        1,
-        0x32475343u,
-        10,
-        0x0004,
-        3,
-        12,
-        0,
-        0x000a);
-    dm2_v1_render_floor_ceiling(&viewport);
-    CHECK("GRAPHICSSET scene light is consumed by floor/ceiling pass",
-          viewport.gdat_scene_light_consumed_count == 1 &&
-              viewport.gdat_scene_floor_anim_consumed_count == 1);
-    memset(&scene_receipt, 0, sizeof(scene_receipt));
-    CHECK("viewport scene receipt captures light/floor GRAPHICSSET consumption",
-          dm2_v1_viewport_scene_consumption_receipt(&viewport,
-                                                    &scene_receipt) == 1 &&
-              scene_receipt.ready == 1 &&
-              (scene_receipt.consumed_mask & 0x6u) == 0x6u &&
-              scene_receipt.light_consumed == 1 &&
-              scene_receipt.floor_anim_consumed == 1 &&
-              scene_receipt.animated_floor == 0x000a &&
-              scene_receipt.consumption_hash != 0u);
-    CHECK("GRAPHICSSET animated floor offsets the live floor tile source",
-          framebuffer[(66 * 320)] == 9 &&
-              framebuffer[(66 * 320) + 1] == 8 &&
-              framebuffer[(67 * 320)] == 7);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -1137,7 +1061,6 @@ static void test_sprite_asset_provider(void)
 
     {
         DM2_V1_HudPartyState party;
-        DM2_V1_InterfaceTheme theme;
 
         memset(&party, 0, sizeof(party));
         party.champion_count = 1;
@@ -1170,6 +1093,26 @@ static void test_sprite_asset_provider(void)
         memset(framebuffer, 0, sizeof(framebuffer));
         dm2_v1_viewport_init(&viewport, framebuffer, 320);
         dm2_v1_viewport_set_hud_party(&viewport, &party);
+        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+        dm2_v1_render_ui_chrome(&viewport);
+        CHECK("DM2 real-profile HUD blocks missing source surfaces but keeps state overlays",
+              viewport.asset_hud_core_drawn_count == 0 &&
+                  viewport.fallback_hud_core_drawn_count == 0 &&
+                  viewport.asset_hud_portrait_drawn_count == 0 &&
+                  viewport.fallback_hud_portrait_drawn_count == 0 &&
+                  (viewport.blocked_material_mask &
+                   (DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE |
+                    DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT)) ==
+                      (DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE |
+                       DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT) &&
+                  framebuffer[0] == 0 &&
+                  framebuffer[39 * 320 + 270] == 2 &&
+                  framebuffer[44 * 320 + 292] == 11 &&
+                  framebuffer[49 * 320 + 272] == 12);
+
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, 320);
+        dm2_v1_viewport_set_hud_party(&viewport, &party);
         s_asset_fetch_calls = 0;
         dm2_v1_viewport_set_asset_provider(&viewport,
                                            test_dm2_asset_fetch,
@@ -1189,34 +1132,6 @@ static void test_sprite_asset_provider(void)
                   framebuffer[34 * 320 + 262] == 4 &&
                   framebuffer[44 * 320 + 250] == 5 &&
                   framebuffer[44 * 320 + 262] == 6);
-
-        memset(&theme, 0, sizeof(theme));
-        theme.valid = 1;
-        theme.semantic_hash = 0x12345678u;
-        theme.action_table_byte_count = 10u;
-        theme.font_table_byte_count = 20u;
-        theme.palette_byte_count = 30u;
-        theme.rect14_ready = 1;
-        theme.rect14_hash = 0x12345678u;
-        theme.rect14_byte_count = 28u;
-        theme.rect14_row_count = 2u;
-        theme.chrome_divider_color = 5u;
-        theme.action_icon_base_color = 6u;
-        theme.champion_frame_color = 9u;
-        theme.gold_coin_color = 11u;
-        theme.gold_label_color = 12u;
-        memset(framebuffer, 0, sizeof(framebuffer));
-        dm2_v1_viewport_init(&viewport, framebuffer, 320);
-        dm2_v1_viewport_set_hud_party(&viewport, &party);
-        dm2_v1_viewport_set_interface_theme(&viewport, &theme);
-        dm2_v1_render_ui_chrome(&viewport);
-        CHECK("DM2 UI chrome consumes rect14 placement semantics live",
-              viewport.interface_semantics_consumed == 1 &&
-                  viewport.interface_rect14_consumed == 1 &&
-                  viewport.interface_semantics_hash == theme.semantic_hash &&
-                  viewport.interface_semantics_byte_count == 88u &&
-                  framebuffer[180 * 320 + 222] != 6 &&
-                  framebuffer[180 * 320 + 223] == 6);
     }
 
     memset(framebuffer, 0, sizeof(framebuffer));

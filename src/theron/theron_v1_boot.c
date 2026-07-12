@@ -52,56 +52,6 @@
 #define TRV_PATH_SEP '/'
 #endif
 
-static uint32_t theron_v1_boot_capture_evidence_hash(
-    uint32_t object_route_hash,
-    uint32_t level_route_hash,
-    unsigned int capture_mask,
-    unsigned int object_blocked_mask,
-    unsigned int level_blocked_mask) {
-
-    uint32_t hash = 2166136261u;
-    hash ^= object_route_hash;
-    hash *= 16777619u;
-    hash ^= level_route_hash;
-    hash *= 16777619u;
-    hash ^= capture_mask;
-    hash *= 16777619u;
-    hash ^= object_blocked_mask;
-    hash *= 16777619u;
-    hash ^= level_blocked_mask;
-    hash *= 16777619u;
-    return hash ? hash : 2166136261u;
-}
-
-static int theron_v1_boot_mac_app_capture_candidate_ready(
-    int all_dungeon_ready,
-    int all_dungeon_count,
-    unsigned int all_dungeon_mask,
-    int exact_level_ready,
-    int exact_object_ready,
-    int bitmap_routes_complete,
-    int no_fallback_runtime_ready,
-    int object_table_no_fallback_ready,
-    int nonstartup_level_no_fallback_ready,
-    uint32_t object_route_hash,
-    uint32_t level_route_hash) {
-
-    return all_dungeon_ready &&
-                   all_dungeon_count == THERON_DUNGEON_COUNT &&
-                   all_dungeon_mask ==
-                       ((1u << THERON_DUNGEON_COUNT) - 1u) &&
-                   exact_level_ready &&
-                   exact_object_ready &&
-                   bitmap_routes_complete &&
-                   no_fallback_runtime_ready &&
-                   object_table_no_fallback_ready &&
-                   nonstartup_level_no_fallback_ready &&
-                   object_route_hash != 0u &&
-                   level_route_hash != 0u
-               ? 1
-               : 0;
-}
-
 /* ── PC Engine file candidates ───────────────────────────────────── */
 
 /* Theron's Quest data files — Phase 0 locked (2026-05-27).
@@ -754,6 +704,10 @@ int theron_v1_boot_prepare_startup_profile(
         result = THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED;
         goto fail;
     }
+    assets->assets_verified = profile->assets_verified ? 1 : 0;
+    if (profile->assets_verified) {
+        tr_asset_block_synthetic_rendering_for_verified_media(assets);
+    }
 
     if (out_result) {
         *out_result = result;
@@ -765,6 +719,52 @@ fail:
         *out_result = result;
     }
     return 0;
+}
+
+int theron_v1_boot_validate_track02_loader_receipt(
+    const Theron_Track02StartupLoaderReceipt *receipt,
+    const char *verified_md5) {
+    char payload[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char md5[33];
+    FILE *file;
+    unsigned char *bytes;
+    size_t required;
+    Theron_Track02IplLoaderReceipt observed;
+
+    if (!receipt || !receipt->valid || !receipt->cue_backed ||
+        !receipt->track02_md5_verified || !receipt->mode1_2352 ||
+        !receipt->no_synthetic_cache || !verified_md5 ||
+        strcmp(receipt->track02_md5, verified_md5) != 0 ||
+        receipt->cue_path[0] == '\0' || receipt->track02_path[0] == '\0') return 0;
+    if (theron_v1_track02_resolve_media_path(receipt->cue_path, payload) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        strcmp(payload, receipt->track02_path) != 0 ||
+        !m12_file_md5_hex(payload, md5) || strcmp(md5, verified_md5) != 0) return 0;
+    required = ((size_t)THERON_TRACK02_IPL_STAGE2_RECORD +
+                (size_t)THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT) *
+               THERON_TRACK02_RAW_SECTOR_BYTES;
+    file = fopen(payload, "rb");
+    if (!file) return 0;
+    bytes = (unsigned char*)malloc(required);
+    if (!bytes || fread(bytes, 1u, required, file) != required) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    memset(&observed, 0, sizeof(observed));
+    if (theron_v1_track02_find_ipl_loader(bytes, required, verified_md5,
+                                           &observed) != THERON_TRACK02_SIGNAL_OK ||
+        !observed.valid ||
+        observed.executable_user_data_hash != receipt->ipl_loader.executable_user_data_hash ||
+        observed.stage2_user_data_hash != receipt->ipl_loader.stage2_user_data_hash ||
+        observed.stage2_record != receipt->ipl_loader.stage2_record ||
+        observed.stage2_sector_count != receipt->ipl_loader.stage2_sector_count) {
+        free(bytes);
+        return 0;
+    }
+    free(bytes);
+    return 1;
 }
 
 const char *theron_v1_boot_startup_prepare_result_name(
@@ -1433,30 +1433,6 @@ int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
     out_view_model->object_table_route_hash =
         effective_snapshot.object_table_route_hash;
     out_view_model->level_route_hash = effective_snapshot.level_route_hash;
-    out_view_model->mac_app_capture_candidate_ready =
-        theron_v1_boot_mac_app_capture_candidate_ready(
-            out_view_model->all_dungeon_real_data_capture_ready,
-            out_view_model->all_dungeon_capture_count,
-            out_view_model->all_dungeon_capture_mask,
-            out_view_model->exact_level_semantics_ready,
-            out_view_model->exact_object_semantics_ready,
-            out_view_model->track02_bitmap_routes_complete,
-            out_view_model->track02_no_fallback_runtime_route_ready,
-            out_view_model->object_table_no_fallback_ready,
-            out_view_model->nonstartup_level_no_fallback_ready,
-            out_view_model->object_table_route_hash,
-            out_view_model->level_route_hash);
-    out_view_model->mac_app_capture_requires_external_screenshot =
-        out_view_model->mac_app_capture_candidate_ready ? 1 : 0;
-    out_view_model->mac_app_capture_evidence_hash =
-        out_view_model->mac_app_capture_candidate_ready
-            ? theron_v1_boot_capture_evidence_hash(
-                  out_view_model->object_table_route_hash,
-                  out_view_model->level_route_hash,
-                  out_view_model->all_dungeon_capture_mask,
-                  out_view_model->object_table_blocked_anchor_mask,
-                  out_view_model->nonstartup_level_blocked_anchor_mask)
-            : 0u;
     if (out_view_model->runtime_level_source ==
             THERON_V1_STARTUP_RUNTIME_LEVEL_NONE &&
         effective_snapshot.world) {
@@ -1671,6 +1647,16 @@ void theron_v1_boot_startup_render_route_receipt_init(
     receipt->status = "NO RENDER ROUTE";
 }
 
+static int theron_v1_boot_startup_has_track02_not_bound_block(
+    const Theron_V1_BootStartupViewModel *view_model) {
+
+    return view_model && view_model->runtime_fallback_visuals_blocked &&
+           view_model->runtime_level_source ==
+               THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
+           view_model->object_table_no_fallback_ready &&
+           view_model->object_table_blocked_anchor_mask != 0u;
+}
+
 int theron_v1_boot_startup_render_route_receipt_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     Theron_V1_BootStartupRenderRouteReceipt *out_receipt)
@@ -1731,15 +1717,13 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
     out_receipt->object_table_route_hash =
         view_model->object_table_route_hash;
     out_receipt->level_route_hash = view_model->level_route_hash;
-    out_receipt->mac_app_capture_candidate_ready =
-        view_model->mac_app_capture_candidate_ready;
-    out_receipt->mac_app_capture_requires_external_screenshot =
-        view_model->mac_app_capture_requires_external_screenshot;
-    out_receipt->mac_app_capture_evidence_hash =
-        view_model->mac_app_capture_evidence_hash;
     out_receipt->startup_menu_render_allowed =
-        view_model->render_plan_valid ? 1 : 0;
+        view_model->render_plan_valid &&
+                !theron_v1_boot_startup_has_track02_not_bound_block(view_model)
+            ? 1
+            : 0;
     out_receipt->track02_title_menu_ready =
+        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
         view_model->startup_media_state_valid &&
                 view_model->startup_media_state_receipt.startup_media_ready
             ? 1
@@ -1765,6 +1749,7 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
         out_receipt->runtime_level_render_allowed &&
         out_receipt->hud_ready ? 1 : 0;
     out_receipt->title_menu_runtime_handoff_ready =
+        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
         out_receipt->track02_title_menu_ready &&
         out_receipt->runtime_readiness_ready ? 1 : 0;
     out_receipt->save_resume_claim = view_model->resume_claim;
@@ -1773,7 +1758,10 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
     out_receipt->save_resume_srm_import_status =
         view_model->srm_import_status;
     out_receipt->save_resume_start_ready =
-        view_model->resume_claim != THERON_V1_STARTUP_RESUME_NONE ? 1 : 0;
+        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
+                view_model->resume_claim != THERON_V1_STARTUP_RESUME_NONE
+            ? 1
+            : 0;
     out_receipt->save_resume_runtime_handoff_ready =
         out_receipt->save_resume_start_ready &&
         out_receipt->runtime_readiness_ready ? 1 : 0;
@@ -1979,13 +1967,6 @@ int theron_v1_boot_startup_host_view_receipt_from_view_model(
             out_receipt->render_route.object_table_route_hash;
         out_receipt->level_route_hash =
             out_receipt->render_route.level_route_hash;
-        out_receipt->mac_app_capture_candidate_ready =
-            out_receipt->render_route.mac_app_capture_candidate_ready;
-        out_receipt->mac_app_capture_requires_external_screenshot =
-            out_receipt->render_route
-                .mac_app_capture_requires_external_screenshot;
-        out_receipt->mac_app_capture_evidence_hash =
-            out_receipt->render_route.mac_app_capture_evidence_hash;
         out_receipt->hud_ready = out_receipt->render_route.hud_ready;
         out_receipt->status_scope = out_receipt->render_route.status_scope;
         out_receipt->status = out_receipt->render_route.status;
@@ -3563,14 +3544,21 @@ int theron_v1_boot_startup_full_start_receipt_from_view_model(
     out_receipt->view_model_valid = 1;
     out_receipt->view_model = *view_model;
     out_receipt->stage_menu_ready =
-        view_model->startup_phase != THERON_STARTUP_PHASE_TITLE ? 1 : 0;
+        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
+                view_model->startup_phase != THERON_STARTUP_PHASE_TITLE
+            ? 1
+            : 0;
     out_receipt->soul_room_menu_ready =
-        view_model->startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
-                view_model->startup_phase == THERON_STARTUP_PHASE_READY
+        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
+                (view_model->startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
+                 view_model->startup_phase == THERON_STARTUP_PHASE_READY)
             ? 1
             : 0;
     out_receipt->forcefield_menu_ready =
-        view_model->startup_phase == THERON_STARTUP_PHASE_READY ? 1 : 0;
+        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
+                view_model->startup_phase == THERON_STARTUP_PHASE_READY
+            ? 1
+            : 0;
 
     if (theron_v1_boot_startup_host_view_receipt_from_view_model(
             view_model,
@@ -3964,6 +3952,15 @@ int theron_v1_boot_startup_execute_input_from_full_start_receipt(
         }
         return 0;
     }
+    if (theron_v1_boot_startup_has_track02_not_bound_block(
+            &receipt->view_model)) {
+        out_receipt->result = THERON_STARTUP_ERR_NOT_READY;
+        out_receipt->host_receipt.input_result =
+            THERON_STARTUP_INPUT_RESULT_REDRAW;
+        out_receipt->host_receipt.status_scope = "TRACK02";
+        out_receipt->host_receipt.status = "TRACK02 NOT_BOUND BLOCKED";
+        return 0;
+    }
     return theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
         &receipt->view_model,
         input,
@@ -3987,6 +3984,15 @@ int theron_v1_boot_startup_execute_pointer_from_full_start_receipt(
             out_receipt->host_receipt.status_scope = "STARTUP";
             out_receipt->host_receipt.status = "FULL START RECEIPT MISSING";
         }
+        return 0;
+    }
+    if (theron_v1_boot_startup_has_track02_not_bound_block(
+            &receipt->view_model)) {
+        out_receipt->result = THERON_STARTUP_ERR_NOT_READY;
+        out_receipt->host_receipt.input_result =
+            THERON_STARTUP_INPUT_RESULT_REDRAW;
+        out_receipt->host_receipt.status_scope = "TRACK02";
+        out_receipt->host_receipt.status = "TRACK02 NOT_BOUND BLOCKED";
         return 0;
     }
     return theron_v1_boot_startup_execute_pointer_from_view_model_with_host_receipt(
@@ -5073,6 +5079,9 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
         framebuffer_width <= 0 || framebuffer_height <= 0) {
         return 0;
     }
+    if (!tr_asset_generated_v1_rendering_allowed(assets)) {
+        return 0;
+    }
     /* THQUEST.ASM T560/T600/T800 runtime owns dungeon draw, UI draw, and
      * optional V2 HUD overlay before M11 presents the indexed viewport. */
     theron_vp_render_dungeon(viewport, world);
@@ -5400,6 +5409,13 @@ int theron_v1_boot_startup_launch_alloc(
         out_launch->assets ? out_launch->assets->hucard_rom_size : 0u,
         out_launch->profile->graphics_md5,
         &out_launch->startup_media_state_receipt);
+    /* CUE Track 01 provenance is an audio-only handoff.  Do not couple it
+     * to the Track 02 bitmap receipt: an unbound graphics route must not
+     * suppress original narration, and no unavailable path gets a fallback. */
+    theron_v1_track01_cdda_handoff_from_verified_media(
+        verified_path && verified_path[0] ? verified_path : out_launch->profile->graphics_path,
+        out_launch->profile->graphics_md5,
+        &out_launch->track01_cdda_handoff);
     theron_v1_boot_startup_launch_build_host_receipt(out_launch);
     return 1;
 }
@@ -5425,6 +5441,7 @@ int theron_v1_boot_startup_launch_detach_runtime(
     out_receipt->save_resume_state_receipt = launch->save_resume_state_receipt;
     out_receipt->startup_media_state_receipt =
         launch->startup_media_state_receipt;
+    out_receipt->track01_cdda_handoff = launch->track01_cdda_handoff;
     out_receipt->launch_host_receipt = launch->launch_host_receipt;
     snprintf(out_receipt->boot_asset_md5,
              sizeof(out_receipt->boot_asset_md5),

@@ -57,6 +57,9 @@
  *   ReDMCSB layout-696 C113..C116 champion-icon zone IDs.
  */
 #include "m11_game_view.h"
+#include "dm1_v1_champion_panel_hud_pc34_compat.h"
+#include "dm1_v1_champion_status_layout_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -172,6 +175,118 @@ static int expect_int(const char* label, int got, int want) {
     }
     printf("PASS %s got=%d\n", label, got);
     return 1;
+}
+
+static int probe_dm1_status_rect_xywh(const DM1_V1_ChampionStatusRectPc34* rect,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    if (!rect) return 0;
+    if (outX) *outX = rect->x;
+    if (outY) *outY = rect->y;
+    if (outW) *outW = rect->w;
+    if (outH) *outH = rect->h;
+    return 1;
+}
+
+static int probe_dm1_layout_rect_xywh(DM1_V1_LayoutZoneRectPc34 rect,
+                                      int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    if (rect.w <= 0 || rect.h <= 0) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return 1;
+}
+
+static int M11_GameView_GetV1StatusBoxZone(int slot,
+                                           int* outX,
+                                           int* outY,
+                                           int* outW,
+                                           int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_box_rect_pc34(slot, &rect)) return 0;
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1StatusNameTextZone(int slot,
+                                                int* outX,
+                                                int* outY,
+                                                int* outW,
+                                                int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_name_text_rect_pc34(slot, &rect)) return 0;
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* game,
+                                             int slot) {
+    const struct ChampionState_Compat* champ;
+    if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
+        slot >= game->world.party.championCount) {
+        return -1;
+    }
+    champ = &game->world.party.champions[slot];
+    return dm1_v1_champion_status_name_color_pc34(
+        champ->present,
+        champ->hp.current,
+        slot == game->world.party.activeChampionIndex);
+}
+
+static int M11_GameView_GetV1StatusBarZone(int slot,
+                                           int stat,
+                                           int* outX,
+                                           int* outY,
+                                           int* outW,
+                                           int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_bar_rect_pc34(slot, stat, &rect)) return 0;
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1ChampionIconZone(int slot,
+                                              int* outX,
+                                              int* outY,
+                                              int* outW,
+                                              int* outH) {
+    DM1_V1_LayoutZoneRectPc34 rect;
+    if (!dm1_v1_champion_icon_rect_pc34(slot, &rect)) return 0;
+    return probe_dm1_layout_rect_xywh(rect, outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1StatusHandSlotBoxZone(int slot,
+                                                   int hand,
+                                                   int* outX,
+                                                   int* outY,
+                                                   int* outW,
+                                                   int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_hand_slot_box_rect_pc34(slot, hand, &rect)) {
+        return 0;
+    }
+    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
+}
+
+static int M11_GameView_GetV1StatusHandSlotGraphic(
+    const M11_GameViewState* game,
+    int slot,
+    int hand) {
+    const struct ChampionState_Compat* champ;
+    if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
+        hand < 0 || hand > 1 ||
+        slot >= game->world.party.championCount) {
+        return 0;
+    }
+    champ = &game->world.party.champions[slot];
+    if (!champ->present || champ->hp.current == 0) return 0;
+    return dm1_v1_champion_status_hand_slot_graphic_pc34(
+        hand,
+        (uint16_t)champ->wounds,
+        hand == 1 && game->actingChampionOrdinal == (unsigned int)(slot + 1));
 }
 
 static void seed_champion(struct ChampionState_Compat* champ,
@@ -457,6 +572,7 @@ static int run_terminal_pair(M11_GameViewState* game,
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
+    M12_StartupMenuInitOptions menuOptions;
     M11_GameViewState game;
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
     int ok = 1;
@@ -467,7 +583,12 @@ int main(int argc, char** argv) {
     }
     dataDir = argv[1];
 
-    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
+    /* The gallery is unrelated to the real-media launch/HUD path and can
+     * traverse a large user screenshot directory before this probe reaches
+     * the PC 3.4 asset scanner. */
+    memset(&menuOptions, 0, sizeof(menuOptions));
+    menuOptions.skipScreenshotGalleryScan = 1;
+    M12_StartupMenu_InitWithOptions(&menu, dataDir, NULL, &menuOptions);
     M11_GameView_Init(&game);
     if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
         fprintf(stderr,

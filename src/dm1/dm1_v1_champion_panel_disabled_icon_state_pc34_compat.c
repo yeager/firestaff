@@ -173,10 +173,11 @@ int dm1_v1_champion_panel_action_icon_map_palette_color_pc34(
     /*
      * ReDMCSB ACTIDRAW.C F0386 applies the action-area palette changes
      * before blitting extracted object icons into the C093..C096 cells:
-     * dark gray maps to C04_COLOR_CYAN for the action-hand icon surface.
+     * G0498[12] maps C12_COLOR_DARKEST_GRAY to C04_COLOR_CYAN for the
+     * action-hand icon surface.
      */
     if (apply_action_palette &&
-        (color_index & 0x0F) == DM1_V1_ACTION_AREA_DARK_GRAY_PC34) {
+        (color_index & 0x0F) == 12) {
         return DM1_V1_ACTION_AREA_CYAN_PC34;
     }
     return color_index;

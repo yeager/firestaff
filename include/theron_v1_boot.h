@@ -228,6 +228,9 @@ typedef struct Theron_V1_BootStartupLaunch {
     Theron_StartupStateReceipt initial_state_receipt;
     Theron_StartupStateReceipt save_resume_state_receipt;
     Theron_StartupMediaStateReceipt startup_media_state_receipt;
+    /* Original Track 01 CD-DA handoff.  This remains available even when
+     * Track 02 startup graphics have no bound route. */
+    Theron_Track01CddaHandoff track01_cdda_handoff;
     Theron_StartupHostReceipt launch_host_receipt;
     Theron_V1BootStartupPrepareResult prepare_result;
 } Theron_V1_BootStartupLaunch;
@@ -240,6 +243,7 @@ typedef struct Theron_V1_BootStartupRuntimeReceipt {
     Theron_StartupStateReceipt initial_state_receipt;
     Theron_StartupStateReceipt save_resume_state_receipt;
     Theron_StartupMediaStateReceipt startup_media_state_receipt;
+    Theron_Track01CddaHandoff track01_cdda_handoff;
     Theron_StartupHostReceipt launch_host_receipt;
     char boot_asset_md5[33];
     char title[64];
@@ -356,9 +360,6 @@ typedef struct Theron_V1_BootStartupViewModel {
     int startup_level_blocked_anchor_count;
     uint32_t object_table_route_hash;
     uint32_t level_route_hash;
-    int mac_app_capture_candidate_ready;
-    int mac_app_capture_requires_external_screenshot;
-    uint32_t mac_app_capture_evidence_hash;
     int continue_focus;
     int resume_claim;
     int tqsv_slot;
@@ -414,9 +415,6 @@ typedef struct Theron_V1_BootStartupRenderRouteReceipt {
     int startup_level_blocked_anchor_count;
     uint32_t object_table_route_hash;
     uint32_t level_route_hash;
-    int mac_app_capture_candidate_ready;
-    int mac_app_capture_requires_external_screenshot;
-    uint32_t mac_app_capture_evidence_hash;
     const char *status_scope;
     const char *status;
 } Theron_V1_BootStartupRenderRouteReceipt;
@@ -472,9 +470,6 @@ typedef struct Theron_V1_BootStartupHostViewReceipt {
     int startup_level_blocked_anchor_count;
     uint32_t object_table_route_hash;
     uint32_t level_route_hash;
-    int mac_app_capture_candidate_ready;
-    int mac_app_capture_requires_external_screenshot;
-    uint32_t mac_app_capture_evidence_hash;
     int hud_ready;
     int state_receipt_valid;
     Theron_StartupStateReceipt state_receipt;
@@ -853,6 +848,12 @@ int theron_v1_boot_prepare_startup_profile(
     Theron_V1StartupSaveResume *out_save_resume,
     int *out_save_resume_ready,
     Theron_V1BootStartupPrepareResult *out_result);
+/* Revalidates a scanner-issued strict CUE receipt against the mounted
+ * payload. This is the IPL/stage-two provenance gate and never writes a
+ * cache payload. */
+int theron_v1_boot_validate_track02_loader_receipt(
+    const Theron_Track02StartupLoaderReceipt *receipt,
+    const char *verified_md5);
 const char *theron_v1_boot_startup_prepare_result_name(
     Theron_V1BootStartupPrepareResult result);
 int theron_v1_boot_startup_launch_alloc(

@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_DM2_V1_VIEWPORT_RENDERER_H
 #define FIRESTAFF_DM2_V1_VIEWPORT_RENDERER_H
 #include <stdint.h>
+#include "dm2_v1_dungeon_loader.h"
 
 /* ══════════════════════════════════════════════════════════════════════
  * DM2 V1 Viewport Renderer — Skullkeep rendering pipeline
@@ -112,6 +113,16 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE (-0xC0000)
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FRONT 0x00
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_D1C 0x00
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING 0x01u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL          0x02u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR          0x04u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE      0x08u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM          0x10u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_POSSESSION    0x20u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CARRIED_ITEM  0x40u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_PROJECTILE    0x80u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE      0x100u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT  0x200u
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_D2C 0x01
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT 8
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_OPENING_SHIFT 4
@@ -294,27 +305,6 @@ typedef struct {
     uint8_t fill_color;
     int gdat_index;
 } DM2_V1_HudIconRender;
-
-typedef struct {
-    int valid;
-    uint32_t semantic_hash;
-    uint32_t action_table_byte_count;
-    uint32_t font_table_byte_count;
-    uint32_t palette_byte_count;
-    int rect14_ready;
-    uint32_t rect14_hash;
-    uint32_t rect14_byte_count;
-    uint32_t rect14_row_count;
-    uint8_t chrome_divider_color;
-    uint8_t gold_coin_color;
-    uint8_t gold_label_color;
-    uint8_t champion_frame_color;
-    uint8_t champion_name_color;
-    uint8_t action_icon_base_color;
-    uint8_t hp_fill_color;
-    uint8_t stamina_fill_color;
-    uint8_t mana_fill_color;
-} DM2_V1_InterfaceTheme;
 
 typedef struct {
     DM2_V1_ViewportRect frame_rect;
@@ -720,6 +710,8 @@ typedef struct {
 
     /* Outdoor state */
     int is_outdoor;
+    DM2_V1_G1FirstMapRuntimeReceipt g1_first_map_runtime;
+    DM2_V1_G1TeleporterTransitionReceipt g1_map0_teleporter_transition;
     float time_of_day;         /* 0.0–1.0 */
 
     /* Rendering state */
@@ -729,6 +721,13 @@ typedef struct {
 
     DM2_V1_ViewportAssetFetch asset_fetch;
     void *asset_user;
+    /* A boot-owned, hash-verified GDAT provider must never be replaced by
+     * aggregate paint.  skproject SKWIN/SkWinCore.cpp (DRAW_MAP_CHIP) resolves
+     * GRAPHICSSET/WALL_GFX imagery before its blit; a failed decode is a
+     * blocked source-material frame, not a new Firestaff wall or plane. */
+    int source_materials_required;
+    int blocked_material_draw_count;
+    uint32_t blocked_material_mask;
     int asset_floor_ceiling_drawn_count;
     int fallback_floor_ceiling_drawn_count;
     int asset_outdoor_sky_drawn_count;
@@ -836,46 +835,18 @@ typedef struct {
     uint32_t last_hud_core_pixel_count;
     int asset_hud_portrait_drawn_count;
     int fallback_hud_portrait_drawn_count;
-    DM2_V1_InterfaceTheme interface_theme;
-    int interface_theme_valid;
-    int interface_semantics_consumed;
-    uint32_t interface_semantics_hash;
-    uint32_t interface_semantics_byte_count;
-    int interface_rect14_consumed;
 } DM2_V1_ViewportState;
-
-typedef struct {
-    int ready;
-    uint32_t consumed_mask;
-    uint32_t consumption_hash;
-    uint32_t source_hash;
-    uint16_t scene_colorkey;
-    uint16_t scene_flags;
-    uint16_t ambient_light;
-    uint16_t highest_light_level;
-    uint16_t void_random_fall;
-    uint16_t animated_floor;
-    int scene_control_consumed;
-    int light_consumed;
-    int floor_anim_consumed;
-    int weather_consumed;
-    int weather_plan_ready;
-    uint32_t weather_plan_hash;
-    int weather_kind;
-    int weather_intensity;
-    int weather_density;
-    int weather_scroll;
-    int weather_alpha;
-    int weather_lightning_flash;
-    uint8_t weather_rain_color;
-    uint8_t weather_fog_target_color;
-    uint8_t weather_lightning_color;
-} DM2_V1_ViewportSceneConsumptionReceipt;
 
 /* ── Initialization ────────────────────────────────────────────── */
 void dm2_v1_viewport_init(DM2_V1_ViewportState *s, uint8_t *framebuffer, int stride);
 void dm2_v1_viewport_set_party(DM2_V1_ViewportState *s, int dir, int x, int y);
 void dm2_v1_viewport_set_outdoor(DM2_V1_ViewportState *s, int is_outdoor);
+void dm2_v1_viewport_set_g1_first_map_runtime(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_G1FirstMapRuntimeReceipt *receipt);
+void dm2_v1_viewport_set_g1_map0_teleporter_transition(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_G1TeleporterTransitionReceipt *receipt);
 void dm2_v1_viewport_set_level(DM2_V1_ViewportState *s, int level);
 void dm2_v1_viewport_set_weather(DM2_V1_ViewportState *s, int weather, int rain_intensity);
 void dm2_v1_viewport_set_time(DM2_V1_ViewportState *s, float time_of_day);
@@ -884,6 +855,8 @@ void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
 void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
                                          DM2_V1_ViewportAssetFetch fetch,
                                          void *user);
+void dm2_v1_viewport_set_source_materials_required(
+    DM2_V1_ViewportState *s, int required);
 void dm2_v1_viewport_set_gdat_scene_control(
     DM2_V1_ViewportState *s,
     int ready,

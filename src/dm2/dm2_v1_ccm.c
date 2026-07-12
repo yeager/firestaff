@@ -8,13 +8,14 @@
  * the result drives the next state transition.
  *
  * This module implements a representative subset of CCM opcodes:
- *   28 opcodes (out of skproject's full ~200) are wired up:
+ *   30 opcodes (out of skproject's full ~200) are wired up:
  *     WALK_NOW, ATTACK_HANDLER, WALK_CONT, WALK_PATH, ROTATE_TO_TARGET,
  *     SPECIAL_ACTION, SPECIAL_06, SPECIAL_07, SPECIAL_08,
  *     STEAL_ITEM, MERCHANT_BEHAVIOR,
  *     PUTS_DOWN_ITEM, TAKES_ITEM, SHOOT_ITEM, KILL_ON_TIMER_POS, ROTATES_TARGET,
  *     CAST_SPELL, ROTATES_TARGET_16, CREATURE_ATTACKS_PARTY, ATTACK_DOOR,
- *     PUTS_DOWN_ITEM_19, TAKES_ITEM_1A, EXPLODE_OR_SUMMON
+ *     PUTS_DOWN_ITEM_19, TAKES_ITEM_1A, EXPLODE_OR_SUMMON,
+ *     TRANSFORM_STAGE, TRANSFORM_FINAL, EXPLODE_OR_SUMMON_PHASE (0x3d..0x40)
  *   All other opcodes return DM2_CCM_RESULT_UNKNOWN_OPCODE (documented
  *   stub for the remaining ~179 opcodes).
  *
@@ -69,6 +70,12 @@ static const DM2_V1_CCMOpcodeDef g_opcode_table[DM2_CCM_MAX_OPCODES] = {
     { 0x1F, "SPECIAL_1F",          1, 1 },
     { 0x20, "SPECIAL_20",          1, 1 },
     { 0x21, "SPECIAL_21",          1, 1 },
+    { 0x3B, "TRANSFORM_STAGE",     0, 0 },
+    { 0x3C, "TRANSFORM_FINAL",     0, 0 },
+    { 0x3D, "EXPLODE_OR_SUMMON_PHASE", 0, 0 },
+    { 0x3E, "EXPLODE_OR_SUMMON_PHASE_3E", 0, 0 },
+    { 0x3F, "EXPLODE_OR_SUMMON_PHASE_3F", 0, 0 },
+    { 0x40, "EXPLODE_OR_SUMMON_PHASE_40", 0, 0 },
     { 0xFF, "HALT",                0, 0 },
 };
 
@@ -308,6 +315,40 @@ static int dispatch_opcode(DM2_V1_CCMState *state, int opcode,
         case DM2_CCM_OP_EXPLODE_OR_SUMMON:
             state->flags[10] = 1;
             break;
+        case DM2_CCM_OP_TRANSFORM_STAGE:
+            /* skproject/SKULLWIN/c_creature.cpp DM2_CREATURE_TRANSFORM
+             * lines 2637-2760: b_1f increments for each 0x3b pass. Once
+             * its pre-increment value is three, it is cleared and b_1a
+             * changes to 0x3c. Cloud/noise effects are only requested here;
+             * this bounded interpreter never fabricates world-side effects. */
+            state->transform_requested = 1;
+            if (state->transform_phase >= 3) {
+                state->transform_phase = 0;
+                state->next_state = DM2_CCM_OP_TRANSFORM_FINAL;
+            } else {
+                state->transform_phase++;
+            }
+            break;
+        case DM2_CCM_OP_TRANSFORM_FINAL:
+            /* The 0x3c post-transform route has no b_1a/b_1f writeback in
+             * DM2_CREATURE_TRANSFORM; retain state and request its effect. */
+            state->transform_requested = 1;
+            break;
+        case DM2_CCM_OP_EXPLODE_OR_SUMMON_PHASE:
+        case DM2_CCM_OP_EXPLODE_OR_SUMMON_PHASE_3E:
+        case DM2_CCM_OP_EXPLODE_OR_SUMMON_PHASE_3F:
+        case DM2_CCM_OP_EXPLODE_OR_SUMMON_PHASE_40:
+            /* skproject/SKULLWIN/c_creature.cpp DM2_CREATURE_EXPLODE_OR_SUMMON
+             * lines 2762-2843, dispatched by DM2_PROCEED_CCM:3145-3149,
+             * sends every 0x3d..0x40 state here. b_20 selects cloud/kill,
+             * minion, or phase-reset work. Only mode 2 has an observable
+             * local state writeback: b_1a=0x11 and b_1f=0. */
+            state->explode_or_summon_requested = 1;
+            if (state->explode_or_summon_mode == 2) {
+                state->transform_phase = 0;
+                state->next_state = DM2_CCM_OP_SPAWN_DEFERRED;
+            }
+            break;
         case DM2_CCM_OP_HALT:
             state->halted = 1;
             s_total_halted++;
@@ -419,7 +460,7 @@ const char *dm2_v1_ccm_source_evidence(void) {
         "Source: ReDMCSB GROUP.C:1695-1770                 - F0207 creature attack\n"
         "Source: ReDMCSB GROUP.C:2376-2387                 - F0209 visible row/col\n"
         "Source: ReDMCSB PROJEXPL.C:76-92                  - F0212 projectile live\n"
-        "Implemented opcodes (28 of ~200 in skproject):\n"
+        "Implemented opcodes (33 of ~200 in skproject):\n"
         "  0x00 WALK_NOW / 0x01 ATTACK_HANDLER / 0x02 WALK_CONT\n"
         "  0x03 WALK_PATH / 0x04 ROTATE_TO_TARGET / 0x05 SPECIAL_ACTION\n"
         "  0x06 SPECIAL_06 / 0x07 SPECIAL_07 / 0x08 SPECIAL_08\n"
@@ -431,7 +472,8 @@ const char *dm2_v1_ccm_source_evidence(void) {
         "  0x15 CAST_SPELL / 0x16 ROTATES_TARGET_16\n"
         "  0x17 CREATURE_ATTACKS_PARTY / 0x18 ATTACK_DOOR\n"
         "  0x19 PUTS_DOWN_ITEM_19 / 0x1A TAKES_ITEM_1A\n"
-        "  0x26 EXPLODE_OR_SUMMON / 0xFF HALT\n"
+        "  0x26 EXPLODE_OR_SUMMON / 0x3B TRANSFORM_STAGE\n"
+        "  0x3C TRANSFORM_FINAL / 0x3D..0x40 EXPLODE_OR_SUMMON_PHASE / 0xFF HALT\n"
         "Stubbed opcodes (return DM2_CCM_RESULT_UNKNOWN_OPCODE):\n"
         "  0x0E/0x1F/0x20/0x21/0x25\n"
         "  + remaining ~179 opcodes in skproject/SKULLWIN/c_creature.cpp.\n"

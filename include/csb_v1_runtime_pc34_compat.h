@@ -327,6 +327,10 @@ typedef struct {
     uint32_t                csbwin_appended_tail_fnv1a;
     int                     csbwin_appended_tail_truncated;
     uint8_t                 csbwin_appended_tail[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
+    /* CSBWin DSA.cpp DSAINDEX::ReadTracing restores this EXPOOL-owned
+     * eight-word bitmap after the save body. It is source trace state only:
+     * no Firestaff diagnostic mode or DSA execution is enabled from it. */
+    CSB_V1_CSBWinDSATracingReport csbwin_dsa_tracing;
     /* CSBWin SaveGame.cpp ReadExtendedFeatures()/ReadDSAs()/ReadGameInfo()
      * owns this separately from the regular GAMEBLOCK sections. Imported DSA
      * programs remain opaque source words; no compatibility opcode runner
@@ -589,6 +593,9 @@ int csb_v1_runtime_locate_csbwin_appended_expool_record(
     uint32_t record_id,
     const uint8_t **out_bytes,
     size_t *out_size);
+int csb_v1_runtime_get_csbwin_dsa_tracing(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_CSBWinDSATracingReport *out_report);
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
 int csb_v1_runtime_select_champion_portrait_render_source(

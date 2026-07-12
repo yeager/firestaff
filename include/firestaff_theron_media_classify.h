@@ -31,6 +31,13 @@ typedef struct {
     int iso_file_count;
     int launch_candidate;
     char candidate_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    /* Canonical paths are populated only for a readable CUE-declared pair.
+     * candidate_path remains the Track 02 payload path for compatibility. */
+    int has_track01_audio;
+    int paired_track01_track02;
+    char cue_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    char track01_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    char track02_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
 } FirestaffTheronMediaStatus;
 
 void FirestaffTheronMedia_Init(FirestaffTheronMediaStatus* status);
@@ -44,6 +51,14 @@ int FirestaffTheronMedia_ClassifyPath(const char* path,
 
 int FirestaffTheronMedia_ClassifyDirectory(const char* root,
                                            FirestaffTheronMediaStatus* status);
+
+/* Finds a strict CUE Track 01 AUDIO + Track 02 MODE1/2352 pair whose
+ * canonical Track 02 path is exactly the already hash-verified payload.
+ * This is provenance matching, not filename-based discovery or extraction. */
+int FirestaffTheronMedia_FindCuePairForTrack02(
+    const char* root,
+    const char* verified_track02_path,
+    FirestaffTheronMediaStatus* status);
 
 const char* FirestaffTheronMedia_LayoutId(FirestaffTheronMediaLayout layout);
 const char* FirestaffTheronMedia_LayoutLabel(FirestaffTheronMediaLayout layout);

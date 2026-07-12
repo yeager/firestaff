@@ -153,6 +153,11 @@ dm2_v1_projectile_creature_collision_resolve(int projectile_slot,
     }
 
     const DM2_AIDefinition *spec = resolve_creature_spec(creature_id);
+    if (!spec) {
+        /* A mounted GDAT without this selected CREATURE_AI row is an
+         * unavailable combat route, not a zero-armor fallback target. */
+        return r;
+    }
     uint16_t ai_flags = spec ? spec->w0AIFlags : 0;
     int armor = spec ? (int)spec->ArmorClass : 0;
 
