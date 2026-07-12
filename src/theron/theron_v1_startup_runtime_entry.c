@@ -2,7 +2,6 @@
 
 #include "theron_v1_boot.h"
 #include "theron_v1_stage2_runtime_handoff.h"
-#include "theron_v1_stage3_irq2_dispatch.h"
 #include "theron_v1_track02.h"
 
 #include <stdio.h>
@@ -52,10 +51,7 @@ static int theron_v1_startup_runtime_stage3_loader_ready(
     size_t track02_size,
     const char *md5_hex) {
     Theron_Track02Variant variant;
-    Theron_Track02IplLoaderReceipt ipl_loader;
-    Theron_Track02Stage2DynamicPayloadReceipt payload;
     Theron_V1Stage2RuntimeHandoff stage2_handoff;
-    Theron_V1Stage3Irq2DispatchReceipt dispatch;
 
     if (!track02_data || track02_size == 0u || !md5_hex || !md5_hex[0]) {
         return 0;
@@ -65,51 +61,17 @@ static int theron_v1_startup_runtime_stage3_loader_ready(
         variant != THERON_TRACK02_VARIANT_US_BIN) {
         return 1;
     }
-    memset(&ipl_loader, 0, sizeof(ipl_loader));
-    memset(&payload, 0, sizeof(payload));
     memset(&stage2_handoff, 0, sizeof(stage2_handoff));
-    memset(&dispatch, 0, sizeof(dispatch));
-    if (theron_v1_track02_find_ipl_loader(
-            track02_data, track02_size, md5_hex, &ipl_loader) !=
-            THERON_TRACK02_SIGNAL_OK || !ipl_loader.valid ||
-        ipl_loader.variant != variant ||
-        ipl_loader.stage2_record != THERON_TRACK02_IPL_STAGE2_RECORD ||
-        ipl_loader.stage2_sector_count !=
-            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT ||
-        ipl_loader.stage2_destination !=
-            THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM ||
-        ipl_loader.stage2_load_address !=
-            THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS ||
-        ipl_loader.stage2_entry_address !=
-            THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS ||
-        ipl_loader.stage2_cd_read_cpu_address !=
-            THERON_TRACK02_IPL_STAGE2_CD_READ_CPU_ADDRESS ||
-        ipl_loader.stage2_cd_read_sector_count != 1u ||
-        ipl_loader.stage2_cd_read_destination !=
-            THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM ||
-        ipl_loader.stage2_cd_read_local_destination !=
-            THERON_TRACK02_IPL_STAGE2_CD_READ_LOCAL_DESTINATION ||
-        !ipl_loader.stage2_cd_read_record_proven ||
-        !ipl_loader.stage2_cd_read_dynamic_boundary_valid ||
-        ipl_loader.stage2_cd_read_live_record_register_mask !=
-            THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_MASK ||
-        ipl_loader.vram_transfer_proven) {
-        return 0;
-    }
-    return theron_v1_track02_inspect_stage2_dynamic_payload(
-               track02_data, track02_size, md5_hex, &payload) ==
-               THERON_TRACK02_SIGNAL_OK &&
-           payload.track02_record == ipl_loader.stage2_cd_read_record &&
-           payload.raw_sector == ipl_loader.stage2_cd_read_raw_sector &&
-           theron_v1_stage2_runtime_handoff_from_dynamic_payload(
-               &payload, &stage2_handoff) &&
+    return theron_v1_stage2_runtime_handoff_from_original_media(
+               track02_data, track02_size, md5_hex, &stage2_handoff) &&
            stage2_handoff.work_ram_cleared_before_entry &&
            stage2_handoff.cleared_work_ram_start == 0x2700u &&
            stage2_handoff.cleared_work_ram_bytes == 0x1100u &&
            stage2_handoff.cleared_work_ram_end == 0x3800u &&
-           theron_v1_stage3_irq2_dispatch_from_original_media(
-               track02_data, track02_size, &payload, &dispatch) &&
-           dispatch.valid && dispatch.irq2_dispatch_proven;
+           stage2_handoff.physical_stage3_entry_verified &&
+           stage2_handoff.stage3_entry_opcode == 0x00u &&
+           stage2_handoff.stage3_irq2_selector == 0xffu &&
+           stage2_handoff.stage3_continuation_address == 0x3802u;
 }
 
 static int theron_v1_startup_runtime_level_load_callback(

@@ -39,6 +39,10 @@ typedef struct {
     size_t manifest_entry_count;
     uint32_t user_data_hash;
     int manifest_entries_semantically_unbound;
+    int physical_stage3_entry_verified;
+    uint8_t stage3_entry_opcode;
+    uint8_t stage3_irq2_selector;
+    uint16_t stage3_continuation_address;
 } Theron_V1Stage2RuntimeHandoff;
 
 /* Converts an already hash-gated, structurally validated dynamic-payload
@@ -46,6 +50,16 @@ typedef struct {
  * reject without producing a partial handoff. */
 int theron_v1_stage2_runtime_handoff_from_dynamic_payload(
     const Theron_Track02Stage2DynamicPayloadReceipt *payload,
+    Theron_V1Stage2RuntimeHandoff *out_handoff);
+
+/* Full original-media form consumed by CUE boot, startup receipt, and direct
+ * runtime entry. It binds IPL CD_EXEC, the traced stage-two CD_READ, cleared
+ * work RAM, and the physical stage-three BRK $ff bytes. It intentionally does
+ * not classify the loaded manifest. */
+int theron_v1_stage2_runtime_handoff_from_original_media(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
     Theron_V1Stage2RuntimeHandoff *out_handoff);
 
 #endif /* THERON_V1_STAGE2_RUNTIME_HANDOFF_H */

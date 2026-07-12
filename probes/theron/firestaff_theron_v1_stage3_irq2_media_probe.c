@@ -67,6 +67,8 @@ int main(int argc, char **argv) {
     Theron_Track02Stage2DynamicPayloadReceipt us_payload;
     Theron_V1Stage2RuntimeHandoff jp_handoff;
     Theron_V1Stage2RuntimeHandoff us_handoff;
+    Theron_V1Stage2RuntimeHandoff jp_original_handoff;
+    Theron_V1Stage2RuntimeHandoff us_original_handoff;
 
     if (argc != 3) {
         printf("[FAIL] expected JP and US raw Track02 paths\n");
@@ -118,6 +120,18 @@ int main(int argc, char **argv) {
               jp_handoff.work_ram_cleared_before_entry &&
               us_handoff.work_ram_cleared_before_entry,
           "stage-two transfer clears the proven work-RAM interval before entry");
+    check(theron_v1_stage2_runtime_handoff_from_original_media(
+              jp_bytes, jp_size, "b7afb338ad31be1025b53f9aff12d73a",
+              &jp_original_handoff) &&
+              theron_v1_stage2_runtime_handoff_from_original_media(
+              us_bytes, us_size, "f23601102138f87c33025877767ebf76",
+              &us_original_handoff) &&
+              jp_original_handoff.physical_stage3_entry_verified &&
+              jp_original_handoff.stage3_entry_opcode == 0x00u &&
+              jp_original_handoff.stage3_irq2_selector == 0xffu &&
+              jp_original_handoff.stage3_continuation_address == 0x3802u &&
+              us_original_handoff.physical_stage3_entry_verified,
+          "single original-media handoff binds IPL through stage-three entry");
     check(jp_bytes && theron_v1_stage3_irq2_dispatch_from_original_media(
               jp_bytes, jp_size, &jp_payload, &jp),
           "JP stage-three bytes authenticate BRK $ff IRQ2 entry");
