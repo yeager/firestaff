@@ -3961,14 +3961,14 @@ int csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
             boot_profile,
             out_receipt->source_title_presents_ticks +
                 out_receipt->source_title_chaos_zoom_ticks,
-            19,
+            21,
             CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
             &out_receipt->title_sample_hashes[2]);
     out_receipt->title_strikes_back_capture_ready =
         csb_v1_boot_startup_visual_title_sample_pc34(
             boot_profile,
             csb_v1_startup_title_total_ticks_pc34() - 1,
-            20,
+            22,
             CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
             &out_receipt->title_sample_hashes[3]);
     out_receipt->title_sample_count =
@@ -4183,8 +4183,8 @@ static int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
     static const int title_source_steps[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34] = {
         1,
         2,
-        19,
-        20
+        21,
+        22
     };
     int title_frames[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34];
     uint32_t runtime_hash = 2166136261u;

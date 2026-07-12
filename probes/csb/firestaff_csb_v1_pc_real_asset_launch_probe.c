@@ -114,11 +114,11 @@ static void verify_real_c001_title_sequence(CSB_V1_StartupRuntimeAssetSession_PC
     if (!session) return;
 
     CHECK(csb_v1_startup_title_presents_ticks_pc34() == 60 &&
-              csb_v1_startup_title_chaos_zoom_ticks_pc34() == 18 &&
-              csb_v1_startup_title_chaos_hold_ticks_pc34() == 2 &&
-              csb_v1_startup_title_strikes_back_ticks_pc34() == 1 &&
-              csb_v1_startup_title_total_ticks_pc34() == 81,
-          "C001 title timing matches TITLE.C F0437's PC 18-frame cadence");
+              csb_v1_startup_title_chaos_zoom_ticks_pc34() == 20 &&
+              csb_v1_startup_title_chaos_hold_ticks_pc34() == 20 &&
+              csb_v1_startup_title_strikes_back_ticks_pc34() == 2 &&
+              csb_v1_startup_title_total_ticks_pc34() == 102,
+          "C001 title timing matches TITLE.C F0437's PC 20-frame cadence");
 
     CHECK(real_c001_title_plan(0, &plan) &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
@@ -153,18 +153,18 @@ static void verify_real_c001_title_sequence(CSB_V1_StartupRuntimeAssetSession_PC
               plan.title_source_step == 2 &&
               plan.title_source_x == 0 && plan.title_source_y == 0 &&
               plan.title_source_w == 320 && plan.title_source_h == 80 &&
-              plan.title_dest_x == 136 && plan.title_dest_y == 74 &&
-              plan.title_dest_w == 48 && plan.title_dest_h == 12 &&
+              plan.title_dest_x == 152 && plan.title_dest_y == 78 &&
+              plan.title_dest_w == 16 && plan.title_dest_h == 4 &&
               plan.title_special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
               csb_v1_boot_startup_runtime_asset_session_frame_pc34(
                   session, &plan, 60u, &frame) == 1 &&
               csb_v1_boot_startup_runtime_frame_rasterize_pc34(
                   &frame, &plan, &raster) == 1 && raster.valid,
-          "C001 CHAOS first raster preserves TITLE.C source order and 48x12 geometry");
+          "C001 CHAOS first raster preserves TITLE.C source order and 16x4 geometry");
     if (raster.valid) {
-        CHECK(raster.pixel_hash == 0x7a4b9ab7u,
-              "C001 CHAOS first raster hash matches verified PC CSB graphics");
+        CHECK(raster.pixel_hash == 0xc57f9804u,
+              "C001 CHAOS first raster capture matches verified PC CSB graphics");
         csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
     }
     CHECK(title_palette_matches_rgb(
@@ -177,7 +177,7 @@ static void verify_real_c001_title_sequence(CSB_V1_StartupRuntimeAssetSession_PC
                   0, 0, 109),
           "C001 CHAOS keeps gold artwork indices over the dark-blue source base");
 
-    CHECK(real_c001_title_plan(80, &plan) &&
+    CHECK(real_c001_title_plan(100, &plan) &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
               plan.title_source_x == 0 && plan.title_source_y == 80 &&
               plan.title_source_w == 320 && plan.title_source_h == 57 &&
@@ -193,7 +193,7 @@ static void verify_real_c001_title_sequence(CSB_V1_StartupRuntimeAssetSession_PC
           "C001 STRIKES BACK retains source crop, black key, and final palette phase");
     if (raster.valid) {
         CHECK(raster.pixel_hash == 0x8e96cf09u,
-              "C001 STRIKES BACK raster hash matches verified PC CSB graphics");
+              "C001 STRIKES BACK raster capture matches verified PC CSB graphics");
         csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
     }
     CHECK(title_palette_matches_rgb(
@@ -273,11 +273,11 @@ static void verify_real_indexed_startup(CSB_V1_BootProfile *profile)
     plan.surface_h = 200;
     plan.closed_left_w = 105;
     plan.closed_left_h = 161;
-    plan.closed_left_dest_y = 28;
+    plan.closed_left_dest_y = 30;
     plan.closed_right_w = 127;
     plan.closed_right_h = 161;
     plan.closed_right_dest_x = 105;
-    plan.closed_right_dest_y = 28;
+    plan.closed_right_dest_y = 30;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 4u, &frame) == 1 &&
               csb_v1_boot_startup_runtime_frame_rasterize_pc34(
@@ -295,19 +295,23 @@ static void verify_real_indexed_startup(CSB_V1_BootProfile *profile)
     plan.opening_left_source_x = 0;
     plan.opening_left_w = 97;
     plan.opening_left_h = 161;
-    plan.opening_left_dest_y = 28;
+    plan.opening_left_dest_y = 30;
     plan.opening_right_source_x = 8;
     plan.opening_right_w = 119;
     plan.opening_right_h = 161;
     plan.opening_right_dest_x = 113;
-    plan.opening_right_dest_y = 28;
+    plan.opening_right_dest_y = 30;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 5u, &frame) == 1 &&
               csb_v1_boot_startup_runtime_frame_rasterize_pc34(
                   &frame, &plan, &raster) == 1 && raster.valid &&
               raster.door_composited && raster.source_surface_count == 3 &&
-              raster_rows_match_surface(&raster, frame.entrance_surface, 28),
-          "C004 opening frame preserves its first 28 rows before C002/C003 strips");
+              raster_rows_match_surface(&raster, frame.entrance_surface, 30),
+          "C004 opening frame preserves its first 30 rows before C002/C003 strips");
+    if (raster.valid) {
+        CHECK(raster.pixel_hash == 0xde9c254eu,
+              "C004/C002/C003 opening capture matches verified PC CSB graphics");
+    }
     csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
 
     CHECK(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
