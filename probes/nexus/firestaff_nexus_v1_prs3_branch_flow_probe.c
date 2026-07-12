@@ -126,6 +126,23 @@ typedef struct {
     size_t low_mask_and_offset;
 } Nexus_Prs3V1ZeroSideMergeReceipt;
 
+/* The merged R4 value then reaches a bounded comparison/control branch. The
+ * receipt names only the observed registers and branch target, not a token
+ * class, length, or decoded output. */
+typedef struct {
+    int valid;
+    size_t low_fragment_increment_offset;
+    int low_fragment_increment;
+    size_t merged_value_add_offset;
+    unsigned int merged_value_source_register;
+    unsigned int merged_value_destination_register;
+    size_t merged_value_compare_offset;
+    unsigned int compare_source_register;
+    unsigned int compare_destination_register;
+    size_t control_branch_offset;
+    size_t control_branch_target;
+} Nexus_Prs3V1ZeroSideMergeBranchReceipt;
+
 static int failures;
 
 static void check(int condition, const char *message) {
@@ -249,6 +266,28 @@ static int sh2_logic_register_fields(uint16_t instruction, uint16_t opcode,
                                      unsigned int *out_source_register,
                                      unsigned int *out_destination_register) {
     if ((instruction & 0xf00fU) != opcode || !out_source_register ||
+        !out_destination_register) return 0;
+    *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
+/* SH-2 CMP/GT Rm,Rn is 0011nnnnmmmm0111. */
+static int sh2_cmp_gt_register_fields(uint16_t instruction,
+                                      unsigned int *out_source_register,
+                                      unsigned int *out_destination_register) {
+    if ((instruction & 0xf00fU) != 0x3007U || !out_source_register ||
+        !out_destination_register) return 0;
+    *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
+/* SH-2 ADD Rm,Rn is 0011nnnnmmmm1100. */
+static int sh2_add_register_fields(uint16_t instruction,
+                                   unsigned int *out_source_register,
+                                   unsigned int *out_destination_register) {
+    if ((instruction & 0xf00fU) != 0x300cU || !out_source_register ||
         !out_destination_register) return 0;
     *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
     *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
@@ -551,6 +590,50 @@ static int prs3_v1_zero_side_merge_receipt(
     return 1;
 }
 
+static int prs3_v1_zero_side_merge_branch_receipt(
+    const uint8_t *data, size_t size,
+    Nexus_Prs3V1ZeroSideMergeBranchReceipt *out) {
+    Nexus_Prs3V1ZeroSideMergeBranchReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+    unsigned int increment_register = 0U;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 136U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.low_fragment_increment_offset = entry + 128U;
+    receipt.merged_value_add_offset = entry + 130U;
+    receipt.merged_value_compare_offset = entry + 132U;
+    receipt.control_branch_offset = entry + 134U;
+    if (!sh2_add_immediate_fields(
+            read_be16(data + receipt.low_fragment_increment_offset),
+            &increment_register, &receipt.low_fragment_increment) ||
+        !sh2_add_register_fields(read_be16(data + receipt.merged_value_add_offset),
+                                 &receipt.merged_value_source_register,
+                                 &receipt.merged_value_destination_register) ||
+        !sh2_cmp_gt_register_fields(read_be16(data + receipt.merged_value_compare_offset),
+                                    &receipt.compare_source_register,
+                                    &receipt.compare_destination_register) ||
+        read_be16(data + receipt.control_branch_offset) != 0x89d5U ||
+        !sh2_conditional_branch_target(
+            receipt.control_branch_offset,
+            read_be16(data + receipt.control_branch_offset), size,
+            &receipt.control_branch_target) ||
+        increment_register != 7U || receipt.low_fragment_increment != 2 ||
+        receipt.merged_value_source_register != 4U ||
+        receipt.merged_value_destination_register != 7U ||
+        receipt.compare_source_register != 7U ||
+        receipt.compare_destination_register != 4U ||
+        receipt.control_branch_target != entry + 52U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
 static void test_synthetic_branch_flow(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Nexus_Prs3V1BranchFlowReceipt receipt;
@@ -680,6 +763,30 @@ static void test_synthetic_zero_side_merge(void) {
           "SH-2 PRS3 zero-side receipt rejects a non-R4 merge operation");
 }
 
+static void test_synthetic_zero_side_merge_branch(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
+    Nexus_Prs3V1ZeroSideMergeBranchReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 128U] = 0x77U; fixture[entry + 129U] = 0x02U;
+    fixture[entry + 130U] = 0x37U; fixture[entry + 131U] = 0x4cU;
+    fixture[entry + 132U] = 0x34U; fixture[entry + 133U] = 0x77U;
+    fixture[entry + 134U] = 0x89U; fixture[entry + 135U] = 0xd5U;
+    check(prs3_v1_zero_side_merge_branch_receipt(
+              fixture, sizeof(fixture), &receipt) && receipt.valid &&
+              receipt.merged_value_source_register == 4U &&
+              receipt.merged_value_destination_register == 7U &&
+              receipt.compare_source_register == 7U &&
+              receipt.compare_destination_register == 4U &&
+              receipt.control_branch_target == entry + 52U,
+          "SH-2 PRS3 zero-side receipt locks merged-value comparison branch");
+    fixture[entry + 135U] = 0xd4U;
+    check(!prs3_v1_zero_side_merge_branch_receipt(
+              fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 zero-side receipt rejects a changed merged-value branch");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -721,12 +828,14 @@ int main(int argc, char **argv) {
     Nexus_Prs3V1TerminationReceipt termination_receipt;
     Nexus_Prs3V1LowBitConsumptionReceipt low_bit_receipt;
     Nexus_Prs3V1ZeroSideMergeReceipt zero_side_merge_receipt;
+    Nexus_Prs3V1ZeroSideMergeBranchReceipt zero_side_merge_branch_receipt;
 
     test_synthetic_branch_flow();
     test_synthetic_zero_side_read();
     test_synthetic_termination();
     test_synthetic_low_bit_consumption();
     test_synthetic_zero_side_merge();
+    test_synthetic_zero_side_merge_branch();
     if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
@@ -763,6 +872,10 @@ int main(int argc, char **argv) {
                   data, size, &zero_side_merge_receipt) &&
                   zero_side_merge_receipt.valid,
               "DM.BIN locks the PRS3 v1 zero-side shift/mask/OR operation");
+        check(prs3_v1_zero_side_merge_branch_receipt(
+                  data, size, &zero_side_merge_branch_receipt) &&
+                  zero_side_merge_branch_receipt.valid,
+              "DM.BIN locks the PRS3 v1 merged-value control branch");
         if (receipt.valid) {
             printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
                    "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
@@ -826,6 +939,21 @@ int main(int argc, char **argv) {
                    (unsigned int)zero_side_merge_receipt.upper_mask_word,
                    zero_side_merge_receipt.merge_or_offset,
                    zero_side_merge_receipt.low_mask_immediate);
+        }
+        if (zero_side_merge_branch_receipt.valid) {
+            printf("SH-2 PRS3 v1 merged-value branch: increment=%zu R7%+d "
+                   "add=%zu R%u->R%u compare=%zu R%u,R%u branch=%zu->%zu; "
+                   "token/output-proof=0\n",
+                   zero_side_merge_branch_receipt.low_fragment_increment_offset,
+                   zero_side_merge_branch_receipt.low_fragment_increment,
+                   zero_side_merge_branch_receipt.merged_value_add_offset,
+                   zero_side_merge_branch_receipt.merged_value_source_register,
+                   zero_side_merge_branch_receipt.merged_value_destination_register,
+                   zero_side_merge_branch_receipt.merged_value_compare_offset,
+                   zero_side_merge_branch_receipt.compare_source_register,
+                   zero_side_merge_branch_receipt.compare_destination_register,
+                   zero_side_merge_branch_receipt.control_branch_offset,
+                   zero_side_merge_branch_receipt.control_branch_target);
         }
     }
     free(data);
