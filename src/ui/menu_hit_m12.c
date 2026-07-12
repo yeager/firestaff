@@ -28,7 +28,7 @@
 #define M12_HIT_PANEL_Y        260
 #define M12_HIT_GAMEOPT_PANEL_Y 190
 #define M12_HIT_PANEL_W        (M12_HIT_CANVAS_W - 2 * M12_HIT_PANEL_X)
-#define M12_HIT_PANEL_H        540
+#define M12_HIT_PANEL_H        800
 #define M12_HIT_GAMEOPT_PANEL_H_V1  780
 #define M12_HIT_GAMEOPT_PANEL_H_V2  780
 #define M12_HIT_ROW_INDENT     36
@@ -55,58 +55,6 @@
 #define M12_HIT_GAMEOPT_ROW_Y0      (M12_HIT_GAMEOPT_PANEL_Y + 76)
 #define M12_HIT_GAMEOPT_ROW_STEP    52
 
-static const int* m12_hit_settings_rows_for_tab(int tab, int* outCount) {
-    static const int gameRows[] = {
-        M12_STARTUP_SETTINGS_ROW_LANGUAGE,
-        M12_STARTUP_SETTINGS_ROW_DATA_DIR,
-        M12_STARTUP_SETTINGS_ROW_DATA_STATUS,
-        M12_STARTUP_SETTINGS_ROW_SESSION_TIMER
-    };
-    static const int graphicsRows[] = {
-        M12_STARTUP_SETTINGS_ROW_GRAPHICS,
-        M12_STARTUP_SETTINGS_ROW_WINDOW_MODE,
-        M12_STARTUP_SETTINGS_ROW_SMOOTH_TURN_PAN
-    };
-    static const int controlsRows[] = { 10, 12, 13 };
-    static const int audioRows[] = { 19, 20, 21, 22 };
-    static const int accessibilityRows[] = { 23, 24, 25, 26 };
-    static const int onlineRows[] = {
-        M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS,
-        M12_STARTUP_SETTINGS_ROW_RA_HARDCORE,
-        M12_STARTUP_SETTINGS_ROW_RA_USERNAME,
-        M12_STARTUP_SETTINGS_ROW_RA_TOKEN,
-        M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT
-    };
-    const int* rows = gameRows;
-    int count = (int)(sizeof(gameRows) / sizeof(gameRows[0]));
-    switch (tab) {
-        case M12_SETTINGS_TAB_GRAPHICS:
-            rows = graphicsRows;
-            count = (int)(sizeof(graphicsRows) / sizeof(graphicsRows[0]));
-            break;
-        case M12_SETTINGS_TAB_CONTROLS:
-            rows = controlsRows;
-            count = (int)(sizeof(controlsRows) / sizeof(controlsRows[0]));
-            break;
-        case M12_SETTINGS_TAB_AUDIO:
-            rows = audioRows;
-            count = (int)(sizeof(audioRows) / sizeof(audioRows[0]));
-            break;
-        case M12_SETTINGS_TAB_ACCESSIBILITY:
-            rows = accessibilityRows;
-            count = (int)(sizeof(accessibilityRows) / sizeof(accessibilityRows[0]));
-            break;
-        case M12_SETTINGS_TAB_ONLINE:
-            rows = onlineRows;
-            count = (int)(sizeof(onlineRows) / sizeof(onlineRows[0]));
-            break;
-        case M12_SETTINGS_TAB_GAME:
-        default:
-            break;
-    }
-    if (outCount) *outCount = count;
-    return rows;
-}
 #define M12_HIT_LANGUAGE_POPUP_X      (M12_HIT_PANEL_X + M12_HIT_ROW_INDENT + M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT - 632)
 #define M12_HIT_LANGUAGE_POPUP_Y      (M12_HIT_SETTINGS_ROW_Y0 + 56)
 #define M12_HIT_LANGUAGE_POPUP_W      632
@@ -186,13 +134,10 @@ static int m12_hit_main_card_rect(int index, int count, int* rx, int* ry, int* r
 }
 
 static int m12_hit_settings_row_rect(int visibleRow, int* rx, int* ry, int* rw, int* rh) {
-    static const int yOffsets[] = {
-        0, 70, 140, 210, 280, 350, 392, 448, 504, 560, 616
-    };
-    if (visibleRow < 0 ||
-        visibleRow >= (int)(sizeof(yOffsets) / sizeof(yOffsets[0]))) return 0;
+    enum { M12_HIT_SETTINGS_MAX_ROWS = 11 };
+    if (visibleRow < 0 || visibleRow >= M12_HIT_SETTINGS_MAX_ROWS) return 0;
     *rx = M12_HIT_PANEL_X + M12_HIT_ROW_INDENT;
-    *ry = M12_HIT_SETTINGS_ROW_Y0 + yOffsets[visibleRow];
+    *ry = M12_HIT_SETTINGS_ROW_Y0 + visibleRow * M12_HIT_SETTINGS_ROW_STEP;
     *rw = M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT;
     *rh = M12_HIT_ROW_HEIGHT;
     return 1;
@@ -330,7 +275,7 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
             }
             {
                 int visibleRowCount = 0;
-                const int* visibleRows = m12_hit_settings_rows_for_tab(
+                const int* visibleRows = M12_StartupMenu_GetSettingsRowsForTab(
                     state ? state->settingsTabIndex : M12_SETTINGS_TAB_GAME,
                     &visibleRowCount);
                 for (i = 0; i < visibleRowCount; ++i) {

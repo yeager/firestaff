@@ -1561,56 +1561,7 @@ static const char* modern_settings_tab_label(int tab) {
 }
 
 static const int* modern_settings_rows_for_tab(int tab, int* outCount) {
-    static const int gameRows[] = {
-        M12_STARTUP_SETTINGS_ROW_LANGUAGE,
-        M12_STARTUP_SETTINGS_ROW_DATA_DIR,
-        M12_STARTUP_SETTINGS_ROW_DATA_STATUS,
-        M12_STARTUP_SETTINGS_ROW_SESSION_TIMER
-    };
-    static const int graphicsRows[] = {
-        M12_STARTUP_SETTINGS_ROW_GRAPHICS,
-        M12_STARTUP_SETTINGS_ROW_WINDOW_MODE,
-        M12_STARTUP_SETTINGS_ROW_SMOOTH_TURN_PAN
-    };
-    static const int controlsRows[] = { 10, 12, 13 };
-    static const int audioRows[] = { 19, 20, 21, 22 };
-    static const int accessibilityRows[] = { 23, 24, 25, 26 };
-    static const int onlineRows[] = {
-        M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS,
-        M12_STARTUP_SETTINGS_ROW_RA_HARDCORE,
-        M12_STARTUP_SETTINGS_ROW_RA_USERNAME,
-        M12_STARTUP_SETTINGS_ROW_RA_TOKEN,
-        M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT
-    };
-    const int* rows = gameRows;
-    int count = (int)(sizeof(gameRows) / sizeof(gameRows[0]));
-    switch (tab) {
-        case M12_SETTINGS_TAB_GRAPHICS:
-            rows = graphicsRows;
-            count = (int)(sizeof(graphicsRows) / sizeof(graphicsRows[0]));
-            break;
-        case M12_SETTINGS_TAB_CONTROLS:
-            rows = controlsRows;
-            count = (int)(sizeof(controlsRows) / sizeof(controlsRows[0]));
-            break;
-        case M12_SETTINGS_TAB_AUDIO:
-            rows = audioRows;
-            count = (int)(sizeof(audioRows) / sizeof(audioRows[0]));
-            break;
-        case M12_SETTINGS_TAB_ACCESSIBILITY:
-            rows = accessibilityRows;
-            count = (int)(sizeof(accessibilityRows) / sizeof(accessibilityRows[0]));
-            break;
-        case M12_SETTINGS_TAB_ONLINE:
-            rows = onlineRows;
-            count = (int)(sizeof(onlineRows) / sizeof(onlineRows[0]));
-            break;
-        case M12_SETTINGS_TAB_GAME:
-        default:
-            break;
-    }
-    if (outCount) *outCount = count;
-    return rows;
+    return M12_StartupMenu_GetSettingsRowsForTab(tab, outCount);
 }
 
 static void draw_modern_settings_tabs(M12_ModernCanvas* c,
@@ -1645,7 +1596,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     int panelX = 96;
     int panelY = 260;
     int panelW = c->w - 2 * panelX;
-    int panelH = 720;
+    int panelH = 800;
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
@@ -1747,8 +1698,8 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                              state->settingsSelectedIndex == row);
         } else {
             char value[32];
-            const char* label = "SETTING";
-            const char* shown = "ON";
+            const char* label = M12_StartupMenu_GetSettingsLabel(state, row);
+            const char* shown = M12_StartupMenu_GetSettingsValue(state, row);
             if (row == 10) {
                 static const char* inputModes[] = { "KEYBOARD", "MOUSE", "TOUCH", "GAMEPAD" };
                 int idx = state->settings.inputModeIndex;

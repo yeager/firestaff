@@ -655,6 +655,11 @@ void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state);
 int M12_StartupMenu_GetLanguageCount(void);
 const char* M12_StartupMenu_GetLanguageCode(int index);
 const char* M12_StartupMenu_GetLanguageName(int index);
+const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount);
+const char* M12_StartupMenu_GetSettingsLabel(const M12_StartupMenuState* state,
+                                             int row);
+const char* M12_StartupMenu_GetSettingsValue(const M12_StartupMenuState* state,
+                                             int row);
 
 /* ── Museum of Lore content accessors ───────────────────────────────
  * The category table itself is private to menu_startup_m12.c (it is

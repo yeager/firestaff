@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 M12 complete settings catalogue: the modern renderer, keyboard
+  navigation, and mouse hit-testing now use one shared six-tab row catalogue.
+  Every displayed functional setting is clickable, including presentation,
+  scale/aspect/filter/vsync, input, audio, accessibility, session, map/log,
+  save actions, and RetroAchievements. The panel and hit geometry support up
+  to eleven rows. Verification: settings hit test 113/113; mouse probe 14/14.
+
 - 2026-07-12 DM1 F0201 stored-scent fallback: when the direct F0199 route
   fails, source-ordered fresh party scent uses the ReDMCSB F0228 direction
   choice and original RNG. The direct route remains higher priority.

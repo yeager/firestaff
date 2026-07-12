@@ -9,6 +9,10 @@ English-scaffold `startup-menu.*.po` entries with reviewed translations and
 add a twentieth locale only with a shaped/font-covered script; do not claim a
 locale is translated merely because it falls back to English.
 
+Per-game cheats are still a single enable/speed gate. Expand them only where a
+game runtime has a real, bounded capability to consume the option; a launcher
+toggle with no game-side implementation must stay unavailable.
+
 ## Theron Authentic CD Trace Follow-up (2026-07-12)
 
 The Mednafen trace harness now forces System Card 3.0 and the correct raw-CUE
