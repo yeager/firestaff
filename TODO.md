@@ -14,6 +14,10 @@ DM1 V2.1 now presents the live indexed framebuffer through source-preserving
 EPX/Scale2x before the normal palette route, including special-palette title
 and entrance frames. Remaining V2.1 work is packaged Mac/app capture only.
 
+DM1 V2.2 now consumes boot's finished-art decision in M11 and has no
+placeholder-overlay route. Remaining V2.2 work is external: a complete,
+operator-reviewed real-art pack and packaged Mac/app capture.
+
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 
 The strict CUE route now carries an authenticated Track 02 IPL/stage-two

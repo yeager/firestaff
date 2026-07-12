@@ -3,8 +3,8 @@
 
 This is a source/flow gate, not an original-DOS pixel-parity claim. It pins the
 current M11 path that samples the V1 source viewport cells, fills the V22 shape
-cache, prefers the in-place bitmap pass, and uses the old colored overlay only
-when no cached modern-art bitmap is available.
+cache, and permits only the verified in-place bitmap pass. Missing/partial art
+must resolve at boot to the source-data V2.1 path, never a colored overlay.
 """
 from __future__ import annotations
 
@@ -57,43 +57,32 @@ def main() -> int:
     inplace_path = ROOT / "src/dm1v2/m11_v22_inplace_draw_pc34.c"
     cell_rects_path = ROOT / "src/dm1v2/m11_v22_cell_rects_pc34.c"
     cache_path = ROOT / "src/dm1v2/m11_v22_shape_cache_pc34.c"
-    overlay_path = ROOT / "src/dm1v2/m11_v22_render_overlay_pc34.c"
     dunview_path = REDMCSB / "DUNVIEW.C"
 
     game_view = read(game_view_path)
     inplace = read(inplace_path)
     cell_rects = read(cell_rects_path)
     cache = read(cache_path)
-    overlay = read(overlay_path)
     dunview = read(dunview_path)
 
     required_game_view_markers = [
         '#include "m11_v22_shape_cache_pc34.h"',
         '#include "m11_v22_inplace_draw_pc34.h"',
-        '#include "m11_v22_render_overlay_pc34.h"',
         "m11_v22_inplace_draw_shutdown();",
-        "if (dm1_v2_shape_runtime_v22_active() && spec->gameId",
-        "strcmp(spec->gameId, \"dm1\") == 0",
-        "(void)m11_v22_inplace_draw_init();",
+        "dm1_v2_boot_startup_prepare_pc34(spec->gameId,",
+        "switch (receipt.resolved_mode)",
         "m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side])",
         "raw_squares[d][s] = cells[d][s].square;",
         "m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);",
         "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
-        "if (m11_v22_inplace_render_pass(framebuffer,",
-        "m11_v22_render_overlay_with_palette(framebuffer,",
+        "(void)m11_v22_inplace_render_pass(framebuffer,",
         "m11_apply_viewport_turn_pan(framebuffer, framebufferWidth, framebufferHeight,",
     ]
     for marker in required_game_view_markers:
         require(errors, marker in game_view, f"m11_game_view.c missing marker: {marker}")
 
-    init_window = game_view[
-        game_view.find("if (dm1_v2_shape_runtime_v22_active() && spec->gameId") :
-        game_view.find("/* ── Theron's Quest V1: Track 02 runtime handoff")
-    ]
-    require(errors, "strcmp(spec->gameId, \"dm1\") == 0" in init_window,
-            "V22 in-place init is not visibly gated to DM1")
-    require(errors, "(void)m11_v22_inplace_draw_init();" in init_window,
-            "V22 in-place init is not in the DM1 V22-active start branch")
+    require(errors, "m11_v22_render_overlay_with_palette" not in game_view,
+            "V22 placeholder overlay remains reachable from M11")
 
     draw_start = game_view.find("m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side])")
     draw_end = game_view.find("m11_apply_viewport_turn_pan(framebuffer, framebufferWidth, framebufferHeight,")
@@ -106,14 +95,10 @@ def main() -> int:
             "m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);",
             "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,",
             "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
-            "if (m11_v22_inplace_render_pass(framebuffer,",
-            "m11_v22_render_overlay_with_palette(framebuffer,",
+            "(void)m11_v22_inplace_render_pass(framebuffer,",
         ],
     )
     errors.extend(draw_errors)
-    require(errors, "== 0) {" in draw_window[draw_window.find("if (m11_v22_inplace_render_pass(") :
-                                           draw_window.find("m11_v22_render_overlay_with_palette(")],
-            "placeholder overlay is not guarded as the in-place-render fallback")
 
     inplace_required = [
         "static const char* v22_floor_pit_id = \"floor_pit_01\";",
@@ -142,16 +127,6 @@ def main() -> int:
     for marker in cache_required:
         require(errors, marker in cache, f"m11_v22_shape_cache_pc34.c missing marker: {marker}")
 
-    overlay_required = [
-        "int m11_v22_render_overlay(unsigned char* framebuffer, int fbW, int fbH)",
-        "m11_v22_shape_cache_get(depth + 1, lateral);",
-        "if (!r || !r->active) continue;",
-        "m11_v22_cell_rect(depth + 1, lateral);",
-        "M11_V22_OVERLAY_PLACEHOLDER_INDEX",
-    ]
-    for marker in overlay_required:
-        require(errors, marker in overlay, f"m11_v22_render_overlay_pc34.c missing marker: {marker}")
-
     cell_rect_required = [
         "m11_v22_cell_rect(int depth, int lateral)",
         "depth < 1 || depth > 3",
@@ -179,16 +154,15 @@ def main() -> int:
             "inplaceDraw": str(inplace_path.relative_to(ROOT)),
             "cellRects": str(cell_rects_path.relative_to(ROOT)),
             "shapeCache": str(cache_path.relative_to(ROOT)),
-            "overlayFallback": str(overlay_path.relative_to(ROOT)),
         },
         "redmcsbAnchor": display(dunview_path),
         "drawOrder": draw_positions,
         "claims": [
             "M11 samples the source V1 viewport cells before V22 shape-cache update.",
-            "DM1 V2.2 start initializes the optional in-place bitmap cache only on the DM1 V22-active branch.",
-            "The viewport draw path prefers m11_v22_inplace_render_pass and calls the colored overlay only when that pass paints zero cells.",
+            "DM1 V2.2 boot resolves incomplete art to V2.1 before M11 presentation.",
+            "The viewport draw path uses m11_v22_inplace_render_pass only; no colored placeholder overlay is reachable.",
             "Pit and stairs have distinct asset ids, and teleporter/field shapes do not fall back to wall art.",
-            "The in-place and placeholder overlay fallback passes share m11_v22_cell_rect() for D1/D2/D3 x L/C/R geometry.",
+            "The in-place pass uses m11_v22_cell_rect() for D1/D2/D3 x L/C/R geometry.",
         ],
         "nonClaims": [
             "No original DOS screenshot or pixel-parity claim.",
