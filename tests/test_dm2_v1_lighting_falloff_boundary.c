@@ -1060,6 +1060,42 @@ static void test_sprite_asset_provider(void)
     }
 
     {
+        uint8_t palette16[16];
+        DM2_V1_DoorRenderPlan door_plan;
+        int overlay_pixel_found = 0;
+        for (int i = 0; i < 16; ++i) palette16[i] = (uint8_t)(0xa0 + i);
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, 320);
+        dm2_v1_viewport_set_asset_provider(&viewport, test_dm2_asset_fetch,
+                                            NULL);
+        dm2_v1_viewport_set_gdat_interface_palette(
+            &viewport, 1, 0x51a7c0deu, palette16);
+        viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+        viewport.squares[DM2_SQ_D0C].ornament_index = 2;
+        /* Keep the synthetic opaque frame out of this focused overlay-palette
+         * sample. The production frame is a separate material pass and would
+         * otherwise cover this 2x2 fixture's ornament pixels. */
+        s_fail_asset_index =
+            dm2_v1_viewport_door_frame_graphic_index_for_square(DM2_SQ_D0C);
+        dm2_v1_render_doors(&viewport);
+        s_fail_asset_index = 0;
+        for (int i = 0; i < 320 * 200; ++i) {
+            if (framebuffer[i] == palette16[11]) {
+                overlay_pixel_found = 1;
+                break;
+            }
+        }
+        CHECK("DM2 GDAT door ornament uses bound palette16 material mapping",
+              dm2_v1_viewport_build_door_render_plan(&viewport,
+                                                      &door_plan) == 1 &&
+                  door_plan.door_count == 1 &&
+                  door_plan.doors[0].ornate_gdat_index != 0 &&
+                  viewport.asset_door_overlay_drawn_count == 1 &&
+                  viewport.gdat_sprite_palette_consumed_count > 0 &&
+                  overlay_pixel_found);
+    }
+
+    {
         DM2_V1_HudPartyState party;
 
         memset(&party, 0, sizeof(party));

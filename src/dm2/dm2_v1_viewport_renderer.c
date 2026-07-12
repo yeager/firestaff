@@ -3474,8 +3474,13 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                             overlay_h,
                             overlay_stride,
                             &blit)) {
-                        dm2_v1_blit_scaled_bitmap_region(
-                            vp,
+                        /* skproject/SKULLWIN/c_gui_vp.cpp DM2_DRAW_DOOR
+                         * draws ornate and destroyed-door overlays through
+                         * the active GDAT palette just like the base door
+                         * panel.  Keeping these pixels on the raw blitter
+                         * made real logical indices bypass dtPalette16. */
+                        dm2_v1_blit_scaled_material_bitmap_region(
+                            s, vp,
                             stride,
                             blit.dst_rect.x,
                             blit.dst_rect.y,
@@ -3486,8 +3491,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                             blit.src_rect.y,
                             blit.src_rect.w,
                             blit.src_rect.h,
-                        blit.src_stride,
-                        blit.transparent_color);
+                            blit.src_stride,
+                            blit.transparent_color,
+                            &s->gdat_sprite_palette_consumed_count);
                         ++door_overlay_asset_count;
                         if (overlay_i == 0) {
                             ornate_drawn_asset = 1;

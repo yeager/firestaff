@@ -213,6 +213,36 @@ typedef struct {
     int canonical_prs3_descriptor_field_correlation;
 } Sh2Prs3Version1WordLifetimeEvidence;
 
+/* This is the first concrete byte-consumption evidence inside the selected
+ * version-1 callee. The branch-controlled refill path shifts R11, tests it,
+ * and, only when that test falls through, reads a byte through R12 with
+ * post-increment while decrementing R14. R12 originates from R4 at callee
+ * entry. These instruction facts prove a bounded R4-origin byte reader, but
+ * not that R4 points at a MENU.BPK payload, which bit means literal/backref,
+ * the refill bit order, the completion condition, or an output pixel format.
+ * Keep all PRS3 materialization blocked until those independent facts exist. */
+typedef struct {
+    int valid;
+    size_t control_shift_offset;
+    unsigned int control_register;
+    size_t control_test_offset;
+    unsigned int control_test_other_register;
+    size_t refill_branch_offset;
+    size_t refill_branch_target;
+    size_t refill_remaining_test_offset;
+    unsigned int remaining_register;
+    size_t refill_exhausted_target;
+    size_t byte_load_offset;
+    unsigned int byte_cursor_register;
+    unsigned int byte_value_register;
+    size_t remaining_decrement_offset;
+    int remaining_decrement;
+    size_t byte_extend_offset;
+    unsigned int byte_extend_source_register;
+    unsigned int byte_extend_destination_register;
+    size_t next_control_test_offset;
+} Sh2Prs3Version1StreamReadEvidence;
+
 /* The available flat DM.BIN image has no encoded direct predecessor for the
  * dispatcher entry and no PC-relative literal that materializes its work-RAM
  * address. This is a negative locator receipt only: an external, indirect, or
@@ -916,6 +946,116 @@ static int sh2_prs3_version1_word_lifetime_evidence(
     return 1;
 }
 
+/* SH-2 MOV.B @Rm+,Rn is 0110nnnnmmmm0100. */
+static int sh2_movb_postinc_register_fields(uint16_t instruction,
+                                            unsigned int *out_base_register,
+                                            unsigned int *out_value_register) {
+    if ((instruction & 0xf00fU) != 0x6004U || !out_base_register ||
+        !out_value_register) {
+        return 0;
+    }
+    *out_value_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_base_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
+/* SH-2 EXTU.B Rm,Rn is 0110nnnnmmmm1100. */
+static int sh2_extub_register_fields(uint16_t instruction,
+                                     unsigned int *out_source_register,
+                                     unsigned int *out_destination_register) {
+    if ((instruction & 0xf00fU) != 0x600cU || !out_source_register ||
+        !out_destination_register) {
+        return 0;
+    }
+    *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
+/* SH-2 ADD #imm,Rn is 0111nnnniiiiiiii. */
+static int sh2_add_immediate_fields(uint16_t instruction,
+                                    unsigned int *out_register,
+                                    int *out_immediate) {
+    if ((instruction & 0xf000U) != 0x7000U || !out_register ||
+        !out_immediate) {
+        return 0;
+    }
+    *out_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_immediate = (int)(int8_t)(instruction & 0x00ffU);
+    return 1;
+}
+
+static int sh2_prs3_version1_stream_read_evidence(
+    const uint8_t *data, size_t data_size,
+    Sh2Prs3Version1StreamReadEvidence *out_evidence) {
+    Sh2Prs3Version1StreamReadEvidence evidence;
+    unsigned int test_left = 0U, test_right = 0U;
+    unsigned int decrement_register = 0U;
+
+    memset(&evidence, 0, sizeof(evidence));
+    if (!data || NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 76U > data_size) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+
+    evidence.control_shift_offset = NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 54U;
+    evidence.control_test_offset = evidence.control_shift_offset + 2U;
+    evidence.refill_branch_offset = evidence.control_shift_offset + 4U;
+    evidence.refill_remaining_test_offset = evidence.control_shift_offset + 6U;
+    evidence.byte_load_offset = evidence.control_shift_offset + 10U;
+    evidence.remaining_decrement_offset = evidence.byte_load_offset + 2U;
+    evidence.byte_extend_offset = evidence.byte_load_offset + 4U;
+    evidence.next_control_test_offset = evidence.byte_load_offset + 10U;
+
+    if (read_be16(data + evidence.control_shift_offset) != 0x4b21U ||
+        read_be16(data + evidence.control_test_offset) != 0x22b8U ||
+        read_be16(data + evidence.refill_remaining_test_offset) != 0x2ee8U ||
+        !sh2_conditional_branch_target(
+            evidence.refill_branch_offset,
+            read_be16(data + evidence.refill_branch_offset), data_size,
+            &evidence.refill_branch_target) ||
+        !sh2_conditional_branch_target(
+            evidence.refill_remaining_test_offset + 2U,
+            read_be16(data + evidence.refill_remaining_test_offset + 2U), data_size,
+            &evidence.refill_exhausted_target) ||
+        evidence.refill_branch_target != evidence.control_shift_offset + 18U ||
+        evidence.refill_exhausted_target !=
+            NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 166U ||
+        !sh2_movb_postinc_register_fields(
+            read_be16(data + evidence.byte_load_offset),
+            &evidence.byte_cursor_register, &evidence.byte_value_register) ||
+        !sh2_add_immediate_fields(
+            read_be16(data + evidence.remaining_decrement_offset),
+            &decrement_register, &evidence.remaining_decrement) ||
+        !sh2_extub_register_fields(
+            read_be16(data + evidence.byte_extend_offset),
+            &evidence.byte_extend_source_register,
+            &evidence.byte_extend_destination_register) ||
+        !sh2_mov_register_fields(read_be16(data + evidence.control_shift_offset - 48U),
+                                 &test_left, &test_right)) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+
+    /* 4b21 is SHAR R11. The preceding callee prologue copies R4 to R12. */
+    evidence.control_register = 11U;
+    evidence.control_test_other_register = 2U;
+    evidence.remaining_register = decrement_register;
+    if (test_left != 4U || test_right != 12U ||
+        evidence.byte_cursor_register != 12U ||
+        evidence.byte_value_register != 11U ||
+        evidence.remaining_register != 14U || evidence.remaining_decrement != -1 ||
+        evidence.byte_extend_source_register != 11U ||
+        evidence.byte_extend_destination_register != 11U ||
+        read_be16(data + evidence.next_control_test_offset) != 0x23b8U) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+    evidence.valid = 1;
+    if (out_evidence) *out_evidence = evidence;
+    return 1;
+}
+
 static int sh2_prs3_header_guard_evidence(const uint8_t *data,
                                           size_t data_size) {
     static const uint16_t predicate[] = {
@@ -1153,6 +1293,51 @@ static void test_sh2_dispatcher_caller_scanner(void) {
           "SH-2 caller scanner fixture retains its synthetic entry address");
 }
 
+static void test_sh2_version1_stream_read_evidence(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
+    Sh2Prs3Version1StreamReadEvidence evidence;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    /* Callee prologue: MOV R4,R12. */
+    fixture[entry + 6U] = 0x6cU;
+    fixture[entry + 7U] = 0x43U;
+    /* Shift/test/refill branch, then the R14 exhaustion branch. */
+    fixture[entry + 54U] = 0x4bU;
+    fixture[entry + 55U] = 0x21U;
+    fixture[entry + 56U] = 0x22U;
+    fixture[entry + 57U] = 0xb8U;
+    fixture[entry + 58U] = 0x8bU;
+    fixture[entry + 59U] = 0x05U;
+    fixture[entry + 60U] = 0x2eU;
+    fixture[entry + 61U] = 0xe8U;
+    fixture[entry + 62U] = 0x89U;
+    fixture[entry + 63U] = 0x32U;
+    /* MOV.B @R12+,R11; ADD #-1,R14; EXTU.B R11,R11. */
+    fixture[entry + 64U] = 0x6bU;
+    fixture[entry + 65U] = 0xc4U;
+    fixture[entry + 66U] = 0x7eU;
+    fixture[entry + 67U] = 0xffU;
+    fixture[entry + 68U] = 0x6bU;
+    fixture[entry + 69U] = 0xbcU;
+    fixture[entry + 74U] = 0x23U;
+    fixture[entry + 75U] = 0xb8U;
+
+    check(sh2_prs3_version1_stream_read_evidence(
+              fixture, sizeof(fixture), &evidence) && evidence.valid &&
+              evidence.byte_cursor_register == 12U &&
+              evidence.byte_value_register == 11U &&
+              evidence.remaining_register == 14U &&
+              evidence.remaining_decrement == -1 &&
+              evidence.refill_branch_target == entry + 72U &&
+              evidence.refill_exhausted_target == entry + 166U,
+          "SH-2 stream reader evidence locks the selected refill byte load");
+    fixture[entry + 65U] = 0xc0U;
+    check(!sh2_prs3_version1_stream_read_evidence(
+              fixture, sizeof(fixture), &evidence),
+          "SH-2 stream reader evidence rejects a non-post-increment refill load");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -1197,6 +1382,7 @@ int main(int argc, char **argv) {
     Sh2Prs3Version1BitfieldOutputEvidence bitfield_output_evidence;
     Sh2Prs3Version1ArgumentEvidence argument_evidence;
     Sh2Prs3Version1WordLifetimeEvidence word_lifetime_evidence;
+    Sh2Prs3Version1StreamReadEvidence stream_read_evidence;
     Sh2Prs3DispatcherCallerEvidence dispatcher_caller_evidence;
     Sh2Prs3BootstrapEvidence bootstrap_evidence;
     Sh2Prs3MapBoundaryEvidence map_boundary_evidence;
@@ -1208,6 +1394,7 @@ int main(int argc, char **argv) {
     test_sh2_work_ram_image_mapper();
     test_sh2_argument_field_decoders();
     test_sh2_dispatcher_caller_scanner();
+    test_sh2_version1_stream_read_evidence();
 
     if (!data_dir) {
         home = getenv("HOME");
@@ -1273,6 +1460,13 @@ int main(int argc, char **argv) {
                   word_lifetime_evidence.r6_is_incoming_over_setup &&
                   !word_lifetime_evidence.canonical_prs3_descriptor_field_correlation,
               "DM.BIN preserves the untyped R6+12 word through the selected call without descriptor-field promotion");
+        check(sh2_prs3_version1_stream_read_evidence(
+                  dm, dm_size, &stream_read_evidence) && stream_read_evidence.valid &&
+                  stream_read_evidence.byte_cursor_register == 12U &&
+                  stream_read_evidence.byte_value_register == 11U &&
+                  stream_read_evidence.remaining_register == 14U &&
+                  stream_read_evidence.remaining_decrement == -1,
+              "DM.BIN version-1 callee proves a bounded R4-origin byte refill path");
         check(sh2_prs3_dispatcher_caller_evidence(
                   dm, dm_size, &dispatcher_caller_evidence) &&
                   dispatcher_caller_evidence.valid &&
@@ -1412,6 +1606,31 @@ int main(int argc, char **argv) {
                    word_lifetime_evidence.r6_is_incoming_over_setup,
                    word_lifetime_evidence.canonical_prs3_descriptor_field_correlation);
             putchar('\n');
+        }
+        if (stream_read_evidence.valid) {
+            printf("SH-2 PRS3 version-1 stream refill: shift=%zu R%u test=%zu R%u "
+                   "branch=%zu->%zu remaining-test=%zu R%u exhausted=%zu "
+                   "load=%zu @R%u+->R%u decrement=%zu R%u%+d extend=%zu R%u->R%u "
+                   "next-test=%zu; payload/opcode/termination-proof=0\n",
+                   stream_read_evidence.control_shift_offset,
+                   stream_read_evidence.control_register,
+                   stream_read_evidence.control_test_offset,
+                   stream_read_evidence.control_test_other_register,
+                   stream_read_evidence.refill_branch_offset,
+                   stream_read_evidence.refill_branch_target,
+                   stream_read_evidence.refill_remaining_test_offset,
+                   stream_read_evidence.remaining_register,
+                   stream_read_evidence.refill_exhausted_target,
+                   stream_read_evidence.byte_load_offset,
+                   stream_read_evidence.byte_cursor_register,
+                   stream_read_evidence.byte_value_register,
+                   stream_read_evidence.remaining_decrement_offset,
+                   stream_read_evidence.remaining_register,
+                   stream_read_evidence.remaining_decrement,
+                   stream_read_evidence.byte_extend_offset,
+                   stream_read_evidence.byte_extend_source_register,
+                   stream_read_evidence.byte_extend_destination_register,
+                   stream_read_evidence.next_control_test_offset);
         }
         if (dispatcher_caller_evidence.valid) {
             printf("SH-2 PRS3 dispatcher caller scan: entry=%zu address=%08x "

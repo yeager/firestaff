@@ -67,6 +67,11 @@ static int orch_cmd_attack_find_door_on_square_compat(
     int mapX,
     int mapY,
     int* outDoorIndex);
+static int orch_f0249_move_non_group_square_things_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY);
 
 /* ================================================================
  *  Local LE helpers
@@ -3372,13 +3377,18 @@ static int orch_dispatch_square_state_event_compat(
         return 1;
     case DM1_EVENT_TELEPORTER:
     case DM1_EVENT_PIT:
-        /* F0250/F0251 share the same bit-3 open/toggle state transition.
-         * F0249 movement of existing things remains in the M10 F0267
-         * movement route and is not fabricated here. */
+        /* ReDMCSB TIMELINE.C F0250/F0251 opens the square before F0249
+         * re-submits its resident Things to F0267 at the same coordinates.
+         * The non-group live-chain branch is complete here; party/group
+         * transitions retain their dedicated F0267 owners. */
         if (effect == DOOR_EFFECT_TOGGLE) effect = (*square & 0x08) ?
             DOOR_EFFECT_CLEAR : DOOR_EFFECT_SET;
-        if (effect == DOOR_EFFECT_SET) *square |= 0x08u;
-        else *square &= (unsigned char)~0x08u;
+        if (effect == DOOR_EFFECT_SET) {
+            *square |= 0x08u;
+            return orch_f0249_move_non_group_square_things_compat(
+                world, ev->mapIndex, ev->mapX, ev->mapY);
+        }
+        *square &= (unsigned char)~0x08u;
         return 1;
     default:
         return 0;
@@ -5874,6 +5884,9 @@ static int orch_f0267_sensor_pass_count_compat(
 static void orch_f0267_dispatch_sensor_results_compat(
     struct GameWorld_Compat* world,
     const struct SensorTriggerResultList_Compat* results,
+    int sourceMapIndex,
+    int sourceMapX,
+    int sourceMapY,
     struct F0267ThingMoveResultPc34Compat* moveResult)
 {
     int i;
@@ -5885,9 +5898,36 @@ static void orch_f0267_dispatch_sensor_results_compat(
      * the corresponding party/group movement paths. */
     for (i = 0; i < results->count; ++i) {
         const struct SensorTriggerResult_Compat* trigger = &results->results[i];
+        struct SensorTriggerResult_Compat resolved;
         struct SensorEffect_Compat* effect;
+        const struct DungeonSensor_Compat* sensor;
+        const struct DungeonMapDesc_Compat* map;
+        int targetSquareType;
+        int targetIndex;
         if (!trigger->triggered || trigger->isLocal ||
-            trigger->targetEventType == DM1_EVENT_NONE) {
+            !world->dungeon || !world->things || !world->dungeon->maps ||
+            !world->dungeon->tiles || sourceMapIndex < 0 ||
+            sourceMapIndex >= (int)world->dungeon->header.mapCount ||
+            trigger->sensorIndex < 0 ||
+            trigger->sensorIndex >= world->things->sensorCount ||
+            !world->things->sensors) {
+            continue;
+        }
+        map = &world->dungeon->maps[sourceMapIndex];
+        if (!world->dungeon->tiles[sourceMapIndex].squareData ||
+            trigger->targetMapX < 0 || trigger->targetMapX >= map->width ||
+            trigger->targetMapY < 0 || trigger->targetMapY >= map->height) {
+            continue;
+        }
+        targetIndex = trigger->targetMapX * map->height + trigger->targetMapY;
+        targetSquareType = (world->dungeon->tiles[sourceMapIndex].squareData[
+            targetIndex] & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+        sensor = &world->things->sensors[trigger->sensorIndex];
+        memset(&resolved, 0, sizeof(resolved));
+        if (!F0724_SENSOR_ResolveEffectDispatch_Compat(sensor,
+                trigger->resolvedEffect, targetSquareType, sourceMapX,
+                sourceMapY, &resolved) ||
+            resolved.targetEventType == DM1_EVENT_NONE) {
             continue;
         }
         if (world->pendingSensorEffects.count >= SENSOR_EFFECT_LIST_MAX_COUNT) {
@@ -5898,13 +5938,37 @@ static void orch_f0267_dispatch_sensor_results_compat(
             world->pendingSensorEffects.count++];
         memset(effect, 0, sizeof(*effect));
         effect->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
-        effect->sensorType = trigger->effectKind;
+        effect->sensorType = resolved.effectKind;
         effect->destMapIndex = -1;
-        effect->destMapX = trigger->targetMapX;
-        effect->destMapY = trigger->targetMapY;
-        effect->destCell = trigger->targetCell;
-        effect->textIndex = trigger->resolvedEffect;
+        effect->destMapX = resolved.targetMapX;
+        effect->destMapY = resolved.targetMapY;
+        effect->destCell = resolved.targetCell;
+        effect->textIndex = resolved.resolvedEffect;
         moveResult->sensorDispatches++;
+
+        /* ReDMCSB MOVESENS.C F0268 queues the remote square event after
+         * F0276 has evaluated the sensor. Remote floor sensors do not carry
+         * a target map, so F0272 keeps the triggering map context. The
+         * source's zero-delay form still waits one timeline tick. */
+        if (resolved.targetEventType == DM1_EVENT_FAKEWALL ||
+            resolved.targetEventType == DM1_EVENT_TELEPORTER ||
+            resolved.targetEventType == DM1_EVENT_PIT ||
+            resolved.targetEventType == DM1_EVENT_DOOR) {
+            struct TimelineEvent_Compat event;
+            memset(&event, 0, sizeof(event));
+            event.kind = TIMELINE_EVENT_SQUARE_STATE;
+            event.fireAtTick = world->gameTick +
+                (uint32_t)(resolved.delayTicks > 0 ? resolved.delayTicks : 1);
+            event.mapIndex = sourceMapIndex;
+            event.mapX = resolved.targetMapX;
+            event.mapY = resolved.targetMapY;
+            event.cell = resolved.targetCell;
+            event.aux0 = resolved.targetEventType;
+            event.aux1 = resolved.resolvedEffect;
+            if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &event)) {
+                moveResult->sensorDispatchOverflow = 1;
+            }
+        }
     }
 }
 
@@ -5951,7 +6015,8 @@ static int orch_f0267_sensor_pass_dispatch_compat(
             world->things->sensorCount, &context, &results)) {
         return 0;
     }
-    orch_f0267_dispatch_sensor_results_compat(world, &results, moveResult);
+    orch_f0267_dispatch_sensor_results_compat(
+        world, &results, mapIndex, mapX, mapY, moveResult);
     return results.count;
 }
 
@@ -6155,6 +6220,71 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     result.destinationLinked = 1;
     result.moved = 1;
     if (outResult) *outResult = result;
+    return 1;
+}
+
+/* ReDMCSB TIMELINE.C F0249:1352-1465 snapshots the source square before
+ * moving its Things through F0267, because a move can unlink a later entry
+ * or loop back onto the same square. Party and GROUP use their own F0267
+ * branches; this helper owns only the ordinary type C05..C15 chain that the
+ * public F0267 object route can faithfully materialize today. */
+static int orch_f0249_move_non_group_square_things_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    unsigned short snapshot[64];
+    unsigned short thing;
+    int squareFirstThingIndex;
+    int snapshotCount = 0;
+    int safety = 0;
+    int i;
+
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->loaded || !world->things->squareFirstThings) {
+        return 0;
+    }
+    squareFirstThingIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (squareFirstThingIndex < 0 ||
+        squareFirstThingIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    thing = world->things->squareFirstThings[squareFirstThingIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+           safety++ < (int)(sizeof(snapshot) / sizeof(snapshot[0]))) {
+        int type = THING_GET_TYPE(thing);
+        unsigned short nextThing = orch_next_thing_compat(world->things, thing);
+
+        /* F0249 moves the GROUP before later Things. Its active-group,
+         * fall-damage and timeline work belongs to the existing group F0267
+         * route, so do not misroute it through the ordinary object path. */
+        if (type > THING_TYPE_GROUP && type <= THING_TYPE_EXPLOSION) {
+            snapshot[snapshotCount++] = thing;
+        }
+        thing = nextThing;
+    }
+
+    for (i = 0; i < snapshotCount; ++i) {
+        struct F0267ThingMoveRequestPc34Compat request;
+        struct F0267ThingMoveResultPc34Compat moveResult;
+
+        memset(&request, 0, sizeof(request));
+        memset(&moveResult, 0, sizeof(moveResult));
+        request.thing = snapshot[i];
+        request.sourceMapIndex = mapIndex;
+        request.sourceMapX = mapX;
+        request.sourceMapY = mapY;
+        request.destinationMapIndex = mapIndex;
+        request.destinationMapX = mapX;
+        request.destinationMapY = mapY;
+        /* A prior F0249 move can have consumed this snapshot entry. F0267
+         * validates source membership and makes that case a no-op. */
+        (void)F0267_MOVE_MoveThingOnLoadedChain_Compat(
+            world, &request, &moveResult);
+    }
     return 1;
 }
 
