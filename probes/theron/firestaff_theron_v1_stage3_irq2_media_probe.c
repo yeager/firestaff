@@ -141,6 +141,7 @@ int main(int argc, char **argv) {
               jp_original_handoff.ipl_preload_record == 0x0003e3u &&
               jp_original_handoff.ipl_preload_sector_count == 2u &&
               jp_original_handoff.ipl_preload_raw_sector == 0x4c3u &&
+              jp_original_handoff.ipl_preload_returns_to_ipl_proven &&
               jp_original_handoff.ipl_preload_user_data_bytes == 4096u &&
               jp_original_handoff.ipl_preload_first_nonzero_offset == 243u &&
               jp_original_handoff.ipl_preload_nonzero_byte_count == 2911u &&
@@ -155,6 +156,7 @@ int main(int argc, char **argv) {
               us_original_handoff.ipl_preload_record == 0x0003e3u &&
               us_original_handoff.ipl_preload_sector_count == 2u &&
               us_original_handoff.ipl_preload_raw_sector == 0x4c4u &&
+              us_original_handoff.ipl_preload_returns_to_ipl_proven &&
               us_original_handoff.ipl_preload_user_data_bytes == 4096u &&
               us_original_handoff.ipl_preload_first_nonzero_offset == 243u &&
               us_original_handoff.ipl_preload_nonzero_byte_count == 2911u &&
