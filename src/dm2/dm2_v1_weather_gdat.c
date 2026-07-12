@@ -13,3 +13,11 @@ int dm2_v1_weather_gdat_image_handle(const DM2_V1_AssetLoader *l, uint8_t field,
     p=dm2_v1_asset_load_typed_sized(l,DM2_GDAT_CATEGORY_ENVIRONMENT,0,DM2_GDAT_ENTRY_TYPE_IMAGE,field,&n);
     if(!p||n==0||n>UINT32_MAX)return 0; out->valid=1;out->field=field;out->data=p;out->byte_count=(uint32_t)n;return 1;
 }
+int dm2_v1_weather_gdat_image_metadata(const DM2_V1_AssetLoader *l, uint8_t field, DM2_V1_WeatherImageMetadata *out) {
+    uint8_t *pixels; int w=0,h=0; DM2_ImageFormat fmt;
+    if(!out)return 0;memset(out,0,sizeof(*out));
+    if(field!=0x64&&field!=0x67&&field!=0x6a&&field!=0x6d&&field!=0x71)return 0;
+    pixels=dm2_v1_asset_load_image_field(l,DM2_GDAT_CATEGORY_ENVIRONMENT,0,field,&w,&h,&fmt);
+    if(!pixels||w<=0||h<=0){dm2_v1_asset_free_pixels(pixels);return 0;}
+    dm2_v1_asset_free_pixels(pixels);out->valid=1;out->field=field;out->width=w;out->height=h;out->format=fmt;return 1;
+}
