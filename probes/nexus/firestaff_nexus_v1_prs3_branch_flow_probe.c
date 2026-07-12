@@ -143,6 +143,23 @@ typedef struct {
     size_t control_branch_target;
 } Nexus_Prs3V1ZeroSideMergeBranchReceipt;
 
+/* The merged R4 value next becomes a bounded R13-indexed byte-read offset.
+ * This is only an instruction/dataflow receipt; R13's allocation and the
+ * byte's PRS3 role remain outside this probe. */
+typedef struct {
+    int valid;
+    size_t index_mask_literal_load_offset;
+    size_t index_mask_literal_offset;
+    uint16_t index_mask_word;
+    size_t merged_value_copy_offset;
+    unsigned int merged_value_copy_source_register;
+    unsigned int merged_value_copy_destination_register;
+    size_t index_mask_and_offset;
+    size_t indexed_byte_load_offset;
+    unsigned int indexed_byte_base_register;
+    unsigned int indexed_byte_destination_register;
+} Nexus_Prs3V1MergedValueReadReceipt;
+
 static int failures;
 
 static void check(int condition, const char *message) {
@@ -291,6 +308,17 @@ static int sh2_add_register_fields(uint16_t instruction,
         !out_destination_register) return 0;
     *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
     *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
+/* SH-2 MOV.B @(R0,Rm),Rn is 0000nnnnmmmm1100. */
+static int sh2_movb_r0_index_load_fields(uint16_t instruction,
+                                         unsigned int *out_base_register,
+                                         unsigned int *out_destination_register) {
+    if ((instruction & 0xf00fU) != 0x000cU || !out_base_register ||
+        !out_destination_register) return 0;
+    *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_base_register = (unsigned int)((instruction >> 4) & 0x0fU);
     return 1;
 }
 
@@ -634,6 +662,53 @@ static int prs3_v1_zero_side_merge_branch_receipt(
     return 1;
 }
 
+static int prs3_v1_merged_value_read_receipt(
+    const uint8_t *data, size_t size, Nexus_Prs3V1MergedValueReadReceipt *out) {
+    Nexus_Prs3V1MergedValueReadReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+    unsigned int source = 0U, destination = 0U;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 150U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.index_mask_literal_load_offset = entry + 50U;
+    receipt.merged_value_copy_offset = entry + 142U;
+    receipt.index_mask_and_offset = entry + 144U;
+    receipt.indexed_byte_load_offset = entry + 148U;
+    if (read_be16(data + receipt.index_mask_literal_load_offset) != 0x956aU ||
+        !sh2_movw_pc_literal_target(
+            receipt.index_mask_literal_load_offset,
+            read_be16(data + receipt.index_mask_literal_load_offset),
+            &receipt.index_mask_literal_offset) ||
+        receipt.index_mask_literal_offset + 2U > size ||
+        !sh2_mov_register_fields(read_be16(data + receipt.merged_value_copy_offset),
+                                 &receipt.merged_value_copy_source_register,
+                                 &receipt.merged_value_copy_destination_register) ||
+        !sh2_logic_register_fields(read_be16(data + receipt.index_mask_and_offset),
+                                   0x2009U, &source, &destination) ||
+        source != 5U || destination != 0U ||
+        !sh2_movb_r0_index_load_fields(read_be16(data + receipt.indexed_byte_load_offset),
+                                       &receipt.indexed_byte_base_register,
+                                       &receipt.indexed_byte_destination_register) ||
+        receipt.merged_value_copy_source_register != 4U ||
+        receipt.merged_value_copy_destination_register != 0U ||
+        receipt.indexed_byte_base_register != 13U ||
+        receipt.indexed_byte_destination_register != 1U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.index_mask_word = read_be16(data + receipt.index_mask_literal_offset);
+    if (receipt.index_mask_word != 0x0fffU) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
 static void test_synthetic_branch_flow(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Nexus_Prs3V1BranchFlowReceipt receipt;
@@ -787,6 +862,31 @@ static void test_synthetic_zero_side_merge_branch(void) {
           "SH-2 PRS3 zero-side receipt rejects a changed merged-value branch");
 }
 
+static void test_synthetic_merged_value_read(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 512U];
+    Nexus_Prs3V1MergedValueReadReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 50U] = 0x95U; fixture[entry + 51U] = 0x6aU;
+    fixture[entry + 266U] = 0x0fU; fixture[entry + 267U] = 0xffU;
+    fixture[entry + 142U] = 0x60U; fixture[entry + 143U] = 0x43U;
+    fixture[entry + 144U] = 0x20U; fixture[entry + 145U] = 0x59U;
+    fixture[entry + 148U] = 0x01U; fixture[entry + 149U] = 0xdcU;
+    check(prs3_v1_merged_value_read_receipt(
+              fixture, sizeof(fixture), &receipt) && receipt.valid &&
+              receipt.index_mask_word == 0x0fffU &&
+              receipt.merged_value_copy_source_register == 4U &&
+              receipt.merged_value_copy_destination_register == 0U &&
+              receipt.indexed_byte_base_register == 13U &&
+              receipt.indexed_byte_destination_register == 1U,
+          "SH-2 PRS3 merged-value receipt locks masked R13-indexed byte read");
+    fixture[entry + 149U] = 0xccU;
+    check(!prs3_v1_merged_value_read_receipt(
+              fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 merged-value receipt rejects a changed indexed byte read");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -829,6 +929,7 @@ int main(int argc, char **argv) {
     Nexus_Prs3V1LowBitConsumptionReceipt low_bit_receipt;
     Nexus_Prs3V1ZeroSideMergeReceipt zero_side_merge_receipt;
     Nexus_Prs3V1ZeroSideMergeBranchReceipt zero_side_merge_branch_receipt;
+    Nexus_Prs3V1MergedValueReadReceipt merged_value_read_receipt;
 
     test_synthetic_branch_flow();
     test_synthetic_zero_side_read();
@@ -836,6 +937,7 @@ int main(int argc, char **argv) {
     test_synthetic_low_bit_consumption();
     test_synthetic_zero_side_merge();
     test_synthetic_zero_side_merge_branch();
+    test_synthetic_merged_value_read();
     if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
@@ -876,6 +978,10 @@ int main(int argc, char **argv) {
                   data, size, &zero_side_merge_branch_receipt) &&
                   zero_side_merge_branch_receipt.valid,
               "DM.BIN locks the PRS3 v1 merged-value control branch");
+        check(prs3_v1_merged_value_read_receipt(
+                  data, size, &merged_value_read_receipt) &&
+                  merged_value_read_receipt.valid,
+              "DM.BIN locks the PRS3 v1 masked R13-indexed byte read");
         if (receipt.valid) {
             printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
                    "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
@@ -954,6 +1060,15 @@ int main(int argc, char **argv) {
                    zero_side_merge_branch_receipt.compare_destination_register,
                    zero_side_merge_branch_receipt.control_branch_offset,
                    zero_side_merge_branch_receipt.control_branch_target);
+        }
+        if (merged_value_read_receipt.valid) {
+            printf("SH-2 PRS3 v1 merged-value read: R4->R0 mask=%04x "
+                   "and=%zu load=%zu @(R0,R%u)->R%u; token/output-proof=0\n",
+                   (unsigned int)merged_value_read_receipt.index_mask_word,
+                   merged_value_read_receipt.index_mask_and_offset,
+                   merged_value_read_receipt.indexed_byte_load_offset,
+                   merged_value_read_receipt.indexed_byte_base_register,
+                   merged_value_read_receipt.indexed_byte_destination_register);
         }
     }
     free(data);

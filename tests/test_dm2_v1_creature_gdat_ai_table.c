@@ -96,6 +96,7 @@ int main(void) {
                 0,
                 255,
                 0);
+    put16(raw_data + 32, 0x01a5u);
 
     memset(entries, 0, sizeof(entries));
     /* skproject QUERY_CREATURE_AI_SPEC_FROM_TYPE reads CREATURES[type]
@@ -172,6 +173,14 @@ int main(void) {
               bat->AttacksSpells == AI_ATTACK_FLAGS__SHOOT &&
               bat->w30 == DM2_AI_W30_TURNS_MISSILE,
           "Cavern Bat spec decodes missile/attack flags");
+    {
+        uint16_t rectno = 0u;
+        CHECK(dm2_v1_creature_item_click_rect_evidence(
+                  DM2_AI_THORN_DEMON, &rectno) == 1 && rectno == 0x01a5u &&
+                  dm2_v1_creature_item_click_rect_evidence(
+                      DM2_AI_GIGGLER, &rectno) == 0,
+              "GDAT creature row exposes only proven w32 click-rect evidence");
+    }
 
     CHECK(dm2_v1_creature_attacks_party(DM2_AI_THORN_DEMON, 1) == 1 &&
               dm2_v1_creature_attacks_party(DM2_AI_THORN_DEMON, 7) == 0,
