@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 DGN Structure1F direct-coordinate receipt: a real
+  LEV00-LEV15 corpus probe now traces all 1,006 direct-coordinate records
+  (items, floor decorations, floor sensors) into typed runtime entries with
+  zero mismatches. This is raw coordinate dataflow only, not object, sensor,
+  trigger, draw, gameplay, or rendering semantics; Structure1A-bound
+  alcove/wall records remain unresolved. Verification: direct strict-C11
+  probe against all 16 original DGN files PASS.
+
 - 2026-07-12 DM2 V1 synthetic startup timers removed: absent an original
   timer corpus, the DM2 timeline initializes with no built-in events, text,
   coordinates, or fires. Verification: focused no-startup-timers test PASS.
@@ -8628,6 +8636,8 @@
 # ✅ 2026-07-12 CSB DSA global EXPOOL writeback: a successful authenticated `GLOBALSTORE` now stages the profile global bank and rewrites its existing CSBWin `EDT_Database | EDBT_GlobalVariables` payload words in the preserved EXPOOL tail before committing either caller parameters or runtime state. The tail hash is refreshed, so the existing CSBWin core exporter retains the real updated record rather than a stale copy. Missing, malformed, truncated, oversized, or partial-record tails reject without publication. Source: CSBWin `SaveGame.cpp` global-variable save loop and `data.cpp EXPOOL::Locate`. Verified by `test_csb_v1_phase7_verification`: one source record updates the runner, profile bank, and located EXPOOL little-endian word.
 
 # ✅ 2026-07-12 CSB DSA global save-export handoff: the existing bounded CSBWin core-save exporter is now regression-locked after an authenticated `GLOBALSTORE`. It verifies the emitted body, resolves the exported `EDT_Database | EDBT_GlobalVariables` record via the same source EXPOOL lookup, and proves the committed little-endian word survives the runtime-to-core-save boundary. Source: CSBWin `SaveGame.cpp` global-variable write loop and `data.cpp EXPOOL::Locate`. Verified by `test_csb_v1_phase7_verification`.
+
+# ✅ 2026-07-12 CSB DSA global native-save handoff: Firestaff-native CSB saves now have a regression that proves the updated preserved EXPOOL tail survives native save/reload and is rehydrated into the source-sized DSA global bank. Source: CSBWin `SaveGame.cpp` global-variable load order before DSA tracing. Verified by `test_csb_v1_phase7_verification`: `GLOBALSTORE` -> native save -> reload retains the record and value.
 
 # ✅ 2026-07-12 CSB authenticated DSA filter runner: added `csb_v1_csbwin_dsa_run_authenticated_filter_stack_action()` as the runtime callback for the supported CSBWin `ProcessDSAFilter` pure stack subset. It requires exact pointer identity with the imported `(dsa,state,ordinal)` action, stages the signed parameter surface and its owned global bank, and publishes a receipt only after a complete supported action. Forged pointers and world-mutating `AMPERSAND` code leave all caller state unchanged. Source: CSBWin `DSA.cpp` `ProcessDSAFilter`/`ProcessDSATimer6` lines 5315-5460 and `Execute` lines 5053-5293. Verified by `test_csb_v1_dsa_trigger_single_step_pc34_compat`: 123 assertions, 0 failures.
 
