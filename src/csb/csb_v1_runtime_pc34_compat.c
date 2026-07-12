@@ -8064,6 +8064,83 @@ static int csb_v1_runtime_object_type_from_thing(
     return (int)(csb_v1_runtime_read_u16(record + 2) & 0x007Fu);
 }
 
+static void csb_v1_runtime_add_skill_experience(
+    CSB_V1_Champion *champion,
+    int skill_index,
+    unsigned int experience)
+{
+    int base_skill;
+    unsigned int temporary_experience;
+
+    if (!champion || !champion->SkillExperienceValid ||
+        skill_index < 0 || skill_index >= CSB_V1_FULL_SKILL_COUNT ||
+        experience == 0u) {
+        return;
+    }
+
+    /* ReDMCSB CHAMPION.C F0304 lines 879-906 adds experience to the
+     * requested skill and, for a hidden skill, to its base skill as well.
+     * C08 steal is hidden ninja skill 8, whose base is C01 ninja. */
+    if (champion->SkillExperience[skill_index] <= UINT32_MAX - experience) {
+        champion->SkillExperience[skill_index] += experience;
+    }
+    temporary_experience = experience >> 3;
+    if (temporary_experience > 100u) temporary_experience = 100u;
+    if (champion->SkillTemporaryExperience[skill_index] < 32000) {
+        champion->SkillTemporaryExperience[skill_index] +=
+            (int16_t)temporary_experience;
+    }
+    if (skill_index < 4) return;
+
+    base_skill = (skill_index - 4) >> 2;
+    if (champion->SkillExperience[base_skill] <= UINT32_MAX - experience) {
+        champion->SkillExperience[base_skill] += experience;
+    }
+}
+
+static void csb_v1_runtime_add_party_steal_skill_experience(
+    CSB_V1_RuntimeProfile *profile,
+    int leader_only)
+{
+    int champion_count;
+    int champion_index;
+    unsigned int experience = 300u;
+
+    if (!profile || !profile->party_state_valid) return;
+    champion_count = profile->party_state.ChampionCount;
+    if (champion_count < 1) return;
+    if (champion_count > CSB_V1_MAX_CHAMPIONS) {
+        champion_count = CSB_V1_MAX_CHAMPIONS;
+    }
+    if (leader_only) {
+        champion_index = profile->leader_index;
+        if (champion_index >= 0 && champion_index < champion_count) {
+            CSB_V1_Champion *champion =
+                &profile->party_state.Champions[champion_index];
+
+            if (champion->CurrentHealth > 0) {
+                csb_v1_runtime_add_skill_experience(champion, 8, experience);
+            }
+        }
+        return;
+    }
+
+    /* ReDMCSB MOVESENS.C F0269 lines 1058-1077 divides by the party
+     * count before it skips dead champions.  F0276 invokes F0270 with
+     * CELL_ANY, so an object-triggered C10 effect always takes this path. */
+    experience /= (unsigned int)champion_count;
+    for (champion_index = 0;
+         champion_index < champion_count;
+         ++champion_index) {
+        CSB_V1_Champion *champion =
+            &profile->party_state.Champions[champion_index];
+
+        if (champion->CurrentHealth > 0) {
+            csb_v1_runtime_add_skill_experience(champion, 8, experience);
+        }
+    }
+}
+
 static void csb_v1_runtime_process_object_floor_sensors_at(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
@@ -8223,10 +8300,18 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         target_x = (int)((target_word >> 6) & 0x1Fu);
         target_y = (int)((target_word >> 11) & 0x1Fu);
         if ((flags_word >> 11) & 0x01u) {
-            /* ReDMCSB MOVESENS.C F0270/F0271 retains only the last local
-             * effect while F0276 walks the source square, then applies its
-             * sensor-list rotation after the pass completes. */
-            pending_local_effect = (int)(target_word & 0x0FFFu);
+            int local_effect = (int)(target_word & 0x0FFFu);
+
+            if (local_effect == 10) {
+                /* ReDMCSB MOVESENS.C F0270 lines 1089-1093 immediately
+                 * routes C10 through F0269 instead of retaining it as a
+                 * later F0271 sensor-list rotation effect. */
+                csb_v1_runtime_add_party_steal_skill_experience(profile, 0);
+            } else {
+                /* ReDMCSB MOVESENS.C F0270/F0271 retains only the last
+                 * rotation effect while F0276 walks the source square. */
+                pending_local_effect = local_effect;
+            }
         } else {
             csb_v1_runtime_trigger_remote_sensor_event_after(
                 profile,
