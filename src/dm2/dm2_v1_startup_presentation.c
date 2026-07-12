@@ -389,7 +389,12 @@ int dm2_v1_startup_execute_draw_commands(
         const DM2_V1_StartupDrawCommand *command = &commands[i];
         switch (command->kind) {
         case DM2_V1_STARTUP_DRAW_GDAT_IMAGE:
-            (void)executor->draw_gdat_image(executor->userdata, command);
+            /* fe7299 SHOW_MENU_SCREEN owns TITLE/0 dt07/4.  A failed source
+             * image fetch is not permission to keep drawing host/menu
+             * substitutes over the startup frame. */
+            if (!executor->draw_gdat_image(executor->userdata, command)) {
+                return 0;
+            }
             break;
         case DM2_V1_STARTUP_DRAW_FILL_RECT:
             executor->fill_rect(executor->userdata, command);
