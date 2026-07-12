@@ -3562,6 +3562,13 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->status_scope = "STARTUP";
         out_receipt->status = "TRACK02 ATLAS ROUTE MISSING";
         return 0;
+    } else if (plan.required_bitmap_route_mask != 0u) {
+        out_receipt->graphics_blocked = 1;
+        out_receipt->no_fallback_startup_graphics_proof = 1;
+        out_receipt->fallback_visuals_allowed = 0;
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "RAW TRACK02 BITMAP REQUIRED";
+        return 0;
     } else {
         out_receipt->graphics_executed =
             theron_v1_boot_startup_execute_graphics_plan(&plan, executor)
