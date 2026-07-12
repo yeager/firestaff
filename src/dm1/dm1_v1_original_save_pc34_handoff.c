@@ -452,7 +452,10 @@ static int import_original_pc34_party_part(const uint8_t *part,
     int slot_count;
     int i;
 
-    if (part_size < DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT) {
+    /* ReDMCSB LOADSAVE.C F0435:2766-2777 reads one fixed PC34 PARTY
+     * save part: M516_CHAMPIONS (4 * 319 bytes) followed by PARTY_INFO
+     * (128 bytes). Do not treat excess bytes as a private extension. */
+    if (part_size != DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
     if (!out_state->party) {

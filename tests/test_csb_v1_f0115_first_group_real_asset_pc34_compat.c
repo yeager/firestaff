@@ -12,6 +12,7 @@ static int test_synthetic_contract(void)
     const uint8_t giggler_source[4] = {11, 1, 2, 3};
     const uint8_t screamer_source[4] = {13, 1, 2, 3};
     const uint8_t rockpile_source[4] = {4, 5, 8, 9};
+    const uint8_t ghost_source[4] = {4, 5, 8, 9};
     const uint8_t wizard_eye_source[4] = {4, 9, 10, 1};
     struct DungeonMapDesc_Compat map;
     uint8_t screen[320 * 200];
@@ -93,6 +94,23 @@ static int test_synthetic_contract(void)
             1, 33, 2, 2, 2, 2500, 0) != 0 ||
         csb_v1_viewport_f0115_native_group_front_graphic_pc34(7) != 605) {
         fprintf(stderr, "FAIL: Rockpile D3/aspect/fail-closed occlusion contract\n");
+        return 0;
+    }
+    memset(screen, 0x5a, sizeof(screen));
+    if (csb_v1_viewport_f0115_blit_native_group_front_family_pc34(
+            8, 607, ghost_source, 2, 2, screen, 320, 200, 320,
+            1, 33, 2, 2, 3, 0x8000 | 3280, 0) != 3 ||
+        screen[33 * 320 + 1] != 0x5a || screen[33 * 320 + 2] != 3 ||
+        screen[34 * 320 + 1] != 3 || screen[34 * 320 + 2] != 0 ||
+        csb_v1_viewport_f0115_blit_native_group_front_family_pc34(
+            8, 605, ghost_source, 2, 2, screen, 320, 200, 320,
+            1, 33, 2, 2, 2, 3280, 0) != 0 ||
+        csb_v1_viewport_f0115_blit_native_group_front_family_pc34(
+            8, 607, ghost_source, 2, 2, screen, 320, 200, 320,
+            1, 33, 2, 2, 2, 2500, 0) != 0 ||
+        csb_v1_viewport_f0115_native_group_front_graphic_pc34(8) != 607 ||
+        csb_v1_viewport_f0115_native_group_front_graphic_pc34(9) != -1) {
+        fprintf(stderr, "FAIL: Ghost D3/aspect/fail-closed occlusion contract\n");
         return 0;
     }
     memset(screen, 0x5a, sizeof(screen));
@@ -193,7 +211,22 @@ int main(void)
         M11_AssetLoader_Shutdown(&loader);
         return 1;
     }
+    slot = M11_AssetLoader_Load(&loader, 607u);
+    if (!slot || !slot->pixels || slot->width == 0 || slot->height == 0) {
+        fprintf(stderr, "FAIL: missing Ghost GRAPHICS.DAT 607\n");
+        M11_AssetLoader_Shutdown(&loader);
+        return 1;
+    }
+    memset(screen, 0x5a, sizeof(screen));
+    if (csb_v1_viewport_f0115_blit_native_group_front_family_pc34(
+            8, 607, slot->pixels, (int)slot->width, (int)slot->height,
+            screen, 320, 200, 320, 96, 80, (int)slot->width,
+            (int)slot->height, 2, 3280, 0) <= 0) {
+        fprintf(stderr, "FAIL: Ghost GRAPHICS.DAT 607 did not composite\n");
+        M11_AssetLoader_Shutdown(&loader);
+        return 1;
+    }
     M11_AssetLoader_Shutdown(&loader);
-    printf("PASS: CSB F0115 Scorpion/Slime/Giggler/Screamer/Rockpile group material\n");
+    printf("PASS: CSB F0115 Scorpion/Slime/Giggler/Screamer/Rockpile/Ghost group material\n");
     return 0;
 }

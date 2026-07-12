@@ -14,6 +14,8 @@
  * cannot create rules or dispatch actions. */
 
 #define NEXUS_SLEV_TASK_HEADER_SIZE 36
+#define NEXUS_SLEV_PRIMARY_LITERAL_INSTRUCTION_OFFSET 4
+#define NEXUS_SLEV_AUX_LITERAL_INSTRUCTION_OFFSET 32
 
 static int nexus_read_u16_be(const uint8_t *p) {
     return p ? (int)(((uint16_t)p[0] << 8) | (uint16_t)p[1]) : 0;
@@ -56,8 +58,13 @@ static int nexus_script_parse_slev_task_header(Nexus_ScriptVM *vm,
     if ((data[2] & 0xf0u) != 0xe0u || (data[4] & 0xf0u) != 0xd0u ||
         (data[32] & 0xf0u) != 0xd0u) return 0;
 
-    primary_literal_offset = 8 + (int)data[5] * 4;
-    aux_literal_offset = 36 + (int)data[33] * 4;
+    /* SH-2 MOV.L @(disp,PC),Rn uses the aligned instruction PC plus four.
+     * This is an encoding receipt only; it does not establish what either
+     * in-file literal denotes or which task body owns it. */
+    primary_literal_offset = NEXUS_SLEV_PRIMARY_LITERAL_INSTRUCTION_OFFSET +
+        4 + (int)data[5] * 4;
+    aux_literal_offset = NEXUS_SLEV_AUX_LITERAL_INSTRUCTION_OFFSET + 4 +
+        (int)data[33] * 4;
     if (primary_literal_offset < NEXUS_SLEV_TASK_HEADER_SIZE ||
         aux_literal_offset < NEXUS_SLEV_TASK_HEADER_SIZE ||
         primary_literal_offset > size - 4 || aux_literal_offset > size - 4) {
@@ -73,10 +80,16 @@ static int nexus_script_parse_slev_task_header(Nexus_ScriptVM *vm,
     vm->real_task_setup_immediate = data[3];
     vm->real_task_setup_immediate_provenance =
         NEXUS_SLEV_SETUP_IMMEDIATE_SH2_MOV_R2;
+    vm->real_task_primary_literal_instruction_offset =
+        NEXUS_SLEV_PRIMARY_LITERAL_INSTRUCTION_OFFSET;
+    vm->real_task_primary_literal_displacement = data[5];
     vm->real_task_primary_literal_offset = primary_literal_offset;
     vm->real_task_primary_literal_address = primary_literal;
     vm->real_task_primary_literal_provenance =
         NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R3;
+    vm->real_task_aux_literal_instruction_offset =
+        NEXUS_SLEV_AUX_LITERAL_INSTRUCTION_OFFSET;
+    vm->real_task_aux_literal_displacement = data[33];
     vm->real_task_aux_literal_offset = aux_literal_offset;
     vm->real_task_aux_literal_address = aux_literal;
     vm->real_task_aux_literal_provenance =
@@ -211,9 +224,13 @@ int nexus_script_vm_load_canonical_level(Nexus_ScriptVM *vm, int level_index,
     vm->real_task_setup_immediate = 0;
     vm->real_task_setup_immediate_provenance =
         NEXUS_SLEV_SETUP_IMMEDIATE_NONE;
+    vm->real_task_primary_literal_instruction_offset = -1;
+    vm->real_task_primary_literal_displacement = 0;
     vm->real_task_primary_literal_offset = -1;
     vm->real_task_primary_literal_address = 0;
     vm->real_task_primary_literal_provenance = NEXUS_SLEV_LITERAL_NONE;
+    vm->real_task_aux_literal_instruction_offset = -1;
+    vm->real_task_aux_literal_displacement = 0;
     vm->real_task_aux_literal_offset = -1;
     vm->real_task_aux_literal_address = 0;
     vm->real_task_aux_literal_provenance = NEXUS_SLEV_LITERAL_NONE;
@@ -260,9 +277,13 @@ void nexus_script_vm_unload(Nexus_ScriptVM *vm) {
     vm->real_task_setup_immediate = 0;
     vm->real_task_setup_immediate_provenance =
         NEXUS_SLEV_SETUP_IMMEDIATE_NONE;
+    vm->real_task_primary_literal_instruction_offset = -1;
+    vm->real_task_primary_literal_displacement = 0;
     vm->real_task_primary_literal_offset = -1;
     vm->real_task_primary_literal_address = 0;
     vm->real_task_primary_literal_provenance = NEXUS_SLEV_LITERAL_NONE;
+    vm->real_task_aux_literal_instruction_offset = -1;
+    vm->real_task_aux_literal_displacement = 0;
     vm->real_task_aux_literal_offset = -1;
     vm->real_task_aux_literal_address = 0;
     vm->real_task_aux_literal_provenance = NEXUS_SLEV_LITERAL_NONE;
@@ -309,12 +330,20 @@ int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
     out_receipt->real_task_setup_immediate = vm->real_task_setup_immediate;
     out_receipt->real_task_setup_immediate_provenance =
         vm->real_task_setup_immediate_provenance;
+    out_receipt->real_task_primary_literal_instruction_offset =
+        vm->real_task_primary_literal_instruction_offset;
+    out_receipt->real_task_primary_literal_displacement =
+        vm->real_task_primary_literal_displacement;
     out_receipt->real_task_primary_literal_offset =
         vm->real_task_primary_literal_offset;
     out_receipt->real_task_primary_literal_address =
         vm->real_task_primary_literal_address;
     out_receipt->real_task_primary_literal_provenance =
         vm->real_task_primary_literal_provenance;
+    out_receipt->real_task_aux_literal_instruction_offset =
+        vm->real_task_aux_literal_instruction_offset;
+    out_receipt->real_task_aux_literal_displacement =
+        vm->real_task_aux_literal_displacement;
     out_receipt->real_task_aux_literal_offset = vm->real_task_aux_literal_offset;
     out_receipt->real_task_aux_literal_address =
         vm->real_task_aux_literal_address;

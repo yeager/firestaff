@@ -102,9 +102,13 @@ typedef struct {
     int real_task_header_size;
     int real_task_setup_immediate;
     Nexus_SlevSetupImmediateProvenance real_task_setup_immediate_provenance;
+    int real_task_primary_literal_instruction_offset;
+    int real_task_primary_literal_displacement;
     int real_task_primary_literal_offset;
     int real_task_primary_literal_address;
     Nexus_SlevLiteralProvenance real_task_primary_literal_provenance;
+    int real_task_aux_literal_instruction_offset;
+    int real_task_aux_literal_displacement;
     int real_task_aux_literal_offset;
     int real_task_aux_literal_address;
     Nexus_SlevLiteralProvenance real_task_aux_literal_provenance;
@@ -146,9 +150,13 @@ typedef struct {
     int real_task_header_size;
     int real_task_setup_immediate;
     Nexus_SlevSetupImmediateProvenance real_task_setup_immediate_provenance;
+    int real_task_primary_literal_instruction_offset;
+    int real_task_primary_literal_displacement;
     int real_task_primary_literal_offset;
     int real_task_primary_literal_address;
     Nexus_SlevLiteralProvenance real_task_primary_literal_provenance;
+    int real_task_aux_literal_instruction_offset;
+    int real_task_aux_literal_displacement;
     int real_task_aux_literal_offset;
     int real_task_aux_literal_address;
     Nexus_SlevLiteralProvenance real_task_aux_literal_provenance;

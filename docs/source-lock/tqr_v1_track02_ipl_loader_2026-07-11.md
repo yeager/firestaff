@@ -46,7 +46,9 @@ The same bootstrap contains a separate, fully literal System Card `CD_EXEC`
 setup at CPU `$40a4`. It reads four bytes from its local table at `$40d5` as
 `CL,DL,CH,AL`: `00 e7 03 11`. Under the documented API this is record
 `0x0003e7`, 17 sectors, local destination `$4000`; `JSR $e00f` loads and jumps
-to that destination. The record begins at raw sector 1223 (JP) or 1224 (US),
+to that destination. This is the canonical stage-two bootstrap handoff: local
+RAM `$4000` is both the load address and entry address. The record begins at
+raw sector 1223 (JP) or 1224 (US),
 again relative to the relevant Track 02 INDEX 01.
 
 Both 17-sector second-stage bodies contain the identical literal `CD_READ` at

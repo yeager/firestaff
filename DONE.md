@@ -1,5 +1,71 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM2 canonical G1 map-5 direct DB2 text receipt: after the
+  map-0 DB1 teleporter route proved non-transitional, the next admissible
+  direct family is map 5's seven DB2 roots. `dm2_v1_dungeon_loader` now reads
+  only `DME.h::Text::w2` after the independently proven DB2 address transform:
+  bit 0 visibility, bits 1..2 mode, and bits 3..15 text-table index. The
+  receipt retains root ObjectID direction, index, and map placement, and the
+  DM2 runtime preserves it at boot. The canonical corpus pins the first
+  record at `(9,13)` / ObjectID `0x084a` / text index 539, and the repeated
+  direction-2 root `0x8a16` at `(10,21)` and `(11,1)` with mode 2 / text index
+  16. No text bytes or `GenericRecord::w0` are read; map-5 DB1/DB3/DB4 roots
+  and all blocked DB8/DB10 roots remain unavailable. Source authority:
+  skproject `SKWIN/DME.h` `ObjectID` and `Text`, with `c_map` ground-stack
+  root selection and the already locked `c_record` DB2 base/index transform.
+  Verification: focused build of `test_dm2_v1_dungeon_loader_first_map_gate`
+  and `firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe`; focused
+  CTest passed 1/1; the hash-verified canonical
+  `~/.firestaff/data/dm2/DUNGEON.DAT` probe passed 59/59. No git operations.
+
+- 2026-07-12 DM1 PC34 original-save F0796 PARTY block: after the
+  `GLOBAL_DATA`-sized ACTIVE_GROUP validation, the native importer and the
+  original-save handoff now accept only the original fixed
+  `M516_CHAMPIONS + PARTY_INFO` save part (`4 * 319 + 128 = 1404` bytes).
+  The check runs before champion decoding and preserves the existing
+  candidate-state commit boundary; oversized and undersized PARTY parts are
+  both rejected without a private extension schema. Source authority:
+  ReDMCSB `LOADSAVE.C F0435:2766-2777` and `DEFS.H
+  CHAMPION_EXCLUDING_PORTRAIT` / `PARTY_INFO`. Verification: focused build
+  and `test_dm1_v1_savegame_pc34_native_export_pc34_compat` passed, including
+  PARTY byte-contract round-trip, malformed-length no-commit, and checksum
+  corruption no-commit coverage. No git operations.
+
+- 2026-07-12 Theron Track 02 canonical stage-two handoff: the authenticated
+  IPL `CD_EXEC` receipt now records `$4000` as both the 17-sector stage-two
+  local-RAM load and entry address. M11 revalidation now compares this
+  handoff plus every already-proven stage-two dynamic-read boundary field
+  against a fresh read of the hash-verified CUE payload, so a mismatched
+  receipt fails closed. This does not bind later records, payload semantics,
+  graphics, palettes, objects, or runtime routes. Verification: focused build
+  passed; `firestaff_theron_v1_track02_ipl_loader_probe` reported `fail=0`;
+  `test_theron_v1_m11_launcher_handoff_boundary` passed 13 assertions with
+  its expected one real-atlas skip; focused CTest passed 2/2. No git
+  operations.
+
+- 2026-07-12 CSB F0115 native Ghost group front: type 8 now resolves only
+  through `G0243 -> G0219 -> M618` to PC CSB `GRAPHICS.DAT` 607. Its G0219
+  offset 23 and `0x04` coordinate/transparency byte are consumed by the
+  existing native C3200 compositor: C4 stays transparent, D2/D3 use the
+  G0222/G0221 palette rows, and only the F0115 C3200 source-zone band is
+  admitted. An incorrect graphic, a non-C3200 zone, malformed geometry, or
+  every unproven family/pose remains a no-draw gate. Source authority:
+  ReDMCSB `DUNVIEW.C G0219:1625-1653`, `F0115:5222-5225,5434-5463,5616-5627`,
+  and `DEFS.H:2392`. Verification: focused target build, direct synthetic
+  `test_csb_v1_f0115_first_group_real_asset_pc34_compat`, and its focused
+  CTest all passed. The optional decoded-PC-asset branch was skipped because
+  `FIRESTAFF_CSB_GRAPHICS_DAT` is unset. No git operations.
+
+- 2026-07-12 Nexus SLEV PC-relative displacement receipt: the canonical
+  36-byte SH-2 entry parser now records the fixed byte offsets and raw
+  displacement operands for `d3dd` and `d0dd`. The receipt proves each
+  bounded in-file literal offset with the SH-2 aligned-PC-plus-four formula
+  across all sixteen staged SLEV files. It assigns no ownership or meaning to
+  either literal, parses no task body, and leaves all script dispatch blocked.
+  Verification: focused build, direct `test_nexus_v1_script_vm`, and CTest
+  `nexus_v1_script_vm` passed against the local 16-file corpus. No git
+  operations.
+
 - 2026-07-12 Theron Track 02 stage-two dynamic-read boundary: the
   authenticated IPL receipt now records the exact `$4090` `CD_READ` boundary
   proven by the original 17-sector second-stage code. It fixes the

@@ -135,6 +135,10 @@ int dm2_v1_runtime_g1_first_map_receipt(
  * and blocked roots remain unavailable. */
 int dm2_v1_runtime_g1_map0_teleporter_transition_receipt(
     DM2_V1_G1TeleporterTransitionReceipt *out_receipt);
+/* Returns the map-5 direct DB2 Text::w2 field receipt consumed at boot.
+ * It exposes no text bytes, GenericRecord::w0 links, or non-DB2 records. */
+int dm2_v1_runtime_g1_map5_text_receipt(
+    DM2_V1_G1Map5TextRuntimeReceipt *out_receipt);
 int  dm2_v1_runtime_bind_boot_profile_with_receipt(
     DM2_V1_BootProfile *boot_profile,
     DM2_V1_StartupHostReceipt *out_receipt);

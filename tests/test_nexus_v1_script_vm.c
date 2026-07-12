@@ -274,10 +274,14 @@ static void test_real_slev_task_profile_blocks_dispatch(void) {
           receipt.real_task_setup_immediate == 0x1a &&
           receipt.real_task_setup_immediate_provenance ==
               NEXUS_SLEV_SETUP_IMMEDIATE_SH2_MOV_R2 &&
+          receipt.real_task_primary_literal_instruction_offset == 4 &&
+          receipt.real_task_primary_literal_displacement == 0x0e &&
           receipt.real_task_primary_literal_offset == 64 &&
           receipt.real_task_primary_literal_address == 0x00202734 &&
           receipt.real_task_primary_literal_provenance ==
               NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R3 &&
+          receipt.real_task_aux_literal_instruction_offset == 32 &&
+          receipt.real_task_aux_literal_displacement == 0x08 &&
           receipt.real_task_aux_literal_offset == 68 &&
           receipt.real_task_aux_literal_address == 0x00202840 &&
           receipt.real_task_aux_literal_provenance ==
@@ -359,6 +363,12 @@ static void test_optional_real_slev_corpus_profile(void) {
                   "optional real SLEV profile records SH-2 call/operand shape");
             CHECK(receipt.real_task_header_supported == 1 &&
                   receipt.real_task_header_size == 36 &&
+                  receipt.real_task_primary_literal_instruction_offset == 4 &&
+                  receipt.real_task_aux_literal_instruction_offset == 32 &&
+                  receipt.real_task_primary_literal_offset ==
+                      8 + receipt.real_task_primary_literal_displacement * 4 &&
+                  receipt.real_task_aux_literal_offset ==
+                      36 + receipt.real_task_aux_literal_displacement * 4 &&
                   receipt.real_task_primary_literal_offset >= 36 &&
                   receipt.real_task_aux_literal_offset >= 36 &&
                   receipt.real_task_primary_literal_address >= 0x00200000 &&

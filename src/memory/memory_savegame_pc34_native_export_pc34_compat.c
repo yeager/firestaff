@@ -826,6 +826,16 @@ static int pc34_validate_active_group_part(int partLen,
            (size_t)partLen == expectedLen;
 }
 
+static int pc34_validate_party_part(int partLen)
+{
+    /* ReDMCSB LOADSAVE.C F0435:2766-2777 reads exactly
+     * sizeof(M516_CHAMPIONS) + sizeof(G0407_s_Party): four packed
+     * 319-byte CHAMPION_EXCLUDING_PORTRAIT records followed by the
+     * 128-byte PARTY_INFO. This is a fixed PC34 save-part contract,
+     * not an extensible Firestaff payload. */
+    return partLen == SAVEGAME_PC34_PARTY_PART_BYTE_COUNT;
+}
+
 static void pack_champion_excluding_portrait(
     unsigned char* dst,
     const struct ChampionState_Compat* champion)
@@ -982,7 +992,7 @@ static void unpack_party(const unsigned char* src,
     if (state == 0 || state->party == 0) {
         return;
     }
-    if (partLen < SAVEGAME_PC34_PARTY_PART_BYTE_COUNT) {
+    if (!pc34_validate_party_part(partLen)) {
         return;
     }
     count = state->party->championCount;
@@ -2302,6 +2312,9 @@ int F0796_SAVEGAME_ImportPC34_Compat(
     if (strictChecksums &&
         actualChecksum != checksums[SAVEGAME_PC34_PART_PARTY]) {
         return SAVEGAME_PC34_ERROR_BAD_CHECKSUM;
+    }
+    if (!pc34_validate_party_part(partLen)) {
+        return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
     unpack_party(partBuf, partLen, &stagedState,
                  portraitIndexes, portraitIndexesPresent);

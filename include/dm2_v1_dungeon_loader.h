@@ -132,6 +132,36 @@ typedef struct {
     uint8_t rotation_type;
 } DM2_V1_G1TeleporterRoot;
 
+/* Source-scoped DB2 text payload. skproject/SKWIN/DME.h Text fixes the
+ * four-byte layout: w2 carries visibility, mode, and the text-table index.
+ * The GenericRecord::w0 link and text-table bytes remain intentionally
+ * outside this partial-G1 receipt. */
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    int index;
+    uint8_t direction;
+    uint8_t visible;
+    uint8_t mode;
+    uint16_t text_index;
+} DM2_V1_G1TextRoot;
+
+#define DM2_V1_G1_MAP5_MAX_TEXT_ROOTS 16
+
+/* Map 5 is the first canonical G1 map with direct DB2 roots. This is a
+ * read-only field receipt, not a text decoder or record graph. */
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int text_root_count;
+    int text_record_reads;
+    int generic_record_reads;
+    int blocked_record_reads;
+    DM2_V1_G1TextRoot texts[DM2_V1_G1_MAP5_MAX_TEXT_ROOTS];
+} DM2_V1_G1Map5TextRuntimeReceipt;
+
 /* Why a selected DB1 teleporter did not move the party. `DestinationMap()` is
  * the raw high byte of Teleporter::w4. skproject c_moverec.cpp passes it
  * directly to c_map.cpp CHANGE_CURRENT_MAP_TO(), whose map-array access has no
@@ -335,6 +365,11 @@ int dm2_v1_dungeon_materialize_g1_partial_map_boot(
 int dm2_v1_dungeon_materialize_g1_first_map_runtime(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1FirstMapRuntimeReceipt *out);
+/* Consume only map 5's direct DB2 Text::w2 payload fields. This never reads
+ * GenericRecord::w0, decodes text data, or reads DB3/DB4/blocked roots. */
+int dm2_v1_dungeon_materialize_g1_map5_text_runtime(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1Map5TextRuntimeReceipt *out);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
 #endif

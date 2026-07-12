@@ -8234,6 +8234,10 @@ Theron_Track02SignalStatus theron_v1_track02_find_ipl_loader(
     out_receipt->stage2_sector_count = THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT;
     out_receipt->stage2_destination = THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM;
     out_receipt->stage2_load_address = THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS;
+    /* The authenticated CD_EXEC sequence at $40a4 enters the exact local
+     * destination it loads.  This canonical handoff does not identify any
+     * subsequent stage-two record, payload, or rendering route. */
+    out_receipt->stage2_entry_address = THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS;
     out_receipt->stage2_raw_sector = stage2_sector;
     out_receipt->stage2_user_data_bytes =
         THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT * TQR_RAW_SECTOR_USER_DATA_BYTES;

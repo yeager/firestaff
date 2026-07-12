@@ -324,6 +324,7 @@ static void probe_first_map(const unsigned char *raw, int size)
     DM2_V1_G1RecordPoolEvidence evidence;
     DM2_V1_G1PartialMapBootReceipt partial_boot;
     DM2_V1_G1FirstMapRuntimeReceipt first_map_runtime;
+    DM2_V1_G1Map5TextRuntimeReceipt map5_text_runtime;
     int load_rc;
     unsigned declared_pool_bytes;
 
@@ -493,11 +494,46 @@ static void probe_first_map(const unsigned char *raw, int size)
     CHECK(g1_map0_db1_roots_are_not_teleporter_tiles(
               &dungeon, &first_map_runtime),
           "canonical map-0 DB1 roots cannot enter the source teleporter transition path");
+    CHECK(dm2_v1_dungeon_materialize_g1_map5_text_runtime(
+              &dungeon, &map5_text_runtime) == 1 &&
+              map5_text_runtime.committed == 1 &&
+              map5_text_runtime.incomplete_world == 1 &&
+              map5_text_runtime.map == 5 &&
+              map5_text_runtime.text_root_count == 7 &&
+              map5_text_runtime.text_record_reads == 7 &&
+              map5_text_runtime.generic_record_reads == 0 &&
+              map5_text_runtime.blocked_record_reads == 0 &&
+              map5_text_runtime.texts[0].x == 9 &&
+              map5_text_runtime.texts[0].y == 13 &&
+              map5_text_runtime.texts[0].object_id == 0x084a &&
+              map5_text_runtime.texts[0].index == 74 &&
+              map5_text_runtime.texts[0].direction == 0 &&
+              map5_text_runtime.texts[0].visible == 0 &&
+              map5_text_runtime.texts[0].mode == 0 &&
+              map5_text_runtime.texts[0].text_index == 539 &&
+              map5_text_runtime.texts[2].x == 10 &&
+              map5_text_runtime.texts[2].y == 21 &&
+              map5_text_runtime.texts[2].object_id == 0x8a16 &&
+              map5_text_runtime.texts[2].index == 534 &&
+              map5_text_runtime.texts[2].direction == 2 &&
+              map5_text_runtime.texts[2].visible == 0 &&
+              map5_text_runtime.texts[2].mode == 2 &&
+              map5_text_runtime.texts[2].text_index == 16 &&
+              map5_text_runtime.texts[3].object_id == 0x8a16 &&
+              map5_text_runtime.texts[3].x == 11 &&
+              map5_text_runtime.texts[3].y == 1 &&
+              map5_text_runtime.texts[6].object_id == 0x0894 &&
+              map5_text_runtime.texts[6].index == 148 &&
+              map5_text_runtime.texts[6].direction == 0 &&
+              map5_text_runtime.texts[6].mode == 0 &&
+              map5_text_runtime.texts[6].text_index == 19,
+          "map-5 receipt reads only direct DB2 Text w2 fields without links or text bytes");
     {
         DM2_V1_BootProfile profile;
         DM2_V1_GameState game_state;
         DM2_V1_G1FirstMapRuntimeReceipt runtime_receipt;
         DM2_V1_G1TeleporterTransitionReceipt transition_receipt;
+        DM2_V1_G1Map5TextRuntimeReceipt runtime_map5_text_receipt;
         DM2_V1_ViewportState viewport;
         uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
 
@@ -518,6 +554,20 @@ static void probe_first_map(const unsigned char *raw, int size)
                   runtime_receipt.teleporters[0].destination_map == 255 &&
                   runtime_receipt.blocked_record_reads == 0,
               "runtime retains the bounded teleporter incomplete-world receipt");
+        CHECK(dm2_v1_runtime_g1_map5_text_receipt(
+                  &runtime_map5_text_receipt) == 1 &&
+                  runtime_map5_text_receipt.committed == 1 &&
+                  runtime_map5_text_receipt.incomplete_world == 1 &&
+                  runtime_map5_text_receipt.map == 5 &&
+                  runtime_map5_text_receipt.text_root_count == 7 &&
+                  runtime_map5_text_receipt.text_record_reads == 7 &&
+                  runtime_map5_text_receipt.generic_record_reads == 0 &&
+                  runtime_map5_text_receipt.blocked_record_reads == 0 &&
+                  runtime_map5_text_receipt.texts[2].object_id == 0x8a16 &&
+                  runtime_map5_text_receipt.texts[2].direction == 2 &&
+                  runtime_map5_text_receipt.texts[2].mode == 2 &&
+                  runtime_map5_text_receipt.texts[2].text_index == 16,
+              "runtime retains the bounded map-5 direct DB2 text receipt");
         dm2_v1_runtime_set_position(0, 0, 4, 0);
         CHECK(dm2_v1_runtime_g1_map0_teleporter_transition_receipt(
                   &transition_receipt) == 1 &&

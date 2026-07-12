@@ -1094,20 +1094,22 @@ int csb_v1_viewport_f0115_blit_m715_m716_m717_m718_projectile_family_pc34(
     int view_depth,
     int flip_flags);
 
-/* ReDMCSB DUNVIEW.C F0115:5222-5627 and G0219:1625-1633. Returns only
+/* ReDMCSB DUNVIEW.C F0115:5222-5627 and G0219:1625-1635. Returns only
  * source-proven default-front PC CSB graphics: Giant Scorpion (type 0) is
  * M618 + 0 = 584, Swamp Slime (type 1) is M618 + 4 = 588, and Giggler
  * (type 2) is M618 + 6 = 590. Screamer (type 6) is M618 + 19 = 603, and
- * Rockpile (type 7) is M618 + 21 = 605.
+ * Rockpile (type 7) is M618 + 21 = 605, and Ghost (type 8) is M618 + 23 =
+ * 607.
  * Types 3-5 remain fail-closed because their aspect color selectors require
  * F0093's current-map replacement palette. Other families and every non-front
  * pose remain fail-closed. */
 int csb_v1_viewport_f0115_native_group_front_graphic_pc34(int creature_type);
 
-/* ReDMCSB DUNVIEW.C F0115:5201-5627, G0219:1625-1633, and DEFS.H:2392.
+/* ReDMCSB DUNVIEW.C F0115:5201-5627, G0219:1625-1635, and DEFS.H:2392.
  * Composites only the source-proven Giant Scorpion, Swamp Slime, Giggler, and
- * Screamer, and Rockpile default fronts through the C3200 creature occlusion band. The
- * compositor derives C13/C11 transparency from each G0219 aspect and applies
+ * Screamer, Rockpile, and Ghost default fronts through the C3200 creature
+ * occlusion band. The compositor derives C13/C11/C4 transparency from each
+ * G0219 aspect and applies
  * G0222/G0221 D2/D3 palette rows. All other group families, graphics, and
  * poses fail closed. */
 int csb_v1_viewport_f0115_blit_native_group_front_family_pc34(

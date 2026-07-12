@@ -8024,11 +8024,12 @@ if(BUILD_TESTING)
     )
 
     # The verified native CSB group-material fronts are Giant Scorpion, Swamp
-    # Slime, Giggler, Screamer, and Rockpile: G0219 offsets 0/4/6/19/21 +
-    # M618 map to 584/588/590/603/605. Types 3-5 use F0093 only with a
+    # Slime, Giggler, Screamer, Rockpile, and Ghost: G0219 offsets
+    # 0/4/6/19/21/23 + M618 map to 584/588/590/603/605/607. Types 3-5 use
+    # F0093 only with a
     # complete current-map ordering and PC Graphic 558 receipt.
     # The regression always covers palette/occlusion fail-closed behavior and
-    # additionally decodes entries 584, 590, 603, and 605 with user-provided media.
+    # additionally decodes entries 584, 590, 603, 605, and 607 with user-provided media.
     add_executable(test_csb_v1_f0115_first_group_real_asset_pc34_compat
         tests/test_csb_v1_f0115_first_group_real_asset_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
