@@ -32,6 +32,10 @@ typedef struct {
     int ipl_preload_local_read_verified;
     uint16_t ipl_preload_cpu_address;
     uint16_t ipl_preload_destination;
+    int ipl_preload_record_proven;
+    uint32_t ipl_preload_record;
+    uint8_t ipl_preload_sector_count;
+    size_t ipl_preload_raw_sector;
     uint16_t cleared_work_ram_start;
     size_t cleared_work_ram_bytes;
     uint16_t cleared_work_ram_end;

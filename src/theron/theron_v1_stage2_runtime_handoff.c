@@ -9,6 +9,24 @@
 #define THERON_V1_STAGE3_WORK_RAM_CLEAR_START 0x2700u
 #define THERON_V1_STAGE3_WORK_RAM_CLEAR_BYTES 0x1100u
 #define THERON_V1_STAGE3_WORK_RAM_CLEAR_END 0x3800u
+#define THERON_V1_RAW_SECTOR_BYTES 2352u
+#define THERON_V1_MODE1_USER_DATA_OFFSET 16u
+#define THERON_V1_IPL_PRELOAD_TABLE_USER_OFFSET 0xdcu
+#define THERON_V1_IPL_PRELOAD_RECORD 0x0003e3u
+#define THERON_V1_IPL_PRELOAD_SECTOR_COUNT 2u
+
+static int theron_v1_mode1_sector_is_valid(const uint8_t *sector) {
+    size_t index;
+
+    if (!sector || sector[0] != 0x00u || sector[11] != 0x00u ||
+        sector[15] != 0x01u) {
+        return 0;
+    }
+    for (index = 1u; index < 11u; ++index) {
+        if (sector[index] != 0xffu) return 0;
+    }
+    return 1;
+}
 
 int theron_v1_stage2_runtime_handoff_from_dynamic_payload(
     const Theron_Track02Stage2DynamicPayloadReceipt *payload,
@@ -73,6 +91,9 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     Theron_Track02Stage2DynamicPayloadReceipt payload;
     Theron_V1Stage3Irq2DispatchReceipt dispatch;
     Theron_V1Stage3Mode1HeaderReceipt mode1_header;
+    size_t preload_raw_sector;
+    size_t preload_table_offset;
+    size_t preload_raw_offset;
 
     if (!out_handoff) return 0;
     memset(out_handoff, 0, sizeof(*out_handoff));
@@ -133,6 +154,37 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
         memset(out_handoff, 0, sizeof(*out_handoff));
         return 0;
     }
+    if (loader.data_track_index01_raw_sector > SIZE_MAX -
+            THERON_V1_IPL_PRELOAD_RECORD ||
+        loader.executable_raw_sector > SIZE_MAX / THERON_V1_RAW_SECTOR_BYTES ||
+        loader.executable_raw_sector * THERON_V1_RAW_SECTOR_BYTES >
+            track02_size ||
+        THERON_V1_MODE1_USER_DATA_OFFSET + THERON_V1_IPL_PRELOAD_TABLE_USER_OFFSET +
+            4u > track02_size -
+                loader.executable_raw_sector * THERON_V1_RAW_SECTOR_BYTES) {
+        memset(out_handoff, 0, sizeof(*out_handoff));
+        return 0;
+    }
+    preload_raw_sector = loader.data_track_index01_raw_sector +
+        THERON_V1_IPL_PRELOAD_RECORD;
+    if (preload_raw_sector > SIZE_MAX / THERON_V1_RAW_SECTOR_BYTES ||
+        preload_raw_sector + THERON_V1_IPL_PRELOAD_SECTOR_COUNT >
+            track02_size / THERON_V1_RAW_SECTOR_BYTES) {
+        memset(out_handoff, 0, sizeof(*out_handoff));
+        return 0;
+    }
+    preload_table_offset = loader.executable_raw_sector *
+        THERON_V1_RAW_SECTOR_BYTES + THERON_V1_MODE1_USER_DATA_OFFSET +
+        THERON_V1_IPL_PRELOAD_TABLE_USER_OFFSET;
+    preload_raw_offset = preload_raw_sector * THERON_V1_RAW_SECTOR_BYTES;
+    if (memcmp(track02_data + preload_table_offset,
+               "\x00\xe3\x03\x02", 4u) != 0 ||
+        !theron_v1_mode1_sector_is_valid(track02_data + preload_raw_offset) ||
+        !theron_v1_mode1_sector_is_valid(track02_data + preload_raw_offset +
+                                         THERON_V1_RAW_SECTOR_BYTES)) {
+        memset(out_handoff, 0, sizeof(*out_handoff));
+        return 0;
+    }
     out_handoff->physical_stage3_entry_verified = 1;
     out_handoff->stage3_entry_opcode = dispatch.opcode;
     out_handoff->stage3_irq2_selector = dispatch.irq2_selector;
@@ -140,6 +192,10 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     out_handoff->ipl_preload_local_read_verified = 1;
     out_handoff->ipl_preload_cpu_address = loader.cd_read_cpu_address;
     out_handoff->ipl_preload_destination = loader.cd_read_local_destination;
+    out_handoff->ipl_preload_record_proven = 1;
+    out_handoff->ipl_preload_record = THERON_V1_IPL_PRELOAD_RECORD;
+    out_handoff->ipl_preload_sector_count = THERON_V1_IPL_PRELOAD_SECTOR_COUNT;
+    out_handoff->ipl_preload_raw_sector = preload_raw_sector;
     out_handoff->stage3_mode1_header_verified = 1;
     out_handoff->stage3_minute_bcd = mode1_header.minute_bcd;
     out_handoff->stage3_second_bcd = mode1_header.second_bcd;

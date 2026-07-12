@@ -137,12 +137,20 @@ int main(int argc, char **argv) {
               jp_original_handoff.ipl_preload_local_read_verified &&
               jp_original_handoff.ipl_preload_cpu_address == 0x40cdu &&
               jp_original_handoff.ipl_preload_destination == 0x3000u &&
+              jp_original_handoff.ipl_preload_record_proven &&
+              jp_original_handoff.ipl_preload_record == 0x0003e3u &&
+              jp_original_handoff.ipl_preload_sector_count == 2u &&
+              jp_original_handoff.ipl_preload_raw_sector == 0x4c3u &&
               jp_original_handoff.stage3_mode1_header_verified &&
               jp_original_handoff.stage3_minute_bcd == 0x01u &&
               jp_original_handoff.stage3_second_bcd == 0x03u &&
               jp_original_handoff.stage3_frame_bcd == 0x38u &&
               us_original_handoff.physical_stage3_entry_verified &&
               us_original_handoff.ipl_preload_local_read_verified &&
+              us_original_handoff.ipl_preload_record_proven &&
+              us_original_handoff.ipl_preload_record == 0x0003e3u &&
+              us_original_handoff.ipl_preload_sector_count == 2u &&
+              us_original_handoff.ipl_preload_raw_sector == 0x4c4u &&
               us_original_handoff.stage3_mode1_header_verified &&
               us_original_handoff.stage3_minute_bcd == 0x00u &&
               us_original_handoff.stage3_second_bcd == 0x58u &&
