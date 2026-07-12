@@ -184,6 +184,12 @@ Structure2 descriptors. Their 95 nonzero numeric offsets all stay inside the
 same descriptor envelope's opaque post-`FFFF` span (zero outside). This proves
 only that bounded reference-to-window relation, not an offset base, payload
 record grammar, palette/image role, decoder, animation, or render route.
+2026-07-12 update: those same 51 references now also prove the exact numeric
+global-to-local handoff: every original Structure1G `first_image_index` is at
+least `0x14c`, subtracts to its stored local Structure2 ID, and matches that
+descriptor's `image_id` (zero mismatches). This remains an index relation,
+not image/palette data, a payload grammar, decoder, animation, or rendering
+claim.
 
 The Structure1F handoff and DGN render-plan receipt now separate the six
 documented direct-coordinate records (items, floor decorations, floor

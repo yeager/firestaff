@@ -2,6 +2,12 @@
 
 #include <string.h>
 
+/* Original stage-two code clears $26ff then TII-copies it through $37ff
+ * immediately before `jmp $3800` (theron-us-stage2-huc6280.asm:176-181). */
+#define THERON_V1_STAGE3_WORK_RAM_CLEAR_START 0x2700u
+#define THERON_V1_STAGE3_WORK_RAM_CLEAR_BYTES 0x1100u
+#define THERON_V1_STAGE3_WORK_RAM_CLEAR_END 0x3800u
+
 int theron_v1_stage2_runtime_handoff_from_dynamic_payload(
     const Theron_Track02Stage2DynamicPayloadReceipt *payload,
     Theron_V1Stage2RuntimeHandoff *out_handoff) {
@@ -42,6 +48,10 @@ int theron_v1_stage2_runtime_handoff_from_dynamic_payload(
     out_handoff->load_address = THERON_TRACK02_IPL_STAGE2_CD_READ_LOCAL_DESTINATION;
     out_handoff->entry_address = THERON_TRACK02_IPL_STAGE2_CD_READ_LOCAL_DESTINATION;
     out_handoff->execute_after_load = 1;
+    out_handoff->cleared_work_ram_start = THERON_V1_STAGE3_WORK_RAM_CLEAR_START;
+    out_handoff->cleared_work_ram_bytes = THERON_V1_STAGE3_WORK_RAM_CLEAR_BYTES;
+    out_handoff->cleared_work_ram_end = THERON_V1_STAGE3_WORK_RAM_CLEAR_END;
+    out_handoff->work_ram_cleared_before_entry = 1;
     out_handoff->header_word0 = payload->header_word0;
     out_handoff->header_word1 = payload->header_word1;
     out_handoff->manifest_bytes = payload->manifest_bytes;

@@ -327,6 +327,14 @@ typedef struct {
     uint32_t                csbwin_appended_tail_fnv1a;
     int                     csbwin_appended_tail_truncated;
     uint8_t                 csbwin_appended_tail[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
+    /* CSBWin SaveGame.cpp reads contiguous 16-word EDT_Database /
+     * EDBT_GlobalVariables EXPOOL records before DSAINDEX::ReadTracing.
+     * This is the save-owned source bank supplied to authenticated DSA
+     * GLOBALFETCH/GLOBALSTORE actions; it is re-derived from the preserved
+     * EXPOOL tail rather than serialized as Firestaff-owned state. */
+    int                     csbwin_global_variables_valid;
+    uint16_t                csbwin_global_variable_count;
+    uint32_t                csbwin_global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
     /* CSBWin DSA.cpp DSAINDEX::ReadTracing restores this EXPOOL-owned
      * eight-word bitmap after the save body. It is source trace state only:
      * no Firestaff diagnostic mode or DSA execution is enabled from it. */
@@ -596,6 +604,11 @@ int csb_v1_runtime_locate_csbwin_appended_expool_record(
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report);
+/* Rebuild the CSBWin save-owned global-variable bank from the complete
+ * appended EXPOOL tail. A missing first record is a valid empty bank; a
+ * malformed present record leaves the prior profile bank unchanged. */
+int csb_v1_runtime_restore_csbwin_expool_global_variables(
+    CSB_V1_RuntimeProfile *profile);
 
 /* CSBWin Monster.cpp resolves a type-47 filter actuator from Expool, then
  * obtains its DSAselector from DB3::word2 bits 7..11 and maps that slot
