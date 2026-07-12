@@ -7974,6 +7974,11 @@ static void csb_v1_runtime_trigger_floor_sensor_event(
         : (raw_square & 0x1F);
     event_type = csb_v1_runtime_square_event_type_for_sensor_target(square_type);
     if (event_type == DM1_EVENT_NONE) return;
+    if (square_type != DM1_SQUARE_WALL) {
+        /* ReDMCSB MOVESENS.C F0272 lines 1201-1207 uses Remote.TargetCell
+         * only for wall targets; all other target squares use CELL_NORTHWEST. */
+        target_cell = 0;
+    }
 
     memset(&event, 0, sizeof(event));
     event.map_time = DM1_MAP_TIME_MAKE(
@@ -11362,6 +11367,11 @@ static void csb_v1_runtime_trigger_remote_sensor_event_after(
         : (raw_square & 0x1F);
     event_type = csb_v1_runtime_square_event_type_for_sensor_target(square_type);
     if (event_type == DM1_EVENT_NONE) return;
+    if (square_type != DM1_SQUARE_WALL) {
+        /* ReDMCSB MOVESENS.C F0272 lines 1201-1207 uses Remote.TargetCell
+         * only for wall targets; all other target squares use CELL_NORTHWEST. */
+        target_cell = 0;
+    }
 
     memset(&event, 0, sizeof(event));
     /* ReDMCSB MOVESENS.C F0272 lines 1194-1203 adds Remote.Value to
