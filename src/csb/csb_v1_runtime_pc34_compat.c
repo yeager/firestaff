@@ -3179,6 +3179,32 @@ static int csb_v1_runtime_find_unused_group_record(
     return 0;
 }
 
+static int csb_v1_runtime_square_has_ordinary_object(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int map_x,
+    int map_y)
+{
+    int thing;
+    int guard;
+
+    if (!dungeon || !dungeon->raw_data) return 0;
+    thing = csb_v1_dungeon_get_first_thing(dungeon, level, map_x, map_y);
+    for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
+         ++guard) {
+        const uint8_t *record;
+        int thing_type = -1;
+        int thing_size = 0;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)thing, &thing_type, NULL, &thing_size);
+        if (!record || thing_size < 2) return 0;
+        if (thing_type > 4 && thing_type < 14) return 1;
+        thing = (int)csb_v1_runtime_read_u16(record);
+    }
+    return 0;
+}
+
 static int csb_v1_runtime_creature_movement_ticks(int creature_type)
 {
     static const unsigned char movement_ticks[27] = {
@@ -8205,8 +8231,9 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
     /* ReDMCSB MOVESENS.C F0276 lines 1608-1655 unlinks before a removal,
      * scans the resulting list, and links after an addition. C001 checks
      * pre-link object/group/party occupancy; C004 checks the same-type
-     * guard; C002/C007 admit a C04 group only when neither party nor another
-     * group occupies the square. The caller performs that source ordering,
+     * guard; C001 admits a C04 group only when party, objects, and another
+     * group are absent; C002/C007 require party and another group absent.
+     * The caller performs that source ordering,
      * and this scan excludes placed_thing for the equivalent post-link view. */
     thing = first_thing;
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
@@ -8250,6 +8277,7 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         sensor_type = (int)(type_data & 0x007Fu);
         sensor_data = (int)(type_data >> 7);
         if ((placed_thing_type == 4 &&
+             sensor_type != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
              sensor_type != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE &&
              sensor_type != DM1_SENSOR_FLOOR_CREATURE) ||
             (placed_thing_type != 4 &&
@@ -8287,7 +8315,10 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
             profile->current_level == level &&
             profile->party_x == map_x && profile->party_y == map_y;
         if ((placed_thing_type == 4 &&
-             (party_on_square || group_present)) ||
+             ((sensor_type == DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
+               (party_on_square || other_object_present || group_present)) ||
+              (sensor_type != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
+               (party_on_square || group_present)))) ||
             (placed_thing_type != 4 &&
              ((sensor_type == DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
                (party_on_square || other_object_present || group_present)) ||
@@ -11234,6 +11265,7 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
     int level,
     int map_x,
     int map_y,
+    int party_square,
     int add_party,
     CSB_V1_InputCommandRuntimeResult *result)
 {
@@ -11260,7 +11292,7 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
     /* ReDMCSB: MOVESENS.C F0267 lines 800-822 calls
      * F0276_SENSOR_ProcessThingAdditionOrRemoval when the party leaves and
      * enters a square.  F0276 lines 1658-1785 walks C03 sensor things until
-     * the first non-sensor, checks C002/C003/C005/C008/C009 floor sensors for
+     * the first non-sensor, checks C001/C002/C003/C005/C008/C009 floor sensors for
      * the party, resolves HOLD into SET/CLEAR, then calls F0272/F0268 to enqueue
      * the square-effect event.  This CSB runtime slice covers party floor
      * sensors, including C008 party-possession checks over imported champion
@@ -11306,6 +11338,18 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
 
         trigger = add_party ? 1 : 0;
         switch (sensor_type) {
+        case 1: /* C001_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT */
+            /* ReDMCSB MOVESENS.C F0276 lines 1678-1685 gates C001 for
+             * party movement on PartySquare, ordinary-object, and C04-group
+             * occupancy.  A turn invokes F0276 with PartySquare true, while
+             * a completed F0267 step reaches this branch with it false. */
+            trigger = (profile->champion_count > 0 && !party_square &&
+                       !csb_v1_runtime_square_has_group(
+                           dungeon, level, map_x, map_y) &&
+                       !csb_v1_runtime_square_has_ordinary_object(
+                           dungeon, level, map_x, map_y))
+                ? trigger : 0;
+            break;
         case 2: /* C002_SENSOR_FLOOR_THERON_PARTY_CREATURE */
             /* ReDMCSB MOVESENS.C F0276 lines 1686-1689 accepts the party
              * only while it is moving onto a square without a C04 group.
@@ -11403,6 +11447,7 @@ static void csb_v1_runtime_process_party_floor_sensors_at(
         profile->current_level,
         map_x,
         map_y,
+        0,
         add_party,
         result);
 }
@@ -11423,6 +11468,7 @@ static void csb_v1_runtime_apply_party_floor_sensor_consequences(
         result->old_party_x,
         result->old_party_y,
         0,
+        0,
         result);
     if (result->stair_transition_applied && result->movement_step_applied) {
         csb_v1_runtime_process_party_floor_sensors_at_level(
@@ -11430,6 +11476,7 @@ static void csb_v1_runtime_apply_party_floor_sensor_consequences(
             result->old_party_level,
             result->movement_destination_x,
             result->movement_destination_y,
+            0,
             0,
             result);
     }
@@ -11469,6 +11516,7 @@ static void csb_v1_runtime_apply_party_turn_floor_sensor_add_consequences(
         level,
         map_x,
         map_y,
+        1,
         1,
         result);
 }
@@ -15241,6 +15289,7 @@ int csb_v1_runtime_process_input_queue(
             local_result.old_party_level,
             local_result.old_party_x,
             local_result.old_party_y,
+            1,
             0,
             &local_result);
         if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
@@ -15266,6 +15315,7 @@ int csb_v1_runtime_process_input_queue(
             local_result.old_party_level,
             local_result.old_party_x,
             local_result.old_party_y,
+            1,
             0,
             &local_result);
         if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {

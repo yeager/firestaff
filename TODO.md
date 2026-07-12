@@ -459,7 +459,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `JSR @R3` executes with `MOV R13,R4` in the delay slot before the recorded
   zero-result return. The pointer is un-mapped and the callee is unnamed;
   this is neither a decoder, payload, output, completion, nor rendering
-  claim.
+  claim. 2026-07-12 update: the selected callee entry now has a bounded
+  loop-register receipt: `R4 -> R12`, `R5 -> R10`, a raw literal-fed
+  `JSR @R3` with delay-slot `R6 -> R14`, then post-call `R0 -> R13` and its
+  branch to `R11=0`. The literal remains unmapped and no ABI, payload,
+  decoder, completion, or rendering role is inferred.
 - 🔧 2026-07-11 Nexus startup/title real-media follow-up: `WARNING.BIN` has a
   spec-backed `RES*`/DGT2 PP decoder for resource 0, including its BGR555 CLUT
   boundary and 240x96 indexed plane. `TITLE.CG` now has a strict local-media
