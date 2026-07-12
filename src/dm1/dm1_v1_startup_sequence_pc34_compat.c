@@ -2715,6 +2715,11 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
     receipt.release_app_capture = consumer.release_app_capture;
     receipt.host_capture_route_matches = consumer.host_capture_route_matches;
     receipt.hoc_asset_capture = consumer.hoc_asset_capture;
+    /* C026/C346 prove the expected Hall composition, but only M11's actual
+     * C127/F0115 requests prove that this is a live post-entrance viewport. */
+    receipt.observed_live_hoc_material_request =
+        facts->observed_live_hoc_c127_material_request &&
+        facts->observed_live_hoc_f0115_material_request;
     receipt.consumed_required_graphics_asset =
         facts->observed_required_graphics_hash_match ? 1 : 0;
     receipt.consumed_required_dungeon_asset =
@@ -3551,8 +3556,10 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
                 corpus_receipt.roundtrip_succeeded_count;
             save_facts.observed_user_save_corpus_roundtrip_failed =
                 corpus_receipt.roundtrip_failed_count;
-            save_facts.observed_user_save_corpus_roundtrip_hash = 0u;
-            save_facts.observed_user_save_corpus_rejected = 0;
+            save_facts.observed_user_save_corpus_roundtrip_hash =
+                corpus_receipt.roundtrip_hash;
+            save_facts.observed_user_save_corpus_rejected =
+                corpus_receipt.rejected_count;
             save_facts.observed_user_save_corpus_truncated = 0;
             save_facts.observed_user_save_corpus_first_pc34_path =
                 corpus_receipt.first_pc34_path;
@@ -4432,7 +4439,10 @@ int dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
             &receipt) ||
         !receipt.valid) {
         *out_receipt = receipt;
-        return 0;
+        /* A missing C346 backing asset is a handled, fail-closed draw
+         * decision. The caller must receive the invalid receipt so it can
+         * block the host fallback rather than treating it as an API failure. */
+        return 1;
     }
     if (!receipt.candidatePanelOwnsCell &&
         (!receipt.drawMirrorBackingAsset ||

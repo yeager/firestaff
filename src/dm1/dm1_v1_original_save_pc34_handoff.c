@@ -2222,6 +2222,12 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
 
     report.scan_succeeded = 1;
     report.scanned_file_count = corpus.scanned_file_count;
+    /* The classifier intentionally keeps arbitrary files out of the PC34
+     * importer. Preserve that decision in the corpus receipt instead of
+     * silently losing evidence of a truncated/non-PC34 neighbour. */
+    report.rejected_count = corpus.scanned_file_count -
+        corpus.pc34_loader_part_envelope_count;
+    report.roundtrip_hash = 2166136261u;
     exported_bytes = (uint8_t *)malloc(SAVEGAME_PC34_MAX_FILE_SIZE);
     if (!exported_bytes) {
         *out_report = report;
@@ -2272,8 +2278,13 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             &roundtrip);
         if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
             roundtrip.core_state_matches) {
+            size_t byte_index;
             ++report.roundtrip_succeeded_count;
             ++report.core_state_match_count;
+            for (byte_index = 0u; byte_index < exported_size; ++byte_index) {
+                report.roundtrip_hash ^= exported_bytes[byte_index];
+                report.roundtrip_hash *= 16777619u;
+            }
             if (!report.first_roundtrip_path[0]) {
                 snprintf(report.first_roundtrip_path,
                          sizeof(report.first_roundtrip_path), "%s",
@@ -2291,6 +2302,9 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         }
     }
     free(exported_bytes);
+    if (report.roundtrip_succeeded_count == 0) {
+        report.roundtrip_hash = 0u;
+    }
     *out_report = report;
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
