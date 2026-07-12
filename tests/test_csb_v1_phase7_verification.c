@@ -524,6 +524,62 @@ static void test_dungeon_decode_dsa_filter_location(void)
           "out-of-bounds DSA filter location is rejected");
 }
 
+static void test_runtime_csbwin_dsa_filter_binding(void)
+{
+    uint8_t actuator_record[8] = { 0, 0, 0x2f, 0x01, 0, 0, 0, 0 };
+    uint16_t program[] = { 0x0006u };
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_DSAFilterLocation location;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_RuntimeDSAFilterBinding binding;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&location, 0, sizeof(location));
+    memset(&action, 0, sizeof(action));
+    memset(&binding, 0, sizeof(binding));
+    memset(&runner, 0, sizeof(runner));
+    dungeon.raw_data = actuator_record;
+    dungeon.raw_size = (int)sizeof(actuator_record);
+    dungeon.thing_data_bases[CSB_V1_THING_TYPE_ACTUATOR] = 0;
+    dungeon.thing_type_counts[CSB_V1_THING_TYPE_ACTUATOR] = 1;
+    location.level = 3;
+    location.actuator_thing =
+        (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.csbwin_extended_features_valid = 1;
+    profile.csbwin_extended_level_index_present = 1;
+    profile.csbwin_extended_level_dsa_index[3][2] = 7u;
+    action.dsa_id = 7u;
+    action.state_index = 4u;
+    action.program_words = program;
+    action.program_word_count = 1;
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+
+    CHECK(csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
+              &profile, &dungeon, &location, &binding) == 1 &&
+              binding.dsa_selector == 2u && binding.dsa_id == 7u,
+          "CSBWin Monster.cpp DSAselector resolves actuator through saved level index");
+    CHECK(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+              &profile, &binding, 4u, 0, 0x0c345u, &runner) == 1 &&
+              runner.programs == &profile.csbwin_extended_dsa_state &&
+              runner.dsa_id == 7 && runner.state_index == 4u &&
+              runner.master_location == 0x0c345u,
+          "CSB runtime prepares its authenticated DSA filter runner from source binding");
+
+    profile.csbwin_extended_level_dsa_index[3][2] = 8u;
+    CHECK(csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
+              &profile, &dungeon, &location, &binding) == 0,
+          "undefined saved DSA index rejects without a runtime filter binding");
+
+    profile.csbwin_extended_dsa_state.imported_actions = NULL;
+    profile.csbwin_extended_dsa_state.imported_action_count = 0;
+    csb_v1_runtime_cleanup(&profile);
+}
+
 static void test_runtime_custom_background_skin_grid_from_expool(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -1691,6 +1747,7 @@ int main(void)
     test_dungeon_live_mutable_thing_chain_between_levels();
     test_dungeon_real_format_expool_db11_skin_lookup();
     test_dungeon_decode_dsa_filter_location();
+    test_runtime_csbwin_dsa_filter_binding();
     test_runtime_custom_background_skin_grid_from_expool();
     test_runtime_custom_background_skin_grid_from_csbwin_tail();
     test_dungeon_decode_square();

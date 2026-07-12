@@ -14681,6 +14681,96 @@ int csb_v1_runtime_get_csbwin_dsa_tracing(
     return 0;
 }
 
+int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *location,
+    CSB_V1_RuntimeDSAFilterBinding *out_binding)
+{
+    const uint8_t *record;
+    CSB_V1_RuntimeDSAFilterBinding candidate;
+    uint16_t word2;
+    uint16_t mapped_dsa;
+    int type;
+    int index;
+    int size;
+    int i;
+
+    if (!profile || !dungeon || !location || !out_binding ||
+        !profile->csbwin_extended_features_valid ||
+        !profile->csbwin_extended_level_index_present ||
+        location->level < 0 || location->level >= 64 ||
+        location->actuator_thing == 0xffffu) {
+        return 0;
+    }
+
+    record = csb_v1_dungeon_get_thing_record(dungeon,
+        location->actuator_thing, &type, &index, &size);
+    (void)index;
+    if (!record || type != CSB_V1_THING_TYPE_ACTUATOR || size < 4) {
+        return 0;
+    }
+    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    if ((word2 & 0x007fu) != CSB_V1_DSA_FILTER_ACTUATOR_TYPE) {
+        return 0;
+    }
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.location = *location;
+    candidate.dsa_selector = (uint8_t)((word2 >> 7) & 0x1fu);
+    mapped_dsa = profile->csbwin_extended_level_dsa_index[
+        location->level][candidate.dsa_selector];
+    if (mapped_dsa == 0xffffu || mapped_dsa >= CSB_V1_MAX_DSA_SCRIPTS) {
+        return 0;
+    }
+    candidate.dsa_id = (uint8_t)mapped_dsa;
+
+    /* ProcessDSATimer6 rejects an undefined DSA after the selector lookup.
+     * A real runtime binding is useful only when the staged authenticated
+     * extension actually owns at least one action for that absolute DSA. */
+    for (i = 0; i < profile->csbwin_extended_dsa_state.imported_action_count;
+         ++i) {
+        if (profile->csbwin_extended_dsa_state.imported_actions[i].dsa_id ==
+            candidate.dsa_id) {
+            *out_binding = candidate;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeDSAFilterBinding *binding,
+    uint32_t state_index,
+    int action_ordinal,
+    uint32_t master_location,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner)
+{
+    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
+
+    if (!profile || !binding || !out_runner || action_ordinal < 0 ||
+        !profile->csbwin_extended_features_valid ||
+        !csb_v1_chaos_find_imported_action(
+            &profile->csbwin_extended_dsa_state, binding->dsa_id,
+            state_index, action_ordinal)) {
+        return 0;
+    }
+
+    /* CSBWin DSA.cpp:5366-5407 maps the slave selector through the loaded
+     * level index before Execute. The explicit action lookup above keeps this
+     * receipt tied to that authenticated owner rather than a caller bytecode
+     * buffer. */
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.programs = &profile->csbwin_extended_dsa_state;
+    candidate.dsa_id = binding->dsa_id;
+    candidate.state_index = state_index;
+    candidate.action_ordinal = action_ordinal;
+    candidate.master_location = master_location;
+    *out_runner = candidate;
+    return 1;
+}
+
 int csb_v1_runtime_export_csbwin_core_save_to_memory(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t *out,
