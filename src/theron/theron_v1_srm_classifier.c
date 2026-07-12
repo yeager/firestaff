@@ -49,10 +49,14 @@
 #include <fcntl.h>
 #include <io.h>
 #include <process.h>
+#include <windows.h>
 #define TSRM_OPEN _open
 #define TSRM_CLOSE _close
 #define TSRM_FDOPEN _fdopen
-#define TSRM_LINK _link
+/* MSVCRT does not provide POSIX link(2).  CreateHardLinkA has the same
+ * no-replace publication property, with its arguments in reverse order. */
+#define TSRM_LINK(old_path, new_path) \
+    (CreateHardLinkA((new_path), (old_path), NULL) ? 0 : -1)
 #define TSRM_GETPID _getpid
 #define TSRM_OPEN_BINARY _O_BINARY
 #else
