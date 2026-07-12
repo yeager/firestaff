@@ -53,12 +53,42 @@ static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
         Nexus_V1_DgnStructure2Texture *dst;
         uint16_t image_id = rb16(src);
         if (image_id == 0xffffU) {
+            int descriptor_index;
+            int opaque_offset = cursor + 2;
             level->structure2_texture_table_valid = 1;
             level->structure2_payload.descriptor_bytes = cursor;
             level->structure2_payload.terminator_offset = cursor;
-            level->structure2_payload.opaque_payload_offset = cursor + 2;
+            level->structure2_payload.opaque_payload_offset = opaque_offset;
             level->structure2_payload.opaque_payload_size =
-                (int)structure2_useful - (cursor + 2);
+                (int)structure2_useful - opaque_offset;
+            for (descriptor_index = 0;
+                 descriptor_index < level->structure2_texture_count;
+                 ++descriptor_index) {
+                const Nexus_V1_DgnStructure2Texture *descriptor =
+                    &level->structure2_textures[descriptor_index];
+                uint32_t offsets[2];
+                int offset_index;
+
+                offsets[0] = descriptor->image_relative_offset;
+                offsets[1] = descriptor->palette_relative_offset;
+                for (offset_index = 0; offset_index < 2; ++offset_index) {
+                    uint32_t relative_offset = offsets[offset_index];
+                    if (relative_offset == 0U) continue;
+                    ++level->structure2_payload.nonzero_descriptor_offset_count;
+                    if (relative_offset >= (uint32_t)opaque_offset &&
+                        relative_offset < structure2_useful) {
+                        ++level->structure2_payload
+                            .nonzero_descriptor_offsets_in_opaque_payload_count;
+                    } else {
+                        ++level->structure2_payload
+                            .nonzero_descriptor_offsets_outside_opaque_payload_count;
+                    }
+                }
+            }
+            level->structure2_payload.local_payload_offset_pattern_observed =
+                level->structure2_payload.nonzero_descriptor_offset_count > 0 &&
+                level->structure2_payload
+                    .nonzero_descriptor_offsets_outside_opaque_payload_count == 0;
             level->structure2_payload.valid = 1;
             /* No decoder may promote this opaque span into a material. */
             level->structure2_payload.material_or_image_data_proven = 0;

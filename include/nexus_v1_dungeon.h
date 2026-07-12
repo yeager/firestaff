@@ -211,6 +211,14 @@ typedef struct {
     int terminator_offset;
     int opaque_payload_offset;
     int opaque_payload_size;
+    /* Read-only descriptor-offset correlation. These counters only compare
+     * the already parsed numeric fields with the bounded post-FFFF span;
+     * they do not assign an offset base, record grammar, pixel codec, or
+     * palette meaning to those bytes. */
+    int nonzero_descriptor_offset_count;
+    int nonzero_descriptor_offsets_in_opaque_payload_count;
+    int nonzero_descriptor_offsets_outside_opaque_payload_count;
+    int local_payload_offset_pattern_observed;
     int valid;
     int material_or_image_data_proven;
 } Nexus_V1_DgnStructure2Payload;

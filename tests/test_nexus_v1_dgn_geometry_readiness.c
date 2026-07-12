@@ -624,8 +624,33 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           level.structure2_payload.terminator_offset == 220 &&
           level.structure2_payload.opaque_payload_offset == 222 &&
           level.structure2_payload.opaque_payload_size == 18 &&
+          level.structure2_payload.nonzero_descriptor_offset_count == 0 &&
+          !level.structure2_payload.local_payload_offset_pattern_observed &&
           !level.structure2_payload.material_or_image_data_proven,
           "Structure2 retains only a bounded opaque payload after its FFFF terminator");
+    wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 12, 222U);
+    wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 16, 224U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          level.structure2_payload.nonzero_descriptor_offset_count == 2 &&
+          level.structure2_payload
+              .nonzero_descriptor_offsets_in_opaque_payload_count == 2 &&
+          level.structure2_payload
+              .nonzero_descriptor_offsets_outside_opaque_payload_count == 0 &&
+          level.structure2_payload.local_payload_offset_pattern_observed &&
+          !level.structure2_payload.material_or_image_data_proven,
+          "Structure2 records bounded descriptor-offset correlation without decoding payload bytes");
+    wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 12, 240U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          level.structure2_payload.nonzero_descriptor_offset_count == 2 &&
+          level.structure2_payload
+              .nonzero_descriptor_offsets_in_opaque_payload_count == 1 &&
+          level.structure2_payload
+              .nonzero_descriptor_offsets_outside_opaque_payload_count == 1 &&
+          !level.structure2_payload.local_payload_offset_pattern_observed &&
+          !level.structure2_payload.material_or_image_data_proven,
+          "Structure2 leaves out-of-span descriptor offsets non-promoting");
+    wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 12, 0U);
+    wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 16, 0U);
     CHECK(level.geometry_info.mesh_ready,
           "animated-floor fixture retains a mesh-ready DGN handoff");
     CHECK(nexus_v1_level_build_dgn_view_render_plan(

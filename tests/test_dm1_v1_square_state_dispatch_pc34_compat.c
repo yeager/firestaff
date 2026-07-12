@@ -27,6 +27,10 @@ int main(void)
     struct DungeonMapDesc_Compat map;
     struct DungeonMapTiles_Compat tiles;
     unsigned char squares[4];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    struct DungeonTeleporter_Compat teleporter;
+    unsigned short squareFirstThings[2];
     struct GameWorld_Compat world;
     struct TickResult_Compat result;
 
@@ -44,7 +48,25 @@ int main(void)
 
     memset(&world, 0, sizeof(world));
     world.dungeon = &dungeon;
+    memset(&things, 0, sizeof(things));
+    memset(&weapon, 0, sizeof(weapon));
+    memset(&teleporter, 0, sizeof(teleporter));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    things.loaded = 1;
+    things.weapons = &weapon;
+    things.weaponCount = 1;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    things.teleporters = &teleporter;
+    things.teleporterCount = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 2;
+    weapon.next = THING_ENDOFLIST;
+    squareFirstThings[0] = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    squareFirstThings[1] = THING_ENDOFLIST;
+    world.things = &things;
     assert(F0881_WORLD_InitDefault_Compat(&world, 1));
+    world.dungeon = &dungeon;
+    world.things = &things;
 
     /* C10 door event becomes C01 animation, which performs one opening
      * step at the same Map_Time. */
@@ -68,6 +90,28 @@ int main(void)
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert((squares[1] & 0x08) != 0);
+
+    /* F0249: opening a teleporter replays its existing ordinary thing
+     * chain through F0267. The weapon starts on (0,0) and is linked onto
+     * the source-verified target square (0,1). */
+    squares[0] = (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) |
+                                 DUNGEON_SQUARE_MASK_THING_LIST);
+    squares[1] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                 DUNGEON_SQUARE_MASK_THING_LIST);
+    teleporter.next = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    teleporter.targetMapIndex = 0;
+    teleporter.targetMapX = 0;
+    teleporter.targetMapY = 1;
+    teleporter.scope = 0x02;
+    weapon.next = THING_ENDOFLIST;
+    squareFirstThings[0] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0);
+    squareFirstThings[1] = THING_ENDOFLIST;
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert(squareFirstThings[0] == (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0));
+    assert(teleporter.next == THING_ENDOFLIST);
+    assert(squareFirstThings[1] == (unsigned short)((THING_TYPE_WEAPON << 10) | 0));
 
     /* C07 SET exposes the fakewall by setting its open bit. */
     squares[3] = (unsigned char)(DUNGEON_ELEMENT_FAKEWALL << 5);
