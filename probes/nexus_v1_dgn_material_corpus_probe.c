@@ -40,7 +40,8 @@ int main(int argc, char **argv) {
            receipt.structure1g_floor_animation_bound_count);
     printf("Structure2: valid-levels=%d descriptors=%d 1G-first-bound=%d "
            "payload-envelopes=%d opaque-bytes=%d proven-material-levels=%d "
-           "canonical-sources=%d bound-payloads=%d\n",
+           "canonical-sources=%d bound-payloads=%d offsets=%d/%d/%d "
+           "local-pattern-levels=%d\n",
            receipt.structure2_valid_level_count,
            receipt.structure2_texture_count,
            receipt.structure1g_structure2_first_image_bound_count,
@@ -48,7 +49,11 @@ int main(int argc, char **argv) {
            receipt.structure2_opaque_payload_byte_count,
            receipt.structure2_material_or_image_data_proven_level_count,
            receipt.structure2_canonical_source_verified_level_count,
-           receipt.structure2_materialization_bound_level_count);
+           receipt.structure2_materialization_bound_level_count,
+           receipt.structure2_nonzero_descriptor_offset_count,
+           receipt.structure2_descriptor_offsets_in_opaque_payload_count,
+           receipt.structure2_descriptor_offsets_outside_opaque_payload_count,
+           receipt.structure2_local_payload_offset_pattern_level_count);
     printf("Coverage: floor=%d ceiling=%d wall=%d bpk-host=%d complete=%d\n",
            receipt.floor_coverage.covered, receipt.ceiling_coverage.covered,
            receipt.wall_coverage.covered, receipt.bpk_host_routes_complete,

@@ -565,6 +565,17 @@ int nexus_v1_inspect_dgn_material_corpus(
             receipt.structure2_payload_envelope_valid_level_count++;
             receipt.structure2_opaque_payload_byte_count +=
                 level.structure2_payload.opaque_payload_size;
+            receipt.structure2_nonzero_descriptor_offset_count +=
+                level.structure2_payload.nonzero_descriptor_offset_count;
+            receipt.structure2_descriptor_offsets_in_opaque_payload_count +=
+                level.structure2_payload
+                    .nonzero_descriptor_offsets_in_opaque_payload_count;
+            receipt.structure2_descriptor_offsets_outside_opaque_payload_count +=
+                level.structure2_payload
+                    .nonzero_descriptor_offsets_outside_opaque_payload_count;
+            if (level.structure2_payload.local_payload_offset_pattern_observed) {
+                receipt.structure2_local_payload_offset_pattern_level_count++;
+            }
             if (level.structure2_payload.material_or_image_data_proven) {
                 receipt.structure2_material_or_image_data_proven_level_count++;
             }

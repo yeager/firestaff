@@ -178,6 +178,10 @@ typedef struct {
     int structure1g_structure2_first_image_bound_count;
     int structure2_payload_envelope_valid_level_count;
     int structure2_opaque_payload_byte_count;
+    int structure2_nonzero_descriptor_offset_count;
+    int structure2_descriptor_offsets_in_opaque_payload_count;
+    int structure2_descriptor_offsets_outside_opaque_payload_count;
+    int structure2_local_payload_offset_pattern_level_count;
     int structure2_material_or_image_data_proven_level_count;
     int structure2_canonical_source_verified_level_count;
     int structure2_materialization_bound_level_count;
