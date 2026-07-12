@@ -73,6 +73,8 @@ static void probe_cue_track02_mount(void) {
     char payload_path[512];
     char missing_cue_path[512];
     char duplicate_cue_path[512];
+    char split_cue_path[512];
+    char split_payload_path[512];
     char resolved[THERON_TRACK02_MOUNT_PATH_CAPACITY];
 
     if (!mkdtemp(directory)) {
@@ -84,6 +86,8 @@ static void probe_cue_track02_mount(void) {
     snprintf(cue_path, sizeof(cue_path), "%s/disc.cue", directory);
     snprintf(missing_cue_path, sizeof(missing_cue_path), "%s/missing.cue", directory);
     snprintf(duplicate_cue_path, sizeof(duplicate_cue_path), "%s/duplicate.cue", directory);
+    snprintf(split_cue_path, sizeof(split_cue_path), "%s/split.cue", directory);
+    snprintf(split_payload_path, sizeof(split_payload_path), "%s/TQUS02End.iso", directory);
     check_int("cue mount payload fixture", write_probe_file(payload_path, "payload"), 1);
     check_int("cue mount cue fixture",
               write_probe_file(cue_path,
@@ -109,6 +113,17 @@ static void probe_cue_track02_mount(void) {
     check_int("cue mount duplicate Track 02 is rejected",
               theron_v1_track02_resolve_media_path(duplicate_cue_path, resolved),
               THERON_TRACK02_SIGNAL_NOT_FOUND);
+    check_int("cue mount split payload fixture",
+              write_probe_file(split_payload_path, "payload"), 1);
+    check_int("cue mount split-layout CUE fixture",
+              write_probe_file(split_cue_path,
+                  "FILE \"TQUS02.iso\" BINARY\n"
+                  "  TRACK 02 MODE1/2048\n"), 1);
+    check_int("cue mount resolves the documented split Track 02 layout",
+              theron_v1_track02_resolve_media_path(split_cue_path, resolved),
+              THERON_TRACK02_SIGNAL_OK);
+    check_int("cue mount does not generalize the split-layout alias",
+              strcmp(resolved, split_payload_path) == 0, 1);
     check_int("plain payload path remains a direct mount",
               theron_v1_track02_resolve_media_path(payload_path, resolved),
               THERON_TRACK02_SIGNAL_OK);
@@ -116,6 +131,8 @@ static void probe_cue_track02_mount(void) {
     remove(cue_path);
     remove(missing_cue_path);
     remove(duplicate_cue_path);
+    remove(split_cue_path);
+    remove(split_payload_path);
     remove(payload_path);
     rmdir(directory);
 #endif

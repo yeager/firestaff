@@ -270,8 +270,44 @@ static int tqr_cue_is_track02_mode1(const char *line) {
     if (strncmp(p, "02", 2u) != 0 || (p[2] != ' ' && p[2] != '\t')) return 0;
     p = tqr_skip_space(p + 2u);
     return tqr_ascii_equal_ci(p, "MODE1/2352") ||
+           tqr_ascii_equal_ci(p, "MODE1/2048") ||
            (strncmp(p, "MODE1/2352", 10u) == 0 &&
+            (p[10] == ' ' || p[10] == '\t' || p[10] == '\r' || p[10] == '\n')) ||
+           (strncmp(p, "MODE1/2048", 10u) == 0 &&
             (p[10] == ' ' || p[10] == '\t' || p[10] == '\r' || p[10] == '\n'));
+}
+
+static int tqr_cue_path_for_file(const char *cue_path, const char *file_name,
+                                 char out_path[THERON_TRACK02_MOUNT_PATH_CAPACITY]);
+
+/* Some documented MyAbandonware dumps split the final data extent into
+ * TQJP02End.iso/TQUS02End.iso, while their supplied CUE still names the
+ * pre-split TQJP02.iso/TQUS02.iso member.  This is an explicit media-layout
+ * alias, not a fallback search: only these two exact CUE member names may
+ * resolve to their matching sibling, and boot still re-hashes the resulting
+ * payload against the known original Track 02 MD5 before decoding it. */
+static int tqr_cue_known_split_track02_path(
+    const char *cue_path,
+    const char *selected_file,
+    char out_path[THERON_TRACK02_MOUNT_PATH_CAPACITY]) {
+    static const struct {
+        const char *declared_name;
+        const char *materialized_name;
+    } aliases[] = {
+        { "TQJP02.iso", "TQJP02End.iso" },
+        { "TQUS02.iso", "TQUS02End.iso" }
+    };
+    size_t i;
+
+    if (!cue_path || !selected_file || !out_path ||
+        strchr(selected_file, '/') || strchr(selected_file, '\\')) return 0;
+    for (i = 0u; i < sizeof(aliases) / sizeof(aliases[0]); ++i) {
+        if (tqr_ascii_equal_ci(selected_file, aliases[i].declared_name)) {
+            return tqr_cue_path_for_file(cue_path, aliases[i].materialized_name,
+                                         out_path);
+        }
+    }
+    return 0;
 }
 
 static int tqr_cue_track_number_and_mode(const char *line,
@@ -296,7 +332,10 @@ static int tqr_cue_track_number_and_mode(const char *line,
     if (out_track02_mode1) {
         *out_track02_mode1 = track == 2u &&
             (tqr_ascii_equal_ci(p, "MODE1/2352") ||
+             tqr_ascii_equal_ci(p, "MODE1/2048") ||
              (strncmp(p, "MODE1/2352", 10u) == 0 &&
+              (p[10] == ' ' || p[10] == '\t' || p[10] == '\r' || p[10] == '\n')) ||
+             (strncmp(p, "MODE1/2048", 10u) == 0 &&
               (p[10] == ' ' || p[10] == '\t' || p[10] == '\r' || p[10] == '\n')));
     }
     return 1;
@@ -502,6 +541,11 @@ Theron_Track02SignalStatus theron_v1_track02_resolve_media_path(
     parent[parent_len] = '\0';
     snprintf(out_payload_path, THERON_TRACK02_MOUNT_PATH_CAPACITY, "%s%s", parent, selected_file);
     payload = fopen(out_payload_path, "rb");
+    if (!payload &&
+        tqr_cue_known_split_track02_path(media_path, selected_file,
+                                         out_payload_path)) {
+        payload = fopen(out_payload_path, "rb");
+    }
     if (!payload) {
         out_payload_path[0] = '\0';
         return THERON_TRACK02_SIGNAL_NOT_FOUND;

@@ -481,7 +481,7 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         safe_str_copy(receipt->track02_path, sizeof(receipt->track02_path), track02_path);
         safe_str_copy(receipt->track02_md5_hex, sizeof(receipt->track02_md5_hex), expected_md5);
         safe_str_copy(receipt->skip_reason_note, sizeof(receipt->skip_reason_note),
-                      "CUE Track 02 mount did not resolve one readable MODE1/2352 payload");
+                      "CUE Track 02 mount did not resolve one readable MODE1 payload");
         receipt->m11_dispatch_source_kind = -1;
         receipt->session_tick_token = theron_v1_startup_receipt_session_tick(receipt);
         return 0;
