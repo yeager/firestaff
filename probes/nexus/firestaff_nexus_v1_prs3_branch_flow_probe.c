@@ -181,6 +181,26 @@ typedef struct {
     size_t outer_loop_target;
 } Nexus_Prs3V1PostReadControlReceipt;
 
+/* Exact continuation of the post-read control decision. The final R1/R10
+ * comparison, increment, BF/S delay slot, local-repeat target, and outer
+ * loop fallthrough are retained as control-flow facts only. */
+typedef struct {
+    int valid;
+    size_t compare_offset;
+    unsigned int compare_source_register;
+    unsigned int compare_destination_register;
+    size_t counter_increment_offset;
+    unsigned int counter_register;
+    int counter_increment;
+    size_t delayed_branch_offset;
+    size_t delayed_branch_target;
+    size_t delay_slot_offset;
+    unsigned int delay_slot_source_register;
+    unsigned int delay_slot_destination_register;
+    size_t outer_loop_branch_offset;
+    size_t outer_loop_target;
+} Nexus_Prs3V1PostReadBranchReceipt;
+
 static int failures;
 
 static void check(int condition, const char *message) {
@@ -791,6 +811,54 @@ static int prs3_v1_post_read_control_receipt(
     return 1;
 }
 
+static int prs3_v1_post_read_branch_receipt(
+    const uint8_t *data, size_t size, Nexus_Prs3V1PostReadBranchReceipt *out) {
+    Nexus_Prs3V1PostReadBranchReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 164U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.compare_offset = entry + 154U;
+    receipt.counter_increment_offset = entry + 156U;
+    receipt.delayed_branch_offset = entry + 158U;
+    receipt.delay_slot_offset = entry + 160U;
+    receipt.outer_loop_branch_offset = entry + 162U;
+    if (!sh2_cmp_eq_register_fields(read_be16(data + receipt.compare_offset),
+                                    &receipt.compare_source_register,
+                                    &receipt.compare_destination_register) ||
+        !sh2_add_immediate_fields(
+            read_be16(data + receipt.counter_increment_offset),
+            &receipt.counter_register, &receipt.counter_increment) ||
+        read_be16(data + receipt.delayed_branch_offset) != 0x8ff3U ||
+        !sh2_conditional_branch_target(
+            receipt.delayed_branch_offset,
+            read_be16(data + receipt.delayed_branch_offset), size,
+            &receipt.delayed_branch_target) ||
+        !sh2_logic_register_fields(read_be16(data + receipt.delay_slot_offset),
+                                   0x2009U,
+                                   &receipt.delay_slot_source_register,
+                                   &receipt.delay_slot_destination_register) ||
+        !sh2_bra_target(receipt.outer_loop_branch_offset,
+                        read_be16(data + receipt.outer_loop_branch_offset), size,
+                        &receipt.outer_loop_target) ||
+        receipt.compare_source_register != 1U ||
+        receipt.compare_destination_register != 10U ||
+        receipt.counter_register != 10U || receipt.counter_increment != 1 ||
+        receipt.delay_slot_source_register != 5U ||
+        receipt.delay_slot_destination_register != 6U ||
+        receipt.delayed_branch_target != entry + 136U ||
+        receipt.outer_loop_target != entry + 52U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
 static void test_synthetic_branch_flow(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Nexus_Prs3V1BranchFlowReceipt receipt;
@@ -995,6 +1063,32 @@ static void test_synthetic_post_read_control(void) {
           "SH-2 PRS3 post-read receipt rejects a changed branch-condition compare");
 }
 
+static void test_synthetic_post_read_branch(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
+    Nexus_Prs3V1PostReadBranchReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 154U] = 0x2aU; fixture[entry + 155U] = 0x10U;
+    fixture[entry + 156U] = 0x7aU; fixture[entry + 157U] = 0x01U;
+    fixture[entry + 158U] = 0x8fU; fixture[entry + 159U] = 0xf3U;
+    fixture[entry + 160U] = 0x26U; fixture[entry + 161U] = 0x59U;
+    fixture[entry + 162U] = 0xafU; fixture[entry + 163U] = 0xc7U;
+    check(prs3_v1_post_read_branch_receipt(
+              fixture, sizeof(fixture), &receipt) && receipt.valid &&
+              receipt.compare_source_register == 1U &&
+              receipt.compare_destination_register == 10U &&
+              receipt.delay_slot_source_register == 5U &&
+              receipt.delay_slot_destination_register == 6U &&
+              receipt.delayed_branch_target == entry + 136U &&
+              receipt.outer_loop_target == entry + 52U,
+          "SH-2 PRS3 post-read branch receipt locks BF/S delay and both targets");
+    fixture[entry + 161U] = 0x58U;
+    check(!prs3_v1_post_read_branch_receipt(
+              fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 post-read branch receipt rejects a changed delay-slot operation");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -1039,6 +1133,7 @@ int main(int argc, char **argv) {
     Nexus_Prs3V1ZeroSideMergeBranchReceipt zero_side_merge_branch_receipt;
     Nexus_Prs3V1MergedValueReadReceipt merged_value_read_receipt;
     Nexus_Prs3V1PostReadControlReceipt post_read_control_receipt;
+    Nexus_Prs3V1PostReadBranchReceipt post_read_branch_receipt;
 
     test_synthetic_branch_flow();
     test_synthetic_zero_side_read();
@@ -1048,6 +1143,7 @@ int main(int argc, char **argv) {
     test_synthetic_zero_side_merge_branch();
     test_synthetic_merged_value_read();
     test_synthetic_post_read_control();
+    test_synthetic_post_read_branch();
     if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
@@ -1096,6 +1192,10 @@ int main(int argc, char **argv) {
                   data, size, &post_read_control_receipt) &&
                   post_read_control_receipt.valid,
               "DM.BIN locks the PRS3 v1 post-read comparison overwrite and repeat branch");
+        check(prs3_v1_post_read_branch_receipt(
+                  data, size, &post_read_branch_receipt) &&
+                  post_read_branch_receipt.valid,
+              "DM.BIN locks the PRS3 v1 post-read BF/S delay and branch targets");
         if (receipt.valid) {
             printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
                    "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
@@ -1197,6 +1297,21 @@ int main(int argc, char **argv) {
                    post_read_control_receipt.delayed_branch_target,
                    post_read_control_receipt.outer_loop_branch_offset,
                    post_read_control_receipt.outer_loop_target);
+        }
+        if (post_read_branch_receipt.valid) {
+            printf("SH-2 PRS3 v1 post-read branch: cmp=R%u,R%u increment=R%u%+d "
+                   "bf/s=%zu->%zu delay=R%u,R%u outer=%zu->%zu; "
+                   "token/output-proof=0\n",
+                   post_read_branch_receipt.compare_source_register,
+                   post_read_branch_receipt.compare_destination_register,
+                   post_read_branch_receipt.counter_register,
+                   post_read_branch_receipt.counter_increment,
+                   post_read_branch_receipt.delayed_branch_offset,
+                   post_read_branch_receipt.delayed_branch_target,
+                   post_read_branch_receipt.delay_slot_source_register,
+                   post_read_branch_receipt.delay_slot_destination_register,
+                   post_read_branch_receipt.outer_loop_branch_offset,
+                   post_read_branch_receipt.outer_loop_target);
         }
     }
     free(data);

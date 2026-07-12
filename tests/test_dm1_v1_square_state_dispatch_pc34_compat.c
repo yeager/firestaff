@@ -2,6 +2,7 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
 
 #include <assert.h>
 #include <string.h>
@@ -257,5 +258,34 @@ int main(void)
     assert(group.next == (unsigned short)(THING_TYPE_TEXTSTRING << 10));
     assert(group.creatureType == 0 && group.health[0] > 0);
     assert(has_generator_reenable_event(&world, 0, 1));
+
+    /* F0259: C11's delayed refill uses C12, C07, C08, C09 source order
+     * and refuses to overwrite a nonempty ready hand. */
+    world.party.champions[0].present = 1;
+    world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
+    world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_1] =
+        (unsigned short)(THING_TYPE_JUNK << 10);
+    world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_3] =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+    world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_2] =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
+    assert(F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick));
+    {
+        struct TimelineEvent_Compat refill;
+        memset(&refill, 0, sizeof(refill));
+        refill.kind = TIMELINE_EVENT_MOVE_TIMER;
+        refill.fireAtTick = world.gameTick;
+        refill.aux0 = 0;
+        refill.aux1 = CHAMPION_SLOT_HAND_LEFT;
+        refill.aux4 = DM1_F0259_MOVE_TIMER_AUX4_PC34;
+        assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &refill));
+    }
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert(world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] ==
+           (unsigned short)((THING_TYPE_WEAPON << 10) | 1));
+    assert(world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_3] == THING_NONE);
+    assert(world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_2] ==
+           (unsigned short)((THING_TYPE_WEAPON << 10) | 2));
     return 0;
 }
