@@ -4020,6 +4020,7 @@ add_test(
     NAME dm1_v1_all_inscription_real_data_capture_regression
     COMMAND firestaff_dm1_v1_hoc_inscription_readability_runtime_probe
         "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 # DM1 V1 Hall-of-Champions probes recovered from local worktree triage.
