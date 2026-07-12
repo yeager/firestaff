@@ -15170,6 +15170,58 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     return 1;
 }
 
+int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *runner,
+    const CSB_V1_DSAImportedAction *action,
+    int *parameters,
+    int parameter_count,
+    int flgs_inout[2])
+{
+    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
+    const CSB_V1_DSAImportedAction *expected;
+    int global_count;
+
+    if (!profile || !runner || !action || !parameters ||
+        parameter_count < 1 || parameter_count > 26 ||
+        runner->programs != &profile->csbwin_extended_dsa_state ||
+        !profile->csbwin_extended_features_valid) {
+        return 0;
+    }
+    expected = csb_v1_chaos_find_imported_action(
+        &profile->csbwin_extended_dsa_state, runner->dsa_id,
+        runner->state_index, runner->action_ordinal);
+    if (expected != action) return 0;
+
+    global_count = profile->csbwin_global_variables_valid ?
+        (int)profile->csbwin_global_variable_count : 0;
+    if (global_count < 0 ||
+        global_count > CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY) {
+        return 0;
+    }
+
+    /* CSBWin DSA.cpp GLOBALFETCH/GLOBALSTORE address SaveGame.cpp's global
+     * bank. Rehydrate immediately before Execute so caller-provided runner
+     * bytes cannot become runtime state. */
+    candidate = *runner;
+    memset(candidate.global_variables, 0, sizeof(candidate.global_variables));
+    candidate.global_variable_count = global_count;
+    memcpy(candidate.global_variables, profile->csbwin_global_variables,
+           (size_t)global_count * sizeof(candidate.global_variables[0]));
+    if (!csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
+            action, parameters, parameter_count, flgs_inout, &candidate)) {
+        return 0;
+    }
+
+    /* The callback already stages its parameters and globals through a full
+     * action. Publish that same completed bank; EXPOOL writeback stays a
+     * separate CSBWin save task. */
+    memcpy(profile->csbwin_global_variables, candidate.global_variables,
+           (size_t)global_count * sizeof(candidate.global_variables[0]));
+    *runner = candidate;
+    return 1;
+}
+
 int csb_v1_runtime_export_csbwin_core_save_to_memory(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t *out,
