@@ -60,7 +60,6 @@
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
-#include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
 #include <stdio.h>
@@ -571,8 +570,6 @@ static int run_terminal_pair(M11_GameViewState* game,
 
 int main(int argc, char** argv) {
     const char* dataDir;
-    M12_StartupMenuState menu;
-    M12_StartupMenuInitOptions menuOptions;
     M11_GameViewState game;
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
     int ok = 1;
@@ -583,14 +580,10 @@ int main(int argc, char** argv) {
     }
     dataDir = argv[1];
 
-    /* The gallery is unrelated to the real-media launch/HUD path and can
-     * traverse a large user screenshot directory before this probe reaches
-     * the PC 3.4 asset scanner. */
-    memset(&menuOptions, 0, sizeof(menuOptions));
-    menuOptions.skipScreenshotGalleryScan = 1;
-    M12_StartupMenu_InitWithOptions(&menu, dataDir, NULL, &menuOptions);
     M11_GameView_Init(&game);
-    if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
+    /* The regression owns one hash-verified DM1 session.  M12 launcher
+     * scanning is not evidence for an active C151..C154/C113..C116 HUD. */
+    if (!M11_GameView_StartDm1(&game, dataDir)) {
         fprintf(stderr,
                 "SKIP dm1 v1 full_party_hud_runtime_pairing_probe: "
                 "could not open DM1 V1 game view from %s\n",
@@ -598,6 +591,7 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&game);
         return 2;
     }
+    game.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     if (!game.assetsAvailable) {
         fprintf(stderr,
                 "SKIP dm1 v1 full_party_hud_runtime_pairing_probe: "
