@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 V2.0 independent palette interpolation: the indexed
+  pre-filter route now runs when palette interpolation is enabled even if
+  dither cleanup is disabled. It still operates on the presentation scratch
+  framebuffer only. Verification: Apple-Silicon V2.0 renderer probe passed
+  8/8, including the independent interpolation/no-dither readback and source
+  immutability checks.
+
 - 2026-07-12 DM1 V2.2 real-art launch gate: V2.2 selection now requires the
   existing finished-art material gate to report `FINISHED_REAL`; a manifest
   or cache containing synthetic/partial placeholders resolves to V2.1, which
