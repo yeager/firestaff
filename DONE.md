@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM2 V1 original title-menu NEW pointer route: M11 now sends
+  startup clicks only through the `INTERFACE_GENERAL/0/dt04/0` rectangle
+  expanded for original event `0xD7`, which skproject `HANDLE_UI_EVENT`
+  maps to NEW GAME. Missing or malformed original rectangles reject input;
+  the Firestaff panel hit region is not used by M11. A focused M11 regression
+  clicks the decoded rectangle centre and checks session entry. Verification:
+  strict C11 syntax PASS; executable test is pending because the local
+  `build/` directory has no `build.ninja`.
+
 - 2026-07-12 Nexus V1 DGN Structure2 target-layout receipt: the original
   LEV00-LEV15 probe now measures all 282 sequence-referenced numeric targets
   as word-aligned; per level, 232 target positions are distinct and 50 reused.
@@ -220,6 +229,14 @@
   transfer-table proof only and assigns no game-data role to stage two.
   Verification: strict-C11 syntax checks plus direct hash-verified JP/US media
   probe, 0 failed.
+
+- 2026-07-12 Theron V1 stage-two dynamic-read transfer binding: the shared
+  runtime handoff now reads the original `$4080` `$4090` CD_READ setup and its
+  post-success status/record/work-RAM/JMP `$3800` byte sequence from both
+  media variants. This proves only the loader control transfer, not manifest,
+  bank, level, object, palette, or later-CD semantics. Verification:
+  strict-C11 syntax checks plus direct hash-verified JP/US media probe, 0
+  failed.
 
 - 2026-07-12 Theron V1 CUE/M11 loader-chain consumer: strict CUE boot
   validation now consumes the same stage-two work-RAM transfer and physical

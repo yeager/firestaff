@@ -1182,6 +1182,20 @@ int dm2_v1_boot_startup_execute_pointer_from_snapshot(
     void *apply_userdata,
     struct DM2_V1_StartupExecution *out_execution,
     struct DM2_V1_StartupHostActionReceipt *out_receipt);
+int dm2_v1_boot_startup_execute_original_pointer_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int x,
+    int y,
+    int (*apply_session)(void *userdata,
+                         const struct DM2_V1_SessionState *session),
+    void *apply_userdata,
+    struct DM2_V1_StartupExecution *out_execution,
+    struct DM2_V1_StartupHostActionReceipt *out_receipt);
 
 int dm2_v1_boot_startup_presentation_build_from_runtime_state(
     const DM2_V1_BootProfile *profile,
@@ -1459,6 +1473,19 @@ typedef struct {
 int dm2_v1_boot_interface_hud_layout(
     DM2_V1_BootProfile *profile,
     DM2_V1_InterfaceHudLayout *out_layout);
+
+typedef struct {
+    int valid;
+    uint32_t table_hash;
+    DM2_V1_InterfaceRect new_game;
+    DM2_V1_InterfaceRect resume_game;
+} DM2_V1_StartupMenuPointerLayout;
+
+/* skproject SHOW_MENU_SCREEN installs the raw4 rect table before handling
+ * event 0xD7 (NEW) and 0xD9 (RESUME). */
+int dm2_v1_boot_startup_menu_pointer_layout(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_StartupMenuPointerLayout *out_layout);
 
 /* skproject LOAD_GDAT_INTERFACE_00_0A table. Storage remains owned by the
  * boot graphics handle and is valid while profile->graphics_dat is alive. */
