@@ -2088,54 +2088,6 @@ static void dm2_v1_blit_scaled_material_bitmap_region(
     }
 }
 
-static void dm2_v1_blit_scaled_bitmap_region_ex(uint8_t *dst,
-                                                int dst_stride,
-                                                int dst_x,
-                                                int dst_y,
-                                                int dst_w,
-                                                int dst_h,
-                                                const uint8_t *src,
-                                                int src_x,
-                                                int src_y,
-                                                int src_w,
-                                                int src_h,
-                                                int src_stride,
-                                                int transparent_color,
-                                                int flip_mirror)
-{
-    int y;
-
-    if (!dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
-        src_w <= 0 || src_h <= 0 || src_stride <= 0) {
-        return;
-    }
-    for (y = 0; y < dst_h; ++y) {
-        int sy = src_y + (y * src_h) / dst_h;
-        int fy = dst_y + y;
-        int x;
-        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
-        for (x = 0; x < dst_w; ++x) {
-            int rx = (x * src_w) / dst_w;
-            int sx = src_x + ((flip_mirror & 1) ? (src_w - 1 - rx) : rx);
-            int fx = dst_x + x;
-            uint8_t pixel;
-            if (flip_mirror & 2) {
-                sy = src_y + src_h - 1 - ((y * src_h) / dst_h);
-            }
-            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH ||
-                sx < 0 || sy < 0 || sx >= src_stride) {
-                continue;
-            }
-            pixel = src[sy * src_stride + sx];
-            if (transparent_color >= 0 &&
-                pixel == (uint8_t)transparent_color) {
-                continue;
-            }
-            dst[fy * dst_stride + fx] = pixel;
-        }
-    }
-}
-
 /* skproject/SKWIN/SkWinCore.cpp routes map-chip and HUD sprites through the
  * same dtPalIRGB/dtPalette16 binding as dungeon materials. Keep this as a
  * distinct primitive so ordinary fallback pixels cannot be counted as GDAT
@@ -2168,36 +2120,6 @@ static void dm2_v1_blit_scaled_material_bitmap_region_ex(
                 dm2_v1_material_palette_color(s, pixel, consumed_count);
         }
     }
-}
-
-static void dm2_v1_blit_scaled_bitmap_region(uint8_t *dst,
-                                             int dst_stride,
-                                             int dst_x,
-                                             int dst_y,
-                                             int dst_w,
-                                             int dst_h,
-                                             const uint8_t *src,
-                                             int src_x,
-                                             int src_y,
-                                             int src_w,
-                                             int src_h,
-                                             int src_stride,
-                                             int transparent_color)
-{
-    dm2_v1_blit_scaled_bitmap_region_ex(dst,
-                                        dst_stride,
-                                        dst_x,
-                                        dst_y,
-                                        dst_w,
-                                        dst_h,
-                                        src,
-                                        src_x,
-                                        src_y,
-                                        src_w,
-                                        src_h,
-                                        src_stride,
-                                        transparent_color,
-                                        0);
 }
 
 static int dm2_v1_prepare_map_chip_frame(int src_w,
