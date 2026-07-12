@@ -3755,10 +3755,139 @@ static int orch_f0248_consume_explosion_launcher_compat(
     return applied;
 }
 
+/* ReDMCSB TIMELINE.C F0247:1066-1100 walks the live square chain for
+ * C014/C015, selects ordinary Things on the event/next cell, and unlinks
+ * each selected Thing through F0164 before F0212 turns it into a kinetic
+ * projectile.  Keep that ownership transfer inside M10. */
+static int orch_f0248_collect_square_launcher_things_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct ProjectileLauncherSquareThing_Compat* outThings,
+    int capacity)
+{
+    int squareIndex;
+    unsigned short thing;
+    int count = 0;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things || !outThings ||
+        capacity <= 0 || !world->things->squareFirstThings) {
+        return 0;
+    }
+    squareIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+    thing = world->things->squareFirstThings[squareIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+           count < capacity && safety++ < 64) {
+        outThings[count].thing = thing;
+        outThings[count].cell = (int)THING_GET_CELL(thing);
+        outThings[count].thingType = (int)THING_GET_TYPE(thing);
+        ++count;
+        thing = orch_next_thing_compat(world->things, thing);
+    }
+    return count;
+}
+
+static int orch_f0248_consume_square_object_launcher_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct DungeonSensor_Compat* sensor,
+    int sensorCell)
+{
+    struct ProjectileLauncherSquareThing_Compat squareThings[64];
+    struct ProjectileLauncherContext_Compat context;
+    struct ProjectileLauncherResult_Compat launcher;
+    int squareThingCount;
+    int unlinkIndex;
+    int launchIndex;
+    int applied = 0;
+
+    if (!world || !ev || !sensor ||
+        (sensor->sensorType != DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_SQUARE_OBJ &&
+         sensor->sensorType != DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_SQUARE_OBJ) ||
+        (sensorCell & 3) != (ev->cell & 3)) {
+        return 0;
+    }
+    squareThingCount = orch_f0248_collect_square_launcher_things_compat(
+        world, ev->mapIndex, ev->mapX, ev->mapY, squareThings,
+        (int)(sizeof(squareThings) / sizeof(squareThings[0])));
+    if (squareThingCount <= 0) return 0;
+    memset(&context, 0, sizeof(context));
+    context.newObjectThings[0] = THING_NONE;
+    context.newObjectThings[1] = THING_NONE;
+    context.squareThings = squareThings;
+    context.squareThingCount = squareThingCount;
+    memset(&launcher, 0, sizeof(launcher));
+    /* First evaluate without RNG so an empty C014/C015 selection does not
+     * advance M005_RANDOM(2). A one-object C015 collapses to the source's
+     * single-launch path and therefore consumes exactly one random bit. */
+    if (!F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+            sensor, sensorCell, ev->mapX, ev->mapY, ev->cell,
+            &context, &launcher) || !launcher.triggered ||
+        launcher.launchCount <= 0) {
+        return 0;
+    }
+    if (launcher.launchSingleProjectile) {
+        context.randomBit = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2);
+        if (!F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+                sensor, sensorCell, ev->mapX, ev->mapY, ev->cell,
+                &context, &launcher) || !launcher.triggered) {
+            return 0;
+        }
+    }
+    if (launcher.sensorDisabled) {
+        sensor->sensorType = DM1_SENSOR_DISABLED;
+        applied = 1;
+    }
+    for (unlinkIndex = 0; unlinkIndex < launcher.unlinkCount; ++unlinkIndex) {
+        applied |= orch_unlink_thing_from_square_compat(
+            world, ev->mapIndex, ev->mapX, ev->mapY,
+            launcher.unlinkThings[unlinkIndex]);
+    }
+    for (launchIndex = 0; launchIndex < launcher.launchCount; ++launchIndex) {
+        const struct ProjectileLauncherLaunch_Compat* launch =
+            &launcher.launches[launchIndex];
+        struct ProjectileCreateInput_Compat input;
+        struct TimelineEvent_Compat firstMove;
+        int slot = -1;
+
+        if (!launch->valid) continue;
+        memset(&input, 0, sizeof(input));
+        input.category = PROJECTILE_CATEGORY_KINETIC;
+        input.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+        input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+        input.ownerIndex = -1;
+        input.mapIndex = ev->mapIndex;
+        input.mapX = launch->mapX;
+        input.mapY = launch->mapY;
+        input.cell = launch->cell;
+        input.direction = launch->direction;
+        input.kineticEnergy = launch->kineticEnergy;
+        input.attack = launch->attack;
+        input.launcherStrength = launch->attack;
+        input.stepEnergy = launch->stepEnergy;
+        input.currentTick = (int)world->gameTick;
+        input.attackTypeCode = COMBAT_ATTACK_BLUNT;
+        input.associatedThing = (int)launch->associatedThing;
+        if (F0810_PROJECTILE_Create_Compat(
+                &input, &world->projectiles, &slot, &firstMove) &&
+            F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
+            applied = 1;
+        }
+    }
+    return applied;
+}
+
 /* ReDMCSB TIMELINE.C F0248:1136-1350 walks the complete wall list in
  * order, changes only TextStrings on the event cell, evaluates C005/C006,
- * consumes allocation-free C008/C010 launchers, and calls F0271 once after
- * the batch. C007/C009/C014/C015 and endgame retain their dedicated owners. */
+ * consumes C008/C010 explosions and C014/C015 live-object launchers, and
+ * calls F0271 once after the batch. C007/C009 and their allocation owner
+ * remain separate. */
 static int orch_dispatch_wall_event_f0248_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev)
@@ -3822,6 +3951,12 @@ static int orch_dispatch_wall_event_f0248_compat(
                        sensor->sensorType ==
                            DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION) {
                 applied |= orch_f0248_consume_explosion_launcher_compat(
+                    world, ev, sensor, THING_GET_CELL(thing));
+            } else if (sensor->sensorType ==
+                           DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_SQUARE_OBJ ||
+                       sensor->sensorType ==
+                           DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_SQUARE_OBJ) {
+                applied |= orch_f0248_consume_square_object_launcher_compat(
                     world, ev, sensor, THING_GET_CELL(thing));
             } else if (sensor->sensorType == DM1_SENSOR_WALL_END_GAME) {
                 /* ReDMCSB TIMELINE.C F0248:1317-1339 does not cell-filter

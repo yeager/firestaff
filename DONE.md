@@ -1,5 +1,53 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Theron V1 stage-three executable-byte gate: the runtime-facing
+  IRQ2 dispatch receipt now rereads the authenticated JP/US MODE1 user-data
+  sector and requires the actual `$3800` prefix `BRK $ff` before publishing
+  the loader-bound IRQ2 handoff. A changed selector fails closed. This proves
+  only the physical loader-to-dispatch boundary, not manifest, palette,
+  object, level, or later-CD semantics. Verification: direct strict-C11
+  original-media probe against both known-MD5 Track 02 files, 0 failed.
+
+- 2026-07-12 DM2 V1 weather GDAT receipt: fail-closed receipt requires
+  ENVIRONMENT dtImage fields 64/67/6A/6D/71 and GRAPHICSSET dtWordValue 69
+  together; it performs no weather rendering. Verification: fixture PASS.
+
+- 2026-07-12 Nexus V1 PRS3 original outer-loop control-join receipt: the
+  hash-locked branch-flow probe now proves the R11 refill merge (`OR R9,R11`)
+  and the skip branch converge on the same `R3=1; TST R11,R3` block before its
+  zero-low-bit branch. This is control-flow evidence only, not a bit order,
+  payload, token, decoder, completion, or rendering claim. Verification:
+  direct strict-C11 probe build against locked Japanese `DM.BIN` PASS.
+
+- 2026-07-12 Nexus V1 PRS3 original outer-loop re-entry receipt: the separate
+  hash-locked branch-flow probe now proves the R6-repeat outer `BRA` returns
+  through the R2=`0x0100` sentinel load, `SHAR R11`, `TST R11,R2`, its skip
+  branch, and the alternate R14-gated `@R12+ -> R11; OR R9,R11` sequence.
+  This is register/control/refill evidence only, not a bit order, payload,
+  token, decoder, completion, or rendering claim. Verification: direct
+  strict-C11 probe build against locked Japanese `DM.BIN` PASS.
+
+- 2026-07-12 Theron V1 stage-three MODE1 envelope: hash-verified raw JP/US
+  Track 02 media now has a strict physical-sector receipt for the proven
+  one-sector stage-three read. JP `$4df` is BCD `01:03:38`; US `$4e0` is
+  `00:58:57`; both retain MODE1 sync, mode byte, and user-data offset 16.
+  This is transport provenance only, not a payload/object/level/graphics
+  decoder. Verification: direct original-media probe, 0 failed.
+
+- 2026-07-12 DM2 V1 WALL_GFX input receipt: source-only receipt binds
+  `DRAW_WALL_ORNATE` dtWordValue 04/05/07/0A and dtImageOffset FD, rejecting
+  incomplete or out-of-range records without rendering. Verification:
+  focused fixture PASS.
+
+- 2026-07-12 Nexus V1 PRS3 original repeat R6-mask receipt: the separate
+  hash-locked branch-flow probe now proves `MOV R6,R3`, `ADD #1,R6`, and
+  delay-slot `AND R5,R6` with PC-relative `R5=0x0fff`, followed by either
+  local repeat or outer R11-loop return. This is R6 register/control evidence
+  only, not an output cursor, token, decoder, completion, or rendering claim.
+  Verification: direct strict-C11 probe build against locked Japanese `DM.BIN`
+  PASS; shared CMake regeneration is currently blocked by unrelated missing
+  Theron probe sources.
+
 - 2026-07-12 Theron V1 IRQ2 live-trace gate: a fail-closed receipt now
   requires an end-to-end Mednafen PCE observation from `$4093` through IRQ2
   `$e736` and CD-state branch `$e74c`; it validates `$f5` continuity and the
@@ -109,6 +157,37 @@
   payload, decoder, or rendering claim. Verification:
   `nexus_v1_prs3_branch_flow_probe` CTest PASS against locked Japanese
   `DM.BIN`.
+
+- 2026-07-12 DM1 PC34 F0248 C014/C015 live-object launcher consumption:
+  M10 now walks the actual square Thing chain, selects the original
+  event-cell/next-cell ordinary Things, unlinks them before projectile
+  creation, and carries their identity into F0810 kinetic launcher entries
+  with C25 first moves. C014 and a C015 reduced to one object consume the
+  source random bit; a full C015 preserves its two adjacent cells. Source:
+  ReDMCSB `TIMELINE.C` F0247:1066-1133. Verification: rebuilt the current
+  orchestrator object and linked
+  `test_dm1_v1_f0248_square_object_launcher_runtime_pc34_compat`; PASS.
+
+- 2026-07-12 DM1 PC34 F0248 C018 live endgame consumption: a wall
+  square-state event now applies the source C018 branch directly to M10's
+  `world->gameWon`, independent of the sensor Thing cell and incoming effect.
+  The next orchestrator step emits `EMIT_GAME_WON` and returns `ORCH_GAME_WON`;
+  M11 remains responsible for the existing F0444/F0446 presentation route.
+  Source: ReDMCSB `TIMELINE.C` F0248:1317-1339. Verification: rebuilt the
+  current orchestrator object and linked
+  `test_dm1_v1_f0248_endgame_runtime_pc34_compat`; PASS.
+
+- 2026-07-12 DM1 PC34 F0248 C008/C010 live launcher consumption: wall
+  square-state events now consume the real explosion launcher branch through
+  the existing F0730 typed plan and F0810 projectile owner. C008 consumes
+  M005_RANDOM(2) only after its source wall cell matches; C010 preserves the
+  two adjacent projectile cells. Both retain original kinetic/step energy,
+  once-only disabling, magical subtype/attack metadata, and C25 first-move
+  scheduling. C007/C009/C014/C015 remain open because their original object
+  allocation or unlink ownership is not yet proven in this M10 path. Source:
+  ReDMCSB `TIMELINE.C` F0247:1033-1133 and F0248:1312-1316. Verification:
+  rebuilt the current orchestrator object and linked
+  `test_dm1_v1_f0248_explosion_launcher_runtime_pc34_compat`; PASS.
 
 - 2026-07-12 DM1 PC34 F0259 C11 move-timer owner: added a bounded DM1
   quiver-refill plan and M10 `TIMELINE_EVENT_MOVE_TIMER` consumer. The
@@ -8351,6 +8430,12 @@
 # ✅ 2026-07-12 CSB F0276/F0270/F0271 C004 LocalEffect: object-triggered local C004 effects now retain the final local `CLEAR`/`TOGGLE` while scanning the square and rotate the complete source sensor run only after the pass, with no F0268 remote event. Source: ReDMCSB `MOVESENS.C F0270` lines 1080-1098, F0271 lines 1100-1158, and F0272/F0276 local-effect path. Verification: the dedicated C49 two-sensor regression passed 6/6; the focused F0267/F0276 CTest group passed 8/8. The separate C10 steal-skill local effect remains outside this bounded rotation route.
 
 # ✅ 2026-07-12 CSB F0276/F0270 C10 local skill XP: a real-format C004 LocalEffect value 10 now follows ReDMCSB's immediate F0269 path instead of being treated as a deferred sensor rotation. Object-triggered C49 materialization divides the original 300 Steal XP by party count, skips dead champions after division, and credits both hidden Steal (8) and base Ninja skill XP. Source: ReDMCSB `MOVESENS.C F0269` lines 1038-1078, `F0270` lines 1088-1094, and `CHAMPION.C F0304` lines 879-906. Verification: dedicated live C49 regression passed 8/8; the manually rebuilt focused nine-binary F0267/F0276 group passed while shared CMake regeneration was blocked by two unrelated missing Theron probe sources.
+
+# ✅ 2026-07-12 CSB F0276 C007 floor-creature group route: C04 group relocations now run source/destination F0276 passes and use the real-format sensor scan for C002/C007 group eligibility. A C007 sensor on the destination publishes its normal F0272/F0268 fakewall SET event after the group is relinked. Source: ReDMCSB `MOVESENS.C F0267` lines 800-867 and `F0276` lines 1658-1778, especially C007 lines 1712-1715. Verification: `test_csb_v1_f0276_group_creature_sensor_pc34_compat` passed 4/4; the manually rebuilt focused nine-binary F0276 group also passed with strict runtime compilation.
+
+# ✅ 2026-07-12 CSB F0276 C002 party route: party movement now evaluates C002 floor Theron/party/creature sensors at the live F0267 destination. It follows ReDMCSB's party/no-group eligibility, then uses the existing F0272/F0268 remote effect route. Source: ReDMCSB `MOVESENS.C F0267` lines 792-857 and `F0276` lines 1686-1689. Verification: `test_csb_v1_f0276_party_c002_sensor_pc34_compat` passed 5/5 through `MOVE_FORWARD`; the manually rebuilt focused ten-binary F0276 group passed with strict runtime compilation.
+
+# ✅ 2026-07-12 CSB F0276 C002 group route: the shared C002/C007 group eligibility route now has a dedicated live C04 move regression. A C04 group landing on a C002 floor Theron/party/creature sensor publishes the normal F0272/F0268 fakewall SET event. Source: ReDMCSB `MOVESENS.C F0267` lines 800-867 and `F0276` lines 1686-1689. Verification: `test_csb_v1_f0276_group_c002_sensor_pc34_compat` passed 4/4; the manually rebuilt focused eleven-binary F0276 group passed with strict runtime compilation.
 
 # ✅ 2026-07-12 CSB DSA transfer runner: the authenticated filter callback now promotes only CSBWin `Execute`'s already source-locked transfer-only `JUMP`/`GOSUB` subset. It invokes the bounded complete transfer chain, publishes its final state and receipt only on success, and preserves the caller parameter surface. Unsupported targets, malformed paths, and depth/transfer limits remain rejection paths. No world opcode or synthetic state transition is enabled. Source: CSBWin `DSA.cpp` lines 764-849 and 5053-5293. Verified by `test_csb_v1_dsa_trigger_single_step_pc34_compat`: 124 assertions, 0 failures.
 

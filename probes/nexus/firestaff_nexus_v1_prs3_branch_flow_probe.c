@@ -221,6 +221,54 @@ typedef struct {
     size_t outer_loop_target;
 } Nexus_Prs3V1RepeatR6MaskReceipt;
 
+/* The outer fallthrough from the R6 repeat block re-enters the shared R11
+ * control block. This proves only its exact SH-2 control/refill shape; it
+ * does not identify a PRS3 bit order, payload, token, or output operation. */
+typedef struct {
+    int valid;
+    size_t outer_loop_branch_offset;
+    size_t reentry_target;
+    size_t sentinel_literal_load_offset;
+    size_t sentinel_literal_offset;
+    uint16_t sentinel_word;
+    size_t control_shift_offset;
+    unsigned int control_shift_register;
+    size_t control_test_offset;
+    unsigned int control_test_source_register;
+    unsigned int control_test_destination_register;
+    size_t refill_skip_branch_offset;
+    size_t refill_skip_target;
+    size_t refill_guard_offset;
+    size_t refill_failure_branch_offset;
+    size_t refill_failure_target;
+    size_t refill_byte_load_offset;
+    unsigned int refill_cursor_register;
+    unsigned int refill_value_register;
+    size_t refill_merge_offset;
+    unsigned int refill_merge_source_register;
+    unsigned int refill_merge_destination_register;
+} Nexus_Prs3V1OuterLoopReentryReceipt;
+
+/* Both observed outer-loop re-entry continuations converge at the same R11
+ * low-bit test. This is a control-flow join only; it says nothing about the
+ * meaning or ordering of the control bits. */
+typedef struct {
+    int valid;
+    size_t skip_branch_offset;
+    size_t skip_target;
+    size_t refill_merge_offset;
+    unsigned int refill_merge_source_register;
+    unsigned int refill_merge_destination_register;
+    size_t low_bit_immediate_offset;
+    unsigned int low_bit_register;
+    int low_bit_immediate;
+    size_t low_bit_test_offset;
+    unsigned int low_bit_test_source_register;
+    unsigned int low_bit_test_destination_register;
+    size_t zero_bit_branch_offset;
+    size_t zero_bit_target;
+} Nexus_Prs3V1OuterLoopLowBitJoinReceipt;
+
 static int failures;
 
 static void check(int condition, const char *message) {
@@ -937,6 +985,129 @@ static int prs3_v1_repeat_r6_mask_receipt(
     return 1;
 }
 
+static int prs3_v1_outer_loop_reentry_receipt(
+    const uint8_t *data, size_t size, Nexus_Prs3V1OuterLoopReentryReceipt *out) {
+    Nexus_Prs3V1OuterLoopReentryReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 270U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.outer_loop_branch_offset = entry + 162U;
+    receipt.sentinel_literal_load_offset = entry + 52U;
+    receipt.control_shift_offset = entry + 54U;
+    receipt.control_test_offset = entry + 56U;
+    receipt.refill_skip_branch_offset = entry + 58U;
+    receipt.refill_guard_offset = entry + 60U;
+    receipt.refill_failure_branch_offset = entry + 62U;
+    receipt.refill_byte_load_offset = entry + 64U;
+    receipt.refill_merge_offset = entry + 70U;
+    if (!sh2_bra_target(receipt.outer_loop_branch_offset,
+                        read_be16(data + receipt.outer_loop_branch_offset), size,
+                        &receipt.reentry_target) ||
+        read_be16(data + receipt.sentinel_literal_load_offset) != 0x926aU ||
+        !sh2_movw_pc_literal_target(
+            receipt.sentinel_literal_load_offset,
+            read_be16(data + receipt.sentinel_literal_load_offset),
+            &receipt.sentinel_literal_offset) ||
+        receipt.sentinel_literal_offset + 2U > size ||
+        read_be16(data + receipt.control_shift_offset) != 0x4b21U ||
+        !sh2_tst_register_fields(read_be16(data + receipt.control_test_offset),
+                                 &receipt.control_test_source_register,
+                                 &receipt.control_test_destination_register) ||
+        !sh2_conditional_branch_target(
+            receipt.refill_skip_branch_offset,
+            read_be16(data + receipt.refill_skip_branch_offset), size,
+            &receipt.refill_skip_target) ||
+        read_be16(data + receipt.refill_guard_offset) != 0x2ee8U ||
+        !sh2_conditional_branch_target(
+            receipt.refill_failure_branch_offset,
+            read_be16(data + receipt.refill_failure_branch_offset), size,
+            &receipt.refill_failure_target) ||
+        !sh2_movb_postinc_fields(read_be16(data + receipt.refill_byte_load_offset),
+                                 &receipt.refill_cursor_register,
+                                 &receipt.refill_value_register) ||
+        read_be16(data + receipt.refill_byte_load_offset + 2U) != 0x7effU ||
+        read_be16(data + receipt.refill_byte_load_offset + 4U) != 0x6bbcU ||
+        !sh2_logic_register_fields(read_be16(data + receipt.refill_merge_offset),
+                                   0x200bU,
+                                   &receipt.refill_merge_source_register,
+                                   &receipt.refill_merge_destination_register) ||
+        receipt.reentry_target != receipt.sentinel_literal_load_offset ||
+        receipt.control_test_source_register != 11U ||
+        receipt.control_test_destination_register != 2U ||
+        receipt.refill_skip_target != entry + 72U ||
+        receipt.refill_failure_target != entry + 166U ||
+        receipt.refill_cursor_register != 12U ||
+        receipt.refill_value_register != 11U ||
+        receipt.refill_merge_source_register != 9U ||
+        receipt.refill_merge_destination_register != 11U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.sentinel_word = read_be16(data + receipt.sentinel_literal_offset);
+    if (receipt.sentinel_word != 0x0100U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.control_shift_register = 11U;
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
+static int prs3_v1_outer_loop_low_bit_join_receipt(
+    const uint8_t *data, size_t size,
+    Nexus_Prs3V1OuterLoopLowBitJoinReceipt *out) {
+    Nexus_Prs3V1OuterLoopLowBitJoinReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 100U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.skip_branch_offset = entry + 58U;
+    receipt.refill_merge_offset = entry + 70U;
+    receipt.low_bit_immediate_offset = entry + 72U;
+    receipt.low_bit_test_offset = entry + 74U;
+    receipt.zero_bit_branch_offset = entry + 76U;
+    if (read_be16(data + receipt.skip_branch_offset) != 0x8b05U ||
+        !sh2_conditional_branch_target(
+            receipt.skip_branch_offset,
+            read_be16(data + receipt.skip_branch_offset), size,
+            &receipt.skip_target) ||
+        !sh2_logic_register_fields(read_be16(data + receipt.refill_merge_offset),
+                                   0x200bU,
+                                   &receipt.refill_merge_source_register,
+                                   &receipt.refill_merge_destination_register) ||
+        !sh2_mov_immediate_fields(
+            read_be16(data + receipt.low_bit_immediate_offset),
+            &receipt.low_bit_register, &receipt.low_bit_immediate) ||
+        !sh2_tst_register_fields(read_be16(data + receipt.low_bit_test_offset),
+                                 &receipt.low_bit_test_source_register,
+                                 &receipt.low_bit_test_destination_register) ||
+        !sh2_conditional_branch_target(
+            receipt.zero_bit_branch_offset,
+            read_be16(data + receipt.zero_bit_branch_offset), size,
+            &receipt.zero_bit_target) ||
+        receipt.skip_target != receipt.low_bit_immediate_offset ||
+        receipt.refill_merge_source_register != 9U ||
+        receipt.refill_merge_destination_register != 11U ||
+        receipt.low_bit_register != 3U || receipt.low_bit_immediate != 1 ||
+        receipt.low_bit_test_source_register != 11U ||
+        receipt.low_bit_test_destination_register != 3U ||
+        receipt.zero_bit_target != entry + 100U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
 static void test_synthetic_branch_flow(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Nexus_Prs3V1BranchFlowReceipt receipt;
@@ -1194,6 +1365,65 @@ static void test_synthetic_repeat_r6_mask(void) {
           "SH-2 PRS3 repeat receipt rejects a changed R6 delay-slot mask");
 }
 
+static void test_synthetic_outer_loop_reentry(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 512U];
+    Nexus_Prs3V1OuterLoopReentryReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 52U] = 0x92U; fixture[entry + 53U] = 0x6aU;
+    fixture[entry + 268U] = 0x01U; fixture[entry + 269U] = 0x00U;
+    fixture[entry + 54U] = 0x4bU; fixture[entry + 55U] = 0x21U;
+    fixture[entry + 56U] = 0x22U; fixture[entry + 57U] = 0xb8U;
+    fixture[entry + 58U] = 0x8bU; fixture[entry + 59U] = 0x05U;
+    fixture[entry + 60U] = 0x2eU; fixture[entry + 61U] = 0xe8U;
+    fixture[entry + 62U] = 0x89U; fixture[entry + 63U] = 0x32U;
+    fixture[entry + 64U] = 0x6bU; fixture[entry + 65U] = 0xc4U;
+    fixture[entry + 66U] = 0x7eU; fixture[entry + 67U] = 0xffU;
+    fixture[entry + 68U] = 0x6bU; fixture[entry + 69U] = 0xbcU;
+    fixture[entry + 70U] = 0x2bU; fixture[entry + 71U] = 0x9bU;
+    fixture[entry + 162U] = 0xafU; fixture[entry + 163U] = 0xc7U;
+    check(prs3_v1_outer_loop_reentry_receipt(
+              fixture, sizeof(fixture), &receipt) && receipt.valid &&
+              receipt.reentry_target == entry + 52U &&
+              receipt.sentinel_word == 0x0100U &&
+              receipt.refill_skip_target == entry + 72U &&
+              receipt.refill_failure_target == entry + 166U &&
+              receipt.refill_cursor_register == 12U &&
+              receipt.refill_value_register == 11U &&
+              receipt.refill_merge_source_register == 9U &&
+              receipt.refill_merge_destination_register == 11U,
+          "SH-2 PRS3 outer-loop receipt locks R11 control/refill reentry");
+    fixture[entry + 71U] = 0x99U;
+    check(!prs3_v1_outer_loop_reentry_receipt(
+              fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 outer-loop receipt rejects a changed R11 merge");
+}
+
+static void test_synthetic_outer_loop_low_bit_join(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
+    Nexus_Prs3V1OuterLoopLowBitJoinReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 58U] = 0x8bU; fixture[entry + 59U] = 0x05U;
+    fixture[entry + 70U] = 0x2bU; fixture[entry + 71U] = 0x9bU;
+    fixture[entry + 72U] = 0xe3U; fixture[entry + 73U] = 0x01U;
+    fixture[entry + 74U] = 0x23U; fixture[entry + 75U] = 0xb8U;
+    fixture[entry + 76U] = 0x89U; fixture[entry + 77U] = 0x0aU;
+    check(prs3_v1_outer_loop_low_bit_join_receipt(
+              fixture, sizeof(fixture), &receipt) && receipt.valid &&
+              receipt.skip_target == entry + 72U &&
+              receipt.refill_merge_source_register == 9U &&
+              receipt.refill_merge_destination_register == 11U &&
+              receipt.zero_bit_target == entry + 100U,
+          "SH-2 PRS3 outer-loop receipt locks the low-bit control join");
+    fixture[entry + 73U] = 0x02U;
+    check(!prs3_v1_outer_loop_low_bit_join_receipt(
+              fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 outer-loop receipt rejects a changed low-bit setup");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -1240,6 +1470,8 @@ int main(int argc, char **argv) {
     Nexus_Prs3V1PostReadControlReceipt post_read_control_receipt;
     Nexus_Prs3V1PostReadBranchReceipt post_read_branch_receipt;
     Nexus_Prs3V1RepeatR6MaskReceipt repeat_r6_mask_receipt;
+    Nexus_Prs3V1OuterLoopReentryReceipt outer_loop_reentry_receipt;
+    Nexus_Prs3V1OuterLoopLowBitJoinReceipt outer_loop_low_bit_join_receipt;
 
     test_synthetic_branch_flow();
     test_synthetic_zero_side_read();
@@ -1251,6 +1483,8 @@ int main(int argc, char **argv) {
     test_synthetic_post_read_control();
     test_synthetic_post_read_branch();
     test_synthetic_repeat_r6_mask();
+    test_synthetic_outer_loop_reentry();
+    test_synthetic_outer_loop_low_bit_join();
     if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
@@ -1307,6 +1541,14 @@ int main(int argc, char **argv) {
                   data, size, &repeat_r6_mask_receipt) &&
                   repeat_r6_mask_receipt.valid,
               "DM.BIN locks the PRS3 v1 shared R6 increment/mask continuation");
+        check(prs3_v1_outer_loop_reentry_receipt(
+                  data, size, &outer_loop_reentry_receipt) &&
+                  outer_loop_reentry_receipt.valid,
+              "DM.BIN locks the PRS3 v1 outer-loop R11 control/refill reentry");
+        check(prs3_v1_outer_loop_low_bit_join_receipt(
+                  data, size, &outer_loop_low_bit_join_receipt) &&
+                  outer_loop_low_bit_join_receipt.valid,
+              "DM.BIN locks the PRS3 v1 outer-loop low-bit control join");
         if (receipt.valid) {
             printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
                    "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
@@ -1435,6 +1677,36 @@ int main(int argc, char **argv) {
                    repeat_r6_mask_receipt.delay_slot_mask_destination_register,
                    repeat_r6_mask_receipt.local_repeat_target,
                    repeat_r6_mask_receipt.outer_loop_target);
+        }
+        if (outer_loop_reentry_receipt.valid) {
+            printf("SH-2 PRS3 v1 outer reentry: branch=%zu->%zu shift=R%u "
+                   "test=R%u,R%u skip=%zu->%zu guard=%zu->%zu "
+                   "refill=@R%u+->R%u merge=R%u,R%u; token/output-proof=0\n",
+                   outer_loop_reentry_receipt.outer_loop_branch_offset,
+                   outer_loop_reentry_receipt.reentry_target,
+                   outer_loop_reentry_receipt.control_shift_register,
+                   outer_loop_reentry_receipt.control_test_source_register,
+                   outer_loop_reentry_receipt.control_test_destination_register,
+                   outer_loop_reentry_receipt.refill_skip_branch_offset,
+                   outer_loop_reentry_receipt.refill_skip_target,
+                   outer_loop_reentry_receipt.refill_failure_branch_offset,
+                   outer_loop_reentry_receipt.refill_failure_target,
+                   outer_loop_reentry_receipt.refill_cursor_register,
+                   outer_loop_reentry_receipt.refill_value_register,
+                   outer_loop_reentry_receipt.refill_merge_source_register,
+                   outer_loop_reentry_receipt.refill_merge_destination_register);
+        }
+        if (outer_loop_low_bit_join_receipt.valid) {
+            printf("SH-2 PRS3 v1 outer join: skip=%zu->%zu refill=R%u,R%u "
+                   "low-test=R%u,R%u zero=%zu->%zu; token/output-proof=0\n",
+                   outer_loop_low_bit_join_receipt.skip_branch_offset,
+                   outer_loop_low_bit_join_receipt.skip_target,
+                   outer_loop_low_bit_join_receipt.refill_merge_source_register,
+                   outer_loop_low_bit_join_receipt.refill_merge_destination_register,
+                   outer_loop_low_bit_join_receipt.low_bit_test_source_register,
+                   outer_loop_low_bit_join_receipt.low_bit_test_destination_register,
+                   outer_loop_low_bit_join_receipt.zero_bit_branch_offset,
+                   outer_loop_low_bit_join_receipt.zero_bit_target);
         }
     }
     free(data);
