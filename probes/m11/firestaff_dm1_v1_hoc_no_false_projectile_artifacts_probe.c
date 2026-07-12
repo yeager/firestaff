@@ -13,9 +13,8 @@
  *     current cell thing chain or runtime projectile/explosion lists.
  */
 
-#include "asset_status_m12.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "m11_game_view.h"
-#include "menu_startup_m12.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
@@ -197,6 +196,128 @@ static int compact_artifact_count_for_cell(const M11_GameViewState* state,
                                 outProjectiles, outExplosions);
 }
 
+static int probe_viewport_relative_square(const M11_GameViewState* state,
+                                          int relForward,
+                                          int relSide,
+                                          int* outMapX,
+                                          int* outMapY,
+                                          int* outElementType,
+                                          unsigned short* outFirstThing) {
+    int dx = 0;
+    int dy = 0;
+    int mapX;
+    int mapY;
+    int elementType;
+    unsigned short firstThing;
+    if (!state || !state->world.dungeon || !state->world.things) {
+        return 0;
+    }
+    switch (state->world.party.direction & 3) {
+        case DIR_NORTH: dx = relSide; dy = -relForward; break;
+        case DIR_EAST:  dx = relForward; dy = relSide; break;
+        case DIR_SOUTH: dx = -relSide; dy = relForward; break;
+        case DIR_WEST:  dx = -relForward; dy = -relSide; break;
+        default: return 0;
+    }
+    mapX = state->world.party.mapX + dx;
+    mapY = state->world.party.mapY + dy;
+    elementType = square_element_for(state, mapX, mapY);
+    if (elementType < 0) {
+        return 0;
+    }
+    firstThing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        state->world.dungeon, state->world.things,
+        state->world.party.mapIndex, mapX, mapY);
+    if (outMapX) *outMapX = mapX;
+    if (outMapY) *outMapY = mapY;
+    if (outElementType) *outElementType = elementType;
+    if (outFirstThing) *outFirstThing = firstThing;
+    return 1;
+}
+
+static int M11_GameView_ProbeViewportRenderMetadata(
+    const M11_GameViewState* state,
+    int relForward,
+    int relSide,
+    int* outMapX,
+    int* outMapY,
+    int* outElementType,
+    int* outWallOrnament,
+    int* outChampionPortrait,
+    int* outInscription,
+    int* outFloorOrnament) {
+    if (outWallOrnament) *outWallOrnament = -1;
+    if (outChampionPortrait) *outChampionPortrait = -1;
+    if (outInscription) *outInscription = -1;
+    if (outFloorOrnament) *outFloorOrnament = 0;
+    return probe_viewport_relative_square(state, relForward, relSide,
+                                          outMapX, outMapY, outElementType,
+                                          NULL);
+}
+
+static int M11_GameView_ProbeViewportArtifactCounts(
+    const M11_GameViewState* state,
+    int relForward,
+    int relSide,
+    int* outMapX,
+    int* outMapY,
+    int* outElementType,
+    int* outProjectiles,
+    int* outExplosions,
+    int* outFirstProjectileGfx,
+    int* outFirstExplosionType) {
+    int mapX = -1;
+    int mapY = -1;
+    int elementType = -1;
+    int projectiles = 0;
+    int explosions = 0;
+    if (!probe_viewport_relative_square(state, relForward, relSide,
+                                        &mapX, &mapY, &elementType, NULL)) {
+        return 0;
+    }
+    (void)compact_artifact_count_for_cell(state, mapX, mapY,
+                                          &projectiles, &explosions);
+    if (outMapX) *outMapX = mapX;
+    if (outMapY) *outMapY = mapY;
+    if (outElementType) *outElementType = elementType;
+    if (outProjectiles) *outProjectiles = projectiles;
+    if (outExplosions) *outExplosions = explosions;
+    if (outFirstProjectileGfx) *outFirstProjectileGfx =
+        projectiles > 0 ? 0 : -1;
+    if (outFirstExplosionType) *outFirstExplosionType =
+        explosions > 0 ? 0 : -1;
+    return 1;
+}
+
+static int M11_GameView_ProbeViewportFloorItemCounts(
+    const M11_GameViewState* state,
+    int relForward,
+    int relSide,
+    int* outMapX,
+    int* outMapY,
+    int* outElementType,
+    int* outFloorItemCount,
+    int* outSummaryItemCount) {
+    unsigned short thing = THING_ENDOFLIST;
+    int count = 0;
+    int safety = 0;
+    if (!probe_viewport_relative_square(state, relForward, relSide,
+                                        outMapX, outMapY, outElementType,
+                                        &thing)) {
+        return 0;
+    }
+    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        if (dm1_v1_thing_type_is_floor_item_pc34(type)) {
+            ++count;
+        }
+        thing = raw_next_thing(state->world.things, thing);
+    }
+    if (outFloorItemCount) *outFloorItemCount = count;
+    if (outSummaryItemCount) *outSummaryItemCount = count;
+    return 1;
+}
+
 static int has_d1c_debug_sensor_marker(const unsigned char* fb) {
     int x;
     int y;
@@ -301,7 +422,6 @@ int main(int argc, char** argv) {
     const char* root = argc > 1 ? argv[1] : getenv("FIRESTAFF_DATA");
     const char* dataDir;
     char narrowed[512];
-    M12_StartupMenuState menu;
     M11_GameViewState state;
     const struct DungeonMapDesc_Compat* map;
     int compactProjectiles = 0;
@@ -328,18 +448,16 @@ int main(int argc, char** argv) {
     printf("=== DM1 V1 HoC no false projectile/explosion artifacts probe ===\n");
     printf("dataDir=%s\n", dataDir);
 
-    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
-    if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1")) {
-        printf("SKIP no hash-verified DM1 data under %s\n", dataDir);
-        return 0;
-    }
-
     M11_GameView_Init(&state);
-    if (!M11_GameView_OpenSelectedMenuEntry(&state, &menu)) {
+    /* This is a DM1-only HoC render regression.  Do not make it wait for
+     * launcher discovery of other games before opening the selected PC34
+     * GRAPHICS.DAT/DUNGEON.DAT pair. */
+    if (!M11_GameView_StartDm1(&state, dataDir)) {
         fprintf(stderr, "FAIL could not open DM1 V1 game view\n");
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     state.world.party.championCount = 0;
     state.world.party.mapIndex = HOC_MAP;
 
