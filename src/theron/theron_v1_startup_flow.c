@@ -2549,13 +2549,9 @@ int theron_v1_startup_render_plan_build(
         out_plan, elements, element_count);
 
     if (state->phase == THERON_STARTUP_PHASE_TITLE) {
-        tqr_startup_render_plan_add_title_graphics(out_plan);
-        return tqr_startup_render_plan_add_text(
-            out_plan,
-            34,
-            76,
-            THERON_STARTUP_RENDER_TEXT_SHADOW,
-            "PRESS ENTER TO START");
+        /* The original title bitmap belongs to the raw Track02 route. Until
+         * that route is proven, emit no substitute rectangles or text. */
+        return 1;
     }
 
     if (state->phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
