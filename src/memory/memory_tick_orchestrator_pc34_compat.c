@@ -19,6 +19,7 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_f0249_timeline_relocation_pc34_compat.h"
+#include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_movement_timing_pc34_compat.h"
@@ -9311,6 +9312,21 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             (void)orch_dispatch_square_state_event_compat(world, &ev, result);
             break;
         case TIMELINE_EVENT_MOVE_TIMER:
+            if (ev.aux4 == DM1_F0259_MOVE_TIMER_AUX4_PC34 &&
+                ev.aux0 >= 0 && ev.aux0 < CHAMPION_MAX_PARTY) {
+                struct ChampionState_Compat* champion =
+                    &world->party.champions[ev.aux0];
+                struct DM1F0259QuiverRefillPlanPc34 refill;
+
+                if (champion->present &&
+                    DM1_V1_F0259_PlanQuiverRefillPc34Compat(
+                        champion, ev.aux0, ev.aux1, &refill) &&
+                    refill.moved) {
+                    champion->inventory[refill.destinationSlot] = refill.thing;
+                    champion->inventory[refill.sourceSlot] = THING_NONE;
+                }
+            }
+            break;
         case TIMELINE_EVENT_SPELL_TICK:
             break;
         case TIMELINE_EVENT_SENSOR_DELAYED:
