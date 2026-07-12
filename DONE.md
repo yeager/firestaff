@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 V2.2 strict real-art handoff: M11 now consumes the resolved
+  boot presentation mode, so a missing, partial, or synthetic modern-art pack
+  falls back to source-data V2.1 before rendering. The live V2.2 path uses
+  only the verified in-place cache and no longer draws a colored placeholder
+  overlay. Verification: full local `firestaff` build, V2.2 source-lock
+  verifier, and `test_dm1_v2_presentation_mode_pc34` 57/57.
+
 - 2026-07-12 DM1 V2.1 live EPX presentation: M11 now expands the live
   320x200 indexed DM1 framebuffer through Scale2x before normal original
   palette presentation, including title/entrance special palettes. The source

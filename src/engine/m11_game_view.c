@@ -138,7 +138,6 @@
 #include "dm1_v2_particle_system_pc34.h"
 #include "m11_v22_shape_cache_pc34.h"
 #include "m11_v22_inplace_draw_pc34.h"
-#include "m11_v22_render_overlay_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
 #include "dm1_v2_settings_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
@@ -11294,10 +11293,28 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
      * runtime. DM1 V2 boot owns the V22 asset-root and cache setup. */
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
         DM1_V2_BootStartupReceipt_PC34 receipt;
-        (void)dm1_v2_boot_startup_prepare_pc34(spec->gameId,
-                                               spec->dataDir,
-                                               spec->presentationMode,
-                                               &receipt);
+        if (dm1_v2_boot_startup_prepare_pc34(spec->gameId,
+                                             spec->dataDir,
+                                             spec->presentationMode,
+                                             &receipt)) {
+            /* The V2.2 material gate may resolve a requested modern mode to
+             * V2.1. M11 must consume that decision rather than later drawing
+             * a placeholder overlay for the requested mode. */
+            switch (receipt.resolved_mode) {
+                case DM1_V2_PM_V20_FILTERED:
+                    state->presentationMode = M12_PRESENTATION_V20_FILTERED;
+                    break;
+                case DM1_V2_PM_V21_UPSCALED:
+                    state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
+                    break;
+                case DM1_V2_PM_V22_MODERN:
+                    state->presentationMode = M12_PRESENTATION_V22_MODERN;
+                    break;
+                default:
+                    state->presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+                    break;
+            }
+        }
     } else if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
         csb_v2_presentation_mode_set_m12(spec->presentationMode);
     } else if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
@@ -34168,20 +34185,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         }
     }
     if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
-        /* V2.2 render path: prefer cached in-place modern-art bitmaps when the
-         * optional V22 cache is available. If no cache/bitmap is available,
-         * keep the previous placeholder overlay as the visible data-flow
-         * fallback.  This is presentation-only; V1 original must keep the
-         * already-rendered GRAPHICS.DAT indices untouched. */
-        if (m11_v22_inplace_render_pass(framebuffer,
-                                        framebufferWidth,
-                                        framebufferHeight) == 0) {
-            int paletteIndex = m11_compute_dungeon_palette_index(state);
-            (void)m11_v22_render_overlay_with_palette(framebuffer,
-                                                      framebufferWidth,
-                                                      framebufferHeight,
-                                                      paletteIndex);
-        }
+        /* V2.2 replaces source pixels only with a verified in-place pack.
+         * A missing cache is a no-draw condition; boot has already resolved
+         * incomplete/placeholder packs to V2.1. */
+        (void)m11_v22_inplace_render_pass(framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight);
     }
 
     m11_apply_viewport_turn_pan(framebuffer, framebufferWidth, framebufferHeight,
