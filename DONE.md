@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 HoC C127 runtime consumer: M11 now preserves the C127 wall
+  ornament ordinal and renders C346/C026 solely from the DM1-owned runtime
+  decision, rather than using release-capture state as a second renderer
+  selector. Verification: `firestaff_m11` and full `firestaff` build passed.
+
 - 2026-07-12 DM1 TITLE/entrance source timing: C001 now uses TITLE.C's 23
   visible events at 20 ms VBlank cadence instead of TITLE.DAT's 53-record
   fallback bank; the entrance waits for a fresh command and rejects altered
