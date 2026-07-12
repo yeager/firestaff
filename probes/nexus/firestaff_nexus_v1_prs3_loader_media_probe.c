@@ -266,6 +266,25 @@ typedef struct {
     size_t loop_back_target;
 } Sh2Prs3Version1ControlSentinelEvidence;
 
+/* This joins the selected loop's original shift, mask test, and BF refill
+ * decision into one receipt. It proves only a control-bit step over R11 and
+ * the chosen refill edge, never a payload bitstream ABI or codec command. */
+typedef struct {
+    int valid;
+    size_t sentinel_literal_load_offset;
+    size_t sentinel_literal_offset;
+    uint16_t sentinel_word;
+    size_t control_shift_offset;
+    unsigned int control_register;
+    size_t mask_test_offset;
+    unsigned int mask_test_source_register;
+    unsigned int mask_test_destination_register;
+    size_t refill_branch_offset;
+    size_t refill_branch_target;
+    size_t refill_guard_offset;
+    size_t refill_byte_load_offset;
+} Sh2Prs3Version1ControlBitStepEvidence;
+
 /* The zero-low-bit side branch has a separate bounded gate: it subtracts two
  * from R14, checks R14 with CMP/PZ, and takes a direct rejection edge before
  * the remaining side-path body when that check fails. This proves only an
@@ -1087,6 +1106,19 @@ static int sh2_cmp_eq_register_fields(uint16_t instruction,
     return 1;
 }
 
+/* SH-2 TST Rm,Rn is 0010nnnnmmmm1000. */
+static int sh2_tst_register_fields(uint16_t instruction,
+                                   unsigned int *out_source_register,
+                                   unsigned int *out_destination_register) {
+    if ((instruction & 0xf00fU) != 0x2008U || !out_source_register ||
+        !out_destination_register) {
+        return 0;
+    }
+    *out_destination_register = (unsigned int)((instruction >> 8) & 0x0fU);
+    *out_source_register = (unsigned int)((instruction >> 4) & 0x0fU);
+    return 1;
+}
+
 static int sh2_prs3_version1_stream_read_evidence(
     const uint8_t *data, size_t data_size,
     Sh2Prs3Version1StreamReadEvidence *out_evidence) {
@@ -1210,6 +1242,57 @@ static int sh2_prs3_version1_control_sentinel_evidence(
         evidence.refill_marker_or_source_register != evidence.refill_marker_register ||
         evidence.refill_marker_or_destination_register != 11U ||
         evidence.loop_back_target != NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 52U) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+    evidence.valid = 1;
+    if (out_evidence) *out_evidence = evidence;
+    return 1;
+}
+
+static int sh2_prs3_version1_control_bit_step_evidence(
+    const uint8_t *data, size_t data_size,
+    Sh2Prs3Version1ControlBitStepEvidence *out_evidence) {
+    Sh2Prs3Version1ControlBitStepEvidence evidence;
+
+    memset(&evidence, 0, sizeof(evidence));
+    if (!data || NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 76U > data_size) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+    evidence.sentinel_literal_load_offset =
+        NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 52U;
+    evidence.control_shift_offset = NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 54U;
+    evidence.mask_test_offset = evidence.control_shift_offset + 2U;
+    evidence.refill_branch_offset = evidence.control_shift_offset + 4U;
+    evidence.refill_guard_offset = evidence.control_shift_offset + 6U;
+    evidence.refill_byte_load_offset = evidence.control_shift_offset + 10U;
+    if (read_be16(data + evidence.sentinel_literal_load_offset) != 0x926aU ||
+        !sh2_movw_pc_literal_target(
+            evidence.sentinel_literal_load_offset,
+            read_be16(data + evidence.sentinel_literal_load_offset),
+            &evidence.sentinel_literal_offset) ||
+        evidence.sentinel_literal_offset + 2U > data_size ||
+        read_be16(data + evidence.control_shift_offset) != 0x4b21U ||
+        !sh2_tst_register_fields(read_be16(data + evidence.mask_test_offset),
+                                 &evidence.mask_test_source_register,
+                                 &evidence.mask_test_destination_register) ||
+        read_be16(data + evidence.refill_branch_offset) != 0x8b05U ||
+        !sh2_conditional_branch_target(
+            evidence.refill_branch_offset,
+            read_be16(data + evidence.refill_branch_offset), data_size,
+            &evidence.refill_branch_target) ||
+        read_be16(data + evidence.refill_guard_offset) != 0x2ee8U ||
+        read_be16(data + evidence.refill_byte_load_offset) != 0x6bc4U) {
+        if (out_evidence) *out_evidence = evidence;
+        return 0;
+    }
+    evidence.sentinel_word = read_be16(data + evidence.sentinel_literal_offset);
+    evidence.control_register = 11U;
+    if (evidence.sentinel_word != 0x0100U ||
+        evidence.mask_test_source_register != 11U ||
+        evidence.mask_test_destination_register != 2U ||
+        evidence.refill_branch_target != NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 72U) {
         if (out_evidence) *out_evidence = evidence;
         return 0;
     }
@@ -1615,6 +1698,39 @@ static void test_sh2_version1_control_sentinel_evidence(void) {
           "SH-2 control-sentinel evidence rejects a non-OR refill operation");
 }
 
+static void test_sh2_version1_control_bit_step_evidence(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 512U];
+    Sh2Prs3Version1ControlBitStepEvidence evidence;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 52U] = 0x92U;
+    fixture[entry + 53U] = 0x6aU; /* MOV.W literal -> R2 */
+    fixture[entry + 268U] = 0x01U;
+    fixture[entry + 269U] = 0x00U;
+    fixture[entry + 54U] = 0x4bU;
+    fixture[entry + 55U] = 0x21U; /* SHAR R11 */
+    fixture[entry + 56U] = 0x22U;
+    fixture[entry + 57U] = 0xb8U; /* TST R11,R2 */
+    fixture[entry + 58U] = 0x8bU;
+    fixture[entry + 59U] = 0x05U; /* BF -> entry + 72 */
+    fixture[entry + 60U] = 0x2eU;
+    fixture[entry + 61U] = 0xe8U;
+    fixture[entry + 64U] = 0x6bU;
+    fixture[entry + 65U] = 0xc4U;
+    check(sh2_prs3_version1_control_bit_step_evidence(
+              fixture, sizeof(fixture), &evidence) && evidence.valid &&
+              evidence.sentinel_word == 0x0100U &&
+              evidence.mask_test_source_register == 11U &&
+              evidence.mask_test_destination_register == 2U &&
+              evidence.refill_branch_target == entry + 72U,
+          "SH-2 control-bit receipt locks shift, mask test, and refill decision");
+    fixture[entry + 59U] = 0x04U;
+    check(!sh2_prs3_version1_control_bit_step_evidence(
+              fixture, sizeof(fixture), &evidence),
+          "SH-2 control-bit receipt rejects a changed refill branch target");
+}
+
 static void test_sh2_version1_zero_bit_gate_evidence(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Sh2Prs3Version1ZeroBitGateEvidence evidence;
@@ -1714,6 +1830,7 @@ int main(int argc, char **argv) {
     Sh2Prs3Version1WordLifetimeEvidence word_lifetime_evidence;
     Sh2Prs3Version1StreamReadEvidence stream_read_evidence;
     Sh2Prs3Version1ControlSentinelEvidence control_sentinel_evidence;
+    Sh2Prs3Version1ControlBitStepEvidence control_bit_step_evidence;
     Sh2Prs3Version1ZeroBitGateEvidence zero_bit_gate_evidence;
     Sh2Prs3Version1SideRepeatEvidence side_repeat_evidence;
     Sh2Prs3DispatcherCallerEvidence dispatcher_caller_evidence;
@@ -1729,6 +1846,7 @@ int main(int argc, char **argv) {
     test_sh2_dispatcher_caller_scanner();
     test_sh2_version1_stream_read_evidence();
     test_sh2_version1_control_sentinel_evidence();
+    test_sh2_version1_control_bit_step_evidence();
     test_sh2_version1_zero_bit_gate_evidence();
     test_sh2_version1_side_repeat_evidence();
 
@@ -1809,6 +1927,11 @@ int main(int argc, char **argv) {
                   control_sentinel_evidence.sentinel_word == 0x0100U &&
                   control_sentinel_evidence.refill_marker_word == 0x0000ff00U,
               "DM.BIN version-1 callee proves its R11 refill sentinel protocol");
+        check(sh2_prs3_version1_control_bit_step_evidence(
+                  dm, dm_size, &control_bit_step_evidence) &&
+                  control_bit_step_evidence.valid &&
+                  control_bit_step_evidence.sentinel_word == 0x0100U,
+              "DM.BIN version-1 callee proves its shift-and-mask refill decision");
         check(sh2_prs3_version1_zero_bit_gate_evidence(
                   dm, dm_size, &zero_bit_gate_evidence) &&
                   zero_bit_gate_evidence.valid &&
@@ -2002,6 +2125,20 @@ int main(int argc, char **argv) {
                    control_sentinel_evidence.refill_marker_or_destination_register,
                    control_sentinel_evidence.loop_back_branch_offset,
                    control_sentinel_evidence.loop_back_target);
+        }
+        if (control_bit_step_evidence.valid) {
+            printf("SH-2 PRS3 version-1 control bit: shift=%zu R%u test=%zu "
+                   "R%u,R%u mask=%04x branch=%zu->%zu refill=%zu; "
+                   "payload/opcode/termination-proof=0\n",
+                   control_bit_step_evidence.control_shift_offset,
+                   control_bit_step_evidence.control_register,
+                   control_bit_step_evidence.mask_test_offset,
+                   control_bit_step_evidence.mask_test_source_register,
+                   control_bit_step_evidence.mask_test_destination_register,
+                   (unsigned int)control_bit_step_evidence.sentinel_word,
+                   control_bit_step_evidence.refill_branch_offset,
+                   control_bit_step_evidence.refill_branch_target,
+                   control_bit_step_evidence.refill_byte_load_offset);
         }
         if (zero_bit_gate_evidence.valid) {
             printf("SH-2 PRS3 version-1 zero-bit gate: branch=%zu->%zu "
