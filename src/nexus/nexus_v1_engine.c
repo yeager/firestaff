@@ -655,6 +655,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     Nexus_V1_Engine *engine, int party_x, int party_y, int party_dir)
 {
     Nexus_V1_DgnMaterialPlan *plan;
+    int static_mns_route_bound;
+    int structure2_source_bound;
     int i;
 
     if (!engine || !engine->level_loaded ||
@@ -679,17 +681,31 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     plan->generation++;
     plan->geometry_generation = plan->generation;
     plan->rebuild_count++;
-    /* Structure2 owns only the animated-image declarations. Static floor,
-     * ceiling, and wall commands already name their retail SN_FLOOR.MNS /
-     * SN_WALL.MNS TEXT surfaces through Structure1B, so they must not be
-     * hidden behind an unrelated opaque-Structure2 gate. The lower plan
-     * builder still rejects any animated command until its Structure2 image
-     * payload has a verified decoder and host route. */
-    plan->receipt.structure2_source_materialization_bound =
+    /* The direct retail MNS pair is independently authenticated and may
+     * supply static Structure1B surfaces. Every other material route,
+     * including an otherwise host-ready BPK fixture, remains tied to the
+     * current level's canonical Structure2 source receipt. This prevents a
+     * stale BPK plan from becoming drawable after its level provenance has
+     * been withdrawn, while leaving the hash-bound MNS route independent of
+     * opaque Structure2 image payloads. */
+    static_mns_route_bound =
+        engine->dgn_static_material_sources.canonical_pair_bound &&
+        engine->floor_mns_material_route_valid &&
+        engine->wall_mns_material_route_valid;
+    structure2_source_bound =
         engine->current_level_structure2_source.level_index ==
             engine->game.current_level &&
         engine->current_level_structure2_source.materialization_bound &&
         !engine->current_level_structure2_source.fallback_visuals_permitted;
+    plan->receipt.structure2_source_materialization_bound =
+        structure2_source_bound;
+    if (!static_mns_route_bound && !structure2_source_bound) {
+        plan->receipt.status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
+        plan->receipt.blocks_real_dgn_mesh_render = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
+        return NULL;
+    }
     if (nexus_v1_level_build_dgn_view_render_plan(
             &engine->current_level, party_x, party_y, party_dir,
             plan->commands, NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
@@ -700,10 +716,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
      * the source evidence for host diagnostics; it is not a static-material
      * permission bit. */
     plan->receipt.structure2_source_materialization_bound =
-        engine->current_level_structure2_source.level_index ==
-            engine->game.current_level &&
-        engine->current_level_structure2_source.materialization_bound &&
-        !engine->current_level_structure2_source.fallback_visuals_permitted;
+        structure2_source_bound;
 
     for (i = 0; i < plan->receipt.command_count; ++i) {
         const Nexus_DMDFTextureSurface *surface =
