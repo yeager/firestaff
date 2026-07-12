@@ -8188,6 +8188,17 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
             (void)csb_v1_audio_runtime_request(&profile->audio_runtime,
                                                 &request);
         }
+        if ((flags_word >> 2) & 0x01u) {
+            uint8_t *mutable_sensor = csb_v1_runtime_mutable_thing_record(
+                dungeon, (uint16_t)thing, NULL, NULL);
+
+            if (mutable_sensor) {
+                /* ReDMCSB MOVESENS.C F0272 lines 1191-1193 disables a
+                 * triggered OnceOnly sensor before it publishes the effect. */
+                csb_v1_runtime_write_u16(
+                    mutable_sensor + 2, (uint16_t)(type_data & 0xFF80u));
+            }
+        }
         target_cell = (int)((target_word >> 4) & 0x03u);
         target_x = (int)((target_word >> 6) & 0x1Fu);
         target_y = (int)((target_word >> 11) & 0x1Fu);
