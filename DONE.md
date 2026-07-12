@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 DGN Structure1F all-family receipt: the real
+  LEV00-LEV15 probe now verifies copied raw fields for all 1,749 typed
+  Structure1F records across all six families, including copied Structure1A
+  index fields for alcove/wall families, with zero mismatches. Those indexes
+  remain raw bindings only, not cell, trigger, object, draw, gameplay,
+  decoder, or rendering semantics. Verification: direct strict-C11 probe
+  against all 16 original DGN files PASS.
+
 - 2026-07-12 DM1 PC34 F0205/F0206 packed active-group directions: M10 now
   promotes legacy scalar group direction state into ReDMCSB `ACTIVE_GROUP`
   packed `Directions`, consumes the real F0205 opposite-turn RNG and F0206
