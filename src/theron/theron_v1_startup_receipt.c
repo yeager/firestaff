@@ -39,7 +39,7 @@
 #include "theron_v1_startup_receipt.h"
 #include "asset_status_m12.h"
 #include "theron_v1_chapter_marker.h"
-#include "theron_v1_stage3_irq2_dispatch.h"
+#include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_startup_media.h"
 
@@ -428,42 +428,19 @@ static int theron_v1_startup_receipt_stage3_loader_chain_valid(
     size_t track02_size,
     const char *md5_hex,
     const Theron_Track02Stage2DynamicPayloadReceipt *payload) {
-    Theron_Track02IplLoaderReceipt loader;
-    Theron_V1Stage3Irq2DispatchReceipt dispatch;
+    Theron_V1Stage2RuntimeHandoff handoff;
 
     if (!track02_data || track02_size == 0u || !md5_hex || !payload ||
         !payload->valid) {
         return 0;
     }
-    memset(&loader, 0, sizeof(loader));
-    memset(&dispatch, 0, sizeof(dispatch));
-    if (theron_v1_track02_find_ipl_loader(
-            track02_data, track02_size, md5_hex, &loader) !=
-            THERON_TRACK02_SIGNAL_OK || !loader.valid ||
-        loader.stage2_record != THERON_TRACK02_IPL_STAGE2_RECORD ||
-        loader.stage2_sector_count != THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT ||
-        loader.stage2_destination != THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM ||
-        loader.stage2_load_address != THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS ||
-        loader.stage2_entry_address != THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS ||
-        loader.stage2_cd_read_cpu_address !=
-            THERON_TRACK02_IPL_STAGE2_CD_READ_CPU_ADDRESS ||
-        loader.stage2_cd_read_sector_count != 1u ||
-        loader.stage2_cd_read_destination !=
-            THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM ||
-        loader.stage2_cd_read_local_destination !=
-            THERON_TRACK02_IPL_STAGE2_CD_READ_LOCAL_DESTINATION ||
-        !loader.stage2_cd_read_record_proven ||
-        !loader.stage2_cd_read_dynamic_boundary_valid ||
-        loader.stage2_cd_read_live_record_register_mask !=
-            THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_MASK ||
-        loader.vram_transfer_proven ||
-        payload->track02_record != loader.stage2_cd_read_record ||
-        payload->raw_sector != loader.stage2_cd_read_raw_sector) {
-        return 0;
-    }
-    return theron_v1_stage3_irq2_dispatch_from_original_media(
-               track02_data, track02_size, payload, &dispatch) &&
-           dispatch.valid && dispatch.irq2_dispatch_proven;
+    memset(&handoff, 0, sizeof(handoff));
+    return theron_v1_stage2_runtime_handoff_from_original_media(
+               track02_data, track02_size, md5_hex, &handoff) &&
+           handoff.variant == payload->variant &&
+           handoff.track02_record == payload->track02_record &&
+           handoff.user_data_hash == payload->user_data_hash &&
+           handoff.physical_stage3_entry_verified;
 }
 
 /* ── Real-asset receipt ───────────────────────────────────────────── */

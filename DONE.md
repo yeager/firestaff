@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 DGN Structure1G backward-goto receipt: the original
+  LEV00-LEV15 probe now proves all 51 raw `FFFE` instructions use negative,
+  instruction-aligned targets to earlier words within their own validated
+  sequences (zero out-of-sequence targets). This is bounded control-flow
+  evidence only, not animation timing/stepping, payload interpretation,
+  decoder, or rendering. Verification: direct strict-C11 probe against all 16
+  original DGN files PASS.
+
 - 2026-07-12 Nexus V1 DGN Structure1G sequence-image receipt: the original
   LEV00-LEV15 probe now proves all 154 non-control image-index instructions
   in the 51 validated sequences subtract from global base `0x14c` into
@@ -80,6 +88,14 @@
   manifest, bank descriptors, objects, levels, palettes, or later CD reads.
   Verification: strict-C11 syntax checks plus hash-verified JP/US original
   media probe, 0 failed.
+
+- 2026-07-12 Theron V1 unified original-media runtime handoff: CUE boot,
+  startup receipt, and direct runtime entry now consume one Theron-owned
+  validator for IPL `CD_EXEC`, traced stage-two `$4090` CD_READ, cleared
+  `$2700..$37ff` work RAM, and physical `$3800` `BRK $ff` dispatch. The
+  handoff stays fail-closed and manifest-unbound. Verification: strict-C11
+  syntax checks for all consumers plus direct hash-verified JP/US media probe,
+  0 failed.
 
 - 2026-07-12 Theron V1 CUE/M11 loader-chain consumer: strict CUE boot
   validation now consumes the same stage-two work-RAM transfer and physical

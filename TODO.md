@@ -108,6 +108,11 @@ contract and the physical `$3800` `BRK $ff` gate after rereading the original
 payload. A CUE receipt can therefore no longer reach runtime on manifest facts
 alone. Later IRQ2 branch selection and every bank/level meaning remain
 separately unbound.
+All three consumers now share one Theron-owned original-media handoff rather
+than duplicating loader checks: IPL `CD_EXEC`, traced `$4090` read, cleared
+work RAM, and physical `$3800` `BRK $ff` are validated together. This reduces
+gate drift only; it does not create a new level, bank, palette, or manifest
+binding.
 The first loaded payload is now structurally verified as a
 218-unit manifest envelope, but its entries remain unclassified; do not treat
 it as a graphics, palette, object, or dungeon-record binding. The hash-gated
@@ -205,6 +210,11 @@ image-index instructions; all subtract from the global `0x14c` base into a
 present local Structure2 descriptor (zero mismatches). This establishes only
 sequence-index-to-descriptor reachability, not instruction timing, payload
 bytes, palette bytes, a decoder, animation stepping, or rendering.
+2026-07-12 update: all 51 raw `FFFE` control instructions in the same corpus
+carry negative, instruction-aligned targets to earlier words within their own
+validated Structure1G sequences (zero out-of-sequence targets). This is only
+bounded original control-flow evidence, not animation timing, stepping,
+payload interpretation, decoder, or rendering.
 
 The Structure1F handoff and DGN render-plan receipt now separate the six
 documented direct-coordinate records (items, floor decorations, floor
