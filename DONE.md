@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 full-party HUD capture: the real-data HUD probe now covers
+  one through four champions and composition changes, checking status boxes,
+  names, bars, icons, and both hand slots. Verification: real local PC34
+  runtime pairing probe passed.
+
 - 2026-07-12 DM1 HoC projectile artifact capture: the real-data probe now
   opens only DM1 directly and verifies all 2,172 viewport cells without
   static projectile/explosion leakage or false fireball markers. Verification:
