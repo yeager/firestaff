@@ -92,6 +92,11 @@ static int orch_handle_group_generator_trigger_runtime_compat(
     const struct TimelineEvent_Compat* ev,
     struct TickResult_Compat* result);
 
+static int orch_f0330_schedule_enable_champion_action_compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    int ticks);
+
 /* ================================================================
  *  Local LE helpers
  * ================================================================ */
@@ -4076,6 +4081,74 @@ static int orch_f0248_award_steal_skill_xp_compat(
         (unsigned long)lifecycleChampion->skills20[DM1_SKILL_IDX_NINJA].experience;
     emit(result, EMIT_XP_AWARD, championIndex, DM1_SKILL_IDX_STEAL, 300, 1);
     return 1;
+}
+
+/* ReDMCSB CHAMPION.C F0330:2233-2255 owns the single pending C11 event
+ * per champion. A later disable replaces its prior event using the source
+ * half-distance timing rule; C11 then reaches F0259's quiver refill owner. */
+static int orch_f0330_schedule_enable_champion_action_compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    int ticks)
+{
+    struct TimelineEvent_Compat event;
+    uint32_t targetTick;
+    int i;
+
+    if (!world || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        ticks <= 0) {
+        return 0;
+    }
+    targetTick = world->gameTick + (uint32_t)ticks;
+    for (i = 0; i < world->timeline.count; ++i) {
+        struct TimelineEvent_Compat* prior = &world->timeline.events[i];
+        uint32_t currentTick;
+
+        if (prior->kind != TIMELINE_EVENT_MOVE_TIMER ||
+            prior->aux4 != DM1_F0259_MOVE_TIMER_AUX4_PC34 ||
+            prior->aux0 != championIndex) {
+            continue;
+        }
+        currentTick = prior->fireAtTick;
+        if (targetTick >= currentTick) {
+            targetTick += (currentTick - world->gameTick) >> 1;
+        } else {
+            targetTick = currentTick + ((uint32_t)ticks >> 1);
+        }
+        memmove(prior, prior + 1,
+                (size_t)(world->timeline.count - i - 1) * sizeof(*prior));
+        --world->timeline.count;
+        memset(&world->timeline.events[world->timeline.count], 0,
+               sizeof(world->timeline.events[world->timeline.count]));
+        break;
+    }
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_MOVE_TIMER;
+    event.fireAtTick = targetTick;
+    event.mapIndex = world->party.mapIndex;
+    event.mapX = world->party.mapX;
+    event.mapY = world->party.mapY;
+    /* F0330 writes source SlotOrdinal 0 (ready hand); Firestaff's V1
+     * inventory maps that source slot to CHAMPION_SLOT_HAND_LEFT. */
+    event.aux0 = championIndex;
+    event.aux1 = CHAMPION_SLOT_HAND_LEFT;
+    event.aux4 = DM1_F0259_MOVE_TIMER_AUX4_PC34;
+    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
+}
+
+static void orch_f0330_schedule_action_disabled_emissions_compat(
+    struct GameWorld_Compat* world,
+    const struct TickResult_Compat* result)
+{
+    int i;
+
+    if (!world || !result) return;
+    for (i = 0; i < result->emissionCount; ++i) {
+        const struct TickEmission_Compat* emission = &result->emissions[i];
+        if (emission->kind != EMIT_ACTION_DISABLED) continue;
+        (void)orch_f0330_schedule_enable_champion_action_compat(
+            world, emission->payload[0], emission->payload[1]);
+    }
 }
 
 /* ReDMCSB TIMELINE.C F0248:1136-1350 walks the complete wall list in
@@ -9968,6 +10041,10 @@ int F0884_ORCH_AdvanceOneTick_Compat(
     /* Step 1: player input */
     if (input->command != CMD_NONE) {
         F0888_ORCH_ApplyPlayerInput_Compat(world, input, outResult);
+        /* ReDMCSB CHAMPION.C F0330 schedules C11 immediately after an
+         * action emits its disabled duration, before the next timeline
+         * extraction can refill the ready hand. */
+        orch_f0330_schedule_action_disabled_emissions_compat(world, outResult);
     }
 
     /* Step 2/3b: map-transition loop + timeline dispatch */

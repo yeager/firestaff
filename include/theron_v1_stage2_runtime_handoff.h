@@ -29,6 +29,10 @@ typedef struct {
     uint16_t load_address;
     uint16_t entry_address;
     int execute_after_load;
+    uint16_t cleared_work_ram_start;
+    size_t cleared_work_ram_bytes;
+    uint16_t cleared_work_ram_end;
+    int work_ram_cleared_before_entry;
     uint16_t header_word0;
     uint16_t header_word1;
     size_t manifest_bytes;

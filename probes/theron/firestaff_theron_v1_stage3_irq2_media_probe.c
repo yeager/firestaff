@@ -1,4 +1,5 @@
 #include "theron_v1_stage3_irq2_dispatch.h"
+#include "theron_v1_stage2_runtime_handoff.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,26 +54,6 @@ static uint8_t *read_file_bytes(const char *path, size_t *out_size) {
     return bytes;
 }
 
-static Theron_Track02Stage2DynamicPayloadReceipt payload(
-    Theron_Track02Variant variant, uint32_t record) {
-    Theron_Track02Stage2DynamicPayloadReceipt receipt;
-
-    memset(&receipt, 0, sizeof(receipt));
-    receipt.valid = 1;
-    receipt.variant = variant;
-    receipt.track02_record = record;
-    receipt.raw_sector = record;
-    receipt.user_data_offset = (size_t)record * 2352u + 16u;
-    receipt.user_data_bytes = 2048u;
-    receipt.header_word0 = 0x00ffu;
-    receipt.header_word1 = 0x0308u;
-    receipt.manifest_bytes = 0x520u;
-    receipt.manifest_entry_count = 218u;
-    receipt.nonzero_byte_count = 1u;
-    receipt.user_data_hash = 1u;
-    return receipt;
-}
-
 int main(int argc, char **argv) {
     uint8_t *jp_bytes;
     uint8_t *us_bytes;
@@ -84,6 +65,8 @@ int main(int argc, char **argv) {
     Theron_Track02IplLoaderReceipt us_loader;
     Theron_Track02Stage2DynamicPayloadReceipt jp_payload;
     Theron_Track02Stage2DynamicPayloadReceipt us_payload;
+    Theron_V1Stage2RuntimeHandoff jp_handoff;
+    Theron_V1Stage2RuntimeHandoff us_handoff;
 
     if (argc != 3) {
         printf("[FAIL] expected JP and US raw Track02 paths\n");
@@ -92,8 +75,8 @@ int main(int argc, char **argv) {
     jp_bytes = read_file_bytes(argv[1], &jp_size);
     us_bytes = read_file_bytes(argv[2], &us_size);
     check(jp_bytes && us_bytes, "raw JP/US Track02 files read");
-    jp_payload = payload(THERON_TRACK02_VARIANT_JP_BIN, 0x0004dfu);
-    us_payload = payload(THERON_TRACK02_VARIANT_US_BIN, 0x0004e0u);
+    memset(&jp_payload, 0, sizeof(jp_payload));
+    memset(&us_payload, 0, sizeof(us_payload));
     check(jp_bytes && theron_v1_track02_find_ipl_loader(
               jp_bytes, jp_size, "b7afb338ad31be1025b53f9aff12d73a",
               &jp_loader) == THERON_TRACK02_SIGNAL_OK &&
@@ -118,6 +101,23 @@ int main(int argc, char **argv) {
               us_loader.stage2_cd_read_record == 0x0004e0u &&
               us_loader.stage2_cd_read_dynamic_boundary_valid,
           "US original IPL chain reaches the proven stage-three record");
+    check(jp_bytes && theron_v1_track02_inspect_stage2_dynamic_payload(
+              jp_bytes, jp_size, "b7afb338ad31be1025b53f9aff12d73a",
+              &jp_payload) == THERON_TRACK02_SIGNAL_OK &&
+              us_bytes && theron_v1_track02_inspect_stage2_dynamic_payload(
+              us_bytes, us_size, "f23601102138f87c33025877767ebf76",
+              &us_payload) == THERON_TRACK02_SIGNAL_OK,
+          "JP/US stage-three payloads are read from original media");
+    check(theron_v1_stage2_runtime_handoff_from_dynamic_payload(
+              &jp_payload, &jp_handoff) &&
+              theron_v1_stage2_runtime_handoff_from_dynamic_payload(
+              &us_payload, &us_handoff) &&
+              jp_handoff.cleared_work_ram_start == 0x2700u &&
+              jp_handoff.cleared_work_ram_bytes == 0x1100u &&
+              jp_handoff.cleared_work_ram_end == 0x3800u &&
+              jp_handoff.work_ram_cleared_before_entry &&
+              us_handoff.work_ram_cleared_before_entry,
+          "stage-two transfer clears the proven work-RAM interval before entry");
     check(jp_bytes && theron_v1_stage3_irq2_dispatch_from_original_media(
               jp_bytes, jp_size, &jp_payload, &jp),
           "JP stage-three bytes authenticate BRK $ff IRQ2 entry");

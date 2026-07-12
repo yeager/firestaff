@@ -1,6 +1,7 @@
 #include "theron_v1_startup_runtime_entry.h"
 
 #include "theron_v1_boot.h"
+#include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_stage3_irq2_dispatch.h"
 #include "theron_v1_track02.h"
 
@@ -53,6 +54,7 @@ static int theron_v1_startup_runtime_stage3_loader_ready(
     Theron_Track02Variant variant;
     Theron_Track02IplLoaderReceipt ipl_loader;
     Theron_Track02Stage2DynamicPayloadReceipt payload;
+    Theron_V1Stage2RuntimeHandoff stage2_handoff;
     Theron_V1Stage3Irq2DispatchReceipt dispatch;
 
     if (!track02_data || track02_size == 0u || !md5_hex || !md5_hex[0]) {
@@ -65,6 +67,7 @@ static int theron_v1_startup_runtime_stage3_loader_ready(
     }
     memset(&ipl_loader, 0, sizeof(ipl_loader));
     memset(&payload, 0, sizeof(payload));
+    memset(&stage2_handoff, 0, sizeof(stage2_handoff));
     memset(&dispatch, 0, sizeof(dispatch));
     if (theron_v1_track02_find_ipl_loader(
             track02_data, track02_size, md5_hex, &ipl_loader) !=
@@ -98,6 +101,12 @@ static int theron_v1_startup_runtime_stage3_loader_ready(
                THERON_TRACK02_SIGNAL_OK &&
            payload.track02_record == ipl_loader.stage2_cd_read_record &&
            payload.raw_sector == ipl_loader.stage2_cd_read_raw_sector &&
+           theron_v1_stage2_runtime_handoff_from_dynamic_payload(
+               &payload, &stage2_handoff) &&
+           stage2_handoff.work_ram_cleared_before_entry &&
+           stage2_handoff.cleared_work_ram_start == 0x2700u &&
+           stage2_handoff.cleared_work_ram_bytes == 0x1100u &&
+           stage2_handoff.cleared_work_ram_end == 0x3800u &&
            theron_v1_stage3_irq2_dispatch_from_original_media(
                track02_data, track02_size, &payload, &dispatch) &&
            dispatch.valid && dispatch.irq2_dispatch_proven;

@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 Nexus V1 DGN Structure1G global-to-local receipt: the original
+  LEV00-LEV15 probe now proves all 51 Structure1G `first_image_index` values
+  are at least `0x14c`, subtract exactly to their stored local Structure2 IDs,
+  and match those descriptors' `image_id` values (zero mismatches). This is an
+  index relation only, not image/palette data, payload grammar, decoder,
+  animation, or rendering. Verification: direct strict-C11 probe against all
+  16 original DGN files PASS.
+
 - 2026-07-12 Nexus V1 DGN Structure1G-to-Structure2 reference receipt: a
   real LEV00-LEV15 corpus probe now follows 51 Structure1G first-image
   references into 45 local Structure2 descriptors. All 95 nonzero referenced

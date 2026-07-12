@@ -552,6 +552,10 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     profile.csbwin_extended_features_valid = 1;
     profile.csbwin_extended_level_index_present = 1;
     profile.csbwin_extended_level_dsa_index[3][2] = 7u;
+    profile.csbwin_global_variables_valid = 1;
+    profile.csbwin_global_variable_count = 2u;
+    profile.csbwin_global_variables[0] = 0x1234u;
+    profile.csbwin_global_variables[1] = 0x5678u;
     action.dsa_id = 7u;
     action.state_index = 4u;
     action.program_words = program;
@@ -567,8 +571,11 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               &profile, &binding, 4u, 0, 0x0c345u, &runner) == 1 &&
               runner.programs == &profile.csbwin_extended_dsa_state &&
               runner.dsa_id == 7 && runner.state_index == 4u &&
-              runner.master_location == 0x0c345u,
-          "CSB runtime prepares its authenticated DSA filter runner from source binding");
+              runner.master_location == 0x0c345u &&
+              runner.global_variable_count == 2 &&
+              runner.global_variables[0] == 0x1234u &&
+              runner.global_variables[1] == 0x5678u,
+          "CSB runtime prepares its authenticated DSA runner with save-owned globals");
 
     profile.csbwin_extended_level_dsa_index[3][2] = 8u;
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
@@ -577,6 +584,65 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
 
     profile.csbwin_extended_dsa_state.imported_actions = NULL;
     profile.csbwin_extended_dsa_state.imported_action_count = 0;
+    csb_v1_runtime_cleanup(&profile);
+}
+
+static void test_runtime_csbwin_expool_global_variable_handoff(void)
+{
+    uint8_t tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES * 2u];
+    uint32_t record_id;
+    uint32_t hash;
+    uint32_t bucket;
+    uint32_t record_word;
+    uint32_t i;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_RuntimeProfile snapshot;
+
+    /* CSBWin data.cpp EXPOOL::Locate uses one shared root hash table. Each
+     * 256-byte allocation block carries its own size at word zero, while the
+     * root bucket points at the absolute record word. */
+    memset(tail, 0, sizeof(tail));
+    for (i = 0u; i < 2u; ++i) {
+        size_t block = (size_t)i * CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES;
+        record_id = (5u << 24) | (4u << 16) | i;
+        hash = record_id * 0xbb40e62du;
+        bucket = 32u + (hash >> 27);
+        record_word = (uint32_t)(block / 4u) + 1u;
+        put_le16(tail, (int)block + 2, 18u);
+        put_le32(tail, (int)bucket * 4, record_word);
+        put_le32(tail, (int)record_word * 4, 0u);
+        put_le32(tail, (int)(record_word + 1u) * 4, record_id);
+        for (uint32_t word = 0u; word < 16u; ++word) {
+            put_le32(tail, (int)(record_word + 2u + word) * 4,
+                     0x1000u * (i + 1u) + word);
+        }
+    }
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.csbwin_appended_tail_valid = 1;
+    profile.csbwin_appended_tail_size = sizeof(tail);
+    profile.csbwin_appended_tail_preserved_size = sizeof(tail);
+    memcpy(profile.csbwin_appended_tail, tail, sizeof(tail));
+    CHECK(csb_v1_runtime_restore_csbwin_expool_global_variables(&profile) == 0 &&
+              profile.csbwin_global_variables_valid == 1 &&
+              profile.csbwin_global_variable_count == 32u &&
+              profile.csbwin_global_variables[0] == 0x1000u &&
+              profile.csbwin_global_variables[15] == 0x100fu &&
+              profile.csbwin_global_variables[16] == 0x2000u &&
+              profile.csbwin_global_variables[31] == 0x200fu,
+          "CSBWin SaveGame.cpp global EXPOOL records restore in source order");
+
+    /* A record whose payload cannot contain the source sixteen ui32 values
+     * must not replace the previously restored bank. */
+    snapshot = profile;
+    put_le16(profile.csbwin_appended_tail, 2, 10u);
+    CHECK(csb_v1_runtime_restore_csbwin_expool_global_variables(&profile) == -1 &&
+              profile.csbwin_global_variable_count ==
+                  snapshot.csbwin_global_variable_count &&
+              memcmp(profile.csbwin_global_variables,
+                     snapshot.csbwin_global_variables,
+                     sizeof(profile.csbwin_global_variables)) == 0,
+          "malformed CSBWin global EXPOOL record preserves live DSA bank");
     csb_v1_runtime_cleanup(&profile);
 }
 
@@ -1748,6 +1814,7 @@ int main(void)
     test_dungeon_real_format_expool_db11_skin_lookup();
     test_dungeon_decode_dsa_filter_location();
     test_runtime_csbwin_dsa_filter_binding();
+    test_runtime_csbwin_expool_global_variable_handoff();
     test_runtime_custom_background_skin_grid_from_expool();
     test_runtime_custom_background_skin_grid_from_csbwin_tail();
     test_dungeon_decode_square();

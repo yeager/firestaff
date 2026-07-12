@@ -60,6 +60,8 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
     size_t *out_size);
 static int csb_v1_runtime_stage_csbwin_dsa_tracing(
     CSB_V1_RuntimeProfile *candidate);
+static int csb_v1_runtime_stage_csbwin_global_variables(
+    CSB_V1_RuntimeProfile *candidate);
 static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_dy);
 static int csb_v1_runtime_square_type_from_raw(
     const CSB_V1_DungeonData *dungeon,
@@ -1257,7 +1259,8 @@ static int csb_v1_runtime_apply_save_image(
         memset(profile->csbwin_appended_tail, 0,
                sizeof(profile->csbwin_appended_tail));
     }
-    if (csb_v1_runtime_stage_csbwin_dsa_tracing(profile) != 0) {
+    if (csb_v1_runtime_stage_csbwin_global_variables(profile) != 0 ||
+        csb_v1_runtime_stage_csbwin_dsa_tracing(profile) != 0) {
         return -1;
     }
     if (csb_v1_runtime_apply_active_group_state_from_save_image(
@@ -14523,7 +14526,8 @@ int csb_v1_runtime_apply_csbwin_resume_report(
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
         return -1;
     }
-    if (csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
+    if (csb_v1_runtime_stage_csbwin_global_variables(&candidate) != 0 ||
+        csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
         return -1;
     }
@@ -14652,7 +14656,8 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         memset(candidate.csbwin_extended_level_dsa_index, 0xff,
                sizeof(candidate.csbwin_extended_level_dsa_index));
     }
-    if (csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
+    if (csb_v1_runtime_stage_csbwin_global_variables(&candidate) != 0 ||
+        csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
         csb_v1_runtime_cleanup_csbwin_extended_state(&candidate);
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
         free(bytes);
@@ -14905,6 +14910,79 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
     return 1;
 }
 
+static uint32_t csb_v1_runtime_read_le32(const uint8_t *bytes)
+{
+    return (uint32_t)bytes[0] |
+           ((uint32_t)bytes[1] << 8) |
+           ((uint32_t)bytes[2] << 16) |
+           ((uint32_t)bytes[3] << 24);
+}
+
+static int csb_v1_runtime_stage_csbwin_global_variables(
+    CSB_V1_RuntimeProfile *candidate)
+{
+    const uint32_t record_base = (5u << 24) | (4u << 16);
+    const uint32_t words_per_record = 16u;
+    const uint32_t record_count =
+        CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY / words_per_record;
+    uint32_t staged[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY] = { 0u };
+    uint32_t count = 0u;
+    uint32_t record_index;
+
+    if (!candidate) return -1;
+
+    /* CSBWin SaveGame.cpp ReadSavegame() reads record i as
+     * (EDT_Database << 24) | (EDBT_GlobalVariables << 16) | i, appending
+     * exactly sixteen ui32 values until EXPOOL::Locate first fails, then
+     * invokes DSAINDEX::ReadTracing. Keep the bounded Firestaff DSA bank
+     * source-sized and stage every word before publishing it. */
+    if (candidate->csbwin_appended_tail_valid &&
+        candidate->csbwin_appended_tail_size != 0u &&
+        (candidate->csbwin_appended_tail_truncated ||
+         candidate->csbwin_appended_tail_size !=
+             candidate->csbwin_appended_tail_preserved_size ||
+         candidate->csbwin_appended_tail_preserved_size >
+             CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES)) {
+        return -1;
+    }
+
+    for (record_index = 0u; record_index < record_count; ++record_index) {
+        const uint8_t *payload = NULL;
+        size_t payload_size = 0u;
+        uint32_t word;
+
+        if (!csb_v1_runtime_locate_appended_expool_record_internal(
+                candidate, record_base | record_index,
+                &payload, &payload_size)) {
+            break;
+        }
+        if (!payload || payload_size < words_per_record * sizeof(uint32_t)) {
+            return -1;
+        }
+        for (word = 0u; word < words_per_record; ++word) {
+            staged[count + word] = csb_v1_runtime_read_le32(
+                payload + word * sizeof(uint32_t));
+        }
+        count += words_per_record;
+    }
+    /* The runner's source-sized bounded bank can hold six complete records
+     * (96 values). Never silently drop a seventh source record merely because
+     * the 100-cell stack bridge has no partial-record representation. */
+    if (record_index == record_count &&
+        csb_v1_runtime_locate_appended_expool_record_internal(
+            candidate, record_base | record_index, NULL, NULL)) {
+        return -1;
+    }
+
+    memset(candidate->csbwin_global_variables, 0,
+           sizeof(candidate->csbwin_global_variables));
+    memcpy(candidate->csbwin_global_variables, staged,
+           count * sizeof(staged[0]));
+    candidate->csbwin_global_variable_count = (uint16_t)count;
+    candidate->csbwin_global_variables_valid = 1;
+    return 0;
+}
+
 static int csb_v1_runtime_stage_csbwin_dsa_tracing(
     CSB_V1_RuntimeProfile *candidate)
 {
@@ -14972,6 +15050,26 @@ int csb_v1_runtime_get_csbwin_dsa_tracing(
         return -1;
     }
     *out_report = profile->csbwin_dsa_tracing;
+    return 0;
+}
+
+int csb_v1_runtime_restore_csbwin_expool_global_variables(
+    CSB_V1_RuntimeProfile *profile)
+{
+    CSB_V1_RuntimeProfile candidate;
+
+    if (!profile) return -1;
+    candidate = *profile;
+    if (csb_v1_runtime_stage_csbwin_global_variables(&candidate) != 0) {
+        return -1;
+    }
+    profile->csbwin_global_variables_valid =
+        candidate.csbwin_global_variables_valid;
+    profile->csbwin_global_variable_count =
+        candidate.csbwin_global_variable_count;
+    memcpy(profile->csbwin_global_variables,
+           candidate.csbwin_global_variables,
+           sizeof(profile->csbwin_global_variables));
     return 0;
 }
 
@@ -15061,6 +15159,13 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.state_index = state_index;
     candidate.action_ordinal = action_ordinal;
     candidate.master_location = master_location;
+    if (profile->csbwin_global_variables_valid) {
+        candidate.global_variable_count =
+            profile->csbwin_global_variable_count;
+        memcpy(candidate.global_variables, profile->csbwin_global_variables,
+               (size_t)candidate.global_variable_count *
+                   sizeof(candidate.global_variables[0]));
+    }
     *out_runner = candidate;
     return 1;
 }
