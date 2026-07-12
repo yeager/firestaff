@@ -1739,6 +1739,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootStartupRenderRouteReceipt render_route_receipt;
     Theron_V1_BootStartupHostViewReceipt host_view_receipt;
     Theron_V1_BootStartupGraphicsRouteReceipt graphics_route_receipt;
+    Theron_V1_BootStartupRawMediaGraphicsReceipt raw_media_graphics_receipt;
     Theron_V1_BootStartupFullStartReceipt full_start_receipt;
     Theron_V1_BootStartupHostRenderReceipt host_render_receipt;
     Theron_V1_BootStartupMenuRuntimeHandoffReceipt handoff_receipt;
@@ -3435,6 +3436,47 @@ static void test_startup_session_facts_wrappers(void) {
                     media_graphics_counters.fill_count > 0 &&
                     media_graphics_counters.rect_count > 0,
                 "boot graphics route receipt executes startup graphics from view model");
+    memset(&raw_media_graphics_receipt, 0, sizeof(raw_media_graphics_receipt));
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    expect_true(theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
+                    &media_receipt,
+                    1,
+                    0,
+                    &raw_media_graphics_receipt) &&
+                    raw_media_graphics_receipt.valid &&
+                    !raw_media_graphics_receipt.palette_descriptor_relation_verified &&
+                    !theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_raw_media_receipt(
+                        &media_view_model,
+                        &raw_media_graphics_receipt,
+                        &media_graphics_executor,
+                        &graphics_route_receipt) &&
+                    graphics_route_receipt.graphics_blocked &&
+                    graphics_route_receipt.no_fallback_startup_graphics_proof &&
+                    !graphics_route_receipt.fallback_visuals_allowed &&
+                    strcmp(graphics_route_receipt.status,
+                           "TRACK02 PALETTE DESCRIPTOR UNPROVEN") == 0 &&
+                    media_graphics_counters.fill_count == 0 &&
+                    media_graphics_counters.rect_count == 0 &&
+                    media_graphics_counters.pixel_count == 0,
+                "raw CD-read receipt blocks title stage Soul Room fallback without palette descriptor proof");
+    memset(&raw_media_graphics_receipt, 0, sizeof(raw_media_graphics_receipt));
+    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
+    expect_true(theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
+                    &media_receipt,
+                    1,
+                    1,
+                    &raw_media_graphics_receipt) &&
+                    raw_media_graphics_receipt.valid &&
+                    raw_media_graphics_receipt.palette_descriptor_relation_verified &&
+                    theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_raw_media_receipt(
+                        &media_view_model,
+                        &raw_media_graphics_receipt,
+                        &media_graphics_executor,
+                        &graphics_route_receipt) &&
+                    graphics_route_receipt.track02_startup_graphics_executed &&
+                    media_graphics_counters.fill_count > 0 &&
+                    media_graphics_counters.rect_count > 0,
+                "host consumes complete raw media receipt without Track02 rescan");
     {
         Theron_StartupMediaStateReceipt unpackaged_media_receipt =
             media_receipt;
