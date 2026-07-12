@@ -3458,6 +3458,7 @@ static int orch_cmd_attack_f0407_closed_door_compat(
     DM1_ActionClosedDoorDestructionInputPc34 destructionIn;
     DM1_ActionClosedDoorDestructionPlanPc34 destructionPlan;
 
+    (void)result;
     if (!world || !input || !weaponInfo || !world->dungeon ||
         !world->dungeon->tiles || !world->dungeon->maps) {
         return 0;
