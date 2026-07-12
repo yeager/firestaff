@@ -759,7 +759,25 @@ int theron_v1_boot_validate_track02_loader_receipt(
         observed.executable_user_data_hash != receipt->ipl_loader.executable_user_data_hash ||
         observed.stage2_user_data_hash != receipt->ipl_loader.stage2_user_data_hash ||
         observed.stage2_record != receipt->ipl_loader.stage2_record ||
-        observed.stage2_sector_count != receipt->ipl_loader.stage2_sector_count) {
+        observed.stage2_sector_count != receipt->ipl_loader.stage2_sector_count ||
+        observed.stage2_destination != receipt->ipl_loader.stage2_destination ||
+        observed.stage2_load_address != receipt->ipl_loader.stage2_load_address ||
+        observed.stage2_entry_address != receipt->ipl_loader.stage2_entry_address ||
+        observed.stage2_cd_read_cpu_address !=
+            receipt->ipl_loader.stage2_cd_read_cpu_address ||
+        observed.stage2_cd_read_sector_count !=
+            receipt->ipl_loader.stage2_cd_read_sector_count ||
+        observed.stage2_cd_read_destination !=
+            receipt->ipl_loader.stage2_cd_read_destination ||
+        observed.stage2_cd_read_local_destination !=
+            receipt->ipl_loader.stage2_cd_read_local_destination ||
+        observed.stage2_cd_read_record_proven !=
+            receipt->ipl_loader.stage2_cd_read_record_proven ||
+        observed.stage2_cd_read_dynamic_boundary_valid !=
+            receipt->ipl_loader.stage2_cd_read_dynamic_boundary_valid ||
+        observed.stage2_cd_read_live_record_register_mask !=
+            receipt->ipl_loader.stage2_cd_read_live_record_register_mask ||
+        observed.vram_transfer_proven != receipt->ipl_loader.vram_transfer_proven) {
         free(bytes);
         return 0;
     }

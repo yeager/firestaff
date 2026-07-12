@@ -105,6 +105,7 @@ typedef struct {
     uint8_t gdat_interface_palette16[16];
     DM2_V1_G1FirstMapRuntimeReceipt g1_first_map_runtime;
     DM2_V1_G1TeleporterTransitionReceipt g1_map0_teleporter_transition;
+    DM2_V1_G1Map5TextRuntimeReceipt g1_map5_text_runtime;
     int g1_first_map_viewport_consumed;
     int g1_map0_teleporter_transition_viewport_consumed;
 } DM2_V1_RuntimeState;
@@ -1196,6 +1197,9 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
         (void)dm2_v1_dungeon_materialize_g1_first_map_runtime(
             (const DM2_V1_DungeonData *)boot_profile->dungeon_data,
             &g_dm2_runtime.g1_first_map_runtime);
+        (void)dm2_v1_dungeon_materialize_g1_map5_text_runtime(
+            (const DM2_V1_DungeonData *)boot_profile->dungeon_data,
+            &g_dm2_runtime.g1_map5_text_runtime);
     }
     if (boot_profile->dm2_state) {
         DM2_V1_GameState *gs = (DM2_V1_GameState *)boot_profile->dm2_state;
@@ -1224,6 +1228,16 @@ int dm2_v1_runtime_g1_map0_teleporter_transition_receipt(
         return 0;
     }
     *out_receipt = g_dm2_runtime.g1_map0_teleporter_transition;
+    return 1;
+}
+
+int dm2_v1_runtime_g1_map5_text_receipt(
+    DM2_V1_G1Map5TextRuntimeReceipt *out_receipt)
+{
+    if (!out_receipt || !g_dm2_runtime.g1_map5_text_runtime.committed) {
+        return 0;
+    }
+    *out_receipt = g_dm2_runtime.g1_map5_text_runtime;
     return 1;
 }
 

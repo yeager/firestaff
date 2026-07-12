@@ -1,12 +1,15 @@
 # Firestaff TODO - Open Work
 
-## Theron CUE IPL/Stage-Two Follow-up (2026-07-11)
+## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 
 The strict CUE route now carries an authenticated Track 02 IPL/stage-two
 loader receipt from M12 into M11, with no filename fallback or cache payload.
-Remaining work is original loader control-flow beyond the fixed IPL bootstrap;
-do not treat this receipt as a graphics, palette, object, or dungeon-record
-binding.
+The canonical `CD_EXEC` handoff is locked: record `0x0003e7` loads and enters
+local RAM at `$4000`; the first stage-two `CD_READ` remains one sector to
+`$3800` with `CL/DL/CH` live. Remaining work requires authenticated original
+stage-two control flow that proves a later dynamic CD read boundary or its
+record context. Do not treat this receipt as a graphics, palette, object, or
+dungeon-record binding.
 
 ## Theron Track 02 Semantic Binding Follow-up (2026-07-11)
 
@@ -84,7 +87,10 @@ terminal `d0dd` as `MOV.L @(disp,PC),R0`. Those classifications, their raw
 immediate, and their in-file literal offsets/values are carried only through
 the profile receipt and hold across the local 16-file corpus. They establish
 instruction provenance, not literal ownership, address semantics, or a task
-dispatch route.
+dispatch route. The same receipt now retains the fixed `d3dd`/`d0dd`
+instruction offsets and their raw displacement bytes, and verifies each
+in-file literal slot as the SH-2 PC-relative formula result across all sixteen
+files. This remains parser evidence only, not a task-body grammar or route.
 
 ## CSB V1 Runtime Presentation Follow-up (2026-07-11)
 
@@ -106,9 +112,10 @@ populated dungeon states.
   runtime collector remains correctly unable to assert that predicate. The
   complete native G0209 object band through GRAPHICS.DAT 583, including all
   armour and junk subtype rows. Giant Scorpion, Swamp Slime, Giggler,
-  Screamer, and Rockpile are the source-proven PC CSB group fronts: G0243 ->
-  G0219 -> M618 maps types 0/1/2/6/7 to GRAPHICS.DAT 584/588/590/603/605
-  through the F0115 C3200 occlusion band, with aspect-owned C13/C11/C4
+  Screamer, Rockpile, and Ghost are the source-proven PC CSB group fronts:
+  G0243 -> G0219 -> M618 maps types 0/1/2/6/7/8 to GRAPHICS.DAT
+  584/588/590/603/605/607 through the F0115 C3200 occlusion band, with
+  aspect-owned C13/C11/C4
   transparency and G0222/G0221 D2/D3 palette rows. Wizard Eye, Pain Rat, and Ruster (types 3-5) now use
   original PC graphics 594/596/600 only through the F0093 receipt: the live
   map order and full PC Graphic 558 aspect/replacement-set data must resolve
@@ -147,11 +154,11 @@ proof, not this synthetic prompt.
 
 The native PC34 importer now transactionally validates the five source save
 parts, including the `GLOBAL_DATA.MaximumActiveGroupCount`-sized ACTIVE_GROUP
-block, and the fixed four-portrait section before publishing header, party, or
-timeline state. The DM1 world handoff restores ACTIVE_GROUP records through
-the same candidate-world path. Remaining original-save interop work is
-original dungeon-tail import breadth and real community-save corpus round-trip
-evidence.
+block, the fixed `M516_CHAMPIONS + PARTY_INFO` PC34 PARTY block, and the fixed
+four-portrait section before publishing header, party, or timeline state. The
+DM1 world handoff restores ACTIVE_GROUP records through the same candidate-world
+path. Remaining original-save interop work is original dungeon-tail import
+breadth and real community-save corpus round-trip evidence.
 
 ## DM1 PC 3.4 Real-Data Fallback Inventory (2026-07-11)
 
@@ -636,6 +643,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     exclusion. No `GenericRecord::w0`, DB3/DB4, or blocked DB8/DB10 root is
     read. Remaining work is a separately proven non-DB1 record family or
     full-world materialisation, never a synthetic map transition.
+  - 2026-07-12 update: the next safe family is canonical map 5's seven direct
+    DB2 `Text` roots. `DME.h::Text` fixes only `w2`: visibility, mode, and the
+    text-table index. The runtime now retains that read-only receipt, including
+    root direction and placement, without reading `GenericRecord::w0` or text
+    bytes. Map 5 DB1/DB3/DB4 roots remain unconsumed, as do all blocked
+    DB8/DB10 roots. Remaining work is a separately source-backed text-table
+    decode/visibility consumer or another direct family, never a chain walk.
   - 2026-07-11 update: the local full-build DM2 link blocker from direct save-load test targets is fixed; weather/timer save round-trip and inventory/item panel gate now link against `firestaff_dm2` and pass. Remaining DM2 work is real render/data breadth, not this build wiring.
   - 2026-07-11 update: the next local full-build blocker, `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` using retired M11 inventory names, is fixed by moving the probe to the DM1/ReDMCSB inventory API. Remaining DM1 chest work is runtime/asset proof, not this stale probe wiring.
   - 2026-07-11 update: `firestaff_dm1_v1_champion_mouse_leader_switch_probe` now uses the current DM1/ReDMCSB champion-leader API names and passes. Remaining leader/status work is runtime capture breadth, not stale API suffix cleanup.

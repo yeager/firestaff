@@ -1235,6 +1235,80 @@ int dm2_v1_dungeon_materialize_g1_first_map_runtime(
     return 1;
 }
 
+int dm2_v1_dungeon_materialize_g1_map5_text_runtime(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1Map5TextRuntimeReceipt *out) {
+    DM2_V1_G1PartialMapBootReceipt partial;
+    DM2_V1_G1Map5TextRuntimeReceipt candidate;
+    const int map = 5;
+    int column_index = 0;
+
+    if (!out || !d || d->level_count <= map || !d->raw_data ||
+        !dm2_v1_dungeon_materialize_g1_partial_map_boot(d, &partial) ||
+        !partial.committed || !partial.incomplete) {
+        return 0;
+    }
+    for (int previous = 0; previous < map; ++previous)
+        column_index += d->level_widths[previous];
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.committed = 1;
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+
+    /* skproject/SKWIN/DME.h Text: w2 is visibility (bit 0), mode (1..2),
+     * and text-table index (3..15). c_map.cpp supplies the root ObjectID.
+     * Do not call GET_NEXT_RECORD_LINK or inspect the text-table payload. */
+    for (int x = 0; x < d->level_widths[map]; ++x) {
+        int stack = (int)RD16(d->raw_data + d->column_index_base +
+                              (column_index + x) * 2);
+        for (int y = 0; y < d->level_heights[map]; ++y) {
+            const uint8_t *record;
+            uint16_t root;
+            uint16_t w2;
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            int type;
+            int index;
+            DM2_V1_G1TextRoot *text;
+
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
+            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
+            ++stack;
+            type = (root >> 10) & 0x0f;
+            if (type != 2) continue;
+            if (!dm2_v1_g1_link_has_declared_shape(d, root) ||
+                candidate.text_root_count >= DM2_V1_G1_MAP5_MAX_TEXT_ROOTS) {
+                return 0;
+            }
+            index = root & 0x03ff;
+            record = d->raw_data + d->thing_data_bases[2] +
+                     index * s_dm2_db_record_size[2];
+            if (record + s_dm2_db_record_size[2] > d->raw_data + d->raw_size)
+                return 0;
+            w2 = RD16(record + 2);
+            text = &candidate.texts[candidate.text_root_count++];
+            text->x = x;
+            text->y = y;
+            text->object_id = root;
+            text->index = index;
+            text->direction = (uint8_t)(root >> 14);
+            text->visible = (uint8_t)(w2 & 0x0001u);
+            text->mode = (uint8_t)((w2 >> 1) & 0x0003u);
+            text->text_index = (uint16_t)((w2 >> 3) & 0x1fffu);
+            ++candidate.text_record_reads;
+        }
+    }
+    if (candidate.text_root_count != 7 || candidate.text_record_reads != 7 ||
+        candidate.generic_record_reads != 0 ||
+        candidate.blocked_record_reads != 0) {
+        return 0;
+    }
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_find_thing_of_type(const DM2_V1_DungeonData *d,
                                       uint16_t first_thing,
                                       int desired_type,

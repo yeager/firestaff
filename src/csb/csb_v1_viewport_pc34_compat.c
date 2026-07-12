@@ -1481,9 +1481,10 @@ int csb_v1_viewport_f0115_native_group_front_graphic_pc34(int creature_type)
 {
     /* ReDMCSB: DUNVIEW.C F0115:5222-5225 routes GROUP.Type through G0243
      * into G0219. G0219:1627-1629 gives type 0/1/2 native offsets 0/4/6,
-     * :1633 gives Screamer type 6 offset 19, and :1634 gives Rockpile type 7
-     * offset 21. With DEFS.H:2392 M618, those default fronts are PC CSB
-     * graphics 584/588/590/603/605. Types 3-5 stay closed: G0219:1630-1632
+     * :1633 gives Screamer type 6 offset 19, :1634 gives Rockpile type 7
+     * offset 21, and :1635 gives Ghost type 8 offset 23. With DEFS.H:2392
+     * M618, those default fronts are PC CSB graphics 584/588/590/603/605/607.
+     * Types 3-5 stay closed: G0219:1630-1632
      * assigns map-configured replacement colors which F0093 applies in
      * current-map allowed-type order. */
     if (creature_type == 0) return 584;
@@ -1494,6 +1495,7 @@ int csb_v1_viewport_f0115_native_group_front_graphic_pc34(int creature_type)
     if (creature_type == 5) return 600;
     if (creature_type == 6) return 603;
     if (creature_type == 7) return 605;
+    if (creature_type == 8) return 607;
     return -1;
 }
 
@@ -1596,8 +1598,9 @@ int csb_v1_viewport_f0115_blit_native_group_front_family_pc34(
     /* ReDMCSB: DUNVIEW.C F0115:5222-5225 identifies GROUP.Type through
      * G0243/G0219. G0219:1627 gives Scorpion offset 0/C13, :1628 gives
      * Swamp Slime offset 4/C11, :1629 gives Giggler offset 6/C11, and
-     * :1633 gives Screamer offset 19/C13, and :1634 gives Rockpile offset
-     * 21/C4, both with no replacement-color selectors.
+     * :1633 gives Screamer offset 19/C13, :1634 gives Rockpile offset 21/C4,
+     * and :1635 gives Ghost offset 23/C4, all with no replacement-color
+     * selectors.
      * F0115:5315 chooses each default front, then :5616-5627 admits the
      * material only through C3200 before F0791. */
     if (creature_type == 0) {
@@ -1609,6 +1612,8 @@ int csb_v1_viewport_f0115_blit_native_group_front_family_pc34(
     } else if (creature_type == 6) {
         aspect_transparent_color = 13;
     } else if (creature_type == 7) {
+        aspect_transparent_color = 4;
+    } else if (creature_type == 8) {
         aspect_transparent_color = 4;
     } else {
         return 0;

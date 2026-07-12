@@ -2524,7 +2524,8 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
  * System-Card CD_READ call is at CPU address 0x40cd and asks for a local-RAM
  * destination at 0x3000.  It is not a VRAM transfer proof.
  *
- * The bootstrap then CD_EXECs record 0x0003e7 (17 sectors) into $4000.  That
+ * The bootstrap then CD_EXECs record 0x0003e7 (17 sectors) into and enters
+ * at $4000.  That
  * second-stage body has a literal one-sector CD_READ into local RAM $3800,
  * but its record registers are dynamic and intentionally remain unbound.
  * None of these fixed calls use the System Card VRAM destination modes.
@@ -2584,6 +2585,10 @@ typedef struct {
     uint8_t stage2_sector_count;
     Theron_Track02IplDestination stage2_destination;
     uint16_t stage2_load_address;
+    /* CD_EXEC loads and transfers control to this same local-RAM address.
+     * It is a bootstrap handoff fact only, not a claim about stage-two
+     * program semantics after entry. */
+    uint16_t stage2_entry_address;
     size_t stage2_raw_sector;
     size_t stage2_user_data_bytes;
     uint32_t stage2_user_data_hash;

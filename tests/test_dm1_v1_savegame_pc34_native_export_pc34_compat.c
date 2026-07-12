@@ -49,6 +49,10 @@
  *      GLOBAL_DATA: its byte count must equal sizeof(ACTIVE_GROUP) *
  *      GLOBAL_DATA.MaximumActiveGroupCount, and malformed length or
  *      ciphertext leaves the destination untouched.
+ *  11. PARTY follows ACTIVE_GROUP as one fixed PC34 block:
+ *      M516_CHAMPIONS (4 * 319 bytes) + PARTY_INFO (128 bytes).
+ *      Its exact length and checksum are validated before candidate
+ *      state is published, and a valid block round-trips champion bytes.
  *
  * ReDMCSB anchors:
  *   - READWRIT.C F0417_SAVEUTIL_GetChecksumAndObfuscate
@@ -883,6 +887,92 @@ static void test_active_group_section_is_transactional(void) {
           memcmp(&importedTimeline, &timelineBefore, sizeof(timelineBefore)) == 0,
           "active-group transaction: ciphertext corruption commits nothing");
     puts("  PASS active_group_section_is_transactional");
+}
+
+static void test_party_section_is_transactional(void) {
+    struct SaveGame_Compat state;
+    struct PartyState_Compat party;
+    struct TimelineQueue_Compat timeline;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat importedParty;
+    struct TimelineQueue_Compat importedTimeline;
+    struct SaveGameHeader_Compat headerBefore;
+    struct PartyState_Compat partyBefore;
+    struct TimelineQueue_Compat timelineBefore;
+    unsigned char exportBuf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int partyLengthOffset;
+    int written = 0;
+    int rc;
+
+    memset(&state, 0, sizeof(state));
+    memset(&party, 0, sizeof(party));
+    memset(&timeline, 0, sizeof(timeline));
+    state.party = &party;
+    state.timeline = &timeline;
+    party.championCount = 1;
+    party.mapIndex = 6;
+    party.mapX = 11;
+    party.mapY = 12;
+    party.direction = 2;
+    party.activeChampionIndex = 0;
+    fill_pc34_export_test_champion(&party.champions[0]);
+    fill_pc34_export_test_timeline(&timeline);
+
+    rc = F0795_SAVEGAME_ExportPC34_Compat(
+        &state, 0x01020304u, exportBuf, (int)sizeof(exportBuf), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "party transaction: native stream exports");
+    partyLengthOffset = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE + 2 +
+                        SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT + 2;
+    CHECK(rd16le(exportBuf + partyLengthOffset) ==
+              SAVEGAME_PC34_PARTY_PART_BYTE_COUNT,
+          "party transaction: source block has fixed PC34 byte count");
+
+    memset(&imported, 0, sizeof(imported));
+    memset(&importedParty, 0, sizeof(importedParty));
+    memset(&importedTimeline, 0, sizeof(importedTimeline));
+    imported.party = &importedParty;
+    imported.timeline = &importedTimeline;
+    rc = F0796_SAVEGAME_ImportPC34_Compat(
+        exportBuf, written, &imported, /* strict = */ 1);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "party transaction: complete PC34 block imports");
+    expect_pc34_export_test_champion(&importedParty.champions[0],
+                                     &party.champions[0],
+                                     "party transaction: champion round-trips");
+
+    memset(&imported, 0xA5, sizeof(imported));
+    memset(&importedParty, 0x5A, sizeof(importedParty));
+    memset(&importedTimeline, 0x3C, sizeof(importedTimeline));
+    imported.party = &importedParty;
+    imported.timeline = &importedTimeline;
+    headerBefore = imported.header;
+    partyBefore = importedParty;
+    timelineBefore = importedTimeline;
+    exportBuf[partyLengthOffset] -= 2u;
+    rc = F0796_SAVEGAME_ImportPC34_Compat(
+        exportBuf, written, &imported, /* strict = */ 0);
+    CHECK(rc == SAVEGAME_PC34_ERROR_BAD_SIZE,
+          "party transaction: noncanonical block length rejected");
+    CHECK(memcmp(&imported.header, &headerBefore, sizeof(headerBefore)) == 0 &&
+          memcmp(&importedParty, &partyBefore, sizeof(partyBefore)) == 0 &&
+          memcmp(&importedTimeline, &timelineBefore, sizeof(timelineBefore)) == 0,
+          "party transaction: malformed length commits nothing");
+
+    rc = F0795_SAVEGAME_ExportPC34_Compat(
+        &state, 0x01020304u, exportBuf, (int)sizeof(exportBuf), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "party transaction: fresh stream exports");
+    exportBuf[partyLengthOffset + 2 + 17] ^= 0x40u;
+    rc = F0796_SAVEGAME_ImportPC34_Compat(
+        exportBuf, written, &imported, /* strict = */ 1);
+    CHECK(rc == SAVEGAME_PC34_ERROR_BAD_CHECKSUM,
+          "party transaction: corrupt ciphertext rejected");
+    CHECK(memcmp(&imported.header, &headerBefore, sizeof(headerBefore)) == 0 &&
+          memcmp(&importedParty, &partyBefore, sizeof(partyBefore)) == 0 &&
+          memcmp(&importedTimeline, &timelineBefore, sizeof(timelineBefore)) == 0,
+          "party transaction: ciphertext corruption commits nothing");
+    puts("  PASS party_section_is_transactional");
 }
 
 /* Test 4: the file size, header magic, and the per-part LENGTH
@@ -1958,6 +2048,7 @@ int main(void) {
     test_strict_checksum_rejects_corrupt_part();
     test_portrait_section_is_transactional();
     test_active_group_section_is_transactional();
+    test_party_section_is_transactional();
     test_cpsc_layout();
     test_error_string_lookup();
     test_format_id_tolerance();

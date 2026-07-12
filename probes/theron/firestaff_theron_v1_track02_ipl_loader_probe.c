@@ -108,6 +108,7 @@ static void check_receipt(const Theron_Track02IplLoaderReceipt *receipt,
               receipt->stage2_sector_count == THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT &&
               receipt->stage2_destination == THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM &&
               receipt->stage2_load_address == THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS &&
+              receipt->stage2_entry_address == THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS &&
               receipt->stage2_raw_sector == index01 + THERON_TRACK02_IPL_STAGE2_RECORD &&
               receipt->stage2_user_data_bytes ==
                   THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT * 2048u &&
