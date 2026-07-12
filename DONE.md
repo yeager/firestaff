@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0188/F0189/F0190 materialization: killed-all now clears
+  decoded and raw C04 group health, emits the source-delayed metallic slot
+  thud, and preserves off-party-map ownership. Verification: real
+  `CMD_ATTACK -> F0231 -> F0190` runtime test passed on normal and off-map
+  paths, including delayed sound emission.
+
 - 2026-07-12 DM1 F0412 Thieves' Eye/potion visual ownership: the active C73
   route now consumes only C041 in the D1C wall position with its source
   transparency, and original potion mutations request F0296 refresh without

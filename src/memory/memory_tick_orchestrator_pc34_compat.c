@@ -2708,16 +2708,31 @@ static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
         !applyPlan.valid) {
         return;
     }
+    if (applyPlan.shouldClearGroupNext &&
+        applyPlan.groupIndex >= 0 &&
+        applyPlan.groupIndex < world->things->groupCount &&
+        world->things->groups) {
+        /* ReDMCSB GROUP.C F0189 clears all C04 health slots before F0267
+         * unlinks the group. F0190 only guarantees the killed slot itself,
+         * so stale unused HP values must not reach native save/export. */
+        memset(world->things->groups[applyPlan.groupIndex].health, 0,
+               sizeof(world->things->groups[applyPlan.groupIndex].health));
+    }
     if (applyPlan.shouldUnlinkGroupFromSquare) {
         (void)orch_unlink_thing_from_square_compat(
             world, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY,
             applyPlan.groupThing);
     }
     if (applyPlan.shouldClearGroupNext &&
+        applyPlan.groupIndex >= 0 &&
         applyPlan.groupIndex < world->things->groupCount &&
         world->things->groups) {
         world->things->groups[applyPlan.groupIndex].next =
             applyPlan.clearedNextThing;
+        /* ReDMCSB GROUP.C F0188 drops GROUP.Slot before F0189 clears
+         * GROUP.Next. Persist both writes together: native save/export
+         * reads the raw C04 record, not this decoded-only mutation. */
+        orch_write_raw_group_compat(world->things, applyPlan.groupIndex);
     }
     /* ReDMCSB GROUP.C F0189 lines 759-766 retires ACTIVE_GROUP only while
      * the killed group is on the party's current map. The unlink, Next clear,
@@ -5467,13 +5482,15 @@ static int orch_drop_creature_fixed_possessions_compat(
     int cell,
     int mapIndex,
     int mapX,
-    int mapY);
+    int mapY,
+    int* outSoundId);
 static int orch_drop_group_slot_possessions_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
     int mapIndex,
     int mapX,
-    int mapY);
+    int mapY,
+    int* outSoundId);
 static int orch_link_thing_to_square_tail_compat(
     struct GameWorld_Compat* world,
     int mapIndex,
@@ -7313,7 +7330,8 @@ static int orch_drop_creature_fixed_possessions_compat(
     int sourceCell,
     int mapIndex,
     int mapX,
-    int mapY)
+    int mapY,
+    int* outSoundId)
 {
     struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
     int dropCount = 0;
@@ -7321,11 +7339,15 @@ static int orch_drop_creature_fixed_possessions_compat(
     int droppedAny = 0;
     int i;
 
+    if (outSoundId) *outSoundId = -1;
     if (!world || !world->things) return 0;
     if (!F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
             creatureType, sourceCell, &world->masterRng, drops,
             DM1_MAX_FIXED_POSSESSION_DROPS, &dropCount, &weaponDropped)) {
         return 0;
+    }
+    if (outSoundId && dropCount > 0) {
+        *outSoundId = weaponDropped ? 0 : ORCH_SOUND_WOODEN_THUD_PC34;
     }
 
     for (i = 0; i < dropCount; ++i) {
@@ -7364,7 +7386,8 @@ static int orch_drop_moving_fixed_possessions_compat(
     }
     for (i = 0; i < plan.dropCellCount; ++i) {
         droppedAny |= orch_drop_creature_fixed_possessions_compat(
-            world, creatureType, plan.dropCells[i], mapIndex, mapX, mapY);
+            world, creatureType, plan.dropCells[i], mapIndex, mapX, mapY,
+            NULL);
     }
     return droppedAny || plan.dropCellCount == 0;
 }
@@ -7389,7 +7412,7 @@ static int orch_drop_group_fixed_possessions_compat(
     for (i = 0; i < plan.dropCellCount; ++i) {
         (void)orch_drop_creature_fixed_possessions_compat(
             world, group->creatureType, plan.dropCells[i],
-            mapIndex, mapX, mapY);
+            mapIndex, mapX, mapY, NULL);
     }
     return 1;
 }
@@ -7399,7 +7422,8 @@ static int orch_drop_group_slot_possessions_compat(
     struct DungeonGroup_Compat* group,
     int mapIndex,
     int mapX,
-    int mapY);
+    int mapY,
+    int* outSoundId);
 
 static int orch_drop_group_f0267_rejection_possessions_compat(
     struct GameWorld_Compat* world,
@@ -7416,7 +7440,8 @@ static int orch_drop_group_f0267_rejection_possessions_compat(
         movingFixedDropCellCount, mapIndex, mapX, mapY);
     (void)orch_drop_group_fixed_possessions_compat(
         world, group, mapIndex, mapX, mapY);
-    return orch_drop_group_slot_possessions_compat(world, group, mapIndex, mapX, mapY);
+    return orch_drop_group_slot_possessions_compat(
+        world, group, mapIndex, mapX, mapY, NULL);
 }
 
 static int orch_apply_group_move_removal_plan_f0267_compat(
@@ -7453,7 +7478,8 @@ static int orch_apply_group_move_removal_plan_f0267_compat(
         (void)orch_drop_group_fixed_possessions_compat(
             world, group, destinationMapIndex, plan.dropMapX, plan.dropMapY);
         return orch_drop_group_slot_possessions_compat(
-            world, group, destinationMapIndex, plan.dropMapX, plan.dropMapY);
+            world, group, destinationMapIndex, plan.dropMapX, plan.dropMapY,
+            NULL);
     }
     return 1;
 }
@@ -7521,7 +7547,8 @@ static int orch_drop_group_slot_possessions_compat(
     struct DungeonGroup_Compat* group,
     int mapIndex,
     int mapX,
-    int mapY)
+    int mapY,
+    int* outSoundId)
 {
     int sftIndex;
     unsigned short thing;
@@ -7529,6 +7556,7 @@ static int orch_drop_group_slot_possessions_compat(
     DM1_MeleeF0188GroupSlotDropInputPc34 in;
     DM1_MeleeF0188GroupSlotDropPlanPc34 plan;
 
+    if (outSoundId) *outSoundId = -1;
     if (!world || !group || !world->dungeon || !world->things) return 0;
     thing = group->slot;
     if (thing == THING_NONE || thing == THING_ENDOFLIST) return 1;
@@ -7563,6 +7591,7 @@ static int orch_drop_group_slot_possessions_compat(
     if (plan.shouldClearGroupSlot) {
         group->slot = THING_ENDOFLIST;
     }
+    if (outSoundId) *outSoundId = plan.soundId;
     return 1;
 }
 
@@ -7572,6 +7601,7 @@ static void orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
     const DM1_MeleeF0190PossessionDropPlanPc34* dropPlan)
 {
     DM1_MeleeF0190PossessionDropApplyPlanPc34 applyPlan;
+    int slotDropSoundId = -1;
     int i;
 
     if (!world || !group || !dropPlan || !dropPlan->valid) return;
@@ -7583,19 +7613,64 @@ static void orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
     }
     if (applyPlan.shouldDropGroupFixedPossessions) {
         for (i = 0; i < applyPlan.groupFixedCellCount; ++i) {
+            int fixedDropSoundId = -1;
+
             (void)orch_drop_creature_fixed_possessions_compat(
                 world, group->creatureType, applyPlan.groupFixedCells[i],
-                applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY);
+                applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY,
+                &fixedDropSoundId);
+            if (fixedDropSoundId >= 0) {
+                struct TimelineEvent_Compat sound;
+                memset(&sound, 0, sizeof(sound));
+                sound.kind = TIMELINE_EVENT_PLAY_SOUND;
+                sound.fireAtTick = world->gameTick + 1u;
+                sound.mapIndex = applyPlan.mapIndex;
+                sound.mapX = applyPlan.mapX;
+                sound.mapY = applyPlan.mapY;
+                sound.aux0 = fixedDropSoundId;
+                (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &sound);
+            }
         }
     }
     if (applyPlan.shouldDropGroupSlotPossessions) {
-        (void)orch_drop_group_slot_possessions_compat(
-            world, group, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY);
+        if (orch_drop_group_slot_possessions_compat(
+                world, group, applyPlan.mapIndex, applyPlan.mapX,
+                applyPlan.mapY, &slotDropSoundId) &&
+            slotDropSoundId >= 0) {
+            struct TimelineEvent_Compat sound;
+
+            /* ReDMCSB GROUP.C F0188 lines 724-736 requests one thud using
+             * C02_MODE_PLAY_ONE_TICK_LATER after the whole Slot chain has
+             * entered the square list. Keep it as a timeline event so M10's
+             * sound dispatcher owns the delayed request. */
+            memset(&sound, 0, sizeof(sound));
+            sound.kind = TIMELINE_EVENT_PLAY_SOUND;
+            sound.fireAtTick = world->gameTick + 1u;
+            sound.mapIndex = applyPlan.mapIndex;
+            sound.mapX = applyPlan.mapX;
+            sound.mapY = applyPlan.mapY;
+            sound.aux0 = slotDropSoundId;
+            (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &sound);
+        }
     }
     if (applyPlan.shouldDropCreatureFixedPossessions) {
+        int fixedDropSoundId = -1;
+
         (void)orch_drop_creature_fixed_possessions_compat(
             world, applyPlan.creatureType, applyPlan.creatureCell,
-            applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY);
+            applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY,
+            &fixedDropSoundId);
+        if (fixedDropSoundId >= 0) {
+            struct TimelineEvent_Compat sound;
+            memset(&sound, 0, sizeof(sound));
+            sound.kind = TIMELINE_EVENT_PLAY_SOUND;
+            sound.fireAtTick = world->gameTick + 1u;
+            sound.mapIndex = applyPlan.mapIndex;
+            sound.mapX = applyPlan.mapX;
+            sound.mapY = applyPlan.mapY;
+            sound.aux0 = fixedDropSoundId;
+            (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &sound);
+        }
     }
 }
 
