@@ -1562,6 +1562,36 @@ static void test_corpus_roundtrip_proof(void)
     test_rmdir(root);
 }
 
+static void test_optional_real_pc34_corpus_roundtrip(void)
+{
+    const char *root = getenv("FIRESTAFF_DM1_PC34_SAVE_CORPUS");
+    DM1OriginalSavePC34CorpusRoundtripReport report;
+    int rc;
+
+    /* This probe intentionally never constructs a candidate. A positive
+     * result is valid only for user-supplied original PC34 bytes; Firestaff
+     * manifest-bearing exports and CSBWin GAMEBLOCK1 shapes are rejected by
+     * the corpus provenance/F0435-envelope gates. */
+    if (!root || !root[0]) {
+        puts("SKIP real PC34 corpus: FIRESTAFF_DM1_PC34_SAVE_CORPUS unset");
+        return;
+    }
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_roundtrip_corpus_root(root, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "real PC34 corpus scan completes");
+    CHECK(report.scan_succeeded == 1,
+          "real PC34 corpus publishes a scan receipt");
+    CHECK(report.roundtrip_failed_count == 0,
+          "real PC34 corpus has no failed external roundtrip");
+    CHECK(report.firestaff_manifest_rejected_count == 0,
+          "real PC34 corpus contains no Firestaff exports");
+    CHECK(report.nonoriginal_envelope_rejected_count == 0,
+          "real PC34 corpus contains no malformed provenance envelope");
+    CHECK(report.roundtrip_succeeded_count == report.pc34_candidate_count,
+          "every external PC34 corpus candidate roundtrips");
+}
+
 int main(void)
 {
     test_pc34_handoff_imports_party_state();
@@ -1573,6 +1603,7 @@ int main(void)
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();
     test_corpus_roundtrip_proof();
+    test_optional_real_pc34_corpus_roundtrip();
     test_strings();
     puts("PASS dm1_v1_original_save_pc34_handoff");
     return 0;

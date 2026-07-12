@@ -6,6 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int read_original_pc34_file_bytes(
+    const char *path,
+    uint8_t **out_bytes,
+    size_t *out_size);
+
 static int dm1_original_save_backup_path(const char *path,
                                          char out_path[DM1_ORIGINAL_SAVE_PATH_MAX])
 {
@@ -26,6 +31,45 @@ static int dm1_original_save_file_opens_for_read(const char *path)
     if (!file) return 0;
     fclose(file);
     return 1;
+}
+
+/* A corpus round-trip is evidence for external original bytes only. The
+ * Firestaff exporter deliberately stamps AdditionalData with LSV01RDM, which
+ * ReDMCSB ignores but must not certify its own output as an original-save
+ * corpus. CSBWin's 512-byte GAMEBLOCK1 also cannot pass this gate by header
+ * shape alone: the classifier has already required F0435/F7057's five
+ * length-prefixed, keyed, checksummed parts before this provenance check. */
+static int dm1_original_save_corpus_external_pc34_file(
+    const char *path,
+    int *out_firestaff_manifest)
+{
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
+    int manifest_result;
+    int result;
+
+    if (out_firestaff_manifest) {
+        *out_firestaff_manifest = 0;
+    }
+    result = read_original_pc34_file_bytes(path, &bytes, &size);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return 0;
+    }
+    if (size > (size_t)((int)0x7fffffff)) {
+        free(bytes);
+        return 0;
+    }
+    manifest_result = F0799_SAVEGAME_PC34PeekManifest_Compat(
+        bytes, (int)size, NULL, NULL, NULL);
+    free(bytes);
+    if (manifest_result == SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT) {
+        return 1;
+    }
+    if (manifest_result == SAVEGAME_PC34_MANIFEST_OK &&
+        out_firestaff_manifest) {
+        *out_firestaff_manifest = 1;
+    }
+    return 0;
 }
 
 #define DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT 319u
@@ -2178,8 +2222,23 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         DM1OriginalSavePC34RoundtripReport roundtrip;
         size_t exported_size = 0u;
         int result;
+        int firestaff_manifest = 0;
 
         if (!corpus.results[i].pc34_loader_part_envelope_candidate) {
+            continue;
+        }
+        if (!dm1_original_save_corpus_external_pc34_file(
+                corpus.paths[i], &firestaff_manifest)) {
+            if (firestaff_manifest) {
+                ++report.firestaff_manifest_rejected_count;
+            } else {
+                ++report.nonoriginal_envelope_rejected_count;
+            }
+            if (report.first_failure_result ==
+                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                report.first_failure_result =
+                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
             continue;
         }
         ++report.pc34_candidate_count;
