@@ -67,6 +67,27 @@ int main(void) {
     CHECK(hit.kind != M12_HIT_SETTINGS_TAB,
           "click on content panel -> not SETTINGS_TAB");
 
+    /* Every row published by the shared settings model must have a matching
+     * clickable modern-menu rectangle. This keeps persistence, rendering and
+     * mouse navigation on one row catalogue. */
+    for (int tab = 0; tab < M12_SETTINGS_TAB_COUNT; ++tab) {
+        const int *rows;
+        int rowCount = 0;
+        state.settingsTabIndex = tab;
+        rows = M12_StartupMenu_GetSettingsRowsForTab(tab, &rowCount);
+        CHECK(rows != NULL && rowCount > 0 && rowCount <= 11,
+              "settings tab publishes a bounded clickable row catalogue");
+        for (int row = 0; rows && row < rowCount; ++row) {
+            hit = M12_ModernMenu_HitTest(
+                &state, settingsRowXRight,
+                settingsRowY0 + row * 70 + 25);
+            CHECK((hit.kind == M12_HIT_SETTINGS_ROW ||
+                   hit.kind == M12_HIT_SETTINGS_CYCLE) &&
+                      hit.index == rows[row],
+                  "published settings row resolves to its mouse hit target");
+        }
+    }
+
     /* M12_ModernMenu_ApplyHit routes M12_HIT_SETTINGS_TAB to a
      * tab switch.  Initial settingsTabIndex=0; clicking tab 2
      * (M12_SETTINGS_TAB_CONTROLS) should set it to 2. */

@@ -1004,34 +1004,57 @@ static int m12_clamp_index(int value, int count) {
     return value;
 }
 
-static const int* m12_visible_settings_rows_for_tab(int tab, int* outCount) {
+const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount) {
     static const int gameRows[] = {
         M12_SETTINGS_ROW_LANGUAGE,
         M12_SETTINGS_ROW_DATA_DIR,
         M12_SETTINGS_ROW_DATA_STATUS,
-        M12_SETTINGS_ROW_SESSION_TIMER
+        M12_SETTINGS_ROW_SESSION_TIMER,
+        M12_SETTINGS_ROW_MINIMAP,
+        M12_SETTINGS_ROW_AUTOMAP,
+        M12_SETTINGS_ROW_COMBAT_LOG,
+        M12_SETTINGS_ROW_QUICK_RESUME,
+        M12_SETTINGS_ROW_SAVE_BROWSER,
+        M12_SETTINGS_ROW_EXPORT,
+        M12_SETTINGS_ROW_IMPORT
     };
     static const int graphicsRows[] = {
         M12_SETTINGS_ROW_GRAPHICS,
+        M12_SETTINGS_ROW_RENDERER_BACKEND,
         M12_SETTINGS_ROW_WINDOW_MODE,
+        M12_SETTINGS_ROW_SCALE_MODE,
+        M12_SETTINGS_ROW_DISPLAY_ASPECT,
+        M12_SETTINGS_ROW_INTEGER_SCALING,
+        M12_SETTINGS_ROW_SCALING_FILTER,
+        M12_SETTINGS_ROW_VSYNC,
+        M12_SETTINGS_ROW_VIEWPORT_STYLE,
         M12_SETTINGS_ROW_SMOOTH_TURN_PAN
     };
     static const int controlsRows[] = {
         M12_SETTINGS_ROW_INPUT_MODE,
         M12_SETTINGS_ROW_TOUCH_CONTROLS,
-        M12_SETTINGS_ROW_MOVEMENT_MODE
+        M12_SETTINGS_ROW_MOVEMENT_MODE,
+        M12_SETTINGS_ROW_DEBUG_OVERLAY,
+        M12_SETTINGS_ROW_DEVELOPER_GATES
     };
     static const int audioRows[] = {
         M12_SETTINGS_ROW_AUDIO_MASTER,
         M12_SETTINGS_ROW_AUDIO_MUSIC,
         M12_SETTINGS_ROW_AUDIO_SFX,
-        M12_SETTINGS_ROW_AUDIO_MUTED
+        M12_SETTINGS_ROW_AUDIO_MUTED,
+        M12_SETTINGS_ROW_SOUNDTRACK,
+        M12_SETTINGS_ROW_AMBIENT,
+        M12_SETTINGS_ROW_AMBIENT_VOLUME
     };
     static const int accessibilityRows[] = {
         M12_SETTINGS_ROW_FONT_SCALE,
         M12_SETTINGS_ROW_HIGH_CONTRAST,
         M12_SETTINGS_ROW_COLORBLIND_MODE,
-        M12_SETTINGS_ROW_AUTO_PAUSE
+        M12_SETTINGS_ROW_AUTO_PAUSE,
+        M12_SETTINGS_ROW_THEME,
+        M12_SETTINGS_ROW_BACKGROUND,
+        M12_SETTINGS_ROW_UI_SCALE,
+        M12_SETTINGS_ROW_STREAMER_MODE
     };
     static const int onlineRows[] = {
         M12_SETTINGS_ROW_RETROACHIEVEMENTS,
@@ -1075,13 +1098,13 @@ static const int* m12_visible_settings_rows_for_tab(int tab, int* outCount) {
 
 static int m12_first_visible_settings_row_for_tab(int tab) {
     int count = 0;
-    const int* rows = m12_visible_settings_rows_for_tab(tab, &count);
+    const int* rows = M12_StartupMenu_GetSettingsRowsForTab(tab, &count);
     return (rows && count > 0) ? rows[0] : M12_SETTINGS_ROW_LANGUAGE;
 }
 
 static int m12_cycle_visible_settings_row(const M12_StartupMenuState* state, int row, int delta) {
     int count = 0;
-    const int* visibleRows = m12_visible_settings_rows_for_tab(
+    const int* visibleRows = M12_StartupMenu_GetSettingsRowsForTab(
         state ? state->settingsTabIndex : M12_SETTINGS_TAB_GAME, &count);
     int i;
     int selected = 0;
@@ -3856,7 +3879,8 @@ const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state)
     return state ? M12_AssetStatus_GetDataDir(&state->assetStatus) : "";
 }
 
-static const char* m12_settings_label(const M12_StartupMenuState* state, int row) {
+const char* M12_StartupMenu_GetSettingsLabel(const M12_StartupMenuState* state,
+                                             int row) {
     switch (row) {
         case M12_SETTINGS_ROW_LANGUAGE: return m12_text(state, M12_TEXT_LANGUAGE);
         case M12_SETTINGS_ROW_GRAPHICS: return m12_text(state, M12_TEXT_PRESENTATION_MODE);
@@ -3916,7 +3940,8 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
     }
 }
 
-static const char* m12_settings_value(const M12_StartupMenuState* state, int row) {
+const char* M12_StartupMenu_GetSettingsValue(const M12_StartupMenuState* state,
+                                             int row) {
     switch (row) {
         case M12_SETTINGS_ROW_LANGUAGE: return m12_settings_value_language(state);
         case M12_SETTINGS_ROW_GRAPHICS: return m12_settings_value_graphics(state);
@@ -7671,22 +7696,22 @@ static const char* m12_ext_settings_value_for_row(
         return "";
     }
     if (strcmp(row->label, "RetroAchievements") == 0) {
-        return m12_settings_value(state, M12_SETTINGS_ROW_RETROACHIEVEMENTS);
+        return M12_StartupMenu_GetSettingsValue(state, M12_SETTINGS_ROW_RETROACHIEVEMENTS);
     }
     if (strcmp(row->label, "RetroAchievements Hardcore") == 0 ||
         strcmp(row->label, "RA Hardcore") == 0) {
-        return m12_settings_value(state, M12_SETTINGS_ROW_RA_HARDCORE);
+        return M12_StartupMenu_GetSettingsValue(state, M12_SETTINGS_ROW_RA_HARDCORE);
     }
     if (strcmp(row->label, "RetroAchievements Username") == 0 ||
         strcmp(row->label, "RA Username") == 0) {
-        return m12_settings_value(state, M12_SETTINGS_ROW_RA_USERNAME);
+        return M12_StartupMenu_GetSettingsValue(state, M12_SETTINGS_ROW_RA_USERNAME);
     }
     if (strcmp(row->label, "RetroAchievements API Token") == 0 ||
         strcmp(row->label, "RA API Token") == 0) {
-        return m12_settings_value(state, M12_SETTINGS_ROW_RA_TOKEN);
+        return M12_StartupMenu_GetSettingsValue(state, M12_SETTINGS_ROW_RA_TOKEN);
     }
     if (strcmp(row->label, "RetroAchievements Endpoint") == 0) {
-        return m12_settings_value(state, M12_SETTINGS_ROW_RA_ENDPOINT);
+        return M12_StartupMenu_GetSettingsValue(state, M12_SETTINGS_ROW_RA_ENDPOINT);
     }
     return m12_tr(state, row->value);
 }
@@ -7894,8 +7919,8 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                                   framebufferWidth,
                                   framebufferHeight,
                                   rowY,
-                                  m12_settings_label(state, row),
-                                  m12_settings_value(state, row),
+                                  M12_StartupMenu_GetSettingsLabel(state, row),
+                                  M12_StartupMenu_GetSettingsValue(state, row),
                                   state->settingsSelectedIndex == row,
                                   state->settings.languageIndex,
                                   row == M12_SETTINGS_ROW_LANGUAGE);
@@ -9282,8 +9307,8 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                          panelX + 10,
                                          rowY,
                                          framebufferWidth - margin - panelX - 20,
-                                         m12_settings_label(state, row),
-                                         m12_settings_value(state, row),
+                                         M12_StartupMenu_GetSettingsLabel(state, row),
+                                         M12_StartupMenu_GetSettingsValue(state, row),
                                          state->settingsSelectedIndex == row,
                                          state->settings.languageIndex,
                                          row == M12_SETTINGS_ROW_LANGUAGE);
