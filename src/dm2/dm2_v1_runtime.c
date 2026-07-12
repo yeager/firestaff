@@ -1750,6 +1750,13 @@ static void dm2_runtime_populate_active_creature_instances(
                 &placement)) {
             continue;
         }
+        /* skproject resolves the creature's GDAT AI row before its viewport
+         * path can consume creature-owned material. A real boot profile must
+         * not render an instance through the old type-index substitute. */
+        if (rt->boot->graphics_dat &&
+            !dm2_v1_creature_ai_spec(inst->ai_index)) {
+            continue;
+        }
         dm2_runtime_append_creature_instance_sprite(
             viewport, inst, &placement);
     }
@@ -1802,6 +1809,14 @@ static void dm2_runtime_populate_creatures(
                     dd, (uint16_t)thing, &type, NULL, &size);
                 if (!record || size < 2) break;
                 if (type == 4 && size >= 5) {
+                    if (rt->boot->graphics_dat &&
+                        !dm2_v1_creature_ai_spec(record[4])) {
+                        next = dm2_v1_dungeon_get_next_thing(
+                            dd, (uint16_t)thing);
+                        if (next < 0 || next == thing) break;
+                        thing = next;
+                        continue;
+                    }
                     dm2_runtime_append_creature_sprite(
                         viewport,
                         (uint16_t)thing,
