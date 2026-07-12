@@ -386,6 +386,8 @@ int dm2_v1_viewport_build_hud_chrome_plan_for_party(
             (uint8_t)(src->portrait_index % DM2_V1_HUD_PORTRAIT_COUNT);
         dst->portrait_fill_color =
             (uint8_t)(8u + (dst->portrait_index & 7u));
+        memcpy(dst->name, src->name, sizeof(dst->name));
+        dst->name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
         dst->fill_color = dst->leader ? 9u : 8u;
         dst->leader_mark_rect =
             (DM2_V1_ViewportRect){ dst->frame_rect.x + 2, py + 3, 3, 3 };
@@ -393,8 +395,8 @@ int dm2_v1_viewport_build_hud_chrome_plan_for_party(
             (DM2_V1_ViewportRect){ dst->frame_rect.x + 4, py + 4, 18, 18 };
         marker_w = dm2_v1_hud_name_marker_width(src->name);
         dst->name_marker_rect =
-            (DM2_V1_ViewportRect){ dst->frame_rect.x + 26, py + 4,
-                                   marker_w, marker_w > 0 ? 3 : 0 };
+            (DM2_V1_ViewportRect){ dst->frame_rect.x + 26, py + 2,
+                                   marker_w, marker_w > 0 ? 6 : 0 };
         dst->hp_bar_rect =
             (DM2_V1_ViewportRect){ dst->frame_rect.x + 26, py + 9, 34, 3 };
         dst->stamina_bar_rect =
@@ -923,6 +925,17 @@ void dm2_v1_viewport_set_gdat_interface_palette(
         memset(s->gdat_interface_palette16, 0,
                sizeof(s->gdat_interface_palette16));
     }
+    s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_gdat_interface_font(
+    DM2_V1_ViewportState *s,
+    const uint8_t *rows,
+    uint32_t hash)
+{
+    if (!s) return;
+    s->gdat_interface_font_rows = rows;
+    s->gdat_interface_font_hash = rows && hash != 0u ? hash : 0u;
     s->dirty = 1;
 }
 
@@ -4146,6 +4159,45 @@ static uint8_t dm2_v1_hud_palette_color(DM2_V1_ViewportState *s,
     return s->gdat_interface_palette16[logical_color];
 }
 
+static int dm2_v1_render_hud_source_font(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_ViewportRect *rect,
+    const char *text,
+    uint8_t foreground,
+    uint8_t background)
+{
+    int glyph_count = 0;
+
+    if (!s || !s->framebuffer || !rect || !text || !text[0] ||
+        !s->gdat_interface_font_rows || s->gdat_interface_font_hash == 0u) {
+        return 0;
+    }
+    /* skproject/SKWIN/SkWinCore.cpp QUERY_FONT expands each dt07/0 byte
+     * into three pixels in the order 0x10, 0x04, 0x01 for six rows. */
+    for (int glyph = 0; text[glyph] && glyph < DM2_V1_HUD_CHAMPION_NAME_MAX;
+         ++glyph) {
+        unsigned char character = (unsigned char)text[glyph];
+        if (character >= 128u || rect->x + glyph * 3 >= rect->x + rect->w) {
+            break;
+        }
+        for (int row = 0; row < 6; ++row) {
+            uint8_t bits = s->gdat_interface_font_rows[row * 128 + character];
+            for (int column = 0; column < 3; ++column) {
+                DM2_V1_ViewportRect pixel = {
+                    rect->x + glyph * 3 + column, rect->y + row, 1, 1
+                };
+                uint8_t color = (bits & (0x10u >> (column * 2)))
+                    ? dm2_v1_hud_palette_color(s, foreground)
+                    : dm2_v1_hud_palette_color(s, background);
+                dm2_v1_fill_rect(s->framebuffer, s->fb_stride, &pixel, color);
+            }
+        }
+        ++glyph_count;
+    }
+    s->gdat_interface_font_consumed_count += glyph_count;
+    return glyph_count > 0;
+}
+
 static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
                                         const DM2_V1_ViewportRect *rect,
                                         int gdat_index)
@@ -4372,10 +4424,20 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                         ++s->fallback_hud_portrait_drawn_count;
                     }
                 }
-                dm2_v1_fill_rect(vp, stride,
-                                 &plan.champion_slots[slot].name_marker_rect,
-                                 dm2_v1_hud_palette_color(
-                                     s, DM2_COL_WHITE));
+                if (!dm2_v1_render_hud_source_font(
+                        s, &plan.champion_slots[slot].name_marker_rect,
+                        plan.champion_slots[slot].name,
+                        DM2_COL_WHITE, DM2_COL_BLACK)) {
+                    if (s->source_materials_required) {
+                        dm2_v1_block_source_material(
+                            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+                    } else {
+                        dm2_v1_fill_rect(
+                            vp, stride,
+                            &plan.champion_slots[slot].name_marker_rect,
+                            dm2_v1_hud_palette_color(s, DM2_COL_WHITE));
+                    }
+                }
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].hp_bar_rect,
                                  dm2_v1_hud_palette_color(
@@ -4463,6 +4525,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->asset_hud_core_drawn_count = 0;
     s->fallback_hud_core_drawn_count = 0;
     s->gdat_interface_palette_consumed_count = 0;
+    s->gdat_interface_font_consumed_count = 0;
     s->gdat_material_palette_floor_ceiling_consumed_count = 0;
     s->gdat_material_palette_wall_consumed_count = 0;
     s->gdat_material_palette_door_frame_consumed_count = 0;

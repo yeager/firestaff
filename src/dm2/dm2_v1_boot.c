@@ -4658,6 +4658,40 @@ int dm2_v1_boot_interface_action_table(
     return dm2_v1_boot_parse_interface_action_table(raw, raw_size, out_table);
 }
 
+int dm2_v1_boot_interface_font_table(
+    DM2_V1_BootProfile *profile,
+    const uint8_t **out_rows,
+    uint32_t *out_hash)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *rows;
+    size_t byte_count = 0u;
+    uint32_t hash = 2166136261u;
+
+    if (out_rows) *out_rows = NULL;
+    if (out_hash) *out_hash = 0u;
+    if (!profile || !profile->graphics_dat || !out_rows || !out_hash) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    rows = dm2_v1_asset_load_typed_sized(
+        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_INTERFACE_RAW_LAYOUT_TABLE,
+        &byte_count);
+    if (!rows || byte_count != 0x300u) {
+        return 0;
+    }
+    /* skproject/SKWIN/SkWinCore.cpp QUERY_FONT indexes exactly six rows of
+     * 128 bytes: `(row << 7) + character`.  Keep the source payload whole;
+     * no Firestaff font or inferred glyph shape is substituted. */
+    for (size_t i = 0; i < byte_count; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, rows[i]);
+    }
+    *out_rows = rows;
+    *out_hash = hash;
+    return hash != 0u;
+}
+
 int dm2_v1_boot_interface_rect14_table(
     DM2_V1_BootProfile *profile,
     const uint8_t **out_rows,

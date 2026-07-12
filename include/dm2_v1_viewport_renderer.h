@@ -317,6 +317,7 @@ typedef struct {
     uint8_t mana_pct;
     uint8_t portrait_index;
     uint8_t portrait_fill_color;
+    char name[DM2_V1_HUD_CHAMPION_NAME_MAX + 1];
     DM2_V1_ViewportRect leader_mark_rect;
     DM2_V1_ViewportRect portrait_rect;
     DM2_V1_ViewportRect name_marker_rect;
@@ -759,6 +760,9 @@ typedef struct {
     int gdat_material_palette_door_frame_consumed_count;
     uint32_t gdat_interface_palette_hash;
     uint8_t gdat_interface_palette16[16];
+    const uint8_t *gdat_interface_font_rows;
+    uint32_t gdat_interface_font_hash;
+    int gdat_interface_font_consumed_count;
     const uint8_t *gdat_interface_rect14_rows;
     uint32_t gdat_interface_rect14_row_count;
     uint32_t gdat_interface_rect14_hash;
@@ -880,6 +884,12 @@ void dm2_v1_viewport_set_gdat_interface_palette(
     int ready,
     uint32_t hash,
     const uint8_t palette16[16]);
+/* skproject QUERY_FONT consumes the six 128-byte dt07/0 rows as 3x6 HUD
+ * glyph pixels.  The caller retains ownership through the boot profile. */
+void dm2_v1_viewport_set_gdat_interface_font(
+    DM2_V1_ViewportState *s,
+    const uint8_t *rows,
+    uint32_t hash);
 void dm2_v1_viewport_set_gdat_interface_rect14(
     DM2_V1_ViewportState *s,
     const uint8_t *rows,

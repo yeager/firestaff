@@ -1127,6 +1127,32 @@ static void test_sprite_asset_provider(void)
                   viewport.fallback_hud_portrait_drawn_count == 1);
 
         {
+            uint8_t font_rows[6 * 128] = { 0 };
+            uint8_t palette16[16];
+            for (int i = 0; i < 16; ++i) {
+                palette16[i] = (uint8_t)(0xa0 + i);
+            }
+            /* QUERY_FONT samples bit 0x10, then 0x04, then 0x01. */
+            for (int row = 0; row < 6; ++row) {
+                font_rows[row * 128 + (unsigned char)'T'] = 0x15u;
+            }
+            memcpy(party.champions[0].name, "T", 2);
+            memset(framebuffer, 0, sizeof(framebuffer));
+            dm2_v1_viewport_init(&viewport, framebuffer, 320);
+            dm2_v1_viewport_set_hud_party(&viewport, &party);
+            dm2_v1_viewport_set_gdat_interface_palette(
+                &viewport, 1, 0x51a7c0deu, palette16);
+            dm2_v1_viewport_set_gdat_interface_font(
+                &viewport, font_rows, 0x470a0008u);
+            dm2_v1_render_ui_chrome(&viewport);
+            CHECK("DM2 champion HUD names consume source dt07/0 font pixels",
+                  viewport.gdat_interface_font_consumed_count == 1 &&
+                      framebuffer[32 * 320 + 270] == palette16[15] &&
+                      framebuffer[37 * 320 + 272] == palette16[15] &&
+                      viewport.gdat_interface_palette_consumed_count > 0);
+        }
+
+        {
             uint8_t palette16[16];
             for (int i = 0; i < 16; ++i) {
                 palette16[i] = (uint8_t)(0xa0 + i);
