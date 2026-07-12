@@ -537,6 +537,9 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     size_t global_payload_size = 0u;
     size_t exported_size = 0u;
     CSB_V1_CSBWin512BodyReport exported_report;
+    CSB_V1_RuntimeProfile native_loaded;
+    const char *tmp_root;
+    char native_path[512];
     const uint32_t global_record_id = (5u << 24) | (4u << 16);
     const uint32_t global_bucket = 32u +
         ((global_record_id * 0xbb40e62du) >> 27);
@@ -627,6 +630,28 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               global_payload_size == 64u && global_payload[4] == 0xaau &&
               global_payload[5] == 0x55u,
           "CSB core export retains the committed source global EXPOOL word");
+
+    tmp_root = getenv("TMPDIR");
+    if (!tmp_root || tmp_root[0] == '\0') tmp_root = ".";
+    snprintf(native_path, sizeof(native_path),
+             "%s/firestaff_csb_global_expool_%p.fsav", tmp_root,
+             (void *)&profile);
+    remove(native_path);
+    csb_v1_runtime_init(&native_loaded, NULL);
+    CHECK(csb_v1_runtime_save_game_to_path(&profile, native_path) == 0 &&
+              csb_v1_runtime_load_game_from_path(&native_loaded,
+                                                  native_path) == 0 &&
+              native_loaded.csbwin_global_variables_valid == 1 &&
+              native_loaded.csbwin_global_variable_count == 16u &&
+              native_loaded.csbwin_global_variables[1] == 0x55aau &&
+              csb_v1_runtime_locate_csbwin_appended_expool_record(
+                  &native_loaded, global_record_id, &global_payload,
+                  &global_payload_size) == 1 &&
+              global_payload_size == 64u && global_payload[4] == 0xaau &&
+              global_payload[5] == 0x55u,
+          "Firestaff native save reload rehydrates the CSBWin global bank");
+    csb_v1_runtime_cleanup(&native_loaded);
+    remove(native_path);
 
     profile.csbwin_extended_level_dsa_index[3][2] = 8u;
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
