@@ -841,7 +841,8 @@ int theron_v1_boot_validate_track02_loader_receipt(
         !stage2_handoff.physical_stage3_entry_verified ||
         stage2_handoff.stage3_entry_opcode != 0x00u ||
         stage2_handoff.stage3_irq2_selector != 0xffu ||
-        stage2_handoff.stage3_continuation_address != 0x3802u) {
+        stage2_handoff.stage3_continuation_address != 0x3802u ||
+        !stage2_handoff.stage3_mode1_header_verified) {
         free(bytes);
         return 0;
     }

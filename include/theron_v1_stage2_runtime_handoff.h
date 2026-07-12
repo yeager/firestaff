@@ -43,6 +43,10 @@ typedef struct {
     uint8_t stage3_entry_opcode;
     uint8_t stage3_irq2_selector;
     uint16_t stage3_continuation_address;
+    int stage3_mode1_header_verified;
+    uint8_t stage3_minute_bcd;
+    uint8_t stage3_second_bcd;
+    uint8_t stage3_frame_bcd;
 } Theron_V1Stage2RuntimeHandoff;
 
 /* Converts an already hash-gated, structurally validated dynamic-payload

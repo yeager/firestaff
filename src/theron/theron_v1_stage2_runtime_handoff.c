@@ -1,5 +1,6 @@
 #include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_stage3_irq2_dispatch.h"
+#include "theron_v1_stage3_mode1_header.h"
 
 #include <string.h>
 
@@ -71,6 +72,7 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     Theron_Track02IplLoaderReceipt loader;
     Theron_Track02Stage2DynamicPayloadReceipt payload;
     Theron_V1Stage3Irq2DispatchReceipt dispatch;
+    Theron_V1Stage3Mode1HeaderReceipt mode1_header;
 
     if (!out_handoff) return 0;
     memset(out_handoff, 0, sizeof(*out_handoff));
@@ -85,6 +87,7 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     memset(&loader, 0, sizeof(loader));
     memset(&payload, 0, sizeof(payload));
     memset(&dispatch, 0, sizeof(dispatch));
+    memset(&mode1_header, 0, sizeof(mode1_header));
     if (theron_v1_track02_find_ipl_loader(
             track02_data, track02_size, md5_hex, &loader) !=
             THERON_TRACK02_SIGNAL_OK || !loader.valid ||
@@ -113,6 +116,11 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
         payload.raw_sector != loader.stage2_cd_read_raw_sector ||
         !theron_v1_stage2_runtime_handoff_from_dynamic_payload(
             &payload, out_handoff) ||
+        !theron_v1_stage3_mode1_header_from_original_media(
+            track02_data, track02_size, &payload, &mode1_header) ||
+        !mode1_header.valid || mode1_header.variant != variant ||
+        mode1_header.track02_record != payload.track02_record ||
+        mode1_header.raw_sector != payload.raw_sector ||
         !theron_v1_stage3_irq2_dispatch_from_original_media(
             track02_data, track02_size, &payload, &dispatch) ||
         !dispatch.valid || !dispatch.irq2_dispatch_proven) {
@@ -123,5 +131,9 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     out_handoff->stage3_entry_opcode = dispatch.opcode;
     out_handoff->stage3_irq2_selector = dispatch.irq2_selector;
     out_handoff->stage3_continuation_address = dispatch.continuation_address;
+    out_handoff->stage3_mode1_header_verified = 1;
+    out_handoff->stage3_minute_bcd = mode1_header.minute_bcd;
+    out_handoff->stage3_second_bcd = mode1_header.second_bcd;
+    out_handoff->stage3_frame_bcd = mode1_header.frame_bcd;
     return 1;
 }

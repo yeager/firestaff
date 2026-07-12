@@ -130,7 +130,15 @@ int main(int argc, char **argv) {
               jp_original_handoff.stage3_entry_opcode == 0x00u &&
               jp_original_handoff.stage3_irq2_selector == 0xffu &&
               jp_original_handoff.stage3_continuation_address == 0x3802u &&
-              us_original_handoff.physical_stage3_entry_verified,
+              jp_original_handoff.stage3_mode1_header_verified &&
+              jp_original_handoff.stage3_minute_bcd == 0x01u &&
+              jp_original_handoff.stage3_second_bcd == 0x03u &&
+              jp_original_handoff.stage3_frame_bcd == 0x38u &&
+              us_original_handoff.physical_stage3_entry_verified &&
+              us_original_handoff.stage3_mode1_header_verified &&
+              us_original_handoff.stage3_minute_bcd == 0x00u &&
+              us_original_handoff.stage3_second_bcd == 0x58u &&
+              us_original_handoff.stage3_frame_bcd == 0x57u,
           "single original-media handoff binds IPL through stage-three entry");
     check(jp_bytes && theron_v1_stage3_irq2_dispatch_from_original_media(
               jp_bytes, jp_size, &jp_payload, &jp),
