@@ -5892,6 +5892,7 @@ static void test_boot_forcefield_pointer_snapshot_enters_runtime(void) {
 static void test_runtime_entry_structured_track02_routes(void) {
     static const unsigned char fake_track02[2352] = {0};
     Theron_V1_World world;
+    Theron_V1_World world_before_block;
     Theron_StartupActionPlan plan;
     Theron_V1StartupRuntimeEntryResult result;
     Theron_V1StartupRuntimeEntryApplyReceipt apply_receipt;
@@ -5933,6 +5934,7 @@ static void test_runtime_entry_structured_track02_routes(void) {
                 "runtime entry fallback route is structured without receipt text parsing");
 
     theron_v1_world_init(&world);
+    world_before_block = world;
     memset(receipt, 0, sizeof(receipt));
     expect_true(!theron_v1_startup_runtime_load_initial_level_with_receipts(
                     &world,
@@ -5959,8 +5961,8 @@ static void test_runtime_entry_structured_track02_routes(void) {
                     !apply_receipt.runtime_receipt_text_route &&
                     strstr(apply_receipt.inspect_detail,
                            "structured=1 text_route=0") != NULL &&
-                    world.level_loaded[0][0] == 0,
-                "runtime entry verified Track02 block route is structured without fallback visuals");
+                    memcmp(&world, &world_before_block, sizeof(world)) == 0,
+                "runtime entry verified Track02 block route is atomic without fallback visuals");
 
     theron_v1_world_init(&world);
     memset(receipt, 0, sizeof(receipt));

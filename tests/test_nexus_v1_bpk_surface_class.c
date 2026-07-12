@@ -219,15 +219,9 @@ static void test_prs3_surface_decode(void) {
     rc = nexus_v1_bpk_archive_decode_surface(data, sizeof(data), 1U,
                                               pixels, sizeof(pixels),
                                               &surface, &written);
-    expect(rc == NEXUS_V1_BPK_DECODE_OK,
-           "PRS3 literal stream decodes to a surface");
-    expect(written == sizeof(pixels) && pixels[0] == 0x11U &&
-               pixels[1] == 0x22U && pixels[2] == 0x33U &&
-               pixels[3] == 0x44U,
-           "PRS3 decoder preserves literal surface pixels");
-    expect(surface.width == 2U && surface.height == 2U &&
-               surface.layout.surface_class == NEXUS_V1_BPK_SURFACE_INDEXED_8BPP,
-           "PRS3 decoder returns the declared surface layout");
+    expect(rc == NEXUS_V1_BPK_DECODE_ERR_STREAM && written == 0U &&
+               surface.width == 0U && surface.height == 0U,
+           "PRS3 literal fixture remains an unproven no-draw stream");
 
     data[132] = 0x00U;
     data[133] = 0xeeU;
@@ -300,13 +294,8 @@ static void test_prs3_material_import(void) {
     make_synthetic_prs3_literal_bpk(data, sizeof(data));
     imported = nexus_v1_dmdf_import_bpk_material_bank(data, sizeof(data),
                                                        &bank);
-    expect(imported == 1 && bank.surfaces[1].valid,
-           "decoded PRS3 surface fills its vacant DGN material slot");
-    expect(bank.surfaces[1].width == 2 && bank.surfaces[1].height == 2 &&
-               bank.surfaces[1].pixels[0] == 0x11U &&
-               bank.surfaces[1].palette[0x11] == 0xff112233U,
-           "BPK material keeps decoded texels and the real DMDF CLUT");
-    free(bank.surfaces[1].pixels);
+    expect(imported == 0 && !bank.surfaces[1].valid,
+           "unproven PRS3 surface cannot fill a DGN material slot");
 }
 
 static void test_truecolor_material_import(void) {
@@ -340,13 +329,8 @@ static void test_truecolor_material_import(void) {
     make_synthetic_prs3_rgb565_bpk(data, sizeof(data));
     imported = nexus_v1_dmdf_import_bpk_material_bank(data, sizeof(data),
                                                        &bank);
-    expect(imported == 1 && bank.surfaces[1].valid,
-           "PRS3-decoded BPK surface imports into material bank");
-    expect(bank.surfaces[1].width == 2 && bank.surfaces[1].height == 2 &&
-               bank.surfaces[1].pixels[0] == 0xf8U &&
-               bank.surfaces[1].palette[0xf8] == 0xffff0000U,
-           "PRS3 import preserves decoded indexed pixels and DMDF CLUT");
-    free(bank.surfaces[1].pixels);
+    expect(imported == 0 && !bank.surfaces[1].valid,
+           "unproven PRS3 RGB565 fixture cannot import into material bank");
 }
 
 static void test_material_host_route_and_category_coverage(void) {
@@ -1019,6 +1003,10 @@ static void test_runtime_upload_plan_routes(void) {
                   "blocked-prs3") == 0,
            "upload plan blocked-prs3 route name is stable");
     expect(receipt.surface_entries == 3U &&
+               receipt.directory_trailer_entries == 1U &&
+               receipt.directory_trailer_found == 1 &&
+               receipt.directory_trailer_at_entry_zero == 1 &&
+               receipt.directory_trailer_valid == 1 &&
                receipt.blocked_prs3_uploads == 3U &&
                receipt.ready_uploads == 0U &&
                receipt.blocks_real_menu_surface_render == 1 &&
@@ -1041,6 +1029,7 @@ static void test_runtime_upload_plan_routes(void) {
     expect(receipt.route == NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED,
            "upload plan routes stored archive to ready-stored");
     expect(receipt.ready_uploads == 3U &&
+               receipt.directory_trailer_valid == 1 &&
                receipt.blocked_prs3_uploads == 0U &&
                receipt.extractable_upload_bytes == 98U &&
                receipt.fallback_visuals_permitted == 0,
@@ -1399,6 +1388,10 @@ static void test_optional_local_menu_bpk(void) {
     expect(upload_receipt.route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3,
            "local MENU.BPK upload route is blocked-prs3");
     expect(upload_receipt.surface_entries == 162U &&
+               upload_receipt.directory_trailer_entries == 1U &&
+               upload_receipt.directory_trailer_found == 1 &&
+               upload_receipt.directory_trailer_at_entry_zero == 1 &&
+               upload_receipt.directory_trailer_valid == 1 &&
                upload_receipt.blocked_prs3_uploads == 162U &&
                upload_receipt.ready_uploads == 0U &&
                upload_receipt.planned_rows == 162U,

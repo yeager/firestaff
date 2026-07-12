@@ -690,7 +690,6 @@ int nexus_v1_bpk_archive_decode_surface(
     size_t *out_written) {
     Nexus_V1_BpkEntry entry;
     Nexus_V1_BpkEntryPrefix prefix;
-    Nexus_V1_BpkPrs3Info prs3;
     uint32_t bpp;
     size_t expected;
 
@@ -713,32 +712,11 @@ int nexus_v1_bpk_archive_decode_surface(
             (rc == NEXUS_V1_BPK_EXTRACT_ERR_TRUNCATED ?
              NEXUS_V1_BPK_DECODE_ERR_TRUNCATED : NEXUS_V1_BPK_DECODE_ERR_ARCHIVE);
     }
-    if (nexus_v1_bpk_archive_inspect_prs3(data, data_size, index, &prs3) != 0 ||
-        !prs3.prs3_version_matches || !prs3.pixel_count_matches ||
-        prs3.compressed_size == 0U ||
-        entry.payload_size < NEXUS_V1_BPK_PRS3_HEADER_BYTES + 4U)
-        return NEXUS_V1_BPK_DECODE_ERR_TRUNCATED;
-    expected = prs3.prs3_pixel_count;
-    if (expected > out_size) return NEXUS_V1_BPK_DECODE_ERR_OUTPUT_TOO_SMALL;
-    if (!prs3_decode_body(data + entry.payload_offset + 12U,
-                          prs3.compressed_size, out, expected, out_written,
-                          NULL,
-                          NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_LSB_FIRST,
-                          NULL))
-        return NEXUS_V1_BPK_DECODE_ERR_STREAM;
-    if (out_surface) {
-        out_surface->entry_index = index;
-        out_surface->mode = prefix.mode;
-        out_surface->width = prefix.width;
-        out_surface->height = prefix.height;
-        out_surface->pixel_count = (uint32_t)prefix.width * prefix.height;
-        out_surface->layout.bpp = 1U;
-        out_surface->layout.rowstride = (uint32_t)prefix.width;
-        out_surface->layout.surface_bytes = (uint32_t)expected;
-        out_surface->layout.surface_class =
-            NEXUS_V1_BPK_SURFACE_INDEXED_8BPP;
-    }
-    return NEXUS_V1_BPK_DECODE_OK;
+    /* The former literal/back-reference trial implementation remains in the
+     * bounded evidence walkers below. It has no original caller, opcode, or
+     * termination proof, so public decode must not turn even a synthetic
+     * stream into a surface that a future host could accidentally consume. */
+    return NEXUS_V1_BPK_DECODE_ERR_STREAM;
 }
 
 const char *nexus_v1_bpk_surface_decode_status_name(int status) {
@@ -1597,6 +1575,8 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
     Nexus_V1_BpkRuntimeSurfaceHandoffSummary handoff;
     uint32_t count;
     uint32_t planned = 0U;
+    uint32_t directory_trailer_entries = 0U;
+    int directory_trailer_at_entry_zero = 0;
     int truncated = 0;
 
     if (!out_receipt) return -1;
@@ -1630,8 +1610,12 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
             out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
             return -1;
         }
-        if (!prefix.prefix_complete ||
-            prefix.mode == NEXUS_V1_BPK_MODE_TRAILER) {
+        if (!prefix.prefix_complete) {
+            continue;
+        }
+        if (prefix.mode == NEXUS_V1_BPK_MODE_TRAILER) {
+            ++directory_trailer_entries;
+            if (i == 0U) directory_trailer_at_entry_zero = 1;
             continue;
         }
         bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
@@ -1700,6 +1684,13 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
 
     out_receipt->planned_rows = planned;
     out_receipt->truncated = truncated;
+    out_receipt->directory_trailer_entries = directory_trailer_entries;
+    out_receipt->directory_trailer_found =
+        directory_trailer_entries > 0U ? 1 : 0;
+    out_receipt->directory_trailer_at_entry_zero =
+        directory_trailer_at_entry_zero;
+    out_receipt->directory_trailer_valid =
+        directory_trailer_entries == 1U && directory_trailer_at_entry_zero;
     if (out_receipt->surface_entries == 0U) {
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES;
     } else if (out_receipt->blocked_prs3_uploads > 0U) {

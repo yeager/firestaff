@@ -188,9 +188,9 @@ typedef enum {
 } Nexus_V1_BpkSurfaceExtractStatus;
 
 /* Decode a single renderable BPK entry to its declared unpacked surface.
- * Stored entries are supported. The PRS3 branch exists only for synthetic
- * regression fixtures; real MENU.BPK routing remains blocked until an
- * independently evidenced opcode format is available. */
+ * Only stored entries are supported. PRS3 framing/candidate evaluators are
+ * diagnostic evidence, never a pixel decoder, until an original Saturn
+ * opcode and termination contract has been independently established. */
 typedef enum {
     NEXUS_V1_BPK_DECODE_OK = 0,
     NEXUS_V1_BPK_DECODE_ERR_NULL = -1,
@@ -690,6 +690,13 @@ typedef struct {
     Nexus_V1_BpkRuntimeUploadRoute route;
     uint32_t archive_entries;
     uint32_t surface_entries;
+    /* MENU.BPK has one mode-10 directory trailer at entry zero. Preserve
+     * that proven archive topology for launcher/package diagnostics; it is
+     * not a render surface and never authorizes PRS3 fallback. */
+    uint32_t directory_trailer_entries;
+    int directory_trailer_found;
+    int directory_trailer_at_entry_zero;
+    int directory_trailer_valid;
     uint32_t ready_uploads;
     uint32_t blocked_prs3_uploads;
     uint32_t blocked_truncated_uploads;
