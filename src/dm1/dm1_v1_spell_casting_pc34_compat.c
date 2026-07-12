@@ -5,6 +5,7 @@
  * See header for full source reference list.
  */
 #include "dm1_v1_spell_casting_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
 #include <string.h>
 
@@ -654,6 +655,9 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
     receipt.eventType = -1;
     receipt.shieldDefenseBefore = partyShieldDefense;
     receipt.shieldDefenseAfter = partyShieldDefense;
+    receipt.statusGraphicIndex = -1;
+    receipt.championIconGraphicIndex = -1;
+    receipt.championIconFillColor = -1;
 
     if (!s || !stats || champIdx < 0 || champIdx >= 4) {
         *outReceipt = receipt;
@@ -764,6 +768,9 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
             receipt.createsEvent = 1;
             receipt.eventType = DM1_SPELL_EVENT_LIGHT_PC34;
             receipt.eventTicks = 10000 + ((spellPower - 8) << 9);
+            /* MENU.C F0404 follows the C70 event insertion with
+             * F0337_INVENTORY_SetDungeonViewPalette. */
+            receipt.requestsDungeonViewPaletteRefresh = 1;
             break;
         case DM1_SPELL_TYPE_OTHER_MAGIC_TORCH:
             receipt.lightPower = (spellPower >> 2) + 1;
@@ -771,6 +778,7 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
             receipt.createsEvent = 1;
             receipt.eventType = DM1_SPELL_EVENT_LIGHT_PC34;
             receipt.eventTicks = 2000 + ((spellPower - 3) << 7);
+            receipt.requestsDungeonViewPaletteRefresh = 1;
             break;
         case DM1_SPELL_TYPE_OTHER_DARKNESS:
             receipt.lightPower = spellPower >> 2;
@@ -778,6 +786,7 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
             receipt.createsEvent = 1;
             receipt.eventType = DM1_SPELL_EVENT_LIGHT_PC34;
             receipt.eventTicks = 98;
+            receipt.requestsDungeonViewPaletteRefresh = 1;
             break;
         case DM1_SPELL_TYPE_OTHER_THIEVES_EYE:
             receipt.createsEvent = 1;
@@ -789,6 +798,13 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
             receipt.createsEvent = 1;
             receipt.eventType = DM1_SPELL_EVENT_INVISIBILITY_PC34;
             receipt.eventTicks = spellPower << 3;
+            /* MENU.C F0412 increments Event71 then redraws champion icons.
+             * CHAMDRAW.C F0286 uses C028_GRAPHIC_CHAMPION_ICONS, fills with
+             * C01_COLOR_DARK_GRAY, and applies G2362 palette changes. */
+            receipt.championIconGraphicIndex =
+                DM1_V1_GRAPHIC_CHAMPION_ICONS_PC34;
+            receipt.championIconFillColor = 1; /* DEFS.H C01_COLOR_DARK_GRAY */
+            receipt.appliesChampionIconInvisibilityPalette = 1;
             break;
         case DM1_SPELL_TYPE_OTHER_PARTY_SHIELD:
             receipt.createsEvent = 1;
@@ -797,6 +813,10 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
             receipt.shieldDefenseDelta = receipt.eventDefense;
             receipt.shieldDefenseAfter = partyShieldDefense + receipt.eventDefense;
             receipt.eventTicks = spellPower * spellPower;
+            /* MENU.C F0412 updates Party.ShieldDefense; CHAMDRAW.C
+             * F0293 then consumes C037_GRAPHIC_BORDER_PARTY_SHIELD. */
+            receipt.statusGraphicIndex =
+                DM1_V1_GRAPHIC_PARTY_SHIELD_BORDER_PC34;
             break;
         case DM1_SPELL_TYPE_OTHER_FOOTPRINTS:
             receipt.createsEvent = 1;
@@ -808,6 +828,10 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
             break;
         case DM1_SPELL_TYPE_OTHER_FIRESHIELD:
             receipt.fireShieldPower = (spellPower * spellPower) + 100;
+            /* MENU.C F0412 delegates to F0403; its FireShieldDefense is
+             * consumed by CHAMDRAW.C as C038_GRAPHIC_BORDER_PARTY_FIRESHIELD. */
+            receipt.statusGraphicIndex =
+                DM1_V1_GRAPHIC_FIRE_SHIELD_BORDER_PC34;
             break;
         default:
             break;
