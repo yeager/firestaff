@@ -160,7 +160,8 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
          * containers and completed host routes; missing Track 1 containers
          * leave this route blocked with no legacy visual fallback. */
         if (engine->initialized &&
-            !((engine->floor_mns_material_route_valid &&
+            !((engine->dgn_static_material_sources.canonical_pair_bound &&
+               engine->floor_mns_material_route_valid &&
                engine->wall_mns_material_route_valid) ||
               (engine->floor_bpk_container.host_route_permitted &&
                engine->wall_bpk_container.host_route_permitted &&

@@ -1150,27 +1150,45 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
      * separate PRS3-gated menu route and is never substituted here. */
     {
         int material_size = 0;
-        uint8_t *material_data = nexus_v1_read_file(engine, "SN_FLOOR.MNS",
-                                                     &material_size);
-        if (material_data) {
+        uint8_t *material_data;
+        memset(&engine->dgn_static_material_sources, 0,
+               sizeof(engine->dgn_static_material_sources));
+        engine->dgn_static_material_sources.fallback_visuals_permitted = 0;
+        (void)nexus_v1_level_aux_source_receipt(
+            engine, "SN_FLOOR.MNS",
+            &engine->dgn_static_material_sources.floor_mns);
+        (void)nexus_v1_level_aux_source_receipt(
+            engine, "SN_WALL.MNS",
+            &engine->dgn_static_material_sources.wall_mns);
+        engine->dgn_static_material_sources.canonical_pair_bound =
+            engine->dgn_static_material_sources.floor_mns.canonical_hash_verified &&
+            engine->dgn_static_material_sources.wall_mns.canonical_hash_verified;
+
+        material_data = nexus_v1_read_file(engine, "SN_FLOOR.MNS",
+                                            &material_size);
+        if (material_data &&
+            engine->dgn_static_material_sources.floor_mns
+                .canonical_hash_verified) {
             engine->floor_mns_material_route_valid =
                 nexus_v1_dmdf_decode_text_material_bank(material_data,
                                                          material_size,
                                                          &engine->floor_materials);
-            free(material_data);
         }
+        free(material_data);
         nexus_v1_inspect_dgn_material_container(
             engine, "FLOORS.BPK", NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR,
             &engine->floor_bpk_container);
         material_data = nexus_v1_read_file(engine, "SN_WALL.MNS",
                                             &material_size);
-        if (material_data) {
+        if (material_data &&
+            engine->dgn_static_material_sources.wall_mns
+                .canonical_hash_verified) {
             engine->wall_mns_material_route_valid =
                 nexus_v1_dmdf_decode_text_material_bank(material_data,
                                                          material_size,
                                                          &engine->wall_materials);
-            free(material_data);
         }
+        free(material_data);
         nexus_v1_inspect_dgn_material_container(
             engine, "WALLS.BPK", NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL,
             &engine->wall_bpk_container);
@@ -1374,6 +1392,17 @@ int nexus_v1_current_level_aux_runtime_receipt(
     return 0;
 }
 
+int nexus_v1_dgn_static_material_source_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt) {
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->fallback_visuals_permitted = 0;
+    if (!engine) return 0;
+    *out_receipt = engine->dgn_static_material_sources;
+    return 0;
+}
+
 int nexus_v1_load_model(Nexus_V1_Engine *engine, const char *name) {
     int size = 0;
     uint8_t *data;
@@ -1484,6 +1513,7 @@ void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
     nexus_v1_font_free(&engine->font);
     nexus_v1_dmdf_free_material_bank(&engine->floor_materials);
     nexus_v1_dmdf_free_material_bank(&engine->wall_materials);
+    nexus_v1_dmdf_free_material_bank(&engine->animated_floor_materials);
     if (engine->source == NEXUS_SRC_ISO)
         nexus_iso_close(&engine->iso);
     memset(engine, 0, sizeof(*engine));

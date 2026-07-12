@@ -113,31 +113,6 @@ static void seed_surface(Nexus_DMDFTextureSurface *surface,
     surface->valid = 1;
 }
 
-static void build_prs3_indexed_material_bpk(uint8_t *data, size_t size) {
-    const uint32_t trailer_off = 64U;
-    const uint32_t surface_off = 96U;
-    memset(data, 0, size);
-    memcpy(data, "BPPK", 4);
-    wb32(data + 4, (uint32_t)size);
-    memcpy(data + 12, "BMPD", 4);
-    wb32(data + 16, (uint32_t)size - 20U);
-    wb32(data + 20, 2U);
-    wb32(data + 24, trailer_off);
-    wb32(data + 28, surface_off);
-    data[trailer_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
-        NEXUS_V1_BPK_MODE_TRAILER;
-    wb16(data + surface_off + NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET, 1U);
-    data[surface_off + NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET] = 1U;
-    data[surface_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
-        NEXUS_V1_BPK_MODE_16BPP;
-    memcpy(data + surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, "PRS3", 4);
-    wb32(data + surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 4U, 1U);
-    wb32(data + surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 8U, 1U);
-    wb32(data + surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 12U, 2U);
-    data[surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 16U] = 0x01U;
-    data[surface_off + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 17U] = 0xf8U;
-}
-
 int main(void) {
     Nexus_Framebuffer fb;
     Nexus_Camera cam;
@@ -149,12 +124,11 @@ int main(void) {
     Nexus_V1_Engine engine;
     Nexus_Viewport viewport;
     Nexus_V1_DgnViewportRenderReceipt receipt;
-    Nexus_V1_DgnViewportHostRouteReceipt host_receipt;
     Nexus_V1_DungeonStartReceipt start;
     Nexus_V1_GameState game;
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
     uint8_t floor_pixel;
-    uint8_t wall_bpk[160];
+    uint8_t wall_pixel;
     uint8_t *structure1;
 
     nexus_fb_init(&fb);
@@ -262,93 +236,81 @@ int main(void) {
     seed_surface(&engine.floor_materials.surfaces[0],
                  &floor_pixel,
                  0xff204060U);
-    engine.floor_materials.surfaces[0].palette[0xf8] = 0xff20a040U;
     engine.wall_materials.valid = 1;
     engine.wall_materials.surface_count = 1;
-    engine.wall_materials.surfaces[0].valid = 1;
-    engine.wall_materials.surfaces[0].palette[0xf8] = 0xfff80000U;
-    build_prs3_indexed_material_bpk(wall_bpk, sizeof(wall_bpk));
-    /* FLOORS and WALLS must commit through the complete upload route. The
-     * source archive is PRS3-bearing, so these are the exact decoded pixels
-     * the DGN host later rasterizes, not direct-import test shortcuts. */
-    expect(nexus_v1_dmdf_import_bpk_material_bank_host_route(
-               wall_bpk, sizeof(wall_bpk), &engine.floor_materials,
-               NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR,
-               &engine.floor_bpk_host_route) == 1 &&
-               engine.floor_bpk_host_route.host_consumed_surfaces &&
-               engine.floor_materials.surfaces[1].valid &&
-               engine.floor_materials.surfaces[1].from_bpk &&
-               engine.floor_materials.surfaces[1].pixels[0] == 0xf8U,
-           "viewport imports PRS3-decoded BPK floor material through host route");
-    expect(nexus_v1_dmdf_import_bpk_material_bank_host_route(
-               wall_bpk, sizeof(wall_bpk), &engine.wall_materials,
-               NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL,
-               &engine.wall_bpk_host_route) == 1 &&
-               engine.wall_bpk_host_route.host_consumed_surfaces &&
-               engine.wall_materials.surfaces[1].valid &&
-               engine.wall_materials.surfaces[1].from_bpk &&
-               engine.wall_materials.surfaces[1].pixels[0] == 0xf8U &&
-               engine.wall_materials.bpk_prs3_surface_count == 1,
-           "viewport imports PRS3-decoded BPK wall material through host route");
-    /* This fixture already owns the complete BPK decode/upload evidence
-     * above. Production init sets this only after a canonical container hash
-     * is available; a named file alone remains blocked. */
-    engine.floor_bpk_container.host_route_permitted = 1;
-    engine.wall_bpk_container.host_route_permitted = 1;
-    engine.floor_bpk_host_route_valid = 1;
-    engine.wall_bpk_host_route_valid = 1;
+    seed_surface(&engine.wall_materials.surfaces[0], &wall_pixel,
+                 0xfff80000U);
     dgn_cell(structure1, 0x40, 3, 4)[0] = 0x00U;
-    dgn_cell(structure1, 0x40, 3, 4)[1] = 0x80U;
+    dgn_cell(structure1, 0x40, 3, 4)[1] = 0x00U;
     expect(nexus_v1_level_load(&engine.current_level,
                                dgn,
                                (int)sizeof(dgn),
                                0) == 0,
-           "Structure1B floor material id reloads after BPK preparation");
+           "Structure1B material ids reload for the direct MNS route");
     for (int y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
         for (int x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
             for (int dir = 0; dir < 4; ++dir) {
-                engine.current_level.wall_material_refs[y][x][dir] = 1U;
+                engine.current_level.wall_material_refs[y][x][dir] = 0U;
             }
         }
     }
+    /* The direct retail MNS route is a separate package route.  Parseable
+     * surfaces cannot bypass the canonical SN_FLOOR/SN_WALL identity pair. */
+    engine.floor_bpk_container.host_route_permitted = 0;
+    engine.wall_bpk_container.host_route_permitted = 0;
+    engine.floor_bpk_host_route_valid = 0;
+    engine.wall_bpk_host_route_valid = 0;
+    engine.floor_mns_material_route_valid = 1;
+    engine.wall_mns_material_route_valid = 1;
+    engine.dgn_static_material_sources.canonical_pair_bound = 0;
     nexus_viewport_init(&viewport);
+    nexus_v1_invalidate_dgn_material_plan(&engine);
     nexus_viewport_render(&viewport, &engine);
     expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0,
-           "viewport exposes last DGN render receipt");
-    expect(receipt.attempted && receipt.ready &&
-               receipt.used_real_dgn_route &&
-               !receipt.blocked &&
+           "viewport exposes static MNS identity-block receipt");
+    expect(receipt.attempted && receipt.blocked &&
                !receipt.fallback_visuals_permitted,
-           "viewport renders real DGN route without legacy fallback");
-    expect(receipt.command_count > 0 &&
-               receipt.command_count == receipt.material_surface_count &&
-               receipt.floor_count == receipt.floor_material_surface_count &&
-               receipt.ceiling_count == receipt.ceiling_material_surface_count &&
-               receipt.wall_count == receipt.wall_material_surface_count &&
-               receipt.command_count == receipt.rasterized_command_count,
-           "viewport consumes every DGN command through decoded material surfaces");
-    expect(receipt.floor_count > 0 &&
-               receipt.ceiling_count > 0 &&
-               receipt.wall_count > 0 &&
-               receipt.palette_synced &&
-               receipt.written_pixels > 0,
-           "viewport rasterizes floor, ceiling and wall DGN geometry to pixels");
-    expect(receipt.bpk_material_surface_count > 0 &&
-               receipt.bpk_floor_material_surface_count > 0 &&
-               receipt.bpk_wall_material_surface_count > 0,
-           "DGN raster receipt proves decoded FLOORS/WALLS BPK materials reached pixels");
-    expect(nexus_viewport_dgn_host_route_receipt(&viewport, &engine,
-                                                 &host_receipt) == 0 &&
-               host_receipt.can_present_runtime_dgn &&
-               host_receipt.bpk_material_surface_count ==
-                   receipt.bpk_material_surface_count &&
-               host_receipt.bpk_floor_material_surface_count > 0 &&
-               host_receipt.bpk_wall_material_surface_count > 0,
-           "DGN host route carries the BPK material-consumption proof to runtime");
+           "unverified static MNS bytes cannot enter the DGN host route");
+
+    engine.dgn_static_material_sources.canonical_pair_bound = 1;
+    engine.dgn_static_material_sources.floor_mns.canonical_hash_verified = 1;
+    engine.dgn_static_material_sources.wall_mns.canonical_hash_verified = 1;
+    memset(&engine.dgn_static_material_sources.floor_mns.canonical_name, 0,
+           sizeof(engine.dgn_static_material_sources.floor_mns.canonical_name));
+    memset(&engine.dgn_static_material_sources.wall_mns.canonical_name, 0,
+           sizeof(engine.dgn_static_material_sources.wall_mns.canonical_name));
+    memcpy(engine.dgn_static_material_sources.floor_mns.canonical_name,
+           "SN_FLOOR.MNS", 13);
+    memcpy(engine.dgn_static_material_sources.wall_mns.canonical_name,
+           "SN_WALL.MNS", 12);
+    for (int y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
+        for (int x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
+            for (int dir = 0; dir < 4; ++dir) {
+                engine.current_level.wall_material_refs[y][x][dir] = 0U;
+            }
+        }
+    }
+    nexus_v1_invalidate_dgn_material_plan(&engine);
+    nexus_viewport_render(&viewport, &engine);
+    expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0 &&
+               receipt.ready && !receipt.blocked &&
+               receipt.bpk_material_surface_count == 0,
+           "hash-bound SN_FLOOR/SN_WALL route renders without BPK substitution");
+    {
+        Nexus_V1_DgnStaticMaterialSourceReceipt source_receipt;
+        expect(nexus_v1_dgn_static_material_source_receipt(
+                   &engine, &source_receipt) == 0 &&
+                   source_receipt.canonical_pair_bound &&
+                   strcmp(source_receipt.floor_mns.canonical_name,
+                          "SN_FLOOR.MNS") == 0 &&
+                   strcmp(source_receipt.wall_mns.canonical_name,
+                          "SN_WALL.MNS") == 0,
+               "DGN host exposes the canonical static-material package receipt");
+    }
 
     engine.wall_materials.valid = 0;
     engine.wall_materials.surface_count = 0;
-    engine.wall_materials.surfaces[1].valid = 0;
+    engine.wall_materials.surfaces[0].valid = 0;
     nexus_v1_invalidate_dgn_material_plan(&engine);
     nexus_viewport_render(&viewport, &engine);
     expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0,
@@ -358,10 +320,10 @@ int main(void) {
                !receipt.fallback_visuals_permitted &&
                !receipt.palette_synced &&
                receipt.rasterized_command_count == 0,
-           "viewport blocks real DGN route when required BPK/DMDF material is missing");
+           "viewport blocks real DGN route when required MNS material is missing");
     expect(receipt.command_count > 0 &&
                receipt.missing_material_count > 0 &&
-               receipt.first_missing_material_id == 1 &&
+               receipt.first_missing_material_id == 0 &&
                (receipt.first_missing_material_kind ==
                     NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT ||
                 receipt.first_missing_material_kind ==
