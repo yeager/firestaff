@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0442 credits loop: the C202 credits command now returns
+  explicitly to the entrance loop and cannot fall through to dungeon, resume,
+  or quit. Verification: C001 fallback gate 291 checks passed.
+
 - 2026-07-12 DM1 F0442 credits handoff: startup verification now proves the
   exact 1800-VBlank credits wait and rejects credits as a dungeon, resume, or
   quit handoff. Verification: C001 fallback gate 290 checks and entrance

@@ -531,6 +531,10 @@ static void check_entrance_credits_runtime_boundary(void) {
              dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
                  ENTRANCE_COMPAT_COMMAND_PATH_CREDITS, &outcome),
              1);
+    expect_truth("credits outcome remains an explicit entrance loop",
+                 outcome.action == DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34 &&
+                     outcome.status &&
+                     strcmp(outcome.status, "DM1 ENTRANCE CREDITS LOOP") == 0);
     expect_truth("credits cannot become dungeon, resume, or quit handoff",
                  outcome.action != DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34 &&
                      outcome.action != DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34 &&

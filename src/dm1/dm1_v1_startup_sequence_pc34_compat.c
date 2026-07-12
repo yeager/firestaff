@@ -1127,6 +1127,14 @@ int dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
             out_outcome->action = DM1_V1_STARTUP_HANDOFF_ACTION_QUIT_PC34;
             out_outcome->status = "DM1 QUIT";
             break;
+        case ENTRANCE_COMPAT_COMMAND_PATH_CREDITS:
+            /* ReDMCSB ENTRANCE.C F0442:1091 restores C202 after its
+             * 1800-VBlank credits window so F0441 redraws the entrance.
+             * Credits is therefore an entrance-local loop command, never a
+             * terminal game/resume/quit startup handoff. */
+            out_outcome->action = DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34;
+            out_outcome->status = "DM1 ENTRANCE CREDITS LOOP";
+            break;
         case ENTRANCE_COMPAT_COMMAND_PATH_NONE:
             out_outcome->action =
                 DM1_V1_STARTUP_HANDOFF_ACTION_SKIPPED_NONFATAL_PC34;
