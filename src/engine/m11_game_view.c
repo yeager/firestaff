@@ -356,6 +356,12 @@ static const M11_GameViewState* g_drawState = NULL;
 static M11_Dm1FloorItemHostPresentationReceipt
     s_m11_dm1_floor_item_host_presentation_receipt;
 
+static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
+{
+    return itemPresent &&
+           s_m11_dm1_floor_item_host_presentation_receipt.valid;
+}
+
 /* The M11 game view owns one active DM2 launch at a time.  Keep the V2
  * phase gate alive for the HUD/touch/lighting runtimes rather than handing
  * them a stack-local configuration.  skproject's c_gui_vp.cpp consumes
@@ -12009,8 +12015,8 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
     facts.observed_live_hoc_c127_material_request =
         m11_front_cell_mirror_ordinal(state) >= 0;
     facts.observed_live_hoc_f0115_material_request =
-        s_m11_dm1_floor_item_host_presentation_receipt.valid &&
-        m11_front_cell_has_live_f0115_floor_item_request(state);
+        m11_dm1_hoc_floor_item_capture_observed(
+            m11_front_cell_has_live_f0115_floor_item_request(state));
     facts.observed_host_window_present = host_window_present;
     facts.consumed_hoc_host_render_receipt = 1;
     facts.consumed_m11_boot_probe_consumer = 1;
@@ -38871,6 +38877,11 @@ void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
     if (outReceipt) {
         *outReceipt = s_m11_dm1_floor_item_host_presentation_receipt;
     }
+}
+
+int M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(int itemPresent)
+{
+    return m11_dm1_hoc_floor_item_capture_observed(itemPresent);
 }
 
 int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
