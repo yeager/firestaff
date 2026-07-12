@@ -120,6 +120,43 @@ typedef struct {
 
 static M11_RenderState g_state = {0};
 
+/* EPX presentation is currently bounded to DM1's 320x200 source frame. */
+static unsigned char g_epx_present_buffer[M11_FB_WIDTH * 2 * M11_FB_HEIGHT * 2];
+
+static int m11_epx_expand_indexed(const unsigned char* src,
+                                  int source_width,
+                                  int source_height) {
+    int x;
+    int y;
+    if (!src || source_width <= 0 || source_height <= 0 ||
+        source_width > M11_FB_WIDTH || source_height > M11_FB_HEIGHT) {
+        return 0;
+    }
+    for (y = 0; y < source_height; ++y) {
+        for (x = 0; x < source_width; ++x) {
+            unsigned char p = src[y * source_width + x];
+            unsigned char a = y > 0 ? src[(y - 1) * source_width + x] : p;
+            unsigned char b = x + 1 < source_width
+                ? src[y * source_width + x + 1] : p;
+            unsigned char c = x > 0 ? src[y * source_width + x - 1] : p;
+            unsigned char d = y + 1 < source_height
+                ? src[(y + 1) * source_width + x] : p;
+            int dst_x = x * 2;
+            int dst_y = y * 2;
+            int dst_width = source_width * 2;
+            g_epx_present_buffer[dst_y * dst_width + dst_x] =
+                (c == a && c != d && a != b) ? a : p;
+            g_epx_present_buffer[dst_y * dst_width + dst_x + 1] =
+                (a == b && a != c && b != d) ? b : p;
+            g_epx_present_buffer[(dst_y + 1) * dst_width + dst_x] =
+                (d == c && d != b && c != a) ? c : p;
+            g_epx_present_buffer[(dst_y + 1) * dst_width + dst_x + 1] =
+                (b == d && b != a && d != c) ? b : p;
+        }
+    }
+    return 1;
+}
+
 static const unsigned char *m11_palette_rgb_for_pixel(unsigned char raw,
                                                        int *out_level)
 {
@@ -1735,6 +1772,17 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     return M11_RENDER_OK;
 }
 
+int M11_Render_PresentEpxIndexed(const unsigned char* framebuffer,
+                                 int logicalWidth,
+                                 int logicalHeight) {
+    if (!m11_epx_expand_indexed(framebuffer, logicalWidth, logicalHeight)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    return M11_Render_PresentIndexed(g_epx_present_buffer,
+                                     logicalWidth * 2,
+                                     logicalHeight * 2);
+}
+
 
 int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer,
                                                 int logicalWidth,
@@ -1861,6 +1909,20 @@ int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer
     SDL_RenderPresent(g_state.renderer);
 #endif
     return M11_RENDER_OK;
+}
+
+int M11_Render_PresentEpxIndexedWithSpecialPalette(
+    const unsigned char* framebuffer,
+    int logicalWidth,
+    int logicalHeight,
+    int specialPalette) {
+    if (!m11_epx_expand_indexed(framebuffer, logicalWidth, logicalHeight)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    return M11_Render_PresentIndexedWithSpecialPalette(g_epx_present_buffer,
+                                                        logicalWidth * 2,
+                                                        logicalHeight * 2,
+                                                        specialPalette);
 }
 
 int M11_Render_PresentRGBA(const unsigned char* rgba,

@@ -133,10 +133,20 @@ int  M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
 int  M11_Render_PresentIndexed(const unsigned char* framebuffer,
                                int logicalWidth,
                                int logicalHeight);
+/* DM1 V2.1: Scale2x/EPX-expand an indexed source before the ordinary
+ * palette/presentation route. The source buffer is never modified. */
+int  M11_Render_PresentEpxIndexed(const unsigned char* framebuffer,
+                                  int logicalWidth,
+                                  int logicalHeight);
 int  M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer,
                                                  int logicalWidth,
                                                  int logicalHeight,
                                                  int specialPalette);
+int  M11_Render_PresentEpxIndexedWithSpecialPalette(
+    const unsigned char* framebuffer,
+    int logicalWidth,
+    int logicalHeight,
+    int specialPalette);
 int  M11_Render_PresentIndexedToResolutionWithSpecialPalette(
     const unsigned char* framebuffer,
     int logicalWidth,
