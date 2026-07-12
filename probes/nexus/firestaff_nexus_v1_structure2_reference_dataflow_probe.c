@@ -68,6 +68,8 @@ int main(int argc, char **argv) {
     int sequence_goto_target_mismatch_count = 0;
     int sequence_terminator_count = 0;
     int sequence_unclassified_instruction_count = 0;
+    int sequence_descriptor_nonzero_target_count = 0;
+    int sequence_descriptor_target_outside_count = 0;
     int unique_descriptor_count = 0;
     int nonzero_target_count = 0;
     int outside_target_count = 0;
@@ -191,6 +193,26 @@ int main(int argc, char **argv) {
                     level.structure2_textures[local_image_id].image_id !=
                         local_image_id) {
                     ++sequence_image_descriptor_mismatch_count;
+                } else {
+                    const Nexus_V1_DgnStructure2Texture *sequence_descriptor =
+                        &level.structure2_textures[local_image_id];
+                    uint32_t sequence_offsets[2];
+                    int offset_index;
+                    uint32_t opaque_begin =
+                        (uint32_t)level.structure2_payload.opaque_payload_offset;
+                    uint32_t opaque_end = opaque_begin +
+                        (uint32_t)level.structure2_payload.opaque_payload_size;
+
+                    sequence_offsets[0] = sequence_descriptor->image_relative_offset;
+                    sequence_offsets[1] = sequence_descriptor->palette_relative_offset;
+                    for (offset_index = 0; offset_index < 2; ++offset_index) {
+                        uint32_t offset = sequence_offsets[offset_index];
+                        if (offset == 0U) continue;
+                        ++sequence_descriptor_nonzero_target_count;
+                        if (offset < opaque_begin || offset >= opaque_end) {
+                            ++sequence_descriptor_target_outside_count;
+                        }
+                    }
                 }
             }
             if (!terminated) ++sequence_unclassified_instruction_count;
@@ -240,6 +262,9 @@ int main(int argc, char **argv) {
           "Structure1G sequence image indexes bind local Structure2 descriptors");
     check(sequence_goto_target_mismatch_count == 0,
           "Structure1G backward gotos stay within their original sequences");
+    check(sequence_descriptor_nonzero_target_count > 0 &&
+              sequence_descriptor_target_outside_count == 0,
+          "Structure1G sequence descriptors target bounded opaque payload spans");
     check(sequence_terminator_count == structure1g_reference_count &&
               sequence_unclassified_instruction_count == 0,
           "Structure1G sequences terminate without unclassified instructions");
@@ -249,6 +274,7 @@ int main(int argc, char **argv) {
            "global-local=%d mismatches=%d raw-sequences=%d sequence-mismatches=%d "
            "sequence-images=%d image-mismatches=%d unique-descriptors=%d "
            "gotos=%d goto-mismatches=%d terminators=%d unclassified=%d "
+           "sequence-targets=%d targets-outside=%d "
            "nonzero-targets=%d outside=%d; "
            "decoder/render-proof=0\n",
            levels_loaded, structure1g_reference_count, global_to_local_binding_count,
@@ -257,6 +283,8 @@ int main(int argc, char **argv) {
            sequence_image_descriptor_mismatch_count, unique_descriptor_count,
            sequence_goto_instruction_count, sequence_goto_target_mismatch_count,
            sequence_terminator_count, sequence_unclassified_instruction_count,
+           sequence_descriptor_nonzero_target_count,
+           sequence_descriptor_target_outside_count,
            nonzero_target_count, outside_target_count);
     return failures == 0 ? 0 : 1;
 }
