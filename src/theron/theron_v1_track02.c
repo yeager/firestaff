@@ -8327,15 +8327,19 @@ Theron_Track02SignalStatus theron_v1_track02_inspect_stage2_dynamic_payload(
     size_t user_offset;
     size_t i;
     const uint8_t *payload;
+    Theron_Track02SignalStatus status;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!track02_data || !md5_hex || !out_receipt ||
-        theron_v1_track02_find_ipl_loader(track02_data, track02_size, md5_hex,
-                                          &loader) != THERON_TRACK02_SIGNAL_OK ||
-        !loader.valid || !loader.stage2_cd_read_record_proven ||
+    if (!track02_data || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    if (!loader.valid || !loader.stage2_cd_read_record_proven ||
         loader.stage2_cd_read_raw_sector >
             (SIZE_MAX - TQR_RAW_SECTOR_USER_DATA_OFFSET) / TQR_RAW_SECTOR_BYTES) {
-        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     raw_offset = loader.stage2_cd_read_raw_sector * TQR_RAW_SECTOR_BYTES;
     user_offset = raw_offset + TQR_RAW_SECTOR_USER_DATA_OFFSET;
@@ -8346,6 +8350,14 @@ Theron_Track02SignalStatus theron_v1_track02_inspect_stage2_dynamic_payload(
     }
     payload = track02_data + user_offset;
     if (rd16be(payload) != 0x00ffu || rd16be(payload + 2u) != 0x0308u) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    if (THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_BYTES < 4u ||
+        (THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_BYTES - 4u) /
+                THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT ||
+        (THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_BYTES - 4u) %
+                THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_BYTES != 0u) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     for (i = THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_BYTES;
