@@ -269,6 +269,25 @@ typedef struct {
     size_t zero_bit_target;
 } Nexus_Prs3V1OuterLoopLowBitJoinReceipt;
 
+/* The directly observed failure target begins with a literal-fed indirect
+ * call. The pointer is retained as raw original data: no memory-map or callee
+ * meaning is inferred here. */
+typedef struct {
+    int valid;
+    size_t failure_target;
+    size_t literal_load_offset;
+    size_t literal_offset;
+    uint32_t literal_word;
+    unsigned int literal_register;
+    size_t indirect_call_offset;
+    unsigned int indirect_call_register;
+    size_t call_delay_offset;
+    unsigned int call_delay_source_register;
+    unsigned int call_delay_destination_register;
+    size_t failure_result_offset;
+    size_t return_offset;
+} Nexus_Prs3V1FailureCallReceipt;
+
 static int failures;
 
 static void check(int condition, const char *message) {
@@ -278,6 +297,11 @@ static void check(int condition, const char *message) {
 
 static uint16_t read_be16(const uint8_t *p) {
     return (uint16_t)(((uint16_t)p[0] << 8) | (uint16_t)p[1]);
+}
+
+static uint32_t read_be32(const uint8_t *p) {
+    return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+           ((uint32_t)p[2] << 8) | (uint32_t)p[3];
 }
 
 static int sh2_conditional_branch_target(size_t instruction_offset,
@@ -332,6 +356,28 @@ static int sh2_movw_pc_literal_target(size_t instruction_offset,
     displacement = (size_t)(instruction & 0x00ffU) * 2U;
     if (displacement > SIZE_MAX - (instruction_offset + 4U)) return 0;
     *out_target = instruction_offset + 4U + displacement;
+    return 1;
+}
+
+/* SH-2 MOV.L @(disp,PC),Rn is 1101nnnndddddddd. */
+static int sh2_movl_pc_literal_target(size_t instruction_offset,
+                                      uint16_t instruction,
+                                      size_t *out_target) {
+    size_t base;
+    size_t displacement;
+
+    if (!out_target || (instruction & 0xf000U) != 0xd000U) return 0;
+    base = (instruction_offset & ~(size_t)3U) + 4U;
+    displacement = (size_t)(instruction & 0x00ffU) * 4U;
+    if (displacement > SIZE_MAX - base) return 0;
+    *out_target = base + displacement;
+    return 1;
+}
+
+/* SH-2 JSR @Rn is 0100nnnn00001011. */
+static int sh2_jsr_register(uint16_t instruction, unsigned int *out_register) {
+    if ((instruction & 0xf0ffU) != 0x400bU || !out_register) return 0;
+    *out_register = (unsigned int)((instruction >> 8) & 0x0fU);
     return 1;
 }
 
@@ -1108,6 +1154,58 @@ static int prs3_v1_outer_loop_low_bit_join_receipt(
     return 1;
 }
 
+static int prs3_v1_failure_call_receipt(
+    const uint8_t *data, size_t size, Nexus_Prs3V1FailureCallReceipt *out) {
+    Nexus_Prs3V1FailureCallReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || entry + 290U > size) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.failure_target = entry + 166U;
+    receipt.literal_load_offset = receipt.failure_target;
+    receipt.indirect_call_offset = entry + 168U;
+    receipt.call_delay_offset = entry + 170U;
+    receipt.failure_result_offset = entry + 174U;
+    receipt.return_offset = entry + 188U;
+    if (read_be16(data + entry + 62U) != 0x8932U ||
+        !sh2_conditional_branch_target(entry + 62U,
+                                       read_be16(data + entry + 62U), size,
+                                       &receipt.failure_target) ||
+        read_be16(data + receipt.literal_load_offset) != 0xd31eU ||
+        !sh2_movl_pc_literal_target(
+            receipt.literal_load_offset,
+            read_be16(data + receipt.literal_load_offset),
+            &receipt.literal_offset) ||
+        receipt.literal_offset + 4U > size ||
+        !sh2_jsr_register(read_be16(data + receipt.indirect_call_offset),
+                          &receipt.indirect_call_register) ||
+        !sh2_mov_register_fields(read_be16(data + receipt.call_delay_offset),
+                                 &receipt.call_delay_source_register,
+                                 &receipt.call_delay_destination_register) ||
+        read_be16(data + receipt.failure_result_offset) != 0xe000U ||
+        read_be16(data + receipt.return_offset) != 0x000bU ||
+        receipt.failure_target != entry + 166U ||
+        receipt.literal_offset != entry + 288U ||
+        receipt.indirect_call_register != 3U ||
+        receipt.call_delay_source_register != 13U ||
+        receipt.call_delay_destination_register != 4U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.literal_register = 3U;
+    receipt.literal_word = read_be32(data + receipt.literal_offset);
+    if (receipt.literal_word != 0x060284e0U) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}
+
 static void test_synthetic_branch_flow(void) {
     uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 256U];
     Nexus_Prs3V1BranchFlowReceipt receipt;
@@ -1424,6 +1522,34 @@ static void test_synthetic_outer_loop_low_bit_join(void) {
           "SH-2 PRS3 outer-loop receipt rejects a changed low-bit setup");
 }
 
+static void test_synthetic_failure_call(void) {
+    uint8_t fixture[NEXUS_PRS3_VERSION1_CALLEE_OFFSET + 512U];
+    Nexus_Prs3V1FailureCallReceipt receipt;
+    size_t entry = NEXUS_PRS3_VERSION1_CALLEE_OFFSET;
+
+    memset(fixture, 0, sizeof(fixture));
+    fixture[entry + 62U] = 0x89U; fixture[entry + 63U] = 0x32U;
+    fixture[entry + 166U] = 0xd3U; fixture[entry + 167U] = 0x1eU;
+    fixture[entry + 168U] = 0x43U; fixture[entry + 169U] = 0x0bU;
+    fixture[entry + 170U] = 0x64U; fixture[entry + 171U] = 0xd3U;
+    fixture[entry + 174U] = 0xe0U; fixture[entry + 175U] = 0x00U;
+    fixture[entry + 188U] = 0x00U; fixture[entry + 189U] = 0x0bU;
+    fixture[entry + 288U] = 0x06U; fixture[entry + 289U] = 0x02U;
+    fixture[entry + 290U] = 0x84U; fixture[entry + 291U] = 0xe0U;
+    check(prs3_v1_failure_call_receipt(
+              fixture, sizeof(fixture), &receipt) && receipt.valid &&
+              receipt.failure_target == entry + 166U &&
+              receipt.literal_word == 0x060284e0U &&
+              receipt.indirect_call_register == 3U &&
+              receipt.call_delay_source_register == 13U &&
+              receipt.call_delay_destination_register == 4U,
+          "SH-2 PRS3 failure receipt locks literal-fed indirect-call shape");
+    fixture[entry + 169U] = 0x09U;
+    check(!prs3_v1_failure_call_receipt(
+              fixture, sizeof(fixture), &receipt),
+          "SH-2 PRS3 failure receipt rejects a non-JSR failure call");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp;
     long file_size;
@@ -1472,6 +1598,7 @@ int main(int argc, char **argv) {
     Nexus_Prs3V1RepeatR6MaskReceipt repeat_r6_mask_receipt;
     Nexus_Prs3V1OuterLoopReentryReceipt outer_loop_reentry_receipt;
     Nexus_Prs3V1OuterLoopLowBitJoinReceipt outer_loop_low_bit_join_receipt;
+    Nexus_Prs3V1FailureCallReceipt failure_call_receipt;
 
     test_synthetic_branch_flow();
     test_synthetic_zero_side_read();
@@ -1485,6 +1612,7 @@ int main(int argc, char **argv) {
     test_synthetic_repeat_r6_mask();
     test_synthetic_outer_loop_reentry();
     test_synthetic_outer_loop_low_bit_join();
+    test_synthetic_failure_call();
     if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
@@ -1549,6 +1677,9 @@ int main(int argc, char **argv) {
                   data, size, &outer_loop_low_bit_join_receipt) &&
                   outer_loop_low_bit_join_receipt.valid,
               "DM.BIN locks the PRS3 v1 outer-loop low-bit control join");
+        check(prs3_v1_failure_call_receipt(data, size, &failure_call_receipt) &&
+                  failure_call_receipt.valid,
+              "DM.BIN locks the PRS3 v1 failure literal/call dataflow");
         if (receipt.valid) {
             printf("SH-2 PRS3 v1 branch flow: test=R%u&R%u branch=%zu->%zu "
                    "fallthrough-load=%zu @R%u+->R%u store=%zu R%u->@(R%u+R%u) "
@@ -1707,6 +1838,20 @@ int main(int argc, char **argv) {
                    outer_loop_low_bit_join_receipt.low_bit_test_destination_register,
                    outer_loop_low_bit_join_receipt.zero_bit_branch_offset,
                    outer_loop_low_bit_join_receipt.zero_bit_target);
+        }
+        if (failure_call_receipt.valid) {
+            printf("SH-2 PRS3 v1 failure call: target=%zu literal=%zu R%u=%08x "
+                   "jsr=@R%u delay=R%u->R%u result=%zu return=%zu; "
+                   "callee-proof=0\n",
+                   failure_call_receipt.failure_target,
+                   failure_call_receipt.literal_offset,
+                   failure_call_receipt.literal_register,
+                   (unsigned int)failure_call_receipt.literal_word,
+                   failure_call_receipt.indirect_call_register,
+                   failure_call_receipt.call_delay_source_register,
+                   failure_call_receipt.call_delay_destination_register,
+                   failure_call_receipt.failure_result_offset,
+                   failure_call_receipt.return_offset);
         }
     }
     free(data);

@@ -39,6 +39,7 @@
 #include "theron_v1_startup_receipt.h"
 #include "asset_status_m12.h"
 #include "theron_v1_chapter_marker.h"
+#include "theron_v1_stage3_irq2_dispatch.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_startup_media.h"
 
@@ -426,6 +427,7 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     Theron_V1_BootProfile profile;
     Theron_Track02BankSignal signal;
     Theron_Track02Stage2DynamicPayloadReceipt stage2_dynamic;
+    Theron_V1Stage3Irq2DispatchReceipt stage3_dispatch;
     Theron_Track02SignalStatus signal_status;
     uint8_t *data = NULL;
     size_t size = 0;
@@ -618,6 +620,7 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
      * startup so later runtime code can consume the exact record without
      * reopening a byte scan.  Its 218 entries remain deliberately opaque. */
     memset(&stage2_dynamic, 0, sizeof(stage2_dynamic));
+    memset(&stage3_dispatch, 0, sizeof(stage3_dispatch));
     if (receipt->variant == THERON_TRACK02_VARIANT_JP_BIN ||
         receipt->variant == THERON_TRACK02_VARIANT_US_BIN) {
         if (theron_v1_track02_inspect_stage2_dynamic_payload(
@@ -628,6 +631,22 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
             safe_str_copy(receipt->skip_reason_note,
                           sizeof(receipt->skip_reason_note),
                           "stage-two dynamic record receipt did not validate");
+            receipt->m11_dispatch_source_kind = -1;
+            receipt->session_tick_token =
+                theron_v1_startup_receipt_session_tick(receipt);
+            return 0;
+        }
+        /* The stage-two loader enters this exact sector at $3800. Require
+         * the physical BRK $ff bytes before its loader handoff can reach
+         * runtime; descriptor contents stay deliberately unclassified. */
+        if (!theron_v1_stage3_irq2_dispatch_from_original_media(
+                data, size, &stage2_dynamic, &stage3_dispatch) ||
+            !stage3_dispatch.valid || !stage3_dispatch.irq2_dispatch_proven) {
+            free(data);
+            set_verdict(receipt, THERON_V1_STARTUP_RECEIPT_SKIPPED, "skipped");
+            safe_str_copy(receipt->skip_reason_note,
+                          sizeof(receipt->skip_reason_note),
+                          "stage-three executable bytes did not validate");
             receipt->m11_dispatch_source_kind = -1;
             receipt->session_tick_token =
                 theron_v1_startup_receipt_session_tick(receipt);

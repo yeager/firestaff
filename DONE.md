@@ -171,6 +171,17 @@
   `nexus_v1_prs3_branch_flow_probe` CTest PASS against locked Japanese
   `DM.BIN`.
 
+- 2026-07-12 DM1 PC34 F0248 C007/C009 F0167 launcher materialization:
+  M10 now uses ReDMCSB's F0167 launcher-icon map to allocate only unused
+  source weapon/junk records for C007/C009 before F0810 creates kinetic
+  projectiles. The supported source map covers torch, dagger, arrow, slayer,
+  rock, poison dart, throwing star, and boulder; double launchers retain the
+  source single-launch fallback when only one record remains. Once-only
+  sensors also disable after an F0167 allocation failure, matching F0248.
+  Source: ReDMCSB `DUNGEON.C` F0167:2140-2200 and `TIMELINE.C`
+  F0247:1106-1133. Verification: rebuilt the current orchestrator object and
+  linked `test_dm1_v1_f0248_new_object_launcher_runtime_pc34_compat`; PASS.
+
 - 2026-07-12 DM1 PC34 F0248 C014/C015 live-object launcher consumption:
   M10 now walks the actual square Thing chain, selects the original
   event-cell/next-cell ordinary Things, unlinks them before projectile
