@@ -527,7 +527,10 @@ static void test_dungeon_decode_dsa_filter_location(void)
 static void test_runtime_csbwin_dsa_filter_binding(void)
 {
     uint8_t actuator_record[8] = { 0, 0, 0x2f, 0x01, 0, 0, 0, 0 };
-    uint16_t program[] = { 0x0006u };
+    uint16_t program[] = {
+        0x0686u, 0x55aau, 0x0054u, 0x0053u, 0x000du
+    };
+    int parameters[] = { 0 };
     CSB_V1_DungeonData dungeon;
     CSB_V1_DSAFilterLocation location;
     CSB_V1_DSAImportedAction action;
@@ -559,7 +562,7 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     action.dsa_id = 7u;
     action.state_index = 4u;
     action.program_words = program;
-    action.program_word_count = 1;
+    action.program_word_count = (int)(sizeof(program) / sizeof(program[0]));
     profile.csbwin_extended_dsa_state.imported_actions = &action;
     profile.csbwin_extended_dsa_state.imported_action_count = 1;
 
@@ -576,6 +579,13 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               runner.global_variables[0] == 0x1234u &&
               runner.global_variables[1] == 0x5678u,
           "CSB runtime prepares its authenticated DSA runner with save-owned globals");
+    { int run_result = csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, parameters, 1, NULL);
+    CHECK(run_result == 1 &&
+              parameters[0] == 0x55aa &&
+              profile.csbwin_global_variables[1] == 0x55aau &&
+              runner.global_variables[1] == 0x55aau,
+          "CSB DSA GLOBALSTORE commits through the save-owned runtime bank"); }
 
     profile.csbwin_extended_level_dsa_index[3][2] = 8u;
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_filter_binding(

@@ -636,6 +636,16 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     int action_ordinal,
     uint32_t master_location,
     CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner);
+/* Execute one prepared authenticated pure-stack action against the profile's
+ * save-owned global bank. Publication occurs only after complete execution;
+ * world/filter opcodes and CSBWin EXPOOL serialization remain outside it. */
+int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *runner,
+    const CSB_V1_DSAImportedAction *action,
+    int *parameters,
+    int parameter_count,
+    int flgs_inout[2]);
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
 int csb_v1_runtime_select_champion_portrait_render_source(

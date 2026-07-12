@@ -64,6 +64,8 @@ int main(int argc, char **argv) {
     int raw_sequence_mismatch_count = 0;
     int sequence_image_instruction_count = 0;
     int sequence_image_descriptor_mismatch_count = 0;
+    int sequence_goto_instruction_count = 0;
+    int sequence_goto_target_mismatch_count = 0;
     int unique_descriptor_count = 0;
     int nonzero_target_count = 0;
     int outside_target_count = 0;
@@ -159,7 +161,18 @@ int main(int argc, char **argv) {
                 uint16_t instruction = read_be16(structure1g + cursor);
                 uint16_t local_image_id;
                 if (instruction == 0xffffU) break;
-                if (instruction == 0xfffeU) continue;
+                if (instruction == 0xfffeU) {
+                    int target_words =
+                        (int)(int16_t)read_be16(structure1g + cursor + 2);
+                    int target_byte_offset = cursor + target_words * 4;
+                    ++sequence_goto_instruction_count;
+                    if (target_words >= 0 || target_byte_offset <
+                            sequence_byte_offset || target_byte_offset >= cursor ||
+                        (target_byte_offset - sequence_byte_offset) % 4 != 0) {
+                        ++sequence_goto_target_mismatch_count;
+                    }
+                    continue;
+                }
                 ++sequence_image_instruction_count;
                 if (instruction < 0x014cU) {
                     ++sequence_image_descriptor_mismatch_count;
@@ -216,17 +229,21 @@ int main(int argc, char **argv) {
     check(sequence_image_instruction_count > 0 &&
               sequence_image_descriptor_mismatch_count == 0,
           "Structure1G sequence image indexes bind local Structure2 descriptors");
+    check(sequence_goto_target_mismatch_count == 0,
+          "Structure1G backward gotos stay within their original sequences");
     check(nonzero_target_count > 0 && outside_target_count == 0,
           "referenced descriptor offsets remain within opaque payload spans");
     printf("Nexus DGN Structure2 reference flow: levels=%d references=%d "
            "global-local=%d mismatches=%d raw-sequences=%d sequence-mismatches=%d "
            "sequence-images=%d image-mismatches=%d unique-descriptors=%d "
+           "gotos=%d goto-mismatches=%d "
            "nonzero-targets=%d outside=%d; "
            "decoder/render-proof=0\n",
            levels_loaded, structure1g_reference_count, global_to_local_binding_count,
            global_to_local_mismatch_count, raw_sequence_binding_count,
            raw_sequence_mismatch_count, sequence_image_instruction_count,
            sequence_image_descriptor_mismatch_count, unique_descriptor_count,
+           sequence_goto_instruction_count, sequence_goto_target_mismatch_count,
            nonzero_target_count, outside_target_count);
     return failures == 0 ? 0 : 1;
 }
