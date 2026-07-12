@@ -961,6 +961,9 @@ static void test_f0412_runtime_receipt_projectile_fireball(void) {
     assert(receipt.championDirectionAfter == 2);
     assert(receipt.redrawChampionState == 1);
     assert(receipt.createsProjectile == 1);
+    assert(receipt.championIconGraphicIndex == -1);
+    assert(receipt.championIconFillColor == -1);
+    assert(receipt.appliesChampionIconInvisibilityPalette == 0);
     assert(receipt.projectileThing == DM1_SPELL_THING_FIRST_EXPLOSION_PC34);
     assert(receipt.projectileKineticEnergy == 70);
     assert(receipt.projectileStepEnergy == 2);
@@ -1065,6 +1068,8 @@ static void test_f0412_runtime_receipt_light_event(void) {
     assert(receipt.lightAmountDelta == 51);
     assert(receipt.eventTicks == 14096);
     assert(receipt.disabledTicks == 22);
+    assert(receipt.statusGraphicIndex == -1);
+    assert(receipt.requestsDungeonViewPaletteRefresh == 1);
 
     printf("    PASS\n");
 }
@@ -1094,6 +1099,27 @@ static void test_f0412_runtime_receipt_status_durations(void) {
     assert(receipt.spellType == DM1_SPELL_TYPE_OTHER_INVISIBILITY);
     assert(receipt.eventType == DM1_SPELL_EVENT_INVISIBILITY_PC34);
     assert(receipt.eventTicks == 128);
+    assert(receipt.statusGraphicIndex == -1);
+    assert(receipt.requestsDungeonViewPaletteRefresh == 0);
+    assert(receipt.championIconGraphicIndex == 28);
+    assert(receipt.championIconFillColor == 1);
+    assert(receipt.appliesChampionIconInvisibilityPalette == 1);
+
+    assert(dm1_spell_f0412RuntimeReceiptForTableIndex(
+               0, 3, 0, &stats, 0x0001, 0, 0, 0, &receipt) == 1);
+    assert(receipt.castResult == DM1_SPELL_CAST_SUCCESS);
+    assert(receipt.spellType == DM1_SPELL_TYPE_OTHER_PARTY_SHIELD);
+    assert(receipt.statusGraphicIndex == 37);
+    assert(receipt.requestsDungeonViewPaletteRefresh == 0);
+    assert(receipt.championIconGraphicIndex == -1);
+    assert(receipt.appliesChampionIconInvisibilityPalette == 0);
+
+    assert(dm1_spell_f0412RuntimeReceiptForTableIndex(
+               10, 3, 0, &stats, 0x0001, 0, 0, 0, &receipt) == 1);
+    assert(receipt.castResult == DM1_SPELL_CAST_SUCCESS);
+    assert(receipt.spellType == DM1_SPELL_TYPE_OTHER_FIRESHIELD);
+    assert(receipt.statusGraphicIndex == 38);
+    assert(receipt.requestsDungeonViewPaletteRefresh == 0);
 
     printf("    PASS\n");
 }

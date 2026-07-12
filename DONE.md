@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-12 DM1 F0412 visual ownership: PARTY SHIELD and FIRESHIELD now
+  expose only C037/C038; LIGHT, TORCH, and DARKNESS request the original
+  dungeon-palette refresh; all other spell families retain no invented HUD
+  graphic. Verification: spell casting 37/37 and F0407 action test passed.
+
 - 2026-07-12 DM1 M648 real-data inscription capture: the direct M11 probe
   now validates all 56 local PC34 wall inscriptions against raw 8x8 glyph
   pixels, C10 transparency, and multiple F0337 palette levels. Verification:

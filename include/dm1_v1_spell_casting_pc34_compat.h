@@ -267,6 +267,18 @@ typedef struct {
     int shieldDefenseAfter;
     int createsZokathraJunk;
     int fireShieldPower;
+
+    /* Original visual ownership from MENU.C F0412.  statusGraphicIndex is
+     * -1 until a spell reaches a CHAMDRAW.C shield border; palette refresh
+     * is only the F0404 light/darkness/torch route. */
+    int statusGraphicIndex;
+    int requestsDungeonViewPaletteRefresh;
+
+    /* MENU.C F0412 invisibility -> CHAMDRAW.C F0286 icon material route.
+     * These stay -1/0 for every other F0412 spell family. */
+    int championIconGraphicIndex;
+    int championIconFillColor;
+    int appliesChampionIconInvisibilityPalette;
 } DM1_SpellF0412RuntimeReceipt;
 
 /* ── Symbol encoding helpers ───────────────────────────────────── */
