@@ -52,16 +52,19 @@ raw sector 1223 (JP) or 1224 (US),
 again relative to the relevant Track 02 INDEX 01.
 
 Both 17-sector second-stage bodies contain the identical literal `CD_READ` at
-CPU `$4090`: `AL=1`, `DH=1`, `BX=$3800`, then `JSR $e009`. This proves a
-one-sector local-RAM read to `$3800`. It does not prove a record number: the
-code does not set `CL/CH/DL` in that fixed setup, so those values remain live
-state and Firestaff records them as unbound. The only other direct `$e009`
-call in the body is likewise not a static VRAM request. Neither validated
-stage uses `DH=$fe` or `$ff`; this is not evidence that later dynamic code
-cannot transfer graphics to VRAM.
+CPU `$4090`: `AL=1`, `DH=1`, `BX=$3800`, then `JSR $e009`. Static inspection
+proves a one-sector local-RAM read and that `CL/CH/DL` remain live.
 
-The receipt now exposes this as a bounded dynamic-read boundary: its record
-register mask is exactly `CL|DL|CH`, while the authenticated setup fixes only
-the one-sector count, local-RAM destination, and local destination mode. It
-does not derive a record value, successor loader context, payload boundary,
-or runtime route from those live registers.
+On 2026-07-12, source-built Mednafen with the PCE/HuC6280 debugger and a
+minimal CD READ trace ran the authenticated original CUEs. The first read
+immediately after the 17-sector stage-two transfer was:
+
+| Variant | Stage 2 raw sectors | PCE CD LBA | Track 02 record | sectors | destination |
+|---|---|---:|---:|---:|---|
+| JP | `1223..1239` | `$1205` | `$04df` | 1 | local RAM `$3800` |
+| US | `1224..1240` | `$10a1` | `$04e0` | 1 | local RAM `$3800` |
+
+The CUE TOC maps those LBAs to the shown Track 02-relative records. This binds
+the live `CL|DL|CH` state at `$4090`; it does not classify the loaded payload,
+derive a graphics format, or authorize a VRAM transfer. Neither validated
+stage uses `DH=$fe` or `$ff`.

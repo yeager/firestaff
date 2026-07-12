@@ -8188,6 +8188,7 @@ Theron_Track02SignalStatus theron_v1_track02_find_ipl_loader(
     size_t information_sector;
     size_t executable_sector;
     size_t stage2_sector;
+    uint32_t stage2_cd_read_record;
     uint8_t count;
     uint8_t load_lo;
     uint8_t load_hi;
@@ -8209,6 +8210,10 @@ Theron_Track02SignalStatus theron_v1_track02_find_ipl_loader(
     } else {
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }
+    stage2_cd_read_record =
+        variant == THERON_TRACK02_VARIANT_JP_BIN
+            ? THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP
+            : THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US;
     if (index01_sector > SIZE_MAX - TQR_IPL_INFORMATION_SECTOR_DELTA ||
         index01_sector > SIZE_MAX - THERON_TRACK02_IPL_RECORD ||
         index01_sector > SIZE_MAX - THERON_TRACK02_IPL_STAGE2_RECORD) {
@@ -8294,13 +8299,15 @@ Theron_Track02SignalStatus theron_v1_track02_find_ipl_loader(
     out_receipt->stage2_cd_read_destination = THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM;
     out_receipt->stage2_cd_read_local_destination =
         THERON_TRACK02_IPL_STAGE2_CD_READ_LOCAL_DESTINATION;
-    /* The $4090 call writes only AL/DH/BX. Its record registers are live
-     * state, so it is deliberately retained as an unbound local-RAM read. */
-    out_receipt->stage2_cd_read_record_proven = 0;
-    /* Authenticated bytes at $4080-$4092 prove a bounded dynamic read:
-     * AL=1, DH=1 and BX=$3800 are written, while CL/DL/CH are untouched.
-     * This records the execution boundary without inventing their live
-     * record value, a later destination, or a media role. */
+    /* Original CUE runtime trace, captured with Mednafen's HuC6280 debugger:
+     * JP LBA $1205 -> Track 02 record $4df and US LBA $10a1 -> record $4e0.
+     * These are the live CL/DL/CH values consumed by the authenticated
+     * $4090 call, not a static-byte inference. */
+    out_receipt->stage2_cd_read_record = stage2_cd_read_record;
+    out_receipt->stage2_cd_read_raw_sector = stage2_cd_read_record;
+    out_receipt->stage2_cd_read_record_proven = 1;
+    /* Authenticated bytes at $4080-$4092 prove the local-RAM call shape;
+     * the original runtime trace supplies the formerly live record value. */
     out_receipt->stage2_cd_read_dynamic_boundary_valid = 1;
     out_receipt->stage2_cd_read_live_record_register_mask =
         THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_MASK;

@@ -119,12 +119,17 @@ static void check_receipt(const Theron_Track02IplLoaderReceipt *receipt,
               receipt->stage2_cd_read_destination == THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM &&
               receipt->stage2_cd_read_local_destination ==
                   THERON_TRACK02_IPL_STAGE2_CD_READ_LOCAL_DESTINATION &&
-              !receipt->stage2_cd_read_record_proven &&
+              receipt->stage2_cd_read_record_proven &&
+              receipt->stage2_cd_read_record ==
+                  (variant == THERON_TRACK02_VARIANT_JP_BIN
+                       ? THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP
+                       : THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US) &&
+              receipt->stage2_cd_read_raw_sector == receipt->stage2_cd_read_record &&
               receipt->stage2_cd_read_dynamic_boundary_valid &&
               receipt->stage2_cd_read_live_record_register_mask ==
                   THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_MASK &&
               !receipt->vram_transfer_proven,
-          "receipt stage-two dynamic boundary stays local and VRAM-unbound");
+          "receipt binds live stage-two record while staying local and VRAM-unbound");
 }
 
 static void check_real_media(const char *path, const char *md5,

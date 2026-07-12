@@ -771,6 +771,10 @@ int theron_v1_boot_validate_track02_loader_receipt(
             receipt->ipl_loader.stage2_cd_read_destination ||
         observed.stage2_cd_read_local_destination !=
             receipt->ipl_loader.stage2_cd_read_local_destination ||
+        observed.stage2_cd_read_record !=
+            receipt->ipl_loader.stage2_cd_read_record ||
+        observed.stage2_cd_read_raw_sector !=
+            receipt->ipl_loader.stage2_cd_read_raw_sector ||
         observed.stage2_cd_read_record_proven !=
             receipt->ipl_loader.stage2_cd_read_record_proven ||
         observed.stage2_cd_read_dynamic_boundary_valid !=

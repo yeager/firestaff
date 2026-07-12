@@ -178,6 +178,14 @@
   `firestaff_theron_v1_track02_ipl_loader_probe` and CTest
   `theron_v1_track02_ipl_loader` passed. No git operations.
 
+- 2026-07-12 Theron original CUE dynamic CD_READ trace: a source-built
+  Mednafen PCE/HuC6280 debugger run against the hash-verified original JP and
+  US CUEs captured the live post-stage-two reads. The `$4090` call resolves to
+  Track 02 record `0x4df` for JP (`LBA $1205`) and `0x4e0` for US (`LBA $10a1`),
+  both one-sector local-RAM reads to `$3800`. Firestaff now carries and
+  revalidates the proven record/raw-sector fields in its IPL receipt; this is
+  loader provenance only, not a semantic classification of either payload.
+
 - 2026-07-12 CSB F0115 native Rockpile group front: type 7 now resolves only
   through `G0243 -> G0219 -> M618` to PC CSB `GRAPHICS.DAT` 605. Its G0219
   offset 21 and `0x04` coordinate/transparency byte are consumed by the
