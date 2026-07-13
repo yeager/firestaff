@@ -597,6 +597,78 @@ int main(int argc, char** argv)
         }
     }
 
+    /* ReDMCSB REVIVE.C F0282 serializes C161 through F0281 before another
+     * panel command can consume the candidate.  A host/API C160 arriving
+     * while F0281 owns the blank editable name must not accept that blank
+     * candidate or disable its source C127 prematurely.  After C162, a
+     * normal C160 must still use the original mirror's C026/name and then
+     * disable that mirror, not a later front-facing route. */
+    if (firstOrdinal >= 0 && secondOrdinal >= 0) {
+        M12_StartupMenuState confirmMenu;
+        M11_GameViewState confirmGame;
+        unsigned char sourcePortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+        char sourceName[16];
+        int candidateIndex;
+
+        sourceName[0] = '\0';
+        if (!open_game(dataDir, &confirmMenu, &confirmGame)) {
+            fprintf(stderr, "FAIL could not open C161/C160 ordering game\n");
+            ok = 0;
+        } else {
+            confirmGame.world.party.mapIndex = 0;
+            confirmGame.world.party.mapX = firstPartyX;
+            confirmGame.world.party.mapY = firstPartyY;
+            confirmGame.world.party.direction = firstDirection;
+            if (!M11_GameView_GetMirrorNameByOrdinal(&confirmGame, firstOrdinal,
+                                                      sourceName, (int)sizeof(sourceName)) ||
+                !M11_GameView_SelectFrontMirrorCandidate(&confirmGame)) {
+                fprintf(stderr, "FAIL HoC C161/C160 source candidate setup\n");
+                ok = 0;
+            } else {
+                candidateIndex = confirmGame.candidateMirrorPartyIndex;
+                if (candidateIndex < 0 || candidateIndex >= CHAMPION_MAX_PARTY ||
+                    !champion_name_matches(
+                        &confirmGame.world.party.champions[candidateIndex], sourceName) ||
+                    !confirmGame.world.party.champions[candidateIndex].portraitBitmapValid) {
+                    fprintf(stderr, "FAIL HoC C161/C160 source portrait/name missing\n");
+                    ok = 0;
+                } else {
+                    memcpy(sourcePortrait,
+                           confirmGame.world.party.champions[candidateIndex].portraitBitmap,
+                           sizeof(sourcePortrait));
+                    if (!M11_GameView_BeginMirrorCandidateReincarnateRename(&confirmGame) ||
+                        !confirmGame.candidateMirrorRenameActive ||
+                        confirmGame.world.party.champions[candidateIndex].name[0] != '\0' ||
+                        M11_GameView_ConfirmMirrorCandidate(&confirmGame, 0) != 0 ||
+                        confirmGame.world.party.championCount != 1 ||
+                        M11_GameView_GetFrontMirrorOrdinal(&confirmGame) != firstOrdinal ||
+                        memcmp(confirmGame.world.party.champions[candidateIndex].portraitBitmap,
+                               sourcePortrait, sizeof(sourcePortrait)) != 0 ||
+                        !M11_GameView_CancelMirrorCandidate(&confirmGame) ||
+                        M11_GameView_GetFrontMirrorOrdinal(&confirmGame) != firstOrdinal ||
+                        !M11_GameView_SelectFrontMirrorCandidate(&confirmGame) ||
+                        confirmGame.candidateMirrorPartyIndex != candidateIndex ||
+                        !champion_name_matches(
+                            &confirmGame.world.party.champions[candidateIndex], sourceName) ||
+                        memcmp(confirmGame.world.party.champions[candidateIndex].portraitBitmap,
+                               sourcePortrait, sizeof(sourcePortrait)) != 0 ||
+                        M11_GameView_ConfirmMirrorCandidate(&confirmGame, 0) != 1 ||
+                        M11_GameView_GetFrontMirrorOrdinal(&confirmGame) != -1 ||
+                        confirmGame.world.party.championCount != 1 ||
+                        !champion_name_matches(
+                            &confirmGame.world.party.champions[candidateIndex], sourceName) ||
+                        memcmp(confirmGame.world.party.champions[candidateIndex].portraitBitmap,
+                               sourcePortrait, sizeof(sourcePortrait)) != 0) {
+                        fprintf(stderr,
+                                "FAIL HoC C161/C160 did not serialize source portrait/name/mirror disable\n");
+                        ok = 0;
+                    }
+                }
+            }
+            M11_GameView_Shutdown(&confirmGame);
+        }
+    }
+
     printf("probe=dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat\n");
     printf("sourceEvidence=ReDMCSB DUNGEON.C:2573,2608-2612 C127 front-wall portrait; MOVESENS.C:1501-1503; REVIVE.C F0280,F0281,F0282:744-805\n");
     printf("visibleMirrorOrdinals=%d\n", expectedCount);

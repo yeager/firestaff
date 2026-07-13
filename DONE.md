@@ -15,6 +15,13 @@
   source pixels are fingerprinted across the transition. Source: ReDMCSB
   `DUNVIEW.C` F0107:3619-3706,3913-3928 and F0124/F0128. Verification:
   focused CTest against installed PC34 data.
+- 2026-07-13 DM1 HoC C161/C160 serialized confirmation: C160 now fails
+  closed while ReDMCSB `REVIVE.C` F0281 owns a C161 candidate. A real-PC34
+  regression verifies the temporary blank name cannot be accepted, C162
+  restores the original C026 portrait/name, and the later C160 disables only
+  that source mirror while retaining its original portrait/name in party.
+  Source: ReDMCSB `REVIVE.C` F0281 and F0282:785-845. Verification: focused
+   CTest against installed PC34 data.
 
 - 2026-07-13 DM1 HoC C161 modal mirror guard: candidate selection now fails
   closed while ReDMCSB `REVIVE.C` F0281 rename state is live. A real-PC34
