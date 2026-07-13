@@ -2367,6 +2367,15 @@ static void test_structure1f_item_ibs_material_binding(void) {
     ibs[0x3100 + 3 * 2] = 1;
     ibs[0x3100 + 3 * 2 + 1] = 7;
     ibs[0x3300 + 7 * 128] = 0x2fU;
+    wb16(ibs + 0xa800, 266U);
+    wb16(ibs + 0xa802, 8U);
+    wb16(ibs + 0xa806, 16U);
+    wb16(ibs + 0xa808, 16U);
+    wb32(ibs + 0xa80c, 0x1000U);
+    wb32(ibs + 0xa810, 0x0900U);
+    wb16(ibs + 0xa800 + 20, 0xffffU);
+    wb32(ibs + 0xa800 + 20 + 12, 0x1100U);
+    wb16(ibs + 0xa800 + 0x0900, 0x03e0U);
 
     CHECK(nexus_v1_item_ibs_parse_verified(ibs, NEXUS_V1_ITEM_IBS_BYTES,
                                              0, &bank) != 0,
@@ -2396,14 +2405,20 @@ static void test_structure1f_item_ibs_material_binding(void) {
               &level, &bank, commands, 2, bindings, 2, &receipt) == 0,
           "Structure1Fa items bind to matching mesh-command cells");
     CHECK(receipt.bound_regular_inventory_count == 1 &&
-          receipt.blocked_special_floor_image_count == 1 &&
+          receipt.bound_special_floor_palette_count == 1 &&
           !receipt.fallback_visuals_permitted,
-          "only documented FFFF inventory reuse binds; special floor codec blocks");
+          "special floor descriptor carries its local palette but no pixel fallback");
     CHECK(bindings[0].command_index == 0 && bindings[0].item_id == 5 &&
           bindings[0].palette_index == 1 && bindings[0].image_index == 7 &&
           bindings[0].palette_bgr555[2] == 0x7c00U &&
           bindings[0].packed_4bpp_texels[0] == 0x2fU,
           "binding carries the exact ITEM.IBS palette and packed texels");
+    CHECK(bindings[1].special_floor_image != NULL &&
+          bindings[1].special_floor_image->encoding == 8U &&
+          bindings[1].special_floor_image->palette_bgr555[0] == 0x03e0U &&
+          bindings[1].special_floor_image->image_bytes == 0x100U &&
+          bindings[1].packed_4bpp_texels == NULL,
+          "special floor binding preserves bounded original payload and palette only");
     free(ibs);
 }
 

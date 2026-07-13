@@ -3718,7 +3718,10 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
         ITEM_PALETTES = 0x3000,
         ITEM_ASSOCIATIONS = 0x3100,
         ITEM_IMAGES = 0x3300,
-        ITEM_IMAGE_BYTES = 128
+        ITEM_IMAGE_BYTES = 128,
+        ITEM_FLOOR_DECLARATIONS = 0xa800,
+        ITEM_FLOOR_DECLARATION_BYTES = 20,
+        ITEM_FLOOR_PAYLOAD_START = 0xb098
     };
     int i;
     if (!out_bank) return -1;
@@ -3756,6 +3759,68 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
     }
     memcpy(out_bank->regular_image_texels, data + ITEM_IMAGES,
            sizeof(out_bank->regular_image_texels));
+    {
+        uint16_t inherited_palette[16] = {0};
+        int have_inherited_palette = 0;
+        int terminator_offset = -1;
+        for (i = 0; i <= NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT; ++i) {
+            const uint8_t *decl = data + ITEM_FLOOR_DECLARATIONS +
+                i * ITEM_FLOOR_DECLARATION_BYTES;
+            uint16_t image_id = rb16(decl);
+            uint32_t image_offset = rb32(decl + 12);
+            uint32_t palette_offset = rb32(decl + 16);
+            Nexus_V1_ItemIbsFloorImage *floor;
+            int color;
+            if (image_id == 0xffffU) {
+                terminator_offset = (int)image_offset;
+                break;
+            }
+            if (i == NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT ||
+                image_id < NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT ||
+                out_bank->floor_image_count >= NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT ||
+                image_offset < (uint32_t)(ITEM_FLOOR_PAYLOAD_START - ITEM_FLOOR_DECLARATIONS) ||
+                image_offset >= (uint32_t)(NEXUS_V1_ITEM_IBS_BYTES - ITEM_FLOOR_DECLARATIONS))
+                return -1;
+            floor = &out_bank->floor_images[out_bank->floor_image_count++];
+            floor->image_id = image_id;
+            floor->encoding = rb16(decl + 2);
+            floor->palette_id = rb16(decl + 4);
+            floor->width = rb16(decl + 6);
+            floor->height = rb16(decl + 8);
+            floor->image_offset = image_offset;
+            if (!floor->width || !floor->height || floor->encoding != 8U)
+                return -1;
+            if (palette_offset != 0U) {
+                if (palette_offset > (uint32_t)(NEXUS_V1_ITEM_IBS_BYTES -
+                                                  ITEM_FLOOR_DECLARATIONS - 32))
+                    return -1;
+                for (color = 0; color < 16; ++color) {
+                    inherited_palette[color] = rb16(data + ITEM_FLOOR_DECLARATIONS +
+                                                     palette_offset + color * 2);
+                }
+                have_inherited_palette = 1;
+            }
+            if (!have_inherited_palette) return -1;
+            memcpy(floor->palette_bgr555, inherited_palette,
+                   sizeof(floor->palette_bgr555));
+            floor->palette_bound = 1;
+        }
+        if (terminator_offset < ITEM_FLOOR_PAYLOAD_START - ITEM_FLOOR_DECLARATIONS ||
+            terminator_offset > NEXUS_V1_ITEM_IBS_BYTES - ITEM_FLOOR_DECLARATIONS)
+            return -1;
+        for (i = 0; i < out_bank->floor_image_count; ++i) {
+            uint32_t next = (uint32_t)terminator_offset;
+            int j;
+            for (j = 0; j < out_bank->floor_image_count; ++j) {
+                uint32_t candidate = out_bank->floor_images[j].image_offset;
+                if (candidate > out_bank->floor_images[i].image_offset && candidate < next)
+                    next = candidate;
+            }
+            if (next <= out_bank->floor_images[i].image_offset) return -1;
+            out_bank->floor_images[i].image_bytes =
+                next - out_bank->floor_images[i].image_offset;
+        }
+    }
     out_bank->source_hash_verified = 1;
     out_bank->valid = 1;
     return 0;
@@ -3809,7 +3874,33 @@ int nexus_v1_dgn_bind_structure1f_item_materials(
         /* DMWeb ITEM.IBS explicitly defines FFFF as "same as inventory".
          * A separate floor image has a different, still-unproved codec. */
         if (floor_image != 0xffffU) {
-            ++receipt.blocked_special_floor_image_count;
+            const Nexus_V1_ItemIbsFloorImage *special = NULL;
+            for (j = 0; j < bank->floor_image_count; ++j) {
+                if (bank->floor_images[j].image_id == floor_image) {
+                    special = &bank->floor_images[j];
+                    break;
+                }
+            }
+            if (!special || !special->palette_bound || !special->image_bytes) {
+                ++receipt.blocked_special_floor_image_count;
+                continue;
+            }
+            if (receipt.bound_regular_inventory_count +
+                    receipt.bound_special_floor_palette_count >= max_bindings) {
+                ++receipt.blocked_invalid_item_count;
+                continue;
+            }
+            j = receipt.bound_regular_inventory_count +
+                receipt.bound_special_floor_palette_count;
+            out_bindings[j].entry_index = i;
+            out_bindings[j].command_index = command_index;
+            out_bindings[j].item_id = entry->item_id;
+            out_bindings[j].palette_index = 0xffU;
+            out_bindings[j].image_index = 0xffU;
+            out_bindings[j].palette_bgr555 = special->palette_bgr555;
+            out_bindings[j].packed_4bpp_texels = NULL;
+            out_bindings[j].special_floor_image = special;
+            ++receipt.bound_special_floor_palette_count;
             continue;
         }
         association = bank->inventory_association[entry->item_id];
@@ -3821,18 +3912,21 @@ int nexus_v1_dgn_bind_structure1f_item_materials(
             ++receipt.blocked_invalid_item_count;
             continue;
         }
-        out_bindings[receipt.bound_regular_inventory_count].entry_index = i;
-        out_bindings[receipt.bound_regular_inventory_count].command_index =
+        j = receipt.bound_regular_inventory_count +
+            receipt.bound_special_floor_palette_count;
+        out_bindings[j].entry_index = i;
+        out_bindings[j].command_index =
             command_index;
-        out_bindings[receipt.bound_regular_inventory_count].item_id =
+        out_bindings[j].item_id =
             entry->item_id;
-        out_bindings[receipt.bound_regular_inventory_count].palette_index =
+        out_bindings[j].palette_index =
             palette;
-        out_bindings[receipt.bound_regular_inventory_count].image_index = image;
-        out_bindings[receipt.bound_regular_inventory_count].palette_bgr555 =
+        out_bindings[j].image_index = image;
+        out_bindings[j].palette_bgr555 =
             bank->palette_bgr555[palette];
-        out_bindings[receipt.bound_regular_inventory_count].packed_4bpp_texels =
+        out_bindings[j].packed_4bpp_texels =
             bank->regular_image_texels[image];
+        out_bindings[j].special_floor_image = NULL;
         ++receipt.bound_regular_inventory_count;
     }
     receipt.complete = receipt.item_entry_count > 0 &&
