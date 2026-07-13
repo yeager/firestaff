@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron sparse authentic-trace instrumentation: the Mednafen
+  debugger callback now filters to bounded System Card/loader windows before
+  any debugger-memory inspection, preserving pending-transfer observations.
+  A rebuilt authentic capture reached the same blocked wait with far fewer
+  trace rows, proving the removed generic tracing was not the CD handoff
+  cause. Verification: patch dry-run, rebuild, and bounded US-CUE capture.
+
 - 2026-07-13 DM1 F0107 non-HoC inscription host consumption: M11 now
   publishes the completed F0168/F0107 line destinations only after it draws
   the real PC34 M648 glyph material. The new real-data regression selects a

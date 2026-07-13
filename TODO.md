@@ -512,6 +512,13 @@ The Mednafen trace harness now forces System Card 3.0 and the correct raw-CUE
 PCE route. It records reproducible CPU progress but still lacks the original
 target-PC snapshots required to select the IRQ2 hardware branch. Continue with
 real trace evidence only; no inferred CD register value may enter runtime.
+2026-07-13 sparse-instrumentation update: the debugger callback now returns
+outside bounded System Card/loader PC windows, eliminating generic per-PC
+transcripts and out-of-window memory inspection. A rebuilt 30-second authentic
+US-CUE/System Card run shrank the debugger trace from 1,195 to 521 rows yet
+reached the same `$c897/$c8c4` wait with three CDIRQ callbacks and no
+non-System-Card PCECD read or raw sector. The trace overhead is therefore not
+the cause of the missing handoff; do not infer one from the timing change.
 The current macOS capture harness now focuses Mednafen and sends opt-in real
 SDL `RUN`, `SELECT`, or `I` input. Fresh authentic US-CUE/System Card 3.0
 captures prove host events and PCE port changes (`RUN=0008`, `SELECT=0004`,
