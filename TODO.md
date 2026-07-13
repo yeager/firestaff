@@ -1343,7 +1343,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     being treated as an absent trace. A fresh 90-second authentic run with
     Mednafen Arcade Card emulation explicitly disabled reproduces the same
     wait and still emits no dynamic CD-read. The repeatable capture script retains this as a negative
-    live result. The Mednafen patch observes
+    live result. The Mednafen patch now also retains bounded direct `$2241`
+    controller-state stores and one late wait-state sample; these are
+    diagnostic-only and cannot stand in for a completed `$4090 -> $4093`
+    transaction. It observes
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect

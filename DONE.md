@@ -911,6 +911,15 @@
   dynamic CD-read; disabling unrelated memory hardware therefore does not
   authorize a Track02 handoff or any graphics interpretation.
 
+- ✅ 2026-07-13 Theron controller-wait state instrumentation: the pinned
+  Mednafen trace patch now retains up to eight direct System Card `$2241`
+  stores after the post-latch boundary and one bounded late wait-state sample
+  (`$2241`, store count, `$1800`). This is diagnostic evidence only: it cannot
+  classify a CD request, infer a payload, or authorize Track 02, palette, RGB,
+  or runtime output. Verification: clean-source patch dry-run via
+  `test_theron_v1_mednafen_controller_wait_trace_patch.sh`, alongside the
+  existing HuC6260 receipt-patch regression.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete
