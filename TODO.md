@@ -1386,6 +1386,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     PCECD physical register writes separately on the next authentic capture,
     including indirect caller paths; only observed writes may explain the
     controller wait or justify a later CD-read receipt.
+    2026-07-13 input-receipt update: the capture harness now records only the
+    raw 16-bit port-0 state Mednafen delivers to the PCE input device. A
+    dummy-SDL run and a GUI-configured run with two host Return attempts both
+    recorded only raw=0000 before the same C8CD -> C897 wait. Thus no UI/input
+    event is yet proven to reach the emulated controller, and no input event
+    may be named as necessary for the CD transition. The next admissible trace
+    must first record a nonzero raw port-0 transition and then prove a
+    subsequent dynamic CD read; otherwise the wait remains pre-Track02 and
+    fail-closed.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect

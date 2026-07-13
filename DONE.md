@@ -1105,6 +1105,19 @@
   payload, palette, or graphics meaning. The next authenticated run must still
   prove a completed CD-interface read before any Track 02 promotion.
 
+- ✅ 2026-07-13 Theron raw input receipt boundary: added a separate,
+  bounded Mednafen PCE port-0 trace and explicit capture controls for a
+  pre-existing GUI configuration. The trace records only the raw 16-bit value
+  delivered to PCE port 0 when it changes, without naming a key, button, or
+  game action. Both the authentic dummy-SDL run and GUI-configured run with
+  two host Return attempts observed only raw=0000, then the existing
+  C8CD -> C897 controller wait. Therefore this pass proves neither a required
+  UI event nor a dynamic Track02 read; the transition remains fail-closed.
+  Verification: clean Mednafen 1.32.1 dry-runs for controller, PCECD, and
+  input patches; the palette patch dry-run; capture-script regression;
+  authentic 90-second dummy capture; and authentic 45-second GUI-configured
+  capture.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete
