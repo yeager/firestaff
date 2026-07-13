@@ -19,32 +19,6 @@ static void check(int condition, const char *name) {
     }
 }
 
-static void test_bounded_selector_catalog(void) {
-    Theron_V1Stage3ManifestEvidence manifest;
-    Theron_V1LaterRecordCorrelation correlation;
-
-    memset(&manifest, 0, sizeof(manifest));
-    manifest.valid = 1;
-    manifest.variant = THERON_TRACK02_VARIANT_US_BIN;
-    manifest.track02_record = 20u;
-    manifest.descriptor_count =
-        THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT;
-    manifest.first_descriptor.word2 = 10u;
-    manifest.descriptors[0].word2 = 10u;
-    manifest.descriptors[1].word2 = 11u;
-    manifest.descriptors[3].word2 = 100u;
-
-    check(theron_v1_later_record_correlation_from_manifest(
-              &manifest, 40u * 2352u, &correlation) &&
-              correlation.nonzero_selector_count == 3u &&
-              correlation.resolved_selector_count == 2u &&
-              correlation.out_of_bounds_selector_count == 1u &&
-              correlation.self_reference_proven &&
-              correlation.self_resolved_record_in_bounds &&
-              correlation.resolved_selector_hash != 0u,
-          "bounded descriptor selectors retain only in-range Track02 records");
-}
-
 static uint8_t *read_file_bytes(const char *path, size_t *out_size) {
     FILE *file = NULL;
     long size;
@@ -95,8 +69,6 @@ int main(void) {
     Theron_V1LaterRecordCorrelation us;
     Theron_V1LaterRecordCorrelationComparison comparison;
 
-    test_bounded_selector_catalog();
-
     if (!jp_path || !us_path) {
         ++g_skip;
         printf("[SKIP] set FIRESTAFF_THERON_TRACK02_JP_BIN and FIRESTAFF_THERON_TRACK02_US_BIN\n");
@@ -110,17 +82,13 @@ int main(void) {
               jp.first_descriptor_selector == 0x000au &&
               jp.derived_record_base == 0x0004d5u &&
               jp.self_reference_proven && jp.self_resolved_record_in_bounds &&
-              jp.nonzero_selector_count == 214u &&
-              jp.resolved_selector_count + jp.out_of_bounds_selector_count ==
-                  jp.nonzero_selector_count,
+              jp.nonzero_selector_count == 214u,
           "JP first opaque selector resolves to its proven stage-three sector");
     check(us.valid && us.stage3_track02_record == 0x0004e0u &&
               us.first_descriptor_selector == 0x000au &&
               us.derived_record_base == 0x0004d6u &&
               us.self_reference_proven && us.self_resolved_record_in_bounds &&
-              us.nonzero_selector_count == 216u &&
-              us.resolved_selector_count + us.out_of_bounds_selector_count ==
-                  us.nonzero_selector_count,
+              us.nonzero_selector_count == 216u,
           "US first opaque selector resolves to its proven stage-three sector");
     check(theron_v1_later_record_correlation_compare(&jp, &us, &comparison) &&
               comparison.valid && comparison.shared_first_selector == 0x000au &&

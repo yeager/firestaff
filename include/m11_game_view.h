@@ -1951,6 +1951,19 @@ void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
  * itemPresent must come from the current F0115 floor-item pass. */
 int M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(int itemPresent);
 
+/* Read-only view of the production F0115 viewport cell.  HoC probes use
+ * this to verify that compact square lists and mirror filtering do not
+ * surface candidate payloads as ordinary floor items. */
+int M11_GameView_ProbeViewportFloorItemCounts(
+    const M11_GameViewState* state,
+    int relativeForward,
+    int relativeSide,
+    int* outMapX,
+    int* outMapY,
+    int* outElementType,
+    int* outFloorItems,
+    int* outSummaryItems);
+
 /* Test probes for the actual F0115 item and projectile blitters. They do not
  * synthesize a receipt; callers must provide an M11 asset-loader cache slot. */
 int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(

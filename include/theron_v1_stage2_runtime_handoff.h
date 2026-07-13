@@ -86,13 +86,6 @@ typedef struct {
     uint32_t stage3_derived_record_base;
     uint32_t stage3_self_resolved_record;
     size_t stage3_nonzero_descriptor_selector_count;
-    /* Full original-media handoff only. Every non-zero descriptor selector
-     * must resolve inside the authenticated Track 02 image; this remains a
-     * coordinate receipt, not a descriptor semantic claim. */
-    int stage3_selector_catalog_complete;
-    size_t stage3_resolved_descriptor_selector_count;
-    size_t stage3_out_of_bounds_descriptor_selector_count;
-    uint32_t stage3_resolved_descriptor_selector_hash;
 } Theron_V1Stage2RuntimeHandoff;
 
 /* Converts an already hash-gated, structurally validated dynamic-payload
