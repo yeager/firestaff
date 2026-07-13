@@ -1588,6 +1588,97 @@ static void test_runtime_materializer_binds_original_sound_union(void)
           "C20 materialization binds original Location, SoundIndex, priority");
 }
 
+static void test_runtime_materializer_binds_original_explosion_union(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    int written = 0;
+    int rc;
+    int i;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[3];
+    struct DungeonMapTiles_Compat tiles[3];
+    unsigned char square_data[3][32 * 32];
+    struct DungeonThings_Compat things;
+    unsigned short first_things[1];
+    unsigned char raw_explosion[4];
+    struct DungeonExplosion_Compat explosions[1];
+    DM1OriginalSavePC34HandoffReport report;
+    uint16_t source_thing = (uint16_t)((THING_TYPE_EXPLOSION << 10) |
+                                       (1u << 14));
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK, "C25 materializer fixture build succeeds");
+    CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 0,
+                                     DM1_EVENT_EXPLOSION) &&
+              rewrite_fixture_event_c_union(bytes, (size_t)written, 0,
+                                            source_thing),
+          "C25 fixture preserves authenticated Slot union bytes");
+
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(square_data, 0, sizeof(square_data));
+    memset(&things, 0, sizeof(things));
+    memset(raw_explosion, 0, sizeof(raw_explosion));
+    memset(explosions, 0, sizeof(explosions));
+    memset(&report, 0, sizeof(report));
+    dungeon.header.mapCount = 3;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    for (i = 0; i < 3; ++i) {
+        maps[i].width = 32;
+        maps[i].height = 32;
+        tiles[i].squareData = square_data[i];
+        tiles[i].squareCount = 32 * 32;
+    }
+    square_data[2][11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    first_things[0] = source_thing;
+    wr16le(raw_explosion + 0u, THING_ENDOFLIST);
+    raw_explosion[2] = 2u; /* lightning-bolt explosion type */
+    raw_explosion[3] = 77u;
+    explosions[0].next = THING_ENDOFLIST;
+    explosions[0].type = 2u;
+    explosions[0].attack = 77u;
+    things.squareFirstThings = first_things;
+    things.squareFirstThingCount = 1;
+    things.explosions = explosions;
+    things.explosionCount = 1;
+    things.rawThingData[THING_TYPE_EXPLOSION] = raw_explosion;
+    things.thingCounts[THING_TYPE_EXPLOSION] = 1;
+    things.loaded = 1;
+    start_world.dungeon = &dungeon;
+    start_world.things = &things;
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written),
+          "C25 materializer fixture write succeeds");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, &report);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "C25 materializes only through the original C15 square chain");
+    CHECK(loaded_world.timeline.count == ORIGINAL_PC34_EVENT_COUNT &&
+              loaded_world.timeline.events[2].kind ==
+                  TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+              loaded_world.timeline.events[2].mapIndex == 2 &&
+              loaded_world.timeline.events[2].mapX == 11 &&
+              loaded_world.timeline.events[2].mapY == 12 &&
+              loaded_world.timeline.events[2].cell == 1 &&
+              loaded_world.timeline.events[2].aux0 == 0 &&
+              loaded_world.explosions.entries[0].reserved0 == 1 &&
+              loaded_world.explosions.entries[0].explosionType == 2 &&
+              loaded_world.explosions.entries[0].attack == 77,
+          "C25 binds Location, Slot, and decoded C15 payload without Cell/Effect");
+}
+
 static void test_real_dm1_dungeon_tail_map_span_validation(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -2216,6 +2307,105 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
           "world export rejects an unbound projectile event instead of guessing");
 }
 
+static void test_world_export_rebuilds_c25_explosion_union(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct GameWorld_Compat world;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat imported_party;
+    DM1OriginalSavePC34HandoffReport report;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char square_data[32 * 32];
+    struct DungeonThings_Compat things;
+    unsigned short first_things[1];
+    unsigned char raw_explosion[4];
+    struct DungeonExplosion_Compat source_explosions[1];
+    uint16_t source_thing = (uint16_t)((THING_TYPE_EXPLOSION << 10) |
+                                       (1u << 14));
+    int written = 0;
+    int rc;
+
+    memset(&world, 0, sizeof(world));
+    memset(&imported, 0, sizeof(imported));
+    memset(&imported_party, 0, sizeof(imported_party));
+    memset(&report, 0, sizeof(report));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(square_data, 0, sizeof(square_data));
+    memset(&things, 0, sizeof(things));
+    memset(raw_explosion, 0, sizeof(raw_explosion));
+    memset(source_explosions, 0, sizeof(source_explosions));
+    world.party.championCount = 1;
+    world.timeline.count = 1;
+    world.timeline.events[0].kind = TIMELINE_EVENT_EXPLOSION_ADVANCE;
+    world.timeline.events[0].fireAtTick = 100u;
+    world.timeline.events[0].mapIndex = 0;
+    world.timeline.events[0].mapX = 11;
+    world.timeline.events[0].mapY = 12;
+    world.timeline.events[0].cell = 1;
+    world.timeline.events[0].aux0 = 0;
+    world.timeline.events[0].aux4 = 5;
+    world.explosions.count = 1;
+    world.explosions.entries[0].slotIndex = 0;
+    world.explosions.entries[0].explosionType = 2;
+    world.explosions.entries[0].mapIndex = 0;
+    world.explosions.entries[0].mapX = 11;
+    world.explosions.entries[0].mapY = 12;
+    world.explosions.entries[0].cell = 1;
+    world.explosions.entries[0].attack = 77;
+    world.explosions.entries[0].reserved0 = 1;
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 32;
+    maps[0].height = 32;
+    tiles[0].squareData = square_data;
+    tiles[0].squareCount = 32 * 32;
+    square_data[11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    first_things[0] = source_thing;
+    wr16le(raw_explosion + 0u, THING_ENDOFLIST);
+    raw_explosion[2] = 2u;
+    raw_explosion[3] = 77u;
+    source_explosions[0].next = THING_ENDOFLIST;
+    source_explosions[0].type = 2u;
+    source_explosions[0].attack = 77u;
+    things.squareFirstThings = first_things;
+    things.squareFirstThingCount = 1;
+    things.explosions = source_explosions;
+    things.explosionCount = 1;
+    things.rawThingData[THING_TYPE_EXPLOSION] = raw_explosion;
+    things.thingCounts[THING_TYPE_EXPLOSION] = 1;
+    things.loaded = 1;
+    world.dungeon = &dungeon;
+    world.things = &things;
+
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
+    CHECK(rc == SAVEGAME_PC34_OK && written > 0,
+          "world export writes a C25 event only with an original C15 source");
+    imported.party = &imported_party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+              report.original_event_count == 1 &&
+              report.events[0].type == DM1_EVENT_EXPLOSION &&
+              report.events[0].b_mapX == 11 && report.events[0].b_mapY == 12 &&
+              rd16le(&report.events[0].c_cell) == source_thing &&
+              report.events[0].priority == 5,
+          "C25 export restores original Location, Slot, and priority union");
+
+    first_things[0] = THING_ENDOFLIST;
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &world, 0x43313445u, bytes, (int)sizeof(bytes), &written) ==
+              SAVEGAME_PC34_ERROR_INTERNAL,
+          "world export rejects an unbound C25 instead of inventing Cell/Effect");
+}
+
 int main(void)
 {
     test_pc34_handoff_imports_party_state();
@@ -2227,6 +2417,7 @@ int main(void)
     test_runtime_handoff_is_transactional_on_rejected_tail();
     test_runtime_handoff_rejects_unmaterialized_source_event();
     test_runtime_materializer_binds_original_sound_union();
+    test_runtime_materializer_binds_original_explosion_union();
     test_real_dm1_dungeon_tail_map_span_validation();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();
@@ -2234,6 +2425,7 @@ int main(void)
     test_optional_real_pc34_corpus_roundtrip();
     test_original_projectile_event_plan_preserves_c48_bits();
     test_world_export_rebuilds_c48_c49_projectile_union();
+    test_world_export_rebuilds_c25_explosion_union();
     test_strings();
     puts("PASS dm1_v1_original_save_pc34_handoff");
     return 0;

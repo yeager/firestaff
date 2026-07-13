@@ -1251,8 +1251,83 @@ static void pc34_sort_timeline_indices(unsigned char* timeline,
     }
 }
 
+static uint16_t pc34_original_next_thing(const struct DungeonThings_Compat* things,
+                                         uint16_t thing)
+{
+    int type;
+    int index;
+    const unsigned char* raw;
+    int byte_count;
+
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return THING_ENDOFLIST;
+    }
+    type = (int)THING_GET_TYPE(thing);
+    index = (int)THING_GET_INDEX(thing);
+    if (type < 0 || type >= DUNGEON_THING_TYPE_COUNT || index < 0 ||
+        index >= things->thingCounts[type]) {
+        return THING_ENDOFLIST;
+    }
+    raw = things->rawThingData[type];
+    byte_count = s_thingDataByteCount[type];
+    if (!raw || byte_count < 2) {
+        return THING_ENDOFLIST;
+    }
+    return read_u16_le(raw + (size_t)index * (size_t)byte_count);
+}
+
+static int pc34_original_explosion_thing_for_runtime_event(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    const struct ExplosionList_Compat* explosions,
+    const struct TimelineEvent_Compat* event,
+    uint16_t* out_thing)
+{
+    const struct ExplosionInstance_Compat* runtime;
+    uint16_t thing;
+    int matches = 0;
+    int safety = 0;
+
+    if (out_thing) *out_thing = THING_NONE;
+    if (!dungeon || !things || !explosions || !event ||
+        event->aux0 < 0 || event->aux0 >= EXPLOSION_LIST_CAPACITY ||
+        event->mapIndex < 0 || event->mapIndex >= (int)dungeon->header.mapCount ||
+        event->mapX < 0 || event->mapY < 0 ||
+        event->mapX >= (int)dungeon->maps[event->mapIndex].width ||
+        event->mapY >= (int)dungeon->maps[event->mapIndex].height) {
+        return 0;
+    }
+    runtime = &explosions->entries[event->aux0];
+    if (runtime->reserved0 == 0 || runtime->mapIndex != event->mapIndex ||
+        runtime->mapX != event->mapX || runtime->mapY != event->mapY ||
+        runtime->cell != event->cell) {
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        dungeon, things, event->mapIndex, event->mapX, event->mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int index = (int)THING_GET_INDEX(thing);
+        if (THING_GET_TYPE(thing) == THING_TYPE_EXPLOSION &&
+            index >= 0 && index < things->explosionCount && things->explosions &&
+            (int)THING_GET_CELL(thing) == event->cell) {
+            const struct DungeonExplosion_Compat* source = &things->explosions[index];
+            if (source->type == runtime->explosionType &&
+                source->attack == runtime->attack &&
+                source->centered == runtime->centered) {
+                if (++matches > 1) return 0;
+                if (out_thing) *out_thing = thing;
+            }
+        }
+        thing = pc34_original_next_thing(things, thing);
+    }
+    return matches == 1;
+}
+
 static int pack_events_and_timeline(const struct SaveGame_Compat* state,
                                     const struct ProjectileList_Compat* projectiles,
+                                    const struct DungeonDatState_Compat* dungeon,
+                                    const struct DungeonThings_Compat* things,
+                                    const struct ExplosionList_Compat* explosions,
                                     int projectileEventIndices[PROJECTILE_LIST_CAPACITY],
                                     unsigned char* events,
                                     int eventsCap,
@@ -1370,6 +1445,20 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
             write_u16_le(dst + 8u, (uint16_t)(src->aux3 & 0xffff));
+        } else if (type == DM1_EVENT_EXPLOSION) {
+            uint16_t thing;
+            /* ReDMCSB PROJEXPL.C F0213:157-165 serializes C25 as
+             * B.Location plus C.Slot, not Cell/Effect. The world-aware
+             * F0802 route may emit it only when one original C15 thing
+             * proves the live F0220 instance; ambiguous or host-only
+             * explosions fail closed. */
+            if (!pc34_original_explosion_thing_for_runtime_event(
+                    dungeon, things, explosions, src, &thing)) {
+                return 0;
+            }
+            dst[6] = (uint8_t)(src->mapX & 0xff);
+            dst[7] = (uint8_t)(src->mapY & 0xff);
+            write_u16_le(dst + 8u, thing);
         } else if (type == DM1_EVENT_REMOVE_FLUXCAGE) {
             /* ReDMCSB PROJEXPL.C F0224 lines 989-993 stores the
              * fluxcage explosion THING in EVENT.C.Slot while B.Location
@@ -2049,6 +2138,7 @@ static int export_pc34_core(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,
     const struct ProjectileList_Compat* projectiles,
+    const struct ExplosionList_Compat* explosions,
     uint32_t gameTime,
     int currentActiveGroupCount,
     int maximumActiveGroupCount,
@@ -2089,7 +2179,8 @@ static int export_pc34_core(
     prngSeed = gameID ^ 0xC0DECAFEu;
     if (prngSeed == 0) prngSeed = 0xDEADBEEFu;
 
-    if (!pack_events_and_timeline(state, projectiles, projectileEventIndices,
+    if (!pack_events_and_timeline(state, projectiles, dungeon, things,
+                                  explosions, projectileEventIndices,
                                   eventsPart, (int)sizeof(eventsPart),
                                   timelinePart, (int)sizeof(timelinePart),
                                   &eventsLen, &timelineLen,
@@ -2252,7 +2343,7 @@ int F0795_SAVEGAME_ExportPC34_Compat(
     return export_pc34_core(state,
                             0, 0,
                             0, 0,
-                            0,
+                            0, 0,
                             0u,
                             0, 0,
                             gameID,
@@ -2301,6 +2392,7 @@ int F0802_SAVEGAME_ExportPC34FromWorld_Compat(
                             world->dungeon,
                             world->things,
                             &world->projectiles,
+                            &world->explosions,
                             world->gameTick,
                             currentActiveGroupCount,
                             maximumActiveGroupCount,

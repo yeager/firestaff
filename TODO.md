@@ -636,6 +636,14 @@ and real community-save corpus round-trip evidence.
     native PC34 export/import and F0435 materialization. Remaining save
     breadth is other source union families, never generic Cell/Effect
     substitution.
+  - 2026-07-13 update: C25 explosion events now preserve ReDMCSB
+    `B.Location` plus `C.Slot` through F0435 materialization and F0802
+    export. The C15 Thing must resolve in the original square chain and a
+    live F0220 instance must map back to exactly one original C15 record;
+    missing or ambiguous references reject rather than becoming synthetic
+    Cell/Effect events. Remaining save breadth is other source union
+    families, original dungeon-tail import breadth, and real community-save
+    corpus evidence.
     Remaining work is broader original dungeon-tail import breadth and real
     community-save corpus evidence.
   - 2026-07-13 update: F0435 dungeon-tail preflight now also enforces the
