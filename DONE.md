@@ -8,6 +8,15 @@
   `DUNGEON.C` F0172/F0174 and `DUNVIEW.C` F0107:3913-3928. Verification:
   focused CTest.
 
+- 2026-07-13 DM1 HoC C127/C026/C346 directional material gate: a minimal
+  DM1/M10-only regression finds a real HoC C127 sensor in installed PC34
+  `DUNGEON.DAT` and tests all four wall cells. Only the source Thing cell may
+  carry the C346 mirror backing followed by C026 portrait receipt; the other
+  three clear stale portrait state and emit no host draw or fallback geometry.
+  It also requires real `GRAPHICS.DAT` presence. Source: ReDMCSB `DUNGEON.C`
+   F0172/F0174:2558,2608-2612; `DUNVIEW.C` F0107:3913-3928; `REVIVE.C` F0280.
+   Verification: focused CTest against the installed PC34 corpus.
+
 - 2026-07-13 DM1 F0115 D1/D2/D3 C15 order audit: a focused regression now
   locks mixed C000/C050/C100/C101 source-list ordering at center D1, D2, and
   D3. Only C000 enters ordinary F0114 in original order; C050 remains F0113,
