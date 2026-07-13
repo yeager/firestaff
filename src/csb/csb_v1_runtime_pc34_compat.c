@@ -15457,6 +15457,177 @@ static uint32_t csb_v1_runtime_fnv1a32(const uint8_t *bytes, size_t size)
     return hash;
 }
 
+/* Persist the one CSBWin DSA state store that has a complete source-owned
+ * representation here: DSA::m_state (LocalState 1).  CSBWin DSA.cpp
+ * ProcessDSATimer6 (lines 5315-5465) obtains a state through GetState(),
+ * executes the exact selected action, then commits the final/forced state
+ * through PutState().  SaveGame.cpp ReadDSAs/WriteDSAs (211-241, 775-790)
+ * wraps that serialized DSA stream in data.cpp's RCS checksum.  Re-check the
+ * whole stream before changing its two-byte m_state field so a stale, partial,
+ * or caller-built receipt cannot become a saved runtime transition. */
+static int csb_v1_runtime_persist_csbwin_localstate1_dsa(
+    CSB_V1_RuntimeProfile *candidate,
+    const CSB_V1_CSBWinDSAFilterStackRunnerContext *before,
+    const CSB_V1_CSBWinDSAFilterStackRunnerContext *after)
+{
+    CSB_V1_CSBWinExtendedDSAReport report;
+    CSB_V1_CSBWinExtendedFeaturesReport features;
+    CSB_V1_CSBWinDSAImportedHeader *header;
+    size_t offset;
+    uint32_t final_state;
+    uint32_t dsa_ordinal;
+    int64_t relative_state;
+
+    if (!candidate || !before || !after ||
+        !candidate->csbwin_appended_tail_valid ||
+        candidate->csbwin_appended_tail_truncated ||
+        candidate->csbwin_appended_tail_size == 0u ||
+        candidate->csbwin_appended_tail_size !=
+            candidate->csbwin_appended_tail_preserved_size ||
+        candidate->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        candidate->csbwin_appended_tail_fnv1a != csb_v1_runtime_fnv1a32(
+            candidate->csbwin_appended_tail,
+            candidate->csbwin_appended_tail_preserved_size) ||
+        before->dsa_id < 0 || before->dsa_id >= CSB_V1_MAX_DSA_SCRIPTS ||
+        before->state_index != after->state_index ||
+        before->action_ordinal != after->action_ordinal) {
+        return 0;
+    }
+    header = &candidate->csbwin_extended_dsa_state.imported_headers[
+        before->dsa_id];
+    if (!header->valid || header->local_state != 1u ||
+        header->persistent_state != before->state_index ||
+        header->state_slot_count == 0u) {
+        return 0;
+    }
+
+    if (after->transfer_execution_count != before->transfer_execution_count) {
+        if (after->transfer_execution_count !=
+                before->transfer_execution_count + 1 ||
+            after->last_transfer.final_state < 0) {
+            return 0;
+        }
+        final_state = (uint32_t)after->last_transfer.final_state;
+    } else {
+        if (after->execution_count != before->execution_count + 1) return 0;
+        if (after->last_execution.forced_state >= 0) {
+            final_state = (uint32_t)after->last_execution.forced_state;
+        } else {
+            relative_state = (int64_t)before->state_index +
+                (int64_t)after->last_execution.next_state;
+            if (relative_state < 0 || relative_state > UINT32_MAX) return 0;
+            final_state = (uint32_t)relative_state;
+        }
+    }
+    if (final_state >= header->state_slot_count || final_state > 0xffffu) {
+        return 0;
+    }
+
+    memset(&report, 0, sizeof(report));
+    memset(&features, 0, sizeof(features));
+    if (csb_v1_csbwin_512_inspect_extended_dsa_section(
+            candidate->csbwin_appended_tail,
+            candidate->csbwin_appended_tail_preserved_size, &report,
+            &features) != CSB_V1_CSBWIN_EXTENDED_OK || !report.valid ||
+        report.dsa_count == 0u ||
+        report.next_payload_offset >
+            candidate->csbwin_appended_tail_preserved_size) {
+        return 0;
+    }
+
+    offset = features.extension_payload_offset;
+    for (dsa_ordinal = 0u; dsa_ordinal < features.dsa_count; ++dsa_ordinal) {
+        uint32_t dsa_id;
+        uint32_t state_slots;
+        uint32_t non_empty_states;
+        uint32_t state_ordinal;
+
+        if (offset > report.dsa_payload_offset + report.dsa_payload_size ||
+            report.dsa_payload_offset + report.dsa_payload_size - offset <
+                100u) {
+            return 0;
+        }
+        dsa_id = csb_v1_runtime_read_le32(
+            candidate->csbwin_appended_tail + offset);
+        state_slots = csb_v1_runtime_read_le32(
+            candidate->csbwin_appended_tail + offset + 88u);
+        non_empty_states = csb_v1_runtime_read_le32(
+            candidate->csbwin_appended_tail + offset + 96u);
+        if (dsa_id == (uint32_t)before->dsa_id) {
+            if (((uint32_t)candidate->csbwin_appended_tail[offset + 84u] |
+                    ((uint32_t)candidate->csbwin_appended_tail[offset + 85u]
+                     << 8)) != header->persistent_state ||
+                candidate->csbwin_appended_tail[offset + 86u] != 1u ||
+                candidate->csbwin_appended_tail[offset + 87u] !=
+                    (uint8_t)header->group_id ||
+                state_slots != header->state_slot_count) {
+                return 0;
+            }
+            candidate->csbwin_appended_tail[offset + 84u] =
+                (uint8_t)final_state;
+            candidate->csbwin_appended_tail[offset + 85u] =
+                (uint8_t)(final_state >> 8);
+            /* CSBWin data.cpp RCS(ui8 *, i32):1818-1827. */
+            {
+                uint32_t checksum = 0xffffu;
+                size_t i;
+                for (i = 0u; i < report.dsa_payload_size; ++i) {
+                    checksum = checksum * 0xbb40e62du + 11u +
+                        candidate->csbwin_appended_tail[
+                            report.dsa_payload_offset + i];
+                }
+                csb_v1_runtime_write_le32(
+                    candidate->csbwin_appended_tail +
+                        report.dsa_payload_offset + report.dsa_payload_size,
+                    checksum);
+            }
+            candidate->csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
+                candidate->csbwin_appended_tail,
+                candidate->csbwin_appended_tail_preserved_size);
+            header->persistent_state = final_state;
+            return 1;
+        }
+
+        offset += 100u;
+        for (state_ordinal = 0u; state_ordinal < non_empty_states;
+             ++state_ordinal) {
+            uint32_t action_count;
+            uint32_t action_ordinal;
+
+            if (offset > report.dsa_payload_offset + report.dsa_payload_size ||
+                report.dsa_payload_offset + report.dsa_payload_size - offset <
+                    8u) {
+                return 0;
+            }
+            action_count = csb_v1_runtime_read_le32(
+                candidate->csbwin_appended_tail + offset + 4u);
+            offset += 8u;
+            for (action_ordinal = 0u; action_ordinal < action_count;
+                 ++action_ordinal) {
+                uint32_t words;
+                size_t byte_count;
+
+                if (offset > report.dsa_payload_offset + report.dsa_payload_size ||
+                    report.dsa_payload_offset + report.dsa_payload_size -
+                        offset < 8u) {
+                    return 0;
+                }
+                words = csb_v1_runtime_read_le32(
+                    candidate->csbwin_appended_tail + offset + 4u);
+                if ((size_t)words > (SIZE_MAX - 8u) / 2u) return 0;
+                byte_count = (size_t)words * 2u;
+                if (byte_count > report.dsa_payload_offset +
+                        report.dsa_payload_size - offset - 8u) {
+                    return 0;
+                }
+                offset += 8u + byte_count;
+            }
+        }
+    }
+    return 0;
+}
+
 /* CSBWin data.cpp EXPOOL::enlarge() lays a DB11 block out as equal-sized
  * nodes beginning at word 1.  The source assumes a trusted save buffer; the
  * runtime must prove that a saved free-list pointer still denotes one of
@@ -18216,6 +18387,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     int global_count;
     int globals_changed;
     int expool_changed;
+    int dsa_state_changed;
     int i;
 
     if (!profile || !runner || !action ||
@@ -18276,6 +18448,22 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             return 0;
         }
     }
+    dsa_state_changed = 0;
+    if (profile_candidate.csbwin_appended_tail_valid &&
+        profile_candidate.csbwin_appended_tail_preserved_size >=
+            sizeof(" Extended Features ") &&
+        memcmp(profile_candidate.csbwin_appended_tail,
+               " Extended Features ", sizeof(" Extended Features ")) == 0 &&
+        profile_candidate.csbwin_extended_dsa_state.imported_headers[
+            candidate.dsa_id].valid &&
+        profile_candidate.csbwin_extended_dsa_state.imported_headers[
+            candidate.dsa_id].local_state == 1u) {
+        if (!csb_v1_runtime_persist_csbwin_localstate1_dsa(
+                &profile_candidate, runner, &candidate)) {
+            return 0;
+        }
+        dsa_state_changed = 1;
+    }
     expool_changed = profile_candidate.csbwin_appended_tail_fnv1a !=
                          profile->csbwin_appended_tail_fnv1a ||
         memcmp(profile_candidate.csbwin_appended_tail,
@@ -18301,6 +18489,12 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         profile->csbwin_skin_cache_tail_fnv1a =
             profile_candidate.csbwin_skin_cache_tail_fnv1a;
         profile->skin_cache = profile_candidate.skin_cache;
+    }
+    if (dsa_state_changed) {
+        profile->csbwin_extended_dsa_state.imported_headers[candidate.dsa_id]
+            .persistent_state =
+            profile_candidate.csbwin_extended_dsa_state.imported_headers[
+                candidate.dsa_id].persistent_state;
     }
     for (i = 0; i < parameter_count; ++i) {
         parameters[i] = staged_parameters[i];

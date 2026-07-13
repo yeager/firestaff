@@ -42,6 +42,17 @@ static void put_le32(uint8_t *bytes, size_t offset, uint32_t value)
     bytes[offset + 3u] = (uint8_t)(value >> 24);
 }
 
+static uint32_t fnv1a32(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 int main(void)
 {
     uint16_t ignored_dsa_zero[] = { 0x0686u, 0x1111u, 0x0054u };
@@ -90,6 +101,7 @@ int main(void)
     profile.csbwin_appended_tail_size = sizeof(tail);
     profile.csbwin_appended_tail_preserved_size = sizeof(tail);
     memcpy(profile.csbwin_appended_tail, tail, sizeof(tail));
+    profile.csbwin_appended_tail_fnv1a = fnv1a32(tail, sizeof(tail));
     binding.dsa_id = 9u;
     binding.location.level = 3;
 
