@@ -10787,7 +10787,16 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             (void)orch_c13_apply_vi_altar_rebirth_compat(world, &ev);
             break;
         case TIMELINE_EVENT_PLAY_SOUND:
-            emit(result, EMIT_SOUND_REQUEST, ev.aux0, ev.mapX, ev.mapY, ev.mapIndex);
+            /* ReDMCSB SOUND.C F0064:1536-1543 produces delayed C20 only
+             * with a non-negative SoundIndex and its native receipt.  Keep
+             * the older generic sound path for non-save callers, but do not
+             * let a malformed claimed C20 reach the emission surface. */
+            if (ev.aux2 != DM1_EVENT_PLAY_SOUND ||
+                (ev.aux0 >= 0 && ev.aux1 == 0 && ev.aux3 == 0 &&
+                 ev.cell == 0 && ev.aux4 >= 0 && ev.aux4 <= 0xff)) {
+                emit(result, EMIT_SOUND_REQUEST, ev.aux0, ev.mapX, ev.mapY,
+                     ev.mapIndex);
+            }
             break;
         case TIMELINE_EVENT_WATCHDOG:
             /* ReDMCSB TIMELINE.C F0256:1710-1715 re-arms C53 exactly

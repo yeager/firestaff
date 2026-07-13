@@ -1592,8 +1592,17 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
         } else if (type == DM1_EVENT_PLAY_SOUND) {
             /* ReDMCSB SOUND.C:1536-1543 schedules C20 with B.Location
              * and the signed C.SoundIndex union member.  C.Cell/Effect is
-             * unrelated for this event family, so do not manufacture it
-             * from generic timeline fields. */
+             * unrelated for this event family.  Only an imported typed
+             * receipt may re-enter a native PC34 save. */
+            if (src->kind != TIMELINE_EVENT_PLAY_SOUND || src->aux0 < 0 ||
+                src->aux0 > 0x7fff ||
+                src->aux1 != 0 || src->aux2 != DM1_EVENT_PLAY_SOUND ||
+                src->aux3 != 0 || src->aux4 < 0 || src->aux4 > 0xff ||
+                src->cell != 0 || src->mapIndex < 0 || src->mapIndex > 0xff ||
+                src->mapX < 0 || src->mapX > 0xff ||
+                src->mapY < 0 || src->mapY > 0xff) {
+                return 0;
+            }
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
             write_u16_le(dst + 8u, (uint16_t)(src->aux0 & 0xffff));
