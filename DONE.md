@@ -191,6 +191,15 @@
 - 2026-07-13 Nexus startup SFX gate: Track 02 now requires a decoded,
   unblocked SFX runtime receipt before it can satisfy the launcher audio
   handoff. Verification: `test_nexus_v1_startup_menu_pc34_compat` PASS.
+- 2026-07-13 DM1 PC34 F0435 event-materialization gate: original-save runtime
+  handoff now rejects an active `EVENTS`/`TIMELINE` entry that has no real M10
+  materializer instead of silently omitting it. This follows ReDMCSB
+  `LOADSAVE.C` F0435:2781-2800 and `TIMELINE.C` F0651:100-124, which restore
+  the complete event heap before live management. Verification: Ninja-built
+  `test_dm1_v1_original_save_pc34_handoff` and its focused CTest entry passed;
+  the regression rewrites a checksum-authenticated fixture through the
+  existing F0430/F0419 route to carry C11 and proves no world, queue, or
+  receipt publishes.
 
 - 2026-07-13 DM1 PC34 F0435 dungeon-tail span validation: save handoff now
   rejects a checksum-valid tail before receipt publication when any map's

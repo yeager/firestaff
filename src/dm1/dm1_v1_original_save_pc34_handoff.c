@@ -765,7 +765,13 @@ static int materialize_original_pc34_timeline(
         src = &report->events[source_index];
         kind = timeline_kind_from_original_pc34_event_type(src->type);
         if (kind == TIMELINE_EVENT_INVALID) {
-            continue;
+            /* ReDMCSB LOADSAVE.C F0435:2781-2800 restores the complete
+             * EVENTS/TIMELINE pair, then TIMELINE.C F0651:100-124 rebuilds
+             * its live management over every non-NONE event.  Dropping an
+             * active source event here would publish a different runtime;
+             * reject the candidate world until that event family has a real
+             * M10 materialization route. */
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
         }
         memset(&ev, 0, sizeof(ev));
         ev.kind = kind;
