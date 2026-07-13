@@ -332,6 +332,13 @@ static int build_original_pc34_fixture(unsigned char *out,
                                 101, 202, 303, 404, 55, 66,
                                 900, 800, 0x0010u, 0x1777u);
     }
+    /* ReDMCSB DEFS.H PARTY_INFO is C2-owned light/shield/scent state plus
+     * unreferenced bytes. These are deliberately opaque test bytes, not a
+     * Firestaff reconstruction of that original layout. */
+    for (i = 0; i < PARTY_PC34_SAVE_INFO_BYTE_COUNT; ++i) {
+        party[ORIGINAL_PC34_CHAMPION_BYTES * CHAMPION_MAX_PARTY + i] =
+            (unsigned char)(0x80u + (unsigned int)i);
+    }
 
     write_original_event(events + 0 * ORIGINAL_PC34_EVENT_BYTES,
                          DM1_MAP_TIME_MAKE(2, 123500u),
@@ -500,6 +507,61 @@ static int rewrite_fixture_event_type(unsigned char *bytes,
                                       int event_type)
 {
     return rewrite_fixture_event_byte(bytes, size, event_index, 4, event_type);
+}
+
+/* Edit only the source-owned C2 PARTY_INFO tail, then rebuild that part's
+ * F0417 checksum and the F0430 header checksum. This remains an original
+ * PC34 envelope; it does not create a Firestaff-specific save layout. */
+static int rewrite_fixture_party_info_bytes(unsigned char *bytes,
+                                            size_t size,
+                                            const unsigned char *info)
+{
+    unsigned char header[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE];
+    uint16_t keys[SAVEGAME_PC34_DM_KEYS_COUNT];
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t checksum;
+    int part;
+    int i;
+
+    if (!bytes || !info || size < sizeof(header)) return 0;
+    memcpy(header, bytes, sizeof(header));
+    xor_obfuscate_second_half(
+        header,
+        rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
+        keys[i] = rd16le(header + 310u + (size_t)i * 2u);
+    }
+    for (part = 0; part < SAVEGAME_PC34_PART_PARTY; ++part) {
+        uint16_t part_size;
+        if (cursor + 2u > size) return 0;
+        part_size = rd16le(bytes + cursor);
+        cursor += 2u;
+        if (part_size > size - cursor) return 0;
+        cursor += part_size;
+    }
+    if (cursor + 2u > size ||
+        rd16le(bytes + cursor) != ORIGINAL_PC34_PARTY_BYTES) return 0;
+    cursor += 2u;
+    if (ORIGINAL_PC34_PARTY_BYTES > size - cursor) return 0;
+    xor_words(bytes + cursor, ORIGINAL_PC34_PARTY_BYTES / 2u,
+              keys[SAVEGAME_PC34_PART_PARTY]);
+    memcpy(bytes + cursor +
+               (ORIGINAL_PC34_CHAMPION_BYTES * CHAMPION_MAX_PARTY),
+           info, PARTY_PC34_SAVE_INFO_BYTE_COUNT);
+    checksum = checksum_and_xor_words(
+        bytes + cursor, ORIGINAL_PC34_PARTY_BYTES / 2u,
+        keys[SAVEGAME_PC34_PART_PARTY]);
+    wr16le(header + 342u +
+           (size_t)SAVEGAME_PC34_PART_PARTY * 2u, checksum);
+    wr16le(header + 254u, 0u);
+    wr16le(header + 254u,
+           (uint16_t)(checksum_first_half(header) ^
+                      checksum_second_half_plain(header)));
+    xor_obfuscate_second_half(
+        header,
+        rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    memcpy(bytes, header, sizeof(header));
+    return 1;
 }
 
 static int rewrite_fixture_event_priority(unsigned char *bytes,
@@ -3139,7 +3201,9 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
     DM1OriginalSaveClassifyResult classified;
     struct SaveGame_Compat imported;
     struct PartyState_Compat party;
+    unsigned char party_info[PARTY_PC34_SAVE_INFO_BYTE_COUNT];
     int rc;
+    int i;
 
     memset(&spec, 0, sizeof(spec));
     spec.champion_count = 3;
@@ -3159,6 +3223,11 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
         &spec, bytes, sizeof(bytes), &written);
     CHECK(rc == SAVEGAME_PC34_OK,
           "roundtrip helper fixture build succeeds");
+    for (i = 0; i < PARTY_PC34_SAVE_INFO_BYTE_COUNT; ++i) {
+        party_info[i] = (unsigned char)(0x80u + (unsigned int)i);
+    }
+    CHECK(rewrite_fixture_party_info_bytes(bytes, written, party_info),
+          "roundtrip helper keeps a checksummed original C2 PARTY_INFO tail");
 
     snprintf(fixture_path, sizeof(fixture_path),
              "/tmp/firestaff_dm1_original_save_roundtrip_%lu.dat",
@@ -3238,6 +3307,10 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
           imported.party->champions[0].portraitBitmap[0] == 0x30u &&
           imported.party->champions[2].portraitBitmap[0] == 0x32u,
           "roundtrip helper preserves original external portraits");
+    CHECK(imported.party->pc34PartyInfoBytesValid &&
+          imported.party->pc34PartyInfoBytes[0] == 0x80u &&
+          imported.party->pc34PartyInfoBytes[127] == 0xffu,
+          "roundtrip helper preserves opaque PC34 PARTY_INFO bytes");
 
     memset(roundtrip, 0, sizeof(roundtrip));
     roundtrip_written = 0u;
@@ -3281,6 +3354,13 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
           roundtrip_report.exported_active_group_count == 2 &&
           roundtrip_report.reloaded_active_group_count == 2,
           "roundtrip reload helper preserves active group count");
+    CHECK(roundtrip_report.party_info_byte_receipt_available &&
+          roundtrip_report.source_party_info_byte_count ==
+              PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
+          roundtrip_report.exported_party_info_byte_count ==
+              PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
+          roundtrip_report.party_info_byte_preservation_ok,
+          "roundtrip reload helper preserves opaque PC34 PARTY_INFO bytes");
 
     memset(roundtrip, 0, sizeof(roundtrip));
     roundtrip_written = 0u;
@@ -3849,7 +3929,13 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
               roundtrip.source_c13_champion_record_reference_count == 1 &&
               roundtrip.c13_champion_record_byte_preserved_count == 1 &&
               roundtrip.c13_champion_record_byte_mismatch_count == 0 &&
-              roundtrip.c13_champion_record_byte_preservation_ok,
+              roundtrip.c13_champion_record_byte_preservation_ok &&
+              roundtrip.party_info_byte_receipt_available &&
+              roundtrip.source_party_info_byte_count ==
+                  PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
+              roundtrip.exported_party_info_byte_count ==
+                  PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
+              roundtrip.party_info_byte_preservation_ok,
           "native F0433 C13 record survives F0435 -> F0433 -> F0435 byte-for-byte");
 
     /* C13 has no independent live meaning: removing its source-owned bones

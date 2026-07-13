@@ -158,6 +158,7 @@ struct ChampionState_Compat {
 #define CHAMPION_NAME_TEXT_CAPACITY 9
 #define CHAMPION_TITLE_TEXT_CAPACITY 21
 #define CHAMPION_PC34_SAVE_RECORD_BYTE_COUNT 319
+#define PARTY_PC34_SAVE_INFO_BYTE_COUNT 128
 
 struct ChampionMirrorRecord_Compat {
     int textStringIndex;
@@ -182,6 +183,12 @@ struct PartyState_Compat {
     unsigned char pc34InactiveChampionRecords[CHAMPION_MAX_PARTY]
                                               [CHAMPION_PC34_SAVE_RECORD_BYTE_COUNT];
     unsigned char pc34InactiveChampionRecordValid[CHAMPION_MAX_PARTY];
+    /* ReDMCSB DEFS.H PARTY_INFO follows all four M516_CHAMPIONS records
+     * in the C2 save part. Firestaff has not yet assigned every light,
+     * shield, scent and BUG0_00 field to live M10 state, so retain the
+     * complete original bytes without inventing a replacement layout. */
+    unsigned char pc34PartyInfoBytes[PARTY_PC34_SAVE_INFO_BYTE_COUNT];
+    unsigned char pc34PartyInfoBytesValid;
     int                         championCount; /* 0-4, how many present */
 
     /* Party position (matches dungeon coordinate system) */
