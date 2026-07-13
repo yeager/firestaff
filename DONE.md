@@ -2020,7 +2020,11 @@
   Finally, the real `F0643_PARTY_ClearChampionSlot_Compat` rollback between
   queueing and due tick clears the champion's presence/count/active slot;
   C11 is then consumed without enabling a removed champion while C04 remains
-  a valid location/sound event.
+  a valid location/sound event. The HoC C162 candidate-cancel host path now
+  removes that stale C11 immediately after its party-slot rollback, before
+  the ordinal can be re-recruited. The focused regression re-recruits the
+  same champion index before the old due tick and proves it receives no old
+  action-enable while the authentic C04 sound still dispatches.
 
 - 2026-07-13 DM1 PC34 Open Door C11 receipt regression: the F0412 Open Door
   runtime gate now requires both independently owned queue receipts: F0327's

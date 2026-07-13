@@ -39,6 +39,7 @@ int main(void)
     int sawSoundAfterPartyCellMove = 0;
     uint32_t historicC11FireAtTick = 0u;
     struct TickResult_Compat dispatchResult;
+    struct ChampionState_Compat reRecruitedChampion;
     struct TimelineEvent_Compat forgedOwnerC04;
     struct TimelineEvent_Compat movedOwnerC04;
 
@@ -195,14 +196,25 @@ int main(void)
         (int)historicC11FireAtTick - 1;
     state.world.projectiles.entries[1].scheduledAtTick =
         (int)historicC11FireAtTick + 2;
+    reRecruitedChampion = state.world.party.champions[0];
     assert(F0643_PARTY_ClearChampionSlot_Compat(&state.world.party, 0) == 1);
     assert(state.world.party.championCount == 0);
     assert(state.world.party.champions[0].present == 0);
     assert(state.world.party.activeChampionIndex == -1);
+    /* REVIVE.C F0282 C162 removes the candidate before a later mirror can
+     * reuse the ordinal. TIMELINE.C C11 dispatches only its stored Priority,
+     * so preserve no C11 across that reuse boundary. C04 remains C20 sound
+     * data and must still dispatch at its source location. */
+    DM1_V1_F0407_ClearRemovedChampionActionReceiptsPc34Compat(
+        &state.world, 0);
+    state.world.party.champions[0] = reRecruitedChampion;
+    state.world.party.champions[0].present = 1;
+    state.world.party.championCount = 1;
+    state.world.party.activeChampionIndex = 0;
     memset(&dispatchResult, 0, sizeof(dispatchResult));
     state.world.gameTick = historicC11FireAtTick + 1u;
     assert(F0887_ORCH_DispatchTimelineEvents_Compat(
-               &state.world, &dispatchResult) == 4);
+               &state.world, &dispatchResult) == 3);
     assert(dispatchResult.emissionCount == 2);
     for (i = 0; i < dispatchResult.emissionCount; ++i) {
         const struct TickEmission_Compat *emission =
@@ -235,6 +247,7 @@ int main(void)
     assert(state.world.projectiles.entries[1].scheduledAtTick ==
            (int)historicC11FireAtTick + 2);
     assert((squareData[(1 * 3) + 2] & 0x07) == 5);
+    assert(F0643_PARTY_ClearChampionSlot_Compat(&state.world.party, 0) == 1);
     assert(DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
                &state.world, 0, 6) == 0);
     assert(DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
