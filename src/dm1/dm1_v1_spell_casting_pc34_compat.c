@@ -867,7 +867,16 @@ int dm1_spell_f0412RuntimeReceiptForTableIndex(
         outReceipt->spellIndex = -1;
         return 1;
     }
-    if (powerOrdinal < 1 || powerOrdinal > 6) powerOrdinal = 1;
+    if (powerOrdinal < 1 || powerOrdinal > 6) {
+        /* ReDMCSB: MENU.C F0412 lines 1804-1807 derives this directly from
+         * Champion.Symbols[0] - '_', whose source domain is 1..6.  The
+         * table-index bridge must not turn malformed command state into Lo. */
+        memset(outReceipt, 0, sizeof(*outReceipt));
+        outReceipt->castResult = DM1_SPELL_CAST_FAILURE;
+        outReceipt->failureType = DM1_FAILURE_MEANINGLESS_SPELL;
+        outReceipt->spellIndex = -1;
+        return 0;
+    }
     if (champIdx < 0 || champIdx >= 4) return 0;
 
     memset(&s, 0, sizeof(s));
@@ -912,6 +921,10 @@ int dm1_spell_f0412PotionReceiptForTableIndex(
     if (!dm1_spell_f0412RuntimeReceiptForTableIndex(
             spellTableIndex, powerOrdinal, champIdx, stats, experienceRng16,
             0, 0, 0, &receipt)) {
+        /* Keep the F0412 handoff atomic: an inner source-domain rejection
+         * already constructed an explicit failure receipt, so never leave a
+         * stale successful potion receipt in the caller's storage. */
+        *outReceipt = receipt;
         return 0;
     }
     if (receipt.spellKind != DM1_SPELL_KIND_POTION) {
@@ -924,6 +937,16 @@ int dm1_spell_f0412PotionReceiptForTableIndex(
         *outReceipt = receipt;
         return 1;
     }
+    if (potionPowerRng16 >= 16u) {
+        /* ReDMCSB: MENU.C F0412 lines 1851-1854 uses M003_RANDOM(16)
+         * directly for the flask power.  Reject an out-of-domain runtime
+         * fact before the successful receipt can authorize flask mutation. */
+        memset(outReceipt, 0, sizeof(*outReceipt));
+        outReceipt->castResult = DM1_SPELL_CAST_FAILURE;
+        outReceipt->failureType = DM1_FAILURE_MEANINGLESS_SPELL;
+        outReceipt->spellIndex = -1;
+        return 0;
+    }
 
     /* ReDMCSB MENU.C F0412 lines 1850-1860: after the F0411 empty-flask
      * lookup succeeds, the potion type is M068_SPELL_TYPE and power is
@@ -931,7 +954,7 @@ int dm1_spell_f0412PotionReceiptForTableIndex(
     receipt.castResult = DM1_SPELL_CAST_SUCCESS;
     receipt.failureType = -1;
     receipt.potionType = receipt.spellType;
-    receipt.potionPower = (int)(potionPowerRng16 & 0x000Fu) +
+    receipt.potionPower = (int)potionPowerRng16 +
                           (receipt.powerOrdinal * 40);
     /* ReDMCSB MENU.C F0412:1850-1856 mutates the real flask, then calls
      * F0296_CHAMPION_DrawChangedObjectIcons.  The icon itself remains owned
