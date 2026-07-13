@@ -15621,17 +15621,27 @@ static int csb_v1_runtime_write_csbwin_overlay_palette(
 static int csb_v1_runtime_stage_csbwin_save_policy(
     CSB_V1_RuntimeProfile *candidate)
 {
-    const uint32_t record_id = (5u << 24) | (5u << 16);
+    const uint32_t database_base = 5u << 24;
+    const uint32_t disable_saves_record = database_base | (5u << 16);
+    const uint32_t delete_duplicate_timers_record = database_base | (1u << 16);
+    const uint32_t runtime_signatures_record = database_base | (2u << 16);
+    const uint32_t debugging_record = database_base | (3u << 16);
     const uint8_t *payload = NULL;
     size_t payload_size = 0u;
 
     if (!candidate) return -1;
     candidate->csbwin_saves_disabled = 0;
+    candidate->csbwin_delete_duplicate_timers = 1u;
+    candidate->csbwin_debugging_data = 0u;
+    candidate->csbwin_csbgraphics_signature_data = 0u;
+    candidate->csbwin_graphics_signature_data = 0u;
+    candidate->csbwin_version_data = 0u;
 
-    /* CSBWin SaveGame.cpp lines 1972-1976 reads EDBT_DisableSaves with
-     * EXPOOL::Read(..., 32) and disables saves exactly when the record has a
-     * positive word count. Preserve that source policy after the tail has
-     * passed the same complete/truncation checks used by other EXPOOL owners. */
+    /* CSBWin SaveGame.cpp:1972-2034 restores DisableSaves,
+     * DeleteDuplicateTimers, Debuging, and RuntimeFileSignatures after its
+     * palette records. These are exact DB11 records, not Firestaff settings;
+     * an absent record retains the source default while a short present record
+     * rejects the whole candidate before runtime state is published. */
     if (!candidate->csbwin_appended_tail_valid ||
         candidate->csbwin_appended_tail_size == 0u) {
         return 0;
@@ -15640,13 +15650,51 @@ static int csb_v1_runtime_stage_csbwin_save_policy(
         candidate->csbwin_appended_tail_size !=
             candidate->csbwin_appended_tail_preserved_size ||
         candidate->csbwin_appended_tail_preserved_size >
-            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        candidate->csbwin_appended_tail_fnv1a !=
+            csb_v1_runtime_fnv1a32(
+                candidate->csbwin_appended_tail,
+                candidate->csbwin_appended_tail_preserved_size)) {
         return -1;
     }
     if (csb_v1_runtime_locate_appended_expool_record_internal(
-            candidate, record_id, &payload, &payload_size)) {
+            candidate, disable_saves_record, &payload, &payload_size)) {
         if (!payload || payload_size == 0u) return -1;
         candidate->csbwin_saves_disabled = 1;
+    }
+    if (csb_v1_runtime_locate_appended_expool_record_internal(
+            candidate, delete_duplicate_timers_record, &payload,
+            &payload_size)) {
+        if (!payload || payload_size < sizeof(uint32_t)) return -1;
+        candidate->csbwin_delete_duplicate_timers =
+            csb_v1_runtime_read_le32(payload);
+    }
+    if (csb_v1_runtime_locate_appended_expool_record_internal(
+            candidate, debugging_record, &payload, &payload_size)) {
+        if (!payload || payload_size < sizeof(uint32_t)) return -1;
+        candidate->csbwin_debugging_data = csb_v1_runtime_read_le32(payload);
+    }
+    if (candidate->csbwin_debugging_data == 0u) {
+        if (csb_v1_runtime_locate_appended_expool_record_internal(
+                candidate, runtime_signatures_record, &payload,
+                &payload_size)) {
+            if (!payload || payload_size < sizeof(uint32_t)) return -1;
+            candidate->csbwin_csbgraphics_signature_data =
+                csb_v1_runtime_read_le32(payload);
+        }
+        if (csb_v1_runtime_locate_appended_expool_record_internal(
+                candidate, runtime_signatures_record | 1u, &payload,
+                &payload_size)) {
+            if (!payload || payload_size < sizeof(uint32_t)) return -1;
+            candidate->csbwin_graphics_signature_data =
+                csb_v1_runtime_read_le32(payload);
+        }
+        if (csb_v1_runtime_locate_appended_expool_record_internal(
+                candidate, runtime_signatures_record | 2u, &payload,
+                &payload_size)) {
+            if (!payload || payload_size < sizeof(uint32_t)) return -1;
+            candidate->csbwin_version_data = csb_v1_runtime_read_le32(payload);
+        }
     }
     return 0;
 }
@@ -15813,6 +15861,49 @@ int csb_v1_runtime_csbwin_saves_disabled(
     const CSB_V1_RuntimeProfile *profile)
 {
     return profile && profile->csbwin_saves_disabled ? 1 : 0;
+}
+
+int csb_v1_runtime_restore_csbwin_save_policy(
+    CSB_V1_RuntimeProfile *profile)
+{
+    CSB_V1_RuntimeProfile candidate;
+
+    if (!profile) return -1;
+    candidate = *profile;
+    if (csb_v1_runtime_stage_csbwin_save_policy(&candidate) != 0) {
+        return -1;
+    }
+    profile->csbwin_saves_disabled = candidate.csbwin_saves_disabled;
+    profile->csbwin_delete_duplicate_timers =
+        candidate.csbwin_delete_duplicate_timers;
+    profile->csbwin_debugging_data = candidate.csbwin_debugging_data;
+    profile->csbwin_csbgraphics_signature_data =
+        candidate.csbwin_csbgraphics_signature_data;
+    profile->csbwin_graphics_signature_data =
+        candidate.csbwin_graphics_signature_data;
+    profile->csbwin_version_data = candidate.csbwin_version_data;
+    return 0;
+}
+
+int csb_v1_runtime_get_csbwin_save_policy(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_delete_duplicate_timers,
+    uint32_t *out_debugging_data,
+    uint32_t *out_csbgraphics_signature,
+    uint32_t *out_graphics_signature,
+    uint32_t *out_version)
+{
+    if (!profile || !out_delete_duplicate_timers || !out_debugging_data ||
+        !out_csbgraphics_signature || !out_graphics_signature ||
+        !out_version) {
+        return -1;
+    }
+    *out_delete_duplicate_timers = profile->csbwin_delete_duplicate_timers;
+    *out_debugging_data = profile->csbwin_debugging_data;
+    *out_csbgraphics_signature = profile->csbwin_csbgraphics_signature_data;
+    *out_graphics_signature = profile->csbwin_graphics_signature_data;
+    *out_version = profile->csbwin_version_data;
+    return 0;
 }
 
 int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
