@@ -1658,6 +1658,13 @@ int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
 int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
                                              const char* name);
 int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state);
+/* ReDMCSB DUNVIEW.C F0107/G0205: front D1C mirror backing rectangle.
+ * Exposed for runtime capture probes; this does not invent host geometry. */
+int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
+                                        int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH);
 int M11_GameView_GetDm1HocMenuRouteReceipt(
     const M11_GameViewState* state,
     DM1_V1_EntranceMenuRouteReceiptPc34* outReceipt);

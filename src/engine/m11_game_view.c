@@ -14944,6 +14944,18 @@ int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state) {
     return m11_front_cell_mirror_ordinal(state);
 }
 
+int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
+                                        int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH) {
+    if (!state || !state->active) {
+        return 0;
+    }
+    return dm1_v1_front_mirror_wall_ornament_zone_xywh_pc34(
+        outX, outY, outW, outH);
+}
+
 int M11_GameView_GetDm1HocMenuRouteReceipt(
     const M11_GameViewState* state,
     DM1_V1_EntranceMenuRouteReceiptPc34* outReceipt) {
