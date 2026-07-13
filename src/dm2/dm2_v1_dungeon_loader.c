@@ -1902,7 +1902,12 @@ int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    if (!d || !d->raw_data || !read_raw || !read_image_metadata ||
+    /* skproject/SKWIN/c_map.cpp reaches a DB4 Creature through the tile
+     * record list, then DME.h Creature::CreatureType() feeds
+     * QUERY_DUNGEON_MAP_CHIP_PICT.  A partial G1 corpus may classify DB4
+     * roots, but it cannot promote one into a GDAT material request. */
+    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
+        !d->raw_data || !read_raw || !read_image_metadata ||
         d->square_bytes != 1 ||
         map < 0 || map >= d->level_count) {
         return 0;
