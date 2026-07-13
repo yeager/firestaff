@@ -7,6 +7,12 @@
   macOS debugger build succeeds, and a real US 19-track CUE/System Card 3.0
   session produces a nonempty trace while the emulator remains running.
 
+- 2026-07-13 DM1 TITLE receipt palette/timing validation: M11 now consumes a
+  handled title-media receipt only when it agrees with ReDMCSB `TITLE.C F0437`
+  C12 PRESENTS, C13/C14 zoom/reveal palette phases, and source VBlank cadence;
+  otherwise it rebuilds the canonical DM1 receipt. Verification:
+  `firestaff_m11` and the focused title CTest trio passed.
+
 - 2026-07-13 Theron Mednafen capture toolchain: the patched Mednafen 1.32.1
   debugger build now succeeds on macOS without enabling its incompatible
   legacy `PCECD_DEBUG` printf path. The instrumented debugger hook remains

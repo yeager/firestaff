@@ -4898,6 +4898,47 @@ int dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
     return out_receipt->handled ? 1 : 0;
 }
 
+int dm1_v1_startup_title_timing_receipt_valid_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt) {
+    V1_TitleFrontendSourceTiming timing;
+    int presents_palette = 0;
+    int title_palette = 0;
+
+    if (!media_receipt || !media_receipt->handled || !media_receipt->play_title) {
+        return 0;
+    }
+    timing = V1_TitleFrontend_GetSourceTimingEvidence();
+    if (!V1_TitleFrontend_GetStepPalette(
+            V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS, &presents_palette) ||
+        !V1_TitleFrontend_GetStepPalette(
+            V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT, &title_palette)) {
+        return 0;
+    }
+    /* ReDMCSB TITLE.C F0437:312-327 selects C12_PRESENTS only for the
+     * PRESENTS strip. F0437:362-409 then selects C13_DUNGEON + C14_MASTER
+     * for zoom/reveal and waits one VBlank per zoom blit, followed by two
+     * post-zoom and one final-guard VBlanks. A stale receipt must not
+     * override those palette/timing facts merely because it is handled. */
+    return
+        media_receipt->title_presents_hold_ms ==
+            V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing) &&
+        media_receipt->title_zoom_frame_delay_ms ==
+            V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing) &&
+        media_receipt->title_zoom_step_count == timing.zoomStepCount &&
+        media_receipt->title_post_zoom_guard_ms ==
+            V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing) &&
+        media_receipt->title_c001_cadence_pad_ms ==
+            V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&timing) &&
+        media_receipt->title_source_animation_steps ==
+            timing.sourceAnimationStepCount &&
+        media_receipt->title_frame_bank_equivalent_steps ==
+            timing.frameBankEquivalentStepCount &&
+        media_receipt->title_menu_boundary_frame ==
+            timing.sourceAnimationStepCount + 1u &&
+        media_receipt->title_presents_palette == presents_palette &&
+        media_receipt->title_zoom_palette == title_palette;
+}
+
 int dm1_v1_startup_title_runtime_source_receipt_pc34(
     const char* source_id,
     int graphics_c001_candidate_available,
