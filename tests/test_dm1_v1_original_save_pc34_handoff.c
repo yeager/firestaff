@@ -1086,6 +1086,62 @@ static void test_pc34_handoff_imports_party_state(void)
           "event queue heap root points to first original timeline event");
 }
 
+static void test_pc34_timeline_rebuild_ignores_raw_tombstone_link(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int written = 0;
+    int event_one_timeline_count = 0;
+    int i;
+    int rc;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat party;
+    struct DM1_EventQueue_V1 event_queue;
+    DM1OriginalSavePC34HandoffReport report;
+
+    memset(&imported, 0, sizeof(imported));
+    memset(&party, 0, sizeof(party));
+    imported.party = &party;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     1, 0, 1, 2, 3, 0,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 3, 0, 1) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 3, 1, 0),
+          "raw tombstone link fixture remains checksum-authenticated");
+
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+              report.original_first_unused_event_index == 3 &&
+              !report.first_unused_event_index_points_to_active &&
+              report.timeline_invalid_slot == -1 &&
+              report.events[1].type == DM1_EVENT_DOOR &&
+              report.events[3].type == DM1_EVENT_NONE,
+          "F0651-shaped handoff ignores stale raw tombstone link");
+
+    memset(&event_queue, 0, sizeof(event_queue));
+    CHECK(dm1v1_event_queue_init(&event_queue, 0u),
+          "initialize queue for raw tombstone-link import");
+    rc = dm1_v1_original_save_pc34_handoff_apply_event_queue(
+        &report, &event_queue);
+    CHECK(rc == ORIGINAL_PC34_EVENT_COUNT &&
+              event_queue.eventCount == ORIGINAL_PC34_EVENT_COUNT &&
+              event_queue.firstUnusedIndex == 3 &&
+              event_queue.events[3].type == DM1_EVENT_NONE,
+          "raw tombstone link cannot promote its free EVENT slot");
+    for (i = 0; i < event_queue.eventCount; ++i) {
+        if (event_queue.timeline[i] == 1u) {
+            ++event_one_timeline_count;
+        }
+    }
+    CHECK(event_one_timeline_count == 1 &&
+              event_queue.events[event_queue.timeline[0]].type ==
+                  DM1_EVENT_DOOR,
+          "valid C4 owner remains active after free-list rebuild");
+}
+
 static void test_rejects_non_pc34_and_truncated_parts(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -4539,6 +4595,7 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
 int main(void)
 {
     test_pc34_handoff_imports_party_state();
+    test_pc34_timeline_rebuild_ignores_raw_tombstone_link();
     test_rejects_non_pc34_and_truncated_parts();
     test_file_runtime_world_loader();
     test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc();

@@ -1271,6 +1271,12 @@ and real community-save corpus round-trip evidence.
     active C3 owner. ReDMCSB `TIMELINE.C` F0651 rebuilds that free-list only
     from `EVENT_NONE` tombstones after F0435; Firestaff records the active
     owner index and type and refuses to publish the malformed candidate.
+  - 2026-07-13 update: the raw two-byte `UNUSED_EVENT.NextUnusedEventIndex`
+    overlay in an `EVENT_NONE` C3 slot is now regression-covered as ignored
+    staging data. A checksum-valid tombstone link aimed at the active C4 Door
+    event leaves the Door scheduled and the tombstone free, matching
+    `TIMELINE.C` F0651's post-F0435 free-list rebuild. Remaining work is
+    authentic community-save coverage, not raw free-list-link import.
   - 2026-07-13 update: each external corpus candidate now also records the
     source/exported PC34 header identity (`FormatID`, `GameID`, `Platform`,
     `DungeonID`) and all five F0433/F0435 length-prefixed part byte counts.
