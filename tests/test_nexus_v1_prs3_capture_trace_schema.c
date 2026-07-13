@@ -133,6 +133,88 @@ static void test_dm_bin_prs3_catalog(void) {
     free(data);
 }
 
+static unsigned char *read_asset(const char *data_dir, const char *name,
+                                 size_t *out_size) {
+    char path[1024];
+    FILE *file;
+    long size;
+    unsigned char *data;
+
+    if (!data_dir || !data_dir[0] || !name || !out_size) return NULL;
+    snprintf(path, sizeof(path), "%s/%s", data_dir, name);
+    file = fopen(path, "rb");
+    if (!file) return NULL;
+    if (fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return NULL;
+    }
+    data = (unsigned char *)malloc((size_t)size);
+    if (!data || fread(data, 1, (size_t)size, file) != (size_t)size) {
+        free(data);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    *out_size = (size_t)size;
+    return data;
+}
+
+static void test_cross_asset_prs3_frame_receipt(void) {
+    unsigned char bpk[68];
+    unsigned char dm_bin[32];
+    Nexus_V1_Prs3CrossAssetFrameReceipt receipt;
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    unsigned char *real_dm_bin;
+    unsigned char *real_menu_bpk;
+    size_t real_dm_bin_size = 0U;
+    size_t real_menu_bpk_size = 0U;
+
+    make_bpk(bpk);
+    memset(dm_bin, 0, sizeof(dm_bin));
+    memcpy(dm_bin, "PRS3", 4U);
+    put_be32(dm_bin + 4U, 1U);
+    put_be32(dm_bin + 8U, 4U);
+    put_be32(dm_bin + 12U, 4U);
+    expect(!nexus_v1_prs3_cross_asset_frame_receipt_verified(
+               dm_bin, sizeof(dm_bin), 1, bpk, sizeof(bpk), 0, &receipt) &&
+               !receipt.menu_bpk_hash_verified,
+           "unverified MENU.BPK never produces a cross-asset PRS3 receipt");
+    expect(nexus_v1_prs3_cross_asset_frame_receipt_verified(
+               dm_bin, sizeof(dm_bin), 1, bpk, sizeof(bpk), 1, &receipt) &&
+               receipt.outer_v1_framing_matches &&
+               receipt.dm_bin_v1_record_count == 1U &&
+               receipt.menu_prs3_entry_count == 1U &&
+               receipt.menu_v1_stream_count == 1U &&
+               receipt.matching_declared_target_count == 1U &&
+               !receipt.shared_opcode_grammar_proven &&
+               !receipt.decoder_promoted && !receipt.menu_handoff_authorized &&
+               !receipt.fallback_visuals_permitted,
+           "matching V1 outer frames remain blocked from decode and menu handoff");
+
+    real_dm_bin = read_asset(data_dir, "DM.BIN", &real_dm_bin_size);
+    real_menu_bpk = read_asset(data_dir, "MENU.BPK", &real_menu_bpk_size);
+    if (!real_dm_bin || !real_menu_bpk) {
+        free(real_dm_bin);
+        free(real_menu_bpk);
+        return;
+    }
+    expect(nexus_v1_prs3_cross_asset_frame_receipt_verified(
+               real_dm_bin, real_dm_bin_size, 1,
+               real_menu_bpk, real_menu_bpk_size, 1, &receipt) &&
+               receipt.dm_bin_marker_count == 2U &&
+               receipt.dm_bin_v1_record_count == 1U &&
+               receipt.menu_prs3_entry_count == 162U &&
+               receipt.menu_v1_stream_count == 162U &&
+               receipt.menu_missing_frame_word_count == 0U &&
+               receipt.outer_v1_framing_matches &&
+               !receipt.shared_opcode_grammar_proven &&
+               !receipt.decoder_promoted && !receipt.menu_handoff_authorized,
+           "retail DM.BIN and MENU.BPK prove outer V1 framing only");
+    free(real_dm_bin);
+    free(real_menu_bpk);
+}
+
 int main(void) {
     Nexus_V1_Prs3CaptureTraceSchemaReceipt receipt;
     Nexus_V1_Prs3CaptureAssetBindingReceipt binding;
@@ -235,6 +317,7 @@ int main(void) {
            "one BPK byte invalidates an otherwise complete capture");
 
     test_dm_bin_prs3_catalog();
+    test_cross_asset_prs3_frame_receipt();
 
     return failures ? 1 : 0;
 }

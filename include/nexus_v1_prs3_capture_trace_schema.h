@@ -39,6 +39,26 @@ typedef struct {
     Nexus_V1_Prs3DmBinMarker markers[NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS];
 } Nexus_V1_Prs3DmBinCatalogReceipt;
 
+/* Cross-asset receipt for the observed V1 outer PRS3 frame.  DM.BIN and
+ * MENU.BPK share only this bounded header evidence today.  In particular,
+ * matching magic/version/frame words does not establish command bit order,
+ * literal/back-reference semantics, output termination, or a render route. */
+typedef struct {
+    int dm_bin_hash_verified;
+    int menu_bpk_hash_verified;
+    uint32_t dm_bin_marker_count;
+    uint32_t dm_bin_v1_record_count;
+    uint32_t menu_prs3_entry_count;
+    uint32_t menu_v1_stream_count;
+    uint32_t menu_missing_frame_word_count;
+    uint32_t matching_declared_target_count;
+    int outer_v1_framing_matches;
+    int shared_opcode_grammar_proven;
+    int decoder_promoted;
+    int menu_handoff_authorized;
+    int fallback_visuals_permitted;
+} Nexus_V1_Prs3CrossAssetFrameReceipt;
+
 typedef struct {
     int valid;
     int complete_evidence;
@@ -99,5 +119,15 @@ int nexus_v1_prs3_capture_trace_schema_bind_assets(
 int nexus_v1_prs3_dm_bin_catalog_verified(
     const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
     Nexus_V1_Prs3DmBinCatalogReceipt *out_receipt);
+
+/* Compare only hash-verified DM.BIN and MENU.BPK V1 outer frames.  A return
+ * value of one means all observed MENU PRS3 entries have complete V1 framing
+ * alongside at least one complete DM.BIN V1 record.  It never authorizes a
+ * decoder or a menu surface handoff; capture-backed opcode evidence is still
+ * required for that separate decision. */
+int nexus_v1_prs3_cross_asset_frame_receipt_verified(
+    const uint8_t *dm_bin, size_t dm_bin_size, int dm_bin_hash_verified,
+    const uint8_t *menu_bpk, size_t menu_bpk_size, int menu_bpk_hash_verified,
+    Nexus_V1_Prs3CrossAssetFrameReceipt *out_receipt);
 
 #endif
