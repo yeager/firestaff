@@ -298,9 +298,10 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
     const char *trace_md5_hex);
 
 /* Reads a bounded V2 capture manifest and binds it to the already selected
- * hash-verified Track 02 profile. This proves only artifact identity; the
- * caller must still use the normal runtime-trace gate to rehash and consume
- * every referenced file. */
+ * hash-verified Track 02 profile. The selected Track 02 file is rehashed
+ * before the manifest is accepted, so a stale profile path cannot hand a
+ * capture receipt to the runtime. The normal runtime-trace gate still
+ * rehashes every referenced artifact before consuming trace evidence. */
 int theron_v1_boot_runtime_capture_manifest_from_file(
     const Theron_V1_BootProfile *profile,
     const char *manifest_path,
