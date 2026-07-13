@@ -83,12 +83,21 @@ static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
                         ++level->structure2_payload
                             .nonzero_descriptor_offsets_outside_opaque_payload_count;
                     }
+                    if ((relative_offset & 1U) != 0U) {
+                        ++level->structure2_payload
+                            .nonzero_descriptor_offsets_unaligned_count;
+                    }
                 }
             }
             level->structure2_payload.local_payload_offset_pattern_observed =
                 level->structure2_payload.nonzero_descriptor_offset_count > 0 &&
                 level->structure2_payload
                     .nonzero_descriptor_offsets_outside_opaque_payload_count == 0;
+            level->structure2_payload
+                .local_payload_word_aligned_offset_pattern_observed =
+                level->structure2_payload.local_payload_offset_pattern_observed &&
+                level->structure2_payload
+                    .nonzero_descriptor_offsets_unaligned_count == 0;
             level->structure2_payload.valid = 1;
             /* No decoder may promote this opaque span into a material. */
             level->structure2_payload.material_or_image_data_proven = 0;

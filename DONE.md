@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure2 word-alignment receipt: the bounded DGN parser
+  now records whether every nonzero descriptor target is word-aligned, matching
+  the observed LEV00-LEV15 descriptor-window corpus. An odd in-span target
+  remains an opaque, non-promoting value and cannot become pixels, a palette,
+  a record boundary, or a material route. Verification:
+  `test_nexus_v1_dgn_geometry_readiness`.
+
 - 2026-07-13 DM2 `QUERY_TEMP_PICST` weather metadata: each source-backed
   environment command now retains the exact IMG3 dimensions/bpp and the
   category-wide plus image-specific `dtImageOffset` coordinates before a
