@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0111 center-door host materialization: the DM1/M10
+  receipt now owns ReDMCSB `DUNVIEW.C F0111` frame-before-panel ordering and
+  carries the current-map F0095 panel graphic to M11 without host-side bitmap
+  or door-state replacement. M11 emits its presentation receipt only after
+  all original PC34 blits succeed. Focused regressions cover the open and
+  closed receipt paths plus a real `GRAPHICS.DAT` draw of graphics 91, 87, and
+  248; no synthetic bitmap or asset cache is used.
+
 - 2026-07-13 DM1 F0115 projectile host materialization: M11 now publishes a
   completed C2900 receipt only after its real PC34 asset blit succeeds. It
   distinguishes the native M613 projectile material from ReDMCSB DUNGEON.C

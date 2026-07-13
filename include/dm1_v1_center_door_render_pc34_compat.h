@@ -28,6 +28,21 @@ typedef struct DM1_CenterDoorRenderPlanPc34 {
     DM1_CenterDoorBlitPc34 closedPanel;
 } DM1_CenterDoorRenderPlanPc34;
 
+#define DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS 5
+
+/* F0111 material receipt for one visible center door. ReDMCSB DUNVIEW.C
+ * F0111 owns frame-before-panel ordering; M11 may only consume these blits. */
+typedef struct DM1_CenterDoorHostMaterialReceiptPc34 {
+    int valid;
+    int depthIndex;
+    int doorState;
+    int doorVertical;
+    int panelVisible;
+    int frameCount;
+    int blitCount;
+    DM1_CenterDoorBlitPc34 blits[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
+} DM1_CenterDoorHostMaterialReceiptPc34;
+
 int dm1_v1_center_door_render_plan_count_pc34(void);
 
 int dm1_v1_center_door_render_plan_at_pc34(
@@ -43,6 +58,13 @@ int dm1_v1_center_door_panel_blits_for_cell_pc34(
     int doorState,
     int doorVertical,
     DM1_CenterDoorBlitPc34 outBlits[2]);
+
+int dm1_v1_center_door_host_material_receipt_pc34(
+    int depthIndex,
+    int doorState,
+    int doorVertical,
+    int panelGraphicIndex,
+    DM1_CenterDoorHostMaterialReceiptPc34* outReceipt);
 
 int dm1_v1_door_panel_graphic_for_set_depth_pc34(
     int doorSet,
