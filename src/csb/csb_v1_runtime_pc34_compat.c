@@ -17162,6 +17162,29 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         }
         return 1;
     }
+    if (timer->function == 7u) {
+        uint8_t *square;
+        int square_type;
+
+        /* CSBWin Timer.cpp:1343-1442 runs the saved DSA receipt before
+         * applying timerTypeModifier[0]'s unconditional falsewall SET.
+         * Keep only that complete bit update here; CLEAR/TOGGLE need the
+         * source party/nonmaterial-group deferral and successor ownership. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 && timer->ubyte9 == 0u &&
+            profile->dungeon_handle) {
+            square = csb_v1_runtime_square_byte_ptr(
+                profile, record->mapIndex, record->mapX, record->mapY,
+                &square_type);
+            if (!square || square_type < 0) return 0;
+            *square |= 0x04u;
+        }
+    }
     if (!profile->dungeon_handle) return 0;
     if (!timer->valid || timer->truncated || timer->source_index != timer_index ||
         ((timer->function < 5u || timer->function > 10u) &&
