@@ -12440,6 +12440,17 @@ source slot rather than writing a host explosion index. Source: ReDMCSB
 Verification: `test_dm1_v1_original_save_pc34_handoff` drives authenticated
 import, runtime expiry, native export, and reimport of the C24 union.
 
+# ✅ 2026-07-13 DM1 original-save C24/C25 staged union rollback
+
+The F0435 runtime handoff now has a focused original-PC34 regression for the
+combined C24/C25 union stage. It places a valid C25 `B.Location + C.Slot`
+before an authenticated C24 whose identical slot is outside its own source
+location. The rejected candidate cannot publish the earlier C25 runtime
+explosion, overwrite the caller's receipt, mutate the borrowed start-world
+explosion list, or rewrite the original save bytes. Source: ReDMCSB
+`LOADSAVE.C F0435` event/timeline restore and `PROJEXPL.C F0213/F0224` C15
+slot ownership. Verification: `test_dm1_v1_original_save_pc34_handoff`.
+
 # ✅ 2026-07-13 DM1 HoC resurrection/rename no-fallback M11 consumer
 
 M11 now draws ReDMCSB `REVIVE.C F0282` C040 and `F0281` C027 only from the

@@ -3296,6 +3296,117 @@ static void test_original_c24_fluxcage_import_runtime_export_roundtrip(void)
           "C24 expiry removes the exact C15 fluxcage and its live counterpart");
 }
 
+static void test_c24_c25_union_materialization_rolls_back_as_one_pc34_stage(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char source_bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    int written = 0;
+    int rc;
+    int i;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct GameWorld_Compat loaded_world_before;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[3];
+    struct DungeonMapTiles_Compat tiles[3];
+    unsigned char square_data[3][32 * 32];
+    struct DungeonThings_Compat things;
+    unsigned short first_things[1];
+    unsigned char raw_explosion[4];
+    struct DungeonExplosion_Compat source_explosions[1];
+    struct ExplosionList_Compat start_explosions_before;
+    DM1OriginalSavePC34HandoffReport report;
+    DM1OriginalSavePC34HandoffReport report_before;
+    uint16_t source_thing = (uint16_t)((THING_TYPE_EXPLOSION << 10) |
+                                       (1u << 14));
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "C24/C25 rollback fixture builds an original PC34 envelope");
+    /* C25 slot 0 is valid and materializes first in C4 heap order. C24 slot
+     * 1 keeps an authenticated C.Slot but points at a different square, so
+     * F0435 must reject the complete candidate instead of publishing C25. */
+    CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 0,
+                                     DM1_EVENT_EXPLOSION) &&
+              rewrite_fixture_event_c_union(bytes, (size_t)written, 0,
+                                            source_thing) &&
+              rewrite_fixture_event_type(bytes, (size_t)written, 1,
+                                         DM1_EVENT_REMOVE_FLUXCAGE) &&
+              rewrite_fixture_event_priority(bytes, (size_t)written, 1, 0) &&
+              rewrite_fixture_event_c_union(bytes, (size_t)written, 1,
+                                            source_thing),
+          "C24/C25 rollback fixture retains two authenticated Slot unions");
+    memcpy(source_bytes, bytes, (size_t)written);
+
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(square_data, 0, sizeof(square_data));
+    memset(&things, 0, sizeof(things));
+    memset(raw_explosion, 0, sizeof(raw_explosion));
+    memset(source_explosions, 0, sizeof(source_explosions));
+    memset(&report, 0, sizeof(report));
+    dungeon.header.mapCount = 3;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    for (i = 0; i < 3; ++i) {
+        maps[i].width = 32;
+        maps[i].height = 32;
+        tiles[i].squareData = square_data[i];
+        tiles[i].squareCount = 32 * 32;
+    }
+    square_data[2][11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    first_things[0] = source_thing;
+    wr16le(raw_explosion + 0u, THING_ENDOFLIST);
+    raw_explosion[2] = C050_EXPLOSION_FLUXCAGE;
+    raw_explosion[3] = 77u;
+    source_explosions[0].next = THING_ENDOFLIST;
+    source_explosions[0].type = C050_EXPLOSION_FLUXCAGE;
+    source_explosions[0].attack = 77u;
+    things.squareFirstThings = first_things;
+    things.squareFirstThingCount = 1;
+    things.explosions = source_explosions;
+    things.explosionCount = 1;
+    things.rawThingData[THING_TYPE_EXPLOSION] = raw_explosion;
+    things.thingCounts[THING_TYPE_EXPLOSION] = 1;
+    things.loaded = 1;
+    start_world.dungeon = &dungeon;
+    start_world.things = &things;
+
+    loaded_world.gameTick = 0x13579bdfu;
+    loaded_world.party.championCount = 2;
+    loaded_world.timeline.count = 1;
+    loaded_world.timeline.events[0].kind = TIMELINE_EVENT_PLAY_SOUND;
+    report.original_game_time = 0x2468ace0u;
+    loaded_world_before = loaded_world;
+    report_before = report;
+    start_explosions_before = start_world.explosions;
+
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written),
+          "C24/C25 rollback fixture write succeeds");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, &report);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "C24 source Slot outside its B.Location fails the PC34 handoff");
+    CHECK(memcmp(&loaded_world, &loaded_world_before,
+                 sizeof(loaded_world)) == 0 &&
+              memcmp(&report, &report_before, sizeof(report)) == 0 &&
+              memcmp(&start_world.explosions, &start_explosions_before,
+                     sizeof(start_world.explosions)) == 0,
+          "failed C24/C25 staging preserves the published runtime and receipt");
+    CHECK(memcmp(bytes, source_bytes, (size_t)written) == 0,
+          "C24/C25 staging never rewrites authenticated source union bytes");
+}
+
 static void test_original_c70_light_import_runtime_export_roundtrip(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -4790,6 +4901,7 @@ int main(void)
     test_original_c13_vi_altar_runtime_sequence();
     test_runtime_materializer_binds_original_explosion_union();
     test_original_c24_fluxcage_import_runtime_export_roundtrip();
+    test_c24_c25_union_materialization_rolls_back_as_one_pc34_stage();
     test_original_c70_light_import_runtime_export_roundtrip();
     test_original_c65_generator_import_runtime_export_roundtrip();
     test_real_dm1_dungeon_tail_map_span_validation();

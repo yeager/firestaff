@@ -1008,6 +1008,46 @@ static int original_pc34_explosion_on_square(
     return 0;
 }
 
+/* ReDMCSB LOADSAVE.C F0435 restores the complete C3/C4 pair before
+ * TIMELINE.C consumes C24/C25. Validate every C15 Slot relation up front so
+ * one later bad union cannot allocate a preceding explosion in the candidate
+ * runtime stage. C24's fluxcage constraints remain distinct from C25. */
+static int original_pc34_explosion_event_slot_is_valid(
+    const struct DM1_Event_V1 *src,
+    const struct GameWorld_Compat *world,
+    int require_fluxcage,
+    int *out_explosion_index)
+{
+    uint16_t source_thing;
+    int map_index;
+    int source_index;
+
+    if (out_explosion_index) *out_explosion_index = -1;
+    if (!src || !world || !world->dungeon || !world->things ||
+        (src->type != DM1_EVENT_EXPLOSION &&
+         src->type != DM1_EVENT_REMOVE_FLUXCAGE) ||
+        (require_fluxcage &&
+         (src->type != DM1_EVENT_REMOVE_FLUXCAGE || src->priority != 0u))) {
+        return 0;
+    }
+    map_index = (int)((src->map_time >> 24) & 0xffu);
+    source_thing = read_u16_le(&src->c_cell);
+    if (map_index < 0 || map_index >= (int)world->dungeon->header.mapCount ||
+        src->b_mapX >= world->dungeon->maps[map_index].width ||
+        src->b_mapY >= world->dungeon->maps[map_index].height ||
+        (require_fluxcage && THING_GET_CELL(source_thing) != 0) ||
+        !original_pc34_explosion_on_square(world, map_index,
+                                           src->b_mapX, src->b_mapY,
+                                           source_thing, &source_index) ||
+        (require_fluxcage &&
+         world->things->explosions[source_index].type !=
+             C050_EXPLOSION_FLUXCAGE)) {
+        return 0;
+    }
+    if (out_explosion_index) *out_explosion_index = source_index;
+    return 1;
+}
+
 /* ReDMCSB CLIKVIEW.C F0374:179-186 creates C13 only after the dropped
  * champion bones are linked at B.Location/C.A.Cell. F0435 must not publish
  * that saved timer merely because its union bytes look plausible: the C2
@@ -1273,12 +1313,8 @@ static int materialize_original_pc34_explosion_event(
      * C.Slot. TIMELINE.C F0261:1872 forwards that same EVENT to F0220.
      * A C25 cannot be reconstructed from Cell/Effect: its C15 reference
      * must be present in the original square chain before M10 publishes it. */
-    if (map_index < 0 || map_index >= (int)world->dungeon->header.mapCount ||
-        src->b_mapX >= world->dungeon->maps[map_index].width ||
-        src->b_mapY >= world->dungeon->maps[map_index].height ||
-        !original_pc34_explosion_on_square(world, map_index,
-                                           src->b_mapX, src->b_mapY,
-                                           source_thing, &source_index)) {
+    if (!original_pc34_explosion_event_slot_is_valid(
+            src, world, 0, &source_index)) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
     source_explosion = &world->things->explosions[source_index];
@@ -1339,15 +1375,8 @@ static int materialize_original_pc34_remove_fluxcage_event(
      * linked C15 fluxcage: Priority=0, B.Location, C.Slot. TIMELINE.C
      * F0261:1906-1916 later unlinks that exact Thing unless the game is
      * won. Do not reinterpret C.Slot as a host ExplosionList index. */
-    if (map_index < 0 || map_index >= (int)world->dungeon->header.mapCount ||
-        src->b_mapX >= world->dungeon->maps[map_index].width ||
-        src->b_mapY >= world->dungeon->maps[map_index].height ||
-        THING_GET_CELL(source_thing) != 0 ||
-        !original_pc34_explosion_on_square(world, map_index,
-                                           src->b_mapX, src->b_mapY,
-                                           source_thing, &source_index) ||
-        world->things->explosions[source_index].type !=
-            C050_EXPLOSION_FLUXCAGE) {
+    if (!original_pc34_explosion_event_slot_is_valid(
+            src, world, 1, &source_index)) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
     source_explosion = &world->things->explosions[source_index];
@@ -1592,6 +1621,24 @@ static int materialize_original_pc34_timeline(
      * optimized timeline management. Mirror that runtime handoff here:
      * the report preserves the raw source EVENT/TIMELINE bytes, while
      * GameWorld_Compat needs the equivalent M10 TimelineQueue. */
+    for (i = 0; i < report->original_event_count; ++i) {
+        if (report->timeline_indices[i] >=
+            (uint16_t)report->decoded_event_count) {
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+        }
+    }
+    for (i = 0; i < report->original_event_count; ++i) {
+        uint16_t source_index = report->timeline_indices[i];
+        const struct DM1_Event_V1 *src = &report->events[source_index];
+        if ((src->type == DM1_EVENT_EXPLOSION &&
+             !original_pc34_explosion_event_slot_is_valid(
+                 src, world, 0, NULL)) ||
+            (src->type == DM1_EVENT_REMOVE_FLUXCAGE &&
+             !original_pc34_explosion_event_slot_is_valid(
+                 src, world, 1, NULL))) {
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+        }
+    }
     (void)F0720_TIMELINE_Init_Compat(timeline, report->original_game_time);
     for (i = 0; i < report->original_event_count; ++i) {
         uint16_t source_index = report->timeline_indices[i];
