@@ -734,6 +734,15 @@
   cell mutation. Source: CSBWin `CSBCode.cpp:6433`, `Timer.cpp:2473-2505`.
   Verification: Ninja and CTest `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 CSBWin restored TT_OPENROOM DB2 tick bridge: verified
+  function-5 entries now update the exact single DSA-free DB2 `show` bit only
+  outside the party square, where the source cannot enter `QuePrintLines`.
+  DSA/mixed lists cannot fall through to generic C05 text mutation; a
+  reachable pure-stack DSA receipt remains separately bounded. Source:
+  CSBWin `CSBCode.cpp:6470`,
+  `Timer.cpp:1641-1711`. Verification: Ninja and CTest
+  `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - ✅ 2026-07-13 DM2 skproject carried-item local-palette consumer:
   source-required `DRAW_ITEM_IN_HAND` rendering now accepts the leader-hand
   GDAT IMG3 only with its matching `QUERY_GDAT_IMAGE_LOCALPAL` receipt and

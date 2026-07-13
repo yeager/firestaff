@@ -17208,6 +17208,50 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
          * saved receipts must never reach that generic mutation path. */
         return 1;
     }
+    if (timer->function == 5u) {
+        uint8_t *text_record;
+        int thing;
+        int thing_type;
+        int thing_size;
+        uint16_t text_word;
+
+        /* CSBWin Timer.cpp::ProcessTT_OPENROOM:1641-1711 changes DB2::show
+         * with timerTypeModifier[0..2]. If a newly visible text is under the
+         * party, it also enters the unavailable QuePrintLines HUD path. Keep
+         * only a single authenticated DB2 target outside the party square;
+         * DSA and mixed lists retain no complete source mutation owner. */
+        if (!timer->valid || timer->truncated ||
+            timer->source_index != timer_index ||
+            record->eventType != timer->function ||
+            record->mapIndex != timer->level ||
+            record->mapX != timer->ubyte6 || record->mapY != timer->ubyte7 ||
+            record->cell != timer->ubyte8 || record->effect != timer->ubyte9 ||
+            record->aux0 != timer->ubyte5 || timer->ubyte9 > 2u ||
+            !profile->dungeon_handle ||
+            (profile->party_x == timer->ubyte6 &&
+             profile->party_y == timer->ubyte7)) {
+            return 1;
+        }
+        thing = csb_v1_dungeon_get_first_thing(
+            profile->dungeon_handle, timer->level, timer->ubyte6,
+            timer->ubyte7);
+        if (thing < 0 || thing == 0xfffe || thing == 0xffff) return 1;
+        text_record = csb_v1_runtime_mutable_thing_record(
+            profile->dungeon_handle, (uint16_t)thing, &thing_type, &thing_size);
+        if (!text_record) return 1;
+        if (thing_type == CSB_THING_TYPE_TEXTSTRING) {
+            if (thing_size < 4 ||
+                csb_v1_runtime_read_u16(text_record) != 0xfffeu) {
+                return 1;
+            }
+            text_word = csb_v1_runtime_read_u16(text_record + 2);
+            if (timer->ubyte9 == 0u) text_word |= 0x0001u;
+            else if (timer->ubyte9 == 1u) text_word &= (uint16_t)~0x0001u;
+            else text_word ^= 0x0001u;
+            csb_v1_runtime_write_u16(text_record + 2, text_word);
+            return 1;
+        }
+    }
     if (timer->function == 8u || timer->function == 9u) {
         uint8_t *square;
         int square_type;
@@ -17476,7 +17520,8 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         thing_record = csb_v1_dungeon_get_thing_record(
             dungeon, (uint16_t)thing, &type, NULL, &size);
         if (!thing_record || size < 2) {
-            return (timer->function == 8u || timer->function == 9u) ? 1 : 0;
+            return (timer->function == 5u || timer->function == 8u ||
+                    timer->function == 9u) ? 1 : 0;
         }
         if (type == CSB_V1_THING_TYPE_ACTUATOR && size >= 4 &&
             (((uint16_t)thing_record[2] | ((uint16_t)thing_record[3] << 8)) &
@@ -17502,10 +17547,11 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         return csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
             profile, record, timer, timer_index, queue_slot);
     }
-    if (timer->function == 8u || timer->function == 9u) {
-        /* A listed target can have DSA or WiggleEverything ownership that is
+    if (timer->function == 5u || timer->function == 8u ||
+        timer->function == 9u) {
+        /* A listed target can have DSA, HUD, or WiggleEverything ownership
          * absent from this restored profile. Any pure-stack DSA receipt above
-         * may run, but it cannot fall through to M10's generic cell mutation. */
+         * may run, but it cannot fall through to M10's generic mutation. */
         return 1;
     }
     return 0;
