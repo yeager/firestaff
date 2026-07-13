@@ -2566,6 +2566,8 @@ add_executable(firestaff_theron_v2_hud_launch_mode_probe
     src/theron/theron_v1_champions.c
     src/dm1v2/dm1_v2_presentation_mode_pc34.c
     src/csb/csb_v2_presentation_mode_pc34.c
+    src/csb/csb_v22_finished_art_material_gate_pc34.c
+    src/csb/csb_v22_modern_assets_pc34.c
     src/csb/csb_v22_shapes.c
     src/csb/csb_v2_texture_upscale_pc34.c
     src/dm1v2/dm1_v22_shapes.c
@@ -2693,6 +2695,8 @@ add_executable(firestaff_theron_v2_presentation_mode_probe
     probes/firestaff_theron_v2_presentation_mode_probe.c
     src/theron/theron_v2_presentation_mode_pc34.c
     src/csb/csb_v2_presentation_mode_pc34.c
+    src/csb/csb_v22_finished_art_material_gate_pc34.c
+    src/csb/csb_v22_modern_assets_pc34.c
     src/dm1v2/dm1_v2_presentation_mode_pc34.c
     src/dm1v2/dm1_v22_shapes.c
     src/dm1v2/dm1_v2_modern_assets_pc34.c
@@ -7417,6 +7421,21 @@ if(BUILD_TESTING)
     )
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_g1_runtime_map_validation_real_data PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+
+    # Like the generic G1 admission probe above, this accepts only the
+    # canonical original DUNGEON.DAT and is built in CI, not run data-free.
+    add_executable(test_dm2_v1_g1_direct_door_runtime_real_data
+        tests/test_dm2_v1_g1_direct_door_runtime_real_data.c
+        src/dm2/dm2_v1_dungeon_loader.c
+    )
+    target_include_directories(test_dm2_v1_g1_direct_door_runtime_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_direct_door_runtime_real_data PRIVATE
             -Wall -Wextra -O2)
     endif()
 
