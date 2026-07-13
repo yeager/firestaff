@@ -4373,6 +4373,20 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_inscription_palette_transition_pc34.c")
+        add_executable(test_m11_dm1_hoc_inscription_palette_transition_pc34
+            tests/test_m11_dm1_hoc_inscription_palette_transition_pc34.c)
+        target_link_libraries(test_m11_dm1_hoc_inscription_palette_transition_pc34 PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_hoc_inscription_palette_transition_pc34 PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_hoc_inscription_palette_transition_pc34
+            COMMAND test_m11_dm1_hoc_inscription_palette_transition_pc34
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/firestaff_dm1_v2_source_owned_route_screenshot_probe.c")
         add_executable(firestaff_dm1_v2_source_owned_route_screenshot_probe
             probes/firestaff_dm1_v2_source_owned_route_screenshot_probe.c)
