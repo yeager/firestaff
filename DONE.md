@@ -1230,6 +1230,13 @@
   and branch target; the observed bit-6 outcome and all controller semantics
   remain live-capture work.
 
+- 2026-07-13 Theron System Card `$e95a` set-branch receipt: hash-verified the
+  bit-6-set target as a raw `$1800 & $f8` store to `$227a`, followed by fixed
+  comparisons and branches `$d0:$e97a`, `$98:$e98a`, `$88:$e988`, and
+  `$80:$e986`, with the unmatched path returning to `$e95a`. No raw value is
+  assigned controller or command semantics; selecting a path remains live
+  capture work.
+
 - 2026-07-12 CSB F0115 native Ghost group front: type 8 now resolves only
   through `G0243 -> G0219 -> M618` to PC CSB `GRAPHICS.DAT` 607. Its G0219
   offset 23 and `0x04` coordinate/transparency byte are consumed by the
