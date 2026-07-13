@@ -17,6 +17,14 @@
   `TITLE.C F0437:424-463` and `ENTRANCE.C F0806:850-903`. Verification: local
   PC34 `firestaff_csb_v1_pc_real_asset_launch_probe` passed 50/50 checks.
 
+- 2026-07-13 DM1 F0231 aftermath ordering: compact melee now consumes
+  `M005_RANDOM(2)+2` stamina at T0231015 misses and `M004_RANDOM(4)+4` after
+  landed F0190 resolution, including F0325's stamina-underflow damage. Its
+  Swing-only entry applies the late `M003_RANDOM(64) < skill` damage critical
+  before F0190. Source: ReDMCSB `PROJEXPL.C F0231:1528-1539` and
+  `CHAMPION.C F0325:2025-2047`. Verification: isolated Ninja build and 42/42
+  assertions in `test_dm1_v1_combat_pc34_compat_integration`.
+
 - 2026-07-13 DM1 F0231 action-hand icon ordering: compact combat now applies
   Diamond Edge's quarter and Hardcleave's eighth defense reductions only after
   the F0231 defense roll, then applies Vorpal Blade's material-target late

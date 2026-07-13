@@ -2859,6 +2859,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     rolled defense, then Vorpal Blade halves only final damage against material
     creatures. The remaining work is broader runtime aftermath proof, not a
     generic weapon modifier or a replacement melee formula.
+  - 2026-07-13 update: the compact F0231 aftermath now keeps the original
+    T0231015 miss stamina draw, landed stamina draw, and late Swing-skill
+    critical order. It does not reuse or replace F0407's separate G0494 action
+    stamina cost. Remaining work is broader runtime aftermath proof.
   - 2026-07-13 update: the live F0407 completion path now retains its
     G0494/M005 stamina receipt until after F0402/F0231. This preserves the
     pre-action F0312 strength state required by `MENU.C F0407:1613-1628` and
