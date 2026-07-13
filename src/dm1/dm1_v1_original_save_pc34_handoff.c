@@ -1104,6 +1104,75 @@ static int materialize_original_pc34_explosion_event(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+static int materialize_original_pc34_remove_fluxcage_event(
+    const struct DM1_Event_V1 *src,
+    struct GameWorld_Compat *world,
+    struct TimelineEvent_Compat *out_event)
+{
+    const struct DungeonExplosion_Compat *source_explosion;
+    struct ExplosionCreateInput_Compat input;
+    struct TimelineEvent_Compat first_event;
+    uint16_t source_thing;
+    int source_index;
+    int runtime_index;
+    int map_index;
+
+    if (!src || !world || !world->dungeon || !world->things || !out_event ||
+        src->type != DM1_EVENT_REMOVE_FLUXCAGE || src->priority != 0u) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    map_index = (int)((src->map_time >> 24) & 0xffu);
+    source_thing = read_u16_le(&src->c_cell);
+
+    /* ReDMCSB PROJEXPL.C F0224:983-994 creates C24 only for a newly
+     * linked C15 fluxcage: Priority=0, B.Location, C.Slot. TIMELINE.C
+     * F0261:1906-1916 later unlinks that exact Thing unless the game is
+     * won. Do not reinterpret C.Slot as a host ExplosionList index. */
+    if (map_index < 0 || map_index >= (int)world->dungeon->header.mapCount ||
+        src->b_mapX >= world->dungeon->maps[map_index].width ||
+        src->b_mapY >= world->dungeon->maps[map_index].height ||
+        THING_GET_CELL(source_thing) != 0 ||
+        !original_pc34_explosion_on_square(world, map_index,
+                                           src->b_mapX, src->b_mapY,
+                                           source_thing, &source_index) ||
+        world->things->explosions[source_index].type !=
+            C050_EXPLOSION_FLUXCAGE) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    source_explosion = &world->things->explosions[source_index];
+    memset(&input, 0, sizeof(input));
+    input.explosionType = C050_EXPLOSION_FLUXCAGE;
+    input.attack = source_explosion->attack;
+    input.mapIndex = map_index;
+    input.mapX = src->b_mapX;
+    input.mapY = src->b_mapY;
+    input.cell = 0;
+    input.centered = source_explosion->centered;
+    input.currentTick = (int)((src->map_time & 0x00ffffffu) - 1u);
+    input.ownerKind = -1;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    if (!F0821_EXPLOSION_Create_Compat(&input, &world->explosions,
+                                       &runtime_index, &first_event)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    (void)first_event;
+    memset(out_event, 0, sizeof(*out_event));
+    out_event->kind = TIMELINE_EVENT_REMOVE_FLUXCAGE;
+    out_event->fireAtTick = src->map_time & 0x00ffffffu;
+    out_event->mapIndex = map_index;
+    out_event->mapX = src->b_mapX;
+    out_event->mapY = src->b_mapY;
+    out_event->cell = 0;
+    out_event->aux0 = runtime_index;
+    out_event->aux1 = C050_EXPLOSION_FLUXCAGE;
+    out_event->aux2 = (int)source_thing;
+    out_event->aux4 = 0;
+    world->explosions.entries[runtime_index].scheduledAtTick =
+        (int)(src->map_time & 0x00ffffffu);
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 static int materialize_original_pc34_timeline(
     const DM1OriginalSavePC34HandoffReport *report,
     struct GameWorld_Compat *world,
@@ -1175,6 +1244,14 @@ static int materialize_original_pc34_timeline(
             }
             continue;
         }
+        if (src->type == DM1_EVENT_REMOVE_FLUXCAGE) {
+            if (materialize_original_pc34_remove_fluxcage_event(
+                    src, world, &ev) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
+                !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            continue;
+        }
         memset(&ev, 0, sizeof(ev));
         ev.kind = kind;
         ev.fireAtTick = src->map_time & 0x00ffffffu;
@@ -1224,17 +1301,6 @@ static int materialize_original_pc34_timeline(
             ev.mapX = src->b_mapX;
             ev.mapY = src->b_mapY;
             ev.aux0 = (int)(int16_t)read_u16_le(&src->c_cell);
-        } else if (src->type == DM1_EVENT_REMOVE_FLUXCAGE) {
-            uint16_t thing = read_u16_le(&src->c_cell);
-            ev.mapX = src->b_mapX;
-            ev.mapY = src->b_mapY;
-            ev.cell = EXPLOSION_CELL_CENTERED;
-            ev.aux0 =
-                (((thing >> DM1_PC34_THING_TYPE_SHIFT) &
-                  DM1_PC34_THING_TYPE_MASK) == THING_TYPE_EXPLOSION)
-                    ? (int)(thing & DM1_PC34_THING_INDEX_MASK)
-                    : (int)thing;
-            ev.aux1 = C050_EXPLOSION_FLUXCAGE;
         } else {
             ev.mapX = src->b_mapX;
             ev.mapY = src->b_mapY;
