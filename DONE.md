@@ -127,8 +127,10 @@
 - 2026-07-13 DM1 PC34 C4 `EVENT_NONE` rejection: a checksum-valid C4 index
   within the decoded EVENT array but pointing to an inactive C3 record now
   fails closed. Its receipt distinguishes the source slot/index and inactive
-  record from an out-of-range reference; staged party, runtime world, queue,
-  and caller receipt remain unchanged. Source: ReDMCSB `LOADSAVE.C`
+  record from an out-of-range reference. The focused source row also proves
+  that C4 cannot schedule the same index named by `FirstUnusedEventIndex`.
+  Staged party, runtime world, queue, and caller receipt remain unchanged.
+  Source: ReDMCSB `LOADSAVE.C`
   F0433/F0435 and `TIMELINE.C` F0238/F0651. Verification: focused native-PC34
    handoff CTest.
 - 2026-07-13 DM1 PC34 invalid C4 reference rejection: a checksum-valid C4

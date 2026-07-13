@@ -1293,8 +1293,11 @@ static void test_rejects_non_pc34_and_truncated_parts(void)
           report.timeline_invalid_slot == 1 &&
           report.timeline_invalid_event_index == 3 &&
           report.timeline_invalid_event_is_none &&
+          report.original_first_unused_event_index ==
+              report.timeline_invalid_event_index &&
+          !report.first_unused_event_index_points_to_active &&
           report.timeline_duplicate_slot == -1,
-          "C4 EVENT_NONE reference has exact F0435 provenance");
+          "C4 reference to its free-list tombstone has exact provenance");
     CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
           "C4 EVENT_NONE reference rolls back staged party import");
 
@@ -1772,15 +1775,15 @@ static void test_runtime_handoff_is_transactional_on_rejected_tail(void)
                                      ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
     CHECK(rc == SAVEGAME_PC34_OK &&
           rewrite_fixture_timeline_index(bytes, (size_t)written, 1, 3u),
-          "C4 EVENT_NONE runtime fixture remains checksum-authenticated");
+          "C4 free-list tombstone runtime fixture remains authenticated");
     rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
         bytes, (size_t)written, &world, &event_queue, &report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
-          "C4 EVENT_NONE reference rejects the complete runtime handoff");
+          "C4 free-list tombstone reference rejects runtime handoff");
     CHECK(world.gameTick == 777u && world.party.championCount == 1 &&
           world.party.mapIndex == 6 && event_queue.gameTick == 888u &&
           event_queue.eventCount == 1 && report.original_game_time == 999u,
-          "C4 EVENTNONE reference preserves world queue and receipt");
+          "C4 free-list tombstone preserves world queue and receipt");
 
     rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
                                      2, 3, 9, 10, 2, 1,
