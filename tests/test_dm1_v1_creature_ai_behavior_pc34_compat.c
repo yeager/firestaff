@@ -780,6 +780,58 @@ static void test_per_creature_attack_event(void) {
 }
 
 /* =========================================================
+ *  Test 14b: PC 3.4 ranged diagonal C38 attack
+ *
+ * ReDMCSB GROUP.C F0209:2380-2387, guarded by
+ * MEDIA720_I34E_I34M, permits a range>1 creature to attack a
+ * visible diagonal party when M003_RANDOM(8) is zero. The Red
+ * Dragon values below are the original G0243 entry: range=3,
+ * sight=5 and dexterity=45. This exercises the actual C38
+ * dispatch rather than a host attack shortcut.
+ * ========================================================= */
+static void test_pc34_ranged_diagonal_c38_attack(void) {
+    int seed;
+    int sawOriginalDiagonalAttack = 0;
+
+    for (seed = 1; seed <= 512; ++seed) {
+        struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+        struct DM1ActiveGroup_Compat ag = make_default_ag();
+        struct RngState_Compat rng = make_rng((uint32_t)seed);
+        struct DM1BehaviorResult_Compat result;
+        int ok;
+
+        ctx.groupBehavior = DM1_BEHAVIOR_ATTACK;
+        ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+        ctx.creatureType = DM1_CREATURE_TYPE_RED_DRAGON;
+        ctx.creatureSize = DM1_SIZE_FULL_SQUARE;
+        ctx.creatureInfo.ranges = 0x3005; /* G0243[24]: attack=3, sight=5 */
+        ctx.creatureInfo.dexterity = 45;  /* G0243[24] */
+        ctx.creatureInfo.animationTicks = 0x0000;
+        ctx.currentGroupMapX = 5;
+        ctx.currentGroupMapY = 5;
+        ctx.partyMapX = 6;
+        ctx.partyMapY = 6;
+        ctx.currentGroupDistanceToParty = 2;
+        ctx.currentGroupPrimaryDirToParty = 1;
+        ctx.distanceToVisibleParty = 2;
+        ag.directions = 1; /* F0205 packed creature-0 east-facing slot */
+        ag.cells = DM1_SINGLE_CENTERED_CREATURE_CELL;
+
+        ok = F0810_DM1_GROUP_DispatchBehavior_Compat(
+            &ctx, &ag, &rng, &result);
+        if (ok && result.actionKind == DM1_ACTION_ATTACK &&
+            result.attackIsProjectile &&
+            result.projectileThing == DM1_PROJECTILE_THING_FIREBALL) {
+            sawOriginalDiagonalAttack = 1;
+            break;
+        }
+    }
+
+    EXPECT_EQ(sawOriginalDiagonalAttack, 1,
+              "pc34_diagonal_c38: range-3 Red Dragon keeps original diagonal shot");
+}
+
+/* =========================================================
  *  Test 15: Negative reaction event during freeze life → ignored
  * ========================================================= */
 static void test_reaction_during_freeze(void) {
@@ -1482,6 +1534,7 @@ int main(void) {
     test_smell_direction_requires_unblocked_route();
     test_smell_direction_stored_scent_fallback();
     test_per_creature_attack_event();
+    test_pc34_ranged_diagonal_c38_attack();
     test_reaction_during_freeze();
     test_negative_reaction_event_creation();
     test_projectile_hit_reaction_sets_search_direction();

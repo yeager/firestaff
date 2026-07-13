@@ -1711,9 +1711,15 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
             int distY = ctx->currentGroupMapY - ctx->partyMapY;
             if (distY < 0) distY = -distY;
 
-            /* In range and on same row/column */
+            /* ReDMCSB GROUP.C F0209:2380-2387: PC 3.4 keeps the normal
+             * row/column attack line, but MEDIA720_I34E/I34M also admits a
+             * ranged (never melee) diagonal shot when M003_RANDOM(8) is
+             * zero. Consume that random value only for the diagonal case,
+             * before the source's M003_RANDOM(16) attack gate. */
             if (ctx->distanceToVisibleParty <= attackRange &&
-                (distX == 0 || distY == 0)) {
+                ((distX == 0 || distY == 0) ||
+                 (attackRange > 1 &&
+                  F0732_COMBAT_RngRandom_Compat(rng, 8) == 0))) {
 
                 /* Random attack probability — ReDMCSB F0209:
                  * Longer range creatures are more likely to attack.
