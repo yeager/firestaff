@@ -2424,6 +2424,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     visible source command surface, so host mutation remains blocked until
     both layers load. Remaining HoC work is real original-PC/Mac capture
     breadth, not a partial panel fallback.
+  - 2026-07-13 update: host C160 and the C027-confirm path now require a
+    bounded, valid original front-square sensor chain before F0282 can commit.
+    The completion mutation follows `REVIVE.C F0282` exactly: it disables the
+    first SENSOR, including documented BUG0_87 custom-dungeon behavior, and
+    does not substitute a matching C127/TextString scan. Missing, malformed,
+    or sensor-free chains leave the visible PC34 panel inert. Direct model APIs
+    remain available to save/runtime proof. Remaining HoC work is real
+    original-PC/Mac capture breadth, not a synthetic mirror disable route.
   - 2026-07-13 update: DM1 F0407 INVOKE projectile planning now accepts only the source `M003_RANDOM(128)` energy and `M002_RANDOM(6)` family domains from `MENU.C F0407:1480-1493`; malformed command facts fail closed rather than creating a non-source projectile. Remaining action work is other special-action preconditions and broader runtime proof.
   - 2026-07-13 update: DM1 F0401 fright plus F0407 WINDOW/FLIP plans now accept only their source `M002_RANDOM(...)`/`M005_RANDOM(2)` domains from `MENU.C F0401:969-976` and `F0407:1398-1440,1536-1541`; malformed runtime draws fail closed rather than wrapping into a resistance, Thieves Eye, or coin-flip outcome. Remaining action work is other special-action preconditions and broader runtime proof.
   - 2026-07-09 update: DM1 F0412/F0327 spell projectile launch receipts now convert spell casts into the shared F0810 create-input path with F0327 weak-projectile adjustment, and the old M11 Open Door fallback launch has been removed. Remaining spell/render work is broader projectile-family receipt proof.

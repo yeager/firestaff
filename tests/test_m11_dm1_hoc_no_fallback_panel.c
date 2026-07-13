@@ -69,10 +69,10 @@ typedef struct HocFrontMirrorFixture {
     struct DungeonMapDesc_Compat map;
     struct DungeonMapTiles_Compat tiles;
     struct DungeonThings_Compat things;
-    struct DungeonSensor_Compat sensors[1];
+    struct DungeonSensor_Compat sensors[2];
     unsigned char squareData[2];
     unsigned short squareFirstThings[2];
-    unsigned char sensorRaw[8];
+    unsigned char sensorRaw[16];
 } HocFrontMirrorFixture;
 
 static unsigned short hoc_sensor_thing(int index, int cell)
@@ -144,6 +144,28 @@ static int seed_front_mirror_state(M11_GameViewState* state,
         &champion, state->mirrorCatalog.records[0].titleText,
         sizeof(state->mirrorCatalog.records[0].titleText));
     return 1;
+}
+
+static void seed_first_sensor_before_mirror(HocFrontMirrorFixture* fixture)
+{
+    if (!fixture) {
+        return;
+    }
+    /* ReDMCSB REVIVE.C F0282 BUG0_87: the source disables the first sensor
+     * on the square, even when a custom sensor precedes the C127 mirror. */
+    fixture->sensors[0].sensorType = 1;
+    fixture->sensors[0].sensorData = 0;
+    fixture->sensors[0].ornamentOrdinal = 0;
+    fixture->sensors[1].sensorType = 127;
+    fixture->sensors[1].sensorData = 13;
+    fixture->sensors[1].ornamentOrdinal = 4;
+    fixture->sensorRaw[0] = (unsigned char)(hoc_sensor_thing(1, 2) & 0xffu);
+    fixture->sensorRaw[1] = (unsigned char)((hoc_sensor_thing(1, 2) >> 8) & 0xffu);
+    fixture->sensorRaw[8] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    fixture->sensorRaw[9] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xffu);
+    fixture->squareData[0] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    fixture->things.thingCounts[THING_TYPE_SENSOR] = 2;
+    fixture->things.sensorCount = 2;
 }
 
 static int expect_original_font_foreground(
@@ -353,6 +375,16 @@ static int test_c040_host_input_requires_real_panel(void)
         M11_GameView_Shutdown(&realAssetState);
         return 0;
     }
+    /* C160's source F0282 tail owns a real first sensor on the front mirror
+     * square.  A model-only C040 panel has no source mutation target. */
+    if (M11_GameView_HandlePointer(&realAssetState, 130, 115, 1) !=
+            M11_GAME_INPUT_IGNORED ||
+        !realAssetState.candidateMirrorPanelActive ||
+        realAssetState.world.party.championCount != 1) {
+        fprintf(stderr, "FAIL C160 accepted without front source sensor\n");
+        M11_GameView_Shutdown(&realAssetState);
+        return 0;
+    }
     /* C162 at the source cancel row must now consume the C040-backed panel
      * and its C017 base, then remove only the appended candidate champion. */
     if (M11_GameView_HandlePointer(&realAssetState, 110, 150, 1) !=
@@ -372,12 +404,13 @@ static int test_c161_host_input_requires_real_c027_and_m653(void)
 {
     const char* graphicsPath = pc34_graphics_path();
     M11_GameViewState state;
+    HocFrontMirrorFixture fixture;
 
     if (!graphicsPath) {
         return 1;
     }
-    seed_c040_state(&state);
-    if (!M11_AssetLoader_Init(&state.assetLoader, graphicsPath)) {
+    if (!seed_front_mirror_state(&state, &fixture) ||
+        !M11_AssetLoader_Init(&state.assetLoader, graphicsPath)) {
         if (getenv("FIRESTAFF_DM1_GRAPHICS_DAT")) {
             fprintf(stderr, "FAIL configured PC34 C027 did not load\n");
             return 0;
@@ -386,6 +419,13 @@ static int test_c161_host_input_requires_real_c027_and_m653(void)
         return 1;
     }
     state.assetsAvailable = 1;
+    if (M11_GameView_HandlePointer(&state, 110, 83, 1) !=
+            M11_GAME_INPUT_REDRAW ||
+        !state.candidateMirrorPanelActive) {
+        fprintf(stderr, "FAIL PC34 C127 did not open C040 for C161\n");
+        M11_GameView_Shutdown(&state);
+        return 0;
+    }
 
     /* ReDMCSB REVIVE.C F0282 invokes F0281 only for C161.  C027 without
      * M653 cannot show typed input, so the host must not enter that modal
@@ -467,6 +507,49 @@ static int test_front_mirror_host_input_requires_real_pc34_material(void)
     return 1;
 }
 
+static int test_c160_disables_source_first_sensor(void)
+{
+    const char* graphicsPath = pc34_graphics_path();
+    M11_GameViewState state;
+    HocFrontMirrorFixture fixture;
+    int confirmResult;
+
+    if (!graphicsPath) {
+        return 1;
+    }
+    if (!seed_front_mirror_state(&state, &fixture) ||
+        !M11_AssetLoader_Init(&state.assetLoader, graphicsPath)) {
+        if (getenv("FIRESTAFF_DM1_GRAPHICS_DAT")) {
+            fprintf(stderr, "FAIL configured PC34 F0282 source chain did not load\n");
+            return 0;
+        }
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    state.assetsAvailable = 1;
+    if (M11_GameView_HandlePointer(&state, 110, 83, 1) !=
+            M11_GAME_INPUT_REDRAW) {
+        fprintf(stderr, "FAIL C127 did not open F0282 panel\n");
+        M11_GameView_Shutdown(&state);
+        return 0;
+    }
+    /* F0280 has already chosen the visible C127.  Model the F0282 source
+     * chain exactly as BUG0_87 describes: a custom sensor now precedes it. */
+    seed_first_sensor_before_mirror(&fixture);
+    confirmResult = M11_GameView_HandlePointer(&state, 130, 115, 1);
+    if (confirmResult != M11_GAME_INPUT_REDRAW ||
+        fixture.sensors[0].sensorType != 0 ||
+        fixture.sensors[1].sensorType != 127 ||
+        state.candidateMirrorPanelActive ||
+        state.world.party.championCount != 1) {
+        fprintf(stderr, "FAIL C160 did not preserve F0282 first-sensor owner\n");
+        M11_GameView_Shutdown(&state);
+        return 0;
+    }
+    M11_GameView_Shutdown(&state);
+    return 1;
+}
+
 int main(void) {
     M11_GameViewState state;
     unsigned char framebuffer[kFramebufferWidth * kFramebufferHeight];
@@ -508,6 +591,9 @@ int main(void) {
         return 1;
     }
     if (!test_front_mirror_host_input_requires_real_pc34_material()) {
+        return 1;
+    }
+    if (!test_c160_disables_source_first_sensor()) {
         return 1;
     }
     printf("PASS test_m11_dm1_hoc_no_fallback_panel substitute_pixels=0\n");
