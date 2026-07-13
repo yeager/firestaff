@@ -294,6 +294,25 @@ typedef struct {
     int pair_semantics_proven;
 } Nexus_V1_DgnStructure1FFaceRotationPairReceipt;
 
+/* Structure1A-owned Structure1F records retain two signed offset bytes. This
+ * receipt preserves only exact raw pair reuse; it does not establish an axis,
+ * scale, origin, position, mesh transform, texture coordinate, or draw. */
+typedef struct {
+    int structure1a_relation_complete;
+    int structure1f_bound_entry_count;
+    int resolved_offset_pair_count;
+    int unique_offset_pair_count;
+    int duplicate_offset_pair_count;
+    int zero_offset_pair_count;
+    int nonzero_offset_pair_count;
+    int minimum_offset_x;
+    int maximum_offset_x;
+    int minimum_offset_y;
+    int maximum_offset_y;
+    int complete;
+    int offset_semantics_proven;
+} Nexus_V1_DgnStructure1FOffsetPairReceipt;
+
 /* DMWeb DGN files: the container header names Structure3 with a block offset
  * and block count. The enclosed bytes have no established Saturn payload,
  * vertex, face, texture, palette, or draw grammar, so this is an envelope
@@ -718,6 +737,7 @@ typedef struct {
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt structure1f_face_rotation_pairs;
+    Nexus_V1_DgnStructure1FOffsetPairReceipt structure1f_offset_pairs;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     int structure1g_present;
     int structure1g_valid;
@@ -814,6 +834,7 @@ typedef struct {
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt structure1f_face_rotation_pairs;
+    Nexus_V1_DgnStructure1FOffsetPairReceipt structure1f_offset_pairs;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
@@ -879,6 +900,9 @@ int nexus_v1_level_structure1f_rotation_selector_receipt(
 int nexus_v1_level_structure1f_face_rotation_pair_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt *out_receipt);
+int nexus_v1_level_structure1f_offset_pair_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FOffsetPairReceipt *out_receipt);
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);
