@@ -10705,3 +10705,7 @@ import, runtime expiry, native export, and reimport of the C24 union.
 - ✅ 2026-07-13 DM2 weather decoded-material receipt: each source ENVIRONMENT
   weather command now proves a decodable IMG3 pixel plane together with its
   own local palette before it can reach the no-draw weather handoff.
+- ✅ 2026-07-13 DM2 G1 creature map-chip palette ownership: direct DB4
+  `CreatureType -> CREATURES/type/F9` material receipts now retain and require
+  the matching source IMG3 local palette before the dungeon viewport accepts
+  the decoded plane.

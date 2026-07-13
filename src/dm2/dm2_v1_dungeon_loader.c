@@ -2069,6 +2069,7 @@ int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
     int map,
     DM2_V1_G1GdatRawRead read_raw,
     DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
     void *read_userdata,
     DM2_V1_G1CreatureMapChipRuntimeReceipt *out)
 {
@@ -2083,6 +2084,7 @@ int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
      * roots, but it cannot promote one into a GDAT material request. */
     if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
         !d->raw_data || !read_raw || !read_image_metadata ||
+        !read_local_palette ||
         d->square_bytes != 1 ||
         map < 0 || map >= d->level_count) {
         return 0;
@@ -2141,6 +2143,16 @@ int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
                 return 0;
             }
             material = &candidate.materials[candidate.material_count++];
+            /* QUERY_DUNGEON_MAP_CHIP_PICT pairs CREATURES/type/F9 with
+             * QUERY_GDAT_IMAGE_LOCALPAL before DRAW_CHIP_OF_MAGIC_MAP.
+             * A DB4 root cannot borrow an interface or another creature's
+             * palette merely because its decoded image dimensions match. */
+            if (!read_local_palette(read_userdata, 0x0f, creature_type, 0xf9,
+                                    material->local_palette16,
+                                    &material->local_palette_hash) ||
+                material->local_palette_hash == 0u) {
+                return 0;
+            }
             material->x = x;
             material->y = y;
             material->object_id = root;
@@ -2164,12 +2176,14 @@ int dm2_v1_g1_creature_map_chip_matches_decoded_material(
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt,
     int creature_type,
     int image_width,
-    int image_height)
+    int image_height,
+    uint32_t local_palette_hash)
 {
     int i;
 
     if (!receipt || !receipt->valid || creature_type < 0 ||
-        creature_type > 0xff || image_width <= 0 || image_height <= 0) {
+        creature_type > 0xff || image_width <= 0 || image_height <= 0 ||
+        local_palette_hash == 0u) {
         return 0;
     }
     for (i = 0; i < receipt->material_count; ++i) {
@@ -2177,7 +2191,8 @@ int dm2_v1_g1_creature_map_chip_matches_decoded_material(
             &receipt->materials[i];
         if (material->creature_type == (uint8_t)creature_type &&
             material->image_width == image_width &&
-            material->image_height == image_height) {
+            material->image_height == image_height &&
+            material->local_palette_hash == local_palette_hash) {
             return 1;
         }
     }
