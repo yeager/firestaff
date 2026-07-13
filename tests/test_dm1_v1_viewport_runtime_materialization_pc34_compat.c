@@ -115,7 +115,7 @@ int main(void)
         DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
             DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34);
         seed_live_effects(&input, &projectiles, &explosions);
-        explosions.count = 4;
+        explosions.count = 5;
         explosions.entries[1] = explosions.entries[0];
         explosions.entries[1].slotIndex = 5;
         explosions.entries[1].explosionType = C002_EXPLOSION_LIGHTNING_BOLT;
@@ -127,9 +127,12 @@ int main(void)
         explosions.entries[3] = explosions.entries[0];
         explosions.entries[3].slotIndex = 7;
         explosions.entries[3].explosionType = C100_EXPLOSION_REBIRTH_STEP1;
+        explosions.entries[4] = explosions.entries[0];
+        explosions.entries[4].slotIndex = 8;
+        explosions.entries[4].explosionType = C101_EXPLOSION_REBIRTH_STEP2;
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
               "F0115 multi-explosion receipt is built");
-        CHECK(d1c.liveExplosionCount == 4 &&
+        CHECK(d1c.liveExplosionCount == 5 &&
               d1c.liveRenderableExplosionCount == 2 &&
               d1c.liveRenderableExplosionSlots[0] == 4 &&
               d1c.liveRenderableExplosionSlots[1] == 5 &&
@@ -137,7 +140,7 @@ int main(void)
               d1c.liveRenderableExplosionTypes[1] == C002_EXPLOSION_LIGHTNING_BOLT &&
               d1c.liveRenderableExplosionFrames[1] == 1 &&
               d1c.liveRenderableExplosionAttacks[1] == 64,
-              "F0115 preserves every ordinary PC34 explosion and fails closed for special routes");
+              "F0115 preserves every ordinary PC34 explosion and keeps C100/C101 on their C3000/C3007 routes");
     }
 
     {

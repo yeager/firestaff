@@ -18151,7 +18151,6 @@ static int m11_draw_explosion_material(unsigned char* framebuffer,
                                        const M11_ViewportCell* cell,
                                        int depthIndex,
                                        int isD0c) {
-    int drewBitmap = 0;
     int expType;
     int frame;
     int maxFrames;
@@ -18171,16 +18170,16 @@ static int m11_draw_explosion_material(unsigned char* framebuffer,
     maxFrames = cell->firstExplosionMaxFrames;
     attack = cell->firstExplosionAttack;
     if (isD0c) {
-        drewBitmap = m11_draw_d0c_explosion_pattern(
+        /* ReDMCSB DUNVIEW.C F0115:6038-6074 has a separate M636 pattern
+         * route for D0C.  A missing pattern is no-draw: falling through to
+         * the F0114 D1-D3 sprite would invent a non-source replacement. */
+        return m11_draw_d0c_explosion_pattern(
             g_drawState, framebuffer, framebufferWidth, framebufferHeight,
             x, y, w, h, expType, attack);
     }
-    if (!drewBitmap) {
-        drewBitmap = m11_draw_explosion_sprite(
-            g_drawState, framebuffer, framebufferWidth, framebufferHeight,
-            x, y, w, h, expType, frame, maxFrames, attack, depthIndex);
-    }
-    return drewBitmap;
+    return m11_draw_explosion_sprite(
+        g_drawState, framebuffer, framebufferWidth, framebufferHeight,
+        x, y, w, h, expType, frame, maxFrames, attack, depthIndex);
 }
 
 static void m11_draw_effect_cue(unsigned char* framebuffer,

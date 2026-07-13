@@ -126,6 +126,11 @@ def main() -> int:
             raise AssertionError(f"deferred pass missing {required!r}")
     if "m11_draw_explosion_sprite" not in explosion_material_body:
         raise AssertionError("deferred explosion material path lost the source-backed bitmap route")
+    if "if (isD0c)" not in explosion_material_body or \
+       "return m11_draw_d0c_explosion_pattern(" not in explosion_material_body:
+        raise AssertionError("D0C must retain its dedicated M636 material route")
+    if "if (!drewBitmap)" in explosion_material_body:
+        raise AssertionError("D0C must not fall back from M636 to an F0114 sprite")
     for forbidden in ["m11_fill_rect", "m11_draw_hline", "m11_draw_vline", "m11_draw_rect"]:
         if forbidden in explosion_material_body:
             raise AssertionError(f"deferred explosion material path reintroduced synthetic {forbidden}")
