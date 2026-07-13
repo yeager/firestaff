@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus SAL container precondition: all 16 local hash-verified
+  Track 1 SAL banks share the exact `dsp01.EXB` preamble, while `DM.BIN`
+  contains the adjacent `.MAP`/`.SAL`/`SNDLEV01..15`/`SDDRVS.TSK` strings at
+  offsets `0x38ea0..0x39100`. Runtime receipts now expose only the byte-8
+  opaque payload boundary and reject other preambles; codec/frame semantics
+  and playback remain blocked. Verification:
+  `test_nexus_v1_sound_runtime_receipt` PASS.
+
 - 2026-07-13 CSB post-C040 movement receipt: the first source movement or
   turn after C040 clear now validates its next tick against the same terminal
   session before the CSB `COMMAND.C` bridge may run. A stale generation leaves
