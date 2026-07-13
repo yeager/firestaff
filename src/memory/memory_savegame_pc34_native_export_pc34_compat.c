@@ -924,8 +924,7 @@ static int pc34_write_external_portraits(unsigned char* dst,
     }
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
         const struct ChampionState_Compat* champion = 0;
-        if (state != 0 && state->party != 0 &&
-            slot < state->party->championCount) {
+        if (state != 0 && state->party != 0) {
             champion = &state->party->champions[slot];
         }
         if (champion != 0 && champion->portraitBitmapValid) {

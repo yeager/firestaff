@@ -111,6 +111,8 @@ typedef struct {
     int decoded_timeline_index_count;
     int event_decode_truncated_count;
     uint32_t external_portrait_byte_count;
+    uint32_t external_portrait_byte_offset;
+    uint32_t external_portrait_fingerprint;
     int external_portrait_payload_count;
     int external_portrait_imported_count;
     int dungeon_tail_present;
@@ -187,6 +189,12 @@ typedef struct {
     int c13_timeline_byte_preserved_count;
     int c13_timeline_byte_mismatch_count;
     int c13_timeline_byte_preservation_ok;
+    int external_portrait_byte_receipt_available;
+    uint32_t source_external_portrait_byte_count;
+    uint32_t source_external_portrait_fingerprint;
+    uint32_t exported_external_portrait_byte_count;
+    uint32_t exported_external_portrait_fingerprint;
+    int external_portrait_byte_preservation_ok;
     int core_state_matches;
 } DM1OriginalSavePC34RoundtripReport;
 
@@ -218,6 +226,9 @@ typedef struct {
     int c13_timeline_byte_preserved_count;
     int c13_timeline_byte_mismatch_count;
     int c13_timeline_byte_preservation_ok;
+    uint32_t source_external_portrait_fingerprint;
+    uint32_t exported_external_portrait_fingerprint;
+    int external_portrait_byte_preservation_ok;
     char path[DM1_ORIGINAL_SAVE_PATH_MAX];
 } DM1OriginalSavePC34CorpusReceipt;
 

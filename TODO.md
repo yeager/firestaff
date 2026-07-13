@@ -1176,6 +1176,13 @@ and real community-save corpus round-trip evidence.
     handoff. A compacted, reordered, missing, or extra C13 reference fails
     closed instead of being normalized into a new save layout. Remaining work
     is authentic community-save coverage and broader dungeon-tail import.
+  - 2026-07-13 update: the independent post-part portrait section now has an
+    exact F0435 -> F0433 -> F0435 byte receipt. ReDMCSB `LOADSAVE.C` F0433
+    writes four fixed 32x29 payloads after the five parts and F0435 reads all
+    four before publishing the save. Firestaff records offset, length, and
+    fingerprint, then compares the transient source/export bytes directly.
+    A missing, short, or changed portrait block fails closed. Remaining work
+    is authentic community-save coverage and broader dungeon-tail import.
   - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
     with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
     the corresponding exported C14 `EventIndex` without changing the live

@@ -16811,6 +16811,21 @@ if(BUILD_TESTING)
         LABELS "tier2;dm1;save;interop;handoff"
     )
 
+    add_executable(test_dm1_v1_original_save_pc34_portrait_receipt
+        tests/test_dm1_v1_original_save_pc34_portrait_receipt.c
+    )
+    target_link_libraries(test_dm1_v1_original_save_pc34_portrait_receipt PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_original_save_pc34_portrait_receipt PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_original_save_pc34_portrait_receipt
+        COMMAND test_dm1_v1_original_save_pc34_portrait_receipt
+    )
+    set_tests_properties(dm1_v1_original_save_pc34_portrait_receipt PROPERTIES
+        LABELS "tier2;dm1;save;interop;portrait"
+    )
+
     add_executable(test_dm1_v1_original_save_pc34_header_receipt
         tests/test_dm1_v1_original_save_pc34_header_receipt.c
     )
