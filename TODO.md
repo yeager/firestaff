@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin restored `TT_71` follow-up: live dispatch now expires an
+  exact saved invisibility receipt only while its imported party count is
+  positive. The source inventory/status redraw has no restored UI owner, and
+  timer families requiring omitted `timerWord8` object identity remain blocked.
+
 - 2026-07-13 CSBWin restored `TT_1` timer follow-up: the live queue now
   admits only the exact terminal closing low-state `1 -> 0` byte-map door
   step. Opening, party and creature collision branches, sounds, nonterminal

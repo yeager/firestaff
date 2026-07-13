@@ -7,6 +7,15 @@
   C74:1975-1976. Verification: Ninja and CTest
   `dm1_v1_original_save_pc34_handoff` passed 1/1.
 
+- 2026-07-13 CSBWin restored `TT_71` invisibility-expiry bridge: the live
+  queue now decrements the imported CSBWin party invisibility count only after
+  exact queue-slot, timer, and event identity validation. Stale identities and
+  zero counts cannot alter or underflow the saved state; the source
+  inventory/status redraw is intentionally blocked without its restored UI
+  owner. Source: CSBWin `CSBCode.cpp:6510`; ReDMCSB `TIMELINE.C F0261` lines
+  1953-1965. Verification: Ninja and CTest
+  `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin restored terminal `TT_1` door timer bridge: an exact
   queue-slot/timer/event receipt now drives only the terminal closing
   byte-map door transition from low state 1 to 0 through the live tick queue.
