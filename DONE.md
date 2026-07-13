@@ -22,6 +22,11 @@
   `Timer.cpp:2519-2584`. Verification:
   `test_csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 CSBWin saved `TT_22` runtime: an authenticated imported timer
+  now preserves CSBWin's documented restart no-op rather than acquiring a
+  generic C22 action. Source: `CSBCode.cpp:6564-6569`. Verification:
+  `test_csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 DM2 per-file original-save corpus receipts: bounded corpus rows
   retain parsed candidate type, path, payload size, and payload hash. Original
   envelope/raw rows are explicitly rejected for runtime import.
