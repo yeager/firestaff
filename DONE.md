@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB F0282 fullbuild probe repair: the live champion-panel probe
+  now carries its source-locked local C040 gate rather than calling the
+  intentionally removed `M11_GameView_CsbF0282ChampionPanelGateActive`
+  export. It validates CSB identity, front C127 mirror ordinal, C040 panel,
+  appended candidate ordinal/index, and present champion before treating
+  F0282 C160/C161/C162 as reachable. Source: ReDMCSB `REVIVE.C`
+  `F0280:260-277`, `F0282:744-806`, `PANEL.C F0346:1619-1635`, and
+  `COMMAND.C F0359:1988-1990`. Verification: Ninja and skip-safe CTest
+  `csb_v1_f0282_live_champion_panel`.
+
 - 2026-07-13 CSBWin restored TT_TELEPORTER DSA tick bridge: verified
   function-8 queue entries now reach the source-ordered ActivateDSA receipt
   through the live restored timer queue, using the existing exact queue-slot,
