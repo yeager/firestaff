@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 mednafen_bin=${MEDNAFEN_BIN:-}
 cue=${THERON_US_CUE:-}
 system_card=${THERON_SYSTEM_CARD:-}
@@ -114,11 +115,12 @@ memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
 input_trace="${trace}.input"
 transition_receipt="${trace}.transition"
+stage2_system_card_receipt="${trace}.stage2-system-card"
 stdout_file="$trace_dir/$(basename -- "$trace").stdout"
 stderr_file="$trace_dir/$(basename -- "$trace").stderr"
 
 mkdir -p "$trace_dir"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$transition_receipt"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$transition_receipt" "$stage2_system_card_receipt"
 if [[ -n "$configured_home" ]]; then
     home_dir=$configured_home
     cleanup_home=0
@@ -186,6 +188,11 @@ set -e
 if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace"; then
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
+fi
+# The loader receipt is separate from the later dynamic game-data handoff.
+# Absence is expected for captures that do not reach this exact stage.
+if ! "$script_dir/verify_theron_stage2_system_card_call_trace.sh" "$trace" >"$stage2_system_card_receipt" 2>/dev/null; then
+    rm -f "$stage2_system_card_receipt"
 fi
 transition_input_count=$(trace_count '^pce_input_(read|write) ' "$input_trace")
 transition_host_key_count=$(trace_count '^host_key_event ' "$input_trace")
