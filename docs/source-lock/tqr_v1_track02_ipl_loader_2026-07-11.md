@@ -131,3 +131,14 @@ routine. The trace consequently proves a status/handshake path, not a CD data
 request. It binds no Track 02 record, destination, size, payload, bitmap,
 palette, object, or level. `scripts/verify_theron_fe92_status_trace.sh`
 requires the exact entry, observed status reads, RTS, and return to `$c86e`.
+
+The same authenticated capture now extends through the first observed
+post-status caller route. At `$c86e`, the carry branch to `$c88c` is not taken
+and execution continues through `$c870`, `$c873`, `$c875`, and the two
+observed `$18c0` writes at `$c877` and `$c87c`. The command latch is observed
+as `$d0` at `$c87a`; execution then calls `$c950`, branches to `$c897`, and
+reads `$2241`. This is deliberately recorded only as live control flow and
+register behavior. It does not identify a `CD_READ`, Track 02 record,
+destination, size, payload, bitmap, palette, object, or level.
+`scripts/verify_theron_c86e_command_trace.sh` requires that exact ordered
+receipt and rejects traces that skip any transition.
