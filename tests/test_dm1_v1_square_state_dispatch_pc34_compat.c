@@ -3,6 +3,7 @@
 #include "memory_door_action_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 
 #include <assert.h>
 #include <string.h>
@@ -337,10 +338,10 @@ int main(void)
     assert(!has_text_message_emission(&result, 0, 0, 0, 1));
     assert(has_generator_reenable_event(&world, 0, 1));
 
-    /* F0259: C11's delayed refill uses C12, C07, C08, C09 source order
-     * and refuses to overwrite a nonempty ready hand. */
+    /* F0259: C11 with MENU.C's C01 ordinal uses C12, C07, C08, C09 source
+     * order and refuses to overwrite a nonempty action hand. */
     world.party.champions[0].present = 1;
-    world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
+    world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] = THING_NONE;
     world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_1] =
         (unsigned short)(THING_TYPE_JUNK << 10);
     world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_3] =
@@ -351,16 +352,17 @@ int main(void)
     {
         struct TimelineEvent_Compat refill;
         memset(&refill, 0, sizeof(refill));
-        refill.kind = TIMELINE_EVENT_MOVE_TIMER;
+        refill.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
         refill.fireAtTick = world.gameTick;
-        refill.aux0 = 0;
-        refill.aux1 = CHAMPION_SLOT_HAND_LEFT;
-        refill.aux4 = DM1_F0259_MOVE_TIMER_AUX4_PC34;
+        refill.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+        refill.aux1 = 2; /* M000_INDEX_TO_ORDINAL(C01_SLOT_ACTION_HAND) */
+        refill.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+        refill.aux4 = 0;
         assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &refill));
     }
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
-    assert(world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] ==
+    assert(world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] ==
            (unsigned short)((THING_TYPE_WEAPON << 10) | 1));
     assert(world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_3] == THING_NONE);
     assert(world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_2] ==

@@ -4221,7 +4221,9 @@ static int orch_f0248_award_steal_skill_xp_compat(
 
 /* ReDMCSB CHAMPION.C F0330:2233-2255 owns the single pending C11 event
  * per champion. A later disable replaces its prior event using the source
- * half-distance timing rule; C11 then reaches F0259's quiver refill owner. */
+ * half-distance timing rule. MENU.C F0407 alone changes SlotOrdinal to
+ * C01's ordinal after a successful throw; this producer must not invent a
+ * refill target for every disabled action. */
 static int orch_f0330_schedule_enable_champion_action_compat(
     struct GameWorld_Compat* world,
     int championIndex,
@@ -4240,9 +4242,10 @@ static int orch_f0330_schedule_enable_champion_action_compat(
         struct TimelineEvent_Compat* prior = &world->timeline.events[i];
         uint32_t currentTick;
 
-        if (prior->kind != TIMELINE_EVENT_MOVE_TIMER ||
-            prior->aux4 != DM1_F0259_MOVE_TIMER_AUX4_PC34 ||
-            prior->aux0 != championIndex) {
+        if (prior->kind != TIMELINE_EVENT_ENABLE_CHAMPION_ACTION ||
+            prior->aux0 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            prior->aux2 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            prior->aux4 != championIndex) {
             continue;
         }
         currentTick = prior->fireAtTick;
@@ -4259,16 +4262,17 @@ static int orch_f0330_schedule_enable_champion_action_compat(
         break;
     }
     memset(&event, 0, sizeof(event));
-    event.kind = TIMELINE_EVENT_MOVE_TIMER;
+    event.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
     event.fireAtTick = targetTick;
     event.mapIndex = world->party.mapIndex;
     event.mapX = world->party.mapX;
     event.mapY = world->party.mapY;
-    /* F0330 writes source SlotOrdinal 0 (ready hand); Firestaff's V1
-     * inventory maps that source slot to CHAMPION_SLOT_HAND_LEFT. */
-    event.aux0 = championIndex;
-    event.aux1 = CHAMPION_SLOT_HAND_LEFT;
-    event.aux4 = DM1_F0259_MOVE_TIMER_AUX4_PC34;
+    /* F0330 writes EVENT.Priority plus B.SlotOrdinal == 0. A proven
+     * MENU.C F0407 throw route may later set ordinal two on this C11. */
+    event.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    event.aux1 = 0;
+    event.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    event.aux4 = championIndex;
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
 }
 
@@ -10774,13 +10778,27 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             emit(result, EMIT_DOOR_STATE, ev.mapX, ev.mapY, 5, ev.mapIndex);
             break;
         case TIMELINE_EVENT_ENABLE_CHAMPION_ACTION:
-            /* ReDMCSB TIMELINE.C:1927-1932 invokes F0253 for the champion
-             * stored in EVENT.Priority.  C11 with a non-zero SlotOrdinal is
-             * rejected at original-save import until F0259's quiver transfer
-             * has a complete native inventory handoff. */
-            if (ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&
-                ev.cell == 0) {
+            /* ReDMCSB TIMELINE.C C11:1927-1932 first invokes F0253 for
+             * Priority, then F0259 only for MENU.C's C01 ordinal two.
+             * Imported B/C padding is deliberately not interpreted. */
+            if (ev.aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+                ev.aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+                ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&
+                world->party.champions[ev.aux4].present &&
+                (ev.aux1 == 0 || ev.aux1 == 2)) {
                 emit(result, EMIT_ACTION_ENABLED, ev.aux4, 0, 0, 0);
+                if (ev.aux1 == 2) {
+                    struct ChampionState_Compat* champion =
+                        &world->party.champions[ev.aux4];
+                    struct DM1F0259QuiverRefillPlanPc34 refill;
+
+                    if (DM1_V1_F0259_PlanQuiverRefillPc34Compat(
+                            champion, ev.aux4, CHAMPION_SLOT_HAND_RIGHT,
+                            &refill) && refill.moved) {
+                        champion->inventory[refill.destinationSlot] = refill.thing;
+                        champion->inventory[refill.sourceSlot] = THING_NONE;
+                    }
+                }
             }
             break;
         case TIMELINE_EVENT_VI_ALTAR_REBIRTH:
@@ -11076,20 +11094,6 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             (void)orch_dispatch_square_state_event_compat(world, &ev, result);
             break;
         case TIMELINE_EVENT_MOVE_TIMER:
-            if (ev.aux4 == DM1_F0259_MOVE_TIMER_AUX4_PC34 &&
-                ev.aux0 >= 0 && ev.aux0 < CHAMPION_MAX_PARTY) {
-                struct ChampionState_Compat* champion =
-                    &world->party.champions[ev.aux0];
-                struct DM1F0259QuiverRefillPlanPc34 refill;
-
-                if (champion->present &&
-                    DM1_V1_F0259_PlanQuiverRefillPc34Compat(
-                        champion, ev.aux0, ev.aux1, &refill) &&
-                    refill.moved) {
-                    champion->inventory[refill.destinationSlot] = refill.thing;
-                    champion->inventory[refill.sourceSlot] = THING_NONE;
-                }
-            }
             break;
         case TIMELINE_EVENT_SPELL_TICK:
             break;

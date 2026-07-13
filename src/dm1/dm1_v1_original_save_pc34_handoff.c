@@ -1767,14 +1767,24 @@ static int materialize_original_pc34_timeline(
         ev.mapIndex = (int)((src->map_time >> 24) & 0xffu);
         ev.aux0 = src->type;
         ev.aux4 = src->priority;
-        /* ReDMCSB TIMELINE.C C11 first clears the champion action lock,
-         * then conditionally moves a weapon from a quiver when SlotOrdinal
-         * is non-zero.  Firestaff has a source-locked live action-lock
-         * route, but no proven original quiver transfer handoff yet.  Do
-         * not silently reinterpret that byte as a generic inventory slot. */
-        if (src->type == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
-            src->c_cell != 0u) {
-            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+        if (src->type == DM1_EVENT_ENABLE_CHAMPION_ACTION) {
+            /* ReDMCSB DEFS.H EVENT.B.SlotOrdinal overlays only B's first
+             * byte. CHAMPION.C F0330 creates ordinal zero; MENU.C F0407
+             * changes that pending C11 to M000_INDEX_TO_ORDINAL(C01), i.e.
+             * two, after a successful throw. No other C11 SlotOrdinal
+             * producer exists in the PC34 source, so reject every other
+             * value rather than mapping raw save bytes into host inventory. */
+            if (src->priority >= CHAMPION_MAX_PARTY ||
+                (src->b_mapX != 0u && src->b_mapX != 2u)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            /* B's second byte and C are outside C11's semantic union arm.
+             * Retain them for F0433 round-trip, never as live coordinates. */
+            ev.aux1 = src->b_mapX;
+            ev.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+            ev.mapX = src->b_mapY;
+            ev.mapY = src->c_cell;
+            ev.cell = src->c_effect;
         }
         if (src->type == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
             /* ReDMCSB CHAMPION.C F0320 writes only Map_Time, Type and
@@ -1803,6 +1813,8 @@ static int materialize_original_pc34_timeline(
             ev.mapY = plan.map_y;
             ev.cell = plan.cell;
             ev.aux1 = plan.step;
+        } else if (src->type == DM1_EVENT_ENABLE_CHAMPION_ACTION) {
+            /* C11 was materialized through its B.SlotOrdinal arm above. */
         } else if (original_pc34_event_type_is_status_timeout(src->type)) {
             ev.aux1 = (int)read_u16_le(&src->b_mapX);
             ev.cell = src->c_cell;

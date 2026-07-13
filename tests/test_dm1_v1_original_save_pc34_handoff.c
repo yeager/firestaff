@@ -1185,6 +1185,8 @@ static void test_file_runtime_world_loader(void)
                                      ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
     CHECK(rc == SAVEGAME_PC34_OK,
           "file loader fixture build succeeds");
+    CHECK(rewrite_fixture_event_byte(bytes, (size_t)written, 2, 6, 2),
+          "C11 fixture writes MENU.C C01 SlotOrdinal");
     make_temp_save_path(path, sizeof(path));
     remove(path);
     CHECK(write_fixture_file(path, bytes, written),
@@ -1214,8 +1216,9 @@ static void test_file_runtime_world_loader(void)
         if (event->kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION) {
             CHECK(event->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION,
                   "C11 source type survives runtime materialization");
-            CHECK(event->aux4 == 2 && event->cell == 0,
-                  "C11 priority and zero SlotOrdinal survive runtime materialization");
+            CHECK(event->aux4 == 2 && event->aux1 == 2 &&
+                      event->aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION,
+                  "C11 priority and C01 SlotOrdinal survive runtime materialization");
             found_enable_action = 1;
         }
     }

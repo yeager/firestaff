@@ -1332,6 +1332,18 @@
   ReDMCSB `TIMELINE.C` C11 dispatch lines 1927-1932 and `CHAMPION.C F0330`.
   Verification: Ninja and `dm1_v1_original_save_pc34_handoff` CTest pass.
 
+- 2026-07-13 DM1 PC34 C11/F0259 action-hand handoff: imported C11 events
+  now retain the real one-byte `EVENT.B.SlotOrdinal`; ordinal zero preserves
+  F0330's ordinary unlock, while the only source-produced non-zero value,
+  MENU.C F0407's ordinal two for `C01_SLOT_ACTION_HAND`, invokes F0259 and
+  refills that exact action hand from C12/C07/C08/C09 weapon slots. Other
+  ordinals reject at import. The raw unowned B/C bytes round-trip without
+  being interpreted as substitute map or inventory state. F0330 now queues
+  the real C11 receipt rather than a host move-timer refill. Source: ReDMCSB
+  `DEFS.H EVENT`, `CHAMPION.C F0330`, `MENU.C F0407`, and `TIMELINE.C`
+  F0258/F0259. Verification: focused C11 producer, timeline dispatch, and
+  original-save handoff tests.
+
 - 2026-07-13 DM1 PC34 C25 explosion union handoff: ReDMCSB
   `PROJEXPL.C F0213` stores C25 as `B.Location + C.Slot`, then
   `TIMELINE.C F0261` dispatches it to F0220. F0435 requires that exact C15
