@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus startup package host gate: title capture now requires M11
+  and M12 admission, and command export additionally requires the final
+  package/host receipt. A blocked Track 02 host route therefore leaves the
+  otherwise-loaded title surface undrawn. Verification:
+  `test_nexus_v1_startup_menu_pc34_compat` PASS.
+
 - 2026-07-13 DM1 HoC D2C/D3C door-button host handoff: M11 now executes
   the DM1-owned ReDMCSB `DUNVIEW.C F0110` material plan for the center
   door-button depths. DM1 supplies the G0208 frame, D2/D3 palette remap, and

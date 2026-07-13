@@ -2867,6 +2867,25 @@ int main(void)
                full_start_package_receipt.blocked_draw_suppressed == 1 &&
                draw_commands[0].kind == NEXUS_V1_STARTUP_DRAW_NONE,
            "Nexus full-start package command helper blocks SFX fallback draw");
+    runtime_state.title_active = 1;
+    runtime_state.champion_select_active = 0;
+    runtime_state.title_frame = nexus_v1_boot_warning_frames();
+    runtime_snapshot.runtime = runtime_state;
+    memset(draw_commands, 0x7f, sizeof(draw_commands));
+    expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(
+               NULL, &runtime_snapshot, 0, NULL, NULL, draw_commands,
+               (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
+               &full_start_package_receipt) &&
+               full_start_package_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
+               full_start_package_receipt.capture_command_count == 0 &&
+               full_start_package_receipt.blocked_draw_suppressed == 1 &&
+               draw_commands[0].kind == NEXUS_V1_STARTUP_DRAW_NONE,
+           "Nexus blocked host receipt suppresses otherwise-ready title draw");
+    runtime_state.title_active = 0;
+    runtime_state.champion_select_active = 1;
+    runtime_state.title_frame = nexus_v1_boot_start_ready_frames();
+    runtime_snapshot.runtime = runtime_state;
     synthetic_engine.sfx_runtime_receipt.status =
         NEXUS_SFX_RUNTIME_READY_DECODED;
     synthetic_engine.sfx_runtime_receipt.level_index = 0;
