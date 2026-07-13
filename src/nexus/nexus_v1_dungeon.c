@@ -3707,3 +3707,138 @@ int nexus_v1_level_build_dgn_view_render_plan(
     *out_receipt = receipt;
     return 0;
 }
+
+int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
+                                     int source_hash_verified,
+                                     Nexus_V1_ItemIbsBank *out_bank)
+{
+    enum {
+        ITEM_DECLARATIONS = 0x0800,
+        ITEM_DECLARATION_BYTES = 40,
+        ITEM_PALETTES = 0x3000,
+        ITEM_ASSOCIATIONS = 0x3100,
+        ITEM_IMAGES = 0x3300,
+        ITEM_IMAGE_BYTES = 128
+    };
+    int i;
+    if (!out_bank) return -1;
+    memset(out_bank, 0, sizeof(*out_bank));
+    /* DMWeb Nexus ITEM.IBS: 0x18800-byte table.  The source verifier owns
+     * identity; the decoder refuses to make an unverified byte stream live. */
+    if (!data || size != NEXUS_V1_ITEM_IBS_BYTES || !source_hash_verified)
+        return -1;
+    for (i = 0; i < NEXUS_V1_ITEM_IBS_DECLARATION_COUNT; ++i) {
+        const uint8_t *decl = data + ITEM_DECLARATIONS +
+            i * ITEM_DECLARATION_BYTES;
+        if (decl[0] != (uint8_t)i) return -1;
+        out_bank->inventory_association[i] = rb16(decl + 0x14);
+        out_bank->floor_image[i] = rb16(decl + 0x16);
+        if (out_bank->inventory_association[i] >= 256U) return -1;
+    }
+    for (i = 0; i < NEXUS_V1_ITEM_IBS_PALETTE_COUNT * 16; ++i) {
+        out_bank->palette_bgr555[i / 16][i % 16] =
+            rb16(data + ITEM_PALETTES + i * 2);
+    }
+    for (i = 0; i < 256; ++i) {
+        uint8_t palette = data[ITEM_ASSOCIATIONS + i * 2];
+        uint8_t image = data[ITEM_ASSOCIATIONS + i * 2 + 1];
+        /* FF00 denotes an unused association, not a valid surface. */
+        if (palette == 0xffU && image == 0x00U) {
+            out_bank->association_palette[i] = 0xffU;
+            out_bank->association_image[i] = 0xffU;
+        } else if (palette < NEXUS_V1_ITEM_IBS_PALETTE_COUNT &&
+                   image < NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT) {
+            out_bank->association_palette[i] = palette;
+            out_bank->association_image[i] = image;
+        } else {
+            return -1;
+        }
+    }
+    memcpy(out_bank->regular_image_texels, data + ITEM_IMAGES,
+           sizeof(out_bank->regular_image_texels));
+    out_bank->source_hash_verified = 1;
+    out_bank->valid = 1;
+    return 0;
+}
+
+int nexus_v1_dgn_bind_structure1f_item_materials(
+    const Nexus_V1_Level *level, const Nexus_V1_ItemIbsBank *bank,
+    const Nexus_V1_DgnRenderCommand *commands, int command_count,
+    Nexus_V1_DgnStructure1FItemMaterialBinding *out_bindings,
+    int max_bindings, Nexus_V1_DgnStructure1FItemMaterialReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FItemMaterialReceipt receipt;
+    int i;
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.fallback_visuals_permitted = 0;
+    if (!level || !bank || !bank->valid || !bank->source_hash_verified ||
+        !commands || command_count < 0 || !out_bindings || max_bindings < 0) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    receipt.source_hash_verified = 1;
+    for (i = 0; i < level->structure1f_entry_count; ++i) {
+        const Nexus_V1_DgnStructure1FEntry *entry =
+            &level->structure1f_entries[i];
+        int command_index = -1;
+        int j;
+        uint16_t association;
+        uint16_t floor_image;
+        uint8_t palette;
+        uint8_t image;
+        if (entry->family != NEXUS_V1_DGN_STRUCTURE1F_ITEMS) continue;
+        ++receipt.item_entry_count;
+        if (entry->item_id >= NEXUS_V1_ITEM_IBS_DECLARATION_COUNT) {
+            ++receipt.blocked_invalid_item_count;
+            continue;
+        }
+        for (j = 0; j < command_count; ++j) {
+            if (commands[j].x == entry->x && commands[j].y == entry->y &&
+                commands[j].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR) {
+                command_index = j;
+                break;
+            }
+        }
+        if (command_index < 0) {
+            ++receipt.blocked_missing_command_count;
+            continue;
+        }
+        ++receipt.command_candidate_count;
+        floor_image = bank->floor_image[entry->item_id];
+        /* DMWeb ITEM.IBS explicitly defines FFFF as "same as inventory".
+         * A separate floor image has a different, still-unproved codec. */
+        if (floor_image != 0xffffU) {
+            ++receipt.blocked_special_floor_image_count;
+            continue;
+        }
+        association = bank->inventory_association[entry->item_id];
+        palette = bank->association_palette[association];
+        image = bank->association_image[association];
+        if (palette >= NEXUS_V1_ITEM_IBS_PALETTE_COUNT ||
+            image >= NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT ||
+            receipt.bound_regular_inventory_count >= max_bindings) {
+            ++receipt.blocked_invalid_item_count;
+            continue;
+        }
+        out_bindings[receipt.bound_regular_inventory_count].entry_index = i;
+        out_bindings[receipt.bound_regular_inventory_count].command_index =
+            command_index;
+        out_bindings[receipt.bound_regular_inventory_count].item_id =
+            entry->item_id;
+        out_bindings[receipt.bound_regular_inventory_count].palette_index =
+            palette;
+        out_bindings[receipt.bound_regular_inventory_count].image_index = image;
+        out_bindings[receipt.bound_regular_inventory_count].palette_bgr555 =
+            bank->palette_bgr555[palette];
+        out_bindings[receipt.bound_regular_inventory_count].packed_4bpp_texels =
+            bank->regular_image_texels[image];
+        ++receipt.bound_regular_inventory_count;
+    }
+    receipt.complete = receipt.item_entry_count > 0 &&
+        receipt.blocked_special_floor_image_count == 0 &&
+        receipt.blocked_missing_command_count == 0 &&
+        receipt.blocked_invalid_item_count == 0;
+    *out_receipt = receipt;
+    return 0;
+}

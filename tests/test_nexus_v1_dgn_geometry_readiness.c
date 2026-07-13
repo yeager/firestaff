@@ -2343,6 +2343,70 @@ static void test_determinism(void) {
           "geometry info parse is byte-stable across runs");
 }
 
+static void test_structure1f_item_ibs_material_binding(void) {
+    uint8_t *ibs = (uint8_t *)calloc(1, NEXUS_V1_ITEM_IBS_BYTES);
+    Nexus_V1_ItemIbsBank bank;
+    Nexus_V1_Level level;
+    Nexus_V1_DgnRenderCommand commands[2];
+    Nexus_V1_DgnStructure1FItemMaterialBinding bindings[2];
+    Nexus_V1_DgnStructure1FItemMaterialReceipt receipt;
+    int i;
+
+    CHECK(ibs != NULL, "ITEM.IBS material fixture allocates");
+    if (!ibs) return;
+    /* DMWeb ITEM.IBS: 243 x 40-byte declarations at 0x0800, regular
+     * palettes at 0x3000, association table at 0x3100 and 16x16 4bpp
+     * images at 0x3300.  The fixture proves the documented FFFF route only. */
+    for (i = 0; i < NEXUS_V1_ITEM_IBS_DECLARATION_COUNT; ++i) {
+        uint8_t *decl = ibs + 0x0800 + i * 40;
+        decl[0] = (uint8_t)i;
+        wb16(decl + 0x14, 3U);
+        wb16(decl + 0x16, 0xffffU);
+    }
+    wb16(ibs + 0x3000 + 1 * 16 * 2 + 2 * 2, 0x7c00U);
+    ibs[0x3100 + 3 * 2] = 1;
+    ibs[0x3100 + 3 * 2 + 1] = 7;
+    ibs[0x3300 + 7 * 128] = 0x2fU;
+
+    CHECK(nexus_v1_item_ibs_parse_verified(ibs, NEXUS_V1_ITEM_IBS_BYTES,
+                                             0, &bank) != 0,
+          "unverified ITEM.IBS never becomes a material bank");
+    CHECK(nexus_v1_item_ibs_parse_verified(ibs, NEXUS_V1_ITEM_IBS_BYTES,
+                                             1, &bank) == 0,
+          "hash-verified ITEM.IBS regular-icon table parses");
+    memset(&level, 0, sizeof(level));
+    level.structure1f_entry_count = 2;
+    level.structure1f_entries[0].family = NEXUS_V1_DGN_STRUCTURE1F_ITEMS;
+    level.structure1f_entries[0].x = 4;
+    level.structure1f_entries[0].y = 5;
+    level.structure1f_entries[0].item_id = 5;
+    level.structure1f_entries[1].family = NEXUS_V1_DGN_STRUCTURE1F_ITEMS;
+    level.structure1f_entries[1].x = 6;
+    level.structure1f_entries[1].y = 7;
+    level.structure1f_entries[1].item_id = 6;
+    bank.floor_image[6] = 266U; /* documented separate floor-image range */
+    memset(commands, 0, sizeof(commands));
+    commands[0].kind = NEXUS_V1_DGN_RENDER_COMMAND_FLOOR;
+    commands[0].x = 4;
+    commands[0].y = 5;
+    commands[1].kind = NEXUS_V1_DGN_RENDER_COMMAND_FLOOR;
+    commands[1].x = 6;
+    commands[1].y = 7;
+    CHECK(nexus_v1_dgn_bind_structure1f_item_materials(
+              &level, &bank, commands, 2, bindings, 2, &receipt) == 0,
+          "Structure1Fa items bind to matching mesh-command cells");
+    CHECK(receipt.bound_regular_inventory_count == 1 &&
+          receipt.blocked_special_floor_image_count == 1 &&
+          !receipt.fallback_visuals_permitted,
+          "only documented FFFF inventory reuse binds; special floor codec blocks");
+    CHECK(bindings[0].command_index == 0 && bindings[0].item_id == 5 &&
+          bindings[0].palette_index == 1 && bindings[0].image_index == 7 &&
+          bindings[0].palette_bgr555[2] == 0x7c00U &&
+          bindings[0].packed_4bpp_texels[0] == 0x2fU,
+          "binding carries the exact ITEM.IBS palette and packed texels");
+    free(ibs);
+}
+
 int main(void) {
     test_variable_grid_and_mesh_ready();
     test_dgn_view_render_plan_from_structure1b();
@@ -2352,6 +2416,7 @@ int main(void) {
     test_structure1c_bytes_do_not_invent_collision_geometry();
     test_bounds_and_legacy_non_promotion();
     test_determinism();
+    test_structure1f_item_ibs_material_binding();
     test_structure1c_record_table_bounds();
     test_structure1f_semantics_and_bounds();
     test_visible_structure1f_semantics_block_render_plan();
