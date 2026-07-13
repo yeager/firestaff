@@ -1264,6 +1264,9 @@ and real community-save corpus round-trip evidence.
     now has separate exact provenance (`slot`, `index`, `is_none`) from an
     out-of-range index. It fails before party/timeline commit; the runtime
     candidate and caller receipt retain their prior state.
+    The focused fixture also locks the adversarial relation where that C4
+    index is exactly `FirstUnusedEventIndex`: a tombstone can own the free
+    list but can never be scheduled through the active C4 heap.
   - 2026-07-13 update: `GLOBAL_DATA.FirstUnusedEventIndex` now rejects an
     active C3 owner. ReDMCSB `TIMELINE.C` F0651 rebuilds that free-list only
     from `EVENT_NONE` tombstones after F0435; Firestaff records the active
