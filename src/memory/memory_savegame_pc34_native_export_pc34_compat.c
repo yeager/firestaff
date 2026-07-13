@@ -1472,6 +1472,16 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
                 src->aux2 != DM1_EVENT_THIEVES_EYE || src->aux4 != 0) {
                 return 0;
             }
+        } else if (type == DM1_EVENT_PARTY_SHIELD) {
+            /* ReDMCSB MENU.C F0412:1965-1978 writes zero Priority and a
+             * positive signed B.Defense. C74 dispatch consumes no C union
+             * arm, so export only its typed receipt. */
+            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
+                src->aux0 != DM1_EVENT_PARTY_SHIELD || src->aux1 <= 0 ||
+                src->aux2 != DM1_EVENT_PARTY_SHIELD || src->aux4 != 0) {
+                return 0;
+            }
+            write_u16_le(dst + 6u, (uint16_t)(int16_t)src->aux1);
         } else if (type == DM1_EVENT_CHAMPION_SHIELD) {
             if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
                 src->aux0 != DM1_EVENT_CHAMPION_SHIELD ||

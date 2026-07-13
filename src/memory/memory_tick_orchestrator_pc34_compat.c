@@ -10869,6 +10869,16 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                     &world->lifecycle, LIFECYCLE_STATUS_THIEVES_EYE);
                 break;
             }
+            if (ev.aux0 == DM1_EVENT_PARTY_SHIELD &&
+                ev.aux2 == DM1_EVENT_PARTY_SHIELD && ev.aux1 > 0 &&
+                ev.aux4 == 0) {
+                /* ReDMCSB TIMELINE.C C74:1975-1976 subtracts the signed
+                 * B.Defense from party shield. Keep both M10 mirrors in
+                 * lockstep without interpreting C as another payload. */
+                world->magic.partyShieldDefense -= (int16_t)ev.aux1;
+                world->lifecycle.status.partyShieldDefense -= (int16_t)ev.aux1;
+                break;
+            }
             int statusKind = orch_normalize_status_timeout_aux0_pc34_compat(ev.aux0);
             int statusDefense =
                 orch_status_timeout_defense_pc34_compat(&ev, statusKind);
