@@ -6,6 +6,15 @@
   original append order. Source: ReDMCSB `REVIVE.C` F0280:272-283 and
   F0282:745-845. Verification: focused CTest.
 
+- 2026-07-13 DM1 HoC F0107/F0124 corridor-frame invalidation: a real-PC34
+  map-0 regression walks every legal HoC wall-inscription pose between the
+  same clean corridor frame. Each text frame must publish its own M648/C10
+  receipt; both adjacent corridor frames must publish no prior glyph data,
+  palette index, or host substitute. The original M648 pixel buffer is
+  fingerprinted across the complete sequence. Source: ReDMCSB `DUNVIEW.C`
+  F0107:3590-3706 and F0124/F0128. Verification: focused CTest against the
+   installed PC34 corpus.
+
 - 2026-07-13 DM1 HoC C160 stale-render guard: a real-PC34 C127 selection
   now proves the post-resurrection invalidation while the party remains in
   front of the source mirror. The focused runtime regression requires the
