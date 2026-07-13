@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 original PC34 C77 Spell Shield roundtrip: typed handoff
+  accepts zero Priority and positive signed `B.Defense`, subtracts it from
+  both spell-shield mirrors at runtime, and exports no invented C union.
+  Source: ReDMCSB `MENU.C` F0403:1099-1115 and `TIMELINE.C` C77:1985-1986.
+  Verification: Ninja and CTest `dm1_v1_original_save_pc34_handoff` passed 1/1.
+
 - 2026-07-13 DM1 original PC34 C75 Poison Champion roundtrip: typed handoff
   validates the live champion and positive unsigned `B.Attack`, preserves the
   source damage and Attack-1 requeue at runtime, and exports no invented C

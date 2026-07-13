@@ -79,7 +79,8 @@
   `SlotOrdinal` action-enable route, C12 hide-damage removal, C13 Vi Altar
   rebirth, C24 fluxcage removal, C65 generator re-enable, C70 signed-light
   decay, C71 invisibility expiry, C72 champion-shield expiry, C73 Thieves'
-  Eye expiry, C74 party-shield expiry, and C75 poison expiry are complete.
+  Eye expiry, C74 party-shield expiry, C75 poison expiry, and C77
+  spell-shield expiry are complete.
   The non-zero-slot
   `F0259_TIMELINE_ProcessEvent11Part2_MoveWeaponFromQuiverToSlot` branch remains
   blocked until its original live inventory/object route is bound. Do not coerce
