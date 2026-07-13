@@ -25,9 +25,9 @@ fi
 if ! grep -Fq 'THERON_CAPTURE_HOST_KEY currently supports only return, i, or select' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY requires a non-dummy SDL video driver' "$script" ||
    ! grep -Fq 'set targetProcess to first application process whose name is "mednafen"' "$script" ||
-   ! grep -Fq 'key down {return}' "$script" ||
-   ! grep -Fq 'key up {return}' "$script" ||
-   ! grep -Fq 'key down {tab}' "$script" ||
+   ! grep -Fq 'key down 36' "$script" ||
+   ! grep -Fq 'key up 36' "$script" ||
+   ! grep -Fq 'key down 48' "$script" ||
    ! grep -Fq 'key code 85' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_REPEATS must be a positive integer' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_DELAY must be a non-negative integer' "$script" ||

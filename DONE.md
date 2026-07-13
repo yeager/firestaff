@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron macOS host-key scancode hardening: the authentic
+  Mednafen capture now uses explicit macOS virtual keycodes for `RUN`/Return
+  (36) and `SELECT`/Tab (48), while retaining the emulator's verified keypad
+  mapping (85) for PC Engine `I`. A fresh authentic US CUE/System Card 3.0
+  Return capture observed SDL scancode 40 and the real PCE `0008` port state.
+  It remains correctly blocked before a later controller poll, PCECD caller,
+  or Track 02 sector. Verification: capture-script contract test and bounded
+  live macOS capture.
+
 - 2026-07-13 DM1 PC34 C2 inactive champion-record preservation: F0435 now
   retains the source-owned inactive `M516_CHAMPIONS` 319-byte records without
   promoting them to live party members, and F0433 writes them only from that
