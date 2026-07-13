@@ -1235,13 +1235,14 @@ diff --git a/src/pce/huc.cpp b/src/pce/huc.cpp
 diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
 --- a/src/cdrom/scsicd.cpp
 +++ b/src/cdrom/scsicd.cpp
-@@ -67,3 +67,32 @@
+@@ -67,3 +67,35 @@
  static bool TrayOpen;
 -
 +static bool TheronTraceReadRawSector(uint8 *buffer, int32 lba)
 +{
 + static FILE *trace = NULL;
 + static unsigned trace_count = 0;
++ uint32 span_fnv1a = 2166136261U;
 + const bool ok = Cur_CDIF->ReadRawSector(buffer, lba);
 +
 + if(ok && trace_count < 32)
@@ -1261,7 +1262,9 @@ diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
 +  }
 +  if(trace)
 +  {
-+   fprintf(trace, "cd_interface_raw_sector_read lba=%d bytes=2352\\n", lba);
++   for(unsigned i = 0; i < 32; i++)
++    span_fnv1a = (span_fnv1a ^ buffer[i]) * 16777619U;
++   fprintf(trace, "cd_interface_raw_sector_read lba=%d bytes=2352 span_offset=0 span_bytes=32 span_fnv1a=%08x\\n", lba, span_fnv1a);
 +   fflush(trace);
 +   trace_count++;
 +  }
@@ -1269,7 +1272,7 @@ diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
 + return ok;
 +}
  // Internal operation to the SCSI CD unit.  Only pass 1 or 0 to these macros!
-@@ -2790,7 +2813,7 @@ static void SCSICD_RunCore(scsicd_timestamp_t run_time)
+@@ -2790,7 +2814,7 @@ static void SCSICD_RunCore(scsicd_timestamp_t run_time)
      else if(SectorAddr >= toc.tracks[100].lba)
      {
       CommandCCError(SENSEKEY_ILLEGAL_REQUEST, NSE_END_OF_VOLUME);
