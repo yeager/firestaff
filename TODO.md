@@ -663,6 +663,12 @@ carry the observed `CL/DL/CH` bytes and reconstruct its accepted Track 02
 record exactly before raw-media binding. The existing startup bitmap receipt
 remains an independent hash-verified raw-route proof; no record is labelled
 as bitmap data until a real capture establishes that relationship.
+2026-07-13 runtime bitmap-chain update: the opt-in raw Track 02 probe now
+requires the hash-verified System Card, Track 02, and Mednafen loader trace
+before it consumes a real startup bitmap route. It binds the trace span and
+the complete raw bitmap-route receipt to the same media identity, while still
+blocking palette output and record-to-bitmap semantics. A positive authentic
+three-artifact run is still required; absent inputs skip without fallback.
 The explicit intake can now bind only a variant-matched authenticated receipt
 to a prepared boot profile. The production Soul Room forcefield transition
 checks that receipt before it mutates startup flow or world state, so no
