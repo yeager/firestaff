@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F floor-decoration model/rotation handoff: raw
+  source pairs now reach DGN host, render-plan, and LEV00-15 corpus receipts.
+  Their grammar remains unproved, so this assigns no model, orientation, mesh,
+  material, texture, palette, pixel, or draw meaning.
+
 - 2026-07-13 DM2 original-save timer-format corpus receipt: header-verified
   original envelope/raw candidate rows now retain their exact path, type,
   payload size, and hash while explicitly rejecting every row for timer use.
