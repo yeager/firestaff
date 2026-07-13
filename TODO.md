@@ -1264,7 +1264,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     startup bitmap consumer now carries only verified 4 bpp indices and
     explicitly blocks RGB output, so the next decoder work is an observed
     original loader palette-write/address binding, not byte-pattern scanning
-    or default-palette use.
+    or default-palette use. 2026-07-13 the locally staged US E98A trace has
+    the Mednafen provenance line but lacks the dynamic CD/controller receipts
+    and VCE palette-data stores; it cannot promote RGB. The Mednafen patch now
+    observes direct `STA abs` stores to HuC6260 `$0402..$0405` only after the
+    controller receipt. Capture a complete authentic run, then bind only a
+    complete recognised index/low/high receipt to a raw bitmap route. Indirect
+    and block-transfer palette paths remain fail-closed.
   - 2026-07-11 update: the local evidence stores and the checked source-lock
     material contain no original Theron's Quest loader/disassembly trace, and
     no newly staged hash-verified Track 02 corpus was available to correlate

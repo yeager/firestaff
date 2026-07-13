@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,5 +36,978 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,5 +36,1001 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -965,6 +965,29 @@ index 347482c4..61d4758e 100644
 +                                f2_at_branch);
 +  TheronIrq2TraceDynamicControllerStateSeen = true;
 +  FlushTheronIrq2Trace();
++ }
++
++ /* CPU callbacks run before execution.  This is therefore a raw store
++  * receipt, not a claim that a palette entry has been assembled.  Limit it
++  * to the absolute STA form and the HuC6260 colour-table control and data
++  * ports;
++  * indirect and block-transfer forms remain unrecognised and cannot unlock
++  * Firestaff RGB output. */
++ if(TheronIrq2TraceDynamicControllerStateSeen &&
++    (CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff) == 0x8d)
++ {
++  const uint32 address = (CurGame->Debugger->MemPeek(logical_pc + 1, 1, true, true) & 0xff) |
++                         ((CurGame->Debugger->MemPeek(logical_pc + 2, 1, true, true) & 0xff) << 8);
++
++  if(address >= 0x0402 && address <= 0x0405)
++  {
++   const RegGroupType *regs = (*CurGame->Debugger->RegGroups)[0];
++   const uint32 accumulator = regs->GetRegister(regs->Regs[1].id, NULL, 0) & 0xff;
++
++   TheronIrq2Trace->print_format("dynamic_huc6260_palette_store pc=%04x physical_pc=%08x opcode=8d address=%04x accumulator=%02x\\n",
++                                 logical_pc, PC, address, accumulator);
++   FlushTheronIrq2Trace();
++  }
 + }
 +
 + if(logical_pc == 0x4093 || logical_pc == 0xe736 || logical_pc == 0xe742 || logical_pc == 0xe74c)
