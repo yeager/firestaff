@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F item-pair host handoff: verified raw
+  `attribute1/attribute2` and `location/item_id` receipts now propagate through
+  the DGN host handoff and render plan. They remain fail-closed provenance;
+  this adds no item, material, mesh, texture, palette, pixel, or draw meaning.
+
 - 2026-07-13 Nexus raw Structure1F item location/item-id pair receipt: complete; no object or draw semantics inferred.
 - 2026-07-13 DM2 weather timer transaction receipt: a weather handoff is
   proven only when authenticated timer bytes, a ten-byte DistantEnvironment
