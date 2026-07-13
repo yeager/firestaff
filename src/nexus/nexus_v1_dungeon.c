@@ -20,6 +20,14 @@ static int nexus_v1_level_find_structure2_texture(
     return 0;
 }
 
+int nexus_v1_level_structure2_source_envelope_valid(
+    const Nexus_V1_Level *level)
+{
+    if (!level) return 0;
+    return level->structure2_payload.valid &&
+           level->structure2_payload.descriptor_offset_envelope_valid;
+}
+
 static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
                                                     const uint8_t *data,
                                                     int size)

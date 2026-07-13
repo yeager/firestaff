@@ -496,6 +496,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   .nonzero_descriptor_offsets_word_bounded_count ==
                   loaded_level.structure2_payload.nonzero_descriptor_offset_count &&
               loaded_level.structure2_payload.descriptor_offset_envelope_valid &&
+              nexus_v1_level_structure2_source_envelope_valid(&loaded_level) &&
               !loaded_level.structure2_payload.material_or_image_data_proven,
               "real Structure2 descriptors retain only their complete aligned opaque target windows");
         structure2_descriptor_total += loaded_level.structure2_texture_count;
@@ -847,6 +848,7 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           level.structure2_payload
               .local_payload_word_bounded_offset_pattern_observed &&
           !level.structure2_payload.descriptor_offset_envelope_valid &&
+          !nexus_v1_level_structure2_source_envelope_valid(&level) &&
           !level.structure2_payload.material_or_image_data_proven,
           "Structure2 records an unaligned in-span target without promoting it");
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
@@ -867,6 +869,7 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           !level.structure2_payload
               .local_payload_word_bounded_offset_pattern_observed &&
           !level.structure2_payload.descriptor_offset_envelope_valid &&
+          !nexus_v1_level_structure2_source_envelope_valid(&level) &&
           !level.structure2_payload.material_or_image_data_proven,
           "Structure2 leaves out-of-span descriptor offsets non-promoting");
     wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 12, 238U);
@@ -879,12 +882,14 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           !level.structure2_payload
               .local_payload_word_bounded_offset_pattern_observed &&
           !level.structure2_payload.descriptor_offset_envelope_valid &&
+          !nexus_v1_level_structure2_source_envelope_valid(&level) &&
           !level.structure2_payload.material_or_image_data_proven,
           "Structure2 keeps a trailing opaque-byte target non-promoting");
     wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 12, 0U);
     wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 16, 0U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
           level.structure2_payload.descriptor_offset_envelope_valid &&
+          nexus_v1_level_structure2_source_envelope_valid(&level) &&
           level.geometry_info.mesh_ready,
           "animated-floor fixture retains a mesh-ready DGN handoff");
     CHECK(nexus_v1_level_build_dgn_view_render_plan(

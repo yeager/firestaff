@@ -395,6 +395,13 @@ typedef struct {
     Nexus_V1_DgnStructure2Payload structure2_payload;
 } Nexus_V1_Level;
 
+/* Source-provenance predicate for host routes. A bounded Structure2 payload
+ * is usable as a source receipt only when every present descriptor target
+ * remains inside that payload's established envelope. This does not decode
+ * the payload or grant any pixel, palette, or material permission. */
+int nexus_v1_level_structure2_source_envelope_valid(
+    const Nexus_V1_Level *level);
+
 typedef enum {
     NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING = 0,
     NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH = 1,
