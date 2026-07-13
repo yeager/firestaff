@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 C100/C101 fail-closed source lock: focused material tests
+  now isolate rebirth records from ordinary effects. Outside D0C, both remain
+  off the F0114 list; at D0C, only C101 reaches its documented M636 path and
+  C100 remains C3000-blocked. Direct C100 M636 pattern lookup also rejects.
+  Source: ReDMCSB `DUNVIEW.C` F0115:5955-6000,6038-6074. No M11 route,
+  scale inference, or substitute material was added.
+
 - 2026-07-13 Theron stage-two live System Card receipt: the authenticated US
   CUE/System Card 3.0 trace now locks the executed `$40cd -> $e009` table
   `00e30302` and `$40a4 -> $e00f` table `00e70311`, including paired returns

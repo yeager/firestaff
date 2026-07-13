@@ -808,6 +808,11 @@ static void test_explosion_pattern_graphic(void) {
     ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(
                   DM1_EXPLOSION_TYPE_REBIRTH_STEP2, 0), 489,
               "D0C rebirth step2 uses fire M636 pattern");
+    /* C100 is not an M636 pattern. Its C3000/lightning route has a separate
+     * scale gate, so a direct pattern query must remain fail-closed. */
+    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(
+                  DM1_EXPLOSION_TYPE_REBIRTH_STEP1, 96), -1,
+              "rebirth step1 never falls through to an M636 pattern");
     /* Fluxcage returns -1 */
     ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_FLUXCAGE, 100), -1,
               "fluxcage->-1");

@@ -656,7 +656,9 @@ independently locates `G2037` at `0x2583B` and `G0230` at `0x25842`, exactly
 seven bytes later. Therefore C100 must remain no-draw for rows 7..11 until a
 PC34 runtime capture or verified I34E disassembly proves the actual mapping.
 It cannot borrow C101/M636, F0114, a marker, host geometry, or the adjacent
-mutable globals as scale values.
+mutable globals as scale values. Focused source-lock tests separately require
+non-D0C C100/C101 to remain outside ordinary F0114 material and D0C to admit
+only C101's documented M636 route; C100 never reaches either fallback.
 
 F0115's deferred C15 receipt preserves each active same-square PC34 record in
 source-list order before material filtering, with explicit ordinary F0114/D0C

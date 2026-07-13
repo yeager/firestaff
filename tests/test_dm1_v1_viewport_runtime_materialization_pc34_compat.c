@@ -230,6 +230,43 @@ int main(void)
     {
         DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
             DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34);
+        seed_live_effects(&input, &projectiles, &explosions);
+        explosions.count = 2;
+        explosions.entries[0].explosionType = C100_EXPLOSION_REBIRTH_STEP1;
+        explosions.entries[0].slotIndex = 17;
+        explosions.entries[1] = explosions.entries[0];
+        explosions.entries[1].explosionType = C101_EXPLOSION_REBIRTH_STEP2;
+        explosions.entries[1].slotIndex = 18;
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
+              "non-D0C C100/C101 source-lock receipt is built");
+        CHECK(d1c.liveExplosionSourceCount == 2 &&
+              d1c.liveExplosionSourceRoutes[0] ==
+                  DM1_V1_C15_EXPLOSION_ROUTE_C100_C3000_BLOCKED_PC34 &&
+              d1c.liveExplosionSourceRoutes[1] ==
+                  DM1_V1_C15_EXPLOSION_ROUTE_C101_C3007_BLOCKED_PC34 &&
+              d1c.liveRenderableExplosionCount == 0,
+              "non-D0C rebirth records never fall through to ordinary F0114 material");
+
+        input.relativeForward = 0;
+        input.relativeSide = 0;
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
+              "D0C C100/C101 source-lock receipt is built");
+        CHECK(d1c.liveExplosionSourceCount == 2 &&
+              d1c.liveExplosionSourceRoutes[0] ==
+                  DM1_V1_C15_EXPLOSION_ROUTE_C100_C3000_BLOCKED_PC34 &&
+              d1c.liveExplosionSourceRoutes[1] ==
+                  DM1_V1_C15_EXPLOSION_ROUTE_C101_D0C_M636_PC34 &&
+              d1c.liveRenderableExplosionCount == 1 &&
+              d1c.liveRenderableExplosionSlots[0] == 18 &&
+              d1c.liveRenderableExplosionTypes[0] == C101_EXPLOSION_REBIRTH_STEP2 &&
+              d1c.liveD0cRebirthStep1Count == 1 &&
+              d1c.liveD0cRebirthStep1GeometryBlocked,
+              "D0C admits only proven C101 M636 material and keeps C100 fail-closed");
+    }
+
+    {
+        DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
+            DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34);
         input.relativeForward = 0;
         input.relativeSide = 0;
         seed_live_effects(&input, &projectiles, &explosions);
