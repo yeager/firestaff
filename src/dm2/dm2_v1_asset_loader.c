@@ -262,6 +262,31 @@ static int dm2_img3_signed_offset(uint16_t value) {
     return (int)((int16_t)value >> 10);
 }
 
+static int dm2_img3_bits_per_pixel(uint16_t cy, uint16_t w4,
+                                   uint16_t *out_bits_per_pixel) {
+    int offset_y;
+
+    if (!out_bits_per_pixel) return 0;
+    offset_y = dm2_img3_signed_offset(cy);
+
+    /* skproject SKWIN/DME.h::IMG3::Getpf selects C8 solely from OffsetY()
+     * == 31, and C4 for every remaining compressed record.  The w4 member
+     * is only a bit-count for the explicit uncompressed OffsetY() == -32
+     * form.  Reject a malformed uncompressed header, but never reinterpret
+     * a valid C8 record's compression state as its bit count. */
+    if (offset_y == 31) {
+        *out_bits_per_pixel = 8u;
+        return 1;
+    }
+    if (offset_y == -32) {
+        if (w4 != 4u && w4 != 8u) return 0;
+        *out_bits_per_pixel = w4;
+        return 1;
+    }
+    *out_bits_per_pixel = 4u;
+    return 1;
+}
+
 static const DM2_V1_GdatEntry *dm2_gdat_find_entry(
     const DM2_V1_AssetLoader *loader,
     int category,
@@ -867,15 +892,18 @@ int dm2_v1_asset_load_image_metadata(
 
     /* skproject SKWIN/SkWinCore.cpp::QUERY_GDAT_SUMMARY_IMAGE applies the
      * graphics-set 0xfe offset first, then QUERY_GDAT_PICT_OFFSET for this
-     * image field.  IMG3 owns the dimensions; it is intentionally not
-     * decoded here. */
+     * image field.  IMG3 owns the dimensions and its format is classified
+     * through IMG3::Getpf(), not by treating w4 as a universal bpp field. */
     out_metadata->width = (uint16_t)(rd16le(raw + 0u) & 0x03ffu);
     out_metadata->height = (uint16_t)(rd16le(raw + 2u) & 0x03ffu);
-    out_metadata->bits_per_pixel = rd16le(raw + 4u);
+    if (!dm2_img3_bits_per_pixel(rd16le(raw + 2u), rd16le(raw + 4u),
+                                 &out_metadata->bits_per_pixel)) {
+        memset(out_metadata, 0, sizeof(*out_metadata));
+        return 0;
+    }
     if (out_metadata->width == 0u || out_metadata->height == 0u ||
         (out_metadata->bits_per_pixel != 4u &&
-         out_metadata->bits_per_pixel != 8u &&
-         out_metadata->bits_per_pixel != 9u)) {
+         out_metadata->bits_per_pixel != 8u)) {
         memset(out_metadata, 0, sizeof(*out_metadata));
         return 0;
     }
