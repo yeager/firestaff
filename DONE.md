@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB PC34 startup input/runtime package handoff: the CSB runtime
+  bridge now permits opening-door and terminal-HUD transitions only when the
+  input/runtime state, host surface, package hash, decoded-surface hash, and
+  session generation belong to the same verified PC34 startup session. No
+  wrapper or synthetic surface can satisfy the handoff. Source: ReDMCSB
+  `TITLE.C F0437:424-463` and `ENTRANCE.C F0806:850-903`. Verification: local
+  PC34 `firestaff_csb_v1_pc_real_asset_launch_probe` passed 50/50 checks.
+
 - 2026-07-13 DM1 F0231 action-hand icon ordering: compact combat now applies
   Diamond Edge's quarter and Hardcleave's eighth defense reductions only after
   the F0231 defense roll, then applies Vorpal Blade's material-target late

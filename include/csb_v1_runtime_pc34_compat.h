@@ -1446,6 +1446,9 @@ typedef struct {
 
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
+struct CSB_V1_StartupRealPackageConsumptionReceipt_PC34;
+struct CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34;
+
 typedef enum {
     CSB_V1_RUNTIME_STARTUP_PLAN_NONE_PC34 = 0,
     CSB_V1_RUNTIME_STARTUP_PLAN_ENTER_DUNGEON_PC34 = 1,
@@ -1467,6 +1470,25 @@ typedef struct {
     int sync_profile_state;
     int sync_leader_hand;
 } CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34;
+/* ReDMCSB TITLE.C F0437 retains C001 through the complete title, while
+ * ENTRANCE.C F0806 owns C002-C005 until it exits its input loop.  Keep the
+ * real package and surface identities coupled to that input/runtime boundary;
+ * this receipt contains no replacement pixels or callback route. */
+typedef struct {
+    int valid;
+    int real_package_matched;
+    int same_session_generation;
+    int no_legacy_wrappers;
+    int no_synthetic_surface;
+    int input_runtime_transition_ready;
+    int door_opening_transition;
+    int hud_runtime_transition;
+    uint32_t session_generation;
+    uint32_t host_surface_hash;
+    uint64_t real_asset_receipt_hash;
+    uint64_t consumed_surface_hash;
+    const char *source_evidence;
+} CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34;
 typedef struct {
     int level_loaded;
     int current_level;
@@ -1535,6 +1557,13 @@ int csb_v1_runtime_apply_startup_sequence_plan_pc34(
     const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,
     const char *resume_path,
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *out_receipt);
+int csb_v1_runtime_startup_package_handoff_receipt_from_transition_pc34(
+    const struct CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    const struct CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host_surface,
+    const CSB_V1_StartupEntranceInputOutcome_PC34 *input_outcome,
+    const CSB_V1_StartupRuntimeApplyReceipt_PC34 *runtime_apply,
+    const CSB_V1_StartupCommandStateReceipt_PC34 *state,
+    CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *out_receipt);
 int csb_v1_runtime_apply_startup_sequence_plan_from_state_facts_with_receipts_pc34(
     CSB_V1_RuntimeProfile *profile,
     const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,

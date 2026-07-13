@@ -87,7 +87,7 @@ typedef enum {
  * file sizes, variant id, archive kind, and a magic salt so
  * the hash is never 0 for a matched receipt.
  */
-typedef struct {
+typedef struct CSB_V1_StartupRealReceipt {
     /* Resolved on-disk paths. Empty when no match. */
     char graphics_path[CSB_V1_STARTUP_REAL_PATH_CAP];
     char dungeon_path[CSB_V1_STARTUP_REAL_PATH_CAP];
@@ -142,7 +142,7 @@ typedef struct {
  * ReDMCSB TITLE.C F0437 keeps C001 resident for PRESENTS/CHAOS/STRIKES;
  * PANEL.C F0346/F0347 returns from C040 to C017 after ENTRANCE.C F0807 has
  * completed. */
-typedef struct {
+typedef struct CSB_V1_StartupRealPackageConsumptionReceipt_PC34 {
     int valid;
     int real_package_matched;
     int c001_title_consumed;

@@ -306,6 +306,10 @@ static void verify_real_indexed_startup(
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
     CSB_V1_StartupFullRuntimeReceipt_PC34 receipt;
     CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
+    CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 handoff_receipt;
+    CSB_V1_StartupEntranceInputOutcome_PC34 input_outcome;
+    CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_apply;
+    CSB_V1_StartupCommandStateReceipt_PC34 state_receipt;
     CSB_V1_StartupRenderPlan_PC34 plan;
 
     csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
@@ -432,6 +436,42 @@ static void verify_real_indexed_startup(
               host_surface.raster.source_surface_count == 3 &&
               host_surface.no_synthetic_surface,
           "runtime host opening decision consumes C004 plus original C002/C003 strips");
+    memset(&input_outcome, 0, sizeof(input_outcome));
+    memset(&runtime_apply, 0, sizeof(runtime_apply));
+    memset(&state_receipt, 0, sizeof(state_receipt));
+    input_outcome.result = CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34;
+    runtime_apply.result = CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34;
+    state_receipt.entrance_active = 1;
+    state_receipt.opening_active = 1;
+    state_receipt.opening_step = 1;
+    CHECK(csb_v1_runtime_startup_package_handoff_receipt_from_transition_pc34(
+              &package_receipt, &host_surface, &input_outcome, &runtime_apply,
+              &state_receipt, &handoff_receipt) == 1 && handoff_receipt.valid &&
+              handoff_receipt.door_opening_transition &&
+              handoff_receipt.same_session_generation &&
+              handoff_receipt.no_synthetic_surface,
+          "opening input/runtime transition retains the verified PC34 package receipt");
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host_surface);
+
+    memset(&plan, 0, sizeof(plan));
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
+    plan.title_stage = CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34;
+    CHECK(csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+              &session, &plan, 102u, &host_surface) == 1 && host_surface.valid &&
+              host_surface.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34,
+          "terminal session exposes the original C017/C040 runtime host surface");
+    memset(&state_receipt, 0, sizeof(state_receipt));
+    state_receipt.entrance_dismissed = 1;
+    CHECK(csb_v1_runtime_startup_package_handoff_receipt_from_transition_pc34(
+              &package_receipt, &host_surface, &input_outcome, &runtime_apply,
+              &state_receipt, &handoff_receipt) == 1 && handoff_receipt.valid &&
+              handoff_receipt.hud_runtime_transition &&
+              handoff_receipt.real_asset_receipt_hash ==
+                  package_receipt.real_asset_receipt_hash &&
+              handoff_receipt.consumed_surface_hash ==
+                  package_receipt.consumed_surface_hash,
+          "HUD input/runtime transition retains the same verified PC34 package receipt");
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host_surface);
 
     CHECK(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
