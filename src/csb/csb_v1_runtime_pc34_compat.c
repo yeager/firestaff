@@ -14721,6 +14721,71 @@ int csb_v1_runtime_claim_csbwin_item16_ai_ownership(
     return claimed;
 }
 
+static int csb_v1_runtime_csbwin_timer_is_before(
+    const CSB_V1_CSBWin512TimerSummary *a, uint16_t index_a,
+    const CSB_V1_CSBWin512TimerSummary *b, uint16_t index_b)
+{
+    const int a_is_parameter_message = a->function == 101u;
+    const int b_is_parameter_message = b->function == 101u;
+
+    if (a->time != b->time) return a->time < b->time;
+    /* CSBWin Timer.cpp TIMER::operator<:733-770 places parameter messages
+     * before every other same-time timer, then uses their byte-5 sequence. */
+    if (a_is_parameter_message != b_is_parameter_message) {
+        return a_is_parameter_message;
+    }
+    if (a->function != b->function) {
+        return a_is_parameter_message
+            ? a->function == 101u
+            : a->function > b->function;
+    }
+    if (a->ubyte5 != b->ubyte5) {
+        return a_is_parameter_message
+            ? a->ubyte5 < b->ubyte5
+            : a->ubyte5 > b->ubyte5;
+    }
+    if (a->sequence != b->sequence) return a->sequence < b->sequence;
+    return index_a <= index_b;
+}
+
+static int csb_v1_runtime_validate_csbwin_timer_heap(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    uint16_t queue_index;
+
+    if (!profile) return 0;
+    for (queue_index = 0u;
+         queue_index < profile->csbwin_timer_queue_summary_count;
+         ++queue_index) {
+        const uint16_t timer_index = profile->csbwin_timer_queue[queue_index];
+        const CSB_V1_CSBWin512TimerSummary *timer;
+        uint16_t child;
+
+        if (timer_index >= profile->csbwin_timer_summary_count) return 0;
+        timer = &profile->csbwin_timers[timer_index];
+        if (!timer->valid || timer->function == DM1_EVENT_NONE) return 0;
+        for (child = (uint16_t)(queue_index * 2u + 1u);
+             child < profile->csbwin_timer_queue_summary_count &&
+             child <= (uint16_t)(queue_index * 2u + 2u);
+             ++child) {
+            const uint16_t child_timer_index = profile->csbwin_timer_queue[child];
+            const CSB_V1_CSBWin512TimerSummary *child_timer;
+
+            if (child_timer_index >= profile->csbwin_timer_summary_count) {
+                return 0;
+            }
+            child_timer = &profile->csbwin_timers[child_timer_index];
+            if (!child_timer->valid ||
+                child_timer->function == DM1_EVENT_NONE ||
+                csb_v1_runtime_csbwin_timer_is_before(
+                    child_timer, child_timer_index, timer, timer_index)) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 int csb_v1_runtime_materialize_csbwin_timer_queue(
     CSB_V1_RuntimeProfile *profile)
 {
@@ -14744,6 +14809,11 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
              profile->csbwin_timer_queue_summary_count)) {
         return -1;
     }
+    /* CSBWin Timer.cpp CheckTimers:884-906 rejects a saved queue if any
+     * child precedes its parent. Validate the complete source heap before
+     * staging so a malformed or reordered original-save queue cannot publish
+     * a partially rebuilt live timeline. */
+    if (!csb_v1_runtime_validate_csbwin_timer_heap(profile)) return -1;
 
     /* CSBWin Timer.cpp:728-772 orders timers by full m_time, then
      * timerFunction, then m_timerUByte5, then m_timerSequence when enabled.

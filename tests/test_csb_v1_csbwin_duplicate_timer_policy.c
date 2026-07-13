@@ -100,6 +100,15 @@ int main(void)
     check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) < 0 &&
               profile.timeline_queue.eventCount == 2,
           "CSBWin restore rejects a truncated timer summary without replacing live timers");
+
+    profile.csbwin_timer_summary_total = 2u;
+    profile.csbwin_timer_queue[0] = 1u;
+    profile.csbwin_timer_queue[1] = 0u;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) < 0 &&
+              profile.timeline_queue.eventCount == 2 &&
+              profile.csbwin_timeline_event_queue_slot[0] == 0u &&
+              profile.csbwin_timeline_event_queue_slot[1] == 1u,
+          "CSBWin restore rejects a reordered source timer heap atomically");
     csb_v1_runtime_cleanup(&profile);
     return failures == 0 ? 0 : 1;
 }
