@@ -51,6 +51,8 @@ int main(void)
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
     CSB_V1_StartupSessionTerminalReceipt_PC34 receipt;
+    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
+    CSB_V1_StartupSessionLiveHudReceipt_PC34 live_hud;
     unsigned int tick;
     unsigned int generation;
 
@@ -79,14 +81,38 @@ int main(void)
           "terminal F0807 authorizes C017/C040 only in the terminal session");
     tick = receipt.source_tick;
     generation = receipt.session_generation;
+    terminal = receipt;
+    check(csb_v1_startup_session_live_hud_receipt_pc34(
+              &session, &terminal, 1u, tick, generation, &live_hud) &&
+              live_hud.valid && live_hud.c040_cleared_once &&
+              live_hud.c017_live_base_only &&
+              live_hud.c017_source_asset_id == 17 &&
+              live_hud.c017_width == 224 && live_hud.c017_height == 136 &&
+              live_hud.special_palette == -1,
+          "one C040 clear returns to neutral first-live C017 in the terminal session");
+    check(!csb_v1_startup_session_live_hud_receipt_pc34(
+               &session, &terminal, 0u, tick, generation, &live_hud),
+          "missing C040 clear cannot enter the first live HUD");
+    check(!csb_v1_startup_session_live_hud_receipt_pc34(
+               &session, &terminal, 2u, tick, generation, &live_hud),
+          "multiple C040 clears cannot enter the first live HUD");
+    check(!csb_v1_startup_session_live_hud_receipt_pc34(
+               &session, &terminal, 1u, tick + 1u, generation, &live_hud),
+          "stale C040-to-C017 tick cannot enter the first live HUD");
     ++session.source_tick;
     check(csb_v1_startup_session_terminal_receipt_pc34(&session, &receipt) &&
               receipt.source_tick != tick && receipt.session_generation == generation,
           "later source tick cannot match an earlier terminal authorization");
+    check(!csb_v1_startup_session_live_hud_receipt_pc34(
+               &session, &terminal, 1u, tick, generation, &live_hud),
+          "session tick drift rejects C040-to-C017 live handoff");
     ++session.generation;
     check(csb_v1_startup_session_terminal_receipt_pc34(&session, &receipt) &&
               receipt.session_generation != generation,
           "later session generation cannot match an earlier terminal authorization");
+    check(!csb_v1_startup_session_live_hud_receipt_pc34(
+               &session, &terminal, 1u, tick, generation, &live_hud),
+          "session generation drift rejects C040-to-C017 live handoff");
     session.playback.entrance_complete = 0;
     check(!csb_v1_startup_session_terminal_receipt_pc34(&session, &receipt) &&
               !receipt.valid,
