@@ -289,35 +289,6 @@ static int M11_GameView_ProbeViewportArtifactCounts(
     return 1;
 }
 
-static int M11_GameView_ProbeViewportFloorItemCounts(
-    const M11_GameViewState* state,
-    int relForward,
-    int relSide,
-    int* outMapX,
-    int* outMapY,
-    int* outElementType,
-    int* outFloorItemCount,
-    int* outSummaryItemCount) {
-    unsigned short thing = THING_ENDOFLIST;
-    int count = 0;
-    int safety = 0;
-    if (!probe_viewport_relative_square(state, relForward, relSide,
-                                        outMapX, outMapY, outElementType,
-                                        &thing)) {
-        return 0;
-    }
-    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety++ < 64) {
-        int type = THING_GET_TYPE(thing);
-        if (dm1_v1_thing_type_is_floor_item_pc34(type)) {
-            ++count;
-        }
-        thing = raw_next_thing(state->world.things, thing);
-    }
-    if (outFloorItemCount) *outFloorItemCount = count;
-    if (outSummaryItemCount) *outSummaryItemCount = count;
-    return 1;
-}
-
 static int has_d1c_debug_sensor_marker(const unsigned char* fb) {
     int x;
     int y;
