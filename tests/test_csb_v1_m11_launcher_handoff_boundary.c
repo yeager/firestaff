@@ -440,8 +440,8 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(count_nonzero_pixels_in_rows(framebuffer, 169, 200) > 0,
                 "M11 CSB post-entrance handoff draws the V1 champion/control HUD band");
     {
-        const CSB_V1_StartupRuntimeAssetSession_PC34 *session =
-            (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+            (CSB_V1_StartupRuntimeAssetSession_PC34 *)
                 view.csbStartupRuntimeAssetSession;
         const CSB_V1_StartupRuntimeSurface_PC34 *c017 =
             &session->surfaces.surfaces[
@@ -467,8 +467,8 @@ static void run_real_launcher_handoff_if_available(void) {
                     "M11 CSB post-entrance input closes the live inventory surface");
     }
     {
-        const CSB_V1_StartupRuntimeAssetSession_PC34 *session =
-            (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+            (CSB_V1_StartupRuntimeAssetSession_PC34 *)
                 view.csbStartupRuntimeAssetSession;
         const CSB_V1_StartupRuntimeSurface_PC34 *c017 =
             &session->surfaces.surfaces[
@@ -509,6 +509,22 @@ static void run_real_launcher_handoff_if_available(void) {
         view.candidateMirrorPanelActive = 0;
         expect_true(M11_GameView_ToggleInventoryPanel(&view) == 0,
                     "M11 CSB candidate route closes the terminal inventory base");
+        {
+            unsigned int saved_generation = session->generation;
+            session->generation = saved_generation + 1u;
+            memset(framebuffer, 0xff, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) ==
+                            0,
+                        "M11 CSB rejects a stale terminal session before clearing C040");
+            session->generation = saved_generation;
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(view.csbState.c040_panel_session_active == 0 &&
+                            count_nonzero_pixels_in_rows(framebuffer, 169,
+                                                         200) > 0,
+                        "M11 CSB clears C040 once into same-session neutral live HUD");
+        }
     }
     {
         void *saved_session = view.csbStartupRuntimeAssetSession;

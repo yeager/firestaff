@@ -849,6 +849,11 @@ typedef struct {
         int startup_import_preview_active;
         char startup_import_dm1_save_path[512];
         char startup_import_utility_prompt[192];
+        /* ReDMCSB PANEL.C F0346/F0347: C040 may clear back to C017 only
+         * through the terminal source session that presented it. */
+        int c040_panel_session_active;
+        unsigned int c040_panel_source_tick;
+        unsigned int c040_panel_session_generation;
     } csbState;
 
     /* DM2 (Skullkeep) V1 runtime — active when sourceKind ==

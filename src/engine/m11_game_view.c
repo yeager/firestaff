@@ -1661,8 +1661,40 @@ static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
                (size_t)c017->width * (size_t)c017->height) == 0;
 }
 
+static int m11_csb_consume_c040_clear_session(M11_GameViewState *state)
+{
+    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
+    CSB_V1_StartupSessionLiveHudReceipt_PC34 live_hud;
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+
+    if (!state || !state->csbStartupRuntimeAssetSession) {
+        return 0;
+    }
+    if (state->candidateMirrorPanelActive ||
+        !state->csbState.c040_panel_session_active) {
+        return 1;
+    }
+    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    /* ReDMCSB PANEL.C F0346/F0347 returns from C040 to the neutral C017
+     * panel exactly once.  Do not let a later terminal session clear a
+     * candidate panel that was presented by an earlier session. */
+    if (!csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
+        !csb_v1_startup_session_live_hud_receipt_pc34(
+            session, &terminal, 1u, state->csbState.c040_panel_source_tick,
+            state->csbState.c040_panel_session_generation, &live_hud) ||
+        !live_hud.valid || !live_hud.c040_cleared_once ||
+        !live_hud.c017_live_base_only) {
+        return 0;
+    }
+    state->csbState.c040_panel_session_active = 0;
+    state->csbState.c040_panel_source_tick = 0u;
+    state->csbState.c040_panel_session_generation = 0u;
+    return 1;
+}
+
 static int m11_draw_csb_v1_inventory_surface(
-    const M11_GameViewState *state,
+    M11_GameViewState *state,
     unsigned char *framebuffer,
     int framebufferWidth,
     int framebufferHeight)
@@ -1741,6 +1773,9 @@ static int m11_draw_csb_v1_inventory_surface(
             }
         }
     }
+    state->csbState.c040_panel_session_active = 1;
+    state->csbState.c040_panel_source_tick = session->source_tick;
+    state->csbState.c040_panel_session_generation = session->generation;
     return 1;
 }
 
@@ -37471,6 +37506,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        /* C040 clear consumption records a one-shot source receipt.  The
+         * public draw API is const for ordinary renderers; a live game view
+         * is nevertheless mutable here and owns this CSB-only transaction. */
+        M11_GameViewState *csb_state = (M11_GameViewState *)state;
         if (m11_csb_boot_startup_active_from_capture(state)) {
             m11_draw_csb_startup_entrance(state,
                                           framebuffer,
@@ -37494,10 +37533,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           M11_COLOR_BLACK);
         } else {
             if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
-                if (state->inventoryPanelActive &&
+                if (!m11_csb_consume_c040_clear_session(csb_state) ||
+                    (state->inventoryPanelActive &&
                     !m11_draw_csb_v1_inventory_surface(
-                        state, framebuffer, framebufferWidth,
-                        framebufferHeight)) {
+                        csb_state, framebuffer, framebufferWidth,
+                        framebufferHeight))) {
                     m11_fill_rect(framebuffer, framebufferWidth,
                                   framebufferHeight, 0, 0,
                                   framebufferWidth, framebufferHeight,

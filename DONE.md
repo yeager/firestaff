@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB terminal C040 clear receipt: M11 records the terminal
+  session generation and source tick when it presents C040, then permits its
+  one clear to neutral live HUD only through the matching source-owned C017
+  receipt. A stale generation rejects before pixels are drawn. Verification:
+  real local-CSB `csb_v1_m11_launcher_handoff_boundary` CTest passed 1/1.
+
 - 2026-07-13 CSB C040 candidate composition: M11 now overlays terminal
   C040 onto the terminal C017 inventory viewport only while candidate input
   owns the panel, preserving ReDMCSB `PANEL.C` F0346/F0347 C101 geometry and
