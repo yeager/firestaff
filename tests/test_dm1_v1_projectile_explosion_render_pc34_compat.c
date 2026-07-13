@@ -791,6 +791,11 @@ static void test_explosion_pattern_graphic(void) {
     /* Smoke uses poison graphics: 489 + 2*3 + 0 = 495 */
     ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_SMOKE, 0), 495,
               "smoke small (=poison)");
+    /* ReDMCSB DUNVIEW.C F0115:5955,6038-6074: D0C rebirth step 2 enters
+     * the fire M636 pattern route, rather than a C3007/F0114 substitute. */
+    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(
+                  DM1_EXPLOSION_TYPE_REBIRTH_STEP2, 0), 489,
+              "D0C rebirth step2 uses fire M636 pattern");
     /* Fluxcage returns -1 */
     ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_FLUXCAGE, 100), -1,
               "fluxcage->-1");

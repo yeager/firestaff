@@ -280,6 +280,12 @@
   controller state, CD register, asset, or level semantics are synthesised.
   Verification: capture-script syntax/contract test, Mednafen patch dry-run,
   rebuilt instrumented Mednafen, and three authentic bounded GUI captures.
+- 2026-07-13 DM1 F0115/F0127 D0C C100/C101 rebirth routing: C101 now reaches
+  ReDMCSB `DUNVIEW.C F0115:5955,6038-6074`'s genuine D0C M636 fire material.
+  C100 instead retains a dedicated no-draw receipt because its distinct
+  lightning/C3000 PC34 coordinate-and-scale decoder is not yet proven; it
+  cannot borrow M636, F0114, a marker, or host geometry. Focused runtime
+  materialization and deferred-explosion source-lock verification pass.
 - 2026-07-13 DM1 F0115/F0127 C15 D0C material fail-closed: removed the
   residual M636-to-F0114 fallback. ReDMCSB `DUNVIEW.C F0115:6038-6074`
   consumes the dedicated PC34 D0C pattern only; missing M636 material now
