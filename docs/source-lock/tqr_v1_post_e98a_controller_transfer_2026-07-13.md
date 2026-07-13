@@ -48,6 +48,14 @@ anything else is emitted as `unrecognized` and fails the consumer. It reads no
 variant environment setting and does not invent a record from the controller
 transfer, CUE name, or static media bytes.
 
+Firestaff consumes this receipt through
+`theron_v1_irq2_live_trace_from_mednafen_capture()`. The parser accepts one
+source row, one E98A receipt, one post-E98A transfer, and exactly one of each
+dynamic row, then feeds the resulting `Theron_V1Irq2LiveTrace` into the same
+authenticated Track 02/System Card runtime gate used by the existing live
+branch path. It cannot promote a text-only, incomplete, duplicate,
+unrecognized, or media-only input.
+
 The record is never derived from controller flow. The consumer accepts only a
 captured JP `0004df` or US `0004e0` value paired with its matching variant;
 these are the existing `$4090` runtime-handoff records established by the real

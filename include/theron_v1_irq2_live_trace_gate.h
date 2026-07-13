@@ -107,6 +107,13 @@ int theron_v1_irq2_live_branch_from_trace(
     const Theron_V1Irq2LiveTrace *trace,
     Theron_V1Irq2LiveBranchReceipt *out_receipt);
 
+/* Parses only the two exact dynamic Mednafen rows plus the live post-$e98a
+ * receipt that binds them to the captured controller flow. Missing,
+ * duplicated, malformed, or unrecognised capture facts reject. */
+int theron_v1_irq2_live_trace_from_mednafen_capture(
+    const char *capture,
+    Theron_V1Irq2LiveTrace *out_trace);
+
 /* Requires the complete authenticated Track 02/System Card chain and a live
  * Mednafen trace. Media-only inputs and partial register snapshots reject. */
 int theron_v1_irq2_live_branch_from_full_track02_media(
@@ -117,6 +124,19 @@ int theron_v1_irq2_live_branch_from_full_track02_media(
     size_t system_card_rom_size,
     const char *system_card_rom_md5_hex,
     const Theron_V1Irq2LiveTrace *trace,
+    Theron_V1Irq2FullMediaTraceReceipt *out_receipt);
+
+/* Concrete Track 02 runtime gate for the instrumented Mednafen capture.
+ * It parses the live text receipt before entering the existing authenticated
+ * Track 02/System Card handoff; there is no media-only or inferred fallback. */
+int theron_v1_irq2_live_branch_from_mednafen_capture_and_full_track02_media(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5_hex,
+    const uint8_t *system_card_rom,
+    size_t system_card_rom_size,
+    const char *system_card_rom_md5_hex,
+    const char *capture,
     Theron_V1Irq2FullMediaTraceReceipt *out_receipt);
 
 #endif /* THERON_V1_IRQ2_LIVE_TRACE_GATE_H */
