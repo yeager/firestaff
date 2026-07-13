@@ -436,6 +436,42 @@ static void test_two_champion_candidate_slot_reuse(void) {
     CHECK(panel.disablesMirrorSensor == 1, "two-party C160 disables mirror sensor");
 }
 
+static void test_full_party_candidate_cancel(void) {
+    ChampionPortraitClickInput_Compat in;
+    CandidateChampionAddResult_Compat add;
+    CandidatePanelState_Compat st;
+    CandidatePanelResult_Compat panel;
+
+    printf("[full_party_candidate_cancel]\n");
+
+    /* ReDMCSB REVIVE.C F0280:272-277 creates the fourth candidate from a
+     * three-champion party. F0282:744-783 removes that tail candidate on
+     * C162 without disabling the mirror; C127 cannot append a fifth member. */
+    in = base_portrait_click_input();
+    in.partyChampionCount = 3;
+    in.leaderIndex = 0;
+    add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(add.triggersCandidateAdd == 1, "three-party C127 creates fourth candidate");
+    CHECK(add.candidateChampionIndex == 3 && add.candidateChampionOrdinal == 4,
+          "fourth candidate occupies tail slot and ordinal");
+    CHECK(add.nextPartyChampionCount == 4 && !add.setLeaderToFirstChampion,
+          "C127 produces four-member panel while retaining leader");
+
+    st.partyChampionCount = add.nextPartyChampionCount;
+    st.candidateChampionOrdinal = add.candidateChampionOrdinal;
+    panel = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
+        st, DM1_COMMAND_CANCEL);
+    CHECK(panel.valid && panel.cancelled && panel.candidateChampionIndex == 3,
+          "C162 accepts and removes the fourth candidate");
+    CHECK(panel.nextPartyChampionCount == 3 &&
+          panel.nextCandidateChampionOrdinal == 0 && !panel.disablesMirrorSensor,
+          "C162 restores three champions and leaves the mirror enabled");
+
+    in.partyChampionCount = 4;
+    add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(!add.triggersCandidateAdd, "full party C127 cannot append fifth candidate");
+}
+
 static void test_mirror_sensor_disable_order(void) {
     MirrorThing_Compat things[3];
     MirrorSensorDisableResult_Compat d;
@@ -569,6 +605,7 @@ int main(void) {
     test_candidate_append_clear_cycles();
     test_candidate_slot_reuse_before_accept();
     test_two_champion_candidate_slot_reuse();
+    test_full_party_candidate_cancel();
     test_mirror_sensor_disable_order();
     test_vi_altar_full_cycle_transition();
     test_command_validation();

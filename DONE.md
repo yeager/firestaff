@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC full-party candidate cancellation: focused coverage now
+  proves C127 appends a fourth candidate only from three members, C162 removes
+  that tail slot and clears its ordinal while preserving the mirror, and a
+  genuinely full four-member party cannot open a fifth-candidate panel.
+  Source: ReDMCSB `REVIVE.C` F0280:272-277 and F0282:744-783. Verification:
+  focused resurrection compatibility test.
+
 - 2026-07-13 DM1 HoC A/B/A candidate order: a fresh real-PC34 runtime now
   cancels a renamed candidate at mirror A, cancels a distinct candidate at B,
   then reopens and accepts A. Both C162 calls restore slot 0 and their source
