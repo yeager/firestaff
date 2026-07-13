@@ -1822,6 +1822,11 @@ typedef struct M11_Dm1InscriptionHostPresentationReceipt {
     int glyphByteCount;
     int lineCount;
     unsigned char glyphBytes[DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34];
+    /* Final M11 viewport destinations after consuming the M10 F0168/F0107
+     * material receipt.  Entries with glyphCount == 0 are unused. */
+    int lineDestinationX[DM1_V1_INSCRIPTION_MAX_LINES];
+    int lineDestinationY[DM1_V1_INSCRIPTION_MAX_LINES];
+    int lineGlyphCount[DM1_V1_INSCRIPTION_MAX_LINES];
 } M11_Dm1InscriptionHostPresentationReceipt;
 
 void M11_GameView_GetDm1InscriptionHostPresentationReceipt(
