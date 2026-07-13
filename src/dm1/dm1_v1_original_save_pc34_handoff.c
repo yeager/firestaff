@@ -2,6 +2,7 @@
 
 #include "dm1_v1_resurrection_pc34_compat.h"
 
+#include "memory_door_action_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 
 #include <stdio.h>
@@ -1542,6 +1543,55 @@ static int materialize_original_pc34_door_destruction_event(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+static int materialize_original_pc34_door_animation_event(
+    const struct DM1_Event_V1 *src, const struct GameWorld_Compat *world,
+    struct TimelineEvent_Compat *out_event)
+{
+    const struct DungeonMapTiles_Compat *tiles;
+    int map_index;
+    unsigned char square;
+
+    if (!src || !world || !world->dungeon || !world->dungeon->maps ||
+        !world->dungeon->tiles || !out_event ||
+        src->type != DM1_EVENT_DOOR_ANIMATION ||
+        src->c_effect > DOOR_EFFECT_CLEAR) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    map_index = (int)((src->map_time >> 24) & 0xffu);
+    if (map_index < 0 || map_index >= (int)world->dungeon->header.mapCount ||
+        !world->dungeon->tilesLoaded ||
+        src->b_mapX >= world->dungeon->maps[map_index].width ||
+        src->b_mapY >= world->dungeon->maps[map_index].height) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    tiles = &world->dungeon->tiles[map_index];
+    if (!tiles->squareData) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    square = tiles->squareData[(size_t)src->b_mapX *
+                               (size_t)world->dungeon->maps[map_index].height +
+                               (size_t)src->b_mapY];
+    if ((square >> 5) != DUNGEON_ELEMENT_DOOR) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+
+    /* ReDMCSB TIMELINE.C F0244:894-913 resolves C10's toggle to SET or
+     * CLEAR before replacing its type with C01.  F0241:749-816 then owns
+     * exactly B.Location and C.A.Effect; C.A.Cell is not read.  A saved C01
+     * therefore cannot become a generic square event or carry a host cell. */
+    memset(out_event, 0, sizeof(*out_event));
+    out_event->kind = TIMELINE_EVENT_DOOR_ANIMATE;
+    out_event->fireAtTick = src->map_time & 0x00ffffffu;
+    out_event->mapIndex = map_index;
+    out_event->mapX = src->b_mapX;
+    out_event->mapY = src->b_mapY;
+    out_event->aux0 = DM1_EVENT_DOOR_ANIMATION;
+    out_event->aux1 = src->c_effect;
+    out_event->aux2 = DM1_EVENT_DOOR_ANIMATION;
+    out_event->aux4 = src->priority;
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 static int materialize_original_pc34_audible_group_move_event(
     const struct DM1_Event_V1 *src, const struct GameWorld_Compat *world,
     struct TimelineEvent_Compat *out_event)
@@ -1748,6 +1798,14 @@ static int materialize_original_pc34_timeline(
         }
         if (src->type == DM1_EVENT_DOOR_DESTRUCTION) {
             if (materialize_original_pc34_door_destruction_event(src, world, &ev) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK || !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            continue;
+        }
+        if (src->type == DM1_EVENT_DOOR_ANIMATION) {
+            if (materialize_original_pc34_door_animation_event(
+                    src, world, &ev) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
+                !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
             continue;
         }
         if (src->type == DM1_EVENT_MOVE_GROUP_AUDIBLE && src->priority == 0u) {

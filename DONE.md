@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 Theron dynamic CD_READ register provenance: the Mednafen
+  capture now records the actual `CL/DL/CH` bytes at the `$4090` call, and
+  Firestaff rejects a trace unless those bytes reconstruct its source-locked
+  Track 02 record before raw-media binding. The startup bitmap-route receipt
+  remains separate, so no unproven record-to-bitmap classification is made.
+  Verification: four focused Theron CTest probes plus
+  `test_theron_v1_dynamic_cd_read_register_provenance.sh` passed.
+
 - ✅ 2026-07-13 Theron Track 02 dynamic CD_READ media-span gate: an
   instrumented Mednafen receipt now has to match its `$4093` 32-byte `$3800`
   FNV span to the selected hash-verified raw Track 02 sector before final

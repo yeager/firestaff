@@ -77,6 +77,24 @@ require_transaction sector_count 01
 require_transaction destination 3800
 require_transaction record_register_mask 07
 
+require_transaction_hex_byte() {
+    local key=$1
+    local actual
+
+    actual=$(value "$transaction" "$key") || {
+        printf 'FAIL: dynamic CD_READ transaction omits %s\n' "$key" >&2
+        exit 1
+    }
+    case "$actual" in
+        [0-9a-f][0-9a-f]) printf '%s\n' "$actual" ;;
+        *) printf 'FAIL: dynamic CD_READ %s is not a lowercase byte\n' "$key" >&2; exit 1 ;;
+    esac
+}
+
+record_cl=$(require_transaction_hex_byte record_cl)
+record_dl=$(require_transaction_hex_byte record_dl)
+record_ch=$(require_transaction_hex_byte record_ch)
+
 variant=$(value "$transaction" variant) || {
     printf 'FAIL: dynamic CD_READ transaction omits variant\n' >&2
     exit 1
@@ -85,6 +103,12 @@ record=$(value "$transaction" record) || {
     printf 'FAIL: dynamic CD_READ transaction omits captured record\n' >&2
     exit 1
 }
+packed_record=$(printf '%02x%02x%02x' "$((16#$record_ch))" \
+    "$((16#$record_dl))" "$((16#$record_cl))")
+if [ "$record" != "$packed_record" ]; then
+    printf 'FAIL: dynamic CD_READ CL/DL/CH do not reconstruct captured record\n' >&2
+    exit 1
+fi
 case "$variant:$record" in
     jp_bin:0004df|us_bin:0004e0) ;;
     *)

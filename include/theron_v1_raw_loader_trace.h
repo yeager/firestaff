@@ -18,6 +18,9 @@ typedef struct {
     char track02_md5[33];
     Theron_Track02Variant variant;
     uint32_t dynamic_cd_read_record;
+    uint8_t dynamic_cd_read_record_cl;
+    uint8_t dynamic_cd_read_record_dl;
+    uint8_t dynamic_cd_read_record_ch;
     uint16_t dynamic_cd_read_destination;
     size_t dynamic_cd_read_destination_span_bytes;
     uint32_t dynamic_cd_read_destination_span_checksum;
@@ -36,6 +39,7 @@ typedef struct {
     uint16_t first_palette_store_pc;
     uint8_t first_palette_store_accumulator;
     int dynamic_cd_read_verified;
+    int dynamic_cd_read_registers_verified;
     /* Direct checksum of original System Card destination RAM after the
      * authenticated CD_READ returned. It proves record-to-RAM transfer only. */
     int dynamic_cd_read_destination_span_verified;

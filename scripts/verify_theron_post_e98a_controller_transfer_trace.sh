@@ -26,7 +26,7 @@ require 'post_e98a_controller_transfer_source_pc='
 
 if ! awk '
     /boot_pc=e98a .*instruction=LDA \$22A4/ { entry = NR }
-    entry && /post_e98a_controller_transfer_source_pc=e[89a][0-9a-f] .*next_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f]/ { proven = 1 }
+    entry && /post_e98a_controller_transfer_source_pc=e[89a][0-9a-f][0-9a-f] .*next_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f]/ { proven = 1 }
     END { exit proven ? 0 : 1 }
 ' "$trace"; then
     printf 'FAIL: post-e98a controller transfer trace order is incomplete\n' >&2

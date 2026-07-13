@@ -308,7 +308,8 @@ int theron_v1_irq2_live_trace_from_mednafen_capture(
     size_t transaction_length;
     size_t state_length;
     unsigned int pc, return_pc, sector_count, destination, register_mask;
-    unsigned int record, state_pc, f5_after, f5_entry, status_1802;
+    unsigned int record, record_cl, record_dl, record_ch;
+    unsigned int state_pc, f5_after, f5_entry, status_1802;
     unsigned int status_1803, f2_before, f2_branch;
     char variant[16];
     int consumed = 0;
@@ -323,9 +324,10 @@ int theron_v1_irq2_live_trace_from_mednafen_capture(
         !theron_v1_capture_line(capture,
             "dynamic_cd_read_controller_state ", &state, &state_length) ||
         sscanf(transaction,
-               "dynamic_cd_read_transaction pc=%x return_pc=%x sector_count=%x destination=%x record_register_mask=%x variant=%15[a-z_] record=%x%n",
+               "dynamic_cd_read_transaction pc=%x return_pc=%x sector_count=%x destination=%x record_register_mask=%x record_cl=%x record_dl=%x record_ch=%x variant=%15[a-z_] record=%x%n",
                &pc, &return_pc, &sector_count, &destination, &register_mask,
-               variant, &record, &consumed) != 7 ||
+               &record_cl, &record_dl, &record_ch, variant, &record,
+               &consumed) != 10 ||
         consumed != (int)transaction_length ||
         sscanf(state,
                "dynamic_cd_read_controller_state pc=%x f5_after_cd_read=%x f5_at_irq2_entry=%x status_1802=%x status_1803=%x f2_before_merge=%x f2_at_branch=%x%n",
@@ -334,6 +336,8 @@ int theron_v1_irq2_live_trace_from_mednafen_capture(
         consumed != (int)state_length || pc != 0x4090u ||
         return_pc != 0x4093u || sector_count != 1u || destination != 0x3800u ||
         register_mask != 0x07u || state_pc != 0xe74cu || record > 0xffffffu ||
+        record_cl > 0xffu || record_dl > 0xffu || record_ch > 0xffu ||
+        record != (record_cl | (record_dl << 8) | (record_ch << 16)) ||
         f5_after > 0xffu || f5_entry > 0xffu || status_1802 > 0xffu ||
         status_1803 > 0xffu || f2_before > 0xffu || f2_branch > 0xffu) {
         return 0;
@@ -349,6 +353,9 @@ int theron_v1_irq2_live_trace_from_mednafen_capture(
     out_trace->version = THERON_V1_IRQ2_TRACE_VERSION;
     out_trace->source = THERON_V1_IRQ2_TRACE_SOURCE_MEDNAFEN_PCE;
     out_trace->stage3_track02_record = record;
+    out_trace->cd_read_record_cl = (uint8_t)record_cl;
+    out_trace->cd_read_record_dl = (uint8_t)record_dl;
+    out_trace->cd_read_record_ch = (uint8_t)record_ch;
     out_trace->cd_read_return_pc = (uint16_t)return_pc;
     out_trace->irq2_entry_pc = 0xe736u;
     out_trace->cd_state_pc = 0xe742u;
