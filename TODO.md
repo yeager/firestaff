@@ -630,6 +630,12 @@ remains no-draw here until its distinct C3000/C3007 coordinates are consumed;
 neither can borrow a generic sprite. Remaining explosion work is real-media
 multi-effect capture plus the separate rebirth geometry route.
 
+F0128's D4L/D4R/D4C `C0x0001` calls retain their real early F0115 object-pass
+ordering, but D4 has no G2028/C2900 projectile row and F0115 exits before the
+projectile branch. Firestaff therefore has no D4 projectile/marker fallback.
+The remaining D4 work is a source-backed G0218 object-coordinate consumer,
+not reintroducing a guessed far projectile box.
+
 DM1 F0115 now consumes only ReDMCSB's compact 13 `G0205` ornament zones.
 The F0676/F0677 D3L2/D3R2 planes are deliberately outside that pass, so they
 cannot duplicate inscriptions.  The remaining DM1 inscription work is a

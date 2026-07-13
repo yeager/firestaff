@@ -7199,26 +7199,21 @@ int main(int argc, char** argv) {
                      dm1_viewport_3d_f0115_c2500_c2900_row(3, 1) == 2,
                      "relative viewport cells source-map through ReDMCSB F0115 G2028 rows");
 
-        /* INV_GV_114C2B2: F0128 D4 projectile pass is intentionally
-         * outside the C2900 row map but has explicit far-pass boxes so
-         * D4 fireball pixels are drawn before D3 wall overpaint. */
-        {
-            int lx = 0, ly = 0, lw = 0, lh = 0;
-            int cx = 0, cy = 0, cw = 0, ch = 0;
-            int rx = 0, ry = 0, rw = 0, rh = 0;
-            int leftOk = dm1_v1_projectile_d4_far_box(-1, &lx, &ly, &lw, &lh);
-            int centerOk = dm1_v1_projectile_d4_far_box(0, &cx, &cy, &cw, &ch);
-            int rightOk = dm1_v1_projectile_d4_far_box(1, &rx, &ry, &rw, &rh);
-            probe_record(&tally,
-                         "INV_GV_114C2B2",
-                         dm1_viewport_3d_f0115_c2500_c2900_row(4, -1) == -1 &&
-                         dm1_viewport_3d_f0115_c2500_c2900_row(4, 0) == -1 &&
-                         dm1_viewport_3d_f0115_c2500_c2900_row(4, 1) == -1 &&
-                         leftOk && lx == 78 && ly == 42 && lw == 10 && lh == 8 &&
-                         centerOk && cx == 108 && cy == 42 && cw == 10 && ch == 8 &&
-                         rightOk && rx == 138 && ry == 42 && rw == 10 && rh == 8,
-                         "D4 far projectile pass has explicit pre-D3 boxes while C2900 rows stay D1-D3 only");
-        }
+        /* INV_GV_114C2B2: F0128 calls F0115 for D4 object ordering, but
+         * F0115 exits before projectile handling and G2028 has no D4 C2900
+         * row. D4 must therefore remain a no-draw projectile route. */
+        probe_record(&tally,
+                     "INV_GV_114C2B2",
+                     dm1_viewport_3d_f0115_c2500_c2900_row(4, -1) == -1 &&
+                     dm1_viewport_3d_f0115_c2500_c2900_row(4, 0) == -1 &&
+                     dm1_viewport_3d_f0115_c2500_c2900_row(4, 1) == -1 &&
+                     dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
+                         DM1_VIEW_SQUARE_D4L) == NULL &&
+                     dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
+                         DM1_VIEW_SQUARE_D4C) == NULL &&
+                     dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
+                         DM1_VIEW_SQUARE_D4R) == NULL,
+                     "D4 has no PC34 C2900 projectile material and draws no substitute box");
 
         /* INV_GV_114C2C: DM1/PC 3.4 floor ornaments use ReDMCSB
          * DUNVIEW.C G0206 coordinate-set 0: 9 floor slots only, with
