@@ -1098,12 +1098,12 @@ static void test_explosion_occlusion_zone_mapping(void)
             int x;
             int y;
         } c100_expected[] = {
-            { DM1_VIEW_SQUARE_D4C, 3000, 112, 53 },
-            { DM1_VIEW_SQUARE_D3C, 3003, 112, 59 },
-            { DM1_VIEW_SQUARE_D2L, 3009, 194, 57 },
-            { DM1_VIEW_SQUARE_D1R, 3013, 112, 76 },
-            { DM1_VIEW_SQUARE_D0C, 3014, 112, 47 },
-            { DM1_VIEW_SQUARE_D0R, 3016, 167, 47 }
+            { DM1_VIEW_SQUARE_D3C, 3000, 112, 53 },
+            { DM1_VIEW_SQUARE_D3L, 3001,  24, 53 },
+            { DM1_VIEW_SQUARE_D3L2, 3003, 112, 59 },
+            { DM1_VIEW_SQUARE_D2L, 3006, 112, 70 },
+            { DM1_VIEW_SQUARE_D1R, 3010, 112, 63 },
+            { DM1_VIEW_SQUARE_D0C, 3011,  12, 63 }
         };
         for (size_t i = 0; i < sizeof(c100_expected) / sizeof(c100_expected[0]); ++i) {
             const DM1_ViewportExplosionOcclusionSpec *spec =
@@ -1122,6 +1122,43 @@ static void test_explosion_occlusion_zone_mapping(void)
             check_int(id, y, c100_expected[i].y);
         }
         check_int("c100_geometry.null", dm1_viewport_3d_c100_rebirth_lightning_geometry(NULL, NULL, NULL, NULL), 0);
+        check_int("c100_geometry.d4_rejected",
+                  dm1_viewport_3d_c100_rebirth_lightning_geometry(
+                      dm1_viewport_3d_get_explosion_occlusion_spec_for_square(DM1_VIEW_SQUARE_D4C),
+                      NULL, NULL, NULL), 0);
+
+        {
+            struct {
+                DM1_ViewSquareIndex square;
+                int scale;
+            } c100_scale_expected[] = {
+                { DM1_VIEW_SQUARE_D3C, 15 },
+                { DM1_VIEW_SQUARE_D3R, 15 },
+                { DM1_VIEW_SQUARE_D3L2, 20 },
+                { DM1_VIEW_SQUARE_D2C, 20 },
+                { DM1_VIEW_SQUARE_D2L, 32 }
+            };
+            for (size_t i = 0; i < sizeof(c100_scale_expected) / sizeof(c100_scale_expected[0]); ++i) {
+                const DM1_ViewportExplosionOcclusionSpec *spec =
+                    dm1_viewport_3d_get_explosion_occlusion_spec_for_square(c100_scale_expected[i].square);
+                int scale = -1;
+                char id[112];
+                snprintf(id, sizeof(id), "c100_scale.%zu.valid", i);
+                check_int(id, dm1_viewport_3d_c100_rebirth_lightning_scale(spec, &scale), 1);
+                snprintf(id, sizeof(id), "c100_scale.%zu.value", i);
+                check_int(id, scale, c100_scale_expected[i].scale);
+            }
+            check_int("c100_scale.row7_rejected",
+                      dm1_viewport_3d_c100_rebirth_lightning_scale(
+                          dm1_viewport_3d_get_explosion_occlusion_spec_for_square(DM1_VIEW_SQUARE_D2R),
+                          NULL), 0);
+            check_int("c100_scale.row11_rejected",
+                      dm1_viewport_3d_c100_rebirth_lightning_scale(
+                          dm1_viewport_3d_get_explosion_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C),
+                          NULL), 0);
+            check_int("c100_scale.null",
+                      dm1_viewport_3d_c100_rebirth_lightning_scale(NULL, NULL), 0);
+        }
     }
 }
 

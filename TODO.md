@@ -644,12 +644,14 @@ multi-effect capture, not a cue, marker, or replacement bitmap.
 
 D0C C100/C101 rebirth C15 records now follow their separate ReDMCSB routes.
 C100's real PC34 lightning material (`M613 + G0210[C03] + 1 = 464`) and C3000
-centres are now decoded from `G2034` and `COORD.C:G3025` for rows 0..16.
-It remains explicitly no-draw: ReDMCSB declares `G2037` with seven scale
-entries but the PC34 `G2034` caller reaches rows 0..16, so a source-proven C100
-scale mapping is still absent. C100 cannot borrow C101/M636, F0114, a marker,
-or host geometry; resolve the PC34 scale mapping by original capture or a
-verified source table before connecting the renderer.
+centres now follow `L2476 = G2028`, not `G2034`: `DUNVIEW.C:5948,5984,5999`
+uses `L2476`, assigned at `4806-4812`. The original `G2037` scales prove only
+rows 0..6 (`15,15,15,20,20,20,32`). Rows 7..11 have valid C3000 coordinates
+but no scale: `FTL.idc` locates `G2037` at `0x2583B` and `G0230` at `0x25842`,
+exactly seven bytes later. Therefore C100 must remain no-draw for every route
+until original PC34 capture or a verified disassembly resolves the row-7..11
+behavior. It cannot borrow C101/M636, F0114, a marker, host geometry, or the
+adjacent mutable globals as scale values.
 
 F0115's deferred C15 receipt now preserves every ordinary same-square PC34
 explosion record in source list order and M11 consumes each record's own

@@ -1183,16 +1183,22 @@ int dm1_viewport_3d_explosion_centered_zone(const DM1_ViewportExplosionOcclusion
 int dm1_viewport_3d_explosion_two_cell_zone(const DM1_ViewportExplosionOcclusionSpec *spec, unsigned char front_cell);
 int dm1_viewport_3d_explosion_rebirth_step1_zone(const DM1_ViewportExplosionOcclusionSpec *spec);
 int dm1_viewport_3d_explosion_rebirth_step2_zone(const DM1_ViewportExplosionOcclusionSpec *spec);
-/* C100 is distinct from C101: PC34 F0115 selects C3000 through G2034,
- * then COORD.C layout-696 supplies the bitmap-centre coordinates.  This
- * exposes only the proven C100 destination geometry; scale and drawing stay
- * fail-closed until the PC34 scale mapping is independently evidenced.
- * Source: DUNVIEW.C:5920,5948,5965,5984,5998-6000; COORD.C:1061-1081. */
+/* C100 is distinct from C101: PC34 F0115 selects C3000 through L2476
+ * (G2028), then COORD.C layout-696 supplies the bitmap-centre coordinates.
+ * This exposes only the proven C100 destination geometry.  Source:
+ * DUNVIEW.C:4806-4812,5948,5965,5998-6000; COORD.C:1061-1081. */
 int dm1_viewport_3d_c100_rebirth_lightning_geometry(
     const DM1_ViewportExplosionOcclusionSpec *spec,
     int *out_zone_index,
     int *out_center_x,
     int *out_center_y);
+/* PC34 G2037 contains exactly seven source scale bytes.  C100 may consume
+ * only rows 0..6; rows 7..11 have C3000 coordinates but no proven G2037
+ * value and are rejected rather than reading adjacent globals.  Source:
+ * DUNVIEW.C:1924-1927,4806-4812,5948,5984; FTL.idc:21032-21034. */
+int dm1_viewport_3d_c100_rebirth_lightning_scale(
+    const DM1_ViewportExplosionOcclusionSpec *spec,
+    int *out_scale);
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec(size_t index);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_ViewSquareIndex square);
