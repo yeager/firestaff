@@ -1680,6 +1680,16 @@
   `dm1_v1_f0407_throw_c11_receipt_pc34_compat` stages the malformed
   SWING/ordinal-two pairing and proves that F0259 cannot run.
 
+- 2026-07-13 DM1 PC34 F0407 closed-door C04 ownership gate: the delayed
+  wooden thud now retains the exact native C20 receipt produced by
+  `SOUND.C F0064` (location, sound index, and DATA.C priority 70). M11 uses
+  that typed receipt, rather than the shared sound-four index, when deciding
+  that the `MENU.C F0407` closed-door melee branch completed. Other drop or
+  impact thuds therefore cannot make an action appear performed. Source:
+  ReDMCSB `MENU.C F0407:1308-1319`, `SOUND.C F0064:1536-1543`, and `DATA.C`
+  `G0060` C04 row. Verification: focused M11 closed-door action regression
+   asserts the full C20 shape and dispatches the paired F0232 C02 event.
+
 - 2026-07-13 DM1 PC34 Open Door C11 receipt regression: the F0412 Open Door
   runtime gate now requires both independently owned queue receipts: F0327's
   typed projectile move and F0330's C11 enable-action record. It no longer

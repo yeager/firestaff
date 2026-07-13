@@ -14475,8 +14475,17 @@ static int m11_last_attack_tick_performed_closed_door_f0407(
         if (event->kind == TIMELINE_EVENT_DOOR_DESTRUCTION) {
             in.observedDoorDestructionEvent = 1;
         }
+        /* ReDMCSB MENU.C F0407:1311-1319 reaches its closed-door branch
+         * only through SOUND.C F0064's delayed native C20.  Sound four is
+         * also used by drops and impacts, so require the exact C20 receipt
+         * rather than treating the shared sound index as an action owner. */
         if (event->kind == TIMELINE_EVENT_PLAY_SOUND &&
-            event->aux0 == DM1_SND_WOODEN_THUD) {
+            event->aux0 == DM1_SND_WOODEN_THUD &&
+            event->aux1 == 0 &&
+            event->aux2 == DM1_EVENT_PLAY_SOUND &&
+            event->aux3 == 0 &&
+            event->aux4 == 70 &&
+            event->cell == 0) {
             in.observedWoodenThudSound = 1;
         }
     }
