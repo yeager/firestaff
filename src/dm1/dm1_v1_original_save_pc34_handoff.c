@@ -829,6 +829,18 @@ static int validate_original_pc34_timeline_membership(
         }
         seen[event_index] = 1u;
     }
+    /* ReDMCSB LOADSAVE.C F0433 writes the live EVENT heap as a paired C3/C4
+     * transaction. F0435 restores C4 before the M10 materializer consumes
+     * it; accepting a live C13 absent from C4 would silently lose its rebirth
+     * timer. Reject every such active orphan with source-slot provenance. */
+    for (i = 0; i < out_report->decoded_event_count; ++i) {
+        if (out_report->events[i].type != DM1_EVENT_NONE && !seen[i]) {
+            out_report->timeline_orphan_active_event_index = i;
+            out_report->timeline_orphan_active_event_type =
+                out_report->events[i].type;
+            return SAVEGAME_PC34_ERROR_BAD_SIZE;
+        }
+    }
     return SAVEGAME_PC34_OK;
 }
 
@@ -2679,6 +2691,8 @@ int dm1_v1_original_save_pc34_handoff_bytes(
     staged_report.timeline_invalid_slot = -1;
     staged_report.timeline_invalid_event_index = -1;
     staged_report.timeline_invalid_event_is_none = 0;
+    staged_report.timeline_orphan_active_event_index = -1;
+    staged_report.timeline_orphan_active_event_type = -1;
     staged_report.first_unused_event_index_event_type = -1;
     if (out_report) {
         memset(out_report, 0, sizeof(*out_report));
@@ -2689,6 +2703,8 @@ int dm1_v1_original_save_pc34_handoff_bytes(
         out_report->timeline_invalid_slot = -1;
         out_report->timeline_invalid_event_index = -1;
         out_report->timeline_invalid_event_is_none = 0;
+        out_report->timeline_orphan_active_event_index = -1;
+        out_report->timeline_orphan_active_event_type = -1;
         out_report->first_unused_event_index_event_type = -1;
     }
     if (!bytes || !out_state) {

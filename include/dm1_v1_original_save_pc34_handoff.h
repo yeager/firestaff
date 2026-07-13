@@ -119,6 +119,11 @@ typedef struct {
     int timeline_invalid_slot;
     int timeline_invalid_event_index;
     int timeline_invalid_event_is_none;
+    /* Every non-NONE C3 EVENT emitted by F0433 must appear once in the C4
+     * heap written by F0238. Retain the first missing row for rollback
+     * provenance before runtime materialization can drop it. */
+    int timeline_orphan_active_event_index;
+    int timeline_orphan_active_event_type;
     int first_unused_event_index_points_to_active;
     int first_unused_event_index_event_type;
     uint32_t external_portrait_byte_count;

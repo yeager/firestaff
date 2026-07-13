@@ -252,6 +252,12 @@ ReDMCSB WIP 2021-02-06 source tree.
     raw C4 TIMELINE bytes, and the optional F0433 dungeon tail. C13/C24/C25
     are subtype receipts only when source rows exist, so an absent optional
     subtype cannot block independent C3/C4/tail evidence.
+  - 2026-07-13 update: PC34 import now rejects any active C3 EVENT omitted
+    from C4 before runtime materialization. The focused C13 regression keeps
+    a valid rebirth EVENT but substitutes a different active C4 index, proving
+    exact rollback provenance instead of silently losing the timer. Remaining
+    evidence is still a provenance-recorded real PC34 corpus and original
+    executable load results.
 
 - REDMCSB-DM1-GAP-008 — **ReDMCSB `LOADSAVE.C`
   F1057/F0433/F1059 and `COMMAND.C` save-command checksum gates.** Save
