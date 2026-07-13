@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 GDAT weather CMDSTR boundary: skproject `CD`/`FW` command
+  strings now decode only from proven original GDAT material; malformed or
+  unsupported input blocks the weather route without generated commands.
+  Verification: Ninja-built and CTest-passed
+  `dm2_v1_weather_gdat_receipt`.
+
 - 2026-07-13 Theron Track 02 `$c86e` command-latch trace: a clean-source,
   instrumented Mednafen 1.32.1 capture from the authenticated US CUE/System
   Card 3.0 now proves the carry-clear caller continuation

@@ -19,14 +19,15 @@ static void check(int condition, const char *name)
 
 int main(void)
 {
-    uint32_t offsets[6] = { 0u, 1u, 3u, 6u, 10u, 15u };
-    uint32_t sizes[6] = { 1u, 2u, 3u, 4u, 5u, 6u };
-    uint8_t raw[21] = {
-        0x11u, 0x22u, 0x23u, 0x31u, 0x32u, 0x33u,
-        0x41u, 0x42u, 0x43u, 0x44u, 0x51u, 0x52u,
-        0x53u, 0x54u, 0x55u, 0x61u, 0x62u, 0x63u,
-        0x64u, 0x65u, 0x66u
-    };
+    static const uint8_t raw[] =
+        "CD=6000;FW=8\0"
+        "CD=6001;FW=2\0"
+        "CD=6002;FW=64\0"
+        "CD=6004;FW=32\0"
+        "CD=6005;FW=0\0"
+        "CD=6006;FW=8\0";
+    uint32_t offsets[6];
+    uint32_t sizes[6];
     DM2_V1_GdatEntry entries[7];
     DM2_V1_AssetLoader loader;
     DM2_V1_WeatherGdatReceipt receipt;
@@ -38,7 +39,10 @@ int main(void)
 
     memset(&loader, 0, sizeof(loader));
     memset(entries, 0, sizeof(entries));
+    offsets[0] = 0u;
     for (i = 0; i < 6; ++i) {
+        sizes[i] = (uint32_t)strlen((const char *)raw + offsets[i]) + 1u;
+        if (i != 5) offsets[i + 1] = offsets[i] + sizes[i];
         entries[i].cls1 = DM2_GDAT_CATEGORY_ENVIRONMENT;
         entries[i].cls2 = 3u;
         entries[i].cls3 = DM2_GDAT_ENTRY_TYPE_TEXT;
@@ -62,13 +66,17 @@ int main(void)
     check(dm2_v1_weather_gdat_receipt(&loader, 3u, &receipt) &&
               receipt.valid && receipt.graphicsset == 3u &&
               receipt.misty_map == 0x0042u &&
-              receipt.command_mask == 0x3fu && receipt.receipt_hash != 0u,
+              receipt.command_mask == 0x3fu && receipt.material_mask == 0x3fu &&
+              receipt.receipt_hash != 0u,
           "weather receipt binds all six source dtText commands");
     check(receipt.commands[3].command == 0x6au &&
               receipt.commands[3].raw_text == raw + offsets[3] &&
               receipt.commands[3].byte_count == sizes[3] &&
-              receipt.commands[3].raw_hash != 0u,
-          "weather receipt preserves raw source command provenance");
+              receipt.commands[3].raw_hash != 0u &&
+              receipt.commands[3].material_valid &&
+              receipt.commands[3].rect_number == 6004u &&
+              receipt.commands[3].flip_mode == 32u,
+          "weather receipt decodes original CD/FW material command");
     check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6cu,
                                                &command) &&
               command.raw_text == raw + offsets[5] &&
@@ -76,6 +84,19 @@ int main(void)
               !dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x70u,
                                                     &command),
           "only c_weather source command range is accepted");
+    {
+        static const uint8_t repeated[] = "CD=6;noise;CD=42;FW=-2\0";
+        int found = 0;
+        int32_t value = 0;
+        check(dm2_v1_weather_cmdstr_query(repeated, sizeof(repeated), "CD",
+                                          &found, &value) && found &&
+                  value == 642,
+              "CMDSTR parser follows source repeated-digit accumulation");
+        check(dm2_v1_weather_cmdstr_query(repeated, sizeof(repeated), "FW",
+                                          &found, &value) && found &&
+                  value == -2,
+              "CMDSTR parser follows source signed decimal branch");
+    }
     check(dm2_v1_weather_gdat_cloud_command_for_level(0x0fu) == 0u &&
               dm2_v1_weather_gdat_cloud_command_for_level(0x10u) == 0x67u &&
               dm2_v1_weather_gdat_cloud_command_for_level(0x40u) == 0x68u &&
