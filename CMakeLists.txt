@@ -295,6 +295,7 @@ set(M11_SOURCES
     src/engine/main_loop_m11.c
     src/engine/firestaff_accessibility.c
     src/engine/m11_game_view.c
+    src/engine/m11_dm2_runtime_frame_receipt_gate.c
     src/engine/m11_game_view_a11y.c
     src/engine/m11_qol_runtime.c
     src/dm1/dm1_v1_minimap_pc34_compat.c
@@ -7049,6 +7050,21 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_m11_startup_profile_gate
         COMMAND test_dm2_v1_m11_startup_profile_gate
+    )
+
+    add_executable(test_dm2_v1_m11_runtime_frame_receipt_gate
+        tests/test_dm2_v1_m11_runtime_frame_receipt_gate.c
+        src/engine/m11_dm2_runtime_frame_receipt_gate.c
+    )
+    target_include_directories(test_dm2_v1_m11_runtime_frame_receipt_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_m11_runtime_frame_receipt_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_m11_runtime_frame_receipt_gate
+        COMMAND test_dm2_v1_m11_runtime_frame_receipt_gate
     )
 
     add_executable(test_csb_v1_m11_startup_resume_gate

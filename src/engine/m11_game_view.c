@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "m11_dm2_runtime_frame_receipt_gate.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "nexus_v1_engine.h"
@@ -37397,6 +37398,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * dm2_v2_runtime_render_frame(), SKULL.ASM T560/T600 render split. */
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         int rendered = -1;
+        int runtime_frame_accepted = 0;
+        DM2_V1_ViewportM11FrameReceipt runtime_frame_receipt;
         DM2_V1_BootStartupHostViewReceipt startup_host_receipt;
         DM2_V1_BootStartupRenderOwnershipReceipt startup_ownership_receipt;
         DM2_V1_BootStartupRealVisualCaptureReceipt startup_visual_receipt;
@@ -37406,6 +37409,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         memset(&startup_ownership_receipt, 0, sizeof(startup_ownership_receipt));
         memset(&startup_visual_receipt, 0, sizeof(startup_visual_receipt));
         memset(&runtime_render_receipt, 0, sizeof(runtime_render_receipt));
+        memset(&runtime_frame_receipt, 0, sizeof(runtime_frame_receipt));
         if (state->dm2World) {
             (void)dm2_v1_boot_runtime_render_frame(
                 (DM2_V1_BootProfile *)state->dm2BootProfile,
@@ -37418,15 +37422,24 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 &runtime_render_receipt);
             rendered = runtime_render_receipt.render_result;
         }
-        if (rendered != 0) {
-            const char *boot_status = state->lastOutcome[0]
-                ? state->lastOutcome
-                : "DM2 RUNTIME NOT READY";
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          18, 18, "DUNGEON MASTER II: SKULLKEEP",
-                          &g_text_title);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          18, 36, boot_status, &g_text_shadow);
+        if (rendered == 0 && !state->dm2State.startup_menu_active) {
+            (void)dm2_v1_runtime_last_m11_frame_receipt(
+                &runtime_frame_receipt);
+            runtime_frame_accepted = M11_Dm2RuntimeFrameReceipt_ShouldPresent(
+                &runtime_render_receipt, &runtime_frame_receipt);
+            if (!runtime_frame_accepted) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              0, 0, framebufferWidth, framebufferHeight,
+                              M11_COLOR_BLACK);
+                m11_set_status((M11_GameViewState *)state,
+                               "RUNTIME", "DM2 GDAT FRAME BLOCKED");
+                rendered = -1;
+            }
+        }
+        if (rendered != 0 && !state->dm2State.startup_menu_active) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          0, 0, framebufferWidth, framebufferHeight,
+                          M11_COLOR_BLACK);
         }
         if (rendered == 0 &&
             state->presentationMode != M12_PRESENTATION_V1_ORIGINAL &&
@@ -37460,13 +37473,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                startup_visual_receipt.status_scope,
                                startup_visual_receipt.status);
             }
-        } else if (runtime_render_receipt.runtime_render_real_asset_ready) {
+        } else if (runtime_frame_accepted &&
+                   runtime_render_receipt.runtime_render_real_asset_ready) {
             m11_set_status((M11_GameViewState *)state,
                            "RUNTIME",
                            "DM2 RUNTIME GDAT");
         }
-        if (!startup_menu_drawn ||
-            !startup_visual_receipt.suppress_game_hud) {
+        if (runtime_frame_accepted &&
+            (!startup_menu_drawn ||
+             !startup_visual_receipt.suppress_game_hud)) {
             m11_draw_dm2_shop_panel(state, framebuffer,
                                     framebufferWidth, framebufferHeight);
             if (state->inventoryPanelActive) {
