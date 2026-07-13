@@ -164,6 +164,13 @@
   original save. Corpus rows retain the reference counts and result. Source:
   ReDMCSB `LOADSAVE.C` F0433:1586-1589 and F0435:2781-2799. Verification:
   focused original-save handoff CTest using native F0433 output only.
+- 2026-07-13 DM1 HoC presented-render consumer: the first opened Hall of
+  Champions frame now uses `m11_present_game_frame()` before its M12 capture
+  receipt is published. This applies the same PC34 palette, nearest filtering,
+  and selected presentation target as subsequent materialized HoC frames;
+  it adds no synthetic text, debug geometry, or overlay. ReDMCSB:
+  `ENTRANCE.C F0797/F0441` -> `DRAWVIEW.C`. Verification: focused launcher
+  handoff, startup state-machine, and M11 presentation-target CTests passed.
 - 2026-07-13 DM1 entrance original-audio gate: F0438 opening-door commands
   now call the M11 original-SND3-only route. It requires the decoded PC34
   sound buffer and refuses to emit a procedural marker when it is absent;

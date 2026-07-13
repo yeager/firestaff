@@ -2022,6 +2022,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     cannot present an alternate runtime title sequence when C001 is missing or
     malformed. The C12 then C13/C14 palette/timing path remains C001-only.
     Remaining startup work is packaged Mac/app capture only.
+  - 2026-07-13 update: the first opened HoC frame now reaches M12's presented
+    capture consumer through the same M11 game-frame presentation route as
+    later PC34 materialized frames. V1 palette/nearest scaling and V2 targets
+    are therefore applied before the capture receipt is published; M11 no
+    longer uses the bare presentation path for this one frame. No synthetic
+    text or debug overlay is added. Remaining work is packaged Mac/app proof.
   - 2026-07-13 update: DM1 SWSH now consumes a DM1-owned command receipt for
     every original `SWSH.C` event: logo load, sound start, each palette word,
     each VBlank wait, and the terminal `START.PRG` handoff. M11 fails closed
