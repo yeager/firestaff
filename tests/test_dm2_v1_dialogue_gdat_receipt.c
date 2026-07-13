@@ -17,10 +17,10 @@ static void check(int condition, const char *name)
 
 int main(void)
 {
-    uint8_t raw[144];
-    uint32_t offsets[3] = { 0u, 40u, 80u };
-    uint32_t sizes[3] = { 40u, 40u, 40u };
-    DM2_V1_GdatEntry entries[4];
+    uint8_t raw[240];
+    uint32_t offsets[5] = { 0u, 40u, 80u, 120u, 160u };
+    uint32_t sizes[5] = { 40u, 40u, 40u, 40u, 40u };
+    DM2_V1_GdatEntry entries[5];
     DM2_V1_AssetLoader loader;
     DM2_V1_DialogueGdatReceipt receipt;
     DM2_V1_DialogueBoxGdatReceipt box_receipt;
@@ -53,12 +53,24 @@ int main(void)
     entries[2].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
     entries[2].cls4 = DM2_V1_DIALOGUE_BOX_FIELD;
     entries[2].data_index = 2u;
+    memcpy(raw + offsets[3], "LOAD", 5u);
+    entries[3].cls1 = DM2_GDAT_CATEGORY_DIALOG_BOXES;
+    entries[3].cls2 = DM2_V1_DIALOGUE_BOX_INDEX;
+    entries[3].cls3 = DM2_GDAT_ENTRY_TYPE_TEXT;
+    entries[3].cls4 = 0u;
+    entries[3].data_index = 3u;
+    memcpy(raw + offsets[4], "CANCEL", 7u);
+    entries[4].cls1 = DM2_GDAT_CATEGORY_DIALOG_BOXES;
+    entries[4].cls2 = DM2_V1_DIALOGUE_BOX_INDEX;
+    entries[4].cls3 = DM2_GDAT_ENTRY_TYPE_TEXT;
+    entries[4].cls4 = 1u;
+    entries[4].data_index = 4u;
     loader.loaded = 1;
     loader.entries = entries;
-    loader.entry_count = 3u;
+    loader.entry_count = 5u;
     loader.raw_offsets = offsets;
     loader.raw_sizes = sizes;
-    loader.raw_data_count = 3u;
+    loader.raw_data_count = 5u;
     loader.data = raw;
     loader.data_size = sizeof(raw);
 
@@ -87,6 +99,29 @@ int main(void)
                   DM2_V1_DIALOGUE_BOX_HIGHLIGHT_PALETTE_SLOT &&
               box_plan.optional_highlight_clear && box_plan.plan_hash != 0u,
           "save dialogue plan keeps skproject RECT_453, palette, and text semantics");
+    {
+        DM2_V1_DialogueOpenPanelReceipt open_panel;
+        check(dm2_v1_dialogue_open_panel_receipt(&loader, &open_panel) &&
+                  open_panel.valid &&
+                  open_panel.text_size[0] == 40u &&
+                  open_panel.text_size[1] == 40u &&
+                  !memcmp(open_panel.text[0], "LOAD", 5u) &&
+                  !memcmp(open_panel.text[1], "CANCEL", 7u) &&
+                  open_panel.panel_rect_index == 4u &&
+                  open_panel.version_rect_index == 450u &&
+                  open_panel.primary_button_rect_index == 466u &&
+                  open_panel.secondary_button_rect_index == 467u &&
+                  open_panel.save_list_rect_index == 451u &&
+                  open_panel.version_palette_slot == 12u &&
+                  open_panel.button_palette_slot == 11u &&
+                  open_panel.save_slot_count == 10u &&
+                  open_panel.fade_when_dialog2 && open_panel.receipt_hash != 0u,
+              "open panel binds original GDAT labels, palette slots, and raw4 rect IDs");
+        raw[offsets[4]] = '\0';
+        check(!dm2_v1_dialogue_open_panel_receipt(&loader, &open_panel),
+              "open panel rejects an empty original secondary label");
+        raw[offsets[4]] = 'C';
+    }
     entries[2].cls2 = 0x80u;
     check(!dm2_v1_dialogue_box_gdat_receipt(&loader, &box_receipt),
           "save dialogue receipt rejects a non-source dialog-box index");

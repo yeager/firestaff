@@ -9934,6 +9934,19 @@ wrong graphics set, non-4bpp record, or absent palette rejects before any
 dialogue draw. This is material provenance only: it does not synthesize text,
 layout, or pixels. Verification: Ninja and `dm2_v1_dialogue_gdat_receipt`.
 
+# ✅ 2026-07-13 DM2 source save/load-panel orchestration
+
+The runtime now retains the complete `SKULLWIN/c_dialog.cpp`
+`DM2_dialog_OPEN_DIALOG_PANEL` command instead of only its follow-up
+`RECT_453` save-name redraw. It requires the original
+`DIALOG_BOXES/0x81/dtImage/0` material and local palette, the GDAT field-0
+and field-1 labels, source palette slots 12/11, and raw4 rectangle IDs
+`4`, `450`, `466`, `467`, and `451`. Missing, wrong-type, or empty source
+label data fails closed. M11 receives only this source-owned command and
+remains responsible for drawing it when a real save/load session is active;
+no synthetic panel, text, colour, or coordinates were added. Verification:
+Ninja and `dm2_v1_dialogue_gdat_receipt`.
+
 # ✅ 2026-07-13 DM1 F0218 projectile-impact aftermath for C38/F0266
 
 The shared M10 projectile-cell pass now runs ReDMCSB `PROJEXPL.C F0217`'s

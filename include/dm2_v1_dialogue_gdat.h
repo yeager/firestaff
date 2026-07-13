@@ -1,6 +1,7 @@
 #ifndef DM2_V1_DIALOGUE_GDAT_H
 #define DM2_V1_DIALOGUE_GDAT_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "dm2_v1_asset_loader.h"
@@ -24,6 +25,19 @@
 #define DM2_V1_DIALOGUE_BOX_TEXT_Y_OFFSET 4u
 #define DM2_V1_DIALOGUE_BOX_TEXT_PALETTE_SLOT 15u
 #define DM2_V1_DIALOGUE_BOX_HIGHLIGHT_PALETTE_SLOT 11u
+
+/* skproject/SKULLWIN/c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL opens the
+ * save/load shell before DM2_dialog_2066_3820 redraws the selected save name.
+ * These fields and rectangle IDs are source data, not a Firestaff dialogue
+ * layout. */
+#define DM2_V1_DIALOGUE_OPEN_PANEL_RECT_INDEX       4u
+#define DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_RECT     450u
+#define DM2_V1_DIALOGUE_OPEN_PANEL_PRIMARY_RECT     466u
+#define DM2_V1_DIALOGUE_OPEN_PANEL_SECONDARY_RECT   467u
+#define DM2_V1_DIALOGUE_OPEN_PANEL_SAVE_LIST_RECT   451u
+#define DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_PALETTE  12u
+#define DM2_V1_DIALOGUE_OPEN_PANEL_BUTTON_PALETTE   11u
+#define DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT       2u
 
 typedef struct {
     int valid;
@@ -65,6 +79,24 @@ typedef struct {
     uint32_t plan_hash;
 } DM2_V1_DialogueBoxDrawPlan;
 
+typedef struct {
+    int valid;
+    DM2_V1_DialogueBoxGdatReceipt material;
+    const uint8_t *text[DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT];
+    size_t text_size[DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT];
+    uint32_t text_hash[DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT];
+    uint16_t panel_rect_index;
+    uint16_t version_rect_index;
+    uint16_t primary_button_rect_index;
+    uint16_t secondary_button_rect_index;
+    uint16_t save_list_rect_index;
+    uint8_t version_palette_slot;
+    uint8_t button_palette_slot;
+    uint8_t save_slot_count;
+    int fade_when_dialog2;
+    uint32_t receipt_hash;
+} DM2_V1_DialogueOpenPanelReceipt;
+
 /* Returns an exact material receipt only when both source images are IMG3
  * 4bpp images with their own QUERY_GDAT_IMAGE_LOCALPAL tail. */
 int dm2_v1_dialogue_gdat_receipt(const DM2_V1_AssetLoader *loader,
@@ -85,5 +117,12 @@ int dm2_v1_dialogue_box_gdat_receipt(
 int dm2_v1_dialogue_box_draw_plan(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_DialogueBoxDrawPlan *out);
+
+/* Captures the complete source-owned save/load panel setup from
+ * c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL. The returned text pointers
+ * refer to the verified GDAT payload and must not be replaced by literals. */
+int dm2_v1_dialogue_open_panel_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_DialogueOpenPanelReceipt *out);
 
 #endif

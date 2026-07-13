@@ -1502,6 +1502,23 @@ typedef struct {
 int dm2_v1_boot_dialogue_box_host_command(
     DM2_V1_BootProfile *profile,
     DM2_V1_DialogueBoxHostCommand *out_command);
+
+/* Source-owned opening orchestration for DM2_dialog_OPEN_DIALOG_PANEL.
+ * All placement comes from the original INTERFACE_GENERAL raw4 table. */
+typedef struct {
+    int valid;
+    DM2_V1_DialogueOpenPanelReceipt draw;
+    DM2_V1_InterfaceRect panel_rect;
+    DM2_V1_InterfaceRect version_rect;
+    DM2_V1_InterfaceRect primary_button_rect;
+    DM2_V1_InterfaceRect secondary_button_rect;
+    DM2_V1_InterfaceRect save_list_rect;
+    uint32_t command_hash;
+} DM2_V1_DialogueOpenPanelHostCommand;
+
+int dm2_v1_boot_dialogue_open_panel_host_command(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_DialogueOpenPanelHostCommand *out_command);
 typedef struct {
     int valid;
     uint32_t table_hash;

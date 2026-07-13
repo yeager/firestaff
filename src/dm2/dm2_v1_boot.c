@@ -5022,6 +5022,67 @@ int dm2_v1_boot_dialogue_box_host_command(
     return 1;
 }
 
+int dm2_v1_boot_dialogue_open_panel_host_command(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_DialogueOpenPanelHostCommand *out_command)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    const DM2_V1_InterfaceRect *rects[5];
+    size_t raw_size = 0u;
+    uint32_t hash = 2166136261u;
+
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!profile || !profile->graphics_dat) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    if (!dm2_v1_dialogue_open_panel_receipt(&gfx->loader, &out_command->draw))
+        return 0;
+    raw = dm2_v1_asset_load_typed_sized(
+        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
+    if (!raw || raw_size < 4u ||
+        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
+            out_command->draw.panel_rect_index, &out_command->panel_rect) ||
+        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
+            out_command->draw.version_rect_index, &out_command->version_rect) ||
+        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
+            out_command->draw.primary_button_rect_index,
+            &out_command->primary_button_rect) ||
+        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
+            out_command->draw.secondary_button_rect_index,
+            &out_command->secondary_button_rect) ||
+        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
+            out_command->draw.save_list_rect_index,
+            &out_command->save_list_rect)) {
+        memset(out_command, 0, sizeof(*out_command));
+        return 0;
+    }
+
+    /* skproject/SKULLWIN/c_dialog.cpp:375-415 consumes the GDAT button
+     * labels, panel image/local palette and raw4 rectangles together. */
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_command->draw.receipt_hash);
+    rects[0] = &out_command->panel_rect;
+    rects[1] = &out_command->version_rect;
+    rects[2] = &out_command->primary_button_rect;
+    rects[3] = &out_command->secondary_button_rect;
+    rects[4] = &out_command->save_list_rect;
+    for (unsigned int i = 0; i < 5u; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, (uint32_t)rects[i]->x);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, (uint32_t)rects[i]->y);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, (uint32_t)rects[i]->w);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, (uint32_t)rects[i]->h);
+    }
+    out_command->command_hash = hash ? hash : 1u;
+    out_command->valid = 1;
+    return 1;
+}
+
 int dm2_v1_boot_startup_menu_pointer_layout(
     DM2_V1_BootProfile *profile,
     DM2_V1_StartupMenuPointerLayout *out_layout)
