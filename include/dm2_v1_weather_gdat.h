@@ -47,6 +47,15 @@ typedef struct {
     int local_palette_valid;
     uint8_t local_palette16[16];
     uint32_t local_palette_hash;
+    /* QUERY_TEMP_PICST consumes the decoded IMG3 pixels, not just the header.
+     * Retain an ownership receipt for the exact decoded plane while the
+     * destination path stays no-draw. */
+    int decoded_pixels_valid;
+    uint16_t decoded_width;
+    uint16_t decoded_height;
+    DM2_ImageFormat decoded_format;
+    uint32_t decoded_pixel_count;
+    uint32_t decoded_pixels_hash;
     uint32_t material_hash;
 } DM2_V1_WeatherCommandReceipt;
 

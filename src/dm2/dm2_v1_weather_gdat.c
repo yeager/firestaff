@@ -116,6 +116,11 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
     int32_t cd = 0;
     int32_t fw = 0;
     uint32_t hash;
+    uint8_t *pixels;
+    int width = 0;
+    int height = 0;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+    size_t pixel_count;
 
     if (!out || !out->raw_text || out->byte_count == 0u ||
         !dm2_v1_weather_cmdstr_query(out->raw_text, out->byte_count,
@@ -144,6 +149,34 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
         loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset,
         out->image_field, out->local_palette16, &out->local_palette_hash);
     if (!out->local_palette_valid || out->local_palette_hash == 0u) return 0;
+    /* c_bkgrnd.cpp passes this exact ENVIRONMENT dtImage into
+     * QUERY_TEMP_PICST. Header metadata and QUERY_GDAT_IMAGE_LOCALPAL do not
+     * prove that the selected image can actually be decoded, so keep a
+     * bounded decoded-pixel receipt alongside its local palette. */
+    pixels = dm2_v1_asset_load_image_field(
+        loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset, out->image_field,
+        &width, &height, &format);
+    if (!pixels || width <= 0 || height <= 0 ||
+        width != (int)out->query_metadata.width ||
+        height != (int)out->query_metadata.height ||
+        out->query_metadata.bits_per_pixel != 4u ||
+        (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4)) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    pixel_count = (size_t)width * (size_t)height;
+    if (pixel_count == 0u || pixel_count > UINT32_MAX) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    out->decoded_pixels_hash = dm2_weather_hash_bytes(pixels, pixel_count);
+    dm2_v1_asset_free_pixels(pixels);
+    if (out->decoded_pixels_hash == 0u) return 0;
+    out->decoded_pixels_valid = 1;
+    out->decoded_width = (uint16_t)width;
+    out->decoded_height = (uint16_t)height;
+    out->decoded_format = format;
+    out->decoded_pixel_count = (uint32_t)pixel_count;
     hash = out->raw_hash;
     hash ^= out->rect_number;
     hash *= 16777619u;
@@ -152,6 +185,10 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
     hash ^= out->query_metadata.metadata_hash;
     hash *= 16777619u;
     hash ^= out->local_palette_hash;
+    hash *= 16777619u;
+    hash ^= out->decoded_pixels_hash;
+    hash *= 16777619u;
+    hash ^= out->decoded_pixel_count;
     hash *= 16777619u;
     out->material_hash = hash;
     out->material_valid = 1;
@@ -206,6 +243,7 @@ static int dm2_weather_overlay_append(
     if (source->command != command || !source->material_valid ||
         source->rect_number == 0u ||
         !source->query_metadata_valid ||
+        !source->decoded_pixels_valid || source->decoded_pixels_hash == 0u ||
         (receipt->material_mask & DM2_V1_WEATHER_COMMAND_MASK(command)) == 0u) {
         return 0;
     }

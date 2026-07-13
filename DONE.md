@@ -10678,3 +10678,6 @@ source slot rather than writing a host explosion index. Source: ReDMCSB
 `PROJEXPL.C F0224` lines 983-994 and `TIMELINE.C F0261` lines 1906-1916.
 Verification: `test_dm1_v1_original_save_pc34_handoff` drives authenticated
 import, runtime expiry, native export, and reimport of the C24 union.
+- ✅ 2026-07-13 DM2 weather decoded-material receipt: each source ENVIRONMENT
+  weather command now proves a decodable IMG3 pixel plane together with its
+  own local palette before it can reach the no-draw weather handoff.
