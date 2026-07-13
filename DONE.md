@@ -8,6 +8,14 @@
   active-group coordinates unchanged. Source: ReDMCSB `GROUP.C`
   F0209:2173-2185 and `DUNGEON.C` F0161/F0163. Verification:
   `dm1_v1_group_los_move_rollback_pc34_compat`.
+- 2026-07-13 DM1 F0407/F0231 stamina-order runtime: M11 now preserves the
+  real G0494/M005 F0407 stamina receipt until the common F0325 tail, after
+  F0402/F0231 has obtained F0312 strength. This prevents an action cost from
+  incorrectly pushing a half-stamina champion into F0231's low-stamina
+  strength branch before the source tail. Source: ReDMCSB `MENU.C`
+  F0407:1613-1628 and `PROJEXPL.C` F0231. Verification: focused runtime
+  receipt uses the same dagger melee route at 50 and 64 pre-action stamina
+  and proves equal deterministic F0231 damage, plus the F0407 tail CTest.
 
 - 2026-07-13 DM1 F0190 projectile killed-all ordering: the live M11
   projectile route defers C040 until F0188 possessions, F0189 unlink, and
