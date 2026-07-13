@@ -127,6 +127,95 @@ uint8_t dm2_v1_weather_gdat_rain_command_for_level(uint8_t level)
     return 0u;
 }
 
+static uint32_t dm2_weather_hash_step(uint32_t hash, uint32_t value)
+{
+    hash ^= value;
+    hash *= 16777619u;
+    return hash;
+}
+
+static int dm2_weather_overlay_append(
+    const DM2_V1_WeatherGdatReceipt *receipt,
+    uint8_t command,
+    uint8_t slot_index,
+    DM2_V1_WeatherOverlayPlan *out,
+    uint32_t *hash)
+{
+    const DM2_V1_WeatherCommandReceipt *source;
+    unsigned int index;
+
+    if (command == 0u) return 1;
+    if (!receipt || !out || !hash ||
+        command < DM2_V1_WEATHER_CLOUD_LIGHT_CMD ||
+        command > DM2_V1_WEATHER_RAIN_STORM_CMD ||
+        out->command_count >= sizeof(out->commands) / sizeof(out->commands[0])) {
+        return 0;
+    }
+    index = (unsigned int)(command - DM2_V1_WEATHER_CLOUD_LIGHT_CMD);
+    source = &receipt->commands[index];
+    /* skproject c_weather.cpp lines 221-266 calls
+     * DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW before it advances to the next
+     * ten-byte command slot.  Do not turn a bare CMDSTR record into pixels. */
+    if (source->command != command || !source->material_valid ||
+        source->rect_number == 0u ||
+        (receipt->material_mask & DM2_V1_WEATHER_COMMAND_MASK(command)) == 0u) {
+        return 0;
+    }
+
+    out->commands[out->command_count].command = command;
+    out->commands[out->command_count].slot_index = slot_index;
+    out->commands[out->command_count].rect_number = source->rect_number;
+    out->commands[out->command_count].flip_mode = source->flip_mode;
+    out->commands[out->command_count].material_hash = source->material_hash;
+    ++out->command_count;
+    out->required_mask |= DM2_V1_WEATHER_COMMAND_MASK(command);
+    out->material_mask |= DM2_V1_WEATHER_COMMAND_MASK(command);
+    *hash = dm2_weather_hash_step(*hash, command);
+    *hash = dm2_weather_hash_step(*hash, source->material_hash);
+    *hash = dm2_weather_hash_step(*hash, source->rect_number);
+    *hash = dm2_weather_hash_step(*hash, source->flip_mode);
+    return 1;
+}
+
+int dm2_v1_weather_gdat_overlay_plan(
+    const DM2_V1_WeatherGdatReceipt *receipt,
+    uint8_t cloud_level,
+    uint8_t rain_level,
+    DM2_V1_WeatherOverlayPlan *out)
+{
+    uint8_t cloud_command;
+    uint8_t rain_command;
+    uint32_t hash = 2166136261u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!receipt || !receipt->valid || receipt->receipt_hash == 0u) return 0;
+
+    /* skproject/SKULLWIN/c_weather.cpp DM2_UPDATE_WEATHER lines 221-266:
+     * cloud selection is emitted first, followed by rain.  The source's
+     * xp_1c += 10 applies only after a successful cloud material lookup. */
+    cloud_command = dm2_v1_weather_gdat_cloud_command_for_level(cloud_level);
+    rain_command = dm2_v1_weather_gdat_rain_command_for_level(rain_level);
+    out->cloud_level = cloud_level;
+    out->rain_level = rain_level;
+    hash = dm2_weather_hash_step(hash, receipt->receipt_hash);
+    hash = dm2_weather_hash_step(hash, cloud_level);
+    hash = dm2_weather_hash_step(hash, rain_level);
+    if (!dm2_weather_overlay_append(receipt, cloud_command, 0u, out, &hash)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    if (!dm2_weather_overlay_append(receipt, rain_command,
+                                    out->command_count ? 1u : 0u,
+                                    out, &hash)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    out->plan_hash = hash;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_weather_gdat_command_receipt(
     const DM2_V1_AssetLoader *loader,
     uint8_t graphicsset,

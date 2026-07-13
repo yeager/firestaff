@@ -44,6 +44,29 @@ typedef struct {
     DM2_V1_WeatherCommandReceipt commands[6];
 } DM2_V1_WeatherGdatReceipt;
 
+/* One source-owned environment picture command prepared by
+ * DM2_UPDATE_WEATHER.  c_weather.cpp lays command records out in ten-byte
+ * slots, first cloud and then rain; this contract retains that order without
+ * assuming the still-unproven QUERY_TEMP_PICST image decoder. */
+typedef struct {
+    uint8_t command;
+    uint8_t slot_index;
+    uint16_t rect_number;
+    uint8_t flip_mode;
+    uint32_t material_hash;
+} DM2_V1_WeatherOverlayCommand;
+
+typedef struct {
+    int valid;
+    uint8_t cloud_level;
+    uint8_t rain_level;
+    uint32_t required_mask;
+    uint32_t material_mask;
+    uint32_t plan_hash;
+    unsigned int command_count;
+    DM2_V1_WeatherOverlayCommand commands[2];
+} DM2_V1_WeatherOverlayPlan;
+
 int dm2_v1_weather_gdat_receipt(const DM2_V1_AssetLoader *loader, uint8_t graphicsset, DM2_V1_WeatherGdatReceipt *out);
 int dm2_v1_weather_gdat_command_receipt(
     const DM2_V1_AssetLoader *loader,
@@ -65,4 +88,14 @@ int dm2_v1_weather_cmdstr_query(const uint8_t *text, size_t text_size,
  * outside this boundary. */
 uint8_t dm2_v1_weather_gdat_cloud_command_for_level(uint8_t level);
 uint8_t dm2_v1_weather_gdat_rain_command_for_level(uint8_t level);
+
+/* Builds the c_weather.cpp command sequence for the supplied live source
+ * levels.  It never creates an image request from CD/FW alone: every selected
+ * command must already carry a verified GDAT dtText receipt and material
+ * fields.  `valid == 0` is therefore a no-draw result, not a fallback. */
+int dm2_v1_weather_gdat_overlay_plan(
+    const DM2_V1_WeatherGdatReceipt *receipt,
+    uint8_t cloud_level,
+    uint8_t rain_level,
+    DM2_V1_WeatherOverlayPlan *out);
 #endif
