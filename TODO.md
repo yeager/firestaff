@@ -26,18 +26,14 @@ The Mednafen trace harness now forces System Card 3.0 and the correct raw-CUE
 PCE route. It records reproducible CPU progress but still lacks the original
 target-PC snapshots required to select the IRQ2 hardware branch. Continue with
 real trace evidence only; no inferred CD register value may enter runtime.
-The verified `$e8ec` path is a fixed `$1804` latch/counter delay, so the next
-capture boundary is after that delay rather than a CD-state condition at it.
-The next source-locked point is `$e900`: wait for `$22a4 == 0`, then capture
-the raw `$1801` write and `$1800` bit-7 outcome without assigning semantics.
-Its zero branch reaches `$e944`, which writes `$1800` and branches only on
-bit 6 to `$e95a`; the next capture must observe that raw branch outcome.
-At `$e95a`, the System Card masks `$1800` into `$227a` and branches on its
-raw values; a live trace must establish which, if any, of those branches runs.
-The `$d0` branch target `$e97a` loads `$224c,X`, increments X, writes `$1801`,
-calls `$ea27`, and returns to `$e95e`; its bytes and call semantics remain unbound.
-`$ea27` first branches to `$ea35`, then polls `$1800` bit 6 before its raw
-`$1802` update; the live trace must establish whether and how that poll exits.
+The verified `$e8ec` path is a fixed `$1804` latch/counter delay. After the
+authenticated US System Card Run input, the first post-latch controller
+exchange is now captured at `$e908..$ea3a`: `$81 -> $1801`, `$60 -> $1800`,
+`$ff -> $1801`, then `$80` latched in `$1802` while `$1800` reads `$90`.
+This is a raw CPU/register receipt only, not a `CD_READ` classification or
+Track 02 binding. Continue from the observed `$e900/$e95a/$e97a` controller
+branches and prove an explicit original read plus its record/destination
+before assigning any payload, bitmap, palette, object, or level semantics.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 
