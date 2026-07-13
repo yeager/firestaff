@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 wall-inscription material gate: a DM1/M10-only
+  regression scans the installed `DUNGEON.DAT` for a real visible wall
+  TextString, then locks F0168's decoded bytes into F0107's M648/C10 receipt.
+  Each source line accepts only M648's native 288x8 material dimensions;
+  missing or short texture dimensions are no-draw. No M11 renderer, font
+  fallback, or fixture was added. Source: ReDMCSB `DUNGEON.C` F0168 and
+  `DUNVIEW.C` F0107:3619-3706. Verification: focused CTest.
+
 - 2026-07-13 Theron CUE media correction: the authenticated US CUE declares
   tracks 03-18 as AUDIO, so runtime asset discovery no longer scans Track 02
   for the old invented `THG3`/`THS4` graphics markers. Raw Track 02 is kept

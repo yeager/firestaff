@@ -10788,6 +10788,20 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_inscription_font_pc34_compat
     )
 
+    # Real PC34 F0168 -> F0107 inscription material receipt.  The test stays
+    # in DM1/M10 so a missing M648 texture is rejected before any host draw.
+    add_executable(test_dm1_v1_wall_inscription_pc34_material_gate
+        tests/test_dm1_v1_wall_inscription_pc34_material_gate.c
+    )
+    target_link_libraries(test_dm1_v1_wall_inscription_pc34_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_wall_inscription_pc34_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_wall_inscription_pc34_material_gate
+        COMMAND test_dm1_v1_wall_inscription_pc34_material_gate
+    )
+
     # DM1 V1 slot-boxes: Graphics.dat item 562 init var
     # G0030_as_Graphic562_SlotBoxes[46] (8 status-box hands, 30 inventory
     # slots, 8 chest slots) — the pixel-coordinate table for slot-box
