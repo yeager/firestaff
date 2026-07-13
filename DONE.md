@@ -10,6 +10,17 @@
   `data.cpp:1542-1568`, `DSA.cpp:5329-5441`. Verification: Ninja and CTest
   `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- ✅ 2026-07-13 DM2 skproject HUD portrait local-palette consumer:
+  source-required `DRAW_CHAMPION_PICTURE` rendering now accepts a CHAMPIONS
+  GDAT IMG3 only with its matching `QUERY_GDAT_IMAGE_LOCALPAL` receipt and
+  blocks the portrait rather than borrowing `INTERFACE_GENERAL` when that
+  receipt is absent. The focused source-data gate proves the portrait image and
+  palette use one GDAT index, the local palette reaches the framebuffer, and a
+  missing palette leaves the portrait surface unpainted. Verification: Ninja
+  built `test_dm2_v1_hud_portrait_local_palette_gate` and
+  `test_dm2_v1_possession_local_palette_gate`; matching CTest passed 2/2;
+   `git diff --check` passed.
+
 - 2026-07-13 CSBWin restored TT_DESSAGE DSA tick bridge: verified
   function-102 queue entries now reach the source `ProcessTT_OPENROOM`
   zero-parameter type-47 DSA receipt through the restored live timer queue,

@@ -1977,8 +1977,8 @@ static int dm2_v1_fetch_viewport_asset(DM2_V1_ViewportState *s,
  * decoded map-chip image together with QUERY_GDAT_IMAGE_LOCALPAL before
  * DRAW_CHIP_OF_MAGIC_MAP. It is part of material lookup, not an optional
  * presentation transform: source-owned walls, doors, creatures, floor objects,
- * possession and carried items, and projectiles must not borrow
- * INTERFACE_GENERAL when their per-IMG3 receipt is unavailable. */
+ * possession and carried items, projectiles, and CHAMPIONS portraits must not
+ * borrow INTERFACE_GENERAL when their per-IMG3 receipt is unavailable. */
 static int dm2_v1_fetch_viewport_local_material(
     DM2_V1_ViewportState *s,
     int gdat_index,
@@ -4606,12 +4606,9 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT);
                 } else if (portrait_gdat != 0 &&
-                    dm2_v1_fetch_viewport_asset(s,
-                                                portrait_gdat,
-                                                &portrait_pixels,
-                                                &portrait_w,
-                                                &portrait_h,
-                                                &portrait_stride) == 0 &&
+                    dm2_v1_fetch_viewport_local_material(
+                        s, portrait_gdat, &portrait_pixels, &portrait_w,
+                        &portrait_h, &portrait_stride) == 0 &&
                     portrait_pixels && portrait_w > 0 && portrait_h > 0 &&
                     portrait_stride >= portrait_w) {
                     dm2_v1_blit_scaled_material_bitmap(s,
