@@ -629,6 +629,7 @@ static void test_pc_g1_ground_stack_map_corpus_receipt(void)
     uint8_t dat[384];
     DM2_V1_DungeonData dungeon;
     DM2_V1_G1GroundStackMapCorpusReceipt receipt;
+    DM2_V1_G1MapCorpusReceipt map_receipt;
     size_t size = build_pc_g1_record_evidence_fixture(dat, sizeof(dat));
 
     CHECK(size > 0 && dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
@@ -650,6 +651,22 @@ static void test_pc_g1_ground_stack_map_corpus_receipt(void)
               receipt.column_index_semantics_unresolved == 1 &&
               receipt.ground_stack_semantics_unresolved == 1,
           "G1 corpus receipt hashes bytes without assigning c_map semantics");
+    CHECK(dm2_v1_dungeon_collect_g1_map_corpus_receipt(
+              &dungeon, &map_receipt) == 1 && map_receipt.available == 1 &&
+              map_receipt.raw_only == 1 &&
+              map_receipt.tile_semantics_unresolved == 1 &&
+              map_receipt.map_count == 1 && map_receipt.map_data_base == 336 &&
+              map_receipt.map_data_byte_count == 4u &&
+              map_receipt.map_data_hash != 0u,
+          "G1 map receipt retains the trailing map-data block as raw evidence");
+    CHECK(map_receipt.maps[0].map == 0 &&
+              map_receipt.maps[0].descriptor_base == 44 &&
+              map_receipt.maps[0].map_data_offset == 0 &&
+              map_receipt.maps[0].width == 2 && map_receipt.maps[0].height == 2 &&
+              map_receipt.maps[0].map_byte_count == 4u &&
+              map_receipt.maps[0].descriptor_hash != 0u &&
+              map_receipt.maps[0].map_hash != 0u,
+          "G1 map receipt hashes each descriptor-bounded raw map span");
     dm2_v1_dungeon_free(&dungeon);
 
     memset(&dungeon, 0, sizeof(dungeon));
@@ -657,6 +674,10 @@ static void test_pc_g1_ground_stack_map_corpus_receipt(void)
               &dungeon, &receipt) == 1 && receipt.available == 0 &&
               receipt.g1_layout_absent == 1,
           "missing G1 layout is reported as absence without fallback decoding");
+    CHECK(dm2_v1_dungeon_collect_g1_map_corpus_receipt(
+              &dungeon, &map_receipt) == 1 && map_receipt.available == 0 &&
+              map_receipt.g1_layout_absent == 1,
+          "missing G1 map layout is reported as absence without tile decoding");
 }
 
 static void test_pc_g1_extension_record_transform(void)
