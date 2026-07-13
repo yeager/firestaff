@@ -102,6 +102,8 @@ int theron_v1_boot_track02_runtime_trace_intake_from_files(
     trace = theron_v1_boot_read_evidence_file(
         trace_path, THERON_V1_RUNTIME_TRACE_MAX_BYTES, &trace_size);
     if (!trace || trace_size == 0u) goto done;
+    (void)theron_v1_system_card_controller_wait_from_mednafen_capture(
+        (const char *)trace, &out_receipt->controller_wait);
     track02 = theron_v1_boot_read_evidence_file(
         track02_path, THERON_V1_RUNTIME_MEDIA_MAX_BYTES, &track02_size);
     system_card = theron_v1_boot_read_evidence_file(
@@ -112,7 +114,12 @@ int theron_v1_boot_track02_runtime_trace_intake_from_files(
             track02, track02_size, track02_md5_hex, system_card,
             system_card_size, system_card_md5_hex, (const char *)trace,
             &out_receipt->runtime_handoff)) {
-        memset(out_receipt, 0, sizeof(*out_receipt));
+        /* Preserve only the independently proven controller wait.  It is a
+         * diagnostic receipt and cannot be mistaken for a runtime handoff. */
+        out_receipt->valid = 0;
+        out_receipt->trace_file_consumed = 0;
+        memset(&out_receipt->runtime_handoff, 0,
+               sizeof(out_receipt->runtime_handoff));
         goto done;
     }
     out_receipt->valid = 1;

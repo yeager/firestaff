@@ -164,6 +164,9 @@ typedef struct {
 typedef struct Theron_V1_BootTrack02RuntimeTraceIntakeReceipt {
     int valid;
     int trace_file_consumed;
+    /* A real trace can prove the pre-Track02 controller wait without
+     * authorizing runtime entry. */
+    Theron_V1SystemCardControllerWaitReceipt controller_wait;
     Theron_V1Irq2FullMediaTraceReceipt runtime_handoff;
 } Theron_V1_BootTrack02RuntimeTraceIntakeReceipt;
 
