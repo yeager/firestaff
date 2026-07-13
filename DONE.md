@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus DGN material package/host route hardening: a DGN render
+  plan now chooses exactly one complete original-material route. Hash-bound
+  `SN_FLOOR.MNS`/`SN_WALL.MNS` surfaces require an independently proven
+  Structure1B selector binding; otherwise the plan fails before command or
+  pixel construction with `blocked-structure1b-selector`. A separately
+  authenticated BPK route remains distinct and cannot mix its surfaces with
+  MNS data. The real Track 1 LEV00-LEV15 corpus now proves this no-draw gate
+  at an ordinary cell and a direct Structure1F cell without guessing a Saturn
+  selector transform. Verification: Ninja-built and passed
+  `test_nexus_v1_dgn_material_raster`,
+  `test_nexus_v1_startup_menu_pc34_compat`, and
+  `firestaff_nexus_v1_dgn_material_corpus_probe` against local retail data.
+
 - 2026-07-13 DM1 F0209/F0267 LoS group-move record rollback: M10 now treats
   C37 and C29-C36/C38-C41 ordinary group relocation as a source-record
   transaction. If the destination SFT record cannot be linked after a valid

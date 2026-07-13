@@ -3105,6 +3105,8 @@ const char *nexus_v1_dgn_renderer_handoff_status_name(
         return "blocked-structure3-mesh";
     case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS:
         return "blocked-structure3-face-semantics";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR:
+        return "blocked-structure1b-selector";
     default: return "unknown";
     }
 }

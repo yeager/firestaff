@@ -2674,6 +2674,9 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
             ? render_plan.status ==
                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE
             ? "blocked-structure2-source"
+            : render_plan.status ==
+                  NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR
+            ? "blocked-structure1b-selector"
             : "blocked-dgn-material"
             : out_receipt->dgn_route
             ? out_receipt->dgn_route

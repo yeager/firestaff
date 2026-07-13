@@ -981,7 +981,10 @@ typedef enum {
     NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_MESH = 11,
     /* Structure3's declared block envelope is bounded, but its original
      * face grammar has not yet been decoded. */
-    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS = 12
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS = 12,
+    /* Hash-bound SN_FLOOR/SN_WALL bytes are present, but no Saturn
+     * executable/capture has proved how Structure1B selects their entries. */
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR = 13
 } Nexus_V1_DgnRendererHandoffStatus;
 
 typedef struct {
@@ -1129,6 +1132,13 @@ typedef struct {
 
 typedef struct {
     Nexus_V1_DgnRendererHandoffStatus status;
+    /* These are package-to-host provenance facts, not decoder claims. A
+     * plan chooses one complete source route and never mixes their surfaces. */
+    int static_mns_source_pair_bound;
+    int structure1b_selector_binding_proven;
+    int bpk_material_route_bound;
+    int uses_static_mns_material_route;
+    int uses_bpk_material_route;
     int plan_ready;
     int blocks_real_dgn_mesh_render;
     int fallback_visuals_permitted;
