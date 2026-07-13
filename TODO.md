@@ -1755,6 +1755,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     sidecar with raw input, CDIRQ, caller-PC, and raw-sector counts plus an
     observed or missing result. It records observation only and remains
     fail-closed when any condition is absent.
+    2026-07-13 input-ordering update: the same receipt now records the first
+    observed host-key line and the number of emulated PCE input transactions
+    before and after it. A host event after the final observed PCE poll is
+    explicitly non-promotable; the next valid run must retain one or more
+    PCE polls after the authentic host event before it can be used to study
+    System Card input handling. This is ordering evidence only and never
+    injects an emulated controller state.
     2026-07-13 caller-PC build repair: caller-PC capture uses Mednafen's
     public `HuC6280::GetRegister(GSREG_PC)` accessor; this changes no trace
     policy.

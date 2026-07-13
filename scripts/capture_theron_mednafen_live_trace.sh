@@ -74,6 +74,38 @@ trace_count() {
     printf '%s' "${count:-0}"
 }
 
+trace_input_order_receipt() {
+    local file=$1
+
+    awk '
+        /^pce_input_(read|write) / {
+            input_total++
+            if (first_host_line == 0) input_before_first_host++
+            else input_after_first_host++
+        }
+        /^host_key_event / && first_host_line == 0 {
+            first_host_line = NR
+            input_before_first_host = input_total
+        }
+        END {
+            if (first_host_line == 0) {
+                printf "first_host_key_input_trace_line=0\\n"
+                printf "pce_input_transactions_before_first_host=%d\\n", input_total
+                printf "pce_input_transactions_after_first_host=0\\n"
+                printf "host_input_order=no_host_key_observed\\n"
+            } else {
+                printf "first_host_key_input_trace_line=%d\\n", first_host_line
+                printf "pce_input_transactions_before_first_host=%d\\n", input_before_first_host
+                printf "pce_input_transactions_after_first_host=%d\\n", input_after_first_host
+                if (input_after_first_host > 0)
+                    printf "host_input_order=followed_by_pce_input_poll\\n"
+                else
+                    printf "host_input_order=after_last_observed_pce_input_poll\\n"
+            }
+        }
+    ' "$file"
+}
+
 trace_dir=$(dirname -- "$trace")
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
@@ -164,6 +196,7 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
     printf 'cd_irq_callbacks=%s\n' "$transition_irq_count"
     printf 'non_system_card_pcecd_reads=%s\n' "$transition_non_system_card_count"
     printf 'raw_sector_spans=%s\n' "$transition_sector_count"
+    trace_input_order_receipt "$input_trace"
     if [[ -n "$host_key" ]]; then
         printf 'requested_host_key=%s\n' "$host_key"
         printf 'requested_host_key_hold_seconds=%s\n' "$host_key_hold"
@@ -188,7 +221,7 @@ if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||
        grep -Eq '^c860_window_pc=c8c7 .*instruction=CMP #\$08' "$trace" &&
        grep -Eq '^c860_window_pc=c8cb .*instruction=CMP #\$04' "$trace" &&
        grep -Eq '^c860_window_pc=c8cd .*instruction=BNE \$C897' "$trace"; then
-        printf 'BLOCKED: System Card wait; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$status"
+        printf 'BLOCKED: System Card wait; host_keys=%s input=%s input_after_first_host=%s irq=%s non_system_card_pcecd=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$(awk -F= '/^pce_input_transactions_after_first_host=/{print $2}' "$transition_receipt")" "$transition_irq_count" "$transition_non_system_card_count" "$status"
         exit 1
     fi
     printf 'BLOCKED: dynamic receipts absent; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$status"

@@ -47,7 +47,10 @@ if ! grep -Fq 'raw sector span lacks prior input, CDIRQ, and non-System-Card PCE
     exit 1
 fi
 if ! grep -Fq 'host_key_events=%s' "$script" ||
-   ! grep -Fq 'System Card wait; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s' "$script" ||
+   ! grep -Fq 'trace_input_order_receipt()' "$script" ||
+   ! grep -Fq 'pce_input_transactions_after_first_host' "$script" ||
+   ! grep -Fq 'host_input_order=after_last_observed_pce_input_poll' "$script" ||
+   ! grep -Fq 'System Card wait; host_keys=%s input=%s input_after_first_host=%s irq=%s non_system_card_pcecd=%s' "$script" ||
    ! grep -Fq 'dynamic receipts absent; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s' "$script"; then
     printf 'FAIL: capture script must report missing transition evidence counts\n' >&2
     exit 1
