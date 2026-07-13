@@ -33,6 +33,8 @@
   Parameter messages stay on their authenticated payload path; malformed
   queue/timer identity, absent type-47 records, wider timer families, timer
   cell effects, master-state writes, and world/filter opcodes remain blocked.
+  TT_TELEPORTER now reaches only its pre-cell-mutation ActivateDSA receipt;
+  its cell mutation and WiggleEverything path remain blocked.
 
 - 2026-07-13 DM1 original-save timeline continuation: C11's zero
   `SlotOrdinal` action-enable route, C12 hide-damage removal, C13 Vi Altar

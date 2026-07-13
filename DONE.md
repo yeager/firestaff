@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin restored TT_TELEPORTER DSA tick bridge: verified
+  function-8 queue entries now reach the source-ordered ActivateDSA receipt
+  through the live restored timer queue, using the existing exact queue-slot,
+  timer, event, square, and type-47 actuator checks. This executes only the
+  authenticated pure-stack DSA action before CSBWin's teleporter cell change;
+  unsupported actions, cell mutation, WiggleEverything, and malformed saved
+  identity remain blocked. Source: CSBWin `CSBCode.cpp:6400-6435`,
+  `Timer.cpp:2343-2367`, `DSA.cpp:5329-5441`. Verification: Ninja and CTest
+  `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - ✅ 2026-07-13 DM2 skproject wall/door local-palette consumer: source-required
   GDAT wall panels plus door panel, overlay, frame, and button paths now bind
   each decoded image to its own `QUERY_GDAT_IMAGE_LOCALPAL` receipt and leave
@@ -10,7 +20,7 @@
   `test_dm2_v1_graphicsset_wall_material_gate`, and
   `test_dm2_v1_g1_wall_button_material_gate`; matching CTest run passed 3/3;
   `git diff --check` passed.
- 
+
 - 2026-07-13 Nexus Structure1A resolved host gate: champion-to-runtime DGN
   handoff now consumes the complete parser-owned Structure1A owner/model
   relation receipt. Only a valid table with every indexed alcove/wall record
