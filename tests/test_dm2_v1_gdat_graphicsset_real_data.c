@@ -7,6 +7,7 @@
 
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_gdat_scene_m11_command.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -256,6 +257,8 @@ int main(void)
             ++failures;
         }
         if (referenced[style]) {
+            DM2_V1_GdatSceneM11CommandPlan command_plan;
+            memset(&command_plan, 0, sizeof(command_plan));
             /* skproject EXTRACT_GDAT_IMAGE dispatches IMG3::Getpf() to
              * DECODE_IMG9 or DECODE_IMG3_UNDERLAY_LOCAL before dungeon
              * planes can reach c_gui_vp. Metadata alone is not admission. */
@@ -276,6 +279,17 @@ int main(void)
                 decoded_ceiling_format == DM2_IMG_FMT_UNKNOWN) {
                 ++failures;
             }
+            if (!dm2_v1_gdat_scene_m11_command_plan_build(
+                    &loader, (uint8_t)style, &command_plan) ||
+                !command_plan.valid || command_plan.command_hash == 0u ||
+                command_plan.commands[0].field != DM2_GDAT_GFXSET_FLOOR ||
+                command_plan.commands[1].field != DM2_GDAT_GFXSET_CEIL ||
+                !command_plan.commands[0].pixels || !command_plan.commands[1].pixels ||
+                command_plan.commands[0].palette_hash == 0u ||
+                command_plan.commands[1].palette_hash == 0u) {
+                ++failures;
+            }
+            dm2_v1_gdat_scene_m11_command_plan_free(&command_plan);
             if (!verify_source_c8_selector_gate(
                     &loader, graphics, graphics_size, floor_raw, floor_size,
                     style, DM2_GDAT_GFXSET_FLOOR, &c8_selector_checks) ||
