@@ -81,6 +81,16 @@
   source candidate is rebuilt only in tail slot 2. Source: ReDMCSB `REVIVE.C`
   F0280 and F0282:744-845. Verification: focused CTest against installed
    PC34 data.
+- 2026-07-13 DM1 F0107/F0128 viewport-inscription receipt: introduced a
+  DM1-owned clear-first receipt for each viewport tuple. It carries exact
+  F0168-decoded M648 glyph material and C10 only for the current readable D1C
+  TextString; C127 mirrors, non-front walls, hidden text, and missing source
+  data are clear-only. M11 now performs the receipt action and blits supplied
+  original material without recomputing a host text decision. The real-PC34
+  HoC regression verifies every readable Hall route alternates correctly with
+  corridor clears, while the non-HoC real-material test stays green. Source:
+  ReDMCSB `DUNVIEW.C` F0107:3590-3706/F0128:8318-8616 and `DUNGEON.C` F0168.
+  Verification: focused PC34 HoC and non-HoC inscription CTests.
 - 2026-07-13 DM1 F0115/F0128 side-wall occlusion ownership: moved D3/D2/D1
   side-wall lane clipping, parity selection, C10-transparent zone geometry
   and F0096 wall-set material into `DM1_ViewportSideWallHostReceiptPc34`.

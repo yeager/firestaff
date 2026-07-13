@@ -8,6 +8,7 @@
  */
 
 #include "dm1_v1_inscription_font_pc34_compat.h"
+#include "dm1_v1_wall_inscription_presentation_pc34_compat.h"
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -19,6 +20,8 @@
 enum { kFramebufferWidth = 320, kFramebufferHeight = 200, kMaxHocPoses = 32 };
 
 typedef struct HocPosePc34 {
+    int wallX;
+    int wallY;
     int partyX;
     int partyY;
     int direction;
@@ -103,6 +106,8 @@ static int collect_hoc_inscription_poses(const M11_GameViewState *state,
                         if (count >= capacity) {
                             return -1;
                         }
+                        outPoses[count].wallX = x;
+                        outPoses[count].wallY = y;
                         outPoses[count].partyX = partyX;
                         outPoses[count].partyY = partyY;
                         outPoses[count].direction = direction;
@@ -188,6 +193,41 @@ static int is_current_m648_receipt(int textStringIndex)
            receipt.glyphByteCount > 0 && receipt.lineCount > 0;
 }
 
+static int is_current_viewport_receipt(const M11_GameViewState *state,
+                                       const HocPosePc34 *pose)
+{
+    DM1_V1_ViewportInscriptionReceiptPc34 receipt;
+    unsigned short firstThing;
+
+    if (!state || !state->world.dungeon || !state->world.things || !pose) {
+        return 0;
+    }
+    firstThing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        state->world.dungeon, state->world.things, 0, pose->wallX, pose->wallY);
+    if (!dm1_v1_viewport_inscription_receipt_from_world_pc34(
+            state->world.things, pose->textStringIndex, firstThing, 1, 0,
+            &receipt)) {
+        return 0;
+    }
+    return receipt.valid && receipt.clearPreviousMaterial &&
+           receipt.drawFrontMaterial && receipt.frontMaterial.valid &&
+           receipt.frontMaterial.textStringIndex == pose->textStringIndex &&
+           receipt.frontMaterial.fontGraphicIndex ==
+               DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 &&
+           receipt.frontMaterial.transparentColor ==
+               DM1_V1_INSCRIPTION_TRANSPARENT_COLOR;
+}
+
+static int is_clear_only_viewport_receipt(const M11_GameViewState *state)
+{
+    DM1_V1_ViewportInscriptionReceiptPc34 receipt;
+
+    return state && dm1_v1_viewport_inscription_receipt_from_world_pc34(
+        state->world.things, -1, THING_NONE, 0, 0, &receipt) &&
+        receipt.valid && receipt.clearPreviousMaterial &&
+        !receipt.drawFrontMaterial && !receipt.frontMaterial.valid;
+}
+
 static void draw_pose(M11_GameViewState *state, const HocPosePc34 *pose,
                       unsigned char *framebuffer)
 {
@@ -244,21 +284,22 @@ int main(void)
     fontHash = hash_font(font);
     for (i = 0; i < poseCount; ++i) {
         draw_pose(&state, &corridorPose, framebuffer);
-        if (!is_empty_m648_receipt()) {
+        if (!is_empty_m648_receipt() || !is_clear_only_viewport_receipt(&state)) {
             fprintf(stderr, "HoC corridor preframe retained M648 before text %d\n",
                     inscriptionPoses[i].textStringIndex);
             M11_GameView_Shutdown(&state);
             return 1;
         }
         draw_pose(&state, &inscriptionPoses[i], framebuffer);
-        if (!is_current_m648_receipt(inscriptionPoses[i].textStringIndex)) {
+        if (!is_current_m648_receipt(inscriptionPoses[i].textStringIndex) ||
+            !is_current_viewport_receipt(&state, &inscriptionPoses[i])) {
             fprintf(stderr, "HoC inscription frame lacks current M648 text %d\n",
                     inscriptionPoses[i].textStringIndex);
             M11_GameView_Shutdown(&state);
             return 1;
         }
         draw_pose(&state, &corridorPose, framebuffer);
-        if (!is_empty_m648_receipt()) {
+        if (!is_empty_m648_receipt() || !is_clear_only_viewport_receipt(&state)) {
             fprintf(stderr, "HoC corridor postframe retained M648 after text %d\n",
                     inscriptionPoses[i].textStringIndex);
             M11_GameView_Shutdown(&state);

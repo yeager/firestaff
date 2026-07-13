@@ -27,3 +27,34 @@ int dm1_v1_wall_inscription_presentation_from_world_pc34(
     *outReceipt = receipt;
     return 1;
 }
+
+int dm1_v1_viewport_inscription_receipt_from_world_pc34(
+    const struct DungeonThings_Compat* things,
+    int preferredTextIndex,
+    unsigned short firstThing,
+    int d1cWallLike,
+    int championMirror,
+    DM1_V1_ViewportInscriptionReceiptPc34* outReceipt)
+{
+    DM1_V1_ViewportInscriptionReceiptPc34 receipt;
+
+    if (!outReceipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.clearPreviousMaterial = 1;
+    /* ReDMCSB DUNVIEW.C F0128:8318-8616 clears/rebuilds the current viewport
+     * tuple before F0107:3590-3706 can select M648. F0107:3913-3928 routes a
+     * C127 mirror through C346/C026, never the readable inscription branch. */
+    if (!d1cWallLike || championMirror || !things) {
+        *outReceipt = receipt;
+        return 1;
+    }
+    if (dm1_v1_inscription_host_material_from_world_pc34(
+            things, preferredTextIndex, firstThing, &receipt.frontMaterial)) {
+        receipt.drawFrontMaterial = 1;
+    }
+    *outReceipt = receipt;
+    return 1;
+}

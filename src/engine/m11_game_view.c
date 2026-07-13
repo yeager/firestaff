@@ -22102,28 +22102,6 @@ static int m11_dm1_visible_wall_inscription_presentation(
         outReceipt);
 }
 
-static int m11_decode_visible_wall_text_raw_glyphs(const M11_GameViewState* state,
-                                                   const M11_ViewportCell* cell,
-                                                   unsigned char* outGlyphs,
-                                                   int outGlyphCapacity) {
-    DM1_V1_InscriptionHostMaterialReceiptPc34 material;
-    int copyCount;
-    if (!outGlyphs || outGlyphCapacity < 2 ||
-        !m11_dm1_visible_wall_inscription_material(state, cell, &material)) {
-        if (outGlyphs && outGlyphCapacity > 0) {
-            outGlyphs[0] = 0x81U;
-        }
-        return 0;
-    }
-    copyCount = material.glyphByteCount;
-    if (copyCount > outGlyphCapacity - 1) {
-        copyCount = outGlyphCapacity - 1;
-    }
-    memcpy(outGlyphs, material.glyphBytes, (size_t)copyCount);
-    outGlyphs[copyCount] = 0x81U;
-    return 1;
-}
-
 static int m11_dm1_unreadable_inscription_box_height(int relForward,
                                                      int relSide,
                                                      int sideProjection,
@@ -22193,16 +22171,18 @@ static int m11_draw_dm1_inscription_glyph_line(const M11_GameViewState* state,
     return 1;
 }
 
-static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* state,
-                                                     const M11_ViewportCell* cell,
-                                                     unsigned char* framebuffer,
-                                                     int fbW,
-                                                     int fbH) {
+static void m11_draw_dm1_front_wall_inscription_material(
+    const M11_GameViewState* state,
+    const DM1_V1_InscriptionHostMaterialReceiptPc34* inputMaterial,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH) {
     DM1_V1_InscriptionHostMaterialReceiptPc34 material;
     int line = 0;
-    if (!m11_dm1_visible_wall_inscription_material(state, cell, &material)) {
+    if (!inputMaterial || !inputMaterial->valid) {
         return;
     }
+    material = *inputMaterial;
     for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
         const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* drawPlan =
             &material.lines[line];
@@ -22262,6 +22242,19 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
         s_m11_dm1_inscription_host_presentation_receipt.lineGlyphCount[line] =
             drawPlan->glyphCount;
     }
+}
+
+static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* state,
+                                                     const M11_ViewportCell* cell,
+                                                     unsigned char* framebuffer,
+                                                     int fbW,
+                                                     int fbH) {
+    DM1_V1_InscriptionHostMaterialReceiptPc34 material;
+    if (!m11_dm1_visible_wall_inscription_material(state, cell, &material)) {
+        return;
+    }
+    m11_draw_dm1_front_wall_inscription_material(state, &material,
+                                                 framebuffer, fbW, fbH);
 }
 
 static int m11_build_dm1_front_champion_portrait_receipt(
@@ -34963,10 +34956,15 @@ static void m11_repaint_dm1_f0128_front_wall_inscription(
     int framebufferHeight)
 {
     M11_ViewportCell frontCell;
-    unsigned char glyphProbe[2];
-    /* ReDMCSB F0128 rebuilds the tuple before F0107 may select M648. A C127
-     * front mirror follows F0107's C346/C026 branch and cannot retain a
-     * prior D1C TextString receipt while the party rotates. */
+    DM1_V1_ViewportInscriptionReceiptPc34 viewportReceipt;
+
+    /* The clear action belongs to the DM1 F0128/F0107 receipt even when no
+     * current world cell is available. M11 only performs that action. */
+    if (!dm1_v1_viewport_inscription_receipt_from_world_pc34(
+            NULL, -1, THING_NONE, 0, 0, &viewportReceipt) ||
+        !viewportReceipt.clearPreviousMaterial) {
+        return;
+    }
     memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_inscription_host_presentation_receipt));
     if (!state || !framebuffer ||
@@ -34975,21 +34973,19 @@ static void m11_repaint_dm1_f0128_front_wall_inscription(
         !frontCell.valid || !m11_viewport_cell_is_wall_like(&frontCell)) {
         return;
     }
-    /* ReDMCSB DUNGEON.C F0172 gives C127 the D1C mirror ornament; DUNVIEW.C
-     * F0107:3913-3928 consumes C346/C026, never M648. An incidental text
-     * carrier cannot promote that mirror frame into the inscription branch. */
-    if (frontCell.championPortraitOrdinal >= 0) {
+    if (!dm1_v1_viewport_inscription_receipt_from_world_pc34(
+            state->world.things, frontCell.inscriptionTextIndex,
+            frontCell.firstThing, 1,
+            frontCell.championPortraitOrdinal >= 0, &viewportReceipt)) {
         return;
     }
     /* ReDMCSB DUNGEON.C F0172/F0174 reselects G0290 from the current party
-     * tuple, then DUNVIEW.C F0107:3592-3706 decodes and draws M648.  This
-     * final M11 repaint is frame-local: a turn/move cannot retain a prior
-     * TextString or replay a host fallback. */
-    if (m11_decode_visible_wall_text_raw_glyphs(
-            state, &frontCell, glyphProbe, (int)sizeof(glyphProbe))) {
-        m11_draw_dm1_front_wall_inscription_text(state, &frontCell,
-                                                 framebuffer, framebufferWidth,
-                                                 framebufferHeight);
+     * tuple, then DUNVIEW.C F0107:3592-3706 decodes and draws M648. The
+     * receipt is frame-local and is clear-only for C127 or hidden text. */
+    if (viewportReceipt.drawFrontMaterial) {
+        m11_draw_dm1_front_wall_inscription_material(
+            state, &viewportReceipt.frontMaterial, framebuffer,
+            framebufferWidth, framebufferHeight);
     }
 }
 
