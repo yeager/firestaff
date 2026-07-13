@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus visible Structure1F item boundary: visible DGN item
+  records with unproven Structure1F semantics now block the host route rather
+  than producing substitute geometry. Verification: Ninja-built
+  `firestaff_nexus` and CTest `nexus_v1_dgn_geometry_readiness`.
+
 - 2026-07-13 Nexus visible Structure1F boundary: DGN rendering now blocks
   visible decoration and sensor records whose original Structure1F semantics
   are not proven. The viewport publishes no substitute geometry. Verification:

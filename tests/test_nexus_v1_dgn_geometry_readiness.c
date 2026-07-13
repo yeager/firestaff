@@ -615,6 +615,29 @@ static void test_visible_structure1f_semantics_block_render_plan(void) {
           receipt.blocks_real_dgn_mesh_render && !receipt.plan_ready &&
           !receipt.fallback_visuals_permitted,
           "visible unproven Structure1F decoration blocks DGN rendering without fallback");
+
+    /* Item coordinates use the same direct 64x64 source-cell binding. The
+     * original Saturn object draw ABI is likewise not established, so an
+     * otherwise renderable view must not silently drop a visible item. */
+    structure1f[NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 1] = 3;
+    structure1f[NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 2] = 4;
+    structure1f[32 + 1] = 10;
+    structure1f[32 + 2] = 20;
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0,
+          "visible Structure1F item level reloads");
+    memset(commands, 0, sizeof(commands));
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(nexus_v1_level_build_dgn_view_render_plan(
+              &level, 3, 4, 0, commands,
+              NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &receipt) == 0,
+          "visible Structure1F item render plan evaluates");
+    CHECK(receipt.structure1f_plan_item_entry_count == 1 &&
+          receipt.structure1f_plan_floor_decoration_entry_count == 0 &&
+          receipt.status ==
+              NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS &&
+          receipt.blocks_real_dgn_mesh_render && !receipt.plan_ready &&
+          !receipt.fallback_visuals_permitted,
+          "visible unproven Structure1F item blocks DGN rendering without fallback");
 }
 
 static void test_structure1g_semantics_and_bounds(void) {

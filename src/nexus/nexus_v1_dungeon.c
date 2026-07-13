@@ -1610,11 +1610,12 @@ int nexus_v1_level_build_dgn_view_render_plan(
         int command_index;
         nexus_v1_dgn_plan_bind_direct_structure1f(level, commands, &receipt);
         /* DMWeb DGN Structure1F documents direct 64x64 source cells for
-         * floor decorations and sensors, but not their Saturn draw or
-         * trigger ABI. Do not render the surrounding DGN as a complete
+         * items, floor decorations, and sensors, but not their Saturn draw
+         * or trigger ABI. Do not render the surrounding DGN as a complete
          * runtime scene while one is visible: that would silently omit a
          * real record. */
-        if (receipt.structure1f_plan_floor_decoration_entry_count > 0 ||
+        if (receipt.structure1f_plan_item_entry_count > 0 ||
+            receipt.structure1f_plan_floor_decoration_entry_count > 0 ||
             receipt.structure1f_plan_floor_sensor_entry_count > 0) {
             receipt.status =
                 NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS;
