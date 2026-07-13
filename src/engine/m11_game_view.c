@@ -325,7 +325,8 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
                                          int sourceZone,
                                          int sourceZoneRow,
                                          int transparentColor,
-                                         int usesF0791Blit);
+                                         int usesF0791Blit,
+                                         int publishFloorItemHostReceipt);
 static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int framebufferWidth,
@@ -360,7 +361,10 @@ static M11_Dm1FloorItemHostPresentationReceipt
 static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
 {
     return itemPresent &&
-           s_m11_dm1_floor_item_host_presentation_receipt.valid;
+           s_m11_dm1_floor_item_host_presentation_receipt.valid &&
+           s_m11_dm1_floor_item_host_presentation_receipt.floorItemLane &&
+           s_m11_dm1_floor_item_host_presentation_receipt.usesF0791Blit &&
+           s_m11_dm1_floor_item_host_presentation_receipt.transparentColor == 10;
 }
 
 /* The M11 game view owns one active DM2 launch at a time.  Keep the V2
@@ -1431,7 +1435,8 @@ static int m11_csb_viewport_object_sprite_drawer(
                                          blit->source_zone,
                                          blit->source_zone_row,
                                          blit->transparent_color,
-                                         blit->uses_f0791_blit);
+                                         blit->uses_f0791_blit,
+                                         0);
 }
 
 static int m11_csb_viewport_object_icon_drawer(
@@ -19624,7 +19629,23 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
                                          int sourceZone,
                                          int sourceZoneRow,
                                          int transparentColor,
-                                         int usesF0791Blit);
+                                         int usesF0791Blit,
+                                         int publishFloorItemHostReceipt);
+static int m11_draw_dm1_f0115_floor_item_sprite(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH,
+    int x,
+    int y,
+    int w,
+    int h,
+    int thingType,
+    int subtype,
+    int relativeCell,
+    int pileIndex,
+    int depthIndex,
+    int sourceZoneRow);
 static int m11_draw_wall_ornament(const M11_GameViewState* state,
                                   unsigned char* framebuffer,
                                   int fbW, int fbH,
@@ -19845,14 +19866,11 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
             if (g_drawState) {
                 /* ReDMCSB DUNVIEW.C F0115 has no synthetic object route:
                  * missing PC34 aspect/material deliberately draws nothing. */
-                (void)m11_draw_item_sprite(g_drawState, framebuffer,
-                                           framebufferWidth, framebufferHeight,
-                                           faceX + 2, faceY + 2, faceW - 4, faceH - 4,
-                                           cell->floorItemTypes[ii],
-                                           cell->floorItemSubtypes[ii],
-                                           cell->floorItemCells[ii], ii,
-                                           depthIndex,
-                                           sourceZoneRow);
+                (void)m11_draw_dm1_f0115_floor_item_sprite(
+                    g_drawState, framebuffer, framebufferWidth, framebufferHeight,
+                    faceX + 2, faceY + 2, faceW - 4, faceH - 4,
+                    cell->floorItemTypes[ii], cell->floorItemSubtypes[ii],
+                    cell->floorItemCells[ii], ii, depthIndex, sourceZoneRow);
             }
         }
     }
@@ -22871,7 +22889,8 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
                                          int sourceZone,
                                          int sourceZoneRow,
                                          int transparentColor,
-                                         int usesF0791Blit) {
+                                         int usesF0791Blit,
+                                         int publishFloorItemHostReceipt) {
     unsigned int gfxIdx;
     const M11_AssetSlot* slot;
     DM1_ItemSpriteBlitPlan plan;
@@ -22927,21 +22946,28 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
             plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
             depthIndex + 1, plan.use_mirror ? 1 : 0) > 0;
     }
-    s_m11_dm1_floor_item_host_presentation_receipt.valid = 1;
-    s_m11_dm1_floor_item_host_presentation_receipt.graphicsId = (int)gfxIdx;
-    s_m11_dm1_floor_item_host_presentation_receipt.transparentColor =
-        effectiveTransparentColor;
-    s_m11_dm1_floor_item_host_presentation_receipt.usesF0791Blit =
-        usesF0791Blit ? 1 : 0;
-    s_m11_dm1_floor_item_host_presentation_receipt.sourceZone = sourceZone;
-    s_m11_dm1_floor_item_host_presentation_receipt.sourceZoneRow =
-        effectiveSourceZoneRow;
-    s_m11_dm1_floor_item_host_presentation_receipt.destinationX = plan.draw_x;
-    s_m11_dm1_floor_item_host_presentation_receipt.destinationY = plan.draw_y;
-    s_m11_dm1_floor_item_host_presentation_receipt.destinationW = plan.draw_w;
-    s_m11_dm1_floor_item_host_presentation_receipt.destinationH = plan.draw_h;
-    s_m11_dm1_floor_item_host_presentation_receipt.assetWidth = (int)slot->width;
-    s_m11_dm1_floor_item_host_presentation_receipt.assetHeight = (int)slot->height;
+    if (publishFloorItemHostReceipt) {
+        /* ReDMCSB DUNVIEW.C F0115:4820-5075 reaches F0791 only for the
+         * object pass. F0121/F0124's alcove invocation is still a real
+         * object blit, but it is a wall lane and cannot prove a floor item
+         * was presented in the HoC capture frame. */
+        s_m11_dm1_floor_item_host_presentation_receipt.valid = 1;
+        s_m11_dm1_floor_item_host_presentation_receipt.floorItemLane = 1;
+        s_m11_dm1_floor_item_host_presentation_receipt.graphicsId = (int)gfxIdx;
+        s_m11_dm1_floor_item_host_presentation_receipt.transparentColor =
+            effectiveTransparentColor;
+        s_m11_dm1_floor_item_host_presentation_receipt.usesF0791Blit =
+            usesF0791Blit ? 1 : 0;
+        s_m11_dm1_floor_item_host_presentation_receipt.sourceZone = sourceZone;
+        s_m11_dm1_floor_item_host_presentation_receipt.sourceZoneRow =
+            effectiveSourceZoneRow;
+        s_m11_dm1_floor_item_host_presentation_receipt.destinationX = plan.draw_x;
+        s_m11_dm1_floor_item_host_presentation_receipt.destinationY = plan.draw_y;
+        s_m11_dm1_floor_item_host_presentation_receipt.destinationW = plan.draw_w;
+        s_m11_dm1_floor_item_host_presentation_receipt.destinationH = plan.draw_h;
+        s_m11_dm1_floor_item_host_presentation_receipt.assetWidth = (int)slot->width;
+        s_m11_dm1_floor_item_host_presentation_receipt.assetHeight = (int)slot->height;
+    }
     if (plan.use_mirror) {
         M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
                                          plan.draw_x, plan.draw_y,
@@ -22976,7 +23002,28 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                          relativeCell, pileIndex,
                                          depthIndex,
                                          -1, sourceZoneRow,
-                                         -1, 0);
+                                         -1, 0, 0);
+}
+
+static int m11_draw_dm1_f0115_floor_item_sprite(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH,
+    int x,
+    int y,
+    int w,
+    int h,
+    int thingType,
+    int subtype,
+    int relativeCell,
+    int pileIndex,
+    int depthIndex,
+    int sourceZoneRow) {
+    return m11_draw_item_sprite_material(
+        state, framebuffer, fbW, fbH, x, y, w, h,
+        thingType, subtype, relativeCell, pileIndex, depthIndex,
+        -1, sourceZoneRow, 10, 1, 1);
 }
 
 /* Draw a wall ornament from GRAPHICS.DAT on the wall face.
@@ -23686,15 +23733,12 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
             for (ii = 0; ii < cell->floorItemCount; ++ii) {
                 if (cell->floorItemTypes[ii] < 0) continue;
                 if (g_drawState) {
-                    (void)m11_draw_item_sprite(g_drawState, framebuffer,
-                                          framebufferWidth, framebufferHeight,
-                                          paneX + 1, itemBaseY,
-                                          paneW - 2, itemArea,
-                                          cell->floorItemTypes[ii],
-                                          cell->floorItemSubtypes[ii],
-                                          cell->floorItemCells[ii], ii,
-                                          depthIndex + 1,
-                                          sourceZoneRow);
+                    (void)m11_draw_dm1_f0115_floor_item_sprite(
+                        g_drawState, framebuffer, framebufferWidth, framebufferHeight,
+                        paneX + 1, itemBaseY, paneW - 2, itemArea,
+                        cell->floorItemTypes[ii], cell->floorItemSubtypes[ii],
+                        cell->floorItemCells[ii], ii, depthIndex + 1,
+                        sourceZoneRow);
                 }
             }
         }
@@ -23874,15 +23918,12 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                 for (ii = 0; ii < cell->floorItemCount; ++ii) {
                     if (cell->floorItemTypes[ii] < 0) continue;
                     if (g_drawState) {
-                        (void)m11_draw_item_sprite(g_drawState, framebuffer,
-                                              framebufferWidth, framebufferHeight,
-                                              paneX + 1, itemBaseY,
-                                              paneW - 2, itemArea,
-                                              cell->floorItemTypes[ii],
-                                              cell->floorItemSubtypes[ii],
-                                              cell->floorItemCells[ii], ii,
-                                              depth + 1,
-                                              sourceZoneRow);
+                        (void)m11_draw_dm1_f0115_floor_item_sprite(
+                            g_drawState, framebuffer, framebufferWidth,
+                            framebufferHeight, paneX + 1, itemBaseY,
+                            paneW - 2, itemArea, cell->floorItemTypes[ii],
+                            cell->floorItemSubtypes[ii], cell->floorItemCells[ii],
+                            ii, depth + 1, sourceZoneRow);
                     }
                 }
             }
@@ -38910,7 +38951,22 @@ int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
     return m11_draw_item_sprite_material(
         state, framebuffer, framebufferWidth, framebufferHeight,
         M11_VIEWPORT_X + 32, M11_VIEWPORT_Y + 32, 32, 20,
-        THING_TYPE_WEAPON, 0, 0, 0, 0, 0, 0, 10, 1);
+        THING_TYPE_WEAPON, 0, 0, 0, 0, 0, 0, 10, 1, 1);
+}
+
+int M11_GameView_ProbeDrawDm1AlcoveItemForFloorItemReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    /* ReDMCSB DUNVIEW.C F0121/F0124 invokes F0115 immediately after an
+     * alcove wall ornament. It remains a source-backed C10/F0791 object
+     * material route, but must not publish the floor-only HoC receipt. */
+    return m11_draw_item_sprite_material(
+        state, framebuffer, framebufferWidth, framebufferHeight,
+        M11_VIEWPORT_X + 32, M11_VIEWPORT_Y + 32, 32, 20,
+        THING_TYPE_WEAPON, 0, 2, 0, 0, 0, 0, 10, 1, 0);
 }
 
 int M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(

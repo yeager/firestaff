@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC F0115 floor-lane host handoff: M11 now publishes the
+  floor-item presentation receipt only from the actual F0115 floor-object
+  lane, with C10/F0791 material facts and final geometry. The source-backed
+  F0121/F0124 alcove lane still draws but cannot validate a HoC floor-item
+  capture. Verification: `firestaff_m11` and
+  `m11_dm1_floor_item_host_presentation_receipt` passed.
+
 - 2026-07-13 Theron live Mednafen trace: regenerated the Mednafen 1.32.1
   patch from the exact source context and made its authenticated debugger
   output flush after each header, callback, target-PC snapshot, and CD-loop
