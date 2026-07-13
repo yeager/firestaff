@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron post-`$e981` controller-status receipt: the authenticated
+  US raw-CUE trace now verifies the ordered `$e9d3 -> $e9dc -> $e9eb ->
+  $e9f3 -> $ea15 -> $ea1d -> $ea26` controller loop, including the `$227b`
+  clear, `$1801` sample, two `$1800` status waits, and return. This is only
+  controller/register evidence and assigns no `CD_READ`, record, transfer,
+  destination, payload, bitmap, palette, object, or level meaning.
+  Verification: `verify_theron_post_latch_status_exchange_trace.sh`.
+
 - 2026-07-13 DM2 GDAT weather IMG3 source bounds: the source-backed weather
   draw receipt now retains the exact exclusive IMG3 bounds after skproject's
   category/image `dtImageOffset` application. It refuses overflow and does

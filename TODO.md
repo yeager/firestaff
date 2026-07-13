@@ -42,6 +42,12 @@ transition from an actual data transaction but proves neither a `CD_READ` nor
 record/register/payload semantics. Continue with a later explicit original
 System Card data transaction whose record/register inputs and destination can
 be independently observed.
+The subsequent observed `$e9d3 -> $e9dc -> $e9eb -> $e9f3 -> $ea15 ->
+$ea1d -> $ea26` status loop is now independently verified from the same US
+capture. It clears `$227b`, samples `$1801`, then completes two `$1800`
+status waits before returning. This remains controller-only evidence: it does
+not identify a CD read, a source record, a destination, a transfer, or payload
+meaning. Continue only from a later explicit original data transaction.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 
