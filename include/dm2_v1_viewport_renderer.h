@@ -687,6 +687,14 @@ typedef int (*DM2_V1_ViewportAssetFetch)(
     int *out_h,
     int *out_stride);
 
+/* The original GDAT IMG3 image owns a local 16-entry palette.  This is a
+ * separate query because the pixel cache is shared by viewport resources. */
+typedef int (*DM2_V1_ViewportAssetPaletteFetch)(
+    void *user,
+    int gdat_index,
+    uint8_t out_palette16[16],
+    uint32_t *out_hash);
+
 /* ── Viewport state ────────────────────────────────────────────── */
 typedef struct {
     /* View geometry */
@@ -733,6 +741,11 @@ typedef struct {
 
     DM2_V1_ViewportAssetFetch asset_fetch;
     void *asset_user;
+    DM2_V1_ViewportAssetPaletteFetch asset_palette_fetch;
+    void *asset_palette_user;
+    uint8_t active_asset_palette16[16];
+    uint32_t active_asset_palette_hash;
+    int active_asset_palette_ready;
     /* A boot-owned, hash-verified GDAT provider must never be replaced by
      * aggregate paint.  skproject SKWIN/SkWinCore.cpp (DRAW_MAP_CHIP) resolves
      * GRAPHICSSET/WALL_GFX imagery before its blit; a failed decode is a
@@ -751,6 +764,7 @@ typedef struct {
     int gdat_scene_light_consumed_count;
     int gdat_scene_weather_consumed_count;
     int gdat_sprite_palette_consumed_count;
+    int gdat_local_palette_consumed_count;
     uint32_t gdat_scene_control_hash;
     uint16_t gdat_scene_colorkey;
     uint16_t gdat_scene_flags;
@@ -874,6 +888,10 @@ void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
 void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
                                          DM2_V1_ViewportAssetFetch fetch,
                                          void *user);
+void dm2_v1_viewport_set_asset_palette_provider(
+    DM2_V1_ViewportState *s,
+    DM2_V1_ViewportAssetPaletteFetch fetch,
+    void *user);
 void dm2_v1_viewport_set_source_materials_required(
     DM2_V1_ViewportState *s, int required);
 void dm2_v1_viewport_set_gdat_scene_control(

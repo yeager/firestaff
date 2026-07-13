@@ -863,6 +863,41 @@ int dm2_v1_asset_load_interface_palette(
     return 1;
 }
 
+int dm2_v1_asset_load_image_local_palette(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    uint8_t out_palette16[16],
+    uint32_t *out_hash)
+{
+    const DM2_V1_GdatEntry *entry;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint32_t hash = 2166136261u;
+    int i;
+
+    if (out_hash) *out_hash = 0u;
+    if (!out_palette16) return 0;
+    memset(out_palette16, 0, 16u);
+    entry = dm2_gdat_find_entry(loader, category, index,
+                                DM2_GDAT_ENTRY_TYPE_IMAGE, field);
+    raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
+    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE + 16u ||
+        rd16le(raw + 4) != 4u) {
+        return 0;
+    }
+
+    /* skproject/SKWIN/SkWinCore.cpp QUERY_GDAT_IMAGE_LOCALPAL (3E74:521A)
+     * returns PTR_PADA(IMG3, QUERY_GDAT_RAW_DATA_LENGTH(index) - 16). */
+    memcpy(out_palette16, raw + raw_size - 16u, 16u);
+    for (i = 0; i < 16; ++i) {
+        hash = (hash ^ out_palette16[i]) * 16777619u;
+    }
+    if (out_hash) *out_hash = hash ? hash : 1u;
+    return 1;
+}
+
 uint8_t *dm2_v1_asset_load_image(const DM2_V1_AssetLoader *loader,
                                    int category, int index,
                                    int *out_width, int *out_height,

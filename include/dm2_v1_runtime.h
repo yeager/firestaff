@@ -82,6 +82,7 @@ typedef struct {
     int gdat_scene_light_consumed;
     int gdat_scene_weather_consumed;
     int gdat_sprite_palette_consumed;
+    int gdat_local_palette_consumed;
     int gdat_interface_palette_ready;
     int gdat_interface_palette_consumed;
     int gdat_interface_font_host_ready;

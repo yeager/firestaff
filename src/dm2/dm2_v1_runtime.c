@@ -82,6 +82,8 @@ typedef struct {
     /* Startup/render asset boundary owned by the runtime handoff. */
     DM2_V1_ViewportAssetFetch viewport_asset_fetch;
     void *viewport_asset_user;
+    DM2_V1_ViewportAssetPaletteFetch viewport_asset_palette_fetch;
+    void *viewport_asset_palette_user;
     uint8_t map_wall_gfx_list[16];
     int map_wall_gfx_count;
     uint8_t map_door_gfx_list[2];
@@ -1210,6 +1212,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.stairs_callback = NULL;
     g_dm2_runtime.viewport_asset_fetch = NULL;
     g_dm2_runtime.viewport_asset_user = NULL;
+    g_dm2_runtime.viewport_asset_palette_fetch = NULL;
+    g_dm2_runtime.viewport_asset_palette_user = NULL;
     memset(g_dm2_runtime.map_wall_gfx_list, 0,
            sizeof(g_dm2_runtime.map_wall_gfx_list));
     g_dm2_runtime.map_wall_gfx_count = 0;
@@ -1324,6 +1328,9 @@ int dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile) {
     if (boot_profile->graphics_dat) {
         dm2_v1_runtime_set_viewport_asset_provider(
             dm2_v1_boot_viewport_asset_fetch, boot_profile);
+        g_dm2_runtime.viewport_asset_palette_fetch =
+            dm2_v1_boot_viewport_asset_palette_fetch;
+        g_dm2_runtime.viewport_asset_palette_user = boot_profile;
         dm2_runtime_refresh_gdat_scene_control(&g_dm2_runtime);
     }
     return 1;
@@ -2293,6 +2300,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        rt->viewport_asset_fetch,
                                        rt->viewport_asset_user);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, rt->viewport_asset_palette_fetch,
+        rt->viewport_asset_palette_user);
     dm2_v1_viewport_set_source_materials_required(
         &viewport,
         rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch &&
@@ -2595,6 +2605,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.gdat_scene_weather_consumed_count;
     g_dm2_frame_ownership.gdat_sprite_palette_consumed =
         viewport.gdat_sprite_palette_consumed_count;
+    g_dm2_frame_ownership.gdat_local_palette_consumed =
+        viewport.gdat_local_palette_consumed_count;
     g_dm2_frame_ownership.gdat_interface_palette_ready =
         rt->gdat_interface_palette_ready;
     g_dm2_frame_ownership.gdat_interface_palette_consumed =
@@ -2650,6 +2662,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
           g_dm2_frame_ownership.gdat_scene_control_hash != 0u &&
           g_dm2_frame_ownership.gdat_interface_palette_ready &&
           g_dm2_frame_ownership.gdat_interface_palette_consumed > 0 &&
+          g_dm2_frame_ownership.gdat_local_palette_consumed > 0 &&
           g_dm2_frame_ownership.gdat_material_palette_floor_ceiling_consumed > 0 &&
           g_dm2_frame_ownership.gdat_material_palette_wall_consumed > 0 &&
           (viewport.asset_door_frame_drawn_count == 0 ||
@@ -2759,6 +2772,10 @@ void dm2_v1_runtime_set_viewport_asset_provider(
     void *user) {
     g_dm2_runtime.viewport_asset_fetch = fetch;
     g_dm2_runtime.viewport_asset_user = user;
+    if (fetch != dm2_v1_boot_viewport_asset_fetch) {
+        g_dm2_runtime.viewport_asset_palette_fetch = NULL;
+        g_dm2_runtime.viewport_asset_palette_user = NULL;
+    }
     dm2_runtime_refresh_gdat_scene_control(&g_dm2_runtime);
 }
 

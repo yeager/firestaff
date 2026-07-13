@@ -1530,6 +1530,14 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
                                      int *out_h,
                                      int *out_stride);
 
+/* Retrieve the source IMG3 local palette for a virtual viewport image.
+ * Runtime GDAT presentation must consume this palette with its pixels. */
+int dm2_v1_boot_viewport_asset_palette_fetch(
+    void *user,
+    int gdat_index,
+    uint8_t out_palette16[16],
+    uint32_t *out_hash);
+
 /* Fetch a DM2 object icon image from the boot-owned GRAPHICS.DAT handle.
  * The returned pixel buffer is owned by the caller and must be freed with
  * dm2_v1_boot_object_icon_asset_free(). Returns 0 on success. */

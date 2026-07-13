@@ -8026,6 +8026,35 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
     return *out_field >= 0;
 }
 
+int dm2_v1_boot_viewport_asset_palette_fetch(
+    void *user,
+    int gdat_index,
+    uint8_t out_palette16[16],
+    uint32_t *out_hash)
+{
+    DM2_V1_BootProfile *profile = (DM2_V1_BootProfile *)user;
+    DM2_V1_BootGraphicsDat *gfx;
+    int category;
+    int index;
+    int field;
+
+    if (out_hash) *out_hash = 0u;
+    if (out_palette16) memset(out_palette16, 0, 16u);
+    if (!profile || !profile->graphics_dat || !out_palette16 ||
+        !dm2_v1_boot_viewport_asset_address(gdat_index, &category, &index,
+                                             &field)) {
+        return -1;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    /* skproject/SKWIN/SkWinCore.cpp QUERY_DUNGEON_MAP_CHIP_PICT (29EE:0BCC)
+     * pairs the selected dtImage with QUERY_GDAT_IMAGE_LOCALPAL before every
+     * DRAW_CHIP_OF_MAGIC_MAP call.  No interface/global-palette substitution
+     * is valid for source-owned viewport pixels. */
+    return dm2_v1_asset_load_image_local_palette(
+               &gfx->loader, category, index, field, out_palette16,
+               out_hash) ? 0 : -1;
+}
+
 int dm2_v1_boot_viewport_asset_evidence(
     DM2_V1_BootProfile *profile,
     int gdat_index,

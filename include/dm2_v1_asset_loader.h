@@ -233,6 +233,17 @@ int dm2_v1_asset_load_interface_palette(
     int field,
     DM2_V1_InterfacePalette *out_palette);
 
+/* Read the 16-byte palette stored at the tail of one four-bit IMG3 GDAT
+ * image.  skproject QUERY_GDAT_IMAGE_LOCALPAL returns this exact payload to
+ * DRAW_CHIP_OF_MAGIC_MAP; it is not the global INTERFACE palette. */
+int dm2_v1_asset_load_image_local_palette(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    uint8_t out_palette16[16],
+    uint32_t *out_hash);
+
 /* Load image asset and decode to pixel buffer.
  * out_width, out_height set dimensions, out_format sets format.
  * Caller owns returned buffer (must free with dm2_v1_asset_free_pixels).
