@@ -29,6 +29,46 @@ world-mutating opcodes reject before state publication. This is deliberately
 not a claim that every CSBWin opcode, ProcessDSAFilter path, or EXPOOL class is
 implemented.
 
+## Reference Limits
+
+ReDMCSB and CSBWin answer different questions. ReDMCSB is the primary source
+for original CSB engine behavior, original EVENT/timeline structure, media
+branches, and original save-header contracts. It is not evidence for CSBWin
+extensions.
+
+| Area | Primary evidence | What ReDMCSB cannot prove |
+|---|---|---|
+| Original timers and dungeon mutation | ReDMCSB `TIMELINE.C`, `DUNGEON.C`, `GROUP.C` | CSBWin TIMER queue ownership and `timerObj6/8` semantics |
+| CSBWin DSA/custom dungeons | CSBWin `DSA.cpp`, `data.cpp`, `SaveGame.cpp` | EXPOOL, type-47 selector tables, opcode behavior, or DSA state |
+| Save interoperability | ReDMCSB `DEFS.H`, `LOADSAVE.C` plus per-media corpus | GAMEBLOCK2, ITEM16, extended tails, EXPOOL, and CSBWin continuation bytes |
+| Mouse, audio, interrupt timing | target-media capture; CSBWin host sources for CSBWin paths | vector-dispatched `USIOSTUB.C`, `MUSCSTUB.C`, and interrupt timing as portable behavior |
+| Title/entrance/HUD pixels | hash-identified original assets and capture | a universal palette, cadence, or renderer across `MEDIA*` branches |
+
+The source archive contains platform dispatch and assembly segments rather
+than a universal host specification. For example, `USIOSTUB.C` forwards mouse
+and queued-input calls through library vectors, `MUSCSTUB.C` forwards music
+calls, `VBLANK.C` installs interrupt handlers, and `GRAPH21.C` carries
+media-specific CPSE/fuzzy-sector logic. These establish that a path exists;
+they do not establish equivalent SDL ordering, sampled input, audio mixing,
+or copy-protection results.
+
+For any claimed original save format, preserve the evidence tuple:
+
+```text
+(media/version hash, original save bytes, parser receipt, runtime capture)
+```
+
+For any CSBWin DSA/save claim, preserve the additional tuple:
+
+```text
+(CSBWin save hash, timer queue slot, source timer index,
+ DSA/EXPOOL record identity, selected source action)
+```
+
+Absent those tuples Firestaff must fail closed or state that the route is not
+yet verified. The detailed work queue is `REDMCSB-CSB-GAP-001` through
+`REDMCSB-CSB-GAP-010` in `TODO.md`.
+
 ## Save and HUD Ownership
 
 Save imports stage GAMEBLOCK, champions, items, timers, extensions, and trace

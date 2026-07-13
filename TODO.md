@@ -1,5 +1,98 @@
 # Firestaff TODO - Open Work
 
+## ReDMCSB CSB Reference-Boundary Audit
+
+- REDMCSB-CSB-GAP-001 — **CSBWin DSA is outside ReDMCSB's source domain.**
+  ReDMCSB `Toolchains/Common/Source/` has no DSA, `EXPOOL`, `GAMEBLOCK2`, or
+  `ITEM16` implementation; its original timer model is `TIMELINE.C`
+  `F0261_TIMELINE_Process` and `DEFS.H` EVENT structures. Firestaff risk:
+  treating a source-shaped original Cxx event as evidence for a CSBWin DSA
+  callback invents selector, state, and opcode semantics. Independent source:
+  CSBWin `DSA.cpp`, `data.cpp`, and `SaveGame.cpp`; required corpus: a
+  checksum-valid CSBWin extended save containing DSA index/action records.
+
+- REDMCSB-CSB-GAP-002 — **CSBWin's restored timer queue is not ReDMCSB's
+  timeline.** ReDMCSB `TIMELINE.C F0240/F0261` owns heap EVENT records, while
+  CSBWin `CSBCode.cpp::ProcessTimers` dequeues `TIMER` entries and passes the
+  original `timerObj6/8`, words, and queue index to `Timer.cpp`. Firestaff
+  risk: C60/C61, C24, and DSA timers can have their object-word payload
+  reinterpreted before CSBWin processing. Independent source: CSBWin
+  `CSBCode.cpp`, `Timer.cpp`, `SaveGame.cpp`; required corpus: restored timer
+  array plus its ordered queue, not merely a materialized EVENT list.
+
+- REDMCSB-CSB-GAP-003 — **The ReDMCSB CSB save header is not a CSBWin save
+  layout specification.** `DEFS.H:482-507` documents the 512-byte original
+  `CSB_SAVE_HEADER`, five active parts, and original format/platform IDs. It
+  does not specify CSBWin GAMEBLOCK2, CHARDESC tail, ITEM16, EXPOOL, or DSA
+  extension bytes. Firestaff risk: accepting a header-shaped file as proof of
+  a complete CSBWin resume, or writing unowned extension bytes. Independent
+  source: CSBWin `SaveGame.cpp` and real CSBWin save corpus across versions.
+
+- REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
+  corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
+  branches and serializes platform-dependent portraits, music state, and
+  allocation paths; `DEFS.H:503-517` enumerates multiple format/platform
+  combinations. Firestaff risk: a PC-oriented import/export path may claim
+  Atari ST, Amiga, PC-98, X68000, or FM-Towns byte compatibility without an
+  observed save for that exact media branch. Independent evidence: one
+  original save and round trip per claimed media/version, plus CSBWin only
+  where its importer explicitly supports that media.
+
+- REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
+  ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
+  CSBWin `DSA.cpp` can alter `timerTypeModifier`, and `Timer.cpp`
+  `ProcessTT_FALSEWALL`, `ProcessTT_STONEROOM`, `ProcessTT_OPENROOM`,
+  `ProcessTT_DOOR`, `ProcessTT_TELEPORTER`, and `ProcessTT_PITROOM` invoke
+  DSA before their normal mutation. Firestaff risk: applying a canonical
+  modifier after an imported type-47 actuator without its DSA owner changes
+  a real dungeon. Independent source: CSBWin `DSA.cpp` and `Timer.cpp`;
+  required corpus: DSA-bearing save/dungeon pair with the selected actuator.
+
+- REDMCSB-CSB-GAP-006 — **Original graphics code does not prove every host
+  presentation byte.** ReDMCSB contains media-conditional C and assembly
+  paths, including `GRAPH21.C` fuzzy-sector/CPSE code and `VBLANK.C` interrupt
+  handlers; startup and rendering data are selected by `MEDIA*` defines.
+  Firestaff risk: deriving CSB title, entrance, palette, frame cadence, or
+  copy-protection side effects from one compiled media path and applying them
+  to another. Independent evidence: hash-identified original asset captures
+  per claimed CSB media, with CSBWin `Swoosh.cpp`, `Graphics.cpp`, and
+  `Viewport.cpp` used only for CSBWin behavior.
+
+- REDMCSB-CSB-GAP-007 — **Platform service shims are opaque dispatches, not
+  portable behavioral specifications.** `USIOSTUB.C` forwards mouse, input,
+  and queue operations through library-vector jumps; `MEM1STUB.C`,
+  `INT1STUB.C`, and `MUSCSTUB.C` do the same for memory, interrupt, and music
+  services. Firestaff risk: assuming their call names prove event ordering,
+  mouse sampling, or music semantics on a modern SDL host. Independent
+  source/corpus: platform executable or trace capture for the target media;
+  CSBWin `Mouse.cpp`, `Sound.cpp`, and `SoundMixer.cpp` for CSBWin-only paths.
+
+- REDMCSB-CSB-GAP-008 — **Original known bugs are behavioral choices, not
+  automatic Firestaff fixes.** ReDMCSB annotates surviving behavior such as
+  `TIMELINE.C` BUG0_19 object-launcher exhaustion and `MENU.C` BUG0_54/55/56/
+  77/79. Firestaff risk: silently "fixing" these changes original behavior,
+  while reproducing them globally can corrupt modern/custom data. Independent
+  evidence: `BugsAndChanges.htm`, version-tagged original runtime capture,
+  and a corpus dungeon that reaches each branch. Each Firestaff choice must
+  state emulate, guard, or reject rather than citing the annotation alone.
+
+- REDMCSB-CSB-GAP-009 — **CSBWin custom-dungeon semantics need CSBWin, not
+  ReDMCSB, as primary source.** ReDMCSB documents original CSB data and
+  version changes, but not CSBWin's type-47 DSA scripts, extended EXPOOL
+  records, trace database, or custom save continuation. Firestaff risk:
+  claiming compatibility with DSA/custom CSB dungeons from original-CSB
+  coverage alone. Independent source: CSBWin `DSA.cpp`, `data.cpp`,
+  `SaveGame.cpp`, and a legal custom-dungeon/save corpus with raw hashes.
+
+- REDMCSB-CSB-GAP-010 — **Assembly and media gates require observed failure
+  behavior before any fallback is accepted.** `GRAPH21.C` shows original-CSB
+  CPSE state (`G0068_i_CheckLastEvent22Time_CPSE`) tied to fuzzy-disk analysis;
+  ReDMCSB exposes the code but Firestaff has no authentic floppy signal or
+  sector timing. Firestaff risk: a synthetic success/failure state can alter
+  memory/freeing or event-22 behavior. Independent evidence: archived
+  original disk image plus emulator/real-machine trace; otherwise keep the
+  branch explicitly unavailable rather than simulating protection state.
+
 ## Skproject Audit (DM2)
 
 - SKPROJECT-GAP-001 — `SKULLWIN/c_weather.cpp::DM2_SET_TIMER_WEATHER` and
