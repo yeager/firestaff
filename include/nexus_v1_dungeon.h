@@ -243,6 +243,14 @@ typedef struct {
     int first_nonzero_byte_offset;
     int last_nonzero_byte_offset;
     uint32_t raw_payload_hash;
+    /* Structure3 is declared in complete 0x800-byte DGN blocks. These are
+     * raw block-boundary observations only, not record, face, or vertex
+     * boundaries. */
+    int complete_block_count;
+    int zero_block_count;
+    int nonzero_block_count;
+    int first_nonzero_block_index;
+    int last_nonzero_block_index;
     int valid;
     int face_semantics_proven;
 } Nexus_V1_DgnStructure3PayloadReceipt;

@@ -47,6 +47,16 @@
   `test_dm2_v1_possession_local_palette_gate`; matching CTest passed 2/2;
    `git diff --check` passed.
 
+- 2026-07-13 Nexus Structure3 block-boundary receipt: the documented DGN
+  `0x800`-byte Structure3 blocks are now profiled individually as raw empty or
+  nonempty spans, including their first and last nonempty block. The corpus
+  inspector aggregates the same measurements with the existing Structure1A
+  owner/model receipt. This establishes only container block boundaries, not
+  records, faces, vertices, meshes, textures, palettes, or pixels; the
+  renderer remains fail-closed at face semantics. Verification: Ninja and
+  CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 CSBWin restored TT_DESSAGE DSA tick bridge: verified
   function-102 queue entries now reach the source `ProcessTT_OPENROOM`
   zero-parameter type-47 DSA receipt through the restored live timer queue,

@@ -37,6 +37,7 @@ static int nexus_v1_level_copy_structure3_payload(
     int byte_size;
     unsigned char seen[UINT8_MAX + 1U];
     uint32_t hash = 2166136261u;
+    int block_index;
     int byte_index;
 
     if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
@@ -58,26 +59,45 @@ static int nexus_v1_level_copy_structure3_payload(
     level->structure3_payload.byte_size = byte_size;
     level->structure3_payload.first_nonzero_byte_offset = -1;
     level->structure3_payload.last_nonzero_byte_offset = -1;
+    level->structure3_payload.first_nonzero_block_index = -1;
+    level->structure3_payload.last_nonzero_block_index = -1;
+    level->structure3_payload.complete_block_count = (int)block_count;
     memset(seen, 0, sizeof(seen));
-    for (byte_index = 0; byte_index < byte_size; ++byte_index) {
-        uint8_t value = data[byte_offset + byte_index];
-        hash ^= value;
-        hash *= 16777619u;
-        if (value == 0U) {
-            ++level->structure3_payload.zero_byte_count;
-        } else {
-            ++level->structure3_payload.nonzero_byte_count;
-            if (level->structure3_payload.first_nonzero_byte_offset < 0) {
-                level->structure3_payload.first_nonzero_byte_offset = byte_index;
+    for (block_index = 0; block_index < (int)block_count; ++block_index) {
+        int block_nonzero = 0;
+        int block_byte;
+        for (block_byte = 0; block_byte < NEXUS_DGN_BLOCK_SIZE; ++block_byte) {
+            uint8_t value;
+            byte_index = block_index * NEXUS_DGN_BLOCK_SIZE + block_byte;
+            value = data[byte_offset + byte_index];
+            hash ^= value;
+            hash *= 16777619u;
+            if (value == 0U) {
+                ++level->structure3_payload.zero_byte_count;
+            } else {
+                ++block_nonzero;
+                ++level->structure3_payload.nonzero_byte_count;
+                if (level->structure3_payload.first_nonzero_byte_offset < 0) {
+                    level->structure3_payload.first_nonzero_byte_offset = byte_index;
+                }
+                level->structure3_payload.last_nonzero_byte_offset = byte_index;
             }
-            level->structure3_payload.last_nonzero_byte_offset = byte_index;
+            if (!seen[value]) {
+                seen[value] = 1U;
+                ++level->structure3_payload.distinct_byte_value_count;
+            }
+            if (byte_index > 0 && value != data[byte_offset + byte_index - 1]) {
+                ++level->structure3_payload.byte_transition_count;
+            }
         }
-        if (!seen[value]) {
-            seen[value] = 1U;
-            ++level->structure3_payload.distinct_byte_value_count;
-        }
-        if (byte_index > 0 && value != data[byte_offset + byte_index - 1]) {
-            ++level->structure3_payload.byte_transition_count;
+        if (block_nonzero == 0) {
+            ++level->structure3_payload.zero_block_count;
+        } else {
+            ++level->structure3_payload.nonzero_block_count;
+            if (level->structure3_payload.first_nonzero_block_index < 0) {
+                level->structure3_payload.first_nonzero_block_index = block_index;
+            }
+            level->structure3_payload.last_nonzero_block_index = block_index;
         }
     }
     level->structure3_payload.raw_payload_hash = hash ? hash : 1U;
