@@ -21,6 +21,12 @@ typedef enum DM1_V1_ViewportRuntimeOriginPc34 {
     DM1_V1_VIEWPORT_RUNTIME_ORIGIN_QUICKSAVE_RESUME_PC34 = 2
 } DM1_V1_ViewportRuntimeOriginPc34;
 
+/* ReDMCSB F0115 restarts the C15 loop and may consume every active
+ * explosion record on the square.  Keep the runtime receipt bounded by the
+ * PC34/M10 explosion slot table rather than collapsing it to a synthetic
+ * "first effect" presentation. */
+#define DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34 EXPLOSION_LIST_CAPACITY
+
 typedef struct DM1_V1_ViewportRuntimeMaterializationInputPc34 {
     int relativeForward;
     int relativeSide;
@@ -68,6 +74,15 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
     int liveExplosionFrame;
     int liveExplosionMaxFrames;
     int liveExplosionAttack;
+    /* Only ordinary F0114-scaled explosions are admitted here.  Fluxcages
+     * use F0113's field route and rebirth has distinct C3000/C3007 geometry,
+     * so neither may borrow this material path. */
+    int liveRenderableExplosionCount;
+    int liveRenderableExplosionSlots[DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34];
+    int liveRenderableExplosionTypes[DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34];
+    int liveRenderableExplosionFrames[DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34];
+    int liveRenderableExplosionMaxFrames[DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34];
+    int liveRenderableExplosionAttacks[DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34];
     const char *sourceAnchor;
 } DM1_V1_ViewportRuntimeMaterializationDecisionPc34;
 

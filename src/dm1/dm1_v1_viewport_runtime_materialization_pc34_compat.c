@@ -22,8 +22,8 @@ const char *dm1_v1_viewport_runtime_materialization_source_evidence_pc34(void)
            "square aspect; DUNVIEW.C F0115 lines 4547-4581 separates the "
            "thing passes, line 4923 clips non-visible cells, line 5075 "
            "selects C2500 object zones, lines 5668-5683 select C2900 "
-           "projectile zones, and lines 5915-5933 restart for deferred "
-           "explosions. DUNVIEW.C lines 3913-3928 reserve the D1C champion "
+           "projectile zones, and lines 5915-6200 restart and consume every "
+           "deferred explosion. DUNVIEW.C lines 3913-3928 reserve the D1C champion "
            "mirror for the wall-overlay route.";
 }
 
@@ -132,6 +132,23 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 decision.liveExplosionMaxFrames =
                     explosion->maxFrames > 0 ? explosion->maxFrames : 1;
                 decision.liveExplosionAttack = explosion->attack;
+            }
+            /* ReDMCSB DUNVIEW.C F0115:5915-6200 restarts the C15 walk and
+             * draws every ordinary explosion through F0114. Fluxcages are
+             * deferred to the F0113 field route, while C100/C101 rebirth
+             * effects require their own C3000/C3007 geometry. Do not let
+             * either class borrow the ordinary F0114 material path. */
+            if (explosion->explosionType != C050_EXPLOSION_FLUXCAGE &&
+                explosion->explosionType < C100_EXPLOSION_REBIRTH_STEP1 &&
+                decision.liveRenderableExplosionCount <
+                    DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34) {
+                int index = decision.liveRenderableExplosionCount++;
+                decision.liveRenderableExplosionSlots[index] = explosion->slotIndex;
+                decision.liveRenderableExplosionTypes[index] = explosion->explosionType;
+                decision.liveRenderableExplosionFrames[index] = explosion->currentFrame;
+                decision.liveRenderableExplosionMaxFrames[index] =
+                    explosion->maxFrames > 0 ? explosion->maxFrames : 1;
+                decision.liveRenderableExplosionAttacks[index] = explosion->attack;
             }
         }
     }
