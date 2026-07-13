@@ -2045,6 +2045,7 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           source_receipt.structure1g_provenance_count == 1 &&
           source_receipt.global_image_index_binding_count == 1 &&
           source_receipt.complete_sequence_provenance_count == 1 &&
+          source_receipt.descriptor_offset_envelope_count == 1 &&
           source_receipt.source_command_count == 1 && source_receipt.complete &&
           !source_receipt.fallback_visuals_permitted &&
           sources[0].command_index == 0 &&
@@ -2056,6 +2057,8 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           sources[0].structure1g_sequence_goto_instruction_count == 0 &&
           sources[0].structure1g_sequence_bound_image_count == 1 &&
           sources[0].structure1g_sequence_unbound_image_count == 0 &&
+          sources[0].image_offset_word_bounded &&
+          sources[0].palette_offset_word_bounded &&
           sources[0].image_id == 10U &&
           sources[0].encoding == 8U && sources[0].palette_id == 0U &&
           sources[0].width == 16U && sources[0].height == 16U &&
@@ -2091,6 +2094,15 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           !source_receipt.complete && !source_receipt.fallback_visuals_permitted,
           "an incompletely bound Structure1G sequence cannot reach a DGN floor command");
     level.structure1g_entries[0].structure2_image_instruction_unbound_count = 0;
+    level.structure2_textures[10].image_relative_offset = 240U;
+    CHECK(nexus_v1_dgn_bind_structure2_animated_floor_sources(
+              &level, commands, receipt.command_count, sources, 2,
+              &source_receipt) == 0 &&
+          source_receipt.source_command_count == 0 &&
+          source_receipt.blocked_descriptor_offset_envelope_count == 1 &&
+          !source_receipt.complete && !source_receipt.fallback_visuals_permitted,
+          "a Structure2 descriptor target outside its raw opaque span cannot reach a floor command");
+    level.structure2_textures[10].image_relative_offset = 0U;
     CHECK(receipt.unresolved_animated_material_count == 1,
           "animated floor declaration remains unresolved without Structure2 handoff");
     CHECK(receipt.blocks_real_dgn_mesh_render && !receipt.fallback_visuals_permitted,
