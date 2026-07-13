@@ -82,6 +82,11 @@ typedef struct {
     Nexus_V1_DgnStructure2FloorCommandSourceReceipt
         structure2_floor_command_source_receipt;
     int structure2_floor_command_sources_consumed;
+    Nexus_V1_DgnStructure1FItemMaterialBinding
+        structure1f_item_command_bindings[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_DgnStructure1FItemMaterialReceipt
+        structure1f_item_command_binding_receipt;
+    int structure1f_item_command_sources_consumed;
     int level;
     int party_x;
     int party_y;
@@ -141,6 +146,16 @@ typedef struct {
     int hash_discovery_attempted;
     int canonical_hash_verified;
 } Nexus_V1_LevelAuxSourceReceipt;
+
+/* ITEM.IBS is a package-level source for direct Structure1Fa item records.
+ * A verified bank can provide command provenance, never a drawable icon or
+ * floor texture without separate original VDP1 evidence. */
+typedef struct {
+    Nexus_V1_LevelAuxSourceReceipt source;
+    int parsed_bank_valid;
+    int source_bound;
+    int fallback_visuals_permitted;
+} Nexus_V1_ItemIbsRuntimeSourceReceipt;
 
 typedef struct {
     int level_index;
@@ -368,6 +383,8 @@ struct Nexus_V1_Engine {
     Nexus_V1_DgnMaterialPlan dgn_material_plan;
     Nexus_V1_DgnMaterialCorpusReceipt dgn_material_corpus;
     Nexus_V1_DgnStructure2SourceReceipt current_level_structure2_source;
+    Nexus_V1_ItemIbsBank item_ibs_bank;
+    Nexus_V1_ItemIbsRuntimeSourceReceipt item_ibs_runtime_source;
 
     /* 3D models (loaded on demand) */
     Nexus_V1_Model models[NEXUS_MAX_MODELS];
