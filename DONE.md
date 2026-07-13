@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus SLEV rule boundary: unproven SLEV script dispatch now
+  blocks the host route rather than deriving a synthetic rule. Verification:
+  Ninja-built and CTest-passed `nexus_v1_script_vm`.
+
 - 2026-07-13 Theron Track 02 `$fe92` System Card status trace: a
   clean-source, instrumented Mednafen 1.32.1 build and authenticated US
   CUE/System Card 3.0 capture now prove `$c860 -> $fe92 -> $c86e`. `$fe92`
