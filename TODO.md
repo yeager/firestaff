@@ -2890,6 +2890,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     offset fields remain the original zero offset; no rect coordinates or
     pixels are inferred. Remaining weather work is still source timer/light
     behavior, actual original rect expansion, and real-data capture.
+  - 2026-07-13 update: the separate `c_gui_vp.cpp` dialogue path now has a
+    source-only `GRAPHICSSET` receipt for its selected shell (`-4..-2`) and
+    glyph field `3`, including each exact IMG3 local palette. It is not a
+    dialogue renderer: message layout, text, and `DRAW_PICST` remain blocked
+    until their source contracts are wired.
 - DM2-012 — `skproject/SKULLWIN/c_item.cpp`, `c_hero.cpp`, `c_dialog.cpp`, and `c_engage.cpp`: `src/dm2/dm2_v1_inventory_panel.c`, `dm2_v1_shop.c`, `dm2_v1_companion.c`, and M11 expose catalog-driven panels and simplified interactions. Replace these stand-ins with source-data item, hero, dialogue, engagement, shop, and transaction semantics, including cancellation order.
 - DM2-013 — `skproject/SKWIN/SkWinCore.cpp` startup/render orchestration and `skproject/SKULLWIN/c_gui_draw.cpp`: M11 now rejects incomplete DM2 boot before clearing or drawing its viewport, keeping the launcher frame and publishing `DM2 ORIGINAL DATA REQUIRED` instead of the former red/brown ceiling/floor substitute. Startup presentation also stops if the source-owned `TITLE/0 dt07/4` draw fails. The complete-support receipt accepts only the source's static title/menu surfaces: a hash-verified raw menu screen or a decoded original image field, both with the existing no-synthetic-overlay composite proof. `src/dm2/dm2_v2_*.c` still contains procedural HUD/asset fallbacks and placeholder stamps. Block those remaining paths until verified original data is available; no synthetic DM2 screen may stand in for an original surface.
 - DM2-014 — `skproject/SKULLWIN/c_savegame.cpp`, `c_loadlevel.cpp`, `c_gui_vp.cpp`, `c_sound.cpp`, `c_events.cpp`, and `c_creature.cpp` integration order: `tests/`, `probes/`, and the DM2 receipt chain lack a real-PC-corpus end-to-end proof from hash-verified assets through level load, source timers, material-complete rendering, resolved audio, and original save round-trip. Add skip-safe corpus gates before claiming playable parity.
