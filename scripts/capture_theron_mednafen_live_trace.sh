@@ -10,7 +10,6 @@ seconds=${THERON_CAPTURE_SECONDS:-45}
 capture_sdl_video_driver=${THERON_CAPTURE_SDL_VIDEODRIVER:-dummy}
 configured_home=${THERON_MEDNAFEN_HOME:-}
 host_key=${THERON_CAPTURE_HOST_KEY:-}
-forced_button=${THERON_CAPTURE_FORCED_BUTTON:-}
 # The authentic System Card 3.0 title needs to become interactive before RUN.
 # A real macOS capture shows that 8 seconds reaches the title, while 3 seconds
 # merely sends the key during BIOS initialization.
@@ -60,17 +59,6 @@ if [[ -n "$host_key" ]]; then
         exit 1
     fi
 fi
-if [[ -n "$forced_button" && "$forced_button" != run &&
-      "$forced_button" != i && "$forced_button" != select ]]; then
-    printf '%s\n' 'FAIL: THERON_CAPTURE_FORCED_BUTTON supports only run, i, or select' >&2
-    exit 1
-fi
-forced_button_mask=
-case "$forced_button" in
-    run) forced_button_mask=0020 ;;
-    select) forced_button_mask=0010 ;;
-    i) forced_button_mask=1000 ;;
-esac
 
 if command -v gtimeout >/dev/null 2>&1; then
     timeout_command=(gtimeout "$seconds")
@@ -151,7 +139,6 @@ launch=(
     FIRESTAFF_THERON_IRQ2_MEMORY_TRACE="$memory_trace" \
     FIRESTAFF_THERON_IRQ2_CD_TRACE="$cd_trace" \
     FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace" \
-    FIRESTAFF_THERON_FORCE_PORT0_BUTTON="$forced_button" \
     SDL_VIDEODRIVER="$capture_sdl_video_driver" \
     SDL_AUDIODRIVER=dummy \
     "$mednafen_bin" \
@@ -225,9 +212,6 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
         printf 'requested_host_key_hold_seconds=%s\n' "$host_key_hold"
         printf 'requested_host_key_repeats=%s\n' "$host_key_repeats"
     fi
-    if [[ -n "$forced_button" ]]; then
-        printf 'forced_pce_button=%s\n' "$forced_button"
-    fi
     if [[ "$transition_input_count" -gt 0 && "$transition_irq_count" -gt 0 &&
           "$transition_non_system_card_count" -gt 0 && "$transition_sector_count" -gt 0 ]]; then
         printf '%s\n' 'transition=observed'
@@ -237,11 +221,6 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
 } >"$transition_receipt"
 if [[ -n "$host_key" && "$transition_host_key_count" -eq 0 ]]; then
     printf 'BLOCKED: requested host key was not observed by Mednafen SDL dispatch (exit=%s)\n' "$status"
-    exit 1
-fi
-if [[ -n "$forced_button" ]] &&
-   ! grep -Fqx "forced_pce_input_port0 button=$forced_button mask=$forced_button_mask" "$input_trace"; then
-    printf 'BLOCKED: requested forced PCE button was not observed by instrumentation (exit=%s)\n' "$status"
     exit 1
 fi
 if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||

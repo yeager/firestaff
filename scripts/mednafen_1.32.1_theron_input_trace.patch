@@ -1,23 +1,11 @@
 diff --git a/src/pce/input.cpp b/src/pce/input.cpp
 --- a/src/pce/input.cpp
 +++ b/src/pce/input.cpp
-@@ -177,5 +177,53 @@ uint16 INPUT_HESHack(void)
+@@ -177,5 +177,30 @@ uint16 INPUT_HESHack(void)
  void INPUT_Frame(void)
  {
 + static FILE *theron_input_trace = NULL;
 + static uint16 theron_previous_port0 = 0xffff;
-+ static bool theron_forced_port0_logged = false;
-+ const char *theron_forced_port0_button = getenv("FIRESTAFF_THERON_FORCE_PORT0_BUTTON");
-+ uint16 theron_forced_port0_mask = 0;
-+ if(theron_forced_port0_button && *theron_forced_port0_button)
-+ {
-+  if(!strcmp(theron_forced_port0_button, "run"))
-+   theron_forced_port0_mask = 0x0020;
-+  else if(!strcmp(theron_forced_port0_button, "select"))
-+   theron_forced_port0_mask = 0x0010;
-+  else if(!strcmp(theron_forced_port0_button, "i"))
-+   theron_forced_port0_mask = 0x1000;
-+ }
 + if(!theron_input_trace)
 + {
 +  const char *path = getenv("FIRESTAFF_THERON_IRQ2_INPUT_TRACE");
@@ -30,17 +18,6 @@ diff --git a/src/pce/input.cpp b/src/pce/input.cpp
 +    fflush(theron_input_trace);
 +   }
 +  }
-+ }
-+ if(data_ptr[0] && theron_forced_port0_mask)
-+ {
-+  uint16 port0 = MDFN_de16lsb(data_ptr[0]);
-+  MDFN_en16lsb(data_ptr[0], port0 | theron_forced_port0_mask);
-+ }
-+ if(theron_input_trace && theron_forced_port0_mask && !theron_forced_port0_logged)
-+ {
-+  fprintf(theron_input_trace, "forced_pce_input_port0 button=%s mask=%04x\n", theron_forced_port0_button, theron_forced_port0_mask);
-+  fflush(theron_input_trace);
-+  theron_forced_port0_logged = true;
 + }
 + if(theron_input_trace && data_ptr[0])
 + {
