@@ -26,6 +26,13 @@ typedef struct {
     int self_reference_proven;
     int self_resolved_record_in_bounds;
     size_t nonzero_selector_count;
+    /* All non-zero stage-three selectors are evaluated against the same
+     * authenticated base. These are record-coordinate facts only: a resolved
+     * selector does not identify a CD command, object table, bitmap, or
+     * dungeon level. */
+    size_t resolved_selector_count;
+    size_t out_of_bounds_selector_count;
+    uint32_t resolved_selector_hash;
 } Theron_V1LaterRecordCorrelation;
 
 typedef struct {
