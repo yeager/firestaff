@@ -7,6 +7,12 @@
   Verification: Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
 
+- 2026-07-13 DM1 original PC34 C61 audible group-move roundtrip: typed handoff
+  binds zero-priority `B.Location` plus original C04 `C.Slot`, selects the
+  F0252 audible deferred-move owner, and exports only the imported receipt.
+  Source: ReDMCSB `MOVESENS.C` F0265:169-192 and `TIMELINE.C`
+  F0252:1505-1567. Verification: Ninja and CTest
+  `dm1_v1_original_save_pc34_handoff` passed 1/1.
 - 2026-07-13 Nexus Structure1F raw wall-payload-selector receipt: complete
   Structure1A-owned wall-decoration and wall-sensor records now retain their
   raw payload-selector byte reuse through the DGN corpus, host handoff, and
