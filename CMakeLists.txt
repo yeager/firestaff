@@ -142,6 +142,13 @@ if(NOT MSVC)
 endif()
 
 # ── M10 static library (frozen Turbo-C compat sources) ──────────────
+if(APPLE)
+    # M10 contains the shared DM2 MIDI backend.  Discover the frameworks
+    # before propagating the dependency to the direct M10 test targets.
+    find_library(COREMIDI_FRAMEWORK CoreMIDI REQUIRED)
+    find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+endif()
+
 file(GLOB_RECURSE M10_SOURCES CONFIGURE_DEPENDS "src/*_pc34_compat.c")
 
 # Exclude test_* files from the library (they have their own main()).
@@ -224,8 +231,6 @@ if(DM2_SOURCES)
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(firestaff_dm2 PUBLIC firestaff_m10 m)
     if(APPLE)
-        find_library(COREMIDI_FRAMEWORK CoreMIDI REQUIRED)
-        find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
         target_link_libraries(firestaff_dm2 PUBLIC
             ${COREMIDI_FRAMEWORK}
             ${COREFOUNDATION_FRAMEWORK})
