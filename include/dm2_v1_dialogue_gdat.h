@@ -97,6 +97,35 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_DialogueOpenPanelReceipt;
 
+/* c_dialog.cpp::DM2_dialog_2066_33e7 receives these four eventqueue values
+ * while the original save-name panel is open.  They are deliberately not
+ * Firestaff menu actions: the host must first decode a source rectangle hit
+ * into SELECT_SLOT before it may call this state machine. */
+typedef enum {
+    DM2_V1_DIALOGUE_SAVE_EVENT_CANCEL = 0,
+    DM2_V1_DIALOGUE_SAVE_EVENT_ACCEPT = 1,
+    DM2_V1_DIALOGUE_SAVE_EVENT_SELECT_SLOT = 2,
+    DM2_V1_DIALOGUE_SAVE_EVENT_EDIT = 3
+} DM2_V1_DialogueSaveEvent;
+
+typedef struct {
+    int valid;
+    int selected_slot;       /* 0..9, or source sentinel 10 */
+    int editing;
+    uint8_t text_length;     /* c_dialog.cpp caps the editable name at 31 */
+    uint8_t text[32];
+    uint32_t state_hash;
+} DM2_V1_DialogueSaveInputState;
+
+typedef struct {
+    int valid;
+    int redraw;
+    int close_panel;
+    int cancelled;
+    int accepted_slot;       /* -1 unless the source accepts a selection */
+    uint32_t route_hash;
+} DM2_V1_DialogueSaveInputReceipt;
+
 /* Returns an exact material receipt only when both source images are IMG3
  * 4bpp images with their own QUERY_GDAT_IMAGE_LOCALPAL tail. */
 int dm2_v1_dialogue_gdat_receipt(const DM2_V1_AssetLoader *loader,
@@ -124,5 +153,27 @@ int dm2_v1_dialogue_box_draw_plan(
 int dm2_v1_dialogue_open_panel_receipt(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_DialogueOpenPanelReceipt *out);
+
+/* Initializes the source save-dialogue state after OPEN_DIALOG_PANEL has
+ * authenticated the panel's two GDAT labels. `initial_name` is a save-header
+ * value, never a replacement label. */
+int dm2_v1_dialogue_save_input_init(
+    const DM2_V1_DialogueOpenPanelReceipt *panel,
+    int selected_slot,
+    const uint8_t *initial_name,
+    size_t initial_name_size,
+    DM2_V1_DialogueSaveInputState *out_state);
+
+/* Mirrors c_dialog.cpp lines 152-301 for its already-decoded eventqueue
+ * values. The only accepted text key is the original uppercased ASCII entry;
+ * keyboard scancode conversion and RECT_451 hit decoding stay with their
+ * source-owning host routes. */
+int dm2_v1_dialogue_save_input_apply(
+    const DM2_V1_DialogueOpenPanelReceipt *panel,
+    DM2_V1_DialogueSaveInputState *state,
+    DM2_V1_DialogueSaveEvent event,
+    int source_slot,
+    uint8_t text_key,
+    DM2_V1_DialogueSaveInputReceipt *out_receipt);
 
 #endif
