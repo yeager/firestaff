@@ -20,6 +20,7 @@
 #define SYSCARD3_BYTES 0x40200u
 #define SYSCARD3_HEADER_BYTES 0x0200u
 #define SYSCARD3_E000_WINDOW_OFFSET 0x0900u
+#define SYSCARD3_E944_WINDOW_OFFSET 0x0944u
 
 static const unsigned char g_post_delay_execution_bytes[] = {
     0xadu, 0xa4u, 0x22u, 0xd0u, 0xfbu, /* LDA $22a4 / BNE $e900 */
@@ -27,6 +28,14 @@ static const unsigned char g_post_delay_execution_bytes[] = {
     0xa9u, 0x81u, 0x8du, 0x01u, 0x18u,  /* LDA #$81 / STA $1801 */
     0x93u, 0x80u, 0x00u, 0x18u,         /* TST #$80,$1800 */
     0xf0u, 0x31u                        /* BEQ $e944 */
+};
+
+static const unsigned char g_e944_branch_target_bytes[] = {
+    0x8du, 0x00u, 0x18u, /* STA $1800 */
+    0x82u,               /* CLX */
+    0xadu, 0x00u, 0x18u, /* LDA $1800 */
+    0x29u, 0x40u,        /* AND #$40 */
+    0xd0u, 0x0bu         /* BNE $e95a */
 };
 
 static int g_failures;
@@ -96,6 +105,8 @@ int main(void) {
     char track02_md5[33];
     const size_t execution_offset = SYSCARD3_HEADER_BYTES +
         SYSCARD3_E000_WINDOW_OFFSET;
+    const size_t e944_offset = SYSCARD3_HEADER_BYTES +
+        SYSCARD3_E944_WINDOW_OFFSET;
 
     if (!system_card_path || !track02_path || !cue_path) {
         printf("SKIP set System Card, US raw Track02, and 19-track CUE paths\n");
@@ -116,8 +127,14 @@ int main(void) {
               memcmp(system_card + execution_offset, g_post_delay_execution_bytes,
                      sizeof(g_post_delay_execution_bytes)) == 0,
           "$e900 waits on $22a4 then writes $81 to $1801 and tests $1800 bit 7");
+    check(system_card && e944_offset + sizeof(g_e944_branch_target_bytes) <=
+              system_card_size &&
+              memcmp(system_card + e944_offset, g_e944_branch_target_bytes,
+                     sizeof(g_e944_branch_target_bytes)) == 0,
+          "$e944 writes $1800 then tests bit 6 with branch target $e95a");
     printf("receipt: e900_wait_address=22a4 first_port_write=1801 "
            "port_value=81 tst_address=1800 tst_mask=80 zero_branch=e944 "
+           "e944_write_address=1800 e944_tst_mask=40 e944_set_branch=e95a "
            "controller_semantics_unproven=1 cue_track02_binding_unproven=1\n");
     free(system_card);
     return g_failures ? 1 : 0;

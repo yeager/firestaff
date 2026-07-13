@@ -1224,6 +1224,12 @@
   and explicit 19-track CUE are authenticated/structural inputs only; no port
   value, controller state, command, or CUE-to-raw binding semantics are inferred.
 
+- 2026-07-13 Theron System Card `$e944` branch-target receipt: hash-verified
+  the original target of `$e900`'s bit-7-zero branch as `STA $1800; CLX; LDA
+  $1800; AND #$40; BNE $e95a`. This binds only the raw register address, mask,
+  and branch target; the observed bit-6 outcome and all controller semantics
+  remain live-capture work.
+
 - 2026-07-12 CSB F0115 native Ghost group front: type 8 now resolves only
   through `G0243 -> G0219 -> M618` to PC CSB `GRAPHICS.DAT` 607. Its G0219
   offset 23 and `0x04` coordinate/transparency byte are consumed by the
