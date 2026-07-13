@@ -877,6 +877,9 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt structure3_correlation;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_DgnRenderPlanReceipt render_plan;
+    Nexus_V1_DgnStructure1FStructure1ACommandSource structure1a_sources[8];
+    Nexus_V1_DgnStructure1FStructure1ACommandSourceReceipt
+        structure1a_source_receipt;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
                           structure1b_rel, 512) == 0,
@@ -998,6 +1001,32 @@ static void test_structure1f_semantics_and_bounds(void) {
           level.structure1f_entries[7].structure1a_structure3_model_index == 0x23 &&
           level.structure1f_entries[7].structure1a_z_rotation == 3U,
           "Structure1F references resolve only through unique Structure1B owners");
+    memset(commands, 0, sizeof(commands));
+    commands[0].kind = NEXUS_V1_DGN_RENDER_COMMAND_FLOOR;
+    commands[0].x = 11;
+    commands[0].y = 10;
+    commands[1].kind = NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT;
+    commands[1].x = 11;
+    commands[1].y = 10;
+    memset(structure1a_sources, 0, sizeof(structure1a_sources));
+    memset(&structure1a_source_receipt, 0, sizeof(structure1a_source_receipt));
+    CHECK(nexus_v1_dgn_bind_structure1a_owned_cell_sources(
+              &level, commands, 2, structure1a_sources, 8,
+              &structure1a_source_receipt) == 0 &&
+          structure1a_source_receipt.complete &&
+          structure1a_source_receipt.visible_owned_entry_count == 2 &&
+          structure1a_source_receipt.floor_command_source_count == 2 &&
+          structure1a_source_receipt.alcove_floor_command_source_count == 2 &&
+          structure1a_source_receipt.wall_decoration_floor_command_source_count == 0 &&
+          structure1a_source_receipt.wall_sensor_floor_command_source_count == 0 &&
+          structure1a_sources[0].command_index == 0 &&
+          structure1a_sources[0].owner_x == 11 &&
+          structure1a_sources[0].owner_y == 10 &&
+          structure1a_sources[0].entry.family ==
+              NEXUS_V1_DGN_STRUCTURE1F_ALCOVES &&
+          !structure1a_sources[0].draw_authorized &&
+          !structure1a_source_receipt.fallback_visuals_permitted,
+          "Structure1A-owned rows reach only their verified visible cell anchor without a draw claim");
     CHECK(nexus_v1_level_structure1a_transform_selector_receipt(
               &level, &transform_selectors) == 0 &&
           transform_selectors.structure1a_relation_complete &&

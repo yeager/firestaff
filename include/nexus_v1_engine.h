@@ -106,6 +106,13 @@ typedef struct {
     Nexus_V1_DgnStructure1FDirectFloorCommandSourceReceipt
         structure1f_direct_floor_source_receipt;
     int structure1f_direct_floor_sources_consumed;
+    /* Structure1A-owned alcove/wall rows retain their exact owner-cell anchor
+     * in the runtime plan. They remain no-draw pending Saturn semantics. */
+    Nexus_V1_DgnStructure1FStructure1ACommandSource
+        structure1a_owned_cell_sources[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_DgnStructure1FStructure1ACommandSourceReceipt
+        structure1a_owned_cell_source_receipt;
+    int structure1a_owned_cell_sources_consumed;
     int level;
     int party_x;
     int party_y;

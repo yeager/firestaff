@@ -1171,6 +1171,33 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure1FDirectFloorCommandSourceReceipt;
 
+/* Structure1A-bound Structure1F families name a verified owner cell only
+ * after the complete Structure1A relation is available. The floor command is
+ * retained solely as the unique visible cell anchor: it is not a claim about
+ * a wall face, model, material, texture, palette, pixel or draw operation. */
+typedef struct {
+    int command_index;
+    int entry_index;
+    Nexus_V1_DgnStructure1FEntry entry;
+    int owner_x;
+    int owner_y;
+    uint8_t structure3_model_index;
+    uint8_t z_rotation;
+    int draw_authorized;
+} Nexus_V1_DgnStructure1FStructure1ACommandSource;
+
+typedef struct {
+    int visible_owned_entry_count;
+    int floor_command_source_count;
+    int alcove_floor_command_source_count;
+    int wall_decoration_floor_command_source_count;
+    int wall_sensor_floor_command_source_count;
+    int blocked_missing_relation_count;
+    int blocked_capacity_count;
+    int complete;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure1FStructure1ACommandSourceReceipt;
+
 /* Exact Structure1G -> Structure2 -> DGN floor-command provenance. The
  * descriptor fields retain raw original values only: Structure2's payload
  * grammar, palette layout, pixel codec and animation timing remain unproved,
@@ -1610,6 +1637,14 @@ int nexus_v1_dgn_bind_direct_structure1f_floor_sources(
     int command_count, Nexus_V1_DgnStructure1FDirectFloorCommandSource *out_sources,
     int max_sources,
     Nexus_V1_DgnStructure1FDirectFloorCommandSourceReceipt *out_receipt);
+/* Retains visible Structure1A-owned Structure1F rows on their proven owner
+ * cell. It deliberately leaves all visual and runtime semantics unclaimed. */
+int nexus_v1_dgn_bind_structure1a_owned_cell_sources(
+    const Nexus_V1_Level *level, const Nexus_V1_DgnRenderCommand *commands,
+    int command_count,
+    Nexus_V1_DgnStructure1FStructure1ACommandSource *out_sources,
+    int max_sources,
+    Nexus_V1_DgnStructure1FStructure1ACommandSourceReceipt *out_receipt);
 /* Binds a declared animated floor's verified local Structure2 descriptor to
  * the exact DGN floor command. It emits raw descriptor provenance only and
  * remains fail-closed until an original Saturn payload/VDP1 decoder exists. */
