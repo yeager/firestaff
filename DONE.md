@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 M516 corpus receipt: opt-in external corpus rows now
+  retain the decrypted C2 M516_CHAMPIONS boundary as exactly four 319-byte
+  records plus source/export byte counts and fingerprints. The real-corpus
+  probe requires raw byte identity; no importer/exporter behavior changed.
+  Source: ReDMCSB `LOADSAVE.C` F0433/F0435 and `DEFS.H` M516_CHAMPIONS.
+  Verification: focused native-PC34 handoff CTest.
+
 - 2026-07-13 DM1 PC34 corpus header/part-shape receipt: every external
   F0435 -> F0433 -> F0435 candidate now records ReDMCSB-owned header identity
   (FormatID, GameID, Platform, DungeonID) and all five length-prefixed save

@@ -3594,6 +3594,7 @@ static void test_corpus_roundtrip_proof(void)
             receipt->source_hash == 0u || receipt->exported_byte_count == 0u ||
             receipt->exported_hash == 0u || !receipt->path[0] ||
             !receipt->header_part_shape_receipt_available ||
+            !receipt->m516_champion_record_receipt_available ||
             !receipt->dungeon_tail_byte_receipt_available ||
             !receipt->dungeon_tail_byte_preservation_ok ||
             receipt->source_dungeon_tail_byte_count != 0u ||
@@ -3664,6 +3665,17 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
               receipt->header_identity_preservation_ok &&
               receipt->part_byte_count_preservation_ok,
               "real PC34 corpus retains header identity and part lengths");
+        CHECK(receipt->m516_champion_record_receipt_available &&
+              receipt->m516_champion_record_byte_preservation_ok &&
+              receipt->source_m516_champion_record_count == CHAMPION_MAX_PARTY &&
+              receipt->exported_m516_champion_record_count == CHAMPION_MAX_PARTY &&
+              receipt->source_m516_champion_record_byte_count ==
+                  ORIGINAL_PC34_CHAMPION_BYTES * CHAMPION_MAX_PARTY &&
+              receipt->source_m516_champion_record_byte_count ==
+                  receipt->exported_m516_champion_record_byte_count &&
+              receipt->source_m516_champion_record_fingerprint ==
+                  receipt->exported_m516_champion_record_fingerprint,
+              "real PC34 corpus preserves complete M516 champion bytes");
         CHECK(receipt->dungeon_tail_byte_receipt_available &&
               receipt->dungeon_tail_byte_preservation_ok,
               "real PC34 corpus preserves each observed dungeon tail exactly");
