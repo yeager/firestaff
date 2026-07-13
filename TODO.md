@@ -629,8 +629,9 @@ and other original thing families, not a D0 synthetic marker or replacement
 sprite. F0115 now scans past an invisible live C14 record to the next record
 with an actual C2900 cell, so multi-projectile materialization cannot select a
 missing first-cell fallback; remaining work is real multi-projectile capture.
-F0127 now consumes its deferred live explosion record through original M636
-pattern material after D0 projectile materialization; remaining work is real
+F0127 now consumes deferred live explosions only through original M636 pattern
+material after D0 projectile materialization; a missing M636 bitmap is no-draw
+and cannot fall through to an F0114 D1-D3 sprite. Remaining work is real
 multi-effect capture, not a cue, marker, or replacement bitmap.
 
 F0115's deferred C15 receipt now preserves every ordinary same-square PC34

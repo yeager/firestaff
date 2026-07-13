@@ -255,6 +255,12 @@
   controller state, CD register, asset, or level semantics are synthesised.
   Verification: capture-script syntax/contract test, Mednafen patch dry-run,
   rebuilt instrumented Mednafen, and three authentic bounded GUI captures.
+- 2026-07-13 DM1 F0115/F0127 C15 D0C material fail-closed: removed the
+  residual M636-to-F0114 fallback. ReDMCSB `DUNVIEW.C F0115:6038-6074`
+  consumes the dedicated PC34 D0C pattern only; missing M636 material now
+  remains no-draw. The focused C15 receipt also locks C100/C101 rebirth out
+  of the ordinary F0114 route pending their distinct C3000/C3007 geometry.
+  Focused Ninja build and CTest/source-lock verification pass.
 - 2026-07-13 DM1 F0115/F0127 D0C multi-explosion materialization: the D0C
   deferred C15 pass now consumes every ordinary live PC34 record in source
   list order through its own M636 pattern material. Removed the synthetic
