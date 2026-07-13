@@ -58,6 +58,12 @@ typedef struct {
     /* Hash of the exact Stage 2-loaded user-data span. It identifies the
      * physical Stage 3 handoff only; it assigns no manifest semantics. */
     uint32_t stage3_user_data_hash;
+    /* The live CL/DL/CH record bytes are retained with the full-media
+     * receipt so runtime can prove the physical CD_READ address still agrees
+     * with the authenticated Stage 2 handoff. */
+    uint8_t cd_read_record_cl;
+    uint8_t cd_read_record_dl;
+    uint8_t cd_read_record_ch;
     uint16_t handler_address;
     uint16_t cd_state_address;
     uint16_t cd_state_branch_address;
