@@ -1,6 +1,7 @@
 
 #ifndef FIRESTAFF_DM2_V1_DUNGEON_LOADER_H
 #define FIRESTAFF_DM2_V1_DUNGEON_LOADER_H
+#include "dm2_v1_asset_loader.h"
 #include <stdint.h>
 
 /* DM2: The Legend of Skullkeep (1993)
@@ -189,6 +190,32 @@ typedef struct {
     DM2_V1_G1TextMessage messages[DM2_V1_G1_TEXT_MESSAGE_MAX];
 } DM2_V1_G1TextMessageRuntimeReceipt;
 
+#define DM2_V1_G1_GDAT_TEXT_MESSAGE_MAX 16
+
+/* QUERY_MESSAGE_TEXT sends a mode-one Text record with SimpleTextExtUsage 14
+ * to QUERY_GDAT_TEXT(MESSAGES, 0, low(TextIndex)). The payload encoding is
+ * retained raw until FORMAT_SKSTR has source/corpus coverage; it must not be
+ * substituted with a C string. */
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint16_t text_index;
+    uint8_t gdat_field;
+    uint32_t raw_byte_count;
+    uint32_t raw_hash;
+} DM2_V1_G1GdatTextMessage;
+
+typedef struct {
+    int valid;
+    int map;
+    int source_text_root_count;
+    int material_count;
+    int blocked_missing_text_count;
+    DM2_V1_G1GdatTextMessage
+        messages[DM2_V1_G1_GDAT_TEXT_MESSAGE_MAX];
+} DM2_V1_G1GdatTextMessageRuntimeReceipt;
+
 #define DM2_V1_G1_TEXT_WALL_GFX_MAX 16
 
 /* A source-bound DB2 Text root which skproject dispatches as a WALL_GFX
@@ -313,6 +340,13 @@ typedef int (*DM2_V1_G1GdatImageLocalPaletteRead)(void *userdata,
                                                    int field,
                                                    uint8_t out_palette16[16],
                                                    uint32_t *out_hash);
+
+typedef int (*DM2_V1_G1GdatTextRead)(void *userdata,
+                                     int category,
+                                     int index,
+                                     int field,
+                                     const uint8_t **out_data,
+                                     uint32_t *out_byte_count);
 
 /* Why a selected DB1 teleporter did not move the party. `DestinationMap()` is
  * the raw high byte of Teleporter::w4. skproject c_moverec.cpp passes it
@@ -556,6 +590,15 @@ int dm2_v1_dungeon_materialize_g1_map5_text_messages(
     const DM2_V1_DungeonData *d,
     const DM2_V1_G1Map5TextRuntimeReceipt *texts,
     DM2_V1_G1TextMessageRuntimeReceipt *out);
+
+/* Raw-only G1 mode-one message route. It admits only the source's extension
+ * usage 14 and MESSAGES/0/dtText low-byte lookup; any missing text blocks the
+ * entire receipt rather than rendering a fabricated string. */
+int dm2_v1_dungeon_materialize_g1_map5_gdat_text_messages(
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1GdatTextRead read_text,
+    void *read_userdata,
+    DM2_V1_G1GdatTextMessageRuntimeReceipt *out);
 
 /* Consumes only direct DB2 TextMode()==1 roots already materialized by the
  * G1 map-5 receipt, which must report zero generic or blocked record reads.

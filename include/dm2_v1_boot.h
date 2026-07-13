@@ -1473,6 +1473,10 @@ int dm2_v1_boot_g1_text_wall_gfx_materials(
     DM2_V1_BootProfile *profile,
     const DM2_V1_G1Map5TextRuntimeReceipt *texts,
     DM2_V1_G1TextWallGfxRuntimeReceipt *out);
+int dm2_v1_boot_g1_gdat_text_materials(
+    DM2_V1_BootProfile *profile,
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1GdatTextMessageRuntimeReceipt *out);
 int dm2_v1_boot_g1_actuator_wall_gfx_materials(
     DM2_V1_BootProfile *profile,
     int map,

@@ -1444,6 +1444,79 @@ int dm2_v1_dungeon_materialize_g1_map5_text_messages(
     return 1;
 }
 
+static uint32_t dm2_v1_g1_gdat_text_hash(const uint8_t *data,
+                                          uint32_t byte_count)
+{
+    uint32_t hash = 2166136261u;
+    uint32_t i;
+
+    if (!data || byte_count == 0u) return 0u;
+    for (i = 0u; i < byte_count; ++i) {
+        hash = (hash ^ data[i]) * 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+int dm2_v1_dungeon_materialize_g1_map5_gdat_text_messages(
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1GdatTextRead read_text,
+    void *read_userdata,
+    DM2_V1_G1GdatTextMessageRuntimeReceipt *out)
+{
+    DM2_V1_G1GdatTextMessageRuntimeReceipt candidate;
+    int i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!texts || !read_text || !texts->committed ||
+        !texts->incomplete_world || texts->map != 5 ||
+        texts->generic_record_reads != 0 ||
+        texts->blocked_record_reads != 0 || texts->text_root_count < 0 ||
+        texts->text_root_count > DM2_V1_G1_MAP5_MAX_TEXT_ROOTS) {
+        return 0;
+    }
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.map = texts->map;
+    candidate.source_text_root_count = texts->text_root_count;
+    for (i = 0; i < texts->text_root_count; ++i) {
+        const DM2_V1_G1TextRoot *root = &texts->texts[i];
+        const uint8_t *raw = NULL;
+        uint32_t raw_byte_count = 0u;
+        uint8_t extension_usage;
+        uint8_t field;
+        DM2_V1_G1GdatTextMessage *message;
+
+        if (!root->visible || root->mode != 1u) continue;
+        extension_usage = (uint8_t)((root->text_index >> 8) & 0x1fu);
+        if (extension_usage != 14u) continue;
+        if (candidate.material_count >= DM2_V1_G1_GDAT_TEXT_MESSAGE_MAX) {
+            return 0;
+        }
+        field = (uint8_t)(root->text_index & 0xffu);
+        /* skproject c_querydb.cpp DM2_QUERY_MESSAGE_TEXT E091-E146:
+         * extension usage 14 sets vb_90 to the low TextIndex byte, then
+         * queries GDAT category 3, index 0. Do not decode FORMAT_SKSTR here. */
+        if (!read_text(read_userdata, DM2_GDAT_CATEGORY_MESSAGES, 0, field,
+                       &raw, &raw_byte_count) || !raw || raw_byte_count == 0u) {
+            ++candidate.blocked_missing_text_count;
+            return 0;
+        }
+        message = &candidate.messages[candidate.material_count++];
+        message->x = root->x;
+        message->y = root->y;
+        message->object_id = root->object_id;
+        message->text_index = root->text_index;
+        message->gdat_field = field;
+        message->raw_byte_count = raw_byte_count;
+        message->raw_hash = dm2_v1_g1_gdat_text_hash(raw, raw_byte_count);
+        if (message->raw_hash == 0u) return 0;
+    }
+    candidate.valid = 1;
+    *out = candidate;
+    return 1;
+}
+
 typedef struct {
     uint16_t colorkey;
     uint16_t position;
