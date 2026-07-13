@@ -192,6 +192,14 @@ static void build_structure1f_fixture(uint8_t *structure1,
     structure1f[152 + 1] = 4U;
     structure1f[168 + 1] = 4U;
     structure1f[184 + 1] = 4U;
+    structure1f[88 + 4] = 1U;
+    structure1f[100 + 4] = 1U;
+    structure1f[112 + 4] = 2U;
+    structure1f[124 + 4] = 3U;
+    structure1f[136 + 4] = 3U;
+    structure1f[152 + 4] = 4U;
+    structure1f[168 + 4] = 4U;
+    structure1f[184 + 4] = 4U;
 }
 
 static void build_structure1g_fixture(uint8_t *structure1,
@@ -774,6 +782,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt face_selectors;
+    Nexus_V1_DgnStructure1FRotationSelectorReceipt rotation_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt structure3_correlation;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
@@ -888,6 +897,19 @@ static void test_structure1f_semantics_and_bounds(void) {
           face_selectors.highest_face_selector == 4U &&
           face_selectors.complete && !face_selectors.face_semantics_proven,
           "resolved Structure1F face selectors remain no-draw provenance");
+    CHECK(nexus_v1_level_structure1f_rotation_selector_receipt(
+              &level, &rotation_selectors) == 0 &&
+          rotation_selectors.structure1a_relation_complete &&
+          rotation_selectors.structure1f_bound_entry_count == 8 &&
+          rotation_selectors.resolved_rotation_selector_count == 8 &&
+          rotation_selectors.unique_rotation_selector_count == 4 &&
+          rotation_selectors.duplicate_rotation_selector_count == 4 &&
+          rotation_selectors.zero_rotation_selector_count == 0 &&
+          rotation_selectors.nonzero_rotation_selector_count == 8 &&
+          rotation_selectors.highest_rotation_selector == 4U &&
+          rotation_selectors.complete &&
+          !rotation_selectors.rotation_semantics_proven,
+          "resolved Structure1F rotation selectors remain no-draw provenance");
     CHECK(nexus_v1_level_structure3_model_reference_receipt(
               &level, &structure3_model_references) == 0 &&
           structure3_model_references.structure1a_relation_complete &&
@@ -1010,6 +1032,9 @@ static void test_structure1f_semantics_and_bounds(void) {
           handoff.structure1f_face_selectors.complete &&
           handoff.structure1f_face_selectors.unique_face_selector_count == 4 &&
           !handoff.structure1f_face_selectors.face_semantics_proven &&
+          handoff.structure1f_rotation_selectors.complete &&
+          handoff.structure1f_rotation_selectors.unique_rotation_selector_count == 4 &&
+          !handoff.structure1f_rotation_selectors.rotation_semantics_proven &&
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
     CHECK(handoff.status ==
@@ -1029,6 +1054,8 @@ static void test_structure1f_semantics_and_bounds(void) {
           !render_plan.structure1a_transform_selectors.transform_semantics_proven &&
           render_plan.structure1f_face_selectors.complete &&
           !render_plan.structure1f_face_selectors.face_semantics_proven &&
+          render_plan.structure1f_rotation_selectors.complete &&
+          !render_plan.structure1f_rotation_selectors.rotation_semantics_proven &&
           render_plan.structure3_payload.valid &&
           render_plan.command_count == 0 && commands[0].kind == 0 &&
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready,
