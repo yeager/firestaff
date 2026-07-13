@@ -15448,6 +15448,74 @@ static int csb_v1_runtime_write_csbwin_global_variables(
     return 0;
 }
 
+static int csb_v1_runtime_write_csbwin_overlay_palette(
+    CSB_V1_RuntimeProfile *candidate)
+{
+    enum {
+        CSBWIN_EDT_PALETTE = 7u,
+        CSBWIN_PALETTE_RECORD_COUNT = 24u,
+        CSBWIN_PALETTE_RECORD_BYTES = 64u
+    };
+    size_t payload_offsets[CSBWIN_PALETTE_RECORD_COUNT];
+    uint32_t record_index;
+
+    if (!candidate || !candidate->csbwin_overlay_palette_valid ||
+        !candidate->csbwin_appended_tail_valid ||
+        candidate->csbwin_appended_tail_truncated ||
+        candidate->csbwin_appended_tail_size == 0u ||
+        candidate->csbwin_appended_tail_size !=
+            candidate->csbwin_appended_tail_preserved_size ||
+        candidate->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        candidate->csbwin_appended_tail_fnv1a !=
+            csb_v1_runtime_fnv1a32(candidate->csbwin_appended_tail,
+                                    candidate->csbwin_appended_tail_preserved_size)) {
+        return -1;
+    }
+
+    /* CSBWin SaveGame.cpp:1213-1224 discards each old EDT_Palette record and
+     * writes exactly sixteen words. Do not emulate EXPOOL::Write expansion:
+     * every target must already be a complete source-owned record. */
+    for (record_index = 0u;
+         record_index < CSBWIN_PALETTE_RECORD_COUNT;
+         ++record_index) {
+        const uint8_t *payload = NULL;
+        size_t payload_size = 0u;
+        size_t payload_offset;
+
+        if (!csb_v1_runtime_locate_appended_expool_record_internal(
+                candidate, (CSBWIN_EDT_PALETTE << 24) | record_index,
+                &payload, &payload_size) ||
+            !payload || payload_size < CSBWIN_PALETTE_RECORD_BYTES ||
+            payload < candidate->csbwin_appended_tail) {
+            return -1;
+        }
+        payload_offset = (size_t)(payload - candidate->csbwin_appended_tail);
+        if (payload_offset > candidate->csbwin_appended_tail_preserved_size ||
+            CSBWIN_PALETTE_RECORD_BYTES >
+                candidate->csbwin_appended_tail_preserved_size - payload_offset) {
+            return -1;
+        }
+        payload_offsets[record_index] = payload_offset;
+    }
+    /* Every lookup verifies the original tail receipt. Validate every target
+     * before changing the first byte, then commit the fixed source bundle. */
+    for (record_index = 0u;
+         record_index < CSBWIN_PALETTE_RECORD_COUNT;
+         ++record_index) {
+        memcpy(candidate->csbwin_appended_tail + payload_offsets[record_index],
+               candidate->csbwin_overlay_palette +
+                   (size_t)record_index * CSBWIN_PALETTE_RECORD_BYTES,
+               CSBWIN_PALETTE_RECORD_BYTES);
+    }
+    candidate->csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
+        candidate->csbwin_appended_tail,
+        candidate->csbwin_appended_tail_preserved_size);
+    candidate->csbwin_overlay_palette_tail_fnv1a =
+        candidate->csbwin_appended_tail_fnv1a;
+    return 0;
+}
+
 static int csb_v1_runtime_stage_csbwin_save_policy(
     CSB_V1_RuntimeProfile *candidate)
 {
@@ -15615,6 +15683,28 @@ int csb_v1_runtime_get_csbwin_expool_overlay_palette(
     *out_palette = profile->csbwin_overlay_palette;
     *out_size = sizeof(profile->csbwin_overlay_palette);
     return 1;
+}
+
+int csb_v1_runtime_set_csbwin_expool_overlay_palette(
+    CSB_V1_RuntimeProfile *profile,
+    const uint8_t *palette,
+    size_t palette_size)
+{
+    CSB_V1_RuntimeProfile candidate;
+
+    if (!profile || !palette ||
+        palette_size != CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES) {
+        return -1;
+    }
+    candidate = *profile;
+    memcpy(candidate.csbwin_overlay_palette, palette,
+           sizeof(candidate.csbwin_overlay_palette));
+    candidate.csbwin_overlay_palette_valid = 1;
+    if (csb_v1_runtime_write_csbwin_overlay_palette(&candidate) != 0) {
+        return -1;
+    }
+    *profile = candidate;
+    return 0;
 }
 
 int csb_v1_runtime_csbwin_saves_disabled(

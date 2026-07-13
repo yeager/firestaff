@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin `EDT_Palette` writeback: the complete 24-record source
+  bundle now persists transactionally through existing 16-word EXPOOL records
+  only. A short, stale, or incomplete tail rejects before any bytes change;
+  Firestaff never invokes `EXPOOL::Write` expansion or creates palette
+  storage. Source: CSBWin `SaveGame.cpp:1213-1224`. Verification: Ninja and
+  `csb_v1_expool_palette_restore`.
+
 - 2026-07-13 CSBWin `EDT_Palette` runtime restore: the 24 original
   `7 << 24 | 0..23` EXPOOL records now stage into CSB's three byte-exact
   512-entry RGB channels following `SaveGame.cpp:1218-1238,1945-1970`.

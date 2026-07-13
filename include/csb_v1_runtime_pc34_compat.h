@@ -641,6 +641,14 @@ int csb_v1_runtime_get_csbwin_expool_overlay_palette(
     const CSB_V1_RuntimeProfile *profile,
     const uint8_t **out_palette,
     size_t *out_size);
+/* Persist a complete CSBWin SaveGame.cpp EDT_Palette bundle. This writes only
+ * the existing 24 source-owned 16-word records in a complete,
+ * FNV-authenticated EXPOOL tail; it never allocates a DB11 node or creates a
+ * palette record. */
+int csb_v1_runtime_set_csbwin_expool_overlay_palette(
+    CSB_V1_RuntimeProfile *profile,
+    const uint8_t *palette,
+    size_t palette_size);
 int csb_v1_runtime_csbwin_saves_disabled(
     const CSB_V1_RuntimeProfile *profile);
 
