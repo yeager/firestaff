@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0249 C04 group-first teleporter/pit handoff: opening a
+  source C08/C09 square now finds and moves its group before snapshotting
+  ordinary Things, as ReDMCSB `TIMELINE.C F0249:1387-1401` requires. The
+  real-source-square path retains `MOVESENS.C F0267:432-435`/F0266 projectile
+  preflight, removes a killed group, and then reuses the existing C60/C61
+  F0267 destination/retry path. Verification: Ninja-built and CTest-passed
+  `dm1_v1_square_state_dispatch_pc34_compat`.
+
 - 2026-07-13 DM1 HoC F0282 reincarnation state gate: the twelve champion
   statistic increments now accept only direct `M002_RANDOM(7)` values from
   ReDMCSB `REVIVE.C F0282:832-835`. Invalid or absent draw arrays publish a

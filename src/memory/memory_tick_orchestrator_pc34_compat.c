@@ -3434,6 +3434,13 @@ static int orch_set_door_state_compat(
     return 1;
 }
 
+static int orch_f0249_move_group_first_square_thing_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct TickResult_Compat* result);
+
 /* ReDMCSB TIMELINE.C F0242/F0244/F0245/F0248/F0250/F0251 dispatches C05..C10
  * square effects after F0261 extracts the event.  M10 represents that
  * original event family as TIMELINE_EVENT_SQUARE_STATE: aux0 is the
@@ -3549,6 +3556,14 @@ static int orch_dispatch_square_state_event_compat(
                         }
                     }
                 }
+            }
+            /* ReDMCSB TIMELINE.C F0249 moves C04 before it snapshots the
+             * ordinary C05..C15 list.  A source-square group move must keep
+             * F0266's projectile-impact preflight; the C60/C61 insertion
+             * owner handles only the later blocked-destination retry. */
+            if (!orch_f0249_move_group_first_square_thing_compat(
+                    world, ev->mapIndex, ev->mapX, ev->mapY, result)) {
+                return 0;
             }
             return orch_f0249_move_non_group_square_things_compat(
                 world, ev->mapIndex, ev->mapX, ev->mapY);
@@ -8504,6 +8519,85 @@ static int orch_link_existing_group_to_square_head_only_compat(
     world->things->squareFirstThings[sftIndex] =
         orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex);
     return 1;
+}
+
+/* ReDMCSB TIMELINE.C F0249:1387-1401 locates the C04 group before every
+ * ordinary Thing, then re-enters MOVESENS.C F0267 from its real source
+ * square.  That distinction matters: F0267 invokes F0266 on a group moving
+ * on the party map, whereas C006/C60/C61 use MAPX_NOT_ON_A_SQUARE and skip
+ * that projectile preflight.  After the source group is unlinked, the
+ * existing C60/C61 owner performs the same teleporter/pit, destination and
+ * retry handoff as the remainder of F0267. */
+static int orch_f0249_move_group_first_square_thing_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct TickResult_Compat* result)
+{
+    int sftIndex;
+    unsigned short thing;
+    int safety = 0;
+    int groupIndex = -1;
+    int killedByProjectile = 0;
+    struct TimelineEvent_Compat groupMove;
+
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->groups || !result) {
+        return 0;
+    }
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+    thing = world->things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_GROUP) {
+            int index = THING_GET_INDEX(thing);
+            if (index >= 0 && index < world->things->groupCount) {
+                groupIndex = index;
+                break;
+            }
+        }
+        thing = orch_next_thing_compat(world->things, thing);
+    }
+    if (groupIndex < 0) return 1;
+
+    if (!orch_apply_f0266_group_projectile_precheck_compat(
+            world, groupIndex, mapIndex, mapX, mapY, mapX, mapY,
+            &killedByProjectile)) {
+        return 0;
+    }
+    if (killedByProjectile) {
+        /* The shared ordinary C04 route removes the source group after its
+         * F0266 kill result.  Preserve that same state boundary here rather
+         * than allowing F0249 to relink a dead source record. */
+        if (!orch_unlink_thing_from_square_compat(
+                world, mapIndex, mapX, mapY,
+                orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex))) {
+            return 0;
+        }
+        world->things->groups[groupIndex].next = THING_NONE;
+        orch_write_raw_group_compat(world->things, groupIndex);
+        orch_remove_active_group_state_compat(world, groupIndex);
+        return 1;
+    }
+
+    if (!orch_unlink_thing_from_square_compat(
+            world, mapIndex, mapX, mapY,
+            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex))) {
+        return 0;
+    }
+    memset(&groupMove, 0, sizeof(groupMove));
+    groupMove.kind = TIMELINE_EVENT_MOVE_GROUP_SILENT;
+    groupMove.fireAtTick = world->gameTick;
+    groupMove.mapIndex = mapIndex;
+    groupMove.mapX = mapX;
+    groupMove.mapY = mapY;
+    groupMove.aux0 = groupIndex;
+    return orch_handle_deferred_group_move_event_compat(
+        world, &groupMove, result);
 }
 
 static int orch_handle_creature_reaction_event_compat(

@@ -164,7 +164,33 @@ int main(void)
     assert(teleporter.next == THING_ENDOFLIST);
     assert(squareFirstThings[1] == (unsigned short)((THING_TYPE_WEAPON << 10) | 0));
 
+    /* F0249's C04 branch is before the ordinary snapshot.  A group on an
+     * opening creature-scope teleporter therefore reaches the same F0267
+     * destination path, while the source square no longer retains C04. */
+    teleporter.next = (unsigned short)(THING_TYPE_GROUP << 10);
+    teleporter.targetMapX = 0;
+    teleporter.targetMapY = 1;
+    teleporter.scope = 0x01;
+    group.next = THING_ENDOFLIST;
+    group.creatureType = 0;
+    group.cells = 0xFF;
+    group.count = 0;
+    group.health[0] = 100;
+    squareFirstThings[0] = (unsigned short)(THING_TYPE_TELEPORTER << 10);
+    squareFirstThings[1] = THING_ENDOFLIST;
+    world.party.mapX = 1;
+    world.party.mapY = 1;
+    world.creatureAICount = 0;
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0, 0);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert(squareFirstThings[0] == (unsigned short)(THING_TYPE_TELEPORTER << 10));
+    assert(teleporter.next == THING_ENDOFLIST);
+    assert(squareFirstThings[1] == (unsigned short)(THING_TYPE_GROUP << 10));
+    assert(group.next == THING_ENDOFLIST);
+
     /* F0249 sends party through F0267 before ordinary source-chain things. */
+    teleporter.scope = 0x02;
     world.party.mapX = 0;
     world.party.mapY = 0;
     world.party.direction = 1;
