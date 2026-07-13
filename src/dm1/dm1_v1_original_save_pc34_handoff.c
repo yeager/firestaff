@@ -3483,6 +3483,76 @@ static int dm1_original_save_c4_timeline_bytes_match(
     return 1;
 }
 
+/* ReDMCSB LOADSAVE.C F0433 writes and F0435 reads the complete C3 EVENT
+ * allocation, before TIMELINE.C can interpret its indexes. Unlike the
+ * canonical per-type receipts, this preserves raw slot order and every byte. */
+static int dm1_original_save_c3_event_bytes_match(
+    const uint8_t *source_bytes, size_t source_size,
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const uint8_t *exported_bytes, size_t exported_size,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    const uint8_t *inputs[2] = { source_bytes, exported_bytes };
+    const size_t sizes[2] = { source_size, exported_size };
+    const DM1OriginalSavePC34HandoffReport *reports[2] = {
+        source_report, exported_report };
+    uint8_t decoded[2][DM1_EVENT_MAX_COUNT * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT];
+    size_t byte_counts[2];
+    int which;
+
+    if (!source_bytes || !exported_bytes || !source_report || !exported_report ||
+        !out_report) return 0;
+    for (which = 0; which < 2; ++which) {
+        uint8_t meta[256];
+        size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+        uint16_t key;
+        int part;
+
+        if (sizes[which] < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE ||
+            reports[which]->part_byte_counts[SAVEGAME_PC34_PART_EVENTS] >
+                sizeof(decoded[which])) return 0;
+        key = read_u16_le(inputs[which] + 20u);
+        memcpy(meta, inputs[which] + 256u, sizeof(meta));
+        (void)f0417_xor_checksum_bytes(meta,
+                                       SAVEGAME_PC34_DM_SAVE_HEADER_HALF_WORDS,
+                                       key);
+        for (part = 0; part < SAVEGAME_PC34_PART_EVENTS; ++part) {
+            uint16_t n;
+            if (cursor + 2u > sizes[which]) return 0;
+            n = read_u16_le(inputs[which] + cursor);
+            cursor += 2u;
+            if (cursor + n > sizes[which]) return 0;
+            cursor += n;
+        }
+        if (cursor + 2u > sizes[which]) return 0;
+        byte_counts[which] = read_u16_le(inputs[which] + cursor);
+        cursor += 2u;
+        if (byte_counts[which] !=
+                reports[which]->part_byte_counts[SAVEGAME_PC34_PART_EVENTS] ||
+            byte_counts[which] % DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT != 0u ||
+            cursor + byte_counts[which] > sizes[which]) return 0;
+        memcpy(decoded[which], inputs[which] + cursor, byte_counts[which]);
+        (void)f0417_xor_checksum_bytes(decoded[which], byte_counts[which] / 2u,
+            read_u16_le(meta + 54u + SAVEGAME_PC34_PART_EVENTS * 2u));
+    }
+    out_report->c3_event_layout_receipt_available = 1;
+    out_report->source_c3_event_record_count =
+        (uint32_t)(byte_counts[0] / DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+    out_report->source_c3_event_byte_count = (uint32_t)byte_counts[0];
+    out_report->source_c3_event_fingerprint =
+        dm1_original_save_hash_bytes(decoded[0], byte_counts[0]);
+    out_report->exported_c3_event_record_count =
+        (uint32_t)(byte_counts[1] / DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+    out_report->exported_c3_event_byte_count = (uint32_t)byte_counts[1];
+    out_report->exported_c3_event_fingerprint =
+        dm1_original_save_hash_bytes(decoded[1], byte_counts[1]);
+    out_report->c3_event_byte_preservation_ok =
+        byte_counts[0] == byte_counts[1] &&
+        memcmp(decoded[0], decoded[1], byte_counts[0]) == 0;
+    return 1;
+}
+
 /* ReDMCSB LOADSAVE.C F0433:1573-1627 constructs five source save-part
  * descriptors, writes their uint16 byte counts, and stamps FormatID/GameID/
  * Platform/DungeonID before F0430 obfuscates the header. F0435 consumes that
@@ -4124,6 +4194,11 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
             &export_report, out_report)) {
         out_report->party_info_byte_receipt_available = 0;
     }
+    if (out_report && !dm1_original_save_c3_event_bytes_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report)) {
+        out_report->c3_event_layout_receipt_available = 0;
+    }
     if (out_report && !dm1_original_save_c4_timeline_bytes_match(
             bytes, size, &import_report, out_bytes, *out_size,
             &export_report, out_report)) {
@@ -4520,6 +4595,22 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_c24_union_slot_byte_count;
         receipt->exported_c24_union_slot_fingerprint =
             roundtrip.exported_c24_union_slot_fingerprint;
+        receipt->c3_event_layout_receipt_available =
+            roundtrip.c3_event_layout_receipt_available;
+        receipt->source_c3_event_record_count =
+            roundtrip.source_c3_event_record_count;
+        receipt->source_c3_event_byte_count =
+            roundtrip.source_c3_event_byte_count;
+        receipt->source_c3_event_fingerprint =
+            roundtrip.source_c3_event_fingerprint;
+        receipt->exported_c3_event_record_count =
+            roundtrip.exported_c3_event_record_count;
+        receipt->exported_c3_event_byte_count =
+            roundtrip.exported_c3_event_byte_count;
+        receipt->exported_c3_event_fingerprint =
+            roundtrip.exported_c3_event_fingerprint;
+        receipt->c3_event_byte_preservation_ok =
+            roundtrip.c3_event_byte_preservation_ok;
         receipt->c4_timeline_layout_receipt_available =
             roundtrip.c4_timeline_layout_receipt_available;
         receipt->source_c4_timeline_index_count =

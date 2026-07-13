@@ -243,6 +243,16 @@ typedef struct {
     uint32_t source_c24_union_slot_fingerprint;
     uint32_t exported_c24_union_slot_byte_count;
     uint32_t exported_c24_union_slot_fingerprint;
+    /* LOADSAVE.C F0433/F0435 owns the complete raw C3 EVENT array. This
+     * atomic receipt covers every C13/C24/C25 record at its original slot. */
+    int c3_event_layout_receipt_available;
+    uint32_t source_c3_event_record_count;
+    uint32_t source_c3_event_byte_count;
+    uint32_t source_c3_event_fingerprint;
+    uint32_t exported_c3_event_record_count;
+    uint32_t exported_c3_event_byte_count;
+    uint32_t exported_c3_event_fingerprint;
+    int c3_event_byte_preservation_ok;
     int c4_timeline_layout_receipt_available;
     uint32_t source_c4_timeline_index_count;
     uint32_t source_c4_timeline_byte_count;
@@ -362,6 +372,14 @@ typedef struct {
     uint32_t source_c24_union_slot_fingerprint;
     uint32_t exported_c24_union_slot_byte_count;
     uint32_t exported_c24_union_slot_fingerprint;
+    int c3_event_layout_receipt_available;
+    uint32_t source_c3_event_record_count;
+    uint32_t source_c3_event_byte_count;
+    uint32_t source_c3_event_fingerprint;
+    uint32_t exported_c3_event_record_count;
+    uint32_t exported_c3_event_byte_count;
+    uint32_t exported_c3_event_fingerprint;
+    int c3_event_byte_preservation_ok;
     int c4_timeline_layout_receipt_available;
     uint32_t source_c4_timeline_index_count;
     uint32_t source_c4_timeline_byte_count;

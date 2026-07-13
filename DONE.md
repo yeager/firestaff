@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 atomic C3 corpus receipt: opt-in external corpus rows
+  now retain the decrypted full C3 EVENT array's record count, byte count, and
+  fingerprint. Real corpus verification requires exact C3 source/transient
+  export identity, closing the slot-order gap left by canonical C13/C24/C25
+  subtype receipts. Source: ReDMCSB `LOADSAVE.C` F0433/F0435.
+  Verification: focused native-PC34 handoff CTest.
+
 - 2026-07-13 Theron V1 palette fallback removal: an unpopulated Track 02
   palette/atlas now remains zeroed and cannot authorize V1 rendering. The
   former generated stone palette and unverified-container rendering allowance
