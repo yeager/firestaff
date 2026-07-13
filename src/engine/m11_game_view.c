@@ -3773,6 +3773,51 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         state->csbStartupRuntimeAssetSession;
     memset(&frame, 0, sizeof(frame));
     memset(&raster, 0, sizeof(raster));
+    if (session &&
+        session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_NONE_PC34) {
+        CSB_V1_StartupAudioAction_PC34 audio_action;
+        if (!csb_v1_boot_startup_playback_begin_pc34(session, &audio_action) ||
+            !csb_v1_boot_startup_playback_complete_swoosh_pc34(
+                session, &audio_action)) {
+            session = NULL;
+        }
+    }
+    if (session &&
+        host_view.render_draw.render_plan.surface ==
+            CSB_V1_STARTUP_RENDER_TITLE_PC34) {
+        const int target_frame = state->csbState.startup_title_frame;
+        int frame_index = session->playback.title_phase_mask
+            ? session->playback.title_frame + 1 : 0;
+        CSB_V1_StartupRenderPlan_PC34 playback_plan;
+        CSB_V1_StartupAudioAction_PC34 audio_action;
+        for (; frame_index <= target_frame; ++frame_index) {
+            if (!csb_v1_boot_startup_playback_title_frame_pc34(
+                    session, frame_index, &playback_plan, &audio_action)) {
+                session = NULL;
+                break;
+            }
+        }
+    } else if (session &&
+               session->playback.stage ==
+                   CSB_V1_STARTUP_PLAYBACK_STAGE_TITLE_PC34) {
+        CSB_V1_StartupRenderPlan_PC34 playback_plan;
+        CSB_V1_StartupAudioAction_PC34 audio_action;
+        int frame_index = session->playback.title_phase_mask
+            ? session->playback.title_frame + 1 : 0;
+        for (; frame_index < csb_v1_startup_title_total_ticks_pc34();
+             ++frame_index) {
+            if (!csb_v1_boot_startup_playback_title_frame_pc34(
+                    session, frame_index, &playback_plan, &audio_action)) {
+                session = NULL;
+                break;
+            }
+        }
+        if (session && !csb_v1_boot_startup_playback_title_frame_pc34(
+                session, csb_v1_startup_title_total_ticks_pc34(),
+                &playback_plan, &audio_action)) {
+            session = NULL;
+        }
+    }
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0807 supply the source
      * plan.  The CSB session owns the verified C001-C005/C017/C040 pixels;
      * M11 only presents its raster and has no startup draw callbacks. */
@@ -3989,6 +4034,17 @@ static M11_GameInputResult m11_csb_startup_apply_idle_receipt(
         m11_csb_startup_command_state_receipt_to_m11(
             state,
             &receipt->finish_receipt);
+        if (state->csbState.startup_entrance_dismissed) {
+            CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+                (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                    state->csbStartupRuntimeAssetSession;
+            if (!session ||
+                !csb_v1_boot_startup_playback_complete_entrance_pc34(
+                    session) ||
+                !csb_v1_boot_startup_playback_enter_hud_pc34(session)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+        }
     }
     return m11_csb_startup_apply_host_receipt(state, &receipt->host_receipt);
 }
