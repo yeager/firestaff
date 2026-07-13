@@ -82,7 +82,7 @@
 
 #define TSRM_PROGRESS_PAYLOAD_BYTES 44u
 #define TSRM_PARTY_BODY_BYTES 40u
-int theron_v1_srm_header_receipt(const uint8_t *data,size_t size,Theron_V1SrmHeaderReceipt *out){if(out)memset(out,0,sizeof(*out));if(!data||!out||size<10u||data[0]!=0x1fu||data[1]!=0x8bu||data[2]!=8u||(data[3]&0xe0u))return 0;out->valid=1;out->container_bytes=size;return 1;}
+int theron_v1_srm_header_receipt(const uint8_t *data,size_t size,Theron_V1SrmHeaderReceipt *out){size_t p=10u;uint8_t f;if(out)memset(out,0,sizeof(*out));if(!data||!out||size<10u||data[0]!=0x1fu||data[1]!=0x8bu||data[2]!=8u||(data[3]&0xe0u))return 0;f=data[3];if(f&4u){size_t n;if(p+2u>size)return 0;n=(size_t)data[p]|((size_t)data[p+1u]<<8u);p+=2u;if(n>size-p)return 0;p+=n;}if(f&8u){while(p<size&&data[p])++p;if(p==size)return 0;++p;}if(f&16u){while(p<size&&data[p])++p;if(p==size)return 0;++p;}out->valid=1;out->container_bytes=size;return 1;}
 #define TSRM_PARTY_PAYLOAD_BYTES \
     (TSRM_PROGRESS_PAYLOAD_BYTES + 4u + \
      ((size_t)THERON_MAX_CHAMPIONS * TSRM_PARTY_BODY_BYTES))
