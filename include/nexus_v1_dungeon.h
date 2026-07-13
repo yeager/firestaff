@@ -211,6 +211,21 @@ typedef struct {
     int complete;
 } Nexus_V1_DgnStructure1ARelationReceipt;
 
+/* Structure1A byte 1 is the documented Structure3 model index. This receipt
+ * consumes that byte only after the Structure1F owner relation is complete.
+ * It measures original model-reference reuse, but does not parse Structure3
+ * bytes, select a face, or authorize a mesh, texture, palette, or pixel. */
+typedef struct {
+    int structure1a_relation_complete;
+    int structure1f_bound_entry_count;
+    int resolved_model_reference_count;
+    int unique_model_index_count;
+    int duplicate_model_index_count;
+    int zero_model_index_count;
+    int nonzero_model_index_count;
+    int complete;
+} Nexus_V1_DgnStructure3ModelReferenceReceipt;
+
 /* The runtime host consumes Structure1F only through this receipt. Direct
  * records retain their documented source cells. Structure1A-indexed records
  * may proceed beyond this provenance gate only when the parser's complete
@@ -508,7 +523,10 @@ typedef enum {
     NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_ENVELOPE = 9,
     /* A span identifies itself as Structure1F but violates its documented
      * direct-coordinate contract, so host code must not omit it. */
-    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_LAYOUT = 10
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_LAYOUT = 10,
+    /* Structure1A's proven owner/model relation reaches a Structure3 model
+     * index, but Structure3 mesh payload/face semantics are still absent. */
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_MESH = 11
 } Nexus_V1_DgnRendererHandoffStatus;
 
 typedef struct {
@@ -549,6 +567,7 @@ typedef struct {
     Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
+    Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     int structure1g_present;
     int structure1g_valid;
     int structure1g_animated_texture_count;
@@ -638,6 +657,8 @@ typedef struct {
     int structure1f_typed_entry_count;
     Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
+    Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
+    Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
      * interpreted as an object, sensor, trigger, or draw command. */
@@ -687,6 +708,9 @@ int nexus_v1_level_structure1a_boundary_receipt(
 int nexus_v1_level_structure1a_relation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1ARelationReceipt *out_receipt);
+int nexus_v1_level_structure3_model_reference_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3ModelReferenceReceipt *out_receipt);
 int nexus_v1_level_dgn_structure1_host_provenance_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1HostProvenanceReceipt *out_receipt);

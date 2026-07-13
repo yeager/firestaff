@@ -2953,7 +2953,7 @@ int main(void)
                runtime_handoff_receipt.structure1_host_provenance
                        .structure1a_relation.complete == 1 &&
                runtime_handoff_receipt.dgn_handoff.status ==
-                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS &&
+                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_MESH &&
                strcmp(runtime_handoff_receipt.status,
                       "blocked-structure1a-relation") != 0 &&
                dgn_commands[0].kind == 0,

@@ -43,12 +43,11 @@
   blocked until its original live inventory/object route is bound. Do not coerce
   its native bytes into substitute Firestaff state.
 
-- 🔧 2026-07-13 Nexus Structure1A follow-up: a complete validated
-  Structure1A/Structure1F owner-model receipt now passes the champion-to-runtime
-  provenance gate, but the next Structure1F face/Structure3 mesh-semantics gate
-  still blocks rendering. Prove original face attachment and mesh consumption
-  before any draw route; do not infer positions, geometry, textures, pixels,
-  palettes, triggers, or fallback art.
+- 🔧 2026-07-13 Nexus Structure3 follow-up: resolved Structure1A/Structure1F
+  model references now reach DGN rendering as a no-draw receipt, but Structure3
+  payload and face grammar remain unparsed. Prove the original mesh span and
+  face attachment before any draw route; do not infer positions, geometry,
+  textures, pixels, palettes, triggers, or fallback art.
 
 ## M12 Localization Completion (2026-07-12)
 
