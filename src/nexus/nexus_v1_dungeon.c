@@ -152,6 +152,18 @@ static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
                 level->structure2_payload
                     .nonzero_descriptor_offsets_word_bounded_count ==
                     level->structure2_payload.nonzero_descriptor_offset_count;
+            /* Preserve a format-envelope gate separately from the measured
+             * corpus patterns above. Zero offsets are allowed; each present
+             * target must remain aligned and fully bounded in its descriptor
+             * envelope before Structure1G can hand it to a host. */
+            level->structure2_payload.descriptor_offset_envelope_valid =
+                level->structure2_payload
+                    .nonzero_descriptor_offsets_outside_opaque_payload_count == 0 &&
+                level->structure2_payload
+                    .nonzero_descriptor_offsets_unaligned_count == 0 &&
+                level->structure2_payload
+                    .nonzero_descriptor_offsets_word_bounded_count ==
+                    level->structure2_payload.nonzero_descriptor_offset_count;
             level->structure2_payload.valid = 1;
             /* No decoder may promote this opaque span into a material. */
             level->structure2_payload.material_or_image_data_proven = 0;
@@ -831,6 +843,8 @@ static void nexus_v1_level_finalize_structure1g_structure2_bindings(
      * not decode the opaque payload or make any material drawable. */
     level->structure1g_structure2_bindings_complete =
         level->structure2_texture_table_valid &&
+        level->structure2_payload.valid &&
+        level->structure2_payload.descriptor_offset_envelope_valid &&
         level->structure1g_entry_count > 0;
     for (entry = 0;
          entry < level->structure1g_entry_count &&
@@ -1254,6 +1268,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
     }
     out_receipt->structure1g_structure2_bindings_complete =
         level->structure1g_structure2_bindings_complete;
+    out_receipt->structure2_descriptor_offset_envelope_valid =
+        level->structure2_payload.descriptor_offset_envelope_valid;
 
     if (!info->dmweb_container) {
         out_receipt->status =
@@ -1261,6 +1277,14 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
     } else if (info->structure1g_present && !info->structure1g_valid) {
         out_receipt->status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE_SEMANTICS;
+    } else if (info->structure1g_present &&
+               level->structure2_texture_table_valid &&
+               level->structure2_payload.valid &&
+               !level->structure2_payload.descriptor_offset_envelope_valid) {
+        /* A descriptor ID alone is not an admissible original source if one
+         * of its raw targets crosses the only proven Structure2 envelope. */
+        out_receipt->status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_ENVELOPE;
     } else if (info->structure1g_present &&
                !level->structure1g_structure2_bindings_complete) {
         /* A syntactically bounded Structure1G program still cannot be
@@ -1308,6 +1332,8 @@ const char *nexus_v1_dgn_renderer_handoff_status_name(
         return "blocked-structure1f-semantics";
     case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_REFERENCE:
         return "blocked-structure1f-reference";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_ENVELOPE:
+        return "blocked-structure2-envelope";
     default: return "unknown";
     }
 }

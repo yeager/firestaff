@@ -487,6 +487,14 @@ and reachability only; it does not interpret Structure2 payload bytes, decode
 pixels or palettes, or execute animation timing. The remaining admissible work
 is still a retail payload grammar plus a Saturn executable/capture route.
 
+2026-07-13 update: Structure1G's descriptor identity handoff now also rejects
+an otherwise present local Structure2 descriptor when any nonzero original
+target is odd, escapes the post-`FFFF` span, or lacks a complete two-byte
+window there. The LEV00-LEV15 corpus satisfies this bounded envelope gate for
+all observed targets; zero target fields remain structurally admissible. This
+is an integrity check for the already proven envelope only, not a word grammar,
+offset base, palette/image interpretation, decoder, animation, or draw route.
+
 ## Nexus SLEV/SAL Semantic Follow-up (2026-07-11)
 
 Level loading binds `SLEVxx.BIN`, `SNDLEVxx.SAL`, and `SNDLEVxx.MAP` to their

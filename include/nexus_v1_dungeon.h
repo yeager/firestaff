@@ -250,6 +250,12 @@ typedef struct {
     int local_payload_offset_pattern_observed;
     int local_payload_word_aligned_offset_pattern_observed;
     int local_payload_word_bounded_offset_pattern_observed;
+    /* Handoff integrity gate: every present descriptor target must name an
+     * aligned, complete two-byte window in this descriptor's bounded opaque
+     * span.  An all-zero target set is structurally valid too.  This is only
+     * a source-envelope invariant, never a payload, pixel, palette, or
+     * record-format claim. */
+    int descriptor_offset_envelope_valid;
     int valid;
     int material_or_image_data_proven;
 } Nexus_V1_DgnStructure2Payload;
@@ -403,7 +409,10 @@ typedef enum {
     NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS = 7,
     /* A packed Structure1B reference reached the opaque Structure1F tail or
      * lies outside the observed typed prefix. It is not drawable geometry. */
-    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_REFERENCE = 8
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_REFERENCE = 8,
+    /* A Structure1G local descriptor exists, but one of its original
+     * Structure2 targets escapes the bounded opaque envelope. */
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_ENVELOPE = 9
 } Nexus_V1_DgnRendererHandoffStatus;
 
 typedef struct {
@@ -452,6 +461,7 @@ typedef struct {
     int structure1g_structure2_image_instruction_bound_count;
     int structure1g_structure2_image_instruction_unbound_count;
     int structure1g_structure2_bindings_complete;
+    int structure2_descriptor_offset_envelope_valid;
 } Nexus_V1_DgnRendererHandoffReceipt;
 
 typedef enum {
