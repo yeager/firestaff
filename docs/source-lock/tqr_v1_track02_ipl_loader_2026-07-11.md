@@ -91,3 +91,15 @@ infer file names or ISO-9660 paths. This explains the control-transfer shape
 but still does not name the 218 manifest units. Sources: [PCEDev HuC6280
 Software Manual](https://archive.org/details/PCEDev) and [PC Engine CD record
 format analysis](https://retrocomputing.stackexchange.com/questions/27518/did-the-pc-engine-turbografx-super-cd-rom-have-a-standardized-file-system).
+
+## Post-Return Continuation
+
+On 2026-07-13, the Mednafen 1.32.1 debugger patch was verified with a clean
+source-tree dry-run, then built and exercised with the authenticated US CUE
+and System Card 3.0. The trace proves the observed return chain
+`$cbef -> $cb2f -> $e109`. `$cb2f` is an `RTS`; its snapshot has
+`$1800..$1804 = 00 00 00 02 00` and `$f5 = 00`. This is an execution and
+register-state receipt only. It observes no System Card `CD_READ` request,
+record number, destination, data type, bitmap, palette, object, or level.
+`scripts/verify_theron_cb20_post_return_trace.sh` validates the required
+ordered trace rows and deliberately makes no semantic promotion.
