@@ -3853,6 +3853,14 @@ int nexus_v1_dgn_bind_direct_structure1f_floor_sources(
             source->entry_index = entry_index;
             source->entry = *entry;
             source->draw_authorized = 0;
+            if (entry->family == NEXUS_V1_DGN_STRUCTURE1F_ITEMS) {
+                ++receipt.item_floor_command_source_count;
+            } else if (entry->family ==
+                       NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS) {
+                ++receipt.floor_decoration_command_source_count;
+            } else {
+                ++receipt.floor_sensor_command_source_count;
+            }
         }
     }
     receipt.complete = receipt.visible_direct_entry_count > 0 &&

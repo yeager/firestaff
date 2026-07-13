@@ -1161,6 +1161,9 @@ typedef struct {
 typedef struct {
     int visible_direct_entry_count;
     int floor_command_source_count;
+    int item_floor_command_source_count;
+    int floor_decoration_command_source_count;
+    int floor_sensor_command_source_count;
     int blocked_capacity_count;
     int complete;
     int fallback_visuals_permitted;

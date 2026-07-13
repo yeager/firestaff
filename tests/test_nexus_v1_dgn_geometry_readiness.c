@@ -1725,6 +1725,9 @@ static void test_direct_structure1f_mesh_command_provenance(void) {
               &direct_receipt) == 0 && direct_receipt.complete &&
           direct_receipt.visible_direct_entry_count == 1 &&
           direct_receipt.floor_command_source_count == 1 &&
+          direct_receipt.item_floor_command_source_count == 1 &&
+          direct_receipt.floor_decoration_command_source_count == 0 &&
+          direct_receipt.floor_sensor_command_source_count == 0 &&
           direct_sources[0].command_index >= 0 &&
           commands[direct_sources[0].command_index].kind ==
               NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
