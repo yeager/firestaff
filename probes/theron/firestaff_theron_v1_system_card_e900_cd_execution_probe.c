@@ -65,7 +65,7 @@ static int inspect_19_track_cue(const char *path) {
     unsigned int track;
     unsigned int expected_track = 1u;
     unsigned int track_count = 0u;
-    int track02_mode1_2048 = 0;
+    int track02_mode1_2352 = 0;
 
     if (!path || !(file = fopen(path, "rb"))) return 0;
     while (fgets(line, sizeof(line), file) != NULL) {
@@ -77,13 +77,13 @@ static int inspect_19_track_cue(const char *path) {
             }
             ++expected_track;
             ++track_count;
-            if (track == 2u && strcmp(mode, "MODE1/2048") == 0) {
-                track02_mode1_2048 = 1;
+            if (track == 2u && strcmp(mode, "MODE1/2352") == 0) {
+                track02_mode1_2352 = 1;
             }
         }
     }
     fclose(file);
-    return track_count == 19u && track02_mode1_2048;
+    return track_count == 19u && track02_mode1_2352;
 }
 
 int main(void) {
