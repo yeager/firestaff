@@ -17,6 +17,7 @@ typedef struct {
     int blocked;
     DM2_V1_G1DungeonSceneClassificationReceipt scene;
     int gdat_index;
+    int creature_type;
     int material_width;
     int material_height;
     int material_stride;
