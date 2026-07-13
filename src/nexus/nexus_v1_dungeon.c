@@ -2510,6 +2510,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure1f_item_attribute_pairs);
     (void)nexus_v1_level_structure1f_item_location_pair_receipt(
         level, &out_receipt->structure1f_item_location_pairs);
+    (void)nexus_v1_level_structure1f_floor_decoration_offset_pair_receipt(
+        level, &out_receipt->structure1f_floor_decoration_offset_pairs);
     (void)nexus_v1_level_structure3_payload_receipt(
         level, &out_receipt->structure3_payload);
     out_receipt->structure1g_present = info->structure1g_present;
@@ -2992,6 +2994,8 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.structure1f_floor_decoration_rotation_selectors;
     receipt.structure1f_item_attribute_pairs = handoff.structure1f_item_attribute_pairs;
     receipt.structure1f_item_location_pairs = handoff.structure1f_item_location_pairs;
+    receipt.structure1f_floor_decoration_offset_pairs =
+        handoff.structure1f_floor_decoration_offset_pairs;
     receipt.structure3_payload = handoff.structure3_payload;
     receipt.structure1g_present = handoff.structure1g_present;
     receipt.structure1g_valid = handoff.structure1g_valid;

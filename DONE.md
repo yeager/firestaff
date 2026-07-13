@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F floor-decoration offset handoff: the existing
+  corpus receipt for signed source offset pairs now reaches the DGN host
+  handoff, render plan, and per-level corpus aggregate. It remains raw,
+  fail-closed provenance with no position, mesh, texture, palette, pixel, or
+  draw semantics.
+
 - 2026-07-13 Nexus Structure1F item-pair host handoff: verified raw
   `attribute1/attribute2` and `location/item_id` receipts now propagate through
   the DGN host handoff and render plan. They remain fail-closed provenance;
