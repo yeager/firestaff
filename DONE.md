@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron authenticated macOS controller-capture hardening: the
+  Mednafen live harness now performs an opt-in, focused macOS SDL key press
+  and retains numeric-zero receipts when a trace sidecar is absent. It accepts
+  only bounded `RUN`/Return, `SELECT`/Tab, or PC Engine `I` keypad input and
+  records the requested hold/repeat policy. Fresh authentic US CUE/System Card
+  3.0 captures prove all three routes reach Mednafen and PCE input (`0008`,
+  `0004`, and `0001` respectively), but none reaches a later PCE controller
+  transaction, non-System-Card PCECD caller, or raw sector. This is evidence
+  of an early-poll timing boundary, not a Track 02 read or game handoff; no
+  controller state, CD register, asset, or level semantics are synthesised.
+  Verification: capture-script syntax/contract test, Mednafen patch dry-run,
+  rebuilt instrumented Mednafen, and three authentic bounded GUI captures.
+
 - 2026-07-13 Nexus Structure1F wall-sensor control/destination handoff: the
   adjacent raw four-byte tuples now reach DGN host, render-plan, and LEV00-15
   corpus receipts. This assigns no trigger, target, route, operation, mesh,

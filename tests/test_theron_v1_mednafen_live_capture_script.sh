@@ -22,6 +22,20 @@ if ! grep -Fq 'THERON_MEDNAFEN_HOME must name an existing Mednafen configuration
     printf 'FAIL: capture script must gate an explicit GUI input configuration\n' >&2
     exit 1
 fi
+if ! grep -Fq 'THERON_CAPTURE_HOST_KEY currently supports only return, i, or select' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_HOST_KEY requires a non-dummy SDL video driver' "$script" ||
+   ! grep -Fq 'set targetProcess to first application process whose name is "mednafen"' "$script" ||
+   ! grep -Fq 'key down {return}' "$script" ||
+   ! grep -Fq 'key up {return}' "$script" ||
+   ! grep -Fq 'key down {tab}' "$script" ||
+   ! grep -Fq 'key code 85' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_HOST_KEY_REPEATS must be a positive integer' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_HOST_KEY_DELAY must be a non-negative integer' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLD must be a positive integer' "$script" ||
+   ! grep -Fq 'requested host key was not observed by Mednafen SDL dispatch' "$script"; then
+    printf 'FAIL: capture script must keep the opt-in macOS Return focus/input gate\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'dynamic CPU receipts lack a bounded authentic raw-sector span' "$script" ||
    ! grep -Fq 'span_offset=0 span_bytes=32 span_fnv1a=' "$script"; then
     printf 'FAIL: capture script must gate dynamic reads on an authentic raw-sector span\n' >&2
@@ -36,6 +50,12 @@ if ! grep -Fq 'host_key_events=%s' "$script" ||
    ! grep -Fq 'System Card wait; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s' "$script" ||
    ! grep -Fq 'dynamic receipts absent; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s' "$script"; then
     printf 'FAIL: capture script must report missing transition evidence counts\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'trace_count()' "$script" ||
+   ! grep -Fq 'local count' "$script" ||
+   ! grep -Fq '"${count:-0}"' "$script"; then
+    printf 'FAIL: capture script must emit numeric zero counts when a trace file is absent\n' >&2
     exit 1
 fi
 if ! grep -Fq 'source=authentic-mednafen-transition-receipt' "$script" ||
