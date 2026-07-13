@@ -14662,6 +14662,7 @@ if(BUILD_TESTING)
     )
     add_executable(test_dm1_v1_projectile_explosion_render_pc34_compat
         tests/test_dm1_v1_projectile_explosion_render_pc34_compat.c
+        src/dm1/dm1_v1_projectile_graphic_query_pc34_compat.c
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_projectile_explosion_render_pc34_compat PRIVATE firestaff_m10)
@@ -17483,6 +17484,7 @@ if(NOT TARGET test_dm1_v1_light_darkness_spell_bridge_pc34_compat)
         tests/test_dm1_v1_light_darkness_spell_bridge_pc34_compat.c
         src/dm1/dm1_v1_light_pc34_compat.c
         src/dm1/dm1_v1_spell_casting_pc34_compat.c
+        src/dm1/dm1_v1_projectile_graphic_query_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_light_darkness_spell_bridge_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -20415,6 +20417,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/csb/csb_v1_csbgraphics_dat_classify.c
         src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
+        src/dm1/dm1_v1_projectile_graphic_query_pc34_compat.c
         src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
         src/dm1/dm1_v1_floor_ornament_pc34_compat.c
         src/dm1/dm1_v1_g0195_pc34_compat.c
@@ -20459,6 +20462,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/csb/csb_v1_csbgraphics_dat_classify.c
         src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
+        src/dm1/dm1_v1_projectile_graphic_query_pc34_compat.c
         src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
         src/dm1/dm1_v1_floor_ornament_pc34_compat.c
         src/dm1/dm1_v1_g0195_pc34_compat.c
