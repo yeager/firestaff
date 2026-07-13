@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron stage-two live System Card receipt: the authenticated US
+  CUE/System Card 3.0 trace now locks the executed `$40cd -> $e009` table
+  `00e30302` and `$40a4 -> $e00f` table `00e70311`, including paired returns
+  and banked zero-page/CPU-state observations. The new verifier rejects any
+  changed call row and deliberately assigns no payload, bitmap, palette,
+  object, or level semantics.
+
 - 2026-07-13 DM1 PC34 C13 external-corpus byte receipt: opt-in external
   PC34 rows now retain canonical ten-byte Vi Altar EVENT payload counts,
   byte lengths, and fingerprints, together with their raw ordered C4

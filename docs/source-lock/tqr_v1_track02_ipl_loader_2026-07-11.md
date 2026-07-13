@@ -55,6 +55,14 @@ Both 17-sector second-stage bodies contain the identical literal `CD_READ` at
 CPU `$4090`: `AL=1`, `DH=1`, `BX=$3800`, then `JSR $e009`. Static inspection
 proves a one-sector local-RAM read and that `CL/CH/DL` remain live.
 
+An authenticated US-CUE/System Card 3.0 Mednafen trace separately records the
+two preceding loader calls at their executed PCs: `$40cd -> $e009` reads the
+live table bytes `00 e3 03 02`, and `$40a4 -> $e00f` reads `00 e7 03 11`.
+Their paired returns are `$40d0` and `$40a7`. The trace also retains CPU and
+bank state but does not assign any game-data role to those calls. The
+fail-closed `verify_theron_stage2_system_card_call_trace.sh` verifier locks
+these exact observed rows.
+
 On 2026-07-12, source-built Mednafen with the PCE/HuC6280 debugger and a
 minimal CD READ trace ran the authenticated original CUEs. The first read
 immediately after the 17-sector stage-two transfer was:
