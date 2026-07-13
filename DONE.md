@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron Track 02 capture-manifest hardening: rewrote the
+  provenance parser as an exact five-field format that rejects malformed or
+  non-canonical MD5s, control bytes in paths, reordered data, and trailing
+  fields. It remains evidence-only and cannot promote a Soul Room handoff.
+  Verification: `test_theron_v1_capture_manifest` and
+  `firestaff_theron_v1_runtime_trace_intake_probe` passed.
+
 - 2026-07-13 DM1 HoC C161 modal mirror guard: candidate selection now fails
   closed while ReDMCSB `REVIVE.C` F0281 rename state is live. A real-PC34
   regression proves a second C127 cannot replace the editable candidate; after
