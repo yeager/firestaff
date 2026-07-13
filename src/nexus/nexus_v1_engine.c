@@ -481,6 +481,8 @@ int nexus_v1_inspect_dgn_material_corpus(
             &level, &receipt.structure1f_wall_sensor_control_selectors[level_index]);
         (void)nexus_v1_level_structure1f_wall_sensor_model_rotation_pair_receipt(
             &level, &receipt.structure1f_wall_sensor_model_rotation_pairs[level_index]);
+        (void)nexus_v1_level_structure1f_wall_decoration_model_rotation_pair_receipt(
+            &level, &receipt.structure1f_wall_decoration_model_rotation_pairs[level_index]);
         (void)nexus_v1_level_structure1f_alcove_payload_selector_receipt(
             &level, &receipt.structure1f_alcove_payload_selectors[level_index]);
         (void)nexus_v1_level_structure1f_floor_sensor_control_selector_receipt(
@@ -568,6 +570,9 @@ int nexus_v1_inspect_dgn_material_corpus(
         }
         if (receipt.structure1f_wall_sensor_model_rotation_pairs[level_index].complete) {
             ++receipt.structure1f_wall_sensor_model_rotation_pair_complete_level_count;
+        }
+        if (receipt.structure1f_wall_decoration_model_rotation_pairs[level_index].complete) {
+            ++receipt.structure1f_wall_decoration_model_rotation_pair_complete_level_count;
         }
         if (receipt.structure1f_alcove_payload_selectors[level_index].complete) {
             ++receipt.structure1f_alcove_payload_selector_complete_level_count;
