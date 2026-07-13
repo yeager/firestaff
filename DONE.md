@@ -66,6 +66,13 @@
   added. Source: ReDMCSB `GROUP.C` F0190 and `DUNVIEW.C` F0115. Verification:
   focused CTest.
 
+- 2026-07-13 DM1 F0190 shared-tile effect ordering: a focused regression
+  completes the F0738 killed-all mutation, then places an existing C000 and
+  the source C040 on the same tile. The existing F0115 receipt retains both
+  source slots, types, and attacks in that order. Source: ReDMCSB `GROUP.C`
+  F0190:892-916 and `DUNVIEW.C` F0115. No renderer, cue fallback, or
+  synthetic effect was added. Verification: focused CTest.
+
 - 2026-07-13 DM1 F0190 C040 attack-domain regression: the existing
   killed-all M10-to-F0115 test now drives each source-valid size/attack pair
   (`quarter/110`, `half/190`, `full/255`) through the live explosion list and
