@@ -20,6 +20,12 @@
   F0280/F0282:745-805 and `DUNVIEW.C` F0107:3619-3706,3913-3928, F0128.
    Verification: focused CTest against installed PC34 data.
 
+- 2026-07-13 DM1 HoC C127 noncompact party guard: M11 now rejects a full
+  party with a missing middle slot instead of letting generic catalog
+  recruitment fill that hole. A dead-but-present middle champion remains a
+  full party. Source: ReDMCSB `REVIVE.C` F0280:124-133 and F0280:272-277.
+  Verification: focused M11 C127 party-layout regression.
+
 - 2026-07-13 Theron Track 02 capture-manifest hardening: rewrote the
   provenance parser as an exact five-field format that rejects malformed or
   non-canonical MD5s, control bytes in paths, reordered data, and trailing
