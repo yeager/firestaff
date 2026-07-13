@@ -140,6 +140,18 @@ typedef struct {
     uint32_t material_hash;
 } DM2_V1_WeatherDrawPlan;
 
+/* QUERY_TEMP_PICST resolves CD through the compressed dt04 rectangle table
+ * before DRAW_TEMP_PICST. This is a destination clip receipt only; it never
+ * grants permission to synthesize or blit weather pixels. */
+typedef struct {
+    int valid;
+    int16_t x;
+    int16_t y;
+    int16_t w;
+    int16_t h;
+    uint32_t table_hash;
+} DM2_V1_WeatherDestinationClip;
+
 int dm2_v1_weather_gdat_receipt(const DM2_V1_AssetLoader *loader, uint8_t graphicsset, DM2_V1_WeatherGdatReceipt *out);
 int dm2_v1_weather_gdat_command_receipt(
     const DM2_V1_AssetLoader *loader,
@@ -179,4 +191,13 @@ int dm2_v1_weather_gdat_draw_plan(
     const DM2_V1_WeatherCommandReceipt *command,
     const DM2_V1_WeatherDrawContext *context,
     DM2_V1_WeatherDrawPlan *out);
+
+/* Bounded QUERY_BLIT_RECT route for a verified weather command. The supplied
+ * bytes must be the original INTERFACE_GENERAL/0/dt04/0 table. Unsupported
+ * compressed-rectangle forms are deliberately rejected. */
+int dm2_v1_weather_gdat_destination_clip(
+    const uint8_t *rect_table,
+    size_t rect_table_size,
+    const DM2_V1_WeatherCommandReceipt *command,
+    DM2_V1_WeatherDestinationClip *out);
 #endif

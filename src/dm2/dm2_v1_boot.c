@@ -4224,6 +4224,55 @@ int dm2_v1_boot_weather_gdat_receipt(
         &gfx->loader, (uint8_t)graphicsset_index, out_receipt);
 }
 
+int dm2_v1_boot_weather_gdat_destination_receipt(
+    DM2_V1_BootProfile *profile,
+    int graphicsset_index,
+    DM2_V1_BootWeatherDestinationReceipt *out_receipt)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    DM2_V1_WeatherGdatReceipt weather;
+    const uint8_t *rect_table;
+    size_t rect_table_size = 0u;
+    unsigned int i;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->graphics_dat || graphicsset_index < 0 ||
+        graphicsset_index > 0xff ||
+        !dm2_v1_boot_weather_gdat_receipt(profile, graphicsset_index,
+                                           &weather) ||
+        !weather.valid) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    rect_table = dm2_v1_asset_load_typed_sized(
+        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &rect_table_size);
+    if (!rect_table || rect_table_size == 0u) return 0;
+    for (i = 0u; i < rect_table_size; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, rect_table[i]);
+    }
+    for (i = 0u; i < 6u; ++i) {
+        if (!dm2_v1_weather_gdat_destination_clip(
+                rect_table, rect_table_size, &weather.commands[i],
+                &out_receipt->clips[i])) {
+            memset(out_receipt, 0, sizeof(*out_receipt));
+            return 0;
+        }
+        out_receipt->destination_mask |= (1u << i);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, weather.commands[i].material_hash);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, out_receipt->clips[i].table_hash);
+    }
+    out_receipt->graphicsset = (uint8_t)graphicsset_index;
+    out_receipt->rect_table_hash = out_receipt->clips[0].table_hash;
+    out_receipt->receipt_hash = hash;
+    out_receipt->valid = out_receipt->rect_table_hash != 0u && hash != 0u;
+    return out_receipt->valid;
+}
+
 static int dm2_v1_boot_runtime_wall_gfx_image_offsets_receipt(
     DM2_V1_BootProfile *profile,
     uint32_t *out_hash,

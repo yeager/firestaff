@@ -7,6 +7,12 @@
 
 static int failures;
 
+static void put16le(uint8_t *p, uint16_t value)
+{
+    p[0] = (uint8_t)value;
+    p[1] = (uint8_t)(value >> 8);
+}
+
 static void check(int condition, const char *name)
 {
     if (!condition) {
@@ -33,6 +39,8 @@ int main(void)
     DM2_V1_WeatherOverlayPlan plan;
     DM2_V1_WeatherDrawContext draw_context;
     DM2_V1_WeatherDrawPlan draw_plan;
+    DM2_V1_WeatherDestinationClip destination_clip;
+    uint8_t rect_table[76];
     static const uint8_t source_commands[6] = {
         0x67u, 0x68u, 0x69u, 0x6au, 0x6bu, 0x6cu
     };
@@ -190,6 +198,35 @@ int main(void)
               plan.valid && plan.command_count == 0u &&
               plan.required_mask == 0u && plan.material_mask == 0u,
           "clear weather has an explicit empty source command plan");
+
+    memset(rect_table, 0, sizeof(rect_table));
+    put16le(rect_table, 0xfc0du);
+    put16le(rect_table + 2u, 2u);
+    put16le(rect_table + 4u, 6000u);
+    put16le(rect_table + 6u, 6006u);
+    put16le(rect_table + 8u, 6100u);
+    put16le(rect_table + 10u, 6100u);
+    /* Rect 6001: bottom-centred anchor -> helper rect 6100. */
+    rect_table[12u + 8u] = 7u;
+    put16le(rect_table + 12u + 8u + 2u, 6100u);
+    put16le(rect_table + 12u + 8u + 4u, 20u);
+    put16le(rect_table + 12u + 8u + 6u, 60u);
+    rect_table[68u] = 9u;
+    put16le(rect_table + 68u + 4u, 40u);
+    put16le(rect_table + 68u + 6u, 20u);
+    check(dm2_v1_weather_gdat_destination_clip(
+              rect_table, sizeof(rect_table), &receipt.commands[1],
+              &destination_clip) && destination_clip.valid &&
+              destination_clip.x == 0 && destination_clip.y == 82 &&
+              destination_clip.w == 40 && destination_clip.h == 20 &&
+              destination_clip.table_hash != 0u,
+          "weather CD resolves through the source dt04 destination clip");
+    receipt.commands[1].material_valid = 0;
+    check(!dm2_v1_weather_gdat_destination_clip(
+              rect_table, sizeof(rect_table), &receipt.commands[1],
+              &destination_clip),
+          "weather destination clip rejects an unverified image/palette pair");
+    receipt.commands[1].material_valid = 1;
 
     memset(&draw_context, 0, sizeof(draw_context));
     draw_context.direction = 3u;

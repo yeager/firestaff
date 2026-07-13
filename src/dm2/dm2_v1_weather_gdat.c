@@ -455,6 +455,129 @@ int dm2_v1_weather_gdat_draw_plan(
     return 1;
 }
 
+static uint16_t dm2_weather_le16(const uint8_t *p)
+{
+    return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+static int dm2_weather_rect_raw(const uint8_t *raw, size_t raw_size,
+                                uint16_t rect_id,
+                                DM2_V1_WeatherDestinationClip *out)
+{
+    uint16_t groups;
+    size_t pos;
+    uint16_t group;
+
+    if (!raw || raw_size < 4u || !out || dm2_weather_le16(raw) != 0xfc0du) {
+        return 0;
+    }
+    groups = dm2_weather_le16(raw + 2u);
+    if (groups == 0u || 4u + (size_t)groups * 4u > raw_size) return 0;
+    pos = 4u + (size_t)groups * 4u;
+    for (group = 0u; group < groups; ++group) {
+        uint16_t first = dm2_weather_le16(raw + 4u + (size_t)group * 4u);
+        uint16_t last = dm2_weather_le16(raw + 6u + (size_t)group * 4u);
+        size_t count = last >= first ? (size_t)(last - first + 1u) : 0u;
+        const uint8_t *row;
+
+        if (count == 0u || pos + count * 8u > raw_size) return 0;
+        if (rect_id < first || rect_id > last) {
+            pos += count * 8u;
+            continue;
+        }
+        row = raw + pos + (size_t)(rect_id - first) * 8u;
+        out->x = (int16_t)dm2_weather_le16(row);
+        out->y = (int16_t)dm2_weather_le16(row + 2u);
+        out->w = (int16_t)dm2_weather_le16(row + 4u);
+        out->h = (int16_t)dm2_weather_le16(row + 6u);
+        return 1;
+    }
+    return 0;
+}
+
+int dm2_v1_weather_gdat_destination_clip(
+    const uint8_t *rect_table,
+    size_t rect_table_size,
+    const DM2_V1_WeatherCommandReceipt *command,
+    DM2_V1_WeatherDestinationClip *out)
+{
+    DM2_V1_WeatherDestinationClip current;
+    DM2_V1_WeatherDestinationClip next;
+    uint32_t hash = 2166136261u;
+    int anchor;
+    int x;
+    int y;
+    int w;
+    int h;
+    size_t i;
+    int guard;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!rect_table || !command || !command->material_valid ||
+        command->rect_number == 0u ||
+        !dm2_weather_rect_raw(rect_table, rect_table_size,
+                              command->rect_number, &current) ||
+        current.y == 0 ||
+        !dm2_weather_rect_raw(rect_table, rect_table_size,
+                              (uint16_t)current.y, &next) ||
+        next.x != 9) {
+        return 0;
+    }
+
+    /* skproject/SKWIN/SkWinCore.cpp QUERY_BLIT_RECT (098D:05C6-098D:0891):
+     * weather's QUERY_TEMP_PICST supplies CD as rectno. Keep the bounded
+     * anchor/offset form already used by source-backed HUD placements; other
+     * compressed forms stay unavailable instead of receiving guessed clips. */
+    anchor = current.x;
+    x = current.w;
+    y = current.h;
+    w = next.w;
+    h = next.h;
+    for (guard = 0; current.y != 0 && guard < 16; ++guard) {
+        if (!dm2_weather_rect_raw(rect_table, rect_table_size,
+                                  (uint16_t)current.y, &next)) {
+            return 0;
+        }
+        if (next.x == 1) {
+            x += next.w;
+            y += next.h;
+        } else if (next.x == 9) {
+            int dx;
+            int dy;
+            switch (current.x) {
+            case 1: dx = current.w; dy = current.h; break;
+            case 4: dx = current.w; dy = current.h - (next.h - 1); break;
+            case 7: dx = current.w - ((next.w + 1) >> 1);
+                    dy = current.h - (next.h - 1); break;
+            default: return 0;
+            }
+            x += dx;
+            y += dy;
+        } else {
+            return 0;
+        }
+        current = next;
+    }
+    if (current.y != 0 || anchor < 1 || anchor > 8 || w <= 0 || h <= 0 ||
+        x < INT16_MIN || x > INT16_MAX || y < INT16_MIN || y > INT16_MAX ||
+        w > INT16_MAX || h > INT16_MAX) {
+        return 0;
+    }
+    out->x = (int16_t)((anchor == 1 || anchor == 4 || anchor == 8) ?
+                       x : x - ((w + 1) >> 1));
+    out->y = (int16_t)((anchor == 1 || anchor == 2 || anchor == 5) ?
+                       y : y - (h - 1));
+    out->w = (int16_t)w;
+    out->h = (int16_t)h;
+    for (i = 0u; i < rect_table_size; ++i) {
+        hash = dm2_weather_hash_step(hash, rect_table[i]);
+    }
+    out->table_hash = hash;
+    out->valid = hash != 0u;
+    return out->valid;
+}
+
 int dm2_v1_weather_gdat_command_receipt(
     const DM2_V1_AssetLoader *loader,
     uint8_t graphicsset,

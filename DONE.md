@@ -31,6 +31,16 @@
   semantics. Verification: Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
 
+- ✅ 2026-07-13 DM2 weather destination-clip handoff: source-owned
+  `ENVIRONMENT` IMG3/local-palette receipts now carry their `CD` values
+  through the original `INTERFACE_GENERAL/0/dt04/0` rectangle route and into
+  live frame ownership. The bounded `QUERY_BLIT_RECT` route rejects an absent
+  palette, malformed table, or unsupported compressed rectangle form; weather
+  remains no-draw. Verification: Ninja built
+  `test_dm2_v1_weather_gdat_receipt` and
+  `test_dm2_v1_weather_no_synthetic_overlay`; matching CTest passed 2/2;
+   `git diff --check` passed.
+
 - 2026-07-13 CSBWin restored terminal `TT_1` door timer bridge: an exact
   queue-slot/timer/event receipt now drives only the terminal closing
   byte-map door transition from low state 1 to 0 through the live tick queue.
