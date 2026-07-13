@@ -214,6 +214,12 @@ static void build_structure1f_fixture(uint8_t *structure1,
     structure1f[168 + 6] = (uint8_t)-128;
     structure1f[184 + 5] = 127U;
     structure1f[184 + 6] = (uint8_t)-128;
+    structure1f[112 + 7] = 5U;
+    structure1f[124 + 7] = 5U;
+    structure1f[136 + 7] = 7U;
+    structure1f[152 + 7] = 9U;
+    structure1f[168 + 7] = 9U;
+    structure1f[184 + 7] = 9U;
 }
 
 static void build_structure1g_fixture(uint8_t *structure1,
@@ -799,6 +805,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure1FRotationSelectorReceipt rotation_selectors;
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt face_rotation_pairs;
     Nexus_V1_DgnStructure1FOffsetPairReceipt offset_pairs;
+    Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt wall_payload_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt structure3_correlation;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
@@ -954,6 +961,21 @@ static void test_structure1f_semantics_and_bounds(void) {
           offset_pairs.maximum_offset_y == 2 &&
           offset_pairs.complete && !offset_pairs.offset_semantics_proven,
           "Structure1F signed offset pairs remain no-draw provenance");
+    CHECK(nexus_v1_level_structure1f_wall_payload_selector_receipt(
+              &level, &wall_payload_selectors) == 0 &&
+          wall_payload_selectors.structure1a_relation_complete &&
+          wall_payload_selectors.wall_payload_entry_count == 6 &&
+          wall_payload_selectors.resolved_payload_selector_count == 6 &&
+          wall_payload_selectors.wall_decoration_selector_count == 2 &&
+          wall_payload_selectors.wall_sensor_selector_count == 4 &&
+          wall_payload_selectors.unique_payload_selector_count == 3 &&
+          wall_payload_selectors.duplicate_payload_selector_count == 3 &&
+          wall_payload_selectors.zero_payload_selector_count == 0 &&
+          wall_payload_selectors.nonzero_payload_selector_count == 6 &&
+          wall_payload_selectors.highest_payload_selector == 9U &&
+          wall_payload_selectors.complete &&
+          !wall_payload_selectors.payload_semantics_proven,
+          "Structure1F wall payload selectors remain no-draw provenance");
     CHECK(nexus_v1_level_structure3_model_reference_receipt(
               &level, &structure3_model_references) == 0 &&
           structure3_model_references.structure1a_relation_complete &&
@@ -1085,6 +1107,9 @@ static void test_structure1f_semantics_and_bounds(void) {
           handoff.structure1f_offset_pairs.complete &&
           handoff.structure1f_offset_pairs.unique_offset_pair_count == 4 &&
           !handoff.structure1f_offset_pairs.offset_semantics_proven &&
+          handoff.structure1f_wall_payload_selectors.complete &&
+          handoff.structure1f_wall_payload_selectors.unique_payload_selector_count == 3 &&
+          !handoff.structure1f_wall_payload_selectors.payload_semantics_proven &&
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
     CHECK(handoff.status ==
@@ -1110,6 +1135,8 @@ static void test_structure1f_semantics_and_bounds(void) {
           !render_plan.structure1f_face_rotation_pairs.pair_semantics_proven &&
           render_plan.structure1f_offset_pairs.complete &&
           !render_plan.structure1f_offset_pairs.offset_semantics_proven &&
+          render_plan.structure1f_wall_payload_selectors.complete &&
+          !render_plan.structure1f_wall_payload_selectors.payload_semantics_proven &&
           render_plan.structure3_payload.valid &&
           render_plan.command_count == 0 && commands[0].kind == 0 &&
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready,

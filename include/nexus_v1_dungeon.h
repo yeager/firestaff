@@ -313,6 +313,24 @@ typedef struct {
     int offset_semantics_proven;
 } Nexus_V1_DgnStructure1FOffsetPairReceipt;
 
+/* Wall-decoration and wall-sensor records carry a raw byte at their original
+ * payload-selector slot. This receipt records byte reuse only; it is not an
+ * object, aspect, model, material, trigger, texture, palette, or pixel map. */
+typedef struct {
+    int structure1a_relation_complete;
+    int wall_payload_entry_count;
+    int resolved_payload_selector_count;
+    int wall_decoration_selector_count;
+    int wall_sensor_selector_count;
+    int unique_payload_selector_count;
+    int duplicate_payload_selector_count;
+    int zero_payload_selector_count;
+    int nonzero_payload_selector_count;
+    uint8_t highest_payload_selector;
+    int complete;
+    int payload_semantics_proven;
+} Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt;
+
 /* DMWeb DGN files: the container header names Structure3 with a block offset
  * and block count. The enclosed bytes have no established Saturn payload,
  * vertex, face, texture, palette, or draw grammar, so this is an envelope
@@ -738,6 +756,7 @@ typedef struct {
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt structure1f_face_rotation_pairs;
     Nexus_V1_DgnStructure1FOffsetPairReceipt structure1f_offset_pairs;
+    Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt structure1f_wall_payload_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     int structure1g_present;
     int structure1g_valid;
@@ -835,6 +854,7 @@ typedef struct {
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt structure1f_face_rotation_pairs;
     Nexus_V1_DgnStructure1FOffsetPairReceipt structure1f_offset_pairs;
+    Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt structure1f_wall_payload_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
@@ -903,6 +923,9 @@ int nexus_v1_level_structure1f_face_rotation_pair_receipt(
 int nexus_v1_level_structure1f_offset_pair_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FOffsetPairReceipt *out_receipt);
+int nexus_v1_level_structure1f_wall_payload_selector_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt *out_receipt);
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);
