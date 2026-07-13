@@ -60,11 +60,11 @@
   positive. The source inventory/status redraw has no restored UI owner, and
   timer families requiring omitted `timerWord8` object identity remain blocked.
 
-- 2026-07-13 CSBWin restored `TT_1` timer follow-up: the live queue now
-  admits only the exact terminal closing low-state `1 -> 0` byte-map door
-  step. Opening, party and creature collision branches, sounds, nonterminal
-  motion, and every timer requeue remain blocked until their complete saved
-  runtime state is source-backed.
+- 2026-07-13 CSBWin restored `TT_1` timer follow-up: collision-free original
+  door stepping and saved-owner requeue are live. Party damage, material-group
+  damage/reaction, source sound data, malformed Thing chains, and nonterminal
+  collision ownership remain blocked until their complete saved runtime state
+  is source-backed.
 
 - 2026-07-13 DM2 viewport source-material follow-up: source-required wall and
   door passes now reject a decoded GDAT image when its own IMG3 local-palette

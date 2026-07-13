@@ -16973,29 +16973,104 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     if (timer->function == 1u) {
         uint8_t *square;
         int square_type;
+        int door_state;
+        int next_door_state;
+        int thing;
+        int guard = 0;
+        int material_group_occupies = 0;
+        struct DM1_Event_V1 next;
+        int event_index;
 
         /* CSBWin CSBCode.cpp:6429 dispatches TT_1 to Timer.cpp:1224-1341.
-         * ReDMCSB TIMELINE.C F0241 lines 749-823 shows the equivalent door
-         * animation can requeue after nonterminal motion. Retain only the
-         * source terminal closing step: Effect 0 takes low state 1 to 0 and
-         * queues no successor. Opening, collisions, sounds, and every
-         * requeue path remain blocked until their full saved runtime state is
-         * owned. TT_1 aliases the shared C01 door-animation event, so even a
-         * malformed saved function-1 receipt must not fall through there. */
+         * Retain ProcessTT_1's collision-free state step and its exact
+         * +1-tick successor under the same saved TIMER/queue owner. Party
+         * damage, material-group damage, and QueueSound need source state
+         * not present in this profile, so those shapes remain fail-closed. */
         if (timer->valid && !timer->truncated &&
             timer->source_index == timer_index &&
             record->eventType == timer->function &&
             record->mapIndex == timer->level &&
             record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
             record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 && timer->ubyte9 == 0u) {
+            record->aux0 == timer->ubyte5 && timer->ubyte9 <= 1u) {
             square = csb_v1_runtime_square_byte_ptr(
                 profile, record->mapIndex, record->mapX, record->mapY,
                 &square_type);
-            if (square && square_type == 4 && (*square & 0x07u) == 1u) {
-                *square = (uint8_t)(*square & (uint8_t)~0x07u);
+            if (!square || square_type != 4) return 1;
+            door_state = *square & 0x07u;
+            if (door_state == 5) return 1;
+            if ((timer->ubyte9 == 0u && door_state == 0) ||
+                (timer->ubyte9 == 1u && door_state == 4)) {
+                return 1;
+            }
+
+            /* Timer.cpp probes the first group after its party route. A
+             * material group takes the damage/reaction path, which must not
+             * be replaced by a synthetic door animation. */
+            if (!profile->dungeon_handle) return 1;
+            if (timer->ubyte9 == 1u && door_state != 0 &&
+                profile->current_level == record->mapIndex &&
+                profile->party_x == record->mapX &&
+                profile->party_y == record->mapY) {
+                return 1;
+            }
+            thing = csb_v1_dungeon_get_first_thing(
+                profile->dungeon_handle, record->mapIndex, record->mapX,
+                record->mapY);
+            while (thing >= 0 && thing != 0xfffe && thing != 0xffff &&
+                   guard++ < 128) {
+                const uint8_t *thing_record;
+                int type;
+                int size;
+
+                thing_record = csb_v1_dungeon_get_thing_record(
+                    profile->dungeon_handle, (uint16_t)thing, &type, NULL,
+                    &size);
+                if (!thing_record || size < 2) return 1;
+                if (type == 4) {
+                    const struct CreatureBehaviorProfile_Compat *creature;
+
+                    if (size <= 4) return 1;
+                    creature = CREATURE_GetProfile_Compat((int)thing_record[4]);
+                    if (!creature) return 1;
+                    material_group_occupies =
+                        (creature->attributes & CREATURE_ATTR_MASK_NON_MATERIAL)
+                            == 0;
+                    break;
+                }
+                thing = csb_v1_runtime_sensor_next_thing(
+                    profile->dungeon_handle, (uint16_t)thing);
+            }
+            if (guard >= 128 || material_group_occupies) return 1;
+
+            next_door_state =
+                door_state + (timer->ubyte9 == 0u ? -1 : 1);
+            if ((timer->ubyte9 == 0u && next_door_state == 0) ||
+                (timer->ubyte9 == 1u && next_door_state == 4)) {
+                *square = (uint8_t)((*square & (uint8_t)~0x07u) |
+                                    (uint8_t)next_door_state);
+                return 1;
+            }
+            memset(&next, 0, sizeof(next));
+            next.map_time = DM1_MAP_TIME_MAKE(
+                timer->level, profile->game_time + 1u);
+            next.type = timer->function;
+            next.priority = timer->ubyte5;
+            next.b_mapX = timer->ubyte6;
+            next.b_mapY = timer->ubyte7;
+            next.c_cell = timer->ubyte8;
+            next.c_effect = timer->ubyte9;
+            event_index = csb_v1_runtime_add_timeline_event(profile, &next);
+            if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT) {
+                *square = (uint8_t)((*square & (uint8_t)~0x07u) |
+                                    (uint8_t)next_door_state);
+                timer->time = profile->game_time + 1u;
+                profile->csbwin_timeline_event_queue_slot[event_index] =
+                    queue_slot;
             }
         }
+        /* TT_1 aliases shared door animation. Invalid and collision-owned
+         * saved receipts must never reach that generic mutation path. */
         return 1;
     }
     if (timer->function == 12u) {
