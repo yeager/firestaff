@@ -994,9 +994,15 @@ void dm2_v1_viewport_set_gdat_interface_rect14(
     uint32_t hash)
 {
     if (!s) return;
-    s->gdat_interface_rect14_rows = rows;
-    s->gdat_interface_rect14_row_count = rows ? row_count : 0u;
-    s->gdat_interface_rect14_hash = rows ? hash : 0u;
+    /* skproject/SKWIN/SkWinCore.cpp QUERY_CREATURE_PICST consumes the
+     * LOAD_GDAT_INTERFACE_00_0A table only after runtime has checked its
+     * host receipt. An empty or unhashed buffer is never a drawable owner. */
+    s->gdat_interface_rect14_rows = rows && row_count > 0u && hash != 0u
+        ? rows : NULL;
+    s->gdat_interface_rect14_row_count =
+        s->gdat_interface_rect14_rows ? row_count : 0u;
+    s->gdat_interface_rect14_hash =
+        s->gdat_interface_rect14_rows ? hash : 0u;
     s->dirty = 1;
 }
 
@@ -4217,6 +4223,11 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                     s->last_creature_asset_src_stride =
                         src_stride > 0 ? src_stride : src_w;
                     drawn_asset = 1;
+                    if (c->rect14_applied) {
+                        /* Count only a rendered source-selected row, not a
+                         * parsed table or a speculative creature plan. */
+                        ++s->gdat_interface_rect14_consumed_count;
+                    }
                 }
             }
         }
