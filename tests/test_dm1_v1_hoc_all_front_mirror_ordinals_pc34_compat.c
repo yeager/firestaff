@@ -52,6 +52,33 @@ static int step_y(int direction)
     return kDy[direction & 3];
 }
 
+static int disable_front_mirror_sensor(M11_GameViewState* game, int mirrorOrdinal)
+{
+    unsigned short thing;
+    int mapX;
+    int mapY;
+    int safety = 0;
+
+    if (!game || !game->world.dungeon || !game->world.things) return 0;
+    mapX = game->world.party.mapX + step_x(game->world.party.direction);
+    mapY = game->world.party.mapY + step_y(game->world.party.direction);
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        game->world.dungeon, game->world.things, game->world.party.mapIndex, mapX, mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_SENSOR) {
+            int sensorIndex = (int)THING_GET_INDEX(thing);
+            if (sensorIndex >= 0 && sensorIndex < game->world.things->sensorCount &&
+                game->world.things->sensors[sensorIndex].sensorType == 127 &&
+                game->world.things->sensors[sensorIndex].sensorData == mirrorOrdinal) {
+                game->world.things->sensors[sensorIndex].sensorType = 0;
+                return 1;
+            }
+        }
+        thing = next_thing(game->world.things, thing);
+    }
+    return 0;
+}
+
 static int portrait_cutout_matches(const unsigned char* left,
                                    const unsigned char* right)
 {
@@ -766,6 +793,77 @@ int main(int argc, char** argv)
             }
         }
         M11_GameView_Shutdown(&leaderGame);
+    }
+
+    /* REVIVE.C F0282:744-783 clears the appended candidate without needing
+     * to re-read C127. Model the source-compatible edge where the source
+     * sensor becomes disabled after F0281 has blanked the candidate name:
+     * C162 must clear only the tail and leave the nonzero leader plus its
+     * portrait intact, while the obsolete C026 source cannot linger. */
+    if (firstOrdinal >= 0) {
+        M12_StartupMenuState disabledMenu;
+        M11_GameViewState disabledGame;
+        unsigned char beforeDisable[320 * 200];
+        unsigned char afterCancel[320 * 200];
+        unsigned char leaderPortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+        char leaderName[16];
+        int existingA = (firstOrdinal + 1) % 24;
+        int existingB = (firstOrdinal + 2) % 24;
+        int candidateIndex;
+
+        leaderName[0] = '\0';
+        if (!open_game(dataDir, &disabledMenu, &disabledGame)) {
+            fprintf(stderr, "FAIL could not open disabled-source C161 game\n");
+            ok = 0;
+        } else if (!M11_GameView_RecruitChampionByMirrorOrdinal(&disabledGame, existingA) ||
+                   !M11_GameView_RecruitChampionByMirrorOrdinal(&disabledGame, existingB)) {
+            fprintf(stderr, "FAIL HoC disabled-source party setup\n");
+            ok = 0;
+        } else {
+            disabledGame.world.party.activeChampionIndex = 1;
+            disabledGame.world.party.mapIndex = 0;
+            disabledGame.world.party.mapX = firstPartyX;
+            disabledGame.world.party.mapY = firstPartyY;
+            disabledGame.world.party.direction = firstDirection;
+            F0628_CHAMPION_UnpackName_Compat(&disabledGame.world.party.champions[1],
+                                              leaderName, sizeof(leaderName));
+            memcpy(leaderPortrait, disabledGame.world.party.champions[1].portraitBitmap,
+                   sizeof(leaderPortrait));
+            M11_GameView_Draw(&disabledGame, beforeDisable, 320, 200);
+            if (!M11_GameView_SelectFrontMirrorCandidate(&disabledGame) ||
+                !M11_GameView_BeginMirrorCandidateReincarnateRename(&disabledGame)) {
+                fprintf(stderr, "FAIL HoC disabled-source C127/C161 setup\n");
+                ok = 0;
+            } else {
+                candidateIndex = disabledGame.candidateMirrorPartyIndex;
+                if (candidateIndex != 2 ||
+                    !disable_front_mirror_sensor(&disabledGame, firstOrdinal) ||
+                    M11_GameView_GetFrontMirrorOrdinal(&disabledGame) != -1 ||
+                    !M11_GameView_CancelMirrorCandidate(&disabledGame) ||
+                    disabledGame.candidateMirrorPanelActive ||
+                    disabledGame.candidateMirrorRenameActive ||
+                    disabledGame.candidateMirrorOrdinal != -1 ||
+                    disabledGame.candidateMirrorPartyIndex != -1 ||
+                    disabledGame.world.party.championCount != 2 ||
+                    disabledGame.world.party.activeChampionIndex != 1 ||
+                    disabledGame.world.party.champions[candidateIndex].present ||
+                    !champion_name_matches(&disabledGame.world.party.champions[1], leaderName) ||
+                    memcmp(disabledGame.world.party.champions[1].portraitBitmap,
+                           leaderPortrait, sizeof(leaderPortrait)) != 0) {
+                    fprintf(stderr,
+                            "FAIL HoC disabled-source C161/C162 cleanup or leader state\n");
+                    ok = 0;
+                } else {
+                    M11_GameView_Draw(&disabledGame, afterCancel, 320, 200);
+                    if (portrait_cutout_matches(beforeDisable, afterCancel)) {
+                        fprintf(stderr,
+                                "FAIL HoC disabled source left stale C026 portrait after C162\n");
+                        ok = 0;
+                    }
+                }
+            }
+        }
+        M11_GameView_Shutdown(&disabledGame);
     }
 
     printf("probe=dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat\n");
