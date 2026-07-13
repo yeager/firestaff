@@ -2248,6 +2248,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     DM2_V1_InterfaceHudLayout hud_layout;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
     DM2_V1_DialogueBoxHostCommand save_dialogue_command;
+    DM2_V1_DialogueOpenPanelHostCommand save_dialogue_open_panel;
 
     if (!framebuffer || fb_stride <= 0 ||
         view_w < DM2_VP_WIDTH || view_h < DM2_VP_HEIGHT) {
@@ -2260,6 +2261,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
            sizeof(g_dm2_last_projectile_render));
     memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
     memset(&save_dialogue_command, 0, sizeof(save_dialogue_command));
+    memset(&save_dialogue_open_panel, 0, sizeof(save_dialogue_open_panel));
     dm2_v1_viewport_init(&viewport, framebuffer, fb_stride);
     dm2_v1_viewport_set_party(&viewport, party_dir, party_x, party_y);
     dm2_v1_viewport_set_level(&viewport, rt->dungeon_level);
@@ -2365,6 +2367,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
      * substitute an inferred rectangle or a launcher panel. */
     (void)dm2_v1_boot_dialogue_box_host_command(
         rt->boot, &save_dialogue_command);
+    /* Keep c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL as one original GDAT
+     * command: it carries the panel, GDAT button labels and raw4 locations.
+     * M11 decides when a save/load session is active; this frame path never
+     * invents a panel, labels, colours, or coordinates. */
+    (void)dm2_v1_boot_dialogue_open_panel_host_command(
+        rt->boot, &save_dialogue_open_panel);
     dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
@@ -2639,14 +2647,25 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         save_dialogue_command.draw.valid;
     g_dm2_frame_ownership.gdat_save_dialogue_host_command_ready =
         save_dialogue_command.valid;
+    g_dm2_frame_ownership.gdat_save_dialogue_open_panel_ready =
+        save_dialogue_open_panel.valid;
     g_dm2_frame_ownership.gdat_save_dialogue_material_hash =
         save_dialogue_command.draw.valid
             ? save_dialogue_command.draw.plan_hash : 0u;
     g_dm2_frame_ownership.gdat_save_dialogue_host_command_hash =
         save_dialogue_command.valid ? save_dialogue_command.command_hash : 0u;
+    g_dm2_frame_ownership.gdat_save_dialogue_open_panel_hash =
+        save_dialogue_open_panel.valid
+            ? save_dialogue_open_panel.command_hash : 0u;
     g_dm2_frame_ownership.gdat_save_dialogue_rect_index =
         save_dialogue_command.valid
             ? save_dialogue_command.draw.expanded_rect_index : 0u;
+    g_dm2_frame_ownership.gdat_save_dialogue_open_panel_rect_index =
+        save_dialogue_open_panel.valid
+            ? save_dialogue_open_panel.draw.panel_rect_index : 0u;
+    g_dm2_frame_ownership.gdat_save_dialogue_open_panel_save_list_rect_index =
+        save_dialogue_open_panel.valid
+            ? save_dialogue_open_panel.draw.save_list_rect_index : 0u;
     g_dm2_frame_ownership.gdat_save_dialogue_x =
         save_dialogue_command.valid ? save_dialogue_command.rect.x : 0;
     g_dm2_frame_ownership.gdat_save_dialogue_y =
