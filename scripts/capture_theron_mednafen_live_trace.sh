@@ -95,5 +95,19 @@ if ! grep -Eq '^cd_interface_raw_sector_read lba=[0-9]+ bytes=2352 span_offset=0
     printf 'BLOCKED: dynamic CPU receipts lack a bounded authentic raw-sector span (exit=%s)\n' "$status"
     exit 1
 fi
+if ! awk '
+    /^pce_input_(read|write) / { saw_input = 1 }
+    /^pce_cd_irq cpu_pc=/ { saw_irq = 1 }
+    /^pce_cd_register_read cpu_pc=[0-9a-b][0-9a-f]{3} / { saw_non_system_card = 1 }
+    /^cd_interface_raw_sector_read / {
+        reached_sector = 1
+        passed = saw_input && saw_irq && saw_non_system_card
+        exit
+    }
+    END { exit !(reached_sector && passed) }
+' "$cd_trace"; then
+    printf 'BLOCKED: raw sector span lacks prior input, CDIRQ, and non-System-Card PCECD caller receipts (exit=%s)\n' "$status"
+    exit 1
+fi
 
 printf 'PASS: live trace contains combined CD/controller/HuC6260 and raw-sector span receipts (exit=%s)\n' "$status"

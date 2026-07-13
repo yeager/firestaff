@@ -27,6 +27,11 @@ if ! grep -Fq 'dynamic CPU receipts lack a bounded authentic raw-sector span' "$
     printf 'FAIL: capture script must gate dynamic reads on an authentic raw-sector span\n' >&2
     exit 1
 fi
+if ! grep -Fq 'raw sector span lacks prior input, CDIRQ, and non-System-Card PCECD caller receipts' "$script" ||
+   ! grep -Fq 'pce_cd_register_read cpu_pc=[0-9a-b][0-9a-f]{3}' "$script"; then
+    printf 'FAIL: capture script must gate raw sectors on observed non-System-Card caller evidence\n' >&2
+    exit 1
+fi
 
 output=$(env -u MEDNAFEN_BIN -u THERON_US_CUE -u THERON_SYSTEM_CARD \
     -u THERON_LIVE_TRACE_OUTPUT "$script")
