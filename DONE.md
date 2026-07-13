@@ -8,6 +8,9 @@
 - 2026-07-13 DM1 original PC34 C29 group-reaction export now requires the
   existing typed SFT-chain receipt. Source: ReDMCSB `TIMELINE.C` F0261 and
   `GROUP.C` F0209. Verification: Ninja and CTest handoff gate.
+- 2026-07-13 DM2 per-file corpus import receipt: runtime now parses the
+  selected SKSave payload before import and accepts only a verified Firestaff
+  session. Original envelope/raw candidates remain fail-closed corpus evidence.
 
 - 2026-07-13 Nexus Structure1F raw floor-decoration rotation receipt: complete.
   Direct floor decorations retain raw rotation-selector reuse through the DGN
