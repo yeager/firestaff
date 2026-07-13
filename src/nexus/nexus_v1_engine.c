@@ -30,6 +30,7 @@ static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"FACE.BIN", "bd9ca16ea68043984e2804067b6cd66f"},
     {"FONT256.S2D", "427735a9997e692d85f2d81158dba423"},
     {"MENU.BPK", "c2776768ff25287c79013a1452253ca0"},
+    {"ITEM.IBS", "309dc91bd14ded1223c72dd6c743f17c"},
     {"SN_FLOOR.MNS", "85c517e8e0bd84e00da58295dca5b409"},
     {"SN_WALL.MNS", "ae67ca9fa8d09481e1849a42aaaa2eb6"},
     {"LEV00.DGN", "603ec9c531a92539babdda84ab09e78e"},
@@ -866,6 +867,11 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     memset(&plan->structure2_floor_command_source_receipt, 0,
            sizeof(plan->structure2_floor_command_source_receipt));
     plan->structure2_floor_command_sources_consumed = 0;
+    memset(plan->structure1f_item_command_bindings, 0,
+           sizeof(plan->structure1f_item_command_bindings));
+    memset(&plan->structure1f_item_command_binding_receipt, 0,
+           sizeof(plan->structure1f_item_command_binding_receipt));
+    plan->structure1f_item_command_sources_consumed = 0;
     plan->level = engine->game.current_level;
     plan->party_x = party_x;
     plan->party_y = party_y;
@@ -949,6 +955,30 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         plan->structure2_floor_command_source_receipt.complete &&
         !plan->structure2_floor_command_source_receipt
             .fallback_visuals_permitted;
+    /* Direct Structure1Fa records get the same one-way host consumption.
+     * The binder returns only original ITEM.IBS descriptor references for
+     * floor commands in the current view; it cannot turn an icon/floor byte
+     * stream into a raster surface. Unseen records remain covered by the
+     * existing Structure1F no-draw gate. */
+    if (engine->item_ibs_runtime_source.source_bound) {
+        if (nexus_v1_dgn_bind_structure1f_item_materials(
+                &engine->current_level, &engine->item_ibs_bank,
+                plan->commands, plan->receipt.command_count,
+                plan->structure1f_item_command_bindings,
+                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+                &plan->structure1f_item_command_binding_receipt) != 0) {
+            plan->receipt.blocks_real_dgn_mesh_render = 1;
+            plan->receipt.fallback_visuals_permitted = 0;
+            return NULL;
+        }
+        plan->structure1f_item_command_sources_consumed =
+            (plan->structure1f_item_command_binding_receipt
+                 .bound_regular_inventory_count +
+             plan->structure1f_item_command_binding_receipt
+                 .bound_special_floor_palette_count) > 0 &&
+            !plan->structure1f_item_command_binding_receipt
+                 .fallback_visuals_permitted;
+    }
     if (!plan->receipt.plan_ready) {
         return NULL;
     }
@@ -1522,6 +1552,32 @@ uint8_t *nexus_v1_read_file(Nexus_V1_Engine *engine, const char *name, int *out_
     return buf;
 }
 
+static void nexus_v1_load_item_ibs_runtime_source(Nexus_V1_Engine *engine)
+{
+    uint8_t *data;
+    int size = 0;
+
+    if (!engine) return;
+    memset(&engine->item_ibs_bank, 0, sizeof(engine->item_ibs_bank));
+    memset(&engine->item_ibs_runtime_source, 0,
+           sizeof(engine->item_ibs_runtime_source));
+    engine->item_ibs_runtime_source.fallback_visuals_permitted = 0;
+    (void)nexus_v1_level_aux_source_receipt(
+        engine, "ITEM.IBS", &engine->item_ibs_runtime_source.source);
+    if (!engine->item_ibs_runtime_source.source.canonical_hash_verified) {
+        return;
+    }
+    data = nexus_v1_read_file(engine, "ITEM.IBS", &size);
+    if (!data) return;
+    engine->item_ibs_runtime_source.parsed_bank_valid =
+        nexus_v1_item_ibs_parse_verified(
+            data, size, 1, &engine->item_ibs_bank) == 0;
+    free(data);
+    engine->item_ibs_runtime_source.source_bound =
+        engine->item_ibs_runtime_source.parsed_bank_valid &&
+        engine->item_ibs_runtime_source.source.canonical_hash_verified;
+}
+
 int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     char name[32];
     char script_name[32];
@@ -1552,6 +1608,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
         free(data);
         return -1;
     }
+    nexus_v1_load_item_ibs_runtime_source(engine);
     (void)nexus_v1_decode_structure2_animation_materials(engine, data, size);
     free(data);
     (void)nexus_v1_structure2_source_receipt(
