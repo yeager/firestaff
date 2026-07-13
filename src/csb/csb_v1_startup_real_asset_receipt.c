@@ -290,6 +290,113 @@ int csb_v1_startup_real_receipt_recompute_hash(
            strcmp(old_hex, receipt->receipt_hash_hex) == 0;
 }
 
+static int csb_v1_startup_real_surface_matches_pc34(
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface, int asset_id,
+    int width, int height, int transparent_color)
+{
+    return surface && surface->valid && surface->pixels &&
+        surface->source_asset_id == asset_id && surface->width == width &&
+        surface->height == height && surface->transparent_color == transparent_color;
+}
+
+static void csb_v1_startup_real_hash_surface_pc34(
+    uint64_t *hash, const CSB_V1_StartupRuntimeSurface_PC34 *surface)
+{
+    size_t pixel_count;
+
+    if (!hash || !surface || !surface->pixels || surface->width <= 0 ||
+        surface->height <= 0) {
+        return;
+    }
+    pixel_count = (size_t)surface->width * (size_t)surface->height;
+    csb_v1_startup_real_hash_u64(hash, (uint64_t)surface->source_asset_id);
+    csb_v1_startup_real_hash_u64(hash, (uint64_t)surface->source_x);
+    csb_v1_startup_real_hash_u64(hash, (uint64_t)surface->source_y);
+    csb_v1_startup_real_hash_u64(hash, (uint64_t)surface->width);
+    csb_v1_startup_real_hash_u64(hash, (uint64_t)surface->height);
+    csb_v1_startup_real_hash_u64(hash, (uint64_t)surface->transparent_color);
+    csb_v1_startup_real_hash_bytes(hash, surface->pixels, pixel_count);
+}
+
+int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
+    const CSB_V1_StartupRealReceipt *real_asset_receipt,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupRealReceipt checked_receipt;
+    const CSB_V1_StartupRuntimeSurface_PC34 *title;
+    const CSB_V1_StartupRuntimeSurface_PC34 *presents;
+    const CSB_V1_StartupRuntimeSurface_PC34 *chaos;
+    const CSB_V1_StartupRuntimeSurface_PC34 *strikes;
+    const CSB_V1_StartupRuntimeSurface_PC34 *c017;
+    const CSB_V1_StartupRuntimeSurface_PC34 *c040;
+    CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
+    uint64_t hash = CSB_V1_STARTUP_REAL_FNV_OFFSET;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!real_asset_receipt || !session || !out_receipt) {
+        return 0;
+    }
+    checked_receipt = *real_asset_receipt;
+    if (!checked_receipt.matched || !checked_receipt.assets_verified ||
+        !checked_receipt.graphics_verified || !checked_receipt.dungeon_verified ||
+        checked_receipt.variant_id != CSB_V1_VARIANT_PC34_EN ||
+        checked_receipt.graphics_kind != CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS ||
+        !csb_v1_startup_real_receipt_recompute_hash(&checked_receipt) ||
+        !csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+            session, &full_runtime) || !full_runtime.valid ||
+        !full_runtime.real_asset_matched || !full_runtime.title_sequence_ready ||
+        !full_runtime.hud_ready || !full_runtime.title_to_hud_same_session ||
+        !full_runtime.no_legacy_wrappers || session->generation == 0u) {
+        return 0;
+    }
+    title = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
+    presents = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
+    chaos = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
+    strikes = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
+    c017 = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+    c040 = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+    if (!session->surfaces.valid || !session->surfaces.real_asset_matched ||
+        !session->surfaces.title_regions_ready || !session->surfaces.hud_surfaces_ready ||
+        !csb_v1_startup_real_surface_matches_pc34(title, 1, 320, 153, -1) ||
+        !csb_v1_startup_real_surface_matches_pc34(presents, 1, 320, 16, -1) ||
+        !csb_v1_startup_real_surface_matches_pc34(chaos, 1, 320, 80, -1) ||
+        !csb_v1_startup_real_surface_matches_pc34(strikes, 1, 320, 57, 0) ||
+        !csb_v1_startup_real_surface_matches_pc34(c017, 17, 224, 136, -1) ||
+        !csb_v1_startup_real_surface_matches_pc34(c040, 40, 144, 73, 6)) {
+        return 0;
+    }
+
+    csb_v1_startup_real_hash_string(&hash, "firestaff:csb:v1:pc34-package-consumption");
+    csb_v1_startup_real_hash_u64(&hash, checked_receipt.receipt_hash);
+    csb_v1_startup_real_hash_surface_pc34(&hash, title);
+    csb_v1_startup_real_hash_surface_pc34(&hash, presents);
+    csb_v1_startup_real_hash_surface_pc34(&hash, chaos);
+    csb_v1_startup_real_hash_surface_pc34(&hash, strikes);
+    csb_v1_startup_real_hash_surface_pc34(&hash, c017);
+    csb_v1_startup_real_hash_surface_pc34(&hash, c040);
+    csb_v1_startup_real_hash_u64(&hash, session->source_tick);
+    csb_v1_startup_real_hash_u64(&hash, session->generation);
+    out_receipt->real_package_matched = 1;
+    out_receipt->c001_title_consumed = 1;
+    out_receipt->c001_presents_consumed = 1;
+    out_receipt->c001_chaos_consumed = 1;
+    out_receipt->c001_strikes_back_consumed = 1;
+    out_receipt->c017_hud_consumed = 1;
+    out_receipt->c040_hud_consumed = 1;
+    out_receipt->title_to_hud_same_session = 1;
+    out_receipt->no_legacy_wrappers = 1;
+    out_receipt->no_fallback_routes = 1;
+    out_receipt->source_tick = session->source_tick;
+    out_receipt->session_generation = session->generation;
+    out_receipt->real_asset_receipt_hash = checked_receipt.receipt_hash;
+    out_receipt->consumed_surface_hash = hash ? hash : 1u;
+    out_receipt->valid = 1;
+    return 1;
+}
+
 const char *csb_v1_startup_real_result_name(int result)
 {
     switch (result) {

@@ -50,6 +50,8 @@
 extern "C" {
 #endif
 
+struct CSB_V1_StartupRuntimeAssetSession_PC34;
+
 /* ── Result codes ─────────────────────────────────────────────────── */
 
 typedef enum {
@@ -131,6 +133,33 @@ typedef struct {
     char asset_root[CSB_V1_STARTUP_REAL_PATH_CAP];
 } CSB_V1_StartupRealReceipt;
 
+/* A terminal PC 3.4 startup session can only be presented after its decoded
+ * C001 title zones and C017/C040 HUD pixels are tied back to a verified
+ * package receipt.  This is deliberately a consumption receipt, not a frame
+ * generator: it accepts only the owned session opened from GRAPHICS.DAT and
+ * never carries fallback text, wrapper surfaces, or generated pixels.
+ *
+ * ReDMCSB TITLE.C F0437 keeps C001 resident for PRESENTS/CHAOS/STRIKES;
+ * PANEL.C F0346/F0347 returns from C040 to C017 after ENTRANCE.C F0807 has
+ * completed. */
+typedef struct {
+    int valid;
+    int real_package_matched;
+    int c001_title_consumed;
+    int c001_presents_consumed;
+    int c001_chaos_consumed;
+    int c001_strikes_back_consumed;
+    int c017_hud_consumed;
+    int c040_hud_consumed;
+    int title_to_hud_same_session;
+    int no_legacy_wrappers;
+    int no_fallback_routes;
+    uint32_t source_tick;
+    uint32_t session_generation;
+    uint64_t real_asset_receipt_hash;
+    uint64_t consumed_surface_hash;
+} CSB_V1_StartupRealPackageConsumptionReceipt_PC34;
+
 /* Initialize an empty (skip-safe) receipt. */
 void csb_v1_startup_real_receipt_init(CSB_V1_StartupRealReceipt *receipt);
 
@@ -189,6 +218,16 @@ int csb_v1_startup_real_scan_and_receipt(const char *data_dir,
  */
 int csb_v1_startup_real_receipt_recompute_hash(
     CSB_V1_StartupRealReceipt *receipt);
+
+/* Build a fail-closed receipt for the real PC34 C001/C017/C040 handoff.
+ * `session` must be the opaque startup session opened by
+ * csb_v1_boot_startup_runtime_asset_session_open_pc34() and advanced through
+ * the title, entrance, and HUD owners.  The forward declaration keeps this
+ * metadata header independent of the boot implementation. */
+int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
+    const CSB_V1_StartupRealReceipt *real_asset_receipt,
+    const struct CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *out_receipt);
 
 /*
  * Return a stable, NUL-terminated string for a result code.
