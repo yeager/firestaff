@@ -431,10 +431,12 @@ ReDMCSB WIP 2021-02-06 source tree.
   TT_TELEPORTER now reaches only its pre-cell-mutation ActivateDSA receipt;
   its cell mutation and WiggleEverything path remain blocked. TT_PITROOM
   likewise reaches only its pre-mutation ActivateDSA receipt; pit flags and
-  fall-through movement remain blocked. TT_DOOR likewise reaches only its
-  pre-requeue ActivateDSA receipt; door cell changes and the TT_1 requeue
-  path remain blocked. TT_DESSAGE reaches only its zero-parameter type-47
-  OPENROOM receipt; text/cell/other-actuator effects remain blocked.
+  fall-through movement remain blocked. TT_DOOR now retains the exact
+  same-time TT_1 handoff only when its saved square has no type-47 owner;
+  type-47 squares still reach only their pre-requeue ActivateDSA receipt and
+  door cell changes remain blocked. TT_DESSAGE reaches only its
+  zero-parameter type-47 OPENROOM receipt; text/cell/other-actuator effects
+  remain blocked.
   TT_ParameterMessage now reaches its authenticated EXPOOL payload route;
   missing/altered payloads and non-DSA source effects remain blocked.
   TT_BASH_DOOR now has its own exact saved queue receipt, so it cannot fall
