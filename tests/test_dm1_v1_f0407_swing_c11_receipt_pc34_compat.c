@@ -49,6 +49,8 @@ int main(void)
     unsigned char actions[3];
     const struct TimelineEvent_Compat* event;
     int swingRow = -1;
+    int actionDefenseAfterBegin;
+    unsigned int c11Tick;
     int i;
 
     memset(&state, 0, sizeof(state));
@@ -128,5 +130,22 @@ int main(void)
     assert(event->aux1 == 0);
     assert(event->fireAtTick == state.world.gameTick +
            state.actionDisabledTicks[0]);
+    actionDefenseAfterBegin = state.world.party.champions[0].actionDefense;
+    c11Tick = event->fireAtTick;
+    assert(actionDefenseAfterBegin != 0);
+
+    /* The real F0330 C11 owner reaches TIMELINE.C F0253 through the normal
+     * M11 idle tick.  Its ordinal-zero SWING receipt must restore the action
+     * state once and retire the host cooldown mirror, not let that mirror
+     * replay F0253 after the emission. */
+    while (state.world.gameTick < c11Tick) {
+        assert(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW);
+    }
+    assert(state.world.party.champions[0].actionDefense == 0);
+    assert(state.world.party.champions[0].actionIndex == 0xFFu);
+    assert(state.actionDisabledTicks[0] == 0u);
+    assert(state.actionDisabledIndex[0] == 0xFFu);
+    assert(state.actionEnableSlotOrdinal[0] == 0xFFu);
+    assert(state.dm1LiveActionEffects.count == 0);
     return 0;
 }
