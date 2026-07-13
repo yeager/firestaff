@@ -3516,6 +3516,8 @@ static void test_corpus_roundtrip_proof(void)
     int written = 0;
     int i;
     int receipts_valid = 1;
+    int eligible_discoveries = 0;
+    int rejected_discoveries = 0;
     DM1OriginalSavePC34CorpusRoundtripReport report;
     int rc;
 
@@ -3546,6 +3548,32 @@ static void test_corpus_roundtrip_proof(void)
           "corpus roundtrip scan succeeds");
     CHECK(report.scan_succeeded == 1, "corpus scan receipt succeeds");
     CHECK(report.scanned_file_count == 3, "corpus scans all files");
+    CHECK(report.discovery_file_count == 3 &&
+          report.discovery_receipt_count == 3 &&
+          report.discovery_pc34_header_count == 2 &&
+          report.discovery_loader_envelope_count == 2 &&
+          report.discovery_rejected_count == 1 &&
+          report.discovery_truncated_count == 0,
+          "corpus discovery records accepted and rejected files separately");
+    for (i = 0; i < report.discovery_receipt_count; ++i) {
+        const DM1OriginalSavePC34CorpusDiscoveryReceipt *discovery =
+            &report.discovery_receipts[i];
+        if (discovery->roundtrip_eligible) {
+            if (discovery->header_prefix_fingerprint != 0u &&
+                discovery->external_original && discovery->result ==
+                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                ++eligible_discoveries;
+            }
+        } else if (discovery->result ==
+                       DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34 &&
+                   discovery->reason[0] != '\0') {
+            ++rejected_discoveries;
+        }
+    }
+    CHECK(eligible_discoveries == 2,
+          "eligible discovery receipts retain header bytes and results");
+    CHECK(rejected_discoveries == 1,
+          "rejected discovery receipt retains explicit reason");
     CHECK(report.pc34_candidate_count == 2, "corpus selects only PC34 files");
     CHECK(report.roundtrip_attempted_count == 2,
           "corpus roundtrips every eligible file");
@@ -3581,6 +3609,12 @@ static void test_corpus_roundtrip_proof(void)
     CHECK(dm1_v1_original_save_pc34_roundtrip_corpus_root(NULL, &report) ==
               DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
           "corpus helper rejects null root");
+    memset(&report, 0, sizeof(report));
+    CHECK(dm1_v1_original_save_pc34_roundtrip_corpus_root(
+              "missing-firestaff-dm1-pc34-corpus", &report) ==
+              DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE &&
+          report.discovery_root_error && !report.scan_succeeded,
+          "missing corpus root publishes an explicit discovery error");
 
     remove(rejected_path);
     remove(second_path);
@@ -3609,6 +3643,10 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
           "real PC34 corpus scan completes");
     CHECK(report.scan_succeeded == 1,
           "real PC34 corpus publishes a scan receipt");
+    CHECK(!report.discovery_root_error && report.discovery_receipt_count ==
+              report.discovery_file_count &&
+          report.discovery_truncated_count == 0,
+          "real PC34 corpus discovery is complete and explicitly scoped");
     CHECK(report.roundtrip_failed_count == 0,
           "real PC34 corpus has no failed external roundtrip");
     CHECK(report.firestaff_manifest_rejected_count == 0,

@@ -1196,6 +1196,14 @@ and real community-save corpus round-trip evidence.
     Firestaff manifests and nonoriginal envelopes remain explicit rejected
     rows and never enter import/export. Remaining work is broader original
     dungeon-tail import breadth and independently collected community saves.
+  - 2026-07-13 update: opt-in corpus discovery is now scoped to its explicit
+    directory only. Each inspected regular file records size, header-prefix
+    bytes fingerprint, classifier shape/reason, eligibility, and final error
+    or roundtrip result; missing roots are explicit errors rather than empty
+    successes. Real-corpus verification rejects discovery truncation and an
+    empty candidate set. It neither searches game-data roots nor opens other
+    games. Remaining work is independently collected external PC34 saves,
+    not broader filesystem discovery or a synthetic corpus.
   - 2026-07-13 update: corpus verification now compares the optional F0433/
     F0435 dungeon tail as raw original bytes after the four portrait payloads.
     A source tail must retain checksum-qualified size, fingerprint, and exact

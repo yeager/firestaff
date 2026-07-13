@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 external-corpus discovery receipts: the opt-in corpus
+  root must now be a readable directory and every inspected regular file
+  receives a path, size, header-prefix fingerprint, classifier reason, and
+  explicit eligible/rejected result before any F0435 handoff. Manifest-bearing
+  exports stay excluded and no default data root or other game is searched.
+  Missing roots publish a discovery error; an opt-in real corpus also rejects
+  truncation and an empty external-candidate set. Verification: focused
+  native-PC34 handoff CTest covers eligible, rejected, and missing-root
+  receipts.
+
 - 2026-07-13 DM1 PC34 real-corpus dungeon-tail receipt: F0435 -> F0433 ->
   F0435 corpus verification now compares every observed original dungeon tail
   byte-for-byte after the four external portraits, using the ReDMCSB F0433/
