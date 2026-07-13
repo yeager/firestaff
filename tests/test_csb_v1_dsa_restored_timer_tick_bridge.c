@@ -339,5 +339,34 @@ int main(void)
     check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
               csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x82u,
           "nonterminal restored door timer remains blocked without source requeue");
+
+    profile.csbwin_character_tail_invisible = 2u;
+    profile.csbwin_timers[0].function = 71u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_invisible == 1u,
+          "restored invisibility-expiry timer decrements its source party count");
+
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_invisible == 1u,
+          "stale invisibility-expiry identity cannot change the party count");
+
+    profile.csbwin_character_tail_invisible = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_invisible == 0u,
+          "invisibility expiry fails closed rather than underflowing a zero count");
     return failures == 0 ? 0 : 1;
 }

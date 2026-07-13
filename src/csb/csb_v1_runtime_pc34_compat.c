@@ -16573,6 +16573,28 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     timer_index = profile->csbwin_timer_queue[queue_slot];
     if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
+    if (timer->function == 71u) {
+        /* CSBWin CSBCode.cpp:6510 and ReDMCSB TIMELINE.C F0261 lines
+         * 1953-1965 expire C71 by decrementing the party invisibility count.
+         * This saved body already owns that exact count. Require a complete
+         * queue/timer/event identity and a positive count rather than allowing
+         * an untrusted or stale record to underflow it. The source redraw
+         * branch depends on an inventory-champion UI owner not present in this
+         * restored runtime profile, so no HUD work is inferred here. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 &&
+            profile->csbwin_character_tail_invisible > 0u) {
+            --profile->csbwin_character_tail_invisible;
+        }
+        /* Keep every restored function-71 receipt source-owned so it cannot
+         * acquire a future generic event path without saved identity checks. */
+        return 1;
+    }
     if (timer->function == 1u) {
         uint8_t *square;
         int square_type;
