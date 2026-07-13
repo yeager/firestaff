@@ -13265,6 +13265,29 @@ int csb_v1_runtime_custom_background_skin_grid(
         return 0;
     }
 
+    /* CSBWin data.cpp:2053-2125 keeps SKIN_CACHE columns only for the
+     * currently loaded EXPPOOL source. A successful resume can replace that
+     * source before the next HUD draw, so retain the exact runtime tail
+     * receipt and discard every cached column/default on a tail boundary.
+     * This does not synthesize a skin: the following lookup still requires
+     * an original DB11 or verified appended EXPOOL record. */
+    if (!profile->csbwin_skin_cache_tail_receipt_valid ||
+        profile->csbwin_skin_cache_tail_valid !=
+            profile->csbwin_appended_tail_valid ||
+        profile->csbwin_skin_cache_tail_size !=
+            profile->csbwin_appended_tail_preserved_size ||
+        profile->csbwin_skin_cache_tail_fnv1a !=
+            profile->csbwin_appended_tail_fnv1a) {
+        csb_v1_skin_cache_init(&profile->skin_cache);
+        profile->csbwin_skin_cache_tail_receipt_valid = 1;
+        profile->csbwin_skin_cache_tail_valid =
+            profile->csbwin_appended_tail_valid;
+        profile->csbwin_skin_cache_tail_size =
+            profile->csbwin_appended_tail_preserved_size;
+        profile->csbwin_skin_cache_tail_fnv1a =
+            profile->csbwin_appended_tail_fnv1a;
+    }
+
     dungeon = profile->dungeon_handle;
     level = profile->current_level;
     if (level < 0 || level >= dungeon->level_count) {

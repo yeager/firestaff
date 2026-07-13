@@ -17,6 +17,15 @@
   action-disable event. Verification: Ninja-built and ran
   `test_dm1_v1_f0412_needs_practice_runtime_pc34_compat` and
   `test_dm1_v1_spell_casting_pc34_compat`.
+- 2026-07-13 CSBWin SKIN_CACHE save/runtime handoff: the live custom-
+  background HUD grid now records the verified appended EXPOOL-tail receipt
+  that filled its EDT_Skins cache and clears cached columns/defaults whenever
+  a resumed or replaced tail changes. The dedicated format regression proves
+  initial saved skin bytes, replacement bytes after the tail boundary, and
+  an absent record's fail-closed zero grid; it is not a real-corpus claim.
+  Source: CSBWin `data.cpp:2053-2125` `SKIN_CACHE::Load/GetSkin/GetDefaultSkin`
+  and `EXPOOL::Locate`. Verification:
+  `csb_v1_runtime_skin_expool_handoff` CTest passed 1/1.
 
 - 2026-07-13 CSBWin DSA attack-filter save handoff: added an atomic production
   binder from a resolved type-47 DSA filter to the concrete `Monster.cpp`
