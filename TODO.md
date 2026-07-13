@@ -2603,6 +2603,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     now expose only `DME.h` `IsOpened` and `ContainerType` bits from `b4`.
     `w0`, the `w2` contained-object ObjectID, and all container traversal stay
     unavailable.
+  - 2026-07-13 update: the canonical G1 direct-root census ends at DB9:
+    DB6/DB7/DB8 and DB10..DB15 have zero direct roots. Their record payloads
+    remain unavailable without a separately proven non-direct route; no
+    extension or `w0` traversal may fill that gap.
   - 2026-07-11 update: the local full-build DM2 link blocker from direct save-load test targets is fixed; weather/timer save round-trip and inventory/item panel gate now link against `firestaff_dm2` and pass. Remaining DM2 work is real render/data breadth, not this build wiring.
   - 2026-07-11 update: the next local full-build blocker, `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` using retired M11 inventory names, is fixed by moving the probe to the DM1/ReDMCSB inventory API. Remaining DM1 chest work is runtime/asset proof, not this stale probe wiring.
   - 2026-07-11 update: `firestaff_dm1_v1_champion_mouse_leader_switch_probe` now uses the current DM1/ReDMCSB champion-leader API names and passes. Remaining leader/status work is runtime capture breadth, not stale API suffix cleanup.

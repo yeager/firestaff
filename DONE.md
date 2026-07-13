@@ -12636,6 +12636,17 @@ container chain. The canonical 39,437-byte PC G1 `DUNGEON.DAT` proves ObjectID
 `0xe408` with closed/type-zero state. Verification: real-data Container test
 and focused 87-check dungeon-loader gate passed.
 
+# ✅ 2026-07-13 DM2 G1 direct-root family census
+
+The partial G1 boot receipt now retains the direct-root count by record type
+while reading only `c_map.cpp` ground-stack ObjectIDs. The canonical
+39,437-byte PC G1 `DUNGEON.DAT` has direct roots only for DB0, DB1, DB2, DB3,
+DB4, DB5, and DB9. DB6, DB7, DB8, and DB10 through DB15 have no direct root,
+so no later family can be materialized without a separately proven route.
+This reads no record payload or `GenericRecord::w0`. Verification: explicit
+build-only real-data census target and focused 87-check dungeon-loader gate
+passed.
+
 # ✅ 2026-07-13 DM2 weather `dtText` provenance boundary
 
 `dm2_v1_weather_gdat` now follows skproject `c_weather.cpp` rather than
