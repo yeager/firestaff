@@ -22183,7 +22183,9 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
         if (m11_viewport_cell_is_wall_like(&cell)) {
             bool flipHoriz = false;
             DM1_WallSetIndex selectedWall;
-            if (spec->square == DM1_VIEW_SQUARE_D3L ||
+            if (spec->square == DM1_VIEW_SQUARE_D3L2 ||
+                spec->square == DM1_VIEW_SQUARE_D3R2 ||
+                spec->square == DM1_VIEW_SQUARE_D3L ||
                 spec->square == DM1_VIEW_SQUARE_D3R) {
                 DM1_ViewportD3SideWallHostHandoffPc34 handoff;
                 if (!dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(

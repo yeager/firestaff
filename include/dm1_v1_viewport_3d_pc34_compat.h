@@ -683,9 +683,10 @@ typedef struct {
     const char *occlusion_source_lines;
 } DM1_ViewportWallDrawSpec;
 
-/* Host-facing material handoff for the ordinary D3 side-wall cases only.
- * ReDMCSB DUNVIEW.C F0116/F0117 select the source wall, C705/C706 zone,
- * C10 transparency, and parity flip before returning or entering F0115. */
+/* Host-facing material handoff for all D3 side-wall cases.
+ * ReDMCSB DUNVIEW.C F0676/F0677 and F0116/F0117 select the source wall,
+ * C702/C703/C705/C706 zone, C10 transparency, and parity flip before
+ * returning or entering F0115. */
 typedef struct {
     bool handled;
     bool draw_wall;

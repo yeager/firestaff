@@ -1,4 +1,5 @@
 #include "dm1_v1_viewport_d3l2_d3r2_wall_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -79,6 +80,27 @@ static void test_specs_source_locked(void)
                "ReDMCSB DEFS.H:4042 C702_ZONE_WALL_D3L2=702");
     expect_int("spec.d3r2.zone", d3r2->wall_zone_pc34, 703,
                "ReDMCSB DEFS.H:4043 C703_ZONE_WALL_D3R2=703");
+    {
+        DM1_ViewportD3SideWallHostHandoffPc34 handoff;
+        expect_int("handoff.d3l2.build",
+                   dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
+                       DM1_VIEW_SQUARE_D3L2, false, true, false, &handoff),
+                   1,
+                   "ReDMCSB DUNVIEW.C F0676 supplies the C702 host material");
+        expect_int("handoff.d3l2.zone", handoff.pc34_zone, 702,
+                   "D3L2 host handoff keeps C702");
+        expect_int("handoff.d3l2.c10", handoff.transparent_color, 10,
+                   "D3L2 host handoff keeps F0104 C10 transparency");
+        expect_int("handoff.d3r2.build",
+                   dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
+                       DM1_VIEW_SQUARE_D3R2, true, true, false, &handoff),
+                   1,
+                   "ReDMCSB DUNVIEW.C F0677 supplies the C703 host material");
+        expect_int("handoff.d3r2.zone", handoff.pc34_zone, 703,
+                   "D3R2 host handoff keeps C703");
+        expect_int("handoff.d3r2.flip", handoff.flip_horizontally ? 1 : 0, 1,
+                   "D3R2 parity uses the source horizontal flip");
+    }
     expect_int("spec.draw_order", d3l2->draw_order_index < d3r2->draw_order_index, 1,
                "ReDMCSB DUNVIEW.C:8446-8464 D3L2 branch precedes D3R2 branch");
     expect_int("spec.same_row", d3l2->viewport_y_first == d3r2->viewport_y_first &&
