@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0209 reaction F0267 handoff: C29-C36/C38-C41 ordinary
+  one-square moves now use ReDMCSB `GROUP.C F0209`'s chosen F0202 direction
+  through M10 `MOVESENS.C F0267` source unlink, destination link, and F0266
+  projectile precheck. C37 retains its existing retry route. Verification:
+  Ninja-built and CTest-passed
+  `dm1_v1_f0206_packed_directions_runtime_pc34_compat`. The unrelated
+  `memory_tick_orchestrator_f0303_skill_query_pc34_compat` Thieves' Eye
+  timeline-count failure was reproduced unchanged before this work.
+
 - 2026-07-13 Nexus visible Structure1F item boundary: visible DGN item
   records with unproven Structure1F semantics now block the host route rather
   than producing substitute geometry. Verification: Ninja-built
