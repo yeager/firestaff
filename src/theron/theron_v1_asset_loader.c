@@ -4,9 +4,7 @@
  * Loads Theron's Quest binary assets from PC Engine HuCard/CD-ROM format.
  *
  * Source-lock:
- *   THQUEST.ASM T400   — tile bank loading
- *   THQUEST.ASM T410   — Track 03 graphics parsing
- *   THQUEST.ASM T420   — Track 04 sound parsing
+ *   THQUEST.ASM T400   — Track 02 loader ownership
  *   THQUEST.ASM T430   — hash verification
  *   HuC6260/HuC6270 datasheet — VDC/VCE graphics format
  *   HuC6270 ADPCM sound format
@@ -19,10 +17,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-/* ── Track magic signatures ──────────────────────────────────────── */
-#define TR_MAGIC_THG3  0x33475448UL  /* "THG3" little-endian */
-#define TR_MAGIC_THS4  0x34535448UL  /* "THS4" little-endian */
-#define TR_MAGIC_THQ   0x31515448UL  /* "THQ1" — HuCard ROM marker */
+/* Retained only so the deprecated public parser helpers remain buildable.
+ * The CUE-backed runtime below never probes these invented markers. */
+#define TR_MAGIC_THG3  0x33475448UL
+#define TR_MAGIC_THS4  0x34535448UL
+#define TR_MAGIC_THQ   0x31515448UL
 
 /* ── Hash verification (Phase 2) ───────────────────────────────── */
 /* Full SHA256/MD5 verification comes in Phase 2 when THERO.DAT
@@ -30,7 +29,7 @@
  * For Phase 4, assets are unverified (assets_verified=0). */
 
 /* ══════════════════════════════════════════════════════════════════════
- * Track 03 graphics parsing
+ * Deprecated guessed Track 03/04 parsing
  * ══════════════════════════════════════════════════════════════════════ */
 
 /*
@@ -48,7 +47,10 @@
  *   offset 18: header_size (2 bytes LE) = 20
  *   offset 20+: tile data (2bpp planar, 16 bytes each)
  *
- * Source: THQUEST.ASM T410.
+ * This is not an original-media format. The authenticated CUE declares
+ * tracks 03 through 18 as AUDIO, while Track 02 is the only MODE1 data
+ * stream. Keep the helper unavailable to the runtime until a loader trace
+ * proves an actual byte range and format.
  */
 int tr_asset_parse_track03(TrAssetBundle *bundle,
                             const uint8_t *track03,
@@ -252,27 +254,13 @@ TrAssetResult tr_asset_parse_track04(TrAssetBundle *bundle,
 static TrAssetResult find_tracks_in_buffer(TrAssetBundle *bundle,
                                             const uint8_t *data,
                                             size_t data_size) {
-    size_t pos = 0;
-    while (pos + 16 < data_size) {
-        uint32_t magic = data[pos] | ((uint32_t)data[pos+1] << 8) |
-                         ((uint32_t)data[pos+2] << 16) | ((uint32_t)data[pos+3] << 24);
-
-        if (magic == TR_MAGIC_THG3) {
-            bundle->track03_data = data + pos;
-            bundle->track03_size = data_size - pos;
-            printf("[TQR] Track 03 found at offset %zu\n", pos);
-        } else if (magic == TR_MAGIC_THS4) {
-            bundle->track04_data = data + pos;
-            bundle->track04_size = data_size - pos;
-            printf("[TQR] Track 04 found at offset %zu\n", pos);
-        }
-        pos += 4;
-    }
-
-    if (!bundle->track03_data && !bundle->track04_data) {
-        return TR_ASSET_ERR_NO_DATA;
-    }
-    return TR_ASSET_OK;
+    (void)bundle;
+    (void)data;
+    (void)data_size;
+    /* CUE provenance establishes that no Track 03/04 data format belongs in
+     * this path. Returning no data preserves the raw Track 02 bytes only for
+     * source-verified loader/semantic routes. */
+    return TR_ASSET_ERR_NO_DATA;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

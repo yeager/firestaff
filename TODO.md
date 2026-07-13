@@ -1758,6 +1758,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     V1 render allowance are removed. Remaining palette work is an original
     HuC6260 table binding from authenticated Track 02 execution/media; a
     missing table must stay unpopulated and render-blocked.
+  - 2026-07-13 update: the supplied authenticated US CUE declares tracks
+    03-18 as AUDIO. The former `THG3`/`THS4` scan is disabled; remaining
+    graphics work must bind a real Track 02 loader read to HuC6260 palette
+    and tile destinations rather than treating CD-audio files as assets.
   - 2026-07-12 update: every attempted verified Track 02 level/object route
     now stages level, object, party, and media writes in a candidate world.
     Only a fully accepted original-data route commits; any rejected semantic

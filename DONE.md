@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron CUE media correction: the authenticated US CUE declares
+  tracks 03-18 as AUDIO, so runtime asset discovery no longer scans Track 02
+  for the old invented `THG3`/`THS4` graphics markers. Raw Track 02 is kept
+  only for source-verified loader/semantic routes; later graphics decoding
+  requires an original loader/media binding. Verification:
+  `test_theron_rendering` (18/18).
+
 - 2026-07-13 DM1 PC34 atomic C3 corpus receipt: opt-in external corpus rows
   now retain the decrypted full C3 EVENT array's record count, byte count, and
   fingerprint. Real corpus verification requires exact C3 source/transient
