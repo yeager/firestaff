@@ -1211,6 +1211,12 @@
   reading and clearing `$1804` bit 1. The explicit 19-track CUE is inspected
   only as metadata; this proves no CD status or Track 02 command at the delay.
 
+- 2026-07-13 Theron System Card `$e900` post-delay receipt: hash-verified the
+  next original code sequence as `LDA $22a4 / BNE $e900`, `STZ $229b`, raw
+  `$81` write to `$1801`, and `TST #$80,$1800 / BEQ $e944`. The US raw Track 02
+  and explicit 19-track CUE are authenticated/structural inputs only; no port
+  value, controller state, command, or CUE-to-raw binding semantics are inferred.
+
 - 2026-07-12 CSB F0115 native Ghost group front: type 8 now resolves only
   through `G0243 -> G0219 -> M618` to PC CSB `GRAPHICS.DAT` 607. Its G0219
   offset 23 and `0x04` coordinate/transparency byte are consumed by the
