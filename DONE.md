@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 CSB PC34 full-title runtime handoff: C001 PRESENTS, CHAOS,
+  and STRIKES BACK now require the same terminal C017/C040 session generation,
+  package hash, and decoded-surface hash as the opening-door or live-HUD
+  runtime transition. Different crops, legacy wrappers, fallback routes, and
+  synthetic surfaces fail closed. Source: ReDMCSB `TITLE.C F0437:424-463` and
+  `ENTRANCE.C F0806:850-903`. Verification: local PC34
+  `firestaff_csb_v1_pc_real_asset_launch_probe` passed 52/52 checks.
+
 - ✅ 2026-07-13 DM2 inventory panel live GDAT consumption: the panel now
   re-decodes the receipt's exact original `dtImage`, revalidates its local
   palette and pixel hash, then performs only the source-provided unscaled
@@ -12575,6 +12583,15 @@ and cannot publish an unadmitted map. The canonical 39,437-byte PC G1
 `DUNGEON.DAT` proves 16 direct roots, beginning with ObjectID `0x4c04` at
 `(6,14)`. Verification: real-data Actuator test and the focused 87-check
 dungeon-loader gate passed.
+
+# ✅ 2026-07-13 DM2 G1 direct DB4 Creature runtime receipt
+
+Runtime-admitted G1 map 17 now consumes only direct DB4 `Creature` records.
+The read-only receipt binds `DME.h` `b4` `CreatureType` and `w6` `HP1`; it
+does not read `GenericRecord::w0`, the `w2` possession ObjectID, or any DB4
+extension record. The canonical 39,437-byte PC G1 `DUNGEON.DAT` proves four
+direct roots, beginning with ObjectID `0x1098` at `(4,4)`. Verification:
+real-data Creature test and focused 87-check dungeon-loader gate passed.
 
 # ✅ 2026-07-13 DM2 weather `dtText` provenance boundary
 

@@ -17,6 +17,7 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
@@ -307,6 +308,8 @@ static void verify_real_indexed_startup(
     CSB_V1_StartupFullRuntimeReceipt_PC34 receipt;
     CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
     CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 handoff_receipt;
+    CSB_V1_StartupSessionPackageTitleReceipt_PC34 title_package_receipt;
+    CSB_V1_RuntimeStartupTitlePackageHandoffReceipt_PC34 title_handoff_receipt;
     CSB_V1_StartupEntranceInputOutcome_PC34 input_outcome;
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_apply;
     CSB_V1_StartupCommandStateReceipt_PC34 state_receipt;
@@ -472,6 +475,22 @@ static void verify_real_indexed_startup(
               handoff_receipt.consumed_surface_hash ==
                   package_receipt.consumed_surface_hash,
           "HUD input/runtime transition retains the same verified PC34 package receipt");
+    CHECK(csb_v1_startup_session_package_title_receipt_pc34(
+              &session, &package_receipt, &title_package_receipt) == 1 &&
+              title_package_receipt.valid &&
+              title_package_receipt.c001_presents_ready &&
+              title_package_receipt.c001_chaos_ready &&
+              title_package_receipt.c001_strikes_back_ready &&
+              title_package_receipt.title_to_hud_same_session,
+          "C001 PRESENTS/CHAOS/STRIKES remain bound to the terminal PC34 package session");
+    CHECK(csb_v1_runtime_startup_title_package_handoff_receipt_pc34(
+              &title_package_receipt, &handoff_receipt,
+              &title_handoff_receipt) == 1 && title_handoff_receipt.valid &&
+              title_handoff_receipt.full_title_to_hud_package_bound &&
+              title_handoff_receipt.same_session_generation &&
+              title_handoff_receipt.no_legacy_wrappers &&
+              title_handoff_receipt.no_synthetic_surface,
+          "runtime handoff retains all C001 title phases and the same PC34 package identity");
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host_surface);
 
     CHECK(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(

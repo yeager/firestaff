@@ -1947,6 +1947,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       input/runtime state that does not match the opening or post-entrance
       transition. The local real-asset probe passes 50/50. Remaining work is
       still a Mac/app presented-frame capture.
+    - 2026-07-13 verified title-package handoff update: C001
+      PRESENTS/CHAOS/STRIKES BACK now remain bound to the terminal C017/C040
+      session and to the same PC34 package and decoded-surface hashes consumed
+      by the runtime transition. A generation mismatch, altered hash, wrapper,
+      fallback route, or changed C001 crop fails closed. The local real-asset
+      probe passes 52/52. Remaining work is still Mac/app presented-frame
+      capture, not a synthetic title or HUD route.
 - 🔧 2026-07-11 Theron Track02 real-media handoff follow-up: entries 6 and 8 are disproven as object-table/level candidates by the hash-verified JP/US raw-BIN receipts. Descriptor-local and startup-plus-guessed-object route constructors now reject, so the hash/anchor-gated startup candidate is the only supported Track 02 level decoder route. Remaining work is genuine non-startup loader/layout correlation from original media, followed only by a separately supported decoder and atomic route handoff; no synthetic fallback, arbitrary descriptor scan, or compact-row semantic promotion. Palette offsets and Mac/app capture remain separate real-media work.
   - 2026-07-13 update: the old hand-authored loader-row import has been
     retired. A loader receipt now accepts only the provenance-marked original
@@ -2575,6 +2582,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     source-locked; no route reads `w0` or follows a record link. Remaining
     work is another independently proven root family and the DB8/DB10 layout,
     never a promoted chain based on these direct records.
+  - 2026-07-13 update: direct DB4 `Creature` roots on runtime-admitted map 17
+    now expose only `DME.h` `CreatureType` (`b4`) and `HP1` (`w6`). Their
+    `w0` next links, `w2` possession ObjectIDs, DB4 extension records, and all
+    DB8/DB10 roots remain unread; this is not a creature-chain or GDAT route.
   - 2026-07-11 update: the local full-build DM2 link blocker from direct save-load test targets is fixed; weather/timer save round-trip and inventory/item panel gate now link against `firestaff_dm2` and pass. Remaining DM2 work is real render/data breadth, not this build wiring.
   - 2026-07-11 update: the next local full-build blocker, `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` using retired M11 inventory names, is fixed by moving the probe to the DM1/ReDMCSB inventory API. Remaining DM1 chest work is runtime/asset proof, not this stale probe wiring.
   - 2026-07-11 update: `firestaff_dm1_v1_champion_mouse_leader_switch_probe` now uses the current DM1/ReDMCSB champion-leader API names and passes. Remaining leader/status work is runtime capture breadth, not stale API suffix cleanup.

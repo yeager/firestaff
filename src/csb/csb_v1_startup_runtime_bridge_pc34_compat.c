@@ -1,6 +1,7 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_startup_real_asset_receipt.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
@@ -73,6 +74,50 @@ int csb_v1_runtime_startup_package_handoff_receipt_from_transition_pc34(
         receipt.host_surface_hash != 0u &&
         receipt.real_asset_receipt_hash != 0u &&
         receipt.consumed_surface_hash != 0u;
+    if (!receipt.valid) return 0;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int csb_v1_runtime_startup_title_package_handoff_receipt_pc34(
+    const CSB_V1_StartupSessionPackageTitleReceipt_PC34 *title_receipt,
+    const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
+    CSB_V1_RuntimeStartupTitlePackageHandoffReceipt_PC34 *out_receipt)
+{
+    CSB_V1_RuntimeStartupTitlePackageHandoffReceipt_PC34 receipt;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!title_receipt || !runtime_receipt || !title_receipt->valid ||
+        !runtime_receipt->valid) return 0;
+
+    receipt.full_title_to_hud_package_bound =
+        title_receipt->real_package_matched && title_receipt->c001_title_ready &&
+        title_receipt->c001_presents_ready && title_receipt->c001_chaos_ready &&
+        title_receipt->c001_strikes_back_ready &&
+        title_receipt->title_to_hud_same_session &&
+        runtime_receipt->real_package_matched &&
+        runtime_receipt->input_runtime_transition_ready;
+    receipt.same_session_generation = title_receipt->session_generation != 0u &&
+        title_receipt->session_generation == runtime_receipt->session_generation;
+    receipt.no_legacy_wrappers = title_receipt->no_legacy_wrappers &&
+        title_receipt->no_fallback_routes && runtime_receipt->no_legacy_wrappers;
+    receipt.no_synthetic_surface = runtime_receipt->no_synthetic_surface;
+    receipt.session_generation = title_receipt->session_generation;
+    receipt.host_surface_hash = runtime_receipt->host_surface_hash;
+    receipt.real_asset_receipt_hash = title_receipt->real_asset_receipt_hash;
+    receipt.consumed_surface_hash = title_receipt->consumed_surface_hash;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 424-463; ENTRANCE.C F0806 lines "
+        "850-903";
+    receipt.valid = receipt.full_title_to_hud_package_bound &&
+        receipt.same_session_generation && receipt.no_legacy_wrappers &&
+        receipt.no_synthetic_surface && receipt.host_surface_hash != 0u &&
+        receipt.real_asset_receipt_hash != 0u &&
+        receipt.consumed_surface_hash != 0u &&
+        receipt.real_asset_receipt_hash == runtime_receipt->real_asset_receipt_hash &&
+        receipt.consumed_surface_hash == runtime_receipt->consumed_surface_hash;
     if (!receipt.valid) return 0;
     *out_receipt = receipt;
     return 1;
