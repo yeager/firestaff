@@ -24,6 +24,7 @@
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
@@ -13731,11 +13732,148 @@ const char *csb_v1_runtime_get_bonus_dungeon_path(
         : NULL;
 }
 
+static int csb_v1_runtime_event_is_before(
+    const struct DM1_Event_V1 *a, int index_a,
+    const struct DM1_Event_V1 *b, int index_b)
+{
+    uint32_t time_a = DM1_MAP_TIME_TIME(a->map_time);
+    uint32_t time_b = DM1_MAP_TIME_TIME(b->map_time);
+    uint16_t type_priority_a;
+    uint16_t type_priority_b;
+
+    if (time_a != time_b) return time_a < time_b;
+    type_priority_a = (uint16_t)((uint16_t)a->type << 8) | a->priority;
+    type_priority_b = (uint16_t)((uint16_t)b->type << 8) | b->priority;
+    if (type_priority_a != type_priority_b) {
+        return type_priority_a > type_priority_b;
+    }
+    return index_a <= index_b;
+}
+
+static void csb_v1_runtime_fix_unmerged_timer_placement(
+    struct DM1_EventQueue_V1 *queue, int timeline_index)
+{
+    int event_index;
+    int parent_index;
+    int child_index;
+    int half_index;
+    int moved_up = 0;
+
+    if (!queue || queue->eventCount <= 1) return;
+    event_index = queue->timeline[timeline_index];
+    while (timeline_index > 0) {
+        parent_index = (timeline_index - 1) >> 1;
+        if (!csb_v1_runtime_event_is_before(
+                &queue->events[event_index], event_index,
+                &queue->events[queue->timeline[parent_index]],
+                queue->timeline[parent_index])) {
+            break;
+        }
+        queue->timeline[timeline_index] = queue->timeline[parent_index];
+        timeline_index = parent_index;
+        moved_up = 1;
+    }
+    if (moved_up) {
+        queue->timeline[timeline_index] = (uint16_t)event_index;
+        return;
+    }
+    half_index = (queue->eventCount - 2) >> 1;
+    while (timeline_index <= half_index) {
+        child_index = (timeline_index << 1) + 1;
+        if (child_index + 1 < queue->eventCount &&
+            csb_v1_runtime_event_is_before(
+                &queue->events[queue->timeline[child_index + 1]],
+                queue->timeline[child_index + 1],
+                &queue->events[queue->timeline[child_index]],
+                queue->timeline[child_index])) {
+            ++child_index;
+        }
+        if (!csb_v1_runtime_event_is_before(
+                &queue->events[queue->timeline[child_index]],
+                queue->timeline[child_index], &queue->events[event_index],
+                event_index)) {
+            break;
+        }
+        queue->timeline[timeline_index] = queue->timeline[child_index];
+        timeline_index = child_index;
+    }
+    queue->timeline[timeline_index] = (uint16_t)event_index;
+}
+
+static int csb_v1_runtime_append_unmerged_map_timer(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_Event_V1 *event)
+{
+    struct DM1_EventQueue_V1 *queue;
+    int index;
+    int position;
+
+    if (!profile || !event) return -1;
+    queue = &profile->timeline_queue;
+    if (queue->eventCount >= queue->maxEvents) return -1;
+    index = queue->firstUnusedIndex;
+    if (index < 0 || index >= queue->maxEvents) return -1;
+
+    /* CSBWin Timer.cpp SetTimer's `deleteDuplicateTimers == 0` branch owns
+     * a distinct map TIMER even when the shared DM1 F0238 helper would merge
+     * it. Preserve that original slot and only reuse the common heap ordering
+     * primitive, not the common merge policy. */
+    queue->events[index] = *event;
+    do {
+        ++queue->firstUnusedIndex;
+    } while (queue->firstUnusedIndex < queue->maxEvents &&
+             queue->events[queue->firstUnusedIndex].type != DM1_EVENT_NONE);
+    position = queue->eventCount;
+    queue->timeline[position] = (uint16_t)index;
+    ++queue->eventCount;
+    csb_v1_runtime_fix_unmerged_timer_placement(queue, position);
+    return index;
+}
+
 int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
                                       const struct DM1_Event_V1 *event)
 {
+    int i;
+
     if (!profile || !event) return -1;
     profile->timeline_queue.gameTick = profile->game_time;
+
+    /* CSBWin Timer.cpp GameTimers::SetTimer:967-1007 checks the restored
+     * EDBT_DeleteDuplicateTimers policy only for map timers C05..C10. A
+     * matching source timer retains its queue slot and receives the new
+     * action byte; TT_STONEROOM additionally requires the same position.
+     * Keep the comparison inside the live CSB timer owner, so a save policy
+     * never reaches a generic wrapper or a caller-built replacement queue. */
+    if (profile->csbwin_delete_duplicate_timers != 0u &&
+        event->type >= DM1_EVENT_CORRIDOR && event->type <= DM1_EVENT_DOOR) {
+        for (i = 0; i < profile->timeline_queue.eventCount; ++i) {
+            int event_index = profile->timeline_queue.timeline[i];
+            struct DM1_Event_V1 *existing;
+
+            if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) {
+                continue;
+            }
+            existing = &profile->timeline_queue.events[event_index];
+            if (existing->type < DM1_EVENT_CORRIDOR ||
+                existing->type > DM1_EVENT_DOOR ||
+                existing->map_time != event->map_time ||
+                existing->b_mapX != event->b_mapX ||
+                existing->b_mapY != event->b_mapY) {
+                continue;
+            }
+            if (existing->type == DM1_EVENT_WALL &&
+                existing->c_cell != event->c_cell) {
+                continue;
+            }
+            existing->c_effect = event->c_effect;
+            return event_index;
+        }
+    }
+    if (event->type >= DM1_EVENT_CORRIDOR &&
+        event->type <= DM1_EVENT_DOOR &&
+        profile->csbwin_delete_duplicate_timers == 0u) {
+        return csb_v1_runtime_append_unmerged_map_timer(profile, event);
+    }
     return dm1v1_event_add(&profile->timeline_queue, event);
 }
 
