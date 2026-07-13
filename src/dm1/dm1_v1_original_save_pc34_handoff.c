@@ -695,6 +695,8 @@ static int timeline_kind_from_original_pc34_event_type(int type)
         return TIMELINE_EVENT_DOOR_DESTRUCTION;
     case DM1_EVENT_ENABLE_CHAMPION_ACTION:
         return TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
+    case DM1_EVENT_HIDE_DAMAGE_RECEIVED:
+        return TIMELINE_EVENT_STATUS_TIMEOUT;
     case DM1_EVENT_MOVE_PROJECTILE:
     case DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS:
         return TIMELINE_EVENT_PROJECTILE_MOVE;
@@ -1156,7 +1158,16 @@ static int materialize_original_pc34_timeline(
             src->c_cell != 0u) {
             return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
         }
-        if (original_pc34_event_type_is_status_timeout(src->type)) {
+        if (src->type == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
+            /* ReDMCSB CHAMPION.C F0320 writes only Map_Time, Type and
+             * Priority for C12. TIMELINE.C F0254 consumes only Priority.
+             * B/C are an uninitialised union arm in the source event and
+             * must never be reinterpreted as Location/Cell/Effect. */
+            if (src->priority >= CHAMPION_MAX_PARTY ||
+                !world->party.champions[src->priority].present) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+        } else if (original_pc34_event_type_is_status_timeout(src->type)) {
             ev.aux1 = (int)read_u16_le(&src->b_mapX);
             ev.cell = src->c_cell;
         } else if (src->type == DM1_EVENT_PLAY_SOUND) {

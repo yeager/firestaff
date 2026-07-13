@@ -1066,6 +1066,8 @@ static int pc34_event_type_from_timeline_kind(int kind, int aux0)
          * them back to the source event ids instead of falling through
          * to C72 champion shield. */
         switch (aux0) {
+        case DM1_EVENT_HIDE_DAMAGE_RECEIVED:
+            return DM1_EVENT_HIDE_DAMAGE_RECEIVED;
         case TIMELINE_AUX_INVISIBILITY:
             return DM1_EVENT_INVISIBILITY;
         case TIMELINE_AUX_THIEVES_EYE:
@@ -1156,6 +1158,8 @@ static int timeline_kind_from_pc34_event_type(int type)
         return TIMELINE_EVENT_DOOR_DESTRUCTION;
     case DM1_EVENT_ENABLE_CHAMPION_ACTION:
         return TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
+    case DM1_EVENT_HIDE_DAMAGE_RECEIVED:
+        return TIMELINE_EVENT_STATUS_TIMEOUT;
     case DM1_EVENT_MOVE_PROJECTILE:
     case DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS:
         return TIMELINE_EVENT_PROJECTILE_MOVE;
@@ -1441,7 +1445,10 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
         }
         dst[4] = (uint8_t)type;
         dst[5] = (uint8_t)(src->aux4 & 0xff);
-        if (pc34_event_type_is_status_timeout(type)) {
+        if (type == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
+            /* ReDMCSB CHAMPION.C F0320 leaves B/C outside C12's contract;
+             * preserve no invented Location/Cell/Effect bytes. */
+        } else if (pc34_event_type_is_status_timeout(type)) {
             int defense = pc34_status_event_defense_from_timeline(src, type);
             write_u16_le(dst + 6u, (uint16_t)(defense & 0xffff));
         } else if (type >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
@@ -1549,7 +1556,11 @@ static void unpack_events_and_timeline(const struct PC34GlobalData* gd,
         dst->kind = kind;
         dst->fireAtTick = mapTime & 0x00ffffffu;
         dst->mapIndex = (int)((mapTime >> 24) & 0xffu);
-        if (pc34_event_type_is_status_timeout(src[4u])) {
+        if (src[4u] == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
+            dst->aux0 = DM1_EVENT_HIDE_DAMAGE_RECEIVED;
+            dst->aux4 = src[5u];
+            continue;
+        } else if (pc34_event_type_is_status_timeout(src[4u])) {
             dst->mapX = 0;
             dst->mapY = 0;
             dst->aux1 = (int)read_u16_le(src + 6u);

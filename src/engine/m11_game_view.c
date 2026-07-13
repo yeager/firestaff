@@ -10565,6 +10565,17 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 }
                 break;
             }
+            case EMIT_CHAMPION_DAMAGE_HIDDEN: {
+                int champIdx = (int)e->payload[0];
+                /* TIMELINE.C F0254 redraws the exact champion panel and
+                 * clears its saved damage graphic. The runtime renderer owns
+                 * that overlay as championDamageTimer/Amount. */
+                if (champIdx >= 0 && champIdx < CHAMPION_MAX_PARTY) {
+                    state->championDamageTimer[champIdx] = 0;
+                    state->championDamageAmount[champIdx] = 0;
+                }
+                break;
+            }
             case EMIT_TEXT_MESSAGE: {
                 char decoded[256];
                 int textIndex = (int)e->payload[0];
