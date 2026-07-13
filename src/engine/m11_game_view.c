@@ -38219,6 +38219,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
            sizeof(s_m11_dm1_wall_ornament_host_presentation_receipt));
     memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_inscription_host_presentation_receipt));
+    /* ReDMCSB DUNVIEW.C F0128:8318-8616 rebuilds a full viewport from the
+     * current party tuple.  A side/depth F0107 inscription publishes only
+     * its original-ornament receipt, so invalidate it before the new tuple
+     * is composed rather than retaining it across a turn or move. */
+    memset(&s_m11_dm1_unreadable_inscription_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_unreadable_inscription_host_presentation_receipt));
     if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         state->dm2BootProfile) {
         DM2_V1_InterfacePalette palette;

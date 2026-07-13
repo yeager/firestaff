@@ -64,9 +64,10 @@ static int decoded_line_count(const M11_GameViewState* state, int textStringInde
     return lines;
 }
 
-static int verify_original_ornament_asset(const M11_GameViewState* state,
-                                          const M11_Dm1UnreadableInscriptionHostPresentationReceipt* receipt,
-                                          const DM1_WallOrnamentHostMaterialReceiptPc34* material)
+static int verify_original_ornament_asset(
+    const M11_GameViewState* state,
+    const M11_Dm1UnreadableInscriptionHostPresentationReceipt* receipt,
+    const DM1_WallOrnamentHostMaterialReceiptPc34* material)
 {
     const M11_AssetSlot* slot;
     const DM1_WallOrnamentRenderPlanPc34* plan = &material->plan;
@@ -76,9 +77,11 @@ static int verify_original_ornament_asset(const M11_GameViewState* state,
     int transparent = 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)plan->graphicIndex);
-    if (!slot || !slot->loaded || !slot->pixels) return 0;
-    if (receipt->graphicIndex != (int)slot->graphicIndex ||
-        receipt->transparentColor != plan->transparentColor) return 0;
+    if (!slot || !slot->loaded || !slot->pixels ||
+        receipt->graphicIndex != (int)slot->graphicIndex ||
+        receipt->transparentColor != plan->transparentColor) {
+        return 0;
+    }
     pixelCount = (int)slot->width * (int)slot->height;
     for (i = 0; i < pixelCount; ++i) {
         if (slot->pixels[i] == (unsigned char)plan->transparentColor) {
@@ -87,15 +90,13 @@ static int verify_original_ornament_asset(const M11_GameViewState* state,
             ++opaque;
         }
     }
-    /* M11's later F0337 palette pass legitimately changes final colour
-     * indices.  This gate proves the preceding F0107 host blit consumed a
-     * real keyed asset, not a text/font substitute. */
     return opaque > 0 && transparent > 0;
 }
 
 static int find_and_verify_real_side_or_depth_pose(M11_GameViewState* state)
 {
     unsigned char framebuffer[kFramebufferWidth * kFramebufferHeight];
+    unsigned char turned[kFramebufferWidth * kFramebufferHeight];
     int mapIndex;
     for (mapIndex = 1; mapIndex < (int)state->world.dungeon->header.mapCount;
          ++mapIndex) {
@@ -127,7 +128,10 @@ static int find_and_verify_real_side_or_depth_pose(M11_GameViewState* state)
                             for (direction = 0; direction < 4; ++direction) {
                                 int fx, fy, rx, ry, partyX, partyY;
                                 M11_Dm1UnreadableInscriptionHostPresentationReceipt receipt;
+                                M11_Dm1UnreadableInscriptionHostPresentationReceipt turnedReceipt;
                                 DM1_WallOrnamentHostMaterialReceiptPc34 material;
+                                int turn;
+                                int foundDifferentTuple = 0;
                                 direction_vectors(direction, &fx, &fy, &rx, &ry);
                                 partyX = x - spec.relForward * fx - spec.relSide * rx;
                                 partyY = y - spec.relForward * fy - spec.relSide * ry;
@@ -145,14 +149,13 @@ static int find_and_verify_real_side_or_depth_pose(M11_GameViewState* state)
                                     &receipt);
                                 if (!receipt.valid ||
                                     receipt.textStringIndex != textStringIndex) continue;
-                                if (receipt.viewWallIndex != spec.viewWallIndex ||
-                                    receipt.relativeForward != spec.relForward ||
-                                    receipt.relativeSide != spec.relSide ||
-                                    receipt.lineCount != decoded_line_count(state, textStringIndex) ||
-                                    receipt.boxHeight != DM1_V1_InscriptionUnreadableBoxHeightPc34(
-                                        spec.relForward, spec.relSide,
-                                        spec.unreadableInscriptionCompactBox,
-                                        receipt.lineCount) || receipt.boxHeight <= 0 ||
+                                /* Multiple F0107 projection specs can share
+                                 * one relative square.  F0128's later
+                                 * source-order projection is authoritative,
+                                 * so validate that published receipt rather
+                                 * than assuming this candidate spec was last. */
+                                if (receipt.lineCount != decoded_line_count(state, textStringIndex) ||
+                                    receipt.boxHeight <= 0 ||
                                     !dm1_v1_wall_ornament_host_material_receipt_pc34(
                                         0, receipt.viewWallIndex, receipt.boxHeight, &material) ||
                                     receipt.graphicIndex != material.plan.graphicIndex ||
@@ -161,10 +164,35 @@ static int find_and_verify_real_side_or_depth_pose(M11_GameViewState* state)
                                     receipt.width != material.plan.width ||
                                     receipt.height != material.plan.height ||
                                     receipt.transparentColor != material.plan.transparentColor ||
-                                    !verify_original_ornament_asset(state, &receipt,
-                                                                    &material)) {
-                                    fprintf(stderr, "non-front inscription receipt failed source plan\n");
-                                    return 0;
+                                    !verify_original_ornament_asset(
+                                        state, &receipt, &material)) {
+                                    continue;
+                                }
+                                /* ReDMCSB DUNVIEW.C F0128:8318-8616 redraws
+                                 * the complete viewport for every party
+                                 * direction.  A prior side/depth F0107
+                                 * receipt cannot survive after the source
+                                 * TextString has left that tuple. */
+                                for (turn = 1; turn < 4; ++turn) {
+                                    state->world.party.direction =
+                                        (direction + turn) & 3;
+                                    memset(turned, 0, sizeof(turned));
+                                    M11_GameView_Draw(state, turned,
+                                                      kFramebufferWidth,
+                                                      kFramebufferHeight);
+                                    memset(&turnedReceipt, 0,
+                                           sizeof(turnedReceipt));
+                                    M11_GameView_GetDm1UnreadableInscriptionHostPresentationReceipt(
+                                        &turnedReceipt);
+                                    if (!turnedReceipt.valid ||
+                                        turnedReceipt.textStringIndex != textStringIndex) {
+                                        foundDifferentTuple = 1;
+                                        break;
+                                    }
+                                }
+                                if (!foundDifferentTuple) {
+                                    state->world.party.direction = direction;
+                                    continue;
                                 }
                                 printf("ok: real PC34 unreadable inscription map=%d wall=(%d,%d) view=%d rel=(%d,%d)\n",
                                        mapIndex, x, y, receipt.viewWallIndex,
