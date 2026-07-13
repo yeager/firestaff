@@ -41,29 +41,21 @@ static int dm1_original_save_file_opens_for_read(const char *path)
  * corpus. CSBWin's 512-byte GAMEBLOCK1 also cannot pass this gate by header
  * shape alone: the classifier has already required F0435/F7057's five
  * length-prefixed, keyed, checksummed parts before this provenance check. */
-static int dm1_original_save_corpus_external_pc34_file(
-    const char *path,
+static int dm1_original_save_corpus_external_pc34_bytes(
+    const uint8_t *bytes,
+    size_t size,
     int *out_firestaff_manifest)
 {
-    uint8_t *bytes = NULL;
-    size_t size = 0u;
     int manifest_result;
-    int result;
 
     if (out_firestaff_manifest) {
         *out_firestaff_manifest = 0;
     }
-    result = read_original_pc34_file_bytes(path, &bytes, &size);
-    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
-        return 0;
-    }
-    if (size > (size_t)((int)0x7fffffff)) {
-        free(bytes);
+    if (!bytes || size == 0u || size > (size_t)((int)0x7fffffff)) {
         return 0;
     }
     manifest_result = F0799_SAVEGAME_PC34PeekManifest_Compat(
         bytes, (int)size, NULL, NULL, NULL);
-    free(bytes);
     if (manifest_result == SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT) {
         return 1;
     }
@@ -72,6 +64,37 @@ static int dm1_original_save_corpus_external_pc34_file(
         *out_firestaff_manifest = 1;
     }
     return 0;
+}
+
+static int dm1_original_save_snapshot_matches_classification(
+    const DM1OriginalSaveClassifyResult *discovered,
+    const uint8_t *bytes,
+    size_t size,
+    DM1OriginalSaveClassifyResult *out_snapshot)
+{
+    DM1OriginalSaveClassifyResult snapshot;
+
+    if (!discovered || !bytes || size == 0u || !out_snapshot ||
+        !dm1_v1_original_save_classify_bytes(bytes, size, &snapshot)) {
+        return 0;
+    }
+    *out_snapshot = snapshot;
+    return snapshot.shape == discovered->shape &&
+           snapshot.readiness == discovered->readiness &&
+           snapshot.size_bytes == discovered->size_bytes &&
+           snapshot.header_key == discovered->header_key &&
+           snapshot.format_id == discovered->format_id &&
+           snapshot.game_id == discovered->game_id &&
+           snapshot.platform == discovered->platform &&
+           snapshot.dungeon_id == discovered->dungeon_id &&
+           snapshot.header_checksum_ok == discovered->header_checksum_ok &&
+           snapshot.prefix_checksum32 == discovered->prefix_checksum32 &&
+           snapshot.pc34_loader_part_envelope_candidate ==
+               discovered->pc34_loader_part_envelope_candidate &&
+           snapshot.save_part_loader_envelope_end_offset ==
+               discovered->save_part_loader_envelope_end_offset &&
+           snapshot.save_part_loader_trailing_byte_count ==
+               discovered->save_part_loader_trailing_byte_count;
 }
 
 static uint32_t dm1_original_save_hash_bytes(const uint8_t *bytes,
@@ -4468,18 +4491,16 @@ int dm1_v1_original_save_pc34_roundtrip_world_file(
     if (!path || !out_bytes || !out_size) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
-    if (!dm1_original_save_file_opens_for_read(path)) {
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-    }
-    /* Product-facing file round trips accept only external PC34 envelopes.
-     * F0433 verification output carries Firestaff's manifest and must never
-     * re-enter the original-save corpus/product import route as evidence. */
-    if (!dm1_original_save_corpus_external_pc34_file(path, NULL)) {
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
-    }
     result = read_original_pc34_file_bytes(path, &bytes, &size);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
+    }
+    /* Product-facing file round trips accept only external PC34 envelopes.
+     * Verify the same bytes that reach F0435; do not reopen a mutable user
+     * file between provenance and import. */
+    if (!dm1_original_save_corpus_external_pc34_bytes(bytes, size, NULL)) {
+        free(bytes);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
     }
 
     /* ReDMCSB LOADSAVE.C F0435 reads original PC34 bytes from disk before
@@ -4508,15 +4529,13 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
     if (!path || !out_bytes || !out_size) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
-    if (!dm1_original_save_file_opens_for_read(path)) {
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-    }
-    if (!dm1_original_save_corpus_external_pc34_file(path, NULL)) {
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
-    }
     result = read_original_pc34_file_bytes(path, &bytes, &size);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
+    }
+    if (!dm1_original_save_corpus_external_pc34_bytes(bytes, size, NULL)) {
+        free(bytes);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
     }
 
     result = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
@@ -4625,6 +4644,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         size_t exported_size = 0u;
         int result;
         int firestaff_manifest = 0;
+        DM1OriginalSaveClassifyResult snapshot;
         DM1OriginalSavePC34CorpusDiscoveryReceipt *discovery =
             i < report.discovery_receipt_count
                 ? &report.discovery_receipts[i] : NULL;
@@ -4663,13 +4683,32 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             }
             continue;
         }
+        /* The recursive discovery scan is advisory. Bind its receipt to the
+         * exact byte snapshot before passing any part to F0435, otherwise a
+         * replacement save could inherit an earlier path/header receipt. */
+        if (!dm1_original_save_snapshot_matches_classification(
+                &corpus.results[i], source_bytes, source_size, &snapshot)) {
+            free(source_bytes);
+            receipt->roundtrip_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+            if (discovery) {
+                discovery->result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+                snprintf(discovery->reason, sizeof(discovery->reason), "%s",
+                         "save changed after corpus discovery");
+            }
+            if (report.first_failure_result ==
+                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                report.first_failure_result =
+                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+            }
+            continue;
+        }
         receipt->source_byte_count = (uint32_t)source_size;
         receipt->source_hash = dm1_original_save_hash_bytes(
             source_bytes, source_size);
         receipt->source_f7057_envelope_end_offset =
-            corpus.results[i].save_part_loader_envelope_end_offset;
+            snapshot.save_part_loader_envelope_end_offset;
         receipt->source_f7057_trailing_byte_count =
-            corpus.results[i].save_part_loader_trailing_byte_count;
+            snapshot.save_part_loader_trailing_byte_count;
         if (receipt->source_hash == 0u) {
             free(source_bytes);
             if (discovery) {
@@ -4681,8 +4720,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             }
             continue;
         }
-        if (!dm1_original_save_corpus_external_pc34_file(
-                corpus.paths[i], &firestaff_manifest)) {
+        if (!dm1_original_save_corpus_external_pc34_bytes(
+                source_bytes, source_size, &firestaff_manifest)) {
             free(source_bytes);
             receipt->firestaff_manifest = firestaff_manifest;
             if (discovery) {
@@ -4720,7 +4759,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         receipt->roundtrip_attempted = 1;
         result = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
             source_bytes, source_size,
-            corpus.results[i].game_id,
+            snapshot.game_id,
             exported_bytes,
             SAVEGAME_PC34_MAX_FILE_SIZE,
             &exported_size,
