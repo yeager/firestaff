@@ -2844,6 +2844,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     hit RNG roll. This matches `PROJEXPL.C F0231:1454-1456` and prevents an
     impossible high-dexterity hit or a changed RNG/Luck sequence. Remaining
     melee work is broader runtime aftermath proof, not a fallback combat path.
+  - 2026-07-13 update: the compact F0231 path now also keeps the original
+    action-hand icon ordering: Diamond Edge and Hardcleave reduce only the
+    rolled defense, then Vorpal Blade halves only final damage against material
+    creatures. The remaining work is broader runtime aftermath proof, not a
+    generic weapon modifier or a replacement melee formula.
   - 2026-07-13 update: the live F0407 completion path now retains its
     G0494/M005 stamina receipt until after F0402/F0231. This preserves the
     pre-action F0312 strength state required by `MENU.C F0407:1613-1628` and

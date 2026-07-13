@@ -955,6 +955,21 @@ static int dm1_melee_action_hits_non_material(const DM1_ChampionCombat* ch) {
     return ch->actionHandIcon == DM1_ICON_WEAPON_VORPAL_BLADE;
 }
 
+/* ReDMCSB: PROJEXPL.C F0231 lines 1491-1496. The icon modifier is applied
+ * after M003_RANDOM(32) has been added to creature defense and before the
+ * next M003_RANDOM(32) damage subtraction. It is not a general weapon or
+ * armor rule. */
+int dm1_melee_action_defense_f0231_pc34(int rolledDefense,
+                                        int actionHandIcon) {
+    if (actionHandIcon == DM1_ICON_WEAPON_DIAMOND_EDGE) {
+        return rolledDefense - (rolledDefense >> 2);
+    }
+    if (actionHandIcon == DM1_ICON_WEAPON_HARDCLEAVE_EXECUTIONER) {
+        return rolledDefense - (rolledDefense >> 3);
+    }
+    return rolledDefense;
+}
+
 /*
  * dm1_melee_action_damage — Champion melee attack against creature
  *
@@ -1000,7 +1015,21 @@ int dm1_melee_action_damage(DM1_CombatState* s, int champIdx,
     }
 
     /* Apply creature defense */
-    attack = dm1_max(0, attack - dm1_combat_random(creatureDef + 1));
+    creatureDef = dm1_combat_random(creatureDef + 1);
+    creatureDef = dm1_melee_action_defense_f0231_pc34(
+        creatureDef, ch->actionHandIcon);
+    attack = dm1_max(0, attack - creatureDef);
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1526-1527. Vorpal Blade can strike
+     * non-material creatures, but its final damage is halved against every
+     * material creature; a one-point result becomes the source miss tail. */
+    if (ch->actionHandIcon == DM1_ICON_WEAPON_VORPAL_BLADE &&
+        !group->info.nonMaterial) {
+        attack >>= 1;
+        if (attack == 0) {
+            return 0;
+        }
+    }
 
     /* Apply damage */
     return dm1_creature_take_damage(group, creatureIdx, attack);

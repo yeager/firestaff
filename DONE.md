@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0231 action-hand icon ordering: compact combat now applies
+  Diamond Edge's quarter and Hardcleave's eighth defense reductions only after
+  the F0231 defense roll, then applies Vorpal Blade's material-target late
+  damage halving. Source: ReDMCSB `PROJEXPL.C F0231:1491-1496,1526-1527`.
+  Verification: isolated Ninja build and 41/41 assertions in
+  `test_dm1_v1_combat_pc34_compat_integration`.
+
 - 2026-07-13 CSB PC34 runtime host-surface decision: the CSB-owned startup
   session now promotes C004 plus C002/C003 only as a three-surface door-opening
   raster, and promotes C017/C040 only as their original decoded HUD surfaces.

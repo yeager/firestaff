@@ -29,6 +29,7 @@ static void test_f0735_non_material_gate_skips_luck(void);
 static void test_f0735_dexterity_255_skips_hit_branch(void);
 static void test_f0735_weak_damage_zero_roll_uses_miss_tail(void);
 static void test_legacy_f0231_dexterity_255_preserves_rng(void);
+static void test_legacy_f0231_icon_damage_order(void);
 static void test_ordered_cells_to_attack_priority(void);
 static void test_f0192_per_creature_resistance(void);
 static void test_f0801b_archenemy_double_move(void);
@@ -646,6 +647,49 @@ static void test_legacy_f0231_dexterity_255_preserves_rng(void) {
     PASS();
 }
 
+/* ReDMCSB PROJEXPL.C F0231:1491-1496,1526-1527. */
+static void test_legacy_f0231_icon_damage_order(void) {
+    DM1_CombatState s;
+    DM1_CreatureGroup normal;
+    DM1_CreatureGroup vorpal;
+
+    TEST(legacy_f0231_icon_damage_order);
+    CHECK(dm1_melee_action_defense_f0231_pc34(31, 0) == 31,
+          "ordinary action hand must retain rolled defense");
+    CHECK(dm1_melee_action_defense_f0231_pc34(31,
+                                                DM1_ICON_WEAPON_DIAMOND_EDGE) == 24,
+          "Diamond Edge must reduce rolled defense by one quarter");
+    CHECK(dm1_melee_action_defense_f0231_pc34(
+              31, DM1_ICON_WEAPON_HARDCLEAVE_EXECUTIONER) == 28,
+          "Hardcleave must reduce rolled defense by one eighth");
+
+    dm1_combat_init(&s);
+    s.championCount = 1;
+    dm1_combat_init_champion(&s.champions[0]);
+    s.champions[0].strength = 100;
+    s.champions[0].dexterity = 100;
+    s.champions[0].hasWeapon = 1;
+    s.champions[0].actionHandWeapon.strength = 80;
+    s.champions[0].actionHandWeapon.weaponClass = 0;
+
+    dm1_combat_init_group(&normal);
+    normal.info.dexterity = 0;
+    normal.info.defense = 0;
+    normal.count = 0;
+    normal.creatures[0].health = 200;
+    vorpal = normal;
+
+    dm1_combat_seed_rng(0x7921u);
+    (void)dm1_melee_action_damage(&s, 0, &normal, 0);
+    s.champions[0].actionHandIcon = DM1_ICON_WEAPON_VORPAL_BLADE;
+    dm1_combat_seed_rng(0x7921u);
+    (void)dm1_melee_action_damage(&s, 0, &vorpal, 0);
+    CHECK(vorpal.creatures[0].health > normal.creatures[0].health,
+          "Vorpal Blade must halve late F0231 damage against material targets");
+
+    PASS();
+}
+
 /* ── Test: wound defense calculation (F0313) ─────────────────────── */
 static void test_wound_defense(void) {
     TEST(wound_defense);
@@ -902,6 +946,7 @@ int main(void) {
     test_f0735_dexterity_255_skips_hit_branch();
     test_f0735_weak_damage_zero_roll_uses_miss_tail();
     test_legacy_f0231_dexterity_255_preserves_rng();
+    test_legacy_f0231_icon_damage_order();
     test_ordered_cells_to_attack_priority();
     test_f0192_per_creature_resistance();
     test_f0801b_archenemy_double_move();
