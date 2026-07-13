@@ -13420,6 +13420,53 @@ int csb_v1_runtime_set_csbwin_saved_skin(
     return 1;
 }
 
+static int csb_v1_runtime_dsa_get_skin(void *user,
+                                        uint32_t location,
+                                        uint8_t *out_skin)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    uint8_t grid[32u * 32u];
+    int width = 0;
+    int height = 0;
+    int loaded_level = -1;
+    int level = (int)((location >> 10) & 63u);
+    int x = (int)((location >> 5) & 31u);
+    int y = (int)(location & 31u);
+
+    if (out_skin) *out_skin = 0u;
+    /* DSA.cpp:3114-3119 addresses the currently loaded SKIN_CACHE.  Do not
+     * manufacture a cross-level cache load: an original profile must already
+     * own that level and its verified DB11/EXPOOL source. */
+    if (!profile || !out_skin || !profile->dungeon_handle ||
+        level != profile->current_level) {
+        return 0;
+    }
+    (void)csb_v1_runtime_custom_background_skin_grid(
+        profile, grid, (int)sizeof(grid), &width, &height, &loaded_level,
+        NULL);
+    if (loaded_level != level || width <= 0 || height <= 0 ||
+        width > 32 || height > 32 || x >= width || y >= height) {
+        return 0;
+    }
+    *out_skin = grid[(size_t)y * (size_t)width + (size_t)x];
+    return 1;
+}
+
+static int csb_v1_runtime_dsa_set_skin(void *user,
+                                        uint32_t location,
+                                        uint8_t skin)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    int level = (int)((location >> 10) & 63u);
+    int x = (int)((location >> 5) & 31u);
+    int y = (int)(location & 31u);
+
+    if (!profile || level != profile->current_level) {
+        return 0;
+    }
+    return csb_v1_runtime_set_csbwin_saved_skin(profile, level, x, y, skin);
+}
+
 int csb_v1_runtime_set_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile,
                                           int enabled)
 {
@@ -15086,7 +15133,11 @@ static int csb_v1_runtime_stage_csbwin_global_variables(
          candidate->csbwin_appended_tail_size !=
              candidate->csbwin_appended_tail_preserved_size ||
          candidate->csbwin_appended_tail_preserved_size >
-             CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES)) {
+             CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+         candidate->csbwin_appended_tail_fnv1a !=
+             csb_v1_runtime_fnv1a32(
+                 candidate->csbwin_appended_tail,
+                 candidate->csbwin_appended_tail_preserved_size))) {
         return -1;
     }
 
@@ -15423,6 +15474,8 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     const CSB_V1_DSAImportedAction *expected;
     int staged_parameters[26];
     int global_count;
+    int globals_changed;
+    int expool_changed;
     int i;
 
     if (!profile || !runner || !action || !parameters ||
@@ -15447,10 +15500,17 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
      * bank. Rehydrate immediately before Execute so caller-provided runner
      * bytes cannot become runtime state. */
     candidate = *runner;
+    profile_candidate = *profile;
     memset(candidate.global_variables, 0, sizeof(candidate.global_variables));
     candidate.global_variable_count = global_count;
     memcpy(candidate.global_variables, profile->csbwin_global_variables,
            (size_t)global_count * sizeof(candidate.global_variables[0]));
+    /* CSBWin DSA.cpp:3107-3135 reaches the loaded SKIN_CACHE through the
+     * DSA stack.  Bind it to a profile candidate so an unsupported record,
+     * bad location, or later bytecode failure cannot publish an EXPOOL edit. */
+    candidate.get_skin = csb_v1_runtime_dsa_get_skin;
+    candidate.set_skin = csb_v1_runtime_dsa_set_skin;
+    candidate.skin_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
         staged_parameters[i] = parameters[i];
     }
@@ -15463,24 +15523,43 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     /* CSBWin SaveGame.cpp writes changed GLOBALSTORE state through EXPOOL.
      * A source-pure DSA action such as AMPERSAND2 NUMPARAM must not rewrite a
      * save tail merely because it crossed the runtime boundary. */
-    if (memcmp(candidate.global_variables, profile->csbwin_global_variables,
-               (size_t)global_count * sizeof(candidate.global_variables[0])) !=
-        0) {
-        profile_candidate = *profile;
+    globals_changed = memcmp(candidate.global_variables,
+                             profile->csbwin_global_variables,
+                             (size_t)global_count *
+                                 sizeof(candidate.global_variables[0])) != 0;
+    if (globals_changed) {
         memcpy(profile_candidate.csbwin_global_variables,
                candidate.global_variables,
                (size_t)global_count * sizeof(candidate.global_variables[0]));
         if (csb_v1_runtime_write_csbwin_global_variables(&profile_candidate) != 0) {
             return 0;
         }
+    }
+    expool_changed = profile_candidate.csbwin_appended_tail_fnv1a !=
+                         profile->csbwin_appended_tail_fnv1a ||
+        memcmp(profile_candidate.csbwin_appended_tail,
+               profile->csbwin_appended_tail,
+               sizeof(profile->csbwin_appended_tail)) != 0;
+    if (globals_changed) {
         memcpy(profile->csbwin_global_variables,
                profile_candidate.csbwin_global_variables,
                sizeof(profile->csbwin_global_variables));
+    }
+    if (expool_changed) {
         memcpy(profile->csbwin_appended_tail,
                profile_candidate.csbwin_appended_tail,
                sizeof(profile->csbwin_appended_tail));
         profile->csbwin_appended_tail_fnv1a =
             profile_candidate.csbwin_appended_tail_fnv1a;
+        profile->csbwin_skin_cache_tail_receipt_valid =
+            profile_candidate.csbwin_skin_cache_tail_receipt_valid;
+        profile->csbwin_skin_cache_tail_valid =
+            profile_candidate.csbwin_skin_cache_tail_valid;
+        profile->csbwin_skin_cache_tail_size =
+            profile_candidate.csbwin_skin_cache_tail_size;
+        profile->csbwin_skin_cache_tail_fnv1a =
+            profile_candidate.csbwin_skin_cache_tail_fnv1a;
+        profile->skin_cache = profile_candidate.skin_cache;
     }
     for (i = 0; i < parameter_count; ++i) {
         parameters[i] = staged_parameters[i];
