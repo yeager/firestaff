@@ -206,6 +206,8 @@ static int m11_projectile_instance_active(
     const struct ProjectileInstance_Compat* projectile);
 static int m11_dm1_hoc_menu_route_blocks_normal_input(
     const M11_GameViewState* state);
+static int m11_dm1_hoc_c040_input_material_ready(
+    const M11_GameViewState* state);
 static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
@@ -14751,6 +14753,30 @@ static int m11_dm1_hoc_menu_route_blocks_normal_input(
             receipt.showResurrectReincarnateChoices) ? 1 : 0;
 }
 
+/* ReDMCSB PANEL.C F0346:1619-1637 installs M568 by blitting original
+ * C040 before COMMAND.C can dispatch C160/C161/C162.  The M11 host route
+ * must not accept an invisible substitute panel.  This deliberately gates
+ * only SDL/host input; the M10 candidate APIs remain data-model operations
+ * for source-locked save/runtime tests. */
+static int m11_dm1_hoc_c040_input_material_ready(
+    const M11_GameViewState* state)
+{
+    const M11_AssetSlot* panel;
+    DM1_V1_LayoutZoneRectPc34 panelRect;
+
+    if (!state || !state->candidateMirrorPanelActive ||
+        state->candidateMirrorRenameActive || !state->assetsAvailable) {
+        return 0;
+    }
+    panelRect = dm1_v1_inventory_panel_rect_pc34();
+    if (!dm1_v1_inventory_panel_zone_id_pc34()) {
+        return 0;
+    }
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 40);
+    return panel && panel->pixels && panel->width == panelRect.w &&
+           panel->height == panelRect.h;
+}
+
 static int m11_disable_front_mirror_route(M11_GameViewState* state,
                                           int mirrorOrdinal) {
     int mapX;
@@ -15876,6 +15902,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             return M11_GAME_INPUT_IGNORED;
         }
+        if (!m11_dm1_hoc_c040_input_material_ready(state)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (input == M12_MENU_INPUT_BACK) {
             return M11_GameView_CancelMirrorCandidate(state)
                        ? M11_GAME_INPUT_REDRAW
@@ -16618,6 +16647,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             return M11_GameView_HandleMirrorCandidateRenameClick(state, x, y)
                        ? M11_GAME_INPUT_REDRAW
                        : M11_GAME_INPUT_IGNORED;
+        }
+        if (!m11_dm1_hoc_c040_input_material_ready(state)) {
+            return M11_GAME_INPUT_IGNORED;
         }
         if (m11_point_in_rect(x, y, 104, 86, 55, 57)) {
             return M11_GameView_ConfirmMirrorCandidate(state, 0)

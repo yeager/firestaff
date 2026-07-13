@@ -11426,6 +11426,16 @@ unavailable, C027 remains real but receives no host-text fallback. Verification:
 `test_m11_dm1_hoc_no_fallback_panel` with local PC34 `GRAPHICS.DAT` proves the
 real font coordinates/colors and the no-font no-text branch.
 
+# ✅ 2026-07-13 DM1 HoC C040 PC34 host-input gate
+
+M11 now accepts ReDMCSB `COMMAND.C` C160/C161/C162 host pointer/keyboard
+input only while `PANEL.C F0346`'s original PC34 C040 panel is loaded at the
+source C101 geometry. Missing or malformed C040 leaves the candidate modal
+blocked instead of accepting an invisible substitute. The lower-level M10
+candidate APIs remain available to source-locked save/runtime tests. Verification:
+`test_m11_dm1_hoc_no_fallback_panel` rejects no-asset C160 input and consumes
+real-PC34 C162 cancel input.
+
 - ✅ 2026-07-13 DM2 weather decoded-material receipt: each source ENVIRONMENT
   weather command now proves a decodable IMG3 pixel plane together with its
   own local palette before it can reach the no-draw weather handoff.
