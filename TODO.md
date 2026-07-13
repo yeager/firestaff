@@ -1215,6 +1215,11 @@ and real community-save corpus round-trip evidence.
     bytes are intentionally not treated as original mirrors. Remaining work
     is independently collected external PC34 saves, not a synthetic header
     or part layout.
+  - 2026-07-13 update: the external corpus receipt now records the complete
+    decrypted C2 `M516_CHAMPIONS` prefix as four fixed 319-byte records with
+    source/export counts and fingerprints. The opt-in real-corpus probe
+    requires raw byte identity. Remaining work is independently collected
+    external PC34 saves, not a synthetic champion block.
   - 2026-07-13 update: opt-in corpus discovery is now scoped to its explicit
     directory only. Each inspected regular file records size, header-prefix
     bytes fingerprint, classifier shape/reason, eligibility, and final error

@@ -3238,6 +3238,59 @@ static int dm1_original_save_inactive_champion_records_match(
     return 1;
 }
 
+/* ReDMCSB LOADSAVE.C F0433/F0435 carries the complete fixed M516_CHAMPIONS
+ * prefix in C2 before PARTY_INFO. This receipt hashes only those four raw
+ * 319-byte records after their own F0417 deobfuscation; it does not infer
+ * champion state or alter the importer/exporter. */
+static int dm1_original_save_m516_champion_records_match(
+    const uint8_t *source_bytes, size_t source_size,
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const uint8_t *exported_bytes, size_t exported_size,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t source_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    uint8_t exported_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    const size_t m516_bytes = DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT *
+        CHAMPION_MAX_PARTY;
+
+    if (!source_bytes || !source_report || !exported_bytes ||
+        !exported_report || !out_report ||
+        source_report->part_byte_counts[SAVEGAME_PC34_PART_PARTY] !=
+            DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT ||
+        exported_report->part_byte_counts[SAVEGAME_PC34_PART_PARTY] !=
+            DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT ||
+        source_report->pc34_party_part_byte_offset > source_size ||
+        exported_report->pc34_party_part_byte_offset > exported_size ||
+        DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT >
+            source_size - source_report->pc34_party_part_byte_offset ||
+        DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT >
+            exported_size - exported_report->pc34_party_part_byte_offset) {
+        return 0;
+    }
+    memcpy(source_part, source_bytes + source_report->pc34_party_part_byte_offset,
+           sizeof(source_part));
+    memcpy(exported_part,
+           exported_bytes + exported_report->pc34_party_part_byte_offset,
+           sizeof(exported_part));
+    (void)f0417_xor_checksum_bytes(source_part, sizeof(source_part) / 2u,
+                                   source_report->pc34_party_part_key);
+    (void)f0417_xor_checksum_bytes(exported_part, sizeof(exported_part) / 2u,
+                                   exported_report->pc34_party_part_key);
+    out_report->m516_champion_record_receipt_available = 1;
+    out_report->source_m516_champion_record_count = CHAMPION_MAX_PARTY;
+    out_report->exported_m516_champion_record_count = CHAMPION_MAX_PARTY;
+    out_report->source_m516_champion_record_byte_count = (uint32_t)m516_bytes;
+    out_report->exported_m516_champion_record_byte_count = (uint32_t)m516_bytes;
+    out_report->source_m516_champion_record_fingerprint =
+        dm1_original_save_hash_bytes(source_part, m516_bytes);
+    out_report->exported_m516_champion_record_fingerprint =
+        dm1_original_save_hash_bytes(exported_part, m516_bytes);
+    out_report->m516_champion_record_byte_preservation_ok = memcmp(
+        source_part, exported_part, m516_bytes) == 0;
+    return 1;
+}
+
 /* ReDMCSB CLIKVIEW.C F0374:179-186 sets C13.Priority from the dropped
  * bones' ChargeCount. That is an index into M516_CHAMPIONS, not a generic
  * host champion identity. F0433/F0435 copy the complete C2 PARTY block, so
@@ -3766,6 +3819,11 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
             &export_report, out_report)) {
         out_report->inactive_champion_record_byte_receipt_available = 0;
     }
+    if (out_report && !dm1_original_save_m516_champion_records_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report)) {
+        out_report->m516_champion_record_receipt_available = 0;
+    }
     if (out_report && !dm1_original_save_c13_champion_records_match(
             bytes, size, &import_report, out_bytes, *out_size,
             &export_report, out_report)) {
@@ -4124,6 +4182,22 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.inactive_champion_record_byte_preserved_count;
         receipt->inactive_champion_record_byte_preservation_ok =
             roundtrip.inactive_champion_record_byte_preservation_ok;
+        receipt->m516_champion_record_receipt_available =
+            roundtrip.m516_champion_record_receipt_available;
+        receipt->source_m516_champion_record_count =
+            roundtrip.source_m516_champion_record_count;
+        receipt->source_m516_champion_record_byte_count =
+            roundtrip.source_m516_champion_record_byte_count;
+        receipt->source_m516_champion_record_fingerprint =
+            roundtrip.source_m516_champion_record_fingerprint;
+        receipt->exported_m516_champion_record_count =
+            roundtrip.exported_m516_champion_record_count;
+        receipt->exported_m516_champion_record_byte_count =
+            roundtrip.exported_m516_champion_record_byte_count;
+        receipt->exported_m516_champion_record_fingerprint =
+            roundtrip.exported_m516_champion_record_fingerprint;
+        receipt->m516_champion_record_byte_preservation_ok =
+            roundtrip.m516_champion_record_byte_preservation_ok;
         receipt->dungeon_tail_byte_receipt_available =
             roundtrip.dungeon_tail_byte_receipt_available;
         receipt->source_dungeon_tail_byte_count =
