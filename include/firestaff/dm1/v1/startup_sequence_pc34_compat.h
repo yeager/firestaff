@@ -75,6 +75,10 @@ typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
     int entrance_palette;
     unsigned int entrance_palette_entry_count;
     unsigned int entrance_palette_fingerprint;
+    unsigned int entrance_credits_wait_ticks;
+    int entrance_credits_palette;
+    unsigned int entrance_credits_palette_entry_count;
+    unsigned int entrance_credits_palette_fingerprint;
     const char* source_evidence;
 } DM1_V1_StartupFullGraphicsMediaReceipt_PC34;
 
@@ -157,6 +161,22 @@ typedef struct DM1_V1_StartupEntranceRenderAudioCommand_PC34 {
     unsigned int door_right_source_x;
     unsigned int delay_ms;
 } DM1_V1_StartupEntranceRenderAudioCommand_PC34;
+
+/* ReDMCSB ENTRANCE.C F0442 presents C005, selects the PC34 credits palette,
+ * then waits up to 1800 VBlanks. This receipt has no CSB phase or fallback
+ * surface: the supplied C005 pixels must be the real decoded PC34 asset. */
+typedef struct DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 {
+    int handled;
+    int present_credits_frame;
+    int source_asset_receipt_consumed;
+    int source_palette_receipt_consumed;
+    int source_timing_receipt_consumed;
+    int special_palette;
+    unsigned int credits_wait_ticks;
+    unsigned int vblank_delay_ms;
+    unsigned int graphics_c005_pixel_fingerprint;
+    const char* source_evidence;
+} DM1_V1_StartupEntranceCreditsPresentationCommand_PC34;
 
 typedef struct DM1_V1_StartupHandoffPreludePlan_PC34 {
     int required;
@@ -1803,6 +1823,12 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
     unsigned int delay_ticks,
     unsigned int vblank_loop_count,
     DM1_V1_StartupEntranceRenderAudioCommand_PC34* out_command);
+int dm1_v1_startup_entrance_credits_presentation_command_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    const unsigned char* graphics_c005_pixels,
+    unsigned int graphics_c005_width,
+    unsigned int graphics_c005_height,
+    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34* out_command);
 int dm1_v1_startup_sequence_source_order_valid_pc34(void);
 const char* dm1_v1_startup_sequence_source_evidence_pc34(void);
 unsigned int dm1_v1_startup_title_zoom_steps_pc34(void);

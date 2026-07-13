@@ -43,6 +43,13 @@
   ReDMCSB `LOADSAVE.C` F0433:1586-1589 and F0435:2781-2799. Verification:
   focused original-save handoff CTest using native F0433 output only.
 
+- 2026-07-13 DM1 entrance C005 credits receipt: M11 now presents credits only
+  when decoded PC34 C005 pixels pass the DM1-owned F0442 receipt. The receipt
+  binds C005 to DATA.C G0019 credits palette and ENTRANCE.C's 1800-VBlank
+  input window, rejecting CSB palette substitution and the old host-made
+  fallback. Verification: focused C001/C005 command test plus PC34 credits
+  and entrance palette CTests.
+
 - 2026-07-13 Theron authenticated input-order receipt: the live Mednafen
   transition sidecar now records the first observed host-key position and
   emulated PCE input transactions before and after it. A host event after the

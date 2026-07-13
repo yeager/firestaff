@@ -515,27 +515,6 @@ static void m11_sync_and_save_window_size(M12_StartupMenuState* menuState) {
 }
 
 
-static void m11_fill_rect_indexed(unsigned char* framebuffer,
-                                  int framebufferWidth,
-                                  int framebufferHeight,
-                                  int x,
-                                  int y,
-                                  int w,
-                                  int h,
-                                  unsigned char color) {
-    int yy;
-    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0 || w <= 0 || h <= 0) return;
-    if (x < 0) { w += x; x = 0; }
-    if (y < 0) { h += y; y = 0; }
-    if (x + w > framebufferWidth) w = framebufferWidth - x;
-    if (y + h > framebufferHeight) h = framebufferHeight - y;
-    if (w <= 0 || h <= 0) return;
-    for (yy = 0; yy < h; ++yy) {
-        memset(framebuffer + (size_t)(y + yy) * (size_t)framebufferWidth + (size_t)x, color, (size_t)w);
-    }
-}
-
-
 static int m11_draw_entrance_screen_asset(M11_GameViewState* gameView,
                                           unsigned char* framebuffer) {
     const M11_AssetSlot* entranceScreen;
@@ -596,27 +575,8 @@ typedef enum {
     M11_ENTRANCE_COMMAND_CREDITS = ENTRANCE_COMPAT_COMMAND_PATH_CREDITS
 } M11_EntranceCommand;
 
-static int m11_draw_entrance_credits_asset(M11_GameViewState* gameView,
-                                           unsigned char* framebuffer) {
-    const M11_AssetSlot* credits;
-    if (!gameView || !framebuffer || !gameView->assetsAvailable) {
-        return 0;
-    }
-    credits = M11_AssetLoader_Load(&gameView->assetLoader, 5U);
-    if (!credits || credits->width != 320U || credits->height != 200U) {
-        return 0;
-    }
-    M11_AssetLoader_Blit(credits,
-                         framebuffer,
-                         M11_FB_WIDTH,
-                         M11_FB_HEIGHT,
-                         0,
-                         0,
-                         -1);
-    return 1;
-}
-
-static int m11_wait_for_entrance_credits_done(void) {
+static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
+                                              unsigned int vblank_delay_ms) {
     unsigned int ticks;
     SDL_Event ev;
     /* ReDMCSB ENTRANCE.C:1012-1091 F0442 sets L1406=1800, discards stale
@@ -626,7 +586,10 @@ static int m11_wait_for_entrance_credits_done(void) {
     while (SDL_PollEvent(&ev)) {
         (void)ev;
     }
-    for (ticks = 0U; ticks < ENTRANCE_Compat_GetCreditsWaitTicks(); ++ticks) {
+    if (wait_ticks == 0U || vblank_delay_ms == 0U) {
+        return M11_ENTRANCE_COMMAND_NONE;
+    }
+    for (ticks = 0U; ticks < wait_ticks; ++ticks) {
         while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
             if (ev.type == SDL_EVENT_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
@@ -652,29 +615,35 @@ static int m11_wait_for_entrance_credits_done(void) {
             }
 #endif
         }
-        SDL_Delay(ENTRANCE_Compat_GetVblankDelayMs());
+        SDL_Delay(vblank_delay_ms);
     }
     return M11_ENTRANCE_COMMAND_NONE;
 }
 
 static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
-                                             unsigned char* framebuffer) {
+                                             unsigned char* framebuffer,
+                                             const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
+                                                 media_receipt) {
+    const M11_AssetSlot* credits;
+    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 command;
     int waitResult;
-    if (!gameView || !framebuffer) return M11_ENTRANCE_COMMAND_NONE;
-    if (!m11_draw_entrance_credits_asset(gameView, framebuffer)) {
-        memset(framebuffer, 0, (size_t)M11_FB_BYTES);
-        m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-                              0, 0, M11_FB_WIDTH, M11_FB_HEIGHT, 1);
-        m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-                              36, 88, 248, 24, 15);
-        m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-                              40, 92, 240, 16, 0);
+    if (!gameView || !framebuffer || !media_receipt || !gameView->assetsAvailable) {
+        return M11_ENTRANCE_COMMAND_NONE;
     }
+    credits = M11_AssetLoader_Load(&gameView->assetLoader, 5U);
+    if (!credits || !dm1_v1_startup_entrance_credits_presentation_command_pc34(
+                        media_receipt, credits->pixels, credits->width,
+                        credits->height, &command)) {
+        return M11_ENTRANCE_COMMAND_NONE;
+    }
+    M11_AssetLoader_Blit(credits, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                         0, 0, -1);
     M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                 M11_FB_WIDTH,
                                                 M11_FB_HEIGHT,
-                                                VGA_PALETTE_PC34_SPECIAL_CREDITS);
-    waitResult = m11_wait_for_entrance_credits_done();
+                                                command.special_palette);
+    waitResult = m11_wait_for_entrance_credits_done(command.credits_wait_ticks,
+                                                    command.vblank_delay_ms);
     return waitResult;
 }
 
@@ -897,7 +866,8 @@ static int m11_play_redmcsb_entrance_transition(
             }
             if (cmd == M11_ENTRANCE_COMMAND_CREDITS) {
                 int creditsResult =
-                    m11_show_redmcsb_entrance_credits(gameView, framebuffer);
+                    m11_show_redmcsb_entrance_credits(gameView, framebuffer,
+                                                      mediaReceipt);
                 if (creditsResult == M11_ENTRANCE_COMMAND_QUIT) {
                     free(dungeonFrame);
                     return M11_ENTRANCE_COMMAND_QUIT;
