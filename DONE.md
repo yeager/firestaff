@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure2 descriptor-envelope handoff gate: a present
+  Structure1G local descriptor now reaches the host only when every nonzero
+  original target is aligned and has a complete two-byte window within its
+  own bounded post-`FFFF` span. LEV00-LEV15 satisfies the gate; malformed
+  odd, out-of-span, and final-byte target fixtures block with the explicit
+  `blocked-structure2-envelope` receipt. This is envelope integrity only,
+  not a payload grammar, pixel, palette, decoder, animation, or material
+  claim. Verification: Ninja and CTest passed
+  `nexus_v1_dgn_geometry_readiness` and
+  `nexus_v1_structure2_no_draw_receipt`.
+
 - 2026-07-13 CSBWin saved `TT_STONEROOM` DSA receipt: restored function-6
   timers now bind their exact level/x/y target, timer position, and
   SET/CLEAR/TOGGLE message to the authenticated `ProcessDSATimer6` resolver
