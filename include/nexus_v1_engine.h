@@ -74,6 +74,14 @@ typedef struct {
 typedef struct {
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_DgnRenderPlanReceipt receipt;
+    /* Runtime-owned, no-draw Structure1G -> Structure2 source bindings for
+     * animated floor commands. These preserve package provenance while the
+     * original payload codec remains unavailable. */
+    Nexus_V1_DgnStructure2FloorCommandSource
+        structure2_floor_command_sources[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_DgnStructure2FloorCommandSourceReceipt
+        structure2_floor_command_source_receipt;
+    int structure2_floor_command_sources_consumed;
     int level;
     int party_x;
     int party_y;
