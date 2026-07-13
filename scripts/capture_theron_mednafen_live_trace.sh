@@ -8,6 +8,10 @@ trace=${THERON_LIVE_TRACE_OUTPUT:-}
 seconds=${THERON_CAPTURE_SECONDS:-45}
 capture_sdl_video_driver=${THERON_CAPTURE_SDL_VIDEODRIVER:-dummy}
 configured_home=${THERON_MEDNAFEN_HOME:-}
+host_key=${THERON_CAPTURE_HOST_KEY:-}
+host_key_delay=${THERON_CAPTURE_HOST_KEY_DELAY:-5}
+host_key_hold=${THERON_CAPTURE_HOST_KEY_HOLD:-1}
+host_key_repeats=${THERON_CAPTURE_HOST_KEY_REPEATS:-3}
 
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
     printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required'
@@ -25,6 +29,32 @@ if [[ -n "$configured_home" && ! -d "$configured_home" ]]; then
     printf '%s\n' 'FAIL: THERON_MEDNAFEN_HOME must name an existing Mednafen configuration directory' >&2
     exit 1
 fi
+if [[ -n "$host_key" ]]; then
+    if [[ "$host_key" != return && "$host_key" != i && "$host_key" != select ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY currently supports only return, i, or select' >&2
+        exit 1
+    fi
+    if [[ "$capture_sdl_video_driver" == dummy ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY requires a non-dummy SDL video driver' >&2
+        exit 1
+    fi
+    if [[ "$(uname -s)" != Darwin ]] || ! command -v osascript >/dev/null 2>&1; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY=return requires macOS osascript accessibility input' >&2
+        exit 1
+    fi
+    if [[ ! "$host_key_delay" =~ ^[0-9]+$ ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_DELAY must be a non-negative integer' >&2
+        exit 1
+    fi
+    if [[ ! "$host_key_hold" =~ ^[1-9][0-9]*$ ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_HOLD must be a positive integer' >&2
+        exit 1
+    fi
+    if [[ ! "$host_key_repeats" =~ ^[1-9][0-9]*$ ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_REPEATS must be a positive integer' >&2
+        exit 1
+    fi
+fi
 
 if command -v gtimeout >/dev/null 2>&1; then
     timeout_command=(gtimeout "$seconds")
@@ -34,6 +64,15 @@ else
     printf '%s\n' 'FAIL: timeout or gtimeout is required for bounded live capture' >&2
     exit 1
 fi
+
+trace_count() {
+    local pattern=$1
+    local file=$2
+    local count
+
+    count=$(grep -Ec "$pattern" "$file" 2>/dev/null || true)
+    printf '%s' "${count:-0}"
+}
 
 trace_dir=$(dirname -- "$trace")
 memory_trace="${trace}.memory"
@@ -56,8 +95,8 @@ if [[ "$cleanup_home" == 1 ]]; then
     trap 'rm -rf "$home_dir"' EXIT
 fi
 
-set +e
-"${timeout_command[@]}" env \
+launch=(
+    "${timeout_command[@]}" env
     MEDNAFEN_HOME="$home_dir" \
     FIRESTAFF_THERON_IRQ2_TRACE="$trace" \
     FIRESTAFF_THERON_IRQ2_MEMORY_TRACE="$memory_trace" \
@@ -69,8 +108,43 @@ set +e
     -sound 0 \
     -video.driver softfb \
     -pce.arcadecard 0 \
-    -pce.cdbios "$system_card" \
-    "$cue" >"$stdout_file" 2>"$stderr_file"
+    -pce.cdbios "$system_card"
+    "$cue"
+)
+set +e
+"${launch[@]}" >"$stdout_file" 2>"$stderr_file" &
+mednafen_pid=$!
+if [[ -n "$host_key" ]]; then
+    sleep "$host_key_delay"
+    if ! osascript <<APPLESCRIPT
+tell application "System Events"
+    set targetProcess to first application process whose name is "mednafen"
+    set frontmost of targetProcess to true
+    delay 0.2
+    if "$host_key" is "return" then
+    key down {return}
+    delay $host_key_hold
+    key up {return}
+    else if "$host_key" is "select" then
+        key down {tab}
+        delay $host_key_hold
+        key up {tab}
+    else
+        repeat $host_key_repeats times
+            key code 85
+            delay 0.2
+        end repeat
+    end if
+end tell
+APPLESCRIPT
+    then
+        kill "$mednafen_pid" 2>/dev/null || true
+        wait "$mednafen_pid" 2>/dev/null || true
+        printf '%s\n' 'FAIL: macOS could not focus Mednafen and send Return; grant accessibility permission to the invoking terminal' >&2
+        exit 1
+    fi
+fi
+wait "$mednafen_pid"
 status=$?
 set -e
 
@@ -78,11 +152,11 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-transition_input_count=$(grep -Ec '^pce_input_(read|write) ' "$input_trace" 2>/dev/null || true)
-transition_host_key_count=$(grep -Ec '^host_key_event ' "$input_trace" 2>/dev/null || true)
-transition_irq_count=$(grep -Ec '^pce_cd_irq cpu_pc=' "$cd_trace" 2>/dev/null || true)
-transition_non_system_card_count=$(grep -Ec '^pce_cd_register_read cpu_pc=[0-9a-b][0-9a-f]{3} ' "$cd_trace" 2>/dev/null || true)
-transition_sector_count=$(grep -Ec '^cd_interface_raw_sector_read ' "$cd_trace" 2>/dev/null || true)
+transition_input_count=$(trace_count '^pce_input_(read|write) ' "$input_trace")
+transition_host_key_count=$(trace_count '^host_key_event ' "$input_trace")
+transition_irq_count=$(trace_count '^pce_cd_irq cpu_pc=' "$cd_trace")
+transition_non_system_card_count=$(trace_count '^pce_cd_register_read cpu_pc=[0-9a-b][0-9a-f]{3} ' "$cd_trace")
+transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
     printf 'input_transactions=%s\n' "$transition_input_count"
@@ -90,6 +164,11 @@ transition_sector_count=$(grep -Ec '^cd_interface_raw_sector_read ' "$cd_trace" 
     printf 'cd_irq_callbacks=%s\n' "$transition_irq_count"
     printf 'non_system_card_pcecd_reads=%s\n' "$transition_non_system_card_count"
     printf 'raw_sector_spans=%s\n' "$transition_sector_count"
+    if [[ -n "$host_key" ]]; then
+        printf 'requested_host_key=%s\n' "$host_key"
+        printf 'requested_host_key_hold_seconds=%s\n' "$host_key_hold"
+        printf 'requested_host_key_repeats=%s\n' "$host_key_repeats"
+    fi
     if [[ "$transition_input_count" -gt 0 && "$transition_irq_count" -gt 0 &&
           "$transition_non_system_card_count" -gt 0 && "$transition_sector_count" -gt 0 ]]; then
         printf '%s\n' 'transition=observed'
@@ -97,6 +176,10 @@ transition_sector_count=$(grep -Ec '^cd_interface_raw_sector_read ' "$cd_trace" 
         printf '%s\n' 'transition=missing'
     fi
 } >"$transition_receipt"
+if [[ -n "$host_key" && "$transition_host_key_count" -eq 0 ]]; then
+    printf 'BLOCKED: requested host key was not observed by Mednafen SDL dispatch (exit=%s)\n' "$status"
+    exit 1
+fi
 if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||
    ! grep -Fq 'dynamic_cd_read_controller_state ' "$trace" ||
    ! grep -Fq 'dynamic_huc6260_palette_store ' "$trace"; then

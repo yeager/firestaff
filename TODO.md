@@ -512,6 +512,15 @@ The Mednafen trace harness now forces System Card 3.0 and the correct raw-CUE
 PCE route. It records reproducible CPU progress but still lacks the original
 target-PC snapshots required to select the IRQ2 hardware branch. Continue with
 real trace evidence only; no inferred CD register value may enter runtime.
+The current macOS capture harness now focuses Mednafen and sends opt-in real
+SDL `RUN`, `SELECT`, or `I` input. Fresh authentic US-CUE/System Card 3.0
+captures prove host events and PCE port changes (`RUN=0008`, `SELECT=0004`,
+`I=0001`) but no later controller transaction after those events: the observed
+128 port transactions have already completed before the host-side event is
+processed. None reaches a non-System-Card PCECD caller or raw sector. The next
+job is therefore a frame-synchronised original input capture that lands before
+the relevant System Card poll, or an independently observed later poll; do not
+inject PCE state, manufacture a controller result, or infer a Track 02 read.
 The verified `$e8ec` path is a fixed `$1804` latch/counter delay. After the
 authenticated US System Card Run input, the first post-latch controller
 exchange is now captured at `$e908..$ea3a`: `$81 -> $1801`, `$60 -> $1800`,
