@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 original PC34 C75 Poison Champion roundtrip: typed handoff
+  validates the live champion and positive unsigned `B.Attack`, preserves the
+  source damage and Attack-1 requeue at runtime, and exports no invented C
+  union. Source: ReDMCSB `CHAMPION.C` F0322:1946-1962 and `TIMELINE.C`
+  C75:1991-1993. Verification: Ninja and CTest
+  `dm1_v1_original_save_pc34_handoff` passed 1/1.
+
 - 2026-07-13 DM1 original PC34 C74 Party Shield roundtrip: typed handoff
   accepts only zero Priority and positive signed `B.Defense`, subtracts it
   from both party-shield mirrors at runtime, and exports no invented C union.
