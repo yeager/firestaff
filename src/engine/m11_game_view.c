@@ -18045,7 +18045,8 @@ static void m11_draw_explosion_cue(unsigned char* framebuffer,
                                    int w,
                                    int h,
                                    const M11_ViewportCell* cell,
-                                   int depthIndex) {
+                                   int depthIndex,
+                                   int isD0c) {
     int cx = x + w / 2;
     int cy = y + h / 2;
     if (!m11_viewport_cell_has_renderable_explosion(cell)) {
@@ -18079,7 +18080,7 @@ static void m11_draw_explosion_cue(unsigned char* framebuffer,
         int atk     = cell->firstExplosionAttack;
         int drewBitmap = 0;
         if (g_drawState) {
-            if (depthIndex == 0) {
+            if (isD0c) {
                 drewBitmap = m11_draw_d0c_explosion_pattern(
                     g_drawState, framebuffer, framebufferWidth,
                     framebufferHeight, x, y, w, h, expType, atk);
@@ -24728,7 +24729,7 @@ static void m11_draw_dm1_deferred_center_explosion(unsigned char* framebuffer,
     }
     m11_draw_explosion_cue(framebuffer, framebufferWidth, framebufferHeight,
                            faceX + 3, faceY + 3, faceW - 6, faceH - 6,
-                           cell, depthIndex);
+                           cell, depthIndex, 0);
 }
 
 static void m11_draw_dm1_deferred_side_explosion(unsigned char* framebuffer,
@@ -24771,7 +24772,33 @@ static void m11_draw_dm1_deferred_side_explosion(unsigned char* framebuffer,
     expY = paneY + (paneH - expArea) / 2;
     m11_draw_explosion_cue(framebuffer, framebufferWidth, framebufferHeight,
                            paneX + 1, expY, paneW - 2, expArea,
-                           cell, depthIndex + 1);
+                           cell, depthIndex + 1, 0);
+}
+
+static void m11_draw_dm1_d0c_deferred_explosion_pass(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    M11_ViewportCell cell;
+
+    if (!state || !framebuffer ||
+        !m11_sample_viewport_cell(state, 0, 0, &cell) || !cell.valid ||
+        !cell.dm1MaterializationDecisionReady ||
+        !cell.dm1MaterializationDecision.drawDeferredSpellEffects ||
+        !m11_viewport_cell_has_renderable_explosion(&cell)) {
+        return;
+    }
+    /* ReDMCSB DUNVIEW.C F0127 calls F0115 for M609_D0C. Its restarted
+     * explosion loop at :5915-6074 selects M636's native 48x32 pattern
+     * material at the D0C pattern origin. Keep it after the D1-D3 deferred
+     * passes, then after the matching D0C projectile pass, exactly as F0128
+     * reaches F0127 after its earlier visible squares. No cue replaces a
+     * missing source bitmap in an asset-backed session. */
+    m11_draw_explosion_cue(framebuffer, framebufferWidth, framebufferHeight,
+                           M11_VIEWPORT_X + 87, M11_VIEWPORT_Y,
+                           48, 32, &cell, 0, 1);
 }
 
 static void m11_draw_dm1_deferred_explosion_pass(const M11_GameViewState* state,
@@ -34835,11 +34862,13 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             }
         }
     }
-    m11_draw_dm1_d0c_projectile_pass(state, framebuffer,
-                                     framebufferWidth, framebufferHeight);
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
                                          frames, cells);
+    m11_draw_dm1_d0c_projectile_pass(state, framebuffer,
+                                     framebufferWidth, framebufferHeight);
+    m11_draw_dm1_d0c_deferred_explosion_pass(state, framebuffer,
+                                             framebufferWidth, framebufferHeight);
 
     /* ReDMCSB DUNGEON.C:2608-2612 / DUNVIEW.C:3922-3928: the C127
      * champion portrait belongs to the D1C front champion-mirror wall

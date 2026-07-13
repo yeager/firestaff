@@ -132,8 +132,9 @@ int main(void)
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
               "F0127 D0C runtime decision is built");
         CHECK(d1c.valid && d1c.viewSquare == 0 && d1c.row == 11 &&
-              d1c.liveProjectileCount == 1 && d1c.projectileZone >= 0,
-              "D0C consumes live projectile material through G2028 row 11");
+              d1c.liveProjectileCount == 1 && d1c.projectileZone >= 0 &&
+              d1c.liveExplosionCount == 1 && d1c.drawDeferredSpellEffects,
+              "D0C consumes live projectile and deferred explosion material");
     }
 
     {

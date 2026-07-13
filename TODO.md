@@ -618,6 +618,9 @@ and other original thing families, not a D0 synthetic marker or replacement
 sprite. F0115 now scans past an invisible live C14 record to the next record
 with an actual C2900 cell, so multi-projectile materialization cannot select a
 missing first-cell fallback; remaining work is real multi-projectile capture.
+F0127 now consumes its deferred live explosion record through original M636
+pattern material after D0 projectile materialization; remaining work is real
+multi-effect capture, not a cue, marker, or replacement bitmap.
 
 DM1 F0115 now consumes only ReDMCSB's compact 13 `G0205` ornament zones.
 The F0676/F0677 D3L2/D3R2 planes are deliberately outside that pass, so they
