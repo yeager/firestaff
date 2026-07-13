@@ -10,6 +10,14 @@
   `F0241_TIMELINE_ProcessEvent1_DoorAnimation` lines 749-823. Verification:
   Ninja and CTest `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 DM1 original PC34 C73 Thieves' Eye roundtrip: typed handoff
+  accepts only zero Priority, retains no B/C union arm, decrements the native
+  and lifecycle Thieves' Eye mirrors at runtime, and exports only its
+  authenticated source receipt with zeroed union bytes. Source: ReDMCSB
+  `MENU.C` F0407:1542-1546, F0412:1945-1949, and `TIMELINE.C`
+  C73:1972-1974. Verification: Ninja and CTest
+  `dm1_v1_original_save_pc34_handoff` passed 1/1.
+
 - 2026-07-13 CSBWin restored TT_12 hide-damage timer bridge: verified an
   exact queue-slot/timer/event/champion receipt now clears the saved
   hide-damage event index through the live queue. Malformed function-12

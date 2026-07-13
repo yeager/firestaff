@@ -1463,6 +1463,15 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
                 src->aux2 != DM1_EVENT_INVISIBILITY || src->aux4 != 0) {
                 return 0;
             }
+        } else if (type == DM1_EVENT_THIEVES_EYE) {
+            /* ReDMCSB MENU.C F0407:1542-1546 and F0412 create C73 with
+             * zero Priority; TIMELINE.C C73:1972-1974 reads no B/C union.
+             * Export only its typed receipt and retain zeroed union bytes. */
+            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
+                src->aux0 != DM1_EVENT_THIEVES_EYE || src->aux1 != 0 ||
+                src->aux2 != DM1_EVENT_THIEVES_EYE || src->aux4 != 0) {
+                return 0;
+            }
         } else if (type == DM1_EVENT_CHAMPION_SHIELD) {
             if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
                 src->aux0 != DM1_EVENT_CHAMPION_SHIELD ||

@@ -10859,6 +10859,16 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                     &world->lifecycle, LIFECYCLE_STATUS_INVISIBILITY);
                 break;
             }
+            if (ev.aux0 == DM1_EVENT_THIEVES_EYE &&
+                ev.aux2 == DM1_EVENT_THIEVES_EYE && ev.aux1 == 0 &&
+                ev.aux4 == 0) {
+                /* ReDMCSB TIMELINE.C C73:1972-1974 decrements only
+                 * Event73Count_ThievesEye; C73 owns no B/C union arm. */
+                world->magic.event73CountThievesEye--;
+                (void)F0839_LIFECYCLE_HandleCounterExpiry_Compat(
+                    &world->lifecycle, LIFECYCLE_STATUS_THIEVES_EYE);
+                break;
+            }
             int statusKind = orch_normalize_status_timeout_aux0_pc34_compat(ev.aux0);
             int statusDefense =
                 orch_status_timeout_defense_pc34_compat(&ev, statusKind);
