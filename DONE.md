@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron Mednafen capture toolchain: the patched Mednafen 1.32.1
+  debugger build now succeeds on macOS without enabling its incompatible
+  legacy `PCECD_DEBUG` printf path. The instrumented debugger hook remains
+  available for authentic Track 02 captures.
+
 - 2026-07-13 Theron IRQ2 capture harness: restored the source-locked Trace
   V3 and stage-two CD-read provenance modules and linked the capture harness
   to its manifest/correlation dependencies. Verification: Ninja
