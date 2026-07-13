@@ -659,7 +659,7 @@ static int corpus_scan_directory_recursive(
 
     dir = opendir(dir_path);
     if (!dir) {
-        return 1;
+        return 0;
     }
     while ((entry = readdir(dir)) != NULL) {
         char path[DM1_ORIGINAL_SAVE_PATH_MAX];
@@ -707,6 +707,7 @@ static int corpus_scan_directory_recursive(
 int dm1_v1_original_save_classify_corpus_root(
     const char *root,
     DM1OriginalSaveCorpusManifest *out_manifest) {
+    struct stat root_st;
     if (!out_manifest) return 0;
     memset(out_manifest, 0, sizeof(*out_manifest));
     out_manifest->candidate_capacity =
@@ -715,6 +716,13 @@ int dm1_v1_original_save_classify_corpus_root(
     if (root && root[0]) {
         copy_path(out_manifest->root, sizeof(out_manifest->root), root);
     } else if (!dm1_v1_original_save_default_root(out_manifest->root)) {
+        return 0;
+    }
+    /* Corpus discovery is opt-in and scoped to one user-supplied directory.
+     * Do not silently treat an unreadable path or a game file as an empty
+     * corpus, which would hide missing real-save evidence. */
+    if (stat(out_manifest->root, &root_st) != 0 ||
+        !S_ISDIR(root_st.st_mode)) {
         return 0;
     }
 

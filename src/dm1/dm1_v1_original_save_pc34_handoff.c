@@ -3843,12 +3843,44 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     report.first_failure_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
     memset(&corpus, 0, sizeof(corpus));
     if (!dm1_v1_original_save_classify_corpus_root(root, &corpus)) {
+        report.discovery_root_error = 1;
         *out_report = report;
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
     }
 
     report.scan_succeeded = 1;
     report.scanned_file_count = corpus.scanned_file_count;
+    report.discovery_file_count = corpus.present_count;
+    report.discovery_pc34_header_count = corpus.original_dm1_pc34_count;
+    report.discovery_loader_envelope_count =
+        corpus.pc34_loader_part_envelope_count;
+    report.discovery_rejected_count = corpus.rejected_count;
+    report.discovery_truncated_count = corpus.truncated_count;
+    for (i = 0; i < corpus.present_count &&
+                i < (int)DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP; ++i) {
+        DM1OriginalSavePC34CorpusDiscoveryReceipt *discovery =
+            &report.discovery_receipts[report.discovery_receipt_count++];
+        const DM1OriginalSaveClassifyResult *classified = &corpus.results[i];
+
+        discovery->source_byte_count = classified->size_bytes > UINT32_MAX
+            ? UINT32_MAX : (uint32_t)classified->size_bytes;
+        discovery->header_prefix_fingerprint = classified->prefix_checksum32;
+        discovery->shape = (int)classified->shape;
+        discovery->readiness = (int)classified->readiness;
+        discovery->pc34_importer_candidate =
+            classified->pc34_importer_candidate;
+        discovery->pc34_loader_part_envelope_candidate =
+            classified->pc34_loader_part_envelope_candidate;
+        discovery->roundtrip_eligible =
+            classified->pc34_loader_part_envelope_candidate;
+        discovery->result = discovery->roundtrip_eligible
+            ? DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE
+            : DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
+        snprintf(discovery->reason, sizeof(discovery->reason), "%s",
+                 classified->reason);
+        snprintf(discovery->path, sizeof(discovery->path), "%s",
+                 corpus.paths[i]);
+    }
     /* The classifier intentionally keeps arbitrary files out of the PC34
      * importer. Preserve that decision in the corpus receipt instead of
      * silently losing evidence of a truncated/non-PC34 neighbour. */
@@ -3874,6 +3906,9 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         size_t exported_size = 0u;
         int result;
         int firestaff_manifest = 0;
+        DM1OriginalSavePC34CorpusDiscoveryReceipt *discovery =
+            i < report.discovery_receipt_count
+                ? &report.discovery_receipts[i] : NULL;
 
         if (!corpus.results[i].pc34_loader_part_envelope_candidate) {
             continue;
@@ -3894,6 +3929,10 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
             source_size == 0u || source_size > UINT32_MAX) {
             free(source_bytes);
+            if (discovery) {
+                discovery->result = result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK
+                    ? DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE : result;
+            }
             if (report.first_failure_result ==
                 DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
                 report.first_failure_result =
@@ -3907,6 +3946,9 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             source_bytes, source_size);
         free(source_bytes);
         if (receipt->source_hash == 0u) {
+            if (discovery) {
+                discovery->result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+            }
             if (report.first_failure_result ==
                 DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
                 report.first_failure_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
@@ -3916,6 +3958,13 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         if (!dm1_original_save_corpus_external_pc34_file(
                 corpus.paths[i], &firestaff_manifest)) {
             receipt->firestaff_manifest = firestaff_manifest;
+            if (discovery) {
+                discovery->result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
+                snprintf(discovery->reason, sizeof(discovery->reason), "%s",
+                         firestaff_manifest
+                             ? "Firestaff manifest-bearing export excluded"
+                             : "not an external original PC34 save");
+            }
             if (firestaff_manifest) {
                 ++report.firestaff_manifest_rejected_count;
             } else {
@@ -3929,6 +3978,9 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             continue;
         }
         receipt->external_original = 1;
+        if (discovery) {
+            discovery->external_original = 1;
+        }
         ++report.pc34_candidate_count;
         if (!report.first_pc34_path[0]) {
             snprintf(report.first_pc34_path, sizeof(report.first_pc34_path),
@@ -3945,6 +3997,9 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             &exported_size,
             &roundtrip);
         receipt->roundtrip_result = result;
+        if (discovery) {
+            discovery->result = result;
+        }
         receipt->core_state_matches = roundtrip.core_state_matches;
         receipt->source_c13_event_count = roundtrip.source_c13_event_count;
         receipt->exported_c13_event_count = roundtrip.exported_c13_event_count;

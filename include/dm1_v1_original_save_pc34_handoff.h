@@ -275,12 +275,36 @@ typedef struct {
     char path[DM1_ORIGINAL_SAVE_PATH_MAX];
 } DM1OriginalSavePC34CorpusReceipt;
 
+/* Discovery is deliberately separate from import receipts. It records every
+ * regular file inspected below the explicitly supplied PC34 corpus root,
+ * including header-only and rejected neighbours, without searching game-data
+ * roots or handing any non-PC34 file to F0435. */
+typedef struct {
+    uint32_t source_byte_count;
+    uint32_t header_prefix_fingerprint;
+    int shape;
+    int readiness;
+    int pc34_importer_candidate;
+    int pc34_loader_part_envelope_candidate;
+    int external_original;
+    int roundtrip_eligible;
+    int result;
+    char reason[96];
+    char path[DM1_ORIGINAL_SAVE_PATH_MAX];
+} DM1OriginalSavePC34CorpusDiscoveryReceipt;
+
 /* Corpus proof is deliberately separate from the header-only classifier.
  * It never writes an export beside a user save: each eligible file is
  * imported, exported into transient memory, and reloaded from that buffer. */
 typedef struct {
     int scan_succeeded;
+    int discovery_root_error;
     int scanned_file_count;
+    int discovery_file_count;
+    int discovery_pc34_header_count;
+    int discovery_loader_envelope_count;
+    int discovery_rejected_count;
+    int discovery_truncated_count;
     int pc34_candidate_count;
     int roundtrip_attempted_count;
     int roundtrip_succeeded_count;
@@ -295,6 +319,9 @@ typedef struct {
     int firestaff_manifest_rejected_count;
     int nonoriginal_envelope_rejected_count;
     int first_failure_result;
+    int discovery_receipt_count;
+    DM1OriginalSavePC34CorpusDiscoveryReceipt
+        discovery_receipts[DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP];
     int receipt_count;
     DM1OriginalSavePC34CorpusReceipt
         receipts[DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP];
