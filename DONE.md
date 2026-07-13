@@ -44,6 +44,13 @@
   `TITLE.C F0437:424-463` and `ENTRANCE.C F0806:850-903`. Verification: local
   PC34 `firestaff_csb_v1_pc_real_asset_launch_probe` passed 50/50 checks.
 
+- 2026-07-13 DM1 F0190 moving killed-all afterplay: a source-locked receipt
+  now represents the `P0374_B_NotMoving == false` route. It requires complete
+  source/destination facts, emits C040 smoke at the source coordinate, and
+  marks possession/group cleanup as deferred to F0267 at the destination.
+  Source: ReDMCSB `GROUP.C F0190:834-839,907-917`. Verification: isolated
+  Ninja build and `test_dm1_v1_f0190_c040_m11_integration_audit` pass.
+
 - 2026-07-13 DM1 F0231 aftermath ordering: compact melee now consumes
   `M005_RANDOM(2)+2` stamina at T0231015 misses and `M004_RANDOM(4)+4` after
   landed F0190 resolution, including F0325's stamina-underflow damage. Its

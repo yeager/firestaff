@@ -2906,6 +2906,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     effects retain order across C040 expiry and source-backed rematerialization,
     including after a complete F0738 mutation. Remaining work is real
     multi-effect capture, not a cue or replacement renderer.
+  - 2026-07-13 update: F0190's moving killed-all branch now has a separate
+    source-coordinate C040 receipt. It requires both source and destination
+    facts, puts smoke only on the source square, and leaves F0188/F0189
+    cleanup explicitly deferred to F0267 at destination. Remaining work is
+    live moving-route consumption and real capture, not inferred coordinates.
   - 2026-07-13 update: the generic F0822 explosion group-death route now
     materializes the existing source C040 plan only after its F0188 drops and
     F0189 cleanup/writeback complete. Projectile F0231 retains its prior

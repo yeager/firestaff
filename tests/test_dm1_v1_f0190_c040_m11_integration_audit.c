@@ -309,6 +309,56 @@ static int verify_same_square_expiry_and_afterplay_order(void)
     return ok;
 }
 
+static int verify_moving_killed_all_source_smoke(void)
+{
+    DM1_MeleeF0190MovingKilledAllAfterplayInputPc34 input;
+    DM1_MeleeF0190MovingKilledAllAfterplayPlanPc34 plan;
+    int ok = 1;
+
+    memset(&input, 0, sizeof(input));
+    input.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    input.groupIndex = 9;
+    input.creatureAttributes = DM1_SIZE_HALF_SQUARE;
+    input.sourceMapIndex = 2;
+    input.sourceMapX = 4;
+    input.sourceMapY = 5;
+    input.sourceCell = 3;
+    input.destinationMapIndex = 6;
+    input.destinationMapX = 12;
+    input.destinationMapY = 13;
+    input.currentTick = 91u;
+
+    ok &= expect(dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
+                     &input, &plan),
+                 "F0190 moving killed-all plan accepts complete source facts");
+    ok &= expect(plan.valid && plan.shouldPresentSourceSmoke &&
+                     plan.requiresDeferredDestinationCleanup &&
+                     plan.groupIndex == 9 &&
+                     plan.sourceSmokeCreateInput.explosionType ==
+                         C040_EXPLOSION_SMOKE &&
+                     plan.sourceSmokeCreateInput.attack == 190 &&
+                     plan.sourceSmokeCreateInput.mapIndex == 2 &&
+                     plan.sourceSmokeCreateInput.mapX == 4 &&
+                     plan.sourceSmokeCreateInput.mapY == 5 &&
+                     plan.sourceSmokeCreateInput.cell == 3 &&
+                     plan.destinationMapIndex == 6 &&
+                     plan.destinationMapX == 12 && plan.destinationMapY == 13,
+                 "F0190 moving death keeps C040 at source and cleanup at destination");
+
+    input.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
+    ok &= expect(dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
+                     &input, &plan) && !plan.valid &&
+                     !plan.shouldPresentSourceSmoke,
+                 "non-final F0190 outcomes cannot enter moving afterplay");
+    input.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    input.sourceCell = 4;
+    ok &= expect(dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
+                     &input, &plan) && !plan.valid &&
+                     !plan.shouldPresentSourceSmoke,
+                 "moving F0190 rejects an unproven source cell");
+    return ok;
+}
+
 int main(void)
 {
     int ok = 1;
@@ -319,6 +369,7 @@ int main(void)
     ok &= verify_valid_attack_route(DM1_SIZE_FULL_SQUARE, 255);
     ok &= verify_invalid_attacks_rejected();
     ok &= verify_same_square_expiry_and_afterplay_order();
+    ok &= verify_moving_killed_all_source_smoke();
     ok &= audit_m11_live_explosion_handoff();
 
     if (!ok) return 1;
