@@ -550,6 +550,8 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     CSB_V1_DSAFilterLocation location;
     CSB_V1_DSAImportedAction action;
     CSB_V1_CSBWin512TimerSummary stoneroom_timer;
+    CSB_V1_CSBWin512TimerSummary falsewall_timer;
+    CSB_V1_CSBWin512TimerSummary falsewall_timer;
     CSB_V1_RuntimeProfile profile;
     CSB_V1_RuntimeDSAFilterBinding binding;
     CSB_V1_RuntimeCSBWinDSATimer6Resolution timer6;
@@ -562,6 +564,8 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     memset(&location, 0, sizeof(location));
     memset(&action, 0, sizeof(action));
     memset(&stoneroom_timer, 0, sizeof(stoneroom_timer));
+    memset(&falsewall_timer, 0, sizeof(falsewall_timer));
+    memset(&falsewall_timer, 0, sizeof(falsewall_timer));
     memset(&binding, 0, sizeof(binding));
     memset(&timer6, 0, sizeof(timer6));
     memset(&runner, 0, sizeof(runner));
@@ -643,6 +647,46 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     CHECK(csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
               &profile, &dungeon, &location, &stoneroom_timer, &timer6) == 0,
           "CSBWin parameter-message timer stays blocked without its EXPOOL payload");
+    falsewall_timer.valid = 1;
+    falsewall_timer.function = 7u;
+    falsewall_timer.ubyte6 = (uint8_t)location.x;
+    falsewall_timer.ubyte7 = (uint8_t)location.y;
+    falsewall_timer.ubyte8 = 0u;
+    falsewall_timer.ubyte9 = 0u;
+    falsewall_timer.level = (uint8_t)location.level;
+    CHECK(csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
+              &profile, &dungeon, &location, &falsewall_timer, &timer6) == 1 &&
+              timer6.input_column == 0u && timer6.state_index == 4u,
+          "CSBWin saved TT_FALSEWALL timer reaches its verified DSA timer-seven receipt");
+    falsewall_timer.ubyte9 = 3u;
+    CHECK(csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
+              &profile, &dungeon, &location, &falsewall_timer, &timer6) == 0,
+          "CSBWin false-wall DSA timer rejects non-source actions");
+    falsewall_timer.valid = 1;
+    falsewall_timer.function = 7u;
+    falsewall_timer.ubyte6 = (uint8_t)location.x;
+    falsewall_timer.ubyte7 = (uint8_t)location.y;
+    falsewall_timer.ubyte8 = 0u;
+    falsewall_timer.ubyte9 = 0u;
+    falsewall_timer.level = (uint8_t)location.level;
+    CHECK(csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
+              &profile, &dungeon, &location, &falsewall_timer, &timer6) == 1 &&
+              timer6.input_column == 0u && timer6.state_index == 4u,
+          "CSBWin saved TT_FALSEWALL timer reaches its verified DSA timer-seven receipt");
+    CHECK(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+              &profile, &timer6.master, timer6.state_index,
+              timer6.action_ordinal, timer6.master_location, &runner) == 1 &&
+              runner.dsa_id == 7 && runner.state_index == 4u,
+          "CSBWin false-wall timer receipt prepares the authenticated DSA runner");
+    falsewall_timer.ubyte9 = 3u;
+    CHECK(csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
+              &profile, &dungeon, &location, &falsewall_timer, &timer6) == 0,
+          "CSBWin false-wall DSA timer rejects non-source SET/CLEAR/TOGGLE actions");
+    falsewall_timer.ubyte9 = 0u;
+    falsewall_timer.function = 101u;
+    CHECK(csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
+              &profile, &dungeon, &location, &falsewall_timer, &timer6) == 0,
+          "CSBWin false-wall parameter-message timer stays blocked without EXPOOL payload");
     selected_action = csb_v1_chaos_resolve_imported_master_filter_action(
         &profile.csbwin_extended_dsa_state, 7,
         (uint16_t)(actuator_record[2] | ((uint16_t)actuator_record[3] << 8)),
