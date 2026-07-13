@@ -137,6 +137,25 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_InventoryPanelHandReceipt;
 
+/* skproject DRAW_HAND_ACTION_ICONS paints this exact interface-GDAT backdrop
+ * before compositing the held item.  The source's rect and dtImage field are
+ * derived solely from its possession/side/direction inputs. */
+typedef struct {
+    int valid;
+    uint16_t expanded_rect_index;
+    uint8_t possession_index;
+    uint8_t left_or_right;
+    uint8_t image_field;
+    DM2_V1_GdatImageMetadata image_metadata;
+    uint8_t local_palette16[16];
+    uint32_t local_palette_hash;
+    uint16_t decoded_width;
+    uint16_t decoded_height;
+    DM2_ImageFormat decoded_format;
+    uint32_t decoded_pixels_hash;
+    uint32_t receipt_hash;
+} DM2_V1_InventoryPanelHandSlotBackdropReceipt;
+
 const char *dm2_v1_inventory_slot_label(int slot);
 int dm2_v1_inventory_slot_is_equipment(int slot);
 
@@ -194,6 +213,21 @@ int dm2_v1_inventory_panel_hand_receipt(
 int dm2_v1_inventory_panel_consume_hand_item(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_InventoryPanelHandReceipt *hand,
+    DM2_V1_InventoryPanelHudSurface *surface,
+    DM2_V1_InventoryPanelHudConsumptionReceipt *out_receipt);
+
+int dm2_v1_inventory_panel_hand_slot_backdrop_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t possession_index,
+    uint8_t left_or_right,
+    uint8_t champion_direction,
+    uint8_t player_direction,
+    DM2_V1_InventoryPanelHandSlotBackdropReceipt *out_receipt);
+
+int dm2_v1_inventory_panel_consume_hand_slot_backdrop(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_InventoryPanelHandSlotBackdropReceipt *backdrop,
+    const DM2_V1_InventoryPanelHudBlit *blit,
     DM2_V1_InventoryPanelHudSurface *surface,
     DM2_V1_InventoryPanelHudConsumptionReceipt *out_receipt);
 
