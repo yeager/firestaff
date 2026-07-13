@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin restored `TT_65` follow-up: the live queue now restores
+  only the saved generator's exact `timerObj8` actuator identity, retaining
+  CSBWin's documented first-disabled-actuator fallback for old saves. Broader
+  C65 sensor execution and generator materialization remain blocked unless
+  their complete CSBWin timer ownership is preserved.
+
 - 2026-07-13 CSBWin restored `TT_75` follow-up: exact saved 8-bit poison
   attacks now enter the existing source C75 damage and `+36` requeue chain.
   Wider `timerWord6` attacks remain blocked until the live continuation owns
