@@ -6,6 +6,13 @@
   Source: ReDMCSB `MENU.C` F0403:1099-1115 and `TIMELINE.C` C78:1988-1989.
   Verification: Ninja and CTest `dm1_v1_original_save_pc34_handoff` passed 1/1.
 
+- 2026-07-13 CSBWin restored `TT_73` Thieves' Eye bridge: the live queue now
+  decrements the imported CSBWin see-through-walls count only after exact
+  queue-slot, timer, and event identity validation. Stale identities and zero
+  counts cannot alter or underflow saved visibility state. Source: CSBWin
+  `CSBCode.cpp:6540`; ReDMCSB `TIMELINE.C F0261` lines 1972-1974.
+  Verification: Ninja and CTest `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 DM1 original PC34 C77 Spell Shield roundtrip: typed handoff
   accepts zero Priority and positive signed `B.Defense`, subtracts it from
   both spell-shield mirrors at runtime, and exports no invented C union.
