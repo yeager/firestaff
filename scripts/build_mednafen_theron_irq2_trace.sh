@@ -8,7 +8,9 @@ fi
 
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 source_root=${1:-/tmp/mednafen-src}
-build_root=${TMPDIR:-/tmp}/mednafen-firestaff-irq2-trace
+# An explicit build root keeps parallel local investigations from reusing an
+# instrumented binary produced from a different patch revision.
+build_root=${FIRESTAFF_MEDNAFEN_BUILD_ROOT:-${TMPDIR:-/tmp}/mednafen-firestaff-irq2-trace}
 prefix="$build_root/install"
 
 if [ ! -f "$source_root/src/drivers/debugger.cpp" ] ||
