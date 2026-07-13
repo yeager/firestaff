@@ -758,6 +758,26 @@ int csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
     CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
     const CSB_V1_DSAImportedAction **out_action);
 
+/* CSBWin CSBCode.cpp dispatches TT_DESSAGE (102) through
+ * ProcessTT_OPENROOM. That path deliberately skips text, counter, and
+ * generator work, but still invokes ProcessDSATimer5 for type-47 actuators.
+ * Bind only this saved DSA handoff; parameter-message payloads and world
+ * mutation remain outside this receipt. */
+int csb_v1_runtime_resolve_csbwin_dessage_dsa_timer_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
+
+int csb_v1_runtime_prepare_csbwin_dessage_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action);
+
 /* CSBWin Timer.cpp::ProcessTT_DOOR invokes ActivateDSA with the decoded
  * SET/CLEAR/TOGGLE action, which constructs a source-shaped timer and calls
  * ProcessDSATimer5 for every type-47 actuator on the door square.  This
