@@ -750,6 +750,38 @@ static void nexus_v1_level_copy_structure1g_entries(
     level->structure1g_entry_count = output;
 }
 
+static void nexus_v1_level_finalize_structure1g_structure2_bindings(
+    Nexus_V1_Level *level)
+{
+    int entry;
+
+    if (!level) return;
+    if (!level->geometry_info.structure1g_present) {
+        level->structure1g_structure2_bindings_complete = 1;
+        return;
+    }
+
+    /* DMWeb DGN Structure1G uses the global image space while Structure2
+     * owns the local descriptor table. Keep the already proven
+     * global-to-local relation whole: one unresolved instruction means this
+     * level cannot claim a usable animated-material declaration. This does
+     * not decode the opaque payload or make any material drawable. */
+    level->structure1g_structure2_bindings_complete =
+        level->structure2_texture_table_valid &&
+        level->structure1g_entry_count > 0;
+    for (entry = 0;
+         entry < level->structure1g_entry_count &&
+         level->structure1g_structure2_bindings_complete;
+         ++entry) {
+        const Nexus_V1_DgnStructure1GEntry *declaration =
+            &level->structure1g_entries[entry];
+        if (!declaration->first_structure2_image_valid ||
+            declaration->structure2_image_instruction_unbound_count != 0) {
+            level->structure1g_structure2_bindings_complete = 0;
+        }
+    }
+}
+
 static void nexus_v1_level_copy_structure1f_entries(
     Nexus_V1_Level *level,
     const uint8_t *data,
@@ -891,6 +923,7 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                 }
                 nexus_v1_level_copy_structure1f_entries(level, data, &layout);
                 nexus_v1_level_copy_structure1g_entries(level, data, &layout);
+                nexus_v1_level_finalize_structure1g_structure2_bindings(level);
                 level->structure1g_floor_animation_bound_count = 0;
                 for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
                     for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
@@ -1156,6 +1189,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
             level->structure1g_entries[entry]
                 .structure2_image_instruction_unbound_count;
     }
+    out_receipt->structure1g_structure2_bindings_complete =
+        level->structure1g_structure2_bindings_complete;
 
     if (!info->dmweb_container) {
         out_receipt->status =
@@ -1163,6 +1198,12 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
     } else if (info->structure1g_present && !info->structure1g_valid) {
         out_receipt->status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE_SEMANTICS;
+    } else if (info->structure1g_present &&
+               !level->structure1g_structure2_bindings_complete) {
+        /* A syntactically bounded Structure1G program still cannot be
+         * promoted when any real image instruction misses Structure2. */
+        out_receipt->status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
     } else if (info->mesh_ready) {
         out_receipt->status = NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH;
         out_receipt->can_render_dgn_mesh = 1;
@@ -1560,6 +1601,8 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.structure1g_structure2_image_instruction_bound_count;
     receipt.structure1g_structure2_image_instruction_unbound_count =
         handoff.structure1g_structure2_image_instruction_unbound_count;
+    receipt.structure1g_structure2_bindings_complete =
+        handoff.structure1g_structure2_bindings_complete;
     if (handoff.status != NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH ||
         !handoff.can_render_dgn_mesh) {
         receipt.blocks_real_dgn_mesh_render = 1;

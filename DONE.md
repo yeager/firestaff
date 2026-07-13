@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus V1 Structure1G complete-binding gate: DGN handoff now
+  requires every valid Structure1G declaration's first image and every
+  non-control sequence image instruction to resolve through the local
+  Structure2 descriptor table. A bounded but unbound image reference blocks
+  the full DGN host route with `blocked-structure2-source` and no fallback.
+  This is descriptor identity/reachability only, not Structure2 payload,
+  palette, pixel, timing, animation, or draw semantics. Verification:
+  `test_nexus_v1_dgn_geometry_readiness`.
+
 - 2026-07-13 DM2 GDAT weather image binding: a weather CMDSTR now becomes
   material-valid only when the same original `ENVIRONMENT` graphics set has
   the matching `dtImage` entry for its selected command. `CD` remains the

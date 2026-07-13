@@ -413,6 +413,15 @@ texture/palette encoding, or a material bridge from descriptor correlation
 alone. The next admissible work is an independently evidenced payload-record
 grammar or Saturn executable route.
 
+2026-07-13 update: valid Structure1G control bytes are now insufficient on
+their own. The runtime requires every declared first image and every sequence
+image instruction to bind to a present local Structure2 descriptor before
+host handoff can claim mesh readiness. An unbound original-data reference
+blocks the whole DGN route with no fallback. This proves descriptor identity
+and reachability only; it does not interpret Structure2 payload bytes, decode
+pixels or palettes, or execute animation timing. The remaining admissible work
+is still a retail payload grammar plus a Saturn executable/capture route.
+
 ## Nexus SLEV/SAL Semantic Follow-up (2026-07-11)
 
 Level loading binds `SLEVxx.BIN`, `SNDLEVxx.SAL`, and `SNDLEVxx.MAP` to their

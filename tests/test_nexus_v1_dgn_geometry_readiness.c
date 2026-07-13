@@ -695,6 +695,7 @@ static void test_structure1g_animated_floor_material_handoff(void) {
     uint8_t *structure1;
     uint8_t *cell;
     Nexus_V1_Level level;
+    Nexus_V1_DgnRendererHandoffReceipt handoff;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_DgnRenderPlanReceipt receipt;
 
@@ -721,6 +722,8 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           level.structure1g_entries[0]
               .structure2_image_instruction_unbound_count == 0,
           "Structure1G global image instructions bind only through local Structure2 descriptors");
+    CHECK(level.structure1g_structure2_bindings_complete,
+          "complete Structure1G image declarations are required before host handoff");
     CHECK(level.structure2_payload.valid &&
           level.structure2_payload.descriptor_bytes == 220 &&
           level.structure2_payload.terminator_offset == 220 &&
@@ -770,6 +773,29 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           "animated floor declaration remains unresolved without Structure2 handoff");
     CHECK(receipt.blocks_real_dgn_mesh_render && !receipt.fallback_visuals_permitted,
           "animated floor declaration blocks until a proven Structure2 material handoff exists");
+    /* A bounded sequence that names an absent local descriptor is not a
+     * partially valid animation. It must block at handoff, even before a
+     * particular viewport happens to look at that floor. */
+    wb16(structure1 + structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 24 + 8,
+         0x0157U);
+    wb16(structure1 + structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 24 + 20,
+         0x0157U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0,
+          "unbound Structure1G fixture reloads");
+    CHECK(!level.structure1g_structure2_bindings_complete,
+          "unbound Structure1G image instruction invalidates the complete binding");
+    CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0,
+          "unbound Structure1G handoff receipt builds");
+    CHECK(handoff.status == NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE,
+          "unbound Structure1G image instruction has the Structure2 handoff status");
+    CHECK(!handoff.structure1g_structure2_bindings_complete,
+          "unbound Structure1G image instruction reaches the host receipt");
+    CHECK(handoff.blocks_real_dgn_mesh_render && !handoff.fallback_visuals_permitted,
+          "unbound Structure1G image instruction blocks the complete DGN host route");
+    wb16(structure1 + structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 24 + 8,
+         0x0156U);
+    wb16(structure1 + structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 24 + 20,
+         0x0156U);
     wb32(dgn + 0x18, 221U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
           !level.structure2_texture_table_valid && !level.structure2_payload.valid,
