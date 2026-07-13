@@ -17925,6 +17925,51 @@ static void m11_draw_pit_effect(unsigned char* framebuffer,
                    x + 4, x + w - 5, pitY + pitH - 4, M11_COLOR_NAVY);
 }
 
+/* ReDMCSB DUNVIEW.C F0115:6038-6074 handles the D0C explosion separately
+ * from the F0114 scaled-sprite path: it selects one of M636's three
+ * small/medium/large pattern bitmaps, then composites it through the D0C
+ * explosion mask. Firestaff has the authentic PC34 bitmap family already;
+ * consume that family here rather than falling through to the D1+ material. */
+static int m11_draw_d0c_explosion_pattern(const M11_GameViewState* state,
+                                          unsigned char* framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight,
+                                          int x,
+                                          int y,
+                                          int w,
+                                          int h,
+                                          int explosionType,
+                                          int attack)
+{
+    const M11_AssetSlot* slot;
+    int graphicIndex;
+    if (!state || !state->assetsAvailable || w <= 0 || h <= 0) {
+        return 0;
+    }
+    graphicIndex = dm1_v1_explosion_pattern_graphic_index(explosionType,
+                                                            attack);
+    if (graphicIndex < DM1_GFX_FIRST_EXPLOSION_PATTERN) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)graphicIndex);
+    if (!slot || slot->width == 0 || slot->height == 0) {
+        return 0;
+    }
+    if (dm1_v1_explosion_is_smoke(explosionType)) {
+        M11_AssetLoader_BlitScaledReplace(
+            slot, framebuffer, framebufferWidth, framebufferHeight,
+            x, y, w, h, M11_COLOR_FLESH,
+            DM1_SMOKE_RECOLOR_SRC_A, DM1_SMOKE_RECOLOR_DST_A,
+            DM1_SMOKE_RECOLOR_SRC_B, DM1_SMOKE_RECOLOR_DST_B);
+    } else {
+        M11_AssetLoader_BlitScaled(slot, framebuffer, framebufferWidth,
+                                   framebufferHeight, x, y, w, h,
+                                   M11_COLOR_FLESH);
+    }
+    return 1;
+}
+
 static void m11_draw_explosion_cue(unsigned char* framebuffer,
                                    int framebufferWidth,
                                    int framebufferHeight,
@@ -17967,10 +18012,17 @@ static void m11_draw_explosion_cue(unsigned char* framebuffer,
         int atk     = cell->firstExplosionAttack;
         int drewBitmap = 0;
         if (g_drawState) {
-            drewBitmap = m11_draw_explosion_sprite(
-                g_drawState, framebuffer, framebufferWidth,
-                framebufferHeight, x, y, w, h,
-                expType, frame, maxF, atk, depthIndex);
+            if (depthIndex == 0) {
+                drewBitmap = m11_draw_d0c_explosion_pattern(
+                    g_drawState, framebuffer, framebufferWidth,
+                    framebufferHeight, x, y, w, h, expType, atk);
+            }
+            if (!drewBitmap) {
+                drewBitmap = m11_draw_explosion_sprite(
+                    g_drawState, framebuffer, framebufferWidth,
+                    framebufferHeight, x, y, w, h,
+                    expType, frame, maxF, atk, depthIndex);
+            }
         }
         /* Cue-style palette-rect fallback for probes / headless
          * environments without a GRAPHICS.DAT loader.  Real builds
