@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,6 +36,845 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,6 +36,892 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -94,7 +94,16 @@ index 347482c4..61d4758e 100644
 +static bool TheronIrq2TracePostLatchControllerCallSeen;
 +static bool TheronIrq2TracePostLatchControllerReturnSeen;
 +static bool TheronIrq2TracePostLatchControllerResumeSeen;
-+static bool TheronIrq2TracePostLatchResumeWindowSeen[0x20];
++/* $e960..$ea3f covers the observed post-latch controller resume path.
++ * This stays a one-time raw execution receipt; it does not identify a CD
++ * transaction or attach meaning to the observed bytes. */
++static bool TheronIrq2TracePostLatchResumeWindowSeen[0xe0];
++static bool TheronIrq2TracePostE98AReached;
++static bool TheronIrq2TracePostE98ATransferPending;
++static bool TheronIrq2TracePostE98ATransferSeen;
++static uint32 TheronIrq2TracePostE98ATransferSourcePC;
++static uint32 TheronIrq2TracePostE98ATransferPhysicalPC;
++static char TheronIrq2TracePostE98ATransferInstruction[256];
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -240,6 +249,21 @@ index 347482c4..61d4758e 100644
 +   FlushTheronIrq2Trace();
 +  }
 +  TheronIrq2TraceFE90TransferPending = false;
++ }
++
++ if(TheronIrq2TracePostE98ATransferPending)
++ {
++  if(logical_pc != TheronIrq2TracePostE98ATransferSourcePC)
++  {
++   TheronIrq2TracePostE98ATransferSeen = true;
++   TheronIrq2Trace->print_format("post_e98a_controller_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\\n",
++                                 TheronIrq2TracePostE98ATransferSourcePC,
++                                 TheronIrq2TracePostE98ATransferPhysicalPC,
++                                 TheronIrq2TracePostE98ATransferInstruction,
++                                 logical_pc, PC);
++   FlushTheronIrq2Trace();
++  }
++  TheronIrq2TracePostE98ATransferPending = false;
 + }
 +
 + if(TheronIrq2TraceCallbackCount < 128)
@@ -574,11 +598,11 @@ index 347482c4..61d4758e 100644
 + FlushTheronIrq2Trace();
 +}
 +
-+/* After the observed $e96a mask, retain the next executed original window
-+ * one instruction at a time. This is raw control-flow and register evidence:
-+ * it does not name a command, CD operation, or payload. */
++/* After the observed $e96a mask, retain the next executed original controller
++ * window through $ea3f one instruction at a time. This is raw control-flow
++ * and register evidence: it does not name a command, CD operation, or payload. */
 +if(TheronIrq2TracePostLatchControllerResumeSeen &&
-+   logical_pc >= 0xe960 && logical_pc < 0xe980 &&
++   logical_pc >= 0xe960 && logical_pc < 0xea40 &&
 +   !TheronIrq2TracePostLatchResumeWindowSeen[logical_pc - 0xe960])
 +{
 + uint32 disassembly_pc = logical_pc;
@@ -595,6 +619,29 @@ index 347482c4..61d4758e 100644
 +                               logical_pc, PC, disassembly, cd_1800, cd_1801,
 +                               cd_1802, cd_1803, cd_1804);
 + FlushTheronIrq2Trace();
++}
++
++/* Once the live controller flow reaches $e98a, retain the first original
++ * control transfer in its immediate $e98a..$ea3f window. The receipt records
++ * only source/next PCs and instruction text; it assigns no CD or payload role. */
++if(TheronIrq2TracePostLatchControllerResumeSeen && logical_pc == 0xe98a)
++ TheronIrq2TracePostE98AReached = true;
++if(TheronIrq2TracePostE98AReached && !TheronIrq2TracePostE98ATransferSeen &&
++   !TheronIrq2TracePostE98ATransferPending &&
++   logical_pc >= 0xe98a && logical_pc < 0xea40)
++{
++ const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
++ if(opcode == 0x20 || opcode == 0x40 || opcode == 0x4c || opcode == 0x60 ||
++    opcode == 0x6c || (opcode & 0x1f) == 0x10 || (opcode & 0x0f) == 0x0f)
++ {
++  uint32 disassembly_pc = logical_pc;
++
++  TheronIrq2TracePostE98ATransferPending = true;
++  TheronIrq2TracePostE98ATransferSourcePC = logical_pc;
++  TheronIrq2TracePostE98ATransferPhysicalPC = PC;
++  CurGame->Debugger->Disassemble(disassembly_pc, logical_pc,
++                                 TheronIrq2TracePostE98ATransferInstruction);
++ }
 +}
 +
 +if(logical_pc >= 0xfe90 && logical_pc < 0xff00 && !TheronIrq2TraceFE90WindowSeen[logical_pc - 0xfe90])
