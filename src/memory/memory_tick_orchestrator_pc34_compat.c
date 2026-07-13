@@ -6635,6 +6635,7 @@ static int orch_apply_projectile_group_action_compat(
     DM1_MeleeF0231AftermathInputPc34 f0231AftermathIn;
     DM1_MeleeF0231AftermathPlanPc34 f0231AftermathPlan;
     DM1_MeleeF0231AftermathApplyPlanPc34 f0231ApplyPlan;
+    DM1_MeleeF0190KilledAllAfterplayReceiptPc34 killedAllAfterplay;
 
     if (!world || !action || !world->things || !world->things->groups) return 0;
     if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_GROUP) return 0;
@@ -6724,7 +6725,25 @@ static int orch_apply_projectile_group_action_compat(
             &f0231AftermathIn, &f0231AftermathPlan);
         (void)dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
             &f0231AftermathPlan, &f0231ApplyPlan);
-        if (f0231ApplyPlan.shouldCreateDeathSmoke) {
+        memset(&killedAllAfterplay, 0, sizeof(killedAllAfterplay));
+        (void)dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
+            &f0231ApplyPlan, &killedAllAfterplay);
+        if (f0231ApplyPlan.shouldApplyMutationDispatch) {
+            (void)orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
+                world, group, &f0231ApplyPlan.mutationDispatchPlan);
+        }
+        if (killedAllAfterplay.shouldPresentSourceSmoke) {
+            struct TimelineEvent_Compat advance;
+            int slotIndex = -1;
+            memset(&advance, 0, sizeof(advance));
+            if (F0821_EXPLOSION_Create_Compat(
+                    &killedAllAfterplay.sourceSmokeCreateInput,
+                    &world->explosions,
+                    &slotIndex, &advance)) {
+                (void)F0721_TIMELINE_Schedule_Compat(
+                    &world->timeline, &advance);
+            }
+        } else if (f0231ApplyPlan.shouldCreateDeathSmoke) {
             struct TimelineEvent_Compat advance;
             int slotIndex = -1;
             memset(&advance, 0, sizeof(advance));
@@ -6734,10 +6753,6 @@ static int orch_apply_projectile_group_action_compat(
                 (void)F0721_TIMELINE_Schedule_Compat(
                     &world->timeline, &advance);
             }
-        }
-        if (f0231ApplyPlan.shouldApplyMutationDispatch) {
-            (void)orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
-                world, group, &f0231ApplyPlan.mutationDispatchPlan);
         }
         if (f0231ApplyPlan.shouldEmitKillNotify) {
             emit(result, EMIT_KILL_NOTIFY,
@@ -10099,6 +10114,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             DM1_MeleeF0231AftermathInputPc34 aftermathIn;
             DM1_MeleeF0231AftermathPlanPc34 aftermathPlan;
             DM1_MeleeF0231AftermathApplyPlanPc34 aftermathApplyPlan;
+            DM1_MeleeF0190KilledAllAfterplayReceiptPc34 killedAllAfterplay;
             DM1_MeleeF0231ResolveRuntimeInputPc34 resolveRuntimeIn;
             DM1_MeleeF0231ResolveRuntimePlanPc34 resolveRuntimePlan;
             DM1_MeleeF0231RuntimeApplyPlanPc34 runtimeApplyPlan;
@@ -10298,7 +10314,30 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                                sizeof(aftermathApplyPlan));
                         (void)dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
                             &aftermathPlan, &aftermathApplyPlan);
-                        if (aftermathApplyPlan.shouldCreateDeathSmoke) {
+                        memset(&killedAllAfterplay, 0,
+                               sizeof(killedAllAfterplay));
+                        (void)dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
+                            &aftermathApplyPlan, &killedAllAfterplay);
+                        if (aftermathApplyPlan.shouldApplyMutationDispatch) {
+                            fearTriggered =
+                                orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
+                                    world, &world->things->groups[groupIndex],
+                                    &aftermathApplyPlan
+                                        .mutationDispatchPlan);
+                        }
+                        if (killedAllAfterplay.shouldPresentSourceSmoke) {
+                            struct TimelineEvent_Compat advance;
+                            int slotIndex = -1;
+                            memset(&advance, 0, sizeof(advance));
+                            if (F0821_EXPLOSION_Create_Compat(
+                                    &killedAllAfterplay.sourceSmokeCreateInput,
+                                    &world->explosions,
+                                    &slotIndex,
+                                    &advance)) {
+                                (void)F0721_TIMELINE_Schedule_Compat(
+                                    &world->timeline, &advance);
+                            }
+                        } else if (aftermathApplyPlan.shouldCreateDeathSmoke) {
                             struct TimelineEvent_Compat advance;
                             int slotIndex = -1;
                             memset(&advance, 0, sizeof(advance));
@@ -10310,13 +10349,6 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                                 (void)F0721_TIMELINE_Schedule_Compat(
                                     &world->timeline, &advance);
                             }
-                        }
-                        if (aftermathApplyPlan.shouldApplyMutationDispatch) {
-                            fearTriggered =
-                                orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
-                                    world, &world->things->groups[groupIndex],
-                                    &aftermathApplyPlan
-                                        .mutationDispatchPlan);
                         }
                         if (aftermathApplyPlan.shouldWriteRawGroup) {
                             orch_write_raw_group_compat(

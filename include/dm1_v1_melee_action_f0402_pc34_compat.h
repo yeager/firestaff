@@ -767,6 +767,19 @@ typedef struct {
     int reactionEventKind;
 } DM1_MeleeF0231AftermathApplyPlanPc34;
 
+/* ReDMCSB GROUP.C F0190 deletes the final group before it creates the
+ * source C040 smoke explosion. This receipt carries only that ordering. */
+typedef struct {
+    int valid;
+    int shouldPresentSourceSmoke;
+    int requiresKilledAllMutationFirst;
+    int groupIndex;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    struct ExplosionCreateInput_Compat sourceSmokeCreateInput;
+} DM1_MeleeF0190KilledAllAfterplayReceiptPc34;
+
 typedef struct {
     int valid;
     int shouldDropPossessions;
@@ -858,6 +871,9 @@ int dm1_v1_melee_aftermath_raw_group_writeback_plan_f0231_pc34(
 int dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
     DM1_MeleeF0231AftermathApplyPlanPc34* out);
+int dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
+    const DM1_MeleeF0231AftermathApplyPlanPc34* aftermathApplyPlan,
+    DM1_MeleeF0190KilledAllAfterplayReceiptPc34* out);
 int dm1_v1_melee_reaction_plan_f0231_pc34(
     const DM1_MeleeF0231ReactionInputPc34* in,
     DM1_MeleeF0231ReactionPlanPc34* out);
