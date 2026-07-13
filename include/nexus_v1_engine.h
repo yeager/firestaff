@@ -179,6 +179,8 @@ typedef struct {
     int structure1g_sequence_count;
     int structure1g_image_instruction_count;
     int structure1g_goto_instruction_count;
+    int structure1g_structure2_image_instruction_bound_count;
+    int structure1g_structure2_image_instruction_unbound_count;
     int structure1g_floor_animation_cell_count;
     int structure1g_floor_animation_bound_count;
     int structure2_valid_level_count;

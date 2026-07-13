@@ -725,7 +725,26 @@ static void nexus_v1_level_copy_structure1g_entries(
             dst->sequence_instruction_count++;
             if (instruction == 0xffffU) break;
             if (instruction == 0xfffeU) dst->goto_instruction_count++;
-            else dst->image_instruction_count++;
+            else {
+                uint16_t local_image_id;
+                dst->image_instruction_count++;
+                /* The parser accepts an instruction only after validating
+                 * the Structure1G image-space lower bound. Keep a second
+                 * defensive check here because level-load must never turn a
+                 * malformed instruction into a local-table lookup. */
+                if (instruction < NEXUS_DGN_STRUCTURE1G_FIRST_IMAGE_INDEX) {
+                    dst->structure2_image_instruction_unbound_count++;
+                    continue;
+                }
+                local_image_id = (uint16_t)(
+                    instruction - NEXUS_DGN_STRUCTURE1G_FIRST_IMAGE_INDEX);
+                if (nexus_v1_level_find_structure2_texture(level,
+                                                            local_image_id)) {
+                    dst->structure2_image_instruction_bound_count++;
+                } else {
+                    dst->structure2_image_instruction_unbound_count++;
+                }
+            }
         }
     }
     level->structure1g_entry_count = output;
@@ -1130,6 +1149,12 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
             level->structure1g_entries[entry].image_instruction_count;
         out_receipt->structure1g_goto_instruction_count +=
             level->structure1g_entries[entry].goto_instruction_count;
+        out_receipt->structure1g_structure2_image_instruction_bound_count +=
+            level->structure1g_entries[entry]
+                .structure2_image_instruction_bound_count;
+        out_receipt->structure1g_structure2_image_instruction_unbound_count +=
+            level->structure1g_entries[entry]
+                .structure2_image_instruction_unbound_count;
     }
 
     if (!info->dmweb_container) {
@@ -1531,6 +1556,10 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.structure1g_image_instruction_count;
     receipt.structure1g_goto_instruction_count =
         handoff.structure1g_goto_instruction_count;
+    receipt.structure1g_structure2_image_instruction_bound_count =
+        handoff.structure1g_structure2_image_instruction_bound_count;
+    receipt.structure1g_structure2_image_instruction_unbound_count =
+        handoff.structure1g_structure2_image_instruction_unbound_count;
     if (handoff.status != NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH ||
         !handoff.can_render_dgn_mesh) {
         receipt.blocks_real_dgn_mesh_render = 1;

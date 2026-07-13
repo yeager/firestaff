@@ -188,6 +188,11 @@ typedef struct {
     int sequence_instruction_count;
     int image_instruction_count;
     int goto_instruction_count;
+    /* Every non-control instruction is only an index into the already
+     * bounded Structure2 descriptor table. This records the complete
+     * original-data relation without assigning payload or texture meaning. */
+    int structure2_image_instruction_bound_count;
+    int structure2_image_instruction_unbound_count;
 } Nexus_V1_DgnStructure1GEntry;
 
 /* DMWeb DGN files, Structure2: 20-byte texture descriptors followed by a
@@ -416,6 +421,8 @@ typedef struct {
     int structure1g_floor_animation_bound_count;
     int structure1g_image_instruction_count;
     int structure1g_goto_instruction_count;
+    int structure1g_structure2_image_instruction_bound_count;
+    int structure1g_structure2_image_instruction_unbound_count;
 } Nexus_V1_DgnRendererHandoffReceipt;
 
 typedef enum {
@@ -506,6 +513,8 @@ typedef struct {
     int structure1g_floor_animation_bound_count;
     int structure1g_image_instruction_count;
     int structure1g_goto_instruction_count;
+    int structure1g_structure2_image_instruction_bound_count;
+    int structure1g_structure2_image_instruction_unbound_count;
     int animated_material_command_count;
     int unresolved_animated_material_count;
     int source_cell_count;

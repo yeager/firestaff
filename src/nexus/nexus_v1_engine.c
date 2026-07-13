@@ -478,6 +478,12 @@ int nexus_v1_inspect_dgn_material_corpus(
                     level.structure1g_entries[entry].image_instruction_count;
                 receipt.structure1g_goto_instruction_count +=
                     level.structure1g_entries[entry].goto_instruction_count;
+                receipt.structure1g_structure2_image_instruction_bound_count +=
+                    level.structure1g_entries[entry]
+                        .structure2_image_instruction_bound_count;
+                receipt.structure1g_structure2_image_instruction_unbound_count +=
+                    level.structure1g_entries[entry]
+                        .structure2_image_instruction_unbound_count;
                 if (level.structure1g_entries[entry].first_structure2_image_valid)
                     receipt.structure1g_structure2_first_image_bound_count++;
             }
