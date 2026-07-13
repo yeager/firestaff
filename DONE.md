@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 per-file original-save corpus receipts: bounded corpus rows
+  retain parsed candidate type, path, payload size, and payload hash. Original
+  envelope/raw rows are explicitly rejected for runtime import.
+
 - 2026-07-13 CSBWin saved `TT_1` collision-free door runtime: exact saved
   door receipts now apply one original low-state open/close step and retain
   the same timer/queue owner through every nonterminal `+1` successor.
