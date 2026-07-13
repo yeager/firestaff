@@ -59,6 +59,31 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_Prs3CrossAssetFrameReceipt;
 
+/* Static SH-2 evidence imported from the hash-locked original DM.BIN V1
+ * loader route.  It proves selected instruction-level control/input/output
+ * facts only.  It has no live MENU.BPK payload binding, no VDP1 command
+ * observation, and therefore cannot promote PRS3 decoding. */
+typedef struct {
+    int source_hash_verified;
+    int dm_bin_v1_frame_verified;
+    uint32_t v1_callee_offset;
+    uint32_t control_test_offset;
+    uint32_t stream_byte_read_offset;
+    uint32_t output_byte_store_offset;
+    uint32_t loop_branch_offset;
+    uint16_t control_test_instruction;
+    uint16_t stream_byte_read_instruction;
+    uint16_t output_byte_store_instruction;
+    uint16_t loop_branch_instruction;
+    int sh2_control_path_verified;
+    int sh2_stream_read_verified;
+    int sh2_output_store_verified;
+    int menu_frame_binding_proven;
+    int vdp1_command_proven;
+    int opcode_grammar_proven;
+    int decoder_promoted;
+} Nexus_V1_Prs3Sh2V1ExecutionReceipt;
+
 typedef struct {
     int valid;
     int complete_evidence;
@@ -129,5 +154,14 @@ int nexus_v1_prs3_cross_asset_frame_receipt_verified(
     const uint8_t *dm_bin, size_t dm_bin_size, int dm_bin_hash_verified,
     const uint8_t *menu_bpk, size_t menu_bpk_size, int menu_bpk_hash_verified,
     Nexus_V1_Prs3CrossAssetFrameReceipt *out_receipt);
+
+/* Import exact, read-only SH-2 instruction evidence from the selected V1
+ * route in hash-verified original DM.BIN.  This validates the control test,
+ * bounded R12 post-increment byte read, R13/R0 byte store, and loop branch
+ * used by the existing provenance probe.  It deliberately does not claim
+ * that any observed byte is a PRS3 opcode or a MENU.BPK frame. */
+int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+    const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
+    Nexus_V1_Prs3Sh2V1ExecutionReceipt *out_receipt);
 
 #endif
