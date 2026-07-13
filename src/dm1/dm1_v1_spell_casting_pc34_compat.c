@@ -651,6 +651,7 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
     receipt.spellType = -1;
     receipt.skillIndex = -1;
     receipt.projectileThing = DM1_SPELL_THING_NONE_PC34;
+    receipt.projectileMaximumMana = -1;
     receipt.championDirectionBefore = championDirection;
     receipt.championDirectionAfter = championDirection;
     receipt.eventType = -1;
@@ -749,6 +750,7 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
         receipt.projectileStepEnergy =
             dm1_spell_projectileStepEnergy(stats->maximumMana);
         receipt.projectileRequiredMana = 0;
+        receipt.projectileMaximumMana = stats->maximumMana;
         *outReceipt = receipt;
         return 1;
     }
@@ -1057,6 +1059,51 @@ int dm1_spell_f0412ReceiptToSpellEffectPc34(
     return 1;
 }
 
+int dm1_spell_f0412ValidateProjectileReceiptPc34(
+    const DM1_SpellF0412RuntimeReceipt* receipt)
+{
+    const DM1_Spell* spell;
+    int expectedKineticEnergy;
+
+    if (!receipt || receipt->castResult != DM1_SPELL_CAST_SUCCESS ||
+        receipt->spellKind != DM1_SPELL_KIND_PROJECTILE ||
+        !receipt->createsProjectile || receipt->spellIndex < 0 ||
+        receipt->spellIndex >= DM1_SPELL_COUNT || receipt->powerOrdinal < 1 ||
+        receipt->powerOrdinal > 6 || receipt->skillLevel < 0 ||
+        receipt->projectileMaximumMana < 0 ||
+        receipt->championDirectionBefore < 0 ||
+        receipt->championDirectionBefore > 3 ||
+        receipt->championDirectionAfter < 0 ||
+        receipt->championDirectionAfter > 3) {
+        return 0;
+    }
+
+    spell = &dm1_spells[receipt->spellIndex];
+    if (DM1_SPELL_KIND(spell) != DM1_SPELL_KIND_PROJECTILE ||
+        receipt->spellType != DM1_SPELL_TYPE(spell) ||
+        receipt->skillIndex != spell->skillIndex ||
+        receipt->requiredSkillLevel !=
+            spell->baseRequiredSkillLevel + receipt->powerOrdinal ||
+        receipt->disabledTicks != DM1_SPELL_DISABLED_TICKS(spell) ||
+        receipt->projectileThing !=
+            (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
+                       receipt->spellType) ||
+        receipt->projectileRequiredMana != 0 ||
+        receipt->projectileStepEnergy !=
+            dm1_spell_projectileStepEnergy(
+                (int16_t)receipt->projectileMaximumMana) ||
+        receipt->rotatesChampion !=
+            (receipt->championDirectionBefore !=
+             receipt->championDirectionAfter) ||
+        receipt->redrawChampionState != receipt->rotatesChampion) {
+        return 0;
+    }
+
+    expectedKineticEnergy = dm1_spell_projectileKineticEnergy(
+        receipt->powerOrdinal, receipt->skillLevel, receipt->spellType);
+    return receipt->projectileKineticEnergy == expectedKineticEnergy;
+}
+
 int dm1_spell_f0412ProjectileGraphicRoutePc34(
     const DM1_SpellF0412RuntimeReceipt* receipt,
     int relativeDirection,
@@ -1070,9 +1117,7 @@ int dm1_spell_f0412ProjectileGraphicRoutePc34(
     outRoute->projectileAspectIndex = -1;
     outRoute->graphicIndex = -1;
 
-    if (!receipt || receipt->castResult != DM1_SPELL_CAST_SUCCESS ||
-        receipt->spellKind != DM1_SPELL_KIND_PROJECTILE ||
-        !receipt->createsProjectile) {
+    if (!dm1_spell_f0412ValidateProjectileReceiptPc34(receipt)) {
         return 0;
     }
 

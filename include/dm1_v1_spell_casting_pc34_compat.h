@@ -251,6 +251,7 @@ typedef struct {
     int projectileKineticEnergy;
     int projectileStepEnergy;
     int projectileRequiredMana;
+    int projectileMaximumMana;
 
     int createsEvent;
     int eventType;
@@ -451,6 +452,12 @@ int dm1_spell_f0412ReceiptToSpellEffectPc34(
     const DM1_SpellF0412RuntimeReceipt* receipt,
     int currentFireShieldDefense,
     struct SpellEffect_Compat* outEffect);
+
+/* ReDMCSB MENU.C F0412:1861-1870 and CHAMPION.C F0327:2091-2102.
+ * Accept only a complete, internally source-consistent PC34 projectile
+ * receipt before a caller can materialize the F0212 projectile. */
+int dm1_spell_f0412ValidateProjectileReceiptPc34(
+    const DM1_SpellF0412RuntimeReceipt* receipt);
 
 /* ReDMCSB MENU.C F0412 -> CHAMPION.C F0327 -> DUNGEON.C F0142 ->
  * DUNVIEW.C F0115.  Accepts only the six projectile spell types in PC34

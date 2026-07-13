@@ -629,6 +629,12 @@ and other original thing families, not a D0 synthetic marker or replacement
 sprite. F0115 now scans past an invisible live C14 record to the next record
 with an actual C2900 cell, so multi-projectile materialization cannot select a
 missing first-cell fallback; remaining work is real multi-projectile capture.
+DM1 projectile spells now cross F0412 to F0327 only through a strict PC34
+receipt: the G0487 spell row, explosion Thing, bounded kinetic energy,
+maximum-mana-derived step energy, zero required mana, and champion direction
+must agree with ReDMCSB before F0212 creation. A changed field is rejected;
+no approximate projectile or host fallback is emitted. Remaining projectile
+work is authentic multi-projectile/pixel capture.
 F0127 now consumes deferred live explosions only through original M636 pattern
 material after D0 projectile materialization; a missing M636 bitmap is no-draw
 and cannot fall through to an F0114 D1-D3 sprite. Remaining work is real

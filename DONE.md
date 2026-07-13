@@ -11698,3 +11698,12 @@ real-PC34 C162 cancel input.
 - ✅ 2026-07-13 DM1 F0115 alcove material hardening: F0121/F0124 wall-alcove candidates now resolve through a DM1-owned ReDMCSB `G2029`/`C2548` receipt instead of M11's ordinary `G2028`/`C2500` floor-row placement. The receipt preserves `G0209` object-aspect selection, including Chest's source-only alcove native bitmap (`M612 + 1` = graphic 499), `C10` transparency, and the absolute opposite-facing alcove cell. The host route fails closed while the original PC34 C2548 coordinate/clip layout remains undecoded, so items cannot be substituted into an incorrect C2500 pane or rendered floating in a wall. Verification: Ninja `firestaff`, `test_dm1_v1_f0115_alcove_item_material_pc34_compat`, and focused CTest PASS 2/2 (`dm1_v1_f0115_alcove_item_material_pc34_compat`, `dm1_v1_viewport_floor_ceiling_items_pc34_compat`). Source: ReDMCSB `DUNVIEW.C F0115:4808-4824,4932-5078`, `G2029`, `G0209`; `DEFS.H C2548`.
 
 - ✅ 2026-07-13 DM1 F0261 legacy spell-tick closure: `TIMELINE_EVENT_SPELL_TICK` admits only verified F0412/F0763 status receipts or complete native PC34 C71/C73/C74/C77/C78/C79 records, and delegates to the existing ReDMCSB expiry logic. Untyped payloads are consumed without creating a host spell/status effect. Verification: focused `test_orch_legacy_spell_tick_consumes_only_typed_status_receipts`. Source: ReDMCSB `TIMELINE.C F0261:1953-1999`; native export folds the same receipts in `memory_savegame_pc34_native_export_pc34_compat.c`.
+
+- ✅ 2026-07-13 DM1 F0412/F0327 cast-spell receipt hardening: spell projectile
+  launch now requires a complete PC34-consistent receipt for the original
+  G0487 spell row, explosion Thing, kinetic energy, maximum-mana-derived step
+  energy, zero required mana, and champion turn/redraw facts. Mismatches fail
+  closed before F0212 creation. Verification: Ninja plus
+  `test_dm1_v1_spell_casting_pc34_compat` and
+  `test_dm1_v1_throw_shoot_pc34_compat` PASS. Source: ReDMCSB `MENU.C
+  F0412:1861-1870`, `CHAMPION.C F0327:2091-2102`.
