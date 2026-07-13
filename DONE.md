@@ -21,6 +21,18 @@
   interpretation. Verification: Ninja and CTests
   `nexus_v1_structure1_host_provenance`,
   `nexus_v1_startup_menu_pc34_compat`.
+
+- 2026-07-13 CSBWin restored saved-DSA timer tick bridge: CSBWin timer
+  materialization now records the original queue slot against the exact live
+  timeline event index, including the separately serialized timer level. At
+  tick dispatch, Firestaff snapshots that receipt before dequeueing, verifies
+  every timer/event field, resolves only linked type-47 actuators on the
+  restored source square, and enters the existing authenticated queued DSA
+  executor. Stale identities, unsupported timer types, missing/malformed
+  actuator chains, and caller-shaped timer state do nothing. Source: CSBWin
+  `SaveGame.cpp:1844-1858`, `CSBCode.cpp:6430-6470`,
+  `Timer.cpp:2118-2185`. Verification: Ninja and CTest
+   `csb_v1_dsa_restored_timer_tick_bridge`.
 - 2026-07-13 DM2 scene-material local-palette binding: indoor ceiling/floor
   and outdoor sky/ground now fetch, bind, and blit each decoded `GRAPHICSSET`
   IMG3 before the next material query can replace its `QUERY_GDAT_IMAGE_LOCALPAL`

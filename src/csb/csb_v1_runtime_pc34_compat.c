@@ -2074,12 +2074,21 @@ int csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
 
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     CSB_V1_RuntimeProfile *profile);
+static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    uint16_t queue_slot);
 
 /* ── Internal tick helper ─────────────────────────────────────────────── */
 
 static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
 {
+    struct DM1_EventQueue_V1 queue_snapshot;
+    uint16_t source_queue_slots[DM1_DISPATCH_MAX_PER_TICK];
+    uint16_t source_event_indices[DM1_DISPATCH_MAX_PER_TICK];
     int dispatched;
+    int source_count = 0;
+    int i;
 
     /* Source: ReDMCSB GAMELOOP.C F0002 lines 69-124 calls
      * F0065_SOUND_ProcessPendingSound before F0261_TIMELINE_Process_CPSEF()
@@ -2087,12 +2096,33 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
      * 702-708 expires the first heap event when event_time <= G0313_ul_GameTime. */
     (void)csb_v1_audio_runtime_flush_pending(&profile->audio_runtime);
     profile->timeline_queue.gameTick = profile->game_time;
+    queue_snapshot = profile->timeline_queue;
+    while (source_count < DM1_DISPATCH_MAX_PER_TICK &&
+           dm1v1_event_is_first_expired(&queue_snapshot)) {
+        uint16_t event_index = queue_snapshot.timeline[0];
+        struct DM1_Event_V1 ignored;
+
+        source_event_indices[source_count] = event_index;
+        source_queue_slots[source_count++] = event_index < DM1_EVENT_MAX_COUNT
+            ? profile->csbwin_timeline_event_queue_slot[event_index]
+            : CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+        if (!dm1v1_event_extract_first(&queue_snapshot, &ignored)) break;
+    }
     memset(&profile->last_timeline_dispatch, 0,
            sizeof(profile->last_timeline_dispatch));
     dispatched = dm1v1_event_process_tick(&profile->timeline_queue,
                                           &profile->last_timeline_dispatch);
     if (dispatched > 0) {
         profile->timeline_dispatch_count += (uint32_t)dispatched;
+        for (i = 0; i < dispatched && i < source_count; ++i) {
+            if (source_event_indices[i] < DM1_EVENT_MAX_COUNT) {
+                profile->csbwin_timeline_event_queue_slot[source_event_indices[i]] =
+                    CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+            }
+            csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
+                profile, &profile->last_timeline_dispatch.records[i],
+                source_queue_slots[i]);
+        }
         csb_v1_runtime_apply_timeline_dispatch_side_effects(profile);
     }
 
@@ -13199,6 +13229,8 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
 {
     if (!profile) return;
     memset(profile, 0, sizeof(*profile));
+    memset(profile->csbwin_timeline_event_queue_slot, 0xff,
+           sizeof(profile->csbwin_timeline_event_queue_slot));
 
     profile->variant_id     = CSB_V1_VARIANT_UNKNOWN;
     profile->difficulty    = CSB_V1_DIFFICULTY_HARD; /* default: 3 champions */
@@ -14511,6 +14543,10 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
      * Unsupported side effects remain harmless dispatch records until their
      * runtime handlers are implemented. */
     dm1v1_event_queue_init(&profile->timeline_queue, profile->game_time);
+    for (queue_index = 0u; queue_index < DM1_EVENT_MAX_COUNT; ++queue_index) {
+        profile->csbwin_timeline_event_queue_slot[queue_index] =
+            CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+    }
     for (queue_index = 0u;
          queue_index < profile->csbwin_timer_queue_summary_count;
          ++queue_index) {
@@ -14527,15 +14563,24 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         }
 
         memset(&event, 0, sizeof(event));
-        event.map_time = timer->time;
+        /* CSBWin TIMER stores level separately from m_time. Preserve that
+         * source field at the DM1 timeline boundary instead of treating a
+         * caller-shaped Map_Time high byte as a saved level. */
+        if ((timer->time & 0xff000000u) != 0u) continue;
+        event.map_time = DM1_MAP_TIME_MAKE(timer->level, timer->time);
         event.type = timer->function;
         event.priority = timer->ubyte5;
         event.b_mapX = timer->ubyte6;
         event.b_mapY = timer->ubyte7;
         event.c_cell = timer->ubyte8;
         event.c_effect = timer->ubyte9;
-        if (dm1v1_event_add(&profile->timeline_queue, &event) >= 0) {
-            ++imported;
+        {
+            int event_index = dm1v1_event_add(&profile->timeline_queue, &event);
+            if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT) {
+                profile->csbwin_timeline_event_queue_slot[event_index] =
+                    queue_index;
+                ++imported;
+            }
         }
     }
     return imported;
@@ -16473,6 +16518,66 @@ int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
     if (!prepared || !action) return 0;
     return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         profile, &runner, action, NULL, 0, NULL);
+}
+
+static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    uint16_t queue_slot)
+{
+    const CSB_V1_DungeonData *dungeon;
+    const CSB_V1_CSBWin512TimerSummary *timer;
+    uint16_t timer_index;
+    int thing;
+    int guard = 0;
+
+    /* CSBWin CSBCode.cpp ProcessTimers gets a TIMER from m_timerQueue, then
+     * Timer.cpp walks that exact square's objects. Keep the Firestaff bridge
+     * tied to the materialized queue slot and the dispatched event fields;
+     * no public API can provide a substitute TIMER or actuator location. */
+    if (!profile || !record || queue_slot == CSB_V1_CSBWIN_TIMER_QUEUE_NONE ||
+        queue_slot >= profile->csbwin_timer_queue_summary_count ||
+        !profile->csbwin_body_runtime_summary_valid ||
+        !profile->dungeon_handle) {
+        return;
+    }
+    timer_index = profile->csbwin_timer_queue[queue_slot];
+    if (timer_index >= profile->csbwin_timer_summary_count) return;
+    timer = &profile->csbwin_timers[timer_index];
+    if (!timer->valid || timer->truncated || timer->source_index != timer_index ||
+        timer->function < 5u || timer->function > 7u ||
+        record->eventType != timer->function ||
+        record->mapIndex != timer->level || record->mapX != timer->ubyte6 ||
+        record->mapY != timer->ubyte7 || record->cell != timer->ubyte8 ||
+        record->effect != timer->ubyte9 || record->aux0 != timer->ubyte5) {
+        return;
+    }
+    dungeon = profile->dungeon_handle;
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon, record->mapIndex, record->mapX, record->mapY);
+    while (thing >= 0 && thing != 0xfffe && thing != 0xffff && guard++ < 1024) {
+        const uint8_t *thing_record;
+        int type;
+        int size;
+        CSB_V1_DSAFilterLocation location;
+
+        thing_record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)thing, &type, NULL, &size);
+        if (!thing_record || size < 2) return;
+        if (type == CSB_V1_THING_TYPE_ACTUATOR && size >= 4 &&
+            (((uint16_t)thing_record[2] | ((uint16_t)thing_record[3] << 8)) &
+             0x007fu) == CSB_V1_DSA_FILTER_ACTUATOR_TYPE) {
+            memset(&location, 0, sizeof(location));
+            location.level = record->mapIndex;
+            location.x = record->mapX;
+            location.y = record->mapY;
+            location.position = (thing >> 14) & 3;
+            location.actuator_thing = (uint16_t)thing;
+            (void)csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
+                profile, dungeon, &location, queue_slot);
+        }
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
 }
 
 int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
