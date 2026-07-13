@@ -1456,6 +1456,10 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
         if (type == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
             /* ReDMCSB CHAMPION.C F0320 leaves B/C outside C12's contract;
              * preserve no invented Location/Cell/Effect bytes. */
+        } else if (type == DM1_EVENT_DOOR_DESTRUCTION) {
+            if (src->kind != TIMELINE_EVENT_DOOR_DESTRUCTION || src->aux0 != DM1_EVENT_DOOR_DESTRUCTION || src->aux2 != DM1_EVENT_DOOR_DESTRUCTION || src->aux1 != 0 || src->aux3 != 0 || src->cell != 0 || !dungeon || !dungeon->maps || src->mapIndex < 0 || src->mapIndex >= (int)dungeon->header.mapCount || src->mapX < 0 || src->mapY < 0 || src->mapX >= (int)dungeon->maps[src->mapIndex].width || src->mapY >= (int)dungeon->maps[src->mapIndex].height) return 0;
+            dst[6] = (uint8_t)src->mapX;
+            dst[7] = (uint8_t)src->mapY;
         } else if (type == DM1_EVENT_INVISIBILITY) {
             /* ReDMCSB MENU.C F0412:1922-1964 creates C71 with zero
              * Priority. TIMELINE.C C71:1953-1964 reads no B/C union arm,
