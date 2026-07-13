@@ -1505,6 +1505,17 @@
   and later stale ordinal-two C11, while SWING/F0330/F0407 regression tests
   pass. F0402 and viewport/save paths are untouched.
 
+- 2026-07-13 DM1 PC34 Open Door C11 receipt regression: the F0412 Open Door
+  runtime gate now requires both independently owned queue receipts: F0327's
+  typed projectile move and F0330's C11 enable-action record. It no longer
+  assumes queue position or suppresses the genuine C11. The existing-action
+  cooldown fixture now stages an authentic ordinal-zero C11 and consumes it
+  through F0253 before the spell creates its own lock; a sidecar-only expiry
+  or source-invalid ordinal is rejected by construction. Source: ReDMCSB
+  `MENU.C F0412:2034-2040`, `CHAMPION.C F0330:2233-2251`, and `TIMELINE.C`
+  C11 dispatch:1927-1932. Verification:
+  `test_m11_open_door_spell_runtime_pc34_compat` (59 passed).
+
 - 2026-07-13 DM1 PC34 C25 explosion union handoff: ReDMCSB
   `PROJEXPL.C F0213` stores C25 as `B.Location + C.Slot`, then
   `TIMELINE.C F0261` dispatches it to F0220. F0435 requires that exact C15
