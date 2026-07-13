@@ -118,6 +118,7 @@
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_floor_pit_pc34_compat.h"
 #include "dm1_v1_inscription_font_pc34_compat.h"
+#include "dm1_v1_wall_inscription_presentation_pc34_compat.h"
 #include "dm1_v1_side_door_render_pc34_compat.h"
 #include "dm1_v1_stairs_render_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
@@ -368,6 +369,8 @@ static M11_Dm1WallOrnamentHostPresentationReceipt
     s_m11_dm1_wall_ornament_host_presentation_receipt;
 static M11_Dm1InscriptionHostPresentationReceipt
     s_m11_dm1_inscription_host_presentation_receipt;
+static M11_Dm1UnreadableInscriptionHostPresentationReceipt
+    s_m11_dm1_unreadable_inscription_host_presentation_receipt;
 
 static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
 {
@@ -21681,93 +21684,6 @@ static int m11_dm1_side_lane_clear_for_rel(const M11_ViewportCell cells[3][3],
                                                                 relSide);
 }
 
-static int m11_decode_visible_wall_text(const M11_GameViewState* state,
-                                           const M11_ViewportCell* cell,
-                                           char* outText,
-                                           size_t outTextSize) {
-    unsigned short thing;
-    int safety = 0;
-    if (!state || !cell || !outText || outTextSize == 0 ||
-        !state->world.things || !state->world.things->textStrings ||
-        !state->world.things->textData || state->world.things->textDataWordCount <= 0) {
-        if (outText && outTextSize > 0) outText[0] = '\0';
-        return 0;
-    }
-    outText[0] = '\0';
-    if (cell->inscriptionTextIndex >= 0 &&
-        cell->inscriptionTextIndex < state->world.things->textStringCount) {
-        if (F0508_DUNGEON_DecodeTextStringThing_Compat(
-                state->world.things,
-                cell->inscriptionTextIndex,
-                DUNGEON_TEXT_TYPE_INSCRIPTION,
-                outText,
-                (int)outTextSize) >= 0 &&
-            outText[0] != '\0') {
-            char* p;
-            /* ReDMCSB DUNGEON.C:2591-2593 stores exactly the
-             * front-wall inscription thing in G0290 for the visible side;
-             * DUNVIEW.C:3592 then decodes that one thing for the M648
-             * renderer.  Use the side-selected index from sampling first so
-             * multi-sided HoC wall text cannot pick the wrong square text. */
-            for (p = outText; *p; ++p) {
-                unsigned char ch = (unsigned char)*p;
-                if (ch == 0x80U) {
-                    *p = '\n';
-                } else if (ch == 0x81U) {
-                    *p = '\0';
-                    break;
-                }
-            }
-            return 1;
-        }
-        outText[0] = '\0';
-    }
-    thing = cell->firstThing;
-    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
-        if (THING_GET_TYPE(thing) == THING_TYPE_TEXTSTRING) {
-            int textIdx = THING_GET_INDEX(thing);
-            if (textIdx >= 0 && textIdx < state->world.things->textStringCount) {
-                if (F0508_DUNGEON_DecodeTextStringThing_Compat(
-                        state->world.things,
-                        textIdx,
-                        DUNGEON_TEXT_TYPE_INSCRIPTION,
-                        outText,
-                        (int)outTextSize) >= 0 &&
-                    outText[0] != '\0') {
-                    /* ReDMCSB DUNVIEW.C:3592 calls F0168 with
-                     * C0_TEXT_TYPE_INSCRIPTION before the M648 renderer.
-                     * DUNGEON.C:2329/2350 emits 0x80 line separators and
-                     * 0x81 terminator bytes for that path.  Normalize only
-                     * those control bytes for Firestaff's line loop; keep
-                     * glyph bytes on the source-font path below. */
-                    for (char* p = outText; *p; ++p) {
-                        unsigned char ch = (unsigned char)*p;
-                        if (ch == 0x80U) {
-                            *p = '\n';
-                        } else if (ch == 0x81U) {
-                            *p = '\0';
-                            break;
-                        }
-                    }
-                    return 1;
-                }
-            }
-        }
-        thing = m11_raw_next_thing(state->world.things, thing);
-        ++safety;
-    }
-    return 0;
-}
-
-static int m11_dm1_visible_wall_text_line_count(const M11_GameViewState* state,
-                                                const M11_ViewportCell* cell) {
-    char decoded[128];
-    if (!m11_decode_visible_wall_text(state, cell, decoded, sizeof(decoded))) {
-        return 0;
-    }
-    return DM1_V1_InscriptionDecodedLineCountPc34(decoded);
-}
-
 static int m11_dm1_visible_wall_inscription_material(
     const M11_GameViewState* state,
     const M11_ViewportCell* cell,
@@ -21779,6 +21695,19 @@ static int m11_dm1_visible_wall_inscription_material(
     return dm1_v1_inscription_host_material_from_world_pc34(
         state->world.things, cell->inscriptionTextIndex, cell->firstThing,
         outMaterial);
+}
+
+static int m11_dm1_visible_wall_inscription_presentation(
+    const M11_GameViewState* state,
+    const M11_ViewportCell* cell,
+    DM1_V1_WallInscriptionPresentationReceiptPc34* outReceipt)
+{
+    if (!state || !cell || !state->world.things) {
+        return 0;
+    }
+    return dm1_v1_wall_inscription_presentation_from_world_pc34(
+        state->world.things, cell->inscriptionTextIndex, cell->firstThing,
+        outReceipt);
 }
 
 static int m11_decode_visible_wall_text_raw_glyphs(const M11_GameViewState* state,
@@ -21913,6 +21842,8 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
      * completed M10 receipt was consumed. No host text/font fallback exists. */
     memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_inscription_host_presentation_receipt));
+    memset(&s_m11_dm1_unreadable_inscription_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_unreadable_inscription_host_presentation_receipt));
     s_m11_dm1_inscription_host_presentation_receipt.valid = 1;
     s_m11_dm1_inscription_host_presentation_receipt.textStringIndex =
         material.textStringIndex;
@@ -22337,11 +22268,13 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         DM1_WallOrnamentViewSpecPc34 spec;
         M11_ViewportCell cell;
         DM1_WallOrnamentHostMaterialReceiptPc34 material;
+        DM1_V1_WallInscriptionPresentationReceiptPc34 inscription;
         M11_DM1ZoneBlit alcoveBlit;
         int localIdx;
         int mapIdx;
         int maxHeight = 0;
         int ornGlobalIdx = -1;
+        memset(&inscription, 0, sizeof(inscription));
         if (!dm1_v1_wall_ornament_view_spec_pc34(i, &spec)) {
             continue;
         }
@@ -22394,13 +22327,18 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         if (ornGlobalIdx < 0) {
             continue;
         }
-        if (ornGlobalIdx == 0 && spec.viewWallIndex != 12) {
+        if (ornGlobalIdx == 0) {
+            (void)m11_dm1_visible_wall_inscription_presentation(
+                state, &cell, &inscription);
+        }
+        if (ornGlobalIdx == 0 && spec.viewWallIndex != 12 &&
+            inscription.valid) {
             int unreadableHeight =
                 m11_dm1_unreadable_inscription_box_height(
                     spec.relForward,
                     spec.relSide,
                     spec.unreadableInscriptionCompactBox,
-                    m11_dm1_visible_wall_text_line_count(state, &cell));
+                    inscription.lineCount);
             if (unreadableHeight > 0) {
                 maxHeight = unreadableHeight;
             }
@@ -22413,16 +22351,50 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
              * inscriptions by patching the wall and drawing the inscription
              * font, then jumping past the normal wall-ornament blit.  The
              * unreadable inscription bitmap is only the distant/side ornament
-             * when there is decoded front text; drawing it under that readable
-             * text makes Hall inscriptions look double-exposed and illegible. */
+            * when there is decoded front text; drawing it under that readable
+            * text makes Hall inscriptions look double-exposed and illegible. */
             if (ornGlobalIdx == 0 && spec.viewWallIndex == 12 &&
-                m11_dm1_visible_wall_text_line_count(state, &cell) > 0) {
+                inscription.valid) {
                 m11_draw_dm1_front_wall_inscription_text(state, &cell,
                                                          framebuffer, fbW, fbH);
                 continue;
             }
             if (m11_draw_dm1_wall_ornament_host_material_receipt(
                     state, framebuffer, fbW, fbH, &material)) {
+                if (ornGlobalIdx == 0 && spec.viewWallIndex != 12 &&
+                    inscription.valid && maxHeight > 0) {
+                    /* ReDMCSB DUNVIEW.C F0107:3864-3901: side/depth views
+                     * retain original ornament pixels, with TextString line
+                     * count selecting only the unreadable box height. */
+                    memset(&s_m11_dm1_unreadable_inscription_host_presentation_receipt,
+                           0,
+                           sizeof(s_m11_dm1_unreadable_inscription_host_presentation_receipt));
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.valid = 1;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.textStringIndex =
+                        inscription.textStringIndex;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.viewWallIndex =
+                        spec.viewWallIndex;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.relativeForward =
+                        spec.relForward;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.relativeSide =
+                        spec.relSide;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.lineCount =
+                        inscription.lineCount;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.boxHeight =
+                        maxHeight;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.graphicIndex =
+                        plan->graphicIndex;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.destinationX =
+                        M11_VIEWPORT_X + plan->dstX;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.destinationY =
+                        M11_VIEWPORT_Y + plan->dstY;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.width =
+                        plan->width;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.height =
+                        plan->height;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.transparentColor =
+                        plan->transparentColor;
+                }
                 /* ReDMCSB DUNGEON.C:2608-2612 / DUNVIEW.C:3923-3928:
                  * champion portraits are owned by the D1C front-mirror route
                  * (`m11_draw_dm1_front_mirror_route`) after the full cell
@@ -39879,6 +39851,14 @@ void M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
 {
     if (outReceipt) {
         *outReceipt = s_m11_dm1_wall_ornament_host_presentation_receipt;
+    }
+}
+
+void M11_GameView_GetDm1UnreadableInscriptionHostPresentationReceipt(
+    M11_Dm1UnreadableInscriptionHostPresentationReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_unreadable_inscription_host_presentation_receipt;
     }
 }
 
