@@ -14413,17 +14413,30 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
     return imported;
 }
 
+static void csb_v1_runtime_reset_csbwin_extended_metadata(
+    CSB_V1_RuntimeProfile *profile)
+{
+    if (!profile) return;
+    profile->csbwin_extended_game_info = NULL;
+    profile->csbwin_extended_game_info_size = 0u;
+    profile->csbwin_extended_game_info_fnv1a = 0u;
+    profile->csbwin_extended_features_valid = 0;
+    profile->csbwin_extended_features_version = 0u;
+    profile->csbwin_extended_features_flags = 0u;
+    profile->csbwin_extended_features_flags32 = 0u;
+    profile->csbwin_extended_cell_flag_array_size = 0u;
+    profile->csbwin_extended_level_index_present = 0;
+    memset(profile->csbwin_extended_level_dsa_index, 0xff,
+           sizeof(profile->csbwin_extended_level_dsa_index));
+}
+
 static void csb_v1_runtime_cleanup_csbwin_extended_state(
     CSB_V1_RuntimeProfile *profile)
 {
     if (!profile) return;
     csb_v1_chaos_cleanup(&profile->csbwin_extended_dsa_state);
     free(profile->csbwin_extended_game_info);
-    profile->csbwin_extended_game_info = NULL;
-    profile->csbwin_extended_game_info_size = 0u;
-    profile->csbwin_extended_game_info_fnv1a = 0u;
-    profile->csbwin_extended_features_valid = 0;
-    profile->csbwin_extended_level_index_present = 0;
+    csb_v1_runtime_reset_csbwin_extended_metadata(profile);
 }
 
 static int csb_v1_runtime_stage_csbwin_resume_report(
@@ -14563,13 +14576,11 @@ int csb_v1_runtime_apply_csbwin_resume_report(
     /* A core-only report has no Extended Features preamble. CSBWin clears its
      * DSA/game-info/index owners before loading the save body. */
     csb_v1_chaos_init(&candidate.csbwin_extended_dsa_state);
-    candidate.csbwin_extended_game_info = NULL;
-    candidate.csbwin_extended_game_info_size = 0u;
-    candidate.csbwin_extended_game_info_fnv1a = 0u;
-    candidate.csbwin_extended_features_valid = 0;
-    candidate.csbwin_extended_level_index_present = 0;
-    memset(candidate.csbwin_extended_level_dsa_index, 0xff,
-           sizeof(candidate.csbwin_extended_level_dsa_index));
+    /* CSBWin SaveGame.cpp clears the whole Extended Features owner when a
+     * core-only resume has no preamble. Do not retain stale DSA flags/index
+     * metadata from the prior save merely because its action pointer was
+     * released transactionally below. */
+    csb_v1_runtime_reset_csbwin_extended_metadata(&candidate);
     csb_v1_runtime_cleanup_csbwin_extended_state(profile);
     *profile = candidate;
     (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership(profile);
@@ -14677,13 +14688,7 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         }
     } else {
         csb_v1_chaos_init(&candidate.csbwin_extended_dsa_state);
-        candidate.csbwin_extended_game_info = NULL;
-        candidate.csbwin_extended_game_info_size = 0u;
-        candidate.csbwin_extended_game_info_fnv1a = 0u;
-        candidate.csbwin_extended_features_valid = 0;
-        candidate.csbwin_extended_level_index_present = 0;
-        memset(candidate.csbwin_extended_level_dsa_index, 0xff,
-               sizeof(candidate.csbwin_extended_level_dsa_index));
+        csb_v1_runtime_reset_csbwin_extended_metadata(&candidate);
     }
     if (csb_v1_runtime_stage_csbwin_global_variables(&candidate) != 0 ||
         csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0 ||
