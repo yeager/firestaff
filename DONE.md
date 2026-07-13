@@ -1965,6 +1965,10 @@
   The regression now keeps two reused champion-zero projectile owners with
   distinct slot, launch, and scheduled-impact ticks; C11 has no generation
   or impact-tick binding and leaves both instances untouched.
+  It also proves a live champion-zero projectile survives a party-cell swap
+  with champion one after F0407/F0330 scheduling: due C11 still enables
+  champion zero and C04 still plays, because original ownership is the stable
+  champion index rather than a movable party position.
 
 - 2026-07-13 DM1 PC34 Open Door C11 receipt regression: the F0412 Open Door
   runtime gate now requires both independently owned queue receipts: F0327's

@@ -35,9 +35,12 @@ int main(void)
     int sawNativeC20 = 0;
     int sawHistoricC11 = 0;
     int sawSoundAfterStaleC11 = 0;
+    int sawActionEnabledAfterPartyCellMove = 0;
+    int sawSoundAfterPartyCellMove = 0;
     uint32_t historicC11FireAtTick = 0u;
     struct TickResult_Compat dispatchResult;
     struct TimelineEvent_Compat forgedOwnerC04;
+    struct TimelineEvent_Compat movedOwnerC04;
 
     memset(&state, 0, sizeof(state));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -232,5 +235,66 @@ int main(void)
                &state.world, 0, 6) == 0);
     assert(DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
                &state.world, 0) == 0);
+
+    /* MENU.C F0407:1256-1259 and CHAMPION.C F0330:2233-2251 retain the
+     * Champion[] index, not the party cell.  A projectile owned by champion
+     * zero may remain live while zero and one exchange physical party slots;
+     * the later C11 must still enable champion zero. */
+    state.world.party.championCount = 2;
+    state.world.party.champions[0].present = 1;
+    state.world.party.champions[0].hp.current = 100;
+    state.world.party.champions[0].cell = 0;
+    state.world.party.champions[1] = state.world.party.champions[0];
+    state.world.party.champions[1].cell = 1;
+    memset(&state.world.projectiles, 0, sizeof(state.world.projectiles));
+    state.world.projectiles.count = 1;
+    state.world.projectiles.entries[0].slotIndex = 0;
+    state.world.projectiles.entries[0].reserved3 = 1;
+    state.world.projectiles.entries[0].ownerKind = PROJECTILE_OWNER_CHAMPION;
+    state.world.projectiles.entries[0].ownerIndex = 0;
+    state.world.projectiles.entries[0].launchedAtTick =
+        (int)state.world.gameTick;
+    state.world.projectiles.entries[0].scheduledAtTick =
+        (int)state.world.gameTick + 1;
+    assert(DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
+               &state.world, 0, 1) == 1);
+    memset(&movedOwnerC04, 0, sizeof(movedOwnerC04));
+    movedOwnerC04.kind = TIMELINE_EVENT_PLAY_SOUND;
+    movedOwnerC04.fireAtTick = state.world.gameTick + 1u;
+    movedOwnerC04.mapIndex = state.world.party.mapIndex;
+    movedOwnerC04.mapX = 1;
+    movedOwnerC04.mapY = 2;
+    movedOwnerC04.aux0 = DM1_SND_WOODEN_THUD;
+    movedOwnerC04.aux2 = DM1_EVENT_PLAY_SOUND;
+    movedOwnerC04.aux4 = 70;
+    assert(F0721_TIMELINE_Schedule_Compat(
+               &state.world.timeline, &movedOwnerC04) == 1);
+    state.world.party.champions[0].cell = 1;
+    state.world.party.champions[1].cell = 0;
+    state.world.gameTick++;
+    memset(&dispatchResult, 0, sizeof(dispatchResult));
+    assert(F0887_ORCH_DispatchTimelineEvents_Compat(
+               &state.world, &dispatchResult) == 2);
+    assert(dispatchResult.emissionCount == 2);
+    for (i = 0; i < dispatchResult.emissionCount; ++i) {
+        const struct TickEmission_Compat *emission =
+            &dispatchResult.emissions[i];
+        if (emission->kind == EMIT_ACTION_ENABLED &&
+            emission->payload[0] == 0) {
+            sawActionEnabledAfterPartyCellMove = 1;
+        }
+        if (emission->kind == EMIT_SOUND_REQUEST &&
+            emission->payload[0] == DM1_SND_WOODEN_THUD &&
+            emission->payload[1] == 1 && emission->payload[2] == 2 &&
+            emission->payload[3] == 0) {
+            sawSoundAfterPartyCellMove = 1;
+        }
+    }
+    assert(sawActionEnabledAfterPartyCellMove == 1);
+    assert(sawSoundAfterPartyCellMove == 1);
+    assert(state.world.party.champions[0].cell == 1);
+    assert(state.world.party.champions[1].cell == 0);
+    assert(state.world.projectiles.entries[0].ownerIndex == 0);
+    assert(state.world.timeline.count == 0);
     return 0;
 }
