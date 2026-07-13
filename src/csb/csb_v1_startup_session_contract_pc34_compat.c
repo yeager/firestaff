@@ -85,3 +85,38 @@ int csb_v1_startup_session_live_hud_receipt_pc34(
     out_receipt->session_generation = session_generation;
     return 1;
 }
+
+int csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupSessionLiveHudReceipt_PC34 *live_hud_receipt,
+    unsigned int previous_door_step,
+    unsigned int door_step,
+    unsigned int source_tick,
+    unsigned int session_generation,
+    CSB_V1_StartupSessionDoorHudTickReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupSessionTerminalReceipt_PC34 current;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    /* ReDMCSB DUNGEON.C advances the live door state by one tick. The first
+     * action after C040's clear begins a new runtime door at step zero; it
+     * cannot replay F0807 or consume a newer C017 session. */
+    if (!session || !live_hud_receipt || !out_receipt ||
+        !live_hud_receipt->valid || !live_hud_receipt->c040_cleared_once ||
+        !live_hud_receipt->c017_live_base_only ||
+        previous_door_step >= 31u || door_step != previous_door_step + 1u ||
+        source_tick <= live_hud_receipt->source_tick ||
+        door_step != source_tick - live_hud_receipt->source_tick ||
+        session_generation != live_hud_receipt->session_generation ||
+        session->source_tick != source_tick ||
+        session->generation != session_generation ||
+        !csb_v1_startup_session_terminal_receipt_pc34(session, &current) ||
+        current.session_generation != session_generation) return 0;
+    out_receipt->valid = 1;
+    out_receipt->first_live_door_tick = previous_door_step == 0u ? 1 : 0;
+    out_receipt->previous_door_step = previous_door_step;
+    out_receipt->door_step = door_step;
+    out_receipt->source_tick = source_tick;
+    out_receipt->session_generation = session_generation;
+    return 1;
+}
