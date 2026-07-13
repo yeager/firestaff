@@ -1242,6 +1242,32 @@ static int materialize_original_pc34_deferred_group_move_event(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+static int materialize_original_pc34_door_destruction_event(
+    const struct DM1_Event_V1 *src, const struct GameWorld_Compat *world,
+    struct TimelineEvent_Compat *out_event)
+{
+    int map_index;
+    if (!src || !world || !world->dungeon || !world->dungeon->maps ||
+        !out_event || src->type != DM1_EVENT_DOOR_DESTRUCTION) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    map_index = (int)((src->map_time >> 24) & 0xffu);
+    if (map_index >= (int)world->dungeon->header.mapCount ||
+        src->b_mapX >= world->dungeon->maps[map_index].width ||
+        src->b_mapY >= world->dungeon->maps[map_index].height) return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    /* ReDMCSB TIMELINE.C F0243 consumes B.Location only. */
+    memset(out_event, 0, sizeof(*out_event));
+    out_event->kind = TIMELINE_EVENT_DOOR_DESTRUCTION;
+    out_event->fireAtTick = src->map_time & 0x00ffffffu;
+    out_event->mapIndex = map_index;
+    out_event->mapX = src->b_mapX;
+    out_event->mapY = src->b_mapY;
+    out_event->aux0 = DM1_EVENT_DOOR_DESTRUCTION;
+    out_event->aux2 = DM1_EVENT_DOOR_DESTRUCTION;
+    out_event->aux4 = src->priority;
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 static int materialize_original_pc34_audible_group_move_event(
     const struct DM1_Event_V1 *src, const struct GameWorld_Compat *world,
     struct TimelineEvent_Compat *out_event)
@@ -1422,6 +1448,10 @@ static int materialize_original_pc34_timeline(
                 !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
                 return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
+            continue;
+        }
+        if (src->type == DM1_EVENT_DOOR_DESTRUCTION) {
+            if (materialize_original_pc34_door_destruction_event(src, world, &ev) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK || !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             continue;
         }
         if (src->type == DM1_EVENT_MOVE_GROUP_AUDIBLE && src->priority == 0u) {
