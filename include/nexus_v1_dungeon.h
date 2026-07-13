@@ -163,6 +163,23 @@ typedef struct {
     int structure1a_bound_entry_count;
 } Nexus_V1_DgnStructure1FSpatialReceipt;
 
+/* Alcove and wall Structure1F records carry a big-endian Structure1A index
+ * instead of a documented 64x64 cell.  This receipt retains that original
+ * index stream at the host boundary without claiming that an index identifies
+ * a cell, a model, a trigger, or a Saturn render surface. */
+typedef struct {
+    int valid;
+    int entry_count;
+    int alcove_entry_count;
+    int wall_decoration_entry_count;
+    int wall_sensor_entry_count;
+    int zero_index_count;
+    int nonzero_index_count;
+    int unique_index_count;
+    int duplicate_index_count;
+    uint16_t highest_index;
+} Nexus_V1_DgnStructure1ABoundaryReceipt;
+
 /* DMWeb DGN files, Structure1G: optional animated-texture declarations.
  * A present table has a counted descriptor prefix and four-byte instruction
  * streams. Image instructions, backward FF FE gotos, and FF FF terminators
@@ -465,6 +482,7 @@ typedef struct {
     int structure1f_family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
     int structure1f_typed_entry_count;
     Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
+    Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
     int structure1g_present;
     int structure1g_valid;
     int structure1g_animated_texture_count;
@@ -553,6 +571,7 @@ typedef struct {
     int structure1f_family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
     int structure1f_typed_entry_count;
     Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
+    Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
      * interpreted as an object, sensor, trigger, or draw command. */
@@ -596,6 +615,9 @@ int nexus_v1_level_get_cell_geometry(const Nexus_V1_Level *level, int x, int y,
 int nexus_v1_level_structure1f_spatial_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FSpatialReceipt *out_receipt);
+int nexus_v1_level_structure1a_boundary_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1ABoundaryReceipt *out_receipt);
 /* Returns non-zero only when the DGN target cell and its collision sector
  * admit a center-to-center party step. */
 int nexus_v1_level_move_allowed(const Nexus_V1_Level *level,

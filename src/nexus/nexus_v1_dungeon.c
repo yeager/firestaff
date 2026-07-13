@@ -1186,6 +1186,67 @@ int nexus_v1_level_structure1f_spatial_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure1a_boundary_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1ABoundaryReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1ABoundaryReceipt receipt;
+    unsigned char index_seen[UINT16_MAX + 1U];
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(index_seen, 0, sizeof(index_seen));
+    if (!level || !level->geometry_info.structure1f_valid ||
+        level->structure1f_entry_count < 0 ||
+        level->structure1f_entry_count !=
+            level->geometry_info.structure1f_total_entry_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        switch (record->family) {
+        case NEXUS_V1_DGN_STRUCTURE1F_ALCOVES:
+            ++receipt.alcove_entry_count;
+            break;
+        case NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS:
+            ++receipt.wall_decoration_entry_count;
+            break;
+        case NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS:
+            ++receipt.wall_sensor_entry_count;
+            break;
+        default:
+            continue;
+        }
+        ++receipt.entry_count;
+        if (record->structure1a_index == 0U) {
+            ++receipt.zero_index_count;
+        } else {
+            ++receipt.nonzero_index_count;
+        }
+        if (index_seen[record->structure1a_index]) {
+            ++receipt.duplicate_index_count;
+        } else {
+            index_seen[record->structure1a_index] = 1;
+            ++receipt.unique_index_count;
+        }
+        if (record->structure1a_index > receipt.highest_index) {
+            receipt.highest_index = record->structure1a_index;
+        }
+    }
+    receipt.valid = receipt.entry_count ==
+        receipt.alcove_entry_count + receipt.wall_decoration_entry_count +
+        receipt.wall_sensor_entry_count &&
+        receipt.entry_count == receipt.zero_index_count +
+        receipt.nonzero_index_count &&
+        receipt.entry_count == receipt.unique_index_count +
+        receipt.duplicate_index_count;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_move_allowed(const Nexus_V1_Level *level,
                                 int from_x, int from_y,
                                 int to_x, int to_y) {
@@ -1269,6 +1330,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
     out_receipt->structure1f_typed_entry_count = level->structure1f_entry_count;
     (void)nexus_v1_level_structure1f_spatial_receipt(
         level, &out_receipt->structure1f_spatial);
+    (void)nexus_v1_level_structure1a_boundary_receipt(
+        level, &out_receipt->structure1a_boundary);
     out_receipt->structure1g_present = info->structure1g_present;
     out_receipt->structure1g_valid = info->structure1g_valid;
     out_receipt->structure1g_animated_texture_count =
@@ -1712,6 +1775,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
            sizeof(receipt.structure1f_family_count));
     receipt.structure1f_typed_entry_count = handoff.structure1f_typed_entry_count;
     receipt.structure1f_spatial = handoff.structure1f_spatial;
+    receipt.structure1a_boundary = handoff.structure1a_boundary;
     receipt.structure1g_present = handoff.structure1g_present;
     receipt.structure1g_valid = handoff.structure1g_valid;
     receipt.structure1g_animated_texture_count =
