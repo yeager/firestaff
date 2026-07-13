@@ -190,10 +190,13 @@ int main(void)
     teleporter.targetMapX = 0;
     teleporter.targetMapY = 1;
     teleporter.scope = 0x01;
+    teleporter.rotation = 1;
+    teleporter.absoluteRotation = 0;
     group.next = THING_ENDOFLIST;
     group.creatureType = 0;
-    group.cells = 0xFF;
+    group.cells = 0;
     group.count = 0;
+    group.direction = 0;
     group.health[0] = 100;
     squareFirstThings[0] = (unsigned short)(THING_TYPE_TELEPORTER << 10);
     squareFirstThings[1] = THING_ENDOFLIST;
@@ -207,9 +210,15 @@ int main(void)
     assert(teleporter.next == THING_ENDOFLIST);
     assert(squareFirstThings[1] == (unsigned short)(THING_TYPE_GROUP << 10));
     assert(group.next == THING_ENDOFLIST);
+    /* MOVESENS.C F0262 is still called by F0249's C04 insertion path:
+     * the creature's orientation and occupied cell rotate with the real
+     * creature-scope teleporter, rather than merely changing its square. */
+    assert(group.direction == 1);
+    assert(group.cells == 1);
 
     /* F0249 sends party through F0267 before ordinary source-chain things. */
     teleporter.scope = 0x02;
+    teleporter.rotation = 0;
     world.party.mapX = 0;
     world.party.mapY = 0;
     world.party.direction = 1;
