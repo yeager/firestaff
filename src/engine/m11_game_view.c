@@ -17300,7 +17300,7 @@ static int m11_build_dm1_viewport_materialization_decision(
     /* ReDMCSB: DUNVIEW.C F0115:5668-5683 and :5916-5933 consumes the
      * current effect records after F0219/F0220 mutation. The DM1 decision
      * owns this projection; M11 only transfers it to the legacy blitters. */
-    if (outDecision->liveProjectileCount > 0) {
+    if (outDecision->liveProjectileSlot >= 0) {
         DM1_ProjectileMaterialResolutionPc34 material;
         int thingType = -1;
         int thingSubtype = -1;
@@ -17324,8 +17324,9 @@ static int m11_build_dm1_viewport_materialization_decision(
         cell->firstProjectileSubtype = outDecision->liveProjectileSubtype;
         cell->firstProjectileRelDir =
             (outDecision->liveProjectileDirection - state->world.party.direction) & 3;
-        cell->firstProjectileCell =
-            (outDecision->liveProjectileCell - state->world.party.direction) & 3;
+        /* The F0115 decision already normalized this C14 cell against the
+         * party direction while proving its C2900 source coordinate. */
+        cell->firstProjectileCell = outDecision->liveProjectileCell;
         hasAssociatedThing =
             outDecision->liveProjectileAssociatedThing != THING_NONE &&
             outDecision->liveProjectileAssociatedThing != THING_ENDOFLIST;

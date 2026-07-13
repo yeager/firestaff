@@ -615,7 +615,9 @@ real multi-projectile capture, not a lane- or cell-only mirror substitute.
 F0127 D0C now reaches its actual G2028/C2900 row 11 for live projectiles;
 cells absent from that original row remain no-draw. Remaining work is capture
 and other original thing families, not a D0 synthetic marker or replacement
-sprite.
+sprite. F0115 now scans past an invisible live C14 record to the next record
+with an actual C2900 cell, so multi-projectile materialization cannot select a
+missing first-cell fallback; remaining work is real multi-projectile capture.
 
 DM1 F0115 now consumes only ReDMCSB's compact 13 `G0205` ornament zones.
 The F0676/F0677 D3L2/D3R2 planes are deliberately outside that pass, so they

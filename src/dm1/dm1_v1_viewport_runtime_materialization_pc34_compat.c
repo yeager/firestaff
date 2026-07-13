@@ -80,18 +80,33 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                     i < PROJECTILE_LIST_CAPACITY; ++i) {
             const struct ProjectileInstance_Compat *projectile =
                 &input->liveProjectiles->entries[i];
+            int viewCell;
+            int projectileX;
+            int projectileY;
             if (!dm1_v1_viewport_runtime_projectile_is_active_pc34(projectile) ||
                 projectile->mapIndex != input->mapIndex ||
                 projectile->mapX != input->mapX || projectile->mapY != input->mapY) {
                 continue;
             }
             ++decision.liveProjectileCount;
+            viewCell = (projectile->cell - input->partyDirection) & 3;
+            /* ReDMCSB DUNVIEW.C F0115:5668-5683 visits every C14 record,
+             * restores its view cell, and draws only when G2028/C2900 has
+             * a coordinate for that cell.  Keep scanning after an invisible
+             * record so it cannot hide a later materialized projectile. */
+            if (!dm1_viewport_3d_c2900_projectile_raw_zone_point(
+                    decision.row, viewCell, &projectileX, &projectileY)) {
+                continue;
+            }
+            (void)projectileX;
+            (void)projectileY;
+            ++decision.liveVisibleProjectileCount;
             if (decision.liveProjectileSlot < 0) {
                 decision.liveProjectileSlot = projectile->slotIndex;
                 decision.liveProjectileSubtype = projectile->projectileSubtype;
                 decision.liveProjectileAssociatedThing =
                     (unsigned short)projectile->reserved1;
-                decision.liveProjectileCell = projectile->cell;
+                decision.liveProjectileCell = viewCell;
                 decision.liveProjectileDirection = projectile->direction;
             }
         }
@@ -135,10 +150,10 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
         decision.drawFloorItems = 1;
     }
     projectileCell = input->projectileCell;
-    if (decision.liveProjectileCount > 0) {
-        projectileCell = (decision.liveProjectileCell - input->partyDirection) & 3;
+    if (decision.liveProjectileSlot >= 0) {
+        projectileCell = decision.liveProjectileCell;
     }
-    if ((input->projectileCount > 0 || decision.liveProjectileCount > 0) &&
+    if ((input->projectileCount > 0 || decision.liveProjectileSlot >= 0) &&
         dm1_viewport_3d_c2900_projectile_raw_zone_point(
             decision.row, projectileCell, &projectileX, &projectileY)) {
         (void)projectileX;

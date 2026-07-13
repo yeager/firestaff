@@ -138,6 +138,28 @@ int main(void)
 
     {
         DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
+            DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34);
+        input.relativeForward = 0;
+        input.relativeSide = 0;
+        seed_live_effects(&input, &projectiles, &explosions);
+        projectiles.count = 2;
+        projectiles.entries[0].slotIndex = 7;
+        projectiles.entries[0].cell = 2; /* Empty in D0C C2900 row 11. */
+        projectiles.entries[1] = projectiles.entries[0];
+        projectiles.entries[1].slotIndex = 8;
+        projectiles.entries[1].projectileSubtype = 11;
+        projectiles.entries[1].cell = 0; /* Present in D0C C2900 row 11. */
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
+              "F0127 scans all same-square live projectile records");
+        CHECK(d1c.liveProjectileCount == 2 &&
+              d1c.liveVisibleProjectileCount == 1 &&
+              d1c.liveProjectileSlot == 8 && d1c.liveProjectileSubtype == 11 &&
+              d1c.liveProjectileCell == 0 && d1c.projectileZone == 2944,
+              "later visible D0C projectile wins over an earlier empty C2900 cell");
+    }
+
+    {
+        DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
             DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34);
         input.hasVisibleChampionMirrorPayload = 1;
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
