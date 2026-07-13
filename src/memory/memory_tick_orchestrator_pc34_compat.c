@@ -10939,9 +10939,9 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
              * state loses the C11 owner after it becomes due, consume the
              * receipt without either action. C20 is independently dispatched
              * from its location/sound receipt. C11 Priority is never a C49
-             * projectile slot or owner, so projectile-pool reuse cannot
-             * revive this receipt. Imported B/C padding is deliberately not
-             * interpreted. */
+             * projectile slot or owner and has no projectile generation or
+             * impact-tick field, so pool reuse cannot revive this receipt.
+             * Imported B/C padding is deliberately not interpreted. */
             if (ev.aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
                 ev.aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
                 ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&
