@@ -124,6 +124,42 @@ int main(void)
               palette[1535] == (uint8_t)(23u * 17u + 63u),
           "CSBWin restores EDT_Palette bytes in source RGB order");
 
+    {
+        uint8_t replacement[CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES];
+        uint8_t tail_before[sizeof(tail)];
+        const uint8_t *record = NULL;
+        size_t record_size = 0u;
+
+        memcpy(tail_before, profile.csbwin_appended_tail, sizeof(tail_before));
+        memset(replacement, 0x5au, sizeof(replacement));
+        replacement[0] = 0x11u;
+        replacement[512] = 0x22u;
+        replacement[1024] = 0x33u;
+        check(csb_v1_runtime_set_csbwin_expool_overlay_palette(
+                  &profile, replacement, sizeof(replacement)) == 0 &&
+                  csb_v1_runtime_get_csbwin_expool_overlay_palette(
+                      &profile, &palette, &palette_size) == 1 &&
+                  palette[0] == 0x11u && palette[512] == 0x22u &&
+                  palette[1024] == 0x33u &&
+                  csb_v1_runtime_locate_csbwin_appended_expool_record(
+                      &profile, 7u << 24, &record, &record_size) == 1 &&
+                  record_size >= 64u && record[0] == 0x11u &&
+                  memcmp(tail_before, profile.csbwin_appended_tail,
+                         sizeof(tail_before)) != 0,
+              "CSBWin writes the complete existing EDT_Palette bundle atomically");
+
+        put_le16(profile.csbwin_appended_tail, 2u, 17u);
+        profile.csbwin_appended_tail_fnv1a = fnv1a32(
+            profile.csbwin_appended_tail,
+            profile.csbwin_appended_tail_preserved_size);
+        memcpy(tail_before, profile.csbwin_appended_tail, sizeof(tail_before));
+        check(csb_v1_runtime_set_csbwin_expool_overlay_palette(
+                  &profile, replacement, sizeof(replacement)) == -1 &&
+                  memcmp(tail_before, profile.csbwin_appended_tail,
+                         sizeof(tail_before)) == 0,
+              "CSBWin never grows or partially writes a short EDT_Palette record");
+    }
+
     /* SaveGame.cpp requires size >= 16 words for every record. Shortening
      * one DB11 descriptor must leave the live renderer receipt untouched. */
     put_le16(profile.csbwin_appended_tail, 2u, 17u);
