@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron Track 02 post-latch controller trace: a clean-source,
+  instrumented Mednafen 1.32.1 capture from the authenticated US CUE/System
+  Card 3.0 now proves the first Run-driven System Card register exchange after
+  `$c897`: `$81 -> $1801`, `$60 -> $1800`, `$ff -> $1801`, and the observed
+  `$1800/$1802 = $90/$80` response at `$ea3a`. This binds only executed
+  instructions and observed controller registers. It does not identify a
+  `CD_READ`, Track 02 record, destination, payload, bitmap, palette, object,
+  or level. Verification: clean patch dry-run, instrumented real-US-CUE trace,
+  and `scripts/verify_theron_post_latch_cd_controller_trace.sh` PASS.
+
 - 2026-07-13 DM2 GDAT weather command plan: the source order from skproject
   `c_weather.cpp::DM2_UPDATE_WEATHER` now carries cloud and rain CMDSTR
   materials through an explicit no-fallback runtime plan. A selected command

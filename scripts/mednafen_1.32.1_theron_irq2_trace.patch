@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,6 +36,690 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,6 +36,746 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -80,6 +80,14 @@ index 347482c4..61d4758e 100644
 +static uint32 TheronIrq2TraceFE90TransferSourcePC;
 +static uint32 TheronIrq2TraceFE90TransferPhysicalPC;
 +static char TheronIrq2TraceFE90TransferInstruction[256];
++static bool TheronIrq2TracePostLatchCDRegistersActive;
++static bool TheronIrq2TracePostLatchCDRegistersBaselineSeen;
++static uint32 TheronIrq2TracePostLatchCD1800;
++static uint32 TheronIrq2TracePostLatchCD1801;
++static uint32 TheronIrq2TracePostLatchCD1802;
++static uint32 TheronIrq2TracePostLatchCD1803;
++static uint32 TheronIrq2TracePostLatchCD1804;
++static unsigned TheronIrq2TracePostLatchCDChangeCount;
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -439,6 +447,54 @@ index 347482c4..61d4758e 100644
 +  TheronIrq2TraceC860TransferSourcePC = logical_pc;
 +  TheronIrq2TraceC860TransferPhysicalPC = PC;
 +  CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, TheronIrq2TraceC860TransferInstruction);
++ }
++}
++
++/* Begin recording only after the proven caller reaches C897. The hook reports
++ * raw register changes, deliberately not CD command or payload semantics. */
++if(logical_pc == 0xc897 && !TheronIrq2TracePostLatchCDRegistersActive)
++{
++ TheronIrq2TracePostLatchCDRegistersActive = true;
++ TheronIrq2TracePostLatchCD1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
++ TheronIrq2TracePostLatchCD1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
++ TheronIrq2TracePostLatchCD1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
++ TheronIrq2TracePostLatchCD1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
++ TheronIrq2TracePostLatchCD1804 = CurGame->Debugger->MemPeek(0x1804, 1, true, true) & 0xff;
++ TheronIrq2TracePostLatchCDRegistersBaselineSeen = true;
++ TheronIrq2Trace->print_format("post_latch_cd_baseline_pc=%04x cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x cd_1804=%02x\n",
++                               logical_pc, TheronIrq2TracePostLatchCD1800, TheronIrq2TracePostLatchCD1801,
++                               TheronIrq2TracePostLatchCD1802, TheronIrq2TracePostLatchCD1803,
++                               TheronIrq2TracePostLatchCD1804);
++ FlushTheronIrq2Trace();
++}
++if(TheronIrq2TracePostLatchCDRegistersActive && TheronIrq2TracePostLatchCDRegistersBaselineSeen && TheronIrq2TracePostLatchCDChangeCount < 4)
++{
++ const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
++ const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
++ const uint32 cd_1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
++ const uint32 cd_1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
++ const uint32 cd_1804 = CurGame->Debugger->MemPeek(0x1804, 1, true, true) & 0xff;
++
++ if(cd_1800 != TheronIrq2TracePostLatchCD1800 || cd_1801 != TheronIrq2TracePostLatchCD1801 ||
++    cd_1802 != TheronIrq2TracePostLatchCD1802 || cd_1803 != TheronIrq2TracePostLatchCD1803 ||
++    cd_1804 != TheronIrq2TracePostLatchCD1804)
++ {
++  uint32 disassembly_pc = logical_pc;
++  char disassembly[256];
++
++  CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, disassembly);
++  TheronIrq2Trace->print_format("post_latch_cd_change_pc=%04x physical_pc=%08x instruction=%s before_1800=%02x before_1801=%02x before_1802=%02x before_1803=%02x before_1804=%02x cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x cd_1804=%02x\n",
++                                logical_pc, PC, disassembly, TheronIrq2TracePostLatchCD1800,
++                                TheronIrq2TracePostLatchCD1801, TheronIrq2TracePostLatchCD1802,
++                                TheronIrq2TracePostLatchCD1803, TheronIrq2TracePostLatchCD1804,
++                                cd_1800, cd_1801, cd_1802, cd_1803, cd_1804);
++  TheronIrq2TracePostLatchCD1800 = cd_1800;
++  TheronIrq2TracePostLatchCD1801 = cd_1801;
++  TheronIrq2TracePostLatchCD1802 = cd_1802;
++  TheronIrq2TracePostLatchCD1803 = cd_1803;
++  TheronIrq2TracePostLatchCD1804 = cd_1804;
++  TheronIrq2TracePostLatchCDChangeCount++;
++  FlushTheronIrq2Trace();
 + }
 +}
 +

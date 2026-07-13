@@ -142,3 +142,14 @@ register behavior. It does not identify a `CD_READ`, Track 02 record,
 destination, size, payload, bitmap, palette, object, or level.
 `scripts/verify_theron_c86e_command_trace.sh` requires that exact ordered
 receipt and rejects traces that skip any transition.
+
+After authenticated Run input, the next real controller sequence is now
+captured from `$c897` through the System Card `$e900` path. It executes
+`LDA #$81`/`STA $1801`, `LDA #$60`/`STA $1800`, then
+`LDA #$ff`/`STA $1801`; the trace observes `$1801` become `$81` and then
+`$ff`. The following `$ea27/$ea35` helper sets `$1802` bit 7, with the
+observed state `$1800/$1802 = $90/$80` at `$ea3a`. This is an authenticated
+instruction/register receipt, not a semantic API classification: it does not
+prove a `CD_READ`, record number, RAM destination, transfer size, payload, or
+any game asset. `scripts/verify_theron_post_latch_cd_controller_trace.sh`
+requires this ordered receipt and rejects pre-Run or incomplete traces.
