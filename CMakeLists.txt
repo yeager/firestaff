@@ -20415,6 +20415,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/csb/csb_v1_csbgraphics_runtime_binding.c
         src/csb/csb_v1_csbgraphics_dat_real_scan.c
         src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/csb/csb_v1_f0093_replacement_palette_pc34_compat.c
         src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
         src/dm1/dm1_v1_projectile_graphic_query_pc34_compat.c
@@ -20425,6 +20426,8 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/dm1/dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+        src/dm1/dm1_v1_graphic_ids_pc34_compat.c
+        src/memory/memory_dungeon_dat_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/shared/dungeon_decompressor_ftl.c
         src/shared/fs_portable_compat.c
@@ -20460,6 +20463,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/csb/csb_v1_csbgraphics_runtime_binding.c
         src/csb/csb_v1_csbgraphics_dat_real_scan.c
         src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/csb/csb_v1_f0093_replacement_palette_pc34_compat.c
         src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
         src/dm1/dm1_v1_projectile_graphic_query_pc34_compat.c
@@ -20470,6 +20474,8 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/dm1/dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+        src/dm1/dm1_v1_graphic_ids_pc34_compat.c
+        src/memory/memory_dungeon_dat_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/shared/dungeon_decompressor_ftl.c
         src/shared/fs_portable_compat.c
