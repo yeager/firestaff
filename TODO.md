@@ -30,6 +30,8 @@ The verified `$e8ec` path is a fixed `$1804` latch/counter delay, so the next
 capture boundary is after that delay rather than a CD-state condition at it.
 The next source-locked point is `$e900`: wait for `$22a4 == 0`, then capture
 the raw `$1801` write and `$1800` bit-7 outcome without assigning semantics.
+Its zero branch reaches `$e944`, which writes `$1800` and branches only on
+bit 6 to `$e95a`; the next capture must observe that raw branch outcome.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 
