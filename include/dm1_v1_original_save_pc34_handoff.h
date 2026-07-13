@@ -61,6 +61,21 @@ typedef struct {
     unsigned short associated_thing;
 } DM1OriginalSavePC34ProjectileEventPlan;
 
+/* ReDMCSB TIMELINE.C F0255 owns all of C13's union fields: B.Location,
+ * C.A.Cell, C.A.Effect, and A.A.Priority. This plan preserves that exact
+ * source surface for a later atomic bones/explosion/rebirth runtime commit. */
+typedef struct {
+    int valid;
+    int source_event_index;
+    int champion_index;
+    int map_index;
+    int map_x;
+    int map_y;
+    int cell;
+    int step;
+    uint32_t fire_at_tick;
+} DM1OriginalSavePC34ViAltarRebirthEventPlan;
+
 typedef struct {
     DM1OriginalSaveClassifyResult classify;
     int importer_result;
@@ -236,6 +251,14 @@ int dm1_v1_original_save_pc34_handoff_projectile_event_plan(
     int source_event_index,
     const struct DungeonThings_Compat *things,
     DM1OriginalSavePC34ProjectileEventPlan *out_plan);
+
+/* ReDMCSB CLIKVIEW.C F0374 writes C13 with Effect=2, while TIMELINE.C F0255
+ * consumes steps 2, 1, and 0. Reject all other values and invalid champion or
+ * cell ownership rather than treating a saved C13 as a generic square event. */
+int dm1_v1_original_save_pc34_handoff_vi_altar_rebirth_event_plan(
+    const struct DM1_Event_V1 *src,
+    int source_event_index,
+    DM1OriginalSavePC34ViAltarRebirthEventPlan *out_plan);
 
 int dm1_v1_original_save_pc34_handoff_load_world_from_file(
     const char *path,

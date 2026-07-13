@@ -906,6 +906,36 @@ int dm1_v1_original_save_pc34_handoff_projectile_event_plan(
     return 1;
 }
 
+int dm1_v1_original_save_pc34_handoff_vi_altar_rebirth_event_plan(
+    const struct DM1_Event_V1 *src,
+    int source_event_index,
+    DM1OriginalSavePC34ViAltarRebirthEventPlan *out_plan)
+{
+    if (!src || !out_plan || source_event_index < 0 ||
+        src->type != DM1_EVENT_VI_ALTAR_REBIRTH ||
+        src->priority >= CHAMPION_MAX_PARTY || src->c_cell > 3u ||
+        src->c_effect > 2u) {
+        return 0;
+    }
+
+    /* ReDMCSB CLIKVIEW.C F0374 lines 179-186 creates C13 from the bones
+     * location/cell and ChargeCount champion index. TIMELINE.C F0255 lines
+     * 1665-1699 consumes B.Location, C.A.Cell, C.A.Effect and Priority for
+     * its exact 2 -> 1 -> 0 sequence. Do not collapse this union into the
+     * generic Location/Cell/Effect handoff before that transaction exists. */
+    memset(out_plan, 0, sizeof(*out_plan));
+    out_plan->valid = 1;
+    out_plan->source_event_index = source_event_index;
+    out_plan->champion_index = src->priority;
+    out_plan->map_index = (int)((src->map_time >> 24) & 0xffu);
+    out_plan->map_x = src->b_mapX;
+    out_plan->map_y = src->b_mapY;
+    out_plan->cell = src->c_cell;
+    out_plan->step = src->c_effect;
+    out_plan->fire_at_tick = src->map_time & 0x00ffffffu;
+    return 1;
+}
+
 static int materialize_original_pc34_projectile_event(
     const struct DM1_Event_V1 *src,
     int source_index,
