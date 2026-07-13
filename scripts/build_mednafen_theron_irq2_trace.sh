@@ -35,6 +35,12 @@ patch -d "$build_root/source" -p1 --batch --forward \
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_host_input_trace.patch"
 
+# The released Mednafen tree carries generated Makefile.in files. Copying it
+# into a fresh trace root can make make try to regenerate them, which would
+# require the historical automake-1.16 toolchain. Keep the shipped generated
+# inputs authoritative for this instrumented build.
+find "$build_root/source" -name Makefile.in -exec touch {} +
+
 cd "$build_root/source"
 # The Firestaff hook reads PCE registers through Mednafen's debugger API.
 # Enabling the legacy PCECD_DEBUG printf path breaks current 1.32.1 builds
