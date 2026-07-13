@@ -45,6 +45,8 @@ int nexus_v1_prs3_capture_trace_schema_parse(
         !read_u32(&cursor, "expected_output_bytes=", &out_receipt->expected_output_bytes) ||
         !read_u32(&cursor, "first_opcode_pc=", &out_receipt->first_opcode_pc) ||
         !read_u32(&cursor, "last_opcode_pc=", &out_receipt->last_opcode_pc) ||
+        !read_u64(&cursor, "opcode_first_sequence=", &out_receipt->opcode_first_sequence) ||
+        !read_u64(&cursor, "opcode_last_sequence=", &out_receipt->opcode_last_sequence) ||
         !read_u32(&cursor, "opcode_fetch_count=", &out_receipt->opcode_fetch_count) ||
         !read_u32(&cursor, "payload_read_bytes=", &out_receipt->payload_read_bytes) ||
         !read_u32(&cursor, "output_write_bytes=", &out_receipt->output_write_bytes) ||
@@ -56,6 +58,11 @@ int nexus_v1_prs3_capture_trace_schema_parse(
         !out_receipt->stream_size || !out_receipt->expected_output_bytes ||
         !out_receipt->first_opcode_pc || !out_receipt->last_opcode_pc ||
         !out_receipt->opcode_fetch_count || !out_receipt->payload_read_bytes ||
+        (out_receipt->opcode_fetch_count == 1U
+            ? out_receipt->opcode_first_sequence !=
+                  out_receipt->opcode_last_sequence
+            : out_receipt->opcode_first_sequence >=
+                  out_receipt->opcode_last_sequence) ||
         out_receipt->payload_read_bytes > out_receipt->stream_size ||
         out_receipt->output_write_bytes != out_receipt->expected_output_bytes ||
         !out_receipt->output_fnv1a64 || returned_success != 1U ||

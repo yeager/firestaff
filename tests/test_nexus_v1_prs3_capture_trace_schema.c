@@ -22,6 +22,8 @@ static const char valid_trace[] =
     "expected_output_bytes=8\n"
     "first_opcode_pc=100\n"
     "last_opcode_pc=102\n"
+    "opcode_first_sequence=10\n"
+    "opcode_last_sequence=11\n"
     "opcode_fetch_count=2\n"
     "payload_read_bytes=4\n"
     "output_write_bytes=8\n"
@@ -49,6 +51,20 @@ int main(void) {
     expect(!nexus_v1_prs3_capture_trace_schema_parse(
                malformed, strlen(malformed), &receipt) && !receipt.valid,
            "malformed stream evidence is rejected");
+
+    snprintf(malformed, sizeof(malformed), "%s", valid_trace);
+    memcpy(strstr(malformed, "opcode_last_sequence=11"),
+           "opcode_last_sequence=10", 23U);
+    expect(!nexus_v1_prs3_capture_trace_schema_parse(
+               malformed, strlen(malformed), &receipt) && !receipt.valid,
+           "non-increasing opcode fetch sequence is rejected");
+
+    snprintf(malformed, sizeof(malformed), "%s", valid_trace);
+    memcpy(strstr(malformed, "opcode_first_sequence=10"),
+           "opcode_missing_sequence=10", 24U);
+    expect(!nexus_v1_prs3_capture_trace_schema_parse(
+               malformed, strlen(malformed), &receipt) && !receipt.valid,
+           "missing opcode fetch sequence is rejected");
 
     snprintf(malformed, sizeof(malformed), "%s", valid_trace);
     memcpy(strstr(malformed, "output_write_bytes=8"),
