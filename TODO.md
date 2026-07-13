@@ -1196,6 +1196,14 @@ and real community-save corpus round-trip evidence.
     Firestaff manifests and nonoriginal envelopes remain explicit rejected
     rows and never enter import/export. Remaining work is broader original
     dungeon-tail import breadth and independently collected community saves.
+  - 2026-07-13 update: corpus verification now compares the optional F0433/
+    F0435 dungeon tail as raw original bytes after the four portrait payloads.
+    A source tail must retain checksum-qualified size, fingerprint, and exact
+    bytes through transient export; a tail-less source must remain tail-less.
+    The opt-in real-corpus test rejects an empty candidate set, so it cannot
+    claim a green real-save pass without external PC34 bytes. Remaining work
+    is independently collected community saves and runtime ownership for
+    still-opaque tail structures, not a synthetic tail format.
   - 2026-07-13 update: C13 Vi Altar records now receive a byte-preservation
     receipt during the F0435 -> F0433 -> F0435 verification path. ReDMCSB
     `LOADSAVE.C` saves and reloads the whole ten-byte EVENT part; Firestaff

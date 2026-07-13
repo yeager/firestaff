@@ -3366,6 +3366,65 @@ static int dm1_original_save_party_info_bytes_match(
     return 1;
 }
 
+/* ReDMCSB LOADSAVE.C F0433 writes the optional loaded dungeon immediately
+ * after the four external portraits, and F0435 reads it from the same cursor.
+ * This is a corpus-only raw-byte receipt: no tail bytes are decoded or
+ * promoted here. A tail-less original save must remain tail-less on export. */
+static int dm1_original_save_dungeon_tail_bytes_match(
+    const uint8_t *source_bytes,
+    size_t source_size,
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const uint8_t *exported_bytes,
+    size_t exported_size,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    size_t source_cursor;
+    size_t exported_cursor;
+
+    if (!source_bytes || !source_report || !exported_bytes ||
+        !exported_report || !out_report) {
+        return 0;
+    }
+    out_report->source_dungeon_tail_byte_count =
+        source_report->dungeon_tail_byte_count;
+    out_report->source_dungeon_tail_fingerprint =
+        source_report->dungeon_tail_fingerprint;
+    out_report->exported_dungeon_tail_byte_count =
+        exported_report->dungeon_tail_byte_count;
+    out_report->exported_dungeon_tail_fingerprint =
+        exported_report->dungeon_tail_fingerprint;
+    out_report->dungeon_tail_byte_receipt_available = 1;
+
+    if (!source_report->dungeon_tail_present) {
+        out_report->dungeon_tail_byte_preservation_ok =
+            !exported_report->dungeon_tail_present;
+        return 1;
+    }
+    if (!source_report->dungeon_tail_checksum_ok ||
+        !exported_report->dungeon_tail_present ||
+        !exported_report->dungeon_tail_checksum_ok ||
+        source_report->dungeon_tail_byte_count == 0u ||
+        source_report->dungeon_tail_byte_count !=
+            exported_report->dungeon_tail_byte_count) {
+        return 1;
+    }
+    source_cursor = original_pc34_dungeon_tail_cursor(source_bytes, source_size);
+    exported_cursor = original_pc34_dungeon_tail_cursor(exported_bytes,
+                                                         exported_size);
+    if (source_cursor == 0u || exported_cursor == 0u ||
+        source_cursor > source_size || exported_cursor > exported_size ||
+        source_report->dungeon_tail_byte_count > source_size - source_cursor ||
+        exported_report->dungeon_tail_byte_count >
+            exported_size - exported_cursor) {
+        return 1;
+    }
+    out_report->dungeon_tail_byte_preservation_ok = memcmp(
+        source_bytes + source_cursor, exported_bytes + exported_cursor,
+        source_report->dungeon_tail_byte_count) == 0;
+    return 1;
+}
+
 static void fill_roundtrip_core_report(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const DM1OriginalSavePC34HandoffReport *export_report,
@@ -3666,6 +3725,11 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
             &export_report, out_report)) {
         out_report->party_info_byte_receipt_available = 0;
     }
+    if (out_report && !dm1_original_save_dungeon_tail_bytes_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report)) {
+        out_report->dungeon_tail_byte_receipt_available = 0;
+    }
     F0883_WORLD_Free_Compat(&reloaded_world);
     if (out_report &&
         (!out_report->core_state_matches ||
@@ -3675,6 +3739,8 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
          !out_report->inactive_champion_record_byte_preservation_ok ||
          !out_report->party_info_byte_receipt_available ||
          !out_report->party_info_byte_preservation_ok ||
+         !out_report->dungeon_tail_byte_receipt_available ||
+         !out_report->dungeon_tail_byte_preservation_ok ||
          (!out_report->c13_byte_receipt_available &&
           import_report.original_event_count > 0) ||
          (out_report->source_c13_event_count > 0 &&
@@ -3924,6 +3990,18 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.inactive_champion_record_byte_preserved_count;
         receipt->inactive_champion_record_byte_preservation_ok =
             roundtrip.inactive_champion_record_byte_preservation_ok;
+        receipt->dungeon_tail_byte_receipt_available =
+            roundtrip.dungeon_tail_byte_receipt_available;
+        receipt->source_dungeon_tail_byte_count =
+            roundtrip.source_dungeon_tail_byte_count;
+        receipt->source_dungeon_tail_fingerprint =
+            roundtrip.source_dungeon_tail_fingerprint;
+        receipt->exported_dungeon_tail_byte_count =
+            roundtrip.exported_dungeon_tail_byte_count;
+        receipt->exported_dungeon_tail_fingerprint =
+            roundtrip.exported_dungeon_tail_fingerprint;
+        receipt->dungeon_tail_byte_preservation_ok =
+            roundtrip.dungeon_tail_byte_preservation_ok;
         if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
             roundtrip.core_state_matches) {
             receipt->exported_byte_count = (uint32_t)exported_size;

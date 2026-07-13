@@ -3564,7 +3564,11 @@ static void test_corpus_roundtrip_proof(void)
             receipt->roundtrip_result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
             !receipt->core_state_matches || receipt->source_byte_count == 0u ||
             receipt->source_hash == 0u || receipt->exported_byte_count == 0u ||
-            receipt->exported_hash == 0u || !receipt->path[0]) {
+            receipt->exported_hash == 0u || !receipt->path[0] ||
+            !receipt->dungeon_tail_byte_receipt_available ||
+            !receipt->dungeon_tail_byte_preservation_ok ||
+            receipt->source_dungeon_tail_byte_count != 0u ||
+            receipt->exported_dungeon_tail_byte_count != 0u) {
             receipts_valid = 0;
         }
     }
@@ -3613,6 +3617,21 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
           "real PC34 corpus contains no malformed provenance envelope");
     CHECK(report.roundtrip_succeeded_count == report.pc34_candidate_count,
           "every external PC34 corpus candidate roundtrips");
+    CHECK(report.pc34_candidate_count > 0,
+          "real PC34 corpus contains at least one external candidate");
+    for (int i = 0; i < report.receipt_count; ++i) {
+        const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
+        CHECK(receipt->dungeon_tail_byte_receipt_available &&
+              receipt->dungeon_tail_byte_preservation_ok,
+              "real PC34 corpus preserves each observed dungeon tail exactly");
+        if (receipt->source_dungeon_tail_byte_count > 0u) {
+            CHECK(receipt->source_dungeon_tail_byte_count ==
+                      receipt->exported_dungeon_tail_byte_count &&
+                  receipt->source_dungeon_tail_fingerprint ==
+                      receipt->exported_dungeon_tail_fingerprint,
+                  "real PC34 corpus tail receipt retains raw byte identity");
+        }
+    }
 }
 
 static void test_original_projectile_event_plan_preserves_c48_bits(void)
