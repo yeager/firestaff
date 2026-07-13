@@ -13044,3 +13044,13 @@ payloads through the existing atomic live runtime restore. Invalid or
 dungeon-incompatible candidates remain fail-closed with no synthetic session
 fallback. Source reference: skproject `c_savegame.cpp` load handoff. Verification:
 Ninja `test_dm2_v1_save_load` 23/23 and CTest `dm2_v1_save_load` 1/1.
+
+# ✅ 2026-07-13 DM2 renamed original SKSave corpus discovery
+
+The bounded recursive corpus scanner now discovers a renamed artifact only
+after its real 42-byte SKSave header validates, then classifies it through the
+existing skproject-shaped parser and records a full-file hash receipt. The
+explicit save root is capped at depth 4, 64 header candidates, and 256 shallow
+file probes; an incomplete scan is marked truncated. Arbitrary filenames and
+bytes never become importable. Verification: Ninja `test_dm2_v1_save_load`
+23/23 and CTest `dm2_v1_save_load` 1/1.

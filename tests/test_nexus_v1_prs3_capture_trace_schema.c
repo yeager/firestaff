@@ -215,6 +215,45 @@ static void test_cross_asset_prs3_frame_receipt(void) {
     free(real_menu_bpk);
 }
 
+static void test_dm_bin_sh2_v1_execution_receipt(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    Nexus_V1_Prs3Sh2V1ExecutionReceipt receipt;
+    unsigned char *dm_bin;
+    unsigned char *damaged;
+    size_t dm_bin_size = 0U;
+
+    dm_bin = read_asset(data_dir, "DM.BIN", &dm_bin_size);
+    if (!dm_bin) return;
+    expect(nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+               dm_bin, dm_bin_size, 1, &receipt) &&
+               receipt.dm_bin_v1_frame_verified &&
+               receipt.v1_callee_offset == 85376U &&
+               receipt.control_test_offset == 85450U &&
+               receipt.stream_byte_read_offset == 85460U &&
+               receipt.output_byte_store_offset == 85464U &&
+               receipt.loop_branch_offset == 85472U &&
+               receipt.control_test_instruction == 0x23b8U &&
+               receipt.stream_byte_read_instruction == 0x62c4U &&
+               receipt.output_byte_store_instruction == 0x0d24U &&
+               receipt.loop_branch_instruction == 0xafe8U &&
+               receipt.sh2_control_path_verified &&
+               receipt.sh2_stream_read_verified && receipt.sh2_output_store_verified &&
+               !receipt.menu_frame_binding_proven && !receipt.vdp1_command_proven &&
+               !receipt.opcode_grammar_proven && !receipt.decoder_promoted,
+           "retail DM.BIN imports SH-2 control/read/store evidence without decode");
+    damaged = (unsigned char *)malloc(dm_bin_size);
+    if (damaged) {
+        memcpy(damaged, dm_bin, dm_bin_size);
+        damaged[85464U] ^= 1U;
+        expect(!nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+                   damaged, dm_bin_size, 1, &receipt) &&
+                   !receipt.sh2_output_store_verified && !receipt.decoder_promoted,
+               "one changed SH-2 output-store instruction rejects the receipt");
+        free(damaged);
+    }
+    free(dm_bin);
+}
+
 int main(void) {
     Nexus_V1_Prs3CaptureTraceSchemaReceipt receipt;
     Nexus_V1_Prs3CaptureAssetBindingReceipt binding;
@@ -318,6 +357,7 @@ int main(void) {
 
     test_dm_bin_prs3_catalog();
     test_cross_asset_prs3_frame_receipt();
+    test_dm_bin_sh2_v1_execution_receipt();
 
     return failures ? 1 : 0;
 }

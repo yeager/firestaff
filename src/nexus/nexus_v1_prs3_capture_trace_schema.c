@@ -34,6 +34,10 @@ static uint32_t read_be32(const uint8_t *p) {
         ((uint32_t)p[2] << 8) | (uint32_t)p[3];
 }
 
+static uint16_t read_be16(const uint8_t *p) {
+    return (uint16_t)(((uint16_t)p[0] << 8) | (uint16_t)p[1]);
+}
+
 static int read_u32(const char **cursor, const char *label, uint32_t *out) {
     uint64_t value;
     if (!read_u64(cursor, label, &value) || value > UINT32_MAX) return 0;
@@ -256,4 +260,66 @@ int nexus_v1_prs3_cross_asset_frame_receipt_verified(
     receipt.fallback_visuals_permitted = 0;
     *out_receipt = receipt;
     return receipt.outer_v1_framing_matches;
+}
+
+int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+    const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
+    Nexus_V1_Prs3Sh2V1ExecutionReceipt *out_receipt) {
+    enum {
+        DM_BIN_V1_FRAME_OFFSET = 231668U,
+        SH2_V1_CALLEE_OFFSET = 85376U,
+        SH2_CONTROL_TEST_OFFSET = SH2_V1_CALLEE_OFFSET + 74U,
+        SH2_STREAM_BYTE_READ_OFFSET = SH2_V1_CALLEE_OFFSET + 84U,
+        SH2_OUTPUT_BYTE_STORE_OFFSET = SH2_V1_CALLEE_OFFSET + 88U,
+        SH2_LOOP_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 96U
+    };
+    Nexus_V1_Prs3Sh2V1ExecutionReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm_bin || !source_hash_verified ||
+        dm_bin_size < SH2_LOOP_BRANCH_OFFSET + 2U ||
+        dm_bin_size < DM_BIN_V1_FRAME_OFFSET + 16U ||
+        memcmp(dm_bin + DM_BIN_V1_FRAME_OFFSET, "PRS3", 4U) != 0 ||
+        read_be32(dm_bin + DM_BIN_V1_FRAME_OFFSET + 4U) != 1U ||
+        read_be32(dm_bin + DM_BIN_V1_FRAME_OFFSET + 8U) != 4096U ||
+        read_be32(dm_bin + DM_BIN_V1_FRAME_OFFSET + 12U) != 997U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.source_hash_verified = 1;
+    receipt.dm_bin_v1_frame_verified = 1;
+    receipt.v1_callee_offset = SH2_V1_CALLEE_OFFSET;
+    receipt.control_test_offset = SH2_CONTROL_TEST_OFFSET;
+    receipt.stream_byte_read_offset = SH2_STREAM_BYTE_READ_OFFSET;
+    receipt.output_byte_store_offset = SH2_OUTPUT_BYTE_STORE_OFFSET;
+    receipt.loop_branch_offset = SH2_LOOP_BRANCH_OFFSET;
+    receipt.control_test_instruction =
+        read_be16(dm_bin + receipt.control_test_offset);
+    receipt.stream_byte_read_instruction =
+        read_be16(dm_bin + receipt.stream_byte_read_offset);
+    receipt.output_byte_store_instruction =
+        read_be16(dm_bin + receipt.output_byte_store_offset);
+    receipt.loop_branch_instruction =
+        read_be16(dm_bin + receipt.loop_branch_offset);
+    receipt.sh2_control_path_verified =
+        receipt.control_test_instruction == 0x23b8U &&
+        read_be16(dm_bin + SH2_V1_CALLEE_OFFSET + 72U) == 0xe301U &&
+        read_be16(dm_bin + SH2_V1_CALLEE_OFFSET + 76U) == 0x890aU;
+    receipt.sh2_stream_read_verified =
+        receipt.stream_byte_read_instruction == 0x62c4U &&
+        read_be16(dm_bin + SH2_V1_CALLEE_OFFSET + 82U) == 0x7effU;
+    receipt.sh2_output_store_verified =
+        receipt.output_byte_store_instruction == 0x0d24U &&
+        read_be16(dm_bin + SH2_V1_CALLEE_OFFSET + 86U) == 0x6063U &&
+        receipt.loop_branch_instruction == 0xafe8U;
+    /* No original execution capture establishes these three bindings yet. */
+    receipt.menu_frame_binding_proven = 0;
+    receipt.vdp1_command_proven = 0;
+    receipt.opcode_grammar_proven = 0;
+    receipt.decoder_promoted = 0;
+    *out_receipt = receipt;
+    return receipt.sh2_control_path_verified && receipt.sh2_stream_read_verified &&
+        receipt.sh2_output_store_verified;
 }
