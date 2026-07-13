@@ -45,6 +45,10 @@
 /* ReDMCSB TIMELINE.C F0255: C13 Vi Altar rebirth retains its own
  * Location/Cell/Effect union; never fold it into generic square state. */
 #define TIMELINE_EVENT_VI_ALTAR_REBIRTH 21
+/* ReDMCSB TIMELINE.C C22_EVENT_CPSE is a copy-protection check.  Builds
+ * compiled with NOCOPYPROTECTION consume it without a game-side effect, but
+ * original-save import/export must retain its Map_Time receipt. */
+#define TIMELINE_EVENT_CPSE_CHECK       22
 
 #define TIMELINE_QUEUE_CAPACITY 256
 #define TIMELINE_EVENT_SERIALIZED_SIZE 44
