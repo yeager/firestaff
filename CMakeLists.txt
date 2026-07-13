@@ -7598,6 +7598,21 @@ if(BUILD_TESTING)
             -Wall -Wextra -O2)
     endif()
 
+    # Canonical-user-media runtime bridge proof; GDAT data stays callback-owned.
+    add_executable(test_dm2_v1_g1_scene_runtime_handoff_real_data
+        tests/test_dm2_v1_g1_scene_runtime_handoff_real_data.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+    )
+    target_include_directories(test_dm2_v1_g1_scene_runtime_handoff_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_scene_runtime_handoff_real_data PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+
     add_executable(test_dm2_v1_g1_null_record_address_gate
         tests/test_dm2_v1_g1_null_record_address_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
@@ -8501,6 +8516,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_pressure_plate_pc34_compat.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_pressure_plate_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -8518,6 +8534,7 @@ if(BUILD_TESTING)
         probes/dm2/firestaff_dm2_v1_pressure_plate_probe.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(firestaff_dm2_v1_pressure_plate_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -8538,6 +8555,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_door_button_toggle_pc34_compat.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_door_button_toggle_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
