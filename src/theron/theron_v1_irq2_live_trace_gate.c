@@ -247,6 +247,9 @@ int theron_v1_system_card_controller_wait_from_mednafen_capture(
     Theron_V1SystemCardControllerWaitReceipt *out_receipt) {
     const char *command;
     const char *state;
+    const char *compare_ready;
+    const char *compare_retry;
+    const char *retry_branch;
     size_t command_length;
     size_t state_length;
     unsigned int command_1800, response_1801, response_1802, response_1803;
@@ -261,6 +264,12 @@ int theron_v1_system_card_controller_wait_from_mednafen_capture(
                                 &command, &command_length) ||
         !theron_v1_capture_line(capture, "c860_window_pc=c8c4 ",
                                 &state, &state_length) ||
+        !theron_v1_capture_line(capture, "c860_window_pc=c8c7 ",
+                                &compare_ready, &(size_t){0}) ||
+        !theron_v1_capture_line(capture, "c860_window_pc=c8cb ",
+                                &compare_retry, &(size_t){0}) ||
+        !theron_v1_capture_line(capture, "c860_window_pc=c8cd ",
+                                &retry_branch, &(size_t){0}) ||
         theron_v1_capture_line(capture, "dynamic_cd_read_transaction ",
                                &(const char *){0}, &(size_t){0}) ||
         sscanf(command,
@@ -273,7 +282,10 @@ int theron_v1_system_card_controller_wait_from_mednafen_capture(
                &controller_state, &consumed) != 1 ||
         consumed <= 0 || (size_t)consumed > state_length || command_1800 != 0xd0u ||
         response_1801 != 0u || response_1802 != 0u || response_1803 != 0x02u ||
-        response_1804 != 0u || controller_state != 0u) {
+        response_1804 != 0u || controller_state != 0u ||
+        !strstr(compare_ready, "instruction=CMP #$08") ||
+        !strstr(compare_retry, "instruction=CMP #$04") ||
+        !strstr(retry_branch, "instruction=BNE $C897")) {
         return 0;
     }
     out_receipt->valid = 1;
@@ -284,6 +296,7 @@ int theron_v1_system_card_controller_wait_from_mednafen_capture(
     out_receipt->response_1803 = (uint8_t)response_1803;
     out_receipt->response_1804 = (uint8_t)response_1804;
     out_receipt->controller_state_222d = (uint8_t)controller_state;
+    out_receipt->retry_branch_to_c897_observed = 1;
     return 1;
 }
 

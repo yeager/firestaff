@@ -74,6 +74,7 @@ typedef struct {
     uint8_t response_1803;
     uint8_t response_1804;
     uint8_t controller_state_222d;
+    int retry_branch_to_c897_observed;
 } Theron_V1SystemCardControllerWaitReceipt;
 
 /* Redacted capture-preflight status only. A ready preflight never selects an

@@ -1320,8 +1320,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     software-SDL attempt with System Events Return-key calls, remained in the
     `$c860/$c96x` System Card wait loop. The captured `$c897` command/response
     is now a typed pre-Track02 controller-wait receipt (`d0,00,00,02,00` plus
-    `$222d=00`), which explicitly blocks runtime instead of being treated as
-    an absent trace. The repeatable capture script retains this as a negative
+    `$222d=00`) and its original `CMP #$08`, `CMP #$04`, `BNE $c897` retry
+    branch are now typed as a pre-Track02 blocked controller state instead of
+    being treated as an absent trace. The repeatable capture script retains this as a negative
     live result. The Mednafen patch observes
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a

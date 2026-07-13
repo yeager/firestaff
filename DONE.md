@@ -842,6 +842,12 @@
   palette, bitmap, or RGB output. The bounded capture script and standalone
   verifier distinguish this result from a completed dynamic Track02 trace.
 
+- ✅ 2026-07-13 Theron System Card retry-branch evidence: the same authentic
+  capture additionally proves the zero `$222d` state follows the original
+  `$c8c7`/`$c8cb` comparisons and takes `$c8cd BNE $c897`. This is retained
+  only as a blocked pre-Track02 controller decision; it has no payload,
+  palette, bitmap, RGB, or runtime-handoff meaning.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete

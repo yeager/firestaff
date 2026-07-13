@@ -31,7 +31,10 @@ int main(void) {
     static const char controller_wait_capture[] =
         "source=mednafen-pce-instrumented\n"
         "post_latch_cd_baseline_pc=c897 cd_1800=d0 cd_1801=00 cd_1802=00 cd_1803=02 cd_1804=00\n"
-        "c860_window_pc=c8c4 physical_pc=0000c8c4 instruction=LDA $222D  @ $222D = $00\n";
+        "c860_window_pc=c8c4 physical_pc=0000c8c4 instruction=LDA $222D  @ $222D = $00\n"
+        "c860_window_pc=c8c7 physical_pc=0000c8c7 instruction=CMP #$08\n"
+        "c860_window_pc=c8cb physical_pc=0000c8cb instruction=CMP #$04\n"
+        "c860_window_pc=c8cd physical_pc=0000c8cd instruction=BNE $C897\n";
     Theron_V1Irq2LiveTrace absent_trace;
     Theron_V1Irq2LiveTrace parsed_trace;
     Theron_V1Irq2LiveBranchReceipt receipt;
@@ -59,7 +62,8 @@ int main(void) {
               controller_wait_capture, &wait_receipt) && wait_receipt.valid &&
               wait_receipt.runtime_blocked && wait_receipt.command_1800 == 0xd0u &&
               wait_receipt.response_1803 == 0x02u &&
-              wait_receipt.controller_state_222d == 0u,
+              wait_receipt.controller_state_222d == 0u &&
+              wait_receipt.retry_branch_to_c897_observed,
           "authentic System Card controller wait is typed but cannot authorize runtime");
     check(!theron_v1_system_card_controller_wait_from_mednafen_capture(
               valid_capture, &wait_receipt) && !wait_receipt.valid,
