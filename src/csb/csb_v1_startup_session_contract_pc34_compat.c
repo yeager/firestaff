@@ -50,6 +50,69 @@ int csb_v1_startup_session_terminal_receipt_pc34(
     return 1;
 }
 
+int csb_v1_startup_session_package_title_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    CSB_V1_StartupSessionPackageTitleReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
+    const CSB_V1_StartupRuntimeSurface_PC34 *title;
+    const CSB_V1_StartupRuntimeSurface_PC34 *presents;
+    const CSB_V1_StartupRuntimeSurface_PC34 *chaos;
+    const CSB_V1_StartupRuntimeSurface_PC34 *strikes;
+
+    /* ReDMCSB TITLE.C F0437 lines 424-463 draws C001 as three distinct
+     * PRESENTS/CHAOS/STRIKES BACK regions. ENTRANCE.C F0806 lines 850-903
+     * may enter live play only after that title session has reached its
+     * terminal HUD handoff. */
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!session || !package_receipt || !out_receipt ||
+        !package_receipt->valid || !package_receipt->real_package_matched ||
+        !package_receipt->c001_title_consumed ||
+        !package_receipt->c001_presents_consumed ||
+        !package_receipt->c001_chaos_consumed ||
+        !package_receipt->c001_strikes_back_consumed ||
+        !package_receipt->title_to_hud_same_session ||
+        !package_receipt->no_legacy_wrappers ||
+        !package_receipt->no_fallback_routes ||
+        !csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
+        package_receipt->source_tick != terminal.source_tick ||
+        package_receipt->session_generation != terminal.session_generation ||
+        package_receipt->real_asset_receipt_hash == 0u ||
+        package_receipt->consumed_surface_hash == 0u) return 0;
+
+    title = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
+    presents = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
+    chaos = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
+    strikes = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
+    if (!title->valid || !title->pixels || title->source_asset_id != 1 ||
+        !presents->valid || !presents->pixels || presents->source_asset_id != 1 ||
+        presents->source_x != 0 || presents->source_y != 137 ||
+        presents->width != 320 || presents->height != 16 ||
+        !chaos->valid || !chaos->pixels || chaos->source_asset_id != 1 ||
+        chaos->source_x != 0 || chaos->source_y != 0 ||
+        chaos->width != 320 || chaos->height != 80 ||
+        !strikes->valid || !strikes->pixels || strikes->source_asset_id != 1 ||
+        strikes->source_x != 0 || strikes->source_y != 80 ||
+        strikes->width != 320 || strikes->height != 57 ||
+        strikes->transparent_color != 0) return 0;
+
+    out_receipt->real_package_matched = 1;
+    out_receipt->c001_title_ready = 1;
+    out_receipt->c001_presents_ready = 1;
+    out_receipt->c001_chaos_ready = 1;
+    out_receipt->c001_strikes_back_ready = 1;
+    out_receipt->title_to_hud_same_session = 1;
+    out_receipt->no_legacy_wrappers = 1;
+    out_receipt->no_fallback_routes = 1;
+    out_receipt->source_tick = terminal.source_tick;
+    out_receipt->session_generation = terminal.session_generation;
+    out_receipt->real_asset_receipt_hash = package_receipt->real_asset_receipt_hash;
+    out_receipt->consumed_surface_hash = package_receipt->consumed_surface_hash;
+    out_receipt->valid = 1;
+    return 1;
+}
+
 int csb_v1_startup_session_live_hud_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     const CSB_V1_StartupSessionTerminalReceipt_PC34 *terminal_receipt,

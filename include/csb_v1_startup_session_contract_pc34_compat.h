@@ -2,6 +2,7 @@
 #define FIRESTAFF_CSB_V1_STARTUP_SESSION_CONTRACT_PC34_COMPAT_H
 
 #include "csb_v1_boot.h"
+#include "csb_v1_startup_real_asset_receipt.h"
 
 typedef struct CSB_V1_StartupSessionTerminalReceipt_PC34 {
     int valid;
@@ -12,6 +13,25 @@ typedef struct CSB_V1_StartupSessionTerminalReceipt_PC34 {
     unsigned int source_tick;
     unsigned int session_generation;
 } CSB_V1_StartupSessionTerminalReceipt_PC34;
+
+/* TITLE.C F0437 retains one C001 bitmap for PRESENTS, CHAOS and STRIKES
+ * BACK. This receipt pins those real regions to the package identity that
+ * later reaches the terminal C017/C040 HUD session. */
+typedef struct CSB_V1_StartupSessionPackageTitleReceipt_PC34 {
+    int valid;
+    int real_package_matched;
+    int c001_title_ready;
+    int c001_presents_ready;
+    int c001_chaos_ready;
+    int c001_strikes_back_ready;
+    int title_to_hud_same_session;
+    int no_legacy_wrappers;
+    int no_fallback_routes;
+    unsigned int source_tick;
+    unsigned int session_generation;
+    uint64_t real_asset_receipt_hash;
+    uint64_t consumed_surface_hash;
+} CSB_V1_StartupSessionPackageTitleReceipt_PC34;
 
 typedef struct CSB_V1_StartupSessionLiveHudReceipt_PC34 {
     int valid;
@@ -84,6 +104,11 @@ typedef struct CSB_V1_StartupSessionSelectionReceipt_PC34 {
 int csb_v1_startup_session_terminal_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupSessionTerminalReceipt_PC34 *out_receipt);
+
+int csb_v1_startup_session_package_title_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    CSB_V1_StartupSessionPackageTitleReceipt_PC34 *out_receipt);
 
 /* ReDMCSB PANEL.C F0346/F0347: one C040 clear returns to neutral C017. */
 int csb_v1_startup_session_live_hud_receipt_pc34(
