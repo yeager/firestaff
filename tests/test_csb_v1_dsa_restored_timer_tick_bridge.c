@@ -222,5 +222,31 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 &&
               profile.csbwin_global_variables[1] == 0u,
           "altered parameter EXPOOL receipt cannot reach the live dispatcher");
+
+    raw[80] = 0x83u; /* Source byte-map door, partially closed. */
+    profile.csbwin_timers[0].function = 2u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    profile.csbwin_timers[0].source_index = 0u;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              raw[80] == 0x85u,
+          "restored bash-door timer reaches its exact source door receipt");
+
+    raw[80] = 0x83u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    profile.csbwin_timers[0].source_index = 1u;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              raw[80] == 0x83u,
+          "malformed bash-door identity cannot fall through to generic destruction");
+
+    raw[80] = 0x03u; /* Not a source byte-map door. */
+    profile.csbwin_timers[0].time = profile.game_time;
+    profile.csbwin_timers[0].source_index = 0u;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              raw[80] == 0x03u,
+          "bash-door receipt cannot mutate a non-door square");
     return failures == 0 ? 0 : 1;
 }
