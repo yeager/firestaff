@@ -1661,6 +1661,54 @@ static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
                (size_t)c017->width * (size_t)c017->height) == 0;
 }
 
+static int m11_draw_csb_v1_inventory_surface(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    enum {
+        CSB_C017_VIEWPORT_X_PC34 = 48,
+        CSB_C017_VIEWPORT_Y_PC34 = 33,
+        CSB_C017_VIEWPORT_WIDTH_PC34 = 224,
+        CSB_C017_VIEWPORT_HEIGHT_PC34 = 136
+    };
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    const CSB_V1_StartupRuntimeSurface_PC34 *c017;
+    int row;
+
+    if (!state || !framebuffer || !state->csbStartupRuntimeAssetSession ||
+        framebufferWidth < CSB_C017_VIEWPORT_X_PC34 +
+            CSB_C017_VIEWPORT_WIDTH_PC34 ||
+        framebufferHeight < CSB_C017_VIEWPORT_Y_PC34 +
+            CSB_C017_VIEWPORT_HEIGHT_PC34) {
+        return 0;
+    }
+    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    c017 = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+    /* ReDMCSB PANEL.C F0347 expands C017 directly into the viewport before
+     * it dispatches the active inventory panel.  This live CSB path consumes
+     * that terminal-session bitmap, never M11's generic inventory fallback. */
+    if (!c017->valid || !c017->pixels || c017->source_asset_id != 17 ||
+        c017->width != CSB_C017_VIEWPORT_WIDTH_PC34 ||
+        c017->height != CSB_C017_VIEWPORT_HEIGHT_PC34 ||
+        c017->transparent_color != -1) {
+        return 0;
+    }
+    for (row = 0; row < CSB_C017_VIEWPORT_HEIGHT_PC34; ++row) {
+        memcpy(framebuffer +
+                   (size_t)(CSB_C017_VIEWPORT_Y_PC34 + row) *
+                       (size_t)framebufferWidth +
+                   (size_t)CSB_C017_VIEWPORT_X_PC34,
+               c017->pixels + (size_t)row *
+                   (size_t)CSB_C017_VIEWPORT_WIDTH_PC34,
+               (size_t)CSB_C017_VIEWPORT_WIDTH_PC34);
+    }
+    return 1;
+}
+
 static void m11_apply_csb_runtime_m11_mirror_receipt(
     M11_GameViewState *state,
     const CSB_V1_RuntimeM11MirrorReceipt_PC34 *receipt)
@@ -37411,9 +37459,19 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           M11_COLOR_BLACK);
         } else {
             if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
-                m11_draw_csb_v1_runtime_hud(state, framebuffer,
-                                            framebufferWidth,
-                                            framebufferHeight);
+                if (state->inventoryPanelActive &&
+                    !m11_draw_csb_v1_inventory_surface(
+                        state, framebuffer, framebufferWidth,
+                        framebufferHeight)) {
+                    m11_fill_rect(framebuffer, framebufferWidth,
+                                  framebufferHeight, 0, 0,
+                                  framebufferWidth, framebufferHeight,
+                                  M11_COLOR_BLACK);
+                } else if (!state->inventoryPanelActive) {
+                    m11_draw_csb_v1_runtime_hud(state, framebuffer,
+                                                framebufferWidth,
+                                                framebufferHeight);
+                }
             } else {
                 m11_draw_csb_runtime_hud(state, framebuffer,
                                          framebufferWidth, framebufferHeight);

@@ -440,6 +440,33 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(count_nonzero_pixels_in_rows(framebuffer, 169, 200) > 0,
                 "M11 CSB post-entrance handoff draws the V1 champion/control HUD band");
     {
+        const CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+            (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                view.csbStartupRuntimeAssetSession;
+        const CSB_V1_StartupRuntimeSurface_PC34 *c017 =
+            &session->surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+        int row_matches = 1;
+        int row;
+
+        expect_true(M11_GameView_ToggleInventoryPanel(&view) == 1,
+                    "M11 CSB post-entrance input opens the live inventory surface");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        for (row = 0; row < c017->height; ++row) {
+            if (memcmp(framebuffer + (size_t)(33 + row) * 320u + 48u,
+                       c017->pixels + (size_t)row * c017->width,
+                       c017->width) != 0) {
+                row_matches = 0;
+                break;
+            }
+        }
+        expect_true(row_matches,
+                    "M11 CSB inventory consumes the terminal C017 bytes at the source viewport geometry");
+        expect_true(M11_GameView_ToggleInventoryPanel(&view) == 0,
+                    "M11 CSB post-entrance input closes the live inventory surface");
+    }
+    {
         void *saved_session = view.csbStartupRuntimeAssetSession;
         memset(framebuffer, 0xff, sizeof(framebuffer));
         view.csbStartupRuntimeAssetSession = NULL;
