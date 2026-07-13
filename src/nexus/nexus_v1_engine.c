@@ -546,6 +546,7 @@ int nexus_v1_inspect_dgn_material_corpus(
         engine->wall_bpk_host_route.host_consumed_surfaces;
     receipt.static_mns_host_route_complete =
         receipt.static_mns_sources.canonical_pair_bound &&
+        receipt.static_mns_sources.structure1b_selector_binding_proven &&
         !receipt.static_mns_sources.fallback_visuals_permitted &&
         engine->floor_mns_material_route_valid &&
         engine->wall_mns_material_route_valid;
@@ -635,6 +636,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
      * opaque Structure2 image payloads. */
     static_mns_route_bound =
         engine->dgn_static_material_sources.canonical_pair_bound &&
+        engine->dgn_static_material_sources.structure1b_selector_binding_proven &&
         engine->floor_mns_material_route_valid &&
         engine->wall_mns_material_route_valid;
     structure2_source_bound =
