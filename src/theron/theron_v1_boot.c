@@ -57,6 +57,7 @@
 
 #define THERON_V1_RUNTIME_TRACE_MAX_BYTES (1024u * 1024u)
 #define THERON_V1_RUNTIME_MEDIA_MAX_BYTES (512u * 1024u * 1024u)
+#define THERON_V1_RUNTIME_CAPTURE_MANIFEST_MAX_BYTES 4096u
 
 static unsigned char *theron_v1_boot_read_evidence_file(
     const char *path, size_t maximum_bytes, size_t *out_size) {
@@ -5708,6 +5709,53 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
     launch->profile->track02_runtime_trace_handoff_ready = 1;
     return theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
         launch->profile);
+}
+
+int theron_v1_boot_runtime_capture_manifest_from_file(
+    const Theron_V1_BootProfile *profile,
+    const char *manifest_path,
+    Theron_V1CaptureManifest *out_manifest) {
+    unsigned char *text;
+    size_t text_size = 0u;
+    Theron_V1CaptureManifest parsed;
+    int accepted = 0;
+
+    if (out_manifest) memset(out_manifest, 0, sizeof(*out_manifest));
+    if (!profile || !manifest_path || !out_manifest ||
+        !profile->assets_verified || !profile->graphics_path[0] ||
+        !profile->graphics_md5[0]) {
+        return 0;
+    }
+    text = theron_v1_boot_read_evidence_file(
+        manifest_path, THERON_V1_RUNTIME_CAPTURE_MANIFEST_MAX_BYTES,
+        &text_size);
+    if (!text || text_size == 0u ||
+        !theron_v1_capture_manifest_parse((const char *)text, &parsed) ||
+        strcmp(parsed.track02_path, profile->graphics_path) != 0 ||
+        strcmp(parsed.track02_md5, profile->graphics_md5) != 0) {
+        goto done;
+    }
+    *out_manifest = parsed;
+    accepted = 1;
+
+done:
+    free(text);
+    return accepted;
+}
+
+int theron_v1_boot_startup_launch_apply_track02_runtime_capture_manifest_from_file(
+    Theron_V1_BootStartupLaunch *launch,
+    const char *manifest_path) {
+    Theron_V1CaptureManifest manifest;
+
+    if (!launch || !launch->profile ||
+        !theron_v1_boot_runtime_capture_manifest_from_file(
+            launch->profile, manifest_path, &manifest)) {
+        return 0;
+    }
+    return theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
+        launch, manifest.system_card_path, manifest.system_card_md5,
+        manifest.trace_path, manifest.trace_md5);
 }
 
 void theron_v1_boot_startup_launch_cleanup(

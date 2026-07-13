@@ -26,13 +26,17 @@ int main(void) {
         "loader_trace_md5=35d3b8fae88a3864d12d0e4d62e4bcfa";
     Theron_V1CaptureManifest manifest;
     Theron_V1CaptureManifest copy;
+    Theron_V1CaptureManifest resolved;
+    Theron_V1_BootProfile profile;
     char written[1024];
     char track02_path[] = "/tmp/firestaff-theron-track02-XXXXXX";
     char system_card_path[] = "/tmp/firestaff-theron-system-card-XXXXXX";
     char trace_path[] = "/tmp/firestaff-theron-loader-trace-XXXXXX";
+    char manifest_path[] = "/tmp/firestaff-theron-capture-manifest-XXXXXX";
     int track02_fd;
     int system_card_fd;
     int trace_fd;
+    int manifest_fd;
 
     check(theron_v1_capture_manifest_parse(valid, &manifest),
           "accepts exact, lower-case MD5-bound manifest");
@@ -98,9 +102,12 @@ int main(void) {
     track02_fd = mkstemp(track02_path);
     system_card_fd = mkstemp(system_card_path);
     trace_fd = mkstemp(trace_path);
-    check(track02_fd >= 0 && system_card_fd >= 0 && trace_fd >= 0,
-          "creates isolated explicit-media and trace files");
-    if (track02_fd >= 0 && system_card_fd >= 0 && trace_fd >= 0) {
+    manifest_fd = mkstemp(manifest_path);
+    check(track02_fd >= 0 && system_card_fd >= 0 && trace_fd >= 0 &&
+              manifest_fd >= 0,
+          "creates isolated explicit-media, trace, and manifest files");
+    if (track02_fd >= 0 && system_card_fd >= 0 && trace_fd >= 0 &&
+        manifest_fd >= 0) {
         check(write(track02_fd, "abc", 3u) == 3 &&
                   write(system_card_fd, "test", 4u) == 4 &&
                   write(trace_fd, "trace", 5u) == 5,
@@ -123,10 +130,47 @@ int main(void) {
                   system_card_path, "098f6bcd4621d373cade4e832627b4f6",
                   trace_path, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
               "rejects a changed loader trace hash");
+        memset(&manifest, 0, sizeof(manifest));
+        snprintf(manifest.track02_path, sizeof(manifest.track02_path), "%s",
+                 track02_path);
+        snprintf(manifest.track02_md5, sizeof(manifest.track02_md5), "%s",
+                 "900150983cd24fb0d6963f7d28e17f72");
+        snprintf(manifest.system_card_path, sizeof(manifest.system_card_path),
+                 "%s", system_card_path);
+        snprintf(manifest.system_card_md5, sizeof(manifest.system_card_md5),
+                 "%s", "098f6bcd4621d373cade4e832627b4f6");
+        snprintf(manifest.trace_path, sizeof(manifest.trace_path), "%s",
+                 trace_path);
+        snprintf(manifest.trace_md5, sizeof(manifest.trace_md5), "%s",
+                 "04a75036e9d520bb983c5ed03b8d0182");
+        manifest.valid = 1;
+        check(theron_v1_capture_manifest_write(&manifest, written,
+                                                sizeof(written)) &&
+                  write(manifest_fd, written, strlen(written)) ==
+                      (ssize_t)strlen(written),
+              "writes a bounded hash-bound runtime capture manifest");
+        close(manifest_fd);
+        theron_v1_boot_profile_init(&profile);
+        profile.assets_verified = 1;
+        snprintf(profile.graphics_path, sizeof(profile.graphics_path), "%s",
+                 track02_path);
+        snprintf(profile.graphics_md5, sizeof(profile.graphics_md5), "%s",
+                 "900150983cd24fb0d6963f7d28e17f72");
+        check(theron_v1_boot_runtime_capture_manifest_from_file(
+                  &profile, manifest_path, &resolved) && resolved.valid &&
+                  strcmp(resolved.trace_md5,
+                         "04a75036e9d520bb983c5ed03b8d0182") == 0,
+              "binds a V2 capture manifest to the selected Track 02 profile");
+        snprintf(profile.graphics_md5, sizeof(profile.graphics_md5), "%s",
+                 "f23601102138f87c33025877767ebf76");
+        check(!theron_v1_boot_runtime_capture_manifest_from_file(
+                  &profile, manifest_path, &resolved) && !resolved.valid,
+              "rejects a manifest for a different selected Track 02 identity");
     }
     if (track02_fd >= 0) unlink(track02_path);
     if (system_card_fd >= 0) unlink(system_card_path);
     if (trace_fd >= 0) unlink(trace_path);
+    if (manifest_fd >= 0) unlink(manifest_path);
     printf("theron capture manifest: %d failure(s)\n", failures);
     return failures != 0;
 }

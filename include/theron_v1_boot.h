@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include "asset_status_m12.h"
 #include "theron_v1_startup_media.h"
+#include "theron_v1_capture_manifest.h"
 #include "theron_v1_raw_loader_trace.h"
 #include "theron_v1_startup_save_resume.h"
 #include "theron_v1_startup_flow.h"
@@ -291,6 +292,23 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
     const char *system_card_md5_hex,
     const char *trace_path,
     const char *trace_md5_hex);
+
+/* Reads a bounded V2 capture manifest and binds it to the already selected
+ * hash-verified Track 02 profile. This proves only artifact identity; the
+ * caller must still use the normal runtime-trace gate to rehash and consume
+ * every referenced file. */
+int theron_v1_boot_runtime_capture_manifest_from_file(
+    const Theron_V1_BootProfile *profile,
+    const char *manifest_path,
+    Theron_V1CaptureManifest *out_manifest);
+
+/* Production convenience entrypoint for an operator-supplied V2 capture
+ * manifest. It never accepts a manifest whose Track 02 path/MD5 differs from
+ * the prepared launch profile, and the delegated intake rehashes all three
+ * artifacts before parsing trace evidence. */
+int theron_v1_boot_startup_launch_apply_track02_runtime_capture_manifest_from_file(
+    Theron_V1_BootStartupLaunch *launch,
+    const char *manifest_path);
 
 typedef struct Theron_V1_BootStartupRuntimeReceipt {
     Theron_V1_BootProfile *profile;
