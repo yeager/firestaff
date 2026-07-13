@@ -22182,10 +22182,25 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
         }
         if (m11_viewport_cell_is_wall_like(&cell)) {
             bool flipHoriz = false;
-            DM1_WallSetIndex selectedWall =
-                dm1_viewport_3d_select_wall_bitmap(spec,
-                                                   flipWalls ? true : false,
-                                                   &flipHoriz);
+            DM1_WallSetIndex selectedWall;
+            if (spec->square == DM1_VIEW_SQUARE_D3L ||
+                spec->square == DM1_VIEW_SQUARE_D3R) {
+                DM1_ViewportD3SideWallHostHandoffPc34 handoff;
+                if (!dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
+                        spec->square, flipWalls ? true : false, true, false,
+                        &handoff) || !handoff.handled || !handoff.draw_wall) {
+                    continue;
+                }
+                selectedWall = handoff.selected_wall;
+                flipHoriz = handoff.flip_horizontally;
+                blit.dstX = handoff.dst_x;
+                blit.dstY = handoff.dst_y;
+                blit.width = handoff.width;
+                blit.height = handoff.height;
+            } else {
+                selectedWall = dm1_viewport_3d_select_wall_bitmap(
+                    spec, flipWalls ? true : false, &flipHoriz);
+            }
             if (selectedWall < DM1_WALL_SET_COUNT) {
                 blit.graphicIndex =
                     dm1_v1_graphic_wallset0_index_pc34((int)selectedWall);

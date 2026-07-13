@@ -6,6 +6,13 @@
   transitioning that same session to live HUD. Verification: real local-CSB
   `csb_v1_m11_launcher_handoff_boundary` CTest passed 1/1.
 
+- 2026-07-13 DM1 HoC D3L/D3R wall host handoff: M11 now executes the
+  DM1-owned ReDMCSB `DUNVIEW.C` F0116/F0117 plan for ordinary depth-three
+  side walls, including selected wallset, C705/C706 destination geometry,
+   C10 transparency, and parity flip. The receipt keeps the wall-return and
+   front-alcove F0115 fallthrough distinction explicit. Verification:
+   `firestaff_m11` and `dm1_v1_viewport_3d_source_lock` passed.
+
 - 2026-07-13 DM1 HoC F0115 floor-lane host handoff: M11 now publishes the
   floor-item presentation receipt only from the actual F0115 floor-object
   lane, with C10/F0791 material facts and final geometry. The source-backed

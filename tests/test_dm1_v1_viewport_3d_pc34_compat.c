@@ -1837,6 +1837,28 @@ static void test_d3l_d3r_far_side_wall_pixel_routes_use_redmcsb_frame_clip(void)
         snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.zone", cases[i].id);
         check_int(check, spec->pc34_zone, cases[i].zone);
 
+        {
+            DM1_ViewportD3SideWallHostHandoffPc34 handoff;
+            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.handoff", cases[i].id);
+            check_int(check,
+                      dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
+                          cases[i].square, false, true, false, &handoff),
+                      1);
+            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.handoff_zone", cases[i].id);
+            check_int(check, handoff.pc34_zone, cases[i].zone);
+            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.handoff_c10", cases[i].id);
+            check_int(check, handoff.transparent_color, 10);
+            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.handoff_return", cases[i].id);
+            check_int(check, handoff.falls_through_to_f0115 ? 1 : 0, 0);
+            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.handoff_alcove", cases[i].id);
+            check_int(check,
+                      dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
+                          cases[i].square, false, true, true, &handoff),
+                      1);
+            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.handoff_alcove_f0115", cases[i].id);
+            check_int(check, handoff.falls_through_to_f0115 ? 1 : 0, 1);
+        }
+
         gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
         snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.visible", cases[i].id);
         check_int(check, gate.visible ? 1 : 0, 1);
@@ -3911,7 +3933,7 @@ static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
           "if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth)",
           "pass404.side_contents_blocker_gate" },
         { "src/engine/m11_game_view.c",
-          "m11_draw_item_sprite(g_drawState, framebuffer",
+          "m11_draw_dm1_f0115_floor_item_sprite(",
           "pass404.side_contents_item_draw" },
         { "src/engine/m11_game_view.c",
           "static void m11_draw_dm1_deferred_explosion_pass(const M11_GameViewState* state",

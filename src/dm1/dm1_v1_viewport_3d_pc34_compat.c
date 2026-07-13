@@ -2275,6 +2275,46 @@ uint16_t dm1_viewport_3d_wall_item_cell_order(const DM1_ViewportWallDrawSpec *sp
         : 0x0000u;
 }
 
+int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
+    DM1_ViewSquareIndex square,
+    bool parity_flip,
+    bool wall_like,
+    bool front_alcove,
+    DM1_ViewportD3SideWallHostHandoffPc34 *out_handoff)
+{
+    const DM1_ViewportWallDrawSpec *spec;
+    DM1_ViewportD3SideWallHostHandoffPc34 handoff;
+
+    if (!out_handoff ||
+        (square != DM1_VIEW_SQUARE_D3L && square != DM1_VIEW_SQUARE_D3R)) {
+        return 0;
+    }
+    spec = dm1_viewport_3d_get_wall_draw_spec_for_square(square);
+    if (!spec) {
+        return 0;
+    }
+    memset(&handoff, 0, sizeof(handoff));
+    handoff.handled = true;
+    handoff.draw_wall = wall_like;
+    handoff.falls_through_to_f0115 =
+        !wall_like || (front_alcove && spec->front_alcove_reveals_contents);
+    handoff.selected_wall = dm1_viewport_3d_select_wall_bitmap(
+        spec, parity_flip, &handoff.flip_horizontally);
+    handoff.pc34_zone = spec->pc34_zone;
+    handoff.dst_x = spec->runtime_dst_x;
+    handoff.dst_y = spec->runtime_dst_y;
+    handoff.width = spec->runtime_width;
+    handoff.height = spec->runtime_height;
+    handoff.transparent_color = 10;
+    handoff.redmcsb_function = spec->redmcsb_function;
+    handoff.source_lines = spec->source_lines;
+    /* ReDMCSB DUNVIEW.C F0116:6421-6437 and F0117:6554-6573 select
+     * C705/C706 wall pixels with C10 transparency, return for ordinary
+     * walls, and only enter F0115 when the front alcove exposes contents. */
+    *out_handoff = handoff;
+    return 1;
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_set_wall_frame_bitmaps
  *
