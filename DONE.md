@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC A/B/A candidate order: a fresh real-PC34 runtime now
+  cancels a renamed candidate at mirror A, cancels a distinct candidate at B,
+  then reopens and accepts A. Both C162 calls restore slot 0 and their source
+  C127 routes; the final C160 materializes A's original name/C026 portrait,
+  elects the sole champion, disables only A, and leaves B selectable. Source:
+  ReDMCSB `REVIVE.C` F0280/F0281/F0282:745-845. Verification: focused CTest
+  against the installed PC34 corpus.
+
 - 2026-07-13 DM1 HoC C127 reject/accept party order: cancelling a candidate
   clears only the appended slot, and selecting the same mirror again reuses
   that slot. Its later C160 confirmation retains leader slot 0 and the
