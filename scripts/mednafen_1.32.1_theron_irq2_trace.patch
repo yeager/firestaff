@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,5 +36,1141 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,5 +36,1145 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -988,7 +988,9 @@ index 347482c4..61d4758e 100644
 +    const uint32 reg_x = regs->GetRegister(regs->Regs[2].id, NULL, 0) & 0xff;
 +    const uint32 reg_y = regs->GetRegister(regs->Regs[3].id, NULL, 0) & 0xff;
 +    const uint32 reg_p = regs->GetRegister(regs->Regs[5].id, NULL, 0) & 0xff;
-+    TheronIrq2Trace->print_format("stage2_system_card_call pc=%04x return_pc=%04x target=%04x a=%02x x=%02x y=%02x p=%02x fc=%02x fd=%02x fe=%02x f8=%02x fa=%02x fb=%02x ff=%02x\n", logical_pc, logical_pc + 3, logical_pc == 0x40cd ? 0xe009 : 0xe00f, reg_a, reg_x, reg_y, reg_p, raw_fc, raw_fd, raw_fe, raw_f8, raw_fa, raw_fb, raw_ff);
++    const uint32 reg_mpr0 = regs->GetRegister(regs->Regs[6].id, NULL, 0) & 0xff;
++    const uint32 physical_fc = CurGame->Debugger->MemPeek((reg_mpr0 << 13) | 0x00fc, 1, true, false) & 0xff;
++    TheronIrq2Trace->print_format("stage2_system_card_call pc=%04x return_pc=%04x target=%04x a=%02x x=%02x y=%02x p=%02x mpr0=%02x fc=%02x physical_fc=%02x fd=%02x fe=%02x f8=%02x fa=%02x fb=%02x ff=%02x\n", logical_pc, logical_pc + 3, logical_pc == 0x40cd ? 0xe009 : 0xe00f, reg_a, reg_x, reg_y, reg_p, reg_mpr0, raw_fc, physical_fc, raw_fd, raw_fe, raw_f8, raw_fa, raw_fb, raw_ff);
 +    FlushTheronIrq2Trace();
 +   }
 +   if(logical_pc == 0x40d0 || logical_pc == 0x40a7)
@@ -1005,7 +1007,9 @@ index 347482c4..61d4758e 100644
 +    const uint32 reg_x = regs->GetRegister(regs->Regs[2].id, NULL, 0) & 0xff;
 +    const uint32 reg_y = regs->GetRegister(regs->Regs[3].id, NULL, 0) & 0xff;
 +    const uint32 reg_p = regs->GetRegister(regs->Regs[5].id, NULL, 0) & 0xff;
-+    TheronIrq2Trace->print_format("stage2_system_card_return pc=%04x call_pc=%04x a=%02x x=%02x y=%02x p=%02x fc=%02x fd=%02x fe=%02x f8=%02x fa=%02x fb=%02x ff=%02x\n", logical_pc, logical_pc == 0x40d0 ? 0x40cd : 0x40a4, reg_a, reg_x, reg_y, reg_p, raw_fc, raw_fd, raw_fe, raw_f8, raw_fa, raw_fb, raw_ff);
++    const uint32 reg_mpr0 = regs->GetRegister(regs->Regs[6].id, NULL, 0) & 0xff;
++    const uint32 physical_fc = CurGame->Debugger->MemPeek((reg_mpr0 << 13) | 0x00fc, 1, true, false) & 0xff;
++    TheronIrq2Trace->print_format("stage2_system_card_return pc=%04x call_pc=%04x a=%02x x=%02x y=%02x p=%02x mpr0=%02x fc=%02x physical_fc=%02x fd=%02x fe=%02x f8=%02x fa=%02x fb=%02x ff=%02x\n", logical_pc, logical_pc == 0x40d0 ? 0x40cd : 0x40a4, reg_a, reg_x, reg_y, reg_p, reg_mpr0, raw_fc, physical_fc, raw_fd, raw_fe, raw_f8, raw_fa, raw_fb, raw_ff);
 +    FlushTheronIrq2Trace();
 +   }
 +   if(logical_pc < 0x4100)
