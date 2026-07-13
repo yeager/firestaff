@@ -96,6 +96,7 @@ static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"SNDLEV13.MAP", "1f3a1f6ddae837f8140063a637d5fbbc"},
     {"SNDLEV14.MAP", "fd3b5d9894265d0753aee0e0ddb02500"},
     {"SNDLEV15.MAP", "9757c71fe8afad9ad3be58543640270d"},
+    {"SDDRVS.TSK", "9a2bfe6df8b4a69077054ca2dbf78cb4"},
     {NULL, NULL}
 };
 
@@ -1168,6 +1169,11 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
 
     /* Init sound engine */
     nexus_sound_init(&engine->audio);
+    (void)nexus_v1_level_aux_source_receipt(
+        engine, "SDDRVS.TSK", &engine->sound_driver_source);
+    nexus_sound_set_driver_canonical_source_verified(
+        &engine->audio,
+        engine->sound_driver_source.canonical_hash_verified);
     (void)nexus_sound_level_runtime_receipt(&engine->audio,
                                             &engine->sfx_runtime_receipt);
     nexus_script_vm_init(&engine->script_vm);
@@ -1286,6 +1292,8 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
            sizeof(engine->level_aux_runtime_receipt));
     engine->level_aux_runtime_receipt.level_index = level;
     engine->level_aux_runtime_receipt.fallback_visuals_permitted = 0;
+    engine->level_aux_runtime_receipt.sound_driver =
+        engine->sound_driver_source;
     (void)nexus_v1_level_aux_source_receipt(
         engine, script_name, &engine->level_aux_runtime_receipt.slev);
     script_data = nexus_v1_read_file(engine, script_name, &script_size);
@@ -1312,6 +1320,10 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
         &engine->audio, level, sal_data, sal_size, map_data, map_size,
         engine->level_aux_runtime_receipt.sal.canonical_hash_verified,
         engine->level_aux_runtime_receipt.map.canonical_hash_verified);
+    nexus_sound_set_driver_canonical_source_verified(
+        &engine->audio,
+        engine->level_aux_runtime_receipt.sound_driver
+            .canonical_hash_verified);
     (void)nexus_sound_level_runtime_receipt(&engine->audio,
                                             &engine->sfx_runtime_receipt);
     free(sal_data);

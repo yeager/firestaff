@@ -560,9 +560,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 2026-07-13 Nexus SFX follow-up: level-0/CD-track provenance alone does
   not promote audio. The verified `dsp01.EXB` preamble establishes only an
   opaque byte-8 SAL payload boundary. All 16 local banks share bytes
-  `0x000000..0x045bb4` before level variation, but this is not a sample-frame
-  claim; remaining work is original `SDDRVS.TSK`/SH-2 codec, frame, and
-  playback proof.
+  `0x000000..0x045bb4` before level variation. The canonical 26,610-byte
+  `SDDRVS.TSK` is now hash-bound into every SFX runtime receipt, but this is
+  not a driver ABI, sample-frame, codec, or playback claim; remaining work is
+  original `SDDRVS.TSK`/SH-2 codec, frame, and playback proof.
 - 🔧 2026-07-13 Nexus SLEV follow-up: parsed source bytes do not promote a
   runtime route until the bounded dispatcher receipt is enabled.
 - 🔧 2026-07-13 Nexus runtime-host follow-up: a blocked SLEV dispatcher now

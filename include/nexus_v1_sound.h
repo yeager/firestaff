@@ -64,6 +64,9 @@ typedef struct {
     int map_size;
     int sal_canonical_source_verified;
     int map_canonical_source_verified;
+    /* Global SDDRVS.TSK source identity. It does not imply an understood
+     * driver ABI, decoder, or playback route. */
+    int sound_driver_canonical_source_verified;
     /* Direct byte-to-event routing is deliberately unavailable. MAP records
      * are retained as bounded opaque windows until Saturn dispatch evidence
      * proves their event-ID semantics. */
@@ -147,6 +150,7 @@ typedef struct {
     int map_loaded;
     int sal_canonical_source_verified;
     int map_canonical_source_verified;
+    int sound_driver_canonical_source_verified;
     int sal_decode_supported;
     int map_decode_supported;
     int map_event_count;
@@ -234,6 +238,8 @@ int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
                                       const uint8_t *map_data, int map_size,
                                       int sal_canonical_source_verified,
                                       int map_canonical_source_verified);
+void nexus_sound_set_driver_canonical_source_verified(
+    Nexus_SoundEngine *eng, int verified);
 int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
                                       Nexus_SfxRuntimeReceipt *out_receipt);
 const char *nexus_sound_sfx_runtime_status_name(

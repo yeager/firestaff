@@ -224,6 +224,15 @@
   invariant only: no codec, sample frame, or playback semantics are claimed.
   Verification: `test_nexus_v1_sound_runtime_receipt` PASS.
 
+- 2026-07-13 Nexus SDDRVS.TSK SFX ownership: the 26,610-byte retail Saturn
+  sound-task image is now hash-bound as a global source receipt and copied
+  into every level's SAL/MAP runtime receipt. A future SAL decoder cannot
+  enable playback without this canonical driver identity, while a verified
+  driver still does not imply a driver ABI, sample codec, event mapping, or
+  playback semantics. Verification: Ninja-built
+  `test_nexus_v1_sound_runtime_receipt`; focused CTest
+  `nexus_v1_sound_runtime_receipt|nexus_v1_boot_file_hash_scan` passed 2/2.
+
 - 2026-07-13 Nexus Structure1C fail-closed collision route: the bounded
   four-byte Structure1C table remains indexed by documented Structure1B
   references, but its unknown record bytes no longer become invented

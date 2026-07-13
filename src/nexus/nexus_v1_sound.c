@@ -404,6 +404,13 @@ int nexus_sound_load_level(Nexus_SoundEngine *eng, int level_index,
                                             map_data, map_size, 0, 0);
 }
 
+void nexus_sound_set_driver_canonical_source_verified(
+    Nexus_SoundEngine *eng, int verified)
+{
+    if (!eng || !eng->initialized) return;
+    eng->sound_driver_canonical_source_verified = verified ? 1 : 0;
+}
+
 int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
                                       const uint8_t *sal_data, int sal_size,
                                       const uint8_t *map_data, int map_size,
@@ -478,6 +485,8 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
         eng->sal_canonical_source_verified;
     out_receipt->map_canonical_source_verified =
         eng->map_canonical_source_verified;
+    out_receipt->sound_driver_canonical_source_verified =
+        eng->sound_driver_canonical_source_verified;
     out_receipt->sal_decode_supported =
         nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_SAL_BANK);
     out_receipt->map_decode_supported =
@@ -618,6 +627,7 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
 
     if (!out_receipt->sal_canonical_source_verified ||
         !out_receipt->map_canonical_source_verified ||
+        !out_receipt->sound_driver_canonical_source_verified ||
         !out_receipt->sal_decode_supported ||
         !out_receipt->map_decode_supported) {
         out_receipt->status = NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE;

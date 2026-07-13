@@ -141,6 +141,14 @@ static void test_canonical_source_handoff_stays_decode_blocked(void) {
           receipt.blocks_real_sfx_playback == 1 &&
           receipt.playback_enabled == 0,
           "verified source does not promote unproven SAL playback");
+    CHECK(receipt.sound_driver_canonical_source_verified == 0,
+          "canonical SAL/MAP do not fabricate a Saturn sound-driver source");
+    nexus_sound_set_driver_canonical_source_verified(&eng, 1);
+    CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
+          receipt.sound_driver_canonical_source_verified == 1 &&
+          receipt.status == NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
+          receipt.blocks_real_sfx_playback == 1,
+          "verified driver identity still cannot promote an unproven decoder");
     nexus_sound_shutdown(&eng);
 }
 
