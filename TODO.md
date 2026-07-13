@@ -1260,6 +1260,10 @@ and real community-save corpus round-trip evidence.
     indexes remain admissible; only a non-existent or `EVENT_NONE` reference
     is rejected before runtime commit. Remaining work is authentic community
     save coverage, not timeline compaction.
+  - 2026-07-13 update: an in-range C4 index whose C3 record is `EVENT_NONE`
+    now has separate exact provenance (`slot`, `index`, `is_none`) from an
+    out-of-range index. It fails before party/timeline commit; the runtime
+    candidate and caller receipt retain their prior state.
   - 2026-07-13 update: each external corpus candidate now also records the
     source/exported PC34 header identity (`FormatID`, `GameID`, `Platform`,
     `DungeonID`) and all five F0433/F0435 length-prefixed part byte counts.
