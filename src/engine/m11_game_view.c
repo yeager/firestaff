@@ -14956,6 +14956,87 @@ int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
         outX, outY, outW, outH);
 }
 
+int M11_GameView_GetV1StatusHandSlotBoxZone(int slot, int hand,
+                                            int* outX, int* outY,
+                                            int* outW, int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_status_hand_slot_box_rect_pc34(slot, hand, &rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return 1;
+}
+
+int M11_GameView_GetV1DamageNumberOriginPc34(int slot, int amount,
+                                             int inventoryChampion,
+                                             int* outX, int* outY) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!dm1_v1_champion_damage_number_origin_variant_pc34(
+            slot, amount, inventoryChampion, &rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    return 1;
+}
+
+int M11_GameView_GetV1ChampionIconZone(int slot,
+                                       int* outX, int* outY,
+                                       int* outW, int* outH) {
+    DM1_V1_LayoutZoneRectPc34 rect;
+    if (!dm1_v1_champion_icon_rect_pc34(slot, &rect)) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return 1;
+}
+
+int M11_GameView_GetV1StatusHandSlotGraphic(
+    const M11_GameViewState* state, int slot, int hand) {
+    const struct ChampionState_Compat* champion;
+    if (!state || slot < 0 || slot >= CHAMPION_MAX_PARTY || hand < 0 || hand > 1 ||
+        slot >= state->world.party.championCount) return 0;
+    champion = &state->world.party.champions[slot];
+    if (!champion->present || champion->hp.current == 0) return 0;
+    return dm1_v1_champion_status_hand_slot_graphic_pc34(
+        hand, (uint16_t)champion->wounds,
+        hand == 1 && state->actingChampionOrdinal == (unsigned int)(slot + 1));
+}
+
+int M11_GameView_GetV1SlotBoxNormalGraphicId(void) {
+    return dm1_v1_graphic_slot_box_normal_pc34();
+}
+
+int M11_GameView_GetV1SlotBoxActingHandGraphicId(void) {
+    return dm1_v1_graphic_slot_box_acting_hand_pc34();
+}
+
+int M11_GameView_GetV1ActionIconCellZone(int championSlot,
+                                         int* outX, int* outY,
+                                         int* outW, int* outH) {
+    DM1_V1_ActionAreaRectPc34 rect =
+        dm1_v1_action_icon_cell_rect_pc34(championSlot);
+    if (rect.w <= 0 || rect.h <= 0) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return 1;
+}
+
+int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
+                                        int* outX, int* outY,
+                                        int* outW, int* outH) {
+    DM1_V1_ActionAreaRectPc34 rect =
+        dm1_v1_action_menu_row_rect_pc34(rowIndex);
+    if (rect.w <= 0 || rect.h <= 0) return 0;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return 1;
+}
+
 int M11_GameView_GetDm1HocMenuRouteReceipt(
     const M11_GameViewState* state,
     DM1_V1_EntranceMenuRouteReceiptPc34* outReceipt) {

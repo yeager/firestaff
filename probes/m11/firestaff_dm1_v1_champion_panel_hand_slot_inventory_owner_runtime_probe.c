@@ -52,7 +52,7 @@ enum {
 /* Probe adapters over the production PC34 layout and graphic contracts. */
 #define M11_DM1_MOUSE_MASK_RIGHT DM1_V1_MOUSE_MASK_RIGHT_PC34
 
-static int M11_GameView_GetV1StatusHandSlotGraphic(
+static int probe_M11_GameView_GetV1StatusHandSlotGraphic(
     const M11_GameViewState* game, int slot, int hand)
 {
     const struct ChampionState_Compat* champion;
@@ -339,7 +339,7 @@ int main(int argc, char** argv)
         int y = 0;
         int w = 0;
         int h = 0;
-        int gfx = M11_GameView_GetV1StatusHandSlotGraphic(&game, slot, 1);
+        int gfx = probe_M11_GameView_GetV1StatusHandSlotGraphic(&game, slot, 1);
         char label[160];
 
         (void)M11_GameView_GetV1StatusHandSlotBoxZone(slot, 1, &x, &y, &w, &h);
