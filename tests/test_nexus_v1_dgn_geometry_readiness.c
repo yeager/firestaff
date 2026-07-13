@@ -2043,11 +2043,13 @@ static void test_structure1g_animated_floor_material_handoff(void) {
               &source_receipt) == 0 &&
           source_receipt.animated_floor_command_count == 1 &&
           source_receipt.structure1g_provenance_count == 1 &&
+          source_receipt.global_image_index_binding_count == 1 &&
           source_receipt.source_command_count == 1 && source_receipt.complete &&
           !source_receipt.fallback_visuals_permitted &&
           sources[0].command_index == 0 &&
           sources[0].structure1g_entry_index == 0 &&
           sources[0].structure1g_sequence_word_offset == 0U &&
+          sources[0].structure1g_global_image_index == 0x0156U &&
           sources[0].image_id == 10U &&
           sources[0].encoding == 8U && sources[0].palette_id == 0U &&
           sources[0].width == 16U && sources[0].height == 16U &&
@@ -2062,6 +2064,17 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           source_receipt.blocked_structure1g_provenance_count == 1 &&
           !source_receipt.complete && !source_receipt.fallback_visuals_permitted,
           "a Structure2 descriptor cannot be detached from its original Structure1G entry");
+    memcpy(commands, source_commands, sizeof(commands));
+    level.structure1g_entries[0].first_image_index = 0x0157U;
+    commands[0].animated_texture_first_image_index = 0x0157U;
+    CHECK(nexus_v1_dgn_bind_structure2_animated_floor_sources(
+              &level, commands, receipt.command_count, sources, 2,
+              &source_receipt) == 0 &&
+          source_receipt.source_command_count == 0 &&
+          source_receipt.blocked_global_image_index_count == 1 &&
+          !source_receipt.complete && !source_receipt.fallback_visuals_permitted,
+          "a Structure1G global image index must resolve to the declared local Structure2 id");
+    level.structure1g_entries[0].first_image_index = 0x0156U;
     memcpy(commands, source_commands, sizeof(commands));
     CHECK(receipt.unresolved_animated_material_count == 1,
           "animated floor declaration remains unresolved without Structure2 handoff");
