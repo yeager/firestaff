@@ -507,12 +507,23 @@ int nexus_v1_inspect_dgn_material_corpus(
             receipt.structure2_descriptor_offsets_word_bounded_count +=
                 level.structure2_payload
                     .nonzero_descriptor_offsets_word_bounded_count;
+            receipt.structure2_descriptor_offsets_unaligned_count +=
+                level.structure2_payload
+                    .nonzero_descriptor_offsets_unaligned_count;
             receipt.structure2_descriptor_offset_unique_count +=
                 level.structure2_payload.nonzero_descriptor_offset_unique_count;
             receipt.structure2_descriptor_offset_reused_count +=
                 level.structure2_payload.nonzero_descriptor_offset_reused_count;
             if (level.structure2_payload.local_payload_offset_pattern_observed) {
                 receipt.structure2_local_payload_offset_pattern_level_count++;
+            }
+            if (level.structure2_payload
+                    .local_payload_word_aligned_offset_pattern_observed) {
+                receipt.structure2_local_payload_word_aligned_offset_pattern_level_count++;
+            }
+            if (level.structure2_payload
+                    .local_payload_word_bounded_offset_pattern_observed) {
+                receipt.structure2_local_payload_word_bounded_offset_pattern_level_count++;
             }
             if (level.structure2_payload.material_or_image_data_proven) {
                 receipt.structure2_material_or_image_data_proven_level_count++;
