@@ -1238,6 +1238,22 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnCommandPacked4BppMaterialReceipt;
 
+/* Read-only Structure1Fa-to-ITEM.IBS coverage.  This establishes that an
+ * actual DGN item's original image reference has a bounded source descriptor;
+ * it does not infer where or how the Saturn drew that item. */
+typedef struct {
+    int source_hash_verified;
+    int dgn_item_entry_count;
+    int inventory_inherited_item_count;
+    int special_floor_reference_count;
+    int special_floor_0008_count;
+    int blocked_invalid_item_count;
+    int blocked_missing_floor_image_count;
+    int blocked_unsupported_encoding_count;
+    int complete;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure1FItemIbsCoverageReceipt;
+
 typedef struct {
     Nexus_V1_DgnRendererHandoffStatus status;
     /* These are package-to-host provenance facts, not decoder claims. A
@@ -1498,5 +1514,11 @@ int nexus_v1_dgn_consume_structure1f_item_floor_materials(
     int binding_count, const Nexus_V1_DgnRenderCommand *commands,
     int command_count, Nexus_V1_DgnCommandPacked4BppMaterial *out_materials,
     int max_materials, Nexus_V1_DgnCommandPacked4BppMaterialReceipt *out_receipt);
+/* Inspects direct Structure1Fa item records against an authenticated ITEM.IBS
+ * bank. Missing or unproved material data is reported as blocked, never
+ * substituted. */
+int nexus_v1_dgn_structure1f_item_ibs_coverage(
+    const Nexus_V1_Level *level, const Nexus_V1_ItemIbsBank *bank,
+    Nexus_V1_DgnStructure1FItemIbsCoverageReceipt *out_receipt);
 
 #endif

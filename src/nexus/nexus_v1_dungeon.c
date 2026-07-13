@@ -4040,3 +4040,57 @@ int nexus_v1_dgn_consume_structure1f_item_floor_materials(
     *out_receipt = receipt;
     return 0;
 }
+
+int nexus_v1_dgn_structure1f_item_ibs_coverage(
+    const Nexus_V1_Level *level, const Nexus_V1_ItemIbsBank *bank,
+    Nexus_V1_DgnStructure1FItemIbsCoverageReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FItemIbsCoverageReceipt receipt;
+    int i;
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.fallback_visuals_permitted = 0;
+    if (!level || !bank || !bank->valid || !bank->source_hash_verified) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    receipt.source_hash_verified = 1;
+    for (i = 0; i < level->structure1f_entry_count; ++i) {
+        const Nexus_V1_DgnStructure1FEntry *entry =
+            &level->structure1f_entries[i];
+        uint16_t floor_image;
+        int j;
+        if (entry->family != NEXUS_V1_DGN_STRUCTURE1F_ITEMS) continue;
+        ++receipt.dgn_item_entry_count;
+        if (entry->item_id >= NEXUS_V1_ITEM_IBS_DECLARATION_COUNT) {
+            ++receipt.blocked_invalid_item_count;
+            continue;
+        }
+        floor_image = bank->floor_image[entry->item_id];
+        if (floor_image == 0xffffU) {
+            ++receipt.inventory_inherited_item_count;
+            continue;
+        }
+        ++receipt.special_floor_reference_count;
+        for (j = 0; j < bank->floor_image_count; ++j) {
+            const Nexus_V1_ItemIbsFloorImage *floor = &bank->floor_images[j];
+            if (floor->image_id != floor_image) continue;
+            if (floor->encoding != 8U || !floor->palette_bound ||
+                !floor->packed_4bpp_valid) {
+                ++receipt.blocked_unsupported_encoding_count;
+            } else {
+                ++receipt.special_floor_0008_count;
+            }
+            break;
+        }
+        if (j == bank->floor_image_count)
+            ++receipt.blocked_missing_floor_image_count;
+    }
+    receipt.complete = receipt.dgn_item_entry_count > 0 &&
+        receipt.special_floor_reference_count == receipt.special_floor_0008_count &&
+        receipt.blocked_invalid_item_count == 0 &&
+        receipt.blocked_missing_floor_image_count == 0 &&
+        receipt.blocked_unsupported_encoding_count == 0;
+    *out_receipt = receipt;
+    return 0;
+}

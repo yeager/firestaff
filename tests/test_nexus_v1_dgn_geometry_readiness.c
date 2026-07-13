@@ -2352,6 +2352,7 @@ static void test_structure1f_item_ibs_material_binding(void) {
     Nexus_V1_DgnStructure1FItemMaterialReceipt receipt;
     Nexus_V1_DgnCommandPacked4BppMaterial materials[2];
     Nexus_V1_DgnCommandPacked4BppMaterialReceipt material_receipt;
+    Nexus_V1_DgnStructure1FItemIbsCoverageReceipt coverage;
     int i;
 
     CHECK(ibs != NULL, "ITEM.IBS material fixture allocates");
@@ -2407,6 +2408,13 @@ static void test_structure1f_item_ibs_material_binding(void) {
     CHECK(nexus_v1_dgn_bind_structure1f_item_materials(
               &level, &bank, commands, 2, bindings, 2, &receipt) == 0,
           "Structure1Fa items bind to matching mesh-command cells");
+    CHECK(nexus_v1_dgn_structure1f_item_ibs_coverage(&level, &bank, &coverage) == 0 &&
+          coverage.complete && coverage.dgn_item_entry_count == 2 &&
+          coverage.inventory_inherited_item_count == 1 &&
+          coverage.special_floor_reference_count == 1 &&
+          coverage.special_floor_0008_count == 1 &&
+          !coverage.fallback_visuals_permitted,
+          "Structure1Fa coverage binds each source item to ITEM.IBS without a substitute");
     CHECK(receipt.bound_regular_inventory_count == 1 &&
           receipt.bound_special_floor_palette_count == 1 &&
           !receipt.fallback_visuals_permitted,
@@ -2447,6 +2455,11 @@ static void test_structure1f_item_ibs_material_binding(void) {
           material_receipt.command_material_count == 0 &&
           !material_receipt.fallback_visuals_permitted,
           "out-of-range DGN command cannot promote a descriptor-0008 surface");
+    level.structure1f_entries[1].item_id = 250U;
+    CHECK(nexus_v1_dgn_structure1f_item_ibs_coverage(&level, &bank, &coverage) == 0 &&
+          !coverage.complete && coverage.blocked_invalid_item_count == 1 &&
+          !coverage.fallback_visuals_permitted,
+          "an unsupported Structure1Fa item reference remains blocked");
     free(ibs);
 }
 
@@ -2460,6 +2473,11 @@ static void test_real_item_ibs_special_floor_corpus(void) {
     Nexus_V1_DgnRenderCommand command;
     Nexus_V1_DgnCommandPacked4BppMaterial material;
     Nexus_V1_DgnCommandPacked4BppMaterialReceipt material_receipt;
+    int level_index;
+    int checked_levels = 0;
+    int total_dgn_items = 0;
+    int total_special_floor_references = 0;
+    int total_blocked_references = 0;
 
     if (!data_dir || !data_dir[0]) return;
     snprintf(path, sizeof(path), "%s/ITEM.IBS", data_dir);
@@ -2500,6 +2518,58 @@ static void test_real_item_ibs_special_floor_corpus(void) {
           material.palette_bgr555 == bank.floor_images[43].palette_bgr555 &&
           !material.draw_authorized,
           "real Saturn descriptor-0008 payload reaches a DGN command no-draw");
+    for (level_index = 0; level_index <= 15; ++level_index) {
+        Nexus_V1_Level level;
+        Nexus_V1_DgnStructure1FItemIbsCoverageReceipt coverage;
+        uint8_t *level_data;
+        FILE *level_file;
+        long level_size;
+
+        snprintf(path, sizeof(path), "%s/LEV%02d.DGN", data_dir, level_index);
+        level_file = fopen(path, "rb");
+        CHECK(level_file != NULL, "real ITEM.IBS coverage DGN opens");
+        if (!level_file) continue;
+        CHECK(fseek(level_file, 0, SEEK_END) == 0,
+              "real ITEM.IBS coverage DGN seeks");
+        level_size = ftell(level_file);
+        CHECK(level_size > 0 && fseek(level_file, 0, SEEK_SET) == 0,
+              "real ITEM.IBS coverage DGN has data");
+        if (level_size <= 0 || fseek(level_file, 0, SEEK_SET) != 0) {
+            fclose(level_file);
+            continue;
+        }
+        level_data = (uint8_t *)malloc((size_t)level_size);
+        CHECK(level_data != NULL, "real ITEM.IBS coverage DGN allocates");
+        if (!level_data) {
+            fclose(level_file);
+            continue;
+        }
+        CHECK(fread(level_data, 1, (size_t)level_size, level_file) ==
+                  (size_t)level_size,
+              "real ITEM.IBS coverage DGN reads");
+        fclose(level_file);
+        CHECK(nexus_v1_level_load(&level, level_data, (int)level_size,
+                                  level_index) == 0 &&
+                  nexus_v1_dgn_structure1f_item_ibs_coverage(
+                      &level, &bank, &coverage) == 0 &&
+                  !coverage.fallback_visuals_permitted,
+              "retail DGN Structure1Fa coverage refuses unproved ITEM.IBS routes");
+        if (nexus_v1_level_load(&level, level_data, (int)level_size,
+                                level_index) == 0 &&
+            nexus_v1_dgn_structure1f_item_ibs_coverage(
+                &level, &bank, &coverage) == 0) {
+            total_dgn_items += coverage.dgn_item_entry_count;
+            total_special_floor_references += coverage.special_floor_reference_count;
+            total_blocked_references += coverage.blocked_invalid_item_count +
+                coverage.blocked_missing_floor_image_count +
+                coverage.blocked_unsupported_encoding_count;
+            ++checked_levels;
+        }
+        free(level_data);
+    }
+    CHECK(checked_levels == 16 && total_dgn_items > 0 &&
+          total_special_floor_references > 0 && total_blocked_references == 0,
+          "retail DGN direct items reach verified descriptor-0008 sources without fallback");
     free(data);
 }
 
