@@ -498,6 +498,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   presentation remains blocked until the full original startup package and
   host receipt are valid; remaining work is Saturn presentation parity, not
   fallback capture commands.
+- 🔧 2026-07-13 Nexus SFX follow-up: level-0/CD-track provenance alone does
+  not promote audio; remaining work is original SAL decode/playback proof.
 - 🔧 2026-07-11 Nexus FACE.BIN codec follow-up: canonical `FACE.BIN`
   (45,104 bytes, SHA-256
   `d733f50096098b5a2d15f2d355a89decd7b3777f82e515f60fee2e9ca4921e22`,

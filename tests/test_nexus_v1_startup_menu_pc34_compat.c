@@ -2734,9 +2734,9 @@ int main(void)
                route_proof_receipt.fallback_visuals_permitted == 0,
            "Nexus startup route proof exposes script parser blocker");
     synthetic_engine.sfx_runtime_receipt.status =
-        NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET;
-    synthetic_engine.sfx_runtime_receipt.level_index = -1;
-    synthetic_engine.sfx_runtime_receipt.cd_track = -1;
+        NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE;
+    synthetic_engine.sfx_runtime_receipt.level_index = 0;
+    synthetic_engine.sfx_runtime_receipt.cd_track = 2;
     synthetic_engine.sfx_runtime_receipt.blocks_real_sfx_playback = 1;
     expect(nexus_v1_launcher_startup_assets_receipt_from_runtime_state(
                &runtime_state,
@@ -2754,9 +2754,9 @@ int main(void)
                route_proof_receipt.route ==
                    NEXUS_V1_STARTUP_ROUTE_PROOF_ASSET_BLOCKED &&
                route_proof_receipt.startup_sfx_status ==
-                   NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET &&
-               route_proof_receipt.startup_sfx_level_index == -1 &&
-               route_proof_receipt.startup_cd_track == -1 &&
+                   NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
+               route_proof_receipt.startup_sfx_level_index == 0 &&
+               route_proof_receipt.startup_cd_track == 2 &&
                route_proof_receipt.startup_sfx_blocks_real_playback == 1 &&
                route_proof_receipt.audio_ready == 0 &&
                route_proof_receipt.audio_runtime_route_ready == 0 &&
@@ -2768,7 +2768,7 @@ int main(void)
                       "track02-sfx") == 0 &&
                route_proof_receipt.asset_handoff.audio_asset_handoff_ready == 0 &&
                route_proof_receipt.runtime_route_receipt.startup_sfx_status ==
-                   NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET &&
+                   NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
                strcmp(route_proof_receipt.status,
                       "blocked-track02-sfx") == 0,
            "Nexus startup route proof exposes Track 02 SFX blocker");
@@ -2785,9 +2785,9 @@ int main(void)
                full_start_receipt.save_menu_route_ready == 0 &&
                full_start_receipt.champion_menu_route_ready == 0 &&
                full_start_receipt.audio_track02_ready == 0 &&
-               full_start_receipt.cd_track == -1 &&
+               full_start_receipt.cd_track == 2 &&
                full_start_receipt.sfx_status ==
-                   NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET &&
+                   NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
                full_start_receipt.sfx_blocks_real_playback == 1 &&
                full_start_receipt.full_start_menu_ready == 0 &&
                full_start_receipt.m11_host_route_ready == 0 &&
