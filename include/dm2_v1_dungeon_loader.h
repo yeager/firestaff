@@ -507,6 +507,29 @@ typedef struct {
     int record_size;
 } DM2_V1_G1DirectRootRecordAddressReceipt;
 
+#define DM2_V1_G1_DIRECT_CHAIN_MAX 32
+
+/* A bounded, local c_record chain. Nodes are address receipts only; the sole
+ * word read from each record is GenericRecord::w0 to select the next node. */
+typedef struct {
+    uint16_t object_id;
+    uint8_t type;
+    uint16_t index;
+    int record_offset;
+    int record_size;
+} DM2_V1_G1DirectChainNode;
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int level;
+    int x;
+    int y;
+    int node_count;
+    int link_word_reads;
+    DM2_V1_G1DirectChainNode nodes[DM2_V1_G1_DIRECT_CHAIN_MAX];
+} DM2_V1_G1DirectRootChainReceipt;
+
 #define DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS 32
 
 /* Read-only direct DB0 payload from skproject SKWIN/DME.h::Door.  `w0` is
@@ -841,6 +864,16 @@ int dm2_v1_dungeon_resolve_g1_direct_root_record(
     int x,
     int y,
     DM2_V1_G1DirectRootRecordAddressReceipt *out);
+/* Follow a selected tile's local chain only while each node remains a
+ * declared direct DB0..DB5/DB9 record and terminates at OBJECT_END_MARKER.
+ * Unknown types, extensions, loops, oversized paths, and malformed bounds
+ * fail closed without mutating out. */
+int dm2_v1_dungeon_collect_g1_direct_root_chain(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_G1DirectRootChainReceipt *out);
 /* Consume only direct DB0 roots on a runtime-admitted G1 map.  The payload is
  * limited to DME.h::Door w2; it never reads GenericRecord::w0 or follows a
  * map/record link.  The output is unchanged when any source gate fails. */
