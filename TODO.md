@@ -91,7 +91,12 @@ capture that also proves the `$4090 -> $4093` one-sector `$3800` transaction,
 its observed `CL/DL/CH` record, and the `$e74c` IRQ2 controller-state merge.
 No fresh combined JP/US capture has been staged, so it remains blocked; the
 consumer must not derive a record from the controller transfer or a static
-media receipt.
+media receipt. The Mednafen patch now emits the consumer's two rows directly
+from the observed `$4090/$4093/$e736/$e742/$e74c` instruction checkpoints and
+their live zero-page/CD-register snapshots. It labels only a captured packed
+record; unrecognized observations remain fail-closed. A fresh authenticated
+combined JP/US capture is still required before this receipt can reach the
+runtime handoff.
 The subsequent observed `$e9d3 -> $e9dc -> $e9eb -> $e9f3 -> $ea15 ->
 $ea1d -> $ea26` status loop is now independently verified from the same US
 capture. It clears `$227b`, samples `$1801`, then completes two `$1800`
