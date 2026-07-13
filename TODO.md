@@ -2766,6 +2766,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     ENVIRONMENT `dtText` receipt remains valid. The actual
     `QUERY_TEMP_PICST` image resolver is still unproven and intentionally not
     inferred; a missing material returns no plan rather than an overlay.
+  - 2026-07-13 update: each selected plan entry now carries the exact
+    `DistantEnvironment` defaults written by
+    `RETRIEVE_ENVIRONMENT_CMD_CD_FW` (`w4/w6=0`, `b8/b9=0x40`) alongside the
+    original `CD`/`FW` values. This closes no image or placement gap: actual
+    `ENVIRONMENT_DRAW_DISTANT_ELEMENT` interpolation and `QUERY_TEMP_PICST`
+    realization remain blocked on the original rect/image route.
 - DM2-012 — `skproject/SKULLWIN/c_item.cpp`, `c_hero.cpp`, `c_dialog.cpp`, and `c_engage.cpp`: `src/dm2/dm2_v1_inventory_panel.c`, `dm2_v1_shop.c`, `dm2_v1_companion.c`, and M11 expose catalog-driven panels and simplified interactions. Replace these stand-ins with source-data item, hero, dialogue, engagement, shop, and transaction semantics, including cancellation order.
 - DM2-013 — `skproject/SKWIN/SkWinCore.cpp` startup/render orchestration and `skproject/SKULLWIN/c_gui_draw.cpp`: M11 now rejects incomplete DM2 boot before clearing or drawing its viewport, keeping the launcher frame and publishing `DM2 ORIGINAL DATA REQUIRED` instead of the former red/brown ceiling/floor substitute. Startup presentation also stops if the source-owned `TITLE/0 dt07/4` draw fails. The complete-support receipt accepts only the source's static title/menu surfaces: a hash-verified raw menu screen or a decoded original image field, both with the existing no-synthetic-overlay composite proof. `src/dm2/dm2_v2_*.c` still contains procedural HUD/asset fallbacks and placeholder stamps. Block those remaining paths until verified original data is available; no synthetic DM2 screen may stand in for an original surface.
 - DM2-014 — `skproject/SKULLWIN/c_savegame.cpp`, `c_loadlevel.cpp`, `c_gui_vp.cpp`, `c_sound.cpp`, `c_events.cpp`, and `c_creature.cpp` integration order: `tests/`, `probes/`, and the DM2 receipt chain lack a real-PC-corpus end-to-end proof from hash-verified assets through level load, source timers, material-complete rendering, resolved audio, and original save round-trip. Add skip-safe corpus gates before claiming playable parity.

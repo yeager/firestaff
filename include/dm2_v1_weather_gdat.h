@@ -53,6 +53,15 @@ typedef struct {
     uint8_t slot_index;
     uint16_t rect_number;
     uint8_t flip_mode;
+    /* skproject/SKWIN/DME.h::DistantEnvironment is exactly ten bytes.
+     * RETRIEVE_ENVIRONMENT_CMD_CD_FW initializes w4/w6 to zero and b8/b9
+     * to 0x40 before ENVIRONMENT_DRAW_DISTANT_ELEMENT reaches
+     * QUERY_TEMP_PICST.  Keep those source values with the command plan;
+     * this is placement/scale provenance, not a locally invented overlay. */
+    int16_t source_offset_x;
+    int16_t source_offset_y;
+    uint8_t source_scale_x;
+    uint8_t source_scale_y;
     uint32_t material_hash;
 } DM2_V1_WeatherOverlayCommand;
 

@@ -166,6 +166,14 @@ static int dm2_weather_overlay_append(
     out->commands[out->command_count].slot_index = slot_index;
     out->commands[out->command_count].rect_number = source->rect_number;
     out->commands[out->command_count].flip_mode = source->flip_mode;
+    /* skproject c_querydb.cpp::DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW:
+     * DistantEnvironment.w4/w6 = 0 and b8/b9 = 0x40.  The later
+     * ENVIRONMENT_DRAW_DISTANT_ELEMENT call owns any movement interpolation
+     * and the QUERY_TEMP_PICST image realization; neither is inferred here. */
+    out->commands[out->command_count].source_offset_x = 0;
+    out->commands[out->command_count].source_offset_y = 0;
+    out->commands[out->command_count].source_scale_x = 0x40u;
+    out->commands[out->command_count].source_scale_y = 0x40u;
     out->commands[out->command_count].material_hash = source->material_hash;
     ++out->command_count;
     out->required_mask |= DM2_V1_WEATHER_COMMAND_MASK(command);
@@ -174,6 +182,7 @@ static int dm2_weather_overlay_append(
     *hash = dm2_weather_hash_step(*hash, source->material_hash);
     *hash = dm2_weather_hash_step(*hash, source->rect_number);
     *hash = dm2_weather_hash_step(*hash, source->flip_mode);
+    *hash = dm2_weather_hash_step(*hash, 0x40400000u);
     return 1;
 }
 
