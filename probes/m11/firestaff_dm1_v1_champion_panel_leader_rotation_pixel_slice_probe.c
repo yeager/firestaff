@@ -361,10 +361,25 @@ static int check_leader_color_in_name_text(const M11_GameViewState* game,
     return ok;
 }
 
+/* ReDMCSB M026_CHAMPION_ICON_INDEX(Direction, PartyDirection). */
+static int probe_M11_GameView_GetV1ChampionIconSourceIndex(
+    const M11_GameViewState* game,
+    int slot) {
+    const struct ChampionState_Compat* champion;
+    if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
+        slot >= game->world.party.championCount) {
+        return -1;
+    }
+    champion = &game->world.party.champions[slot];
+    if (!champion->present) return -1;
+    return ((int)champion->direction -
+            ((int)game->world.party.direction & 3) + 4) & 3;
+}
+
 static int check_champion_icon_source_index(const M11_GameViewState* game,
                                              int slot,
                                              int* outIconIndex) {
-    int idx = M11_GameView_GetV1ChampionIconSourceIndex(game, slot);
+    int idx = probe_M11_GameView_GetV1ChampionIconSourceIndex(game, slot);
     if (outIconIndex) {
         *outIconIndex = idx;
     }
