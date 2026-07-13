@@ -731,13 +731,141 @@ static int original_pc34_event_type_is_status_timeout(int type)
            type == DM1_EVENT_FOOTPRINTS;
 }
 
+int dm1_v1_original_save_pc34_handoff_projectile_event_plan(
+    const struct DM1_Event_V1 *src,
+    int source_index,
+    const struct DungeonThings_Compat *things,
+    DM1OriginalSavePC34ProjectileEventPlan *out_plan)
+{
+    const struct DungeonProjectile_Compat *source_projectile;
+    uint16_t source_thing;
+    uint16_t projectile_motion;
+    int projectile_index;
+    int projectile_type;
+
+    if (!src || !things || !out_plan ||
+        (src->type != DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS &&
+         src->type != DM1_EVENT_MOVE_PROJECTILE)) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+
+    /* ReDMCSB DEFS.H EVENT stores B.Slot as a C14 THING and packs
+     * C.Projectile as MapX:5, MapY:5, Direction:2, StepEnergy:4.  An
+     * original C48/C49 must bind both records before it can enter M10. */
+    source_thing = read_u16_le(&src->b_mapX);
+    projectile_motion = read_u16_le(&src->c_cell);
+    if (THING_GET_TYPE(source_thing) != THING_TYPE_PROJECTILE) {
+        return 0;
+    }
+    projectile_index = (int)THING_GET_INDEX(source_thing);
+    if (projectile_index < 0 || projectile_index >= PROJECTILE_LIST_CAPACITY ||
+        projectile_index >= things->projectileCount || !things->projectiles) {
+        return 0;
+    }
+    source_projectile = &things->projectiles[projectile_index];
+    if ((int)source_projectile->eventIndex != source_index) {
+        return 0;
+    }
+    projectile_type = THING_GET_TYPE(source_projectile->slot);
+    out_plan->valid = 1;
+    out_plan->source_event_type = src->type;
+    out_plan->source_event_index = source_index;
+    out_plan->projectile_index = projectile_index;
+    out_plan->projectile_category =
+        projectile_type == THING_TYPE_EXPLOSION
+            ? PROJECTILE_CATEGORY_MAGICAL : PROJECTILE_CATEGORY_KINETIC;
+    out_plan->projectile_subtype =
+        projectile_type == THING_TYPE_EXPLOSION
+            ? (int)(source_projectile->slot & 0xffu)
+            : PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    out_plan->map_index = (int)((src->map_time >> 24) & 0xffu);
+    out_plan->map_x = (int)(projectile_motion & 0x001fu);
+    out_plan->map_y = (int)((projectile_motion >> 5) & 0x001fu);
+    out_plan->cell = (int)THING_GET_CELL(source_thing);
+    out_plan->direction = (int)((projectile_motion >> 10) & 0x03u);
+    out_plan->step_energy = (int)((projectile_motion >> 12) & 0x0fu);
+    out_plan->first_move_grace =
+        src->type == DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS;
+    out_plan->kinetic_energy = source_projectile->kineticEnergy;
+    out_plan->attack = source_projectile->attack;
+    out_plan->associated_thing = source_projectile->slot;
+    return 1;
+}
+
+static int materialize_original_pc34_projectile_event(
+    const struct DM1_Event_V1 *src,
+    int source_index,
+    struct GameWorld_Compat *world,
+    struct TimelineEvent_Compat *out_event)
+{
+    struct ProjectileInstance_Compat *runtime_projectile;
+    DM1OriginalSavePC34ProjectileEventPlan plan;
+
+    if (!src || !world || !world->dungeon || !world->things || !out_event ||
+        !dm1_v1_original_save_pc34_handoff_projectile_event_plan(
+            src, source_index, world->things, &plan)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    if (plan.map_index < 0 ||
+        plan.map_index >= (int)world->dungeon->header.mapCount ||
+        plan.map_x >= (int)world->dungeon->maps[plan.map_index].width ||
+        plan.map_y >= (int)world->dungeon->maps[plan.map_index].height) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    runtime_projectile = &world->projectiles.entries[plan.projectile_index];
+    if (runtime_projectile->reserved3 != 0) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    memset(runtime_projectile, 0, sizeof(*runtime_projectile));
+    runtime_projectile->slotIndex = plan.projectile_index;
+    runtime_projectile->projectileCategory = plan.projectile_category;
+    runtime_projectile->projectileSubtype = plan.projectile_subtype;
+    runtime_projectile->ownerKind = -1;
+    runtime_projectile->ownerIndex = -1;
+    runtime_projectile->mapIndex = plan.map_index;
+    runtime_projectile->mapX = plan.map_x;
+    runtime_projectile->mapY = plan.map_y;
+    runtime_projectile->cell = plan.cell;
+    runtime_projectile->direction = plan.direction;
+    runtime_projectile->kineticEnergy = plan.kinetic_energy;
+    runtime_projectile->attack = plan.attack;
+    runtime_projectile->stepEnergy = plan.step_energy;
+    runtime_projectile->firstMoveGraceFlag = plan.first_move_grace;
+    runtime_projectile->launchedAtTick =
+        (int)((src->map_time & 0x00ffffffu) - 1u);
+    runtime_projectile->scheduledAtTick =
+        (int)(src->map_time & 0x00ffffffu);
+    runtime_projectile->attackTypeCode = COMBAT_ATTACK_BLUNT;
+    runtime_projectile->flags = PROJECTILE_FLAG_IGNORE_DOOR_PASS_THROUGH;
+    runtime_projectile->launcherStrength = plan.attack;
+    runtime_projectile->reserved1 = (int)plan.associated_thing;
+    runtime_projectile->reserved3 = 1;
+    if (world->projectiles.count <= plan.projectile_index) {
+        world->projectiles.count = plan.projectile_index + 1;
+    }
+
+    memset(out_event, 0, sizeof(*out_event));
+    out_event->kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    out_event->fireAtTick = src->map_time & 0x00ffffffu;
+    out_event->mapIndex = plan.map_index;
+    out_event->mapX = plan.map_x;
+    out_event->mapY = plan.map_y;
+    out_event->cell = plan.cell;
+    out_event->aux0 = plan.projectile_index;
+    out_event->aux3 = runtime_projectile->projectileSubtype;
+    out_event->aux4 = src->priority;
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 static int materialize_original_pc34_timeline(
     const DM1OriginalSavePC34HandoffReport *report,
+    struct GameWorld_Compat *world,
     struct TimelineQueue_Compat *timeline)
 {
     int i;
 
-    if (!report || !timeline) {
+    if (!report || !world || !timeline) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
     if (report->original_event_count < 0 ||
@@ -772,6 +900,18 @@ static int materialize_original_pc34_timeline(
              * reject the candidate world until that event family has a real
              * M10 materialization route. */
             return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+        }
+        if (src->type == DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS ||
+            src->type == DM1_EVENT_MOVE_PROJECTILE) {
+            if (materialize_original_pc34_projectile_event(
+                    src, (int)source_index, world, &ev) !=
+                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            if (!F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            continue;
         }
         memset(&ev, 0, sizeof(ev));
         ev.kind = kind;
@@ -1800,7 +1940,7 @@ static int load_world_from_bytes_uncommitted(
     if (result < 0) {
         return result;
     }
-    result = materialize_original_pc34_timeline(report, &world->timeline);
+    result = materialize_original_pc34_timeline(report, world, &world->timeline);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
     }

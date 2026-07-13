@@ -5546,8 +5546,7 @@ static int orch_build_projectile_digest_compat(
     out->sourceSquareType = (sourceSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5;
     out->destTeleporterNewDirection = -1;
 
-    for (i = 0; i < world->projectiles.count &&
-                i < PROJECTILE_LIST_CAPACITY; ++i) {
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* other =
             &world->projectiles.entries[i];
         if (i == projectileIndex || !orch_projectile_instance_active_compat(other)) continue;
@@ -5641,8 +5640,7 @@ static int orch_build_projectile_digest_compat(
         }
     }
 
-    for (i = 0; i < world->projectiles.count &&
-                i < PROJECTILE_LIST_CAPACITY; ++i) {
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* other =
             &world->projectiles.entries[i];
         if (i == projectileIndex || !orch_projectile_instance_active_compat(other)) continue;

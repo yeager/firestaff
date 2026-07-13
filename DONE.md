@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 original-save C48/C49 projectile handoff: PC34 save import
+  now source-decodes ReDMCSB `DEFS.H EVENT.B.Slot` and the packed
+  `EVENT.C.Projectile` MapX/MapY/Direction/StepEnergy fields, binding them
+  only to the matching C14 `PROJECTILE.EventIndex` record. C48 keeps its
+  first-move impact grace; C49 does not. Mismatched Things, event records,
+  capacity, or map coordinates reject the candidate runtime instead of
+  creating a substitute projectile. Sparse original slots are also visible to
+  M10 collision scans. Verification: Ninja and CTest-passed
+  `dm1_v1_original_save_pc34_handoff`,
+  `dm1_v1_f0206_packed_directions_runtime_pc34_compat`, and
+  `dm1_v1_throw_shoot_pc34_compat`.
+
 - 2026-07-13 Nexus Structure2 target-window receipt: the bounded parser now
   distinguishes descriptor targets that retain a full two-byte window inside
   the verified opaque span from targets that reach only its final byte. This
