@@ -319,6 +319,13 @@ static void verify_real_indexed_startup(
     CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 consumption_receipt;
     CSB_V1_RuntimeStartupTitleOpeningConsumptionHandoffReceipt_PC34
         consumption_handoff_receipt;
+    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal_receipt;
+    CSB_V1_StartupSessionLiveHudReceipt_PC34 live_hud_receipt;
+    CSB_V1_StartupSessionDoorHudTickReceipt_PC34 first_door_receipt;
+    CSB_V1_StartupSessionInputReceipt_PC34 first_input_receipt;
+    CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34 hud_door_input_receipt;
+    CSB_V1_RuntimeStartupHudDoorInputHandoffReceipt_PC34
+        hud_door_input_handoff_receipt;
     CSB_V1_StartupEntranceInputOutcome_PC34 input_outcome;
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_apply;
     CSB_V1_StartupCommandStateReceipt_PC34 state_receipt;
@@ -537,6 +544,51 @@ static void verify_real_indexed_startup(
               title_package_receipt.c001_strikes_back_ready &&
               title_package_receipt.title_to_hud_same_session,
           "C001 PRESENTS/CHAOS/STRIKES remain bound to the terminal PC34 package session");
+    CHECK(csb_v1_startup_session_terminal_receipt_pc34(
+              &session, &terminal_receipt) == 1 && terminal_receipt.valid &&
+              terminal_receipt.c017_ready && terminal_receipt.c040_ready,
+          "terminal C017/C040 HUD session has an owned PC34 receipt");
+    CHECK(csb_v1_startup_session_live_hud_receipt_pc34(
+              &session, &terminal_receipt, 1u, terminal_receipt.source_tick,
+              terminal_receipt.session_generation, &live_hud_receipt) == 1 &&
+              live_hud_receipt.valid && live_hud_receipt.c017_live_base_only,
+          "C040 clear returns to the real C017 HUD before runtime input");
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, terminal_receipt.source_tick + 1u, &frame) == 1 &&
+              frame.valid && frame.session_generation ==
+                  terminal_receipt.session_generation,
+          "first runtime tick retains the terminal PC34 HUD session");
+    CHECK(csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
+              &session, &live_hud_receipt, 0u, 1u,
+              live_hud_receipt.source_tick + 1u,
+              live_hud_receipt.session_generation, &first_door_receipt) == 1 &&
+              first_door_receipt.valid && first_door_receipt.first_live_door_tick,
+          "first live door frame follows the C017/C040 HUD session");
+    CHECK(csb_v1_startup_session_first_input_receipt_pc34(
+              &session, &live_hud_receipt,
+              CSB_V1_STARTUP_SESSION_MOVEMENT_FORWARD_PC34,
+              live_hud_receipt.source_tick + 1u,
+              live_hud_receipt.session_generation, &first_input_receipt) == 1 &&
+              first_input_receipt.valid && first_input_receipt.first_post_c040_input,
+          "first runtime input follows the same C017 HUD session");
+    CHECK(csb_v1_startup_session_hud_door_input_package_receipt_pc34(
+              &session, &package_receipt, &host_surface, &live_hud_receipt,
+              &first_door_receipt, &first_input_receipt,
+              &hud_door_input_receipt) == 1 && hud_door_input_receipt.valid &&
+              hud_door_input_receipt.c017_hud_consumed &&
+              hud_door_input_receipt.c040_hud_consumed &&
+              hud_door_input_receipt.first_live_door_frame &&
+              hud_door_input_receipt.first_runtime_input,
+          "C017/C040 HUD, first door frame, and input share one PC34 package host");
+    CHECK(csb_v1_runtime_startup_hud_door_input_handoff_receipt_pc34(
+              &hud_door_input_receipt, &handoff_receipt,
+              &hud_door_input_handoff_receipt) == 1 &&
+              hud_door_input_handoff_receipt.valid &&
+              hud_door_input_handoff_receipt.real_hud_door_input_consumption &&
+              hud_door_input_handoff_receipt.same_session_generation &&
+              hud_door_input_handoff_receipt.no_legacy_wrappers &&
+              hud_door_input_handoff_receipt.no_synthetic_surface,
+          "runtime bridge retains real C017/C040 HUD through first door and input");
     CHECK(csb_v1_runtime_startup_title_door_handoff_receipt_pc34(
               &title_package_receipt, &opening_door_receipt,
               &door_handoff_receipt, &title_door_handoff_receipt) == 1 &&

@@ -1451,6 +1451,7 @@ struct CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34;
 struct CSB_V1_StartupSessionPackageTitleReceipt_PC34;
 struct CSB_V1_StartupSessionOpeningDoorReceipt_PC34;
 struct CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34;
+struct CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34;
 
 typedef enum {
     CSB_V1_RUNTIME_STARTUP_PLAN_NONE_PC34 = 0,
@@ -1531,6 +1532,19 @@ typedef struct {
     uint64_t consumed_surface_hash;
     const char *source_evidence;
 } CSB_V1_RuntimeStartupTitleOpeningConsumptionHandoffReceipt_PC34;
+
+typedef struct {
+    int valid;
+    int real_hud_door_input_consumption;
+    int same_session_generation;
+    int no_legacy_wrappers;
+    int no_synthetic_surface;
+    uint32_t session_generation;
+    uint32_t hud_host_surface_hash;
+    uint64_t real_asset_receipt_hash;
+    uint64_t consumed_surface_hash;
+    const char *source_evidence;
+} CSB_V1_RuntimeStartupHudDoorInputHandoffReceipt_PC34;
 typedef struct {
     int level_loaded;
     int current_level;
@@ -1620,6 +1634,11 @@ int csb_v1_runtime_startup_title_opening_consumption_handoff_receipt_pc34(
         *consumption_receipt,
     const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
     CSB_V1_RuntimeStartupTitleOpeningConsumptionHandoffReceipt_PC34 *out_receipt);
+int csb_v1_runtime_startup_hud_door_input_handoff_receipt_pc34(
+    const struct CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34
+        *package_receipt,
+    const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
+    CSB_V1_RuntimeStartupHudDoorInputHandoffReceipt_PC34 *out_receipt);
 int csb_v1_runtime_apply_startup_sequence_plan_from_state_facts_with_receipts_pc34(
     CSB_V1_RuntimeProfile *profile,
     const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,

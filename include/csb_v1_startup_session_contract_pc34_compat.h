@@ -71,6 +71,25 @@ typedef struct CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 {
     uint64_t consumed_surface_hash;
 } CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34;
 
+/* PANEL.C restores C017 after its C040 clear; the first DUNGEON.C door tick
+ * and COMMAND.C input must retain that same package-owned HUD session. */
+typedef struct CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34 {
+    int valid;
+    int real_package_matched;
+    int c017_hud_consumed;
+    int c040_hud_consumed;
+    int first_live_door_frame;
+    int first_runtime_input;
+    int no_legacy_wrappers;
+    int no_synthetic_surface;
+    unsigned int session_generation;
+    unsigned int hud_source_tick;
+    unsigned int first_runtime_tick;
+    uint32_t hud_host_surface_hash;
+    uint64_t real_asset_receipt_hash;
+    uint64_t consumed_surface_hash;
+} CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34;
+
 typedef struct CSB_V1_StartupSessionLiveHudReceipt_PC34 {
     int valid;
     int c040_cleared_once;
@@ -162,6 +181,15 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
     const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *strikes_host,
     const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *opening_host,
     CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 *out_receipt);
+
+int csb_v1_startup_session_hud_door_input_package_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *hud_host,
+    const CSB_V1_StartupSessionLiveHudReceipt_PC34 *live_hud_receipt,
+    const CSB_V1_StartupSessionDoorHudTickReceipt_PC34 *door_receipt,
+    const CSB_V1_StartupSessionInputReceipt_PC34 *input_receipt,
+    CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34 *out_receipt);
 
 /* ReDMCSB PANEL.C F0346/F0347: one C040 clear returns to neutral C017. */
 int csb_v1_startup_session_live_hud_receipt_pc34(
