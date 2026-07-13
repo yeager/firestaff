@@ -253,6 +253,12 @@ typedef struct {
     int last_nonzero_block_index;
     int nonzero_block_run_count;
     int longest_nonzero_block_run;
+    /* Exact spans of the first and last nonempty block runs. These are raw
+     * search regions only, never inferred record or face boundaries. */
+    int first_nonzero_block_run_start_block_index;
+    int first_nonzero_block_run_block_count;
+    int last_nonzero_block_run_start_block_index;
+    int last_nonzero_block_run_block_count;
     int valid;
     int face_semantics_proven;
 } Nexus_V1_DgnStructure3PayloadReceipt;

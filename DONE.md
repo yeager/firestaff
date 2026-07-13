@@ -23,6 +23,14 @@
   1953-1965. Verification: Ninja and CTest
   `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 Nexus Structure3 occupancy-run span receipt: the first and last
+  nonempty documented `0x800`-byte block runs now carry exact bounded starts
+  and lengths into the DGN corpus receipt and probe output. These are raw
+  search regions for future format work, not record, face, vertex, mesh,
+  texture, palette, or pixel boundaries. Rendering remains fail-closed at face
+  semantics. Verification: Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 CSBWin restored terminal `TT_1` door timer bridge: an exact
   queue-slot/timer/event receipt now drives only the terminal closing
   byte-map door transition from low state 1 to 0 through the live tick queue.
