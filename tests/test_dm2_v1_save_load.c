@@ -2304,6 +2304,95 @@ done:
     return 1;
 }
 
+static int test_original_sksave_corpus_runtime_import(void)
+{
+    char tmpdir[256];
+    uint8_t payload[2048];
+    size_t payload_size = 0u;
+    DM2_TestGameStateStorage gs_store;
+    DM2_GameStateBlock *gs = &gs_store.block;
+    DM2_ChampionRecord champion;
+    DM2_V1_SaveCandidate candidate;
+    DM2_V1_RuntimeCorpusImportReceipt receipt;
+    DM2_V1_BootProfile boot;
+    DM2_V1_GameState game;
+    DM2_V1_DungeonData dungeon;
+    uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE] = { 0 };
+    uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE] = { 0 };
+    uint16_t global_words[DM2_GLOBAL_WORDS_SIZE] = { 0 };
+    uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE] = { 0 };
+    uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
+    int result = 0;
+
+    printf("  Hash-receipted original SKSave corpus candidate restores runtime...\n");
+    snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_original_corpus_%d",
+             FS_GETPID());
+    FS_MKDIR(tmpdir);
+    memset(&gs_store, 0, sizeof(gs_store));
+    memset(&champion, 0, sizeof(champion));
+    gs->dwGameTick = 0x00045678u;
+    gs->dwRandomSeed = 0x10293847u;
+    gs->wChampionsCount = 1;
+    gs->wPlayerPosX = 2;
+    gs->wPlayerPosY = 3;
+    gs->wPlayerDir = 3;
+    gs->wChampionLeader = 0;
+    memcpy(champion.first_name, "ZED", 3u);
+    champion.cur_hp = 41;
+    champion.max_hp = 50;
+    inventory[8] = dm2_db_make_handle(6, 0x33);
+    if (!build_raw_sksave_payload(gs, &champion, global_flags, global_bytes,
+                                  global_words, spell_effects, NULL, 0,
+                                  inventory, dm2_db_make_handle(7, 0x44),
+                                  payload, sizeof(payload), &payload_size) ||
+        dm2_v1_session_parse_save_candidate(&candidate, payload,
+                                             payload_size) != 0 ||
+        candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW ||
+        dm2_sl_save_last_session(tmpdir, "OriginalCorpus", payload,
+                                 payload_size) != 0) {
+        goto done;
+    }
+
+    memset(&boot, 0, sizeof(boot));
+    memset(&game, 0, sizeof(game));
+    memset(&dungeon, 0, sizeof(dungeon));
+    dungeon.raw_data = (uint8_t *)calloc(candidate.dungeon_size, 1u);
+    if (!dungeon.raw_data) goto done;
+    dungeon.raw_size = (int)candidate.dungeon_size;
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 1;
+    dungeon.level_heights[0] = 1;
+    dungeon.square_bytes = 1;
+    boot.dm2_state = &game;
+    boot.dungeon_data = &dungeon;
+    snprintf(boot.graphics_md5, sizeof(boot.graphics_md5), "original-corpus-gdat");
+    dm2_v1_runtime_init(&boot);
+
+    if (!dm2_v1_runtime_import_sksave_corpus(tmpdir, &receipt) ||
+        receipt.result != DM2_V1_RUNTIME_CORPUS_IMPORT_OK ||
+        !receipt.restored ||
+        receipt.candidate_kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW ||
+        receipt.rejected_original_candidate ||
+        receipt.selected_payload_size != payload_size ||
+        strstr(receipt.selected_path, "SKSave.dat") == NULL ||
+        game.party_x != 2 || game.party_y != 3 || game.party_dir != 3 ||
+        dm2_v1_runtime_get_tick_count() != (int)gs->dwGameTick ||
+        dm2_v1_runtime_get_champion_inventory_object(0, 8) != inventory[8] ||
+        memcmp(dungeon.raw_data, payload, candidate.dungeon_size) != 0) {
+        goto done;
+    }
+    result = 1;
+done:
+    free(dungeon.raw_data);
+    cleanup_slot_dir(tmpdir);
+    if (!result) {
+        printf("    FAIL: receipted original corpus candidate was not restored\n");
+        return 0;
+    }
+    printf("    PASS: original bytes were hash-gated then restored through runtime\n");
+    return 1;
+}
+
 /* ════════════════════════════════════════════════════════════════ */
 
 int main(void)
@@ -2339,6 +2428,7 @@ int main(void)
     RUN(20, test_original_save_candidate_live_restore);
     RUN(21, test_sksave_corpus_runtime_import);
     RUN(22, test_sksave_receipted_candidate_hash_gate);
+    RUN(23, test_original_sksave_corpus_runtime_import);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);

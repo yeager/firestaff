@@ -13035,3 +13035,12 @@ F0433:1641-1682 / F0435:1995-2017, `DUNGEON.C F0160`, and
 `READWRIT.C F0421/F0422`. Verification: isolated Ninja build and
 `test_dm1_v1_original_save_pc34_handoff` pass with a real local F0433 export;
 a checksum-recomputed mismatched column row is rejected before handoff.
+
+# ✅ 2026-07-13 DM2 hash-receipted original SKSave corpus runtime import
+
+DM2 corpus import now scans to a selected receipt, reloads its exact file
+through full-file and payload hashes, and routes original raw/envelope SKSave
+payloads through the existing atomic live runtime restore. Invalid or
+dungeon-incompatible candidates remain fail-closed with no synthetic session
+fallback. Source reference: skproject `c_savegame.cpp` load handoff. Verification:
+Ninja `test_dm2_v1_save_load` 23/23 and CTest `dm2_v1_save_load` 1/1.

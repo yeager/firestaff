@@ -3386,8 +3386,9 @@ int dm2_v1_runtime_import_sksave_corpus(
     const DM2_SKSaveCandidateReceipt *selected = NULL;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    if (!dm2_v1_sksave_corpus_load_first_importable(save_root, payload,
-            sizeof(payload), &size, &corpus)) {
+    if (!dm2_v1_sksave_corpus_scan(save_root, &corpus) ||
+        corpus.importable_candidate_count == 0u ||
+        corpus.first_importable_path[0] == '\0') {
         out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_UNAVAILABLE;
         return 0;
     }
@@ -3406,19 +3407,29 @@ int dm2_v1_runtime_import_sksave_corpus(
     out->selected_payload_size = selected->payload_size;
     out->selected_payload_hash = selected->payload_hash;
     snprintf(out->selected_path, sizeof(out->selected_path), "%s", selected->path);
-    if (selected->import_rejected) {
-        out->rejected_original_candidate = 1;
+    if (!dm2_v1_sksave_corpus_load_receipted_candidate(selected, payload,
+            sizeof(payload), &size) ||
+        dm2_v1_session_parse_save_candidate(&candidate, payload, size) != 0) {
         out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
         return 0;
     }
-    if (dm2_v1_session_parse_save_candidate(&candidate, payload, size) != 0) {
-        out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
-        return 0;
-    }
+
     out->candidate_kind = candidate.kind;
-    /* Runtime corpus resume owns only the proven Firestaff session codec.
-     * Original envelope/raw candidates remain corpus evidence, never a
-     * substitute runtime import route. */
+    if (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE ||
+        candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+        /* skproject/SKULLWIN/c_savegame.cpp: original saves restore only
+         * through the active dungeon/session binding.  The corpus receipt
+         * authenticates the file bytes; restore_save_candidate owns the
+         * fallible dungeon compatibility check and atomic state handoff. */
+        if (dm2_v1_runtime_restore_save_candidate(payload, size) != 0) {
+            out->rejected_original_candidate = 1;
+            out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
+            return 0;
+        }
+        out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_OK;
+        out->restored = 1;
+        return 1;
+    }
     if (candidate.kind != DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION ||
         dm2_v1_session_deserialize(&session, payload, size) != 0 ||
         dm2_v1_runtime_apply_session(&session) != 0) {
