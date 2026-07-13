@@ -124,6 +124,14 @@
   Verification: capture-script syntax/contract test, Mednafen patch dry-run,
   rebuilt instrumented Mednafen, and three authentic bounded GUI captures.
 
+- 2026-07-13 DM1 F0115/F0127 D0C deferred explosion materialization: the
+  D0C live explosion route now follows ReDMCSB `DUNVIEW.C F0115:5915-6074`
+  after the D1-D3 deferred passes and its matching D0C projectile draw. It
+  consumes M636's original 48x32 explosion-pattern family only for D0C;
+  asset-backed sessions do not substitute a cue or replacement bitmap.
+  Focused D0C materialization, projectile/explosion CTest, viewport source
+  lock, and Ninja build pass.
+
 - 2026-07-13 DM1 F0115 multi-projectile C2900 selection: the live PC34
   materialization receipt now counts every same-square C14 record while
   selecting its presented record only after the ReDMCSB `DUNVIEW.C
