@@ -7230,6 +7230,19 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_gdat_word_values
     )
 
+    add_executable(test_dm2_v1_gdat_graphicsset_real_data
+        tests/test_dm2_v1_gdat_graphicsset_real_data.c
+    )
+    target_include_directories(test_dm2_v1_gdat_graphicsset_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_gdat_graphicsset_real_data
+        PRIVATE firestaff_dm2 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdat_graphicsset_real_data
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+
     add_executable(test_dm2_v1_g1_wall_button_material_gate
         tests/test_dm2_v1_g1_wall_button_material_gate.c
     )
