@@ -248,5 +248,50 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 &&
               raw[80] == 0x03u,
           "bash-door receipt cannot mutate a non-door square");
+
+    profile.party_state_valid = 1;
+    profile.champion_count = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.Champions[0].EnableActionEventIndex = 19;
+    profile.party_state.Champions[0].Attributes = 0x0008u;
+    profile.party_state.Champions[0].CsbWinWord64 = 37;
+    profile.party_state.Champions[0].ActionIndex = 30u;
+    profile.csbwin_timers[0].function = 11u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].EnableActionEventIndex == -1 &&
+              profile.party_state.Champions[0].Attributes == 0u &&
+              profile.party_state.Champions[0].CsbWinWord64 == 0 &&
+              profile.party_state.Champions[0].ActionIndex == CSB_V1_ACTION_NONE,
+          "restored action-enable timer clears the authenticated champion lock");
+
+    profile.party_state.Champions[0].EnableActionEventIndex = 19;
+    profile.party_state.Champions[0].Attributes = 0x0008u;
+    profile.party_state.Champions[0].CsbWinWord64 = 37;
+    profile.party_state.Champions[0].ActionIndex = 30u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    profile.csbwin_timers[0].source_index = 1u;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].EnableActionEventIndex == 19 &&
+              profile.party_state.Champions[0].Attributes == 0x0008u &&
+              profile.party_state.Champions[0].CsbWinWord64 == 37 &&
+              profile.party_state.Champions[0].ActionIndex == 30u,
+          "stale action-enable timer identity cannot clear a champion lock");
+
+    profile.csbwin_timers[0].time = profile.game_time;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].ubyte6 = 1u;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].EnableActionEventIndex == 19 &&
+              profile.party_state.Champions[0].Attributes == 0x0008u &&
+              profile.party_state.Champions[0].CsbWinWord64 == 37 &&
+              profile.party_state.Champions[0].ActionIndex == 30u,
+          "action-enable rearm branch remains blocked without saved inventory handoff");
     return failures == 0 ? 0 : 1;
 }

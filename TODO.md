@@ -45,6 +45,8 @@
   TT_BASH_DOOR now has its own exact saved queue receipt, so it cannot fall
   through the shared function-2 destruction handler; non-door targets and
   malformed saved identity remain blocked.
+  TT_11 now restores only the exact no-rearm, non-SHOOT champion action lock;
+  ammunition/quiver branches and malformed saved identity remain blocked.
 
 - 2026-07-13 CSB F0282 probe follow-up: keep the repaired probe-local C040
   candidate-panel receipt fail-closed as additional real-save variants are
