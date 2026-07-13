@@ -651,6 +651,30 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     int *parameters,
     int parameter_count,
     int flgs_inout[2]);
+
+/* Source-owned callback bridge for CSBWin Monster.cpp's ProcessDSAFilter
+ * call shape. The adapter may execute only a runner prepared from the same
+ * runtime profile and authenticated DSA action; it adds no opcode support or
+ * world/filter side effects. */
+typedef struct {
+    CSB_V1_RuntimeProfile *profile;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+} CSB_V1_RuntimeDSAFilterStackAdapter;
+
+int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_adapter(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeDSAFilterBinding *binding,
+    uint32_t state_index,
+    int action_ordinal,
+    uint32_t master_location,
+    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter);
+
+int csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback(
+    const CSB_V1_DSAImportedAction *action,
+    int *parameters,
+    int parameter_count,
+    int flgs_inout[2],
+    void *user);
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
 int csb_v1_runtime_select_champion_portrait_render_source(

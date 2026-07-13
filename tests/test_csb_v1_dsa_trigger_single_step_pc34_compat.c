@@ -44,6 +44,8 @@
  */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
+#include "csb_v1_monster_pc34_compat.h"
+#include "csb_v1_runtime_pc34_compat.h"
 
 #include <limits.h>
 #include <stdio.h>
@@ -886,6 +888,59 @@ static void test_csbwin_authenticated_filter_stack_runner(void)
     csb_v1_chaos_cleanup(&state);
 }
 
+static void test_csbwin_runtime_filter_adapter(void)
+{
+    uint16_t store_monster_id[] = { 0x0686u, 0x1234u, 0x000du };
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_RuntimeDSAFilterBinding binding;
+    CSB_V1_RuntimeDSAFilterStackAdapter adapter;
+    CSB_V1_DSAFilterRuntime filter;
+    CSB_V1_AttackParameters parameters;
+
+    memset(&action, 0, sizeof(action));
+    memset(&profile, 0, sizeof(profile));
+    memset(&binding, 0, sizeof(binding));
+    memset(&adapter, 0, sizeof(adapter));
+    memset(&filter, 0, sizeof(filter));
+    memset(&parameters, 0, sizeof(parameters));
+    csb_v1_chaos_init(&profile.csbwin_extended_dsa_state);
+    action.dsa_id = 9u;
+    action.state_index = 4u;
+    action.program_words = store_monster_id;
+    action.program_word_count = (int)(sizeof(store_monster_id) /
+                                      sizeof(store_monster_id[0]));
+    profile.csbwin_extended_features_valid = 1;
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    binding.dsa_id = 9u;
+
+    check(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_adapter(
+              &profile, &binding, 4u, 0, 0x12345u, &adapter) == 1,
+          "CSBWin/Monster.cpp:1134-1180 ProcessDSAFilter",
+          "runtime prepares a profile-owned authenticated monster-filter adapter");
+    filter.programs = &profile.csbwin_extended_dsa_state;
+    filter.runner = csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback;
+    filter.runner_user = &adapter;
+    filter.loaded_level = 6;
+    filter.attack_filter_dsa_id = 9;
+    filter.attack_filter_state = 4u;
+    filter.attack_filter_action = 0;
+    parameters.monsterID = 77;
+    parameters.monsterIndex = 13;
+
+    check(csb_v1_dsa_filter_attack_preprocess_live(&parameters, &filter) == 1 &&
+              parameters.monsterID == 0x1234 &&
+              adapter.runner.execution_count == 1 &&
+              filter.loaded_level == 6,
+          "CSBWin/DSA.cpp:5315-5460 + Monster.cpp:1164-1167",
+          "live monster-filter callback runs only the profile-authenticated stack action");
+
+    profile.csbwin_extended_dsa_state.imported_actions = NULL;
+    profile.csbwin_extended_dsa_state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&profile.csbwin_extended_dsa_state);
+}
+
 static void test_csbwin_authenticated_local_variable_opcode_family(void)
 {
     uint16_t round_trip[] = {
@@ -1275,6 +1330,7 @@ int main(void)
     test_csbwin_load_store_rejects_unowned_action();
     test_csbwin_authenticated_stack_opcode_family();
     test_csbwin_authenticated_filter_stack_runner();
+    test_csbwin_runtime_filter_adapter();
     test_csbwin_authenticated_local_variable_opcode_family();
     test_csbwin_authenticated_global_variable_opcode_family();
     test_csbwin_authenticated_state_column_jump_dispatch();
