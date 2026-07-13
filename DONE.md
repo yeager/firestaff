@@ -11398,3 +11398,11 @@ fixture writes no substitute pixels. Source: `REVIVE.C:357-455,704-840`.
   `CreatureType -> CREATURES/type/F9` material receipts now retain and require
   the matching source IMG3 local palette before the dungeon viewport accepts
   the decoded plane.
+# DM1 C001 title presentation command
+
+- 2026-07-13 DM1 M11 title presentation now consumes a source-locked,
+  DM1-owned command for each ReDMCSB `TITLE.C F0437` event. The command admits
+  only decoded C001 material, keeps C12 PRESENTS separate from C13/C14 title
+  palette selection, retains the source VBlank waits, and rejects CSB palette
+  substitution. The focused regression covers PRESENTS, zoom, post-zoom waits,
+  and the final title event against real PC34 graphics.

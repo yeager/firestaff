@@ -1288,12 +1288,10 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* dm1MediaReceipt) {
     const M11_AssetSlot* titleGraphic;
     unsigned char* framebuffer;
-    V1_TitleFrontendSourceTiming timing;
     M11_AudioState titleAudio;
     int titleAudioInitialized = 0;
     unsigned int sourceStep;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
-    int hasDm1Media;
     DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 titleAssetReceipt;
 
     if (outPlayedAnyFrame) {
@@ -1335,20 +1333,13 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     if (!framebuffer) {
         return 0;
     }
-    timing = V1_TitleFrontend_GetSourceTimingEvidence();
     memset(&dm1Media, 0, sizeof(dm1Media));
     if (dm1_v1_startup_title_timing_receipt_valid_pc34(dm1MediaReceipt)) {
         dm1Media = *dm1MediaReceipt;
-        hasDm1Media = 1;
-    } else {
-        hasDm1Media =
-            dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
-                "dm1",
-                &dm1Media);
-        if (hasDm1Media &&
-            !dm1_v1_startup_title_timing_receipt_valid_pc34(&dm1Media)) {
-            hasDm1Media = 0;
-        }
+    } else if (!dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
+                   "dm1", &dm1Media) ||
+               !dm1_v1_startup_title_timing_receipt_valid_pc34(&dm1Media)) {
+        return 0;
     }
 
     memset(&titleAudio, 0, sizeof(titleAudio));
@@ -1375,26 +1366,30 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     for (sourceStep = 1U; sourceStep <= V1_TitleFrontend_GetSourceAnimationStepCount(); ++sourceStep) {
         V1_TitleFrontendSourceAnimationStep step;
         V1_TitleFrontendC001BlitPlan blitPlan;
-        int stepPalette;
+        DM1_V1_StartupTitlePresentationCommand_PC34 command;
         if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
             break;
         }
         if (!V1_TitleFrontend_GetC001BlitPlanForStep(&step, &blitPlan)) {
             break;
         }
-        if (blitPlan.clearBeforeBlit) {
+        memset(&command, 0, sizeof(command));
+        if (!dm1_v1_startup_title_presentation_command_pc34(
+                &dm1Media, &titleAssetReceipt, sourceStep, &command)) {
+            break;
+        }
+        if (command.clear_before_present) {
             memset(framebuffer, 0, (size_t)M11_FB_BYTES);
         }
         /* ReDMCSB TITLE.C F0437:385-387 waits before each prepared
          * zoom bitmap is blitted. Steps 20, 21, and 23 model the two
          * post-zoom waits and the final guard individually, so do not add
          * an aggregate delay after this loop. */
-        if (step.vblankBeforeEvent &&
-            m11_delay_ms_with_intro_event_pump(
-                hasDm1Media ? dm1Media.title_zoom_frame_delay_ms :
-                              V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
+        if (command.pre_present_delay_ms > 0U &&
+            m11_delay_ms_with_intro_event_pump(command.pre_present_delay_ms)) {
             break;
         }
+        if (!command.present_frame) continue;
         if (blitPlan.kind == V1_TITLE_FRONTEND_C001_BLIT_REGION) {
             M11_AssetLoader_BlitRegion(titleGraphic,
                                        (int)blitPlan.srcX,
@@ -1433,28 +1428,18 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
          * truth for that mapping; v2.7.4 always used
          * VGA_PALETTE_PC34_SPECIAL_TITLE for every step and painted
          * the "PRESENTS" word red instead of plain white. */
-        (void)V1_TitleFrontend_GetStepPalette(step.kind, &stepPalette);
-        if (hasDm1Media) {
-            stepPalette =
-                (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS) ?
-                    dm1Media.title_presents_palette :
-                    dm1Media.title_zoom_palette;
-        }
         if (M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                         M11_FB_WIDTH,
                                                         M11_FB_HEIGHT,
-                                                        stepPalette) != M11_RENDER_OK) {
+                                                        command.special_palette) != M11_RENDER_OK) {
             break;
         }
         if (outPlayedAnyFrame) {
             *outPlayedAnyFrame = 1;
         }
-        if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS) {
-            if (m11_delay_ms_with_intro_event_pump(
-                    hasDm1Media ? dm1Media.title_presents_hold_ms :
-                                  V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing))) {
-                break;
-            }
+        if (command.post_present_delay_ms > 0U &&
+            m11_delay_ms_with_intro_event_pump(command.post_present_delay_ms)) {
+            break;
         }
     }
     if (titleAudioInitialized) {
