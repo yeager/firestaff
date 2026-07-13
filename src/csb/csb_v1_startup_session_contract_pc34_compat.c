@@ -153,3 +153,37 @@ int csb_v1_startup_session_first_input_receipt_pc34(
     out_receipt->session_generation = session_generation;
     return 1;
 }
+
+int csb_v1_startup_session_first_action_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupSessionLiveHudReceipt_PC34 *live_hud_receipt,
+    CSB_V1_StartupSessionActionCommand_PC34 command,
+    unsigned int source_tick,
+    unsigned int session_generation,
+    CSB_V1_StartupSessionActionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupSessionTerminalReceipt_PC34 current;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    /* ReDMCSB COMMAND.C follows PANEL.C's C040 clear with C017-owned hand
+     * or cast dispatch. This first action is bound to exactly the next tick,
+     * preventing a stale action surface from crossing a session boundary. */
+    if (!session || !live_hud_receipt || !out_receipt ||
+        !live_hud_receipt->valid || !live_hud_receipt->c040_cleared_once ||
+        !live_hud_receipt->c017_live_base_only ||
+        command <= CSB_V1_STARTUP_SESSION_ACTION_NONE_PC34 ||
+        command > CSB_V1_STARTUP_SESSION_ACTION_CAST_PC34 ||
+        source_tick != live_hud_receipt->source_tick + 1u ||
+        session_generation != live_hud_receipt->session_generation ||
+        session->source_tick != source_tick ||
+        session->generation != session_generation ||
+        !csb_v1_startup_session_terminal_receipt_pc34(session, &current) ||
+        current.session_generation != session_generation) return 0;
+    out_receipt->valid = 1;
+    out_receipt->first_post_live_hud_action = 1;
+    out_receipt->command = command;
+    out_receipt->c017_source_asset_id = 17;
+    out_receipt->source_tick = source_tick;
+    out_receipt->session_generation = session_generation;
+    return 1;
+}
