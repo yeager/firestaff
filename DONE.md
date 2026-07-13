@@ -58,6 +58,13 @@
   Verification: capture-script syntax/contract test, Mednafen patch dry-run,
   rebuilt instrumented Mednafen, and three authentic bounded GUI captures.
 
+- 2026-07-13 DM1 F0115 thrown-object C2900 lane materialization: G0209
+  `FLIP_ON_RIGHT` now follows ReDMCSB `DUNVIEW.C F0115:4862-4865` after the
+  F0142 object handoff at :5891-5900. Right side lanes mirror the original
+  object material; center lanes mirror only C01/C02, never C03. Focused
+  regressions cover original C2900 D2L/D2R rows, geometry, scale, and mirror
+  choice without a synthetic pane or marker fallback. Ninja and CTest pass.
+
 - 2026-07-13 DM1 F0115 live projectile material fail-closed: M11 now resets
   each live F0142/F0115 sample before resolving it and requires a decoded
   non-empty PC34 `Projectile.Slot` before entering the G0209/M612 C2900

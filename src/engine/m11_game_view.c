@@ -17696,6 +17696,7 @@ static int m11_draw_thrown_object_projectile_sprite(
     int objectAspectIndex,
     int depthIndex,
     int relativeCell,
+    int viewLane,
     int sourceZoneRow)
 {
     const M11_AssetSlot* slot;
@@ -17709,7 +17710,7 @@ static int m11_draw_thrown_object_projectile_sprite(
     if (!slot || slot->width == 0 || slot->height == 0 ||
         !dm1_v1_thrown_object_projectile_blit_plan_pc34(
             &plan, gfxIndex, objectAspectIndex, depthIndex, relativeCell,
-            sourceZoneRow, M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W,
+            viewLane, sourceZoneRow, M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W,
             M11_VIEWPORT_H, (int)slot->width, (int)slot->height)) {
         return 0;
     }
@@ -17770,7 +17771,7 @@ static int m11_draw_viewport_projectile_sprite(
             state, framebuffer, framebufferWidth, framebufferHeight,
             cell->firstProjectileGfxIndex,
             cell->firstProjectileObjectAspectIndex, depthIndex,
-            cell->firstProjectileCell, sourceZoneRow);
+            cell->firstProjectileCell, cell->relSide, sourceZoneRow);
     }
     return m11_draw_projectile_sprite(
         state, framebuffer, framebufferWidth, framebufferHeight, x, y, w, h,
@@ -39847,7 +39848,7 @@ int M11_GameView_ProbeDrawDm1ThrownObjectProjectileHostReceipt(
      * takes G0209 aspect 38 / native object bitmap 537 in C2900. */
     return m11_draw_thrown_object_projectile_sprite(
         state, framebuffer, framebufferWidth, framebufferHeight,
-        537, 38, 1, 2, 2);
+        537, 38, 1, 2, 0, 2);
 }
 
 void M11_GameView_GetDm1DoorHostPresentationReceipt(

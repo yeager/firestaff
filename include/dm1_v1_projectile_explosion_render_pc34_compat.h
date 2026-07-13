@@ -204,6 +204,7 @@ int dm1_v1_thrown_object_projectile_blit_plan_pc34(
     int objectAspectIndex,
     int depthIndex,
     int relativeCell,
+    int viewLane,
     int sourceZoneRow,
     int viewportX,
     int viewportY,

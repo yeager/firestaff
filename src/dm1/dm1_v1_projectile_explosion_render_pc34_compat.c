@@ -182,6 +182,7 @@ int dm1_v1_thrown_object_projectile_blit_plan_pc34(
     int objectAspectIndex,
     int depthIndex,
     int relativeCell,
+    int viewLane,
     int sourceZoneRow,
     int viewportX,
     int viewportY,
@@ -197,6 +198,7 @@ int dm1_v1_thrown_object_projectile_blit_plan_pc34(
     if (!outPlan || graphicIndex < DM1_GRAPHIC_FIRST_OBJECT ||
         objectAspectIndex < 0 || objectAspectIndex >= 85 ||
         relativeCell < 0 || relativeCell > 3 || sourceZoneRow < 0 ||
+        viewLane < -1 || viewLane > 1 ||
         viewportW <= 0 || viewportH <= 0 || spriteW <= 0 || spriteH <= 0 ||
         !dm1_viewport_3d_c2900_projectile_raw_zone_point(
             sourceZoneRow, relativeCell, &zoneX, &zoneY)) {
@@ -216,9 +218,15 @@ int dm1_v1_thrown_object_projectile_blit_plan_pc34(
     if (plan.draw_h < 3) plan.draw_h = 3;
     plan.draw_x = viewportX + zoneX - plan.draw_w / 2;
     plan.draw_y = viewportY + zoneY - plan.draw_h + 1;
+    /* ReDMCSB DUNVIEW.C F0115:4862-4865 applies G0209's
+     * FLIP_ON_RIGHT flag to every right-side lane.  In the center lane it
+     * applies only to FRONT_RIGHT (C01) and BACK_RIGHT (C02), never
+     * BACK_LEFT (C03).  A thrown object re-enters this same object path at
+     * :5891-5900, so its C2900 material must use the identical predicate. */
     plan.use_mirror =
         (dm1_object_aspect_graphic_info(objectAspectIndex) & 0x0001u) &&
-        (relativeCell == 1 || relativeCell == 3);
+        (viewLane > 0 ||
+         (viewLane == 0 && (relativeCell == 1 || relativeCell == 2)));
     plan.uses_source_row = 1;
 
     if (plan.draw_x < viewportX - plan.draw_w + 1) {
