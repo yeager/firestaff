@@ -23790,6 +23790,9 @@ if(BUILD_TESTING AND THERON_SOURCES)
         tests/test_theron_v1_capture_manifest.c
     )
     target_link_libraries(test_theron_v1_capture_manifest PRIVATE firestaff_theron)
+    if(TARGET firestaff_m12)
+        target_link_libraries(test_theron_v1_capture_manifest PRIVATE firestaff_m12)
+    endif()
     target_include_directories(test_theron_v1_capture_manifest PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )

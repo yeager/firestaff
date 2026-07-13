@@ -35,6 +35,7 @@
 
 #include "theron_v1_boot.h"
 #include "asset_find_by_hash.h"
+#include "asset_status_m12.h"
 #include "theron_v1_mechanics.h"
 #include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_startup_runtime_entry.h"
@@ -82,6 +83,24 @@ static unsigned char *theron_v1_boot_read_evidence_file(
     return bytes;
 }
 
+int theron_v1_boot_runtime_trace_files_match_declared_hashes(
+    const char *track02_path,
+    const char *track02_md5_hex,
+    const char *system_card_path,
+    const char *system_card_md5_hex) {
+    char actual_track02_md5[33];
+    char actual_system_card_md5[33];
+
+    if (!track02_path || !track02_md5_hex || !system_card_path ||
+        !system_card_md5_hex || !m12_file_md5_hex(track02_path,
+                                                   actual_track02_md5) ||
+        !m12_file_md5_hex(system_card_path, actual_system_card_md5)) {
+        return 0;
+    }
+    return strcmp(actual_track02_md5, track02_md5_hex) == 0 &&
+           strcmp(actual_system_card_md5, system_card_md5_hex) == 0;
+}
+
 int theron_v1_boot_track02_runtime_trace_intake_from_files(
     const char *track02_path,
     const char *track02_md5_hex,
@@ -99,6 +118,14 @@ int theron_v1_boot_track02_runtime_trace_intake_from_files(
 
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
+    /* The parser below receives bytes after these hashes are checked. The
+     * explicit rehash prevents a caller from pairing a known hash label with
+     * changed Track 02 or System Card media. */
+    if (!theron_v1_boot_runtime_trace_files_match_declared_hashes(
+            track02_path, track02_md5_hex, system_card_path,
+            system_card_md5_hex)) {
+        return 0;
+    }
     trace = theron_v1_boot_read_evidence_file(
         trace_path, THERON_V1_RUNTIME_TRACE_MAX_BYTES, &trace_size);
     if (!trace || trace_size == 0u) goto done;
