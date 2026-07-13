@@ -648,11 +648,15 @@ C100's real PC34 lightning material (`M613 + G0210[C03] + 1 = 464`) and C3000
 centres now follow `L2476 = G2028`, not `G2034`: `DUNVIEW.C:5948,5984,5999`
 uses `L2476`, assigned at `4806-4812`. The original `G2037` scales prove only
 rows 0..6 (`15,15,15,20,20,20,32`). Rows 7..11 have valid C3000 coordinates
-but no scale: `FTL.idc` locates `G2037` at `0x2583B` and `G0230` at `0x25842`,
-exactly seven bytes later. Therefore C100 must remain no-draw for every route
-until original PC34 capture or a verified disassembly resolves the row-7..11
-behavior. It cannot borrow C101/M636, F0114, a marker, host geometry, or the
-adjacent mutable globals as scale values.
+but no scale. The exact unresolved contradiction is source-locked:
+`DUNVIEW.C:373` maps visible D2R/D1C/D1L/D1R/D0C to G2028 rows 7..11 and
+`:5984` indexes `G2037[row]`, but `DUNVIEW.C:1914-1926` declares the matching
+C100 coordinate/scale data as seven rows only. `FTL.idc:21033-21034`
+independently locates `G2037` at `0x2583B` and `G0230` at `0x25842`, exactly
+seven bytes later. Therefore C100 must remain no-draw for rows 7..11 until a
+PC34 runtime capture or verified I34E disassembly proves the actual mapping.
+It cannot borrow C101/M636, F0114, a marker, host geometry, or the adjacent
+mutable globals as scale values.
 
 F0115's deferred C15 receipt preserves each active same-square PC34 record in
 source-list order before material filtering, with explicit ordinary F0114/D0C

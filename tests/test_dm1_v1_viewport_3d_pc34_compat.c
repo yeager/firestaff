@@ -1148,14 +1148,29 @@ static void test_explosion_occlusion_zone_mapping(void)
                 snprintf(id, sizeof(id), "c100_scale.%zu.value", i);
                 check_int(id, scale, c100_scale_expected[i].scale);
             }
-            check_int("c100_scale.row7_rejected",
-                      dm1_viewport_3d_c100_rebirth_lightning_scale(
-                          dm1_viewport_3d_get_explosion_occlusion_spec_for_square(DM1_VIEW_SQUARE_D2R),
-                          NULL), 0);
-            check_int("c100_scale.row11_rejected",
-                      dm1_viewport_3d_c100_rebirth_lightning_scale(
-                          dm1_viewport_3d_get_explosion_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C),
-                          NULL), 0);
+            {
+                static const DM1_ViewSquareIndex c100_unproven_rows[] = {
+                    /* G2028 maps these visible C100 routes to rows 7..11,
+                     * beyond the seven bytes that original G2037 owns. */
+                    DM1_VIEW_SQUARE_D2R,
+                    DM1_VIEW_SQUARE_D1C,
+                    DM1_VIEW_SQUARE_D1L,
+                    DM1_VIEW_SQUARE_D1R,
+                    DM1_VIEW_SQUARE_D0C
+                };
+                for (size_t i = 0;
+                     i < sizeof(c100_unproven_rows) /
+                             sizeof(c100_unproven_rows[0]);
+                     ++i) {
+                    char id[112];
+                    snprintf(id, sizeof(id), "c100_scale.row%zu_rejected", i + 7);
+                    check_int(id, dm1_viewport_3d_c100_rebirth_lightning_scale(
+                                       dm1_viewport_3d_get_explosion_occlusion_spec_for_square(
+                                           c100_unproven_rows[i]),
+                                       NULL),
+                              0);
+                }
+            }
             check_int("c100_scale.null",
                       dm1_viewport_3d_c100_rebirth_lightning_scale(NULL, NULL), 0);
         }
