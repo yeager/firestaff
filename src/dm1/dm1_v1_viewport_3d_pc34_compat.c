@@ -12,11 +12,53 @@
  */
 
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
 #include <string.h>
 #include <stdlib.h>
+
+int dm1_viewport_3d_wall_host_material_receipt_pc34(
+    int map_wall_set,
+    int wallset0_graphic_index,
+    int transparent_color,
+    bool flip_horizontally,
+    int expected_width,
+    int expected_height,
+    DM1_ViewportWallHostMaterialReceiptPc34 *out_receipt)
+{
+    DM1_ViewportWallHostMaterialReceiptPc34 receipt;
+    int graphic_index;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    /* ReDMCSB DUNVIEW.C F0096:2225-2464 materializes only C093..C107
+     * before F0100/F0101/F0104/F0105 consume a wall panel. A host-scaled
+     * substitute is not an original PC34 material decision. */
+    if (wallset0_graphic_index < 93 || wallset0_graphic_index > 107 ||
+        expected_width <= 0 || expected_height <= 0 ||
+        (transparent_color != -1 && transparent_color != 10)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    graphic_index = dm1_v1_graphic_materialized_wallset_index_pc34(
+        map_wall_set, wallset0_graphic_index);
+    if (graphic_index < 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.graphic_index = graphic_index;
+    receipt.transparent_color = transparent_color;
+    receipt.flip_horizontally = flip_horizontally;
+    receipt.expected_width = expected_width;
+    receipt.expected_height = expected_height;
+    *out_receipt = receipt;
+    return 1;
+}
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Transparency color — ReDMCSB DEFS.H C10_COLOR_FLESH

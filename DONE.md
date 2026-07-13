@@ -58,6 +58,16 @@
   source candidate is rebuilt only in tail slot 2. Source: ReDMCSB `REVIVE.C`
   F0280 and F0282:744-845. Verification: focused CTest against installed
    PC34 data.
+- 2026-07-13 DM1 F0115 HoC wall-material ownership: moved final F0096
+  C093..C107 wall-set material selection for M11's D1C/D2C/D3C paths into a
+  DM1 receipt. M11 accepts only the exact original bitmap dimensions and
+  no-draws instead of scaling a host substitute; missing F0098 floor/ceiling
+  material also remains black rather than generating a gray corridor. C127
+  remains on its existing C346/C026 receipt route. A real-PC34 HoC test loads
+  the three wall panels and validates the visible mirror/portrait route. Source: ReDMCSB
+  `DUNVIEW.C` F0096:2225-2464, F0100/F0101/F0115/F0128 and `DUNGEON.C`
+  F0172. Verification: focused CTest against installed PC34 data. The
+   separate legacy memory-limit behavior remains REDMCSB-DM1-GAP-004.
 - 2026-07-13 DM1 HoC C160 non-inscription redraw audit: a real-PC34
   regression establishes M648/C10 from a visible inscription, opens C040 on
   an authentic C127 mirror, resolves C160, then makes the first ordinary

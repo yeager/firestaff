@@ -204,6 +204,12 @@ ReDMCSB WIP 2021-02-06 source tree.
   not decide modern host rendering. **Required independent evidence:** PC34
   `GRAPHICS.DAT`/`DUNGEON.DAT` pair and original-PC/DOS capture of HoC,
   resurrection, rename, and a controlled custom-dungeon memory case.
+  **2026-07-13 implementation boundary:** DM1 now owns F0096 wall-set
+  material receipts for the remaining M11 D1C/D2C/D3C wall blits; host code
+  rejects mismatched graphics rather than scaling a substitute. Real-PC34 HoC
+  coverage proves C093/C098/C103 material plus C127/C026. This does not close
+  the documented platform-memory gap: an original-PC custom-dungeon capture is
+  still required for the legacy loading workaround.
 
 - REDMCSB-DM1-GAP-005 — **ReDMCSB `CHAMPION.C`
   F0306_CHAMPION_GetStaminaAdjustedValue, lines 1078-1100.** The source notes
