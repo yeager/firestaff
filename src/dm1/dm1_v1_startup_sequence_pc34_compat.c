@@ -3,6 +3,7 @@
 #include "dm1_v1_original_save_classifier.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "entrance_frontend_pc34_compat.h"
+#include "firestaff/dm1/v1/palette_entrance_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include "vga_palette_pc34_compat.h"
@@ -17,6 +18,24 @@
  * SWSH.C does. Keep the runtime cadence on the shared 50 Hz/20 ms VBlank,
  * not the unrelated decoded TITLE.DAT frame-bank duration. */
 #define DM1_V1_STARTUP_TITLE_VBLANK_TICK_MS_PC34 20u
+
+static unsigned int dm1_v1_startup_entrance_palette_fingerprint_pc34(void) {
+    const unsigned int *palette = dm1_v1_palette_entrance_table_pc34();
+    const int count = dm1_v1_palette_entrance_size_pc34();
+    unsigned int hash = 2166136261u;
+    int index;
+
+    if (!palette || count != DM1_V1_PALETTE_ENTRANCE_PC34_COMPAT_SIZE) {
+        return 0U;
+    }
+    for (index = 0; index < count; ++index) {
+        hash ^= palette[index];
+        hash *= 16777619u;
+    }
+    hash ^= (unsigned int)count;
+    hash *= 16777619u;
+    return hash ? hash : 1U;
+}
 
 static unsigned int dm1_v1_startup_hoc_capture_consumer_hash_pc34(
     unsigned int mask) {
@@ -4795,6 +4814,7 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 receipt;
     V1_TitleFrontendSourceTiming title_timing;
     EntranceCompatSourceAnimationStep entrance_pre_open_step;
+    DM1_V1_PaletteEntranceResultPc34 entrance_palette;
     int presents_palette = 0;
     int title_palette = 0;
 
@@ -4802,6 +4822,7 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
         return 0;
     }
     memset(&receipt, 0, sizeof(receipt));
+    memset(&entrance_palette, 0, sizeof(entrance_palette));
     if (!dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
         *out_receipt = receipt;
         return 1;
@@ -4819,6 +4840,11 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
         /* ReDMCSB TITLE.C F0437:319-324 uses C12_PRESENTS, then
          * F0437:362-402 installs C13_DUNGEON + C14_MASTER.  A shared or
          * unresolved palette would visibly corrupt the original transition. */
+        return 0;
+    }
+    if (!dm1_v1_palette_entrance_run_pc34(&entrance_palette) ||
+        !entrance_palette.accepted ||
+        dm1_v1_startup_entrance_palette_fingerprint_pc34() == 0U) {
         return 0;
     }
 
@@ -4868,6 +4894,11 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     receipt.entrance_door_step_count =
         ENTRANCE_Compat_GetDoorAnimationStepCount();
     receipt.entrance_vblank_ms = ENTRANCE_Compat_GetVblankDelayMs();
+    receipt.entrance_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
+    receipt.entrance_palette_entry_count =
+        (unsigned int)entrance_palette.tableSize;
+    receipt.entrance_palette_fingerprint =
+        dm1_v1_startup_entrance_palette_fingerprint_pc34();
     memset(&entrance_pre_open_step, 0, sizeof(entrance_pre_open_step));
     if (ENTRANCE_Compat_GetSourceAnimationStep(6u, &entrance_pre_open_step) &&
         entrance_pre_open_step.kind ==
@@ -5017,11 +5048,13 @@ unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
 int dm1_v1_startup_entrance_timing_receipt_valid_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt) {
     EntranceCompatSourceAnimationStep pre_open_step;
+    DM1_V1_PaletteEntranceResultPc34 entrance_palette;
 
     if (!media_receipt || !media_receipt->handled) {
         return 0;
     }
     memset(&pre_open_step, 0, sizeof(pre_open_step));
+    memset(&entrance_palette, 0, sizeof(entrance_palette));
     if (!ENTRANCE_Compat_GetSourceAnimationStep(6U, &pre_open_step) ||
         pre_open_step.kind != ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY) {
         return 0;
@@ -5034,7 +5067,15 @@ int dm1_v1_startup_entrance_timing_receipt_valid_pc34(
         media_receipt->entrance_vblank_ms ==
             ENTRANCE_Compat_GetVblankDelayMs() &&
         media_receipt->entrance_pre_open_delay_ms ==
-            ENTRANCE_Compat_GetRuntimeDelayMs(&pre_open_step);
+            ENTRANCE_Compat_GetRuntimeDelayMs(&pre_open_step) &&
+        dm1_v1_palette_entrance_run_pc34(&entrance_palette) &&
+        entrance_palette.accepted &&
+        media_receipt->entrance_palette ==
+            VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+        media_receipt->entrance_palette_entry_count ==
+            (unsigned int)entrance_palette.tableSize &&
+        media_receipt->entrance_palette_fingerprint ==
+            dm1_v1_startup_entrance_palette_fingerprint_pc34();
 }
 
 int dm1_v1_startup_entrance_render_audio_command_pc34(
@@ -5076,6 +5117,9 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
     command.lower_level_audio_helper_owned = 1;
     command.source_step = source_step;
     command.present_entrance_palette = 1;
+    command.entrance_palette = media_receipt->entrance_palette;
+    command.entrance_palette_fingerprint =
+        media_receipt->entrance_palette_fingerprint;
     command.delay_ms =
         dm1_v1_startup_entrance_step_delay_ms_pc34(media_receipt,
                                                    entrance_event_kind,

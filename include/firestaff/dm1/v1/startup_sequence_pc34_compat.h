@@ -72,6 +72,9 @@ typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
     unsigned int entrance_door_step_count;
     unsigned int entrance_vblank_ms;
     unsigned int entrance_pre_open_delay_ms;
+    int entrance_palette;
+    unsigned int entrance_palette_entry_count;
+    unsigned int entrance_palette_fingerprint;
     const char* source_evidence;
 } DM1_V1_StartupFullGraphicsMediaReceipt_PC34;
 
@@ -107,6 +110,8 @@ typedef struct DM1_V1_StartupEntranceRenderAudioCommand_PC34 {
     unsigned int audio_volume;
     unsigned int source_step;
     unsigned int door_animation_step;
+    int entrance_palette;
+    unsigned int entrance_palette_fingerprint;
     int door_geometry_ready;
     unsigned int door_left_box_x;
     unsigned int door_left_box_y;

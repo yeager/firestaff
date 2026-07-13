@@ -27,6 +27,14 @@
    and nonoriginal envelopes remain rejected and never become import evidence.
    Verification: focused original-save handoff CTest.
 
+- 2026-07-13 DM1 entrance palette/timing receipt: M10 binds the PC34
+  `DATA.C` G0020 entrance palette table to the full-graphics media receipt by
+  entry count and stable fingerprint. M11 rejects an invalid receipt before
+  its first entrance present and consumes the source-carried palette ordinal
+  for every entrance frame. ReDMCSB `ENTRANCE.C F0436/F0438/F0441` timing
+   remains on the existing VBlank schedule; no synthetic frame or palette was
+   added.
+
 - 2026-07-13 Nexus Structure1F wall-sensor control/destination handoff: the
   adjacent raw four-byte tuples now reach DGN host, render-plan, and LEV00-15
   corpus receipts. This assigns no trigger, target, route, operation, mesh,

@@ -553,8 +553,13 @@ static void check_title_to_menu_boundary(void) {
                  entranceStep.kind == ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY,
              1);
     expect_u("DM1 full graphics media receipt entrance pre-open delay",
-             media.entrance_pre_open_delay_ms,
-             ENTRANCE_Compat_GetRuntimeDelayMs(&entranceStep));
+            media.entrance_pre_open_delay_ms,
+            ENTRANCE_Compat_GetRuntimeDelayMs(&entranceStep));
+    expect_i("DM1 full graphics media receipt entrance palette is PC34 source palette",
+             media.entrance_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+                 media.entrance_palette_entry_count == 16u &&
+                 media.entrance_palette_fingerprint != 0u,
+             1);
     expect_i("DM1 full graphics media receipt entrance timing valid",
              dm1_v1_startup_entrance_timing_receipt_valid_pc34(&media),
              1);
@@ -591,6 +596,11 @@ static void check_title_to_menu_boundary(void) {
     expect_i("DM1 entrance timing validator rejects too-fast pre-open",
              dm1_v1_startup_entrance_timing_receipt_valid_pc34(&badMedia),
              0);
+    badMedia = media;
+    badMedia.entrance_palette_fingerprint ^= 1u;
+    expect_i("DM1 entrance timing validator rejects altered palette evidence",
+             dm1_v1_startup_entrance_timing_receipt_valid_pc34(&badMedia),
+             0);
     expect_i("DM1 entrance command builds closed-door render",
              dm1_v1_startup_entrance_render_audio_command_pc34(
                  &media,
@@ -605,7 +615,10 @@ static void check_title_to_menu_boundary(void) {
                  entranceCommand.source_timing_receipt_consumed &&
                  entranceCommand.lower_level_renderer_helper_owned &&
                  entranceCommand.lower_level_audio_helper_owned &&
-                 entranceCommand.present_entrance_palette,
+                 entranceCommand.present_entrance_palette &&
+                 entranceCommand.entrance_palette == media.entrance_palette &&
+                 entranceCommand.entrance_palette_fingerprint ==
+                     media.entrance_palette_fingerprint,
              1);
     expect_i("DM1 entrance command builds rattle door render",
              dm1_v1_startup_entrance_render_audio_command_pc34(
