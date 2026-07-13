@@ -100,6 +100,7 @@ static void verify_real_c017_c040_hud_handoff(
 {
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
     CSB_V1_StartupAudioAction_PC34 audio_action;
     const CSB_V1_StartupRuntimeSurface_PC34 *inventory;
     const CSB_V1_StartupRuntimeSurface_PC34 *resurrect;
@@ -159,6 +160,16 @@ static void verify_real_c017_c040_hud_handoff(
                                     (size_t)resurrect->width * resurrect->height) &&
               frame.hud_binding_hash != 0u,
           "runtime frame binds original C017/C040 pixels without a wrapper surface");
+    CHECK(csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+              session, &plan, 102u, &host_surface) == 1 && host_surface.valid &&
+              host_surface.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34 &&
+              host_surface.runtime_hud_decision &&
+              host_surface.uses_c017_inventory && host_surface.uses_c040_resurrect &&
+              host_surface.raster.pixels == NULL &&
+              host_surface.no_synthetic_surface,
+          "runtime host selects original C017/C040 surfaces without a synthetic HUD raster");
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host_surface);
 }
 
 static int real_c001_title_plan(int title_frame,
@@ -292,6 +303,7 @@ static void verify_real_indexed_startup(
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
     CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
     CSB_V1_StartupRuntimeRaster_PC34 raster;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
     CSB_V1_StartupFullRuntimeReceipt_PC34 receipt;
     CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
     CSB_V1_StartupRenderPlan_PC34 plan;
@@ -411,6 +423,16 @@ static void verify_real_indexed_startup(
               "C004/C002/C003 opening capture matches verified PC CSB graphics");
     }
     csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+    CHECK(csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+              &session, &plan, 5u, &host_surface) == 1 && host_surface.valid &&
+              host_surface.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34 &&
+              host_surface.door_opening_decision &&
+              host_surface.raster.door_composited &&
+              host_surface.raster.source_surface_count == 3 &&
+              host_surface.no_synthetic_surface,
+          "runtime host opening decision consumes C004 plus original C002/C003 strips");
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host_surface);
 
     CHECK(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
               &session, &receipt) == 1 && receipt.valid &&

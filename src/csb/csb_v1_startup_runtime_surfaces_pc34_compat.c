@@ -580,6 +580,126 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
     return out_frame->valid;
 }
 
+void csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *receipt)
+{
+    if (!receipt) return;
+    csb_v1_boot_startup_runtime_raster_release_pc34(&receipt->raster);
+    memset(receipt, 0, sizeof(*receipt));
+}
+
+int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    uint32_t source_tick,
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 receipt;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!session || !plan ||
+        !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+            session, plan, source_tick, &receipt.frame)) {
+        return 0;
+    }
+
+    receipt.real_asset_matched = receipt.frame.real_asset_matched;
+    receipt.no_legacy_wrappers = receipt.frame.no_legacy_wrappers;
+    receipt.no_synthetic_surface = 1;
+    receipt.uses_c017_inventory =
+        receipt.frame.hud_inventory_surface &&
+        receipt.frame.hud_inventory_surface->source_asset_id == 17 &&
+        receipt.frame.hud_inventory_pixel_hash != 0u;
+    receipt.uses_c040_resurrect =
+        receipt.frame.hud_resurrect_surface &&
+        receipt.frame.hud_resurrect_surface->source_asset_id == 40 &&
+        receipt.frame.hud_resurrect_surface->transparent_color == 6 &&
+        receipt.frame.hud_resurrect_pixel_hash != 0u;
+
+    if (plan->title_stage == CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34) {
+        /* ReDMCSB ENTRANCE.C F0806 leaves the temporary entrance loop before
+         * DUNVIEW/PANEL consume the live HUD.  Do not turn C017/C040 into a
+         * made-up 320x200 frame: hand their original decoded surfaces to the
+         * host as the explicit runtime decision. */
+        if (session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34 ||
+            !receipt.frame.uses_verified_hud_bindings ||
+            !receipt.uses_c017_inventory || !receipt.uses_c040_resurrect) {
+            return 0;
+        }
+        receipt.host_surface = CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34;
+        receipt.runtime_hud_decision = 1;
+    } else {
+        if (!csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                &receipt.frame, plan, &receipt.raster) ||
+            !receipt.raster.valid || !receipt.raster.real_asset_matched) {
+            csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                &receipt);
+            return 0;
+        }
+        if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
+            if (!receipt.raster.title_composited ||
+                receipt.raster.source_surface_count != 1) {
+                csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                    &receipt);
+                return 0;
+            }
+            receipt.host_surface = CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34;
+        } else if (plan->surface ==
+                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
+            if (!plan->opening_composite_valid || !receipt.raster.door_composited ||
+                receipt.raster.source_surface_count != 3) {
+                csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                    &receipt);
+                return 0;
+            }
+            receipt.host_surface =
+                CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34;
+            receipt.door_opening_decision = 1;
+        } else if (plan->surface ==
+                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34) {
+            if (!receipt.raster.entrance_composited ||
+                !receipt.raster.door_composited ||
+                receipt.raster.source_surface_count != 3) {
+                csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                    &receipt);
+                return 0;
+            }
+            receipt.host_surface =
+                CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34;
+        } else {
+            csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                &receipt);
+            return 0;
+        }
+    }
+    hash = csb_v1_startup_frame_hash_step_pc34(hash,
+                                                 receipt.frame.frame_route_hash);
+    hash = csb_v1_startup_frame_hash_step_pc34(hash,
+                                                 receipt.raster.route_hash);
+    hash = csb_v1_startup_frame_hash_step_pc34(hash,
+                                                 (uint32_t)receipt.host_surface);
+    hash = csb_v1_startup_frame_hash_step_pc34(
+        hash, receipt.frame.hud_binding_hash);
+    receipt.host_surface_hash = hash;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 424-463; ENTRANCE.C F0806 lines "
+        "721-826,850-889; DUNVIEW.C F0111 lines 4248-4313";
+    receipt.valid = receipt.real_asset_matched && receipt.no_legacy_wrappers &&
+        receipt.no_synthetic_surface && receipt.host_surface !=
+            CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_NONE_PC34 &&
+        receipt.host_surface_hash != 0u;
+    if (!receipt.valid) {
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &receipt);
+        return 0;
+    }
+    *out_receipt = receipt;
+    return 1;
+}
+
 int csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupFullRuntimeReceipt_PC34 *out_receipt)

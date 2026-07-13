@@ -1105,6 +1105,34 @@ typedef struct CSB_V1_StartupRuntimeRaster_PC34 {
     uint32_t route_hash;
 } CSB_V1_StartupRuntimeRaster_PC34;
 
+/* A concrete CSB host-surface decision, backed only by the owning PC34
+ * startup session.  TITLE.C F0437 presents C001 from its resident source;
+ * ENTRANCE.C F0806 retains C002-C005 until the entrance loop exits; and
+ * DUNVIEW.C F0111 selects real door-frame pixels for an opening state. */
+typedef enum CSB_V1_StartupRuntimeHostSurface_PC34 {
+    CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_NONE_PC34 = 0,
+    CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34,
+    CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34,
+    CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34,
+    CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34
+} CSB_V1_StartupRuntimeHostSurface_PC34;
+
+typedef struct CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 {
+    int valid;
+    int real_asset_matched;
+    int no_legacy_wrappers;
+    int no_synthetic_surface;
+    CSB_V1_StartupRuntimeHostSurface_PC34 host_surface;
+    int door_opening_decision;
+    int runtime_hud_decision;
+    int uses_c017_inventory;
+    int uses_c040_resurrect;
+    uint32_t host_surface_hash;
+    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
+    CSB_V1_StartupRuntimeRaster_PC34 raster;
+    const char *source_evidence;
+} CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34;
+
 /* Runtime-only startup presentation.  This is the CSB boundary for title,
  * entrance/HUD, utility, and opening-door plans when verified game data is
  * present.  The older snapshot helpers remain inspection adapters. */
@@ -1344,6 +1372,13 @@ int csb_v1_boot_startup_runtime_frame_rasterize_pc34(
     const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
+void csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *receipt);
+int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    uint32_t source_tick,
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupFullRuntimeReceipt_PC34 *out_receipt);

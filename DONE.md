@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB PC34 runtime host-surface decision: the CSB-owned startup
+  session now promotes C004 plus C002/C003 only as a three-surface door-opening
+  raster, and promotes C017/C040 only as their original decoded HUD surfaces.
+  The latter deliberately creates no synthetic 320x200 HUD image; C040 keeps
+  PANEL.C transparency index 6. Source: ReDMCSB `TITLE.C F0437:424-463`,
+  `ENTRANCE.C F0806:721-826,850-889`, and `DUNVIEW.C F0111:4248-4313`.
+  Verification: local PC34 `firestaff_csb_v1_pc_real_asset_launch_probe`
+  passed 47/47 checks.
+
 - 2026-07-13 CSB PC34 package consumption receipt: the real-asset launch
   probe now proves that the hash-verified PC34 package is consumed by one
   source-owned C001 PRESENTS/CHAOS/STRIKES and C017/C040 HUD session. The
