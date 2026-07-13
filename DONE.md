@@ -10,6 +10,17 @@
   `Timer.cpp:2343-2367`, `DSA.cpp:5329-5441`. Verification: Ninja and CTest
   `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- ✅ 2026-07-13 DM2 skproject floor-object local-palette consumer:
+  source-required `QUERY_DUNGEON_MAP_CHIP_PICT` floor items now accept a
+  decoded GDAT IMG3 only with the matching `QUERY_GDAT_IMAGE_LOCALPAL` receipt
+  and block the material with no fallback art when that palette is absent. A
+  focused source-data gate proves the image/palette share one GDAT index, the
+  local palette reaches the framebuffer, and missing palette metadata leaves
+  the object unpainted. Verification: Ninja targets
+  `test_dm2_v1_item_local_palette_gate` and
+  `test_dm2_v1_creature_local_palette_gate`; matching CTest run passed 2/2;
+   `git diff --check` passed.
+
 - ✅ 2026-07-13 DM2 skproject wall/door local-palette consumer: source-required
   GDAT wall panels plus door panel, overlay, frame, and button paths now bind
   each decoded image to its own `QUERY_GDAT_IMAGE_LOCALPAL` receipt and leave
