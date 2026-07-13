@@ -1356,6 +1356,14 @@ and real community-save corpus round-trip evidence.
     Cell/Effect events. Remaining save breadth is other source union
     families, original dungeon-tail import breadth, and real community-save
     corpus evidence.
+  - 2026-07-13 update: opt-in external-corpus rows now retain a separate
+    C25 receipt for the exact four source-owned union bytes: `B.Location`
+    followed by `C.Slot`. The receipt canonicalizes only EVENT storage order
+    after F0651, records count/byte length/fingerprint, and requires exact
+    source/export identity for every observed C25. It does not infer an
+    explosion from `Cell/Effect`, or alter F0435/F0802 runtime behavior.
+    Remaining work is authentic community-save coverage and broader
+    dungeon-tail import.
     Remaining work is broader original dungeon-tail import breadth and real
     community-save corpus evidence.
   - 2026-07-13 update: F0435 dungeon-tail preflight now also enforces the

@@ -6,6 +6,13 @@
   and banked zero-page/CPU-state observations. The new verifier rejects any
   changed call row and deliberately assigns no payload, bitmap, palette,
   object, or level semantics.
+- 2026-07-13 DM1 PC34 C25 external-corpus receipt: opt-in external corpus
+  rows now retain canonical four-byte explosion unions (`B.Location` plus
+  `C.Slot`) with counts, byte lengths, and fingerprints. The receipt sorts
+  only event-storage rows after F0651; it does not reinterpret `Cell/Effect`
+  or construct an explosion. Real corpus candidates require exact source and
+  transient-export identity. Source: ReDMCSB `PROJEXPL.C` F0213 and
+  `LOADSAVE.C` F0433/F0435. Verification: focused native-PC34 handoff CTest.
 
 - 2026-07-13 DM1 PC34 C13 external-corpus byte receipt: opt-in external
   PC34 rows now retain canonical ten-byte Vi Altar EVENT payload counts,

@@ -219,6 +219,18 @@ typedef struct {
     uint32_t source_c13_timeline_reference_fingerprint;
     uint32_t exported_c13_timeline_reference_byte_count;
     uint32_t exported_c13_timeline_reference_fingerprint;
+    /* PROJEXPL.C F0213 owns C25's B.Location and C.Slot union bytes. Keep
+     * their four-byte record apart from generic EVENT fields. */
+    int c25_union_slot_byte_receipt_available;
+    int source_c25_event_count;
+    int exported_c25_event_count;
+    int c25_union_slot_byte_preserved_count;
+    int c25_union_slot_byte_mismatch_count;
+    int c25_union_slot_byte_preservation_ok;
+    uint32_t source_c25_union_slot_byte_count;
+    uint32_t source_c25_union_slot_fingerprint;
+    uint32_t exported_c25_union_slot_byte_count;
+    uint32_t exported_c25_union_slot_fingerprint;
     int c4_timeline_layout_receipt_available;
     uint32_t source_c4_timeline_index_count;
     uint32_t source_c4_timeline_byte_count;
@@ -318,6 +330,16 @@ typedef struct {
     uint32_t source_c13_timeline_reference_fingerprint;
     uint32_t exported_c13_timeline_reference_byte_count;
     uint32_t exported_c13_timeline_reference_fingerprint;
+    int c25_union_slot_byte_receipt_available;
+    int source_c25_event_count;
+    int exported_c25_event_count;
+    int c25_union_slot_byte_preserved_count;
+    int c25_union_slot_byte_mismatch_count;
+    int c25_union_slot_byte_preservation_ok;
+    uint32_t source_c25_union_slot_byte_count;
+    uint32_t source_c25_union_slot_fingerprint;
+    uint32_t exported_c25_union_slot_byte_count;
+    uint32_t exported_c25_union_slot_fingerprint;
     int c4_timeline_layout_receipt_available;
     uint32_t source_c4_timeline_index_count;
     uint32_t source_c4_timeline_byte_count;
