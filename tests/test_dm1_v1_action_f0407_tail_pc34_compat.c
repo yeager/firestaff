@@ -3,6 +3,7 @@
 #include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
+#include "firestaff/dm1/v1/G0491_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 
@@ -1258,7 +1259,7 @@ static void test_melee_damage_emission_plan(void) {
 
     memset(&runtimeIn, 0, sizeof(runtimeIn));
     runtimeIn.actionIndex = DM1_ACTION_CHOP;
-    runtimeIn.defaultDisabledTicks = 8;
+    runtimeIn.defaultDisabledTicks = 1;
     runtimeIn.observedAttackDamage = 13;
     runtimeIn.combatOutcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
     CHECK_EQ(dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
@@ -1270,8 +1271,10 @@ static void test_melee_damage_emission_plan(void) {
     CHECK_EQ(runtimeOut.showDamageFeedback, 1,
              "melee runtime positive damage feedback");
     CHECK_EQ(runtimeOut.damage, 13, "melee runtime damage copied");
-    CHECK_EQ(runtimeOut.disabledTicks, 8,
-             "melee runtime damage keeps disabled ticks");
+    CHECK_EQ(runtimeOut.disabledTicks,
+             dm1_v1_graphic560_action_disabled_ticks_get_pc34(
+                 DM1_ACTION_CHOP),
+             "melee runtime damage uses G0491 disabled ticks");
 
     runtimeIn.observedAttackDamage = 0;
     runtimeIn.combatOutcome = COMBAT_OUTCOME_MISS;
@@ -1286,10 +1289,10 @@ static void test_melee_damage_emission_plan(void) {
 
     memset(&runtimeIn, 0, sizeof(runtimeIn));
     runtimeIn.actionIndex = DM1_ACTION_BASH;
-    runtimeIn.defaultDisabledTicks = 9;
+    runtimeIn.defaultDisabledTicks = 99;
     runtimeIn.combatOutcome = COMBAT_OUTCOME_INVALID;
     runtimeIn.closedDoorBranchPerformed = 1;
-    runtimeIn.closedDoorDisabledTicks = 6;
+    runtimeIn.closedDoorDisabledTicks = 99;
     CHECK_EQ(dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
                  &runtimeIn, &runtimeOut), 1,
              "melee runtime closed-door outcome builds");
@@ -1309,8 +1312,10 @@ static void test_melee_damage_emission_plan(void) {
     CHECK_EQ(runtimeOut.performed, 0, "empty-front parry not performed");
     CHECK_EQ(runtimeOut.meleeFailureTail, 1,
              "empty-front parry uses failure tail");
-    CHECK_EQ(runtimeOut.disabledTicks, 5,
-             "failure outcome keeps base ticks before tail adjustment");
+    CHECK_EQ(runtimeOut.disabledTicks,
+             dm1_v1_graphic560_action_disabled_ticks_get_pc34(
+                 DM1_ACTION_PARRY),
+             "failure outcome uses G0491 ticks before tail adjustment");
 
     memset(&killIn, 0, sizeof(killIn));
     killIn.creatureType = 6;
@@ -1436,14 +1441,11 @@ static void test_melee_pre_f0231_gates(void) {
 static void test_melee_weapon_profile_plan(void) {
     DM1_MeleeWeaponProfileInputPc34 in;
     DM1_MeleeWeaponProfilePlanPc34 out;
+    DM1_ActionXpRoute route;
     int chopHit = dm1_v1_graphic560_action_hit_probability_get_pc34(
         DM1_ACTION_CHOP);
     int chopDamage = dm1_v1_graphic560_action_damage_factor_get_pc34(
         DM1_ACTION_CHOP);
-    int meleeHit = dm1_v1_graphic560_action_hit_probability_get_pc34(
-        DM1_ACTION_MELEE);
-    int meleeDamage = dm1_v1_graphic560_action_damage_factor_get_pc34(
-        DM1_ACTION_MELEE);
     int disruptHit = dm1_v1_graphic560_action_hit_probability_get_pc34(
         DM1_ACTION_DISRUPT);
     int disruptDamage = dm1_v1_graphic560_action_damage_factor_get_pc34(
@@ -1456,7 +1458,9 @@ static void test_melee_weapon_profile_plan(void) {
     in.kineticEnergy = 18;
     in.weaponAttributes = 0x55;
     in.actionIndex = DM1_ACTION_CHOP;
-    in.actionSkillIndex = 6;
+    CHECK_EQ(dm1_v1_action_xp_route(DM1_ACTION_CHOP, &route), 1,
+             "CHOP source XP route builds");
+    in.actionSkillIndex = route.skillIndex;
     CHECK_EQ(dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
                  &in, &out), 1,
              "CHOP weapon profile builds");
@@ -1491,6 +1495,9 @@ static void test_melee_weapon_profile_plan(void) {
 
     in.weaponType = 12;
     in.actionIndex = DM1_ACTION_DISRUPT;
+    CHECK_EQ(dm1_v1_action_xp_route(DM1_ACTION_DISRUPT, &route), 1,
+             "DISRUPT source XP route builds");
+    in.actionSkillIndex = route.skillIndex;
     CHECK_EQ(dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
                  &in, &out), 1,
              "DISRUPT weapon profile builds");
@@ -1504,16 +1511,16 @@ static void test_melee_weapon_profile_plan(void) {
     CHECK_EQ(out.weaponProfile.damageFactor, disruptDamage,
              "DISRUPT damage factor from G0492");
 
+    in.actionSkillIndex = 6;
+    CHECK_EQ(dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
+                 &in, &out), 0,
+             "mismatched source XP skill rejects profile");
+
     in.actionIndex = 999;
     CHECK_EQ(dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
-                 &in, &out), 1,
-             "invalid action profile falls back");
-    CHECK_EQ(out.normalizedActionIndex, DM1_ACTION_MELEE,
-             "invalid action falls back to MELEE");
-    CHECK_EQ(out.weaponProfile.hitProbability, meleeHit,
-             "fallback hit probability");
-    CHECK_EQ(out.weaponProfile.damageFactor, meleeDamage,
-             "fallback damage factor");
+                 &in, &out), 0,
+             "invalid action profile rejects without default");
+    CHECK_EQ(out.valid, 0, "invalid profile remains invalid");
 }
 
 static void test_melee_f0231_side_effect_plan(void) {
