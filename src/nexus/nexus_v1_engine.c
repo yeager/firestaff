@@ -877,6 +877,11 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     memset(&plan->structure1f_item_floor_material_receipt, 0,
            sizeof(plan->structure1f_item_floor_material_receipt));
     plan->structure1f_item_floor_materials_consumed = 0;
+    memset(plan->structure1f_direct_floor_sources, 0,
+           sizeof(plan->structure1f_direct_floor_sources));
+    memset(&plan->structure1f_direct_floor_source_receipt, 0,
+           sizeof(plan->structure1f_direct_floor_source_receipt));
+    plan->structure1f_direct_floor_sources_consumed = 0;
     plan->level = engine->game.current_level;
     plan->party_x = party_x;
     plan->party_y = party_y;
@@ -960,6 +965,23 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         plan->structure2_floor_command_source_receipt.complete &&
         !plan->structure2_floor_command_source_receipt
             .fallback_visuals_permitted;
+    /* Preserve every visible direct Structure1F row on its exact floor
+     * command before the existing no-draw semantics gate rejects the plan.
+     * This is an immutable runtime source receipt, never a request to draw
+     * or interpret the copied record. */
+    if (nexus_v1_dgn_bind_direct_structure1f_floor_sources(
+            &engine->current_level, plan->commands,
+            plan->receipt.command_count, plan->structure1f_direct_floor_sources,
+            NEXUS_V1_DGN_RUNTIME_DIRECT_SOURCE_MAX,
+            &plan->structure1f_direct_floor_source_receipt) != 0) {
+        plan->receipt.blocks_real_dgn_mesh_render = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
+        return NULL;
+    }
+    plan->structure1f_direct_floor_sources_consumed =
+        plan->structure1f_direct_floor_source_receipt.complete &&
+        !plan->structure1f_direct_floor_source_receipt
+             .fallback_visuals_permitted;
     /* Direct Structure1Fa records get the same one-way host consumption.
      * The binder returns only original ITEM.IBS descriptor references for
      * floor commands in the current view; it cannot turn an icon/floor byte
