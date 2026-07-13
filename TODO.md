@@ -26,6 +26,8 @@ The Mednafen trace harness now forces System Card 3.0 and the correct raw-CUE
 PCE route. It records reproducible CPU progress but still lacks the original
 target-PC snapshots required to select the IRQ2 hardware branch. Continue with
 real trace evidence only; no inferred CD register value may enter runtime.
+The verified `$e8ec` path is a fixed `$1804` latch/counter delay, so the next
+capture boundary is after that delay rather than a CD-state condition at it.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 
