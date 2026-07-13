@@ -354,6 +354,10 @@ typedef struct {
     int structure1g_entry_count;
     int structure1g_floor_animation_cell_count;
     int structure1g_floor_animation_bound_count;
+    /* A valid Structure1G instruction stream is not enough for a drawable
+     * DGN handoff. Every declared global image index must resolve to its
+     * local Structure2 descriptor before the host can rely on the table. */
+    int structure1g_structure2_bindings_complete;
     Nexus_V1_DgnStructure2Texture
         structure2_textures[NEXUS_DGN_MAX_STRUCTURE2_TEXTURES];
     int structure2_texture_count;
@@ -423,6 +427,7 @@ typedef struct {
     int structure1g_goto_instruction_count;
     int structure1g_structure2_image_instruction_bound_count;
     int structure1g_structure2_image_instruction_unbound_count;
+    int structure1g_structure2_bindings_complete;
 } Nexus_V1_DgnRendererHandoffReceipt;
 
 typedef enum {
@@ -515,6 +520,7 @@ typedef struct {
     int structure1g_goto_instruction_count;
     int structure1g_structure2_image_instruction_bound_count;
     int structure1g_structure2_image_instruction_unbound_count;
+    int structure1g_structure2_bindings_complete;
     int animated_material_command_count;
     int unresolved_animated_material_count;
     int source_cell_count;
