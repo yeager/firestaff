@@ -342,6 +342,8 @@ typedef struct {
     uint32_t game_id;
     uint32_t source_byte_count;
     uint32_t source_hash;
+    uint32_t source_f7057_envelope_end_offset;
+    uint32_t source_f7057_trailing_byte_count;
     uint32_t exported_byte_count;
     uint32_t exported_hash;
     int source_c13_event_count;
@@ -459,6 +461,8 @@ typedef struct {
     int pc34_version_platform_identity_ok;
     int pc34_importer_candidate;
     int pc34_loader_part_envelope_candidate;
+    uint32_t f7057_envelope_end_offset;
+    uint32_t f7057_trailing_byte_count;
     int external_original;
     int roundtrip_eligible;
     int result;

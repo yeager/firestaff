@@ -232,6 +232,13 @@ ReDMCSB WIP 2021-02-06 source tree.
   recorded PC34 save corpus spanning new game, HoC selection, deaths/bones,
   active groups, pending events, backup, and rejected/corrupt files, with
   original-load and byte round-trip results.
+  - 2026-07-13 update: external-PC34 corpus discovery and per-file receipts
+    now retain the exact F7057 five-part envelope endpoint and the untouched
+    trailing-byte count that F0435 must consume as portraits/dungeon tail.
+    This distinguishes a valid envelope with a later corrupt suffix from a
+    malformed F7057 body without decoding or promoting tail bytes. Remaining
+    evidence is a provenance-recorded real PC34 corpus across the listed
+    gameplay states and original executable load results.
 
 - REDMCSB-DM1-GAP-008 — **ReDMCSB `LOADSAVE.C`
   F1057/F0433/F1059 and `COMMAND.C` save-command checksum gates.** Save

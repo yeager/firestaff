@@ -3942,6 +3942,9 @@ static void test_corpus_roundtrip_proof(void)
     int failed_eligible_discoveries = 0;
     int tail_failed_receipts = 0;
     int rejected_discoveries = 0;
+    int envelope_provenance_rows = 0;
+    uint32_t normal_f7057_trailing_bytes = 0u;
+    uint32_t corrupt_f7057_trailing_bytes = 0u;
     DM1OriginalSavePC34CorpusRoundtripReport report;
     int rc;
 
@@ -3989,6 +3992,20 @@ static void test_corpus_roundtrip_proof(void)
         const DM1OriginalSavePC34CorpusDiscoveryReceipt *discovery =
             &report.discovery_receipts[i];
         if (discovery->roundtrip_eligible) {
+            if (discovery->f7057_envelope_end_offset >
+                    SAVEGAME_PC34_DM_SAVE_HEADER_SIZE &&
+                discovery->f7057_envelope_end_offset +
+                        discovery->f7057_trailing_byte_count ==
+                    discovery->source_byte_count) {
+                ++envelope_provenance_rows;
+                if (strstr(discovery->path, "corrupt-c4.bin")) {
+                    corrupt_f7057_trailing_bytes =
+                        discovery->f7057_trailing_byte_count;
+                } else {
+                    normal_f7057_trailing_bytes =
+                        discovery->f7057_trailing_byte_count;
+                }
+            }
             if (discovery->header_prefix_fingerprint != 0u &&
                 discovery->pc34_version_platform_identity_ok &&
                 discovery->save_format_id == SAVEGAME_PC34_FORMAT_DUNGEON_MASTER_PC &&
@@ -4006,6 +4023,10 @@ static void test_corpus_roundtrip_proof(void)
     }
     CHECK(failed_eligible_discoveries == 3,
           "empty-subtype candidates retain explicit corpus failure receipts");
+    CHECK(envelope_provenance_rows == 3 && normal_f7057_trailing_bytes > 0u &&
+              corrupt_f7057_trailing_bytes ==
+                  normal_f7057_trailing_bytes + 1u,
+          "F7057 receipt separates authentic tail boundary from corrupt suffix");
     CHECK(rejected_discoveries == 1,
           "rejected discovery receipt retains explicit reason");
     CHECK(report.pc34_candidate_count == 3, "corpus selects only PC34 files");
@@ -4047,6 +4068,12 @@ static void test_corpus_roundtrip_proof(void)
             receipt->source_byte_count == 0u ||
             receipt->source_hash == 0u || receipt->exported_byte_count != 0u ||
             receipt->exported_hash != 0u || !receipt->path[0] ||
+             receipt->source_f7057_envelope_end_offset <=
+                 SAVEGAME_PC34_DM_SAVE_HEADER_SIZE ||
+             receipt->source_f7057_envelope_end_offset +
+                     receipt->source_f7057_trailing_byte_count !=
+                 receipt->source_byte_count ||
+             !receipt->c13_byte_receipt_available ||
             !receipt->header_part_shape_receipt_available ||
             !receipt->m516_champion_record_receipt_available ||
             !receipt->c4_timeline_layout_receipt_available ||
@@ -4159,6 +4186,12 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
               receipt->header_identity_preservation_ok &&
               receipt->part_byte_count_preservation_ok,
               "real PC34 corpus retains header identity and part lengths");
+        CHECK(receipt->source_f7057_envelope_end_offset >
+                  SAVEGAME_PC34_DM_SAVE_HEADER_SIZE &&
+              receipt->source_f7057_envelope_end_offset +
+                      receipt->source_f7057_trailing_byte_count ==
+                  receipt->source_byte_count,
+              "real PC34 corpus retains the F7057-to-F0435 byte boundary");
         CHECK(receipt->m516_champion_record_receipt_available &&
               receipt->m516_champion_record_byte_preservation_ok &&
               receipt->source_m516_champion_record_count == CHAMPION_MAX_PARTY &&

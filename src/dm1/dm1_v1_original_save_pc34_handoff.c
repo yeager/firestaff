@@ -4488,6 +4488,10 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             classified->pc34_importer_candidate;
         discovery->pc34_loader_part_envelope_candidate =
             classified->pc34_loader_part_envelope_candidate;
+        discovery->f7057_envelope_end_offset =
+            classified->save_part_loader_envelope_end_offset;
+        discovery->f7057_trailing_byte_count =
+            classified->save_part_loader_trailing_byte_count;
         discovery->roundtrip_eligible =
             classified->pc34_loader_part_envelope_candidate &&
             discovery->pc34_version_platform_identity_ok;
@@ -4565,6 +4569,10 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         receipt->source_byte_count = (uint32_t)source_size;
         receipt->source_hash = dm1_original_save_hash_bytes(
             source_bytes, source_size);
+        receipt->source_f7057_envelope_end_offset =
+            corpus.results[i].save_part_loader_envelope_end_offset;
+        receipt->source_f7057_trailing_byte_count =
+            corpus.results[i].save_part_loader_trailing_byte_count;
         if (receipt->source_hash == 0u) {
             free(source_bytes);
             if (discovery) {

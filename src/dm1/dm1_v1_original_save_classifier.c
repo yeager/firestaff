@@ -243,6 +243,14 @@ static int classify_pc34_loader_part_envelope(
     out->save_part_loader_envelope_payload_bytes = payload_bytes;
     out->pc34_loader_part_envelope_candidate =
         ok_count == (uint16_t)DM1OS_SAVE_PART_COUNT;
+    if (out->pc34_loader_part_envelope_candidate) {
+        /* F7057 ends after its fifth authenticated part. F0435 alone owns
+         * the remaining portrait/dungeon-tail bytes, so retain their raw
+         * boundary for corpus evidence rather than treating them as F7057
+         * payload or guessing a tail format. */
+        out->save_part_loader_envelope_end_offset = (uint32_t)cursor;
+        out->save_part_loader_trailing_byte_count = (uint32_t)(size - cursor);
+    }
     return out->pc34_loader_part_envelope_candidate;
 }
 
