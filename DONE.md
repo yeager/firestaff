@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 GDAT weather IMG3 source bounds: the source-backed weather
+  draw receipt now retains the exact exclusive IMG3 bounds after skproject's
+  category/image `dtImageOffset` application. It refuses overflow and does
+  not invent a viewport clip or pixels; final destination clipping remains
+  blocked on the original `DRAW_TEMP_PICST` route. Source:
+  `skproject/SKULLWIN/c_querydb.cpp::DM2_QUERY_TEMP_PICST`. Verification:
+  Ninja-built and CTest-passed `dm2_v1_weather_gdat_receipt`.
+
 - 2026-07-13 Theron post-`$e981` controller-transition receipt: extended the
   clean-source Mednafen instrumentation with raw checkpoints at `$e985`,
   `$e988`, and `$e96a`. The authenticated US raw-CUE trace proves the order
