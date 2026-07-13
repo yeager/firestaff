@@ -22,6 +22,8 @@ typedef struct {
     uint32_t last_opcode_pc;
     uint64_t opcode_first_sequence;
     uint64_t opcode_last_sequence;
+    uint64_t payload_first_read_sequence;
+    uint64_t payload_last_read_sequence;
     uint64_t decoder_return_sequence;
     uint64_t capture_completion_sequence;
     uint32_t opcode_fetch_count;
