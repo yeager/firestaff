@@ -11614,6 +11614,16 @@
 
 ### Theron V1
 
+- ✅ 2026-07-13 Theron Track02 completed HuC6260-word receipt: the strict
+  Mednafen loader parser now retains completed VCE colour-table words after
+  the authenticated dynamic CD_READ/IRQ2 gate, preserving the first
+  index/value and ordered FNV receipt separately from CPU `STA` observations.
+  It rejects malformed words and does not treat VCE output as Track 02 byte
+  taint, palette-table location, or rendering permission. Verification:
+  Ninja plus focused CTest `theron_v1_irq2_live_trace_gate`,
+  `theron_v1_raw_loader_trace_ingest`, `theron_v1_raw_loader_trace_import`,
+  `theron_v1_capture_preflight_chain`, and `theron_v1_capture_manifest`.
+
 - ✅ 2026-07-13 Theron Track02 real loader-trace boundary: replaced the
   hand-authored raw I/O-row importer with a strict parser for the existing
   provenance-marked Mednafen dynamic `CD_READ`/IRQ2 receipt. It checks the

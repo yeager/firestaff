@@ -21,6 +21,10 @@ typedef struct {
     uint16_t dynamic_cd_read_destination;
     unsigned int palette_store_count;
     unsigned int palette_register_mask;
+    unsigned int palette_word_count;
+    uint16_t first_palette_word_index;
+    uint16_t first_palette_word_value;
+    uint32_t palette_word_checksum;
     uint16_t first_palette_store_pc;
     uint8_t first_palette_store_accumulator;
     int dynamic_cd_read_verified;
@@ -32,8 +36,10 @@ typedef struct {
 } Theron_V1RawLoaderTraceReceipt;
 
 /* Parses a provenance-marked instrumented Mednafen trace.  It validates the
- * existing dynamic CD_READ/IRQ2 gate first, then records only VCE stores that
- * appear after that read in the same original capture. */
+ * existing dynamic CD_READ/IRQ2 gate first, then records only VCE stores and
+ * completed HuC6260 colour-table words that appear after that read in the
+ * same original capture.  Completed VCE words establish hardware output
+ * order, not Track 02 source-byte provenance. */
 int theron_v1_raw_loader_trace_ingest_mednafen_capture(
     const char *capture,
     const char *track02_md5,
