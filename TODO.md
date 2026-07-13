@@ -211,16 +211,16 @@ ReDMCSB WIP 2021-02-06 source tree.
   the documented platform-memory gap: an original-PC custom-dungeon capture is
   still required for the legacy loading workaround.
 
-- REDMCSB-DM1-GAP-005 — **ReDMCSB `CHAMPION.C`
-  F0306_CHAMPION_GetStaminaAdjustedValue, lines 1078-1100.** The source notes
-  compiler-dependent operand evaluation; Turbo C++ 1.01, the PC 3.4 compiler,
-  takes the unexpected order. **Firestaff risk:** directly translating the C
-  expression into C11 yields neither a portable nor automatically PC34-correct
-  strength/maximum-load result. Firestaff M11 now pins the documented DM1
-  PC 3.4 Turbo C++ second-operand order in its F0312 defender path, rather
-  than inheriting the cross-media test toggle. **Still required independent
-  evidence:** PC34 executable trace or save-driven capture at below-half
-  stamina, with known strength/load inputs and observed result.
+- REDMCSB-DM1-GAP-005 — **ReDMCSB `CHAMPION.C` F0306/F0319/F0320/F0321.**
+  Firestaff now locks the PC34 F0306 compiler-order branch and M11 owns the
+  F0319 one-shot death record: inventory/bones are not duplicated across host
+  ticks or an original-save reload that already has its bones record, poison
+  lifecycle records clear with the champion, and the champion direction plus
+  C026 portrait record remain source-backed. M11 creature melee now publishes
+  the actual F0320 C015/C016 champion-damage receipt after its F0321 result.
+  **Still required independent evidence:** PC34 executable capture covering
+  nonlethal F0321 damage, death, save/reload, bones pickup, and resurrection,
+  with recorded portrait/HUD frames and save bytes.
 
 - REDMCSB-DM1-GAP-006 — **ReDMCSB `DUNGEON.C` thing allocation, around line
   2099 (`BUG0_10`).** The reserved champion-bones type uses bit 15 and the

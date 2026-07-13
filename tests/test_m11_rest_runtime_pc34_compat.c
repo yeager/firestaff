@@ -112,6 +112,11 @@ static void test_creature_attack_wakes_resting_party(void) {
     ASSERT_EQ(state.damageFlashTimer > 0, 1, "creature attack damage cue fires");
     ASSERT_EQ(state.world.party.champions[0].hp.current < 100, 1,
               "creature attack applies damage");
+    ASSERT_EQ(state.championDamageTimer[0] > 0, 1,
+              "F0320 publishes the real C015/C016 champion damage receipt");
+    ASSERT_EQ(state.championDamageAmount[0],
+              100 - state.world.party.champions[0].hp.current,
+              "F0320 receipt retains the exact F0321-applied damage amount");
 }
 
 static int run_awake_creature_attack_fixture_with_parry_xp(int32_t fighterXp,
