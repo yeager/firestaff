@@ -70,7 +70,7 @@ static int M11_GameView_GetV1SlotBoxNormalGraphicId(void)
     return dm1_v1_graphic_slot_box_normal_pc34();
 }
 
-static int M11_GameView_GetV1StatusBoxZone(
+static int probe_status_box_zone(
     int slot, int* outX, int* outY, int* outW, int* outH)
 {
     DM1_V1_ChampionStatusRectPc34 rect;
@@ -349,7 +349,7 @@ int main(int argc, char** argv)
     }
 
     ok &= expect_true("owner status box zone",
-                      M11_GameView_GetV1StatusBoxZone(PROBE_OWNER_SLOT,
+                      probe_status_box_zone(PROBE_OWNER_SLOT,
                                                       &ownerStatusX,
                                                       &ownerStatusY,
                                                       &ownerStatusW,

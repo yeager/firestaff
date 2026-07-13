@@ -4,6 +4,7 @@
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_center_door_render_pc34_compat.h"
 #include "dm1_v1_inscription_host_material_pc34_compat.h"
+#include "dm1_v1_wall_ornament_pc34_compat.h"
 
 #include <stdint.h>
 #include "menu_startup_m12.h"
@@ -126,6 +127,15 @@ static inline int M11_GameView_GetV1InventoryBackdropZone(
     if (rect.w <= 0 || rect.h <= 0) return 0;
     *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
     return 1;
+}
+
+/* Legacy source-lock probes use the old M11 spelling, while production
+ * rendering owns the coordinate table in the DM1 helper. */
+static inline int M11_GameView_GetDm1WallOrnamentZone(
+    int coordSet, int viewWallIndex, int* outX, int* outY, int* outW,
+    int* outH) {
+    return dm1_v1_wall_ornament_zone_xywh_pc34(
+        coordSet, viewWallIndex, outX, outY, outW, outH);
 }
 
 static inline int M11_GameView_GetV1MouseCommandForPoint(
