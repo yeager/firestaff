@@ -214,6 +214,8 @@ typedef struct {
     int structure3_payload_transition_count;
     int structure3_zero_block_count;
     int structure3_nonzero_block_count;
+    int structure3_nonzero_block_run_count;
+    int structure3_longest_nonzero_block_run;
     int structure3_model_reference_complete_level_count;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payloads[16];
     Nexus_V1_DgnStructure3ModelReferenceReceipt
