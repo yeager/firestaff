@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin restored `TT_53` follow-up: live runtime now retains the
+  exact saved watchdog TIMER/queue owner while requeueing its source `+300`
+  level-zero successor. Broader watchdog diagnostics remain blocked without
+  their complete CSBWin runtime state.
+
 - 2026-07-13 CSBWin restored `TT_65` follow-up: the live queue now restores
   only the saved generator's exact `timerObj8` actuator identity, retaining
   CSBWin's documented first-disabled-actuator fallback for old saves. Broader

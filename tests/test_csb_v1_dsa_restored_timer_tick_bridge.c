@@ -650,5 +650,34 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 &&
               (raw[92u] & 0x7fu) == 6u,
           "old-save generator timer uses CSBWin first-disabled fallback");
+
+    profile.csbwin_timers[0].function = 53u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].level = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_timers[0].time == profile.game_time + 299u &&
+              profile.timeline_queue.eventCount == 1,
+          "restored watchdog timer retains its CSBWin owner through +300 requeue");
+
+    profile.game_time = profile.csbwin_timers[0].time;
+    check(csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_timers[0].time == profile.game_time + 299u &&
+              profile.timeline_queue.eventCount == 1,
+          "requeued watchdog remains owned by its original saved timer slot");
+
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.timeline_queue.eventCount == 0 &&
+              profile.csbwin_timers[0].time == profile.game_time - 1u,
+          "stale watchdog identity cannot enter a generic recurring path");
     return failures == 0 ? 0 : 1;
 }

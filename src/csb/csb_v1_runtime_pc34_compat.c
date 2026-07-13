@@ -16556,7 +16556,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     uint16_t queue_slot)
 {
     const CSB_V1_DungeonData *dungeon;
-    const CSB_V1_CSBWin512TimerSummary *timer;
+    CSB_V1_CSBWin512TimerSummary *timer;
     uint16_t timer_index;
     int thing;
     int guard = 0;
@@ -16573,6 +16573,47 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     timer_index = profile->csbwin_timer_queue[queue_slot];
     if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
+    if (timer->function == DM1_EVENT_WATCHDOG) {
+        struct DM1_Event_V1 next;
+        uint32_t next_time;
+        int event_index;
+
+        /* CSBWin CSBCode.cpp:6504 delegates TT_53 to Timer.cpp:2770-2782.
+         * SetWatchdogTimer creates a zero-payload level-zero TT_53 exactly
+         * 300 game ticks after the current d.Time. Retain the original
+         * TIMER summary and queue slot for the successor: a separately
+         * invented M10 C53 event would lose the original-save owner and
+         * could not round-trip through the CSBWin timer queue. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 &&
+            profile->game_time <= 0x00fffed3u) {
+            next_time = profile->game_time + 300u;
+            memset(&next, 0, sizeof(next));
+            next.map_time = DM1_MAP_TIME_MAKE(0u, next_time);
+            next.type = DM1_EVENT_WATCHDOG;
+            event_index = csb_v1_runtime_add_timeline_event(profile, &next);
+            if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT) {
+                /* Commit only after the successor has a live heap slot. */
+                timer->time = next_time;
+                timer->level = 0u;
+                timer->ubyte5 = 0u;
+                timer->ubyte6 = 0u;
+                timer->ubyte7 = 0u;
+                timer->ubyte8 = 0u;
+                timer->ubyte9 = 0u;
+                profile->csbwin_timeline_event_queue_slot[event_index] =
+                    queue_slot;
+            }
+        }
+        /* TT_53 aliases the M10 watchdog classification. A malformed saved
+         * timer cannot be allowed to enter a generic watchdog path. */
+        return 1;
+    }
     if (timer->function == 65u) {
         CSB_V1_DungeonData *saved_dungeon;
         uint16_t generator_thing;
