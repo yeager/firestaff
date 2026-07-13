@@ -19424,6 +19424,36 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     return 1;
 }
 
+int M11_GameView_ProbeViewportFloorItemCounts(
+    const M11_GameViewState* state,
+    int relativeForward,
+    int relativeSide,
+    int* outMapX,
+    int* outMapY,
+    int* outElementType,
+    int* outFloorItems,
+    int* outSummaryItems) {
+    M11_ViewportCell cell;
+
+    if (!state || !outMapX || !outMapY || !outElementType ||
+        !outFloorItems || !outSummaryItems) {
+        return 0;
+    }
+
+    memset(&cell, 0, sizeof(cell));
+    if (!m11_sample_viewport_cell(state, relativeForward, relativeSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+
+    *outMapX = cell.mapX;
+    *outMapY = cell.mapY;
+    *outElementType = cell.elementType;
+    *outFloorItems = cell.floorItemCount;
+    *outSummaryItems = cell.summary.items;
+    return 1;
+}
+
 static int m11_viewport_cell_is_open(const M11_ViewportCell* cell) {
     if (!cell || !cell->valid) {
         return 0;

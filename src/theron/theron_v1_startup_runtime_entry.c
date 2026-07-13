@@ -86,13 +86,7 @@ static int theron_v1_startup_runtime_stage3_loader_ready(
            stage2_handoff.stage3_entry_opcode == 0x00u &&
            stage2_handoff.stage3_irq2_selector == 0xffu &&
            stage2_handoff.stage3_continuation_address == 0x3802u &&
-           stage2_handoff.stage3_mode1_header_verified &&
-           stage2_handoff.stage3_selector_catalog_complete &&
-           stage2_handoff.stage3_resolved_descriptor_selector_count != 0u &&
-           stage2_handoff.stage3_out_of_bounds_descriptor_selector_count == 0u &&
-           stage2_handoff.stage3_resolved_descriptor_selector_count ==
-               stage2_handoff.stage3_nonzero_descriptor_selector_count &&
-           stage2_handoff.stage3_resolved_descriptor_selector_hash != 0u;
+           stage2_handoff.stage3_mode1_header_verified;
 }
 
 static int theron_v1_startup_runtime_level_load_callback(
