@@ -229,6 +229,54 @@ int csb_v1_runtime_startup_title_opening_consumption_handoff_receipt_pc34(
     return 1;
 }
 
+int csb_v1_runtime_startup_hud_door_input_handoff_receipt_pc34(
+    const CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34
+        *package_receipt,
+    const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
+    CSB_V1_RuntimeStartupHudDoorInputHandoffReceipt_PC34 *out_receipt)
+{
+    CSB_V1_RuntimeStartupHudDoorInputHandoffReceipt_PC34 receipt;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!package_receipt || !runtime_receipt || !package_receipt->valid ||
+        !runtime_receipt->valid) return 0;
+
+    receipt.real_hud_door_input_consumption =
+        package_receipt->real_package_matched &&
+        package_receipt->c017_hud_consumed && package_receipt->c040_hud_consumed &&
+        package_receipt->first_live_door_frame &&
+        package_receipt->first_runtime_input &&
+        runtime_receipt->real_package_matched &&
+        runtime_receipt->hud_runtime_transition &&
+        runtime_receipt->input_runtime_transition_ready;
+    receipt.same_session_generation = package_receipt->session_generation != 0u &&
+        package_receipt->session_generation == runtime_receipt->session_generation;
+    receipt.no_legacy_wrappers = package_receipt->no_legacy_wrappers &&
+        runtime_receipt->no_legacy_wrappers;
+    receipt.no_synthetic_surface = package_receipt->no_synthetic_surface &&
+        runtime_receipt->no_synthetic_surface;
+    receipt.session_generation = package_receipt->session_generation;
+    receipt.hud_host_surface_hash = package_receipt->hud_host_surface_hash;
+    receipt.real_asset_receipt_hash = package_receipt->real_asset_receipt_hash;
+    receipt.consumed_surface_hash = package_receipt->consumed_surface_hash;
+    receipt.source_evidence =
+        "ReDMCSB PANEL.C F0346/F0347; DUNGEON.C live door tick; "
+        "COMMAND.C first input; CSBWin CSBCode.cpp OpenPrisonDoors";
+    receipt.valid = receipt.real_hud_door_input_consumption &&
+        receipt.same_session_generation && receipt.no_legacy_wrappers &&
+        receipt.no_synthetic_surface && receipt.hud_host_surface_hash != 0u &&
+        receipt.real_asset_receipt_hash != 0u &&
+        receipt.consumed_surface_hash != 0u &&
+        receipt.hud_host_surface_hash == runtime_receipt->host_surface_hash &&
+        receipt.real_asset_receipt_hash == runtime_receipt->real_asset_receipt_hash &&
+        receipt.consumed_surface_hash == runtime_receipt->consumed_surface_hash;
+    if (!receipt.valid) return 0;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int csb_v1_runtime_apply_startup_sequence_plan_from_state_facts_with_receipts_pc34(
     CSB_V1_RuntimeProfile *profile,
     const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,

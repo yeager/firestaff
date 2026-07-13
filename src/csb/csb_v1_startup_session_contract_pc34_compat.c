@@ -270,6 +270,70 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
     return 1;
 }
 
+int csb_v1_startup_session_hud_door_input_package_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *hud_host,
+    const CSB_V1_StartupSessionLiveHudReceipt_PC34 *live_hud_receipt,
+    const CSB_V1_StartupSessionDoorHudTickReceipt_PC34 *door_receipt,
+    const CSB_V1_StartupSessionInputReceipt_PC34 *input_receipt,
+    CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34 *out_receipt)
+{
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    /* ReDMCSB PANEL.C F0346/F0347 restores C017 after C040, then
+     * DUNGEON.C advances the first live door tick and COMMAND.C consumes the
+     * first input. The package receipt is carried throughout, never copied
+     * into a wrapper-owned framebuffer. CSBWin's OpenPrisonDoors reaches the
+     * same live panel-before-command boundary. */
+    if (!session || !package_receipt || !hud_host || !live_hud_receipt ||
+        !door_receipt || !input_receipt || !out_receipt || !session->valid ||
+        !package_receipt->valid || !package_receipt->real_package_matched ||
+        !package_receipt->c017_hud_consumed ||
+        !package_receipt->c040_hud_consumed ||
+        !package_receipt->no_legacy_wrappers ||
+        !package_receipt->no_fallback_routes ||
+        package_receipt->session_generation != session->generation ||
+        package_receipt->real_asset_receipt_hash == 0u ||
+        package_receipt->consumed_surface_hash == 0u || !hud_host->valid ||
+        !hud_host->real_asset_matched || !hud_host->no_legacy_wrappers ||
+        !hud_host->no_synthetic_surface ||
+        hud_host->host_surface != CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34 ||
+        !hud_host->runtime_hud_decision || !hud_host->uses_c017_inventory ||
+        !hud_host->uses_c040_resurrect ||
+        hud_host->frame.session_generation != session->generation ||
+        hud_host->host_surface_hash == 0u || !live_hud_receipt->valid ||
+        !live_hud_receipt->c040_cleared_once ||
+        !live_hud_receipt->c017_live_base_only ||
+        live_hud_receipt->c017_source_asset_id != 17 ||
+        live_hud_receipt->session_generation != session->generation ||
+        live_hud_receipt->source_tick != hud_host->frame.source_tick ||
+        !door_receipt->valid || !door_receipt->first_live_door_tick ||
+        door_receipt->previous_door_step != 0u || door_receipt->door_step != 1u ||
+        door_receipt->session_generation != session->generation ||
+        door_receipt->source_tick != live_hud_receipt->source_tick + 1u ||
+        !input_receipt->valid || !input_receipt->first_post_c040_input ||
+        input_receipt->command == CSB_V1_STARTUP_SESSION_MOVEMENT_NONE_PC34 ||
+        input_receipt->session_generation != session->generation ||
+        input_receipt->source_tick != live_hud_receipt->source_tick + 1u ||
+        input_receipt->source_tick != door_receipt->source_tick) return 0;
+
+    out_receipt->valid = 1;
+    out_receipt->real_package_matched = 1;
+    out_receipt->c017_hud_consumed = 1;
+    out_receipt->c040_hud_consumed = 1;
+    out_receipt->first_live_door_frame = 1;
+    out_receipt->first_runtime_input = 1;
+    out_receipt->no_legacy_wrappers = 1;
+    out_receipt->no_synthetic_surface = 1;
+    out_receipt->session_generation = session->generation;
+    out_receipt->hud_source_tick = live_hud_receipt->source_tick;
+    out_receipt->first_runtime_tick = input_receipt->source_tick;
+    out_receipt->hud_host_surface_hash = hud_host->host_surface_hash;
+    out_receipt->real_asset_receipt_hash = package_receipt->real_asset_receipt_hash;
+    out_receipt->consumed_surface_hash = package_receipt->consumed_surface_hash;
+    return 1;
+}
+
 int csb_v1_startup_session_live_hud_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     const CSB_V1_StartupSessionTerminalReceipt_PC34 *terminal_receipt,
