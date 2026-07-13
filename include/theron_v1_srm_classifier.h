@@ -79,7 +79,7 @@
  * exceed this budget return THERON_V1_SRM_PAYLOAD_PROBE_OUTPUT_TRUNCATED
  * rather than silently growing the heap. */
 #define THERON_V1_SRM_BODY_DECODE_MAX_BYTES 4096u
-typedef struct { int valid; size_t container_bytes; } Theron_V1SrmHeaderReceipt;
+typedef struct { int valid; size_t container_bytes; uint32_t mtime; uint8_t xfl, os; } Theron_V1SrmHeaderReceipt;
 int theron_v1_srm_header_receipt(const uint8_t *data,size_t size,Theron_V1SrmHeaderReceipt *out);
 
 /* Maximum compressed Save Disk member accepted by the opaque transfer path.
