@@ -65,7 +65,7 @@ static int probe_M11_GameView_GetV1StatusHandSlotGraphic(
         hand == 1 && game->actingChampionOrdinal == (unsigned int)(slot + 1));
 }
 
-static int M11_GameView_GetV1SlotBoxNormalGraphicId(void)
+static int probe_M11_GameView_GetV1SlotBoxNormalGraphicId(void)
 {
     return dm1_v1_graphic_slot_box_normal_pc34();
 }
@@ -344,7 +344,7 @@ int main(int argc, char** argv)
 
         (void)M11_GameView_GetV1StatusHandSlotBoxZone(slot, 1, &x, &y, &w, &h);
         snprintf(label, sizeof(label), "baseline slot%d action-hand C033", slot);
-        ok &= expect_int(label, gfx, M11_GameView_GetV1SlotBoxNormalGraphicId());
+        ok &= expect_int(label, gfx, probe_M11_GameView_GetV1SlotBoxNormalGraphicId());
         ok &= check_asset_perimeter(&game, baselineFb, x, y, gfx, label);
     }
 
@@ -398,7 +398,7 @@ int main(int argc, char** argv)
             inventoryFb,
             PROBE_DM1_VIEWPORT_X + sourceX - 1,
             PROBE_DM1_VIEWPORT_Y + sourceY - 1,
-            M11_GameView_GetV1SlotBoxNormalGraphicId(),
+            probe_M11_GameView_GetV1SlotBoxNormalGraphicId(),
             "inventory owner C508 action-hand slotbox");
     }
 

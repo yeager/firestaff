@@ -122,28 +122,28 @@ static int probe_dm1_layout_rect_xywh(DM1_V1_LayoutZoneRectPc34 rect,
 /* This probe keeps independent source-locked oracles for the status-panel
  * helpers.  M11 now exports the same API names, so give the local oracle
  * copies probe-private names without changing their assertions or M11. */
-#define M11_GameView_GetV1StatusBoxFillColor probe_v1_status_box_fill_color
-#define M11_GameView_GetV1StatusNameClearColor probe_v1_status_name_clear_color
-#define M11_GameView_GetV1StatusNameColor probe_v1_status_name_color
-#define M11_GameView_GetV1StatusBoxZone probe_v1_status_box_zone
-#define M11_GameView_GetV1StatusNameZone probe_v1_status_name_zone
-#define M11_GameView_GetV1StatusNameTextZone probe_v1_status_name_text_zone
-#define M11_GameView_GetV1StatusBarZone probe_v1_status_bar_zone
+#define probe_M11_GameView_GetV1StatusBoxFillColor probe_v1_status_box_fill_color
+#define probe_M11_GameView_GetV1StatusNameClearColor probe_v1_status_name_clear_color
+#define probe_M11_GameView_GetV1StatusNameColor probe_v1_status_name_color
+#define probe_M11_GameView_GetV1StatusBoxZone probe_v1_status_box_zone
+#define probe_M11_GameView_GetV1StatusNameZone probe_v1_status_name_zone
+#define probe_M11_GameView_GetV1StatusNameTextZone probe_v1_status_name_text_zone
+#define probe_M11_GameView_GetV1StatusBarZone probe_v1_status_bar_zone
 #define probe_M11_GameView_GetV1StatusHandSlotBoxZone probe_v1_status_hand_slot_box_zone
 #define M11_GameView_GetV1StatusHandIconZone probe_v1_status_hand_icon_zone
-#define M11_GameView_GetV1ChampionBarColor probe_v1_champion_bar_color
-#define M11_GameView_GetV1StatusBarBlankColor probe_v1_status_bar_blank_color
+#define probe_M11_GameView_GetV1ChampionBarColor probe_v1_champion_bar_color
+#define probe_M11_GameView_GetV1StatusBarBlankColor probe_v1_status_bar_blank_color
 #define M11_GameView_GetV1ObjectIconSourceZone probe_v1_object_icon_source_zone
 
-static int M11_GameView_GetV1StatusBoxFillColor(void) {
+static int probe_M11_GameView_GetV1StatusBoxFillColor(void) {
     return dm1_v1_champion_status_box_fill_color_pc34();
 }
 
-static int M11_GameView_GetV1StatusNameClearColor(void) {
+static int probe_M11_GameView_GetV1StatusNameClearColor(void) {
     return dm1_v1_champion_status_name_clear_color_pc34();
 }
 
-static int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* game,
+static int probe_M11_GameView_GetV1StatusNameColor(const M11_GameViewState* game,
                                              int slot) {
     const struct ChampionState_Compat* champ;
     if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
@@ -157,7 +157,7 @@ static int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* game,
         slot == game->world.party.activeChampionIndex);
 }
 
-static int M11_GameView_GetV1StatusBoxZone(int slot,
+static int probe_M11_GameView_GetV1StatusBoxZone(int slot,
                                            int* outX,
                                            int* outY,
                                            int* outW,
@@ -167,7 +167,7 @@ static int M11_GameView_GetV1StatusBoxZone(int slot,
     return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
 }
 
-static int M11_GameView_GetV1StatusNameZone(int slot,
+static int probe_M11_GameView_GetV1StatusNameZone(int slot,
                                             int* outX,
                                             int* outY,
                                             int* outW,
@@ -177,7 +177,7 @@ static int M11_GameView_GetV1StatusNameZone(int slot,
     return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
 }
 
-static int M11_GameView_GetV1StatusNameTextZone(int slot,
+static int probe_M11_GameView_GetV1StatusNameTextZone(int slot,
                                                 int* outX,
                                                 int* outY,
                                                 int* outW,
@@ -187,7 +187,7 @@ static int M11_GameView_GetV1StatusNameTextZone(int slot,
     return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
 }
 
-static int M11_GameView_GetV1StatusBarZone(int slot,
+static int probe_M11_GameView_GetV1StatusBarZone(int slot,
                                            int stat,
                                            int* outX,
                                            int* outY,
@@ -251,14 +251,14 @@ static int M11_GameView_GetV1ChampionIconGraphicId(void) {
     return dm1_v1_graphic_champion_icons_pc34();
 }
 
-static int M11_GameView_GetV1ChampionBarColor(int slot) {
+static int probe_M11_GameView_GetV1ChampionBarColor(int slot) {
     if (slot < 0 || slot >= DM1_CHAMPION_COUNT) {
         return DM1_COLOR_LIGHTEST_GRAY;
     }
     return DM1_ChampionColor[slot];
 }
 
-static int M11_GameView_GetV1StatusBarBlankColor(void) {
+static int probe_M11_GameView_GetV1StatusBarBlankColor(void) {
     return DM1_COLOR_DARKEST_GRAY;
 }
 
@@ -466,13 +466,13 @@ static int check_status_box_pixels(const M11_GameViewState* game,
     int x, y, w, h;
     int nx, ny, nw, nh;
     int nameTextX, nameTextY, nameTextW, nameTextH;
-    int fillColor = M11_GameView_GetV1StatusBoxFillColor();
-    int nameClearColor = M11_GameView_GetV1StatusNameClearColor();
-    int nameColor = M11_GameView_GetV1StatusNameColor(game, slot);
+    int fillColor = probe_M11_GameView_GetV1StatusBoxFillColor();
+    int nameClearColor = probe_M11_GameView_GetV1StatusNameClearColor();
+    int nameColor = probe_M11_GameView_GetV1StatusNameColor(game, slot);
     char label[128];
 
     snprintf(label, sizeof(label), "slot%d status box zone", slot);
-    ok &= expect_true(label, M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &w, &h) &&
+    ok &= expect_true(label, probe_M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &w, &h) &&
                              w == 67 && h == 29);
 
     snprintf(label, sizeof(label), "slot%d status box fill visible", slot);
@@ -490,11 +490,11 @@ static int check_status_box_pixels(const M11_GameViewState* game,
                      0);
 
     snprintf(label, sizeof(label), "slot%d name clear zone", slot);
-    ok &= expect_true(label, M11_GameView_GetV1StatusNameZone(slot, &nx, &ny, &nw, &nh) &&
+    ok &= expect_true(label, probe_M11_GameView_GetV1StatusNameZone(slot, &nx, &ny, &nw, &nh) &&
                              count_color(fb, PROBE_FB_W, nx, ny, nw, nh, nameClearColor) > 90);
 
     snprintf(label, sizeof(label), "slot%d name text color", slot);
-    ok &= expect_true(label, M11_GameView_GetV1StatusNameTextZone(slot,
+    ok &= expect_true(label, probe_M11_GameView_GetV1StatusNameTextZone(slot,
                                                                   &nameTextX,
                                                                   &nameTextY,
                                                                   &nameTextW,
@@ -517,12 +517,12 @@ static int check_status_box_gutter_pixels(const unsigned char* fb) {
         int gutterX;
         int gutterW;
         snprintf(label, sizeof(label), "slot%d status box zone for gutter", slot);
-        ok &= expect_true(label, M11_GameView_GetV1StatusBoxZone(slot,
+        ok &= expect_true(label, probe_M11_GameView_GetV1StatusBoxZone(slot,
                                                                  &x, &y,
                                                                  &w, &h) &&
                                  w == 67 && h == 29);
         snprintf(label, sizeof(label), "slot%d next status box zone for gutter", slot);
-        ok &= expect_true(label, M11_GameView_GetV1StatusBoxZone(slot + 1,
+        ok &= expect_true(label, probe_M11_GameView_GetV1StatusBoxZone(slot + 1,
                                                                  &nextX, &nextY,
                                                                  &nextW, &nextH) &&
                                  nextY == y && nextW == 67 && nextH == 29);
@@ -556,8 +556,8 @@ static int check_bar_pixels(const M11_GameViewState* game,
     int x, y, w, h;
     int fillHeight;
     int blankHeight;
-    int fillColor = M11_GameView_GetV1ChampionBarColor(slot);
-    int blankColor = M11_GameView_GetV1StatusBarBlankColor();
+    int fillColor = probe_M11_GameView_GetV1ChampionBarColor(slot);
+    int blankColor = probe_M11_GameView_GetV1StatusBarBlankColor();
     int ok = 1;
     char label[128];
 
@@ -569,7 +569,7 @@ static int check_bar_pixels(const M11_GameViewState* game,
     maximum[2] = champ->mana.maximum;
 
     snprintf(label, sizeof(label), "slot%d stat%d bar zone", slot, stat);
-    ok &= expect_true(label, M11_GameView_GetV1StatusBarZone(slot, stat, &x, &y, &w, &h) &&
+    ok &= expect_true(label, probe_M11_GameView_GetV1StatusBarZone(slot, stat, &x, &y, &w, &h) &&
                              w == 4 && h == 25);
     fillHeight = expected_fill_height(current[stat], maximum[stat], h);
     blankHeight = h - fillHeight;
@@ -731,7 +731,7 @@ static int check_champion_icon_pixels(const M11_GameViewState* game,
     int transparentMatch = 0;
     int transparentPixels = 0;
     const M11_AssetSlot* asset;
-    int baseColor = M11_GameView_GetV1ChampionBarColor(slot);
+    int baseColor = probe_M11_GameView_GetV1ChampionBarColor(slot);
     int xx;
     int yy;
     const int transparentColor = 12; /* M11_COLOR_DARK_GRAY */
