@@ -378,6 +378,11 @@ and 50 are reused. This is only opaque-span layout evidence, not record
 boundaries, field meanings, payload grammar, palette/image semantics, decoder,
 animation, or rendering.
 
+2026-07-13 update: the Structure2 receipt now retains this same word-alignment
+measurement for every nonzero descriptor target. A nonzero in-span odd target
+is explicitly distinguishable from the observed aligned corpus shape, but it
+does not reject parsing, establish a record size, or promote source material.
+
 The Structure1F handoff and DGN render-plan receipt now separate the six
 documented direct-coordinate records (items, floor decorations, floor
 sensors) from Structure1A-bound alcove/wall records without assigning the

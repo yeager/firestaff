@@ -225,7 +225,11 @@ typedef struct {
     int nonzero_descriptor_offset_count;
     int nonzero_descriptor_offsets_in_opaque_payload_count;
     int nonzero_descriptor_offsets_outside_opaque_payload_count;
+    /* The known LEV00-LEV15 descriptor targets are word-aligned.  This is
+     * a measured envelope invariant only; it is not a payload record size. */
+    int nonzero_descriptor_offsets_unaligned_count;
     int local_payload_offset_pattern_observed;
+    int local_payload_word_aligned_offset_pattern_observed;
     int valid;
     int material_or_image_data_proven;
 } Nexus_V1_DgnStructure2Payload;
