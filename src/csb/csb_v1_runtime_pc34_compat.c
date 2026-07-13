@@ -15884,6 +15884,27 @@ int csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
         (int)timer->ubyte8, out_resolution);
 }
 
+int csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
+{
+    /* CSBWin: Timer.cpp ProcessTT_FALSEWALL -> DSA.cpp ProcessDSATimer7. */
+    if (!profile || !dungeon || !slave_location || !timer || !out_resolution ||
+        !timer->valid || timer->truncated || timer->function != 7u ||
+        timer->ubyte9 > 2u || timer->ubyte8 > 3u ||
+        timer->level != (uint8_t)slave_location->level ||
+        timer->ubyte6 != (uint8_t)slave_location->x ||
+        timer->ubyte7 != (uint8_t)slave_location->y) {
+        return 0;
+    }
+    return csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+        profile, dungeon, slave_location, (int)timer->ubyte9,
+        (int)timer->ubyte8, out_resolution);
+}
+
 int csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,

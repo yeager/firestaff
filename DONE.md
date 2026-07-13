@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin `TT_FALSEWALL` DSA receipt: restored function-7 timers
+  now bind their original target and SET/CLEAR/TOGGLE action through
+  `ProcessDSATimer7` to the existing authenticated `ProcessDSATimer6`
+  resolver. Parameter-message timers remain blocked without EXPOOL data.
+  Verification: Ninja and CTest-passed `csb_v1_phase7_verification`.
+
 - 2026-07-13 Nexus Structure2 descriptor-envelope handoff gate: a present
   Structure1G local descriptor now reaches the host only when every nonzero
   original target is aligned and has a complete two-byte window within its
