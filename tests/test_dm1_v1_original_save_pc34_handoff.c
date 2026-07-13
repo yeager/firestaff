@@ -2027,6 +2027,28 @@ static void test_original_c77_spell_shield_roundtrip(void)
     CHECK(rc != SAVEGAME_PC34_OK, "C77 export rejects an unproven host timeout");
 }
 
+static void test_original_c78_fire_shield_roundtrip(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE], exported[SAVEGAME_PC34_MAX_FILE_SIZE]; char path[512];
+    int written = 0, exported_size = 0, rc, i, index = -1, c78_index = -1;
+    struct GameWorld_Compat start_world, loaded_world; struct DungeonDatState_Compat dungeon; struct DungeonThings_Compat things;
+    struct SaveGame_Compat imported; struct PartyState_Compat party; struct TickResult_Compat result; struct TimelineEvent_Compat event; DM1OriginalSavePC34HandoffReport report;
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written, 3, 3, 9, 10, 2, 1, ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK && rewrite_fixture_event_type(bytes, (size_t)written, 2, DM1_EVENT_FIRESHIELD) && rewrite_fixture_event_byte(bytes, (size_t)written, 2, 5, 0) && rewrite_fixture_event_byte(bytes, (size_t)written, 2, 6, 12) && rewrite_fixture_event_byte(bytes, (size_t)written, 2, 7, 0) && rewrite_fixture_event_byte(bytes, (size_t)written, 2, 8, 0x3c) && rewrite_fixture_event_byte(bytes, (size_t)written, 2, 9, 0xc3), "C78 fixture writes signed B.Defense only");
+    memset(&start_world, 0, sizeof(start_world)); memset(&loaded_world, 0, sizeof(loaded_world)); memset(&dungeon, 0, sizeof(dungeon)); memset(&things, 0, sizeof(things)); memset(&report, 0, sizeof(report)); start_world.dungeon = &dungeon; start_world.things = &things;
+    make_temp_save_path(path, sizeof(path)); remove(path); CHECK(write_fixture_file(path, bytes, written), "C78 fixture writes"); rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(path, &start_world, &loaded_world, NULL, &report); remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK, "C78 materializes typed fire shield expiry");
+    for (i = 0; i < loaded_world.timeline.count; ++i) if (loaded_world.timeline.events[i].aux2 == DM1_EVENT_FIRESHIELD) { index = i; break; } c78_index = index;
+    CHECK(index >= 0 && loaded_world.timeline.events[index].aux1 == 12 && loaded_world.timeline.events[index].aux4 == 0, "C78 retains defense and zero-priority receipt");
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(&loaded_world, 0x43313445u, exported, (int)sizeof(exported), &exported_size); CHECK(rc == SAVEGAME_PC34_OK, "C78 exports natively");
+    memset(&imported, 0, sizeof(imported)); memset(&party, 0, sizeof(party)); imported.party = &party; rc = dm1_v1_original_save_pc34_handoff_bytes(exported, (size_t)exported_size, &imported, &report);
+    for (i = 0; i < report.original_event_count; ++i) if (report.events[i].type == DM1_EVENT_FIRESHIELD) { index = i; break; }
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && index >= 0 && report.events[index].priority == 0 && (int16_t)rd16le(&report.events[index].b_mapX) == 12 && report.events[index].c_cell == 0 && report.events[index].c_effect == 0, "C78 native roundtrip preserves B.Defense and no C union arm");
+    loaded_world.magic.fireShieldDefense = 20; loaded_world.lifecycle.status.partyFireShieldDefense = 20; event = loaded_world.timeline.events[c78_index]; F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick); F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event); loaded_world.gameTick = event.fireAtTick; memset(&result, 0, sizeof(result)); F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world, &result);
+    CHECK(loaded_world.magic.fireShieldDefense == 8 && loaded_world.lifecycle.status.partyFireShieldDefense == 8, "C78 runtime subtracts B.Defense from fire shield mirrors");
+    event.aux2 = 0; F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick); F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event); rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(&loaded_world, 0x43313445u, exported, (int)sizeof(exported), &exported_size); CHECK(rc != SAVEGAME_PC34_OK, "C78 export rejects an unproven host timeout");
+}
+
 static void test_original_c13_vi_altar_event_plan(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -3372,6 +3394,7 @@ int main(void)
     test_original_c74_party_shield_roundtrip();
     test_original_c75_poison_roundtrip();
     test_original_c77_spell_shield_roundtrip();
+    test_original_c78_fire_shield_roundtrip();
     test_original_c13_vi_altar_event_plan();
     test_original_c13_vi_altar_runtime_sequence();
     test_runtime_materializer_binds_original_explosion_union();
