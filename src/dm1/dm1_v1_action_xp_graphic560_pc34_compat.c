@@ -756,9 +756,12 @@ int dm1_v1_action_window_plan_f0407_pc34(
     out->decrementsActionHandCharges = 0;
     range = dm1_v1_action_window_random_range_f0407_pc34(in->earthSkillLevel);
     draw = in->randomDraw;
-    if (draw < 0) draw = 0;
-    if (range <= 0) range = 1;
-    if (draw >= range) draw %= range;
+    if (range <= 0 || draw < 0 || draw >= range) {
+        /* ReDMCSB: MENU.C F0407 lines 1536-1541 consumes exactly
+         * M002_RANDOM(F0303(action skill) + 8).  A malformed host draw must
+         * not wrap into a different Thieves Eye duration. */
+        return 0;
+    }
     out->valid = 1;
     out->randomRange = range;
     out->durationTicks = draw + 5;
@@ -861,8 +864,12 @@ int dm1_v1_action_fright_plan_f0401_pc34(
     total = base + (in->influenceSkillLevel < 0 ? 0 : in->influenceSkillLevel);
     if (total <= 0) total = 1;
     draw = in->randomDraw;
-    if (draw < 0) draw = 0;
-    if (draw >= total) draw %= total;
+    if (draw < 0 || draw >= total) {
+        /* ReDMCSB: MENU.C F0401 lines 969-976 compares FearResistance with
+         * M002_RANDOM(FrightAmount).  Do not manufacture resistance/flee
+         * results by folding an out-of-domain runtime value into the roll. */
+        return 0;
+    }
     fearResistance = in->fearResistance;
     if (fearResistance < 0) fearResistance = 0;
     movementTicks = in->movementTicks;
@@ -1108,7 +1115,12 @@ int dm1_v1_action_flip_plan_f0407_pc34(
     int draw;
     if (!in || !out) return 0;
     draw = in->randomDraw;
-    if (draw < 0) draw = 0;
+    if (draw < 0 || draw >= 2) {
+        /* ReDMCSB: MENU.C F0407 lines 1398-1440 uses M005_RANDOM(2).
+         * Only the source coin-flip domain may publish an action result. */
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
     out->valid = 1;
     out->performed = 1;
     /* ReDMCSB: MENU.C F0407 C005_ACTION_FLIP lines 1398-1440 prints HEADS
