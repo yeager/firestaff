@@ -1494,6 +1494,90 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_doors(
     return 1;
 }
 
+int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1RuntimeMapActuatorReceipt *out) {
+    DM2_V1_G1RuntimeMapValidationReceipt validation;
+    DM2_V1_G1RuntimeMapActuatorReceipt candidate;
+    int column_index = 0;
+
+    /* skproject SKULLWIN/c_map.cpp obtains the map root before
+     * c_record.cpp's GET_NEXT_RECORD_LINK. SKWIN/DME.h::Actuator defines the
+     * w2/w4/w6 field layout read below; this route never reads the w0 word. */
+    if (!out || !d || !d->raw_data ||
+        !dm2_v1_dungeon_validate_g1_runtime_map(d, map, &validation) ||
+        !validation.committed || !validation.incomplete_world) {
+        return 0;
+    }
+    for (int level = 0; level < map; ++level)
+        column_index += d->level_widths[level];
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    for (int x = 0; x < validation.width; ++x) {
+        int stack = (int)RD16(d->raw_data + d->column_index_base +
+                              (column_index + x) * 2);
+        for (int y = 0; y < validation.height; ++y) {
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            uint16_t root;
+            const uint8_t *record;
+            uint16_t w2;
+            uint16_t w4;
+            uint16_t w6;
+            DM2_V1_G1DirectActuatorRoot *actuator;
+
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
+            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
+            if (((root >> 10) & 0x0fu) == 3u &&
+                dm2_v1_g1_link_has_declared_shape(d, root)) {
+                if (candidate.actuator_root_count >=
+                    DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS) {
+                    return 0;
+                }
+                record = dm2_v1_dungeon_get_thing_record(
+                    d, root, NULL, NULL, NULL);
+                if (!record) return 0;
+                w2 = RD16(record + 2);
+                w4 = RD16(record + 4);
+                w6 = RD16(record + 6);
+                actuator = &candidate.actuators[candidate.actuator_root_count++];
+                actuator->x = x;
+                actuator->y = y;
+                actuator->object_id = root;
+                actuator->index = root & 0x03ff;
+                actuator->direction = (uint8_t)(root >> 14);
+                actuator->actuator_type = (uint8_t)(w2 & 0x007fu);
+                actuator->actuator_data = (uint16_t)((w2 >> 7) & 0x01ffu);
+                actuator->graphic_number = (uint8_t)((w4 >> 12) & 0x000fu);
+                actuator->disabled = (uint8_t)((w4 >> 11) & 1u);
+                actuator->delay = (uint8_t)((w4 >> 7) & 0x000fu);
+                actuator->sound_effect = (uint8_t)((w4 >> 6) & 1u);
+                actuator->revert_effect = (uint8_t)((w4 >> 5) & 1u);
+                actuator->action_type = (uint8_t)((w4 >> 3) & 3u);
+                actuator->once_only = (uint8_t)((w4 >> 2) & 1u);
+                actuator->active_status = (uint8_t)(w4 & 1u);
+                actuator->target_direction = (uint8_t)((w6 >> 4) & 3u);
+                actuator->target_x = (uint8_t)((w6 >> 6) & 0x001fu);
+                actuator->target_y = (uint8_t)((w6 >> 11) & 0x001fu);
+                ++candidate.actuator_record_reads;
+            }
+            ++stack;
+        }
+    }
+    if (candidate.actuator_record_reads != candidate.actuator_root_count ||
+        candidate.generic_record_reads != 0 ||
+        candidate.blocked_record_reads != 0) {
+        return 0;
+    }
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_first_map_runtime(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1FirstMapRuntimeReceipt *out) {

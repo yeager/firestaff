@@ -148,6 +148,9 @@
   A second raw-only receipt correlates every verified `Map_definitions` row
   to its bounded trailing-map span and hash, without assigning tile meaning.
   Both receipts intentionally leave the table and tile semantics absent.
+  Direct DB0 and DB3 root receipts now read only their independently defined
+  payload words after runtime admission; DB3 extension records and every
+  `GenericRecord::w0` route remain unread and untraversed.
   Required: multi-map original DUNGEON.DAT corpus plus debugger traces that
   define `v1e03f4`, `dunGroundStacks`, and bit `0x10` beyond their observed
   indexing contract.

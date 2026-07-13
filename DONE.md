@@ -12529,6 +12529,17 @@ The real PC G1 map 9 receipt locks three direct doors, including the active
 button at `(7,3)` with ObjectID `0x0006`. Verification: real-data DB0 test,
 runtime-map admission test, and focused loader gate all passed.
 
+# ✅ 2026-07-13 DM2 G1 direct DB3 Actuator runtime receipt
+
+Runtime-admitted G1 map 5 now consumes only direct DB3 `Actuator` records.
+The receipt binds the source-defined `DME.h` `w2`, `w4`, and `w6` fields:
+type/data, graphic number, flags, delay/action, and target pose. It never
+reads `GenericRecord::w0`, skips the separately bounded DB3 extension range,
+and cannot publish an unadmitted map. The canonical 39,437-byte PC G1
+`DUNGEON.DAT` proves 16 direct roots, beginning with ObjectID `0x4c04` at
+`(6,14)`. Verification: real-data Actuator test and the focused 87-check
+dungeon-loader gate passed.
+
 # ✅ 2026-07-13 DM2 weather `dtText` provenance boundary
 
 `dm2_v1_weather_gdat` now follows skproject `c_weather.cpp` rather than
