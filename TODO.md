@@ -417,6 +417,12 @@ for the already bounded post-`FFFF` span. This makes truncation or payload
 replacement observable at the envelope boundary, but assigns no byte a
 record, palette, image, codec, or render meaning.
 
+2026-07-13 update: the same bounded span now retains complete raw two-byte
+pair and trailing-byte counts, plus all-zero versus nonzero pair counts. This
+is only composition evidence for the existing byte range; it establishes no
+word grammar, byte order, record boundary, palette/image role, codec, or
+render route.
+
 The Structure1F handoff and DGN render-plan receipt now separate the six
 documented direct-coordinate records (items, floor decorations, floor
 sensors) from Structure1A-bound alcove/wall records without assigning the
