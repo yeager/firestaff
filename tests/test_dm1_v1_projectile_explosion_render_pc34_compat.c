@@ -211,6 +211,16 @@ static void test_thrown_object_material_resolution(void) {
                      PROJECTILE_SUBTYPE_KINETIC_ARROW,
                      THING_TYPE_POTION, 99, 0, &resolution),
                 "unresolvable carried Slot fails closed");
+
+    ASSERT_TRUE(dm1_v1_projectile_material_resolve_pc34(
+                    PROJECTILE_SUBTYPE_KINETIC_ARROW,
+                    -1, -1, 0, &resolution),
+                "spell projectile resolves only without an associated object");
+    ASSERT_EQ(resolution.uses_object_aspect, 0,
+              "empty Slot retains the native M613 projectile route");
+    ASSERT_EQ(resolution.graphic_index,
+              dm1_v1_projectile_graphic_index(0, 0),
+              "empty Slot uses the original M613 projectile graphic");
 }
 
 

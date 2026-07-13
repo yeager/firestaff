@@ -599,7 +599,10 @@ through `DUNVIEW.C F0115:5691-5900`: a live `Projectile.Slot` is retained in
 the DM1 viewport receipt, resolves to either M613 projectile art or M612/G0209
 object art, and is drawn only in the C2900/C10 projectile lane. Remaining
 projectile work is authentic multi-projectile/pixel capture, not a substitute
-sprite or floor-item route.
+sprite or floor-item route. M11 now fails closed when a non-empty live Slot
+cannot be decoded from PC34 thing data, and asset-backed F0115 passes no
+longer substitute cyan projectile markers. Remaining work is capture, not a
+fallback-material path.
 
 DM1 F0115 now consumes only ReDMCSB's compact 13 `G0205` ornament zones.
 The F0676/F0677 D3L2/D3R2 planes are deliberately outside that pass, so they
