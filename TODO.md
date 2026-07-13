@@ -1161,8 +1161,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `DRAW_WALL_ORNATE`; a missing bitmap is retained as non-drawable and
     blocks its source-required custom-button draw rather than triggering any
     fallback. Map 5 DB1/DB3/DB4 roots remain unconsumed, as do all blocked
-    DB8/DB10 roots. Remaining work is a separately source-backed text-table
-    decode/visibility consumer or another direct family, never a chain walk.
+    DB8/DB10 roots. Visible direct `TextMode()==0` rows now decode their
+    little-endian `dunTextData` 5-bit stream through skproject
+    `QUERY_MESSAGE_TEXT`, preserving map position and ObjectID in the runtime
+    receipt. Mode-one GDAT messages and phrase-bank controls 29/30 stay
+    unavailable rather than receiving synthetic text. Remaining work is a
+    real GDAT `QUERY_GDAT_TEXT` consumer for the mode-one branch and final
+    interaction presentation, never a guessed phrase table or chain walk.
   - 2026-07-11 update: the local full-build DM2 link blocker from direct save-load test targets is fixed; weather/timer save round-trip and inventory/item panel gate now link against `firestaff_dm2` and pass. Remaining DM2 work is real render/data breadth, not this build wiring.
   - 2026-07-11 update: the next local full-build blocker, `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` using retired M11 inventory names, is fixed by moving the probe to the DM1/ReDMCSB inventory API. Remaining DM1 chest work is runtime/asset proof, not this stale probe wiring.
   - 2026-07-11 update: `firestaff_dm1_v1_champion_mouse_leader_switch_probe` now uses the current DM1/ReDMCSB champion-leader API names and passes. Remaining leader/status work is runtime capture breadth, not stale API suffix cleanup.
