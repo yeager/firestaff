@@ -11,6 +11,14 @@
   source candidate is rebuilt only in tail slot 2. Source: ReDMCSB `REVIVE.C`
   F0280 and F0282:744-845. Verification: focused CTest against installed
    PC34 data.
+- 2026-07-13 DM1 HoC C127/C162 rotated-owner audit: a real-PC34 regression
+  opens the C040 candidate panel at one C127 mirror, changes the live view to
+  a distinct C127 mirror, then invokes C162. Only the original appended
+  candidate slot may be cleared; the second mirror must remain selectable.
+  All C127/panel frames clear M648/C10, and returning to a real inscription
+  restores its exact graphic-258 glyph bytes. Source: ReDMCSB `REVIVE.C`
+  F0280/F0282:745-805 and `DUNVIEW.C` F0107:3619-3706,3913-3928, F0128.
+   Verification: focused CTest against installed PC34 data.
 
 - 2026-07-13 Theron Track 02 capture-manifest hardening: rewrote the
   provenance parser as an exact five-field format that rejects malformed or
