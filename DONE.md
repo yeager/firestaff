@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB C017 live inventory consumption: after the verified
+  entrance handoff, a live CSB inventory request now copies terminal-session
+  C017 bytes directly into the original 48,33 viewport rectangle. Missing or
+  malformed session material rejects to black instead of using the generic
+  panel route. Verification: real local-CSB
+  `csb_v1_m11_launcher_handoff_boundary` CTest passed 1/1.
+
 - 2026-07-13 DM1 PC34 dungeon-tail provenance: successful F0435 handoffs
   now record a stable fingerprint of the fully validated F0433 dungeon tail.
   Verification: Ninja-built `test_dm1_v1_original_save_pc34_handoff` passed
