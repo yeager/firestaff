@@ -25,6 +25,17 @@
   action-disable event. Verification: Ninja-built and ran
   `test_dm1_v1_f0412_needs_practice_runtime_pc34_compat` and
   `test_dm1_v1_spell_casting_pc34_compat`.
+- 2026-07-13 CSBWin DSA movement-filter save handoff: added the atomic runtime
+  binder for one resolved type-47 movement filter at its source level. Both
+  attack and movement binders now explicitly disable every unbound DSA slot,
+  avoiding accidental DSA-zero dispatch from zero-initialized state. The new
+  focused regression exercises `Monster.cpp`'s seven-word movement callback,
+  level restoration, and an admitted `GLOBALSTORE` through the original
+  EXPOOL global bytes. No movement flag, distance/party gate, world opcode,
+  or generic dispatcher was introduced. Source: CSBWin `Monster.cpp:3079-3370`,
+  `DSA.cpp:1244-1312`, and `SaveGame.cpp` global EXPOOL records. Verification:
+  `csb_v1_dsa_movement_filter_save_handoff` CTest passed 1/1.
+
 - 2026-07-13 CSBWin SKIN_CACHE save/runtime handoff: the live custom-
   background HUD grid now records the verified appended EXPOOL-tail receipt
   that filled its EDT_Skins cache and clears cached columns/defaults whenever
