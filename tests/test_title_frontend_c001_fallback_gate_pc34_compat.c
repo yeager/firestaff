@@ -221,10 +221,12 @@ static void check_title_presentation_command(void) {
 static void check_entrance_credits_presentation_command(void) {
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
     DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 command;
+    DM1_V1_StartupEntranceCreditsReturnCommand_PC34 return_command;
     unsigned char c005[320U * 200U];
 
     memset(&media, 0, sizeof(media));
     memset(&command, 0, sizeof(command));
+    memset(&return_command, 0, sizeof(return_command));
     memset(c005, 0, sizeof(c005));
     c005[320U * 100U + 160U] = 15U;
     expect_i("entrance credits command obtains DM1 PC34 media receipt",
@@ -242,6 +244,18 @@ static void check_entrance_credits_presentation_command(void) {
                  command.source_timing_receipt_consumed &&
                  command.graphics_c005_pixel_fingerprint != 0U,
              1);
+    expect_i("credits return redraws DM1 entrance after the F0442 phase",
+             dm1_v1_startup_entrance_credits_return_command_pc34(
+                 &media, &command, &return_command) &&
+                 return_command.credits_phase_receipt_consumed &&
+                 return_command.redraw_closed_entrance &&
+                 return_command.discard_pending_input &&
+                 return_command.present_entrance_palette &&
+                 return_command.special_palette ==
+                     VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+                 return_command.wait_vblank_delay_ms ==
+                     media.entrance_vblank_ms,
+             1);
     c005[320U * 100U + 160U] = 0U;
     expect_i("entrance C005 command rejects an empty synthetic credits frame",
              !dm1_v1_startup_entrance_credits_presentation_command_pc34(
@@ -252,6 +266,10 @@ static void check_entrance_credits_presentation_command(void) {
     expect_i("entrance C005 command rejects a CSB palette substitution",
              !dm1_v1_startup_entrance_credits_presentation_command_pc34(
                  &media, c005, 320U, 200U, &command),
+             1);
+    expect_i("credits return rejects a CSB credits phase",
+             !dm1_v1_startup_entrance_credits_return_command_pc34(
+                 &media, &command, &return_command),
              1);
 }
 

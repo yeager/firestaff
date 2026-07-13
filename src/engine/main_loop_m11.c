@@ -623,11 +623,14 @@ static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
 static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
                                              unsigned char* framebuffer,
                                              const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
-                                                 media_receipt) {
+                                                 media_receipt,
+                                             DM1_V1_StartupEntranceCreditsPresentationCommand_PC34*
+                                                 out_command) {
     const M11_AssetSlot* credits;
     DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 command;
     int waitResult;
-    if (!gameView || !framebuffer || !media_receipt || !gameView->assetsAvailable) {
+    if (!gameView || !framebuffer || !media_receipt || !out_command ||
+        !gameView->assetsAvailable) {
         return M11_ENTRANCE_COMMAND_NONE;
     }
     credits = M11_AssetLoader_Load(&gameView->assetLoader, 5U);
@@ -644,6 +647,7 @@ static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
                                                 command.special_palette);
     waitResult = m11_wait_for_entrance_credits_done(command.credits_wait_ticks,
                                                     command.vblank_delay_ms);
+    *out_command = command;
     return waitResult;
 }
 
@@ -865,15 +869,47 @@ static int m11_play_redmcsb_entrance_transition(
                 return M11_ENTRANCE_COMMAND_RESUME;
             }
             if (cmd == M11_ENTRANCE_COMMAND_CREDITS) {
-                int creditsResult =
-                    m11_show_redmcsb_entrance_credits(gameView, framebuffer,
-                                                      mediaReceipt);
-                if (creditsResult == M11_ENTRANCE_COMMAND_QUIT) {
-                    free(dungeonFrame);
-                    return M11_ENTRANCE_COMMAND_QUIT;
+                for (;;) {
+                    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34
+                        creditsCommand;
+                    DM1_V1_StartupEntranceCreditsReturnCommand_PC34 returnCommand;
+                    int creditsResult;
+
+                    memset(&creditsCommand, 0, sizeof(creditsCommand));
+                    memset(&returnCommand, 0, sizeof(returnCommand));
+                    creditsResult = m11_show_redmcsb_entrance_credits(
+                        gameView, framebuffer, mediaReceipt, &creditsCommand);
+                    if (creditsResult == M11_ENTRANCE_COMMAND_QUIT) {
+                        free(dungeonFrame);
+                        return M11_ENTRANCE_COMMAND_QUIT;
+                    }
+                    if (!dm1_v1_startup_entrance_credits_return_command_pc34(
+                            mediaReceipt, &creditsCommand, &returnCommand) ||
+                        !returnCommand.redraw_closed_entrance ||
+                        !returnCommand.present_entrance_palette ||
+                        !m11_draw_entrance_screen_asset(gameView, framebuffer) ||
+                        !m11_draw_entrance_closed_doors_asset(gameView, framebuffer)) {
+                        free(dungeonFrame);
+                        return 0;
+                    }
+                    (void)M11_Render_PresentIndexedWithSpecialPalette(
+                        framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                        returnCommand.special_palette);
+
+                    /* F0441 discards the credits-dismissal input before its
+                     * fresh C099 wait; this helper performs that drain. */
+                    cmd = m11_wait_for_redmcsb_entrance_command(autoEnterAfterMs);
+                    if (cmd == M11_ENTRANCE_COMMAND_CREDITS) continue;
+                    if (cmd == M11_ENTRANCE_COMMAND_QUIT) {
+                        free(dungeonFrame);
+                        return M11_ENTRANCE_COMMAND_QUIT;
+                    }
+                    if (cmd == M11_ENTRANCE_COMMAND_RESUME) {
+                        free(dungeonFrame);
+                        return M11_ENTRANCE_COMMAND_RESUME;
+                    }
+                    break;
                 }
-                sourceStep = 0U;
-                continue;
             }
         }
         {
