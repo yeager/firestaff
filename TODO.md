@@ -624,6 +624,11 @@ and real community-save corpus round-trip evidence.
     chain, retain `C.Ticks`, and export back to their original event union;
     an absent group remains a failed import rather than a synthetic reaction.
     The same ordering makes C48/C49 resolve against their real C14 records.
+  - 2026-07-13 update: C20 delayed sound events now preserve the distinct
+    ReDMCSB `EVENT` union (`B.Location`, signed `C.SoundIndex`) through
+    native PC34 export/import and F0435 materialization. Remaining save
+    breadth is other source union families, never generic Cell/Effect
+    substitution.
     Remaining work is broader original dungeon-tail import breadth and real
     community-save corpus evidence.
   - 2026-07-13 update: F0435 dungeon-tail preflight now also enforces the

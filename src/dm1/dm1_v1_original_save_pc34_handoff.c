@@ -1041,6 +1041,13 @@ static int materialize_original_pc34_timeline(
         if (original_pc34_event_type_is_status_timeout(src->type)) {
             ev.aux1 = (int)read_u16_le(&src->b_mapX);
             ev.cell = src->c_cell;
+        } else if (src->type == DM1_EVENT_PLAY_SOUND) {
+            /* ReDMCSB SOUND.C:1536-1543 writes B.Location and the signed
+             * C.SoundIndex union member; TIMELINE.C:1903-1905 passes those
+             * three values directly to F0064_SOUND_RequestPlay. */
+            ev.mapX = src->b_mapX;
+            ev.mapY = src->b_mapY;
+            ev.aux0 = (int)(int16_t)read_u16_le(&src->c_cell);
         } else if (src->type == DM1_EVENT_REMOVE_FLUXCAGE) {
             uint16_t thing = read_u16_le(&src->c_cell);
             ev.mapX = src->b_mapX;

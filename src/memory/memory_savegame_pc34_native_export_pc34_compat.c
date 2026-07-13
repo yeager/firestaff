@@ -1380,6 +1380,14 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
             dst[7] = (uint8_t)(src->mapY & 0xff);
             write_u16_le(dst + 8u,
                          pc34_make_thing_ref(THING_TYPE_EXPLOSION, src->aux0));
+        } else if (type == DM1_EVENT_PLAY_SOUND) {
+            /* ReDMCSB SOUND.C:1536-1543 schedules C20 with B.Location
+             * and the signed C.SoundIndex union member.  C.Cell/Effect is
+             * unrelated for this event family, so do not manufacture it
+             * from generic timeline fields. */
+            dst[6] = (uint8_t)(src->mapX & 0xff);
+            dst[7] = (uint8_t)(src->mapY & 0xff);
+            write_u16_le(dst + 8u, (uint16_t)(src->aux0 & 0xffff));
         } else {
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
@@ -1460,6 +1468,15 @@ static void unpack_events_and_timeline(const struct PC34GlobalData* gd,
             dst->aux0 = (pc34_thing_ref_type(thing) == THING_TYPE_EXPLOSION)
                 ? pc34_thing_ref_index(thing) : (int)thing;
             dst->aux1 = C050_EXPLOSION_FLUXCAGE;
+            dst->aux4 = src[5u];
+            continue;
+        } else if (src[4u] == DM1_EVENT_PLAY_SOUND) {
+            /* ReDMCSB TIMELINE.C:1903-1905 consumes C.SoundIndex together
+             * with B.Location.  Preserve the 16-bit union payload exactly
+             * so a native PC34 save does not turn it into Cell/Effect. */
+            dst->mapX = src[6u];
+            dst->mapY = src[7u];
+            dst->aux0 = (int)(int16_t)read_u16_le(src + 8u);
             dst->aux4 = src[5u];
             continue;
         } else {
