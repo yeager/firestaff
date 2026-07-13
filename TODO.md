@@ -572,6 +572,12 @@ staged queue, so a malformed report cannot alter a live queue. The DM1 world
 handoff restores ACTIVE_GROUP records through the same candidate-world path.
 Remaining original-save interop work is original dungeon-tail import breadth
 and real community-save corpus round-trip evidence.
+  - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
+    with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
+    the corresponding exported C14 `EventIndex` without changing the live
+    world. Unbound runtime slots fail export rather than becoming synthetic
+    square events. Remaining work is broader original dungeon-tail import
+    breadth and real community-save corpus evidence.
   - 2026-07-13 update: F0435 dungeon-tail preflight now also enforces the
     F0434 map raw-data span boundary before publishing a tail receipt. A
     checksum-correct descriptor that reaches outside the saved raw-map block

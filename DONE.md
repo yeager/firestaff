@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 original-save C48/C49 projectile export: F0802 now writes
+  ReDMCSB `EVENT.B.Slot` as the live C14 projectile Thing and rebuilds packed
+  `EVENT.C.Projectile` from the active map, square, direction, and step
+  energy. C48 retains its first-move grace, C49 does not, and the exported
+  C14 `EventIndex` points to the reconstructed event without mutating the
+  live world. An unbound runtime projectile rejects export rather than
+  emitting a substitute square event. Verification: Ninja and CTest-passed
+  `dm1_v1_original_save_pc34_handoff`.
+
 - 2026-07-13 Theron post-`$e981` controller-status receipt: the authenticated
   US raw-CUE trace now verifies the ordered `$e9d3 -> $e9dc -> $e9eb ->
   $e9f3 -> $ea15 -> $ea1d -> $ea26` controller loop, including the `$227b`

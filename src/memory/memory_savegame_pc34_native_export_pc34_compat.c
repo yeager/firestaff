@@ -1232,6 +1232,8 @@ static void pc34_sort_timeline_indices(unsigned char* timeline,
 }
 
 static int pack_events_and_timeline(const struct SaveGame_Compat* state,
+                                    const struct ProjectileList_Compat* projectiles,
+                                    int projectileEventIndices[PROJECTILE_LIST_CAPACITY],
                                     unsigned char* events,
                                     int eventsCap,
                                     unsigned char* timeline,
@@ -1252,6 +1254,11 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
     if (outEventMaximumCount) *outEventMaximumCount = 0;
     if (!events || !timeline || eventsCap < 0 || timelineCap < 0) {
         return 0;
+    }
+    if (projectileEventIndices) {
+        for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
+            projectileEventIndices[i] = -1;
+        }
     }
     memset(events, 0, (size_t)eventsCap);
     memset(timeline, 0, (size_t)timelineCap);
@@ -1280,6 +1287,57 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
         write_u32_le(dst + 0u,
                      (((uint32_t)src->mapIndex & 0xffu) << 24) |
                      (src->fireAtTick & 0x00ffffffu));
+        /* ReDMCSB DEFS.H stores C48/C49 in a different union arm from
+         * ordinary square events: B.Slot is a C14 THING and C.Projectile
+         * packs MapX, MapY, Direction and StepEnergy.  F0802 is world-aware,
+         * so it can reconstruct those bytes from the live slot rather than
+         * exporting a syntactically valid but semantically unrelated C49. */
+        if (type == DM1_EVENT_MOVE_PROJECTILE && projectiles) {
+            const struct ProjectileInstance_Compat* projectile;
+            int projectileIndex = src->aux0;
+            uint16_t thing;
+            uint16_t motion;
+
+            if (projectileIndex < 0 ||
+                projectileIndex >= PROJECTILE_LIST_CAPACITY ||
+                projectileIndex >= projectiles->count) {
+                return 0;
+            }
+            projectile = &projectiles->entries[projectileIndex];
+            if (projectile->reserved3 == 0 ||
+                projectile->slotIndex != projectileIndex ||
+                projectile->mapIndex < 0 || projectile->mapIndex > 0xff ||
+                projectile->mapX < 0 || projectile->mapX > 0x1f ||
+                projectile->mapY < 0 || projectile->mapY > 0x1f ||
+                projectile->cell < 0 || projectile->cell > 3 ||
+                projectile->direction < 0 || projectile->direction > 3 ||
+                projectile->stepEnergy < 0 || projectile->stepEnergy > 0x0f) {
+                return 0;
+            }
+            type = projectile->firstMoveGraceFlag
+                ? DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS
+                : DM1_EVENT_MOVE_PROJECTILE;
+            thing = (uint16_t)(pc34_make_thing_ref(THING_TYPE_PROJECTILE,
+                                                    projectileIndex) |
+                               ((uint16_t)projectile->cell << 14));
+            motion = (uint16_t)(projectile->mapX |
+                                (projectile->mapY << 5) |
+                                (projectile->direction << 10) |
+                                (projectile->stepEnergy << 12));
+            write_u32_le(dst + 0u,
+                         (((uint32_t)projectile->mapIndex & 0xffu) << 24) |
+                         (src->fireAtTick & 0x00ffffffu));
+            dst[4] = (uint8_t)type;
+            dst[5] = (uint8_t)(src->aux4 & 0xff);
+            write_u16_le(dst + 6u, thing);
+            write_u16_le(dst + 8u, motion);
+            if (projectileEventIndices) {
+                projectileEventIndices[projectileIndex] = count;
+            }
+            write_u16_le(timeline + (size_t)count * 2u, (uint16_t)count);
+            ++count;
+            continue;
+        }
         dst[4] = (uint8_t)type;
         dst[5] = (uint8_t)(src->aux4 & 0xff);
         if (pc34_event_type_is_status_timeout(type)) {
@@ -1579,7 +1637,9 @@ static int pc34_can_pack_decoded_things(const struct DungeonThings_Compat* thing
 static void pc34_pack_decoded_thing_slot(unsigned char* out,
                                          const struct DungeonThings_Compat* things,
                                          int type,
-                                         int index)
+                                         int index,
+                                         const int projectileEventIndices[
+                                             PROJECTILE_LIST_CAPACITY])
 {
     switch (type) {
     case THING_TYPE_DOOR: {
@@ -1738,7 +1798,12 @@ static void pc34_pack_decoded_thing_slot(unsigned char* out,
         write_u16_le(out + 2u, p->slot);
         out[4u] = p->kineticEnergy;
         out[5u] = p->attack;
-        write_u16_le(out + 6u, p->eventIndex);
+        write_u16_le(out + 6u,
+                     projectileEventIndices && index >= 0 &&
+                             index < PROJECTILE_LIST_CAPACITY &&
+                             projectileEventIndices[index] >= 0
+                         ? (uint16_t)projectileEventIndices[index]
+                         : p->eventIndex);
         break;
     }
     case THING_TYPE_EXPLOSION: {
@@ -1761,6 +1826,7 @@ static int pc34_write_dungeon_thing_chunk(
     const struct DungeonThings_Compat* things,
     int type,
     int expectedCount,
+    const int projectileEventIndices[PROJECTILE_LIST_CAPACITY],
     uint16_t* inOutChecksum)
 {
     int byteCount = (int)s_thingDataByteCount[type] * expectedCount;
@@ -1781,7 +1847,8 @@ static int pc34_write_dungeon_thing_chunk(
         }
         for (i = 0; i < expectedCount; ++i) {
             pc34_pack_decoded_thing_slot(packed + (size_t)i * slotBytes,
-                                         things, type, i);
+                                         things, type, i,
+                                         projectileEventIndices);
         }
         rc = pc34_write_dungeon_chunk(dst, dstAvail, packed, byteCount,
                                       inOutChecksum);
@@ -1796,7 +1863,8 @@ static int pc34_write_dungeon_tail(
     unsigned char* dst,
     int dstAvail,
     const struct DungeonDatState_Compat* dungeon,
-    const struct DungeonThings_Compat* things)
+    const struct DungeonThings_Compat* things,
+    const int projectileEventIndices[PROJECTILE_LIST_CAPACITY])
 {
     int cursor = 0;
     int mapIndex;
@@ -1874,7 +1942,8 @@ static int pc34_write_dungeon_tail(
                     (int)dungeon->header.thingCounts[type];
         if (pc34_write_dungeon_thing_chunk(
                 dst + cursor, dstAvail - cursor, things, type,
-                (int)dungeon->header.thingCounts[type], &checksum) < 0) {
+                (int)dungeon->header.thingCounts[type], projectileEventIndices,
+                &checksum) < 0) {
             return -1;
         }
         cursor += bytes;
@@ -1935,6 +2004,7 @@ static int export_pc34_core(
     int activeGroupsLen,
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,
+    const struct ProjectileList_Compat* projectiles,
     uint32_t gameTime,
     int currentActiveGroupCount,
     int maximumActiveGroupCount,
@@ -1958,6 +2028,7 @@ static int export_pc34_core(
     int eventCount = 0;
     int firstUnusedEventIndex = 0;
     int eventMaximumCount = 0;
+    int projectileEventIndices[PROJECTILE_LIST_CAPACITY];
     int dungeonTailLen = 0;
     int i;
     int totalNeeded;
@@ -1974,7 +2045,7 @@ static int export_pc34_core(
     prngSeed = gameID ^ 0xC0DECAFEu;
     if (prngSeed == 0) prngSeed = 0xDEADBEEFu;
 
-    if (!pack_events_and_timeline(state,
+    if (!pack_events_and_timeline(state, projectiles, projectileEventIndices,
                                   eventsPart, (int)sizeof(eventsPart),
                                   timelinePart, (int)sizeof(timelinePart),
                                   &eventsLen, &timelineLen,
@@ -2104,7 +2175,8 @@ static int export_pc34_core(
     partLen = pc34_write_dungeon_tail(p + cursor,
                                       outBufSize - cursor,
                                       dungeon,
-                                      things);
+                                      things,
+                                      projectileEventIndices);
     if (partLen < 0) return SAVEGAME_PC34_ERROR_BUFFER_TOO_SMALL;
     cursor += partLen;
 
@@ -2136,6 +2208,7 @@ int F0795_SAVEGAME_ExportPC34_Compat(
     return export_pc34_core(state,
                             0, 0,
                             0, 0,
+                            0,
                             0u,
                             0, 0,
                             gameID,
@@ -2183,6 +2256,7 @@ int F0802_SAVEGAME_ExportPC34FromWorld_Compat(
                             activeGroupsLen,
                             world->dungeon,
                             world->things,
+                            &world->projectiles,
                             world->gameTick,
                             currentActiveGroupCount,
                             maximumActiveGroupCount,
