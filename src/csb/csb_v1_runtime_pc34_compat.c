@@ -17208,18 +17208,20 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
          * saved receipts must never reach that generic mutation path. */
         return 1;
     }
-    if (timer->function == 8u) {
+    if (timer->function == 8u || timer->function == 9u) {
         uint8_t *square;
         int square_type;
+        int expected_square_type;
         int thing;
         int action;
 
-        /* CSBWin Timer.cpp::ProcessTT_TELEPORTER:2343-2367 runs
-         * ActivateDSA, then updates bit 3 and calls WiggleEverything on SET.
-         * A square with no Thing list has neither a type-47 owner nor any
-         * party/monster/drawable Thing for WiggleEverything to move. Retain
-         * only that complete no-op-wiggle shape; a listed Thing falls through
-         * to the existing DSA receipt and remains mutation-blocked below. */
+        /* CSBWin Timer.cpp::ProcessTT_TELEPORTER:2343-2367 and
+         * ProcessTT_PITROOM:2473-2505 run ActivateDSA, then update bit 3 and
+         * call WiggleEverything when a closed target opens. An empty Thing
+         * chain has neither a type-47 owner nor a party/monster/drawable Thing
+         * for WiggleEverything to move. Retain only that complete no-op-wiggle
+         * shape; a listed Thing falls through to the DSA receipt and remains
+         * mutation-blocked below. */
         if (!timer->valid || timer->truncated ||
             timer->source_index != timer_index ||
             record->eventType != timer->function ||
@@ -17230,9 +17232,10 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
             !profile->dungeon_handle) {
             return 1;
         }
+        expected_square_type = timer->function == 8u ? 5 : 2;
         square = csb_v1_runtime_square_byte_ptr(
             profile, timer->level, timer->ubyte6, timer->ubyte7, &square_type);
-        if (!square || square_type != 5) return 1;
+        if (!square || square_type != expected_square_type) return 1;
         thing = csb_v1_dungeon_get_first_thing(
             profile->dungeon_handle, timer->level, timer->ubyte6,
             timer->ubyte7);
@@ -17473,7 +17476,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         thing_record = csb_v1_dungeon_get_thing_record(
             dungeon, (uint16_t)thing, &type, NULL, &size);
         if (!thing_record || size < 2) {
-            return timer->function == 8u ? 1 : 0;
+            return (timer->function == 8u || timer->function == 9u) ? 1 : 0;
         }
         if (type == CSB_V1_THING_TYPE_ACTUATOR && size >= 4 &&
             (((uint16_t)thing_record[2] | ((uint16_t)thing_record[3] << 8)) &
@@ -17499,7 +17502,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         return csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
             profile, record, timer, timer_index, queue_slot);
     }
-    if (timer->function == 8u) {
+    if (timer->function == 8u || timer->function == 9u) {
         /* A listed target can have DSA or WiggleEverything ownership that is
          * absent from this restored profile. Any pure-stack DSA receipt above
          * may run, but it cannot fall through to M10's generic cell mutation. */
