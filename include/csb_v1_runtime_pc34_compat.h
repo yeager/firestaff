@@ -733,6 +733,31 @@ int csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
     CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
     const CSB_V1_DSAImportedAction **out_action);
 
+/* Bind one restored CSBWin TT_OPENROOM (function 5) timer to the exact
+ * ProcessDSATimer5 -> ProcessDSATimer6 receipt for a concrete type-47
+ * actuator on its target square. Timer.cpp does not alter a normal
+ * TT_OPENROOM timer before calling ProcessDSATimer5, so the saved
+ * SET/CLEAR/TOGGLE action, position, level, and coordinates are the direct
+ * source inputs. TT_ParameterMessage remains excluded until its EXPOOL
+ * parameter record has an authenticated runtime owner. */
+int csb_v1_runtime_resolve_csbwin_openroom_dsa_timer_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
+
+/* Prepare the existing authenticated pure-stack runner only from the exact
+ * action selected through TT_OPENROOM -> ProcessDSATimer5. This bridge does
+ * not execute world opcodes, text updates, or unknown LocalState 2/3 paths. */
+int csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action);
+
 /* Resolve the source's complete Monster.cpp attack-filter handoff: the
  * verified SpecialLocations actuator, saved level selector, serialized DSA
  * LocalState, actuator DSAstate, and timer column 0.  It only returns an

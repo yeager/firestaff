@@ -551,7 +551,7 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     CSB_V1_DSAImportedAction action;
     CSB_V1_CSBWin512TimerSummary stoneroom_timer;
     CSB_V1_CSBWin512TimerSummary falsewall_timer;
-    CSB_V1_CSBWin512TimerSummary falsewall_timer;
+    CSB_V1_CSBWin512TimerSummary openroom_timer;
     CSB_V1_RuntimeProfile profile;
     CSB_V1_RuntimeDSAFilterBinding binding;
     CSB_V1_RuntimeCSBWinDSATimer6Resolution timer6;
@@ -565,7 +565,7 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     memset(&action, 0, sizeof(action));
     memset(&stoneroom_timer, 0, sizeof(stoneroom_timer));
     memset(&falsewall_timer, 0, sizeof(falsewall_timer));
-    memset(&falsewall_timer, 0, sizeof(falsewall_timer));
+    memset(&openroom_timer, 0, sizeof(openroom_timer));
     memset(&binding, 0, sizeof(binding));
     memset(&timer6, 0, sizeof(timer6));
     memset(&runner, 0, sizeof(runner));
@@ -638,6 +638,29 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               runner.dsa_id == 7 && runner.state_index == 4u &&
               runner.action_ordinal == 0,
           "CSBWin saved TT_STONEROOM timer prepares only its selected DSA action");
+    openroom_timer.valid = 1;
+    openroom_timer.function = 5u;
+    openroom_timer.ubyte6 = (uint8_t)location.x;
+    openroom_timer.ubyte7 = (uint8_t)location.y;
+    openroom_timer.ubyte8 = 0u;
+    openroom_timer.ubyte9 = 0u;
+    openroom_timer.level = (uint8_t)location.level;
+    CHECK(csb_v1_runtime_resolve_csbwin_openroom_dsa_timer_action(
+              &profile, &dungeon, &location, &openroom_timer, &timer6) == 1 &&
+              timer6.input_column == 0u && timer6.state_index == 4u,
+          "CSBWin saved TT_OPENROOM timer reaches ProcessDSATimer5/6 receipt");
+    selected_action = NULL;
+    CHECK(csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
+              &profile, &dungeon, &location, &openroom_timer, &runner,
+              &selected_action) == 1 && selected_action == &action &&
+              runner.dsa_id == 7 && runner.state_index == 4u &&
+              runner.action_ordinal == 0,
+          "CSBWin saved TT_OPENROOM timer prepares only its selected DSA action");
+    openroom_timer.function = 101u;
+    CHECK(csb_v1_runtime_resolve_csbwin_openroom_dsa_timer_action(
+              &profile, &dungeon, &location, &openroom_timer, &timer6) == 0,
+          "CSBWin parameter-message timer stays blocked without its EXPOOL payload");
+    openroom_timer.function = 5u;
     stoneroom_timer.ubyte9 = 3u;
     CHECK(csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
               &profile, &dungeon, &location, &stoneroom_timer, &timer6) == 0,
@@ -647,21 +670,6 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     CHECK(csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
               &profile, &dungeon, &location, &stoneroom_timer, &timer6) == 0,
           "CSBWin parameter-message timer stays blocked without its EXPOOL payload");
-    falsewall_timer.valid = 1;
-    falsewall_timer.function = 7u;
-    falsewall_timer.ubyte6 = (uint8_t)location.x;
-    falsewall_timer.ubyte7 = (uint8_t)location.y;
-    falsewall_timer.ubyte8 = 0u;
-    falsewall_timer.ubyte9 = 0u;
-    falsewall_timer.level = (uint8_t)location.level;
-    CHECK(csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
-              &profile, &dungeon, &location, &falsewall_timer, &timer6) == 1 &&
-              timer6.input_column == 0u && timer6.state_index == 4u,
-          "CSBWin saved TT_FALSEWALL timer reaches its verified DSA timer-seven receipt");
-    falsewall_timer.ubyte9 = 3u;
-    CHECK(csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
-              &profile, &dungeon, &location, &falsewall_timer, &timer6) == 0,
-          "CSBWin false-wall DSA timer rejects non-source actions");
     falsewall_timer.valid = 1;
     falsewall_timer.function = 7u;
     falsewall_timer.ubyte6 = (uint8_t)location.x;
@@ -714,6 +722,10 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               &profile, &dungeon, &location, &stoneroom_timer, &runner,
               &selected_action) == 0,
           "CSBWin TT_STONEROOM runner keeps ParameterB LocalState blocked");
+    CHECK(csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
+              &profile, &dungeon, &location, &openroom_timer, &runner,
+              &selected_action) == 0,
+          "CSBWin TT_OPENROOM runner keeps ParameterB LocalState blocked");
     profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 3u;
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
               &profile, &dungeon, &location, 0, 0, &timer6) == 0,

@@ -43,6 +43,14 @@
   does not claim rectangle 453 placement, text layout, a decoded surface, or
   a draw. Verification: Ninja and CTest-passed
   `dm2_v1_dialogue_gdat_receipt`.
+- 2026-07-13 CSBWin saved `TT_OPENROOM` DSA receipt: restored function-5
+  timers now bind their exact level/x/y target, timer position, and
+  SET/CLEAR/TOGGLE message through `Timer.cpp::ProcessTT_OPENROOM` and
+  `DSA.cpp::ProcessDSATimer5` to the existing authenticated
+  `ProcessDSATimer6` resolver. Parameter-message timers, target mismatches,
+  invalid actions/positions, and `LocalState=2/3` reject before dispatch; no
+  EXPOOL payload, world opcode, text update, or fallback execution was
+  inferred. Verification: Ninja and CTest `csb_v1_phase7_verification`.
 
 - 2026-07-13 CSBWin saved `TT_STONEROOM` DSA receipt: restored function-6
   timers now bind their exact level/x/y target, timer position, and
