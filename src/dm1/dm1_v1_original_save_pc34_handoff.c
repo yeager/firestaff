@@ -3627,10 +3627,10 @@ static void dm1_original_save_sort_c13_receipt_rows(
     }
 }
 
-/* ReDMCSB PROJEXPL.C F0213 creates C25 with exactly B.Location and C.Slot.
- * F0433/F0435 retain the enclosing EVENT; this receipt deliberately retains
- * only the four source-owned union bytes. */
-static void dm1_original_save_c25_union_slot_receipt_bytes(
+/* ReDMCSB PROJEXPL.C F0213/F0224 creates C25/C24 with B.Location and
+ * C.Slot. F0433/F0435 retain the enclosing EVENT; this receipt deliberately
+ * retains only the four source-owned C15 union bytes. */
+static void dm1_original_save_explosion_union_slot_receipt_bytes(
     const struct DM1_Event_V1 *event,
     uint8_t out_bytes[4])
 {
@@ -3640,39 +3640,7 @@ static void dm1_original_save_c25_union_slot_receipt_bytes(
     out_bytes[3] = event->c_effect;
 }
 
-static void dm1_original_save_sort_c25_receipt_rows(
-    uint8_t rows[DM1_EVENT_MAX_COUNT][4],
-    int count)
-{
-    int i;
-
-    for (i = 1; i < count; ++i) {
-        uint8_t row[4];
-        int j = i;
-
-        memcpy(row, rows[i], sizeof(row));
-        while (j > 0 && memcmp(rows[j - 1], row, sizeof(row)) > 0) {
-            memcpy(rows[j], rows[j - 1], sizeof(row));
-            --j;
-        }
-        memcpy(rows[j], row, sizeof(row));
-    }
-}
-
-/* ReDMCSB PROJEXPL.C F0224 creates C24 for a C15 fluxcage with the same
- * B.Location/C.Slot union shape as C25. This is receipt-only and never turns
- * the saved Thing into a host explosion-list index. */
-static void dm1_original_save_c24_union_slot_receipt_bytes(
-    const struct DM1_Event_V1 *event,
-    uint8_t out_bytes[4])
-{
-    out_bytes[0] = event->b_mapX;
-    out_bytes[1] = event->b_mapY;
-    out_bytes[2] = event->c_cell;
-    out_bytes[3] = event->c_effect;
-}
-
-static void dm1_original_save_sort_c24_receipt_rows(
+static void dm1_original_save_sort_explosion_union_receipt_rows(
     uint8_t rows[DM1_EVENT_MAX_COUNT][4],
     int count)
 {
@@ -3973,20 +3941,20 @@ static void fill_roundtrip_core_report(
         out_report->c25_union_slot_byte_receipt_available = 1;
         for (i = 0; i < source_report->decoded_event_count; ++i) {
             if (source_report->events[i].type == DM1_EVENT_EXPLOSION) {
-                dm1_original_save_c25_union_slot_receipt_bytes(
+                dm1_original_save_explosion_union_slot_receipt_bytes(
                     &source_report->events[i], source_c25_rows[source_c25_count++]);
             }
         }
         for (i = 0; i < export_report->decoded_event_count; ++i) {
             if (export_report->events[i].type == DM1_EVENT_EXPLOSION) {
-                dm1_original_save_c25_union_slot_receipt_bytes(
+                dm1_original_save_explosion_union_slot_receipt_bytes(
                     &export_report->events[i], export_c25_rows[export_c25_count++]);
             }
         }
-        dm1_original_save_sort_c25_receipt_rows(source_c25_rows,
-                                                  source_c25_count);
-        dm1_original_save_sort_c25_receipt_rows(export_c25_rows,
-                                                  export_c25_count);
+        dm1_original_save_sort_explosion_union_receipt_rows(source_c25_rows,
+                                                              source_c25_count);
+        dm1_original_save_sort_explosion_union_receipt_rows(export_c25_rows,
+                                                              export_c25_count);
         out_report->source_c25_event_count = source_c25_count;
         out_report->exported_c25_event_count = export_c25_count;
         out_report->source_c25_union_slot_byte_count =
@@ -4025,20 +3993,20 @@ static void fill_roundtrip_core_report(
         out_report->c24_union_slot_byte_receipt_available = 1;
         for (i = 0; i < source_report->decoded_event_count; ++i) {
             if (source_report->events[i].type == DM1_EVENT_REMOVE_FLUXCAGE) {
-                dm1_original_save_c24_union_slot_receipt_bytes(
+                dm1_original_save_explosion_union_slot_receipt_bytes(
                     &source_report->events[i], source_c24_rows[source_c24_count++]);
             }
         }
         for (i = 0; i < export_report->decoded_event_count; ++i) {
             if (export_report->events[i].type == DM1_EVENT_REMOVE_FLUXCAGE) {
-                dm1_original_save_c24_union_slot_receipt_bytes(
+                dm1_original_save_explosion_union_slot_receipt_bytes(
                     &export_report->events[i], export_c24_rows[export_c24_count++]);
             }
         }
-        dm1_original_save_sort_c24_receipt_rows(source_c24_rows,
-                                                  source_c24_count);
-        dm1_original_save_sort_c24_receipt_rows(export_c24_rows,
-                                                  export_c24_count);
+        dm1_original_save_sort_explosion_union_receipt_rows(source_c24_rows,
+                                                              source_c24_count);
+        dm1_original_save_sort_explosion_union_receipt_rows(export_c24_rows,
+                                                              export_c24_count);
         out_report->source_c24_event_count = source_c24_count;
         out_report->exported_c24_event_count = export_c24_count;
         out_report->source_c24_union_slot_byte_count =
