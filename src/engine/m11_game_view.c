@@ -29956,10 +29956,18 @@ static void m11_projectile_apply_impact(
                                 impactMap, impactX, impactY,
                                 actionApply.outcomeCode);
                         }
-                        if (aftermath.spawnDeathSmoke) {
+                        if (aftermath.spawnDeathSmoke &&
+                            actionApply.outcomeCode !=
+                                COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+                            /* ReDMCSB GROUP.C F0190:892-916 compacts a
+                             * surviving group before its C040. The all-kill
+                             * branch defers C040 to the F0188/F0189 route
+                             * below, where event deletion can free its
+                             * source timeline slot first. */
                             (void)m11_spawn_f0190_death_smoke(
                                 state, actionPlan.originalCreatureType,
-                                actionPlan.killedCell, impactMap, impactX, impactY);
+                                actionPlan.killedCell, impactMap, impactX,
+                                impactY);
                         }
                         if (aftermath.scheduleReaction) {
                             m11_schedule_projectile_hit_creature_reaction(
@@ -29985,7 +29993,10 @@ static void m11_projectile_apply_impact(
                 /* Check if the group is dead after projectile damage */
                 (void)m11_check_group_death_and_drop(
                     state, groupThing, impactMap, impactX, impactY,
-                    actionPlan.killedCell, 0);
+                    actionPlan.killedCell,
+                    aftermath.spawnDeathSmoke &&
+                        actionApply.outcomeCode ==
+                            COMBAT_OUTCOME_KILLED_ALL_CREATURES);
                 m11_write_raw_group_record(state->world.things, gIdx);
                 (void)m11_materialize_projectile_associated_thing(
                     state, p, r, associatedThingMovedToGroup);
