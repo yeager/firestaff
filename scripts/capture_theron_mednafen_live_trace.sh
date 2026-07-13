@@ -196,6 +196,8 @@ launch=(
     "$mednafen_bin" \
     -sound 0 \
     -video.driver softfb \
+    -pce.input.multitap 0 \
+    -pce.input.port1 gamepad \
     -pce.arcadecard 0 \
     -pce.cdbios "$system_card"
     "$cue"
