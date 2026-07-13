@@ -176,6 +176,53 @@ static void test_sal_package_profile_blocks_playback(void) {
     nexus_sound_shutdown(&eng);
 }
 
+static void test_sal_container_preamble_stays_opaque(void) {
+    Nexus_SoundEngine eng;
+    Nexus_SfxRuntimeReceipt receipt;
+    static unsigned char sal_data[297082];
+    static unsigned char map_data[66];
+
+    memset(sal_data, 0, sizeof(sal_data));
+    memset(map_data, 0, sizeof(map_data));
+    memcpy(sal_data, "dsp01.EXB", 8);
+
+    memset(&eng, 0, sizeof(eng));
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(nexus_sound_init(&eng) == 0, "sound engine initializes");
+    CHECK(nexus_sound_load_level(&eng, 0, sal_data, (int)sizeof(sal_data),
+                                 map_data, (int)sizeof(map_data)) == 0,
+          "known SAL preamble loads for bounded inspection");
+    CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0,
+          "known SAL preamble receipt emits");
+    CHECK(receipt.sal_container_preamble_supported == 1 &&
+          receipt.sal_payload_offset == 8 &&
+          receipt.sal_opaque_payload_size == (int)sizeof(sal_data) - 8 &&
+          receipt.status == NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
+          receipt.blocks_real_sfx_playback == 1,
+          "known preamble exposes only an opaque payload boundary");
+    nexus_sound_shutdown(&eng);
+
+    memset(sal_data, 0, sizeof(sal_data));
+    memcpy(sal_data, "dsp02.EXB", 8);
+    memset(&eng, 0, sizeof(eng));
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(nexus_sound_init(&eng) == 0, "sound engine reinitializes");
+    CHECK(nexus_sound_load_level(&eng, 0, sal_data, (int)sizeof(sal_data),
+                                 map_data, (int)sizeof(map_data)) == 0,
+          "unknown SAL preamble loads only for rejection");
+    CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0,
+          "unknown SAL preamble receipt emits");
+    CHECK(receipt.sal_container_preamble_supported == 0,
+          "unknown preamble is not accepted");
+    CHECK(receipt.sal_payload_offset == -1 &&
+          receipt.sal_opaque_payload_size == 0,
+          "unknown preamble has no payload boundary");
+    CHECK(receipt.blocks_real_sfx_playback == 1 &&
+          receipt.playback_enabled == 0,
+          "unknown preamble cannot enable playback");
+    nexus_sound_shutdown(&eng);
+}
+
 static void test_sfx_map_record_table_receipt(void) {
     Nexus_SoundEngine eng;
     Nexus_SfxRuntimeReceipt receipt;
@@ -429,6 +476,9 @@ static void test_optional_real_sal_corpus_profile(void) {
             profiled++;
             CHECK(receipt.status == NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
                   receipt.blocks_real_sfx_playback == 1 &&
+                  receipt.sal_container_preamble_supported == 1 &&
+                  receipt.sal_payload_offset == 8 &&
+                  receipt.sal_opaque_payload_size == sal_size - 8 &&
                   receipt.sal_word_count == (int)(sal_size / 2) &&
                   receipt.sal_nonzero_byte_count > 0 &&
                   receipt.sal_last_nonzero_offset >=
@@ -514,6 +564,7 @@ int main(void) {
     test_missing_assets_block_playback();
     test_size_matched_assets_block_decode();
     test_sal_package_profile_blocks_playback();
+    test_sal_container_preamble_stays_opaque();
     test_sfx_map_record_table_receipt();
     test_sfx_map_duplicate_event_receipt();
     test_mismatched_assets_block_playback();

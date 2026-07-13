@@ -29,6 +29,15 @@ static const char *g_event_names[] = {
 #define EVENT_COUNT (sizeof(g_event_names)/sizeof(g_event_names[0]))
 #define NEXUS_SFX_MAP_HEADER_BYTES 24
 #define NEXUS_SFX_MAP_RECORD_BYTES 8
+#define NEXUS_SAL_CONTAINER_PREAMBLE_BYTES 8
+
+/* The 16 hash-verified Japanese Track 1 SAL banks begin with these literal
+ * bytes. DM.BIN+0x38ea0..0x39100 contains the adjacent .MAP, .SAL,
+ * SNDLEV01..15, and SDDRVS.TSK loader strings. This establishes only an
+ * opaque container precondition, not codec or frame semantics. */
+static const uint8_t g_sal_container_preamble[NEXUS_SAL_CONTAINER_PREAMBLE_BYTES] = {
+    'd', 's', 'p', '0', '1', '.', 'E', 'X'
+};
 
 static int read_u16_be(const uint8_t *p) {
     return p ? (int)(((uint16_t)p[0] << 8) | (uint16_t)p[1]) : 0;
@@ -322,6 +331,9 @@ static void parse_map_record_table(Nexus_SoundEngine *eng) {
 static void clear_sal_profile(Nexus_SoundEngine *eng) {
     if (!eng) return;
     eng->sal_package_profile_supported = 0;
+    eng->sal_container_preamble_supported = 0;
+    eng->sal_payload_offset = -1;
+    eng->sal_opaque_payload_size = 0;
     eng->sal_word_count = 0;
     eng->sal_nonzero_byte_count = 0;
     eng->sal_high_bit_byte_count = 0;
@@ -341,6 +353,15 @@ static void parse_sal_profile(Nexus_SoundEngine *eng) {
     clear_sal_profile(eng);
     if (!eng->sal_data || eng->sal_size <= 0 || (eng->sal_size & 1) != 0) {
         return;
+    }
+
+    if (eng->sal_size >= NEXUS_SAL_CONTAINER_PREAMBLE_BYTES &&
+        memcmp(eng->sal_data, g_sal_container_preamble,
+               NEXUS_SAL_CONTAINER_PREAMBLE_BYTES) == 0) {
+        eng->sal_container_preamble_supported = 1;
+        eng->sal_payload_offset = NEXUS_SAL_CONTAINER_PREAMBLE_BYTES;
+        eng->sal_opaque_payload_size =
+            eng->sal_size - NEXUS_SAL_CONTAINER_PREAMBLE_BYTES;
     }
 
     for (i = 0; i < eng->sal_size; ++i) {
@@ -625,6 +646,10 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
         eng->last_event_window_transition_count;
     out_receipt->sal_package_profile_supported =
         eng->sal_package_profile_supported;
+    out_receipt->sal_container_preamble_supported =
+        eng->sal_container_preamble_supported;
+    out_receipt->sal_payload_offset = eng->sal_payload_offset;
+    out_receipt->sal_opaque_payload_size = eng->sal_opaque_payload_size;
     out_receipt->sal_word_count = eng->sal_word_count;
     out_receipt->sal_nonzero_byte_count = eng->sal_nonzero_byte_count;
     out_receipt->sal_high_bit_byte_count = eng->sal_high_bit_byte_count;

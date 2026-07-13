@@ -114,6 +114,9 @@ typedef struct {
     int last_event_window_distinct_byte_count;
     int last_event_window_transition_count;
     int sal_package_profile_supported;
+    int sal_container_preamble_supported;
+    int sal_payload_offset;
+    int sal_opaque_payload_size;
     int sal_word_count;
     int sal_nonzero_byte_count;
     int sal_high_bit_byte_count;
@@ -203,6 +206,9 @@ typedef struct {
     int last_event_window_distinct_byte_count;
     int last_event_window_transition_count;
     int sal_package_profile_supported;
+    int sal_container_preamble_supported;
+    int sal_payload_offset;
+    int sal_opaque_payload_size;
     int sal_word_count;
     int sal_nonzero_byte_count;
     int sal_high_bit_byte_count;

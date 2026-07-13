@@ -504,7 +504,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   host receipt are valid; remaining work is Saturn presentation parity, not
   fallback capture commands.
 - 🔧 2026-07-13 Nexus SFX follow-up: level-0/CD-track provenance alone does
-  not promote audio; remaining work is original SAL decode/playback proof.
+  not promote audio. The verified `dsp01.EXB` preamble establishes only an
+  opaque byte-8 SAL payload boundary; remaining work is original
+  `SDDRVS.TSK`/SH-2 codec, frame, and playback proof.
 - 🔧 2026-07-13 Nexus SLEV follow-up: parsed source bytes do not promote a
   runtime route until the bounded dispatcher receipt is enabled.
 - 🔧 2026-07-13 Nexus runtime-host follow-up: a blocked SLEV dispatcher now
