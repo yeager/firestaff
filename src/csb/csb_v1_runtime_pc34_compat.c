@@ -16567,13 +16567,46 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
      * no public API can provide a substitute TIMER or actuator location. */
     if (!profile || !record || queue_slot == CSB_V1_CSBWIN_TIMER_QUEUE_NONE ||
         queue_slot >= profile->csbwin_timer_queue_summary_count ||
-        !profile->csbwin_body_runtime_summary_valid ||
-        !profile->dungeon_handle) {
+        !profile->csbwin_body_runtime_summary_valid) {
         return 0;
     }
     timer_index = profile->csbwin_timer_queue[queue_slot];
     if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
+    if (timer->function == 11u) {
+        CSB_V1_Champion *champion;
+
+        /* ReDMCSB TIMELINE.C F0253 lines 1574-1612 and CSBWin
+         * CSBCode.cpp:6457-6466/Timer.cpp:2591-2642 own TT_11. Retain only
+         * the saved no-rearm, non-SHOOT receipt: F0253 clears the action
+         * lock, clears the stored action defense, and resets ActionIndex.
+         * Ammunition selection and CSBWin's TAG0115ee branch have no complete
+         * save-owned inventory handoff here, so they remain fail-closed. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 && timer->ubyte6 == 0u &&
+            profile->party_state_valid &&
+            profile->champion_count > 0 &&
+            profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
+            profile->party_state.ChampionCount == profile->champion_count &&
+            timer->ubyte5 < (uint8_t)profile->party_state.ChampionCount &&
+            timer->ubyte5 < CSB_V1_MAX_CHAMPIONS) {
+            champion = &profile->party_state.Champions[timer->ubyte5];
+            if (champion->ActionIndex != 32u) { /* CSBWin atk_SHOOT. */
+                champion->EnableActionEventIndex = -1;
+                champion->Attributes &= (uint16_t)~0x0008u;
+                champion->CsbWinWord64 = 0;
+                champion->ActionIndex = CSB_V1_ACTION_NONE;
+            }
+        }
+        /* Function 11 aliases the shared action-enable event. A malformed
+         * restored TT_11 must not reach that generic path on a later pass. */
+        return 1;
+    }
     if (timer->function == 2u) {
         uint8_t *square;
         int square_type;
@@ -16602,6 +16635,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         }
         return 1;
     }
+    if (!profile->dungeon_handle) return 0;
     if (!timer->valid || timer->truncated || timer->source_index != timer_index ||
         ((timer->function < 5u || timer->function > 10u) &&
          timer->function != 101u && timer->function != 102u) ||

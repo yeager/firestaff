@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin restored TT_11 action-enable timer bridge: verified an
+  exact queue-slot/timer/event/champion receipt now clears the source busy
+  timer, disable-action bit, action-defense word, and action index for the
+  saved no-rearm, non-SHOOT path. Function 11 is consumed before the shared
+  action-enable event route even when malformed. Ammunition selection and the
+  TAG0115ee rearm branch remain blocked. Source: ReDMCSB `TIMELINE.C`
+  `F0253` lines 1574-1612 and `C11` dispatch at 1927-1932; CSBWin
+  `CSBCode.cpp:6457-6466`, `Timer.cpp:2591-2642`. Verification: Ninja and
+  CTest `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin restored TT_BASH_DOOR timer bridge: verified function-2
   queue entries now alter only their exact loaded byte-map door receipt after
   queue-slot, timer, and full event identity validation. The shared DM1
