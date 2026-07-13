@@ -526,11 +526,14 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               correlation.structure3_nonzero_block_run_count ==
                   loaded_level.structure3_payload.nonzero_block_run_count &&
               correlation.direct_block_ordinal_mapping_disproven ==
-                  (correlation.model_index_exceeds_block_count > 0) &&
+                  (correlation.zero_based_block_ordinal_mapping_disproven &&
+                   correlation.one_based_block_ordinal_mapping_disproven) &&
               correlation.direct_byte_run_ordinal_mapping_disproven ==
-                  (correlation.model_index_exceeds_nonzero_byte_run_count > 0) &&
+                  (correlation.zero_based_byte_run_ordinal_mapping_disproven &&
+                   correlation.one_based_byte_run_ordinal_mapping_disproven) &&
               correlation.direct_run_ordinal_mapping_disproven ==
-                  (correlation.model_index_exceeds_nonzero_block_run_count > 0) &&
+                  (correlation.zero_based_run_ordinal_mapping_disproven &&
+                   correlation.one_based_run_ordinal_mapping_disproven) &&
               !correlation.face_semantics_proven,
               "retail Structure3 correlation rules out only disproven direct ordinals");
         if (loaded_level.structure3_payload.declared) {
@@ -901,11 +904,41 @@ static void test_structure1f_semantics_and_bounds(void) {
           structure3_correlation.model_index_exceeds_block_count == 8 &&
           structure3_correlation.model_index_exceeds_nonzero_byte_run_count == 8 &&
           structure3_correlation.model_index_exceeds_nonzero_block_run_count == 8 &&
+          structure3_correlation.zero_based_block_ordinal_mapping_disproven &&
+          structure3_correlation.one_based_block_ordinal_mapping_disproven &&
+          structure3_correlation.zero_based_byte_run_ordinal_mapping_disproven &&
+          structure3_correlation.one_based_byte_run_ordinal_mapping_disproven &&
+          structure3_correlation.zero_based_run_ordinal_mapping_disproven &&
+          structure3_correlation.one_based_run_ordinal_mapping_disproven &&
           structure3_correlation.direct_block_ordinal_mapping_disproven &&
           structure3_correlation.direct_byte_run_ordinal_mapping_disproven &&
           structure3_correlation.direct_run_ordinal_mapping_disproven &&
           !structure3_correlation.face_semantics_proven,
           "Structure1A model indexes cannot become direct Structure3 byte, block, or run ordinals");
+    for (int entry = 0; entry < level.structure1f_entry_count; ++entry) {
+        if (level.structure1f_entries[entry].family >=
+            NEXUS_V1_DGN_STRUCTURE1F_ALCOVES) {
+            level.structure1f_entries[entry].structure1a_structure3_model_index = 3U;
+        }
+    }
+    CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(
+              &level, &structure3_correlation) == 0 &&
+          structure3_correlation.zero_based_byte_run_ordinal_mapping_disproven &&
+          !structure3_correlation.one_based_byte_run_ordinal_mapping_disproven &&
+          !structure3_correlation.direct_byte_run_ordinal_mapping_disproven &&
+          !structure3_correlation.zero_based_block_ordinal_mapping_disproven &&
+          !structure3_correlation.one_based_block_ordinal_mapping_disproven &&
+          structure3_correlation.zero_based_run_ordinal_mapping_disproven &&
+          structure3_correlation.one_based_run_ordinal_mapping_disproven &&
+          structure3_correlation.direct_run_ordinal_mapping_disproven,
+          "Structure3 ordinal receipts keep zero- and one-based exclusions separate");
+    for (int entry = 0; entry < level.structure1f_entry_count; ++entry) {
+        if (level.structure1f_entries[entry].family >=
+            NEXUS_V1_DGN_STRUCTURE1F_ALCOVES) {
+            level.structure1f_entries[entry].structure1a_structure3_model_index =
+                (uint8_t)(0x20 + level.structure1f_entries[entry].structure1a_index);
+        }
+    }
     level.structure1f_entries[7].structure1a_index = 9U;
     level.structure1f_entries[7].structure1a_relation_valid = 0;
     CHECK(nexus_v1_level_structure1a_relation_receipt(&level,

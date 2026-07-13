@@ -499,6 +499,30 @@ int nexus_v1_inspect_dgn_material_corpus(
             ++receipt.structure3_model_reference_complete_level_count;
         }
         if (receipt.structure3_ordinal_correlations[level_index]
+                .zero_based_block_ordinal_mapping_disproven) {
+            ++receipt.structure3_zero_based_block_ordinal_mapping_disproven_level_count;
+        }
+        if (receipt.structure3_ordinal_correlations[level_index]
+                .one_based_block_ordinal_mapping_disproven) {
+            ++receipt.structure3_one_based_block_ordinal_mapping_disproven_level_count;
+        }
+        if (receipt.structure3_ordinal_correlations[level_index]
+                .zero_based_byte_run_ordinal_mapping_disproven) {
+            ++receipt.structure3_zero_based_byte_run_ordinal_mapping_disproven_level_count;
+        }
+        if (receipt.structure3_ordinal_correlations[level_index]
+                .one_based_byte_run_ordinal_mapping_disproven) {
+            ++receipt.structure3_one_based_byte_run_ordinal_mapping_disproven_level_count;
+        }
+        if (receipt.structure3_ordinal_correlations[level_index]
+                .zero_based_run_ordinal_mapping_disproven) {
+            ++receipt.structure3_zero_based_run_ordinal_mapping_disproven_level_count;
+        }
+        if (receipt.structure3_ordinal_correlations[level_index]
+                .one_based_run_ordinal_mapping_disproven) {
+            ++receipt.structure3_one_based_run_ordinal_mapping_disproven_level_count;
+        }
+        if (receipt.structure3_ordinal_correlations[level_index]
                 .direct_block_ordinal_mapping_disproven) {
             ++receipt.structure3_direct_block_ordinal_mapping_disproven_level_count;
         }
