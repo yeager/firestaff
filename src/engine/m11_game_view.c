@@ -34773,10 +34773,22 @@ static void m11_repaint_dm1_f0128_front_wall_inscription(
 {
     M11_ViewportCell frontCell;
     unsigned char glyphProbe[2];
+    /* ReDMCSB F0128 rebuilds the tuple before F0107 may select M648. A
+     * C127 champion-mirror frame follows F0107's C346/C026 branch instead,
+     * so it must not retain an earlier D1C TextString receipt. */
+    memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_inscription_host_presentation_receipt));
     if (!state || !framebuffer ||
         state->presentationMode == M12_PRESENTATION_V22_MODERN ||
         !m11_sample_viewport_cell(state, 1, 0, &frontCell) ||
         !frontCell.valid || !m11_viewport_cell_is_wall_like(&frontCell)) {
+        return;
+    }
+    /* ReDMCSB DUNGEON.C F0172 publishes C127 as the D1C mirror ornament;
+     * DUNVIEW.C F0107:3913-3928 then consumes C346/C026, not M648. An
+     * incidental TextString carrier cannot promote that mirror frame back
+     * into the inscription-font branch. */
+    if (frontCell.championPortraitOrdinal >= 0) {
         return;
     }
     /* ReDMCSB DUNGEON.C F0172/F0174 reselects G0290 from the current party
