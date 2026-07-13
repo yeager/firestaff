@@ -1037,6 +1037,40 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         plan->structure1a_structure3_topology_candidate_receipt.complete &&
         !plan->structure1a_structure3_topology_candidate_receipt
              .fallback_visuals_permitted;
+    if (plan->structure1a_structure3_topology_candidates_consumed) {
+        const Nexus_V1_DgnStructure1AStructure3TopologyCandidateReceipt
+            *topology = &plan->structure1a_structure3_topology_candidate_receipt;
+        const Nexus_V1_DgnStructure3PayloadReceipt *payload =
+            &engine->current_level.structure3_payload;
+
+        plan->receipt.structure1a_structure3_topology_candidate_count =
+            topology->topology_candidate_count;
+        plan->receipt.structure1a_structure3_topology_blocked_invalid_source_count =
+            topology->blocked_invalid_source_count;
+        plan->receipt.structure1a_structure3_topology_blocked_payload_count =
+            topology->blocked_payload_count;
+        plan->receipt
+            .structure1a_structure3_topology_direct_ordinal_mapping_disproven_count =
+            topology->direct_ordinal_mapping_disproven_count;
+        plan->receipt.structure1a_structure3_topology_complete = 1;
+        plan->receipt.structure1a_structure3_payload_block_offset =
+            payload->block_offset;
+        plan->receipt.structure1a_structure3_payload_block_count =
+            payload->block_count;
+        plan->receipt.structure1a_structure3_payload_nonzero_byte_run_count =
+            payload->nonzero_byte_run_count;
+        plan->receipt.structure1a_structure3_payload_nonzero_block_run_count =
+            payload->nonzero_block_run_count;
+        plan->receipt.structure1a_structure3_payload_raw_hash =
+            payload->raw_payload_hash;
+    }
+    if (plan->receipt.blocks_real_dgn_mesh_render) {
+        /* Source-only topology commands must not fall through to the
+         * material loop and become a host plan. */
+        plan->receipt.plan_ready = 0;
+        plan->receipt.fallback_visuals_permitted = 0;
+        return NULL;
+    }
     /* Direct Structure1Fa records get the same one-way host consumption.
      * The binder returns only original ITEM.IBS descriptor references for
      * floor commands in the current view; it cannot turn an icon/floor byte

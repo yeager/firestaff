@@ -1501,6 +1501,20 @@ typedef struct {
     Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt
         structure1f_floor_decoration_offset_pairs;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
+    /* A blocked Structure3 handoff may still retain its proven owner-cell
+     * topology route for later diagnostics. These values are raw envelope
+     * relations and identity only; they are never mesh, face, material,
+     * palette, pixel, or draw semantics. */
+    int structure1a_structure3_topology_candidate_count;
+    int structure1a_structure3_topology_blocked_invalid_source_count;
+    int structure1a_structure3_topology_blocked_payload_count;
+    int structure1a_structure3_topology_direct_ordinal_mapping_disproven_count;
+    int structure1a_structure3_topology_complete;
+    int structure1a_structure3_payload_block_offset;
+    int structure1a_structure3_payload_block_count;
+    int structure1a_structure3_payload_nonzero_byte_run_count;
+    int structure1a_structure3_payload_nonzero_block_run_count;
+    uint32_t structure1a_structure3_payload_raw_hash;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
      * interpreted as an object, sensor, trigger, or draw command. */

@@ -320,6 +320,66 @@ int main(void) {
     expect(engine.dgn_material_plan.receipt.uses_static_mns_material_route &&
                !engine.dgn_material_plan.receipt.uses_bpk_material_route,
            "bound Structure1B selectors admit one static MNS package route only");
+    /* A resolved Structure1A owner may retain only the bounded Structure3
+     * envelope. The plan keeps that source evidence while the absent face
+     * grammar remains a hard no-draw gate. */
+    engine.current_level.geometry_info.structure1f_declared = 1;
+    engine.current_level.geometry_info.structure1f_valid = 1;
+    engine.current_level.geometry_info.structure1f_total_entry_count = 1;
+    engine.current_level.structure1f_entry_count = 1;
+    engine.current_level.structure1f_entries[0].family =
+        NEXUS_V1_DGN_STRUCTURE1F_ALCOVES;
+    engine.current_level.structure1f_entries[0].structure1a_index = 0;
+    engine.current_level.structure1f_entries[0].structure1a_relation_valid = 1;
+    engine.current_level.structure1f_entries[0].structure1a_owner_x = 3;
+    engine.current_level.structure1f_entries[0].structure1a_owner_y = 4;
+    engine.current_level.structure1f_entries[0]
+        .structure1a_structure3_model_index = 5U;
+    engine.current_level.structure1a_table_valid = 1;
+    engine.current_level.structure1a_model_count = 1;
+    engine.current_level.structure3_payload.declared = 1;
+    engine.current_level.structure3_payload.valid = 1;
+    engine.current_level.structure3_payload.block_offset = 20;
+    engine.current_level.structure3_payload.block_count = 4;
+    engine.current_level.structure3_payload.byte_size =
+        NEXUS_DGN_BLOCK_SIZE * 4;
+    engine.current_level.structure3_payload.complete_block_count = 4;
+    engine.current_level.structure3_payload.nonzero_byte_run_count = 3;
+    engine.current_level.structure3_payload.nonzero_block_run_count = 2;
+    engine.current_level.structure3_payload.raw_payload_hash = 0x6d358ca1U;
+    nexus_v1_invalidate_dgn_material_plan(&engine);
+    expect(nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0) == NULL &&
+               engine.dgn_material_plan.receipt.status ==
+                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS &&
+               engine.dgn_material_plan.receipt.command_count > 0 &&
+               !engine.dgn_material_plan.receipt.plan_ready &&
+               engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
+               !engine.dgn_material_plan.receipt.fallback_visuals_permitted &&
+               engine.dgn_material_plan
+                   .structure1a_structure3_topology_candidates_consumed &&
+               engine.dgn_material_plan.receipt
+                   .structure1a_structure3_topology_complete &&
+               engine.dgn_material_plan.receipt
+                   .structure1a_structure3_topology_candidate_count == 1 &&
+               engine.dgn_material_plan.receipt
+                   .structure1a_structure3_topology_direct_ordinal_mapping_disproven_count ==
+                       1 &&
+               engine.dgn_material_plan.receipt
+                   .structure1a_structure3_payload_block_offset == 20 &&
+               engine.dgn_material_plan.receipt
+                   .structure1a_structure3_payload_block_count == 4 &&
+               engine.dgn_material_plan.receipt
+                   .structure1a_structure3_payload_nonzero_byte_run_count == 3 &&
+               engine.dgn_material_plan.receipt
+                   .structure1a_structure3_payload_nonzero_block_run_count == 2 &&
+               engine.dgn_material_plan.receipt
+                   .structure1a_structure3_payload_raw_hash == 0x6d358ca1U,
+           "Structure1A/Structure3 topology reaches a blocked no-draw plan with only envelope runs and hash evidence");
+    engine.current_level.structure1f_entry_count = 0;
+    engine.current_level.geometry_info.structure1f_declared = 0;
+    engine.current_level.geometry_info.structure1f_valid = 0;
+    memset(&engine.current_level.structure3_payload, 0,
+           sizeof(engine.current_level.structure3_payload));
     {
         Nexus_V1_DgnStaticMaterialSourceReceipt source_receipt;
         expect(nexus_v1_dgn_static_material_source_receipt(

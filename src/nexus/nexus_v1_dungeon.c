@@ -3462,6 +3462,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
     static const int left_dy[4] = {0, -1, 0, 1};
     Nexus_V1_DgnRendererHandoffReceipt handoff;
     Nexus_V1_DgnRenderPlanReceipt receipt;
+    int structure3_topology_no_draw;
     int pdir;
     int depth;
 
@@ -3569,8 +3570,12 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.structure1g_structure2_image_instruction_unbound_count;
     receipt.structure1g_structure2_bindings_complete =
         handoff.structure1g_structure2_bindings_complete;
-    if (handoff.status != NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH ||
-        !handoff.can_render_dgn_mesh) {
+    structure3_topology_no_draw =
+        handoff.status ==
+        NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS;
+    if ((handoff.status != NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH &&
+         !structure3_topology_no_draw) ||
+        (!handoff.can_render_dgn_mesh && !structure3_topology_no_draw)) {
         receipt.blocks_real_dgn_mesh_render = 1;
         *out_receipt = receipt;
         return 0;
@@ -3685,6 +3690,18 @@ int nexus_v1_level_build_dgn_view_render_plan(
         }
     }
 
+    if (structure3_topology_no_draw) {
+        /* Structure1A owner cells and the bounded Structure3 envelope may be
+         * retained by the engine, but the original face grammar remains
+         * absent. Keep this command plan source-only. */
+        receipt.status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS;
+        receipt.plan_ready = 0;
+        receipt.blocks_real_dgn_mesh_render = 1;
+        receipt.fallback_visuals_permitted = 0;
+        *out_receipt = receipt;
+        return 0;
+    }
     if (!receipt.blocks_real_dgn_mesh_render) {
         int command_index;
         nexus_v1_dgn_plan_bind_direct_structure1f(level, commands, &receipt);
