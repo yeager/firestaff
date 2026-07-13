@@ -832,6 +832,8 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure1FWallDecorationModelRotationPairReceipt
         wall_decoration_model_rotation_pairs;
     Nexus_V1_DgnStructure1FAlcovePayloadSelectorReceipt alcove_payload_selectors;
+    Nexus_V1_DgnStructure1FAlcovePayloadRotationPairReceipt
+        alcove_payload_rotation_pairs;
     Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt floor_sensor_controls;
     Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt floor_sensor_destinations;
     Nexus_V1_DgnStructure1FFloorSensorModelRotationPairReceipt
@@ -1119,6 +1121,19 @@ static void test_structure1f_semantics_and_bounds(void) {
           alcove_payload_selectors.complete &&
           !alcove_payload_selectors.payload_semantics_proven,
           "Structure1F alcove payload selectors remain no-draw provenance");
+    CHECK(nexus_v1_level_structure1f_alcove_payload_rotation_pair_receipt(
+              &level, &alcove_payload_rotation_pairs) == 0 &&
+          alcove_payload_rotation_pairs.structure1a_relation_complete &&
+          alcove_payload_rotation_pairs.alcove_entry_count == 2 &&
+          alcove_payload_rotation_pairs.resolved_pair_count == 2 &&
+          alcove_payload_rotation_pairs.unique_pair_count == 1 &&
+          alcove_payload_rotation_pairs.duplicate_pair_count == 1 &&
+          alcove_payload_rotation_pairs.zero_pair_count == 0 &&
+          alcove_payload_rotation_pairs.nonzero_pair_count == 2 &&
+          alcove_payload_rotation_pairs.highest_pair == 0x0601U &&
+          alcove_payload_rotation_pairs.complete &&
+          !alcove_payload_rotation_pairs.pair_semantics_proven,
+          "Structure1F alcove payload/rotation pairs remain no-draw provenance");
     CHECK(nexus_v1_level_structure1f_floor_sensor_control_selector_receipt(
               &level, &floor_sensor_controls) == 0 &&
           floor_sensor_controls.structure1f_spatial_valid &&
@@ -1375,6 +1390,9 @@ static void test_structure1f_semantics_and_bounds(void) {
           handoff.structure1f_alcove_payload_selectors.complete &&
           handoff.structure1f_alcove_payload_selectors.unique_payload_selector_count == 1 &&
           !handoff.structure1f_alcove_payload_selectors.payload_semantics_proven &&
+          handoff.structure1f_alcove_payload_rotation_pairs.complete &&
+          handoff.structure1f_alcove_payload_rotation_pairs.unique_pair_count == 1 &&
+          !handoff.structure1f_alcove_payload_rotation_pairs.pair_semantics_proven &&
           handoff.structure1f_floor_sensor_control_selectors.complete &&
           handoff.structure1f_floor_sensor_control_selectors.unique_control_selector_count == 2 &&
           !handoff.structure1f_floor_sensor_control_selectors.control_semantics_proven &&
@@ -1448,6 +1466,8 @@ static void test_structure1f_semantics_and_bounds(void) {
           !render_plan.structure1f_wall_decoration_model_rotation_pairs.pair_semantics_proven &&
           render_plan.structure1f_alcove_payload_selectors.complete &&
           !render_plan.structure1f_alcove_payload_selectors.payload_semantics_proven &&
+          render_plan.structure1f_alcove_payload_rotation_pairs.complete &&
+          !render_plan.structure1f_alcove_payload_rotation_pairs.pair_semantics_proven &&
           render_plan.structure1f_floor_sensor_control_selectors.complete &&
           !render_plan.structure1f_floor_sensor_control_selectors.control_semantics_proven &&
           render_plan.structure1f_floor_sensor_destinations.complete &&

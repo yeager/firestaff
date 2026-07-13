@@ -2136,6 +2136,53 @@ int nexus_v1_level_structure1f_alcove_payload_selector_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure1f_alcove_payload_rotation_pair_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FAlcovePayloadRotationPairReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FAlcovePayloadRotationPairReceipt receipt;
+    Nexus_V1_DgnStructure1ARelationReceipt relation;
+    unsigned char seen[UINT16_MAX + 1U];
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&relation, 0, sizeof(relation));
+    memset(seen, 0, sizeof(seen));
+    if (!level || nexus_v1_level_structure1a_relation_receipt(
+                      level, &relation) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.structure1a_relation_complete = relation.complete;
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        uint16_t pair;
+
+        if (record->family != NEXUS_V1_DGN_STRUCTURE1F_ALCOVES) continue;
+        ++receipt.alcove_entry_count;
+        if (!record->structure1a_relation_valid) continue;
+        ++receipt.resolved_pair_count;
+        pair = (uint16_t)(((uint16_t)record->item_id << 8) |
+                          record->rotation);
+        if (pair == 0U) ++receipt.zero_pair_count;
+        else ++receipt.nonzero_pair_count;
+        if (pair > receipt.highest_pair) receipt.highest_pair = pair;
+        if (seen[pair]) ++receipt.duplicate_pair_count;
+        else {
+            seen[pair] = 1U;
+            ++receipt.unique_pair_count;
+        }
+    }
+    receipt.complete = receipt.structure1a_relation_complete &&
+        receipt.resolved_pair_count == receipt.alcove_entry_count;
+    receipt.pair_semantics_proven = 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_structure1f_floor_sensor_control_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt *out_receipt)
@@ -2853,6 +2900,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure1f_wall_decoration_model_rotation_pairs);
     (void)nexus_v1_level_structure1f_alcove_payload_selector_receipt(
         level, &out_receipt->structure1f_alcove_payload_selectors);
+    (void)nexus_v1_level_structure1f_alcove_payload_rotation_pair_receipt(
+        level, &out_receipt->structure1f_alcove_payload_rotation_pairs);
     (void)nexus_v1_level_structure1f_floor_sensor_control_selector_receipt(
         level, &out_receipt->structure1f_floor_sensor_control_selectors);
     (void)nexus_v1_level_structure1f_floor_sensor_destination_receipt(
@@ -3353,6 +3402,8 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.structure1f_wall_decoration_model_rotation_pairs;
     receipt.structure1f_alcove_payload_selectors =
         handoff.structure1f_alcove_payload_selectors;
+    receipt.structure1f_alcove_payload_rotation_pairs =
+        handoff.structure1f_alcove_payload_rotation_pairs;
     receipt.structure1f_floor_sensor_control_selectors =
         handoff.structure1f_floor_sensor_control_selectors;
     receipt.structure1f_floor_sensor_destinations =
