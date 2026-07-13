@@ -861,6 +861,11 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
 
     memset(plan->commands, 0, sizeof(plan->commands));
     memset(&plan->receipt, 0, sizeof(plan->receipt));
+    memset(plan->structure2_floor_command_sources, 0,
+           sizeof(plan->structure2_floor_command_sources));
+    memset(&plan->structure2_floor_command_source_receipt, 0,
+           sizeof(plan->structure2_floor_command_source_receipt));
+    plan->structure2_floor_command_sources_consumed = 0;
     plan->level = engine->game.current_level;
     plan->party_x = party_x;
     plan->party_y = party_y;
@@ -922,7 +927,29 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     if (nexus_v1_level_build_dgn_view_render_plan(
             &engine->current_level, party_x, party_y, party_dir,
             plan->commands, NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
-            &plan->receipt) != 0 || !plan->receipt.plan_ready) {
+            &plan->receipt) != 0) {
+        return NULL;
+    }
+    /* Consume the real DGN command plan once, before its no-draw Structure2
+     * gate returns control to the host. The resulting records are raw
+     * package provenance only: neither this engine cache nor the viewport
+     * can treat them as a decoded texture, palette, animation, or fallback. */
+    if (nexus_v1_dgn_bind_structure2_animated_floor_sources(
+            &engine->current_level, plan->commands,
+            plan->receipt.command_count,
+            plan->structure2_floor_command_sources,
+            NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+            &plan->structure2_floor_command_source_receipt) != 0) {
+        plan->receipt.blocks_real_dgn_mesh_render = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
+        return NULL;
+    }
+    plan->structure2_floor_command_sources_consumed =
+        structure2_source_bound &&
+        plan->structure2_floor_command_source_receipt.complete &&
+        !plan->structure2_floor_command_source_receipt
+            .fallback_visuals_permitted;
+    if (!plan->receipt.plan_ready) {
         return NULL;
     }
     /* The lower-level plan builder owns its receipt initialization. Preserve

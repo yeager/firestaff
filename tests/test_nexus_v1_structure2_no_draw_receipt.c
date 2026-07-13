@@ -22,6 +22,9 @@ int main(void) {
         engine.dgn_material_plan.receipt.plan_ready ||
         engine.dgn_material_plan.receipt.command_count != 0 ||
         engine.dgn_material_plan.receipt.structure2_source_materialization_bound ||
+        engine.dgn_material_plan.structure2_floor_command_source_receipt
+            .source_command_count != 0 ||
+        engine.dgn_material_plan.structure2_floor_command_sources_consumed ||
         engine.dgn_material_plan.receipt.fallback_visuals_permitted) {
         fprintf(stderr, "Incomplete DGN data did not produce a no-draw plan\n");
         return 1;
