@@ -157,6 +157,10 @@ typedef struct {
     /* The Soul Room forcefield route may enter the Track 02 runtime only
      * after a live Mednafen receipt has been authenticated for this media. */
     int track02_runtime_trace_handoff_ready;
+    /* Canonical MD5 of the exact Mednafen trace that produced the accepted
+     * runtime receipt. It keeps capture provenance attached to the profile
+     * after the temporary intake buffers have been released. */
+    char track02_runtime_trace_md5[33];
     Theron_V1Irq2FullMediaTraceReceipt track02_runtime_trace_handoff;
 } Theron_V1_BootProfile;
 

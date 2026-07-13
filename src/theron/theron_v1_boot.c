@@ -84,6 +84,20 @@ static unsigned char *theron_v1_boot_read_evidence_file(
     return bytes;
 }
 
+static int theron_v1_boot_md5_is_canonical(const char *md5_hex) {
+    size_t index;
+
+    if (!md5_hex || strlen(md5_hex) != 32u) return 0;
+    for (index = 0u; index < 32u; ++index) {
+        const char value = md5_hex[index];
+        if (!((value >= '0' && value <= '9') ||
+              (value >= 'a' && value <= 'f'))) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int theron_v1_boot_runtime_trace_files_match_declared_hashes(
     const char *track02_path,
     const char *track02_md5_hex,
@@ -184,6 +198,8 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
     handoff = &profile->track02_runtime_trace_handoff;
     return (expected_variant == THERON_TRACK02_VARIANT_JP_BIN ||
             expected_variant == THERON_TRACK02_VARIANT_US_BIN) &&
+           theron_v1_boot_md5_is_canonical(
+               profile->track02_runtime_trace_md5) &&
            handoff->valid && handoff->variant == expected_variant &&
            handoff->stage3_track02_record != 0u &&
            handoff->handler_address != 0u &&
@@ -5685,6 +5701,8 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
     }
     memset(&intake, 0, sizeof(intake));
     launch->profile->track02_runtime_trace_handoff_ready = 0;
+    memset(launch->profile->track02_runtime_trace_md5, 0,
+           sizeof(launch->profile->track02_runtime_trace_md5));
     memset(&launch->profile->track02_runtime_trace_handoff,
            0,
            sizeof(launch->profile->track02_runtime_trace_handoff));
@@ -5706,6 +5724,9 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
         return 0;
     }
     launch->profile->track02_runtime_trace_handoff = intake.runtime_handoff;
+    snprintf(launch->profile->track02_runtime_trace_md5,
+             sizeof(launch->profile->track02_runtime_trace_md5), "%s",
+             intake.trace_md5);
     launch->profile->track02_runtime_trace_handoff_ready = 1;
     return theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
         launch->profile);

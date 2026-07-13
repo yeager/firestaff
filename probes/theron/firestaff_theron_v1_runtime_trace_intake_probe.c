@@ -30,6 +30,26 @@ int main(void) {
     check(!theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
               &profile),
           "Soul Room forcefield route stays closed without a live receipt");
+    snprintf(profile.graphics_md5, sizeof(profile.graphics_md5), "%s",
+             THERON_TRACK02_MD5_US_BIN);
+    profile.track02_runtime_trace_handoff_ready = 1;
+    profile.track02_runtime_trace_handoff.valid = 1;
+    profile.track02_runtime_trace_handoff.variant = THERON_TRACK02_VARIANT_US_BIN;
+    profile.track02_runtime_trace_handoff.stage3_track02_record = 0x4e0u;
+    profile.track02_runtime_trace_handoff.handler_address = 0xe736u;
+    profile.track02_runtime_trace_handoff.cd_state_address = 0xe742u;
+    profile.track02_runtime_trace_handoff.cd_state_branch_address = 0xe74cu;
+    profile.track02_runtime_trace_handoff.branch.valid = 1;
+    check(!theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
+              &profile),
+          "Soul Room route rejects a receipt with no trace provenance hash");
+    snprintf(profile.track02_runtime_trace_md5,
+             sizeof(profile.track02_runtime_trace_md5), "%s",
+             "04a75036e9d520bb983c5ed03b8d0182");
+    check(theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
+              &profile),
+          "Soul Room route retains canonical loader-trace provenance");
+    theron_v1_boot_profile_init(&profile);
     memset(&flow, 0, sizeof(flow));
     memset(&world, 0, sizeof(world));
     memset(&plan, 0, sizeof(plan));
