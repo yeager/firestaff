@@ -42,6 +42,10 @@
   receipt into live frame ownership, but remains no-draw until skproject proves
   the destination clip; do not borrow interface colors or synthesize
   replacement art.
+  - 2026-07-13 update: weather ENVIRONMENT commands now additionally require
+    a bounded decoded IMG3 pixel receipt that matches their metadata and local
+    palette. The decoded material remains no-draw until its complete source
+    `QUERY_TEMP_PICST`/`DRAW_TEMP_PICST` execution route is consumed.
 
 - 2026-07-13 CSBWin saved-DSA parameter-message follow-up: the bounded
   `TT_ParameterMessage` runtime path now owns authenticated EXPOOL payloads

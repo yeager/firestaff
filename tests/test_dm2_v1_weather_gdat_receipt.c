@@ -62,20 +62,21 @@ int main(void)
         entries[i].data_index = (uint16_t)i;
     }
     for (i = 0; i < 6; ++i) {
-        uint16_t width = (uint16_t)(32 + i);
-        uint16_t height = (uint16_t)(48 + i);
+        /* Minimal source-shaped uncompressed IMG3: 2x1 four-bit payload,
+         * followed by its QUERY_GDAT_IMAGE_LOCALPAL tail. The -32 IMG3
+         * offset selects the real U4 extraction path. */
         offsets[6 + i] = (uint32_t)cursor;
-        sizes[6 + i] = 26u;
-        raw[cursor + 0u] = (uint8_t)width;
-        raw[cursor + 1u] = (uint8_t)(width >> 8);
-        raw[cursor + 2u] = (uint8_t)height;
-        raw[cursor + 3u] = (uint8_t)(height >> 8);
+        sizes[6 + i] = 27u;
+        raw[cursor + 0u] = 2u;
+        raw[cursor + 2u] = 1u;
+        raw[cursor + 3u] = 0x80u;
         raw[cursor + 4u] = 4u;
+        raw[cursor + 10u] = (uint8_t)(0x12u + (unsigned int)i);
         for (int palette = 0; palette < 16; ++palette) {
-            raw[cursor + 10u + (size_t)palette] =
+            raw[cursor + 11u + (size_t)palette] =
                 (uint8_t)(0x20u + (unsigned int)i + (unsigned int)palette);
         }
-        cursor += 26u;
+        cursor += 27u;
         entries[6 + i].cls1 = DM2_GDAT_CATEGORY_ENVIRONMENT;
         entries[6 + i].cls2 = 3u;
         entries[6 + i].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
@@ -129,8 +130,8 @@ int main(void)
               receipt.commands[3].image_present &&
               receipt.commands[3].image_field == 0x6au &&
               receipt.commands[3].query_metadata_valid &&
-              receipt.commands[3].query_metadata.width == 35u &&
-              receipt.commands[3].query_metadata.height == 51u &&
+              receipt.commands[3].query_metadata.width == 2u &&
+              receipt.commands[3].query_metadata.height == 1u &&
               receipt.commands[3].query_metadata.graphicsset_offset_present &&
               receipt.commands[3].query_metadata.image_offset_present &&
               receipt.commands[3].query_metadata.query_offset_x == 1 &&
@@ -138,8 +139,14 @@ int main(void)
               receipt.commands[3].local_palette_valid &&
               receipt.commands[3].local_palette16[0] == 0x23u &&
               receipt.commands[3].local_palette16[15] == 0x32u &&
-              receipt.commands[3].local_palette_hash != 0u,
-          "weather receipt binds CMDSTR, IMG3 bounds, and local palette");
+              receipt.commands[3].local_palette_hash != 0u &&
+              receipt.commands[3].decoded_pixels_valid &&
+              receipt.commands[3].decoded_width == 2u &&
+              receipt.commands[3].decoded_height == 1u &&
+              receipt.commands[3].decoded_format == DM2_IMG_FMT_U4 &&
+              receipt.commands[3].decoded_pixel_count == 2u &&
+              receipt.commands[3].decoded_pixels_hash != 0u,
+          "weather receipt binds CMDSTR, decoded IMG3 pixels, and local palette");
     check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6cu,
                                                &command) &&
               command.raw_text == raw + offsets[5] &&
@@ -183,14 +190,14 @@ int main(void)
               plan.commands[0].source_offset_y == 0 &&
               plan.commands[0].source_scale_x == 0x40u &&
               plan.commands[0].source_scale_y == 0x40u &&
-              plan.commands[0].image_width == 33u &&
-              plan.commands[0].image_height == 49u &&
+              plan.commands[0].image_width == 2u &&
+              plan.commands[0].image_height == 1u &&
               plan.commands[0].query_offset_x == 1 &&
               plan.commands[0].query_offset_y == -2 &&
               plan.commands[1].command == 0x6bu &&
               plan.commands[1].slot_index == 1u &&
               plan.commands[1].rect_number == 6005u &&
-              plan.commands[1].image_width == 36u &&
+              plan.commands[1].image_width == 2u &&
               plan.commands[1].query_offset_y == 1 &&
               plan.plan_hash != 0u,
           "weather plan preserves source cloud then rain material order");
@@ -249,7 +256,7 @@ int main(void)
               draw_plan.draw_offset_x == 7 && draw_plan.draw_offset_y == 11 &&
               draw_plan.source_bounds_valid &&
               draw_plan.source_left == 1 && draw_plan.source_top == -2 &&
-              draw_plan.source_right == 34 && draw_plan.source_bottom == 47 &&
+              draw_plan.source_right == 3 && draw_plan.source_bottom == -1 &&
               draw_plan.material_hash == receipt.commands[1].material_hash,
           "weather draw plan retains source IMG3 bounds and moving horizon transform");
     draw_context.map_x = 2;
@@ -271,13 +278,22 @@ int main(void)
           "weather draw plan refuses an unverified image material");
     receipt.commands[3].material_valid = 1;
 
-    sizes[9] = 10u;
+    sizes[9] = 25u;
     check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6au,
                                                &command) &&
               command.image_present && command.query_metadata_valid &&
               !command.local_palette_valid && !command.material_valid,
           "weather command rejects an IMG3 without its local palette tail");
-    sizes[9] = 26u;
+    sizes[9] = 27u;
+
+    raw[offsets[9] + 0u] = 100u;
+    check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6au,
+                                               &command) &&
+              command.image_present && command.query_metadata_valid &&
+              command.local_palette_valid && !command.decoded_pixels_valid &&
+              !command.material_valid,
+          "weather command rejects an image whose IMG3 pixels cannot decode");
+    raw[offsets[9] + 0u] = 2u;
 
     entries[4].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
     check(!dm2_v1_weather_gdat_receipt(&loader, 3u, &receipt),
