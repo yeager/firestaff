@@ -19,8 +19,8 @@ if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x addre
     exit 1
 fi
 
-if ! grep -Fq 'pce_cd_register_read physical=%08x data=%02x peek=%u' "$state_patch_file" ||
-   ! grep -Fq 'pce_cd_irq type=%04x port2=%02x port3=%02x' "$state_patch_file" ||
+if ! grep -Fq 'pce_cd_register_read cpu_pc=%04x physical=%08x data=%02x peek=%u' "$state_patch_file" ||
+   ! grep -Fq 'pce_cd_irq cpu_pc=%04x type=%04x port2=%02x port3=%02x' "$state_patch_file" ||
    ! grep -Fq '!PeekMode && (A & 0xf) <= 4' "$state_patch_file" ||
    ! grep -Fq 'source=mednafen-pce-instrumented-cd-state' "$state_patch_file"; then
     printf 'FAIL: Mednafen state patch no longer retains raw PCECD read/IRQ evidence\n' >&2

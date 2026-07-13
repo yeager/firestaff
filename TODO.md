@@ -1655,6 +1655,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     2026-07-13 capture-gate update: a dynamic CPU receipt is incomplete unless
     the same authentic run also contains the bounded raw-sector span receipt.
     This remains a correlation requirement only, not a sector-to-record claim.
+    2026-07-13 ownership update: non-peek PCECD reads and CDIRQ receipts now
+    retain the live HuC6280 PC. A later read can therefore be classified only
+    by observed caller address as System Card or non-System-Card execution;
+    no address is assigned a Theron semantic role by this trace alone.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect

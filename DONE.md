@@ -1189,6 +1189,12 @@
   record/destination observations from being promoted without media evidence.
   Verification: capture-script and Mednafen patch regressions.
 
+- ✅ 2026-07-13 Theron PCECD caller-PC receipt: non-peek controller reads and
+  CDIRQ callbacks now include the live HuC6280 PC. The receipt distinguishes
+  execution origins only by observed address and makes no System Card or
+  Theron behavior claim beyond that address. Verification: clean patch
+  dry-run and capture-script regression.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete
