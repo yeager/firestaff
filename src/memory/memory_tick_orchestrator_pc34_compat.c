@@ -10935,7 +10935,11 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
         case TIMELINE_EVENT_ENABLE_CHAMPION_ACTION:
             /* ReDMCSB TIMELINE.C C11:1927-1932 first invokes F0253 for
              * Priority, then F0259 only for MENU.C's C01 ordinal two.
-             * Imported B/C padding is deliberately not interpreted. */
+             * COMMAND.C F0380 only gates the action-area route; if imported
+             * state loses the C11 owner after it becomes due, consume the
+             * receipt without either action. C20 is independently dispatched
+             * from its location/sound receipt. Imported B/C padding is
+             * deliberately not interpreted. */
             if (ev.aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
                 ev.aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
                 ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&
