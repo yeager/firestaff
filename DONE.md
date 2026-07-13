@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB PC34 package consumption receipt: the real-asset launch
+  probe now proves that the hash-verified PC34 package is consumed by one
+  source-owned C001 PRESENTS/CHAOS/STRIKES and C017/C040 HUD session. The
+  receipt hashes the actual decoded pixels, requires the ReDMCSB title and
+  entrance completion order, and rejects wrappers or fallback routes.
+  Verification: `firestaff_csb_v1_pc_real_asset_launch_probe` against local
+  PC34 CSB data passed 45 checks with 0 failures.
+
 - 2026-07-13 DM1 F0231 Dexterity-255 melee gate: the compact DM1 combat
   entry now mirrors ReDMCSB `PROJEXPL.C F0231:1454-1456` by returning before
   the hit, Luck, or damage RNG path when `CreatureInfo.Dexterity == 255`.

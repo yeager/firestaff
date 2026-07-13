@@ -128,9 +128,18 @@ static void verify_real_c017_c040_hud_handoff(
               csb_v1_boot_startup_playback_complete_swoosh_pc34(
                   session, &audio_action) == 1 &&
               csb_v1_boot_startup_playback_title_frame_pc34(
+                  session, 0, &plan, &audio_action) == 1 &&
+              csb_v1_boot_startup_playback_title_frame_pc34(
+                  session, 60, &plan, &audio_action) == 1 &&
+              csb_v1_boot_startup_playback_title_frame_pc34(
+                  session, 80, &plan, &audio_action) == 1 &&
+              csb_v1_boot_startup_playback_title_frame_pc34(
+                  session, 100, &plan, &audio_action) == 1 &&
+              csb_v1_boot_startup_playback_title_frame_pc34(
                   session, csb_v1_startup_title_total_ticks_pc34(),
                   &plan, &audio_action) == 1 &&
               audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_ENTRANCE_MUSIC_PC34 &&
+              csb_v1_boot_startup_playback_complete_entrance_pc34(session) == 1 &&
               csb_v1_boot_startup_playback_enter_hud_pc34(session) == 1 &&
               session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34,
           "C001-C005 playback reaches the C017/C040 runtime HUD owner");
@@ -276,12 +285,15 @@ static void verify_real_c001_title_sequence(CSB_V1_StartupRuntimeAssetSession_PC
           "C001 STRIKES BACK applies TITLE.C's final black/red slot changes");
 }
 
-static void verify_real_indexed_startup(CSB_V1_BootProfile *profile)
+static void verify_real_indexed_startup(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_StartupRealReceipt *real_asset_receipt)
 {
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
     CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
     CSB_V1_StartupRuntimeRaster_PC34 raster;
     CSB_V1_StartupFullRuntimeReceipt_PC34 receipt;
+    CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
     CSB_V1_StartupRenderPlan_PC34 plan;
 
     csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
@@ -293,6 +305,22 @@ static void verify_real_indexed_startup(CSB_V1_BootProfile *profile)
 
     verify_real_c001_title_sequence(&session);
     verify_real_c017_c040_hud_handoff(&session);
+    CHECK(csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
+              real_asset_receipt, &session, &package_receipt) == 1 &&
+              package_receipt.valid && package_receipt.real_package_matched &&
+              package_receipt.c001_title_consumed &&
+              package_receipt.c001_presents_consumed &&
+              package_receipt.c001_chaos_consumed &&
+              package_receipt.c001_strikes_back_consumed &&
+              package_receipt.c017_hud_consumed &&
+              package_receipt.c040_hud_consumed &&
+              package_receipt.title_to_hud_same_session &&
+              package_receipt.no_legacy_wrappers &&
+              package_receipt.no_fallback_routes &&
+              package_receipt.real_asset_receipt_hash ==
+                  real_asset_receipt->receipt_hash &&
+              package_receipt.consumed_surface_hash != 0u,
+          "PC34 package receipt binds C001 title and C017/C040 HUD pixels to one real session");
 
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
@@ -396,6 +424,7 @@ int main(int argc, char **argv)
     char default_dir[1024];
     const char *dir = pc_data_dir(argc, argv, default_dir, sizeof(default_dir));
     CSB_V1_BootProfile profile;
+    CSB_V1_StartupRealReceipt real_asset_receipt;
     const CSB_V1_DungeonData *current;
     uint64_t before_play_ms;
 
@@ -409,6 +438,12 @@ int main(int argc, char **argv)
     }
 
     csb_v1_boot_profile_init(&profile);
+    CHECK(csb_v1_startup_real_scan_and_receipt(
+              dir, 4, &real_asset_receipt) == CSB_V1_STARTUP_REAL_OK &&
+              real_asset_receipt.matched &&
+              real_asset_receipt.variant_id == CSB_V1_VARIANT_PC34_EN &&
+              real_asset_receipt.receipt_hash != 0u,
+          "PC CSB package metadata has a verified real-asset receipt");
     CHECK(csb_v1_boot_scan_assets(&profile, dir) == 0,
           "PC CSB assets scan by hash");
     CHECK(profile.assets_verified == 1, "boot profile marks assets verified");
@@ -423,7 +458,7 @@ int main(int argc, char **argv)
     CHECK(profile.graphics_kind == CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS,
           "graphics archive kind is ordinary GRAPHICS.DAT");
 
-    verify_real_indexed_startup(&profile);
+    verify_real_indexed_startup(&profile, &real_asset_receipt);
 
     CHECK(csb_v1_boot_enter_game(&profile) == 0,
           "boot profile enters the CSB V1 runtime");
