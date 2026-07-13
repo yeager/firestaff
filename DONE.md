@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 C38/F0218 active-group compaction: when a projectile kills
+  one creature but leaves its group alive, M10 now shifts the live packed
+  direction and aspect entries with F0190's health/cell compaction, passes
+  the converted C0/C1/C2 outcome to the F0190 mutation dispatcher, and then
+  schedules F0217's C30 projectile reaction. This matches ReDMCSB
+  `GROUP.C F0190:892-917` and `PROJEXPL.C F0217:532-537`; later C38 events
+  cannot target the dead slot or retain its visual aspect. Verification:
+  Ninja and `dm1_v1_f0206_packed_directions_runtime_pc34_compat`.
+
 - 2026-07-13 CSBWin DSA master-filter selection: Firestaff now consumes the
   authentic `DSA::Read` header layout (`u16 m_state`, `u8 m_localState`,
   `u8 m_groupID`) rather than three host-width fields. A type-47 master
