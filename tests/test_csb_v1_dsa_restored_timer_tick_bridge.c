@@ -685,6 +685,46 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 && raw[92u] == 0u,
           "stale generator timer cannot enter generic C65 mutation");
 
+    /* CSBWin Timer.cpp::ProcessTT_ViAltar state 1 uses the old DB10 value
+     * only when no EXPOOL ChampionBones record exists. */
+    profile.csbwin_extended_features_valid = 0;
+    profile.csbwin_appended_tail_valid = 0;
+    raw[80u] = 0x10u;
+    put_le16(raw, 62u, (uint16_t)(10u << 10));
+    put_le16(raw, 100u, 0xfffeu);
+    put_le16(raw, 102u, 0x0005u); /* DB10 Bones, old-save champion 0. */
+    dungeon.thing_data_bases[10] = 100;
+    dungeon.thing_type_counts[10] = 1;
+    profile.party_state.Champions[0].MaximumHealth = 100;
+    profile.party_state.Champions[0].CurrentHealth = 0;
+    profile.party_state.Champions[0].Attributes =
+        CSB_V1_CHAMPION_ATTRIBUTE_DEAD;
+    profile.csbwin_timers[0].function = 13u;
+    profile.csbwin_timers[0].ubyte5 = 1u; /* packed position 0, state 1 */
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0x28u; /* DB10 thing index 0 */
+    profile.csbwin_timers[0].level = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              raw[62u] == 0xfeu && raw[63u] == 0xffu && raw[100u] == 0xfeu &&
+              raw[101u] == 0xffu && raw[102u] == 0u && raw[103u] == 0u &&
+              profile.csbwin_timers[0].ubyte5 == 0u &&
+              profile.csbwin_timers[0].time == profile.game_time &&
+              profile.timeline_queue.eventCount == 1,
+          "old-save Vi Altar bones step retains the source C13 queue owner");
+
+    profile.game_time = profile.csbwin_timers[0].time;
+    check(csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].MaximumHealth == 98 &&
+              profile.party_state.Champions[0].CurrentHealth == 49 &&
+              (profile.party_state.Champions[0].Attributes &
+               CSB_V1_CHAMPION_ATTRIBUTE_DEAD) == 0u,
+          "old-save Vi Altar successor reaches state 0 through its queue owner");
+
     profile.party_dir = 3;
     profile.party_state.Champions[0].MaximumHealth = 100;
     profile.party_state.Champions[0].CurrentHealth = 0;
@@ -722,6 +762,9 @@ int main(void)
                CSB_V1_CHAMPION_ATTRIBUTE_DEAD) != 0u,
           "stale Vi Altar receipt cannot enter generic rebirth handling");
 
+    raw[80u] = 0x10u;
+    put_le16(raw, 62u, (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10));
+    put_le16(raw, 90u, 0xfffeu);
     put_le16(raw, 92u, 0u);
     profile.csbwin_timers[0].function = 65u;
     profile.csbwin_timers[0].source_index = 0u;

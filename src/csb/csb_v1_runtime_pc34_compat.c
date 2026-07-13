@@ -5434,6 +5434,38 @@ static int csb_v1_runtime_append_thing_to_square_tail(
     return 0;
 }
 
+static int csb_v1_runtime_square_contains_thing(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t target_thing,
+    int level,
+    int map_x,
+    int map_y)
+{
+    uint8_t *first_ptr;
+    uint8_t *record;
+    uint16_t thing;
+    int thing_type;
+    int thing_size;
+    int guard;
+
+    if (!dungeon || target_thing == 0xfffeu || target_thing == 0xffffu) {
+        return 0;
+    }
+    first_ptr = csb_v1_runtime_square_first_thing_ptr(
+        dungeon, level, map_x, map_y);
+    if (!first_ptr) return 0;
+    thing = csb_v1_runtime_read_u16(first_ptr);
+    for (guard = 0; guard < 128 && thing != 0xfffeu && thing != 0xffffu;
+         ++guard) {
+        if (thing == target_thing) return 1;
+        record = csb_v1_runtime_mutable_thing_record(
+            dungeon, thing, &thing_type, &thing_size);
+        if (!record || thing_size < 2) return 0;
+        thing = csb_v1_runtime_read_u16(record);
+    }
+    return 0;
+}
+
 static int csb_v1_runtime_unlink_thing_from_square(
     CSB_V1_DungeonData *dungeon,
     uint16_t target_thing,
@@ -16641,9 +16673,76 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         /* CSBWin CSBCode.cpp:6469 dispatches TT_ViAltar to Timer.cpp:
          * 2663-2763. Retain only ProcessTT_ViAltar's final packedState()==0
          * step, which calls Character.cpp:804-825 BringCharacterToLife.
-         * State 2 needs CreateCloud and state 1 needs exact DB10 bones/
-         * EXPOOL ownership, neither of which this restored timer summary owns.
-         * The source stores packed position in timerUByte5 bits 2..3. */
+         * State 2 needs CreateCloud. State 1 can additionally retain the
+         * old-save DB10 branch when no EXPOOL tail is present: it owns the
+         * exact bones Thing, its DB10 value, and the +1 successor. The source
+         * stores packed position in timerUByte5 bits 2..3. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 &&
+            (timer->ubyte5 & 3u) == 1u && !profile->csbwin_appended_tail_valid &&
+            profile->dungeon_handle && timer->time < 0x00ffffffu) {
+            uint16_t bones_thing = (uint16_t)timer->ubyte8 |
+                ((uint16_t)timer->ubyte9 << 8);
+            uint16_t word2;
+            uint8_t *bones_record;
+            struct DM1_Event_V1 next;
+            int bones_type;
+            int bones_size;
+            int event_index;
+
+            /* CSBWin Timer.cpp:2692-2751 old-save arm uses DB10::value as
+             * its champion ordinal only after it finds this exact bones RN
+             * on the saved square and at the packed source position. */
+            bones_record = csb_v1_runtime_mutable_thing_record(
+                profile->dungeon_handle, bones_thing, &bones_type, &bones_size);
+            if (bones_record && bones_type == 10 && bones_size >= 4 &&
+                ((bones_thing >> 14) & 3u) == ((timer->ubyte5 >> 2) & 3u) &&
+                csb_v1_runtime_square_contains_thing(profile->dungeon_handle,
+                                                       bones_thing,
+                                                       timer->level,
+                                                       timer->ubyte6,
+                                                       timer->ubyte7)) {
+                word2 = csb_v1_runtime_read_u16(bones_record + 2);
+                champion_index = (int)((word2 >> 14) & 3u);
+                if ((word2 & 0x007fu) == 5u && profile->party_state_valid &&
+                    profile->champion_count > 0 &&
+                    profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
+                    profile->party_state.ChampionCount == profile->champion_count &&
+                    champion_index < profile->party_state.ChampionCount &&
+                    profile->party_state.Champions[champion_index].CurrentHealth ==
+                        0) {
+                    memset(&next, 0, sizeof(next));
+                    next.map_time = DM1_MAP_TIME_MAKE(timer->level,
+                                                       timer->time + 1u);
+                    next.type = timer->function;
+                    next.priority = (uint8_t)(champion_index << 2);
+                    next.b_mapX = timer->ubyte6;
+                    next.b_mapY = timer->ubyte7;
+                    next.c_cell = timer->ubyte8;
+                    next.c_effect = timer->ubyte9;
+                    event_index = csb_v1_runtime_add_timeline_event(profile,
+                                                                      &next);
+                    if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT &&
+                        csb_v1_runtime_unlink_thing_from_square(
+                            profile->dungeon_handle, bones_thing, timer->level,
+                            timer->ubyte6, timer->ubyte7)) {
+                        /* DB10::Clear sets both link=RNeof and word2=0. */
+                        csb_v1_runtime_write_u16(bones_record, 0xfffeu);
+                        csb_v1_runtime_write_u16(bones_record + 2, 0u);
+                        timer->time += 1u;
+                        timer->ubyte5 = (uint8_t)(champion_index << 2);
+                        profile->csbwin_timeline_event_queue_slot[event_index] =
+                            queue_slot;
+                    }
+                }
+            }
+            return 1;
+        }
         champion_index = (int)((timer->ubyte5 >> 2) & 3u);
         if (timer->valid && !timer->truncated &&
             timer->source_index == timer_index &&
