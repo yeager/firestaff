@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,6 +36,892 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,6 +36,894 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -624,7 +624,9 @@ index 347482c4..61d4758e 100644
 +/* Once the live controller flow reaches $e98a, retain the first original
 + * control transfer in its immediate $e98a..$ea3f window. The receipt records
 + * only source/next PCs and instruction text; it assigns no CD or payload role. */
-+if(TheronIrq2TracePostLatchControllerResumeSeen && logical_pc == 0xe98a)
++/* The raw program-counter receipt is the gate. Earlier controller markers
++ * are diagnostic only and must not suppress a real execution of $e98a. */
++if(logical_pc == 0xe98a)
 + TheronIrq2TracePostE98AReached = true;
 +if(TheronIrq2TracePostE98AReached && !TheronIrq2TracePostE98ATransferSeen &&
 +   !TheronIrq2TracePostE98ATransferPending &&

@@ -8,8 +8,10 @@ observation gate, not a decoder and not a game-data classification.
 
 ## Capture contract
 
-The instrumented Mednafen 1.32.1 patch begins this narrow capture only after
-the real post-latch flow has executed `$e98a` (`LDA $22A4`). It records the
+The instrumented Mednafen 1.32.1 patch begins this narrow capture directly
+after the real post-latch flow has executed `$e98a` (`LDA $22A4`). The live
+program counter is the gate, so earlier diagnostic markers cannot hide an
+executed instruction. It records the
 source PC, physical source PC, disassembly text, next logical PC, and next
 physical PC for the first branch, call, return, or indirect transfer reached
 inside `$e98a..$ea3f`.
