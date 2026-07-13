@@ -473,6 +473,16 @@
   state when present, and writes the original raw group record. Verification:
   Ninja-built and CTest-passed `dm1_v1_square_state_dispatch_pc34_compat`.
 
+- 2026-07-13 Nexus V1 Structure2 source-route integrity: canonical
+  `LEVxx.DGN` source receipts now require both the bounded payload envelope
+  and the existing descriptor-offset envelope gate before they can bind a
+  Structure2 source to a host route. Hash verification can no longer promote
+  an odd, out-of-span, or trailing-byte target. This is fail-closed layout
+  validation only: Structure2 bytes remain opaque, with no pixel, palette,
+  PRS3, material, animation, or fallback-visual claim. Verification:
+  `test_nexus_v1_dgn_geometry_readiness` exercises valid, unaligned,
+  out-of-span, and trailing-byte target fixtures.
+
 - 2026-07-13 DM1 HoC F0282 reincarnation state gate: the twelve champion
   statistic increments now accept only direct `M002_RANDOM(7)` values from
   ReDMCSB `REVIVE.C F0282:832-835`. Invalid or absent draw arrays publish a

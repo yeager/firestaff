@@ -500,6 +500,14 @@ all observed targets; zero target fields remain structurally admissible. This
 is an integrity check for the already proven envelope only, not a word grammar,
 offset base, palette/image interpretation, decoder, animation, or draw route.
 
+2026-07-13 update: canonical-hash Structure2 source receipts now consume that
+same descriptor-envelope integrity gate before binding a level to any host
+route. A malformed local descriptor layout can therefore no longer become a
+materialization receipt merely because its containing `LEVxx.DGN` hash is
+known. This remains provenance only: no payload, image, palette, PRS3,
+animation, or rendering semantics are added. The next admissible work remains
+an independently evidenced retail payload grammar or Saturn executable route.
+
 ## Nexus SLEV/SAL Semantic Follow-up (2026-07-11)
 
 Level loading binds `SLEVxx.BIN`, `SNDLEVxx.SAL`, and `SNDLEVxx.MAP` to their

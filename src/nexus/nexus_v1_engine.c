@@ -210,8 +210,12 @@ static int nexus_v1_structure2_source_receipt(
     if (!md5) return 0;
     strncpy(out_receipt->canonical_md5, md5,
             sizeof(out_receipt->canonical_md5) - 1U);
+    /* A canonical hash alone cannot admit a malformed local descriptor
+     * layout. Retain the existing no-decoder policy, but require the parsed
+     * descriptor targets to remain within the one proven Structure2 envelope
+     * before publishing this source to a host route. */
     out_receipt->structure2_payload_envelope_valid =
-        level->structure2_payload.valid ? 1 : 0;
+        nexus_v1_level_structure2_source_envelope_valid(level) ? 1 : 0;
 
     if (engine->source == NEXUS_SRC_EXTRACTED) {
         snprintf(path, sizeof(path), "%s/%s", engine->data_dir, name);
