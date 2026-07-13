@@ -9,6 +9,13 @@
   `test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat`; direct
   focused `test_dm1_v1_f0282_reincarnation_state_domain_pc34_compat` and
   CTest `dm1_v1_chm08_f0864_reincarnation_rng_source_lock` passed.
+- 2026-07-13 CSBWin EXPOOL runtime receipt gate: save-owned runtime consumers
+  now recompute the preserved tail FNV before every EXPOOL record lookup, so
+  altered bytes cannot reach DSA globals, tracing, DisableSaves, or SKIN_CACHE.
+  The focused regression proves a stale receipt fails closed before returning
+  a record. Verification: `csb_v1_expool_receipt_runtime_lookup` CTest
+  passed 1/1.
+
 - 2026-07-13 CSBWin EXPOOL receipt export gate: core export now recomputes the
   preserved tail's FNV receipt and rejects mismatched bytes before emitting a
   save. This extends the truncated-tail guard to altered complete tails while
