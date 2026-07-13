@@ -120,3 +120,36 @@ int csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
     out_receipt->session_generation = session_generation;
     return 1;
 }
+
+int csb_v1_startup_session_first_input_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupSessionLiveHudReceipt_PC34 *live_hud_receipt,
+    CSB_V1_StartupSessionMovementCommand_PC34 command,
+    unsigned int source_tick,
+    unsigned int session_generation,
+    CSB_V1_StartupSessionInputReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupSessionTerminalReceipt_PC34 current;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    /* ReDMCSB COMMAND.C consumes the first movement only after PANEL.C
+     * restores C017. Keep this action in the immediate next source tick;
+     * a delayed command must re-enter through a later runtime receipt. */
+    if (!session || !live_hud_receipt || !out_receipt ||
+        !live_hud_receipt->valid || !live_hud_receipt->c040_cleared_once ||
+        !live_hud_receipt->c017_live_base_only ||
+        command <= CSB_V1_STARTUP_SESSION_MOVEMENT_NONE_PC34 ||
+        command > CSB_V1_STARTUP_SESSION_MOVEMENT_TURN_RIGHT_PC34 ||
+        source_tick != live_hud_receipt->source_tick + 1u ||
+        session_generation != live_hud_receipt->session_generation ||
+        session->source_tick != source_tick ||
+        session->generation != session_generation ||
+        !csb_v1_startup_session_terminal_receipt_pc34(session, &current) ||
+        current.session_generation != session_generation) return 0;
+    out_receipt->valid = 1;
+    out_receipt->first_post_c040_input = 1;
+    out_receipt->command = command;
+    out_receipt->source_tick = source_tick;
+    out_receipt->session_generation = session_generation;
+    return 1;
+}

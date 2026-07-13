@@ -34,6 +34,22 @@ typedef struct CSB_V1_StartupSessionDoorHudTickReceipt_PC34 {
     unsigned int session_generation;
 } CSB_V1_StartupSessionDoorHudTickReceipt_PC34;
 
+typedef enum CSB_V1_StartupSessionMovementCommand_PC34 {
+    CSB_V1_STARTUP_SESSION_MOVEMENT_NONE_PC34 = 0,
+    CSB_V1_STARTUP_SESSION_MOVEMENT_FORWARD_PC34,
+    CSB_V1_STARTUP_SESSION_MOVEMENT_BACKWARD_PC34,
+    CSB_V1_STARTUP_SESSION_MOVEMENT_TURN_LEFT_PC34,
+    CSB_V1_STARTUP_SESSION_MOVEMENT_TURN_RIGHT_PC34
+} CSB_V1_StartupSessionMovementCommand_PC34;
+
+typedef struct CSB_V1_StartupSessionInputReceipt_PC34 {
+    int valid;
+    int first_post_c040_input;
+    CSB_V1_StartupSessionMovementCommand_PC34 command;
+    unsigned int source_tick;
+    unsigned int session_generation;
+} CSB_V1_StartupSessionInputReceipt_PC34;
+
 /* ReDMCSB TITLE.C F0437, ENTRANCE.C F0807, PANEL.C F0347. */
 int csb_v1_startup_session_terminal_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
@@ -58,5 +74,15 @@ int csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
     unsigned int source_tick,
     unsigned int session_generation,
     CSB_V1_StartupSessionDoorHudTickReceipt_PC34 *out_receipt);
+
+/* ReDMCSB COMMAND.C dispatches movement only after PANEL.C has returned the
+ * live C017 surface. */
+int csb_v1_startup_session_first_input_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupSessionLiveHudReceipt_PC34 *live_hud_receipt,
+    CSB_V1_StartupSessionMovementCommand_PC34 command,
+    unsigned int source_tick,
+    unsigned int session_generation,
+    CSB_V1_StartupSessionInputReceipt_PC34 *out_receipt);
 
 #endif

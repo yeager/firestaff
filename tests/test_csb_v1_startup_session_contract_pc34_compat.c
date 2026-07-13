@@ -54,6 +54,7 @@ int main(void)
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     CSB_V1_StartupSessionLiveHudReceipt_PC34 live_hud;
     CSB_V1_StartupSessionDoorHudTickReceipt_PC34 door_tick;
+    CSB_V1_StartupSessionInputReceipt_PC34 input;
     unsigned int tick;
     unsigned int generation;
 
@@ -92,6 +93,26 @@ int main(void)
               live_hud.special_palette == -1,
           "one C040 clear returns to neutral first-live C017 in the terminal session");
     ++session.source_tick;
+    check(csb_v1_startup_session_first_input_receipt_pc34(
+              &session, &live_hud, CSB_V1_STARTUP_SESSION_MOVEMENT_FORWARD_PC34,
+              session.source_tick, session.generation, &input) && input.valid &&
+              input.first_post_c040_input &&
+              input.command == CSB_V1_STARTUP_SESSION_MOVEMENT_FORWARD_PC34,
+          "first post-C040 input enters movement through the next live HUD tick");
+    check(!csb_v1_startup_session_first_input_receipt_pc34(
+               &session, &live_hud, CSB_V1_STARTUP_SESSION_MOVEMENT_NONE_PC34,
+               session.source_tick, session.generation, &input),
+          "nonmovement input cannot enter the first post-C040 command route");
+    check(!csb_v1_startup_session_first_input_receipt_pc34(
+               &session, &live_hud, CSB_V1_STARTUP_SESSION_MOVEMENT_FORWARD_PC34,
+               live_hud.source_tick, session.generation, &input),
+          "stale post-C040 input tick cannot enter movement");
+    ++session.generation;
+    check(!csb_v1_startup_session_first_input_receipt_pc34(
+               &session, &live_hud, CSB_V1_STARTUP_SESSION_MOVEMENT_FORWARD_PC34,
+               session.source_tick, session.generation, &input),
+          "stale post-C040 input generation cannot enter movement");
+    --session.generation;
     check(csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
               &session, &live_hud, 0u, 1u, session.source_tick,
               session.generation, &door_tick) && door_tick.valid &&
