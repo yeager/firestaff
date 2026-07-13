@@ -9,6 +9,18 @@
   `test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat`; direct
   focused `test_dm1_v1_f0282_reincarnation_state_domain_pc34_compat` and
   CTest `dm1_v1_chm08_f0864_reincarnation_rng_source_lock` passed.
+- 2026-07-13 CSBWin EXPOOL receipt export gate: core export now recomputes the
+  preserved tail's FNV receipt and rejects mismatched bytes before emitting a
+  save. This extends the truncated-tail guard to altered complete tails while
+  retaining the original source tail exactly on valid exports. Verification:
+  `csb_v1_expool_receipt_core_export` CTest passed 1/1.
+
+- 2026-07-13 CSBWin EXPOOL export integrity: CSBWin core export now rejects a
+  tail marked truncated even when its preserved size otherwise looks bounded,
+  preventing incomplete original EXPOOL data from being re-emitted. The
+  dedicated regression proves the export leaves its output surface untouched.
+  Source: CSBWin `SaveGame.cpp` EXPOOL ownership/read path. Verification:
+  `csb_v1_truncated_expool_core_export` CTest passed 1/1.
 
 - 2026-07-13 DM1 F0412 potion receipt publication: table-index potion
   receipts now require the exact `Champion.Symbols[0] - '_'` power domain
