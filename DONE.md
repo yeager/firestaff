@@ -8,6 +8,12 @@
   `DUNGEON.C` F0172/F0174 and `DUNVIEW.C` F0107:3913-3928. Verification:
   focused CTest.
 
+- 2026-07-13 DM1 F0115 D1/D2/D3 C15 order audit: a focused regression now
+  locks mixed C000/C050/C100/C101 source-list ordering at center D1, D2, and
+  D3. Only C000 enters ordinary F0114 in original order; C050 remains F0113,
+  C100 remains C3000-blocked, and C101 remains C3007-blocked. Source:
+  ReDMCSB `DUNVIEW.C` F0115:5915-6120. Verification: focused CTest.
+
 - 2026-07-13 DM1 PC34 wall-inscription material gate: a DM1/M10-only
   regression scans the installed `DUNGEON.DAT` for a real visible wall
   TextString, then locks F0168's decoded bytes into F0107's M648/C10 receipt.
