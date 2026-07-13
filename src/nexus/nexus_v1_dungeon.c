@@ -286,6 +286,16 @@ static uint16_t nexus_v1_decode_structure1b_post_grid_0x30_ref(
                        ((unsigned)cell[6] >> 4)) & 0x0fffU);
 }
 
+static int nexus_v1_post_grid_0x30_ref_is_bounded(
+    const Nexus_V1_DgnStructure1Layout *layout, int ref) {
+    if (ref == 0 || ref == 0x0fff) {
+        return 1;
+    }
+    return layout && layout->post_grid_0x30_records.valid &&
+        ref >= 0 &&
+        ref < layout->post_grid_0x30_records.typed_prefix_record_count;
+}
+
 static uint8_t nexus_v1_decode_structure1b_floor_material(const uint8_t *cell) {
     return (uint8_t)((rb16(cell) >> 7) & 0x1fU);
 }
@@ -608,6 +618,14 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
                 if (post_grid_0x30_ref > info.max_post_grid_0x30_ref) {
                     info.max_post_grid_0x30_ref = post_grid_0x30_ref;
                 }
+                if (!nexus_v1_post_grid_0x30_ref_is_bounded(
+                        &layout, post_grid_0x30_ref)) {
+                    info.post_grid_0x30_invalid_ref_count++;
+                    if (info.first_invalid_post_grid_0x30_ref == 0) {
+                        info.first_invalid_post_grid_0x30_ref =
+                            post_grid_0x30_ref;
+                    }
+                }
             }
         }
     }
@@ -659,9 +677,13 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
     info.structure1g_animated_texture_count =
         layout.structure1g.animated_texture_count;
     info.structure1g_sequence_count = layout.structure1g.sequence_count;
+    info.post_grid_0x30_references_valid =
+        info.post_grid_0x30_record_table_valid &&
+        info.post_grid_0x30_invalid_ref_count == 0;
     if (info.collision_records_valid &&
         info.post_grid_0x30_record_table_valid &&
-        info.post_grid_0x30_row_ordinal_prefix_valid) {
+        info.post_grid_0x30_row_ordinal_prefix_valid &&
+        info.post_grid_0x30_references_valid) {
         info.mesh_ready = 1;
     }
 
@@ -938,7 +960,12 @@ int nexus_v1_level_get_cell_geometry(const Nexus_V1_Level *level, int x, int y,
     if (cell.collision_ref < NEXUS_DGN_MAX_COLLISION_SECTORS)
         cell.collision_sector = level->collision_sectors[cell.collision_ref];
     cell.post_grid_0x30_row_prefix_valid =
-        level->geometry_info.post_grid_0x30_row_ordinal_prefix_valid;
+        level->geometry_info.post_grid_0x30_row_ordinal_prefix_valid &&
+        (cell.post_grid_0x30_ref == 0 ||
+         cell.post_grid_0x30_ref == 0x0fffU ||
+         cell.post_grid_0x30_ref <
+             (uint16_t)level->geometry_info
+                 .post_grid_0x30_typed_prefix_record_count);
     *out_cell = cell;
     return 0;
 }
@@ -1054,6 +1081,12 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         info->post_grid_0x30_ref_unique_count;
     out_receipt->max_post_grid_0x30_ref =
         info->max_post_grid_0x30_ref;
+    out_receipt->post_grid_0x30_references_valid =
+        info->post_grid_0x30_references_valid;
+    out_receipt->post_grid_0x30_invalid_ref_count =
+        info->post_grid_0x30_invalid_ref_count;
+    out_receipt->first_invalid_post_grid_0x30_ref =
+        info->first_invalid_post_grid_0x30_ref;
     out_receipt->post_grid_0x30_ref_value_count =
         info->post_grid_0x30_ref_value_count;
     out_receipt->post_grid_0x24_zero_span_valid =
