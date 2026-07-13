@@ -67,7 +67,10 @@ For any CSBWin DSA/save claim, preserve the additional tuple:
 
 Absent those tuples Firestaff must fail closed or state that the route is not
 yet verified. The detailed work queue is `REDMCSB-CSB-GAP-001` through
-`REDMCSB-CSB-GAP-010` in `TODO.md`.
+`REDMCSB-CSB-GAP-013` in `TODO.md`. The additional boundaries make clear that
+the ReDMCSB rebuild is not a PC-binary oracle, its source does not define a
+complete PC boot-media contract, and historical bug notes require an explicit
+Firestaff policy rather than automatic reproduction.
 
 ## Save and HUD Ownership
 
