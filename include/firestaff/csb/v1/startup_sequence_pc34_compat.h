@@ -453,6 +453,12 @@ typedef struct CSB_V1_StartupRenderExecutor_PC34 {
                                const struct CSB_V1_UtilRenderPlan *utility_plan);
 } CSB_V1_StartupRenderExecutor_PC34;
 
+/* ReDMCSB TITLE.C F0437 / ENTRANCE.C F0806 geometry, separated from the
+ * host raster path so source-plan consumers can be tested without M10. */
+int csb_v1_startup_source_render_plan_from_state_pc34(
+    const CSB_V1_StartupRenderState_PC34 *state,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan);
+
 typedef struct CSB_V1_StartupCommandState_PC34 {
     int title_active;
     int title_frame;
