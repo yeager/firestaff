@@ -11803,6 +11803,16 @@ The unresolved PC34 C100 scale mapping remains fail-closed in TODO because
 `G2037` is declared as seven entries while `G2034` reaches rows 0..16.
 Verification: `test_dm1_v1_projectile_explosion_render_pc34_compat` and
 `test_dm1_v1_viewport_3d_pc34_compat`.
+
+# ✅ 2026-07-13 DM1 C100 PC34 scale audit
+
+C100's selector was corrected to the actual PC34 `L2476 = G2028` path from
+`DUNVIEW.C:4806-4812,5948,5984,5999`; `G2034` belongs to ordinary explosion
+placement. The seven original `G2037` values are exposed only for C100 rows
+0..6 (`15,15,15,20,20,20,32`). `FTL.idc` places the next global at `0x25842`
+immediately after `G2037` at `0x2583B`, proving no source-backed rows 7..11
+exist. Those rows reject scale retrieval and the renderer remains no-draw.
+Verification: `test_dm1_v1_viewport_3d_pc34_compat`.
 - ✅ 2026-07-13 DM2 weather decoded-material receipt: each source ENVIRONMENT
   weather command now proves a decodable IMG3 pixel plane together with its
   own local palette before it can reach the no-draw weather handoff.
