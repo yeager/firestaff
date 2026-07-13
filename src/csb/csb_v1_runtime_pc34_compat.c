@@ -16573,6 +16573,42 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     timer_index = profile->csbwin_timer_queue[queue_slot];
     if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
+    if (timer->function == 75u) {
+        uint16_t poison_attack;
+        int champion_index;
+
+        /* CSBWin CSBCode.cpp:6545-6555 dispatches TT_75 through
+         * PoisonCharacter; ReDMCSB TIMELINE.C F0261 lines 1991-1993 then
+         * decrements PoisonEventCount before CHAMPION.C F0322 applies the
+         * Attack damage and source +36 requeue. The restored TIMER owns its
+         * champion priority and little-endian Attack word. The runtime C75
+         * continuation currently retains only an 8-bit attack, so reject a
+         * wider saved word rather than truncate it into a synthetic chain. */
+        poison_attack = (uint16_t)timer->ubyte6 |
+            ((uint16_t)timer->ubyte7 << 8);
+        champion_index = (int)timer->ubyte5;
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 && profile->party_state_valid &&
+            profile->champion_count > 0 &&
+            profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
+            profile->party_state.ChampionCount == profile->champion_count &&
+            champion_index < profile->party_state.ChampionCount &&
+            poison_attack > 0u && poison_attack <= 0xffu &&
+            profile->party_state.Champions[champion_index].PoisonEventCount >
+                0u) {
+            --profile->party_state.Champions[champion_index].PoisonEventCount;
+            csb_v1_runtime_apply_poison_attack_to_champion(
+                profile, champion_index, (int)poison_attack);
+        }
+        /* C75 remains source-owned even when malformed, preventing a future
+         * generic event path from treating timerUByte9 as its Attack word. */
+        return 1;
+    }
     if (timer->function == 77u) {
         int16_t shield_delta;
 
