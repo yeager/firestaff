@@ -358,7 +358,10 @@ typedef enum {
     NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_LEGACY_FALLBACK = 4,
     NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE_SEMANTICS = 5,
     /* The parsed DGN has no committed canonical Track 1 Structure2 source. */
-    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE = 6
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE = 6,
+    /* Visible direct Structure1F decorations/sensors have source cells but
+     * no Saturn draw/trigger semantics yet. */
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS = 7
 } Nexus_V1_DgnRendererHandoffStatus;
 
 typedef struct {

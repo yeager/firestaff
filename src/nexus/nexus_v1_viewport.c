@@ -198,6 +198,9 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
                 (engine->current_level.structure2_payload.valid ||
                  engine->current_level_structure2_source
                      .structure2_payload_envelope_valid);
+            vp->last_dgn_render_receipt.no_draw_structure1f_semantics =
+                blocked_plan->status ==
+                NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS;
             vp->last_dgn_render_receipt.blocked = 1;
             return;
         }
@@ -360,6 +363,8 @@ int nexus_viewport_dgn_host_route_receipt(
         handoff.fallback_visuals_permitted || render->fallback_visuals_permitted;
     out_receipt->no_draw_structure2_source =
         render->no_draw_structure2_source ? 1 : 0;
+    out_receipt->no_draw_structure1f_semantics =
+        render->no_draw_structure1f_semantics ? 1 : 0;
     out_receipt->level = engine->game.current_level;
     out_receipt->party_x = render->party_x;
     out_receipt->party_y = render->party_y;
@@ -402,6 +407,11 @@ int nexus_viewport_dgn_host_route_receipt(
             NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE2_SOURCE;
         return 0;
     }
+    if (render->no_draw_structure1f_semantics) {
+        out_receipt->status =
+            NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE1F_SEMANTICS;
+        return 0;
+    }
     if (!render->attempted || !render->used_real_dgn_route) {
         out_receipt->status =
             NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_VIEWPORT_NOT_RENDERED;
@@ -441,6 +451,8 @@ const char *nexus_viewport_dgn_host_route_status_name(
         return "blocked-raster";
     case NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE2_SOURCE:
         return "blocked-structure2-source";
+    case NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE1F_SEMANTICS:
+        return "blocked-structure1f-semantics";
     case NEXUS_V1_DGN_HOST_ROUTE_MISSING:
     default:
         return "missing";
