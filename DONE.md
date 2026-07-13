@@ -365,6 +365,13 @@
   and a transient export hash. Failed rows retain raw diagnostic provenance
   but cannot be mistaken for published optional-event proof. Source: ReDMCSB
    `LOADSAVE.C` F0433/F0435. Verification: focused native-PC34 handoff CTest.
+ - 2026-07-13 DM1 F0328/F0811 simultaneous projectile ownership: direct M11
+   runtime now has a focused PC34-shaped regression for independent same-tick
+   arrow-wall and fireball-boundary impacts. Each route consumes only its own
+   C14 and C48/C49 owner; F0215 leaves the arrow as the terminal F0115 floor
+   object, leaves no static fireball Thing, and preserves an unrelated C11
+   action receipt. Source: ReDMCSB `PROJEXPL.C` F0214/F0215/F0217/F0811.
+   Verification: `test_m11_creature_projectile_runtime_pc34_compat`.
 
 - 2026-07-13 DM1 HoC C026/C346 material gate: a DM1/M10-only regression
   scans the installed PC34 Hall of Champions for a real C127 mirror sensor.

@@ -19,6 +19,7 @@
 #include "memory_projectile_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 
@@ -318,6 +319,109 @@ static void test_direct_f0811_impact_cleans_c14_and_c49(void) {
               1, "F0115 drop resolves the original M612 object graphic bank");
 }
 
+static void test_direct_f0811_multi_projectile_impact_ownership(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char map0Tiles[1];
+    unsigned char map1Tiles[3];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct DungeonProjectile_Compat projectiles[2];
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned short squareFirstThings[4];
+    unsigned short projectile0 = (unsigned short)(THING_TYPE_PROJECTILE << 10);
+    unsigned short projectile1 = (unsigned short)((THING_TYPE_PROJECTILE << 10) | 1);
+    unsigned short weaponThing = (unsigned short)(THING_TYPE_WEAPON << 10);
+    unsigned short fireballThing = (unsigned short)(THING_TYPE_EXPLOSION << 10);
+    struct TimelineEvent_Compat* event;
+
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles,
+                                  map1Tiles, &things, groups, squareFirstThings);
+    map1Tiles[1] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    memset(projectiles, 0, sizeof(projectiles));
+    memset(weapons, 0, sizeof(weapons));
+    projectiles[0].slot = weaponThing;
+    projectiles[0].next = THING_ENDOFLIST;
+    projectiles[1].slot = fireballThing;
+    projectiles[1].next = THING_ENDOFLIST;
+    weapons[0].type = 27;
+    weapons[0].next = THING_NONE;
+    things.projectiles = projectiles;
+    things.projectileCount = 2;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    squareFirstThings[1] = projectile1;
+    squareFirstThings[3] = projectile0;
+    memset(&state.world.projectiles, 0, sizeof(state.world.projectiles));
+    state.world.projectiles.count = 2;
+    state.world.gameTick = 29;
+
+    state.world.projectiles.entries[0].slotIndex = 0;
+    state.world.projectiles.entries[0].projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    state.world.projectiles.entries[0].projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    state.world.projectiles.entries[0].mapIndex = 1;
+    state.world.projectiles.entries[0].mapX = 2;
+    state.world.projectiles.entries[0].mapY = 0;
+    state.world.projectiles.entries[0].cell = 0;
+    state.world.projectiles.entries[0].direction = 3;
+    state.world.projectiles.entries[0].kineticEnergy = 20;
+    state.world.projectiles.entries[0].attack = 20;
+    state.world.projectiles.entries[0].stepEnergy = 1;
+    state.world.projectiles.entries[0].scheduledAtTick = 29;
+    state.world.projectiles.entries[0].attackTypeCode = COMBAT_ATTACK_BLUNT;
+    state.world.projectiles.entries[0].reserved1 = weaponThing;
+    state.world.projectiles.entries[0].reserved3 = 1;
+    state.world.projectiles.entries[1] = state.world.projectiles.entries[0];
+    state.world.projectiles.entries[1].slotIndex = 1;
+    state.world.projectiles.entries[1].projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
+    state.world.projectiles.entries[1].projectileSubtype = PROJECTILE_SUBTYPE_FIREBALL;
+    state.world.projectiles.entries[1].kineticEnergy = 40;
+    state.world.projectiles.entries[1].attack = 40;
+    state.world.projectiles.entries[1].attackTypeCode = COMBAT_ATTACK_FIRE;
+    state.world.projectiles.entries[1].reserved1 = fireballThing;
+    state.world.projectiles.entries[1].mapX = 0;
+
+    memset(state.world.timeline.events, 0, sizeof(state.world.timeline.events));
+    event = &state.world.timeline.events[0];
+    event->kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    event->fireAtTick = 29;
+    event->aux0 = 0;
+    event = &state.world.timeline.events[1];
+    event->kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    event->fireAtTick = 29;
+    event->aux0 = 1;
+    event = &state.world.timeline.events[2];
+    event->kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
+    event->fireAtTick = 35;
+    event->aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    event->aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    event->aux4 = 0;
+    state.world.timeline.count = 3;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+    ASSERT_EQ(state.world.projectiles.count, 0,
+              "same-tick F0811 impacts consume both runtime projectiles");
+    ASSERT_EQ(squareFirstThings[3], weaponThing,
+              "only the thrown weapon materializes after mixed impacts");
+    ASSERT_EQ(squareFirstThings[1], THING_ENDOFLIST,
+              "fireball leaves no static Thing after its separate impact");
+    ASSERT_EQ(projectiles[0].next, THING_NONE,
+              "thrown route C14 is cleared after its own F0215");
+    ASSERT_EQ(projectiles[1].next, THING_NONE,
+              "fireball route C14 is cleared after its own F0215");
+    ASSERT_EQ(weapons[0].next, THING_ENDOFLIST,
+              "thrown weapon remains terminal after both C14 cleanups");
+    ASSERT_EQ(state.world.timeline.count, 1,
+              "both C48/C49 events are removed without broad queue cleanup");
+    ASSERT_EQ(state.world.timeline.events[0].kind,
+              TIMELINE_EVENT_ENABLE_CHAMPION_ACTION,
+              "unrelated C11 action receipt survives projectile cleanup");
+    ASSERT_EQ(state.world.timeline.events[0].aux4, 0,
+              "surviving C11 retains its champion owner");
+}
+
 int main(void) {
     printf("=== M11 Creature Projectile Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: GROUP.C F0207/F0209, PROJEXPL.C F0212/F0219, MOVESENS.C C48 impact gate\n\n");
@@ -327,6 +431,7 @@ int main(void) {
     test_black_flame_fireball_impact_heals_and_caps();
     test_first_move_grace_skips_source_square_impact();
     test_direct_f0811_impact_cleans_c14_and_c49();
+    test_direct_f0811_multi_projectile_impact_ownership();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
