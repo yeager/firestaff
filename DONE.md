@@ -13064,3 +13064,13 @@ explicit save root is capped at depth 4, 64 header candidates, and 256 shallow
 file probes; an incomplete scan is marked truncated. Arbitrary filenames and
 bytes never become importable. Verification: Ninja `test_dm2_v1_save_load`
 23/23 and CTest `dm2_v1_save_load` 1/1.
+
+# ✅ 2026-07-14 DM2 template-bound raw SKSave export roundtrip
+
+`dm2_v1_session_export_raw_sksave_payload()` exports only from a
+parser-verified original raw body. It retains the complete dungeon/DB prefix
+byte-for-byte, re-encodes only the owned SUPPRESS party/global/champion/timer
+sections, rejects changed party/timer/minion shapes, and re-imports its output
+before success. This is a bounded original-format write path, not a fabricated
+dungeon export or a full DB parity claim. Source reference: skproject
+`c_savegame.cpp` save ordering. Verification: Ninja `test_dm2_v1_save_load`

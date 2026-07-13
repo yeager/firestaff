@@ -1372,6 +1372,100 @@ static int test_raw_sksave_resume_import(void)
     return 1;
 }
 
+static int test_raw_sksave_export_roundtrip(void)
+{
+    uint8_t source[2048];
+    uint8_t exported[2048];
+    size_t source_size = 0u;
+    size_t exported_size = 0u;
+    DM2_TestGameStateStorage gs_store;
+    DM2_GameStateBlock *gs = &gs_store.block;
+    DM2_ChampionRecord champion;
+    DM2_V1_SessionState session;
+    DM2_V1_SaveCandidate candidate;
+    uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE] = { 0 };
+    uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE] = { 0 };
+    uint16_t global_words[DM2_GLOBAL_WORDS_SIZE] = { 0 };
+    uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE] = { 0 };
+    uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
+    DM2_TimerEntry timer;
+
+    printf("  Original raw SKSave export preserves prefix and round-trips...\n");
+    memset(&gs_store, 0, sizeof(gs_store));
+    memset(&champion, 0, sizeof(champion));
+    memset(&timer, 0, sizeof(timer));
+    gs->dwGameTick = 0x01020304u;
+    gs->dwRandomSeed = 0x10203040u;
+    gs->wChampionsCount = 1;
+    gs->wPlayerPosX = 4;
+    gs->wPlayerPosY = 5;
+    gs->wPlayerDir = 1;
+    gs->wChampionLeader = 0;
+    gs->wTimersCount = 1;
+    memcpy(champion.first_name, "EXPORT", 6u);
+    champion.cur_hp = 35;
+    champion.max_hp = 60;
+    inventory[8] = dm2_db_make_handle(6, 0x44);
+    timer.timer_id = 0x0203u;
+    timer.current_tick = 0x0102u;
+    timer.interval_ticks = 0x0008u;
+    timer.flags = 1u;
+    timer.user_data = 0x77u;
+    global_flags[3] = 0xA5u;
+    global_words[4] = 0x1234u;
+    spell_effects[1] = 0x08u;
+    if (!build_raw_sksave_payload(gs, &champion, global_flags, global_bytes,
+                                  global_words, spell_effects, &timer, 1,
+                                  inventory, dm2_db_make_handle(7, 0x55),
+                                  source, sizeof(source), &source_size) ||
+        dm2_v1_session_import_raw_sksave_payload(&session, source,
+                                                  source_size) != 0) {
+        printf("    FAIL: could not import raw export fixture\n");
+        return 0;
+    }
+    session.game_tick = 0x55667788u;
+    session.party_x = 9;
+    session.party_y = 10;
+    session.party_dir = 3;
+    session.rain_intensity = 21u;
+    session.original_global_flags[3] = 0x5Au;
+    session.original_timers[0].user_data = 0x99u;
+    ((DM2_ChampionRecord *)session.champion_data[0])->inventory[8] =
+        dm2_db_make_handle(6, 0x66);
+    session.original_leader_hand_object = dm2_db_make_handle(7, 0x77);
+    if (dm2_v1_session_export_raw_sksave_payload(
+            &session, source, source_size, exported, sizeof(exported),
+            &exported_size) != 0 ||
+        dm2_v1_session_parse_save_candidate(&candidate, exported,
+                                             exported_size) != 0 ||
+        candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW ||
+        candidate.dungeon_size == 0u ||
+        memcmp(source, exported, candidate.dungeon_size) != 0 ||
+        candidate.session.game_tick != session.game_tick ||
+        candidate.session.party_x != session.party_x ||
+        candidate.session.party_y != session.party_y ||
+        candidate.session.party_dir != session.party_dir ||
+        candidate.session.rain_intensity != session.rain_intensity ||
+        candidate.session.original_global_flags[3] != 0x5Au ||
+        candidate.session.original_timers[0].user_data != 0x99u ||
+        ((DM2_ChampionRecord *)candidate.session.champion_data[0])
+            ->inventory[8] != dm2_db_make_handle(6, 0x66) ||
+        candidate.session.original_leader_hand_object !=
+            dm2_db_make_handle(7, 0x77)) {
+        printf("    FAIL: raw export did not preserve supported state\n");
+        return 0;
+    }
+    session.champion_count = 2;
+    if (dm2_v1_session_export_raw_sksave_payload(
+            &session, source, source_size, exported, sizeof(exported),
+            &exported_size) == 0 || exported_size != 0u) {
+        printf("    FAIL: raw export accepted a changed original shape\n");
+        return 0;
+    }
+    printf("    PASS: source prefix preserved; supported raw state re-imports\n");
+    return 1;
+}
+
 static int test_sksave_corpus_scan_receipt(void)
 {
     printf("  Real SKSave corpus scan receipt...\n");
@@ -2441,13 +2535,14 @@ int main(void)
     RUN(14, test_stale_fixture_metadata_guard);
     RUN(15, test_resume_smoke_gate_position_facing_inventory);
     RUN(16, test_raw_sksave_resume_import);
-    RUN(17, test_sksave_corpus_scan_receipt);
-    RUN(18, test_champion_death_permanence_source_lock);
-    RUN(19, test_live_runtime_state_roundtrip);
-    RUN(20, test_original_save_candidate_live_restore);
-    RUN(21, test_sksave_corpus_runtime_import);
-    RUN(22, test_sksave_receipted_candidate_hash_gate);
-    RUN(23, test_original_sksave_corpus_runtime_import);
+    RUN(17, test_raw_sksave_export_roundtrip);
+    RUN(18, test_sksave_corpus_scan_receipt);
+    RUN(19, test_champion_death_permanence_source_lock);
+    RUN(20, test_live_runtime_state_roundtrip);
+    RUN(21, test_original_save_candidate_live_restore);
+    RUN(22, test_sksave_corpus_runtime_import);
+    RUN(23, test_sksave_receipted_candidate_hash_gate);
+    RUN(24, test_original_sksave_corpus_runtime_import);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);
