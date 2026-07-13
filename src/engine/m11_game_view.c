@@ -36729,34 +36729,12 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 drewPanel = 1;
             }
         }
-        if (!drewPanel && dm1_v1_inventory_panel_zone_id_pc34()) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
-                          zw, zh, M11_COLOR_GREEN);
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
-                          zw, zh, M11_COLOR_ORANGE);
-            if (state->candidateMirrorRenameActive) {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              M11_VIEWPORT_X + zx + 24, M11_VIEWPORT_Y + zy + 18,
-                              "NAME", &g_text_small);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              M11_VIEWPORT_X + zx + 24, M11_VIEWPORT_Y + zy + 36,
-                              "TITLE", &g_text_small);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              M11_VIEWPORT_X + zx + 28, M11_VIEWPORT_Y + zy + 58,
-                              "BACKSPACE        OK", &g_text_small);
-            } else {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              M11_VIEWPORT_X + zx + 16, M11_VIEWPORT_Y + zy + 18,
-                              "RESURRECT", &g_text_small);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              M11_VIEWPORT_X + zx + 78, M11_VIEWPORT_Y + zy + 18,
-                              "REINCARNATE", &g_text_small);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              M11_VIEWPORT_X + zx + 44, M11_VIEWPORT_Y + zy + 58,
-                              "CANCEL", &g_text_small);
-            }
+        /* ReDMCSB REVIVE.C F0281 draws C027 and F0282 draws C040. These
+         * are original GRAPHICS.DAT panels, not host UI layouts: when the
+         * exact panel cannot be loaded, keep the already-cleared C017
+         * viewport and fail closed. Do not replace it with host art/text. */
+        if (!drewPanel) {
+            return;
         }
         if (state->candidateMirrorRenameActive) {
             M11_TextStyle renameStyle = g_text_small;
