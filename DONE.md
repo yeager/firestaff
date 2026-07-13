@@ -13,6 +13,13 @@
   unproved; no placement, size, mesh, texture, palette, pixel, or draw meaning
   is inferred.
 
+- 2026-07-13 DM1 F0115 world-candidate host handoff: M10/DM1 now owns
+  bounded ReDMCSB DUNGEON.C F0160/F0161 SFT traversal through F0511/F0512,
+  typed C04 group decode, typed floor-item decode, and the map-0 HoC mirror
+  payload rule. M11 consumes that receipt rather than scanning static Thing
+  links for creature/item candidates. The focused regression loads the local
+  PC34 `DUNGEON.DAT` corpus and rejects missing or malformed typed records.
+
 - 2026-07-13 Nexus Structure1F item corpus handoff: raw direct-item
   `attribute1/attribute2` and `location/item_id` pair receipts now also flow
   through the per-level LEV00-15 aggregate. This remains fail-closed
