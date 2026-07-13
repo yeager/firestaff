@@ -3792,6 +3792,15 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
             continue;
         }
         ++receipt.structure1g_provenance_count;
+        if (command->animated_texture_first_image_index <
+                NEXUS_DGN_STRUCTURE1G_FIRST_IMAGE_INDEX ||
+            (uint16_t)(command->animated_texture_first_image_index -
+                NEXUS_DGN_STRUCTURE1G_FIRST_IMAGE_INDEX) !=
+                command->animated_texture_structure2_image_id) {
+            ++receipt.blocked_global_image_index_count;
+            continue;
+        }
+        ++receipt.global_image_index_binding_count;
         if (!nexus_v1_level_structure2_source_envelope_valid(level) ||
             !level->structure1g_structure2_bindings_complete) {
             ++receipt.blocked_source_envelope_count;
@@ -3814,6 +3823,8 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
             command->animated_texture_structure1g_entry_index;
         source->structure1g_sequence_word_offset =
             command->animated_texture_structure1g_sequence_word_offset;
+        source->structure1g_global_image_index =
+            command->animated_texture_first_image_index;
         source->image_id = texture->image_id;
         source->encoding = texture->encoding;
         source->palette_id = texture->palette_id;
@@ -3828,9 +3839,12 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
     receipt.complete = receipt.animated_floor_command_count > 0 &&
         receipt.structure1g_provenance_count ==
             receipt.animated_floor_command_count &&
+        receipt.global_image_index_binding_count ==
+            receipt.animated_floor_command_count &&
         receipt.source_command_count == receipt.animated_floor_command_count &&
         receipt.blocked_invalid_command_count == 0 &&
         receipt.blocked_structure1g_provenance_count == 0 &&
+        receipt.blocked_global_image_index_count == 0 &&
         receipt.blocked_missing_descriptor_count == 0 &&
         receipt.blocked_source_envelope_count == 0;
     *out_receipt = receipt;

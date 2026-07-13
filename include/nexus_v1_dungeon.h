@@ -1179,6 +1179,7 @@ typedef struct {
     int command_index;
     int structure1g_entry_index;
     uint16_t structure1g_sequence_word_offset;
+    uint16_t structure1g_global_image_index;
     uint16_t image_id;
     uint16_t encoding;
     uint16_t palette_id;
@@ -1194,9 +1195,11 @@ typedef struct {
 typedef struct {
     int animated_floor_command_count;
     int structure1g_provenance_count;
+    int global_image_index_binding_count;
     int source_command_count;
     int blocked_invalid_command_count;
     int blocked_structure1g_provenance_count;
+    int blocked_global_image_index_count;
     int blocked_missing_descriptor_count;
     int blocked_source_envelope_count;
     int complete;
