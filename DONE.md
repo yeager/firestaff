@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 original PC34 C78 Fire Shield roundtrip: typed handoff
+  accepts zero Priority and positive signed `B.Defense`, subtracts it from
+  both fire-shield mirrors at runtime, and exports no invented C union.
+  Source: ReDMCSB `MENU.C` F0403:1099-1115 and `TIMELINE.C` C78:1988-1989.
+  Verification: Ninja and CTest `dm1_v1_original_save_pc34_handoff` passed 1/1.
+
 - 2026-07-13 DM1 original PC34 C77 Spell Shield roundtrip: typed handoff
   accepts zero Priority and positive signed `B.Defense`, subtracts it from
   both spell-shield mirrors at runtime, and exports no invented C union.
