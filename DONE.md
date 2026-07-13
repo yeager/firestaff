@@ -17,6 +17,16 @@
   `dm2_v1_boot_viewport_asset_palette_fetch` with the existing verified GDAT
   provider. Source-locked to skproject `QUERY_GDAT_IMAGE_LOCALPAL` use in the
   HUD/image path. Verification: Ninja `firestaff_dm2_v2_hud_runtime_probe`.
+- 2026-07-13 CSBWin saved `TT_ParameterMessage` DSA execution: a restored
+  timer now runs only when it exactly matches its serialized TIMER-array slot
+  and its `EDT_MessageParameters` DB11/EXPOOL record has a complete FNV
+  receipt. CSBWin `ProcessTimers` stone/open-room routing is retained, and
+  the existing authenticated pure-stack runner receives at most 26 source
+  words before transactional `GLOBALSTORE` publication. Altered timer fields,
+  stale tail receipts, missing records, and oversized payloads reject without
+  publishing state. Source: CSBWin `CSBCode.cpp:6436-6454`,
+  `Timer.cpp:1641-1711,2118-2185`, `data.cpp:1542-1568`. Verification:
+  Ninja and CTest `csb_v1_dsa_parameter_message_save_handoff`.
 
 - 2026-07-13 Nexus Structure1A/Structure1F host boundary: typed alcove,
   wall-decoration, and wall-sensor records now publish their original
