@@ -861,9 +861,9 @@
   PASS; shared CMake regeneration is currently blocked by unrelated missing
   Theron probe sources.
 
-- 2026-07-13 Theron V1 verified post-return continuation: a fresh Mednafen
-  1.32.1 debugger build from a clean source tree, authenticated US CUE, and
-  System Card 3.0 trace now proves `$cbef -> $cb2f -> $e109`. The `$cb2f`
+- 2026-07-13 Theron V1 verified post-return continuation: a Mednafen 1.32.1
+  clean-source patch dry-run, targeted debugger rebuild, authenticated US
+  CUE, and System Card 3.0 trace now prove `$cbef -> $cb2f -> $e109`. The `$cb2f`
   snapshot records `$1800..$1804 = 00 00 00 02 00` and `$f5 = 00`; it is an
   RTS continuation with no observed new `CD_READ`, record, destination,
   payload, bitmap, palette, object, or level semantic. Added
