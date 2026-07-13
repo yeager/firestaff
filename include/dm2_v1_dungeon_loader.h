@@ -558,6 +558,32 @@ typedef struct {
         actuators[DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS];
 } DM2_V1_G1RuntimeMapActuatorReceipt;
 
+#define DM2_V1_G1_RUNTIME_MAP_MAX_CREATURE_ROOTS 32
+
+/* Read-only direct DB4 payload from skproject SKWIN/DME.h::Creature. The
+ * w0 next link and w2 possession ObjectID are deliberately excluded. */
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    int index;
+    uint8_t direction;
+    uint8_t creature_type;
+    uint16_t hit_points_1;
+} DM2_V1_G1DirectCreatureRoot;
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int creature_root_count;
+    int creature_record_reads;
+    int generic_record_reads;
+    int blocked_record_reads;
+    DM2_V1_G1DirectCreatureRoot
+        creatures[DM2_V1_G1_RUNTIME_MAP_MAX_CREATURE_ROOTS];
+} DM2_V1_G1RuntimeMapCreatureReceipt;
+
 /* First-map runtime handoff for the transactional PC G1 boot. This carries
  * source-proven root-address classes only; it deliberately contains no
  * decoded c_record payload or inferred object. */
@@ -750,6 +776,13 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1RuntimeMapActuatorReceipt *out);
+/* Consume only declared direct DB4 roots on a runtime-admitted G1 map. It
+ * reads the source-defined Creature b4 and w6 fields, never the w0 next link,
+ * the w2 possession ObjectID, extension DB4 records, or an unvalidated map. */
+int dm2_v1_dungeon_materialize_g1_runtime_map_creatures(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1RuntimeMapCreatureReceipt *out);
 /* Consume the transactional receipt for map 0 only. This repeats c_map's
  * ground-stack root lookup and classifies source-proven addresses. It may read
  * only a direct DB1 teleporter's independently verified fields; it never reads

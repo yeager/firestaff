@@ -1578,6 +1578,73 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
     return 1;
 }
 
+int dm2_v1_dungeon_materialize_g1_runtime_map_creatures(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1RuntimeMapCreatureReceipt *out) {
+    DM2_V1_G1RuntimeMapValidationReceipt validation;
+    DM2_V1_G1RuntimeMapCreatureReceipt candidate;
+    int column_index = 0;
+
+    /* skproject SKULLWIN/c_map.cpp obtains the root before c_record.cpp's
+     * GET_NEXT_RECORD_LINK. SKWIN/DME.h::Creature names b4 CreatureType and
+     * w6 HP1; no link or possession ObjectID is read by this receipt. */
+    if (!out || !d || !d->raw_data ||
+        !dm2_v1_dungeon_validate_g1_runtime_map(d, map, &validation) ||
+        !validation.committed || !validation.incomplete_world) {
+        return 0;
+    }
+    for (int level = 0; level < map; ++level)
+        column_index += d->level_widths[level];
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    for (int x = 0; x < validation.width; ++x) {
+        int stack = (int)RD16(d->raw_data + d->column_index_base +
+                              (column_index + x) * 2);
+        for (int y = 0; y < validation.height; ++y) {
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            uint16_t root;
+            const uint8_t *record;
+            DM2_V1_G1DirectCreatureRoot *creature;
+
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
+            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
+            if (((root >> 10) & 0x0fu) == 4u &&
+                dm2_v1_g1_link_has_declared_shape(d, root)) {
+                if (candidate.creature_root_count >=
+                    DM2_V1_G1_RUNTIME_MAP_MAX_CREATURE_ROOTS) {
+                    return 0;
+                }
+                record = dm2_v1_dungeon_get_thing_record(
+                    d, root, NULL, NULL, NULL);
+                if (!record) return 0;
+                creature = &candidate.creatures[candidate.creature_root_count++];
+                creature->x = x;
+                creature->y = y;
+                creature->object_id = root;
+                creature->index = root & 0x03ff;
+                creature->direction = (uint8_t)(root >> 14);
+                creature->creature_type = record[4];
+                creature->hit_points_1 = RD16(record + 6);
+                ++candidate.creature_record_reads;
+            }
+            ++stack;
+        }
+    }
+    if (candidate.creature_record_reads != candidate.creature_root_count ||
+        candidate.generic_record_reads != 0 ||
+        candidate.blocked_record_reads != 0) {
+        return 0;
+    }
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_first_map_runtime(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1FirstMapRuntimeReceipt *out) {
