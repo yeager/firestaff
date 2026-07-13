@@ -21,7 +21,6 @@
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v1_f0249_timeline_relocation_pc34_compat.h"
-#include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_movement_timing_pc34_compat.h"
@@ -10881,19 +10880,10 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                 ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&
                 world->party.champions[ev.aux4].present &&
                 (ev.aux1 == 0 || ev.aux1 == 2)) {
-                emit(result, EMIT_ACTION_ENABLED, ev.aux4, 0, 0, 0);
-                if (ev.aux1 == 2) {
-                    struct ChampionState_Compat* champion =
-                        &world->party.champions[ev.aux4];
-                    struct DM1F0259QuiverRefillPlanPc34 refill;
-
-                    if (DM1_V1_F0259_PlanQuiverRefillPc34Compat(
-                            champion, ev.aux4, CHAMPION_SLOT_HAND_RIGHT,
-                            &refill) && refill.moved) {
-                        champion->inventory[refill.destinationSlot] = refill.thing;
-                        champion->inventory[refill.sourceSlot] = THING_NONE;
-                    }
-                }
+                /* Preserve B.SlotOrdinal for M11.  It must run the source
+                 * C11 order as F0253 first, then F0259 for ordinal two;
+                 * mutating the quiver here would invert that order. */
+                emit(result, EMIT_ACTION_ENABLED, ev.aux4, ev.aux1, 0, 0);
             }
             break;
         case TIMELINE_EVENT_VI_ALTAR_REBIRTH:

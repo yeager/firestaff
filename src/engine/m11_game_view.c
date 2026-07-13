@@ -77,6 +77,7 @@
 #include "dm1_v1_live_action_effects_pc34_compat.h"
 #include "dm1_v1_runtime_sidecar_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
@@ -6296,12 +6297,16 @@ static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
         int championIndex = advancePlan.expiredChampionIndex[i];
         int actionIndex = advancePlan.expiredActionIndex[i];
         if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) continue;
-        /* The F0407 SWING path owns an authenticated F0330 C11 receipt.
-         * Its host lock is only a gate while that event is pending: it must
-         * never synthesize TIMELINE.C F0253 if F0330 moved C11 behind an
-         * earlier owner.  Missing/malformed C11 therefore remains locked
+        /* The authenticated F0407 SWING and THROW C11 routes use their
+         * host locks only as gates while the source receipt is pending. They
+         * must never synthesize TIMELINE.C F0253 if F0330 moved C11 behind
+         * an earlier owner. Missing/malformed C11 therefore remains locked
          * rather than releasing defense/action state from a local timeout. */
-        if (actionIndex == DM1_ACTION_SWING) continue;
+        if (actionIndex == DM1_ACTION_SWING ||
+            state->actionEnableSlotOrdinal[championIndex] ==
+                DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL) {
+            continue;
+        }
         state->actionDisabledTicks[championIndex] = 0u;
         if (championIndex < state->world.party.championCount &&
             actionIndex >= 0 && actionIndex < 44) {
@@ -6327,15 +6332,52 @@ static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
     }
 }
 
-/* ReDMCSB TIMELINE.C C11 calls F0253 when the saved action-enable event
- * expires.  The event is already source-gated by DM1 original-save import:
- * SlotOrdinal must be zero until the distinct F0259 quiver transfer has a
- * complete runtime handoff. */
+static int m11_move_weapon_from_quiver_after_c11_f0259(
+    M11_GameViewState* state,
+    int championIndex) {
+    struct ChampionState_Compat* champion;
+    struct DM1F0259QuiverRefillPlanPc34 refill;
+    if (!state || championIndex < 0 ||
+        championIndex >= state->world.party.championCount ||
+        championIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    champion = &state->world.party.champions[championIndex];
+    if (!champion->present) return 0;
+    memset(&refill, 0, sizeof(refill));
+    if (!DM1_V1_F0259_PlanQuiverRefillPc34Compat(
+            champion, championIndex, CHAMPION_SLOT_HAND_RIGHT, &refill) ||
+        !refill.moved) {
+        return 0;
+    }
+    champion->inventory[refill.destinationSlot] = refill.thing;
+    champion->inventory[refill.sourceSlot] = THING_NONE;
+    return 1;
+}
+
+/* ReDMCSB TIMELINE.C C11 calls F0253 first and F0259 only when its
+ * B.SlotOrdinal is C01.  The M11 sidecar is the live owner recorded when
+ * F0407/F0412 created C11; accepting a different ordinal would turn a stale
+ * or duplicate receipt into a second state/inventory mutation. */
 static void m11_enable_champion_action_from_timeline(M11_GameViewState* state,
-                                                     int championIndex) {
+                                                     int championIndex,
+                                                     int slotOrdinal) {
     int actionIndex;
     if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    if ((slotOrdinal != 0 && slotOrdinal != 2) ||
+        state->actionEnableSlotOrdinal[championIndex] !=
+            (unsigned char)slotOrdinal) {
+        return;
+    }
     actionIndex = (int)state->actionDisabledIndex[championIndex];
+    /* F0253 reads Champion.ActionIndex itself. F0328's THROW lock has no
+     * action index in the M11 cooldown sidecar, so recover the source owner
+     * only after the receipt ordinal has passed the stale/duplicate gate. */
+    if ((actionIndex < 0 || actionIndex >= 44) &&
+        championIndex < state->world.party.championCount) {
+        actionIndex = (int)state->world.party.champions[championIndex]
+            .actionIndex;
+    }
     /* ReDMCSB TIMELINE.C C11 -> F0253 owns the real completion.  The
      * ordinal-zero F0407 SWING route has one local cooldown mirror solely
      * for host gating; consume it here so the later mirror-aging pass cannot
@@ -6360,6 +6402,12 @@ static void m11_enable_champion_action_from_timeline(M11_GameViewState* state,
     state->pendingShootReadyHandRefill[championIndex] = 0u;
     state->actionDisabledIndex[championIndex] = 0xFFu;
     state->actionEnableSlotOrdinal[championIndex] = 0xFFu;
+    /* TIMELINE.C C11:1927-1932 invokes F0259 only after F0253 has cleared
+     * ActionIndex and refreshed the living champion. */
+    if (slotOrdinal == 2) {
+        (void)m11_move_weapon_from_quiver_after_c11_f0259(
+            state, championIndex);
+    }
 }
 
 static void m11_materialize_action_lock(M11_GameViewState* state,
@@ -10723,7 +10771,7 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 break;
             case EMIT_ACTION_ENABLED:
                 m11_enable_champion_action_from_timeline(
-                    state, (int)e->payload[0]);
+                    state, (int)e->payload[0], (int)e->payload[1]);
                 break;
             case EMIT_GAME_WON:
                 if (!state->gameWon) {
@@ -26773,6 +26821,10 @@ static int m11_apply_action_completion_plan_f0407(
          * branch above, so its C11 keeps SlotOrdinal zero. THROW owns the
          * separate F0328 then F0407 ordinal-two path. */
         if (actionIndex == DM1_ACTION_SWING) {
+            /* F0330 initializes B.SlotOrdinal to zero. Keep that exact
+             * live-owner fact until C11 reaches F0253; zero is meaningful,
+             * not the no-owner 0xFF sentinel used by older M11 mirrors. */
+            state->actionEnableSlotOrdinal[championIndex] = 0u;
             (void)DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
                 &state->world, championIndex, plan.disabledTicks);
         }

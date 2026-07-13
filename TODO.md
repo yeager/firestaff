@@ -465,7 +465,8 @@ ReDMCSB WIP 2021-02-06 source tree.
   Other F0407 action families still require separate source-owned live
   receipt work; do not generalize C11 scheduling from a UI cooldown or add a
   fallback timer. In particular, a delayed SWING C11 must remain locked until
-  the authentic receipt reaches F0253.
+  the authentic receipt reaches F0253. C11 receipts must retain their
+  original ordinal and be rejected once their live owner is consumed.
 
 - 🔧 2026-07-13 Nexus Structure3 follow-up: documented `0x800`-byte block
   layout, raw zero-separated byte/block spans, payload composition, and

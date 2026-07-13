@@ -1493,6 +1493,18 @@
   prior C11 owner and proves both delayed lock retention and final F0253
   consumption; related F0330/F0407 focused CTests pass.
 
+- 2026-07-13 DM1 PC34 C11 F0253/F0259 ordering and stale-owner gate:
+  `EMIT_ACTION_ENABLED` now retains the authenticated `B.SlotOrdinal` from
+  M10 to M11. M11 accepts it only while the matching live owner remains,
+  executes `F0253` against the source `Champion.ActionIndex`, then executes
+  `F0259` for ordinal-two action-hand refill. The ordinal-zero SWING owner is
+  retained explicitly; duplicate or later stale C11s cannot replay defense,
+  action-index, or quiver mutation. Source: ReDMCSB `TIMELINE.C C11:1927-1932,
+  F0253:1590-1611`, `CHAMPION.C F0330:2233-2251`, and `MENU.C
+  F0407:1613-1629`. Verification: the focused THROW test stages a duplicate
+  and later stale ordinal-two C11, while SWING/F0330/F0407 regression tests
+  pass. F0402 and viewport/save paths are untouched.
+
 - 2026-07-13 DM1 PC34 C25 explosion union handoff: ReDMCSB
   `PROJEXPL.C F0213` stores C25 as `B.Location + C.Slot`, then
   `TIMELINE.C F0261` dispatches it to F0220. F0435 requires that exact C15

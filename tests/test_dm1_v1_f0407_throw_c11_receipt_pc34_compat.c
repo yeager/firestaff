@@ -35,13 +35,19 @@ int main(void)
 {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
-    struct DungeonWeapon_Compat weapon;
+    struct DungeonWeapon_Compat weapons[3];
+    struct TimelineEvent_Compat duplicateC11;
+    struct TimelineEvent_Compat staleC11;
     const struct TimelineEvent_Compat* event;
     unsigned short thrownThing;
+    unsigned short firstQuiverWeapon;
+    unsigned short secondQuiverWeapon;
+    unsigned int c11Tick;
+    unsigned int staleTick;
 
     memset(&state, 0, sizeof(state));
     memset(&things, 0, sizeof(things));
-    memset(&weapon, 0, sizeof(weapon));
+    memset(weapons, 0, sizeof(weapons));
     M11_GameView_Init(&state);
     state.active = 1;
     state.world.gameTick = 100u;
@@ -58,14 +64,22 @@ int main(void)
     state.world.party.champions[0].direction = 3;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
     state.world.party.champions[0].maxLoad = 420;
-    weapon.type = 8;
+    weapons[0].type = 8;
+    weapons[1].type = 8;
+    weapons[2].type = 8;
     things.loaded = 1;
-    things.weapons = &weapon;
-    things.weaponCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 3;
     state.world.things = &things;
     thrownThing = make_thing(THING_TYPE_WEAPON, 0);
+    firstQuiverWeapon = make_thing(THING_TYPE_WEAPON, 1);
+    secondQuiverWeapon = make_thing(THING_TYPE_WEAPON, 2);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         thrownThing;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_1] =
+        firstQuiverWeapon;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_3] =
+        secondQuiverWeapon;
 
     assert(M11_GameView_TriggerNonMeleeActionByIndex(
                &state, 0, DM1_ACTION_THROW) == 1);
@@ -79,5 +93,41 @@ int main(void)
                .inventory[CHAMPION_SLOT_ACTION_HAND] == THING_NONE);
     assert(!DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
         &state.world, 0));
+
+    /* C11 must carry ordinal two through M10, run F0253 in M11, then run
+     * F0259 once.  A duplicate in the same source tick is stale after the
+     * first receipt consumes the live ordinal owner. */
+    c11Tick = event->fireAtTick;
+    duplicateC11 = *event;
+    assert(F0721_TIMELINE_Schedule_Compat(
+        &state.world.timeline, &duplicateC11));
+    while (state.world.gameTick <= c11Tick) {
+        assert(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW);
+    }
+    assert(state.actionEnableSlotOrdinal[0] == 0xFFu);
+    assert(state.actionDisabledIndex[0] == 0xFFu);
+    assert(state.world.party.champions[0].actionIndex == 0xFFu);
+    assert(state.world.party.champions[0]
+               .inventory[CHAMPION_SLOT_ACTION_HAND] == firstQuiverWeapon);
+    assert(state.world.party.champions[0]
+               .inventory[CHAMPION_SLOT_QUIVER_1] == THING_NONE);
+    assert(state.world.party.champions[0]
+               .inventory[CHAMPION_SLOT_QUIVER_3] == secondQuiverWeapon);
+
+    /* A later stale ordinal-two C11 is rejected before F0253/F0259.  Clear
+     * the action hand only to make a forbidden second F0259 transfer visible. */
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        THING_NONE;
+    staleC11 = duplicateC11;
+    staleC11.fireAtTick = state.world.gameTick;
+    staleTick = staleC11.fireAtTick;
+    assert(F0721_TIMELINE_Schedule_Compat(&state.world.timeline, &staleC11));
+    while (state.world.gameTick <= staleTick) {
+        assert(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW);
+    }
+    assert(state.world.party.champions[0]
+               .inventory[CHAMPION_SLOT_ACTION_HAND] == THING_NONE);
+    assert(state.world.party.champions[0]
+               .inventory[CHAMPION_SLOT_QUIVER_3] == secondQuiverWeapon);
     return 0;
 }
