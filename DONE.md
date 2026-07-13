@@ -13,6 +13,14 @@
   Verification: capture-script syntax/contract test, Mednafen patch dry-run,
   rebuilt instrumented Mednafen, and three authentic bounded GUI captures.
 
+- 2026-07-13 DM1 F0115 D0C explosion material consumption: M11 now resolves
+  ReDMCSB DUNVIEW.C F0115:6038-6074's original PC34 M636 small/medium/large
+  pattern graphics (489..497) for the D0C deferred explosion pass before the
+  normal F0114 D1+ scaled-sprite path. Smoke retains the original palette
+  substitutions; Fluxcage remains excluded for the existing field route. No
+  synthetic material or explosion type semantics were added. Verification:
+  focused Ninja build and projectile/explosion CTest.
+
 - 2026-07-13 Nexus Structure1F wall-sensor control/destination handoff: the
   adjacent raw four-byte tuples now reach DGN host, render-plan, and LEV00-15
   corpus receipts. This assigns no trigger, target, route, operation, mesh,
