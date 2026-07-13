@@ -100,6 +100,18 @@ static void test_projectile_graphic_indices(void) {
     ASSERT_EQ(dm1_v1_projectile_graphic_index(14, 0), -1, "gfx[14]");
 }
 
+/* C100 must retain its own M613 lightning material.  C101 and ordinary
+ * explosions are intentionally covered by separate routes. */
+static void test_c100_rebirth_lightning_material(void) {
+    printf("  C100 rebirth lightning material...\n");
+    ASSERT_EQ(dm1_v1_c100_rebirth_lightning_graphic_index_pc34(),
+              DM1_GFX_FIRST_PROJECTILE + 10,
+              "C100 uses C03 following native bitmap");
+    ASSERT_NE(dm1_v1_c100_rebirth_lightning_graphic_index_pc34(),
+              DM1_GFX_FIRST_EXPLOSION_PATTERN,
+              "C100 never borrows M636 pattern material");
+}
+
 
 /* ── Test: Projectile bitmap deltas match aspect type rules ──────── */
 
@@ -1466,6 +1478,7 @@ int main(void) {
 
     test_projectile_aspect_table();
     test_projectile_graphic_indices();
+    test_c100_rebirth_lightning_material();
     test_projectile_bitmap_deltas();
     test_projectile_subtype_mapping();
     test_thrown_object_material_resolution();

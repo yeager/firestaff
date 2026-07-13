@@ -1090,6 +1090,39 @@ static void test_explosion_occlusion_zone_mapping(void)
     check_int("explosion_occlusion.out_of_range", dm1_viewport_3d_get_explosion_occlusion_spec(17) == NULL, 1);
     check_int("explosion_occlusion.null_zone", dm1_viewport_3d_explosion_centered_zone(NULL), -1);
     check_int("explosion_occlusion.bad_cell", dm1_viewport_3d_explosion_two_cell_zone(dm1_viewport_3d_get_explosion_occlusion_spec_for_square(DM1_VIEW_SQUARE_D3C), 2), -1);
+
+    {
+        struct {
+            DM1_ViewSquareIndex square;
+            int zone;
+            int x;
+            int y;
+        } c100_expected[] = {
+            { DM1_VIEW_SQUARE_D4C, 3000, 112, 53 },
+            { DM1_VIEW_SQUARE_D3C, 3003, 112, 59 },
+            { DM1_VIEW_SQUARE_D2L, 3009, 194, 57 },
+            { DM1_VIEW_SQUARE_D1R, 3013, 112, 76 },
+            { DM1_VIEW_SQUARE_D0C, 3014, 112, 47 },
+            { DM1_VIEW_SQUARE_D0R, 3016, 167, 47 }
+        };
+        for (size_t i = 0; i < sizeof(c100_expected) / sizeof(c100_expected[0]); ++i) {
+            const DM1_ViewportExplosionOcclusionSpec *spec =
+                dm1_viewport_3d_get_explosion_occlusion_spec_for_square(c100_expected[i].square);
+            int zone = -1;
+            int x = -1;
+            int y = -1;
+            char id[112];
+            snprintf(id, sizeof(id), "c100_geometry.%zu.valid", i);
+            check_int(id, dm1_viewport_3d_c100_rebirth_lightning_geometry(spec, &zone, &x, &y), 1);
+            snprintf(id, sizeof(id), "c100_geometry.%zu.zone", i);
+            check_int(id, zone, c100_expected[i].zone);
+            snprintf(id, sizeof(id), "c100_geometry.%zu.x", i);
+            check_int(id, x, c100_expected[i].x);
+            snprintf(id, sizeof(id), "c100_geometry.%zu.y", i);
+            check_int(id, y, c100_expected[i].y);
+        }
+        check_int("c100_geometry.null", dm1_viewport_3d_c100_rebirth_lightning_geometry(NULL, NULL, NULL, NULL), 0);
+    }
 }
 
 static void test_projectile_wall_zone_movement_visibility_gate(void)

@@ -2484,6 +2484,37 @@ int dm1_viewport_3d_explosion_rebirth_step2_zone(const DM1_ViewportExplosionOccl
     return 3007 + spec->rebirth_row;
 }
 
+int dm1_viewport_3d_c100_rebirth_lightning_geometry(
+    const DM1_ViewportExplosionOcclusionSpec *spec,
+    int *out_zone_index,
+    int *out_center_x,
+    int *out_center_y)
+{
+    /* ReDMCSB DUNVIEW.C F0115:5920/5948/5984/5998 selects C100 with the
+     * PC34 G2034 row, not the seven-entry legacy rebirth coordinate row.
+     * COORD.C G3025 layout-696 records C3000..C3016 below are record-type 0:
+     * each pair is the real bitmap centre inside the 224x136 viewport.
+     * Do not reuse these coordinates for C101 or generic explosions. */
+    static const short k_c3000_c100_centres[17][2] = {
+        {112, 53}, { 24, 53}, {194, 53}, {112, 59}, { 15, 59},
+        {208, 59}, {112, 70}, {112, 57}, { 24, 57}, {194, 57},
+        {112, 63}, { 12, 63}, {213, 63}, {112, 76}, {112, 47},
+        { 57, 47}, {167, 47}
+    };
+    int row;
+
+    if (!spec) return 0;
+    row = spec->g2034_row;
+    if (row < 0 || row >= (int)(sizeof(k_c3000_c100_centres) /
+                                sizeof(k_c3000_c100_centres[0]))) {
+        return 0;
+    }
+    if (out_zone_index) *out_zone_index = 3000 + row;
+    if (out_center_x) *out_center_x = (int)k_c3000_c100_centres[row][0];
+    if (out_center_y) *out_center_y = (int)k_c3000_c100_centres[row][1];
+    return 1;
+}
+
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void)
 {
     return sizeof(s_door_front_occlusion_specs) / sizeof(s_door_front_occlusion_specs[0]);

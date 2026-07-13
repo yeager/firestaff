@@ -11785,6 +11785,17 @@ candidate APIs remain available to source-locked save/runtime tests. Verificatio
 `test_m11_dm1_hoc_no_fallback_panel` rejects no-asset C160 input and consumes
 real-PC34 C162 cancel input.
 
+# ✅ 2026-07-13 DM1 C100 lightning/rebirth material and C3000 geometry
+
+C100 now has its own source-locked material and destination receipt: ReDMCSB
+`DUNVIEW.C F0115:5965-5969,5977-5979` resolves native graphic `464` from the
+lightning C03 aspect, while the PC34 `G2034` row selects `C3000..C3016` and
+`COORD.C:G3025` supplies their actual viewport centres. The new API rejects
+unmapped rows and does not draw; C101 and the general D0C route are untouched.
+The unresolved PC34 C100 scale mapping remains fail-closed in TODO because
+`G2037` is declared as seven entries while `G2034` reaches rows 0..16.
+Verification: `test_dm1_v1_projectile_explosion_render_pc34_compat` and
+`test_dm1_v1_viewport_3d_pc34_compat`.
 - ✅ 2026-07-13 DM2 weather decoded-material receipt: each source ENVIRONMENT
   weather command now proves a decodable IMG3 pixel plane together with its
   own local palette before it can reach the no-draw weather handoff.

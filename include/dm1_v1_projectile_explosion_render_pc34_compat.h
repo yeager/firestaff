@@ -158,6 +158,11 @@ unsigned int dm1_v1_projectile_aspect_graphic_info(int aspectIndex);
 int dm1_v1_projectile_graphic_index(int aspectIndex, int relativeDir);
 int dm1_v1_projectile_subtype_graphic_index(int subtype);
 int dm1_v1_projectile_bitmap_delta(int aspectIndex, int relativeDir);
+/* C100 rebirth step 1 is the only explosion branch that uses the lightning
+ * projectile's following native bitmap.  It deliberately does not reuse the
+ * M636 explosion-pattern bank or a host replacement sprite.
+ * Source: ReDMCSB DUNVIEW.C F0115:5965-5969,5977-5979; DEFS.H M613/C03. */
+int dm1_v1_c100_rebirth_lightning_graphic_index_pc34(void);
 int dm1_v1_projectile_flip_flags(int aspectIndex, int relativeDir,
                                  int relativeCell, int mapX, int mapY);
 int dm1_v1_projectile_scale_units(int depthIndex, int relativeCell);
