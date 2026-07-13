@@ -764,6 +764,10 @@ typedef struct {
      * has a decoded image and its own verified local palette. */
     uint16_t last_dungeon_wall_material_required_mask;
     uint16_t last_dungeon_wall_material_consumed_mask;
+    /* Bit 0=floor, bit 1=ceiling. Source-required scenes render neither
+     * plane until both GRAPHICSSET images and local palettes are verified. */
+    uint8_t last_floor_ceiling_material_required_mask;
+    uint8_t last_floor_ceiling_material_consumed_mask;
     int gdat_scene_control_ready;
     int gdat_scene_control_consumed_count;
     int gdat_scene_light_consumed_count;
