@@ -101,6 +101,10 @@ static uint32_t dm1_original_save_corpus_hash_step(uint32_t hash,
 #define DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT \
     ((DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT * CHAMPION_MAX_PARTY) + \
      DM1_PC34_ORIGINAL_PARTY_INFO_BYTE_COUNT)
+#define DM1_PC34_PARTY_INFO_MAGICAL_LIGHT_OFFSET 0u
+#define DM1_PC34_PARTY_INFO_SHIELD_DEFENSE_OFFSET 4u
+#define DM1_PC34_PARTY_INFO_FIRE_SHIELD_DEFENSE_OFFSET 6u
+#define DM1_PC34_PARTY_INFO_SPELL_SHIELD_DEFENSE_OFFSET 8u
 #define DM1_PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT 16u
 #define DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT 10u
 #define DM1_PC34_ORIGINAL_ACTIVE_GROUP_FIXTURE_COUNT 3u
@@ -2819,6 +2823,32 @@ static int load_world_from_bytes_uncommitted(
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
     }
+
+    /* ReDMCSB DEFS.H PARTY_INFO starts with MagicalLightAmount, then the
+     * C73/C79 counters, then ShieldDefense/FireShieldDefense/
+     * SpellShieldDefense. These four signed 16-bit fields have existing
+     * M10 runtime owners; do not infer the later scent or BUG0_00 bytes. */
+    if (!world->party.pc34PartyInfoBytesValid) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    world->magic.magicalLightAmount = read_i16_le(
+        world->party.pc34PartyInfoBytes +
+        DM1_PC34_PARTY_INFO_MAGICAL_LIGHT_OFFSET);
+    world->magic.partyShieldDefense = read_i16_le(
+        world->party.pc34PartyInfoBytes +
+        DM1_PC34_PARTY_INFO_SHIELD_DEFENSE_OFFSET);
+    world->magic.fireShieldDefense = read_i16_le(
+        world->party.pc34PartyInfoBytes +
+        DM1_PC34_PARTY_INFO_FIRE_SHIELD_DEFENSE_OFFSET);
+    world->magic.spellShieldDefense = read_i16_le(
+        world->party.pc34PartyInfoBytes +
+        DM1_PC34_PARTY_INFO_SPELL_SHIELD_DEFENSE_OFFSET);
+    world->lifecycle.status.partyShieldDefense =
+        (int16_t)world->magic.partyShieldDefense;
+    world->lifecycle.status.partyFireShieldDefense =
+        (int16_t)world->magic.fireShieldDefense;
+    world->lifecycle.status.partySpellShieldDefense =
+        (int16_t)world->magic.spellShieldDefense;
 
     world->gameTick = report->original_game_time;
     world->partyMapIndex = world->party.mapIndex;

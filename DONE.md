@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 PARTY_INFO runtime handoff: F0435 now applies the
+  source-owned signed light, party-shield, fire-shield, and spell-shield words
+  from the leading C2 `PARTY_INFO` bytes to existing M10 magic/lifecycle
+  owners. F0433 writes those exact owned words back into retained provenance,
+  rejecting out-of-range host values; C73/C79/scent/freeze and unknown bytes
+  remain untouched. Source: ReDMCSB `DEFS.H` `PARTY_INFO` and `LOADSAVE.C`
+  F0433/F0435. Verification: focused native-PC34 handoff CTest proves
+  raw-byte import, runtime materialization, and export/reimport.
+
 - 2026-07-13 DM1 PC34 C2 PARTY_INFO provenance: F0435 now retains the full
   128-byte trailing `PARTY_INFO` record after M516_CHAMPIONS, and F0433 emits
   only that imported record. The former host-written party-coordinate layout

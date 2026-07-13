@@ -1239,8 +1239,11 @@ and real community-save corpus round-trip evidence.
     scent and unreferenced bytes there; it is not `GLOBAL_DATA`, so F0433
     re-emits imported provenance instead of writing party coordinates into
     that region. The roundtrip and corpus receipts compare all 128 bytes.
-    Remaining work is source-backed runtime ownership for individual
-    PARTY_INFO fields plus authentic community-save coverage.
+    F0435 now materializes the proven leading signed light and three shield
+    words into existing M10 owners, and F0433 writes only those owned words
+    back with signed-16-bit range rejection. The C73/C79 counters, scent,
+    freeze-life, and unreferenced bytes remain opaque pending their own
+    source-backed runtime owners and authentic community-save coverage.
   - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
     with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
     the corresponding exported C14 `EventIndex` without changing the live
