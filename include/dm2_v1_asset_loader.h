@@ -77,6 +77,9 @@ typedef enum {
 
 typedef enum {
     DM2_GDAT_ENTRY_TYPE_IMAGE        = 0x01,
+    /* skproject SKWIN/DME.h dtText.  QUERY_GDAT_TEXT selects this exact
+     * type; it must not be confused with a drawable environment image. */
+    DM2_GDAT_ENTRY_TYPE_TEXT         = 0x05,
     /* skproject/SKWIN/DME.h dtIndex: dtRectangle/dt04 = 4.
      * LOAD_RECTS_AND_COMPRESS reads this exact typed payload before it
      * expands the title-menu and HUD rectangle tables. */
@@ -202,6 +205,16 @@ const uint8_t *dm2_v1_asset_load_typed_sized(
     int category,
     int index,
     int type,
+    int field,
+    size_t *out_size);
+
+/* Load an exact skproject dtText payload.  The returned bytes retain their
+ * original encoding; callers must not treat them as decoded C strings until
+ * the relevant QUERY_GDAT_TEXT/FORMAT_SKSTR contract has been proven. */
+const uint8_t *dm2_v1_asset_load_text_sized(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
     int field,
     size_t *out_size);
 

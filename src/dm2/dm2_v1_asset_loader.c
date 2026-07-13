@@ -768,6 +768,21 @@ const uint8_t *dm2_v1_asset_load_typed_sized(
     return dm2_gdat_raw_from_entry(loader, entry, out_size);
 }
 
+const uint8_t *dm2_v1_asset_load_text_sized(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    size_t *out_size)
+{
+    return dm2_v1_asset_load_typed_sized(loader,
+                                         category,
+                                         index,
+                                         DM2_GDAT_ENTRY_TYPE_TEXT,
+                                         field,
+                                         out_size);
+}
+
 int dm2_v1_asset_load_word_value(
     const DM2_V1_AssetLoader *loader,
     int category,
