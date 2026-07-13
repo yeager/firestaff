@@ -55,6 +55,9 @@ typedef struct {
     int valid;
     Theron_Track02Variant variant;
     uint32_t stage3_track02_record;
+    /* Hash of the exact Stage 2-loaded user-data span. It identifies the
+     * physical Stage 3 handoff only; it assigns no manifest semantics. */
+    uint32_t stage3_user_data_hash;
     uint16_t handler_address;
     uint16_t cd_state_address;
     uint16_t cd_state_branch_address;
