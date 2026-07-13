@@ -4,6 +4,9 @@
   corpus row now supplies runtime path, type, size, and hash. Original
   envelope/raw rows return an explicit fail-closed rejection.
 
+- 2026-07-13 Nexus raw Structure1F item attribute pair receipt: complete;
+  direct item attribute pairs remain no-draw provenance.
+
 - 2026-07-13 DM2 per-file original-save corpus receipts: bounded corpus rows
   retain parsed candidate type, path, payload size, and payload hash. Original
   envelope/raw rows are explicitly rejected for runtime import.
