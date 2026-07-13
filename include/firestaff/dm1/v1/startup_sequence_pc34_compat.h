@@ -103,6 +103,23 @@ typedef struct DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupTitleRuntimeAssetReceipt_PC34;
 
+/* One source-visible PC34 TITLE.C F0437 event as consumed by M11. This is
+ * deliberately DM1-only: no CSB title phase, palette, or fallback frame can
+ * enter this receipt. `present_frame` is false for the two post-zoom waits
+ * and final guard, which still retain their original pre-event VBlank wait. */
+typedef struct DM1_V1_StartupTitlePresentationCommand_PC34 {
+    int handled;
+    unsigned int source_step;
+    int present_frame;
+    int clear_before_present;
+    int special_palette;
+    unsigned int pre_present_delay_ms;
+    unsigned int post_present_delay_ms;
+    int source_timing_receipt_consumed;
+    int source_asset_receipt_consumed;
+    const char* source_evidence;
+} DM1_V1_StartupTitlePresentationCommand_PC34;
+
 typedef enum DM1_V1_StartupEntranceRenderKind_PC34 {
     DM1_V1_STARTUP_ENTRANCE_RENDER_NONE_PC34 = 0,
     DM1_V1_STARTUP_ENTRANCE_RENDER_DUNGEON_FRAME_PC34 = 1,
@@ -1766,6 +1783,12 @@ int dm1_v1_startup_title_runtime_asset_receipt_pc34(
     unsigned int graphics_c001_width,
     unsigned int graphics_c001_height,
     DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* out_receipt);
+
+int dm1_v1_startup_title_presentation_command_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    const DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* asset_receipt,
+    unsigned int source_step,
+    DM1_V1_StartupTitlePresentationCommand_PC34* out_command);
 unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
     int entrance_event_kind,

@@ -171,6 +171,53 @@ static void check_runtime_asset_receipt(void) {
              1);
 }
 
+static void check_title_presentation_command(void) {
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
+    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 asset;
+    DM1_V1_StartupTitlePresentationCommand_PC34 command;
+
+    memset(&media, 0, sizeof(media));
+    memset(&asset, 0, sizeof(asset));
+    memset(&command, 0, sizeof(command));
+    expect_i("TITLE presentation command obtains DM1 PC34 media receipt",
+             dm1_v1_startup_full_graphics_media_receipt_pc34("dm1", &media),
+             1);
+    asset.release_c001_ready = 1;
+    expect_i("TITLE presentation PRESENTS keeps C12 and source hold",
+             dm1_v1_startup_title_presentation_command_pc34(
+                 &media, &asset, 1u, &command) && command.present_frame &&
+                 command.clear_before_present &&
+                 command.special_palette ==
+                     VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
+                 command.pre_present_delay_ms == 0u &&
+                 command.post_present_delay_ms == media.title_presents_hold_ms &&
+                 command.source_timing_receipt_consumed &&
+                 command.source_asset_receipt_consumed,
+             1);
+    expect_i("TITLE presentation zoom keeps C13/C14 VBlank cadence",
+             dm1_v1_startup_title_presentation_command_pc34(
+                 &media, &asset, 2u, &command) && command.present_frame &&
+                 command.special_palette == VGA_PALETTE_PC34_SPECIAL_TITLE &&
+                 command.pre_present_delay_ms == media.title_zoom_frame_delay_ms &&
+                 command.post_present_delay_ms == 0u,
+             1);
+    expect_i("TITLE post-zoom wait remains a non-present VBlank event",
+             dm1_v1_startup_title_presentation_command_pc34(
+                 &media, &asset, 20u, &command) && !command.present_frame &&
+                 command.pre_present_delay_ms == media.title_zoom_frame_delay_ms,
+             1);
+    expect_i("TITLE Strikes Back keeps DM1 C13/C14 palette",
+             dm1_v1_startup_title_presentation_command_pc34(
+                 &media, &asset, 22u, &command) && command.present_frame &&
+                 command.special_palette == VGA_PALETTE_PC34_SPECIAL_TITLE,
+             1);
+    media.title_zoom_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS;
+    expect_i("TITLE presentation rejects a CSB palette substitution",
+             !dm1_v1_startup_title_presentation_command_pc34(
+                 &media, &asset, 2u, &command),
+             1);
+}
+
 static void check_palette_cross_source_contract(void) {
     V1_TitleFrontendSourceAnimationStep presentsStep;
     V1_TitleFrontendSourceAnimationStep zoomStep;
@@ -707,6 +754,7 @@ static void check_real_pc34_c001(const char* graphics_path) {
 int main(int argc, char** argv) {
     check_selection_contract();
     check_runtime_asset_receipt();
+    check_title_presentation_command();
     check_palette_cross_source_contract();
     check_startup_source_timing_contract();
     check_entrance_credits_runtime_boundary();

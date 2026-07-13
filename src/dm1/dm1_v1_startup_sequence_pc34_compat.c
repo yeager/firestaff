@@ -5094,6 +5094,55 @@ int dm1_v1_startup_title_runtime_asset_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_title_presentation_command_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    const DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* asset_receipt,
+    unsigned int source_step,
+    DM1_V1_StartupTitlePresentationCommand_PC34* out_command) {
+    DM1_V1_StartupTitlePresentationCommand_PC34 command;
+    V1_TitleFrontendSourceAnimationStep step;
+    V1_TitleFrontendC001BlitPlan plan;
+    int palette = 0;
+
+    if (!out_command || !media_receipt || !asset_receipt ||
+        !dm1_v1_startup_title_timing_receipt_valid_pc34(media_receipt) ||
+        !asset_receipt->release_c001_ready || source_step == 0U) {
+        return 0;
+    }
+    memset(&command, 0, sizeof(command));
+    memset(&step, 0, sizeof(step));
+    memset(&plan, 0, sizeof(plan));
+    if (!V1_TitleFrontend_GetSourceAnimationStep(source_step, &step) ||
+        !V1_TitleFrontend_GetC001BlitPlanForStep(&step, &plan) ||
+        !V1_TitleFrontend_GetStepPalette(step.kind, &palette)) {
+        return 0;
+    }
+
+    /* ReDMCSB TITLE.C F0437:313 installs C12 only for PRESENTS. Lines
+     * 363-367 install C13+C14 before the C001 zoom/reveal path. */
+    if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS) {
+        if (palette != media_receipt->title_presents_palette) return 0;
+    } else if (palette != media_receipt->title_zoom_palette) {
+        return 0;
+    }
+
+    command.handled = 1;
+    command.source_step = source_step;
+    command.present_frame = plan.kind != V1_TITLE_FRONTEND_C001_BLIT_NONE;
+    command.clear_before_present = plan.clearBeforeBlit ? 1 : 0;
+    command.special_palette = palette;
+    command.pre_present_delay_ms = step.vblankBeforeEvent
+        ? media_receipt->title_zoom_frame_delay_ms : 0U;
+    command.post_present_delay_ms =
+        step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS
+            ? media_receipt->title_presents_hold_ms : 0U;
+    command.source_timing_receipt_consumed = 1;
+    command.source_asset_receipt_consumed = 1;
+    command.source_evidence = step.sourceLineEvidence;
+    *out_command = command;
+    return 1;
+}
+
 unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
     int entrance_event_kind,
