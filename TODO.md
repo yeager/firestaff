@@ -2610,6 +2610,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: DM1 F0231 now owns raw group writeback receipts consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
   - 2026-07-09 update: DM1 F0190 killed-all state now owns unlink/next-clear/active-state apply receipts consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
   - 2026-07-13 update: DM1 F0190 killed-all afterplay now has a fail-closed PC34 receipt binding F0188/F0189 completion to the original C040 smoke create input. M10 consumes it after final-group mutation in both projectile and melee routes; malformed smoke attacks are rejected rather than replaced with a host effect. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
+  - 2026-07-13 update: F0190 C040's current M10-to-M11 integration is
+    regression-audited: the afterplay receipt enters the live explosion list,
+    then the existing F0115 materialization receipt carries its type/frame/
+    attack to M11. Remaining work is real multi-effect capture, not a cue or
+    replacement renderer.
   - 2026-07-09 update: DM1 F0190 killed-some state now owns cleanup/fear apply receipts consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
   - 2026-07-09 update: DM1 F0190 mutation dispatch now owns the combined possession/killed-some/killed-all apply receipt consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
   - 2026-07-09 update: DM1 F0231 runtime result now owns post-resolve apply receipts for luck, side effects, group damage, and damage emission consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
