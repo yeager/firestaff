@@ -43,6 +43,9 @@ int main(void) {
     check(!theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
               &profile),
           "Soul Room route rejects a receipt with no trace provenance hash");
+    snprintf(profile.track02_runtime_system_card_md5,
+             sizeof(profile.track02_runtime_system_card_md5), "%s",
+             "ff1a674273fe3540ccef576376407d1d");
     snprintf(profile.track02_runtime_trace_md5,
              sizeof(profile.track02_runtime_trace_md5), "%s",
              "04a75036e9d520bb983c5ed03b8d0182");

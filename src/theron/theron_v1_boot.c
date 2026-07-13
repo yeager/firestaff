@@ -199,6 +199,8 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
     return (expected_variant == THERON_TRACK02_VARIANT_JP_BIN ||
             expected_variant == THERON_TRACK02_VARIANT_US_BIN) &&
            theron_v1_boot_md5_is_canonical(
+               profile->track02_runtime_system_card_md5) &&
+           theron_v1_boot_md5_is_canonical(
                profile->track02_runtime_trace_md5) &&
            handoff->valid && handoff->variant == expected_variant &&
            handoff->stage3_track02_record != 0u &&
@@ -5701,6 +5703,8 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
     }
     memset(&intake, 0, sizeof(intake));
     launch->profile->track02_runtime_trace_handoff_ready = 0;
+    memset(launch->profile->track02_runtime_system_card_md5, 0,
+           sizeof(launch->profile->track02_runtime_system_card_md5));
     memset(launch->profile->track02_runtime_trace_md5, 0,
            sizeof(launch->profile->track02_runtime_trace_md5));
     memset(&launch->profile->track02_runtime_trace_handoff,
@@ -5724,6 +5728,9 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
         return 0;
     }
     launch->profile->track02_runtime_trace_handoff = intake.runtime_handoff;
+    snprintf(launch->profile->track02_runtime_system_card_md5,
+             sizeof(launch->profile->track02_runtime_system_card_md5), "%s",
+             system_card_md5_hex);
     snprintf(launch->profile->track02_runtime_trace_md5,
              sizeof(launch->profile->track02_runtime_trace_md5), "%s",
              intake.trace_md5);
