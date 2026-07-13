@@ -2609,6 +2609,8 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         state->engine, &out_receipt->static_material_sources);
     out_receipt->dgn_static_material_source_consumed =
         out_receipt->static_material_sources.canonical_pair_bound &&
+        out_receipt->static_material_sources
+            .structure1b_selector_binding_proven &&
         state->engine->floor_mns_material_route_valid &&
         state->engine->wall_mns_material_route_valid;
     out_receipt->dgn_route =

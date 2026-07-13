@@ -9215,3 +9215,13 @@
   loader now rejects decodable candidate fields instead of promoting guessed
   bytecode into runtime. Verification: focused CCM fixture and strict C11
   syntax PASS.
+# 2026-07-13 Nexus DGN static-material selector guard
+
+The DGN runtime no longer treats Structure1B bytes 3/4 as direct
+`SN_WALL.MNS` material IDs. The real LEV00-LEV15 corpus contains values beyond
+the bank's 0..14 descriptor range, so a hash-bound MNS pair now requires an
+explicit selector-binding proof before it can promote a DGN render plan. The
+existing material-raster test supplies that proof only as a controlled host
+fixture; production remains blocked without a Saturn executable/capture route.
+Verification: Ninja build plus `test_nexus_v1_dgn_material_raster` and
+`test_nexus_v1_dmdf_embedded_blocks` against the real local MNS asset.

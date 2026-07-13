@@ -69,6 +69,12 @@ Nexus Track 1 capture now requires hash-bound SN_FLOOR.MNS and SN_WALL.MNS
 and forbids BPK material surfaces. Remaining work is full DGN semantics and
 texture decoding, not a substitute material path.
 
+Nexus's original Structure1B wall-selector transform remains unproven. Real
+LEV00-LEV15 bytes 3/4 contain values outside the 15 descriptor IDs in the
+hash-bound `SN_WALL.MNS` TEXT bank, so the runtime blocks that MNS route
+unless a Saturn executable or capture proves the mapping. Do not derive a
+nibble, mask, or directional transform from the observed values alone.
+
 ## DM2 V2.0 Runtime Follow-up (2026-07-12)
 
 M11 now binds the selected DM2 V2 presentation mode to the persistent V2

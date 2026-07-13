@@ -329,6 +329,16 @@ static void test_real_dgn_structure1_layout_corpus(void) {
     static const int expected_structure2_textures[16] =
         {82, 122, 100, 126, 97, 98, 85, 104,
          122, 113, 114, 118, 102, 106, 95, 94};
+    /* SN_WALL.MNS has exactly 15 TEXT descriptors (IDs 0..14).  These are
+     * raw Structure1B byte-3/byte-4 counts above that range, measured from
+     * the hash-verified retail LEV corpus. They prove those bytes cannot be
+     * promoted as direct wall-material IDs. */
+    static const int expected_byte3_above_wall_bank[16] =
+        {0, 86, 228, 976, 1255, 1280, 1451, 1494,
+         1005, 98, 1969, 2113, 409, 647, 820, 998};
+    static const int expected_byte4_above_wall_bank[16] =
+        {49, 455, 1267, 1341, 1558, 1331, 596, 1707,
+         1306, 786, 1318, 1428, 1474, 987, 552, 1045};
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     int level;
     int checked = 0;
@@ -342,6 +352,9 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnGeometryInfo info;
         Nexus_V1_Level loaded_level;
         Nexus_V1_DgnRendererHandoffReceipt handoff;
+        int byte3_above_wall_bank = 0;
+        int byte4_above_wall_bank = 0;
+        int cell;
         snprintf(path, sizeof(path), "%s/LEV%02d.DGN", data_dir, level);
         file = fopen(path, "rb");
         CHECK(file != NULL, "real DGN corpus file opens");
@@ -448,6 +461,16 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               loaded_level.structure2_texture_count ==
                   expected_structure2_textures[level],
               "real Structure1F and optional Structure1G typed records survive level load and reach host handoff");
+        for (cell = 0; cell < NEXUS_MAX_MAP_SIZE * NEXUS_MAX_MAP_SIZE;
+             ++cell) {
+            const uint8_t *raw = data + info.structure1b_offset + cell * 8;
+            if (raw[3] > 14U) ++byte3_above_wall_bank;
+            if (raw[4] > 14U) ++byte4_above_wall_bank;
+        }
+        CHECK(byte3_above_wall_bank == expected_byte3_above_wall_bank[level] &&
+              byte4_above_wall_bank == expected_byte4_above_wall_bank[level] &&
+              byte3_above_wall_bank + byte4_above_wall_bank > 0,
+              "retail Structure1B bytes 3/4 exceed the SN_WALL descriptor bank and stay unbound");
         for (int entry = 0; entry < loaded_level.structure1g_entry_count;
              ++entry) {
             CHECK(loaded_level.structure1g_entries[entry].first_structure2_image_valid,

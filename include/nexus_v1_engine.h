@@ -150,6 +150,11 @@ typedef struct {
     Nexus_V1_LevelAuxSourceReceipt floor_mns;
     Nexus_V1_LevelAuxSourceReceipt wall_mns;
     int canonical_pair_bound;
+    /* The two MNS files establish source identity only. Structure1B bytes
+     * 3/4 are not a proved wall-selector grammar: real LEV00..15 values
+     * exceed the 0..14 SN_WALL descriptor range. This stays false until a
+     * Saturn executable/capture route proves the selector transform. */
+    int structure1b_selector_binding_proven;
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStaticMaterialSourceReceipt;
 

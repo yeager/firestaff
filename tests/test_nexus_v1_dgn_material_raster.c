@@ -290,6 +290,18 @@ int main(void) {
             }
         }
     }
+    /* Hash identity and decoded MNS bytes do not establish Structure1B's
+     * wall-selector transform. The real retail corpus has raw bytes above
+     * the 15-entry wall bank, so this route must stay closed until a Saturn
+     * decoder/capture supplies a binding proof. */
+    nexus_v1_invalidate_dgn_material_plan(&engine);
+    nexus_viewport_render(&viewport, &engine);
+    expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0 &&
+               receipt.attempted && receipt.blocked &&
+               !receipt.fallback_visuals_permitted,
+           "unbound Structure1B wall selectors block the real MNS route");
+
+    engine.dgn_static_material_sources.structure1b_selector_binding_proven = 1;
     nexus_v1_invalidate_dgn_material_plan(&engine);
     nexus_viewport_render(&viewport, &engine);
     expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0 &&
@@ -301,6 +313,7 @@ int main(void) {
         expect(nexus_v1_dgn_static_material_source_receipt(
                    &engine, &source_receipt) == 0 &&
                    source_receipt.canonical_pair_bound &&
+                   source_receipt.structure1b_selector_binding_proven &&
                    strcmp(source_receipt.floor_mns.canonical_name,
                           "SN_FLOOR.MNS") == 0 &&
                    strcmp(source_receipt.wall_mns.canonical_name,
