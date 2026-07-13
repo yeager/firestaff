@@ -20776,6 +20776,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_boot.c
+        src/theron/theron_v1_raw_loader_trace.c
     )
     target_link_libraries(test_theron_v1_availability PRIVATE firestaff_v2)
     # Local asset_status_m12.c references asset_find_by_md5 etc, which live

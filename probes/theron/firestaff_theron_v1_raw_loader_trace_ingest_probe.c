@@ -1,0 +1,2 @@
+#include "theron_v1_raw_loader_trace.h"
+int main(void){Theron_V1RawLoaderTraceRow ok[]={{1,0x1800,1,16,0x3800,0},{2,0x0400,1,16,0,0}};Theron_V1RawLoaderTraceRow bad[]={{2,0x1800,1,16,0,0},{1,0x0400,1,16,0,0}};Theron_V1RawLoaderTraceReceipt r;return theron_v1_raw_loader_trace_ingest(ok,2,2352*2,&r)&&r.valid&&r.palette_descriptor_relation_verified&&!theron_v1_raw_loader_trace_ingest(bad,2,2352*2,&r)?0:1;}

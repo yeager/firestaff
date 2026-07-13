@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include "asset_status_m12.h"
 #include "theron_v1_startup_media.h"
+#include "theron_v1_raw_loader_trace.h"
 #include "theron_v1_startup_save_resume.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_irq2_live_trace_gate.h"
@@ -1155,6 +1156,10 @@ int theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
     const Theron_StartupMediaStateReceipt *startup_media_receipt,
     int cd_read_receipt_verified,
     int palette_descriptor_relation_verified,
+    Theron_V1_BootStartupRawMediaGraphicsReceipt *out_receipt);
+int theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace(
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_V1RawLoaderTraceReceipt *trace_receipt,
     Theron_V1_BootStartupRawMediaGraphicsReceipt *out_receipt);
 int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_raw_media_receipt(
     const Theron_V1_BootStartupViewModel *view_model,
