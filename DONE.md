@@ -1,5 +1,19 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 G1 WALL_GFX local-palette ownership: source DB2 Text and DB3
+  Actuator wall graphics now retain `dtImage/1` dimensions, format, and the
+  exact `QUERY_GDAT_IMAGE_LOCALPAL` hash before a source-required
+  `DRAW_DEFAULT_DOOR_BUTTON` can consume them. The viewport performs the
+  comparison after the matching image lookup; absent or mismatched palette
+  receipts block the custom button without a fallback. Non-four-bit source
+  images use skproject's real GDAT `MISCELLANEOUS/FE/FE` palette fallback,
+  never Firestaff or interface colours. Source: skproject
+  `SKULLWIN/c_gui_vp.cpp::DM2_DRAW_DEFAULT_DOOR_BUTTON`,
+  `c_gui_draw.cpp::DRAW_WALL_ORNATE`, and `c_querydb.cpp`
+  `DM2_QUERY_GDAT_IMAGE_LOCALPAL`. Verification: Ninja and CTest
+  `dm2_v1_g1_wall_button_material_gate`,
+  `dm2_v1_g1_text_wall_gfx_runtime` passed 2/2.
+
 - 2026-07-13 CSBWin restored `TT_75` poison bridge: an exact saved queue
   receipt now maps its champion priority and bounded 8-bit `timerWord6` attack
   into the existing ReDMCSB C75 damage, dose, and `+36` requeue chain. Stale

@@ -18,6 +18,7 @@ static void expect_true(int condition, const char *label)
 typedef struct {
     int omit_image_offset;
     int omit_front_image;
+    int omit_local_palette;
 } GdatFixture;
 
 static int read_scalar(void *userdata, int data_type, int category,
@@ -51,6 +52,22 @@ static int read_image_metadata(void *userdata, int category, int entry,
     *out_width = 32;
     *out_height = 18;
     *out_format = 3;
+    return 1;
+}
+
+static int read_local_palette(void *userdata, int category, int entry,
+                              int field, uint8_t out_palette16[16],
+                              uint32_t *out_hash)
+{
+    const GdatFixture *fixture = (const GdatFixture *)userdata;
+
+    if (!fixture || fixture->omit_local_palette || !out_palette16 ||
+        !out_hash || category != 0x09 || entry != 0x2a || field != 1) {
+        return 0;
+    }
+    memset(out_palette16, 0, 16u);
+    out_palette16[1] = 0x7bu;
+    *out_hash = 0x57414c4cu;
     return 1;
 }
 
@@ -91,6 +108,27 @@ int main(void)
                     receipt.materials[0].front_image_height == 18 &&
                     receipt.materials[0].front_image_format == 3,
                 "front ornate image is decoded through the source GDAT receipt");
+
+    expect_true(
+        dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_material_runtime(
+            &texts, read_scalar, read_image_metadata, read_local_palette,
+            &fixture, &receipt) == 1 && receipt.valid &&
+            receipt.material_count == 1 &&
+            receipt.materials[0].front_image_ready == 1 &&
+            receipt.materials[0].local_palette_hash == 0x57414c4cu &&
+            receipt.materials[0].local_palette16[1] == 0x7bu,
+        "strong WALL_GFX material retains the exact IMG3 local palette");
+
+    fixture.omit_local_palette = 1;
+    expect_true(
+        dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_material_runtime(
+            &texts, read_scalar, read_image_metadata, read_local_palette,
+            &fixture, &receipt) == 1 && receipt.valid &&
+            receipt.material_count == 1 &&
+            !receipt.materials[0].front_image_ready &&
+            receipt.materials[0].local_palette_hash == 0u,
+        "missing WALL_GFX local palette remains non-drawable");
+    fixture.omit_local_palette = 0;
 
     fixture.omit_front_image = 1;
     expect_true(dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(

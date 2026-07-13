@@ -3291,7 +3291,10 @@ static int dm2_v1_wall_button_receipt_matches(
                 (!s->source_materials_required ||
                  (material->front_image_ready &&
                   material->front_image_width > 0u &&
-                  material->front_image_height > 0u))) {
+                  material->front_image_height > 0u &&
+                  material->local_palette_hash != 0u &&
+                  material->local_palette_hash ==
+                      s->active_asset_palette_hash))) {
                 return 1;
             }
         }
@@ -3306,7 +3309,14 @@ static int dm2_v1_wall_button_receipt_matches(
             if (material->x == door->wall_button_x &&
                 material->y == door->wall_button_y &&
                 material->object_id == door->wall_button_object_id &&
-                material->wall_gfx_index == (uint8_t)door->wall_button_index) {
+                material->wall_gfx_index == (uint8_t)door->wall_button_index &&
+                (!s->source_materials_required ||
+                 (material->front_image_ready &&
+                  material->front_image_width > 0u &&
+                  material->front_image_height > 0u &&
+                  material->local_palette_hash != 0u &&
+                  material->local_palette_hash ==
+                      s->active_asset_palette_hash))) {
                 return 1;
             }
         }
@@ -3687,15 +3697,13 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int button_h = 0;
             int button_stride = 0;
             int wall_button_material_bound =
-                door->button_source_kind != 2 ||
-                dm2_v1_wall_button_receipt_matches(s, door);
+                door->button_source_kind != 2;
 
             /* skproject DRAW_DEFAULT_DOOR_BUTTON reaches the custom button
              * through the current WALL_GFX owner. Do not let the generic
              * view-square helper pick a same-numbered GDAT image unless the
              * direct DB2/DB3 receipt proves that ownership. */
-            if ((!s->source_materials_required || wall_button_material_bound) &&
-                dm2_v1_fetch_viewport_local_material(s,
+            if (dm2_v1_fetch_viewport_local_material(s,
                                                       door->button_gdat_index,
                                                       &button_pixels,
                                                       &button_w,
@@ -3703,12 +3711,21 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                                       &button_stride) == 0 &&
                 button_pixels && button_w > 0 && button_h > 0) {
                 DM2_V1_DoorAssetBlit blit;
+                if (door->button_source_kind == 2) {
+                    /* The palette query belongs to this exact image fetch,
+                     * so match only after it has populated the active IMG3
+                     * palette receipt. */
+                    wall_button_material_bound =
+                        dm2_v1_wall_button_receipt_matches(s, door);
+                }
                 /* skproject SKWIN/SkWinCore.cpp DRAW_DEFAULT_DOOR_BUTTON
                  * lines ~46243-46264 renders both default door buttons and
                  * custom wall-gfx buttons through the same rectno path. Exact
                  * viewport-cell placement is isolated in
                  * dm2_v1_viewport_door_button_rect_for_square(). */
-                if (dm2_v1_viewport_door_button_asset_blit(door,
+                if ((!s->source_materials_required ||
+                     wall_button_material_bound) &&
+                    dm2_v1_viewport_door_button_asset_blit(door,
                                                            button_w,
                                                            button_h,
                                                            button_stride,

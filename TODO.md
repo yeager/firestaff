@@ -44,6 +44,15 @@
   receipt is absent. Extend that same per-image ownership rule to remaining
   map-chip consumers only with proven skproject lookup and palette evidence;
   do not borrow `INTERFACE_GENERAL` colors or fabricate a fallback plane.
+  - 2026-07-13 update: direct G1 DB2 Text and DB3 Actuator `WALL_GFX` routes
+    now carry `dtImage/1` metadata plus the matching
+    `QUERY_GDAT_IMAGE_LOCALPAL` receipt into `DRAW_DEFAULT_DOOR_BUTTON`.
+    The source-required viewport fetches that exact IMG3 before comparing its
+    palette hash and blocks any absent/mismatched ornate/button. The lookup
+    now also consumes skproject's real `MISCELLANEOUS/FE/FE` GDAT default
+    palette when an otherwise valid source image lacks a four-bit tail. This covers
+    only the proven field-1 button route; broader ornate placement and other
+    fields remain unavailable rather than inferred.
 
 - 2026-07-13 DM2 viewport material follow-up: source-required creature,
   floor-object, projectile, carried-item, possession, and CHAMPIONS portrait

@@ -1494,6 +1494,7 @@ static int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime_impl(
     const DM2_V1_G1Map5TextRuntimeReceipt *texts,
     DM2_V1_G1GdatScalarRead read_scalar,
     DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
     void *read_userdata,
     DM2_V1_G1TextWallGfxRuntimeReceipt *out)
 {
@@ -1561,10 +1562,21 @@ static int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime_impl(
                 width > 0 && height > 0 &&
                 width <= UINT16_MAX && height <= UINT16_MAX &&
                 format > 0 && format <= UINT8_MAX) {
-                material->front_image_ready = 1u;
                 material->front_image_width = (uint16_t)width;
                 material->front_image_height = (uint16_t)height;
                 material->front_image_format = (uint8_t)format;
+                /* skproject DRAW_WALL_ORNATE/DRAW_DEFAULT_DOOR_BUTTON calls
+                 * QUERY_GDAT_IMAGE_LOCALPAL for the same WALL_GFX image.
+                 * The strong path cannot promote an image whose palette is
+                 * absent or mismatched at the later viewport fetch. */
+                if (!read_local_palette ||
+                    (read_local_palette(read_userdata, 0x09,
+                                        wall_gfx_index, 1,
+                                        material->local_palette16,
+                                        &material->local_palette_hash) &&
+                     material->local_palette_hash != 0u)) {
+                    material->front_image_ready = 1u;
+                }
             }
         }
     }
@@ -1580,7 +1592,7 @@ int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
     DM2_V1_G1TextWallGfxRuntimeReceipt *out)
 {
     return dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime_impl(
-        texts, read_scalar, NULL, read_userdata, out);
+        texts, read_scalar, NULL, NULL, read_userdata, out);
 }
 
 int dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(
@@ -1595,13 +1607,32 @@ int dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(
         return 0;
     }
     return dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime_impl(
-        texts, read_scalar, read_image_metadata, read_userdata, out);
+        texts, read_scalar, read_image_metadata, NULL, read_userdata, out);
 }
 
-int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
+int dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_material_runtime(
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
+    void *read_userdata,
+    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
+{
+    if (!read_image_metadata || !read_local_palette) {
+        if (out) memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime_impl(
+        texts, read_scalar, read_image_metadata, read_local_palette,
+        read_userdata, out);
+}
+
+static int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime_impl(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1GdatScalarRead read_scalar,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
     void *read_userdata,
     DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out)
 {
@@ -1676,11 +1707,63 @@ int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
             material->do_not_flip = scalars.do_not_flip;
             material->alcove_type = scalars.alcove_type;
             material->image_offset = scalars.image_offset;
+            if (read_image_metadata) {
+                int width = 0;
+                int height = 0;
+                int format = 0;
+                if (read_image_metadata(read_userdata, 0x09,
+                                        wall_gfx_index, 1,
+                                        &width, &height, &format) &&
+                    width > 0 && height > 0 &&
+                    width <= UINT16_MAX && height <= UINT16_MAX &&
+                    format > 0 && format <= UINT8_MAX) {
+                    material->front_image_width = (uint16_t)width;
+                    material->front_image_height = (uint16_t)height;
+                    material->front_image_format = (uint8_t)format;
+                    if (!read_local_palette ||
+                        (read_local_palette(read_userdata, 0x09,
+                                            wall_gfx_index, 1,
+                                            material->local_palette16,
+                                            &material->local_palette_hash) &&
+                         material->local_palette_hash != 0u)) {
+                        material->front_image_ready = 1u;
+                    }
+                }
+            }
         }
     }
     candidate.valid = 1;
     *out = candidate;
     return 1;
+}
+
+int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    void *read_userdata,
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out)
+{
+    return dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime_impl(
+        d, map, read_scalar, NULL, NULL, read_userdata, out);
+}
+
+int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_image_material_runtime(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
+    void *read_userdata,
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out)
+{
+    if (!read_image_metadata || !read_local_palette) {
+        if (out) memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    return dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime_impl(
+        d, map, read_scalar, read_image_metadata, read_local_palette,
+        read_userdata, out);
 }
 
 int dm2_v1_g1_text_wall_gfx_allows_button_material(

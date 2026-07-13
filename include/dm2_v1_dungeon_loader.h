@@ -212,6 +212,8 @@ typedef struct {
     uint16_t front_image_width;
     uint16_t front_image_height;
     uint8_t front_image_format;
+    uint8_t local_palette16[16];
+    uint32_t local_palette_hash;
 } DM2_V1_G1TextWallGfxMaterial;
 
 typedef struct {
@@ -236,6 +238,12 @@ typedef struct {
     uint16_t do_not_flip;
     uint16_t alcove_type;
     uint16_t image_offset;
+    uint8_t front_image_ready;
+    uint16_t front_image_width;
+    uint16_t front_image_height;
+    uint8_t front_image_format;
+    uint8_t local_palette16[16];
+    uint32_t local_palette_hash;
 } DM2_V1_G1ActuatorWallGfxMaterial;
 
 typedef struct {
@@ -571,6 +579,18 @@ int dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(
     void *read_userdata,
     DM2_V1_G1TextWallGfxRuntimeReceipt *out);
 
+/* Stronger DRAW_WALL_ORNATE/DRAW_DEFAULT_DOOR_BUTTON material boundary. The
+ * source renderer obtains the image and its exact QUERY_GDAT_IMAGE_LOCALPAL
+ * result as one IMG3 operation; callers using this entry must not draw an
+ * ornate/button from metadata alone. */
+int dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_material_runtime(
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
+    void *read_userdata,
+    DM2_V1_G1TextWallGfxRuntimeReceipt *out);
+
 /* Direct DB3 roots only after the G1 record graph is complete. c_record
  * resolves the address; skproject Actuator::GraphicNumber() maps through the
  * current map's one-based WallGraphics list before DRAW_WALL_ORNATE consumes
@@ -579,6 +599,16 @@ int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1GdatScalarRead read_scalar,
+    void *read_userdata,
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out);
+
+/* Same source-owned image/palette binding for direct DB3 actuator graphics. */
+int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_image_material_runtime(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
     void *read_userdata,
     DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out);
 
