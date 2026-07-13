@@ -3018,6 +3018,21 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Real PC34 path: verified new-game dungeon -> first input -> native save ->
+# reload into the same dungeon owner. Source-locked against LOADSAVE.C F0435
+# and CSBWin SaveGame.cpp; no synthetic fixture or startup wrapper is used.
+add_executable(firestaff_csb_v1_pc34_save_new_game_handoff_probe
+    probes/csb/firestaff_csb_v1_pc34_save_new_game_handoff_probe.c
+    src/csb/csb_v1_boot.c)
+target_include_directories(firestaff_csb_v1_pc34_save_new_game_handoff_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_pc34_save_new_game_handoff_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_pc34_save_new_game_handoff_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 PC 3.4 quickplay/startup dungeon-handle probe.
 # Narrow runtime-boundary probe that proves the verified DUNGEON.DAT
 # handle survives boot handoff into the runtime AND is cleared on a
