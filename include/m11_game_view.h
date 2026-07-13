@@ -1699,6 +1699,37 @@ int M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(
     int framebufferWidth,
     int framebufferHeight);
 
+/* Read-only evidence from a completed DM1 F0115 creature material blit.
+ * It records the original GRAPHICS.DAT bitmap and the G0221/G0222 palette
+ * selected by the DM1 route; it is invalid until that host blit succeeds. */
+typedef struct M11_Dm1CreatureHostPresentationReceipt {
+    int valid;
+    int creatureLane;
+    int creatureType;
+    int depthIndex;
+    int graphicsId;
+    int transparentColor;
+    int mirrored;
+    int destinationX;
+    int destinationY;
+    int destinationW;
+    int destinationH;
+    int assetWidth;
+    int assetHeight;
+    unsigned int paletteChecksum;
+} M11_Dm1CreatureHostPresentationReceipt;
+
+void M11_GameView_GetDm1CreatureHostPresentationReceipt(
+    M11_Dm1CreatureHostPresentationReceipt* outReceipt);
+
+/* Test-only entry to the production F0115 creature material route.  The
+ * caller must provide a real initialized GRAPHICS.DAT asset loader. */
+int M11_GameView_ProbeDrawDm1CreatureHostReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
+
 #ifdef __cplusplus
 }
 #endif
