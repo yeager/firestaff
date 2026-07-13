@@ -22851,6 +22851,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_track02_ipl_loader
         COMMAND firestaff_theron_v1_track02_ipl_loader_probe
     )
+
+    add_executable(firestaff_theron_v1_system_card_e8ec_boot_delay_probe
+        probes/theron/firestaff_theron_v1_system_card_e8ec_boot_delay_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_system_card_e8ec_boot_delay_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_system_card_e8ec_boot_delay_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_system_card_e8ec_boot_delay_probe PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_system_card_e8ec_boot_delay_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_system_card_e8ec_boot_delay
+        COMMAND firestaff_theron_v1_system_card_e8ec_boot_delay_probe
+    )
     if(Python3_EXECUTABLE)
         add_test(
             NAME theron_v1_probe_registration_hygiene

@@ -1191,6 +1191,12 @@
   its expected one real-atlas skip; focused CTest passed 2/2. No git
   operations.
 
+- 2026-07-13 Theron System Card `$e8ec` boot-delay receipt: hash-verified the
+  original System Card 3.0 bytes at the bank-mapped `$e8e3` entry. It sets bit
+  1 of `$1804`, then runs fixed X/Y counter delays at `$e8ec/$e8ed` before
+  reading and clearing `$1804` bit 1. The explicit 19-track CUE is inspected
+  only as metadata; this proves no CD status or Track 02 command at the delay.
+
 - 2026-07-12 CSB F0115 native Ghost group front: type 8 now resolves only
   through `G0243 -> G0219 -> M618` to PC CSB `GRAPHICS.DAT` 607. Its G0219
   offset 23 and `0x04` coordinate/transparency byte are consumed by the
