@@ -652,6 +652,12 @@ The boot/runtime intake now accepts an explicit trace-file path alongside the
 authenticated Track 02 and System Card paths, but no authenticated combined
 capture is staged. A missing, unreadable, oversized, or rejected trace keeps
 the existing launch route blocked and does not synthesize a receipt.
+2026-07-13 raw-media binding update: the combined receipt must now also match
+its captured 32-byte `$3800` FNV span against the exact selected raw Track 02
+sector before final startup-media binding. This proves only the observed
+record-to-RAM transfer; it does not classify palette bytes, bitmap data,
+objects, or a later dungeon record. A fresh authentic combined capture still
+must pass this gate before any positive runtime route is accepted.
 The explicit intake can now bind only a variant-matched authenticated receipt
 to a prepared boot profile. The production Soul Room forcefield transition
 checks that receipt before it mutates startup flow or world state, so no

@@ -6,4 +6,74 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
-int main(void){const char*raw=getenv("THERON_RAW_TRACK02");const char*trace=getenv("THERON_RAW_LOADER_TRACE");const char*manifest=getenv("THERON_CAPTURE_MANIFEST");struct stat st;char md5[33],text[1024];FILE*f;Theron_V1CaptureManifest m;Theron_V1RawLoaderTraceReceipt r;if(!raw||!trace||stat(raw,&st)||st.st_size<=0){printf("status=skip reason=explicit_raw_track02_and_trace_required\n");return 0;}if((size_t)st.st_size%THERON_TRACK02_RAW_SECTOR_BYTES||!m12_file_md5_hex(raw,md5)||(strcmp(md5,THERON_TRACK02_MD5_US_BIN)&&strcmp(md5,THERON_TRACK02_MD5_JP_BIN))){printf("status=blocked reason=raw_track02_unverified\n");return 1;}if(manifest){f=fopen(manifest,"r");if(!f||!fread(text,1,sizeof(text)-1,f)){if(f)fclose(f);printf("status=blocked reason=capture_manifest_invalid\n");return 1;}fclose(f);text[sizeof(text)-1]=0;if(!theron_v1_capture_manifest_parse(text,&m)||!theron_v1_capture_manifest_matches_preflight_inputs(&m,raw,md5,m.system_card_path,m.system_card_md5,trace)){printf("status=blocked reason=capture_manifest_mismatch\n");return 1;}}if(!theron_v1_raw_loader_trace_import_mednafen_capture_file(trace,md5,&r)||!r.valid){printf("status=blocked reason=loader_trace_invalid\n");return 1;}if(r.bitmap_route_mask||r.bitmap_atlas_checksum||r.palette_descriptor_relation_verified){printf("status=blocked reason=unbound_trace_render_claim\n");return 1;}printf("status=ready trace=validated_dynamic_loader_receipt=blocked_pending_source_byte_provenance\n");return 0;}
+
+int main(void)
+{
+    const char *raw = getenv("THERON_RAW_TRACK02");
+    const char *trace = getenv("THERON_RAW_LOADER_TRACE");
+    const char *manifest = getenv("THERON_CAPTURE_MANIFEST");
+    struct stat st;
+    char md5[33];
+    char text[1024];
+    uint8_t *raw_bytes;
+    FILE *file;
+    Theron_V1CaptureManifest capture_manifest;
+    Theron_V1RawLoaderTraceReceipt trace_receipt;
+    Theron_V1RawLoaderTraceReceipt bound_receipt;
+
+    if (!raw || !trace || stat(raw, &st) != 0 || st.st_size <= 0) {
+        printf("status=skip reason=explicit_raw_track02_and_trace_required\n");
+        return 0;
+    }
+    if ((size_t)st.st_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u ||
+        !m12_file_md5_hex(raw, md5) ||
+        (strcmp(md5, THERON_TRACK02_MD5_US_BIN) != 0 &&
+         strcmp(md5, THERON_TRACK02_MD5_JP_BIN) != 0)) {
+        printf("status=blocked reason=raw_track02_unverified\n");
+        return 1;
+    }
+    if (manifest) {
+        file = fopen(manifest, "r");
+        if (!file || !fread(text, 1u, sizeof(text) - 1u, file)) {
+            if (file) fclose(file);
+            printf("status=blocked reason=capture_manifest_invalid\n");
+            return 1;
+        }
+        fclose(file);
+        text[sizeof(text) - 1u] = '\0';
+        if (!theron_v1_capture_manifest_parse(text, &capture_manifest) ||
+            !theron_v1_capture_manifest_matches_preflight_inputs(
+                &capture_manifest, raw, md5, capture_manifest.system_card_path,
+                capture_manifest.system_card_md5, trace)) {
+            printf("status=blocked reason=capture_manifest_mismatch\n");
+            return 1;
+        }
+    }
+    raw_bytes = (uint8_t *)malloc((size_t)st.st_size);
+    file = raw_bytes ? fopen(raw, "rb") : NULL;
+    if (!file || fread(raw_bytes, 1u, (size_t)st.st_size, file) !=
+                     (size_t)st.st_size) {
+        if (file) fclose(file);
+        free(raw_bytes);
+        printf("status=blocked reason=raw_track02_read_failed\n");
+        return 1;
+    }
+    fclose(file);
+    if (!theron_v1_raw_loader_trace_import_mednafen_capture_file(
+            trace, md5, &trace_receipt) ||
+        !theron_v1_raw_loader_trace_bind_track02_destination_span(
+            &trace_receipt, raw_bytes, (size_t)st.st_size, md5,
+            &bound_receipt)) {
+        free(raw_bytes);
+        printf("status=blocked reason=loader_trace_media_span_unproven\n");
+        return 1;
+    }
+    free(raw_bytes);
+    if (bound_receipt.bitmap_route_mask || bound_receipt.bitmap_atlas_checksum ||
+        bound_receipt.palette_descriptor_relation_verified) {
+        printf("status=blocked reason=unbound_trace_render_claim\n");
+        return 1;
+    }
+    printf("status=ready trace=validated_dynamic_loader_media_span=blocked_pending_palette_source_provenance\n");
+    return 0;
+}

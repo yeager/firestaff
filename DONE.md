@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 Theron Track 02 dynamic CD_READ media-span gate: an
+  instrumented Mednafen receipt now has to match its `$4093` 32-byte `$3800`
+  FNV span to the selected hash-verified raw Track 02 sector before final
+  startup-media binding. Trace text alone no longer authorizes the handoff.
+  The gate deliberately proves only the observed record-to-RAM transfer;
+  palette, bitmap, object, and later dungeon semantics remain blocked pending
+  a real capture. Verification: Ninja and CTest
+  `theron_v1_raw_loader_trace_ingest` and
+  `theron_v1_capture_preflight_chain` passed; the raw-media preflight probe
+  compiled with `-Wall -Wextra -Werror`.
+
 - ✅ 2026-07-13 DM2 atomic T600 GDAT scene transaction: source-required
   outdoor rendering now resolves both active `GRAPHICSSET` sky and ground
   IMG3s plus their exact local palettes before drawing either half of the
