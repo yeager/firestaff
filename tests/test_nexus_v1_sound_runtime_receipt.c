@@ -96,11 +96,11 @@ static void test_size_matched_assets_block_decode(void) {
           receipt.sal_canonical_source_verified == 0 &&
           receipt.map_canonical_source_verified == 0 &&
           receipt.map_decode_supported == 1 &&
-          receipt.map_event_count == 27 &&
-          receipt.map_mapped_event_count == 2 &&
-          receipt.map_first_sample_index == 7 &&
-          receipt.map_last_sample_index == 11,
-          "runtime receipt exposes bounded MAP event-to-sample route");
+          receipt.map_event_count == 0 &&
+          receipt.map_mapped_event_count == 0 &&
+          receipt.map_first_sample_index == -1 &&
+          receipt.map_last_sample_index == -1,
+          "runtime receipt refuses raw MAP byte-to-event promotion");
     CHECK(receipt.sal_package_profile_supported == 0 &&
           receipt.sal_word_count == 0 &&
           receipt.sal_nonzero_byte_count == 0,
@@ -111,8 +111,9 @@ static void test_size_matched_assets_block_decode(void) {
     nexus_sound_play(&eng, NEXUS_SFX_MENU_CONFIRM);
     CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
           receipt.last_event == NEXUS_SFX_MENU_CONFIRM &&
-          receipt.last_sample_index == 11,
-          "blocked playback still consumes MAP event sample route");
+          receipt.last_sample_index == -1 &&
+          receipt.last_event_record_found == 0,
+          "blocked playback does not promote a raw MAP event route");
     CHECK(strcmp(nexus_sound_sfx_runtime_status_name(receipt.status),
                  "blocked-unsupported-decode") == 0,
           "unsupported decode status name is stable");
@@ -327,17 +328,11 @@ static void test_sfx_map_record_table_receipt(void) {
     nexus_sound_play(&eng, NEXUS_SFX_PIT_FALL);
     CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
           receipt.last_event == NEXUS_SFX_PIT_FALL &&
-          receipt.last_event_record_found == 1 &&
-          receipt.last_event_sal_offset == 0x1000 &&
-          receipt.last_event_sal_size == 0x20 &&
-          receipt.last_event_window_checksum16 == 0xb0 &&
-          receipt.last_event_window_nonzero_byte_count == 3 &&
-          receipt.last_event_window_high_bit_byte_count == 1 &&
-          receipt.last_event_window_first_nonzero_relative_offset == 0 &&
-          receipt.last_event_window_last_nonzero_relative_offset == 0x1f &&
-          receipt.last_event_window_distinct_byte_count == 4 &&
-          receipt.last_event_window_transition_count == 3,
-          "blocked SFX event consumes matching SAL window metadata");
+          receipt.last_sample_index == -1 &&
+          receipt.last_event_record_found == 0 &&
+          receipt.last_event_sal_offset == -1 &&
+          receipt.last_event_sal_size == 0,
+          "blocked SFX event does not infer a MAP record identity");
     nexus_sound_play(&eng, NEXUS_SFX_MENU_CANCEL);
     CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
           receipt.last_event == NEXUS_SFX_MENU_CANCEL &&
@@ -398,10 +393,10 @@ static void test_sfx_map_duplicate_event_receipt(void) {
           "SFX MAP record receipt exposes event range and duplicates");
     nexus_sound_play(&eng, NEXUS_SFX_PIT_FALL);
     CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
-          receipt.last_event_record_found == 1 &&
-          receipt.last_event_sal_offset == 0x1020 &&
-          receipt.last_event_sal_size == 0x10,
-          "duplicate SFX event keeps the last bounded SAL window route");
+          receipt.last_event_record_found == 0 &&
+          receipt.last_event_sal_offset == -1 &&
+          receipt.last_event_sal_size == 0,
+          "duplicate MAP records never select a host SFX route");
     nexus_sound_shutdown(&eng);
 }
 
@@ -495,7 +490,10 @@ static void test_optional_real_sal_corpus_profile(void) {
                   receipt.sal_nonzero_byte_count > 0 &&
                   receipt.sal_last_nonzero_offset >=
                       receipt.sal_first_nonzero_offset &&
-                  receipt.map_event_count > 0 &&
+                  receipt.map_event_count == 0 &&
+                  receipt.map_mapped_event_count == 0 &&
+                  receipt.map_first_sample_index == -1 &&
+                  receipt.map_last_sample_index == -1 &&
                   receipt.map_record_table_supported == 1 &&
                   receipt.map_record_count > 0 &&
                   receipt.map_record_terminator_offset > 0 &&
@@ -516,24 +514,12 @@ static void test_optional_real_sal_corpus_profile(void) {
                   receipt.map_first_window_checksum16 >= 0 &&
                   receipt.map_last_window_checksum16 >= 0,
                   "real SAL/SFX record receipt consumes package without playback");
-            if (receipt.map_first_record_event > NEXUS_SFX_NONE &&
-                receipt.map_first_record_event < 27) {
-                int expected_offset = receipt.map_first_record_sal_offset;
-                int expected_size = receipt.map_first_record_size;
-                nexus_sound_play(&eng,
-                                 (Nexus_SoundEvent)receipt.map_first_record_event);
-                CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
-                      receipt.last_event_record_found == 1 &&
-                      receipt.last_event_sal_offset == expected_offset &&
-                      receipt.last_event_sal_size == expected_size &&
-                      receipt.last_event_window_nonzero_byte_count >= 0 &&
-                      receipt.last_event_window_high_bit_byte_count >= 0 &&
-                      receipt.last_event_window_first_nonzero_relative_offset >= -1 &&
-                      receipt.last_event_window_last_nonzero_relative_offset >= -1 &&
-                      receipt.last_event_window_distinct_byte_count > 0 &&
-                      receipt.last_event_window_transition_count >= 0,
-                      "real mapped SFX event exposes SAL window metadata without playback");
-            }
+            nexus_sound_play(&eng, NEXUS_SFX_PIT_FALL);
+            CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
+                  receipt.last_event_record_found == 0 &&
+                  receipt.last_event_sal_offset == -1 &&
+                  receipt.last_event_sal_size == 0,
+                  "real MAP records stay unbound from host SFX requests");
         }
         nexus_sound_shutdown(&eng);
         free(sal_data);
