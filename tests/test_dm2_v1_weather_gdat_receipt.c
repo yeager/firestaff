@@ -117,6 +117,10 @@ int main(void)
               plan.commands[0].command == 0x68u &&
               plan.commands[0].slot_index == 0u &&
               plan.commands[0].rect_number == 6001u &&
+              plan.commands[0].source_offset_x == 0 &&
+              plan.commands[0].source_offset_y == 0 &&
+              plan.commands[0].source_scale_x == 0x40u &&
+              plan.commands[0].source_scale_y == 0x40u &&
               plan.commands[1].command == 0x6bu &&
               plan.commands[1].slot_index == 1u &&
               plan.commands[1].rect_number == 6005u &&

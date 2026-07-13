@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 weather distant-environment plan: selected real GDAT
+  weather commands now retain the complete source-initialized
+  `DistantEnvironment` transform (`CD`, `FW`, zero offsets and 0x40 scales),
+  matching skproject `c_querydb.cpp::DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW`.
+  This does not authorize an image draw; `QUERY_TEMP_PICST` remains explicitly
+  unavailable until its rect/image route is proven. Verification: Ninja-built
+  and CTest-passed `dm2_v1_weather_gdat_receipt`.
+
 - 2026-07-13 DM1 F0231/F0190 live aftermath count handoff: the M10
   `CMD_ATTACK` route now waits for F0190's real group-damage receipt before it
   builds F0231 aftermath, then carries the original pre-compaction
