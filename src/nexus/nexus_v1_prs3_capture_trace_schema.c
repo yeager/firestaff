@@ -1,4 +1,5 @@
 #include "nexus_v1_prs3_capture_trace_schema.h"
+#include "nexus_v1_bpk_archive.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -14,6 +15,18 @@ static int read_u64(const char **cursor, const char *label, uint64_t *out) {
     *out = (uint64_t)value;
     *cursor += strlen(label) + (size_t)consumed + 1U;
     return 1;
+}
+
+static uint64_t fnv1a64(const uint8_t *data, size_t size) {
+    uint64_t hash = UINT64_C(1469598103934665603);
+    size_t i;
+
+    if (!data || size == 0U) return 0U;
+    for (i = 0U; i < size; ++i) {
+        hash ^= (uint64_t)data[i];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
 }
 
 static int read_u32(const char **cursor, const char *label, uint32_t *out) {
@@ -86,4 +99,43 @@ int nexus_v1_prs3_capture_trace_schema_parse(
     /* This standalone syntax gate never connects to a codec. */
     out_receipt->decoder_promotion_eligible = 0;
     return 1;
+}
+
+int nexus_v1_prs3_capture_trace_schema_bind_assets(
+    const Nexus_V1_Prs3CaptureTraceSchemaReceipt *trace,
+    const uint8_t *menu_bpk, size_t menu_bpk_size,
+    const uint8_t *dm_bin, size_t dm_bin_size,
+    Nexus_V1_Prs3CaptureAssetBindingReceipt *out_receipt) {
+    Nexus_V1_BpkPrs3StreamPlan plan;
+    Nexus_V1_Prs3CaptureAssetBindingReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!trace || !trace->valid || !trace->complete_evidence ||
+        !menu_bpk || menu_bpk_size == 0U || !dm_bin || dm_bin_size == 0U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.trace_valid = 1;
+    receipt.menu_bpk_matches =
+        fnv1a64(menu_bpk, menu_bpk_size) == trace->menu_bpk_fnv1a64;
+    receipt.dm_bin_matches =
+        fnv1a64(dm_bin, dm_bin_size) == trace->dm_bin_fnv1a64;
+    if (nexus_v1_bpk_archive_prs3_stream_plan(
+            menu_bpk, menu_bpk_size, trace->entry_index, &plan) ==
+        NEXUS_V1_BPK_PRS3_STREAM_OK) {
+        receipt.entry_plan_matches =
+            plan.stream_offset == trace->stream_offset &&
+            plan.stream_size == trace->stream_size &&
+            plan.expected_output_bytes == trace->expected_output_bytes;
+    }
+    receipt.asset_bound_capture =
+        receipt.menu_bpk_matches && receipt.dm_bin_matches &&
+        receipt.entry_plan_matches;
+    receipt.valid = receipt.asset_bound_capture;
+    /* A capture establishes a bounded observation, never an opcode grammar. */
+    receipt.decoder_promotion_eligible = 0;
+    *out_receipt = receipt;
+    return receipt.valid;
 }

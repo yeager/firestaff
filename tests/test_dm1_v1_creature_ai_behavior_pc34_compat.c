@@ -1050,6 +1050,42 @@ static void test_attack_any_back_row_bypasses_cell_adjust(void) {
               "attack_any_back_row: group cells remain unchanged");
 }
 
+/* =========================================================
+ * Test 20b: F0209 uses the opposite free cell after candidate collision
+ * ========================================================= */
+static void test_quarter_square_melee_uses_opposite_free_cell(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1ActiveGroup_Compat ag = make_default_ag();
+    struct RngState_Compat rng = make_rng(2);
+    struct DM1BehaviorResult_Compat result;
+    int ok;
+
+    ctx.groupBehavior = DM1_BEHAVIOR_ATTACK;
+    ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    ctx.creatureType = DM1_CREATURE_TYPE_SWAMP_SLIME;
+    ctx.creatureSize = DM1_SIZE_QUARTER_SQUARE;
+    ctx.creatureCount = 1;
+    ctx.creatureInfo.ranges = 0x1003;
+    ctx.creatureInfo.movementTicks = 20;
+    ctx.currentGroupPrimaryDirToParty = 1;
+    ctx.distanceToVisibleParty = 1;
+    ctx.currentGroupDistanceToParty = 1;
+    /* Creature zero starts at C0. Its direct C1 candidate is occupied by
+     * creature one, while C3 is free. The source random branch selects C3. */
+    ag.cells = 0x04;
+
+    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "quarter_melee_opposite: dispatch returns 1");
+    EXPECT_EQ(result.actionKind, DM1_ACTION_ADJUST_CELL,
+              "quarter_melee_opposite: action adjusts cell");
+    EXPECT_EQ(result.updatedGroupCells, 0x07,
+              "quarter_melee_opposite: source commits opposite free C3");
+    EXPECT_EQ(result.adjustedCreatureCell, 3,
+              "quarter_melee_opposite: reports C3 for creature zero");
+    EXPECT_EQ(ag.cells, 0x07,
+              "quarter_melee_opposite: keeps creature one at C1");
+}
+
 
 /* =========================================================
  *  Test 21: Source fixed possession table: Animated Armour
@@ -1455,6 +1491,7 @@ int main(void) {
     test_giggler_attack_dispatch_steals();
     test_quarter_square_melee_cell_adjusts_before_attack();
     test_attack_any_back_row_bypasses_cell_adjust();
+    test_quarter_square_melee_uses_opposite_free_cell();
     test_fixed_possessions_animated_armour_are_cursed();
     test_fixed_possessions_rockpile_random_flags();
     test_fixed_possessions_dragon_steak_table();

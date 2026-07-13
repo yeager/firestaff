@@ -89,6 +89,7 @@ static int resolve_quarter_square_melee_cell_adjustment(
     int primaryDir;
     int currentCell;
     int candidateCell;
+    int selectedCell;
     int centered;
 
     if (!ctx || !activeGroup || !rng || !result) return 0;
@@ -123,17 +124,24 @@ static int resolve_quarter_square_melee_cell_adjustment(
         } else {
             candidateCell = (currentCell + 1) & 3;
         }
+        selectedCell = candidateCell;
         if (!packed_group_cell_is_occupied(activeGroup->cells,
                                            ctx->creatureCount,
                                            creatureIndex,
-                                           candidateCell) ||
+                                           selectedCell) ||
             (F0732_COMBAT_RngRandom_Compat(rng, 2) != 0 &&
              !packed_group_cell_is_occupied(activeGroup->cells,
                                             ctx->creatureCount,
                                             creatureIndex,
-                                            (candidateCell + 2) & 3))) {
+                                            (selectedCell =
+                                                 (candidateCell + 2) & 3)))) {
+            /* ReDMCSB GROUP.C F0209:2424-2432 assigns the opposite
+             * candidate through AL0446_i_Cell before F0178 commits it.
+             * Keeping candidateCell here would put a creature into an
+             * already occupied cell after the successful opposite-cell
+             * branch. */
             activeGroup->cells = packed_group_cell_update(
-                activeGroup->cells, creatureIndex, candidateCell);
+                activeGroup->cells, creatureIndex, selectedCell);
         }
     }
 
