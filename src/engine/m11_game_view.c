@@ -14777,6 +14777,25 @@ static int m11_dm1_hoc_c040_input_material_ready(
            panel->height == panelRect.h;
 }
 
+static int m11_dm1_hoc_c027_input_material_ready(
+    const M11_GameViewState* state)
+{
+    const M11_AssetSlot* panel;
+    DM1_V1_LayoutZoneRectPc34 panelRect;
+
+    if (!state || !state->candidateMirrorPanelActive ||
+        !state->assetsAvailable || !state->originalFontAvailable) {
+        return 0;
+    }
+    panelRect = dm1_v1_inventory_panel_rect_pc34();
+    if (!dm1_v1_inventory_panel_zone_id_pc34()) {
+        return 0;
+    }
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 27);
+    return panel && panel->pixels && panel->width == panelRect.w &&
+           panel->height == panelRect.h;
+}
+
 static int m11_disable_front_mirror_route(M11_GameViewState* state,
                                           int mirrorOrdinal) {
     int mapX;
@@ -15886,6 +15905,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
      * and BACK to cancel; the public confirm API keeps probes explicit. */
     if (m11_dm1_hoc_menu_route_blocks_normal_input(state)) {
         if (state->candidateMirrorRenameActive) {
+            if (!m11_dm1_hoc_c027_input_material_ready(state)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
             if (input == M12_MENU_INPUT_BACK) {
                 return M11_GameView_ApplyMirrorCandidateRenameCommand(
                            state,
@@ -16644,6 +16666,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * get reinterpreted as movement/inspect clicks. */
     if (m11_dm1_hoc_menu_route_blocks_normal_input(state)) {
         if (state->candidateMirrorRenameActive) {
+            if (!m11_dm1_hoc_c027_input_material_ready(state)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
             return M11_GameView_HandleMirrorCandidateRenameClick(state, x, y)
                        ? M11_GAME_INPUT_REDRAW
                        : M11_GAME_INPUT_IGNORED;
@@ -16657,6 +16682,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                        : M11_GAME_INPUT_IGNORED;
         }
         if (m11_point_in_rect(x, y, 163, 86, 55, 57)) {
+            if (!m11_dm1_hoc_c027_input_material_ready(state)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
             return M11_GameView_BeginMirrorCandidateReincarnateRename(state)
                        ? M11_GAME_INPUT_REDRAW
                        : M11_GAME_INPUT_IGNORED;

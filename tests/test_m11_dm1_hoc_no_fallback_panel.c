@@ -357,6 +357,57 @@ static int test_c040_host_input_requires_real_panel(void)
     return 1;
 }
 
+static int test_c161_host_input_requires_real_c027_and_m653(void)
+{
+    const char* graphicsPath = pc34_graphics_path();
+    M11_GameViewState state;
+
+    if (!graphicsPath) {
+        return 1;
+    }
+    seed_c040_state(&state);
+    if (!M11_AssetLoader_Init(&state.assetLoader, graphicsPath)) {
+        if (getenv("FIRESTAFF_DM1_GRAPHICS_DAT")) {
+            fprintf(stderr, "FAIL configured PC34 C027 did not load\n");
+            return 0;
+        }
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    state.assetsAvailable = 1;
+
+    /* ReDMCSB REVIVE.C F0282 invokes F0281 only for C161.  C027 without
+     * M653 cannot show typed input, so the host must not enter that modal
+     * route merely because C040 remains loaded. */
+    if (M11_GameView_HandlePointer(&state, 186, 115, 1) !=
+            M11_GAME_INPUT_IGNORED ||
+        state.candidateMirrorRenameActive) {
+        fprintf(stderr, "FAIL C161 accepted without PC34 M653\n");
+        M11_GameView_Shutdown(&state);
+        return 0;
+    }
+
+    M11_Font_Init(&state.originalFont);
+    if (!M11_Font_LoadFromGraphicsDat(&state.originalFont,
+                                      state.assetLoader.fileState,
+                                      state.assetLoader.runtimeState)) {
+        fprintf(stderr, "FAIL PC34 M653 did not load for C161\n");
+        M11_GameView_Shutdown(&state);
+        return 0;
+    }
+    state.originalFontAvailable = 1;
+    if (M11_GameView_HandlePointer(&state, 186, 115, 1) !=
+            M11_GAME_INPUT_REDRAW ||
+        !state.candidateMirrorRenameActive ||
+        !state.candidateMirrorPanelActive) {
+        fprintf(stderr, "FAIL real PC34 C161/C027 rename route\n");
+        M11_GameView_Shutdown(&state);
+        return 0;
+    }
+    M11_GameView_Shutdown(&state);
+    return 1;
+}
+
 static int test_front_mirror_host_input_requires_real_pc34_material(void)
 {
     const char* graphicsPath = pc34_graphics_path();
@@ -440,6 +491,9 @@ int main(void) {
         return 1;
     }
     if (!test_c040_host_input_requires_real_panel()) {
+        return 1;
+    }
+    if (!test_c161_host_input_requires_real_c027_and_m653()) {
         return 1;
     }
     if (!test_front_mirror_host_input_requires_real_pc34_material()) {

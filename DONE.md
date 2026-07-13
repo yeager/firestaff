@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC C161/C027 host-input gate: the ReDMCSB `REVIVE.C
+  F0282` reincarnate route now opens and edits F0281 rename only when the
+  original PC34 C027 panel and M653 interface font are present. C040 stays
+  active on a missing dependency, so no invisible rename interaction or host
+  fallback is admitted; direct save/model APIs remain separate. Verification:
+  focused Ninja build and `m11_dm1_hoc_no_fallback_panel` CTest covering
+  rejection without M653 and the loaded C027/M653 C161 route.
+
 - 2026-07-13 Theron macOS host-key scancode hardening: the authentic
   Mednafen capture now uses explicit macOS virtual keycodes for `RUN`/Return
   (36) and `SELECT`/Tab (48), while retaining the emulator's verified keypad
