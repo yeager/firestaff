@@ -19051,6 +19051,21 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_dgn_geometry_readiness
     )
 
+    add_executable(test_nexus_v1_structure1f_spatial_receipt
+        tests/test_nexus_v1_structure1f_spatial_receipt.c
+    )
+    target_include_directories(test_nexus_v1_structure1f_spatial_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_structure1f_spatial_receipt PRIVATE firestaff_nexus)
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_structure1f_spatial_receipt PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_structure1f_spatial_receipt
+        COMMAND test_nexus_v1_structure1f_spatial_receipt
+    )
+
     # ── Nexus V1 DMDF embedded palette / string block bounds gate ──
     # Parser-level gate (no game data required). Verifies the new
     # nexus_v1_dmdf_parse_palette_block / nexus_v1_dmdf_parse_string_block

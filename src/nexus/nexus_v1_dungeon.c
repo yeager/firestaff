@@ -963,10 +963,12 @@ int nexus_v1_level_structure1f_spatial_receipt(
     Nexus_V1_DgnStructure1FSpatialReceipt *out_receipt)
 {
     Nexus_V1_DgnStructure1FSpatialReceipt receipt;
+    unsigned char direct_cell_seen[NEXUS_MAX_MAP_SIZE * NEXUS_MAX_MAP_SIZE];
     int entry;
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
+    memset(direct_cell_seen, 0, sizeof(direct_cell_seen));
     if (!level || !level->geometry_info.structure1f_valid ||
         level->structure1f_entry_count < 0 ||
         level->structure1f_entry_count !=
@@ -1001,6 +1003,15 @@ int nexus_v1_level_structure1f_spatial_receipt(
             record->y >= (uint8_t)level->height) {
             *out_receipt = receipt;
             return 0;
+        }
+        {
+            int cell = (int)record->y * NEXUS_MAX_MAP_SIZE + record->x;
+            if (direct_cell_seen[cell]) {
+                ++receipt.direct_coordinate_duplicate_cell_count;
+            } else {
+                direct_cell_seen[cell] = 1;
+                ++receipt.direct_coordinate_unique_cell_count;
+            }
         }
         ++receipt.direct_coordinate_entry_count;
     }
