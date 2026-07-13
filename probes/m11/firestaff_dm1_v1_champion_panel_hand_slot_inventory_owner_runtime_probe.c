@@ -49,6 +49,42 @@ enum {
     PROBE_DM1_VIEWPORT_Y = 33
 };
 
+/* Probe adapters over the production PC34 layout and graphic contracts. */
+#define M11_DM1_MOUSE_MASK_RIGHT DM1_V1_MOUSE_MASK_RIGHT_PC34
+
+static int M11_GameView_GetV1StatusHandSlotGraphic(
+    const M11_GameViewState* game, int slot, int hand)
+{
+    const struct ChampionState_Compat* champion;
+    if (!game || slot < 0 || slot >= game->world.party.championCount ||
+        hand < 0 || hand > 1) return 0;
+    champion = &game->world.party.champions[slot];
+    if (!champion->present || champion->hp.current <= 0) return 0;
+    return dm1_v1_champion_status_hand_slot_graphic_pc34(
+        hand, (uint16_t)champion->wounds,
+        hand == 1 && game->actingChampionOrdinal == (unsigned int)(slot + 1));
+}
+
+static int M11_GameView_GetV1SlotBoxNormalGraphicId(void)
+{
+    return dm1_v1_graphic_slot_box_normal_pc34();
+}
+
+static int M11_GameView_GetV1StatusBoxZone(
+    int slot, int* outX, int* outY, int* outW, int* outH)
+{
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_champion_status_box_rect_pc34(slot, &rect)) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
+
+static int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int slot)
+{
+    return dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(slot);
+}
+
 static unsigned char px_index(const unsigned char* fb, int width, int x, int y)
 {
     return (unsigned char)M11_FB_DECODE_INDEX(fb[y * width + x]);
