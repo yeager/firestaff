@@ -38,6 +38,7 @@ static int nexus_v1_level_copy_structure3_payload(
     unsigned char seen[UINT8_MAX + 1U];
     uint32_t hash = 2166136261u;
     int block_index;
+    int nonzero_block_run_start = -1;
     int nonzero_block_run_length = 0;
     int byte_index;
 
@@ -62,6 +63,8 @@ static int nexus_v1_level_copy_structure3_payload(
     level->structure3_payload.last_nonzero_byte_offset = -1;
     level->structure3_payload.first_nonzero_block_index = -1;
     level->structure3_payload.last_nonzero_block_index = -1;
+    level->structure3_payload.first_nonzero_block_run_start_block_index = -1;
+    level->structure3_payload.last_nonzero_block_run_start_block_index = -1;
     level->structure3_payload.complete_block_count = (int)block_count;
     memset(seen, 0, sizeof(seen));
     for (block_index = 0; block_index < (int)block_count; ++block_index) {
@@ -93,6 +96,19 @@ static int nexus_v1_level_copy_structure3_payload(
         }
         if (block_nonzero == 0) {
             ++level->structure3_payload.zero_block_count;
+            if (nonzero_block_run_length > 0) {
+                if (level->structure3_payload.first_nonzero_block_run_block_count ==
+                    0) {
+                    level->structure3_payload
+                        .first_nonzero_block_run_block_count =
+                        nonzero_block_run_length;
+                }
+                level->structure3_payload.last_nonzero_block_run_start_block_index =
+                    nonzero_block_run_start;
+                level->structure3_payload.last_nonzero_block_run_block_count =
+                    nonzero_block_run_length;
+            }
+            nonzero_block_run_start = -1;
             nonzero_block_run_length = 0;
         } else {
             ++level->structure3_payload.nonzero_block_count;
@@ -102,6 +118,12 @@ static int nexus_v1_level_copy_structure3_payload(
             level->structure3_payload.last_nonzero_block_index = block_index;
             if (nonzero_block_run_length == 0) {
                 ++level->structure3_payload.nonzero_block_run_count;
+                nonzero_block_run_start = block_index;
+                if (level->structure3_payload
+                        .first_nonzero_block_run_start_block_index < 0) {
+                    level->structure3_payload
+                        .first_nonzero_block_run_start_block_index = block_index;
+                }
             }
             ++nonzero_block_run_length;
             if (nonzero_block_run_length >
@@ -110,6 +132,16 @@ static int nexus_v1_level_copy_structure3_payload(
                     nonzero_block_run_length;
             }
         }
+    }
+    if (nonzero_block_run_length > 0) {
+        if (level->structure3_payload.first_nonzero_block_run_block_count == 0) {
+            level->structure3_payload.first_nonzero_block_run_block_count =
+                nonzero_block_run_length;
+        }
+        level->structure3_payload.last_nonzero_block_run_start_block_index =
+            nonzero_block_run_start;
+        level->structure3_payload.last_nonzero_block_run_block_count =
+            nonzero_block_run_length;
     }
     level->structure3_payload.raw_payload_hash = hash ? hash : 1U;
     level->structure3_payload.valid = 1;

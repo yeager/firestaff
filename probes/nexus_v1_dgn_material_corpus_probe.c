@@ -195,6 +195,16 @@ int main(int argc, char **argv) {
            receipt.structure3_model_reference_complete_level_count,
            receipt.structure3_direct_block_ordinal_mapping_disproven_level_count,
            receipt.structure3_direct_run_ordinal_mapping_disproven_level_count);
+    for (int level = 0; level < 16; ++level) {
+        const Nexus_V1_DgnStructure3PayloadReceipt *payload =
+            &receipt.structure3_payloads[level];
+        if (!payload->declared) continue;
+        printf("Structure3 LEV%02d: first-run=%d+%d last-run=%d+%d\n",
+               level, payload->first_nonzero_block_run_start_block_index,
+               payload->first_nonzero_block_run_block_count,
+               payload->last_nonzero_block_run_start_block_index,
+               payload->last_nonzero_block_run_block_count);
+    }
     printf("Coverage: floor=%d ceiling=%d wall=%d mns-host=%d bpk-host=%d complete=%d\n",
            receipt.floor_coverage.covered, receipt.ceiling_coverage.covered,
            receipt.wall_coverage.covered,

@@ -541,7 +541,15 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                     loaded_level.structure3_payload.first_nonzero_block_index == -1 &&
                     loaded_level.structure3_payload.last_nonzero_block_index == -1 &&
                     loaded_level.structure3_payload.nonzero_block_run_count == 0 &&
-                    loaded_level.structure3_payload.longest_nonzero_block_run == 0) ||
+                    loaded_level.structure3_payload.longest_nonzero_block_run == 0 &&
+                    loaded_level.structure3_payload
+                        .first_nonzero_block_run_start_block_index == -1 &&
+                    loaded_level.structure3_payload
+                        .first_nonzero_block_run_block_count == 0 &&
+                    loaded_level.structure3_payload
+                        .last_nonzero_block_run_start_block_index == -1 &&
+                    loaded_level.structure3_payload
+                        .last_nonzero_block_run_block_count == 0) ||
                    (loaded_level.structure3_payload.nonzero_block_count > 0 &&
                     loaded_level.structure3_payload.first_nonzero_block_index >= 0 &&
                     loaded_level.structure3_payload.last_nonzero_block_index >=
@@ -549,7 +557,25 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                     loaded_level.structure3_payload.nonzero_block_run_count > 0 &&
                     loaded_level.structure3_payload.longest_nonzero_block_run > 0 &&
                     loaded_level.structure3_payload.longest_nonzero_block_run <=
-                        loaded_level.structure3_payload.nonzero_block_count)) &&
+                        loaded_level.structure3_payload.nonzero_block_count &&
+                    loaded_level.structure3_payload
+                        .first_nonzero_block_run_start_block_index >= 0 &&
+                    loaded_level.structure3_payload
+                        .first_nonzero_block_run_block_count > 0 &&
+                    loaded_level.structure3_payload
+                        .first_nonzero_block_run_start_block_index +
+                            loaded_level.structure3_payload
+                                .first_nonzero_block_run_block_count <=
+                        loaded_level.structure3_payload.complete_block_count &&
+                    loaded_level.structure3_payload
+                        .last_nonzero_block_run_start_block_index >= 0 &&
+                    loaded_level.structure3_payload
+                        .last_nonzero_block_run_block_count > 0 &&
+                    loaded_level.structure3_payload
+                        .last_nonzero_block_run_start_block_index +
+                            loaded_level.structure3_payload
+                                .last_nonzero_block_run_block_count <=
+                        loaded_level.structure3_payload.complete_block_count)) &&
                   loaded_level.structure3_payload.distinct_byte_value_count > 0 &&
                   loaded_level.structure3_payload.first_nonzero_byte_offset >= -1 &&
                   loaded_level.structure3_payload.last_nonzero_byte_offset >=
@@ -811,6 +837,10 @@ static void test_structure1f_semantics_and_bounds(void) {
           structure3_payload.last_nonzero_block_index == 3 &&
           structure3_payload.nonzero_block_run_count == 2 &&
           structure3_payload.longest_nonzero_block_run == 2 &&
+          structure3_payload.first_nonzero_block_run_start_block_index == 0 &&
+          structure3_payload.first_nonzero_block_run_block_count == 2 &&
+          structure3_payload.last_nonzero_block_run_start_block_index == 3 &&
+          structure3_payload.last_nonzero_block_run_block_count == 1 &&
           structure3_payload.raw_payload_hash != 0U &&
           !structure3_payload.face_semantics_proven,
           "Structure3 payload retains documented block boundaries without face semantics");
