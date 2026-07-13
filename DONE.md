@@ -21,6 +21,16 @@
   Source: ReDMCSB `DUNGEON.C` F0172:2573-2600 and `DUNVIEW.C` F0107:3590-3706,
    F0124:7842-7845. Verification: focused CTest against installed PC34 data.
 
+- 2026-07-13 DM1 all-visible F0107/F0124 inscription stale-state audit: a
+  real-PC34 M11 regression walks all 56 legal visible wall TextString poses
+  in sequence. Every frame must publish exactly its current F0168 glyph
+  bytes, M648 graphic 258, C10 transparency, and original indexed glyph
+  pixels; a final ordinary D1C tuple must publish no prior receipt. The
+  original M648 pixels are fingerprinted before and after the complete pass.
+  Empty source lines remain source-positioned rather than being compacted.
+  Source: ReDMCSB `DUNGEON.C` F0172 and `DUNVIEW.C` F0107:3590-3706,
+   F0124:7842-7845. Verification: focused CTest against installed PC34 data.
+
 - 2026-07-13 DM1 HoC C026/C346 material gate: a DM1/M10-only regression
   scans the installed PC34 Hall of Champions for a real C127 mirror sensor.
   It locks the source ordinal to the exact C026 atlas cell and G0109
