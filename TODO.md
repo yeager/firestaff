@@ -1334,6 +1334,18 @@ and real community-save corpus round-trip evidence.
     zero. Failed rows retain their source provenance and raw receipts but are
     never promoted as passing corpus evidence. Remaining work is authentic
     community-save coverage and source-backed owners for opaque fields.
+   - 2026-07-13 update: corpus rows now retain positive C13 EVENT and C13
+    timeline-reference receipt availability, and require those plus C24/C25
+    availability even when all three subtype counts are zero. An absent
+    subtype receipt is therefore an explicit failed external-corpus result,
+    never vacuous evidence. Remaining work is authentic community-save
+    coverage and source-backed owners for opaque fields.
+  - 2026-07-13 update: direct F0435 -> F0433 -> F0435 state identity now
+    applies the same fail-closed rule to C13, C24, and C25: any source or
+    exported optional row requires its available, byte-preserved receipt.
+    Empty rows remain valid only with positive zero-count receipts. Remaining
+     work is authentic community-save coverage and source-backed owners for
+     opaque fields.
   - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
     with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
     the corresponding exported C14 `EventIndex` without changing the live

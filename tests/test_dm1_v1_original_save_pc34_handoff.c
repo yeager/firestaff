@@ -3360,6 +3360,21 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
               roundtrip_report.exported_party_info_fingerprint &&
           roundtrip_report.party_info_byte_preservation_ok,
           "roundtrip reload helper preserves opaque PC34 PARTY_INFO bytes");
+    CHECK(roundtrip_report.c13_byte_receipt_available &&
+          roundtrip_report.c13_timeline_byte_receipt_available &&
+          roundtrip_report.source_c13_event_count == 0 &&
+          roundtrip_report.exported_c13_event_count == 0 &&
+          roundtrip_report.c13_byte_preservation_ok &&
+          roundtrip_report.c13_timeline_byte_preservation_ok &&
+          roundtrip_report.c24_union_slot_byte_receipt_available &&
+          roundtrip_report.source_c24_event_count == 0 &&
+          roundtrip_report.exported_c24_event_count == 0 &&
+          roundtrip_report.c24_union_slot_byte_preservation_ok &&
+          roundtrip_report.c25_union_slot_byte_receipt_available &&
+          roundtrip_report.source_c25_event_count == 0 &&
+          roundtrip_report.exported_c25_event_count == 0 &&
+          roundtrip_report.c25_union_slot_byte_preservation_ok,
+          "empty optional C13/C24/C25 rows require positive receipts");
 
     memset(roundtrip, 0, sizeof(roundtrip));
     roundtrip_written = 0u;
