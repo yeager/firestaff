@@ -51,6 +51,11 @@
   `READY_PARSED` plus the explicit enabled dispatch receipt. Verification:
   `test_nexus_v1_startup_menu_pc34_compat` PASS.
 
+- 2026-07-13 Nexus SLEV host consumption: a runtime route now requires the
+  consumed script-dispatch receipt, so a blocked dispatcher cannot present a
+  game-ready host route. Verification:
+  `test_nexus_v1_startup_menu_pc34_compat` PASS.
+
 - 2026-07-13 CSB startup playback-to-HUD ownership: M11 now advances skipped
   ReDMCSB `TITLE.C F0437` cadence through the verified startup session before
   entrance presentation, then accepts `ENTRANCE.C F0806` completion only by
