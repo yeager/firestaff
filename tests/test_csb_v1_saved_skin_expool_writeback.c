@@ -77,13 +77,34 @@ static void prepare_profile(CSB_V1_RuntimeProfile *profile,
         profile->csbwin_appended_tail_preserved_size);
 }
 
+static void prepare_profile_with_larger_free_node(
+    CSB_V1_RuntimeProfile *profile,
+    const uint8_t skins[4])
+{
+    prepare_profile(profile, skins);
+    /* CSBWin EXPOOL::enlarge has already supplied one source-owned four-word
+     * DB11 node in the second block. SETSKIN may consume it after Read frees
+     * the old three-word node, exactly as data.cpp:2145-2166 does. */
+    put_le16(profile->csbwin_appended_tail,
+             CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES + 2u, 4u);
+    put_le32(profile->csbwin_appended_tail, 4u * 4u, 65u);
+    put_le32(profile->csbwin_appended_tail, 65u * 4u, 0u);
+    profile->csbwin_appended_tail_size =
+        2u * CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES;
+    profile->csbwin_appended_tail_preserved_size =
+        2u * CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES;
+    profile->csbwin_appended_tail_fnv1a = fnv1a32(
+        profile->csbwin_appended_tail,
+        profile->csbwin_appended_tail_preserved_size);
+}
+
 int main(void)
 {
     static const uint8_t skins[4] = { 1u, 2u, 3u, 4u };
     static const uint8_t single_skin[4] = { 0u, 0u, 0u, 5u };
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
-    uint8_t before[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
+    uint8_t before[2u * CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
     uint8_t grid[4];
     uint32_t original_fnv;
     const uint8_t *payload = NULL;
@@ -110,9 +131,11 @@ int main(void)
               grid[0] == 1u && grid[1] == 2u && grid[2] == 3u && grid[3] == 42u,
           "SETSKIN invalidates the HUD cache and presents the saved source byte");
 
-    memcpy(before, profile.csbwin_appended_tail, sizeof(before));
+    memcpy(before, profile.csbwin_appended_tail,
+           CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
     check(csb_v1_runtime_set_csbwin_saved_skin(&profile, 0, 0, 2, 9u) == 0 &&
-              memcmp(before, profile.csbwin_appended_tail, sizeof(before)) == 0,
+              memcmp(before, profile.csbwin_appended_tail,
+                     CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES) == 0,
           "SETSKIN rejects a write that would require a new DB11 payload extent");
 
     profile.csbwin_appended_tail_fnv1a ^= 1u;
@@ -123,11 +146,22 @@ int main(void)
     profile.dungeon_handle = NULL;
     csb_v1_runtime_cleanup(&profile);
 
+    prepare_profile_with_larger_free_node(&profile, skins);
+    check(csb_v1_runtime_set_csbwin_saved_skin(&profile, 0, 0, 2, 9u) == 1 &&
+              csb_v1_runtime_locate_csbwin_appended_expool_record(
+                  &profile, CSB_V1_SKIN_CACHE_EDT_SKINS << 24,
+                  &payload, &payload_size) == 1 &&
+              payload_size == 8u && payload[0] == 1u && payload[3] == 4u &&
+              payload[4] == 9u,
+          "SETSKIN consumes an original larger DB11 free node for expansion");
+    csb_v1_runtime_cleanup(&profile);
+
     prepare_profile(&profile, single_skin);
-    memcpy(before, profile.csbwin_appended_tail, sizeof(before));
-    check(csb_v1_runtime_set_csbwin_saved_skin(&profile, 0, 1, 1, 0u) == 0 &&
-              memcmp(before, profile.csbwin_appended_tail, sizeof(before)) == 0,
-          "SETSKIN refuses an all-zero delete without a source-proven DB11 free-list");
+    check(csb_v1_runtime_set_csbwin_saved_skin(&profile, 0, 1, 1, 0u) == 1 &&
+              csb_v1_runtime_locate_csbwin_appended_expool_record(
+                  &profile, CSB_V1_SKIN_CACHE_EDT_SKINS << 24,
+                  &payload, &payload_size) == 0,
+          "SETSKIN deletes an all-zero column through source EXPOOL Read");
     csb_v1_runtime_cleanup(&profile);
 
     return g_failures == 0 ? 0 : 1;

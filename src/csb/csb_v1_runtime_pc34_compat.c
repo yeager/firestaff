@@ -58,6 +58,11 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
     uint32_t record_id,
     const uint8_t **out_bytes,
     size_t *out_size);
+static int csb_v1_runtime_replace_appended_expool_record_internal(
+    CSB_V1_RuntimeProfile *candidate,
+    uint32_t record_id,
+    const uint8_t *payload,
+    size_t payload_size);
 static int csb_v1_runtime_stage_csbwin_dsa_tracing(
     CSB_V1_RuntimeProfile *candidate);
 static int csb_v1_runtime_stage_csbwin_global_variables(
@@ -13349,9 +13354,6 @@ int csb_v1_runtime_set_csbwin_saved_skin(
     uint8_t skin_num)
 {
     CSB_V1_RuntimeProfile candidate;
-    const uint8_t *payload = NULL;
-    size_t payload_size = 0u;
-    size_t payload_offset;
     uint8_t column[CSB_V1_SKIN_CACHE_COLUMN_BYTES];
     uint32_t record_id;
     int index;
@@ -13361,9 +13363,10 @@ int csb_v1_runtime_set_csbwin_saved_skin(
     /* CSBWin DSA.cpp:3122-3135 decodes the five-bit x/y and six-bit level
      * from SETSKIN's location word. data.cpp:2130-2167 then reads exactly
      * one EDT_Skins DB11 record, changes one byte, trims zero suffixes, and
-     * writes it back through EXPOOL. Firestaff has no source-proven DB11
-     * allocator, so require an existing record whose source write would keep
-     * the same word-aligned payload extent. */
+     * writes it back through EXPOOL. Use that actual Read/Write contract:
+     * the replacement must be satisfied by the original save tail's exact
+     * DB11 free list. We deliberately do not call EXPOOL::enlarge or invent
+     * a new block when the source tail has no suitable free node. */
     if (!profile || level < 0 || level >= CSB_V1_SKIN_CACHE_MAX_LEVELS ||
         x < 0 || x >= 32 || y < 0 || y >= 32) {
         return 0;
@@ -13373,25 +13376,21 @@ int csb_v1_runtime_set_csbwin_saved_skin(
     if (index < 0 || index >= CSB_V1_SKIN_CACHE_COLUMN_BYTES) return 0;
 
     candidate = *profile;
-    if (!csb_v1_runtime_locate_appended_expool_record_internal(
-            &candidate, record_id, &payload, &payload_size) ||
-        !payload || payload < candidate.csbwin_appended_tail ||
-        payload_size == 0u || payload_size > sizeof(column)) {
-        return 0;
-    }
-    payload_offset = (size_t)(payload - candidate.csbwin_appended_tail);
-    if (payload_offset > candidate.csbwin_appended_tail_preserved_size ||
-        payload_size > candidate.csbwin_appended_tail_preserved_size -
-            payload_offset) {
-        return 0;
-    }
+    memset(column, 0, sizeof(column));
+    {
+        const uint8_t *existing = NULL;
+        size_t existing_size = 0u;
 
-    memcpy(column, payload, payload_size);
-    if ((size_t)index < payload_size && column[index] == skin_num) {
-        return 1;
-    }
-    if ((size_t)index >= payload_size && skin_num == 0u) {
-        return 1;
+        if (csb_v1_runtime_locate_appended_expool_record_internal(
+                &candidate, record_id, &existing, &existing_size)) {
+            if (!existing || existing_size > sizeof(column)) return 0;
+            memcpy(column, existing, existing_size);
+            if ((size_t)index < existing_size && column[index] == skin_num) {
+                return 1;
+            }
+        } else if (skin_num == 0u) {
+            return 1;
+        }
     }
     column[index] = skin_num;
     last_nonzero = (int)sizeof(column) - 1;
@@ -13399,17 +13398,17 @@ int csb_v1_runtime_set_csbwin_saved_skin(
         --last_nonzero;
     }
     if (last_nonzero < 0) {
-        /* CSBWin removes the record here. Do not guess EXPOOL free-list
-         * mutation or leave a non-source-equivalent empty record behind. */
-        return 0;
+        if (!csb_v1_runtime_replace_appended_expool_record_internal(
+                &candidate, record_id, NULL, 0u)) {
+            return 0;
+        }
+    } else {
+        source_write_size = (size_t)((last_nonzero + 4) / 4) * 4u;
+        if (!csb_v1_runtime_replace_appended_expool_record_internal(
+                &candidate, record_id, column, source_write_size)) {
+            return 0;
+        }
     }
-    source_write_size = (size_t)((last_nonzero + 4) / 4) * 4u;
-    if (source_write_size != payload_size) {
-        return 0;
-    }
-
-    memcpy(candidate.csbwin_appended_tail + payload_offset,
-           column, payload_size);
     candidate.csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
         candidate.csbwin_appended_tail,
         candidate.csbwin_appended_tail_preserved_size);
@@ -15107,6 +15106,110 @@ static uint32_t csb_v1_runtime_fnv1a32(const uint8_t *bytes, size_t size)
         hash *= 16777619u;
     }
     return hash;
+}
+
+/* CSBWin data.cpp EXPOOL::Read/Write, limited to an already preserved DB11
+ * tail. This is intentionally not an allocator: EXPOOL::enlarge would create
+ * a new save block and has no authenticated source-tail receipt here. The
+ * source Read first unlinks the old node into its exact-size free list; Write
+ * then consumes an exact free node for the replacement, or rejects. */
+static int csb_v1_runtime_replace_appended_expool_record_internal(
+    CSB_V1_RuntimeProfile *candidate,
+    uint32_t record_id,
+    const uint8_t *payload,
+    size_t payload_size)
+{
+    uint8_t *bytes;
+    uint32_t total_words;
+    uint32_t hash;
+    uint32_t hashi;
+    uint32_t bucket;
+    uint32_t prior = 0u;
+    uint32_t old_node = 0u;
+    uint32_t old_size_words = 0u;
+    uint32_t write_words;
+    int guard;
+
+    if (!candidate || !candidate->csbwin_appended_tail_valid ||
+        candidate->csbwin_appended_tail_truncated ||
+        candidate->csbwin_appended_tail_size == 0u ||
+        candidate->csbwin_appended_tail_size !=
+            candidate->csbwin_appended_tail_preserved_size ||
+        (candidate->csbwin_appended_tail_preserved_size & 3u) != 0u ||
+        candidate->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        candidate->csbwin_appended_tail_fnv1a != csb_v1_runtime_fnv1a32(
+            candidate->csbwin_appended_tail,
+            candidate->csbwin_appended_tail_preserved_size) ||
+        (payload_size != 0u && (!payload || (payload_size & 3u) != 0u))) {
+        return 0;
+    }
+
+    bytes = candidate->csbwin_appended_tail;
+    total_words = (uint32_t)(candidate->csbwin_appended_tail_preserved_size / 4u);
+    if (total_words < 64u) return 0;
+    hash = record_id * 0xbb40e62du;
+    hashi = 32u + (hash >> 27);
+    if (hashi >= total_words) return 0;
+    bucket = csb_v1_runtime_read_le32(bytes + (size_t)hashi * 4u);
+    if ((bucket & 0x80000000u) != 0u) {
+        hashi = (bucket & 0x7fffffffu) + ((hash >> 21) & 0x3fu);
+        if (hashi >= total_words) return 0;
+        bucket = csb_v1_runtime_read_le32(bytes + (size_t)hashi * 4u);
+    }
+
+    for (guard = 0; guard < (int)total_words && bucket != 0u; ++guard) {
+        uint32_t block_base;
+
+        if (bucket + 2u > total_words) return 0;
+        block_base = bucket & 0xffffffc0u;
+        if (block_base >= total_words) return 0;
+        old_size_words = (uint32_t)bytes[(size_t)block_base * 4u + 2u] |
+            ((uint32_t)bytes[(size_t)block_base * 4u + 3u] << 8);
+        if (old_size_words < 2u || bucket + old_size_words > total_words) {
+            return 0;
+        }
+        if (csb_v1_runtime_read_le32(bytes + (size_t)(bucket + 1u) * 4u) ==
+            record_id) {
+            old_node = bucket;
+            break;
+        }
+        prior = bucket;
+        bucket = csb_v1_runtime_read_le32(bytes + (size_t)bucket * 4u);
+    }
+    if (guard == (int)total_words) return 0;
+
+    /* EXPOOL::Read: unlink the old record and return its exact DB11 node to
+     * the size-specific free list. A missing record is valid for Write. */
+    if (old_node != 0u) {
+        uint32_t next = csb_v1_runtime_read_le32(
+            bytes + (size_t)old_node * 4u);
+        if (old_size_words + 2u >= total_words) return 0;
+        if (prior == 0u) {
+            csb_v1_runtime_write_le32(bytes + (size_t)hashi * 4u, next);
+        } else {
+            csb_v1_runtime_write_le32(bytes + (size_t)prior * 4u, next);
+        }
+        csb_v1_runtime_write_le32(bytes + (size_t)old_node * 4u,
+            csb_v1_runtime_read_le32(bytes + (size_t)old_size_words * 4u));
+        csb_v1_runtime_write_le32(bytes + (size_t)old_size_words * 4u,
+            old_node);
+    }
+
+    /* SetSkin returns after Read when the trimmed column is empty. */
+    if (payload_size == 0u) return old_node != 0u;
+    write_words = (uint32_t)(payload_size / 4u) + 2u;
+    if (write_words + 2u >= total_words) return 0;
+    bucket = csb_v1_runtime_read_le32(bytes + (size_t)write_words * 4u);
+    if (bucket == 0u || bucket + write_words > total_words) return 0;
+    csb_v1_runtime_write_le32(bytes + (size_t)write_words * 4u,
+        csb_v1_runtime_read_le32(bytes + (size_t)bucket * 4u));
+    csb_v1_runtime_write_le32(bytes + (size_t)bucket * 4u,
+        csb_v1_runtime_read_le32(bytes + (size_t)hashi * 4u));
+    csb_v1_runtime_write_le32(bytes + (size_t)hashi * 4u, bucket);
+    csb_v1_runtime_write_le32(bytes + (size_t)(bucket + 1u) * 4u, record_id);
+    memcpy(bytes + (size_t)(bucket + 2u) * 4u, payload, payload_size);
+    return 1;
 }
 
 static int csb_v1_runtime_stage_csbwin_global_variables(

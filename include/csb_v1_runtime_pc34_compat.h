@@ -842,11 +842,11 @@ int csb_v1_runtime_custom_background_skin_grid(
     int *out_loaded_level,
     int *out_default_skin);
 
-/* Persist one CSBWin DSA SETSKIN change only when the target EDT_Skins
- * record already exists in a complete, FNV-authenticated appended EXPOOL
- * tail and its source-sized DB11 payload can retain the exact write.  This
- * mirrors CSBWin data.cpp SKIN_CACHE::SetSkin without inventing DB11 nodes
- * or an allocator for records whose original bytes are unavailable. */
+/* Persist one CSBWin DSA SETSKIN change through the complete,
+ * FNV-authenticated appended EXPOOL tail. This mirrors CSBWin data.cpp
+ * SKIN_CACHE::SetSkin and EXPOOL::Read/Write: it may remove an all-zero
+ * column or consume a source-owned exact-size DB11 free node for a changed
+ * column. It never calls EXPOOL::enlarge or invents a new DB11 block. */
 int csb_v1_runtime_set_csbwin_saved_skin(
     CSB_V1_RuntimeProfile *profile,
     int level,
