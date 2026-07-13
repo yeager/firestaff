@@ -53,6 +53,25 @@ static int has_generator_reenable_event(const struct GameWorld_Compat* world,
     return 0;
 }
 
+static int has_text_message_emission(const struct TickResult_Compat* result,
+                                     int textIndex, int mapIndex,
+                                     int mapX, int mapY)
+{
+    int i;
+    if (!result) return 0;
+    for (i = 0; i < result->emissionCount; ++i) {
+        const struct TickEmission_Compat* emission = &result->emissions[i];
+        if (emission->kind == EMIT_TEXT_MESSAGE &&
+            emission->payload[0] == textIndex &&
+            emission->payload[1] == mapIndex &&
+            emission->payload[2] == mapX &&
+            emission->payload[3] == mapY) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int main(void)
 {
     struct DungeonDatState_Compat dungeon;
@@ -258,6 +277,26 @@ int main(void)
      * is materialized immediately in list order through F0185. */
     squares[1] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
                                  DUNGEON_SQUARE_MASK_THING_LIST);
+    /* F0245 prints a newly-visible corridor text immediately when the
+     * party is standing on that square. Keep this first route text-only:
+     * a generator on the party square has independent F0185 placement
+     * rules and would obscure the message assertion. */
+    text.visible = 0;
+    text.next = THING_ENDOFLIST;
+    squareFirstThings[1] = (unsigned short)(THING_TYPE_TEXTSTRING << 10);
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 0;
+    world.party.mapY = 1;
+    assert(F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick));
+    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1, 3);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert(text.visible == 1);
+    assert(has_text_message_emission(&result, 0, 0, 0, 1));
+
+    /* C006 remains materialized in source list order, but it does not
+     * print the TextString when the party is elsewhere. */
     text.visible = 0;
     text.next = (unsigned short)(THING_TYPE_SENSOR << 10);
     sensors[0].next = THING_ENDOFLIST;
@@ -269,20 +308,24 @@ int main(void)
     sensors[0].localMultiple = (unsigned short)((2u << 4) | 1u);
     group.next = THING_NONE;
     squareFirstThings[1] = (unsigned short)(THING_TYPE_TEXTSTRING << 10);
-    world.party.mapIndex = 0;
-    world.partyMapIndex = 0;
     world.party.mapX = 1;
-    world.party.mapY = 1;
     assert(F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick));
 
     schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1, 3);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(text.visible == 1);
+    assert(!has_text_message_emission(&result, 0, 0, 0, 1));
     assert(sensors[0].sensorType == RUNTIME_SENSOR_TYPE_DISABLED);
     assert(squareFirstThings[1] == (unsigned short)(THING_TYPE_GROUP << 10));
     assert(group.next == (unsigned short)(THING_TYPE_TEXTSTRING << 10));
     assert(group.creatureType == 0 && group.health[0] > 0);
+
+    /* A repeated SET remains silent. */
+    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1, 3);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert(!has_text_message_emission(&result, 0, 0, 0, 1));
     assert(has_generator_reenable_event(&world, 0, 1));
 
     /* F0259: C11's delayed refill uses C12, C07, C08, C09 source order

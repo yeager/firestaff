@@ -10535,6 +10535,23 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 }
                 break;
             }
+            case EMIT_TEXT_MESSAGE: {
+                char decoded[256];
+                int textIndex = (int)e->payload[0];
+                /* ReDMCSB TIMELINE.C F0245:949-954 calls F0168 with
+                 * C1_TEXT_TYPE_MESSAGE, then F0047 directly.  The M10
+                 * emission is already restricted to a hidden->visible
+                 * TextString on the party square, so M11 only consumes its
+                 * source index through the same message decoder. */
+                if (F0508_DUNGEON_DecodeTextStringThing_Compat(
+                        state->world.things, textIndex,
+                        DUNGEON_TEXT_TYPE_MESSAGE, decoded,
+                        (int)sizeof(decoded)) > 0) {
+                    M11_MessageLog_Push(&state->messageLog, decoded,
+                                        M11_COLOR_WHITE);
+                }
+                break;
+            }
             case EMIT_CHAMPION_DOWN: {
                 int champIdx = (int)e->payload[0];
                 char name[16];

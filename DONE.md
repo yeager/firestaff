@@ -9321,6 +9321,17 @@
   loader now rejects decodable candidate fields instead of promoting guessed
   bytecode into runtime. Verification: focused CCM fixture and strict C11
   syntax PASS.
+# ✅ 2026-07-13 DM1 F0245 corridor TextString message handoff
+
+DM1 now follows ReDMCSB `TIMELINE.C F0245` lines 939-954 when a corridor
+TextString becomes visible: M10 emits its real TextString Thing index only
+when the event square is the current party square, and M11 consumes it with
+`F0168`/`DUNGEON_TEXT_TYPE_MESSAGE` into the source message area. Repeated
+SET, off-party reveals, clears, and existing-visible text remain silent. The
+route contains no generated text or replacement font. Verification: Ninja
+build of `firestaff_m11` and
+`test_dm1_v1_square_state_dispatch_pc34_compat`; focused CTest passed 1/1.
+
 # 2026-07-13 Nexus DGN static-material selector guard
 
 The DGN runtime no longer treats Structure1B bytes 3/4 as direct

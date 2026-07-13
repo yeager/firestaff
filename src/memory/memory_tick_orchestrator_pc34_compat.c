@@ -3613,8 +3613,20 @@ static int orch_dispatch_corridor_event_f0245_compat(
             thingIndex >= 0 && thingIndex < world->things->textStringCount) {
             struct DungeonTextString_Compat* text =
                 &world->things->textStrings[thingIndex];
+            int wasVisible = text->visible != 0;
             text->visible = (unsigned char)(ev->aux1 == DM1_EFFECT_TOGGLE ?
                 !text->visible : ev->aux1 == DM1_EFFECT_SET);
+            /* ReDMCSB TIMELINE.C F0245:949-954 prints exactly when a
+             * corridor TextString changes from hidden to visible on the
+             * current party square.  M10 carries the original Thing index;
+             * M11 decodes it through F0168's MESSAGE path. */
+            if (!wasVisible && text->visible &&
+                ev->mapIndex == world->party.mapIndex &&
+                ev->mapX == world->party.mapX &&
+                ev->mapY == world->party.mapY) {
+                emit(result, EMIT_TEXT_MESSAGE, thingIndex, ev->mapIndex,
+                     ev->mapX, ev->mapY);
+            }
             applied = 1;
         } else if (type == THING_TYPE_SENSOR &&
                    thingIndex >= 0 && thingIndex < world->things->sensorCount &&
