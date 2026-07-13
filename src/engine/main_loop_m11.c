@@ -390,6 +390,20 @@ static void m11_publish_dm1_hoc_presented_capture_to_m12(
                                                            &capture);
 }
 
+/* ReDMCSB ENTRANCE.C F0797/F0441 hands the opened Hall to DRAWVIEW before
+ * input. Keep every later materialized HoC frame on this same M11->M12 edge:
+ * capture may observe only a successfully presented game frame, never a
+ * prior frame from a bare renderer call. */
+static int m11_present_game_frame_and_publish_dm1_hoc_capture(
+    const M11_GameViewState* gameView,
+    M12_StartupMenuState* menuState) {
+    if (!m11_present_game_frame(gameView)) {
+        return 0;
+    }
+    m11_publish_dm1_hoc_presented_capture_to_m12(gameView, menuState);
+    return 1;
+}
+
 void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
     int requestedWindowMode;
     int requestedScaleMode;
@@ -4490,9 +4504,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
          * V1 palette/nearest scaling and V2 targets are applied before the
          * M12 presented-capture consumer records the PC34 receipt.  Calling
          * bare Render_Present() here bypassed that contract on first launch. */
-        (void)m11_present_game_frame(&gameView);
-        m11_publish_dm1_hoc_presented_capture_to_m12(&gameView,
-                                                     &menuState);
+        (void)m11_present_game_frame_and_publish_dm1_hoc_capture(
+            &gameView, &menuState);
     } else {
         m11_present_launcher(launcherFramebuffer, modernRgba, useModern);
     }
@@ -4762,9 +4775,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 DM1_CombatLog_Render(&gameView,
                                      M11_Render_GetFramebuffer(),
                                      M11_FB_WIDTH, M11_FB_HEIGHT);
-                m11_present_game_frame(&gameView);
-                m11_publish_dm1_hoc_presented_capture_to_m12(&gameView,
-                                                             &menuState);
+                (void)m11_present_game_frame_and_publish_dm1_hoc_capture(
+                    &gameView, &menuState);
                 gameFrameNeedsPresent = 0;
             }
         } else {
