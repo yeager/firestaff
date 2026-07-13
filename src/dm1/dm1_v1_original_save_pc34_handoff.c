@@ -3046,8 +3046,12 @@ static void fill_roundtrip_core_report(
     int source_c13_indices[DM1_EVENT_MAX_COUNT];
     int export_c13_indices[DM1_EVENT_MAX_COUNT];
     int export_c13_used[DM1_EVENT_MAX_COUNT];
+    uint16_t source_c13_timeline_refs[DM1_EVENT_MAX_COUNT];
+    uint16_t export_c13_timeline_refs[DM1_EVENT_MAX_COUNT];
     int source_c13_count = 0;
     int export_c13_count = 0;
+    int source_c13_timeline_count = 0;
+    int export_c13_timeline_count = 0;
     int i;
 
     if (!out_report) {
@@ -3159,6 +3163,74 @@ static void fill_roundtrip_core_report(
         out_report->c13_byte_preservation_ok =
             out_report->c13_byte_mismatch_count == 0 &&
             source_c13_count == export_c13_count;
+
+        /* F0433 stores the C4 timeline as raw 16-bit indexes into the
+         * companion EVENT array, and F0435 restores that array before the
+         * F0651 heap rebuild. A C13 record may be byte-identical while its
+         * source timeline reference changes, so retain a second receipt for
+         * those two-byte values. Do not normalize sparse/original indexes
+         * into Firestaff's compact queue and call that a preserved save. */
+        if (source_report->original_event_count < 0 ||
+            source_report->original_event_count >
+                source_report->decoded_timeline_index_count ||
+            export_report->original_event_count < 0 ||
+            export_report->original_event_count >
+                export_report->decoded_timeline_index_count) {
+            out_report->c13_timeline_byte_receipt_available = 0;
+        } else {
+            out_report->c13_timeline_byte_receipt_available = 1;
+            for (i = 0; i < source_report->original_event_count; ++i) {
+                uint16_t event_index = source_report->timeline_indices[i];
+                if (event_index >= (uint16_t)source_report->decoded_event_count) {
+                    out_report->c13_timeline_byte_receipt_available = 0;
+                    break;
+                }
+                if (source_report->events[event_index].type ==
+                    DM1_EVENT_VI_ALTAR_REBIRTH) {
+                    source_c13_timeline_refs[source_c13_timeline_count++] =
+                        event_index;
+                }
+            }
+            for (i = 0; out_report->c13_timeline_byte_receipt_available &&
+                        i < export_report->original_event_count; ++i) {
+                uint16_t event_index = export_report->timeline_indices[i];
+                if (event_index >= (uint16_t)export_report->decoded_event_count) {
+                    out_report->c13_timeline_byte_receipt_available = 0;
+                    break;
+                }
+                if (export_report->events[event_index].type ==
+                    DM1_EVENT_VI_ALTAR_REBIRTH) {
+                    export_c13_timeline_refs[export_c13_timeline_count++] =
+                        event_index;
+                }
+            }
+            out_report->source_c13_timeline_reference_count =
+                source_c13_timeline_count;
+            out_report->exported_c13_timeline_reference_count =
+                export_c13_timeline_count;
+            if (out_report->c13_timeline_byte_receipt_available) {
+                int compare_count = source_c13_timeline_count <
+                    export_c13_timeline_count ? source_c13_timeline_count :
+                    export_c13_timeline_count;
+                for (i = 0; i < compare_count; ++i) {
+                    if (source_c13_timeline_refs[i] ==
+                        export_c13_timeline_refs[i]) {
+                        ++out_report->c13_timeline_byte_preserved_count;
+                    } else {
+                        ++out_report->c13_timeline_byte_mismatch_count;
+                    }
+                }
+                if (source_c13_timeline_count != export_c13_timeline_count) {
+                    int difference = source_c13_timeline_count -
+                        export_c13_timeline_count;
+                    out_report->c13_timeline_byte_mismatch_count +=
+                        difference < 0 ? -difference : difference;
+                }
+                out_report->c13_timeline_byte_preservation_ok =
+                    out_report->c13_timeline_byte_mismatch_count == 0 &&
+                    source_c13_timeline_count == export_c13_timeline_count;
+            }
+        }
     }
 
     out_report->core_state_matches =
@@ -3232,7 +3304,9 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
          (!out_report->c13_byte_receipt_available &&
           import_report.original_event_count > 0) ||
          (out_report->source_c13_event_count > 0 &&
-          !out_report->c13_byte_preservation_ok))) {
+          (!out_report->c13_byte_preservation_ok ||
+           !out_report->c13_timeline_byte_receipt_available ||
+           !out_report->c13_timeline_byte_preservation_ok)))) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
@@ -3438,6 +3512,16 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.c13_byte_mismatch_count;
         receipt->c13_byte_preservation_ok =
             roundtrip.c13_byte_preservation_ok;
+        receipt->source_c13_timeline_reference_count =
+            roundtrip.source_c13_timeline_reference_count;
+        receipt->exported_c13_timeline_reference_count =
+            roundtrip.exported_c13_timeline_reference_count;
+        receipt->c13_timeline_byte_preserved_count =
+            roundtrip.c13_timeline_byte_preserved_count;
+        receipt->c13_timeline_byte_mismatch_count =
+            roundtrip.c13_timeline_byte_mismatch_count;
+        receipt->c13_timeline_byte_preservation_ok =
+            roundtrip.c13_timeline_byte_preservation_ok;
         if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
             roundtrip.core_state_matches) {
             receipt->exported_byte_count = (uint32_t)exported_size;

@@ -9,6 +9,15 @@
   replacement font, synthetic bitmap, or HoC-only assumption is used.
   Verification: focused Ninja build and CTest inscription capture suite.
 
+- 2026-07-13 DM1 PC34 C13 timeline-index preservation receipt: the C4
+  TIMELINE's source-owned two-byte EVENT reference is now verified alongside
+  the C13 EVENT record through F0435 -> F0433 -> F0435. An original C13 that
+  survives at the same index passes; a native F0435 heap rebuild that would
+  compact its index is explicitly rejected rather than exported as a changed
+  original save. Corpus rows retain the reference counts and result. Source:
+  ReDMCSB `LOADSAVE.C` F0433:1586-1589 and F0435:2781-2799. Verification:
+  focused original-save handoff CTest using native F0433 output only.
+
 - 2026-07-13 Theron authenticated input-order receipt: the live Mednafen
   transition sidecar now records the first observed host-key position and
   emulated PCE input transactions before and after it. A host event after the

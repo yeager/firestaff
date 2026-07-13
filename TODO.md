@@ -1160,6 +1160,13 @@ and real community-save corpus round-trip evidence.
     rebuilding. A truncated EVENT part or any C13 byte mismatch fails the
     round trip; no generic timer substitution is permitted. Remaining work
     is authentic community-save coverage and broader dungeon-tail import.
+  - 2026-07-13 update: C13's companion C4 TIMELINE record now has an
+    independent raw-16-bit-index receipt. ReDMCSB `LOADSAVE.C` F0433 writes
+    `EventMaximumCount * sizeof(int16_t)` and F0435 reads it before F0651;
+    Firestaff compares each active C13 index byte-for-byte after the native
+    handoff. A compacted, reordered, missing, or extra C13 reference fails
+    closed instead of being normalized into a new save layout. Remaining work
+    is authentic community-save coverage and broader dungeon-tail import.
   - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
     with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
     the corresponding exported C14 `EventIndex` without changing the live
