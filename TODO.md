@@ -508,6 +508,13 @@ add those rows only with runtime application coverage.
 
 ## Theron Authentic CD Trace Follow-up (2026-07-12)
 
+2026-07-13 live stage-two correction: the authentic US-CUE/System Card capture
+reaches loaded RAM and disassembles `$40cd` as `JSR $e009` and `$40a4` as
+`JSR $e00f`. `$4090` is instead `STA $fd` in the second table setup, not a
+System Card call. Retain these as raw execution facts only; capture the exact
+register/result/sector relationship for the two actual calls before assigning
+CD_READ, record, destination, bitmap, palette, object, or level semantics.
+
 The Mednafen trace harness now forces System Card 3.0 and the correct raw-CUE
 PCE route. It records reproducible CPU progress but still lacks the original
 target-PC snapshots required to select the IRQ2 hardware branch. Continue with
