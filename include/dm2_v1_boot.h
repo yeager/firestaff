@@ -269,6 +269,11 @@ typedef struct {
     int runtime_render_blocked_material_draw_count;
     uint32_t runtime_render_blocked_material_mask;
     int runtime_render_no_core_fallbacks;
+    /* Atomic source-required frame identity consumed by M11. */
+    int runtime_m11_frame_receipt_consumed;
+    uint32_t runtime_m11_frame_map_load_token;
+    uint32_t runtime_m11_frame_scene_control_hash;
+    uint32_t runtime_m11_frame_palette_hash;
 } DM2_V1_BootRuntimeRenderReceipt;
 
 typedef struct {
