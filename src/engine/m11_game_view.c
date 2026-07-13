@@ -6296,6 +6296,36 @@ static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
     }
 }
 
+/* ReDMCSB TIMELINE.C C11 calls F0253 when the saved action-enable event
+ * expires.  The event is already source-gated by DM1 original-save import:
+ * SlotOrdinal must be zero until the distinct F0259 quiver transfer has a
+ * complete runtime handoff. */
+static void m11_enable_champion_action_from_timeline(M11_GameViewState* state,
+                                                     int championIndex) {
+    int actionIndex;
+    if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    actionIndex = (int)state->actionDisabledIndex[championIndex];
+    state->actionDisabledTicks[championIndex] = 0u;
+    if (championIndex < state->world.party.championCount &&
+        actionIndex >= 0 && actionIndex < 44) {
+        DM1_ActionDefenseInputPc34 defenseIn;
+        DM1_ActionDefensePlanPc34 defensePlan;
+        memset(&defenseIn, 0, sizeof(defenseIn));
+        memset(&defensePlan, 0, sizeof(defensePlan));
+        defenseIn.actionIndex = actionIndex;
+        if (dm1_v1_action_defense_remove_plan_f0407_pc34(
+                &defenseIn, &defensePlan) && defensePlan.valid) {
+            state->world.party.champions[championIndex].actionDefense +=
+                defensePlan.defenseDelta;
+            state->world.party.champions[championIndex].actionIndex =
+                (unsigned char)defensePlan.resultingActionIndex;
+        }
+    }
+    state->pendingShootReadyHandRefill[championIndex] = 0u;
+    state->actionDisabledIndex[championIndex] = 0xFFu;
+    state->actionEnableSlotOrdinal[championIndex] = 0xFFu;
+}
+
 static void m11_materialize_action_lock(M11_GameViewState* state,
                                         int championIndex,
                                         int actionIndex,
@@ -10641,6 +10671,10 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
             case EMIT_ACTION_DISABLED:
                 m11_disable_champion_action_after_spell_f0412(
                     state, (int)e->payload[0], (int)e->payload[1]);
+                break;
+            case EMIT_ACTION_ENABLED:
+                m11_enable_champion_action_from_timeline(
+                    state, (int)e->payload[0]);
                 break;
             case EMIT_GAME_WON:
                 if (!state->gameWon) {

@@ -693,6 +693,8 @@ static int timeline_kind_from_original_pc34_event_type(int type)
         return TIMELINE_EVENT_DOOR_ANIMATE;
     case DM1_EVENT_DOOR_DESTRUCTION:
         return TIMELINE_EVENT_DOOR_DESTRUCTION;
+    case DM1_EVENT_ENABLE_CHAMPION_ACTION:
+        return TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
     case DM1_EVENT_MOVE_PROJECTILE:
     case DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS:
         return TIMELINE_EVENT_PROJECTILE_MOVE;
@@ -1145,6 +1147,15 @@ static int materialize_original_pc34_timeline(
         ev.mapIndex = (int)((src->map_time >> 24) & 0xffu);
         ev.aux0 = src->type;
         ev.aux4 = src->priority;
+        /* ReDMCSB TIMELINE.C C11 first clears the champion action lock,
+         * then conditionally moves a weapon from a quiver when SlotOrdinal
+         * is non-zero.  Firestaff has a source-locked live action-lock
+         * route, but no proven original quiver transfer handoff yet.  Do
+         * not silently reinterpret that byte as a generic inventory slot. */
+        if (src->type == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            src->c_cell != 0u) {
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+        }
         if (original_pc34_event_type_is_status_timeout(src->type)) {
             ev.aux1 = (int)read_u16_le(&src->b_mapX);
             ev.cell = src->c_cell;
@@ -1791,7 +1802,7 @@ int dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
     write_original_pc34_fixture_event(
         events + 2u * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
         DM1_MAP_TIME_MAKE(1, 123490u),
-        DM1_EVENT_LIGHT, 2, 0, 0, 0, 9);
+        DM1_EVENT_ENABLE_CHAMPION_ACTION, 2, 0, 0, 0, 0);
     write_u16_le(timeline + 0u, 1u);
     write_u16_le(timeline + 2u, 2u);
     write_u16_le(timeline + 4u, 0u);
