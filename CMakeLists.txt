@@ -23772,6 +23772,21 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND firestaff_theron_v1_runtime_trace_intake_probe
     )
 
+    add_executable(test_theron_v1_capture_manifest
+        tests/test_theron_v1_capture_manifest.c
+    )
+    target_link_libraries(test_theron_v1_capture_manifest PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_capture_manifest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_capture_manifest PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_capture_manifest
+        COMMAND test_theron_v1_capture_manifest
+    )
+
     add_executable(firestaff_theron_v1_stage3_irq2_media_probe
         probes/theron/firestaff_theron_v1_stage3_irq2_media_probe.c
     )

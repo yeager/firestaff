@@ -843,6 +843,11 @@ The live trace gate now rejects all incomplete or media-only inputs. It will
 accept only a complete Mednafen capture that preserves `$f5` from the `$4093`
 CD_READ return through `$e736`, records `$1802/$1803/$f2` at `$e742/$e74c`,
 and proves the resulting branch. No such original capture is staged yet.
+The external capture manifest is now parsed as a closed five-field binding:
+canonical lower-case MD5 values, control-free paths, exact field order, and no
+unbound trailing data. This strengthens provenance but is deliberately not a
+runtime handoff; only the complete dynamic Mednafen CD transaction can open
+that route.
 The completed stage-three record also now has physical MODE1/2352 provenance:
 JP record `$4df` carries BCD MSF `01:03:38`, US `$4e0` carries `00:58:57`,
 and both have the sync/mode-1/user-data envelope at byte 16. This identifies
