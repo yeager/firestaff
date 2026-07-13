@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin restored TT_12 hide-damage timer bridge: verified an
+  exact queue-slot/timer/event/champion receipt now clears the saved
+  hide-damage event index through the live queue. Malformed function-12
+  records are consumed before the shared event route. Source inventory and
+  status-panel redraw branches remain blocked because the restored profile
+  does not yet own the inventory-champion ordinal. Source: ReDMCSB
+  `TIMELINE.C F0254` lines 1614-1637 and C12 dispatch at 1933-1934; CSBWin
+  `CSBCode.cpp:6468`, `Timer.cpp:2644-2664`. Verification: Ninja and CTest
+  `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin restored TT_11 action-enable timer bridge: verified an
   exact queue-slot/timer/event/champion receipt now clears the source busy
   timer, disable-action bit, action-defense word, and action index for the
