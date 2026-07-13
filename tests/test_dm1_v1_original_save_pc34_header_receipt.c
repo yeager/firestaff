@@ -1,4 +1,5 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
+#include "memory_savegame_pc34_native_export_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
