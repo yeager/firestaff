@@ -23901,6 +23901,57 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND firestaff_theron_v1_irq2_live_trace_gate_probe
     )
 
+    add_executable(firestaff_theron_v1_raw_loader_trace_ingest_probe
+        probes/theron/firestaff_theron_v1_raw_loader_trace_ingest_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_raw_loader_trace_ingest_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_raw_loader_trace_ingest_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_raw_loader_trace_ingest_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_raw_loader_trace_ingest
+        COMMAND firestaff_theron_v1_raw_loader_trace_ingest_probe
+    )
+
+    add_executable(firestaff_theron_v1_raw_loader_trace_import_probe
+        probes/theron/firestaff_theron_v1_raw_loader_trace_import_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_raw_loader_trace_import_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_raw_loader_trace_import_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_raw_loader_trace_import_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_raw_loader_trace_import
+        COMMAND firestaff_theron_v1_raw_loader_trace_import_probe
+    )
+
+    add_executable(firestaff_theron_v1_capture_preflight_chain_probe
+        probes/theron/firestaff_theron_v1_capture_preflight_chain_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_capture_preflight_chain_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_capture_preflight_chain_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_capture_preflight_chain_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_capture_preflight_chain
+        COMMAND firestaff_theron_v1_capture_preflight_chain_probe
+    )
+
     add_executable(firestaff_theron_v1_runtime_trace_intake_probe
         probes/theron/firestaff_theron_v1_runtime_trace_intake_probe.c
     )

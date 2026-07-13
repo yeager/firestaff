@@ -1,8 +1,163 @@
 #include "theron_v1_raw_loader_trace.h"
-#include "theron_v1_track02.h"
-#include <string.h>
+
+#include "theron_v1_irq2_live_trace_gate.h"
+
 #include <stdio.h>
-int theron_v1_raw_loader_trace_ingest(const Theron_V1RawLoaderTraceRow *r,size_t n,size_t bytes,Theron_V1RawLoaderTraceReceipt*out){size_t i;int read=0,pal=0;if(out)memset(out,0,sizeof(*out));if(!r||!out||n<2||!bytes)return 0;for(i=0;i<n;i++){if(i&&r[i].sequence<=r[i-1].sequence)return 0;if(r[i].sector>bytes/THERON_TRACK02_RAW_SECTOR_BYTES||r[i].source_offset>=bytes)return 0;if(r[i].address>=0x1800u&&r[i].address<=0x1803u)read=1;if(read&&r[i].address>=0x0400u&&r[i].address<=0x0403u&&r[i].palette_bank<16u)pal=1;}if(!read||!pal)return 0;out->valid=1;out->palette_descriptor_relation_verified=1;return 1;}
-int theron_v1_raw_loader_trace_bind_bitmap_receipt(Theron_V1RawLoaderTraceReceipt *t,const Theron_StartupMediaStateReceipt*m){if(!t||!m||!t->valid||!t->palette_descriptor_relation_verified||!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(m)||!m->startup_bitmap_raw_route_mask||!m->startup_bitmap_atlas_checksum)return 0;t->bitmap_route_mask=m->startup_bitmap_raw_route_mask;t->bitmap_atlas_checksum=m->startup_bitmap_atlas_checksum;return 1;}
-int theron_v1_raw_loader_trace_import_file(const char*p,const char*md5,size_t bytes,Theron_V1RawLoaderTraceReceipt*out){FILE*f;char line[160],id[33];unsigned long sum,want=0;Theron_V1RawLoaderTraceRow rows[64];size_t n=0;uint64_t h=2166136261u;if(out)memset(out,0,sizeof(*out));if(!p||!md5||!out||(f=fopen(p,"r"))==NULL)return 0;if(!fgets(line,sizeof(line),f)||strcmp(line,"THERON_RAW_LOADER_TRACE_V1\n")||!fgets(line,sizeof(line),f)||sscanf(line,"track02_md5=%32s",id)!=1||strcmp(id,md5))goto bad;if(!fgets(line,sizeof(line),f)||sscanf(line,"checksum=%lx",&want)!=1)goto bad;while(fgets(line,sizeof(line),f)){Theron_V1RawLoaderTraceRow*r;if(n>=64||sscanf(line,"%llu %hx %x %zu %hx %hhu",(unsigned long long*)&rows[n].sequence,&rows[n].address,&rows[n].sector,&rows[n].source_offset,&rows[n].destination,&rows[n].palette_bank)!=6)goto bad;r=&rows[n++];h=(h^r->sequence)*16777619u;h=(h^r->address)*16777619u;h=(h^r->sector)*16777619u;h=(h^r->source_offset)*16777619u;}fclose(f);sum=h;if(sum!=want)return 0;if(!theron_v1_raw_loader_trace_ingest(rows,n,bytes,out))return 0;snprintf(out->track02_md5,sizeof(out->track02_md5),"%s",md5);return 1;bad:fclose(f);return 0;}
-int theron_v1_raw_loader_trace_final_bind(const Theron_V1RawLoaderTraceReceipt*t,const Theron_StartupMediaStateReceipt*m,Theron_V1RawLoaderTraceReceipt*out){if(out)memset(out,0,sizeof(*out));if(!t||!m||!out||!t->valid||!t->palette_descriptor_relation_verified||strcmp(t->track02_md5,m->track02_md5)||!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(m))return 0;*out=*t;out->bitmap_route_mask=m->startup_bitmap_raw_route_mask;out->bitmap_atlas_checksum=m->startup_bitmap_atlas_checksum;return out->bitmap_route_mask&&out->bitmap_atlas_checksum;}
+#include <stdlib.h>
+#include <string.h>
+
+#define THERON_V1_RAW_LOADER_TRACE_MAX_BYTES (1024u * 1024u)
+
+static int tqr_trace_next_line(const char **cursor,
+                               const char **out_line,
+                               size_t *out_length)
+{
+    const char *line;
+    const char *end;
+
+    if (!cursor || !*cursor || !out_line || !out_length) return 0;
+    line = *cursor;
+    if (!line[0]) return 0;
+    end = strchr(line, '\n');
+    *out_line = line;
+    *out_length = end ? (size_t)(end - line) : strlen(line);
+    *cursor = end ? end + 1 : line + *out_length;
+    return 1;
+}
+
+static int tqr_trace_parse_palette_store(const char *line, size_t length,
+                                         unsigned int *out_pc,
+                                         unsigned int *out_address,
+                                         unsigned int *out_accumulator)
+{
+    int consumed = 0;
+    unsigned int physical_pc;
+    unsigned int opcode;
+
+    if (!line || !out_pc || !out_address || !out_accumulator) return 0;
+    return sscanf(line,
+                  "dynamic_huc6260_palette_store pc=%x physical_pc=%x opcode=%x address=%x accumulator=%x%n",
+                  out_pc, &physical_pc, &opcode, out_address, out_accumulator,
+                  &consumed) == 5 &&
+           consumed == (int)length && *out_pc <= 0xffffu &&
+           physical_pc <= 0xffffffffu && opcode == 0x8du &&
+           *out_address >= 0x0402u && *out_address <= 0x0405u &&
+           *out_accumulator <= 0xffu;
+}
+
+int theron_v1_raw_loader_trace_ingest_mednafen_capture(
+    const char *capture,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceReceipt *out)
+{
+    Theron_V1Irq2LiveTrace live_trace;
+    const char *cursor;
+    const char *line;
+    size_t length;
+    const char *dynamic_read;
+    unsigned int pc;
+    unsigned int address;
+    unsigned int accumulator;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!capture || !track02_md5 || !out ||
+        !theron_v1_irq2_live_trace_from_mednafen_capture(capture,
+                                                          &live_trace)) {
+        return 0;
+    }
+    if ((live_trace.variant == THERON_TRACK02_VARIANT_JP_BIN &&
+         strcmp(track02_md5, THERON_TRACK02_MD5_JP_BIN) != 0) ||
+        (live_trace.variant == THERON_TRACK02_VARIANT_US_BIN &&
+         strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0)) {
+        return 0;
+    }
+
+    dynamic_read = strstr(capture, "dynamic_cd_read_transaction ");
+    if (!dynamic_read) return 0;
+    cursor = dynamic_read;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (length < strlen("dynamic_huc6260_palette_store ") ||
+            memcmp(line, "dynamic_huc6260_palette_store ",
+                   strlen("dynamic_huc6260_palette_store ")) != 0) {
+            continue;
+        }
+        if (!tqr_trace_parse_palette_store(line, length, &pc, &address,
+                                           &accumulator)) {
+            return 0;
+        }
+        ++out->palette_store_count;
+        out->palette_register_mask |= 1u << (address - 0x0402u);
+        if (out->palette_store_count == 1u) {
+            out->first_palette_store_pc = (uint16_t)pc;
+            out->first_palette_store_accumulator = (uint8_t)accumulator;
+        }
+    }
+    if (out->palette_store_count == 0u) return 0;
+
+    out->valid = 1;
+    out->variant = live_trace.variant;
+    out->dynamic_cd_read_record = live_trace.stage3_track02_record;
+    out->dynamic_cd_read_destination = 0x3800u;
+    out->dynamic_cd_read_verified = 1;
+    out->palette_store_observed_after_dynamic_read = 1;
+    /* The current emulator receipt has no source-byte provenance. */
+    out->palette_descriptor_relation_verified = 0;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_import_mednafen_capture_file(
+    const char *path,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceReceipt *out)
+{
+    FILE *file;
+    long size;
+    char *capture;
+    int result;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!path || !track02_md5 || !out || !(file = fopen(path, "rb"))) {
+        return 0;
+    }
+    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+        (size_t)size > THERON_V1_RAW_LOADER_TRACE_MAX_BYTES ||
+        fseek(file, 0L, SEEK_SET) != 0 ||
+        !(capture = (char *)malloc((size_t)size + 1u))) {
+        fclose(file);
+        return 0;
+    }
+    if (fread(capture, 1u, (size_t)size, file) != (size_t)size) {
+        fclose(file);
+        free(capture);
+        return 0;
+    }
+    fclose(file);
+    capture[size] = '\0';
+    result = theron_v1_raw_loader_trace_ingest_mednafen_capture(
+        capture, track02_md5, out);
+    free(capture);
+    return result;
+}
+
+int theron_v1_raw_loader_trace_final_bind(
+    const Theron_V1RawLoaderTraceReceipt *trace,
+    const Theron_StartupMediaStateReceipt *media,
+    Theron_V1RawLoaderTraceReceipt *out)
+{
+    if (out) memset(out, 0, sizeof(*out));
+    if (!trace || !media || !out || !trace->valid ||
+        !trace->dynamic_cd_read_verified ||
+        !trace->palette_store_observed_after_dynamic_read ||
+        strcmp(trace->track02_md5, media->track02_md5) != 0 ||
+        trace->variant != (Theron_Track02Variant)media->track02_variant ||
+        !theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(media) ||
+        !media->startup_bitmap_raw_route_mask ||
+        !media->startup_bitmap_atlas_checksum) {
+        return 0;
+    }
+    *out = *trace;
+    out->bitmap_route_mask = media->startup_bitmap_raw_route_mask;
+    out->bitmap_atlas_checksum = media->startup_bitmap_atlas_checksum;
+    return 1;
+}

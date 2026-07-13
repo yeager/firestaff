@@ -11601,6 +11601,19 @@
 
 ### Theron V1
 
+- ✅ 2026-07-13 Theron Track02 real loader-trace boundary: replaced the
+  hand-authored raw I/O-row importer with a strict parser for the existing
+  provenance-marked Mednafen dynamic `CD_READ`/IRQ2 receipt. It checks the
+  JP/US MD5-to-record pairing, records only HuC6260 stores after that read,
+  and carries the compatible real startup-bitmap receipt forward. A VCE store
+  is explicitly not source-byte taint, so the parser cannot verify a palette
+  descriptor relation or unlock rendering; incomplete, mismatched, or
+  uninstrumented traces fail closed. Added registered CTest probes for trace
+  ingestion and preflight binding. Verification: Ninja plus focused CTest
+  `theron_v1_irq2_live_trace_gate`, `theron_v1_raw_loader_trace_ingest`,
+  `theron_v1_raw_loader_trace_import`, `theron_v1_capture_preflight_chain`,
+  and `theron_v1_capture_manifest`.
+
 - ✅ 2026-07-05 Theron V1 probe-registration hygiene gate: added `tools/verify_theron_v1_probe_registration.py` and CTest `theron_v1_probe_registration_hygiene`. The gate requires every `probes/theron/*.c` file to be referenced from `CMakeLists.txt` and rejects the obsolete descriptor-entry API tokens that caused the stale unregistered semantic probe cleanup. Verification: CMake reconfigure succeeded; direct Python verifier passed (`17 Theron probe sources are registered`); focused CTest for startup receipt, M11 direct launch, descriptor-entry roles, and probe-registration hygiene passed 4/4.
 - ✅ 2026-07-05 Theron V1 stale descriptor-entry semantic probe cleanup: removed the unregistered `firestaff_theron_v1_track02_descriptor_entry_semantic_probe.c`, which referenced obsolete descriptor-entry API names and was not wired into CMake/CTest. The live coverage remains in `firestaff_theron_v1_track02_descriptor_entry_roles_probe` plus the startup receipt descriptor-role summary. Verification: no remaining old-symbol references; targeted build passed; focused CTest for descriptor-entry roles, startup receipt, and M11 direct launch passed 3/3; direct descriptor-entry roles and startup receipt probes passed with local Track 02 data.
 - ✅ 2026-07-05 Theron V1 startup receipt descriptor-role summary: `Theron_V1_StartupReceipt` now records a bounded 9-entry Track 02 descriptor-role summary from `theron_v1_track02_bind_descriptor_entry_roles()`: zero-fill count, pre/post descriptor-data counts, descriptor-table count, descriptor-window entry index, byte-before-descriptor, RTS marker, first nonzero byte after descriptor, and all-zero-after marker. The real-asset receipt probe now locks placeholder defaults plus real JP/US BIN receipts with exactly one descriptor-table role and nine total classified entries. Verification: targeted build passed; `firestaff_theron_v1_startup_real_asset_receipt_probe` passed 128/128 with local JP/US Track 02 BIN data; focused CTest for receipt + M11 direct launch passed 2/2; headless Theron launch against `~/.firestaff/data` passed. Honest scope: descriptor byte-role receipt only; no Track 02 startup bitmap/audio decode or per-dungeon semantic promotion.
