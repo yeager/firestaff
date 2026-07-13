@@ -4047,6 +4047,83 @@ int nexus_v1_dgn_bind_structure1a_owned_cell_sources(
     return 0;
 }
 
+int nexus_v1_dgn_bind_structure1a_structure3_topology_candidates(
+    const Nexus_V1_Level *level,
+    const Nexus_V1_DgnStructure1FStructure1ACommandSource *sources,
+    int source_count,
+    Nexus_V1_DgnStructure1AStructure3TopologyCandidate *out_candidates,
+    int max_candidates,
+    Nexus_V1_DgnStructure1AStructure3TopologyCandidateReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1AStructure3TopologyCandidateReceipt receipt;
+    int source_index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.fallback_visuals_permitted = 0;
+    if (!level || !sources || source_count < 0 || !out_candidates ||
+        max_candidates < 0) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    if (!level->structure3_payload.declared ||
+        !level->structure3_payload.valid ||
+        level->structure3_payload.block_count <= 0 ||
+        level->structure3_payload.byte_size <= 0 ||
+        level->structure3_payload.complete_block_count !=
+            level->structure3_payload.block_count) {
+        receipt.blocked_payload_count = source_count;
+        *out_receipt = receipt;
+        return 0;
+    }
+    for (source_index = 0; source_index < source_count; ++source_index) {
+        const Nexus_V1_DgnStructure1FStructure1ACommandSource *source =
+            &sources[source_index];
+        Nexus_V1_DgnStructure1AStructure3TopologyCandidate *candidate;
+
+        ++receipt.owner_cell_source_count;
+        if (source->command_index < 0 || source->entry_index < 0 ||
+            source->entry_index >= level->structure1f_entry_count ||
+            !source->entry.structure1a_relation_valid ||
+            source->owner_x != source->entry.structure1a_owner_x ||
+            source->owner_y != source->entry.structure1a_owner_y ||
+            source->structure3_model_index !=
+                source->entry.structure1a_structure3_model_index ||
+            source->z_rotation != source->entry.structure1a_z_rotation) {
+            ++receipt.blocked_invalid_source_count;
+            continue;
+        }
+        if (receipt.topology_candidate_count >= max_candidates) {
+            ++receipt.blocked_invalid_source_count;
+            continue;
+        }
+        candidate = &out_candidates[receipt.topology_candidate_count++];
+        memset(candidate, 0, sizeof(*candidate));
+        candidate->command_index = source->command_index;
+        candidate->entry_index = source->entry_index;
+        candidate->owner_x = source->owner_x;
+        candidate->owner_y = source->owner_y;
+        candidate->structure3_model_index = source->structure3_model_index;
+        candidate->z_rotation = source->z_rotation;
+        candidate->structure3_block_offset =
+            level->structure3_payload.block_offset;
+        candidate->structure3_block_count =
+            level->structure3_payload.block_count;
+        candidate->structure3_byte_size = level->structure3_payload.byte_size;
+        candidate->structure3_raw_payload_hash =
+            level->structure3_payload.raw_payload_hash;
+        candidate->model_ordinal_proven = 0;
+        candidate->face_semantics_proven = 0;
+        candidate->draw_authorized = 0;
+    }
+    receipt.complete = receipt.owner_cell_source_count > 0 &&
+        receipt.topology_candidate_count == receipt.owner_cell_source_count &&
+        receipt.blocked_invalid_source_count == 0 &&
+        receipt.blocked_payload_count == 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
                                      int source_hash_verified,
                                      Nexus_V1_ItemIbsBank *out_bank)

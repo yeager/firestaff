@@ -1198,6 +1198,35 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure1FStructure1ACommandSourceReceipt;
 
+/* A Structure1A model index reaches the level's bounded Structure3 payload
+ * through the verified owner-cell source. The payload has no proven model
+ * ordinal, face grammar, material or pixel codec, so this is an unresolved
+ * topology candidate only and can never authorize a draw. */
+typedef struct {
+    int command_index;
+    int entry_index;
+    int owner_x;
+    int owner_y;
+    uint8_t structure3_model_index;
+    uint8_t z_rotation;
+    int structure3_block_offset;
+    int structure3_block_count;
+    int structure3_byte_size;
+    uint32_t structure3_raw_payload_hash;
+    int model_ordinal_proven;
+    int face_semantics_proven;
+    int draw_authorized;
+} Nexus_V1_DgnStructure1AStructure3TopologyCandidate;
+
+typedef struct {
+    int owner_cell_source_count;
+    int topology_candidate_count;
+    int blocked_invalid_source_count;
+    int blocked_payload_count;
+    int complete;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure1AStructure3TopologyCandidateReceipt;
+
 /* Exact Structure1G -> Structure2 -> DGN floor-command provenance. The
  * descriptor fields retain raw original values only: Structure2's payload
  * grammar, palette layout, pixel codec and animation timing remain unproved,
@@ -1645,6 +1674,15 @@ int nexus_v1_dgn_bind_structure1a_owned_cell_sources(
     Nexus_V1_DgnStructure1FStructure1ACommandSource *out_sources,
     int max_sources,
     Nexus_V1_DgnStructure1FStructure1ACommandSourceReceipt *out_receipt);
+/* Retains bounded Structure3 payload identity beside each verified owner-cell
+ * source. It must not infer a model ordinal, mesh face, material or draw. */
+int nexus_v1_dgn_bind_structure1a_structure3_topology_candidates(
+    const Nexus_V1_Level *level,
+    const Nexus_V1_DgnStructure1FStructure1ACommandSource *sources,
+    int source_count,
+    Nexus_V1_DgnStructure1AStructure3TopologyCandidate *out_candidates,
+    int max_candidates,
+    Nexus_V1_DgnStructure1AStructure3TopologyCandidateReceipt *out_receipt);
 /* Binds a declared animated floor's verified local Structure2 descriptor to
  * the exact DGN floor command. It emits raw descriptor provenance only and
  * remains fail-closed until an original Saturn payload/VDP1 decoder exists. */

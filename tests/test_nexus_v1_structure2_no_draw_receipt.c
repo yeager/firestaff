@@ -40,6 +40,9 @@ int main(void) {
         engine.dgn_material_plan.structure1a_owned_cell_source_receipt
             .floor_command_source_count != 0 ||
         engine.dgn_material_plan.structure1a_owned_cell_sources_consumed ||
+        engine.dgn_material_plan.structure1a_structure3_topology_candidate_receipt
+            .topology_candidate_count != 0 ||
+        engine.dgn_material_plan.structure1a_structure3_topology_candidates_consumed ||
         engine.dgn_material_plan.receipt.fallback_visuals_permitted) {
         fprintf(stderr, "Incomplete DGN data did not produce a no-draw plan\n");
         return 1;
