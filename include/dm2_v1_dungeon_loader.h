@@ -162,6 +162,33 @@ typedef struct {
     DM2_V1_G1TextRoot texts[DM2_V1_G1_MAP5_MAX_TEXT_ROOTS];
 } DM2_V1_G1Map5TextRuntimeReceipt;
 
+/* Source-decoded subset of skproject QUERY_MESSAGE_TEXT.  The PC G1
+ * dungeon owns only TextMode==0 strings in dunTextData; mode-one messages
+ * may refer to GDAT's MESSAGE bank and deliberately stay outside this
+ * receipt.  Phrase-bank control codes 29/30 are rejected until their source
+ * tables are independently decoded, rather than replaced with guessed text. */
+#define DM2_V1_G1_TEXT_MESSAGE_MAX 16
+#define DM2_V1_G1_TEXT_MESSAGE_CHARS 192
+
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint16_t text_index;
+    uint16_t source_word_count;
+    char text[DM2_V1_G1_TEXT_MESSAGE_CHARS];
+} DM2_V1_G1TextMessage;
+
+typedef struct {
+    int valid;
+    int map;
+    int source_text_root_count;
+    int decoded_message_count;
+    int blocked_phrase_message_count;
+    int skipped_non_dungeon_message_count;
+    DM2_V1_G1TextMessage messages[DM2_V1_G1_TEXT_MESSAGE_MAX];
+} DM2_V1_G1TextMessageRuntimeReceipt;
+
 #define DM2_V1_G1_TEXT_WALL_GFX_MAX 16
 
 /* A source-bound DB2 Text root which skproject dispatches as a WALL_GFX
@@ -503,6 +530,15 @@ int dm2_v1_dungeon_materialize_g1_first_map_runtime(
 int dm2_v1_dungeon_materialize_g1_map5_text_runtime(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1Map5TextRuntimeReceipt *out);
+
+/* Decode only visible, direct map-5 TextMode==0 dunTextData messages using
+ * skproject SKWIN/SkWinCore.cpp QUERY_MESSAGE_TEXT.  The input must be the
+ * committed map-5 receipt; unknown phrase-bank escapes fail closed per
+ * message. */
+int dm2_v1_dungeon_materialize_g1_map5_text_messages(
+    const DM2_V1_DungeonData *d,
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1TextMessageRuntimeReceipt *out);
 
 /* Consumes only direct DB2 TextMode()==1 roots already materialized by the
  * G1 map-5 receipt, which must report zero generic or blocked record reads.

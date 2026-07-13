@@ -166,6 +166,10 @@ int dm2_v1_runtime_g1_map0_teleporter_transition_receipt(
  * It exposes no text bytes, GenericRecord::w0 links, or non-DB2 records. */
 int dm2_v1_runtime_g1_map5_text_receipt(
     DM2_V1_G1Map5TextRuntimeReceipt *out_receipt);
+/* Visible DB2 TextMode==0 strings decoded from the original G1 text table.
+ * Mode-one GDAT messages and unknown phrase-bank escapes are not fabricated. */
+int dm2_v1_runtime_g1_map5_text_message_receipt(
+    DM2_V1_G1TextMessageRuntimeReceipt *out_receipt);
 int dm2_v1_runtime_g1_map5_text_wall_gfx_receipt(
     DM2_V1_G1TextWallGfxRuntimeReceipt *out_receipt);
 int dm2_v1_runtime_g1_actuator_wall_gfx_receipt(

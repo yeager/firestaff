@@ -1338,6 +1338,112 @@ int dm2_v1_dungeon_materialize_g1_map5_text_runtime(
     return 1;
 }
 
+static int dm2_v1_g1_decode_dungeon_text(
+    const DM2_V1_DungeonData *d,
+    uint16_t text_index,
+    char out_text[DM2_V1_G1_TEXT_MESSAGE_CHARS],
+    uint16_t *out_word_count)
+{
+    int word_index;
+    int output = 0;
+
+    if (!d || !out_text || !out_word_count || !d->raw_data ||
+        d->text_data_base < 0 || d->text_word_count <= 0 ||
+        text_index >= (uint16_t)d->text_word_count) {
+        return 0;
+    }
+    out_text[0] = '\0';
+    *out_word_count = 0u;
+    for (word_index = (int)text_index;
+         word_index < d->text_word_count;
+         ++word_index) {
+        const uint8_t *word_ptr = d->raw_data + d->text_data_base +
+                                  word_index * 2;
+        uint16_t word;
+        int groups[3];
+
+        if (word_ptr < d->raw_data || word_ptr + 2 > d->raw_data + d->raw_size ||
+            word_index - (int)text_index >= UINT16_MAX) {
+            return 0;
+        }
+        /* skproject QUERY_MESSAGE_TEXT: dunTextData is host-endian U16 in
+         * memory after the file loader's little-endian read. */
+        word = RD16(word_ptr);
+        groups[0] = (word >> 10) & 0x1f;
+        groups[1] = (word >> 5) & 0x1f;
+        groups[2] = word & 0x1f;
+        for (int group = 0; group < 3; ++group) {
+            int code = groups[group];
+            char c;
+
+            if (code == 31) {
+                out_text[output] = '\0';
+                *out_word_count = (uint16_t)(word_index - (int)text_index + 1);
+                return output > 0;
+            }
+            /* Codes 29 and 30 expand through skproject's private phrase
+             * banks (_4976_0362/_4976_0262).  Do not substitute text. */
+            if (code == 29 || code == 30 || output + 1 >= DM2_V1_G1_TEXT_MESSAGE_CHARS) {
+                return 0;
+            }
+            if (code < 26) c = (char)('A' + code);
+            else if (code == 26) c = ' ';
+            else if (code == 27) c = '.';
+            else if (code == 28) c = '\n';
+            else return 0;
+            out_text[output++] = c;
+        }
+    }
+    return 0;
+}
+
+int dm2_v1_dungeon_materialize_g1_map5_text_messages(
+    const DM2_V1_DungeonData *d,
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1TextMessageRuntimeReceipt *out)
+{
+    DM2_V1_G1TextMessageRuntimeReceipt candidate;
+    int i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !texts || !texts->committed || !texts->incomplete_world ||
+        texts->map != 5 || texts->generic_record_reads != 0 ||
+        texts->blocked_record_reads != 0 || texts->text_root_count < 0 ||
+        texts->text_root_count > DM2_V1_G1_MAP5_MAX_TEXT_ROOTS) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.map = texts->map;
+    candidate.source_text_root_count = texts->text_root_count;
+    for (i = 0; i < texts->text_root_count; ++i) {
+        const DM2_V1_G1TextRoot *root = &texts->texts[i];
+        DM2_V1_G1TextMessage *message;
+
+        if (!root->visible) continue;
+        if (root->mode != 0u) {
+            ++candidate.skipped_non_dungeon_message_count;
+            continue;
+        }
+        if (candidate.decoded_message_count >= DM2_V1_G1_TEXT_MESSAGE_MAX) return 0;
+        message = &candidate.messages[candidate.decoded_message_count];
+        if (!dm2_v1_g1_decode_dungeon_text(d, root->text_index, message->text,
+                                            &message->source_word_count)) {
+            ++candidate.blocked_phrase_message_count;
+            memset(message, 0, sizeof(*message));
+            continue;
+        }
+        message->x = root->x;
+        message->y = root->y;
+        message->object_id = root->object_id;
+        message->text_index = root->text_index;
+        ++candidate.decoded_message_count;
+    }
+    candidate.valid = 1;
+    *out = candidate;
+    return 1;
+}
+
 typedef struct {
     uint16_t colorkey;
     uint16_t position;

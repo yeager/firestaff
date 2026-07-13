@@ -9404,3 +9404,16 @@ CTest group, 5/5 passed.
 - `test_nexus_v1_dmdf_embedded_blocks` covers the structurally valid but
   out-of-bank source-ID rejection and passes against both local canonical
   `SN_FLOOR.MNS` and `SN_WALL.MNS` assets.
+
+# ✅ 2026-07-13 DM2 G1 DB2 dungeon-text decoding
+
+DM2 V1 now consumes the original PC G1 direct DB2 `TextMode()==0` text-table
+route from skproject `SkWinCore.cpp QUERY_MESSAGE_TEXT` (0CEE:159B): visible
+map-5 `Text::TextIndex()` values decode three 5-bit glyphs per little-endian
+`dunTextData` word until the source terminator. The runtime receipt retains
+the source map position and ObjectID for later interaction presentation.
+Mode-one GDAT message rows and private phrase-bank escapes 29/30 explicitly
+remain unavailable, with no generated replacement text. Verification:
+`test_dm2_v1_g1_text_message_runtime` checks literal decoding, source
+placement, phrase-bank rejection, GDAT-only skip, and untrusted-receipt
+rejection.
