@@ -435,8 +435,11 @@ ReDMCSB WIP 2021-02-06 source tree.
   when the party is elsewhere; listed-Thing and DSA-owned targets remain
   mutation-blocked. TT_OPENROOM now retains only a single DSA-free DB2 text
   visibility update outside the party square; DSA/mixed lists and the HUD
-  print route remain mutation-blocked. TT_DOOR now retains the exact
-  same-time TT_1 handoff only when its saved square has no type-47 owner;
+  print route remain mutation-blocked. TT_STONEROOM now retains only a sole
+  DSA-free, position-matched DB2 text visibility update; DSA/mixed lists,
+  actuator arms, and endgame remain mutation-blocked. TT_DOOR now retains
+  the exact same-time TT_1 handoff only when its saved square has no type-47
+  owner;
   type-47 squares still reach only their pre-requeue ActivateDSA receipt and
   door cell changes remain blocked. TT_DESSAGE reaches only its
   zero-parameter type-47 OPENROOM receipt; text/cell/other-actuator effects
