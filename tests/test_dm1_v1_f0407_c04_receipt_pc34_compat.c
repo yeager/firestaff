@@ -33,7 +33,10 @@ int main(void)
     int swingRow = -1;
     int i;
     int sawNativeC20 = 0;
+    int timelineCountBeforeInvalidOwner;
     struct TickResult_Compat dispatchResult;
+    struct TickInput_Compat invalidOwnerInput;
+    struct TimelineEvent_Compat invalidOwnerC11;
 
     memset(&state, 0, sizeof(state));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -136,5 +139,43 @@ int main(void)
     assert(F0887_ORCH_DispatchTimelineEvents_Compat(
                &state.world, &dispatchResult) == 2);
     assert((squareData[(1 * 3) + 2] & 0x07) == 5);
+
+    /* MENU.C F0391/F0407 acts on a Party.Champion ordinal.  A stale save
+     * must not turn populated storage beyond ChampionCount into a C04/C11
+     * action owner. */
+    state.world.party.champions[1] = state.world.party.champions[0];
+    timelineCountBeforeInvalidOwner = state.world.timeline.count;
+    memset(&invalidOwnerInput, 0, sizeof(invalidOwnerInput));
+    invalidOwnerInput.command = CMD_ATTACK;
+    invalidOwnerInput.commandArg1 = 1;
+    invalidOwnerInput.commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+    invalidOwnerInput.reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
+    invalidOwnerInput.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+        DM1_ACTION_SWING |
+        CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
+        ((unsigned int)DIR_SOUTH << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT);
+    assert(F0888_ORCH_ApplyPlayerInput_Compat(
+               &state.world, &invalidOwnerInput, &dispatchResult) == 1);
+    assert(state.world.timeline.count == timelineCountBeforeInvalidOwner);
+    assert(DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
+               &state.world, 1, 6) == 0);
+    assert(DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
+               &state.world, 1) == 0);
+
+    memset(&invalidOwnerC11, 0, sizeof(invalidOwnerC11));
+    invalidOwnerC11.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
+    invalidOwnerC11.fireAtTick = state.world.gameTick;
+    invalidOwnerC11.mapIndex = state.world.party.mapIndex;
+    invalidOwnerC11.mapX = state.world.party.mapX;
+    invalidOwnerC11.mapY = state.world.party.mapY;
+    invalidOwnerC11.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    invalidOwnerC11.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    invalidOwnerC11.aux4 = 1;
+    assert(F0721_TIMELINE_Schedule_Compat(
+               &state.world.timeline, &invalidOwnerC11) == 1);
+    memset(&dispatchResult, 0, sizeof(dispatchResult));
+    assert(F0887_ORCH_DispatchTimelineEvents_Compat(
+               &state.world, &dispatchResult) == 1);
+    assert(dispatchResult.emissionCount == 0);
     return 0;
 }

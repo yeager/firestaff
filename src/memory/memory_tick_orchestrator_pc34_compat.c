@@ -4260,7 +4260,7 @@ int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
     int i;
 
     if (!world || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
-        ticks <= 0) {
+        championIndex >= world->party.championCount || ticks <= 0) {
         return 0;
     }
     targetTick = world->gameTick + (uint32_t)ticks;
@@ -4309,7 +4309,8 @@ int DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
     int found = -1;
     int i;
 
-    if (!world || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) {
+    if (!world || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        championIndex >= world->party.championCount) {
         return 0;
     }
     /* ReDMCSB MENU.C F0407:1613-1617 reaches this only after F0328 has
@@ -4546,7 +4547,8 @@ static int orch_cmd_attack_f0407_closed_door_compat(
     }
     door = &world->things->doors[doorIndex];
     if ((int)input->commandArg1 < 0 ||
-        (int)input->commandArg1 >= CHAMPION_MAX_PARTY) {
+        (int)input->commandArg1 >= CHAMPION_MAX_PARTY ||
+        (int)input->commandArg1 >= world->party.championCount) {
         return 1;
     }
     champion = &world->party.champions[(int)input->commandArg1];
@@ -10073,6 +10075,13 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
         int weaponClass;
         DM1_MeleeF0402WeaponAvailabilityInputPc34 availabilityIn;
         DM1_MeleeF0402WeaponAvailabilityPlanPc34 availabilityPlan;
+        /* ReDMCSB MENU.C F0391/F0407 receives a selected Party.Champion
+         * ordinal, not an arbitrary Champion[] slot.  Reject a populated
+         * out-of-party slot before it can create F0407 C04/C11 receipts. */
+        if ((int)input->commandArg1 >= CHAMPION_MAX_PARTY ||
+            (int)input->commandArg1 >= world->party.championCount) {
+            return 1;
+        }
         int hasWeaponInfo = F0888_ORCH_GetChampionActionHandWeaponInfo_Compat(
             world, (int)input->commandArg1, &weaponInfo) > 0;
         memset(&decodeIn, 0, sizeof(decodeIn));
@@ -10881,6 +10890,7 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             if (ev.aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
                 ev.aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
                 ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&
+                ev.aux4 < world->party.championCount &&
                 world->party.champions[ev.aux4].present &&
                 (ev.aux1 == 0 || ev.aux1 == 2)) {
                 /* Preserve B.SlotOrdinal for M11.  It must run the source
