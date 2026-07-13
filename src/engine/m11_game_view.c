@@ -21799,6 +21799,11 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
                                            int sourceZoneRow) {
     int ii;
     const int alcoveCellRelativeToParty = 2;
+    (void)framebuffer;
+    (void)fbW;
+    (void)fbH;
+    (void)blit;
+    (void)sourceZoneRow;
     if (!state || !cell || !blit || cell->floorItemCount <= 0) {
         return;
     }
@@ -21810,21 +21815,24 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
      * requiring an open floor square, so only the object on the alcove
      * sub-cell is visible in square/Vi/arched alcoves. */
     for (ii = 0; ii < cell->floorItemCount; ++ii) {
+        DM1_F0115AlcoveItemMaterialPlanPc34 material;
         if (cell->floorItemTypes[ii] < 0 ||
             cell->floorItemCells[ii] != alcoveCellRelativeToParty) {
             continue;
         }
-        (void)m11_draw_item_sprite(state, framebuffer, fbW, fbH,
-                                  M11_VIEWPORT_X + blit->dstX,
-                                  M11_VIEWPORT_Y + blit->dstY,
-                                  blit->width,
-                                  blit->height,
-                                  cell->floorItemTypes[ii],
-                                  cell->floorItemSubtypes[ii],
-                                  cell->floorItemCells[ii],
-                                  ii,
-                                  cell->relForward,
-                                  sourceZoneRow);
+        if (!dm1_v1_f0115_alcove_item_material_plan_pc34(
+                &material, cell->floorItemTypes[ii], cell->floorItemSubtypes[ii],
+                cell->relForward, cell->relSide, cell->floorItemCells[ii])) {
+            continue;
+        }
+        /* ReDMCSB F0115 reaches F0791 through C2548, not the ordinary
+         * C2500 placement consumed by m11_draw_item_sprite().  Until the
+         * original PC34 C2548 layout record is bound, drawing this candidate
+         * would place it in the wrong lane and can show a chest/item in midair.
+         * Fail closed: no substitute geometry, font, or bitmap is permitted. */
+        if (!material.coordinate_binding_ready) {
+            continue;
+        }
     }
 }
 
