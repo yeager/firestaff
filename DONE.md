@@ -98,6 +98,16 @@
   source candidate is rebuilt only in tail slot 2. Source: ReDMCSB `REVIVE.C`
   F0280 and F0282:744-845. Verification: focused CTest against installed
    PC34 data.
+- 2026-07-13 DM1 C38 PC34 diagonal ranged attack: restored the
+  `MEDIA720_I34E/I34M` source branch for visible diagonal targets. A
+  range-greater-than-one creature consumes `M003_RANDOM(8)` before the
+  normal `M003_RANDOM(16)` attack gate, while melee and aligned attacks keep
+  their original random sequence. The focused C38 dispatch regression uses
+  the original G0243 Red Dragon range/sight/dexterity values and proves a
+  real fireball receipt can be produced diagonally. Source: ReDMCSB
+  `GROUP.C` F0209:2380-2387 and `DUNGEON.C` G0243[24]. Verification:
+  `test_dm1_v1_creature_ai_behavior_pc34_compat`.
+
 - 2026-07-13 DM1 F0107/F0128 viewport-inscription receipt: introduced a
   DM1-owned clear-first receipt for each viewport tuple. It carries exact
   F0168-decoded M648 glyph material and C10 only for the current readable D1C
