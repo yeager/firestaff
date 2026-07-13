@@ -4126,6 +4126,16 @@ int nexus_v1_dgn_bind_structure1a_structure3_topology_candidates(
             ++receipt.blocked_invalid_source_count;
             continue;
         }
+        if (!level->structure1a_table_valid ||
+            entry->structure1a_index >=
+                (uint16_t)level->structure1a_model_count ||
+            level->structure1a_models[entry->structure1a_index]
+                    .structure3_model_index != source->structure3_model_index ||
+            level->structure1a_models[entry->structure1a_index].z_rotation !=
+                source->z_rotation) {
+            ++receipt.blocked_invalid_source_count;
+            continue;
+        }
         if (receipt.topology_candidate_count >= max_candidates) {
             ++receipt.blocked_invalid_source_count;
             continue;
@@ -4143,6 +4153,19 @@ int nexus_v1_dgn_bind_structure1a_structure3_topology_candidates(
         candidate->structure1f_binding_proven = 1;
         candidate->structure1f_face_selector_semantics_proven = 0;
         ++receipt.structure1f_binding_count;
+        candidate->structure1a_kind =
+            level->structure1a_models[entry->structure1a_index].kind;
+        candidate->structure1a_row_binding_proven = 1;
+        candidate->structure1a_kind_semantics_proven = 0;
+        ++receipt.structure1a_row_binding_count;
+        candidate->structure1a_structure3_model_index =
+            level->structure1a_models[entry->structure1a_index]
+                .structure3_model_index;
+        candidate->structure1a_z_rotation =
+            level->structure1a_models[entry->structure1a_index].z_rotation;
+        candidate->structure1a_model_rotation_binding_proven = 1;
+        candidate->structure1a_model_rotation_semantics_proven = 0;
+        ++receipt.structure1a_model_rotation_binding_count;
         candidate->structure3_model_index = source->structure3_model_index;
         candidate->z_rotation = source->z_rotation;
         candidate->structure3_block_offset =

@@ -1217,6 +1217,18 @@ typedef struct {
     uint16_t structure1f_structure1a_index;
     int structure1f_binding_proven;
     int structure1f_face_selector_semantics_proven;
+    /* Structure1A row byte 0 is retained verbatim after the Structure1F
+     * index resolves into the parsed table. It has no assigned meaning. */
+    uint8_t structure1a_kind;
+    int structure1a_row_binding_proven;
+    int structure1a_kind_semantics_proven;
+    /* These raw Structure1A row bytes are retained only after matching the
+     * Structure1F-derived source values. They do not establish an ordinal,
+     * transform, face, mesh, pixel, or draw interpretation. */
+    uint8_t structure1a_structure3_model_index;
+    uint8_t structure1a_z_rotation;
+    int structure1a_model_rotation_binding_proven;
+    int structure1a_model_rotation_semantics_proven;
     uint8_t structure3_model_index;
     uint8_t z_rotation;
     int structure3_block_offset;
@@ -1239,6 +1251,8 @@ typedef struct {
     int owner_cell_source_count;
     int topology_candidate_count;
     int structure1f_binding_count;
+    int structure1a_row_binding_count;
+    int structure1a_model_rotation_binding_count;
     int blocked_invalid_source_count;
     int blocked_payload_count;
     int direct_ordinal_mapping_disproven_count;
@@ -1519,6 +1533,10 @@ typedef struct {
     int structure1a_structure3_topology_candidate_count;
     int structure1a_structure3_topology_structure1f_binding_count;
     int structure1a_structure3_topology_structure1f_face_selector_semantics_proven;
+    int structure1a_structure3_topology_structure1a_row_binding_count;
+    int structure1a_structure3_topology_structure1a_kind_semantics_proven;
+    int structure1a_structure3_topology_structure1a_model_rotation_binding_count;
+    int structure1a_structure3_topology_structure1a_model_rotation_semantics_proven;
     int structure1a_structure3_topology_blocked_invalid_source_count;
     int structure1a_structure3_topology_blocked_payload_count;
     int structure1a_structure3_topology_direct_ordinal_mapping_disproven_count;
