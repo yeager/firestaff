@@ -15672,6 +15672,12 @@ int csb_v1_runtime_export_csbwin_core_save_to_memory(
         return -1;
     }
     *out_size = 0u;
+    /* CSBWin SaveGame.cpp:1972-1976 treats EDBT_DisableSaves as a save
+     * policy, not merely a UI hint. The native save route already enforces
+     * it; keep the interoperable core-export route equally closed. */
+    if (profile->csbwin_saves_disabled) {
+        return -1;
+    }
     memset(&summary, 0, sizeof(summary));
     if (csb_v1_runtime_build_csbwin_core_summary(profile, &summary) != 0) {
         return -1;
