@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F raw floor-decoration rotation receipt: complete.
+  Direct floor decorations retain raw rotation-selector reuse through the DGN
+  corpus, host handoff, and render plan. It is not a direction, transform,
+  mesh, texture, palette, pixel, or draw instruction. Verification: Ninja and
+  CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 Nexus Structure1F raw floor-decoration payload-selector receipt:
   complete. Direct floor decorations retain raw payload-selector reuse through
   the DGN corpus, host handoff, and render plan, without an object, model,
