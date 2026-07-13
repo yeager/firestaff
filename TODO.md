@@ -98,8 +98,10 @@
 - SKPROJECT-GAP-001 — `SKULLWIN/c_weather.cpp::DM2_SET_TIMER_WEATHER` and
   `DM2_UPDATE_WEATHER` identify scheduling but not a serialised timer-record
   layout or save offset. Risk: Firestaff could bind a random SKSave region as
-  weather state. Required: original timer/save trace and corpus with known
-  weather transitions.
+  weather state. A per-file original-save timer-format receipt now preserves
+  only verified candidate type/path/size/hash and explicitly rejects each
+  unowned envelope/raw payload. Required: original timer/save trace and corpus
+  with known weather transitions that identify record owner and byte layout.
 - SKPROJECT-GAP-002 — `SKWIN/DME.h::DistantEnvironment` fixes the ten-byte
   in-memory shape but not allocation owner, persistence location, or save
   encoding. Risk: ENVIRONMENT material could pair with stale slot bytes.

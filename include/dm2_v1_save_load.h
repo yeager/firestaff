@@ -146,6 +146,24 @@ typedef struct {
     uint32_t corpus_hash;
 } DM2_DistantEnvironmentTimerCorpusReceipt;
 
+/* Raw-only inventory of original save candidates considered by a timer-format
+ * probe. A slot header and a parsed envelope/raw candidate do not identify a
+ * timer owner or wire layout, so every retained row remains rejected. */
+typedef struct {
+    int scan_complete;
+    int has_header_verified_candidate;
+    int timer_layout_owner_proven;
+    int matching_timer_record_count;
+    int original_candidate_list_complete;
+    uint16_t original_candidate_count;
+    uint16_t rejected_unowned_candidate_count;
+    uint32_t retained_original_payload_bytes;
+    uint32_t corpus_hash;
+    uint8_t candidate_receipt_count;
+    DM2_SKSaveCandidateReceipt
+        candidate_receipts[DM2_SK_CORPUS_RECEIPT_MAX];
+} DM2_OriginalTimerFormatCorpusReceipt;
+
 /* Initialise slot manager with save base directory (NULL = cwd). */
 void dm2_sl_init(DM2_SL_State *state, const char *save_base);
 
@@ -210,6 +228,11 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
 bool dm2_v1_distant_environment_timer_corpus_probe(
     const char *save_base,
     DM2_DistantEnvironmentTimerCorpusReceipt *out_receipt);
+/* Enumerate only header-verified original envelope/raw candidates as raw
+ * timer-format evidence. No unknown byte range is decoded or imported. */
+bool dm2_v1_original_timer_format_corpus_probe(
+    const char *save_base,
+    DM2_OriginalTimerFormatCorpusReceipt *out_receipt);
 bool dm2_v1_sksave_corpus_load_first_importable(
     const char *save_base,
     uint8_t *out_payload,
