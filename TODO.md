@@ -117,8 +117,10 @@
   original DUNGEON.DAT corpus plus debugger traces that define `v1e03f4`,
   `dunGroundStacks`, and bit `0x10` beyond their observed indexing contract.
 - SKPROJECT-GAP-005 — `SKWIN/DME.h` labels CCM `0x32..0x34` unknown. Risk:
-  fabricated creature behaviour. Required: original opcode streams and
-  instruction-level traces.
+  fabricated creature behaviour. The corpus receipt now hashes only verified
+  `CREATURE_AI/row/dt00` AIDefinition rows, rejects all adjacent fields, and
+  records no 0x32..0x34 stream bytes. Required: original opcode streams and
+  instruction-level traces that bind a file/save owner and grammar.
 - SKPROJECT-GAP-006 — `SKWIN/SkWinCore.h::_44c8_0f29` is unresolved blitting.
   Risk: local-palette clipping/mirroring differs despite decoded GDAT pixels.
   Required: original framebuffer captures and DOS blitter trace.

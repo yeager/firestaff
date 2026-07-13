@@ -182,9 +182,8 @@ static int test_gdat_imported_ccm_program_drives_ticks(void) {
     uint32_t raw_sizes[1] = { (uint32_t)sizeof(program_bytes) };
     DM2_V1_GdatEntry entries[1];
     DM2_V1_AssetLoader loader;
-    DM2_V1_CreatureCCMTickObserver obs;
+    DM2_V1_CCMCorpusReceipt receipt;
     int auto_field = -1;
-    int slot;
 
     memset(entries, 0, sizeof(entries));
     entries[0].cls1 = DM2_GDAT_CATEGORY_CREATURE_AI;
@@ -203,42 +202,25 @@ static int test_gdat_imported_ccm_program_drives_ticks(void) {
 
     install_mobile_melee_ai();
     dm2_v1_creature_reset_ccm_programs();
-    CHECK("load imported ccm", dm2_v1_creature_load_ccm_programs_from_gdat(&loader, 1) == 1);
-    CHECK("import count", dm2_v1_creature_loaded_ccm_program_count() == 1);
-    CHECK("import field", dm2_v1_creature_loaded_ccm_program_field() == 1);
+    CHECK("ccm corpus receipt", dm2_v1_creature_ccm_corpus_receipt(
+              &loader, &receipt) == 1 && receipt.gdat_loaded == 1 &&
+              receipt.ai_definition_owner_proven == 0 &&
+              receipt.command_state_owner_proven == 1 &&
+              receipt.command_stream_owner_proven == 0 &&
+              receipt.opcode_32_present == 0 && receipt.opcode_33_present == 0 &&
+              receipt.opcode_34_present == 0 && receipt.decoder_permitted == 0);
+    CHECK("reject unowned ccm field", dm2_v1_creature_load_ccm_programs_from_gdat(
+              &loader, 1) == 0);
+    CHECK("unowned import count", dm2_v1_creature_loaded_ccm_program_count() == 0);
+    CHECK("unowned import field", dm2_v1_creature_loaded_ccm_program_field() == -1);
 
-    slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 14, 15, 0, 2, 8);
-    CHECK("spawn imported", slot >= 0);
-
-    dm2_v1_creature_tick();
-    CHECK("import observer 0", dm2_v1_creature_last_ccm_tick(&obs) == 1);
-    CHECK("imported flag 0", obs.imported_program == 1);
-    CHECK("import pc 0", obs.program_pc_before == 0 && obs.program_pc_after == 1);
-    CHECK("import steal", obs.ccm_opcode == DM2_CCM_STEAL_ITEM && obs.ccm_target_id == 3);
-
-    dm2_v1_creature_tick();
-    CHECK("import observer 1", dm2_v1_creature_last_ccm_tick(&obs) == 1);
-    CHECK("import pc 1", obs.program_pc_before == 1 && obs.program_pc_after == 2);
-    CHECK("import shoot", obs.ccm_opcode == DM2_CCM_SHOOT_ITEM &&
-                          obs.ccm_stack_top == 2 &&
-                          obs.ccm_stack_value0 == 44 &&
-                          obs.ccm_stack_value1 == 2);
-
-    dm2_v1_creature_tick();
-    CHECK("import observer 2", dm2_v1_creature_last_ccm_tick(&obs) == 1);
-    CHECK("import pc reset", obs.program_pc_before == 2 && obs.program_pc_after == 0);
-    CHECK("import cast", obs.ccm_opcode == DM2_CCM_CAST_SPELL &&
-                         obs.ccm_target_x == 5 &&
-                         obs.ccm_target_y == 7);
-
-    dm2_v1_creature_reset_ccm_programs();
     entries[0].cls4 = 2;
-    CHECK("auto load imported ccm",
+    CHECK("auto rejects unowned ccm",
           dm2_v1_creature_load_ccm_programs_from_gdat_auto(&loader,
-                                                           &auto_field) == 1);
-    CHECK("auto load field", auto_field == 2);
-    CHECK("auto import count", dm2_v1_creature_loaded_ccm_program_count() == 1);
-    CHECK("auto import field", dm2_v1_creature_loaded_ccm_program_field() == 2);
+                                                           &auto_field) == 0);
+    CHECK("auto rejects field", auto_field == -1);
+    CHECK("auto rejects count", dm2_v1_creature_loaded_ccm_program_count() == 0);
+    CHECK("auto rejects import field", dm2_v1_creature_loaded_ccm_program_field() == -1);
     dm2_v1_creature_reset_ccm_programs();
     return 1;
 }

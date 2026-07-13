@@ -8208,11 +8208,17 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_creature_ccm_runtime_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(test_dm2_v1_creature_ccm_runtime_pc34_compat PRIVATE firestaff_m10 m)
+    if(APPLE)
+        target_link_libraries(test_dm2_v1_creature_ccm_runtime_pc34_compat PRIVATE
+            ${COREMIDI_FRAMEWORK}
+            ${COREFOUNDATION_FRAMEWORK})
+    endif()
     target_compile_definitions(test_dm2_v1_creature_ccm_runtime_pc34_compat PRIVATE
         FIRESTAFF_DM2_CREATURE_TESTING=1
     )
