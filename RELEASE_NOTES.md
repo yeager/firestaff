@@ -1,6 +1,27 @@
 
 # Unreleased
 
+# Firestaff v3.0.74
+
+Firestaff v3.0.74 packages the latest source-locked runtime work from `main`.
+
+## Highlights since v3.0.73
+
+- **DM1**: original PC34 timeline save events now retain and restore C11
+  action-enable, C20 sound, C25 explosion, and group-reaction records.
+- **CSB**: more CSBWin saved DSA timer routes are source-gated before runtime
+  dispatch, including doors, teleports, pits, messages, and false walls.
+- **DM2**: the original GDAT save/load dialogue now uses its source image,
+  local palette, rectangle, labels, and input state in M11.
+- **Nexus/Theron**: stricter fail-closed DGN and Track 02 route gates prevent
+  unproven data from becoming visible runtime content.
+
+## Verification
+
+- Focused DM1 original-save, CSB DSA, DM2 dialogue, and Nexus DGN tests passed
+  locally.
+- GitHub Actions builds and packages platform artifacts from the `v3.0.74` tag.
+
 # Firestaff v3.0.73
 
 Firestaff v3.0.73 packages the latest DM1 source-faithful runtime and startup
