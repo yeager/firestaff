@@ -11391,6 +11391,17 @@ green/orange panel, labels, and rename cursor are not rendered. This keeps
 dynamic rename text behind real C027 ownership and does not synthesize art.
 The focused M11 overlay regression verifies that a no-asset HoC rename
 fixture writes no substitute pixels. Source: `REVIVE.C:357-455,704-840`.
+
+# ✅ 2026-07-13 DM1 HoC C027 PC34 rename-font consumer
+
+The live C027 rename panel now consumes the real loaded PC34 M653 interface
+bitmap with ReDMCSB `TEXT2.C F0644`'s six-pixel advance and baseline mapping.
+`REVIVE.C F0281` guides, typed name/title, C13 foreground, C12 erase color,
+and C09 cursor are rendered at their source viewport positions. If M653 is
+unavailable, C027 remains real but receives no host-text fallback. Verification:
+`test_m11_dm1_hoc_no_fallback_panel` with local PC34 `GRAPHICS.DAT` proves the
+real font coordinates/colors and the no-font no-text branch.
+
 - ✅ 2026-07-13 DM2 weather decoded-material receipt: each source ENVIRONMENT
   weather command now proves a decodable IMG3 pixel plane together with its
   own local palette before it can reach the no-draw weather handoff.

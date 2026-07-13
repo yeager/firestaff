@@ -36701,6 +36701,117 @@ static int m11_draw_v1_mouth_visual_frame(const M11_GameViewState* state,
                                          0);
 }
 
+/* ReDMCSB TEXT2.C F0644: the interface font takes a baseline y coordinate,
+ * copies six pixels from each eight-pixel M653 cell at x=char*8+3, and
+ * advances six pixels.  It is distinct from the eight-pixel inscription
+ * renderer used by M11_Font_DrawString. */
+static int m11_draw_dm1_pc34_interface_text(
+    const M11_FontState* font,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int x,
+    int y,
+    const char* text,
+    unsigned char foreground,
+    unsigned char background)
+{
+    int drawn = 0;
+
+    if (!font || !M11_Font_IsLoaded(font) || !framebuffer || !text) {
+        return 0;
+    }
+    /* TEXT2.C F0644 MEDIA508: top = (baseline + G2086_C1) -
+     * (G2083_C6 - G2086_C1) = baseline - 4. */
+    y -= 4;
+    while (*text) {
+        const int fontX = ((unsigned char)*text * 8) + 3;
+        int row;
+        for (row = 0; row < 6; ++row) {
+            int col;
+            for (col = 0; col < 6; ++col) {
+                const int dstX = x + col;
+                const int dstY = y + row;
+                if (dstX >= 0 && dstX < framebufferWidth &&
+                    dstY >= 0 && dstY < framebufferHeight) {
+                    framebuffer[dstY * framebufferWidth + dstX] =
+                        M11_Font_GetPixel(font, fontX + col, row)
+                            ? foreground : background;
+                }
+            }
+        }
+        x += 6;
+        text++;
+        drawn = 1;
+    }
+    return drawn;
+}
+
+/* ReDMCSB REVIVE.C F0281 (PC F20/F20J path) prints C027's fixed guides
+ * through F0052 at viewport coordinates, then writes the current name/title
+ * and C09 cursor to the same original M653 font surface.  This is deliberately
+ * separate from m11_draw_text_original(): the resurrection panel must neither
+ * scale nor fall back to Firestaff's host font when PC34 M653 is unavailable. */
+static int m11_draw_dm1_hoc_rename_pc34_text(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    const DM1_V1_ResurrectionRenameUiGatePc34Compat* rename;
+    const M11_FontState* font;
+
+    if (!state || !framebuffer || !state->candidateMirrorRenameActive ||
+        !state->originalFontAvailable ||
+        !M11_Font_IsLoaded(&state->originalFont)) {
+        return 0;
+    }
+
+    rename = &state->candidateMirrorRename;
+    font = &state->originalFont;
+
+    /* REVIVE.C F0281:408-409, F0052_TEXT_PrintToViewport(..., C13, ...).
+     * F0052 writes C12 behind each M653 glyph; preserve that exact erase
+     * behavior so a full host redraw cannot leave old typed characters. */
+    (void)m11_draw_dm1_pc34_interface_text(
+        font, framebuffer, framebufferWidth, framebufferHeight,
+        M11_VIEWPORT_X + 177, M11_VIEWPORT_Y + 58,
+        "_______", M11_COLOR_SILVER, M11_COLOR_DARK_GRAY);
+    (void)m11_draw_dm1_pc34_interface_text(
+        font, framebuffer, framebufferWidth, framebufferHeight,
+        M11_VIEWPORT_X + 105, M11_VIEWPORT_Y + 76,
+        "___________________", M11_COLOR_SILVER, M11_COLOR_DARK_GRAY);
+
+    /* REVIVE.C F0281:418-419 and 543-544: the gate retains these as
+     * viewport-relative coordinates.  Convert exactly once at the M11
+     * framebuffer boundary. */
+    if (rename->name[0] != '\0') {
+        (void)m11_draw_dm1_pc34_interface_text(
+            font, framebuffer, framebufferWidth, framebufferHeight,
+            M11_VIEWPORT_X + 177, M11_VIEWPORT_Y + 91,
+            rename->name, M11_COLOR_SILVER, M11_COLOR_DARK_GRAY);
+    }
+    if (rename->title[0] != '\0') {
+        (void)m11_draw_dm1_pc34_interface_text(
+            font, framebuffer, framebufferWidth, framebufferHeight,
+            M11_VIEWPORT_X + 105, M11_VIEWPORT_Y + 109,
+            rename->title, M11_COLOR_SILVER, M11_COLOR_DARK_GRAY);
+    }
+    if (!(rename->fieldMode ==
+              DM1_V1_RESURRECTION_RENAME_UI_FIELD_TITLE_PC34_COMPAT &&
+          rename->characterIndex >=
+              DM1_V1_RESURRECTION_RENAME_UI_TITLE_MAX_PC34_COMPAT)) {
+        /* REVIVE.C F0281:609, 648 and 687: C09 cursor uses the same C12
+         * background and is absent only when the title field is full. */
+        (void)m11_draw_dm1_pc34_interface_text(
+            font, framebuffer, framebufferWidth, framebufferHeight,
+            M11_VIEWPORT_X + rename->cursorX,
+            M11_VIEWPORT_Y + rename->cursorY,
+            "_", M11_COLOR_ORANGE, M11_COLOR_DARK_GRAY);
+    }
+    return 1;
+}
+
 static void m11_draw_inventory_panel(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
@@ -36807,26 +36918,10 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             return;
         }
         if (state->candidateMirrorRenameActive) {
-            M11_TextStyle renameStyle = g_text_small;
-            M11_TextStyle cursorStyle = g_text_small;
-            renameStyle.color = M11_COLOR_LIGHT_GRAY;
-            cursorStyle.color = M11_COLOR_ORANGE;
-            if (state->candidateMirrorRename.name[0] != '\0') {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              177, 91,
-                              state->candidateMirrorRename.name,
-                              &renameStyle);
-            }
-            if (state->candidateMirrorRename.title[0] != '\0') {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              105, 109,
-                              state->candidateMirrorRename.title,
-                              &renameStyle);
-            }
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          state->candidateMirrorRename.cursorX,
-                          state->candidateMirrorRename.cursorY,
-                          "_", &cursorStyle);
+            /* C027 alone is valid when M653 cannot be proven.  Do not use
+             * host text or guessed coordinates as a substitute. */
+            (void)m11_draw_dm1_hoc_rename_pc34_text(
+                state, framebuffer, framebufferWidth, framebufferHeight);
         }
         return;
     }
