@@ -16573,6 +16573,80 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     timer_index = profile->csbwin_timer_queue[queue_slot];
     if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
+    if (timer->function == 65u) {
+        CSB_V1_DungeonData *saved_dungeon;
+        uint16_t generator_thing;
+        uint16_t first_disabled = 0xffffu;
+        int thing;
+        int guard = 0;
+
+        /* CSBWin CSBCode.cpp:6473-6475 dispatches TT_ReactivateGenerator
+         * to Timer.cpp:1788-1836. The original tries timerObj8 first, then
+         * keeps an explicit old-save fallback to the first type-zero DB3
+         * actuator on the saved square. ubyte8/ubyte9 are that preserved
+         * little-endian timerObj8 word, not generic cell/effect input. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 && profile->dungeon_handle) {
+            saved_dungeon = profile->dungeon_handle;
+            generator_thing = (uint16_t)timer->ubyte8 |
+                ((uint16_t)timer->ubyte9 << 8);
+            thing = csb_v1_dungeon_get_first_thing(
+                saved_dungeon, record->mapIndex, record->mapX, record->mapY);
+            while (thing >= 0 && thing != 0xfffe && thing != 0xffff &&
+                   guard++ < 128) {
+                uint8_t *actuator;
+                int type;
+                int size;
+                uint16_t type_data;
+
+                actuator = csb_v1_runtime_mutable_thing_record(
+                    saved_dungeon, (uint16_t)thing, &type, &size);
+                if (!actuator) break;
+                if (type == CSB_V1_THING_TYPE_ACTUATOR && size >= 4) {
+                    type_data = csb_v1_runtime_read_u16(actuator + 2);
+                    if ((type_data & 0x007fu) == 0u) {
+                        if (first_disabled == 0xffffu) {
+                            first_disabled = (uint16_t)thing;
+                        }
+                        if ((uint16_t)thing == generator_thing) {
+                            first_disabled = (uint16_t)thing;
+                            break;
+                        }
+                    }
+                }
+                thing = csb_v1_runtime_sensor_next_thing(
+                    saved_dungeon, (uint16_t)thing);
+            }
+            if (first_disabled != 0xffffu) {
+                uint8_t *actuator;
+                int type;
+                int size;
+                uint16_t type_data;
+
+                actuator = csb_v1_runtime_mutable_thing_record(
+                    saved_dungeon, first_disabled, &type, &size);
+                if (actuator && type == CSB_V1_THING_TYPE_ACTUATOR &&
+                    size >= 4) {
+                    type_data = csb_v1_runtime_read_u16(actuator + 2);
+                    if ((type_data & 0x007fu) == 0u) {
+                        /* Timer.cpp's actuatorTypeOR(6) preserves every
+                         * source bit except the disabled type-zero state. */
+                        csb_v1_runtime_write_u16(
+                            actuator + 2, (uint16_t)(type_data | 6u));
+                    }
+                }
+            }
+        }
+        /* C65 aliases generic M10 generator handling. Always consume an
+         * imported TT_65 here so malformed saved data cannot reach that
+         * broader first-disabled-sensor route without CSBWin identity proof. */
+        return 1;
+    }
     if (timer->function == 79u) {
         /* CSBWin CSBCode.cpp:6563 and Magic.cpp:1329-1339 expire TT_79 by
          * removing exactly one active Magic Footprints effect. The complete

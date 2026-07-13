@@ -612,5 +612,43 @@ int main(void)
               profile.party_state.Champions[0].PoisonDose == 3u &&
               profile.party_state.Champions[0].PoisonEventCount == 1u,
           "wide saved poison attack remains fail-closed without truncation");
+
+    /* Rebuild the source square after prior timer cases and give TT_65 its
+     * actual timerObj8 actuator handle (type 3, index 0). */
+    raw[60u] = 0u;
+    raw[61u] = 0u;
+    raw[80u] = 0x10u;
+    put_le16(raw, 62u, (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10));
+    put_le16(raw, 90u, 0xfffeu);
+    put_le16(raw, 92u, 0u);
+    profile.csbwin_timers[0].function = 65u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 =
+        (uint8_t)(CSB_V1_THING_TYPE_ACTUATOR << 2);
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              (raw[92u] & 0x7fu) == 6u,
+          "restored generator timer reactivates its exact saved actuator");
+
+    put_le16(raw, 92u, 0u);
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[92u] == 0u,
+          "stale generator timer cannot enter generic C65 mutation");
+
+    put_le16(raw, 92u, 0u);
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].ubyte8 = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              (raw[92u] & 0x7fu) == 6u,
+          "old-save generator timer uses CSBWin first-disabled fallback");
     return failures == 0 ? 0 : 1;
 }

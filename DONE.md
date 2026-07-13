@@ -13,6 +13,14 @@
   host-only group index. Source: ReDMCSB `MOVESENS.C` F0265:169-192 and
   `TIMELINE.C` F0252:1505-1567. Verification: Ninja and CTest
   `dm1_v1_original_save_pc34_handoff` passed 1/1.
+- 2026-07-13 CSBWin saved `TT_65` generator runtime: a materialized timer
+  now consumes its exact queue/event identity and preserved `timerObj8` DB3
+  reference before reactivating only a type-zero actuator as source type 6.
+  It retains CSBWin's documented old-save fallback to the first disabled
+  actuator on that same square, while malformed/stale timers cannot fall
+  through to generic C65 mutation. Source: `CSBCode.cpp:6473-6475`,
+  `Timer.cpp:1788-1836`. Verification:
+  `test_csb_v1_dsa_restored_timer_tick_bridge`.
 
 - 2026-07-13 DM2 G1 WALL_GFX local-palette ownership: source DB2 Text and DB3
   Actuator wall graphics now retain `dtImage/1` dimensions, format, and the
