@@ -1251,6 +1251,11 @@ and real community-save corpus round-trip evidence.
     normalization.
     The runtime entry regression additionally proves its candidate world,
     queue, and caller receipt all remain unchanged on this rejection.
+  - 2026-07-13 update: a C4 entry outside the decoded F0433 EVENT array now
+    fails with its source slot and raw index receipt. Sparse valid EVENT
+    indexes remain admissible; only a non-existent or `EVENT_NONE` reference
+    is rejected before runtime commit. Remaining work is authentic community
+    save coverage, not timeline compaction.
   - 2026-07-13 update: each external corpus candidate now also records the
     source/exported PC34 header identity (`FormatID`, `GameID`, `Platform`,
     `DungeonID`) and all five F0433/F0435 length-prefixed part byte counts.

@@ -1217,6 +1217,27 @@ static void test_rejects_non_pc34_and_truncated_parts(void)
               report.timeline_duplicate_event_index,
           "duplicate C4 failure provenance is repeatable");
 
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     1, 0, 1, 2, 3, 0,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+          rewrite_fixture_timeline_index(bytes, (size_t)written, 1, 4u),
+          "out-of-range C4 index fixture remains checksum-authenticated");
+    memset(&party, 0xa5, sizeof(party));
+    party_before = party;
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
+          report.importer_result == SAVEGAME_PC34_ERROR_BAD_SIZE &&
+          report.part_checksum_ok_count == SAVEGAME_PC34_PART_COUNT &&
+          report.timeline_invalid_slot == 1 &&
+          report.timeline_invalid_event_index == 4 &&
+          report.timeline_duplicate_slot == -1,
+          "out-of-range C4 index has stable F0435 provenance");
+    CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
+          "out-of-range C4 index rolls back staged party import");
+
     memset(&report, 0, sizeof(report));
     memset(&world, 0, sizeof(world));
     report.reported_active_group_count =
@@ -1648,6 +1669,21 @@ static void test_runtime_handoff_is_transactional_on_rejected_tail(void)
           "duplicate C4 reference leaves live queue untouched");
     CHECK(report.original_game_time == 999u,
           "duplicate C4 reference leaves caller receipt untouched");
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+          rewrite_fixture_timeline_index(bytes, (size_t)written, 1, 4u),
+          "out-of-range C4 runtime fixture remains checksum-authenticated");
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, &event_queue, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "out-of-range C4 reference rejects the complete runtime handoff");
+    CHECK(world.gameTick == 777u && world.party.championCount == 1 &&
+          world.party.mapIndex == 6 && event_queue.gameTick == 888u &&
+          event_queue.eventCount == 1 && report.original_game_time == 999u,
+          "out-of-range C4 reference preserves world queue and receipt");
 
     make_temp_save_path(path, sizeof(path));
     snprintf(backup_path, sizeof(backup_path), "%s.bak", path);
