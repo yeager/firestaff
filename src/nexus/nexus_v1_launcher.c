@@ -2930,10 +2930,12 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
     }
     out_receipt->runtime_handoff = *handoff;
     out_receipt->route = handoff->route;
-    out_receipt->runtime_route_ready = handoff->runtime_ready ? 1 : 0;
+    out_receipt->runtime_route_ready =
+        handoff->runtime_ready && handoff->script_runtime_ready;
     out_receipt->runtime_route_blocked =
         handoff->route == NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED ||
-        handoff->route == NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED;
+        handoff->route == NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED ||
+        !handoff->script_runtime_ready;
     out_receipt->startup_sfx_status = handoff->assets.startup_sfx_status;
     out_receipt->startup_sfx_level_index =
         handoff->assets.startup_sfx_level_index;

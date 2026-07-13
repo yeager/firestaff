@@ -507,6 +507,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   not promote audio; remaining work is original SAL decode/playback proof.
 - 🔧 2026-07-13 Nexus SLEV follow-up: parsed source bytes do not promote a
   runtime route until the bounded dispatcher receipt is enabled.
+- 🔧 2026-07-13 Nexus runtime-host follow-up: a blocked SLEV dispatcher now
+  prevents runtime-route consumption; remaining work is original dispatch
+  semantics, not a receipt-only promotion.
 - 🔧 2026-07-11 Nexus FACE.BIN codec follow-up: canonical `FACE.BIN`
   (45,104 bytes, SHA-256
   `d733f50096098b5a2d15f2d355a89decd7b3777f82e515f60fee2e9ca4921e22`,

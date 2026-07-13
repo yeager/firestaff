@@ -2715,7 +2715,7 @@ int main(void)
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &route_proof_receipt) &&
-               route_proof_receipt.runtime_route_ready == 1 &&
+               route_proof_receipt.runtime_route_ready == 0 &&
                route_proof_receipt.first_runtime_route_ready == 1 &&
                route_proof_receipt.dgn_viewport_host_route_status ==
                    NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
