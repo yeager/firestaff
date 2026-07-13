@@ -74,3 +74,14 @@ sequence without claiming a completed write, selected palette, entry count, or
 bitmap binding. Indirect and block-transfer instructions remain unrecognised;
 their presence keeps the RGB gate closed until a complete, authenticated receipt
 format is implemented.
+
+## Live Capture Attempt
+
+The patched Mednafen 1.32.1 binary was built and run against the authentic US
+CUE and System Card 3.0. A bounded dummy-SDL run and a software-SDL windowed
+run with two System Events Return-key calls emitted only the provenance line
+and then remained in the System Card `$c860/$c96x` wait loop. Neither run reached
+the dynamic CD/controller checkpoints or a HuC6260 store receipt. These are
+negative live results, not evidence of a palette or a loader branch. The
+reproducible `scripts/capture_theron_mednafen_live_trace.sh` keeps that result
+fail-closed and writes no substitute trace rows.

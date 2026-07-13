@@ -803,6 +803,15 @@
   now records bounded raw HuC6260 control/data store receipts after a future
   controller receipt; no synthetic palette trace or default palette was added.
 
+- ✅ 2026-07-13 Theron authentic Mednafen live-capture attempt: built the
+  instrumented Mednafen 1.32.1 patch and ran the authentic US CUE plus System
+  Card 3.0 in bounded dummy-SDL and software-SDL attempts, with two System
+  Events Return-key calls in the latter. Both wrote provenance-marked live
+  traces but remained in the documented `$c860/$c96x` System Card wait loop,
+  before the dynamic CD/controller and HuC6260 store
+  checkpoints. Added an explicit-input bounded capture script and regression;
+  RGB remains blocked and no trace rows, palette, or pixels were fabricated.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete
