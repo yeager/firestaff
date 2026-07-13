@@ -328,6 +328,13 @@ typedef struct {
     uint32_t                csbwin_appended_tail_fnv1a;
     int                     csbwin_appended_tail_truncated;
     uint8_t                 csbwin_appended_tail[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
+    /* CSBWin data.cpp SKIN_CACHE caches EDT_Skins columns. Remember the
+     * save-tail receipt that populated Firestaff's cache so a resumed or
+     * replaced verified EXPOOL tail cannot reuse stale HUD skin bytes. */
+    int                     csbwin_skin_cache_tail_receipt_valid;
+    int                     csbwin_skin_cache_tail_valid;
+    size_t                  csbwin_skin_cache_tail_size;
+    uint32_t                csbwin_skin_cache_tail_fnv1a;
     /* CSBWin SaveGame.cpp reads contiguous 16-word EDT_Database /
      * EDBT_GlobalVariables EXPOOL records before DSAINDEX::ReadTracing.
      * This is the save-owned source bank supplied to authenticated DSA
