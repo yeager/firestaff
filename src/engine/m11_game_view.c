@@ -6378,6 +6378,14 @@ static void m11_enable_champion_action_from_timeline(M11_GameViewState* state,
         actionIndex = (int)state->world.party.champions[championIndex]
             .actionIndex;
     }
+    /* ReDMCSB MENU.C F0407:1613-1617 writes C01's ordinal-two C11 receipt
+     * only from the successful C042_ACTION_THROW branch after F0328.  Do
+     * not let an imported or stale ordinal-two receipt coupled to a normal
+     * melee/action owner reach F0259 and move the action-hand quiver slot. */
+    if (slotOrdinal == DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL &&
+        actionIndex != DM1_ACTION_THROW) {
+        return;
+    }
     /* ReDMCSB TIMELINE.C C11 -> F0253 owns the real completion.  The
      * ordinal-zero F0407 SWING route has one local cooldown mirror solely
      * for host gating; consume it here so the later mirror-aging pass cannot

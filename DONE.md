@@ -1640,6 +1640,16 @@
   and later stale ordinal-two C11, while SWING/F0330/F0407 regression tests
   pass. F0402 and viewport/save paths are untouched.
 
+- 2026-07-13 DM1 PC34 F0407 C11 ordinal-two action-owner gate: M11 now
+  accepts the action-hand F0259 receipt only when its live completion action
+  is `C042_ACTION_THROW`. An ordinal-two C11 paired with a normal melee
+  action remains locked fail-closed, so it cannot transfer an unrelated
+  quiver weapon. Source: ReDMCSB `MENU.C F0407:1613-1617`, where only the
+  successful `C042_ACTION_THROW`/`F0328` branch writes the ordinal-two
+  receipt, and `TIMELINE.C C11:1927-1932`. Verification:
+  `dm1_v1_f0407_throw_c11_receipt_pc34_compat` stages the malformed
+  SWING/ordinal-two pairing and proves that F0259 cannot run.
+
 - 2026-07-13 DM1 PC34 Open Door C11 receipt regression: the F0412 Open Door
   runtime gate now requires both independently owned queue receipts: F0327's
   typed projectile move and F0330's C11 enable-action record. It no longer
