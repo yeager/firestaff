@@ -39,3 +39,19 @@ existing raw/MODE1 provenance and explicitly leaves both
 
 No Track 02 palette offset, object table, non-startup level record, or runtime
 route is established by this note.
+
+## Raw Bitmap Consumer Boundary
+
+`theron_v1_startup_media_consume_raw_bitmap_route()` consumes one of the
+already hash-recognised raw 4 bpp startup-atlas routes only after the complete
+Track 02 receipt validates its variant, route mask, dimensions, nonzero index
+count, checksum, and MODE1 raw/user-data coordinates. It copies the observed
+palette indices unchanged and records their source coordinates.
+
+The resulting receipt has `palette_binding_verified=0` and
+`rgba_output_allowed=0`. This is intentional: the authenticated runtime trace
+currently proves the Track 02 controller/CD transaction, not a HuC6260 palette
+write or a palette-to-menu binding. The consumer therefore cannot publish RGB
+pixels and must not select a default palette. The corpus probe uses only an
+operator-provided, hash-recognised Track 02 BIN plus System Card; it verifies
+the raw-byte receipt and expects the palette/RGB gate to remain blocked.

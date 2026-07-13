@@ -1241,9 +1241,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     generic 9-bit palette decoder to B=bits 0..2, R=3..5, G=6..8. This is a
     hardware-format decoder only: no Track 02 palette offset, asset role, or
     render route is newly inferred. Every inspected real-media palette window
-    remains semantically unbound and promotion-blocked. The next decoder work
-    is original loader/media evidence for a non-startup record boundary or a
-    palette load address, not byte-pattern scanning or default-palette use.
+    remains semantically unbound and promotion-blocked. The raw Track 02
+    startup bitmap consumer now carries only verified 4 bpp indices and
+    explicitly blocks RGB output, so the next decoder work is an observed
+    original loader palette-write/address binding, not byte-pattern scanning
+    or default-palette use.
   - 2026-07-11 update: the local evidence stores and the checked source-lock
     material contain no original Theron's Quest loader/disassembly trace, and
     no newly staged hash-verified Track 02 corpus was available to correlate

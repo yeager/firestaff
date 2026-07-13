@@ -171,6 +171,30 @@ typedef struct {
     char startup_text_prompt[THERON_STARTUP_MEDIA_PROMPT_CAPACITY];
 } Theron_StartupMediaStateReceipt;
 
+/* A source-backed indexed startup route.  `pixels` contains only the 4 bpp
+ * indices extracted from the hash-recognised Track 02 atlas.  Track 02 has
+ * no loader-bound title/stage/Soul Room/forcefield palette window yet, so a
+ * successful raw receipt deliberately still has `palette_binding_verified`
+ * and `rgba_output_allowed` clear. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    unsigned int route_bit;
+    size_t tile_count;
+    uint16_t width;
+    uint16_t height;
+    size_t first_raw_offset;
+    size_t last_raw_offset;
+    size_t first_user_data_offset;
+    size_t nonzero_pixel_count;
+    uint32_t checksum;
+    int raw_source_verified;
+    int palette_binding_verified;
+    int rgba_output_allowed;
+    uint8_t pixels[THERON_TRACK02_STARTUP_BITMAP_ATLAS_PIXELS];
+} Theron_StartupRawBitmapRouteReceipt;
+
 void theron_v1_startup_media_init(Theron_StartupMedia *media);
 void theron_v1_startup_media_state_receipt_init(
     Theron_StartupMediaStateReceipt *receipt);
@@ -186,6 +210,15 @@ void theron_v1_startup_media_capture_track02_state_receipt(
     size_t hucard_rom_size,
     const char *md5_hex,
     Theron_StartupMediaStateReceipt *out_receipt);
+
+/* Copies one hash-recognised raw 4 bpp startup route from the captured Track
+ * 02 receipt.  This is an indexed-byte consumer, not a palette guesser: it
+ * never assigns an RGB value or a menu role beyond the already catalogued
+ * route bit. */
+int theron_v1_startup_media_consume_raw_bitmap_route(
+    const Theron_StartupMediaStateReceipt *receipt,
+    unsigned int route_bit,
+    Theron_StartupRawBitmapRouteReceipt *out_receipt);
 
 int theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
     const Theron_StartupMediaStateReceipt *receipt);
