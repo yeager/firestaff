@@ -1806,6 +1806,36 @@ static int orch_normalize_status_timeout_aux0_pc34_compat(int aux0)
     }
 }
 
+static int orch_spell_tick_has_typed_status_receipt_pc34_compat(
+    const struct TimelineEvent_Compat* ev)
+{
+    if (!ev) return 0;
+
+    /* ReDMCSB TIMELINE.C F0261:1953-1999 owns C71/C73/C74/C77/C78/C79
+     * directly.  The richer F0412/F0763 tags are Firestaff's typed
+     * compatibility receipts for exactly those source events.  Do not let
+     * arbitrary legacy C05 payloads become status effects. */
+    switch (ev->aux0) {
+    case TIMELINE_AUX_THIEVES_EYE:
+    case TIMELINE_AUX_INVISIBILITY:
+    case TIMELINE_AUX_PARTY_SHIELD:
+    case TIMELINE_AUX_FIRESHIELD:
+    case TIMELINE_AUX_FOOTPRINTS:
+    case TIMELINE_AUX_SPELL_SHIELD:
+        return 1;
+    case DM1_EVENT_INVISIBILITY:
+    case DM1_EVENT_THIEVES_EYE:
+    case DM1_EVENT_FOOTPRINTS:
+        return ev->aux2 == ev->aux0 && ev->aux1 == 0 && ev->aux4 == 0;
+    case DM1_EVENT_PARTY_SHIELD:
+    case DM1_EVENT_SPELLSHIELD:
+    case DM1_EVENT_FIRESHIELD:
+        return ev->aux2 == ev->aux0 && ev->aux1 > 0 && ev->aux4 == 0;
+    default:
+        return 0;
+    }
+}
+
 static int orch_status_timeout_defense_pc34_compat(
     const struct TimelineEvent_Compat* ev,
     int normalizedStatus)
@@ -10873,6 +10903,18 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             }
             break;
         }
+        case TIMELINE_EVENT_SPELL_TICK:
+            /* Firestaff's legacy spell-tick queue kind carries the same
+             * typed F0412/F0763 status receipt as STATUS_TIMEOUT.  ReDMCSB
+             * has no generic C05 spell event here: F0261:1953-1999 dispatches
+             * the original C71/C73/C74/C77/C78/C79 bytes directly.  Consume
+             * only those already-typed payloads through that source route;
+             * unknown payloads remain a no-op instead of becoming a host
+             * spell effect. */
+            if (!orch_spell_tick_has_typed_status_receipt_pc34_compat(&ev)) {
+                break;
+            }
+            /* fall through */
         case TIMELINE_EVENT_STATUS_TIMEOUT: {
             struct TimelineEvent_Compat resched;
             struct TimelineEvent_Compat statusEvent;
@@ -11094,8 +11136,6 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             (void)orch_dispatch_square_state_event_compat(world, &ev, result);
             break;
         case TIMELINE_EVENT_MOVE_TIMER:
-            break;
-        case TIMELINE_EVENT_SPELL_TICK:
             break;
         case TIMELINE_EVENT_SENSOR_DELAYED:
             if (ev.aux0 == 10 && ev.aux1 == DOOR_EFFECT_TOGGLE) {

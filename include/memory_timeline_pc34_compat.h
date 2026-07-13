@@ -24,6 +24,8 @@
 #define TIMELINE_EVENT_DOOR_ANIMATE     2
 #define TIMELINE_EVENT_PROJECTILE_MOVE  3
 #define TIMELINE_EVENT_EXPLOSION_ADVANCE 4
+/* Legacy compatibility carrier for typed F0412/F0763 status receipts;
+ * original PC34 uses native C71/C73/C74/C77/C78/C79 instead. */
 #define TIMELINE_EVENT_SPELL_TICK       5
 #define TIMELINE_EVENT_HUNGER_THIRST    6
 #define TIMELINE_EVENT_MAGIC_LIGHT_DECAY 7
