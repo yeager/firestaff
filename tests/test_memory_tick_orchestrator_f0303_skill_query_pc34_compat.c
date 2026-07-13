@@ -9,6 +9,7 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
@@ -445,6 +446,56 @@ static void test_orch_spell_status_timeout_aux_tags_expire_magic_state(void) {
     assert(world.lifecycle.status.partySpellShieldDefense == 7);
     assert(world.magic.partyShieldDefense == 7);
     assert(world.magic.fireShieldDefense == 6);
+    assert(world.timeline.count == 0);
+}
+
+static void test_orch_legacy_spell_tick_consumes_only_typed_status_receipts(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat ev;
+
+    init_world(&world, &things, weapons, junks);
+    world.gameTick = 500;
+    world.magic.event71CountInvisibility = 2;
+    world.magic.partyShieldDefense = 5;
+    world.lifecycle.status.partyShieldDefense = 5;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.kind = TIMELINE_EVENT_SPELL_TICK;
+    ev.fireAtTick = world.gameTick;
+    ev.aux0 = TIMELINE_AUX_INVISIBILITY;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
+
+    /* A fully shaped imported PC34 C71 receipt uses the same source-owned
+     * F0261 branch, rather than a generic legacy spell handler. */
+    memset(&ev, 0, sizeof(ev));
+    ev.kind = TIMELINE_EVENT_SPELL_TICK;
+    ev.fireAtTick = world.gameTick;
+    ev.aux0 = DM1_EVENT_INVISIBILITY;
+    ev.aux2 = DM1_EVENT_INVISIBILITY;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
+
+    memset(&ev, 0, sizeof(ev));
+    ev.kind = TIMELINE_EVENT_SPELL_TICK;
+    ev.fireAtTick = world.gameTick;
+    ev.aux0 = TIMELINE_AUX_PARTY_SHIELD;
+    ev.aux4 = 5;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
+
+    /* An untyped compatibility event may leave the queue but must never
+     * manufacture a spell/status mutation. */
+    ev.aux0 = 0x12345678;
+    ev.aux4 = 0;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
+
+    memset(&result, 0, sizeof(result));
+    assert(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 4);
+    assert(world.magic.event71CountInvisibility == 0);
+    assert(world.magic.partyShieldDefense == 0);
+    assert(world.lifecycle.status.partyShieldDefense == 0);
     assert(world.timeline.count == 0);
 }
 
@@ -7763,6 +7814,7 @@ int main(void) {
     test_orch_darkness_spell_decays_back_to_zero_without_clamp();
     test_orch_magic_torch_spell_decays_back_to_zero();
     test_orch_spell_status_timeout_aux_tags_expire_magic_state();
+    test_orch_legacy_spell_tick_consumes_only_typed_status_receipts();
     test_orch_thieves_eye_spell_uses_f0412_square_duration();
     test_orch_invisibility_spell_mirrors_lifecycle_counter();
     test_orch_party_shield_spell_mirrors_lifecycle_defense();
