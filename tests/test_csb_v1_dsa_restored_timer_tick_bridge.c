@@ -228,6 +228,43 @@ int main(void)
               profile.csbwin_global_variables[1] == 0x55aau,
           "DSA-owned TT_OPENROOM blocks generic text mutation after receipt");
 
+    /* ProcessTT_STONEROOM selects the DB2 by saved Thing position and has no
+     * QuePrintLines branch, so a sole matching record owns this update. */
+    memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
+    memset(profile.csbwin_timeline_event_queue_slot, 0xff,
+           sizeof(profile.csbwin_timeline_event_queue_slot));
+    put_le16(raw, 62u, (uint16_t)(CSB_TEST_THING_TYPE_TEXTSTRING << 10));
+    put_le16(raw, 100u, 0xfffeu);
+    put_le16(raw, 102u, 0u);
+    profile.csbwin_timers[0].function = 6u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[102] == 1u &&
+              profile.timeline_queue.eventCount == 0,
+          "DSA-free TT_STONEROOM retains its positioned DB2 owner");
+
+    memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
+    memset(profile.csbwin_timeline_event_queue_slot, 0xff,
+           sizeof(profile.csbwin_timeline_event_queue_slot));
+    put_le16(raw, 62u, (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10));
+    put_le16(raw, 90u,
+             (uint16_t)(CSB_TEST_THING_TYPE_TEXTSTRING << 10));
+    put_le16(raw, 92u, 0x012fu);
+    put_le16(raw, 100u, 0xfffeu);
+    put_le16(raw, 102u, 0u);
+    profile.csbwin_global_variables[1] = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[102] == 0u &&
+              profile.csbwin_global_variables[1] == 0x55aau,
+          "DSA-owned TT_STONEROOM blocks generic text mutation after receipt");
+
     raw[80] = 0x14u;
     put_le16(raw, 62u, (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10));
     put_le16(raw, 90u, 0xfffeu);

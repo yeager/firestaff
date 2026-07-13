@@ -758,6 +758,13 @@
   `Timer.cpp:1641-1711`. Verification: Ninja and CTest
   `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 CSBWin restored TT_STONEROOM DB2 tick bridge: verified
+  function-6 entries now update the exact sole position-matched DSA-free DB2
+  `show` bit. DSA/mixed lists cannot fall through to generic mutation;
+  actuator and endgame arms remain blocked. Source: CSBWin
+  `CSBCode.cpp:6450-6456`, `Timer.cpp:2118-2340`. Verification: Ninja and
+  CTest `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - ✅ 2026-07-13 DM2 skproject carried-item local-palette consumer:
   source-required `DRAW_ITEM_IN_HAND` rendering now accepts the leader-hand
   GDAT IMG3 only with its matching `QUERY_GDAT_IMAGE_LOCALPAL` receipt and
