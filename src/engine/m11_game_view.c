@@ -17202,6 +17202,8 @@ static int m11_build_dm1_hoc_front_mirror_runtime_decision(
     const M11_GameViewState* state,
     const M11_ViewportCell* frontCell,
     DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* outDecision);
+static int m11_front_mirror_host_material_ready(
+    const M11_GameViewState* state);
 
 static int m11_projectile_associated_thing_material(
     const M11_GameViewState* state,
@@ -19414,7 +19416,7 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
     /* ── Champion mirror (unchanged) ── */
     if (localX >= 96 && localX <= 127 &&
         localY >= 35 && localY <= 63 &&
-        m11_front_cell_mirror_ordinal(state) >= 0 &&
+        m11_front_mirror_host_material_ready(state) &&
         M11_GameView_SelectFrontMirrorCandidate(state) == 1) {
         return M11_GAME_INPUT_REDRAW;
     }
@@ -19723,8 +19725,7 @@ static int m11_inspect_front_cell(M11_GameViewState* state) {
     if (m11_build_front_text_readout(state, &frontCell,
                                      title, sizeof(title),
                                      detail, sizeof(detail))) {
-        int mirrorOrdinal = m11_front_cell_mirror_ordinal(state);
-        if (mirrorOrdinal >= 0 &&
+        if (m11_front_mirror_host_material_ready(state) &&
             M11_GameView_SelectFrontMirrorCandidate(state) == 1) {
             return 1;
         }
@@ -19808,6 +19809,50 @@ static int m11_get_front_cell(const M11_GameViewState* state, M11_ViewportCell* 
     }
     if (outCell) {
         *outCell = frontCell;
+    }
+    return 1;
+}
+
+static int m11_front_mirror_host_material_ready(const M11_GameViewState* state) {
+    M11_ViewportCell frontCell;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 renderReceipt;
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 hostDraw;
+    const M11_AssetSlot* portraits;
+    const M11_AssetSlot* backing;
+
+    if (!state || !state->active || !state->assetsAvailable ||
+        !m11_get_front_cell(state, &frontCell) ||
+        !m11_build_dm1_front_champion_portrait_receipt(&frontCell,
+                                                       &renderReceipt) ||
+        !renderReceipt.valid || !renderReceipt.drawChampionPortrait) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C:3913-3928 first draws C346, then copies the exact
+     * C026 atlas cell selected by F0172's C127 sensor.  The host may only
+     * turn that visible wall into REVIVE.C F0280 input when both original
+     * materials are present.  This deliberately does not gate the public
+     * M10-facing selection API used by save/runtime tests. */
+    portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                     (unsigned int)renderReceipt.graphicIndex);
+    if (!portraits || !portraits->loaded || !portraits->pixels ||
+        renderReceipt.sourceX < 0 || renderReceipt.sourceY < 0 ||
+        renderReceipt.width <= 0 || renderReceipt.height <= 0 ||
+        portraits->width < renderReceipt.sourceX + renderReceipt.width ||
+        portraits->height < renderReceipt.sourceY + renderReceipt.height) {
+        return 0;
+    }
+
+    backing = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                   (unsigned int)renderReceipt.backingGraphicIndex);
+    if (!backing || !backing->loaded || !backing->pixels ||
+        backing->width <= 0 || backing->height <= 0 ||
+        !DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+            &renderReceipt, 0, 1, &hostDraw) ||
+        !hostDraw.valid || !hostDraw.drawChampionPortrait ||
+        !hostDraw.drawMirrorBackingAsset ||
+        !hostDraw.suppressHostFallbackVisuals) {
+        return 0;
     }
     return 1;
 }

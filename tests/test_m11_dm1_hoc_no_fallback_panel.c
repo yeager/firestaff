@@ -63,6 +63,88 @@ static void seed_c040_state(M11_GameViewState* state)
            sizeof(state->candidateMirrorRename));
 }
 
+typedef struct HocFrontMirrorFixture {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    struct DungeonSensor_Compat sensors[1];
+    unsigned char squareData[2];
+    unsigned short squareFirstThings[2];
+    unsigned char sensorRaw[8];
+} HocFrontMirrorFixture;
+
+static unsigned short hoc_sensor_thing(int index, int cell)
+{
+    return (unsigned short)(((cell & 0x03) << 14) |
+                            ((THING_TYPE_SENSOR & 0x0f) << 10) |
+                            (index & 0x03ff));
+}
+
+static int seed_front_mirror_state(M11_GameViewState* state,
+                                   HocFrontMirrorFixture* fixture)
+{
+    struct ChampionState_Compat champion;
+
+    if (!state || !fixture) {
+        return 0;
+    }
+    M11_GameView_Init(state);
+    memset(fixture, 0, sizeof(*fixture));
+    state->active = 1;
+    state->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+    state->world.party.mapIndex = 0;
+    state->world.party.mapX = 0;
+    state->world.party.mapY = 1;
+    state->world.party.direction = DIR_NORTH;
+    state->world.party.activeChampionIndex = -1;
+
+    fixture->squareData[0] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    fixture->squareData[1] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    fixture->squareFirstThings[0] = hoc_sensor_thing(0, 2);
+    fixture->squareFirstThings[1] = THING_ENDOFLIST;
+    fixture->sensorRaw[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    fixture->sensorRaw[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xffu);
+    fixture->sensors[0].sensorType = 127;
+    fixture->sensors[0].sensorData = 13;
+    fixture->sensors[0].ornamentOrdinal = 4;
+    fixture->map.width = 1;
+    fixture->map.height = 2;
+    fixture->tiles.squareData = fixture->squareData;
+    fixture->tiles.squareCount = 2;
+    fixture->dungeon.header.mapCount = 1;
+    fixture->dungeon.maps = &fixture->map;
+    fixture->dungeon.tiles = &fixture->tiles;
+    fixture->dungeon.tilesLoaded = 1;
+    fixture->things.squareFirstThings = fixture->squareFirstThings;
+    fixture->things.squareFirstThingCount = 2;
+    fixture->things.rawThingData[THING_TYPE_SENSOR] = fixture->sensorRaw;
+    fixture->things.thingCounts[THING_TYPE_SENSOR] = 1;
+    fixture->things.sensors = fixture->sensors;
+    fixture->things.sensorCount = 1;
+    state->world.dungeon = &fixture->dungeon;
+    state->world.things = &fixture->things;
+
+    F0600_CHAMPION_InitEmpty_Compat(&champion);
+    if (!F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
+            "HALK|THE BRAVE||M|AAGEAAHIAABJAAAA|AABOCACCCECGCIAAAA|AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            &champion)) {
+        return 0;
+    }
+    state->mirrorCatalogAvailable = 1;
+    state->mirrorCatalog.count = 1;
+    state->mirrorCatalog.records[0].textStringIndex = 0;
+    state->mirrorCatalog.records[0].mirrorOrdinal = 13;
+    state->mirrorCatalog.records[0].champion = champion;
+    (void)F0628_CHAMPION_UnpackName_Compat(
+        &champion, state->mirrorCatalog.records[0].nameText,
+        sizeof(state->mirrorCatalog.records[0].nameText));
+    (void)F0629_CHAMPION_UnpackTitle_Compat(
+        &champion, state->mirrorCatalog.records[0].titleText,
+        sizeof(state->mirrorCatalog.records[0].titleText));
+    return 1;
+}
+
 static int expect_original_font_foreground(
     const M11_FontState* font,
     const unsigned char* framebuffer,
@@ -275,6 +357,54 @@ static int test_c040_host_input_requires_real_panel(void)
     return 1;
 }
 
+static int test_front_mirror_host_input_requires_real_pc34_material(void)
+{
+    const char* graphicsPath = pc34_graphics_path();
+    M11_GameViewState noAssetState;
+    M11_GameViewState realAssetState;
+    HocFrontMirrorFixture noAssetFixture;
+    HocFrontMirrorFixture realAssetFixture;
+
+    /* ReDMCSB DUNGEON.C F0172 publishes C127 only for the visible face;
+     * DUNVIEW.C:3913-3928 presents C346 then its C026 atlas cell.  M11 host
+     * input must not invoke REVIVE.C F0280 from an invisible substitute. */
+    if (!seed_front_mirror_state(&noAssetState, &noAssetFixture) ||
+        M11_GameView_HandlePointer(&noAssetState, 110, 83, 1) !=
+            M11_GAME_INPUT_IGNORED ||
+        noAssetState.candidateMirrorPanelActive ||
+        noAssetState.world.party.championCount != 0) {
+        fprintf(stderr, "FAIL C127 accepted without C346/C026 PC34 material\n");
+        M11_GameView_Shutdown(&noAssetState);
+        return 0;
+    }
+    M11_GameView_Shutdown(&noAssetState);
+
+    if (!graphicsPath) {
+        return 1;
+    }
+    if (!seed_front_mirror_state(&realAssetState, &realAssetFixture) ||
+        !M11_AssetLoader_Init(&realAssetState.assetLoader, graphicsPath)) {
+        if (getenv("FIRESTAFF_DM1_GRAPHICS_DAT")) {
+            fprintf(stderr, "FAIL configured PC34 C346/C026 did not load\n");
+            return 0;
+        }
+        M11_GameView_Shutdown(&realAssetState);
+        return 1;
+    }
+    realAssetState.assetsAvailable = 1;
+    if (M11_GameView_HandlePointer(&realAssetState, 110, 83, 1) !=
+            M11_GAME_INPUT_REDRAW ||
+        !realAssetState.candidateMirrorPanelActive ||
+        realAssetState.candidateMirrorOrdinal != 13 ||
+        realAssetState.world.party.championCount != 1) {
+        fprintf(stderr, "FAIL real C346/C026 C127 mirror route\n");
+        M11_GameView_Shutdown(&realAssetState);
+        return 0;
+    }
+    M11_GameView_Shutdown(&realAssetState);
+    return 1;
+}
+
 int main(void) {
     M11_GameViewState state;
     unsigned char framebuffer[kFramebufferWidth * kFramebufferHeight];
@@ -310,6 +440,9 @@ int main(void) {
         return 1;
     }
     if (!test_c040_host_input_requires_real_panel()) {
+        return 1;
+    }
+    if (!test_front_mirror_host_input_requires_real_pc34_material()) {
         return 1;
     }
     printf("PASS test_m11_dm1_hoc_no_fallback_panel substitute_pixels=0\n");
