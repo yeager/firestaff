@@ -139,6 +139,9 @@ typedef struct {
     Nexus_V1_LevelAuxSourceReceipt slev;
     Nexus_V1_LevelAuxSourceReceipt sal;
     Nexus_V1_LevelAuxSourceReceipt map;
+    /* SDDRVS.TSK is the global Saturn sound-task image consumed with every
+     * level bank.  Its identity is separate from per-level SAL/MAP bytes. */
+    Nexus_V1_LevelAuxSourceReceipt sound_driver;
     int canonical_pair_bound;
     int fallback_visuals_permitted;
 } Nexus_V1_LevelAuxRuntimeReceipt;
@@ -278,6 +281,7 @@ struct Nexus_V1_Engine {
     Nexus_ScriptVM script_vm;
     Nexus_ScriptRuntimeReceipt script_runtime_receipt;
     Nexus_V1_LevelAuxRuntimeReceipt level_aux_runtime_receipt;
+    Nexus_V1_LevelAuxSourceReceipt sound_driver_source;
 
     /* Creature manager */
     Nexus_V1_CreatureManager creatures;
