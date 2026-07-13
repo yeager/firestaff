@@ -124,6 +124,20 @@ int main(void)
 
     {
         DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
+            DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34);
+        input.relativeForward = 0;
+        input.relativeSide = 0;
+        seed_live_effects(&input, &projectiles, &explosions);
+        projectiles.entries[0].cell = 0; /* D0C row 11 C2900 cell. */
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
+              "F0127 D0C runtime decision is built");
+        CHECK(d1c.valid && d1c.viewSquare == 0 && d1c.row == 11 &&
+              d1c.liveProjectileCount == 1 && d1c.projectileZone >= 0,
+              "D0C consumes live projectile material through G2028 row 11");
+    }
+
+    {
+        DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
             DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34);
         input.hasVisibleChampionMirrorPayload = 1;
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
