@@ -37,6 +37,17 @@ destination `$3800`, and all live `CL/DL/CH` record registers. It also requires
 the original System Card 3.0 IRQ2 state receipt at `$e74c`, including the
 observed `$f5`, `$1802`, `$1803`, and `$f2` merge.
 
+The Mednafen 1.32.1 patch now emits those two rows directly. At the observed
+stage-two `JSR $e009` instruction at `$4090`, it snapshots only the live
+`CL/DL/CH` zero-page bytes and packs that observed triplet. It emits the
+transaction row only after execution returns to `$4093`. It then retains the
+observed `$f5` at `$4093` and `$e736`, `$f2` plus `$1802/$1803` at `$e742`,
+and the merged `$f2` at `$e74c` before emitting the controller-state row.
+The patch recognizes a JP/US label only from that captured packed value;
+anything else is emitted as `unrecognized` and fails the consumer. It reads no
+variant environment setting and does not invent a record from the controller
+transfer, CUE name, or static media bytes.
+
 The record is never derived from controller flow. The consumer accepts only a
 captured JP `0004df` or US `0004e0` value paired with its matching variant;
 these are the existing `$4090` runtime-handoff records established by the real

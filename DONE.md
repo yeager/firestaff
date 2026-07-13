@@ -276,6 +276,16 @@
   manifest semantics remain unbound. Verification: rejection regression
   `tests/test_verify_theron_post_e98a_track02_runtime_handoff_trace.sh`.
 
+- 2026-07-13 Theron live dynamic CD receipt emission: the Mednafen 1.32.1
+  instrumentation patch now writes the exact `dynamic_cd_read_transaction`
+  and `dynamic_cd_read_controller_state` rows consumed by the post-`$e98a`
+  verifier. It snapshots the real `$4090` live `CL/DL/CH` bytes, emits only
+  after the `$4093` return, and captures the original `$e736/$e742/$e74c`
+  IRQ2 state sequence. Unknown packed records are explicitly unrecognized;
+  no environment label, CUE name, static payload, or controller-flow guess
+  can promote them. Verification: receipt-schema/rejection regression and
+  clean patch dry-run against the cached Mednafen 1.32.1 source tree.
+
 - 2026-07-13 DM1 original-save C48/C49 projectile export: F0802 now writes
   ReDMCSB `EVENT.B.Slot` as the live C14 projectile Thing and rebuilds packed
   `EVENT.C.Projectile` from the active map, square, direction, and step

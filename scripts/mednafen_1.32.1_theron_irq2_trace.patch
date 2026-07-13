@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,6 +36,894 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,5 +36,978 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -104,6 +104,21 @@ index 347482c4..61d4758e 100644
 +static uint32 TheronIrq2TracePostE98ATransferSourcePC;
 +static uint32 TheronIrq2TracePostE98ATransferPhysicalPC;
 +static char TheronIrq2TracePostE98ATransferInstruction[256];
++/* These are raw snapshots at the real stage-two/System Card boundaries.
++ * They are intentionally not a decoder: an unrecognised live record is
++ * written as such and cannot pass Firestaff's Track 02 handoff verifier. */
++static bool TheronIrq2TraceDynamicReadPending;
++static bool TheronIrq2TraceDynamicTransactionSeen;
++static uint32 TheronIrq2TraceDynamicReadRecord;
++static bool TheronIrq2TraceDynamicReadReturnSeen;
++static uint32 TheronIrq2TraceDynamicF5AfterRead;
++static bool TheronIrq2TraceDynamicIrq2EntrySeen;
++static uint32 TheronIrq2TraceDynamicF5AtIrq2Entry;
++static bool TheronIrq2TraceDynamicStateBeforeSeen;
++static uint32 TheronIrq2TraceDynamicF2BeforeMerge;
++static uint32 TheronIrq2TraceDynamicStatus1802;
++static uint32 TheronIrq2TraceDynamicStatus1803;
++static bool TheronIrq2TraceDynamicControllerStateSeen;
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -882,6 +897,76 @@ index 347482c4..61d4758e 100644
 +  }
 + }
 +
++ /* The stage-two source invokes the System Card at $4090 after setting
++  * AL/DH/BX. CL/DL/CH are left live by that setup (theron-us-stage2-
++  * huc6280.asm:163-187), so record their actual zero-page bytes before the
++  * JSR and emit them only after the observed $4093 return. */
++ if(logical_pc == 0x4090 && !TheronIrq2TraceDynamicTransactionSeen &&
++    !TheronIrq2TraceDynamicReadPending &&
++    (CurGame->Debugger->MemPeek(0x4090, 1, true, true) & 0xff) == 0x20 &&
++    (CurGame->Debugger->MemPeek(0x4091, 1, true, true) & 0xff) == 0x09 &&
++    (CurGame->Debugger->MemPeek(0x4092, 1, true, true) & 0xff) == 0xe0)
++ {
++  const uint32 cl = CurGame->Debugger->MemPeek(0x00fc, 1, true, true) & 0xff;
++  const uint32 dl = CurGame->Debugger->MemPeek(0x00fd, 1, true, true) & 0xff;
++  const uint32 ch = CurGame->Debugger->MemPeek(0x00fe, 1, true, true) & 0xff;
++
++  TheronIrq2TraceDynamicReadRecord = cl | (dl << 8) | (ch << 16);
++  TheronIrq2TraceDynamicReadPending = true;
++ }
++ if(logical_pc == 0x4093 && TheronIrq2TraceDynamicReadPending &&
++    !TheronIrq2TraceDynamicReadReturnSeen)
++ {
++  const char *variant = "unrecognized";
++
++  if(TheronIrq2TraceDynamicReadRecord == 0x0004df)
++   variant = "jp_bin";
++  else if(TheronIrq2TraceDynamicReadRecord == 0x0004e0)
++   variant = "us_bin";
++  TheronIrq2Trace->print_format("dynamic_cd_read_transaction pc=4090 return_pc=4093 sector_count=01 destination=3800 record_register_mask=07 variant=%s record=%06x\\n",
++                                variant, TheronIrq2TraceDynamicReadRecord);
++  TheronIrq2TraceDynamicReadReturnSeen = true;
++  TheronIrq2TraceDynamicTransactionSeen = true;
++  TheronIrq2TraceDynamicReadPending = false;
++  TheronIrq2TraceDynamicF5AfterRead =
++   CurGame->Debugger->MemPeek(0x00f5, 1, true, true) & 0xff;
++  FlushTheronIrq2Trace();
++ }
++ if(logical_pc == 0xe736 && TheronIrq2TraceDynamicReadReturnSeen &&
++    !TheronIrq2TraceDynamicIrq2EntrySeen)
++ {
++  TheronIrq2TraceDynamicF5AtIrq2Entry =
++   CurGame->Debugger->MemPeek(0x00f5, 1, true, true) & 0xff;
++  TheronIrq2TraceDynamicIrq2EntrySeen = true;
++ }
++ if(logical_pc == 0xe742 && TheronIrq2TraceDynamicIrq2EntrySeen &&
++    !TheronIrq2TraceDynamicStateBeforeSeen)
++ {
++  TheronIrq2TraceDynamicF2BeforeMerge =
++   CurGame->Debugger->MemPeek(0x00f2, 1, true, true) & 0xff;
++  TheronIrq2TraceDynamicStatus1802 =
++   CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
++  TheronIrq2TraceDynamicStatus1803 =
++   CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
++  TheronIrq2TraceDynamicStateBeforeSeen = true;
++ }
++ if(logical_pc == 0xe74c && TheronIrq2TraceDynamicStateBeforeSeen &&
++    !TheronIrq2TraceDynamicControllerStateSeen)
++ {
++  const uint32 f2_at_branch =
++   CurGame->Debugger->MemPeek(0x00f2, 1, true, true) & 0xff;
++
++  TheronIrq2Trace->print_format("dynamic_cd_read_controller_state pc=e74c f5_after_cd_read=%02x f5_at_irq2_entry=%02x status_1802=%02x status_1803=%02x f2_before_merge=%02x f2_at_branch=%02x\\n",
++                                TheronIrq2TraceDynamicF5AfterRead,
++                                TheronIrq2TraceDynamicF5AtIrq2Entry,
++                                TheronIrq2TraceDynamicStatus1802,
++                                TheronIrq2TraceDynamicStatus1803,
++                                TheronIrq2TraceDynamicF2BeforeMerge,
++                                f2_at_branch);
++  TheronIrq2TraceDynamicControllerStateSeen = true;
++  FlushTheronIrq2Trace();
++ }
++
 + if(logical_pc == 0x4093 || logical_pc == 0xe736 || logical_pc == 0xe742 || logical_pc == 0xe74c)
 + {
 +  const uint32 f5 = CurGame->Debugger->MemPeek(0x00f5, 1, true, true) & 0xff;
@@ -894,7 +979,6 @@ index 347482c4..61d4758e 100644
 +  FlushTheronIrq2Trace();
 + }
 +}
- 
  static bool NeedInit;
  static bool WatchLogical; // Watch logical memory addresses, not physical
 @@ -162,10 +817,10 @@ static void UpdateCoreHooks(void)
@@ -903,24 +987,24 @@ index 347482c4..61d4758e 100644
  	IOWriteBreakpoints.size() || AuxReadBreakpoints.size() || AuxWriteBreakpoints.size() || OpBreakpoints.size();
 - bool CPUCBNeeded = BPInUse || TraceLog || InSteppingMode || (NeedStep == 2);
 + bool CPUCBNeeded = BPInUse || TraceLog || TheronIrq2Trace || InSteppingMode || (NeedStep == 2);
- 
+-
++
 - CurGame->Debugger->EnableBranchTrace(BPInUse || TraceLog || IsActive);
 - CurGame->Debugger->SetCPUCallback(CPUCBNeeded ? CPUCallback : NULL, TraceLog || InSteppingMode || (NeedStep == 2));
 + CurGame->Debugger->EnableBranchTrace(BPInUse || TraceLog || TheronIrq2Trace || IsActive);
 + CurGame->Debugger->SetCPUCallback(CPUCBNeeded ? CPUCallback : NULL, TraceLog || TheronIrq2Trace || InSteppingMode || (NeedStep == 2));
  }
- 
+-
++
  static void UpdatePCBreakpoints(void)
-@@ -1367,6 +2022,8 @@ static void CPUCallback(uint32 PC, bool bpoint)
+@@ -1367,4 +2022,6 @@ static void CPUCallback(uint32 PC, bool bpoint)
   //
   if(TraceLog)
    DoTraceLog(PC);
 + if(TheronIrq2Trace)
 +  DoTheronIrq2Trace(PC);
  }
- 
- 
-@@ -1873,6 +2530,44 @@ void Debugger_Init(void)
+@@ -1873,5 +2530,55 @@ void Debugger_Init(void)
  	TraceLogSpec = "";
  	TraceLogEnd = 0;
  	TraceLogRTO = 0;
@@ -958,23 +1042,33 @@ index 347482c4..61d4758e 100644
 +	  memset(TheronIrq2TraceCB20WindowSeen, 0, sizeof(TheronIrq2TraceCB20WindowSeen));
 +	  TheronIrq2TraceCB20TransferPending = false;
 +	  memset(TheronIrq2TraceCB20TransferSeen, 0, sizeof(TheronIrq2TraceCB20TransferSeen));
++	  TheronIrq2TraceDynamicReadPending = false;
++	  TheronIrq2TraceDynamicTransactionSeen = false;
++	  TheronIrq2TraceDynamicReadRecord = 0;
++	  TheronIrq2TraceDynamicReadReturnSeen = false;
++	  TheronIrq2TraceDynamicF5AfterRead = 0;
++	  TheronIrq2TraceDynamicIrq2EntrySeen = false;
++	  TheronIrq2TraceDynamicF5AtIrq2Entry = 0;
++	  TheronIrq2TraceDynamicStateBeforeSeen = false;
++	  TheronIrq2TraceDynamicF2BeforeMerge = 0;
++	  TheronIrq2TraceDynamicStatus1802 = 0;
++	  TheronIrq2TraceDynamicStatus1803 = 0;
++	  TheronIrq2TraceDynamicControllerStateSeen = false;
 +	  TheronIrq2Trace.reset(new FileStream(theron_trace_path, FileStream::MODE_WRITE_INPLACE));
 +	  TheronIrq2Trace->print_format("source=mednafen-pce-instrumented\n");
 +	  FlushTheronIrq2Trace();
 +	 }
- 
  	NeedInit = true;
  	WatchLogical = true;
 @@ -1896,0 +2591,3 @@ void Debugger_Init(void)
 +
 +	if(TheronIrq2Trace)
 +	 UpdateCoreHooks();
-@@ -1916,6 +2614,8 @@ void Debugger_Kill(void)
+@@ -1916,5 +2614,7 @@ void Debugger_Kill(void)
  {
  	if(TraceLog)
  	 TraceLog.reset(nullptr);
 +	if(TheronIrq2Trace)
 +	 TheronIrq2Trace.reset(nullptr);
- 
  	if(memdbg != NULL)
  	{
