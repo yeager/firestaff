@@ -193,6 +193,7 @@ int main(int argc, char **argv) {
            "complete-alcove-payload-selectors=%d "
            "complete-floor-sensor-controls=%d "
            "complete-floor-sensor-destinations=%d "
+           "complete-floor-sensor-model-rotation-pairs=%d "
            "complete-floor-decoration-payload-selectors=%d "
            "complete-floor-decoration-rotation-selectors=%d "
            "complete-floor-decoration-offset-pairs=%d "
@@ -226,6 +227,7 @@ int main(int argc, char **argv) {
            receipt.structure1f_alcove_payload_selector_complete_level_count,
            receipt.structure1f_floor_sensor_control_selector_complete_level_count,
            receipt.structure1f_floor_sensor_destination_complete_level_count,
+           receipt.structure1f_floor_sensor_model_rotation_pair_complete_level_count,
            receipt.structure1f_floor_decoration_payload_selector_complete_level_count,
            receipt.structure1f_floor_decoration_rotation_selector_complete_level_count,
            receipt.structure1f_floor_decoration_offset_pair_complete_level_count,

@@ -1172,8 +1172,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   addresses. Direct item `attribute1/attribute2` and `location/item_id` pairs
   plus floor-decoration signed offset pairs and raw control/extent tuples reach
   the host receipt, render plan, and LEV00-15 corpus aggregate as provenance
-  only. Remaining work is a documented Saturn Structure1F draw/trigger
-  binding, never a synthetic overlay or omission of a visible original record.
+  only; the same is true of floor-sensor model/rotation pairs. Remaining work
+  is a documented Saturn Structure1F draw/trigger binding, never a synthetic
+  overlay or omission of a visible original record.
 
 - 🔧 2026-07-13 Nexus startup host-route follow-up: title/save/champion
   presentation remains blocked until the full original startup package and

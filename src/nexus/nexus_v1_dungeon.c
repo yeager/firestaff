@@ -2133,6 +2133,54 @@ int nexus_v1_level_structure1f_floor_sensor_destination_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure1f_floor_sensor_model_rotation_pair_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FFloorSensorModelRotationPairReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FFloorSensorModelRotationPairReceipt receipt;
+    Nexus_V1_DgnStructure1FSpatialReceipt spatial;
+    unsigned char seen[UINT16_MAX + 1U];
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&spatial, 0, sizeof(spatial));
+    memset(seen, 0, sizeof(seen));
+    if (!level || nexus_v1_level_structure1f_spatial_receipt(level, &spatial) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.structure1f_spatial_valid = spatial.valid;
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        uint16_t pair;
+
+        if (record->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS) {
+            continue;
+        }
+        ++receipt.floor_sensor_entry_count;
+        if (!spatial.valid) continue;
+        ++receipt.resolved_pair_count;
+        pair = (uint16_t)(((uint16_t)record->model_or_aspect << 8) |
+                          record->rotation);
+        if (pair == 0U) ++receipt.zero_pair_count;
+        else ++receipt.nonzero_pair_count;
+        if (pair > receipt.highest_pair) receipt.highest_pair = pair;
+        if (seen[pair]) ++receipt.duplicate_pair_count;
+        else {
+            seen[pair] = 1U;
+            ++receipt.unique_pair_count;
+        }
+    }
+    receipt.complete = receipt.structure1f_spatial_valid &&
+        receipt.resolved_pair_count == receipt.floor_sensor_entry_count;
+    receipt.pair_semantics_proven = 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_structure1f_floor_decoration_payload_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt *out_receipt)
@@ -2567,6 +2615,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure1f_floor_sensor_control_selectors);
     (void)nexus_v1_level_structure1f_floor_sensor_destination_receipt(
         level, &out_receipt->structure1f_floor_sensor_destinations);
+    (void)nexus_v1_level_structure1f_floor_sensor_model_rotation_pair_receipt(
+        level, &out_receipt->structure1f_floor_sensor_model_rotation_pairs);
     (void)nexus_v1_level_structure1f_floor_decoration_payload_selector_receipt(
         level, &out_receipt->structure1f_floor_decoration_payload_selectors);
     (void)nexus_v1_level_structure1f_floor_decoration_rotation_selector_receipt(
@@ -3055,6 +3105,8 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.structure1f_floor_sensor_control_selectors;
     receipt.structure1f_floor_sensor_destinations =
         handoff.structure1f_floor_sensor_destinations;
+    receipt.structure1f_floor_sensor_model_rotation_pairs =
+        handoff.structure1f_floor_sensor_model_rotation_pairs;
     receipt.structure1f_floor_decoration_payload_selectors =
         handoff.structure1f_floor_decoration_payload_selectors;
     receipt.structure1f_floor_decoration_rotation_selectors =
