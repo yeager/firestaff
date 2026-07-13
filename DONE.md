@@ -4,6 +4,11 @@
   retain parsed candidate type, path, payload size, and payload hash. Original
   envelope/raw rows are explicitly rejected for runtime import.
 
+- 2026-07-13 CSBWin saved `TT_FALSEWALL` SET runtime: authenticated function-7
+  receipts now apply the original falsewall bit after the existing saved DSA
+  boundary. Source: `Timer.cpp:1343-1442`. Verification:
+  `test_csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin saved `TT_1` collision-free door runtime: exact saved
   door receipts now apply one original low-state open/close step and retain
   the same timer/queue owner through every nonterminal `+1` successor.

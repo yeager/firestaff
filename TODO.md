@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin restored `TT_FALSEWALL` follow-up: authenticated SET now
+  updates the original falsewall cell flag. CLEAR/TOGGLE party and
+  nonmaterial-group deferral, source successor ownership, portrait handling,
+  and parameter-message payloads remain fail-closed.
+
 - 2026-07-13 CSBWin restored `TT_24` follow-up: exact saved-object removal
   and free are live only for a validated source Thing chain. Timer-owned
   clouds, source sound/party effects, malformed chains, and all broader

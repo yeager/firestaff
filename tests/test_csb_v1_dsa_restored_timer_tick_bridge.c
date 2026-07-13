@@ -143,6 +143,22 @@ int main(void)
               profile.csbwin_global_variables[1] == 0u,
           "stale restored timer identity cannot reach the live DSA dispatcher");
 
+    raw[80] = 0x10u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].function = 7u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x14u,
+          "restored falsewall SET timer applies its source cell flag");
+
+    raw[80] = 0x10u;
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x10u,
+          "stale falsewall SET timer cannot mutate a source cell flag");
+
     profile.csbwin_timers[0].source_index = 0u;
     profile.csbwin_timers[0].function = 8u;
     profile.csbwin_timers[0].time = profile.game_time;
