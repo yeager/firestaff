@@ -2069,6 +2069,17 @@
   Verification: focused throw/shoot receipt regression and M11 projectile
   runtime target build.
 
+- 2026-07-13 DM1 PC34 F0328/F0811 direct impact queue and render cleanup:
+  M11 now deletes only the matching C48/C49 move event at F0214 time and
+  writes the C14 decoded/raw `Next` to `THING_NONE` after F0215. The direct
+  runtime gate drives a PC34-shaped arrow C14 into a wall and proves that its
+  source square contains only the terminal weapon drop for the next F0115
+  floor-item draw, with no active projectile or queued move event. C11 action
+  receipts are intentionally untouched. Source: ReDMCSB `PROJEXPL.C
+  F0214:197-223`, `F0217:607-608`, `F0215:248-260`, and `DUNVIEW.C F0115`.
+  Verification: `test_m11_creature_projectile_runtime_pc34_compat` (30/30)
+  and focused throw/shoot receipt regression.
+
 - 2026-07-13 DM1 PC34 F0407 invalid-owner receipt cleanup: a typed pending
   C11 whose champion owner is no longer within `Party.ChampionCount` is now
   compacted immediately when Firestaff rejects that invalid action/owner.
