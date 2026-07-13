@@ -1422,6 +1422,16 @@
   1620-1622`, `CHAMPION.C F0330`, and `TIMELINE.C F0253`. Verification:
   focused real M11 SWING action-hand test plus C11 regressions.
 
+- 2026-07-13 DM1 PC34 F0407 SWING C11 consumption: the authentic ordinal-zero
+  C11 emission now owns the M11 F0253 completion for the already-created
+  SWING action lock. Its matching local cooldown mirror is retired before the
+  end-of-tick aging pass, so `ActionDefense` and `ActionIndex` are restored
+  exactly once. This is limited to the source-backed SWING route and leaves
+  THROW/F0328/F0402 unchanged. Source: ReDMCSB `MENU.C F0407:1620-1622`,
+  `CHAMPION.C F0330`, and `TIMELINE.C F0253:1654-1664,1927-1932`.
+  Verification: `dm1_v1_f0407_swing_c11_receipt_pc34_compat` drives real M11
+  idle ticks to C11 expiry; related F0330/F0407 focused CTests pass.
+
 - 2026-07-13 DM1 PC34 C25 explosion union handoff: ReDMCSB
   `PROJEXPL.C F0213` stores C25 as `B.Location + C.Slot`, then
   `TIMELINE.C F0261` dispatches it to F0220. F0435 requires that exact C15

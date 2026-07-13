@@ -460,10 +460,11 @@ ReDMCSB WIP 2021-02-06 source tree.
   staged. Do not reintroduce the removed M11 diagnostic export or admit any
   state beyond source-proven F0280/F0282 panel facts.
 
-- 2026-07-13 DM1 F0407 action-enable receipts: live `THROW` and one real
-  action-hand `SWING` route now bind their F0330 C11 owners. Other F0407
-  action families still require separate source-owned live receipt work; do
-  not generalize C11 scheduling from a UI cooldown or add a fallback timer.
+- 2026-07-13 DM1 F0407 action-enable receipts: `THROW` and the real
+  action-hand `SWING` route now complete through their F0330 C11 owners.
+  Other F0407 action families still require separate source-owned live
+  receipt work; do not generalize C11 scheduling from a UI cooldown or add a
+  fallback timer.
 
 - 🔧 2026-07-13 Nexus Structure3 follow-up: documented `0x800`-byte block
   layout, raw zero-separated byte/block spans, payload composition, and

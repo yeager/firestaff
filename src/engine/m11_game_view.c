@@ -6255,6 +6255,35 @@ static int m11_refill_ready_hand_after_dm1_shoot(M11_GameViewState* state,
 static int m11_refill_ready_hand_after_shoot(M11_GameViewState* state,
                                              int championIndex);
 
+/* The live action-lock list is an M11 cooldown mirror, not a second owner of
+ * ReDMCSB TIMELINE.C C11.  MENU.C F0407 schedules the authenticated SWING
+ * C11 through F0330; when that receipt reaches F0253, retire this matching
+ * local mirror before the end-of-tick cooldown pass can replay F0253's
+ * ActionDefense/ActionIndex mutation. */
+static void m11_consume_swing_action_lock_c11(M11_GameViewState* state,
+                                              int championIndex,
+                                              int actionIndex) {
+    int i;
+    if (!state || actionIndex != DM1_ACTION_SWING ||
+        championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) {
+        return;
+    }
+    for (i = 0; i < state->dm1LiveActionEffects.count; ++i) {
+        DM1_V1_LiveActionEffectPc34* entry =
+            &state->dm1LiveActionEffects.entries[i];
+        if (entry->kind != DM1_V1_LIVE_ACTION_EFFECT_ACTION_LOCK_PC34 ||
+            entry->championIndex != championIndex ||
+            entry->actionIndex != actionIndex) {
+            continue;
+        }
+        state->dm1LiveActionEffects.entries[i] =
+            state->dm1LiveActionEffects.entries[
+                state->dm1LiveActionEffects.count - 1];
+        --state->dm1LiveActionEffects.count;
+        return;
+    }
+}
+
 static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
     DM1_V1_LiveActionEffectsAdvancePlanPc34 advancePlan;
     int i;
@@ -6301,6 +6330,11 @@ static void m11_enable_champion_action_from_timeline(M11_GameViewState* state,
     int actionIndex;
     if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
     actionIndex = (int)state->actionDisabledIndex[championIndex];
+    /* ReDMCSB TIMELINE.C C11 -> F0253 owns the real completion.  The
+     * ordinal-zero F0407 SWING route has one local cooldown mirror solely
+     * for host gating; consume it here so the later mirror-aging pass cannot
+     * apply the F0253 defense/action-index mutation a second time. */
+    m11_consume_swing_action_lock_c11(state, championIndex, actionIndex);
     state->actionDisabledTicks[championIndex] = 0u;
     if (championIndex < state->world.party.championCount &&
         actionIndex >= 0 && actionIndex < 44) {
