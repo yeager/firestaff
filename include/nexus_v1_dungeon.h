@@ -180,6 +180,19 @@ typedef struct {
     uint16_t highest_index;
 } Nexus_V1_DgnStructure1ABoundaryReceipt;
 
+/* Structure1F entries that carry a Structure1A index are usable only after
+ * their original Structure1B owner relation has been proven. */
+typedef struct {
+    int table_valid;
+    int table_entry_count;
+    int structure1f_bound_entry_count;
+    int resolved_entry_count;
+    int missing_owner_entry_count;
+    int ambiguous_owner_entry_count;
+    int out_of_range_index_count;
+    int complete;
+} Nexus_V1_DgnStructure1ARelationReceipt;
+
 /* The runtime host consumes Structure1F only through this receipt. Direct
  * records retain their documented source cells, while records indexed through
  * Structure1A block before any viewport/material work: Structure1A has not
@@ -199,6 +212,7 @@ typedef struct {
     int structure1f_typed_entry_count;
     Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
+    Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     int can_prepare_runtime_dgn;
     int blocks_real_dgn_mesh_render;
     int fallback_visuals_permitted;
@@ -642,6 +656,9 @@ int nexus_v1_level_structure1f_spatial_receipt(
 int nexus_v1_level_structure1a_boundary_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1ABoundaryReceipt *out_receipt);
+int nexus_v1_level_structure1a_relation_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1ARelationReceipt *out_receipt);
 int nexus_v1_level_dgn_structure1_host_provenance_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1HostProvenanceReceipt *out_receipt);
