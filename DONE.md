@@ -1863,17 +1863,17 @@
   compacted immediately when Firestaff rejects that invalid action/owner.
   A historic valid-owner C11 survives unrelated invalid input, while an
   F0407 action whose once-valid champion later leaves `Party.ChampionCount`
-  loses only its now-stale C11; the same action's C04 delayed wooden-thud
-  receipt is intentionally retained. Source: ReDMCSB `COMMAND.C
+  after C11 is due consumes that stale C11 without an enable action; the
+  same action's C04 delayed wooden-thud receipt still dispatches. Source:
+  ReDMCSB `COMMAND.C
   F0380:2308-2312`, `MENU.C F0407:1312-1317,1620-1622`, `SOUND.C
-  F0064:1536-1543`, and `CHAMPION.C F0330`; COMMAND only forwards valid
-  action-area ownership, C11 stores champion Priority, and C04 has no
-  champion field to clean.
+  F0064:1536-1543`, `CHAMPION.C F0330`, and `TIMELINE.C:1903-1905,1927-1932`;
+  COMMAND gates the action-area route, C11 stores champion Priority, and C04
+  has no champion field to clean.
   Verification: the focused C04/C11 regression proves malformed action input
   creates no receipts, a source-created C04/C11 pair follows this distinct
-  ownership rule after the action owner invalidates, stale C11 is removed
-  before its due tick, C04 still dispatches, and a later invalid imported C11
-  remains non-observable at dispatch.
+  ownership rule after C11 is due and the action owner invalidates: stale C11
+  is consumed without `EMIT_ACTION_ENABLED`, while C04 still dispatches.
 
 - 2026-07-13 DM1 PC34 Open Door C11 receipt regression: the F0412 Open Door
   runtime gate now requires both independently owned queue receipts: F0327's
