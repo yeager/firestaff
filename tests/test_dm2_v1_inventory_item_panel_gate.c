@@ -14,6 +14,7 @@
  */
 
 #include "dm2_v1_inventory_panel.h"
+#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_object_model.h"
 
 #include <stdio.h>
@@ -196,6 +197,80 @@ static void test_empty_invalid_and_unresolved_slots(void)
           "unresolved neck-slot description stable");
 }
 
+static void test_source_selected_item_gdat_material(void)
+{
+    DM2_V1_AssetLoader loader;
+    DM2_V1_GdatEntry entries[2];
+    uint8_t raw[27];
+    uint32_t offsets[1] = {0u};
+    uint32_t sizes[1] = {sizeof(raw)};
+    DM2_ChampionRecord champ;
+    DM2_DB_State db;
+    DM2_V1_InventoryPanelItemView item;
+    DM2_V1_InventoryPanelGdatMaterialReceipt material;
+    DM2_V1_InventoryPanelHudReceipt hud;
+    uint32_t powerblade;
+    int palette;
+
+    memset(&loader, 0, sizeof(loader));
+    memset(entries, 0, sizeof(entries));
+    memset(raw, 0, sizeof(raw));
+    memset(&champ, 0, sizeof(champ));
+    memset(&db, 0, sizeof(db));
+    raw[0] = 2u;
+    raw[2] = 1u;
+    raw[3] = 0x80u;
+    raw[4] = 4u;
+    raw[10] = 0x12u;
+    for (palette = 0; palette < 16; ++palette) {
+        raw[11 + palette] = (uint8_t)(0x20 + palette);
+    }
+    entries[0].cls1 = DM2_GDAT_CATEGORY_WEAPONS;
+    entries[0].cls2 = 0x2au;
+    entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
+    entries[0].cls4 = 0x18u;
+    entries[0].data_index = 0u;
+    loader.loaded = 1;
+    loader.entries = entries;
+    loader.entry_count = 1u;
+    loader.raw_offsets = offsets;
+    loader.raw_sizes = sizes;
+    loader.raw_data_count = 1u;
+    loader.data = raw;
+    loader.data_size = sizeof(raw);
+    powerblade = dm2_db_make_handle(DM2_DB_WEAPON, 1u);
+    champ.inventory[DM2_V1_INV_SLOT_ACTION_HAND] = powerblade;
+
+    CHECK(dm2_v1_inventory_panel_select_item(
+              &champ, NULL, DM2_V1_INV_SLOT_ACTION_HAND,
+              &db, NULL, 0u, &item),
+          "source-selected action-hand item snapshot succeeds");
+    CHECK(dm2_v1_inventory_panel_gdat_material_receipt(
+              &loader, powerblade, DM2_GDAT_CATEGORY_WEAPONS, 0x2au, 0x18u,
+              &material) && material.valid &&
+              material.decoded_width == 2u && material.decoded_height == 1u &&
+              material.decoded_format == DM2_IMG_FMT_U4 &&
+              material.local_palette16[0] == 0x20u &&
+              material.local_palette16[15] == 0x2fu &&
+              material.material_hash != 0u,
+          "item material receipt binds exact GDAT image, pixels, and palette");
+    CHECK(dm2_v1_inventory_panel_hud_receipt(&item, &material, &hud) &&
+              hud.valid && hud.object_id == powerblade &&
+              hud.selected_slot == DM2_V1_INV_SLOT_ACTION_HAND &&
+              hud.receipt_hash != 0u,
+          "HUD receipt accepts only matching selected item material");
+    CHECK(!dm2_v1_inventory_panel_gdat_material_receipt(
+              &loader, powerblade, DM2_GDAT_CATEGORY_WEAPONS, 0x2au, 0x19u,
+              &material),
+          "missing source-selected item field fails closed");
+    CHECK(!dm2_v1_inventory_panel_gdat_material_receipt(
+              &loader, powerblade, DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+              0x02u, 0u, &material),
+          "non-item GDAT category cannot become an inventory icon");
+    CHECK(!dm2_v1_inventory_panel_hud_receipt(&item, &material, &hud),
+          "failed material cannot produce a fallback HUD receipt");
+}
+
 static void test_source_evidence(void)
 {
     const char *e = dm2_v1_inventory_panel_source_evidence();
@@ -218,6 +293,7 @@ int main(void)
     test_slot_names_and_equipment_flags();
     test_inventory_selection_and_description();
     test_empty_invalid_and_unresolved_slots();
+    test_source_selected_item_gdat_material();
     test_source_evidence();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

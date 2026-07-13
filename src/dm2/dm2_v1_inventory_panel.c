@@ -42,6 +42,27 @@ static int slot_valid(int slot)
            (slot >= 0 && slot < DM2_V1_INV_SLOT_COUNT);
 }
 
+static uint32_t inventory_panel_hash_step(uint32_t hash, uint32_t value)
+{
+    hash ^= value;
+    return hash * 16777619u;
+}
+
+static int inventory_item_gdat_category(uint8_t category)
+{
+    switch (category) {
+        case DM2_GDAT_CATEGORY_WEAPONS:
+        case DM2_GDAT_CATEGORY_CLOTHES:
+        case DM2_GDAT_CATEGORY_SCROLLS:
+        case DM2_GDAT_CATEGORY_POTIONS:
+        case DM2_GDAT_CATEGORY_CONTAINERS:
+        case DM2_GDAT_CATEGORY_MISCELLANEOUS:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 const char *dm2_v1_inventory_slot_label(int slot)
 {
     if (slot == DM2_V1_INV_SLOT_LEADER_HAND) return "leader_hand";
@@ -126,6 +147,119 @@ int dm2_v1_inventory_panel_select_item(
         snprintf(out->description, sizeof(out->description), "UNRESOLVED");
     }
 
+    return 1;
+}
+
+int dm2_v1_inventory_panel_gdat_material_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint32_t object_id,
+    uint8_t gdat_category,
+    uint8_t gdat_index,
+    uint8_t image_field,
+    DM2_V1_InventoryPanelGdatMaterialReceipt *out_receipt)
+{
+    uint8_t *pixels;
+    int width = 0;
+    int height = 0;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+    size_t pixel_count;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM_ICON 13478-13620 and
+     * DRAW_ITEM_IN_HAND 15778-15812 first retain the source record's cls1,
+     * cls2 and selected image field, then query that exact dtImage and its
+     * QUERY_GDAT_IMAGE_LOCALPAL payload.  A host icon chooser would not
+     * preserve this contract, so a caller must supply the source address. */
+    if (!loader || object_id == 0u || !inventory_item_gdat_category(gdat_category) ||
+        !dm2_v1_asset_load_image_metadata(loader, gdat_category, gdat_index,
+                                          image_field,
+                                          &out_receipt->image_metadata) ||
+        out_receipt->image_metadata.bits_per_pixel != 4u ||
+        !dm2_v1_asset_load_image_local_palette(loader, gdat_category,
+                                               gdat_index, image_field,
+                                               out_receipt->local_palette16,
+                                               &out_receipt->local_palette_hash) ||
+        out_receipt->local_palette_hash == 0u) {
+        return 0;
+    }
+
+    pixels = dm2_v1_asset_load_image_field(loader, gdat_category, gdat_index,
+                                            image_field, &width, &height,
+                                            &format);
+    if (!pixels || width <= 0 || height <= 0 ||
+        width != (int)out_receipt->image_metadata.width ||
+        height != (int)out_receipt->image_metadata.height ||
+        (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4)) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    pixel_count = (size_t)width * (size_t)height;
+    if (pixel_count == 0u || pixel_count > UINT32_MAX) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    for (size_t i = 0u; i < pixel_count; ++i) {
+        hash = inventory_panel_hash_step(hash, pixels[i]);
+    }
+    dm2_v1_asset_free_pixels(pixels);
+    if (hash == 0u) return 0;
+
+    out_receipt->object_id = object_id;
+    out_receipt->gdat_category = gdat_category;
+    out_receipt->gdat_index = gdat_index;
+    out_receipt->image_field = image_field;
+    out_receipt->decoded_width = (uint16_t)width;
+    out_receipt->decoded_height = (uint16_t)height;
+    out_receipt->decoded_format = format;
+    out_receipt->decoded_pixel_count = (uint32_t)pixel_count;
+    out_receipt->decoded_pixels_hash = hash;
+    hash = inventory_panel_hash_step(hash,
+                                     out_receipt->image_metadata.metadata_hash);
+    hash = inventory_panel_hash_step(hash, out_receipt->local_palette_hash);
+    hash = inventory_panel_hash_step(hash, object_id);
+    hash = inventory_panel_hash_step(hash,
+                                     ((uint32_t)gdat_category << 16) |
+                                     ((uint32_t)gdat_index << 8) |
+                                     image_field);
+    if (hash == 0u) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    out_receipt->material_hash = hash;
+    out_receipt->valid = 1;
+    return 1;
+}
+
+int dm2_v1_inventory_panel_hud_receipt(
+    const DM2_V1_InventoryPanelItemView *item,
+    const DM2_V1_InventoryPanelGdatMaterialReceipt *material,
+    DM2_V1_InventoryPanelHudReceipt *out_receipt)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!item || !material || !item->has_object || item->object_id == 0u ||
+        !material->valid || material->object_id != item->object_id ||
+        material->material_hash == 0u) {
+        return 0;
+    }
+    hash = inventory_panel_hash_step(hash, (uint32_t)item->selected_slot);
+    hash = inventory_panel_hash_step(hash, item->object_id);
+    hash = inventory_panel_hash_step(hash, item->db_pool);
+    hash = inventory_panel_hash_step(hash, item->db_index);
+    hash = inventory_panel_hash_step(hash, material->material_hash);
+    if (hash == 0u) return 0;
+
+    out_receipt->selected_slot = item->selected_slot;
+    out_receipt->object_id = item->object_id;
+    out_receipt->db_pool = item->db_pool;
+    out_receipt->db_index = item->db_index;
+    out_receipt->material = *material;
+    out_receipt->receipt_hash = hash;
+    out_receipt->valid = 1;
     return 1;
 }
 
