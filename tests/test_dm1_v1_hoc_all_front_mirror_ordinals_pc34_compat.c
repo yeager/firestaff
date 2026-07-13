@@ -800,32 +800,40 @@ int main(int argc, char** argv)
      * materialization and C160 confirmation: a missing leader must become
      * slot 0 without changing the two existing portraits or tail append. */
     if (firstOrdinal >= 0) {
-        M12_StartupMenuState missingLeaderMenu;
-        M11_GameViewState missingLeaderGame;
-        unsigned char firstPortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
-        unsigned char secondPortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
-        char firstName[16];
-        char secondName[16];
-        char sourceName[16];
-        int existingA = (firstOrdinal + 1) % 24;
-        int existingB = (firstOrdinal + 2) % 24;
-        int candidateIndex;
+        const int invalidLeaderIndices[] = { -1, CHAMPION_MAX_PARTY };
+        int invalidLeaderCase;
 
-        firstName[0] = '\0';
-        secondName[0] = '\0';
-        sourceName[0] = '\0';
-        if (!open_game(dataDir, &missingLeaderMenu, &missingLeaderGame)) {
+        for (invalidLeaderCase = 0;
+             invalidLeaderCase < (int)(sizeof(invalidLeaderIndices) /
+                                       sizeof(invalidLeaderIndices[0]));
+             ++invalidLeaderCase) {
+            M12_StartupMenuState missingLeaderMenu;
+            M11_GameViewState missingLeaderGame;
+            unsigned char firstPortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+            unsigned char secondPortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+            char firstName[16];
+            char secondName[16];
+            char sourceName[16];
+            int existingA = (firstOrdinal + 1) % 24;
+            int existingB = (firstOrdinal + 2) % 24;
+            int candidateIndex;
+
+            firstName[0] = '\0';
+            secondName[0] = '\0';
+            sourceName[0] = '\0';
+            if (!open_game(dataDir, &missingLeaderMenu, &missingLeaderGame)) {
             fprintf(stderr, "FAIL could not open missing-leader C127 game\n");
             ok = 0;
-        } else if (!M11_GameView_RecruitChampionByMirrorOrdinal(
+            } else if (!M11_GameView_RecruitChampionByMirrorOrdinal(
                        &missingLeaderGame, existingA) ||
                    !M11_GameView_RecruitChampionByMirrorOrdinal(
                        &missingLeaderGame, existingB) ||
                    missingLeaderGame.world.party.championCount != 2) {
             fprintf(stderr, "FAIL HoC missing-leader source party setup\n");
             ok = 0;
-        } else {
-            missingLeaderGame.world.party.activeChampionIndex = -1;
+            } else {
+            missingLeaderGame.world.party.activeChampionIndex =
+                invalidLeaderIndices[invalidLeaderCase];
             missingLeaderGame.world.party.mapIndex = 0;
             missingLeaderGame.world.party.mapX = firstPartyX;
             missingLeaderGame.world.party.mapY = firstPartyY;
@@ -871,8 +879,9 @@ int main(int argc, char** argv)
                     ok = 0;
                 }
             }
+            }
+            M11_GameView_Shutdown(&missingLeaderGame);
         }
-        M11_GameView_Shutdown(&missingLeaderGame);
     }
 
     /* REVIVE.C F0282:744-783 clears the appended candidate without needing

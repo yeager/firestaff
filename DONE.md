@@ -7,6 +7,13 @@
   `REVIVE.C` F0280/F0281/F0282. Verification: focused CTest against installed
   PC34 data.
 
+- 2026-07-13 DM1 HoC out-of-range leader C127/C160: the real-PC34 leader
+  recovery regression now also starts with active index 4 for a two-member
+  roster. C127 and C160 repair it to the first living source-order champion,
+  retaining both existing portraits and the appended source candidate. Source:
+  ReDMCSB `CHAMPION.C` F0319:1662-1681 and `REVIVE.C` F0280/F0282.
+  Verification: all-front-mirror focused CTest.
+
 - 2026-07-13 DM1 HoC C161 disabled-source accept: a real-PC34 C127 candidate
   now proves F0281 rename completion accepts its already materialized C026
   portrait after the source sensor is disabled. The final party member keeps
