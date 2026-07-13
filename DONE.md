@@ -18,6 +18,11 @@
   this adds no item, material, mesh, texture, palette, pixel, or draw meaning.
 
 - 2026-07-13 Nexus raw Structure1F item location/item-id pair receipt: complete; no object or draw semantics inferred.
+- 2026-07-13 ReDMCSB DM1 reference-boundary audit: documented twelve
+  source/provenance, platform, compiler, save, asset, render, input, and
+  startup limits as `REDMCSB-DM1-GAP-001` through `-012`, each with its
+  independent original-PC34 evidence requirement. DM1 technical wiki now
+  states the same verification boundary.
 
 - 2026-07-13 DM1 F0115 `summary_from_world`: M11 now consumes one DM1/M10
   receipt built from ReDMCSB DUNGEON.C F0160/F0161 compact SFT traversal and

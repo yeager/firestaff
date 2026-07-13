@@ -28,9 +28,10 @@ Group sight follows ReDMCSB F0200/F0197/F0199/F0227: cone direction,
 fixed-point diagonal traversal, two-corner blocking, wall/fakewall/door rules,
 Portcullis/Ra exceptions, palette darkness, invisibility, and SEE_INVISIBLE.
 
-M11 gives DM1 only its static Thing chain. DM1 classifies active projectile and
-explosion instances for the F0115 layer plan. HoC mirror candidates are not
-ordinary dungeon Things and are excluded from item rendering.
+M10 supplies the bounded static Thing chain and typed live projectile/explosion
+lists. DM1 builds the F0115 summary and layer plan; M11 only consumes the
+receipt. HoC mirror candidates are not ordinary dungeon Things and are excluded
+from item rendering.
 
 ## Saves
 
@@ -53,3 +54,20 @@ the packaged application path.
 
 For the detailed PC34 chain, timeline, render-plan, and save invariants, see
 [DM1 PC34 Internals](DM1-PC34-Internals).
+
+## ReDMCSB Reference Boundary
+
+ReDMCSB is the primary behavioral reference, but it is a reverse-engineered
+source tree rather than FTL's original source. It is especially strong for
+control flow, data ownership, and platform-conditioned differences. It is not
+by itself proof of a PC 3.4 binary ABI, instruction timing, checksum outcome,
+host input ordering, or that a decoded asset is the original asset intended by
+a given PC34 route.
+
+Firestaff therefore requires independent PC34 evidence before claiming those
+surfaces: hash-identified original executable and data files, provenance
+recorded save bytes, decoded asset/palette offsets, and frame/audio/input
+captures from the original plus the packaged host application. The open
+reference limits are tracked in `TODO.md` as `REDMCSB-DM1-GAP-001` through
+`REDMCSB-DM1-GAP-012`. They are audit boundaries, not defects attributed to
+ReDMCSB.
