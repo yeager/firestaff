@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin `TT_FALSEWALL` DSA runner: the restored function-7
+  `Timer.cpp::ProcessTT_FALSEWALL` route now prepares only the exact
+  authenticated `ProcessDSATimer7`/`ProcessDSATimer6` pure-stack action.
+  It remains fail-closed for substituted actions, malformed targets,
+  parameter payloads, LocalState 2/3, fake-wall mutation, and world opcodes.
+  Verification: Ninja and CTest `csb_v1_phase7_verification`.
+
 - 2026-07-13 CSBWin saved `TT_DESSAGE` DSA handoff: CSBCode.cpp's exact
   `TT_DESSAGE` -> `ProcessTT_OPENROOM` dispatch now reaches the authenticated
   type-47 `ProcessDSATimer5`/`ProcessDSATimer6` receipt and can prepare only

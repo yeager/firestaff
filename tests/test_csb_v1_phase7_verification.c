@@ -715,11 +715,13 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               &profile, &dungeon, &location, &falsewall_timer, &timer6) == 1 &&
               timer6.input_column == 0u && timer6.state_index == 4u,
           "CSBWin saved TT_FALSEWALL timer reaches its verified DSA timer-seven receipt");
-    CHECK(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
-              &profile, &timer6.master, timer6.state_index,
-              timer6.action_ordinal, timer6.master_location, &runner) == 1 &&
-              runner.dsa_id == 7 && runner.state_index == 4u,
-          "CSBWin false-wall timer receipt prepares the authenticated DSA runner");
+    selected_action = NULL;
+    CHECK(csb_v1_runtime_prepare_csbwin_falsewall_dsa_timer_stack_runner(
+              &profile, &dungeon, &location, &falsewall_timer, &runner,
+              &selected_action) == 1 && selected_action == &action &&
+              runner.dsa_id == 7 && runner.state_index == 4u &&
+              runner.action_ordinal == 0,
+          "CSBWin TT_FALSEWALL prepares only its selected DSA action");
     falsewall_timer.ubyte9 = 3u;
     CHECK(csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
               &profile, &dungeon, &location, &falsewall_timer, &timer6) == 0,
@@ -760,6 +762,10 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               &profile, &dungeon, &location, &openroom_timer, &runner,
               &selected_action) == 0,
           "CSBWin TT_OPENROOM runner keeps ParameterB LocalState blocked");
+    CHECK(csb_v1_runtime_prepare_csbwin_falsewall_dsa_timer_stack_runner(
+              &profile, &dungeon, &location, &falsewall_timer, &runner,
+              &selected_action) == 0,
+          "CSBWin TT_FALSEWALL runner keeps ParameterB LocalState blocked");
     profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 3u;
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
               &profile, &dungeon, &location, 0, 0, &timer6) == 0,
