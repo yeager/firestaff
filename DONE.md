@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron Track 02 runtime gate: the host-runtime regression now
+  requires authenticated stage-three loader bytes and verifies that a
+  synthetic Track 02 fixture is blocked without media identity, state receipt,
+  or fallback visuals. Verification: real JP/US raw Track 02 probes passed.
+
 - 2026-07-12 DM1 F0188/F0189/F0190 materialization: killed-all now clears
   decoded and raw C04 group health, emits the source-delayed metallic slot
   thud, and preserves off-party-map ownership. Verification: real
