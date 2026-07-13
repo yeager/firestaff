@@ -9250,7 +9250,7 @@ static int orch_handle_creature_reaction_event_compat(
     if (ctx.ticksSinceLastMove < 0) ctx.ticksSinceLastMove = 0;
     ctx.currentTickLow = (int)world->gameTick;
     ctx.eventType = ev->aux2;
-    ctx.eventTicks = (int)ev->fireAtTick;
+    ctx.eventTicks = (ev->aux4 & 0x100) ? ev->aux3 : (int)ev->fireAtTick;
 
     activeGroup.groupThingIndex = groupIndex;
     activeGroup.cells = group->cells;

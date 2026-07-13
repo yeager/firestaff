@@ -1043,6 +1043,12 @@ static int pc34_event_type_from_timeline_kind(int kind, int aux0)
         return DM1_EVENT_MOVE_GROUP_SILENT;
     case TIMELINE_EVENT_MOVE_GROUP_AUDIBLE:
         return DM1_EVENT_MOVE_GROUP_AUDIBLE;
+    case TIMELINE_EVENT_CREATURE_REACTION:
+        if (aux0 >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
+            aux0 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+            return aux0;
+        }
+        return DM1_EVENT_NONE;
     case TIMELINE_EVENT_SQUARE_STATE:
     case TIMELINE_EVENT_SENSOR_DELAYED:
         if (aux0 >= DM1_EVENT_CORRIDOR && aux0 <= DM1_EVENT_DOOR) {
@@ -1165,6 +1171,20 @@ static int timeline_kind_from_pc34_event_type(int type)
         return TIMELINE_EVENT_MOVE_GROUP_SILENT;
     case DM1_EVENT_MOVE_GROUP_AUDIBLE:
         return TIMELINE_EVENT_MOVE_GROUP_AUDIBLE;
+    case DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE:
+    case DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE:
+    case DM1_EVENT_GROUP_REACTION_PARTY_IS_ADJACENT:
+    case DM1_EVENT_UPDATE_ASPECT_GROUP:
+    case DM1_EVENT_UPDATE_ASPECT_CREATURE_0:
+    case DM1_EVENT_UPDATE_ASPECT_CREATURE_1:
+    case DM1_EVENT_UPDATE_ASPECT_CREATURE_2:
+    case DM1_EVENT_UPDATE_ASPECT_CREATURE_3:
+    case DM1_EVENT_UPDATE_BEHAVIOR_GROUP:
+    case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0:
+    case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_1:
+    case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_2:
+    case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3:
+        return TIMELINE_EVENT_CREATURE_REACTION;
     case DM1_EVENT_CORRIDOR:
     case DM1_EVENT_WALL:
     case DM1_EVENT_FAKEWALL:
@@ -1271,7 +1291,9 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
     }
     for (i = 0; i < state->timeline->count; ++i) {
         const struct TimelineEvent_Compat* src = &state->timeline->events[i];
-        int type = pc34_event_type_from_timeline_kind(src->kind, src->aux0);
+        int type = pc34_event_type_from_timeline_kind(
+            src->kind,
+            src->kind == TIMELINE_EVENT_CREATURE_REACTION ? src->aux2 : src->aux0);
         unsigned char* dst;
         if (type == DM1_EVENT_NONE) {
             continue;
@@ -1343,6 +1365,11 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
         if (pc34_event_type_is_status_timeout(type)) {
             int defense = pc34_status_event_defense_from_timeline(src, type);
             write_u16_le(dst + 6u, (uint16_t)(defense & 0xffff));
+        } else if (type >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
+                   type <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+            dst[6] = (uint8_t)(src->mapX & 0xff);
+            dst[7] = (uint8_t)(src->mapY & 0xff);
+            write_u16_le(dst + 8u, (uint16_t)(src->aux3 & 0xffff));
         } else if (type == DM1_EVENT_REMOVE_FLUXCAGE) {
             /* ReDMCSB PROJEXPL.C F0224 lines 989-993 stores the
              * fluxcage explosion THING in EVENT.C.Slot while B.Location

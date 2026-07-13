@@ -605,6 +605,14 @@ and real community-save corpus round-trip evidence.
     rebuilt PC34 event indices because M10's timeline deliberately has no
     raw EVENT-slot allocator. Remaining work is broader original dungeon-tail
     import breadth and real community-save corpus evidence.
+  - 2026-07-13 update: F0435 now binds tail-less PC34 saves to the existing
+    original start dungeon before materializing EVENTS/TIMELINE. Source
+    C29-C41 group reactions resolve `B.Location` through the live raw SFT
+    chain, retain `C.Ticks`, and export back to their original event union;
+    an absent group remains a failed import rather than a synthetic reaction.
+    The same ordering makes C48/C49 resolve against their real C14 records.
+    Remaining work is broader original dungeon-tail import breadth and real
+    community-save corpus evidence.
   - 2026-07-13 update: F0435 dungeon-tail preflight now also enforces the
     F0434 map raw-data span boundary before publishing a tail receipt. A
     checksum-correct descriptor that reaches outside the saved raw-map block

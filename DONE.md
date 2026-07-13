@@ -11,6 +11,16 @@
   `nexus_v1_dgn_geometry_readiness` and
   `nexus_v1_structure2_no_draw_receipt`.
 
+- 2026-07-13 DM1 PC34 F0435 group-reaction event handoff: tail-less original
+  saves now attach the existing original start dungeon before EVENTS/TIMELINE
+  materialization. ReDMCSB `TIMELINE.C F0261` C29-C41 records resolve
+  `B.Location` through the raw SFT chain, preserve `C.Ticks` and source
+  priority, and bind the actual C04 group into the existing F0209 route.
+  Missing groups reject the candidate save instead of inventing a reaction.
+  F0802 re-exports the same C29-C41 union. Sources: `TIMELINE.C F0261`
+  lines 1858-1863 and `GROUP.C F0209`. Verification: Ninja and CTest-passed
+  `dm1_v1_original_save_pc34_handoff`.
+
 - 2026-07-13 CSBWin saved `TT_STONEROOM` DSA receipt: restored function-6
   timers now bind their exact level/x/y target, timer position, and
   SET/CLEAR/TOGGLE message to the authenticated `ProcessDSATimer6` resolver
