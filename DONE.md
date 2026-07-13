@@ -9363,3 +9363,12 @@ tail FNV receipt, and invalidates the HUD skin cache. It refuses altered,
 truncated, absent, resizing, or all-zero-delete records rather than inventing
 DB11 allocator/free-list state. Verification: Ninja plus the focused EXPOOL
 CTest group, 5/5 passed.
+# Nexus MNS TEXT Atomic Material Route (2026-07-13)
+
+- `nexus_v1_dmdf_decode_text_material_bank()` now fails closed for the whole
+  authenticated MNS TEXT bank when any descriptor cannot occupy a unique
+  256-entry host slot, allocation fails, or a surface exceeds the indexed
+  palette capacity. The DGN route cannot use a partial original material bank.
+- `test_nexus_v1_dmdf_embedded_blocks` covers the structurally valid but
+  out-of-bank source-ID rejection and passes against both local canonical
+  `SN_FLOOR.MNS` and `SN_WALL.MNS` assets.

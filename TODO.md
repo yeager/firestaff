@@ -74,6 +74,12 @@ surface allocation, so one original descriptor cannot silently replace another
 in the static material bank. This hardens source identity only; it does not
 prove Structure1B's selector transform or make DGN geometry drawable.
 
+The MNS TEXT material decoder now commits its bank atomically: an out-of-bank
+descriptor, allocation failure, or texture requiring more than the host's
+256-entry indexed palette clears every decoded surface and blocks the route.
+This confirms complete source-bank consumption, not Structure1B selector or
+Saturn texture semantics.
+
 Nexus's original Structure1B wall-selector transform remains unproven. Real
 LEV00-LEV15 bytes 3/4 contain values outside the 15 descriptor IDs in the
 hash-bound `SN_WALL.MNS` TEXT bank, so the runtime blocks that MNS route

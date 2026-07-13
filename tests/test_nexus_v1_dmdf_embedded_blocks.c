@@ -362,6 +362,34 @@ static void test_texture_section_duplicate_material_rejected(void) {
           "duplicate TEXT material IDs cannot overwrite a source surface");
 }
 
+static void test_texture_section_out_of_range_material_rejected(void) {
+    uint8_t buf[256];
+    Nexus_DMDFTextureSection section;
+    Nexus_DMDFMaterialBank bank;
+
+    memset(buf, 0, sizeof(buf));
+    buf[0] = 'D'; buf[1] = 'M'; buf[2] = 'D'; buf[3] = 'F';
+    wb32(buf + 0x24, 48U);
+    wb32(buf + 48, NEXUS_DMDF_TEXTURE_SECTION_MAGIC);
+    wb32(buf + 52, 192U);
+    wb32(buf + 56, 1U);
+    wb32(buf + 72, 56U);
+    wb32(buf + 76, 32U);
+    /* The descriptor itself is structurally valid, but its original
+     * material ID cannot fit the fixed 256-entry host bank. */
+    wb32(buf + 80, 0x01000000U); wb32(buf + 84, 8U);
+    wb32(buf + 88, 0x00080000U); wb32(buf + 92, 56U);
+    CHECK(nexus_v1_dmdf_parse_texture_section(buf, (int)sizeof(buf),
+                                               &section) == 1 &&
+          section.descriptors[0].material_id == 256U,
+          "TEXT parser retains structurally valid out-of-bank source ID");
+    memset(&bank, 0, sizeof(bank));
+    CHECK(nexus_v1_dmdf_decode_text_material_bank(buf, (int)sizeof(buf),
+                                                   &bank) == 0 &&
+          !bank.valid && bank.surface_count == 0,
+          "out-of-bank TEXT material blocks the whole source route");
+}
+
 static void test_optional_real_mns(void) {
     const char *path = getenv("FIRESTAFF_NEXUS_MNS");
     char fallback[1024];
@@ -433,6 +461,7 @@ int main(void) {
     test_material_decode();
     test_texture_section_boundary();
     test_texture_section_duplicate_material_rejected();
+    test_texture_section_out_of_range_material_rejected();
     test_optional_real_mns();
 
     printf("\nResults: %d PASS, %d FAIL\n", g_pass, g_fail);
