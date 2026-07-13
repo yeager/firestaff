@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 C13 external-corpus byte receipt: opt-in external
+  PC34 rows now retain canonical ten-byte Vi Altar EVENT payload counts,
+  byte lengths, and fingerprints, together with their raw ordered C4
+  TIMELINE references. EVENT receipt rows sort only to survive F0651 storage
+  reordering; C4 references remain original raw little-endian index bytes.
+  A real corpus candidate must preserve both fingerprints exactly. Source:
+  ReDMCSB `LOADSAVE.C` F0433/F0435 and `TIMELINE.C` F0651. Verification:
+  focused native-PC34 handoff CTest.
+
 - 2026-07-13 DM1 PC34 C4 TIMELINE corpus receipt: opt-in external corpus
   rows now retain the full decrypted C4 index layout, including index count,
   byte count, and raw fingerprint. Real-corpus verification requires exact
