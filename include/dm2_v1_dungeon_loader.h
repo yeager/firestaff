@@ -499,9 +499,10 @@ int dm2_v1_dungeon_materialize_g1_map5_text_runtime(
     DM2_V1_G1Map5TextRuntimeReceipt *out);
 
 /* Consumes only direct DB2 TextMode()==1 roots already materialized by the
- * G1 map-5 receipt. skproject QUERY_CLS2_OF_TEXT_RECORD maps their low
- * TextIndex byte to WALL_GFX; DRAW_WALL_ORNATE consumes the exact five GDAT
- * fields recorded here. Missing or malformed source material rejects all. */
+ * G1 map-5 receipt, which must report zero generic or blocked record reads.
+ * skproject QUERY_CLS2_OF_TEXT_RECORD maps their low TextIndex byte to
+ * WALL_GFX; DRAW_WALL_ORNATE consumes the exact five GDAT fields recorded
+ * here. Missing or malformed source material rejects all. */
 int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
     const DM2_V1_G1Map5TextRuntimeReceipt *texts,
     DM2_V1_G1GdatScalarRead read_scalar,
