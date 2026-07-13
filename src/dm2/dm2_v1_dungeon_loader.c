@@ -791,6 +791,17 @@ static int dm2_v1_g1_link_has_record_shape(const DM2_V1_DungeonData *d,
            dm2_v1_g1_link_has_extension_shape(d, link);
 }
 
+static int dm2_v1_dungeon_record_list_traversal_allowed(
+    const DM2_V1_DungeonData *d) {
+    /* skproject/SKULLWIN/c_map.cpp uses DM2_GET_TILE_RECORD_LINK before
+     * repeatedly calling c_record.cpp DM2_GET_NEXT_RECORD_LINK. Generic
+     * dungeon/HUD helpers must therefore consume a fully materialized map to
+     * record graph. The direct G1 runtime receipts below are the deliberately
+     * narrower, source-scoped alternative for an incomplete PC corpus. */
+    return d && (d->square_bytes != 1 || d->g1_extension_size <= 0 ||
+                 d->record_graph_complete);
+}
+
 static int dm2_v1_g1_read_teleporter_root(
     const DM2_V1_DungeonData *d,
     uint16_t object_id,
@@ -1545,7 +1556,8 @@ int dm2_v1_dungeon_find_thing_of_type(const DM2_V1_DungeonData *d,
                                       int max_steps) {
     uint16_t thing = first_thing;
 
-    if (!d || desired_type < 0 || desired_type >= DM2_THING_TYPE_COUNT)
+    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
+        desired_type < 0 || desired_type >= DM2_THING_TYPE_COUNT)
         return -1;
     if (max_steps <= 0) max_steps = 32;
     for (int step = 0; step < max_steps; ++step) {
@@ -1575,7 +1587,8 @@ int dm2_v1_dungeon_find_text_wall_gfx_owner(const DM2_V1_DungeonData *d,
     if (out_wall_gfx_index) *out_wall_gfx_index = -1;
     if (out_wall_gfx_field) *out_wall_gfx_field = -1;
     if (out_object_id) *out_object_id = DM2_THING_END_MARKER;
-    if (!d || !out_wall_gfx_index || !out_wall_gfx_field) return -1;
+    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
+        !out_wall_gfx_index || !out_wall_gfx_field) return -1;
     if (side_index < 0 || side_index > 3) return -1;
     if (max_steps <= 0) max_steps = 32;
 
@@ -1674,7 +1687,8 @@ int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
     uint16_t thing = first_thing;
 
     if (out_wall_gfx_ordinal) *out_wall_gfx_ordinal = -1;
-    if (!d || !out_wall_gfx_ordinal) return -1;
+    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
+        !out_wall_gfx_ordinal) return -1;
     if (side_index < 0 || side_index > 3) return -1;
     if (max_steps <= 0) max_steps = 32;
 
