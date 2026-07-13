@@ -658,6 +658,15 @@ material after D0 projectile materialization; a missing M636 bitmap is no-draw
 and cannot fall through to an F0114 D1-D3 sprite. Remaining work is real
 multi-effect capture, not a cue, marker, or replacement bitmap.
 
+2026-07-13: the F0215 materialization receipt now also owns F0217's required
+preceding C14 cleanup coordinates. M10 unlinks the exact live projectile Thing
+from its original source chain before it attaches `Projectile.Slot` at the
+source or resolved champion-impact square; an absent C14 rejects materializing
+the Slot rather than leaving a renderable duplicate. This covers the same
+cleanup order for dropped weapons, consumed potions, and non-materialized
+spell Slots. Remaining work is still authentic multi-projectile and pixel
+capture with user-supplied PC34 data.
+
 D0C C100/C101 rebirth C15 records now follow their separate ReDMCSB routes.
 C100's real PC34 lightning material (`M613 + G0210[C03] + 1 = 464`) and C3000
 centres now follow `L2476 = G2028`, not `G2034`: `DUNVIEW.C:5948,5984,5999`

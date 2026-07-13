@@ -6097,7 +6097,31 @@ static int orch_materialize_projectile_associated_thing_compat(
             world->things->potionCount,
             world->things->squareFirstThings[sftIndex],
             NULL, 0, &receipt) ||
-        !receipt.valid || !receipt.handled || !receipt.shouldMaterialize) {
+        !receipt.valid || !receipt.handled) {
+        return 0;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0217:607-608 precedes F0215: remove the exact
+     * active C14 from the source chain before F0215 moves its Slot.  Do not
+     * materialize an associated object when the original C14 receipt cannot
+     * be found; that would leave a second, still-renderable projectile in
+     * the PC34 thing list. */
+    if (!receipt.shouldUnlinkProjectileFromSquare ||
+        !orch_unlink_thing_from_square_compat(
+            world, receipt.cleanupMapIndex, receipt.cleanupMapX,
+            receipt.cleanupMapY, receipt.projectileThing)) {
+        return 0;
+    }
+
+    if (!receipt.shouldMaterialize) {
+        if (world->things->projectiles &&
+            world->things->projectileCount >
+                (int)THING_GET_INDEX(receipt.projectileThing) &&
+            !orch_set_next_thing_compat(
+                world->things, receipt.projectileThing,
+                receipt.projectileNextAfterDelete)) {
+            return 0;
+        }
         return 1;
     }
 

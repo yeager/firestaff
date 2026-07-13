@@ -2021,6 +2021,16 @@
   focused C04/C11 regression stages a populated out-of-party slot and proves
   it creates neither a closed-door receipt nor an action-enable emission.
 
+- 2026-07-13 DM1 PC34 F0328/F0811 impact cleanup receipt: the F0215
+  materialization receipt now carries F0217's source C14 unlink boundary,
+  separately from a champion-impact Slot destination. M10 removes the exact
+  live projectile Thing before F0215 clears its `Next` and materializes its
+  associated original Thing; missing C14 ownership rejects the Slot move.
+  Potion and spell Slots take the same cleanup route even when no floor Thing
+  is attached. Source: ReDMCSB `PROJEXPL.C F0217:607-608` followed by
+  `F0215:248-260`, with `DUNGEON.C F0163` retaining the destination append
+  owner. Verification: focused throw/shoot receipt regression.
+
 - 2026-07-13 DM1 PC34 F0407 invalid-owner receipt cleanup: a typed pending
   C11 whose champion owner is no longer within `Party.ChampionCount` is now
   compacted immediately when Firestaff rejects that invalid action/owner.

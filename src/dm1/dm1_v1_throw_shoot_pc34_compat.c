@@ -1034,8 +1034,16 @@ int dm1_v1_projectile_materialization_receipt_f0215_pc34(
     outReceipt->handled = plan.handled;
     outReceipt->shouldDeleteProjectile = 1;
     outReceipt->shouldClearProjectileNext = 1;
+    /* ReDMCSB PROJEXPL.C F0217:607-608 unlinks the live C14 from its
+     * current square before F0215 relocates Projectile.Slot or clears the
+     * C14 record.  Keep this distinct from plan.map*, which is F0215's
+     * possible champion-impact materialization destination. */
+    outReceipt->shouldUnlinkProjectileFromSquare = 1;
     outReceipt->shouldConsumePotion = plan.shouldConsumePotion;
     outReceipt->shouldMaterialize = plan.shouldMaterialize;
+    outReceipt->cleanupMapIndex = projectile->mapIndex;
+    outReceipt->cleanupMapX = projectile->mapX;
+    outReceipt->cleanupMapY = projectile->mapY;
     outReceipt->mapIndex = plan.mapIndex;
     outReceipt->mapX = plan.mapX;
     outReceipt->mapY = plan.mapY;

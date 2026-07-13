@@ -755,6 +755,14 @@ static void test_projectile_materialization_plan(void) {
               "wall materialization receipt deletes projectile");
     ASSERT_EQ(materialReceipt.shouldClearProjectileNext, 1,
               "wall materialization receipt clears projectile next");
+    ASSERT_EQ(materialReceipt.shouldUnlinkProjectileFromSquare, 1,
+              "wall materialization receipt unlinks live C14 first");
+    ASSERT_EQ(materialReceipt.cleanupMapIndex, 2,
+              "wall cleanup receipt keeps source map");
+    ASSERT_EQ(materialReceipt.cleanupMapX, 10,
+              "wall cleanup receipt keeps source x");
+    ASSERT_EQ(materialReceipt.cleanupMapY, 11,
+              "wall cleanup receipt keeps source y");
     ASSERT_EQ(materialReceipt.projectileThing,
               (unsigned short)((THING_TYPE_PROJECTILE << 10) |
                                (unsigned short)(1u << 14)),
@@ -795,6 +803,12 @@ static void test_projectile_materialization_plan(void) {
               "champion materialization receipt builds");
     ASSERT_EQ(materialReceipt.mapIndex, 3,
               "champion materialization receipt impact map");
+    ASSERT_EQ(materialReceipt.cleanupMapIndex, 2,
+              "champion cleanup stays at live C14 source map");
+    ASSERT_EQ(materialReceipt.cleanupMapX, 10,
+              "champion cleanup stays at live C14 source x");
+    ASSERT_EQ(materialReceipt.cleanupMapY, 11,
+              "champion cleanup stays at live C14 source y");
     ASSERT_EQ(materialReceipt.cell, 2,
               "champion materialization receipt impact cell");
     ASSERT_EQ(materialReceipt.squareAttach.shouldAppendAfterTail, 1,
@@ -821,6 +835,10 @@ static void test_projectile_materialization_plan(void) {
               "potion materialization receipt still deletes projectile");
     ASSERT_EQ(materialReceipt.shouldClearProjectileNext, 1,
               "potion materialization receipt still clears projectile next");
+    ASSERT_EQ(materialReceipt.shouldUnlinkProjectileFromSquare, 1,
+              "potion receipt still unlinks live C14 before consuming Slot");
+    ASSERT_EQ(materialReceipt.cleanupMapX, 10,
+              "potion cleanup keeps live C14 source x");
     ASSERT_EQ(materialReceipt.shouldMaterialize, 0,
               "potion materialization receipt skips attach");
     ASSERT_EQ(materialReceipt.squareAttach.valid, 0,
@@ -841,6 +859,8 @@ static void test_projectile_materialization_plan(void) {
               "projectile thing materialization receipt builds");
     ASSERT_EQ(materialReceipt.shouldMaterialize, 0,
               "projectile thing materialization receipt blocks attach");
+    ASSERT_EQ(materialReceipt.shouldUnlinkProjectileFromSquare, 1,
+              "non-materialized C14 receipt still owns source unlink");
 
     p.reserved1 = (unsigned short)((THING_TYPE_SENSOR << 10) | 1);
     ASSERT_EQ(dm1_v1_projectile_materialization_plan_pc34(
