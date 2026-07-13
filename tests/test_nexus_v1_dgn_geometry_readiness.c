@@ -570,6 +570,53 @@ static void test_structure1f_semantics_and_bounds(void) {
           "Structure1F rejects a family tag that is not documented by the original format");
 }
 
+static void test_visible_structure1f_semantics_block_render_plan(void) {
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
+    const int structure1b_rel = 0x40;
+    const int geometry_bytes = 512;
+    uint8_t *structure1;
+    uint8_t *structure1f;
+    Nexus_V1_Level level;
+    Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_DgnRenderPlanReceipt receipt;
+
+    CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
+                          structure1b_rel, geometry_bytes) == 0,
+          "visible Structure1F fixture builds");
+    structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
+    structure1[9] = 22;
+    set_floor_flags(structure1, structure1b_rel, 3, 4,
+                    (uint16_t)((1U << 14) | (21U << 7) | (2U << 4) | 2U));
+    set_collision_ref(structure1, structure1b_rel, 3, 4, 1);
+    set_post_grid_0x30_ref(structure1, structure1b_rel, 3, 4, 1);
+    set_collision_ref(structure1, structure1b_rel, 2, 4, 0x0fff);
+    set_collision_ref(structure1, structure1b_rel, 4, 4, 0x0fff);
+    set_collision_ref(structure1, structure1b_rel, 3, 3, 0x0fff);
+
+    build_structure1f_fixture(structure1, structure1b_rel);
+    structure1f = structure1 + structure1b_rel +
+        NEXUS_DGN_STRUCTURE1B_BYTES + 312;
+    /* First floor-decoration record: its documented source cell is visible,
+     * but no original Saturn draw semantics are currently evidenced. */
+    structure1f[32 + 1] = 3;
+    structure1f[32 + 2] = 4;
+
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0,
+          "visible Structure1F level loads");
+    memset(commands, 0, sizeof(commands));
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(nexus_v1_level_build_dgn_view_render_plan(
+              &level, 3, 4, 0, commands,
+              NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &receipt) == 0,
+          "visible Structure1F render plan evaluates");
+    CHECK(receipt.structure1f_plan_floor_decoration_entry_count == 1 &&
+          receipt.status ==
+              NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS &&
+          receipt.blocks_real_dgn_mesh_render && !receipt.plan_ready &&
+          !receipt.fallback_visuals_permitted,
+          "visible unproven Structure1F decoration blocks DGN rendering without fallback");
+}
+
 static void test_structure1g_semantics_and_bounds(void) {
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
     const int structure1b_rel = 0x40;
@@ -978,6 +1025,7 @@ int main(void) {
     test_determinism();
     test_structure1c_record_table_bounds();
     test_structure1f_semantics_and_bounds();
+    test_visible_structure1f_semantics_block_render_plan();
     test_structure1g_semantics_and_bounds();
     test_structure1g_animated_floor_material_handoff();
     test_real_dgn_structure1_layout_corpus();

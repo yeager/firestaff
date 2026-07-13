@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus visible Structure1F boundary: DGN rendering now blocks
+  visible decoration and sensor records whose original Structure1F semantics
+  are not proven. The viewport publishes no substitute geometry. Verification:
+  Ninja-built `firestaff_nexus` and CTest
+  `nexus_v1_dgn_geometry_readiness`.
+
 - 2026-07-13 Theron Track 02 post-return `$c860` trace: a clean-source,
   instrumented Mednafen 1.32.1 build and authenticated US CUE/System Card 3.0
   capture now prove `$e109 -> $c860 -> $fe92`. The observed route executes

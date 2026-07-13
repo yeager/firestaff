@@ -548,6 +548,12 @@ real-data-present synthetic fallback candidate.
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-07-13 Nexus Structure1F follow-up: visible direct floor-decoration
+  and floor-sensor records now fail closed through the DGN render plan,
+  viewport, and host receipt. Remaining work is a documented Saturn
+  Structure1F draw/trigger binding, never a synthetic overlay or omission of
+  a visible original record.
+
 - 🔧 2026-07-13 Nexus startup host-route follow-up: title/save/champion
   presentation remains blocked until the full original startup package and
   host receipt are valid; remaining work is Saturn presentation parity, not
