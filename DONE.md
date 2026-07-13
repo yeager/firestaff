@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron post-`$e981` controller-transition receipt: extended the
+  clean-source Mednafen instrumentation with raw checkpoints at `$e985`,
+  `$e988`, and `$e96a`. The authenticated US raw-CUE trace proves the order
+  `$e981` NOP -> `$e985` JSR `$ea27` -> `$e988` BRA `$e95e` -> `$e96a` AND
+  `#$b8`; it is controller-flow evidence only and assigns no `CD_READ`,
+  record, transfer, destination, payload, bitmap, palette, or object meaning.
+  Verification: `verify_theron_post_latch_controller_transition_trace.sh`
+  plus a clean Mednafen 1.32.1 patch dry-run.
+
 - 2026-07-13 DM1 original-save C48/C49 projectile handoff: PC34 save import
   now source-decodes ReDMCSB `DEFS.H EVENT.B.Slot` and the packed
   `EVENT.C.Projectile` MapX/MapY/Direction/StepEnergy fields, binding them

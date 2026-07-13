@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,6 +36,784 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,6 +36,821 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -91,6 +91,9 @@ index 347482c4..61d4758e 100644
 +static bool TheronIrq2TracePostLatchFirstExchangeComplete;
 +static bool TheronIrq2TracePostLatchDispatchBeforeSeen;
 +static bool TheronIrq2TracePostLatchDispatchAfterSeen;
++static bool TheronIrq2TracePostLatchControllerCallSeen;
++static bool TheronIrq2TracePostLatchControllerReturnSeen;
++static bool TheronIrq2TracePostLatchControllerResumeSeen;
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -536,6 +539,40 @@ index 347482c4..61d4758e 100644
 + FlushTheronIrq2Trace();
 +}
 +
++/* Keep the next original controller transition byte-for-byte observable.
++ * The three PCs delimit controller dispatch only; none is classified as a CD
++ * request, record, transfer, or payload boundary. */
++if(TheronIrq2TracePostLatchDispatchAfterSeen &&
++   logical_pc == 0xe985 && !TheronIrq2TracePostLatchControllerCallSeen)
++{
++ const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
++ const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
++ TheronIrq2Trace->print_format("post_latch_controller_call_pc=%04x physical_pc=%08x instruction=JSR $EA27 cd_1800=%02x cd_1801=%02x\\n",
++                               logical_pc, PC, cd_1800, cd_1801);
++ TheronIrq2TracePostLatchControllerCallSeen = true;
++ FlushTheronIrq2Trace();
++}
++if(TheronIrq2TracePostLatchControllerCallSeen &&
++   logical_pc == 0xe988 && !TheronIrq2TracePostLatchControllerReturnSeen)
++{
++ const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
++ const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
++ TheronIrq2Trace->print_format("post_latch_controller_return_pc=%04x physical_pc=%08x instruction=BRA $E95E cd_1800=%02x cd_1801=%02x\\n",
++                               logical_pc, PC, cd_1800, cd_1801);
++ TheronIrq2TracePostLatchControllerReturnSeen = true;
++ FlushTheronIrq2Trace();
++}
++if(TheronIrq2TracePostLatchControllerReturnSeen &&
++   logical_pc == 0xe96a && !TheronIrq2TracePostLatchControllerResumeSeen)
++{
++ const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
++ const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
++ TheronIrq2Trace->print_format("post_latch_controller_resume_pc=%04x physical_pc=%08x instruction=AND #$B8 cd_1800=%02x cd_1801=%02x\\n",
++                               logical_pc, PC, cd_1800, cd_1801);
++ TheronIrq2TracePostLatchControllerResumeSeen = true;
++ FlushTheronIrq2Trace();
++}
++
 +if(logical_pc >= 0xfe90 && logical_pc < 0xff00 && !TheronIrq2TraceFE90WindowSeen[logical_pc - 0xfe90])
 +{
 + uint32 disassembly_pc = logical_pc;
@@ -787,7 +824,7 @@ index 347482c4..61d4758e 100644
  
  static bool NeedInit;
  static bool WatchLogical; // Watch logical memory addresses, not physical
-@@ -162,10 +780,10 @@ static void UpdateCoreHooks(void)
+@@ -162,10 +817,10 @@ static void UpdateCoreHooks(void)
  {
   bool BPInUse = PCBreakPoints.size() || ReadBreakpoints.size() || WriteBreakpoints.size() || IOReadBreakpoints.size() ||
  	IOWriteBreakpoints.size() || AuxReadBreakpoints.size() || AuxWriteBreakpoints.size() || OpBreakpoints.size();
@@ -801,7 +838,7 @@ index 347482c4..61d4758e 100644
  }
  
  static void UpdatePCBreakpoints(void)
-@@ -1367,6 +1985,8 @@ static void CPUCallback(uint32 PC, bool bpoint)
+@@ -1367,6 +2022,8 @@ static void CPUCallback(uint32 PC, bool bpoint)
   //
   if(TraceLog)
    DoTraceLog(PC);
@@ -810,7 +847,7 @@ index 347482c4..61d4758e 100644
  }
  
  
-@@ -1873,6 +2493,44 @@ void Debugger_Init(void)
+@@ -1873,6 +2530,44 @@ void Debugger_Init(void)
  	TraceLogSpec = "";
  	TraceLogEnd = 0;
  	TraceLogRTO = 0;
@@ -855,11 +892,11 @@ index 347482c4..61d4758e 100644
  
  	NeedInit = true;
  	WatchLogical = true;
-@@ -1896,0 +2554,3 @@ void Debugger_Init(void)
+@@ -1896,0 +2591,3 @@ void Debugger_Init(void)
 +
 +	if(TheronIrq2Trace)
 +	 UpdateCoreHooks();
-@@ -1916,6 +2577,8 @@ void Debugger_Kill(void)
+@@ -1916,6 +2614,8 @@ void Debugger_Kill(void)
  {
  	if(TraceLog)
  	 TraceLog.reset(nullptr);
