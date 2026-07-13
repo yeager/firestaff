@@ -218,6 +218,43 @@ static void check_title_presentation_command(void) {
              1);
 }
 
+static void check_entrance_credits_presentation_command(void) {
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
+    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 command;
+    unsigned char c005[320U * 200U];
+
+    memset(&media, 0, sizeof(media));
+    memset(&command, 0, sizeof(command));
+    memset(c005, 0, sizeof(c005));
+    c005[320U * 100U + 160U] = 15U;
+    expect_i("entrance credits command obtains DM1 PC34 media receipt",
+             dm1_v1_startup_full_graphics_media_receipt_pc34("dm1", &media),
+             1);
+    expect_i("entrance C005 command keeps DM1 credits palette and 1800 VBlanks",
+             dm1_v1_startup_entrance_credits_presentation_command_pc34(
+                 &media, c005, 320U, 200U, &command) &&
+                 command.present_credits_frame &&
+                 command.special_palette == VGA_PALETTE_PC34_SPECIAL_CREDITS &&
+                 command.credits_wait_ticks == 1800U &&
+                 command.vblank_delay_ms == media.entrance_vblank_ms &&
+                 command.source_asset_receipt_consumed &&
+                 command.source_palette_receipt_consumed &&
+                 command.source_timing_receipt_consumed &&
+                 command.graphics_c005_pixel_fingerprint != 0U,
+             1);
+    c005[320U * 100U + 160U] = 0U;
+    expect_i("entrance C005 command rejects an empty synthetic credits frame",
+             !dm1_v1_startup_entrance_credits_presentation_command_pc34(
+                 &media, c005, 320U, 200U, &command),
+             1);
+    media.entrance_credits_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS;
+    c005[320U * 100U + 160U] = 15U;
+    expect_i("entrance C005 command rejects a CSB palette substitution",
+             !dm1_v1_startup_entrance_credits_presentation_command_pc34(
+                 &media, c005, 320U, 200U, &command),
+             1);
+}
+
 static void check_palette_cross_source_contract(void) {
     V1_TitleFrontendSourceAnimationStep presentsStep;
     V1_TitleFrontendSourceAnimationStep zoomStep;
@@ -662,7 +699,10 @@ static unsigned int count_non_black(const unsigned char* pixels,
 static void check_real_pc34_c001(const char* graphics_path) {
     M11_AssetLoader loader;
     const M11_AssetSlot* c001;
+    const M11_AssetSlot* c005;
     unsigned char framebuffer[320u * 200u];
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
+    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 credits_command;
     V1_TitleFrontendSourceAnimationStep first_zoom;
     V1_TitleFrontendSourceAnimationStep last_zoom;
     V1_TitleFrontendSourceAnimationStep strikes_back;
@@ -673,6 +713,8 @@ static void check_real_pc34_c001(const char* graphics_path) {
         return;
     }
     memset(&loader, 0, sizeof(loader));
+    memset(&media, 0, sizeof(media));
+    memset(&credits_command, 0, sizeof(credits_command));
     expect_i("real C001: loader opens supplied PC34 GRAPHICS.DAT",
              M11_AssetLoader_Init(&loader, graphics_path), 1);
     if (!M11_AssetLoader_IsReady(&loader)) {
@@ -703,6 +745,19 @@ static void check_real_pc34_c001(const char* graphics_path) {
     expect_truth("real C001: MASTER STRIKES BACK source strip has original pixels",
                  count_non_black(c001->pixels, c001->width,
                                  0u, 80u, 320u, 57u) > 0u);
+
+    c005 = M11_AssetLoader_Load(&loader, 5u);
+    expect_truth("real C005: credits graphic decodes", c005 != NULL);
+    if (c005) {
+        expect_truth("real C005: original credits pixels satisfy DM1 receipt",
+                     dm1_v1_startup_full_graphics_media_receipt_pc34(
+                         "dm1", &media) &&
+                     dm1_v1_startup_entrance_credits_presentation_command_pc34(
+                         &media, c005->pixels, c005->width, c005->height,
+                         &credits_command) &&
+                     credits_command.present_credits_frame &&
+                     credits_command.graphics_c005_pixel_fingerprint != 0u);
+    }
 
     expect_i("real C001: first zoom step resolves",
              V1_TitleFrontend_GetSourceAnimationStep(2u, &first_zoom), 1);
@@ -755,6 +810,7 @@ int main(int argc, char** argv) {
     check_selection_contract();
     check_runtime_asset_receipt();
     check_title_presentation_command();
+    check_entrance_credits_presentation_command();
     check_palette_cross_source_contract();
     check_startup_source_timing_contract();
     check_entrance_credits_runtime_boundary();

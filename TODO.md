@@ -1930,6 +1930,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     supplies a synthetic frame. The C001 decoded-asset receipt remains a
     mandatory input. Remaining work is packaged Mac/app capture, not a shared
     CSB title path or replacement art.
+  - 2026-07-13 update: the DM1 entrance C005 credits phase now requires the
+    decoded original 320x200 C005 raster. M11 consumes a DM1-owned F0442
+    receipt for the G0019 PC34 credits palette and its 1800-VBlank input wait;
+    it no longer draws a host-made credits replacement and rejects CSB palette
+    substitution. Remaining startup work is packaged Mac/app capture, not
+    fallback credits art or a shared CSB phase.
   - 2026-07-11 update: DM1 C001 TITLE zoom now follows F0437's actual bitmap direction: the complete `320x80` DUNGEON MASTER source is scaled down into each centred `48x12` through `320x80` destination box. It no longer crops a tiny source rectangle and magnifies it full-screen. The title handoff probe now consumes this production blit plan after an RGBA SWSH-like present and verifies palette-index-to-RGB readback. Remaining title work is real packaged Mac/release capture breadth and any source-proven presentation defect, not synthetic title replacement.
   - 2026-07-11 update: the local DM1 capture blockers in pass610 viewport crop capture, pass623 input capture readiness, original-capture live-row determinism, and capture runbook consistency are green after the capture-determinism repair in DONE.md. Remaining DM1 capture work is real packaged Mac/release/app capture promotion and any later active runtime ownership cleanup outside this verified gate cluster.
   - 2026-07-11 update: M12 DM1 HoC presented-capture receipt import now goes through `dm1_v1_startup_hoc_presented_capture_m12_import_receipt_pc34`, so M12 no longer owns the consumer-mask/chain-hash validation for app/Mac presented capture. Remaining DM1 work is real packaged Mac/release/app capture promotion and broader runtime/API ownership outside this active M12 import path.

@@ -4,6 +4,7 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/palette_entrance_pc34_compat.h"
+#include "firestaff/dm1/v1/palette_credits_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include "vga_palette_pc34_compat.h"
@@ -26,6 +27,24 @@ static unsigned int dm1_v1_startup_entrance_palette_fingerprint_pc34(void) {
     int index;
 
     if (!palette || count != DM1_V1_PALETTE_ENTRANCE_PC34_COMPAT_SIZE) {
+        return 0U;
+    }
+    for (index = 0; index < count; ++index) {
+        hash ^= palette[index];
+        hash *= 16777619u;
+    }
+    hash ^= (unsigned int)count;
+    hash *= 16777619u;
+    return hash ? hash : 1U;
+}
+
+static unsigned int dm1_v1_startup_credits_palette_fingerprint_pc34(void) {
+    const unsigned int *palette = dm1_v1_palette_credits_table_pc34();
+    const int count = dm1_v1_palette_credits_size_pc34();
+    unsigned int hash = 2166136261u;
+    int index;
+
+    if (!palette || count != DM1_V1_PALETTE_CREDITS_PC34_COMPAT_SIZE) {
         return 0U;
     }
     for (index = 0; index < count; ++index) {
@@ -4815,6 +4834,7 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     V1_TitleFrontendSourceTiming title_timing;
     EntranceCompatSourceAnimationStep entrance_pre_open_step;
     DM1_V1_PaletteEntranceResultPc34 entrance_palette;
+    DM1_V1_PaletteCreditsResultPc34 credits_palette;
     int presents_palette = 0;
     int title_palette = 0;
 
@@ -4823,6 +4843,7 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     }
     memset(&receipt, 0, sizeof(receipt));
     memset(&entrance_palette, 0, sizeof(entrance_palette));
+    memset(&credits_palette, 0, sizeof(credits_palette));
     if (!dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
         *out_receipt = receipt;
         return 1;
@@ -4844,7 +4865,10 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     }
     if (!dm1_v1_palette_entrance_run_pc34(&entrance_palette) ||
         !entrance_palette.accepted ||
-        dm1_v1_startup_entrance_palette_fingerprint_pc34() == 0U) {
+        dm1_v1_startup_entrance_palette_fingerprint_pc34() == 0U ||
+        !dm1_v1_palette_credits_run_pc34(&credits_palette) ||
+        !credits_palette.accepted ||
+        dm1_v1_startup_credits_palette_fingerprint_pc34() == 0U) {
         return 0;
     }
 
@@ -4899,6 +4923,13 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
         (unsigned int)entrance_palette.tableSize;
     receipt.entrance_palette_fingerprint =
         dm1_v1_startup_entrance_palette_fingerprint_pc34();
+    receipt.entrance_credits_wait_ticks =
+        ENTRANCE_Compat_GetCreditsWaitTicks();
+    receipt.entrance_credits_palette = VGA_PALETTE_PC34_SPECIAL_CREDITS;
+    receipt.entrance_credits_palette_entry_count =
+        (unsigned int)credits_palette.tableSize;
+    receipt.entrance_credits_palette_fingerprint =
+        dm1_v1_startup_credits_palette_fingerprint_pc34();
     memset(&entrance_pre_open_step, 0, sizeof(entrance_pre_open_step));
     if (ENTRANCE_Compat_GetSourceAnimationStep(6u, &entrance_pre_open_step) &&
         entrance_pre_open_step.kind ==
@@ -5203,6 +5234,62 @@ int dm1_v1_startup_entrance_timing_receipt_valid_pc34(
             (unsigned int)entrance_palette.tableSize &&
         media_receipt->entrance_palette_fingerprint ==
             dm1_v1_startup_entrance_palette_fingerprint_pc34();
+}
+
+int dm1_v1_startup_entrance_credits_presentation_command_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    const unsigned char* graphics_c005_pixels,
+    unsigned int graphics_c005_width,
+    unsigned int graphics_c005_height,
+    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34* out_command) {
+    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 command;
+    DM1_V1_PaletteCreditsResultPc34 palette;
+    unsigned int hash = 2166136261u;
+    unsigned int index;
+    int has_pixels = 0;
+
+    if (!out_command || !media_receipt || !graphics_c005_pixels ||
+        !dm1_v1_startup_entrance_timing_receipt_valid_pc34(media_receipt) ||
+        graphics_c005_width != 320U || graphics_c005_height != 200U) {
+        return 0;
+    }
+    memset(&palette, 0, sizeof(palette));
+    if (!dm1_v1_palette_credits_run_pc34(&palette) || !palette.accepted ||
+        media_receipt->entrance_credits_wait_ticks !=
+            ENTRANCE_Compat_GetCreditsWaitTicks() ||
+        media_receipt->entrance_credits_palette !=
+            VGA_PALETTE_PC34_SPECIAL_CREDITS ||
+        media_receipt->entrance_credits_palette_entry_count !=
+            (unsigned int)palette.tableSize ||
+        media_receipt->entrance_credits_palette_fingerprint !=
+            dm1_v1_startup_credits_palette_fingerprint_pc34()) {
+        return 0;
+    }
+    for (index = 0U; index < graphics_c005_width * graphics_c005_height;
+         ++index) {
+        const unsigned char pixel = graphics_c005_pixels[index];
+        has_pixels |= pixel != 0U;
+        hash ^= pixel;
+        hash *= 16777619u;
+    }
+    if (!has_pixels) return 0;
+
+    /* ReDMCSB ENTRANCE.C F0442:1004-1061 presents C005, restores the
+     * normal curtain, fades to DATA.C G0019, then waits on L1406=1800. */
+    memset(&command, 0, sizeof(command));
+    command.handled = 1;
+    command.present_credits_frame = 1;
+    command.source_asset_receipt_consumed = 1;
+    command.source_palette_receipt_consumed = 1;
+    command.source_timing_receipt_consumed = 1;
+    command.special_palette = media_receipt->entrance_credits_palette;
+    command.credits_wait_ticks = media_receipt->entrance_credits_wait_ticks;
+    command.vblank_delay_ms = media_receipt->entrance_vblank_ms;
+    command.graphics_c005_pixel_fingerprint = hash ? hash : 1U;
+    command.source_evidence =
+        "ReDMCSB ENTRANCE.C F0442:1004-1091; DATA.C G0019 PC34";
+    *out_command = command;
+    return 1;
 }
 
 int dm1_v1_startup_entrance_render_audio_command_pc34(
