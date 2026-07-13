@@ -731,11 +731,14 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           level.structure2_payload.opaque_payload_size == 18 &&
           level.structure2_payload.nonzero_descriptor_offset_count == 0 &&
           level.structure2_payload.nonzero_descriptor_offsets_unaligned_count == 0 &&
+          level.structure2_payload.nonzero_descriptor_offsets_word_bounded_count == 0 &&
           level.structure2_payload.nonzero_descriptor_offset_unique_count == 0 &&
           level.structure2_payload.nonzero_descriptor_offset_reused_count == 0 &&
           !level.structure2_payload.local_payload_offset_pattern_observed &&
           !level.structure2_payload
               .local_payload_word_aligned_offset_pattern_observed &&
+          !level.structure2_payload
+              .local_payload_word_bounded_offset_pattern_observed &&
           !level.structure2_payload.material_or_image_data_proven,
           "Structure2 retains only a bounded opaque payload after its FFFF terminator");
     wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 12, 222U);
@@ -746,11 +749,15 @@ static void test_structure1g_animated_floor_material_handoff(void) {
               .nonzero_descriptor_offsets_in_opaque_payload_count == 2 &&
           level.structure2_payload
               .nonzero_descriptor_offsets_outside_opaque_payload_count == 0 &&
+          level.structure2_payload
+              .nonzero_descriptor_offsets_word_bounded_count == 2 &&
           level.structure2_payload.nonzero_descriptor_offset_unique_count == 2 &&
           level.structure2_payload.nonzero_descriptor_offset_reused_count == 0 &&
           level.structure2_payload.local_payload_offset_pattern_observed &&
           level.structure2_payload
               .local_payload_word_aligned_offset_pattern_observed &&
+          level.structure2_payload
+              .local_payload_word_bounded_offset_pattern_observed &&
           !level.structure2_payload.material_or_image_data_proven,
           "Structure2 records bounded descriptor-offset correlation without decoding payload bytes");
     wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 16, 222U);
@@ -759,6 +766,7 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           level.structure2_payload.nonzero_descriptor_offset_unique_count == 1 &&
           level.structure2_payload.nonzero_descriptor_offset_reused_count == 1 &&
           level.structure2_payload.local_payload_word_aligned_offset_pattern_observed &&
+          level.structure2_payload.local_payload_word_bounded_offset_pattern_observed &&
           !level.structure2_payload.material_or_image_data_proven,
           "Structure2 retains a repeated in-span target as opaque layout provenance");
     wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 16, 224U);
@@ -770,6 +778,8 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           level.structure2_payload.local_payload_offset_pattern_observed &&
           !level.structure2_payload
               .local_payload_word_aligned_offset_pattern_observed &&
+          level.structure2_payload
+              .local_payload_word_bounded_offset_pattern_observed &&
           !level.structure2_payload.material_or_image_data_proven,
           "Structure2 records an unaligned in-span target without promoting it");
     wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 12, 240U);
@@ -780,8 +790,21 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           level.structure2_payload
               .nonzero_descriptor_offsets_outside_opaque_payload_count == 1 &&
           !level.structure2_payload.local_payload_offset_pattern_observed &&
+          !level.structure2_payload
+              .local_payload_word_bounded_offset_pattern_observed &&
           !level.structure2_payload.material_or_image_data_proven,
           "Structure2 leaves out-of-span descriptor offsets non-promoting");
+    wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 12, 238U);
+    wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 16, 239U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          level.structure2_payload
+              .nonzero_descriptor_offsets_in_opaque_payload_count == 2 &&
+          level.structure2_payload
+              .nonzero_descriptor_offsets_word_bounded_count == 1 &&
+          !level.structure2_payload
+              .local_payload_word_bounded_offset_pattern_observed &&
+          !level.structure2_payload.material_or_image_data_proven,
+          "Structure2 keeps a trailing opaque-byte target non-promoting");
     wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 12, 0U);
     wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 16, 0U);
     CHECK(level.geometry_info.mesh_ready,

@@ -191,6 +191,7 @@ typedef struct {
     int structure2_nonzero_descriptor_offset_count;
     int structure2_descriptor_offsets_in_opaque_payload_count;
     int structure2_descriptor_offsets_outside_opaque_payload_count;
+    int structure2_descriptor_offsets_word_bounded_count;
     int structure2_descriptor_offset_unique_count;
     int structure2_descriptor_offset_reused_count;
     int structure2_local_payload_offset_pattern_level_count;

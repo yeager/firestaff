@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure2 target-window receipt: the bounded parser now
+  distinguishes descriptor targets that retain a full two-byte window inside
+  the verified opaque span from targets that reach only its final byte. This
+  is byte-boundary provenance only, not a payload word grammar, image,
+  palette, record, decoder, or material route. Verification:
+  `test_nexus_v1_dgn_geometry_readiness`.
+
 - 2026-07-13 Nexus Structure2 target-alias receipt: the bounded parser now
   records unique and reused nonzero descriptor target addresses. Reused
   in-span addresses remain opaque layout provenance and cannot establish a
