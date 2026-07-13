@@ -30,6 +30,11 @@ typedef struct {
     size_t dynamic_cd_read_raw_sector;
     size_t dynamic_cd_read_raw_offset;
     size_t dynamic_cd_read_user_data_offset;
+    /* Full one-sector Stage2 payload receipt derived from the same
+     * hash-verified Track 02 image as the traced destination span. */
+    int stage2_dynamic_payload_verified;
+    size_t stage2_dynamic_payload_bytes;
+    uint32_t stage2_dynamic_payload_checksum;
     unsigned int palette_store_count;
     unsigned int palette_register_mask;
     unsigned int palette_word_count;
@@ -47,6 +52,15 @@ typedef struct {
     int palette_store_observed_after_dynamic_read;
     /* Kept separate deliberately: a VCE store is not RAM/CD byte taint. */
     int palette_descriptor_relation_verified;
+    /* The Soul Room route is an independently catalogued raw-media receipt.
+     * Its byte envelope is recorded here only after it has been checked
+     * disjoint from the traced Stage2 $3800 span. This does not claim that
+     * the Stage2 CD_READ loaded, decoded, or selected that route. */
+    int soul_room_raw_route_verified;
+    size_t soul_room_first_raw_offset;
+    size_t soul_room_last_raw_offset;
+    uint32_t soul_room_checksum;
+    int soul_room_route_disjoint_from_dynamic_span;
     unsigned int bitmap_route_mask;
     uint32_t bitmap_atlas_checksum;
 } Theron_V1RawLoaderTraceReceipt;
@@ -78,9 +92,13 @@ int theron_v1_raw_loader_trace_bind_track02_destination_span(
     const char *track02_md5,
     Theron_V1RawLoaderTraceReceipt *out);
 
-/* Binds only compatible real-media startup bitmap receipts.  This returns a
- * valid loader receipt even when palette byte provenance remains unbound;
- * callers must inspect palette_descriptor_relation_verified before drawing. */
+/* Binds only compatible real-media startup bitmap receipts. In addition to
+ * preserving the existing bitmap-route contract, this binds the inspected
+ * Stage2 payload and independently catalogued Soul Room raw route to one
+ * Track 02 identity, proving their byte envelopes are disjoint. It does not
+ * infer a loader-to-route relation, dungeon/object meaning, or palette
+ * source. Callers must inspect palette_descriptor_relation_verified before
+ * drawing. */
 int theron_v1_raw_loader_trace_final_bind(
     const Theron_V1RawLoaderTraceReceipt *trace,
     const Theron_StartupMediaStateReceipt *media,
