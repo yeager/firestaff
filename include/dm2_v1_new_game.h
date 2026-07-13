@@ -289,6 +289,19 @@ int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
                                              const uint8_t *buf,
                                              size_t buf_size);
 
+/* Export a supported original raw SKSave body using an authenticated original
+ * raw body as its template. The dungeon prefix is copied byte-for-byte; only
+ * already-modeled SUPPRESS session sections are re-encoded. The function
+ * rejects a different party/timer/minion shape or any output that cannot be
+ * re-imported through the same raw parser. */
+int dm2_v1_session_export_raw_sksave_payload(
+    const DM2_V1_SessionState *session,
+    const uint8_t *source_raw,
+    size_t source_raw_size,
+    uint8_t *out,
+    size_t out_capacity,
+    size_t *out_size);
+
 /* Parse one payload after the 42-byte SKSave slot header. The function never
  * changes live runtime state; callers must apply the returned candidate only
  * after validating the active dungeon/profile boundary. */

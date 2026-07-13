@@ -2565,6 +2565,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     remain fail-closed when their active dungeon/session binding is invalid.
     Remaining save work is a hash-verified external original-save corpus with
     real version coverage; no local original SKSave corpus is promoted here.
+  - 2026-07-14 update: raw original export now requires a parser-verified
+    original body as its template and retains its dungeon prefix byte-for-byte
+    while re-encoding only modeled SUPPRESS state. A changed party, timer, or
+    minion shape is rejected, and output must re-import before it is released.
+    Remaining work is verified real-corpus coverage and the unmodeled DB/post-
+    load rebuild fields, not invented raw dungeon data.
   - 2026-07-11 update: CCM walk writeback now honors an explicitly loaded AI row before the data-free probe rule, so a known non-attacking creature cannot be converted into a synthetic adjacency attack before the DM2-owned door/passability route writes its live position. Focused CCM and broad runtime handoff regressions cover closed and passable door writeback. Remaining CCM work is later advanced side effects and real-data startup/audio routing.
   - 2026-07-11 update: PC G1 c_record addresses now follow skproject `READ_DUNGEON_STRUCTURE`: after the proven c_map column, ground-stack, and text tables, all 16 pools are addressed consecutively by `glbItemSizePerDB[type] * nRecords[type]` in the exact non-tail `[6942,23826)` span. The real G1 corpus rejects graph promotion: 1,069 ground-stack words and 1,029 pool first links fall outside the declared direct ObjectID shapes, so `GenericRecord::w0` traversal remains blocked for G1 while direct bounded pool lookup stays diagnostic. The later `[23826,31667)` G1 extension remains untyped. Remaining work is source/corpus correlation for those non-direct IDs, followed by field-level c_record semantics and any GRAPHICS-backed cross-reference; do not broaden traversal into untyped bytes.
   - 2026-07-11 follow-up: the hash-verified G1 probe now checks every one of the 16 `READ_DUNGEON_STRUCTURE` pool bases against the header count/`glbItemSizePerDB` progression from the text boundary through `[6942,23826)`. This strengthens ownership proof only; it does not assign semantics to invalid direct-shaped links or the later extension.

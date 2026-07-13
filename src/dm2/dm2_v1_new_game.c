@@ -1097,6 +1097,156 @@ int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
     return 0;
 }
 
+static int dm2_v1_raw_sksave_append(uint8_t *out,
+                                    size_t out_capacity,
+                                    size_t *pos,
+                                    const uint8_t *data,
+                                    size_t data_size)
+{
+    if (!out || !pos || !data || *pos > out_capacity ||
+        data_size > out_capacity - *pos) {
+        return 0;
+    }
+    memcpy(out + *pos, data, data_size);
+    *pos += data_size;
+    return 1;
+}
+
+static int dm2_v1_raw_sksave_append_u32(uint8_t *out,
+                                        size_t out_capacity,
+                                        size_t *pos,
+                                        uint32_t value)
+{
+    uint8_t bytes[4];
+    bytes[0] = (uint8_t)(value & 0xFFu);
+    bytes[1] = (uint8_t)((value >> 8) & 0xFFu);
+    bytes[2] = (uint8_t)((value >> 16) & 0xFFu);
+    bytes[3] = (uint8_t)((value >> 24) & 0xFFu);
+    return dm2_v1_raw_sksave_append(out, out_capacity, pos, bytes,
+                                    sizeof(bytes));
+}
+
+int dm2_v1_session_export_raw_sksave_payload(
+    const DM2_V1_SessionState *session,
+    const uint8_t *source_raw,
+    size_t source_raw_size,
+    uint8_t *out,
+    size_t out_capacity,
+    size_t *out_size)
+{
+    DM2_V1_SessionState source_session;
+    DM2_V1_SessionState roundtrip_session;
+    DM2_GameStateBlock gs;
+    uint8_t encoded[512];
+    uint8_t champion_mask[261];
+    size_t prefix_size = 0u;
+    size_t pos;
+    int encoded_size;
+
+    if (out_size) *out_size = 0u;
+    if (!session || !source_raw || !out || !out_size ||
+        !dm2_v1_session_validate(session) ||
+        !dm2_v1_locate_raw_sksave_state_offset(source_raw, source_raw_size,
+                                                &prefix_size) ||
+        prefix_size == 0u || prefix_size > source_raw_size ||
+        prefix_size > out_capacity ||
+        dm2_v1_session_import_raw_sksave_payload(&source_session, source_raw,
+                                                  source_raw_size) != 0 ||
+        session->champion_count != source_session.champion_count ||
+        session->original_timer_count != source_session.original_timer_count ||
+        session->original_minions.count != source_session.original_minions.count ||
+        dm2_suppress_decode_gamestate(source_raw + prefix_size,
+                                      source_raw_size - prefix_size,
+                                      &gs, 0) <= 0) {
+        return -1;
+    }
+
+    /* skproject/SKULLWIN/c_savegame.cpp saves the dungeon DB before its
+     * SUPPRESS state sections. Preserve that unmodeled DB prefix exactly;
+     * writing a replacement prefix would be synthetic save data. */
+    memcpy(out, source_raw, prefix_size);
+    pos = prefix_size;
+    gs.dwGameTick = session->game_tick;
+    gs.dwRandomSeed = session->rng_seed;
+    gs.wChampionsCount = session->champion_count;
+    gs.wPlayerPosX = session->party_x;
+    gs.wPlayerPosY = session->party_y;
+    gs.wPlayerDir = session->party_dir;
+    gs.wPlayerMap = session->party_level;
+    gs.wChampionLeader = session->leader_index;
+    gs.wTimersCount = session->original_timer_count;
+    gs.rain_state[0] = session->rain_intensity;
+
+    encoded_size = dm2_suppress_encode_gamestate(&gs, encoded, sizeof(encoded));
+    if (encoded_size <= 0 ||
+        !dm2_v1_raw_sksave_append(out, out_capacity, &pos, encoded,
+                                  (size_t)encoded_size)) {
+        return -1;
+    }
+    encoded_size = dm2_suppress_encode_global_flags(
+        session->original_global_flags, encoded, sizeof(encoded));
+    if (encoded_size <= 0 || !dm2_v1_raw_sksave_append(
+            out, out_capacity, &pos, encoded, (size_t)encoded_size)) return -1;
+    encoded_size = dm2_suppress_encode_global_bytes(
+        session->original_global_bytes, encoded, sizeof(encoded));
+    if (encoded_size <= 0 || !dm2_v1_raw_sksave_append(
+            out, out_capacity, &pos, encoded, (size_t)encoded_size)) return -1;
+    encoded_size = dm2_suppress_encode_global_words(
+        session->original_global_words, encoded, sizeof(encoded));
+    if (encoded_size <= 0 || !dm2_v1_raw_sksave_append(
+            out, out_capacity, &pos, encoded, (size_t)encoded_size)) return -1;
+
+    dm2_suppress_champion_mask(champion_mask);
+    for (uint8_t i = 0u; i < session->champion_count; ++i) {
+        encoded_size = dm2_suppress_encode_champion(
+            (const DM2_ChampionRecord *)session->champion_data[i],
+            champion_mask, encoded, sizeof(encoded));
+        if (encoded_size <= 0 || !dm2_v1_raw_sksave_append(
+                out, out_capacity, &pos, encoded, (size_t)encoded_size)) return -1;
+    }
+    encoded_size = dm2_suppress_encode_spell_effects(
+        session->original_spell_effects, encoded, sizeof(encoded));
+    if (encoded_size <= 0 || !dm2_v1_raw_sksave_append(
+            out, out_capacity, &pos, encoded, (size_t)encoded_size)) return -1;
+    for (uint8_t i = 0u; i < session->original_timer_count; ++i) {
+        encoded_size = dm2_suppress_encode_timer(&session->original_timers[i],
+                                                 encoded, sizeof(encoded));
+        if (encoded_size <= 0 || !dm2_v1_raw_sksave_append(
+                out, out_capacity, &pos, encoded, (size_t)encoded_size)) return -1;
+    }
+    for (uint8_t champion = 0u; champion < session->champion_count;
+         ++champion) {
+        const DM2_ChampionRecord *record =
+            (const DM2_ChampionRecord *)session->champion_data[champion];
+        for (uint8_t slot = 0u; slot < DM2_CHAMPION_INVENTORY_SLOTS; ++slot) {
+            if (!dm2_v1_raw_sksave_append_u32(out, out_capacity, &pos,
+                                               record->inventory[slot])) return -1;
+        }
+    }
+    if (!dm2_v1_raw_sksave_append_u32(out, out_capacity, &pos,
+                                       session->original_leader_hand_object)) {
+        return -1;
+    }
+    if (session->original_minions.count != 0u) {
+        if (!dm2_v1_raw_sksave_append(out, out_capacity, &pos,
+                                      &session->original_minions.count, 1u)) return -1;
+        for (uint8_t i = 0u; i < session->original_minions.count; ++i) {
+            if (!dm2_v1_raw_sksave_append_u32(
+                    out, out_capacity, &pos,
+                    session->original_minions.entries[i].object_id) ||
+                !dm2_v1_raw_sksave_append_u32(
+                    out, out_capacity, &pos,
+                    session->original_minions.entries[i].owner_champion)) return -1;
+        }
+    }
+    if (dm2_v1_session_import_raw_sksave_payload(&roundtrip_session, out,
+                                                  pos) != 0) {
+        return -1;
+    }
+    *out_size = pos;
+    return 0;
+}
+
 int dm2_v1_session_parse_save_candidate(DM2_V1_SaveCandidate *out_candidate,
                                          const uint8_t *buf,
                                          size_t buf_size)
