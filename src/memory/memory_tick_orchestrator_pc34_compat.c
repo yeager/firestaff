@@ -4250,8 +4250,9 @@ static int orch_f0248_award_steal_skill_xp_compat(
  * F0330 with that selected Party.Champion. Imported/corrupt state can retain
  * a typed C11 for a slot no longer in Party.ChampionCount; compact only that
  * stale owner before a later invalid input leaves it pending until its due
- * tick. C04's delayed sound has no champion owner and is deliberately
- * outside this cleanup. */
+ * tick. F0407 can schedule C04 and C11 from the same action, but C04's
+ * SOUND.C C20 layout has no champion owner and is deliberately outside this
+ * cleanup. */
 static void orch_cleanup_invalid_action_enable_receipts_compat(
     struct GameWorld_Compat* world,
     int championIndex)
