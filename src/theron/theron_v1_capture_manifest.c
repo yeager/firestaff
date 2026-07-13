@@ -54,7 +54,7 @@ int theron_v1_capture_manifest_parse(const char *text,
     if (out) memset(out, 0, sizeof(*out));
     if (!text || !out) return 0;
     cursor = text;
-    if (strncmp(cursor, "THERON_CAPTURE_MANIFEST_V2\n", 27u) != 0) return 0;
+    if (strncmp(cursor, "THERON_CAPTURE_MANIFEST_V1\n", 27u) != 0) return 0;
     cursor += 27u;
     if (!theron_v1_capture_manifest_copy_field(
             &cursor, "track02_path=", parsed.track02_path,
@@ -71,16 +71,12 @@ int theron_v1_capture_manifest_parse(const char *text,
         !theron_v1_capture_manifest_copy_field(
             &cursor, "loader_trace_path=", parsed.trace_path,
             sizeof(parsed.trace_path)) ||
-        !theron_v1_capture_manifest_copy_field(
-            &cursor, "loader_trace_md5=", parsed.trace_md5,
-            sizeof(parsed.trace_md5)) ||
         (*cursor != '\0' && !(cursor[0] == '\n' && cursor[1] == '\0')) ||
         !theron_v1_capture_manifest_path_is_valid(parsed.track02_path) ||
         !theron_v1_capture_manifest_path_is_valid(parsed.system_card_path) ||
         !theron_v1_capture_manifest_path_is_valid(parsed.trace_path) ||
         !theron_v1_capture_manifest_md5_is_valid(parsed.track02_md5) ||
-        !theron_v1_capture_manifest_md5_is_valid(parsed.system_card_md5) ||
-        !theron_v1_capture_manifest_md5_is_valid(parsed.trace_md5)) {
+        !theron_v1_capture_manifest_md5_is_valid(parsed.system_card_md5)) {
         return 0;
     }
     parsed.valid = 1;
@@ -91,32 +87,23 @@ int theron_v1_capture_manifest_parse(const char *text,
 int theron_v1_capture_manifest_matches(
     const Theron_V1CaptureManifest *manifest, const char *track02_path,
     const char *track02_md5, const char *system_card_path,
-    const char *system_card_md5, const char *trace_path,
-    const char *trace_md5) {
+    const char *system_card_md5, const char *trace_path) {
     return manifest && manifest->valid && track02_path && track02_md5 &&
-           system_card_path && system_card_md5 && trace_path && trace_md5 &&
-           theron_v1_capture_manifest_path_is_valid(track02_path) &&
-           theron_v1_capture_manifest_path_is_valid(system_card_path) &&
-           theron_v1_capture_manifest_path_is_valid(trace_path) &&
-           theron_v1_capture_manifest_md5_is_valid(track02_md5) &&
-           theron_v1_capture_manifest_md5_is_valid(system_card_md5) &&
-           theron_v1_capture_manifest_md5_is_valid(trace_md5) &&
+           system_card_path && system_card_md5 && trace_path &&
            strcmp(manifest->track02_path, track02_path) == 0 &&
            strcmp(manifest->track02_md5, track02_md5) == 0 &&
            strcmp(manifest->system_card_path, system_card_path) == 0 &&
            strcmp(manifest->system_card_md5, system_card_md5) == 0 &&
-           strcmp(manifest->trace_path, trace_path) == 0 &&
-           strcmp(manifest->trace_md5, trace_md5) == 0;
+           strcmp(manifest->trace_path, trace_path) == 0;
 }
 
 int theron_v1_capture_manifest_matches_preflight_inputs(
     const Theron_V1CaptureManifest *manifest, const char *track02_path,
     const char *track02_md5, const char *system_card_path,
-    const char *system_card_md5, const char *trace_path,
-    const char *trace_md5) {
+    const char *system_card_md5, const char *trace_path) {
     return theron_v1_capture_manifest_matches(
         manifest, track02_path, track02_md5, system_card_path,
-        system_card_md5, trace_path, trace_md5);
+        system_card_md5, trace_path);
 }
 
 int theron_v1_capture_manifest_write(const Theron_V1CaptureManifest *manifest,
@@ -128,18 +115,17 @@ int theron_v1_capture_manifest_write(const Theron_V1CaptureManifest *manifest,
         !theron_v1_capture_manifest_path_is_valid(manifest->system_card_path) ||
         !theron_v1_capture_manifest_path_is_valid(manifest->trace_path) ||
         !theron_v1_capture_manifest_md5_is_valid(manifest->track02_md5) ||
-        !theron_v1_capture_manifest_md5_is_valid(manifest->system_card_md5) ||
-        !theron_v1_capture_manifest_md5_is_valid(manifest->trace_md5)) {
+        !theron_v1_capture_manifest_md5_is_valid(manifest->system_card_md5)) {
         return 0;
     }
     written = snprintf(
         out, capacity,
-        "THERON_CAPTURE_MANIFEST_V2\n"
+        "THERON_CAPTURE_MANIFEST_V1\n"
         "track02_path=%s\ntrack02_md5=%s\n"
         "system_card_path=%s\nsystem_card_md5=%s\n"
-        "loader_trace_path=%s\nloader_trace_md5=%s",
+        "loader_trace_path=%s",
         manifest->track02_path, manifest->track02_md5,
         manifest->system_card_path, manifest->system_card_md5,
-        manifest->trace_path, manifest->trace_md5);
+        manifest->trace_path);
     return written >= 0 && (size_t)written < capacity;
 }

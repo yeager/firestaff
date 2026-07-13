@@ -4,15 +4,6 @@
 
 #define THERON_V1_RAW_SECTOR_BYTES 2352u
 
-static uint32_t theron_v1_later_record_fnv1a_u32(uint32_t hash,
-                                                  uint32_t value) {
-    for (unsigned int shift = 0u; shift < 32u; shift += 8u) {
-        hash ^= (uint8_t)(value >> shift);
-        hash *= 16777619u;
-    }
-    return hash;
-}
-
 int theron_v1_later_record_correlation_from_manifest(
     const Theron_V1Stage3ManifestEvidence *manifest,
     size_t raw_track02_size,
@@ -49,30 +40,10 @@ int theron_v1_later_record_correlation_from_manifest(
         out_correlation->self_resolved_record == manifest->track02_record;
     out_correlation->self_resolved_record_in_bounds =
         out_correlation->self_resolved_record < out_correlation->raw_sector_count;
-    out_correlation->resolved_selector_hash = 2166136261u;
     for (index = 0u; index < manifest->descriptor_count; ++index) {
-        uint32_t resolved_record;
-
-        selector = manifest->descriptors[index].word2;
-        if (selector == 0u) continue;
-        ++out_correlation->nonzero_selector_count;
-        if ((uint32_t)selector > UINT32_MAX -
-                                      out_correlation->derived_record_base) {
-            ++out_correlation->out_of_bounds_selector_count;
-            continue;
+        if (manifest->descriptors[index].word2 != 0u) {
+            ++out_correlation->nonzero_selector_count;
         }
-        resolved_record = out_correlation->derived_record_base + selector;
-        if (resolved_record >= out_correlation->raw_sector_count) {
-            ++out_correlation->out_of_bounds_selector_count;
-            continue;
-        }
-        ++out_correlation->resolved_selector_count;
-        out_correlation->resolved_selector_hash =
-            theron_v1_later_record_fnv1a_u32(
-                out_correlation->resolved_selector_hash, (uint32_t)index);
-        out_correlation->resolved_selector_hash =
-            theron_v1_later_record_fnv1a_u32(
-                out_correlation->resolved_selector_hash, resolved_record);
     }
     return out_correlation->self_reference_proven &&
         out_correlation->self_resolved_record_in_bounds;

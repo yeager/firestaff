@@ -69,6 +69,16 @@
   `theron_v1_capture_preflight_chain` passed; the raw-media preflight probe
   compiled with `-Wall -Wextra -Werror`.
 
+- ✅ 2026-07-13 DM2 hand-slot backdrop GDAT consumption: the inventory panel
+  now follows skproject `DRAW_HAND_ACTION_ICONS` to select
+  INTERFACE_GENERAL/4 `dtImage` `(possession * 2) + side + 2` and its
+  direction-derived expanded rect before consuming its exact local palette.
+  Wrong material, rect, or transparency mode fails closed with no panel-tile
+  fallback. Source: skproject `SKWIN/SkWinCore.cpp`
+  `DRAW_HAND_ACTION_ICONS` 7488-7560 and `DRAW_ICON_PICT_ENTRY` 6901-6925.
+  Verification: focused hand-slot backdrop gate passed 4/4, Ninja inventory
+  panel target and CTest `dm2_v1_inventory_item_panel_gate` passed.
+
 - ✅ 2026-07-13 DM2 atomic T600 GDAT scene transaction: source-required
   outdoor rendering now resolves both active `GRAPHICSSET` sky and ground
   IMG3s plus their exact local palettes before drawing either half of the
@@ -13002,6 +13012,98 @@ bytes. Source: ReDMCSB `LOADSAVE.C F0435` one-save read transaction and
 `F0433` export order. Verification: focused
 `test_dm1_v1_original_save_pc34_handoff` passes; real-corpus coverage remains
 explicitly opt-in through `FIRESTAFF_DM1_PC34_SAVE_CORPUS`.
+
+# ✅ 2026-07-13 Nexus Structure1Fa ITEM.IBS special-floor palette consumer
+
+`nexus_v1_item_ibs_parse_verified()` now validates the documented special
+floor-image descriptor table, local/inherited 16-colour BGR555 palettes and
+bounded raw payload spans. `nexus_v1_dgn_bind_structure1f_item_materials()`
+binds that original palette/payload receipt to the matching floor command.
+The unproved `0008` pixel codec remains no-draw and cannot fall back to an
+inventory icon. Focused `nexus_v1_dgn_geometry_readiness` passes.
+
+# ✅ 2026-07-13 Nexus ITEM.IBS special-floor packed-4bpp corpus gate
+
+The canonical `ITEM.IBS` corpus now proves that descriptor encoding `0008`
+has a packed `width * height / 2` 4bpp span, with local 16-colour BGR555
+palettes interleaved before later payloads. The parser maps the on-disc
+0..108 floor ordinals into the combined 223..331 image space, preserves the
+positive packed payload, and treats legal `FFFF` inventory associations as
+no-draw. The raw nibble order and world placement remain intentionally
+blocked. Verified against `~/.firestaff/data/nexus/ITEM.IBS` through
+`nexus_v1_dgn_geometry_readiness`.
+
+# ✅ 2026-07-13 Nexus ITEM.IBS 0008 DGN command-material consumer
+
+Verified ITEM.IBS `0008` floor payloads now reach an explicit, command-indexed
+DGN material consumer with their exact packed bytes, local BGR555 palette,
+dimensions, and source provenance. The consumer rejects a non-floor or
+out-of-range command and never authorizes drawing: original nibble order and
+3D placement remain unproven, with no inventory-icon or synthetic fallback.
+The focused `nexus_v1_dgn_geometry_readiness` target passes against the local
+retail ITEM.IBS corpus.
+
+# ✅ 2026-07-13 Nexus Structure1F ITEM.IBS retail-coverage gate
+
+`nexus_v1_dgn_structure1f_item_ibs_coverage()` now validates every direct
+Structure1F item against the authenticated ITEM.IBS bank before it can reach a
+material path. The local LEV00–LEV15 corpus proves 446 item records and 174
+separate descriptor-`0008` references, with no missing or unsupported source
+descriptor. The receipt remains no-draw and fail-closed: it does not claim a
+Saturn texel order or world placement. Verified by
+`nexus_v1_dgn_geometry_readiness` with the retail corpus.
+
+# ✅ 2026-07-13 Nexus ITEM.IBS 0008 VDP1 codec-provenance gate
+
+The new `nexus_v1_item_ibs_decode_0008_vdp1_4bpp()` keeps the Saturn VDP1
+high-nibble-first rule behind four independent provenance facts: verified
+ITEM.IBS identity, original VDP1 command stream, 16-colour mode, and the
+byte/nibble route. Retail ITEM.IBS descriptors therefore remain blocked and
+no-draw when only their own data is available. Focused
+`nexus_v1_dgn_geometry_readiness` verifies both the blocked retail route and
+the source-gated decoder contract without a fallback.
+
+# ✅ 2026-07-13 Nexus DM.BIN PRS3 marker catalog
+
+`nexus_v1_prs3_dm_bin_catalog_verified()` now reads only bounded, literal
+PRS3 framing from hash-verified original DM.BIN bytes. The retail corpus has
+two markers: an unclassified executable occurrence and one complete V1 record
+with target `4096` and first frame word `997`. Truncated records fail closed;
+the catalog never promotes a PRS3 opcode decoder or a render route. Verified
+by `nexus_v1_prs3_capture_trace_schema` against local retail DM.BIN.
+
+# ✅ 2026-07-13 Nexus PRS3 DM.BIN/MENU.BPK outer-frame receipt
+
+`nexus_v1_prs3_cross_asset_frame_receipt_verified()` now compares only the
+hash-verified V1 outer-frame fields shared by original `DM.BIN` and
+`MENU.BPK`. The local retail corpus proves one complete DM.BIN V1 record and
+162 complete MENU.BPK V1 frames, each with a nonzero first frame word. It does
+not infer any opcode grammar, control-bit order, termination rule, decoded
+pixel output, or menu render route: decoder promotion, menu handoff, and
+fallback visuals remain disabled. Verified by the focused
+`nexus_v1_prs3_capture_trace_schema` CTest with the local retail corpus.
+
+# ✅ 2026-07-13 Nexus PRS3 V1 SH-2 execution receipt
+
+`nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified()` imports the exact
+instruction-level facts already isolated from the hash-verified retail
+`DM.BIN`: the V1 control test at `85450`, R12 post-increment byte read at
+`85460`, R13/R0 byte store at `85464`, and loop branch at `85472`. Any changed
+anchor rejects the receipt. These are loader control/dataflow facts only; no
+live `MENU.BPK` frame binding, VDP1 command observation, opcode grammar, or
+decoder/menu route is promoted. Verified by
+`nexus_v1_prs3_capture_trace_schema` against local retail `DM.BIN`.
+
+# ✅ 2026-07-14 Nexus PRS3 SH-2-to-VDP1 capture gate
+
+`nexus_v1_prs3_vdp1_capture_schema_parse()` and its asset-binding companion
+now define a strict future-capture contract for one exact `MENU.BPK` PRS3
+frame: hash-bound BPK/DM.BIN bytes, bounded packed input span, SH-2 input and
+output address ranges, complete output fingerprint, and a later VDP1 command
+whose texture source is that exact output range. Partial or inconsistent
+traces reject atomically. The gate records an observed handoff only; it never
+claims an opcode grammar, enables generic PRS3 decoding, or permits fallback
+visuals. Verified by `nexus_v1_prs3_capture_trace_schema`.
 # ✅ 2026-07-13 DM2 atomic GDAT door-material transaction
 
 `dm2_v1_render_doors()` now preloads each required skproject `DM2_DRAW_DOOR`
@@ -13054,3 +13156,42 @@ explicit save root is capped at depth 4, 64 header candidates, and 256 shallow
 file probes; an incomplete scan is marked truncated. Arbitrary filenames and
 bytes never become importable. Verification: Ninja `test_dm2_v1_save_load`
 23/23 and CTest `dm2_v1_save_load` 1/1.
+
+# ✅ 2026-07-14 DM2 template-bound raw SKSave export roundtrip
+
+`dm2_v1_session_export_raw_sksave_payload()` exports only from a
+parser-verified original raw body. It retains the complete dungeon/DB prefix
+byte-for-byte, re-encodes only the owned SUPPRESS party/global/champion/timer
+sections, rejects changed party/timer/minion shapes, and re-imports its output
+before success. This is a bounded original-format write path, not a fabricated
+dungeon export or a full DB parity claim. Source reference: skproject
+`c_savegame.cpp` save ordering. Verification: Ninja `test_dm2_v1_save_load`
+24/24 and CTest `dm2_v1_save_load` 1/1.
+
+# ✅ 2026-07-13 DM2 G1 exact GRAPHICSSET IMG3 classification
+
+`dm2_v1_asset_load_image_metadata()` now follows skproject
+`DME.h::IMG3::Getpf()`: a compressed C8 record is selected by
+`OffsetY() == 31`, rather than treating IMG3 `w4` as a universal bit-depth.
+The real PC `DUNGEON.DAT` references GRAPHICSSET 1..5; each now resolves its
+own floor, ceiling, scene-colorkey, and scene-flag entries from the matching
+original `GRAPHICS.DAT` set. Malformed uncompressed `OffsetY() == -32`
+records still reject unless `w4` is exactly 4 or 8. No cross-set fallback was
+added. Source: skproject `SKWIN/DME.h` IMG3 `Getpf()` and
+`SKWIN/SkWinCore.cpp` `QUERY_GDAT_IMAGE_ENTRY_BUFF` / map setup
+`2676:0CBB-0D99`. Verification: local canonical
+`test_dm2_v1_gdat_graphicsset_real_data`, `test_dm2_v1_gdat_word_values`, and
+`test_dm2_v1_weather_gdat_receipt` pass.
+
+# ✅ 2026-07-14 DM2 G1 GRAPHICSSET decoded plane and C8 selector gate
+
+The canonical G1 map GRAPHICSSET 1..5 floor and ceiling IMG3 records now
+prove both metadata and successful source-format decode before they are
+admitted as scene materials. The C8/IMG9 decoder follows skproject
+`SkWinCore.cpp::DECODE_IMG9`: selector byte 6 is accepted only for the two
+proven back-reference layouts, 2 and 3; all other selectors fail closed rather
+than being interpreted as layout 3. The real-data test decodes every
+referenced floor/ceiling at its declared dimensions and mutates each observed
+C8 selector only to prove unknown selectors cannot publish pixels. Verification:
+Ninja and direct `test_dm2_v1_gdat_graphicsset_real_data`,
+`test_dm2_v1_gdat_word_values`, and `test_dm2_v1_weather_gdat_receipt` pass.
