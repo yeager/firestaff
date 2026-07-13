@@ -27,6 +27,12 @@
   their candidate slots and C040 text. Source: ReDMCSB `REVIVE.C`
   F0281/F0282:744-783 and `DUNVIEW.C`:3913-3928. Verification: focused CTest
   against the installed PC34 corpus.
+- 2026-07-13 DM1 HoC C127 three-cycle candidate reuse: a leader-owned party
+  now has focused coverage for three C127/C162 cancel cycles followed by a
+  C160 acceptance. Each cancel reuses slot 1, restores the one-member party,
+  and keeps the mirror enabled; the final acceptance retains slot 1, clears
+  the candidate ordinal, and takes the mirror-disable path. Source: ReDMCSB
+  `REVIVE.C` F0280:272-276 and F0282:745-805. Verification: focused CTest.
 
 - 2026-07-13 DM1 HoC C160 stale-render guard: a real-PC34 C127 selection
   now proves the post-resurrection invalidation while the party remains in
