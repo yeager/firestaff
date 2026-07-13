@@ -4,8 +4,9 @@
  * Source-lock:
  *   dm2_v1_dungeon_materialize_g1_map5_text_runtime follows
  *   skproject/SKWIN/DME.h Text::w2 only and commits with zero generic and
- *   blocked record reads. QUERY_CLS2_OF_TEXT_RECORD then maps TextMode one
- *   to WALL_GFX before DRAW_WALL_ORNATE consumes scalar GDAT fields.
+ *   blocked record reads. QUERY_CLS2_OF_TEXT_RECORD then accepts only its
+ *   source-defined TextMode-one extension cases before DRAW_WALL_ORNATE
+ *   consumes scalar GDAT fields.
  */
 
 #include "dm2_v1_dungeon_loader.h"
@@ -62,7 +63,7 @@ int main(void)
     texts.text_record_reads = 1;
     texts.texts[0].object_id = 0x8800u;
     texts.texts[0].mode = 1;
-    texts.texts[0].text_index = 0x012au;
+    texts.texts[0].text_index = 0x022au;
 
     memset(&calls, 0, sizeof(calls));
     memset(&receipt, 0xa5, sizeof(receipt));

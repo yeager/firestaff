@@ -7242,6 +7242,22 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_g1_text_material_provenance_gate
     )
 
+    add_executable(test_dm2_v1_g1_text_wall_gfx_runtime
+        tests/test_dm2_v1_g1_text_wall_gfx_runtime.c
+        src/dm2/dm2_v1_dungeon_loader.c
+    )
+    target_include_directories(test_dm2_v1_g1_text_wall_gfx_runtime PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_text_wall_gfx_runtime PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_g1_text_wall_gfx_runtime
+        COMMAND test_dm2_v1_g1_text_wall_gfx_runtime
+    )
+
     add_executable(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe
         probes/dm2/firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe.c
         src/shared/asset_find_by_hash.c
