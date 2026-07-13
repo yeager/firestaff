@@ -2058,6 +2058,128 @@ static void test_original_c24_fluxcage_import_runtime_export_roundtrip(void)
           "C24 expiry removes the exact C15 fluxcage and its live counterpart");
 }
 
+static void test_original_c70_light_import_runtime_export_roundtrip(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    int written = 0;
+    int exported_written = 0;
+    int rc;
+    int i;
+    int c70_index = -1;
+    int exported_c70 = -1;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[3];
+    struct DungeonMapTiles_Compat tiles[3];
+    unsigned char square_data[3][32 * 32];
+    struct DungeonThings_Compat things;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat imported_party;
+    struct TickResult_Compat result;
+    DM1OriginalSavePC34HandoffReport report;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK, "C70 materializer fixture build succeeds");
+    CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 0,
+                                     DM1_EVENT_LIGHT) &&
+              rewrite_fixture_event_priority(bytes, (size_t)written, 0, 0) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 0, 6, 3) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 0, 7, 0) &&
+              rewrite_fixture_event_c_union(bytes, (size_t)written, 0, 0x7f3du),
+          "C70 fixture preserves signed B.LightPower and irrelevant C bytes");
+
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(square_data, 0, sizeof(square_data));
+    memset(&things, 0, sizeof(things));
+    memset(&imported, 0, sizeof(imported));
+    memset(&imported_party, 0, sizeof(imported_party));
+    memset(&report, 0, sizeof(report));
+    dungeon.header.mapCount = 3;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    for (i = 0; i < 3; ++i) {
+        maps[i].width = 32;
+        maps[i].height = 32;
+        tiles[i].squareData = square_data[i];
+        tiles[i].squareCount = 32 * 32;
+    }
+    start_world.dungeon = &dungeon;
+    start_world.things = &things;
+    start_world.magic.magicalLightAmount = 50;
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written), "C70 materializer fixture write succeeds");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, &report);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "C70 materializes only through signed B.LightPower");
+    for (i = 0; i < loaded_world.timeline.count; ++i) {
+        if (loaded_world.timeline.events[i].kind == TIMELINE_EVENT_MAGIC_LIGHT_DECAY) {
+            c70_index = i;
+            break;
+        }
+    }
+    CHECK(c70_index >= 0 && loaded_world.timeline.events[c70_index].aux0 == 3 &&
+              loaded_world.timeline.events[c70_index].aux1 == DM1_EVENT_LIGHT &&
+              loaded_world.timeline.events[c70_index].aux4 == 0,
+          "C70 keeps LightPower separate from its native-event receipt");
+
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+        &exported_written);
+    CHECK(rc == SAVEGAME_PC34_OK && exported_written > 0,
+          "C70 materialized state exports natively");
+    imported.party = &imported_party;
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        exported, (size_t)exported_written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK, "C70 exported state reimports");
+    for (i = 0; i < report.original_event_count; ++i) {
+        if (report.events[i].type == DM1_EVENT_LIGHT) {
+            exported_c70 = i;
+            break;
+        }
+    }
+    CHECK(exported_c70 >= 0 && report.events[exported_c70].priority == 0 &&
+              (int16_t)rd16le(&report.events[exported_c70].b_mapX) == 3 &&
+              rd16le(&report.events[exported_c70].c_cell) == 0,
+          "C70 roundtrip preserves B.LightPower and invents no C union arm");
+
+    {
+        struct TimelineEvent_Compat c70 = loaded_world.timeline.events[c70_index];
+        CHECK(F0720_TIMELINE_Init_Compat(&loaded_world.timeline, c70.fireAtTick),
+              "C70 runtime timeline initializes");
+        CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &c70),
+              "C70 runtime event schedules");
+        loaded_world.gameTick = c70.fireAtTick;
+    }
+    memset(&result, 0, sizeof(result));
+    CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world, &result) > 0 &&
+              loaded_world.magic.magicalLightAmount == 12 &&
+              loaded_world.timeline.count == 1 &&
+              loaded_world.timeline.events[0].aux0 == 2 &&
+              loaded_world.timeline.events[0].aux1 == DM1_EVENT_LIGHT &&
+              loaded_world.timeline.events[0].aux4 == 0,
+          "C70 runtime follows F0257 and retains native export provenance");
+
+    loaded_world.timeline.events[0].aux1 = 0;
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+              &exported_written) == SAVEGAME_PC34_ERROR_INTERNAL,
+          "C70 export rejects an unproven host light event");
+}
+
 static void test_real_dm1_dungeon_tail_map_span_validation(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -2859,6 +2981,7 @@ int main(void)
     test_original_c13_vi_altar_runtime_sequence();
     test_runtime_materializer_binds_original_explosion_union();
     test_original_c24_fluxcage_import_runtime_export_roundtrip();
+    test_original_c70_light_import_runtime_export_roundtrip();
     test_real_dm1_dungeon_tail_map_span_validation();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();

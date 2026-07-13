@@ -103,7 +103,7 @@
  *  see DATA.C:225 for the original 16-entry layout.
  * ========================================================== */
 
-#define RUNTIME_LIGHT_POWER_MAX   6
+#define RUNTIME_LIGHT_POWER_MAX   15
 
 /* ==========================================================
  *  Data structures.

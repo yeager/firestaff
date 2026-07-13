@@ -1452,6 +1452,19 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
         if (type == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
             /* ReDMCSB CHAMPION.C F0320 leaves B/C outside C12's contract;
              * preserve no invented Location/Cell/Effect bytes. */
+        } else if (type == DM1_EVENT_LIGHT) {
+            int light_power = src->aux0;
+            int abs_power = light_power < 0 ? -light_power : light_power;
+            /* ReDMCSB TIMELINE.C F0257:1747-1765 uses B.LightPower as a
+             * signed int16_t and writes no C union member. Export only the
+             * typed original-save receipt; generic host light events have
+             * no proven native PC34 union provenance. */
+            if (src->kind != TIMELINE_EVENT_MAGIC_LIGHT_DECAY ||
+                src->aux1 != DM1_EVENT_LIGHT || src->aux4 != 0 ||
+                light_power == 0 || abs_power > RUNTIME_LIGHT_POWER_MAX) {
+                return 0;
+            }
+            write_u16_le(dst + 6u, (uint16_t)(int16_t)light_power);
         } else if (pc34_event_type_is_status_timeout(type)) {
             int defense = pc34_status_event_defense_from_timeline(src, type);
             write_u16_le(dst + 6u, (uint16_t)(defense & 0xffff));

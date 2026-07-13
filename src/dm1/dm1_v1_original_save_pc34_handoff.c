@@ -1173,6 +1173,37 @@ static int materialize_original_pc34_remove_fluxcage_event(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+static int materialize_original_pc34_light_event(
+    const struct DM1_Event_V1 *src,
+    struct TimelineEvent_Compat *out_event)
+{
+    int light_power;
+    int abs_power;
+
+    if (!src || !out_event || src->type != DM1_EVENT_LIGHT ||
+        src->priority != 0u) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    light_power = (int)(int16_t)read_u16_le(&src->b_mapX);
+    abs_power = light_power < 0 ? -light_power : light_power;
+    /* ReDMCSB TIMELINE.C F0257:1747-1765 consumes only B.LightPower,
+     * decrements its signed magnitude, and queues C70 at Priority=0.
+     * DATA.C G0039 has 16 entries, so zero or magnitudes above 15 are
+     * not a live source sequence Firestaff can faithfully materialize. */
+    if (light_power == 0 || abs_power > RUNTIME_LIGHT_POWER_MAX) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    memset(out_event, 0, sizeof(*out_event));
+    out_event->kind = TIMELINE_EVENT_MAGIC_LIGHT_DECAY;
+    out_event->fireAtTick = src->map_time & 0x00ffffffu;
+    out_event->mapIndex = (int)((src->map_time >> 24) & 0xffu);
+    out_event->aux0 = light_power;
+    /* aux0 is live LightPower; retain C70 separately as F0802's receipt. */
+    out_event->aux1 = DM1_EVENT_LIGHT;
+    out_event->aux4 = 0;
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 static int materialize_original_pc34_timeline(
     const DM1OriginalSavePC34HandoffReport *report,
     struct GameWorld_Compat *world,
@@ -1247,6 +1278,14 @@ static int materialize_original_pc34_timeline(
         if (src->type == DM1_EVENT_REMOVE_FLUXCAGE) {
             if (materialize_original_pc34_remove_fluxcage_event(
                     src, world, &ev) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
+                !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            continue;
+        }
+        if (src->type == DM1_EVENT_LIGHT) {
+            if (materialize_original_pc34_light_event(src, &ev) !=
+                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
                 !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
                 return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }

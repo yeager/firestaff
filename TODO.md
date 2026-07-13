@@ -45,7 +45,7 @@
 
 - 2026-07-13 DM1 original-save timeline continuation: C11's zero
   `SlotOrdinal` action-enable route, C12 hide-damage removal, C13 Vi Altar
-  rebirth, and C24 fluxcage removal are complete. The non-zero-slot
+  rebirth, C24 fluxcage removal, and C70 signed-light decay are complete. The non-zero-slot
   `F0259_TIMELINE_ProcessEvent11Part2_MoveWeaponFromQuiverToSlot` branch remains
   blocked until its original live inventory/object route is bound. Do not coerce
   its native bytes into substitute Firestaff state.
