@@ -1546,6 +1546,10 @@ static void test_structure1f_semantics_and_bounds(void) {
               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &render_plan) == 0 &&
           render_plan.status ==
               NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS &&
+          render_plan.command_count > 0 &&
+          !render_plan.plan_ready &&
+          render_plan.blocks_real_dgn_mesh_render &&
+          !render_plan.fallback_visuals_permitted &&
           render_plan.structure3_model_references.complete &&
           render_plan.structure1a_transform_selectors.complete &&
           !render_plan.structure1a_transform_selectors.transform_semantics_proven &&
@@ -1604,9 +1608,10 @@ static void test_structure1f_semantics_and_bounds(void) {
           render_plan.structure1f_item_coordinate_pairs.unique_pair_count == 2 &&
           !render_plan.structure1f_item_coordinate_pairs.semantics_proven &&
           render_plan.structure3_payload.valid &&
-          render_plan.command_count == 0 && commands[0].kind == 0 &&
-          render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready,
-          "DGN render planning consumes the bounded Structure3 receipt without a mesh draw");
+          render_plan.command_count > 0 && commands[0].kind != 0 &&
+          render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready &&
+          !render_plan.fallback_visuals_permitted,
+          "DGN render planning retains bounded Structure3 source commands without a mesh draw");
     wb16(dgn + 0x1c, 24U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) != 0,
           "out-of-file Structure3 payload envelopes fail closed during DGN load");
