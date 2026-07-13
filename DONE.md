@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB startup playback-to-HUD ownership: M11 now advances skipped
+  ReDMCSB `TITLE.C F0437` cadence through the verified startup session before
+  entrance presentation, then accepts `ENTRANCE.C F0806` completion only by
+  transitioning that same session to live HUD. Verification: real local-CSB
+  `csb_v1_m11_launcher_handoff_boundary` CTest passed 1/1.
+
 - 2026-07-13 DM1 HoC F0115 floor-lane host handoff: M11 now publishes the
   floor-item presentation receipt only from the actual F0115 floor-object
   lane, with C10/F0791 material facts and final geometry. The source-backed

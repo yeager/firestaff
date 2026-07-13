@@ -428,6 +428,10 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(view.csbState.startup_entrance_last_command ==
                     ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON,
                 "M11 CSB launcher handoff records source enter-dungeon command");
+    expect_true(((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                     view.csbStartupRuntimeAssetSession)->playback.stage ==
+                    CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34,
+                "M11 CSB launcher door completion releases the same source session to HUD");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(view.csbState.level_loaded == 1 &&
