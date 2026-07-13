@@ -1396,6 +1396,14 @@
   `CHAMPION.C F0330`, `MENU.C F0407:1613-1617`, `DEFS.H C01`, and
   `TIMELINE.C F0253/F0259`. Verification: focused M11 THROW runtime test.
 
+- 2026-07-13 DM1 PC34 live F0407 SWING C11 receipt: the real M11
+  action-hand `SWING` path now sends its final F0407 disabled-tick result to
+  the existing F0330 C11 owner with `SlotOrdinal == 0`. This is deliberately
+  disjoint from THROW's F0328/F0259 ordinal-two mutation and does not admit a
+  generic UI-cooldown timer. Source: ReDMCSB `MENU.C F0407:1266-1275,
+  1620-1622`, `CHAMPION.C F0330`, and `TIMELINE.C F0253`. Verification:
+  focused real M11 SWING action-hand test plus C11 regressions.
+
 - 2026-07-13 DM1 PC34 C25 explosion union handoff: ReDMCSB
   `PROJEXPL.C F0213` stores C25 as `B.Location + C.Slot`, then
   `TIMELINE.C F0261` dispatches it to F0220. F0435 requires that exact C15

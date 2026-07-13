@@ -26727,6 +26727,15 @@ static int m11_apply_action_completion_plan_f0407(
         m11_materialize_action_lock(state, championIndex,
                                     plan.actionDisabledIndex,
                                     plan.disabledTicks);
+        /* ReDMCSB MENU.C F0407:1620-1622 calls F0330 from the common
+         * action tail. Bind one authenticated action-hand/melee route
+         * here: SWING has completed the real F0402/F0231 or closed-door
+         * branch above, so its C11 keeps SlotOrdinal zero. THROW owns the
+         * separate F0328 then F0407 ordinal-two path. */
+        if (actionIndex == DM1_ACTION_SWING) {
+            (void)DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
+                &state->world, championIndex, plan.disabledTicks);
+        }
     }
     if (plan.shouldRefillReadyHandNow) {
         state->pendingShootReadyHandRefill[championIndex] = 0u;
