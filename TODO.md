@@ -2641,8 +2641,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     regression-audited: the afterplay receipt enters the live explosion list,
     then the existing F0115 materialization receipt carries its type/frame/
     attack to M11. The source-locked 110/190/255 attack domain is now covered
-    through this route and all other byte values are rejected. Remaining work
-    is real multi-effect capture, not a cue or replacement renderer.
+    through this route and all other byte values are rejected. A F0738-complete
+    mutation with two live effects on one tile retains the existing C000 then
+    C040 F0115 source order. Remaining work is real multi-effect capture, not
+    a cue or replacement renderer.
   - 2026-07-09 update: DM1 F0190 killed-some state now owns cleanup/fear apply receipts consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
   - 2026-07-09 update: DM1 F0190 mutation dispatch now owns the combined possession/killed-some/killed-all apply receipt consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
   - 2026-07-09 update: DM1 F0231 runtime result now owns post-resolve apply receipts for luck, side effects, group damage, and damage emission consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
