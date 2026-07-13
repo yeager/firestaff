@@ -28,6 +28,7 @@ static void test_f0735_zero_luck_f0308_uses_pc34_rng_count(void);
 static void test_f0735_non_material_gate_skips_luck(void);
 static void test_f0735_dexterity_255_skips_hit_branch(void);
 static void test_f0735_weak_damage_zero_roll_uses_miss_tail(void);
+static void test_legacy_f0231_dexterity_255_preserves_rng(void);
 static void test_ordered_cells_to_attack_priority(void);
 static void test_f0192_per_creature_resistance(void);
 static void test_f0801b_archenemy_double_move(void);
@@ -607,6 +608,44 @@ static void test_material_melee_does_not_require_non_material_gate(void) {
     PASS();
 }
 
+/* ReDMCSB PROJEXPL.C F0231 (MEDIA720 PC34): Dexterity 255 returns before
+ * the F0231 hit RNG and F0308 Luck path. Keep the compact combat API's
+ * legacy caller source-locked to the live F0402 resolver. */
+static void test_legacy_f0231_dexterity_255_preserves_rng(void) {
+    DM1_CombatState s;
+    DM1_CreatureGroup g;
+    int nextAfterCall;
+    int expectedNext;
+
+    TEST(legacy_f0231_dexterity_255_preserves_rng);
+    dm1_combat_init(&s);
+    s.championCount = 1;
+    dm1_combat_init_champion(&s.champions[0]);
+    s.champions[0].strength = 255;
+    s.champions[0].dexterity = 255;
+    s.champions[0].hasWeapon = 1;
+
+    dm1_combat_init_group(&g);
+    g.info.dexterity = 255;
+    g.info.defense = 0;
+    g.count = 0;
+    g.creatures[0].health = 200;
+
+    dm1_combat_seed_rng(0x4a31u);
+    CHECK(dm1_melee_action_damage(&s, 0, &g, 0) == DM1_OUTCOME_KILLED_NONE,
+          "Dexterity 255 must reject the compact F0231 melee action");
+    CHECK(g.creatures[0].health == 200,
+          "Dexterity 255 must leave creature health unchanged");
+    nextAfterCall = dm1_combat_random(32768);
+
+    dm1_combat_seed_rng(0x4a31u);
+    expectedNext = dm1_combat_random(32768);
+    CHECK(nextAfterCall == expectedNext,
+          "Dexterity 255 must not consume compact F0231 hit RNG");
+
+    PASS();
+}
+
 /* ── Test: wound defense calculation (F0313) ─────────────────────── */
 static void test_wound_defense(void) {
     TEST(wound_defense);
@@ -862,6 +901,7 @@ int main(void) {
     test_f0735_non_material_gate_skips_luck();
     test_f0735_dexterity_255_skips_hit_branch();
     test_f0735_weak_damage_zero_roll_uses_miss_tail();
+    test_legacy_f0231_dexterity_255_preserves_rng();
     test_ordered_cells_to_attack_priority();
     test_f0192_per_creature_resistance();
     test_f0801b_archenemy_double_move();

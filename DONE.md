@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0231 Dexterity-255 melee gate: the compact DM1 combat
+  entry now mirrors ReDMCSB `PROJEXPL.C F0231:1454-1456` by returning before
+  the hit, Luck, or damage RNG path when `CreatureInfo.Dexterity == 255`.
+  Verification: isolated Ninja build and all 40 assertions in
+  `test_dm1_v1_combat_pc34_compat_integration`, including the direct RNG
+  sequence regression.
+
 - 2026-07-13 DM2 original-save to world-state restore: valid SKSave envelopes
   now strip only after the 0xBEEF/0xDEAD gate and run their complete `D2RS` or
   raw candidate parser before a `DM2_WorldState` is allocated. The resulting

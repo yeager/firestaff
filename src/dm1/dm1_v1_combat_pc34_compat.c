@@ -971,6 +971,14 @@ int dm1_melee_action_damage(DM1_CombatState* s, int champIdx,
     DM1_ChampionCombat* ch = &s->champions[champIdx];
     if (!ch->alive) return 0;
 
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1454-1456 (MEDIA720 PC34):
+     * CreatureInfo.Dexterity == 255 bypasses the entire hit path. This is
+     * stronger than an ordinary dexterity contest: it must not consume the
+     * first M003_RANDOM(32) or F0308 Luck state either. */
+    if (group->info.dexterity == 255) {
+        return 0;
+    }
+
     /* Source: PROJEXPL.C:1477 gates non-material targets before hit RNG. */
     if (group->info.nonMaterial && !dm1_melee_action_hits_non_material(ch)) {
         return 0;
