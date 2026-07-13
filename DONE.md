@@ -26,6 +26,15 @@
   F0802 re-exports the same C29-C41 union. Sources: `TIMELINE.C F0261`
   lines 1858-1863 and `GROUP.C F0209`. Verification: Ninja and CTest-passed
   `dm1_v1_original_save_pc34_handoff`.
+- 2026-07-13 DM2 save/load dialogue GDAT receipt: the source-owned panel from
+  skproject `uidialog.cpp::DM2_dialog_2066_3820` / `sktext.cpp::DIALOG_2066_3820`
+  now validates the exact `DIALOG_BOXES/0x81/dtImage/0` 4bpp IMG3 record and
+  its `QUERY_GDAT_IMAGE_LOCALPAL` tail. It is independent of map
+  `GRAPHICSSET` dialogue material and rejects any missing, differently typed,
+  differently addressed, or palette-less record. The receipt deliberately
+  does not claim rectangle 453 placement, text layout, a decoded surface, or
+  a draw. Verification: Ninja and CTest-passed
+  `dm2_v1_dialogue_gdat_receipt`.
 
 - 2026-07-13 CSBWin saved `TT_STONEROOM` DSA receipt: restored function-6
   timers now bind their exact level/x/y target, timer position, and

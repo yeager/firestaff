@@ -54,3 +54,35 @@ int dm2_v1_dialogue_gdat_receipt(const DM2_V1_AssetLoader *loader,
     out->valid = 1;
     return 1;
 }
+
+int dm2_v1_dialogue_box_gdat_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_DialogueBoxGdatReceipt *out)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!loader || !loader->loaded ||
+        !dm2_v1_asset_load_image_metadata(
+            loader, DM2_GDAT_CATEGORY_DIALOG_BOXES,
+            DM2_V1_DIALOGUE_BOX_INDEX, DM2_V1_DIALOGUE_BOX_FIELD,
+            &out->metadata) ||
+        out->metadata.bits_per_pixel != 4u ||
+        !dm2_v1_asset_load_image_local_palette(
+            loader, DM2_GDAT_CATEGORY_DIALOG_BOXES,
+            DM2_V1_DIALOGUE_BOX_INDEX, DM2_V1_DIALOGUE_BOX_FIELD,
+            out->palette, &out->palette_hash)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+
+    hash = dm2_dialogue_hash_step(hash, DM2_GDAT_CATEGORY_DIALOG_BOXES);
+    hash = dm2_dialogue_hash_step(hash, DM2_V1_DIALOGUE_BOX_INDEX);
+    hash = dm2_dialogue_hash_step(hash, DM2_V1_DIALOGUE_BOX_FIELD);
+    hash = dm2_dialogue_hash_step(hash, out->metadata.metadata_hash);
+    hash = dm2_dialogue_hash_step(hash, out->palette_hash);
+    out->receipt_hash = hash ? hash : 1u;
+    out->valid = 1;
+    return 1;
+}

@@ -17,12 +17,13 @@ static void check(int condition, const char *name)
 
 int main(void)
 {
-    uint8_t raw[96];
-    uint32_t offsets[2] = { 0u, 40u };
-    uint32_t sizes[2] = { 40u, 40u };
+    uint8_t raw[144];
+    uint32_t offsets[3] = { 0u, 40u, 80u };
+    uint32_t sizes[3] = { 40u, 40u, 40u };
     DM2_V1_GdatEntry entries[4];
     DM2_V1_AssetLoader loader;
     DM2_V1_DialogueGdatReceipt receipt;
+    DM2_V1_DialogueBoxGdatReceipt box_receipt;
     int i;
 
     memset(raw, 0, sizeof(raw));
@@ -42,12 +43,21 @@ int main(void)
         entries[i].cls4 = i == 0 ? 0xfdu : DM2_V1_DIALOGUE_GLYPH_FIELD;
         entries[i].data_index = (uint16_t)i;
     }
+    raw[80u] = 48u;
+    raw[82u] = 24u;
+    raw[84u] = 4u;
+    for (i = 0; i < 16; ++i) raw[104u + (size_t)i] = (uint8_t)(0xa0 + i);
+    entries[2].cls1 = DM2_GDAT_CATEGORY_DIALOG_BOXES;
+    entries[2].cls2 = DM2_V1_DIALOGUE_BOX_INDEX;
+    entries[2].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
+    entries[2].cls4 = DM2_V1_DIALOGUE_BOX_FIELD;
+    entries[2].data_index = 2u;
     loader.loaded = 1;
     loader.entries = entries;
-    loader.entry_count = 2u;
+    loader.entry_count = 3u;
     loader.raw_offsets = offsets;
     loader.raw_sizes = sizes;
-    loader.raw_data_count = 2u;
+    loader.raw_data_count = 3u;
     loader.data = raw;
     loader.data_size = sizeof(raw);
 
@@ -59,6 +69,15 @@ int main(void)
               receipt.shell_palette_hash != 0u &&
               receipt.glyph_palette_hash != 0u && receipt.receipt_hash != 0u,
           "dialogue receipt binds source shell, glyph and local palettes");
+    check(dm2_v1_dialogue_box_gdat_receipt(&loader, &box_receipt) &&
+              box_receipt.valid && box_receipt.metadata.width == 48u &&
+              box_receipt.metadata.height == 24u &&
+              box_receipt.palette_hash != 0u && box_receipt.receipt_hash != 0u,
+          "save dialogue receipt binds skproject dialog-box image and palette");
+    entries[2].cls2 = 0x80u;
+    check(!dm2_v1_dialogue_box_gdat_receipt(&loader, &box_receipt),
+          "save dialogue receipt rejects a non-source dialog-box index");
+    entries[2].cls2 = DM2_V1_DIALOGUE_BOX_INDEX;
     check(!dm2_v1_dialogue_gdat_receipt(&loader, 7u, 0xfbu, &receipt),
           "dialogue receipt rejects a non-source shell field");
     entries[1].cls2 = 8u;
