@@ -7,6 +7,12 @@
   elects the sole champion, disables only A, and leaves B selectable. Source:
   ReDMCSB `REVIVE.C` F0280/F0281/F0282:745-845. Verification: focused CTest
   against the installed PC34 corpus.
+- 2026-07-13 DM1 HoC C127 two-champion candidate reuse: focused coverage now
+  proves that a C127 candidate appends at slot 2/ordinal 3, C162 removes only
+  that tail slot and leaves the mirror enabled, and the following C127/C160
+  retry reuses and retains slot 2 while clearing the candidate ordinal and
+  disabling the mirror. Source: ReDMCSB `REVIVE.C` F0280:272-277 and
+  F0282:744-805. Verification: focused resurrection compatibility test.
 
 - 2026-07-13 DM1 HoC C127 reject/accept party order: cancelling a candidate
   clears only the appended slot, and selecting the same mirror again reuses
