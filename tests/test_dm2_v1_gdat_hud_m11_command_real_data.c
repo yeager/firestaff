@@ -43,6 +43,7 @@ int main(void)
     size_t graphics_size = 0u;
     DM2_V1_AssetLoader loader;
     DM2_V1_GdatHudM11CommandPlan plan;
+    DM2_V1_HudPartyState party;
     int failures = 0;
     int expected_kind[DM2_V1_GDAT_HUD_M11_COMMAND_MAX] = {
         DM2_V1_GDAT_HUD_M11_COMMAND_TOP_BAR,
@@ -53,7 +54,11 @@ int main(void)
         DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
         DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
         DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
-        DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL
+        DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL,
+        DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT,
+        DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT,
+        DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT,
+        DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT
     };
 
     if (root && root[0]) {
@@ -71,8 +76,16 @@ int main(void)
     }
     memset(&loader, 0, sizeof(loader));
     memset(&plan, 0, sizeof(plan));
+    memset(&party, 0, sizeof(party));
+    party.champion_count = DM2_V1_HUD_CHAMPION_SLOT_COUNT;
+    for (int i = 0; i < party.champion_count; ++i) {
+        party.champions[i].occupied = 1;
+        party.champions[i].portrait_type_source_bound = 1;
+        party.champions[i].portrait_index = (uint8_t)i;
+    }
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||
-        !dm2_v1_gdat_hud_m11_command_plan_build(&loader, &plan)) {
+        !dm2_v1_gdat_hud_m11_command_plan_build_for_party(&loader, &party,
+                                                            &plan)) {
         fputs("FAIL: canonical GDAT HUD command plan was not admitted\n", stderr);
         dm2_v1_gdat_hud_m11_command_plan_free(&plan);
         dm2_v1_asset_loader_free(&loader);
@@ -86,8 +99,10 @@ int main(void)
     for (int i = 0; i < plan.command_count; ++i) {
         const DM2_V1_GdatHudM11Command *command = &plan.commands[i];
         if (command->kind != expected_kind[i] ||
-            command->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
-            command->gdat_index < 2 || command->gdat_index > 6 ||
+            (i < 9 && (command->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+                       command->gdat_index < 2 || command->gdat_index > 6)) ||
+            (i >= 9 && (command->gdat_category != DM2_GDAT_CATEGORY_CHAMPIONS ||
+                        command->gdat_index != i - 9 || command->gdat_field != 0)) ||
             command->width <= 0 || command->height <= 0 || !command->pixels ||
             command->format == DM2_IMG_FMT_UNKNOWN || command->raw_hash == 0u ||
             command->raw_byte_count == 0u || command->palette_hash == 0u ||
