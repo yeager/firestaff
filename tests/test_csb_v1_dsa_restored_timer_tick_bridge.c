@@ -312,5 +312,32 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 &&
               profile.party_state.Champions[0].HideDamageReceivedEventIndex == 23,
           "stale hide-damage timer identity cannot clear a champion receipt");
+
+    raw[80] = 0x81u; /* Source byte-map door, terminal closing step. */
+    profile.csbwin_timers[0].function = 1u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x80u,
+          "restored terminal door timer closes its exact source byte-map door");
+
+    raw[80] = 0x81u;
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x81u,
+          "stale terminal door identity cannot fall through to generic animation");
+
+    raw[80] = 0x82u; /* A later closing step would need source requeue. */
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x82u,
+          "nonterminal restored door timer remains blocked without source requeue");
     return failures == 0 ? 0 : 1;
 }

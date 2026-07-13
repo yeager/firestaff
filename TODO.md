@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin restored `TT_1` timer follow-up: the live queue now
+  admits only the exact terminal closing low-state `1 -> 0` byte-map door
+  step. Opening, party and creature collision branches, sounds, nonterminal
+  motion, and every timer requeue remain blocked until their complete saved
+  runtime state is source-backed.
+
 - 2026-07-13 DM2 viewport source-material follow-up: source-required wall and
   door passes now reject a decoded GDAT image when its own IMG3 local-palette
   receipt is absent. Extend that same per-image ownership rule to remaining

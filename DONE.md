@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin restored terminal `TT_1` door timer bridge: an exact
+  queue-slot/timer/event receipt now drives only the terminal closing
+  byte-map door transition from low state 1 to 0 through the live tick queue.
+  Every saved function-1 record is consumed before the shared C01 door route;
+  stale identity, malformed data, non-door targets, opening, collision,
+  sound, and requeue paths therefore fail closed. Source: CSBWin
+  `CSBCode.cpp:6425-6433`, `Timer.cpp:1224-1341`; ReDMCSB `TIMELINE.C`
+  `F0241_TIMELINE_ProcessEvent1_DoorAnimation` lines 749-823. Verification:
+  Ninja and CTest `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin restored TT_12 hide-damage timer bridge: verified an
   exact queue-slot/timer/event/champion receipt now clears the saved
   hide-damage event index through the live queue. Malformed function-12
