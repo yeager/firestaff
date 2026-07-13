@@ -1231,3 +1231,48 @@ diff --git a/src/pce/huc.cpp b/src/pce/huc.cpp
 + }
   SysCardRAM[A - 0x68 * 8192] = V;
  }
+
+diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
+--- a/src/cdrom/scsicd.cpp
++++ b/src/cdrom/scsicd.cpp
+@@ -69,0 +70,30 @@
++static bool TheronTraceReadRawSector(uint8 *buffer, int32 lba)
++{
++ static FILE *trace = NULL;
++ static unsigned trace_count = 0;
++ const bool ok = Cur_CDIF->ReadRawSector(buffer, lba);
++
++ if(ok && trace_count < 32)
++ {
++  if(!trace)
++  {
++   const char *path = getenv("FIRESTAFF_THERON_IRQ2_CD_TRACE");
++   if(path && *path)
++   {
++    trace = fopen(path, "a");
++    if(trace)
++    {
++     fputs("source=mednafen-pce-instrumented-cd\\n", trace);
++     fflush(trace);
++    }
++   }
++  }
++  if(trace)
++  {
++   fprintf(trace, "cd_interface_raw_sector_read lba=%d bytes=2352\\n", lba);
++   fflush(trace);
++   trace_count++;
++  }
++ }
++ return ok;
++}
++
+@@ -2790,7 +2813,7 @@ static void SCSICD_RunCore(scsicd_timestamp_t run_time)
+    else if(SectorAddr >= toc.tracks[100].lba)
+    {
+     CommandCCError(SENSEKEY_ILLEGAL_REQUEST, NSE_END_OF_VOLUME);
+    }
+-   else if(!Cur_CDIF->ReadRawSector(tmp_read_buf, SectorAddr))	//, SectorAddr + SectorCount))
++   else if(!TheronTraceReadRawSector(tmp_read_buf, SectorAddr))	//, SectorAddr + SectorCount))
+    {
+     cd.data_transfer_done = false;
