@@ -308,8 +308,11 @@ static void verify_real_indexed_startup(
     CSB_V1_StartupFullRuntimeReceipt_PC34 receipt;
     CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
     CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 handoff_receipt;
+    CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 door_handoff_receipt;
     CSB_V1_StartupSessionPackageTitleReceipt_PC34 title_package_receipt;
     CSB_V1_RuntimeStartupTitlePackageHandoffReceipt_PC34 title_handoff_receipt;
+    CSB_V1_StartupSessionOpeningDoorReceipt_PC34 opening_door_receipt;
+    CSB_V1_RuntimeStartupTitleDoorHandoffReceipt_PC34 title_door_handoff_receipt;
     CSB_V1_StartupEntranceInputOutcome_PC34 input_outcome;
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_apply;
     CSB_V1_StartupCommandStateReceipt_PC34 state_receipt;
@@ -454,6 +457,14 @@ static void verify_real_indexed_startup(
               handoff_receipt.same_session_generation &&
               handoff_receipt.no_synthetic_surface,
           "opening input/runtime transition retains the verified PC34 package receipt");
+    CHECK(csb_v1_startup_session_opening_door_receipt_pc34(
+              &session, &package_receipt, &host_surface,
+              &opening_door_receipt) == 1 && opening_door_receipt.valid &&
+              opening_door_receipt.c004_entrance_ready &&
+              opening_door_receipt.c002_left_door_ready &&
+              opening_door_receipt.c003_right_door_ready,
+          "C004/C002/C003 opening frame remains in the verified C001 package session");
+    door_handoff_receipt = handoff_receipt;
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host_surface);
 
     memset(&plan, 0, sizeof(plan));
@@ -483,6 +494,15 @@ static void verify_real_indexed_startup(
               title_package_receipt.c001_strikes_back_ready &&
               title_package_receipt.title_to_hud_same_session,
           "C001 PRESENTS/CHAOS/STRIKES remain bound to the terminal PC34 package session");
+    CHECK(csb_v1_runtime_startup_title_door_handoff_receipt_pc34(
+              &title_package_receipt, &opening_door_receipt,
+              &door_handoff_receipt, &title_door_handoff_receipt) == 1 &&
+              title_door_handoff_receipt.valid &&
+              title_door_handoff_receipt.full_title_to_opening_package_bound &&
+              title_door_handoff_receipt.same_session_generation &&
+              title_door_handoff_receipt.no_legacy_wrappers &&
+              title_door_handoff_receipt.no_synthetic_surface,
+          "C001 title phases hand off to original C004/C002/C003 opening runtime");
     CHECK(csb_v1_runtime_startup_title_package_handoff_receipt_pc34(
               &title_package_receipt, &handoff_receipt,
               &title_handoff_receipt) == 1 && title_handoff_receipt.valid &&

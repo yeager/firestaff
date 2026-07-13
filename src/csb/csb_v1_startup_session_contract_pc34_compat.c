@@ -113,6 +113,70 @@ int csb_v1_startup_session_package_title_receipt_pc34(
     return 1;
 }
 
+int csb_v1_startup_session_opening_door_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host_surface,
+    CSB_V1_StartupSessionOpeningDoorReceipt_PC34 *out_receipt)
+{
+    const CSB_V1_StartupRuntimeSurface_PC34 *entrance;
+    const CSB_V1_StartupRuntimeSurface_PC34 *left;
+    const CSB_V1_StartupRuntimeSurface_PC34 *right;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    /* ReDMCSB ENTRANCE.C F0806 lines 775-826 composes C004, C002, and C003
+     * in the resident entrance session. The host must not replace that
+     * opening composition after TITLE.C F0437 has authenticated C001. */
+    if (!session || !package_receipt || !host_surface || !out_receipt ||
+        !session->valid || !package_receipt->valid ||
+        !package_receipt->real_package_matched ||
+        !package_receipt->title_to_hud_same_session ||
+        !package_receipt->no_legacy_wrappers ||
+        !package_receipt->no_fallback_routes || !host_surface->valid ||
+        !host_surface->real_asset_matched ||
+        !host_surface->no_legacy_wrappers ||
+        !host_surface->no_synthetic_surface ||
+        host_surface->host_surface !=
+            CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34 ||
+        !host_surface->door_opening_decision ||
+        host_surface->frame.session_generation != session->generation ||
+        package_receipt->session_generation != session->generation ||
+        package_receipt->real_asset_receipt_hash == 0u ||
+        package_receipt->consumed_surface_hash == 0u ||
+        !host_surface->raster.valid || !host_surface->raster.real_asset_matched ||
+        !host_surface->raster.entrance_composited ||
+        !host_surface->raster.door_composited ||
+        host_surface->raster.source_surface_count != 3 ||
+        host_surface->host_surface_hash == 0u) return 0;
+
+    entrance = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
+    left = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
+    right = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
+    if (!entrance->valid || !entrance->pixels || entrance->source_asset_id != 4 ||
+        !left->valid || !left->pixels || left->source_asset_id != 2 ||
+        !right->valid || !right->pixels || right->source_asset_id != 3 ||
+        host_surface->frame.entrance_surface != entrance ||
+        host_surface->frame.left_door_surface != left ||
+        host_surface->frame.right_door_surface != right) return 0;
+
+    out_receipt->valid = 1;
+    out_receipt->real_package_matched = 1;
+    out_receipt->c004_entrance_ready = 1;
+    out_receipt->c002_left_door_ready = 1;
+    out_receipt->c003_right_door_ready = 1;
+    out_receipt->opening_to_title_same_session = 1;
+    out_receipt->no_legacy_wrappers = 1;
+    out_receipt->no_fallback_routes = 1;
+    out_receipt->source_tick = host_surface->frame.source_tick;
+    out_receipt->session_generation = session->generation;
+    out_receipt->real_asset_receipt_hash = package_receipt->real_asset_receipt_hash;
+    out_receipt->consumed_surface_hash = package_receipt->consumed_surface_hash;
+    return 1;
+}
+
 int csb_v1_startup_session_live_hud_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     const CSB_V1_StartupSessionTerminalReceipt_PC34 *terminal_receipt,
