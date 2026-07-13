@@ -6,6 +6,15 @@
   Source: ReDMCSB `MENU.C` F0412:1979-1992 and `TIMELINE.C` C79:1998-2000.
   Verification: Ninja and CTest `dm1_v1_original_save_pc34_handoff` passed 1/1.
 
+- 2026-07-13 CSBWin restored `TT_74` Party Shield bridge: the live queue now
+  subtracts an exact signed `timerWord6` defense delta from the imported
+  PartyShield tail only after queue-slot, timer, and event identity validation.
+  Stale, nonpositive, and underflowing receipts leave saved defense unchanged;
+  the source all-portrait redraw remains blocked without a restored HUD owner.
+  Source: CSBWin `CSBCode.cpp:6541-6543`; ReDMCSB `TIMELINE.C F0261` lines
+  1975-1984. Verification: Ninja and CTest
+  `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 DM1 original PC34 C78 Fire Shield roundtrip: typed handoff
   accepts zero Priority and positive signed `B.Defense`, subtracts it from
   both fire-shield mirrors at runtime, and exports no invented C union.

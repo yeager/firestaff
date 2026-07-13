@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin restored `TT_74` follow-up: live dispatch now expires an
+  exact saved Party Shield receipt only for a positive, non-underflowing
+  signed defense delta. The source all-portrait redraw remains blocked without
+  a restored M11 HUD owner; timer families needing omitted object identity
+  remain blocked pending a source-backed timer-record expansion.
+
 - 2026-07-13 CSBWin restored `TT_73` follow-up: live dispatch now expires an
   exact saved Thieves' Eye receipt only while its imported party count is
   positive. Timer families requiring unpreserved object-word identity remain
