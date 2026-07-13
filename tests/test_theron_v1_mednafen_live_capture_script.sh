@@ -9,6 +9,10 @@ if [[ ! -x "$script" ]]; then
     exit 1
 fi
 bash -n "$script"
+if ! grep -Fq -- '-pce.arcadecard 0' "$script"; then
+    printf 'FAIL: capture script must disable unrelated Arcade Card emulation\n' >&2
+    exit 1
+fi
 
 output=$(env -u MEDNAFEN_BIN -u THERON_US_CUE -u THERON_SYSTEM_CARD \
     -u THERON_LIVE_TRACE_OUTPUT "$script")

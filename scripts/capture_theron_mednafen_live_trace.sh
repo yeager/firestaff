@@ -47,6 +47,7 @@ set +e
     "$mednafen_bin" \
     -sound 0 \
     -video.driver softfb \
+    -pce.arcadecard 0 \
     -pce.cdbios "$system_card" \
     "$cue" >"$stdout_file" 2>"$stderr_file"
 status=$?
