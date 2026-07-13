@@ -13,6 +13,15 @@
   `CSBCode.cpp:6540`; ReDMCSB `TIMELINE.C F0261` lines 1972-1974.
   Verification: Ninja and CTest `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 Nexus Structure3 byte-run ordinal exclusion: complete
+  Structure1A owner/model relations now compare their model indexes with the
+  bounded zero-separated Structure3 byte-run count. An index beyond that count
+  rules out only a direct zero- or one-based byte-run ordinal; no alternative
+  mapping, record, face, vertex, mesh, texture, palette, or pixel semantics is
+  inferred. Rendering remains fail-closed at face semantics. Verification:
+  Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 DM1 original PC34 C77 Spell Shield roundtrip: typed handoff
   accepts zero Priority and positive signed `B.Defense`, subtracts it from
   both spell-shield mirrors at runtime, and exports no invented C union.

@@ -1643,6 +1643,8 @@ int nexus_v1_level_structure3_ordinal_correlation_receipt(
     receipt.structure1a_relation_complete = model_references.complete;
     receipt.structure3_payload_valid = level->structure3_payload.valid;
     receipt.structure3_block_count = level->structure3_payload.block_count;
+    receipt.structure3_nonzero_byte_run_count =
+        level->structure3_payload.nonzero_byte_run_count;
     receipt.structure3_nonzero_block_run_count =
         level->structure3_payload.nonzero_block_run_count;
     for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
@@ -1659,6 +1661,9 @@ int nexus_v1_level_structure3_ordinal_correlation_receipt(
         if (model_index > receipt.structure3_block_count) {
             ++receipt.model_index_exceeds_block_count;
         }
+        if (model_index > receipt.structure3_nonzero_byte_run_count) {
+            ++receipt.model_index_exceeds_nonzero_byte_run_count;
+        }
         if (model_index > receipt.structure3_nonzero_block_run_count) {
             ++receipt.model_index_exceeds_nonzero_block_run_count;
         }
@@ -1666,6 +1671,9 @@ int nexus_v1_level_structure3_ordinal_correlation_receipt(
     receipt.direct_block_ordinal_mapping_disproven =
         receipt.resolved_model_reference_count > 0 &&
         receipt.model_index_exceeds_block_count > 0;
+    receipt.direct_byte_run_ordinal_mapping_disproven =
+        receipt.resolved_model_reference_count > 0 &&
+        receipt.model_index_exceeds_nonzero_byte_run_count > 0;
     receipt.direct_run_ordinal_mapping_disproven =
         receipt.resolved_model_reference_count > 0 &&
         receipt.model_index_exceeds_nonzero_block_run_count > 0;
