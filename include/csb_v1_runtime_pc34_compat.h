@@ -357,6 +357,14 @@ typedef struct {
     /* CSBWin SaveGame.cpp reads EDBT_DisableSaves from EXPOOL. It is a
      * source save-policy gate, not a Firestaff preference. */
     int                     csbwin_saves_disabled;
+    /* CSBWin SaveGame.cpp:1978-2034 restores these DB11/EXPOOL policy
+     * records after the palette. They are source save state, never inferred
+     * from Firestaff configuration or asset filenames. */
+    uint32_t                csbwin_delete_duplicate_timers;
+    uint32_t                csbwin_debugging_data;
+    uint32_t                csbwin_csbgraphics_signature_data;
+    uint32_t                csbwin_graphics_signature_data;
+    uint32_t                csbwin_version_data;
     /* CSBWin DSA.cpp DSAINDEX::ReadTracing restores this EXPOOL-owned
      * eight-word bitmap after the save body. It is source trace state only:
      * no Firestaff diagnostic mode or DSA execution is enabled from it. */
@@ -656,6 +664,17 @@ int csb_v1_runtime_set_csbwin_expool_overlay_palette(
     size_t palette_size);
 int csb_v1_runtime_csbwin_saves_disabled(
     const CSB_V1_RuntimeProfile *profile);
+int csb_v1_runtime_restore_csbwin_save_policy(
+    CSB_V1_RuntimeProfile *profile);
+/* Read the post-palette CSBWin SaveGame.cpp EXPOOL policy records. The
+ * values are restored only from a complete, receipt-authenticated save tail. */
+int csb_v1_runtime_get_csbwin_save_policy(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_delete_duplicate_timers,
+    uint32_t *out_debugging_data,
+    uint32_t *out_csbgraphics_signature,
+    uint32_t *out_graphics_signature,
+    uint32_t *out_version);
 
 /* CSBWin Monster.cpp resolves a type-47 filter actuator from Expool, then
  * obtains its DSAselector from DB3::word2 bits 7..11 and maps that slot
