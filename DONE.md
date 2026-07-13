@@ -339,6 +339,14 @@
   controller state, CD register, asset, or level semantics are synthesised.
   Verification: capture-script syntax/contract test, Mednafen patch dry-run,
   rebuilt instrumented Mednafen, and three authentic bounded GUI captures.
+- 2026-07-13 DM1 C100 scale-row 7-11 audit: ReDMCSB's I34E C100 route is
+  contradictory, not an invitation to infer scales. `DUNVIEW.C:373,5984`
+  reaches G2028 rows 7-11 while `DUNVIEW.C:1914-1926` and
+  `FTL.idc:21033-21034` prove G2037 ends after row 6 and the next bytes belong
+  to mutable globals. The focused viewport test now rejects every unresolved
+  row 7-11, preserving fail-closed no-draw until an original PC34 runtime
+  capture or verified disassembly provides a mapping.
+
 - 2026-07-13 DM1 F0115/F0127 D0C C100/C101 rebirth routing: C101 now reaches
   ReDMCSB `DUNVIEW.C F0115:5955,6038-6074`'s genuine D0C M636 fire material.
   C100 instead retains a dedicated no-draw receipt because its distinct
