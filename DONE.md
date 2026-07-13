@@ -7,6 +7,13 @@
 - 2026-07-13 Nexus raw Structure1F item attribute pair receipt: complete;
   direct item attribute pairs remain no-draw provenance.
 
+- 2026-07-13 CSBWin saved `TT_60`/`TT_61` pre-mutation runtime: authenticated
+  timer queue/event identity now reaches the source-owned party-square,
+  non-Lord-Chaos `+5` requeue before shared M10 C60/C61 group dispatch can
+  reinterpret `timerObj8`. Source: `CSBCode.cpp:6471-6472`,
+  `Timer.cpp:2519-2584`. Verification:
+  `test_csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 DM2 per-file original-save corpus receipts: bounded corpus rows
   retain parsed candidate type, path, payload size, and payload hash. Original
   envelope/raw rows are explicitly rejected for runtime import.
