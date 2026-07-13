@@ -4,6 +4,9 @@
   retain parsed candidate type, path, payload size, and payload hash. Original
   envelope/raw rows are explicitly rejected for runtime import.
 
+- 2026-07-13 Nexus raw floor-decoration offset-pair receipt: complete; signed
+  source pairs remain fail-closed.
+
 - 2026-07-13 CSBWin saved `TT_FALSEWALL` SET runtime: authenticated function-7
   receipts now apply the original falsewall bit after the existing saved DSA
   boundary. Source: `Timer.cpp:1343-1442`. Verification:
