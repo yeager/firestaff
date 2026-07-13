@@ -122,3 +122,12 @@ and observed registers. It does not classify `$c950` or `$fe92`, identify a
 CD request, or bind a Track 02 record, payload, bitmap, palette, object, or
 level. `scripts/verify_theron_c860_post_return_trace.sh` requires the ordered
 `$e109 -> $c860 -> $fe92` rows and rejects the preceding trace format.
+
+The following clean-source US-CUE capture enters the actual `$fe92` System
+Card routine and returns through `$febe` to `$c86e`. It reads `$18c5`, then
+the observed `$18c1 = aa`, `$18c2 = 55`, and `$18c3 = 03` handshake state;
+the CD data registers remain `$1800..$1804 = 00 00 00 02 00` throughout the
+routine. The trace consequently proves a status/handshake path, not a CD data
+request. It binds no Track 02 record, destination, size, payload, bitmap,
+palette, object, or level. `scripts/verify_theron_fe92_status_trace.sh`
+requires the exact entry, observed status reads, RTS, and return to `$c86e`.

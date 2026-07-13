@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron Track 02 `$fe92` System Card status trace: a
+  clean-source, instrumented Mednafen 1.32.1 build and authenticated US
+  CUE/System Card 3.0 capture now prove `$c860 -> $fe92 -> $c86e`. `$fe92`
+  reads the observed `$18c5`, `$18c1 = aa`, `$18c2 = 55`, and `$18c3 = 03`
+  handshake state, then returns via `$febe`; `$1800..$1804` remain
+  `00 00 00 02 00`. This is a status receipt, not a CD data request: no Track
+  02 record, destination, payload, bitmap, palette, object, or level meaning
+  is assigned. Verification: clean patch dry-run, instrumented build,
+  30-second real-media trace, and
+  `scripts/verify_theron_fe92_status_trace.sh` PASS.
+
 - 2026-07-13 DM1 F0209 reaction F0267 handoff: C29-C36/C38-C41 ordinary
   one-square moves now use ReDMCSB `GROUP.C F0209`'s chosen F0202 direction
   through M10 `MOVESENS.C F0267` source unlink, destination link, and F0266
