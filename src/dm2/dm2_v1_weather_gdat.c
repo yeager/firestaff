@@ -28,6 +28,31 @@ static int dm2_weather_text_has_nul(const uint8_t *text, size_t size)
     return text && memchr(text, '\0', size) != NULL;
 }
 
+static int dm2_weather_has_environment_image(const DM2_V1_AssetLoader *loader,
+                                             uint8_t graphicsset,
+                                             uint8_t command)
+{
+    size_t i;
+
+    if (!loader || !loader->loaded || !loader->entries) return 0;
+    /* skproject/SKWIN/c_bkgrnd.cpp
+     * ENVIRONMENT_DRAW_DISTANT_ELEMENT calls QUERY_TEMP_PICST with
+     * category 0x17, glbMapGraphicsSet and ref->envImg.  ref->envImg is the
+     * original command number chosen by c_weather.cpp, not CD's rect number.
+     * Keep the check typed and set-specific so a command text cannot borrow
+     * a picture from another map style. */
+    for (i = 0; i < loader->entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader->entries[i];
+        if (entry->cls1 == DM2_GDAT_CATEGORY_ENVIRONMENT &&
+            entry->cls2 == graphicsset &&
+            entry->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE &&
+            entry->cls4 == command) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int dm2_v1_weather_cmdstr_query(const uint8_t *text, size_t text_size,
                                  const char *name, int *out_found,
                                  int32_t *out_value)
@@ -82,7 +107,9 @@ int dm2_v1_weather_cmdstr_query(const uint8_t *text, size_t text_size,
     return 1;
 }
 
-static int dm2_weather_decode_material(DM2_V1_WeatherCommandReceipt *out)
+static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
+                                       uint8_t graphicsset,
+                                       DM2_V1_WeatherCommandReceipt *out)
 {
     int found_cd = 0;
     int found_fw = 0;
@@ -101,6 +128,10 @@ static int dm2_weather_decode_material(DM2_V1_WeatherCommandReceipt *out)
     }
     out->rect_number = (uint16_t)cd;
     out->flip_mode = found_fw ? (uint8_t)fw : 0u;
+    out->image_field = out->command;
+    out->image_present = dm2_weather_has_environment_image(
+        loader, graphicsset, out->image_field);
+    if (!out->image_present) return 0;
     hash = out->raw_hash;
     hash ^= out->rect_number;
     hash *= 16777619u;
@@ -251,7 +282,7 @@ int dm2_v1_weather_gdat_command_receipt(
     out->raw_text = raw;
     out->byte_count = (uint32_t)size;
     out->raw_hash = dm2_weather_hash_bytes(raw, size);
-    (void)dm2_weather_decode_material(out);
+    (void)dm2_weather_decode_material(loader, graphicsset, out);
     return 1;
 }
 

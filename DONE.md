@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 GDAT weather image binding: a weather CMDSTR now becomes
+  material-valid only when the same original `ENVIRONMENT` graphics set has
+  the matching `dtImage` entry for its selected command. `CD` remains the
+  source rectangle number and is never reinterpreted as image data. This
+  follows skproject `c_bkgrnd.cpp::ENVIRONMENT_DRAW_DISTANT_ELEMENT`; missing
+  or cross-set images remain no-draw. Verification: Ninja-built and
+  CTest-passed `dm2_v1_weather_gdat_receipt`.
+
 - 2026-07-13 Nexus: propagated every validated Structure1G image instruction
   through an explicit local Structure2 descriptor-bound/unbound receipt. The
   DGN parser and renderer still fail closed for unknown descriptors and make

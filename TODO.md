@@ -113,6 +113,12 @@ live real-material renderer. Remaining V2.2 work is a renderer that consumes
 a complete, operator-reviewed pack through every active GDAT scene route;
 placeholder or partial assets must never be promoted.
 
+DM2 V1 weather CMDSTR receipts now require the matching original
+`ENVIRONMENT` `dtImage` in the active graphics set, so `CD/FW` metadata
+cannot authorize a draw by itself. Remaining weather work is to bind real
+original rain/cloud state and `QUERY_TEMP_PICST` placement to that verified
+image route; do not derive overlays from Firestaff weather enums or intensity.
+
 ## DM1 V2.2 Finished-Art Follow-up (2026-07-12)
 
 The live V2.2 selection path now rejects synthetic and partial modern-art

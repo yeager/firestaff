@@ -28,7 +28,7 @@ int main(void)
         "CD=6006;FW=8\0";
     uint32_t offsets[6];
     uint32_t sizes[6];
-    DM2_V1_GdatEntry entries[7];
+    DM2_V1_GdatEntry entries[13];
     DM2_V1_AssetLoader loader;
     DM2_V1_WeatherGdatReceipt receipt;
     DM2_V1_WeatherCommandReceipt command;
@@ -50,14 +50,21 @@ int main(void)
         entries[i].cls4 = source_commands[i];
         entries[i].data_index = (uint16_t)i;
     }
-    entries[6].cls1 = DM2_GDAT_CATEGORY_GRAPHICSSET;
-    entries[6].cls2 = 3u;
-    entries[6].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
-    entries[6].cls4 = DM2_GDAT_GFXSET_MISTY_MAP;
-    entries[6].data_index = 0x0042u;
+    for (i = 0; i < 6; ++i) {
+        entries[6 + i].cls1 = DM2_GDAT_CATEGORY_ENVIRONMENT;
+        entries[6 + i].cls2 = 3u;
+        entries[6 + i].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
+        entries[6 + i].cls4 = source_commands[i];
+        entries[6 + i].data_index = (uint16_t)(0x100u + (unsigned int)i);
+    }
+    entries[12].cls1 = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    entries[12].cls2 = 3u;
+    entries[12].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[12].cls4 = DM2_GDAT_GFXSET_MISTY_MAP;
+    entries[12].data_index = 0x0042u;
     loader.loaded = 1;
     loader.entries = entries;
-    loader.entry_count = 7u;
+    loader.entry_count = 13u;
     loader.raw_offsets = offsets;
     loader.raw_sizes = sizes;
     loader.raw_data_count = 6u;
@@ -76,8 +83,10 @@ int main(void)
               receipt.commands[3].raw_hash != 0u &&
               receipt.commands[3].material_valid &&
               receipt.commands[3].rect_number == 6004u &&
-              receipt.commands[3].flip_mode == 32u,
-          "weather receipt decodes original CD/FW material command");
+              receipt.commands[3].flip_mode == 32u &&
+              receipt.commands[3].image_present &&
+              receipt.commands[3].image_field == 0x6au,
+          "weather receipt binds original CMDSTR and matching dtImage");
     check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6cu,
                                                &command) &&
               command.raw_text == raw + offsets[5] &&
@@ -136,6 +145,15 @@ int main(void)
           "image record cannot masquerade as weather command text");
     check(!dm2_v1_weather_gdat_overlay_plan(&receipt, 0u, 0x80u, &plan),
           "weather plan refuses a receipt invalidated by wrong GDAT type");
+
+    entries[4].cls3 = DM2_GDAT_ENTRY_TYPE_TEXT;
+    for (i = 0; i < 6; ++i) entries[6 + i].cls2 = 4u;
+    check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6au,
+                                               &command) &&
+              !command.material_valid &&
+              dm2_v1_weather_gdat_receipt(&loader, 3u, &receipt) &&
+              receipt.material_mask == 0u,
+          "weather commands refuse images from a different graphics set");
 
     fprintf(stderr, "DM2 weather GDAT command receipt: %d failure(s)\n",
             failures);

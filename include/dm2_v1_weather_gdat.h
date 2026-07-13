@@ -31,6 +31,11 @@ typedef struct {
     int material_valid;
     uint16_t rect_number;
     uint8_t flip_mode;
+    /* ENVIRONMENT_DRAW_DISTANT_ELEMENT passes the same environment command
+     * number to QUERY_TEMP_PICST as an actual dtImage field.  CMDSTR CD/FW
+     * alone is layout metadata, never drawable source material. */
+    int image_present;
+    uint8_t image_field;
     uint32_t material_hash;
 } DM2_V1_WeatherCommandReceipt;
 
