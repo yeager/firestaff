@@ -672,6 +672,13 @@ cleanup order for dropped weapons, consumed potions, and non-materialized
 spell Slots. Remaining work is still authentic multi-projectile and pixel
 capture with user-supplied PC34 data.
 
+2026-07-13: the direct M11 F0811 tick path now consumes that same receipt
+instead of re-deriving only a drop plan. It removes C14 before its F0215 Slot
+route and therefore leaves the next F0115 scan with exactly one valid render
+owner: a live projectile before impact, a real linked floor object after an
+ordinary drop, or neither for potion/spell/group-slot cleanup. Remaining work
+is real multi-projectile pixel capture, not an alternate M11 impact renderer.
+
 D0C C100/C101 rebirth C15 records now follow their separate ReDMCSB routes.
 C100's real PC34 lightning material (`M613 + G0210[C03] + 1 = 464`) and C3000
 centres now follow `L2476 = G2028`, not `G2034`: `DUNVIEW.C:5948,5984,5999`

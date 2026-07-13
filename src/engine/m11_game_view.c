@@ -29297,31 +29297,39 @@ static int m11_materialize_projectile_associated_thing(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result,
     int associatedThingMovedToGroup) {
-    DM1_ProjectileMaterializationPlanPc34 plan;
-    if (!state || !projectile || associatedThingMovedToGroup) return 1;
+    DM1_ProjectileMaterializationReceiptPc34 receipt;
+    if (!state || !projectile) return 1;
     if (!state->world.things || !state->world.dungeon) return 1;
-    if (!dm1_v1_projectile_materialization_plan_pc34(
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_projectile_materialization_receipt_f0215_pc34(
             projectile, result, associatedThingMovedToGroup,
             state->world.things->potions ? state->world.things->potionCount : 0,
-            &plan)) {
+            THING_ENDOFLIST, NULL, 0, &receipt) ||
+        !receipt.valid || !receipt.handled ||
+        !receipt.shouldUnlinkProjectileFromSquare ||
+        !m11_unlink_thing_from_square(
+            &state->world, receipt.cleanupMapIndex, receipt.cleanupMapX,
+            receipt.cleanupMapY, receipt.projectileThing)) {
         return 0;
-    }
-    if (!plan.shouldMaterialize) {
-        return 1;
     }
 
-    /* ReDMCSB PROJEXPL.C F0215 lines 248-259 materializes Projectile.Slot
-     * on the DM1-selected square/cell when F0217 does not delete a potion
-     * or pass GROUP.Slot for kept sharp weapons. */
-    if (!m11_link_projectile_thing_to_square_tail(
-            &state->world, plan.mapIndex, plan.mapX,
-            plan.mapY, plan.droppedThing)) {
+    /* ReDMCSB PROJEXPL.C F0217:607-608 unlinks C14 before F0215:248-260
+     * decides whether Slot enters GROUP.Slot, a target square, or nowhere.
+     * This M11 direct-tick path must consume the same DM1 receipt as M10 so
+     * the next F0115 sample cannot draw both the old projectile and its drop. */
+    if (receipt.shouldMaterialize &&
+        !m11_link_projectile_thing_to_square_tail(
+            &state->world, receipt.mapIndex, receipt.mapX,
+            receipt.mapY, receipt.materialization.droppedThing)) {
         return 0;
     }
-    m11_set_object_drop_next(state->world.things, plan.associatedThing,
-                             THING_ENDOFLIST);
-    m11_set_next_thing(state->world.things, plan.associatedThing,
-                       THING_ENDOFLIST);
+
+    if (state->world.things->projectiles &&
+        (int)THING_GET_INDEX(receipt.projectileThing) <
+            state->world.things->projectileCount) {
+        m11_set_next_thing(state->world.things, receipt.projectileThing,
+                           receipt.projectileNextAfterDelete);
+    }
     return 1;
 }
 
