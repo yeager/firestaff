@@ -12705,3 +12705,16 @@ bytes. Source: ReDMCSB `LOADSAVE.C F0435` one-save read transaction and
 `F0433` export order. Verification: focused
 `test_dm1_v1_original_save_pc34_handoff` passes; real-corpus coverage remains
 explicitly opt-in through `FIRESTAFF_DM1_PC34_SAVE_CORPUS`.
+# ✅ 2026-07-13 DM1 PC34 F0435/F0433 dungeon-tail column-table validation
+
+The original-save handoff now validates every persisted
+`G0280_pui_DungeonColumnsCumulativeSquareFirstThingCount` entry against the
+saved raw-map thing-list flags before materializing a dungeon tail. This
+closes the gap where M10 could reconstruct a lookup from tiles while accepting
+a checksum-valid but different ReDMCSB F0433 column table. Spare SFT capacity
+is retained: the final cumulative index may be below the saved allocation
+length, exactly as `DUNGEON.C F0160` requires. Source: ReDMCSB `LOADSAVE.C`
+F0433:1641-1682 / F0435:1995-2017, `DUNGEON.C F0160`, and
+`READWRIT.C F0421/F0422`. Verification: isolated Ninja build and
+`test_dm1_v1_original_save_pc34_handoff` pass with a real local F0433 export;
+a checksum-recomputed mismatched column row is rejected before handoff.

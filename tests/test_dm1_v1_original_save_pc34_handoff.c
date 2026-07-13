@@ -3610,6 +3610,8 @@ static void test_real_dm1_dungeon_tail_map_span_validation(void)
     struct PartyState_Compat party;
     DM1OriginalSavePC34HandoffReport report;
     size_t tail_offset;
+    size_t columns_offset;
+    uint16_t first_column_cumulative;
     int written = 0;
     int rc;
 
@@ -3630,6 +3632,10 @@ static void test_real_dm1_dungeon_tail_map_span_validation(void)
           "real F0433 dungeon tail passes F0435 preflight");
     CHECK(report.dungeon_tail_present && report.dungeon_tail_checksum_ok,
           "real DUNGEON.DAT tail receipt is checksum-qualified");
+    CHECK(report.dungeon_tail_column_table_valid &&
+              report.dungeon_tail_column_terminal_sft_count <=
+                  (uint32_t)report.dungeon_tail_square_first_thing_count,
+          "real F0433 column cumulative table matches raw-map SFT ownership");
     CHECK(report.dungeon_tail_fingerprint != 0u,
           "real DUNGEON.DAT tail receipt has provenance fingerprint");
 
@@ -3644,6 +3650,30 @@ static void test_real_dm1_dungeon_tail_map_span_validation(void)
                   report.dungeon_tail_fingerprint,
               "same real F0433 dungeon tail keeps provenance fingerprint");
     }
+
+    /* ReDMCSB DUNGEON.C F0160 indexes the compact SquareFirstThings list
+     * through this saved per-column cumulative table. The M10 tail loader
+     * formerly rebuilt it from tiles and could accept a checksum-valid
+     * mismatch. Recompute F0422's byte checksum so this exercises the table
+     * contract, not merely the outer checksum gate. */
+    columns_offset = tail_offset + DUNGEON_HEADER_SIZE +
+        (size_t)bytes[tail_offset + 4u] * DUNGEON_MAP_DESC_SIZE;
+    first_column_cumulative = rd16le(bytes + columns_offset);
+    wr16le(bytes + columns_offset,
+           (uint16_t)(first_column_cumulative + 1u));
+    wr16le(bytes + (size_t)written - 2u,
+           byte_sum16(bytes + tail_offset,
+                      (size_t)written - tail_offset - 2u));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "mismatched real tail column table fails F0435 handoff");
+    CHECK(report.importer_result == SAVEGAME_PC34_ERROR_BAD_SIZE,
+          "column-table mismatch keeps a bounded F0434 size failure");
+
+    CHECK(export_local_dm1_dungeon_save(bytes, sizeof(bytes), &written),
+          "re-export real tail after column-table rejection");
+    tail_offset = original_pc34_tail_offset(bytes, (size_t)written);
 
     /* ReDMCSB F0434/F0504 rejects a map whose raw data begins past the
      * saved raw-map block. Recompute only the source F0422 byte checksum. */

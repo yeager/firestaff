@@ -141,6 +141,11 @@ typedef struct {
     int dungeon_tail_checksum_ok;
     int dungeon_tail_map_count;
     int dungeon_tail_column_count;
+    /* ReDMCSB DUNGEON.C F0160 indexes SquareFirstThings through the saved
+     * per-column cumulative table.  F0435 must validate that table against
+     * the raw map before a host-side reconstructed lookup can consume it. */
+    int dungeon_tail_column_table_valid;
+    uint32_t dungeon_tail_column_terminal_sft_count;
     int dungeon_tail_square_first_thing_count;
     int dungeon_tail_text_data_word_count;
     uint32_t dungeon_tail_thing_data_byte_count;

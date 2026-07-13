@@ -273,6 +273,11 @@ ReDMCSB WIP 2021-02-06 source tree.
     discovery is rejected with a diagnostic instead of inheriting stale
     header/envelope provenance. This is transaction hardening only; it does
     not replace the required original PC34 corpus.
+  - 2026-07-13 update: F0435 tail validation now verifies the persisted
+    per-column cumulative SquareFirstThings table against raw-map thing-list
+    flags before M10 can reconstruct its lookup. The remaining requirement is
+    still provenance-recorded original PC34 saves and original executable
+    results, not a different tail format.
 
 - REDMCSB-DM1-GAP-008 — **ReDMCSB `LOADSAVE.C`
   F1057/F0433/F1059 and `COMMAND.C` save-command checksum gates.** Save
