@@ -94,6 +94,12 @@
   receipt rejects a CSB credits palette. Verification: focused startup CTests
   and real local PC34 `GRAPHICS.DAT` C001/C005 decoding.
 
+- 2026-07-13 DM1 PC34 title fail-closed route: runtime startup now rejects the
+  alternate `TITLE.DAT` frame bank when C001 is absent or malformed. Only the
+  ReDMCSB `TITLE.C F0437` C001 phase route may present the title, preserving
+  its DM1 palette and VBlank receipts. Verification: focused title/startup
+  CTests and local PC34 `GRAPHICS.DAT` C001 decode.
+
 - 2026-07-13 Theron authenticated input-order receipt: the live Mednafen
   transition sidecar now records the first observed host-key position and
   emulated PCE input transactions before and after it. A host event after the

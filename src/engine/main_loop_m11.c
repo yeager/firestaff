@@ -1460,20 +1460,9 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                                                       int* outPlayedAnyFrame,
                                                       const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
                                                           dm1MediaReceipt) {
-    char titlePath[FSP_PATH_MAX];
-    unsigned char* packedStorage;
-    unsigned char* packedScreen;
-    unsigned char* indexedScreen;
-    char err[160];
-    unsigned int step;
-    V1_TitleFrontendSourceTiming timing;
-    M11_AudioState titleAudio;
-    int titleAudioInitialized = 0;
-    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
-    int hasDm1Media;
-
     /* TITLE.C:309-409 is the DM1 PC/F20 branch. CSB enters the distinct
      * A31 branch at TITLE.C:412 and must use its own title implementation. */
+    (void)menuState;
     if (!dm1_v1_startup_source_visible_handoff_required_pc34(sourceId)) {
         return;
     }
@@ -1486,118 +1475,9 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                                                           dm1MediaReceipt)) {
         return;
     }
-    if (!V1_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
-        fprintf(stderr,
-                "Firestaff V1 original TITLE intro skipped: no GRAPHICS.DAT C001 title graphic "
-                "or DM PC 3.4 TITLE fallback file found; set FIRESTAFF_TITLE_DAT or install "
-                "the canonical original-data anchor at "
-                "$HOME/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE.\n");
-        return;
-    }
-    packedStorage = (unsigned char*)calloc(1U, 4U + 32000U);
-    indexedScreen = (unsigned char*)malloc((size_t)M11_FB_BYTES);
-    if (!packedStorage || !indexedScreen) {
-        free(packedStorage);
-        free(indexedScreen);
-        return;
-    }
-    packedScreen = packedStorage + 4U;
-    timing = V1_TitleFrontend_GetSourceTimingEvidence();
-    memset(&dm1Media, 0, sizeof(dm1Media));
-    if (dm1_v1_startup_title_timing_receipt_valid_pc34(dm1MediaReceipt)) {
-        dm1Media = *dm1MediaReceipt;
-        hasDm1Media = 1;
-    } else {
-        hasDm1Media =
-            dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
-                "dm1",
-                &dm1Media);
-        if (hasDm1Media &&
-            !dm1_v1_startup_title_timing_receipt_valid_pc34(&dm1Media)) {
-            hasDm1Media = 0;
-        }
-    }
-
-    memset(&titleAudio, 0, sizeof(titleAudio));
-    if (M11_Audio_Init(&titleAudio)) {
-        titleAudioInitialized = 1;
-        (void)M11_Audio_PlayTitleMusic(&titleAudio);
-    }
-
-    /* ReDMCSB TITLE.C PC/F20 source-lock:
-     *   TITLE.C:319-324 draws PRESENTS from the decompressed title graphic.
-     *   TITLE.C:340-360 builds 18 shrinked title bitmaps; TITLE.C:385-387
-     *               waits M526_WaitVerticalBlank() before each reverse-order zoom blit.
-     *   TITLE.C:395-402 waits two more VBlanks and draws STRIKES BACK.
-     *   TITLE.C:409 adds the final guard before the next screen.
-     * Runtime normally uses GRAPHICS.DAT C001 above.  If that bitmap is not
-     * available, keep the hash-locked TITLE.DAT bank as a last-resort visible
-     * fallback rather than skipping straight to the entrance. */
-    for (step = 1U; step <= V1_TITLE_DAT_FRAME_MAX; ++step) {
-        V1_TitleFrontendSequenceDecision d = V1_TitleFrontend_DecideSequenceStep(step);
-        V1_TitleFrontendRenderResult renderResult;
-        int stepPalette;
-        memset(packedStorage, 0, 4U + 32000U);
-        memset(indexedScreen, 0, (size_t)M11_FB_BYTES);
-        memset(&renderResult, 0, sizeof(renderResult));
-        err[0] = '\0';
-        if (!V1_TitleFrontend_RenderFrameToScreen(titlePath,
-                                                  d.renderFrameOrdinal,
-                                                  packedScreen,
-                                                  &renderResult,
-                                                  err,
-                                                  sizeof(err))) {
-            fprintf(stderr,
-                    "Firestaff V1 original TITLE intro stopped: failed to render frame %u from %s: %s\n",
-                    d.renderFrameOrdinal,
-                    titlePath,
-                    err[0] ? err : "unknown TITLE decode error");
-            break;
-        }
-        (void)V1_TitleFrontend_Unpack4bppScreenToIndexed(packedScreen,
-                                                         M11_FB_WIDTH,
-                                                         M11_FB_HEIGHT,
-                                                         indexedScreen,
-                                                         M11_FB_WIDTH);
-        /* TITLE.DAT is the bank-of-frames fallback used when the
-         * GRAPHICS.DAT C001 graphic is not available.  Keep its palette
-         * choice behind the same ReDMCSB TITLE.C source-lock helper as
-         * the normal GRAPHICS.DAT path; the runtime must not hard-code a
-         * different interpretation of the C12_PRESENTS -> C13_DUNGEON +
-         * C14_MASTER switch. */
-        (void)V1_TitleFrontend_GetFallbackFramePalette(renderResult.paletteOrdinal,
-                                                       &stepPalette);
-        if (M11_Render_PresentIndexedWithSpecialPalette(indexedScreen,
-                                                        M11_FB_WIDTH,
-                                                        M11_FB_HEIGHT,
-                                                        stepPalette) != M11_RENDER_OK) {
-            fprintf(stderr,
-                    "Firestaff V1 original TITLE intro stopped: renderer failed to present frame %u\n",
-                    d.renderFrameOrdinal);
-            break;
-        }
-        if (outPlayedAnyFrame) {
-            *outPlayedAnyFrame = 1;
-        }
-        /* ReDMCSB TITLE.C:201-214 gates the zoom on vertical blanks, then
-         * TITLE.C:251 adds a final BUG0_71 guard so fast machines do not
-         * smash straight into the entrance screen.  Bind the runtime delay
-         * through the TITLE frontend helper so the observable handoff cadence
-         * remains tied to the source timing evidence. */
-        if (m11_delay_ms_with_intro_event_pump(
-                hasDm1Media ? dm1Media.title_zoom_frame_delay_ms :
-                              V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
-            break;
-        }
-    }
-    (void)m11_delay_ms_with_intro_event_pump(
-        hasDm1Media ? dm1Media.title_post_zoom_guard_ms :
-                      V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
-    if (titleAudioInitialized) {
-        M11_Audio_Shutdown(&titleAudio);
-    }
-    free(packedStorage);
-    free(indexedScreen);
+    /* No TITLE.DAT frame-bank fallback: ReDMCSB PC34 F0437 presents C001.
+     * With no verified C001 receipt, leave this phase unpresented rather than
+     * inventing an alternate title sequence. */
 }
 
 typedef struct M11_DM1StartupHandoffContext {
