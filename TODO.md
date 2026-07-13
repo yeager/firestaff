@@ -558,9 +558,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 2026-07-13 Nexus Structure1F follow-up: visible direct items,
   floor-decoration, and floor-sensor records now fail closed through the DGN
   render plan, viewport, and host receipt; prefix references also require a
-  verified post-grid record target before mesh readiness. Remaining work is a
-  documented Saturn Structure1F draw/trigger binding, never a synthetic
-  overlay or omission of a visible original record.
+  verified post-grid record target before mesh readiness, with a distinct
+  `blocked-structure1f-reference` receipt for opaque-tail or out-of-prefix
+  addresses. Remaining work is a documented Saturn Structure1F draw/trigger
+  binding, never a synthetic overlay or omission of a visible original record.
 
 - 🔧 2026-07-13 Nexus startup host-route follow-up: title/save/champion
   presentation remains blocked until the full original startup package and

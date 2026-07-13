@@ -1144,6 +1144,12 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
     } else if (!info->post_grid_0x30_record_table_valid) {
         out_receipt->status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_NO_GEOMETRY;
+    } else if (!info->post_grid_0x30_references_valid) {
+        /* The retail corpus proves only the ordinal-typed prefix. A packed
+         * Structure1B reference into the opaque tail cannot be presented as
+         * a generic descriptor shortage or substituted with fallback art. */
+        out_receipt->status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_REFERENCE;
     } else {
         out_receipt->status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_DESCRIPTOR_BUDGET;
@@ -1171,6 +1177,8 @@ const char *nexus_v1_dgn_renderer_handoff_status_name(
         return "blocked-structure2-source";
     case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS:
         return "blocked-structure1f-semantics";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_REFERENCE:
+        return "blocked-structure1f-reference";
     default: return "unknown";
     }
 }
