@@ -2496,6 +2496,42 @@ static int orch_cmd_attack_map_difficulty_compat(
     return (int)world->dungeon->maps[mapIndex].difficulty;
 }
 
+static void orch_cmd_cast_spell_award_f0412_experience_compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    int skillIndex,
+    int experience,
+    int successfulCast,
+    struct TickResult_Compat* result)
+{
+    int baseSkillIndex;
+
+    if (!world || championIndex < 0 ||
+        championIndex >= CHAMPION_MAX_PARTY || experience <= 0 ||
+        skillIndex < 0 || skillIndex >= DM1_TOTAL_SKILL_COUNT) {
+        return;
+    }
+
+    baseSkillIndex = dm1_skill_get_base_index(skillIndex);
+    if (baseSkillIndex < 0 || baseSkillIndex >= CHAMPION_SKILL_COUNT) {
+        return;
+    }
+
+    /* ReDMCSB MENU.C F0412 lines 1835-1841 calls F0304 with the
+     * shifted experience before returning NEEDS_MORE_PRACTICE.  Use the
+     * same live lifecycle/F0304 bridge as command-side action XP; a failed
+     * spell must not silently discard the receipt's source-owned partial XP. */
+    (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
+        &world->lifecycle.champions[championIndex], skillIndex, experience,
+        orch_cmd_attack_map_difficulty_compat(world), world->gameTick,
+        world->lifecycle.lastCreatureAttackTime, NULL, NULL);
+    world->party.champions[championIndex].skillExperience[baseSkillIndex] =
+        (unsigned long)world->lifecycle.champions[championIndex]
+            .skills20[baseSkillIndex].experience;
+    emit(result, EMIT_XP_AWARD, championIndex, skillIndex, experience,
+         successfulCast ? 1 : 0);
+}
+
 static int orch_cmd_attack_doubled_map_difficulty_compat(
     const struct GameWorld_Compat* world)
 {
@@ -9643,6 +9679,8 @@ cmd_attack_legacy_marker:
         int spellExperience = 0;
         int receiptExperience = -1;
         int actionDisabledTicks = 0;
+        int failedCastExperience = 0;
+        int failedCastSkillIndex = -1;
         uint32_t spellRngRaw;
 
         spellRngRaw = F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
@@ -9684,6 +9722,13 @@ cmd_attack_legacy_marker:
             }
             receiptExperience = receipt.experience;
             actionDisabledTicks = receipt.disabledTicks;
+
+            if (receipt.castResult != DM1_SPELL_CAST_SUCCESS &&
+                receipt.failureType == DM1_FAILURE_NEEDS_MORE_PRACTICE &&
+                receipt.partialExperience > 0) {
+                failedCastExperience = receipt.partialExperience;
+                failedCastSkillIndex = receipt.skillIndex;
+            }
 
             if (receipt.castResult != DM1_SPELL_CAST_SUCCESS ||
                 !receipt.createsProjectile) {
@@ -9733,6 +9778,12 @@ cmd_attack_legacy_marker:
             }
             receiptExperience = receipt.experience;
             actionDisabledTicks = receipt.disabledTicks;
+            if (receipt.castResult != DM1_SPELL_CAST_SUCCESS &&
+                receipt.failureType == DM1_FAILURE_NEEDS_MORE_PRACTICE &&
+                receipt.partialExperience > 0) {
+                failedCastExperience = receipt.partialExperience;
+                failedCastSkillIndex = receipt.skillIndex;
+            }
             break;
         }
         case C1_SPELL_KIND_POTION_COMPAT: {
@@ -9757,6 +9808,12 @@ cmd_attack_legacy_marker:
             }
             receiptExperience = receipt.experience;
             actionDisabledTicks = receipt.disabledTicks;
+            if (receipt.castResult != DM1_SPELL_CAST_SUCCESS &&
+                receipt.failureType == DM1_FAILURE_NEEDS_MORE_PRACTICE &&
+                receipt.partialExperience > 0) {
+                failedCastExperience = receipt.partialExperience;
+                failedCastSkillIndex = receipt.skillIndex;
+            }
             break;
         }
         case C4_SPELL_KIND_MAGIC_MAP_COMPAT:
@@ -9768,6 +9825,13 @@ cmd_attack_legacy_marker:
             break;
         default:
             /* Unknown kind — no effect. */
+            return 1;
+        }
+
+        if (effect.castResult != SPELL_CAST_SUCCESS) {
+            orch_cmd_cast_spell_award_f0412_experience_compat(
+                world, champIdx, failedCastSkillIndex, failedCastExperience,
+                0, result);
             return 1;
         }
 
