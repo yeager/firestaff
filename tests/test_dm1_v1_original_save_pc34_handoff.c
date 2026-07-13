@@ -3593,6 +3593,7 @@ static void test_corpus_roundtrip_proof(void)
             !receipt->core_state_matches || receipt->source_byte_count == 0u ||
             receipt->source_hash == 0u || receipt->exported_byte_count == 0u ||
             receipt->exported_hash == 0u || !receipt->path[0] ||
+            !receipt->header_part_shape_receipt_available ||
             !receipt->dungeon_tail_byte_receipt_available ||
             !receipt->dungeon_tail_byte_preservation_ok ||
             receipt->source_dungeon_tail_byte_count != 0u ||
@@ -3659,6 +3660,10 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
           "real PC34 corpus contains at least one external candidate");
     for (int i = 0; i < report.receipt_count; ++i) {
         const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
+        CHECK(receipt->header_part_shape_receipt_available &&
+              receipt->header_identity_preservation_ok &&
+              receipt->part_byte_count_preservation_ok,
+              "real PC34 corpus retains header identity and part lengths");
         CHECK(receipt->dungeon_tail_byte_receipt_available &&
               receipt->dungeon_tail_byte_preservation_ok,
               "real PC34 corpus preserves each observed dungeon tail exactly");

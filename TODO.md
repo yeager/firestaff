@@ -1203,6 +1203,14 @@ and real community-save corpus round-trip evidence.
     Firestaff manifests and nonoriginal envelopes remain explicit rejected
     rows and never enter import/export. Remaining work is broader original
     dungeon-tail import breadth and independently collected community saves.
+  - 2026-07-13 update: each external corpus candidate now also records the
+    source/exported PC34 header identity (`FormatID`, `GameID`, `Platform`,
+    `DungeonID`) and all five F0433/F0435 length-prefixed part byte counts.
+    The opt-in real-corpus probe requires those source-owned values to match.
+    Header Noise, regenerated keys/checksums, and AdditionalData manifest
+    bytes are intentionally not treated as original mirrors. Remaining work
+    is independently collected external PC34 saves, not a synthetic header
+    or part layout.
   - 2026-07-13 update: opt-in corpus discovery is now scoped to its explicit
     directory only. Each inspected regular file records size, header-prefix
     bytes fingerprint, classifier shape/reason, eligibility, and final error

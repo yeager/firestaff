@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 corpus header/part-shape receipt: every external
+  F0435 -> F0433 -> F0435 candidate now records ReDMCSB-owned header identity
+  (FormatID, GameID, Platform, DungeonID) and all five length-prefixed save
+  parts. The opt-in real-corpus probe requires each identity and length to
+  match. Noise, regenerated keys/checksums, and Firestaff's AdditionalData
+  manifest are deliberately excluded from the original-byte mirror. Source:
+  ReDMCSB `DEFS.H` `DM_SAVE_HEADER` and `LOADSAVE.C` F0433:1573-1627/F0435.
+  Verification: focused native-PC34 handoff CTest.
+
 - 2026-07-13 DM1 PC34 external-corpus discovery receipts: the opt-in corpus
   root must now be a readable directory and every inspected regular file
   receives a path, size, header-prefix fingerprint, classifier reason, and
