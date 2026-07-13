@@ -36,7 +36,9 @@
   TT_TELEPORTER now reaches only its pre-cell-mutation ActivateDSA receipt;
   its cell mutation and WiggleEverything path remain blocked. TT_PITROOM
   likewise reaches only its pre-mutation ActivateDSA receipt; pit flags and
-  fall-through movement remain blocked.
+  fall-through movement remain blocked. TT_DOOR likewise reaches only its
+  pre-requeue ActivateDSA receipt; door cell changes and the TT_1 requeue
+  path remain blocked.
 
 - 2026-07-13 CSB F0282 probe follow-up: keep the repaired probe-local C040
   candidate-panel receipt fail-closed as additional real-save variants are

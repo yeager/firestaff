@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin restored TT_DOOR DSA tick bridge: verified function-10
+  queue entries now reach the source-ordered ActivateDSA receipt through the
+  restored live timer queue, retaining the exact queue-slot, timer, event,
+  square, and type-47 actuator checks. This admits only the authenticated
+  pure-stack DSA action before CSBWin converts the timer to TT_1 and requeues
+  it; unsupported actions, door-state mutation, TT_1 requeue, and malformed
+  saved identity remain blocked. Source: CSBWin `CSBCode.cpp:6400-6435`,
+  `Timer.cpp:1509-1541`, `DSA.cpp:5329-5441`. Verification: Ninja and CTest
+  `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin restored TT_PITROOM DSA tick bridge: verified function-9
   queue entries now reach the source-ordered ActivateDSA receipt through the
   restored live timer queue, retaining the exact queue-slot, timer, event,
