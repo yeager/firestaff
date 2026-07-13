@@ -151,6 +151,10 @@ int theron_v1_boot_track02_runtime_trace_intake_from_files(
     out_receipt->trace_file_hash_verified = 1;
     snprintf(out_receipt->trace_md5, sizeof(out_receipt->trace_md5), "%s",
              trace_md5_hex);
+    out_receipt->system_card_file_hash_verified = 1;
+    snprintf(out_receipt->system_card_md5,
+             sizeof(out_receipt->system_card_md5), "%s",
+             system_card_md5_hex);
     trace = theron_v1_boot_read_evidence_file(
         trace_path, THERON_V1_RUNTIME_TRACE_MAX_BYTES, &trace_size);
     if (!trace || trace_size == 0u) goto done;
@@ -5723,6 +5727,7 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
     expected_variant = theron_v1_track02_variant_for_md5(
         launch->profile->graphics_md5);
     if (!intake.valid || !intake.trace_file_hash_verified ||
+        !intake.system_card_file_hash_verified ||
         !intake.trace_file_consumed ||
         intake.runtime_handoff.variant != expected_variant) {
         return 0;
@@ -5730,7 +5735,7 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
     launch->profile->track02_runtime_trace_handoff = intake.runtime_handoff;
     snprintf(launch->profile->track02_runtime_system_card_md5,
              sizeof(launch->profile->track02_runtime_system_card_md5), "%s",
-             system_card_md5_hex);
+             intake.system_card_md5);
     snprintf(launch->profile->track02_runtime_trace_md5,
              sizeof(launch->profile->track02_runtime_trace_md5), "%s",
              intake.trace_md5);

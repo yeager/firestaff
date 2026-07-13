@@ -174,6 +174,10 @@ typedef struct Theron_V1_BootTrack02RuntimeTraceIntakeReceipt {
     int trace_file_hash_verified;
     int trace_file_consumed;
     char trace_md5[33];
+    /* The System Card hash is retained only after the same explicit-file
+     * rehash that authenticated this intake. */
+    int system_card_file_hash_verified;
+    char system_card_md5[33];
     /* A real trace can prove the pre-Track02 controller wait without
      * authorizing runtime entry. */
     Theron_V1SystemCardControllerWaitReceipt controller_wait;

@@ -70,7 +70,9 @@ int main(void) {
               "/missing/syscard3.pce", "ff1a674273fe3540ccef576376407d1d",
               "/missing/mednafen.trace", "00000000000000000000000000000000",
               &receipt) && !receipt.valid && !receipt.trace_file_hash_verified &&
-              !receipt.trace_file_consumed && !receipt.runtime_handoff.valid,
+              !receipt.trace_file_consumed &&
+              !receipt.system_card_file_hash_verified &&
+              !receipt.runtime_handoff.valid,
           "missing explicit trace preserves the fail-closed Track 02 handoff");
     check(!theron_v1_boot_track02_runtime_trace_intake_from_files(
               NULL, NULL, NULL, NULL, NULL, NULL, &receipt) && !receipt.valid &&
