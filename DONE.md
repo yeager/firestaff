@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 TITLE first-zoom palette latch: the M11 C001 title route
+  now presents the cleared indexed surface with C13_DUNGEON+C14_MASTER before
+  the first zoom VBlank, instead of selecting it after the wait. This follows
+  ReDMCSB `TITLE.C F0437:362-387`; only the first zoom command owns the
+  pre-VBlank latch, while PRESENTS remains C12. Verification:
+  `title_frontend_c001_fallback_gate_pc34_compat` and a Ninja `firestaff_m11`
+  build.
+
 - 2026-07-13 Nexus DGN material package/host route hardening: a DGN render
   plan now chooses exactly one complete original-material route. Hash-bound
   `SN_FLOOR.MNS`/`SN_WALL.MNS` surfaces require an independently proven

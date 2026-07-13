@@ -117,6 +117,8 @@ typedef struct DM1_V1_StartupTitlePresentationCommand_PC34 {
     int present_frame;
     int clear_before_present;
     int special_palette;
+    /* TITLE.C:362-387 loads C13/C14 before the first zoom VBlank. */
+    int palette_before_pre_present_delay;
     unsigned int pre_present_delay_ms;
     unsigned int post_present_delay_ms;
     int source_timing_receipt_consumed;

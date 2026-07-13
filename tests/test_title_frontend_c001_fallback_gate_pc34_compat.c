@@ -201,6 +201,7 @@ static void check_title_presentation_command(void) {
                  command.clear_before_present &&
                  command.special_palette ==
                      VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
+                 !command.palette_before_pre_present_delay &&
                  command.pre_present_delay_ms == 0u &&
                  command.post_present_delay_ms == media.title_presents_hold_ms &&
                  command.source_timing_receipt_consumed &&
@@ -210,8 +211,14 @@ static void check_title_presentation_command(void) {
              dm1_v1_startup_title_presentation_command_pc34(
                  &media, &asset, 2u, &command) && command.present_frame &&
                  command.special_palette == VGA_PALETTE_PC34_SPECIAL_TITLE &&
+                 command.palette_before_pre_present_delay &&
                  command.pre_present_delay_ms == media.title_zoom_frame_delay_ms &&
                  command.post_present_delay_ms == 0u,
+             1);
+    expect_i("only the first zoom latches C13/C14 before its VBlank",
+             dm1_v1_startup_title_presentation_command_pc34(
+                 &media, &asset, 3u, &command) && command.present_frame &&
+                 !command.palette_before_pre_present_delay,
              1);
     expect_i("TITLE post-zoom wait remains a non-present VBlank event",
              dm1_v1_startup_title_presentation_command_pc34(
