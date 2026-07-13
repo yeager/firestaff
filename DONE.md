@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC C127 reject/accept party order: cancelling a candidate
+  clears only the appended slot, and selecting the same mirror again reuses
+  that slot. Its later C160 confirmation retains leader slot 0 and the
+  original append order. Source: ReDMCSB `REVIVE.C` F0280:272-283 and
+  F0282:745-845. Verification: focused CTest.
+
 - 2026-07-13 DM1 HoC C160 stale-render guard: a real-PC34 C127 selection
   now proves the post-resurrection invalidation while the party remains in
   front of the source mirror. The focused runtime regression requires the
