@@ -1665,6 +1665,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the same trace by raw PCE input activity, CDIRQ, and a PCECD read from an
     observed PC below C000. This only excludes the observed System Card
     C000-FFFF address region; it does not name the caller or infer a payload.
+    2026-07-13 diagnostic update: failed authentic captures now report counts
+    for observed input transactions, CDIRQ callbacks, and PCECD reads below
+    C000. Counts identify absent evidence only and cannot promote a route.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect

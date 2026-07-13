@@ -32,6 +32,11 @@ if ! grep -Fq 'raw sector span lacks prior input, CDIRQ, and non-System-Card PCE
     printf 'FAIL: capture script must gate raw sectors on observed non-System-Card caller evidence\n' >&2
     exit 1
 fi
+if ! grep -Fq 'System Card wait; input=%s irq=%s non_system_card_pcecd=%s' "$script" ||
+   ! grep -Fq 'dynamic receipts absent; input=%s irq=%s non_system_card_pcecd=%s' "$script"; then
+    printf 'FAIL: capture script must report missing transition evidence counts\n' >&2
+    exit 1
+fi
 
 output=$(env -u MEDNAFEN_BIN -u THERON_US_CUE -u THERON_SYSTEM_CARD \
     -u THERON_LIVE_TRACE_OUTPUT "$script")
