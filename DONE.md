@@ -71,6 +71,16 @@
   decode or runtime promotion is added. Verification: focused creature CCM
   runtime CTest.
 
+- 2026-07-13 Theron controlled host-input capture gate: Mednafen's input
+  dispatcher now emits a bounded raw SDL key-event receipt alongside the
+  existing PCE port transaction, caller-PC, CDIRQ, and raw-sector receipts.
+  The authentic US CUE/System Card 3.0 run with two controlled macOS Return
+  attempts observed zero host key events, 128 PCE transactions, three CDIRQ
+  callbacks, no caller below C000, and no raw sector span. The route remains
+  fail-closed; no controller trigger, Track 02 record, destination, payload,
+  graphic, or level semantics were inferred. Verification: both Mednafen
+  patch dry-run and live-capture script tests passed.
+
 - 2026-07-13 DM2 original-save timer-format corpus receipt: header-verified
   original envelope/raw candidate rows now retain their exact path, type,
   payload size, and hash while explicitly rejecting every row for timer use.

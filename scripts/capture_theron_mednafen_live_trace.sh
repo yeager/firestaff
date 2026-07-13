@@ -79,12 +79,14 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     exit 1
 fi
 transition_input_count=$(grep -Ec '^pce_input_(read|write) ' "$input_trace" 2>/dev/null || true)
+transition_host_key_count=$(grep -Ec '^host_key_event ' "$input_trace" 2>/dev/null || true)
 transition_irq_count=$(grep -Ec '^pce_cd_irq cpu_pc=' "$cd_trace" 2>/dev/null || true)
 transition_non_system_card_count=$(grep -Ec '^pce_cd_register_read cpu_pc=[0-9a-b][0-9a-f]{3} ' "$cd_trace" 2>/dev/null || true)
 transition_sector_count=$(grep -Ec '^cd_interface_raw_sector_read ' "$cd_trace" 2>/dev/null || true)
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
     printf 'input_transactions=%s\n' "$transition_input_count"
+    printf 'host_key_events=%s\n' "$transition_host_key_count"
     printf 'cd_irq_callbacks=%s\n' "$transition_irq_count"
     printf 'non_system_card_pcecd_reads=%s\n' "$transition_non_system_card_count"
     printf 'raw_sector_spans=%s\n' "$transition_sector_count"
@@ -103,10 +105,10 @@ if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||
        grep -Eq '^c860_window_pc=c8c7 .*instruction=CMP #\$08' "$trace" &&
        grep -Eq '^c860_window_pc=c8cb .*instruction=CMP #\$04' "$trace" &&
        grep -Eq '^c860_window_pc=c8cd .*instruction=BNE \$C897' "$trace"; then
-        printf 'BLOCKED: System Card wait; input=%s irq=%s non_system_card_pcecd=%s (exit=%s)\n' "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$status"
+        printf 'BLOCKED: System Card wait; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$status"
         exit 1
     fi
-    printf 'BLOCKED: dynamic receipts absent; input=%s irq=%s non_system_card_pcecd=%s (exit=%s)\n' "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$status"
+    printf 'BLOCKED: dynamic receipts absent; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$status"
     exit 1
 fi
 if ! grep -Eq '^cd_interface_raw_sector_read lba=[0-9]+ bytes=2352 span_offset=0 span_bytes=32 span_fnv1a=[0-9a-f]{8}$' "$cd_trace"; then

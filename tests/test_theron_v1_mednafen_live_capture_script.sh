@@ -32,8 +32,9 @@ if ! grep -Fq 'raw sector span lacks prior input, CDIRQ, and non-System-Card PCE
     printf 'FAIL: capture script must gate raw sectors on observed non-System-Card caller evidence\n' >&2
     exit 1
 fi
-if ! grep -Fq 'System Card wait; input=%s irq=%s non_system_card_pcecd=%s' "$script" ||
-   ! grep -Fq 'dynamic receipts absent; input=%s irq=%s non_system_card_pcecd=%s' "$script"; then
+if ! grep -Fq 'host_key_events=%s' "$script" ||
+   ! grep -Fq 'System Card wait; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s' "$script" ||
+   ! grep -Fq 'dynamic receipts absent; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s' "$script"; then
     printf 'FAIL: capture script must report missing transition evidence counts\n' >&2
     exit 1
 fi
