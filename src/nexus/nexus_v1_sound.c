@@ -608,6 +608,14 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
         (uint32_t)(eng->map_size > 0 ? eng->map_size : 0),
         NULL,
         &out_receipt->map_receipt);
+    (void)nexus_v1_audio_expected_asset(
+        NEXUS_V1_AUDIO_KIND_SOUND_DRIVER,
+        -1,
+        &out_receipt->sound_driver_receipt);
+    /* The engine binds this receipt only after its independent MD5 source
+     * discovery has authenticated SDDRVS.TSK. Keep the observed-size field
+     * unset here: this module intentionally never opens arbitrary driver
+     * files just to manufacture a second source path. */
 
     if (!out_receipt->sal_loaded || !out_receipt->map_loaded) {
         out_receipt->status = NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET;

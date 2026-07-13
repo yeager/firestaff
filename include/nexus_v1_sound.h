@@ -220,6 +220,10 @@ typedef struct {
     int fallback_visuals_permitted;
     Nexus_V1_AudioReceipt sal_receipt;
     Nexus_V1_AudioReceipt map_receipt;
+    /* Expected identity for the globally hash-bound SDDRVS.TSK image.
+     * `sound_driver_canonical_source_verified` remains the actual engine
+     * ownership gate because the sound module never reads arbitrary files. */
+    Nexus_V1_AudioReceipt sound_driver_receipt;
 } Nexus_SfxRuntimeReceipt;
 
 /* Init sound system */
