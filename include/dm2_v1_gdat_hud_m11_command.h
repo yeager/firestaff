@@ -13,10 +13,11 @@ enum {
     DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_STRIP,
     DM2_V1_GDAT_HUD_M11_COMMAND_GOLD_BOX,
     DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
-    DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL
+    DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL,
+    DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT
 };
 
-#define DM2_V1_GDAT_HUD_M11_COMMAND_MAX 9
+#define DM2_V1_GDAT_HUD_M11_COMMAND_MAX 13
 
 typedef struct {
     int kind;
@@ -48,6 +49,14 @@ typedef struct {
  * non-local-palette material rejects the entire plan. */
 int dm2_v1_gdat_hud_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *out_plan);
+
+/* Extends the same verified HUD family with the occupied party portraits.
+ * A portrait without its exact CHAMPIONS/index/0 material rejects all 13
+ * commands rather than replacing it with a coloured slot. */
+int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_HudPartyState *party,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
 
 void dm2_v1_gdat_hud_m11_command_plan_free(

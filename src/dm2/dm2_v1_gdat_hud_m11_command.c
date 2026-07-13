@@ -57,10 +57,14 @@ static int dm2_v1_gdat_hud_add_command(
     command->kind = kind;
     command->viewport_gdat_index = viewport_gdat_index;
     command->destination = *destination;
-    if (!dm2_v1_boot_hud_core_asset_address(
-            logical_field,
-            &command->gdat_category, &command->gdat_index,
-            &command->gdat_field)) {
+    if (kind == DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT) {
+        command->gdat_category = DM2_GDAT_CATEGORY_CHAMPIONS;
+        command->gdat_index = viewport_gdat_index;
+        command->gdat_field = DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD;
+    } else if (!dm2_v1_boot_hud_core_asset_address(
+                   logical_field,
+                   &command->gdat_category, &command->gdat_index,
+                   &command->gdat_field)) {
         return 0;
     }
     raw = dm2_v1_asset_load_sized(loader, command->gdat_category,
@@ -129,7 +133,7 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
     if (!dm2_v1_gdat_hud_add_command(loader, out_plan,
             DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL,
             chrome.portrait_panel_gdat_index, &chrome.portrait_panel_rect) ||
-        out_plan->command_count != DM2_V1_GDAT_HUD_M11_COMMAND_MAX) {
+        out_plan->command_count != 9) {
         dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
         return 0;
     }
@@ -147,5 +151,42 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
     }
     out_plan->command_hash = hash ? hash : 1u;
     out_plan->valid = 1;
+    return 1;
+}
+
+int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_HudPartyState *party,
+    DM2_V1_GdatHudM11CommandPlan *out_plan)
+{
+    DM2_V1_HudChromeRenderPlan chrome;
+    uint32_t hash = 2166136261u;
+    int slot;
+
+    if (!party || !dm2_v1_gdat_hud_m11_command_plan_build(loader, out_plan) ||
+        !dm2_v1_viewport_build_hud_chrome_plan_for_party(0, party, &chrome)) {
+        dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+        return 0;
+    }
+    for (slot = 0; slot < chrome.champion_slot_count; ++slot) {
+        const DM2_V1_HudChampionSlotRender *champ = &chrome.champion_slots[slot];
+        if (!champ->occupied || !champ->portrait_type_source_bound ||
+            !dm2_v1_gdat_hud_add_command(loader, out_plan,
+                DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT,
+                champ->portrait_index, &champ->portrait_rect)) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+    }
+    if (out_plan->command_count != 13) {
+        dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+        return 0;
+    }
+    for (slot = 0; slot < out_plan->command_count; ++slot) {
+        hash = dm2_v1_gdat_hud_hash_bytes(hash,
+            (const uint8_t *)&out_plan->commands[slot].raw_hash,
+            sizeof(out_plan->commands[slot].raw_hash));
+    }
+    out_plan->command_hash = hash ? hash : 1u;
     return 1;
 }
