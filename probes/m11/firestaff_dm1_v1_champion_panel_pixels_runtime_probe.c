@@ -129,7 +129,7 @@ static int probe_dm1_layout_rect_xywh(DM1_V1_LayoutZoneRectPc34 rect,
 #define M11_GameView_GetV1StatusNameZone probe_v1_status_name_zone
 #define M11_GameView_GetV1StatusNameTextZone probe_v1_status_name_text_zone
 #define M11_GameView_GetV1StatusBarZone probe_v1_status_bar_zone
-#define M11_GameView_GetV1StatusHandSlotBoxZone probe_v1_status_hand_slot_box_zone
+#define probe_M11_GameView_GetV1StatusHandSlotBoxZone probe_v1_status_hand_slot_box_zone
 #define M11_GameView_GetV1StatusHandIconZone probe_v1_status_hand_icon_zone
 #define M11_GameView_GetV1ChampionBarColor probe_v1_champion_bar_color
 #define M11_GameView_GetV1StatusBarBlankColor probe_v1_status_bar_blank_color
@@ -198,7 +198,7 @@ static int M11_GameView_GetV1StatusBarZone(int slot,
     return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
 }
 
-static int M11_GameView_GetV1StatusHandSlotBoxZone(int slot,
+static int probe_M11_GameView_GetV1StatusHandSlotBoxZone(int slot,
                                                    int hand,
                                                    int* outX,
                                                    int* outY,
@@ -224,7 +224,7 @@ static int M11_GameView_GetV1StatusHandIconZone(int slot,
     return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
 }
 
-static int M11_GameView_GetV1ChampionIconZone(int slot,
+static int probe_M11_GameView_GetV1ChampionIconZone(int slot,
                                               int* outX,
                                               int* outY,
                                               int* outW,
@@ -262,7 +262,7 @@ static int M11_GameView_GetV1StatusBarBlankColor(void) {
     return DM1_COLOR_DARKEST_GRAY;
 }
 
-static int M11_GameView_GetV1SlotBoxNormalGraphicId(void) {
+static int probe_M11_GameView_GetV1SlotBoxNormalGraphicId(void) {
     return dm1_v1_graphic_slot_box_normal_pc34();
 }
 
@@ -270,11 +270,11 @@ static int M11_GameView_GetV1SlotBoxWoundedGraphicId(void) {
     return dm1_v1_graphic_slot_box_wounded_pc34();
 }
 
-static int M11_GameView_GetV1SlotBoxActingHandGraphicId(void) {
+static int probe_M11_GameView_GetV1SlotBoxActingHandGraphicId(void) {
     return dm1_v1_graphic_slot_box_acting_hand_pc34();
 }
 
-static int M11_GameView_GetV1StatusHandSlotGraphic(
+static int probe_M11_GameView_GetV1StatusHandSlotGraphic(
     const M11_GameViewState* game,
     int slot,
     int hand) {
@@ -595,7 +595,7 @@ static int check_hand_slot_asset_pixels(const M11_GameViewState* game,
                                         const unsigned char* fb,
                                         int slot,
                                         int hand) {
-    int gfx = M11_GameView_GetV1StatusHandSlotGraphic(game, slot, hand);
+    int gfx = probe_M11_GameView_GetV1StatusHandSlotGraphic(game, slot, hand);
     const M11_AssetSlot* asset = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
                                                      (unsigned int)gfx);
     int x, y, w, h;
@@ -606,9 +606,9 @@ static int check_hand_slot_asset_pixels(const M11_GameViewState* game,
     int ok = 1;
 
     snprintf(label, sizeof(label), "slot%d hand%d expected graphic", slot, hand);
-    ok &= expect_true(label, gfx == M11_GameView_GetV1SlotBoxNormalGraphicId() ||
+    ok &= expect_true(label, gfx == probe_M11_GameView_GetV1SlotBoxNormalGraphicId() ||
                              gfx == M11_GameView_GetV1SlotBoxWoundedGraphicId() ||
-                             gfx == M11_GameView_GetV1SlotBoxActingHandGraphicId());
+                             gfx == probe_M11_GameView_GetV1SlotBoxActingHandGraphicId());
     if (!ok) {
         return 0;
     }
@@ -616,7 +616,7 @@ static int check_hand_slot_asset_pixels(const M11_GameViewState* game,
     ok &= expect_true(label, asset && asset->loaded && asset->pixels &&
                              asset->width == 18 && asset->height == 18);
     snprintf(label, sizeof(label), "slot%d hand%d slot-box zone", slot, hand);
-    ok &= expect_true(label, M11_GameView_GetV1StatusHandSlotBoxZone(slot, hand,
+    ok &= expect_true(label, probe_M11_GameView_GetV1StatusHandSlotBoxZone(slot, hand,
                                                                      &x, &y, &w, &h) &&
                              w == 18 && h == 18);
     if (!ok) {
@@ -741,7 +741,7 @@ static int check_champion_icon_pixels(const M11_GameViewState* game,
     iconIndex = M11_GameView_GetV1ChampionIconSourceIndex(game, slot);
     ok &= expect_true(label, iconIndex >= 0);
     snprintf(label, sizeof(label), "slot%d champion icon zone", slot);
-    ok &= expect_true(label, M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
+    ok &= expect_true(label, probe_M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
                               w == 19 && h == 14);
     gfxId = M11_GameView_GetV1ChampionIconGraphicId();
     asset = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,

@@ -26,6 +26,7 @@
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dialog_frontend_pc34_compat.h"
+#include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
 #include "firestaff_retroachievements.h"
 #include "firestaff/dm1/v1/resurrection_rename_ui_gate_pc34_compat.h"
@@ -79,16 +80,9 @@ static inline int M11_GameView_GetV1ObjectIconSourceZone(
     return 1;
 }
 
-static inline int M11_GameView_GetV1StatusHandSlotBoxZone(
+int M11_GameView_GetV1StatusHandSlotBoxZone(
     int championSlot, int handIndex, int* outX, int* outY, int* outW,
-    int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!outX || !outY || !outW || !outH ||
-        !dm1_v1_champion_status_hand_slot_box_rect_pc34(
-            championSlot, handIndex, &rect)) return 0;
-    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
-    return 1;
-}
+    int* outH);
 
 static inline int M11_GameView_GetV1StatusHandIconZone(
     int championSlot, int handIndex, int* outX, int* outY, int* outW,
@@ -1687,6 +1681,27 @@ int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
                                         int* outY,
                                         int* outW,
                                         int* outH);
+/* Compatibility-only geometry and material adapters for legacy M11 probes.
+ * They delegate to DM1 PC34 layout helpers and never alter runtime drawing. */
+int M11_GameView_GetV1StatusHandSlotBoxZone(int slot, int hand,
+                                            int* outX, int* outY,
+                                            int* outW, int* outH);
+int M11_GameView_GetV1DamageNumberOriginPc34(int slot, int amount,
+                                             int inventoryChampion,
+                                             int* outX, int* outY);
+int M11_GameView_GetV1ChampionIconZone(int slot,
+                                       int* outX, int* outY,
+                                       int* outW, int* outH);
+int M11_GameView_GetV1StatusHandSlotGraphic(
+    const M11_GameViewState* state, int slot, int hand);
+int M11_GameView_GetV1SlotBoxNormalGraphicId(void);
+int M11_GameView_GetV1SlotBoxActingHandGraphicId(void);
+int M11_GameView_GetV1ActionIconCellZone(int championSlot,
+                                         int* outX, int* outY,
+                                         int* outW, int* outH);
+int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
+                                        int* outX, int* outY,
+                                        int* outW, int* outH);
 int M11_GameView_GetDm1HocMenuRouteReceipt(
     const M11_GameViewState* state,
     DM1_V1_EntranceMenuRouteReceiptPc34* outReceipt);
