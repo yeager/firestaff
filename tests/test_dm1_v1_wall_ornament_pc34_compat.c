@@ -44,6 +44,7 @@ int main(void)
     DM1_WallOrnamentZoneBlitPc34 blit;
     DM1_WallOrnamentViewSpecPc34 spec;
     DM1_WallOrnamentRenderPlanPc34 plan;
+    DM1_WallOrnamentHostMaterialReceiptPc34 material;
     DM1_FrontMirrorRenderPlanPc34 mirrorPlan;
 
     /* ReDMCSB DUNVIEW.C G0194: wall ornament global index to G0205
@@ -134,6 +135,8 @@ int main(void)
                dm1_v1_wall_ornament_render_plan_pc34(-1, 12, 0, &plan), 0);
     expect_int("plan.bad_view",
                dm1_v1_wall_ornament_render_plan_pc34(0, 13, 0, &plan), 0);
+    expect_int("material.null",
+               dm1_v1_wall_ornament_host_material_receipt_pc34(1, 1, 0, NULL), 0);
 
     expect_int("plan.inscription.d1c.ok",
                dm1_v1_wall_ornament_render_plan_pc34(0, 12, 0, &plan), 1);
@@ -166,6 +169,16 @@ int main(void)
     expect_int("plan.d3r_left.flip", plan.flipHorizontal, 1);
     expect_int("plan.d3r_left.palette2", plan.paletteMap[2], 12);
     expect_int("plan.d3r_left.alcove", plan.isAlcove, 1);
+
+    expect_int("material.d3r_left.ok",
+               dm1_v1_wall_ornament_host_material_receipt_pc34(
+                   1, 1, 0, &material), 1);
+    expect_int("material.d3r_left.valid", material.valid, 1);
+    expect_int("material.d3r_left.global", material.globalOrnamentIndex, 1);
+    expect_int("material.d3r_left.view", material.viewWallIndex, 1);
+    expect_int("material.d3r_left.graphic", material.plan.graphicIndex, 261);
+    expect_int("material.d3r_left.flip", material.plan.flipHorizontal, 1);
+    expect_int("material.d3r_left.key", material.plan.transparentColor, 10);
 
     expect_int("plan.d2r_left.ok",
                dm1_v1_wall_ornament_render_plan_pc34(1, 6, 0, &plan), 1);

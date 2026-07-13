@@ -1787,6 +1787,32 @@ int M11_GameView_ProbeDrawDm1CenterDoorHostReceipt(
     int framebufferWidth,
     int framebufferHeight);
 
+typedef struct M11_Dm1WallOrnamentHostPresentationReceipt {
+    int valid;
+    int globalOrnamentIndex;
+    int viewWallIndex;
+    int graphicIndex;
+    int destinationX;
+    int destinationY;
+    int width;
+    int height;
+    int transparentColor;
+    int flipHorizontal;
+    int paletteMapValid;
+    unsigned char paletteMap[16];
+} M11_Dm1WallOrnamentHostPresentationReceipt;
+
+void M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
+    M11_Dm1WallOrnamentHostPresentationReceipt* outReceipt);
+
+/* Test-only entry to the production F0107 side-wall ornament route.
+ * The caller must initialize an original PC34 GRAPHICS.DAT loader. */
+int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
+
 #ifdef __cplusplus
 }
 #endif
