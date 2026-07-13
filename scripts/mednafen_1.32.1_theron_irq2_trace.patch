@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,5 +36,1001 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,5 +36,1033 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -94,6 +94,8 @@ index 347482c4..61d4758e 100644
 +static bool TheronIrq2TracePostLatchControllerCallSeen;
 +static bool TheronIrq2TracePostLatchControllerReturnSeen;
 +static bool TheronIrq2TracePostLatchControllerResumeSeen;
++static unsigned TheronIrq2TraceControllerStateWriteCount;
++static bool TheronIrq2TraceControllerStateWaitSampleSeen;
 +/* $e960..$ea3f covers the observed post-latch controller resume path.
 + * This stays a one-time raw execution receipt; it does not identify a CD
 + * transaction or attach meaning to the observed bytes. */
@@ -297,6 +299,36 @@ index 347482c4..61d4758e 100644
 +   FlushTheronIrq2Trace();
 +  }
 + }
++/* Retain only direct writes to the System Card state polled by C897. The
++ * later sample is diagnostic evidence and cannot invent a CD request. */
++if(TheronIrq2TracePostLatchCDRegistersActive &&
++   TheronIrq2TraceControllerStateWriteCount < 8 &&
++   (CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff) == 0x8d)
++{
++ const uint32 address = (CurGame->Debugger->MemPeek(logical_pc + 1, 1, true, true) & 0xff) |
++                        ((CurGame->Debugger->MemPeek(logical_pc + 2, 1, true, true) & 0xff) << 8);
++ if(address == 0x2241)
++ {
++  const RegGroupType *regs = (*CurGame->Debugger->RegGroups)[0];
++  const uint32 accumulator = regs->GetRegister(regs->Regs[1].id, NULL, 0) & 0xff;
++  TheronIrq2Trace->print_format("system_card_controller_state_write pc=%04x physical_pc=%08x address=2241 accumulator=%02x\\n",
++                                logical_pc, PC, accumulator);
++  TheronIrq2TraceControllerStateWriteCount++;
++  FlushTheronIrq2Trace();
++ }
++}
++if(TheronIrq2TracePostLatchCDRegistersActive &&
++   TheronIrq2TracePostCapCallbackCount >= 0x100000u &&
++   !TheronIrq2TraceControllerStateWaitSampleSeen)
++{
++ const uint32 state_2241 = CurGame->Debugger->MemPeek(0x2241, 1, true, true) & 0xff;
++ TheronIrq2Trace->print_format("system_card_controller_wait_sample callback=%llu state_2241=%02x state_write_count=%u cd_1800=%02x\\n",
++                               (unsigned long long)TheronIrq2TracePostCapCallbackCount,
++                               state_2241, TheronIrq2TraceControllerStateWriteCount,
++                               CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff);
++ TheronIrq2TraceControllerStateWaitSampleSeen = true;
++ FlushTheronIrq2Trace();
++}
 + if(TheronIrq2TracePostCapCallbackCount && TheronIrq2TracePostCapPageSamples < 32 && !TheronIrq2TracePostCapPageSeen[logical_pc >> 8])
 + {
 +  TheronIrq2TracePostCapPageSeen[logical_pc >> 8] = true;
