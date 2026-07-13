@@ -49,27 +49,35 @@ int main(void)
     DM1_V1_ViewportRuntimeMaterializationDecisionPc34 allEffects;
     DM1_V1_ViewportRuntimeMaterializationDecisionPc34 noFluxcage;
 
-    /* ReDMCSB DUNVIEW.C F0115:5932-6074: C100/C101 use C3000/C3007
-     * only on D3C..D1C, while C050 is retained for F0113 field drawing.
-     * D0C must therefore not promote any of these to its ordinary M636 C15
-     * presentation. This test audits the current receipt rather than claiming
-     * that the absent M11 D0C consumer already implements the source rule. */
+    /* ReDMCSB DUNVIEW.C F0115:5932-6074: C100 takes C3000, C050 remains
+     * F0113-owned, and D0C admits C101/C000 through its M636 pass. */
     if (!build_mixed_d0c_receipt(0, &allEffects) ||
         !build_mixed_d0c_receipt(1, &noFluxcage)) {
         fprintf(stderr, "D0C receipt audit could not build current M10 state\n");
         return 1;
     }
 
-    /* Current HEAD has no D0C M10 receipt at all: its F0115 row mapper
-     * admits only D1..D3. That is the exact reason C100/C101/C050 cannot be
-     * proven excluded from an ordinary D0C presenter yet. */
-    if (allEffects.valid || allEffects.viewSquare != -1 || allEffects.row != -1 ||
-        allEffects.liveExplosionCount != 0 || allEffects.liveExplosionSlot != -1 ||
-        allEffects.liveExplosionType != -1 || noFluxcage.valid ||
-        noFluxcage.liveExplosionCount != 0 || noFluxcage.liveExplosionSlot != -1 ||
-        noFluxcage.liveExplosionType != -1) {
+    /* ReDMCSB DUNVIEW.C F0115:5955-6074 owns D0C's M636 admission: C101
+     * and ordinary C000 remain renderable, while C100 stays C3000-blocked
+     * and C050 retains F0113 ownership. */
+    if (!allEffects.valid || allEffects.viewSquare != 0 || allEffects.row != 11 ||
+        allEffects.liveExplosionCount != 4 || allEffects.liveExplosionSourceCount != 4 ||
+        allEffects.liveExplosionSourceRoutes[0] !=
+            DM1_V1_C15_EXPLOSION_ROUTE_C100_C3000_BLOCKED_PC34 ||
+        allEffects.liveExplosionSourceRoutes[1] !=
+            DM1_V1_C15_EXPLOSION_ROUTE_C101_D0C_M636_PC34 ||
+        allEffects.liveExplosionSourceRoutes[2] !=
+            DM1_V1_C15_EXPLOSION_ROUTE_FLUXCAGE_F0113_PC34 ||
+        allEffects.liveExplosionSourceRoutes[3] !=
+            DM1_V1_C15_EXPLOSION_ROUTE_ORDINARY_D0C_M636_PC34 ||
+        allEffects.liveRenderableExplosionCount != 2 ||
+        allEffects.liveRenderableExplosionSlots[0] != 32 ||
+        allEffects.liveRenderableExplosionSlots[1] != 34 ||
+        !noFluxcage.valid || noFluxcage.liveExplosionCount != 3 ||
+        noFluxcage.liveExplosionSourceCount != 3 ||
+        noFluxcage.liveRenderableExplosionCount != 2) {
         fprintf(stderr,
-                "current D0C receipt audit changed: all=%d/%d/%d/%d noFlux=%d/%d/%d/%d\n",
+                "D0C C15 source receipt changed: all=%d/%d/%d/%d noFlux=%d/%d/%d/%d\n",
                 allEffects.valid, allEffects.viewSquare, allEffects.row,
                 allEffects.liveExplosionCount, noFluxcage.valid,
                 noFluxcage.viewSquare, noFluxcage.row,
@@ -77,9 +85,8 @@ int main(void)
         return 1;
     }
 
-    /* The generic pattern lookup is not a D0C admission gate: C100 and C050
-     * reject there, but C101 maps to fire art and needs the missing view-square
-     * ownership rule to stay out of D0C. */
+    /* The generic pattern lookup is not an admission gate: C101's fire art
+     * becomes legal only through the D0C M636 route above. */
     if (dm1_v1_explosion_pattern_graphic_index(
             DM1_EXPLOSION_TYPE_REBIRTH_STEP1, 160) != -1 ||
         dm1_v1_explosion_pattern_graphic_index(
@@ -90,6 +97,6 @@ int main(void)
         return 1;
     }
 
-    puts("ok: current HEAD lacks a source-owned D0C ordinary-C15 receipt");
+    puts("ok: D0C ordinary C15 receipt keeps C100/C050 out of M636");
     return 0;
 }
