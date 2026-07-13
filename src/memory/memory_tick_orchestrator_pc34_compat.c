@@ -5191,6 +5191,18 @@ static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
     const struct ProjectileInstance_Compat* projectile,
     int damageOutcome);
 
+static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const DM1_MeleeF0190MutationDispatchPlanPc34* plan);
+
+static void orch_schedule_group_reaction_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    const struct DungeonGroup_Compat* group,
+    const struct CombatAction_Compat* action,
+    int reactionKind);
+
 static int orch_apply_projectile_creature_precheck_with_plan_compat(
     struct DungeonGroup_Compat* group,
     int creatureIndex,
@@ -5303,16 +5315,24 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                 const struct CreatureBehaviorProfile_Compat* profile;
                 DM1_ProjectileCreaturePrecheckDamagePlanPc34 precheckPlan;
                 DM1_ProjectileCreatureImpactAftermathPc34 aftermath;
+                DM1_MeleeF0190MutationDispatchInputPc34 dispatchIn;
+                DM1_MeleeF0190MutationDispatchPlanPc34 dispatchPlan;
+                struct CombatAction_Compat reactionAction;
                 int creatureIndex = (int)ordinalInCell[cell] - 1;
                 int outcome;
                 int combatOutcome;
                 int creatureAttributes = 0;
+                int creatureProperties = 0;
+                int originalGroupCount = (int)group->count;
                 int associatedWeaponType = -1;
 
                 orch_build_precheck_projectile_instance_compat(
                     projectile, index, &compatProjectile);
                 profile = CREATURE_GetProfile_Compat((int)group->creatureType);
-                if (profile) creatureAttributes = profile->attributes;
+                if (profile) {
+                    creatureAttributes = profile->attributes;
+                    creatureProperties = profile->properties;
+                }
                 associatedWeaponType =
                     orch_projectile_associated_weapon_type_compat(
                         world, &compatProjectile);
@@ -5342,6 +5362,50 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                     (void)orch_maybe_attach_projectile_weapon_to_group_slot_compat(
                         world, group, &compatProjectile, combatOutcome);
                 }
+                if (outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES ||
+                    outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+                    /* ReDMCSB PROJEXPL.C F0217 calls GROUP.C F0190 after a
+                     * projectile kill.  F0266 and C38 both use this helper,
+                     * so one source-owned dispatch must provide possession
+                     * drops, C29-C41 cleanup, fear, unlink and raw writeback. */
+                    memset(&dispatchIn, 0, sizeof(dispatchIn));
+                    memset(&dispatchPlan, 0, sizeof(dispatchPlan));
+                    dispatchIn.outcome = outcome;
+                    dispatchIn.groupIndex = (int)(group - world->things->groups);
+                    dispatchIn.groupBehavior = (int)group->behavior;
+                    dispatchIn.killedCreatureIndex = creatureIndex;
+                    dispatchIn.originalGroupCount = originalGroupCount;
+                    dispatchIn.creatureType = (int)group->creatureType;
+                    dispatchIn.creatureAttributes = creatureAttributes;
+                    dispatchIn.creatureProperties = creatureProperties;
+                    dispatchIn.killedCell = precheckPlan.killedCell;
+                    dispatchIn.mapIndex = mapIndex;
+                    dispatchIn.mapX = mapX;
+                    dispatchIn.mapY = mapY;
+                    dispatchIn.partyMapIndex = world->partyMapIndex;
+                    dispatchIn.partyMapX = world->party.mapX;
+                    dispatchIn.partyMapY = world->party.mapY;
+                    if (!dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
+                            &dispatchIn, &dispatchPlan) || !dispatchPlan.valid) {
+                        return 0;
+                    }
+                    /* This helper returns whether F0190 fear triggered, not
+                     * a success code; a calm survivor is still a valid hit. */
+                    (void)orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
+                        world, group, &dispatchPlan);
+                } else if (aftermath.scheduleReaction) {
+                    /* F0217 reports a surviving projectile hit as C30 through
+                     * GROUP.C F0209; keep the same owner for F0266 and C38. */
+                    memset(&reactionAction, 0, sizeof(reactionAction));
+                    reactionAction.targetMapIndex = mapIndex;
+                    reactionAction.targetMapX = mapX;
+                    reactionAction.targetMapY = mapY;
+                    orch_schedule_group_reaction_compat(
+                        world, (int)(group - world->things->groups), group,
+                        &reactionAction, DM1_CM2_REACTION_HIT_BY_PROJECTILE);
+                }
+                orch_write_raw_group_compat(
+                    world->things, (int)(group - world->things->groups));
                 if (outcome == 2) {
                     if (outKilledGroup) *outKilledGroup = 1;
                     return 1;
@@ -8627,17 +8691,9 @@ static int orch_f0249_move_group_first_square_thing_compat(
         return 0;
     }
     if (killedByProjectile) {
-        /* The shared ordinary C04 route removes the source group after its
-         * F0266 kill result.  Preserve that same state boundary here rather
-         * than allowing F0249 to relink a dead source record. */
-        if (!orch_unlink_thing_from_square_compat(
-                world, mapIndex, mapX, mapY,
-                orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex))) {
-            return 0;
-        }
-        world->things->groups[groupIndex].next = THING_NONE;
-        orch_write_raw_group_compat(world->things, groupIndex);
-        orch_remove_active_group_state_compat(world, groupIndex);
+        /* F0217's shared F0190 aftermath has already unlinked the group,
+         * cleaned C29-C41, and retired active state.  F0249 must not try to
+         * relink or delete the now-dead source record a second time. */
         return 1;
     }
 
@@ -8732,6 +8788,10 @@ static int orch_apply_f0209_reaction_move_f0267_compat(
             ev->mapX, ev->mapY, direction, destinationPassable,
             destinationBlocked, killedByProjectile, world->gameTick,
             &movePlan) || !movePlan.valid) return 0;
+    if (killedByProjectile) {
+        if (outGroupRemoved) *outGroupRemoved = 1;
+        return 1;
+    }
     memset(&applyPlan, 0, sizeof(applyPlan));
     if (!DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
             &movePlan, ev->mapIndex, ev->mapX, ev->mapY, direction,
@@ -8827,6 +8887,9 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
                 &movePlan) ||
             !movePlan.valid) {
             return 0;
+        }
+        if (killedByProjectile) {
+            return 1;
         }
     }
     memset(&applyPlan, 0, sizeof(applyPlan));
@@ -9229,16 +9292,8 @@ static int orch_handle_creature_reaction_event_compat(
             cellsChangedByPendingProjectile =
                 ((int)group->count != creatureCountBeforeBehavior);
             if (killedAllByPendingProjectile) {
-                /* C38 has no subsequent F0267 move to consume the F0218
-                 * outcome, so perform F0190's group/active-state removal
-                 * here.  It must not apply its deferred cell write after the
-                 * last creature is killed. */
-                (void)orch_unlink_thing_from_square_compat(
-                    world, ev->mapIndex, ev->mapX, ev->mapY,
-                    orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex));
-                group->next = THING_NONE;
-                orch_write_raw_group_compat(world->things, groupIndex);
-                orch_remove_active_group_state_compat(world, groupIndex);
+                /* F0218 has already completed F0190's whole aftermath;
+                 * never restore the deferred C38 cell state after a kill. */
                 return 1;
             }
         }
