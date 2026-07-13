@@ -447,6 +447,7 @@ typedef struct {
     int complete;
     int rotation_semantics_proven;
 } Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt;
+typedef struct { int spatial_valid; int item_count; int resolved_pair_count; int unique_pair_count; int duplicate_pair_count; int complete; int semantics_proven; } Nexus_V1_DgnStructure1FItemAttributePairReceipt;
 typedef struct { int structure1f_spatial_valid; int entry_count; int resolved_pair_count; int unique_pair_count; int duplicate_pair_count; int zero_pair_count; int nonzero_pair_count; int complete; int offset_semantics_proven; } Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt;
 
 /* DMWeb DGN files: the container header names Structure3 with a block offset
@@ -1094,6 +1095,7 @@ int nexus_v1_level_structure1f_floor_decoration_payload_selector_receipt(
 int nexus_v1_level_structure1f_floor_decoration_rotation_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt *out_receipt);
+int nexus_v1_level_structure1f_item_attribute_pair_receipt(const Nexus_V1_Level *, Nexus_V1_DgnStructure1FItemAttributePairReceipt *);
 int nexus_v1_level_structure1f_floor_decoration_offset_pair_receipt(const Nexus_V1_Level *level, Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt *out_receipt);
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
