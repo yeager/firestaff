@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus SAL layout provenance: an opt-in real-data probe now
+  verifies that all 16 local SAL banks share the exact byte range
+  `0x000000..0x045bb4` before their first level-specific variation. It also
+  validates `DM.BIN+0x3bd94` as the original big-endian pointer table for
+  `SNDLEV01..15` in the `0x06010000` image space. This is a bounded layout
+  invariant only: no codec, sample frame, or playback semantics are claimed.
+  Verification: `test_nexus_v1_sound_runtime_receipt` PASS.
+
 - 2026-07-13 DM1 F0407/F0231 melee XP correction: removed the non-source
   base-health kill-XP mutation from the DM1 F0231 defeat receipt. ReDMCSB
   `PROJEXPL.C F0231:1531-1539` grants only damage-derived F0304 skill XP;
