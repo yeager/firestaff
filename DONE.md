@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron post-`$e96a` controller resume receipt: the authenticated
+  US raw-CUE Mednafen trace proves `$e96a` `AND #$B8` -> `$e96c` `CMP #$98` ->
+  `$e96e` `BEQ $E98A` -> executed `$e98a` `LDA $22A4`. The trace hook now also
+  retains the next executed `$e960..$e97f` instructions with raw `$1800..$1804`
+  values for a fresh US/JP capture. This is controller-flow evidence only and
+  assigns no `CD_READ`, record, transfer, destination, payload, bitmap,
+  palette, object, or level semantics. Verification:
+  `verify_theron_post_latch_resume_branch_trace.sh` and a clean Mednafen 1.32.1
+  patch dry-run.
+
 - 2026-07-13 DM1 original-save C48/C49 projectile export: F0802 now writes
   ReDMCSB `EVENT.B.Slot` as the live C14 projectile Thing and rebuilds packed
   `EVENT.C.Projectile` from the active map, square, direction, and step

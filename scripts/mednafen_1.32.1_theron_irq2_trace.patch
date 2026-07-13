@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,6 +36,821 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,6 +36,845 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -94,6 +94,7 @@ index 347482c4..61d4758e 100644
 +static bool TheronIrq2TracePostLatchControllerCallSeen;
 +static bool TheronIrq2TracePostLatchControllerReturnSeen;
 +static bool TheronIrq2TracePostLatchControllerResumeSeen;
++static bool TheronIrq2TracePostLatchResumeWindowSeen[0x20];
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -570,6 +571,29 @@ index 347482c4..61d4758e 100644
 + TheronIrq2Trace->print_format("post_latch_controller_resume_pc=%04x physical_pc=%08x instruction=AND #$B8 cd_1800=%02x cd_1801=%02x\\n",
 +                               logical_pc, PC, cd_1800, cd_1801);
 + TheronIrq2TracePostLatchControllerResumeSeen = true;
++ FlushTheronIrq2Trace();
++}
++
++/* After the observed $e96a mask, retain the next executed original window
++ * one instruction at a time. This is raw control-flow and register evidence:
++ * it does not name a command, CD operation, or payload. */
++if(TheronIrq2TracePostLatchControllerResumeSeen &&
++   logical_pc >= 0xe960 && logical_pc < 0xe980 &&
++   !TheronIrq2TracePostLatchResumeWindowSeen[logical_pc - 0xe960])
++{
++ uint32 disassembly_pc = logical_pc;
++ char disassembly[256];
++ const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
++ const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
++ const uint32 cd_1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
++ const uint32 cd_1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
++ const uint32 cd_1804 = CurGame->Debugger->MemPeek(0x1804, 1, true, true) & 0xff;
++
++ TheronIrq2TracePostLatchResumeWindowSeen[logical_pc - 0xe960] = true;
++ CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, disassembly);
++ TheronIrq2Trace->print_format("post_latch_resume_window_pc=%04x physical_pc=%08x instruction=%s cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x cd_1804=%02x\\n",
++                               logical_pc, PC, disassembly, cd_1800, cd_1801,
++                               cd_1802, cd_1803, cd_1804);
 + FlushTheronIrq2Trace();
 +}
 +

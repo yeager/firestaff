@@ -42,6 +42,12 @@ transition from an actual data transaction but proves neither a `CD_READ` nor
 record/register/payload semantics. Continue with a later explicit original
 System Card data transaction whose record/register inputs and destination can
 be independently observed.
+The authenticated US raw-CUE trace also proves the immediate resume branch
+after `$e96a`: `CMP #$98` at `$e96c`, `BEQ $e98a` at `$e96e`, then executed
+`LDA $22a4` at `$e98a`. This is controller-status flow only, not a `CD_READ`,
+record, destination, transfer, or payload classification. The next task is an
+equivalent fresh US/JP capture through the new per-instruction resume-window
+hook, then a later independently observable data transaction.
 The subsequent observed `$e9d3 -> $e9dc -> $e9eb -> $e9f3 -> $ea15 ->
 $ea1d -> $ea26` status loop is now independently verified from the same US
 capture. It clears `$227b`, samples `$1801`, then completes two `$1800`
