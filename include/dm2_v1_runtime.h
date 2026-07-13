@@ -323,6 +323,18 @@ typedef struct DM2_V1_RuntimeDoorRenderReceipt {
     DM2_V1_ViewportRect frame_asset_dst_rect;
     DM2_V1_ViewportRect button_asset_dst_rect;
 } DM2_V1_RuntimeDoorRenderReceipt;
+
+typedef enum { DM2_V1_RUNTIME_CORPUS_IMPORT_NONE = 0,
+               DM2_V1_RUNTIME_CORPUS_IMPORT_OK,
+               DM2_V1_RUNTIME_CORPUS_IMPORT_UNAVAILABLE,
+               DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED } DM2_V1_RuntimeCorpusImportResult;
+typedef struct {
+    DM2_V1_RuntimeCorpusImportResult result;
+    int restored;
+    int candidate_kind;
+    size_t selected_payload_size;
+    char selected_path[256];
+} DM2_V1_RuntimeCorpusImportReceipt;
 int dm2_v1_runtime_last_door_render_receipt(
     DM2_V1_RuntimeDoorRenderReceipt *out_receipt);
 int dm2_v1_runtime_last_asset_item_count(void);
@@ -460,6 +472,8 @@ int dm2_v1_runtime_get_party_y(void);
 int dm2_v1_runtime_get_party_dir(void);
 int dm2_v1_runtime_get_weather(void);
 int dm2_v1_runtime_get_weather_intensity(void);
+int dm2_v1_runtime_import_sksave_corpus(
+    const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 uint32_t dm2_v1_runtime_get_leader_hand_object(void);
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,

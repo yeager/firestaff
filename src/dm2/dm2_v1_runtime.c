@@ -3290,6 +3290,39 @@ int dm2_v1_runtime_get_weather_intensity(void) {
     return g_dm2_runtime.weather.weather_intensity;
 }
 
+int dm2_v1_runtime_import_sksave_corpus(
+    const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out)
+{
+    uint8_t payload[DM2_SESSION_MAX_SIZE];
+    size_t size = 0u;
+    DM2_SKSaveCorpusReceipt corpus;
+    DM2_V1_SessionState session;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!dm2_v1_sksave_corpus_load_first_importable(save_root, payload,
+            sizeof(payload), &size, &corpus)) {
+        out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_UNAVAILABLE;
+        return 0;
+    }
+    if ((corpus.importable_kind_mask &
+         (1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION)) == 0u ||
+        dm2_v1_session_deserialize(&session, payload, size) != 0 ||
+        dm2_v1_runtime_apply_session(&session) != 0) {
+        out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
+        return 0;
+    }
+    out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_OK;
+    out->restored = 1;
+    /* The verified Firestaff session carries the persisted DM2 RNG seed.
+     * Runtime weather owns the live copy; do not invent a weather transition. */
+    g_dm2_runtime.weather.weather_seed = session.rng_seed;
+    out->selected_payload_size = size;
+    out->candidate_kind = DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION;
+    snprintf(out->selected_path, sizeof(out->selected_path), "%s",
+             corpus.first_importable_path);
+    return 1;
+}
+
 uint32_t dm2_v1_runtime_get_leader_hand_object(void) {
     return g_dm2_runtime.leader_hand_object;
 }

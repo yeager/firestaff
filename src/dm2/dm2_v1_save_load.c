@@ -925,6 +925,30 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
     return true;
 }
 
+bool dm2_v1_distant_environment_timer_corpus_probe(
+    const char *save_base,
+    DM2_DistantEnvironmentTimerCorpusReceipt *out_receipt)
+{
+    DM2_SKSaveCorpusReceipt corpus;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return false;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_sksave_corpus_scan(save_base, &corpus)) return false;
+    out_receipt->scan_complete = 1;
+    out_receipt->has_header_verified_candidate =
+        corpus.has_last_session || corpus.has_last_session_backup ||
+        corpus.valid_slot_count != 0u || corpus.extra_valid_candidate_count != 0u;
+    /* No skproject-correlated original byte offset or timer tag exists yet.
+     * Never scan heuristically or promote a header-valid save to runtime. */
+    out_receipt->skipped_missing_live_timer = 1;
+    hash = dm2_sksave_corpus_hash_step(hash, (uint32_t)out_receipt->scan_complete);
+    hash = dm2_sksave_corpus_hash_step(hash, (uint32_t)out_receipt->has_header_verified_candidate);
+    hash = dm2_sksave_corpus_hash_step(hash, (uint32_t)corpus.total_payload_size);
+    out_receipt->corpus_hash = hash;
+    return true;
+}
+
 bool dm2_v1_sksave_corpus_load_first_importable(
     const char *save_base,
     uint8_t *out_payload,

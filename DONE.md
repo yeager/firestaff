@@ -52,6 +52,10 @@
   `CSBCode.cpp:6469`, `Timer.cpp:2663-2763`, `Character.cpp:804-825`,
   `CSB.h:2019-2022`. Verification:
   `test_csb_v1_dsa_restored_timer_tick_bridge`.
+- 2026-07-13 DM2 source-backed corpus import receipt: header-verified
+  Firestaff-session candidates now deserialize through the existing session
+  codec and restore party, tick, and persisted RNG seed before publishing an
+  import receipt. Other corpus kinds remain fail-closed.
 
 - 2026-07-13 Nexus Structure1F raw wall-sensor destination receipt: complete
   Structure1A-owned wall-sensor records now retain exact destination-byte tuple

@@ -123,6 +123,16 @@ typedef struct {
     char     first_importable_path[256];
 } DM2_SKSaveCorpusReceipt;
 
+/* Skip-safe provenance gate for the still-unmapped live weather timer area.
+ * A valid SKSave header proves only a save candidate, never a timer layout. */
+typedef struct {
+    int scan_complete;
+    int has_header_verified_candidate;
+    int live_distant_environment_timer_present;
+    int skipped_missing_live_timer;
+    uint32_t corpus_hash;
+} DM2_DistantEnvironmentTimerCorpusReceipt;
+
 /* Initialise slot manager with save base directory (NULL = cwd). */
 void dm2_sl_init(DM2_SL_State *state, const char *save_base);
 
@@ -184,6 +194,9 @@ bool dm2_v1_save_has_valid_last_session(const char *save_base);
  * byte totals without mutating live runtime state. */
 bool dm2_v1_sksave_corpus_scan(const char *save_base,
                                DM2_SKSaveCorpusReceipt *out_receipt);
+bool dm2_v1_distant_environment_timer_corpus_probe(
+    const char *save_base,
+    DM2_DistantEnvironmentTimerCorpusReceipt *out_receipt);
 bool dm2_v1_sksave_corpus_load_first_importable(
     const char *save_base,
     uint8_t *out_payload,
