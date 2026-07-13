@@ -47,6 +47,8 @@ int nexus_v1_prs3_capture_trace_schema_parse(
         !read_u32(&cursor, "last_opcode_pc=", &out_receipt->last_opcode_pc) ||
         !read_u64(&cursor, "opcode_first_sequence=", &out_receipt->opcode_first_sequence) ||
         !read_u64(&cursor, "opcode_last_sequence=", &out_receipt->opcode_last_sequence) ||
+        !read_u64(&cursor, "payload_first_read_sequence=", &out_receipt->payload_first_read_sequence) ||
+        !read_u64(&cursor, "payload_last_read_sequence=", &out_receipt->payload_last_read_sequence) ||
         !read_u64(&cursor, "decoder_return_sequence=", &out_receipt->decoder_return_sequence) ||
         !read_u64(&cursor, "capture_completion_sequence=", &out_receipt->capture_completion_sequence) ||
         !read_u32(&cursor, "opcode_fetch_count=", &out_receipt->opcode_fetch_count) ||
@@ -65,6 +67,12 @@ int nexus_v1_prs3_capture_trace_schema_parse(
                   out_receipt->opcode_last_sequence
             : out_receipt->opcode_first_sequence >=
                   out_receipt->opcode_last_sequence) ||
+        out_receipt->payload_first_read_sequence <
+            out_receipt->opcode_first_sequence ||
+        out_receipt->payload_first_read_sequence >
+            out_receipt->payload_last_read_sequence ||
+        out_receipt->payload_last_read_sequence >=
+            out_receipt->decoder_return_sequence ||
         out_receipt->opcode_last_sequence >=
             out_receipt->decoder_return_sequence ||
         out_receipt->decoder_return_sequence >=
