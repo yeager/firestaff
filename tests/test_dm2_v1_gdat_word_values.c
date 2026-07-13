@@ -291,11 +291,14 @@ static void test_img3_local_palette_fixture(void)
           "IMG3 local palette comes from the final sixteen raw bytes");
     CHECK(palette16[0] == 0xe0u && palette16[15] == 0xefu && hash != 0u,
           "IMG3 local palette has a deterministic nonzero receipt hash");
-    raw[4] = 8u;
+    /* skproject IMG3::Getpf() selects C8 via OffsetY() == 31; w4 is not a
+     * general bit-depth field for compressed records. */
+    raw[2] = 1u;
+    raw[3] = 0x7cu;
     CHECK(dm2_v1_asset_load_image_local_palette(
               &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
               palette16, &hash) == 0,
-          "non-four-bit IMG3 image cannot claim a source local palette");
+          "C8 IMG3 image cannot claim a source local palette");
 
     /* QUERY_GDAT_IMAGE_LOCALPAL falls back to MISCELLANEOUS/FE/FE. */
     raw[28] = 2u;
@@ -311,7 +314,7 @@ static void test_img3_local_palette_fixture(void)
               &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
               palette16, &hash) == 1 && palette16[0] == 0xa0u &&
               palette16[15] == 0xafu && hash != 0u,
-          "non-four-bit image consumes skproject's real GDAT default palette");
+          "C8 image consumes skproject's real GDAT default palette");
 }
 
 int main(void)

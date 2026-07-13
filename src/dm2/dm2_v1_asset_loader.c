@@ -992,6 +992,7 @@ int dm2_v1_asset_load_image_local_palette(
     const uint8_t *raw;
     size_t raw_size = 0u;
     uint32_t hash = 2166136261u;
+    uint16_t bits_per_pixel = 0u;
     int i;
 
     if (out_hash) *out_hash = 0u;
@@ -1010,7 +1011,8 @@ int dm2_v1_asset_load_image_local_palette(
      * Firestaff fallback. Keep the same bounded lookup so U8/IMG9 wall
      * ornaments do not become falsely undrawable while malformed/missing
      * default data still fails closed. */
-    if (rd16le(raw + 4) != 4u) {
+    if (!dm2_img3_bits_per_pixel(rd16le(raw + 2u), rd16le(raw + 4u),
+                                 &bits_per_pixel) || bits_per_pixel != 4u) {
         if (category == DM2_GDAT_CATEGORY_MISCELLANEOUS &&
             index == 0xfe && field == 0xfe) {
             return 0;
@@ -1020,7 +1022,8 @@ int dm2_v1_asset_load_image_local_palette(
             DM2_GDAT_ENTRY_TYPE_IMAGE, 0xfe);
         raw = dm2_gdat_raw_from_entry(loader, fallback_entry, &raw_size);
         if (!raw || raw_size < DM2_IMG3_HEADER_SIZE + 16u ||
-            rd16le(raw + 4) != 4u) {
+            !dm2_img3_bits_per_pixel(rd16le(raw + 2u), rd16le(raw + 4u),
+                                     &bits_per_pixel) || bits_per_pixel != 4u) {
             return 0;
         }
     }
