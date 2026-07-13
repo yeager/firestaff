@@ -176,6 +176,10 @@ static void test_open_door_ui_cast_launches_source_projectile(void) {
     struct ProjectileInstance_Compat* projectile;
     const struct TimelineEvent_Compat* projectileMove;
     const struct TimelineEvent_Compat* enableAction;
+    const unsigned short quiverWeapon =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 3);
+    uint32_t c11Tick = 0;
+    int defenseBefore;
 
     memset(&state, 0, sizeof(state));
     M11_GameView_Init(&state);
@@ -193,9 +197,16 @@ static void test_open_door_ui_cast_launches_source_projectile(void) {
     state.world.party.champions[0].hp.maximum = 100;
     state.world.party.champions[0].mana.current = 80;
     state.world.party.champions[0].mana.maximum = 80;
+    state.world.party.champions[0].actionIndex = 0xFFu;
+    state.world.party.champions[0].actionDefense = 17;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        THING_NONE;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_1] =
+        quiverWeapon;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 80;
     state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_WIZARD].experience = 8000;
     state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_AIR].experience = 8000;
+    defenseBefore = state.world.party.champions[0].actionDefense;
 
     ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1, "spell panel opens");
     ASSERT_EQ(M11_GameView_EnterRune(&state, 0), 1, "LO power rune entered");
@@ -227,6 +238,9 @@ static void test_open_door_ui_cast_launches_source_projectile(void) {
                   "C11 receipt retains F0330 slot ordinal zero");
         ASSERT_EQ(enableAction->aux4, 0,
                   "C11 receipt retains the casting champion owner");
+        c11Tick = enableAction->fireAtTick;
+        ASSERT_EQ(c11Tick > state.world.gameTick, 1,
+                  "F0330 keeps Open Door's C11 delayed after F0412");
     }
 
     projectile = &state.world.projectiles.entries[0];
@@ -243,6 +257,36 @@ static void test_open_door_ui_cast_launches_source_projectile(void) {
     if (projectileMove != NULL) {
         ASSERT_EQ(projectileMove->aux3, PROJECTILE_SUBTYPE_OPEN_DOOR,
                   "projectile receipt carries Open Door subtype");
+    }
+    ASSERT_EQ(state.actionDisabledTicks[0], 15,
+              "F0412 materializes the source spell-disable duration");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0,
+              "Open Door C11 remains F0330 ordinal zero before expiry");
+
+    if (enableAction != NULL) {
+        while (state.world.gameTick <= c11Tick) {
+            ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state),
+                      M11_GAME_INPUT_REDRAW,
+                      "Open Door advances to its real F0330 C11 receipt");
+        }
+        /* TIMELINE.C C11 calls F0253 first.  Its B.SlotOrdinal is zero for
+         * F0412, so F0259 must not move the deliberately visible weapon. */
+        ASSERT_EQ(state.actionDisabledTicks[0], 0,
+                  "Open Door C11 F0253 clears the spell action lock");
+        ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
+                  "Open Door C11 leaves no action row behind");
+        ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0xFF,
+                  "Open Door C11 consumes its sole live owner");
+        ASSERT_EQ(state.world.party.champions[0].actionIndex, 0xFF,
+                  "F0253 preserves F0412's no-action champion state");
+        ASSERT_EQ(state.world.party.champions[0].actionDefense, defenseBefore,
+                  "F0253 removes no defense for the F0412 no-action receipt");
+        ASSERT_EQ(state.world.party.champions[0]
+                      .inventory[CHAMPION_SLOT_ACTION_HAND], THING_NONE,
+                  "ordinal-zero Open Door C11 cannot run F0259 into action hand");
+        ASSERT_EQ(state.world.party.champions[0]
+                      .inventory[CHAMPION_SLOT_QUIVER_1], quiverWeapon,
+                  "ordinal-zero Open Door C11 retains the quiver weapon");
     }
 }
 

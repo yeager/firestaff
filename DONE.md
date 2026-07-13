@@ -1540,6 +1540,16 @@
   C11 dispatch:1927-1932. Verification:
   `test_m11_open_door_spell_runtime_pc34_compat` (59 passed).
 
+- 2026-07-13 DM1 PC34 Open Door C11 F0253/F0259 aftereffect: the real F0412
+  F0330 receipt is now run to expiry in the focused gate. Its ordinal-zero
+  owner clears the spell action lock through F0253 without changing the
+  no-action `ActionIndex` or `ActionDefense`; an empty action hand plus a
+  real weapon in quiver line one remains unchanged, proving that F0259 is
+  not reached. Source: ReDMCSB `MENU.C F0412:2034-2040`, `CHAMPION.C
+  F0330:2233-2251`, and `TIMELINE.C F0253:1590-1611`,
+  `F0259:1793-1815`, C11:1927-1932. Verification:
+  `test_m11_open_door_spell_runtime_pc34_compat` (84 passed).
+
 - 2026-07-13 DM1 PC34 C25 explosion union handoff: ReDMCSB
   `PROJEXPL.C F0213` stores C25 as `B.Location + C.Slot`, then
   `TIMELINE.C F0261` dispatches it to F0220. F0435 requires that exact C15
