@@ -39,14 +39,14 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 @@ -373,3 +399,4 @@ static void CDIRQ(int type)
   }
   update_irq_state();
-+ TheronTracePCECDState("pce_cd_irq type=%04x port2=%02x port3=%02x\n", raw_type, _Port[2], _Port[3]);
++ TheronTracePCECDState("pce_cd_irq cpu_pc=%04x type=%04x port2=%02x port3=%02x\n", HuCPU.PC, raw_type, _Port[2], _Port[3]);
  }
 @@ -634,3 +661,8 @@ MDFN_FASTCALL uint8 PCECD_Read(uint32 timestamp, uint32 A, int32 &next_event, c
   #endif
   next_event = CalcNextEvent(0x7FFFFFFF);
 + if(!PeekMode && (A & 0xf) <= 4)
 + {
-+  TheronTracePCECDState("pce_cd_register_read physical=%08x data=%02x peek=%u\n",
-+                        A, ret, PeekMode ? 1 : 0);
++  TheronTracePCECDState("pce_cd_register_read cpu_pc=%04x physical=%08x data=%02x peek=%u\n",
++                        HuCPU.PC, A, ret, PeekMode ? 1 : 0);
 + }
   return(ret);
