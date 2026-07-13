@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 corpus version/platform identity: opt-in discovery now
+  receipts each candidate's ReDMCSB header FormatID, Platform, DungeonID, and
+  GameID. Only checksum-valid `(5, 9, 10)` DM1 PC34 identities are eligible
+  for F0435; every other decoded original header is a hard discovery rejection.
+  Verification: focused native-PC34 handoff CTest.
+
 - 2026-07-13 DM1 PC34 M516 corpus receipt: opt-in external corpus rows now
   retain the decrypted C2 M516_CHAMPIONS boundary as exactly four 319-byte
   records plus source/export byte counts and fingerprints. The real-corpus

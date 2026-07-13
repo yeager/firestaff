@@ -3551,6 +3551,8 @@ static void test_corpus_roundtrip_proof(void)
     CHECK(report.discovery_file_count == 3 &&
           report.discovery_receipt_count == 3 &&
           report.discovery_pc34_header_count == 2 &&
+          report.discovery_pc34_version_platform_identity_count == 2 &&
+          report.discovery_pc34_version_platform_rejected_count == 0 &&
           report.discovery_loader_envelope_count == 2 &&
           report.discovery_rejected_count == 1 &&
           report.discovery_truncated_count == 0,
@@ -3560,6 +3562,10 @@ static void test_corpus_roundtrip_proof(void)
             &report.discovery_receipts[i];
         if (discovery->roundtrip_eligible) {
             if (discovery->header_prefix_fingerprint != 0u &&
+                discovery->pc34_version_platform_identity_ok &&
+                discovery->save_format_id == SAVEGAME_PC34_FORMAT_DUNGEON_MASTER_PC &&
+                discovery->save_platform == SAVEGAME_PC34_PLATFORM_PC &&
+                discovery->save_dungeon_id == SAVEGAME_PC34_DUNGEON_ID_DM &&
                 discovery->external_original && discovery->result ==
                     DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
                 ++eligible_discoveries;
@@ -3649,6 +3655,10 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
               report.discovery_file_count &&
           report.discovery_truncated_count == 0,
           "real PC34 corpus discovery is complete and explicitly scoped");
+    CHECK(report.discovery_pc34_version_platform_identity_count ==
+              report.pc34_candidate_count &&
+          report.discovery_pc34_version_platform_rejected_count == 0,
+          "real PC34 corpus rejects non-PC34 version or platform identities");
     CHECK(report.roundtrip_failed_count == 0,
           "real PC34 corpus has no failed external roundtrip");
     CHECK(report.firestaff_manifest_rejected_count == 0,

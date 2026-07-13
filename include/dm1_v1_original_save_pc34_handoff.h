@@ -330,6 +330,11 @@ typedef struct {
     uint32_t header_prefix_fingerprint;
     int shape;
     int readiness;
+    uint16_t save_format_id;
+    uint16_t save_platform;
+    uint16_t save_dungeon_id;
+    uint32_t save_game_id;
+    int pc34_version_platform_identity_ok;
     int pc34_importer_candidate;
     int pc34_loader_part_envelope_candidate;
     int external_original;
@@ -348,6 +353,8 @@ typedef struct {
     int scanned_file_count;
     int discovery_file_count;
     int discovery_pc34_header_count;
+    int discovery_pc34_version_platform_identity_count;
+    int discovery_pc34_version_platform_rejected_count;
     int discovery_loader_envelope_count;
     int discovery_rejected_count;
     int discovery_truncated_count;
