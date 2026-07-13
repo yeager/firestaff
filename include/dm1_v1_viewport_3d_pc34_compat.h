@@ -1183,6 +1183,16 @@ int dm1_viewport_3d_explosion_centered_zone(const DM1_ViewportExplosionOcclusion
 int dm1_viewport_3d_explosion_two_cell_zone(const DM1_ViewportExplosionOcclusionSpec *spec, unsigned char front_cell);
 int dm1_viewport_3d_explosion_rebirth_step1_zone(const DM1_ViewportExplosionOcclusionSpec *spec);
 int dm1_viewport_3d_explosion_rebirth_step2_zone(const DM1_ViewportExplosionOcclusionSpec *spec);
+/* C100 is distinct from C101: PC34 F0115 selects C3000 through G2034,
+ * then COORD.C layout-696 supplies the bitmap-centre coordinates.  This
+ * exposes only the proven C100 destination geometry; scale and drawing stay
+ * fail-closed until the PC34 scale mapping is independently evidenced.
+ * Source: DUNVIEW.C:5920,5948,5965,5984,5998-6000; COORD.C:1061-1081. */
+int dm1_viewport_3d_c100_rebirth_lightning_geometry(
+    const DM1_ViewportExplosionOcclusionSpec *spec,
+    int *out_zone_index,
+    int *out_center_x,
+    int *out_center_y);
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec(size_t index);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_ViewSquareIndex square);

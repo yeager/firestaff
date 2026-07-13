@@ -118,6 +118,17 @@ int dm1_v1_projectile_subtype_graphic_index(int subtype) {
     return DM1_GFX_FIRST_PROJECTILE + first;
 }
 
+int dm1_v1_c100_rebirth_lightning_graphic_index_pc34(void)
+{
+    /* ReDMCSB DUNVIEW.C F0115:5965-5969,5977-5979 resolves the original
+     * lightning projectile aspect, then requests its following native bitmap:
+     * M613 (454) + G0210[C03].FirstNativeBitmapRelativeIndex (9) + 1.
+     * C100 remains distinct from C101's M636 fire-pattern route. */
+    return DM1_GFX_FIRST_PROJECTILE +
+           (int)DM1_ProjectileAspects[DM1_PROJ_ASPECT_LIGHTNING_BOLT]
+               .firstNativeBitmapRelativeIndex + 1;
+}
+
 int dm1_v1_projectile_material_resolve_pc34(
     int projectileSubtype,
     int associatedThingType,

@@ -639,11 +639,14 @@ material after D0 projectile materialization; a missing M636 bitmap is no-draw
 and cannot fall through to an F0114 D1-D3 sprite. Remaining work is real
 multi-effect capture, not a cue, marker, or replacement bitmap.
 
-D0C C100/C101 rebirth C15 records now follow their separate ReDMCSB routes:
-C101 enters D0C's real M636 fire pattern, while C100 retains an explicit
-no-draw receipt because its PC34 C3000/lightning coordinate-and-scale decoder
-is not yet proven. C100 cannot borrow M636, F0114, a marker, or host geometry.
-The broader rebirth geometry route remains open pending real PC34 coordinates.
+D0C C100/C101 rebirth C15 records now follow their separate ReDMCSB routes.
+C100's real PC34 lightning material (`M613 + G0210[C03] + 1 = 464`) and C3000
+centres are now decoded from `G2034` and `COORD.C:G3025` for rows 0..16.
+It remains explicitly no-draw: ReDMCSB declares `G2037` with seven scale
+entries but the PC34 `G2034` caller reaches rows 0..16, so a source-proven C100
+scale mapping is still absent. C100 cannot borrow C101/M636, F0114, a marker,
+or host geometry; resolve the PC34 scale mapping by original capture or a
+verified source table before connecting the renderer.
 
 F0115's deferred C15 receipt now preserves every ordinary same-square PC34
 explosion record in source list order and M11 consumes each record's own
