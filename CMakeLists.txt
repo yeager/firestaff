@@ -17025,6 +17025,26 @@ if(NOT TARGET test_dm1_v1_skill_levelup_formula_gate_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_dm1_v1_f0407_invoke_random_domain_pc34_compat)
+    add_executable(test_dm1_v1_f0407_invoke_random_domain_pc34_compat
+        tests/test_dm1_v1_f0407_invoke_random_domain_pc34_compat.c
+        src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_skill_index_pc34_compat.c
+        src/dm1/dm1_v1_g0497_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_disabled_ticks_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_damage_factor_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_stamina_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_defense_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0407_invoke_random_domain_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0407_invoke_random_domain_pc34_compat
+        COMMAND test_dm1_v1_f0407_invoke_random_domain_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_dm1_v1_action_f0407_tail_pc34_compat)
     add_executable(test_dm1_v1_action_f0407_tail_pc34_compat
         tests/test_dm1_v1_action_f0407_tail_pc34_compat.c

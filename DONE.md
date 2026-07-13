@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0407 INVOKE random-domain gate: the DM1 projectile plan
+  now rejects values outside ReDMCSB `MENU.C F0407:1480-1493`'s
+  `M003_RANDOM(128)` energy and `M002_RANDOM(6)` family draws. Invalid
+  runtime command facts cannot fold into another projectile family or publish
+  non-source kinetic energy. Verification: Ninja-built `firestaff_m10` and
+  `test_dm1_v1_action_f0407_tail_pc34_compat`; direct focused
+  `test_dm1_v1_f0407_invoke_random_domain_pc34_compat` passed.
+
 - 2026-07-13 DM1 F0412 needs-practice runtime XP: M10 now consumes the
   source-owned partial-XP receipt before a failed spell cast returns. ReDMCSB
   `MENU.C F0412:1835-1841` calls F0304 with shifted experience on the
