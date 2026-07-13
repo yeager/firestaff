@@ -55,6 +55,14 @@ static void seed_rename_state(M11_GameViewState* state)
     state->world.party.champions[0].hp.maximum = 100;
 }
 
+static void seed_c040_state(M11_GameViewState* state)
+{
+    seed_rename_state(state);
+    state->candidateMirrorRenameActive = 0;
+    memset(&state->candidateMirrorRename, 0,
+           sizeof(state->candidateMirrorRename));
+}
+
 static int expect_original_font_foreground(
     const M11_FontState* font,
     const unsigned char* framebuffer,
@@ -217,6 +225,56 @@ static int test_real_pc34_rename_font_handoff(void)
     return 1;
 }
 
+static int test_c040_host_input_requires_real_panel(void)
+{
+    const char* graphicsPath = pc34_graphics_path();
+    M11_GameViewState noAssetState;
+    M11_GameViewState realAssetState;
+
+    /* ReDMCSB PANEL.C F0346 must have installed C040 before COMMAND.C
+     * dispatches C160/C161/C162.  An invisible panel may not accept host
+     * keyboard or pointer commands. */
+    seed_c040_state(&noAssetState);
+    if (M11_GameView_HandlePointer(&noAssetState, 110, 100, 1) !=
+            M11_GAME_INPUT_IGNORED ||
+        M11_GameView_HandleInput(&noAssetState, M12_MENU_INPUT_ACCEPT) !=
+            M11_GAME_INPUT_IGNORED ||
+        !noAssetState.candidateMirrorPanelActive ||
+        noAssetState.world.party.championCount != 1) {
+        fprintf(stderr, "FAIL C040 input accepted without original panel\n");
+        M11_GameView_Shutdown(&noAssetState);
+        return 0;
+    }
+    M11_GameView_Shutdown(&noAssetState);
+
+    if (!graphicsPath) {
+        return 1;
+    }
+    seed_c040_state(&realAssetState);
+    if (!M11_AssetLoader_Init(&realAssetState.assetLoader, graphicsPath)) {
+        if (getenv("FIRESTAFF_DM1_GRAPHICS_DAT")) {
+            fprintf(stderr, "FAIL configured PC34 C040 did not load\n");
+            return 0;
+        }
+        M11_GameView_Shutdown(&realAssetState);
+        return 1;
+    }
+    realAssetState.assetsAvailable = 1;
+    /* C162 at the source cancel row must now consume the C040-backed panel
+     * and remove only the appended candidate champion. */
+    if (M11_GameView_HandlePointer(&realAssetState, 110, 150, 1) !=
+            M11_GAME_INPUT_REDRAW ||
+        realAssetState.candidateMirrorPanelActive ||
+        realAssetState.world.party.championCount != 0 ||
+        realAssetState.world.party.activeChampionIndex != -1) {
+        fprintf(stderr, "FAIL real PC34 C040 cancel route\n");
+        M11_GameView_Shutdown(&realAssetState);
+        return 0;
+    }
+    M11_GameView_Shutdown(&realAssetState);
+    return 1;
+}
+
 int main(void) {
     M11_GameViewState state;
     unsigned char framebuffer[kFramebufferWidth * kFramebufferHeight];
@@ -249,6 +307,9 @@ int main(void) {
         return 1;
     }
     if (!test_real_pc34_rename_font_handoff()) {
+        return 1;
+    }
+    if (!test_c040_host_input_requires_real_panel()) {
         return 1;
     }
     printf("PASS test_m11_dm1_hoc_no_fallback_panel substitute_pixels=0\n");
