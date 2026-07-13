@@ -460,19 +460,6 @@ ReDMCSB WIP 2021-02-06 source tree.
   staged. Do not reintroduce the removed M11 diagnostic export or admit any
   state beyond source-proven F0280/F0282 panel facts.
 
-- 2026-07-13 DM1 original-save timeline continuation: C11's zero
-  `SlotOrdinal` action-enable route, C12 hide-damage removal, C13 Vi Altar
-  rebirth, C24 fluxcage removal, C65 generator re-enable, C70 signed-light
-  decay, C71 invisibility expiry, C72 champion-shield expiry, C73 Thieves'
-  Eye expiry, C74 party-shield expiry, C75 poison expiry, C77 spell-shield
-  expiry, C78 fire-shield expiry, C79 Footprints expiry, C53 Watchdog re-arm,
-  C2 door destruction, C7 fakewall, C20 delayed sound playback, C22 CPSE typed no-op handling, and C60/C61
-  silent/audible deferred-group moves are complete.
-  The F0259 C11 `SlotOrdinal == 2` original-save route now reaches the C01
-  action hand. Remaining: bind MENU.C F0407's successful-throw mutation to
-  the exact pending F0330 C11 event. Do not create a generic action-disable
-  refill or coerce any other native slot ordinal into Firestaff inventory.
-
 - 🔧 2026-07-13 Nexus Structure3 follow-up: documented `0x800`-byte block
   layout, raw zero-separated byte/block spans, payload composition, and
   Structure1A owner/model and transform selectors plus Structure1F raw face,

@@ -102,7 +102,7 @@ static int orch_find_material_group_on_square_compat(
     int* outGroupIndex,
     int* outCreatureHeight);
 
-static int orch_f0330_schedule_enable_champion_action_compat(
+int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
     struct GameWorld_Compat* world,
     int championIndex,
     int ticks);
@@ -4254,7 +4254,7 @@ static int orch_f0248_award_steal_skill_xp_compat(
  * half-distance timing rule. MENU.C F0407 alone changes SlotOrdinal to
  * C01's ordinal after a successful throw; this producer must not invent a
  * refill target for every disabled action. */
-static int orch_f0330_schedule_enable_champion_action_compat(
+int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
     struct GameWorld_Compat* world,
     int championIndex,
     int ticks)
@@ -4306,6 +4306,39 @@ static int orch_f0330_schedule_enable_champion_action_compat(
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
 }
 
+int DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
+    struct GameWorld_Compat* world,
+    int championIndex)
+{
+    int found = -1;
+    int i;
+
+    if (!world || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    /* ReDMCSB MENU.C F0407:1613-1617 reaches this only after F0328 has
+     * accepted the action-hand throw. It writes the indexed F0330 event's
+     * B.SlotOrdinal to M000_INDEX_TO_ORDINAL(C01_SLOT_ACTION_HAND) == 2.
+     * Firestaff has no Champion.EnableActionEventIndex mirror, so accept
+     * exactly one still-pending typed C11 owner and fail closed otherwise. */
+    for (i = 0; i < world->timeline.count; ++i) {
+        const struct TimelineEvent_Compat* event = &world->timeline.events[i];
+
+        if (event->kind != TIMELINE_EVENT_ENABLE_CHAMPION_ACTION ||
+            event->aux0 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            event->aux2 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            event->aux4 != championIndex || event->aux1 != 0 ||
+            event->fireAtTick < world->gameTick) {
+            continue;
+        }
+        if (found >= 0) return 0;
+        found = i;
+    }
+    if (found < 0) return 0;
+    world->timeline.events[found].aux1 = 2;
+    return 1;
+}
+
 static void orch_f0330_schedule_action_disabled_emissions_compat(
     struct GameWorld_Compat* world,
     const struct TickResult_Compat* result)
@@ -4316,7 +4349,7 @@ static void orch_f0330_schedule_action_disabled_emissions_compat(
     for (i = 0; i < result->emissionCount; ++i) {
         const struct TickEmission_Compat* emission = &result->emissions[i];
         if (emission->kind != EMIT_ACTION_DISABLED) continue;
-        (void)orch_f0330_schedule_enable_champion_action_compat(
+        (void)DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
             world, emission->payload[0], emission->payload[1]);
     }
 }

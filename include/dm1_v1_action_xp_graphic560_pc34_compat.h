@@ -177,6 +177,10 @@ typedef struct {
     int shouldRefillReadyHandNow;
 } DM1_ActionF0407CompletionPlanPc34;
 
+/* ReDMCSB DEFS.H C01_SLOT_ACTION_HAND is zero-based slot index 1, while
+ * EVENT.B.SlotOrdinal is one-based. MENU.C F0407 writes this after F0328. */
+#define DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL 2
+
 typedef struct {
     int currentStamina;
     int maximumStamina;

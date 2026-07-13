@@ -6393,6 +6393,8 @@ static void m11_disable_champion_action_f0328_throw(
     state->actionDisabledIndex[championIndex] = 0xFFu;
     state->actionEnableSlotOrdinal[championIndex] = 0u;
     m11_materialize_action_lock(state, championIndex, 0xFF, ticks);
+    (void)DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
+        &state->world, championIndex, ticks);
 }
 
 /* ── Apply sensor effects from movement pipeline ──
@@ -31030,8 +31032,13 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             if (throwPlan.shouldClearActionHand) {
                 champ->inventory[CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
             }
-            state->actionEnableSlotOrdinal[championIndex] =
-                (unsigned char)throwPlan.actionEnableSlotOrdinal;
+            if (throwPlan.actionEnableSlotOrdinal ==
+                    DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL &&
+                DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
+                    &state->world, championIndex)) {
+                state->actionEnableSlotOrdinal[championIndex] =
+                    (unsigned char)throwPlan.actionEnableSlotOrdinal;
+            }
             m11_log_event(state, M11_COLOR_YELLOW,
                           "T%u: %s THROWS",
                           (unsigned int)state->world.gameTick,

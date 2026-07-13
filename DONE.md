@@ -1381,6 +1381,14 @@
   F0258/F0259. Verification: focused C11 producer, timeline dispatch, and
   original-save handoff tests.
 
+- 2026-07-13 DM1 PC34 live F0407 throw-to-C11 mutation: a successful M11
+  `THROW` now creates the real F0330 C11 receipt and mutates exactly that
+  pending typed owner to PC34 `B.SlotOrdinal == 2` after F0328 accepts the
+  action. Ambiguous, missing, expired, or already-mutated owners fail closed;
+  no generic action-disable refill is introduced. Source: ReDMCSB
+  `CHAMPION.C F0330`, `MENU.C F0407:1613-1617`, `DEFS.H C01`, and
+  `TIMELINE.C F0253/F0259`. Verification: focused M11 THROW runtime test.
+
 - 2026-07-13 DM1 PC34 C25 explosion union handoff: ReDMCSB
   `PROJEXPL.C F0213` stores C25 as `B.Location + C.Slot`, then
   `TIMELINE.C F0261` dispatches it to F0220. F0435 requires that exact C15
