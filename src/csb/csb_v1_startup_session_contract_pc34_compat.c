@@ -177,6 +177,99 @@ int csb_v1_startup_session_opening_door_receipt_pc34(
     return 1;
 }
 
+int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *presents_host,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *chaos_host,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *strikes_host,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *opening_host,
+    CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 *out_receipt)
+{
+    const CSB_V1_StartupRuntimeSurface_PC34 *presents;
+    const CSB_V1_StartupRuntimeSurface_PC34 *chaos;
+    const CSB_V1_StartupRuntimeSurface_PC34 *strikes;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    /* ReDMCSB TITLE.C F0437 lines 424-463 emits three C001 phases before
+     * ENTRANCE.C F0806 lines 775-826 composes C004/C002/C003. Retain the
+     * owning host receipts so a callback cannot replace any phase. */
+    if (!session || !package_receipt || !presents_host || !chaos_host ||
+        !strikes_host || !opening_host || !out_receipt || !session->valid ||
+        !package_receipt->valid || !package_receipt->real_package_matched ||
+        !package_receipt->c001_presents_consumed ||
+        !package_receipt->c001_chaos_consumed ||
+        !package_receipt->c001_strikes_back_consumed ||
+        !package_receipt->no_legacy_wrappers ||
+        !package_receipt->no_fallback_routes ||
+        package_receipt->session_generation != session->generation ||
+        package_receipt->real_asset_receipt_hash == 0u ||
+        package_receipt->consumed_surface_hash == 0u) return 0;
+
+    presents = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
+    chaos = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
+    strikes = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
+    if (!presents->valid || !chaos->valid || !strikes->valid ||
+        !presents->pixels || !chaos->pixels || !strikes->pixels ||
+        presents->source_asset_id != 1 || chaos->source_asset_id != 1 ||
+        strikes->source_asset_id != 1 ||
+        !presents_host->valid || !chaos_host->valid || !strikes_host->valid ||
+        !opening_host->valid || !presents_host->real_asset_matched ||
+        !chaos_host->real_asset_matched || !strikes_host->real_asset_matched ||
+        !opening_host->real_asset_matched ||
+        !presents_host->no_legacy_wrappers || !chaos_host->no_legacy_wrappers ||
+        !strikes_host->no_legacy_wrappers || !opening_host->no_legacy_wrappers ||
+        !presents_host->no_synthetic_surface || !chaos_host->no_synthetic_surface ||
+        !strikes_host->no_synthetic_surface || !opening_host->no_synthetic_surface ||
+        presents_host->host_surface != CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 ||
+        chaos_host->host_surface != CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 ||
+        strikes_host->host_surface != CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 ||
+        opening_host->host_surface !=
+            CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34 ||
+        !opening_host->door_opening_decision ||
+        presents_host->frame.session_generation != session->generation ||
+        chaos_host->frame.session_generation != session->generation ||
+        strikes_host->frame.session_generation != session->generation ||
+        opening_host->frame.session_generation != session->generation ||
+        presents_host->frame.stage != CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 ||
+        chaos_host->frame.stage != CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 ||
+        strikes_host->frame.stage != CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 ||
+        presents_host->frame.title_surface != presents ||
+        chaos_host->frame.title_surface != chaos ||
+        strikes_host->frame.title_surface != strikes ||
+        !presents_host->raster.valid || !chaos_host->raster.valid ||
+        !strikes_host->raster.valid || !opening_host->raster.valid ||
+        !presents_host->raster.title_composited ||
+        !chaos_host->raster.title_composited ||
+        !strikes_host->raster.title_composited ||
+        presents_host->raster.source_surface_count != 1 ||
+        chaos_host->raster.source_surface_count != 1 ||
+        strikes_host->raster.source_surface_count != 1 ||
+        presents_host->host_surface_hash == 0u || chaos_host->host_surface_hash == 0u ||
+        strikes_host->host_surface_hash == 0u || opening_host->host_surface_hash == 0u)
+        return 0;
+
+    out_receipt->valid = 1;
+    out_receipt->real_package_matched = 1;
+    out_receipt->presents_consumed = 1;
+    out_receipt->chaos_consumed = 1;
+    out_receipt->strikes_back_consumed = 1;
+    out_receipt->c004_c002_c003_consumed = 1;
+    out_receipt->no_legacy_wrappers = 1;
+    out_receipt->no_synthetic_surface = 1;
+    out_receipt->session_generation = session->generation;
+    out_receipt->presents_host_surface_hash = presents_host->host_surface_hash;
+    out_receipt->chaos_host_surface_hash = chaos_host->host_surface_hash;
+    out_receipt->strikes_host_surface_hash = strikes_host->host_surface_hash;
+    out_receipt->opening_host_surface_hash = opening_host->host_surface_hash;
+    out_receipt->real_asset_receipt_hash = package_receipt->real_asset_receipt_hash;
+    out_receipt->consumed_surface_hash = package_receipt->consumed_surface_hash;
+    return 1;
+}
+
 int csb_v1_startup_session_live_hud_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     const CSB_V1_StartupSessionTerminalReceipt_PC34 *terminal_receipt,
