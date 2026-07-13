@@ -35,6 +35,18 @@ static int fetch_asset(void *user,
     return 0;
 }
 
+static int fetch_local_palette(void *user,
+                               int gdat_index,
+                               uint8_t out_palette16[16],
+                               uint32_t *out_hash)
+{
+    (void)user;
+    (void)gdat_index;
+    for (int i = 0; i < 16; ++i) out_palette16[i] = (uint8_t)(0x90 + i);
+    if (out_hash) *out_hash = 0x47443150u;
+    return 0;
+}
+
 static void setup_custom_button(DM2_V1_ViewportState *viewport,
                                 uint8_t *framebuffer)
 {
@@ -47,6 +59,8 @@ static void setup_custom_button(DM2_V1_ViewportState *viewport,
     viewport->squares[DM2_SQ_D0C].door_wall_button_y = 7;
     viewport->squares[DM2_SQ_D0C].door_wall_button_object_id = 0x8abcu;
     dm2_v1_viewport_set_asset_provider(viewport, fetch_asset, NULL);
+    dm2_v1_viewport_set_asset_palette_provider(
+        viewport, fetch_local_palette, NULL);
     dm2_v1_viewport_set_source_materials_required(viewport, 1);
 }
 
@@ -75,6 +89,9 @@ int main(void)
     text_receipt.materials[0].y = 7;
     text_receipt.materials[0].object_id = 0x8abcu;
     text_receipt.materials[0].wall_gfx_index = 0x2a;
+    text_receipt.materials[0].front_image_ready = 1;
+    text_receipt.materials[0].front_image_width = 2;
+    text_receipt.materials[0].front_image_height = 2;
     CHECK("text receipt accepts source WALL_GFX field one",
           dm2_v1_g1_text_wall_gfx_allows_button_material(
               &text_receipt, 0x2a, 1) &&

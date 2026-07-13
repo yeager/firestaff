@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 DM2 viewport source-material follow-up: source-required wall and
+  door passes now reject a decoded GDAT image when its own IMG3 local-palette
+  receipt is absent. Extend that same per-image ownership rule to remaining
+  map-chip consumers only with proven skproject lookup and palette evidence;
+  do not borrow `INTERFACE_GENERAL` colors or fabricate a fallback plane.
+
 - 2026-07-13 CSBWin saved-DSA parameter-message follow-up: the bounded
   `TT_ParameterMessage` runtime path now owns authenticated EXPOOL payloads
   through the 26-word stack ABI for source stone/open-room dispatch. Larger
