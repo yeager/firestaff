@@ -62,7 +62,7 @@ static int inspect_19_track_cue(const char *path) {
     unsigned int track;
     unsigned int expected_track = 1u;
     unsigned int track_count = 0u;
-    int track02_mode1_2048 = 0;
+    int track02_mode1_2352 = 0;
 
     if (!path || !(file = fopen(path, "rb"))) return 0;
     while (fgets(line, sizeof(line), file) != NULL) {
@@ -74,13 +74,13 @@ static int inspect_19_track_cue(const char *path) {
             }
             ++expected_track;
             ++track_count;
-            if (track == 2u && strcmp(mode, "MODE1/2048") == 0) {
-                track02_mode1_2048 = 1;
+            if (track == 2u && strcmp(mode, "MODE1/2352") == 0) {
+                track02_mode1_2352 = 1;
             }
         }
     }
     fclose(file);
-    return track_count == 19u && track02_mode1_2048;
+    return track_count == 19u && track02_mode1_2352;
 }
 
 int main(void) {
@@ -108,7 +108,7 @@ int main(void) {
                      sizeof(g_boot_delay_bytes)) == 0,
           "$e8e3 sets $1804 then enters fixed $e8ec delay");
     check(inspect_19_track_cue(cue_path),
-          "explicit 19-track CUE declares sequential tracks and Track 02 MODE1/2048");
+          "explicit 19-track CUE declares sequential tracks and Track 02 MODE1/2352");
     printf("receipt: e8ec_entry=fixed_tsb_1804_and_counter_delay "
            "cd_state_unproven=1\n");
     free(system_card);
