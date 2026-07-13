@@ -3805,6 +3805,63 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
     return 0;
 }
 
+int nexus_v1_dgn_bind_direct_structure1f_floor_sources(
+    const Nexus_V1_Level *level, const Nexus_V1_DgnRenderCommand *commands,
+    int command_count, Nexus_V1_DgnStructure1FDirectFloorCommandSource *out_sources,
+    int max_sources,
+    Nexus_V1_DgnStructure1FDirectFloorCommandSourceReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FDirectFloorCommandSourceReceipt receipt;
+    int entry_index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.fallback_visuals_permitted = 0;
+    if (!level || !commands || command_count < 0 || !out_sources ||
+        max_sources < 0) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    for (entry_index = 0; entry_index < level->structure1f_entry_count;
+         ++entry_index) {
+        const Nexus_V1_DgnStructure1FEntry *entry =
+            &level->structure1f_entries[entry_index];
+        int command_index;
+
+        if (entry->family != NEXUS_V1_DGN_STRUCTURE1F_ITEMS &&
+            entry->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS &&
+            entry->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS) {
+            continue;
+        }
+        for (command_index = 0; command_index < command_count;
+             ++command_index) {
+            Nexus_V1_DgnStructure1FDirectFloorCommandSource *source;
+            if (commands[command_index].kind !=
+                    NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
+                commands[command_index].x != entry->x ||
+                commands[command_index].y != entry->y) {
+                continue;
+            }
+            ++receipt.visible_direct_entry_count;
+            if (receipt.floor_command_source_count >= max_sources) {
+                ++receipt.blocked_capacity_count;
+                continue;
+            }
+            source = &out_sources[receipt.floor_command_source_count++];
+            memset(source, 0, sizeof(*source));
+            source->command_index = command_index;
+            source->entry_index = entry_index;
+            source->entry = *entry;
+            source->draw_authorized = 0;
+        }
+    }
+    receipt.complete = receipt.visible_direct_entry_count > 0 &&
+        receipt.floor_command_source_count == receipt.visible_direct_entry_count &&
+        receipt.blocked_capacity_count == 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
                                      int source_hash_verified,
                                      Nexus_V1_ItemIbsBank *out_bank)

@@ -31,6 +31,9 @@ int main(void) {
         engine.dgn_material_plan.structure1f_item_floor_material_receipt
             .command_material_count != 0 ||
         engine.dgn_material_plan.structure1f_item_floor_materials_consumed ||
+        engine.dgn_material_plan.structure1f_direct_floor_source_receipt
+            .floor_command_source_count != 0 ||
+        engine.dgn_material_plan.structure1f_direct_floor_sources_consumed ||
         engine.dgn_material_plan.receipt.fallback_visuals_permitted) {
         fprintf(stderr, "Incomplete DGN data did not produce a no-draw plan\n");
         return 1;

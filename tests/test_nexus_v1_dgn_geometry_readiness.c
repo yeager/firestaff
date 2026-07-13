@@ -1651,6 +1651,8 @@ static void test_direct_structure1f_mesh_command_provenance(void) {
     Nexus_V1_Level level;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_DgnRenderPlanReceipt receipt;
+    Nexus_V1_DgnStructure1FDirectFloorCommandSource direct_sources[2];
+    Nexus_V1_DgnStructure1FDirectFloorCommandSourceReceipt direct_receipt;
     int command_index;
     int matched_commands = 0;
     int matched_floor_commands = 0;
@@ -1716,6 +1718,21 @@ static void test_direct_structure1f_mesh_command_provenance(void) {
           receipt.structure1f_plan_item_floor_command_entry_count == matched_floor_commands &&
           matched_commands > matched_floor_commands && matched_floor_commands > 0,
           "direct Structure1F source cells bind only to exact floor material commands then remain no-draw");
+    memset(direct_sources, 0, sizeof(direct_sources));
+    memset(&direct_receipt, 0, sizeof(direct_receipt));
+    CHECK(nexus_v1_dgn_bind_direct_structure1f_floor_sources(
+              &level, commands, receipt.command_count, direct_sources, 2,
+              &direct_receipt) == 0 && direct_receipt.complete &&
+          direct_receipt.visible_direct_entry_count == 1 &&
+          direct_receipt.floor_command_source_count == 1 &&
+          direct_sources[0].command_index >= 0 &&
+          commands[direct_sources[0].command_index].kind ==
+              NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
+          direct_sources[0].entry.family == NEXUS_V1_DGN_STRUCTURE1F_ITEMS &&
+          direct_sources[0].entry.x == 3 && direct_sources[0].entry.y == 4 &&
+          !direct_sources[0].draw_authorized &&
+          !direct_receipt.fallback_visuals_permitted,
+          "direct Structure1F record reaches only its exact runtime floor command without a draw claim");
 }
 
 /* Retail-only companion to the mesh-command fixture above. It checks the

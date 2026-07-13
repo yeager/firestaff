@@ -1148,6 +1148,24 @@ typedef struct {
     uint8_t draw_order;
 } Nexus_V1_DgnRenderCommand;
 
+/* Direct-coordinate Structure1F records reach only the matching DGN floor
+ * command. The copied record is original-data provenance, not an object,
+ * trigger, transform, mesh, texture, palette, pixel, or draw instruction. */
+typedef struct {
+    int command_index;
+    int entry_index;
+    Nexus_V1_DgnStructure1FEntry entry;
+    int draw_authorized;
+} Nexus_V1_DgnStructure1FDirectFloorCommandSource;
+
+typedef struct {
+    int visible_direct_entry_count;
+    int floor_command_source_count;
+    int blocked_capacity_count;
+    int complete;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure1FDirectFloorCommandSourceReceipt;
+
 /* Exact Structure1G -> Structure2 -> DGN floor-command provenance. The
  * descriptor fields retain raw original values only: Structure2's payload
  * grammar, palette layout, pixel codec and animation timing remain unproved,
@@ -1554,6 +1572,13 @@ int nexus_v1_level_build_dgn_view_render_plan(
     Nexus_V1_DgnRenderCommand *commands,
     int max_commands,
     Nexus_V1_DgnRenderPlanReceipt *out_receipt);
+/* Copies visible direct-coordinate Structure1F records to their exact floor
+ * commands. No semantic promotion or draw permission is granted. */
+int nexus_v1_dgn_bind_direct_structure1f_floor_sources(
+    const Nexus_V1_Level *level, const Nexus_V1_DgnRenderCommand *commands,
+    int command_count, Nexus_V1_DgnStructure1FDirectFloorCommandSource *out_sources,
+    int max_sources,
+    Nexus_V1_DgnStructure1FDirectFloorCommandSourceReceipt *out_receipt);
 /* Binds a declared animated floor's verified local Structure2 descriptor to
  * the exact DGN floor command. It emits raw descriptor provenance only and
  * remains fail-closed until an original Saturn payload/VDP1 decoder exists. */

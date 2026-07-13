@@ -30,6 +30,7 @@ typedef struct Nexus_V1_Engine Nexus_V1_Engine;
 
 /* ── Constants ─────────────────────────────────────────────────────── */
 #define NEXUS_MAX_MODELS 64
+#define NEXUS_V1_DGN_RUNTIME_DIRECT_SOURCE_MAX 512
 
 /* ── Enumerations ──────────────────────────────────────────────────── */
 typedef enum {
@@ -95,6 +96,11 @@ typedef struct {
     Nexus_V1_DgnCommandPacked4BppMaterialReceipt
         structure1f_item_floor_material_receipt;
     int structure1f_item_floor_materials_consumed;
+    Nexus_V1_DgnStructure1FDirectFloorCommandSource
+        structure1f_direct_floor_sources[NEXUS_V1_DGN_RUNTIME_DIRECT_SOURCE_MAX];
+    Nexus_V1_DgnStructure1FDirectFloorCommandSourceReceipt
+        structure1f_direct_floor_source_receipt;
+    int structure1f_direct_floor_sources_consumed;
     int level;
     int party_x;
     int party_y;
