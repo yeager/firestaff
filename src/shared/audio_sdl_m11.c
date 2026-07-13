@@ -937,6 +937,42 @@ int M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex) {
                                     M11_Audio_FallbackMarkerForSoundIndex(soundIndex));
 }
 
+int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
+                                        const unsigned char* program,
+                                        int programBytes,
+                                        unsigned int vblankMs) {
+    unsigned int pos = 0u;
+    unsigned int waits = 0u;
+    unsigned int writes = 0u;
+
+    if (!state || !state->initialized || !program || programBytes < 2 ||
+        vblankMs == 0u) {
+        return 0;
+    }
+    /* ReDMCSB SWSH.C V0901005 -> XBIOS Dosound(): retain and validate the
+     * original PSG register program. This route deliberately does not call
+     * EmitMarker/EmitSoundIndex, because neither SND3 nor procedural audio is
+     * the source-visible FTL swoosh sound. SDL playback of this PSG program is
+     * a separate backend concern; no alternate effect is substituted here. */
+    while (pos + 1u < (unsigned int)programBytes) {
+        unsigned int reg = program[pos++];
+        unsigned int value = program[pos++];
+        if (reg == 0xffu) {
+            if (value == 0u) {
+                state->lastSoundIndex = -1;
+                return writes == 17u && waits == 20u ? 1 : 0;
+            }
+            waits += value;
+            continue;
+        }
+        if (reg > 0x0du) {
+            return 0;
+        }
+        writes++;
+    }
+    return 0;
+}
+
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {
     if (!state || !state->initialized) return 0;
     state->lastMusicTrackId = musicTrackId;

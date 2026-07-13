@@ -485,6 +485,24 @@ static void check_startup_source_timing_contract(void) {
     expect_u("startup SWSH final hold comes from source helper",
              media.swsh_final_hold_ms,
              SWSH_Compat_GetRuntimeFinalHoldMs());
+    {
+        unsigned int soundBytes = 0u;
+        const unsigned char* sound = SWSH_Compat_GetPc34DosoundProgram(&soundBytes);
+        unsigned int soundPos = 0u;
+        unsigned int soundWrites = 0u;
+        unsigned int soundWaits = 0u;
+        expect_truth("DM1 SWSH retains original Dosound program",
+                     sound != NULL && soundBytes == 56u);
+        while (sound && soundPos + 1u < soundBytes) {
+            unsigned int reg = sound[soundPos++];
+            unsigned int value = sound[soundPos++];
+            if (reg == 0xffu && value == 0u) break;
+            if (reg == 0xffu) soundWaits += value;
+            else ++soundWrites;
+        }
+        expect_u("DM1 SWSH Dosound has 17 original register writes", soundWrites, 17u);
+        expect_u("DM1 SWSH Dosound has 20 original VBlank waits", soundWaits, 20u);
+    }
     for (sourceStep = 1u;
          sourceStep <= SWSH_Compat_GetSourceAnimationStepCount();
          ++sourceStep) {
