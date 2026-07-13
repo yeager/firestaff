@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 DM2 selected-item survey preview: the inventory panel now
+  consumes skproject `DRAW_ITEM_SURVEY`'s optional selected-item
+  `dtImage/0x11` only at original expanded rect `0x1EE` with transparency key
+  12. It reuses the verified local-palette GDAT blit and rejects a missing
+  preview record or any different destination rect/key without synthesizing a
+  replacement icon. Source: skproject `SKWIN/SkWinCore.cpp`
+  `DRAW_ITEM_SURVEY` 13962-14019. Verification: Ninja and CTest
+  `dm2_v1_inventory_item_panel_gate` passed; `git diff --check` passed.
+
 - ✅ 2026-07-13 CSB PC34 full-title runtime handoff: C001 PRESENTS, CHAOS,
   and STRIKES BACK now require the same terminal C017/C040 session generation,
   package hash, and decoded-surface hash as the opening-door or live-HUD

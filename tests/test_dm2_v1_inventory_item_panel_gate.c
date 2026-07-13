@@ -201,9 +201,9 @@ static void test_source_selected_item_gdat_material(void)
 {
     DM2_V1_AssetLoader loader;
     DM2_V1_GdatEntry entries[2];
-    uint8_t raw[27];
-    uint32_t offsets[1] = {0u};
-    uint32_t sizes[1] = {sizeof(raw)};
+    uint8_t raw[54];
+    uint32_t offsets[2] = {0u, 27u};
+    uint32_t sizes[2] = {27u, 27u};
     DM2_ChampionRecord champ;
     DM2_DB_State db;
     DM2_V1_InventoryPanelItemView item;
@@ -212,6 +212,7 @@ static void test_source_selected_item_gdat_material(void)
     DM2_V1_InventoryPanelHudBlit blit;
     DM2_V1_InventoryPanelHudSurface surface;
     DM2_V1_InventoryPanelHudConsumptionReceipt consumption;
+    DM2_V1_InventoryPanelSurveyPreviewReceipt preview;
     uint8_t hud_pixels[16];
     uint32_t powerblade;
     int palette;
@@ -228,18 +229,29 @@ static void test_source_selected_item_gdat_material(void)
     raw[10] = 0x1cu;
     for (palette = 0; palette < 16; ++palette) {
         raw[11 + palette] = (uint8_t)(0x20 + palette);
+        raw[38 + palette] = (uint8_t)(0x40 + palette);
     }
     entries[0].cls1 = DM2_GDAT_CATEGORY_WEAPONS;
     entries[0].cls2 = 0x2au;
     entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
     entries[0].cls4 = 0x18u;
     entries[0].data_index = 0u;
+    raw[27] = 2u;
+    raw[29] = 1u;
+    raw[30] = 0x80u;
+    raw[31] = 4u;
+    raw[37] = 0x1cu;
+    entries[1].cls1 = DM2_GDAT_CATEGORY_WEAPONS;
+    entries[1].cls2 = 0x2au;
+    entries[1].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
+    entries[1].cls4 = DM2_V1_INVENTORY_SURVEY_PREVIEW_FIELD;
+    entries[1].data_index = 1u;
     loader.loaded = 1;
     loader.entries = entries;
-    loader.entry_count = 1u;
+    loader.entry_count = 2u;
     loader.raw_offsets = offsets;
     loader.raw_sizes = sizes;
-    loader.raw_data_count = 1u;
+    loader.raw_data_count = 2u;
     loader.data = raw;
     loader.data_size = sizeof(raw);
     powerblade = dm2_db_make_handle(DM2_DB_WEAPON, 1u);
@@ -297,6 +309,27 @@ static void test_source_selected_item_gdat_material(void)
     CHECK(!dm2_v1_inventory_panel_consume_hud_material(
               &loader, &hud, &blit, &surface, &consumption),
           "changed GDAT item pixels invalidate the live HUD receipt");
+    raw[10] = 0x1cu;
+    CHECK(dm2_v1_inventory_panel_survey_preview_receipt(
+              &loader, &item, DM2_GDAT_CATEGORY_WEAPONS, 0x2au, &preview) &&
+              preview.valid &&
+              preview.expanded_rect_index == DM2_V1_INVENTORY_SURVEY_PREVIEW_RECT &&
+              preview.transparent_index == DM2_V1_INVENTORY_SURVEY_TRANSPARENCY &&
+              preview.hud.material.image_field ==
+                  DM2_V1_INVENTORY_SURVEY_PREVIEW_FIELD,
+          "selected item survey binds only its source dtImage 0x11 preview");
+    memset(hud_pixels, 0x7eu, sizeof(hud_pixels));
+    blit.rect_number = DM2_V1_INVENTORY_SURVEY_PREVIEW_RECT;
+    blit.destination_x = 1;
+    CHECK(dm2_v1_inventory_panel_consume_survey_preview(
+              &loader, &preview, &blit, &surface, &consumption) &&
+              consumption.valid && hud_pixels[2 * 4 + 1] == 0x41u &&
+              hud_pixels[2 * 4 + 2] == 0x7eu,
+          "selected item survey consumes its exact preview without fallback");
+    blit.rect_number = 0x01efu;
+    CHECK(!dm2_v1_inventory_panel_consume_survey_preview(
+              &loader, &preview, &blit, &surface, &consumption),
+          "survey preview rejects a non-source destination rect");
     CHECK(!dm2_v1_inventory_panel_gdat_material_receipt(
               &loader, powerblade, DM2_GDAT_CATEGORY_WEAPONS, 0x2au, 0x19u,
               &material),
