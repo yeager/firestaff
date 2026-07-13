@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 C2 PARTY_INFO provenance: F0435 now retains the full
+  128-byte trailing `PARTY_INFO` record after M516_CHAMPIONS, and F0433 emits
+  only that imported record. The former host-written party-coordinate layout
+  is removed because ReDMCSB `DEFS.H` assigns this region to light, shield,
+  scent, and unreferenced state. The C13/C2 roundtrip gate and corpus receipts
+  compare the complete raw block. Source: ReDMCSB `DEFS.H` `PARTY_INFO` and
+  `LOADSAVE.C` F0433:1565-1584/F0435:2766-2777. Verification: focused
+  native-PC34 handoff CTest with nonzero opaque PARTY_INFO bytes.
+
 - 2026-07-13 Theron authentic BIOS-to-loader capture: a visible macOS capture
   proves the real Super CD-ROM System Card title accepts `RUN` only after its
   startup screen is live, then reaches Theron's genuine JVC intro. The bounded

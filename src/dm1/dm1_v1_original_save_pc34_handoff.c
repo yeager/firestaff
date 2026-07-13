@@ -550,6 +550,14 @@ static int import_original_pc34_party_part(const uint8_t *part,
                DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT);
         out_state->party->pc34InactiveChampionRecordValid[i] = 1u;
     }
+    /* ReDMCSB LOADSAVE.C F0435:2766-2777 copies the complete C2 payload,
+     * including PARTY_INFO. DEFS.H's 128-byte structure starts with light
+     * and shield state, not the GLOBAL_DATA party coordinates; retain it
+     * opaquely until every source field has a proved runtime owner. */
+    memcpy(out_state->party->pc34PartyInfoBytes,
+           part + (DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT * CHAMPION_MAX_PARTY),
+           PARTY_PC34_SAVE_INFO_BYTE_COUNT);
+    out_state->party->pc34PartyInfoBytesValid = 1u;
     if (out_report) {
         out_report->imported_champion_block_count = CHAMPION_MAX_PARTY;
         out_report->imported_champion_slot_count = slot_count;
@@ -3267,6 +3275,55 @@ static int dm1_original_save_c13_champion_records_match(
     return 1;
 }
 
+static int dm1_original_save_party_info_bytes_match(
+    const uint8_t *source_bytes,
+    size_t source_size,
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const uint8_t *exported_bytes,
+    size_t exported_size,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t source_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    uint8_t exported_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    const size_t party_info_offset =
+        DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT * CHAMPION_MAX_PARTY;
+
+    if (!source_bytes || !source_report || !exported_bytes ||
+        !exported_report || !out_report ||
+        source_report->part_byte_counts[SAVEGAME_PC34_PART_PARTY] !=
+            DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT ||
+        exported_report->part_byte_counts[SAVEGAME_PC34_PART_PARTY] !=
+            DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT ||
+        source_report->pc34_party_part_byte_offset > source_size ||
+        exported_report->pc34_party_part_byte_offset > exported_size ||
+        DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT > source_size -
+            source_report->pc34_party_part_byte_offset ||
+        DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT > exported_size -
+            exported_report->pc34_party_part_byte_offset) {
+        return 0;
+    }
+    memcpy(source_part,
+           source_bytes + source_report->pc34_party_part_byte_offset,
+           sizeof(source_part));
+    memcpy(exported_part,
+           exported_bytes + exported_report->pc34_party_part_byte_offset,
+           sizeof(exported_part));
+    (void)f0417_xor_checksum_bytes(source_part,
+                                   sizeof(source_part) / 2u,
+                                   source_report->pc34_party_part_key);
+    (void)f0417_xor_checksum_bytes(exported_part,
+                                   sizeof(exported_part) / 2u,
+                                   exported_report->pc34_party_part_key);
+    out_report->party_info_byte_receipt_available = 1;
+    out_report->source_party_info_byte_count = PARTY_PC34_SAVE_INFO_BYTE_COUNT;
+    out_report->exported_party_info_byte_count = PARTY_PC34_SAVE_INFO_BYTE_COUNT;
+    out_report->party_info_byte_preservation_ok = memcmp(
+        source_part + party_info_offset, exported_part + party_info_offset,
+        PARTY_PC34_SAVE_INFO_BYTE_COUNT) == 0;
+    return 1;
+}
+
 static void fill_roundtrip_core_report(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const DM1OriginalSavePC34HandoffReport *export_report,
@@ -3562,6 +3619,11 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
             &export_report, out_report)) {
         out_report->c13_champion_record_byte_receipt_available = 0;
     }
+    if (out_report && !dm1_original_save_party_info_bytes_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report)) {
+        out_report->party_info_byte_receipt_available = 0;
+    }
     F0883_WORLD_Free_Compat(&reloaded_world);
     if (out_report &&
         (!out_report->core_state_matches ||
@@ -3569,6 +3631,8 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
          !out_report->external_portrait_byte_preservation_ok ||
          !out_report->inactive_champion_record_byte_receipt_available ||
          !out_report->inactive_champion_record_byte_preservation_ok ||
+         !out_report->party_info_byte_receipt_available ||
+         !out_report->party_info_byte_preservation_ok ||
          (!out_report->c13_byte_receipt_available &&
           import_report.original_event_count > 0) ||
          (out_report->source_c13_event_count > 0 &&
@@ -3800,6 +3864,12 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.c13_champion_record_byte_mismatch_count;
         receipt->c13_champion_record_byte_preservation_ok =
             roundtrip.c13_champion_record_byte_preservation_ok;
+        receipt->source_party_info_byte_count =
+            roundtrip.source_party_info_byte_count;
+        receipt->exported_party_info_byte_count =
+            roundtrip.exported_party_info_byte_count;
+        receipt->party_info_byte_preservation_ok =
+            roundtrip.party_info_byte_preservation_ok;
         receipt->source_external_portrait_fingerprint =
             roundtrip.source_external_portrait_fingerprint;
         receipt->exported_external_portrait_fingerprint =

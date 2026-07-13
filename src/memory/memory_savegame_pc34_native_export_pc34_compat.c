@@ -907,18 +907,13 @@ static int pack_party(unsigned char* dst, int dstCap,
                                               &state->party->champions[slot]);
         }
     }
-    write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 0u,
-                 (uint16_t)state->party->championCount);
-    write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 2u,
-                 (uint16_t)state->party->mapX);
-    write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 4u,
-                 (uint16_t)state->party->mapY);
-    write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 6u,
-                 (uint16_t)state->party->direction);
-    write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 8u,
-                 (uint16_t)state->party->mapIndex);
-    write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 10u,
-                 (uint16_t)state->party->activeChampionIndex);
+    if (state->party->pc34PartyInfoBytesValid) {
+        /* ReDMCSB DEFS.H PARTY_INFO is not GLOBAL_DATA: preserve source
+         * light/shield/scent bytes rather than fabricating a host layout. */
+        memcpy(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u,
+               state->party->pc34PartyInfoBytes,
+               PARTY_PC34_SAVE_INFO_BYTE_COUNT);
+    }
     return needed;
 }
 
@@ -1025,6 +1020,10 @@ static void unpack_party(const unsigned char* src,
     for (; slot < CHAMPION_MAX_PARTY; ++slot) {
         F0600_CHAMPION_InitEmpty_Compat(&state->party->champions[slot]);
     }
+    memcpy(state->party->pc34PartyInfoBytes,
+           src + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u,
+           PARTY_PC34_SAVE_INFO_BYTE_COUNT);
+    state->party->pc34PartyInfoBytesValid = 1u;
 }
 
 static int pc34_event_type_from_timeline_kind(int kind, int aux0)

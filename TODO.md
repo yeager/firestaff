@@ -1227,6 +1227,13 @@ and real community-save corpus round-trip evidence.
     records fail closed; the corpus receipt exposes the same count/result.
     Remaining work is authentic community-save coverage and broader
     dungeon-tail import.
+  - 2026-07-13 update: the C2 tail is now retained as the original 128-byte
+    `PARTY_INFO` record. ReDMCSB `DEFS.H` places magical light, shield,
+    scent and unreferenced bytes there; it is not `GLOBAL_DATA`, so F0433
+    re-emits imported provenance instead of writing party coordinates into
+    that region. The roundtrip and corpus receipts compare all 128 bytes.
+    Remaining work is source-backed runtime ownership for individual
+    PARTY_INFO fields plus authentic community-save coverage.
   - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
     with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
     the corresponding exported C14 `EventIndex` without changing the live
