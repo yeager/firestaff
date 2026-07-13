@@ -90,6 +90,14 @@
   Verification: capture-script syntax/contract test, Mednafen patch dry-run,
   rebuilt instrumented Mednafen, and three authentic bounded GUI captures.
 
+- 2026-07-13 DM1 F0115 multi-projectile C2900 selection: the live PC34
+  materialization receipt now counts every same-square C14 record while
+  selecting its presented record only after the ReDMCSB `DUNVIEW.C
+  F0115:5668-5683` G2028/C2900 coordinate gate succeeds. An earlier invisible
+  cell can no longer suppress a later valid object/projectile material; no
+  marker or replacement graphic is introduced. Focused D0C two-record
+  regression, projectile material CTest, and Ninja build pass.
+
 - 2026-07-13 DM1 F0115 F0127 D0C projectile materialization: M11 now maps
   `M609_VIEW_SQUARE_D0C` to ReDMCSB `G2028[0]` / C2900 row 11 and consumes
   its live original material in a dedicated F0127-order pass before deferred

@@ -56,6 +56,7 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
     int suppressMirrorAsSpellEffect;
     int noM11Fallback;
     int liveProjectileCount;
+    int liveVisibleProjectileCount;
     int liveProjectileSlot;
     int liveProjectileSubtype;
     unsigned short liveProjectileAssociatedThing;
