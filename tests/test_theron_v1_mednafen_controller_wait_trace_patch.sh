@@ -4,6 +4,7 @@ set -euo pipefail
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 patch_file=$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch
 input_patch_file=$repo/scripts/mednafen_1.32.1_theron_input_trace.patch
+state_patch_file=$repo/scripts/mednafen_1.32.1_theron_pcecd_state_trace.patch
 
 if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x address=2241 accumulator=%02x' "$patch_file" ||
    ! grep -Fq 'system_card_controller_state_store pc=%04x physical_pc=%08x opcode=%02x accumulator=%02x state_before=%02x' "$patch_file" ||
@@ -14,6 +15,14 @@ if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x addre
    ! grep -Fq 'system_card_controller_wait_sample callback=%llu state_2241=%02x state_write_count=%u cd_1800=%02x' "$patch_file" ||
    ! grep -Fq 'address == 0x2241' "$patch_file"; then
     printf 'FAIL: Mednafen patch no longer retains bounded controller-state evidence\n' >&2
+    exit 1
+fi
+
+if ! grep -Fq 'pce_cd_register_read physical=%08x data=%02x peek=%u' "$state_patch_file" ||
+   ! grep -Fq 'pce_cd_irq type=%04x port2=%02x port3=%02x' "$state_patch_file" ||
+   ! grep -Fq '!PeekMode && (A & 0xf) <= 4' "$state_patch_file" ||
+   ! grep -Fq 'source=mednafen-pce-instrumented-cd-state' "$state_patch_file"; then
+    printf 'FAIL: Mednafen state patch no longer retains raw PCECD read/IRQ evidence\n' >&2
     exit 1
 fi
 
@@ -34,4 +43,5 @@ trap 'rm -rf "$scratch"' EXIT
 cp -R "$MEDNAFEN_SOURCE/." "$scratch/source"
 patch -d "$scratch/source" -p1 --batch --forward <"$patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$input_patch_file"
-printf 'PASS: Mednafen patches dry-run with controller-state and raw input evidence\n'
+patch -d "$scratch/source" -p1 --batch --forward <"$state_patch_file"
+printf 'PASS: Mednafen patches dry-run with controller, raw input, and PCECD state evidence\n'

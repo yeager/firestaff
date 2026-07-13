@@ -1395,6 +1395,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     must first record a nonzero raw port-0 transition and then prove a
     subsequent dynamic CD read; otherwise the wait remains pre-Track02 and
     fail-closed.
+    2026-07-13 PCECD-state update: the authentic run now proves non-peek
+    controller reads at 1804, 1802, and 1803 plus CDIRQ types 8001 and 0003.
+    No non-peek 1800 status transition and no raw sector read followed these
+    events before the C8CD -> C897 loop. These are raw controller observations
+    only; the next trace must observe a later status/IRQ change followed by a
+    real sector read before any Track02 handoff can proceed.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect

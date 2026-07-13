@@ -1118,6 +1118,15 @@
   authentic 90-second dummy capture; and authentic 45-second GUI-configured
   capture.
 
+- ✅ 2026-07-13 Theron PCECD read/IRQ receipt: added a bounded Mednafen
+  controller-state patch that records only non-peek PCECD reads and raw CDIRQ
+  callback type plus port masks. The authentic US CUE/System Card capture
+  observed reads at 1804, 1802, and 1803 and CDIRQ types 8001 and 0003 before
+  the existing C8CD -> C897 wait. It observed no non-peek 1800 transition and
+  no raw sector read, so it cannot authorize Track02, payload, graphics, or
+  runtime output. Verification: all Mednafen patch dry-runs, capture-script
+  regression, clean instrumented Mednafen build, and bounded authentic capture.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete

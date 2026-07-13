@@ -1,0 +1,52 @@
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -98,3 +98,27 @@ namespace MDFN_IEN_PCE
+ static void (*IRQCB)(bool asserted);
+-
++static FILE *TheronPCECDStateTrace;
++static unsigned TheronPCECDStateTraceCount;
++
++static void TheronTracePCECDState(const char *format, ...)
++{
++ va_list args;
++
++ if(TheronPCECDStateTraceCount >= 128)
++  return;
++ if(!TheronPCECDStateTrace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_IRQ2_CD_TRACE");
++  if(!path || !*path)
++   return;
++  TheronPCECDStateTrace = fopen(path, "a");
++  if(!TheronPCECDStateTrace)
++   return;
++  fputs("source=mednafen-pce-instrumented-cd-state\n", TheronPCECDStateTrace);
++ }
++ va_start(args, format);
++ vfprintf(TheronPCECDStateTrace, format, args);
++ va_end(args);
++ fflush(TheronPCECDStateTrace);
++ TheronPCECDStateTraceCount++;
++}
+ // Settings:
+@@ -352,3 +376,5 @@ static void CDIRQ(int type)
+ static void CDIRQ(int type)
+ {
++ const int raw_type = type;
++
+  #ifdef PCECD_DEBUG
+@@ -373,3 +399,4 @@ static void CDIRQ(int type)
+  }
+  update_irq_state();
++ TheronTracePCECDState("pce_cd_irq type=%04x port2=%02x port3=%02x\n", raw_type, _Port[2], _Port[3]);
+ }
+@@ -634,3 +661,8 @@ MDFN_FASTCALL uint8 PCECD_Read(uint32 timestamp, uint32 A, int32 &next_event, c
+  #endif
+  next_event = CalcNextEvent(0x7FFFFFFF);
++ if(!PeekMode && (A & 0xf) <= 4)
++ {
++  TheronTracePCECDState("pce_cd_register_read physical=%08x data=%02x peek=%u\n",
++                        A, ret, PeekMode ? 1 : 0);
++ }
+  return(ret);
