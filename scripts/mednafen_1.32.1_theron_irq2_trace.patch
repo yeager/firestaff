@@ -1195,5 +1195,39 @@ index 347482c4..61d4758e 100644
  	 TraceLog.reset(nullptr);
 +	if(TheronIrq2Trace)
 +	 TheronIrq2Trace.reset(nullptr);
- 	if(memdbg != NULL)
- 	{
+	if(memdbg != NULL)
+	{
+
+diff --git a/src/pce/huc.cpp b/src/pce/huc.cpp
+--- a/src/pce/huc.cpp
++++ b/src/pce/huc.cpp
+@@ -110,4 +110,29 @@ static DECLFW(SysCardRAMWrite)
+ static DECLFW(SysCardRAMWrite)
+ {
++ static FILE *theron_memory_trace = NULL;
++ static unsigned theron_memory_trace_count = 0;
++
++ if(!theron_memory_trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_IRQ2_MEMORY_TRACE");
++  if(path && *path)
++  {
++   theron_memory_trace = fopen(path, "a");
++   if(theron_memory_trace)
++   {
++    fputs("source=mednafen-pce-instrumented-memory\\n", theron_memory_trace);
++    fflush(theron_memory_trace);
++   }
++  }
++ }
++ if(theron_memory_trace && theron_memory_trace_count < 16 &&
++    HuCPU.GetLastLogicalWriteAddr() == 0x222d)
++ {
++  fprintf(theron_memory_trace,
++          "system_card_controller_result_memory_write logical=222d physical=%08x value=%02x\\n",
++          A, V);
++  fflush(theron_memory_trace);
++  theron_memory_trace_count++;
++ }
+  SysCardRAM[A - 0x68 * 8192] = V;
+ }
