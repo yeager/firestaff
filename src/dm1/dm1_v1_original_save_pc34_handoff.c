@@ -758,10 +758,15 @@ static int validate_original_pc34_timeline_membership(
     for (i = 0; i < out_report->original_event_count; ++i) {
         uint16_t event_index = out_report->timeline_indices[i];
 
-        if (event_index >= (uint16_t)out_report->decoded_event_count ||
-            out_report->events[event_index].type == DM1_EVENT_NONE) {
+        if (event_index >= (uint16_t)out_report->decoded_event_count) {
             out_report->timeline_invalid_slot = i;
             out_report->timeline_invalid_event_index = event_index;
+            return SAVEGAME_PC34_ERROR_BAD_SIZE;
+        }
+        if (out_report->events[event_index].type == DM1_EVENT_NONE) {
+            out_report->timeline_invalid_slot = i;
+            out_report->timeline_invalid_event_index = event_index;
+            out_report->timeline_invalid_event_is_none = 1;
             return SAVEGAME_PC34_ERROR_BAD_SIZE;
         }
         if (seen[event_index]) {
@@ -2628,6 +2633,7 @@ int dm1_v1_original_save_pc34_handoff_bytes(
     staged_report.timeline_duplicate_event_index = -1;
     staged_report.timeline_invalid_slot = -1;
     staged_report.timeline_invalid_event_index = -1;
+    staged_report.timeline_invalid_event_is_none = 0;
     if (out_report) {
         memset(out_report, 0, sizeof(*out_report));
         out_report->importer_result = SAVEGAME_PC34_ERROR_INTERNAL;
@@ -2636,6 +2642,7 @@ int dm1_v1_original_save_pc34_handoff_bytes(
         out_report->timeline_duplicate_event_index = -1;
         out_report->timeline_invalid_slot = -1;
         out_report->timeline_invalid_event_index = -1;
+        out_report->timeline_invalid_event_is_none = 0;
     }
     if (!bytes || !out_state) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;

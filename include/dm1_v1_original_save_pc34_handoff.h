@@ -118,6 +118,7 @@ typedef struct {
     int timeline_duplicate_event_index;
     int timeline_invalid_slot;
     int timeline_invalid_event_index;
+    int timeline_invalid_event_is_none;
     uint32_t external_portrait_byte_count;
     uint32_t external_portrait_byte_offset;
     uint32_t external_portrait_fingerprint;
