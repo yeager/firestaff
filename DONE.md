@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 DM2 inventory HUD GDAT material receipt: a selected DM2 item
+  can now bind to a no-draw receipt only through its source-provided item
+  category/index/image-field triple, the exact decoded four-bit `dtImage`,
+  and its `QUERY_GDAT_IMAGE_LOCALPAL` palette. The HUD receipt rejects an
+  ObjectID mismatch, missing field, or non-item category and never chooses a
+  fallback icon. Source: skproject `SKWIN/SkWinCore.cpp` `DRAW_ITEM_ICON`
+  13478-13620 and `DRAW_ITEM_IN_HAND` 15778-15812. Verification: Ninja and
+  CTest `dm2_v1_inventory_item_panel_gate` passed; `git diff --check` passed.
+
 - 2026-07-13 CSB PC34 startup input/runtime package handoff: the CSB runtime
   bridge now permits opening-door and terminal-HUD transitions only when the
   input/runtime state, host surface, package hash, decoded-surface hash, and
