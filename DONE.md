@@ -24,6 +24,14 @@
   fallback is admitted; direct save/model APIs remain separate. Verification:
   focused Ninja build and `m11_dm1_hoc_no_fallback_panel` CTest covering
   rejection without M653 and the loaded C027/M653 C161 route.
+- 2026-07-13 DM1 PC34 C13-to-C2 byte receipt: every saved Vi Altar C13 now
+  verifies the exact active 319-byte `M516_CHAMPIONS` C2 record selected by
+  its source `EVENT.Priority` across F0435 -> F0433 -> F0435, with each
+  PARTY part decoded under its own original key. Missing active slots or
+  changed records fail closed, and corpus receipts retain the same evidence.
+  Source: ReDMCSB `CLIKVIEW.C` F0374:179-186 and `LOADSAVE.C`
+   F0433:1565-1584/F0435:2766-2777. Verification: focused native-PC34 C13
+   round-trip CTest.
 
 - 2026-07-13 Theron macOS host-key scancode hardening: the authentic
   Mednafen capture now uses explicit macOS virtual keycodes for `RUN`/Return

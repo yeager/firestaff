@@ -3188,6 +3188,85 @@ static int dm1_original_save_inactive_champion_records_match(
     return 1;
 }
 
+/* ReDMCSB CLIKVIEW.C F0374:179-186 sets C13.Priority from the dropped
+ * bones' ChargeCount. That is an index into M516_CHAMPIONS, not a generic
+ * host champion identity. F0433/F0435 copy the complete C2 PARTY block, so
+ * the C13-selected active 319-byte source record must survive unchanged. */
+static int dm1_original_save_c13_champion_records_match(
+    const uint8_t *source_bytes,
+    size_t source_size,
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const uint8_t *exported_bytes,
+    size_t exported_size,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t source_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    uint8_t exported_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    int source_count;
+    int exported_count;
+    int i;
+
+    if (!source_bytes || !source_report || !exported_bytes ||
+        !exported_report || !out_report ||
+        source_report->part_byte_counts[SAVEGAME_PC34_PART_PARTY] !=
+            DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT ||
+        exported_report->part_byte_counts[SAVEGAME_PC34_PART_PARTY] !=
+            DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT ||
+        source_report->pc34_party_part_byte_offset > source_size ||
+        exported_report->pc34_party_part_byte_offset > exported_size ||
+        DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT > source_size -
+            source_report->pc34_party_part_byte_offset ||
+        DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT > exported_size -
+            exported_report->pc34_party_part_byte_offset) {
+        return 0;
+    }
+    source_count = source_report->imported_champion_count;
+    exported_count = exported_report->imported_champion_count;
+    if (source_count < 0 || source_count > CHAMPION_MAX_PARTY ||
+        exported_count != source_count) {
+        return 0;
+    }
+    memcpy(source_part,
+           source_bytes + source_report->pc34_party_part_byte_offset,
+           sizeof(source_part));
+    memcpy(exported_part,
+           exported_bytes + exported_report->pc34_party_part_byte_offset,
+           sizeof(exported_part));
+    (void)f0417_xor_checksum_bytes(source_part,
+                                   sizeof(source_part) / 2u,
+                                   source_report->pc34_party_part_key);
+    (void)f0417_xor_checksum_bytes(exported_part,
+                                   sizeof(exported_part) / 2u,
+                                   exported_report->pc34_party_part_key);
+    out_report->c13_champion_record_byte_receipt_available = 1;
+    for (i = 0; i < source_report->decoded_event_count; ++i) {
+        const struct DM1_Event_V1 *event = &source_report->events[i];
+        size_t offset;
+
+        if (event->type != DM1_EVENT_VI_ALTAR_REBIRTH) {
+            continue;
+        }
+        ++out_report->source_c13_champion_record_reference_count;
+        if (event->priority >= (uint8_t)source_count) {
+            ++out_report->c13_champion_record_byte_mismatch_count;
+            continue;
+        }
+        offset = (size_t)event->priority *
+            DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT;
+        if (memcmp(source_part + offset, exported_part + offset,
+                   DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT) == 0) {
+            ++out_report->c13_champion_record_byte_preserved_count;
+        } else {
+            ++out_report->c13_champion_record_byte_mismatch_count;
+        }
+    }
+    out_report->c13_champion_record_byte_preservation_ok =
+        out_report->c13_champion_record_byte_preserved_count ==
+        out_report->source_c13_champion_record_reference_count;
+    return 1;
+}
+
 static void fill_roundtrip_core_report(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const DM1OriginalSavePC34HandoffReport *export_report,
@@ -3478,6 +3557,11 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
             &export_report, out_report)) {
         out_report->inactive_champion_record_byte_receipt_available = 0;
     }
+    if (out_report && !dm1_original_save_c13_champion_records_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report)) {
+        out_report->c13_champion_record_byte_receipt_available = 0;
+    }
     F0883_WORLD_Free_Compat(&reloaded_world);
     if (out_report &&
         (!out_report->core_state_matches ||
@@ -3490,7 +3574,9 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
          (out_report->source_c13_event_count > 0 &&
           (!out_report->c13_byte_preservation_ok ||
            !out_report->c13_timeline_byte_receipt_available ||
-           !out_report->c13_timeline_byte_preservation_ok)))) {
+           !out_report->c13_timeline_byte_preservation_ok ||
+           !out_report->c13_champion_record_byte_receipt_available ||
+           !out_report->c13_champion_record_byte_preservation_ok)))) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
@@ -3706,6 +3792,14 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.c13_timeline_byte_mismatch_count;
         receipt->c13_timeline_byte_preservation_ok =
             roundtrip.c13_timeline_byte_preservation_ok;
+        receipt->source_c13_champion_record_reference_count =
+            roundtrip.source_c13_champion_record_reference_count;
+        receipt->c13_champion_record_byte_preserved_count =
+            roundtrip.c13_champion_record_byte_preserved_count;
+        receipt->c13_champion_record_byte_mismatch_count =
+            roundtrip.c13_champion_record_byte_mismatch_count;
+        receipt->c13_champion_record_byte_preservation_ok =
+            roundtrip.c13_champion_record_byte_preservation_ok;
         receipt->source_external_portrait_fingerprint =
             roundtrip.source_external_portrait_fingerprint;
         receipt->exported_external_portrait_fingerprint =

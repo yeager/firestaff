@@ -3844,7 +3844,12 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
               roundtrip.exported_c13_timeline_reference_count == 1 &&
               roundtrip.c13_timeline_byte_preserved_count == 1 &&
               roundtrip.c13_timeline_byte_mismatch_count == 0 &&
-              roundtrip.c13_timeline_byte_preservation_ok,
+              roundtrip.c13_timeline_byte_preservation_ok &&
+              roundtrip.c13_champion_record_byte_receipt_available &&
+              roundtrip.source_c13_champion_record_reference_count == 1 &&
+              roundtrip.c13_champion_record_byte_preserved_count == 1 &&
+              roundtrip.c13_champion_record_byte_mismatch_count == 0 &&
+              roundtrip.c13_champion_record_byte_preservation_ok,
           "native F0433 C13 record survives F0435 -> F0433 -> F0435 byte-for-byte");
 
     /* C13 has no independent live meaning: removing its source-owned bones

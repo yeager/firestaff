@@ -1214,6 +1214,13 @@ and real community-save corpus round-trip evidence.
     rejects the import; C13 can no longer reinterpret Priority as a free
     champion selector. Remaining work is authentic community-save coverage
     and broader dungeon-tail import.
+  - 2026-07-13 update: C13 now has a separate C2 PARTY byte receipt.
+    For every saved C13, F0435 -> F0433 -> F0435 decrypts each save's own
+    C2 part and compares the exact 319-byte active `M516_CHAMPIONS` record
+    selected by `EVENT.Priority`. Missing active slots or altered selected
+    records fail closed; the corpus receipt exposes the same count/result.
+    Remaining work is authentic community-save coverage and broader
+    dungeon-tail import.
   - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
     with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
     the corresponding exported C14 `EventIndex` without changing the live
