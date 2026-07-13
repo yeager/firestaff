@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus retail MNS TEXT bank integrity: the bounded `TEXT`
+  decoder now records descriptor material-ID uniqueness and rejects ambiguous
+  duplicate slots before a source surface can be overwritten. Local
+  hash-verified `SN_FLOOR.MNS` and `SN_WALL.MNS` both decode with one source
+  slot per descriptor. This does not infer the still-unknown Structure1B
+  selector transform. Verification: Ninja-built
+  `test_nexus_v1_dmdf_embedded_blocks`; it passed with each real MNS file.
+
 - 2026-07-13 DM1 F0249 C04 group-first teleporter/pit handoff: opening a
   source C08/C09 square now finds and moves its group before snapshotting
   ordinary Things, as ReDMCSB `TIMELINE.C F0249:1387-1401` requires. The

@@ -108,6 +108,13 @@ typedef struct {
     uint32_t descriptor_offset;
     uint32_t pixel_data_offset;
     uint32_t descriptor_count;
+    /* TEXT descriptors feed a material-id-addressed bank. Retain the
+     * observed ID domain so an ambiguous duplicate slot cannot silently
+     * replace original texels. */
+    uint16_t first_material_id;
+    uint16_t last_material_id;
+    uint32_t unique_material_id_count;
+    int material_ids_unique;
     Nexus_DMDFTextureDescriptor descriptors[NEXUS_DMDF_MAX_TEXTURE_DESCRIPTORS];
     int valid;
 } Nexus_DMDFTextureSection;
