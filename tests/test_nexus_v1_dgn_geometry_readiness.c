@@ -829,6 +829,8 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt floor_sensor_destinations;
     Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt floor_decoration_payloads;
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt floor_decoration_rotations;
+    Nexus_V1_DgnStructure1FItemAttributePairReceipt item_attribute_pairs;
+    Nexus_V1_DgnStructure1FItemLocationPairReceipt item_location_pairs;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt structure3_correlation;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
@@ -893,6 +895,26 @@ static void test_structure1f_semantics_and_bounds(void) {
           spatial.floor_sensor_entry_count == 2 &&
           spatial.structure1a_bound_entry_count == 8,
           "Structure1F separates direct cell records from unresolved Structure1A records");
+    CHECK(nexus_v1_level_structure1f_item_attribute_pair_receipt(
+              &level, &item_attribute_pairs) == 0 &&
+          item_attribute_pairs.spatial_valid &&
+          item_attribute_pairs.item_count == 2 &&
+          item_attribute_pairs.resolved_pair_count == 2 &&
+          item_attribute_pairs.unique_pair_count == 2 &&
+          item_attribute_pairs.duplicate_pair_count == 0 &&
+          item_attribute_pairs.complete &&
+          !item_attribute_pairs.semantics_proven,
+          "Structure1F item attributes remain raw no-draw provenance");
+    CHECK(nexus_v1_level_structure1f_item_location_pair_receipt(
+              &level, &item_location_pairs) == 0 &&
+          item_location_pairs.spatial_valid &&
+          item_location_pairs.item_count == 2 &&
+          item_location_pairs.resolved_pair_count == 2 &&
+          item_location_pairs.unique_pair_count == 2 &&
+          item_location_pairs.duplicate_pair_count == 0 &&
+          item_location_pairs.complete &&
+          !item_location_pairs.semantics_proven,
+          "Structure1F item locations remain raw no-draw provenance");
     CHECK(nexus_v1_level_structure1a_boundary_receipt(&level,
                                                        &structure1a_boundary) == 0 &&
           structure1a_boundary.valid && structure1a_boundary.entry_count == 8 &&
@@ -1247,6 +1269,12 @@ static void test_structure1f_semantics_and_bounds(void) {
           !handoff.structure1f_floor_decoration_payload_selectors.payload_semantics_proven &&
           handoff.structure1f_floor_decoration_rotation_selectors.complete &&
           !handoff.structure1f_floor_decoration_rotation_selectors.rotation_semantics_proven &&
+          handoff.structure1f_item_attribute_pairs.complete &&
+          handoff.structure1f_item_attribute_pairs.unique_pair_count == 2 &&
+          !handoff.structure1f_item_attribute_pairs.semantics_proven &&
+          handoff.structure1f_item_location_pairs.complete &&
+          handoff.structure1f_item_location_pairs.unique_pair_count == 2 &&
+          !handoff.structure1f_item_location_pairs.semantics_proven &&
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
     CHECK(handoff.status ==
@@ -1288,6 +1316,12 @@ static void test_structure1f_semantics_and_bounds(void) {
           !render_plan.structure1f_floor_decoration_payload_selectors.payload_semantics_proven &&
           render_plan.structure1f_floor_decoration_rotation_selectors.complete &&
           !render_plan.structure1f_floor_decoration_rotation_selectors.rotation_semantics_proven &&
+          render_plan.structure1f_item_attribute_pairs.complete &&
+          render_plan.structure1f_item_attribute_pairs.unique_pair_count == 2 &&
+          !render_plan.structure1f_item_attribute_pairs.semantics_proven &&
+          render_plan.structure1f_item_location_pairs.complete &&
+          render_plan.structure1f_item_location_pairs.unique_pair_count == 2 &&
+          !render_plan.structure1f_item_location_pairs.semantics_proven &&
           render_plan.structure3_payload.valid &&
           render_plan.command_count == 0 && commands[0].kind == 0 &&
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready,
