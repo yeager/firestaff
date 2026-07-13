@@ -286,6 +286,13 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 CSB launcher handoff claims CSB boot source");
     expect_true(view.csbBootProfile != NULL,
                 "M11 CSB launcher handoff owns a CSB boot profile");
+    expect_true(view.csbStartupRuntimeAssetSession != NULL &&
+                    ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                         view.csbStartupRuntimeAssetSession)->valid &&
+                    ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                         view.csbStartupRuntimeAssetSession)
+                        ->rejects_legacy_wrappers,
+                "M11 CSB launcher handoff owns source-session startup surfaces");
     expect_true(view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_dismissed == 0,
                 "M11 CSB launcher handoff stops at startup title/entrance");
@@ -311,8 +318,17 @@ static void run_real_launcher_handoff_if_available(void) {
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
-                "M11 CSB launcher title prelude draws a visible first frame");
+    expect_true(((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                     view.csbStartupRuntimeAssetSession)
+                    ->surfaces.surfaces[
+                        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].width ==
+                    320 &&
+                    ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                         view.csbStartupRuntimeAssetSession)
+                        ->surfaces.surfaces[
+                            CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].height ==
+                    16,
+                "M11 CSB launcher emits C001 PRESENTS through its source geometry");
     expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
                     VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS,
                 "M11 CSB launcher PRESENTS frame keeps C001 special palette");

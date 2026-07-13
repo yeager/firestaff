@@ -36,6 +36,14 @@
   synthetic Track 02 fixture is blocked without media identity, state receipt,
   or fallback visuals. Verification: real JP/US raw Track 02 probes passed.
 
+- 2026-07-13 CSB startup session presentation: M11 now opens and owns one
+  verified `CSB_V1_StartupRuntimeAssetSession_PC34` with the CSB boot profile,
+  consumes the ReDMCSB TITLE/ENTRANCE render plan through its C001-C005/C017/C040
+  raster, and releases it with the profile. The old M11 startup render-executor
+  path is no longer on the active route; missing session, invalid raster, or a
+   non-320x200 frame fails closed to black. Verification: real local-CSB
+   `csb_v1_m11_launcher_handoff_boundary` CTest passed 1/1.
+
 - 2026-07-12 DM1 F0188/F0189/F0190 materialization: killed-all now clears
   decoded and raw C04 group health, emits the source-delayed metallic slot
   thud, and preserves off-party-map ownership. Verification: real

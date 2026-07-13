@@ -3743,9 +3743,9 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 {
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
-    CSB_V1_BootStartupHostViewDrawReceipt_PC34 draw_receipt;
-    M11_CSBStartupRenderExecutorContext context;
-    CSB_V1_StartupRenderExecutor_PC34 executor;
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
+    CSB_V1_StartupRuntimeRaster_PC34 raster;
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
@@ -3753,7 +3753,6 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     }
     m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
     csb_v1_boot_startup_host_view_receipt_init_pc34(&host_view);
-    csb_v1_boot_startup_host_view_draw_receipt_init_pc34(&draw_receipt);
     if (!csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
             &snapshot,
             &host_view) ||
@@ -3770,35 +3769,27 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                       M11_COLOR_BLACK);
         return;
     }
-    context.state = state;
-    context.framebuffer = framebuffer;
-    context.framebufferWidth = framebufferWidth;
-    context.framebufferHeight = framebufferHeight;
-    context.drawReceipt = &host_view.render_draw;
-    memset(&executor, 0, sizeof(executor));
-    executor.user = &context;
-    executor.draw_title = m11_csb_startup_executor_draw_title;
-    executor.clear_black = m11_csb_startup_executor_clear_black;
-    executor.draw_full_surface = m11_csb_startup_executor_draw_full_surface;
-    executor.draw_opening_frame =
-        m11_csb_startup_executor_draw_opening_frame;
-    executor.draw_closed_doors = m11_csb_startup_executor_draw_closed_doors;
-    /* The CSB host receipt rejects fallback draw routes.  Leave both
-     * callbacks absent so an invalid receipt cannot revive M11 text or door
-     * stand-ins after the verified C001-C005/C017/C040 session is active. */
-    executor.draw_door_fallback = NULL;
-    executor.draw_fallback_text = NULL;
-    executor.draw_utility_panel =
-        m11_csb_startup_executor_draw_utility_panel;
-    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0580/F0581 keep CSB
-     * startup drawing on the title/entrance path.  M11 now consumes the
-     * CSB host-view draw receipt and its primitive/asset/opening command
-     * readiness bits before executing callbacks. */
-    if (!csb_v1_boot_startup_execute_host_view_receipt_pc34(
-            &host_view,
-            &executor,
-            &draw_receipt) ||
-        !draw_receipt.consumed_host_view_only) {
+    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    memset(&frame, 0, sizeof(frame));
+    memset(&raster, 0, sizeof(raster));
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0807 supply the source
+     * plan.  The CSB session owns the verified C001-C005/C017/C040 pixels;
+     * M11 only presents its raster and has no startup draw callbacks. */
+    if (!session ||
+        framebufferWidth != CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 ||
+        framebufferHeight != CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34 ||
+        !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+            session,
+            &host_view.render_draw.render_plan,
+            (uint32_t)state->csbState.startup_entrance_frame,
+            &frame) ||
+        !frame.valid || !frame.no_legacy_wrappers ||
+        !csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+            &frame, &host_view.render_draw.render_plan, &raster) ||
+        !raster.valid || !raster.pixels ||
+        raster.width != framebufferWidth || raster.height != framebufferHeight) {
+        csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
         m11_fill_rect(framebuffer,
                       framebufferWidth,
                       framebufferHeight,
@@ -3807,7 +3798,11 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                       framebufferWidth,
                       framebufferHeight,
                       M11_COLOR_BLACK);
+        return;
     }
+    memcpy(framebuffer, raster.pixels,
+           (size_t)framebufferWidth * (size_t)framebufferHeight);
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
 }
 
 static void m11_csb_startup_command_state_receipt_to_m11(
@@ -3946,6 +3941,17 @@ static int m11_csb_apply_boot_runtime_receipt(
         }
     }
     state->csbBootProfile = receipt->profile;
+    state->csbStartupRuntimeAssetSession = calloc(
+        1, sizeof(CSB_V1_StartupRuntimeAssetSession_PC34));
+    if (!state->csbStartupRuntimeAssetSession ||
+        !csb_v1_boot_startup_runtime_asset_session_open_pc34(
+            (const CSB_V1_BootProfile *)state->csbBootProfile,
+            (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                state->csbStartupRuntimeAssetSession)) {
+        free(state->csbStartupRuntimeAssetSession);
+        state->csbStartupRuntimeAssetSession = NULL;
+        return 0;
+    }
     m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
     m11_csb_startup_init_state_receipt_to_m11(
         state,
@@ -10544,6 +10550,13 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         state->theronAssets = theronAssets;
     }
     m11_v22_inplace_draw_shutdown();
+    if (state->csbStartupRuntimeAssetSession) {
+        csb_v1_boot_startup_runtime_asset_session_release_pc34(
+            (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                state->csbStartupRuntimeAssetSession);
+        free(state->csbStartupRuntimeAssetSession);
+        state->csbStartupRuntimeAssetSession = NULL;
+    }
     if (state->csbBootProfile) {
         csb_v1_boot_cleanup((CSB_V1_BootProfile*)state->csbBootProfile);
         free(state->csbBootProfile);
