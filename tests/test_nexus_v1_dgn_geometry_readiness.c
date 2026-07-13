@@ -2353,6 +2353,9 @@ static void test_structure1f_item_ibs_material_binding(void) {
     Nexus_V1_DgnCommandPacked4BppMaterial materials[2];
     Nexus_V1_DgnCommandPacked4BppMaterialReceipt material_receipt;
     Nexus_V1_DgnStructure1FItemIbsCoverageReceipt coverage;
+    Nexus_V1_ItemIbs0008Vdp1Provenance provenance;
+    Nexus_V1_ItemIbs0008CodecReceipt codec_receipt;
+    uint8_t decoded[NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_TEXELS];
     int i;
 
     CHECK(ibs != NULL, "ITEM.IBS material fixture allocates");
@@ -2432,6 +2435,28 @@ static void test_structure1f_item_ibs_material_binding(void) {
           bindings[1].special_floor_image->packed_4bpp_valid &&
           bindings[1].packed_4bpp_texels == NULL,
           "special floor binding preserves bounded original payload and palette only");
+    memset(decoded, 0xa5, sizeof(decoded));
+    CHECK(nexus_v1_item_ibs_decode_0008_vdp1_4bpp(
+              bindings[1].special_floor_image, NULL, decoded,
+              (int)sizeof(decoded), &codec_receipt) == 0 &&
+          codec_receipt.descriptor_0008_verified &&
+          codec_receipt.packed_span_verified && codec_receipt.palette_bound &&
+          codec_receipt.blocked_missing_vdp1_command_provenance &&
+          !codec_receipt.decode_authorized && decoded[0] == 0xa5U &&
+          !codec_receipt.fallback_visuals_permitted,
+          "ITEM.IBS alone cannot authorize a VDP1 nibble-order decode");
+    memset(&provenance, 0, sizeof(provenance));
+    provenance.item_ibs_hash_verified = 1;
+    provenance.original_vdp1_command_stream_verified = 1;
+    provenance.vdp1_16_colour_mode_verified = 1;
+    provenance.vdp1_high_nibble_first_verified = 1;
+    CHECK(nexus_v1_item_ibs_decode_0008_vdp1_4bpp(
+              bindings[1].special_floor_image, &provenance, decoded,
+              (int)sizeof(decoded), &codec_receipt) == 0 &&
+          codec_receipt.source_hash_verified && codec_receipt.decode_authorized &&
+          codec_receipt.decoded_texel_count == 256 && decoded[0] == 6U &&
+          decoded[1] == 12U && !codec_receipt.fallback_visuals_permitted,
+          "source-proven VDP1 mode expands descriptor-0008 high nibble first");
     CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
               bindings, 2, commands, 2, materials, 2, &material_receipt) == 0 &&
           material_receipt.complete &&
@@ -2473,6 +2498,8 @@ static void test_real_item_ibs_special_floor_corpus(void) {
     Nexus_V1_DgnRenderCommand command;
     Nexus_V1_DgnCommandPacked4BppMaterial material;
     Nexus_V1_DgnCommandPacked4BppMaterialReceipt material_receipt;
+    Nexus_V1_ItemIbs0008CodecReceipt codec_receipt;
+    uint8_t decoded[NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_TEXELS];
     int level_index;
     int checked_levels = 0;
     int total_dgn_items = 0;
@@ -2518,6 +2545,15 @@ static void test_real_item_ibs_special_floor_corpus(void) {
           material.palette_bgr555 == bank.floor_images[43].palette_bgr555 &&
           !material.draw_authorized,
           "real Saturn descriptor-0008 payload reaches a DGN command no-draw");
+    CHECK(nexus_v1_item_ibs_decode_0008_vdp1_4bpp(
+              &bank.floor_images[43], NULL, decoded, (int)sizeof(decoded),
+              &codec_receipt) == 0 &&
+          codec_receipt.descriptor_0008_verified &&
+          codec_receipt.packed_span_verified && codec_receipt.palette_bound &&
+          codec_receipt.blocked_missing_vdp1_command_provenance &&
+          !codec_receipt.decode_authorized &&
+          !codec_receipt.fallback_visuals_permitted,
+          "real Saturn ITEM.IBS stays blocked without an original VDP1 command receipt");
     for (level_index = 0; level_index <= 15; ++level_index) {
         Nexus_V1_Level level;
         Nexus_V1_DgnStructure1FItemIbsCoverageReceipt coverage;

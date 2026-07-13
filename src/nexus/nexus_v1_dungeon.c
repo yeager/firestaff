@@ -4094,3 +4094,55 @@ int nexus_v1_dgn_structure1f_item_ibs_coverage(
     *out_receipt = receipt;
     return 0;
 }
+
+int nexus_v1_item_ibs_decode_0008_vdp1_4bpp(
+    const Nexus_V1_ItemIbsFloorImage *floor,
+    const Nexus_V1_ItemIbs0008Vdp1Provenance *provenance,
+    uint8_t *out_texels, int max_texels,
+    Nexus_V1_ItemIbs0008CodecReceipt *out_receipt)
+{
+    Nexus_V1_ItemIbs0008CodecReceipt receipt;
+    uint32_t expected_bytes;
+    int texel_count;
+    int i;
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.fallback_visuals_permitted = 0;
+    if (!floor || !out_texels || max_texels < 0) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    expected_bytes = ((uint32_t)floor->width * (uint32_t)floor->height) / 2U;
+    receipt.descriptor_0008_verified = floor->encoding == 8U;
+    receipt.packed_span_verified = expected_bytes > 0U &&
+        expected_bytes <= NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_PACKED_BYTES &&
+        floor->packed_4bpp_valid && floor->packed_4bpp_bytes == expected_bytes;
+    receipt.palette_bound = floor->palette_bound;
+    texel_count = (int)(expected_bytes * 2U);
+    if (!provenance || !provenance->item_ibs_hash_verified ||
+        !provenance->original_vdp1_command_stream_verified ||
+        !provenance->vdp1_16_colour_mode_verified ||
+        !provenance->vdp1_high_nibble_first_verified) {
+        receipt.blocked_missing_vdp1_command_provenance = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_hash_verified = 1;
+    if (!receipt.descriptor_0008_verified || !receipt.packed_span_verified ||
+        !receipt.palette_bound || texel_count > max_texels) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    /* Mednafen Saturn VDP1 TexFetch(), colour modes 0/1: x=0 consumes the
+     * high nibble of the first byte.  This is reachable only through the
+     * original-command provenance gate above, never from ITEM.IBS alone. */
+    for (i = 0; i < (int)expected_bytes; ++i) {
+        uint8_t packed = floor->packed_4bpp_texels[i];
+        out_texels[i * 2] = (uint8_t)(packed >> 4);
+        out_texels[i * 2 + 1] = (uint8_t)(packed & 0x0fU);
+    }
+    receipt.decoded_texel_count = texel_count;
+    receipt.decode_authorized = 1;
+    *out_receipt = receipt;
+    return 0;
+}
