@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0412 needs-practice runtime XP: M10 now consumes the
+  source-owned partial-XP receipt before a failed spell cast returns. ReDMCSB
+  `MENU.C F0412:1835-1841` calls F0304 with shifted experience on the
+  `NEEDS_MORE_PRACTICE` branch; Firestaff now uses the existing lifecycle
+  F0304 bridge, synchronizes the base-skill runtime mirror, and emits a
+  failure-marked XP receipt without creating a projectile, status timer, or
+  action-disable event. Verification: Ninja-built and ran
+  `test_dm1_v1_f0412_needs_practice_runtime_pc34_compat` and
+  `test_dm1_v1_spell_casting_pc34_compat`.
+
 - 2026-07-13 CSBWin DSA attack-filter save handoff: added an atomic production
   binder from a resolved type-47 DSA filter to the concrete `Monster.cpp`
   attack-filter runtime and its profile-owned authenticated callback. The
