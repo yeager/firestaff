@@ -101,6 +101,8 @@ int main(void)
           "save dialogue plan keeps skproject RECT_453, palette, and text semantics");
     {
         DM2_V1_DialogueOpenPanelReceipt open_panel;
+        DM2_V1_DialogueSaveInputState input_state;
+        DM2_V1_DialogueSaveInputReceipt input_receipt;
         check(dm2_v1_dialogue_open_panel_receipt(&loader, &open_panel) &&
                   open_panel.valid &&
                   open_panel.text_size[0] == 40u &&
@@ -117,6 +119,36 @@ int main(void)
                   open_panel.save_slot_count == 10u &&
                   open_panel.fade_when_dialog2 && open_panel.receipt_hash != 0u,
               "open panel binds original GDAT labels, palette slots, and raw4 rect IDs");
+        check(dm2_v1_dialogue_save_input_init(&open_panel, 2,
+                                              (const uint8_t *)"save", 4u,
+                                              &input_state) &&
+                  input_state.valid && input_state.selected_slot == 2 &&
+                  input_state.text_length == 4u &&
+                  !memcmp(input_state.text, "save", 5u),
+              "save dialogue initializes only from authenticated source panel and save header");
+        check(dm2_v1_dialogue_save_input_apply(
+                  &open_panel, &input_state,
+                  DM2_V1_DIALOGUE_SAVE_EVENT_EDIT, -1, 'x',
+                  &input_receipt) && input_receipt.valid &&
+                  input_receipt.redraw && input_state.editing &&
+                  !memcmp(input_state.text, "saveX", 6u),
+              "save dialogue uppercases the original decoded input byte");
+        check(dm2_v1_dialogue_save_input_apply(
+                  &open_panel, &input_state,
+                  DM2_V1_DIALOGUE_SAVE_EVENT_SELECT_SLOT, 10, 0u,
+                  &input_receipt) && input_receipt.redraw &&
+                  input_state.selected_slot == 10 && !input_state.editing &&
+                  !dm2_v1_dialogue_save_input_apply(
+                      &open_panel, &input_state,
+                      DM2_V1_DIALOGUE_SAVE_EVENT_EDIT, -1, 'a',
+                      &input_receipt),
+              "save dialogue retains source sentinel slot and blocks its edit path");
+        check(dm2_v1_dialogue_save_input_apply(
+                  &open_panel, &input_state,
+                  DM2_V1_DIALOGUE_SAVE_EVENT_CANCEL, -1, 0u,
+                  &input_receipt) && input_receipt.close_panel &&
+                  input_receipt.cancelled && input_receipt.accepted_slot == -1,
+              "save dialogue cancel follows source event zero");
         raw[offsets[4]] = '\0';
         check(!dm2_v1_dialogue_open_panel_receipt(&loader, &open_panel),
               "open panel rejects an empty original secondary label");

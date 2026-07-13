@@ -1197,9 +1197,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     fail-closed host command: its original `DIALOG_BOXES/0x81` image/local
     palette, fields 0/1 GDAT labels, palette slots, and raw4 rects
     `4/450/466/467/451` must all exist together. M11 consumes the panel only
-    when active; the original label glyph draw and button/input dispatch remain
-    blocked until their source path is decoded. It must not infer labels,
-    positions, colours, or a fallback panel.
+    when active. `DM2_dialog_2066_33e7` now has its verified event/input core
+    (source events 0/1/2/3, ten slots plus sentinel, 31-byte uppercase edit)
+    behind the original GDAT panel receipt. Remaining work is the actual
+    RECT_451 pointer decoder, keyboard-scancode route, original glyph draw,
+    and save-header corpus. It must not infer labels, positions, colours, or
+    a fallback panel.
   - 2026-07-11 DM2 real-data fallback audit (mounted PC English `~/.firestaff/data/dm2/data/graphics.dat`, 8,639,757 bytes; source container verified by `probe_dm2_v1_asset_loader`): only the following live fallback draws have a demonstrated original replacement and must be removed or fail the real-data frame, rather than paint a substitute.
 - 🔧 2026-07-11 local build verifier follow-up: former stuck compile paths for CSB input/startup surfaces, CSB keyboard, DM1 input queue, V1 TITLE/SWSH pathfinders, memory frontend/cache frontend, selector, bitmap, image expand, and Theron/miniz SRM startup now pass targeted checks. `firestaff_dm2`, `firestaff_m10`, Nexus startup, Theron startup save/resume, and CSB runtime handoff build/pass locally. Remaining work is broader full-app/test-target verification after subagent edits settle.
 - 🔧 2026-07-11 DM1 host/API cleanup follow-up: legacy M11 alias cleanup batches 1-11, shared DM1/CSB graphics-loader alias cleanup, champion-mirror aliases, and mirror-click/leader aliases are verified in DONE.md. Remaining cleanup should focus only on active runtime APIs, combat-log/UI-local names, or combat/creature/spell-adjacent aliases when their owning call sites are moved; do not reopen removed foundation/header-only alias blocks.

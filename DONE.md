@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 source save-dialogue event core: skproject
+  `c_dialog.cpp::DM2_dialog_2066_33e7` event values 0/1/2/3 now drive a
+  source-bound state machine only after `OPEN_DIALOG_PANEL` authenticated the
+  original GDAT labels. It retains the ten-slot/sentinel selection, 31-byte
+  uppercased edit rule, backspace/return handling, and cancel/accept receipts;
+  it does not invent pointer rectangles, keyscancodes, labels, glyphs, or
+  dialog UI. Verification: Ninja and CTest `dm2_v1_dialogue_gdat_receipt`.
+
 - 2026-07-13 CSBWin `TT_FALSEWALL` DSA runner: the restored function-7
   `Timer.cpp::ProcessTT_FALSEWALL` route now prepares only the exact
   authenticated `ProcessDSATimer7`/`ProcessDSATimer6` pure-stack action.
