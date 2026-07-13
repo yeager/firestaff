@@ -521,6 +521,43 @@ typedef struct {
     DM2_V1_G1DirectDoorRoot doors[DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS];
 } DM2_V1_G1RuntimeMapDoorReceipt;
 
+#define DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS 64
+
+/* Read-only direct DB3 payload from skproject SKWIN/DME.h::Actuator. The
+ * GenericRecord::w0 link is deliberately excluded from this receipt. */
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    int index;
+    uint8_t direction;
+    uint8_t actuator_type;
+    uint16_t actuator_data;
+    uint8_t graphic_number;
+    uint8_t disabled;
+    uint8_t delay;
+    uint8_t sound_effect;
+    uint8_t revert_effect;
+    uint8_t action_type;
+    uint8_t once_only;
+    uint8_t active_status;
+    uint8_t target_direction;
+    uint8_t target_x;
+    uint8_t target_y;
+} DM2_V1_G1DirectActuatorRoot;
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int actuator_root_count;
+    int actuator_record_reads;
+    int generic_record_reads;
+    int blocked_record_reads;
+    DM2_V1_G1DirectActuatorRoot
+        actuators[DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS];
+} DM2_V1_G1RuntimeMapActuatorReceipt;
+
 /* First-map runtime handoff for the transactional PC G1 boot. This carries
  * source-proven root-address classes only; it deliberately contains no
  * decoded c_record payload or inferred object. */
@@ -706,6 +743,13 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_doors(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1RuntimeMapDoorReceipt *out);
+/* Consume only declared direct DB3 roots on a runtime-admitted G1 map. It
+ * reads the source-defined Actuator w2/w4/w6 fields and never GenericRecord::
+ * w0, an extension DB3 record, or an unvalidated map/record route. */
+int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1RuntimeMapActuatorReceipt *out);
 /* Consume the transactional receipt for map 0 only. This repeats c_map's
  * ground-stack root lookup and classifies source-proven addresses. It may read
  * only a direct DB1 teleporter's independently verified fields; it never reads
