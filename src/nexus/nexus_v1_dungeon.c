@@ -1299,6 +1299,15 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
          * promoted when any real image instruction misses Structure2. */
         out_receipt->status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
+    } else if (info->structure1f_valid &&
+               out_receipt->structure1f_spatial.valid &&
+               out_receipt->structure1f_spatial.structure1a_bound_entry_count > 0) {
+        /* DMWeb DGN Structure1F binds alcove and wall families through
+         * Structure1A. Until that source relationship is decoded, their
+         * position and Saturn draw/trigger route cannot be omitted from a
+         * real runtime scene. */
+        out_receipt->status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS;
     } else if (info->mesh_ready) {
         out_receipt->status = NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH;
         out_receipt->can_render_dgn_mesh = 1;

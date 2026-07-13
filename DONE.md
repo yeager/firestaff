@@ -14,6 +14,12 @@
   `INTERFACE_GENERAL/0/raw4` `RECT_453` destination. The runtime publishes
   the exact source-owned image, rectangle, text offset, and palette semantics
   for M11; it does not create a replacement panel, position, or colour.
+- 2026-07-13: Nexus Structure1F/Structure1A runtime boundary: host handoff
+  and DGN plan now fail closed when typed alcove or wall-family records remain
+  bound only through unresolved Structure1A source references. The existing
+  `blocked-structure1f-semantics` receipt preserves a no-fallback outcome;
+  no Saturn object/draw semantics or graphics decoding were inferred. Covered
+  by `nexus_v1_dgn_geometry_readiness`.
 
 - 2026-07-13 CSBWin `TT_FALSEWALL` DSA receipt: restored function-7 timers
   now bind their original target and SET/CLEAR/TOGGLE action through
