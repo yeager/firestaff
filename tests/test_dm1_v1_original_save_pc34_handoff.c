@@ -3816,9 +3816,43 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
               roundtrip.exported_c13_event_count == 1 &&
               roundtrip.c13_byte_preserved_count == 1 &&
               roundtrip.c13_byte_mismatch_count == 0 &&
-              roundtrip.c13_byte_preservation_ok,
+              roundtrip.c13_byte_preservation_ok &&
+              roundtrip.c13_timeline_byte_receipt_available &&
+              roundtrip.source_c13_timeline_reference_count == 1 &&
+              roundtrip.exported_c13_timeline_reference_count == 1 &&
+              roundtrip.c13_timeline_byte_preserved_count == 1 &&
+              roundtrip.c13_timeline_byte_mismatch_count == 0 &&
+              roundtrip.c13_timeline_byte_preservation_ok,
           "native F0433 C13 record survives F0435 -> F0433 -> F0435 byte-for-byte");
 
+    /* This uses F0802's native PC34 output, not a fixture save. The C13
+     * record begins in EVENT slot 0 while its later fire time places its
+     * C4 TIMELINE reference after C53. F0435 rebuilds a compact live queue,
+     * so F0433 would move C13 to slot 1. The new raw-index receipt must
+     * reject that changed two-byte reference instead of certifying it. */
+    world.timeline.count = 2;
+    memset(&world.timeline.events[1], 0, sizeof(world.timeline.events[1]));
+    world.timeline.events[1].kind = TIMELINE_EVENT_WATCHDOG;
+    world.timeline.events[1].fireAtTick = 100u;
+    world.timeline.events[1].aux0 = DM1_EVENT_WATCHDOG;
+    world.timeline.events[1].aux2 = DM1_EVENT_WATCHDOG;
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "native F0433 writes the C13/C53 timeline-order candidate");
+    memset(&roundtrip, 0, sizeof(roundtrip));
+    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+        bytes, (size_t)written, 0x43313445u, reexported,
+        sizeof(reexported), &reexported_size, &roundtrip);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
+              roundtrip.source_c13_timeline_reference_count == 1 &&
+              roundtrip.exported_c13_timeline_reference_count == 1 &&
+              roundtrip.c13_timeline_byte_preserved_count == 0 &&
+              roundtrip.c13_timeline_byte_mismatch_count == 1 &&
+              !roundtrip.c13_timeline_byte_preservation_ok,
+          "changed C13 C4 timeline index fails closed after native F0435 handoff");
+
+    world.timeline.count = 1;
     world.timeline.events[0].aux1 = 3;
     CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
               &world, 0x43313445u, bytes, (int)sizeof(bytes), &written) ==

@@ -181,6 +181,12 @@ typedef struct {
     int c13_byte_preserved_count;
     int c13_byte_mismatch_count;
     int c13_byte_preservation_ok;
+    int c13_timeline_byte_receipt_available;
+    int source_c13_timeline_reference_count;
+    int exported_c13_timeline_reference_count;
+    int c13_timeline_byte_preserved_count;
+    int c13_timeline_byte_mismatch_count;
+    int c13_timeline_byte_preservation_ok;
     int core_state_matches;
 } DM1OriginalSavePC34RoundtripReport;
 
@@ -207,6 +213,11 @@ typedef struct {
     int c13_byte_preserved_count;
     int c13_byte_mismatch_count;
     int c13_byte_preservation_ok;
+    int source_c13_timeline_reference_count;
+    int exported_c13_timeline_reference_count;
+    int c13_timeline_byte_preserved_count;
+    int c13_timeline_byte_mismatch_count;
+    int c13_timeline_byte_preservation_ok;
     char path[DM1_ORIGINAL_SAVE_PATH_MAX];
 } DM1OriginalSavePC34CorpusReceipt;
 
