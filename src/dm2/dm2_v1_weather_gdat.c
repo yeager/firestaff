@@ -616,6 +616,34 @@ int dm2_v1_weather_gdat_destination_clip(
     return out->valid;
 }
 
+int dm2_v1_weather_distant_environment_receipt(
+    const DM2_V1_WeatherGdatReceipt *weather,
+    uint8_t command,
+    uint8_t slot_index,
+    const uint8_t raw[DM2_V1_DISTANT_ENVIRONMENT_BYTES],
+    DM2_V1_DistantEnvironmentReceipt *out)
+{
+    unsigned int index;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!weather || !weather->valid || !raw || slot_index >= 2u ||
+        !dm2_weather_command_is_source_owned(command)) return 0;
+    index = (unsigned int)(command - DM2_V1_WEATHER_CLOUD_LIGHT_CMD);
+    if (index >= 6u || !weather->commands[index].material_valid ||
+        weather->commands[index].command != command) return 0;
+    /* skproject c_weather.cpp DM2_UPDATE_WEATHER fills cloud then rain in
+     * DistantEnvironment ten-byte slots before c_bkgrnd DRAW_TEMP_PICST. */
+    out->command = command;
+    out->slot_index = slot_index;
+    memcpy(out->raw, raw, DM2_V1_DISTANT_ENVIRONMENT_BYTES);
+    out->raw_hash = dm2_weather_hash_bytes(out->raw,
+                                            DM2_V1_DISTANT_ENVIRONMENT_BYTES);
+    if (out->raw_hash == 0u) return 0;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_weather_gdat_command_receipt(
     const DM2_V1_AssetLoader *loader,
     uint8_t graphicsset,

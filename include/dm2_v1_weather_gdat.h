@@ -19,6 +19,17 @@
 #define DM2_V1_WEATHER_COMMAND_MASK(command_) \
     (1u << ((unsigned int)(command_) - DM2_V1_WEATHER_CLOUD_LIGHT_CMD))
 
+/* skproject DME.h::DistantEnvironment is a ten-byte live c_weather record.
+ * This is provenance only: it deliberately has no renderer-facing meaning. */
+#define DM2_V1_DISTANT_ENVIRONMENT_BYTES 10u
+typedef struct {
+    int valid;
+    uint8_t command;
+    uint8_t slot_index;
+    uint8_t raw[DM2_V1_DISTANT_ENVIRONMENT_BYTES];
+    uint32_t raw_hash;
+} DM2_V1_DistantEnvironmentReceipt;
+
 typedef struct {
     uint8_t command;
     const uint8_t *raw_text;
@@ -209,4 +220,13 @@ int dm2_v1_weather_gdat_destination_clip(
     size_t rect_table_size,
     const DM2_V1_WeatherCommandReceipt *command,
     DM2_V1_WeatherDestinationClip *out);
+
+/* Retain one source-owned c_weather slot only after its selected ENVIRONMENT
+ * command is already material-valid. No generic weather state is accepted. */
+int dm2_v1_weather_distant_environment_receipt(
+    const DM2_V1_WeatherGdatReceipt *weather,
+    uint8_t command,
+    uint8_t slot_index,
+    const uint8_t raw[DM2_V1_DISTANT_ENVIRONMENT_BYTES],
+    DM2_V1_DistantEnvironmentReceipt *out);
 #endif

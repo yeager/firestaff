@@ -1387,7 +1387,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     verified, fail-closed destination/mirror/scale plan for each weather
     command. The remaining weather step is to make M11 consume this exact
     receipt with the original decoded GDAT pixels and rectangle table, not a
-    generated overlay or substitute placement.
+    generated overlay or substitute placement. Live `DistantEnvironment`
+    ten-byte slots are now retained only when their selected ENVIRONMENT
+    command has a verified material receipt; corpus evidence for the original
+    timer-owned live slot bytes is still absent, so no runtime promotion or
+    pixel blit is permitted.
   - 2026-07-13 update: the exact skproject save/load dialogue now binds its
     separate `DIALOG_BOXES/0x81/dtImage/0` IMG3/local palette to the real
     `INTERFACE_GENERAL/0/raw4` expansion of `RECT_453`; the live runtime

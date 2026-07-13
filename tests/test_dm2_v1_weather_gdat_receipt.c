@@ -35,6 +35,7 @@ int main(void)
     DM2_V1_GdatEntry entries[20];
     DM2_V1_AssetLoader loader;
     DM2_V1_WeatherGdatReceipt receipt;
+    DM2_V1_DistantEnvironmentReceipt distant;
     DM2_V1_WeatherCommandReceipt command;
     DM2_V1_WeatherOverlayPlan plan;
     DM2_V1_WeatherDrawContext draw_context;
@@ -201,6 +202,18 @@ int main(void)
               plan.commands[1].query_offset_y == 1 &&
               plan.plan_hash != 0u,
           "weather plan preserves source cloud then rain material order");
+    {
+        const uint8_t live_slot[DM2_V1_DISTANT_ENVIRONMENT_BYTES] =
+            { 1u, 2u, 3u, 4u, 0u, 0u, 0u, 0u, 0x40u, 0x40u };
+        check(dm2_v1_weather_distant_environment_receipt(
+                  &receipt, 0x68u, 0u, live_slot, &distant) &&
+                  distant.valid && distant.command == 0x68u &&
+                  distant.slot_index == 0u && distant.raw_hash != 0u,
+              "live DistantEnvironment slot is retained only for source material");
+        check(!dm2_v1_weather_distant_environment_receipt(
+                  &receipt, 0x70u, 0u, live_slot, &distant),
+              "unknown live weather command stays unavailable");
+    }
     check(dm2_v1_weather_gdat_overlay_plan(&receipt, 0u, 0u, &plan) &&
               plan.valid && plan.command_count == 0u &&
               plan.required_mask == 0u && plan.material_mask == 0u,
