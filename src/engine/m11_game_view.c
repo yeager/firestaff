@@ -15160,7 +15160,7 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
 
     mirrorName[0] = '\0';
     if (!state || !state->active || !state->candidateMirrorPanelActive ||
-        state->candidateMirrorOrdinal < 0) {
+        state->candidateMirrorRenameActive || state->candidateMirrorOrdinal < 0) {
         return 0;
     }
     championIndex = state->candidateMirrorPartyIndex;
