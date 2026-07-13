@@ -3236,7 +3236,7 @@ static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
 
 static void nexus_v1_dgn_plan_bind_direct_structure1f(
     const Nexus_V1_Level *level,
-    const Nexus_V1_DgnRenderCommand *commands,
+    Nexus_V1_DgnRenderCommand *commands,
     Nexus_V1_DgnRenderPlanReceipt *receipt)
 {
     int entry_index;
@@ -3251,10 +3251,26 @@ static void nexus_v1_dgn_plan_bind_direct_structure1f(
             &level->structure1f_entries[entry_index];
         int command_index;
         int visible = 0;
+        uint8_t family_mask;
 
         if (entry->family != NEXUS_V1_DGN_STRUCTURE1F_ITEMS &&
             entry->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS &&
             entry->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS) {
+            continue;
+        }
+        switch (entry->family) {
+        case NEXUS_V1_DGN_STRUCTURE1F_ITEMS:
+            family_mask = NEXUS_V1_DGN_STRUCTURE1F_DIRECT_FAMILY_ITEM;
+            break;
+        case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS:
+            family_mask =
+                NEXUS_V1_DGN_STRUCTURE1F_DIRECT_FAMILY_FLOOR_DECORATION;
+            break;
+        case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS:
+            family_mask =
+                NEXUS_V1_DGN_STRUCTURE1F_DIRECT_FAMILY_FLOOR_SENSOR;
+            break;
+        default:
             continue;
         }
         for (command_index = 0; command_index < receipt->command_count;
@@ -3262,7 +3278,14 @@ static void nexus_v1_dgn_plan_bind_direct_structure1f(
             if (commands[command_index].x == entry->x &&
                 commands[command_index].y == entry->y) {
                 visible = 1;
-                break;
+                if (commands[command_index].structure1f_direct_entry_count ==
+                    0) {
+                    ++receipt->structure1f_plan_direct_command_count;
+                }
+                ++commands[command_index].structure1f_direct_entry_count;
+                commands[command_index].structure1f_direct_family_mask |=
+                    family_mask;
+                ++receipt->structure1f_plan_direct_command_entry_count;
             }
         }
         if (!visible) {

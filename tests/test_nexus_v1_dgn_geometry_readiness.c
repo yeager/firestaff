@@ -241,6 +241,29 @@ static void build_structure1f_fixture(uint8_t *structure1,
     structure1f[100 + 7] = 6U;
 }
 
+static void build_direct_structure1f_fixture(uint8_t *structure1,
+                                             int structure1b_rel,
+                                             int x,
+                                             int y) {
+    uint8_t *structure1f = structure1 + structure1b_rel +
+        NEXUS_DGN_STRUCTURE1B_BYTES + 312;
+
+    /* One documented direct-coordinate item record. No Structure1A-bound
+     * record is present, so the plan reaches its explicit no-draw gate. */
+    memset(structure1f, 0, 64U);
+    wb32(structure1 + 0x34, (uint32_t)(structure1b_rel +
+                                        NEXUS_DGN_STRUCTURE1B_BYTES + 312));
+    wb32(structure1 - NEXUS_DGN_BLOCK_SIZE + 0x10,
+         (uint32_t)(structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES +
+                    312 + NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 8));
+    wb16(structure1f, 0x0034U);
+    wb16(structure1f + 2, 0x0012U);
+    wb16(structure1f + 4, 1U);
+    structure1f[NEXUS_DGN_STRUCTURE1F_HEADER_BYTES] = 0x10U;
+    structure1f[NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 1] = (uint8_t)x;
+    structure1f[NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 2] = (uint8_t)y;
+}
+
 static void build_structure1g_fixture(uint8_t *structure1,
                                       int structure1b_rel) {
     const int post_grid = structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES;
@@ -1621,6 +1644,150 @@ static void test_visible_structure1f_semantics_block_render_plan(void) {
           "visible unproven Structure1F item blocks DGN rendering without fallback");
 }
 
+static void test_direct_structure1f_mesh_command_provenance(void) {
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
+    const int structure1b_rel = 0x40;
+    uint8_t *structure1;
+    Nexus_V1_Level level;
+    Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_DgnRenderPlanReceipt receipt;
+    int command_index;
+    int matched_commands = 0;
+
+    CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
+                          structure1b_rel, 2048) == 0,
+          "direct Structure1F mesh-provenance fixture builds");
+    structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
+    structure1[9] = 22;
+    set_floor_flags(structure1, structure1b_rel, 3, 4,
+                    (uint16_t)((1U << 14) | (21U << 7) | (2U << 4) | 2U));
+    set_collision_ref(structure1, structure1b_rel, 3, 4, 1);
+    cell_at(structure1, structure1b_rel, 3, 4)[3] = 4;
+    cell_at(structure1, structure1b_rel, 3, 4)[4] = 41;
+    set_post_grid_0x30_ref(structure1, structure1b_rel, 3, 4, 1);
+    cell_at(structure1, structure1b_rel, 4, 4)[3] = 12;
+    set_collision_ref(structure1, structure1b_rel, 4, 4, 1);
+    set_post_grid_0x30_ref(structure1, structure1b_rel, 4, 4, 2);
+    set_collision_ref(structure1, structure1b_rel, 3, 3, 1);
+    set_post_grid_0x30_ref(structure1, structure1b_rel, 3, 3, 3);
+    set_collision_ref(structure1, structure1b_rel, 2, 4, 0x0fff);
+    set_collision_ref(structure1, structure1b_rel, 2, 3, 0x0fff);
+    set_collision_ref(structure1, structure1b_rel, 4, 3, 0x0fff);
+    set_collision_ref(structure1, structure1b_rel, 3, 2, 0x0fff);
+    build_direct_structure1f_fixture(structure1, structure1b_rel, 3, 4);
+
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0,
+          "direct Structure1F mesh-provenance level loads");
+    memset(commands, 0, sizeof(commands));
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(nexus_v1_level_build_dgn_view_render_plan(
+              &level, 3, 4, 0, commands,
+              NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &receipt) == 0,
+          "direct Structure1F mesh-provenance plan evaluates");
+    for (command_index = 0; command_index < receipt.command_count;
+         ++command_index) {
+        if (commands[command_index].x == 3 && commands[command_index].y == 4) {
+            ++matched_commands;
+            CHECK(commands[command_index].structure1f_direct_entry_count == 1 &&
+                  commands[command_index].structure1f_direct_family_mask ==
+                      NEXUS_V1_DGN_STRUCTURE1F_DIRECT_FAMILY_ITEM,
+                  "each source-cell mesh command retains exact direct item provenance");
+        }
+    }
+    CHECK(receipt.status == NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS &&
+          receipt.blocks_real_dgn_mesh_render && !receipt.plan_ready &&
+          !receipt.fallback_visuals_permitted &&
+          receipt.structure1f_plan_direct_entry_count == 1 &&
+          receipt.structure1f_plan_item_entry_count == 1 &&
+          receipt.structure1f_plan_direct_command_count == matched_commands &&
+          receipt.structure1f_plan_direct_command_entry_count == matched_commands &&
+          matched_commands > 0,
+          "direct Structure1F source cells bind to material/mesh commands then remain no-draw");
+}
+
+/* Retail-only companion to the mesh-command fixture above. It checks the
+ * source relation used by the command binder against each supplied Track 1
+ * DGN, without promoting any raw item/decor/sensor bytes to Saturn visuals. */
+static void test_real_structure1f_direct_cell_corpus(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    int level_index;
+    int checked = 0;
+
+    if (!data_dir || !data_dir[0]) return;
+    for (level_index = 0; level_index <= 15; ++level_index) {
+        char path[1024];
+        FILE *file;
+        long size;
+        uint8_t *data;
+        Nexus_V1_Level level;
+        Nexus_V1_DgnStructure1FSpatialReceipt spatial;
+        int entry_index;
+        int direct_count = 0;
+        int item_count = 0;
+        int floor_decoration_count = 0;
+        int floor_sensor_count = 0;
+
+        snprintf(path, sizeof(path), "%s/LEV%02d.DGN", data_dir, level_index);
+        file = fopen(path, "rb");
+        CHECK(file != NULL, "real Structure1F direct-cell corpus file opens");
+        if (!file) continue;
+        CHECK(fseek(file, 0, SEEK_END) == 0,
+              "real Structure1F direct-cell corpus file seeks");
+        size = ftell(file);
+        CHECK(size > 0 && fseek(file, 0, SEEK_SET) == 0,
+              "real Structure1F direct-cell corpus file has data");
+        if (size <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+            fclose(file);
+            continue;
+        }
+        data = (uint8_t *)malloc((size_t)size);
+        CHECK(data != NULL, "real Structure1F direct-cell corpus allocates");
+        if (!data) {
+            fclose(file);
+            continue;
+        }
+        CHECK(fread(data, 1, (size_t)size, file) == (size_t)size,
+              "real Structure1F direct-cell corpus reads");
+        fclose(file);
+        if (nexus_v1_level_load(&level, data, (int)size, level_index) == 0 &&
+            nexus_v1_level_structure1f_spatial_receipt(&level, &spatial) == 0) {
+            for (entry_index = 0; entry_index < level.structure1f_entry_count;
+                 ++entry_index) {
+                const Nexus_V1_DgnStructure1FEntry *entry =
+                    &level.structure1f_entries[entry_index];
+                switch (entry->family) {
+                case NEXUS_V1_DGN_STRUCTURE1F_ITEMS:
+                    ++item_count;
+                    ++direct_count;
+                    break;
+                case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS:
+                    ++floor_decoration_count;
+                    ++direct_count;
+                    break;
+                case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS:
+                    ++floor_sensor_count;
+                    ++direct_count;
+                    break;
+                default:
+                    break;
+                }
+            }
+            CHECK(spatial.valid &&
+                  spatial.direct_coordinate_entry_count == direct_count &&
+                  spatial.item_entry_count == item_count &&
+                  spatial.floor_decoration_entry_count == floor_decoration_count &&
+                  spatial.floor_sensor_entry_count == floor_sensor_count,
+                  "real Structure1F direct-cell records retain the mesh-command source relation");
+            ++checked;
+        } else {
+            CHECK(0, "real Structure1F direct-cell corpus level loads");
+        }
+        free(data);
+    }
+    CHECK(checked == 16,
+          "real Structure1F direct-cell corpus covers every supplied retail DGN");
+}
+
 static void test_structure1g_semantics_and_bounds(void) {
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
     const int structure1b_rel = 0x40;
@@ -2188,9 +2355,11 @@ int main(void) {
     test_structure1c_record_table_bounds();
     test_structure1f_semantics_and_bounds();
     test_visible_structure1f_semantics_block_render_plan();
+    test_direct_structure1f_mesh_command_provenance();
     test_structure1g_semantics_and_bounds();
     test_structure1g_animated_floor_material_handoff();
     test_real_dgn_structure1_layout_corpus();
+    test_real_structure1f_direct_cell_corpus();
 
     if (g_fail != 0) {
         printf("Nexus V1 DGN geometry readiness gate: %d failure(s)\n", g_fail);

@@ -1096,6 +1096,16 @@ typedef enum {
     NEXUS_V1_DGN_ANIMATED_MATERIAL_ROUTE_STRUCTURE2_FLOOR = 1
 } Nexus_V1_DgnAnimatedMaterialRoute;
 
+/* Structure1F direct-cell families have documented 64x64 source
+ * coordinates. These bits preserve that source relation on the owning mesh
+ * command only; they do not imply an object, trigger, mesh, or draw ABI. */
+typedef enum {
+    NEXUS_V1_DGN_STRUCTURE1F_DIRECT_FAMILY_NONE = 0,
+    NEXUS_V1_DGN_STRUCTURE1F_DIRECT_FAMILY_ITEM = 1 << 0,
+    NEXUS_V1_DGN_STRUCTURE1F_DIRECT_FAMILY_FLOOR_DECORATION = 1 << 1,
+    NEXUS_V1_DGN_STRUCTURE1F_DIRECT_FAMILY_FLOOR_SENSOR = 1 << 2
+} Nexus_V1_DgnStructure1FDirectFamilyMask;
+
 typedef struct {
     Nexus_V1_DgnRenderCommandKind kind;
     int x;
@@ -1125,6 +1135,10 @@ typedef struct {
     uint16_t animated_texture_structure2_image_id;
     int animated_texture_structure2_image_valid;
     Nexus_V1_DgnAnimatedMaterialRoute animated_texture_host_route;
+    /* Exact Structure1F direct-cell provenance for this material/mesh cell.
+     * A non-zero value forces the plan down its no-draw semantics gate. */
+    uint8_t structure1f_direct_family_mask;
+    uint8_t structure1f_direct_entry_count;
     Nexus_V1_DgnRenderCommandKind material_source_kind;
     uint8_t palette_index;
     uint8_t draw_order;
@@ -1216,6 +1230,8 @@ typedef struct {
     int structure1f_plan_item_entry_count;
     int structure1f_plan_floor_decoration_entry_count;
     int structure1f_plan_floor_sensor_entry_count;
+    int structure1f_plan_direct_command_count;
+    int structure1f_plan_direct_command_entry_count;
     int structure1g_present;
     int structure1g_valid;
     int structure1g_animated_texture_count;
