@@ -1442,7 +1442,12 @@ int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    if (!d || !d->raw_data || !read_scalar || d->square_bytes != 1 ||
+    /* skproject/SKWIN/c_map.cpp supplies the tile root, c_record.cpp
+     * addresses its DB3 record, and GET_WALL_DECORATION_OF_ACTUATOR consumes
+     * GraphicNumber through the map-local list. Classification-only G1 roots
+     * cannot issue the later GDAT WALL_GFX scalar requests. */
+    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
+        !d->raw_data || !read_scalar || d->square_bytes != 1 ||
         map < 0 || map >= d->level_count) {
         return 0;
     }

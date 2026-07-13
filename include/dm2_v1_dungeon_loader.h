@@ -508,9 +508,10 @@ int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
     void *read_userdata,
     DM2_V1_G1TextWallGfxRuntimeReceipt *out);
 
-/* Direct DB3 roots only. c_record resolves the address; skproject
- * Actuator::GraphicNumber() maps through the current map's one-based
- * WallGraphics list before DRAW_WALL_ORNATE consumes the GDAT fields. */
+/* Direct DB3 roots only after the G1 record graph is complete. c_record
+ * resolves the address; skproject Actuator::GraphicNumber() maps through the
+ * current map's one-based WallGraphics list before DRAW_WALL_ORNATE consumes
+ * the GDAT fields. */
 int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
     const DM2_V1_DungeonData *d,
     int map,
