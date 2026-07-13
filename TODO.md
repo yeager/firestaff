@@ -2611,6 +2611,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     DB6/DB7/DB8 and DB10..DB15 have zero direct roots. Their record payloads
     remain unavailable without a separately proven non-direct route; no
     extension or `w0` traversal may fill that gap.
+  - 2026-07-13 update: selected level/tile coordinates can now resolve only
+    direct DB0..DB5/DB9 roots through the exact `c_map.cpp` ground-stack and
+    `c_record.cpp` base-plus-stride transform. DB6..DB8/DB10..DB15, extensions,
+    `w0`, and possession routes still reject before any record payload read.
   - 2026-07-11 update: the local full-build DM2 link blocker from direct save-load test targets is fixed; weather/timer save round-trip and inventory/item panel gate now link against `firestaff_dm2` and pass. Remaining DM2 work is real render/data breadth, not this build wiring.
   - 2026-07-11 update: the next local full-build blocker, `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` using retired M11 inventory names, is fixed by moving the probe to the DM1/ReDMCSB inventory API. Remaining DM1 chest work is runtime/asset proof, not this stale probe wiring.
   - 2026-07-11 update: `firestaff_dm1_v1_champion_mouse_leader_switch_probe` now uses the current DM1/ReDMCSB champion-leader API names and passes. Remaining leader/status work is runtime capture breadth, not stale API suffix cleanup.
@@ -4301,11 +4305,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     an origin surface with identical dimensions. A material/palette/pixel
     mismatch or a different destination size produces no hand image; no
     generic hand icon, transparency substitution, or scaling is supplied.
-  - 2026-07-13 update: `DRAW_HAND_ACTION_ICONS` now binds its hand-slot
-    backdrop to the source-selected INTERFACE_GENERAL/4 `dtImage`, local
-    palette, and direction-derived expanded rect. A changed field, palette,
-    pixels, rect, or transparency mode produces no backdrop; no generic panel
-    tile or replacement image is available.
 - DM2-011 — `skproject/SKULLWIN/c_weather.cpp` `DM2_SET_TIMER_WEATHER`, `DM2_UPDATE_WEATHER`, `DM2_weather_3df7_0037`, `c_light.cpp`, and `c_cloud.cpp`: `src/dm2/dm2_v1_weather.c`, `dm2_v1_outdoor_renderer.c`, and `dm2_v1_runtime.c` lack the source timer/reseed/light/cloud interaction chain. The runtime now forwards its exact live weather state to the outdoor viewport and records the handoff. `QUERY_GDAT_TEXT(ENVIRONMENT, MapGraphicsStyle, 0x67..0x6c)` now retains all six exact raw `dtText` receipts and decodes only the bounded, source-proven `QUERY_CMDSTR_TEXT` `CD`/`FW` values used by `c_bkgrnd.cpp::RETRIEVE_ENVIRONMENT_CMD_CD_FW`; a missing NUL, missing/zero CD, or out-of-range FW clears the material bit and cannot cause a substitute draw. Next: source timer dispatcher, reseed/light/cloud command handling, command-to-`QUERY_TEMP_PICST` execution, and real-data capture. Do not add a procedural visual substitute.
   - 2026-07-13 update: `DM2_UPDATE_WEATHER` cloud-then-rain command order now
     has a DM2-owned execution plan. It preserves the source's ten-byte slot
