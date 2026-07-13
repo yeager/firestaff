@@ -2372,6 +2372,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     material leaves the host route inert; direct M10/save model selection
     remains independent. Remaining HoC work is real original-PC/Mac capture
     breadth, not an input or render substitute.
+  - 2026-07-13 update: the C161 host transition into F0281 rename now
+    requires real PC34 C027 panel geometry and the loaded M653 interface
+    font. C027 keyboard and pointer edits use the same gate; missing material
+    leaves C040 active without accepting an invisible rename interaction.
+    Direct model APIs remain available for save/runtime proof. Remaining HoC
+    work is real original-PC/Mac capture breadth, not a substitute panel or
+    host-font input path.
   - 2026-07-13 update: DM1 F0407 INVOKE projectile planning now accepts only the source `M003_RANDOM(128)` energy and `M002_RANDOM(6)` family domains from `MENU.C F0407:1480-1493`; malformed command facts fail closed rather than creating a non-source projectile. Remaining action work is other special-action preconditions and broader runtime proof.
   - 2026-07-13 update: DM1 F0401 fright plus F0407 WINDOW/FLIP plans now accept only their source `M002_RANDOM(...)`/`M005_RANDOM(2)` domains from `MENU.C F0401:969-976` and `F0407:1398-1440,1536-1541`; malformed runtime draws fail closed rather than wrapping into a resistance, Thieves Eye, or coin-flip outcome. Remaining action work is other special-action preconditions and broader runtime proof.
   - 2026-07-09 update: DM1 F0412/F0327 spell projectile launch receipts now convert spell casts into the shared F0810 create-input path with F0327 weak-projectile adjustment, and the old M11 Open Door fallback launch has been removed. Remaining spell/render work is broader projectile-family receipt proof.
