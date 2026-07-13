@@ -7,6 +7,14 @@
   bytes are decoded, imported, or promoted. Verification: focused save/load
   CTest.
 
+- 2026-07-13 DM1 F0115 creature host materialization: the actual M11 PC34
+  creature blit now publishes a receipt only after it loads the selected
+  native C584+ bitmap and applies the ReDMCSB DUNVIEW.C G0221/G0222 depth
+  palette. The receipt retains G0219-derived graphic id, C10 transparency,
+  mirror, final geometry, dimensions, and palette fingerprint. Its focused
+  regression initializes the installed PC34 `GRAPHICS.DAT`; it uses no
+  replacement image or synthetic asset cache.
+
 - 2026-07-13 Nexus Structure1F floor-sensor model/rotation handoff: raw
   source pairs now reach the DGN host, render-plan, and LEV00-15 corpus
   receipts. The pair remains fail-closed provenance; it defines no sensor,

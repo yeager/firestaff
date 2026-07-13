@@ -358,6 +358,8 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
 static const M11_GameViewState* g_drawState = NULL;
 static M11_Dm1FloorItemHostPresentationReceipt
     s_m11_dm1_floor_item_host_presentation_receipt;
+static M11_Dm1CreatureHostPresentationReceipt
+    s_m11_dm1_creature_host_presentation_receipt;
 
 static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
 {
@@ -23771,6 +23773,17 @@ static void m11_blit_creature_pc34_palette(const M11_AssetSlot* slot,
     }
 }
 
+static unsigned int m11_creature_palette_checksum_pc34(const uint8_t palette[16])
+{
+    unsigned int hash = 2166136261u;
+    int i;
+    for (i = 0; i < 16; ++i) {
+        hash ^= palette[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
                                                 unsigned char* framebuffer,
                                                 int fbW,
@@ -23877,6 +23890,26 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
     m11_blit_creature_pc34_palette(slot, framebuffer, fbW, fbH,
                                    drawX, drawY, drawW, drawH,
                                    transparentColor, useMirror, palette);
+    /* ReDMCSB DUNVIEW.C F0115:5442-5463 materializes the native C584+
+     * bitmap only after G0221/G0222 has selected the depth palette. Keep
+     * that real host draw observable instead of inferring it from a plan. */
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        s_m11_dm1_creature_host_presentation_receipt.valid = 1;
+        s_m11_dm1_creature_host_presentation_receipt.creatureLane = 1;
+        s_m11_dm1_creature_host_presentation_receipt.creatureType = creatureType;
+        s_m11_dm1_creature_host_presentation_receipt.depthIndex = depthIndex;
+        s_m11_dm1_creature_host_presentation_receipt.graphicsId = (int)spriteIdx;
+        s_m11_dm1_creature_host_presentation_receipt.transparentColor = transparentColor;
+        s_m11_dm1_creature_host_presentation_receipt.mirrored = useMirror;
+        s_m11_dm1_creature_host_presentation_receipt.destinationX = drawX;
+        s_m11_dm1_creature_host_presentation_receipt.destinationY = drawY;
+        s_m11_dm1_creature_host_presentation_receipt.destinationW = drawW;
+        s_m11_dm1_creature_host_presentation_receipt.destinationH = drawH;
+        s_m11_dm1_creature_host_presentation_receipt.assetWidth = spriteW;
+        s_m11_dm1_creature_host_presentation_receipt.assetHeight = spriteH;
+        s_m11_dm1_creature_host_presentation_receipt.paletteChecksum =
+            m11_creature_palette_checksum_pc34(palette);
+    }
     return 1;
 }
 
@@ -37645,6 +37678,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * blit. Do not let a prior frame authorize a later projectile-only view. */
     memset(&s_m11_dm1_floor_item_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_floor_item_host_presentation_receipt));
+    memset(&s_m11_dm1_creature_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_creature_host_presentation_receipt));
     if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         state->dm2BootProfile) {
         DM2_V1_InterfacePalette palette;
@@ -39448,4 +39483,30 @@ int M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(
         state, framebuffer, framebufferWidth, framebufferHeight,
         M11_VIEWPORT_X + 48, M11_VIEWPORT_Y + 40, 24, 16,
         454, 0, 0, 0, 0, 0);
+}
+
+void M11_GameView_GetDm1CreatureHostPresentationReceipt(
+    M11_Dm1CreatureHostPresentationReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_creature_host_presentation_receipt;
+    }
+}
+
+int M11_GameView_ProbeDrawDm1CreatureHostReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    if (!state) return 0;
+    memset(&s_m11_dm1_creature_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_creature_host_presentation_receipt));
+    /* ReDMCSB DUNVIEW.C F0115:5442-5463: Mummy type 10 has a PC34 native
+     * creature aspect and requires the D2 G0221 palette route. */
+    return m11_draw_creature_sprite_ex_material(
+        state, framebuffer, framebufferWidth, framebufferHeight,
+        M11_VIEWPORT_X + 48, M11_VIEWPORT_Y + 40, 96, 72,
+        DM1_CREATURE_MUMMY, 1, 0, 0,
+        dm1_creature_transparent_color(DM1_CREATURE_MUMMY));
 }
