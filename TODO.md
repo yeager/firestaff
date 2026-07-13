@@ -489,6 +489,11 @@ and real community-save corpus round-trip evidence.
     checksum validation. The real-data regression proves repeated production
     exports of the same local original dungeon retain that identity; rejected
     tails publish no accepted receipt.
+  - 2026-07-13 update: F0435 runtime materialization now rejects a candidate
+    save when its live source `EVENTS`/`TIMELINE` heap contains an event
+    family without an M10 materializer. It never resumes by silently dropping
+    an original event; remaining work is source-complete event-family breadth
+    plus real community-save corpus round-trip evidence.
 
 ## DM1 PC 3.4 Real-Data Fallback Inventory (2026-07-11)
 

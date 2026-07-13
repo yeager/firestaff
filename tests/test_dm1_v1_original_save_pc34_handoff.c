@@ -429,6 +429,68 @@ static int write_fixture_file(const char *path,
     return written == (size_t)byte_count;
 }
 
+/* Reuse the test's exact F0430/F0419 fixture obfuscation to turn one
+ * accepted event into C11. It remains a checksum-authenticated PC34 save,
+ * not a fabricated in-memory timeline. */
+static int rewrite_fixture_event_type(unsigned char *bytes,
+                                      size_t size,
+                                      int event_index,
+                                      int event_type)
+{
+    unsigned char header[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE];
+    uint16_t keys[SAVEGAME_PC34_DM_KEYS_COUNT];
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t checksum;
+    int part;
+    int i;
+
+    if (!bytes || size < sizeof(header) || event_index < 0 ||
+        event_index >= ORIGINAL_PC34_EVENT_MAXIMUM_COUNT ||
+        event_type < 0 || event_type > 255) {
+        return 0;
+    }
+    memcpy(header, bytes, sizeof(header));
+    xor_obfuscate_second_half(
+        header,
+        rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
+        keys[i] = rd16le(header + 310u + (size_t)i * 2u);
+    }
+    for (part = 0; part < SAVEGAME_PC34_PART_EVENTS; ++part) {
+        uint16_t part_size;
+        if (cursor + 2u > size) return 0;
+        part_size = rd16le(bytes + cursor);
+        cursor += 2u;
+        if (part_size > size - cursor) return 0;
+        cursor += part_size;
+    }
+    if (cursor + 2u > size ||
+        rd16le(bytes + cursor) != ORIGINAL_PC34_EVENTS_PART_BYTES) {
+        return 0;
+    }
+    cursor += 2u;
+    if (ORIGINAL_PC34_EVENTS_PART_BYTES > size - cursor) return 0;
+
+    xor_words(bytes + cursor, ORIGINAL_PC34_EVENTS_PART_BYTES / 2u,
+              keys[SAVEGAME_PC34_PART_EVENTS]);
+    bytes[cursor + (size_t)event_index * ORIGINAL_PC34_EVENT_BYTES + 4u] =
+        (unsigned char)event_type;
+    checksum = checksum_and_xor_words(
+        bytes + cursor, ORIGINAL_PC34_EVENTS_PART_BYTES / 2u,
+        keys[SAVEGAME_PC34_PART_EVENTS]);
+    wr16le(header + 342u +
+           (size_t)SAVEGAME_PC34_PART_EVENTS * 2u, checksum);
+    wr16le(header + 254u, 0u);
+    wr16le(header + 254u,
+           (uint16_t)(checksum_first_half(header) ^
+                      checksum_second_half_plain(header)));
+    xor_obfuscate_second_half(
+        header,
+        rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    memcpy(bytes, header, sizeof(header));
+    return 1;
+}
+
 static void make_temp_save_path(char *out, size_t out_size)
 {
     const char *root = getenv("FIRESTAFF_TEST_TMPDIR");
@@ -1276,6 +1338,46 @@ static void test_runtime_handoff_is_transactional_on_rejected_tail(void)
           "adopt rejects self-transfer");
 }
 
+static void test_runtime_handoff_rejects_unmaterialized_source_event(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int written = 0;
+    struct GameWorld_Compat world;
+    struct DM1_EventQueue_V1 event_queue;
+    DM1OriginalSavePC34HandoffReport report;
+    int rc;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "unmaterialized-event fixture build succeeds");
+    CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 0,
+                                     DM1_EVENT_ENABLE_CHAMPION_ACTION),
+          "C11 event rewrite preserves the PC34 envelope");
+
+    memset(&world, 0, sizeof(world));
+    memset(&event_queue, 0, sizeof(event_queue));
+    memset(&report, 0, sizeof(report));
+    world.gameTick = 777u;
+    world.party.championCount = 1;
+    world.party.mapIndex = 6;
+    event_queue.gameTick = 888u;
+    event_queue.eventCount = 1;
+    report.original_game_time = 999u;
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, &event_queue, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "active C11 without a materializer rejects runtime handoff");
+    CHECK(world.gameTick == 777u && world.party.championCount == 1 &&
+          world.party.mapIndex == 6,
+          "unmaterialized source event leaves live world untouched");
+    CHECK(event_queue.gameTick == 888u && event_queue.eventCount == 1,
+          "unmaterialized source event leaves live queue untouched");
+    CHECK(report.original_game_time == 999u,
+          "unmaterialized source event leaves receipt untouched");
+}
+
 static void test_real_dm1_dungeon_tail_map_span_validation(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -1748,6 +1850,7 @@ int main(void)
     test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc();
     test_runtime_materializer_recovers_missing_primary_from_backup();
     test_runtime_handoff_is_transactional_on_rejected_tail();
+    test_runtime_handoff_rejects_unmaterialized_source_event();
     test_real_dm1_dungeon_tail_map_span_validation();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();
