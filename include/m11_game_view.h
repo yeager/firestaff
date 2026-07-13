@@ -576,6 +576,9 @@ typedef struct {
      * Tracks ESC-triggered save dialog matching ReDMCSB
      * C140_COMMAND (LOADSAVE.C F0433). */
     struct DM1SaveMenuContext saveMenu;
+    /* DM2 save/load dialogue presentation is separate from generic plaque
+     * overlays: M11 may paint it only from c_dialog.cpp's GDAT/RAW4 command. */
+    int dm2SaveDialoguePanelActive;
     uint32_t dm1GameID;  /* Persistent game ID for save file matching */
     int dm1MusicOn;      /* ReDMCSB G2024_B_PendingMusicOn runtime state */
 
