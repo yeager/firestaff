@@ -24579,6 +24579,22 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_mirror_pc34_co
     )
 endif()
 
+# Real DM1 PC34 HoC C127 -> C346/C026 material receipt. This is DM1/M10 only:
+# unavailable original C346 backing remains no-draw, never a host fallback.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_hoc_mirror_pc34_material_gate.c")
+    add_executable(test_dm1_v1_hoc_mirror_pc34_material_gate
+        tests/test_dm1_v1_hoc_mirror_pc34_material_gate.c
+    )
+    target_link_libraries(test_dm1_v1_hoc_mirror_pc34_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_hoc_mirror_pc34_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_hoc_mirror_pc34_material_gate
+        COMMAND test_dm1_v1_hoc_mirror_pc34_material_gate
+    )
+endif()
+
 # pass852 — DM1 V1 mandatory-graphic-indices: Graphics.dat item 562 init
 # var G0018_ai_Graphic562_MandatoryGraphicIndices[70]. Source-locked
 # against DATA.C:24/137-209/615/690 + DUNVIEW.C:2350/2353/2356/2359/2454/2455

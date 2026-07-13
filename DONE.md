@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC C026/C346 material gate: a DM1/M10-only regression
+  scans the installed PC34 Hall of Champions for a real C127 mirror sensor.
+  It locks the source ordinal to the exact C026 atlas cell and G0109
+  placement, with C346 backing material first. An unavailable C346 backing
+  returns no draw receipt and no fallback rectangle. Source: ReDMCSB
+  `DUNGEON.C` F0172/F0174 and `DUNVIEW.C` F0107:3913-3928. Verification:
+  focused CTest.
+
 - 2026-07-13 DM1 PC34 wall-inscription material gate: a DM1/M10-only
   regression scans the installed `DUNGEON.DAT` for a real visible wall
   TextString, then locks F0168's decoded bytes into F0107's M648/C10 receipt.
