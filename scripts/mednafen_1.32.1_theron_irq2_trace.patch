@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,5 +36,1078 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,5 +36,1100 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -98,6 +98,7 @@ index 347482c4..61d4758e 100644
 +static bool TheronIrq2TraceControllerStateWaitSampleSeen;
 +static unsigned TheronIrq2TraceRawControllerStateStoreCount;
 +static unsigned TheronIrq2TraceRawCDRegisterStoreCount;
++static unsigned TheronIrq2TraceRawControllerResultStoreCount;
 +/* $e960..$ea3f covers the observed post-latch controller resume path.
 + * This stays a one-time raw execution receipt; it does not identify a CD
 + * transaction or attach meaning to the observed bytes. */
@@ -340,6 +341,27 @@ index 347482c4..61d4758e 100644
 +                                 logical_pc, PC, opcode, address, accumulator,
 +                                 CurGame->Debugger->MemPeek(address, 1, true, true) & 0xff);
 +   TheronIrq2TraceRawCDRegisterStoreCount++;
++   FlushTheronIrq2Trace();
++  }
++ }
++}
++/* Retain direct stores to the exact result byte read by the C860 wait loop.
++ * The row is raw instruction evidence only; it assigns no completion reason. */
++if(TheronIrq2TraceRawControllerResultStoreCount < 16)
++{
++ const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
++ if(opcode == 0x8c || opcode == 0x8d || opcode == 0x8e || opcode == 0x9c || opcode == 0xee || opcode == 0xce)
++ {
++  const uint32 address = (CurGame->Debugger->MemPeek(logical_pc + 1, 1, true, true) & 0xff) |
++                         ((CurGame->Debugger->MemPeek(logical_pc + 2, 1, true, true) & 0xff) << 8);
++  if(address == 0x222d)
++  {
++   const RegGroupType *regs = (*CurGame->Debugger->RegGroups)[0];
++   const uint32 accumulator = regs->GetRegister(regs->Regs[1].id, NULL, 0) & 0xff;
++   TheronIrq2Trace->print_format("system_card_controller_result_store pc=%04x physical_pc=%08x opcode=%02x accumulator=%02x value_before=%02x\\n",
++                                 logical_pc, PC, opcode, accumulator,
++                                 CurGame->Debugger->MemPeek(0x222d, 1, true, true) & 0xff);
++   TheronIrq2TraceRawControllerResultStoreCount++;
 +   FlushTheronIrq2Trace();
 +  }
 + }
@@ -1104,7 +1126,7 @@ index 347482c4..61d4758e 100644
 + if(TheronIrq2Trace)
 +  DoTheronIrq2Trace(PC);
  }
-@@ -1873,5 +2530,57 @@ void Debugger_Init(void)
+@@ -1873,5 +2530,58 @@ void Debugger_Init(void)
  	TraceLogSpec = "";
  	TraceLogEnd = 0;
  	TraceLogRTO = 0;
@@ -1120,6 +1142,7 @@ index 347482c4..61d4758e 100644
 +	  TheronIrq2TracePostCapPageSamples = 0;
 +	  TheronIrq2TraceRawControllerStateStoreCount = 0;
 +	  TheronIrq2TraceRawCDRegisterStoreCount = 0;
++	  TheronIrq2TraceRawControllerResultStoreCount = 0;
 +	  memset(TheronIrq2TraceReturnWindowSeen, 0, sizeof(TheronIrq2TraceReturnWindowSeen));
 +	  TheronIrq2TraceReturnTransferPending = false;
 +	  memset(TheronIrq2TraceReturnTransferSeen, 0, sizeof(TheronIrq2TraceReturnTransferSeen));
