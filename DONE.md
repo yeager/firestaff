@@ -21,6 +21,15 @@
   ReDMCSB `NEWMAP.C`:45-77 and `TIMELINE.C` C22:1920-1925. Verification:
   Ninja and CTest `dm1_v1_original_save_pc34_handoff` passed 1/1.
 
+- 2026-07-13 CSBWin saved timer runtime: restored `TT_78` Fire Shield and
+  `TT_79` Magic Footprints timers now execute through the live materialized
+  queue only after complete serialized TIMER and dispatch-event identity
+  checks. `TT_78` preserves its signed little-endian `timerWord6` defense
+  delta and rejects negative/underflowing records; `TT_79` decrements only a
+  positive saved active-effect count. Source portrait redraw and footprint
+  visual/cleanup paths remain deliberately unowned. Verified by
+  `test_csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin restored `TT_75` poison bridge: an exact saved queue
   receipt now maps its champion priority and bounded 8-bit `timerWord6` attack
   into the existing ReDMCSB C75 damage, dose, and `+36` requeue chain. Stale

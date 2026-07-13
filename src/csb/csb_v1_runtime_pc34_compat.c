@@ -16573,6 +16573,49 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     timer_index = profile->csbwin_timer_queue[queue_slot];
     if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
+    if (timer->function == 79u) {
+        /* CSBWin CSBCode.cpp:6563 and Magic.cpp:1329-1339 expire TT_79 by
+         * removing exactly one active Magic Footprints effect. The complete
+         * source TIMER identity is still required even though its payload is
+         * unused: byte fields must not become a synthetic footprint route.
+         * The footprint-record cleanup/draw route has no restored owner, so
+         * this bridge owns only the saved counter decrement. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 &&
+            profile->csbwin_character_tail_magic_footprints_active > 0u) {
+            --profile->csbwin_character_tail_magic_footprints_active;
+        }
+        return 1;
+    }
+    if (timer->function == 78u) {
+        int16_t shield_delta;
+
+        /* CSBWin CSBCode.cpp:6560-6562 and Attack.cpp:1208-1227 expire
+         * TT_78 by subtracting its signed timerWord6 from FireShield. Keep
+         * the original little-endian word and full materialized queue/event
+         * identity together; malformed, negative, or underflowing records
+         * cannot create a replacement shield state. MarkAllPortraitsChanged
+         * remains unavailable without the source HUD owner. */
+        shield_delta = (int16_t)((uint16_t)timer->ubyte6 |
+            ((uint16_t)timer->ubyte7 << 8));
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 && shield_delta > 0 &&
+            profile->csbwin_character_tail_fire_shield >= shield_delta) {
+            profile->csbwin_character_tail_fire_shield = (int16_t)(
+                profile->csbwin_character_tail_fire_shield - shield_delta);
+        }
+        return 1;
+    }
     if (timer->function == 75u) {
         uint16_t poison_attack;
         int champion_index;
