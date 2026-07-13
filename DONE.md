@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F item corpus handoff: raw direct-item
+  `attribute1/attribute2` and `location/item_id` pair receipts now also flow
+  through the per-level LEV00-15 aggregate. This remains fail-closed
+  provenance: it assigns no item, object, gameplay, material, mesh, texture,
+  palette, pixel, or draw semantics.
+
 - 2026-07-13 Nexus Structure1F floor-decoration offset handoff: the existing
   corpus receipt for signed source offset pairs now reaches the DGN host
   handoff, render plan, and per-level corpus aggregate. It remains raw,
