@@ -6,6 +6,8 @@ cue=${THERON_US_CUE:-}
 system_card=${THERON_SYSTEM_CARD:-}
 trace=${THERON_LIVE_TRACE_OUTPUT:-}
 seconds=${THERON_CAPTURE_SECONDS:-45}
+capture_sdl_video_driver=${THERON_CAPTURE_SDL_VIDEODRIVER:-dummy}
+configured_home=${THERON_MEDNAFEN_HOME:-}
 
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
     printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required'
@@ -17,6 +19,10 @@ if [[ ! -x "$mednafen_bin" || ! -f "$cue" || ! -f "$system_card" ]]; then
 fi
 if [[ ! "$seconds" =~ ^[1-9][0-9]*$ ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_SECONDS must be a positive integer' >&2
+    exit 1
+fi
+if [[ -n "$configured_home" && ! -d "$configured_home" ]]; then
+    printf '%s\n' 'FAIL: THERON_MEDNAFEN_HOME must name an existing Mednafen configuration directory' >&2
     exit 1
 fi
 
@@ -32,13 +38,22 @@ fi
 trace_dir=$(dirname -- "$trace")
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
-home_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-mednafen.XXXXXX")
+input_trace="${trace}.input"
 stdout_file="$trace_dir/$(basename -- "$trace").stdout"
 stderr_file="$trace_dir/$(basename -- "$trace").stderr"
 
 mkdir -p "$trace_dir"
-rm -f "$trace" "$memory_trace" "$cd_trace"
-trap 'rm -rf "$home_dir"' EXIT
+rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace"
+if [[ -n "$configured_home" ]]; then
+    home_dir=$configured_home
+    cleanup_home=0
+else
+    home_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-mednafen.XXXXXX")
+    cleanup_home=1
+fi
+if [[ "$cleanup_home" == 1 ]]; then
+    trap 'rm -rf "$home_dir"' EXIT
+fi
 
 set +e
 "${timeout_command[@]}" env \
@@ -46,7 +61,8 @@ set +e
     FIRESTAFF_THERON_IRQ2_TRACE="$trace" \
     FIRESTAFF_THERON_IRQ2_MEMORY_TRACE="$memory_trace" \
     FIRESTAFF_THERON_IRQ2_CD_TRACE="$cd_trace" \
-    SDL_VIDEODRIVER=dummy \
+    FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace" \
+    SDL_VIDEODRIVER="$capture_sdl_video_driver" \
     SDL_AUDIODRIVER=dummy \
     "$mednafen_bin" \
     -sound 0 \

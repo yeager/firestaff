@@ -1,0 +1,34 @@
+diff --git a/src/pce/input.cpp b/src/pce/input.cpp
+--- a/src/pce/input.cpp
++++ b/src/pce/input.cpp
+@@ -177,5 +177,30 @@ uint16 INPUT_HESHack(void)
+ void INPUT_Frame(void)
+ {
++ static FILE *theron_input_trace = NULL;
++ static uint16 theron_previous_port0 = 0xffff;
++ if(!theron_input_trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_IRQ2_INPUT_TRACE");
++  if(path && *path)
++  {
++   theron_input_trace = fopen(path, "a");
++   if(theron_input_trace)
++   {
++    fputs("source=mednafen-pce-instrumented-input\n", theron_input_trace);
++    fflush(theron_input_trace);
++   }
++  }
++ }
++ if(theron_input_trace && data_ptr[0])
++ {
++  const uint16 port0 = MDFN_de16lsb(data_ptr[0]);
++  if(port0 != theron_previous_port0)
++  {
++   fprintf(theron_input_trace, "pce_input_port0 raw=%04x\n", port0);
++   fflush(theron_input_trace);
++   theron_previous_port0 = port0;
++  }
++ }
+  for(int i = 0; i < 5; i++)
+   if(devices[i])
+    devices[i]->Update(data_ptr[i]);

@@ -13,6 +13,15 @@ if ! grep -Fq -- '-pce.arcadecard 0' "$script"; then
     printf 'FAIL: capture script must disable unrelated Arcade Card emulation\n' >&2
     exit 1
 fi
+if ! grep -Fq 'FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace"' "$script"; then
+    printf 'FAIL: capture script must retain a raw controller input receipt\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_MEDNAFEN_HOME must name an existing Mednafen configuration directory' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_SDL_VIDEODRIVER' "$script"; then
+    printf 'FAIL: capture script must gate an explicit GUI input configuration\n' >&2
+    exit 1
+fi
 
 output=$(env -u MEDNAFEN_BIN -u THERON_US_CUE -u THERON_SYSTEM_CARD \
     -u THERON_LIVE_TRACE_OUTPUT "$script")

@@ -17,14 +17,14 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 +    theron_cd_register_trace = fopen(path, "a");
 +    if(theron_cd_register_trace)
 +    {
-+     fputs("source=mednafen-pce-instrumented-cd-register\\n", theron_cd_register_trace);
++     fputs("source=mednafen-pce-instrumented-cd-register\n", theron_cd_register_trace);
 +     fflush(theron_cd_register_trace);
 +    }
 +   }
 +  }
 +  if(theron_cd_register_trace)
 +  {
-+   fprintf(theron_cd_register_trace, "pce_cd_register_write physical=%08x data=%02x\\n", physAddr, data);
++   fprintf(theron_cd_register_trace, "pce_cd_register_write physical=%08x data=%02x\n", physAddr, data);
 +   fflush(theron_cd_register_trace);
 +   theron_cd_register_trace_count++;
 +  }
