@@ -51,6 +51,9 @@ typedef struct {
     int door_gdat_blits;
     int creature_gdat_blits;
     int floor_ceiling_gdat_blits;
+    uint8_t floor_ceiling_material_required_mask;
+    uint8_t floor_ceiling_material_consumed_mask;
+    int floor_ceiling_materials_complete;
     int outdoor_sky_gdat_blits;
     int outdoor_ground_gdat_blits;
     int wall_gdat_blits;
@@ -142,6 +145,9 @@ typedef struct {
     uint32_t map_load_token;
     uint32_t scene_control_hash;
     uint32_t palette_hash;
+    uint8_t floor_ceiling_material_required_mask;
+    uint8_t floor_ceiling_material_consumed_mask;
+    int floor_ceiling_materials_complete;
 } DM2_V1_ViewportM11FrameReceipt;
 
 typedef struct {

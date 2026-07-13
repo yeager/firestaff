@@ -1024,6 +1024,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
               ownership.runtime_weather == DM2_WEATHER_CLEAR &&
               ownership.runtime_weather_intensity == 0 &&
               ownership.floor_ceiling_gdat_blits == 2 &&
+              ownership.floor_ceiling_materials_complete == 1 &&
               ownership.wall_gdat_blits == 10 &&
               ownership.hud_core_gdat_blits == 9 &&
               ownership.hud_gdat_blits == 13 &&
