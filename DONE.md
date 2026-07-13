@@ -9471,3 +9471,14 @@ remain unavailable, with no generated replacement text. Verification:
 `test_dm2_v1_g1_text_message_runtime` checks literal decoding, source
 placement, phrase-bank rejection, GDAT-only skip, and untrusted-receipt
 rejection.
+
+# ✅ 2026-07-13 DM2 weather `dtText` provenance boundary
+
+`dm2_v1_weather_gdat` now follows skproject `c_weather.cpp` rather than
+treating environment fields as drawable images. It resolves the six exact
+`QUERY_GDAT_TEXT(0x17, MapGraphicsStyle, 0x67..0x6c)` command payloads,
+retains byte identity in a receipt, and derives the original cloud
+`0x10/0x40/0x80` and rain `0x40/0x80/0xc0` selectors. Missing, wrong-type,
+or partial commands reject; raw `dtText` is not decoded or rendered until
+`QUERY_CMDSTR_TEXT` and its encoding state are source-proven. Verification:
+Ninja and `dm2_v1_weather_gdat_receipt` passed.
