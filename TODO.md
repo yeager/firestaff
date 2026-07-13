@@ -787,9 +787,12 @@ Saturn texture semantics.
 
 Nexus's original Structure1B wall-selector transform remains unproven. Real
 LEV00-LEV15 bytes 3/4 contain values outside the 15 descriptor IDs in the
-hash-bound `SN_WALL.MNS` TEXT bank, so the runtime blocks that MNS route
-unless a Saturn executable or capture proves the mapping. Do not derive a
-nibble, mask, or directional transform from the observed values alone.
+hash-bound `SN_WALL.MNS` TEXT bank. The package-to-host handoff now reports
+`blocked-structure1b-selector` before constructing any MNS-backed command,
+and accepts only one complete source route per plan (proved MNS or separately
+authenticated BPK). The remaining work is a Saturn executable or capture
+that proves the mapping; do not derive a nibble, mask, or directional
+transform from the observed values alone.
 
 Structure1C's bounded four-byte records are now retained only as original
 reference-table data. The next admissible collision work is a Saturn

@@ -389,17 +389,25 @@ static int nexus_v1_find_dmdf_family_file(const char *dir,
 }
 
 static const Nexus_DMDFTextureSurface *nexus_v1_plan_surface(
-    const Nexus_V1_Engine *engine, const Nexus_V1_DgnRenderCommand *command)
+    const Nexus_V1_Engine *engine,
+    const Nexus_V1_DgnRenderCommand *command,
+    int use_static_mns_material_route,
+    int use_bpk_material_route)
 {
     const Nexus_DMDFMaterialBank *bank;
+    const Nexus_DMDFTextureSurface *surface;
     if (!engine || !command) return NULL;
+    /* A Structure2 image descriptor is source provenance only until its
+     * original payload is decoded. It cannot smuggle an animated surface
+     * through either static material route. */
     if (command->animated_texture_declared &&
         command->animated_texture_structure2_image_valid &&
         engine->animated_floor_material_route_valid) {
-        const Nexus_DMDFTextureSurface *surface =
-            &engine->animated_floor_materials.surfaces[
-                command->animated_texture_structure2_image_id];
-        return surface->valid ? surface : NULL;
+        surface = &engine->animated_floor_materials.surfaces[
+            command->animated_texture_structure2_image_id];
+        return surface->valid &&
+            ((use_static_mns_material_route && !surface->from_bpk) ||
+             (use_bpk_material_route && surface->from_bpk)) ? surface : NULL;
     }
     bank = (command->kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
             command->kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
@@ -407,8 +415,13 @@ static const Nexus_DMDFTextureSurface *nexus_v1_plan_surface(
     if (!bank->valid) {
         return NULL;
     }
-    return bank->surfaces[command->material_id].valid
-        ? &bank->surfaces[command->material_id] : NULL;
+    surface = &bank->surfaces[command->material_id];
+    if (!surface->valid) return NULL;
+    /* Never let a decoded MNS bank make an unproved Structure1B transform
+     * look renderable, and never cross-source a BPK command with MNS pixels. */
+    if (use_static_mns_material_route && !surface->from_bpk) return surface;
+    if (use_bpk_material_route && surface->from_bpk) return surface;
+    return NULL;
 }
 
 int nexus_v1_inspect_dgn_material_corpus(
@@ -830,6 +843,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
 {
     Nexus_V1_DgnMaterialPlan *plan;
     int static_mns_route_bound;
+    int bpk_material_route_bound;
     int structure2_source_bound;
     int i;
 
@@ -867,6 +881,13 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         engine->dgn_static_material_sources.structure1b_selector_binding_proven &&
         engine->floor_mns_material_route_valid &&
         engine->wall_mns_material_route_valid;
+    bpk_material_route_bound =
+        engine->floor_bpk_container.host_route_permitted &&
+        engine->wall_bpk_container.host_route_permitted &&
+        engine->floor_bpk_host_route_valid &&
+        engine->wall_bpk_host_route_valid &&
+        engine->floor_bpk_host_route.host_consumed_surfaces &&
+        engine->wall_bpk_host_route.host_consumed_surfaces;
     structure2_source_bound =
         engine->current_level_structure2_source.level_index ==
             engine->game.current_level &&
@@ -874,7 +895,24 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         !engine->current_level_structure2_source.fallback_visuals_permitted;
     plan->receipt.structure2_source_materialization_bound =
         structure2_source_bound;
-    if (!static_mns_route_bound && !structure2_source_bound) {
+    plan->receipt.static_mns_source_pair_bound =
+        engine->dgn_static_material_sources.canonical_pair_bound;
+    plan->receipt.structure1b_selector_binding_proven =
+        engine->dgn_static_material_sources.structure1b_selector_binding_proven;
+    plan->receipt.bpk_material_route_bound = bpk_material_route_bound;
+    if (!static_mns_route_bound &&
+        engine->dgn_static_material_sources.canonical_pair_bound &&
+        engine->floor_mns_material_route_valid &&
+        engine->wall_mns_material_route_valid &&
+        !engine->dgn_static_material_sources.structure1b_selector_binding_proven) {
+        plan->receipt.status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR;
+        plan->receipt.blocks_real_dgn_mesh_render = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
+        return NULL;
+    }
+    if (!static_mns_route_bound &&
+        (!bpk_material_route_bound || !structure2_source_bound)) {
         plan->receipt.status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
         plan->receipt.blocks_real_dgn_mesh_render = 1;
@@ -892,10 +930,18 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
      * permission bit. */
     plan->receipt.structure2_source_materialization_bound =
         structure2_source_bound;
+    /* Static MNS takes precedence only after the selector is independently
+     * proven. Otherwise the BPK route must carry every command itself. */
+    plan->receipt.uses_static_mns_material_route = static_mns_route_bound;
+    plan->receipt.uses_bpk_material_route =
+        !static_mns_route_bound && bpk_material_route_bound;
 
     for (i = 0; i < plan->receipt.command_count; ++i) {
         const Nexus_DMDFTextureSurface *surface =
-            nexus_v1_plan_surface(engine, &plan->commands[i]);
+            nexus_v1_plan_surface(
+                engine, &plan->commands[i],
+                plan->receipt.uses_static_mns_material_route,
+                plan->receipt.uses_bpk_material_route);
         if (!surface) {
             /* DMWeb DGN structure selects IDs; a verified BPK host route
              * plus the matching decoded source surface is required. */

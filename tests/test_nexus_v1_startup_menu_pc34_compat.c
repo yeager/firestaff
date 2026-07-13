@@ -972,6 +972,7 @@ int main(void)
     seed_material_surface(&synthetic_engine.floor_materials.surfaces[0],
                           &synthetic_floor_pixel,
                           0xff204060U);
+    synthetic_engine.floor_materials.surfaces[0].from_bpk = 1;
     synthetic_engine.wall_materials.valid = 1;
     synthetic_engine.wall_materials.surface_count = 1;
     synthetic_engine.wall_materials.bpk_imported_surface_count = 1;

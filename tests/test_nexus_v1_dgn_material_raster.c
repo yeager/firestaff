@@ -300,6 +300,15 @@ int main(void) {
                receipt.attempted && receipt.blocked &&
                !receipt.fallback_visuals_permitted,
            "unbound Structure1B wall selectors block the real MNS route");
+    expect(nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0) == NULL &&
+               engine.dgn_material_plan.receipt.status ==
+                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR &&
+               engine.dgn_material_plan.receipt.static_mns_source_pair_bound &&
+               !engine.dgn_material_plan.receipt
+                    .structure1b_selector_binding_proven &&
+               !engine.dgn_material_plan.receipt.uses_static_mns_material_route &&
+               !engine.dgn_material_plan.receipt.uses_bpk_material_route,
+           "material-plan package route names the unproved Structure1B selector blocker");
 
     engine.dgn_static_material_sources.structure1b_selector_binding_proven = 1;
     nexus_v1_invalidate_dgn_material_plan(&engine);
@@ -308,6 +317,9 @@ int main(void) {
                receipt.ready && !receipt.blocked &&
                receipt.bpk_material_surface_count == 0,
            "hash-bound SN_FLOOR/SN_WALL route renders without BPK substitution");
+    expect(engine.dgn_material_plan.receipt.uses_static_mns_material_route &&
+               !engine.dgn_material_plan.receipt.uses_bpk_material_route,
+           "bound Structure1B selectors admit one static MNS package route only");
     {
         Nexus_V1_DgnStaticMaterialSourceReceipt source_receipt;
         expect(nexus_v1_dgn_static_material_source_receipt(
