@@ -2293,6 +2293,9 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
             (const DM2_ChampionRecord *)
                 rt->session_snapshot.champion_data[slot];
         DM2_V1_HudChampionState *dst = &hud.champions[slot];
+        const uint8_t *source_champion =
+            rt->session_snapshot.champion_data[slot];
+        char source_first_name[8];
 
         dst->occupied = champ->first_name[0] != '\0' ||
                         champ->cur_hp != 0u || champ->max_hp != 0u;
@@ -2303,12 +2306,20 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         dst->stamina_pct =
             dm2_runtime_hud_pct_from_current(champ->stamina);
         dst->mana_pct = dm2_runtime_hud_pct_from_current(champ->mana);
-        dst->portrait_index =
-            (uint8_t)(champ->portrait_index % DM2_V1_HUD_PORTRAIT_COUNT);
-        /* DM2_ChampionRecord.portrait_index is Firestaff session-tail
-         * metadata. skproject DRAW_CHAMPION_PICTURE requires HeroType(), so
-         * this cannot authorize a real CHAMPIONS GDAT fetch. */
+        dst->portrait_index = 0u;
+        /* skproject/SKWIN/DME.h::Champion::heroType is byte 255 of the
+         * 261-byte save record.  REVIVE_PLAYER writes it from the source
+         * mirror actuator and DRAW_CHAMPION_PICTURE uses that exact GDAT
+         * index.  The local portrait_index tail is not a substitute. */
         dst->portrait_type_source_bound = 0;
+        memset(source_first_name, 0, sizeof(source_first_name));
+        if (dm2_v1_boot_champion_hero_type_source_ready(
+                rt->boot, source_champion[255], source_first_name) &&
+            strncmp(source_first_name, champ->first_name,
+                    sizeof(source_first_name)) == 0) {
+            dst->portrait_index = source_champion[255];
+            dst->portrait_type_source_bound = 1;
+        }
         memcpy(dst->name, champ->first_name, DM2_V1_HUD_CHAMPION_NAME_MAX);
         dst->name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
     }

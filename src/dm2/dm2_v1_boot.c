@@ -3719,6 +3719,60 @@ int dm2_v1_boot_gdat_typed_raw_asset_proof(
            *out_hash != 0u && *out_byte_count > 0u;
 }
 
+int dm2_v1_boot_champion_hero_type_source_ready(
+    DM2_V1_BootProfile *profile,
+    uint8_t hero_type,
+    char out_first_name[8])
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *name;
+    const uint8_t *hero_data;
+    size_t name_size = 0u;
+    size_t hero_data_size = 0u;
+    uint8_t *pixels = NULL;
+    int width = 0;
+    int height = 0;
+    int stride = 0;
+    size_t copied = 0u;
+
+    if (out_first_name) out_first_name[0] = '\0';
+    if (!profile || !profile->graphics_dat || !out_first_name) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+
+    /* skproject/SKWIN/SkWinCore.cpp REVIVE_PLAYER (20573-20627) stores the
+     * mirror's actuator HeroType, reads CHAMPIONS/type dtText/0x18 and
+     * dt08/0, then DRAW_CHAMPION_PICTURE (12866-12880) draws dtImage/0.
+     * Keep all three source records present before M11 admits the portrait. */
+    name = dm2_v1_asset_load_text_sized(&gfx->loader,
+                                        DM2_GDAT_CATEGORY_CHAMPIONS,
+                                        hero_type, 0x18, &name_size);
+    hero_data = dm2_v1_asset_load_typed_sized(&gfx->loader,
+                                               DM2_GDAT_CATEGORY_CHAMPIONS,
+                                               hero_type,
+                                               DM2_GDAT_ENTRY_TYPE_RAW8,
+                                               0x00, &hero_data_size);
+    if (!name || name_size == 0u || !hero_data || hero_data_size == 0u) {
+        return 0;
+    }
+    while (copied < 7u && copied < name_size && name[copied] != 0u &&
+           name[copied] != ' ') {
+        out_first_name[copied] = (char)name[copied];
+        ++copied;
+    }
+    if (copied == 0u) return 0;
+    out_first_name[copied] = '\0';
+    if (dm2_v1_boot_gdat_image_asset_fetch(
+            profile, DM2_GDAT_CATEGORY_CHAMPIONS, hero_type, 0x00,
+            &pixels, &width, &height, &stride) != 0 || !pixels ||
+        width <= 0 || height <= 0 || stride < width) {
+        dm2_v1_boot_gdat_image_asset_free(pixels);
+        out_first_name[0] = '\0';
+        return 0;
+    }
+    dm2_v1_boot_gdat_image_asset_free(pixels);
+    return 1;
+}
+
 static int dm2_v1_boot_runtime_raw_gdat_hash_add(
     DM2_V1_BootProfile *profile,
     int category,
