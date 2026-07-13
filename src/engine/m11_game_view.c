@@ -7580,6 +7580,16 @@ static void m11_set_decoded_next_thing(struct DungeonThings_Compat* things,
             things->junks[index].next = newNext;
         }
         break;
+    case THING_TYPE_PROJECTILE:
+        if (things->projectiles && index < things->projectileCount) {
+            things->projectiles[index].next = newNext;
+        }
+        break;
+    case THING_TYPE_EXPLOSION:
+        if (things->explosions && index < things->explosionCount) {
+            things->explosions[index].next = newNext;
+        }
+        break;
     default:
         break;
     }
@@ -29362,6 +29372,39 @@ static int m11_materialize_projectile_associated_thing(
     return 1;
 }
 
+static void m11_delete_projectile_move_events_after_impact(
+    M11_GameViewState* state,
+    int projectileSlot)
+{
+    int readIndex;
+    int newCount;
+    int writeIndex = 0;
+
+    if (!state || projectileSlot < 0) {
+        return;
+    }
+    /* ReDMCSB PROJEXPL.C F0214 deletes the C48/C49 event before F0215
+     * clears C14. This direct M11 F0811 loop otherwise leaves the original
+     * move event queued after it has already despawned the runtime slot.
+     * C11 belongs to F0330/F0407 action cooldown ownership and is never a
+     * projectile cleanup target. */
+    for (readIndex = 0; readIndex < state->world.timeline.count; ++readIndex) {
+        const struct TimelineEvent_Compat* event =
+            &state->world.timeline.events[readIndex];
+        if (event->kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+            event->aux0 == projectileSlot) {
+            continue;
+        }
+        state->world.timeline.events[writeIndex++] = *event;
+    }
+    newCount = writeIndex;
+    while (writeIndex < state->world.timeline.count) {
+        memset(&state->world.timeline.events[writeIndex++], 0,
+               sizeof(state->world.timeline.events[0]));
+    }
+    state->world.timeline.count = newCount;
+}
+
 static int m11_maybe_heal_black_flame_from_fireball(
     M11_GameViewState* state,
     const struct ProjectileInstance_Compat* projectile,
@@ -30140,6 +30183,7 @@ static void m11_advance_projectiles_v1(M11_GameViewState* state) {
         if (!F0811_PROJECTILE_Advance_Compat(p, &digest, now,
                                              &state->world.masterRng,
                                              &newState, &result)) {
+            m11_delete_projectile_move_events_after_impact(state, i);
             F0813_PROJECTILE_Despawn_Compat(&state->world.projectiles, i);
             continue;
         }
@@ -30160,10 +30204,13 @@ static void m11_advance_projectiles_v1(M11_GameViewState* state) {
                      * slots are consumed. */
                     (void)m11_materialize_projectile_associated_thing(
                         state, other, &result, 0);
+                    m11_delete_projectile_move_events_after_impact(
+                        state, otherIndex);
                     (void)F0813_PROJECTILE_Despawn_Compat(
                         &state->world.projectiles, otherIndex);
                 }
             }
+            m11_delete_projectile_move_events_after_impact(state, i);
             F0813_PROJECTILE_Despawn_Compat(&state->world.projectiles, i);
         } else {
             /* Commit the flown state.  F0811 fills outNewState with

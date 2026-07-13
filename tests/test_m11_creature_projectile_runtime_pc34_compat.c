@@ -19,6 +19,8 @@
 #include "memory_projectile_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -242,6 +244,80 @@ static void test_first_move_grace_skips_source_square_impact(void) {
     ASSERT_EQ(next.firstMoveGraceFlag, 0, "first move grace clears after first advance");
 }
 
+static void test_direct_f0811_impact_cleans_c14_and_c49(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char map0Tiles[1];
+    unsigned char map1Tiles[3];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct DungeonProjectile_Compat projectiles[1];
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned short squareFirstThings[4];
+    struct TimelineEvent_Compat moveEvent;
+    unsigned short projectileThing = (unsigned short)(THING_TYPE_PROJECTILE << 10);
+    unsigned short weaponThing = (unsigned short)(THING_TYPE_WEAPON << 10);
+
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles,
+                                  map1Tiles, &things, groups, squareFirstThings);
+    /* F0219 sees the north/westward blocker before it can commit movement.
+     * The live C14 begins at map 1, x 2; F0217 must unlink it, F0215 drops
+     * its actual Slot back at x 2, and F0214 removes the queued C49. */
+    map1Tiles[1] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    memset(projectiles, 0, sizeof(projectiles));
+    memset(weapons, 0, sizeof(weapons));
+    projectiles[0].slot = weaponThing;
+    projectiles[0].next = THING_ENDOFLIST;
+    weapons[0].type = 27; /* ReDMCSB WEAPON_ARROW. */
+    weapons[0].next = THING_NONE;
+    things.projectiles = projectiles;
+    things.projectileCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    squareFirstThings[3] = projectileThing;
+    memset(&state.world.projectiles, 0, sizeof(state.world.projectiles));
+    state.world.projectiles.count = 1;
+    state.world.projectiles.entries[0].slotIndex = 0;
+    state.world.projectiles.entries[0].projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    state.world.projectiles.entries[0].projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    state.world.projectiles.entries[0].mapIndex = 1;
+    state.world.projectiles.entries[0].mapX = 2;
+    state.world.projectiles.entries[0].mapY = 0;
+    state.world.projectiles.entries[0].cell = 0;
+    state.world.projectiles.entries[0].direction = 3;
+    state.world.projectiles.entries[0].kineticEnergy = 20;
+    state.world.projectiles.entries[0].attack = 20;
+    state.world.projectiles.entries[0].stepEnergy = 1;
+    state.world.projectiles.entries[0].scheduledAtTick = 29;
+    state.world.projectiles.entries[0].attackTypeCode = COMBAT_ATTACK_BLUNT;
+    state.world.projectiles.entries[0].reserved1 = weaponThing;
+    state.world.projectiles.entries[0].reserved3 = 1;
+    memset(&moveEvent, 0, sizeof(moveEvent));
+    moveEvent.kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    moveEvent.fireAtTick = 29;
+    moveEvent.aux0 = 0;
+    state.world.timeline.events[0] = moveEvent;
+    state.world.timeline.count = 1;
+    state.world.gameTick = 29;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+    ASSERT_EQ(state.world.projectiles.count, 0,
+              "F0811 impact despawns the live runtime projectile");
+    ASSERT_EQ(state.world.timeline.count, 0,
+              "F0214 removes stale C48/C49 after direct M11 impact");
+    ASSERT_EQ(squareFirstThings[3], weaponThing,
+              "F0215 replaces C14 with the thrown weapon at the source square");
+    ASSERT_EQ(projectiles[0].next, THING_NONE,
+              "F0215 clears the raw C14 next link after impact");
+    ASSERT_EQ(weapons[0].next, THING_ENDOFLIST,
+              "F0163 makes the dropped weapon a terminal F0115 floor item");
+    ASSERT_EQ((int)dm1_item_sprite_index(THING_TYPE_WEAPON, 27) >=
+                  DM1_GRAPHIC_FIRST_OBJECT,
+              1, "F0115 drop resolves the original M612 object graphic bank");
+}
+
 int main(void) {
     printf("=== M11 Creature Projectile Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: GROUP.C F0207/F0209, PROJEXPL.C F0212/F0219, MOVESENS.C C48 impact gate\n\n");
@@ -250,6 +326,7 @@ int main(void) {
     test_live_idle_tick_inserts_creature_projectile();
     test_black_flame_fireball_impact_heals_and_caps();
     test_first_move_grace_skips_source_square_impact();
+    test_direct_f0811_impact_cleans_c14_and_c49();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

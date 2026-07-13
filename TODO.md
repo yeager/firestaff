@@ -690,6 +690,14 @@ owner: a live projectile before impact, a real linked floor object after an
 ordinary drop, or neither for potion/spell/group-slot cleanup. Remaining work
 is real multi-projectile pixel capture, not an alternate M11 impact renderer.
 
+2026-07-13: the M11 impact path now also performs F0214 queue cleanup for
+only the matching C48/C49 projectile slot, and writes C14's decoded/raw Next
+to `THING_NONE` after F0215. The F0330/F0407 C11 action receipt remains
+outside projectile cleanup ownership. A direct runtime regression proves a
+real PC34-shaped C14 arrow hits a wall, becomes the sole terminal F0115 floor
+object on its source square, and leaves no move event or C14 chain link.
+Remaining work is authentic multi-projectile pixel capture.
+
 D0C C100/C101 rebirth C15 records now follow their separate ReDMCSB routes.
 C100's real PC34 lightning material (`M613 + G0210[C03] + 1 = 464`) and C3000
 centres now follow `L2476 = G2028`, not `G2034`: `DUNVIEW.C:5948,5984,5999`
