@@ -3601,6 +3601,7 @@ static void test_corpus_roundtrip_proof(void)
             receipt->exported_hash == 0u || !receipt->path[0] ||
             !receipt->header_part_shape_receipt_available ||
             !receipt->m516_champion_record_receipt_available ||
+            !receipt->c4_timeline_layout_receipt_available ||
             !receipt->dungeon_tail_byte_receipt_available ||
             !receipt->dungeon_tail_byte_preservation_ok ||
             receipt->source_dungeon_tail_byte_count != 0u ||
@@ -3686,6 +3687,15 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
               receipt->source_m516_champion_record_fingerprint ==
                   receipt->exported_m516_champion_record_fingerprint,
               "real PC34 corpus preserves complete M516 champion bytes");
+        CHECK(receipt->c4_timeline_layout_receipt_available &&
+              receipt->c4_timeline_byte_preservation_ok &&
+              receipt->source_c4_timeline_index_count ==
+                  receipt->exported_c4_timeline_index_count &&
+              receipt->source_c4_timeline_byte_count ==
+                  receipt->exported_c4_timeline_byte_count &&
+              receipt->source_c4_timeline_fingerprint ==
+                  receipt->exported_c4_timeline_fingerprint,
+              "real PC34 corpus preserves full C4 timeline index bytes");
         CHECK(receipt->dungeon_tail_byte_receipt_available &&
               receipt->dungeon_tail_byte_preservation_ok,
               "real PC34 corpus preserves each observed dungeon tail exactly");
