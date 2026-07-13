@@ -38,6 +38,7 @@ int main(void)
     struct DungeonWeapon_Compat weapons[3];
     struct TimelineEvent_Compat duplicateC11;
     struct TimelineEvent_Compat staleC11;
+    struct TimelineEvent_Compat mixedOwnerC11;
     const struct TimelineEvent_Compat* event;
     unsigned short thrownThing;
     unsigned short firstQuiverWeapon;
@@ -129,5 +130,33 @@ int main(void)
                .inventory[CHAMPION_SLOT_ACTION_HAND] == THING_NONE);
     assert(state.world.party.champions[0]
                .inventory[CHAMPION_SLOT_QUIVER_3] == secondQuiverWeapon);
+
+    /* MENU.C F0407:1613-1617 changes C11's ordinal to two only for a
+     * successful C042_ACTION_THROW/F0328 branch.  A malformed receipt
+     * coupled to an ordinary SWING owner must remain locked and must not
+     * reach TIMELINE.C F0259's action-hand quiver transfer. */
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_1] =
+        firstQuiverWeapon;
+    state.world.party.champions[0].actionIndex = DM1_ACTION_SWING;
+    state.actionDisabledTicks[0] = 4u;
+    state.actionDisabledIndex[0] = DM1_ACTION_SWING;
+    state.actionEnableSlotOrdinal[0] =
+        DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL;
+    mixedOwnerC11 = duplicateC11;
+    mixedOwnerC11.fireAtTick = state.world.gameTick;
+    staleTick = mixedOwnerC11.fireAtTick;
+    assert(F0721_TIMELINE_Schedule_Compat(
+        &state.world.timeline, &mixedOwnerC11));
+    while (state.world.gameTick <= staleTick) {
+        assert(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW);
+    }
+    assert(state.world.party.champions[0]
+               .inventory[CHAMPION_SLOT_ACTION_HAND] == THING_NONE);
+    assert(state.world.party.champions[0]
+               .inventory[CHAMPION_SLOT_QUIVER_1] == firstQuiverWeapon);
+    assert(state.actionDisabledTicks[0] == 4u);
+    assert(state.actionDisabledIndex[0] == DM1_ACTION_SWING);
+    assert(state.actionEnableSlotOrdinal[0] ==
+           DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL);
     return 0;
 }
