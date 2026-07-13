@@ -227,6 +227,7 @@ typedef struct {
     int structure1f_wall_payload_selector_complete_level_count;
     int structure1f_wall_sensor_destination_complete_level_count;
     int structure1f_wall_sensor_control_selector_complete_level_count;
+    int structure1f_alcove_payload_selector_complete_level_count;
     int structure3_zero_based_block_ordinal_mapping_disproven_level_count;
     int structure3_one_based_block_ordinal_mapping_disproven_level_count;
     int structure3_zero_based_byte_run_ordinal_mapping_disproven_level_count;
@@ -253,6 +254,8 @@ typedef struct {
         structure1f_wall_sensor_destinations[16];
     Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt
         structure1f_wall_sensor_control_selectors[16];
+    Nexus_V1_DgnStructure1FAlcovePayloadSelectorReceipt
+        structure1f_alcove_payload_selectors[16];
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt
         structure3_ordinal_correlations[16];
     Nexus_V1_DgnMaterialCategoryCoverageReceipt floor_coverage;
