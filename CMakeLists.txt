@@ -9218,6 +9218,23 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_runtime_skin_expool_handoff
     )
 
+    # CSBWin DSA.cpp SETSKIN may write only through an authenticated saved
+    # EXPOOL record; Firestaff must not create a synthetic DB11 node.
+    add_executable(test_csb_v1_saved_skin_expool_writeback
+        tests/test_csb_v1_saved_skin_expool_writeback.c
+    )
+    target_include_directories(test_csb_v1_saved_skin_expool_writeback PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_saved_skin_expool_writeback PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_saved_skin_expool_writeback PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_saved_skin_expool_writeback
+        COMMAND test_csb_v1_saved_skin_expool_writeback
+    )
+
     # CSBWin Monster.cpp movement-filter callback: authenticated seven-word
     # runtime ABI plus transactional GLOBALSTORE save handoff.
     add_executable(test_csb_v1_dsa_movement_filter_save_handoff

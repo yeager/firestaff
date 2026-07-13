@@ -13341,6 +13341,85 @@ int csb_v1_runtime_custom_background_skin_grid(
     return has_skin;
 }
 
+int csb_v1_runtime_set_csbwin_saved_skin(
+    CSB_V1_RuntimeProfile *profile,
+    int level,
+    int x,
+    int y,
+    uint8_t skin_num)
+{
+    CSB_V1_RuntimeProfile candidate;
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    size_t payload_offset;
+    uint8_t column[CSB_V1_SKIN_CACHE_COLUMN_BYTES];
+    uint32_t record_id;
+    int index;
+    int last_nonzero;
+    size_t source_write_size;
+
+    /* CSBWin DSA.cpp:3122-3135 decodes the five-bit x/y and six-bit level
+     * from SETSKIN's location word. data.cpp:2130-2167 then reads exactly
+     * one EDT_Skins DB11 record, changes one byte, trims zero suffixes, and
+     * writes it back through EXPOOL. Firestaff has no source-proven DB11
+     * allocator, so require an existing record whose source write would keep
+     * the same word-aligned payload extent. */
+    if (!profile || level < 0 || level >= CSB_V1_SKIN_CACHE_MAX_LEVELS ||
+        x < 0 || x >= 32 || y < 0 || y >= 32) {
+        return 0;
+    }
+    record_id = csb_v1_skin_cache_column_record_id(level, x);
+    index = 2 * y + (x & 1);
+    if (index < 0 || index >= CSB_V1_SKIN_CACHE_COLUMN_BYTES) return 0;
+
+    candidate = *profile;
+    if (!csb_v1_runtime_locate_appended_expool_record_internal(
+            &candidate, record_id, &payload, &payload_size) ||
+        !payload || payload < candidate.csbwin_appended_tail ||
+        payload_size == 0u || payload_size > sizeof(column)) {
+        return 0;
+    }
+    payload_offset = (size_t)(payload - candidate.csbwin_appended_tail);
+    if (payload_offset > candidate.csbwin_appended_tail_preserved_size ||
+        payload_size > candidate.csbwin_appended_tail_preserved_size -
+            payload_offset) {
+        return 0;
+    }
+
+    memcpy(column, payload, payload_size);
+    if ((size_t)index < payload_size && column[index] == skin_num) {
+        return 1;
+    }
+    if ((size_t)index >= payload_size && skin_num == 0u) {
+        return 1;
+    }
+    column[index] = skin_num;
+    last_nonzero = (int)sizeof(column) - 1;
+    while (last_nonzero >= 0 && column[last_nonzero] == 0u) {
+        --last_nonzero;
+    }
+    if (last_nonzero < 0) {
+        /* CSBWin removes the record here. Do not guess EXPOOL free-list
+         * mutation or leave a non-source-equivalent empty record behind. */
+        return 0;
+    }
+    source_write_size = (size_t)((last_nonzero + 4) / 4) * 4u;
+    if (source_write_size != payload_size) {
+        return 0;
+    }
+
+    memcpy(candidate.csbwin_appended_tail + payload_offset,
+           column, payload_size);
+    candidate.csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
+        candidate.csbwin_appended_tail,
+        candidate.csbwin_appended_tail_preserved_size);
+    /* Force the next HUD read through the newly authenticated source tail. */
+    csb_v1_skin_cache_init(&candidate.skin_cache);
+    candidate.csbwin_skin_cache_tail_receipt_valid = 0;
+    *profile = candidate;
+    return 1;
+}
+
 int csb_v1_runtime_set_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile,
                                           int enabled)
 {
