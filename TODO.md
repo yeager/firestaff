@@ -61,6 +61,12 @@ CSB's runtime frame now binds original C017 inventory and C040 resurrection
 pixels into its route hash. Remaining CSB startup work is the clean-build
 regression repair and packaged Mac/app capture, not a substitute HUD.
 
+CSBWin's admitted DSA `SETSKIN` route is now action-transactional: it stages
+original DB11/EXPOOL skin writes until every authenticated source word has
+been consumed, while a later `GETSKIN` sees the staged byte. Remaining CSB
+DSA work is still the wider source interpreter and real-save corpus; do not
+promote unsupported world or text opcodes from fixtures.
+
 Nexus M11 now presents only the verified WARNING.BIN/TITLE.CG transition at
 Saturn frames 47, 48, and 102. MENU.BPK remains blocked until its PRS3 pixel
 and palette decoder is proven; the next Nexus work is real DGN rendering.

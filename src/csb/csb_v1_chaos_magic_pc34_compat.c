@@ -668,10 +668,42 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
     return (value >> count) | (~0u << (32u - count));
 }
 
+/* CSBWin executes STKOP_SetSkin against the live SKIN_CACHE.  Firestaff's
+ * authenticated action boundary must instead retain those source writes
+ * until every following source word has been accepted.  The runtime binds
+ * this queue to a candidate EXPOOL profile, so publishing the queue remains
+ * atomic with parameter/global commits. */
+#define CSB_V1_CSBWIN_DSA_PENDING_SKIN_WRITES 100
+
+typedef struct {
+    uint32_t location;
+    uint8_t skin;
+} CSB_V1_CSBWinDSAPendingSkinWrite;
+
+static int csb_v1_csbwin_dsa_pending_skin_lookup(
+    const CSB_V1_CSBWinDSAPendingSkinWrite *writes,
+    int write_count,
+    uint32_t location,
+    uint8_t *out_skin)
+{
+    int i;
+
+    if (!writes || !out_skin || write_count < 0) return 0;
+    for (i = write_count - 1; i >= 0; --i) {
+        if (writes[i].location == location) {
+            *out_skin = writes[i].skin;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static CSB_V1_CSBWinDSAStackResult
 csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int *depth, int *forced_state, int parameter_count,
-    const CSB_V1_CSBWinDSAStackContext *context)
+    const CSB_V1_CSBWinDSAStackContext *context,
+    CSB_V1_CSBWinDSAPendingSkinWrite *pending_skin_writes,
+    int *pending_skin_write_count)
 {
     uint32_t v;
     uint32_t w;
@@ -680,7 +712,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int32_t sv;
     int32_t sw;
 
-    if (!stack || !depth || !forced_state || !context || parameter_count < 0 ||
+    if (!stack || !depth || !forced_state || !context ||
+        !pending_skin_writes || !pending_skin_write_count ||
+        *pending_skin_write_count < 0 || parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
     case 1u: /* STKOP_Plus */
@@ -839,21 +873,28 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
          * location, reads the loaded SKIN_CACHE, then pushes its byte. */
         if (!context->get_skin ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
-            !context->get_skin(context->skin_user, v, &skin) ||
+            (!csb_v1_csbwin_dsa_pending_skin_lookup(
+                 pending_skin_writes, *pending_skin_write_count, v, &skin) &&
+             !context->get_skin(context->skin_user, v, &skin)) ||
             !csb_v1_csbwin_dsa_stack_push(stack, depth, skin)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
         break;
     case 132u: /* STKOP_SetSkin, reached via AMPERSAND2 + 128 */
         /* CSBWin DSA.cpp:3122-3135 pops location first, then the skin byte.
-         * The runtime hook stages the original EXPOOL write and leaves this
-         * action rejected until a complete authentic record is present. */
+         * Retain the write locally until the complete authenticated action
+         * has consumed every later word. GETSKIN below observes this exact
+         * action-local state, as it would after CSBWin's immediate write. */
         if (!context->set_skin ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
-            !context->set_skin(context->skin_user, v, (uint8_t)w)) {
+            *pending_skin_write_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_SKIN_WRITES) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        pending_skin_writes[*pending_skin_write_count].location = v;
+        pending_skin_writes[*pending_skin_write_count].skin = (uint8_t)w;
+        ++*pending_skin_write_count;
         break;
     default:
         return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
@@ -876,9 +917,12 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     uint32_t variables[CSB_V1_CSBWIN_DSA_VARIABLE_COUNT] = { 0u };
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY] = { 0u };
     uint8_t variable_defined[CSB_V1_CSBWIN_DSA_VARIABLE_COUNT] = { 0u };
+    CSB_V1_CSBWinDSAPendingSkinWrite
+        pending_skin_writes[CSB_V1_CSBWIN_DSA_PENDING_SKIN_WRITES];
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
     int depth = 0;
+    int pending_skin_write_count = 0;
     int i;
 
     if (!state || !context || !out_execution || !context->parameters ||
@@ -1014,10 +1058,21 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             }
             rc = csb_v1_csbwin_dsa_execute_stack_subcode(
                 subcode, stack, &depth, &candidate.forced_state,
-                context->parameter_count, context);
+                context->parameter_count, context, pending_skin_writes,
+                &pending_skin_write_count);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
+    }
+    /* Commit externally owned EXPOOL state before the local copies become
+     * visible. The runtime's skin callback owns a full profile candidate, so
+     * a rejected batch leaves every live save surface untouched. */
+    for (i = 0; i < pending_skin_write_count; ++i) {
+        if (!context->set_skin(context->skin_user,
+                               pending_skin_writes[i].location,
+                               pending_skin_writes[i].skin)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
     }
     for (i = 0; i < 26 && i < context->parameter_count; ++i) context->parameters[i] = parameters[i];
     for (i = 0; i < context->global_variable_count; ++i) {

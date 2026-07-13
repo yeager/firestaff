@@ -85,6 +85,36 @@ static void put_le32(uint8_t *bytes, size_t offset, uint32_t value)
     bytes[offset + 3u] = (uint8_t)(value >> 24);
 }
 
+static uint32_t fnv1a32(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+typedef struct {
+    int calls;
+    uint32_t location;
+    uint8_t skin;
+} PendingSkinWriteProbe;
+
+static int pending_skin_write_probe(void *user, uint32_t location,
+                                    uint8_t skin)
+{
+    PendingSkinWriteProbe *probe = (PendingSkinWriteProbe *)user;
+
+    if (!probe) return 0;
+    ++probe->calls;
+    probe->location = location;
+    probe->skin = skin;
+    return 1;
+}
+
 static void install_single_script(CSB_V1_ChaosMagicState *chaos,
     uint16_t *bytecode, int bytecode_words)
 {
@@ -832,6 +862,52 @@ static void test_csbwin_authenticated_stack_opcode_family(void)
     csb_v1_chaos_cleanup(&state);
 }
 
+static void test_csbwin_setskin_waits_for_complete_action(void)
+{
+    /* CSBWin DSA.cpp:3122-3135 executes SETSKIN from the stack, while the
+     * Firestaff authenticated boundary must reject an entire malformed DSA
+     * action without publishing its save-owned EXPOOL change. */
+    uint16_t malformed_after_setskin[] = {
+        0x0686u, 31u,              /* LOAD INTEGER skin */
+        0x0686u, 0x0421u,          /* LOAD INTEGER location */
+        0x0115u,                   /* AMPERSAND2 SetSkin */
+        0x0000u                    /* unsupported DSACMD_NOOP */
+    };
+    uint32_t parameters[] = { 77u };
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    PendingSkinWriteProbe probe;
+
+    memset(&action, 0, sizeof(action));
+    memset(&context, 0, sizeof(context));
+    memset(&probe, 0, sizeof(probe));
+    csb_v1_chaos_init(&state);
+    action.dsa_id = 9u;
+    action.state_index = 4u;
+    action.program_words = malformed_after_setskin;
+    action.program_word_count = (int)(sizeof(malformed_after_setskin) /
+                                      sizeof(malformed_after_setskin[0]));
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+    context.parameters = parameters;
+    context.parameter_count = 1;
+    context.set_skin = pending_skin_write_probe;
+    context.skin_user = &probe;
+
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 9, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              probe.calls == 0 && parameters[0] == 77u,
+          "CSBWin/DSA.cpp:3122-3135 + SaveGame.cpp EXPOOL",
+          "SETSKIN waits for the complete authenticated action before save publication");
+
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
 static void test_csbwin_authenticated_filter_stack_runner(void)
 {
     uint16_t store_parameter[] = { 0x0686u, 0x1234u, 0x000du };
@@ -956,6 +1032,9 @@ static void test_csbwin_runtime_filter_adapter(void)
     profile.csbwin_appended_tail_size = sizeof(appended_tail);
     profile.csbwin_appended_tail_preserved_size = sizeof(appended_tail);
     memcpy(profile.csbwin_appended_tail, appended_tail, sizeof(appended_tail));
+    profile.csbwin_appended_tail_fnv1a = fnv1a32(
+        profile.csbwin_appended_tail,
+        profile.csbwin_appended_tail_preserved_size);
     binding.dsa_id = 9u;
 
     check(csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
@@ -1385,6 +1464,7 @@ int main(void)
     test_csbwin_load_opcode_family();
     test_csbwin_load_store_rejects_unowned_action();
     test_csbwin_authenticated_stack_opcode_family();
+    test_csbwin_setskin_waits_for_complete_action();
     test_csbwin_authenticated_filter_stack_runner();
     test_csbwin_runtime_filter_adapter();
     test_csbwin_authenticated_local_variable_opcode_family();
