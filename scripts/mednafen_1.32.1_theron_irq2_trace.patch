@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,5 +36,1100 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,5 +36,1096 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -286,22 +286,18 @@ index 347482c4..61d4758e 100644
 +  TheronIrq2TracePostE98ATransferPending = false;
 + }
 +
-+ if(TheronIrq2TraceCallbackCount < 128)
-+ {
-+  TheronIrq2TraceCallbackCount++;
-+  TheronIrq2Trace->print_format("callback_pc=%08x logical_pc=%04x\n", PC, logical_pc);
-+  FlushTheronIrq2Trace();
-+ }
-+ else if(TheronIrq2TracePostCapSamples < 64)
-+ {
-+  TheronIrq2TracePostCapCallbackCount++;
-+  if(TheronIrq2TracePostCapCallbackCount == 1 || !(TheronIrq2TracePostCapCallbackCount & 0xfffff))
-+  {
-+   TheronIrq2TracePostCapSamples++;
-+   TheronIrq2Trace->print_format("post_cap_callback=%llu physical_pc=%08x logical_pc=%04x\n", (unsigned long long)TheronIrq2TracePostCapCallbackCount, PC, logical_pc);
-+   FlushTheronIrq2Trace();
-+  }
-+ }
++ /* The debugger callback runs for every HuC6280 instruction.  Do not
++  * inspect memory or write a generic per-PC transcript outside the bounded
++  * System Card / loader windows: that instrumentation itself can otherwise
++  * distort CD timing.  Pending transfer receipts above remain handled before
++  * this filter, so a branch out of a watched window is still captured. */
++ const bool TheronIrq2TraceWatchedPC =
++     (logical_pc >= 0xc800 && logical_pc < 0xce00) ||
++     (logical_pc >= 0xe000 && logical_pc < 0xeb00) ||
++     (logical_pc >= 0xfe00) ||
++     (logical_pc >= 0x4000 && logical_pc < 0x4100);
++ if(!TheronIrq2TraceWatchedPC)
++  return;
 +/* Record bounded raw store instructions that can alter the controller state
 + * before the latch. This has no command, payload, or state-machine meaning. */
 +if(TheronIrq2TraceRawControllerStateStoreCount < 16)
