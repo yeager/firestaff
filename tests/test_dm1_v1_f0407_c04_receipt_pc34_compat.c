@@ -33,6 +33,9 @@ int main(void)
     int swingRow = -1;
     int i;
     int sawNativeC20 = 0;
+    int sawHistoricC11 = 0;
+    int sawHistoricC11AfterInvalidOwner = 0;
+    int sawRetainedC04AfterInvalidOwner = 0;
     int timelineCountBeforeInvalidOwner;
     struct TickResult_Compat dispatchResult;
     struct TickInput_Compat invalidOwnerInput;
@@ -132,8 +135,15 @@ int main(void)
             assert(event->cell == 0);
             sawNativeC20 = 1;
         }
+        if (event->kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux4 == 0) {
+            sawHistoricC11 = 1;
+        }
     }
     assert(sawNativeC20 == 1);
+    assert(sawHistoricC11 == 1);
     assert(state.actionDisabledTicks[0] == 6u);
     memset(&dispatchResult, 0, sizeof(dispatchResult));
     state.world.gameTick = 9u;
@@ -192,10 +202,26 @@ int main(void)
     assert(F0888_ORCH_ApplyPlayerInput_Compat(
                &state.world, &invalidOwnerInput, &dispatchResult) == 1);
     assert(state.world.timeline.count == timelineCountBeforeInvalidOwner + 1);
-    assert(state.world.timeline.events[timelineCountBeforeInvalidOwner].kind ==
-           TIMELINE_EVENT_PLAY_SOUND);
-    assert(state.world.timeline.events[timelineCountBeforeInvalidOwner].aux0 ==
-           DM1_SND_WOODEN_THUD);
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        const struct TimelineEvent_Compat *event =
+            &state.world.timeline.events[i];
+        if (event->kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux4 == 0) {
+            sawHistoricC11AfterInvalidOwner = 1;
+        }
+        if (event->kind == TIMELINE_EVENT_PLAY_SOUND &&
+            event->fireAtTick == state.world.gameTick + 20u &&
+            event->mapIndex == state.world.party.mapIndex &&
+            event->mapX == 1 && event->mapY == 2 &&
+            event->aux0 == DM1_SND_WOODEN_THUD &&
+            event->aux2 == DM1_EVENT_PLAY_SOUND && event->aux4 == 70) {
+            sawRetainedC04AfterInvalidOwner = 1;
+        }
+    }
+    assert(sawHistoricC11AfterInvalidOwner == 1);
+    assert(sawRetainedC04AfterInvalidOwner == 1);
     assert(DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
                &state.world, 1, 6) == 0);
     assert(DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(

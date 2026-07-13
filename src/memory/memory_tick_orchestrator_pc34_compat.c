@@ -4245,11 +4245,13 @@ static int orch_f0248_award_steal_skill_xp_compat(
     return 1;
 }
 
-/* ReDMCSB MENU.C F0407 only reaches F0330 with its selected
- * Party.Champion owner. Imported/corrupt state can retain a typed C11 for a
- * slot no longer in Party.ChampionCount; compact that stale owner before a
- * later invalid input can leave it pending until its due tick. C04's delayed
- * sound has no champion owner and is deliberately outside this cleanup. */
+/* ReDMCSB COMMAND.C F0380:2308-2312 forwards an action-area click only when
+ * the command layer has a valid party-panel owner; MENU.C F0407 then reaches
+ * F0330 with that selected Party.Champion. Imported/corrupt state can retain
+ * a typed C11 for a slot no longer in Party.ChampionCount; compact only that
+ * stale owner before a later invalid input leaves it pending until its due
+ * tick. C04's delayed sound has no champion owner and is deliberately
+ * outside this cleanup. */
 static void orch_cleanup_invalid_action_enable_receipts_compat(
     struct GameWorld_Compat* world,
     int championIndex)
@@ -10118,9 +10120,10 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
         int weaponClass;
         DM1_MeleeF0402WeaponAvailabilityInputPc34 availabilityIn;
         DM1_MeleeF0402WeaponAvailabilityPlanPc34 availabilityPlan;
-        /* ReDMCSB MENU.C F0391/F0407 receives a selected Party.Champion
-         * ordinal, not an arbitrary Champion[] slot.  Reject a populated
-         * out-of-party slot before it can create F0407 C04/C11 receipts. */
+        /* ReDMCSB COMMAND.C F0380:2308-2312 and MENU.C F0407 receive a
+         * selected Party.Champion ordinal, not an arbitrary Champion[] slot.
+         * Reject a populated out-of-party slot before it can create F0407
+         * C04/C11 receipts; cleanup preserves historic valid C11 and C04. */
         if ((int)input->commandArg1 >= CHAMPION_MAX_PARTY ||
             (int)input->commandArg1 >= world->party.championCount) {
             orch_cleanup_invalid_action_enable_receipts_compat(
