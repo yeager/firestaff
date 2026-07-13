@@ -9932,6 +9932,21 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_csbwin_duplicate_timer_policy
     )
 
+    add_executable(test_csb_v1_csbwin_item16_atomic_restore
+        tests/test_csb_v1_csbwin_item16_atomic_restore.c
+    )
+    target_include_directories(test_csb_v1_csbwin_item16_atomic_restore PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_item16_atomic_restore PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_item16_atomic_restore PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_item16_atomic_restore
+        COMMAND test_csb_v1_csbwin_item16_atomic_restore
+    )
+
     # CSBWin Monster.cpp movement-filter callback: authenticated seven-word
     # runtime ABI plus transactional GLOBALSTORE save handoff.
     add_executable(test_csb_v1_dsa_movement_filter_save_handoff

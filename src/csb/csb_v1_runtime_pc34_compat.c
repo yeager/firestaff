@@ -14544,21 +14544,23 @@ int csb_v1_runtime_materialize_csbwin_item16_summaries(
     CSB_V1_RuntimeProfile *profile)
 {
     uint16_t item_index;
+    uint16_t staged_count = 0u;
+    CSB_V1_CSBWinRuntimeItem16 staged_items[
+        CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES];
     int imported = 0;
 
     if (!profile || !profile->csbwin_body_runtime_summary_valid) {
         return -1;
     }
     if (profile->csbwin_item16_summary_count >
-        CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES) {
+            CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES ||
+        (profile->csbwin_item16_summary_total != 0u &&
+         profile->csbwin_item16_summary_total !=
+             profile->csbwin_item16_summary_count)) {
         return -1;
     }
 
-    memset(profile->csbwin_runtime_item16, 0,
-           sizeof(profile->csbwin_runtime_item16));
-    profile->csbwin_runtime_item16_count = 0u;
-    profile->csbwin_runtime_item16_total =
-        profile->csbwin_item16_summary_total;
+    memset(staged_items, 0, sizeof(staged_items));
 
     /* CSBWin CSB.h:2257-2280 defines ITEM16 as active-monster state:
      * word0 DB4 monster index, packed facings/positions, d.Time low byte,
@@ -14573,16 +14575,21 @@ int csb_v1_runtime_materialize_csbwin_item16_summaries(
             &profile->csbwin_item16[item_index];
         CSB_V1_CSBWinRuntimeItem16 *dst;
 
-        if (!src->valid || src->monster_index == 0xffffu) {
+        /* SaveGame.cpp reads the complete MaxITEM16 stream before runtime
+         * ownership. An absent decoded record is corruption, while 0xffff is
+         * the source's explicit unused ITEM16 marker. */
+        if (!src->valid) {
+            return -1;
+        }
+        if (src->monster_index == 0xffffu) {
             continue;
         }
-        if (profile->csbwin_runtime_item16_count >=
+        if (staged_count >=
             CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES) {
-            break;
+            return -1;
         }
 
-        dst = &profile->csbwin_runtime_item16
-            [profile->csbwin_runtime_item16_count];
+        dst = &staged_items[staged_count];
         memset(dst, 0, sizeof(*dst));
         dst->valid = 1;
         dst->monster_index = src->monster_index;
@@ -14603,10 +14610,18 @@ int csb_v1_runtime_materialize_csbwin_item16_summaries(
         memcpy(dst->single_monster_status,
                src->single_monster_status,
                sizeof(dst->single_monster_status));
-        ++profile->csbwin_runtime_item16_count;
+        ++staged_count;
         ++imported;
     }
 
+    /* Do not publish a shortened CSBWin active-monster table. The source
+     * body is already checksum-authenticated; this second boundary keeps the
+     * decoded summary and live ownership transactionally aligned. */
+    memcpy(profile->csbwin_runtime_item16, staged_items,
+           sizeof(staged_items));
+    profile->csbwin_runtime_item16_count = staged_count;
+    profile->csbwin_runtime_item16_total =
+        profile->csbwin_item16_summary_total;
     return imported;
 }
 
