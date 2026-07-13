@@ -1,6 +1,26 @@
 
 # Unreleased
 
+# Firestaff v3.0.75
+
+Firestaff v3.0.75 packages current source-locked runtime work from `main`.
+
+## Highlights since v3.0.74
+
+- **DM1**: original title palette latching now occurs before the first zoom
+  VBlank, and source-lock runtime probe contracts cover title, hand slots and
+  mirror backing geometry.
+- **Theron's Quest**: authenticated Mednafen receipts preserve dynamic CD_READ
+  destination-RAM spans and VCE word order without claiming an unproven
+  bitmap/palette binding.
+- **Runtime safety**: incomplete original material provenance remains
+  fail-closed rather than rendering substitute data.
+
+## Verification
+
+- Focused DM1 probes and Theron loader-trace CTest checks passed locally.
+- GitHub Actions release packaging is dispatched for `v3.0.75`.
+
 # Firestaff v3.0.74
 
 Firestaff v3.0.74 packages the latest source-locked runtime work from `main`.
