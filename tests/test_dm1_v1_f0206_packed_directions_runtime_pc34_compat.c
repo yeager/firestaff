@@ -423,6 +423,106 @@ static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
     return 1;
 }
 
+/* ReDMCSB PROJEXPL.C F0219:687-714 updates the decoded C14 record before
+ * the next C49 is queued.  Without this bridge an original save exported
+ * after a live flight step retained the projectile's launch energy/attack. */
+static int test_m10_f0219_keeps_original_c14_motion_fields_live(void)
+{
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    struct DungeonProjectile_Compat sourceProjectile;
+    unsigned short squareFirstThings[3];
+    unsigned char squareData[3];
+    struct TimelineEvent_Compat event;
+    unsigned short projectileThing;
+
+    memset(&world, 0, sizeof(world));
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(&sourceProjectile, 0, sizeof(sourceProjectile));
+    memset(squareFirstThings, 0xff, sizeof(squareFirstThings));
+    memset(squareData,
+           (DUNGEON_ELEMENT_CORRIDOR << 5) | DUNGEON_SQUARE_MASK_THING_LIST,
+           sizeof(squareData));
+    memset(&event, 0, sizeof(event));
+
+    if (!F0881_WORLD_InitDefault_Compat(&world, 0xF0219u)) return 1;
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    map.width = 3;
+    map.height = 1;
+    tiles.squareCount = 3;
+    tiles.squareData = squareData;
+    things.loaded = 1;
+    things.projectiles = &sourceProjectile;
+    things.projectileCount = 1;
+    things.thingCounts[THING_TYPE_PROJECTILE] = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 3;
+    projectileThing = (unsigned short)((THING_TYPE_PROJECTILE << 10) |
+                                       (1u << 14));
+    sourceProjectile.next = THING_ENDOFLIST;
+    sourceProjectile.slot = THING_NONE;
+    sourceProjectile.kineticEnergy = 20;
+    sourceProjectile.attack = 30;
+    sourceProjectile.eventIndex = 9;
+    squareFirstThings[0] = projectileThing;
+
+    world.dungeon = &dungeon;
+    world.things = &things;
+    world.projectiles.count = 1;
+    world.projectiles.entries[0].slotIndex = 0;
+    world.projectiles.entries[0].reserved3 = 1;
+    world.projectiles.entries[0].mapIndex = 0;
+    world.projectiles.entries[0].mapX = 0;
+    world.projectiles.entries[0].mapY = 0;
+    world.projectiles.entries[0].cell = 1;
+    world.projectiles.entries[0].direction = 1;
+    world.projectiles.entries[0].kineticEnergy = 20;
+    world.projectiles.entries[0].attack = 30;
+    world.projectiles.entries[0].stepEnergy = 4;
+    world.projectiles.entries[0].firstMoveGraceFlag = 0;
+    world.projectiles.entries[0].reserved1 = THING_NONE;
+    world.gameTick = 100;
+    world.timeline.nowTick = 100;
+    event.kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    event.fireAtTick = 100;
+    event.mapIndex = 0;
+    event.mapX = 0;
+    event.mapY = 0;
+    event.cell = 1;
+    event.aux0 = 0;
+    if (!F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) ||
+        F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) != ORCH_OK) {
+        return 1;
+    }
+    if (world.projectiles.entries[0].mapX != 1 ||
+        world.projectiles.entries[0].kineticEnergy != 16 ||
+        world.projectiles.entries[0].attack != 26 ||
+        sourceProjectile.kineticEnergy != 16 ||
+        sourceProjectile.attack != 26 ||
+        squareFirstThings[0] != THING_ENDOFLIST ||
+        THING_GET_TYPE(squareFirstThings[1]) != THING_TYPE_PROJECTILE ||
+        THING_GET_INDEX(squareFirstThings[1]) != 0 ||
+        world.timeline.count != 1 ||
+        world.timeline.events[0].kind != TIMELINE_EVENT_PROJECTILE_MOVE) {
+        return 1;
+    }
+    return 0;
+}
+
 int main(void)
 {
     if (test_f0206_rng_direction_adapter() != 0) return 1;
@@ -430,6 +530,7 @@ int main(void)
     if (test_m10_c29_reaction_moves_group_through_f0267() != 0) return 1;
     if (test_m10_c38_turns_before_attack() != 0) return 1;
     if (test_m10_c38_checks_pending_projectile_before_cell_write() != 0) return 1;
+    if (test_m10_f0219_keeps_original_c14_motion_fields_live() != 0) return 1;
     puts("PASS: DM1 F0205/F0206 packed active-group directions");
     return 0;
 }

@@ -590,6 +590,12 @@ and real community-save corpus round-trip evidence.
     world. Unbound runtime slots fail export rather than becoming synthetic
     square events. Remaining work is broader original dungeon-tail import
     breadth and real community-save corpus evidence.
+  - 2026-07-13 update: F0219 now writes a successfully moved live C14
+    projectile's decremented kinetic energy and attack back to its decoded
+    original record before the next C49 is queued. F0802 continues to own
+    rebuilt PC34 event indices because M10's timeline deliberately has no
+    raw EVENT-slot allocator. Remaining work is broader original dungeon-tail
+    import breadth and real community-save corpus evidence.
   - 2026-07-13 update: F0435 dungeon-tail preflight now also enforces the
     F0434 map raw-data span boundary before publishing a tail receipt. A
     checksum-correct descriptor that reaches outside the saved raw-map block
