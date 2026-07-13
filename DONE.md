@@ -12618,6 +12618,15 @@ canonical 39,437-byte PC G1 `DUNGEON.DAT` proves two placements of ObjectID
 `0xd407`, at `(5,8)` and `(6,1)`. Verification: real-data Weapon test and
 focused 87-check dungeon-loader gate passed.
 
+# ✅ 2026-07-13 DM2 G1 direct DB9 Container runtime receipt
+
+Runtime-admitted G1 map 9 now consumes the direct DB9 `Container` record at
+`(11,19)`. The receipt binds only `DME.h` `b4` `IsOpened` and `ContainerType`
+bits. It never reads `GenericRecord::w0`, the `w2` contained-object ID, or a
+container chain. The canonical 39,437-byte PC G1 `DUNGEON.DAT` proves ObjectID
+`0xe408` with closed/type-zero state. Verification: real-data Container test
+and focused 87-check dungeon-loader gate passed.
+
 # ✅ 2026-07-13 DM2 weather `dtText` provenance boundary
 
 `dm2_v1_weather_gdat` now follows skproject `c_weather.cpp` rather than

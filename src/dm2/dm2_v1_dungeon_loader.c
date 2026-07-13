@@ -1715,6 +1715,74 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_weapons(
     return 1;
 }
 
+int dm2_v1_dungeon_materialize_g1_runtime_map_containers(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1RuntimeMapContainerReceipt *out) {
+    DM2_V1_G1RuntimeMapValidationReceipt validation;
+    DM2_V1_G1RuntimeMapContainerReceipt candidate;
+    int column_index = 0;
+
+    /* skproject SKULLWIN/c_map.cpp obtains the root before c_record.cpp's
+     * GET_NEXT_RECORD_LINK. SKWIN/DME.h::Container defines b4's open/type
+     * bits; this receipt does not read w0 or the w2 contained ObjectID. */
+    if (!out || !d || !d->raw_data ||
+        !dm2_v1_dungeon_validate_g1_runtime_map(d, map, &validation) ||
+        !validation.committed || !validation.incomplete_world) {
+        return 0;
+    }
+    for (int level = 0; level < map; ++level)
+        column_index += d->level_widths[level];
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    for (int x = 0; x < validation.width; ++x) {
+        int stack = (int)RD16(d->raw_data + d->column_index_base +
+                              (column_index + x) * 2);
+        for (int y = 0; y < validation.height; ++y) {
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            uint16_t root;
+            const uint8_t *record;
+            DM2_V1_G1DirectContainerRoot *container;
+
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
+            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
+            if (((root >> 10) & 0x0fu) == 9u &&
+                dm2_v1_g1_link_has_declared_shape(d, root)) {
+                if (candidate.container_root_count >=
+                    DM2_V1_G1_RUNTIME_MAP_MAX_CONTAINER_ROOTS) {
+                    return 0;
+                }
+                record = dm2_v1_dungeon_get_thing_record(
+                    d, root, NULL, NULL, NULL);
+                if (!record) return 0;
+                container =
+                    &candidate.containers[candidate.container_root_count++];
+                container->x = x;
+                container->y = y;
+                container->object_id = root;
+                container->index = root & 0x03ff;
+                container->direction = (uint8_t)(root >> 14);
+                container->opened = (uint8_t)(record[4] & 1u);
+                container->container_type = (uint8_t)((record[4] >> 1) & 3u);
+                ++candidate.container_record_reads;
+            }
+            ++stack;
+        }
+    }
+    if (candidate.container_record_reads != candidate.container_root_count ||
+        candidate.generic_record_reads != 0 ||
+        candidate.blocked_record_reads != 0) {
+        return 0;
+    }
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_first_map_runtime(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1FirstMapRuntimeReceipt *out) {
