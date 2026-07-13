@@ -332,13 +332,6 @@ static int build_original_pc34_fixture(unsigned char *out,
                                 101, 202, 303, 404, 55, 66,
                                 900, 800, 0x0010u, 0x1777u);
     }
-    /* ReDMCSB DEFS.H PARTY_INFO is C2-owned light/shield/scent state plus
-     * unreferenced bytes. These are deliberately opaque test bytes, not a
-     * Firestaff reconstruction of that original layout. */
-    for (i = 0; i < PARTY_PC34_SAVE_INFO_BYTE_COUNT; ++i) {
-        party[ORIGINAL_PC34_CHAMPION_BYTES * CHAMPION_MAX_PARTY + i] =
-            (unsigned char)(0x80u + (unsigned int)i);
-    }
 
     write_original_event(events + 0 * ORIGINAL_PC34_EVENT_BYTES,
                          DM1_MAP_TIME_MAKE(2, 123500u),
@@ -3417,6 +3410,65 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
     remove(fixture_path);
 }
 
+static void test_original_pc34_party_info_runtime_materialization(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char party_info[PARTY_PC34_SAVE_INFO_BYTE_COUNT];
+    struct GameWorld_Compat world;
+    struct DM1_EventQueue_V1 queue;
+    struct SaveGame_Compat reimported;
+    struct PartyState_Compat reimported_party;
+    DM1OriginalSavePC34HandoffReport report;
+    int written = 0;
+    int exported_size = 0;
+    int rc;
+
+    memset(bytes, 0, sizeof(bytes));
+    memset(party_info, 0, sizeof(party_info));
+    memset(&world, 0, sizeof(world));
+    memset(&queue, 0, sizeof(queue));
+    memset(&report, 0, sizeof(report));
+    CHECK(build_original_pc34_fixture(
+              bytes, (int)sizeof(bytes), &written, 2, 1, 4, 5, 2, 1,
+              ORIGINAL_PC34_ACTIVE_GROUP_COUNT) == SAVEGAME_PC34_OK,
+          "PARTY_INFO runtime fixture build succeeds");
+    wr16le(party_info + 0u, (uint16_t)(int16_t)-12);
+    wr16le(party_info + 4u, 17u);
+    wr16le(party_info + 6u, 19u);
+    wr16le(party_info + 8u, 23u);
+    CHECK(rewrite_fixture_party_info_bytes(
+              bytes, (size_t)written, party_info),
+          "PARTY_INFO runtime fixture retains authenticated C2 bytes");
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, &queue, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+          world.magic.magicalLightAmount == -12 &&
+          world.magic.partyShieldDefense == 17 &&
+          world.magic.fireShieldDefense == 19 &&
+          world.magic.spellShieldDefense == 23 &&
+          world.lifecycle.status.partyShieldDefense == 17 &&
+          world.lifecycle.status.partyFireShieldDefense == 19 &&
+          world.lifecycle.status.partySpellShieldDefense == 23,
+          "F0435 materializes source PARTY_INFO light and shield owners");
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &world, 0x43313445u, exported, (int)sizeof(exported),
+              &exported_size) == SAVEGAME_PC34_OK,
+          "F0433 exports source-owned PARTY_INFO runtime fields");
+    memset(&reimported, 0, sizeof(reimported));
+    memset(&reimported_party, 0, sizeof(reimported_party));
+    reimported.party = &reimported_party;
+    CHECK(dm1_v1_original_save_pc34_handoff_bytes(
+              exported, (size_t)exported_size, &reimported, &report) ==
+              DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+          (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 0u) == -12 &&
+          (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 4u) == 17 &&
+          (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 6u) == 19 &&
+          (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 8u) == 23,
+          "F0433 preserves source PARTY_INFO field ownership on export");
+    F0883_WORLD_Free_Compat(&world);
+}
+
 static void test_strings(void)
 {
     CHECK(strcmp(dm1_v1_original_save_pc34_handoff_result_name(
@@ -4026,6 +4078,7 @@ int main(void)
     test_real_dm1_dungeon_tail_map_span_validation();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();
+    test_original_pc34_party_info_runtime_materialization();
     test_corpus_roundtrip_proof();
     test_optional_real_pc34_corpus_roundtrip();
     test_original_projectile_event_plan_preserves_c48_bits();
