@@ -271,6 +271,27 @@ int dm1_v1_wall_ornament_render_plan_pc34(
     return 1;
 }
 
+int dm1_v1_wall_ornament_host_material_receipt_pc34(
+    int globalOrnamentIndex,
+    int viewWallIndex,
+    int maxHeight,
+    DM1_WallOrnamentHostMaterialReceiptPc34* outReceipt)
+{
+    DM1_WallOrnamentHostMaterialReceiptPc34 receipt;
+    if (!outReceipt || !dm1_v1_wall_ornament_render_plan_pc34(
+            globalOrnamentIndex, viewWallIndex, maxHeight, &receipt.plan)) {
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0107:3502-3717 selects G0194/G0205 geometry,
+     * the PC34 ornament graphic, C10 transparency, D2/D3 palette, and the
+     * side-view flip before its host blit. No host substitute is permitted. */
+    receipt.valid = 1;
+    receipt.globalOrnamentIndex = globalOrnamentIndex;
+    receipt.viewWallIndex = viewWallIndex;
+    *outReceipt = receipt;
+    return 1;
+}
+
 int dm1_v1_front_mirror_render_plan_pc34(
     int portraitOrdinal,
     DM1_FrontMirrorRenderPlanPc34* outPlan) {

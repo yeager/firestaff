@@ -5,6 +5,13 @@
   receipts. They remain fail-closed provenance, with no model, orientation,
   mesh, material, texture, palette, pixel, or draw semantics.
 
+- 2026-07-13 DM1 F0107 side-wall ornament host materialization: M10 now
+  carries the ReDMCSB `DUNVIEW.C F0107` G0194/G0205 ornament material receipt
+  to M11. The host consumes only its original PC34 graphic, C10 key, D2/D3
+  palette map, source geometry, and side-view flip. The focused real-media
+  regression draws D3R-left alcove graphic 261 from `GRAPHICS.DAT`; no
+  synthetic graphic, text, or fallback material is used.
+
 - 2026-07-13 DM1 F0111 center-door host materialization: the DM1/M10
   receipt now owns ReDMCSB `DUNVIEW.C F0111` frame-before-panel ordering and
   carries the current-map F0095 panel graphic to M11 without host-side bitmap

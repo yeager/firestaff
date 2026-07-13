@@ -364,6 +364,8 @@ static M11_Dm1ProjectileHostPresentationReceipt
     s_m11_dm1_projectile_host_presentation_receipt;
 static M11_Dm1DoorHostPresentationReceipt
     s_m11_dm1_door_host_presentation_receipt;
+static M11_Dm1WallOrnamentHostPresentationReceipt
+    s_m11_dm1_wall_ornament_host_presentation_receipt;
 
 static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
 {
@@ -22130,6 +22132,62 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         state, &drawReceipt, framebuffer, fbW, fbH);
 }
 
+static int m11_draw_dm1_wall_ornament_host_material_receipt(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH,
+    const DM1_WallOrnamentHostMaterialReceiptPc34* material)
+{
+    const M11_AssetSlot* slot;
+    const DM1_WallOrnamentRenderPlanPc34* plan;
+    if (!state || !framebuffer || !material || !material->valid) {
+        return 0;
+    }
+    plan = &material->plan;
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)plan->graphicIndex);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width <= 0 || slot->height <= 0) {
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0107:3502-3717: consume the M10-selected PC34
+     * graphic, C10 key, D2/D3 palette row, and source-selected flip. */
+    m11_blit_scaled_palette_map_maybe_flip(
+        slot, framebuffer, fbW, fbH,
+        M11_VIEWPORT_X + plan->dstX, M11_VIEWPORT_Y + plan->dstY,
+        plan->width, plan->height, plan->transparentColor,
+        plan->paletteMapValid ? plan->paletteMap : NULL,
+        plan->flipHorizontal);
+    memset(&s_m11_dm1_wall_ornament_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_wall_ornament_host_presentation_receipt));
+    s_m11_dm1_wall_ornament_host_presentation_receipt.valid = 1;
+    s_m11_dm1_wall_ornament_host_presentation_receipt.globalOrnamentIndex =
+        material->globalOrnamentIndex;
+    s_m11_dm1_wall_ornament_host_presentation_receipt.viewWallIndex =
+        material->viewWallIndex;
+    s_m11_dm1_wall_ornament_host_presentation_receipt.graphicIndex =
+        plan->graphicIndex;
+    s_m11_dm1_wall_ornament_host_presentation_receipt.destinationX =
+        M11_VIEWPORT_X + plan->dstX;
+    s_m11_dm1_wall_ornament_host_presentation_receipt.destinationY =
+        M11_VIEWPORT_Y + plan->dstY;
+    s_m11_dm1_wall_ornament_host_presentation_receipt.width = plan->width;
+    s_m11_dm1_wall_ornament_host_presentation_receipt.height = plan->height;
+    s_m11_dm1_wall_ornament_host_presentation_receipt.transparentColor =
+        plan->transparentColor;
+    s_m11_dm1_wall_ornament_host_presentation_receipt.flipHorizontal =
+        plan->flipHorizontal;
+    s_m11_dm1_wall_ornament_host_presentation_receipt.paletteMapValid =
+        plan->paletteMapValid;
+    if (plan->paletteMapValid) {
+        memcpy(s_m11_dm1_wall_ornament_host_presentation_receipt.paletteMap,
+               plan->paletteMap,
+               sizeof(s_m11_dm1_wall_ornament_host_presentation_receipt.paletteMap));
+    }
+    return 1;
+}
+
 static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int fbW,
@@ -22161,7 +22219,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
     for (i = 0; i < dm1_v1_wall_ornament_view_spec_count_pc34(); ++i) {
         DM1_WallOrnamentViewSpecPc34 spec;
         M11_ViewportCell cell;
-        DM1_WallOrnamentRenderPlanPc34 plan;
+        DM1_WallOrnamentHostMaterialReceiptPc34 material;
         M11_DM1ZoneBlit alcoveBlit;
         int localIdx;
         int mapIdx;
@@ -22230,11 +22288,9 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                 maxHeight = unreadableHeight;
             }
         }
-        if (dm1_v1_wall_ornament_render_plan_pc34(
-                ornGlobalIdx, spec.viewWallIndex, maxHeight, &plan)) {
-            const M11_AssetSlot* slot;
-            slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                        (unsigned int)plan.graphicIndex);
+        if (dm1_v1_wall_ornament_host_material_receipt_pc34(
+                ornGlobalIdx, spec.viewWallIndex, maxHeight, &material)) {
+            const DM1_WallOrnamentRenderPlanPc34* plan = &material.plan;
             /* ReDMCSB DUNVIEW.C F0107 lines 3590-3639 decodes the current
              * map inscription, and lines 3608-3717 handle D1C front-facing
              * inscriptions by patching the wall and drawing the inscription
@@ -22248,14 +22304,8 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                                          framebuffer, fbW, fbH);
                 continue;
             }
-            if (slot && slot->loaded && slot->pixels && slot->width > 0 && slot->height > 0) {
-                m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,
-                                                       M11_VIEWPORT_X + plan.dstX,
-                                                       M11_VIEWPORT_Y + plan.dstY,
-                                                       plan.width, plan.height,
-                                                       plan.transparentColor,
-                                                       plan.paletteMapValid ? plan.paletteMap : NULL,
-                                                       plan.flipHorizontal);
+            if (m11_draw_dm1_wall_ornament_host_material_receipt(
+                    state, framebuffer, fbW, fbH, &material)) {
                 /* ReDMCSB DUNGEON.C:2608-2612 / DUNVIEW.C:3923-3928:
                  * champion portraits are owned by the D1C front-mirror route
                  * (`m11_draw_dm1_front_mirror_route`) after the full cell
@@ -22264,14 +22314,14 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                  * Sonja/Mophus/Wuuf-class portraits directly over stone wall
                  * texture, which made them look like they were floating or on
                  * the wrong Hall wall. */
-                if (plan.isAlcove) {
-                    alcoveBlit.graphicIndex = plan.graphicIndex;
-                    alcoveBlit.srcX = plan.srcX;
-                    alcoveBlit.srcY = plan.srcY;
-                    alcoveBlit.dstX = plan.dstX;
-                    alcoveBlit.dstY = plan.dstY;
-                    alcoveBlit.width = plan.width;
-                    alcoveBlit.height = plan.height;
+                if (plan->isAlcove) {
+                    alcoveBlit.graphicIndex = plan->graphicIndex;
+                    alcoveBlit.srcX = plan->srcX;
+                    alcoveBlit.srcY = plan->srcY;
+                    alcoveBlit.dstX = plan->dstX;
+                    alcoveBlit.dstY = plan->dstY;
+                    alcoveBlit.width = plan->width;
+                    alcoveBlit.height = plan->height;
                     m11_draw_dm1_alcove_wall_items(state, framebuffer, fbW, fbH,
                                                    &cell, &alcoveBlit,
                                                    dm1_viewport_3d_f0115_c2500_c2900_row(
@@ -37746,6 +37796,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
            sizeof(s_m11_dm1_projectile_host_presentation_receipt));
     memset(&s_m11_dm1_door_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_door_host_presentation_receipt));
+    memset(&s_m11_dm1_wall_ornament_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_wall_ornament_host_presentation_receipt));
     if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         state->dm2BootProfile) {
         DM2_V1_InterfacePalette palette;
@@ -39621,5 +39673,30 @@ int M11_GameView_ProbeDrawDm1CenterDoorHostReceipt(
         return 0;
     }
     return m11_draw_dm1_center_door_material_receipt(
+        state, framebuffer, framebufferWidth, framebufferHeight, &material);
+}
+
+void M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
+    M11_Dm1WallOrnamentHostPresentationReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_wall_ornament_host_presentation_receipt;
+    }
+}
+
+int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    DM1_WallOrnamentHostMaterialReceiptPc34 material;
+    /* ReDMCSB DUNVIEW.C F0107 D3R-left: G0194/G0205 selects the actual
+     * PC34 graphic 261, D3 palette, C10 key, and horizontal flip. */
+    if (!state || !dm1_v1_wall_ornament_host_material_receipt_pc34(
+            1, 1, 0, &material)) {
+        return 0;
+    }
+    return m11_draw_dm1_wall_ornament_host_material_receipt(
         state, framebuffer, framebufferWidth, framebufferHeight, &material);
 }
