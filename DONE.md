@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron Track 02 post-return `$e109` trace: a clean-source,
+  instrumented Mednafen 1.32.1 build and authenticated US CUE/System Card 3.0
+  capture now prove `$cb2f -> $e109 -> $c860`. The `$e109` instruction is
+  `JSR $C860`, with observed `$1800..$1804 = 00 00 00 02 00`. This remains a
+  control-flow/register receipt only: it assigns no CD record, payload,
+  bitmap, palette, object, or level semantics. Verification: clean patch
+  dry-run, instrumented build, 25-second real-media trace, and
+  `scripts/verify_theron_e109_post_return_trace.sh` PASS.
+
 - 2026-07-13 DM2 GDAT local image palettes: boot/runtime/viewport receipts
   now carry source-local indexed palettes from real GDAT images into wall
   materialization. Palette metadata without a verified image remains

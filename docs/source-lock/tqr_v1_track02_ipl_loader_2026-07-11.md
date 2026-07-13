@@ -103,3 +103,12 @@ register-state receipt only. It observes no System Card `CD_READ` request,
 record number, destination, data type, bitmap, palette, object, or level.
 `scripts/verify_theron_cb20_post_return_trace.sh` validates the required
 ordered trace rows and deliberately makes no semantic promotion.
+
+The next clean-source Mednafen capture was run against the authenticated US
+CUE and System Card 3.0. It proves the immediate continuation
+`$cb2f -> $e109 -> $c860`: `$e109` executes `JSR $C860`. At that exact
+instruction, the observed CD registers are `$1800..$1804 = 00 00 00 02 00`.
+This is a control-flow and register-state receipt only. It does not identify
+`$c860`, issue or complete a `CD_READ`, or bind a Track 02 record, payload,
+bitmap, palette, object, or level. `scripts/verify_theron_e109_post_return_trace.sh`
+checks the ordered rows and rejects traces that omit either transfer.
