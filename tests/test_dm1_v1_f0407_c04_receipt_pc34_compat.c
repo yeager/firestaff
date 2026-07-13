@@ -37,6 +37,7 @@ int main(void)
     struct TickResult_Compat dispatchResult;
     struct TickInput_Compat invalidOwnerInput;
     struct TimelineEvent_Compat invalidOwnerC11;
+    struct TimelineEvent_Compat retainedC04;
 
     memset(&state, 0, sizeof(state));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -145,18 +146,56 @@ int main(void)
      * action owner. */
     state.world.party.champions[1] = state.world.party.champions[0];
     timelineCountBeforeInvalidOwner = state.world.timeline.count;
+    memset(&retainedC04, 0, sizeof(retainedC04));
+    retainedC04.kind = TIMELINE_EVENT_PLAY_SOUND;
+    retainedC04.fireAtTick = state.world.gameTick + 20u;
+    retainedC04.mapIndex = state.world.party.mapIndex;
+    retainedC04.mapX = 1;
+    retainedC04.mapY = 2;
+    retainedC04.aux0 = DM1_SND_WOODEN_THUD;
+    retainedC04.aux2 = DM1_EVENT_PLAY_SOUND;
+    retainedC04.aux4 = 70;
+    assert(F0721_TIMELINE_Schedule_Compat(
+               &state.world.timeline, &retainedC04) == 1);
+    assert(state.world.timeline.count == timelineCountBeforeInvalidOwner + 1);
     memset(&invalidOwnerInput, 0, sizeof(invalidOwnerInput));
     invalidOwnerInput.command = CMD_ATTACK;
-    invalidOwnerInput.commandArg1 = 1;
+    invalidOwnerInput.commandArg1 = 0;
     invalidOwnerInput.commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
     invalidOwnerInput.reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
+    invalidOwnerInput.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+        0xffu |
+        CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
+        ((unsigned int)DIR_SOUTH << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT);
+    assert(F0888_ORCH_ApplyPlayerInput_Compat(
+               &state.world, &invalidOwnerInput, &dispatchResult) == 1);
+    assert(state.world.timeline.count == timelineCountBeforeInvalidOwner + 1);
+
+    memset(&invalidOwnerC11, 0, sizeof(invalidOwnerC11));
+    invalidOwnerC11.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
+    invalidOwnerC11.fireAtTick = state.world.gameTick + 20u;
+    invalidOwnerC11.mapIndex = state.world.party.mapIndex;
+    invalidOwnerC11.mapX = state.world.party.mapX;
+    invalidOwnerC11.mapY = state.world.party.mapY;
+    invalidOwnerC11.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    invalidOwnerC11.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    invalidOwnerC11.aux4 = 1;
+    assert(F0721_TIMELINE_Schedule_Compat(
+               &state.world.timeline, &invalidOwnerC11) == 1);
+    assert(state.world.timeline.count == timelineCountBeforeInvalidOwner + 2);
+
+    invalidOwnerInput.commandArg1 = 1;
     invalidOwnerInput.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
         DM1_ACTION_SWING |
         CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
         ((unsigned int)DIR_SOUTH << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT);
     assert(F0888_ORCH_ApplyPlayerInput_Compat(
                &state.world, &invalidOwnerInput, &dispatchResult) == 1);
-    assert(state.world.timeline.count == timelineCountBeforeInvalidOwner);
+    assert(state.world.timeline.count == timelineCountBeforeInvalidOwner + 1);
+    assert(state.world.timeline.events[timelineCountBeforeInvalidOwner].kind ==
+           TIMELINE_EVENT_PLAY_SOUND);
+    assert(state.world.timeline.events[timelineCountBeforeInvalidOwner].aux0 ==
+           DM1_SND_WOODEN_THUD);
     assert(DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
                &state.world, 1, 6) == 0);
     assert(DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(

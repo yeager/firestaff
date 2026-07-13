@@ -4245,6 +4245,47 @@ static int orch_f0248_award_steal_skill_xp_compat(
     return 1;
 }
 
+/* ReDMCSB MENU.C F0407 only reaches F0330 with its selected
+ * Party.Champion owner. Imported/corrupt state can retain a typed C11 for a
+ * slot no longer in Party.ChampionCount; compact that stale owner before a
+ * later invalid input can leave it pending until its due tick. C04's delayed
+ * sound has no champion owner and is deliberately outside this cleanup. */
+static void orch_cleanup_invalid_action_enable_receipts_compat(
+    struct GameWorld_Compat* world,
+    int championIndex)
+{
+    int partyChampionCount;
+    int newEventCount;
+    int readIndex;
+    int writeIndex = 0;
+
+    if (!world || championIndex < 0) return;
+    partyChampionCount = world->party.championCount;
+    if (partyChampionCount < 0) partyChampionCount = 0;
+    if (partyChampionCount > CHAMPION_MAX_PARTY) {
+        partyChampionCount = CHAMPION_MAX_PARTY;
+    }
+    for (readIndex = 0; readIndex < world->timeline.count; ++readIndex) {
+        const struct TimelineEvent_Compat* event =
+            &world->timeline.events[readIndex];
+        if (event->kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux4 == championIndex &&
+            (championIndex >= CHAMPION_MAX_PARTY ||
+             championIndex >= partyChampionCount)) {
+            continue;
+        }
+        world->timeline.events[writeIndex++] = *event;
+    }
+    newEventCount = writeIndex;
+    while (writeIndex < world->timeline.count) {
+        memset(&world->timeline.events[writeIndex++], 0,
+               sizeof(world->timeline.events[0]));
+    }
+    world->timeline.count = newEventCount;
+}
+
 /* ReDMCSB CHAMPION.C F0330:2233-2255 owns the single pending C11 event
  * per champion. A later disable replaces its prior event using the source
  * half-distance timing rule. MENU.C F0407 alone changes SlotOrdinal to
@@ -4261,6 +4302,7 @@ int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
 
     if (!world || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
         championIndex >= world->party.championCount || ticks <= 0) {
+        orch_cleanup_invalid_action_enable_receipts_compat(world, championIndex);
         return 0;
     }
     targetTick = world->gameTick + (uint32_t)ticks;
@@ -4311,6 +4353,7 @@ int DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
 
     if (!world || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
         championIndex >= world->party.championCount) {
+        orch_cleanup_invalid_action_enable_receipts_compat(world, championIndex);
         return 0;
     }
     /* ReDMCSB MENU.C F0407:1613-1617 reaches this only after F0328 has
@@ -10080,6 +10123,8 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
          * out-of-party slot before it can create F0407 C04/C11 receipts. */
         if ((int)input->commandArg1 >= CHAMPION_MAX_PARTY ||
             (int)input->commandArg1 >= world->party.championCount) {
+            orch_cleanup_invalid_action_enable_receipts_compat(
+                world, (int)input->commandArg1);
             return 1;
         }
         int hasWeaponInfo = F0888_ORCH_GetChampionActionHandWeaponInfo_Compat(
