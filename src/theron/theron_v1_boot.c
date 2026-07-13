@@ -213,6 +213,12 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
                ((uint32_t)handoff->cd_read_record_cl |
                 ((uint32_t)handoff->cd_read_record_dl << 8) |
                 ((uint32_t)handoff->cd_read_record_ch << 16)) &&
+           handoff->stage3_user_data_offset /
+                   THERON_TRACK02_RAW_SECTOR_BYTES ==
+               handoff->stage3_raw_sector &&
+           handoff->stage3_user_data_offset %
+                   THERON_TRACK02_RAW_SECTOR_BYTES ==
+               THERON_TRACK02_RAW_USER_DATA_OFFSET &&
            handoff->handler_address != 0u &&
            handoff->cd_state_address != 0u &&
            handoff->cd_state_branch_address != 0u && handoff->branch.valid;
