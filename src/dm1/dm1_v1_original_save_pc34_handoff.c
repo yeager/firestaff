@@ -1470,6 +1470,24 @@ static int materialize_original_pc34_timeline(
             if (!F0721_TIMELINE_Schedule_Compat(timeline, &ev)) return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             continue;
         }
+        if (src->type == DM1_EVENT_WATCHDOG) {
+            /* ReDMCSB TIMELINE.C F0256:1710-1715 creates C53 from only
+             * Type and Map_Time, and the C53 dispatch re-arms that same
+             * record 300 ticks later.  B/C and Priority are not initialized
+             * by this source path, so keep them out of the live receipt. */
+            if (((src->map_time >> 24) & 0xffu) != 0u) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            memset(&ev, 0, sizeof(ev));
+            ev.kind = TIMELINE_EVENT_WATCHDOG;
+            ev.fireAtTick = src->map_time & 0x00ffffffu;
+            ev.aux0 = DM1_EVENT_WATCHDOG;
+            ev.aux2 = DM1_EVENT_WATCHDOG;
+            if (!F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            continue;
+        }
         if (src->type == DM1_EVENT_CHAMPION_SHIELD) {
             int defense = (int)(int16_t)read_u16_le(&src->b_mapX);
             if (src->priority >= CHAMPION_MAX_PARTY ||

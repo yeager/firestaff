@@ -1597,6 +1597,18 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
             write_u16_le(dst + 8u, (uint16_t)(src->aux0 & 0xffff));
+        } else if (type == DM1_EVENT_WATCHDOG) {
+            /* ReDMCSB TIMELINE.C F0256:1710-1715 owns only Type and
+             * Map_Time for C53.  Native export may canonicalize the
+             * uninitialized Priority/B/C bytes to zero, but only after the
+             * exact imported receipt has survived runtime. */
+            if (src->kind != TIMELINE_EVENT_WATCHDOG ||
+                src->aux0 != DM1_EVENT_WATCHDOG || src->aux1 != 0 ||
+                src->aux2 != DM1_EVENT_WATCHDOG || src->aux3 != 0 ||
+                src->aux4 != 0 || src->mapIndex != 0 || src->mapX != 0 ||
+                src->mapY != 0 || src->cell != 0) {
+                return 0;
+            }
         } else if (type == DM1_EVENT_VI_ALTAR_REBIRTH) {
             /* ReDMCSB CLIKVIEW.C F0374:179-186 creates C13 with
              * Priority=JUNK.ChargeCount, B.Location, and C.A.Cell/Effect.

@@ -9,6 +9,12 @@
   1985-1989. Verification: Ninja and CTest
   `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 DM1 original PC34 C53 Watchdog roundtrip: typed handoff retains
+  only Type/Map_Time, re-arms the authenticated watchdog 300 ticks later, and
+  native export canonicalizes its unowned Priority/B/C fields. Source:
+  ReDMCSB `TIMELINE.C` F0256:1710-1715 and C53 dispatch:1938-1945.
+  Verification: Ninja and CTest `dm1_v1_original_save_pc34_handoff` passed 1/1.
+
 - 2026-07-13 DM1 original PC34 C79 Footprints roundtrip: typed handoff
   accepts zero Priority, retains no B/C union arm, expires both Footprints
   mirrors at runtime, and exports only its authenticated source receipt.
