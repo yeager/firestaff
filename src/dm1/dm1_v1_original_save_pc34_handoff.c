@@ -2145,6 +2145,75 @@ static int validate_original_pc34_dungeon_tail_map_spans(
     return SAVEGAME_PC34_OK;
 }
 
+/* ReDMCSB DUNGEON.C F0160 uses G0280's entry for each map column as the
+ * index of that column's first SquareFirstThings row. LOADSAVE.C F0433
+ * serializes the table before the SFT payload; F0435 reads it verbatim.
+ * Firestaff's M10 lookup can reconstruct this table from raw tiles, but an
+ * original-save handoff must first prove the persisted table is equivalent.
+ */
+static int validate_original_pc34_dungeon_tail_columns(
+    const uint8_t *tail,
+    int map_count,
+    size_t map_descriptors_offset,
+    size_t columns_offset,
+    size_t raw_map_offset,
+    size_t raw_map_byte_count,
+    int square_first_thing_count,
+    uint32_t *out_terminal_count)
+{
+    uint32_t cumulative = 0u;
+    int map_index;
+    int column_index = 0;
+
+    if (!tail || map_count <= 0 || map_count > DUNGEON_MAX_MAPS ||
+        square_first_thing_count < 0) {
+        return SAVEGAME_PC34_ERROR_BAD_SIZE;
+    }
+    for (map_index = 0; map_index < map_count; ++map_index) {
+        const uint8_t *map = tail + map_descriptors_offset +
+            (size_t)map_index * DUNGEON_MAP_DESC_SIZE;
+        uint16_t raw_bitfield_a = read_u16_le(map + 8u);
+        size_t map_offset = (size_t)read_u16_le(map + 0u);
+        size_t width = (size_t)((raw_bitfield_a >> 6) & 0x1fu) + 1u;
+        size_t height = (size_t)((raw_bitfield_a >> 11) & 0x1fu) + 1u;
+        size_t x;
+
+        if (map_offset > raw_map_byte_count ||
+            width > raw_map_byte_count - map_offset ||
+            height != 0u && width > SIZE_MAX / height ||
+            width * height > raw_map_byte_count - map_offset) {
+            return SAVEGAME_PC34_ERROR_BAD_SIZE;
+        }
+        for (x = 0u; x < width; ++x, ++column_index) {
+            size_t y;
+            uint16_t saved_cumulative = read_u16_le(
+                tail + columns_offset + (size_t)column_index * 2u);
+            if (cumulative > UINT16_MAX ||
+                saved_cumulative != (uint16_t)cumulative) {
+                return SAVEGAME_PC34_ERROR_BAD_SIZE;
+            }
+            for (y = 0u; y < height; ++y) {
+                uint8_t square = tail[raw_map_offset + map_offset +
+                                      x * height + y];
+                if ((square & DUNGEON_SQUARE_MASK_THING_LIST) != 0u) {
+                    ++cumulative;
+                }
+            }
+        }
+    }
+    /* SquareFirstThingCount is the persisted allocation length. The source
+     * table addresses the live thing-list rows and may legitimately leave
+     * spare slots at its tail, so only reject a column table that indexes
+     * beyond the stored SFT payload. */
+    if (cumulative > (uint32_t)square_first_thing_count) {
+        return SAVEGAME_PC34_ERROR_BAD_SIZE;
+    }
+    if (out_terminal_count) {
+        *out_terminal_count = cumulative;
+    }
+    return SAVEGAME_PC34_OK;
+}
+
 static int decode_original_pc34_dungeon_tail(
     const uint8_t *bytes,
     size_t size,
@@ -2158,6 +2227,7 @@ static int decode_original_pc34_dungeon_tail(
     int column_count = 0;
     int thing_data_bytes = 0;
     size_t map_descriptors_offset;
+    size_t columns_offset;
     int type;
 
     if (!bytes || !out_report || cursor >= size) {
@@ -2185,6 +2255,7 @@ static int decode_original_pc34_dungeon_tail(
         column_count += width;
     }
     off += (size_t)map_count * DUNGEON_MAP_DESC_SIZE;
+    columns_offset = off;
     if (off + (size_t)column_count * 2u + 2u > tail_size) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
@@ -2226,6 +2297,13 @@ static int decode_original_pc34_dungeon_tail(
                 (size_t)raw_map_bytes) != SAVEGAME_PC34_OK) {
             return SAVEGAME_PC34_ERROR_BAD_SIZE;
         }
+        if (validate_original_pc34_dungeon_tail_columns(
+                tail, map_count, map_descriptors_offset, columns_offset, off,
+                (size_t)raw_map_bytes, square_first_thing_count,
+                &out_report->dungeon_tail_column_terminal_sft_count) !=
+            SAVEGAME_PC34_OK) {
+            return SAVEGAME_PC34_ERROR_BAD_SIZE;
+        }
         off += (size_t)raw_map_bytes;
         expected_checksum = read_u16_le(tail + off);
         actual_checksum = original_pc34_byte_checksum(tail, off);
@@ -2239,6 +2317,7 @@ static int decode_original_pc34_dungeon_tail(
             (expected_checksum == actual_checksum);
         out_report->dungeon_tail_map_count = map_count;
         out_report->dungeon_tail_column_count = column_count;
+        out_report->dungeon_tail_column_table_valid = 1;
         out_report->dungeon_tail_square_first_thing_count =
             square_first_thing_count;
         out_report->dungeon_tail_text_data_word_count =
