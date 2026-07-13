@@ -1013,6 +1013,84 @@ int main(int argc, char** argv)
         M11_GameView_Shutdown(&acceptGame);
     }
 
+    /* ReDMCSB REVIVE.C F0282 disables a sensor on the accepting mirror's
+     * front square. It must not revive or otherwise disturb a separately
+     * disabled C127 mirror. Use two genuine PC34 mirrors: B is disabled
+     * first, A enters C161 and is disabled before F0281's accept. */
+    if (firstOrdinal >= 0 && secondOrdinal >= 0) {
+        M12_StartupMenuState peerMenu;
+        M11_GameViewState peerGame;
+        unsigned char sourcePortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+        char sourceName[16];
+        int candidateIndex;
+
+        sourceName[0] = '\0';
+        if (!open_game(dataDir, &peerMenu, &peerGame)) {
+            fprintf(stderr, "FAIL could not open disabled-peer accept game\n");
+            ok = 0;
+        } else {
+            peerGame.world.party.mapIndex = 0;
+            peerGame.world.party.mapX = secondPartyX;
+            peerGame.world.party.mapY = secondPartyY;
+            peerGame.world.party.direction = secondDirection;
+            if (!disable_front_mirror_sensor(&peerGame, secondOrdinal) ||
+                M11_GameView_GetFrontMirrorOrdinal(&peerGame) != -1) {
+                fprintf(stderr, "FAIL HoC disabled-peer B source setup\n");
+                ok = 0;
+            } else {
+                peerGame.world.party.mapX = firstPartyX;
+                peerGame.world.party.mapY = firstPartyY;
+                peerGame.world.party.direction = firstDirection;
+                if (!M11_GameView_GetMirrorNameByOrdinal(&peerGame, firstOrdinal,
+                                                          sourceName, (int)sizeof(sourceName)) ||
+                    M11_GameView_GetFrontMirrorOrdinal(&peerGame) != firstOrdinal ||
+                    !M11_GameView_SelectFrontMirrorCandidate(&peerGame)) {
+                    fprintf(stderr, "FAIL HoC disabled-peer A C127 setup\n");
+                    ok = 0;
+                } else {
+                    candidateIndex = peerGame.candidateMirrorPartyIndex;
+                    if (candidateIndex != 0 ||
+                        !peerGame.world.party.champions[candidateIndex].portraitBitmapValid) {
+                        fprintf(stderr, "FAIL HoC disabled-peer A source material missing\n");
+                        ok = 0;
+                    } else {
+                        memcpy(sourcePortrait,
+                               peerGame.world.party.champions[candidateIndex].portraitBitmap,
+                               sizeof(sourcePortrait));
+                        if (!M11_GameView_BeginMirrorCandidateReincarnateRename(&peerGame) ||
+                            !disable_front_mirror_sensor(&peerGame, firstOrdinal) ||
+                            M11_GameView_GetFrontMirrorOrdinal(&peerGame) != -1 ||
+                            !M11_GameView_ApplyMirrorCandidateRenameAscii(&peerGame, 'A') ||
+                            !M11_GameView_ApplyMirrorCandidateRenameAscii(&peerGame, '\r') ||
+                            !M11_GameView_ApplyMirrorCandidateRenameCommand(
+                                &peerGame,
+                                DM1_V1_RESURRECTION_RENAME_UI_COMMAND_OK_PC34_COMPAT) ||
+                            peerGame.world.party.championCount != 1 ||
+                            !champion_name_matches(
+                                &peerGame.world.party.champions[candidateIndex], "A") ||
+                            memcmp(peerGame.world.party.champions[candidateIndex].portraitBitmap,
+                                   sourcePortrait, sizeof(sourcePortrait)) != 0) {
+                            fprintf(stderr,
+                                    "FAIL HoC disabled-peer A C161 accept material/order\n");
+                            ok = 0;
+                        } else {
+                            peerGame.world.party.mapX = secondPartyX;
+                            peerGame.world.party.mapY = secondPartyY;
+                            peerGame.world.party.direction = secondDirection;
+                            if (M11_GameView_GetFrontMirrorOrdinal(&peerGame) != -1 ||
+                                M11_GameView_SelectFrontMirrorCandidate(&peerGame) != 0) {
+                                fprintf(stderr,
+                                        "FAIL HoC disabled-peer B changed during A accept\n");
+                                ok = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        M11_GameView_Shutdown(&peerGame);
+    }
+
     printf("probe=dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat\n");
     printf("sourceEvidence=ReDMCSB DUNGEON.C:2573,2608-2612 C127 front-wall portrait; MOVESENS.C:1501-1503; REVIVE.C F0280,F0281,F0282:744-805\n");
     printf("visibleMirrorOrdinals=%d\n", expectedCount);
