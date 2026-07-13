@@ -1101,7 +1101,7 @@ static void test_melee_action_tick_plan(void) {
     in.championIndex = 2;
     in.actionIndex = DM1_ACTION_CHOP;
     in.championPresent = 1;
-    in.championDirection = 5;
+    in.championDirection = DIR_EAST;
     CHECK_EQ(dm1_v1_melee_action_tick_plan_f0402_pc34(&in, &out), 1,
              "melee tick plan builds");
     CHECK_EQ(out.valid, 1, "melee tick plan valid");
@@ -1112,7 +1112,8 @@ static void test_melee_action_tick_plan(void) {
     CHECK_EQ(out.reserved, CMD_ATTACK_CREATURE_AUTO_PC34,
              "melee tick auto creature");
     CHECK_EQ(out.hasTargetDirection, 1, "melee tick target direction flag");
-    CHECK_EQ(out.targetDirection, 1, "melee tick target direction normalized");
+    CHECK_EQ(out.targetDirection, DIR_EAST,
+             "melee tick target direction retained");
     CHECK_EQ((out.reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) != 0u,
              1, "melee tick action valid bit");
     CHECK_EQ((int)(out.reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK),
@@ -1122,7 +1123,13 @@ static void test_melee_action_tick_plan(void) {
     CHECK_EQ((int)((out.reserved2 &
                     CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK) >>
                    CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT),
-             1, "melee tick direction bits");
+             DIR_EAST, "melee tick direction bits");
+
+    in.championDirection = 5;
+    CHECK_EQ(dm1_v1_melee_action_tick_plan_f0402_pc34(&in, &out), 0,
+             "out-of-range champion direction rejects receipt");
+    CHECK_EQ(out.valid, 0, "out-of-range direction plan invalid");
+    in.championDirection = DIR_EAST;
 
     in.actionIndex = DM1_ACTION_BLOCK;
     CHECK_EQ(dm1_v1_melee_action_tick_plan_f0402_pc34(&in, &out), 0,
@@ -1171,49 +1178,49 @@ static void test_melee_action_tick_plan(void) {
              "F0402 command decode west target y");
 
     decodeIn.commandArg2 = 7;
-    decodeIn.reserved = 2;
+    decodeIn.reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
     decodeIn.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
-                         (unsigned int)DM1_GRAPHIC560_ACTION_COUNT |
+                         (unsigned int)DM1_ACTION_CHOP |
+                         CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
+                         (3u << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT);
+    CHECK_EQ(dm1_v1_melee_command_decode_plan_f0402_pc34(
+                 &decodeIn, &decodeOut), 0,
+             "F0402 rejects direct group receipt");
+    CHECK_EQ(decodeOut.valid, 0,
+             "F0402 direct group receipt remains invalid");
+
+    decodeIn.commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+    decodeIn.reserved = 2;
+    CHECK_EQ(dm1_v1_melee_command_decode_plan_f0402_pc34(
+                 &decodeIn, &decodeOut), 0,
+             "F0402 rejects direct creature receipt");
+    CHECK_EQ(decodeOut.valid, 0,
+             "F0402 direct creature receipt remains invalid");
+
+    decodeIn.commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+    decodeIn.reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
+    decodeIn.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+                         (unsigned int)DM1_ACTION_CHOP |
+                         CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
+                         (3u << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT) |
                          CMD_ATTACK_RESERVED2_LEGACY_MARKER_VALID;
     CHECK_EQ(dm1_v1_melee_command_decode_plan_f0402_pc34(
-                 &decodeIn, &decodeOut), 1,
-             "F0402 invalid action decode builds");
-    CHECK_EQ(decodeOut.actionIndex, CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34,
-             "F0402 invalid action defaults to MELEE");
-    CHECK_EQ(decodeOut.hasLiveActionIndex, 1,
-             "F0402 invalid action keeps live bit");
-    CHECK_EQ(decodeOut.hasLegacyMarker, 1,
-             "F0402 legacy marker bit");
-    CHECK_EQ(decodeOut.targetDirection, 2,
-             "F0402 missing direction falls back to party");
-    CHECK_EQ(decodeOut.requestedAutoTarget, 0,
-             "F0402 direct target flag");
-    CHECK_EQ(decodeOut.directGroupIndex, 7,
-             "F0402 direct group index");
-    CHECK_EQ(decodeOut.requestedAutoCreature, 0,
-             "F0402 direct creature flag");
-    CHECK_EQ(decodeOut.directCreatureIndex, 2,
-             "F0402 direct creature index");
-    CHECK_EQ(decodeOut.targetMapX, 10,
-             "F0402 south target x");
-    CHECK_EQ(decodeOut.targetMapY, 21,
-             "F0402 south target y");
+                 &decodeIn, &decodeOut), 0,
+             "F0402 rejects legacy marker receipt");
+    CHECK_EQ(decodeOut.valid, 0,
+             "F0402 legacy marker receipt remains invalid");
+    CHECK_EQ(decodeOut.actionIndex, -1,
+             "F0402 legacy receipt has no default action");
 
     decodeIn.commandArg2 = 0;
     decodeIn.reserved = 0;
     decodeIn.reserved2 = 0u;
     decodeIn.partyDirection = 7;
     CHECK_EQ(dm1_v1_melee_command_decode_plan_f0402_pc34(
-                 &decodeIn, &decodeOut), 1,
-             "F0402 default command decode builds");
-    CHECK_EQ(decodeOut.hasLiveActionIndex, 0,
-             "F0402 default command no live action");
-    CHECK_EQ(decodeOut.actionIndex, CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34,
-             "F0402 default command action");
-    CHECK_EQ(decodeOut.targetDirection, 3,
-             "F0402 default command party direction masked");
-    CHECK_EQ(decodeOut.targetMapX, 9,
-             "F0402 default command west target x");
+                 &decodeIn, &decodeOut), 0,
+             "F0402 rejects receipt without source action and direction");
+    CHECK_EQ(decodeOut.valid, 0,
+             "F0402 incomplete receipt remains invalid");
 }
 
 static void test_melee_damage_emission_plan(void) {
@@ -1629,11 +1636,11 @@ static void test_melee_f0402_weapon_availability_and_preflight(void) {
     memset(&preIn, 0, sizeof(preIn));
     preIn.targetResolved = 0;
     CHECK_EQ(dm1_v1_melee_preflight_plan_f0402_pc34(&preIn, &preOut), 1,
-             "F0402 marker fallback preflight builds");
-    CHECK_EQ(preOut.shouldReturnHandled, 0,
-             "F0402 marker fallback not handled yet");
-    CHECK_EQ(preOut.canUseLegacyMarker, 1,
-             "F0402 marker fallback allowed");
+             "F0402 no-target preflight builds");
+    CHECK_EQ(preOut.shouldReturnHandled, 1,
+             "F0402 no-target is handled without fallback");
+    CHECK_EQ(preOut.canUseLegacyMarker, 0,
+             "F0402 no-target cannot use legacy marker");
 
     memset(&preIn, 0, sizeof(preIn));
     preIn.targetResolved = 1;
