@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin restored `TT_77` follow-up: live dispatch now expires an
+  exact saved Spell Shield receipt only for a positive, non-underflowing
+  signed defense delta. The source all-portrait redraw remains blocked without
+  a restored M11 HUD owner. `TT_75` remains blocked because its saved poison
+  path requires a source-owned damage and requeue handoff.
+
 - 2026-07-13 CSBWin restored `TT_74` follow-up: live dispatch now expires an
   exact saved Party Shield receipt only for a positive, non-underflowing
   signed defense delta. The source all-portrait redraw remains blocked without
