@@ -1366,6 +1366,12 @@ and real community-save corpus round-trip evidence.
     explosion from `Cell/Effect`, or alter F0435/F0802 runtime behavior.
     Remaining work is authentic community-save coverage and broader
     dungeon-tail import.
+  - 2026-07-13 update: opt-in external-corpus rows now retain the separate
+    C24 fluxcage `B.Location` plus `C.Slot` union as a four-byte canonical
+    receipt. It records count, byte length, and fingerprint after F0651 may
+    reorder EVENT storage, but keeps no host explosion-index interpretation.
+    Every observed external C24 must retain source/export identity. Remaining
+    work is authentic community-save coverage and broader dungeon-tail import.
     Remaining work is broader original dungeon-tail import breadth and real
     community-save corpus evidence.
   - 2026-07-13 update: F0435 dungeon-tail preflight now also enforces the

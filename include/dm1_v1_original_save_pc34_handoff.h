@@ -231,6 +231,18 @@ typedef struct {
     uint32_t source_c25_union_slot_fingerprint;
     uint32_t exported_c25_union_slot_byte_count;
     uint32_t exported_c25_union_slot_fingerprint;
+    /* PROJEXPL.C F0224 owns C24's B.Location and C.Slot union bytes for a
+     * linked fluxcage; retain no host explosion-index interpretation. */
+    int c24_union_slot_byte_receipt_available;
+    int source_c24_event_count;
+    int exported_c24_event_count;
+    int c24_union_slot_byte_preserved_count;
+    int c24_union_slot_byte_mismatch_count;
+    int c24_union_slot_byte_preservation_ok;
+    uint32_t source_c24_union_slot_byte_count;
+    uint32_t source_c24_union_slot_fingerprint;
+    uint32_t exported_c24_union_slot_byte_count;
+    uint32_t exported_c24_union_slot_fingerprint;
     int c4_timeline_layout_receipt_available;
     uint32_t source_c4_timeline_index_count;
     uint32_t source_c4_timeline_byte_count;
@@ -340,6 +352,16 @@ typedef struct {
     uint32_t source_c25_union_slot_fingerprint;
     uint32_t exported_c25_union_slot_byte_count;
     uint32_t exported_c25_union_slot_fingerprint;
+    int c24_union_slot_byte_receipt_available;
+    int source_c24_event_count;
+    int exported_c24_event_count;
+    int c24_union_slot_byte_preserved_count;
+    int c24_union_slot_byte_mismatch_count;
+    int c24_union_slot_byte_preservation_ok;
+    uint32_t source_c24_union_slot_byte_count;
+    uint32_t source_c24_union_slot_fingerprint;
+    uint32_t exported_c24_union_slot_byte_count;
+    uint32_t exported_c24_union_slot_fingerprint;
     int c4_timeline_layout_receipt_available;
     uint32_t source_c4_timeline_index_count;
     uint32_t source_c4_timeline_byte_count;
