@@ -209,7 +209,12 @@ ReDMCSB WIP 2021-02-06 source tree.
   rejects mismatched graphics rather than scaling a substitute. Real-PC34 HoC
   coverage proves C093/C098/C103 material plus C127/C026. This does not close
   the documented platform-memory gap: an original-PC custom-dungeon capture is
-  still required for the legacy loading workaround.
+  still required for the legacy loading workaround. **2026-07-13 F0115/F0128
+  boundary:** D3/D2/D1 side-wall lane clipping, parity, C10 key and F0096
+  material are now a single DM1 receipt consumed mechanically by M11; D4 has
+  an explicit no-receipt result because F0115 exits at depth > 3. The missing
+  original-PC custom-dungeon capture remains the blocker for the legacy
+  memory-limit behavior.
 
 - REDMCSB-DM1-GAP-005 — **ReDMCSB `CHAMPION.C` F0306/F0319/F0320/F0321.**
   Firestaff now locks the PC34 F0306 compiler-order branch and M11 owns the

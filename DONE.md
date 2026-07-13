@@ -81,6 +81,16 @@
   source candidate is rebuilt only in tail slot 2. Source: ReDMCSB `REVIVE.C`
   F0280 and F0282:744-845. Verification: focused CTest against installed
    PC34 data.
+- 2026-07-13 DM1 F0115/F0128 side-wall occlusion ownership: moved D3/D2/D1
+  side-wall lane clipping, parity selection, C10-transparent zone geometry
+  and F0096 wall-set material into `DM1_ViewportSideWallHostReceiptPc34`.
+  M11 now only samples the world cell and blits the exact receipt asset, or
+  no-draws when the receipt is clipped or unavailable. D4 is explicitly
+  no-receipt/no-draw because `F0128` calls `F0115` there but the latter exits
+  before selecting a wall zone at depth > 3. The real-PC34 HoC regression
+  verifies D3 material dimensions, depth replay clipping, and the D4 case.
+  Source: ReDMCSB `DUNVIEW.C` F0128:8466-8533, F0115 and F0096.
+  Verification: `m11_dm1_hoc_wall_material_receipt_pc34`.
 - 2026-07-13 DM1 F0115 HoC wall-material ownership: moved final F0096
   C093..C107 wall-set material selection for M11's D1C/D2C/D3C paths into a
   DM1 receipt. M11 accepts only the exact original bitmap dimensions and
