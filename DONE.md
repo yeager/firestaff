@@ -418,6 +418,14 @@
   launch behavior. Verification: `theron_v1_runtime_trace_intake` CTest uses
   only absent paths and does not manufacture a live capture.
 
+- 2026-07-13 Theron Soul Room live-trace handoff gate: a prepared boot launch
+  can now bind the explicit authenticated Mednafen/Track 02 receipt only when
+  its variant matches the verified boot media. The real forcefield-to-dungeon
+  entry checks that boot-owned receipt before mutating flow or world state;
+  absent or invalid evidence leaves the session in Soul Room with an explicit
+  blocked host receipt. Verification: `theron_v1_runtime_trace_intake` CTest
+  proves the unopened route using no synthetic trace.
+
 - 2026-07-13 DM1 original-save C48/C49 projectile export: F0802 now writes
   ReDMCSB `EVENT.B.Slot` as the live C14 projectile Thing and rebuilds packed
   `EVENT.C.Projectile` from the active map, square, direction, and step
