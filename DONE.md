@@ -12609,6 +12609,15 @@ extension record. The canonical 39,437-byte PC G1 `DUNGEON.DAT` proves four
 direct roots, beginning with ObjectID `0x1098` at `(4,4)`. Verification:
 real-data Creature test and focused 87-check dungeon-loader gate passed.
 
+# ✅ 2026-07-13 DM2 G1 direct DB5 Weapon runtime receipt
+
+Runtime-admitted G1 map 17 now consumes only direct DB5 `Weapon` records.
+The receipt binds `DME.h` `w2` `ItemType`, `Important`, and `Charges` fields
+without reading `GenericRecord::w0` or attempting a record chain. The
+canonical 39,437-byte PC G1 `DUNGEON.DAT` proves two placements of ObjectID
+`0xd407`, at `(5,8)` and `(6,1)`. Verification: real-data Weapon test and
+focused 87-check dungeon-loader gate passed.
+
 # ✅ 2026-07-13 DM2 weather `dtText` provenance boundary
 
 `dm2_v1_weather_gdat` now follows skproject `c_weather.cpp` rather than

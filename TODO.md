@@ -2591,6 +2591,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     now expose only `DME.h` `CreatureType` (`b4`) and `HP1` (`w6`). Their
     `w0` next links, `w2` possession ObjectIDs, DB4 extension records, and all
     DB8/DB10 roots remain unread; this is not a creature-chain or GDAT route.
+  - 2026-07-13 update: direct DB5 `Weapon` roots on runtime-admitted map 17
+    now expose only `DME.h` `ItemType`, `Important`, and `Charges` from `w2`.
+    `w0`, every other item family, and all object traversal remain unavailable.
   - 2026-07-11 update: the local full-build DM2 link blocker from direct save-load test targets is fixed; weather/timer save round-trip and inventory/item panel gate now link against `firestaff_dm2` and pass. Remaining DM2 work is real render/data breadth, not this build wiring.
   - 2026-07-11 update: the next local full-build blocker, `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` using retired M11 inventory names, is fixed by moving the probe to the DM1/ReDMCSB inventory API. Remaining DM1 chest work is runtime/asset proof, not this stale probe wiring.
   - 2026-07-11 update: `firestaff_dm1_v1_champion_mouse_leader_switch_probe` now uses the current DM1/ReDMCSB champion-leader API names and passes. Remaining leader/status work is runtime capture breadth, not stale API suffix cleanup.
