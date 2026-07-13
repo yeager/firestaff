@@ -1460,6 +1460,9 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
             if (src->kind != TIMELINE_EVENT_DOOR_DESTRUCTION || src->aux0 != DM1_EVENT_DOOR_DESTRUCTION || src->aux2 != DM1_EVENT_DOOR_DESTRUCTION || src->aux1 != 0 || src->aux3 != 0 || src->cell != 0 || !dungeon || !dungeon->maps || src->mapIndex < 0 || src->mapIndex >= (int)dungeon->header.mapCount || src->mapX < 0 || src->mapY < 0 || src->mapX >= (int)dungeon->maps[src->mapIndex].width || src->mapY >= (int)dungeon->maps[src->mapIndex].height) return 0;
             dst[6] = (uint8_t)src->mapX;
             dst[7] = (uint8_t)src->mapY;
+        } else if (type == DM1_EVENT_FAKEWALL) {
+            if (src->kind != TIMELINE_EVENT_SQUARE_STATE || src->aux0 != DM1_EVENT_FAKEWALL || src->aux2 != DM1_EVENT_FAKEWALL || src->aux3 != 0 || src->cell != 0 || src->aux1 < 0 || src->aux1 > 2 || !dungeon || !dungeon->maps || src->mapIndex < 0 || src->mapIndex >= (int)dungeon->header.mapCount || src->mapX < 0 || src->mapY < 0 || src->mapX >= (int)dungeon->maps[src->mapIndex].width || src->mapY >= (int)dungeon->maps[src->mapIndex].height) return 0;
+            dst[6] = (uint8_t)src->mapX; dst[7] = (uint8_t)src->mapY; dst[9] = (uint8_t)src->aux1;
         } else if (type == DM1_EVENT_INVISIBILITY) {
             /* ReDMCSB MENU.C F0412:1922-1964 creates C71 with zero
              * Priority. TIMELINE.C C71:1953-1964 reads no B/C union arm,
