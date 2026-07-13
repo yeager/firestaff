@@ -4096,6 +4096,7 @@ int nexus_v1_dgn_bind_structure1a_structure3_topology_candidates(
     for (source_index = 0; source_index < source_count; ++source_index) {
         const Nexus_V1_DgnStructure1FStructure1ACommandSource *source =
             &sources[source_index];
+        const Nexus_V1_DgnStructure1FEntry *entry;
         Nexus_V1_DgnStructure1AStructure3TopologyCandidate *candidate;
 
         ++receipt.owner_cell_source_count;
@@ -4110,6 +4111,21 @@ int nexus_v1_dgn_bind_structure1a_structure3_topology_candidates(
             ++receipt.blocked_invalid_source_count;
             continue;
         }
+        entry = &level->structure1f_entries[source->entry_index];
+        if (entry->family < NEXUS_V1_DGN_STRUCTURE1F_ALCOVES ||
+            entry->family != source->entry.family ||
+            entry->tag != source->entry.tag ||
+            entry->face != source->entry.face ||
+            entry->structure1a_index != source->entry.structure1a_index ||
+            !entry->structure1a_relation_valid ||
+            entry->structure1a_owner_x != source->owner_x ||
+            entry->structure1a_owner_y != source->owner_y ||
+            entry->structure1a_structure3_model_index !=
+                source->structure3_model_index ||
+            entry->structure1a_z_rotation != source->z_rotation) {
+            ++receipt.blocked_invalid_source_count;
+            continue;
+        }
         if (receipt.topology_candidate_count >= max_candidates) {
             ++receipt.blocked_invalid_source_count;
             continue;
@@ -4120,6 +4136,13 @@ int nexus_v1_dgn_bind_structure1a_structure3_topology_candidates(
         candidate->entry_index = source->entry_index;
         candidate->owner_x = source->owner_x;
         candidate->owner_y = source->owner_y;
+        candidate->structure1f_family = entry->family;
+        candidate->structure1f_tag = entry->tag;
+        candidate->structure1f_face_selector = entry->face;
+        candidate->structure1f_structure1a_index = entry->structure1a_index;
+        candidate->structure1f_binding_proven = 1;
+        candidate->structure1f_face_selector_semantics_proven = 0;
+        ++receipt.structure1f_binding_count;
         candidate->structure3_model_index = source->structure3_model_index;
         candidate->z_rotation = source->z_rotation;
         candidate->structure3_block_offset =

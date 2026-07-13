@@ -329,6 +329,8 @@ int main(void) {
     engine.current_level.structure1f_entry_count = 1;
     engine.current_level.structure1f_entries[0].family =
         NEXUS_V1_DGN_STRUCTURE1F_ALCOVES;
+    engine.current_level.structure1f_entries[0].tag = 0x20U;
+    engine.current_level.structure1f_entries[0].face = 3U;
     engine.current_level.structure1f_entries[0].structure1a_index = 0;
     engine.current_level.structure1f_entries[0].structure1a_relation_valid = 1;
     engine.current_level.structure1f_entries[0].structure1a_owner_x = 3;
@@ -361,6 +363,22 @@ int main(void) {
                    .structure1a_structure3_topology_complete &&
                engine.dgn_material_plan.receipt
                    .structure1a_structure3_topology_candidate_count == 1 &&
+               engine.dgn_material_plan.receipt
+                   .structure1a_structure3_topology_structure1f_binding_count == 1 &&
+               !engine.dgn_material_plan.receipt
+                    .structure1a_structure3_topology_structure1f_face_selector_semantics_proven &&
+               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                   .structure1f_binding_proven &&
+               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                   .structure1f_family == NEXUS_V1_DGN_STRUCTURE1F_ALCOVES &&
+               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                   .structure1f_tag == 0x20U &&
+               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                   .structure1f_face_selector == 3U &&
+               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                   .structure1f_structure1a_index == 0U &&
+               !engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                    .structure1f_face_selector_semantics_proven &&
                engine.dgn_material_plan.receipt
                    .structure1a_structure3_topology_direct_ordinal_mapping_disproven_count ==
                        1 &&

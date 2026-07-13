@@ -1207,6 +1207,16 @@ typedef struct {
     int entry_index;
     int owner_x;
     int owner_y;
+    /* DMWeb DGN Structure1F wall-family rows bind to Structure1A by their
+     * 16-bit table index. Preserve the exact row identity and its raw face
+     * selector beside the resolved owner-cell route. Neither field supplies
+     * a face transform or any mesh/draw semantics. */
+    Nexus_V1_DgnStructure1FFamily structure1f_family;
+    uint8_t structure1f_tag;
+    uint8_t structure1f_face_selector;
+    uint16_t structure1f_structure1a_index;
+    int structure1f_binding_proven;
+    int structure1f_face_selector_semantics_proven;
     uint8_t structure3_model_index;
     uint8_t z_rotation;
     int structure3_block_offset;
@@ -1228,6 +1238,7 @@ typedef struct {
 typedef struct {
     int owner_cell_source_count;
     int topology_candidate_count;
+    int structure1f_binding_count;
     int blocked_invalid_source_count;
     int blocked_payload_count;
     int direct_ordinal_mapping_disproven_count;
@@ -1506,6 +1517,8 @@ typedef struct {
      * relations and identity only; they are never mesh, face, material,
      * palette, pixel, or draw semantics. */
     int structure1a_structure3_topology_candidate_count;
+    int structure1a_structure3_topology_structure1f_binding_count;
+    int structure1a_structure3_topology_structure1f_face_selector_semantics_proven;
     int structure1a_structure3_topology_blocked_invalid_source_count;
     int structure1a_structure3_topology_blocked_payload_count;
     int structure1a_structure3_topology_direct_ordinal_mapping_disproven_count;
