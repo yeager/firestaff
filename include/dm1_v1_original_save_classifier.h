@@ -82,6 +82,22 @@ typedef struct {
     char reason[96];
 } DM1OriginalSaveClassifyResult;
 
+/* Read-only SAVEHEAD.C F0429 envelope receipt. No body bytes are decoded. */
+typedef struct {
+    int header_size_ok;
+    int decoded;
+    int checksum_ok;
+    uint16_t expected_checksum;
+    uint16_t actual_checksum;
+    uint16_t format_id;
+    uint16_t platform;
+    uint16_t dungeon_id;
+} Dm1V1OriginalSavePc34HeaderDecodeReceipt;
+
+int dm1_v1_original_save_pc34_decode_header_receipt(
+    const uint8_t *bytes, size_t size,
+    Dm1V1OriginalSavePc34HeaderDecodeReceipt *out_receipt);
+
 typedef struct {
     char root[DM1_ORIGINAL_SAVE_PATH_MAX];
     int candidate_count;
