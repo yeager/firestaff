@@ -281,6 +281,7 @@ if [[ -n "$host_key" && "$transition_host_key_count" -eq 0 ]]; then
 fi
 if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||
    ! grep -Fq 'dynamic_cd_read_controller_state ' "$trace" ||
+   ! grep -Fq 'dynamic_cd_read_destination_span pc=4093 destination=3800 bytes=32 fnv1a=' "$trace" ||
    ! grep -Fq 'dynamic_huc6260_palette_store ' "$trace"; then
     if [[ "$transition_sector_count" -gt 0 ]]; then
         printf 'BLOCKED: loader reached authentic raw sectors but dynamic CPU receipts are absent; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s raw_sectors=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$transition_sector_count" "$status"

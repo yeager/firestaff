@@ -67,6 +67,23 @@ static int tqr_trace_parse_palette_word(const char *line, size_t length,
            *out_word <= 0x1ffu;
 }
 
+static int tqr_trace_parse_cd_read_destination_span(
+    const char *line, size_t length, unsigned int *out_pc,
+    unsigned int *out_destination, unsigned int *out_bytes,
+    unsigned int *out_checksum)
+{
+    int consumed = 0;
+
+    if (!line || !out_pc || !out_destination || !out_bytes ||
+        !out_checksum) return 0;
+    return sscanf(line,
+                  "dynamic_cd_read_destination_span pc=%x destination=%x bytes=%u fnv1a=%x%n",
+                  out_pc, out_destination, out_bytes, out_checksum,
+                  &consumed) == 4 && consumed == (int)length &&
+           *out_pc == 0x4093u && *out_destination == 0x3800u &&
+           *out_bytes == 32u && *out_checksum != 0u;
+}
+
 int theron_v1_raw_loader_trace_ingest_mednafen_capture(
     const char *capture,
     const char *track02_md5,
@@ -82,6 +99,10 @@ int theron_v1_raw_loader_trace_ingest_mednafen_capture(
     unsigned int accumulator;
     unsigned int palette_index;
     unsigned int palette_word;
+    unsigned int destination_span_pc;
+    unsigned int destination_span_destination;
+    unsigned int destination_span_bytes;
+    unsigned int destination_span_checksum;
 
     if (out) memset(out, 0, sizeof(*out));
     if (!capture || !track02_md5 || !out ||
@@ -101,7 +122,20 @@ int theron_v1_raw_loader_trace_ingest_mednafen_capture(
     cursor = dynamic_read;
     out->palette_word_checksum = 2166136261u;
     while (tqr_trace_next_line(&cursor, &line, &length)) {
-        if (length >= strlen("dynamic_huc6260_palette_store ") &&
+        if (length >= strlen("dynamic_cd_read_destination_span ") &&
+            memcmp(line, "dynamic_cd_read_destination_span ",
+                   strlen("dynamic_cd_read_destination_span ")) == 0) {
+            if (out->dynamic_cd_read_destination_span_verified ||
+                !tqr_trace_parse_cd_read_destination_span(
+                    line, length, &destination_span_pc,
+                    &destination_span_destination, &destination_span_bytes,
+                    &destination_span_checksum)) return 0;
+            out->dynamic_cd_read_destination_span_bytes =
+                destination_span_bytes;
+            out->dynamic_cd_read_destination_span_checksum =
+                destination_span_checksum;
+            out->dynamic_cd_read_destination_span_verified = 1;
+        } else if (length >= strlen("dynamic_huc6260_palette_store ") &&
             memcmp(line, "dynamic_huc6260_palette_store ",
                    strlen("dynamic_huc6260_palette_store ")) == 0) {
             if (!tqr_trace_parse_palette_store(line, length, &pc, &address,
@@ -132,7 +166,8 @@ int theron_v1_raw_loader_trace_ingest_mednafen_capture(
                 (uint16_t)palette_word);
         }
     }
-    if (out->palette_store_count == 0u) return 0;
+    if (out->palette_store_count == 0u ||
+        !out->dynamic_cd_read_destination_span_verified) return 0;
 
     out->valid = 1;
     out->variant = live_trace.variant;
@@ -188,6 +223,9 @@ int theron_v1_raw_loader_trace_final_bind(
     if (out) memset(out, 0, sizeof(*out));
     if (!trace || !media || !out || !trace->valid ||
         !trace->dynamic_cd_read_verified ||
+        !trace->dynamic_cd_read_destination_span_verified ||
+        trace->dynamic_cd_read_destination_span_bytes != 32u ||
+        !trace->dynamic_cd_read_destination_span_checksum ||
         !trace->palette_store_observed_after_dynamic_read ||
         strcmp(trace->track02_md5, media->track02_md5) != 0 ||
         trace->variant != (Theron_Track02Variant)media->track02_variant ||

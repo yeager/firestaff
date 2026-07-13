@@ -19,6 +19,8 @@ typedef struct {
     Theron_Track02Variant variant;
     uint32_t dynamic_cd_read_record;
     uint16_t dynamic_cd_read_destination;
+    size_t dynamic_cd_read_destination_span_bytes;
+    uint32_t dynamic_cd_read_destination_span_checksum;
     unsigned int palette_store_count;
     unsigned int palette_register_mask;
     unsigned int palette_word_count;
@@ -28,6 +30,9 @@ typedef struct {
     uint16_t first_palette_store_pc;
     uint8_t first_palette_store_accumulator;
     int dynamic_cd_read_verified;
+    /* Direct checksum of original System Card destination RAM after the
+     * authenticated CD_READ returned. It proves record-to-RAM transfer only. */
+    int dynamic_cd_read_destination_span_verified;
     int palette_store_observed_after_dynamic_read;
     /* Kept separate deliberately: a VCE store is not RAM/CD byte taint. */
     int palette_descriptor_relation_verified;

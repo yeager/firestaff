@@ -12587,6 +12587,20 @@ Verification: `test_dm1_v1_viewport_3d_pc34_compat`.
   `CreatureType -> CREATURES/type/F9` material receipts now retain and require
   the matching source IMG3 local palette before the dungeon viewport accepts
   the decoded plane.
+# ✅ 2026-07-13 Theron dynamic Track 02 CD_READ-to-RAM receipt: the
+# instrumented Mednafen trace now captures an FNV-1a checksum of the bounded
+# 32-byte `$3800` destination span immediately after original System Card
+# `CD_READ` returns at `$4093`. `theron_v1_raw_loader_trace` accepts one exact
+# receipt only after the authenticated dynamic record transaction and requires
+# it before binding any startup bitmap route. This proves only original
+# record-to-RAM transfer; palette/VCE/VDC byte provenance and rendering remain
+# fail-closed. Verification: Ninja targets
+# `firestaff_theron_v1_raw_loader_trace_ingest_probe`,
+# `firestaff_theron_v1_raw_loader_trace_import_probe`, and
+# `firestaff_theron_v1_capture_preflight_chain_probe` PASS; both Mednafen
+# source-patch and live-capture script contracts PASS; `git diff --check`
+# clean.
+
 # DM1 C001 title presentation command
 
 - 2026-07-13 DM1 M11 title presentation now consumes a source-locked,
