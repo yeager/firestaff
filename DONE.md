@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 original PC34 C74 Party Shield roundtrip: typed handoff
+  accepts only zero Priority and positive signed `B.Defense`, subtracts it
+  from both party-shield mirrors at runtime, and exports no invented C union.
+  Source: ReDMCSB `MENU.C` F0412:1965-1978 and `TIMELINE.C`
+  C74:1975-1976. Verification: Ninja and CTest
+  `dm1_v1_original_save_pc34_handoff` passed 1/1.
+
 - 2026-07-13 CSBWin restored terminal `TT_1` door timer bridge: an exact
   queue-slot/timer/event receipt now drives only the terminal closing
   byte-map door transition from low state 1 to 0 through the live tick queue.
