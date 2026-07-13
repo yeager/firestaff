@@ -893,9 +893,19 @@ static int pack_party(unsigned char* dst, int dstCap,
         return needed;
     }
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-        pack_champion_excluding_portrait(
-            dst + (size_t)slot * SAVEGAME_PC34_CHAMPION_BYTE_COUNT,
-            &state->party->champions[slot]);
+        unsigned char* record =
+            dst + (size_t)slot * SAVEGAME_PC34_CHAMPION_BYTE_COUNT;
+        if (!state->party->champions[slot].present &&
+            state->party->pc34InactiveChampionRecordValid[slot]) {
+            /* ReDMCSB F0433 writes every M516_CHAMPIONS slot. This opaque
+             * source cache is retained only after F0435 imported an inactive
+             * record, so no host-generated inactive record is promoted. */
+            memcpy(record, state->party->pc34InactiveChampionRecords[slot],
+                   SAVEGAME_PC34_CHAMPION_BYTE_COUNT);
+        } else {
+            pack_champion_excluding_portrait(record,
+                                              &state->party->champions[slot]);
+        }
     }
     write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 0u,
                  (uint16_t)state->party->championCount);

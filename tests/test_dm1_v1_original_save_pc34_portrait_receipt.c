@@ -34,7 +34,10 @@ int main(void)
     world.party.direction = 1;
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
         struct ChampionState_Compat *champion = &world.party.champions[slot];
-        champion->present = slot < world.party.championCount;
+        /* F0433 writes all four M516_CHAMPIONS records independently of
+         * PartyChampionCount. Keep the native source records nonzero so the
+         * F0435 inactive-slot cache is exercised without a fixture format. */
+        champion->present = 1;
         champion->portraitBitmapValid = 1;
         for (byte_index = 0u;
              byte_index < CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT; ++byte_index) {
@@ -65,8 +68,12 @@ int main(void)
                    report.source_external_portrait_fingerprint != 0u &&
                    report.source_external_portrait_fingerprint ==
                        report.exported_external_portrait_fingerprint &&
-                   report.external_portrait_byte_preservation_ok,
-               "F0435 -> F0433 -> F0435 preserves all external portrait bytes")) {
+                   report.external_portrait_byte_preservation_ok &&
+                   report.inactive_champion_record_byte_receipt_available &&
+                   report.inactive_champion_record_count == 2 &&
+                   report.inactive_champion_record_byte_preserved_count == 2 &&
+                   report.inactive_champion_record_byte_preservation_ok,
+               "F0435 -> F0433 -> F0435 preserves portrait and inactive champion bytes")) {
         return 1;
     }
 

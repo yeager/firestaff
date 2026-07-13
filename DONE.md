@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 C2 inactive champion-record preservation: F0435 now
+  retains the source-owned inactive `M516_CHAMPIONS` 319-byte records without
+  promoting them to live party members, and F0433 writes them only from that
+  provenance cache. The round-trip receipt separately decrypts C2 with each
+  save's original key and compares all inactive records byte-for-byte. Source:
+  ReDMCSB `LOADSAVE.C` F0433:1579-1589 and F0435:2766-2777. Verification:
+  native-PC34 portrait/save CTest with four nonzero M516 records and a
+  two-member party.
+
 - 2026-07-13 Theron sparse authentic-trace instrumentation: the Mednafen
   debugger callback now filters to bounded System Card/loader windows before
   any debugger-memory inspection, preserving pending-transfer observations.
