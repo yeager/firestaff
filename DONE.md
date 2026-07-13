@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0190 C040 M10-to-M11 integration audit: a focused test now
+  drives the existing killed-all afterplay receipt through `F0821` into the
+  live PC34 explosion list, then through the existing F0115 materialization
+  receipt. It retains the source C040 type, frame, attack, map, and F0114
+  route for M11 consumption. The M11 audit locks its use of the live list and
+  deferred material consumer; no cue fallback, marker, or renderer path was
+  added. Source: ReDMCSB `GROUP.C` F0190 and `DUNVIEW.C` F0115. Verification:
+  focused CTest.
+
 - 2026-07-13 DM1 PC34 C24 external-corpus receipt: opt-in external corpus
   rows now retain canonical four-byte fluxcage unions (`B.Location` plus
   `C.Slot`) with counts, byte lengths, and fingerprints. The receipt sorts

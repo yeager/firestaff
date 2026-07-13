@@ -415,6 +415,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_runtime_materi
         COMMAND test_dm1_v1_viewport_runtime_materialization_pc34_compat
     )
 endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0190_c040_m11_integration_audit.c")
+    add_executable(test_dm1_v1_f0190_c040_m11_integration_audit
+        tests/test_dm1_v1_f0190_c040_m11_integration_audit.c
+        src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_f0190_c040_m11_integration_audit PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0190_c040_m11_integration_audit PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0190_c040_m11_integration_audit
+        COMMAND test_dm1_v1_f0190_c040_m11_integration_audit
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+endif()
+
 if(CSB_V2_SOURCES)
     target_link_libraries(firestaff_m11 PUBLIC firestaff_csb_v2)
 endif()
