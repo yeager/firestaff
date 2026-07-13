@@ -16573,6 +16573,33 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     timer_index = profile->csbwin_timer_queue[queue_slot];
     if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
+    if (timer->function == 12u) {
+        /* ReDMCSB TIMELINE.C F0254 lines 1614-1637 and CSBWin
+         * CSBCode.cpp:6468/Timer.cpp:2644-2664 consume TT_12 through its
+         * champion priority, first clearing HideDamageReceivedEventIndex.
+         * The source's two redraw branches depend on the live inventory
+         * champion ordinal, which this restored CSBWin profile does not own;
+         * do not infer it or fabricate a HUD redraw. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 && profile->party_state_valid &&
+            profile->champion_count > 0 &&
+            profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
+            profile->party_state.ChampionCount == profile->champion_count &&
+            timer->ubyte5 < (uint8_t)profile->party_state.ChampionCount &&
+            timer->ubyte5 < CSB_V1_MAX_CHAMPIONS) {
+            profile->party_state.Champions[timer->ubyte5]
+                .HideDamageReceivedEventIndex = -1;
+        }
+        /* TT_12 aliases the shared hide-damage event. Keep every restored
+         * function-12 receipt out of any generic path, including malformed
+         * identities, until an exact inventory redraw surface is available. */
+        return 1;
+    }
     if (timer->function == 11u) {
         CSB_V1_Champion *champion;
 

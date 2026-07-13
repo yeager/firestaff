@@ -48,6 +48,9 @@
   malformed saved identity remain blocked.
   TT_11 now restores only the exact no-rearm, non-SHOOT champion action lock;
   ammunition/quiver branches and malformed saved identity remain blocked.
+  TT_12 now clears only its exact saved hide-damage receipt; its source
+  inventory/status-panel redraw branches remain blocked until their live
+  inventory-champion identity is restored.
 
 - 2026-07-13 CSB F0282 probe follow-up: keep the repaired probe-local C040
   candidate-panel receipt fail-closed as additional real-save variants are

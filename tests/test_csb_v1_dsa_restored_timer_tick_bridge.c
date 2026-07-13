@@ -293,5 +293,24 @@ int main(void)
               profile.party_state.Champions[0].CsbWinWord64 == 37 &&
               profile.party_state.Champions[0].ActionIndex == 30u,
           "action-enable rearm branch remains blocked without saved inventory handoff");
+
+    profile.party_state.Champions[0].HideDamageReceivedEventIndex = 23;
+    profile.csbwin_timers[0].function = 12u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].HideDamageReceivedEventIndex == -1,
+          "restored hide-damage timer clears the authenticated source receipt");
+
+    profile.party_state.Champions[0].HideDamageReceivedEventIndex = 23;
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].HideDamageReceivedEventIndex == 23,
+          "stale hide-damage timer identity cannot clear a champion receipt");
     return failures == 0 ? 0 : 1;
 }
