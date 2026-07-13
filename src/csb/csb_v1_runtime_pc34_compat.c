@@ -15826,13 +15826,22 @@ int csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
     if ((word2 & 0x007fu) != CSB_V1_DSA_FILTER_ACTUATOR_TYPE) return 0;
 
     /* DSA.cpp GetState: LocalState 0 is DB3::DSAstate, while LocalState 1
-     * is serialized DSA::m_state. LocalState 2 reads DB3::ParameterB(), a
-     * widened record whose word8 high bits are not yet an authenticated
-     * Firestaff input, and must therefore remain blocked. */
+     * is serialized DSA::m_state. DB3::MakeBig (data.cpp:1319-1326) widens
+     * type-47 records before ParameterB may use its extra bits. The imported
+     * compact eight-byte DB3 gives us only word6, so accept LocalState 2
+     * strictly when its unrepresented high two bits are zero. That is the
+     * exact compact ParameterB value and never a guessed widened state. */
     if (header->local_state == 0u) {
         candidate.state_index = (uint32_t)((word2 >> 12) & 0x0fu);
     } else if (header->local_state == 1u) {
         candidate.state_index = header->persistent_state;
+    } else if (header->local_state == 2u) {
+        uint16_t parameter_b;
+
+        if (size < 8) return 0;
+        parameter_b = (uint16_t)record[6] | ((uint16_t)record[7] << 8);
+        if ((parameter_b & 0xc000u) != 0u) return 0;
+        candidate.state_index = (uint32_t)parameter_b;
     } else {
         return 0;
     }
@@ -16406,6 +16415,64 @@ int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
     if (!prepared || !action) return 0;
     return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         profile, &runner, action, parameters, (int)parameter_count, NULL);
+}
+
+int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    uint16_t queue_index)
+{
+    const CSB_V1_CSBWin512TimerSummary *timer;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    const CSB_V1_DSAImportedAction *action = NULL;
+    uint16_t timer_index;
+    int prepared;
+
+    /* SaveGame.cpp restores both serialized arrays before ProcessTimers
+     * consumes m_timerQueue. Do not allow a caller-built TIMER shape to
+     * stand in for either authenticated saved record. */
+    if (!profile || !dungeon || !slave_location ||
+        !profile->csbwin_body_runtime_summary_valid ||
+        profile->csbwin_timer_summary_total !=
+            profile->csbwin_timer_summary_count ||
+        profile->csbwin_timer_queue_summary_total !=
+            profile->csbwin_timer_queue_summary_count ||
+        profile->csbwin_timer_queue_summary_count !=
+            profile->csbwin_timer_summary_count ||
+        queue_index >= profile->csbwin_timer_queue_summary_count) {
+        return 0;
+    }
+    timer_index = profile->csbwin_timer_queue[queue_index];
+    if (timer_index >= profile->csbwin_timer_summary_count) return 0;
+    timer = &profile->csbwin_timers[timer_index];
+    if (!timer->valid || timer->truncated ||
+        timer->source_index != timer_index ||
+        timer->level != (uint8_t)slave_location->level ||
+        timer->ubyte6 != (uint8_t)slave_location->x ||
+        timer->ubyte7 != (uint8_t)slave_location->y) {
+        return 0;
+    }
+    memset(&runner, 0, sizeof(runner));
+    switch (timer->function) {
+    case 5u:
+        prepared = csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, timer, &runner, &action);
+        break;
+    case 6u:
+        prepared = csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, timer, &runner, &action);
+        break;
+    case 7u:
+        prepared = csb_v1_runtime_prepare_csbwin_falsewall_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, timer, &runner, &action);
+        break;
+    default:
+        return 0;
+    }
+    if (!prepared || !action) return 0;
+    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+        profile, &runner, action, NULL, 0, NULL);
 }
 
 int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(

@@ -8,6 +8,13 @@
   independently source-owned runtime surface; do not truncate parameters or
   route a timer by inferred room state.
 
+- 2026-07-13 CSBWin saved-DSA LocalState follow-up: normal saved queue
+  entries now execute source `LocalState=2` only when compact DB3 `ParameterB`
+  has no widened high bits. Widened ParameterB values, slave-master routing,
+  master-state writes, timer cell effects, and all world/filter opcodes remain
+  blocked pending complete source-owned runtime records; do not coerce a
+  compact actuator into a widened state value.
+
 - 2026-07-13 DM1 original-save timeline continuation: C11's zero
   `SlotOrdinal` action-enable route and C12 hide-damage removal are complete.
   The non-zero-slot `F0259_TIMELINE_ProcessEvent11Part2_MoveWeaponFromQuiverToSlot`

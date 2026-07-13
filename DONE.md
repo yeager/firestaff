@@ -9,6 +9,17 @@
   framebuffer fill as source-backed. Source-locked to skproject `DRAW_DUNGEON`/outdoor `GRAPHICSSET`
   image and local-palette query ordering. Verification: Ninja and CTest
   `dm2_v1_runtime_handoff_smoke`.
+- 2026-07-13 CSBWin queued `LocalState=2` saved-timer DSA execution: a
+  restored `TT_OPENROOM`/`TT_STONEROOM`/`TT_FALSEWALL` timer now executes
+  only through its verified CSBWin timer-queue entry and matching serialized
+  TIMER slot. `DSA.cpp::GetState`'s `DB3::ParameterB` route is admitted only
+  for the compact source DB3 form with zero widened high bits, then selects
+  the existing authenticated pure-stack action transactionally. Widened
+  ParameterB state, malformed queue references, parameter messages, world
+  effects, and unsupported opcodes reject without publication. Source:
+  CSBWin `data.cpp:1319-1351`, `DSA.cpp:548-571`,
+  `SaveGame.cpp:1844-1858`, `CSBCode.cpp:6430-6470`. Verification: Ninja and
+  CTest `csb_v1_dsa_queued_localstate2_timer`.
 
 - 2026-07-13 Nexus Structure1 host/runtime consumer: champion-to-runtime DGN
   handoff now consumes a dedicated Structure1F/Structure1A provenance receipt

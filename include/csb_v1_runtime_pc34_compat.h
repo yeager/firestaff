@@ -873,6 +873,20 @@ int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
     const CSB_V1_DSAFilterLocation *slave_location,
     const CSB_V1_CSBWin512TimerSummary *timer);
 
+/* Execute one normal saved CSBWin timer selected by its authenticated timer
+ * queue entry. This admits only TT_OPENROOM (5), TT_STONEROOM (6), and
+ * TT_FALSEWALL (7), after the queue/TIMER-array identity and the selected
+ * type-47 DSA receipt are proven. It deliberately excludes parameter
+ * messages, ActivateDSA families, world/cell effects, and unsupported DSA
+ * state/opcode surfaces. Source: CSBWin SaveGame.cpp:1844-1858,
+ * CSBCode.cpp ProcessTimers:6430-6470, Timer.cpp:1343-1405,1641-1711,
+ * 2118-2185. */
+int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    uint16_t queue_index);
+
 /* Resolve the source's complete Monster.cpp attack-filter handoff: the
  * verified SpecialLocations actuator, saved level selector, serialized DSA
  * LocalState, actuator DSAstate, and timer column 0.  It only returns an
