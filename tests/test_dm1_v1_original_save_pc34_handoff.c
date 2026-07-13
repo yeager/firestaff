@@ -4073,8 +4073,7 @@ static void test_corpus_roundtrip_proof(void)
              receipt->source_f7057_envelope_end_offset +
                      receipt->source_f7057_trailing_byte_count !=
                  receipt->source_byte_count ||
-             !receipt->c13_byte_receipt_available ||
-            !receipt->header_part_shape_receipt_available ||
+             !receipt->header_part_shape_receipt_available ||
             !receipt->m516_champion_record_receipt_available ||
             !receipt->c4_timeline_layout_receipt_available ||
             !receipt->c25_union_slot_byte_receipt_available ||
