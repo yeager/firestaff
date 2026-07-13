@@ -36,8 +36,12 @@ branches and prove an explicit original read plus its record/destination
 before assigning any payload, bitmap, palette, object, or level semantics.
 The first post-exchange `$e97a -> $e981` dispatch is now a raw trace receipt
 only; it still leaves `$224c,X` and its controller transition unclassified.
-Continue with a later explicit original System Card data transaction whose
-record/register inputs and destination can be independently observed.
+The next observed controller-only order is `$e981 -> $e985 (JSR $ea27) ->
+$e988 (BRA $e95e) -> $e96a (AND #$b8)`. It separates this controller
+transition from an actual data transaction but proves neither a `CD_READ` nor
+record/register/payload semantics. Continue with a later explicit original
+System Card data transaction whose record/register inputs and destination can
+be independently observed.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 
