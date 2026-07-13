@@ -3278,14 +3278,35 @@ static void nexus_v1_dgn_plan_bind_direct_structure1f(
             if (commands[command_index].x == entry->x &&
                 commands[command_index].y == entry->y) {
                 visible = 1;
+                /* DMWeb's Structure1F families here carry a direct floor
+                 * cell coordinate. Retain their provenance on the exact
+                 * FLOOR command only; applying it to co-located walls or a
+                 * ceiling would invent a material/mesh relation. The visible
+                 * record remains a no-draw gate below even if a plan has no
+                 * floor command for its source cell. */
+                if (commands[command_index].kind !=
+                    NEXUS_V1_DGN_RENDER_COMMAND_FLOOR) {
+                    continue;
+                }
+                const int item_already_attached =
+                    (commands[command_index].structure1f_direct_family_mask &
+                     NEXUS_V1_DGN_STRUCTURE1F_DIRECT_FAMILY_ITEM) != 0;
                 if (commands[command_index].structure1f_direct_entry_count ==
                     0) {
                     ++receipt->structure1f_plan_direct_command_count;
+                    ++receipt->structure1f_plan_direct_floor_command_count;
                 }
                 ++commands[command_index].structure1f_direct_entry_count;
                 commands[command_index].structure1f_direct_family_mask |=
                     family_mask;
                 ++receipt->structure1f_plan_direct_command_entry_count;
+                ++receipt->structure1f_plan_direct_floor_command_entry_count;
+                if (entry->family == NEXUS_V1_DGN_STRUCTURE1F_ITEMS) {
+                    ++receipt->structure1f_plan_item_floor_command_entry_count;
+                    if (!item_already_attached) {
+                        ++receipt->structure1f_plan_item_floor_command_count;
+                    }
+                }
             }
         }
         if (!visible) {

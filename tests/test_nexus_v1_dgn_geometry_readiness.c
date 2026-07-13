@@ -1653,6 +1653,7 @@ static void test_direct_structure1f_mesh_command_provenance(void) {
     Nexus_V1_DgnRenderPlanReceipt receipt;
     int command_index;
     int matched_commands = 0;
+    int matched_floor_commands = 0;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
                           structure1b_rel, 2048) == 0,
@@ -1688,10 +1689,18 @@ static void test_direct_structure1f_mesh_command_provenance(void) {
          ++command_index) {
         if (commands[command_index].x == 3 && commands[command_index].y == 4) {
             ++matched_commands;
-            CHECK(commands[command_index].structure1f_direct_entry_count == 1 &&
-                  commands[command_index].structure1f_direct_family_mask ==
-                      NEXUS_V1_DGN_STRUCTURE1F_DIRECT_FAMILY_ITEM,
-                  "each source-cell mesh command retains exact direct item provenance");
+            if (commands[command_index].kind ==
+                NEXUS_V1_DGN_RENDER_COMMAND_FLOOR) {
+                ++matched_floor_commands;
+                CHECK(commands[command_index].structure1f_direct_entry_count == 1 &&
+                      commands[command_index].structure1f_direct_family_mask ==
+                          NEXUS_V1_DGN_STRUCTURE1F_DIRECT_FAMILY_ITEM,
+                      "the source-cell floor command retains exact direct item provenance");
+            } else {
+                CHECK(commands[command_index].structure1f_direct_entry_count == 0 &&
+                      commands[command_index].structure1f_direct_family_mask == 0,
+                      "direct floor-cell provenance never invents a wall or ceiling relation");
+            }
         }
     }
     CHECK(receipt.status == NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS &&
@@ -1699,10 +1708,14 @@ static void test_direct_structure1f_mesh_command_provenance(void) {
           !receipt.fallback_visuals_permitted &&
           receipt.structure1f_plan_direct_entry_count == 1 &&
           receipt.structure1f_plan_item_entry_count == 1 &&
-          receipt.structure1f_plan_direct_command_count == matched_commands &&
-          receipt.structure1f_plan_direct_command_entry_count == matched_commands &&
-          matched_commands > 0,
-          "direct Structure1F source cells bind to material/mesh commands then remain no-draw");
+          receipt.structure1f_plan_direct_command_count == matched_floor_commands &&
+          receipt.structure1f_plan_direct_command_entry_count == matched_floor_commands &&
+          receipt.structure1f_plan_direct_floor_command_count == matched_floor_commands &&
+          receipt.structure1f_plan_direct_floor_command_entry_count == matched_floor_commands &&
+          receipt.structure1f_plan_item_floor_command_count == matched_floor_commands &&
+          receipt.structure1f_plan_item_floor_command_entry_count == matched_floor_commands &&
+          matched_commands > matched_floor_commands && matched_floor_commands > 0,
+          "direct Structure1F source cells bind only to exact floor material commands then remain no-draw");
 }
 
 /* Retail-only companion to the mesh-command fixture above. It checks the
