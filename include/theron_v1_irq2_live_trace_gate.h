@@ -62,6 +62,45 @@ typedef struct {
     Theron_V1Irq2LiveBranchReceipt branch;
 } Theron_V1Irq2FullMediaTraceReceipt;
 
+/* Redacted capture-preflight status only. A ready preflight never selects an
+ * IRQ2 path; a complete live trace remains mandatory. */
+typedef enum {
+    THERON_V1_IRQ2_PREFLIGHT_MALFORMED = 0,
+    THERON_V1_IRQ2_PREFLIGHT_SYSTEM_CARD_MISSING,
+    THERON_V1_IRQ2_PREFLIGHT_SYSTEM_CARD_HASH_MISMATCH,
+    THERON_V1_IRQ2_PREFLIGHT_SCHEMA_INVALID,
+    THERON_V1_IRQ2_PREFLIGHT_IPL_STAGE2_UNVERIFIED,
+    THERON_V1_IRQ2_PREFLIGHT_STAGE3_STATIC_UNVERIFIED,
+    THERON_V1_IRQ2_PREFLIGHT_STAGE2_STAGE3_INVALID,
+    THERON_V1_IRQ2_PREFLIGHT_COMPLETION_INVALID,
+    THERON_V1_IRQ2_PREFLIGHT_TRACE_MISSING,
+    THERON_V1_IRQ2_PREFLIGHT_TRACE_INVALID,
+    THERON_V1_IRQ2_PREFLIGHT_READY
+} Theron_V1Irq2PreflightStatus;
+
+typedef struct {
+    Theron_V1Irq2PreflightStatus status;
+    int redacted_receipt_valid;
+    int runtime_allowed;
+} Theron_V1Irq2PreflightDiagnostic;
+
+typedef struct {
+    uint32_t magic;
+    uint16_t version;
+    Theron_V1Irq2PreflightStatus status;
+    int redacted_receipt_valid;
+    int runtime_blocked;
+} Theron_V1Irq2PreflightLauncherReceipt;
+
+int theron_v1_irq2_preflight_diagnostic_from_redacted_receipt(
+    const char *receipt,
+    Theron_V1Irq2PreflightDiagnostic *out_diagnostic);
+const char *theron_v1_irq2_preflight_status_name(
+    Theron_V1Irq2PreflightStatus status);
+int theron_v1_irq2_preflight_launcher_receipt_from_redacted_receipt(
+    const char *receipt,
+    Theron_V1Irq2PreflightLauncherReceipt *out_receipt);
+
 /* Rejects unless a complete original Mednafen PCE trace proves every state
  * boundary from CD_READ return through the first IRQ2 CD-state branch. */
 int theron_v1_irq2_live_branch_from_trace(
