@@ -1922,6 +1922,8 @@
   ownership rule after C11 is due and the action owner invalidates: stale C11
   is consumed without `EMIT_ACTION_ENABLED`, valid C04 still dispatches, and
   a same-due forged owner-tagged C04 produces neither sound nor a stale event.
+  It also resets and reuses projectile slot/owner zero at that dispatch
+  boundary, proving C11/C20 do not resolve through C49 projectile identity.
 
 - 2026-07-13 DM1 PC34 Open Door C11 receipt regression: the F0412 Open Door
   runtime gate now requires both independently owned queue receipts: F0327's

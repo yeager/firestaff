@@ -163,6 +163,18 @@ int main(void)
     forgedOwnerC04.aux4 = 0; /* Claimed C11 owner, not C20 sound priority. */
     assert(F0721_TIMELINE_Schedule_Compat(
                &state.world.timeline, &forgedOwnerC04) == 1);
+    /* C11 Priority is a champion ordinal, while C49 owns projectile slots.
+     * Reset and reuse slot/owner zero at the same due-tick boundary: neither
+     * F0407 receipt may resolve through this new projectile instance. */
+    memset(&state.world.projectiles, 0, sizeof(state.world.projectiles));
+    state.world.projectiles.count = 1;
+    state.world.projectiles.entries[0].slotIndex = 0;
+    state.world.projectiles.entries[0].reserved3 = 1;
+    state.world.projectiles.entries[0].ownerKind = PROJECTILE_OWNER_CHAMPION;
+    state.world.projectiles.entries[0].ownerIndex = 0;
+    state.world.projectiles.entries[0].mapIndex = 0;
+    state.world.projectiles.entries[0].mapX = 1;
+    state.world.projectiles.entries[0].mapY = 2;
     state.world.party.championCount = 0;
     memset(&dispatchResult, 0, sizeof(dispatchResult));
     state.world.gameTick = historicC11FireAtTick + 1u;
@@ -182,6 +194,11 @@ int main(void)
     }
     assert(sawSoundAfterStaleC11 == 1);
     assert(state.world.timeline.count == 0);
+    assert(state.world.projectiles.count == 1);
+    assert(state.world.projectiles.entries[0].slotIndex == 0);
+    assert(state.world.projectiles.entries[0].ownerKind ==
+           PROJECTILE_OWNER_CHAMPION);
+    assert(state.world.projectiles.entries[0].ownerIndex == 0);
     assert((squareData[(1 * 3) + 2] & 0x07) == 5);
     assert(DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
                &state.world, 0, 6) == 0);
