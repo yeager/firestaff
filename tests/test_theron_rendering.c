@@ -640,9 +640,9 @@ static int test_asset_load_raw_track02_semantic_only(void) {
     ASSERT(bundle.palette.tile_count == 0,
            "raw Track 02 route does not initialize synthetic tiles");
     ASSERT(bundle.synthetic_rendering_blocked == 0,
-           "unverified fixture remains usable by data-free tests");
-    ASSERT(tr_asset_generated_v1_rendering_allowed(&bundle) == 1,
-           "unverified fixture may use deterministic test rendering");
+           "semantic-only fixture has no sticky render block yet");
+    ASSERT(tr_asset_generated_v1_rendering_allowed(&bundle) == 0,
+           "raw Track 02 never grants generated V1 rendering");
     bundle.assets_verified = 1;
     ASSERT(tr_asset_generated_v1_rendering_allowed(&bundle) == 0,
            "verified original Track 02 blocks generated V1 rendering without a caller flag");
@@ -764,12 +764,12 @@ static int test_palette_state_init(void) {
     ASSERT(pal.tile_count >= 0, "tile_count should be >= 0");
     ASSERT(pal.tile_count >= 0, "tile_count should be >= 0");
 
-    /* Palette should have some non-zero entries */
-    int colors_non_zero = 0;
-    for (int i = 0; i < 16 && !colors_non_zero; i++) {
-        if (pal.entries[i].bgr444 != 0) colors_non_zero = 1;
+    /* A missing Track 02 palette must remain visibly unpopulated rather than
+     * receiving a generated stone palette. */
+    for (int i = 0; i < TQR_PALETTE_SIZE; i++) {
+        ASSERT(pal.entries[i].bgr444 == 0 && pal.entries[i].rgba == 0,
+               "unloaded palette must not contain generated colours");
     }
-    ASSERT(colors_non_zero, "Palette should have some non-zero colors");
 
     tqr_palette_free_tiles(&pal);
     PASS();

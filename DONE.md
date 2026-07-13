@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron V1 palette fallback removal: an unpopulated Track 02
+  palette/atlas now remains zeroed and cannot authorize V1 rendering. The
+  former generated stone palette and unverified-container rendering allowance
+  are removed; only an original graphics bank that produced tiles can enter
+  the V1 render path. The real HuC6260 palette-table binding remains separate.
+  Verification: `test_theron_rendering` (18/18).
+
 - 2026-07-13 DM1 PC34 C15/C24/C25 corpus receipt audit: the duplicate C24
   and C25 four-byte receipt serializers are consolidated into one raw
   `B.Location`/`C.Slot` helper. It copies only original EVENT union bytes;

@@ -145,8 +145,9 @@ static inline uint32_t tqr_bgr444_to_rgba(uint16_t bgr444) {
     return 0xFF000000U | (r << 16) | (g << 8) | b;
 }
 
-/* Initialize palette with PC Engine dungeon default tones.
- * Fills all 512 entries with deterministic dungeon stone palette. */
+/* Initialize an explicitly unpopulated palette/atlas. Original HuC6260
+ * entries must arrive through tqr_palette_load_group(); there is no generated
+ * dungeon palette fallback. */
 void tqr_palette_init_defaults(TQR_PaletteState *pal);
 
 /* Load palette data from a packed BGR444 buffer.
@@ -200,12 +201,6 @@ int tqr_tile_get_info(const TQR_PaletteState *pal,
                       int tile_index,
                       int *out_bpp,
                       int *out_pal_group);
-
-/* Default dungeon master palette (512 x BGR444, PC Engine native).
- * Covers dungeon stone (groups 0-3), creatures (group 1), objects
- * (group 2), UI (group 3), title (group 14), font (group 4).
- * Used as fallback when Track 02 palette data is unavailable. */
-extern const uint16_t g_tqr_default_palette_bgr444[TQR_PALETTE_SIZE];
 
 /* ── Deterministic fallback rules ─────────────────────────────────── */
 

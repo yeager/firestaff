@@ -3,15 +3,16 @@
  *
  * Implementations for the TQR tile/palette system.
  *
- * Phase 4 provides deterministic stub implementations:
- *   - tqr_palette_init_defaults(): fills palette with PC Engine dungeon stone tones
+ * Phase 4 provides bounded decode primitives:
+ *   - tqr_palette_init_defaults(): leaves the atlas explicitly unpopulated
  *   - tqr_decode_tile_row(): planar bitplane decode (2bpp/4bpp → indexed)
  *   - tqr_decode_tile(): full 8x8 tile decode
  *   - tqr_tile_strip_load(): load tile strip into atlas
  *   - All other functions: no-op stubs returning 0/-1/NULL
  *
- * Full Track 02 tile/palette extraction (Phase 5) will replace these
- * with real implementations that parse the PC Engine CD-ROM data track.
+ * Full Track 02 tile/palette extraction will bind these primitives to
+ * original CD-ROM data. Until that evidence exists, no invented palette may
+ * make an unproven graphics route appear playable.
  *
  * Source: THQUEST.ASM T400 (tile bank loading), T520 (tile selection),
  *         HuC6260/HuC6270 datasheet, tqr_v1_phase2_data_formats_H2339.md §7
@@ -33,8 +34,7 @@ void tqr_decode_tile_row(uint8_t *TQR_RESTRICT out_row,
      *
      * Decoded byte per pixel = sum(bitplane_n[bit_n] << n) for n=0..bpp-1
      *
-     * Since we only have raw bytes and no actual tile data yet,
-     * we fill with a placeholder pattern (checkerboard using bpp bits). */
+ * The caller supplies original tile bytes; this routine never invents pixels. */
     if (bpp == 2) {
         /* 2bpp: bitplane 0 at src_row[0], bitplane 1 at src_row[1] */
         for (int i = 0; i < 8; i++) {
@@ -69,37 +69,12 @@ void tqr_decode_tile(uint8_t *TQR_RESTRICT out64,
 
 /* ── Palette init ─────────────────────────────────────────────────── */
 
-/*
- * Default PC Engine dungeon stone palette.
- * 16 palette groups × 16 colors = 512 entries.
- * Group 0 (dungeon walls/floors):
- *   0-3:   black, dark gray, gray, light gray
- *   4-7:   brown tones (stone wall shading)
- *   8-11:  tan/light brown (floor highlights)
- *   12-15: blue-gray (ceiling/special)
- * Groups 1-3 follow similar distributions for their domains.
- *
- * Generated deterministically using a fixed formula:
- *   entry[n].bgr444 = ((n / 16) << 8) | (((n % 16) * 15) / 16 << 4) | (n % 16)
- * which gives a recognizable dungeon stone gradient.
- */
-
-/* Stub: fills all 512 palette entries with deterministic stone gradient.
- * This ensures the same output on all platforms even without Track 02 data. */
+/* There is no source-verified fallback palette. A zeroed state means the
+ * caller has not supplied original HuC6260 entries yet. */
 void tqr_palette_init_defaults(TQR_PaletteState *pal) {
     if (!pal) return;
     memset(pal, 0, sizeof(*pal));
     pal->tile_count = 0;
-
-    /* Deterministic gradient: BGR444 formula gives a recognizable
-     * dungeon stone palette across all 512 entries (16 groups x 16). */
-    for (int i = 0; i < TQR_PALETTE_SIZE; i++) {
-        /* BGR444: ((idx & 0xF) << 8) | (((idx >> 4) & 0xF) << 4) | (idx & 0xF)
-         * Produces a smooth diagonal gradient: black→blue→...→white */
-        uint16_t bgr444 = (uint16_t)(((i & 0xF) << 8) | (((i >> 4) & 0xF) << 4) | (i & 0xF));
-        pal->entries[i].bgr444 = bgr444;
-        pal->entries[i].rgba = tqr_bgr444_to_rgba(bgr444);
-    }
 }
 
 /* ── Palette load ─────────────────────────────────────────────────── */

@@ -98,11 +98,10 @@ TrAssetResult tr_asset_load(const char *file_path,
 void tr_asset_block_synthetic_rendering_for_verified_media(
     TrAssetBundle *bundle);
 
-/* Returns zero when a hash-verified Track 02 container is present but no
- * source-evidenced V1 graphics bank has been decoded.  This is deliberately
- * derived from the bundle state rather than only the sticky block flag, so a
- * later render caller cannot accidentally route original media through the
- * generated tile/UI fallback merely by omitting the boot helper above. */
+/* Returns one only when original graphics data produced a tile bank. This is
+ * deliberately derived from the bundle state rather than the sticky block
+ * flag alone, so no test fixture, unverified container, or generated palette
+ * can reach V1 rendering. */
 int tr_asset_generated_v1_rendering_allowed(const TrAssetBundle *bundle);
 
 /* Free all asset resources owned by the bundle.
