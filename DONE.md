@@ -7,6 +7,12 @@
   bytes are decoded, imported, or promoted. Verification: focused save/load
   CTest.
 
+- 2026-07-13 Nexus Structure1F floor-sensor model/rotation handoff: raw
+  source pairs now reach the DGN host, render-plan, and LEV00-15 corpus
+  receipts. The pair remains fail-closed provenance; it defines no sensor,
+  trigger, model, rotation, mesh, material, texture, palette, pixel, or draw
+  behavior.
+
 - 2026-07-13 DM2 G1 raw c_map corpus receipt: verified G1 column-index,
   ground-stack, and map-data bounds now retain byte counts and FNV-1a hashes.
   This explicitly preserves skproject `c_map.cpp:43-67` uncertainty around

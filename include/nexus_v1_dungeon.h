@@ -416,6 +416,22 @@ typedef struct {
     int destination_semantics_proven;
 } Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt;
 
+/* Direct floor-sensor records retain their adjacent raw model/aspect and
+ * rotation bytes as one pair. The pair is not a model binding, orientation,
+ * trigger, mesh, material, texture, palette, pixel, or draw instruction. */
+typedef struct {
+    int structure1f_spatial_valid;
+    int floor_sensor_entry_count;
+    int resolved_pair_count;
+    int unique_pair_count;
+    int duplicate_pair_count;
+    int zero_pair_count;
+    int nonzero_pair_count;
+    uint16_t highest_pair;
+    int complete;
+    int pair_semantics_proven;
+} Nexus_V1_DgnStructure1FFloorSensorModelRotationPairReceipt;
+
 /* Direct floor-decoration records retain a raw payload-selector byte. The
  * receipt preserves byte reuse only; it is not an object, aspect, model,
  * material, texture, palette, pixel, or draw instruction. */
@@ -907,6 +923,8 @@ typedef struct {
         structure1f_floor_sensor_control_selectors;
     Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt
         structure1f_floor_sensor_destinations;
+    Nexus_V1_DgnStructure1FFloorSensorModelRotationPairReceipt
+        structure1f_floor_sensor_model_rotation_pairs;
     Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt
         structure1f_floor_decoration_payload_selectors;
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt
@@ -1024,6 +1042,8 @@ typedef struct {
         structure1f_floor_sensor_control_selectors;
     Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt
         structure1f_floor_sensor_destinations;
+    Nexus_V1_DgnStructure1FFloorSensorModelRotationPairReceipt
+        structure1f_floor_sensor_model_rotation_pairs;
     Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt
         structure1f_floor_decoration_payload_selectors;
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt
@@ -1120,6 +1140,9 @@ int nexus_v1_level_structure1f_floor_sensor_control_selector_receipt(
 int nexus_v1_level_structure1f_floor_sensor_destination_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt *out_receipt);
+int nexus_v1_level_structure1f_floor_sensor_model_rotation_pair_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FFloorSensorModelRotationPairReceipt *out_receipt);
 int nexus_v1_level_structure1f_floor_decoration_payload_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt *out_receipt);
