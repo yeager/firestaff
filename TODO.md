@@ -1737,8 +1737,20 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     sidecar with raw input, CDIRQ, caller-PC, and raw-sector counts plus an
     observed or missing result. It records observation only and remains
     fail-closed when any condition is absent.
-    2026-07-13 build repair: caller-PC capture now includes the Mednafen PCE
-    declaration required for HuCPU access; this changes no trace policy.
+    2026-07-13 caller-PC build repair: caller-PC capture uses Mednafen's
+    public `HuC6280::GetRegister(GSREG_PC)` accessor; this changes no trace
+    policy.
+    2026-07-13 controlled-input update: an authentic 35-second US CUE +
+    System Card 3.0 capture with two macOS Return attempts now records an
+    explicit bounded SDL host-key receipt. The result is
+    `host_key_events=0`, `input_transactions=128`, `cd_irq_callbacks=3`,
+    `non_system_card_pcecd_reads=0`, and `raw_sector_spans=0`; port 0 remains
+    `0000`. This proves only that these controlled host attempts did not reach
+    Mednafen's SDL input event dispatcher. It neither identifies a required
+    key nor changes controller, record, destination, span, payload, graphics,
+    or level semantics. The next admissible capture must first observe a host
+    event and a nonzero emulated port transition, then retain the existing
+    CDIRQ/non-System-Card/raw-sector gates.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect
