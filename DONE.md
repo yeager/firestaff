@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC D3L2/D3R2 wall host handoff: extended the M11 D3
+  material consumer to the ReDMCSB `DUNVIEW.C` F0676/F0677 C702/C703 side
+  wall routes. DM1 supplies wallset selection, C10 transparency, geometry,
+  and parity flip; M11 only executes the material plan. Verification:
+  direct D3L2/D3R2 source-lock test passed 135/135 assertions and
+  `firestaff_m11` built.
+
 - 2026-07-13 CSB startup playback-to-HUD ownership: M11 now advances skipped
   ReDMCSB `TITLE.C F0437` cadence through the verified startup session before
   entrance presentation, then accepts `ENTRANCE.C F0806` completion only by

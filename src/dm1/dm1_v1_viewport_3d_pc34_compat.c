@@ -2286,7 +2286,8 @@ int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
     DM1_ViewportD3SideWallHostHandoffPc34 handoff;
 
     if (!out_handoff ||
-        (square != DM1_VIEW_SQUARE_D3L && square != DM1_VIEW_SQUARE_D3R)) {
+        (square != DM1_VIEW_SQUARE_D3L2 && square != DM1_VIEW_SQUARE_D3R2 &&
+         square != DM1_VIEW_SQUARE_D3L && square != DM1_VIEW_SQUARE_D3R)) {
         return 0;
     }
     spec = dm1_viewport_3d_get_wall_draw_spec_for_square(square);
@@ -2308,9 +2309,10 @@ int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
     handoff.transparent_color = 10;
     handoff.redmcsb_function = spec->redmcsb_function;
     handoff.source_lines = spec->source_lines;
-    /* ReDMCSB DUNVIEW.C F0116:6421-6437 and F0117:6554-6573 select
-     * C705/C706 wall pixels with C10 transparency, return for ordinary
-     * walls, and only enter F0115 when the front alcove exposes contents. */
+    /* ReDMCSB DUNVIEW.C F0676:6254-6289 / F0677:6321-6356 select
+     * C702/C703, and F0116:6421-6437 / F0117:6554-6573 select C705/C706.
+     * All four use C10-transparent wall material, return for ordinary
+     * walls, and retain their source-defined F0115 fallthrough. */
     *out_handoff = handoff;
     return 1;
 }
