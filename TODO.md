@@ -160,12 +160,13 @@ The stage-three entry is now proven as HuC6280 `BRK $ff`: it dispatches through
 IRQ2 at `$fff6/$fff7` and resumes at `$3802`, so the descriptor table is not
 linear CPU code. Remaining work is later handler execution, Track 02 reads,
 and their data semantics.
-The observed post-return chain now reaches `$cbef -> $cb2f -> $e109 -> $c860`,
-with no new `CD_READ` request in the captured window. `$cb2f` is a verified
-`RTS`, and `$e109` is a verified `JSR $c860`; `$c860`, `$c950`, and `$fe92`
-remain unclassified. Capture the first reachable System Card request after
-this chain and bind its live registers to its Track 02 record before promoting
-any payload.
+The observed post-return chain now reaches
+`$cbef -> $cb2f -> $e109 -> $c860 -> $fe92`, with no new `CD_READ` request in
+the captured window. `$cb2f` is a verified `RTS`; `$e109` is a verified
+`JSR $c860`; `$c860` initializes `$f8/$f9`, calls `$c950`, then executes
+`JSR $fe92`. These are control-flow and register receipts only. Capture the
+first reachable System Card request after this chain and bind its live
+registers to its Track 02 record before promoting any payload.
 The authenticated System Card 3.0 container has a 0x200-byte header; its
 genuine IRQ2 vector is `$e736`. Bit 0 of `$f5` selects an indirect `$2200`
 transfer; the clear path saves A/X/Y, calls `$e742`, then returns with `RTI`.
