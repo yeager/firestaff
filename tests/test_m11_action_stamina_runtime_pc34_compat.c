@@ -2096,7 +2096,8 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW keeps the inner F0328/F0330 disable after the action tick decrements it");
     ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
               "THROW has no F0407 disabled-action index when G0491 is zero");
-    ASSERT_EQ(state.actionEnableSlotOrdinal[0], CHAMPION_SLOT_ACTION_HAND,
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0],
+              DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL,
               "THROW stores C01 action-hand slot ordinal on the enable-action event");
 }
 
@@ -2163,7 +2164,8 @@ static void test_throw_full_projectile_list_still_accepts_f0328(void) {
               "full-list THROW keeps the inner F0328/F0330 disable");
     ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
               "full-list THROW has no F0407 disabled-action overwrite");
-    ASSERT_EQ(state.actionEnableSlotOrdinal[0], CHAMPION_SLOT_ACTION_HAND,
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0],
+              DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL,
               "full-list THROW keeps the C01 action-hand enable slot");
 }
 

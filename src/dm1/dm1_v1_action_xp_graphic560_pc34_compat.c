@@ -1222,7 +1222,7 @@ int dm1_v1_action_throw_plan_f0407_pc34(
          * movement-disable ticks and last projectile direction. */
         out->performed = 1;
         out->shouldClearActionHand = 1;
-        out->actionEnableSlotOrdinal = CHAMPION_SLOT_ACTION_HAND;
+        out->actionEnableSlotOrdinal = DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL;
         out->disableActionTicks = 4;
         out->projectileDisabledMovementTicks = 4;
         out->lastProjectileDisabledMovementDirection = in->partyDirection & 3;

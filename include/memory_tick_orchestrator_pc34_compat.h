@@ -442,6 +442,17 @@ int F0888_ORCH_GetCreatureSnapshot_Compat(
     int doubledMapDifficulty,
     struct CombatantCreatureSnapshot_Compat* outSnapshot);
 
+/* ReDMCSB CHAMPION.C F0330 creates one pending C11 per champion. MENU.C
+ * F0407 mutates that exact event to C01's one-based SlotOrdinal after a
+ * successful F0328 throw. These helpers own only that live M10 receipt. */
+int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    int ticks);
+int DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
+    struct GameWorld_Compat* world,
+    int championIndex);
+
 void F0889_ORCH_ApplyPendingDamage_Compat(
     struct GameWorld_Compat* world,
     struct TickResult_Compat* result);

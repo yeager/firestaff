@@ -326,11 +326,13 @@ static void test_tail_adjustments(void) {
     completionIn.performed = 1;
     completionIn.actionExperienceGain = 0;
     completionIn.disabledTicks = 4;
-    completionIn.pendingActionEnableSlotOrdinal = 1;
+    completionIn.pendingActionEnableSlotOrdinal =
+        DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL;
     CHECK_EQ(dm1_v1_action_completion_plan_f0407_pc34(
                  &completionIn, &completionOut), 1,
              "throw completion plan builds");
-    CHECK_EQ(completionOut.actionEnableSlotOrdinal, 1,
+    CHECK_EQ(completionOut.actionEnableSlotOrdinal,
+             DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL,
              "throw completion keeps action-hand slot");
 
     completionIn.disabledTicks = 0;
@@ -339,7 +341,8 @@ static void test_tail_adjustments(void) {
              "throw f0328-owned completion plan builds");
     CHECK_EQ(completionOut.preservesExistingActionDisable, 1,
              "throw preserves f0328 action disable");
-    CHECK_EQ(completionOut.actionEnableSlotOrdinal, 1,
+    CHECK_EQ(completionOut.actionEnableSlotOrdinal,
+             DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL,
              "throw f0328 completion keeps action-hand slot");
 
     memset(&completionIn, 0, sizeof(completionIn));
@@ -394,11 +397,13 @@ static void test_action_state_plans(void) {
     CHECK_EQ(disableOut.shouldRefillReadyHandNow, 0,
              "nonzero disable does not refill now");
 
-    disableIn.pendingActionEnableSlotOrdinal = 1;
+    disableIn.pendingActionEnableSlotOrdinal =
+        DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL;
     CHECK_EQ(dm1_v1_action_disable_plan_f0407_pc34(
                  &disableIn, &disableOut), 1,
              "disable preserves pending slot ordinal");
-    CHECK_EQ(disableOut.actionEnableSlotOrdinal, 1,
+    CHECK_EQ(disableOut.actionEnableSlotOrdinal,
+             DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL,
              "disable keeps action-hand slot ordinal");
 
     disableIn.disabledTicks = 0;
@@ -984,7 +989,8 @@ static void test_flip_and_direction_plans(void) {
              "throw post-spawn plan builds");
     CHECK_EQ(throwOut.performed, 1, "throw post-spawn performed");
     CHECK_EQ(throwOut.shouldClearActionHand, 1, "throw clears action hand");
-    CHECK_EQ(throwOut.actionEnableSlotOrdinal, CHAMPION_SLOT_ACTION_HAND,
+    CHECK_EQ(throwOut.actionEnableSlotOrdinal,
+             DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL,
              "throw requests action-hand enable slot");
     CHECK_EQ(throwOut.disableActionTicks, 4,
              "throw F0328 disables action for four ticks");
