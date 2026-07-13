@@ -202,12 +202,23 @@ typedef struct {
     int c13_byte_preserved_count;
     int c13_byte_mismatch_count;
     int c13_byte_preservation_ok;
+    /* Canonical ten-byte C13 EVENT rows, sorted only for this receipt: F0651
+     * can reorder EVENT storage, but must not change any F0433 payload byte. */
+    uint32_t source_c13_event_byte_count;
+    uint32_t source_c13_event_fingerprint;
+    uint32_t exported_c13_event_byte_count;
+    uint32_t exported_c13_event_fingerprint;
     int c13_timeline_byte_receipt_available;
     int source_c13_timeline_reference_count;
     int exported_c13_timeline_reference_count;
     int c13_timeline_byte_preserved_count;
     int c13_timeline_byte_mismatch_count;
     int c13_timeline_byte_preservation_ok;
+    /* Raw little-endian C4 index bytes, retained in original timeline order. */
+    uint32_t source_c13_timeline_reference_byte_count;
+    uint32_t source_c13_timeline_reference_fingerprint;
+    uint32_t exported_c13_timeline_reference_byte_count;
+    uint32_t exported_c13_timeline_reference_fingerprint;
     int c4_timeline_layout_receipt_available;
     uint32_t source_c4_timeline_index_count;
     uint32_t source_c4_timeline_byte_count;
@@ -281,6 +292,10 @@ typedef struct {
     int c13_byte_preserved_count;
     int c13_byte_mismatch_count;
     int c13_byte_preservation_ok;
+    uint32_t source_c13_event_byte_count;
+    uint32_t source_c13_event_fingerprint;
+    uint32_t exported_c13_event_byte_count;
+    uint32_t exported_c13_event_fingerprint;
     int header_part_shape_receipt_available;
     uint16_t source_header_format_id;
     uint16_t exported_header_format_id;
@@ -299,6 +314,10 @@ typedef struct {
     int c13_timeline_byte_preserved_count;
     int c13_timeline_byte_mismatch_count;
     int c13_timeline_byte_preservation_ok;
+    uint32_t source_c13_timeline_reference_byte_count;
+    uint32_t source_c13_timeline_reference_fingerprint;
+    uint32_t exported_c13_timeline_reference_byte_count;
+    uint32_t exported_c13_timeline_reference_fingerprint;
     int c4_timeline_layout_receipt_available;
     uint32_t source_c4_timeline_index_count;
     uint32_t source_c4_timeline_byte_count;

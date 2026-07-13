@@ -3602,6 +3602,14 @@ static void test_corpus_roundtrip_proof(void)
             !receipt->header_part_shape_receipt_available ||
             !receipt->m516_champion_record_receipt_available ||
             !receipt->c4_timeline_layout_receipt_available ||
+            receipt->source_c13_event_byte_count !=
+                (uint32_t)receipt->source_c13_event_count * 10u ||
+            receipt->exported_c13_event_byte_count !=
+                (uint32_t)receipt->exported_c13_event_count * 10u ||
+            receipt->source_c13_timeline_reference_byte_count !=
+                (uint32_t)receipt->source_c13_timeline_reference_count * 2u ||
+            receipt->exported_c13_timeline_reference_byte_count !=
+                (uint32_t)receipt->exported_c13_timeline_reference_count * 2u ||
             !receipt->dungeon_tail_byte_receipt_available ||
             !receipt->dungeon_tail_byte_preservation_ok ||
             receipt->source_dungeon_tail_byte_count != 0u ||
@@ -3696,6 +3704,17 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
               receipt->source_c4_timeline_fingerprint ==
                   receipt->exported_c4_timeline_fingerprint,
               "real PC34 corpus preserves full C4 timeline index bytes");
+        CHECK(receipt->c13_byte_preservation_ok &&
+              receipt->source_c13_event_byte_count ==
+                  receipt->exported_c13_event_byte_count &&
+              receipt->source_c13_event_fingerprint ==
+                  receipt->exported_c13_event_fingerprint &&
+              receipt->c13_timeline_byte_preservation_ok &&
+              receipt->source_c13_timeline_reference_byte_count ==
+                  receipt->exported_c13_timeline_reference_byte_count &&
+              receipt->source_c13_timeline_reference_fingerprint ==
+                  receipt->exported_c13_timeline_reference_fingerprint,
+              "real PC34 corpus preserves C13 EVENT and C4 reference bytes");
         CHECK(receipt->dungeon_tail_byte_receipt_available &&
               receipt->dungeon_tail_byte_preservation_ok,
               "real PC34 corpus preserves each observed dungeon tail exactly");
@@ -4068,12 +4087,22 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
               roundtrip.c13_byte_preserved_count == 1 &&
               roundtrip.c13_byte_mismatch_count == 0 &&
               roundtrip.c13_byte_preservation_ok &&
+              roundtrip.source_c13_event_byte_count == 10u &&
+              roundtrip.source_c13_event_byte_count ==
+                  roundtrip.exported_c13_event_byte_count &&
+              roundtrip.source_c13_event_fingerprint ==
+                  roundtrip.exported_c13_event_fingerprint &&
               roundtrip.c13_timeline_byte_receipt_available &&
               roundtrip.source_c13_timeline_reference_count == 1 &&
               roundtrip.exported_c13_timeline_reference_count == 1 &&
               roundtrip.c13_timeline_byte_preserved_count == 1 &&
               roundtrip.c13_timeline_byte_mismatch_count == 0 &&
               roundtrip.c13_timeline_byte_preservation_ok &&
+              roundtrip.source_c13_timeline_reference_byte_count == 2u &&
+              roundtrip.source_c13_timeline_reference_byte_count ==
+                  roundtrip.exported_c13_timeline_reference_byte_count &&
+              roundtrip.source_c13_timeline_reference_fingerprint ==
+                  roundtrip.exported_c13_timeline_reference_fingerprint &&
               roundtrip.c13_champion_record_byte_receipt_available &&
               roundtrip.source_c13_champion_record_reference_count == 1 &&
               roundtrip.c13_champion_record_byte_preserved_count == 1 &&

@@ -1271,6 +1271,13 @@ and real community-save corpus round-trip evidence.
     handoff. A compacted, reordered, missing, or extra C13 reference fails
     closed instead of being normalized into a new save layout. Remaining work
     is authentic community-save coverage and broader dungeon-tail import.
+  - 2026-07-13 update: opt-in external-corpus receipts now retain canonical
+    ten-byte C13 EVENT payload counts, byte lengths, and fingerprints plus
+    the raw C4 little-endian C13 reference sequence. EVENT receipt rows sort
+    only for the receipt because `TIMELINE.C` F0651 may reorder storage; C4
+    references remain in original order. A real corpus row must preserve both
+    fingerprints exactly. Remaining work is authentic community-save coverage
+    and broader dungeon-tail import.
   - 2026-07-13 update: the independent post-part portrait section now has an
     exact F0435 -> F0433 -> F0435 byte receipt. ReDMCSB `LOADSAVE.C` F0433
     writes four fixed 32x29 payloads after the five parts and F0435 reads all

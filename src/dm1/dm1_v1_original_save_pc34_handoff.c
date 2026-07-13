@@ -3593,6 +3593,40 @@ static int dm1_original_save_dungeon_tail_bytes_match(
     return 1;
 }
 
+/* ReDMCSB DEFS.H EVENT is written verbatim by LOADSAVE.C F0433. This is a
+ * receipt serializer only: F0651 may reorder storage but not payload bytes. */
+static void dm1_original_save_c13_event_receipt_bytes(
+    const struct DM1_Event_V1 *event,
+    uint8_t out_bytes[DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT])
+{
+    write_u32_le(out_bytes, event->map_time);
+    out_bytes[4] = event->type;
+    out_bytes[5] = event->priority;
+    out_bytes[6] = event->b_mapX;
+    out_bytes[7] = event->b_mapY;
+    out_bytes[8] = event->c_cell;
+    out_bytes[9] = event->c_effect;
+}
+
+static void dm1_original_save_sort_c13_receipt_rows(
+    uint8_t rows[DM1_EVENT_MAX_COUNT][DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT],
+    int count)
+{
+    int i;
+
+    for (i = 1; i < count; ++i) {
+        uint8_t row[DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT];
+        int j = i;
+
+        memcpy(row, rows[i], sizeof(row));
+        while (j > 0 && memcmp(rows[j - 1], row, sizeof(row)) > 0) {
+            memcpy(rows[j], rows[j - 1], sizeof(row));
+            --j;
+        }
+        memcpy(rows[j], row, sizeof(row));
+    }
+}
+
 static void fill_roundtrip_core_report(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const DM1OriginalSavePC34HandoffReport *export_report,
@@ -3603,8 +3637,14 @@ static void fill_roundtrip_core_report(
     int source_c13_indices[DM1_EVENT_MAX_COUNT];
     int export_c13_indices[DM1_EVENT_MAX_COUNT];
     int export_c13_used[DM1_EVENT_MAX_COUNT];
+    uint8_t source_c13_rows[DM1_EVENT_MAX_COUNT]
+                           [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT];
+    uint8_t export_c13_rows[DM1_EVENT_MAX_COUNT]
+                           [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT];
     uint16_t source_c13_timeline_refs[DM1_EVENT_MAX_COUNT];
     uint16_t export_c13_timeline_refs[DM1_EVENT_MAX_COUNT];
+    uint8_t source_c13_timeline_bytes[DM1_EVENT_MAX_COUNT * sizeof(uint16_t)];
+    uint8_t export_c13_timeline_bytes[DM1_EVENT_MAX_COUNT * sizeof(uint16_t)];
     int source_c13_count = 0;
     int export_c13_count = 0;
     int source_c13_timeline_count = 0;
@@ -3696,6 +3736,30 @@ static void fill_roundtrip_core_report(
         }
         out_report->source_c13_event_count = source_c13_count;
         out_report->exported_c13_event_count = export_c13_count;
+        for (i = 0; i < source_c13_count; ++i) {
+            dm1_original_save_c13_event_receipt_bytes(
+                &source_report->events[source_c13_indices[i]],
+                source_c13_rows[i]);
+        }
+        for (i = 0; i < export_c13_count; ++i) {
+            dm1_original_save_c13_event_receipt_bytes(
+                &export_report->events[export_c13_indices[i]],
+                export_c13_rows[i]);
+        }
+        dm1_original_save_sort_c13_receipt_rows(source_c13_rows,
+                                                  source_c13_count);
+        dm1_original_save_sort_c13_receipt_rows(export_c13_rows,
+                                                  export_c13_count);
+        out_report->source_c13_event_byte_count =
+            (uint32_t)source_c13_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT;
+        out_report->exported_c13_event_byte_count =
+            (uint32_t)export_c13_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT;
+        out_report->source_c13_event_fingerprint =
+            dm1_original_save_hash_bytes(&source_c13_rows[0][0],
+                out_report->source_c13_event_byte_count);
+        out_report->exported_c13_event_fingerprint =
+            dm1_original_save_hash_bytes(&export_c13_rows[0][0],
+                out_report->exported_c13_event_byte_count);
         memset(export_c13_used, 0, sizeof(export_c13_used));
         for (i = 0; i < source_c13_count; ++i) {
             const struct DM1_Event_V1 *source_event =
@@ -3782,6 +3846,24 @@ static void fill_roundtrip_core_report(
                 source_c13_timeline_count;
             out_report->exported_c13_timeline_reference_count =
                 export_c13_timeline_count;
+            out_report->source_c13_timeline_reference_byte_count =
+                (uint32_t)source_c13_timeline_count * sizeof(uint16_t);
+            out_report->exported_c13_timeline_reference_byte_count =
+                (uint32_t)export_c13_timeline_count * sizeof(uint16_t);
+            for (i = 0; i < source_c13_timeline_count; ++i) {
+                write_u16_le(source_c13_timeline_bytes +
+                    (size_t)i * sizeof(uint16_t), source_c13_timeline_refs[i]);
+            }
+            for (i = 0; i < export_c13_timeline_count; ++i) {
+                write_u16_le(export_c13_timeline_bytes +
+                    (size_t)i * sizeof(uint16_t), export_c13_timeline_refs[i]);
+            }
+            out_report->source_c13_timeline_reference_fingerprint =
+                dm1_original_save_hash_bytes(source_c13_timeline_bytes,
+                    out_report->source_c13_timeline_reference_byte_count);
+            out_report->exported_c13_timeline_reference_fingerprint =
+                dm1_original_save_hash_bytes(export_c13_timeline_bytes,
+                    out_report->exported_c13_timeline_reference_byte_count);
             if (out_report->c13_timeline_byte_receipt_available) {
                 int compare_count = source_c13_timeline_count <
                     export_c13_timeline_count ? source_c13_timeline_count :
@@ -4209,6 +4291,14 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.c13_byte_mismatch_count;
         receipt->c13_byte_preservation_ok =
             roundtrip.c13_byte_preservation_ok;
+        receipt->source_c13_event_byte_count =
+            roundtrip.source_c13_event_byte_count;
+        receipt->source_c13_event_fingerprint =
+            roundtrip.source_c13_event_fingerprint;
+        receipt->exported_c13_event_byte_count =
+            roundtrip.exported_c13_event_byte_count;
+        receipt->exported_c13_event_fingerprint =
+            roundtrip.exported_c13_event_fingerprint;
         receipt->header_part_shape_receipt_available =
             roundtrip.header_part_shape_receipt_available;
         receipt->source_header_format_id = roundtrip.source_header_format_id;
@@ -4242,6 +4332,14 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.c13_timeline_byte_mismatch_count;
         receipt->c13_timeline_byte_preservation_ok =
             roundtrip.c13_timeline_byte_preservation_ok;
+        receipt->source_c13_timeline_reference_byte_count =
+            roundtrip.source_c13_timeline_reference_byte_count;
+        receipt->source_c13_timeline_reference_fingerprint =
+            roundtrip.source_c13_timeline_reference_fingerprint;
+        receipt->exported_c13_timeline_reference_byte_count =
+            roundtrip.exported_c13_timeline_reference_byte_count;
+        receipt->exported_c13_timeline_reference_fingerprint =
+            roundtrip.exported_c13_timeline_reference_fingerprint;
         receipt->c4_timeline_layout_receipt_available =
             roundtrip.c4_timeline_layout_receipt_available;
         receipt->source_c4_timeline_index_count =
