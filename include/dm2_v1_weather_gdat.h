@@ -36,6 +36,11 @@ typedef struct {
      * alone is layout metadata, never drawable source material. */
     int image_present;
     uint8_t image_field;
+    /* Exact QUERY_TEMP_PICST metadata, sourced from the matching dtImage
+     * IMG3 header and its two dtImageOffset records.  Missing metadata makes
+     * the command non-material, rather than inventing a placement. */
+    int query_metadata_valid;
+    DM2_V1_GdatImageMetadata query_metadata;
     uint32_t material_hash;
 } DM2_V1_WeatherCommandReceipt;
 
@@ -67,6 +72,10 @@ typedef struct {
     int16_t source_offset_y;
     uint8_t source_scale_x;
     uint8_t source_scale_y;
+    uint16_t image_width;
+    uint16_t image_height;
+    int16_t query_offset_x;
+    int16_t query_offset_y;
     uint32_t material_hash;
 } DM2_V1_WeatherOverlayCommand;
 

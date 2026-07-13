@@ -19,16 +19,14 @@ static void check(int condition, const char *name)
 
 int main(void)
 {
-    static const uint8_t raw[] =
-        "CD=6000;FW=8\0"
-        "CD=6001;FW=2\0"
-        "CD=6002;FW=64\0"
-        "CD=6004;FW=32\0"
-        "CD=6005;FW=0\0"
-        "CD=6006;FW=8\0";
-    uint32_t offsets[6];
-    uint32_t sizes[6];
-    DM2_V1_GdatEntry entries[13];
+    static const char *const source_text[6] = {
+        "CD=6000;FW=8", "CD=6001;FW=2", "CD=6002;FW=64",
+        "CD=6004;FW=32", "CD=6005;FW=0", "CD=6006;FW=8"
+    };
+    uint8_t raw[256];
+    uint32_t offsets[12];
+    uint32_t sizes[12];
+    DM2_V1_GdatEntry entries[20];
     DM2_V1_AssetLoader loader;
     DM2_V1_WeatherGdatReceipt receipt;
     DM2_V1_WeatherCommandReceipt command;
@@ -37,13 +35,16 @@ int main(void)
         0x67u, 0x68u, 0x69u, 0x6au, 0x6bu, 0x6cu
     };
     int i;
+    size_t cursor = 0u;
 
     memset(&loader, 0, sizeof(loader));
     memset(entries, 0, sizeof(entries));
-    offsets[0] = 0u;
+    memset(raw, 0, sizeof(raw));
     for (i = 0; i < 6; ++i) {
-        sizes[i] = (uint32_t)strlen((const char *)raw + offsets[i]) + 1u;
-        if (i != 5) offsets[i + 1] = offsets[i] + sizes[i];
+        sizes[i] = (uint32_t)strlen(source_text[i]) + 1u;
+        offsets[i] = (uint32_t)cursor;
+        memcpy(raw + cursor, source_text[i], sizes[i]);
+        cursor += sizes[i];
         entries[i].cls1 = DM2_GDAT_CATEGORY_ENVIRONMENT;
         entries[i].cls2 = 3u;
         entries[i].cls3 = DM2_GDAT_ENTRY_TYPE_TEXT;
@@ -51,25 +52,47 @@ int main(void)
         entries[i].data_index = (uint16_t)i;
     }
     for (i = 0; i < 6; ++i) {
+        uint16_t width = (uint16_t)(32 + i);
+        uint16_t height = (uint16_t)(48 + i);
+        offsets[6 + i] = (uint32_t)cursor;
+        sizes[6 + i] = 10u;
+        raw[cursor + 0u] = (uint8_t)width;
+        raw[cursor + 1u] = (uint8_t)(width >> 8);
+        raw[cursor + 2u] = (uint8_t)height;
+        raw[cursor + 3u] = (uint8_t)(height >> 8);
+        raw[cursor + 4u] = 4u;
+        cursor += 10u;
         entries[6 + i].cls1 = DM2_GDAT_CATEGORY_ENVIRONMENT;
         entries[6 + i].cls2 = 3u;
         entries[6 + i].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
         entries[6 + i].cls4 = source_commands[i];
-        entries[6 + i].data_index = (uint16_t)(0x100u + (unsigned int)i);
+        entries[6 + i].data_index = (uint16_t)(6u + (unsigned int)i);
     }
     entries[12].cls1 = DM2_GDAT_CATEGORY_GRAPHICSSET;
     entries[12].cls2 = 3u;
     entries[12].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
     entries[12].cls4 = DM2_GDAT_GFXSET_MISTY_MAP;
     entries[12].data_index = 0x0042u;
+    entries[13].cls1 = DM2_GDAT_CATEGORY_ENVIRONMENT;
+    entries[13].cls2 = 3u;
+    entries[13].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET;
+    entries[13].cls4 = 0xfeu;
+    entries[13].data_index = 0x02fdu; /* +2, -3 */
+    for (i = 0; i < 6; ++i) {
+        entries[14 + i].cls1 = DM2_GDAT_CATEGORY_ENVIRONMENT;
+        entries[14 + i].cls2 = 3u;
+        entries[14 + i].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET;
+        entries[14 + i].cls4 = source_commands[i];
+        entries[14 + i].data_index = (uint16_t)(0xff00u | (unsigned int)i);
+    }
     loader.loaded = 1;
     loader.entries = entries;
-    loader.entry_count = 13u;
+    loader.entry_count = 20u;
     loader.raw_offsets = offsets;
     loader.raw_sizes = sizes;
-    loader.raw_data_count = 6u;
+    loader.raw_data_count = 12u;
     loader.data = raw;
-    loader.data_size = sizeof(raw);
+    loader.data_size = cursor;
 
     check(dm2_v1_weather_gdat_receipt(&loader, 3u, &receipt) &&
               receipt.valid && receipt.graphicsset == 3u &&
@@ -85,8 +108,15 @@ int main(void)
               receipt.commands[3].rect_number == 6004u &&
               receipt.commands[3].flip_mode == 32u &&
               receipt.commands[3].image_present &&
-              receipt.commands[3].image_field == 0x6au,
-          "weather receipt binds original CMDSTR and matching dtImage");
+              receipt.commands[3].image_field == 0x6au &&
+              receipt.commands[3].query_metadata_valid &&
+              receipt.commands[3].query_metadata.width == 35u &&
+              receipt.commands[3].query_metadata.height == 51u &&
+              receipt.commands[3].query_metadata.graphicsset_offset_present &&
+              receipt.commands[3].query_metadata.image_offset_present &&
+              receipt.commands[3].query_metadata.query_offset_x == 1 &&
+              receipt.commands[3].query_metadata.query_offset_y == 0,
+          "weather receipt binds original CMDSTR, image dimensions and offsets");
     check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6cu,
                                                &command) &&
               command.raw_text == raw + offsets[5] &&
@@ -130,9 +160,15 @@ int main(void)
               plan.commands[0].source_offset_y == 0 &&
               plan.commands[0].source_scale_x == 0x40u &&
               plan.commands[0].source_scale_y == 0x40u &&
+              plan.commands[0].image_width == 33u &&
+              plan.commands[0].image_height == 49u &&
+              plan.commands[0].query_offset_x == 1 &&
+              plan.commands[0].query_offset_y == -2 &&
               plan.commands[1].command == 0x6bu &&
               plan.commands[1].slot_index == 1u &&
               plan.commands[1].rect_number == 6005u &&
+              plan.commands[1].image_width == 36u &&
+              plan.commands[1].query_offset_y == 1 &&
               plan.plan_hash != 0u,
           "weather plan preserves source cloud then rain material order");
     check(dm2_v1_weather_gdat_overlay_plan(&receipt, 0u, 0u, &plan) &&
@@ -147,6 +183,15 @@ int main(void)
           "weather plan refuses a receipt invalidated by wrong GDAT type");
 
     entries[4].cls3 = DM2_GDAT_ENTRY_TYPE_TEXT;
+    entries[17].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
+    check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6au,
+                                               &command) &&
+              command.material_valid && command.query_metadata_valid &&
+              !command.query_metadata.image_offset_present &&
+              command.query_metadata.query_offset_x == 2 &&
+              command.query_metadata.query_offset_y == -3,
+          "weather command preserves source zero offset when field is absent");
+    entries[17].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET;
     for (i = 0; i < 6; ++i) entries[6 + i].cls2 = 4u;
     check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6au,
                                                &command) &&

@@ -833,6 +833,71 @@ int dm2_v1_asset_load_image_offset(
     return 1;
 }
 
+int dm2_v1_asset_load_image_metadata(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_GdatImageMetadata *out_metadata)
+{
+    const DM2_V1_GdatEntry *entry;
+    const DM2_V1_GdatEntry *graphicsset_offset_entry;
+    const DM2_V1_GdatEntry *image_offset_entry;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint16_t graphicsset_offset;
+    uint16_t image_offset;
+    uint32_t hash = 2166136261u;
+
+    if (!out_metadata) return 0;
+    memset(out_metadata, 0, sizeof(*out_metadata));
+    entry = dm2_gdat_find_entry(loader, category, index,
+                                DM2_GDAT_ENTRY_TYPE_IMAGE, field);
+    raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
+    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) {
+        return 0;
+    }
+    graphicsset_offset_entry = dm2_gdat_find_entry(
+        loader, category, index, DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET, 0xfe);
+    image_offset_entry = dm2_gdat_find_entry(
+        loader, category, index, DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET, field);
+    graphicsset_offset = graphicsset_offset_entry
+        ? graphicsset_offset_entry->data_index : 0u;
+    image_offset = image_offset_entry ? image_offset_entry->data_index : 0u;
+
+    /* skproject SKWIN/SkWinCore.cpp::QUERY_GDAT_SUMMARY_IMAGE applies the
+     * graphics-set 0xfe offset first, then QUERY_GDAT_PICT_OFFSET for this
+     * image field.  IMG3 owns the dimensions; it is intentionally not
+     * decoded here. */
+    out_metadata->width = (uint16_t)(rd16le(raw + 0u) & 0x03ffu);
+    out_metadata->height = (uint16_t)(rd16le(raw + 2u) & 0x03ffu);
+    out_metadata->bits_per_pixel = rd16le(raw + 4u);
+    if (out_metadata->width == 0u || out_metadata->height == 0u ||
+        (out_metadata->bits_per_pixel != 4u &&
+         out_metadata->bits_per_pixel != 8u &&
+         out_metadata->bits_per_pixel != 9u)) {
+        memset(out_metadata, 0, sizeof(*out_metadata));
+        return 0;
+    }
+    out_metadata->graphicsset_offset_present = graphicsset_offset_entry != NULL;
+    out_metadata->image_offset_present = image_offset_entry != NULL;
+    out_metadata->graphicsset_offset_x = (int8_t)(graphicsset_offset >> 8);
+    out_metadata->graphicsset_offset_y = (int8_t)graphicsset_offset;
+    out_metadata->image_offset_x = (int8_t)(image_offset >> 8);
+    out_metadata->image_offset_y = (int8_t)image_offset;
+    out_metadata->query_offset_x = (int16_t)(out_metadata->graphicsset_offset_x +
+                                              out_metadata->image_offset_x);
+    out_metadata->query_offset_y = (int16_t)(out_metadata->graphicsset_offset_y +
+                                              out_metadata->image_offset_y);
+    hash = (hash ^ out_metadata->width) * 16777619u;
+    hash = (hash ^ out_metadata->height) * 16777619u;
+    hash = (hash ^ out_metadata->bits_per_pixel) * 16777619u;
+    hash = (hash ^ graphicsset_offset) * 16777619u;
+    hash = (hash ^ image_offset) * 16777619u;
+    out_metadata->metadata_hash = hash ? hash : 1u;
+    return 1;
+}
+
 int dm2_v1_asset_load_interface_palette(
     const DM2_V1_AssetLoader *loader,
     int category,
