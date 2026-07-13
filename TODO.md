@@ -602,7 +602,9 @@ projectile work is authentic multi-projectile/pixel capture, not a substitute
 sprite or floor-item route. M11 now fails closed when a non-empty live Slot
 cannot be decoded from PC34 thing data, and asset-backed F0115 passes no
 longer substitute cyan projectile markers. Remaining work is capture, not a
-fallback-material path.
+fallback-material path. The C2900 thrown-object route now also consumes the
+original G0209 right-side mirror predicate for D2/D3 lanes; remaining work is
+real multi-projectile capture, not a lane- or cell-only mirror substitute.
 
 DM1 F0115 now consumes only ReDMCSB's compact 13 `G0205` ornament zones.
 The F0676/F0677 D3L2/D3R2 planes are deliberately outside that pass, so they

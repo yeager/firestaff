@@ -190,12 +190,34 @@ static void test_thrown_object_material_resolution(void) {
 
     ASSERT_TRUE(dm1_v1_thrown_object_projectile_blit_plan_pc34(
                     &blit, resolution.graphic_index, resolution.aspect_index,
-                    1, 2, 2, 0, 0, 224, 136, 16, 16),
+                    1, 2, 0, 2, 0, 0, 224, 136, 16, 16),
                 "object projectile gets C2900 placement plan");
     ASSERT_EQ(blit.transparent_color, 10, "object projectile keeps C10");
     ASSERT_EQ(blit.uses_source_row, 1, "object projectile uses C2900 row");
     ASSERT_TRUE(blit.draw_x >= -15 && blit.draw_x < 224,
                 "object projectile C2900 X is viewport bounded");
+
+    ASSERT_TRUE(dm1_v1_thrown_object_projectile_blit_plan_pc34(
+                    &blit, (int)dm1_object_aspect_graphic_index(63), 63,
+                    2, 0, -1, 6, 0, 0, 224, 136, 16, 16),
+                "D2L thrown object uses its real C2900 row");
+    ASSERT_EQ(blit.use_mirror, 0,
+              "D2L does not mirror a G0209 right-facing object aspect");
+    ASSERT_EQ(blit.source_scale_index, 4,
+              "D2L preserves its D2 back-row object scale");
+    ASSERT_EQ(blit.draw_x, 7,
+              "D2L uses C2900 row 6 cell 0, not a pane fallback");
+
+    ASSERT_TRUE(dm1_v1_thrown_object_projectile_blit_plan_pc34(
+                    &blit, (int)dm1_object_aspect_graphic_index(63), 63,
+                    2, 0, 1, 7, 0, 0, 224, 136, 16, 16),
+                "D2R thrown object uses its real C2900 row");
+    ASSERT_EQ(blit.use_mirror, 1,
+              "D2R mirrors the G0209 right-facing object aspect");
+    ASSERT_EQ(blit.source_scale_index, 4,
+              "D2R preserves its D2 back-row object scale");
+    ASSERT_EQ(blit.draw_x, 168,
+              "D2R uses C2900 row 7 cell 0, not a pane fallback");
 
     ASSERT_TRUE(dm1_v1_projectile_material_resolve_pc34(
                     PROJECTILE_SUBTYPE_KINETIC_ARROW,
