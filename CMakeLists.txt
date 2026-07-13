@@ -15478,7 +15478,8 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_viewport_hand_overlay_pc34_compat
         tests/test_dm1_v1_viewport_hand_overlay_pc34_compat.c
     )
-    target_link_libraries(test_dm1_v1_viewport_hand_overlay_pc34_compat PRIVATE firestaff_m10)
+    # Header-only, source-locked DM1 cursor adapter. Keep this legacy CI
+    # contract independent from unrelated M10 compilation units.
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_viewport_hand_overlay_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -15835,7 +15836,8 @@ if(BUILD_TESTING)
         tests/test_dm1_v1_champion_panel_spell_area_overlay_pc34_compat.c
         src/dm1/dm1_v1_champion_panel_spell_area_overlay_pc34_compat.c
     )
-    target_link_libraries(test_dm1_v1_champion_panel_spell_area_overlay_pc34_compat PRIVATE firestaff_m10)
+    # This contract adapter has no runtime dependencies; compile only the
+    # source-locked DM1 slice named above for a hermetic CI target.
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_champion_panel_spell_area_overlay_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
