@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC C161 disabled-source cancellation: real-PC34 coverage
+  now disables the active C127 source after F0281 starts and before C162.
+  C162 clears only the tail candidate/modal state, retains the slot-1 leader
+  with its original name/C026 portrait, and leaves no stale source portrait.
+  Source: ReDMCSB `REVIVE.C` F0281 and F0282:744-783. Verification: focused
+  CTest against installed PC34 data.
+
 - 2026-07-13 Theron live-trace media rehash: the explicit runtime intake now
   rehashes the Track 02 and System Card files it reads and rejects a known MD5
   label paired with changed bytes. Verification: capture-manifest unit test
