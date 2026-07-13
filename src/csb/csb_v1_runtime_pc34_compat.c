@@ -2082,6 +2082,12 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record,
     uint16_t queue_slot);
+static int csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    CSB_V1_CSBWin512TimerSummary *timer,
+    uint16_t timer_index,
+    uint16_t queue_slot);
 
 /* ── Internal tick helper ─────────────────────────────────────────────── */
 
@@ -17256,7 +17262,124 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         }
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
     }
+    if (timer->function == 7u && timer->ubyte9 == 1u) {
+        return csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
+            profile, record, timer, timer_index, queue_slot);
+    }
     return 0;
+}
+
+static int csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    CSB_V1_CSBWin512TimerSummary *timer,
+    uint16_t timer_index,
+    uint16_t queue_slot)
+{
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *square;
+    int square_type;
+    int thing;
+    int guard;
+    int defer = 0;
+    struct DM1_Event_V1 next;
+    int event_index;
+
+    /* CSBWin Timer.cpp ProcessTT_FALSEWALL:1343-1442 clears bit 0x04 only
+     * after DSA/portrait processing. With neither owner on the saved square,
+     * timerTypeModifier[1] remains the canonical CLEAR mapping established
+     * by CSBCode.cpp ProcessTimers:6403-6405. */
+    if (!profile || !record || !timer || !profile->dungeon_handle ||
+        timer->function != 7u || timer->ubyte9 != 1u ||
+        !timer->valid || timer->truncated ||
+        timer->source_index != timer_index ||
+        record->eventType != timer->function ||
+        record->mapIndex != timer->level || record->mapX != timer->ubyte6 ||
+        record->mapY != timer->ubyte7 || record->cell != timer->ubyte8 ||
+        record->effect != timer->ubyte9 || record->aux0 != timer->ubyte5) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle;
+    square = csb_v1_runtime_square_byte_ptr(
+        profile, record->mapIndex, record->mapX, record->mapY, &square_type);
+    if (!square || square_type < 0) return 0;
+
+    /* The source visits DSA type-47 and matching portrait type-127 objects
+     * before reading timerTypeModifier. Their effects are not represented by
+     * this cell-only bridge, so an exact clear is unavailable in that case. */
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon, record->mapIndex, record->mapX, record->mapY);
+    for (guard = 0; guard < 128 && thing != 0xfffe && thing != 0xffff;
+         ++guard) {
+        const uint8_t *thing_record;
+        int type;
+        int size;
+
+        thing_record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)thing, &type, NULL, &size);
+        if (!thing_record || size < 2) return 0;
+        if (type == CSB_V1_THING_TYPE_ACTUATOR && size >= 4) {
+            uint16_t actuator_data = (uint16_t)thing_record[2] |
+                ((uint16_t)thing_record[3] << 8);
+            uint16_t actuator_type = actuator_data & 0x007fu;
+
+            if (actuator_type == CSB_V1_DSA_FILTER_ACTUATOR_TYPE ||
+                (actuator_type == 127u &&
+                 ((uint16_t)thing >> 14) == timer->ubyte8)) {
+                return 0;
+            }
+        }
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+    if (guard >= 128) return 0;
+
+    if (profile->current_level == timer->level &&
+        profile->party_x == timer->ubyte6 && profile->party_y == timer->ubyte7) {
+        defer = 1;
+    } else {
+        thing = csb_v1_dungeon_get_first_thing(
+            dungeon, record->mapIndex, record->mapX, record->mapY);
+        for (guard = 0; guard < 128 && thing != 0xfffe && thing != 0xffff;
+             ++guard) {
+            const uint8_t *thing_record;
+            int type;
+            int size;
+
+            thing_record = csb_v1_dungeon_get_thing_record(
+                dungeon, (uint16_t)thing, &type, NULL, &size);
+            if (!thing_record || size < 2) return 0;
+            if (type == CSB_V1_THING_TYPE_GROUP) {
+                const struct CreatureBehaviorProfile_Compat *creature;
+
+                if (size < 16) return 0;
+                creature = CREATURE_GetProfile_Compat((int)thing_record[4]);
+                if (!creature) return 0;
+                defer = (creature->attributes &
+                         CREATURE_ATTR_MASK_NON_MATERIAL) != 0;
+                break;
+            }
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+        }
+        if (guard >= 128) return 0;
+    }
+    if (!defer) {
+        *square &= (uint8_t)~0x04u;
+        return 1;
+    }
+    if (timer->time >= 0x00ffffffu) return 0;
+    memset(&next, 0, sizeof(next));
+    next.map_time = DM1_MAP_TIME_MAKE(timer->level, timer->time + 1u);
+    next.type = timer->function;
+    next.priority = timer->ubyte5;
+    next.b_mapX = timer->ubyte6;
+    next.b_mapY = timer->ubyte7;
+    next.c_cell = timer->ubyte8;
+    next.c_effect = timer->ubyte9;
+    event_index = csb_v1_runtime_add_timeline_event(profile, &next);
+    if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) return 0;
+    timer->time += 1u;
+    profile->csbwin_timeline_event_queue_slot[event_index] = queue_slot;
+    return 1;
 }
 
 static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(

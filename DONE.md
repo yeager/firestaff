@@ -54,6 +54,12 @@
   boundary. Source: `Timer.cpp:1343-1442`. Verification:
   `test_csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 CSBWin saved `TT_FALSEWALL` CLEAR runtime: DSA-/portrait-free
+  authenticated function-7 receipts now preserve the original clear or
+  party/nonmaterial deferral and retain the saved timer queue owner through a
+  `+1` successor. Source: `CSBCode.cpp:6403-6405`, `Timer.cpp:1343-1442`.
+  Verification: `test_csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin saved `TT_1` collision-free door runtime: exact saved
   door receipts now apply one original low-state open/close step and retain
   the same timer/queue owner through every nonterminal `+1` successor.
