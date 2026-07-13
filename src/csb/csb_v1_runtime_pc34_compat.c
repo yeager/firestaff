@@ -16518,6 +16518,12 @@ int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
         prepared = csb_v1_runtime_prepare_csbwin_teleporter_dsa_timer_stack_runner(
             profile, dungeon, slave_location, timer, &runner, &action);
         break;
+    case 9u:
+        /* CSBWin Timer.cpp ProcessTT_PITROOM enters ActivateDSA before
+         * mutating the pit cell flag or wiggling occupants. */
+        prepared = csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, timer, &runner, &action);
+        break;
     default:
         return 0;
     }
@@ -16551,7 +16557,7 @@ static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     if (timer_index >= profile->csbwin_timer_summary_count) return;
     timer = &profile->csbwin_timers[timer_index];
     if (!timer->valid || timer->truncated || timer->source_index != timer_index ||
-        timer->function < 5u || timer->function > 8u ||
+        timer->function < 5u || timer->function > 9u ||
         record->eventType != timer->function ||
         record->mapIndex != timer->level || record->mapX != timer->ubyte6 ||
         record->mapY != timer->ubyte7 || record->cell != timer->ubyte8 ||
