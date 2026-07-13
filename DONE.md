@@ -8,6 +8,15 @@
   A fresh immediate Return capture observed the host event after 128 PCE input
   transactions, so it correctly remains blocked.
 
+- 2026-07-13 DM1 C001 startup asset receipt: M11 now admits the PC34 title
+  only after M10 verifies real decoded `GRAPHICS.DAT` C001 pixels in the three
+  ReDMCSB `TITLE.C F0437` source regions: DUNGEON, MASTER/STRIKES BACK, and
+  PRESENTS. The receipt fingerprints the consumed 320x200 pixels and is
+  explicitly DM1-only, preserving C12 PRESENTS followed by C13/C14 title
+  palettes and the original VBlank cadence. Verification includes the local
+  hash-verified PC34 `GRAPHICS.DAT`; no TITLE.DAT, CSB art, or synthetic title
+  frame is promoted.
+
 - 2026-07-13 Theron authenticated macOS controller-capture hardening: the
   Mednafen live harness now performs an opt-in, focused macOS SDL key press
   and retains numeric-zero receipts when a trace sidecar is absent. It accepts

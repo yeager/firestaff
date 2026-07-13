@@ -1294,6 +1294,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     unsigned int sourceStep;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media;
+    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 titleAssetReceipt;
 
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
@@ -1320,6 +1321,15 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
                 (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001) {
             return 0;
         }
+    }
+    memset(&titleAssetReceipt, 0, sizeof(titleAssetReceipt));
+    if (!dm1_v1_startup_title_runtime_asset_receipt_pc34(
+            "dm1", titleGraphic ? titleGraphic->pixels : NULL,
+            titleGraphic ? titleGraphic->width : 0U,
+            titleGraphic ? titleGraphic->height : 0U,
+            &titleAssetReceipt) ||
+        !titleAssetReceipt.release_c001_ready) {
+        return 0;
     }
     framebuffer = M11_Render_GetFramebuffer();
     if (!framebuffer) {

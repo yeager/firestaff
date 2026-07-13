@@ -88,6 +88,21 @@ typedef struct DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupTitleRuntimeSourceReceipt_PC34;
 
+/* ReDMCSB TITLE.C F0437 PC/F20 consumes C001 in three separate source
+ * regions: DUNGEON (y=0..79), MASTER/STRIKES BACK (y=80..136), and PRESENTS
+ * (y=137..152). This receipt validates the decoded PC34 C001 pixels that M11
+ * will actually present; it never supplies substitute title art. */
+typedef struct DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 {
+    int handled;
+    int graphics_c001_dimensions_valid;
+    int dungeon_source_pixels_present;
+    int master_source_pixels_present;
+    int presents_source_pixels_present;
+    unsigned int graphics_c001_pixel_fingerprint;
+    int release_c001_ready;
+    const char* source_evidence;
+} DM1_V1_StartupTitleRuntimeAssetReceipt_PC34;
+
 typedef enum DM1_V1_StartupEntranceRenderKind_PC34 {
     DM1_V1_STARTUP_ENTRANCE_RENDER_NONE_PC34 = 0,
     DM1_V1_STARTUP_ENTRANCE_RENDER_DUNGEON_FRAME_PC34 = 1,
@@ -1744,6 +1759,13 @@ int dm1_v1_startup_title_runtime_source_receipt_pc34(
     unsigned int graphics_c001_height,
     int title_dat_fallback_available,
     DM1_V1_StartupTitleRuntimeSourceReceipt_PC34* out_receipt);
+
+int dm1_v1_startup_title_runtime_asset_receipt_pc34(
+    const char* source_id,
+    const unsigned char* graphics_c001_pixels,
+    unsigned int graphics_c001_width,
+    unsigned int graphics_c001_height,
+    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* out_receipt);
 unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
     int entrance_event_kind,
