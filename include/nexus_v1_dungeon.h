@@ -447,6 +447,7 @@ typedef struct {
     int complete;
     int rotation_semantics_proven;
 } Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt;
+typedef struct { int structure1f_spatial_valid; int entry_count; int resolved_pair_count; int unique_pair_count; int duplicate_pair_count; int zero_pair_count; int nonzero_pair_count; int complete; int offset_semantics_proven; } Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt;
 
 /* DMWeb DGN files: the container header names Structure3 with a block offset
  * and block count. The enclosed bytes have no established Saturn payload,
@@ -888,6 +889,7 @@ typedef struct {
         structure1f_floor_decoration_payload_selectors;
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt
         structure1f_floor_decoration_rotation_selectors;
+    Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt structure1f_floor_decoration_offset_pairs;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     int structure1g_present;
     int structure1g_valid;
@@ -1092,6 +1094,7 @@ int nexus_v1_level_structure1f_floor_decoration_payload_selector_receipt(
 int nexus_v1_level_structure1f_floor_decoration_rotation_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt *out_receipt);
+int nexus_v1_level_structure1f_floor_decoration_offset_pair_receipt(const Nexus_V1_Level *level, Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt *out_receipt);
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);
