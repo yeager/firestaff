@@ -7,6 +7,15 @@
   Verification: `test_theron_v1_capture_manifest` and
   `firestaff_theron_v1_runtime_trace_intake_probe` passed.
 
+- 2026-07-13 DM1 HoC C127 rotation M648/C10 invalidation: a real-PC34
+  regression finds one corridor pose that turns from a current D1C
+  inscription to a current C127 champion mirror and back. The intermediate
+  C346/C026 frame must clear the M648/C10 receipt; turning back must rebuild
+  exactly the original TextString glyph bytes and graphic 258. The M648
+  source pixels are fingerprinted across the transition. Source: ReDMCSB
+  `DUNVIEW.C` F0107:3619-3706,3913-3928 and F0124/F0128. Verification:
+  focused CTest against installed PC34 data.
+
 - 2026-07-13 DM1 HoC C161 modal mirror guard: candidate selection now fails
   closed while ReDMCSB `REVIVE.C` F0281 rename state is live. A real-PC34
   regression proves a second C127 cannot replace the editable candidate; after
