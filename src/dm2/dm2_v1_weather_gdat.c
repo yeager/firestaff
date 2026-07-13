@@ -644,6 +644,31 @@ int dm2_v1_weather_distant_environment_receipt(
     return 1;
 }
 
+int dm2_v1_weather_timer_transaction_receipt(
+    const DM2_V1_WeatherGdatReceipt *weather,
+    const uint8_t *timer_bytes, size_t timer_size,
+    const uint8_t distant_environment[DM2_V1_DISTANT_ENVIRONMENT_BYTES],
+    DM2_V1_WeatherTimerTransactionReceipt *out)
+{
+    uint8_t command;
+    unsigned int index;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!weather || !weather->valid || !timer_bytes || timer_size == 0u ||
+        !distant_environment) return 0;
+    command = distant_environment[0];
+    if (!dm2_weather_command_is_source_owned(command)) return 0;
+    index = (unsigned int)(command - DM2_V1_WEATHER_CLOUD_LIGHT_CMD);
+    if (index >= 6u || !weather->commands[index].material_valid) return 0;
+    out->timer_hash = dm2_weather_hash_bytes(timer_bytes, timer_size);
+    out->distant_environment_hash = dm2_weather_hash_bytes(
+        distant_environment, DM2_V1_DISTANT_ENVIRONMENT_BYTES);
+    out->transaction_hash = dm2_weather_hash_step(out->timer_hash,
+                                                    out->distant_environment_hash);
+    out->proven = out->timer_hash != 0u && out->distant_environment_hash != 0u;
+    return out->proven;
+}
+
 int dm2_v1_weather_gdat_command_receipt(
     const DM2_V1_AssetLoader *loader,
     uint8_t graphicsset,

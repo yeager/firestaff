@@ -31,6 +31,13 @@ typedef struct {
 } DM2_V1_DistantEnvironmentReceipt;
 
 typedef struct {
+    int proven;
+    uint32_t timer_hash;
+    uint32_t distant_environment_hash;
+    uint32_t transaction_hash;
+} DM2_V1_WeatherTimerTransactionReceipt;
+
+typedef struct {
     uint8_t command;
     const uint8_t *raw_text;
     uint32_t byte_count;
@@ -229,4 +236,9 @@ int dm2_v1_weather_distant_environment_receipt(
     uint8_t slot_index,
     const uint8_t raw[DM2_V1_DISTANT_ENVIRONMENT_BYTES],
     DM2_V1_DistantEnvironmentReceipt *out);
+int dm2_v1_weather_timer_transaction_receipt(
+    const DM2_V1_WeatherGdatReceipt *weather,
+    const uint8_t *timer_bytes, size_t timer_size,
+    const uint8_t distant_environment[DM2_V1_DISTANT_ENVIRONMENT_BYTES],
+    DM2_V1_WeatherTimerTransactionReceipt *out);
 #endif
