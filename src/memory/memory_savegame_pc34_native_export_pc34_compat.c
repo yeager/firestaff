@@ -1039,6 +1039,8 @@ static int pc34_event_type_from_timeline_kind(int kind, int aux0)
         return DM1_EVENT_REMOVE_FLUXCAGE;
     case TIMELINE_EVENT_PLAY_SOUND:
         return DM1_EVENT_PLAY_SOUND;
+    case TIMELINE_EVENT_VI_ALTAR_REBIRTH:
+        return DM1_EVENT_VI_ALTAR_REBIRTH;
     case TIMELINE_EVENT_WATCHDOG:
         return DM1_EVENT_WATCHDOG;
     case TIMELINE_EVENT_MOVE_GROUP_SILENT:
@@ -1160,6 +1162,8 @@ static int timeline_kind_from_pc34_event_type(int type)
         return TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
     case DM1_EVENT_HIDE_DAMAGE_RECEIVED:
         return TIMELINE_EVENT_STATUS_TIMEOUT;
+    case DM1_EVENT_VI_ALTAR_REBIRTH:
+        return TIMELINE_EVENT_VI_ALTAR_REBIRTH;
     case DM1_EVENT_MOVE_PROJECTILE:
     case DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS:
         return TIMELINE_EVENT_PROJECTILE_MOVE;
@@ -1488,6 +1492,31 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
             write_u16_le(dst + 8u, (uint16_t)(src->aux0 & 0xffff));
+        } else if (type == DM1_EVENT_VI_ALTAR_REBIRTH) {
+            /* ReDMCSB CLIKVIEW.C F0374:179-186 creates C13 with
+             * Priority=JUNK.ChargeCount, B.Location, and C.A.Cell/Effect.
+             * TIMELINE.C F0255:1665-1699 consumes exactly that union for
+             * its 2 -> 1 -> 0 rebirth transaction.  Export only the
+             * materialized source-owned state; never turn a generic square
+             * event into a syntactically plausible C13. */
+            if (src->kind != TIMELINE_EVENT_VI_ALTAR_REBIRTH ||
+                src->aux0 != DM1_EVENT_VI_ALTAR_REBIRTH ||
+                src->aux4 < 0 || src->aux4 >= CHAMPION_MAX_PARTY ||
+                src->aux1 < 0 || src->aux1 > 2 ||
+                src->cell < 0 || src->cell > 3 ||
+                !state->party || !state->party->champions[src->aux4].present ||
+                !dungeon || !dungeon->maps ||
+                src->mapIndex < 0 ||
+                src->mapIndex >= (int)dungeon->header.mapCount ||
+                src->mapX < 0 || src->mapY < 0 ||
+                src->mapX >= (int)dungeon->maps[src->mapIndex].width ||
+                src->mapY >= (int)dungeon->maps[src->mapIndex].height) {
+                return 0;
+            }
+            dst[6] = (uint8_t)(src->mapX & 0xff);
+            dst[7] = (uint8_t)(src->mapY & 0xff);
+            dst[8] = (uint8_t)src->cell;
+            dst[9] = (uint8_t)src->aux1;
         } else {
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);

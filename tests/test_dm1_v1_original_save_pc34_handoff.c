@@ -2630,6 +2630,64 @@ static void test_world_export_rebuilds_c25_explosion_union(void)
           "world export rejects an unbound C25 instead of inventing Cell/Effect");
 }
 
+static void test_world_export_roundtrips_c13_vi_altar_union(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct GameWorld_Compat world;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat imported_party;
+    DM1OriginalSavePC34HandoffReport report;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    int written = 0;
+    int rc;
+
+    memset(&world, 0, sizeof(world));
+    memset(&imported, 0, sizeof(imported));
+    memset(&imported_party, 0, sizeof(imported_party));
+    memset(&report, 0, sizeof(report));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    maps[0].width = 32;
+    maps[0].height = 32;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    world.dungeon = &dungeon;
+    world.party.championCount = 3;
+    world.party.champions[2].present = 1;
+    world.timeline.count = 1;
+    world.timeline.events[0].kind = TIMELINE_EVENT_VI_ALTAR_REBIRTH;
+    world.timeline.events[0].fireAtTick = 1234u;
+    world.timeline.events[0].mapIndex = 0;
+    world.timeline.events[0].mapX = 11;
+    world.timeline.events[0].mapY = 12;
+    world.timeline.events[0].cell = 1;
+    world.timeline.events[0].aux0 = DM1_EVENT_VI_ALTAR_REBIRTH;
+    world.timeline.events[0].aux1 = 2;
+    world.timeline.events[0].aux4 = 2;
+
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
+    CHECK(rc == SAVEGAME_PC34_OK && written > 0,
+          "world export writes source-proven C13 Vi Altar state");
+    imported.party = &imported_party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+              report.original_event_count == 1 &&
+              report.events[0].type == DM1_EVENT_VI_ALTAR_REBIRTH &&
+              report.events[0].priority == 2 &&
+              report.events[0].b_mapX == 11 && report.events[0].b_mapY == 12 &&
+              report.events[0].c_cell == 1 && report.events[0].c_effect == 2,
+          "C13 export roundtrips original Priority Location Cell Effect union");
+
+    world.timeline.events[0].aux1 = 3;
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &world, 0x43313445u, bytes, (int)sizeof(bytes), &written) ==
+              SAVEGAME_PC34_ERROR_INTERNAL,
+          "world export rejects an unproven C13 rebirth step");
+}
+
 int main(void)
 {
     test_pc34_handoff_imports_party_state();
@@ -2653,6 +2711,7 @@ int main(void)
     test_original_projectile_event_plan_preserves_c48_bits();
     test_world_export_rebuilds_c48_c49_projectile_union();
     test_world_export_rebuilds_c25_explosion_union();
+    test_world_export_roundtrips_c13_vi_altar_union();
     test_strings();
     puts("PASS dm1_v1_original_save_pc34_handoff");
     return 0;

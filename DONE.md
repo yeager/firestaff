@@ -10164,3 +10164,13 @@ ticks later; step 1 unlinks only matching bones before staging step 0; step 0
 applies the `REVIVE.C F0283` inventory, health, cell, and direction state.
 Invalid source plans, maps, champions, or queue capacity fail closed before
 publication. Verification: `test_dm1_v1_original_save_pc34_handoff`.
+
+# ✅ 2026-07-13 DM1 original-save C13 native PC34 export
+
+The world-aware PC34 exporter now writes a materialized C13 Vi Altar event as
+the original `Priority`, `B.Location`, and `C.A.Cell/Effect` union. It rejects
+generic events, absent champions, invalid maps/cells, and rebirth steps outside
+the source-proven 2/1/0 sequence rather than emitting a guessed native event.
+Source: ReDMCSB `CLIKVIEW.C F0374` lines 179-186 and `TIMELINE.C F0255` lines
+1665-1699. Verification: `test_dm1_v1_original_save_pc34_handoff` exports and
+reimports the C13 union and rejects an unproven step.

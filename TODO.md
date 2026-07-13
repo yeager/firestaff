@@ -16,11 +16,11 @@
   compact actuator into a widened state value.
 
 - 2026-07-13 DM1 original-save timeline continuation: C11's zero
-  `SlotOrdinal` action-enable route and C12 hide-damage removal are complete.
-  The non-zero-slot `F0259_TIMELINE_ProcessEvent11Part2_MoveWeaponFromQuiverToSlot`
-  branch and C13 Vi Altar rebirth remain blocked until their original live
-  inventory/object routes are bound. Do not coerce their native bytes into
-  substitute Firestaff state.
+  `SlotOrdinal` action-enable route, C12 hide-damage removal, and C13 Vi Altar
+  rebirth are complete. The non-zero-slot
+  `F0259_TIMELINE_ProcessEvent11Part2_MoveWeaponFromQuiverToSlot` branch remains
+  blocked until its original live inventory/object route is bound. Do not coerce
+  its native bytes into substitute Firestaff state.
 
 - 🔧 2026-07-13 Nexus Structure1A follow-up: Structure1A now has a validated
   header-counted 24-byte model table, and a Structure1F alcove/wall index is
