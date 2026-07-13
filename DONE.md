@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB post-C040 movement receipt: the first source movement or
+  turn after C040 clear now validates its next tick against the same terminal
+  session before the CSB `COMMAND.C` bridge may run. A stale generation leaves
+  the bridge and runtime unchanged. Verification: real local-CSB
+  `csb_v1_m11_launcher_handoff_boundary` CTest passed 1/1.
+
 - 2026-07-13 CSB terminal C040 clear receipt: M11 records the terminal
   session generation and source tick when it presents C040, then permits its
   one clear to neutral live HUD only through the matching source-owned C017
