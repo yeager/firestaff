@@ -6,13 +6,16 @@
  *   THERON_SYSTEM_CARD=/absolute/path/to/syscard3.pce
  *
  * It validates the documented IPL -> $4090 local-RAM CD_READ boundary, then
- * publishes only bitmap-route masks and checksums from the existing raw
- * bitmap receipt.  No filesystem scan, emulator, framebuffer, or fallback
- * executor is involved.
+ * hands the resulting hash-bound receipt to the real Theron boot graphics
+ * consumer.  The consumer may acknowledge raw bitmap provenance, but cannot
+ * draw until a separate original palette-byte relation is captured.  No
+ * filesystem scan outside an explicit root, emulator, framebuffer, or
+ * fallback executor is involved.
  */
 #define _XOPEN_SOURCE 700
 
 #include "asset_status_m12.h"
+#include "theron_v1_boot.h"
 #include "theron_v1_raw_loader_trace.h"
 #include "theron_v1_startup_media.h"
 #include "theron_v1_system_card_irq2_entry_gate.h"
@@ -225,6 +228,7 @@ int main(void)
     Theron_V1RawLoaderTraceReceipt loader_trace;
     Theron_V1RawLoaderTraceReceipt media_bound_trace;
     Theron_V1RawLoaderTraceReceipt bitmap_bound_trace;
+    Theron_V1_BootStartupRawMediaGraphicsReceipt handoff;
     const Theron_Track02StartupBitmapAtlasRoute *route;
     const char *route_name = NULL;
     unsigned int route_bit = 0u;
@@ -365,14 +369,36 @@ int main(void)
         goto done;
     }
 
-    /* The bounded route-to-bank relation is proven, but the palette API is
-     * intentionally unbound: no loader reference names a palette window for
-     * this route.  Do not inspect arbitrary 32-byte spans or publish pixels. */
-    printf("status=blocked route=%s raw_bitmap_consumed=1 "
-           "loader_trace_track02_bound=1 bitmap_route_receipt_bound=1 "
-           "bitmap_descriptor_hash=%08x palette_descriptor=unproven "
-           "rgba_output=blocked emulator=not_started fallback=not_run\n",
-           route_name, raw_bitmap.checksum);
+    /* This is the production boot boundary.  It admits only the receipt that
+     * has already bound the original Mednafen transaction to the selected raw
+     * Track 02 bytes.  The System Card is checked above through the original
+     * IRQ2 entry gate, so an independently supplied hash-valid ROM cannot
+     * bypass the combined capture chain. */
+    if (!theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace(
+            &bitmap, &bitmap_bound_trace, &handoff) || !handoff.valid ||
+        !handoff.raw_track02_verified || !handoff.cd_read_receipt_verified ||
+        !handoff.bitmap_route_receipt_verified ||
+        !handoff.no_fallback_visuals ||
+        handoff.track02_variant != bitmap.track02_variant ||
+        strcmp(handoff.track02_md5, bitmap.track02_md5) != 0 ||
+        handoff.bitmap_route_mask != bitmap.startup_bitmap_raw_route_mask ||
+        handoff.bitmap_atlas_checksum != bitmap.startup_bitmap_atlas_checksum) {
+        printf("status=blocked reason=raw_capture_handoff_rejected "
+               "emulator=not_started fallback=not_run\n");
+        goto done;
+    }
+
+    /* The bounded route-to-bank relation and the production handoff are now
+     * positive.  Palette byte provenance is intentionally separate: do not
+     * inspect arbitrary spans, publish pixels, or substitute a surface. */
+    printf("status=ready route=%s raw_bitmap_consumed=1 "
+           "system_card_gate_bound=1 loader_trace_track02_bound=1 "
+           "bitmap_route_receipt_bound=1 boot_handoff_bound=1 "
+           "bitmap_descriptor_hash=%08x palette_descriptor=%s "
+           "rgba_output=%s emulator=not_started fallback=not_run\n",
+           route_name, raw_bitmap.checksum,
+           handoff.palette_descriptor_relation_verified ? "verified" : "unproven",
+           handoff.palette_descriptor_relation_verified ? "not_exercised" : "blocked");
 
 done:
     free(track02);
