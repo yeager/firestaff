@@ -1,6 +1,7 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
 
 #include "memory_champion_state_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 
 #include <stdio.h>
@@ -444,6 +445,79 @@ static void make_temp_save_path(char *out, size_t out_size)
                  root);
     CHECK(n > 0 && (size_t)n < out_size,
           "temporary save path fits");
+}
+
+static uint16_t byte_sum16(const unsigned char *bytes, size_t count)
+{
+    uint16_t sum = 0u;
+    size_t i;
+
+    for (i = 0u; i < count; ++i) {
+        sum = (uint16_t)(sum + bytes[i]);
+    }
+    return sum;
+}
+
+static size_t original_pc34_tail_offset(const unsigned char *bytes, size_t size)
+{
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    int part;
+
+    if (!bytes || size < cursor) return 0u;
+    for (part = 0; part < SAVEGAME_PC34_PART_COUNT; ++part) {
+        uint16_t part_size;
+        if (cursor + 2u > size) return 0u;
+        part_size = rd16le(bytes + cursor);
+        cursor += 2u;
+        if (cursor + part_size > size) return 0u;
+        cursor += part_size;
+    }
+    if (cursor + SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT >= size) {
+        return 0u;
+    }
+    return cursor + SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT;
+}
+
+static int export_local_dm1_dungeon_save(unsigned char *out,
+                                         size_t capacity,
+                                         int *out_written)
+{
+    const char *root = getenv("FIRESTAFF_DM1_DATA");
+    char path[1024];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonThings_Compat things;
+    struct GameWorld_Compat world;
+    int rc;
+
+    if (!root || root[0] == '\0') {
+        const char *home = getenv("HOME");
+        if (!home || home[0] == '\0') return 0;
+        snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/DUNGEON.DAT", home);
+    } else {
+        snprintf(path, sizeof(path), "%s/DUNGEON.DAT", root);
+    }
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&things, 0, sizeof(things));
+    memset(&world, 0, sizeof(world));
+    if (!F0500_DUNGEON_LoadDatHeader_Compat(path, &dungeon) ||
+        !F0502_DUNGEON_LoadTileData_Compat(path, &dungeon) ||
+        !F0504_DUNGEON_LoadThingData_Compat(path, &dungeon, &things)) {
+        F0504_DUNGEON_FreeThingData_Compat(&things);
+        F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
+        return 0;
+    }
+    world.dungeon = &dungeon;
+    world.things = &things;
+    world.party.championCount = 1;
+    world.party.mapIndex = 0;
+    world.party.mapX = 0;
+    world.party.mapY = 0;
+    world.gameTick = 1u;
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &world, 0x44554e31u, out, (int)capacity, out_written);
+    F0504_DUNGEON_FreeThingData_Compat(&things);
+    F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
+    return rc == SAVEGAME_PC34_OK;
 }
 
 static void test_pc34_handoff_imports_party_state(void)
@@ -1202,6 +1276,48 @@ static void test_runtime_handoff_is_transactional_on_rejected_tail(void)
           "adopt rejects self-transfer");
 }
 
+static void test_real_dm1_dungeon_tail_map_span_validation(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat party;
+    DM1OriginalSavePC34HandoffReport report;
+    size_t tail_offset;
+    int written = 0;
+    int rc;
+
+    if (!export_local_dm1_dungeon_save(bytes, sizeof(bytes), &written)) {
+        puts("SKIP real DM1 DUNGEON.DAT tail validation (no local data)");
+        return;
+    }
+    tail_offset = original_pc34_tail_offset(bytes, (size_t)written);
+    CHECK(tail_offset != 0u && tail_offset + DUNGEON_HEADER_SIZE + 2u <
+              (size_t)written,
+          "real F0433 export exposes a bounded dungeon tail");
+    memset(&imported, 0, sizeof(imported));
+    memset(&party, 0, sizeof(party));
+    imported.party = &party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "real F0433 dungeon tail passes F0435 preflight");
+    CHECK(report.dungeon_tail_present && report.dungeon_tail_checksum_ok,
+          "real DUNGEON.DAT tail receipt is checksum-qualified");
+
+    /* ReDMCSB F0434/F0504 rejects a map whose raw data begins past the
+     * saved raw-map block. Recompute only the source F0422 byte checksum. */
+    wr16le(bytes + tail_offset + DUNGEON_HEADER_SIZE, 0xffffu);
+    wr16le(bytes + (size_t)written - 2u,
+           byte_sum16(bytes + tail_offset,
+                      (size_t)written - tail_offset - 2u));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "out-of-range real tail map span fails before receipt publication");
+    CHECK(report.importer_result == SAVEGAME_PC34_ERROR_BAD_SIZE,
+          "out-of-range real tail map span preserves F0434 size failure");
+}
+
 static void test_public_fixture_builder_roundtrips_pc34_handoff(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -1618,6 +1734,7 @@ int main(void)
     test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc();
     test_runtime_materializer_recovers_missing_primary_from_backup();
     test_runtime_handoff_is_transactional_on_rejected_tail();
+    test_real_dm1_dungeon_tail_map_span_validation();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();
     test_corpus_roundtrip_proof();
