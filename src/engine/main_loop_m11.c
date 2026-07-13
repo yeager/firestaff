@@ -4484,7 +4484,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
     }
     if (gameView.active) {
-        M11_Render_Present();
+        /* ReDMCSB ENTRANCE.C F0797/F0441 hands its opened Hall frame to
+         * DRAWVIEW before input.  The initial HoC frame must use the same
+         * M11 presentation path as every later materialized DM1 frame so
+         * V1 palette/nearest scaling and V2 targets are applied before the
+         * M12 presented-capture consumer records the PC34 receipt.  Calling
+         * bare Render_Present() here bypassed that contract on first launch. */
+        (void)m11_present_game_frame(&gameView);
         m11_publish_dm1_hoc_presented_capture_to_m12(&gameView,
                                                      &menuState);
     } else {
