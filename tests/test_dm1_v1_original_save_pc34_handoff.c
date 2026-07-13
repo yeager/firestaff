@@ -3355,6 +3355,9 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
               PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
           roundtrip_report.exported_party_info_byte_count ==
               PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
+          roundtrip_report.source_party_info_fingerprint != 0u &&
+          roundtrip_report.source_party_info_fingerprint ==
+              roundtrip_report.exported_party_info_fingerprint &&
           roundtrip_report.party_info_byte_preservation_ok,
           "roundtrip reload helper preserves opaque PC34 PARTY_INFO bytes");
 
@@ -3753,6 +3756,15 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
               receipt->source_c3_event_fingerprint ==
                   receipt->exported_c3_event_fingerprint,
               "real PC34 corpus preserves atomic C3 EVENT bytes");
+        CHECK(receipt->source_party_info_byte_count ==
+                  PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
+              receipt->exported_party_info_byte_count ==
+                  PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
+              receipt->source_party_info_fingerprint != 0u &&
+              receipt->source_party_info_fingerprint ==
+                  receipt->exported_party_info_fingerprint &&
+              receipt->party_info_byte_preservation_ok,
+              "real PC34 corpus preserves atomic C2 PARTY_INFO bytes");
         CHECK(receipt->dungeon_tail_byte_receipt_available &&
               receipt->dungeon_tail_byte_preservation_ok,
               "real PC34 corpus preserves each observed dungeon tail exactly");
@@ -4151,6 +4163,9 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
                   PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
               roundtrip.exported_party_info_byte_count ==
                   PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
+              roundtrip.source_party_info_fingerprint != 0u &&
+              roundtrip.source_party_info_fingerprint ==
+                  roundtrip.exported_party_info_fingerprint &&
               roundtrip.party_info_byte_preservation_ok,
           "native F0433 C13 record survives F0435 -> F0433 -> F0435 byte-for-byte");
 
