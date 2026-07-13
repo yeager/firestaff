@@ -21,6 +21,16 @@
   `test_dm2_v1_creature_local_palette_gate`; matching CTest run passed 2/2;
    `git diff --check` passed.
 
+- 2026-07-13 Nexus Structure3 model-reference receipt: complete Structure1A
+  owner/model relations now feed the DGN handoff and render-plan receipts with
+  counted, unique, duplicate, and zero/nonzero Structure3 model-index
+  provenance. This is a no-draw consumer only: it blocks at
+  `blocked-structure3-mesh` until original Structure3 payload and face
+  semantics are proven, and emits no mesh commands, textures, palettes, or
+  pixels. Verification: Ninja and CTests
+  `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - ✅ 2026-07-13 DM2 skproject wall/door local-palette consumer: source-required
   GDAT wall panels plus door panel, overlay, frame, and button paths now bind
   each decoded image to its own `QUERY_GDAT_IMAGE_LOCALPAL` receipt and leave
