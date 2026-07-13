@@ -445,6 +445,12 @@ texture/palette encoding, or a material bridge from descriptor correlation
 alone. The next admissible work is an independently evidenced payload-record
 grammar or Saturn executable route.
 
+2026-07-13 update: the LEV00-LEV15 verification gate now checks all 1,678
+Structure2 descriptors and the observed 2,944 nonzero targets as aligned,
+two-byte-bounded addresses inside their own opaque spans. This strengthens the
+descriptor envelope only; it does not identify a payload record boundary,
+offset base, palette, image, decoder, animation, or draw route.
+
 2026-07-13 update: valid Structure1G control bytes are now insufficient on
 their own. The runtime requires every declared first image and every sequence
 image instruction to bind to a present local Structure2 descriptor before

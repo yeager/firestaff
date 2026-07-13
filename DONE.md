@@ -9,6 +9,15 @@
   Verification: `verify_theron_post_latch_controller_transition_trace.sh`
   plus a clean Mednafen 1.32.1 patch dry-run.
 
+- 2026-07-13 Nexus Structure2 full-corpus envelope receipt: material-corpus
+  aggregation now retains the aligned/window-bounded descriptor measurements,
+  and the optional hash-bound LEV00-LEV15 verification checks all 1,678
+  descriptors plus their 2,944 nonzero target fields. Every observed target
+  remains aligned and retains a complete two-byte window inside its own opaque
+  post-FFFF span. This is descriptor-envelope provenance only, not a payload
+  record grammar, offset base, palette, image, decoder, animation, or material
+  route. Verification: `test_nexus_v1_dgn_geometry_readiness`.
+
 - 2026-07-13 DM1 original-save C48/C49 projectile handoff: PC34 save import
   now source-decodes ReDMCSB `DEFS.H EVENT.B.Slot` and the packed
   `EVENT.C.Projectile` MapX/MapY/Direction/StepEnergy fields, binding them

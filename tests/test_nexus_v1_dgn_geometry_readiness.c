@@ -345,6 +345,11 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         {49, 455, 1267, 1341, 1558, 1331, 596, 1707,
          1306, 786, 1318, 1428, 1474, 987, 552, 1045};
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    int structure2_descriptor_total = 0;
+    int structure2_nonzero_target_total = 0;
+    int structure2_in_span_target_total = 0;
+    int structure2_word_bounded_target_total = 0;
+    int structure2_unaligned_target_total = 0;
     int level;
     int checked = 0;
     if (!data_dir || !data_dir[0]) return;
@@ -466,6 +471,34 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               loaded_level.structure2_texture_count ==
                   expected_structure2_textures[level],
               "real Structure1F and optional Structure1G typed records survive level load and reach host handoff");
+        CHECK(loaded_level.structure2_payload.valid &&
+              loaded_level.structure2_payload.local_payload_offset_pattern_observed &&
+              loaded_level.structure2_payload
+                  .local_payload_word_aligned_offset_pattern_observed &&
+              loaded_level.structure2_payload
+                  .local_payload_word_bounded_offset_pattern_observed &&
+              loaded_level.structure2_payload
+                  .nonzero_descriptor_offsets_unaligned_count == 0 &&
+              loaded_level.structure2_payload
+                  .nonzero_descriptor_offsets_in_opaque_payload_count ==
+                  loaded_level.structure2_payload.nonzero_descriptor_offset_count &&
+              loaded_level.structure2_payload
+                  .nonzero_descriptor_offsets_word_bounded_count ==
+                  loaded_level.structure2_payload.nonzero_descriptor_offset_count &&
+              !loaded_level.structure2_payload.material_or_image_data_proven,
+              "real Structure2 descriptors retain only their complete aligned opaque target windows");
+        structure2_descriptor_total += loaded_level.structure2_texture_count;
+        structure2_nonzero_target_total +=
+            loaded_level.structure2_payload.nonzero_descriptor_offset_count;
+        structure2_in_span_target_total +=
+            loaded_level.structure2_payload
+                .nonzero_descriptor_offsets_in_opaque_payload_count;
+        structure2_word_bounded_target_total +=
+            loaded_level.structure2_payload
+                .nonzero_descriptor_offsets_word_bounded_count;
+        structure2_unaligned_target_total +=
+            loaded_level.structure2_payload
+                .nonzero_descriptor_offsets_unaligned_count;
         for (cell = 0; cell < NEXUS_MAX_MAP_SIZE * NEXUS_MAX_MAP_SIZE;
              ++cell) {
             const uint8_t *raw = data + info.structure1b_offset + cell * 8;
@@ -485,6 +518,12 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         free(data);
     }
     CHECK(checked == 16, "all LEV00 through LEV15 files were checked");
+    CHECK(structure2_descriptor_total == 1678 &&
+          structure2_nonzero_target_total == 2944 &&
+          structure2_in_span_target_total == 2944 &&
+          structure2_word_bounded_target_total == 2944 &&
+          structure2_unaligned_target_total == 0,
+          "retail Structure2 corpus retains the known 20-byte descriptor target envelope only");
 }
 
 static void test_structure1c_record_table_bounds(void) {

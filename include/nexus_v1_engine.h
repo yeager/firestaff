@@ -192,9 +192,14 @@ typedef struct {
     int structure2_descriptor_offsets_in_opaque_payload_count;
     int structure2_descriptor_offsets_outside_opaque_payload_count;
     int structure2_descriptor_offsets_word_bounded_count;
+    /* Corpus-only layout measurements.  These deliberately describe numeric
+     * descriptor targets, not any payload record or graphics meaning. */
+    int structure2_descriptor_offsets_unaligned_count;
     int structure2_descriptor_offset_unique_count;
     int structure2_descriptor_offset_reused_count;
     int structure2_local_payload_offset_pattern_level_count;
+    int structure2_local_payload_word_aligned_offset_pattern_level_count;
+    int structure2_local_payload_word_bounded_offset_pattern_level_count;
     int structure2_material_or_image_data_proven_level_count;
     int structure2_canonical_source_verified_level_count;
     int structure2_materialization_bound_level_count;
