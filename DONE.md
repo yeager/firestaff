@@ -1177,6 +1177,12 @@
   payload, or graphics meaning. Verification: clean Mednafen patch dry-run
   and capture-script regression.
 
+- ✅ 2026-07-13 Theron dynamic-read capture correlation gate: the live capture
+  now rejects otherwise-complete dynamic CPU receipts unless the same
+  authentic run also emits the bounded raw-sector span receipt. This prevents
+  record/destination observations from being promoted without media evidence.
+  Verification: capture-script and Mednafen patch regressions.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete

@@ -22,6 +22,11 @@ if ! grep -Fq 'THERON_MEDNAFEN_HOME must name an existing Mednafen configuration
     printf 'FAIL: capture script must gate an explicit GUI input configuration\n' >&2
     exit 1
 fi
+if ! grep -Fq 'dynamic CPU receipts lack a bounded authentic raw-sector span' "$script" ||
+   ! grep -Fq 'span_offset=0 span_bytes=32 span_fnv1a=' "$script"; then
+    printf 'FAIL: capture script must gate dynamic reads on an authentic raw-sector span\n' >&2
+    exit 1
+fi
 
 output=$(env -u MEDNAFEN_BIN -u THERON_US_CUE -u THERON_SYSTEM_CARD \
     -u THERON_LIVE_TRACE_OUTPUT "$script")

@@ -1652,6 +1652,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     of that raw span. It assigns no record, destination, payload, or graphics
     meaning; only an observed dynamic read may later correlate it with the
     existing CPU-side record/destination receipt.
+    2026-07-13 capture-gate update: a dynamic CPU receipt is incomplete unless
+    the same authentic run also contains the bounded raw-sector span receipt.
+    This remains a correlation requirement only, not a sector-to-record claim.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect

@@ -91,5 +91,9 @@ if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||
     printf 'BLOCKED: live trace ended without combined CD/controller/HuC6260 store receipts (exit=%s)\n' "$status"
     exit 1
 fi
+if ! grep -Eq '^cd_interface_raw_sector_read lba=[0-9]+ bytes=2352 span_offset=0 span_bytes=32 span_fnv1a=[0-9a-f]{8}$' "$cd_trace"; then
+    printf 'BLOCKED: dynamic CPU receipts lack a bounded authentic raw-sector span (exit=%s)\n' "$status"
+    exit 1
+fi
 
-printf 'PASS: live trace contains combined CD/controller/HuC6260 store receipts (exit=%s)\n' "$status"
+printf 'PASS: live trace contains combined CD/controller/HuC6260 and raw-sector span receipts (exit=%s)\n' "$status"
