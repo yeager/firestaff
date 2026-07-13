@@ -21,6 +21,15 @@
   `SaveGame.cpp:1844-1858`, `CSBCode.cpp:6430-6470`. Verification: Ninja and
   CTest `csb_v1_dsa_queued_localstate2_timer`.
 
+- 2026-07-13 Nexus Structure1A/Structure1F structural relation: the DGN
+  parser now validates the documented header-counted Structure1A 24-byte model
+  table, retains each entry's Structure3 model index and Z rotation, and
+  resolves an alcove/wall Structure1F index only when exactly one Structure1B
+  byte-4-bit-7 packed `XXY` owner names it. The renderer handoff receives this
+  relation as provenance only; it still cannot draw face attachments or model
+  mesh data. Malformed, missing, duplicate, and out-of-range relationships
+  remain fail-closed. Verification: Ninja and CTests
+  `nexus_v1_dgn_geometry_readiness`, `nexus_v1_structure1f_spatial_receipt`.
 - 2026-07-13 Nexus Structure1 host/runtime consumer: champion-to-runtime DGN
   handoff now consumes a dedicated Structure1F/Structure1A provenance receipt
   before any material plan or viewport route can run. Verified direct-cell

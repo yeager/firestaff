@@ -22,13 +22,12 @@
   inventory/object routes are bound. Do not coerce their native bytes into
   substitute Firestaff state.
 
-- 🔧 2026-07-13 Nexus Structure1A follow-up: the M11 startup runtime path now
-  consumes the verified Structure1F/Structure1A provenance receipt before it
-  prepares a material plan. Any indexed alcove or wall record fails closed as
-  `blocked-structure1a-relation`; malformed declared Structure1F fails as
-  `blocked-structure1f-layout`. The next DGN host work is an original
-  Structure1A mapping that proves the indexed alcove/wall cell relation; do
-  not substitute inferred coordinates or a synthetic static record route.
+- 🔧 2026-07-13 Nexus Structure1A follow-up: Structure1A now has a validated
+  header-counted 24-byte model table, and a Structure1F alcove/wall index is
+  structurally resolved only through a unique Structure1B bit-7 `XXY` owner.
+  The host receipt retains this no-draw provenance, but face attachment and
+  Structure3 mesh consumption remain unproved and blocked. Do not infer faces,
+  attachment positions, geometry, pixels, palettes, triggers, or fallback art.
 
 ## M12 Localization Completion (2026-07-12)
 

@@ -26,6 +26,8 @@
 #define NEXUS_DGN_STRUCTURE1F_HEADER_BYTES 16
 #define NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT 6
 #define NEXUS_DGN_MAX_STRUCTURE1F_ENTRIES 4096
+#define NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES 24
+#define NEXUS_DGN_MAX_STRUCTURE1A_ENTRIES 4096
 #define NEXUS_DGN_STRUCTURE1G_DESCRIPTOR_BYTES 8
 #define NEXUS_DGN_STRUCTURE1G_HEADER_BYTES 4
 #define NEXUS_DGN_MAX_STRUCTURE1G_ENTRIES 256
@@ -123,6 +125,20 @@ typedef struct {
     int valid;
 } Nexus_V1_DgnStructure1FTable;
 
+/* DMWeb DGN Structure1A: header-counted 24-byte model records. */
+typedef struct {
+    int relative_offset;
+    int entry_count;
+    int size;
+    int valid;
+} Nexus_V1_DgnStructure1ATable;
+
+typedef struct {
+    uint8_t kind;
+    uint8_t structure3_model_index;
+    uint8_t z_rotation;
+} Nexus_V1_DgnStructure1AModel;
+
 typedef struct {
     Nexus_V1_DgnStructure1FFamily family;
     uint8_t tag;
@@ -142,6 +158,10 @@ typedef struct {
     uint8_t width;
     uint8_t height;
     uint16_t structure1a_index;
+    int structure1a_relation_valid;
+    int structure1a_owner_x;
+    int structure1a_owner_y;
+    uint8_t structure1a_structure3_model_index;
     uint8_t face;
     uint8_t destination_x;
     uint8_t destination_y;
@@ -179,6 +199,17 @@ typedef struct {
     int duplicate_index_count;
     uint16_t highest_index;
 } Nexus_V1_DgnStructure1ABoundaryReceipt;
+
+typedef struct {
+    int table_valid;
+    int table_entry_count;
+    int structure1f_bound_entry_count;
+    int resolved_entry_count;
+    int missing_owner_entry_count;
+    int ambiguous_owner_entry_count;
+    int out_of_range_index_count;
+    int complete;
+} Nexus_V1_DgnStructure1ARelationReceipt;
 
 /* The runtime host consumes Structure1F only through this receipt. Direct
  * records retain their documented source cells, while records indexed through
@@ -316,6 +347,7 @@ typedef struct {
     Nexus_V1_DgnStructure1CRecordTable structure1c;
     Nexus_V1_DgnPostGrid0x24ZeroSpan post_grid_0x24_zero_span;
     Nexus_V1_DgnPostGrid0x30RecordTable post_grid_0x30_records;
+    Nexus_V1_DgnStructure1ATable structure1a;
     Nexus_V1_DgnStructure1FTable structure1f;
     Nexus_V1_DgnStructure1GTable structure1g;
     int valid;
@@ -424,6 +456,12 @@ typedef struct {
     Nexus_V1_DgnStructure1FEntry
         structure1f_entries[NEXUS_DGN_MAX_STRUCTURE1F_ENTRIES];
     int structure1f_entry_count;
+    Nexus_V1_DgnStructure1AModel
+        structure1a_models[NEXUS_DGN_MAX_STRUCTURE1A_ENTRIES];
+    int structure1a_model_count;
+    int structure1a_table_valid;
+    uint16_t structure1a_owner_refs[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    uint8_t structure1a_owner_ref_valid[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
     Nexus_V1_DgnStructure1GEntry
         structure1g_entries[NEXUS_DGN_MAX_STRUCTURE1G_ENTRIES];
     int structure1g_entry_count;
@@ -507,6 +545,7 @@ typedef struct {
     int structure1f_typed_entry_count;
     Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
+    Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     int structure1g_present;
     int structure1g_valid;
     int structure1g_animated_texture_count;
@@ -642,6 +681,9 @@ int nexus_v1_level_structure1f_spatial_receipt(
 int nexus_v1_level_structure1a_boundary_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1ABoundaryReceipt *out_receipt);
+int nexus_v1_level_structure1a_relation_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1ARelationReceipt *out_receipt);
 int nexus_v1_level_dgn_structure1_host_provenance_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1HostProvenanceReceipt *out_receipt);
