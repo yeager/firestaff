@@ -1726,6 +1726,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     sidecar with raw input, CDIRQ, caller-PC, and raw-sector counts plus an
     observed or missing result. It records observation only and remains
     fail-closed when any condition is absent.
+    2026-07-13 build repair: caller-PC capture now includes the Mednafen PCE
+    declaration required for HuCPU access; this changes no trace policy.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect

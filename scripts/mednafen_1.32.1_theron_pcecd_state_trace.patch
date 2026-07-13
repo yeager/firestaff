@@ -1,6 +1,12 @@
 diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
+@@ -86,4 +86,4 @@
+ #include <mednafen/sound/okiadpcm.h>
+ #include <mednafen/cdrom/SimpleFIFO.h>
+-
++#include "pce.h"
+ using namespace Mednafen;
 @@ -98,3 +98,27 @@ namespace MDFN_IEN_PCE
  static void (*IRQCB)(bool asserted);
 -
