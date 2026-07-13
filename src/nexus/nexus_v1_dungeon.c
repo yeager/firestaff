@@ -3736,7 +3736,11 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
         if (decl[0] != (uint8_t)i) return -1;
         out_bank->inventory_association[i] = rb16(decl + 0x14);
         out_bank->floor_image[i] = rb16(decl + 0x16);
-        if (out_bank->inventory_association[i] >= 256U) return -1;
+        /* DMWeb records 19 item declarations without an inventory image as
+         * FFFF.  They are valid source records, but cannot become an icon
+         * material or a substitute for a floor image. */
+        if (out_bank->inventory_association[i] >= 256U &&
+            out_bank->inventory_association[i] != 0xffffU) return -1;
     }
     for (i = 0; i < NEXUS_V1_ITEM_IBS_PALETTE_COUNT * 16; ++i) {
         out_bank->palette_bgr555[i / 16][i % 16] =
@@ -3766,23 +3770,29 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
         for (i = 0; i <= NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT; ++i) {
             const uint8_t *decl = data + ITEM_FLOOR_DECLARATIONS +
                 i * ITEM_FLOOR_DECLARATION_BYTES;
-            uint16_t image_id = rb16(decl);
+            uint16_t image_ordinal = rb16(decl);
             uint32_t image_offset = rb32(decl + 12);
             uint32_t palette_offset = rb32(decl + 16);
             Nexus_V1_ItemIbsFloorImage *floor;
             int color;
-            if (image_id == 0xffffU) {
+            if (image_ordinal == 0xffffU) {
                 terminator_offset = (int)image_offset;
                 break;
             }
             if (i == NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT ||
-                image_id < NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT ||
+                image_ordinal >= NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT ||
                 out_bank->floor_image_count >= NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT ||
                 image_offset < (uint32_t)(ITEM_FLOOR_PAYLOAD_START - ITEM_FLOOR_DECLARATIONS) ||
                 image_offset >= (uint32_t)(NEXUS_V1_ITEM_IBS_BYTES - ITEM_FLOOR_DECLARATIONS))
                 return -1;
             floor = &out_bank->floor_images[out_bank->floor_image_count++];
-            floor->image_id = image_id;
+            /* The on-disc declaration uses a 0..108 ordinal.  Item
+             * declarations address the combined image space, so its special
+             * floor image is regular-image-count + this ordinal.  This is
+             * confirmed by the canonical ITEM.IBS where floor refs are
+             * 266..331 while these declarations are 43..108. */
+            floor->image_id = (uint16_t)(
+                NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT + image_ordinal);
             floor->encoding = rb16(decl + 2);
             floor->palette_id = rb16(decl + 4);
             floor->width = rb16(decl + 6);
@@ -3816,9 +3826,32 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
                 if (candidate > out_bank->floor_images[i].image_offset && candidate < next)
                     next = candidate;
             }
+            uint32_t packed_bytes;
+            uint32_t expected_packed_bytes;
             if (next <= out_bank->floor_images[i].image_offset) return -1;
             out_bank->floor_images[i].image_bytes =
                 next - out_bank->floor_images[i].image_offset;
+            expected_packed_bytes =
+                ((uint32_t)out_bank->floor_images[i].width *
+                 (uint32_t)out_bank->floor_images[i].height) / 2U;
+            /* The verified retail corpus establishes encoding 0008 as a
+             * packed 4bpp payload: every descriptor has at least WxH/2
+             * bytes before the next image, with any remaining bytes being a
+             * following 32-byte palette record.  Do not promote a different
+             * encoding or a truncated surface. */
+            if (out_bank->floor_images[i].encoding != 8U ||
+                expected_packed_bytes == 0U ||
+                expected_packed_bytes >
+                    NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_PACKED_BYTES ||
+                out_bank->floor_images[i].image_bytes < expected_packed_bytes)
+                return -1;
+            packed_bytes = expected_packed_bytes;
+            memcpy(out_bank->floor_images[i].packed_4bpp_texels,
+                   data + ITEM_FLOOR_DECLARATIONS +
+                       out_bank->floor_images[i].image_offset,
+                   packed_bytes);
+            out_bank->floor_images[i].packed_4bpp_bytes = packed_bytes;
+            out_bank->floor_images[i].packed_4bpp_valid = 1;
         }
     }
     out_bank->source_hash_verified = 1;
@@ -3881,7 +3914,8 @@ int nexus_v1_dgn_bind_structure1f_item_materials(
                     break;
                 }
             }
-            if (!special || !special->palette_bound || !special->image_bytes) {
+            if (!special || !special->palette_bound ||
+                !special->packed_4bpp_valid) {
                 ++receipt.blocked_special_floor_image_count;
                 continue;
             }
@@ -3901,9 +3935,14 @@ int nexus_v1_dgn_bind_structure1f_item_materials(
             out_bindings[j].packed_4bpp_texels = NULL;
             out_bindings[j].special_floor_image = special;
             ++receipt.bound_special_floor_palette_count;
+            ++receipt.bound_special_floor_texture_count;
             continue;
         }
         association = bank->inventory_association[entry->item_id];
+        if (association == 0xffffU) {
+            ++receipt.blocked_invalid_item_count;
+            continue;
+        }
         palette = bank->association_palette[association];
         image = bank->association_image[association];
         if (palette >= NEXUS_V1_ITEM_IBS_PALETTE_COUNT ||
