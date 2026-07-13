@@ -22,6 +22,11 @@
   that source mirror while retaining its original portrait/name in party.
   Source: ReDMCSB `REVIVE.C` F0281 and F0282:785-845. Verification: focused
    CTest against installed PC34 data.
+- 2026-07-13 DM1 HoC C127 nonzero leader selection: focused coverage now
+  proves that a multi-champion party with leader slot 1 appends the mirror
+  candidate at the tail, and C160 retains that party without selecting leader
+  slot 0. Source: ReDMCSB `REVIVE.C` F0280:272-277 and F0282:837-845.
+   Verification: focused resurrection compatibility test.
 
 - 2026-07-13 DM1 HoC C161 modal mirror guard: candidate selection now fails
   closed while ReDMCSB `REVIVE.C` F0281 rename state is live. A real-PC34
