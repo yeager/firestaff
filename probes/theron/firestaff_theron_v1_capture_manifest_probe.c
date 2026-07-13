@@ -1,0 +1,2 @@
+#include "theron_v1_capture_manifest.h"
+int main(void){Theron_V1CaptureManifest m;const char*ok="THERON_CAPTURE_MANIFEST_V1\ntrack02_path=/raw\ntrack02_md5=12345678901234567890123456789012\nsystem_card_path=/card\nsystem_card_md5=12345678901234567890123456789012\nloader_trace_path=/trace";return theron_v1_capture_manifest_parse(ok,&m)&&m.valid&&!theron_v1_capture_manifest_parse("THERON_CAPTURE_MANIFEST_V1\ntrack02_path=\n",&m)?0:1;}
