@@ -2037,6 +2037,15 @@
   `F0215:248-260`, with `DUNGEON.C F0163` retaining the destination append
   owner. Verification: focused throw/shoot receipt regression.
 
+- 2026-07-13 DM1 PC34 F0328/F0811 M11 drop renderer handoff: M11's direct
+  projectile tick path now consumes the F0217/F0215 materialization receipt,
+  including the exact C14 unlink before an ordinary Slot is linked for the
+  following F0115 item pass. Potions, spell Slots, and retained group weapons
+  still clean C14 but produce no floor-item render route. Source: ReDMCSB
+  `PROJEXPL.C F0217:607-608`, `F0215:248-260`, and `DUNVIEW.C F0115`.
+  Verification: focused throw/shoot receipt regression and M11 projectile
+  runtime target build.
+
 - 2026-07-13 DM1 PC34 F0407 invalid-owner receipt cleanup: a typed pending
   C11 whose champion owner is no longer within `Party.ChampionCount` is now
   compacted immediately when Firestaff rejects that invalid action/owner.
