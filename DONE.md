@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F raw wall-sensor destination receipt: complete
+  Structure1A-owned wall-sensor records now retain exact destination-byte tuple
+  reuse through the DGN corpus, host handoff, and render plan. The tuple is not
+  promoted to a cell, orientation, trigger, teleport, route, or command.
+  Verification: Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 Nexus Structure1F raw wall-payload-selector receipt: complete
   Structure1A-owned wall-decoration and wall-sensor records now retain their
   raw payload-selector byte reuse through the DGN corpus, host handoff, and

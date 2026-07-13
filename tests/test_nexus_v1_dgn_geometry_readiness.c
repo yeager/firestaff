@@ -220,6 +220,16 @@ static void build_structure1f_fixture(uint8_t *structure1,
     structure1f[152 + 7] = 9U;
     structure1f[168 + 7] = 9U;
     structure1f[184 + 7] = 9U;
+    structure1f[136 + 13] = 20U;
+    structure1f[136 + 14] = 21U;
+    structure1f[152 + 13] = 20U;
+    structure1f[152 + 14] = 21U;
+    structure1f[168 + 13] = 30U;
+    structure1f[168 + 14] = 31U;
+    structure1f[168 + 15] = 2U;
+    structure1f[184 + 13] = 30U;
+    structure1f[184 + 14] = 31U;
+    structure1f[184 + 15] = 2U;
 }
 
 static void build_structure1g_fixture(uint8_t *structure1,
@@ -806,6 +816,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt face_rotation_pairs;
     Nexus_V1_DgnStructure1FOffsetPairReceipt offset_pairs;
     Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt wall_payload_selectors;
+    Nexus_V1_DgnStructure1FWallSensorDestinationReceipt wall_sensor_destinations;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt structure3_correlation;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
@@ -976,6 +987,21 @@ static void test_structure1f_semantics_and_bounds(void) {
           wall_payload_selectors.complete &&
           !wall_payload_selectors.payload_semantics_proven,
           "Structure1F wall payload selectors remain no-draw provenance");
+    CHECK(nexus_v1_level_structure1f_wall_sensor_destination_receipt(
+              &level, &wall_sensor_destinations) == 0 &&
+          wall_sensor_destinations.structure1a_relation_complete &&
+          wall_sensor_destinations.wall_sensor_entry_count == 4 &&
+          wall_sensor_destinations.resolved_destination_count == 4 &&
+          wall_sensor_destinations.unique_destination_count == 2 &&
+          wall_sensor_destinations.duplicate_destination_count == 2 &&
+          wall_sensor_destinations.zero_destination_count == 0 &&
+          wall_sensor_destinations.nonzero_destination_count == 4 &&
+          wall_sensor_destinations.highest_destination_x == 30U &&
+          wall_sensor_destinations.highest_destination_y == 31U &&
+          wall_sensor_destinations.highest_destination_orientation == 2U &&
+          wall_sensor_destinations.complete &&
+          !wall_sensor_destinations.destination_semantics_proven,
+          "Structure1F wall-sensor destination tuples remain no-draw provenance");
     CHECK(nexus_v1_level_structure3_model_reference_receipt(
               &level, &structure3_model_references) == 0 &&
           structure3_model_references.structure1a_relation_complete &&
@@ -1110,6 +1136,9 @@ static void test_structure1f_semantics_and_bounds(void) {
           handoff.structure1f_wall_payload_selectors.complete &&
           handoff.structure1f_wall_payload_selectors.unique_payload_selector_count == 3 &&
           !handoff.structure1f_wall_payload_selectors.payload_semantics_proven &&
+          handoff.structure1f_wall_sensor_destinations.complete &&
+          handoff.structure1f_wall_sensor_destinations.unique_destination_count == 2 &&
+          !handoff.structure1f_wall_sensor_destinations.destination_semantics_proven &&
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
     CHECK(handoff.status ==
@@ -1137,6 +1166,8 @@ static void test_structure1f_semantics_and_bounds(void) {
           !render_plan.structure1f_offset_pairs.offset_semantics_proven &&
           render_plan.structure1f_wall_payload_selectors.complete &&
           !render_plan.structure1f_wall_payload_selectors.payload_semantics_proven &&
+          render_plan.structure1f_wall_sensor_destinations.complete &&
+          !render_plan.structure1f_wall_sensor_destinations.destination_semantics_proven &&
           render_plan.structure3_payload.valid &&
           render_plan.command_count == 0 && commands[0].kind == 0 &&
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready,
