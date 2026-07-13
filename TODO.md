@@ -37,6 +37,12 @@ before assigning any payload, bitmap, palette, object, or level semantics.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 
+DM1's C38 projectile precheck now carries ReDMCSB F0190's live active-group
+compaction for surviving groups: health/cells, packed directions, and aspects
+move together before a later behavior event, followed by F0217's C30 reaction.
+Remaining DM1 projectile work is real multi-projectile/pixel capture, not
+another synthetic group mutation.
+
 DM1 F0328/F0811 thrown-object material now follows ReDMCSB `DUNGEON.C F0142`
 through `DUNVIEW.C F0115:5691-5900`: a live `Projectile.Slot` is retained in
 the DM1 viewport receipt, resolves to either M613 projectile art or M612/G0209

@@ -5185,6 +5185,42 @@ static void orch_build_group_projectile_impact_cells_compat(
     }
 }
 
+/* ReDMCSB GROUP.C:F0190 lines 892-917 compacts the packed direction and
+ * ACTIVE_GROUP aspect entries alongside Health/Cells after a single creature
+ * dies.  The projectile precheck owns the raw Health/Count/Cells mutation;
+ * M10 owns this live-party ACTIVE_GROUP counterpart. */
+static void orch_compact_active_group_after_f0190_killed_some_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int killedCreatureIndex,
+    int originalGroupCount)
+{
+    struct CreatureAIState_Compat* ai;
+    int activeIndex;
+    int i;
+
+    if (!world || !group || killedCreatureIndex < 0 ||
+        killedCreatureIndex >= originalGroupCount ||
+        mapIndex != world->partyMapIndex) {
+        return;
+    }
+    activeIndex = orch_find_active_group_state_index_compat(
+        world, (int)(group - world->things->groups));
+    if (activeIndex < 0) return;
+
+    ai = &world->creatureAI[activeIndex];
+    for (i = killedCreatureIndex; i < originalGroupCount; ++i) {
+        int nextDirection = (ai->groupDirection >> ((i + 1) << 1)) & 0x03;
+        ai->groupDirection =
+            (ai->groupDirection & ~(0x03 << (i << 1))) |
+            (nextDirection << (i << 1));
+        ai->aspect[i] = ai->aspect[i + 1];
+    }
+    /* F0184/F0148 expose only creature zero in raw GROUP.Direction. */
+    group->direction = (unsigned char)(ai->groupDirection & 0x03);
+}
+
 static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
@@ -5347,6 +5383,13 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                 memset(&precheckPlan, 0, sizeof(precheckPlan));
                 outcome = orch_apply_projectile_creature_precheck_with_plan_compat(
                     group, creatureIndex, &compatProjectile, &precheckPlan);
+                if (outcome == 1) { /* F0190 C1 killed some */
+                    orch_compact_active_group_after_f0190_killed_some_compat(
+                        world, group, mapIndex, creatureIndex,
+                        originalGroupCount);
+                }
+                /* The F0217 precheck keeps the original C0/C1/C2 outcome
+                 * ordinal.  Convert once for M10 F0190 dispatch consumers. */
                 combatOutcome = (outcome == 2) ? COMBAT_OUTCOME_KILLED_ALL_CREATURES :
                     ((outcome == 1) ? COMBAT_OUTCOME_KILLED_SOME_CREATURES :
                                       COMBAT_OUTCOME_KILLED_NO_CREATURES);
@@ -5362,15 +5405,14 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                     (void)orch_maybe_attach_projectile_weapon_to_group_slot_compat(
                         world, group, &compatProjectile, combatOutcome);
                 }
-                if (outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES ||
-                    outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+                if (outcome == 1 || outcome == 2) {
                     /* ReDMCSB PROJEXPL.C F0217 calls GROUP.C F0190 after a
                      * projectile kill.  F0266 and C38 both use this helper,
                      * so one source-owned dispatch must provide possession
                      * drops, C29-C41 cleanup, fear, unlink and raw writeback. */
                     memset(&dispatchIn, 0, sizeof(dispatchIn));
                     memset(&dispatchPlan, 0, sizeof(dispatchPlan));
-                    dispatchIn.outcome = outcome;
+                    dispatchIn.outcome = combatOutcome;
                     dispatchIn.groupIndex = (int)(group - world->things->groups);
                     dispatchIn.groupBehavior = (int)group->behavior;
                     dispatchIn.killedCreatureIndex = creatureIndex;
@@ -5393,9 +5435,12 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                      * a success code; a calm survivor is still a valid hit. */
                     (void)orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
                         world, group, &dispatchPlan);
-                } else if (aftermath.scheduleReaction) {
-                    /* F0217 reports a surviving projectile hit as C30 through
-                     * GROUP.C F0209; keep the same owner for F0266 and C38. */
+                }
+                /* ReDMCSB PROJEXPL.C:F0217 calls F0209 C30 after every
+                 * creature impact except a whole-group kill.  This includes
+                 * F0190 C1 killed-some: compaction/fear happens first, then
+                 * the surviving group receives its projectile reaction. */
+                if (outcome != 2 && aftermath.scheduleReaction) {
                     memset(&reactionAction, 0, sizeof(reactionAction));
                     reactionAction.targetMapIndex = mapIndex;
                     reactionAction.targetMapX = mapX;
@@ -9300,6 +9345,12 @@ static int orch_handle_creature_reaction_event_compat(
 
         if (!cellsChangedByPendingProjectile) {
             group->cells = (unsigned char)(behavior.updatedGroupCells & 0xff);
+        } else {
+            /* F0190 shifted the surviving slot before this C38 dispatch
+             * reaches F0208.  Do not copy the pre-impact ACTIVE_GROUP back
+             * over that source mutation at the common apply-plan tail. */
+            activeGroup.directions = ai->groupDirection;
+            memcpy(activeGroup.aspect, ai->aspect, sizeof(activeGroup.aspect));
         }
         activeGroup.cells = group->cells;
         ai->groupCells = group->cells;

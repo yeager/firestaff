@@ -313,6 +313,9 @@ static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
     int lastCount = -1;
     int lastCells = -1;
     int lastProjectileNext = -1;
+    int lastDirection = -1;
+    int lastAspect = -1;
+    int lastReaction = -1;
 
     for (seed = 1; seed <= 512; ++seed) {
         struct GameWorld_Compat world;
@@ -352,7 +355,9 @@ static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
         world.creatureAI[0].stateKind = AI_STATE_ATTACK;
         world.creatureAI[0].creatureType = CREATURE_TYPE_SCREAMER;
         world.creatureAI[0].groupCells = group->cells;
-        world.creatureAI[0].groupDirection = 0x0A; /* both face south */
+        world.creatureAI[0].groupDirection = 0x0E;
+        world.creatureAI[0].aspect[0] = 0x11;
+        world.creatureAI[0].aspect[1] = 0x44;
         F0730_COMBAT_RngInit_Compat(&world.masterRng, (uint32_t)seed);
 
         memset(&input, 0, sizeof(input));
@@ -397,6 +402,8 @@ static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
 
         if (group->count == 0 && group->health[0] == 200 &&
             group->cells == 5 && world.creatureAI[0].groupCells == 5 &&
+            (world.creatureAI[0].groupDirection & 0x03) == 3 &&
+            group->direction == 3 && world.creatureAI[0].aspect[0] == 0x44 &&
             world.things->projectiles[0].next == THING_NONE &&
             sawProjectileReaction) {
             F0883_WORLD_Free_Compat(&world);
@@ -405,10 +412,14 @@ static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
         lastCount = (int)group->count;
         lastCells = (int)group->cells;
         lastProjectileNext = (int)world.things->projectiles[0].next;
+        lastDirection = world.creatureAI[0].groupDirection;
+        lastAspect = world.creatureAI[0].aspect[0];
+        lastReaction = sawProjectileReaction;
         F0883_WORLD_Free_Compat(&world);
     }
-    fprintf(stderr, "FAIL: C38 pending projectile cell-write ordering (count=%d cells=%d projectile-next=%d)\n",
-            lastCount, lastCells, lastProjectileNext);
+    fprintf(stderr, "FAIL: C38 pending projectile F0190 compaction (count=%d cells=%d direction=%d aspect=%d projectile-next=%d reaction=%d)\n",
+            lastCount, lastCells, lastDirection, lastAspect,
+            lastProjectileNext, lastReaction);
     return 1;
 }
 
