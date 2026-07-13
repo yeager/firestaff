@@ -1995,6 +1995,67 @@ int nexus_v1_level_structure1f_wall_sensor_control_selector_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure1f_wall_sensor_control_destination_tuple_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FWallSensorControlDestinationTupleReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FWallSensorControlDestinationTupleReceipt receipt;
+    Nexus_V1_DgnStructure1ARelationReceipt relation;
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&relation, 0, sizeof(relation));
+    if (!level || nexus_v1_level_structure1a_relation_receipt(
+                      level, &relation) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.structure1a_relation_complete = relation.complete;
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        uint32_t tuple;
+        int previous;
+        int duplicate = 0;
+
+        if (record->family != NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS) {
+            continue;
+        }
+        ++receipt.wall_sensor_entry_count;
+        if (!record->structure1a_relation_valid) continue;
+        ++receipt.resolved_tuple_count;
+        tuple = ((uint32_t)record->type_or_control << 24) |
+            ((uint32_t)record->destination_x << 16) |
+            ((uint32_t)record->destination_y << 8) |
+            record->destination_orientation;
+        if (tuple == 0U) ++receipt.zero_tuple_count;
+        else ++receipt.nonzero_tuple_count;
+        if (tuple > receipt.highest_tuple) receipt.highest_tuple = tuple;
+        for (previous = 0; previous < entry; ++previous) {
+            const Nexus_V1_DgnStructure1FEntry *prior =
+                &level->structure1f_entries[previous];
+            if (prior->family == NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS &&
+                prior->structure1a_relation_valid &&
+                prior->type_or_control == record->type_or_control &&
+                prior->destination_x == record->destination_x &&
+                prior->destination_y == record->destination_y &&
+                prior->destination_orientation == record->destination_orientation) {
+                duplicate = 1;
+                break;
+            }
+        }
+        if (duplicate) ++receipt.duplicate_tuple_count;
+        else ++receipt.unique_tuple_count;
+    }
+    receipt.complete = receipt.structure1a_relation_complete &&
+        receipt.resolved_tuple_count == receipt.wall_sensor_entry_count;
+    receipt.tuple_semantics_proven = 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_structure1f_wall_sensor_model_rotation_pair_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FWallSensorModelRotationPairReceipt *out_receipt)
@@ -2894,6 +2955,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure1f_wall_sensor_destinations);
     (void)nexus_v1_level_structure1f_wall_sensor_control_selector_receipt(
         level, &out_receipt->structure1f_wall_sensor_control_selectors);
+    (void)nexus_v1_level_structure1f_wall_sensor_control_destination_tuple_receipt(
+        level, &out_receipt->structure1f_wall_sensor_control_destination_tuples);
     (void)nexus_v1_level_structure1f_wall_sensor_model_rotation_pair_receipt(
         level, &out_receipt->structure1f_wall_sensor_model_rotation_pairs);
     (void)nexus_v1_level_structure1f_wall_decoration_model_rotation_pair_receipt(
@@ -3396,6 +3459,8 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.structure1f_wall_sensor_destinations;
     receipt.structure1f_wall_sensor_control_selectors =
         handoff.structure1f_wall_sensor_control_selectors;
+    receipt.structure1f_wall_sensor_control_destination_tuples =
+        handoff.structure1f_wall_sensor_control_destination_tuples;
     receipt.structure1f_wall_sensor_model_rotation_pairs =
         handoff.structure1f_wall_sensor_model_rotation_pairs;
     receipt.structure1f_wall_decoration_model_rotation_pairs =

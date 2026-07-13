@@ -1235,7 +1235,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   plus floor-decoration signed offset pairs and raw control/extent tuples reach
   the host receipt, render plan, and LEV00-15 corpus aggregate as provenance
   only; the same is true of raw direct descriptor pairs plus Structure1A-bound
-  wall and alcove descriptor pairs. Remaining work is a documented Saturn
+  wall and alcove descriptor tuples. Remaining work is a documented Saturn
   Structure1F
   draw/trigger binding, never a synthetic overlay or omission of a visible
   original record.
