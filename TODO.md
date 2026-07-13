@@ -12,9 +12,12 @@
   host handoff and the DGN render plan with the no-fallback
   `blocked-structure1f-semantics` result. This preserves the unresolved
   source relation without guessing an object, trigger, draw, pixel, palette,
-  or animation route. The next concrete DGN host-handoff work is an original
-  Structure1A mapping that proves the indexed alcove/wall cell relation; do
-  not substitute inferred coordinates or a synthetic static record route.
+  or animation route. The host now retains the original big-endian index
+  stream with family, zero/non-zero, duplicate, and high-water provenance,
+  but it is not a Structure1A parser and cannot authorize a cell relation.
+  The next concrete DGN host-handoff work is an original Structure1A mapping
+  that proves the indexed alcove/wall cell relation; do not substitute
+  inferred coordinates or a synthetic static record route.
 
 ## M12 Localization Completion (2026-07-12)
 

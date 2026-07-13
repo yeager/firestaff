@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1A/Structure1F host boundary: typed alcove,
+  wall-decoration, and wall-sensor records now publish their original
+  big-endian `Structure1A` indexes as a fail-closed provenance receipt.
+  The receipt measures family ownership, zero/non-zero indexes, duplicates,
+  and the maximum observed index while the existing no-fallback host gate
+  continues to block all such records. It does not decode Structure1A or
+  infer a cell, object, trigger, model, Saturn pixel, palette, PRS3 route,
+  or visual fallback. Verification: Ninja and CTests
+  `nexus_v1_dgn_geometry_readiness`, `nexus_v1_structure2_no_draw_receipt`.
+
 - 2026-07-13 DM1 PC34 original-save C11 enable-action handoff: a saved
   `C11_EVENT_ENABLE_CHAMPION_ACTION` with `SlotOrdinal == 0` now imports,
   materializes as an M10 timeline event, clears the matching M11 action lock

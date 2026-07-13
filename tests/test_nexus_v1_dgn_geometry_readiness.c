@@ -165,6 +165,16 @@ static void build_structure1f_fixture(uint8_t *structure1,
     structure1f[56 + 13] = 30;
     structure1f[56 + 14] = 31;
     structure1f[56 + 15] = 2;
+    /* Alcove/wall records keep their original Structure1A indexes as raw
+     * provenance.  Their target table remains deliberately undecoded. */
+    wb16(structure1f + 88 + 2, 3U);
+    wb16(structure1f + 100 + 2, 3U);
+    wb16(structure1f + 112 + 2, 0U);
+    wb16(structure1f + 124 + 2, 4U);
+    wb16(structure1f + 136 + 2, 5U);
+    wb16(structure1f + 152 + 2, 6U);
+    wb16(structure1f + 168 + 2, 7U);
+    wb16(structure1f + 184 + 2, 8U);
 }
 
 static void build_structure1g_fixture(uint8_t *structure1,
@@ -573,6 +583,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_Level level;
     Nexus_V1_DgnRendererHandoffReceipt handoff;
     Nexus_V1_DgnStructure1FSpatialReceipt spatial;
+    Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
                           structure1b_rel, 512) == 0,
@@ -612,12 +623,27 @@ static void test_structure1f_semantics_and_bounds(void) {
           spatial.floor_sensor_entry_count == 2 &&
           spatial.structure1a_bound_entry_count == 8,
           "Structure1F separates direct cell records from unresolved Structure1A records");
+    CHECK(nexus_v1_level_structure1a_boundary_receipt(&level,
+                                                       &structure1a_boundary) == 0 &&
+          structure1a_boundary.valid && structure1a_boundary.entry_count == 8 &&
+          structure1a_boundary.alcove_entry_count == 2 &&
+          structure1a_boundary.wall_decoration_entry_count == 2 &&
+          structure1a_boundary.wall_sensor_entry_count == 4 &&
+          structure1a_boundary.zero_index_count == 1 &&
+          structure1a_boundary.nonzero_index_count == 7 &&
+          structure1a_boundary.unique_index_count == 7 &&
+          structure1a_boundary.duplicate_index_count == 1 &&
+          structure1a_boundary.highest_index == 8U,
+          "Structure1A indexes reach the host boundary as raw provenance only");
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
           handoff.structure1f_valid && handoff.structure1f_total_entry_count == 14 &&
           handoff.structure1f_typed_entry_count == level.structure1f_entry_count &&
           handoff.structure1f_spatial.valid &&
           handoff.structure1f_spatial.direct_coordinate_entry_count == 6 &&
           handoff.structure1f_spatial.structure1a_bound_entry_count == 8 &&
+          handoff.structure1a_boundary.valid &&
+          handoff.structure1a_boundary.entry_count == 8 &&
+          handoff.structure1a_boundary.duplicate_index_count == 1 &&
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
     CHECK(handoff.status ==
