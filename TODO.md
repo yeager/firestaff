@@ -1915,6 +1915,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     order only, not which Track 02 byte reached VCE: byte provenance,
     HuC6260 index/data assembly, palette-table offset, and bitmap binding all
     remain required and rendering stays blocked until then.
+  - 2026-07-13 update: the same receipt now retains Mednafen's completed
+    HuC6260 colour-table words, in strict trace order and separately from
+    pre-execution CPU store rows. This proves only that the authenticated
+    original execution reached VCE with those 9-bit words after the dynamic
+    `CD_READ`; it does not taint a word back to Track 02 RAM/media or identify
+    a palette table, bitmap, menu, object, or level. A future handoff must
+    capture that source-byte transfer before RGB presentation can open.
   - 2026-07-13 update: the old generated stone palette and unverified-media
     V1 render allowance are removed. Remaining palette work is an original
     HuC6260 table binding from authenticated Track 02 execution/media; a

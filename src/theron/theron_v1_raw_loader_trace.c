@@ -8,6 +8,14 @@
 
 #define THERON_V1_RAW_LOADER_TRACE_MAX_BYTES (1024u * 1024u)
 
+static uint32_t tqr_trace_fnv1a_u16(uint32_t hash, uint16_t value)
+{
+    hash ^= (uint8_t)(value & 0xffu);
+    hash *= 16777619u;
+    hash ^= (uint8_t)(value >> 8);
+    return hash * 16777619u;
+}
+
 static int tqr_trace_next_line(const char **cursor,
                                const char **out_line,
                                size_t *out_length)
@@ -45,6 +53,20 @@ static int tqr_trace_parse_palette_store(const char *line, size_t length,
            *out_accumulator <= 0xffu;
 }
 
+static int tqr_trace_parse_palette_word(const char *line, size_t length,
+                                        unsigned int *out_index,
+                                        unsigned int *out_word)
+{
+    int consumed = 0;
+
+    if (!line || !out_index || !out_word) return 0;
+    return sscanf(line,
+                  "dynamic_huc6260_palette_word index=%x word=%x%n",
+                  out_index, out_word, &consumed) == 2 &&
+           consumed == (int)length && *out_index <= 0x1ffu &&
+           *out_word <= 0x1ffu;
+}
+
 int theron_v1_raw_loader_trace_ingest_mednafen_capture(
     const char *capture,
     const char *track02_md5,
@@ -58,6 +80,8 @@ int theron_v1_raw_loader_trace_ingest_mednafen_capture(
     unsigned int pc;
     unsigned int address;
     unsigned int accumulator;
+    unsigned int palette_index;
+    unsigned int palette_word;
 
     if (out) memset(out, 0, sizeof(*out));
     if (!capture || !track02_md5 || !out ||
@@ -75,21 +99,37 @@ int theron_v1_raw_loader_trace_ingest_mednafen_capture(
     dynamic_read = strstr(capture, "dynamic_cd_read_transaction ");
     if (!dynamic_read) return 0;
     cursor = dynamic_read;
+    out->palette_word_checksum = 2166136261u;
     while (tqr_trace_next_line(&cursor, &line, &length)) {
-        if (length < strlen("dynamic_huc6260_palette_store ") ||
+        if (length >= strlen("dynamic_huc6260_palette_store ") &&
             memcmp(line, "dynamic_huc6260_palette_store ",
-                   strlen("dynamic_huc6260_palette_store ")) != 0) {
-            continue;
-        }
-        if (!tqr_trace_parse_palette_store(line, length, &pc, &address,
-                                           &accumulator)) {
-            return 0;
-        }
-        ++out->palette_store_count;
-        out->palette_register_mask |= 1u << (address - 0x0402u);
-        if (out->palette_store_count == 1u) {
-            out->first_palette_store_pc = (uint16_t)pc;
-            out->first_palette_store_accumulator = (uint8_t)accumulator;
+                   strlen("dynamic_huc6260_palette_store ")) == 0) {
+            if (!tqr_trace_parse_palette_store(line, length, &pc, &address,
+                                               &accumulator)) {
+                return 0;
+            }
+            ++out->palette_store_count;
+            out->palette_register_mask |= 1u << (address - 0x0402u);
+            if (out->palette_store_count == 1u) {
+                out->first_palette_store_pc = (uint16_t)pc;
+                out->first_palette_store_accumulator = (uint8_t)accumulator;
+            }
+        } else if (length >= strlen("dynamic_huc6260_palette_word ") &&
+                   memcmp(line, "dynamic_huc6260_palette_word ",
+                          strlen("dynamic_huc6260_palette_word ")) == 0) {
+            if (!tqr_trace_parse_palette_word(line, length, &palette_index,
+                                              &palette_word)) {
+                return 0;
+            }
+            ++out->palette_word_count;
+            if (out->palette_word_count == 1u) {
+                out->first_palette_word_index = (uint16_t)palette_index;
+                out->first_palette_word_value = (uint16_t)palette_word;
+            }
+            out->palette_word_checksum = tqr_trace_fnv1a_u16(
+                tqr_trace_fnv1a_u16(out->palette_word_checksum,
+                                    (uint16_t)palette_index),
+                (uint16_t)palette_word);
         }
     }
     if (out->palette_store_count == 0u) return 0;
