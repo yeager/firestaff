@@ -323,6 +323,7 @@ static void probe_first_map(const unsigned char *raw, int size)
     DM2_V1_DungeonData dungeon;
     DM2_V1_G1RecordPoolEvidence evidence;
     DM2_V1_G1GroundStackMapCorpusReceipt ground_stack_map;
+    DM2_V1_G1MapCorpusReceipt map_corpus;
     DM2_V1_G1PartialMapBootReceipt partial_boot;
     DM2_V1_G1FirstMapRuntimeReceipt first_map_runtime;
     DM2_V1_G1Map5TextRuntimeReceipt map5_text_runtime;
@@ -391,6 +392,28 @@ static void probe_first_map(const unsigned char *raw, int size)
               ground_stack_map.column_index_semantics_unresolved == 1 &&
               ground_stack_map.ground_stack_semantics_unresolved == 1,
           "canonical G1 hashes c_map table/map bytes without decoding their unresolved semantics");
+    CHECK(dm2_v1_dungeon_collect_g1_map_corpus_receipt(
+              &dungeon, &map_corpus) == 1 && map_corpus.available == 1 &&
+              map_corpus.raw_only == 1 &&
+              map_corpus.tile_semantics_unresolved == 1 &&
+              map_corpus.map_count == DM2_MAP_DESCRIPTOR_COUNT &&
+              map_corpus.map_data_base == 31667 &&
+              map_corpus.map_data_byte_count ==
+                  (uint32_t)(DM2_CANONICAL_DUNGEON_SIZE - 31667) &&
+              map_corpus.map_data_hash != 0u,
+          "canonical G1 retains its full trailing map-data block as raw evidence");
+    CHECK(map_corpus.maps[0].map == 0 &&
+              map_corpus.maps[0].descriptor_base == DM2_HEADER_SIZE &&
+              map_corpus.maps[0].map_data_offset == 0 &&
+              map_corpus.maps[0].width == 7 && map_corpus.maps[0].height == 10 &&
+              map_corpus.maps[0].map_byte_count == 70u &&
+              map_corpus.maps[0].descriptor_hash != 0u &&
+              map_corpus.maps[0].map_hash != 0u &&
+              map_corpus.maps[DM2_MAP_DESCRIPTOR_COUNT - 1].map ==
+                  DM2_MAP_DESCRIPTOR_COUNT - 1 &&
+              map_corpus.maps[DM2_MAP_DESCRIPTOR_COUNT - 1].descriptor_hash != 0u &&
+              map_corpus.maps[DM2_MAP_DESCRIPTOR_COUNT - 1].map_hash != 0u,
+          "canonical G1 hashes every descriptor-bounded map span without tile promotion");
     CHECK(dungeon.thing_data_bases[0] == 6942 &&
               dungeon.thing_data_bases[1] == 7810 &&
               dungeon.thing_data_bases[2] == 11266 &&

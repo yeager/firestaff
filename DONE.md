@@ -13,6 +13,12 @@
   This remains fail-closed provenance, not item placement, object, mesh,
   material, texture, palette, pixel, or draw semantics.
 
+- 2026-07-13 DM2 G1 descriptor/map corpus correlation: every verified G1
+  `Map_definitions` row now retains its raw descriptor and trailing map-span
+  bounds, byte count, and hash. This is raw provenance only; no tile, terrain,
+  object, bit-0x10, or runtime semantics are promoted. Verification: focused
+  loader CTest and skip-safe hash-verified real-data probe.
+
 - 2026-07-13 Nexus Structure1F floor-decoration model/rotation handoff: raw
   source pairs now reach DGN host, render-plan, and LEV00-15 corpus receipts.
   Their grammar remains unproved, so this assigns no model, orientation, mesh,

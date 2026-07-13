@@ -1177,6 +1177,83 @@ int dm2_v1_dungeon_collect_g1_ground_stack_map_corpus_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_collect_g1_map_corpus_receipt(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1MapCorpusReceipt *out)
+{
+    uint32_t map_data_bytes;
+    int level;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->g1_layout_absent = 1;
+
+    /* skproject/SKWIN/DME.h Map_definitions proves only the raw offset and
+     * w8 dimensions.  Correlate that descriptor with a bounded byte span,
+     * but never promote the bytes into tile or record meaning. */
+    if (!d || !d->raw_data || d->square_bytes != 1 ||
+        d->g1_extension_base < 0 || d->raw_map_data_base < 0 ||
+        d->raw_size < 0 || d->level_count <= 0 ||
+        d->level_count > DM2_V1_MAX_LEVELS ||
+        d->raw_map_data_base > d->raw_size) {
+        return 1;
+    }
+
+    map_data_bytes = (uint32_t)(d->raw_size - d->raw_map_data_base);
+    if (map_data_bytes == 0u) return 1;
+
+    out->g1_layout_absent = 0;
+    out->raw_only = 1;
+    out->tile_semantics_unresolved = 1;
+    out->map_count = d->level_count;
+    out->map_data_base = d->raw_map_data_base;
+    out->map_data_byte_count = map_data_bytes;
+    out->map_data_hash = dm2_v1_g1_receipt_hash(
+        d->raw_data + d->raw_map_data_base, map_data_bytes);
+    if (out->map_data_hash == 0u) goto absent;
+
+    for (level = 0; level < d->level_count; ++level) {
+        DM2_V1_G1MapRawSpan *span = &out->maps[level];
+        int descriptor_base = DM2_DUNGEON_HEADER_SIZE +
+                              level * DM2_MAP_DESC_SIZE;
+        int map_offset = d->level_offsets[level];
+        int width = d->level_widths[level];
+        int height = d->level_heights[level];
+        long map_bytes = (long)width * (long)height;
+
+        if (descriptor_base < 0 ||
+            descriptor_base > d->raw_size - DM2_MAP_DESC_SIZE ||
+            map_offset < 0 || width <= 0 || height <= 0 ||
+            map_bytes <= 0 || map_bytes > (long)UINT32_MAX ||
+            map_offset > (int)map_data_bytes ||
+            map_bytes > (long)map_data_bytes - map_offset) {
+            goto absent;
+        }
+
+        span->map = level;
+        span->descriptor_base = descriptor_base;
+        span->map_data_offset = map_offset;
+        span->width = width;
+        span->height = height;
+        span->descriptor_hash = dm2_v1_g1_receipt_hash(
+            d->raw_data + descriptor_base, DM2_MAP_DESC_SIZE);
+        span->map_byte_count = (uint32_t)map_bytes;
+        span->map_hash = dm2_v1_g1_receipt_hash(
+            d->raw_data + d->raw_map_data_base + map_offset,
+            span->map_byte_count);
+        if (span->descriptor_hash == 0u || span->map_hash == 0u)
+            goto absent;
+    }
+
+    out->available = 1;
+    return 1;
+
+absent:
+    memset(out, 0, sizeof(*out));
+    out->g1_layout_absent = 1;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_partial_map_boot(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1PartialMapBootReceipt *out) {

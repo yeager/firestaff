@@ -115,6 +115,35 @@ typedef struct {
     uint32_t map_data_hash;
 } DM2_V1_G1GroundStackMapCorpusReceipt;
 
+/*
+ * Raw provenance for each verified PC G1 Map_definitions row and the bounded
+ * byte span it selects in the trailing map-data block.  SKULLWIN/c_map.cpp
+ * does not prove the tile, terrain, object, or flag grammar of those bytes,
+ * so this receipt deliberately carries no decoded map semantics.
+ */
+typedef struct {
+    int map;
+    int descriptor_base;
+    int map_data_offset;
+    int width;
+    int height;
+    uint32_t descriptor_hash;
+    uint32_t map_byte_count;
+    uint32_t map_hash;
+} DM2_V1_G1MapRawSpan;
+
+typedef struct {
+    int available;
+    int g1_layout_absent;
+    int raw_only;
+    int tile_semantics_unresolved;
+    int map_count;
+    int map_data_base;
+    uint32_t map_data_byte_count;
+    uint32_t map_data_hash;
+    DM2_V1_G1MapRawSpan maps[DM2_V1_MAX_LEVELS];
+} DM2_V1_G1MapCorpusReceipt;
+
 #define DM2_V1_G1_PARTIAL_BOOT_MAX_BLOCKED_ROOTS 5
 
 /*
@@ -594,6 +623,10 @@ int dm2_v1_dungeon_collect_g1_record_pool_evidence(
 int dm2_v1_dungeon_collect_g1_ground_stack_map_corpus_receipt(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1GroundStackMapCorpusReceipt *out);
+
+int dm2_v1_dungeon_collect_g1_map_corpus_receipt(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1MapCorpusReceipt *out);
 /* Transactionally scans the PC G1 map roots and commits a partial-map boot
  * receipt only when every root is either direct, in the proven DB3/DB4
  * continuation, or one of the five explicitly blocked DB8/DB10 roots.
