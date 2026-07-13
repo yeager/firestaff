@@ -141,6 +141,8 @@ typedef struct {
     int has_header_verified_candidate;
     int live_distant_environment_timer_present;
     int skipped_missing_live_timer;
+    uint32_t verified_payload_bytes;
+    uint32_t matching_timer_record_count;
     uint32_t corpus_hash;
 } DM2_DistantEnvironmentTimerCorpusReceipt;
 

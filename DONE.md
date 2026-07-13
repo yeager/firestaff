@@ -6,6 +6,11 @@
   this adds no item, material, mesh, texture, palette, pixel, or draw meaning.
 
 - 2026-07-13 Nexus raw Structure1F item location/item-id pair receipt: complete; no object or draw semantics inferred.
+
+- 2026-07-13 DM2 weather timer corpus absence receipt: the skip-safe scan now
+  records verified payload bytes and zero matching timer records when no
+  skproject-proven save offset exists; no heuristic match or runtime promotion.
+
 - 2026-07-13 DM2 weather timer transaction receipt: a weather handoff is
   proven only when authenticated timer bytes, a ten-byte DistantEnvironment
   slot, and verified ENVIRONMENT material agree. Missing links reject.
