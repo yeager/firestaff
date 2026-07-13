@@ -41,6 +41,12 @@ typedef struct {
      * the command non-material, rather than inventing a placement. */
     int query_metadata_valid;
     DM2_V1_GdatImageMetadata query_metadata;
+    /* QUERY_TEMP_PICST realizes this exact environment IMG3. Keep the
+     * QUERY_GDAT_IMAGE_LOCALPAL receipt with it even while no-draw owns the
+     * still-unproven destination clip. */
+    int local_palette_valid;
+    uint8_t local_palette16[16];
+    uint32_t local_palette_hash;
     uint32_t material_hash;
 } DM2_V1_WeatherCommandReceipt;
 

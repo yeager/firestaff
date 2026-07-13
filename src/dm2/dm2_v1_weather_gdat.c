@@ -136,12 +136,22 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
         loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset,
         out->image_field, &out->query_metadata);
     if (!out->query_metadata_valid) return 0;
+    /* skproject QUERY_TEMP_PICST realizes the same ENVIRONMENT IMG3 that
+     * QUERY_GDAT_IMAGE_LOCALPAL binds before image presentation. A valid
+     * command text and dimensions are not enough to authorize a weather
+     * material without this per-image palette receipt. */
+    out->local_palette_valid = dm2_v1_asset_load_image_local_palette(
+        loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset,
+        out->image_field, out->local_palette16, &out->local_palette_hash);
+    if (!out->local_palette_valid || out->local_palette_hash == 0u) return 0;
     hash = out->raw_hash;
     hash ^= out->rect_number;
     hash *= 16777619u;
     hash ^= out->flip_mode;
     hash *= 16777619u;
     hash ^= out->query_metadata.metadata_hash;
+    hash *= 16777619u;
+    hash ^= out->local_palette_hash;
     hash *= 16777619u;
     out->material_hash = hash;
     out->material_valid = 1;
