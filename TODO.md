@@ -2761,6 +2761,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     afterplay receipt and explicitly does not create a second smoke record.
     Remaining work is real multi-effect capture, not a cue or replacement
     renderer.
+  - 2026-07-13 update: the normal M11 projectile route now likewise defers a
+    killed-all C040 until F0188/F0189 have dropped, unlinked, and deleted
+    source group events. A full timeline queue with one deletable C29-C41
+    event now retains a scheduled C040 rather than an unscheduled live entry.
+    Remaining work is real multi-effect capture, not a cue or replacement
+    renderer.
   - 2026-07-09 update: DM1 F0190 killed-some state now owns cleanup/fear apply receipts consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
   - 2026-07-09 update: DM1 F0190 mutation dispatch now owns the combined possession/killed-some/killed-all apply receipt consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
   - 2026-07-09 update: DM1 F0231 runtime result now owns post-resolve apply receipts for luck, side effects, group damage, and damage emission consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.

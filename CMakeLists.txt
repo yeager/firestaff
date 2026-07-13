@@ -17677,6 +17677,18 @@ if(NOT TARGET test_m11_creature_fixed_possession_runtime_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_m11_f0190_projectile_afterplay_runtime_pc34_compat)
+    add_executable(test_m11_f0190_projectile_afterplay_runtime_pc34_compat
+        tests/test_m11_f0190_projectile_afterplay_runtime_pc34_compat.c)
+    target_link_libraries(test_m11_f0190_projectile_afterplay_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_f0190_projectile_afterplay_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_f0190_projectile_afterplay_runtime_source_lock
+        COMMAND test_m11_f0190_projectile_afterplay_runtime_pc34_compat)
+endif()
+
 if(NOT TARGET test_m11_open_door_spell_runtime_pc34_compat)
     add_executable(test_m11_open_door_spell_runtime_pc34_compat
         tests/test_m11_open_door_spell_runtime_pc34_compat.c

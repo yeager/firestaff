@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0190 projectile killed-all ordering: the live M11
+  projectile route defers C040 until F0188 possessions, F0189 unlink, and
+  F0181 queued-event deletion complete. A full timeline queue with one
+  source-deletable group event now frees the slot before the real C040
+  advance is scheduled; killed-some smoke remains after its compacted group
+  mutation. Source: ReDMCSB `GROUP.C` F0188/F0189/F0190:834-839,892-916.
+  Verification: focused M11 projectile runtime CTest.
+
 - 2026-07-13 DM1 GAP-005 F0306 PC34 runtime: M11 defender-strength now uses
   an explicit Turbo C++ 1.01 second-operand F0306 implementation, isolated
   from the cross-media compiler-order test switch. A real-PC34 runtime test
