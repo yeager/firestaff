@@ -382,6 +382,60 @@ static void test_candidate_slot_reuse_before_accept(void) {
           "C160 clears G0299 and takes the mirror-disable path");
 }
 
+static void test_two_champion_candidate_slot_reuse(void) {
+    ChampionPortraitClickInput_Compat in;
+    CandidateChampionAddResult_Compat add;
+    CandidatePanelState_Compat st;
+    CandidatePanelResult_Compat panel;
+
+    printf("[two_champion_candidate_slot_reuse]\n");
+
+    /* ReDMCSB REVIVE.C F0280:272-277 records G0299 as the previous party
+     * count plus one before incrementing G0305. F0282:744-783 always removes
+     * the current tail slot on C162, and only clears the leader when that
+     * tail was the sole party member. Two established champions therefore
+     * keep slots 0 and 1 while a rejected C127 candidate repeatedly uses
+     * slot 2; C160 retains that same slot and disables the mirror sensor. */
+    in = base_portrait_click_input();
+    in.partyChampionCount = 2;
+    in.leaderIndex = 0;
+
+    add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(add.triggersCandidateAdd == 1, "two-party C127 route reaches F0280");
+    CHECK(add.candidateChampionIndex == 2, "two-party candidate appends at slot 2");
+    CHECK(add.candidateChampionOrdinal == 3, "two-party G0299 records ordinal 3");
+    CHECK(add.nextPartyChampionCount == 3, "two-party C127 increments G0305 to 3");
+    CHECK(add.setLeaderToFirstChampion == 0, "two-party C127 preserves existing leader");
+
+    st.partyChampionCount = add.nextPartyChampionCount;
+    st.candidateChampionOrdinal = add.candidateChampionOrdinal;
+    panel = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
+        st, DM1_COMMAND_CANCEL);
+    CHECK(panel.valid == 1, "two-party C162 is valid for appended candidate");
+    CHECK(panel.cancelled == 1, "two-party C162 rejects candidate");
+    CHECK(panel.candidateChampionIndex == 2, "two-party C162 removes tail slot 2");
+    CHECK(panel.nextPartyChampionCount == 2, "two-party C162 restores two champions");
+    CHECK(panel.nextCandidateChampionOrdinal == 0, "two-party C162 clears G0299");
+    CHECK(panel.disablesMirrorSensor == 0, "two-party C162 leaves mirror enabled");
+
+    add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(add.triggersCandidateAdd == 1, "two-party C127 remains armed after rejection");
+    CHECK(add.candidateChampionIndex == 2, "two-party retry reuses slot 2");
+    CHECK(add.candidateChampionOrdinal == 3, "two-party retry restores ordinal 3");
+    CHECK(add.nextPartyChampionCount == 3, "two-party retry appends only candidate slot");
+
+    st.partyChampionCount = add.nextPartyChampionCount;
+    st.candidateChampionOrdinal = add.candidateChampionOrdinal;
+    panel = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
+        st, DM1_COMMAND_RESURRECT);
+    CHECK(panel.valid == 1, "two-party C160 is valid for retried candidate");
+    CHECK(panel.resurrected == 1, "two-party C160 accepts candidate");
+    CHECK(panel.candidateChampionIndex == 2, "two-party C160 retains slot 2");
+    CHECK(panel.nextPartyChampionCount == 3, "two-party C160 keeps three champions");
+    CHECK(panel.nextCandidateChampionOrdinal == 0, "two-party C160 clears G0299");
+    CHECK(panel.disablesMirrorSensor == 1, "two-party C160 disables mirror sensor");
+}
+
 static void test_mirror_sensor_disable_order(void) {
     MirrorThing_Compat things[3];
     MirrorSensorDisableResult_Compat d;
@@ -514,6 +568,7 @@ int main(void) {
     test_candidate_panel_path();
     test_candidate_append_clear_cycles();
     test_candidate_slot_reuse_before_accept();
+    test_two_champion_candidate_slot_reuse();
     test_mirror_sensor_disable_order();
     test_vi_altar_full_cycle_transition();
     test_command_validation();
