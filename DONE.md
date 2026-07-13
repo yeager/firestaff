@@ -23,6 +23,14 @@
   added. Source: ReDMCSB `GROUP.C` F0190 and `DUNVIEW.C` F0115. Verification:
   focused CTest.
 
+- 2026-07-13 DM1 F0190 C040 attack-domain regression: the existing
+  killed-all M10-to-F0115 test now drives each source-valid size/attack pair
+  (`quarter/110`, `half/190`, `full/255`) through the live explosion list and
+  existing M11 receipt. It also rejects every other 8-bit attack value plus
+  `-1` and `256` before any M10 materialization. Source: ReDMCSB `GROUP.C`
+  F0190:907-917 and `DUNVIEW.C` F0115. No production route, cue fallback, or
+  synthetic effect was added. Verification: focused CTest.
+
 - 2026-07-13 DM1 PC34 C24 external-corpus receipt: opt-in external corpus
   rows now retain canonical four-byte fluxcage unions (`B.Location` plus
   `C.Slot`) with counts, byte lengths, and fingerprints. The receipt sorts

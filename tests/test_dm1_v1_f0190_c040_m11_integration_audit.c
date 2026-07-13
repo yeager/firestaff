@@ -68,19 +68,16 @@ static int audit_m11_live_explosion_handoff(void)
     return ok;
 }
 
-int main(void)
+static int build_killed_all_afterplay(
+    int creatureAttributes,
+    DM1_MeleeF0231AftermathApplyPlanPc34* outApply,
+    DM1_MeleeF0190KilledAllAfterplayReceiptPc34* outAfterplay)
 {
     DM1_MeleeF0231AftermathInputPc34 aftermathInput;
     DM1_MeleeF0231AftermathPlanPc34 aftermathPlan;
-    DM1_MeleeF0231AftermathApplyPlanPc34 aftermathApply;
-    DM1_MeleeF0190KilledAllAfterplayReceiptPc34 afterplay;
-    DM1_V1_ViewportRuntimeMaterializationInputPc34 viewportInput;
-    DM1_V1_ViewportRuntimeMaterializationDecisionPc34 viewportDecision;
-    struct ExplosionList_Compat explosions;
-    struct TimelineEvent_Compat advance;
-    int createdSlot = -1;
     int ok = 1;
 
+    if (!outApply || !outAfterplay) return 0;
     memset(&aftermathInput, 0, sizeof(aftermathInput));
     aftermathInput.groupIndex = 4;
     aftermathInput.creatureIndex = 2;
@@ -95,7 +92,7 @@ int main(void)
     aftermathInput.targetMapX = 8;
     aftermathInput.targetMapY = 9;
     aftermathInput.currentTick = 77u;
-    aftermathInput.creatureAttributes = DM1_SIZE_FULL_SQUARE;
+    aftermathInput.creatureAttributes = creatureAttributes;
     aftermathInput.killedCell = EXPLOSION_CELL_CENTERED;
     aftermathInput.damageOutcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
     aftermathInput.fallbackCombatOutcome = COMBAT_OUTCOME_HIT_DAMAGE;
@@ -104,17 +101,33 @@ int main(void)
                      &aftermathInput, &aftermathPlan),
                  "F0231 builds the killed-all aftermath");
     ok &= expect(dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
-                     &aftermathPlan, &aftermathApply),
+                     &aftermathPlan, outApply),
                  "F0231 builds the M10 apply receipt");
     ok &= expect(dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
-                     &aftermathApply, &afterplay),
+                     outApply, outAfterplay),
                  "F0190 builds the source-smoke afterplay receipt");
+    return ok;
+}
+
+static int verify_valid_attack_route(int creatureAttributes, int expectedAttack)
+{
+    DM1_MeleeF0231AftermathApplyPlanPc34 aftermathApply;
+    DM1_MeleeF0190KilledAllAfterplayReceiptPc34 afterplay;
+    DM1_V1_ViewportRuntimeMaterializationInputPc34 viewportInput;
+    DM1_V1_ViewportRuntimeMaterializationDecisionPc34 viewportDecision;
+    struct ExplosionList_Compat explosions;
+    struct TimelineEvent_Compat advance;
+    int createdSlot = -1;
+    int ok = 1;
+
+    ok &= build_killed_all_afterplay(creatureAttributes, &aftermathApply,
+                                     &afterplay);
     ok &= expect(afterplay.shouldPresentSourceSmoke &&
                      afterplay.requiresKilledAllMutationFirst &&
                      afterplay.sourceSmokeCreateInput.explosionType ==
                          C040_EXPLOSION_SMOKE &&
-                     afterplay.sourceSmokeCreateInput.attack == 255,
-                 "F0190 retains only the original full-square C040 smoke");
+                     afterplay.sourceSmokeCreateInput.attack == expectedAttack,
+                 "F0190 retains the source-locked C040 attack");
 
     memset(&explosions, 0, sizeof(explosions));
     memset(&advance, 0, sizeof(advance));
@@ -126,7 +139,7 @@ int main(void)
                      explosions.entries[createdSlot].reserved0 &&
                      explosions.entries[createdSlot].explosionType ==
                          C040_EXPLOSION_SMOKE &&
-                     explosions.entries[createdSlot].attack == 255 &&
+                     explosions.entries[createdSlot].attack == expectedAttack &&
                      explosions.entries[createdSlot].mapIndex == 3 &&
                      explosions.entries[createdSlot].mapX == 8 &&
                      explosions.entries[createdSlot].mapY == 9,
@@ -154,11 +167,58 @@ int main(void)
                          C040_EXPLOSION_SMOKE &&
                      viewportDecision.liveRenderableExplosionFrames[0] ==
                          explosions.entries[createdSlot].currentFrame &&
-                     viewportDecision.liveRenderableExplosionAttacks[0] == 255,
+                     viewportDecision.liveRenderableExplosionAttacks[0] ==
+                         expectedAttack &&
+                     viewportDecision.liveExplosionAttack == expectedAttack,
                  "C040 reaches M11's existing F0115 material boundary unchanged");
+    return ok;
+}
+
+static int verify_invalid_attacks_rejected(void)
+{
+    DM1_MeleeF0231AftermathApplyPlanPc34 aftermathApply;
+    DM1_MeleeF0190KilledAllAfterplayReceiptPc34 afterplay;
+    int attack;
+    int ok = 1;
+
+    ok &= build_killed_all_afterplay(DM1_SIZE_FULL_SQUARE, &aftermathApply,
+                                     &afterplay);
+    for (attack = 0; attack <= 255; ++attack) {
+        aftermathApply.smokeCreateInput.attack = attack;
+        ok &= expect(dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
+                         &aftermathApply, &afterplay),
+                     "F0190 inspects every byte-domain attack value");
+        if (attack == 110 || attack == 190 || attack == 255) {
+            ok &= expect(afterplay.shouldPresentSourceSmoke &&
+                             afterplay.sourceSmokeCreateInput.attack == attack,
+                         "F0190 admits only source-derived smoke attacks");
+        } else {
+            ok &= expect(!afterplay.shouldPresentSourceSmoke,
+                         "F0190 rejects every other byte-domain attack");
+        }
+    }
+    for (attack = -1; attack <= 256; attack += 257) {
+        aftermathApply.smokeCreateInput.attack = attack;
+        ok &= expect(dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
+                         &aftermathApply, &afterplay) &&
+                         !afterplay.shouldPresentSourceSmoke,
+                     "F0190 rejects out-of-domain smoke attacks");
+    }
+    return ok;
+}
+
+int main(void)
+{
+    int ok = 1;
+
+    /* ReDMCSB GROUP.C F0190:907-917 selects only these three values. */
+    ok &= verify_valid_attack_route(DM1_SIZE_QUARTER_SQUARE, 110);
+    ok &= verify_valid_attack_route(DM1_SIZE_HALF_SQUARE, 190);
+    ok &= verify_valid_attack_route(DM1_SIZE_FULL_SQUARE, 255);
+    ok &= verify_invalid_attacks_rejected();
     ok &= audit_m11_live_explosion_handoff();
 
     if (!ok) return 1;
-    puts("ok: F0190 C040 M10-to-M11 integration audit");
+    puts("ok: F0190 C040 M10-to-M11 attack-domain integration audit");
     return 0;
 }
