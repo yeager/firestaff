@@ -15669,6 +15669,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (state->dm2State.startup_menu_active) {
             return m11_dm2_startup_handle_input(state, input);
         }
+        if (state->dm2SaveDialoguePanelActive) {
+            if (input == M12_MENU_INPUT_BACK) {
+                state->dm2SaveDialoguePanelActive = 0;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         shop_result = m11_handle_dm2_shop_input(state, input);
         if (shop_result != M11_GAME_INPUT_IGNORED) {
             return shop_result;
@@ -15687,9 +15694,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_REDRAW;
         }
         if (input == M12_MENU_INPUT_SAVE_GAME) {
-            return M11_GameView_QuickSave(state)
-                       ? M11_GAME_INPUT_REDRAW
-                       : M11_GAME_INPUT_IGNORED;
+            /* The source panel opens before any save action.  Its button
+             * semantics remain blocked until the original glyph/input route
+             * is decoded; M11 must not invent a confirmation dialog. */
+            state->dm2SaveDialoguePanelActive = 1;
+            return M11_GAME_INPUT_REDRAW;
         }
         if (state->inventoryPanelActive) {
             return input == M12_MENU_INPUT_NONE
@@ -32956,6 +32965,60 @@ static void m11_draw_dm2_leader_hand_object_icon(const M11_GameViewState* state,
                                       1);
 }
 
+/* c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL expands raw4 rectangles and
+ * blits DIALOG_BOXES/0x81/0 with its local palette.  M11 consumes that exact
+ * command and never substitutes a launcher or generic dialog panel. */
+static int m11_draw_dm2_save_dialogue_panel(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    DM2_V1_BootProfile *profile;
+    DM2_V1_DialogueOpenPanelHostCommand command;
+    uint8_t *pixels = NULL;
+    int srcW = 0;
+    int srcH = 0;
+    int stride = 0;
+    int y;
+
+    if (!state || !framebuffer ||
+        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        !state->dm2SaveDialoguePanelActive || !state->dm2BootProfile) {
+        return 0;
+    }
+    profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
+    memset(&command, 0, sizeof(command));
+    if (!dm2_v1_boot_dialogue_open_panel_host_command(profile, &command) ||
+        !command.valid || !command.draw.valid ||
+        command.panel_rect.w <= 0 || command.panel_rect.h <= 0 ||
+        dm2_v1_boot_gdat_image_asset_fetch(
+            profile, DM2_GDAT_CATEGORY_DIALOG_BOXES,
+            DM2_V1_DIALOGUE_BOX_INDEX, DM2_V1_DIALOGUE_BOX_FIELD,
+            &pixels, &srcW, &srcH, &stride) != 0 ||
+        !pixels || srcW <= 0 || srcH <= 0 || stride < srcW) {
+        dm2_v1_boot_gdat_image_asset_free(pixels);
+        return 0;
+    }
+    for (y = 0; y < command.panel_rect.h; ++y) {
+        int x;
+        int sy = y * srcH / command.panel_rect.h;
+        int dy = command.panel_rect.y + y;
+        if (dy < 0 || dy >= framebufferHeight) continue;
+        for (x = 0; x < command.panel_rect.w; ++x) {
+            int sx = x * srcW / command.panel_rect.w;
+            int dx = command.panel_rect.x + x;
+            uint8_t color;
+            if (dx < 0 || dx >= framebufferWidth) continue;
+            color = pixels[sy * stride + sx];
+            if (color < 16u) color = command.draw.material.palette[color];
+            framebuffer[dy * framebufferWidth + dx] = color;
+        }
+    }
+    dm2_v1_boot_gdat_image_asset_free(pixels);
+    return 1;
+}
+
 typedef struct M11_DM2StartupDrawContext {
     const M11_GameViewState *state;
     const DM2_V1_BootStartupRenderOwnershipReceipt *ownership_receipt;
@@ -38015,6 +38078,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_draw_dm2_leader_hand_object_icon(state, framebuffer,
                                                  framebufferWidth,
                                                  framebufferHeight);
+            (void)m11_draw_dm2_save_dialogue_panel(state, framebuffer,
+                                                   framebufferWidth,
+                                                   framebufferHeight);
         }
         m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                             framebufferHeight);

@@ -24,6 +24,17 @@
   PRS3, or animation semantics were inferred. Verification: Ninja and CTest
   `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_structure2_no_draw_receipt`.
+- 2026-07-13 DM2 M11 source dialogue consumer: the DM2 save command now
+  opens only skproject `c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL`'s
+  source-bound `DIALOG_BOXES/0x81/0` surface. M11 expands the verified raw4
+  panel rectangle through the host command, maps each indexed pixel through
+  that image's verified local palette, and blocks rather than drawing a
+  generic dialog when any material or placement proof is absent. Escape
+  closes this source panel. The original glyph/input semantics remain
+  explicitly blocked pending their own source decoder; no substitute labels
+  or button behavior were introduced. Verification: Ninja and CTest
+  `dm2_v1_dialogue_gdat_receipt`.
+
 - 2026-07-13 CSBWin `TT_DOOR` DSA receipt: restored function-10 timers now
   follow `Timer.cpp::ProcessTT_DOOR` through `ActivateDSA` and
   `DSA.cpp::ProcessDSATimer5` to the existing authenticated
