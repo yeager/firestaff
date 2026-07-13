@@ -768,6 +768,10 @@ typedef struct {
      * plane until both GRAPHICSSET images and local palettes are verified. */
     uint8_t last_floor_ceiling_material_required_mask;
     uint8_t last_floor_ceiling_material_consumed_mask;
+    /* skproject T600 uses the same GRAPHICSSET planes for outdoor sky and
+     * ground. Keep their source transaction separate from the indoor view. */
+    uint8_t last_outdoor_scene_material_required_mask;
+    uint8_t last_outdoor_scene_material_consumed_mask;
     int gdat_scene_control_ready;
     int gdat_scene_control_consumed_count;
     int gdat_scene_light_consumed_count;

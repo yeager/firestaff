@@ -5119,6 +5119,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->gdat_scene_weather_consumed_count = 0;
     s->gdat_sprite_palette_consumed_count = 0;
     s->gdat_local_palette_consumed_count = 0;
+    s->last_outdoor_scene_material_required_mask = 0u;
+    s->last_outdoor_scene_material_consumed_mask = 0u;
     s->last_hud_core_gdat_hash = 2166136261u;
     s->last_hud_core_pixel_count = 0u;
     s->asset_hud_portrait_drawn_count = 0;
@@ -5131,6 +5133,19 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
      * Source: SKULL.ASM T560 (dungeon), SKULL.ASM T600 (outdoor) */
 
     if (s->is_outdoor) {
+        typedef struct {
+            const uint8_t *pixels;
+            int width;
+            int height;
+            int stride;
+            uint8_t palette16[16];
+            uint32_t palette_hash;
+            int ready;
+        } DM2_V1_OutdoorSceneMaterial;
+        enum {
+            DM2_OUTDOOR_SCENE_SKY = 1u << 0,
+            DM2_OUTDOOR_SCENE_GROUND = 1u << 1
+        };
         /* DM2 outdoor rendering:
          * Source: SKULL.ASM T600 (outdoor tick, sky and ground draw)
          *         skproject/SKWIN/SkWinCore.cpp GRAPHICSSET material route
@@ -5152,16 +5167,76 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         int ground_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
             s->gdat_scene_material_index,
             DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR);
+        DM2_V1_OutdoorSceneMaterial sky_material = { 0 };
+        DM2_V1_OutdoorSceneMaterial ground_material = { 0 };
+        int sky_asset;
+        int ground_asset;
         /* T600 resolves each GRAPHICSSET IMG3 with its own local palette;
          * source-required outdoor frames must not borrow an interface palette. */
-        int sky_asset =
-            dm2_v1_fetch_viewport_local_material(s,
-                                                  sky_gdat_index,
-                                                  &sky_pixels,
-                                                  &sky_w,
-                                                  &sky_h_src,
-                                                  &sky_stride) == 0 &&
-            sky_pixels && sky_w > 0 && sky_h_src > 0;
+        if (s->source_materials_required) {
+            int graphicsset_index = 0;
+            int material_field = 0;
+
+            s->last_outdoor_scene_material_required_mask =
+                DM2_OUTDOOR_SCENE_SKY | DM2_OUTDOOR_SCENE_GROUND;
+            /* skproject T600 resolves both active GRAPHICSSET materials
+             * before it presents the outdoor scene. Cache the real IMG3 plus
+             * local-palette pairs, so a rejected ground cannot leave a sky
+             * rendered through an invented or stale palette. */
+            if (!dm2_v1_viewport_scene_material_graphic_address(
+                    sky_gdat_index, &graphicsset_index, &material_field) ||
+                graphicsset_index != s->gdat_scene_material_index ||
+                material_field != DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING ||
+                dm2_v1_fetch_viewport_local_material(
+                    s, sky_gdat_index, &sky_material.pixels,
+                    &sky_material.width, &sky_material.height,
+                    &sky_material.stride) != 0 ||
+                !sky_material.pixels || sky_material.width <= 0 ||
+                sky_material.height <= 0 || !s->active_asset_palette_ready ||
+                s->active_asset_palette_hash == 0u) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+                return;
+            }
+            memcpy(sky_material.palette16, s->active_asset_palette16,
+                   sizeof(sky_material.palette16));
+            sky_material.palette_hash = s->active_asset_palette_hash;
+            sky_material.ready = 1;
+
+            if (!dm2_v1_viewport_scene_material_graphic_address(
+                    ground_gdat_index, &graphicsset_index, &material_field) ||
+                graphicsset_index != s->gdat_scene_material_index ||
+                material_field != DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR ||
+                dm2_v1_fetch_viewport_local_material(
+                    s, ground_gdat_index, &ground_material.pixels,
+                    &ground_material.width, &ground_material.height,
+                    &ground_material.stride) != 0 ||
+                !ground_material.pixels || ground_material.width <= 0 ||
+                ground_material.height <= 0 || !s->active_asset_palette_ready ||
+                s->active_asset_palette_hash == 0u) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+                return;
+            }
+            memcpy(ground_material.palette16, s->active_asset_palette16,
+                   sizeof(ground_material.palette16));
+            ground_material.palette_hash = s->active_asset_palette_hash;
+            ground_material.ready = 1;
+            sky_pixels = sky_material.pixels;
+            sky_w = sky_material.width;
+            sky_h_src = sky_material.height;
+            sky_stride = sky_material.stride;
+            memcpy(s->active_asset_palette16, sky_material.palette16,
+                   sizeof(s->active_asset_palette16));
+            s->active_asset_palette_hash = sky_material.palette_hash;
+            s->active_asset_palette_ready = sky_material.ready;
+            sky_asset = 1;
+        } else {
+            sky_asset = dm2_v1_fetch_viewport_local_material(
+                            s, sky_gdat_index, &sky_pixels, &sky_w,
+                            &sky_h_src, &sky_stride) == 0 &&
+                sky_pixels && sky_w > 0 && sky_h_src > 0;
+        }
         if (sky_asset) {
             dm2_v1_blit_tiled_material_bitmap(
                 s, vp, stride, 0, 0, DM2_VP_WIDTH, sky_h, sky_pixels,
@@ -5171,6 +5246,10 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
             ++s->asset_floor_ceiling_drawn_count;
             ++s->asset_outdoor_sky_drawn_count;
             ++s->gdat_scene_material_consumed_count;
+            if (s->source_materials_required) {
+                s->last_outdoor_scene_material_consumed_mask |=
+                    DM2_OUTDOOR_SCENE_SKY;
+            }
         } else if (s->source_materials_required) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
@@ -5182,14 +5261,22 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         int ground_w = 0;
         int ground_h_src = 0;
         int ground_stride = 0;
-        int ground_asset =
-            dm2_v1_fetch_viewport_local_material(s,
-                                                  ground_gdat_index,
-                                                  &ground_pixels,
-                                                  &ground_w,
-                                                  &ground_h_src,
-                                                  &ground_stride) == 0 &&
-            ground_pixels && ground_w > 0 && ground_h_src > 0;
+        if (s->source_materials_required) {
+            ground_pixels = ground_material.pixels;
+            ground_w = ground_material.width;
+            ground_h_src = ground_material.height;
+            ground_stride = ground_material.stride;
+            memcpy(s->active_asset_palette16, ground_material.palette16,
+                   sizeof(s->active_asset_palette16));
+            s->active_asset_palette_hash = ground_material.palette_hash;
+            s->active_asset_palette_ready = ground_material.ready;
+            ground_asset = 1;
+        } else {
+            ground_asset = dm2_v1_fetch_viewport_local_material(
+                               s, ground_gdat_index, &ground_pixels,
+                               &ground_w, &ground_h_src, &ground_stride) == 0 &&
+                ground_pixels && ground_w > 0 && ground_h_src > 0;
+        }
         if (ground_asset) {
             dm2_v1_blit_tiled_material_bitmap(
                 s, vp, stride, 0, sky_h, DM2_VP_WIDTH,
@@ -5200,9 +5287,20 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
             ++s->asset_floor_ceiling_drawn_count;
             ++s->asset_outdoor_ground_drawn_count;
             ++s->gdat_scene_material_consumed_count;
+            if (s->source_materials_required) {
+                s->last_outdoor_scene_material_consumed_mask |=
+                    DM2_OUTDOOR_SCENE_GROUND;
+            }
         } else if (s->source_materials_required) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+        }
+        if (s->source_materials_required &&
+            s->last_outdoor_scene_material_required_mask !=
+                s->last_outdoor_scene_material_consumed_mask) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+            return;
         }
     } else {
         /* DM2 indoor dungeon rendering:
