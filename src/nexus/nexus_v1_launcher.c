@@ -438,7 +438,9 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
         receipt->startup_sfx_blocks_real_playback =
             sfx.blocks_real_sfx_playback;
         receipt->startup_audio_handoff_ready =
-            sfx.level_index == 0 && sfx.cd_track == 2 ? 1 : 0;
+            sfx.level_index == 0 && sfx.cd_track == 2 &&
+            sfx.status == NEXUS_SFX_RUNTIME_READY_DECODED &&
+            !sfx.blocks_real_sfx_playback;
     }
 
     receipt->startup_assets_ready =

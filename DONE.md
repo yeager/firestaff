@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus startup SFX gate: Track 02 now requires a decoded,
+  unblocked SFX runtime receipt before it can satisfy the launcher audio
+  handoff. Verification: `test_nexus_v1_startup_menu_pc34_compat` PASS.
+
 - 2026-07-13 DM1 PC34 F0435 dungeon-tail span validation: save handoff now
   rejects a checksum-valid tail before receipt publication when any map's
   raw data span lies outside its saved raw-map block, matching the source
