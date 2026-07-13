@@ -28,6 +28,9 @@ int main(void) {
         engine.dgn_material_plan.structure1f_item_command_binding_receipt
             .bound_regular_inventory_count != 0 ||
         engine.dgn_material_plan.structure1f_item_command_sources_consumed ||
+        engine.dgn_material_plan.structure1f_item_floor_material_receipt
+            .command_material_count != 0 ||
+        engine.dgn_material_plan.structure1f_item_floor_materials_consumed ||
         engine.dgn_material_plan.receipt.fallback_visuals_permitted) {
         fprintf(stderr, "Incomplete DGN data did not produce a no-draw plan\n");
         return 1;

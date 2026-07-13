@@ -87,6 +87,14 @@ typedef struct {
     Nexus_V1_DgnStructure1FItemMaterialReceipt
         structure1f_item_command_binding_receipt;
     int structure1f_item_command_sources_consumed;
+    /* Descriptor-0008 retains an authenticated packed 4bpp span and local
+     * palette at its floor command. It stays no-draw until original VDP1
+     * command provenance proves the texel order and placement. */
+    Nexus_V1_DgnCommandPacked4BppMaterial
+        structure1f_item_floor_materials[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_DgnCommandPacked4BppMaterialReceipt
+        structure1f_item_floor_material_receipt;
+    int structure1f_item_floor_materials_consumed;
     int level;
     int party_x;
     int party_y;
