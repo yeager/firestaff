@@ -16573,6 +16573,41 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     timer_index = profile->csbwin_timer_queue[queue_slot];
     if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
+    if (timer->function == 72u) {
+        CSB_V1_Champion *champion;
+        uint16_t shield_delta;
+
+        /* CSBWin CSBCode.cpp:6511-6538 and ReDMCSB TIMELINE.C F0261 lines
+         * 1966-1971 expire C72 from its champion priority and B.Defense
+         * word. The restored TIMER keeps that union as ubyte5 and little-
+         * endian ubyte6..7, while CHARDESC owns ShieldStrength. Do not admit
+         * a stale record, an absent champion, or an underflowing decrement;
+         * the latter cannot be proven as a live saved shield contribution.
+         * Source status-panel redraw remains blocked without its M11 owner. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 && profile->party_state_valid &&
+            profile->champion_count > 0 &&
+            profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
+            profile->party_state.ChampionCount == profile->champion_count &&
+            timer->ubyte5 < (uint8_t)profile->party_state.ChampionCount &&
+            timer->ubyte5 < CSB_V1_MAX_CHAMPIONS) {
+            champion = &profile->party_state.Champions[timer->ubyte5];
+            shield_delta = (uint16_t)timer->ubyte6 |
+                ((uint16_t)timer->ubyte7 << 8);
+            if (shield_delta <= champion->ShieldStrength) {
+                champion->ShieldStrength =
+                    (uint16_t)(champion->ShieldStrength - shield_delta);
+            }
+        }
+        /* C72 is source-owned even if malformed, so generic timeline code
+         * cannot gain a future champion-shield mutation without this receipt. */
+        return 1;
+    }
     if (timer->function == 71u) {
         /* CSBWin CSBCode.cpp:6510 and ReDMCSB TIMELINE.C F0261 lines
          * 1953-1965 expire C71 by decrementing the party invisibility count.

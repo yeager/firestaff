@@ -368,5 +368,35 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 &&
               profile.csbwin_character_tail_invisible == 0u,
           "invisibility expiry fails closed rather than underflowing a zero count");
+
+    profile.party_state.Champions[0].ShieldStrength = 100u;
+    profile.csbwin_timers[0].function = 72u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 30u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].ShieldStrength == 70u,
+          "restored champion-shield timer applies its exact saved defense delta");
+
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].ShieldStrength == 70u,
+          "stale champion-shield identity cannot change saved defense");
+
+    profile.party_state.Champions[0].ShieldStrength = 10u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].ubyte6 = 11u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].ShieldStrength == 10u,
+          "underflowing champion-shield expiry remains fail-closed");
     return failures == 0 ? 0 : 1;
 }
