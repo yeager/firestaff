@@ -324,11 +324,42 @@ static void test_texture_section_boundary(void) {
           "TEXT section preserves bounded range");
     CHECK(section.declared_entry_count == 1 && section.flags == 1 &&
           section.descriptor_count == 1 &&
+          section.material_ids_unique && section.unique_material_id_count == 1 &&
+          section.first_material_id == 0 && section.last_material_id == 0 &&
           section.descriptors[0].width == 8 && section.descriptors[0].height == 8,
           "TEXT section preserves opaque metadata");
     buf[55] = 96;
     CHECK(nexus_v1_dmdf_parse_texture_section(buf, 64, &section) == 0,
           "truncated TEXT section is rejected");
+}
+
+static void test_texture_section_duplicate_material_rejected(void) {
+    uint8_t buf[256];
+    Nexus_DMDFTextureSection section;
+    Nexus_DMDFMaterialBank bank;
+
+    memset(buf, 0, sizeof(buf));
+    buf[0] = 'D'; buf[1] = 'M'; buf[2] = 'D'; buf[3] = 'F';
+    wb32(buf + 0x24, 48U);
+    wb32(buf + 48, NEXUS_DMDF_TEXTURE_SECTION_MAGIC);
+    wb32(buf + 52, 208U);
+    wb32(buf + 56, 2U);
+    wb32(buf + 72, 72U);
+    wb32(buf + 76, 32U);
+    /* Two otherwise valid descriptors deliberately target material 7. */
+    wb32(buf + 80, 0x00070000U); wb32(buf + 84, 8U);
+    wb32(buf + 88, 0x00080000U); wb32(buf + 92, 72U);
+    wb32(buf + 100, 0x00070000U); wb32(buf + 104, 8U);
+    wb32(buf + 108, 0x00080000U); wb32(buf + 112, 72U);
+    CHECK(nexus_v1_dmdf_parse_texture_section(buf, (int)sizeof(buf),
+                                               &section) == 1 &&
+          !section.material_ids_unique && section.unique_material_id_count == 1,
+          "TEXT parser retains duplicate material-id ambiguity");
+    memset(&bank, 0, sizeof(bank));
+    CHECK(nexus_v1_dmdf_decode_text_material_bank(buf, (int)sizeof(buf),
+                                                   &bank) == 0 &&
+          !bank.valid && bank.surface_count == 0,
+          "duplicate TEXT material IDs cannot overwrite a source surface");
 }
 
 static void test_optional_real_mns(void) {
@@ -375,6 +406,9 @@ static void test_optional_real_mns(void) {
               "optional real .MNS TEXT section is bounded");
         CHECK((uint64_t)section.offset + section.bytes <= size,
               "optional real .MNS TEXT section stays inside file");
+        CHECK(section.material_ids_unique &&
+              section.unique_material_id_count == section.descriptor_count,
+              "optional real .MNS TEXT material IDs have one source bank slot each");
         printf("  NOTE: real .MNS TEXT section offset=%u bytes=%u entries=%u flags=%u\n",
                section.offset, section.bytes, section.declared_entry_count,
                section.flags);
@@ -398,6 +432,7 @@ int main(void) {
     test_embedded_scan_and_raw_tail();
     test_material_decode();
     test_texture_section_boundary();
+    test_texture_section_duplicate_material_rejected();
     test_optional_real_mns();
 
     printf("\nResults: %d PASS, %d FAIL\n", g_pass, g_fail);

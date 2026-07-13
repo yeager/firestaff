@@ -69,6 +69,11 @@ Nexus Track 1 capture now requires hash-bound SN_FLOOR.MNS and SN_WALL.MNS
 and forbids BPK material surfaces. Remaining work is full DGN semantics and
 texture decoding, not a substitute material path.
 
+The verified MNS TEXT route now rejects duplicate material IDs before any
+surface allocation, so one original descriptor cannot silently replace another
+in the static material bank. This hardens source identity only; it does not
+prove Structure1B's selector transform or make DGN geometry drawable.
+
 Nexus's original Structure1B wall-selector transform remains unproven. Real
 LEV00-LEV15 bytes 3/4 contain values outside the 15 descriptor IDs in the
 hash-bound `SN_WALL.MNS` TEXT bank, so the runtime blocks that MNS route

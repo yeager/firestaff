@@ -450,6 +450,7 @@ int nexus_v1_dmdf_parse_texture_section(const uint8_t *data, int size,
     uint32_t descriptor_offset;
     uint32_t pixel_data_offset;
     uint32_t i;
+    uint8_t material_id_seen[NEXUS_DMDF_MATERIAL_COUNT];
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
@@ -483,6 +484,7 @@ int nexus_v1_dmdf_parse_texture_section(const uint8_t *data, int size,
     out->descriptor_offset = descriptor_offset;
     out->pixel_data_offset = pixel_data_offset;
     out->descriptor_count = count;
+    memset(material_id_seen, 0, sizeof(material_id_seen));
     for (i = 0; i < count; ++i) {
         const uint8_t *entry = data + offset + descriptor_offset + i * 20U;
         Nexus_DMDFTextureDescriptor *descriptor = &out->descriptors[i];
@@ -501,7 +503,21 @@ int nexus_v1_dmdf_parse_texture_section(const uint8_t *data, int size,
             descriptor->pixel_offset >= pixel_data_offset &&
             (uint64_t)descriptor->pixel_offset + pixel_bytes <= bytes;
         if (!descriptor->valid) return 0;
+        if (!material_id_seen[descriptor->material_id]) {
+            material_id_seen[descriptor->material_id] = 1;
+            if (out->unique_material_id_count == 0U ||
+                descriptor->material_id < out->first_material_id) {
+                out->first_material_id = descriptor->material_id;
+            }
+            if (out->unique_material_id_count == 0U ||
+                descriptor->material_id > out->last_material_id) {
+                out->last_material_id = descriptor->material_id;
+            }
+            ++out->unique_material_id_count;
+        }
     }
+    out->material_ids_unique =
+        out->unique_material_id_count == out->descriptor_count;
     out->valid = 1;
     return 1;
 }
@@ -515,6 +531,9 @@ int nexus_v1_dmdf_decode_text_material_bank(const uint8_t *data, int size,
     if (!out || !nexus_v1_dmdf_parse_texture_section(data, size, &section)) {
         return 0;
     }
+    /* A duplicate source material ID has no unambiguous bank destination.
+     * Reject it before allocation; never overwrite an original surface. */
+    if (!section.material_ids_unique) return 0;
     nexus_v1_dmdf_free_material_bank(out);
     for (i = 0; i < section.descriptor_count; ++i) {
         const Nexus_DMDFTextureDescriptor *descriptor = &section.descriptors[i];
