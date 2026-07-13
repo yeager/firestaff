@@ -2524,10 +2524,13 @@ static void test_structure1f_item_ibs_material_binding(void) {
               bindings, 2, commands, 2, materials, 2, &material_receipt) == 0 &&
           material_receipt.complete &&
           material_receipt.special_floor_binding_count == 1 &&
+          material_receipt.source_cell_match_count == 1 &&
           material_receipt.command_material_count == 1 &&
           !material_receipt.fallback_visuals_permitted,
           "descriptor-0008 is consumed by its matching DGN floor command only");
-    CHECK(materials[0].command_index == 1 && materials[0].image_id == 266U &&
+    CHECK(materials[0].command_index == 1 && materials[0].source_entry_index == 1 &&
+          materials[0].source_x == 6 && materials[0].source_y == 7 &&
+          materials[0].item_id == 6U && materials[0].image_id == 266U &&
           materials[0].encoding == 8U && materials[0].width == 16U &&
           materials[0].height == 16U && materials[0].packed_4bpp_bytes == 128U &&
           materials[0].palette_bgr555[0] == 0x03e0U &&
@@ -2535,6 +2538,15 @@ static void test_structure1f_item_ibs_material_binding(void) {
           materials[0].source_hash_verified && materials[0].packed_4bpp_valid &&
           !materials[0].texel_order_proven && !materials[0].draw_authorized,
           "command material keeps exact authenticated 4bpp bytes no-draw");
+    bindings[1].source_x = 4;
+    CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
+              bindings, 2, commands, 2, materials, 2, &material_receipt) == 0 &&
+          !material_receipt.complete &&
+          material_receipt.blocked_source_cell_mismatch_count == 1 &&
+          material_receipt.command_material_count == 0 &&
+          !material_receipt.fallback_visuals_permitted,
+          "a descriptor-0008 source cell cannot be rebound to another DGN floor");
+    bindings[1].source_x = 6;
     bindings[1].command_index = 2;
     CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
               bindings, 2, commands, 2, materials, 2, &material_receipt) == 0 &&

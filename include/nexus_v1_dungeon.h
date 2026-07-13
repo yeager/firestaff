@@ -1262,6 +1262,8 @@ typedef struct {
 typedef struct {
     int entry_index;
     int command_index;
+    int source_x;
+    int source_y;
     uint8_t item_id;
     uint8_t palette_index;
     uint8_t image_index;
@@ -1277,6 +1279,10 @@ typedef struct {
  * consumer, never a renderer fallback. */
 typedef struct {
     int command_index;
+    int source_entry_index;
+    int source_x;
+    int source_y;
+    uint8_t item_id;
     uint16_t image_id;
     uint16_t encoding;
     uint16_t width;
@@ -1307,9 +1313,11 @@ typedef struct {
 typedef struct {
     int source_hash_verified;
     int special_floor_binding_count;
+    int source_cell_match_count;
     int command_material_count;
     int blocked_invalid_binding_count;
     int blocked_invalid_command_count;
+    int blocked_source_cell_mismatch_count;
     int complete;
     int fallback_visuals_permitted;
 } Nexus_V1_DgnCommandPacked4BppMaterialReceipt;
