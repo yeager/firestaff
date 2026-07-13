@@ -1369,6 +1369,21 @@ static int dm2_v1_g1_read_wall_gfx_scalars(
     return 1;
 }
 
+/* skproject/SKULLWIN/c_record.cpp DM2_QUERY_CLS2_OF_TEXT_RECORD
+ * lines 1210-1256: a DB2 text only resolves to its low TextIndex byte when
+ * TextMode()==1 and SimpleTextExtUsage() is 0, 2, 3, 5, or 13.  The other
+ * mode-one encodings return 0xff and must not become WALL_GFX requests. */
+static int dm2_v1_g1_text_selects_wall_gfx(const DM2_V1_G1TextRoot *text)
+{
+    uint8_t extension_usage;
+
+    if (!text || text->mode != 1u) return 0;
+    extension_usage = (uint8_t)((text->text_index >> 8) & 0x1fu);
+    return extension_usage == 0u || extension_usage == 2u ||
+           extension_usage == 3u || extension_usage == 5u ||
+           extension_usage == 13u;
+}
+
 int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
     const DM2_V1_G1Map5TextRuntimeReceipt *texts,
     DM2_V1_G1GdatScalarRead read_scalar,
@@ -1401,10 +1416,7 @@ int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
         DM2_V1_G1WallGfxScalars scalars;
         uint8_t wall_gfx_index;
 
-        /* skproject/SKWIN/SkWinCore.cpp QUERY_CLS2_OF_TEXT_RECORD:
-         * TextMode()==1 selects the decorative cases and returns
-         * TextIndex() & 0xff as the WALL_GFX cls2 value. */
-        if (text->mode != 1u) continue;
+        if (!dm2_v1_g1_text_selects_wall_gfx(text)) continue;
         if (candidate.material_count >= DM2_V1_G1_TEXT_WALL_GFX_MAX) return 0;
         wall_gfx_index = (uint8_t)(text->text_index & 0xffu);
 
