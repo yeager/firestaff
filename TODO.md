@@ -1378,6 +1378,12 @@ and real community-save corpus round-trip evidence.
     it neither reads nor emits a host explosion-list index. The existing C15
     square-chain validators remain the only runtime owner. Remaining work is
     authentic community-save coverage and broader dungeon-tail import.
+  - 2026-07-13 update: the opt-in corpus now also retains an atomic decrypted
+    C3 EVENT-array receipt from the F0433/F0435 part boundary: record count,
+    byte count, and fingerprint cover every raw EVENT slot, including C13,
+    C24, and C25. The real-corpus probe requires full C3 identity in addition
+    to the canonical subtype receipts. Remaining work is authentic community
+    save coverage and broader dungeon-tail import.
     Remaining work is broader original dungeon-tail import breadth and real
     community-save corpus evidence.
   - 2026-07-13 update: F0435 dungeon-tail preflight now also enforces the
