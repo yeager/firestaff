@@ -9331,3 +9331,13 @@ existing material-raster test supplies that proof only as a controlled host
 fixture; production remains blocked without a Saturn executable/capture route.
 Verification: Ninja build plus `test_nexus_v1_dgn_material_raster` and
 `test_nexus_v1_dmdf_embedded_blocks` against the real local MNS asset.
+
+# ✅ 2026-07-13 CSB saved EXPOOL SETSKIN writeback
+
+`csb_v1_runtime_set_csbwin_saved_skin()` now follows CSBWin `DSA.cpp`
+lines 3122-3135 and `data.cpp` lines 2130-2167 for an existing verified
+`EDT_Skins` record: it changes the exact packed cell byte, refreshes the
+tail FNV receipt, and invalidates the HUD skin cache. It refuses altered,
+truncated, absent, resizing, or all-zero-delete records rather than inventing
+DB11 allocator/free-list state. Verification: Ninja plus the focused EXPOOL
+CTest group, 5/5 passed.
