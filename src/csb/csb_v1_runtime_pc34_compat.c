@@ -14911,7 +14911,11 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
         profile->csbwin_appended_tail_size !=
             profile->csbwin_appended_tail_preserved_size ||
         profile->csbwin_appended_tail_preserved_size >
-            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        profile->csbwin_appended_tail_fnv1a !=
+            csb_v1_runtime_fnv1a32(
+                profile->csbwin_appended_tail,
+                profile->csbwin_appended_tail_preserved_size)) {
         return 0;
     }
 
