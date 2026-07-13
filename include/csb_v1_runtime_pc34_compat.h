@@ -662,11 +662,40 @@ typedef struct {
     uint8_t dsa_id;
 } CSB_V1_RuntimeDSAFilterBinding;
 
+/* Exact, bounded receipt for CSBWin DSA.cpp ProcessDSATimer6.  The current
+ * CSBWin FindMaster implementation returns the slave itself only when its
+ * DSA is a master (LocalState != 3); it explicitly reports slave DSAs as not
+ * implemented.  Keep both identities here so a later original slave route
+ * cannot silently be mistaken for the self-master route. */
+typedef struct {
+    CSB_V1_RuntimeDSAFilterBinding slave;
+    CSB_V1_RuntimeDSAFilterBinding master;
+    uint32_t master_location;
+    uint32_t state_index;
+    uint32_t input_column;
+    int action_ordinal;
+} CSB_V1_RuntimeCSBWinDSATimer6Resolution;
+
 int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,
     const CSB_V1_DSAFilterLocation *location,
     CSB_V1_RuntimeDSAFilterBinding *out_binding);
+
+/* Resolve one authenticated ProcessDSATimer6 dispatch without executing it.
+ * CSBWin DSA.cpp:534-575,5363-5416 maps the slave selector, applies the
+ * implemented self-master FindMaster branch, gets saved state, and selects
+ * column `3 * timerPosition + timerFunction`.  LocalState 0 uses the DB3
+ * DSAstate nibble and LocalState 1 uses serialized DSA::m_state. LocalState
+ * 2 needs the complete DB3 ParameterB/word8 record and LocalState 3 is an
+ * explicitly unimplemented source slave route, so both fail closed. */
+int csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    int timer_function,
+    int timer_position,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
 
 /* Resolve the source's complete Monster.cpp attack-filter handoff: the
  * verified SpecialLocations actuator, saved level selector, serialized DSA

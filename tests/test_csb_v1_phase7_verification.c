@@ -551,6 +551,7 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     CSB_V1_DSAImportedAction action;
     CSB_V1_RuntimeProfile profile;
     CSB_V1_RuntimeDSAFilterBinding binding;
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution timer6;
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
     const CSB_V1_DSAImportedAction *selected_action;
     uint32_t selected_state = 0u;
@@ -560,6 +561,7 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     memset(&location, 0, sizeof(location));
     memset(&action, 0, sizeof(action));
     memset(&binding, 0, sizeof(binding));
+    memset(&timer6, 0, sizeof(timer6));
     memset(&runner, 0, sizeof(runner));
     dungeon.raw_data = actuator_record;
     dungeon.raw_size = (int)sizeof(actuator_record);
@@ -606,6 +608,12 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               &profile, &dungeon, &location, &binding) == 1 &&
               binding.dsa_selector == 2u && binding.dsa_id == 7u,
           "CSBWin Monster.cpp DSAselector resolves actuator through saved level index");
+    CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+              &profile, &dungeon, &location, 0, 0, &timer6) == 1 &&
+              timer6.slave.dsa_id == 7u && timer6.master.dsa_id == 7u &&
+              timer6.state_index == 4u && timer6.input_column == 0u &&
+              timer6.action_ordinal == 0,
+          "CSBWin DSA.cpp ProcessDSATimer6 retains self-master identity and saved DB3 state");
     selected_action = csb_v1_chaos_resolve_imported_master_filter_action(
         &profile.csbwin_extended_dsa_state, 7,
         (uint16_t)(actuator_record[2] | ((uint16_t)actuator_record[3] << 8)),
@@ -614,12 +622,25 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               selected_ordinal == 0,
           "CSBWin DSA.cpp ProcessDSATimer6 selects DB3 DSAstate and timer column zero");
     profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 1u;
+    profile.csbwin_extended_dsa_state.imported_headers[7].persistent_state = 4u;
+    CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+              &profile, &dungeon, &location, 0, 0, &timer6) == 1 &&
+              timer6.state_index == 4u,
+          "CSBWin ProcessDSATimer6 reads serialized DSA m_state for LocalState one");
     CHECK(csb_v1_chaos_resolve_imported_master_filter_action(
               &profile.csbwin_extended_dsa_state, 7,
               (uint16_t)(actuator_record[2] |
                          ((uint16_t)actuator_record[3] << 8)),
               0u, &selected_state, &selected_ordinal) == NULL,
           "CSBWin non-actuator LocalState is not promoted through the master filter bridge");
+    profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 2u;
+    CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+              &profile, &dungeon, &location, 0, 0, &timer6) == 0,
+          "CSBWin ParameterB state route stays blocked without authenticated widened DB3 data");
+    profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 3u;
+    CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+              &profile, &dungeon, &location, 0, 0, &timer6) == 0,
+          "CSBWin source-unimplemented slave DSA route stays explicitly blocked");
     profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 0u;
     CHECK(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
               &profile, &binding, 4u, 0, 0x0c345u, &runner) == 1 &&
