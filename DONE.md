@@ -164,6 +164,13 @@
   original save. Corpus rows retain the reference counts and result. Source:
   ReDMCSB `LOADSAVE.C` F0433:1586-1589 and F0435:2781-2799. Verification:
   focused original-save handoff CTest using native F0433 output only.
+- 2026-07-13 DM1 HoC subsequent-frame presentation contract: centralized the
+  first and every later materialized HoC frame behind one M11 present-and-M12
+  publish edge. Capture is now emitted only after `m11_present_game_frame()`
+  succeeds, retaining its selected target, PC34 palette, and filtering
+  contract without a stale or bare-renderer frame. ReDMCSB: `ENTRANCE.C
+  F0797/F0441` -> `DRAWVIEW.C`. Verification: focused launcher handoff,
+  startup state-machine, and M11 presentation-target CTests passed.
 - 2026-07-13 DM1 HoC presented-render consumer: the first opened Hall of
   Champions frame now uses `m11_present_game_frame()` before its M12 capture
   receipt is published. This applies the same PC34 palette, nearest filtering,

@@ -2023,6 +2023,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     are therefore applied before the capture receipt is published; M11 no
     longer uses the bare presentation path for this one frame. No synthetic
     text or debug overlay is added. Remaining work is packaged Mac/app proof.
+  - 2026-07-13 update: first and later materialized HoC frames now share one
+    M11->M12 present-and-capture edge. M12 capture is published only after
+    M11 successfully applies the game presentation target/palette contract,
+    preventing a later redraw from retaining a stale first-frame receipt.
+    Remaining work is packaged Mac/app proof.
   - 2026-07-13 update: DM1 SWSH now consumes a DM1-owned command receipt for
     every original `SWSH.C` event: logo load, sound start, each palette word,
     each VBlank wait, and the terminal `START.PRG` handoff. M11 fails closed
