@@ -700,6 +700,15 @@
   `Timer.cpp:1509-1541`, `DSA.cpp:5329-5441`. Verification: Ninja and CTest
   `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 CSBWin restored TT_TELEPORTER DSA-free tick bridge: verified
+  function-8 entries now apply the source bit-3 cell update only for an empty
+  saved target square with the party elsewhere, where `WiggleEverything` has
+  no possible source-owned movement to perform. Listed-Thing targets retain
+  any authenticated pure-stack DSA receipt but cannot fall through to a
+  generic M10 cell mutation. Source: CSBWin `CSBCode.cpp:6433`,
+  `Timer.cpp:2343-2471`. Verification: Ninja and CTest
+  `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - ✅ 2026-07-13 DM2 skproject carried-item local-palette consumer:
   source-required `DRAW_ITEM_IN_HAND` rendering now accepts the leader-hand
   GDAT IMG3 only with its matching `QUERY_GDAT_IMAGE_LOCALPAL` receipt and

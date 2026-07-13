@@ -17208,6 +17208,49 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
          * saved receipts must never reach that generic mutation path. */
         return 1;
     }
+    if (timer->function == 8u) {
+        uint8_t *square;
+        int square_type;
+        int thing;
+        int action;
+
+        /* CSBWin Timer.cpp::ProcessTT_TELEPORTER:2343-2367 runs
+         * ActivateDSA, then updates bit 3 and calls WiggleEverything on SET.
+         * A square with no Thing list has neither a type-47 owner nor any
+         * party/monster/drawable Thing for WiggleEverything to move. Retain
+         * only that complete no-op-wiggle shape; a listed Thing falls through
+         * to the existing DSA receipt and remains mutation-blocked below. */
+        if (!timer->valid || timer->truncated ||
+            timer->source_index != timer_index ||
+            record->eventType != timer->function ||
+            record->mapIndex != timer->level ||
+            record->mapX != timer->ubyte6 || record->mapY != timer->ubyte7 ||
+            record->cell != timer->ubyte8 || record->effect != timer->ubyte9 ||
+            record->aux0 != timer->ubyte5 || timer->ubyte9 > 2u ||
+            !profile->dungeon_handle) {
+            return 1;
+        }
+        square = csb_v1_runtime_square_byte_ptr(
+            profile, timer->level, timer->ubyte6, timer->ubyte7, &square_type);
+        if (!square || square_type != 5) return 1;
+        thing = csb_v1_dungeon_get_first_thing(
+            profile->dungeon_handle, timer->level, timer->ubyte6,
+            timer->ubyte7);
+        if (thing < 0 || thing == 0xfffe || thing == 0xffff) {
+            /* The saved runtime profile has no independent party-level
+             * field. Block the ambiguous same-square shape rather than infer
+             * that CSBWin's party wiggle was a no-op. */
+            if (profile->party_x == timer->ubyte6 &&
+                profile->party_y == timer->ubyte7) {
+                return 1;
+            }
+            action = (int)timer->ubyte9;
+            if (action == 2) action = (*square & 0x08u) ? 1 : 0;
+            if (action == 0) *square |= 0x08u;
+            else *square &= (uint8_t)~0x08u;
+            return 1;
+        }
+    }
     if (timer->function == 10u) {
         uint8_t *square;
         int square_type;
@@ -17429,7 +17472,9 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
 
         thing_record = csb_v1_dungeon_get_thing_record(
             dungeon, (uint16_t)thing, &type, NULL, &size);
-        if (!thing_record || size < 2) return 0;
+        if (!thing_record || size < 2) {
+            return timer->function == 8u ? 1 : 0;
+        }
         if (type == CSB_V1_THING_TYPE_ACTUATOR && size >= 4 &&
             (((uint16_t)thing_record[2] | ((uint16_t)thing_record[3] << 8)) &
              0x007fu) == CSB_V1_DSA_FILTER_ACTUATOR_TYPE) {
@@ -17453,6 +17498,12 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         (timer->ubyte9 == 1u || timer->ubyte9 == 2u)) {
         return csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
             profile, record, timer, timer_index, queue_slot);
+    }
+    if (timer->function == 8u) {
+        /* A listed target can have DSA or WiggleEverything ownership that is
+         * absent from this restored profile. Any pure-stack DSA receipt above
+         * may run, but it cannot fall through to M10's generic cell mutation. */
+        return 1;
     }
     return 0;
 }
