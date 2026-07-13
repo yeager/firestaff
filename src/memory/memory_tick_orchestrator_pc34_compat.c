@@ -4289,6 +4289,18 @@ static void orch_cleanup_invalid_action_enable_receipts_compat(
     world->timeline.count = newEventCount;
 }
 
+void DM1_V1_F0407_ClearRemovedChampionActionReceiptsPc34Compat(
+    struct GameWorld_Compat* world,
+    int championIndex)
+{
+    /* ReDMCSB REVIVE.C F0282 C162 removes the candidate from the party;
+     * TIMELINE.C C11 later dispatches solely by its stored Priority.  The
+     * original event has no generation field, so the host must discard it
+     * while the removed slot is absent, before a different mirror can take
+     * the same party ordinal. */
+    orch_cleanup_invalid_action_enable_receipts_compat(world, championIndex);
+}
+
 /* ReDMCSB CHAMPION.C F0330:2233-2255 owns the single pending C11 event
  * per champion. A later disable replaces its prior event using the source
  * half-distance timing rule. MENU.C F0407 alone changes SlotOrdinal to

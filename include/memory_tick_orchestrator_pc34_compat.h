@@ -452,6 +452,13 @@ int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
 int DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
     struct GameWorld_Compat* world,
     int championIndex);
+/* ReDMCSB REVIVE.C C162 candidate cancellation removes a temporary party
+ * slot before that ordinal can be reused.  Drop only the stale F0330 C11
+ * owner at that boundary; F0407's C04 is a C20 sound receipt, not a
+ * champion-owned action receipt. */
+void DM1_V1_F0407_ClearRemovedChampionActionReceiptsPc34Compat(
+    struct GameWorld_Compat* world,
+    int championIndex);
 
 void F0889_ORCH_ApplyPendingDamage_Compat(
     struct GameWorld_Compat* world,

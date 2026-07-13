@@ -15485,8 +15485,14 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
     }
     championIndex = state->candidateMirrorPartyIndex;
     if (championIndex >= 0 && championIndex < CHAMPION_MAX_PARTY) {
-        (void)F0643_PARTY_ClearChampionSlot_Compat(&state->world.party,
-                                                   championIndex);
+        if (F0643_PARTY_ClearChampionSlot_Compat(&state->world.party,
+                                                 championIndex)) {
+            /* ReDMCSB REVIVE.C F0282 C162 cancels this temporary candidate.
+             * Its prior F0407/F0330 C11 must not enable a later mirror
+             * recruited into the same party slot. */
+            DM1_V1_F0407_ClearRemovedChampionActionReceiptsPc34Compat(
+                &state->world, championIndex);
+        }
         if (state->world.party.championCount <= 0) {
             state->world.party.activeChampionIndex = -1;
         }
