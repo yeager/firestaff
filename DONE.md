@@ -1244,6 +1244,12 @@
   assigned controller or command semantics; selecting a path remains live
   capture work.
 
+- 2026-07-13 Theron System Card `$e97a` raw-branch receipt: hash-verified the
+  `$d0` branch target as `LDA $224c,X; INX; STA $1801`, four NOPs, `JSR $ea27`,
+  then `BRA $e95e`. It binds original load/write/call/return addresses only;
+  the loaded value and all controller or subroutine semantics remain pending
+  live capture.
+
 - 2026-07-12 CSB F0115 native Ghost group front: type 8 now resolves only
   through `G0243 -> G0219 -> M618` to PC CSB `GRAPHICS.DAT` 607. Its G0219
   offset 23 and `0x04` coordinate/transparency byte are consumed by the
