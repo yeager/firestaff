@@ -1192,6 +1192,8 @@ typedef struct {
     uint16_t height;
     uint32_t image_relative_offset;
     uint32_t palette_relative_offset;
+    int image_offset_word_bounded;
+    int palette_offset_word_bounded;
     int structure2_source_envelope_valid;
     int payload_decoder_proven;
     int draw_authorized;
@@ -1202,11 +1204,13 @@ typedef struct {
     int structure1g_provenance_count;
     int global_image_index_binding_count;
     int complete_sequence_provenance_count;
+    int descriptor_offset_envelope_count;
     int source_command_count;
     int blocked_invalid_command_count;
     int blocked_structure1g_provenance_count;
     int blocked_global_image_index_count;
     int blocked_sequence_provenance_count;
+    int blocked_descriptor_offset_envelope_count;
     int blocked_missing_descriptor_count;
     int blocked_source_envelope_count;
     int complete;

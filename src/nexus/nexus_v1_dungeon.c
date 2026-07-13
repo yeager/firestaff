@@ -3741,6 +3741,25 @@ int nexus_v1_level_build_dgn_view_render_plan(
     return 0;
 }
 
+static int nexus_v1_dgn_structure2_offset_word_bounded(
+    const Nexus_V1_Level *level, uint32_t relative_offset)
+{
+    const Nexus_V1_DgnStructure2Payload *payload;
+    uint32_t opaque_start;
+    uint32_t opaque_end;
+
+    if (!level) return 0;
+    payload = &level->structure2_payload;
+    if (!payload->valid || !payload->descriptor_offset_envelope_valid)
+        return 0;
+    if (relative_offset == 0U) return 1;
+    if ((relative_offset & 1U) != 0U || payload->opaque_payload_size < 2)
+        return 0;
+    opaque_start = (uint32_t)payload->opaque_payload_offset;
+    opaque_end = opaque_start + (uint32_t)payload->opaque_payload_size;
+    return relative_offset >= opaque_start && relative_offset <= opaque_end - 2U;
+}
+
 int nexus_v1_dgn_bind_structure2_animated_floor_sources(
     const Nexus_V1_Level *level, const Nexus_V1_DgnRenderCommand *commands,
     int command_count, Nexus_V1_DgnStructure2FloorCommandSource *out_sources,
@@ -3821,6 +3840,14 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
             ++receipt.blocked_missing_descriptor_count;
             continue;
         }
+        if (!nexus_v1_dgn_structure2_offset_word_bounded(
+                level, texture->image_relative_offset) ||
+            !nexus_v1_dgn_structure2_offset_word_bounded(
+                level, texture->palette_relative_offset)) {
+            ++receipt.blocked_descriptor_offset_envelope_count;
+            continue;
+        }
+        ++receipt.descriptor_offset_envelope_count;
         if (receipt.source_command_count >= max_sources) {
             ++receipt.blocked_invalid_command_count;
             continue;
@@ -3851,6 +3878,8 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
         source->height = texture->height;
         source->image_relative_offset = texture->image_relative_offset;
         source->palette_relative_offset = texture->palette_relative_offset;
+        source->image_offset_word_bounded = 1;
+        source->palette_offset_word_bounded = 1;
         source->structure2_source_envelope_valid = 1;
         source->payload_decoder_proven = 0;
         source->draw_authorized = 0;
@@ -3862,11 +3891,14 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
             receipt.animated_floor_command_count &&
         receipt.complete_sequence_provenance_count ==
             receipt.animated_floor_command_count &&
+        receipt.descriptor_offset_envelope_count ==
+            receipt.animated_floor_command_count &&
         receipt.source_command_count == receipt.animated_floor_command_count &&
         receipt.blocked_invalid_command_count == 0 &&
         receipt.blocked_structure1g_provenance_count == 0 &&
         receipt.blocked_global_image_index_count == 0 &&
         receipt.blocked_sequence_provenance_count == 0 &&
+        receipt.blocked_descriptor_offset_envelope_count == 0 &&
         receipt.blocked_missing_descriptor_count == 0 &&
         receipt.blocked_source_envelope_count == 0;
     *out_receipt = receipt;
