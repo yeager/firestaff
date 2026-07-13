@@ -827,6 +827,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure1FAlcovePayloadSelectorReceipt alcove_payload_selectors;
     Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt floor_sensor_controls;
     Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt floor_sensor_destinations;
+    Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt floor_decoration_payloads;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt structure3_correlation;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
@@ -1066,6 +1067,19 @@ static void test_structure1f_semantics_and_bounds(void) {
           floor_sensor_destinations.complete &&
           !floor_sensor_destinations.destination_semantics_proven,
           "Structure1F floor-sensor destinations remain no-draw provenance");
+    CHECK(nexus_v1_level_structure1f_floor_decoration_payload_selector_receipt(
+              &level, &floor_decoration_payloads) == 0 &&
+          floor_decoration_payloads.structure1f_spatial_valid &&
+          floor_decoration_payloads.floor_decoration_entry_count == 2 &&
+          floor_decoration_payloads.resolved_payload_selector_count == 2 &&
+          floor_decoration_payloads.unique_payload_selector_count == 2 &&
+          floor_decoration_payloads.duplicate_payload_selector_count == 0 &&
+          floor_decoration_payloads.zero_payload_selector_count == 1 &&
+          floor_decoration_payloads.nonzero_payload_selector_count == 1 &&
+          floor_decoration_payloads.highest_payload_selector == 0x28U &&
+          floor_decoration_payloads.complete &&
+          !floor_decoration_payloads.payload_semantics_proven,
+          "Structure1F floor-decoration payloads remain no-draw provenance");
     CHECK(nexus_v1_level_structure3_model_reference_receipt(
               &level, &structure3_model_references) == 0 &&
           structure3_model_references.structure1a_relation_complete &&
@@ -1215,6 +1229,9 @@ static void test_structure1f_semantics_and_bounds(void) {
           handoff.structure1f_floor_sensor_destinations.complete &&
           handoff.structure1f_floor_sensor_destinations.unique_destination_count == 2 &&
           !handoff.structure1f_floor_sensor_destinations.destination_semantics_proven &&
+          handoff.structure1f_floor_decoration_payload_selectors.complete &&
+          handoff.structure1f_floor_decoration_payload_selectors.unique_payload_selector_count == 2 &&
+          !handoff.structure1f_floor_decoration_payload_selectors.payload_semantics_proven &&
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
     CHECK(handoff.status ==
@@ -1252,6 +1269,8 @@ static void test_structure1f_semantics_and_bounds(void) {
           !render_plan.structure1f_floor_sensor_control_selectors.control_semantics_proven &&
           render_plan.structure1f_floor_sensor_destinations.complete &&
           !render_plan.structure1f_floor_sensor_destinations.destination_semantics_proven &&
+          render_plan.structure1f_floor_decoration_payload_selectors.complete &&
+          !render_plan.structure1f_floor_decoration_payload_selectors.payload_semantics_proven &&
           render_plan.structure3_payload.valid &&
           render_plan.command_count == 0 && commands[0].kind == 0 &&
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready,

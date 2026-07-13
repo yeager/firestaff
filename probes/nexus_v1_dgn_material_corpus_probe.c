@@ -193,6 +193,7 @@ int main(int argc, char **argv) {
            "complete-alcove-payload-selectors=%d "
            "complete-floor-sensor-controls=%d "
            "complete-floor-sensor-destinations=%d "
+           "complete-floor-decoration-payload-selectors=%d "
            "ordinal-block-disproven=%d "
            "ordinal-byte-run-disproven=%d "
            "ordinal-run-disproven=%d ordinal-zero=%d/%d/%d "
@@ -220,6 +221,7 @@ int main(int argc, char **argv) {
            receipt.structure1f_alcove_payload_selector_complete_level_count,
            receipt.structure1f_floor_sensor_control_selector_complete_level_count,
            receipt.structure1f_floor_sensor_destination_complete_level_count,
+           receipt.structure1f_floor_decoration_payload_selector_complete_level_count,
            receipt.structure3_direct_block_ordinal_mapping_disproven_level_count,
            receipt.structure3_direct_byte_run_ordinal_mapping_disproven_level_count,
            receipt.structure3_direct_run_ordinal_mapping_disproven_level_count,
