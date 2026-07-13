@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,6 +36,125 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,6 +36,136 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -14,6 +14,7 @@ index 347482c4..61d4758e 100644
 +static unsigned TheronIrq2TracePostCapSamples;
 +static bool TheronIrq2TracePostCapPageSeen[256];
 +static unsigned TheronIrq2TracePostCapPageSamples;
++static bool TheronIrq2TraceReturnWindowSeen[256];
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -50,6 +51,16 @@ index 347482c4..61d4758e 100644
 +  TheronIrq2TracePostCapPageSeen[logical_pc >> 8] = true;
 +  TheronIrq2TracePostCapPageSamples++;
 +  TheronIrq2Trace->print_format("post_cap_page_pc=%04x physical_pc=%08x\n", logical_pc, PC);
++  FlushTheronIrq2Trace();
++ }
++ if(logical_pc >= 0xcc00 && logical_pc < 0xcd00 && !TheronIrq2TraceReturnWindowSeen[logical_pc & 0xff])
++ {
++  uint32 disassembly_pc = logical_pc;
++  char disassembly[256];
++
++  TheronIrq2TraceReturnWindowSeen[logical_pc & 0xff] = true;
++  CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, disassembly);
++  TheronIrq2Trace->print_format("return_window_pc=%04x physical_pc=%08x instruction=%s\n", logical_pc, PC, disassembly);
 +  FlushTheronIrq2Trace();
 + }
 +
@@ -128,7 +139,7 @@ index 347482c4..61d4758e 100644
  
  static bool NeedInit;
  static bool WatchLogical; // Watch logical memory addresses, not physical
-@@ -162,10 +281,10 @@ static void UpdateCoreHooks(void)
+@@ -162,10 +292,10 @@ static void UpdateCoreHooks(void)
  {
   bool BPInUse = PCBreakPoints.size() || ReadBreakpoints.size() || WriteBreakpoints.size() || IOReadBreakpoints.size() ||
  	IOWriteBreakpoints.size() || AuxReadBreakpoints.size() || AuxWriteBreakpoints.size() || OpBreakpoints.size();
@@ -142,7 +153,7 @@ index 347482c4..61d4758e 100644
  }
  
  static void UpdatePCBreakpoints(void)
-@@ -1367,6 +1486,8 @@ static void CPUCallback(uint32 PC, bool bpoint)
+@@ -1367,6 +1497,8 @@ static void CPUCallback(uint32 PC, bool bpoint)
   //
   if(TraceLog)
    DoTraceLog(PC);
@@ -151,7 +162,7 @@ index 347482c4..61d4758e 100644
  }
  
  
-@@ -1873,6 +1992,20 @@ void Debugger_Init(void)
+@@ -1873,6 +2003,21 @@ void Debugger_Init(void)
  	TraceLogSpec = "";
  	TraceLogEnd = 0;
  	TraceLogRTO = 0;
@@ -165,6 +176,7 @@ index 347482c4..61d4758e 100644
 +	  TheronIrq2TracePostCapSamples = 0;
 +	  memset(TheronIrq2TracePostCapPageSeen, 0, sizeof(TheronIrq2TracePostCapPageSeen));
 +	  TheronIrq2TracePostCapPageSamples = 0;
++	  memset(TheronIrq2TraceReturnWindowSeen, 0, sizeof(TheronIrq2TraceReturnWindowSeen));
 +	  TheronIrq2Trace.reset(new FileStream(theron_trace_path, FileStream::MODE_WRITE_INPLACE));
 +	  TheronIrq2Trace->print_format("source=mednafen-pce-instrumented\n");
 +	  FlushTheronIrq2Trace();
@@ -172,11 +184,11 @@ index 347482c4..61d4758e 100644
  
  	NeedInit = true;
  	WatchLogical = true;
-@@ -1896,0 +2029,3 @@ void Debugger_Init(void)
+@@ -1896,0 +2041,3 @@ void Debugger_Init(void)
 +
 +	if(TheronIrq2Trace)
 +	 UpdateCoreHooks();
-@@ -1916,6 +2052,8 @@ void Debugger_Kill(void)
+@@ -1916,6 +2064,8 @@ void Debugger_Kill(void)
  {
  	if(TraceLog)
  	 TraceLog.reset(nullptr);
