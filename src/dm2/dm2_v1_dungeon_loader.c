@@ -1384,9 +1384,10 @@ static int dm2_v1_g1_text_selects_wall_gfx(const DM2_V1_G1TextRoot *text)
            extension_usage == 13u;
 }
 
-int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
+static int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime_impl(
     const DM2_V1_G1Map5TextRuntimeReceipt *texts,
     DM2_V1_G1GdatScalarRead read_scalar,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
     void *read_userdata,
     DM2_V1_G1TextWallGfxRuntimeReceipt *out)
 {
@@ -1439,10 +1440,56 @@ int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
         material->do_not_flip = scalars.do_not_flip;
         material->alcove_type = scalars.alcove_type;
         material->image_offset = scalars.image_offset;
+        /* skproject SKWIN/SkWinCore.cpp DRAW_WALL_ORNATE lines
+         * 23285-23306 selects dtImage/1 for a front-facing nonzero ornate.
+         * Decode the source bitmap now when the caller owns GDAT, so a later
+         * custom-button draw cannot be authorized by scalar metadata alone.
+         * WALL_GFX zero is the source text-panel branch at 23081-23133 and
+         * does not have a WALL_GFX ornate bitmap to claim here. */
+        if (read_image_metadata && wall_gfx_index != 0u) {
+            int width = 0;
+            int height = 0;
+            int format = 0;
+            if (read_image_metadata(read_userdata, 0x09, wall_gfx_index, 1,
+                                    &width, &height, &format) &&
+                width > 0 && height > 0 &&
+                width <= UINT16_MAX && height <= UINT16_MAX &&
+                format > 0 && format <= UINT8_MAX) {
+                material->front_image_ready = 1u;
+                material->front_image_width = (uint16_t)width;
+                material->front_image_height = (uint16_t)height;
+                material->front_image_format = (uint8_t)format;
+            }
+        }
     }
     candidate.valid = 1;
     *out = candidate;
     return 1;
+}
+
+int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    void *read_userdata,
+    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
+{
+    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime_impl(
+        texts, read_scalar, NULL, read_userdata, out);
+}
+
+int dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    void *read_userdata,
+    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
+{
+    if (!read_image_metadata) {
+        if (out) memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime_impl(
+        texts, read_scalar, read_image_metadata, read_userdata, out);
 }
 
 int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(

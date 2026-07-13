@@ -1135,11 +1135,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     exclusion. No `GenericRecord::w0`, DB3/DB4, or blocked DB8/DB10 root is
     read. Remaining work is a separately proven non-DB1 record family or
     full-world materialisation, never a synthetic map transition.
-  - 2026-07-12 update: the next safe family is canonical map 5's seven direct
+  - 2026-07-13 update: the next safe family is canonical map 5's seven direct
     DB2 `Text` roots. `DME.h::Text` fixes only `w2`: visibility, mode, and the
     text-table index. The runtime now retains that read-only receipt, including
     root direction and placement, without reading `GenericRecord::w0` or text
-    bytes. Map 5 DB1/DB3/DB4 roots remain unconsumed, as do all blocked
+    bytes. The boot-owned route also probes the exact nonzero `WALL_GFX`
+    `dtImage/1` front ornate surface selected by skproject
+    `DRAW_WALL_ORNATE`; a missing bitmap is retained as non-drawable and
+    blocks its source-required custom-button draw rather than triggering any
+    fallback. Map 5 DB1/DB3/DB4 roots remain unconsumed, as do all blocked
     DB8/DB10 roots. Remaining work is a separately source-backed text-table
     decode/visibility consumer or another direct family, never a chain walk.
   - 2026-07-11 update: the local full-build DM2 link blocker from direct save-load test targets is fixed; weather/timer save round-trip and inventory/item panel gate now link against `firestaff_dm2` and pass. Remaining DM2 work is real render/data breadth, not this build wiring.

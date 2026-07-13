@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 DB2 Text -> GDAT ornament materialization: the boot-owned
+  map-5 DB2 `Text` route now probes and records the exact nonzero
+  `WALL_GFX dtImage/1` front ornate surface selected by skproject
+  `SkWinCore::DRAW_WALL_ORNATE`. The receipt retains decoded dimensions and
+  format when present; a missing source bitmap remains explicitly
+  non-drawable, and the source-required renderer blocks that custom-button
+  draw instead of using scalar metadata or a fallback surface. `WALL_GFX`
+  zero remains the source's separate `GRAPHICSSET` text-panel branch.
+  Verification: Ninja-built `test_dm2_v1_g1_text_wall_gfx_runtime`; direct
+  run and focused CTest passed 12/12.
+
 - 2026-07-13 Nexus retail MNS TEXT bank integrity: the bounded `TEXT`
   decoder now records descriptor material-ID uniqueness and rejects ambiguous
   duplicate slots before a source surface can be overwritten. Local

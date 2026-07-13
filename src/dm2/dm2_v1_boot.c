@@ -4836,8 +4836,9 @@ int dm2_v1_boot_g1_text_wall_gfx_materials(
     memset(out, 0, sizeof(*out));
     if (!profile || !profile->graphics_dat) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
-        texts, dm2_v1_boot_g1_wall_gfx_scalar_read, gfx, out);
+    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(
+        texts, dm2_v1_boot_g1_wall_gfx_scalar_read,
+        dm2_v1_boot_g1_image_metadata_read, gfx, out);
 }
 
 int dm2_v1_boot_g1_actuator_wall_gfx_materials(
