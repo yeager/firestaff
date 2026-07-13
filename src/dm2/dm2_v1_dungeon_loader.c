@@ -1380,8 +1380,13 @@ int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
+    /* map5_text_runtime commits only after consuming direct DB2 w2 fields
+     * with no GenericRecord::w0 or blocked-root reads.  Keep that provenance
+     * at the GDAT boundary so a forged receipt cannot request WALL_GFX. */
     if (!texts || !read_scalar || !texts->committed ||
         !texts->incomplete_world || texts->map != 5 ||
+        texts->generic_record_reads != 0 ||
+        texts->blocked_record_reads != 0 ||
         texts->text_root_count < 0 ||
         texts->text_root_count > DM2_V1_G1_MAP5_MAX_TEXT_ROOTS) {
         return 0;
