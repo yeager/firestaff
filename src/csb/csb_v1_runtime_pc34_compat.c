@@ -15417,6 +15417,52 @@ int csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback(
         parameter_count, flgs_inout);
 }
 
+int csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeDSAFilterBinding *binding,
+    uint32_t state_index,
+    int action_ordinal,
+    uint32_t master_location,
+    int loaded_level,
+    CSB_V1_DSAFilterRuntime *out_filter,
+    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter)
+{
+    CSB_V1_DSAFilterRuntime filter_candidate;
+    CSB_V1_RuntimeDSAFilterStackAdapter adapter_candidate;
+
+    if (!profile || !binding || !out_filter || !out_adapter ||
+        loaded_level < 0) {
+        return 0;
+    }
+
+    /* CSBWin Monster.cpp:1134-1180 resolves the selected type-47 filter,
+     * packs ATTACK_PARAMETERES, then calls ProcessDSAFilter. Install exactly
+     * that callback shape only after the save-owned action was authenticated.
+     * Staging both objects keeps a rejected binding from exposing a partial
+     * live filter. */
+    memset(&adapter_candidate, 0, sizeof(adapter_candidate));
+    if (!csb_v1_runtime_prepare_csbwin_dsa_filter_stack_adapter(
+            profile, binding, state_index, action_ordinal, master_location,
+            &adapter_candidate)) {
+        return 0;
+    }
+    memset(&filter_candidate, 0, sizeof(filter_candidate));
+    filter_candidate.programs = &profile->csbwin_extended_dsa_state;
+    filter_candidate.runner =
+        csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback;
+    filter_candidate.runner_user = &adapter_candidate;
+    filter_candidate.loaded_level = loaded_level;
+    filter_candidate.attack_filter_dsa_id = binding->dsa_id;
+    filter_candidate.attack_filter_state = state_index;
+    filter_candidate.attack_filter_action = action_ordinal;
+
+    *out_adapter = adapter_candidate;
+    /* runner_user must refer to the published adapter, never its staged copy. */
+    filter_candidate.runner_user = out_adapter;
+    *out_filter = filter_candidate;
+    return 1;
+}
+
 int csb_v1_runtime_export_csbwin_core_save_to_memory(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t *out,

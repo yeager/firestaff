@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin DSA attack-filter save handoff: added an atomic production
+  binder from a resolved type-47 DSA filter to the concrete `Monster.cpp`
+  attack-filter runtime and its profile-owned authenticated callback. The
+  focused regression drives an admitted `GLOBALSTORE` through the full attack
+  ABI and verifies the exact little-endian CSBWin EXPOOL global bytes that the
+  runtime publishes. No DSA opcode family, movement filter, or generic
+  dispatcher was added. Source: CSBWin `Monster.cpp:1134-1180`, `DSA.cpp`
+  `ProcessDSAFilter`, and `SaveGame.cpp` global-variable EXPOOL records.
+  Verification: `csb_v1_dsa_trigger_single_step_pc34_compat` CTest passed 1/1.
+
 - 2026-07-13 Nexus SAL layout provenance: an opt-in real-data probe now
   verifies that all 16 local SAL banks share the exact byte range
   `0x000000..0x045bb4` before their first level-specific variation. It also

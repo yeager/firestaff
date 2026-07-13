@@ -52,6 +52,7 @@
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_csbwin_512_xor_pad_classify.h"
 #include "csb_v1_chaos_magic_pc34_compat.h"
+#include "csb_v1_monster_pc34_compat.h"
 #include "csb_v1_skin_cache_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
@@ -675,6 +676,21 @@ int csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback(
     int parameter_count,
     int flgs_inout[2],
     void *user);
+
+/* Install the authenticated callback in the concrete Monster.cpp attack
+ * filter runtime. This is deliberately limited to one already-resolved
+ * type-47 attack filter and one imported action; it neither creates DSA
+ * bytecode nor expands the admitted opcode subset. */
+int csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeDSAFilterBinding *binding,
+    uint32_t state_index,
+    int action_ordinal,
+    uint32_t master_location,
+    int loaded_level,
+    CSB_V1_DSAFilterRuntime *out_filter,
+    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter);
+
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
 int csb_v1_runtime_select_champion_portrait_render_source(
