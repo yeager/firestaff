@@ -2603,6 +2603,17 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     }
 
     out_receipt->dgn_handoff = dgn_handoff;
+    (void)nexus_v1_level_dgn_structure1_host_provenance_receipt(
+        &state->engine->current_level, &out_receipt->structure1_host_provenance);
+    out_receipt->structure1_host_provenance_consumed = 1;
+    if (!out_receipt->structure1_host_provenance.can_prepare_runtime_dgn) {
+        out_receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED;
+        out_receipt->dgn_render_blocked = 1;
+        out_receipt->status_scope = "DGN";
+        out_receipt->status = nexus_v1_dgn_structure1_host_provenance_status_name(
+            out_receipt->structure1_host_provenance.status);
+        return 1;
+    }
     (void)nexus_v1_current_level_structure2_source_receipt(
         state->engine, &out_receipt->structure2_source);
     (void)nexus_v1_dgn_static_material_source_receipt(

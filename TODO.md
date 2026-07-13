@@ -7,17 +7,13 @@
   inventory/object routes are bound. Do not coerce their native bytes into
   substitute Firestaff state.
 
-- 🔧 2026-07-13 Nexus Structure1F runtime follow-up: any typed alcove or
-  wall-family record that remains bound only through Structure1A now blocks
-  host handoff and the DGN render plan with the no-fallback
-  `blocked-structure1f-semantics` result. This preserves the unresolved
-  source relation without guessing an object, trigger, draw, pixel, palette,
-  or animation route. The host now retains the original big-endian index
-  stream with family, zero/non-zero, duplicate, and high-water provenance,
-  but it is not a Structure1A parser and cannot authorize a cell relation.
-  The next concrete DGN host-handoff work is an original Structure1A mapping
-  that proves the indexed alcove/wall cell relation; do not substitute
-  inferred coordinates or a synthetic static record route.
+- 🔧 2026-07-13 Nexus Structure1A follow-up: the M11 startup runtime path now
+  consumes the verified Structure1F/Structure1A provenance receipt before it
+  prepares a material plan. Any indexed alcove or wall record fails closed as
+  `blocked-structure1a-relation`; malformed declared Structure1F fails as
+  `blocked-structure1f-layout`. The next DGN host work is an original
+  Structure1A mapping that proves the indexed alcove/wall cell relation; do
+  not substitute inferred coordinates or a synthetic static record route.
 
 ## M12 Localization Completion (2026-07-12)
 

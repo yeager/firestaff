@@ -1247,6 +1247,68 @@ int nexus_v1_level_structure1a_boundary_receipt(
     return 0;
 }
 
+int nexus_v1_level_dgn_structure1_host_provenance_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1HostProvenanceReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1HostProvenanceReceipt receipt;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_MISSING;
+    if (!level || level->width <= 0 || level->height <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.structure1f_declared = level->geometry_info.structure1f_declared;
+    receipt.structure1f_valid = level->geometry_info.structure1f_valid;
+    receipt.structure1f_typed_entry_count = level->structure1f_entry_count;
+    (void)nexus_v1_level_structure1f_spatial_receipt(
+        level, &receipt.structure1f_spatial);
+    (void)nexus_v1_level_structure1a_boundary_receipt(
+        level, &receipt.structure1a_boundary);
+
+    if (!receipt.structure1f_declared) {
+        receipt.status = NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_ABSENT;
+        receipt.can_prepare_runtime_dgn = 1;
+    } else if (!receipt.structure1f_valid ||
+               !receipt.structure1f_spatial.valid ||
+               !receipt.structure1a_boundary.valid) {
+        receipt.status =
+            NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1F_LAYOUT;
+    } else if (receipt.structure1f_spatial.structure1a_bound_entry_count > 0 ||
+               receipt.structure1a_boundary.entry_count > 0) {
+        receipt.status =
+            NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION;
+    } else {
+        receipt.status = NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_DIRECT;
+        receipt.can_prepare_runtime_dgn = 1;
+    }
+    receipt.blocks_real_dgn_mesh_render =
+        receipt.can_prepare_runtime_dgn ? 0 : 1;
+    *out_receipt = receipt;
+    return 0;
+}
+
+const char *nexus_v1_dgn_structure1_host_provenance_status_name(
+    Nexus_V1_DgnStructure1HostProvenanceStatus status)
+{
+    switch (status) {
+    case NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_ABSENT:
+        return "ready-no-structure1f";
+    case NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_DIRECT:
+        return "ready-direct-structure1f";
+    case NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1F_LAYOUT:
+        return "blocked-structure1f-layout";
+    case NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION:
+        return "blocked-structure1a-relation";
+    case NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_MISSING:
+    default:
+        return "missing";
+    }
+}
+
 int nexus_v1_level_move_allowed(const Nexus_V1_Level *level,
                                 int from_x, int from_y,
                                 int to_x, int to_y) {
