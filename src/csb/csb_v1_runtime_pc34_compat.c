@@ -17208,6 +17208,94 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
          * saved receipts must never reach that generic mutation path. */
         return 1;
     }
+    if (timer->function == 10u) {
+        uint8_t *square;
+        int square_type;
+        int door_state;
+        int door_action;
+        int thing;
+        int guard;
+        int has_dsa = 0;
+        struct DM1_Event_V1 next;
+        int event_index;
+
+        /* CSBWin Timer.cpp::ProcessTT_DOOR:1509-1540 calls ActivateDSA,
+         * then turns its same saved TIMER into TT_1. This bridge owns only
+         * the no-type-47 case, where no DSA can alter the action before the
+         * normal door-state guards. A DSA-bearing square remains with the
+         * existing authenticated pre-mutation path. */
+        if (!timer->valid || timer->truncated ||
+            timer->source_index != timer_index ||
+            record->eventType != timer->function ||
+            record->mapIndex != timer->level ||
+            record->mapX != timer->ubyte6 || record->mapY != timer->ubyte7 ||
+            record->cell != timer->ubyte8 || record->effect != timer->ubyte9 ||
+            record->aux0 != timer->ubyte5 || timer->ubyte9 > 2u ||
+            !profile->dungeon_handle) {
+            return 1;
+        }
+        thing = csb_v1_dungeon_get_first_thing(
+            profile->dungeon_handle, timer->level, timer->ubyte6, timer->ubyte7);
+        for (guard = 0; guard < 128 && thing >= 0 &&
+             thing != 0xfffe && thing != 0xffff;
+             ++guard) {
+            const uint8_t *thing_record;
+            int thing_type;
+            int thing_size;
+
+            thing_record = csb_v1_dungeon_get_thing_record(
+                profile->dungeon_handle, (uint16_t)thing, &thing_type, NULL,
+                &thing_size);
+            if (!thing_record || thing_size < 2) return 1;
+            if (thing_type == CSB_V1_THING_TYPE_ACTUATOR && thing_size >= 4 &&
+                (csb_v1_runtime_read_u16(thing_record + 2) & 0x007fu) ==
+                    CSB_V1_DSA_FILTER_ACTUATOR_TYPE) {
+                has_dsa = 1;
+                break;
+            }
+            thing = csb_v1_runtime_sensor_next_thing(
+                profile->dungeon_handle, (uint16_t)thing);
+        }
+        if (guard >= 128) return 1;
+        if (!has_dsa) {
+            /* ProcessTT_DOOR activates type-47 records before it reads the
+             * door square. Preserve that source order: a DSA may be owned by
+             * any square class, while the DSA-free TT_1 handoff requires a
+             * real door. */
+            square = csb_v1_runtime_square_byte_ptr(
+                profile, timer->level, timer->ubyte6, timer->ubyte7,
+                &square_type);
+            if (!square || square_type != 4) return 1;
+
+            door_state = *square & 0x07u;
+            if (door_state == 5) return 1;
+            door_action = (int)timer->ubyte9;
+            if (door_action == 2) door_action = door_state == 0 ? 1 : 0;
+            if ((door_action == 0 && door_state == 0) ||
+                (door_action == 1 && door_state == 4)) {
+                return 1;
+            }
+            memset(&next, 0, sizeof(next));
+            /* ProcessTT_DOOR calls SetTimer without changing Time. Firestaff
+             * retains that source time and queue owner; the next M11 tick sees
+             * the already-expired TT_1 receipt rather than inventing a new C10. */
+            next.map_time = DM1_MAP_TIME_MAKE(timer->level, timer->time);
+            next.type = 1u;
+            next.priority = timer->ubyte5;
+            next.b_mapX = timer->ubyte6;
+            next.b_mapY = timer->ubyte7;
+            next.c_cell = timer->ubyte8;
+            next.c_effect = (uint8_t)door_action;
+            event_index = csb_v1_runtime_add_timeline_event(profile, &next);
+            if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT) {
+                timer->function = 1u;
+                timer->ubyte9 = (uint8_t)door_action;
+                profile->csbwin_timeline_event_queue_slot[event_index] =
+                    queue_slot;
+            }
+            return 1;
+        }
+    }
     if (timer->function == 12u) {
         /* ReDMCSB TIMELINE.C F0254 lines 1614-1637 and CSBWin
          * CSBCode.cpp:6468/Timer.cpp:2644-2664 consume TT_12 through its

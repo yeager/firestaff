@@ -383,6 +383,34 @@ int main(void)
               profile.timeline_queue.eventCount == 1,
           "nonterminal restored door timer retains source requeue");
 
+    /* ProcessTT_DOOR has no DSA side effects when its saved square has no
+     * type-47 DB3. It converts the same TIMER to TT_1 at the same time. */
+    memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
+    memset(profile.csbwin_timeline_event_queue_slot, 0xff,
+           sizeof(profile.csbwin_timeline_event_queue_slot));
+    raw[80] = 0x82u;
+    put_le16(raw, 62u, 0xfffeu);
+    profile.csbwin_timers[0].function = 10u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x82u &&
+              profile.csbwin_timers[0].function == 1u &&
+              profile.csbwin_timers[0].ubyte9 == 0u &&
+              profile.csbwin_timers[0].time + 1u == profile.game_time &&
+              profile.timeline_queue.eventCount == 1,
+          "DSA-free restored TT_DOOR retains its TT_1 queue owner");
+
+    check(csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x81u &&
+              profile.csbwin_timers[0].function == 1u &&
+              profile.timeline_queue.eventCount == 1,
+          "converted restored TT_DOOR reaches its source-owned TT_1 step");
+
     profile.csbwin_character_tail_invisible = 2u;
     profile.csbwin_timers[0].function = 71u;
     profile.csbwin_timers[0].ubyte5 = 0u;
