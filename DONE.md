@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin restored TT_BASH_DOOR timer bridge: verified function-2
+  queue entries now alter only their exact loaded byte-map door receipt after
+  queue-slot, timer, and full event identity validation. The shared DM1
+  function-2 destruction path is suppressed for every saved bash-door entry,
+  including malformed ones, so it cannot bypass CSBWin identity checks.
+  Non-door targets remain blocked. Source: CSBWin `CSBCode.cpp:6431`,
+  `Timer.cpp:1445-1451`, `SaveGame.cpp:1844-1858`. Verification: Ninja and
+  CTest `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin restored TT_ParameterMessage DSA tick bridge: verified
   function-101 queue entries now reach the source parameter-message route
   through the restored live timer queue only after exact queue-slot, timer,

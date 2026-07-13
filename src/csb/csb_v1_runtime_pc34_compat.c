@@ -2074,7 +2074,7 @@ int csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
 
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     CSB_V1_RuntimeProfile *profile);
-static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
+static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record,
     uint16_t queue_slot);
@@ -2119,9 +2119,15 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
                 profile->csbwin_timeline_event_queue_slot[source_event_indices[i]] =
                     CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
             }
-            csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
-                profile, &profile->last_timeline_dispatch.records[i],
-                source_queue_slots[i]);
+            if (csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
+                    profile, &profile->last_timeline_dispatch.records[i],
+                    source_queue_slots[i])) {
+                /* A saved CSBWin TT_BASH_DOOR is numerically equal to the
+                 * shared DM1 door-destruction event. Its mutation is owned
+                 * exclusively by the source-identity bridge below. */
+                profile->last_timeline_dispatch.records[i].eventType =
+                    DM1_EVENT_NONE;
+            }
         }
         csb_v1_runtime_apply_timeline_dispatch_side_effects(profile);
     }
@@ -16544,7 +16550,7 @@ int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
         profile, &runner, action, NULL, 0, NULL);
 }
 
-static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
+static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record,
     uint16_t queue_slot)
@@ -16563,11 +16569,39 @@ static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         queue_slot >= profile->csbwin_timer_queue_summary_count ||
         !profile->csbwin_body_runtime_summary_valid ||
         !profile->dungeon_handle) {
-        return;
+        return 0;
     }
     timer_index = profile->csbwin_timer_queue[queue_slot];
-    if (timer_index >= profile->csbwin_timer_summary_count) return;
+    if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
+    if (timer->function == 2u) {
+        uint8_t *square;
+        int square_type;
+
+        /* CSBWin CSBCode.cpp:6431 dispatches TT_BASH_DOOR directly to
+         * Timer.cpp:1445-1451. Its function value aliases Firestaff's shared
+         * door-destruction timeline event, so consume every saved function-2
+         * receipt here even when it is malformed; otherwise the generic
+         * timeline path could mutate a door without saved CSBWin identity. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5) {
+            square = csb_v1_runtime_square_byte_ptr(
+                profile, record->mapIndex, record->mapX, record->mapY,
+                &square_type);
+            /* ProcessTT_BASH_DOOR sets the source door's low three cell bits
+             * to five. A restored receipt may alter only a loaded byte-map
+             * door square; all other target shapes fail closed. */
+            if (square && square_type == 4) {
+                *square = (uint8_t)((*square & (uint8_t)~0x07u) | 5u);
+            }
+        }
+        return 1;
+    }
     if (!timer->valid || timer->truncated || timer->source_index != timer_index ||
         ((timer->function < 5u || timer->function > 10u) &&
          timer->function != 101u && timer->function != 102u) ||
@@ -16575,7 +16609,7 @@ static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         record->mapIndex != timer->level || record->mapX != timer->ubyte6 ||
         record->mapY != timer->ubyte7 || record->cell != timer->ubyte8 ||
         record->effect != timer->ubyte9 || record->aux0 != timer->ubyte5) {
-        return;
+        return 0;
     }
     dungeon = profile->dungeon_handle;
     thing = csb_v1_dungeon_get_first_thing(
@@ -16588,7 +16622,7 @@ static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
 
         thing_record = csb_v1_dungeon_get_thing_record(
             dungeon, (uint16_t)thing, &type, NULL, &size);
-        if (!thing_record || size < 2) return;
+        if (!thing_record || size < 2) return 0;
         if (type == CSB_V1_THING_TYPE_ACTUATOR && size >= 4 &&
             (((uint16_t)thing_record[2] | ((uint16_t)thing_record[3] << 8)) &
              0x007fu) == CSB_V1_DSA_FILTER_ACTUATOR_TYPE) {
@@ -16608,6 +16642,7 @@ static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         }
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
     }
+    return 0;
 }
 
 int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
