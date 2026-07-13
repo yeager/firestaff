@@ -17799,6 +17799,19 @@ if(NOT TARGET test_m11_action_stamina_runtime_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_m11_f0407_f0231_stamina_order_pc34_compat)
+    add_executable(test_m11_f0407_f0231_stamina_order_pc34_compat
+        tests/test_m11_f0407_f0231_stamina_order_pc34_compat.c
+    )
+    target_link_libraries(test_m11_f0407_f0231_stamina_order_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_m11_f0407_f0231_stamina_order_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME m11_f0407_f0231_stamina_order_pc34_compat
+        COMMAND test_m11_f0407_f0231_stamina_order_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_dm1_v1_f0407_throw_c11_receipt_pc34_compat)
     add_executable(test_dm1_v1_f0407_throw_c11_receipt_pc34_compat
         tests/test_dm1_v1_f0407_throw_c11_receipt_pc34_compat.c

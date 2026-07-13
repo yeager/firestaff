@@ -26917,13 +26917,11 @@ static int m11_apply_action_begin_plan_f0407(
 
     champ->actionDefense += plan.defenseDelta;
     champ->actionIndex = (unsigned char)plan.resultingActionIndex;
-    if (plan.staminaApplied) {
-        champ->stamina.current = (unsigned short)plan.currentStaminaAfter;
-        champ->hp.current = (unsigned short)plan.currentHealthAfter;
-        if (plan.shouldDamageFlash) {
-            M11_GameView_NotifyDamageFlash(state, -1);
-        }
-    }
+    /* ReDMCSB MENU.C F0407:1613-1628 resolves the chosen action before
+     * its common F0325 stamina tail.  In particular, F0402/F0231 must
+     * build its F0312 strength receipt from the pre-action stamina state.
+     * Keep the source-backed cost in plan for completion rather than
+     * applying it while entering the action. */
     *outPlan = plan;
     return 1;
 }
@@ -26935,6 +26933,7 @@ static int m11_apply_action_completion_plan_f0407(
         int performed,
         int cancelActionDisable,
         int meleeFailureTail,
+        int actionStaminaCost,
         int* actionExperienceGain,
         unsigned char disabledTicks) {
     DM1_ActionF0407CompletionInputPc34 in;
@@ -26963,32 +26962,36 @@ static int m11_apply_action_completion_plan_f0407(
             state->actionEnableSlotOrdinal[championIndex] =
                 (unsigned char)plan.actionEnableSlotOrdinal;
         }
-        return 1;
-    }
-    state->actionDisabledTicks[championIndex] =
-        (unsigned char)plan.disabledTicks;
-    state->actionDisabledIndex[championIndex] =
-        (unsigned char)plan.actionDisabledIndex;
-    state->actionEnableSlotOrdinal[championIndex] =
-        (unsigned char)plan.actionEnableSlotOrdinal;
-    if (plan.disabledTicks > 0) {
-        m11_materialize_action_lock(state, championIndex,
-                                    plan.actionDisabledIndex,
-                                    plan.disabledTicks);
-        /* ReDMCSB MENU.C F0407:1620-1622 calls F0330 from the common
-         * action tail. Bind one authenticated action-hand/melee route
-         * here: SWING has completed the real F0402/F0231 or closed-door
-         * branch above, so its C11 keeps SlotOrdinal zero. THROW owns the
-         * separate F0328 then F0407 ordinal-two path. */
-        if (actionIndex == DM1_ACTION_SWING) {
-            /* F0330 initializes B.SlotOrdinal to zero. Keep that exact
-             * live-owner fact until C11 reaches F0253; zero is meaningful,
-             * not the no-owner 0xFF sentinel used by older M11 mirrors. */
-            state->actionEnableSlotOrdinal[championIndex] = 0u;
-            (void)DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
-                &state->world, championIndex, plan.disabledTicks);
+    } else {
+        state->actionDisabledTicks[championIndex] =
+            (unsigned char)plan.disabledTicks;
+        state->actionDisabledIndex[championIndex] =
+            (unsigned char)plan.actionDisabledIndex;
+        state->actionEnableSlotOrdinal[championIndex] =
+            (unsigned char)plan.actionEnableSlotOrdinal;
+        if (plan.disabledTicks > 0) {
+            m11_materialize_action_lock(state, championIndex,
+                                        plan.actionDisabledIndex,
+                                        plan.disabledTicks);
+            /* ReDMCSB MENU.C F0407:1620-1622 calls F0330 from the common
+             * action tail. Bind one authenticated action-hand/melee route
+             * here: SWING has completed the real F0402/F0231 or closed-door
+             * branch above, so its C11 keeps SlotOrdinal zero. THROW owns the
+             * separate F0328 then F0407 ordinal-two path. */
+            if (actionIndex == DM1_ACTION_SWING) {
+                /* F0330 initializes B.SlotOrdinal to zero. Keep that exact
+                 * live-owner fact until C11 reaches F0253; zero is meaningful,
+                 * not the no-owner 0xFF sentinel used by older M11 mirrors. */
+                state->actionEnableSlotOrdinal[championIndex] = 0u;
+                (void)DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
+                    &state->world, championIndex, plan.disabledTicks);
+            }
         }
     }
+    /* ReDMCSB MENU.C F0407:1620-1625: the F0330 action lock precedes the
+     * common F0325 stamina decrement, including the preserved-lock tail. */
+    (void)m11_apply_champion_stamina_cost_f0325(
+        state, championIndex, actionStaminaCost);
     if (plan.shouldRefillReadyHandNow) {
         state->pendingShootReadyHandRefill[championIndex] = 0u;
         (void)m11_refill_ready_hand_after_shoot(state, championIndex);
@@ -31590,6 +31593,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
                 (void)m11_apply_action_completion_plan_f0407(
                     state, championIndex, chosen, performed, 0,
                     meleeOutcomePlan.meleeFailureTail,
+                    beginPlan.staminaCost,
                     &actionExperienceGain, disabledTicks);
             }
             goto action_tail_award_and_clear;
@@ -31633,6 +31637,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
         (void)m11_apply_action_completion_plan_f0407(
             state, championIndex, chosen, performed, 0,
             meleeOutcomePlan.meleeFailureTail,
+            beginPlan.staminaCost,
             &actionExperienceGain, disabledTicks);
     } else {
         unsigned char disabledTicks = (unsigned char)beginPlan.disabledTicks;
@@ -31656,6 +31661,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
         }
         (void)m11_apply_action_completion_plan_f0407(
             state, championIndex, chosen, performed, cancelActionDisable, 0,
+            beginPlan.staminaCost,
             &actionExperienceGain, disabledTicks);
     }
 action_tail_award_and_clear:
@@ -31765,6 +31771,7 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
         (void)m11_apply_action_completion_plan_f0407(
             state, championIndex, (unsigned char)actionIndex, performed,
             cancelActionDisable, meleeFailureTail,
+            beginPlan.staminaCost,
             &actionExperienceGain,
             (unsigned char)beginPlan.disabledTicks);
     }
