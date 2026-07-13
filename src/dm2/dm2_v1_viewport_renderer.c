@@ -3216,7 +3216,11 @@ static int dm2_v1_wall_button_receipt_matches(
             if (material->x == door->wall_button_x &&
                 material->y == door->wall_button_y &&
                 material->object_id == door->wall_button_object_id &&
-                material->wall_gfx_index == (uint8_t)door->wall_button_index) {
+                material->wall_gfx_index == (uint8_t)door->wall_button_index &&
+                (!s->source_materials_required ||
+                 (material->front_image_ready &&
+                  material->front_image_width > 0u &&
+                  material->front_image_height > 0u))) {
                 return 1;
             }
         }

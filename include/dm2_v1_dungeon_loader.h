@@ -165,8 +165,10 @@ typedef struct {
 #define DM2_V1_G1_TEXT_WALL_GFX_MAX 16
 
 /* A source-bound DB2 Text root which skproject dispatches as a WALL_GFX
- * ornament. This remains material metadata only: no chain traversal, text
- * decoding, rectangle selection, or image blit is inferred here. */
+ * ornament. The front image fields are populated only by the image-aware
+ * materialization route. They prove that the exact dtImage/1 surface which
+ * DRAW_WALL_ORNATE selects for a front-facing ornate was decoded from GDAT;
+ * the special WALL_GFX zero text-panel route deliberately has no such image. */
 typedef struct {
     int x;
     int y;
@@ -179,6 +181,10 @@ typedef struct {
     uint16_t do_not_flip;
     uint16_t alcove_type;
     uint16_t image_offset;
+    uint8_t front_image_ready;
+    uint16_t front_image_width;
+    uint16_t front_image_height;
+    uint8_t front_image_format;
 } DM2_V1_G1TextWallGfxMaterial;
 
 typedef struct {
@@ -506,6 +512,17 @@ int dm2_v1_dungeon_materialize_g1_map5_text_runtime(
 int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
     const DM2_V1_G1Map5TextRuntimeReceipt *texts,
     DM2_V1_G1GdatScalarRead read_scalar,
+    void *read_userdata,
+    DM2_V1_G1TextWallGfxRuntimeReceipt *out);
+
+/* The boot-owned GDAT route uses this stronger variant before allowing an
+ * original-data frame to consume a DB2 custom wall button. It probes the
+ * exact WALL_GFX dtImage/1 front bitmap and retains dimensions/source format
+ * when it decodes; an unavailable bitmap remains explicitly non-drawable. */
+int dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
     void *read_userdata,
     DM2_V1_G1TextWallGfxRuntimeReceipt *out);
 

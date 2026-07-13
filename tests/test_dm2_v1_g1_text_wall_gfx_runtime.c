@@ -17,6 +17,7 @@ static void expect_true(int condition, const char *label)
 
 typedef struct {
     int omit_image_offset;
+    int omit_front_image;
 } GdatFixture;
 
 static int read_scalar(void *userdata, int data_type, int category,
@@ -33,6 +34,23 @@ static int read_scalar(void *userdata, int data_type, int category,
     else if (data_type == 0x0c && field == 0xfd && !fixture->omit_image_offset)
         *out_value = 0xfe02;
     else return 0;
+    return 1;
+}
+
+static int read_image_metadata(void *userdata, int category, int entry,
+                               int field, int *out_width, int *out_height,
+                               int *out_format)
+{
+    const GdatFixture *fixture = (const GdatFixture *)userdata;
+
+    if (!fixture || !out_width || !out_height || !out_format ||
+        fixture->omit_front_image || category != 0x09 || entry != 0x2a ||
+        field != 1) {
+        return 0;
+    }
+    *out_width = 32;
+    *out_height = 18;
+    *out_format = 3;
     return 1;
 }
 
@@ -63,6 +81,25 @@ int main(void)
                     receipt.materials[0].position == 12 &&
                     receipt.materials[0].image_offset == 0xfe02,
                 "TextMode one uses TextIndex low byte and original ornament fields");
+
+    expect_true(dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(
+                    &texts, read_scalar, read_image_metadata, &fixture,
+                    &receipt) == 1 && receipt.valid &&
+                    receipt.material_count == 1 &&
+                    receipt.materials[0].front_image_ready == 1 &&
+                    receipt.materials[0].front_image_width == 32 &&
+                    receipt.materials[0].front_image_height == 18 &&
+                    receipt.materials[0].front_image_format == 3,
+                "front ornate image is decoded through the source GDAT receipt");
+
+    fixture.omit_front_image = 1;
+    expect_true(dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(
+                    &texts, read_scalar, read_image_metadata, &fixture,
+                    &receipt) == 1 && receipt.valid &&
+                    receipt.material_count == 1 &&
+                    !receipt.materials[0].front_image_ready,
+                "missing original front ornate image stays unavailable for rendering");
+    fixture.omit_front_image = 0;
 
     {
         static const uint16_t allowed_indices[] = {
