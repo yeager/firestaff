@@ -320,6 +320,8 @@ static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
         struct TickResult_Compat result;
         struct TimelineEvent_Compat event;
         struct DungeonGroup_Compat* group;
+        int sawProjectileReaction = 0;
+        int eventIndex;
 
         if (!build_world(&world)) return 1;
         world.things->projectiles = (struct DungeonProjectile_Compat*)calloc(
@@ -382,9 +384,21 @@ static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
             return 1;
         }
 
+        for (eventIndex = 0; eventIndex < world.timeline.count; ++eventIndex) {
+            const struct TimelineEvent_Compat* pending =
+                &world.timeline.events[eventIndex];
+            if (pending->kind == TIMELINE_EVENT_CREATURE_REACTION &&
+                pending->aux0 == 0 &&
+                pending->aux2 == DM1_EVENT_REACTION_HIT_BY_PROJECTILE) {
+                sawProjectileReaction = 1;
+                break;
+            }
+        }
+
         if (group->count == 0 && group->health[0] == 200 &&
             group->cells == 5 && world.creatureAI[0].groupCells == 5 &&
-            world.things->projectiles[0].next == THING_NONE) {
+            world.things->projectiles[0].next == THING_NONE &&
+            sawProjectileReaction) {
             F0883_WORLD_Free_Compat(&world);
             return 0;
         }

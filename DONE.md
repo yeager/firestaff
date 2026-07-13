@@ -9571,3 +9571,14 @@ retains byte identity in a receipt, and derives the original cloud
 or partial commands reject; raw `dtText` is not decoded or rendered until
 `QUERY_CMDSTR_TEXT` and its encoding state are source-proven. Verification:
 Ninja and `dm2_v1_weather_gdat_receipt` passed.
+
+# ✅ 2026-07-13 DM1 F0218 projectile-impact aftermath for C38/F0266
+
+The shared M10 projectile-cell pass now runs ReDMCSB `PROJEXPL.C F0217`'s
+full `GROUP.C F0190` aftermath after a kill: fixed and slot possessions,
+C29-C41 cleanup, fear, unlink, active-group retirement, and raw C04 writeback
+all use the existing typed F0190 receipt. A surviving hit now schedules the
+source C30 reaction through the same F0209 scheduler. `F0249`, F0267, and the
+C38 deferred-cell branch consume the completed aftermath instead of trying to
+unlink or relink an already-dead group. Verification: Ninja and
+`dm1_v1_f0206_packed_directions_runtime_pc34_compat` passed.
