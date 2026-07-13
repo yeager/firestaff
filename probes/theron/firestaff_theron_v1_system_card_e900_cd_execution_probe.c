@@ -22,6 +22,7 @@
 #define SYSCARD3_E000_WINDOW_OFFSET 0x0900u
 #define SYSCARD3_E944_WINDOW_OFFSET 0x0944u
 #define SYSCARD3_E95A_WINDOW_OFFSET 0x095au
+#define SYSCARD3_E97A_WINDOW_OFFSET 0x097au
 
 static const unsigned char g_post_delay_execution_bytes[] = {
     0xadu, 0xa4u, 0x22u, 0xd0u, 0xfbu, /* LDA $22a4 / BNE $e900 */
@@ -48,6 +49,14 @@ static const unsigned char g_e95a_set_branch_bytes[] = {
     0xc9u, 0x88u, 0xf0u, 0x16u,
     0xc9u, 0x80u, 0xf0u, 0x12u,      /* raw comparisons/branches */
     0x80u, 0xe4u                       /* BRA $e95a */
+};
+
+static const unsigned char g_e97a_d0_branch_bytes[] = {
+    0xbdu, 0x4cu, 0x22u, 0xe8u,      /* LDA $224c,X / INX */
+    0x8du, 0x01u, 0x18u,             /* STA $1801 */
+    0xeau, 0xeau, 0xeau, 0xeau,      /* NOP x4 */
+    0x20u, 0x27u, 0xeau,             /* JSR $ea27 */
+    0x80u, 0xd4u                      /* BRA $e95e */
 };
 
 static int g_failures;
@@ -121,6 +130,8 @@ int main(void) {
         SYSCARD3_E944_WINDOW_OFFSET;
     const size_t e95a_offset = SYSCARD3_HEADER_BYTES +
         SYSCARD3_E95A_WINDOW_OFFSET;
+    const size_t e97a_offset = SYSCARD3_HEADER_BYTES +
+        SYSCARD3_E97A_WINDOW_OFFSET;
 
     if (!system_card_path || !track02_path || !cue_path) {
         printf("SKIP set System Card, US raw Track02, and 19-track CUE paths\n");
@@ -151,11 +162,18 @@ int main(void) {
               memcmp(system_card + e95a_offset, g_e95a_set_branch_bytes,
                      sizeof(g_e95a_set_branch_bytes)) == 0,
           "$e95a masks $1800 and branches on raw values to $e97a/$e98a/$e988/$e986");
+    check(system_card && e97a_offset + sizeof(g_e97a_d0_branch_bytes) <=
+              system_card_size &&
+              memcmp(system_card + e97a_offset, g_e97a_d0_branch_bytes,
+                     sizeof(g_e97a_d0_branch_bytes)) == 0,
+          "$e97a loads $224c,X, increments X, writes $1801, calls $ea27, then returns to $e95e");
     printf("receipt: e900_wait_address=22a4 first_port_write=1801 "
            "port_value=81 tst_address=1800 tst_mask=80 zero_branch=e944 "
            "e944_write_address=1800 e944_tst_mask=40 e944_set_branch=e95a "
            "e95a_mask_address=1800 e95a_mask=f8 e95a_store=227a "
            "e95a_raw_branches=d0:e97a,98:e98a,88:e988,80:e986 "
+           "e97a_load_address=224c e97a_index_increment=1 "
+           "e97a_write_address=1801 e97a_call=ea27 e97a_return=e95e "
            "controller_semantics_unproven=1 cue_track02_binding_unproven=1\n");
     free(system_card);
     return g_failures ? 1 : 0;
