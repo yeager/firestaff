@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 DM2 skproject wall/door local-palette consumer: source-required
+  GDAT wall panels plus door panel, overlay, frame, and button paths now bind
+  each decoded image to its own `QUERY_GDAT_IMAGE_LOCALPAL` receipt and leave
+  that material unpainted when the receipt is absent, instead of borrowing the
+  interface palette. Added a focused wall/door source-data gate that proves
+  distinct local palette output and the no-palette fail-closed path.
+  Verification: Ninja targets `test_dm2_v1_wall_door_local_palette_gate`,
+  `test_dm2_v1_graphicsset_wall_material_gate`, and
+  `test_dm2_v1_g1_wall_button_material_gate`; matching CTest run passed 3/3;
+  `git diff --check` passed.
+
 - 2026-07-13 DM2 scene-material local-palette binding: indoor ceiling/floor
   and outdoor sky/ground now fetch, bind, and blit each decoded `GRAPHICSSET`
   IMG3 before the next material query can replace its `QUERY_GDAT_IMAGE_LOCALPAL`

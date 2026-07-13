@@ -71,6 +71,8 @@ int main(void)
     trace.expected_graphicsset = 0x2a;
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     dm2_v1_viewport_set_asset_provider(&viewport, fetch_wall, &trace);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, fetch_wall_local_palette, NULL);
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     dm2_v1_render_walls(&viewport);
     CHECK("missing MapGraphicsStyle receipt blocks before wall fetch",
@@ -85,6 +87,8 @@ int main(void)
     trace.expected_graphicsset = 0x2a;
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     dm2_v1_viewport_set_asset_provider(&viewport, fetch_wall, &trace);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, fetch_wall_local_palette, NULL);
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 1, 0x2a, 0x6d324741u,

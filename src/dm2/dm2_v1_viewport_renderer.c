@@ -1973,6 +1973,33 @@ static int dm2_v1_fetch_viewport_asset(DM2_V1_ViewportState *s,
     return dm2_v1_gfx_fetch(gdat_index, out_pixels, out_w, out_h, out_stride);
 }
 
+/* skproject SKWIN/SkWinCore.cpp QUERY_GDAT_IMAGE_LOCALPAL is part of the
+ * material lookup, not an optional presentation transform.  A source-owned
+ * wall or door image without that receipt must remain unpainted instead of
+ * borrowing INTERFACE_GENERAL's synthetic compatibility palette. */
+static int dm2_v1_fetch_viewport_local_material(
+    DM2_V1_ViewportState *s,
+    int gdat_index,
+    const uint8_t **out_pixels,
+    int *out_w,
+    int *out_h,
+    int *out_stride)
+{
+    if (dm2_v1_fetch_viewport_asset(s, gdat_index, out_pixels, out_w, out_h,
+                                    out_stride) != 0) {
+        return -1;
+    }
+    if (s && s->source_materials_required &&
+        !s->active_asset_palette_ready) {
+        if (out_pixels) *out_pixels = NULL;
+        if (out_w) *out_w = 0;
+        if (out_h) *out_h = 0;
+        if (out_stride) *out_stride = 0;
+        return -1;
+    }
+    return 0;
+}
+
 static void __attribute__((unused)) dm2_v1_blit_tiled_bitmap(uint8_t *dst,
                                      int dst_stride,
                                      int dst_x,
@@ -3338,12 +3365,12 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         int wall_h = 0;
         int wall_stride = 0;
 
-        if (dm2_v1_fetch_viewport_asset(s,
-                                        panel->gdat_index,
-                                        &wall_pixels,
-                                        &wall_w,
-                                        &wall_h,
-                                        &wall_stride) != 0 ||
+        if (dm2_v1_fetch_viewport_local_material(s,
+                                                 panel->gdat_index,
+                                                 &wall_pixels,
+                                                 &wall_w,
+                                                 &wall_h,
+                                                 &wall_stride) != 0 ||
             !wall_pixels || wall_w <= 0 || wall_h <= 0) {
             if (s->source_materials_required) {
                 ++s->blocked_material_draw_count;
@@ -3460,12 +3487,12 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int panel_stride = 0;
             int panel_drawn_asset = 0;
             if (door->panel_gdat_index != 0 &&
-                dm2_v1_fetch_viewport_asset(s,
-                                            door->panel_gdat_index,
-                                            &panel_pixels,
-                                            &panel_w,
-                                            &panel_h,
-                                            &panel_stride) == 0 &&
+                dm2_v1_fetch_viewport_local_material(s,
+                                                      door->panel_gdat_index,
+                                                      &panel_pixels,
+                                                      &panel_w,
+                                                      &panel_h,
+                                                      &panel_stride) == 0 &&
                 panel_pixels && panel_w > 0 && panel_h > 0) {
                 DM2_V1_DoorAssetBlit blit;
                 /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR lines
@@ -3529,12 +3556,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 int overlay_stride = 0;
                 if (overlay_indices[overlay_i] != 0 &&
                     door->panel_rect.w > 0 && door->panel_rect.h > 0 &&
-                    dm2_v1_fetch_viewport_asset(s,
-                                                overlay_indices[overlay_i],
-                                                &overlay_pixels,
-                                                &overlay_w,
-                                                &overlay_h,
-                                                &overlay_stride) == 0 &&
+                    dm2_v1_fetch_viewport_local_material(
+                        s, overlay_indices[overlay_i], &overlay_pixels,
+                        &overlay_w, &overlay_h, &overlay_stride) == 0 &&
                     overlay_pixels && overlay_w > 0 && overlay_h > 0) {
                     DM2_V1_DoorAssetBlit blit;
                     if (dm2_v1_viewport_full_rect_asset_blit(
@@ -3606,12 +3630,12 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int door_stride = 0;
 
             if (door->frame_gdat_index != 0 &&
-                dm2_v1_fetch_viewport_asset(s,
-                                            door->frame_gdat_index,
-                                            &door_pixels,
-                                            &door_w,
-                                            &door_h,
-                                            &door_stride) == 0 &&
+                dm2_v1_fetch_viewport_local_material(s,
+                                                      door->frame_gdat_index,
+                                                      &door_pixels,
+                                                      &door_w,
+                                                      &door_h,
+                                                      &door_stride) == 0 &&
                 door_pixels && door_w > 0 && door_h > 0) {
                 DM2_V1_DoorAssetBlit blit;
                 /* skproject GRAPHICSSET fields 0x06/0x07/0x09 are the
@@ -3669,12 +3693,12 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
              * view-square helper pick a same-numbered GDAT image unless the
              * direct DB2/DB3 receipt proves that ownership. */
             if ((!s->source_materials_required || wall_button_material_bound) &&
-                dm2_v1_fetch_viewport_asset(s,
-                                            door->button_gdat_index,
-                                            &button_pixels,
-                                            &button_w,
-                                            &button_h,
-                                            &button_stride) == 0 &&
+                dm2_v1_fetch_viewport_local_material(s,
+                                                      door->button_gdat_index,
+                                                      &button_pixels,
+                                                      &button_w,
+                                                      &button_h,
+                                                      &button_stride) == 0 &&
                 button_pixels && button_w > 0 && button_h > 0) {
                 DM2_V1_DoorAssetBlit blit;
                 /* skproject SKWIN/SkWinCore.cpp DRAW_DEFAULT_DOOR_BUTTON
