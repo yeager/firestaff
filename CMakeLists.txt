@@ -3018,6 +3018,19 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Opt-in original CSBWin-save policy handoff probe. It never constructs a
+# substitute save; hosts without FIRESTAFF_CSBWIN_SAVE skip cleanly.
+add_executable(firestaff_csb_v1_csbwin_save_policy_probe
+    probes/csb/firestaff_csb_v1_csbwin_save_policy_probe.c)
+target_include_directories(firestaff_csb_v1_csbwin_save_policy_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_csbwin_save_policy_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_csbwin_save_policy_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Real PC34 path: verified new-game dungeon -> first input -> native save ->
 # reload into the same dungeon owner. Source-locked against LOADSAVE.C F0435
 # and CSBWin SaveGame.cpp; no synthetic fixture or startup wrapper is used.
@@ -9880,6 +9893,23 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_expool_palette_restore
         COMMAND test_csb_v1_expool_palette_restore
+    )
+
+    # CSBWin SaveGame.cpp restores post-palette EXPOOL policy records only
+    # after their complete DB11 tail has passed validation.
+    add_executable(test_csb_v1_csbwin_save_policy_restore
+        tests/test_csb_v1_csbwin_save_policy_restore.c
+    )
+    target_include_directories(test_csb_v1_csbwin_save_policy_restore PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_save_policy_restore PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_save_policy_restore PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_save_policy_restore
+        COMMAND test_csb_v1_csbwin_save_policy_restore
     )
 
     # CSBWin Monster.cpp movement-filter callback: authenticated seven-word
