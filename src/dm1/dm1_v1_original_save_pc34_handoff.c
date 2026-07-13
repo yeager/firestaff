@@ -795,6 +795,39 @@ static int original_pc34_group_on_square(
     return 0;
 }
 
+static int original_pc34_explosion_on_square(
+    const struct GameWorld_Compat *world,
+    int map_index,
+    int map_x,
+    int map_y,
+    uint16_t expected_thing,
+    int *out_explosion_index)
+{
+    uint16_t thing;
+    int safety = 0;
+
+    if (out_explosion_index) *out_explosion_index = -1;
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->loaded || !world->things->explosions ||
+        THING_GET_TYPE(expected_thing) != THING_TYPE_EXPLOSION) {
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, map_index, map_x, map_y);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        if (thing == expected_thing) {
+            int index = (int)THING_GET_INDEX(thing);
+            if (index < 0 || index >= world->things->explosionCount) {
+                return 0;
+            }
+            if (out_explosion_index) *out_explosion_index = index;
+            return 1;
+        }
+        thing = original_pc34_next_thing(world->things, thing);
+    }
+    return 0;
+}
+
 static int original_pc34_event_type_is_status_timeout(int type)
 {
     return type == DM1_EVENT_INVISIBILITY ||
@@ -969,6 +1002,72 @@ static int materialize_original_pc34_group_reaction_event(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+static int materialize_original_pc34_explosion_event(
+    const struct DM1_Event_V1 *src,
+    struct GameWorld_Compat *world,
+    struct TimelineEvent_Compat *out_event)
+{
+    const struct DungeonExplosion_Compat *source_explosion;
+    struct ExplosionCreateInput_Compat input;
+    struct TimelineEvent_Compat first_event;
+    uint16_t source_thing;
+    int source_index;
+    int runtime_index;
+    int map_index;
+
+    if (!src || !world || !world->dungeon || !world->things || !out_event ||
+        src->type != DM1_EVENT_EXPLOSION) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    map_index = (int)((src->map_time >> 24) & 0xffu);
+    source_thing = read_u16_le(&src->c_cell);
+
+    /* ReDMCSB PROJEXPL.C F0213:157-165 creates C25 with B.Location and
+     * C.Slot. TIMELINE.C F0261:1872 forwards that same EVENT to F0220.
+     * A C25 cannot be reconstructed from Cell/Effect: its C15 reference
+     * must be present in the original square chain before M10 publishes it. */
+    if (map_index < 0 || map_index >= (int)world->dungeon->header.mapCount ||
+        src->b_mapX >= world->dungeon->maps[map_index].width ||
+        src->b_mapY >= world->dungeon->maps[map_index].height ||
+        !original_pc34_explosion_on_square(world, map_index,
+                                           src->b_mapX, src->b_mapY,
+                                           source_thing, &source_index)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    source_explosion = &world->things->explosions[source_index];
+    memset(&input, 0, sizeof(input));
+    input.explosionType = source_explosion->type;
+    input.attack = source_explosion->attack;
+    input.mapIndex = map_index;
+    input.mapX = src->b_mapX;
+    input.mapY = src->b_mapY;
+    input.cell = (int)THING_GET_CELL(source_thing);
+    input.centered = source_explosion->centered;
+    input.currentTick = (int)((src->map_time & 0x00ffffffu) - 1u);
+    input.ownerKind = -1;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    if (!F0821_EXPLOSION_Create_Compat(&input, &world->explosions,
+                                       &runtime_index, &first_event)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    (void)first_event;
+    memset(out_event, 0, sizeof(*out_event));
+    out_event->kind = TIMELINE_EVENT_EXPLOSION_ADVANCE;
+    out_event->fireAtTick = src->map_time & 0x00ffffffu;
+    out_event->mapIndex = map_index;
+    out_event->mapX = src->b_mapX;
+    out_event->mapY = src->b_mapY;
+    out_event->cell = (int)THING_GET_CELL(source_thing);
+    out_event->aux0 = runtime_index;
+    out_event->aux1 = source_explosion->type;
+    out_event->aux2 = source_explosion->attack;
+    out_event->aux4 = src->priority;
+    world->explosions.entries[runtime_index].scheduledAtTick =
+        (int)(src->map_time & 0x00ffffffu);
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 static int materialize_original_pc34_timeline(
     const DM1OriginalSavePC34HandoffReport *report,
     struct GameWorld_Compat *world,
@@ -1027,6 +1126,14 @@ static int materialize_original_pc34_timeline(
         if (original_pc34_event_type_is_group_reaction(src->type)) {
             if (materialize_original_pc34_group_reaction_event(
                     src, world, &ev) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
+                !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            continue;
+        }
+        if (src->type == DM1_EVENT_EXPLOSION) {
+            if (materialize_original_pc34_explosion_event(src, world, &ev) !=
+                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
                 !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
                 return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
