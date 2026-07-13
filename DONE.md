@@ -1182,6 +1182,14 @@
   F0115's typed live projectile/explosion passes. The focused world test
   covers a bounded group/item chain plus local active effects.
 
+- ✅ 2026-07-13 DM2 restored-weather GDAT renderer receipt: validated
+  post-save runtime weather now reaches a no-draw renderer receipt only via
+  exact `c_weather.cpp` `DistantEnvironment` command bytes, verified decoded
+  ENVIRONMENT GDAT material, and the original `dt04` clip route. It rejects a
+  mismatched command byte or invalid restored state and does not derive cloud,
+  rain, or timer data from generic state. Verification: Ninja and CTest
+  `dm2_v1_weather_gdat_receipt` passed; `git diff --check` passed.
+
 - 2026-07-13 DM2 weather timer corpus absence receipt: the skip-safe scan now
   records verified payload bytes and zero matching timer records when no
   skproject-proven save offset exists; no heuristic match or runtime promotion.

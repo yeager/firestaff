@@ -9,6 +9,7 @@
 
 #include "dm2_v1_weather.h"
 #include <math.h>
+#include <string.h>
 
 /* ReDMCSB/Baseline deterministic RNG for seeded transitions:
  * BASE.C F1695 / F1765:
@@ -27,6 +28,12 @@ static const char *const g_weather_names[DM2_WEATHER_COUNT] = {
     [DM2_WEATHER_FOG]   = "Fog",
     [DM2_WEATHER_STORM] = "Storm",
 };
+
+static uint32_t dm2_weather_state_hash_step(uint32_t hash, uint32_t value)
+{
+    hash ^= value;
+    return hash * 16777619u;
+}
 
 void dm2_v1_weather_init(DM2_V1_WeatherState *state) {
     if (!state) return;
@@ -119,6 +126,38 @@ int dm2_v1_weather_particle_count(const DM2_V1_WeatherState *state) {
         case DM2_WEATHER_STORM: return state->weather_intensity * 3;
         default: return 0;
     }
+}
+
+int dm2_v1_weather_restored_state_receipt(
+    const DM2_V1_WeatherState *state,
+    DM2_V1_WeatherRestoredStateReceipt *out)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    /* Save restoration has already completed before this boundary.  Keep the
+     * source-neutral runtime fields as identity only; c_weather.cpp owns
+     * separate live cloud/rain counters and no original save offset for them
+     * is proven here. */
+    if (!state || state->weather < DM2_WEATHER_CLEAR ||
+        state->weather >= DM2_WEATHER_COUNT || state->weather_intensity < 0 ||
+        state->weather_intensity > UINT8_MAX || state->time_of_day < 0 ||
+        state->time_of_day >= DM2_TIME_MINUTES_MAX) {
+        return 0;
+    }
+    out->weather = (uint8_t)state->weather;
+    out->intensity = (uint8_t)state->weather_intensity;
+    out->time_of_day = (uint16_t)state->time_of_day;
+    out->weather_seed = state->weather_seed;
+    hash = dm2_weather_state_hash_step(hash, out->weather);
+    hash = dm2_weather_state_hash_step(hash, out->intensity);
+    hash = dm2_weather_state_hash_step(hash, out->time_of_day);
+    hash = dm2_weather_state_hash_step(hash, out->weather_seed);
+    if (hash == 0u) return 0;
+    out->state_hash = hash;
+    out->valid = 1;
+    return 1;
 }
 
 const char *dm2_v1_weather_name(int weather) {

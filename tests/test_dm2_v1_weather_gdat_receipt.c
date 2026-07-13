@@ -41,6 +41,9 @@ int main(void)
     DM2_V1_WeatherDrawContext draw_context;
     DM2_V1_WeatherDrawPlan draw_plan;
     DM2_V1_WeatherDestinationClip destination_clip;
+    DM2_V1_WeatherState restored_weather;
+    DM2_V1_WeatherRestoredStateReceipt restored_state;
+    DM2_V1_WeatherRendererReceipt renderer_receipt;
     uint8_t rect_table[76];
     static const uint8_t source_commands[6] = {
         0x67u, 0x68u, 0x69u, 0x6au, 0x6bu, 0x6cu
@@ -204,7 +207,7 @@ int main(void)
           "weather plan preserves source cloud then rain material order");
     {
         const uint8_t live_slot[DM2_V1_DISTANT_ENVIRONMENT_BYTES] =
-            { 1u, 2u, 3u, 4u, 0u, 0u, 0u, 0u, 0x40u, 0x40u };
+            { 0x68u, 2u, 3u, 4u, 0u, 0u, 0u, 0u, 0x40u, 0x40u };
         check(dm2_v1_weather_distant_environment_receipt(
                   &receipt, 0x68u, 0u, live_slot, &distant) &&
                   distant.valid && distant.command == 0x68u &&
@@ -231,6 +234,11 @@ int main(void)
     put16le(rect_table + 12u + 8u + 2u, 6100u);
     put16le(rect_table + 12u + 8u + 4u, 20u);
     put16le(rect_table + 12u + 8u + 6u, 60u);
+    /* Rect 6005: rain shares the proven helper rectangle form. */
+    rect_table[12u + 5u * 8u] = 7u;
+    put16le(rect_table + 12u + 5u * 8u + 2u, 6100u);
+    put16le(rect_table + 12u + 5u * 8u + 4u, 20u);
+    put16le(rect_table + 12u + 5u * 8u + 6u, 60u);
     rect_table[68u] = 9u;
     put16le(rect_table + 68u + 4u, 40u);
     put16le(rect_table + 68u + 6u, 20u);
@@ -290,6 +298,50 @@ int main(void)
                                          &draw_plan),
           "weather draw plan refuses an unverified image material");
     receipt.commands[3].material_valid = 1;
+
+    dm2_v1_weather_init(&restored_weather);
+    restored_weather.weather = DM2_WEATHER_RAIN;
+    restored_weather.weather_intensity = 128;
+    restored_weather.weather_seed = 0x4a3d7f01u;
+    restored_weather.time_of_day = 721;
+    restored_weather.time_fraction = 721.0f / 1440.0f;
+    check(dm2_v1_weather_restored_state_receipt(&restored_weather,
+                                                &restored_state) &&
+              restored_state.valid && restored_state.weather == DM2_WEATHER_RAIN &&
+              restored_state.intensity == 128u && restored_state.time_of_day == 721u &&
+              restored_state.weather_seed == 0x4a3d7f01u &&
+              restored_state.state_hash != 0u,
+          "restored weather state carries only validated runtime fields");
+    {
+        const uint8_t source_slots[2][DM2_V1_DISTANT_ENVIRONMENT_BYTES] = {
+            { 0x68u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0x40u, 0x40u },
+            { 0x6bu, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0x40u, 0x40u }
+        };
+        DM2_V1_DistantEnvironmentReceipt source_receipts[2];
+
+        check(dm2_v1_weather_distant_environment_receipt(
+                  &receipt, 0x68u, 0u, source_slots[0], &source_receipts[0]) &&
+                  dm2_v1_weather_distant_environment_receipt(
+                  &receipt, 0x6bu, 1u, source_slots[1], &source_receipts[1]) &&
+                  dm2_v1_weather_gdat_renderer_receipt(
+                  &restored_state, &receipt, source_receipts, 2u, &draw_context,
+                  rect_table, sizeof(rect_table), &renderer_receipt) &&
+                  renderer_receipt.valid && renderer_receipt.command_count == 2u &&
+                  renderer_receipt.draws[0].command == 0x68u &&
+                  renderer_receipt.draws[1].command == 0x6bu &&
+                  renderer_receipt.clips[0].valid && renderer_receipt.clips[1].valid &&
+                  renderer_receipt.renderer_hash != 0u,
+              "restored weather binds source GDAT slots to renderer receipts");
+        source_receipts[1].raw[0] = 0x6au;
+        check(!dm2_v1_weather_gdat_renderer_receipt(
+                  &restored_state, &receipt, source_receipts, 2u, &draw_context,
+                  rect_table, sizeof(rect_table), &renderer_receipt),
+              "renderer receipt rejects a mismatched source command byte");
+    }
+    restored_weather.weather = DM2_WEATHER_COUNT;
+    check(!dm2_v1_weather_restored_state_receipt(&restored_weather,
+                                                 &restored_state),
+          "invalid restored weather state cannot reach renderer receipt");
 
     sizes[9] = 25u;
     check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6au,

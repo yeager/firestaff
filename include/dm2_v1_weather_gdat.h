@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_weather.h"
 
 /* skproject/SKULLWIN/c_weather.cpp DM2_UPDATE_WEATHER writes one of these
  * environment-command IDs and resolves it through QUERY_GDAT_TEXT(0x17,
@@ -179,6 +180,20 @@ typedef struct {
     uint32_t table_hash;
 } DM2_V1_WeatherDestinationClip;
 
+/* The renderer consumes only source-owned DistantEnvironment slots.  This
+ * receipt joins a save-restored runtime state with its selected, decoded GDAT
+ * materials and the original rectangle-table clips.  It is a no-draw
+ * contract: no command is promoted from weather intensity or timer bytes. */
+typedef struct {
+    int valid;
+    DM2_V1_WeatherRestoredStateReceipt restored_state;
+    unsigned int command_count;
+    uint32_t distant_environment_hash;
+    uint32_t renderer_hash;
+    DM2_V1_WeatherDrawPlan draws[2];
+    DM2_V1_WeatherDestinationClip clips[2];
+} DM2_V1_WeatherRendererReceipt;
+
 int dm2_v1_weather_gdat_receipt(const DM2_V1_AssetLoader *loader, uint8_t graphicsset, DM2_V1_WeatherGdatReceipt *out);
 int dm2_v1_weather_gdat_command_receipt(
     const DM2_V1_AssetLoader *loader,
@@ -227,6 +242,20 @@ int dm2_v1_weather_gdat_destination_clip(
     size_t rect_table_size,
     const DM2_V1_WeatherCommandReceipt *command,
     DM2_V1_WeatherDestinationClip *out);
+
+/* Binds already-restored runtime weather to the exact c_weather.cpp
+ * DistantEnvironment command slots.  Each slot must name its own source
+ * command byte, retain material provenance, and resolve through the original
+ * dt04 rectangle table.  Missing or malformed slots leave no fallback draw. */
+int dm2_v1_weather_gdat_renderer_receipt(
+    const DM2_V1_WeatherRestoredStateReceipt *restored_state,
+    const DM2_V1_WeatherGdatReceipt *weather,
+    const DM2_V1_DistantEnvironmentReceipt *slots,
+    unsigned int slot_count,
+    const DM2_V1_WeatherDrawContext *context,
+    const uint8_t *rect_table,
+    size_t rect_table_size,
+    DM2_V1_WeatherRendererReceipt *out);
 
 /* Retain one source-owned c_weather slot only after its selected ENVIRONMENT
  * command is already material-valid. No generic weather state is accepted. */

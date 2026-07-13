@@ -616,6 +616,70 @@ int dm2_v1_weather_gdat_destination_clip(
     return out->valid;
 }
 
+int dm2_v1_weather_gdat_renderer_receipt(
+    const DM2_V1_WeatherRestoredStateReceipt *restored_state,
+    const DM2_V1_WeatherGdatReceipt *weather,
+    const DM2_V1_DistantEnvironmentReceipt *slots,
+    unsigned int slot_count,
+    const DM2_V1_WeatherDrawContext *context,
+    const uint8_t *rect_table,
+    size_t rect_table_size,
+    DM2_V1_WeatherRendererReceipt *out)
+{
+    uint32_t distant_hash = 2166136261u;
+    uint32_t renderer_hash = 2166136261u;
+    unsigned int i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!restored_state || !restored_state->valid ||
+        restored_state->state_hash == 0u || !weather || !weather->valid ||
+        !context || slot_count > 2u || (slot_count != 0u && !slots)) {
+        return 0;
+    }
+
+    out->restored_state = *restored_state;
+    renderer_hash = dm2_weather_hash_step(renderer_hash, restored_state->state_hash);
+    renderer_hash = dm2_weather_hash_step(renderer_hash, weather->receipt_hash);
+    for (i = 0u; i < slot_count; ++i) {
+        const DM2_V1_DistantEnvironmentReceipt *slot = &slots[i];
+        const DM2_V1_WeatherCommandReceipt *command;
+        unsigned int command_index;
+
+        /* c_weather.cpp puts the selected command in byte zero, then consumes
+         * cloud before rain in successive ten-byte DistantEnvironment slots.
+         * Do not infer either selection from restored generic weather fields. */
+        if (!slot->valid || slot->slot_index != i ||
+            !dm2_weather_command_is_source_owned(slot->command) ||
+            slot->raw[0] != slot->command || slot->raw_hash == 0u) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        command_index = (unsigned int)(slot->command -
+                                       DM2_V1_WEATHER_CLOUD_LIGHT_CMD);
+        command = &weather->commands[command_index];
+        if (command_index >= 6u || command->command != slot->command ||
+            !command->material_valid ||
+            !dm2_v1_weather_gdat_draw_plan(command, context, &out->draws[i]) ||
+            !dm2_v1_weather_gdat_destination_clip(rect_table, rect_table_size,
+                                                   command, &out->clips[i])) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        distant_hash = dm2_weather_hash_step(distant_hash, slot->raw_hash);
+        renderer_hash = dm2_weather_hash_step(renderer_hash, slot->command);
+        renderer_hash = dm2_weather_hash_step(renderer_hash,
+                                              out->draws[i].material_hash);
+        renderer_hash = dm2_weather_hash_step(renderer_hash,
+                                              out->clips[i].table_hash);
+    }
+    out->command_count = slot_count;
+    out->distant_environment_hash = distant_hash;
+    out->renderer_hash = dm2_weather_hash_step(renderer_hash, distant_hash);
+    out->valid = out->renderer_hash != 0u;
+    return out->valid;
+}
+
 int dm2_v1_weather_distant_environment_receipt(
     const DM2_V1_WeatherGdatReceipt *weather,
     uint8_t command,
