@@ -1510,6 +1510,8 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
                 src->aux0 != DM1_EVENT_FIRESHIELD || src->aux1 <= 0 ||
                 src->aux2 != DM1_EVENT_FIRESHIELD || src->aux4 != 0) return 0;
             write_u16_le(dst + 6u, (uint16_t)(int16_t)src->aux1);
+        } else if (type == DM1_EVENT_FOOTPRINTS) {
+            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT || src->aux0 != DM1_EVENT_FOOTPRINTS || src->aux1 != 0 || src->aux2 != DM1_EVENT_FOOTPRINTS || src->aux4 != 0) return 0;
         } else if (type == DM1_EVENT_CHAMPION_SHIELD) {
             if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
                 src->aux0 != DM1_EVENT_CHAMPION_SHIELD ||
