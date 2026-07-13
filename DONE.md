@@ -46,6 +46,13 @@
   ReDMCSB `REVIVE.C` F0280:272-283 and F0282:744-845. Verification:
    focused CTest.
 
+- 2026-07-13 DM1 PC34 corpus receipt transactionality: a classifier-qualified
+  external row now commits its C13/C24/C25 receipt only after the full
+  F0435 -> F0433 -> F0435 transaction has an OK result, matching core state,
+  and a transient export hash. Failed rows retain raw diagnostic provenance
+  but cannot be mistaken for published optional-event proof. Source: ReDMCSB
+   `LOADSAVE.C` F0433/F0435. Verification: focused native-PC34 handoff CTest.
+
 - 2026-07-13 DM1 HoC C026/C346 material gate: a DM1/M10-only regression
   scans the installed PC34 Hall of Champions for a real C127 mirror sensor.
   It locks the source ordinal to the exact C026 atlas cell and G0109
