@@ -4231,12 +4231,22 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
          !out_report->dungeon_tail_byte_preservation_ok ||
          (!out_report->c13_byte_receipt_available &&
           import_report.original_event_count > 0) ||
-         (out_report->source_c13_event_count > 0 &&
-          (!out_report->c13_byte_preservation_ok ||
+         ((out_report->source_c13_event_count > 0 ||
+           out_report->exported_c13_event_count > 0) &&
+          (!out_report->c13_byte_receipt_available ||
+           !out_report->c13_byte_preservation_ok ||
            !out_report->c13_timeline_byte_receipt_available ||
            !out_report->c13_timeline_byte_preservation_ok ||
            !out_report->c13_champion_record_byte_receipt_available ||
-           !out_report->c13_champion_record_byte_preservation_ok)))) {
+           !out_report->c13_champion_record_byte_preservation_ok)) ||
+         ((out_report->source_c24_event_count > 0 ||
+           out_report->exported_c24_event_count > 0) &&
+          (!out_report->c24_union_slot_byte_receipt_available ||
+           !out_report->c24_union_slot_byte_preservation_ok)) ||
+         ((out_report->source_c25_event_count > 0 ||
+           out_report->exported_c25_event_count > 0) &&
+          (!out_report->c25_union_slot_byte_receipt_available ||
+           !out_report->c25_union_slot_byte_preservation_ok)))) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;

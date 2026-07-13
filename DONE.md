@@ -12096,3 +12096,26 @@ Verification: `test_dm1_v1_viewport_3d_pc34_compat`.
   provenance for diagnosis. No importer/exporter/runtime fallback changed.
   Source: ReDMCSB `LOADSAVE.C` F0433:1583-1589 and F0435:2762-2796.
    Verification: focused native-PC34 handoff CTest.
+- 2026-07-13 DM1 PC34 C2/C3/C4 receipt negative paths: focused regression
+  covers a truncated C4 part, a checksum-valid header with only the C4 key
+  changed, and one extra byte after the portrait boundary. Each must reject
+  before any C2 PARTY_INFO, C3 EVENT, or C4 TIMELINE fingerprint receipt is
+  published. No import/export/runtime behavior changed. Source: ReDMCSB
+  `LOADSAVE.C` F0433:1583-1589/F0435:2762-2796. Verification: focused
+  native-PC34 handoff CTest.
+- 2026-07-13 DM1 PC34 empty-subtype corpus receipts: corpus rows now retain
+  C13 EVENT and C13 timeline-receipt availability and require positive C13,
+  C24, and C25 receipts even where their source/export row counts are zero.
+  This prevents a missing subtype decoder from becoming vacuous external-save
+  evidence; C3/C4 raw identity remains independently required. No runtime
+  importer/exporter behavior changed. Source: ReDMCSB `LOADSAVE.C`
+  F0433:1583-1589/F0435:2762-2796. Verification: focused native-PC34
+  handoff CTest.
+- 2026-07-13 DM1 PC34 optional EVENT roundtrip gate: direct F0435 -> F0433
+  -> F0435 state identity now rejects an unavailable or changed C13, C24, or
+  C25 receipt whenever either source/export side contains that optional row.
+  Zero-row families still require positive receipt availability. This closes
+  the direct-roundtrip gap previously covered only by the corpus wrapper; no
+  importer/exporter fallback was added. Source: ReDMCSB `LOADSAVE.C`
+  F0433:1586-1589/F0435:2781-2796. Verification: focused native-PC34
+   handoff CTest.
