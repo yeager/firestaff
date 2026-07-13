@@ -4317,6 +4317,20 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_f0107_hidden_inscription_fail_closed.c")
+        add_executable(test_m11_dm1_f0107_hidden_inscription_fail_closed
+            tests/test_m11_dm1_f0107_hidden_inscription_fail_closed.c)
+        target_link_libraries(test_m11_dm1_f0107_hidden_inscription_fail_closed PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_f0107_hidden_inscription_fail_closed PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_f0107_hidden_inscription_fail_closed
+            COMMAND test_m11_dm1_f0107_hidden_inscription_fail_closed
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_f0128_inscription_repaint_runtime.c")
         add_executable(test_m11_dm1_f0128_inscription_repaint_runtime
             tests/test_m11_dm1_f0128_inscription_repaint_runtime.c)

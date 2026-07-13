@@ -14,6 +14,13 @@
   existing leader instead of selecting the appended candidate. Source:
    ReDMCSB `REVIVE.C` F0282:837-845. Verification: focused CTest.
 
+- 2026-07-13 DM1 F0107/F0124 hidden-inscription fail-closed gate: a real
+  PC34 non-HoC D1C TextString first proves its M648 material receipt, then
+  disables that original `Visible` bit and redraws the same tuple. The next
+  frame publishes no M648 receipt, old glyph bytes, or host-text substitute.
+  Source: ReDMCSB `DUNGEON.C` F0172:2573-2600 and `DUNVIEW.C` F0107:3590-3706,
+   F0124:7842-7845. Verification: focused CTest against installed PC34 data.
+
 - 2026-07-13 DM1 HoC C026/C346 material gate: a DM1/M10-only regression
   scans the installed PC34 Hall of Champions for a real C127 mirror sensor.
   It locks the source ordinal to the exact C026 atlas cell and G0109
