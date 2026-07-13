@@ -1,5 +1,29 @@
 # Firestaff TODO - Open Work
 
+## Skproject Audit (DM2)
+
+- SKPROJECT-GAP-001 — `SKULLWIN/c_weather.cpp::DM2_SET_TIMER_WEATHER` and
+  `DM2_UPDATE_WEATHER` identify scheduling but not a serialised timer-record
+  layout or save offset. Risk: Firestaff could bind a random SKSave region as
+  weather state. Required: original timer/save trace and corpus with known
+  weather transitions.
+- SKPROJECT-GAP-002 — `SKWIN/DME.h::DistantEnvironment` fixes the ten-byte
+  in-memory shape but not allocation owner, persistence location, or save
+  encoding. Risk: ENVIRONMENT material could pair with stale slot bytes.
+  Required: DOS memory/save snapshots across weather updates.
+- SKPROJECT-GAP-003 — `SKULLWIN/c_sound.cpp` retains TODOs around MIDI calls,
+  sample-state returns, and queue fields. Risk: voice lifetime/music semantics
+  can diverge. Required: original executable trace and sound corpus.
+- SKPROJECT-GAP-004 — `SKULLWIN/c_map.cpp` marks map globals and ground-stack
+  table meanings unresolved. Risk: over-promoted G1 record/tile ownership.
+  Required: multi-map original DUNGEON.DAT corpus plus debugger traces.
+- SKPROJECT-GAP-005 — `SKWIN/DME.h` labels CCM `0x32..0x34` unknown. Risk:
+  fabricated creature behaviour. Required: original opcode streams and
+  instruction-level traces.
+- SKPROJECT-GAP-006 — `SKWIN/SkWinCore.h::_44c8_0f29` is unresolved blitting.
+  Risk: local-palette clipping/mirroring differs despite decoded GDAT pixels.
+  Required: original framebuffer captures and DOS blitter trace.
+
 - 2026-07-13 CSBWin restored `TT_60`/`TT_61` follow-up: only the exact
   party-square, non-Lord-Chaos `+5` successor is live before M10 can mutate
   `timerObj8`. Object movement, TT_61 sound, occupied-square checks, and the
