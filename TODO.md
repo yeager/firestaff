@@ -508,9 +508,9 @@ register/result/sector relationship for the two actual calls before assigning
 CD_READ, record, destination, bitmap, palette, object, or level semantics.
 The trace patch now emits one raw `stage2_system_card_call` and matching
 `stage2_system_card_return` receipt at each exact call/return PC, including
-the target and `$fc/$fd/$fe/$f8/$fa/$fb/$ff` registers. It deliberately still
-does not label a call as a CD read or assign any data role until a live
-post-call sector/result relationship is observed.
+the target, HuC6280 `A/X/Y/P`, and `$fc/$fd/$fe/$f8/$fa/$fb/$ff` registers. It
+deliberately still does not label a call as a CD read or assign any data role
+until a live post-call sector/result relationship is observed.
 
 The Mednafen trace harness now forces System Card 3.0 and the correct raw-CUE
 PCE route. It records reproducible CPU progress but still lacks the original
