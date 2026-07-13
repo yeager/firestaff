@@ -180,6 +180,7 @@ int main(int argc, char **argv) {
            receipt.structure2_descriptor_offsets_outside_opaque_payload_count,
            receipt.structure2_local_payload_offset_pattern_level_count);
     printf("Structure3: declared=%d valid=%d bytes=%d nonzero=%d transitions=%d "
+           "byte-runs=%d longest-byte-run=%d "
            "zero-blocks=%d nonzero-blocks=%d runs=%d longest-run=%d "
            "complete-model-relations=%d ordinal-block-disproven=%d "
            "ordinal-run-disproven=%d\n",
@@ -188,6 +189,8 @@ int main(int argc, char **argv) {
            receipt.structure3_payload_byte_count,
            receipt.structure3_payload_nonzero_byte_count,
            receipt.structure3_payload_transition_count,
+           receipt.structure3_nonzero_byte_run_count,
+           receipt.structure3_longest_nonzero_byte_run,
            receipt.structure3_zero_block_count,
            receipt.structure3_nonzero_block_count,
            receipt.structure3_nonzero_block_run_count,
@@ -199,8 +202,13 @@ int main(int argc, char **argv) {
         const Nexus_V1_DgnStructure3PayloadReceipt *payload =
             &receipt.structure3_payloads[level];
         if (!payload->declared) continue;
-        printf("Structure3 LEV%02d: first-run=%d+%d last-run=%d+%d\n",
-               level, payload->first_nonzero_block_run_start_block_index,
+        printf("Structure3 LEV%02d: first-byte-run=%d+%d last-byte-run=%d+%d "
+               "first-block-run=%d+%d last-block-run=%d+%d\n",
+               level, payload->first_nonzero_byte_run_offset,
+               payload->first_nonzero_byte_run_byte_count,
+               payload->last_nonzero_byte_run_offset,
+               payload->last_nonzero_byte_run_byte_count,
+               payload->first_nonzero_block_run_start_block_index,
                payload->first_nonzero_block_run_block_count,
                payload->last_nonzero_block_run_start_block_index,
                payload->last_nonzero_block_run_block_count);

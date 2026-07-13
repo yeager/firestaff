@@ -87,12 +87,12 @@
   its native bytes into substitute Firestaff state.
 
 - 🔧 2026-07-13 Nexus Structure3 follow-up: documented `0x800`-byte block
-  layout, raw occupancy-run spans, payload composition, and Structure1A
-  owner/model correlation now reach the optional retail DGN corpus receipt.
-  The receipt can rule out direct model-index block/run ordinals, but Structure3
-  record and face grammar remain unparsed. Prove original record boundaries and
-  face attachment before any draw route; do not infer positions, geometry,
-  textures, pixels, palettes, triggers, or fallback art.
+  layout, raw zero-separated byte/block spans, payload composition, and
+  Structure1A owner/model correlation now reach the optional retail DGN corpus
+  receipt. The receipt can rule out direct model-index block/run ordinals, but
+  Structure3 record and face grammar remain unparsed. Prove original record
+  boundaries and face attachment before any draw route; do not infer positions,
+  geometry, textures, pixels, palettes, triggers, or fallback art.
 
 ## M12 Localization Completion (2026-07-12)
 

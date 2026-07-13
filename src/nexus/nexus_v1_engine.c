@@ -476,6 +476,13 @@ int nexus_v1_inspect_dgn_material_corpus(
                 level.structure3_payload.nonzero_byte_count;
             receipt.structure3_payload_transition_count +=
                 level.structure3_payload.byte_transition_count;
+            receipt.structure3_nonzero_byte_run_count +=
+                level.structure3_payload.nonzero_byte_run_count;
+            if (level.structure3_payload.longest_nonzero_byte_run >
+                receipt.structure3_longest_nonzero_byte_run) {
+                receipt.structure3_longest_nonzero_byte_run =
+                    level.structure3_payload.longest_nonzero_byte_run;
+            }
             receipt.structure3_zero_block_count +=
                 level.structure3_payload.zero_block_count;
             receipt.structure3_nonzero_block_count +=
