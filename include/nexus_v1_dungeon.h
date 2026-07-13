@@ -272,6 +272,12 @@ typedef struct {
     int post_grid_0x30_ref_count;
     int post_grid_0x30_ref_unique_count;
     int max_post_grid_0x30_ref;
+    /* A non-zero packed Structure1B reference may only address a row in the
+     * observed 0x30 typed prefix. The final row stays opaque and is never
+     * render-addressable. */
+    int post_grid_0x30_references_valid;
+    int post_grid_0x30_invalid_ref_count;
+    int first_invalid_post_grid_0x30_ref;
     int post_grid_0x30_record_zero_referenced;
     int post_grid_0x30_ref_value_count;
     int structure1f_valid;
@@ -381,6 +387,9 @@ typedef struct {
     int post_grid_0x30_ref_count;
     int post_grid_0x30_ref_unique_count;
     int max_post_grid_0x30_ref;
+    int post_grid_0x30_references_valid;
+    int post_grid_0x30_invalid_ref_count;
+    int first_invalid_post_grid_0x30_ref;
     int post_grid_0x30_ref_value_count;
     int post_grid_0x24_zero_span_valid;
     int post_grid_0x30_record_table_valid;

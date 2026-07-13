@@ -234,7 +234,7 @@ static void test_variable_grid_and_mesh_ready(void) {
     set_collision_ref(structure1, structure1b_rel, 4, 2, 5);
     set_post_grid_0x30_ref(structure1, structure1b_rel, 2, 2, 1);
     set_post_grid_0x30_ref(structure1, structure1b_rel, 3, 2, 1);
-    set_post_grid_0x30_ref(structure1, structure1b_rel, 4, 2, 5);
+    set_post_grid_0x30_ref(structure1, structure1b_rel, 4, 2, 4);
     set_collision_ref(structure1, structure1b_rel, 0, 0, 0x0fff);
     cell_at(structure1, structure1b_rel, 5, 5)[1] = 0x01; /* door flag */
     geometry = dgn + NEXUS_DGN_BLOCK_SIZE + structure1b_rel +
@@ -271,9 +271,12 @@ static void test_variable_grid_and_mesh_ready(void) {
           "max collision descriptor ref is captured");
     CHECK(info.post_grid_0x30_ref_count == 3 &&
           info.post_grid_0x30_ref_unique_count == 2 &&
-          info.max_post_grid_0x30_ref == 5 &&
+          info.max_post_grid_0x30_ref == 4 &&
           info.post_grid_0x30_ref_value_count == 3,
           "packed-high post-grid values are counted without claiming row indexing");
+    CHECK(info.post_grid_0x30_references_valid &&
+          info.post_grid_0x30_invalid_ref_count == 0,
+          "all visible packed Structure1F references stay within the typed prefix");
     CHECK(info.mesh_ready == 1,
           "bounded collision and mesh descriptor budgets mark fixture mesh-ready");
     CHECK(info.post_grid_0x30_row_ordinal_flagged_prefix_record_count == 1 &&
@@ -304,8 +307,10 @@ static void test_variable_grid_and_mesh_ready(void) {
           handoff.fallback_visuals_permitted == 0,
           "DGN renderer handoff routes real mesh without fallback visuals");
     CHECK(handoff.max_collision_ref == 5 &&
-          handoff.max_post_grid_0x30_ref == 5 &&
+          handoff.max_post_grid_0x30_ref == 4 &&
           handoff.post_grid_0x30_ref_unique_count == 2 &&
+          handoff.post_grid_0x30_references_valid &&
+          handoff.post_grid_0x30_invalid_ref_count == 0 &&
           handoff.post_grid_0x30_row_ordinal_prefix_valid &&
           handoff.post_grid_0x30_row_ordinal_flagged_prefix_record_count == 1 &&
           handoff.post_grid_0x30_first_row_ordinal_flagged_prefix_record == 1,
@@ -907,6 +912,46 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           "DGN render plan stops at first front wall");
 }
 
+static void test_structure1f_out_of_prefix_ref_blocks_mesh(void) {
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
+    const int structure1b_rel = 0x40;
+    Nexus_V1_DgnGeometryInfo info;
+    Nexus_V1_DgnRendererHandoffReceipt handoff;
+    Nexus_V1_Level level;
+    Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_DgnRenderPlanReceipt receipt;
+    uint8_t *structure1;
+
+    CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
+                          structure1b_rel, 256) == 0,
+          "Structure1F prefix-overrun fixture builds");
+    structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
+    set_collision_ref(structure1, structure1b_rel, 3, 3, 1);
+    /* 256 bytes gives six rows: records 0..4 are the observed prefix;
+     * record 5 is the opaque tail and cannot be selected by a cell. */
+    set_post_grid_0x30_ref(structure1, structure1b_rel, 3, 3, 5);
+
+    CHECK(nexus_v1_dgn_geometry_info(&info, dgn, (int)sizeof(dgn)) == 0 &&
+          !info.post_grid_0x30_references_valid &&
+          info.post_grid_0x30_invalid_ref_count == 1 &&
+          info.first_invalid_post_grid_0x30_ref == 5 &&
+          !info.mesh_ready,
+          "an opaque Structure1F tail reference blocks mesh promotion");
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
+          handoff.status == NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_DESCRIPTOR_BUDGET &&
+          !handoff.post_grid_0x30_references_valid &&
+          handoff.first_invalid_post_grid_0x30_ref == 5 &&
+          handoff.blocks_real_dgn_mesh_render &&
+          !handoff.fallback_visuals_permitted,
+          "DGN handoff fails closed for an unproven Structure1F reference");
+    CHECK(nexus_v1_level_build_dgn_view_render_plan(
+              &level, 3, 3, 0, commands,
+              NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &receipt) == 0 &&
+          receipt.blocks_real_dgn_mesh_render && receipt.command_count == 0,
+          "blocked Structure1F reference emits no synthetic render plan");
+}
+
 static void test_descriptor_budget_blocks_mesh_ready(void) {
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 21];
     const int structure1b_rel = 0x40;
@@ -1041,6 +1086,7 @@ static void test_determinism(void) {
 int main(void) {
     test_variable_grid_and_mesh_ready();
     test_dgn_view_render_plan_from_structure1b();
+    test_structure1f_out_of_prefix_ref_blocks_mesh();
     test_descriptor_budget_blocks_mesh_ready();
     test_post_grid_0x30_row_prefix_rejection();
     test_structure1c_bytes_do_not_invent_collision_geometry();

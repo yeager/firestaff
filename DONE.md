@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F prefix references: DGN mesh readiness now
+  requires every Structure1F prefix reference to resolve inside the verified
+  post-grid record table. Invalid references block rendering with no fallback.
+  Verification: strict C11 regression and the main Ninja
+  `nexus_v1_dgn_geometry_readiness` test.
+
 - 2026-07-13 DM2 GDAT weather CMDSTR boundary: skproject `CD`/`FW` command
   strings now decode only from proven original GDAT material; malformed or
   unsupported input blocks the weather route without generated commands.
