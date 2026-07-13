@@ -1668,6 +1668,14 @@ int dm2_v1_boot_weather_gdat_destination_receipt(
     int graphicsset_index,
     DM2_V1_BootWeatherDestinationReceipt *out_receipt);
 
+/* c_gui_vp.cpp dialogue shell/glyph evidence only. The receipt does not
+ * authorize text layout or a DRAW_PICST call. */
+int dm2_v1_boot_dialogue_gdat_receipt(
+    DM2_V1_BootProfile *profile,
+    int graphicsset_index,
+    uint8_t shell_field,
+    DM2_V1_DialogueGdatReceipt *out_receipt);
+
 /* Raw-byte and decoded-pixel evidence for one virtual viewport resource.
  * The virtual index is the one used by DM2_V1_ViewportAssetFetch. */
 typedef struct {

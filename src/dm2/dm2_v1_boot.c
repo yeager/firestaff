@@ -4273,6 +4273,23 @@ int dm2_v1_boot_weather_gdat_destination_receipt(
     return out_receipt->valid;
 }
 
+int dm2_v1_boot_dialogue_gdat_receipt(
+    DM2_V1_BootProfile *profile,
+    int graphicsset_index,
+    uint8_t shell_field,
+    DM2_V1_DialogueGdatReceipt *out_receipt)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->graphics_dat || !out_receipt ||
+        graphicsset_index < 0 || graphicsset_index > 0xff) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return dm2_v1_dialogue_gdat_receipt(&gfx->loader,
+                                         (uint8_t)graphicsset_index,
+                                         shell_field, out_receipt);
+}
+
 static int dm2_v1_boot_runtime_wall_gfx_image_offsets_receipt(
     DM2_V1_BootProfile *profile,
     uint32_t *out_hash,

@@ -22,6 +22,10 @@
   Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
 
+- ✅ 2026-07-13 DM2 dialogue shell runtime receipt: the verified c_gui_vp
+  GRAPHICSSET shell/glyph IMG3 and local-palette receipt now reaches frame
+  ownership for the active map style. No dialogue surface is rendered.
+
 - 2026-07-13 DM1 original PC34 C77 Spell Shield roundtrip: typed handoff
   accepts zero Priority and positive signed `B.Defense`, subtracts it from
   both spell-shield mirrors at runtime, and exports no invented C union.
