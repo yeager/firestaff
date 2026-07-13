@@ -698,6 +698,15 @@ real PC34-shaped C14 arrow hits a wall, becomes the sole terminal F0115 floor
 object on its source square, and leaves no move event or C14 chain link.
 Remaining work is authentic multi-projectile pixel capture.
 
+2026-07-13: simultaneous F0811 routes now retain separate PC34 ownership:
+an arrow hitting a wall and an explosion-slot fireball leaving the map on the
+same tick each unlinks only its own C14, removes only its own C48/C49 event,
+and clears its own raw/decoded `Next` to `THING_NONE`. F0215 materializes the
+arrow as the sole F0115 floor object while the fireball leaves no static
+Thing. An unrelated C11 action receipt survives unchanged. Remaining work is
+authentic multi-projectile pixel capture with user-supplied PC34 media, not a
+different impact or renderer path.
+
 D0C C100/C101 rebirth C15 records now follow their separate ReDMCSB routes.
 C100's real PC34 lightning material (`M613 + G0210[C03] + 1 = 464`) and C3000
 centres now follow `L2476 = G2028`, not `G2034`: `DUNVIEW.C:5948,5984,5999`
