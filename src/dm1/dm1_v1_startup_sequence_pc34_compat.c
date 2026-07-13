@@ -5292,6 +5292,47 @@ int dm1_v1_startup_entrance_credits_presentation_command_pc34(
     return 1;
 }
 
+int dm1_v1_startup_entrance_credits_return_command_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    const DM1_V1_StartupEntranceCreditsPresentationCommand_PC34*
+        credits_command,
+    DM1_V1_StartupEntranceCreditsReturnCommand_PC34* out_command) {
+    DM1_V1_StartupEntranceCreditsReturnCommand_PC34 command;
+
+    if (!out_command || !media_receipt || !credits_command ||
+        !dm1_v1_startup_entrance_timing_receipt_valid_pc34(media_receipt) ||
+        !credits_command->handled ||
+        !credits_command->present_credits_frame ||
+        !credits_command->source_asset_receipt_consumed ||
+        !credits_command->source_palette_receipt_consumed ||
+        !credits_command->source_timing_receipt_consumed ||
+        media_receipt->entrance_credits_palette !=
+            VGA_PALETTE_PC34_SPECIAL_CREDITS ||
+        credits_command->special_palette !=
+            VGA_PALETTE_PC34_SPECIAL_CREDITS ||
+        credits_command->credits_wait_ticks !=
+            media_receipt->entrance_credits_wait_ticks ||
+        credits_command->vblank_delay_ms != media_receipt->entrance_vblank_ms ||
+        credits_command->graphics_c005_pixel_fingerprint == 0U) {
+        return 0;
+    }
+
+    /* ReDMCSB ENTRANCE.C F0441:846-883 is an outer do-loop: after F0442
+     * returns C202, it redraws C004/doors, discards the credits-dismissal
+     * input, restores C099, and waits for a fresh entrance command. */
+    memset(&command, 0, sizeof(command));
+    command.handled = 1;
+    command.credits_phase_receipt_consumed = 1;
+    command.redraw_closed_entrance = 1;
+    command.discard_pending_input = 1;
+    command.present_entrance_palette = 1;
+    command.special_palette = media_receipt->entrance_palette;
+    command.wait_vblank_delay_ms = media_receipt->entrance_vblank_ms;
+    command.source_evidence = "ReDMCSB ENTRANCE.C F0441:846-883; F0442:1004-1091";
+    *out_command = command;
+    return 1;
+}
+
 int dm1_v1_startup_entrance_render_audio_command_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
     unsigned int source_step,

@@ -178,6 +178,20 @@ typedef struct DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupEntranceCreditsPresentationCommand_PC34;
 
+/* F0441's outer loop redraws C004 plus C002/C003 after F0442 returns. Keep
+ * this distinct DM1 PC34 phase receipt so M11 cannot replay title/fade steps,
+ * carry the credits palette into the entrance, or share a CSB transition. */
+typedef struct DM1_V1_StartupEntranceCreditsReturnCommand_PC34 {
+    int handled;
+    int credits_phase_receipt_consumed;
+    int redraw_closed_entrance;
+    int discard_pending_input;
+    int present_entrance_palette;
+    int special_palette;
+    unsigned int wait_vblank_delay_ms;
+    const char* source_evidence;
+} DM1_V1_StartupEntranceCreditsReturnCommand_PC34;
+
 typedef struct DM1_V1_StartupHandoffPreludePlan_PC34 {
     int required;
     int source_order_valid;
@@ -1829,6 +1843,11 @@ int dm1_v1_startup_entrance_credits_presentation_command_pc34(
     unsigned int graphics_c005_width,
     unsigned int graphics_c005_height,
     DM1_V1_StartupEntranceCreditsPresentationCommand_PC34* out_command);
+int dm1_v1_startup_entrance_credits_return_command_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    const DM1_V1_StartupEntranceCreditsPresentationCommand_PC34*
+        credits_command,
+    DM1_V1_StartupEntranceCreditsReturnCommand_PC34* out_command);
 int dm1_v1_startup_sequence_source_order_valid_pc34(void);
 const char* dm1_v1_startup_sequence_source_evidence_pc34(void);
 unsigned int dm1_v1_startup_title_zoom_steps_pc34(void);

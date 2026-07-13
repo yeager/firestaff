@@ -59,6 +59,13 @@
   fallback. Verification: focused C001/C005 command test plus PC34 credits
   and entrance palette CTests.
 
+- 2026-07-13 DM1 F0442-to-F0441 credits return: after the verified C005
+  credits phase, M11 consumes a DM1-only return receipt and redraws real
+  C004/C002/C003 under the entrance palette before waiting for a fresh input.
+  It no longer restarts the title/fade/micro-dungeon phase sequence. The
+  receipt rejects a CSB credits palette. Verification: focused startup CTests
+  and real local PC34 `GRAPHICS.DAT` C001/C005 decoding.
+
 - 2026-07-13 Theron authenticated input-order receipt: the live Mednafen
   transition sidecar now records the first observed host-key position and
   emulated PCE input transactions before and after it. A host event after the
