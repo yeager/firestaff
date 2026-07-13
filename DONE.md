@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 C15/C24/C25 corpus receipt audit: the duplicate C24
+  and C25 four-byte receipt serializers are consolidated into one raw
+  `B.Location`/`C.Slot` helper. It copies only original EVENT union bytes;
+  no host explosion-list index can enter a corpus receipt. Runtime still
+  resolves the raw Thing only through the original C15 square chain. Source:
+  ReDMCSB `PROJEXPL.C` F0213/F0224 and `LOADSAVE.C` F0433/F0435.
+  Verification: focused native-PC34 handoff CTest.
+
 - 2026-07-13 DM1 D0C ordinary-C15 receipt audit: a focused regression locks
   the current F0115 source order for C100, C101, C050, and C000. C100 remains
   C3000-blocked, C050 stays F0113-owned, and only C101/C000 enter D0C M636;

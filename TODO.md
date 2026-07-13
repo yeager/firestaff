@@ -1372,6 +1372,12 @@ and real community-save corpus round-trip evidence.
     reorder EVENT storage, but keeps no host explosion-index interpretation.
     Every observed external C24 must retain source/export identity. Remaining
     work is authentic community-save coverage and broader dungeon-tail import.
+  - 2026-07-13 update: C24 and C25 corpus receipts now share one raw C15
+    union serializer for `B.Location` plus `C.Slot`, preventing their
+    four-byte receipts from diverging. The helper copies raw EVENT bytes only;
+    it neither reads nor emits a host explosion-list index. The existing C15
+    square-chain validators remain the only runtime owner. Remaining work is
+    authentic community-save coverage and broader dungeon-tail import.
     Remaining work is broader original dungeon-tail import breadth and real
     community-save corpus evidence.
   - 2026-07-13 update: F0435 dungeon-tail preflight now also enforces the
