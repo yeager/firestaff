@@ -32,6 +32,123 @@
 - 2026-07-13 CSBWin restored `TT_22` follow-up: the imported restart timer's
   exact source no-op is live. Its original creation context and the removed
   historical restart work remain unavailable; do not infer a C22 action.
+## ReDMCSB DM1 Reference Boundaries (2026-07-13)
+
+These are reference limits, not claims that ReDMCSB logic is wrong. Each item
+marks a place where a Firestaff PC34 claim needs evidence in addition to the
+ReDMCSB WIP 2021-02-06 source tree.
+
+- REDMCSB-DM1-GAP-001 — **ReDMCSB `Documentation/Readme.htm`, scope and
+  terminology sections.** The project states that it is reverse engineered,
+  not FTL's original source, and that names are reconstructed from binaries
+  and secondary material. **Firestaff risk:** a plausible identifier or C
+  expression can be mistaken for a proven PC34 ABI, byte layout, or side
+  effect. **Required independent evidence:** a hash-identified original PC
+  3.4 executable/disassembly and a minimal runtime trace for every ABI or
+  save-layout assertion that depends on reconstructed naming.
+
+- REDMCSB-DM1-GAP-002 — **ReDMCSB `Documentation/Readme.htm`, Accuracy /
+  Atari ST.** The supplied Megamax 1.1 rebuilds are deliberately only
+  near-identical to FTL's Atari binaries and fail some copy-protection checks;
+  the original compiler/linker is unavailable. **Firestaff risk:** source
+  control-flow is not binary proof for checksums, address-sensitive code, or
+  instruction timing. **Required independent evidence:** the original PC34
+  executable plus DOS/emulator execution trace; do not use a ReDMCSB rebuild
+  as a checksum or timing oracle.
+
+- REDMCSB-DM1-GAP-003 — **ReDMCSB `Documentation/Engine.htm:10` and
+  `Documentation/Readme.htm`, Accuracy / Other platforms.** The engine page
+  is explicitly written from Atari ST source, while the other-platform
+  accuracy section is marked "TO BE COMPLETED". **Firestaff risk:** an ST
+  render, palette, disk, or input branch can be silently promoted to PC34.
+  **Required independent evidence:** PC 3.4 English media, executable
+  disassembly, and frame/input captures; cross-platform branches are
+  explanatory only until those agree.
+
+- REDMCSB-DM1-GAP-004 — **ReDMCSB `DUNVIEW.C` F0115 setup, around line 2464
+  (`BUG0_86`).** Mirror/resurrection/rename graphics are conditionally loaded
+  according to legacy memory limits; the comment records known missing/garbage
+  graphics on PC in custom-dungeon conditions. **Firestaff risk:** this
+  platform-memory workaround is not a canonical HoC visual contract and must
+  not decide modern host rendering. **Required independent evidence:** PC34
+  `GRAPHICS.DAT`/`DUNGEON.DAT` pair and original-PC/DOS capture of HoC,
+  resurrection, rename, and a controlled custom-dungeon memory case.
+
+- REDMCSB-DM1-GAP-005 — **ReDMCSB `CHAMPION.C`
+  F0306_CHAMPION_GetStaminaAdjustedValue, lines 1078-1100.** The source notes
+  compiler-dependent operand evaluation; Turbo C++ 1.01, the PC 3.4 compiler,
+  takes the unexpected order. **Firestaff risk:** directly translating the C
+  expression into C11 yields neither a portable nor automatically PC34-correct
+  strength/maximum-load result. **Required independent evidence:** PC34
+  executable trace or save-driven capture at below-half stamina, with known
+  strength/load inputs and observed result.
+
+- REDMCSB-DM1-GAP-006 — **ReDMCSB `DUNGEON.C` thing allocation, around line
+  2099 (`BUG0_10`).** The reserved champion-bones type uses bit 15 and the
+  legacy compiler's shift happens to discard it before indexing; the source
+  documents that a normal compiler can index out of bounds. **Firestaff risk:**
+  source-shaped C alone cannot define the PC34 allocation semantics for dead
+  champion bones. **Required independent evidence:** real PC34 saves and
+  runtime traces covering party death, bone allocation, pickup, save, load,
+  and export byte comparison.
+
+- REDMCSB-DM1-GAP-007 — **ReDMCSB `LOADSAVE.C` load branch around
+  lines 2860-2895.** The code documents a broken historical DM/CSB dungeon
+  detector and format/header changes that make older saves impossible to load.
+  **Firestaff risk:** ReDMCSB's broad multi-platform loader is not a complete
+  PC34 interchange specification, especially for damaged, backup, and
+  version-mismatched files. **Required independent evidence:** provenance
+  recorded PC34 save corpus spanning new game, HoC selection, deaths/bones,
+  active groups, pending events, backup, and rejected/corrupt files, with
+  original-load and byte round-trip results.
+
+- REDMCSB-DM1-GAP-008 — **ReDMCSB `LOADSAVE.C`
+  F1057/F0433/F1059 and `COMMAND.C` save-command checksum gates.** Save
+  control flow is wrapped by platform-specific checksum/copy-protection
+  helpers such as F0464; the ReDMCSB accuracy note says non-identical rebuilt
+  Atari binaries have incorrect checksum values. **Firestaff risk:** source
+  call order does not prove original PC34 save UI acceptance, protection, or
+  failure presentation. **Required independent evidence:** original PC34
+  executable and save-media corpus with recorded save command, produced bytes,
+  reload result, and dialog/frame capture.
+
+- REDMCSB-DM1-GAP-009 — **ReDMCSB `MEMORY.C` graphic loading calls to
+  F0497_LZW_Decompress and `Documentation/Readme.htm`, graphics compression
+  and caching.** The source explains the codec and cache policy, but carries
+  no Firestaff-owned proof that a particular PC34 `GRAPHICS.DAT` bitmap,
+  palette, title, or sound entry has the assumed identity. **Firestaff risk:**
+  valid decoding can still select the wrong asset, palette, frame, or cached
+  representation. **Required independent evidence:** hash-identified PC34
+  `GRAPHICS.DAT` plus asset-offset/decoded-pixel corpus and original frame
+  captures for title, entrance, HoC, HUD, inscriptions, and dungeon cells.
+
+- REDMCSB-DM1-GAP-010 — **ReDMCSB `GRF1.C`, `IBMIO.C`, `IO.C`
+  S0075/S0076, and `SOUND.C` F0061.** Low-level graphics, input interrupts,
+  mouse state, and sound routes include platform assembly/system calls or
+  platform-specific tables. **Firestaff risk:** the high-level source cannot
+  prescribe SDL event coalescing, audio scheduling, palette latch timing, or
+  host frame presentation. **Required independent evidence:** PC34 DOS/emulator
+  input/audio/frame capture with tick markers, then Mac/SDL packaged-app
+  comparison; no synthetic timing or sound substitute may be promoted.
+
+- REDMCSB-DM1-GAP-011 — **ReDMCSB `GAMELOOP.C` lines 171-181 and `IO.C`
+  mouse interrupt path.** The source records a platform/version race fix for
+  eye/mouth press state between interrupt and command-queue processing.
+  **Firestaff risk:** polling SDL input can look correct while diverging on
+  press/release ordering, dialogs, chest panels, or save-menu entry. **Required
+  independent evidence:** original PC34 input traces for click/hold/release
+  around eye, mouth, chest, scroll, resurrection and save commands, plus the
+  same scripted sequence through the packaged host app.
+
+- REDMCSB-DM1-GAP-012 — **ReDMCSB `ENTRANCE.C`
+  F0438_STARTEND_OpenEntranceDoors, `TITLE.C` F0437, and platform headers.**
+  The common source supplies control flow but timing, bitmap presentation,
+  palette behavior, and sound backend are selected by platform conditionals.
+  **Firestaff risk:** copying the sequence can produce a visually plausible
+  but wrong PC34 title/swoosh/entrance cadence or palette. **Required
+  independent evidence:** frame-numbered, audio-synchronised PC34 startup
+  captures and raw title/animation asset corpus, compared against the packaged
+  Firestaff frame stream.
 
 - 2026-07-13 CSBWin restored `TT_FALSEWALL` follow-up: authenticated SET now
   and DSA-free CLEAR now update the original falsewall cell flag. TOGGLE,
