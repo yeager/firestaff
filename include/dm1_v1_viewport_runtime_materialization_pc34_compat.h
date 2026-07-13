@@ -27,6 +27,18 @@ typedef enum DM1_V1_ViewportRuntimeOriginPc34 {
  * "first effect" presentation. */
 #define DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34 EXPLOSION_LIST_CAPACITY
 
+/* ReDMCSB DUNVIEW.C F0115:5915-6220 restarts at the original C15 list and
+ * dispatches each record by type and view square.  These route values are a
+ * receipt of that source dispatch, not permission to substitute material. */
+typedef enum DM1_V1_C15ExplosionRoutePc34 {
+    DM1_V1_C15_EXPLOSION_ROUTE_ORDINARY_F0114_PC34 = 0,
+    DM1_V1_C15_EXPLOSION_ROUTE_ORDINARY_D0C_M636_PC34 = 1,
+    DM1_V1_C15_EXPLOSION_ROUTE_C100_C3000_BLOCKED_PC34 = 2,
+    DM1_V1_C15_EXPLOSION_ROUTE_C101_C3007_BLOCKED_PC34 = 3,
+    DM1_V1_C15_EXPLOSION_ROUTE_C101_D0C_M636_PC34 = 4,
+    DM1_V1_C15_EXPLOSION_ROUTE_FLUXCAGE_F0113_PC34 = 5
+} DM1_V1_C15ExplosionRoutePc34;
+
 typedef struct DM1_V1_ViewportRuntimeMaterializationInputPc34 {
     int relativeForward;
     int relativeSide;
@@ -74,6 +86,14 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
     int liveExplosionFrame;
     int liveExplosionMaxFrames;
     int liveExplosionAttack;
+    /* Source-list receipt.  This preserves the live PC34/M10 C15 order
+     * before the route-specific material gates below filter what M11 may
+     * draw.  C100/C101 therefore cannot be lost or merged with ordinary
+     * F0114 effects merely because their routes differ. */
+    int liveExplosionSourceCount;
+    int liveExplosionSourceSlots[DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34];
+    int liveExplosionSourceTypes[DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34];
+    int liveExplosionSourceRoutes[DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34];
     /* ReDMCSB F0115 routes C101 through D0C's native M636 fire pattern, but
      * C100 jumps to C3000/lightning geometry. Retain the latter as an
      * explicit no-draw receipt until its PC34 zone/scale decoder is proven. */

@@ -16,6 +16,29 @@ static int dm1_v1_viewport_runtime_explosion_is_active_pc34(
     return explosion && explosion->slotIndex >= 0 && explosion->reserved0 != 0;
 }
 
+static int dm1_v1_c15_explosion_route_pc34(int explosionType, int viewSquare)
+{
+    /* ReDMCSB DUNVIEW.C F0115:5955-6200 dispatches C101 as fire material,
+     * but D0C takes the M636 pattern branch before the C3007 branch. C100
+     * jumps directly to C3000 at :5965-6000. Fluxcage is retained for F0113
+     * after the C15 loop.  This is route evidence only: blocked routes do
+     * not gain a fallback material. */
+    if (explosionType == C100_EXPLOSION_REBIRTH_STEP1) {
+        return DM1_V1_C15_EXPLOSION_ROUTE_C100_C3000_BLOCKED_PC34;
+    }
+    if (explosionType == C101_EXPLOSION_REBIRTH_STEP2) {
+        return viewSquare == 0
+            ? DM1_V1_C15_EXPLOSION_ROUTE_C101_D0C_M636_PC34
+            : DM1_V1_C15_EXPLOSION_ROUTE_C101_C3007_BLOCKED_PC34;
+    }
+    if (explosionType == C050_EXPLOSION_FLUXCAGE) {
+        return DM1_V1_C15_EXPLOSION_ROUTE_FLUXCAGE_F0113_PC34;
+    }
+    return viewSquare == 0
+        ? DM1_V1_C15_EXPLOSION_ROUTE_ORDINARY_D0C_M636_PC34
+        : DM1_V1_C15_EXPLOSION_ROUTE_ORDINARY_F0114_PC34;
+}
+
 const char *dm1_v1_viewport_runtime_materialization_source_evidence_pc34(void)
 {
     return "ReDMCSB DUNGEON.C F0172 lines 2466-2589 publishes each visible "
@@ -125,6 +148,20 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 continue;
             }
             ++decision.liveExplosionCount;
+            if (decision.liveExplosionSourceCount <
+                DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34) {
+                int sourceIndex = decision.liveExplosionSourceCount++;
+                /* Keep the active-list ordering exactly as supplied by the
+                 * M10 C15 bridge.  The later ordinary-material list is a
+                 * filtered view, never a replacement source order. */
+                decision.liveExplosionSourceSlots[sourceIndex] =
+                    explosion->slotIndex;
+                decision.liveExplosionSourceTypes[sourceIndex] =
+                    explosion->explosionType;
+                decision.liveExplosionSourceRoutes[sourceIndex] =
+                    dm1_v1_c15_explosion_route_pc34(
+                        explosion->explosionType, decision.viewSquare);
+            }
             if (decision.liveExplosionSlot < 0) {
                 decision.liveExplosionSlot = explosion->slotIndex;
                 decision.liveExplosionType = explosion->explosionType;
@@ -134,10 +171,10 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 decision.liveExplosionAttack = explosion->attack;
             }
             /* ReDMCSB DUNVIEW.C F0115:5965-6000 sends C100 to the original
-             * lightning projectile material plus C3000 geometry. Its PC34
-             * scale/coordinate decoder is not yet recovered here, so retain
-             * the live record as no-draw rather than borrowing M636/F0114.
-             * C101 instead follows :5955 then the D0C M636 fire branch. */
+             * lightning projectile material plus C3000 geometry. Its scale
+             * gate remains separate and no-draw; do not borrow M636/F0114.
+             * The ordered C15 receipt above retains C100 and C101 even when
+             * this ordinary-material list excludes their distinct routes. */
             if (explosion->explosionType == C100_EXPLOSION_REBIRTH_STEP1) {
                 /* decision.viewSquare is the ReDMCSB MEDIA720 square id:
                  * M609/D0C is 0, not Firestaff's presentation enum value. */
@@ -148,10 +185,10 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 continue;
             }
             /* ReDMCSB DUNVIEW.C F0115:5915-6200 restarts the C15 walk and
-             * draws every ordinary explosion through F0114. Fluxcages are
-             * deferred to the F0113 field route, while C100/C101 rebirth
-             * effects require their own C3000/C3007 geometry. Do not let
-             * either class borrow the ordinary F0114 material path. */
+             * draws ordinary effects through F0114, except D0C's M636
+             * pattern branch. Fluxcage is deferred to F0113; C100/C101 have
+             * their C3000/C3007 routes. C101's D0C M636 material is admitted
+             * here only after its distinct route was recorded above. */
             if (explosion->explosionType != C050_EXPLOSION_FLUXCAGE &&
                 (explosion->explosionType < C100_EXPLOSION_REBIRTH_STEP1 ||
                  (explosion->explosionType == C101_EXPLOSION_REBIRTH_STEP2 &&
