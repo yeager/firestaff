@@ -872,6 +872,11 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     memset(&plan->structure1f_item_command_binding_receipt, 0,
            sizeof(plan->structure1f_item_command_binding_receipt));
     plan->structure1f_item_command_sources_consumed = 0;
+    memset(plan->structure1f_item_floor_materials, 0,
+           sizeof(plan->structure1f_item_floor_materials));
+    memset(&plan->structure1f_item_floor_material_receipt, 0,
+           sizeof(plan->structure1f_item_floor_material_receipt));
+    plan->structure1f_item_floor_materials_consumed = 0;
     plan->level = engine->game.current_level;
     plan->party_x = party_x;
     plan->party_y = party_y;
@@ -961,6 +966,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
      * stream into a raster surface. Unseen records remain covered by the
      * existing Structure1F no-draw gate. */
     if (engine->item_ibs_runtime_source.source_bound) {
+        int item_binding_count;
         if (nexus_v1_dgn_bind_structure1f_item_materials(
                 &engine->current_level, &engine->item_ibs_bank,
                 plan->commands, plan->receipt.command_count,
@@ -977,6 +983,28 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
              plan->structure1f_item_command_binding_receipt
                  .bound_special_floor_palette_count) > 0 &&
             !plan->structure1f_item_command_binding_receipt
+                 .fallback_visuals_permitted;
+        item_binding_count =
+            plan->structure1f_item_command_binding_receipt
+                .bound_regular_inventory_count +
+            plan->structure1f_item_command_binding_receipt
+                .bound_special_floor_palette_count;
+        /* Pass descriptor-0008 through the runtime plan only as an exact
+         * packed source receipt. The consumer explicitly leaves
+         * texel_order_proven and draw_authorized clear. */
+        if (nexus_v1_dgn_consume_structure1f_item_floor_materials(
+                plan->structure1f_item_command_bindings, item_binding_count,
+                plan->commands, plan->receipt.command_count,
+                plan->structure1f_item_floor_materials,
+                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+                &plan->structure1f_item_floor_material_receipt) != 0) {
+            plan->receipt.blocks_real_dgn_mesh_render = 1;
+            plan->receipt.fallback_visuals_permitted = 0;
+            return NULL;
+        }
+        plan->structure1f_item_floor_materials_consumed =
+            plan->structure1f_item_floor_material_receipt.complete &&
+            !plan->structure1f_item_floor_material_receipt
                  .fallback_visuals_permitted;
     }
     if (!plan->receipt.plan_ready) {
