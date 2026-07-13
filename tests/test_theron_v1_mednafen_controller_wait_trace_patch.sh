@@ -5,6 +5,7 @@ repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 patch_file=$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch
 input_patch_file=$repo/scripts/mednafen_1.32.1_theron_input_trace.patch
 state_patch_file=$repo/scripts/mednafen_1.32.1_theron_pcecd_state_trace.patch
+input_state_patch_file=$repo/scripts/mednafen_1.32.1_theron_input_state_trace.patch
 
 if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x address=2241 accumulator=%02x' "$patch_file" ||
    ! grep -Fq 'system_card_controller_state_store pc=%04x physical_pc=%08x opcode=%02x accumulator=%02x state_before=%02x' "$patch_file" ||
@@ -32,6 +33,11 @@ if ! grep -Fq 'source=mednafen-pce-instrumented-input' "$input_patch_file" ||
     printf 'FAIL: Mednafen input patch no longer retains raw port-0 evidence\n' >&2
     exit 1
 fi
+if ! grep -Fq 'pce_input_read register=%04x raw=%04x sel=%u clr=%u index=%u' "$input_state_patch_file" ||
+   ! grep -Fq 'pce_input_write register=%04x data=%02x sel_before=%u clr_before=%u index=%u' "$input_state_patch_file"; then
+    printf 'FAIL: Mednafen input-state patch no longer retains raw port transaction evidence\n' >&2
+    exit 1
+fi
 
 if [[ -z ${MEDNAFEN_SOURCE:-} ]]; then
     printf 'SKIP: MEDNAFEN_SOURCE is required for patch dry-run\n'
@@ -44,4 +50,5 @@ cp -R "$MEDNAFEN_SOURCE/." "$scratch/source"
 patch -d "$scratch/source" -p1 --batch --forward <"$patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$input_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$state_patch_file"
-printf 'PASS: Mednafen patches dry-run with controller, raw input, and PCECD state evidence\n'
+patch -d "$scratch/source" -p1 --batch --forward <"$input_state_patch_file"
+printf 'PASS: Mednafen patches dry-run with controller, raw input, PCECD, and port transaction evidence\n'

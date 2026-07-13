@@ -1637,6 +1637,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     events before the C8CD -> C897 loop. These are raw controller observations
     only; the next trace must observe a later status/IRQ change followed by a
     real sector read before any Track02 handoff can proceed.
+    2026-07-13 controller-port update: the next authentic capture now records
+    each bounded PCE input read with raw port-0, SEL, CLR, and multitap index,
+    plus each PCE input write before it changes those latches. This assigns no
+    host key meaning. A valid transition requires an observed port transaction,
+    then a non-peek 1800 change or CDIRQ change, then the existing raw sector
+    receipt; all earlier states remain pre-Track02 and blocked.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect
