@@ -351,6 +351,11 @@ int main(void)
     if (!theron_v1_raw_loader_trace_final_bind(
             &media_bound_trace, &bitmap, &bitmap_bound_trace) ||
         !bitmap_bound_trace.valid ||
+        !bitmap_bound_trace.stage2_dynamic_payload_verified ||
+        bitmap_bound_trace.stage2_dynamic_payload_bytes !=
+            THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES ||
+        !bitmap_bound_trace.soul_room_raw_route_verified ||
+        !bitmap_bound_trace.soul_room_route_disjoint_from_dynamic_span ||
         bitmap_bound_trace.bitmap_route_mask !=
             bitmap.startup_bitmap_raw_route_mask ||
         bitmap_bound_trace.bitmap_atlas_checksum !=
